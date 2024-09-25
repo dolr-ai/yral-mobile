@@ -1,0 +1,16 @@
+[package]
+name = "rust-agent-yral-mobile"
+version = "0.1.0"
+edition = "2021"
+
+build = "build.rs"
+
+[build-dependencies]
+swift-bridge-build = "0.1.57"
+
+[lib]
+crate-type = ["staticlib"]
+
+[dependencies]
+swift-bridge = "0.1.57"
+ic-agent = "0.38.0"
