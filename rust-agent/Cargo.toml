@@ -1,5 +1,5 @@
 [package]
-name = "swift-bridge-test"
+name = "yral-mobile-swift-binding"
 version = "0.1.0"
 edition = "2021"
 
@@ -14,8 +14,8 @@ crate-type = ["staticlib"]
 [dependencies]
 swift-bridge = {version = "0.1.57", features = ["async"]}
 tokio = { version = "1.28", features = ["macros", "rt-multi-thread"] }
-ic-agent = "0.38.0"
-thiserror = "1.0"
+ic-agent = "0.39.1"
+thiserror = "2.0.0"
 lazy_static = "1.4"
 candid = "0.10.10"
 serde = "1.0.213"
