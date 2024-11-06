@@ -1,5 +1,5 @@
 [package]
-name = "rust-agent-yral-mobile"
+name = "swift-bridge-test"
 version = "0.1.0"
 edition = "2021"
 
@@ -12,5 +12,11 @@ swift-bridge-build = "0.1.57"
 crate-type = ["staticlib"]
 
 [dependencies]
-swift-bridge = "0.1.57"
+swift-bridge = {version = "0.1.57", features = ["async"]}
+tokio = { version = "1.28", features = ["macros", "rt-multi-thread"] }
 ic-agent = "0.38.0"
+thiserror = "1.0"
+lazy_static = "1.4"
+candid = "0.10.10"
+serde = "1.0.213"
+serde_bytes = "0.11.15"
