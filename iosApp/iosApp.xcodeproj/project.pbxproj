@@ -78,10 +78,10 @@
 			children = (
 				058557BA273AAA24004C7B11 /* Assets.xcassets */,
 				7555FF82242A565900829871 /* ContentView.swift */,
+				AC09AA1E2CDBB69B009A39A4 /* Extensions */,
 				7555FF8C242A565B00829871 /* Info.plist */,
 				2152FB032600AC8F00CF470E /* iOSApp.swift */,
 				058557D7273AAEEB004C7B11 /* Preview Content */,
-				AC09A9F92CDB7A5D009A39A4 /* SwiftBindings+Extensions.swift */,
 			);
 			path = iosApp;
 			sourceTree = "<group>";
@@ -112,6 +112,14 @@
 				AC09A9B02CDB775C009A39A4 /* SwiftBridgeCore.swift */,
 			);
 			path = Generated;
+			sourceTree = "<group>";
+		};
+		AC09AA1E2CDBB69B009A39A4 /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				AC09A9F92CDB7A5D009A39A4 /* SwiftBindings+Extensions.swift */,
+			);
+			path = Extensions;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
