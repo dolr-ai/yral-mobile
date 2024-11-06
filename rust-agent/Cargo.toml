@@ -1,0 +1,22 @@
+[package]
+name = "yral-mobile-swift-binding"
+version = "0.1.0"
+edition = "2021"
+
+build = "build.rs"
+
+[build-dependencies]
+swift-bridge-build = "0.1.57"
+
+[lib]
+crate-type = ["staticlib"]
+
+[dependencies]
+swift-bridge = {version = "0.1.57", features = ["async"]}
+tokio = { version = "1.28", features = ["macros", "rt-multi-thread"] }
+ic-agent = "0.39.1"
+thiserror = "2.0.0"
+lazy_static = "1.4"
+candid = "0.10.10"
+serde = "1.0.213"
+serde_bytes = "0.11.15"
