@@ -7,6 +7,9 @@ use ic_agent::export::PrincipalError;
 use ic_agent::AgentError;
 use serde_bytes::ByteBuf;
 use candid::Nat;
+use k256::elliptic_curve::JwkEcKey;
+use ic_agent::identity::Secp256k1Identity;
+use std::error::Error;
 
 #[swift_bridge::bridge]
 mod ffi {
@@ -125,6 +128,8 @@ mod ffi {
         type Principal;
         type ByteBuf;
         type Nat;
+        type JwkEcKey;
+        type Secp256k1Identity;
     }
 
     extern "Rust" {
@@ -319,5 +324,16 @@ mod ffi {
         //     arg0: u64,
         //     arg1: Vec<(String, String)>,
         // ) -> Result<Result6, AgentError>;
+    }
+
+    extern "Rust" {
+        fn get_secp256k1_identity(jwk_key: JwkEcKey) -> Option<Secp256k1Identity>;
+    }
+}
+
+fn get_secp256k1_identity(jwk_key: JwkEcKey) -> Option<Secp256k1Identity> {
+    match k256::SecretKey::from_jwk(&jwk_key) {
+        Ok(key) => Some(Secp256k1Identity::from_private_key(key)),
+        Err(_) => None,
     }
 }
