@@ -1474,6 +1474,7 @@ void __swift_bridge__$Service$update_watch_history(void* callback_wrapper, void 
 void __swift_bridge__$Service$update_well_known_principal(void* callback_wrapper, void __swift_bridge__$Service$update_well_known_principal$async(void* callback_wrapper, void* ret), void* self, void* arg0, void* arg1);
 void __swift_bridge__$Service$write_key_value_pair(void* callback_wrapper, void __swift_bridge__$Service$write_key_value_pair$async(void* callback_wrapper, struct __private__ResultPtrAndPtr ret), void* self, uint64_t arg0, void* arg1, void* arg2);
 void* __swift_bridge__$get_secp256k1_identity(void* jwk_key);
+void* __swift_bridge__$get_jwk_ec_key(void* json_string);
 typedef enum __swift_bridge__$ResultU32AndAgentError$Tag {__swift_bridge__$ResultU32AndAgentError$ResultOk, __swift_bridge__$ResultU32AndAgentError$ResultErr} __swift_bridge__$ResultU32AndAgentError$Tag;
 union __swift_bridge__$ResultU32AndAgentError$Fields {uint32_t ok; void* err;};
 typedef struct __swift_bridge__$ResultU32AndAgentError{__swift_bridge__$ResultU32AndAgentError$Tag tag; union __swift_bridge__$ResultU32AndAgentError$Fields payload;} __swift_bridge__$ResultU32AndAgentError;

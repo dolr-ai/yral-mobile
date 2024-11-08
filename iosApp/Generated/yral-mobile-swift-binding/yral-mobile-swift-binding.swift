@@ -1,6 +1,9 @@
 public func get_secp256k1_identity(_ jwk_key: JwkEcKey) -> Optional<Secp256k1Identity> {
     { let val = __swift_bridge__$get_secp256k1_identity({jwk_key.isOwned = false; return jwk_key.ptr;}()); if val != nil { return Secp256k1Identity(ptr: val!) } else { return nil } }()
 }
+public func get_jwk_ec_key<GenericIntoRustString: IntoRustString>(_ json_string: GenericIntoRustString) -> Optional<JwkEcKey> {
+    { let val = __swift_bridge__$get_jwk_ec_key({ let rustString = json_string.intoRustString(); rustString.isOwned = false; return rustString.ptr }()); if val != nil { return JwkEcKey(ptr: val!) } else { return nil } }()
+}
 
 public class Secp256k1Identity: Secp256k1IdentityRefMut {
     var isOwned: Bool = true
