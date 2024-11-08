@@ -1,7 +1,9 @@
 #![allow(dead_code, unused_imports)]
 use candid::{self, CandidType, Decode, Deserialize, Encode, Principal};
-use ic_agent::{export::PrincipalError, identity, Agent};
+use ic_agent::{export::{reqwest::Error, PrincipalError}, identity, Agent};
+use k256::elliptic_curve::JwkEcKey;
 use std::sync::Arc;
+use ic_agent::identity::Secp256k1Identity;
 
 type Result<T> = std::result::Result<T, ic_agent::AgentError>;
 
@@ -1762,103 +1764,3 @@ impl Service {
         Ok(Decode!(&bytes, Result6)?)
     }
 }
-
-
-// // Declare the FFI module for `swift-bridge`
-// #[swift_bridge::bridge]
-// mod ffi {
-//     extern "Rust" {
-//         // Expose the `update_function` to Swift
-//         fn update_function(
-//             canister_id: String,
-//             method: String,
-//             arg: String,
-//         ) -> Result<Vec<u8>, RequestError>;
-
-//         // Expose the `query_function` to Swift
-//         fn query_function(
-//             canister_id: String,
-//             method: String,
-//             arg: Vec<u8>,
-//         ) -> Result<String, RequestError>;
-//     }
-
-//     // Define Rust-side error handling for Swift
-//     extern "Rust" {
-//         type RequestError;
-//     }
-// }
-
-// #[derive(Debug, thiserror::Error)]
-// pub enum RequestError {
-//     #[error("Request failed: {0}")]
-//     RequestFailed(String),
-// }
-
-// impl From<PrincipalError> for RequestError {
-//     fn from(err: PrincipalError) -> Self {
-//         RequestError::RequestFailed(err.to_string())
-//     }
-// }
-
-// impl From<AgentError> for RequestError {
-//     fn from(err: AgentError) -> Self {
-//         RequestError::RequestFailed(err.to_string())
-//     }
-// }
-
-// // This function is exposed to Swift
-// pub fn update_function(
-//     canister_id: String,
-//     method: String,
-//     arg: String,
-// ) -> Result<Vec<u8>, RequestError> {
-//     let principal = Principal::from_text(canister_id)?;
-
-//     let arg_bytes =
-//         candid::encode_args((arg,)).map_err(|e| RequestError::RequestFailed(e.to_string()))?;
-
-//     let future = AGENT
-//         .update(&principal, &method)
-//         .with_arg(arg_bytes)
-//         .call_and_wait();
-
-//     // Fix the return statement here
-//     let result = match tokio::runtime::Handle::try_current() {
-//         Ok(handle) => handle
-//             .block_on(future)
-//             .map_err(|e| RequestError::from(e)), // Explicit error type conversion
-//         Err(_) => RUNTIME
-//             .block_on(future)
-//             .map_err(|e| RequestError::from(e)), // Explicit error type conversion
-//     }?;
-
-//     Ok(result)
-// }
-
-// // This function is exposed to Swift
-// pub fn query_function(
-//     canister_id: String,
-//     method: String,
-//     arg: Vec<u8>,
-// ) -> Result<String, RequestError> {
-//     let principal = Principal::from_text(canister_id)?;
-
-//     let arg_bytes = if arg.is_empty() {
-//         candid::encode_args(()).map_err(|e| RequestError::RequestFailed(e.to_string()))?
-//     } else {
-//         arg
-//     };
-
-//     let future = AGENT.query(&principal, &method).with_arg(arg_bytes).call();
-
-//     let response = match tokio::runtime::Handle::try_current() {
-//         Ok(handle) => handle.block_on(future)?,
-//         Err(_) => RUNTIME.block_on(future)?,
-//     };
-
-//     let (result,): (String,) =
-//         candid::decode_args(&response).map_err(|e| RequestError::RequestFailed(e.to_string()))?;
-
-//     Ok(result)
-// }
