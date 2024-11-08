@@ -1,12 +1,14 @@
 mod import;
+use std::str::FromStr;
+
 use crate::import::*;
-use candid::binary_parser::PrincipalBytes;
-use candid::{self, CandidType, Decode, Deserialize, Encode, Principal};
-use candid::types::type_env;
+use candid::{self, ser, CandidType, Decode, Deserialize, Encode, Principal};
 use ic_agent::export::PrincipalError;
 use ic_agent::AgentError;
 use serde_bytes::ByteBuf;
 use candid::Nat;
+use k256::elliptic_curve::JwkEcKey;
+use ic_agent::identity::Secp256k1Identity;
 
 #[swift_bridge::bridge]
 mod ffi {
@@ -125,6 +127,8 @@ mod ffi {
         type Principal;
         type ByteBuf;
         type Nat;
+        type JwkEcKey;
+        type Secp256k1Identity;
     }
 
     extern "Rust" {
@@ -320,4 +324,24 @@ mod ffi {
         //     arg1: Vec<(String, String)>,
         // ) -> Result<Result6, AgentError>;
     }
+
+    extern "Rust" {
+        fn get_secp256k1_identity(jwk_key: JwkEcKey) -> Option<Secp256k1Identity>;
+        fn get_jwk_ec_key(json_string: String) -> Option<JwkEcKey>;
+    }
+}
+
+fn get_secp256k1_identity(jwk_key: JwkEcKey) -> Option<Secp256k1Identity> {
+    match k256::SecretKey::from_jwk(&jwk_key) {
+        Ok(key) => Some(Secp256k1Identity::from_private_key(key)),
+        Err(_) => None,
+    }
+}
+
+fn get_jwk_ec_key(json_string: String) -> Option<JwkEcKey> {
+    let jwk_ec_key = JwkEcKey::from_str(&json_string);
+    match jwk_ec_key {
+        Ok(key) => Some(key),
+        Err(_) => None,
+    }    
 }
