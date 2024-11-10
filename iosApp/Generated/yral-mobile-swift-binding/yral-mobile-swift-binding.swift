@@ -4,6 +4,84 @@ public func get_secp256k1_identity(_ jwk_key: JwkEcKey) -> Optional<Secp256k1Ide
 public func get_jwk_ec_key<GenericIntoRustString: IntoRustString>(_ json_string: GenericIntoRustString) -> Optional<JwkEcKey> {
     { let val = __swift_bridge__$get_jwk_ec_key({ let rustString = json_string.intoRustString(); rustString.isOwned = false; return rustString.ptr }()); if val != nil { return JwkEcKey(ptr: val!) } else { return nil } }()
 }
+public func delegated_identity_from_bytes(_ data: UnsafeBufferPointer<UInt8>) throws -> DelegatedIdentity {
+    try { let val = __swift_bridge__$delegated_identity_from_bytes(data.toFfiSlice()); if val.is_ok { return DelegatedIdentity(ptr: val.ok_or_err!) } else { throw RustString(ptr: val.ok_or_err!) } }()
+}
+
+public class DelegatedIdentity: DelegatedIdentityRefMut {
+    var isOwned: Bool = true
+
+    public override init(ptr: UnsafeMutableRawPointer) {
+        super.init(ptr: ptr)
+    }
+
+    deinit {
+        if isOwned {
+            __swift_bridge__$DelegatedIdentity$_free(ptr)
+        }
+    }
+}
+public class DelegatedIdentityRefMut: DelegatedIdentityRef {
+    public override init(ptr: UnsafeMutableRawPointer) {
+        super.init(ptr: ptr)
+    }
+}
+public class DelegatedIdentityRef {
+    var ptr: UnsafeMutableRawPointer
+
+    public init(ptr: UnsafeMutableRawPointer) {
+        self.ptr = ptr
+    }
+}
+extension DelegatedIdentity: Vectorizable {
+    public static func vecOfSelfNew() -> UnsafeMutableRawPointer {
+        __swift_bridge__$Vec_DelegatedIdentity$new()
+    }
+
+    public static func vecOfSelfFree(vecPtr: UnsafeMutableRawPointer) {
+        __swift_bridge__$Vec_DelegatedIdentity$drop(vecPtr)
+    }
+
+    public static func vecOfSelfPush(vecPtr: UnsafeMutableRawPointer, value: DelegatedIdentity) {
+        __swift_bridge__$Vec_DelegatedIdentity$push(vecPtr, {value.isOwned = false; return value.ptr;}())
+    }
+
+    public static func vecOfSelfPop(vecPtr: UnsafeMutableRawPointer) -> Optional<Self> {
+        let pointer = __swift_bridge__$Vec_DelegatedIdentity$pop(vecPtr)
+        if pointer == nil {
+            return nil
+        } else {
+            return (DelegatedIdentity(ptr: pointer!) as! Self)
+        }
+    }
+
+    public static func vecOfSelfGet(vecPtr: UnsafeMutableRawPointer, index: UInt) -> Optional<DelegatedIdentityRef> {
+        let pointer = __swift_bridge__$Vec_DelegatedIdentity$get(vecPtr, index)
+        if pointer == nil {
+            return nil
+        } else {
+            return DelegatedIdentityRef(ptr: pointer!)
+        }
+    }
+
+    public static func vecOfSelfGetMut(vecPtr: UnsafeMutableRawPointer, index: UInt) -> Optional<DelegatedIdentityRefMut> {
+        let pointer = __swift_bridge__$Vec_DelegatedIdentity$get_mut(vecPtr, index)
+        if pointer == nil {
+            return nil
+        } else {
+            return DelegatedIdentityRefMut(ptr: pointer!)
+        }
+    }
+
+    public static func vecOfSelfAsPtr(vecPtr: UnsafeMutableRawPointer) -> UnsafePointer<DelegatedIdentityRef> {
+        UnsafePointer<DelegatedIdentityRef>(OpaquePointer(__swift_bridge__$Vec_DelegatedIdentity$as_ptr(vecPtr)))
+    }
+
+    public static func vecOfSelfLen(vecPtr: UnsafeMutableRawPointer) -> UInt {
+        __swift_bridge__$Vec_DelegatedIdentity$len(vecPtr)
+    }
+}
+
 
 public class Secp256k1Identity: Secp256k1IdentityRefMut {
     var isOwned: Bool = true
@@ -8719,31 +8797,13 @@ public class Service: ServiceRefMut {
     }
 }
 extension Service {
-  public convenience init<GenericToRustStr: ToRustStr>(
-    _ principal_text: GenericToRustStr,
-    _ agent_url: GenericToRustStr
-  ) throws {
-    var initializationError: Error?
-    var servicePtr: UnsafeMutableRawPointer?
-
-    agent_url.toRustStr { agent_urlAsRustStr in
-      principal_text.toRustStr { principal_textAsRustStr in
-        let val = __swift_bridge__$Service$new(principal_textAsRustStr, agent_urlAsRustStr)
-        if val.is_ok {
-          servicePtr = val.ok_or_err!
-        } else {
-          initializationError = PrincipalError(ptr: val.ok_or_err!)
-        }
-      }
+    public convenience init<GenericToRustStr: ToRustStr>(_ principal_text: GenericToRustStr, _ agent_url: GenericToRustStr) throws {
+        agent_url.toRustStr({ agent_urlAsRustStr in
+            principal_text.toRustStr({ principal_textAsRustStr in
+            try { let val = __swift_bridge__$Service$new(principal_textAsRustStr, agent_urlAsRustStr); if val.is_ok { return Service(ptr: val.ok_or_err!) } else { throw PrincipalError(ptr: val.ok_or_err!) } }()
+        })
+        })
     }
-    if let error = initializationError {
-      throw error
-    }
-    guard let ptr = servicePtr else {
-      fatalError("Service initialization failed without an error.")
-    }
-    self.init(ptr: ptr)
-  }
 }
 public class ServiceRefMut: ServiceRef {
     public override init(ptr: UnsafeMutableRawPointer) {
@@ -10772,6 +10832,81 @@ extension Service: Vectorizable {
 
     public static func vecOfSelfLen(vecPtr: UnsafeMutableRawPointer) -> UInt {
         __swift_bridge__$Vec_Service$len(vecPtr)
+    }
+}
+
+
+public class DelegatedIdentityWire: DelegatedIdentityWireRefMut {
+    var isOwned: Bool = true
+
+    public override init(ptr: UnsafeMutableRawPointer) {
+        super.init(ptr: ptr)
+    }
+
+    deinit {
+        if isOwned {
+            __swift_bridge__$DelegatedIdentityWire$_free(ptr)
+        }
+    }
+}
+public class DelegatedIdentityWireRefMut: DelegatedIdentityWireRef {
+    public override init(ptr: UnsafeMutableRawPointer) {
+        super.init(ptr: ptr)
+    }
+}
+public class DelegatedIdentityWireRef {
+    var ptr: UnsafeMutableRawPointer
+
+    public init(ptr: UnsafeMutableRawPointer) {
+        self.ptr = ptr
+    }
+}
+extension DelegatedIdentityWire: Vectorizable {
+    public static func vecOfSelfNew() -> UnsafeMutableRawPointer {
+        __swift_bridge__$Vec_DelegatedIdentityWire$new()
+    }
+
+    public static func vecOfSelfFree(vecPtr: UnsafeMutableRawPointer) {
+        __swift_bridge__$Vec_DelegatedIdentityWire$drop(vecPtr)
+    }
+
+    public static func vecOfSelfPush(vecPtr: UnsafeMutableRawPointer, value: DelegatedIdentityWire) {
+        __swift_bridge__$Vec_DelegatedIdentityWire$push(vecPtr, {value.isOwned = false; return value.ptr;}())
+    }
+
+    public static func vecOfSelfPop(vecPtr: UnsafeMutableRawPointer) -> Optional<Self> {
+        let pointer = __swift_bridge__$Vec_DelegatedIdentityWire$pop(vecPtr)
+        if pointer == nil {
+            return nil
+        } else {
+            return (DelegatedIdentityWire(ptr: pointer!) as! Self)
+        }
+    }
+
+    public static func vecOfSelfGet(vecPtr: UnsafeMutableRawPointer, index: UInt) -> Optional<DelegatedIdentityWireRef> {
+        let pointer = __swift_bridge__$Vec_DelegatedIdentityWire$get(vecPtr, index)
+        if pointer == nil {
+            return nil
+        } else {
+            return DelegatedIdentityWireRef(ptr: pointer!)
+        }
+    }
+
+    public static func vecOfSelfGetMut(vecPtr: UnsafeMutableRawPointer, index: UInt) -> Optional<DelegatedIdentityWireRefMut> {
+        let pointer = __swift_bridge__$Vec_DelegatedIdentityWire$get_mut(vecPtr, index)
+        if pointer == nil {
+            return nil
+        } else {
+            return DelegatedIdentityWireRefMut(ptr: pointer!)
+        }
+    }
+
+    public static func vecOfSelfAsPtr(vecPtr: UnsafeMutableRawPointer) -> UnsafePointer<DelegatedIdentityWireRef> {
+        UnsafePointer<DelegatedIdentityWireRef>(OpaquePointer(__swift_bridge__$Vec_DelegatedIdentityWire$as_ptr(vecPtr)))
+    }
+
+    public static func vecOfSelfLen(vecPtr: UnsafeMutableRawPointer) -> UInt {
+        __swift_bridge__$Vec_DelegatedIdentityWire$len(vecPtr)
     }
 }
 

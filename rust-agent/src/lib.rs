@@ -9,6 +9,8 @@ use serde_bytes::ByteBuf;
 use candid::Nat;
 use k256::elliptic_curve::JwkEcKey;
 use ic_agent::identity::Secp256k1Identity;
+use yral_types::delegated_identity::DelegatedIdentityWire;
+use ic_agent::identity::DelegatedIdentity;
 
 #[swift_bridge::bridge]
 mod ffi {
@@ -129,6 +131,7 @@ mod ffi {
         type Nat;
         type JwkEcKey;
         type Secp256k1Identity;
+        type DelegatedIdentity;
     }
 
     extern "Rust" {
@@ -329,6 +332,11 @@ mod ffi {
         fn get_secp256k1_identity(jwk_key: JwkEcKey) -> Option<Secp256k1Identity>;
         fn get_jwk_ec_key(json_string: String) -> Option<JwkEcKey>;
     }
+
+    extern "Rust" {
+        type DelegatedIdentityWire;
+        fn delegated_identity_from_bytes(data: &[u8]) -> Result<DelegatedIdentity, String>;
+    }
 }
 
 fn get_secp256k1_identity(jwk_key: JwkEcKey) -> Option<Secp256k1Identity> {
@@ -344,4 +352,29 @@ fn get_jwk_ec_key(json_string: String) -> Option<JwkEcKey> {
         Ok(key) => Some(key),
         Err(_) => None,
     }    
+}
+
+pub trait FromBytes {
+    fn from_bytes(data: &[u8]) -> Result<Self, String>
+    where 
+        Self: Sized;
+}
+
+impl FromBytes for DelegatedIdentityWire {
+    fn from_bytes(data: &[u8]) -> Result<Self, String> {
+        serde_json::from_slice(data).map_err(|e| e.to_string())
+    }
+}
+
+fn delegated_identity_from_bytes(data: &[u8]) -> Result<ic_agent::identity::DelegatedIdentity, String> {
+    let wire = DelegatedIdentityWire::from_bytes(data)?;
+    let to_secret = k256::SecretKey::from_jwk(&wire.to_secret)
+        .map_err(|e| format!("Failed to parse secret key: {:?}", e))?;
+    let to_identity = ic_agent::identity::Secp256k1Identity::from_private_key(to_secret);
+    let delegated_identity = ic_agent::identity::DelegatedIdentity::new(
+        wire.from_key,
+        Box::new(to_identity),
+        wire.delegation_chain,
+    );
+    Ok(delegated_identity)
 }
