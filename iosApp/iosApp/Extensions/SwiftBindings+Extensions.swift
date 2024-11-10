@@ -19,3 +19,7 @@ extension PrincipalError: Error {
 extension IntoRustString where Self: Vectorizable {
 
 }
+
+extension RustString: Error {
+  
+}

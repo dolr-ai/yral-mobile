@@ -8,7 +8,8 @@ struct ContentView: View {
     Text("greet")
       .task {
         do {
-          try await getAuthCookie()
+          guard let cookie = HTTPCookieStorage.shared.cookies?.first(where: { $0.name == "user-identity"}) else { return }
+          try await extractIdentity(from: cookie)
         } catch {
           print("Error: \(error)")
         }
@@ -59,15 +60,63 @@ struct ContentView: View {
         print("Error:", error)
         return
       }
-      if let httpResponse = response as? HTTPURLResponse {
-        print("Response status code:", httpResponse.statusCode)
-      }
-      if let data = data, let responseString = String(data: data, encoding: .utf8) {
-        print("Response data:", responseString)
+      guard let httpResponse = response as? HTTPURLResponse else { return }
+      if httpResponse.statusCode == 200, let data = data, let responseString = String(data: data, encoding: .utf8) {
+        if let cookies = HTTPCookieStorage.shared.cookies(for: url), let userIdentity = cookies.first(where: { $0.name == "user-identity"}) {
+          HTTPCookieStorage.shared.setCookie(userIdentity)
+        } else {
+          print("No cookies found for this URL")
+        }
       }
     }
     task.resume()
   }
+
+  func extractIdentity(from cookie: HTTPCookie) async throws {
+    do {
+      guard let url = URL(string: "https://yral.com/api/extract_identity") else {
+        print("Invalid URL")
+        return
+      }
+      var request = URLRequest(url: url)
+      let cookieHeader = "\(cookie.name)=\(cookie.value)"
+      request.setValue(cookieHeader, forHTTPHeaderField: "Cookie")
+      request.httpMethod = "POST"
+      request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+      request.httpBody = "{}".data(using: .utf8)
+
+      let task = URLSession.shared.dataTask(with: request) { data, response, error in
+        if let error = error {
+          print("Error:", error)
+          return
+        }
+        guard let httpResponse = response as? HTTPURLResponse else { return }
+        if let data = data, let responseString = String(data: data, encoding: .utf8) {
+          Task {
+            try await handleExtractIdentityResponse(from: data)
+          }
+          do {
+          } catch {
+            print(error)
+          }
+        }
+      }
+      task.resume()
+    }
+  }
+
+  func handleExtractIdentityResponse(from data: Data) async throws {
+    try data.withUnsafeBytes { (buffer: UnsafeRawBufferPointer) in
+      if buffer.count > 0 {
+        let uint8Buffer = buffer.bindMemory(to: UInt8.self)
+        let delegatedIdentity = try delegated_identity_from_bytes(uint8Buffer)
+        print(delegatedIdentity)
+      } else {
+        print("Received empty data.")
+      }
+    }
+  }
+
 }
 
 struct ContentView_Previews: PreviewProvider {
