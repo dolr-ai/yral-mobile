@@ -12,6 +12,7 @@ use ic_agent::identity::Secp256k1Identity;
 use yral_types::delegated_identity::DelegatedIdentityWire;
 use ic_agent::identity::DelegatedIdentity;
 
+
 #[swift_bridge::bridge]
 mod ffi {
     extern "Rust" {
@@ -135,9 +136,9 @@ mod ffi {
     }
 
     extern "Rust" {
-        type Service;
+        type Service_Individual_User_Template;
         #[swift_bridge(init)]
-        fn new(principal_text: &str, agent_url: &str) -> Result<Service, PrincipalError>;
+        fn new(principal_text: &str, agent_url: &str) -> Result<Service_Individual_User_Template, PrincipalError>;
         async fn add_device_id(&self, arg0: String) -> Result<Result_, AgentError>;
         async fn add_post_v_2(&self, arg0: PostDetailsFromFrontend) -> Result<Result1, AgentError>;
         async fn add_token(&self, arg0: Principal) -> Result<Result2, AgentError>;
