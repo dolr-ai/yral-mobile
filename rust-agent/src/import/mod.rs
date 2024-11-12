@@ -15,3 +15,5 @@ pub  use sns_index::*;
 pub  use sns_ledger::*;
 pub use sns_root::*;
 pub use sns_swap::*;
+pub use individual_user_template::Service as Service_Individual_User_Template;
+pub use sns_swap::Service as Service_Sns_Swap;
