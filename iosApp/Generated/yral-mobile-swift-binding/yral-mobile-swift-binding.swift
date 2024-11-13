@@ -8783,7 +8783,7 @@ extension Result_: Vectorizable {
 }
 
 
-public class Service_Individual_User_Template: Service_Individual_User_TemplateRefMut {
+public class Service: ServiceRefMut {
     var isOwned: Bool = true
 
     public override init(ptr: UnsafeMutableRawPointer) {
@@ -8792,35 +8792,53 @@ public class Service_Individual_User_Template: Service_Individual_User_TemplateR
 
     deinit {
         if isOwned {
-            __swift_bridge__$Service_Individual_User_Template$_free(ptr)
+            __swift_bridge__$Service$_free(ptr)
         }
     }
 }
-extension Service_Individual_User_Template {
-    public convenience init<GenericToRustStr: ToRustStr>(_ principal_text: GenericToRustStr, _ agent_url: GenericToRustStr) throws {
-        agent_url.toRustStr({ agent_urlAsRustStr in
-            principal_text.toRustStr({ principal_textAsRustStr in
-            try { let val = __swift_bridge__$Service_Individual_User_Template$new(principal_textAsRustStr, agent_urlAsRustStr); if val.is_ok { return Service_Individual_User_Template(ptr: val.ok_or_err!) } else { throw PrincipalError(ptr: val.ok_or_err!) } }()
-        })
-        })
+extension Service {
+  public convenience init<GenericToRustStr: ToRustStr>(
+    _ principal_text: GenericToRustStr,
+    _ agent_url: GenericToRustStr
+  ) throws {
+    var initializationError: Error?
+    var servicePtr: UnsafeMutableRawPointer?
+
+    agent_url.toRustStr { agent_urlAsRustStr in
+      principal_text.toRustStr { principal_textAsRustStr in
+        let val = __swift_bridge__$Service$new(principal_textAsRustStr, agent_urlAsRustStr)
+        if val.is_ok {
+          servicePtr = val.ok_or_err!
+        } else {
+          initializationError = PrincipalError(ptr: val.ok_or_err!)
+        }
+      }
     }
+    if let error = initializationError {
+      throw error
+    }
+    guard let ptr = servicePtr else {
+      fatalError("Service initialization failed without an error.")
+    }
+    self.init(ptr: ptr)
+  }
 }
-public class Service_Individual_User_TemplateRefMut: Service_Individual_User_TemplateRef {
+public class ServiceRefMut: ServiceRef {
     public override init(ptr: UnsafeMutableRawPointer) {
         super.init(ptr: ptr)
     }
 }
-public class Service_Individual_User_TemplateRef {
+public class ServiceRef {
     var ptr: UnsafeMutableRawPointer
 
     public init(ptr: UnsafeMutableRawPointer) {
         self.ptr = ptr
     }
 }
-extension Service_Individual_User_TemplateRef {
+extension ServiceRef {
     public func add_device_id<GenericIntoRustString: IntoRustString>(_ arg0: GenericIntoRustString) async throws -> Result_ {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$add_device_id>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$add_device_id>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(Result_(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -8833,13 +8851,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$add_device_id(cb: callback)
+            let wrapper = CbWrapper$Service$add_device_id(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$add_device_id(wrapperPtr, onComplete, ptr, { let rustString = arg0.intoRustString(); rustString.isOwned = false; return rustString.ptr }())
+            __swift_bridge__$Service$add_device_id(wrapperPtr, onComplete, ptr, { let rustString = arg0.intoRustString(); rustString.isOwned = false; return rustString.ptr }())
         })
     }
-    class CbWrapper$Service_Individual_User_Template$add_device_id {
+    class CbWrapper$Service$add_device_id {
         var cb: (Result<Result_, Error>) -> ()
     
         public init(cb: @escaping (Result<Result_, Error>) -> ()) {
@@ -8849,7 +8867,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func add_post_v_2(_ arg0: PostDetailsFromFrontend) async throws -> Result1 {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$add_post_v_2>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$add_post_v_2>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(Result1(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -8862,13 +8880,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$add_post_v_2(cb: callback)
+            let wrapper = CbWrapper$Service$add_post_v_2(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$add_post_v_2(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}())
+            __swift_bridge__$Service$add_post_v_2(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}())
         })
     }
-    class CbWrapper$Service_Individual_User_Template$add_post_v_2 {
+    class CbWrapper$Service$add_post_v_2 {
         var cb: (Result<Result1, Error>) -> ()
     
         public init(cb: @escaping (Result<Result1, Error>) -> ()) {
@@ -8878,7 +8896,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func add_token(_ arg0: Principal) async throws -> Result2 {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$add_token>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$add_token>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(Result2(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -8891,13 +8909,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$add_token(cb: callback)
+            let wrapper = CbWrapper$Service$add_token(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$add_token(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}())
+            __swift_bridge__$Service$add_token(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}())
         })
     }
-    class CbWrapper$Service_Individual_User_Template$add_token {
+    class CbWrapper$Service$add_token {
         var cb: (Result<Result2, Error>) -> ()
     
         public init(cb: @escaping (Result<Result2, Error>) -> ()) {
@@ -8907,7 +8925,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func bet_on_currently_viewing_post(_ arg0: PlaceBetArg) async throws -> Result3 {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$bet_on_currently_viewing_post>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$bet_on_currently_viewing_post>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(Result3(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -8920,13 +8938,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$bet_on_currently_viewing_post(cb: callback)
+            let wrapper = CbWrapper$Service$bet_on_currently_viewing_post(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$bet_on_currently_viewing_post(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}())
+            __swift_bridge__$Service$bet_on_currently_viewing_post(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}())
         })
     }
-    class CbWrapper$Service_Individual_User_Template$bet_on_currently_viewing_post {
+    class CbWrapper$Service$bet_on_currently_viewing_post {
         var cb: (Result<Result3, Error>) -> ()
     
         public init(cb: @escaping (Result<Result3, Error>) -> ()) {
@@ -8936,7 +8954,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func check_and_update_scores_and_share_with_post_cache_if_difference_beyond_threshold(_ arg0: RustVec<UInt64>) async throws -> () {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: UnsafeMutableRawPointer?) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$check_and_update_scores_and_share_with_post_cache_if_difference_beyond_threshold>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$check_and_update_scores_and_share_with_post_cache_if_difference_beyond_threshold>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal == nil {
                 wrapper.cb(.success(()))
             } else {
@@ -8949,13 +8967,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$check_and_update_scores_and_share_with_post_cache_if_difference_beyond_threshold(cb: callback)
+            let wrapper = CbWrapper$Service$check_and_update_scores_and_share_with_post_cache_if_difference_beyond_threshold(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$check_and_update_scores_and_share_with_post_cache_if_difference_beyond_threshold(wrapperPtr, onComplete, ptr, { let val = arg0; val.isOwned = false; return val.ptr }())
+            __swift_bridge__$Service$check_and_update_scores_and_share_with_post_cache_if_difference_beyond_threshold(wrapperPtr, onComplete, ptr, { let val = arg0; val.isOwned = false; return val.ptr }())
         })
     }
-    class CbWrapper$Service_Individual_User_Template$check_and_update_scores_and_share_with_post_cache_if_difference_beyond_threshold {
+    class CbWrapper$Service$check_and_update_scores_and_share_with_post_cache_if_difference_beyond_threshold {
         var cb: (Result<(), Error>) -> ()
     
         public init(cb: @escaping (Result<(), Error>) -> ()) {
@@ -8965,7 +8983,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func clear_snapshot() async throws -> () {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: UnsafeMutableRawPointer?) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$clear_snapshot>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$clear_snapshot>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal == nil {
                 wrapper.cb(.success(()))
             } else {
@@ -8978,13 +8996,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$clear_snapshot(cb: callback)
+            let wrapper = CbWrapper$Service$clear_snapshot(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$clear_snapshot(wrapperPtr, onComplete, ptr)
+            __swift_bridge__$Service$clear_snapshot(wrapperPtr, onComplete, ptr)
         })
     }
-    class CbWrapper$Service_Individual_User_Template$clear_snapshot {
+    class CbWrapper$Service$clear_snapshot {
         var cb: (Result<(), Error>) -> ()
     
         public init(cb: @escaping (Result<(), Error>) -> ()) {
@@ -8994,7 +9012,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func create_a_namespace<GenericIntoRustString: IntoRustString>(_ arg0: GenericIntoRustString) async throws -> Result4 {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$create_a_namespace>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$create_a_namespace>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(Result4(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -9007,13 +9025,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$create_a_namespace(cb: callback)
+            let wrapper = CbWrapper$Service$create_a_namespace(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$create_a_namespace(wrapperPtr, onComplete, ptr, { let rustString = arg0.intoRustString(); rustString.isOwned = false; return rustString.ptr }())
+            __swift_bridge__$Service$create_a_namespace(wrapperPtr, onComplete, ptr, { let rustString = arg0.intoRustString(); rustString.isOwned = false; return rustString.ptr }())
         })
     }
-    class CbWrapper$Service_Individual_User_Template$create_a_namespace {
+    class CbWrapper$Service$create_a_namespace {
         var cb: (Result<Result4, Error>) -> ()
     
         public init(cb: @escaping (Result<Result4, Error>) -> ()) {
@@ -9023,7 +9041,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func delete_key_value_pair<GenericIntoRustString: IntoRustString>(_ arg0: UInt64, _ arg1: GenericIntoRustString) async throws -> Result5 {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$delete_key_value_pair>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$delete_key_value_pair>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(Result5(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -9036,13 +9054,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$delete_key_value_pair(cb: callback)
+            let wrapper = CbWrapper$Service$delete_key_value_pair(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$delete_key_value_pair(wrapperPtr, onComplete, ptr, arg0, { let rustString = arg1.intoRustString(); rustString.isOwned = false; return rustString.ptr }())
+            __swift_bridge__$Service$delete_key_value_pair(wrapperPtr, onComplete, ptr, arg0, { let rustString = arg1.intoRustString(); rustString.isOwned = false; return rustString.ptr }())
         })
     }
-    class CbWrapper$Service_Individual_User_Template$delete_key_value_pair {
+    class CbWrapper$Service$delete_key_value_pair {
         var cb: (Result<Result5, Error>) -> ()
     
         public init(cb: @escaping (Result<Result5, Error>) -> ()) {
@@ -9052,7 +9070,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func delete_multiple_key_value_pairs<GenericIntoRustString: IntoRustString>(_ arg0: UInt64, _ arg1: RustVec<GenericIntoRustString>) async throws -> Result6 {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$delete_multiple_key_value_pairs>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$delete_multiple_key_value_pairs>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(Result6(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -9065,13 +9083,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$delete_multiple_key_value_pairs(cb: callback)
+            let wrapper = CbWrapper$Service$delete_multiple_key_value_pairs(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$delete_multiple_key_value_pairs(wrapperPtr, onComplete, ptr, arg0, { let val = arg1; val.isOwned = false; return val.ptr }())
+            __swift_bridge__$Service$delete_multiple_key_value_pairs(wrapperPtr, onComplete, ptr, arg0, { let val = arg1; val.isOwned = false; return val.ptr }())
         })
     }
-    class CbWrapper$Service_Individual_User_Template$delete_multiple_key_value_pairs {
+    class CbWrapper$Service$delete_multiple_key_value_pairs {
         var cb: (Result<Result6, Error>) -> ()
     
         public init(cb: @escaping (Result<Result6, Error>) -> ()) {
@@ -9081,7 +9099,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func deploy_cdao_sns(_ arg0: SnsInitPayload, _ arg1: UInt64) async throws -> Result7 {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$deploy_cdao_sns>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$deploy_cdao_sns>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(Result7(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -9094,13 +9112,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$deploy_cdao_sns(cb: callback)
+            let wrapper = CbWrapper$Service$deploy_cdao_sns(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$deploy_cdao_sns(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}(), arg1)
+            __swift_bridge__$Service$deploy_cdao_sns(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}(), arg1)
         })
     }
-    class CbWrapper$Service_Individual_User_Template$deploy_cdao_sns {
+    class CbWrapper$Service$deploy_cdao_sns {
         var cb: (Result<Result7, Error>) -> ()
     
         public init(cb: @escaping (Result<Result7, Error>) -> ()) {
@@ -9110,7 +9128,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func deployed_cdao_canisters() async throws -> RustVec<DeployedCdaoCanisters> {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$deployed_cdao_canisters>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$deployed_cdao_canisters>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(RustVec<DeployedCdaoCanisters>(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -9123,13 +9141,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$deployed_cdao_canisters(cb: callback)
+            let wrapper = CbWrapper$Service$deployed_cdao_canisters(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$deployed_cdao_canisters(wrapperPtr, onComplete, ptr)
+            __swift_bridge__$Service$deployed_cdao_canisters(wrapperPtr, onComplete, ptr)
         })
     }
-    class CbWrapper$Service_Individual_User_Template$deployed_cdao_canisters {
+    class CbWrapper$Service$deployed_cdao_canisters {
         var cb: (Result<RustVec<DeployedCdaoCanisters>, Error>) -> ()
     
         public init(cb: @escaping (Result<RustVec<DeployedCdaoCanisters>, Error>) -> ()) {
@@ -9139,7 +9157,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func do_i_follow_this_user(_ arg0: FolloweeArg) async throws -> Result8 {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$do_i_follow_this_user>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$do_i_follow_this_user>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(Result8(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -9152,13 +9170,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$do_i_follow_this_user(cb: callback)
+            let wrapper = CbWrapper$Service$do_i_follow_this_user(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$do_i_follow_this_user(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}())
+            __swift_bridge__$Service$do_i_follow_this_user(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}())
         })
     }
-    class CbWrapper$Service_Individual_User_Template$do_i_follow_this_user {
+    class CbWrapper$Service$do_i_follow_this_user {
         var cb: (Result<Result8, Error>) -> ()
     
         public init(cb: @escaping (Result<Result8, Error>) -> ()) {
@@ -9168,7 +9186,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func get_bet_details_for_a_user_on_a_post(_ arg0: Principal, _ arg1: UInt64) async throws -> Result9 {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$get_bet_details_for_a_user_on_a_post>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$get_bet_details_for_a_user_on_a_post>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(Result9(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -9181,13 +9199,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$get_bet_details_for_a_user_on_a_post(cb: callback)
+            let wrapper = CbWrapper$Service$get_bet_details_for_a_user_on_a_post(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$get_bet_details_for_a_user_on_a_post(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}(), arg1)
+            __swift_bridge__$Service$get_bet_details_for_a_user_on_a_post(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}(), arg1)
         })
     }
-    class CbWrapper$Service_Individual_User_Template$get_bet_details_for_a_user_on_a_post {
+    class CbWrapper$Service$get_bet_details_for_a_user_on_a_post {
         var cb: (Result<Result9, Error>) -> ()
     
         public init(cb: @escaping (Result<Result9, Error>) -> ()) {
@@ -9197,7 +9215,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func get_device_identities() async throws -> RustVec<DeviceIdentity> {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$get_device_identities>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$get_device_identities>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(RustVec<DeviceIdentity>(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -9210,13 +9228,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$get_device_identities(cb: callback)
+            let wrapper = CbWrapper$Service$get_device_identities(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$get_device_identities(wrapperPtr, onComplete, ptr)
+            __swift_bridge__$Service$get_device_identities(wrapperPtr, onComplete, ptr)
         })
     }
-    class CbWrapper$Service_Individual_User_Template$get_device_identities {
+    class CbWrapper$Service$get_device_identities {
         var cb: (Result<RustVec<DeviceIdentity>, Error>) -> ()
     
         public init(cb: @escaping (Result<RustVec<DeviceIdentity>, Error>) -> ()) {
@@ -9226,7 +9244,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func get_entire_individual_post_detail_by_id(_ arg0: UInt64) async throws -> Result10 {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$get_entire_individual_post_detail_by_id>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$get_entire_individual_post_detail_by_id>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(Result10(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -9239,13 +9257,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$get_entire_individual_post_detail_by_id(cb: callback)
+            let wrapper = CbWrapper$Service$get_entire_individual_post_detail_by_id(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$get_entire_individual_post_detail_by_id(wrapperPtr, onComplete, ptr, arg0)
+            __swift_bridge__$Service$get_entire_individual_post_detail_by_id(wrapperPtr, onComplete, ptr, arg0)
         })
     }
-    class CbWrapper$Service_Individual_User_Template$get_entire_individual_post_detail_by_id {
+    class CbWrapper$Service$get_entire_individual_post_detail_by_id {
         var cb: (Result<Result10, Error>) -> ()
     
         public init(cb: @escaping (Result<Result10, Error>) -> ()) {
@@ -9255,7 +9273,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func get_hot_or_not_bet_details_for_this_post(_ arg0: UInt64) async throws -> BettingStatus {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$get_hot_or_not_bet_details_for_this_post>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$get_hot_or_not_bet_details_for_this_post>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(BettingStatus(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -9268,13 +9286,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$get_hot_or_not_bet_details_for_this_post(cb: callback)
+            let wrapper = CbWrapper$Service$get_hot_or_not_bet_details_for_this_post(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$get_hot_or_not_bet_details_for_this_post(wrapperPtr, onComplete, ptr, arg0)
+            __swift_bridge__$Service$get_hot_or_not_bet_details_for_this_post(wrapperPtr, onComplete, ptr, arg0)
         })
     }
-    class CbWrapper$Service_Individual_User_Template$get_hot_or_not_bet_details_for_this_post {
+    class CbWrapper$Service$get_hot_or_not_bet_details_for_this_post {
         var cb: (Result<BettingStatus, Error>) -> ()
     
         public init(cb: @escaping (Result<BettingStatus, Error>) -> ()) {
@@ -9284,7 +9302,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func get_hot_or_not_bets_placed_by_this_profile_with_pagination(_ arg0: UInt64) async throws -> RustVec<PlacedBetDetail> {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$get_hot_or_not_bets_placed_by_this_profile_with_pagination>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$get_hot_or_not_bets_placed_by_this_profile_with_pagination>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(RustVec<PlacedBetDetail>(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -9297,13 +9315,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$get_hot_or_not_bets_placed_by_this_profile_with_pagination(cb: callback)
+            let wrapper = CbWrapper$Service$get_hot_or_not_bets_placed_by_this_profile_with_pagination(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$get_hot_or_not_bets_placed_by_this_profile_with_pagination(wrapperPtr, onComplete, ptr, arg0)
+            __swift_bridge__$Service$get_hot_or_not_bets_placed_by_this_profile_with_pagination(wrapperPtr, onComplete, ptr, arg0)
         })
     }
-    class CbWrapper$Service_Individual_User_Template$get_hot_or_not_bets_placed_by_this_profile_with_pagination {
+    class CbWrapper$Service$get_hot_or_not_bets_placed_by_this_profile_with_pagination {
         var cb: (Result<RustVec<PlacedBetDetail>, Error>) -> ()
     
         public init(cb: @escaping (Result<RustVec<PlacedBetDetail>, Error>) -> ()) {
@@ -9313,7 +9331,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func get_individual_post_details_by_id(_ arg0: UInt64) async throws -> PostDetailsForFrontend {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$get_individual_post_details_by_id>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$get_individual_post_details_by_id>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(PostDetailsForFrontend(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -9326,13 +9344,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$get_individual_post_details_by_id(cb: callback)
+            let wrapper = CbWrapper$Service$get_individual_post_details_by_id(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$get_individual_post_details_by_id(wrapperPtr, onComplete, ptr, arg0)
+            __swift_bridge__$Service$get_individual_post_details_by_id(wrapperPtr, onComplete, ptr, arg0)
         })
     }
-    class CbWrapper$Service_Individual_User_Template$get_individual_post_details_by_id {
+    class CbWrapper$Service$get_individual_post_details_by_id {
         var cb: (Result<PostDetailsForFrontend, Error>) -> ()
     
         public init(cb: @escaping (Result<PostDetailsForFrontend, Error>) -> ()) {
@@ -9342,7 +9360,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func get_last_access_time() async throws -> Result11 {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$get_last_access_time>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$get_last_access_time>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(Result11(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -9355,13 +9373,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$get_last_access_time(cb: callback)
+            let wrapper = CbWrapper$Service$get_last_access_time(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$get_last_access_time(wrapperPtr, onComplete, ptr)
+            __swift_bridge__$Service$get_last_access_time(wrapperPtr, onComplete, ptr)
         })
     }
-    class CbWrapper$Service_Individual_User_Template$get_last_access_time {
+    class CbWrapper$Service$get_last_access_time {
         var cb: (Result<Result11, Error>) -> ()
     
         public init(cb: @escaping (Result<Result11, Error>) -> ()) {
@@ -9371,7 +9389,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func get_last_canister_functionality_access_time() async throws -> Result11 {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$get_last_canister_functionality_access_time>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$get_last_canister_functionality_access_time>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(Result11(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -9384,13 +9402,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$get_last_canister_functionality_access_time(cb: callback)
+            let wrapper = CbWrapper$Service$get_last_canister_functionality_access_time(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$get_last_canister_functionality_access_time(wrapperPtr, onComplete, ptr)
+            __swift_bridge__$Service$get_last_canister_functionality_access_time(wrapperPtr, onComplete, ptr)
         })
     }
-    class CbWrapper$Service_Individual_User_Template$get_last_canister_functionality_access_time {
+    class CbWrapper$Service$get_last_canister_functionality_access_time {
         var cb: (Result<Result11, Error>) -> ()
     
         public init(cb: @escaping (Result<Result11, Error>) -> ()) {
@@ -9400,7 +9418,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func get_ml_feed_cache_paginated(_ arg0: UInt64, _ arg1: UInt64) async throws -> RustVec<MlFeedCacheItem> {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$get_ml_feed_cache_paginated>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$get_ml_feed_cache_paginated>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(RustVec<MlFeedCacheItem>(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -9413,13 +9431,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$get_ml_feed_cache_paginated(cb: callback)
+            let wrapper = CbWrapper$Service$get_ml_feed_cache_paginated(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$get_ml_feed_cache_paginated(wrapperPtr, onComplete, ptr, arg0, arg1)
+            __swift_bridge__$Service$get_ml_feed_cache_paginated(wrapperPtr, onComplete, ptr, arg0, arg1)
         })
     }
-    class CbWrapper$Service_Individual_User_Template$get_ml_feed_cache_paginated {
+    class CbWrapper$Service$get_ml_feed_cache_paginated {
         var cb: (Result<RustVec<MlFeedCacheItem>, Error>) -> ()
     
         public init(cb: @escaping (Result<RustVec<MlFeedCacheItem>, Error>) -> ()) {
@@ -9429,7 +9447,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func get_posts_of_this_user_profile_with_pagination(_ arg0: UInt64, _ arg1: UInt64) async throws -> Result12 {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$get_posts_of_this_user_profile_with_pagination>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$get_posts_of_this_user_profile_with_pagination>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(Result12(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -9442,13 +9460,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$get_posts_of_this_user_profile_with_pagination(cb: callback)
+            let wrapper = CbWrapper$Service$get_posts_of_this_user_profile_with_pagination(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$get_posts_of_this_user_profile_with_pagination(wrapperPtr, onComplete, ptr, arg0, arg1)
+            __swift_bridge__$Service$get_posts_of_this_user_profile_with_pagination(wrapperPtr, onComplete, ptr, arg0, arg1)
         })
     }
-    class CbWrapper$Service_Individual_User_Template$get_posts_of_this_user_profile_with_pagination {
+    class CbWrapper$Service$get_posts_of_this_user_profile_with_pagination {
         var cb: (Result<Result12, Error>) -> ()
     
         public init(cb: @escaping (Result<Result12, Error>) -> ()) {
@@ -9458,7 +9476,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func get_posts_of_this_user_profile_with_pagination_cursor(_ arg0: UInt64, _ arg1: UInt64) async throws -> Result12 {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$get_posts_of_this_user_profile_with_pagination_cursor>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$get_posts_of_this_user_profile_with_pagination_cursor>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(Result12(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -9471,13 +9489,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$get_posts_of_this_user_profile_with_pagination_cursor(cb: callback)
+            let wrapper = CbWrapper$Service$get_posts_of_this_user_profile_with_pagination_cursor(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$get_posts_of_this_user_profile_with_pagination_cursor(wrapperPtr, onComplete, ptr, arg0, arg1)
+            __swift_bridge__$Service$get_posts_of_this_user_profile_with_pagination_cursor(wrapperPtr, onComplete, ptr, arg0, arg1)
         })
     }
-    class CbWrapper$Service_Individual_User_Template$get_posts_of_this_user_profile_with_pagination_cursor {
+    class CbWrapper$Service$get_posts_of_this_user_profile_with_pagination_cursor {
         var cb: (Result<Result12, Error>) -> ()
     
         public init(cb: @escaping (Result<Result12, Error>) -> ()) {
@@ -9487,7 +9505,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func get_principals_that_follow_this_profile_paginated(_ arg0: Optional<UInt64>) async throws -> RustVec<FollowEntry> {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$get_principals_that_follow_this_profile_paginated>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$get_principals_that_follow_this_profile_paginated>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(RustVec<FollowEntry>(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -9500,13 +9518,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$get_principals_that_follow_this_profile_paginated(cb: callback)
+            let wrapper = CbWrapper$Service$get_principals_that_follow_this_profile_paginated(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$get_principals_that_follow_this_profile_paginated(wrapperPtr, onComplete, ptr, arg0.intoFfiRepr())
+            __swift_bridge__$Service$get_principals_that_follow_this_profile_paginated(wrapperPtr, onComplete, ptr, arg0.intoFfiRepr())
         })
     }
-    class CbWrapper$Service_Individual_User_Template$get_principals_that_follow_this_profile_paginated {
+    class CbWrapper$Service$get_principals_that_follow_this_profile_paginated {
         var cb: (Result<RustVec<FollowEntry>, Error>) -> ()
     
         public init(cb: @escaping (Result<RustVec<FollowEntry>, Error>) -> ()) {
@@ -9516,7 +9534,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func get_principals_this_profile_follows_paginated(_ arg0: Optional<UInt64>) async throws -> RustVec<FollowEntry> {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$get_principals_this_profile_follows_paginated>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$get_principals_this_profile_follows_paginated>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(RustVec<FollowEntry>(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -9529,13 +9547,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$get_principals_this_profile_follows_paginated(cb: callback)
+            let wrapper = CbWrapper$Service$get_principals_this_profile_follows_paginated(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$get_principals_this_profile_follows_paginated(wrapperPtr, onComplete, ptr, arg0.intoFfiRepr())
+            __swift_bridge__$Service$get_principals_this_profile_follows_paginated(wrapperPtr, onComplete, ptr, arg0.intoFfiRepr())
         })
     }
-    class CbWrapper$Service_Individual_User_Template$get_principals_this_profile_follows_paginated {
+    class CbWrapper$Service$get_principals_this_profile_follows_paginated {
         var cb: (Result<RustVec<FollowEntry>, Error>) -> ()
     
         public init(cb: @escaping (Result<RustVec<FollowEntry>, Error>) -> ()) {
@@ -9545,7 +9563,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func get_profile_details() async throws -> UserProfileDetailsForFrontend {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$get_profile_details>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$get_profile_details>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(UserProfileDetailsForFrontend(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -9558,13 +9576,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$get_profile_details(cb: callback)
+            let wrapper = CbWrapper$Service$get_profile_details(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$get_profile_details(wrapperPtr, onComplete, ptr)
+            __swift_bridge__$Service$get_profile_details(wrapperPtr, onComplete, ptr)
         })
     }
-    class CbWrapper$Service_Individual_User_Template$get_profile_details {
+    class CbWrapper$Service$get_profile_details {
         var cb: (Result<UserProfileDetailsForFrontend, Error>) -> ()
     
         public init(cb: @escaping (Result<UserProfileDetailsForFrontend, Error>) -> ()) {
@@ -9574,7 +9592,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func get_profile_details_v_2() async throws -> UserProfileDetailsForFrontendV2 {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$get_profile_details_v_2>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$get_profile_details_v_2>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(UserProfileDetailsForFrontendV2(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -9587,13 +9605,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$get_profile_details_v_2(cb: callback)
+            let wrapper = CbWrapper$Service$get_profile_details_v_2(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$get_profile_details_v_2(wrapperPtr, onComplete, ptr)
+            __swift_bridge__$Service$get_profile_details_v_2(wrapperPtr, onComplete, ptr)
         })
     }
-    class CbWrapper$Service_Individual_User_Template$get_profile_details_v_2 {
+    class CbWrapper$Service$get_profile_details_v_2 {
         var cb: (Result<UserProfileDetailsForFrontendV2, Error>) -> ()
     
         public init(cb: @escaping (Result<UserProfileDetailsForFrontendV2, Error>) -> ()) {
@@ -9603,7 +9621,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func get_rewarded_for_referral(_ arg0: Principal, _ arg1: Principal) async throws -> () {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: UnsafeMutableRawPointer?) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$get_rewarded_for_referral>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$get_rewarded_for_referral>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal == nil {
                 wrapper.cb(.success(()))
             } else {
@@ -9616,13 +9634,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$get_rewarded_for_referral(cb: callback)
+            let wrapper = CbWrapper$Service$get_rewarded_for_referral(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$get_rewarded_for_referral(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}(), {arg1.isOwned = false; return arg1.ptr;}())
+            __swift_bridge__$Service$get_rewarded_for_referral(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}(), {arg1.isOwned = false; return arg1.ptr;}())
         })
     }
-    class CbWrapper$Service_Individual_User_Template$get_rewarded_for_referral {
+    class CbWrapper$Service$get_rewarded_for_referral {
         var cb: (Result<(), Error>) -> ()
     
         public init(cb: @escaping (Result<(), Error>) -> ()) {
@@ -9632,7 +9650,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func get_rewarded_for_signing_up() async throws -> () {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: UnsafeMutableRawPointer?) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$get_rewarded_for_signing_up>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$get_rewarded_for_signing_up>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal == nil {
                 wrapper.cb(.success(()))
             } else {
@@ -9645,13 +9663,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$get_rewarded_for_signing_up(cb: callback)
+            let wrapper = CbWrapper$Service$get_rewarded_for_signing_up(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$get_rewarded_for_signing_up(wrapperPtr, onComplete, ptr)
+            __swift_bridge__$Service$get_rewarded_for_signing_up(wrapperPtr, onComplete, ptr)
         })
     }
-    class CbWrapper$Service_Individual_User_Template$get_rewarded_for_signing_up {
+    class CbWrapper$Service$get_rewarded_for_signing_up {
         var cb: (Result<(), Error>) -> ()
     
         public init(cb: @escaping (Result<(), Error>) -> ()) {
@@ -9661,7 +9679,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func get_session_type() async throws -> Result13 {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$get_session_type>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$get_session_type>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(Result13(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -9674,13 +9692,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$get_session_type(cb: callback)
+            let wrapper = CbWrapper$Service$get_session_type(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$get_session_type(wrapperPtr, onComplete, ptr)
+            __swift_bridge__$Service$get_session_type(wrapperPtr, onComplete, ptr)
         })
     }
-    class CbWrapper$Service_Individual_User_Template$get_session_type {
+    class CbWrapper$Service$get_session_type {
         var cb: (Result<Result13, Error>) -> ()
     
         public init(cb: @escaping (Result<Result13, Error>) -> ()) {
@@ -9690,7 +9708,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func get_success_history() async throws -> Result14 {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$get_success_history>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$get_success_history>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(Result14(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -9703,13 +9721,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$get_success_history(cb: callback)
+            let wrapper = CbWrapper$Service$get_success_history(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$get_success_history(wrapperPtr, onComplete, ptr)
+            __swift_bridge__$Service$get_success_history(wrapperPtr, onComplete, ptr)
         })
     }
-    class CbWrapper$Service_Individual_User_Template$get_success_history {
+    class CbWrapper$Service$get_success_history {
         var cb: (Result<Result14, Error>) -> ()
     
         public init(cb: @escaping (Result<Result14, Error>) -> ()) {
@@ -9719,7 +9737,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func get_token_roots_of_this_user_with_pagination_cursor(_ arg0: UInt64, _ arg1: UInt64) async throws -> Result15 {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$get_token_roots_of_this_user_with_pagination_cursor>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$get_token_roots_of_this_user_with_pagination_cursor>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(Result15(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -9732,13 +9750,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$get_token_roots_of_this_user_with_pagination_cursor(cb: callback)
+            let wrapper = CbWrapper$Service$get_token_roots_of_this_user_with_pagination_cursor(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$get_token_roots_of_this_user_with_pagination_cursor(wrapperPtr, onComplete, ptr, arg0, arg1)
+            __swift_bridge__$Service$get_token_roots_of_this_user_with_pagination_cursor(wrapperPtr, onComplete, ptr, arg0, arg1)
         })
     }
-    class CbWrapper$Service_Individual_User_Template$get_token_roots_of_this_user_with_pagination_cursor {
+    class CbWrapper$Service$get_token_roots_of_this_user_with_pagination_cursor {
         var cb: (Result<Result15, Error>) -> ()
     
         public init(cb: @escaping (Result<Result15, Error>) -> ()) {
@@ -9748,7 +9766,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func get_user_caniser_cycle_balance() async throws -> Nat {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$get_user_caniser_cycle_balance>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$get_user_caniser_cycle_balance>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(Nat(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -9761,13 +9779,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$get_user_caniser_cycle_balance(cb: callback)
+            let wrapper = CbWrapper$Service$get_user_caniser_cycle_balance(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$get_user_caniser_cycle_balance(wrapperPtr, onComplete, ptr)
+            __swift_bridge__$Service$get_user_caniser_cycle_balance(wrapperPtr, onComplete, ptr)
         })
     }
-    class CbWrapper$Service_Individual_User_Template$get_user_caniser_cycle_balance {
+    class CbWrapper$Service$get_user_caniser_cycle_balance {
         var cb: (Result<Nat, Error>) -> ()
     
         public init(cb: @escaping (Result<Nat, Error>) -> ()) {
@@ -9777,7 +9795,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func get_user_utility_token_transaction_history_with_pagination(_ arg0: UInt64, _ arg1: UInt64) async throws -> Result16 {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$get_user_utility_token_transaction_history_with_pagination>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$get_user_utility_token_transaction_history_with_pagination>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(Result16(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -9790,13 +9808,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$get_user_utility_token_transaction_history_with_pagination(cb: callback)
+            let wrapper = CbWrapper$Service$get_user_utility_token_transaction_history_with_pagination(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$get_user_utility_token_transaction_history_with_pagination(wrapperPtr, onComplete, ptr, arg0, arg1)
+            __swift_bridge__$Service$get_user_utility_token_transaction_history_with_pagination(wrapperPtr, onComplete, ptr, arg0, arg1)
         })
     }
-    class CbWrapper$Service_Individual_User_Template$get_user_utility_token_transaction_history_with_pagination {
+    class CbWrapper$Service$get_user_utility_token_transaction_history_with_pagination {
         var cb: (Result<Result16, Error>) -> ()
     
         public init(cb: @escaping (Result<Result16, Error>) -> ()) {
@@ -9806,7 +9824,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func get_version() async throws -> RustString {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$get_version>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$get_version>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(RustString(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -9819,13 +9837,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$get_version(cb: callback)
+            let wrapper = CbWrapper$Service$get_version(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$get_version(wrapperPtr, onComplete, ptr)
+            __swift_bridge__$Service$get_version(wrapperPtr, onComplete, ptr)
         })
     }
-    class CbWrapper$Service_Individual_User_Template$get_version {
+    class CbWrapper$Service$get_version {
         var cb: (Result<RustString, Error>) -> ()
     
         public init(cb: @escaping (Result<RustString, Error>) -> ()) {
@@ -9835,7 +9853,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func get_watch_history() async throws -> Result17 {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$get_watch_history>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$get_watch_history>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(Result17(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -9848,13 +9866,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$get_watch_history(cb: callback)
+            let wrapper = CbWrapper$Service$get_watch_history(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$get_watch_history(wrapperPtr, onComplete, ptr)
+            __swift_bridge__$Service$get_watch_history(wrapperPtr, onComplete, ptr)
         })
     }
-    class CbWrapper$Service_Individual_User_Template$get_watch_history {
+    class CbWrapper$Service$get_watch_history {
         var cb: (Result<Result17, Error>) -> ()
     
         public init(cb: @escaping (Result<Result17, Error>) -> ()) {
@@ -9864,7 +9882,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func http_request(_ arg0: HttpRequest) async throws -> HttpResponse {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$http_request>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$http_request>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(HttpResponse(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -9877,13 +9895,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$http_request(cb: callback)
+            let wrapper = CbWrapper$Service$http_request(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$http_request(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}())
+            __swift_bridge__$Service$http_request(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}())
         })
     }
-    class CbWrapper$Service_Individual_User_Template$http_request {
+    class CbWrapper$Service$http_request {
         var cb: (Result<HttpResponse, Error>) -> ()
     
         public init(cb: @escaping (Result<HttpResponse, Error>) -> ()) {
@@ -9893,7 +9911,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func list_namespace_keys(_ arg0: UInt64) async throws -> Result18 {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$list_namespace_keys>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$list_namespace_keys>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(Result18(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -9906,13 +9924,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$list_namespace_keys(cb: callback)
+            let wrapper = CbWrapper$Service$list_namespace_keys(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$list_namespace_keys(wrapperPtr, onComplete, ptr, arg0)
+            __swift_bridge__$Service$list_namespace_keys(wrapperPtr, onComplete, ptr, arg0)
         })
     }
-    class CbWrapper$Service_Individual_User_Template$list_namespace_keys {
+    class CbWrapper$Service$list_namespace_keys {
         var cb: (Result<Result18, Error>) -> ()
     
         public init(cb: @escaping (Result<Result18, Error>) -> ()) {
@@ -9922,7 +9940,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func list_namespaces(_ arg0: UInt64, _ arg1: UInt64) async throws -> RustVec<NamespaceForFrontend> {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$list_namespaces>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$list_namespaces>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(RustVec<NamespaceForFrontend>(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -9935,13 +9953,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$list_namespaces(cb: callback)
+            let wrapper = CbWrapper$Service$list_namespaces(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$list_namespaces(wrapperPtr, onComplete, ptr, arg0, arg1)
+            __swift_bridge__$Service$list_namespaces(wrapperPtr, onComplete, ptr, arg0, arg1)
         })
     }
-    class CbWrapper$Service_Individual_User_Template$list_namespaces {
+    class CbWrapper$Service$list_namespaces {
         var cb: (Result<RustVec<NamespaceForFrontend>, Error>) -> ()
     
         public init(cb: @escaping (Result<RustVec<NamespaceForFrontend>, Error>) -> ()) {
@@ -9951,7 +9969,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func load_snapshot(_ arg0: UInt64) async throws -> () {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: UnsafeMutableRawPointer?) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$load_snapshot>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$load_snapshot>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal == nil {
                 wrapper.cb(.success(()))
             } else {
@@ -9964,13 +9982,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$load_snapshot(cb: callback)
+            let wrapper = CbWrapper$Service$load_snapshot(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$load_snapshot(wrapperPtr, onComplete, ptr, arg0)
+            __swift_bridge__$Service$load_snapshot(wrapperPtr, onComplete, ptr, arg0)
         })
     }
-    class CbWrapper$Service_Individual_User_Template$load_snapshot {
+    class CbWrapper$Service$load_snapshot {
         var cb: (Result<(), Error>) -> ()
     
         public init(cb: @escaping (Result<(), Error>) -> ()) {
@@ -9980,7 +9998,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func once_reenqueue_timers_for_pending_bet_outcomes() async throws -> Result19 {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$once_reenqueue_timers_for_pending_bet_outcomes>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$once_reenqueue_timers_for_pending_bet_outcomes>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(Result19(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -9993,13 +10011,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$once_reenqueue_timers_for_pending_bet_outcomes(cb: callback)
+            let wrapper = CbWrapper$Service$once_reenqueue_timers_for_pending_bet_outcomes(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$once_reenqueue_timers_for_pending_bet_outcomes(wrapperPtr, onComplete, ptr)
+            __swift_bridge__$Service$once_reenqueue_timers_for_pending_bet_outcomes(wrapperPtr, onComplete, ptr)
         })
     }
-    class CbWrapper$Service_Individual_User_Template$once_reenqueue_timers_for_pending_bet_outcomes {
+    class CbWrapper$Service$once_reenqueue_timers_for_pending_bet_outcomes {
         var cb: (Result<Result19, Error>) -> ()
     
         public init(cb: @escaping (Result<Result19, Error>) -> ()) {
@@ -10009,7 +10027,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func read_key_value_pair<GenericIntoRustString: IntoRustString>(_ arg0: UInt64, _ arg1: GenericIntoRustString) async throws -> Result5 {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$read_key_value_pair>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$read_key_value_pair>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(Result5(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -10022,13 +10040,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$read_key_value_pair(cb: callback)
+            let wrapper = CbWrapper$Service$read_key_value_pair(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$read_key_value_pair(wrapperPtr, onComplete, ptr, arg0, { let rustString = arg1.intoRustString(); rustString.isOwned = false; return rustString.ptr }())
+            __swift_bridge__$Service$read_key_value_pair(wrapperPtr, onComplete, ptr, arg0, { let rustString = arg1.intoRustString(); rustString.isOwned = false; return rustString.ptr }())
         })
     }
-    class CbWrapper$Service_Individual_User_Template$read_key_value_pair {
+    class CbWrapper$Service$read_key_value_pair {
         var cb: (Result<Result5, Error>) -> ()
     
         public init(cb: @escaping (Result<Result5, Error>) -> ()) {
@@ -10038,7 +10056,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func receive_and_save_snaphot(_ arg0: UInt64, _ arg1: ByteBuf) async throws -> () {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: UnsafeMutableRawPointer?) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$receive_and_save_snaphot>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$receive_and_save_snaphot>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal == nil {
                 wrapper.cb(.success(()))
             } else {
@@ -10051,13 +10069,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$receive_and_save_snaphot(cb: callback)
+            let wrapper = CbWrapper$Service$receive_and_save_snaphot(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$receive_and_save_snaphot(wrapperPtr, onComplete, ptr, arg0, {arg1.isOwned = false; return arg1.ptr;}())
+            __swift_bridge__$Service$receive_and_save_snaphot(wrapperPtr, onComplete, ptr, arg0, {arg1.isOwned = false; return arg1.ptr;}())
         })
     }
-    class CbWrapper$Service_Individual_User_Template$receive_and_save_snaphot {
+    class CbWrapper$Service$receive_and_save_snaphot {
         var cb: (Result<(), Error>) -> ()
     
         public init(cb: @escaping (Result<(), Error>) -> ()) {
@@ -10067,7 +10085,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func receive_bet_from_bet_makers_canister(_ arg0: PlaceBetArg, _ arg1: Principal) async throws -> Result3 {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$receive_bet_from_bet_makers_canister>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$receive_bet_from_bet_makers_canister>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(Result3(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -10080,13 +10098,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$receive_bet_from_bet_makers_canister(cb: callback)
+            let wrapper = CbWrapper$Service$receive_bet_from_bet_makers_canister(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$receive_bet_from_bet_makers_canister(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}(), {arg1.isOwned = false; return arg1.ptr;}())
+            __swift_bridge__$Service$receive_bet_from_bet_makers_canister(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}(), {arg1.isOwned = false; return arg1.ptr;}())
         })
     }
-    class CbWrapper$Service_Individual_User_Template$receive_bet_from_bet_makers_canister {
+    class CbWrapper$Service$receive_bet_from_bet_makers_canister {
         var cb: (Result<Result3, Error>) -> ()
     
         public init(cb: @escaping (Result<Result3, Error>) -> ()) {
@@ -10096,7 +10114,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func receive_bet_winnings_when_distributed(_ arg0: UInt64, _ arg1: BetOutcomeForBetMaker) async throws -> () {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: UnsafeMutableRawPointer?) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$receive_bet_winnings_when_distributed>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$receive_bet_winnings_when_distributed>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal == nil {
                 wrapper.cb(.success(()))
             } else {
@@ -10109,13 +10127,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$receive_bet_winnings_when_distributed(cb: callback)
+            let wrapper = CbWrapper$Service$receive_bet_winnings_when_distributed(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$receive_bet_winnings_when_distributed(wrapperPtr, onComplete, ptr, arg0, {arg1.isOwned = false; return arg1.ptr;}())
+            __swift_bridge__$Service$receive_bet_winnings_when_distributed(wrapperPtr, onComplete, ptr, arg0, {arg1.isOwned = false; return arg1.ptr;}())
         })
     }
-    class CbWrapper$Service_Individual_User_Template$receive_bet_winnings_when_distributed {
+    class CbWrapper$Service$receive_bet_winnings_when_distributed {
         var cb: (Result<(), Error>) -> ()
     
         public init(cb: @escaping (Result<(), Error>) -> ()) {
@@ -10125,7 +10143,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func receive_data_from_hotornot(_ arg0: Principal, _ arg1: UInt64, _ arg2: RustVec<Post>) async throws -> Result20 {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$receive_data_from_hotornot>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$receive_data_from_hotornot>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(Result20(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -10138,13 +10156,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$receive_data_from_hotornot(cb: callback)
+            let wrapper = CbWrapper$Service$receive_data_from_hotornot(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$receive_data_from_hotornot(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}(), arg1, { let val = arg2; val.isOwned = false; return val.ptr }())
+            __swift_bridge__$Service$receive_data_from_hotornot(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}(), arg1, { let val = arg2; val.isOwned = false; return val.ptr }())
         })
     }
-    class CbWrapper$Service_Individual_User_Template$receive_data_from_hotornot {
+    class CbWrapper$Service$receive_data_from_hotornot {
         var cb: (Result<Result20, Error>) -> ()
     
         public init(cb: @escaping (Result<Result20, Error>) -> ()) {
@@ -10154,7 +10172,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func return_cycles_to_user_index_canister(_ arg0: Optional<Nat>) async throws -> () {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: UnsafeMutableRawPointer?) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$return_cycles_to_user_index_canister>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$return_cycles_to_user_index_canister>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal == nil {
                 wrapper.cb(.success(()))
             } else {
@@ -10167,13 +10185,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$return_cycles_to_user_index_canister(cb: callback)
+            let wrapper = CbWrapper$Service$return_cycles_to_user_index_canister(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$return_cycles_to_user_index_canister(wrapperPtr, onComplete, ptr, { if let val = arg0 { val.isOwned = false; return val.ptr } else { return nil } }())
+            __swift_bridge__$Service$return_cycles_to_user_index_canister(wrapperPtr, onComplete, ptr, { if let val = arg0 { val.isOwned = false; return val.ptr } else { return nil } }())
         })
     }
-    class CbWrapper$Service_Individual_User_Template$return_cycles_to_user_index_canister {
+    class CbWrapper$Service$return_cycles_to_user_index_canister {
         var cb: (Result<(), Error>) -> ()
     
         public init(cb: @escaping (Result<(), Error>) -> ()) {
@@ -10183,7 +10201,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func save_snapshot_json() async throws -> UInt32 {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __swift_bridge__$ResultU32AndAgentError) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$save_snapshot_json>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$save_snapshot_json>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             switch rustFnRetVal.tag { case __swift_bridge__$ResultU32AndAgentError$ResultOk: wrapper.cb(.success(rustFnRetVal.payload.ok)) case __swift_bridge__$ResultU32AndAgentError$ResultErr: wrapper.cb(.failure(AgentError(ptr: rustFnRetVal.payload.err))) default: fatalError() }
         }
 
@@ -10192,13 +10210,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$save_snapshot_json(cb: callback)
+            let wrapper = CbWrapper$Service$save_snapshot_json(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$save_snapshot_json(wrapperPtr, onComplete, ptr)
+            __swift_bridge__$Service$save_snapshot_json(wrapperPtr, onComplete, ptr)
         })
     }
-    class CbWrapper$Service_Individual_User_Template$save_snapshot_json {
+    class CbWrapper$Service$save_snapshot_json {
         var cb: (Result<UInt32, Error>) -> ()
     
         public init(cb: @escaping (Result<UInt32, Error>) -> ()) {
@@ -10208,7 +10226,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func settle_neurons_fund_participation(_ arg0: SettleNeuronsFundParticipationRequest) async throws -> SettleNeuronsFundParticipationResponse {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$settle_neurons_fund_participation>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$settle_neurons_fund_participation>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(SettleNeuronsFundParticipationResponse(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -10221,13 +10239,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$settle_neurons_fund_participation(cb: callback)
+            let wrapper = CbWrapper$Service$settle_neurons_fund_participation(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$settle_neurons_fund_participation(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}())
+            __swift_bridge__$Service$settle_neurons_fund_participation(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}())
         })
     }
-    class CbWrapper$Service_Individual_User_Template$settle_neurons_fund_participation {
+    class CbWrapper$Service$settle_neurons_fund_participation {
         var cb: (Result<SettleNeuronsFundParticipationResponse, Error>) -> ()
     
         public init(cb: @escaping (Result<SettleNeuronsFundParticipationResponse, Error>) -> ()) {
@@ -10237,7 +10255,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func transfer_token_to_user_canister(_ arg0: Principal, _ arg1: Principal, _ arg2: Optional<ByteBuf>, _ arg3: Nat) async throws -> Result23 {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$transfer_token_to_user_canister>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$transfer_token_to_user_canister>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(Result23(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -10250,13 +10268,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$transfer_token_to_user_canister(cb: callback)
+            let wrapper = CbWrapper$Service$transfer_token_to_user_canister(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$transfer_token_to_user_canister(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}(), {arg1.isOwned = false; return arg1.ptr;}(), { if let val = arg2 { val.isOwned = false; return val.ptr } else { return nil } }(), {arg3.isOwned = false; return arg3.ptr;}())
+            __swift_bridge__$Service$transfer_token_to_user_canister(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}(), {arg1.isOwned = false; return arg1.ptr;}(), { if let val = arg2 { val.isOwned = false; return val.ptr } else { return nil } }(), {arg3.isOwned = false; return arg3.ptr;}())
         })
     }
-    class CbWrapper$Service_Individual_User_Template$transfer_token_to_user_canister {
+    class CbWrapper$Service$transfer_token_to_user_canister {
         var cb: (Result<Result23, Error>) -> ()
     
         public init(cb: @escaping (Result<Result23, Error>) -> ()) {
@@ -10266,7 +10284,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func transfer_tokens_and_posts(_ arg0: Principal, _ arg1: Principal) async throws -> Result20 {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$transfer_tokens_and_posts>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$transfer_tokens_and_posts>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(Result20(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -10279,13 +10297,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$transfer_tokens_and_posts(cb: callback)
+            let wrapper = CbWrapper$Service$transfer_tokens_and_posts(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$transfer_tokens_and_posts(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}(), {arg1.isOwned = false; return arg1.ptr;}())
+            __swift_bridge__$Service$transfer_tokens_and_posts(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}(), {arg1.isOwned = false; return arg1.ptr;}())
         })
     }
-    class CbWrapper$Service_Individual_User_Template$transfer_tokens_and_posts {
+    class CbWrapper$Service$transfer_tokens_and_posts {
         var cb: (Result<Result20, Error>) -> ()
     
         public init(cb: @escaping (Result<Result20, Error>) -> ()) {
@@ -10295,7 +10313,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func update_last_access_time() async throws -> Result24 {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$update_last_access_time>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$update_last_access_time>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(Result24(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -10308,13 +10326,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$update_last_access_time(cb: callback)
+            let wrapper = CbWrapper$Service$update_last_access_time(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$update_last_access_time(wrapperPtr, onComplete, ptr)
+            __swift_bridge__$Service$update_last_access_time(wrapperPtr, onComplete, ptr)
         })
     }
-    class CbWrapper$Service_Individual_User_Template$update_last_access_time {
+    class CbWrapper$Service$update_last_access_time {
         var cb: (Result<Result24, Error>) -> ()
     
         public init(cb: @escaping (Result<Result24, Error>) -> ()) {
@@ -10324,7 +10342,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func update_last_canister_functionality_access_time() async throws -> () {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: UnsafeMutableRawPointer?) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$update_last_canister_functionality_access_time>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$update_last_canister_functionality_access_time>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal == nil {
                 wrapper.cb(.success(()))
             } else {
@@ -10337,13 +10355,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$update_last_canister_functionality_access_time(cb: callback)
+            let wrapper = CbWrapper$Service$update_last_canister_functionality_access_time(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$update_last_canister_functionality_access_time(wrapperPtr, onComplete, ptr)
+            __swift_bridge__$Service$update_last_canister_functionality_access_time(wrapperPtr, onComplete, ptr)
         })
     }
-    class CbWrapper$Service_Individual_User_Template$update_last_canister_functionality_access_time {
+    class CbWrapper$Service$update_last_canister_functionality_access_time {
         var cb: (Result<(), Error>) -> ()
     
         public init(cb: @escaping (Result<(), Error>) -> ()) {
@@ -10353,7 +10371,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func update_ml_feed_cache(_ arg0: RustVec<MlFeedCacheItem>) async throws -> Result24 {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$update_ml_feed_cache>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$update_ml_feed_cache>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(Result24(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -10366,13 +10384,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$update_ml_feed_cache(cb: callback)
+            let wrapper = CbWrapper$Service$update_ml_feed_cache(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$update_ml_feed_cache(wrapperPtr, onComplete, ptr, { let val = arg0; val.isOwned = false; return val.ptr }())
+            __swift_bridge__$Service$update_ml_feed_cache(wrapperPtr, onComplete, ptr, { let val = arg0; val.isOwned = false; return val.ptr }())
         })
     }
-    class CbWrapper$Service_Individual_User_Template$update_ml_feed_cache {
+    class CbWrapper$Service$update_ml_feed_cache {
         var cb: (Result<Result24, Error>) -> ()
     
         public init(cb: @escaping (Result<Result24, Error>) -> ()) {
@@ -10382,7 +10400,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func update_post_add_view_details(_ arg0: UInt64, _ arg1: PostViewDetailsFromFrontend) async throws -> () {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: UnsafeMutableRawPointer?) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$update_post_add_view_details>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$update_post_add_view_details>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal == nil {
                 wrapper.cb(.success(()))
             } else {
@@ -10395,13 +10413,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$update_post_add_view_details(cb: callback)
+            let wrapper = CbWrapper$Service$update_post_add_view_details(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$update_post_add_view_details(wrapperPtr, onComplete, ptr, arg0, {arg1.isOwned = false; return arg1.ptr;}())
+            __swift_bridge__$Service$update_post_add_view_details(wrapperPtr, onComplete, ptr, arg0, {arg1.isOwned = false; return arg1.ptr;}())
         })
     }
-    class CbWrapper$Service_Individual_User_Template$update_post_add_view_details {
+    class CbWrapper$Service$update_post_add_view_details {
         var cb: (Result<(), Error>) -> ()
     
         public init(cb: @escaping (Result<(), Error>) -> ()) {
@@ -10411,7 +10429,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func update_post_as_ready_to_view(_ arg0: UInt64) async throws -> () {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: UnsafeMutableRawPointer?) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$update_post_as_ready_to_view>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$update_post_as_ready_to_view>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal == nil {
                 wrapper.cb(.success(()))
             } else {
@@ -10424,13 +10442,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$update_post_as_ready_to_view(cb: callback)
+            let wrapper = CbWrapper$Service$update_post_as_ready_to_view(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$update_post_as_ready_to_view(wrapperPtr, onComplete, ptr, arg0)
+            __swift_bridge__$Service$update_post_as_ready_to_view(wrapperPtr, onComplete, ptr, arg0)
         })
     }
-    class CbWrapper$Service_Individual_User_Template$update_post_as_ready_to_view {
+    class CbWrapper$Service$update_post_as_ready_to_view {
         var cb: (Result<(), Error>) -> ()
     
         public init(cb: @escaping (Result<(), Error>) -> ()) {
@@ -10440,7 +10458,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func update_post_status(_ arg0: UInt64, _ arg1: PostStatus) async throws -> () {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: UnsafeMutableRawPointer?) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$update_post_status>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$update_post_status>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal == nil {
                 wrapper.cb(.success(()))
             } else {
@@ -10453,13 +10471,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$update_post_status(cb: callback)
+            let wrapper = CbWrapper$Service$update_post_status(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$update_post_status(wrapperPtr, onComplete, ptr, arg0, {arg1.isOwned = false; return arg1.ptr;}())
+            __swift_bridge__$Service$update_post_status(wrapperPtr, onComplete, ptr, arg0, {arg1.isOwned = false; return arg1.ptr;}())
         })
     }
-    class CbWrapper$Service_Individual_User_Template$update_post_status {
+    class CbWrapper$Service$update_post_status {
         var cb: (Result<(), Error>) -> ()
     
         public init(cb: @escaping (Result<(), Error>) -> ()) {
@@ -10469,7 +10487,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func update_profile_display_details(_ arg0: UserProfileUpdateDetailsFromFrontend) async throws -> Result25 {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$update_profile_display_details>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$update_profile_display_details>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(Result25(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -10482,13 +10500,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$update_profile_display_details(cb: callback)
+            let wrapper = CbWrapper$Service$update_profile_display_details(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$update_profile_display_details(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}())
+            __swift_bridge__$Service$update_profile_display_details(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}())
         })
     }
-    class CbWrapper$Service_Individual_User_Template$update_profile_display_details {
+    class CbWrapper$Service$update_profile_display_details {
         var cb: (Result<Result25, Error>) -> ()
     
         public init(cb: @escaping (Result<Result25, Error>) -> ()) {
@@ -10498,7 +10516,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func update_profile_owner(_ arg0: Optional<Principal>) async throws -> Result26 {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$update_profile_owner>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$update_profile_owner>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(Result26(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -10511,13 +10529,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$update_profile_owner(cb: callback)
+            let wrapper = CbWrapper$Service$update_profile_owner(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$update_profile_owner(wrapperPtr, onComplete, ptr, { if let val = arg0 { val.isOwned = false; return val.ptr } else { return nil } }())
+            __swift_bridge__$Service$update_profile_owner(wrapperPtr, onComplete, ptr, { if let val = arg0 { val.isOwned = false; return val.ptr } else { return nil } }())
         })
     }
-    class CbWrapper$Service_Individual_User_Template$update_profile_owner {
+    class CbWrapper$Service$update_profile_owner {
         var cb: (Result<Result26, Error>) -> ()
     
         public init(cb: @escaping (Result<Result26, Error>) -> ()) {
@@ -10527,7 +10545,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func update_profile_set_unique_username_once<GenericIntoRustString: IntoRustString>(_ arg0: GenericIntoRustString) async throws -> Result27 {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$update_profile_set_unique_username_once>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$update_profile_set_unique_username_once>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(Result27(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -10540,13 +10558,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$update_profile_set_unique_username_once(cb: callback)
+            let wrapper = CbWrapper$Service$update_profile_set_unique_username_once(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$update_profile_set_unique_username_once(wrapperPtr, onComplete, ptr, { let rustString = arg0.intoRustString(); rustString.isOwned = false; return rustString.ptr }())
+            __swift_bridge__$Service$update_profile_set_unique_username_once(wrapperPtr, onComplete, ptr, { let rustString = arg0.intoRustString(); rustString.isOwned = false; return rustString.ptr }())
         })
     }
-    class CbWrapper$Service_Individual_User_Template$update_profile_set_unique_username_once {
+    class CbWrapper$Service$update_profile_set_unique_username_once {
         var cb: (Result<Result27, Error>) -> ()
     
         public init(cb: @escaping (Result<Result27, Error>) -> ()) {
@@ -10556,7 +10574,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func update_profiles_i_follow_toggle_list_with_specified_profile(_ arg0: FolloweeArg) async throws -> Result8 {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$update_profiles_i_follow_toggle_list_with_specified_profile>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$update_profiles_i_follow_toggle_list_with_specified_profile>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(Result8(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -10569,13 +10587,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$update_profiles_i_follow_toggle_list_with_specified_profile(cb: callback)
+            let wrapper = CbWrapper$Service$update_profiles_i_follow_toggle_list_with_specified_profile(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$update_profiles_i_follow_toggle_list_with_specified_profile(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}())
+            __swift_bridge__$Service$update_profiles_i_follow_toggle_list_with_specified_profile(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}())
         })
     }
-    class CbWrapper$Service_Individual_User_Template$update_profiles_i_follow_toggle_list_with_specified_profile {
+    class CbWrapper$Service$update_profiles_i_follow_toggle_list_with_specified_profile {
         var cb: (Result<Result8, Error>) -> ()
     
         public init(cb: @escaping (Result<Result8, Error>) -> ()) {
@@ -10585,7 +10603,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func update_profiles_that_follow_me_toggle_list_with_specified_profile(_ arg0: FollowerArg) async throws -> Result8 {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$update_profiles_that_follow_me_toggle_list_with_specified_profile>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$update_profiles_that_follow_me_toggle_list_with_specified_profile>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(Result8(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -10598,13 +10616,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$update_profiles_that_follow_me_toggle_list_with_specified_profile(cb: callback)
+            let wrapper = CbWrapper$Service$update_profiles_that_follow_me_toggle_list_with_specified_profile(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$update_profiles_that_follow_me_toggle_list_with_specified_profile(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}())
+            __swift_bridge__$Service$update_profiles_that_follow_me_toggle_list_with_specified_profile(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}())
         })
     }
-    class CbWrapper$Service_Individual_User_Template$update_profiles_that_follow_me_toggle_list_with_specified_profile {
+    class CbWrapper$Service$update_profiles_that_follow_me_toggle_list_with_specified_profile {
         var cb: (Result<Result8, Error>) -> ()
     
         public init(cb: @escaping (Result<Result8, Error>) -> ()) {
@@ -10614,7 +10632,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func update_referrer_details(_ arg0: UserCanisterDetails) async throws -> Result24 {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$update_referrer_details>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$update_referrer_details>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(Result24(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -10627,13 +10645,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$update_referrer_details(cb: callback)
+            let wrapper = CbWrapper$Service$update_referrer_details(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$update_referrer_details(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}())
+            __swift_bridge__$Service$update_referrer_details(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}())
         })
     }
-    class CbWrapper$Service_Individual_User_Template$update_referrer_details {
+    class CbWrapper$Service$update_referrer_details {
         var cb: (Result<Result24, Error>) -> ()
     
         public init(cb: @escaping (Result<Result24, Error>) -> ()) {
@@ -10643,7 +10661,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func update_session_type(_ arg0: SessionType) async throws -> Result24 {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$update_session_type>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$update_session_type>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(Result24(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -10656,13 +10674,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$update_session_type(cb: callback)
+            let wrapper = CbWrapper$Service$update_session_type(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$update_session_type(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}())
+            __swift_bridge__$Service$update_session_type(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}())
         })
     }
-    class CbWrapper$Service_Individual_User_Template$update_session_type {
+    class CbWrapper$Service$update_session_type {
         var cb: (Result<Result24, Error>) -> ()
     
         public init(cb: @escaping (Result<Result24, Error>) -> ()) {
@@ -10672,7 +10690,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func update_success_history(_ arg0: SuccessHistoryItemV1) async throws -> Result24 {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$update_success_history>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$update_success_history>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(Result24(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -10685,13 +10703,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$update_success_history(cb: callback)
+            let wrapper = CbWrapper$Service$update_success_history(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$update_success_history(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}())
+            __swift_bridge__$Service$update_success_history(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}())
         })
     }
-    class CbWrapper$Service_Individual_User_Template$update_success_history {
+    class CbWrapper$Service$update_success_history {
         var cb: (Result<Result24, Error>) -> ()
     
         public init(cb: @escaping (Result<Result24, Error>) -> ()) {
@@ -10701,7 +10719,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func update_watch_history(_ arg0: WatchHistoryItem) async throws -> Result24 {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$update_watch_history>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$update_watch_history>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(Result24(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -10714,13 +10732,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$update_watch_history(cb: callback)
+            let wrapper = CbWrapper$Service$update_watch_history(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$update_watch_history(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}())
+            __swift_bridge__$Service$update_watch_history(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}())
         })
     }
-    class CbWrapper$Service_Individual_User_Template$update_watch_history {
+    class CbWrapper$Service$update_watch_history {
         var cb: (Result<Result24, Error>) -> ()
     
         public init(cb: @escaping (Result<Result24, Error>) -> ()) {
@@ -10730,7 +10748,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func update_well_known_principal(_ arg0: KnownPrincipalType, _ arg1: Principal) async throws -> () {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: UnsafeMutableRawPointer?) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$update_well_known_principal>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$update_well_known_principal>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal == nil {
                 wrapper.cb(.success(()))
             } else {
@@ -10743,13 +10761,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$update_well_known_principal(cb: callback)
+            let wrapper = CbWrapper$Service$update_well_known_principal(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$update_well_known_principal(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}(), {arg1.isOwned = false; return arg1.ptr;}())
+            __swift_bridge__$Service$update_well_known_principal(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}(), {arg1.isOwned = false; return arg1.ptr;}())
         })
     }
-    class CbWrapper$Service_Individual_User_Template$update_well_known_principal {
+    class CbWrapper$Service$update_well_known_principal {
         var cb: (Result<(), Error>) -> ()
     
         public init(cb: @escaping (Result<(), Error>) -> ()) {
@@ -10759,7 +10777,7 @@ extension Service_Individual_User_TemplateRef {
 
     public func write_key_value_pair<GenericIntoRustString: IntoRustString>(_ arg0: UInt64, _ arg1: GenericIntoRustString, _ arg2: GenericIntoRustString) async throws -> Result5 {
         func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service_Individual_User_Template$write_key_value_pair>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            let wrapper = Unmanaged<CbWrapper$Service$write_key_value_pair>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
             if rustFnRetVal.is_ok {
                 wrapper.cb(.success(Result5(ptr: rustFnRetVal.ok_or_err!)))
             } else {
@@ -10772,13 +10790,13 @@ extension Service_Individual_User_TemplateRef {
                 continuation.resume(with: rustFnRetVal)
             }
 
-            let wrapper = CbWrapper$Service_Individual_User_Template$write_key_value_pair(cb: callback)
+            let wrapper = CbWrapper$Service$write_key_value_pair(cb: callback)
             let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-            __swift_bridge__$Service_Individual_User_Template$write_key_value_pair(wrapperPtr, onComplete, ptr, arg0, { let rustString = arg1.intoRustString(); rustString.isOwned = false; return rustString.ptr }(), { let rustString = arg2.intoRustString(); rustString.isOwned = false; return rustString.ptr }())
+            __swift_bridge__$Service$write_key_value_pair(wrapperPtr, onComplete, ptr, arg0, { let rustString = arg1.intoRustString(); rustString.isOwned = false; return rustString.ptr }(), { let rustString = arg2.intoRustString(); rustString.isOwned = false; return rustString.ptr }())
         })
     }
-    class CbWrapper$Service_Individual_User_Template$write_key_value_pair {
+    class CbWrapper$Service$write_key_value_pair {
         var cb: (Result<Result5, Error>) -> ()
     
         public init(cb: @escaping (Result<Result5, Error>) -> ()) {
@@ -10786,52 +10804,52 @@ extension Service_Individual_User_TemplateRef {
         }
     }
 }
-extension Service_Individual_User_Template: Vectorizable {
+extension Service: Vectorizable {
     public static func vecOfSelfNew() -> UnsafeMutableRawPointer {
-        __swift_bridge__$Vec_Service_Individual_User_Template$new()
+        __swift_bridge__$Vec_Service$new()
     }
 
     public static func vecOfSelfFree(vecPtr: UnsafeMutableRawPointer) {
-        __swift_bridge__$Vec_Service_Individual_User_Template$drop(vecPtr)
+        __swift_bridge__$Vec_Service$drop(vecPtr)
     }
 
-    public static func vecOfSelfPush(vecPtr: UnsafeMutableRawPointer, value: Service_Individual_User_Template) {
-        __swift_bridge__$Vec_Service_Individual_User_Template$push(vecPtr, {value.isOwned = false; return value.ptr;}())
+    public static func vecOfSelfPush(vecPtr: UnsafeMutableRawPointer, value: Service) {
+        __swift_bridge__$Vec_Service$push(vecPtr, {value.isOwned = false; return value.ptr;}())
     }
 
     public static func vecOfSelfPop(vecPtr: UnsafeMutableRawPointer) -> Optional<Self> {
-        let pointer = __swift_bridge__$Vec_Service_Individual_User_Template$pop(vecPtr)
+        let pointer = __swift_bridge__$Vec_Service$pop(vecPtr)
         if pointer == nil {
             return nil
         } else {
-            return (Service_Individual_User_Template(ptr: pointer!) as! Self)
+            return (Service(ptr: pointer!) as! Self)
         }
     }
 
-    public static func vecOfSelfGet(vecPtr: UnsafeMutableRawPointer, index: UInt) -> Optional<Service_Individual_User_TemplateRef> {
-        let pointer = __swift_bridge__$Vec_Service_Individual_User_Template$get(vecPtr, index)
+    public static func vecOfSelfGet(vecPtr: UnsafeMutableRawPointer, index: UInt) -> Optional<ServiceRef> {
+        let pointer = __swift_bridge__$Vec_Service$get(vecPtr, index)
         if pointer == nil {
             return nil
         } else {
-            return Service_Individual_User_TemplateRef(ptr: pointer!)
+            return ServiceRef(ptr: pointer!)
         }
     }
 
-    public static func vecOfSelfGetMut(vecPtr: UnsafeMutableRawPointer, index: UInt) -> Optional<Service_Individual_User_TemplateRefMut> {
-        let pointer = __swift_bridge__$Vec_Service_Individual_User_Template$get_mut(vecPtr, index)
+    public static func vecOfSelfGetMut(vecPtr: UnsafeMutableRawPointer, index: UInt) -> Optional<ServiceRefMut> {
+        let pointer = __swift_bridge__$Vec_Service$get_mut(vecPtr, index)
         if pointer == nil {
             return nil
         } else {
-            return Service_Individual_User_TemplateRefMut(ptr: pointer!)
+            return ServiceRefMut(ptr: pointer!)
         }
     }
 
-    public static func vecOfSelfAsPtr(vecPtr: UnsafeMutableRawPointer) -> UnsafePointer<Service_Individual_User_TemplateRef> {
-        UnsafePointer<Service_Individual_User_TemplateRef>(OpaquePointer(__swift_bridge__$Vec_Service_Individual_User_Template$as_ptr(vecPtr)))
+    public static func vecOfSelfAsPtr(vecPtr: UnsafeMutableRawPointer) -> UnsafePointer<ServiceRef> {
+        UnsafePointer<ServiceRef>(OpaquePointer(__swift_bridge__$Vec_Service$as_ptr(vecPtr)))
     }
 
     public static func vecOfSelfLen(vecPtr: UnsafeMutableRawPointer) -> UInt {
-        __swift_bridge__$Vec_Service_Individual_User_Template$len(vecPtr)
+        __swift_bridge__$Vec_Service$len(vecPtr)
     }
 }
 
