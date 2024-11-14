@@ -9,7 +9,8 @@ fn main() {
         "src/platform_orchestrator/platform_orchestrator_ffi.rs",
         "src/post_cache/post_cache_ffi.rs",
         "src/sns_governance/sns_governance_ffi.rs",
-        "src/sns_index/sns_index_ffi.rs"
+        "src/sns_index/sns_index_ffi.rs",
+        "src/sns_ledger/sns_ledger_ffi.rs"
     ];
     for path in &bridges {
         println!("cargo:rerun-if-changed={}", path);
