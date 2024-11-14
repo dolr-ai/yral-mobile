@@ -5,6 +5,7 @@ use ic_agent::{export::{reqwest::Error, PrincipalError}, identity, Agent};
 use k256::elliptic_curve::JwkEcKey;
 use std::sync::Arc;
 use ic_agent::identity::Secp256k1Identity;
+use crate::RUNTIME;
 
 type Result<T> = std::result::Result<T, ic_agent::AgentError>;
 
@@ -799,25 +800,6 @@ pub struct FollowerArg {
 pub struct FollowEntry {
     pub id: u64,
     pub detail: FollowEntryDetail,
-}
-
-lazy_static::lazy_static! {
-    static ref RUNTIME: tokio::runtime::Runtime = {
-        tokio::runtime::Builder::new_multi_thread()
-            .enable_all()
-            .build()
-            .expect("Failed to create Tokio runtime")
-    };
-
-    static ref AGENT: Agent = {
-        let agent = Agent::builder()
-            .with_url("https://ic0.app/")
-            .build()
-            .expect("Failed to create agent");
-        RUNTIME.block_on(agent.fetch_root_key())
-            .expect("Failed to fetch root key");
-        agent
-    };
 }
 
 pub struct Service {
