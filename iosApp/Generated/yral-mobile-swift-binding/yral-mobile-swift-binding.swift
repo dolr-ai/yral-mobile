@@ -8797,13 +8797,31 @@ public class Service: ServiceRefMut {
     }
 }
 extension Service {
-    public convenience init<GenericToRustStr: ToRustStr>(_ principal_text: GenericToRustStr, _ agent_url: GenericToRustStr) throws {
-        agent_url.toRustStr({ agent_urlAsRustStr in
-            principal_text.toRustStr({ principal_textAsRustStr in
-            try { let val = __swift_bridge__$Service$new(principal_textAsRustStr, agent_urlAsRustStr); if val.is_ok { return Service(ptr: val.ok_or_err!) } else { throw PrincipalError(ptr: val.ok_or_err!) } }()
-        })
-        })
+  public convenience init<GenericToRustStr: ToRustStr>(
+    _ principal_text: GenericToRustStr,
+    _ agent_url: GenericToRustStr
+  ) throws {
+    var initializationError: Error?
+    var servicePtr: UnsafeMutableRawPointer?
+
+    agent_url.toRustStr { agent_urlAsRustStr in
+      principal_text.toRustStr { principal_textAsRustStr in
+        let val = __swift_bridge__$Service$new(principal_textAsRustStr, agent_urlAsRustStr)
+        if val.is_ok {
+          servicePtr = val.ok_or_err!
+        } else {
+          initializationError = PrincipalError(ptr: val.ok_or_err!)
+        }
+      }
     }
+    if let error = initializationError {
+      throw error
+    }
+    guard let ptr = servicePtr else {
+      fatalError("Service initialization failed without an error.")
+    }
+    self.init(ptr: ptr)
+  }
 }
 public class ServiceRefMut: ServiceRef {
     public override init(ptr: UnsafeMutableRawPointer) {
