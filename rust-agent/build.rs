@@ -11,7 +11,8 @@ fn main() {
         "src/sns_governance/sns_governance_ffi.rs",
         "src/sns_index/sns_index_ffi.rs",
         "src/sns_ledger/sns_ledger_ffi.rs",
-        "src/sns_root/sns_root_ffi.rs"
+        "src/sns_root/sns_root_ffi.rs",
+        "src/sns_swap/sns_swap_ffi.rs"
     ];
     for path in &bridges {
         println!("cargo:rerun-if-changed={}", path);
