@@ -1,4 +1,5 @@
 #![allow(dead_code, unused_imports)]
+mod individual_user_template_ffi;
 use candid::{self, CandidType, Decode, Deserialize, Encode, Principal};
 use ic_agent::{export::{reqwest::Error, PrincipalError}, identity, Agent};
 use k256::elliptic_curve::JwkEcKey;

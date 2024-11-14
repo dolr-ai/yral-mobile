@@ -3,7 +3,10 @@ const XCODE_CONFIGURATION_ENV: &'static str = "CONFIGURATION";
 fn main() {
     let out_dir = "../iosApp/Generated";
 
-    let bridges: Vec<&str> = vec!["src/lib.rs"];
+    let bridges: Vec<&str> = vec![
+        "src/lib.rs",
+        "src/individual_user_template/individual_user_template_ffi.rs"
+    ];
     for path in &bridges {
         println!("cargo:rerun-if-changed={}", path);
     }
