@@ -6,7 +6,8 @@ fn main() {
     let bridges: Vec<&str> = vec![
         "src/lib.rs",
         "src/individual_user_template/individual_user_template_ffi.rs",
-        "src/platform_orchestrator/platform_orchestrator_ffi.rs"
+        "src/platform_orchestrator/platform_orchestrator_ffi.rs",
+        "src/post_cache/post_cache_ffi.rs"
     ];
     for path in &bridges {
         println!("cargo:rerun-if-changed={}", path);
