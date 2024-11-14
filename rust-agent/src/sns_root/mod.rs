@@ -1,7 +1,13 @@
 // This is an experimental feature to generate Rust binding from Candid.
 // You may want to manually adjust some of the types.
 #![allow(dead_code, unused_imports)]
+mod sns_root_ffi;
+use crate::individual_user_template;
+use crate::RUNTIME;
+use ic_agent::export::PrincipalError;
+use ic_agent::Agent;
 use candid::{self, CandidType, Deserialize, Principal, Encode, Decode};
+use std::sync::Arc;
 type Result<T> = std::result::Result<T, ic_agent::AgentError>;
 
 #[derive(CandidType, Deserialize)]
@@ -146,51 +152,71 @@ pub struct FailedUpdate {
 #[derive(CandidType, Deserialize)]
 pub struct SetDappControllersResponse { pub failed_updates: Vec<FailedUpdate> }
 
-pub struct Service<'a>(pub Principal, pub &'a ic_agent::Agent);
-impl<'a> Service<'a> {
+pub struct Service {
+  pub principal: Principal,
+  pub agent: Arc<Agent>,
+}
+impl Service {
+  pub fn new(
+      principal_text: &str,
+      agent_url: &str,
+  ) -> std::result::Result<Service, PrincipalError> {
+      let principal = Principal::from_text(principal_text)?;
+      let agent = Agent::builder()
+          .with_url("https://ic0.app/")
+          .build()
+          .expect("Failed to create agent");
+      RUNTIME
+          .block_on(agent.fetch_root_key())
+          .expect("Failed to fetch root key");
+      Ok(Self {
+          principal,
+          agent: Arc::new(agent),
+      })
+  }
   pub async fn canister_status(&self, arg0: CanisterIdRecord) -> Result<CanisterStatusResult> {
     let args = Encode!(&arg0)?;
-    let bytes = self.1.update(&self.0, "canister_status").with_arg(args).call_and_wait().await?;
+    let bytes = self.agent.update(&self.principal, "canister_status").with_arg(args).call_and_wait().await?;
     Ok(Decode!(&bytes, CanisterStatusResult)?)
   }
   pub async fn change_canister(&self, arg0: ChangeCanisterRequest) -> Result<()> {
     let args = Encode!(&arg0)?;
-    let bytes = self.1.update(&self.0, "change_canister").with_arg(args).call_and_wait().await?;
+    let bytes = self.agent.update(&self.principal, "change_canister").with_arg(args).call_and_wait().await?;
     Ok(Decode!(&bytes)?)
   }
   pub async fn get_build_metadata(&self) -> Result<String> {
     let args = Encode!()?;
-    let bytes = self.1.query(&self.0, "get_build_metadata").with_arg(args).call().await?;
+    let bytes = self.agent.query(&self.principal, "get_build_metadata").with_arg(args).call().await?;
     Ok(Decode!(&bytes, String)?)
   }
   pub async fn get_sns_canisters_summary(&self, arg0: GetSnsCanistersSummaryRequest) -> Result<GetSnsCanistersSummaryResponse> {
     let args = Encode!(&arg0)?;
-    let bytes = self.1.update(&self.0, "get_sns_canisters_summary").with_arg(args).call_and_wait().await?;
+    let bytes = self.agent.update(&self.principal, "get_sns_canisters_summary").with_arg(args).call_and_wait().await?;
     Ok(Decode!(&bytes, GetSnsCanistersSummaryResponse)?)
   }
   pub async fn list_sns_canisters(&self, arg0: ListSnsCanistersArg) -> Result<ListSnsCanistersResponse> {
     let args = Encode!(&arg0)?;
-    let bytes = self.1.query(&self.0, "list_sns_canisters").with_arg(args).call().await?;
+    let bytes = self.agent.query(&self.principal, "list_sns_canisters").with_arg(args).call().await?;
     Ok(Decode!(&bytes, ListSnsCanistersResponse)?)
   }
   pub async fn manage_dapp_canister_settings(&self, arg0: ManageDappCanisterSettingsRequest) -> Result<ManageDappCanisterSettingsResponse> {
     let args = Encode!(&arg0)?;
-    let bytes = self.1.update(&self.0, "manage_dapp_canister_settings").with_arg(args).call_and_wait().await?;
+    let bytes = self.agent.update(&self.principal, "manage_dapp_canister_settings").with_arg(args).call_and_wait().await?;
     Ok(Decode!(&bytes, ManageDappCanisterSettingsResponse)?)
   }
   pub async fn register_dapp_canister(&self, arg0: RegisterDappCanisterRequest) -> Result<RegisterDappCanisterRet> {
     let args = Encode!(&arg0)?;
-    let bytes = self.1.update(&self.0, "register_dapp_canister").with_arg(args).call_and_wait().await?;
+    let bytes = self.agent.update(&self.principal, "register_dapp_canister").with_arg(args).call_and_wait().await?;
     Ok(Decode!(&bytes, RegisterDappCanisterRet)?)
   }
   pub async fn register_dapp_canisters(&self, arg0: RegisterDappCanistersRequest) -> Result<RegisterDappCanistersRet> {
     let args = Encode!(&arg0)?;
-    let bytes = self.1.update(&self.0, "register_dapp_canisters").with_arg(args).call_and_wait().await?;
+    let bytes = self.agent.update(&self.principal, "register_dapp_canisters").with_arg(args).call_and_wait().await?;
     Ok(Decode!(&bytes, RegisterDappCanistersRet)?)
   }
   pub async fn set_dapp_controllers(&self, arg0: SetDappControllersRequest) -> Result<SetDappControllersResponse> {
     let args = Encode!(&arg0)?;
-    let bytes = self.1.update(&self.0, "set_dapp_controllers").with_arg(args).call_and_wait().await?;
+    let bytes = self.agent.update(&self.principal, "set_dapp_controllers").with_arg(args).call_and_wait().await?;
     Ok(Decode!(&bytes, SetDappControllersResponse)?)
   }
 }
