@@ -1,7 +1,13 @@
 // This is an experimental feature to generate Rust binding from Candid.
 // You may want to manually adjust some of the types.
 #![allow(dead_code, unused_imports)]
+mod sns_swap_ffi;
 use candid::{self, CandidType, Deserialize, Principal, Encode, Decode};
+use crate::individual_user_template;
+use crate::RUNTIME;
+use ic_agent::export::PrincipalError;
+use ic_agent::Agent;
+use std::sync::Arc;
 type Result<T> = std::result::Result<T, ic_agent::AgentError>;
 
 #[derive(CandidType, Deserialize)]
@@ -71,9 +77,9 @@ pub struct Ok { pub block_height: Option<u64> }
 #[derive(CandidType, Deserialize)]
 pub struct Err { pub description: Option<String>, pub error_type: Option<i32> }
 #[derive(CandidType, Deserialize)]
-pub enum Result_ { Ok(Ok), Err(Err) }
+pub enum SNSSwapResult_ { Ok(Ok), Err(Err) }
 #[derive(CandidType, Deserialize)]
-pub struct ErrorRefundIcpResponse { pub result: Option<Result_> }
+pub struct ErrorRefundIcpResponse { pub result: Option<SNSSwapResult_> }
 #[derive(CandidType, Deserialize)]
 pub struct FinalizeSwapArg {}
 #[derive(CandidType, Deserialize)]
@@ -240,9 +246,9 @@ pub struct Ok2 { pub ticket: Option<Ticket> }
 #[derive(CandidType, Deserialize)]
 pub struct Err1 { pub error_type: Option<i32> }
 #[derive(CandidType, Deserialize)]
-pub enum Result1 { Ok(Ok2), Err(Err1) }
+pub enum SNSSwapResult1 { Ok(Ok2), Err(Err1) }
 #[derive(CandidType, Deserialize)]
-pub struct GetOpenTicketResponse { pub result: Option<Result1> }
+pub struct GetOpenTicketResponse { pub result: Option<SNSSwapResult1> }
 #[derive(CandidType, Deserialize)]
 pub struct GetSaleParametersArg {}
 #[derive(CandidType, Deserialize)]
@@ -388,9 +394,9 @@ pub struct Err2 {
   pub error_type: i32,
 }
 #[derive(CandidType, Deserialize)]
-pub enum Result2 { Ok(Ok2), Err(Err2) }
+pub enum SNSSwapResult2 { Ok(Ok2), Err(Err2) }
 #[derive(CandidType, Deserialize)]
-pub struct NewSaleTicketResponse { pub result: Option<Result2> }
+pub struct NewSaleTicketResponse { pub result: Option<SNSSwapResult2> }
 #[derive(CandidType, Deserialize)]
 pub struct NotifyPaymentFailureArg {}
 #[derive(CandidType, Deserialize)]
@@ -404,96 +410,116 @@ pub struct RefreshBuyerTokensResponse {
   pub icp_ledger_account_balance_e8s: u64,
 }
 
-pub struct Service<'a>(pub Principal, pub &'a ic_agent::Agent);
-impl<'a> Service<'a> {
+pub struct Service {
+  pub principal: Principal,
+  pub agent: Arc<Agent>,
+}
+impl Service {
+  pub fn new(
+      principal_text: &str,
+      agent_url: &str,
+  ) -> std::result::Result<Service, PrincipalError> {
+      let principal = Principal::from_text(principal_text)?;
+      let agent = Agent::builder()
+          .with_url("https://ic0.app/")
+          .build()
+          .expect("Failed to create agent");
+      RUNTIME
+          .block_on(agent.fetch_root_key())
+          .expect("Failed to fetch root key");
+      Ok(Self {
+          principal,
+          agent: Arc::new(agent),
+      })
+  }
   pub async fn error_refund_icp(&self, arg0: ErrorRefundIcpRequest) -> Result<ErrorRefundIcpResponse> {
     let args = Encode!(&arg0)?;
-    let bytes = self.1.update(&self.0, "error_refund_icp").with_arg(args).call_and_wait().await?;
+    let bytes = self.agent.update(&self.principal, "error_refund_icp").with_arg(args).call_and_wait().await?;
     Ok(Decode!(&bytes, ErrorRefundIcpResponse)?)
   }
   pub async fn finalize_swap(&self, arg0: FinalizeSwapArg) -> Result<FinalizeSwapResponse> {
     let args = Encode!(&arg0)?;
-    let bytes = self.1.update(&self.0, "finalize_swap").with_arg(args).call_and_wait().await?;
+    let bytes = self.agent.update(&self.principal, "finalize_swap").with_arg(args).call_and_wait().await?;
     Ok(Decode!(&bytes, FinalizeSwapResponse)?)
   }
   pub async fn get_auto_finalization_status(&self, arg0: GetAutoFinalizationStatusArg) -> Result<GetAutoFinalizationStatusResponse> {
     let args = Encode!(&arg0)?;
-    let bytes = self.1.query(&self.0, "get_auto_finalization_status").with_arg(args).call().await?;
+    let bytes = self.agent.query(&self.principal, "get_auto_finalization_status").with_arg(args).call().await?;
     Ok(Decode!(&bytes, GetAutoFinalizationStatusResponse)?)
   }
   pub async fn get_buyer_state(&self, arg0: GetBuyerStateRequest) -> Result<GetBuyerStateResponse> {
     let args = Encode!(&arg0)?;
-    let bytes = self.1.query(&self.0, "get_buyer_state").with_arg(args).call().await?;
+    let bytes = self.agent.query(&self.principal, "get_buyer_state").with_arg(args).call().await?;
     Ok(Decode!(&bytes, GetBuyerStateResponse)?)
   }
   pub async fn get_buyers_total(&self, arg0: GetBuyersTotalArg) -> Result<GetBuyersTotalResponse> {
     let args = Encode!(&arg0)?;
-    let bytes = self.1.update(&self.0, "get_buyers_total").with_arg(args).call_and_wait().await?;
+    let bytes = self.agent.update(&self.principal, "get_buyers_total").with_arg(args).call_and_wait().await?;
     Ok(Decode!(&bytes, GetBuyersTotalResponse)?)
   }
   pub async fn get_canister_status(&self, arg0: GetCanisterStatusArg) -> Result<CanisterStatusResultV2> {
     let args = Encode!(&arg0)?;
-    let bytes = self.1.update(&self.0, "get_canister_status").with_arg(args).call_and_wait().await?;
+    let bytes = self.agent.update(&self.principal, "get_canister_status").with_arg(args).call_and_wait().await?;
     Ok(Decode!(&bytes, CanisterStatusResultV2)?)
   }
   pub async fn get_derived_state(&self, arg0: GetDerivedStateArg) -> Result<GetDerivedStateResponse> {
     let args = Encode!(&arg0)?;
-    let bytes = self.1.query(&self.0, "get_derived_state").with_arg(args).call().await?;
+    let bytes = self.agent.query(&self.principal, "get_derived_state").with_arg(args).call().await?;
     Ok(Decode!(&bytes, GetDerivedStateResponse)?)
   }
   pub async fn get_init(&self, arg0: GetInitArg) -> Result<GetInitResponse> {
     let args = Encode!(&arg0)?;
-    let bytes = self.1.query(&self.0, "get_init").with_arg(args).call().await?;
+    let bytes = self.agent.query(&self.principal, "get_init").with_arg(args).call().await?;
     Ok(Decode!(&bytes, GetInitResponse)?)
   }
   pub async fn get_lifecycle(&self, arg0: GetLifecycleArg) -> Result<GetLifecycleResponse> {
     let args = Encode!(&arg0)?;
-    let bytes = self.1.query(&self.0, "get_lifecycle").with_arg(args).call().await?;
+    let bytes = self.agent.query(&self.principal, "get_lifecycle").with_arg(args).call().await?;
     Ok(Decode!(&bytes, GetLifecycleResponse)?)
   }
   pub async fn get_open_ticket(&self, arg0: GetOpenTicketArg) -> Result<GetOpenTicketResponse> {
     let args = Encode!(&arg0)?;
-    let bytes = self.1.query(&self.0, "get_open_ticket").with_arg(args).call().await?;
+    let bytes = self.agent.query(&self.principal, "get_open_ticket").with_arg(args).call().await?;
     Ok(Decode!(&bytes, GetOpenTicketResponse)?)
   }
   pub async fn get_sale_parameters(&self, arg0: GetSaleParametersArg) -> Result<GetSaleParametersResponse> {
     let args = Encode!(&arg0)?;
-    let bytes = self.1.query(&self.0, "get_sale_parameters").with_arg(args).call().await?;
+    let bytes = self.agent.query(&self.principal, "get_sale_parameters").with_arg(args).call().await?;
     Ok(Decode!(&bytes, GetSaleParametersResponse)?)
   }
   pub async fn get_state(&self, arg0: GetStateArg) -> Result<GetStateResponse> {
     let args = Encode!(&arg0)?;
-    let bytes = self.1.query(&self.0, "get_state").with_arg(args).call().await?;
+    let bytes = self.agent.query(&self.principal, "get_state").with_arg(args).call().await?;
     Ok(Decode!(&bytes, GetStateResponse)?)
   }
   pub async fn list_community_fund_participants(&self, arg0: ListCommunityFundParticipantsRequest) -> Result<ListCommunityFundParticipantsResponse> {
     let args = Encode!(&arg0)?;
-    let bytes = self.1.query(&self.0, "list_community_fund_participants").with_arg(args).call().await?;
+    let bytes = self.agent.query(&self.principal, "list_community_fund_participants").with_arg(args).call().await?;
     Ok(Decode!(&bytes, ListCommunityFundParticipantsResponse)?)
   }
   pub async fn list_direct_participants(&self, arg0: ListDirectParticipantsRequest) -> Result<ListDirectParticipantsResponse> {
     let args = Encode!(&arg0)?;
-    let bytes = self.1.query(&self.0, "list_direct_participants").with_arg(args).call().await?;
+    let bytes = self.agent.query(&self.principal, "list_direct_participants").with_arg(args).call().await?;
     Ok(Decode!(&bytes, ListDirectParticipantsResponse)?)
   }
   pub async fn list_sns_neuron_recipes(&self, arg0: ListSnsNeuronRecipesRequest) -> Result<ListSnsNeuronRecipesResponse> {
     let args = Encode!(&arg0)?;
-    let bytes = self.1.query(&self.0, "list_sns_neuron_recipes").with_arg(args).call().await?;
+    let bytes = self.agent.query(&self.principal, "list_sns_neuron_recipes").with_arg(args).call().await?;
     Ok(Decode!(&bytes, ListSnsNeuronRecipesResponse)?)
   }
   pub async fn new_sale_ticket(&self, arg0: NewSaleTicketRequest) -> Result<NewSaleTicketResponse> {
     let args = Encode!(&arg0)?;
-    let bytes = self.1.update(&self.0, "new_sale_ticket").with_arg(args).call_and_wait().await?;
+    let bytes = self.agent.update(&self.principal, "new_sale_ticket").with_arg(args).call_and_wait().await?;
     Ok(Decode!(&bytes, NewSaleTicketResponse)?)
   }
   pub async fn notify_payment_failure(&self, arg0: NotifyPaymentFailureArg) -> Result<Ok2> {
     let args = Encode!(&arg0)?;
-    let bytes = self.1.update(&self.0, "notify_payment_failure").with_arg(args).call_and_wait().await?;
+    let bytes = self.agent.update(&self.principal, "notify_payment_failure").with_arg(args).call_and_wait().await?;
     Ok(Decode!(&bytes, Ok2)?)
   }
   pub async fn refresh_buyer_tokens(&self, arg0: RefreshBuyerTokensRequest) -> Result<RefreshBuyerTokensResponse> {
     let args = Encode!(&arg0)?;
-    let bytes = self.1.update(&self.0, "refresh_buyer_tokens").with_arg(args).call_and_wait().await?;
+    let bytes = self.agent.update(&self.principal, "refresh_buyer_tokens").with_arg(args).call_and_wait().await?;
     Ok(Decode!(&bytes, RefreshBuyerTokensResponse)?)
   }
 }
