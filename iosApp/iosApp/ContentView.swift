@@ -8,7 +8,19 @@ struct ContentView: View {
     Text("greet")
       .task {
         do {
-          guard let cookie = HTTPCookieStorage.shared.cookies?.first(where: { $0.name == "user-identity"}) else { return }
+          guard let cookie = HTTPCookieStorage.shared.cookies?.first(where: { $0.name == "user-identity"}) else {
+            Task {
+              do {
+                try await getAuthCookie()
+                if let cookie = HTTPCookieStorage.shared.cookies?.first(where: { $0.name == "user-identity"}) {
+                  try await extractIdentity(from: cookie)
+                }
+              } catch {
+                print(error)
+              }
+            }
+            return
+          }
           try await extractIdentity(from: cookie)
         } catch {
           print("Error: \(error)")
@@ -36,7 +48,7 @@ struct ContentView: View {
        let jsonString = String(data: jsonData, encoding: .utf8) {
       if let ec_key = get_jwk_ec_key(jsonString) {
         let identity = get_secp256k1_identity(ec_key)
-        print("Ec Key: \(ec_key), identity: \(identity)")
+        print("Ec Key: \(ec_key), identity: \(String(describing: identity))")
       }
     }
     let payload: [String: Any] = [
@@ -61,7 +73,7 @@ struct ContentView: View {
         return
       }
       guard let httpResponse = response as? HTTPURLResponse else { return }
-      if httpResponse.statusCode == 200, let data = data, let responseString = String(data: data, encoding: .utf8) {
+      if httpResponse.statusCode == 200, let data = data {
         if let cookies = HTTPCookieStorage.shared.cookies(for: url), let userIdentity = cookies.first(where: { $0.name == "user-identity"}) {
           HTTPCookieStorage.shared.setCookie(userIdentity)
         } else {
@@ -73,50 +85,55 @@ struct ContentView: View {
   }
 
   func extractIdentity(from cookie: HTTPCookie) async throws {
-    do {
-      guard let url = URL(string: "https://yral.com/api/extract_identity") else {
-        print("Invalid URL")
+    guard let url = URL(string: "https://yral.com/api/extract_identity") else {
+      print("Invalid URL")
+      return
+    }
+    var request = URLRequest(url: url)
+    let cookieHeader = "\(cookie.name)=\(cookie.value)"
+    request.setValue(cookieHeader, forHTTPHeaderField: "Cookie")
+    request.httpMethod = "POST"
+    request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+    request.httpBody = "{}".data(using: .utf8)
+
+    let task = URLSession.shared.dataTask(with: request) { data, response, error in
+      if let error = error {
+        print("Error:", error)
         return
       }
-      var request = URLRequest(url: url)
-      let cookieHeader = "\(cookie.name)=\(cookie.value)"
-      request.setValue(cookieHeader, forHTTPHeaderField: "Cookie")
-      request.httpMethod = "POST"
-      request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-      request.httpBody = "{}".data(using: .utf8)
-
-      let task = URLSession.shared.dataTask(with: request) { data, response, error in
-        if let error = error {
-          print("Error:", error)
-          return
-        }
-        guard let httpResponse = response as? HTTPURLResponse else { return }
-        if let data = data, let responseString = String(data: data, encoding: .utf8) {
-          Task {
-            try await handleExtractIdentityResponse(from: data)
-          }
-          do {
-          } catch {
-            print(error)
-          }
+      guard response is HTTPURLResponse else { return }
+      if let data = data {
+        Task {
+          try await handleExtractIdentityResponse(from: data)
         }
       }
-      task.resume()
     }
+    task.resume()
   }
 
   func handleExtractIdentityResponse(from data: Data) async throws {
     try data.withUnsafeBytes { (buffer: UnsafeRawBufferPointer) in
       if buffer.count > 0 {
         let uint8Buffer = buffer.bindMemory(to: UInt8.self)
+        let wire = try delegated_identity_wire_from_bytes(uint8Buffer)
         let delegatedIdentity = try delegated_identity_from_bytes(uint8Buffer)
-        print(delegatedIdentity)
+        Task {
+          try await deployCanister(with: wire, identity: delegatedIdentity)
+        }
       } else {
         print("Received empty data.")
       }
     }
   }
 
+  func deployCanister(with wire: DelegatedIdentityWire, identity: DelegatedIdentity) async throws {
+    let canistersWrapper = try await authenticate_with_network(wire, nil)
+    let principal = get_canister_principal(canistersWrapper)
+    let service = try Service(principal, identity)
+    let result = try await service.get_last_access_time()
+    let systemTime = extract_time_as_double(result)
+    print(systemTime)
+  }
 }
 
 struct ContentView_Previews: PreviewProvider {

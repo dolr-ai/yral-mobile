@@ -1,7 +1,7 @@
 #![allow(dead_code, unused_imports)]
 mod individual_user_template_ffi;
 use candid::{self, CandidType, Decode, Deserialize, Encode, Principal};
-use ic_agent::{export::{reqwest::Error, PrincipalError}, identity, Agent};
+use ic_agent::{export::{reqwest::Error, PrincipalError}, identity::{self, DelegatedIdentity}, Agent};
 use k256::elliptic_curve::JwkEcKey;
 use std::sync::Arc;
 use ic_agent::identity::Secp256k1Identity;
@@ -808,10 +808,10 @@ pub struct Service {
 }
 
 impl Service {
-    pub fn new(principal_text: &str, agent_url: &str) -> std::result::Result<Service, PrincipalError> {
-        let principal = Principal::from_text(principal_text)?;
+    pub fn new(principal: Principal, identity: DelegatedIdentity) -> std::result::Result<Service, PrincipalError> {
         let agent = Agent::builder()
         .with_url("https://ic0.app/")
+        .with_identity(identity)
         .build()
         .expect("Failed to create agent");
     RUNTIME.block_on(agent.fetch_root_key())

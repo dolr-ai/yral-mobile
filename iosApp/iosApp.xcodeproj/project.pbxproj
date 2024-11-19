@@ -15,8 +15,8 @@
 		AC09A9B32CDB775C009A39A4 /* SwiftBridgeCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC09A9B02CDB775C009A39A4 /* SwiftBridgeCore.swift */; };
 		AC09A9FA2CDB7A5D009A39A4 /* SwiftBindings+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC09A9F92CDB7A5D009A39A4 /* SwiftBindings+Extensions.swift */; };
 		AC09AA742CDD210D009A39A4 /* Data+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC09AA732CDD2107009A39A4 /* Data+Extensions.swift */; };
+		AC0E49C42CEBA6F0002DC158 /* secp256k1 in Frameworks */ = {isa = PBXBuildFile; productRef = AC0E49C32CEBA6F0002DC158 /* secp256k1 */; };
 		AC6CBA802CE46CA6002454F8 /* libyral_mobile_swift_binding.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AC09A9F72CDB78B9009A39A4 /* libyral_mobile_swift_binding.a */; };
-		AC95DFFE2CE4624700593A20 /* secp256k1 in Frameworks */ = {isa = PBXBuildFile; productRef = AC95DFFD2CE4624700593A20 /* secp256k1 */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -42,8 +42,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AC95DFFE2CE4624700593A20 /* secp256k1 in Frameworks */,
 				AC6CBA802CE46CA6002454F8 /* libyral_mobile_swift_binding.a in Frameworks */,
+				AC0E49C42CEBA6F0002DC158 /* secp256k1 in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -174,7 +174,7 @@
 			);
 			mainGroup = 7555FF72242A565900829871;
 			packageReferences = (
-				AC95DFFC2CE4624700593A20 /* XCRemoteSwiftPackageReference "swift-secp256k1" */,
+				AC0E49C22CEBA6F0002DC158 /* XCRemoteSwiftPackageReference "swift-secp256k1" */,
 			);
 			productRefGroup = 7555FF7C242A565900829871 /* Products */;
 			projectDirPath = "";
@@ -452,7 +452,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		AC95DFFC2CE4624700593A20 /* XCRemoteSwiftPackageReference "swift-secp256k1" */ = {
+		AC0E49C22CEBA6F0002DC158 /* XCRemoteSwiftPackageReference "swift-secp256k1" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/21-DOT-DEV/swift-secp256k1";
 			requirement = {
@@ -463,9 +463,9 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		AC95DFFD2CE4624700593A20 /* secp256k1 */ = {
+		AC0E49C32CEBA6F0002DC158 /* secp256k1 */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = AC95DFFC2CE4624700593A20 /* XCRemoteSwiftPackageReference "swift-secp256k1" */;
+			package = AC0E49C22CEBA6F0002DC158 /* XCRemoteSwiftPackageReference "swift-secp256k1" */;
 			productName = secp256k1;
 		};
 /* End XCSwiftPackageProductDependency section */

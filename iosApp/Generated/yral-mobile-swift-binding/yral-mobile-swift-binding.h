@@ -1428,7 +1428,19 @@ void* __swift_bridge__$Vec_DelegatedIdentityWire$get_mut(void* vec_ptr, uintptr_
 uintptr_t __swift_bridge__$Vec_DelegatedIdentityWire$len(void* vec_ptr);
 void* __swift_bridge__$Vec_DelegatedIdentityWire$as_ptr(void* vec_ptr);
 
-struct __private__ResultPtrAndPtr __swift_bridge__$Service$new(struct RustStr principal_text, struct RustStr agent_url);
+typedef struct CanistersWrapper CanistersWrapper;
+void __swift_bridge__$CanistersWrapper$_free(void* self);
+
+void* __swift_bridge__$Vec_CanistersWrapper$new(void);
+void __swift_bridge__$Vec_CanistersWrapper$drop(void* vec_ptr);
+void __swift_bridge__$Vec_CanistersWrapper$push(void* vec_ptr, void* item_ptr);
+void* __swift_bridge__$Vec_CanistersWrapper$pop(void* vec_ptr);
+void* __swift_bridge__$Vec_CanistersWrapper$get(void* vec_ptr, uintptr_t index);
+void* __swift_bridge__$Vec_CanistersWrapper$get_mut(void* vec_ptr, uintptr_t index);
+uintptr_t __swift_bridge__$Vec_CanistersWrapper$len(void* vec_ptr);
+void* __swift_bridge__$Vec_CanistersWrapper$as_ptr(void* vec_ptr);
+
+struct __private__ResultPtrAndPtr __swift_bridge__$Service$new(void* principal, void* identity);
 void __swift_bridge__$Service$add_device_id(void* callback_wrapper, void __swift_bridge__$Service$add_device_id$async(void* callback_wrapper, struct __private__ResultPtrAndPtr ret), void* self, void* arg0);
 void __swift_bridge__$Service$add_post_v_2(void* callback_wrapper, void __swift_bridge__$Service$add_post_v_2$async(void* callback_wrapper, struct __private__ResultPtrAndPtr ret), void* self, void* arg0);
 void __swift_bridge__$Service$add_token(void* callback_wrapper, void __swift_bridge__$Service$add_token$async(void* callback_wrapper, struct __private__ResultPtrAndPtr ret), void* self, void* arg0);
@@ -1500,6 +1512,11 @@ void __swift_bridge__$Service$write_key_value_pair(void* callback_wrapper, void 
 void* __swift_bridge__$get_secp256k1_identity(void* jwk_key);
 void* __swift_bridge__$get_jwk_ec_key(void* json_string);
 struct __private__ResultPtrAndPtr __swift_bridge__$delegated_identity_from_bytes(struct __private__FfiSlice data);
+struct __private__ResultPtrAndPtr __swift_bridge__$delegated_identity_wire_from_bytes(struct __private__FfiSlice data);
+void __swift_bridge__$authenticate_with_network(void* callback_wrapper, void __swift_bridge__$authenticate_with_network$async(void* callback_wrapper, struct __private__ResultPtrAndPtr ret), void* auth, void* referrer);
+void* __swift_bridge__$get_canister_principal(void* wrapper);
+void* __swift_bridge__$get_user_principal(void* wrapper);
+struct __private__OptionU64 __swift_bridge__$extract_time_as_double(void* result);
 typedef enum __swift_bridge__$ResultU32AndAgentError$Tag {__swift_bridge__$ResultU32AndAgentError$ResultOk, __swift_bridge__$ResultU32AndAgentError$ResultErr} __swift_bridge__$ResultU32AndAgentError$Tag;
 union __swift_bridge__$ResultU32AndAgentError$Fields {uint32_t ok; void* err;};
 typedef struct __swift_bridge__$ResultU32AndAgentError{__swift_bridge__$ResultU32AndAgentError$Tag tag; union __swift_bridge__$ResultU32AndAgentError$Fields payload;} __swift_bridge__$ResultU32AndAgentError;
