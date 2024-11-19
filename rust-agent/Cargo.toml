@@ -15,7 +15,6 @@ crate-type = ["staticlib"]
 swift-bridge = {version = "0.1.57", features = ["async"]}
 tokio = { version = "1.28", features = ["macros", "rt-multi-thread"] }
 ic-agent = "0.38.2"
-thiserror = "2.0.0"
 lazy_static = "1.4"
 candid = "0.10.10"
 serde = "1.0.213"
@@ -25,4 +24,6 @@ k256 = { version = "0.13.4", default-features = false, features = [
     "std",
     "jwk",
 ] }
-yral-types = { git = "https://github.com/yral-dapp/yral-common.git", rev = "2e432882052a69d5a625e7188cd69ad8aa5bcec7" }
+yral-types = { git = "https://github.com/yral-dapp/yral-common.git" }
+yral-canisters-common = {git = "https://github.com/yral-dapp/yral-common.git"}
+yral-canisters-client = {git = "https://github.com/yral-dapp/yral-common.git"}
