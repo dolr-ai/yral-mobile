@@ -1,5 +1,5 @@
 use std::str::FromStr;
-use crate::individual_user_template::*;
+use crate::{individual_user_template::*, Err};
 use candid::{self, ser, CandidType, Decode, Deserialize, Encode, Principal};
 use ic_agent::export::PrincipalError;
 use ic_agent::AgentError;
@@ -9,7 +9,7 @@ use k256::elliptic_curve::JwkEcKey;
 use ic_agent::identity::Secp256k1Identity;
 use yral_types::delegated_identity::DelegatedIdentityWire;
 use ic_agent::identity::DelegatedIdentity;
-
+use yral_canisters_common::Canisters;
 
 #[swift_bridge::bridge]
 mod ffi {
@@ -136,7 +136,7 @@ mod ffi {
     extern "Rust" {
         type Service;
         #[swift_bridge(init)]
-        fn new(principal_text: &str, agent_url: &str) -> Result<Service, PrincipalError>;
+        fn new(principal: Principal, identity: DelegatedIdentity) -> Result<Service, PrincipalError>;
         async fn add_device_id(&self, arg0: String) -> Result<Result_, AgentError>;
         async fn add_post_v_2(&self, arg0: PostDetailsFromFrontend) -> Result<Result1, AgentError>;
         async fn add_token(&self, arg0: Principal) -> Result<Result2, AgentError>;
@@ -335,6 +335,22 @@ mod ffi {
     extern "Rust" {
         type DelegatedIdentityWire;
         fn delegated_identity_from_bytes(data: &[u8]) -> Result<DelegatedIdentity, String>;
+        fn delegated_identity_wire_from_bytes(data: &[u8]) -> Result<DelegatedIdentityWire, String>;
+    }
+
+    extern "Rust" {
+        type CanistersWrapper;
+        async fn authenticate_with_network(
+            auth: DelegatedIdentityWire,
+            referrer: Option<Principal>,
+        ) -> Result<CanistersWrapper, String>;
+
+        fn get_canister_principal(wrapper: CanistersWrapper) -> Principal;
+        fn get_user_principal(wrapper: CanistersWrapper) -> Principal;
+    }
+
+    extern "Rust" {
+        fn extract_time_as_double(result: Result11) -> Option<u64>;
     }
 }
 
@@ -365,6 +381,10 @@ impl FromBytes for DelegatedIdentityWire {
     }
 }
 
+fn delegated_identity_wire_from_bytes(data: &[u8]) -> std::result::Result<DelegatedIdentityWire, String> {
+    return DelegatedIdentityWire::from_bytes(data).map_err( |e| e.to_string());
+}
+
 fn delegated_identity_from_bytes(data: &[u8]) -> std::result::Result<ic_agent::identity::DelegatedIdentity, String> {
     let wire = DelegatedIdentityWire::from_bytes(data)?;
     let to_secret = k256::SecretKey::from_jwk(&wire.to_secret)
@@ -376,4 +396,31 @@ fn delegated_identity_from_bytes(data: &[u8]) -> std::result::Result<ic_agent::i
         wire.delegation_chain,
     );
     Ok(delegated_identity)
+}
+
+pub struct CanistersWrapper {
+    inner: Canisters<true>,
+}
+
+pub async fn authenticate_with_network(
+    auth: DelegatedIdentityWire,
+    referrer: Option<Principal>,
+) -> std::result::Result<CanistersWrapper, String> {
+    let canisters: Canisters<true> = Canisters::<true>::authenticate_with_network(auth, referrer).await.map_err( |error| error.to_string())?;
+    Ok(CanistersWrapper { inner: canisters })
+}
+
+fn get_canister_principal(wrapper: CanistersWrapper) -> Principal {
+    return wrapper.inner.user_canister()
+}
+
+fn get_user_principal(wrapper: CanistersWrapper) -> Principal {
+    return wrapper.inner.user_principal()
+}
+
+pub fn extract_time_as_double(result: Result11) -> Option<u64> {
+    match result {
+        Result11::Ok(system_time) => Some(system_time.secs_since_epoch),
+        Result11::Err(_) => None,
+    }
 }

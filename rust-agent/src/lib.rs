@@ -24,14 +24,4 @@ lazy_static::lazy_static! {
             .build()
             .expect("Failed to create Tokio runtime")
     };
-
-    static ref AGENT: Agent = {
-        let agent = Agent::builder()
-            .with_url("https://ic0.app/")
-            .build()
-            .expect("Failed to create agent");
-        RUNTIME.block_on(agent.fetch_root_key())
-            .expect("Failed to fetch root key");
-        agent
-    };
 }
