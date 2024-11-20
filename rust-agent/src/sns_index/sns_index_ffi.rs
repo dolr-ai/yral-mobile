@@ -25,12 +25,18 @@ mod ffi {
         type AgentError;
         #[swift_bridge(already_declared)]
         type Principal;
-    }    
+    }
     extern "Rust" {
         #[swift_bridge(already_declared)]
         type Service;
-        async fn get_account_transactions(&self, arg0: GetAccountTransactionsArgs) -> Result<GetTransactionsResult, AgentError>;
+        async fn get_account_transactions(
+            &self,
+            arg0: GetAccountTransactionsArgs,
+        ) -> Result<GetTransactionsResult, AgentError>;
         async fn ledger_id(&self) -> Result<Principal, AgentError>;
-        async fn list_subaccounts(&self, arg0: ListSubaccountsArgs) -> Result<Vec<SubAccount>, AgentError>;
+        async fn list_subaccounts(
+            &self,
+            arg0: ListSubaccountsArgs,
+        ) -> Result<Vec<SubAccount>, AgentError>;
     }
 }
