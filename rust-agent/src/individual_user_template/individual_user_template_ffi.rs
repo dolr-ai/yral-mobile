@@ -132,6 +132,7 @@ mod ffi {
         type JwkEcKey;
         type Secp256k1Identity;
         type DelegatedIdentity;
+        type Secp256k1Error;
     }
 
     extern "Rust" {
@@ -378,8 +379,8 @@ mod ffi {
     }
 
     extern "Rust" {
-        fn get_secp256k1_identity(jwk_key: JwkEcKey) -> Option<Secp256k1Identity>;
-        fn get_jwk_ec_key(json_string: String) -> Option<JwkEcKey>;
+        fn get_secp256k1_identity(jwk_key: JwkEcKey) -> Result<Secp256k1Identity, Secp256k1Error>;
+        fn get_jwk_ec_key(json_string: String) -> Result<JwkEcKey, Secp256k1Error>;
     }
 
     extern "Rust" {

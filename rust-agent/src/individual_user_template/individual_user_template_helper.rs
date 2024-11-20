@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use crate::individual_user_template::*;
+use crate::{individual_user_template::*, Err};
 use candid::Nat;
 use candid::{self, ser, CandidType, Decode, Deserialize, Encode, Principal};
 use ic_agent::export::PrincipalError;
@@ -12,19 +12,19 @@ use serde_bytes::ByteBuf;
 use yral_canisters_common::Canisters;
 use yral_types::delegated_identity::DelegatedIdentityWire;
 
-pub fn get_secp256k1_identity(jwk_key: JwkEcKey) -> Option<Secp256k1Identity> {
+pub type Secp256k1Error = k256::elliptic_curve::Error;
+
+pub fn get_secp256k1_identity(
+    jwk_key: JwkEcKey,
+) -> std::result::Result<Secp256k1Identity, Secp256k1Error> {
     match k256::SecretKey::from_jwk(&jwk_key) {
-        Ok(key) => Some(Secp256k1Identity::from_private_key(key)),
-        Err(_) => None,
+        Ok(key) => Ok(Secp256k1Identity::from_private_key(key)),
+        Err(error) => Err(error),
     }
 }
 
-pub fn get_jwk_ec_key(json_string: String) -> Option<JwkEcKey> {
-    let jwk_ec_key = JwkEcKey::from_str(&json_string);
-    match jwk_ec_key {
-        Ok(key) => Some(key),
-        Err(_) => None,
-    }
+pub fn get_jwk_ec_key(json_string: String) -> std::result::Result<JwkEcKey, Secp256k1Error> {
+    return JwkEcKey::from_str(&json_string);
 }
 
 pub trait FromBytes {

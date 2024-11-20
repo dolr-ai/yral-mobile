@@ -16,10 +16,10 @@ extension PrincipalError: Error {
 
 }
 
-extension IntoRustString where Self: Vectorizable {
-
-}
-
 extension RustString: Error {
   
+}
+
+extension Secp256k1Error: Error {
+
 }
