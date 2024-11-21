@@ -81,7 +81,10 @@ mod ffi {
         async fn archives(&self) -> Result<Vec<ArchiveInfo>, AgentError>;
         async fn get_blocks(&self, arg0: GetBlocksArgs) -> Result<GetBlocksResponse, AgentError>;
         async fn get_data_certificate(&self) -> Result<DataCertificate, AgentError>;
-        async fn get_transactions(&self, arg0: GetTransactionsRequest) -> Result<GetTransactionsResponse, AgentError>;
+        async fn get_transactions(
+            &self,
+            arg0: GetTransactionsRequest,
+        ) -> Result<GetTransactionsResponse, AgentError>;
         async fn icrc_1_balance_of(&self, arg0: Account) -> Result<Tokens, AgentError>;
         async fn icrc_1_decimals(&self) -> Result<u8, AgentError>;
         async fn icrc_1_fee(&self) -> Result<Tokens, AgentError>;
@@ -94,10 +97,21 @@ mod ffi {
         async fn icrc_1_transfer(&self, arg0: TransferArg) -> Result<TransferResult, AgentError>;
         async fn icrc_2_allowance(&self, arg0: AllowanceArgs) -> Result<Allowance, AgentError>;
         async fn icrc_2_approve(&self, arg0: ApproveArgs) -> Result<ApproveResult, AgentError>;
-        async fn icrc_2_transfer_from(&self, arg0: TransferFromArgs) -> Result<TransferFromResult, AgentError>;
-        async fn icrc_3_get_archives(&self, arg0: GetArchivesArgs) -> Result<GetArchivesResult, AgentError>;
-        async fn icrc_3_get_blocks(&self, arg0: Vec<GetBlocksArgs>) -> Result<GetBlocksResult, AgentError>;
+        async fn icrc_2_transfer_from(
+            &self,
+            arg0: TransferFromArgs,
+        ) -> Result<TransferFromResult, AgentError>;
+        async fn icrc_3_get_archives(
+            &self,
+            arg0: GetArchivesArgs,
+        ) -> Result<GetArchivesResult, AgentError>;
+        async fn icrc_3_get_blocks(
+            &self,
+            arg0: Vec<GetBlocksArgs>,
+        ) -> Result<GetBlocksResult, AgentError>;
         // async fn icrc_3_get_tip_certificate(&self) -> Result<Option<Icrc3DataCertificate>, AgentError>;
-        async fn icrc_3_supported_block_types(&self) -> Result<Vec<Icrc3SupportedBlockTypesRetItem>, AgentError>;
-    }    
+        async fn icrc_3_supported_block_types(
+            &self,
+        ) -> Result<Vec<Icrc3SupportedBlockTypesRetItem>, AgentError>;
+    }
 }

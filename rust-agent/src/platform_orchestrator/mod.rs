@@ -2,12 +2,12 @@
 // You may want to manually adjust some of the types.
 #![allow(dead_code, unused_imports)]
 mod platform_orchestrator_ffi;
+use crate::individual_user_template;
+use crate::RUNTIME;
 use candid::{self, CandidType, Decode, Deserialize, Encode, Principal};
 use ic_agent::export::PrincipalError;
 use ic_agent::Agent;
 use std::sync::Arc;
-use crate::RUNTIME;
-use crate::individual_user_template;
 
 type Result<T> = std::result::Result<T, ic_agent::AgentError>;
 
@@ -144,7 +144,10 @@ impl Service {
             .await?;
         Ok(Decode!(&bytes, HttpResponse)?)
     }
-    pub async fn provision_subnet_orchestrator_canister(&self, arg0: Principal) -> Result<PlatformOrchestratorResult1> {
+    pub async fn provision_subnet_orchestrator_canister(
+        &self,
+        arg0: Principal,
+    ) -> Result<PlatformOrchestratorResult1> {
         let args = Encode!(&arg0)?;
         let bytes = self
             .agent
@@ -154,7 +157,9 @@ impl Service {
             .await?;
         Ok(Decode!(&bytes, PlatformOrchestratorResult1)?)
     }
-    pub async fn start_reclaiming_cycles_from_individual_canisters(&self) -> Result<PlatformOrchestratorResult_> {
+    pub async fn start_reclaiming_cycles_from_individual_canisters(
+        &self,
+    ) -> Result<PlatformOrchestratorResult_> {
         let args = Encode!()?;
         let bytes = self
             .agent
@@ -182,7 +187,9 @@ impl Service {
             .await?;
         Ok(Decode!(&bytes, String)?)
     }
-    pub async fn stop_upgrades_for_individual_user_canisters(&self) -> Result<PlatformOrchestratorResult_> {
+    pub async fn stop_upgrades_for_individual_user_canisters(
+        &self,
+    ) -> Result<PlatformOrchestratorResult_> {
         let args = Encode!()?;
         let bytes = self
             .agent
@@ -218,7 +225,10 @@ impl Service {
             .await?;
         Ok(Decode!(&bytes)?)
     }
-    pub async fn upgrade_canister(&self, arg0: UpgradeCanisterArg) -> Result<PlatformOrchestratorResult_> {
+    pub async fn upgrade_canister(
+        &self,
+        arg0: UpgradeCanisterArg,
+    ) -> Result<PlatformOrchestratorResult_> {
         let args = Encode!(&arg0)?;
         let bytes = self
             .agent

@@ -1,8 +1,8 @@
 use crate::platform_orchestrator::*;
+use candid::Nat;
 use ic_agent::export::PrincipalError;
 use ic_agent::AgentError;
 use serde_bytes::ByteBuf;
-use candid::Nat;
 
 #[swift_bridge::bridge]
 mod ffi {
@@ -29,7 +29,7 @@ mod ffi {
         type Nat;
     }
 
-    extern  "Rust" {
+    extern "Rust" {
         #[swift_bridge(already_declared)]
         type Service;
         async fn deposit_cycles_to_canister(
@@ -42,13 +42,10 @@ mod ffi {
             &self,
         ) -> Result<Vec<Principal>, AgentError>;
 
-        async fn get_all_subnet_orchestrators(
-            &self,
-        ) -> Result<Vec<Principal>, AgentError>;
+        async fn get_all_subnet_orchestrators(&self) -> Result<Vec<Principal>, AgentError>;
 
-        async fn get_subnet_last_upgrade_status(
-            &self,
-        ) -> Result<CanisterUpgradeStatus, AgentError>;
+        async fn get_subnet_last_upgrade_status(&self)
+            -> Result<CanisterUpgradeStatus, AgentError>;
 
         async fn provision_subnet_orchestrator_canister(
             &self,
@@ -67,13 +64,9 @@ mod ffi {
             &self,
         ) -> Result<PlatformOrchestratorResult_, AgentError>;
 
-        async fn subnet_orchestrator_maxed_out(
-            &self,
-        ) -> Result<(), AgentError>;
+        async fn subnet_orchestrator_maxed_out(&self) -> Result<(), AgentError>;
 
-        async fn update_profile_owner_for_individual_canisters(
-            &self,
-        ) -> Result<(), AgentError>;
+        async fn update_profile_owner_for_individual_canisters(&self) -> Result<(), AgentError>;
 
         async fn upgrade_canister(
             &self,

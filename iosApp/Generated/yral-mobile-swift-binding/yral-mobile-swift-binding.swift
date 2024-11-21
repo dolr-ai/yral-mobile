@@ -1,8 +1,8 @@
-public func get_secp256k1_identity(_ jwk_key: JwkEcKey) -> Optional<Secp256k1Identity> {
-    { let val = __swift_bridge__$get_secp256k1_identity({jwk_key.isOwned = false; return jwk_key.ptr;}()); if val != nil { return Secp256k1Identity(ptr: val!) } else { return nil } }()
+public func get_secp256k1_identity(_ jwk_key: JwkEcKey) throws -> Secp256k1Identity {
+    try { let val = __swift_bridge__$get_secp256k1_identity({jwk_key.isOwned = false; return jwk_key.ptr;}()); if val.is_ok { return Secp256k1Identity(ptr: val.ok_or_err!) } else { throw Secp256k1Error(ptr: val.ok_or_err!) } }()
 }
-public func get_jwk_ec_key<GenericIntoRustString: IntoRustString>(_ json_string: GenericIntoRustString) -> Optional<JwkEcKey> {
-    { let val = __swift_bridge__$get_jwk_ec_key({ let rustString = json_string.intoRustString(); rustString.isOwned = false; return rustString.ptr }()); if val != nil { return JwkEcKey(ptr: val!) } else { return nil } }()
+public func get_jwk_ec_key<GenericIntoRustString: IntoRustString>(_ json_string: GenericIntoRustString) throws -> JwkEcKey {
+    try { let val = __swift_bridge__$get_jwk_ec_key({ let rustString = json_string.intoRustString(); rustString.isOwned = false; return rustString.ptr }()); if val.is_ok { return JwkEcKey(ptr: val.ok_or_err!) } else { throw Secp256k1Error(ptr: val.ok_or_err!) } }()
 }
 public func delegated_identity_from_bytes(_ data: UnsafeBufferPointer<UInt8>) throws -> DelegatedIdentity {
     try { let val = __swift_bridge__$delegated_identity_from_bytes(data.toFfiSlice()); if val.is_ok { return DelegatedIdentity(ptr: val.ok_or_err!) } else { throw RustString(ptr: val.ok_or_err!) } }()
@@ -47,6 +47,81 @@ public func get_user_principal(_ wrapper: CanistersWrapper) -> Principal {
 public func extract_time_as_double(_ result: Result11) -> Optional<UInt64> {
     __swift_bridge__$extract_time_as_double({result.isOwned = false; return result.ptr;}()).intoSwiftRepr()
 }
+
+public class Secp256k1Error: Secp256k1ErrorRefMut {
+    var isOwned: Bool = true
+
+    public override init(ptr: UnsafeMutableRawPointer) {
+        super.init(ptr: ptr)
+    }
+
+    deinit {
+        if isOwned {
+            __swift_bridge__$Secp256k1Error$_free(ptr)
+        }
+    }
+}
+public class Secp256k1ErrorRefMut: Secp256k1ErrorRef {
+    public override init(ptr: UnsafeMutableRawPointer) {
+        super.init(ptr: ptr)
+    }
+}
+public class Secp256k1ErrorRef {
+    var ptr: UnsafeMutableRawPointer
+
+    public init(ptr: UnsafeMutableRawPointer) {
+        self.ptr = ptr
+    }
+}
+extension Secp256k1Error: Vectorizable {
+    public static func vecOfSelfNew() -> UnsafeMutableRawPointer {
+        __swift_bridge__$Vec_Secp256k1Error$new()
+    }
+
+    public static func vecOfSelfFree(vecPtr: UnsafeMutableRawPointer) {
+        __swift_bridge__$Vec_Secp256k1Error$drop(vecPtr)
+    }
+
+    public static func vecOfSelfPush(vecPtr: UnsafeMutableRawPointer, value: Secp256k1Error) {
+        __swift_bridge__$Vec_Secp256k1Error$push(vecPtr, {value.isOwned = false; return value.ptr;}())
+    }
+
+    public static func vecOfSelfPop(vecPtr: UnsafeMutableRawPointer) -> Optional<Self> {
+        let pointer = __swift_bridge__$Vec_Secp256k1Error$pop(vecPtr)
+        if pointer == nil {
+            return nil
+        } else {
+            return (Secp256k1Error(ptr: pointer!) as! Self)
+        }
+    }
+
+    public static func vecOfSelfGet(vecPtr: UnsafeMutableRawPointer, index: UInt) -> Optional<Secp256k1ErrorRef> {
+        let pointer = __swift_bridge__$Vec_Secp256k1Error$get(vecPtr, index)
+        if pointer == nil {
+            return nil
+        } else {
+            return Secp256k1ErrorRef(ptr: pointer!)
+        }
+    }
+
+    public static func vecOfSelfGetMut(vecPtr: UnsafeMutableRawPointer, index: UInt) -> Optional<Secp256k1ErrorRefMut> {
+        let pointer = __swift_bridge__$Vec_Secp256k1Error$get_mut(vecPtr, index)
+        if pointer == nil {
+            return nil
+        } else {
+            return Secp256k1ErrorRefMut(ptr: pointer!)
+        }
+    }
+
+    public static func vecOfSelfAsPtr(vecPtr: UnsafeMutableRawPointer) -> UnsafePointer<Secp256k1ErrorRef> {
+        UnsafePointer<Secp256k1ErrorRef>(OpaquePointer(__swift_bridge__$Vec_Secp256k1Error$as_ptr(vecPtr)))
+    }
+
+    public static func vecOfSelfLen(vecPtr: UnsafeMutableRawPointer) -> UInt {
+        __swift_bridge__$Vec_Secp256k1Error$len(vecPtr)
+    }
+}
+
 
 public class DelegatedIdentity: DelegatedIdentityRefMut {
     var isOwned: Bool = true

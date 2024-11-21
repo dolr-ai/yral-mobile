@@ -123,23 +123,55 @@ mod ffi {
     extern "Rust" {
         #[swift_bridge(already_declared)]
         type Service;
-        async fn claim_swap_neurons(&self, arg0: ClaimSwapNeuronsRequest) -> Result<ClaimSwapNeuronsResponse, AgentError>;
-        async fn fail_stuck_upgrade_in_progress(&self, arg0: FailStuckUpgradeInProgressArg) -> Result<FailStuckUpgradeInProgressRet, AgentError>;
+        async fn claim_swap_neurons(
+            &self,
+            arg0: ClaimSwapNeuronsRequest,
+        ) -> Result<ClaimSwapNeuronsResponse, AgentError>;
+        async fn fail_stuck_upgrade_in_progress(
+            &self,
+            arg0: FailStuckUpgradeInProgressArg,
+        ) -> Result<FailStuckUpgradeInProgressRet, AgentError>;
         async fn get_build_metadata(&self) -> Result<String, AgentError>;
         async fn get_latest_reward_event(&self) -> Result<RewardEvent, AgentError>;
-        async fn get_maturity_modulation(&self, arg0: GetMaturityModulationArg) -> Result<GetMaturityModulationResponse, AgentError>;
-        async fn get_metadata(&self, arg0: GetMetadataArg) -> Result<GetMetadataResponse, AgentError>;
+        async fn get_maturity_modulation(
+            &self,
+            arg0: GetMaturityModulationArg,
+        ) -> Result<GetMaturityModulationResponse, AgentError>;
+        async fn get_metadata(
+            &self,
+            arg0: GetMetadataArg,
+        ) -> Result<GetMetadataResponse, AgentError>;
         async fn get_mode(&self, arg0: GetModeArg) -> Result<GetModeResponse, AgentError>;
-        async fn get_nervous_system_parameters(&self, arg0: ()) -> Result<NervousSystemParameters, AgentError>;
+        async fn get_nervous_system_parameters(
+            &self,
+            arg0: (),
+        ) -> Result<NervousSystemParameters, AgentError>;
         async fn get_neuron(&self, arg0: GetNeuron) -> Result<GetNeuronResponse, AgentError>;
         async fn get_proposal(&self, arg0: GetProposal) -> Result<GetProposalResponse, AgentError>;
-        async fn get_root_canister_status(&self, arg0: ()) -> Result<CanisterStatusResultV2, AgentError>;
-        async fn get_running_sns_version(&self, arg0: GetRunningSnsVersionArg) -> Result<GetRunningSnsVersionResponse, AgentError>;
-        async fn get_sns_initialization_parameters(&self, arg0: GetSnsInitializationParametersArg) -> Result<GetSnsInitializationParametersResponse, AgentError>;
-        async fn list_nervous_system_functions(&self) -> Result<ListNervousSystemFunctionsResponse, AgentError>;
+        async fn get_root_canister_status(
+            &self,
+            arg0: (),
+        ) -> Result<CanisterStatusResultV2, AgentError>;
+        async fn get_running_sns_version(
+            &self,
+            arg0: GetRunningSnsVersionArg,
+        ) -> Result<GetRunningSnsVersionResponse, AgentError>;
+        async fn get_sns_initialization_parameters(
+            &self,
+            arg0: GetSnsInitializationParametersArg,
+        ) -> Result<GetSnsInitializationParametersResponse, AgentError>;
+        async fn list_nervous_system_functions(
+            &self,
+        ) -> Result<ListNervousSystemFunctionsResponse, AgentError>;
         async fn list_neurons(&self, arg0: ListNeurons) -> Result<ListNeuronsResponse, AgentError>;
-        async fn list_proposals(&self, arg0: ListProposals) -> Result<ListProposalsResponse, AgentError>;
-        async fn manage_neuron(&self, arg0: ManageNeuron) -> Result<ManageNeuronResponse, AgentError>;
+        async fn list_proposals(
+            &self,
+            arg0: ListProposals,
+        ) -> Result<ListProposalsResponse, AgentError>;
+        async fn manage_neuron(
+            &self,
+            arg0: ManageNeuron,
+        ) -> Result<ManageNeuronResponse, AgentError>;
         async fn set_mode(&self, arg0: SetMode) -> Result<SetModeRet, AgentError>;
-    }   
+    }
 }

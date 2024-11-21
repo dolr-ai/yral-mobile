@@ -2,12 +2,12 @@
 // You may want to manually adjust some of the types.
 #![allow(dead_code, unused_imports)]
 mod post_cache_ffi;
+use crate::individual_user_template;
 use crate::RUNTIME;
 use candid::{self, CandidType, Decode, Deserialize, Encode, Principal};
 use ic_agent::export::PrincipalError;
 use ic_agent::Agent;
 use std::sync::Arc;
-use crate::individual_user_template;
 
 type Result<T> = std::result::Result<T, ic_agent::AgentError>;
 

@@ -105,28 +105,76 @@ mod ffi {
         #[swift_bridge(already_declared)]
         type PrincipalError;
     }
-    
+
     extern "Rust" {
         #[swift_bridge(already_declared)]
         type Service;
-        async fn error_refund_icp(&self, arg0: ErrorRefundIcpRequest) -> Result<ErrorRefundIcpResponse, AgentError>;
-        async fn finalize_swap(&self, arg0: FinalizeSwapArg) -> Result<FinalizeSwapResponse, AgentError>;
-        async fn get_auto_finalization_status(&self, arg0: GetAutoFinalizationStatusArg) -> Result<GetAutoFinalizationStatusResponse, AgentError>;
-        async fn get_buyer_state(&self, arg0: GetBuyerStateRequest) -> Result<GetBuyerStateResponse, AgentError>;
-        async fn get_buyers_total(&self, arg0: GetBuyersTotalArg) -> Result<GetBuyersTotalResponse, AgentError>;
-        async fn get_canister_status(&self, arg0: GetCanisterStatusArg) -> Result<CanisterStatusResultV2, AgentError>;
-        async fn get_derived_state(&self, arg0: GetDerivedStateArg) -> Result<GetDerivedStateResponse, AgentError>;
+        async fn error_refund_icp(
+            &self,
+            arg0: ErrorRefundIcpRequest,
+        ) -> Result<ErrorRefundIcpResponse, AgentError>;
+        async fn finalize_swap(
+            &self,
+            arg0: FinalizeSwapArg,
+        ) -> Result<FinalizeSwapResponse, AgentError>;
+        async fn get_auto_finalization_status(
+            &self,
+            arg0: GetAutoFinalizationStatusArg,
+        ) -> Result<GetAutoFinalizationStatusResponse, AgentError>;
+        async fn get_buyer_state(
+            &self,
+            arg0: GetBuyerStateRequest,
+        ) -> Result<GetBuyerStateResponse, AgentError>;
+        async fn get_buyers_total(
+            &self,
+            arg0: GetBuyersTotalArg,
+        ) -> Result<GetBuyersTotalResponse, AgentError>;
+        async fn get_canister_status(
+            &self,
+            arg0: GetCanisterStatusArg,
+        ) -> Result<CanisterStatusResultV2, AgentError>;
+        async fn get_derived_state(
+            &self,
+            arg0: GetDerivedStateArg,
+        ) -> Result<GetDerivedStateResponse, AgentError>;
         async fn get_init(&self, arg0: GetInitArg) -> Result<GetInitResponse, AgentError>;
-        async fn get_lifecycle(&self, arg0: GetLifecycleArg) -> Result<GetLifecycleResponse, AgentError>;
-        async fn get_open_ticket(&self, arg0: GetOpenTicketArg) -> Result<GetOpenTicketResponse,AgentError>;
-        async fn get_sale_parameters(&self, arg0: GetSaleParametersArg) -> Result<GetSaleParametersResponse,AgentError>;
-        async fn get_state(&self, arg0: GetStateArg) -> Result<GetStateResponse,AgentError>;
-        async fn list_community_fund_participants(&self, arg0: ListCommunityFundParticipantsRequest) -> Result<ListCommunityFundParticipantsResponse,AgentError>;
-        async fn list_direct_participants(&self, arg0: ListDirectParticipantsRequest) -> Result<ListDirectParticipantsResponse,AgentError>;
-        async fn list_sns_neuron_recipes(&self, arg0: ListSnsNeuronRecipesRequest) -> Result<ListSnsNeuronRecipesResponse,AgentError>;
-        async fn new_sale_ticket(&self, arg0: NewSaleTicketRequest) -> Result<NewSaleTicketResponse,AgentError>;
-        async fn notify_payment_failure(&self, arg0: NotifyPaymentFailureArg) -> Result<Ok2,AgentError>;
-        async fn refresh_buyer_tokens(&self, arg0: RefreshBuyerTokensRequest) -> Result<RefreshBuyerTokensResponse,AgentError>;
+        async fn get_lifecycle(
+            &self,
+            arg0: GetLifecycleArg,
+        ) -> Result<GetLifecycleResponse, AgentError>;
+        async fn get_open_ticket(
+            &self,
+            arg0: GetOpenTicketArg,
+        ) -> Result<GetOpenTicketResponse, AgentError>;
+        async fn get_sale_parameters(
+            &self,
+            arg0: GetSaleParametersArg,
+        ) -> Result<GetSaleParametersResponse, AgentError>;
+        async fn get_state(&self, arg0: GetStateArg) -> Result<GetStateResponse, AgentError>;
+        async fn list_community_fund_participants(
+            &self,
+            arg0: ListCommunityFundParticipantsRequest,
+        ) -> Result<ListCommunityFundParticipantsResponse, AgentError>;
+        async fn list_direct_participants(
+            &self,
+            arg0: ListDirectParticipantsRequest,
+        ) -> Result<ListDirectParticipantsResponse, AgentError>;
+        async fn list_sns_neuron_recipes(
+            &self,
+            arg0: ListSnsNeuronRecipesRequest,
+        ) -> Result<ListSnsNeuronRecipesResponse, AgentError>;
+        async fn new_sale_ticket(
+            &self,
+            arg0: NewSaleTicketRequest,
+        ) -> Result<NewSaleTicketResponse, AgentError>;
+        async fn notify_payment_failure(
+            &self,
+            arg0: NotifyPaymentFailureArg,
+        ) -> Result<Ok2, AgentError>;
+        async fn refresh_buyer_tokens(
+            &self,
+            arg0: RefreshBuyerTokensRequest,
+        ) -> Result<RefreshBuyerTokensResponse, AgentError>;
 
     }
 }
