@@ -46,10 +46,9 @@ struct ContentView: View {
     ]
     if let jsonData = try? JSONSerialization.data(withJSONObject: jwk, options: .prettyPrinted),
        let jsonString = String(data: jsonData, encoding: .utf8) {
-      if let ec_key = get_jwk_ec_key(jsonString) {
-        let identity = get_secp256k1_identity(ec_key)
-        print("Ec Key: \(ec_key), identity: \(String(describing: identity))")
-      }
+      let ec_key = try get_jwk_ec_key(jsonString)
+      let identity = try get_secp256k1_identity(ec_key)
+      print("Ec Key: \(ec_key), identity: \(String(describing: identity))")
     }
     let payload: [String: Any] = [
       "anonymous_identity": jwk

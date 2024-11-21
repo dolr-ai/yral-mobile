@@ -1,11 +1,16 @@
 #![allow(dead_code, unused_imports)]
 mod individual_user_template_ffi;
+mod individual_user_template_helper;
+use crate::RUNTIME;
 use candid::{self, CandidType, Decode, Deserialize, Encode, Principal};
-use ic_agent::{export::{reqwest::Error, PrincipalError}, identity::{self, DelegatedIdentity}, Agent};
+use ic_agent::identity::Secp256k1Identity;
+use ic_agent::{
+    export::{reqwest::Error, PrincipalError},
+    identity::{self, DelegatedIdentity},
+    Agent,
+};
 use k256::elliptic_curve::JwkEcKey;
 use std::sync::Arc;
-use ic_agent::identity::Secp256k1Identity;
-use crate::RUNTIME;
 
 type Result<T> = std::result::Result<T, ic_agent::AgentError>;
 
@@ -808,17 +813,21 @@ pub struct Service {
 }
 
 impl Service {
-    pub fn new(principal: Principal, identity: DelegatedIdentity) -> std::result::Result<Service, PrincipalError> {
+    pub fn new(
+        principal: Principal,
+        identity: DelegatedIdentity,
+    ) -> std::result::Result<Service, PrincipalError> {
         let agent = Agent::builder()
-        .with_url("https://ic0.app/")
-        .with_identity(identity)
-        .build()
-        .expect("Failed to create agent");
-    RUNTIME.block_on(agent.fetch_root_key())
-        .expect("Failed to fetch root key");
+            .with_url("https://ic0.app/")
+            .with_identity(identity)
+            .build()
+            .expect("Failed to create agent");
+        RUNTIME
+            .block_on(agent.fetch_root_key())
+            .expect("Failed to fetch root key");
         Ok(Self {
             principal,
-            agent: Arc::new(agent)
+            agent: Arc::new(agent),
         })
     }
 
