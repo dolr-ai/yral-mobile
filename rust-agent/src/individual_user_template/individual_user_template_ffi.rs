@@ -74,6 +74,7 @@ mod ffi {
         type Result10;
         type BetOutcomeForBetMaker;
         type PlacedBetDetail;
+        type PlacedBetDetailResult;
         type PostDetailsForFrontend;
         type Result11;
         type MlFeedCacheItem;
@@ -133,6 +134,9 @@ mod ffi {
         type Secp256k1Identity;
         type DelegatedIdentity;
         type Secp256k1Error;
+        type PrincipalResult;
+        type U64Wrapper;
+        type KeyValuePair;
     }
 
     extern "Rust" {
@@ -172,7 +176,7 @@ mod ffi {
         ) -> Result<Result7, AgentError>;
         async fn deployed_cdao_canisters(&self) -> Result<Vec<DeployedCdaoCanisters>, AgentError>;
         async fn do_i_follow_this_user(&self, arg0: FolloweeArg) -> Result<Result8, AgentError>;
-        //async fn download_snapshot(&self, arg0: u64, arg1: u64) -> Result<serde_bytes::ByteBuf, AgentError>;
+        async fn download_snapshot(&self, arg0: u64, arg1: u64) -> Result<ByteBuf, AgentError>;
         async fn get_bet_details_for_a_user_on_a_post(
             &self,
             arg0: Principal,
@@ -195,11 +199,11 @@ mod ffi {
             &self,
             arg0: u64,
         ) -> Result<PostDetailsForFrontend, AgentError>;
-        // async fn get_individual_hot_or_not_bet_placed_by_this_profile(
-        //     &self,
-        //     arg0: Principal,
-        //     arg1: u64,
-        // ) -> Result<Option<PlacedBetDetail>, AgentError>;
+        async fn get_individual_hot_or_not_bet_placed_by_this_profile(
+            &self,
+            arg0: Principal,
+            arg1: u64,
+        ) -> Result<PlacedBetDetailResult, AgentError>;
         async fn get_last_access_time(&self) -> Result<Result11, AgentError>;
         async fn get_last_canister_functionality_access_time(&self)
             -> Result<Result11, AgentError>;
@@ -237,7 +241,7 @@ mod ffi {
         ) -> Result<(), AgentError>;
         async fn get_rewarded_for_signing_up(&self) -> Result<(), AgentError>;
         async fn get_session_type(&self) -> Result<Result13, AgentError>;
-        // async fn get_stable_memory_size(&self) -> Result<u64, AgentError>;
+        async fn get_stable_memory_size(&self) -> Result<U64Wrapper, AgentError>;
         async fn get_success_history(&self) -> Result<Result14, AgentError>;
         async fn get_token_roots_of_this_user_with_pagination_cursor(
             &self,
@@ -250,14 +254,14 @@ mod ffi {
             arg0: u64,
             arg1: u64,
         ) -> Result<Result16, AgentError>;
-        // async fn get_utility_token_balance(&self) -> Result<u64, AgentError>;
+        async fn get_utility_token_balance(&self) -> Result<U64Wrapper, AgentError>;
         async fn get_version(&self) -> Result<String, AgentError>;
-        // async fn get_version_number(&self) -> Result<u64, AgentError>;
+        async fn get_version_number(&self) -> Result<U64Wrapper, AgentError>;
         async fn get_watch_history(&self) -> Result<Result17, AgentError>;
-        // async fn get_well_known_principal_value(
-        //     &self,
-        //     arg0: KnownPrincipalType,
-        // ) -> Result<Option<Principal>, AgentError>;
+        async fn get_well_known_principal_value(
+            &self,
+            arg0: KnownPrincipalType,
+        ) -> Result<PrincipalResult, AgentError>;
         async fn http_request(&self, arg0: HttpRequest) -> Result<HttpResponse, AgentError>;
         async fn list_namespace_keys(&self, arg0: u64) -> Result<Result18, AgentError>;
         async fn list_namespaces(
@@ -325,7 +329,10 @@ mod ffi {
             arg1: PostViewDetailsFromFrontend,
         ) -> Result<(), AgentError>;
         async fn update_post_as_ready_to_view(&self, arg0: u64) -> Result<(), AgentError>;
-        // async fn update_post_increment_share_count(&self, arg0: u64) -> Result<u64, AgentError>;
+        async fn update_post_increment_share_count(
+            &self,
+            arg0: u64,
+        ) -> Result<U64Wrapper, AgentError>;
         async fn update_post_status(&self, arg0: u64, arg1: PostStatus) -> Result<(), AgentError>;
         async fn update_profile_display_details(
             &self,
@@ -371,11 +378,11 @@ mod ffi {
             arg1: String,
             arg2: String,
         ) -> Result<Result5, AgentError>;
-        // async fn write_multiple_key_value_pairs(
-        //     &self,
-        //     arg0: u64,
-        //     arg1: Vec<(String, String)>,
-        // ) -> Result<Result6, AgentError>;
+        async fn write_multiple_key_value_pairs(
+            &self,
+            arg0: u64,
+            arg1: Vec<KeyValuePair>,
+        ) -> Result<Result6, AgentError>;
     }
 
     extern "Rust" {
