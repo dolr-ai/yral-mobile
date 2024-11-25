@@ -73,6 +73,8 @@ mod ffi {
         #[swift_bridge(already_declared)]
         type AgentError;
         type MetadataEntry;
+        type AccountResult;
+        type Icrc3DataCertificateResult;
     }
 
     extern "Rust" {
@@ -89,7 +91,7 @@ mod ffi {
         async fn icrc_1_decimals(&self) -> Result<u8, AgentError>;
         async fn icrc_1_fee(&self) -> Result<Tokens, AgentError>;
         async fn icrc_1_metadata(&self) -> Result<Vec<MetadataEntry>, AgentError>;
-        // async fn icrc_1_minting_account(&self) -> Result<Option<Account>, AgentError>;
+        async fn icrc_1_minting_account(&self) -> Result<AccountResult, AgentError>;
         async fn icrc_1_name(&self) -> Result<String, AgentError>;
         async fn icrc_1_supported_standards(&self) -> Result<Vec<StandardRecord>, AgentError>;
         async fn icrc_1_symbol(&self) -> Result<String, AgentError>;
@@ -109,7 +111,9 @@ mod ffi {
             &self,
             arg0: Vec<GetBlocksArgs>,
         ) -> Result<GetBlocksResult, AgentError>;
-        // async fn icrc_3_get_tip_certificate(&self) -> Result<Option<Icrc3DataCertificate>, AgentError>;
+        async fn icrc_3_get_tip_certificate(
+            &self,
+        ) -> Result<Icrc3DataCertificateResult, AgentError>;
         async fn icrc_3_supported_block_types(
             &self,
         ) -> Result<Vec<Icrc3SupportedBlockTypesRetItem>, AgentError>;

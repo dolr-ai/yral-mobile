@@ -15,6 +15,15 @@ use std::sync::Arc;
 type Result<T> = std::result::Result<T, ic_agent::AgentError>;
 
 #[derive(CandidType, Deserialize)]
+pub struct U64Wrapper {
+    pub item: u64,
+}
+#[derive(CandidType, Deserialize)]
+pub enum PrincipalResult {
+    Found(Principal),
+    NotFound,
+}
+#[derive(CandidType, Deserialize)]
 pub enum Result_ {
     Ok(bool),
     Err(String),
@@ -440,6 +449,11 @@ pub struct PlacedBetDetail {
     pub bet_placed_at: SystemTime,
 }
 #[derive(CandidType, Deserialize)]
+pub enum PlacedBetDetailResult {
+    Found(PlacedBetDetail),
+    NotFound,
+}
+#[derive(CandidType, Deserialize)]
 pub struct PostDetailsForFrontend {
     pub id: u64,
     pub is_nsfw: bool,
@@ -807,6 +821,12 @@ pub struct FollowEntry {
     pub detail: FollowEntryDetail,
 }
 
+#[derive(Deserialize, CandidType)]
+pub struct KeyValuePair {
+    pub key: String,
+    pub value: String,
+}
+
 pub struct Service {
     pub principal: Principal,
     pub agent: Arc<Agent>,
@@ -1038,7 +1058,7 @@ impl Service {
         &self,
         arg0: Principal,
         arg1: u64,
-    ) -> Result<Option<PlacedBetDetail>> {
+    ) -> Result<PlacedBetDetailResult> {
         let args = Encode!(&arg0, &arg1)?;
         let bytes = self
             .agent
@@ -1049,7 +1069,13 @@ impl Service {
             .with_arg(args)
             .call()
             .await?;
-        Ok(Decode!(&bytes, Option<PlacedBetDetail>)?)
+        let result = Decode!(&bytes, Option<PlacedBetDetail>)?;
+        match result {
+            Some(placed_bet_details) => {
+                std::result::Result::Ok(PlacedBetDetailResult::Found(placed_bet_details))
+            }
+            None => Ok(PlacedBetDetailResult::NotFound),
+        }
     }
     pub async fn get_individual_post_details_by_id(
         &self,
@@ -1217,7 +1243,7 @@ impl Service {
             .await?;
         Ok(Decode!(&bytes, Result13)?)
     }
-    pub async fn get_stable_memory_size(&self) -> Result<u64> {
+    pub async fn get_stable_memory_size(&self) -> Result<U64Wrapper> {
         let args = Encode!()?;
         let bytes = self
             .agent
@@ -1225,7 +1251,7 @@ impl Service {
             .with_arg(args)
             .call()
             .await?;
-        Ok(Decode!(&bytes, u64)?)
+        return Ok(Decode!(&bytes, U64Wrapper)?);
     }
     pub async fn get_success_history(&self) -> Result<Result14> {
         let args = Encode!()?;
@@ -1281,7 +1307,7 @@ impl Service {
             .await?;
         Ok(Decode!(&bytes, Result16)?)
     }
-    pub async fn get_utility_token_balance(&self) -> Result<u64> {
+    pub async fn get_utility_token_balance(&self) -> Result<U64Wrapper> {
         let args = Encode!()?;
         let bytes = self
             .agent
@@ -1289,7 +1315,7 @@ impl Service {
             .with_arg(args)
             .call()
             .await?;
-        Ok(Decode!(&bytes, u64)?)
+        Ok(Decode!(&bytes, U64Wrapper)?)
     }
     pub async fn get_version(&self) -> Result<String> {
         let args = Encode!()?;
@@ -1301,7 +1327,7 @@ impl Service {
             .await?;
         Ok(Decode!(&bytes, String)?)
     }
-    pub async fn get_version_number(&self) -> Result<u64> {
+    pub async fn get_version_number(&self) -> Result<U64Wrapper> {
         let args = Encode!()?;
         let bytes = self
             .agent
@@ -1309,7 +1335,7 @@ impl Service {
             .with_arg(args)
             .call()
             .await?;
-        Ok(Decode!(&bytes, u64)?)
+        Ok(Decode!(&bytes, U64Wrapper)?)
     }
     pub async fn get_watch_history(&self) -> Result<Result17> {
         let args = Encode!()?;
@@ -1324,7 +1350,7 @@ impl Service {
     pub async fn get_well_known_principal_value(
         &self,
         arg0: KnownPrincipalType,
-    ) -> Result<Option<Principal>> {
+    ) -> Result<PrincipalResult> {
         let args = Encode!(&arg0)?;
         let bytes = self
             .agent
@@ -1332,7 +1358,11 @@ impl Service {
             .with_arg(args)
             .call()
             .await?;
-        Ok(Decode!(&bytes, Option<Principal>)?)
+        let result = Decode!(&bytes, Option<Principal>)?;
+        match result {
+            Some(principal) => std::result::Result::Ok(PrincipalResult::Found(principal)),
+            None => Ok(PrincipalResult::NotFound),
+        }
     }
     pub async fn http_request(&self, arg0: HttpRequest) -> Result<HttpResponse> {
         let args = Encode!(&arg0)?;
@@ -1577,7 +1607,7 @@ impl Service {
             .await?;
         Ok(Decode!(&bytes)?)
     }
-    pub async fn update_post_increment_share_count(&self, arg0: u64) -> Result<u64> {
+    pub async fn update_post_increment_share_count(&self, arg0: u64) -> Result<U64Wrapper> {
         let args = Encode!(&arg0)?;
         let bytes = self
             .agent
@@ -1585,7 +1615,7 @@ impl Service {
             .with_arg(args)
             .call_and_wait()
             .await?;
-        Ok(Decode!(&bytes, u64)?)
+        Ok(Decode!(&bytes, U64Wrapper)?)
     }
     pub async fn update_post_status(&self, arg0: u64, arg1: PostStatus) -> Result<()> {
         let args = Encode!(&arg0, &arg1)?;
@@ -1744,7 +1774,7 @@ impl Service {
     pub async fn write_multiple_key_value_pairs(
         &self,
         arg0: u64,
-        arg1: Vec<(String, String)>,
+        arg1: Vec<KeyValuePair>,
     ) -> Result<Result6> {
         let args = Encode!(&arg0, &arg1)?;
         let bytes = self
