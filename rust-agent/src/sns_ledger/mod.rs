@@ -36,6 +36,11 @@ pub struct Account {
     pub subaccount: Option<Subaccount>,
 }
 #[derive(CandidType, Deserialize)]
+pub enum AccountResult {
+    Found(Account),
+    NotFound,
+}
+#[derive(CandidType, Deserialize)]
 pub enum ChangeFeeCollector {
     SetTo(Account),
     Unset,
@@ -395,6 +400,11 @@ pub struct Icrc3DataCertificate {
     pub hash_tree: serde_bytes::ByteBuf,
 }
 #[derive(CandidType, Deserialize)]
+pub enum Icrc3DataCertificateResult {
+    Found(Icrc3DataCertificate),
+    NotFound,
+}
+#[derive(CandidType, Deserialize)]
 pub struct Icrc3SupportedBlockTypesRetItem {
     pub url: String,
     pub block_type: String,
@@ -510,7 +520,7 @@ impl Service {
             .await?;
         Ok(Decode!(&bytes, Vec<MetadataEntry>)?)
     }
-    pub async fn icrc_1_minting_account(&self) -> Result<Option<Account>> {
+    pub async fn icrc_1_minting_account(&self) -> Result<AccountResult> {
         let args = Encode!()?;
         let bytes = self
             .agent
@@ -518,7 +528,7 @@ impl Service {
             .with_arg(args)
             .call()
             .await?;
-        Ok(Decode!(&bytes, Option<Account>)?)
+        Ok(Decode!(&bytes, AccountResult)?)
     }
     pub async fn icrc_1_name(&self) -> Result<String> {
         let args = Encode!()?;
@@ -620,7 +630,7 @@ impl Service {
             .await?;
         Ok(Decode!(&bytes, GetBlocksResult)?)
     }
-    pub async fn icrc_3_get_tip_certificate(&self) -> Result<Option<Icrc3DataCertificate>> {
+    pub async fn icrc_3_get_tip_certificate(&self) -> Result<Icrc3DataCertificateResult> {
         let args = Encode!()?;
         let bytes = self
             .agent
@@ -628,7 +638,7 @@ impl Service {
             .with_arg(args)
             .call()
             .await?;
-        Ok(Decode!(&bytes, Option<Icrc3DataCertificate>)?)
+        Ok(Decode!(&bytes, Icrc3DataCertificateResult)?)
     }
     pub async fn icrc_3_supported_block_types(
         &self,

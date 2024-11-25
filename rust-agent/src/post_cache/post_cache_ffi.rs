@@ -52,8 +52,6 @@ mod ffi {
             arg4: Option<NsfwFilter>,
         ) -> Result<PostCacheResult_, AgentError>;
 
-        // async fn get_well_known_principal_value(&self, arg0: KnownPrincipalType) -> Result<Opton<Principal>, AgentError>;
-
         async fn receive_top_home_feed_posts_from_publishing_canister(
             &self,
             arg0: Vec<PostScoreIndexItemV1>,
