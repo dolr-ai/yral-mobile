@@ -46,9 +46,9 @@ struct ContentView: View {
     ]
     if let jsonData = try? JSONSerialization.data(withJSONObject: jwk, options: .prettyPrinted),
        let jsonString = String(data: jsonData, encoding: .utf8) {
-      let ec_key = try get_jwk_ec_key(jsonString)
-      let identity = try get_secp256k1_identity(ec_key)
-      print("Ec Key: \(ec_key), identity: \(String(describing: identity))")
+      let jwkEcKey = try get_jwk_ec_key(jsonString)
+      let identity = try get_secp256k1_identity(jwkEcKey)
+      print("Ec Key: \(jwkEcKey), identity: \(String(describing: identity))")
     }
     let payload: [String: Any] = [
       "anonymous_identity": jwk
@@ -66,14 +66,15 @@ struct ContentView: View {
     request.addValue("application/json", forHTTPHeaderField: "Content-Type")
     request.httpBody = jsonData
 
-    let task = URLSession.shared.dataTask(with: request) { data, response, error in
+    let task = URLSession.shared.dataTask(with: request) { _, response, error in
       if let error = error {
         print("Error:", error)
         return
       }
       guard let httpResponse = response as? HTTPURLResponse else { return }
-      if httpResponse.statusCode == 200, let data = data {
-        if let cookies = HTTPCookieStorage.shared.cookies(for: url), let userIdentity = cookies.first(where: { $0.name == "user-identity"}) {
+      if httpResponse.statusCode == 200 {
+        if let cookies = HTTPCookieStorage.shared.cookies(for: url),
+           let userIdentity = cookies.first(where: { $0.name == "user-identity"}) {
           HTTPCookieStorage.shared.setCookie(userIdentity)
         } else {
           print("No cookies found for this URL")
@@ -93,7 +94,7 @@ struct ContentView: View {
     request.setValue(cookieHeader, forHTTPHeaderField: "Cookie")
     request.httpMethod = "POST"
     request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-    request.httpBody = "{}".data(using: .utf8)
+    request.httpBody = Data("{}".utf8)
 
     let task = URLSession.shared.dataTask(with: request) { data, response, error in
       if let error = error {
