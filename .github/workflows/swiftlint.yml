@@ -1,0 +1,19 @@
+name: SwiftLint
+
+on:
+  pull_request:
+    types: [ready_for_review]
+
+jobs:
+  swiftlint:
+    runs-on: macOS-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Install SwiftLint
+        run: brew install swiftlint
+
+      - name: Run SwiftLint
+        working-directory: iosApp
+        run: swiftlint --strict
