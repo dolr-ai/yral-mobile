@@ -17,7 +17,7 @@ extension PrincipalError: Error {
 }
 
 extension RustString: Error {
-  
+
 }
 
 extension Secp256k1Error: Error {
