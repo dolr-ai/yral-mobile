@@ -1,4 +1,5 @@
 // swiftlint:disable all
+
 public func get_secp256k1_identity(_ jwk_key: JwkEcKey) throws -> Secp256k1Identity {
     try { let val = __swift_bridge__$get_secp256k1_identity({jwk_key.isOwned = false; return jwk_key.ptr;}()); if val.is_ok { return Secp256k1Identity(ptr: val.ok_or_err!) } else { throw Secp256k1Error(ptr: val.ok_or_err!) } }()
 }
@@ -34496,5 +34497,4 @@ extension ServiceRef {
         }
     }
 }
-
-
+// swiftlint:enable all
