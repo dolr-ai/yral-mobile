@@ -1322,3 +1322,4 @@ extension Optional where Wrapped == Bool {
         __private__OptionBool(self) 
     }
 }
+// swiftlint:enable all

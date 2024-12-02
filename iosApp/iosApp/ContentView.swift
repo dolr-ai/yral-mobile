@@ -2,7 +2,6 @@ import SwiftUI
 import secp256k1
 
 struct ContentView: View {
-  //	let greet = Greeting().greet()
 
   var body: some View {
     Text("greet")
