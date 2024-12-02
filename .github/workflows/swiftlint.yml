@@ -16,4 +16,4 @@ jobs:
 
       - name: Run SwiftLint
         working-directory: iosApp
-        run: swiftlint
+        run: swiftlint --strict
