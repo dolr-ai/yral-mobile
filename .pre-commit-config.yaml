@@ -4,3 +4,19 @@ repos:
     hooks:
       - id: swiftlint
         entry: swiftlint --strict
+
+  - repo: local
+    hooks:
+      - id: ktlint
+        name: ktlint
+        entry: ktlint
+        language: system
+        types: [kotlin]
+        pass_filenames: true
+
+      - id: detekt
+        name: detekt
+        entry: detekt
+        language: system
+        types: [kotlin]
+        pass_filenames: true
