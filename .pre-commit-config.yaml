@@ -11,12 +11,12 @@ repos:
         name: ktlint
         entry: ktlint
         language: system
+        types: [kotlin]
         pass_filenames: true
-        files: \.kt$
 
       - id: detekt
         name: detekt
         entry: detekt
         language: system
+        types: [kotlin]
         pass_filenames: true
-        files: \.kt$
