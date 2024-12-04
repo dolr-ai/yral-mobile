@@ -20,3 +20,4 @@ repos:
         language: system
         types: [kotlin]
         pass_filenames: true
+        excludes: '**/build.gradle.kts,**/settings.gradle.kts'
