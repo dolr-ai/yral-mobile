@@ -1,5 +1,6 @@
 import SwiftUI
 import secp256k1
+import Firebase
 
 struct ContentView: View {
 
@@ -25,6 +26,9 @@ struct ContentView: View {
           print("Error: \(error)")
         }
       }
+    Button("Crash") {
+      fatalError("Crash was triggered")
+    }
   }
 
   func getAuthCookie() async throws {

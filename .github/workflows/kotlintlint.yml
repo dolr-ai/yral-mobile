@@ -1,0 +1,89 @@
+name: KotlinLint
+
+on:
+  pull_request:
+    types: [opened, ready_for_review, synchronize]
+
+jobs:
+  code-analysis:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Get Changed Files
+        id: changed_files
+        uses: tj-actions/changed-files@v36
+        with:
+          files: |
+            '**/*.kt'
+            '**/*.kts'
+
+      - name: Run ktlint on Changed Files
+        if: steps.changed_files.outputs.any_changed == 'true'
+        run: |
+          echo "Changed files for ktlint: ${{ steps.changed_files.outputs.all_changed_files }}"
+          changed_files=$(echo "${{ steps.changed_files.outputs.all_changed_files }}" | tr ' ' '\n')
+          ./gradlew ktlintCheck -PktlintFiles="$changed_files" --console=plain
+        continue-on-error: true
+
+      - name: Run detekt on Changed Files
+        if: steps.changed_files.outputs.any_changed == 'true'
+        run: |
+          echo "Changed files for detekt: ${{ steps.changed_files.outputs.all_changed_files }}"
+          changed_files=$(echo "${{ steps.changed_files.outputs.all_changed_files }}" | tr ' ' ',')
+          ./gradlew detekt -PdetektFiles="$changed_files" --console=plain
+        continue-on-error: true
+
+      - name: Annotate ktlint Issues
+        if: failure()
+        uses: reviewdog/action-setup@v1
+        with:
+          name: ktlint
+          reporter: github-pr-review
+          filter_mode: added
+          fail_on_error: true
+          level: error
+          format: ktlint
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          tool_name: ktlint
+          # Read ktlint report
+          input: './build/reports/ktlint/ktlintMainSourceSetCheck.txt'
+
+      - name: Annotate detekt Issues
+        if: failure()
+        uses: reviewdog/action-setup@v1
+        with:
+          name: detekt
+          reporter: github-pr-review
+          filter_mode: added
+          fail_on_error: true
+          level: error
+          format: checkstyle
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          tool_name: detekt
+          # Read detekt report
+          input: './build/reports/detekt/detekt.xml'
+
+      - name: Upload detekt SARIF Report
+        if: always() && steps.changed_files.outputs.any_changed == 'true'
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: build/reports/detekt/detekt.sarif
