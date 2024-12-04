@@ -1,5 +1,4 @@
 // swiftlint:disable all
-
 import Foundation
 
 extension RustString {
