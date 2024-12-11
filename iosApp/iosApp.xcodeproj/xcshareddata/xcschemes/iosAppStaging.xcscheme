@@ -16,8 +16,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "7555FF7A242A565900829871"
-               BuildableName = "Yral.app"
-               BlueprintName = "Yral"
+               BuildableName = "iosApp.app"
+               BlueprintName = "iosApp"
                ReferencedContainer = "container:iosApp.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -30,8 +30,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "ACD941832CFF575C0038FCB6"
-               BuildableName = "Yral-Staging.app"
-               BlueprintName = "Yral-Staging"
+               BuildableName = "iosAppStaging.app"
+               BlueprintName = "iosAppStaging"
                ReferencedContainer = "container:iosApp.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -68,8 +68,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "ACD941832CFF575C0038FCB6"
-            BuildableName = "Yral-Staging.app"
-            BlueprintName = "Yral-Staging"
+            BuildableName = "iosAppStaging.app"
+            BlueprintName = "iosAppStaging"
             ReferencedContainer = "container:iosApp.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -91,8 +91,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "ACD941832CFF575C0038FCB6"
-            BuildableName = "Yral-Staging.app"
-            BlueprintName = "Yral-Staging"
+            BuildableName = "iosAppStaging.app"
+            BlueprintName = "iosAppStaging"
             ReferencedContainer = "container:iosApp.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
