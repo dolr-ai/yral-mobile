@@ -16,6 +16,22 @@
 		AC09A9FA2CDB7A5D009A39A4 /* SwiftBindings+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC09A9F92CDB7A5D009A39A4 /* SwiftBindings+Extensions.swift */; };
 		AC09AA742CDD210D009A39A4 /* Data+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC09AA732CDD2107009A39A4 /* Data+Extensions.swift */; };
 		AC0E49C42CEBA6F0002DC158 /* secp256k1 in Frameworks */ = {isa = PBXBuildFile; productRef = AC0E49C32CEBA6F0002DC158 /* secp256k1 */; };
+		AC6BECAA2D09D52B002E2021 /* CGRPCZlib in Frameworks */ = {isa = PBXBuildFile; productRef = AC6BECA92D09D52B002E2021 /* CGRPCZlib */; };
+		AC6BECAC2D09D52B002E2021 /* GRPC in Frameworks */ = {isa = PBXBuildFile; productRef = AC6BECAB2D09D52B002E2021 /* GRPC */; };
+		AC6BECAE2D09D52B002E2021 /* GRPCReflectionService in Frameworks */ = {isa = PBXBuildFile; productRef = AC6BECAD2D09D52B002E2021 /* GRPCReflectionService */; };
+		AC6BECB02D09D52B002E2021 /* protoc-gen-grpc-swift in Frameworks */ = {isa = PBXBuildFile; productRef = AC6BECAF2D09D52B002E2021 /* protoc-gen-grpc-swift */; };
+		AC6BECB22D09D541002E2021 /* CGRPCZlib in Frameworks */ = {isa = PBXBuildFile; productRef = AC6BECB12D09D541002E2021 /* CGRPCZlib */; };
+		AC6BECB42D09D541002E2021 /* GRPC in Frameworks */ = {isa = PBXBuildFile; productRef = AC6BECB32D09D541002E2021 /* GRPC */; };
+		AC6BECB62D09D541002E2021 /* GRPCReflectionService in Frameworks */ = {isa = PBXBuildFile; productRef = AC6BECB52D09D541002E2021 /* GRPCReflectionService */; };
+		AC6BECB82D09D55B002E2021 /* protoc-gen-grpc-swift in Frameworks */ = {isa = PBXBuildFile; productRef = AC6BECB72D09D55B002E2021 /* protoc-gen-grpc-swift */; };
+		AC6BECBC2D09F68C002E2021 /* Endpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC6BECBB2D09F685002E2021 /* Endpoint.swift */; };
+		AC6BECBD2D09F68C002E2021 /* Endpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC6BECBB2D09F685002E2021 /* Endpoint.swift */; };
+		AC6BECBF2D09F86C002E2021 /* NetworkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC6BECBE2D09F866002E2021 /* NetworkService.swift */; };
+		AC6BECC02D09F86C002E2021 /* NetworkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC6BECBE2D09F866002E2021 /* NetworkService.swift */; };
+		AC6BECC22D09F91C002E2021 /* HTTPService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC6BECC12D09F917002E2021 /* HTTPService.swift */; };
+		AC6BECC32D09F91C002E2021 /* HTTPService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC6BECC12D09F917002E2021 /* HTTPService.swift */; };
+		AC6BECC52D09FDA6002E2021 /* GRPCService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC6BECC42D09FD9B002E2021 /* GRPCService.swift */; };
+		AC6BECC62D09FDA6002E2021 /* GRPCService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC6BECC42D09FD9B002E2021 /* GRPCService.swift */; };
 		AC6CBA802CE46CA6002454F8 /* libyral_mobile_swift_binding.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AC09A9F72CDB78B9009A39A4 /* libyral_mobile_swift_binding.a */; };
 		ACB815372CF9D4FF00104B7B /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = ACB815342CF9CE0800104B7B /* GoogleService-Info.plist */; };
 		ACB815482CFA146800104B7B /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = ACB815472CFA146800104B7B /* FirebaseCore */; };
@@ -40,6 +56,12 @@
 		ACD941D12CFF5B720038FCB6 /* secp256k1 in Frameworks */ = {isa = PBXBuildFile; productRef = ACD941D02CFF5B720038FCB6 /* secp256k1 */; };
 		ACD941D32CFF5B8B0038FCB6 /* secp256k1 in Frameworks */ = {isa = PBXBuildFile; productRef = ACD941D22CFF5B8B0038FCB6 /* secp256k1 */; };
 		ACD941D92CFF63D90038FCB6 /* libyral_mobile_swift_binding.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AC09A9F72CDB78B9009A39A4 /* libyral_mobile_swift_binding.a */; };
+		ACF4EFC62D09CC0400086ADF /* ml_feed.proto in Sources */ = {isa = PBXBuildFile; fileRef = ACF4EFC42D09CC0400086ADF /* ml_feed.proto */; };
+		ACF4EFC72D09CC0400086ADF /* ml_feed.proto in Sources */ = {isa = PBXBuildFile; fileRef = ACF4EFC42D09CC0400086ADF /* ml_feed.proto */; };
+		ACF4EFCA2D09D39400086ADF /* ml_feed.grpc.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACF4EFC82D09D39400086ADF /* ml_feed.grpc.swift */; };
+		ACF4EFCB2D09D39400086ADF /* ml_feed.pb.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACF4EFC92D09D39400086ADF /* ml_feed.pb.swift */; };
+		ACF4EFCC2D09D39400086ADF /* ml_feed.grpc.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACF4EFC82D09D39400086ADF /* ml_feed.grpc.swift */; };
+		ACF4EFCD2D09D39400086ADF /* ml_feed.pb.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACF4EFC92D09D39400086ADF /* ml_feed.pb.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -57,11 +79,18 @@
 		AC09A9F92CDB7A5D009A39A4 /* SwiftBindings+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SwiftBindings+Extensions.swift"; sourceTree = "<group>"; };
 		AC09AA0A2CDB7F2A009A39A4 /* shared.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = shared.framework; path = "../shared/build/xcode-frameworks/Debug/iphoneos18.1/shared.framework"; sourceTree = "<group>"; };
 		AC09AA732CDD2107009A39A4 /* Data+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Data+Extensions.swift"; sourceTree = "<group>"; };
+		AC6BECBB2D09F685002E2021 /* Endpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Endpoint.swift; sourceTree = "<group>"; };
+		AC6BECBE2D09F866002E2021 /* NetworkService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkService.swift; sourceTree = "<group>"; };
+		AC6BECC12D09F917002E2021 /* HTTPService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTPService.swift; sourceTree = "<group>"; };
+		AC6BECC42D09FD9B002E2021 /* GRPCService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GRPCService.swift; sourceTree = "<group>"; };
 		ACB815342CF9CE0800104B7B /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		ACD941B82CFF575C0038FCB6 /* iosAppStaging.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iosAppStaging.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACD941B92CFF575C0038FCB6 /* Info-Staging.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "Info-Staging.plist"; path = "/Users/sarveshsharma/Desktop/yral-mobile/iosApp/Staging/Info-Staging.plist"; sourceTree = "<absolute>"; };
 		ACD941BA2CFF579A0038FCB6 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		ACD941BE2CFF58B10038FCB6 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		ACF4EFC42D09CC0400086ADF /* ml_feed.proto */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.protobuf; path = ml_feed.proto; sourceTree = "<group>"; };
+		ACF4EFC82D09D39400086ADF /* ml_feed.grpc.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ml_feed.grpc.swift; sourceTree = "<group>"; };
+		ACF4EFC92D09D39400086ADF /* ml_feed.pb.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ml_feed.pb.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -70,12 +99,16 @@
 			buildActionMask = 2147483647;
 			files = (
 				AC6CBA802CE46CA6002454F8 /* libyral_mobile_swift_binding.a in Frameworks */,
+				AC6BECAC2D09D52B002E2021 /* GRPC in Frameworks */,
 				ACD941D12CFF5B720038FCB6 /* secp256k1 in Frameworks */,
 				AC0E49C42CEBA6F0002DC158 /* secp256k1 in Frameworks */,
 				ACD941C22CFF5B3D0038FCB6 /* FirebaseAnalytics in Frameworks */,
 				ACD941802CFF55BB0038FCB6 /* FirebaseAnalyticsWithoutAdIdSupport in Frameworks */,
 				ACD941C42CFF5B3D0038FCB6 /* FirebaseCore in Frameworks */,
 				ACD941C62CFF5B3D0038FCB6 /* FirebaseCrashlytics in Frameworks */,
+				AC6BECAA2D09D52B002E2021 /* CGRPCZlib in Frameworks */,
+				AC6BECB02D09D52B002E2021 /* protoc-gen-grpc-swift in Frameworks */,
+				AC6BECAE2D09D52B002E2021 /* GRPCReflectionService in Frameworks */,
 				ACB815482CFA146800104B7B /* FirebaseCore in Frameworks */,
 				ACD941822CFF55BB0038FCB6 /* FirebaseCrashlytics in Frameworks */,
 			);
@@ -85,8 +118,12 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AC6BECB42D09D541002E2021 /* GRPC in Frameworks */,
 				ACD941C82CFF5B5B0038FCB6 /* FirebaseAnalytics in Frameworks */,
 				ACD941D92CFF63D90038FCB6 /* libyral_mobile_swift_binding.a in Frameworks */,
+				AC6BECB62D09D541002E2021 /* GRPCReflectionService in Frameworks */,
+				AC6BECB82D09D55B002E2021 /* protoc-gen-grpc-swift in Frameworks */,
+				AC6BECB22D09D541002E2021 /* CGRPCZlib in Frameworks */,
 				ACD941D32CFF5B8B0038FCB6 /* secp256k1 in Frameworks */,
 				ACD941CA2CFF5B5B0038FCB6 /* FirebaseAnalyticsOnDeviceConversion in Frameworks */,
 				ACD941CE2CFF5B5B0038FCB6 /* FirebaseCrashlytics in Frameworks */,
@@ -130,6 +167,8 @@
 		7555FF7D242A565900829871 /* iosApp */ = {
 			isa = PBXGroup;
 			children = (
+				ACF4EFC52D09CC0400086ADF /* grpc */,
+				AC6BECB92D09F0F0002E2021 /* Infrastructure */,
 				058557BA273AAA24004C7B11 /* Assets.xcassets */,
 				7555FF82242A565900829871 /* ContentView.swift */,
 				AC09AA1E2CDBB69B009A39A4 /* Extensions */,
@@ -176,6 +215,25 @@
 			path = Extensions;
 			sourceTree = "<group>";
 		};
+		AC6BECB92D09F0F0002E2021 /* Infrastructure */ = {
+			isa = PBXGroup;
+			children = (
+				AC6BECBA2D09F0FD002E2021 /* Network */,
+			);
+			path = Infrastructure;
+			sourceTree = "<group>";
+		};
+		AC6BECBA2D09F0FD002E2021 /* Network */ = {
+			isa = PBXGroup;
+			children = (
+				AC6BECBE2D09F866002E2021 /* NetworkService.swift */,
+				AC6BECBB2D09F685002E2021 /* Endpoint.swift */,
+				AC6BECC12D09F917002E2021 /* HTTPService.swift */,
+				AC6BECC42D09FD9B002E2021 /* GRPCService.swift */,
+			);
+			path = Network;
+			sourceTree = "<group>";
+		};
 		ACD941BC2CFF57A90038FCB6 /* Prod */ = {
 			isa = PBXGroup;
 			children = (
@@ -192,6 +250,16 @@
 				ACD941BA2CFF579A0038FCB6 /* GoogleService-Info.plist */,
 			);
 			path = Staging;
+			sourceTree = "<group>";
+		};
+		ACF4EFC52D09CC0400086ADF /* grpc */ = {
+			isa = PBXGroup;
+			children = (
+				ACF4EFC82D09D39400086ADF /* ml_feed.grpc.swift */,
+				ACF4EFC92D09D39400086ADF /* ml_feed.pb.swift */,
+				ACF4EFC42D09CC0400086ADF /* ml_feed.proto */,
+			);
+			path = grpc;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -264,6 +332,7 @@
 			packageReferences = (
 				ACD941C02CFF5B3D0038FCB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				ACD941CF2CFF5B720038FCB6 /* XCRemoteSwiftPackageReference "swift-secp256k1" */,
+				AC6BECA82D09D52B002E2021 /* XCRemoteSwiftPackageReference "grpc-swift" */,
 			);
 			productRefGroup = 7555FF7C242A565900829871 /* Products */;
 			projectDirPath = "";
@@ -374,7 +443,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\n./build-rust.sh\n";
+			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\n#./build-rust.sh\n";
 		};
 		ACD941852CFF575C0038FCB6 /* Run Script */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -424,12 +493,19 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AC6BECC02D09F86C002E2021 /* NetworkService.swift in Sources */,
 				2152FB042600AC8F00CF470E /* IosApp.swift in Sources */,
 				AC09A9B22CDB775C009A39A4 /* yral-mobile-swift-binding.swift in Sources */,
+				AC6BECC62D09FDA6002E2021 /* GRPCService.swift in Sources */,
+				ACF4EFCA2D09D39400086ADF /* ml_feed.grpc.swift in Sources */,
+				ACF4EFCB2D09D39400086ADF /* ml_feed.pb.swift in Sources */,
+				AC6BECBD2D09F68C002E2021 /* Endpoint.swift in Sources */,
 				AC09A9B32CDB775C009A39A4 /* SwiftBridgeCore.swift in Sources */,
 				AC09AA742CDD210D009A39A4 /* Data+Extensions.swift in Sources */,
 				AC09A9FA2CDB7A5D009A39A4 /* SwiftBindings+Extensions.swift in Sources */,
+				AC6BECC22D09F91C002E2021 /* HTTPService.swift in Sources */,
 				7555FF83242A565900829871 /* ContentView.swift in Sources */,
+				ACF4EFC72D09CC0400086ADF /* ml_feed.proto in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -437,12 +513,19 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AC6BECBF2D09F86C002E2021 /* NetworkService.swift in Sources */,
 				ACD941872CFF575C0038FCB6 /* IosApp.swift in Sources */,
 				ACD941882CFF575C0038FCB6 /* yral-mobile-swift-binding.swift in Sources */,
+				AC6BECC52D09FDA6002E2021 /* GRPCService.swift in Sources */,
+				ACF4EFCC2D09D39400086ADF /* ml_feed.grpc.swift in Sources */,
+				ACF4EFCD2D09D39400086ADF /* ml_feed.pb.swift in Sources */,
+				AC6BECBC2D09F68C002E2021 /* Endpoint.swift in Sources */,
 				ACD941892CFF575C0038FCB6 /* SwiftBridgeCore.swift in Sources */,
 				ACD9418A2CFF575C0038FCB6 /* Data+Extensions.swift in Sources */,
 				ACD9418B2CFF575C0038FCB6 /* SwiftBindings+Extensions.swift in Sources */,
+				AC6BECC32D09F91C002E2021 /* HTTPService.swift in Sources */,
 				ACD9418C2CFF575C0038FCB6 /* ContentView.swift in Sources */,
+				ACF4EFC62D09CC0400086ADF /* ml_feed.proto in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -728,6 +811,14 @@
 				minimumVersion = 0.18.0;
 			};
 		};
+		AC6BECA82D09D52B002E2021 /* XCRemoteSwiftPackageReference "grpc-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/grpc/grpc-swift.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.24.2;
+			};
+		};
 		ACB815382CFA146800104B7B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/firebase/firebase-ios-sdk.git";
@@ -767,6 +858,46 @@
 			isa = XCSwiftPackageProductDependency;
 			package = AC0E49C22CEBA6F0002DC158 /* XCRemoteSwiftPackageReference "swift-secp256k1" */;
 			productName = secp256k1;
+		};
+		AC6BECA92D09D52B002E2021 /* CGRPCZlib */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AC6BECA82D09D52B002E2021 /* XCRemoteSwiftPackageReference "grpc-swift" */;
+			productName = CGRPCZlib;
+		};
+		AC6BECAB2D09D52B002E2021 /* GRPC */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AC6BECA82D09D52B002E2021 /* XCRemoteSwiftPackageReference "grpc-swift" */;
+			productName = GRPC;
+		};
+		AC6BECAD2D09D52B002E2021 /* GRPCReflectionService */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AC6BECA82D09D52B002E2021 /* XCRemoteSwiftPackageReference "grpc-swift" */;
+			productName = GRPCReflectionService;
+		};
+		AC6BECAF2D09D52B002E2021 /* protoc-gen-grpc-swift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AC6BECA82D09D52B002E2021 /* XCRemoteSwiftPackageReference "grpc-swift" */;
+			productName = "protoc-gen-grpc-swift";
+		};
+		AC6BECB12D09D541002E2021 /* CGRPCZlib */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AC6BECA82D09D52B002E2021 /* XCRemoteSwiftPackageReference "grpc-swift" */;
+			productName = CGRPCZlib;
+		};
+		AC6BECB32D09D541002E2021 /* GRPC */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AC6BECA82D09D52B002E2021 /* XCRemoteSwiftPackageReference "grpc-swift" */;
+			productName = GRPC;
+		};
+		AC6BECB52D09D541002E2021 /* GRPCReflectionService */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AC6BECA82D09D52B002E2021 /* XCRemoteSwiftPackageReference "grpc-swift" */;
+			productName = GRPCReflectionService;
+		};
+		AC6BECB72D09D55B002E2021 /* protoc-gen-grpc-swift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AC6BECA82D09D52B002E2021 /* XCRemoteSwiftPackageReference "grpc-swift" */;
+			productName = "protoc-gen-grpc-swift";
 		};
 		ACB815472CFA146800104B7B /* FirebaseCore */ = {
 			isa = XCSwiftPackageProductDependency;
