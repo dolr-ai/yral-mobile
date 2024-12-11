@@ -1,5 +1,5 @@
 {
-  "originHash" : "ae71e5ece5817e4bcb8bac839fa54759d3ec2aaa76b7e331dc907d7c7d80bec6",
+  "originHash" : "e512d8ad12b4c625cf0559a56dc31a69996053bb018c5fefedea83a18fa9e77e",
   "pins" : [
     {
       "identity" : "abseil-cpp-binary",
@@ -101,15 +101,6 @@
       }
     },
     {
-      "identity" : "lottie-ios",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/airbnb/lottie-ios.git",
-      "state" : {
-        "revision" : "047aa81b77adcbf583a966dfef620d17650cc656",
-        "version" : "4.5.1"
-      }
-    },
-    {
       "identity" : "nanopb",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/firebase/nanopb.git",
@@ -125,15 +116,6 @@
       "state" : {
         "revision" : "540318ecedd63d883069ae7f1ed811a2df00b6ac",
         "version" : "2.4.0"
-      }
-    },
-    {
-      "identity" : "sdwebimage",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/SDWebImage/SDWebImage.git",
-      "state" : {
-        "revision" : "10d06f6a33bafae8c164fbfd1f03391f6d4692b3",
-        "version" : "5.20.0"
       }
     },
     {
