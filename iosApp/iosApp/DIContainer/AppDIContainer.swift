@@ -44,6 +44,7 @@ final class AppDIContainer {
       )
     )
   }
+<<<<<<< HEAD
 
   func makeProfileDIContainer() -> ProfileDIContainer {
     return ProfileDIContainer(
@@ -53,4 +54,6 @@ final class AppDIContainer {
       )
     )
   }
+=======
+>>>>>>> 6c3bf61 (Stiches the feeds flow and adds YralPlayer (#74))
 }
