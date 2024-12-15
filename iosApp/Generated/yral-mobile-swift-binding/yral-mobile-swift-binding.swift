@@ -9150,6 +9150,7 @@ extension PostDetailsForFrontendRef {
     public func video_uid() -> RustStr {
         __swift_bridge__$PostDetailsForFrontend$video_uid(ptr)
     }
+<<<<<<< HEAD
 
     public func description() -> RustStr {
         __swift_bridge__$PostDetailsForFrontend$description(ptr)
@@ -9166,6 +9167,8 @@ extension PostDetailsForFrontendRef {
     public func created_by_profile_photo_url() -> Optional<RustStr> {
         { let val = __swift_bridge__$PostDetailsForFrontend$created_by_profile_photo_url(ptr); if val.start != nil { return val; } else { return nil; } }()
     }
+=======
+>>>>>>> 6c3bf61 (Stiches the feeds flow and adds YralPlayer (#74))
 }
 extension PostDetailsForFrontend: Vectorizable {
     public static func vecOfSelfNew() -> UnsafeMutableRawPointer {

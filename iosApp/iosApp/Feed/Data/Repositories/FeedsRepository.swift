@@ -6,14 +6,20 @@
 //  Copyright © 2024 orgName. All rights reserved.
 //
 import Foundation
+<<<<<<< HEAD
 import Combine
+=======
+>>>>>>> 6c3bf61 (Stiches the feeds flow and adds YralPlayer (#74))
 
 class FeedsRepository: FeedRepositoryProtocol {
   private let httpService: HTTPService
   private let mlClient: MlFeed_MLFeedNIOClient
   private let authClient: AuthClient
+<<<<<<< HEAD
   private let feedsUpdateSubject = PassthroughSubject<[FeedResult], Never>()
   var feedUpdates: AnyPublisher<[FeedResult], Never> { feedsUpdateSubject.eraseToAnyPublisher() }
+=======
+>>>>>>> 6c3bf61 (Stiches the feeds flow and adds YralPlayer (#74))
 
   init(httpService: HTTPService, mlClient: MlFeed_MLFeedNIOClient, authClient: AuthClient) {
     self.httpService = httpService
@@ -21,6 +27,7 @@ class FeedsRepository: FeedRepositoryProtocol {
     self.authClient = authClient
   }
 
+<<<<<<< HEAD
   func getInitialFeeds(numResults: Int) async throws {
     guard let principal = authClient.principalString else {
       throw AuthError.authenticationFailed("Missing principal")
@@ -143,14 +150,46 @@ class CacheEndPoints {
 protocol FeedMapping {
   var postID: UInt32 { get }
   var canisterID: String { get }
+=======
+  func fetchFeed(request: FeedRequest) async -> Result<[FeedResult], Error> {
+    var mlRequest = MlFeed_FeedRequest()
+    mlRequest.canisterID = request.canisterId
+    mlRequest.filterPosts = request.filteredPosts
+    mlRequest.numResults = UInt32(request.numResults)
+    do {
+      let response = try mlClient.get_feed_clean(
+        mlRequest
+      ).response.wait()
+      let feeds = try await response.feed.asyncMap { feed in
+        let principal = try get_principal(feed.canisterID)
+        do {
+          let identity = try self.authClient.generateNewDelegatedIdentity()
+          let service = try Service(principal, identity)
+          let result = try await service.get_individual_post_details_by_id(UInt64(feed.postID))
+          let videoURL = URL(
+            string: "\(Constants.cloudfarePrefix)\(result.video_uid().toString())\(Constants.cloudflareSuffix)"
+          ) ?? URL(fileURLWithPath: "")
+          return FeedResult(id: String(feed.postID), url: videoURL)
+        }
+      }
+      return .success(feeds)
+    } catch {
+      print(error)
+      return .failure(error)
+    }
+  }
+>>>>>>> 6c3bf61 (Stiches the feeds flow and adds YralPlayer (#74))
 }
 
 extension FeedsRepository {
   enum Constants {
     static let cloudfarePrefix = "https://customer-2p3jflss4r4hmpnz.cloudflarestream.com/"
     static let cloudflareSuffix = "/manifest/video.m3u8"
+<<<<<<< HEAD
     static let thumbnailSuffix = "/thumbnails/thumbnail.jpg"
     static let cacheBaseURL = "https://yral-ml-feed-cache.go-bazzinga.workers.dev/feed-cache/"
 
+=======
+>>>>>>> 6c3bf61 (Stiches the feeds flow and adds YralPlayer (#74))
   }
 }
