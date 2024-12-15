@@ -73,6 +73,18 @@
             ReferencedContainer = "container:iosApp.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
+<<<<<<< HEAD
+=======
+      <MacroExpansion>
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "7555FF7A242A565900829871"
+            BuildableName = "iosApp.app"
+            BlueprintName = "iosApp"
+            ReferencedContainer = "container:iosApp.xcodeproj">
+         </BuildableReference>
+      </MacroExpansion>
+>>>>>>> 6c3bf61 (Stiches the feeds flow and adds YralPlayer (#74))
       <EnvironmentVariables>
          <EnvironmentVariable
             key = "RUST_BACKTRACE"

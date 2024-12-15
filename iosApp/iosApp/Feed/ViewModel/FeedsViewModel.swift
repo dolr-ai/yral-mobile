@@ -5,14 +5,22 @@
 //  Created by Sarvesh Sharma on 15/12/24.
 //  Copyright © 2024 orgName. All rights reserved.
 //
+<<<<<<< HEAD
 import Foundation
 import Combine
 
 enum FeedsPageState: Equatable {
+=======
+
+import Foundation
+
+enum FeedsPageState {
+>>>>>>> 6c3bf61 (Stiches the feeds flow and adds YralPlayer (#74))
   case initalized
   case loading
   case successfullyFetched([FeedResult])
   case failure(Error)
+<<<<<<< HEAD
 
   static func == (lhs: FeedsPageState, rhs: FeedsPageState) -> Bool {
     switch (lhs, rhs) {
@@ -143,4 +151,34 @@ class FeedsViewModel: ObservableObject {
       event = .toggleLikeFailed(error)
     }
   }
+=======
+}
+
+enum FeedsPageEvent {
+  case reachedEnd
+}
+
+class FeedsViewModel: ObservableObject {
+  @Published var state: FeedsPageState = .initalized
+  var feedsUseCase: FeedsUseCase
+
+  init(useCase: FeedsUseCase) {
+    self.feedsUseCase = useCase
+  }
+
+  func fetchFeeds(request: FeedRequest) async {
+    state = .loading
+    do {
+      let result = try await feedsUseCase.execute(request: request)
+      switch result {
+      case .success(let response):
+        state = .successfullyFetched(response)
+      case .failure(let error):
+        state = .failure(error)
+      }
+    } catch {
+      state = .failure(error)
+    }
+  }
+>>>>>>> 6c3bf61 (Stiches the feeds flow and adds YralPlayer (#74))
 }

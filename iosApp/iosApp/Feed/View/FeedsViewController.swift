@@ -6,6 +6,7 @@
 //  Copyright © 2024 orgName. All rights reserved.
 //
 import UIKit
+<<<<<<< HEAD
 import Combine
 import AVFoundation
 
@@ -39,6 +40,11 @@ class FeedsViewController: UIViewController {
 
   lazy var feedsDataSource = getConfiguredDataSource()
   private var loadMoreRequestMade: Bool = false
+=======
+
+class FeedsViewController: UIViewController {
+  private var viewModel: FeedsViewModel
+>>>>>>> 6c3bf61 (Stiches the feeds flow and adds YralPlayer (#74))
 
   init(viewModel: FeedsViewModel) {
     self.viewModel = viewModel
@@ -51,6 +57,7 @@ class FeedsViewController: UIViewController {
 
   override func viewDidLoad() {
     super.viewDidLoad()
+<<<<<<< HEAD
     bindViewModel()
     handleEvents()
     setupUI()
@@ -333,3 +340,23 @@ extension FeedsViewController {
     static let shareURLPrefix = "https://yral.com/hot-or-not/"
   }
 }
+=======
+    bindViewModel(viewModel: viewModel)
+  }
+
+  func bindViewModel(viewModel: FeedsViewModel) {
+    viewModel.$state.receive(on: RunLoop.main).sink { [weak self] state in
+      switch state {
+      case .initalized:
+        break
+      case .loading:
+        break
+      case .successfullyFetched(let feeds):
+        print(feeds)
+      case .failure(let error):
+        print(error)
+      }
+    }
+  }
+}
+>>>>>>> 6c3bf61 (Stiches the feeds flow and adds YralPlayer (#74))

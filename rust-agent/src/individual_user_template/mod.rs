@@ -1091,6 +1091,10 @@ impl Service {
         match call_result {
             Ok(bytes) => {
                 // Decode the bytes if the call succeeded
+<<<<<<< HEAD
+=======
+                eprintln!("Raw bytes: {:?}", bytes);
+>>>>>>> 6c3bf61 (Stiches the feeds flow and adds YralPlayer (#74))
                 match Decode!(&bytes, PostDetailsForFrontend) {
                     Ok(details) => Ok(details),
                     Err(e) => {
