@@ -7,5 +7,5 @@
 //
 
 protocol FeedRepositoryProtocol {
-  func fetchFeed(request: FeedRequest) async -> [FeedResult]
+  func fetchFeed(request: FeedRequest) async -> Result<[FeedResult], Error>
 }
