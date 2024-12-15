@@ -142,14 +142,6 @@ mod ffi {
         type PostDetailsForFrontend;
         #[swift_bridge(get(&video_uid))]
         fn video_uid(&self) -> &str;
-        #[swift_bridge(get(&description))]
-        fn description(&self) -> &str;
-        #[swift_bridge(get(like_count))]
-        fn like_count(&self) -> u64;
-        #[swift_bridge(get(liked_by_me))]
-        fn liked_by_me(&self) -> bool;
-        #[swift_bridge(get(&created_by_profile_photo_url))]
-        fn created_by_profile_photo_url(&self) -> Option<&str>;
     }
     extern "Rust" {
         type Service;
@@ -346,7 +338,6 @@ mod ffi {
             arg0: u64,
         ) -> Result<U64Wrapper, AgentError>;
         async fn update_post_status(&self, arg0: u64, arg1: PostStatus) -> Result<(), AgentError>;
-        async fn update_post_toggle_like_status_by_caller(&self, arg0: u64) -> Result<bool, AgentError>;
         async fn update_profile_display_details(
             &self,
             arg0: UserProfileUpdateDetailsFromFrontend,

@@ -7,14 +7,7 @@
 //
 import Foundation
 
-struct FeedResult: Hashable {
-  let postID: String
-  let videoID: String
-  let canisterID: String
+struct FeedResult {
+  let id: String
   let url: URL
-  let thumbnail: URL
-  let postDescription: String
-  var profileImageURL: URL?
-  var likeCount: Int
-  var isLiked: Bool
 }

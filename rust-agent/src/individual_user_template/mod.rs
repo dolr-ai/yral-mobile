@@ -1091,6 +1091,7 @@ impl Service {
         match call_result {
             Ok(bytes) => {
                 // Decode the bytes if the call succeeded
+                eprintln!("Raw bytes: {:?}", bytes);
                 match Decode!(&bytes, PostDetailsForFrontend) {
                     Ok(details) => Ok(details),
                     Err(e) => {
