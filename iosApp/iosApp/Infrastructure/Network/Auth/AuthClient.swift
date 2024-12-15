@@ -20,7 +20,7 @@ class DefaultAuthClient: AuthClient {
     self.networkService = networkService
   }
 
-  func initialize() async throws {
+  @MainActor func initialize() async throws {
     if let existingCookie = cookieStorage.cookies?.first(where: { $0.name == AuthConstants.cookieName }) {
       try await refreshAuthIfNeeded(using: existingCookie)
     } else {
