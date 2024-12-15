@@ -30,7 +30,18 @@ final class AppDIContainer {
     return MlFeed_MLFeedNIOClient(channel: channel)
   }()
 
+  lazy var authClient: DefaultAuthClient = {
+    let client = DefaultAuthClient(networkService: HTTPService())
+    return client
+  }()
+
   func makeFeedDIContainer() -> FeedDIContainer {
-    FeedDIContainer(dependencies: FeedDIContainer.Dependencies(mlfeedService: mlFeedClient, httpService: HTTPService()))
+    return FeedDIContainer(
+      dependencies: FeedDIContainer.Dependencies(
+        mlfeedService: mlFeedClient,
+        httpService: HTTPService(),
+        authClient: authClient
+      )
+    )
   }
 }
