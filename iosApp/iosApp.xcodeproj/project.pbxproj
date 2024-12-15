@@ -61,14 +61,6 @@
 		ACB46A5E2D0EF92D002E200C /* AuthEndPoints.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A5C2D0EF927002E200C /* AuthEndPoints.swift */; };
 		ACB46A602D0EF94B002E200C /* AuthClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A5F2D0EF947002E200C /* AuthClient.swift */; };
 		ACB46A612D0EF94B002E200C /* AuthClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A5F2D0EF947002E200C /* AuthClient.swift */; };
-		ACB46A642D0F0B75002E200C /* FeedsUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A632D0F0B70002E200C /* FeedsUseCase.swift */; };
-		ACB46A652D0F0B75002E200C /* FeedsUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A632D0F0B70002E200C /* FeedsUseCase.swift */; };
-		ACB46A682D0F3609002E200C /* FeedsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A672D0F3604002E200C /* FeedsViewModel.swift */; };
-		ACB46A692D0F3609002E200C /* FeedsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A672D0F3604002E200C /* FeedsViewModel.swift */; };
-		ACB46A6B2D0F3F8E002E200C /* FeedsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A6A2D0F3F89002E200C /* FeedsViewController.swift */; };
-		ACB46A6C2D0F3F8E002E200C /* FeedsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A6A2D0F3F89002E200C /* FeedsViewController.swift */; };
-		ACB46A6F2D0F417F002E200C /* FeedsViewControllerWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A6E2D0F4179002E200C /* FeedsViewControllerWrapper.swift */; };
-		ACB46A702D0F417F002E200C /* FeedsViewControllerWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A6E2D0F4179002E200C /* FeedsViewControllerWrapper.swift */; };
 		ACB815372CF9D4FF00104B7B /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = ACB815342CF9CE0800104B7B /* GoogleService-Info.plist */; };
 		ACB815482CFA146800104B7B /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = ACB815472CFA146800104B7B /* FirebaseCore */; };
 		ACD941802CFF55BB0038FCB6 /* FirebaseAnalyticsWithoutAdIdSupport in Frameworks */ = {isa = PBXBuildFile; productRef = ACD9417F2CFF55BB0038FCB6 /* FirebaseAnalyticsWithoutAdIdSupport */; };
@@ -127,10 +119,6 @@
 		ACB46A592D0EF91A002E200C /* AuthConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthConstants.swift; sourceTree = "<group>"; };
 		ACB46A5C2D0EF927002E200C /* AuthEndPoints.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthEndPoints.swift; sourceTree = "<group>"; };
 		ACB46A5F2D0EF947002E200C /* AuthClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthClient.swift; sourceTree = "<group>"; };
-		ACB46A632D0F0B70002E200C /* FeedsUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedsUseCase.swift; sourceTree = "<group>"; };
-		ACB46A672D0F3604002E200C /* FeedsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedsViewModel.swift; sourceTree = "<group>"; };
-		ACB46A6A2D0F3F89002E200C /* FeedsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedsViewController.swift; sourceTree = "<group>"; };
-		ACB46A6E2D0F4179002E200C /* FeedsViewControllerWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedsViewControllerWrapper.swift; sourceTree = "<group>"; };
 		ACB815342CF9CE0800104B7B /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		ACD941B82CFF575C0038FCB6 /* iosAppStaging.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iosAppStaging.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACD941B92CFF575C0038FCB6 /* Info-Staging.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "Info-Staging.plist"; path = "/Users/sarveshsharma/Desktop/yral-mobile/iosApp/Staging/Info-Staging.plist"; sourceTree = "<absolute>"; };
@@ -212,13 +200,13 @@
 		7555FF7D242A565900829871 /* iosApp */ = {
 			isa = PBXGroup;
 			children = (
-				2152FB032600AC8F00CF470E /* IosApp.swift */,
 				ACB46A2E2D0EC838002E200C /* DIContainer */,
 				ACEBE9962D0C4AA50056F033 /* Feed */,
 				AC6BECB92D09F0F0002E2021 /* Infrastructure */,
 				058557BA273AAA24004C7B11 /* Assets.xcassets */,
 				7555FF82242A565900829871 /* ContentView.swift */,
 				AC09AA1E2CDBB69B009A39A4 /* Extensions */,
+				2152FB032600AC8F00CF470E /* IosApp.swift */,
 				058557D7273AAEEB004C7B11 /* Preview Content */,
 			);
 			path = iosApp;
@@ -338,7 +326,6 @@
 		ACB46A492D0ED0E9002E200C /* Domain */ = {
 			isa = PBXGroup;
 			children = (
-				ACB46A622D0F0B67002E200C /* Usecase */,
 				ACB46A4E2D0ED181002E200C /* Entities */,
 				ACB46A4A2D0ED0F8002E200C /* Interfaces */,
 			);
@@ -372,31 +359,6 @@
 			path = Auth;
 			sourceTree = "<group>";
 		};
-		ACB46A622D0F0B67002E200C /* Usecase */ = {
-			isa = PBXGroup;
-			children = (
-				ACB46A632D0F0B70002E200C /* FeedsUseCase.swift */,
-			);
-			path = Usecase;
-			sourceTree = "<group>";
-		};
-		ACB46A662D0F35FD002E200C /* ViewModel */ = {
-			isa = PBXGroup;
-			children = (
-				ACB46A672D0F3604002E200C /* FeedsViewModel.swift */,
-			);
-			path = ViewModel;
-			sourceTree = "<group>";
-		};
-		ACB46A6D2D0F3F9E002E200C /* View */ = {
-			isa = PBXGroup;
-			children = (
-				ACB46A6E2D0F4179002E200C /* FeedsViewControllerWrapper.swift */,
-				ACB46A6A2D0F3F89002E200C /* FeedsViewController.swift */,
-			);
-			path = View;
-			sourceTree = "<group>";
-		};
 		ACD941BC2CFF57A90038FCB6 /* Prod */ = {
 			isa = PBXGroup;
 			children = (
@@ -418,8 +380,6 @@
 		ACEBE9962D0C4AA50056F033 /* Feed */ = {
 			isa = PBXGroup;
 			children = (
-				ACB46A6D2D0F3F9E002E200C /* View */,
-				ACB46A662D0F35FD002E200C /* ViewModel */,
 				ACB46A492D0ED0E9002E200C /* Domain */,
 				ACB46A3E2D0ECBB3002E200C /* Data */,
 			);
@@ -659,12 +619,10 @@
 			files = (
 				AC6BECC02D09F86C002E2021 /* NetworkService.swift in Sources */,
 				ACB46A262D0EC0A3002E200C /* YralPlayer.swift in Sources */,
-				ACB46A682D0F3609002E200C /* FeedsViewModel.swift in Sources */,
 				ACB46A422D0ECBB3002E200C /* ml_feed.proto in Sources */,
 				ACB46A5E2D0EF92D002E200C /* AuthEndPoints.swift in Sources */,
 				ACB46A612D0EF94B002E200C /* AuthClient.swift in Sources */,
 				ACB46A432D0ECBB3002E200C /* ml_feed.grpc.swift in Sources */,
-				ACB46A652D0F0B75002E200C /* FeedsUseCase.swift in Sources */,
 				ACB46A442D0ECBB3002E200C /* ml_feed.pb.swift in Sources */,
 				ACB46A482D0ECBD5002E200C /* FeedsRepository.swift in Sources */,
 				ACB46A502D0ED195002E200C /* FeedResult.swift in Sources */,
@@ -681,8 +639,6 @@
 				ACB46A5B2D0EF91F002E200C /* AuthConstants.swift in Sources */,
 				ACB46A292D0EC76A002E200C /* AppConfiguration.swift in Sources */,
 				ACB46A342D0EC8FF002E200C /* Numbers+Extensions.swift in Sources */,
-				ACB46A6F2D0F417F002E200C /* FeedsViewControllerWrapper.swift in Sources */,
-				ACB46A6C2D0F3F8E002E200C /* FeedsViewController.swift in Sources */,
 				7555FF83242A565900829871 /* ContentView.swift in Sources */,
 				ACB46A4C2D0ED110002E200C /* FeedRepositoryProtocol.swift in Sources */,
 			);
@@ -694,12 +650,10 @@
 			files = (
 				AC6BECBF2D09F86C002E2021 /* NetworkService.swift in Sources */,
 				ACB46A272D0EC0A3002E200C /* YralPlayer.swift in Sources */,
-				ACB46A692D0F3609002E200C /* FeedsViewModel.swift in Sources */,
 				ACB46A3F2D0ECBB3002E200C /* ml_feed.proto in Sources */,
 				ACB46A5D2D0EF92D002E200C /* AuthEndPoints.swift in Sources */,
 				ACB46A602D0EF94B002E200C /* AuthClient.swift in Sources */,
 				ACB46A402D0ECBB3002E200C /* ml_feed.grpc.swift in Sources */,
-				ACB46A642D0F0B75002E200C /* FeedsUseCase.swift in Sources */,
 				ACB46A412D0ECBB3002E200C /* ml_feed.pb.swift in Sources */,
 				ACB46A472D0ECBD5002E200C /* FeedsRepository.swift in Sources */,
 				ACB46A512D0ED195002E200C /* FeedResult.swift in Sources */,
@@ -716,8 +670,6 @@
 				ACB46A5A2D0EF91F002E200C /* AuthConstants.swift in Sources */,
 				ACB46A2A2D0EC76A002E200C /* AppConfiguration.swift in Sources */,
 				ACB46A332D0EC8FF002E200C /* Numbers+Extensions.swift in Sources */,
-				ACB46A702D0F417F002E200C /* FeedsViewControllerWrapper.swift in Sources */,
-				ACB46A6B2D0F3F8E002E200C /* FeedsViewController.swift in Sources */,
 				ACD9418C2CFF575C0038FCB6 /* ContentView.swift in Sources */,
 				ACB46A4D2D0ED110002E200C /* FeedRepositoryProtocol.swift in Sources */,
 			);

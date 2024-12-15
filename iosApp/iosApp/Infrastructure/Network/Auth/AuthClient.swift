@@ -14,13 +14,12 @@ class DefaultAuthClient: AuthClient {
   private(set) var principal: Principal?
   private let networkService: NetworkService
   private let cookieStorage = HTTPCookieStorage.shared
-  private(set) var identityData: Data?
 
   init(networkService: NetworkService) {
     self.networkService = networkService
   }
 
-  @MainActor func initialize() async throws {
+  func initialize() async throws {
     if let existingCookie = cookieStorage.cookies?.first(where: { $0.name == AuthConstants.cookieName }) {
       try await refreshAuthIfNeeded(using: existingCookie)
     } else {
@@ -65,7 +64,6 @@ class DefaultAuthClient: AuthClient {
     let endpoint = AuthEndpoints.extractIdentity(cookie: cookie)
 
     let data = try await networkService.performRequest(for: endpoint)
-    identityData = data
     try await handleExtractIdentityResponse(from: data)
   }
 
@@ -105,20 +103,6 @@ class DefaultAuthClient: AuthClient {
     let payload: [String: Any] = ["anonymous_identity": jwk]
     return try JSONSerialization.data(withJSONObject: payload)
   }
-
-  func generateNewDelegatedIdentity() throws -> DelegatedIdentity {
-    guard let data = identityData else {
-      throw NetworkError.invalidResponse("No identity data available")
-    }
-    return try data.withUnsafeBytes { (buffer: UnsafeRawBufferPointer) in
-      if buffer.count > 0 {
-        let uint8Buffer = buffer.bindMemory(to: UInt8.self)
-        return try delegated_identity_from_bytes(uint8Buffer)
-      } else {
-        throw NetworkError.invalidResponse("Empty data received")
-      }
-    }
-  }
 }
 
 protocol AuthClient {
@@ -126,5 +110,4 @@ protocol AuthClient {
   var principal: Principal? { get }
   func initialize() async throws
   func refreshAuthIfNeeded() async throws
-  func generateNewDelegatedIdentity() throws -> DelegatedIdentity
 }

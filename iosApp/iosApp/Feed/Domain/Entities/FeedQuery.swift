@@ -12,4 +12,5 @@ struct FeedRequest {
   let canisterId: String
   let filteredPosts: [MlFeed_PostItem]
   let numResults: Int
+  let wire: DelegatedIdentityWire
 }
