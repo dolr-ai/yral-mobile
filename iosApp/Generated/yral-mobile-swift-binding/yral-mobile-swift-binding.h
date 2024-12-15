@@ -732,18 +732,6 @@ void* __swift_bridge__$Vec_Result11$get_mut(void* vec_ptr, uintptr_t index);
 uintptr_t __swift_bridge__$Vec_Result11$len(void* vec_ptr);
 void* __swift_bridge__$Vec_Result11$as_ptr(void* vec_ptr);
 
-typedef struct PostDetailsForFrontend PostDetailsForFrontend;
-void __swift_bridge__$PostDetailsForFrontend$_free(void* self);
-
-void* __swift_bridge__$Vec_PostDetailsForFrontend$new(void);
-void __swift_bridge__$Vec_PostDetailsForFrontend$drop(void* vec_ptr);
-void __swift_bridge__$Vec_PostDetailsForFrontend$push(void* vec_ptr, void* item_ptr);
-void* __swift_bridge__$Vec_PostDetailsForFrontend$pop(void* vec_ptr);
-void* __swift_bridge__$Vec_PostDetailsForFrontend$get(void* vec_ptr, uintptr_t index);
-void* __swift_bridge__$Vec_PostDetailsForFrontend$get_mut(void* vec_ptr, uintptr_t index);
-uintptr_t __swift_bridge__$Vec_PostDetailsForFrontend$len(void* vec_ptr);
-void* __swift_bridge__$Vec_PostDetailsForFrontend$as_ptr(void* vec_ptr);
-
 typedef struct PlacedBetDetailResult PlacedBetDetailResult;
 void __swift_bridge__$PlacedBetDetailResult$_free(void* self);
 
@@ -1464,6 +1452,18 @@ void* __swift_bridge__$Vec_Result_$get_mut(void* vec_ptr, uintptr_t index);
 uintptr_t __swift_bridge__$Vec_Result_$len(void* vec_ptr);
 void* __swift_bridge__$Vec_Result_$as_ptr(void* vec_ptr);
 
+typedef struct PostDetailsForFrontend PostDetailsForFrontend;
+void __swift_bridge__$PostDetailsForFrontend$_free(void* self);
+
+void* __swift_bridge__$Vec_PostDetailsForFrontend$new(void);
+void __swift_bridge__$Vec_PostDetailsForFrontend$drop(void* vec_ptr);
+void __swift_bridge__$Vec_PostDetailsForFrontend$push(void* vec_ptr, void* item_ptr);
+void* __swift_bridge__$Vec_PostDetailsForFrontend$pop(void* vec_ptr);
+void* __swift_bridge__$Vec_PostDetailsForFrontend$get(void* vec_ptr, uintptr_t index);
+void* __swift_bridge__$Vec_PostDetailsForFrontend$get_mut(void* vec_ptr, uintptr_t index);
+uintptr_t __swift_bridge__$Vec_PostDetailsForFrontend$len(void* vec_ptr);
+void* __swift_bridge__$Vec_PostDetailsForFrontend$as_ptr(void* vec_ptr);
+
 typedef struct Service Service;
 void __swift_bridge__$Service$_free(void* self);
 
@@ -1500,6 +1500,7 @@ void* __swift_bridge__$Vec_CanistersWrapper$get_mut(void* vec_ptr, uintptr_t ind
 uintptr_t __swift_bridge__$Vec_CanistersWrapper$len(void* vec_ptr);
 void* __swift_bridge__$Vec_CanistersWrapper$as_ptr(void* vec_ptr);
 
+struct RustStr __swift_bridge__$PostDetailsForFrontend$video_uid(void* self);
 struct __private__ResultPtrAndPtr __swift_bridge__$Service$new(void* principal, void* identity);
 void __swift_bridge__$Service$add_device_id(void* callback_wrapper, void __swift_bridge__$Service$add_device_id$async(void* callback_wrapper, struct __private__ResultPtrAndPtr ret), void* self, void* arg0);
 void __swift_bridge__$Service$add_post_v_2(void* callback_wrapper, void __swift_bridge__$Service$add_post_v_2$async(void* callback_wrapper, struct __private__ResultPtrAndPtr ret), void* self, void* arg0);
@@ -1582,9 +1583,11 @@ struct __private__ResultPtrAndPtr __swift_bridge__$get_jwk_ec_key(void* json_str
 struct __private__ResultPtrAndPtr __swift_bridge__$delegated_identity_from_bytes(struct __private__FfiSlice data);
 struct __private__ResultPtrAndPtr __swift_bridge__$delegated_identity_wire_from_bytes(struct __private__FfiSlice data);
 void __swift_bridge__$authenticate_with_network(void* callback_wrapper, void __swift_bridge__$authenticate_with_network$async(void* callback_wrapper, struct __private__ResultPtrAndPtr ret), void* auth, void* referrer);
-void* __swift_bridge__$get_canister_principal(void* wrapper);
-void* __swift_bridge__$get_user_principal(void* wrapper);
+void* __swift_bridge__$CanistersWrapper$get_canister_principal(void* self);
+void* __swift_bridge__$CanistersWrapper$get_canister_principal_string(void* self);
+void* __swift_bridge__$CanistersWrapper$get_user_principal(void* self);
 struct __private__OptionU64 __swift_bridge__$extract_time_as_double(void* result);
+struct __private__ResultPtrAndPtr __swift_bridge__$get_principal(void* text);
 typedef enum __swift_bridge__$ResultU32AndAgentError$Tag {__swift_bridge__$ResultU32AndAgentError$ResultOk, __swift_bridge__$ResultU32AndAgentError$ResultErr} __swift_bridge__$ResultU32AndAgentError$Tag;
 union __swift_bridge__$ResultU32AndAgentError$Fields {uint32_t ok; void* err;};
 typedef struct __swift_bridge__$ResultU32AndAgentError{__swift_bridge__$ResultU32AndAgentError$Tag tag; union __swift_bridge__$ResultU32AndAgentError$Fields payload;} __swift_bridge__$ResultU32AndAgentError;
