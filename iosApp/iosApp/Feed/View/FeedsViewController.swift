@@ -6,9 +6,20 @@
 //  Copyright © 2024 orgName. All rights reserved.
 //
 import UIKit
+import Combine
 
 class FeedsViewController: UIViewController {
+  typealias DataSource = UICollectionViewDiffableDataSource<Int, FeedResult>
+  typealias Snapshot = NSDiffableDataSourceSnapshot<Int, FeedResult>
+
   private var viewModel: FeedsViewModel
+  private var cancellables: Set<AnyCancellable> = []
+  private var feedsCV: UICollectionView = {
+    let collectionView = getUICollectionView()
+    collectionView.showsVerticalScrollIndicator = false
+    collectionView.showsHorizontalScrollIndicator = false
+    return collectionView
+  }()
 
   init(viewModel: FeedsViewModel) {
     self.viewModel = viewModel
@@ -22,6 +33,9 @@ class FeedsViewController: UIViewController {
   override func viewDidLoad() {
     super.viewDidLoad()
     bindViewModel(viewModel: viewModel)
+    Task { @MainActor in
+      await viewModel.fetchFeeds(request: FeedRequest(filteredPosts: [], numResults: Constants.initialNumResults))
+    }
   }
 
   func bindViewModel(viewModel: FeedsViewModel) {
@@ -36,6 +50,14 @@ class FeedsViewController: UIViewController {
       case .failure(let error):
         print(error)
       }
-    }
+    }.store(in: &cancellables)
+  }
+
+  func setupUI() {}
+}
+
+extension FeedsViewController {
+  enum Constants {
+    static let initialNumResults = 5
   }
 }
