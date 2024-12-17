@@ -7,7 +7,7 @@
 //
 import Foundation
 
-struct FeedResult {
+struct FeedResult: Hashable {
   let id: String
   let url: URL
 }
