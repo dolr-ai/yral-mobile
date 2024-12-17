@@ -6,14 +6,6 @@
 //  Copyright © 2024 orgName. All rights reserved.
 //
 
-//
-//  YralPlayer.swift
-//  iosApp
-//
-//  Created by Sarvesh Sharma on 15/12/24.
-//  Copyright © 2024 orgName. All rights reserved.
-//
-
 import UIKit
 import AVFoundation
 
@@ -27,6 +19,9 @@ class YralPlayer {
   // Keep a reference to the AVPlayerLooper to prevent it from being deallocated
   private var playerLooper: AVPlayerLooper?
 
+  // Store the last played times for each video
+  private var lastPlayedTimes: [Int: CMTime] = [:]
+
   private var playerItems: [Int: AVPlayerItem] = [:]
 
   func loadInitialVideos(_ feedResults: [FeedResult]) {
@@ -38,10 +33,14 @@ class YralPlayer {
 
   func advanceToVideo(at index: Int) {
     guard index >= 0 && index < feedResults.count else { return }
-    currentIndex = index
 
+    // Save current player's last played time before switching
+    if let currentTime = player.currentItem?.currentTime() {
+      lastPlayedTimes[currentIndex] = currentTime
+    }
+
+    currentIndex = index
     if let preloadedItem = playerItems[index] {
-      // Use the preloaded item
       startLooping(with: preloadedItem)
     } else {
       // Need to load it asynchronously
@@ -63,9 +62,16 @@ class YralPlayer {
     player.insert(item, after: nil)
 
     // Create a new looper for the current item
-    // AVPlayerLooper needs a template item and will handle looping internally
     playerLooper = AVPlayerLooper(player: player, templateItem: item)
-    player.play()
+
+    // If we have a saved last played time, seek to it
+    if let lastTime = lastPlayedTimes[currentIndex] {
+      player.seek(to: lastTime, toleranceBefore: .zero, toleranceAfter: .zero) { [weak self] _ in
+        self?.player.play()
+      }
+    } else {
+      player.play()
+    }
   }
 
   private func preloadAdjacentVideos() {
