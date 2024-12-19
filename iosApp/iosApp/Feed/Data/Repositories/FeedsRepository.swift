@@ -169,7 +169,12 @@ protocol FeedMapping {
           let videoURL = URL(
             string: "\(Constants.cloudfarePrefix)\(result.video_uid().toString())\(Constants.cloudflareSuffix)"
           ) ?? URL(fileURLWithPath: "")
-          return FeedResult(id: String(feed.postID), url: videoURL)
+          return FeedResult(
+            postID: String(feed.postID),
+            videoID: result.video_uid().toString(),
+            canisterID: feed.canisterID,
+            url: videoURL
+          )
         }
       }
       return .success(feeds)
