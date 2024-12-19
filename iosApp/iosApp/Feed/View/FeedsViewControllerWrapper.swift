@@ -14,12 +14,9 @@ struct FeedsViewControllerWrapper: UIViewControllerRepresentable {
 
   func makeUIViewController(context: Context) -> UINavigationController {
     let navigationController = UINavigationController(rootViewController: feedsViewController)
-<<<<<<< HEAD
     navigationController.navigationBar.isHidden = true
     feedsViewController.edgesForExtendedLayout = .all
     feedsViewController.extendedLayoutIncludesOpaqueBars = true
-=======
->>>>>>> 6c3bf61 (Stiches the feeds flow and adds YralPlayer (#74))
     return navigationController
   }
 
