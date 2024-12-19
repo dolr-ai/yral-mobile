@@ -219,6 +219,9 @@ class YralPlayer {
     prepareCurrentVideo()
   }
 
+  func addFeedResults(_ feedResults: [FeedResult]) {
+    self.feedResults += feedResults
+  }
   func advanceToVideo(at index: Int) {
     guard index >= 0 && index < feedResults.count else { return }
 
@@ -255,14 +258,22 @@ class YralPlayer {
     // If we have a saved last played time, seek to it
     if let lastTime = lastPlayedTimes[currentIndex] {
       player.seek(to: lastTime, toleranceBefore: .zero, toleranceAfter: .zero) { [weak self] _ in
-        self?.player.play()
+        self?.play()
       }
     } else {
-      player.play()
+      play()
     }
   }
 
-  private func preloadAdjacentVideos() {
+  func play() {
+    player.play()
+  }
+
+  func pause() {
+    player.pause()
+  }
+
+  private func preloadFeed() {
     let nextIndex = currentIndex + 1
     let prevIndex = currentIndex - 1
 
