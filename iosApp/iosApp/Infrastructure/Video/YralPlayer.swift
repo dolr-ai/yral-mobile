@@ -189,82 +189,102 @@ extension YralPlayer {
 }
 =======
 class YralPlayer {
-  private var currentPlayerItem: AVPlayerItem?
-  private var nextPlayerItem: AVPlayerItem?
   private var feedResults: [FeedResult] = []
-  private var currentIndex: Int = 0
-  let player = AVPlayer()
+  var currentIndex: Int = 0
+
+  // Using AVQueuePlayer for looping capabilities
+  let player = AVQueuePlayer()
+
+  // Keep a reference to the AVPlayerLooper to prevent it from being deallocated
+  private var playerLooper: AVPlayerLooper?
+
+  // Store the last played times for each video
+  private var lastPlayedTimes: [Int: CMTime] = [:]
+
+  private var playerItems: [Int: AVPlayerItem] = [:]
 
   func loadInitialVideos(_ feedResults: [FeedResult]) {
     self.feedResults = feedResults
+    player.isMuted = false
     currentIndex = 0
     prepareCurrentVideo()
   }
 
+  func advanceToVideo(at index: Int) {
+    guard index >= 0 && index < feedResults.count else { return }
+
+    // Save current player's last played time before switching
+    if let currentTime = player.currentItem?.currentTime() {
+      lastPlayedTimes[currentIndex] = currentTime
+    }
+
+    currentIndex = index
+    if let preloadedItem = playerItems[index] {
+      startLooping(with: preloadedItem)
+    } else {
+      // Need to load it asynchronously
+      prepareCurrentVideo()
+    }
+  }
+
   private func prepareCurrentVideo() {
     guard currentIndex < feedResults.count else { return }
+    loadVideo(at: currentIndex) { [weak self] item in
+      guard let self = self, let item = item else { return }
+      self.startLooping(with: item)
+    }
+  }
 
-    let currentVideo = feedResults[currentIndex]
-    let asset = AVURLAsset(url: currentVideo.url)
+  private func startLooping(with item: AVPlayerItem) {
+    // Reset the player to ensure no previous items remain
+    player.removeAllItems()
+    player.insert(item, after: nil)
 
+    // Create a new looper for the current item
+    playerLooper = AVPlayerLooper(player: player, templateItem: item)
+
+    // If we have a saved last played time, seek to it
+    if let lastTime = lastPlayedTimes[currentIndex] {
+      player.seek(to: lastTime, toleranceBefore: .zero, toleranceAfter: .zero) { [weak self] _ in
+        self?.player.play()
+      }
+    } else {
+      player.play()
+    }
+  }
+
+  private func preloadAdjacentVideos() {
+    let nextIndex = currentIndex + 1
+    let prevIndex = currentIndex - 1
+
+    if nextIndex < feedResults.count && playerItems[nextIndex] == nil {
+      loadVideo(at: nextIndex, completion: nil)
+    }
+
+    if prevIndex >= 0 && playerItems[prevIndex] == nil {
+      loadVideo(at: prevIndex, completion: nil)
+    }
+  }
+
+  private func loadVideo(at index: Int, completion: ((AVPlayerItem?) -> Void)?) {
+    let video = feedResults[index]
+    let asset = AVURLAsset(url: video.url)
     asset.loadValuesAsynchronously(forKeys: ["playable"]) { [weak self] in
       guard let self = self else { return }
 
       var error: NSError?
       let status = asset.statusOfValue(forKey: "playable", error: &error)
+
       DispatchQueue.main.async {
         if status == .loaded {
           let item = AVPlayerItem(asset: asset)
-          self.currentPlayerItem = item
-          self.player.replaceCurrentItem(with: item)
-          self.player.play()
-
-          self.preloadNextVideo()
+          self.playerItems[index] = item
+          completion?(item)
         } else {
           print("Failed to load asset: \(error?.localizedDescription ?? "Unknown error")")
+          completion?(nil)
         }
       }
-    }
-  }
-
-  private func preloadNextVideo() {
-    let nextIndex = currentIndex + 1
-    guard nextIndex < feedResults.count else {
-      nextPlayerItem = nil
-      return
-    }
-
-    let nextVideo = feedResults[nextIndex]
-    let nextAsset = AVURLAsset(url: nextVideo.url)
-
-    nextAsset.loadValuesAsynchronously(forKeys: ["playable"]) { [weak self] in
-      guard let self = self else { return }
-      var error: NSError?
-      let status = nextAsset.statusOfValue(forKey: "playable", error: &error)
-
-      DispatchQueue.main.async {
-        if status == .loaded {
-          let nextItem = AVPlayerItem(asset: nextAsset)
-          self.nextPlayerItem = nextItem
-        } else {
-          print("Failed to preload next asset: \(error?.localizedDescription ?? "Unknown error")")
-        }
-      }
-    }
-  }
-
-  // Call this when the user scrolls to the next video
-  func advanceToNextVideo() {
-    currentIndex += 1
-    if let nextItem = nextPlayerItem {
-      currentPlayerItem = nextItem
-      player.replaceCurrentItem(with: nextItem)
-      player.play()
-      // Now preload the next next video
-      preloadNextVideo()
-    } else {
-      // If we don’t have a preloaded item, just prepare it normally
-      prepareCurrentVideo()
     }
   }
 }
