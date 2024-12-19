@@ -8,6 +8,8 @@
 import Foundation
 
 struct FeedResult: Hashable {
-  let id: String
+  let postID: String
+  let videoID: String
+  let canisterID: String
   let url: URL
 }
