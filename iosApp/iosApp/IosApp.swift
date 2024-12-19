@@ -20,7 +20,7 @@ struct IosApp: App {
   var body: some Scene {
     WindowGroup {
       if let feedsDIContainer = feedsDIContainer {
-        feedsDIContainer.makeFeedsViewControllerWrapper()
+        feedsDIContainer.makeFeedsViewControllerWrapper().ignoresSafeArea()
       } else if let error = initializationError {
         Text("Failed to initialize: \(error.localizedDescription)")
           .foregroundColor(.red)
