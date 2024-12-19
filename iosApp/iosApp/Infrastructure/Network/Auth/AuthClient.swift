@@ -12,6 +12,7 @@ import secp256k1
 class DefaultAuthClient: AuthClient {
   private(set) var identity: DelegatedIdentity?
   private(set) var principal: Principal?
+  private(set) var principalString: String?
   private let networkService: NetworkService
   private let cookieStorage = HTTPCookieStorage.shared
   private(set) var identityData: Data?
@@ -70,19 +71,24 @@ class DefaultAuthClient: AuthClient {
   }
 
   private func handleExtractIdentityResponse(from data: Data) async throws {
-    try data.withUnsafeBytes { (buffer: UnsafeRawBufferPointer) in
-      if buffer.count > 0 {
-        let uint8Buffer = buffer.bindMemory(to: UInt8.self)
-        let wire = try delegated_identity_wire_from_bytes(uint8Buffer)
-        let identity = try delegated_identity_from_bytes(uint8Buffer)
-
-        Task { @MainActor in
-          self.identity = identity
-          self.principal = principal
-        }
-      } else {
+    let (wire, identity): (DelegatedIdentityWire, DelegatedIdentity) = try data.withUnsafeBytes { buffer in
+      guard buffer.count > 0 else {
         throw NetworkError.invalidResponse("Empty data received")
       }
+
+      let uint8Buffer = buffer.bindMemory(to: UInt8.self)
+      let wire = try delegated_identity_wire_from_bytes(uint8Buffer)
+      let identity = try delegated_identity_from_bytes(uint8Buffer)
+      return (wire, identity)
+    }
+    let canistersWrapper = try await authenticate_with_network(wire, nil)
+    let principal = canistersWrapper.get_canister_principal()
+    let principalString = canistersWrapper.get_canister_principal_string().toString()
+
+    await MainActor.run {
+      self.identity = identity
+      self.principal = principal
+      self.principalString = principalString
     }
   }
 
@@ -124,6 +130,7 @@ class DefaultAuthClient: AuthClient {
 protocol AuthClient {
   var identity: DelegatedIdentity? { get }
   var principal: Principal? { get }
+  var principalString: String? { get }
   func initialize() async throws
   func refreshAuthIfNeeded() async throws
   func generateNewDelegatedIdentity() throws -> DelegatedIdentity
