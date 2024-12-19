@@ -153,13 +153,13 @@ protocol FeedMapping {
 =======
   func fetchFeed(request: FeedRequest) async -> Result<[FeedResult], Error> {
     var mlRequest = MlFeed_FeedRequest()
-    mlRequest.canisterID = request.canisterId
+    mlRequest.canisterID = authClient.principalString ?? ""
     mlRequest.filterPosts = request.filteredPosts
     mlRequest.numResults = UInt32(request.numResults)
     do {
-      let response = try mlClient.get_feed_clean(
+      let response = try await mlClient.get_feed_clean(
         mlRequest
-      ).response.wait()
+      ).response.get()
       let feeds = try await response.feed.asyncMap { feed in
         let principal = try get_principal(feed.canisterID)
         do {
@@ -174,7 +174,6 @@ protocol FeedMapping {
       }
       return .success(feeds)
     } catch {
-      print(error)
       return .failure(error)
     }
   }
