@@ -10,4 +10,5 @@ import Foundation
 struct FeedResult: Hashable {
   let id: String
   let url: URL
+  let thumbnail: URL
 }

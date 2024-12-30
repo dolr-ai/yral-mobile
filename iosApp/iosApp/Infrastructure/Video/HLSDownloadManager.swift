@@ -26,7 +26,7 @@ final class HLSDownloadManager: NSObject {
   private var assetTitleForURL: [URL: String] = [:]
   private var localRemoteUrlMapping: [URL: URL] = [:]
   private var downloadContinuations: [URL: CheckedContinuation<URL, Error>] = [:]
-  var downloadedAssetsLRU: [String: Date] = [:]
+  private var downloadedAssetsLRU: [String: Date] = [:]
 
   private let monitor = NWPathMonitor()
   private var isNetworkAvailable = true
