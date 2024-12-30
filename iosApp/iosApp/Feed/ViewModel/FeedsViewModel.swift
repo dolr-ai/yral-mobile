@@ -17,6 +17,7 @@ enum FeedsPageState {
 
 enum FeedsPageEvent {
   case loadedMoreFeeds([FeedResult])
+  case loadMoreFeedsFailed(Error)
 }
 
 class FeedsViewModel: ObservableObject {
@@ -29,7 +30,7 @@ class FeedsViewModel: ObservableObject {
     self.feedsUseCase = useCase
   }
 
-  func fetchFeeds(request: FeedRequest) async {
+  @MainActor func fetchFeeds(request: FeedRequest) async {
     state = .loading
     do {
       let result = try await feedsUseCase.execute(request: request)
@@ -45,7 +46,7 @@ class FeedsViewModel: ObservableObject {
     }
   }
 
-  func loadMoreFeeds() async {
+  @MainActor func loadMoreFeeds() async {
     state = .loading
     do {
       let filteredPosts = currentFeeds.map { feed in
@@ -66,9 +67,11 @@ class FeedsViewModel: ObservableObject {
         currentFeeds += response
         state = .successfullyFetched(currentFeeds)
       case .failure(let error):
+        event = .loadMoreFeedsFailed(error)
         state = .failure(error)
       }
     } catch {
+      event = .loadMoreFeedsFailed(error)
       state = .failure(error)
     }
   }

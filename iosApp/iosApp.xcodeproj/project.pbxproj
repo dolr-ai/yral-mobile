@@ -31,6 +31,10 @@
 		AC6BECC22D09F91C002E2021 /* HTTPService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC6BECC12D09F917002E2021 /* HTTPService.swift */; };
 		AC6BECC32D09F91C002E2021 /* HTTPService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC6BECC12D09F917002E2021 /* HTTPService.swift */; };
 		AC6CBA802CE46CA6002454F8 /* libyral_mobile_swift_binding.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AC09A9F72CDB78B9009A39A4 /* libyral_mobile_swift_binding.a */; };
+		AC8472AA2D1D9139004A4259 /* HLSDownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC8472A92D1D9135004A4259 /* HLSDownloadManager.swift */; };
+		AC8472AB2D1D9139004A4259 /* HLSDownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC8472A92D1D9135004A4259 /* HLSDownloadManager.swift */; };
+		AC8472AD2D1D9540004A4259 /* AVFoundation+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC8472AC2D1D953B004A4259 /* AVFoundation+Extensions.swift */; };
+		AC8472AE2D1D9540004A4259 /* AVFoundation+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC8472AC2D1D953B004A4259 /* AVFoundation+Extensions.swift */; };
 		ACB46A262D0EC0A3002E200C /* YralPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A252D0EC09C002E200C /* YralPlayer.swift */; };
 		ACB46A272D0EC0A3002E200C /* YralPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A252D0EC09C002E200C /* YralPlayer.swift */; };
 		ACB46A292D0EC76A002E200C /* AppConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A282D0EC765002E200C /* AppConfiguration.swift */; };
@@ -122,6 +126,8 @@
 		AC6BECBB2D09F685002E2021 /* Endpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Endpoint.swift; sourceTree = "<group>"; };
 		AC6BECBE2D09F866002E2021 /* NetworkService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkService.swift; sourceTree = "<group>"; };
 		AC6BECC12D09F917002E2021 /* HTTPService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTPService.swift; sourceTree = "<group>"; };
+		AC8472A92D1D9135004A4259 /* HLSDownloadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HLSDownloadManager.swift; sourceTree = "<group>"; };
+		AC8472AC2D1D953B004A4259 /* AVFoundation+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AVFoundation+Extensions.swift"; sourceTree = "<group>"; };
 		ACB46A252D0EC09C002E200C /* YralPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralPlayer.swift; sourceTree = "<group>"; };
 		ACB46A282D0EC765002E200C /* AppConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfiguration.swift; sourceTree = "<group>"; };
 		ACB46A2B2D0EC82F002E200C /* AppDIContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDIContainer.swift; sourceTree = "<group>"; };
@@ -271,6 +277,7 @@
 		AC09AA1E2CDBB69B009A39A4 /* Extensions */ = {
 			isa = PBXGroup;
 			children = (
+				AC8472AC2D1D953B004A4259 /* AVFoundation+Extensions.swift */,
 				ACB46A322D0EC8F9002E200C /* Numbers+Extensions.swift */,
 				AC09AA732CDD2107009A39A4 /* Data+Extensions.swift */,
 				AC09A9F92CDB7A5D009A39A4 /* SwiftBindings+Extensions.swift */,
@@ -302,6 +309,7 @@
 		ACB46A242D0EC083002E200C /* Video */ = {
 			isa = PBXGroup;
 			children = (
+				AC8472A92D1D9135004A4259 /* HLSDownloadManager.swift */,
 				ACB46A252D0EC09C002E200C /* YralPlayer.swift */,
 			);
 			path = Video;
@@ -712,8 +720,10 @@
 				ACB46A362D0EC998002E200C /* FeedDIContainer.swift in Sources */,
 				2152FB042600AC8F00CF470E /* IosApp.swift in Sources */,
 				AC09A9B22CDB775C009A39A4 /* yral-mobile-swift-binding.swift in Sources */,
+				AC8472AE2D1D9540004A4259 /* AVFoundation+Extensions.swift in Sources */,
 				AC6BECBD2D09F68C002E2021 /* Endpoint.swift in Sources */,
 				AC09A9B32CDB775C009A39A4 /* SwiftBridgeCore.swift in Sources */,
+				AC8472AB2D1D9139004A4259 /* HLSDownloadManager.swift in Sources */,
 				AC09AA742CDD210D009A39A4 /* Data+Extensions.swift in Sources */,
 				AC09A9FA2CDB7A5D009A39A4 /* SwiftBindings+Extensions.swift in Sources */,
 				ACB46A772D105B17002E200C /* ReusableView.swift in Sources */,
@@ -752,8 +762,10 @@
 				ACB46A372D0EC998002E200C /* FeedDIContainer.swift in Sources */,
 				ACD941872CFF575C0038FCB6 /* IosApp.swift in Sources */,
 				ACD941882CFF575C0038FCB6 /* yral-mobile-swift-binding.swift in Sources */,
+				AC8472AD2D1D9540004A4259 /* AVFoundation+Extensions.swift in Sources */,
 				AC6BECBC2D09F68C002E2021 /* Endpoint.swift in Sources */,
 				ACD941892CFF575C0038FCB6 /* SwiftBridgeCore.swift in Sources */,
+				AC8472AA2D1D9139004A4259 /* HLSDownloadManager.swift in Sources */,
 				ACD9418A2CFF575C0038FCB6 /* Data+Extensions.swift in Sources */,
 				ACD9418B2CFF575C0038FCB6 /* SwiftBindings+Extensions.swift in Sources */,
 				ACB46A762D105B17002E200C /* ReusableView.swift in Sources */,
