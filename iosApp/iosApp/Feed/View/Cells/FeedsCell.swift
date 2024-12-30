@@ -9,10 +9,10 @@
 import UIKit
 import AVFoundation
 
-class FeedsCell: UICollectionViewCell, ReusableView {
+class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
 
   var playerLayer: AVPlayerLayer?
-  private let playerContainerView = getUIView()
+  private let playerContainerView = getUIImageView()
 
   override init(frame: CGRect) {
     super.init(frame: frame)
@@ -34,7 +34,12 @@ class FeedsCell: UICollectionViewCell, ReusableView {
     contentView.layoutIfNeeded()
   }
 
-  func configure(withPlayer player: AVPlayer) {
+  func configure(withPlayer player: AVPlayer, thumbnailURL: URL, lastFrameImage: UIImage?) {
+    if let lastFrameImage {
+      playerContainerView.image = lastFrameImage
+    } else {
+      loadImage(with: thumbnailURL, on: playerContainerView)
+    }
     playerLayer?.removeFromSuperlayer()
     let layer = AVPlayerLayer(player: player)
     layer.videoGravity = .resize

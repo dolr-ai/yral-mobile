@@ -36,11 +36,15 @@ class FeedsRepository: FeedRepositoryProtocol {
           let videoURL = URL(
             string: "\(Constants.cloudfarePrefix)\(result.video_uid().toString())\(Constants.cloudflareSuffix)"
           ) ?? URL(fileURLWithPath: "")
+          let thumbnailURL = URL(
+            string: "\(Constants.cloudfarePrefix)\(result.video_uid().toString())\(Constants.thumbnailSuffix)"
+          ) ?? URL(fileURLWithPath: "")
           return FeedResult(
             postID: String(feed.postID),
             videoID: result.video_uid().toString(),
             canisterID: feed.canisterID,
-            url: videoURL
+            url: videoURL,
+            thumbnail: thumbnailURL
           )
         }
       }
@@ -55,5 +59,7 @@ extension FeedsRepository {
   enum Constants {
     static let cloudfarePrefix = "https://customer-2p3jflss4r4hmpnz.cloudflarestream.com/"
     static let cloudflareSuffix = "/manifest/video.m3u8"
+    static let thumbnailSuffix = "/thumbnails/thumbnail.jpg"
+
   }
 }
