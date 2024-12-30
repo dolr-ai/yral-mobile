@@ -69,6 +69,9 @@ class FeedsViewController: UIViewController {
       switch event {
       case .loadedMoreFeeds(let feeds):
         self.addFeeds(with: feeds)
+      case .loadMoreFeedsFailed(let error):
+        print(error)
+        self.loadMoreRequestMade = false
       default:
         break
       }
@@ -169,6 +172,10 @@ extension FeedsViewController: UICollectionViewDelegate {
     }
   }
 
+  func scrollViewShouldScrollToTop(_ scrollView: UIScrollView) -> Bool {
+    return false
+  }
+
   func collectionView(
     _ collectionView: UICollectionView,
     willDisplay cell: UICollectionViewCell,
@@ -176,7 +183,7 @@ extension FeedsViewController: UICollectionViewDelegate {
   ) {
     let feedsCount = feedsDataSource.snapshot().numberOfItems
     if indexPath.item == feedsCount - Constants.thresholdForLoadingMoreResults, !loadMoreRequestMade {
-      Task { @MainActor in
+      Task {
         self.loadMoreRequestMade = true
         await viewModel.loadMoreFeeds()
       }
@@ -188,5 +195,6 @@ extension FeedsViewController {
   enum Constants {
     static let initialNumResults = 10
     static let thresholdForLoadingMoreResults = 6
+    static let radius = 5
   }
 }
