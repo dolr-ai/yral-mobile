@@ -26,7 +26,7 @@ final class HLSDownloadManager: NSObject {
   private var assetTitleForURL: [URL: String] = [:]
   private var localRemoteUrlMapping: [URL: URL] = [:]
   private var downloadContinuations: [URL: CheckedContinuation<URL, Error>] = [:]
-  private var downloadedAssetsLRU: [String: Date] = [:]
+  var downloadedAssetsLRU: [String: Date] = [:]
 
   private let monitor = NWPathMonitor()
   private var isNetworkAvailable = true
@@ -107,7 +107,7 @@ final class HLSDownloadManager: NSObject {
     self.delegate?.clearedCache(for: assetTitle)
   }
 
-  func removeAsset(_ url: URL) {
+  private func removeAsset(_ url: URL) {
     do {
       if FileManager.default.fileExists(atPath: url.path) {
         try FileManager.default.removeItem(at: url)
@@ -133,9 +133,6 @@ extension HLSDownloadManager: AVAssetDownloadDelegate {
         self.downloadContinuations.removeValue(forKey: feedURL)
       }
       self.downloadContinuations[feedURL]?.resume(returning: location)
-      let policy = AVMutableAssetDownloadStorageManagementPolicy()
-      policy.expirationDate = Calendar.current.date(byAdding: .minute, value: 2, to: .now) ?? .now
-      AVAssetDownloadStorageManager.shared().setStorageManagementPolicy(policy, for: location)
       print("Finished writing to location: \(location)")
     }
   }
@@ -160,7 +157,6 @@ extension HLSDownloadManager {
     static let maxOfflineAssets = 10
     static let maxConnectionsPerHost = 5
     static let downloadIdentifier = "com.yral.HLSDownloadManager.async"
-    static let videoKey = "userVideos"
   }
 }
 

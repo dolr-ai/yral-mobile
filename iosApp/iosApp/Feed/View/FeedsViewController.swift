@@ -14,7 +14,8 @@ class FeedsViewController: UIViewController {
   typealias Snapshot = NSDiffableDataSourceSnapshot<Int, FeedResult>
 
   private var viewModel: FeedsViewModel
-  private var cancellables: Set<AnyCancellable> = []
+  private var initalFeedscancellables: Set<AnyCancellable> = []
+  private var paginatedFeedscancellables: Set<AnyCancellable> = []
   private var yralPlayer = YralPlayer()
   private var feedsCV: UICollectionView = {
     let collectionView = getUICollectionView()
@@ -25,6 +26,7 @@ class FeedsViewController: UIViewController {
     return collectionView
   }()
   lazy var feedsDataSource = getConfiguredDataSource()
+  private var loadMoreRequestMade: Bool = false
 
   init(viewModel: FeedsViewModel) {
     self.viewModel = viewModel
@@ -37,14 +39,15 @@ class FeedsViewController: UIViewController {
 
   override func viewDidLoad() {
     super.viewDidLoad()
-    bindViewModel(viewModel: viewModel)
+    bindViewModel()
+    handleEvents()
     setupUI()
     Task { @MainActor in
       await viewModel.fetchFeeds(request: FeedRequest(filteredPosts: [], numResults: Constants.initialNumResults))
     }
   }
 
-  func bindViewModel(viewModel: FeedsViewModel) {
+  func bindViewModel() {
     viewModel.$state.receive(on: RunLoop.main).sink { [weak self] state in
       guard let self = self else { return }
       switch state {
@@ -57,9 +60,23 @@ class FeedsViewController: UIViewController {
       case .failure(let error):
         print(error)
       }
-    }.store(in: &cancellables)
+    }.store(in: &initalFeedscancellables)
   }
 
+  func handleEvents() {
+    viewModel.$event.receive(on: RunLoop.main).sink { [weak self] event in
+      guard let self = self else { return }
+      switch event {
+      case .loadedMoreFeeds(let feeds):
+        self.addFeeds(with: feeds)
+      case .loadMoreFeedsFailed(let error):
+        print(error)
+        self.loadMoreRequestMade = false
+      default:
+        break
+      }
+    }.store(in: &paginatedFeedscancellables)
+  }
   func setupUI() {
     setupCollectionView()
   }
@@ -109,32 +126,54 @@ class FeedsViewController: UIViewController {
   }
 
   func updateData(withFeeds feeds: [FeedResult], animated: Bool = false) {
-    self.yralPlayer.loadInitialVideos(feeds)
+    guard self.feedsDataSource.snapshot().itemIdentifiers.isEmpty else { return }
     var shouldAnimate = false
     if #available(iOS 15, *) {
       shouldAnimate = animated
     }
+    self.yralPlayer.loadInitialVideos(feeds)
     var snapshot = feedsDataSource.snapshot()
     snapshot.appendSections([0])
-    snapshot.appendItems(feeds, toSection: 0)
+    snapshot.appendItems(feeds, toSection: .zero)
     feedsDataSource.apply(snapshot, animatingDifferences: shouldAnimate)
+  }
+
+  func addFeeds(with feeds: [FeedResult], animated: Bool = false) {
+    yralPlayer.addFeedResults(feeds)
+    var shouldAnimate = false
+    if #available(iOS 15, *) {
+      shouldAnimate = animated
+    }
+    guard !self.feedsDataSource.snapshot().itemIdentifiers.isEmpty else { return }
+    var snapshot = feedsDataSource.snapshot()
+    snapshot.appendItems(feeds, toSection: .zero)
+    feedsDataSource.apply(snapshot, animatingDifferences: shouldAnimate) {
+      self.loadMoreRequestMade = false
+    }
   }
 }
 
 extension FeedsViewController: UICollectionViewDelegate {
   func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
-    yralPlayer.player.pause()
+    guard !loadMoreRequestMade, scrollView.contentOffset.y > .zero else { return }
+    yralPlayer.pause()
   }
 
   func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
-    feedsCV.layoutIfNeeded() // Force layout update
+    feedsCV.layoutIfNeeded()
     guard let visibleIndexPath = feedsCV.indexPathsForVisibleItems.sorted().first else { return }
     let oldIndex = yralPlayer.currentIndex
     let newIndex = visibleIndexPath.item
     if newIndex != oldIndex {
       yralPlayer.advanceToVideo(at: newIndex)
       feedsCV.reloadData()
+    } else {
+      yralPlayer.play()
     }
+  }
+
+  func scrollViewShouldScrollToTop(_ scrollView: UIScrollView) -> Bool {
+    return false
   }
 
   func collectionView(
@@ -143,10 +182,10 @@ extension FeedsViewController: UICollectionViewDelegate {
     forItemAt indexPath: IndexPath
   ) {
     let feedsCount = feedsDataSource.snapshot().numberOfItems
-    let threshold = 1
-    if indexPath.item == feedsCount - threshold {
+    if indexPath.item == feedsCount - Constants.thresholdForLoadingMoreResults, !loadMoreRequestMade {
       Task {
-//        await viewModel.fetchFeeds(request: FeedRequest(filteredPosts: [], numResults: 5))
+        self.loadMoreRequestMade = true
+        await viewModel.loadMoreFeeds()
       }
     }
   }
@@ -154,7 +193,8 @@ extension FeedsViewController: UICollectionViewDelegate {
 
 extension FeedsViewController {
   enum Constants {
-    static let initialNumResults = 5
-    static let thresholdForLoadingMoreResults = 1
+    static let initialNumResults = 10
+    static let thresholdForLoadingMoreResults = 6
+    static let radius = 5
   }
 }
