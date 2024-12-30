@@ -12,4 +12,5 @@ struct FeedResult: Hashable {
   let videoID: String
   let canisterID: String
   let url: URL
+  let thumbnail: URL
 }
