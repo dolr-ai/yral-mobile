@@ -31,6 +31,12 @@
 		AC6BECC22D09F91C002E2021 /* HTTPService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC6BECC12D09F917002E2021 /* HTTPService.swift */; };
 		AC6BECC32D09F91C002E2021 /* HTTPService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC6BECC12D09F917002E2021 /* HTTPService.swift */; };
 		AC6CBA802CE46CA6002454F8 /* libyral_mobile_swift_binding.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AC09A9F72CDB78B9009A39A4 /* libyral_mobile_swift_binding.a */; };
+		AC6E311A2D22F050001EBE6C /* SDWebImage in Frameworks */ = {isa = PBXBuildFile; productRef = AC6E31192D22F050001EBE6C /* SDWebImage */; };
+		AC6E311C2D22F050001EBE6C /* SDWebImageMapKit in Frameworks */ = {isa = PBXBuildFile; productRef = AC6E311B2D22F050001EBE6C /* SDWebImageMapKit */; };
+		AC6E311E2D22F069001EBE6C /* SDWebImage in Frameworks */ = {isa = PBXBuildFile; productRef = AC6E311D2D22F069001EBE6C /* SDWebImage */; };
+		AC6E31202D22F069001EBE6C /* SDWebImageMapKit in Frameworks */ = {isa = PBXBuildFile; productRef = AC6E311F2D22F069001EBE6C /* SDWebImageMapKit */; };
+		AC6E31222D22F08F001EBE6C /* ImageLoaderProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC6E31212D22F088001EBE6C /* ImageLoaderProtocol.swift */; };
+		AC6E31232D22F08F001EBE6C /* ImageLoaderProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC6E31212D22F088001EBE6C /* ImageLoaderProtocol.swift */; };
 		AC8472AA2D1D9139004A4259 /* HLSDownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC8472A92D1D9135004A4259 /* HLSDownloadManager.swift */; };
 		AC8472AB2D1D9139004A4259 /* HLSDownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC8472A92D1D9135004A4259 /* HLSDownloadManager.swift */; };
 		AC8472AD2D1D9540004A4259 /* AVFoundation+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC8472AC2D1D953B004A4259 /* AVFoundation+Extensions.swift */; };
@@ -126,6 +132,7 @@
 		AC6BECBB2D09F685002E2021 /* Endpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Endpoint.swift; sourceTree = "<group>"; };
 		AC6BECBE2D09F866002E2021 /* NetworkService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkService.swift; sourceTree = "<group>"; };
 		AC6BECC12D09F917002E2021 /* HTTPService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTPService.swift; sourceTree = "<group>"; };
+		AC6E31212D22F088001EBE6C /* ImageLoaderProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageLoaderProtocol.swift; sourceTree = "<group>"; };
 		AC8472A92D1D9135004A4259 /* HLSDownloadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HLSDownloadManager.swift; sourceTree = "<group>"; };
 		AC8472AC2D1D953B004A4259 /* AVFoundation+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AVFoundation+Extensions.swift"; sourceTree = "<group>"; };
 		ACB46A252D0EC09C002E200C /* YralPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralPlayer.swift; sourceTree = "<group>"; };
@@ -165,6 +172,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AC6CBA802CE46CA6002454F8 /* libyral_mobile_swift_binding.a in Frameworks */,
+				AC6E311C2D22F050001EBE6C /* SDWebImageMapKit in Frameworks */,
 				AC6BECAC2D09D52B002E2021 /* GRPC in Frameworks */,
 				ACD941D12CFF5B720038FCB6 /* secp256k1 in Frameworks */,
 				AC0E49C42CEBA6F0002DC158 /* secp256k1 in Frameworks */,
@@ -174,6 +182,7 @@
 				ACD941C62CFF5B3D0038FCB6 /* FirebaseCrashlytics in Frameworks */,
 				AC6BECAA2D09D52B002E2021 /* CGRPCZlib in Frameworks */,
 				AC6BECB02D09D52B002E2021 /* protoc-gen-grpc-swift in Frameworks */,
+				AC6E311A2D22F050001EBE6C /* SDWebImage in Frameworks */,
 				AC6BECAE2D09D52B002E2021 /* GRPCReflectionService in Frameworks */,
 				ACB815482CFA146800104B7B /* FirebaseCore in Frameworks */,
 				ACD941822CFF55BB0038FCB6 /* FirebaseCrashlytics in Frameworks */,
@@ -192,7 +201,9 @@
 				AC6BECB22D09D541002E2021 /* CGRPCZlib in Frameworks */,
 				ACD941D32CFF5B8B0038FCB6 /* secp256k1 in Frameworks */,
 				ACD941CA2CFF5B5B0038FCB6 /* FirebaseAnalyticsOnDeviceConversion in Frameworks */,
+				AC6E311E2D22F069001EBE6C /* SDWebImage in Frameworks */,
 				ACD941CE2CFF5B5B0038FCB6 /* FirebaseCrashlytics in Frameworks */,
+				AC6E31202D22F069001EBE6C /* SDWebImageMapKit in Frameworks */,
 				ACD941CC2CFF5B5B0038FCB6 /* FirebaseCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -425,6 +436,7 @@
 		ACB46A712D105AC0002E200C /* DesignSystem */ = {
 			isa = PBXGroup;
 			children = (
+				AC6E31212D22F088001EBE6C /* ImageLoaderProtocol.swift */,
 				ACB46A7B2D105BE0002E200C /* UIKitInitializers.swift */,
 				ACB46A782D105B30002E200C /* NibLoadableVIew.swift */,
 				ACB46A752D105B11002E200C /* ReusableView.swift */,
@@ -541,6 +553,7 @@
 				ACD941C02CFF5B3D0038FCB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				ACD941CF2CFF5B720038FCB6 /* XCRemoteSwiftPackageReference "swift-secp256k1" */,
 				AC6BECA82D09D52B002E2021 /* XCRemoteSwiftPackageReference "grpc-swift" */,
+				AC6E31182D22F050001EBE6C /* XCRemoteSwiftPackageReference "SDWebImage" */,
 			);
 			productRefGroup = 7555FF7C242A565900829871 /* Products */;
 			projectDirPath = "";
@@ -729,6 +742,7 @@
 				ACB46A772D105B17002E200C /* ReusableView.swift in Sources */,
 				ACB46A812D106034002E200C /* FeedsCell.swift in Sources */,
 				AC6BECC22D09F91C002E2021 /* HTTPService.swift in Sources */,
+				AC6E31232D22F08F001EBE6C /* ImageLoaderProtocol.swift in Sources */,
 				ACB46A5B2D0EF91F002E200C /* AuthConstants.swift in Sources */,
 				ACB46A292D0EC76A002E200C /* AppConfiguration.swift in Sources */,
 				ACB46A342D0EC8FF002E200C /* Numbers+Extensions.swift in Sources */,
@@ -771,6 +785,7 @@
 				ACB46A762D105B17002E200C /* ReusableView.swift in Sources */,
 				ACB46A802D106034002E200C /* FeedsCell.swift in Sources */,
 				AC6BECC32D09F91C002E2021 /* HTTPService.swift in Sources */,
+				AC6E31222D22F08F001EBE6C /* ImageLoaderProtocol.swift in Sources */,
 				ACB46A5A2D0EF91F002E200C /* AuthConstants.swift in Sources */,
 				ACB46A2A2D0EC76A002E200C /* AppConfiguration.swift in Sources */,
 				ACB46A332D0EC8FF002E200C /* Numbers+Extensions.swift in Sources */,
@@ -1071,6 +1086,14 @@
 				minimumVersion = 1.24.2;
 			};
 		};
+		AC6E31182D22F050001EBE6C /* XCRemoteSwiftPackageReference "SDWebImage" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/SDWebImage/SDWebImage.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.20.0;
+			};
+		};
 		ACB815382CFA146800104B7B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/firebase/firebase-ios-sdk.git";
@@ -1150,6 +1173,26 @@
 			isa = XCSwiftPackageProductDependency;
 			package = AC6BECA82D09D52B002E2021 /* XCRemoteSwiftPackageReference "grpc-swift" */;
 			productName = "protoc-gen-grpc-swift";
+		};
+		AC6E31192D22F050001EBE6C /* SDWebImage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AC6E31182D22F050001EBE6C /* XCRemoteSwiftPackageReference "SDWebImage" */;
+			productName = SDWebImage;
+		};
+		AC6E311B2D22F050001EBE6C /* SDWebImageMapKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AC6E31182D22F050001EBE6C /* XCRemoteSwiftPackageReference "SDWebImage" */;
+			productName = SDWebImageMapKit;
+		};
+		AC6E311D2D22F069001EBE6C /* SDWebImage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AC6E31182D22F050001EBE6C /* XCRemoteSwiftPackageReference "SDWebImage" */;
+			productName = SDWebImage;
+		};
+		AC6E311F2D22F069001EBE6C /* SDWebImageMapKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AC6E31182D22F050001EBE6C /* XCRemoteSwiftPackageReference "SDWebImage" */;
+			productName = SDWebImageMapKit;
 		};
 		ACB815472CFA146800104B7B /* FirebaseCore */ = {
 			isa = XCSwiftPackageProductDependency;

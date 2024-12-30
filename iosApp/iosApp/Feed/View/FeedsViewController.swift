@@ -101,13 +101,21 @@ class FeedsViewController: UIViewController {
   }
 
   func getConfiguredDataSource() -> DataSource {
-    let dataSource = DataSource(collectionView: feedsCV) { [weak self] collectionView, indexPath, _ in
+    let dataSource = DataSource(collectionView: feedsCV) { [weak self] collectionView, indexPath, feed in
       guard let self = self else { return UICollectionViewCell() }
       let cell = collectionView.dequeueReusableCell(FeedsCell.self, for: indexPath)
       if indexPath.row == self.yralPlayer.currentIndex {
-        cell.configure(withPlayer: self.yralPlayer.player)
+        cell.configure(
+          withPlayer: self.yralPlayer.player,
+          thumbnailURL: feed.thumbnail,
+          lastFrameImage: self.yralPlayer.lastFrames[indexPath.item]
+        )
       } else {
-        cell.configure(withPlayer: AVPlayer())
+        cell.configure(
+          withPlayer: AVPlayer(),
+          thumbnailURL: feed.thumbnail,
+          lastFrameImage: self.yralPlayer.lastFrames[indexPath.item]
+        )
       }
       return cell
     }
