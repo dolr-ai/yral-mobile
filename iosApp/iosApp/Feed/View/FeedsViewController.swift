@@ -78,6 +78,7 @@ class FeedsViewController: UIViewController {
     }.store(in: &paginatedFeedscancellables)
   }
   func setupUI() {
+    self.view.backgroundColor = .black
     setupCollectionView()
   }
 
@@ -93,10 +94,6 @@ class FeedsViewController: UIViewController {
     feedsCV.dataSource = feedsDataSource
     feedsCV.delegate = self
     view.layoutIfNeeded()
-    let layout = UICollectionViewFlowLayout()
-    layout.scrollDirection = .vertical
-    layout.itemSize = CGSize(width: view.bounds.width, height: view.bounds.height)
-    layout.minimumLineSpacing = .zero
     feedsCV.setCollectionViewLayout(createLayout(), animated: false)
   }
 
@@ -108,13 +105,13 @@ class FeedsViewController: UIViewController {
         cell.configure(
           withPlayer: self.yralPlayer.player,
           thumbnailURL: feed.thumbnail,
-          lastFrameImage: self.yralPlayer.lastFrames[indexPath.item]
+          lastFrameImage: nil
         )
       } else {
         cell.configure(
           withPlayer: AVPlayer(),
           thumbnailURL: feed.thumbnail,
-          lastFrameImage: self.yralPlayer.lastFrames[indexPath.item]
+          lastFrameImage: nil
         )
       }
       return cell

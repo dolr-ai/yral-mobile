@@ -16,6 +16,10 @@
 		AC09A9FA2CDB7A5D009A39A4 /* SwiftBindings+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC09A9F92CDB7A5D009A39A4 /* SwiftBindings+Extensions.swift */; };
 		AC09AA742CDD210D009A39A4 /* Data+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC09AA732CDD2107009A39A4 /* Data+Extensions.swift */; };
 		AC0E49C42CEBA6F0002DC158 /* secp256k1 in Frameworks */ = {isa = PBXBuildFile; productRef = AC0E49C32CEBA6F0002DC158 /* secp256k1 */; };
+		AC638BF52D2309C000481E94 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC638BF42D2309BA00481E94 /* KeychainHelper.swift */; };
+		AC638BF62D2309C000481E94 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC638BF42D2309BA00481E94 /* KeychainHelper.swift */; };
+		AC638BF92D230DCD00481E94 /* HomeTabController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC638BF82D230DCD00481E94 /* HomeTabController.swift */; };
+		AC638BFA2D230DCD00481E94 /* HomeTabController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC638BF82D230DCD00481E94 /* HomeTabController.swift */; };
 		AC6BECAA2D09D52B002E2021 /* CGRPCZlib in Frameworks */ = {isa = PBXBuildFile; productRef = AC6BECA92D09D52B002E2021 /* CGRPCZlib */; };
 		AC6BECAC2D09D52B002E2021 /* GRPC in Frameworks */ = {isa = PBXBuildFile; productRef = AC6BECAB2D09D52B002E2021 /* GRPC */; };
 		AC6BECAE2D09D52B002E2021 /* GRPCReflectionService in Frameworks */ = {isa = PBXBuildFile; productRef = AC6BECAD2D09D52B002E2021 /* GRPCReflectionService */; };
@@ -129,6 +133,8 @@
 		AC09A9F92CDB7A5D009A39A4 /* SwiftBindings+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SwiftBindings+Extensions.swift"; sourceTree = "<group>"; };
 		AC09AA0A2CDB7F2A009A39A4 /* shared.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = shared.framework; path = "../shared/build/xcode-frameworks/Debug/iphoneos18.1/shared.framework"; sourceTree = "<group>"; };
 		AC09AA732CDD2107009A39A4 /* Data+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Data+Extensions.swift"; sourceTree = "<group>"; };
+		AC638BF42D2309BA00481E94 /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
+		AC638BF82D230DCD00481E94 /* HomeTabController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeTabController.swift; sourceTree = "<group>"; };
 		AC6BECBB2D09F685002E2021 /* Endpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Endpoint.swift; sourceTree = "<group>"; };
 		AC6BECBE2D09F866002E2021 /* NetworkService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkService.swift; sourceTree = "<group>"; };
 		AC6BECC12D09F917002E2021 /* HTTPService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTPService.swift; sourceTree = "<group>"; };
@@ -247,6 +253,7 @@
 				ACB46A712D105AC0002E200C /* DesignSystem */,
 				2152FB032600AC8F00CF470E /* IosApp.swift */,
 				ACB46A2E2D0EC838002E200C /* DIContainer */,
+				AC638BF72D230DA900481E94 /* HomeTabController */,
 				ACEBE9962D0C4AA50056F033 /* Feed */,
 				AC6BECB92D09F0F0002E2021 /* Infrastructure */,
 				058557BA273AAA24004C7B11 /* Assets.xcassets */,
@@ -294,6 +301,14 @@
 				AC09A9F92CDB7A5D009A39A4 /* SwiftBindings+Extensions.swift */,
 			);
 			path = Extensions;
+			sourceTree = "<group>";
+		};
+		AC638BF72D230DA900481E94 /* HomeTabController */ = {
+			isa = PBXGroup;
+			children = (
+				AC638BF82D230DCD00481E94 /* HomeTabController.swift */,
+			);
+			path = HomeTabController;
 			sourceTree = "<group>";
 		};
 		AC6BECB92D09F0F0002E2021 /* Infrastructure */ = {
@@ -400,6 +415,7 @@
 		ACB46A582D0EF912002E200C /* Auth */ = {
 			isa = PBXGroup;
 			children = (
+				AC638BF42D2309BA00481E94 /* KeychainHelper.swift */,
 				ACB46A5F2D0EF947002E200C /* AuthClient.swift */,
 				ACB46A5C2D0EF927002E200C /* AuthEndPoints.swift */,
 				ACB46A592D0EF91A002E200C /* AuthConstants.swift */,
@@ -720,6 +736,7 @@
 				ACB46A422D0ECBB3002E200C /* ml_feed.proto in Sources */,
 				ACB46A5E2D0EF92D002E200C /* AuthEndPoints.swift in Sources */,
 				ACB46A612D0EF94B002E200C /* AuthClient.swift in Sources */,
+				AC638BFA2D230DCD00481E94 /* HomeTabController.swift in Sources */,
 				ACB46A732D105AF4002E200C /* CollectionView+Extensions.swift in Sources */,
 				ACB46A432D0ECBB3002E200C /* ml_feed.grpc.swift in Sources */,
 				ACB46A7A2D105B35002E200C /* NibLoadableVIew.swift in Sources */,
@@ -742,6 +759,7 @@
 				ACB46A772D105B17002E200C /* ReusableView.swift in Sources */,
 				ACB46A812D106034002E200C /* FeedsCell.swift in Sources */,
 				AC6BECC22D09F91C002E2021 /* HTTPService.swift in Sources */,
+				AC638BF62D2309C000481E94 /* KeychainHelper.swift in Sources */,
 				AC6E31232D22F08F001EBE6C /* ImageLoaderProtocol.swift in Sources */,
 				ACB46A5B2D0EF91F002E200C /* AuthConstants.swift in Sources */,
 				ACB46A292D0EC76A002E200C /* AppConfiguration.swift in Sources */,
@@ -763,6 +781,7 @@
 				ACB46A3F2D0ECBB3002E200C /* ml_feed.proto in Sources */,
 				ACB46A5D2D0EF92D002E200C /* AuthEndPoints.swift in Sources */,
 				ACB46A602D0EF94B002E200C /* AuthClient.swift in Sources */,
+				AC638BF92D230DCD00481E94 /* HomeTabController.swift in Sources */,
 				ACB46A742D105AF4002E200C /* CollectionView+Extensions.swift in Sources */,
 				ACB46A402D0ECBB3002E200C /* ml_feed.grpc.swift in Sources */,
 				ACB46A792D105B35002E200C /* NibLoadableVIew.swift in Sources */,
@@ -785,6 +804,7 @@
 				ACB46A762D105B17002E200C /* ReusableView.swift in Sources */,
 				ACB46A802D106034002E200C /* FeedsCell.swift in Sources */,
 				AC6BECC32D09F91C002E2021 /* HTTPService.swift in Sources */,
+				AC638BF52D2309C000481E94 /* KeychainHelper.swift in Sources */,
 				AC6E31222D22F08F001EBE6C /* ImageLoaderProtocol.swift in Sources */,
 				ACB46A5A2D0EF91F002E200C /* AuthConstants.swift in Sources */,
 				ACB46A2A2D0EC76A002E200C /* AppConfiguration.swift in Sources */,
