@@ -16,6 +16,54 @@
 		AC09A9FA2CDB7A5D009A39A4 /* SwiftBindings+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC09A9F92CDB7A5D009A39A4 /* SwiftBindings+Extensions.swift */; };
 		AC09AA742CDD210D009A39A4 /* Data+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC09AA732CDD2107009A39A4 /* Data+Extensions.swift */; };
 		AC0E49C42CEBA6F0002DC158 /* secp256k1 in Frameworks */ = {isa = PBXBuildFile; productRef = AC0E49C32CEBA6F0002DC158 /* secp256k1 */; };
+		AC32E3F62D26FEB9001DDA43 /* UIColor+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E3F52D26FEB4001DDA43 /* UIColor+Extensions.swift */; };
+		AC32E3F72D26FEB9001DDA43 /* UIColor+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E3F52D26FEB4001DDA43 /* UIColor+Extensions.swift */; };
+		AC32E4062D270097001DDA43 /* README.txt in Resources */ = {isa = PBXBuildFile; fileRef = AC32E4042D270097001DDA43 /* README.txt */; };
+		AC32E4072D270097001DDA43 /* KumbhSans-ExtraBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = AC32E3FA2D270097001DDA43 /* KumbhSans-ExtraBold.ttf */; };
+		AC32E4082D270097001DDA43 /* KumbhSans-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = AC32E3FF2D270097001DDA43 /* KumbhSans-SemiBold.ttf */; };
+		AC32E4092D270097001DDA43 /* KumbhSans-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = AC32E3F82D270097001DDA43 /* KumbhSans-Black.ttf */; };
+		AC32E40A2D270097001DDA43 /* KumbhSans-ExtraLight.ttf in Resources */ = {isa = PBXBuildFile; fileRef = AC32E3FB2D270097001DDA43 /* KumbhSans-ExtraLight.ttf */; };
+		AC32E40B2D270097001DDA43 /* KumbhSans-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = AC32E3FE2D270097001DDA43 /* KumbhSans-Regular.ttf */; };
+		AC32E40C2D270097001DDA43 /* KumbhSans-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = AC32E3FD2D270097001DDA43 /* KumbhSans-Medium.ttf */; };
+		AC32E40D2D270097001DDA43 /* OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = AC32E4032D270097001DDA43 /* OFL.txt */; };
+		AC32E40E2D270097001DDA43 /* KumbhSans-Thin.ttf in Resources */ = {isa = PBXBuildFile; fileRef = AC32E4002D270097001DDA43 /* KumbhSans-Thin.ttf */; };
+		AC32E40F2D270097001DDA43 /* KumbhSans-VariableFont_YOPQ,wght.ttf in Resources */ = {isa = PBXBuildFile; fileRef = AC32E4022D270097001DDA43 /* KumbhSans-VariableFont_YOPQ,wght.ttf */; };
+		AC32E4102D270097001DDA43 /* KumbhSans-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = AC32E3F92D270097001DDA43 /* KumbhSans-Bold.ttf */; };
+		AC32E4112D270097001DDA43 /* KumbhSans-Light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = AC32E3FC2D270097001DDA43 /* KumbhSans-Light.ttf */; };
+		AC32E4122D270097001DDA43 /* README.txt in Resources */ = {isa = PBXBuildFile; fileRef = AC32E4042D270097001DDA43 /* README.txt */; };
+		AC32E4132D270097001DDA43 /* KumbhSans-ExtraBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = AC32E3FA2D270097001DDA43 /* KumbhSans-ExtraBold.ttf */; };
+		AC32E4142D270097001DDA43 /* KumbhSans-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = AC32E3FF2D270097001DDA43 /* KumbhSans-SemiBold.ttf */; };
+		AC32E4152D270097001DDA43 /* KumbhSans-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = AC32E3F82D270097001DDA43 /* KumbhSans-Black.ttf */; };
+		AC32E4162D270097001DDA43 /* KumbhSans-ExtraLight.ttf in Resources */ = {isa = PBXBuildFile; fileRef = AC32E3FB2D270097001DDA43 /* KumbhSans-ExtraLight.ttf */; };
+		AC32E4172D270097001DDA43 /* KumbhSans-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = AC32E3FE2D270097001DDA43 /* KumbhSans-Regular.ttf */; };
+		AC32E4182D270097001DDA43 /* KumbhSans-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = AC32E3FD2D270097001DDA43 /* KumbhSans-Medium.ttf */; };
+		AC32E4192D270097001DDA43 /* OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = AC32E4032D270097001DDA43 /* OFL.txt */; };
+		AC32E41A2D270097001DDA43 /* KumbhSans-Thin.ttf in Resources */ = {isa = PBXBuildFile; fileRef = AC32E4002D270097001DDA43 /* KumbhSans-Thin.ttf */; };
+		AC32E41B2D270097001DDA43 /* KumbhSans-VariableFont_YOPQ,wght.ttf in Resources */ = {isa = PBXBuildFile; fileRef = AC32E4022D270097001DDA43 /* KumbhSans-VariableFont_YOPQ,wght.ttf */; };
+		AC32E41C2D270097001DDA43 /* KumbhSans-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = AC32E3F92D270097001DDA43 /* KumbhSans-Bold.ttf */; };
+		AC32E41D2D270097001DDA43 /* KumbhSans-Light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = AC32E3FC2D270097001DDA43 /* KumbhSans-Light.ttf */; };
+		AC32E4242D2712F1001DDA43 /* ProfileInfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E4232D2712EE001DDA43 /* ProfileInfoView.swift */; };
+		AC32E4252D2712F1001DDA43 /* ProfileInfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E4232D2712EE001DDA43 /* ProfileInfoView.swift */; };
+		AC32E4272D27A3F8001DDA43 /* LoginConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E4262D27A3E5001DDA43 /* LoginConstants.swift */; };
+		AC32E4282D27A3F8001DDA43 /* LoginConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E4262D27A3E5001DDA43 /* LoginConstants.swift */; };
+		AC32E42B2D27A428001DDA43 /* ProfileHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E42A2D27A421001DDA43 /* ProfileHeaderView.swift */; };
+		AC32E42C2D27A428001DDA43 /* ProfileHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E42A2D27A421001DDA43 /* ProfileHeaderView.swift */; };
+		AC32E42E2D27A44A001DDA43 /* LoginButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E42D2D27A443001DDA43 /* LoginButton.swift */; };
+		AC32E42F2D27A44A001DDA43 /* LoginButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E42D2D27A443001DDA43 /* LoginButton.swift */; };
+		AC32E4312D27A479001DDA43 /* InfoTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E4302D27A46D001DDA43 /* InfoTextView.swift */; };
+		AC32E4322D27A479001DDA43 /* InfoTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E4302D27A46D001DDA43 /* InfoTextView.swift */; };
+		AC32E4342D27A493001DDA43 /* MenuRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E4332D27A48B001DDA43 /* MenuRowView.swift */; };
+		AC32E4352D27A493001DDA43 /* MenuRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E4332D27A48B001DDA43 /* MenuRowView.swift */; };
+		AC32E4372D27A4AE001DDA43 /* FollowUsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E4362D27A4A8001DDA43 /* FollowUsView.swift */; };
+		AC32E4382D27A4AE001DDA43 /* FollowUsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E4362D27A4A8001DDA43 /* FollowUsView.swift */; };
+		AC32E43A2D27A4C6001DDA43 /* PoweredByView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E4392D27A4C0001DDA43 /* PoweredByView.swift */; };
+		AC32E43B2D27A4C6001DDA43 /* PoweredByView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E4392D27A4C0001DDA43 /* PoweredByView.swift */; };
+		AC32E43D2D27A4E1001DDA43 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E43C2D27A4DC001DDA43 /* LoginView.swift */; };
+		AC32E43E2D27A4E1001DDA43 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E43C2D27A4DC001DDA43 /* LoginView.swift */; };
+		AC638BF52D2309C000481E94 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC638BF42D2309BA00481E94 /* KeychainHelper.swift */; };
+		AC638BF62D2309C000481E94 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC638BF42D2309BA00481E94 /* KeychainHelper.swift */; };
+		AC638BF92D230DCD00481E94 /* HomeTabController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC638BF82D230DCD00481E94 /* HomeTabController.swift */; };
+		AC638BFA2D230DCD00481E94 /* HomeTabController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC638BF82D230DCD00481E94 /* HomeTabController.swift */; };
 		AC6BECAA2D09D52B002E2021 /* CGRPCZlib in Frameworks */ = {isa = PBXBuildFile; productRef = AC6BECA92D09D52B002E2021 /* CGRPCZlib */; };
 		AC6BECAC2D09D52B002E2021 /* GRPC in Frameworks */ = {isa = PBXBuildFile; productRef = AC6BECAB2D09D52B002E2021 /* GRPC */; };
 		AC6BECAE2D09D52B002E2021 /* GRPCReflectionService in Frameworks */ = {isa = PBXBuildFile; productRef = AC6BECAD2D09D52B002E2021 /* GRPCReflectionService */; };
@@ -129,6 +177,30 @@
 		AC09A9F92CDB7A5D009A39A4 /* SwiftBindings+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SwiftBindings+Extensions.swift"; sourceTree = "<group>"; };
 		AC09AA0A2CDB7F2A009A39A4 /* shared.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = shared.framework; path = "../shared/build/xcode-frameworks/Debug/iphoneos18.1/shared.framework"; sourceTree = "<group>"; };
 		AC09AA732CDD2107009A39A4 /* Data+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Data+Extensions.swift"; sourceTree = "<group>"; };
+		AC32E3F52D26FEB4001DDA43 /* UIColor+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIColor+Extensions.swift"; sourceTree = "<group>"; };
+		AC32E3F82D270097001DDA43 /* KumbhSans-Black.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "KumbhSans-Black.ttf"; sourceTree = "<group>"; };
+		AC32E3F92D270097001DDA43 /* KumbhSans-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "KumbhSans-Bold.ttf"; sourceTree = "<group>"; };
+		AC32E3FA2D270097001DDA43 /* KumbhSans-ExtraBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "KumbhSans-ExtraBold.ttf"; sourceTree = "<group>"; };
+		AC32E3FB2D270097001DDA43 /* KumbhSans-ExtraLight.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "KumbhSans-ExtraLight.ttf"; sourceTree = "<group>"; };
+		AC32E3FC2D270097001DDA43 /* KumbhSans-Light.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "KumbhSans-Light.ttf"; sourceTree = "<group>"; };
+		AC32E3FD2D270097001DDA43 /* KumbhSans-Medium.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "KumbhSans-Medium.ttf"; sourceTree = "<group>"; };
+		AC32E3FE2D270097001DDA43 /* KumbhSans-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "KumbhSans-Regular.ttf"; sourceTree = "<group>"; };
+		AC32E3FF2D270097001DDA43 /* KumbhSans-SemiBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "KumbhSans-SemiBold.ttf"; sourceTree = "<group>"; };
+		AC32E4002D270097001DDA43 /* KumbhSans-Thin.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "KumbhSans-Thin.ttf"; sourceTree = "<group>"; };
+		AC32E4022D270097001DDA43 /* KumbhSans-VariableFont_YOPQ,wght.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "KumbhSans-VariableFont_YOPQ,wght.ttf"; sourceTree = "<group>"; };
+		AC32E4032D270097001DDA43 /* OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = OFL.txt; sourceTree = "<group>"; };
+		AC32E4042D270097001DDA43 /* README.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = README.txt; sourceTree = "<group>"; };
+		AC32E4232D2712EE001DDA43 /* ProfileInfoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileInfoView.swift; sourceTree = "<group>"; };
+		AC32E4262D27A3E5001DDA43 /* LoginConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginConstants.swift; sourceTree = "<group>"; };
+		AC32E42A2D27A421001DDA43 /* ProfileHeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileHeaderView.swift; sourceTree = "<group>"; };
+		AC32E42D2D27A443001DDA43 /* LoginButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginButton.swift; sourceTree = "<group>"; };
+		AC32E4302D27A46D001DDA43 /* InfoTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InfoTextView.swift; sourceTree = "<group>"; };
+		AC32E4332D27A48B001DDA43 /* MenuRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuRowView.swift; sourceTree = "<group>"; };
+		AC32E4362D27A4A8001DDA43 /* FollowUsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FollowUsView.swift; sourceTree = "<group>"; };
+		AC32E4392D27A4C0001DDA43 /* PoweredByView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoweredByView.swift; sourceTree = "<group>"; };
+		AC32E43C2D27A4DC001DDA43 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
+		AC638BF42D2309BA00481E94 /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
+		AC638BF82D230DCD00481E94 /* HomeTabController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeTabController.swift; sourceTree = "<group>"; };
 		AC6BECBB2D09F685002E2021 /* Endpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Endpoint.swift; sourceTree = "<group>"; };
 		AC6BECBE2D09F866002E2021 /* NetworkService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkService.swift; sourceTree = "<group>"; };
 		AC6BECC12D09F917002E2021 /* HTTPService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTPService.swift; sourceTree = "<group>"; };
@@ -244,11 +316,14 @@
 		7555FF7D242A565900829871 /* iosApp */ = {
 			isa = PBXGroup;
 			children = (
-				ACB46A712D105AC0002E200C /* DesignSystem */,
 				2152FB032600AC8F00CF470E /* IosApp.swift */,
 				ACB46A2E2D0EC838002E200C /* DIContainer */,
+				ACB46A712D105AC0002E200C /* DesignSystem */,
+				AC638BF72D230DA900481E94 /* HomeTabController */,
+				AC32E4292D27A412001DDA43 /* Profile */,
 				ACEBE9962D0C4AA50056F033 /* Feed */,
 				AC6BECB92D09F0F0002E2021 /* Infrastructure */,
+				AC32E41E2D2700DC001DDA43 /* Fonts */,
 				058557BA273AAA24004C7B11 /* Assets.xcassets */,
 				7555FF82242A565900829871 /* ContentView.swift */,
 				AC09AA1E2CDBB69B009A39A4 /* Extensions */,
@@ -294,6 +369,80 @@
 				AC09A9F92CDB7A5D009A39A4 /* SwiftBindings+Extensions.swift */,
 			);
 			path = Extensions;
+			sourceTree = "<group>";
+		};
+		AC32E4012D270097001DDA43 /* static */ = {
+			isa = PBXGroup;
+			children = (
+				AC32E3F82D270097001DDA43 /* KumbhSans-Black.ttf */,
+				AC32E3F92D270097001DDA43 /* KumbhSans-Bold.ttf */,
+				AC32E3FA2D270097001DDA43 /* KumbhSans-ExtraBold.ttf */,
+				AC32E3FB2D270097001DDA43 /* KumbhSans-ExtraLight.ttf */,
+				AC32E3FC2D270097001DDA43 /* KumbhSans-Light.ttf */,
+				AC32E3FD2D270097001DDA43 /* KumbhSans-Medium.ttf */,
+				AC32E3FE2D270097001DDA43 /* KumbhSans-Regular.ttf */,
+				AC32E3FF2D270097001DDA43 /* KumbhSans-SemiBold.ttf */,
+				AC32E4002D270097001DDA43 /* KumbhSans-Thin.ttf */,
+			);
+			path = static;
+			sourceTree = "<group>";
+		};
+		AC32E4052D270097001DDA43 /* Kumbh_Sans */ = {
+			isa = PBXGroup;
+			children = (
+				AC32E4012D270097001DDA43 /* static */,
+				AC32E4022D270097001DDA43 /* KumbhSans-VariableFont_YOPQ,wght.ttf */,
+				AC32E4032D270097001DDA43 /* OFL.txt */,
+				AC32E4042D270097001DDA43 /* README.txt */,
+			);
+			path = Kumbh_Sans;
+			sourceTree = "<group>";
+		};
+		AC32E41E2D2700DC001DDA43 /* Fonts */ = {
+			isa = PBXGroup;
+			children = (
+				AC32E4052D270097001DDA43 /* Kumbh_Sans */,
+			);
+			path = Fonts;
+			sourceTree = "<group>";
+		};
+		AC32E4222D2712E9001DDA43 /* Helper */ = {
+			isa = PBXGroup;
+			children = (
+				AC32E4232D2712EE001DDA43 /* ProfileInfoView.swift */,
+			);
+			path = Helper;
+			sourceTree = "<group>";
+		};
+		AC32E4292D27A412001DDA43 /* Profile */ = {
+			isa = PBXGroup;
+			children = (
+				AC32E43C2D27A4DC001DDA43 /* LoginView.swift */,
+				AC32E4262D27A3E5001DDA43 /* LoginConstants.swift */,
+				AC32E43F2D27A514001DDA43 /* Helpers */,
+			);
+			path = Profile;
+			sourceTree = "<group>";
+		};
+		AC32E43F2D27A514001DDA43 /* Helpers */ = {
+			isa = PBXGroup;
+			children = (
+				AC32E4392D27A4C0001DDA43 /* PoweredByView.swift */,
+				AC32E4362D27A4A8001DDA43 /* FollowUsView.swift */,
+				AC32E4332D27A48B001DDA43 /* MenuRowView.swift */,
+				AC32E4302D27A46D001DDA43 /* InfoTextView.swift */,
+				AC32E42D2D27A443001DDA43 /* LoginButton.swift */,
+				AC32E42A2D27A421001DDA43 /* ProfileHeaderView.swift */,
+			);
+			path = Helpers;
+			sourceTree = "<group>";
+		};
+		AC638BF72D230DA900481E94 /* HomeTabController */ = {
+			isa = PBXGroup;
+			children = (
+				AC638BF82D230DCD00481E94 /* HomeTabController.swift */,
+			);
+			path = HomeTabController;
 			sourceTree = "<group>";
 		};
 		AC6BECB92D09F0F0002E2021 /* Infrastructure */ = {
@@ -400,6 +549,7 @@
 		ACB46A582D0EF912002E200C /* Auth */ = {
 			isa = PBXGroup;
 			children = (
+				AC638BF42D2309BA00481E94 /* KeychainHelper.swift */,
 				ACB46A5F2D0EF947002E200C /* AuthClient.swift */,
 				ACB46A5C2D0EF927002E200C /* AuthEndPoints.swift */,
 				ACB46A592D0EF91A002E200C /* AuthConstants.swift */,
@@ -426,6 +576,7 @@
 		ACB46A6D2D0F3F9E002E200C /* View */ = {
 			isa = PBXGroup;
 			children = (
+				AC32E4222D2712E9001DDA43 /* Helper */,
 				ACB46A6E2D0F4179002E200C /* FeedsViewControllerWrapper.swift */,
 				ACB46A6A2D0F3F89002E200C /* FeedsViewController.swift */,
 				ACB46A7E2D10602B002E200C /* Cells */,
@@ -436,6 +587,7 @@
 		ACB46A712D105AC0002E200C /* DesignSystem */ = {
 			isa = PBXGroup;
 			children = (
+				AC32E3F52D26FEB4001DDA43 /* UIColor+Extensions.swift */,
 				AC6E31212D22F088001EBE6C /* ImageLoaderProtocol.swift */,
 				ACB46A7B2D105BE0002E200C /* UIKitInitializers.swift */,
 				ACB46A782D105B30002E200C /* NibLoadableVIew.swift */,
@@ -571,6 +723,18 @@
 			buildActionMask = 2147483647;
 			files = (
 				058557D9273AAEEB004C7B11 /* Preview Assets.xcassets in Resources */,
+				AC32E4122D270097001DDA43 /* README.txt in Resources */,
+				AC32E4132D270097001DDA43 /* KumbhSans-ExtraBold.ttf in Resources */,
+				AC32E4142D270097001DDA43 /* KumbhSans-SemiBold.ttf in Resources */,
+				AC32E4152D270097001DDA43 /* KumbhSans-Black.ttf in Resources */,
+				AC32E4162D270097001DDA43 /* KumbhSans-ExtraLight.ttf in Resources */,
+				AC32E4172D270097001DDA43 /* KumbhSans-Regular.ttf in Resources */,
+				AC32E4182D270097001DDA43 /* KumbhSans-Medium.ttf in Resources */,
+				AC32E4192D270097001DDA43 /* OFL.txt in Resources */,
+				AC32E41A2D270097001DDA43 /* KumbhSans-Thin.ttf in Resources */,
+				AC32E41B2D270097001DDA43 /* KumbhSans-VariableFont_YOPQ,wght.ttf in Resources */,
+				AC32E41C2D270097001DDA43 /* KumbhSans-Bold.ttf in Resources */,
+				AC32E41D2D270097001DDA43 /* KumbhSans-Light.ttf in Resources */,
 				058557BB273AAA24004C7B11 /* Assets.xcassets in Resources */,
 				ACB815372CF9D4FF00104B7B /* GoogleService-Info.plist in Resources */,
 			);
@@ -581,6 +745,18 @@
 			buildActionMask = 2147483647;
 			files = (
 				ACD941B12CFF575C0038FCB6 /* Preview Assets.xcassets in Resources */,
+				AC32E4062D270097001DDA43 /* README.txt in Resources */,
+				AC32E4072D270097001DDA43 /* KumbhSans-ExtraBold.ttf in Resources */,
+				AC32E4082D270097001DDA43 /* KumbhSans-SemiBold.ttf in Resources */,
+				AC32E4092D270097001DDA43 /* KumbhSans-Black.ttf in Resources */,
+				AC32E40A2D270097001DDA43 /* KumbhSans-ExtraLight.ttf in Resources */,
+				AC32E40B2D270097001DDA43 /* KumbhSans-Regular.ttf in Resources */,
+				AC32E40C2D270097001DDA43 /* KumbhSans-Medium.ttf in Resources */,
+				AC32E40D2D270097001DDA43 /* OFL.txt in Resources */,
+				AC32E40E2D270097001DDA43 /* KumbhSans-Thin.ttf in Resources */,
+				AC32E40F2D270097001DDA43 /* KumbhSans-VariableFont_YOPQ,wght.ttf in Resources */,
+				AC32E4102D270097001DDA43 /* KumbhSans-Bold.ttf in Resources */,
+				AC32E4112D270097001DDA43 /* KumbhSans-Light.ttf in Resources */,
 				ACD941B22CFF575C0038FCB6 /* Assets.xcassets in Resources */,
 				ACD941BB2CFF579A0038FCB6 /* GoogleService-Info.plist in Resources */,
 			);
@@ -720,31 +896,43 @@
 				ACB46A422D0ECBB3002E200C /* ml_feed.proto in Sources */,
 				ACB46A5E2D0EF92D002E200C /* AuthEndPoints.swift in Sources */,
 				ACB46A612D0EF94B002E200C /* AuthClient.swift in Sources */,
+				AC638BFA2D230DCD00481E94 /* HomeTabController.swift in Sources */,
 				ACB46A732D105AF4002E200C /* CollectionView+Extensions.swift in Sources */,
 				ACB46A432D0ECBB3002E200C /* ml_feed.grpc.swift in Sources */,
 				ACB46A7A2D105B35002E200C /* NibLoadableVIew.swift in Sources */,
 				ACB46A652D0F0B75002E200C /* FeedsUseCase.swift in Sources */,
 				ACB46A442D0ECBB3002E200C /* ml_feed.pb.swift in Sources */,
 				ACB46A482D0ECBD5002E200C /* FeedsRepository.swift in Sources */,
+				AC32E4342D27A493001DDA43 /* MenuRowView.swift in Sources */,
 				ACB46A502D0ED195002E200C /* FeedResult.swift in Sources */,
 				ACB46A532D0ED22B002E200C /* FeedQuery.swift in Sources */,
 				ACB46A2D2D0EC833002E200C /* AppDIContainer.swift in Sources */,
+				AC32E3F72D26FEB9001DDA43 /* UIColor+Extensions.swift in Sources */,
 				ACB46A7D2D105BEB002E200C /* UIKitInitializers.swift in Sources */,
 				ACB46A362D0EC998002E200C /* FeedDIContainer.swift in Sources */,
 				2152FB042600AC8F00CF470E /* IosApp.swift in Sources */,
+				AC32E4372D27A4AE001DDA43 /* FollowUsView.swift in Sources */,
 				AC09A9B22CDB775C009A39A4 /* yral-mobile-swift-binding.swift in Sources */,
+				AC32E4312D27A479001DDA43 /* InfoTextView.swift in Sources */,
 				AC8472AE2D1D9540004A4259 /* AVFoundation+Extensions.swift in Sources */,
 				AC6BECBD2D09F68C002E2021 /* Endpoint.swift in Sources */,
 				AC09A9B32CDB775C009A39A4 /* SwiftBridgeCore.swift in Sources */,
+				AC32E4252D2712F1001DDA43 /* ProfileInfoView.swift in Sources */,
+				AC32E42B2D27A428001DDA43 /* ProfileHeaderView.swift in Sources */,
 				AC8472AB2D1D9139004A4259 /* HLSDownloadManager.swift in Sources */,
+				AC32E43E2D27A4E1001DDA43 /* LoginView.swift in Sources */,
 				AC09AA742CDD210D009A39A4 /* Data+Extensions.swift in Sources */,
+				AC32E43B2D27A4C6001DDA43 /* PoweredByView.swift in Sources */,
 				AC09A9FA2CDB7A5D009A39A4 /* SwiftBindings+Extensions.swift in Sources */,
 				ACB46A772D105B17002E200C /* ReusableView.swift in Sources */,
 				ACB46A812D106034002E200C /* FeedsCell.swift in Sources */,
 				AC6BECC22D09F91C002E2021 /* HTTPService.swift in Sources */,
+				AC638BF62D2309C000481E94 /* KeychainHelper.swift in Sources */,
 				AC6E31232D22F08F001EBE6C /* ImageLoaderProtocol.swift in Sources */,
+				AC32E42F2D27A44A001DDA43 /* LoginButton.swift in Sources */,
 				ACB46A5B2D0EF91F002E200C /* AuthConstants.swift in Sources */,
 				ACB46A292D0EC76A002E200C /* AppConfiguration.swift in Sources */,
+				AC32E4282D27A3F8001DDA43 /* LoginConstants.swift in Sources */,
 				ACB46A342D0EC8FF002E200C /* Numbers+Extensions.swift in Sources */,
 				ACB46A6F2D0F417F002E200C /* FeedsViewControllerWrapper.swift in Sources */,
 				ACB46A6C2D0F3F8E002E200C /* FeedsViewController.swift in Sources */,
@@ -763,31 +951,43 @@
 				ACB46A3F2D0ECBB3002E200C /* ml_feed.proto in Sources */,
 				ACB46A5D2D0EF92D002E200C /* AuthEndPoints.swift in Sources */,
 				ACB46A602D0EF94B002E200C /* AuthClient.swift in Sources */,
+				AC638BF92D230DCD00481E94 /* HomeTabController.swift in Sources */,
 				ACB46A742D105AF4002E200C /* CollectionView+Extensions.swift in Sources */,
 				ACB46A402D0ECBB3002E200C /* ml_feed.grpc.swift in Sources */,
 				ACB46A792D105B35002E200C /* NibLoadableVIew.swift in Sources */,
 				ACB46A642D0F0B75002E200C /* FeedsUseCase.swift in Sources */,
 				ACB46A412D0ECBB3002E200C /* ml_feed.pb.swift in Sources */,
 				ACB46A472D0ECBD5002E200C /* FeedsRepository.swift in Sources */,
+				AC32E4352D27A493001DDA43 /* MenuRowView.swift in Sources */,
 				ACB46A512D0ED195002E200C /* FeedResult.swift in Sources */,
 				ACB46A542D0ED22B002E200C /* FeedQuery.swift in Sources */,
 				ACB46A2C2D0EC833002E200C /* AppDIContainer.swift in Sources */,
+				AC32E3F62D26FEB9001DDA43 /* UIColor+Extensions.swift in Sources */,
 				ACB46A7C2D105BEB002E200C /* UIKitInitializers.swift in Sources */,
 				ACB46A372D0EC998002E200C /* FeedDIContainer.swift in Sources */,
 				ACD941872CFF575C0038FCB6 /* IosApp.swift in Sources */,
+				AC32E4382D27A4AE001DDA43 /* FollowUsView.swift in Sources */,
 				ACD941882CFF575C0038FCB6 /* yral-mobile-swift-binding.swift in Sources */,
+				AC32E4322D27A479001DDA43 /* InfoTextView.swift in Sources */,
 				AC8472AD2D1D9540004A4259 /* AVFoundation+Extensions.swift in Sources */,
 				AC6BECBC2D09F68C002E2021 /* Endpoint.swift in Sources */,
 				ACD941892CFF575C0038FCB6 /* SwiftBridgeCore.swift in Sources */,
+				AC32E4242D2712F1001DDA43 /* ProfileInfoView.swift in Sources */,
+				AC32E42C2D27A428001DDA43 /* ProfileHeaderView.swift in Sources */,
 				AC8472AA2D1D9139004A4259 /* HLSDownloadManager.swift in Sources */,
+				AC32E43D2D27A4E1001DDA43 /* LoginView.swift in Sources */,
 				ACD9418A2CFF575C0038FCB6 /* Data+Extensions.swift in Sources */,
+				AC32E43A2D27A4C6001DDA43 /* PoweredByView.swift in Sources */,
 				ACD9418B2CFF575C0038FCB6 /* SwiftBindings+Extensions.swift in Sources */,
 				ACB46A762D105B17002E200C /* ReusableView.swift in Sources */,
 				ACB46A802D106034002E200C /* FeedsCell.swift in Sources */,
 				AC6BECC32D09F91C002E2021 /* HTTPService.swift in Sources */,
+				AC638BF52D2309C000481E94 /* KeychainHelper.swift in Sources */,
 				AC6E31222D22F08F001EBE6C /* ImageLoaderProtocol.swift in Sources */,
+				AC32E42E2D27A44A001DDA43 /* LoginButton.swift in Sources */,
 				ACB46A5A2D0EF91F002E200C /* AuthConstants.swift in Sources */,
 				ACB46A2A2D0EC76A002E200C /* AppConfiguration.swift in Sources */,
+				AC32E4272D27A3F8001DDA43 /* LoginConstants.swift in Sources */,
 				ACB46A332D0EC8FF002E200C /* Numbers+Extensions.swift in Sources */,
 				ACB46A702D0F417F002E200C /* FeedsViewControllerWrapper.swift in Sources */,
 				ACB46A6B2D0F3F8E002E200C /* FeedsViewController.swift in Sources */,

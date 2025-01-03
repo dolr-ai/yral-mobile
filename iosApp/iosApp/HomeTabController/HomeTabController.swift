@@ -1,0 +1,76 @@
+//
+//  HomeTabController.swift
+//  iosApp
+//
+//  Created by Sarvesh Sharma on 30/12/24.
+//  Copyright © 2024 orgName. All rights reserved.
+//
+
+import SwiftUI
+
+struct HomeTabController: View {
+  let feedsViewControllerWrapper: FeedsViewControllerWrapper
+  @State private var selectedTab: Int = .zero
+  @State private var tabBarHeight = UITabBarController().tabBar.frame.height
+
+  init(feedsViewControllerWrapper: FeedsViewControllerWrapper) {
+    self.feedsViewControllerWrapper = feedsViewControllerWrapper
+    UITabBar.appearance().backgroundColor = .black
+    UITabBar.appearance().barTintColor = .black
+    UITabBar.appearance().isTranslucent = false
+  }
+
+  var body: some View {
+    VStack(spacing: .zero) {
+      TabView(selection: $selectedTab) {
+        feedsViewControllerWrapper
+          .tabItem {
+            Image(ImageResource(name: Constants.homeIconImageName, bundle: .main))
+              .renderingMode(.original)
+          }
+          .ignoresSafeArea()
+          .tag(Int.zero)
+        LoginView()
+          .tabItem {
+            Image(ImageResource(name: Constants.profileIconImageName, bundle: .main)).renderingMode(.original)
+              .ignoresSafeArea()
+              .tag(Int.one)
+          }
+          .ignoresSafeArea()
+          .tag(Int.one)
+      }
+      GeometryReader { geometry in
+        let tabWidth = geometry.size.width/CGFloat.two
+        let indicatorXPosition = CGFloat(selectedTab) * tabWidth + (tabWidth - Constants.indicatorWidth) / CGFloat.two
+        HStack(spacing: .zero) {
+          Spacer().frame(width: indicatorXPosition)
+          Rectangle()
+            .fill(Color(ColorResource(name: Constants.indicatorColorName, bundle: .main)))
+            .frame(width: Constants.indicatorWidth, height: Constants.tabIndicatorHeight)
+            .edgesIgnoringSafeArea(.top)
+            .cornerRadius(Constants.tabIndicatorHeight/CGFloat.two)
+            .offset(x: .zero, y: -self.tabBarHeight)
+            .animation(.easeInOut, value: selectedTab)
+          Spacer()
+        }
+      }
+      .frame(height: .zero)
+    }
+    .background(Color.black.edgesIgnoringSafeArea(.all))
+  }
+}
+
+#Preview {
+  let feedsDIContainer = AppDIContainer().makeFeedDIContainer()
+  HomeTabController(feedsViewControllerWrapper: feedsDIContainer.makeFeedsViewControllerWrapper())
+}
+
+extension HomeTabController {
+  enum Constants {
+    static let homeIconImageName = "home_tab"
+    static let profileIconImageName = "profile_tab"
+    static let tabIndicatorHeight: CGFloat = 2.0
+    static let indicatorWidth = 30.0
+    static let indicatorColorName = "tabIndicatorColor"
+  }
+}
