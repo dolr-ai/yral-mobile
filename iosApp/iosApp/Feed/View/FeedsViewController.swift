@@ -17,6 +17,7 @@ class FeedsViewController: UIViewController {
   private var initalFeedscancellables: Set<AnyCancellable> = []
   private var paginatedFeedscancellables: Set<AnyCancellable> = []
   private var yralPlayer = YralPlayer()
+
   private var feedsCV: UICollectionView = {
     let collectionView = getUICollectionView()
     collectionView.showsVerticalScrollIndicator = false
@@ -25,6 +26,7 @@ class FeedsViewController: UIViewController {
     collectionView.isPagingEnabled = true
     return collectionView
   }()
+
   lazy var feedsDataSource = getConfiguredDataSource()
   private var loadMoreRequestMade: Bool = false
 
@@ -78,6 +80,7 @@ class FeedsViewController: UIViewController {
     }.store(in: &paginatedFeedscancellables)
   }
   func setupUI() {
+    self.view.backgroundColor = .black
     setupCollectionView()
   }
 
@@ -92,11 +95,6 @@ class FeedsViewController: UIViewController {
     feedsCV.register(FeedsCell.self)
     feedsCV.dataSource = feedsDataSource
     feedsCV.delegate = self
-    view.layoutIfNeeded()
-    let layout = UICollectionViewFlowLayout()
-    layout.scrollDirection = .vertical
-    layout.itemSize = CGSize(width: view.bounds.width, height: view.bounds.height)
-    layout.minimumLineSpacing = .zero
     feedsCV.setCollectionViewLayout(createLayout(), animated: false)
   }
 
@@ -108,13 +106,21 @@ class FeedsViewController: UIViewController {
         cell.configure(
           withPlayer: self.yralPlayer.player,
           thumbnailURL: feed.thumbnail,
-          lastFrameImage: self.yralPlayer.lastFrames[indexPath.item]
+          lastFrameImage: nil,
+          profileInfo: ProfileInfoView.ProfileInfo(
+            imageURL: URL(fileURLWithPath: ""),
+            title: feed.canisterID,
+            subtitle: feed.postID)
         )
       } else {
         cell.configure(
           withPlayer: AVPlayer(),
           thumbnailURL: feed.thumbnail,
-          lastFrameImage: self.yralPlayer.lastFrames[indexPath.item]
+          lastFrameImage: nil,
+          profileInfo: ProfileInfoView.ProfileInfo(
+            imageURL: URL(fileURLWithPath: ""),
+            title: feed.canisterID,
+            subtitle: feed.postID)
         )
       }
       return cell
@@ -141,7 +147,7 @@ class FeedsViewController: UIViewController {
     }
     self.yralPlayer.loadInitialVideos(feeds)
     var snapshot = feedsDataSource.snapshot()
-    snapshot.appendSections([0])
+    snapshot.appendSections([.zero])
     snapshot.appendItems(feeds, toSection: .zero)
     feedsDataSource.apply(snapshot, animatingDifferences: shouldAnimate)
   }
