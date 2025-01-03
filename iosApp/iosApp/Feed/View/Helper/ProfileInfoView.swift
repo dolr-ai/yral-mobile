@@ -98,17 +98,13 @@ class ProfileInfoView: UIView, ImageLoaderProtocol {
   }
 
   func set(data: ProfileInfo) {
-    if let imageURL = data.imageURL {
-      loadImage(with: imageURL, on: imageView)
-    } else {
-      imageView.image = Constants.defaultProfileImage
-    }
+    loadImage(with: data.imageURL, on: imageView)
     titleLabel.text = data.title
     subtitleLabel.text = data.subtitle
   }
 
   struct ProfileInfo {
-    let imageURL: URL?
+    let imageURL: URL
     let title: String
     let subtitle: String
   }
@@ -129,6 +125,5 @@ extension ProfileInfoView {
     static let labelLeading = 12.0
     static let gradientStartColor = UIColor(red: 0, green: 0, blue: 0, alpha: 1).cgColor
     static let gradientEndColor = UIColor(red: 0.4, green: 0.4, blue: 0.4, alpha: 0).cgColor
-    static let defaultProfileImage = UIImage(named: "default_profile")
   }
 }
