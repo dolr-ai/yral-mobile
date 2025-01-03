@@ -16,6 +16,7 @@ class DefaultAuthClient: AuthClient {
   private let networkService: NetworkService
   private let cookieStorage = HTTPCookieStorage.shared
   private(set) var identityData: Data?
+  private let keychainIdentityKey = "yral.delegatedIdentity"
 
   init(networkService: NetworkService) {
     self.networkService = networkService
@@ -29,24 +30,21 @@ class DefaultAuthClient: AuthClient {
     }
   }
 
-  func refreshAuthIfNeeded() async throws {
-    guard let existingCookie = cookieStorage.cookies?.first(where: { $0.name == AuthConstants.cookieName }) else {
-      try await fetchAndSetAuthCookie()
-      return
-    }
-
-    if let expiresDate = existingCookie.expiresDate, expiresDate < Date() {
-      try await fetchAndSetAuthCookie()
-    } else {
-      try await extractIdentity(from: existingCookie)
-    }
-  }
-
-  private func refreshAuthIfNeeded(using cookie: HTTPCookie) async throws {
+  func refreshAuthIfNeeded(using cookie: HTTPCookie) async throws {
     if let expiresDate = cookie.expiresDate, expiresDate < Date() {
       try await fetchAndSetAuthCookie()
     } else {
-      try await extractIdentity(from: cookie)
+      do {
+        guard let data = try KeychainHelper.retrieveData(for: keychainIdentityKey) else {
+          try await extractIdentity(from: cookie)
+          return
+        }
+        identityData = data
+        try await handleExtractIdentityResponse(from: data)
+      } catch {
+        print(error)
+        try await extractIdentity(from: cookie)
+      }
     }
   }
 
@@ -64,9 +62,9 @@ class DefaultAuthClient: AuthClient {
 
   private func extractIdentity(from cookie: HTTPCookie) async throws {
     let endpoint = AuthEndpoints.extractIdentity(cookie: cookie)
-
     let data = try await networkService.performRequest(for: endpoint)
     identityData = data
+    try KeychainHelper.store(data: data, for: keychainIdentityKey)
     try await handleExtractIdentityResponse(from: data)
   }
 
@@ -125,6 +123,19 @@ class DefaultAuthClient: AuthClient {
       }
     }
   }
+
+  func logout() {
+    if let cookies = cookieStorage.cookies {
+      for cookie in cookies where cookie.name == AuthConstants.cookieName {
+        cookieStorage.deleteCookie(cookie)
+      }
+    }
+    try? KeychainHelper.deleteItem(for: keychainIdentityKey)
+    self.identity = nil
+    self.principal = nil
+    self.principalString = nil
+    self.identityData = nil
+  }
 }
 
 protocol AuthClient {
@@ -132,6 +143,12 @@ protocol AuthClient {
   var principal: Principal? { get }
   var principalString: String? { get }
   func initialize() async throws
-  func refreshAuthIfNeeded() async throws
+  func refreshAuthIfNeeded(using cookie: HTTPCookie) async throws
   func generateNewDelegatedIdentity() throws -> DelegatedIdentity
+}
+
+extension DefaultAuthClient {
+  enum Constants {
+    static let keychainIdentity = "yral.delegatedIdentity"
+  }
 }
