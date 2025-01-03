@@ -25,19 +25,36 @@ struct HomeTabController: View {
       TabView(selection: $selectedTab) {
         feedsViewControllerWrapper
           .tabItem {
-            Image(
-              uiImage: UIImage(
-                named: Constants.homeIconImageName)?
-                .withRenderingMode(.alwaysOriginal) ?? UIImage()).renderingMode(.original)
+            Image(ImageResource(name: Constants.homeIconImageName, bundle: .main))
+              .renderingMode(.original)
           }
           .ignoresSafeArea()
+          .tag(Int.zero)
+        LoginView()
+          .tabItem {
+            Image(ImageResource(name: Constants.profileIconImageName, bundle: .main)).renderingMode(.original)
+              .ignoresSafeArea()
+              .tag(Int.one)
+          }
+          .ignoresSafeArea()
+          .tag(Int.one)
       }
-      Rectangle()
-        .fill(Color.pink)
-        .frame(width: Constants.indicatorWidth, height: Constants.tabIndicatorHeight)
-        .edgesIgnoringSafeArea(.top)
-        .cornerRadius(Constants.tabIndicatorHeight/2)
-        .offset(x: .zero, y: -self.tabBarHeight)
+      GeometryReader { geometry in
+        let tabWidth = geometry.size.width/CGFloat.two
+        let indicatorXPosition = CGFloat(selectedTab) * tabWidth + (tabWidth - Constants.indicatorWidth) / CGFloat.two
+        HStack(spacing: .zero) {
+          Spacer().frame(width: indicatorXPosition)
+          Rectangle()
+            .fill(Color(ColorResource(name: Constants.indicatorColorName, bundle: .main)))
+            .frame(width: Constants.indicatorWidth, height: Constants.tabIndicatorHeight)
+            .edgesIgnoringSafeArea(.top)
+            .cornerRadius(Constants.tabIndicatorHeight/CGFloat.two)
+            .offset(x: .zero, y: -self.tabBarHeight)
+            .animation(.easeInOut, value: selectedTab)
+          Spacer()
+        }
+      }
+      .frame(height: .zero)
     }
     .background(Color.black.edgesIgnoringSafeArea(.all))
   }
@@ -51,7 +68,9 @@ struct HomeTabController: View {
 extension HomeTabController {
   enum Constants {
     static let homeIconImageName = "home_tab"
+    static let profileIconImageName = "profile_tab"
     static let tabIndicatorHeight: CGFloat = 2.0
     static let indicatorWidth = 30.0
+    static let indicatorColorName = "tabIndicatorColor"
   }
 }
