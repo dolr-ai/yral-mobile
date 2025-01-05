@@ -18,17 +18,21 @@ enum FeedsPageState {
 enum FeedsPageEvent {
   case loadedMoreFeeds([FeedResult])
   case loadMoreFeedsFailed(Error)
+  case toggledLikeSuccessfully(Bool)
+  case toggleLikeFailed(Error)
 }
 
 class FeedsViewModel: ObservableObject {
-  let feedsUseCase: FeedsUseCase
+  let feedsUseCase: FetchFeedsUseCase
+  let likesUseCase: ToggleLikeUseCase
   private var currentFeeds = [FeedResult]()
 
   @Published var state: FeedsPageState = .initalized
   @Published var event: FeedsPageEvent?
 
-  init(useCase: FeedsUseCase) {
-    self.feedsUseCase = useCase
+  init(fetchFeedsuseCase: FetchFeedsUseCase, likeUseCase: ToggleLikeUseCase) {
+    self.feedsUseCase = fetchFeedsuseCase
+    self.likesUseCase = likeUseCase
   }
 
   @MainActor func fetchFeeds(request: FeedRequest) async {
@@ -48,7 +52,7 @@ class FeedsViewModel: ObservableObject {
   }
 
   @MainActor func loadMoreFeeds() async {
-    state = .loading
+    state  = .loading
     do {
       let filteredPosts = currentFeeds.map { feed in
         var item = MlFeed_PostItem()
@@ -74,6 +78,20 @@ class FeedsViewModel: ObservableObject {
     } catch {
       event = .loadMoreFeedsFailed(error)
       state = .failure(error)
+    }
+  }
+
+  @MainActor func toggleLike(postID: Int) async {
+    do {
+      let result = try await likesUseCase.execute(request: postID)
+      switch result {
+      case .success(let response):
+        event = .toggledLikeSuccessfully(response)
+      case .failure(let error):
+        event = .toggleLikeFailed(error)
+      }
+    } catch {
+      event = .toggleLikeFailed(error)
     }
   }
 }

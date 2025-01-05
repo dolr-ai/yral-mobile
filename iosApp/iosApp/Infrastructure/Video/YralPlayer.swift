@@ -28,20 +28,6 @@ final class YralPlayer {
     Task {
       await prepareCurrentVideo()
     }
-    NotificationCenter.default.addObserver(
-      self,
-      selector: #selector(appDidBecomeActive),
-      name: UIApplication.didBecomeActiveNotification,
-      object: nil
-    )
-  }
-
-  deinit {
-    NotificationCenter.default.removeObserver(self, name: UIApplication.didBecomeActiveNotification, object: nil)
-  }
-
-  @objc func appDidBecomeActive() {
-    player.play()
   }
 
   private func configureAudioSession() {

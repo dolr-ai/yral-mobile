@@ -25,7 +25,11 @@ final class FeedDIContainer {
   }
 
   func makeFeedsViewModel() -> FeedsViewModel {
-    FeedsViewModel(useCase: FeedsUseCase(feedRepository: makeFeedsRepository()))
+    let feedRepository = makeFeedsRepository()
+    return FeedsViewModel(
+      fetchFeedsuseCase: FetchFeedsUseCase(feedRepository: feedRepository),
+      likeUseCase: ToggleLikeUseCase(feedRepository: feedRepository)
+    )
   }
 
   func makeFeedsRepository() -> FeedsRepository {
