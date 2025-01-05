@@ -25,21 +25,20 @@ struct UserInfoView: View {
           .foregroundColor(Constants.profileLabelColor)
           .lineLimit(.two)
       }
-      .frame(maxWidth: .infinity, alignment: .leading)
-//      VStack(alignment: .leading, spacing: Constants.secondaryVStackSpacing) {
-//        Button { }
-//        label: {
-//          Text(Constants.loginButtonTitle)
-//            .foregroundColor(Constants.loginButtonTextColor)
-//            .font(Constants.loginButtonFont)
-//            .frame(maxWidth: .infinity, minHeight: Constants.loginButtonHeight)
-//            .background(Constants.loginButtonGradient)
-//            .cornerRadius(Constants.loginButtonCornerRadius)
-//        }
-//        Text(Constants.loginMessageString)
-//          .foregroundColor(Constants.loginLabelColor)
-//          .font(Constants.loginLabelFont)
-//      }
+      VStack(spacing: Constants.secondaryVStackSpacing) {
+        Button { }
+        label: {
+          Text(Constants.loginButtonTitle)
+            .foregroundColor(Constants.loginButtonTextColor)
+            .font(Constants.loginButtonFont)
+            .frame(maxWidth: .infinity, minHeight: Constants.loginButtonHeight)
+            .background(Constants.loginButtonGradient)
+            .cornerRadius(Constants.loginButtonCornerRadius)
+        }
+        Text(Constants.loginMessageString)
+          .foregroundColor(Constants.loginLabelColor)
+          .font(Constants.loginLabelFont)
+      }
       Rectangle()
         .fill(Constants.dividerColor)
         .frame(height: .one)

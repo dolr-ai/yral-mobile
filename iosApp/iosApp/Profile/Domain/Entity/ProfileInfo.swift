@@ -9,6 +9,6 @@
 import Foundation
 
 struct ProfileInfo: Equatable {
-  let imageURL: URL?
+  let imageURL: URL
   let canisterID: String
 }

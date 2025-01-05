@@ -163,11 +163,12 @@ enum FeedsPageEvent {
 }
 
 class FeedsViewModel: ObservableObject {
+  let feedsUseCase: FeedsUseCase
+  private var currentFeeds = [FeedResult]()
+
   @Published var state: FeedsPageState = .initalized
   @Published var event: FeedsPageEvent?
 
-  var feedsUseCase: FeedsUseCase
-  private var currentFeeds = [FeedResult]()
   init(useCase: FeedsUseCase) {
     self.feedsUseCase = useCase
   }
