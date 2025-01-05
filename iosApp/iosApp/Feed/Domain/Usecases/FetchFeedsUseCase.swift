@@ -6,11 +6,11 @@
 //  Copyright © 2024 orgName. All rights reserved.
 //
 
-protocol FeedsUseCaseProtocol {
+protocol FetchFeedsUseCaseProtocol {
   func execute(request: FeedRequest) async throws -> Result<[FeedResult], Error>
 }
 
-class FeedsUseCase: FeedsUseCaseProtocol {
+class FetchFeedsUseCase: FetchFeedsUseCaseProtocol {
   private let feedRepository: FeedRepositoryProtocol
 
   init(feedRepository: FeedRepositoryProtocol) {
