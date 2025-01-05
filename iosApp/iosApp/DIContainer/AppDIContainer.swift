@@ -44,4 +44,13 @@ final class AppDIContainer {
       )
     )
   }
+
+  func makeProfileDIContainer() -> ProfileDIContainer {
+    return ProfileDIContainer(
+      dependencies: ProfileDIContainer.Dependencies(
+        httpService: HTTPService(),
+        authClient: authClient
+      )
+    )
+  }
 }

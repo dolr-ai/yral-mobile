@@ -16,7 +16,7 @@ protocol ImageLoaderProtocol: AnyObject {
 extension ImageLoaderProtocol {
   func loadImage(
     with url: URL,
-    placeholderImage: UIImage?,
+    placeholderImage: UIImage? = UIImage(named: "placeholderImg"),
     on imageView: UIImageView
   ) {
     imageView.sd_imageIndicator = SDWebImageActivityIndicator.gray
