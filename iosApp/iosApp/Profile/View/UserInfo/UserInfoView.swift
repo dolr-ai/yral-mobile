@@ -25,8 +25,7 @@ struct UserInfoView: View {
           .foregroundColor(Constants.profileLabelColor)
           .lineLimit(.two)
       }
-      .frame(maxWidth: .infinity, alignment: .leading)
-      VStack(alignment: .leading, spacing: Constants.secondaryVStackSpacing) {
+      VStack(spacing: Constants.secondaryVStackSpacing) {
         Button { }
         label: {
           Text(Constants.loginButtonTitle)

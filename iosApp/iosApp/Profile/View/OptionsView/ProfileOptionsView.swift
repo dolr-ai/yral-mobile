@@ -9,60 +9,43 @@
 import SwiftUI
 
 struct ProfileOptionsView: View {
-  @Environment(\.openURL) private var openURL
+    var body: some View {
+      ForEach(Constants.options.indices, id: \.self) { index in
+        let option = Constants.options[index]
+        NavigationLink {
 
-  var body: some View {
-    ForEach(Constants.options.indices, id: \.self) { index in
-      let option = Constants.options[index]
-      Button {
-        if let url = URL(string: option.redirection) {
-          openURL(url)
+        } label: {
+          HStack(spacing: Constants.hStackSpacing) {
+            option.image
+              .frame(width: Constants.iconSize, height: Constants.iconSize)
+            Text(option.text)
+              .font(Constants.font)
+              .foregroundColor(Constants.textColor)
+            Spacer()
+            Image(systemName: "chevron.right")
+              .foregroundColor(.white)
+          }
+          .padding([.horizontal], Constants.hStackPadding)
         }
-      } label: {
-        HStack(spacing: Constants.hStackSpacing) {
-          option.image
-            .frame(width: Constants.iconSize, height: Constants.iconSize)
-          Text(option.text)
-            .font(Constants.font)
-            .foregroundColor(Constants.textColor)
-          Spacer()
-          Image(systemName: "chevron.right")
-            .foregroundColor(.white)
-        }
-        .padding([.horizontal], Constants.hStackPadding)
       }
     }
-  }
 
   struct Options {
     let image: Image
     let text: String
-    let redirection: String
   }
 }
 
 #Preview {
-  ProfileOptionsView()
+    ProfileOptionsView()
 }
 
 extension ProfileOptionsView {
   enum Constants {
     static let options = [
-      Options(
-        image: Image("option_chat"),
-        text: "Talk to the Team",
-        redirection: "https://t.me/+c-LTX0Cp-ENmMzI1"
-      ),
-      Options(
-        image: Image("option_tnc"),
-        text: "Terms of service",
-        redirection: "https://yral.com/terms-of-service"
-      ),
-      Options(
-        image: Image("option_privacy"),
-        text: "Privacy Policy",
-        redirection: "https://yral.com/privacy-policy"
-      )
+      Options(image: Image("option_chat"), text: "Talk to the Team"),
+      Options(image: Image("option_tnc"), text: "Terms of service"),
+      Options(image: Image("option_privacy"), text: "Privacy Policy")
     ]
     static let hStackSpacing: CGFloat = 16
     static let hStackPadding: CGFloat = 16

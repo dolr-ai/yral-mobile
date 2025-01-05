@@ -18,9 +18,7 @@ struct URLImage: View {
           .resizable()
           .scaledToFit()
       } else {
-        Image(ImageResource(name: Constants.defaultImage, bundle: .main))
-          .resizable()
-          .scaledToFit()
+        ProgressView()
       }
     }
     .onAppear {
@@ -36,11 +34,5 @@ struct URLImage: View {
         self.imageData = data
       }
     }.resume()
-  }
-}
-
-extension URLImage {
-  public enum Constants {
-    static let defaultImage = "default_profile"
   }
 }
