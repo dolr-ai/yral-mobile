@@ -1502,13 +1502,10 @@ uintptr_t __swift_bridge__$Vec_CanistersWrapper$len(void* vec_ptr);
 void* __swift_bridge__$Vec_CanistersWrapper$as_ptr(void* vec_ptr);
 
 struct RustStr __swift_bridge__$PostDetailsForFrontend$video_uid(void* self);
-<<<<<<< HEAD
 struct RustStr __swift_bridge__$PostDetailsForFrontend$description(void* self);
 uint64_t __swift_bridge__$PostDetailsForFrontend$like_count(void* self);
 bool __swift_bridge__$PostDetailsForFrontend$liked_by_me(void* self);
 struct RustStr __swift_bridge__$PostDetailsForFrontend$created_by_profile_photo_url(void* self);
-=======
->>>>>>> 6c3bf61 (Stiches the feeds flow and adds YralPlayer (#74))
 struct __private__ResultPtrAndPtr __swift_bridge__$Service$new(void* principal, void* identity);
 void __swift_bridge__$Service$add_device_id(void* callback_wrapper, void __swift_bridge__$Service$add_device_id$async(void* callback_wrapper, struct __private__ResultPtrAndPtr ret), void* self, void* arg0);
 void __swift_bridge__$Service$add_post_v_2(void* callback_wrapper, void __swift_bridge__$Service$add_post_v_2$async(void* callback_wrapper, struct __private__ResultPtrAndPtr ret), void* self, void* arg0);

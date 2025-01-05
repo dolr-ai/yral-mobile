@@ -142,7 +142,6 @@ mod ffi {
         type PostDetailsForFrontend;
         #[swift_bridge(get(&video_uid))]
         fn video_uid(&self) -> &str;
-<<<<<<< HEAD
         #[swift_bridge(get(&description))]
         fn description(&self) -> &str;
         #[swift_bridge(get(like_count))]
@@ -151,8 +150,6 @@ mod ffi {
         fn liked_by_me(&self) -> bool;
         #[swift_bridge(get(&created_by_profile_photo_url))]
         fn created_by_profile_photo_url(&self) -> Option<&str>;
-=======
->>>>>>> 6c3bf61 (Stiches the feeds flow and adds YralPlayer (#74))
     }
     extern "Rust" {
         type Service;
