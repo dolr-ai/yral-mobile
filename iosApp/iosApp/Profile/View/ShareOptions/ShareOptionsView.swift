@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct ShareOptionsView: View {
+  @Environment(\.openURL) private var openURL
+
   var body: some View {
     VStack(spacing: Constants.vStackSpacing) {
       Text(Constants.titleText)
@@ -18,6 +20,7 @@ struct ShareOptionsView: View {
         ForEach(Constants.socialMediaPlatforms, id: \.self) { platform in
           // swiftlint: disable multiple_closures_with_trailing_closure
           Button(action: {
+            openURL(platform.url)
           }) {
             Image(platform.imageName)
               .frame(width: Constants.iconSize, height: Constants.iconSize)
@@ -53,15 +56,15 @@ extension ShareOptionsView {
     static let socialMediaPlatforms = [
       SocialMediaPlatform(
         imageName: "telegram_icon",
-        url: URL(string: "https://telegram.org")!
+        url: URL(string: "https://t.me/+c-LTX0Cp-ENmMzI1")!
       ),
       SocialMediaPlatform(
         imageName: "discord_icon",
-        url: URL(string: "https://discord.com")!
+        url: URL(string: "https://discord.com/invite/GZ9QemnZuj")!
       ),
       SocialMediaPlatform(
         imageName: "twitter_icon",
-        url: URL(string: "https://twitter.com")!
+        url: URL(string: "https://twitter.com/Yral_app")!
       )
     ]
   }

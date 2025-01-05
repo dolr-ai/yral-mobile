@@ -68,6 +68,10 @@
 		AC32E46C2D299DFD001DDA43 /* ShareOptionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E46A2D299DF9001DDA43 /* ShareOptionsView.swift */; };
 		AC32E46F2D299E74001DDA43 /* ICPBrandingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E46E2D299E6B001DDA43 /* ICPBrandingView.swift */; };
 		AC32E4702D299E74001DDA43 /* ICPBrandingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E46E2D299E6B001DDA43 /* ICPBrandingView.swift */; };
+		AC32E4732D2AD67D001DDA43 /* ToggleLikeUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E4722D2AD674001DDA43 /* ToggleLikeUseCase.swift */; };
+		AC32E4742D2AD67D001DDA43 /* ToggleLikeUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E4722D2AD674001DDA43 /* ToggleLikeUseCase.swift */; };
+		AC32E4762D2ADC22001DDA43 /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E4752D2ADC20001DDA43 /* Utils.swift */; };
+		AC32E4772D2ADC22001DDA43 /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E4752D2ADC20001DDA43 /* Utils.swift */; };
 		AC638BF52D2309C000481E94 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC638BF42D2309BA00481E94 /* KeychainHelper.swift */; };
 		AC638BF62D2309C000481E94 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC638BF42D2309BA00481E94 /* KeychainHelper.swift */; };
 		AC638BF92D230DCD00481E94 /* HomeTabController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC638BF82D230DCD00481E94 /* HomeTabController.swift */; };
@@ -127,8 +131,8 @@
 		ACB46A5E2D0EF92D002E200C /* AuthEndPoints.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A5C2D0EF927002E200C /* AuthEndPoints.swift */; };
 		ACB46A602D0EF94B002E200C /* AuthClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A5F2D0EF947002E200C /* AuthClient.swift */; };
 		ACB46A612D0EF94B002E200C /* AuthClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A5F2D0EF947002E200C /* AuthClient.swift */; };
-		ACB46A642D0F0B75002E200C /* FeedsUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A632D0F0B70002E200C /* FeedsUseCase.swift */; };
-		ACB46A652D0F0B75002E200C /* FeedsUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A632D0F0B70002E200C /* FeedsUseCase.swift */; };
+		ACB46A642D0F0B75002E200C /* FetchFeedsUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A632D0F0B70002E200C /* FetchFeedsUseCase.swift */; };
+		ACB46A652D0F0B75002E200C /* FetchFeedsUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A632D0F0B70002E200C /* FetchFeedsUseCase.swift */; };
 		ACB46A682D0F3609002E200C /* FeedsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A672D0F3604002E200C /* FeedsViewModel.swift */; };
 		ACB46A692D0F3609002E200C /* FeedsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A672D0F3604002E200C /* FeedsViewModel.swift */; };
 		ACB46A6B2D0F3F8E002E200C /* FeedsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A6A2D0F3F89002E200C /* FeedsViewController.swift */; };
@@ -211,6 +215,8 @@
 		AC32E4672D2998D0001DDA43 /* ProfileDIContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileDIContainer.swift; sourceTree = "<group>"; };
 		AC32E46A2D299DF9001DDA43 /* ShareOptionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareOptionsView.swift; sourceTree = "<group>"; };
 		AC32E46E2D299E6B001DDA43 /* ICPBrandingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ICPBrandingView.swift; sourceTree = "<group>"; };
+		AC32E4722D2AD674001DDA43 /* ToggleLikeUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToggleLikeUseCase.swift; sourceTree = "<group>"; };
+		AC32E4752D2ADC20001DDA43 /* Utils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utils.swift; sourceTree = "<group>"; };
 		AC638BF42D2309BA00481E94 /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
 		AC638BF82D230DCD00481E94 /* HomeTabController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeTabController.swift; sourceTree = "<group>"; };
 		AC6BECBB2D09F685002E2021 /* Endpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Endpoint.swift; sourceTree = "<group>"; };
@@ -234,7 +240,7 @@
 		ACB46A592D0EF91A002E200C /* AuthConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthConstants.swift; sourceTree = "<group>"; };
 		ACB46A5C2D0EF927002E200C /* AuthEndPoints.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthEndPoints.swift; sourceTree = "<group>"; };
 		ACB46A5F2D0EF947002E200C /* AuthClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthClient.swift; sourceTree = "<group>"; };
-		ACB46A632D0F0B70002E200C /* FeedsUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedsUseCase.swift; sourceTree = "<group>"; };
+		ACB46A632D0F0B70002E200C /* FetchFeedsUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FetchFeedsUseCase.swift; sourceTree = "<group>"; };
 		ACB46A672D0F3604002E200C /* FeedsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedsViewModel.swift; sourceTree = "<group>"; };
 		ACB46A6A2D0F3F89002E200C /* FeedsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedsViewController.swift; sourceTree = "<group>"; };
 		ACB46A6E2D0F4179002E200C /* FeedsViewControllerWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedsViewControllerWrapper.swift; sourceTree = "<group>"; };
@@ -489,7 +495,7 @@
 		AC32E4512D29662C001DDA43 /* Domain */ = {
 			isa = PBXGroup;
 			children = (
-				AC32E45F2D2967DF001DDA43 /* UseCase */,
+				AC32E45F2D2967DF001DDA43 /* UseCases */,
 				AC32E4592D296664001DDA43 /* Entity */,
 				AC32E45D2D296749001DDA43 /* Interfaces */,
 			);
@@ -528,12 +534,12 @@
 			path = Repository;
 			sourceTree = "<group>";
 		};
-		AC32E45F2D2967DF001DDA43 /* UseCase */ = {
+		AC32E45F2D2967DF001DDA43 /* UseCases */ = {
 			isa = PBXGroup;
 			children = (
 				AC32E44E2D296623001DDA43 /* ProfileUseCase.swift */,
 			);
-			path = UseCase;
+			path = UseCases;
 			sourceTree = "<group>";
 		};
 		AC32E4632D298E0E001DDA43 /* OptionsView */ = {
@@ -574,6 +580,7 @@
 				ACB46A282D0EC765002E200C /* AppConfiguration.swift */,
 				ACB46A242D0EC083002E200C /* Video */,
 				AC6BECBA2D09F0FD002E2021 /* Network */,
+				AC32E4752D2ADC20001DDA43 /* Utils.swift */,
 			);
 			path = Infrastructure;
 			sourceTree = "<group>";
@@ -646,7 +653,7 @@
 		ACB46A492D0ED0E9002E200C /* Domain */ = {
 			isa = PBXGroup;
 			children = (
-				ACB46A622D0F0B67002E200C /* Usecase */,
+				ACB46A622D0F0B67002E200C /* Usecases */,
 				ACB46A4E2D0ED181002E200C /* Entities */,
 				ACB46A4A2D0ED0F8002E200C /* Interfaces */,
 			);
@@ -681,12 +688,13 @@
 			path = Auth;
 			sourceTree = "<group>";
 		};
-		ACB46A622D0F0B67002E200C /* Usecase */ = {
+		ACB46A622D0F0B67002E200C /* Usecases */ = {
 			isa = PBXGroup;
 			children = (
-				ACB46A632D0F0B70002E200C /* FeedsUseCase.swift */,
+				AC32E4722D2AD674001DDA43 /* ToggleLikeUseCase.swift */,
+				ACB46A632D0F0B70002E200C /* FetchFeedsUseCase.swift */,
 			);
-			path = Usecase;
+			path = Usecases;
 			sourceTree = "<group>";
 		};
 		ACB46A662D0F35FD002E200C /* ViewModel */ = {
@@ -1023,7 +1031,7 @@
 				ACB46A432D0ECBB3002E200C /* ml_feed.grpc.swift in Sources */,
 				ACB46A7A2D105B35002E200C /* NibLoadableVIew.swift in Sources */,
 				AC32E4702D299E74001DDA43 /* ICPBrandingView.swift in Sources */,
-				ACB46A652D0F0B75002E200C /* FeedsUseCase.swift in Sources */,
+				ACB46A652D0F0B75002E200C /* FetchFeedsUseCase.swift in Sources */,
 				ACB46A442D0ECBB3002E200C /* ml_feed.pb.swift in Sources */,
 				ACB46A482D0ECBD5002E200C /* FeedsRepository.swift in Sources */,
 				AC32E4412D295E97001DDA43 /* UserInfoView.swift in Sources */,
@@ -1039,6 +1047,7 @@
 				AC09A9B22CDB775C009A39A4 /* yral-mobile-swift-binding.swift in Sources */,
 				AC8472AE2D1D9540004A4259 /* AVFoundation+Extensions.swift in Sources */,
 				AC32E4652D2991AD001DDA43 /* ProfileView.swift in Sources */,
+				AC32E4772D2ADC22001DDA43 /* Utils.swift in Sources */,
 				AC6BECBD2D09F68C002E2021 /* Endpoint.swift in Sources */,
 				AC09A9B32CDB775C009A39A4 /* SwiftBridgeCore.swift in Sources */,
 				AC32E4252D2712F1001DDA43 /* ProfileInfoView.swift in Sources */,
@@ -1051,6 +1060,7 @@
 				AC32E4542D296637001DDA43 /* ProfileRepository.swift in Sources */,
 				ACB46A812D106034002E200C /* FeedsCell.swift in Sources */,
 				AC6BECC22D09F91C002E2021 /* HTTPService.swift in Sources */,
+				AC32E4742D2AD67D001DDA43 /* ToggleLikeUseCase.swift in Sources */,
 				AC32E46B2D299DFD001DDA43 /* ShareOptionsView.swift in Sources */,
 				AC638BF62D2309C000481E94 /* KeychainHelper.swift in Sources */,
 				AC6E31232D22F08F001EBE6C /* ImageLoaderProtocol.swift in Sources */,
@@ -1082,7 +1092,7 @@
 				ACB46A402D0ECBB3002E200C /* ml_feed.grpc.swift in Sources */,
 				ACB46A792D105B35002E200C /* NibLoadableVIew.swift in Sources */,
 				AC32E46F2D299E74001DDA43 /* ICPBrandingView.swift in Sources */,
-				ACB46A642D0F0B75002E200C /* FeedsUseCase.swift in Sources */,
+				ACB46A642D0F0B75002E200C /* FetchFeedsUseCase.swift in Sources */,
 				ACB46A412D0ECBB3002E200C /* ml_feed.pb.swift in Sources */,
 				ACB46A472D0ECBD5002E200C /* FeedsRepository.swift in Sources */,
 				AC32E4422D295E97001DDA43 /* UserInfoView.swift in Sources */,
@@ -1098,6 +1108,7 @@
 				ACD941882CFF575C0038FCB6 /* yral-mobile-swift-binding.swift in Sources */,
 				AC8472AD2D1D9540004A4259 /* AVFoundation+Extensions.swift in Sources */,
 				AC32E4662D2991AD001DDA43 /* ProfileView.swift in Sources */,
+				AC32E4762D2ADC22001DDA43 /* Utils.swift in Sources */,
 				AC6BECBC2D09F68C002E2021 /* Endpoint.swift in Sources */,
 				ACD941892CFF575C0038FCB6 /* SwiftBridgeCore.swift in Sources */,
 				AC32E4242D2712F1001DDA43 /* ProfileInfoView.swift in Sources */,
@@ -1110,6 +1121,7 @@
 				AC32E4532D296637001DDA43 /* ProfileRepository.swift in Sources */,
 				ACB46A802D106034002E200C /* FeedsCell.swift in Sources */,
 				AC6BECC32D09F91C002E2021 /* HTTPService.swift in Sources */,
+				AC32E4732D2AD67D001DDA43 /* ToggleLikeUseCase.swift in Sources */,
 				AC32E46C2D299DFD001DDA43 /* ShareOptionsView.swift in Sources */,
 				AC638BF52D2309C000481E94 /* KeychainHelper.swift in Sources */,
 				AC6E31222D22F08F001EBE6C /* ImageLoaderProtocol.swift in Sources */,

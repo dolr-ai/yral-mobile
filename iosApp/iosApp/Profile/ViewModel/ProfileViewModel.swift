@@ -20,7 +20,7 @@ enum ProfilePageState: Equatable {
     case (.loading, .loading):
       return true
     case (.successfullyFetched(let lhsInfo), .successfullyFetched(let rhsInfo)):
-      return lhsInfo == lhsInfo // Assuming ProfileInfo is Equatable
+      return lhsInfo == rhsInfo
     case (.failure(let lhsError), .failure(let rhsError)):
       return lhsError.localizedDescription == rhsError.localizedDescription
     default:

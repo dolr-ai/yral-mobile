@@ -39,16 +39,35 @@ class FeedsRepository: FeedRepositoryProtocol {
           let thumbnailURL = URL(
             string: "\(Constants.cloudfarePrefix)\(result.video_uid().toString())\(Constants.thumbnailSuffix)"
           ) ?? URL(fileURLWithPath: "")
+          let urlString = result.created_by_profile_photo_url()?.toString()
           return FeedResult(
             postID: String(feed.postID),
             videoID: result.video_uid().toString(),
             canisterID: feed.canisterID,
             url: videoURL,
-            thumbnail: thumbnailURL
+            thumbnail: thumbnailURL,
+            postDescription: result.description().toString(),
+            profileImageURL: urlString != nil ? URL(string: urlString!) : nil,
+            likeCount: Int(result.like_count()),
+            isLiked: result.liked_by_me()
           )
         }
       }
       return .success(feeds)
+    } catch {
+      return .failure(error)
+    }
+  }
+
+  func toggleLikeStatus(for postId: Int) async -> Result<Bool, Error> {
+    do {
+      let identity = try self.authClient.generateNewDelegatedIdentity()
+      guard let principal = authClient.principal else {
+        return .failure(AuthError.authenticationFailed("Authentication failed"))
+      }
+      let service = try Service(principal, identity)
+      let result = try await service.update_post_toggle_like_status_by_caller(1)
+      return .success(result)
     } catch {
       return .failure(error)
     }

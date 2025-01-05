@@ -25,16 +25,11 @@ final class FeedDIContainer {
   }
 
   func makeFeedsViewModel() -> FeedsViewModel {
-<<<<<<< HEAD
     let feedRepository = makeFeedsRepository()
     return FeedsViewModel(
-      fetchFeedsUseCase: FetchInitialFeedsUseCase(feedRepository: feedRepository),
-      moreFeedsUseCase: FetchMoreFeedsUseCase(feedRepository: feedRepository),
+      fetchFeedsuseCase: FetchFeedsUseCase(feedRepository: feedRepository),
       likeUseCase: ToggleLikeUseCase(feedRepository: feedRepository)
     )
-=======
-    FeedsViewModel(useCase: FeedsUseCase(feedRepository: makeFeedsRepository()))
->>>>>>> 6c3bf61 (Stiches the feeds flow and adds YralPlayer (#74))
   }
 
   func makeFeedsRepository() -> FeedsRepository {
