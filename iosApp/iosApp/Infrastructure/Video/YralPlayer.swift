@@ -301,33 +301,36 @@ final class YralPlayer {
   }
 
   private func preloadFeeds() async {
-    let startIndex = currentIndex + .one
-    let endIndex = min(feedResults.count, startIndex + Constants.radius)
+    let startIndex = currentIndex
+    let endIndex = min(feedResults.count, currentIndex + .one + Constants.radius)
 
     for index in startIndex..<endIndex {
       guard playerItems[index] == nil else { continue }
       guard !currentlyDownloadingIndexes.contains(index) else { continue }
-
-      currentlyDownloadingIndexes.insert(index)
-      let feed = feedResults[index]
-      let assetTitle = "\(feed.videoID)"
-
-      do {
-        _ = try await HLSDownloadManager.shared.startDownloadAsync(
-          hlsURL: feed.url,
-          assetTitle: assetTitle
-        )
-        if let item = try await loadVideo(at: index) {
-          playerItems[index] = item
-        }
-      } catch is CancellationError {
-        print("Preload canceled for index \(index).")
-      } catch {
-        print("Preload failed for index \(index): \(error)")
-      }
-
-      currentlyDownloadingIndexes.remove(index)
+      await downloadVideo(at: index)
     }
+  }
+
+  private func downloadVideo(at index: Int) async {
+    currentlyDownloadingIndexes.insert(index)
+    let feed = feedResults[index]
+    let assetTitle = "\(feed.videoID)"
+
+    do {
+      _ = try await HLSDownloadManager.shared.startDownloadAsync(
+        hlsURL: feed.url,
+        assetTitle: assetTitle
+      )
+      if let item = try await loadVideo(at: index) {
+        playerItems[index] = item
+      }
+    } catch is CancellationError {
+      print("Preload canceled for index \(index).")
+    } catch {
+      print("Preload failed for index \(index): \(error)")
+    }
+
+    currentlyDownloadingIndexes.remove(index)
   }
 
   private func cancelPreloadOutsideRange(center: Int, radius: Int) {
