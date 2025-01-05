@@ -17,6 +17,7 @@ class FeedsViewController: UIViewController {
   private var initalFeedscancellables: Set<AnyCancellable> = []
   private var paginatedFeedscancellables: Set<AnyCancellable> = []
   private var yralPlayer = YralPlayer()
+  private var isCurrentlyVisible = true
 
   private var feedsCV: UICollectionView = {
     let collectionView = getUICollectionView()
@@ -25,6 +26,14 @@ class FeedsViewController: UIViewController {
     collectionView.backgroundColor = .clear
     collectionView.isPagingEnabled = true
     return collectionView
+  }()
+
+  private lazy var activityIndicator: UIActivityIndicatorView = {
+    let indicator = UIActivityIndicatorView(style: .medium)
+    indicator.translatesAutoresizingMaskIntoConstraints = false
+    indicator.color = .white
+    indicator.hidesWhenStopped = true
+    return indicator
   }()
 
   lazy var feedsDataSource = getConfiguredDataSource()
@@ -46,6 +55,26 @@ class FeedsViewController: UIViewController {
     setupUI()
     Task { @MainActor in
       await viewModel.fetchFeeds(request: FeedRequest(filteredPosts: [], numResults: Constants.initialNumResults))
+    }
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(appDidBecomeActive),
+      name: UIApplication.didBecomeActiveNotification,
+      object: nil
+    )
+  }
+
+  override func viewWillDisappear(_ animated: Bool) {
+    super.viewWillDisappear(animated)
+    isCurrentlyVisible = false
+    yralPlayer.pause()
+  }
+
+  override func viewWillAppear(_ animated: Bool) {
+    super.viewWillAppear(animated)
+    isCurrentlyVisible = true
+    if feedsCV.indexPathsForVisibleItems.first != nil {
+      yralPlayer.play()
     }
   }
 
@@ -74,14 +103,22 @@ class FeedsViewController: UIViewController {
       case .loadMoreFeedsFailed(let error):
         print(error)
         self.loadMoreRequestMade = false
+      case .toggledLikeSuccessfully(let status):
+        guard let visibleCellIP = self.feedsCV.indexPathsForVisibleItems.first,
+              let visbleCell = self.feedsCV.cellForItem(at: visibleCellIP) as? FeedsCell else { return }
+        visbleCell.setLikeStatus(isLiked: status)
+      case .toggleLikeFailed(let error):
+        print(error)
       default:
         break
       }
     }.store(in: &paginatedFeedscancellables)
   }
+
   func setupUI() {
     self.view.backgroundColor = .black
     setupCollectionView()
+    setupActivityIndicator()
   }
 
   func setupCollectionView() {
@@ -98,29 +135,48 @@ class FeedsViewController: UIViewController {
     feedsCV.setCollectionViewLayout(createLayout(), animated: false)
   }
 
+  func setupActivityIndicator() {
+    view.addSubview(activityIndicator)
+    NSLayoutConstraint.activate([
+      activityIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+      activityIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+    ])
+  }
+
   func getConfiguredDataSource() -> DataSource {
     let dataSource = DataSource(collectionView: feedsCV) { [weak self] collectionView, indexPath, feed in
       guard let self = self else { return UICollectionViewCell() }
       let cell = collectionView.dequeueReusableCell(FeedsCell.self, for: indexPath)
+      cell.delegate = self
       if indexPath.row == self.yralPlayer.currentIndex {
         cell.configure(
           withPlayer: self.yralPlayer.player,
-          thumbnailURL: feed.thumbnail,
-          lastFrameImage: nil,
+          feedInfo: FeedsCell.FeedCellInfo(
+            thumbnailURL: feed.thumbnail,
+            lastFrameImage: nil,
+            likeCount: feed.likeCount,
+            isLiked: feed.isLiked
+          ),
           profileInfo: ProfileInfoView.ProfileInfo(
-            imageURL: URL(fileURLWithPath: ""),
+            imageURL: feed.profileImageURL,
             title: feed.canisterID,
-            subtitle: feed.postID)
+            subtitle: feed.postDescription),
+          index: indexPath.item
         )
       } else {
         cell.configure(
           withPlayer: AVPlayer(),
-          thumbnailURL: feed.thumbnail,
-          lastFrameImage: nil,
+          feedInfo: FeedsCell.FeedCellInfo(
+            thumbnailURL: feed.thumbnail,
+            lastFrameImage: nil,
+            likeCount: feed.likeCount,
+            isLiked: feed.isLiked
+          ),
           profileInfo: ProfileInfoView.ProfileInfo(
-            imageURL: URL(fileURLWithPath: ""),
+            imageURL: feed.profileImageURL,
             title: feed.canisterID,
-            subtitle: feed.postID)
+            subtitle: feed.postDescription),
+          index: indexPath.item
         )
       }
       return cell
@@ -165,6 +221,16 @@ class FeedsViewController: UIViewController {
       self.loadMoreRequestMade = false
     }
   }
+
+  @objc func appDidBecomeActive() {
+    if isCurrentlyVisible {
+      yralPlayer.play()
+    }
+  }
+
+  deinit {
+    NotificationCenter.default.removeObserver(self, name: UIApplication.didBecomeActiveNotification, object: nil)
+  }
 }
 
 extension FeedsViewController: UICollectionViewDelegate {
@@ -205,10 +271,38 @@ extension FeedsViewController: UICollectionViewDelegate {
   }
 }
 
+extension FeedsViewController: FeedsCellProtocol {
+  func shareButtonTapped(index: Int) {
+    activityIndicator.startAnimating()
+    // swiftlint: disable line_length
+    guard let shareURL = URL(
+      string: "https://yral.com/hot-or-not/\(self.feedsDataSource.snapshot().itemIdentifiers[index].canisterID)/\(self.feedsDataSource.snapshot().itemIdentifiers[index].postID)"
+    ) else { return }
+    // swiftlint: enable line_length
+    let activityViewController = UIActivityViewController(
+      activityItems: [shareURL],
+      applicationActivities: nil
+    )
+
+    guard let viewController = navigationController?.viewControllers.first else { return }
+    viewController.present(activityViewController, animated: true) {
+      self.activityIndicator.stopAnimating()
+    }
+  }
+
+  func likeButtonTapped(index: Int) {
+    guard let postID = Int(feedsDataSource.snapshot().itemIdentifiers[index].postID) else { return }
+    Task {
+      await self.viewModel.toggleLike(postID: postID)
+    }
+  }
+}
+
 extension FeedsViewController {
   enum Constants {
     static let initialNumResults = 10
     static let thresholdForLoadingMoreResults = 6
     static let radius = 5
+    static let shareURLPrefix = "https://yral.com/hot-or-not/"
   }
 }
