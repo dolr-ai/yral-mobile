@@ -10,11 +10,13 @@ import SwiftUI
 
 struct HomeTabController: View {
   let feedsViewControllerWrapper: FeedsViewControllerWrapper
+  let profileView: ProfileView
   @State private var selectedTab: Int = .zero
   @State private var tabBarHeight = UITabBarController().tabBar.frame.height
 
-  init(feedsViewControllerWrapper: FeedsViewControllerWrapper) {
+  init(feedsViewControllerWrapper: FeedsViewControllerWrapper, profileView: ProfileView) {
     self.feedsViewControllerWrapper = feedsViewControllerWrapper
+    self.profileView = profileView
     UITabBar.appearance().backgroundColor = .black
     UITabBar.appearance().barTintColor = .black
     UITabBar.appearance().isTranslucent = false
@@ -30,13 +32,13 @@ struct HomeTabController: View {
           }
           .ignoresSafeArea()
           .tag(Int.zero)
-        LoginView()
+        profileView
+          .background(Color.black.edgesIgnoringSafeArea(.all))
           .tabItem {
             Image(ImageResource(name: Constants.profileIconImageName, bundle: .main)).renderingMode(.original)
               .ignoresSafeArea()
               .tag(Int.one)
           }
-          .ignoresSafeArea()
           .tag(Int.one)
       }
       GeometryReader { geometry in
@@ -62,7 +64,11 @@ struct HomeTabController: View {
 
 #Preview {
   let feedsDIContainer = AppDIContainer().makeFeedDIContainer()
-  HomeTabController(feedsViewControllerWrapper: feedsDIContainer.makeFeedsViewControllerWrapper())
+  let profileDIContainer = AppDIContainer().makeProfileDIContainer()
+  HomeTabController(
+    feedsViewControllerWrapper: feedsDIContainer .makeFeedsViewControllerWrapper(),
+    profileView: profileDIContainer.makeProfileView()
+  )
 }
 
 extension HomeTabController {
