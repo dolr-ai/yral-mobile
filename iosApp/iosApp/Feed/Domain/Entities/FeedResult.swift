@@ -13,4 +13,8 @@ struct FeedResult: Hashable {
   let canisterID: String
   let url: URL
   let thumbnail: URL
+  let postDescription: String
+  var profileImageURL: URL?
+  let likeCount: Int
+  let isLiked: Bool
 }
