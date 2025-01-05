@@ -8,4 +8,5 @@
 
 protocol FeedRepositoryProtocol {
   func fetchFeed(request: FeedRequest) async -> Result<[FeedResult], Error>
+  func toggleLikeStatus(for postId: Int) async -> Result<Bool, Error>
 }

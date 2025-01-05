@@ -9,9 +9,16 @@
 import UIKit
 import AVFoundation
 
+protocol FeedsCellProtocol: AnyObject {
+  func shareButtonTapped(index: Int)
+  func likeButtonTapped(index: Int)
+}
+
 class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
 
   var playerLayer: AVPlayerLayer?
+  var index: Int = .zero
+  weak var delegate: FeedsCellProtocol?
   private let playerContainerView = getUIImageView()
 
   private var actionsStackView: UIStackView = {
@@ -25,7 +32,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   }()
 
   private var likeButton: UIButton = {
-    getActionButton(withTitle: "100", image: Constants.likeButtonImage)
+    getActionButton(withTitle: "100", image: Constants.likeUnSelectedImage)
   }()
 
   private var shareButton: UIButton = {
@@ -120,20 +127,33 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
         constant: -Constants.stackViewBottom
       )
     ])
+
     actionsStackView.addArrangedSubview(likeButton)
     actionsStackView.addArrangedSubview(shareButton)
+    likeButton.addTarget(self, action: #selector(likeButtonTapped), for: .touchUpInside)
+    shareButton.addTarget(self, action: #selector(shareButtonTapped), for: .touchUpInside)
+  }
+
+  @objc func likeButtonTapped() {
+    delegate?.likeButtonTapped(index: index)
+  }
+
+  @objc func shareButtonTapped() {
+    delegate?.shareButtonTapped(index: index)
   }
 
   func configure(
     withPlayer player: AVPlayer,
-    thumbnailURL: URL,
-    lastFrameImage: UIImage?,
-    profileInfo: ProfileInfoView.ProfileInfo
+    feedInfo: FeedCellInfo,
+    profileInfo: ProfileInfoView.ProfileInfo,
+    index: Int
   ) {
-    if let lastFrameImage {
+    if let lastFrameImage = feedInfo.lastFrameImage {
       playerContainerView.image = lastFrameImage
-    } else {
+    } else if let thumbnailURL = feedInfo.thumbnailURL {
       loadImage(with: thumbnailURL, on: playerContainerView)
+    } else {
+      playerContainerView.image = Constants.defaultProfileImage
     }
     playerLayer?.removeFromSuperlayer()
     let layer = AVPlayerLayer(player: player)
@@ -142,6 +162,18 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     playerLayer = layer
     playerLayer?.frame = contentView.bounds
     profileInfoView.set(data: profileInfo)
+    likeButton.configuration?.attributedTitle = AttributedString(
+      String(feedInfo.likeCount),
+      attributes: AttributeContainer([
+        .font: Constants.actionButtonFont
+      ])
+    )
+    setLikeStatus(isLiked: feedInfo.isLiked)
+    self.index = index
+  }
+
+  func setLikeStatus(isLiked: Bool) {
+    likeButton.configuration?.image = isLiked ? Constants.likeSelectedImage : Constants.likeUnSelectedImage
   }
 
   override func layoutSubviews() {
@@ -151,6 +183,13 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   override func prepareForReuse() {
       super.prepareForReuse()
       playerLayer?.player = nil
+  }
+
+  struct FeedCellInfo {
+    let thumbnailURL: URL?
+    let lastFrameImage: UIImage?
+    let likeCount: Int
+    let isLiked: Bool
   }
 }
 
@@ -162,7 +201,8 @@ extension FeedsCell {
     static let stackViewBottom = 74.0
     static let stackViewBGColor = UIColor.clear
     static let actionButtonFont = UIFont(name: "KumbhSans-SemiBold", size: 15) ?? UIFont.systemFont(ofSize: 15)
-    static let likeButtonImage = UIImage(named: "like_feed")
+    static let likeSelectedImage = UIImage(named: "like_selected_feed")
+    static let likeUnSelectedImage = UIImage(named: "like_unselected_feed")
     static let shareButtonImage = UIImage(named: "share_feed")
     static let actionButtonHeight: CGFloat = 51.0
     static let actionButtonWidth: CGFloat = 34.0
@@ -172,5 +212,6 @@ extension FeedsCell {
     static let profileInfoTop = 8.0
     static let profileInfoTrailing = 60.0
     static let profileInfoViewHeight = 56.0
+    static let defaultProfileImage = UIImage(named: "default_profile")
   }
 }
