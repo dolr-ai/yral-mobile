@@ -45,7 +45,6 @@ final class YralPlayer {
   }
 
   func advanceToVideo(at index: Int) {
-    print("Sarvesh index: \(index)")
     guard index >= 0 && index < feedResults.count else { return }
     if let currentTime = player.currentItem?.currentTime() {
       lastPlayedTimes[currentIndex] = currentTime
