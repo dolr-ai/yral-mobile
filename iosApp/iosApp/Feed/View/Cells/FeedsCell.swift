@@ -31,7 +31,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     return stackView
   }()
 
-  private var likeButton: UIButton = {
+  var likeButton: UIButton = {
     getActionButton(withTitle: "100", image: Constants.likeUnSelectedImage)
   }()
 
@@ -168,12 +168,22 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
         .font: Constants.actionButtonFont
       ])
     )
-    setLikeStatus(isLiked: feedInfo.isLiked)
+    likeButton.configuration?.image = feedInfo.isLiked ? Constants.likeSelectedImage : Constants.likeUnSelectedImage
     self.index = index
   }
 
   func setLikeStatus(isLiked: Bool) {
     likeButton.configuration?.image = isLiked ? Constants.likeSelectedImage : Constants.likeUnSelectedImage
+    var likeButtonString = String((Int(likeButton.titleLabel?.text ?? "") ?? .zero) - .one)
+    if isLiked {
+      likeButtonString = String((Int(likeButton.titleLabel?.text ?? "") ?? .zero) + .one)
+    }
+    likeButton.configuration?.attributedTitle = AttributedString(
+      likeButtonString,
+      attributes: AttributeContainer([
+        .font: Constants.actionButtonFont
+      ])
+    )
   }
 
   override func layoutSubviews() {

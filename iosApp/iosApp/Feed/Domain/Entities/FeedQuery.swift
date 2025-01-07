@@ -8,7 +8,11 @@
 
 import Foundation
 
-struct FeedRequest {
+struct MoreFeedsRequest {
   let filteredPosts: [MlFeed_PostItem]
+  let numResults: Int
+}
+
+struct InitialFeedRequest {
   let numResults: Int
 }

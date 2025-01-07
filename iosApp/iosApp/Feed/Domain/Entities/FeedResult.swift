@@ -13,6 +13,6 @@ struct FeedResult: Hashable {
   let thumbnail: URL
   let postDescription: String
   var profileImageURL: URL?
-  let likeCount: Int
-  let isLiked: Bool
+  var likeCount: Int
+  var isLiked: Bool
 }
