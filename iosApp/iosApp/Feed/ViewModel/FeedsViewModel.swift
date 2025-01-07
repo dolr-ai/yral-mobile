@@ -67,8 +67,11 @@ class FeedsViewModel: ObservableObject {
       .receive(on: DispatchQueue.main)
       .sink { [weak self] updatedFeed in
         guard let self else { return }
-        self.currentFeeds += updatedFeed
-        self.state = .successfullyFetched(updatedFeed)
+        let updatedFeeds = self.currentFeeds.deduplicating(updatedFeed)
+        if updatedFeeds.count > self.currentFeeds.count {
+          self.currentFeeds += updatedFeed
+          self.state = .successfullyFetched(updatedFeed)
+        }
       }
       .store(in: &cancellables)
   }
