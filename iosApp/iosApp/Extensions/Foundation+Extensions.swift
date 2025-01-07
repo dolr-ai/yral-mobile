@@ -8,15 +8,7 @@
 import Foundation
 
 extension Collection {
-  subscript(safe index: Index) -> Element? {
-    return indices.contains(index) ? self[index] : nil
-  }
-}
-
-extension Array where Element == FeedResult {
-  func deduplicating(_ newFeeds: [FeedResult]) -> [FeedResult] {
-    let existingPostIds = Set(self.map { $0.postID })
-    let uniqueNewFeeds = newFeeds.filter { !existingPostIds.contains($0.postID) }
-    return self + uniqueNewFeeds
-  }
+    subscript(safe index: Index) -> Element? {
+        return indices.contains(index) ? self[index] : nil
+    }
 }
