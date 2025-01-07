@@ -8,7 +8,6 @@
 
 import Foundation
 
-<<<<<<< HEAD
 struct MoreFeedsRequest {
   let filteredPosts: [MlFeed_PostItem]
   let numResults: Int
@@ -17,9 +16,3 @@ struct MoreFeedsRequest {
 struct InitialFeedRequest {
   let numResults: Int
 }
-=======
-struct FeedRequest {
-  let filteredPosts: [MlFeed_PostItem]
-  let numResults: Int
-}
->>>>>>> 6c3bf61 (Stiches the feeds flow and adds YralPlayer (#74))

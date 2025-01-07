@@ -63,7 +63,7 @@ extension ShareOptionsView {
         url: URL(string: "https://discord.com/invite/GZ9QemnZuj")!
       ),
       SocialMediaPlatform(
-        imageName: "twitter_icon",
+        imageName: "x_icon",
         url: URL(string: "https://twitter.com/Yral_app")!
       )
     ]

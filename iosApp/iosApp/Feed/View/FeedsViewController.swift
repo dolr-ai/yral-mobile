@@ -54,7 +54,7 @@ class FeedsViewController: UIViewController {
     handleEvents()
     setupUI()
     Task { @MainActor in
-      await viewModel.fetchFeeds(request: FeedRequest(filteredPosts: [], numResults: Constants.initialNumResults))
+      await viewModel.fetchFeeds(request: InitialFeedRequest(numResults: Constants.initialNumResults))
     }
     NotificationCenter.default.addObserver(
       self,
@@ -89,6 +89,7 @@ class FeedsViewController: UIViewController {
       case .successfullyFetched(let feeds):
         self.updateData(withFeeds: feeds)
       case .failure(let error):
+        loadMoreRequestMade = false
         print(error)
       }
     }.store(in: &initalFeedscancellables)
@@ -98,15 +99,16 @@ class FeedsViewController: UIViewController {
     viewModel.$event.receive(on: RunLoop.main).sink { [weak self] event in
       guard let self = self else { return }
       switch event {
-      case .loadedMoreFeeds(let feeds):
-        self.addFeeds(with: feeds)
+      case .loadedMoreFeeds:
+        break
       case .loadMoreFeedsFailed(let error):
         print(error)
-        self.loadMoreRequestMade = false
-      case .toggledLikeSuccessfully(let status):
-        guard let visibleCellIP = self.feedsCV.indexPathsForVisibleItems.first,
-              let visbleCell = self.feedsCV.cellForItem(at: visibleCellIP) as? FeedsCell else { return }
-        visbleCell.setLikeStatus(isLiked: status)
+      case .fetchingInitialFeeds:
+        loadMoreRequestMade = true
+      case .finishedLoadingInitialFeeds:
+        loadMoreRequestMade = false
+      case .toggledLikeSuccessfully(let response):
+        toggleLikeStatus(response)
       case .toggleLikeFailed(let error):
         print(error)
       default:
@@ -196,7 +198,10 @@ class FeedsViewController: UIViewController {
   }
 
   func updateData(withFeeds feeds: [FeedResult], animated: Bool = false) {
-    guard self.feedsDataSource.snapshot().itemIdentifiers.isEmpty else { return }
+    guard self.feedsDataSource.snapshot().itemIdentifiers.isEmpty else {
+      self.addFeeds(with: feeds, animated: animated)
+      return
+    }
     var shouldAnimate = false
     if #available(iOS 15, *) {
       shouldAnimate = animated
@@ -218,8 +223,24 @@ class FeedsViewController: UIViewController {
     var snapshot = feedsDataSource.snapshot()
     snapshot.appendItems(feeds, toSection: .zero)
     feedsDataSource.apply(snapshot, animatingDifferences: shouldAnimate) {
-      self.loadMoreRequestMade = false
+      self.loadMoreRequestMade = {
+        if case .fetchingInitialFeeds = self.viewModel.event {
+          return true
+        }
+        return false
+      }()
     }
+  }
+
+  private func toggleLikeStatus(_ response: LikeResult) {
+    var snapshot = feedsDataSource.snapshot()
+    var items = snapshot.itemIdentifiers
+    items[response.index].isLiked = response.status
+    items[response.index].likeCount += response.status ? .one : -.one
+
+    snapshot.deleteItems(snapshot.itemIdentifiers)
+    snapshot.appendItems(items)
+    feedsDataSource.apply(snapshot, animatingDifferences: false)
   }
 
   @objc func appDidBecomeActive() {
@@ -292,9 +313,12 @@ extension FeedsViewController: FeedsCellProtocol {
 
   func likeButtonTapped(index: Int) {
     guard let postID = Int(feedsDataSource.snapshot().itemIdentifiers[index].postID) else { return }
-    Task {
-      await self.viewModel.toggleLike(postID: postID)
+    let canisterID = feedsDataSource.snapshot().itemIdentifiers[index].canisterID
+    Task { @MainActor in
+      await self.viewModel.toggleLike(request: LikeQuery(postID: postID, canisterID: canisterID, index: index))
     }
+    guard let cell = feedsCV.cellForItem(at: IndexPath(item: index, section: .zero)) as? FeedsCell else { return }
+    cell.setLikeStatus(isLiked: cell.likeButton.configuration?.image == FeedsCell.Constants.likeUnSelectedImage)
   }
 }
 

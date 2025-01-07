@@ -5,47 +5,82 @@
 //  Created by Sarvesh Sharma on 15/12/24.
 //  Copyright © 2024 orgName. All rights reserved.
 //
-
 import Foundation
+import Combine
 
-enum FeedsPageState {
+enum FeedsPageState: Equatable {
   case initalized
   case loading
   case successfullyFetched([FeedResult])
   case failure(Error)
+
+  static func == (lhs: FeedsPageState, rhs: FeedsPageState) -> Bool {
+    switch (lhs, rhs) {
+    case (.initalized, .initalized): return true
+    case (.loading, .loading): return true
+    case (.successfullyFetched, .successfullyFetched): return true
+    default: return false
+    }
+  }
 }
 
 enum FeedsPageEvent {
-  case loadedMoreFeeds([FeedResult])
+  case loadedMoreFeeds
   case loadMoreFeedsFailed(Error)
-  case toggledLikeSuccessfully(Bool)
+  case toggledLikeSuccessfully(LikeResult)
   case toggleLikeFailed(Error)
+  case fetchingInitialFeeds
+  case finishedLoadingInitialFeeds
+
+  static func == (lhs: FeedsPageEvent, rhs: FeedsPageEvent) -> Bool {
+    switch (lhs, rhs) {
+    case (.loadedMoreFeeds, .loadedMoreFeeds): return true
+    case (.loadMoreFeedsFailed, .loadMoreFeedsFailed): return true
+    case (.toggledLikeSuccessfully, .toggledLikeSuccessfully): return true
+    case (.toggleLikeFailed, .toggleLikeFailed): return true
+    case (.fetchingInitialFeeds, .fetchingInitialFeeds): return true
+    case (.finishedLoadingInitialFeeds, .finishedLoadingInitialFeeds): return true
+    default: return false
+    }
+  }
 }
 
 class FeedsViewModel: ObservableObject {
-  let feedsUseCase: FetchFeedsUseCase
+  let initialFeedsUseCase: FetchInitialFeedsUseCase
+  let moreFeedsUseCase: FetchMoreFeedsUseCase
   let likesUseCase: ToggleLikeUseCase
   private var currentFeeds = [FeedResult]()
+  private var cancellables = Set<AnyCancellable>()
 
   @Published var state: FeedsPageState = .initalized
   @Published var event: FeedsPageEvent?
 
-  init(fetchFeedsuseCase: FetchFeedsUseCase, likeUseCase: ToggleLikeUseCase) {
-    self.feedsUseCase = fetchFeedsuseCase
+  init(
+    fetchFeedsUseCase: FetchInitialFeedsUseCase,
+    moreFeedsUseCase: FetchMoreFeedsUseCase,
+    likeUseCase: ToggleLikeUseCase
+  ) {
+    self.initialFeedsUseCase = fetchFeedsUseCase
+    self.moreFeedsUseCase = moreFeedsUseCase
     self.likesUseCase = likeUseCase
+    initialFeedsUseCase.feedUpdates
+      .receive(on: DispatchQueue.main)
+      .sink { [weak self] updatedFeed in
+        guard let self else { return }
+        let updatedFeeds = self.currentFeeds.deduplicating(updatedFeed)
+        if updatedFeeds.count > self.currentFeeds.count {
+          self.currentFeeds += updatedFeed
+          self.state = .successfullyFetched(updatedFeed)
+        }
+      }
+      .store(in: &cancellables)
   }
 
-  @MainActor func fetchFeeds(request: FeedRequest) async {
+  @MainActor func fetchFeeds(request: InitialFeedRequest) async {
     state = .loading
     do {
-      let result = try await feedsUseCase.execute(request: request)
-      switch result {
-      case .success(let response):
-        currentFeeds = response
-        state = .successfullyFetched(currentFeeds)
-      case .failure(let error):
-        state = .failure(error)
-      }
+      try await initialFeedsUseCase.execute(request: request)
+      event = .finishedLoadingInitialFeeds
     } catch {
       state = .failure(error)
     }
@@ -61,16 +96,16 @@ class FeedsViewModel: ObservableObject {
         item.videoID = feed.videoID
         return item
       }
-      let request = FeedRequest(
+      let request = MoreFeedsRequest(
         filteredPosts: filteredPosts,
         numResults: FeedsViewController.Constants.initialNumResults
       )
-      let result = try await feedsUseCase.execute(request: request)
+      let result = try await moreFeedsUseCase.execute(request: request)
       switch result {
       case .success(let response):
-        event = .loadedMoreFeeds(response)
+        event = .loadedMoreFeeds
         currentFeeds += response
-        state = .successfullyFetched(currentFeeds)
+        state = .successfullyFetched(response)
       case .failure(let error):
         event = .loadMoreFeedsFailed(error)
         state = .failure(error)
@@ -81,11 +116,14 @@ class FeedsViewModel: ObservableObject {
     }
   }
 
-  @MainActor func toggleLike(postID: Int) async {
+  @MainActor func toggleLike(request: LikeQuery) async {
     do {
-      let result = try await likesUseCase.execute(request: postID)
+      let result = try await likesUseCase.execute(request: request)
       switch result {
       case .success(let response):
+        currentFeeds[response.index].isLiked = response.status
+        let likeCountDifference = response.status ? Int.one : -Int.one
+        currentFeeds[response.index].likeCount += likeCountDifference
         event = .toggledLikeSuccessfully(response)
       case .failure(let error):
         event = .toggleLikeFailed(error)

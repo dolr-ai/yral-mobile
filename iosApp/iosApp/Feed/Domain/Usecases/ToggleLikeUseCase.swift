@@ -8,7 +8,7 @@
 
 protocol ToggleLikeUseCaseProtocol: AnyObject {
   typealias PostID = Int
-  func execute(request: PostID) async throws -> Result<Bool, Error>
+  func execute(request: LikeQuery) async throws -> Result<LikeResult, Error>
 }
 
 class ToggleLikeUseCase: ToggleLikeUseCaseProtocol {
@@ -18,7 +18,7 @@ class ToggleLikeUseCase: ToggleLikeUseCaseProtocol {
     self.feedRepository = feedRepository
   }
 
-  func execute(request: Int) async throws -> Result<Bool, Error> {
-    await feedRepository.toggleLikeStatus(for: request)
+  func execute(request: LikeQuery) async throws -> Result<LikeResult, Error> {
+    try await feedRepository.toggleLikeStatus(for: request)
   }
 }
