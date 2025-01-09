@@ -161,6 +161,12 @@
 		ACB46A812D106034002E200C /* FeedsCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A7F2D106031002E200C /* FeedsCell.swift */; };
 		ACB815372CF9D4FF00104B7B /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = ACB815342CF9CE0800104B7B /* GoogleService-Info.plist */; };
 		ACB815482CFA146800104B7B /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = ACB815472CFA146800104B7B /* FirebaseCore */; };
+		ACC0F3942D2ED5B700FA5BD0 /* SplashScreenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC0F3922D2ED5B700FA5BD0 /* SplashScreenView.swift */; };
+		ACC0F3952D2ED5B700FA5BD0 /* SplashScreenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC0F3922D2ED5B700FA5BD0 /* SplashScreenView.swift */; };
+		ACC0F3972D2ED5D700FA5BD0 /* LottieView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC0F3962D2ED5D700FA5BD0 /* LottieView.swift */; };
+		ACC0F3982D2ED5D700FA5BD0 /* LottieView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC0F3962D2ED5D700FA5BD0 /* LottieView.swift */; };
+		ACC0F39F2D2ED68500FA5BD0 /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = ACC0F39E2D2ED68500FA5BD0 /* Lottie */; };
+		ACC0F3A32D2ED69200FA5BD0 /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = ACC0F3A22D2ED69200FA5BD0 /* Lottie */; };
 		ACD941802CFF55BB0038FCB6 /* FirebaseAnalyticsWithoutAdIdSupport in Frameworks */ = {isa = PBXBuildFile; productRef = ACD9417F2CFF55BB0038FCB6 /* FirebaseAnalyticsWithoutAdIdSupport */; };
 		ACD941822CFF55BB0038FCB6 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = ACD941812CFF55BB0038FCB6 /* FirebaseCrashlytics */; };
 		ACD941872CFF575C0038FCB6 /* IosApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* IosApp.swift */; };
@@ -183,6 +189,29 @@
 		ACD941D32CFF5B8B0038FCB6 /* secp256k1 in Frameworks */ = {isa = PBXBuildFile; productRef = ACD941D22CFF5B8B0038FCB6 /* secp256k1 */; };
 		ACD941D92CFF63D90038FCB6 /* libyral_mobile_swift_binding.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AC09A9F72CDB78B9009A39A4 /* libyral_mobile_swift_binding.a */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		ACC0F3A72D2ED69300FA5BD0 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		ACC0F3AA2D2ED77200FA5BD0 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		058557BA273AAA24004C7B11 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -265,6 +294,8 @@
 		ACB46A7B2D105BE0002E200C /* UIKitInitializers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIKitInitializers.swift; sourceTree = "<group>"; };
 		ACB46A7F2D106031002E200C /* FeedsCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedsCell.swift; sourceTree = "<group>"; };
 		ACB815342CF9CE0800104B7B /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		ACC0F3922D2ED5B700FA5BD0 /* SplashScreenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashScreenView.swift; sourceTree = "<group>"; };
+		ACC0F3962D2ED5D700FA5BD0 /* LottieView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LottieView.swift; sourceTree = "<group>"; };
 		ACD941B82CFF575C0038FCB6 /* iosAppStaging.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iosAppStaging.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACD941B92CFF575C0038FCB6 /* Info-Staging.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "Info-Staging.plist"; path = "/Users/sarveshsharma/Desktop/yral-mobile/iosApp/Staging/Info-Staging.plist"; sourceTree = "<absolute>"; };
 		ACD941BA2CFF579A0038FCB6 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
@@ -283,6 +314,7 @@
 				AC0E49C42CEBA6F0002DC158 /* secp256k1 in Frameworks */,
 				ACD941C22CFF5B3D0038FCB6 /* FirebaseAnalytics in Frameworks */,
 				ACD941802CFF55BB0038FCB6 /* FirebaseAnalyticsWithoutAdIdSupport in Frameworks */,
+				ACC0F3A32D2ED69200FA5BD0 /* Lottie in Frameworks */,
 				ACD941C42CFF5B3D0038FCB6 /* FirebaseCore in Frameworks */,
 				ACD941C62CFF5B3D0038FCB6 /* FirebaseCrashlytics in Frameworks */,
 				AC6BECAA2D09D52B002E2021 /* CGRPCZlib in Frameworks */,
@@ -298,6 +330,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				ACC0F39F2D2ED68500FA5BD0 /* Lottie in Frameworks */,
 				AC6BECB42D09D541002E2021 /* GRPC in Frameworks */,
 				ACD941C82CFF5B5B0038FCB6 /* FirebaseAnalytics in Frameworks */,
 				ACD941D92CFF63D90038FCB6 /* libyral_mobile_swift_binding.a in Frameworks */,
@@ -352,13 +385,13 @@
 				2152FB032600AC8F00CF470E /* IosApp.swift */,
 				ACB46A2E2D0EC838002E200C /* DIContainer */,
 				ACB46A712D105AC0002E200C /* DesignSystem */,
+				ACC0F3932D2ED5B700FA5BD0 /* Splash */,
 				AC638BF72D230DA900481E94 /* HomeTabController */,
 				AC32E4292D27A412001DDA43 /* Profile */,
 				ACEBE9962D0C4AA50056F033 /* Feed */,
 				AC6BECB92D09F0F0002E2021 /* Infrastructure */,
 				AC09AA1E2CDBB69B009A39A4 /* Extensions */,
-				AC32E41E2D2700DC001DDA43 /* Fonts */,
-				058557BA273AAA24004C7B11 /* Assets.xcassets */,
+				ACC0F3992D2ED61100FA5BD0 /* Resources */,
 				7555FF82242A565900829871 /* ContentView.swift */,
 				058557D7273AAEEB004C7B11 /* Preview Content */,
 			);
@@ -483,6 +516,7 @@
 		AC32E4482D2961CE001DDA43 /* SwiftUI */ = {
 			isa = PBXGroup;
 			children = (
+				ACC0F3962D2ED5D700FA5BD0 /* LottieView.swift */,
 				AC32E4452D2961BE001DDA43 /* URLImage.swift */,
 			);
 			path = SwiftUI;
@@ -761,6 +795,23 @@
 			path = Cells;
 			sourceTree = "<group>";
 		};
+		ACC0F3932D2ED5B700FA5BD0 /* Splash */ = {
+			isa = PBXGroup;
+			children = (
+				ACC0F3922D2ED5B700FA5BD0 /* SplashScreenView.swift */,
+			);
+			path = Splash;
+			sourceTree = "<group>";
+		};
+		ACC0F3992D2ED61100FA5BD0 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				AC32E41E2D2700DC001DDA43 /* Fonts */,
+				058557BA273AAA24004C7B11 /* Assets.xcassets */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
 		ACD941BC2CFF57A90038FCB6 /* Prod */ = {
 			isa = PBXGroup;
 			children = (
@@ -803,6 +854,7 @@
 				7555FF78242A565900829871 /* Frameworks */,
 				7555FF79242A565900829871 /* Resources */,
 				ACB815362CF9CEF600104B7B /* ShellScript */,
+				ACC0F3A72D2ED69300FA5BD0 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -823,6 +875,7 @@
 				ACD9418D2CFF575C0038FCB6 /* Frameworks */,
 				ACD941B02CFF575C0038FCB6 /* Resources */,
 				ACD941B42CFF575C0038FCB6 /* ShellScript */,
+				ACC0F3AA2D2ED77200FA5BD0 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -862,6 +915,7 @@
 				ACD941CF2CFF5B720038FCB6 /* XCRemoteSwiftPackageReference "swift-secp256k1" */,
 				AC6BECA82D09D52B002E2021 /* XCRemoteSwiftPackageReference "grpc-swift" */,
 				AC6E31182D22F050001EBE6C /* XCRemoteSwiftPackageReference "SDWebImage" */,
+				ACC0F39D2D2ED68500FA5BD0 /* XCRemoteSwiftPackageReference "lottie-ios" */,
 			);
 			productRefGroup = 7555FF7C242A565900829871 /* Products */;
 			projectDirPath = "";
@@ -1070,6 +1124,7 @@
 				AC32E4502D296628001DDA43 /* ProfileUseCase.swift in Sources */,
 				ACB46A2D2D0EC833002E200C /* AppDIContainer.swift in Sources */,
 				AC32E3F72D26FEB9001DDA43 /* UIColor+Extensions.swift in Sources */,
+				ACC0F3972D2ED5D700FA5BD0 /* LottieView.swift in Sources */,
 				ACB46A7D2D105BEB002E200C /* UIKitInitializers.swift in Sources */,
 				AC32E4692D2998D6001DDA43 /* ProfileDIContainer.swift in Sources */,
 				ACB46A362D0EC998002E200C /* FeedDIContainer.swift in Sources */,
@@ -1093,6 +1148,7 @@
 				AC32E4542D296637001DDA43 /* ProfileRepository.swift in Sources */,
 				ACB46A812D106034002E200C /* FeedsCell.swift in Sources */,
 				AC6BECC22D09F91C002E2021 /* HTTPService.swift in Sources */,
+				ACC0F3942D2ED5B700FA5BD0 /* SplashScreenView.swift in Sources */,
 				AC32E4742D2AD67D001DDA43 /* ToggleLikeUseCase.swift in Sources */,
 				AC32E46B2D299DFD001DDA43 /* ShareOptionsView.swift in Sources */,
 				AC638BF62D2309C000481E94 /* KeychainHelper.swift in Sources */,
@@ -1136,6 +1192,7 @@
 				AC32E44F2D296628001DDA43 /* ProfileUseCase.swift in Sources */,
 				ACB46A2C2D0EC833002E200C /* AppDIContainer.swift in Sources */,
 				AC32E3F62D26FEB9001DDA43 /* UIColor+Extensions.swift in Sources */,
+				ACC0F3982D2ED5D700FA5BD0 /* LottieView.swift in Sources */,
 				ACB46A7C2D105BEB002E200C /* UIKitInitializers.swift in Sources */,
 				AC32E4682D2998D6001DDA43 /* ProfileDIContainer.swift in Sources */,
 				ACB46A372D0EC998002E200C /* FeedDIContainer.swift in Sources */,
@@ -1159,6 +1216,7 @@
 				AC32E4532D296637001DDA43 /* ProfileRepository.swift in Sources */,
 				ACB46A802D106034002E200C /* FeedsCell.swift in Sources */,
 				AC6BECC32D09F91C002E2021 /* HTTPService.swift in Sources */,
+				ACC0F3952D2ED5B700FA5BD0 /* SplashScreenView.swift in Sources */,
 				AC32E4732D2AD67D001DDA43 /* ToggleLikeUseCase.swift in Sources */,
 				AC32E46C2D299DFD001DDA43 /* ShareOptionsView.swift in Sources */,
 				AC638BF52D2309C000481E94 /* KeychainHelper.swift in Sources */,
@@ -1301,7 +1359,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
-				DEVELOPMENT_TEAM = 7CSR524RFQ;
+				DEVELOPMENT_TEAM = 2UL556KNXC;
 				ENABLE_PREVIEWS = YES;
 				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)";
 				INFOPLIST_FILE = Prod/Info.plist;
@@ -1317,7 +1375,7 @@
 					shared,
 					"-ObjC",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.yral.ios;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yral.iosApp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "$(PROJECT_DIR)/BridgingHeader.h";
 				SWIFT_VERSION = 5.0;
@@ -1331,7 +1389,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
-				DEVELOPMENT_TEAM = 7CSR524RFQ;
+				DEVELOPMENT_TEAM = 2UL556KNXC;
 				ENABLE_PREVIEWS = YES;
 				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)";
 				INFOPLIST_FILE = Prod/Info.plist;
@@ -1347,7 +1405,7 @@
 					shared,
 					"-ObjC",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.yral.ios;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yral.iosApp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "$(PROJECT_DIR)/BridgingHeader.h";
 				SWIFT_VERSION = 5.0;
@@ -1361,7 +1419,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
-				DEVELOPMENT_TEAM = 7CSR524RFQ;
+				DEVELOPMENT_TEAM = 2UL556KNXC;
 				ENABLE_PREVIEWS = YES;
 				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)";
 				INFOPLIST_FILE = "Staging/Info-Staging.plist";
@@ -1377,7 +1435,7 @@
 					shared,
 					"-ObjC",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.yral.ios.staging;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yral.iosApp.staging;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "$(PROJECT_DIR)/BridgingHeader.h";
 				SWIFT_VERSION = 5.0;
@@ -1391,7 +1449,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
-				DEVELOPMENT_TEAM = 7CSR524RFQ;
+				DEVELOPMENT_TEAM = 2UL556KNXC;
 				ENABLE_PREVIEWS = YES;
 				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)";
 				INFOPLIST_FILE = "Staging/Info-Staging.plist";
@@ -1407,7 +1465,7 @@
 					shared,
 					"-ObjC",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.yral.ios.staging;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yral.iosApp.staging;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "$(PROJECT_DIR)/BridgingHeader.h";
 				SWIFT_VERSION = 5.0;
@@ -1478,6 +1536,14 @@
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 11.5.0;
+			};
+		};
+		ACC0F39D2D2ED68500FA5BD0 /* XCRemoteSwiftPackageReference "lottie-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/airbnb/lottie-ios.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 4.5.1;
 			};
 		};
 		ACD9417E2CFF55BB0038FCB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
@@ -1576,6 +1642,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = ACB815382CFA146800104B7B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseCore;
+		};
+		ACC0F39E2D2ED68500FA5BD0 /* Lottie */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = ACC0F39D2D2ED68500FA5BD0 /* XCRemoteSwiftPackageReference "lottie-ios" */;
+			productName = Lottie;
+		};
+		ACC0F3A22D2ED69200FA5BD0 /* Lottie */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = ACC0F39D2D2ED68500FA5BD0 /* XCRemoteSwiftPackageReference "lottie-ios" */;
+			productName = Lottie;
 		};
 		ACD9417F2CFF55BB0038FCB6 /* FirebaseAnalyticsWithoutAdIdSupport */ = {
 			isa = XCSwiftPackageProductDependency;
