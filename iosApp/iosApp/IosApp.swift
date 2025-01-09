@@ -30,7 +30,7 @@ struct IosApp: App {
         Text("Failed to initialize: \(error.localizedDescription)")
           .foregroundColor(.red)
       } else {
-        ProgressView("Initializing...")
+        SplashScreenView()
           .task {
             await initializeDependencies()
           }
