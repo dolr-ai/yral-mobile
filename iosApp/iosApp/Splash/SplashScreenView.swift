@@ -11,12 +11,18 @@ struct SplashScreenView: View {
   var body: some View {
     ZStack {
       Color.white.ignoresSafeArea()
-      LottieView(name: "Splash_Lottie",
-                 loopMode: .loop,
+      LottieView(name: Constants.splashAnimation,
+                 loopMode: .playOnce,
                  animationSpeed: 1.0)
       .ignoresSafeArea()
       .background(.black)
       .edgesIgnoringSafeArea(.all)
     }
+  }
+}
+
+extension SplashScreenView {
+  enum Constants {
+    static let splashAnimation = "Splash_Lottie"
   }
 }
