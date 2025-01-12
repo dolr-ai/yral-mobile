@@ -16,8 +16,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "7555FF7A242A565900829871"
-               BuildableName = "iosApp.app"
-               BlueprintName = "iosApp"
+               BuildableName = "Yral.app"
+               BlueprintName = "Yral"
                ReferencedContainer = "container:iosApp.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -45,8 +45,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "7555FF7A242A565900829871"
-            BuildableName = "iosApp.app"
-            BlueprintName = "iosApp"
+            BuildableName = "Yral.app"
+            BlueprintName = "Yral"
             ReferencedContainer = "container:iosApp.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -68,8 +68,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "7555FF7A242A565900829871"
-            BuildableName = "iosApp.app"
-            BlueprintName = "iosApp"
+            BuildableName = "Yral.app"
+            BlueprintName = "Yral"
             ReferencedContainer = "container:iosApp.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -79,6 +79,7 @@
    </AnalyzeAction>
    <ArchiveAction
       buildConfiguration = "Release"
+      customArchiveName = "Yral"
       revealArchiveInOrganizer = "YES">
    </ArchiveAction>
 </Scheme>
