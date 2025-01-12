@@ -25,6 +25,7 @@ class FeedsViewController: UIViewController {
     collectionView.showsHorizontalScrollIndicator = false
     collectionView.backgroundColor = .clear
     collectionView.isPagingEnabled = true
+    collectionView.scrollsToTop = false
     return collectionView
   }()
 
@@ -83,12 +84,14 @@ class FeedsViewController: UIViewController {
       guard let self = self else { return }
       switch state {
       case .initalized:
-        break
+        activityIndicator.startAnimating()
       case .loading:
         break
       case .successfullyFetched(let feeds):
+        activityIndicator.stopAnimating()
         self.updateData(withFeeds: feeds)
       case .failure(let error):
+        activityIndicator.stopAnimating()
         loadMoreRequestMade = false
         print(error)
       }
@@ -283,7 +286,7 @@ extension FeedsViewController: UICollectionViewDelegate {
     forItemAt indexPath: IndexPath
   ) {
     let feedsCount = feedsDataSource.snapshot().numberOfItems
-    if indexPath.item == feedsCount - Constants.thresholdForLoadingMoreResults, !loadMoreRequestMade {
+    if indexPath.item >= feedsCount - Constants.thresholdForLoadingMoreResults, !loadMoreRequestMade {
       Task {
         self.loadMoreRequestMade = true
         await viewModel.loadMoreFeeds()

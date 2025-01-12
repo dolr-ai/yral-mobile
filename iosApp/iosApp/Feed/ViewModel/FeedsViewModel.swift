@@ -50,7 +50,9 @@ class FeedsViewModel: ObservableObject {
   let moreFeedsUseCase: FetchMoreFeedsUseCase
   let likesUseCase: ToggleLikeUseCase
   private var currentFeeds = [FeedResult]()
+  private var feedPostIDSet = Set<String>()
   private var cancellables = Set<AnyCancellable>()
+  private var isFetchingInitialFeeds = false
 
   @Published var state: FeedsPageState = .initalized
   @Published var event: FeedsPageEvent?
@@ -63,12 +65,14 @@ class FeedsViewModel: ObservableObject {
     self.initialFeedsUseCase = fetchFeedsUseCase
     self.moreFeedsUseCase = moreFeedsUseCase
     self.likesUseCase = likeUseCase
+    self.event = .fetchingInitialFeeds
+    isFetchingInitialFeeds = true
     initialFeedsUseCase.feedUpdates
       .receive(on: DispatchQueue.main)
       .sink { [weak self] updatedFeed in
         guard let self else { return }
-        let updatedFeeds = self.currentFeeds.deduplicating(updatedFeed)
-        if updatedFeeds.count > self.currentFeeds.count {
+        if !Set(updatedFeed.map { $0.postID }).subtracting(feedPostIDSet).isEmpty {
+          feedPostIDSet = feedPostIDSet.union(Set(updatedFeed.map { $0.postID }))
           self.currentFeeds += updatedFeed
           self.state = .successfullyFetched(updatedFeed)
         }
@@ -80,6 +84,7 @@ class FeedsViewModel: ObservableObject {
     state = .loading
     do {
       try await initialFeedsUseCase.execute(request: request)
+      isFetchingInitialFeeds = false
       event = .finishedLoadingInitialFeeds
     } catch {
       state = .failure(error)
@@ -104,8 +109,11 @@ class FeedsViewModel: ObservableObject {
       switch result {
       case .success(let response):
         event = .loadedMoreFeeds
-        currentFeeds += response
-        state = .successfullyFetched(response)
+        if !feedPostIDSet.subtracting(Set(response.map { $0.postID })).isEmpty {
+          feedPostIDSet = feedPostIDSet.union(Set(response.map { $0.postID }))
+          currentFeeds += response
+          state = .successfullyFetched(response)
+        }
       case .failure(let error):
         event = .loadMoreFeedsFailed(error)
         state = .failure(error)
@@ -125,6 +133,9 @@ class FeedsViewModel: ObservableObject {
         let likeCountDifference = response.status ? Int.one : -Int.one
         currentFeeds[response.index].likeCount += likeCountDifference
         event = .toggledLikeSuccessfully(response)
+        if isFetchingInitialFeeds {
+          event = .fetchingInitialFeeds
+        }
       case .failure(let error):
         event = .toggleLikeFailed(error)
       }
