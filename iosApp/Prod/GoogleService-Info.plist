@@ -9,7 +9,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.yral.ios</string>
+	<string>com.yral.iosApp</string>
 	<key>PROJECT_ID</key>
 	<string>yral-mobile</string>
 	<key>STORAGE_BUCKET</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:1035262663512:ios:52e9d4481e2a5f9b1c232d</string>
+	<string>1:1035262663512:ios:d552d8604c837aaf1c232d</string>
 </dict>
 </plist>
