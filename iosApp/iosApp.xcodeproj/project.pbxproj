@@ -231,7 +231,6 @@
 		AC09AA732CDD2107009A39A4 /* Data+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Data+Extensions.swift"; sourceTree = "<group>"; };
 		AC12B9D12D3809B7004E9EA9 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		AC233D342D314CA3007040F1 /* Splash_Lottie.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Splash_Lottie.json; sourceTree = "<group>"; };
-		AC233D372D314CC1007040F1 /* Splash_Lottie.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = Splash_Lottie.json; path = iosApp/Resources/Splash_Lottie.json; sourceTree = "<group>"; };
 		AC32E3F52D26FEB4001DDA43 /* UIColor+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIColor+Extensions.swift"; sourceTree = "<group>"; };
 		AC32E3F82D270097001DDA43 /* KumbhSans-Black.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "KumbhSans-Black.ttf"; sourceTree = "<group>"; };
 		AC32E3F92D270097001DDA43 /* KumbhSans-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "KumbhSans-Bold.ttf"; sourceTree = "<group>"; };
@@ -362,7 +361,6 @@
 		7555FF72242A565900829871 = {
 			isa = PBXGroup;
 			children = (
-				AC233D372D314CC1007040F1 /* Splash_Lottie.json */,
 				ACD941BD2CFF57BC0038FCB6 /* Staging */,
 				ACD941BC2CFF57A90038FCB6 /* Prod */,
 				AC09A9B12CDB775C009A39A4 /* Generated */,
