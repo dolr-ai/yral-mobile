@@ -1,5 +1,5 @@
 {
-  "originHash" : "caaa13f1667bac822d9cf1ced50ff68ec273f6f070b92a988715e5a98c014303",
+  "originHash" : "ae71e5ece5817e4bcb8bac839fa54759d3ec2aaa76b7e331dc907d7c7d80bec6",
   "pins" : [
     {
       "identity" : "abseil-cpp-binary",
@@ -24,13 +24,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/firebase/firebase-ios-sdk.git",
       "state" : {
-<<<<<<< HEAD
         "revision" : "0d885d28250fb1196b614bc9455079b75c531f72",
         "version" : "11.7.0"
-=======
-        "revision" : "dbdfdc44bee8b8e4eaa5ec27eb12b9338f3f2bc1",
-        "version" : "11.5.0"
->>>>>>> 6c3bf61 (Stiches the feeds flow and adds YralPlayer (#74))
       }
     },
     {
