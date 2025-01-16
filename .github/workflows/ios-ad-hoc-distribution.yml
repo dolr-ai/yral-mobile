@@ -30,7 +30,7 @@ jobs:
       - name: Install Fastlane + Firebase plugin
         run: |
           gem install fastlane
-          fastlane add_plugin firebase_app_distribution
+          gem install fastlane-plugin-firebase_app_distribution
 
       - name: Decrypt and import Dev Certificate
         run: |
