@@ -10,6 +10,7 @@ platform :ios do
   lane :build_staging_firebase do
     # Build with ad-hoc signing (Staging Dev)
     gym(
+      project: "iosApp/iosApp.xcodeproj",
       scheme: "iosAppStaging",
       export_method: "ad-hoc",
       export_options: {
