@@ -23,3 +23,7 @@ extension RustString: Error {
 extension Secp256k1Error: Error {
 
 }
+
+extension MlFeed_PostItemResponse: FeedMapping { }
+
+extension CacheDTO: FeedMapping { }

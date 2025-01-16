@@ -1,6 +1,7 @@
 import SwiftUI
 import secp256k1
 import Firebase
+import GRPC
 
 struct ContentView: View {
 
@@ -120,8 +121,9 @@ struct ContentView: View {
         let uint8Buffer = buffer.bindMemory(to: UInt8.self)
         let wire = try delegated_identity_wire_from_bytes(uint8Buffer)
         let delegatedIdentity = try delegated_identity_from_bytes(uint8Buffer)
+        let delegatedIdentityNew = try delegated_identity_from_bytes(uint8Buffer)
         Task {
-          try await deployCanister(with: wire, identity: delegatedIdentity)
+          try await deployCanister(with: wire, identity: delegatedIdentity, identityNew: delegatedIdentityNew)
         }
       } else {
         print("Received empty data.")
@@ -129,13 +131,51 @@ struct ContentView: View {
     }
   }
 
-  func deployCanister(with wire: DelegatedIdentityWire, identity: DelegatedIdentity) async throws {
+  func deployCanister(
+    with wire: DelegatedIdentityWire,
+    identity: DelegatedIdentity,
+    identityNew: DelegatedIdentity) async throws {
     let canistersWrapper = try await authenticate_with_network(wire, nil)
-    let principal = get_canister_principal(canistersWrapper)
+    let principal = canistersWrapper.get_canister_principal()
+    let principalString = canistersWrapper.get_canister_principal_string().toString()
     let service = try Service(principal, identity)
-    let result = try await service.get_last_access_time()
-    let systemTime = extract_time_as_double(result)
-    print(systemTime)
+    //    let result = try await service.get_last_access_time()
+    //    let systemTime = extract_time_as_double(result)
+    //    print(systemTime)
+
+    let group = PlatformSupport.makeEventLoopGroup(loopCount: 1)
+    var configuration = ClientConnection.Configuration.default(
+      target: .hostAndPort("yral-ml-feed-server.fly.dev", 443),
+      eventLoopGroup: group
+    )
+    let tlsConfig = GRPCTLSConfiguration.makeClientConfigurationBackedByNIOSSL(
+      certificateChain: [],
+      privateKey: nil,
+      trustRoots: .default,
+      certificateVerification: .fullVerification,
+      hostnameOverride: nil,
+      customVerificationCallback: nil
+    )
+    configuration.tlsConfiguration = tlsConfig
+    let channel = ClientConnection(configuration: configuration)
+    let client = MlFeed_MLFeedNIOClient(channel: channel)
+    var request = MlFeed_FeedRequest()
+    request.canisterID = principalString
+    request.numResults = 10
+    request.filterPosts = []
+
+    do {
+      let response = try client.get_feed_clean(
+        request
+      ).response.wait()
+      print(response)
+      let principalNew = try get_principal(response.feed[0].canisterID)
+      let serviceNew = try Service(principalNew, identityNew)
+      let result = try await serviceNew.get_individual_post_details_by_id(UInt64(response.feed[0].postID))
+      print(result.video_uid().toString())
+    } catch {
+      print("Error: \(error)")
+    }
   }
 }
 

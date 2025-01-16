@@ -64,6 +64,20 @@ pub struct CanistersWrapper {
     inner: Canisters<true>,
 }
 
+impl CanistersWrapper {
+    pub fn get_canister_principal( &self) -> Principal {
+        return self.inner.user_canister();
+    }
+    
+    pub fn get_canister_principal_string(&self) -> String {
+        return self.inner.user_canister().to_string();
+    }
+    
+    pub fn get_user_principal(&self) -> Principal {
+        return self.inner.user_principal();
+    }    
+}
+
 pub async fn authenticate_with_network(
     auth: DelegatedIdentityWire,
     referrer: Option<Principal>,
@@ -74,17 +88,13 @@ pub async fn authenticate_with_network(
     Ok(CanistersWrapper { inner: canisters })
 }
 
-pub fn get_canister_principal(wrapper: CanistersWrapper) -> Principal {
-    return wrapper.inner.user_canister();
-}
-
-pub fn get_user_principal(wrapper: CanistersWrapper) -> Principal {
-    return wrapper.inner.user_principal();
-}
-
 pub fn extract_time_as_double(result: Result11) -> Option<u64> {
     match result {
         Result11::Ok(system_time) => Some(system_time.secs_since_epoch),
         Result11::Err(_) => None,
     }
+}
+
+pub fn get_principal(text: String) -> std::result::Result<Principal, PrincipalError> {
+    Principal::from_text(text)
 }

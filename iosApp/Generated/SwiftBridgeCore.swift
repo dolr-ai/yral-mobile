@@ -1,4 +1,4 @@
-// swiftlint:disable all
+// swiftlint: disable all
 import Foundation
 
 extension RustString {
@@ -1321,4 +1321,4 @@ extension Optional where Wrapped == Bool {
         __private__OptionBool(self) 
     }
 }
-// swiftlint:enable all
+// swiftlint: enable all

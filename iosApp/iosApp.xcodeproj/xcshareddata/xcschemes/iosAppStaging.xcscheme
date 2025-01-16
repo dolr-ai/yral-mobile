@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
    LastUpgradeVersion = "1610"
-   version = "1.7">
+   version = "2.2">
    <BuildAction
       parallelizeBuildables = "YES"
       buildImplicitDependencies = "YES"
       buildArchitectures = "Automatic">
       <BuildActionEntries>
          <BuildActionEntry
-            buildForTesting = "YES"
-            buildForRunning = "YES"
-            buildForProfiling = "YES"
-            buildForArchiving = "YES"
-            buildForAnalyzing = "YES">
+            buildForTesting = "NO"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "7555FF7A242A565900829871"
-               BuildableName = "iosApp.app"
-               BlueprintName = "iosApp"
+               BuildableName = "Yral.app"
+               BlueprintName = "Yral"
                ReferencedContainer = "container:iosApp.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -30,10 +30,19 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "ACD941832CFF575C0038FCB6"
-               BuildableName = "iosAppStaging.app"
-               BlueprintName = "iosAppStaging"
+               BuildableName = "Yral-Staging.app"
+               BlueprintName = "Yral-Staging"
                ReferencedContainer = "container:iosApp.xcodeproj">
             </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <AutocreatedTestPlanReference>
+            </AutocreatedTestPlanReference>
          </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
@@ -59,20 +68,18 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "ACD941832CFF575C0038FCB6"
-            BuildableName = "iosAppStaging.app"
-            BlueprintName = "iosAppStaging"
+            BuildableName = "Yral-Staging.app"
+            BlueprintName = "Yral-Staging"
             ReferencedContainer = "container:iosApp.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
-      <MacroExpansion>
-         <BuildableReference
-            BuildableIdentifier = "primary"
-            BlueprintIdentifier = "7555FF7A242A565900829871"
-            BuildableName = "iosApp.app"
-            BlueprintName = "iosApp"
-            ReferencedContainer = "container:iosApp.xcodeproj">
-         </BuildableReference>
-      </MacroExpansion>
+      <EnvironmentVariables>
+         <EnvironmentVariable
+            key = "RUST_BACKTRACE"
+            value = "1"
+            isEnabled = "YES">
+         </EnvironmentVariable>
+      </EnvironmentVariables>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"
@@ -80,22 +87,22 @@
       savedToolIdentifier = ""
       useCustomWorkingDirectory = "NO"
       debugDocumentVersioning = "YES">
-      <BuildableProductRunnable
-         runnableDebuggingMode = "0">
+      <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "7555FF7A242A565900829871"
-            BuildableName = "iosApp.app"
-            BlueprintName = "iosApp"
+            BlueprintIdentifier = "ACD941832CFF575C0038FCB6"
+            BuildableName = "Yral-Staging.app"
+            BlueprintName = "Yral-Staging"
             ReferencedContainer = "container:iosApp.xcodeproj">
          </BuildableReference>
-      </BuildableProductRunnable>
+      </MacroExpansion>
    </ProfileAction>
    <AnalyzeAction
-      buildConfiguration = "Debug">
+      buildConfiguration = "Release">
    </AnalyzeAction>
    <ArchiveAction
       buildConfiguration = "Release"
+      customArchiveName = "Yral-Staging"
       revealArchiveInOrganizer = "YES">
    </ArchiveAction>
 </Scheme>
