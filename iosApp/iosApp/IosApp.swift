@@ -40,6 +40,7 @@ struct IosApp: App {
 
   @MainActor
   private func initializeDependencies() async {
+    print("Test commit")
     do {
       try await appDIContainer.authClient.initialize()
       feedsDIContainer = appDIContainer.makeFeedDIContainer()
