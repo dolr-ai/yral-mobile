@@ -12,6 +12,7 @@ platform :ios do
     gym(
       project: "iosApp/iosApp.xcodeproj",
       scheme: "iosAppStaging",
+      destination: "generic/platform=iOS",
       export_method: "ad-hoc",
       export_options: {
         provisioningProfiles: {
@@ -36,6 +37,7 @@ platform :ios do
   lane :build_staging_testflight do
     gym(
       scheme: "iosAppStaging",
+      destination: "generic/platform=iOS",
       export_method: "app-store",
       export_options: {
         "com.yral.iosApp.staging" => "Yral-Staging-Dist"
@@ -58,6 +60,7 @@ platform :ios do
   lane :build_production_testflight do
     gym(
       scheme: "iosApp",
+      destination: "generic/platform=iOS",
       export_method: "app-store",
       export_options: {
         "com.yral.iosApp" => "Yral-Prod-Dist"
