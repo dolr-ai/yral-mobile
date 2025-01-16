@@ -833,20 +833,19 @@ pub struct Service {
 }
 
 impl Service {
-    pub fn new(
-        principal: Principal,
-        identity: DelegatedIdentity,
-    ) -> std::result::Result<Service, PrincipalError> {
+    pub fn new(principal: Principal, identity: DelegatedIdentity) -> std::result::Result<Service, PrincipalError> {
         let agent = Agent::builder()
             .with_url("https://ic0.app/")
             .with_identity(identity)
             .build()
             .expect("Failed to create agent");
-        RUNTIME
+        
+            RUNTIME
             .block_on(agent.fetch_root_key())
             .expect("Failed to fetch root key");
-        Ok(Self {
-            principal,
+        
+        Ok(Service {
+            principal: principal,
             agent: Arc::new(agent),
         })
     }
@@ -1082,13 +1081,30 @@ impl Service {
         arg0: u64,
     ) -> Result<PostDetailsForFrontend> {
         let args = Encode!(&arg0)?;
-        let bytes = self
+        let call_result = self
             .agent
             .query(&self.principal, "get_individual_post_details_by_id")
             .with_arg(args)
             .call()
-            .await?;
-        Ok(Decode!(&bytes, PostDetailsForFrontend)?)
+            .await;
+    
+        match call_result {
+            Ok(bytes) => {
+                // Decode the bytes if the call succeeded
+                match Decode!(&bytes, PostDetailsForFrontend) {
+                    Ok(details) => Ok(details),
+                    Err(e) => {
+                        eprintln!("Failed to decode PostDetailsForFrontend: {:?}", e);
+                        Err(e.into())
+                    }
+                }
+            }
+            Err(e) => {
+                // Log the error here
+                eprintln!("Error calling get_individual_post_details_by_id: {:?}", e);
+                Err(e.into())
+            }
+        }
     }
     pub async fn get_last_access_time(&self) -> Result<Result11> {
         let args = Encode!()?;

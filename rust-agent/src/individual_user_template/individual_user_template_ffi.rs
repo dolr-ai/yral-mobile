@@ -75,7 +75,6 @@ mod ffi {
         type BetOutcomeForBetMaker;
         type PlacedBetDetail;
         type PlacedBetDetailResult;
-        type PostDetailsForFrontend;
         type Result11;
         type MlFeedCacheItem;
         type GetPostsOfUserProfileError;
@@ -139,6 +138,19 @@ mod ffi {
         type KeyValuePair;
     }
 
+    extern "Rust" {
+        type PostDetailsForFrontend;
+        #[swift_bridge(get(&video_uid))]
+        fn video_uid(&self) -> &str;
+        #[swift_bridge(get(&description))]
+        fn description(&self) -> &str;
+        #[swift_bridge(get(like_count))]
+        fn like_count(&self) -> u64;
+        #[swift_bridge(get(liked_by_me))]
+        fn liked_by_me(&self) -> bool;
+        #[swift_bridge(get(&created_by_profile_photo_url))]
+        fn created_by_profile_photo_url(&self) -> Option<&str>;
+    }
     extern "Rust" {
         type Service;
         #[swift_bridge(init)]
@@ -334,6 +346,7 @@ mod ffi {
             arg0: u64,
         ) -> Result<U64Wrapper, AgentError>;
         async fn update_post_status(&self, arg0: u64, arg1: PostStatus) -> Result<(), AgentError>;
+        async fn update_post_toggle_like_status_by_caller(&self, arg0: u64) -> Result<bool, AgentError>;
         async fn update_profile_display_details(
             &self,
             arg0: UserProfileUpdateDetailsFromFrontend,
@@ -404,11 +417,13 @@ mod ffi {
             referrer: Option<Principal>,
         ) -> Result<CanistersWrapper, String>;
 
-        fn get_canister_principal(wrapper: CanistersWrapper) -> Principal;
-        fn get_user_principal(wrapper: CanistersWrapper) -> Principal;
+        fn get_canister_principal(&self) -> Principal;
+        fn get_canister_principal_string(&self) -> String;
+        fn get_user_principal(&self) -> Principal;
     }
 
     extern "Rust" {
         fn extract_time_as_double(result: Result11) -> Option<u64>;
+        fn get_principal(text: String) -> Result<Principal, PrincipalError>;
     }
 }
