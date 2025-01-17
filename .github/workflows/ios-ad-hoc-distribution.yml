@@ -35,14 +35,16 @@ jobs:
       - name: Decrypt and import Dev Certificate
         run: |
           mkdir -p certs
-          echo "${{ secrets.YRAL_STAGING_DEV_CERT_P12_BASE64 }}" | base64 --decode > certs/Yral-Staging-Dev.p12
-          echo "${{ secrets.YRAL_STAGING_DEV_PROF_BASE64 }}" | base64 --decode > certs/Yral-Staging-Dev.mobileprovision
+          echo "${{ secrets.YRAL_STAGING_DEV_CERT_P12_BASE64 }}" | base64 --decode > certs/Yral-Staging-Development.p12
+          echo "${{ secrets.YRAL_STAGING_DEV_PROF_BASE64 }}" | base64 --decode > certs/Yral-Staging-Development.mobileprovision
           
           security create-keychain -p "" build.keychain
-          security import certs/Yral-Staging-Dev.p12 -k ~/Library/Keychains/build.keychain -P ${{ secrets.IOS_CERTIFICATE_PASSWORD }} -A
+          security import certs/Yral-Staging-Development.p12 -k ~/Library/Keychains/build.keychain -P ${{ secrets.IOS_CERTIFICATE_PASSWORD }} -A
           security list-keychains -s ~/Library/Keychains/build.keychain
           security set-keychain-settings -lut 21600s ~/Library/Keychains/build.keychain
           security unlock-keychain -p "" ~/Library/Keychains/build.keychain
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp certs/Yral-Staging-Development.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
 
       - name: Build & Distribute via Firebase
         run: fastlane ios build_staging_firebase
