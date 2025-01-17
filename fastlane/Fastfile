@@ -18,7 +18,8 @@ platform :ios do
         provisioningProfiles: {
           "com.yral.iosApp.staging" => "Yral-Staging-Development"
         }
-      }
+      },
+      xcargs: "-allowProvisioningUpdates COMPILER_INDEX_STORE_ENABLE=NO SWIFT_STRICT_CONCURRENCY=minimal ENABLE_USER_SCRIPT_SANDBOXING=NO"
     )
 
     # Distribute to Firebase

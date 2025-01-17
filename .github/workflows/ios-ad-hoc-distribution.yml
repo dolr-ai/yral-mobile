@@ -43,6 +43,8 @@ jobs:
           security list-keychains -s ~/Library/Keychains/build.keychain
           security set-keychain-settings -lut 21600s ~/Library/Keychains/build.keychain
           security unlock-keychain -p "" ~/Library/Keychains/build.keychain
+          security import certs/Yral-Staging-Development.p12 -k build.keychain -P "${{ secrets.IOS_CERTIFICATE_PASSWORD }}" -A
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "" build.keychain
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp certs/Yral-Staging-Development.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
 
