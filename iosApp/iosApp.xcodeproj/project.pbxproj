@@ -117,6 +117,12 @@
 		AC8472AB2D1D9139004A4259 /* HLSDownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC8472A92D1D9135004A4259 /* HLSDownloadManager.swift */; };
 		AC8472AD2D1D9540004A4259 /* AVFoundation+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC8472AC2D1D953B004A4259 /* AVFoundation+Extensions.swift */; };
 		AC8472AE2D1D9540004A4259 /* AVFoundation+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC8472AC2D1D953B004A4259 /* AVFoundation+Extensions.swift */; };
+		AC8958D82D3EA46800E19ED7 /* FeedsViewController+ScrollView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC8958D72D3EA46000E19ED7 /* FeedsViewController+ScrollView.swift */; };
+		AC8958D92D3EA46800E19ED7 /* FeedsViewController+ScrollView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC8958D72D3EA46000E19ED7 /* FeedsViewController+ScrollView.swift */; };
+		AC8958DC2D3EA54700E19ED7 /* FeedsViewController+Delegates.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC8958DB2D3EA54000E19ED7 /* FeedsViewController+Delegates.swift */; };
+		AC8958DD2D3EA54700E19ED7 /* FeedsViewController+Delegates.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC8958DB2D3EA54000E19ED7 /* FeedsViewController+Delegates.swift */; };
+		AC8958DF2D3EA60500E19ED7 /* FeedsViewController+DataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC8958DE2D3EA5FE00E19ED7 /* FeedsViewController+DataSource.swift */; };
+		AC8958E02D3EA60500E19ED7 /* FeedsViewController+DataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC8958DE2D3EA5FE00E19ED7 /* FeedsViewController+DataSource.swift */; };
 		ACB46A262D0EC0A3002E200C /* YralPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A252D0EC09C002E200C /* YralPlayer.swift */; };
 		ACB46A272D0EC0A3002E200C /* YralPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A252D0EC09C002E200C /* YralPlayer.swift */; };
 		ACB46A292D0EC76A002E200C /* AppConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A282D0EC765002E200C /* AppConfiguration.swift */; };
@@ -276,6 +282,9 @@
 		AC6E31212D22F088001EBE6C /* ImageLoaderProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageLoaderProtocol.swift; sourceTree = "<group>"; };
 		AC8472A92D1D9135004A4259 /* HLSDownloadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HLSDownloadManager.swift; sourceTree = "<group>"; };
 		AC8472AC2D1D953B004A4259 /* AVFoundation+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AVFoundation+Extensions.swift"; sourceTree = "<group>"; };
+		AC8958D72D3EA46000E19ED7 /* FeedsViewController+ScrollView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FeedsViewController+ScrollView.swift"; sourceTree = "<group>"; };
+		AC8958DB2D3EA54000E19ED7 /* FeedsViewController+Delegates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FeedsViewController+Delegates.swift"; sourceTree = "<group>"; };
+		AC8958DE2D3EA5FE00E19ED7 /* FeedsViewController+DataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FeedsViewController+DataSource.swift"; sourceTree = "<group>"; };
 		ACB46A252D0EC09C002E200C /* YralPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralPlayer.swift; sourceTree = "<group>"; };
 		ACB46A282D0EC765002E200C /* AppConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfiguration.swift; sourceTree = "<group>"; };
 		ACB46A2B2D0EC82F002E200C /* AppDIContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDIContainer.swift; sourceTree = "<group>"; };
@@ -659,6 +668,17 @@
 			path = Network;
 			sourceTree = "<group>";
 		};
+		AC8958DA2D3EA47200E19ED7 /* FeedsVC */ = {
+			isa = PBXGroup;
+			children = (
+				ACB46A6A2D0F3F89002E200C /* FeedsViewController.swift */,
+				AC8958DE2D3EA5FE00E19ED7 /* FeedsViewController+DataSource.swift */,
+				AC8958DB2D3EA54000E19ED7 /* FeedsViewController+Delegates.swift */,
+				AC8958D72D3EA46000E19ED7 /* FeedsViewController+ScrollView.swift */,
+			);
+			path = FeedsVC;
+			sourceTree = "<group>";
+		};
 		ACB46A242D0EC083002E200C /* Video */ = {
 			isa = PBXGroup;
 			children = (
@@ -775,9 +795,9 @@
 		ACB46A6D2D0F3F9E002E200C /* View */ = {
 			isa = PBXGroup;
 			children = (
-				AC32E4222D2712E9001DDA43 /* Helper */,
 				ACB46A6E2D0F4179002E200C /* FeedsViewControllerWrapper.swift */,
-				ACB46A6A2D0F3F89002E200C /* FeedsViewController.swift */,
+				AC8958DA2D3EA47200E19ED7 /* FeedsVC */,
+				AC32E4222D2712E9001DDA43 /* Helper */,
 				ACB46A7E2D10602B002E200C /* Cells */,
 			);
 			path = View;
@@ -1114,6 +1134,7 @@
 				ACB46A682D0F3609002E200C /* FeedsViewModel.swift in Sources */,
 				ACB46A422D0ECBB3002E200C /* ml_feed.proto in Sources */,
 				ACB46A5E2D0EF92D002E200C /* AuthEndPoints.swift in Sources */,
+				AC8958DD2D3EA54700E19ED7 /* FeedsViewController+Delegates.swift in Sources */,
 				ACB46A612D0EF94B002E200C /* AuthClient.swift in Sources */,
 				AC638BFA2D230DCD00481E94 /* HomeTabController.swift in Sources */,
 				AC32E4572D29665B001DDA43 /* ProfileInfo.swift in Sources */,
@@ -1138,6 +1159,7 @@
 				AC32E4692D2998D6001DDA43 /* ProfileDIContainer.swift in Sources */,
 				ACB46A362D0EC998002E200C /* FeedDIContainer.swift in Sources */,
 				2152FB042600AC8F00CF470E /* IosApp.swift in Sources */,
+				AC8958DF2D3EA60500E19ED7 /* FeedsViewController+DataSource.swift in Sources */,
 				AC09A9B22CDB775C009A39A4 /* yral-mobile-swift-binding.swift in Sources */,
 				AC8472AE2D1D9540004A4259 /* AVFoundation+Extensions.swift in Sources */,
 				AC32E4652D2991AD001DDA43 /* ProfileView.swift in Sources */,
@@ -1154,6 +1176,7 @@
 				AC32E44C2D2965A3001DDA43 /* ProfileViewModel.swift in Sources */,
 				AC09AA742CDD210D009A39A4 /* Data+Extensions.swift in Sources */,
 				AC09A9FA2CDB7A5D009A39A4 /* SwiftBindings+Extensions.swift in Sources */,
+				AC8958D92D3EA46800E19ED7 /* FeedsViewController+ScrollView.swift in Sources */,
 				ACB46A772D105B17002E200C /* ReusableView.swift in Sources */,
 				AC32E4542D296637001DDA43 /* ProfileRepository.swift in Sources */,
 				ACB46A812D106034002E200C /* FeedsCell.swift in Sources */,
@@ -1183,6 +1206,7 @@
 				ACB46A692D0F3609002E200C /* FeedsViewModel.swift in Sources */,
 				ACB46A3F2D0ECBB3002E200C /* ml_feed.proto in Sources */,
 				ACB46A5D2D0EF92D002E200C /* AuthEndPoints.swift in Sources */,
+				AC8958DC2D3EA54700E19ED7 /* FeedsViewController+Delegates.swift in Sources */,
 				ACB46A602D0EF94B002E200C /* AuthClient.swift in Sources */,
 				AC638BF92D230DCD00481E94 /* HomeTabController.swift in Sources */,
 				AC32E4582D29665B001DDA43 /* ProfileInfo.swift in Sources */,
@@ -1207,6 +1231,7 @@
 				AC32E4682D2998D6001DDA43 /* ProfileDIContainer.swift in Sources */,
 				ACB46A372D0EC998002E200C /* FeedDIContainer.swift in Sources */,
 				ACD941872CFF575C0038FCB6 /* IosApp.swift in Sources */,
+				AC8958E02D3EA60500E19ED7 /* FeedsViewController+DataSource.swift in Sources */,
 				ACD941882CFF575C0038FCB6 /* yral-mobile-swift-binding.swift in Sources */,
 				AC8472AD2D1D9540004A4259 /* AVFoundation+Extensions.swift in Sources */,
 				AC32E4662D2991AD001DDA43 /* ProfileView.swift in Sources */,
@@ -1223,6 +1248,7 @@
 				AC32E44B2D2965A3001DDA43 /* ProfileViewModel.swift in Sources */,
 				ACD9418A2CFF575C0038FCB6 /* Data+Extensions.swift in Sources */,
 				ACD9418B2CFF575C0038FCB6 /* SwiftBindings+Extensions.swift in Sources */,
+				AC8958D82D3EA46800E19ED7 /* FeedsViewController+ScrollView.swift in Sources */,
 				ACB46A762D105B17002E200C /* ReusableView.swift in Sources */,
 				AC32E4532D296637001DDA43 /* ProfileRepository.swift in Sources */,
 				ACB46A802D106034002E200C /* FeedsCell.swift in Sources */,

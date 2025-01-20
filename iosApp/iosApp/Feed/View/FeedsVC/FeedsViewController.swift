@@ -8,18 +8,20 @@
 import UIKit
 import Combine
 import AVFoundation
-// swiftlint: disable type_body_length
+import SDWebImage
+
 class FeedsViewController: UIViewController {
   typealias DataSource = UICollectionViewDiffableDataSource<Int, FeedResult>
   typealias Snapshot = NSDiffableDataSourceSnapshot<Int, FeedResult>
 
-  private var viewModel: FeedsViewModel
-  private var initalFeedscancellables: Set<AnyCancellable> = []
-  private var paginatedFeedscancellables: Set<AnyCancellable> = []
-  private var yralPlayer = YralPlayer()
-  private var isCurrentlyVisible = true
+  var viewModel: FeedsViewModel
+  var initalFeedscancellables: Set<AnyCancellable> = []
+  var paginatedFeedscancellables: Set<AnyCancellable> = []
+  var yralPlayer = YralPlayer()
+  var isCurrentlyVisible = true
+  var lastDisplayedThumbnailPath: [Int: String] = [:]
 
-  private var feedsCV: UICollectionView = {
+  var feedsCV: UICollectionView = {
     let collectionView = getUICollectionView()
     collectionView.showsVerticalScrollIndicator = false
     collectionView.showsHorizontalScrollIndicator = false
@@ -29,7 +31,7 @@ class FeedsViewController: UIViewController {
     return collectionView
   }()
 
-  private lazy var activityIndicator: UIActivityIndicatorView = {
+  lazy var activityIndicator: UIActivityIndicatorView = {
     let indicator = UIActivityIndicatorView(style: .medium)
     indicator.translatesAutoresizingMaskIntoConstraints = false
     indicator.color = .white
@@ -38,8 +40,8 @@ class FeedsViewController: UIViewController {
   }()
 
   lazy var feedsDataSource = getConfiguredDataSource()
-  private var loadMoreRequestMade: Bool = false
-  private var shouldShowFooterLoader: Bool = false
+  var loadMoreRequestMade: Bool = false
+  var shouldShowFooterLoader: Bool = false
 
   init(viewModel: FeedsViewModel) {
     self.viewModel = viewModel
@@ -161,47 +163,6 @@ class FeedsViewController: UIViewController {
     ])
   }
 
-  func getConfiguredDataSource() -> DataSource {
-    let dataSource = DataSource(collectionView: feedsCV) { [weak self] collectionView, indexPath, feed in
-      guard let self = self else { return UICollectionViewCell() }
-      let cell = collectionView.dequeueReusableCell(FeedsCell.self, for: indexPath)
-      cell.delegate = self
-      if indexPath.row == self.yralPlayer.currentIndex {
-        cell.configure(
-          withPlayer: self.yralPlayer.player,
-          feedInfo: FeedsCell.FeedCellInfo(
-            thumbnailURL: feed.thumbnail,
-            lastFrameImage: nil,
-            likeCount: feed.likeCount,
-            isLiked: feed.isLiked
-          ),
-          profileInfo: ProfileInfoView.ProfileInfo(
-            imageURL: feed.profileImageURL,
-            title: feed.canisterID,
-            subtitle: feed.postDescription),
-          index: indexPath.item
-        )
-      } else {
-        cell.configure(
-          withPlayer: AVPlayer(),
-          feedInfo: FeedsCell.FeedCellInfo(
-            thumbnailURL: feed.thumbnail,
-            lastFrameImage: nil,
-            likeCount: feed.likeCount,
-            isLiked: feed.isLiked
-          ),
-          profileInfo: ProfileInfoView.ProfileInfo(
-            imageURL: feed.profileImageURL,
-            title: feed.canisterID,
-            subtitle: feed.postDescription),
-          index: indexPath.item
-        )
-      }
-      return cell
-    }
-    return dataSource
-  }
-
   func configureFooter() {
     feedsDataSource.supplementaryViewProvider = { [weak self] collectionView, kind, indexPath in
       guard let self = self,
@@ -240,136 +201,38 @@ class FeedsViewController: UIViewController {
     }
   }
 
-  func updateData(withFeeds feeds: [FeedResult], animated: Bool = false) {
-    guard self.feedsDataSource.snapshot().itemIdentifiers.isEmpty else {
-      self.addFeeds(with: feeds, animated: animated)
-      return
-    }
-    var shouldAnimate = false
-    if #available(iOS 15, *) {
-      shouldAnimate = animated
-    }
-    self.yralPlayer.loadInitialVideos(feeds)
-    var snapshot = feedsDataSource.snapshot()
-    snapshot.appendSections([.zero])
-    snapshot.appendItems(feeds, toSection: .zero)
-
-    feedsDataSource.apply(snapshot, animatingDifferences: shouldAnimate)
-  }
-
-  func addFeeds(with feeds: [FeedResult], animated: Bool = false) {
-    yralPlayer.addFeedResults(feeds)
-    var shouldAnimate = false
-    if #available(iOS 15, *) {
-      shouldAnimate = animated
-    }
-    guard !self.feedsDataSource.snapshot().itemIdentifiers.isEmpty else { return }
-    var snapshot = feedsDataSource.snapshot()
-    snapshot.appendItems(feeds, toSection: .zero)
-    feedsDataSource.apply(snapshot, animatingDifferences: shouldAnimate) {
-      self.loadMoreRequestMade = {
-        if case .fetchingInitialFeeds = self.viewModel.event {
-          return true
-        }
-        return false
-      }()
-    }
-  }
-
-  private func toggleLikeStatus(_ response: LikeResult) {
-    var snapshot = feedsDataSource.snapshot()
-    var items = snapshot.itemIdentifiers
-    items[response.index].isLiked = response.status
-    items[response.index].likeCount += response.status ? .one : -.one
-
-    snapshot.deleteItems(snapshot.itemIdentifiers)
-    snapshot.appendItems(items)
-    feedsDataSource.apply(snapshot, animatingDifferences: false)
-  }
-
   @objc func appDidBecomeActive() {
     if isCurrentlyVisible {
       yralPlayer.play()
     }
   }
 
+  func storeThumbnail() {
+    let currentTimeSec = yralPlayer.player.currentTime().seconds
+    let roundedTime = String(format: "%.2f", currentTimeSec)
+    guard let visibleIndexPath = feedsCV.indexPathsForVisibleItems.sorted().first else { return }
+    let baseString = FeedsRepository.Constants.cloudfarePrefix +
+    (feedsDataSource.itemIdentifier(for: visibleIndexPath)?.videoID ?? "") +
+    FeedsRepository.Constants.thumbnailSuffix + "?time=\(roundedTime)s"
+    guard let url = URL(string: baseString) else { return }
+    lastDisplayedThumbnailPath[yralPlayer.currentIndex] = baseString
+    SDWebImageManager.shared.loadImage(
+      with: url,
+      options: .highPriority,
+      progress: nil
+    ) { [weak self] image, _, error, _, _, _ in
+      guard
+        let image = image,
+        error == nil
+      else {
+        return
+      }
+      SDImageCache.shared.store(image, forKey: baseString, completion: nil)
+    }
+  }
+
   deinit {
     NotificationCenter.default.removeObserver(self, name: UIApplication.didBecomeActiveNotification, object: nil)
-  }
-}
-
-extension FeedsViewController: UICollectionViewDelegate {
-  func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
-    guard !loadMoreRequestMade, scrollView.contentOffset.y > .zero else { return }
-    yralPlayer.pause()
-  }
-
-  func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
-    feedsCV.layoutIfNeeded()
-    guard let visibleIndexPath = feedsCV.indexPathsForVisibleItems.sorted().first else { return }
-    let oldIndex = yralPlayer.currentIndex
-    let newIndex = visibleIndexPath.item
-    if newIndex != oldIndex {
-      yralPlayer.advanceToVideo(at: newIndex)
-      feedsCV.reloadData()
-    } else {
-      yralPlayer.play()
-    }
-  }
-
-  func scrollViewShouldScrollToTop(_ scrollView: UIScrollView) -> Bool {
-    return false
-  }
-
-  func collectionView(
-    _ collectionView: UICollectionView,
-    willDisplay cell: UICollectionViewCell,
-    forItemAt indexPath: IndexPath
-  ) {
-    let feedsCount = feedsDataSource.snapshot().numberOfItems
-    if indexPath.item >= feedsCount - Constants.thresholdForLoadingMoreResults, !loadMoreRequestMade {
-      Task {
-        self.loadMoreRequestMade = true
-        await viewModel.loadMoreFeeds()
-      }
-    }
-    if indexPath.item >= feedsCount - 1 {
-      DispatchQueue.main.async {
-        self.shouldShowFooterLoader = true
-        let snapshot = self.feedsDataSource.snapshot()
-        self.feedsDataSource.apply(snapshot, animatingDifferences: false)
-      }
-    }
-  }
-}
-
-extension FeedsViewController: FeedsCellProtocol {
-  func shareButtonTapped(index: Int) {
-    activityIndicator.startAnimating()
-    // swiftlint: disable line_length
-    guard let shareURL = URL(
-      string: "https://yral.com/hot-or-not/\(self.feedsDataSource.snapshot().itemIdentifiers[index].canisterID)/\(self.feedsDataSource.snapshot().itemIdentifiers[index].postID)"
-    ) else { return }
-    // swiftlint: enable line_length
-    let activityViewController = UIActivityViewController(
-      activityItems: [shareURL],
-      applicationActivities: nil
-    )
-
-    guard let viewController = navigationController?.viewControllers.first else { return }
-    viewController.present(activityViewController, animated: true) {
-      self.activityIndicator.stopAnimating()
-    }
-  }
-
-  func likeButtonTapped(index: Int) {
-    guard let postID = Int(feedsDataSource.snapshot().itemIdentifiers[index].postID) else { return }
-    let canisterID = feedsDataSource.snapshot().itemIdentifiers[index].canisterID
-    Task { @MainActor in
-      await self.viewModel.toggleLike(request: LikeQuery(postID: postID, canisterID: canisterID, index: index))
-    }
-    guard let cell = feedsCV.cellForItem(at: IndexPath(item: index, section: .zero)) as? FeedsCell else { return }
-    cell.setLikeStatus(isLiked: cell.likeButton.configuration?.image == FeedsCell.Constants.likeUnSelectedImage)
   }
 }
 
@@ -382,4 +245,3 @@ extension FeedsViewController {
     static let footerHeight = 50.0
   }
 }
-// swiftlint: enable type_body_length

@@ -99,7 +99,7 @@ class ProfileInfoView: UIView, ImageLoaderProtocol {
 
   func set(data: ProfileInfo) {
     if let imageURL = data.imageURL {
-      loadImage(with: imageURL, on: imageView)
+      loadImage(with: imageURL, placeholderImage: nil, on: imageView)
     } else {
       imageView.image = Constants.defaultProfileImage
     }

@@ -42,6 +42,11 @@ final class YralPlayer {
 
   func addFeedResults(_ feedResults: [FeedResult]) {
     self.feedResults += feedResults
+    if self.feedResults.count <= Constants.radius {
+      Task {
+        await preloadFeeds()
+      }
+    }
   }
 
   func advanceToVideo(at index: Int) {
