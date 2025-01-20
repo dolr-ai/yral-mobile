@@ -148,10 +148,10 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     profileInfo: ProfileInfoView.ProfileInfo,
     index: Int
   ) {
-    if let lastFrameImage = feedInfo.lastFrameImage {
-      playerContainerView.image = lastFrameImage
+    if let lastThumbnailImage = feedInfo.lastThumbnailImage {
+      playerContainerView.image = lastThumbnailImage
     } else if let thumbnailURL = feedInfo.thumbnailURL {
-      loadImage(with: thumbnailURL, on: playerContainerView)
+      loadImage(with: thumbnailURL, placeholderImage: nil, on: playerContainerView)
     } else {
       playerContainerView.image = Constants.defaultProfileImage
     }
@@ -197,9 +197,9 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
 
   struct FeedCellInfo {
     let thumbnailURL: URL?
-    let lastFrameImage: UIImage?
     let likeCount: Int
     let isLiked: Bool
+    let lastThumbnailImage: UIImage?
   }
 }
 
