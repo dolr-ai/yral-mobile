@@ -8,7 +8,7 @@
 import UIKit
 import Combine
 import AVFoundation
-
+// swiftlint: disable type_body_length
 class FeedsViewController: UIViewController {
   typealias DataSource = UICollectionViewDiffableDataSource<Int, FeedResult>
   typealias Snapshot = NSDiffableDataSourceSnapshot<Int, FeedResult>
@@ -39,6 +39,7 @@ class FeedsViewController: UIViewController {
 
   lazy var feedsDataSource = getConfiguredDataSource()
   private var loadMoreRequestMade: Bool = false
+  private var shouldShowFooterLoader: Bool = false
 
   init(viewModel: FeedsViewModel) {
     self.viewModel = viewModel
@@ -86,10 +87,13 @@ class FeedsViewController: UIViewController {
       case .initalized:
         activityIndicator.startAnimating()
       case .loading:
-        break
+        guard viewModel.event != .loadingMoreFeeds else { return }
+        activityIndicator.startAnimating()
       case .successfullyFetched(let feeds):
-        activityIndicator.stopAnimating()
-        self.updateData(withFeeds: feeds)
+        DispatchQueue.main.async {
+          self.activityIndicator.stopAnimating()
+          self.updateData(withFeeds: feeds)
+        }
       case .failure(let error):
         activityIndicator.stopAnimating()
         loadMoreRequestMade = false
@@ -103,7 +107,11 @@ class FeedsViewController: UIViewController {
       guard let self = self else { return }
       switch event {
       case .loadedMoreFeeds:
-        break
+        DispatchQueue.main.async {
+          self.shouldShowFooterLoader = false
+          let snapshot = self.feedsDataSource.snapshot()
+          self.feedsDataSource.apply(snapshot, animatingDifferences: true)
+        }
       case .loadMoreFeedsFailed(let error):
         print(error)
       case .fetchingInitialFeeds:
@@ -135,9 +143,14 @@ class FeedsViewController: UIViewController {
       feedsCV.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
     ])
     feedsCV.register(FeedsCell.self)
+    feedsCV.register(
+      FooterLoaderView.self,
+      forSupplementaryViewOfKind: UICollectionView.elementKindSectionFooter
+    )
     feedsCV.dataSource = feedsDataSource
     feedsCV.delegate = self
     feedsCV.setCollectionViewLayout(createLayout(), animated: false)
+    configureFooter()
   }
 
   func setupActivityIndicator() {
@@ -189,6 +202,23 @@ class FeedsViewController: UIViewController {
     return dataSource
   }
 
+  func configureFooter() {
+    feedsDataSource.supplementaryViewProvider = { [weak self] collectionView, kind, indexPath in
+      guard let self = self,
+            kind == UICollectionView.elementKindSectionFooter else {
+        return UICollectionReusableView()
+      }
+      let footer = collectionView.dequeueReusableSupplementaryView(FooterLoaderView.self, ofKind: kind, for: indexPath)
+      if self.loadMoreRequestMade && self.shouldShowFooterLoader {
+        footer.startAnimating()
+      } else {
+        footer.stopAnimating()
+      }
+
+      return footer
+    }
+
+  }
   private func createLayout() -> UICollectionViewCompositionalLayout {
     return UICollectionViewCompositionalLayout { (_, _) -> NSCollectionLayoutSection? in
       let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(.one),
@@ -196,6 +226,16 @@ class FeedsViewController: UIViewController {
       let item = NSCollectionLayoutItem(layoutSize: itemSize)
       let group = NSCollectionLayoutGroup.vertical(layoutSize: itemSize, subitems: [item])
       let section = NSCollectionLayoutSection(group: group)
+      let footerSize = NSCollectionLayoutSize(
+        widthDimension: .fractionalWidth(.one),
+        heightDimension: .estimated(Constants.footerHeight)
+      )
+      let footer = NSCollectionLayoutBoundarySupplementaryItem(
+        layoutSize: footerSize,
+        elementKind: UICollectionView.elementKindSectionFooter,
+        alignment: .bottom
+      )
+      section.boundarySupplementaryItems = [footer]
       return section
     }
   }
@@ -213,6 +253,7 @@ class FeedsViewController: UIViewController {
     var snapshot = feedsDataSource.snapshot()
     snapshot.appendSections([.zero])
     snapshot.appendItems(feeds, toSection: .zero)
+
     feedsDataSource.apply(snapshot, animatingDifferences: shouldAnimate)
   }
 
@@ -292,6 +333,13 @@ extension FeedsViewController: UICollectionViewDelegate {
         await viewModel.loadMoreFeeds()
       }
     }
+    if indexPath.item >= feedsCount - 1 {
+      DispatchQueue.main.async {
+        self.shouldShowFooterLoader = true
+        let snapshot = self.feedsDataSource.snapshot()
+        self.feedsDataSource.apply(snapshot, animatingDifferences: false)
+      }
+    }
   }
 }
 
@@ -331,5 +379,7 @@ extension FeedsViewController {
     static let thresholdForLoadingMoreResults = 6
     static let radius = 5
     static let shareURLPrefix = "https://yral.com/hot-or-not/"
+    static let footerHeight = 50.0
   }
 }
+// swiftlint: enable type_body_length
