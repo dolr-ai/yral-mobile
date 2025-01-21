@@ -839,11 +839,7 @@ impl Service {
             .with_identity(identity)
             .build()
             .expect("Failed to create agent");
-        
-            RUNTIME
-            .block_on(agent.fetch_root_key())
-            .expect("Failed to fetch root key");
-        
+                
         Ok(Service {
             principal: principal,
             agent: Arc::new(agent),
