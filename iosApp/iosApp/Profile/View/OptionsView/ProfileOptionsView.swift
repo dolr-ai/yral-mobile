@@ -38,7 +38,6 @@ struct ProfileOptionsView: View {
             ProfileOptionsWebView(url: URL(string: option.redirection) ?? URL(fileURLWithPath: ""))
               .navigationBarTitleDisplayMode(.inline)
               .navigationTitle(option.text)
-              .interactiveDismissDisabled()
               .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                   Button(Constants.closeButtonTitle) {
@@ -48,6 +47,7 @@ struct ProfileOptionsView: View {
                 }
               }
           }
+          .interactiveDismissDisabled(true)
         }
       }
       if isShowingLoader {
