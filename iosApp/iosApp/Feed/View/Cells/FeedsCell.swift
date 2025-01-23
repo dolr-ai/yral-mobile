@@ -151,7 +151,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     if let lastThumbnailImage = feedInfo.lastThumbnailImage {
       playerContainerView.image = lastThumbnailImage
     } else if let thumbnailURL = feedInfo.thumbnailURL {
-      loadImage(with: thumbnailURL, placeholderImage: nil, on: playerContainerView)
+      loadImage(with: thumbnailURL, placeholderImage: Constants.playerPlaceHolderImage, on: playerContainerView)
     } else {
       playerContainerView.image = Constants.defaultProfileImage
     }
@@ -223,5 +223,6 @@ extension FeedsCell {
     static let profileInfoTrailing = 60.0
     static let profileInfoViewHeight = 56.0
     static let defaultProfileImage = UIImage(named: "default_profile")
+    static let playerPlaceHolderImage = UIImage(named: "player_placeholder")
   }
 }
