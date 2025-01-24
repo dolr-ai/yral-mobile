@@ -129,7 +129,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     ])
 
     actionsStackView.addArrangedSubview(likeButton)
-    actionsStackView.addArrangedSubview(shareButton)
+//    actionsStackView.addArrangedSubview(shareButton)
     likeButton.addTarget(self, action: #selector(likeButtonTapped), for: .touchUpInside)
     shareButton.addTarget(self, action: #selector(shareButtonTapped), for: .touchUpInside)
   }
