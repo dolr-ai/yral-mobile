@@ -34,6 +34,9 @@ jobs:
           target: aarch64-apple-ios
           override: true
 
+      - name: Install cargo-lipo
+        run: cargo install cargo-lipo
+
       - name: Make build script executable
         run: chmod +x iosApp/build-rust.sh
 
