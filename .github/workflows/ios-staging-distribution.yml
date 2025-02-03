@@ -41,7 +41,7 @@ jobs:
 
       - name: Build Rust Library
         run: |
-          PROJECT_DIR="${PWD}/rust-agent" iosApp/build-rust.sh
+          PROJECT_DIR="${PWD}/rust-agent" CONFIGURATION=Release iosApp/build-rust.sh
           # Optional: verify the build
           ls -la rust-agent/target || true
 
