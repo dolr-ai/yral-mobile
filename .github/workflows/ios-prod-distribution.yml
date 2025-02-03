@@ -12,7 +12,7 @@ jobs:
   build-ad-hoc-staging:
     if: ${{ github.event.pull_request.draft == false }}
     runs-on: macos-latest
-    
+
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
@@ -76,7 +76,7 @@ jobs:
           cp "certs/Yral distribution.mobileprovision" ~/Library/MobileDevice/Provisioning\ Profiles/
   
       - name: Build & Upload to TestFlight
-        run: fastlane ios build_staging_testflight
+        run: fastlane ios build_production_testflight
         env:
           APP_STORE_CONNECT_ISSUER_ID: ${{ vars.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_KEY_ID: ${{ vars.APP_STORE_CONNECT_KEY_ID }}
