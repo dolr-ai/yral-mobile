@@ -1,9 +1,12 @@
 name: Yral-Staging (TestFlight)
 
 on:
-  push:
+  pull_request:
     branches:
-      - main
+      - 'develop'
+    types:
+      - ready_for_review
+      - synchronize
 
 jobs:
   build-testflight-staging:
