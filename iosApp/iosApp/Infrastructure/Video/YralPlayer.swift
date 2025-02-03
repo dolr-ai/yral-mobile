@@ -42,6 +42,11 @@ final class YralPlayer {
 
   func addFeedResults(_ feedResults: [FeedResult]) {
     self.feedResults += feedResults
+    if self.feedResults.count <= Constants.radius {
+      Task {
+        await preloadFeeds()
+      }
+    }
   }
 
   func advanceToVideo(at index: Int) {
@@ -76,7 +81,6 @@ final class YralPlayer {
 
   private func startLooping(with item: AVPlayerItem) {
     player.removeAllItems()
-    player.insert(item, after: nil)
     playerLooper = AVPlayerLooper(player: player, templateItem: item)
 
     if let lastTime = lastPlayedTimes[currentIndex] {

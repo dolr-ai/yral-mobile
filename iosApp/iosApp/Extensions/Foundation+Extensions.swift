@@ -20,3 +20,7 @@ extension Array where Element == FeedResult {
     return self + uniqueNewFeeds
   }
 }
+
+extension URL: Identifiable {
+  public var id: String { absoluteString }
+}

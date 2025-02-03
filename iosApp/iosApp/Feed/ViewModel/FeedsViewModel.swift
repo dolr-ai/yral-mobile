@@ -24,7 +24,8 @@ enum FeedsPageState: Equatable {
   }
 }
 
-enum FeedsPageEvent {
+enum FeedsPageEvent: Equatable {
+  case loadingMoreFeeds
   case loadedMoreFeeds
   case loadMoreFeedsFailed(Error)
   case toggledLikeSuccessfully(LikeResult)
@@ -34,6 +35,7 @@ enum FeedsPageEvent {
 
   static func == (lhs: FeedsPageEvent, rhs: FeedsPageEvent) -> Bool {
     switch (lhs, rhs) {
+    case (.loadingMoreFeeds, .loadingMoreFeeds): return true
     case (.loadedMoreFeeds, .loadedMoreFeeds): return true
     case (.loadMoreFeedsFailed, .loadMoreFeedsFailed): return true
     case (.toggledLikeSuccessfully, .toggledLikeSuccessfully): return true
@@ -92,6 +94,7 @@ class FeedsViewModel: ObservableObject {
   }
 
   @MainActor func loadMoreFeeds() async {
+    event = .loadingMoreFeeds
     state  = .loading
     do {
       let filteredPosts = currentFeeds.map { feed in
