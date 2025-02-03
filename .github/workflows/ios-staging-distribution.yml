@@ -3,13 +3,15 @@ name: Yral-Staging (TestFlight)
 on:
   pull_request:
     branches:
-      - 'develop'
+      - main
     types:
-      - ready_for_review
-      - synchronize
+      - closed
 
 jobs:
   build-testflight-staging:
+    if: >
+      ${{ github.event.pull_request.merged == true &&
+         github.event.pull_request.head.ref == 'develop' }}
     runs-on: macos-latest
 
     steps:
