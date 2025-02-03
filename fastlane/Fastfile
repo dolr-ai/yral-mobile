@@ -37,12 +37,14 @@ platform :ios do
   desc "Build & upload Yral-Staging to TestFlight"
   lane :build_staging_testflight do
     gym(
+      project: "iosApp/iosApp.xcodeproj",
       scheme: "iosAppStaging",
       destination: "generic/platform=iOS",
       export_method: "app-store",
       export_options: {
         "com.yral.iosApp.staging" => "Yral-Staging-Dist"
-      }
+      },
+      xcargs: "-allowProvisioningUpdates COMPILER_INDEX_STORE_ENABLE=NO SWIFT_STRICT_CONCURRENCY=minimal ENABLE_USER_SCRIPT_SANDBOXING=NO"
     )
     pilot(
       skip_waiting_for_build_processing: true,
