@@ -23,12 +23,13 @@ fi
 
 # For GitHub Actions, we'll only build for arm64 initially
 if [[ "$CI" == "true" ]]; then
-    echo "Building for CI environment (aarch64-apple-ios only)"
-        cargo lipo \
+    echo "Building for CI environment (aarch64-apple-ios only, RELEASE build)"
+    cargo lipo \
+      --release \
       --manifest-path ../rust-agent/Cargo.toml \
       --targets aarch64-apple-ios \
       -p yral-mobile-swift-binding
-
+      
 else
     # Original logic for local development
     TARGETS=""
