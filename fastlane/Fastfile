@@ -42,7 +42,9 @@ platform :ios do
       destination: "generic/platform=iOS",
       export_method: "app-store",
       export_options: {
-        "com.yral.iosApp.staging" => "Yral-Staging distribution"
+        provisioningProfiles: {
+          "com.yral.iosApp.staging" => "Yral-Staging distribution"
+        }
       },
       xcargs: "-allowProvisioningUpdates COMPILER_INDEX_STORE_ENABLE=NO SWIFT_STRICT_CONCURRENCY=minimal ENABLE_USER_SCRIPT_SANDBOXING=NO"
     )
