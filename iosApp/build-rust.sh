@@ -21,25 +21,28 @@ if [[ -n "${DEVELOPER_SDK_DIR:-}" ]]; then
   export LIBRARY_PATH="${DEVELOPER_SDK_DIR}/MacOSX.sdk/usr/lib:${LIBRARY_PATH:-}"
 fi
 
-TARGETS=""
-if [[ "$PLATFORM_NAME" = "iphonesimulator" ]]; then
-    TARGETS="aarch64-apple-ios-sim,x86_64-apple-ios"
+# For GitHub Actions, we'll only build for arm64 initially
+if [[ "$CI" == "true" ]]; then
+    echo "Building for CI environment (aarch64-apple-ios only)"
+        cargo lipo \
+      --manifest-path ../rust-agent/Cargo.toml \
+      --targets aarch64-apple-ios \
+      -p yral-mobile-swift-binding
+
 else
-    TARGETS="aarch64-apple-ios,x86_64-apple-ios"
+    # Original logic for local development
+    TARGETS=""
+    if [[ "$PLATFORM_NAME" = "iphonesimulator" ]]; then
+        TARGETS="aarch64-apple-ios-sim,x86_64-apple-ios"
+    else
+        TARGETS="aarch64-apple-ios,x86_64-apple-ios"
+    fi
+
+    if [[ $CONFIGURATION == "Release" ]]; then
+        echo "BUILDING FOR RELEASE ($TARGETS)"
+        cargo lipo --release --manifest-path ../rust-agent/Cargo.toml --targets $TARGETS
+    else
+        echo "BUILDING FOR DEBUG ($TARGETS)"
+        cargo lipo --manifest-path ../rust-agent/Cargo.toml --targets $TARGETS
+    fi
 fi
-
-# if [ $ENABLE_PREVIEWS == "NO" ]; then
-
-  if [[ $CONFIGURATION == "Release" ]]; then
-      echo "BUIlDING FOR RELEASE ($TARGETS)"
-
-      cargo lipo --release --manifest-path ../rust-agent/Cargo.toml  --targets $TARGETS
-  else
-      echo "BUIlDING FOR DEBUG ($TARGETS)"
-
-      cargo lipo --manifest-path ../rust-agent/Cargo.toml  --targets $TARGETS
-  fi
-
-# else
-#   echo "Skipping the script because of preview mode"
-# fi
