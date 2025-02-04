@@ -59,7 +59,7 @@ jobs:
         run: |
           mkdir -p certs
           echo "${{ secrets.YRAL_DIST_CERT_P12_BASE64 }}" | base64 --decode > certs/Yral-Dist.p12
-          echo "${{ secrets.YRAL_STAGING_DIST_PROF_BASE64 }}" | base64 --decode > "certs/Yral distribution.mobileprovision"
+          echo "${{ secrets.YRAL_PROD_DIST_PROF_BASE64 }}" | base64 --decode > "certs/Yral distribution.mobileprovision"
 
           security create-keychain -p "" build.keychain
           security import certs/Yral-Dist.p12 -k ~/Library/Keychains/build.keychain -P ${{ secrets.IOS_CERTIFICATE_PASSWORD }} -A
@@ -76,7 +76,7 @@ jobs:
           cp "certs/Yral distribution.mobileprovision" ~/Library/MobileDevice/Provisioning\ Profiles/
   
       - name: Build & Upload to TestFlight
-        run: fastlane ios build_staging_testflight
+        run: fastlane ios build_production_testflight
         env:
           APP_STORE_CONNECT_ISSUER_ID: ${{ vars.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_KEY_ID: ${{ vars.APP_STORE_CONNECT_KEY_ID }}
