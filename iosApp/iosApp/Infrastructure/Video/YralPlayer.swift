@@ -19,6 +19,7 @@ final class YralPlayer {
   private var lastPlayedTimes: [Int: CMTime] = [:]
   private var playerItems: [Int: AVPlayerItem] = [:]
   private var currentlyDownloadingIndexes: Set<Int> = []
+  weak var delegate: YralPlayerProtocol?
 
   func loadInitialVideos(_ feedResults: [FeedResult]) {
     self.feedResults = feedResults
@@ -80,6 +81,8 @@ final class YralPlayer {
   }
 
   private func startLooping(with item: AVPlayerItem) {
+    playerLooper?.disableLooping()
+    playerLooper = nil
     player.removeAllItems()
     playerLooper = AVPlayerLooper(player: player, templateItem: item)
 
@@ -143,7 +146,7 @@ final class YralPlayer {
   private func cancelPreloadOutsideRange(center: Int, radius: Int) {
     let validRange = (center - radius)...(center + radius)
     let indicesToCancel = currentlyDownloadingIndexes.filter { !validRange.contains($0) }
-
+    delegate?.removeThumbnails(for: indicesToCancel)
     for idx in indicesToCancel {
       let feed = feedResults[idx]
       HLSDownloadManager.shared.cancelDownload(for: feed.url)
@@ -177,8 +180,14 @@ extension YralPlayer: HLSDownloadManagerProtocol {
       guard let self else { return }
       guard let index = feedResults.firstIndex(where: { $0.videoID == assetTitle }) else { return }
       self.playerItems.removeValue(forKey: index)
+      self.delegate?.cacheCleared(atc: index)
     }
   }
+}
+
+protocol YralPlayerProtocol: AnyObject {
+  func cacheCleared(atc index: Int)
+  func removeThumbnails(for set: Set<Int>)
 }
 
 extension YralPlayer {
