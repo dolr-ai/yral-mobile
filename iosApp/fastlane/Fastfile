@@ -1,0 +1,75 @@
+# fastlane/Fastfile
+default_platform(:ios)
+
+platform :ios do
+
+  ###############################################
+  # 1) Ad-hoc Staging Build (Firebase Distribution)
+  ###############################################
+  desc "Build Ad-hoc for Yral-Staging & distribute via Firebase"
+  lane :build_staging_firebase do
+    # Build with ad-hoc signing (Staging Dev)
+    gym(
+      scheme: "iosAppStaging",
+      export_method: "ad-hoc",
+      export_options: {
+        provisioningProfiles: {
+          "com.yral.iosApp.staging" => "Yral-Staging-Dev"
+        }
+      }
+    )
+
+    # Distribute to Firebase
+    firebase_app_distribution(
+      app: ENV["FIREBASE_APP_ID_STAGING"],
+      firebase_cli_token: ENV["FIREBASE_TOKEN"],
+      release_notes: "Ad Hoc build from PR (Draft -> Ready)",
+      debug: false
+    )
+  end
+
+  ####################################################
+  # 2) Staging Distribution -> TestFlight
+  ####################################################
+  desc "Build & upload Yral-Staging to TestFlight"
+  lane :build_staging_testflight do
+    gym(
+      scheme: "iosAppStaging",
+      export_method: "app-store",
+      export_options: {
+        "com.yral.iosApp.staging" => "Yral-Staging-Dist"
+      }
+    )
+    pilot(
+      skip_waiting_for_build_processing: true,
+      api_key: app_store_connect_api_key(
+        key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
+        issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
+        key_content: Base64.decode64(ENV["APP_STORE_CONNECT_API_KEY_BASE64"])
+      )
+    )
+  end
+
+  ####################################################
+  # 3) Production Distribution -> TestFlight
+  ####################################################
+  desc "Build & upload Yral (Production) to TestFlight"
+  lane :build_production_testflight do
+    gym(
+      scheme: "iosApp",
+      export_method: "app-store",
+      export_options: {
+        "com.yral.iosApp" => "Yral-Prod-Dist"
+      }
+    )
+    pilot(
+      skip_waiting_for_build_processing: true,
+      api_key: app_store_connect_api_key(
+        key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
+        issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
+        key_content: Base64.decode64(ENV["APP_STORE_CONNECT_API_KEY_BASE64"])
+      )
+    )
+  end
+
+end

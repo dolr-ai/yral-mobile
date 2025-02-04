@@ -17,7 +17,11 @@ class FeedsViewController: UIViewController {
   var viewModel: FeedsViewModel
   var initalFeedscancellables: Set<AnyCancellable> = []
   var paginatedFeedscancellables: Set<AnyCancellable> = []
-  var yralPlayer = YralPlayer()
+  lazy var yralPlayer: YralPlayer = {
+    let player = YralPlayer()
+    player.delegate = self
+    return player
+  }()
   var isCurrentlyVisible = true
   var lastDisplayedThumbnailPath: [Int: String] = [:]
 

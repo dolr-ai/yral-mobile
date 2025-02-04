@@ -36,7 +36,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   }()
 
   private var shareButton: UIButton = {
-    return getActionButton(withTitle: "100k", image: Constants.shareButtonImage)
+    return getActionButton(withTitle: "", image: Constants.shareButtonImage)
   }()
 
   private static func getActionButton(withTitle title: String, image: UIImage?) -> UIButton {
@@ -129,7 +129,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     ])
 
     actionsStackView.addArrangedSubview(likeButton)
-    actionsStackView.addArrangedSubview(shareButton)
+//    actionsStackView.addArrangedSubview(shareButton)
     likeButton.addTarget(self, action: #selector(likeButtonTapped), for: .touchUpInside)
     shareButton.addTarget(self, action: #selector(shareButtonTapped), for: .touchUpInside)
   }
@@ -151,7 +151,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     if let lastThumbnailImage = feedInfo.lastThumbnailImage {
       playerContainerView.image = lastThumbnailImage
     } else if let thumbnailURL = feedInfo.thumbnailURL {
-      loadImage(with: thumbnailURL, placeholderImage: nil, on: playerContainerView)
+      loadImage(with: thumbnailURL, placeholderImage: Constants.playerPlaceHolderImage, on: playerContainerView)
     } else {
       playerContainerView.image = Constants.defaultProfileImage
     }
@@ -205,9 +205,9 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
 
 extension FeedsCell {
   enum Constants {
-    static let stackViewSpacing = 24.0
+    static let stackViewSpacing = 14.0
     static let horizontalMargin = 16.0
-    static let stackViewHeight = 126.0
+    static let stackViewHeight = 106.0
     static let stackViewBottom = 74.0
     static let stackViewBGColor = UIColor.clear
     static let actionButtonFont = UIFont(name: "KumbhSans-SemiBold", size: 15) ?? UIFont.systemFont(ofSize: 15)
@@ -223,5 +223,6 @@ extension FeedsCell {
     static let profileInfoTrailing = 60.0
     static let profileInfoViewHeight = 56.0
     static let defaultProfileImage = UIImage(named: "default_profile")
+    static let playerPlaceHolderImage = UIImage(named: "player_placeholder")
   }
 }
