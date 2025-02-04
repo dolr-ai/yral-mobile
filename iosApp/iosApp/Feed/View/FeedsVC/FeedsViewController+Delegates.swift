@@ -36,3 +36,15 @@ extension FeedsViewController: FeedsCellProtocol {
     cell.setLikeStatus(isLiked: cell.likeButton.configuration?.image == FeedsCell.Constants.likeUnSelectedImage)
   }
 }
+
+extension FeedsViewController: YralPlayerProtocol {
+  func cacheCleared(atc index: Int) {
+    lastDisplayedThumbnailPath.removeValue(forKey: index)
+  }
+
+  func removeThumbnails(for set: Set<Int>) {
+    for index in set {
+      lastDisplayedThumbnailPath.removeValue(forKey: index)
+    }
+  }
+}
