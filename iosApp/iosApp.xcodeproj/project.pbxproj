@@ -128,6 +128,18 @@
 		AC9293FD2D620B6C003DB102 /* MediaPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9293F82D620B6C003DB102 /* MediaPicker.swift */; };
 		AC9293FF2D620B6C003DB102 /* MediaPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9293F82D620B6C003DB102 /* MediaPicker.swift */; };
 		AC9294062D620BDD003DB102 /* MediaPickerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9294032D620BDD003DB102 /* MediaPickerTests.swift */; };
+		AC9294082D630266003DB102 /* UploadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9294072D630259003DB102 /* UploadView.swift */; };
+		AC9294092D630266003DB102 /* UploadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9294072D630259003DB102 /* UploadView.swift */; };
+		AC92940B2D64C9C0003DB102 /* UploadDIContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC92940A2D64C9BB003DB102 /* UploadDIContainer.swift */; };
+		AC92940C2D64C9C0003DB102 /* UploadDIContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC92940A2D64C9BB003DB102 /* UploadDIContainer.swift */; };
+		AC92940E2D64CBFB003DB102 /* SelectFileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC92940D2D64CBFB003DB102 /* SelectFileView.swift */; };
+		AC92940F2D64CBFB003DB102 /* SelectFileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC92940D2D64CBFB003DB102 /* SelectFileView.swift */; };
+		AC9294112D6599A1003DB102 /* CaptionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9294102D6599A1003DB102 /* CaptionsView.swift */; };
+		AC9294122D6599A1003DB102 /* CaptionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9294102D6599A1003DB102 /* CaptionsView.swift */; };
+		AC9294142D659B53003DB102 /* HashtagsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9294132D659B53003DB102 /* HashtagsView.swift */; };
+		AC9294152D659B53003DB102 /* HashtagsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9294132D659B53003DB102 /* HashtagsView.swift */; };
+		AC9294192D65F308003DB102 /* View+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9294182D65F2FD003DB102 /* View+Extensions.swift */; };
+		AC92941A2D65F308003DB102 /* View+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9294182D65F2FD003DB102 /* View+Extensions.swift */; };
 		AC9B77E62D58C84000270FC9 /* HLSDownloadManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9B77D52D58C2F300270FC9 /* HLSDownloadManagerTests.swift */; };
 		ACB46A262D0EC0A3002E200C /* YralPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A252D0EC09C002E200C /* YralPlayer.swift */; };
 		ACB46A272D0EC0A3002E200C /* YralPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A252D0EC09C002E200C /* YralPlayer.swift */; };
@@ -304,6 +316,12 @@
 		AC8958E12D3EB0D100E19ED7 /* ProfileOptionsWebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileOptionsWebView.swift; sourceTree = "<group>"; };
 		AC9293F82D620B6C003DB102 /* MediaPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaPicker.swift; sourceTree = "<group>"; };
 		AC9294032D620BDD003DB102 /* MediaPickerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaPickerTests.swift; sourceTree = "<group>"; };
+		AC9294072D630259003DB102 /* UploadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadView.swift; sourceTree = "<group>"; };
+		AC92940A2D64C9BB003DB102 /* UploadDIContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadDIContainer.swift; sourceTree = "<group>"; };
+		AC92940D2D64CBFB003DB102 /* SelectFileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectFileView.swift; sourceTree = "<group>"; };
+		AC9294102D6599A1003DB102 /* CaptionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptionsView.swift; sourceTree = "<group>"; };
+		AC9294132D659B53003DB102 /* HashtagsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HashtagsView.swift; sourceTree = "<group>"; };
+		AC9294182D65F2FD003DB102 /* View+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "View+Extensions.swift"; sourceTree = "<group>"; };
 		AC9B77D52D58C2F300270FC9 /* HLSDownloadManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HLSDownloadManagerTests.swift; sourceTree = "<group>"; };
 		AC9B77DD2D58C7E300270FC9 /* YralTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = YralTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACB46A252D0EC09C002E200C /* YralPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralPlayer.swift; sourceTree = "<group>"; };
@@ -566,6 +584,7 @@
 		AC32E4482D2961CE001DDA43 /* SwiftUI */ = {
 			isa = PBXGroup;
 			children = (
+				AC9294182D65F2FD003DB102 /* View+Extensions.swift */,
 				ACC0F3962D2ED5D700FA5BD0 /* LottieView.swift */,
 				AC32E4452D2961BE001DDA43 /* URLImage.swift */,
 			);
@@ -735,6 +754,10 @@
 		AC9293FB2D620B6C003DB102 /* View */ = {
 			isa = PBXGroup;
 			children = (
+				AC9294072D630259003DB102 /* UploadView.swift */,
+				AC92940D2D64CBFB003DB102 /* SelectFileView.swift */,
+				AC9294102D6599A1003DB102 /* CaptionsView.swift */,
+				AC9294132D659B53003DB102 /* HashtagsView.swift */,
 				AC9293F92D620B6C003DB102 /* Helper */,
 			);
 			path = View;
@@ -772,6 +795,7 @@
 				ACB46A2B2D0EC82F002E200C /* AppDIContainer.swift */,
 				ACB46A352D0EC991002E200C /* FeedDIContainer.swift */,
 				AC32E4672D2998D0001DDA43 /* ProfileDIContainer.swift */,
+				AC92940A2D64C9BB003DB102 /* UploadDIContainer.swift */,
 			);
 			path = DIContainer;
 			sourceTree = "<group>";
@@ -1255,6 +1279,7 @@
 				AC32E4462D2961CA001DDA43 /* URLImage.swift in Sources */,
 				ACB46A732D105AF4002E200C /* CollectionView+Extensions.swift in Sources */,
 				ACB46A432D0ECBB3002E200C /* ml_feed.grpc.swift in Sources */,
+				AC9294142D659B53003DB102 /* HashtagsView.swift in Sources */,
 				AC49605B2D2C4BF7008D59D9 /* FetchMoreFeedsUseCase.swift in Sources */,
 				ACB46A7A2D105B35002E200C /* NibLoadableVIew.swift in Sources */,
 				AC32E4702D299E74001DDA43 /* ICPBrandingView.swift in Sources */,
@@ -1277,6 +1302,7 @@
 				AC8958DF2D3EA60500E19ED7 /* FeedsViewController+DataSource.swift in Sources */,
 				AC09A9B22CDB775C009A39A4 /* yral-mobile-swift-binding.swift in Sources */,
 				AC8472AE2D1D9540004A4259 /* AVFoundation+Extensions.swift in Sources */,
+				AC92941A2D65F308003DB102 /* View+Extensions.swift in Sources */,
 				AC32E4652D2991AD001DDA43 /* ProfileView.swift in Sources */,
 				AC4DECA92D3E06AC008EC8F5 /* FooterLoaderView.swift in Sources */,
 				AC32E4772D2ADC22001DDA43 /* Utils.swift in Sources */,
@@ -1288,17 +1314,20 @@
 				AC32E47A2D2AF599001DDA43 /* CacheDTO.swift in Sources */,
 				AC8472AB2D1D9139004A4259 /* HLSDownloadManager.swift in Sources */,
 				AC32E45B2D296731001DDA43 /* ProfileRepositoryProtocol.swift in Sources */,
+				AC92940F2D64CBFB003DB102 /* SelectFileView.swift in Sources */,
 				AC32E44C2D2965A3001DDA43 /* ProfileViewModel.swift in Sources */,
 				AC09AA742CDD210D009A39A4 /* Data+Extensions.swift in Sources */,
 				AC09A9FA2CDB7A5D009A39A4 /* SwiftBindings+Extensions.swift in Sources */,
 				AC8958D92D3EA46800E19ED7 /* FeedsViewController+ScrollView.swift in Sources */,
 				ACB46A772D105B17002E200C /* ReusableView.swift in Sources */,
 				AC32E4542D296637001DDA43 /* ProfileRepository.swift in Sources */,
+				AC9294092D630266003DB102 /* UploadView.swift in Sources */,
 				ACB46A812D106034002E200C /* FeedsCell.swift in Sources */,
 				AC6BECC22D09F91C002E2021 /* HTTPService.swift in Sources */,
 				ACC0F3942D2ED5B700FA5BD0 /* SplashScreenView.swift in Sources */,
 				AC32E4742D2AD67D001DDA43 /* ToggleLikeUseCase.swift in Sources */,
 				AC32E46B2D299DFD001DDA43 /* ShareOptionsView.swift in Sources */,
+				AC9294112D6599A1003DB102 /* CaptionsView.swift in Sources */,
 				AC638BF62D2309C000481E94 /* KeychainHelper.swift in Sources */,
 				AC6E31232D22F08F001EBE6C /* ImageLoaderProtocol.swift in Sources */,
 				ACB46A5B2D0EF91F002E200C /* AuthConstants.swift in Sources */,
@@ -1307,6 +1336,7 @@
 				AC32E4612D298E0A001DDA43 /* ProfileOptionsView.swift in Sources */,
 				ACB46A6F2D0F417F002E200C /* FeedsViewControllerWrapper.swift in Sources */,
 				ACB46A6C2D0F3F8E002E200C /* FeedsViewController.swift in Sources */,
+				AC92940C2D64C9C0003DB102 /* UploadDIContainer.swift in Sources */,
 				7555FF83242A565900829871 /* ContentView.swift in Sources */,
 				ACB46A4C2D0ED110002E200C /* FeedRepositoryProtocol.swift in Sources */,
 			);
@@ -1338,6 +1368,7 @@
 				AC32E4472D2961CA001DDA43 /* URLImage.swift in Sources */,
 				ACB46A742D105AF4002E200C /* CollectionView+Extensions.swift in Sources */,
 				ACB46A402D0ECBB3002E200C /* ml_feed.grpc.swift in Sources */,
+				AC9294152D659B53003DB102 /* HashtagsView.swift in Sources */,
 				AC49605C2D2C4BF7008D59D9 /* FetchMoreFeedsUseCase.swift in Sources */,
 				ACB46A792D105B35002E200C /* NibLoadableVIew.swift in Sources */,
 				AC32E46F2D299E74001DDA43 /* ICPBrandingView.swift in Sources */,
@@ -1360,6 +1391,7 @@
 				AC8958E02D3EA60500E19ED7 /* FeedsViewController+DataSource.swift in Sources */,
 				ACD941882CFF575C0038FCB6 /* yral-mobile-swift-binding.swift in Sources */,
 				AC8472AD2D1D9540004A4259 /* AVFoundation+Extensions.swift in Sources */,
+				AC9294192D65F308003DB102 /* View+Extensions.swift in Sources */,
 				AC32E4662D2991AD001DDA43 /* ProfileView.swift in Sources */,
 				AC4DECAA2D3E06AC008EC8F5 /* FooterLoaderView.swift in Sources */,
 				AC32E4762D2ADC22001DDA43 /* Utils.swift in Sources */,
@@ -1371,17 +1403,20 @@
 				AC32E4792D2AF599001DDA43 /* CacheDTO.swift in Sources */,
 				AC8472AA2D1D9139004A4259 /* HLSDownloadManager.swift in Sources */,
 				AC32E45C2D296731001DDA43 /* ProfileRepositoryProtocol.swift in Sources */,
+				AC92940E2D64CBFB003DB102 /* SelectFileView.swift in Sources */,
 				AC32E44B2D2965A3001DDA43 /* ProfileViewModel.swift in Sources */,
 				ACD9418A2CFF575C0038FCB6 /* Data+Extensions.swift in Sources */,
 				ACD9418B2CFF575C0038FCB6 /* SwiftBindings+Extensions.swift in Sources */,
 				AC8958D82D3EA46800E19ED7 /* FeedsViewController+ScrollView.swift in Sources */,
 				ACB46A762D105B17002E200C /* ReusableView.swift in Sources */,
 				AC32E4532D296637001DDA43 /* ProfileRepository.swift in Sources */,
+				AC9294082D630266003DB102 /* UploadView.swift in Sources */,
 				ACB46A802D106034002E200C /* FeedsCell.swift in Sources */,
 				AC6BECC32D09F91C002E2021 /* HTTPService.swift in Sources */,
 				ACC0F3952D2ED5B700FA5BD0 /* SplashScreenView.swift in Sources */,
 				AC32E4732D2AD67D001DDA43 /* ToggleLikeUseCase.swift in Sources */,
 				AC32E46C2D299DFD001DDA43 /* ShareOptionsView.swift in Sources */,
+				AC9294122D6599A1003DB102 /* CaptionsView.swift in Sources */,
 				AC638BF52D2309C000481E94 /* KeychainHelper.swift in Sources */,
 				AC6E31222D22F08F001EBE6C /* ImageLoaderProtocol.swift in Sources */,
 				ACB46A5A2D0EF91F002E200C /* AuthConstants.swift in Sources */,
@@ -1390,6 +1425,7 @@
 				AC32E4622D298E0A001DDA43 /* ProfileOptionsView.swift in Sources */,
 				ACB46A702D0F417F002E200C /* FeedsViewControllerWrapper.swift in Sources */,
 				ACB46A6B2D0F3F8E002E200C /* FeedsViewController.swift in Sources */,
+				AC92940B2D64C9C0003DB102 /* UploadDIContainer.swift in Sources */,
 				ACD9418C2CFF575C0038FCB6 /* ContentView.swift in Sources */,
 				ACB46A4D2D0ED110002E200C /* FeedRepositoryProtocol.swift in Sources */,
 			);
@@ -1666,7 +1702,7 @@
 				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)";
 				INFOPLIST_FILE = "Staging/Info-Staging.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Yral-Staging";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.2;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
