@@ -29,7 +29,7 @@ struct HomeTabController: View {
   }
 
   var body: some View {
-    VStack(spacing: .zero) {
+    ZStack {
       TabView(selection: $selectedTab) {
         feedsViewControllerWrapper
           .tabItem {
@@ -39,11 +39,13 @@ struct HomeTabController: View {
           .ignoresSafeArea()
           .tag(Int.zero)
         uploadView
+          .onDoneAction {
+            selectedTab = .zero
+          }
           .background(Color.black.edgesIgnoringSafeArea(.all))
           .tabItem {
             Image(ImageResource(name: Constants.uploadIconImageName, bundle: .main)).renderingMode(.original)
               .ignoresSafeArea()
-              .tag(Int.one)
           }
           .tag(Int.one)
         profileView
@@ -51,26 +53,27 @@ struct HomeTabController: View {
           .tabItem {
             Image(ImageResource(name: Constants.profileIconImageName, bundle: .main)).renderingMode(.original)
               .ignoresSafeArea()
-              .tag(Int.one)
           }
           .tag(Int.two)
       }
       GeometryReader { geometry in
-        let tabWidth = geometry.size.width/CGFloat.three
-        let indicatorXPosition = CGFloat(selectedTab) * tabWidth + (tabWidth - Constants.indicatorWidth) / CGFloat.two
-        HStack(spacing: .zero) {
-          Spacer().frame(width: indicatorXPosition)
-          Rectangle()
-            .fill(Color(ColorResource(name: Constants.indicatorColorName, bundle: .main)))
-            .frame(width: Constants.indicatorWidth, height: Constants.tabIndicatorHeight)
-            .edgesIgnoringSafeArea(.top)
-            .cornerRadius(Constants.tabIndicatorHeight/CGFloat.two)
-            .offset(x: .zero, y: -self.tabBarHeight)
-            .animation(.easeInOut, value: selectedTab)
-          Spacer()
+        let tabWidth = geometry.size.width / .three
+        let indicatorXPosition = CGFloat(selectedTab) * tabWidth + (tabWidth - Constants.indicatorWidth) / .two
+        VStack {
+          Spacer().frame(height: geometry.size.height - Constants.tabIndicatorHeight)
+          HStack {
+            Spacer().frame(width: indicatorXPosition)
+            Rectangle()
+              .fill(Color(ColorResource(name: Constants.indicatorColorName, bundle: .main)))
+              .frame(width: Constants.indicatorWidth, height: Constants.tabIndicatorHeight)
+              .cornerRadius(Constants.tabIndicatorHeight / .two)
+              .offset(x: .zero, y: -self.tabBarHeight)
+              .animation(.easeInOut, value: selectedTab)
+            Spacer()
+          }
         }
       }
-      .frame(height: .zero)
+      .ignoresSafeArea([.keyboard])
     }
     .background(Color.black.edgesIgnoringSafeArea(.all))
   }

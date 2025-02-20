@@ -9,30 +9,31 @@
 import SwiftUI
 
 struct SelectFileView: View {
-    var body: some View {
-      VStack(spacing: Constants.outerVStackSpacing) {
-        Color.black.edgesIgnoringSafeArea(.all)
-        VStack(alignment: .center, spacing: Constants.innerVStackSpacing) {
-          Text(Constants.uploadText)
-            .font(Constants.uploadTextFont)
-            .foregroundColor(Constants.uploadTextColor)
-          Text(Constants.fileSizeText)
-            .font(Constants.fileSizeFont)
-            .foregroundColor(Constants.fileSizeColor)
-        }
-        Button { }
-        label: {
-          Text(Constants.selectFileText)
-            .font(Constants.selectFileFont)
-            .foregroundColor(Constants.selectFileColor)
-            .frame(maxWidth: .infinity, minHeight: Constants.selectFileButtonHeight)
-            .cornerRadius(Constants.selectFileButtonRadius)
-        }
-      }.overlay {
-        RoundedRectangle(cornerRadius: Constants.outerVStackRadius)
-          .stroke(Constants.outerVStackStrokeColor, lineWidth: .one)
+  @Binding var showVideoPicker: Bool
+  var body: some View {
+    VStack(spacing: Constants.outerVStackSpacing) {
+      Color.black.edgesIgnoringSafeArea(.all)
+      VStack(alignment: .center, spacing: Constants.innerVStackSpacing) {
+        Text(Constants.uploadText)
+          .font(Constants.uploadTextFont)
+          .foregroundColor(Constants.uploadTextColor)
+        Text(Constants.fileSizeText)
+          .font(Constants.fileSizeFont)
+          .foregroundColor(Constants.fileSizeColor)
       }
+      Button { showVideoPicker = true }
+      label: {
+        Text(Constants.selectFileText)
+          .font(Constants.selectFileFont)
+          .foregroundColor(Constants.selectFileColor)
+          .frame(maxWidth: .infinity, minHeight: Constants.selectFileButtonHeight)
+          .cornerRadius(Constants.selectFileButtonRadius)
+      }
+    }.overlay {
+      RoundedRectangle(cornerRadius: Constants.outerVStackRadius)
+        .stroke(Constants.outerVStackStrokeColor, lineWidth: .one)
     }
+  }
 }
 
 extension SelectFileView {
@@ -57,7 +58,4 @@ extension SelectFileView {
     static let selectFileButtonHeight = 68.0
 
   }
-}
-#Preview {
-    SelectFileView()
 }

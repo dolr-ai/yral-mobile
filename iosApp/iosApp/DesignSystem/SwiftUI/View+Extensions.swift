@@ -21,3 +21,19 @@ extension View {
     }
   }
 }
+
+extension UIApplication {
+  func endEditing() {
+    sendAction(#selector(UIResponder.resignFirstResponder),
+               to: nil, from: nil, for: nil)
+  }
+}
+
+extension View {
+  /// A modifier that hides the keyboard when tapping anywhere outside text fields.
+  func hideKeyboardOnTap() -> some View {
+    self.onTapGesture {
+      UIApplication.shared.endEditing()
+    }
+  }
+}
