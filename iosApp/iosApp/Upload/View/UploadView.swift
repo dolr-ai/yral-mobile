@@ -172,7 +172,8 @@ struct UploadView: View {
             }
           }
           .fullScreenCover(isPresented: $showUploadCompletedView) {
-            UploadCompletedView(doneAction: doneAction)
+            AnimatedCheckbox()
+//            UploadCompletedView(doneAction: doneAction)
           }
         }
       }
