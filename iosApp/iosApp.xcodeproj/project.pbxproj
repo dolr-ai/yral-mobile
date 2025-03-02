@@ -233,6 +233,8 @@
 		ACEBF7ED2D6F845C00B594A0 /* ToastView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACEBF7EB2D6F845900B594A0 /* ToastView.swift */; };
 		ACEBF7EF2D6F847300B594A0 /* ToastManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACEBF7EE2D6F847000B594A0 /* ToastManager.swift */; };
 		ACEBF7F02D6F847300B594A0 /* ToastManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACEBF7EE2D6F847000B594A0 /* ToastManager.swift */; };
+		ACEBF7F62D70A8D700B594A0 /* AnimatedCheckbox.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACEBF7F52D70A8CF00B594A0 /* AnimatedCheckbox.swift */; };
+		ACEBF7F72D70A8D700B594A0 /* AnimatedCheckbox.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACEBF7F52D70A8CF00B594A0 /* AnimatedCheckbox.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -380,6 +382,7 @@
 		ACEBF7E82D6F844700B594A0 /* ToastType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastType.swift; sourceTree = "<group>"; };
 		ACEBF7EB2D6F845900B594A0 /* ToastView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastView.swift; sourceTree = "<group>"; };
 		ACEBF7EE2D6F847000B594A0 /* ToastManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastManager.swift; sourceTree = "<group>"; };
+		ACEBF7F52D70A8CF00B594A0 /* AnimatedCheckbox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimatedCheckbox.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -784,6 +787,7 @@
 		AC9293FB2D620B6C003DB102 /* View */ = {
 			isa = PBXGroup;
 			children = (
+				ACEBF7F52D70A8CF00B594A0 /* AnimatedCheckbox.swift */,
 				ACEBF7E02D6F505300B594A0 /* UploadSuccessView.swift */,
 				ACEBF7DD2D6F215400B594A0 /* VideoPlayerView.swift */,
 				ACD2E8232D6746E400E750FE /* UploadingProgressView.swift */,
@@ -1368,6 +1372,7 @@
 				AC32E4772D2ADC22001DDA43 /* Utils.swift in Sources */,
 				AC6BECBD2D09F68C002E2021 /* Endpoint.swift in Sources */,
 				AC09A9B32CDB775C009A39A4 /* SwiftBridgeCore.swift in Sources */,
+				ACEBF7F72D70A8D700B594A0 /* AnimatedCheckbox.swift in Sources */,
 				AC49605E2D2C5E65008D59D9 /* LikeQuery.swift in Sources */,
 				AC32E4252D2712F1001DDA43 /* ProfileInfoView.swift in Sources */,
 				AC4960612D2D664B008D59D9 /* LikeResult.swift in Sources */,
@@ -1465,6 +1470,7 @@
 				AC32E4762D2ADC22001DDA43 /* Utils.swift in Sources */,
 				AC6BECBC2D09F68C002E2021 /* Endpoint.swift in Sources */,
 				ACD941892CFF575C0038FCB6 /* SwiftBridgeCore.swift in Sources */,
+				ACEBF7F62D70A8D700B594A0 /* AnimatedCheckbox.swift in Sources */,
 				AC49605F2D2C5E65008D59D9 /* LikeQuery.swift in Sources */,
 				AC32E4242D2712F1001DDA43 /* ProfileInfoView.swift in Sources */,
 				AC4960622D2D664B008D59D9 /* LikeResult.swift in Sources */,
