@@ -88,7 +88,7 @@ class FeedsViewController: UIViewController {
 
   override func viewDidAppear(_ animated: Bool) {
     super.viewDidAppear(animated)
-    ToastManager.showToast(type: .success)
+    ToastManager.showToast(type: .failure)
   }
   func bindViewModel() {
     viewModel.$state.receive(on: RunLoop.main).sink { [weak self] state in

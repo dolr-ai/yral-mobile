@@ -18,6 +18,8 @@ final class ToastView: UIView {
   private let actionButton = getUIButton()
   private let closeButton = UIButton(type: .system)
 
+  private var initialOriginY: CGFloat = 0
+
   init(type: ToastType, buttonAction: (() -> Void)? = nil) {
     self.type = type
     self.buttonAction = buttonAction
@@ -26,15 +28,20 @@ final class ToastView: UIView {
     backgroundColor = type.backgroundColor
     layer.masksToBounds = true
     layer.cornerRadius = Constants.cornerRadius
+    setupUI()
+    setupPanGesture()
+  }
+
+  required init?(coder: NSCoder) {
+    fatalError("init(coder:) has not been implemented")
+  }
+
+  private func setupUI() {
     setupCloseButton()
     setupIconImageView()
     setupTitleLabel()
     setupSubtitleLabel()
     setupActionButtonIfNeeded()
-  }
-
-  required init?(coder: NSCoder) {
-    fatalError("init(coder:) has not been implemented")
   }
 
   private func setupCloseButton() {
@@ -82,7 +89,7 @@ final class ToastView: UIView {
   private func setupSubtitleLabel() {
     subtitleLabel.text = type.subtitle
     subtitleLabel.font = Constants.subtitleLabelFont
-    subtitleLabel.textColor = Constants.subtitleLabelTextColor
+    subtitleLabel.textColor = type.subtitleColor
     subtitleLabel.numberOfLines = .zero
     addSubview(subtitleLabel)
 
@@ -112,6 +119,38 @@ final class ToastView: UIView {
       actionButton.leadingAnchor.constraint(equalTo: subtitleLabel.leadingAnchor),
       actionButton.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -Constants.topPadding)
     ])
+  }
+
+  private func setupPanGesture() {
+    let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
+    addGestureRecognizer(panGesture)
+  }
+
+  @objc private func handlePanGesture(_ gesture: UIPanGestureRecognizer) {
+    let translation = gesture.translation(in: superview)
+
+    switch gesture.state {
+    case .began:
+      initialOriginY = frame.origin.y
+
+    case .changed:
+      if translation.y < .zero {
+        frame.origin.y = initialOriginY + translation.y
+      }
+    case .ended, .cancelled:
+      let dragAmount = initialOriginY - frame.origin.y
+      let velocity = gesture.velocity(in: superview).y
+      let dismissThreshold = CGFloat.animationPeriod * bounds.height
+      if dragAmount > dismissThreshold || velocity < Constants.panGestureThreshold {
+        dismiss()
+      } else {
+        UIView.animate(withDuration: CGFloat.apiDelay) {
+          self.frame.origin.y = self.initialOriginY
+        }
+      }
+    default:
+      break
+    }
   }
 
   @objc private func handleActionButtonTapped() {
@@ -146,5 +185,6 @@ extension ToastView {
     static let horizontalPadding: CGFloat = 16
     static let spacing: CGFloat = 8
     static let iconSize: CGFloat = 24
+    static let panGestureThreshold = -500.0
   }
 }
