@@ -41,6 +41,13 @@ struct UploadView: View {
   var body: some View {
     ZStack {
       if showUploadCompletedView {
+//        UploadErrorView(
+//          tryAgainAction: {
+//
+//        }, goHomeAction: doneAction
+//        )
+//        .transition(.opacity)
+//        .zIndex(CGFloat.one)
         UploadCompletedView(doneAction: doneAction, showUploadCompletedView: $showUploadCompletedView)
           .transition(.opacity)
           .zIndex(CGFloat.one)
