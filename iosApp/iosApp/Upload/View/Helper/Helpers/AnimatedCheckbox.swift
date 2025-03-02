@@ -11,6 +11,7 @@ import SwiftUI
 struct AnimatedCheckbox: View {
   @State private var scale: CGFloat = .zero
   @State private var opacity: Double = .zero
+  let animationCompleted: () -> Void
   var body: some View {
     ZStack {
       Color.black.edgesIgnoringSafeArea(.all)
@@ -61,6 +62,7 @@ struct AnimatedCheckbox: View {
               withAnimation(Animation.easeInOut(duration: CGFloat.apiDelay)) {
                 scale = .one
                 opacity = CGFloat.one
+                animationCompleted()
               }
             }
           }

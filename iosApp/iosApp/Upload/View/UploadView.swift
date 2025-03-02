@@ -40,7 +40,11 @@ struct UploadView: View {
 
   var body: some View {
     ZStack {
-      if showUploadProgressView, let url = videoURL {
+      if showUploadCompletedView {
+        UploadCompletedView(doneAction: doneAction, showUploadCompletedView: $showUploadCompletedView)
+          .transition(.opacity)
+          .zIndex(CGFloat.one)
+      } else if showUploadProgressView, let url = videoURL {
         VStack(spacing: .zero) {
           Text(Constants.navigationTitle)
             .font(Constants.navigationTitleFont)
@@ -171,13 +175,10 @@ struct UploadView: View {
               VideoPickerViewControllerRepresentable(videoURL: $videoURL)
             }
           }
-          .fullScreenCover(isPresented: $showUploadCompletedView) {
-            AnimatedCheckbox()
-//            UploadCompletedView(doneAction: doneAction)
-          }
         }
       }
     }
+    .animation(.easeInOut, value: showUploadCompletedView)
   }
 
   private func togglePlayback() {
