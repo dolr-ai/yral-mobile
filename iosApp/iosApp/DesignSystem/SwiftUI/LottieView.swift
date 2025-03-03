@@ -13,6 +13,7 @@ struct LottieView: UIViewRepresentable {
   let name: String
   let loopMode: LottieLoopMode
   let animationSpeed: CGFloat
+  let animationCompleted: () -> Void
 
   func makeUIView(context: Context) -> UIView {
     let containerView = UIView(frame: .zero)
@@ -22,7 +23,6 @@ struct LottieView: UIViewRepresentable {
     animationView.loopMode = loopMode
     animationView.contentMode = .scaleAspectFill
     animationView.translatesAutoresizingMaskIntoConstraints = false
-
     containerView.addSubview(animationView)
 
     NSLayoutConstraint.activate([
@@ -32,7 +32,9 @@ struct LottieView: UIViewRepresentable {
       animationView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor)
     ])
 
-    animationView.play()
+    animationView.play { _ in
+      animationCompleted()
+    }
     return containerView
   }
 

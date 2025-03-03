@@ -24,7 +24,8 @@ struct IosApp: App {
       if let feedsDIContainer = feedsDIContainer, let profileDIContainer = profileDIContainer {
         HomeTabController(
           feedsViewControllerWrapper: feedsDIContainer.makeFeedsViewControllerWrapper(),
-          profileView: profileDIContainer.makeProfileView()
+          profileView: profileDIContainer.makeProfileView(),
+          uploadView: UploadView()
         )
       } else if let error = initializationError {
         Text("Failed to initialize: \(error.localizedDescription)")

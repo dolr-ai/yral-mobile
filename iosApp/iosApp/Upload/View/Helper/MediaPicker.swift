@@ -42,7 +42,22 @@ struct DefaultVideoMetadataProvider: VideoMetadataProvider {
 
 class VideoPickerViewController: UIViewController {
   var videoMetadataProvider: VideoMetadataProvider = DefaultVideoMetadataProvider()
+  weak var delegate: VideoPickerDelegate?
+  private var didShowOptions = false
 
+  override func viewDidLoad() {
+    super.viewDidLoad()
+    view.backgroundColor = .clear
+    modalPresentationStyle = .overFullScreen
+  }
+
+  override func viewDidAppear(_ animated: Bool) {
+    super.viewDidAppear(animated)
+    if !didShowOptions {
+      didShowOptions = true
+      showVideoPickerOptions()
+    }
+  }
   func showVideoPickerOptions() {
     let alert = UIAlertController(title: Constants.pickerOptionsTitle, message: nil, preferredStyle: .actionSheet)
 
@@ -62,16 +77,19 @@ class VideoPickerViewController: UIViewController {
       self.openDocumentPicker()
     }))
 
-    alert.addAction(UIAlertAction(title: Constants.cancelActionTitle, style: .cancel, handler: nil))
+    alert.addAction(UIAlertAction(title: Constants.cancelActionTitle, style: .cancel, handler: { _ in
+      self.delegate?.cancelled()
+    }))
 
     self.present(alert, animated: true)
   }
 
   func openCamera() {
     let picker = UIImagePickerController()
+    picker.mediaTypes = ["public.movie"]
     picker.delegate = self
     picker.sourceType = .camera
-    picker.mediaTypes = Constants.mediaTypes
+    picker.cameraCaptureMode = .video
     picker.videoMaximumDuration = Constants.videoMaxDuration
     self.present(picker, animated: true)
   }
@@ -81,6 +99,7 @@ class VideoPickerViewController: UIViewController {
     picker.delegate = self
     picker.sourceType = .photoLibrary
     picker.mediaTypes = Constants.mediaTypes
+    picker.modalPresentationStyle = .fullScreen
     self.present(picker, animated: true)
   }
 
@@ -130,12 +149,14 @@ extension VideoPickerViewController: UIImagePickerControllerDelegate, UINavigati
 
     if let mediaURL = info[.mediaURL] as? URL {
       if validateVideo(url: mediaURL) {
+        delegate?.videoPicker(self, didPickVideo: mediaURL)
         print("Video selected: \(mediaURL)")
       }
     }
   }
 
   func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+    delegate?.cancelled()
     picker.dismiss(animated: true)
   }
 }
@@ -146,13 +167,20 @@ extension VideoPickerViewController: UIDocumentPickerDelegate {
                       didPickDocumentsAt urls: [URL]) {
     controller.dismiss(animated: true)
     if let url = urls.first, validateVideo(url: url) {
+      delegate?.videoPicker(self, didPickVideo: url)
       print("Video selected from File Manager: \(url)")
     }
   }
 
   func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
+    delegate?.cancelled()
     controller.dismiss(animated: true)
   }
+}
+
+protocol VideoPickerDelegate: AnyObject {
+  func videoPicker(_ picker: VideoPickerViewController, didPickVideo url: URL)
+  func cancelled()
 }
 
 extension VideoPickerViewController {
