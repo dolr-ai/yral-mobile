@@ -3,15 +3,13 @@ name: Yral-Staging (TestFlight)
 on:
   pull_request:
     branches:
-      - main
+      - develop
     types:
       - closed
 
 jobs:
   build-testflight-staging:
-    if: >
-      ${{ github.event.pull_request.merged == true &&
-         github.event.pull_request.head.ref == 'develop' }}
+    if: ${{ github.event.pull_request.merged == true }}
     runs-on: macos-latest
 
     steps:
@@ -61,7 +59,6 @@ jobs:
           mkdir -p certs
           echo "${{ secrets.YRAL_DIST_CERT_P12_BASE64 }}" | base64 --decode > certs/Yral-Dist.p12
           echo "${{ secrets.YRAL_STAGING_DIST_PROF_BASE64 }}" | base64 --decode > "certs/Yral-Staging distribution.mobileprovision"
-
           security create-keychain -p "" build.keychain
           security import certs/Yral-Dist.p12 -k ~/Library/Keychains/build.keychain -P ${{ secrets.IOS_CERTIFICATE_PASSWORD }} -A
           security list-keychains -s ~/Library/Keychains/build.keychain
