@@ -8,8 +8,10 @@
 
 import SwiftUI
 struct UploadErrorView: View {
+  @Binding var showUploadFailedView: Bool
   var tryAgainAction: () -> Void
   var goHomeAction: () -> Void
+  @Environment(\.dismiss) private var dismiss
 
   var body: some View {
     ZStack {
@@ -43,6 +45,10 @@ struct UploadErrorView: View {
 
         Button {
           goHomeAction()
+          dismiss()
+          withAnimation {
+            showUploadFailedView = false
+          }
         } label: {
           Text(Constants.goHomeButtonText)
             .font(Constants.goHomeButtonFont)

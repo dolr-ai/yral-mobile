@@ -32,6 +32,9 @@ struct ProfileView: View {
       }
       .padding([.top], Constants.vStackPadding)
     }
+    .onAppear {
+      ToastManager.showToast(type: .failure)
+    }
     .task {
       await viewModel.fetchProfileInfo()
     }
