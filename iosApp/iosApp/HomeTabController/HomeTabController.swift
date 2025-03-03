@@ -11,19 +11,25 @@ import SwiftUI
 struct HomeTabController: View {
   let feedsViewControllerWrapper: FeedsViewControllerWrapper
   let profileView: ProfileView
+  let uploadView: UploadView
   @State private var selectedTab: Int = .zero
   @State private var tabBarHeight = UITabBarController().tabBar.frame.height
 
-  init(feedsViewControllerWrapper: FeedsViewControllerWrapper, profileView: ProfileView) {
+  init(
+    feedsViewControllerWrapper: FeedsViewControllerWrapper,
+    profileView: ProfileView,
+    uploadView: UploadView
+  ) {
     self.feedsViewControllerWrapper = feedsViewControllerWrapper
     self.profileView = profileView
+    self.uploadView = uploadView
     UITabBar.appearance().backgroundColor = .black
     UITabBar.appearance().barTintColor = .black
     UITabBar.appearance().isTranslucent = false
   }
 
   var body: some View {
-    VStack(spacing: .zero) {
+    ZStack {
       TabView(selection: $selectedTab) {
         feedsViewControllerWrapper
           .tabItem {
@@ -32,31 +38,42 @@ struct HomeTabController: View {
           }
           .ignoresSafeArea()
           .tag(Int.zero)
+        uploadView
+          .onDoneAction {
+            selectedTab = .zero
+          }
+          .background(Color.black.edgesIgnoringSafeArea(.all))
+          .tabItem {
+            Image(ImageResource(name: Constants.uploadIconImageName, bundle: .main)).renderingMode(.original)
+              .ignoresSafeArea()
+          }
+          .tag(Int.one)
         profileView
           .background(Color.black.edgesIgnoringSafeArea(.all))
           .tabItem {
             Image(ImageResource(name: Constants.profileIconImageName, bundle: .main)).renderingMode(.original)
               .ignoresSafeArea()
-              .tag(Int.one)
           }
-          .tag(Int.one)
+          .tag(Int.two)
       }
       GeometryReader { geometry in
-        let tabWidth = geometry.size.width/CGFloat.two
-        let indicatorXPosition = CGFloat(selectedTab) * tabWidth + (tabWidth - Constants.indicatorWidth) / CGFloat.two
-        HStack(spacing: .zero) {
-          Spacer().frame(width: indicatorXPosition)
-          Rectangle()
-            .fill(Color(ColorResource(name: Constants.indicatorColorName, bundle: .main)))
-            .frame(width: Constants.indicatorWidth, height: Constants.tabIndicatorHeight)
-            .edgesIgnoringSafeArea(.top)
-            .cornerRadius(Constants.tabIndicatorHeight/CGFloat.two)
-            .offset(x: .zero, y: -self.tabBarHeight)
-            .animation(.easeInOut, value: selectedTab)
-          Spacer()
+        let tabWidth = geometry.size.width / .three
+        let indicatorXPosition = CGFloat(selectedTab) * tabWidth + (tabWidth - Constants.indicatorWidth) / .two
+        VStack {
+          Spacer().frame(height: geometry.size.height - Constants.tabIndicatorHeight)
+          HStack {
+            Spacer().frame(width: indicatorXPosition)
+            Rectangle()
+              .fill(Color(ColorResource(name: Constants.indicatorColorName, bundle: .main)))
+              .frame(width: Constants.indicatorWidth, height: Constants.tabIndicatorHeight)
+              .cornerRadius(Constants.tabIndicatorHeight / .two)
+              .offset(x: .zero, y: -self.tabBarHeight)
+              .animation(.easeInOut, value: selectedTab)
+            Spacer()
+          }
         }
       }
-      .frame(height: .zero)
+      .ignoresSafeArea([.keyboard])
     }
     .background(Color.black.edgesIgnoringSafeArea(.all))
   }
@@ -67,7 +84,8 @@ struct HomeTabController: View {
   let profileDIContainer = AppDIContainer().makeProfileDIContainer()
   HomeTabController(
     feedsViewControllerWrapper: feedsDIContainer .makeFeedsViewControllerWrapper(),
-    profileView: profileDIContainer.makeProfileView()
+    profileView: profileDIContainer.makeProfileView(),
+    uploadView: UploadView()
   )
 }
 
@@ -75,6 +93,7 @@ extension HomeTabController {
   enum Constants {
     static let homeIconImageName = "home_tab"
     static let profileIconImageName = "profile_tab"
+    static let uploadIconImageName = "upload_tab"
     static let tabIndicatorHeight: CGFloat = 2.0
     static let indicatorWidth = 30.0
     static let indicatorColorName = "tabIndicatorColor"
