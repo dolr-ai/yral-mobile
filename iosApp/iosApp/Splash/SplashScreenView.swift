@@ -13,7 +13,8 @@ struct SplashScreenView: View {
       Color.white.ignoresSafeArea()
       LottieView(name: Constants.splashAnimation,
                  loopMode: .playOnce,
-                 animationSpeed: .one)
+                 animationSpeed: .one) {
+      }
       .ignoresSafeArea()
       .background(.black)
       .edgesIgnoringSafeArea(.all)
