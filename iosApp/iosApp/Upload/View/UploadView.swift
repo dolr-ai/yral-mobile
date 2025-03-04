@@ -20,6 +20,7 @@ struct UploadView: View {
   @State private var showUploadProgressView = false
   @State private var showUploadCompletedView = false
   @State private var showUploadFailedView = false
+  @ObservedObject var viewModel: UploadViewModel
 
   var doneAction: () -> Void = {}
   var isUploadEnabled: Bool {
@@ -29,7 +30,8 @@ struct UploadView: View {
     return !isCaptionEmpty && !areHashtagsEmpty && isVideoURLValid
   }
 
-  init() {
+  init(viewModel: UploadViewModel) {
+    self.viewModel = viewModel
     // swiftlint: disable unavailable_condition
     if #available(iOS 16.0, *) {
       // No extra setup needed.
@@ -192,6 +194,11 @@ struct UploadView: View {
     }
     .animation(.easeInOut, value: showUploadCompletedView)
     .animation(.easeInOut, value: showUploadFailedView)
+    .onAppear {
+      Task {
+        await viewModel.getUploadEndpoint()
+      }
+    }
   }
 
   private func togglePlayback() {
@@ -263,11 +270,5 @@ extension UploadView {
     static let playPauseButtonSize: CGFloat = 64.0
     static let playImageName = "video_play"
     static let pauseImageName = "video_pause"
-  }
-}
-
-struct UploadView_Previews: PreviewProvider {
-  static var previews: some View {
-    UploadView()
   }
 }

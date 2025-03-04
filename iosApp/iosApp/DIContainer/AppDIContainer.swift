@@ -53,4 +53,13 @@ final class AppDIContainer {
       )
     )
   }
+
+  func makeUploadDIContainer() -> UploadDIContainer {
+    return UploadDIContainer(
+      dependencies: UploadDIContainer.Dependencies(
+        httpService: HTTPService(baseURLString: appConfiguration.uploadBaseURLString),
+        authClient: authClient
+      )
+    )
+  }
 }

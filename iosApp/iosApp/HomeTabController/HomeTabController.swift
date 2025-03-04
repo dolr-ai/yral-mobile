@@ -82,10 +82,11 @@ struct HomeTabController: View {
 #Preview {
   let feedsDIContainer = AppDIContainer().makeFeedDIContainer()
   let profileDIContainer = AppDIContainer().makeProfileDIContainer()
+  let uploadDIContainer = AppDIContainer().makeUploadDIContainer()
   HomeTabController(
     feedsViewControllerWrapper: feedsDIContainer .makeFeedsViewControllerWrapper(),
     profileView: profileDIContainer.makeProfileView(),
-    uploadView: UploadView()
+    uploadView: uploadDIContainer.makeUploadView()
   )
 }
 

@@ -17,15 +17,18 @@ struct IosApp: App {
   let appDIContainer = AppDIContainer()
   @State private var feedsDIContainer: FeedDIContainer?
   @State private var profileDIContainer: ProfileDIContainer?
+  @State private var uploadDIContainer: UploadDIContainer?
   @State private var initializationError: Error?
 
   var body: some Scene {
     WindowGroup {
-      if let feedsDIContainer = feedsDIContainer, let profileDIContainer = profileDIContainer {
+      if let feedsDIContainer = feedsDIContainer,
+          let profileDIContainer = profileDIContainer,
+          let uploadDIContainer = uploadDIContainer {
         HomeTabController(
           feedsViewControllerWrapper: feedsDIContainer.makeFeedsViewControllerWrapper(),
           profileView: profileDIContainer.makeProfileView(),
-          uploadView: UploadView()
+          uploadView: uploadDIContainer.makeUploadView()
         )
       } else if let error = initializationError {
         Text("Failed to initialize: \(error.localizedDescription)")
@@ -45,6 +48,7 @@ struct IosApp: App {
       try await appDIContainer.authClient.initialize()
       feedsDIContainer = appDIContainer.makeFeedDIContainer()
       profileDIContainer = appDIContainer.makeProfileDIContainer()
+      uploadDIContainer = appDIContainer.makeUploadDIContainer()
     } catch {
       initializationError = error
     }

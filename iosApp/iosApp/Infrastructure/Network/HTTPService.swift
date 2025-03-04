@@ -9,9 +9,19 @@
 import UIKit
 
 class HTTPService: NetworkService {
+  let baseURLString: String?
+  var baseURL: URL? {
+    guard let urlString = baseURLString else { return nil }
+    return URL(string: urlString)
+  }
+
+  init(baseURLString: String? = nil) {
+    self.baseURLString = baseURLString
+  }
+
   func performRequest(for endPoint: Endpoint) async throws -> Data {
     guard endPoint.transport == .http,
-          let baseURL = endPoint.baseURL,
+          let baseURL = baseURL ?? endPoint.baseURL,
           let path = endPoint.path,
           let method = endPoint.httpMethod else {
       throw NetworkError.invalidRequest
