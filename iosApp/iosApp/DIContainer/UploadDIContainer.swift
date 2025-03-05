@@ -22,7 +22,14 @@ final class UploadDIContainer {
   }
 
   func makeUploadViewModel() -> UploadViewModel {
-    UploadViewModel(getUploadEndpointUseCase: GetUploadEndpointUseCase(uploadRepository: makeUploadRepository()))
+    UploadViewModel(
+      getUploadEndpointUseCase: GetUploadEndpointUseCase(
+        uploadRepository: makeUploadRepository()
+      ),
+      uploadVideoUseCase: UploadVideoUseCase(
+        uploadRepository: makeUploadRepository()
+      )
+    )
   }
 
   func makeUploadRepository() -> UploadRepository {

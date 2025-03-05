@@ -18,6 +18,7 @@ struct UploadView: View {
   @State private var isPlaying: Bool = false
   @State private var showControls: Bool = true
   @State private var showUploadProgressView = false
+  @State private var currentProgress: Double = 0.0
   @State private var showUploadCompletedView = false
   @State private var showUploadFailedView = false
   @ObservedObject var viewModel: UploadViewModel
@@ -34,7 +35,7 @@ struct UploadView: View {
     self.viewModel = viewModel
     // swiftlint: disable unavailable_condition
     if #available(iOS 16.0, *) {
-      // No extra setup needed.
+      // No extra setup needed
     } else {
       UITextView.appearance().backgroundColor = .clear
     }
@@ -43,20 +44,34 @@ struct UploadView: View {
 
   var body: some View {
     ZStack {
-      if showUploadCompletedView {
-        UploadCompletedView(doneAction: doneAction, showUploadCompletedView: $showUploadCompletedView)
-          .transition(.opacity)
-          .zIndex(CGFloat.one)
+      if showUploadCompletedView, showUploadProgressView {
+        UploadCompletedView(
+          doneAction: {
+            Task {
+              await viewModel.getUploadEndpoint()
+            }
+            resetUploadScreen()
+            doneAction()
+          },
+          showUploadCompletedView: $showUploadCompletedView
+        )
+        .transition(.opacity)
+        .zIndex(1)
       } else if showUploadFailedView {
         UploadErrorView(
           showUploadFailedView: $showUploadFailedView,
           tryAgainAction: {
-
           },
-          goHomeAction: doneAction
+          goHomeAction: {
+            Task {
+              await viewModel.getUploadEndpoint()
+            }
+            resetUploadScreen()
+            doneAction()
+          }
         )
         .transition(.opacity)
-        .zIndex(CGFloat.one)
+        .zIndex(1)
       } else if showUploadProgressView, let url = videoURL {
         VStack(spacing: .zero) {
           Text(Constants.navigationTitle)
@@ -66,7 +81,7 @@ struct UploadView: View {
             .padding(Constants.navigationTitlePadding)
 
           VStack(spacing: Constants.uploadProgessVStackSpacing) {
-            UploadProgressView(videoURL: url)
+            UploadProgressView(progressValue: $currentProgress, videoURL: url)
             ZStack {
               VideoPlayerView(
                 player: $player,
@@ -77,7 +92,7 @@ struct UploadView: View {
               .onAppear {
                 player?.play()
                 isPlaying = true
-                DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.one) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
                   withAnimation {
                     showControls = false
                   }
@@ -121,6 +136,7 @@ struct UploadView: View {
                     url: url
                   )
                   .frame(height: Constants.videoPlayerHeight)
+
                   if showControls {
                     Button {
                       togglePlayback()
@@ -135,10 +151,7 @@ struct UploadView: View {
                 }
                 .overlay(
                   Button {
-                    videoURL = nil
-                    player = nil
-                    isPlaying = false
-                    showControls = true
+                    viewModel.cancelUpload()
                   } label: {
                     Image(Constants.uploadPlayerCloseImageName)
                   }
@@ -148,19 +161,19 @@ struct UploadView: View {
               } else {
                 SelectFileView(showVideoPicker: $showVideoPicker)
               }
+
               CaptionsView(caption: $caption)
                 .id(Constants.captionsViewId)
-                .onTapGesture { showUploadCompletedView = true }
+
               HashtagView(hashtags: $hashtags) {
                 withAnimation {
                   proxy.scrollTo(Constants.hashtagsViewId, anchor: .center)
                 }
               }
               .id(Constants.hashtagsViewId)
-              .onTapGesture { showUploadFailedView = true }
 
               Button {
-                showUploadProgressView = true
+                viewModel.event = .uploadPressed
               } label: {
                 Text(Constants.uploadButtonTitle)
                   .foregroundColor(Constants.uploadButtonTextColor)
@@ -181,12 +194,12 @@ struct UploadView: View {
           .hideKeyboardOnTap()
           .fullScreenCover(isPresented: $showVideoPicker) {
             if #available(iOS 16.4, *) {
-              VideoPickerViewControllerRepresentable(videoURL: $videoURL)
+              VideoPickerViewControllerRepresentable(viewModel: viewModel)
                 .presentationDetents([])
                 .presentationDragIndicator(.hidden)
                 .presentationBackground(.clear)
             } else {
-              VideoPickerViewControllerRepresentable(videoURL: $videoURL)
+              VideoPickerViewControllerRepresentable(viewModel: viewModel)
             }
           }
         }
@@ -199,6 +212,34 @@ struct UploadView: View {
         await viewModel.getUploadEndpoint()
       }
     }
+    .onReceive(viewModel.$event) { event in
+      guard let event = event else { return }
+      switch event {
+      case .uploadProgressUpdated(let progress):
+        currentProgress = progress
+
+      case .uploadPressed:
+        showUploadProgressView = true
+
+      case .videoSelected(let url):
+        videoURL = url
+        viewModel.startUpload(fileURL: url)
+
+      case .videoUploadSuccess:
+        showUploadProgressView = false
+        showUploadCompletedView = true
+
+      case .videoUploadFailure(let error):
+        showUploadProgressView = false
+        print(error)
+      case .videoUploadCancelled:
+        videoURL = nil
+        player = nil
+        isPlaying = false
+        showControls = true
+      }
+      viewModel.event = nil
+    }
   }
 
   private func togglePlayback() {
@@ -208,12 +249,28 @@ struct UploadView: View {
     } else {
       player?.play()
       isPlaying = true
-      DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.one) {
+      DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
         withAnimation {
           showControls = false
         }
       }
     }
+  }
+
+  private func resetUploadScreen() {
+    showUploadCompletedView = false
+    showUploadFailedView = false
+    showUploadProgressView = false
+
+    videoURL = nil
+    player = nil
+    isPlaying = false
+    showControls = true
+
+    caption = ""
+    hashtags = []
+
+    currentProgress = .zero
   }
 }
 

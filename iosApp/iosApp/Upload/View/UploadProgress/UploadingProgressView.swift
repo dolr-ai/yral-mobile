@@ -10,7 +10,7 @@ import SwiftUI
 import AVKit
 
 struct UploadProgressView: View {
-  @State private var progressValue: Double = 0.20
+  @Binding var progressValue: Double
   let videoURL: URL
 
   var body: some View {
