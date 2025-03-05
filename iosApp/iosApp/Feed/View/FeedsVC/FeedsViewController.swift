@@ -86,10 +86,6 @@ class FeedsViewController: UIViewController {
     }
   }
 
-  override func viewDidAppear(_ animated: Bool) {
-    super.viewDidAppear(animated)
-    ToastManager.showToast(type: .success)
-  }
   func bindViewModel() {
     viewModel.$state.receive(on: RunLoop.main).sink { [weak self] state in
       guard let self = self else { return }

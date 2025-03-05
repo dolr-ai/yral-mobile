@@ -10,6 +10,12 @@ import Foundation
 protocol NetworkService {
   func performRequest(for endPoint: Endpoint) async throws -> Data
   func performRequest<T: Decodable>(for endPoint: Endpoint, decodeAs type: T.Type) async throws -> T
+  func performMultipartRequestWithProgress(
+    for endpoint: Endpoint,
+    fileURL: URL,
+    fileKey: String,
+    mimeType: String
+  ) -> AsyncThrowingStream<Double, Error>
 }
 
 enum NetworkError: Error {
