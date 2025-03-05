@@ -10,7 +10,8 @@ import SwiftUI
 import AVKit
 
 struct VideoPickerViewControllerRepresentable: UIViewControllerRepresentable {
-  @Binding var videoURL: URL?
+  let viewModel: UploadViewModel
+
   @Environment(\.presentationMode) var presentationMode
 
   func makeUIViewController(context: Context) -> VideoPickerViewController {
@@ -24,19 +25,22 @@ struct VideoPickerViewControllerRepresentable: UIViewControllerRepresentable {
   }
 
   func makeCoordinator() -> Coordinator {
-    Coordinator(self)
+    Coordinator(self, viewModel: viewModel)
   }
 
   class Coordinator: NSObject, VideoPickerDelegate {
-    var parent: VideoPickerViewControllerRepresentable
+    let parent: VideoPickerViewControllerRepresentable
+    let viewModel: UploadViewModel
 
-    init(_ parent: VideoPickerViewControllerRepresentable) {
+    init(_ parent: VideoPickerViewControllerRepresentable,
+         viewModel: UploadViewModel) {
       self.parent = parent
+      self.viewModel = viewModel
     }
 
     func videoPicker(_ picker: VideoPickerViewController, didPickVideo url: URL) {
       DispatchQueue.main.async {
-        self.parent.videoURL = url
+        self.viewModel.handleVideoPicked(url)
         self.parent.presentationMode.wrappedValue.dismiss()
       }
     }

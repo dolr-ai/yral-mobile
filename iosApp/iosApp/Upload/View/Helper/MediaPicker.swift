@@ -1,13 +1,5 @@
 //
-//  MediaPicker.swift
-//  iosApp
-//
-//  Created by Sarvesh Sharma on 10/02/25.
-//  Copyright © 2025 orgName. All rights reserved.
-//
-
-//
-//  MediaPicker.swift
+//  VideoPickerViewController.swift
 //  iosApp
 //
 //  Created by Sarvesh Sharma on 10/02/25.
@@ -18,31 +10,15 @@ import UIKit
 import AVFoundation
 import UniformTypeIdentifiers
 
-protocol VideoMetadataProvider {
-  func duration(for url: URL) -> Double?
-  func fileSize(for url: URL) -> UInt64?
-}
-
-struct DefaultVideoMetadataProvider: VideoMetadataProvider {
-  func duration(for url: URL) -> Double? {
-    let asset = AVAsset(url: url)
-    return CMTimeGetSeconds(asset.duration)
-  }
-
-  func fileSize(for url: URL) -> UInt64? {
-    do {
-      let fileAttributes = try FileManager.default.attributesOfItem(atPath: url.path)
-      return fileAttributes[.size] as? UInt64
-    } catch {
-      print("Error retrieving file size: \(error)")
-      return nil
-    }
-  }
+protocol VideoPickerDelegate: AnyObject {
+  func videoPicker(_ picker: VideoPickerViewController, didPickVideo url: URL)
+  func cancelled()
 }
 
 class VideoPickerViewController: UIViewController {
   var videoMetadataProvider: VideoMetadataProvider = DefaultVideoMetadataProvider()
   weak var delegate: VideoPickerDelegate?
+
   private var didShowOptions = false
 
   override func viewDidLoad() {
@@ -58,28 +34,41 @@ class VideoPickerViewController: UIViewController {
       showVideoPickerOptions()
     }
   }
+
   func showVideoPickerOptions() {
-    let alert = UIAlertController(title: Constants.pickerOptionsTitle, message: nil, preferredStyle: .actionSheet)
+    let alert = UIAlertController(
+      title: Constants.pickerOptionsTitle,
+      message: nil,
+      preferredStyle: .actionSheet
+    )
 
     if UIImagePickerController.isSourceTypeAvailable(.camera) {
-      alert.addAction(UIAlertAction(title: Constants.cameraActionTitle, style: .default, handler: { _ in
-        self.openCamera()
-      }))
+      alert.addAction(UIAlertAction(
+        title: Constants.cameraActionTitle,
+        style: .default,
+        handler: { _ in self.openCamera() }
+      ))
     }
 
     if UIImagePickerController.isSourceTypeAvailable(.photoLibrary) {
-      alert.addAction(UIAlertAction(title: Constants.photoActionTitle, style: .default, handler: { _ in
-        self.openPhotoLibrary()
-      }))
+      alert.addAction(UIAlertAction(
+        title: Constants.photoActionTitle,
+        style: .default,
+        handler: { _ in self.openPhotoLibrary() }
+      ))
     }
 
-    alert.addAction(UIAlertAction(title: Constants.fileManagerActionTitle, style: .default, handler: { _ in
-      self.openDocumentPicker()
-    }))
+    alert.addAction(UIAlertAction(
+      title: Constants.fileManagerActionTitle,
+      style: .default,
+      handler: { _ in self.openDocumentPicker() }
+    ))
 
-    alert.addAction(UIAlertAction(title: Constants.cancelActionTitle, style: .cancel, handler: { _ in
-      self.delegate?.cancelled()
-    }))
+    alert.addAction(UIAlertAction(
+      title: Constants.cancelActionTitle,
+      style: .cancel,
+      handler: { _ in self.delegate?.cancelled() }
+    ))
 
     self.present(alert, animated: true)
   }
@@ -111,22 +100,26 @@ class VideoPickerViewController: UIViewController {
 
   func validateVideo(url: URL) -> Bool {
     guard let durationSeconds = videoMetadataProvider.duration(for: url) else {
-      showAlert(title: Constants.errorAlertTitle, message: Constants.lengthViolationAlertMessage)
+      showAlert(title: Constants.errorAlertTitle,
+                message: Constants.lengthViolationAlertMessage)
       return false
     }
 
     if durationSeconds > Constants.videoMaxDuration {
-      showAlert(title: Constants.errorAlertTitle, message: Constants.lengthViolationAlertMessage)
+      showAlert(title: Constants.errorAlertTitle,
+                message: Constants.lengthViolationAlertMessage)
       return false
     }
 
     guard let fileSize = videoMetadataProvider.fileSize(for: url) else {
-      showAlert(title: Constants.errorAlertTitle, message: Constants.sizeViolationAlertMessage)
+      showAlert(title: Constants.errorAlertTitle,
+                message: Constants.sizeViolationAlertMessage)
       return false
     }
 
     if fileSize > Constants.videoMaxFileSize {
-      showAlert(title: Constants.errorAlertTitle, message: Constants.sizeViolationAlertMessage)
+      showAlert(title: Constants.errorAlertTitle,
+                message: Constants.sizeViolationAlertMessage)
       return false
     }
 
@@ -142,15 +135,12 @@ class VideoPickerViewController: UIViewController {
 }
 
 extension VideoPickerViewController: UIImagePickerControllerDelegate, UINavigationControllerDelegate {
-
   func imagePickerController(_ picker: UIImagePickerController,
                              didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
     picker.dismiss(animated: true)
-
     if let mediaURL = info[.mediaURL] as? URL {
       if validateVideo(url: mediaURL) {
         delegate?.videoPicker(self, didPickVideo: mediaURL)
-        print("Video selected: \(mediaURL)")
       }
     }
   }
@@ -162,13 +152,11 @@ extension VideoPickerViewController: UIImagePickerControllerDelegate, UINavigati
 }
 
 extension VideoPickerViewController: UIDocumentPickerDelegate {
-
   func documentPicker(_ controller: UIDocumentPickerViewController,
                       didPickDocumentsAt urls: [URL]) {
     controller.dismiss(animated: true)
     if let url = urls.first, validateVideo(url: url) {
       delegate?.videoPicker(self, didPickVideo: url)
-      print("Video selected from File Manager: \(url)")
     }
   }
 
@@ -176,11 +164,6 @@ extension VideoPickerViewController: UIDocumentPickerDelegate {
     delegate?.cancelled()
     controller.dismiss(animated: true)
   }
-}
-
-protocol VideoPickerDelegate: AnyObject {
-  func videoPicker(_ picker: VideoPickerViewController, didPickVideo url: URL)
-  func cancelled()
 }
 
 extension VideoPickerViewController {
@@ -197,5 +180,27 @@ extension VideoPickerViewController {
     static let okMessage = "OK"
     static let videoMaxDuration = 60.0
     static let videoMaxFileSize = 200 * 1024 * 1024
+  }
+}
+
+protocol VideoMetadataProvider {
+  func duration(for url: URL) -> Double?
+  func fileSize(for url: URL) -> UInt64?
+}
+
+struct DefaultVideoMetadataProvider: VideoMetadataProvider {
+  func duration(for url: URL) -> Double? {
+    let asset = AVAsset(url: url)
+    return CMTimeGetSeconds(asset.duration)
+  }
+
+  func fileSize(for url: URL) -> UInt64? {
+    do {
+      let fileAttributes = try FileManager.default.attributesOfItem(atPath: url.path)
+      return fileAttributes[.size] as? UInt64
+    } catch {
+      print("Error retrieving file size: \(error)")
+      return nil
+    }
   }
 }
