@@ -127,6 +127,12 @@
 		AC7F7EC02D7734BB00215162 /* UploadRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7F7EBE2D7734B500215162 /* UploadRepository.swift */; };
 		AC7F7EC42D7741C900215162 /* UploadResponseDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7F7EC32D7741C300215162 /* UploadResponseDTO.swift */; };
 		AC7F7EC52D7741C900215162 /* UploadResponseDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7F7EC32D7741C300215162 /* UploadResponseDTO.swift */; };
+		AC7F7EC72D78696200215162 /* UploadDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7F7EC62D78695F00215162 /* UploadDelegate.swift */; };
+		AC7F7EC82D78696200215162 /* UploadDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7F7EC62D78695F00215162 /* UploadDelegate.swift */; };
+		AC7F7ECA2D786F8E00215162 /* UploadVideoUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7F7EC92D786F8E00215162 /* UploadVideoUseCase.swift */; };
+		AC7F7ECB2D786F8E00215162 /* UploadVideoUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7F7EC92D786F8E00215162 /* UploadVideoUseCase.swift */; };
+		AC7F7ECD2D78707200215162 /* UploadVideoRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7F7ECC2D78706900215162 /* UploadVideoRequest.swift */; };
+		AC7F7ECE2D78707200215162 /* UploadVideoRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7F7ECC2D78706900215162 /* UploadVideoRequest.swift */; };
 		AC8472AA2D1D9139004A4259 /* HLSDownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC8472A92D1D9135004A4259 /* HLSDownloadManager.swift */; };
 		AC8472AB2D1D9139004A4259 /* HLSDownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC8472A92D1D9135004A4259 /* HLSDownloadManager.swift */; };
 		AC8472AD2D1D9540004A4259 /* AVFoundation+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC8472AC2D1D953B004A4259 /* AVFoundation+Extensions.swift */; };
@@ -351,6 +357,9 @@
 		AC7F7EBB2D77335500215162 /* AuthErrors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthErrors.swift; sourceTree = "<group>"; };
 		AC7F7EBE2D7734B500215162 /* UploadRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadRepository.swift; sourceTree = "<group>"; };
 		AC7F7EC32D7741C300215162 /* UploadResponseDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadResponseDTO.swift; sourceTree = "<group>"; };
+		AC7F7EC62D78695F00215162 /* UploadDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadDelegate.swift; sourceTree = "<group>"; };
+		AC7F7EC92D786F8E00215162 /* UploadVideoUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadVideoUseCase.swift; sourceTree = "<group>"; };
+		AC7F7ECC2D78706900215162 /* UploadVideoRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadVideoRequest.swift; sourceTree = "<group>"; };
 		AC8472A92D1D9135004A4259 /* HLSDownloadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HLSDownloadManager.swift; sourceTree = "<group>"; };
 		AC8472AC2D1D953B004A4259 /* AVFoundation+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AVFoundation+Extensions.swift"; sourceTree = "<group>"; };
 		AC8958D72D3EA46000E19ED7 /* FeedsViewController+ScrollView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FeedsViewController+ScrollView.swift"; sourceTree = "<group>"; };
@@ -771,6 +780,7 @@
 		AC6BECBA2D09F0FD002E2021 /* Network */ = {
 			isa = PBXGroup;
 			children = (
+				AC7F7EC62D78695F00215162 /* UploadDelegate.swift */,
 				ACB46A582D0EF912002E200C /* Auth */,
 				AC6BECBE2D09F866002E2021 /* NetworkService.swift */,
 				AC6BECBB2D09F685002E2021 /* Endpoint.swift */,
@@ -800,6 +810,7 @@
 		AC7F7EAF2D771EED00215162 /* Entity */ = {
 			isa = PBXGroup;
 			children = (
+				AC7F7ECC2D78706900215162 /* UploadVideoRequest.swift */,
 				AC7F7EB52D7732A400215162 /* VideoUploadError.swift */,
 				AC7F7EAC2D771EA200215162 /* UploadEndpointResponse.swift */,
 			);
@@ -810,6 +821,7 @@
 			isa = PBXGroup;
 			children = (
 				AC7F7EA82D771DEF00215162 /* GetUploadEndpointUseCase.swift */,
+				AC7F7EC92D786F8E00215162 /* UploadVideoUseCase.swift */,
 			);
 			path = UseCase;
 			sourceTree = "<group>";
@@ -1528,6 +1540,7 @@
 				AC09A9B32CDB775C009A39A4 /* SwiftBridgeCore.swift in Sources */,
 				ACEBF7F72D70A8D700B594A0 /* AnimatedCheckbox.swift in Sources */,
 				AC7F7EA52D771D5D00215162 /* UploadViewModel.swift in Sources */,
+				AC7F7EC82D78696200215162 /* UploadDelegate.swift in Sources */,
 				AC49605E2D2C5E65008D59D9 /* LikeQuery.swift in Sources */,
 				AC32E4252D2712F1001DDA43 /* ProfileInfoView.swift in Sources */,
 				AC4960612D2D664B008D59D9 /* LikeResult.swift in Sources */,
@@ -1535,6 +1548,7 @@
 				AC32E47A2D2AF599001DDA43 /* CacheDTO.swift in Sources */,
 				AC8472AB2D1D9139004A4259 /* HLSDownloadManager.swift in Sources */,
 				AC32E45B2D296731001DDA43 /* ProfileRepositoryProtocol.swift in Sources */,
+				AC7F7ECA2D786F8E00215162 /* UploadVideoUseCase.swift in Sources */,
 				AC92940F2D64CBFB003DB102 /* SelectFileView.swift in Sources */,
 				AC32E44C2D2965A3001DDA43 /* ProfileViewModel.swift in Sources */,
 				AC09AA742CDD210D009A39A4 /* Data+Extensions.swift in Sources */,
@@ -1546,6 +1560,7 @@
 				AC9294092D630266003DB102 /* UploadView.swift in Sources */,
 				AC7F7EBF2D7734BB00215162 /* UploadRepository.swift in Sources */,
 				ACB46A812D106034002E200C /* FeedsCell.swift in Sources */,
+				AC7F7ECE2D78707200215162 /* UploadVideoRequest.swift in Sources */,
 				AC6BECC22D09F91C002E2021 /* HTTPService.swift in Sources */,
 				ACC0F3942D2ED5B700FA5BD0 /* SplashScreenView.swift in Sources */,
 				ACEBF7ED2D6F845C00B594A0 /* ToastView.swift in Sources */,
@@ -1634,6 +1649,7 @@
 				ACD941892CFF575C0038FCB6 /* SwiftBridgeCore.swift in Sources */,
 				ACEBF7F62D70A8D700B594A0 /* AnimatedCheckbox.swift in Sources */,
 				AC7F7EA62D771D5D00215162 /* UploadViewModel.swift in Sources */,
+				AC7F7EC72D78696200215162 /* UploadDelegate.swift in Sources */,
 				AC49605F2D2C5E65008D59D9 /* LikeQuery.swift in Sources */,
 				AC32E4242D2712F1001DDA43 /* ProfileInfoView.swift in Sources */,
 				AC4960622D2D664B008D59D9 /* LikeResult.swift in Sources */,
@@ -1641,6 +1657,7 @@
 				AC32E4792D2AF599001DDA43 /* CacheDTO.swift in Sources */,
 				AC8472AA2D1D9139004A4259 /* HLSDownloadManager.swift in Sources */,
 				AC32E45C2D296731001DDA43 /* ProfileRepositoryProtocol.swift in Sources */,
+				AC7F7ECB2D786F8E00215162 /* UploadVideoUseCase.swift in Sources */,
 				AC92940E2D64CBFB003DB102 /* SelectFileView.swift in Sources */,
 				AC32E44B2D2965A3001DDA43 /* ProfileViewModel.swift in Sources */,
 				ACD9418A2CFF575C0038FCB6 /* Data+Extensions.swift in Sources */,
@@ -1652,6 +1669,7 @@
 				AC9294082D630266003DB102 /* UploadView.swift in Sources */,
 				AC7F7EC02D7734BB00215162 /* UploadRepository.swift in Sources */,
 				ACB46A802D106034002E200C /* FeedsCell.swift in Sources */,
+				AC7F7ECD2D78707200215162 /* UploadVideoRequest.swift in Sources */,
 				AC6BECC32D09F91C002E2021 /* HTTPService.swift in Sources */,
 				ACC0F3952D2ED5B700FA5BD0 /* SplashScreenView.swift in Sources */,
 				ACEBF7EC2D6F845C00B594A0 /* ToastView.swift in Sources */,
@@ -1745,6 +1763,7 @@
 				STRIP_INSTALLED_PRODUCT = NO;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
 			};
 			name = Debug;
 		};
@@ -1800,6 +1819,7 @@
 				STRIP_INSTALLED_PRODUCT = NO;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
@@ -1968,7 +1988,6 @@
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_OBJC_BRIDGING_HEADER = "$(PROJECT_DIR)/BridgingHeader.h";
-				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
@@ -2010,7 +2029,6 @@
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_OBJC_BRIDGING_HEADER = "$(PROJECT_DIR)/BridgingHeader.h";
-				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;

@@ -6,11 +6,11 @@
 //  Copyright © 2025 orgName. All rights reserved.
 //
 
-protocol UploadUseCaseProtocol {
+protocol GetUploadEndpointUseCaseProtocol {
   func execute() async -> Result<UploadEndpointResponse, VideoUploadError>
 }
 
-class GetUploadEndpointUseCase: UploadUseCaseProtocol {
+class GetUploadEndpointUseCase: GetUploadEndpointUseCaseProtocol {
   private let uploadRepository: UploadRepositoryProtocol
 
   init(uploadRepository: UploadRepositoryProtocol) {
