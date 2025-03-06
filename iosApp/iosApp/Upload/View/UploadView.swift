@@ -57,7 +57,7 @@ struct UploadView: View {
         )
         .transition(.opacity)
         .zIndex(1)
-      } else if showUploadFailedView {
+      } else if showUploadFailedView, showUploadProgressView {
         UploadErrorView(
           showUploadFailedView: $showUploadFailedView,
           tryAgainAction: {
@@ -226,11 +226,10 @@ struct UploadView: View {
         viewModel.startUpload(fileURL: url)
 
       case .videoUploadSuccess:
-        showUploadProgressView = false
         showUploadCompletedView = true
 
       case .videoUploadFailure(let error):
-        showUploadProgressView = false
+        showUploadFailedView = true
         print(error)
       case .videoUploadCancelled:
         videoURL = nil
