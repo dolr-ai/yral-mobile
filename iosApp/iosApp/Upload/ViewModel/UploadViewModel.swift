@@ -5,13 +5,6 @@
 //  Created by Sarvesh Sharma on 04/03/25.
 //  Copyright © 2025 orgName. All rights reserved.
 //
-//
-//  UploadViewModel.swift
-//  iosApp
-//
-//  Created by Sarvesh Sharma on 04/03/25.
-//  Copyright © 2025 orgName. All rights reserved.
-//
 
 import Foundation
 
