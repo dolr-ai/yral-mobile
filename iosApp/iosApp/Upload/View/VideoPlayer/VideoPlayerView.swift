@@ -52,8 +52,11 @@ struct VideoPlayerView: View {
           player?.play()
         }
       }
+      .onDisappear {
+        player?.pause()
+        isPlaying = false
+      }
       .onTapGesture {
-        // Toggle your custom controls
         withAnimation {
           showControls.toggle()
         }

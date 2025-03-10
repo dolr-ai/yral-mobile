@@ -18,9 +18,6 @@ class UploadVideoUseCase: UploadVideoUseCaseProtocol {
   }
 
   func execute(request: UploadVideoRequest) -> AsyncThrowingStream<Double, Error> {
-    uploadRepository.uploadVideoWithProgress(
-      fileURL: request.fileURL,
-      uploadURLString: request.uploadURLString
-    )
+    uploadRepository.uploadVideoWithProgress(request: request)
   }
 }
