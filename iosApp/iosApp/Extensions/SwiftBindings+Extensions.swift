@@ -27,3 +27,13 @@ extension Secp256k1Error: Error {
 extension MlFeed_PostItemResponse: FeedMapping { }
 
 extension CacheDTO: FeedMapping { }
+
+extension RustVec where T == UInt8 {
+  public convenience init(bytes: UnsafeRawBufferPointer) {
+    self.init()
+    let bound = bytes.bindMemory(to: UInt8.self)
+    for item in bound {
+      self.push(value: item)
+    }
+  }
+}

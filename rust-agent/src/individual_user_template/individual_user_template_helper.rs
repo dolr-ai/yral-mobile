@@ -11,6 +11,13 @@ use k256::elliptic_curve::JwkEcKey;
 use serde_bytes::ByteBuf;
 use yral_canisters_common::Canisters;
 use yral_types::delegated_identity::DelegatedIdentityWire;
+use std::time::UNIX_EPOCH;
+use ic_agent::identity::SignedDelegation;
+use ic_agent::identity::Delegation;
+use ic_agent::Identity;
+use tokio::time::Duration;
+use k256::Secp256k1;
+use k256::elliptic_curve::sec1::ToEncodedPoint;
 
 pub type Secp256k1Error = k256::elliptic_curve::Error;
 
@@ -60,22 +67,86 @@ pub fn delegated_identity_from_bytes(
     Ok(delegated_identity)
 }
 
+pub fn delegate_identity_with_max_age_public(
+    parent_wire: DelegatedIdentityWire,
+    new_pub_jwk_json: Vec<u8>,
+    max_age_seconds: u64,
+) -> std::result::Result<DelegatedIdentityWire, String> {
+    let new_jwk: JwkEcKey = serde_json::from_slice(&new_pub_jwk_json)
+        .map_err(|e| format!("Failed to parse new JWK JSON: {e}"))?;
+
+    let pk = new_jwk
+        .to_public_key::<Secp256k1>()
+        .map_err(|e| format!("Could not parse JWK into Secp256k1 public key: {e:?}"))?;
+
+    let encoded = pk.to_encoded_point(/*compress=*/ false);
+    let child_pub_bytes = encoded.as_bytes().to_vec();
+
+    let parent_sk = k256::SecretKey::from_jwk(&parent_wire.to_secret)
+        .map_err(|e| format!("Failed to parse parent's private key: {e}"))?;
+    let parent_identity = Secp256k1Identity::from_private_key(parent_sk);
+
+    let existing_delegated = DelegatedIdentity::new(
+        parent_wire.from_key.clone(),
+        Box::new(parent_identity),
+        parent_wire.delegation_chain.clone(),
+    );
+
+    let now = std::time::SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map_err(|_| "System clock error (before UNIX epoch)".to_string())?;
+    let expiry = now + Duration::from_secs(max_age_seconds);
+    let expiry_ns = expiry.as_nanos() as u64;
+
+    let delegation = Delegation {
+        pubkey: child_pub_bytes,
+        expiration: expiry_ns,
+        targets: None,
+    };
+
+    let signed_result = existing_delegated
+        .sign_delegation(&delegation)
+        .map_err(|e| format!("Failed to sign delegation: {e:?}"))?;
+
+    let signature_bytes = signed_result
+        .signature
+        .ok_or_else(|| "No signature in sign_delegation result".to_string())?;
+    let parent_pubkey = signed_result
+        .public_key
+        .ok_or_else(|| "No public key in sign_delegation result".to_string())?;
+
+    let mut new_chain = parent_wire.delegation_chain.clone();
+    new_chain.push(SignedDelegation {
+        delegation,
+        signature: signature_bytes,
+    });
+
+    Ok(DelegatedIdentityWire {
+        from_key: parent_pubkey,
+        to_secret: parent_wire.to_secret,
+        delegation_chain: new_chain,
+    })
+}
+
+pub fn delegated_identity_wire_to_json(wire: &DelegatedIdentityWire) -> String {
+    serde_json::to_string(wire).unwrap() 
+}
 pub struct CanistersWrapper {
     inner: Canisters<true>,
 }
 
 impl CanistersWrapper {
-    pub fn get_canister_principal( &self) -> Principal {
+    pub fn get_canister_principal(&self) -> Principal {
         return self.inner.user_canister();
     }
-    
+
     pub fn get_canister_principal_string(&self) -> String {
         return self.inner.user_canister().to_string();
     }
-    
+
     pub fn get_user_principal(&self) -> Principal {
         return self.inner.user_principal();
-    }    
+    }
 }
 
 pub async fn authenticate_with_network(

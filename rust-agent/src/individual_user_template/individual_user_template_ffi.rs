@@ -8,6 +8,7 @@ use ic_agent::identity::Secp256k1Identity;
 use ic_agent::AgentError;
 use k256::elliptic_curve::JwkEcKey;
 use serde_bytes::ByteBuf;
+use std::clone::Clone;
 use std::str::FromStr;
 use yral_canisters_common::Canisters;
 use yral_types::delegated_identity::DelegatedIdentityWire;
@@ -16,7 +17,6 @@ use yral_types::delegated_identity::DelegatedIdentityWire;
 mod ffi {
     extern "Rust" {
         type Result_;
-        type PostDetailsFromFrontend;
         type RejectionCode;
         type TransferError;
         type CdaoTokenError;
@@ -151,6 +151,21 @@ mod ffi {
         #[swift_bridge(get(&created_by_profile_photo_url))]
         fn created_by_profile_photo_url(&self) -> Option<&str>;
     }
+
+    extern "Rust" {
+        type PostDetailsFromFrontend;
+        #[swift_bridge(get(is_nsfw))]
+        fn is_nsfw(&self) -> bool;
+        #[swift_bridge(get_with(&hashtags = Clone::clone))]
+        fn hashtags(&self) -> Vec<String>;
+        #[swift_bridge(get(&description))]
+        fn description(&self) -> &str;
+        #[swift_bridge(get(&video_uid))]
+        fn video_uid(&self) -> &str;
+        #[swift_bridge(get(creator_consent_for_inclusion_in_hot_or_not))]
+        fn creator_consent_for_inclusion_in_hot_or_not(&self) -> bool;
+    }
+
     extern "Rust" {
         type Service;
         #[swift_bridge(init)]
@@ -346,7 +361,10 @@ mod ffi {
             arg0: u64,
         ) -> Result<U64Wrapper, AgentError>;
         async fn update_post_status(&self, arg0: u64, arg1: PostStatus) -> Result<(), AgentError>;
-        async fn update_post_toggle_like_status_by_caller(&self, arg0: u64) -> Result<bool, AgentError>;
+        async fn update_post_toggle_like_status_by_caller(
+            &self,
+            arg0: u64,
+        ) -> Result<bool, AgentError>;
         async fn update_profile_display_details(
             &self,
             arg0: UserProfileUpdateDetailsFromFrontend,
@@ -408,7 +426,15 @@ mod ffi {
         fn delegated_identity_from_bytes(data: &[u8]) -> Result<DelegatedIdentity, String>;
         fn delegated_identity_wire_from_bytes(data: &[u8])
             -> Result<DelegatedIdentityWire, String>;
-    }
+        fn delegate_identity_with_max_age_public(
+            parent_wire: DelegatedIdentityWire,
+            new_pub_jwk_json: Vec<u8>,
+            max_age_seconds: u64
+        ) -> Result<DelegatedIdentityWire, String>; 
+        fn delegated_identity_wire_to_json(
+            wire: &DelegatedIdentityWire
+        ) -> String;
+   }
 
     extern "Rust" {
         type CanistersWrapper;
