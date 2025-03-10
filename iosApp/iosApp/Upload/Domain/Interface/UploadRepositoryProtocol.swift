@@ -9,8 +9,6 @@ import Foundation
 
 protocol UploadRepositoryProtocol {
   func fetchUploadUrl() async -> Result<UploadEndpointResponse, VideoUploadError>
-  func uploadVideoWithProgress(
-    fileURL: URL,
-    uploadURLString: String
-  ) -> AsyncThrowingStream<Double, Error>
+  func uploadVideoWithProgress(request: UploadVideoRequest) -> AsyncThrowingStream<Double, Error>
+  func updateMetadata(request: UploadVideoRequest) async -> Result<Void, VideoUploadError>
 }

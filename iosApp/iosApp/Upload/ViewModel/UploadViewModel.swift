@@ -27,6 +27,7 @@ enum UploadViewEvent {
 class UploadViewModel: ObservableObject {
   let getUploadEndpointUseCase: GetUploadEndpointUseCase
   let uploadVideoUseCase: UploadVideoUseCase
+  let updateMetaUseCase: UpdateMetaUseCase
   var uploadEndpointResponse: UploadEndpointResponse!
 
   @Published var event: UploadViewEvent?
@@ -35,9 +36,11 @@ class UploadViewModel: ObservableObject {
   private var uploadTask: Task<Void, Never>?
 
   init(getUploadEndpointUseCase: GetUploadEndpointUseCase,
-       uploadVideoUseCase: UploadVideoUseCase) {
+       uploadVideoUseCase: UploadVideoUseCase,
+       updateMetaUseCase: UpdateMetaUseCase) {
     self.getUploadEndpointUseCase = getUploadEndpointUseCase
     self.uploadVideoUseCase = uploadVideoUseCase
+    self.updateMetaUseCase = updateMetaUseCase
   }
 
   func getUploadEndpoint() async {
@@ -54,7 +57,7 @@ class UploadViewModel: ObservableObject {
     event = .videoSelected(url)
   }
 
-  func startUpload(fileURL: URL) {
+  func startUpload(fileURL: URL, caption: String, hashtags: [String]) {
     uploadTask?.cancel()
     guard let uploadURLString = uploadEndpointResponse?.url else {
       state = .failure(VideoUploadError.invalidUploadURL("No valid upload URL found."))
@@ -63,7 +66,13 @@ class UploadViewModel: ObservableObject {
     state = .loading
 
     let progressStream = uploadVideoUseCase.execute(
-      request: UploadVideoRequest(fileURL: fileURL, uploadURLString: uploadURLString)
+      request: UploadVideoRequest(
+        fileURL: fileURL,
+        videoUID: uploadEndpointResponse.videoID,
+        uploadURLString: uploadURLString,
+        caption: caption,
+        hashtags: hashtags
+      )
     )
 
     uploadTask = Task {
@@ -72,14 +81,6 @@ class UploadViewModel: ObservableObject {
           await MainActor.run {
             self.event = .uploadProgressUpdated(progress)
           }
-        }
-        await MainActor.run {
-          self.event = .videoUploadSuccess
-          self.state = .success
-        }
-      } catch is CancellationError {
-        await MainActor.run {
-          self.state = .initalized
         }
       } catch {
         let finalError: VideoUploadError
@@ -99,5 +100,36 @@ class UploadViewModel: ObservableObject {
   func cancelUpload() {
     uploadTask?.cancel()
     event = .videoUploadCancelled
+  }
+
+  func finishUpload(fileURL: URL, caption: String, hashtags: [String]) async {
+    guard let uploadURLString = uploadEndpointResponse?.url else {
+      await MainActor.run {
+        state = .failure(VideoUploadError.invalidUploadURL("No valid upload URL found."))
+      }
+      return
+    }
+    await MainActor.run {
+      state = .loading
+    }
+    let result = await updateMetaUseCase.execute(
+      request: UploadVideoRequest(
+        fileURL: fileURL,
+        videoUID: uploadEndpointResponse.videoID,
+        uploadURLString: uploadURLString,
+        caption: caption,
+        hashtags: hashtags
+      )
+    )
+    await MainActor.run {
+      switch result {
+      case .success:
+        self.state = .success
+        self.event = .videoUploadSuccess
+      case .failure(let failure):
+        self.state = .failure(failure)
+        self.event = .videoUploadFailure(failure)
+      }
+    }
   }
 }

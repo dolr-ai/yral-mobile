@@ -220,10 +220,14 @@ struct UploadView: View {
 
       case .uploadPressed:
         showUploadProgressView = true
+        guard let url = videoURL else { return }
+        Task {
+          await viewModel.finishUpload(fileURL: url, caption: caption, hashtags: hashtags.map { $0.text })
+        }
 
       case .videoSelected(let url):
         videoURL = url
-        viewModel.startUpload(fileURL: url)
+        viewModel.startUpload(fileURL: url, caption: caption, hashtags: hashtags.map { $0.text })
 
       case .videoUploadSuccess:
         showUploadCompletedView = true
