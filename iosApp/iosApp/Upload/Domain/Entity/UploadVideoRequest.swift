@@ -7,7 +7,12 @@
 //
 import Foundation
 
-struct UploadVideoRequest: Codable {
+struct UploadVideoRequest {
   let fileURL: URL
+  let videoUID: String
   let uploadURLString: String
+  let caption: String
+  let hashtags: [String]
+  let isNSFW: Bool = false
+  let creatorConsentForInclusionInHotOrNot: Bool = true
 }
