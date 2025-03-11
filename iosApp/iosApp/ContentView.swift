@@ -165,9 +165,9 @@ struct ContentView: View {
     request.filterPosts = []
 
     do {
-      let response = try client.get_feed_clean(
+      let response = try await client.get_feed_clean(
         request
-      ).response.wait()
+      ).response.get()
       print(response)
       let principalNew = try get_principal(response.feed[0].canisterID)
       let serviceNew = try Service(principalNew, identityNew)

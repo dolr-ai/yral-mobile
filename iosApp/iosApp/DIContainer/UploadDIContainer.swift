@@ -9,6 +9,7 @@ final class UploadDIContainer {
   struct Dependencies {
     let httpService: HTTPService
     let authClient: AuthClient
+    let crashReporter: CrashReporter
   }
 
   private let dependencies: Dependencies
@@ -17,26 +18,29 @@ final class UploadDIContainer {
     self.dependencies = dependencies
   }
 
-  func makeUploadView() -> UploadView {
-    UploadView(viewModel: makeUploadViewModel())
+  func makeUploadRepository() -> UploadRepository {
+    UploadRepository(httpService: dependencies.httpService, authClient: dependencies.authClient)
   }
 
   func makeUploadViewModel() -> UploadViewModel {
     let uploadRepository = makeUploadRepository()
     return UploadViewModel(
       getUploadEndpointUseCase: GetUploadEndpointUseCase(
-        uploadRepository: uploadRepository
+        uploadRepository: uploadRepository,
+        crashReporter: dependencies.crashReporter
       ),
       uploadVideoUseCase: UploadVideoUseCase(
-        uploadRepository: uploadRepository
+        uploadRepository: uploadRepository,
+        crashReporter: dependencies.crashReporter
       ),
       updateMetaUseCase: UpdateMetaUseCase(
-        uploadRepository: uploadRepository
+        uploadRepository: uploadRepository,
+        crashReporter: dependencies.crashReporter
       )
     )
   }
 
-  func makeUploadRepository() -> UploadRepository {
-    UploadRepository(httpService: dependencies.httpService, authClient: dependencies.authClient)
+  func makeUploadView() -> UploadView {
+    UploadView(viewModel: makeUploadViewModel())
   }
 }

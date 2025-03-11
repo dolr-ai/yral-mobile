@@ -16,7 +16,7 @@ class ProfileRepository: ProfileRepositoryProtocol {
     self.authClient = authClient
   }
 
-  func fetchProfile() async -> Result<ProfileInfo, Error> {
+  func fetchProfile() async -> Result<ProfileInfo, ProfileError> {
     return .success(ProfileInfo(imageURL: nil, canisterID: authClient.principalString ?? ""))
   }
 }
