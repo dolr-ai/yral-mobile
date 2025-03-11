@@ -35,14 +35,15 @@ class DefaultAuthClient: AuthClient {
       try await fetchAndSetAuthCookie()
     } else {
       do {
-        guard let data = try KeychainHelper.retrieveData(for: keychainIdentityKey) else {
+        guard let data = try KeychainHelper.retrieveData(for: keychainIdentityKey), !data.isEmpty else {
           try await extractIdentity(from: cookie)
           return
         }
         identityData = data
         try await handleExtractIdentityResponse(from: data)
       } catch {
-        print(error)
+        try? KeychainHelper.deleteItem(for: keychainIdentityKey)
+        identityData = nil
         try await extractIdentity(from: cookie)
       }
     }
@@ -69,24 +70,31 @@ class DefaultAuthClient: AuthClient {
   }
 
   private func handleExtractIdentityResponse(from data: Data) async throws {
-    let (wire, identity): (DelegatedIdentityWire, DelegatedIdentity) = try data.withUnsafeBytes { buffer in
-      guard buffer.count > 0 else {
-        throw NetworkError.invalidResponse("Empty data received")
-      }
-
-      let uint8Buffer = buffer.bindMemory(to: UInt8.self)
-      let wire = try delegated_identity_wire_from_bytes(uint8Buffer)
-      let identity = try delegated_identity_from_bytes(uint8Buffer)
-      return (wire, identity)
+    guard !data.isEmpty else {
+      throw NetworkError.invalidResponse("Empty identity data received.")
     }
-    let canistersWrapper = try await authenticate_with_network(wire, nil)
-    let principal = canistersWrapper.get_canister_principal()
-    let principalString = canistersWrapper.get_canister_principal_string().toString()
+    do {
+      let (wire, identity): (DelegatedIdentityWire, DelegatedIdentity) = try data.withUnsafeBytes { buffer in
+        guard buffer.count > 0 else {
+          throw NetworkError.invalidResponse("Empty data received")
+        }
 
-    await MainActor.run {
-      self.identity = identity
-      self.principal = principal
-      self.principalString = principalString
+        let uint8Buffer = buffer.bindMemory(to: UInt8.self)
+        let wire = try delegated_identity_wire_from_bytes(uint8Buffer)
+        let identity = try delegated_identity_from_bytes(uint8Buffer)
+        return (wire, identity)
+      }
+      let canistersWrapper = try await authenticate_with_network(wire, nil)
+      let principal = canistersWrapper.get_canister_principal()
+      let principalString = canistersWrapper.get_canister_principal_string().toString()
+
+      await MainActor.run {
+        self.identity = identity
+        self.principal = principal
+        self.principalString = principalString
+      }
+    } catch {
+      throw NetworkError.invalidResponse("Failed parsing identity data: \(error)")
     }
   }
 
