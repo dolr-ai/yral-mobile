@@ -39,15 +39,11 @@ class UploadRepository: UploadRepositoryProtocol {
     }
   }
 
-  func uploadVideoWithProgress(
-    fileURL: URL,
-    uploadURLString: String
-  ) -> AsyncThrowingStream<Double, Error> {
-
-    guard let url = URL(string: uploadURLString) else {
+  func uploadVideoWithProgress(request: UploadVideoRequest) -> AsyncThrowingStream<Double, Error> {
+    guard let url = URL(string: request.uploadURLString) else {
       return AsyncThrowingStream<Double, Error> { continuation in
         continuation.finish(
-          throwing: VideoUploadError.invalidFileURL("Invalid URL: \(uploadURLString)")
+          throwing: VideoUploadError.invalidFileURL("Invalid URL: \(request.uploadURLString)")
         )
       }
     }
@@ -60,7 +56,7 @@ class UploadRepository: UploadRepositoryProtocol {
 
     let upstream = httpService.performMultipartRequestWithProgress(
       for: endpoint,
-      fileURL: fileURL,
+      fileURL: request.fileURL,
       fileKey: "file",
       mimeType: "video/mp4"
     )
@@ -82,10 +78,58 @@ class UploadRepository: UploadRepositoryProtocol {
       }
     }
   }
+
+  func updateMetadata(request: UploadVideoRequest) async -> Result<Void, VideoUploadError> {
+    guard let baseURL = httpService.baseURL else {
+      return .failure(.network(.invalidRequest))
+    }
+    do {
+      let delegatedWire = try authClient.generateNewDelegatedIdentityWireOneHour()
+      let swiftWire = try swiftDelegatedIdentityWire(from: delegatedWire)
+      let metaRequest = UpdateMetaDataRequest(
+        videoUid: request.videoUID,
+        delegatedIdentityWire: swiftWire,
+        meta: [:],
+        postDetails: PostDetailsFromFrontendRequest(
+          hashtags: request.hashtags,
+          description: request.caption,
+          videoUid: request.videoUID
+        )
+      )
+      let endpoint = Endpoint(
+        http: "",
+        baseURL: baseURL,
+        path: Constants.updateMetaDataPath,
+        method: .post,
+        headers: ["Content-Type": "application/json"],
+        body: try JSONEncoder().encode(metaRequest)
+      )
+      _ = try await httpService.performRequest(for: endpoint)
+      return .success(())
+    } catch {
+      switch error {
+      case let netErr as NetworkError:
+        return .failure(VideoUploadError.network(netErr))
+      case let authErr as AuthError:
+        return .failure(VideoUploadError.auth(authErr))
+      default:
+        return .failure(.unknown)
+      }
+    }
+  }
+
+  private func swiftDelegatedIdentityWire(from rustWire: DelegatedIdentityWire) throws -> SwiftDelegatedIdentityWire {
+    let wireJsonString = delegated_identity_wire_to_json(rustWire).toString()
+    guard let data = wireJsonString.data(using: .utf8) else {
+      throw AuthError.authenticationFailed("Failed to convert wire JSON string to Data")
+    }
+    return try JSONDecoder().decode(SwiftDelegatedIdentityWire.self, from: data)
+  }
 }
 
 extension UploadRepository {
   enum Constants {
     static let getVideoURLPath = "get_upload_url"
+    static let updateMetaDataPath = "update_metadata"
   }
 }
