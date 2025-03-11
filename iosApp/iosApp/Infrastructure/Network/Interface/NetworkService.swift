@@ -23,4 +23,5 @@ enum NetworkError: Error {
   case invalidResponse(String)
   case decodingFailed(Error)
   case transportError(String)
+  case grpc(String)
 }

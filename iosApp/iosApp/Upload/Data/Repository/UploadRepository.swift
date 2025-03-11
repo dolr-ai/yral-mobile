@@ -34,7 +34,7 @@ class UploadRepository: UploadRepositoryProtocol {
       case let error as NetworkError:
         return .failure(.network(error))
       default:
-        return .failure(.unknown)
+        return .failure(.unknown(error))
       }
     }
   }
@@ -72,7 +72,7 @@ class UploadRepository: UploadRepositoryProtocol {
           if let netErr = error as? NetworkError {
             continuation.finish(throwing: VideoUploadError.network(netErr))
           } else {
-            continuation.finish(throwing: VideoUploadError.unknown)
+            continuation.finish(throwing: VideoUploadError.unknown(error))
           }
         }
       }
@@ -113,7 +113,7 @@ class UploadRepository: UploadRepositoryProtocol {
       case let authErr as AuthError:
         return .failure(VideoUploadError.auth(authErr))
       default:
-        return .failure(.unknown)
+        return .failure(.unknown(error))
       }
     }
   }

@@ -85,11 +85,15 @@ class FeedsViewModel: ObservableObject {
   @MainActor func fetchFeeds(request: InitialFeedRequest) async {
     state = .loading
     do {
-      try await initialFeedsUseCase.execute(request: request)
+      let result = await initialFeedsUseCase.execute(request: request)
       isFetchingInitialFeeds = false
       event = .finishedLoadingInitialFeeds
-    } catch {
-      state = .failure(error)
+      switch result {
+      case .failure(let failure):
+        event = .finishedLoadingInitialFeeds
+        print(failure)
+      default: break
+      }
     }
   }
 
@@ -108,7 +112,7 @@ class FeedsViewModel: ObservableObject {
         filteredPosts: filteredPosts,
         numResults: FeedsViewController.Constants.initialNumResults
       )
-      let result = try await moreFeedsUseCase.execute(request: request)
+      let result = await moreFeedsUseCase.execute(request: request)
       switch result {
       case .success(let response):
         event = .loadedMoreFeeds
@@ -121,15 +125,12 @@ class FeedsViewModel: ObservableObject {
         event = .loadMoreFeedsFailed(error)
         state = .failure(error)
       }
-    } catch {
-      event = .loadMoreFeedsFailed(error)
-      state = .failure(error)
     }
   }
 
   @MainActor func toggleLike(request: LikeQuery) async {
     do {
-      let result = try await likesUseCase.execute(request: request)
+      let result = await likesUseCase.execute(request: request)
       switch result {
       case .success(let response):
         currentFeeds[response.index].isLiked = response.status
@@ -142,8 +143,6 @@ class FeedsViewModel: ObservableObject {
       case .failure(let error):
         event = .toggleLikeFailed(error)
       }
-    } catch {
-      event = .toggleLikeFailed(error)
     }
   }
 }

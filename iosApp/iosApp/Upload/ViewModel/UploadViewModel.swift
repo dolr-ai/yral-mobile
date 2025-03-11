@@ -87,7 +87,7 @@ class UploadViewModel: ObservableObject {
         if let uploadErr = error as? VideoUploadError {
           finalError = uploadErr
         } else {
-          finalError = .unknown
+          finalError = .unknown(error)
         }
         await MainActor.run {
           self.state = .failure(finalError)

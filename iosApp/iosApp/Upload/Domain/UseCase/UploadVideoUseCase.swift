@@ -10,14 +10,24 @@ protocol UploadVideoUseCaseProtocol {
   func execute(request: UploadVideoRequest) async -> AsyncThrowingStream<Double, Error>
 }
 
-class UploadVideoUseCase: UploadVideoUseCaseProtocol {
+class UploadVideoUseCase:
+  BaseStreamingUseCase<UploadVideoRequest, Double, VideoUploadError>,
+    UploadVideoUseCaseProtocol {
   private let uploadRepository: UploadRepositoryProtocol
 
-  init(uploadRepository: UploadRepositoryProtocol) {
+  init(uploadRepository: UploadRepositoryProtocol, crashReporter: CrashReporter) {
     self.uploadRepository = uploadRepository
+    super.init(crashReporter: crashReporter)
   }
 
-  func execute(request: UploadVideoRequest) -> AsyncThrowingStream<Double, Error> {
-    uploadRepository.uploadVideoWithProgress(request: request)
+  override func runImplementation(_ request: UploadVideoRequest) -> AsyncThrowingStream<Double, any Error> {
+    return uploadRepository.uploadVideoWithProgress(request: request)
+  }
+
+  override func convertToDomainError(_ error: any Error) -> VideoUploadError {
+    if let domainErr = error as? VideoUploadError {
+      return domainErr
+    }
+    return VideoUploadError.unknown(error)
   }
 }

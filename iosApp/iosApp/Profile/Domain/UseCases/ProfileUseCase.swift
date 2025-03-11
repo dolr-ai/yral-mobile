@@ -9,17 +9,24 @@
 import Foundation
 
 protocol ProfileUseCaseProtocol {
-  func execute() async -> Result<ProfileInfo, Error>
+  func execute() async -> Result<ProfileInfo, ProfileError>
 }
 
-class ProfileUseCase: ProfileUseCaseProtocol {
+class ProfileUseCase:
+  BaseResultUseCase<Void, ProfileInfo, ProfileError>,
+  ProfileUseCaseProtocol {
   let profileRepository: ProfileRepositoryProtocol
 
-  init(profileRepository: ProfileRepositoryProtocol) {
+  init(profileRepository: ProfileRepositoryProtocol, crashReporter: CrashReporter) {
     self.profileRepository = profileRepository
+    super.init(crashReporter: crashReporter)
   }
 
-  func execute() async -> Result<ProfileInfo, Error> {
+  func execute() async -> Result<ProfileInfo, ProfileError> {
+    await super.execute(request: ())
+  }
+
+  override func runImplementation(_ request: Void) async -> Result<ProfileInfo, ProfileError> {
     await profileRepository.fetchProfile()
   }
 }

@@ -11,5 +11,5 @@ enum VideoUploadError: Error {
   case invalidUploadURL(String)
   case network(NetworkError)
   case auth(AuthError)
-  case unknown
+  case unknown(Error)
 }

@@ -10,6 +10,7 @@ final class ProfileDIContainer {
   struct Dependencies {
     let httpService: HTTPService
     let authClient: AuthClient
+    let crashReporter: CrashReporter
   }
 
   private let dependencies: Dependencies
@@ -23,7 +24,12 @@ final class ProfileDIContainer {
   }
 
   func makeProfileViewModel() -> ProfileViewModel {
-    ProfileViewModel(useCase: ProfileUseCase(profileRepository: makeProfileRepository()))
+    ProfileViewModel(
+      useCase: ProfileUseCase(
+        profileRepository: makeProfileRepository(),
+        crashReporter: dependencies.crashReporter
+      )
+    )
   }
 
   func makeProfileRepository() -> ProfileRepository {

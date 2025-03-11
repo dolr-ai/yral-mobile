@@ -10,15 +10,17 @@ protocol UpdateMetaUseCaseProtocol {
   func execute(request: UploadVideoRequest) async -> Result<Void, VideoUploadError>
 }
 
-class UpdateMetaUseCase: UpdateMetaUseCaseProtocol {
+class UpdateMetaUseCase:
+  BaseResultUseCase<UploadVideoRequest, Void, VideoUploadError>,
+    UpdateMetaUseCaseProtocol {
   private let uploadRepository: UploadRepositoryProtocol
 
-  init(uploadRepository: UploadRepositoryProtocol) {
+  init(uploadRepository: UploadRepositoryProtocol, crashReporter: CrashReporter) {
     self.uploadRepository = uploadRepository
+    super.init(crashReporter: crashReporter)
   }
 
-  func execute(request: UploadVideoRequest) async -> Result<Void, VideoUploadError> {
-    let upstream = uploadRepository.uploadVideoWithProgress(request: request)
+  override func runImplementation(_ request: UploadVideoRequest) async -> Result<Void, VideoUploadError> {
     return await self.uploadRepository.updateMetadata(request: request)
   }
 }
