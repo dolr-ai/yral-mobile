@@ -7,5 +7,5 @@
 //
 
 protocol ProfileRepositoryProtocol {
-  func fetchProfile() async -> Result<ProfileInfo, Error>
+  func fetchProfile() async -> Result<ProfileInfo, ProfileError>
 }

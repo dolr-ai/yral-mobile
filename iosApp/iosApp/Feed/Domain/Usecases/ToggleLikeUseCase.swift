@@ -8,17 +8,20 @@
 
 protocol ToggleLikeUseCaseProtocol: AnyObject {
   typealias PostID = Int
-  func execute(request: LikeQuery) async throws -> Result<LikeResult, Error>
+  func execute(request: LikeQuery) async throws -> Result<LikeResult, FeedError>
 }
 
-class ToggleLikeUseCase: ToggleLikeUseCaseProtocol {
+class ToggleLikeUseCase:
+  BaseResultUseCase<LikeQuery, LikeResult, FeedError>,
+  ToggleLikeUseCaseProtocol {
   private let feedRepository: FeedRepositoryProtocol
 
-  init(feedRepository: FeedRepositoryProtocol) {
+  init(feedRepository: FeedRepositoryProtocol, crashReporter: CrashReporter) {
     self.feedRepository = feedRepository
+    super.init(crashReporter: crashReporter)
   }
 
-  func execute(request: LikeQuery) async throws -> Result<LikeResult, Error> {
-    try await feedRepository.toggleLikeStatus(for: request)
+  override func runImplementation(_ request: LikeQuery) async -> Result<LikeResult, FeedError> {
+    await feedRepository.toggleLikeStatus(for: request)
   }
 }

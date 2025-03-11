@@ -8,34 +8,24 @@
 import Combine
 
 protocol FetchInitialFeedsUseCaseProtocol {
-  func execute(request: InitialFeedRequest) async throws
+  func execute(request: InitialFeedRequest) async -> Result<Void, FeedError>
   var feedUpdates: AnyPublisher<[FeedResult], Never> { get }
 }
 
-class FetchInitialFeedsUseCase: FetchInitialFeedsUseCaseProtocol {
+class FetchInitialFeedsUseCase:
+  BaseResultUseCase<InitialFeedRequest, Void, FeedError>,
+    FetchInitialFeedsUseCaseProtocol {
   private let feedRepository: FeedRepositoryProtocol
   var feedUpdates: AnyPublisher<[FeedResult], Never> {
     feedRepository.feedUpdates
   }
 
-  init(feedRepository: FeedRepositoryProtocol) {
+  init(feedRepository: FeedRepositoryProtocol, crashReporter: CrashReporter) {
     self.feedRepository = feedRepository
+    super.init(crashReporter: crashReporter)
   }
 
-  func execute(request: InitialFeedRequest) async throws {
-    try await withCheckedThrowingContinuation { continuation in
-      Task {
-        do {
-          try await feedRepository.getInitialFeeds(numResults: request.numResults)
-          continuation.resume()
-        } catch {
-          continuation.resume(throwing: error)
-        }
-      }
-    }
-  }
-
-  func fetchMoreFeeds(request: MoreFeedsRequest) async throws -> Result<[FeedResult], Error> {
-    return try await feedRepository.fetchMoreFeeds(request: request)
+  override func runImplementation(_ request: InitialFeedRequest) async -> Result<Void, FeedError> {
+    await feedRepository.getInitialFeeds(numResults: request.numResults)
   }
 }

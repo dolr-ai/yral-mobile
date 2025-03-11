@@ -12,6 +12,7 @@ final class FeedDIContainer {
     let mlfeedService: MlFeed_MLFeedNIOClient
     let httpService: HTTPService
     let authClient: AuthClient
+    let crashReporter: CrashReporter
   }
 
   private let dependencies: Dependencies
@@ -27,9 +28,17 @@ final class FeedDIContainer {
   func makeFeedsViewModel() -> FeedsViewModel {
     let feedRepository = makeFeedsRepository()
     return FeedsViewModel(
-      fetchFeedsUseCase: FetchInitialFeedsUseCase(feedRepository: feedRepository),
-      moreFeedsUseCase: FetchMoreFeedsUseCase(feedRepository: feedRepository),
-      likeUseCase: ToggleLikeUseCase(feedRepository: feedRepository)
+      fetchFeedsUseCase: FetchInitialFeedsUseCase(
+        feedRepository: feedRepository,
+        crashReporter: dependencies.crashReporter
+      ),
+      moreFeedsUseCase: FetchMoreFeedsUseCase(feedRepository: feedRepository,
+                                              crashReporter: dependencies.crashReporter
+                                             ),
+      likeUseCase: ToggleLikeUseCase(
+        feedRepository: feedRepository,
+        crashReporter: dependencies.crashReporter
+      )
     )
   }
 

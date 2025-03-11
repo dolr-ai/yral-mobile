@@ -45,9 +45,11 @@ struct ProfileView: View {
         profileRepository: ProfileRepository(httpService: HTTPService(),
                                              authClient:
                                               DefaultAuthClient(
-                                                networkService: HTTPService()
+                                                networkService: HTTPService(),
+                                                crashReporter: FirebaseCrashlyticsReporter()
                                               )
-                                            )
+                                            ),
+        crashReporter: FirebaseCrashlyticsReporter()
       )
     )
   )
