@@ -136,6 +136,46 @@ class DefaultAuthClient: AuthClient {
     self.principalString = nil
     self.identityData = nil
   }
+
+  func generateNewDelegatedIdentityWireOneHour() throws -> DelegatedIdentityWire {
+    guard let parentData = identityData else {
+      throw NetworkError.invalidResponse("No existing identity data available.")
+    }
+
+    let parentWire: DelegatedIdentityWire = try parentData.withUnsafeBytes { buf in
+      guard buf.count > 0 else {
+        throw NetworkError.invalidResponse("Empty parent identity data.")
+      }
+      return try delegated_identity_wire_from_bytes(buf.bindMemory(to: UInt8.self))
+    }
+
+    let ephemeralJsonData = try createAuthPayload()
+    guard
+      let parsed = try JSONSerialization.jsonObject(with: ephemeralJsonData) as? [String: Any],
+      var anon = parsed["anonymous_identity"] as? [String: Any]
+    else {
+      throw NetworkError.invalidResponse("Failed to parse ephemeral JSON.")
+    }
+    anon.removeValue(forKey: "d") // remove the private key
+
+    let ephemeralPublicDict: [String: Any] = [
+      "kty": anon["kty"] ?? "EC",
+      "crv": anon["crv"] ?? "secp256k1",
+      "x": anon["x"] ?? "",
+      "y": anon["y"] ?? ""
+    ]
+    let ephemeralPublicData = try JSONSerialization.data(withJSONObject: ephemeralPublicDict)
+
+    let newWire = try ephemeralPublicData.withUnsafeBytes { buffer in
+      let rustVec = RustVec<UInt8>(bytes: buffer)
+      return try delegate_identity_with_max_age_public(
+        parentWire,
+        rustVec,
+        Constants.temporaryIdentityExpirySecond
+      )
+    }
+    return newWire
+  }
 }
 
 protocol AuthClient {
@@ -145,10 +185,12 @@ protocol AuthClient {
   func initialize() async throws
   func refreshAuthIfNeeded(using cookie: HTTPCookie) async throws
   func generateNewDelegatedIdentity() throws -> DelegatedIdentity
+  func generateNewDelegatedIdentityWireOneHour() throws -> DelegatedIdentityWire
 }
 
 extension DefaultAuthClient {
   enum Constants {
     static let keychainIdentity = "yral.delegatedIdentity"
+    static let temporaryIdentityExpirySecond: UInt64 = 3600
   }
 }

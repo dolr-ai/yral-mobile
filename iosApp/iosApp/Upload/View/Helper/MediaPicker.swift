@@ -129,7 +129,9 @@ class VideoPickerViewController: UIViewController {
 
   private func showAlert(title: String, message: String) {
     let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-    alert.addAction(UIAlertAction(title: Constants.okMessage, style: .default))
+    alert.addAction(UIAlertAction(title: Constants.okMessage, style: .default, handler: { [weak self] _ in
+      self?.delegate?.cancelled()
+    }))
     self.present(alert, animated: true)
   }
 }
