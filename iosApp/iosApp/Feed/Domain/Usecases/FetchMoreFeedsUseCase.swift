@@ -7,17 +7,20 @@
 //
 
 protocol FetchMoreFeedsUseCaseProtocol {
-  func execute(request: MoreFeedsRequest) async throws -> Result<[FeedResult], Error>
+  func execute(request: MoreFeedsRequest) async throws -> Result<[FeedResult], FeedError>
 }
 
-class FetchMoreFeedsUseCase: FetchMoreFeedsUseCaseProtocol {
+class FetchMoreFeedsUseCase:
+  BaseResultUseCase<MoreFeedsRequest, [FeedResult], FeedError>,
+  FetchMoreFeedsUseCaseProtocol {
   private let feedRepository: FeedRepositoryProtocol
 
-  init(feedRepository: FeedRepositoryProtocol) {
+  init(feedRepository: FeedRepositoryProtocol, crashReporter: CrashReporter) {
     self.feedRepository = feedRepository
+    super.init(crashReporter: crashReporter)
   }
 
-  func execute(request: MoreFeedsRequest) async throws -> Result<[FeedResult], Error> {
-    return try await feedRepository.fetchMoreFeeds(request: request)
+  override func runImplementation(_ request: MoreFeedsRequest) async -> Result<[FeedResult], FeedError> {
+    return await feedRepository.fetchMoreFeeds(request: request)
   }
 }
