@@ -29,8 +29,8 @@
 		AC26CA5C2D802BB0006ADA75 /* BaseResultUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC26CA5A2D802BAA006ADA75 /* BaseResultUseCase.swift */; };
 		AC26CA5E2D8052E2006ADA75 /* BaseStreamingUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC26CA5D2D8052D9006ADA75 /* BaseStreamingUseCase.swift */; };
 		AC26CA5F2D8052E2006ADA75 /* BaseStreamingUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC26CA5D2D8052D9006ADA75 /* BaseStreamingUseCase.swift */; };
-		AC26CA612D805D6D006ADA75 /* ProfileError.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC26CA602D805D6A006ADA75 /* ProfileError.swift */; };
-		AC26CA622D805D6D006ADA75 /* ProfileError.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC26CA602D805D6A006ADA75 /* ProfileError.swift */; };
+		AC26CA612D805D6D006ADA75 /* AccountError.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC26CA602D805D6A006ADA75 /* AccountError.swift */; };
+		AC26CA622D805D6D006ADA75 /* AccountError.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC26CA602D805D6A006ADA75 /* AccountError.swift */; };
 		AC26CA642D805E58006ADA75 /* FeedError.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC26CA632D805E52006ADA75 /* FeedError.swift */; };
 		AC26CA652D805E58006ADA75 /* FeedError.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC26CA632D805E52006ADA75 /* FeedError.swift */; };
 		AC26CA682D806514006ADA75 /* Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC26CA672D80650D006ADA75 /* Utilities.swift */; };
@@ -67,22 +67,22 @@
 		AC32E4422D295E97001DDA43 /* UserInfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E4402D295E92001DDA43 /* UserInfoView.swift */; };
 		AC32E4462D2961CA001DDA43 /* URLImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E4452D2961BE001DDA43 /* URLImage.swift */; };
 		AC32E4472D2961CA001DDA43 /* URLImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E4452D2961BE001DDA43 /* URLImage.swift */; };
-		AC32E44B2D2965A3001DDA43 /* ProfileViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E44A2D29659F001DDA43 /* ProfileViewModel.swift */; };
-		AC32E44C2D2965A3001DDA43 /* ProfileViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E44A2D29659F001DDA43 /* ProfileViewModel.swift */; };
-		AC32E44F2D296628001DDA43 /* ProfileUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E44E2D296623001DDA43 /* ProfileUseCase.swift */; };
-		AC32E4502D296628001DDA43 /* ProfileUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E44E2D296623001DDA43 /* ProfileUseCase.swift */; };
-		AC32E4532D296637001DDA43 /* ProfileRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E4522D296633001DDA43 /* ProfileRepository.swift */; };
-		AC32E4542D296637001DDA43 /* ProfileRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E4522D296633001DDA43 /* ProfileRepository.swift */; };
-		AC32E4572D29665B001DDA43 /* ProfileInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E4562D296656001DDA43 /* ProfileInfo.swift */; };
-		AC32E4582D29665B001DDA43 /* ProfileInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E4562D296656001DDA43 /* ProfileInfo.swift */; };
-		AC32E45B2D296731001DDA43 /* ProfileRepositoryProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E45A2D296728001DDA43 /* ProfileRepositoryProtocol.swift */; };
-		AC32E45C2D296731001DDA43 /* ProfileRepositoryProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E45A2D296728001DDA43 /* ProfileRepositoryProtocol.swift */; };
+		AC32E44B2D2965A3001DDA43 /* AccountViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E44A2D29659F001DDA43 /* AccountViewModel.swift */; };
+		AC32E44C2D2965A3001DDA43 /* AccountViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E44A2D29659F001DDA43 /* AccountViewModel.swift */; };
+		AC32E44F2D296628001DDA43 /* AccountUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E44E2D296623001DDA43 /* AccountUseCase.swift */; };
+		AC32E4502D296628001DDA43 /* AccountUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E44E2D296623001DDA43 /* AccountUseCase.swift */; };
+		AC32E4532D296637001DDA43 /* AccountRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E4522D296633001DDA43 /* AccountRepository.swift */; };
+		AC32E4542D296637001DDA43 /* AccountRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E4522D296633001DDA43 /* AccountRepository.swift */; };
+		AC32E4572D29665B001DDA43 /* AccountInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E4562D296656001DDA43 /* AccountInfo.swift */; };
+		AC32E4582D29665B001DDA43 /* AccountInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E4562D296656001DDA43 /* AccountInfo.swift */; };
+		AC32E45B2D296731001DDA43 /* AccountRepositoryProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E45A2D296728001DDA43 /* AccountRepositoryProtocol.swift */; };
+		AC32E45C2D296731001DDA43 /* AccountRepositoryProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E45A2D296728001DDA43 /* AccountRepositoryProtocol.swift */; };
 		AC32E4612D298E0A001DDA43 /* ProfileOptionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E4602D298E0A001DDA43 /* ProfileOptionsView.swift */; };
 		AC32E4622D298E0A001DDA43 /* ProfileOptionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E4602D298E0A001DDA43 /* ProfileOptionsView.swift */; };
-		AC32E4652D2991AD001DDA43 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E4642D2991AD001DDA43 /* ProfileView.swift */; };
-		AC32E4662D2991AD001DDA43 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E4642D2991AD001DDA43 /* ProfileView.swift */; };
-		AC32E4682D2998D6001DDA43 /* ProfileDIContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E4672D2998D0001DDA43 /* ProfileDIContainer.swift */; };
-		AC32E4692D2998D6001DDA43 /* ProfileDIContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E4672D2998D0001DDA43 /* ProfileDIContainer.swift */; };
+		AC32E4652D2991AD001DDA43 /* AccountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E4642D2991AD001DDA43 /* AccountView.swift */; };
+		AC32E4662D2991AD001DDA43 /* AccountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E4642D2991AD001DDA43 /* AccountView.swift */; };
+		AC32E4682D2998D6001DDA43 /* AccountDIContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E4672D2998D0001DDA43 /* AccountDIContainer.swift */; };
+		AC32E4692D2998D6001DDA43 /* AccountDIContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E4672D2998D0001DDA43 /* AccountDIContainer.swift */; };
 		AC32E46B2D299DFD001DDA43 /* ShareOptionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E46A2D299DF9001DDA43 /* ShareOptionsView.swift */; };
 		AC32E46C2D299DFD001DDA43 /* ShareOptionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E46A2D299DF9001DDA43 /* ShareOptionsView.swift */; };
 		AC32E46F2D299E74001DDA43 /* ICPBrandingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E46E2D299E6B001DDA43 /* ICPBrandingView.swift */; };
@@ -334,7 +334,7 @@
 		AC26CA542D802813006ADA75 /* FirebaseCrashlyticsReporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseCrashlyticsReporter.swift; sourceTree = "<group>"; };
 		AC26CA5A2D802BAA006ADA75 /* BaseResultUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseResultUseCase.swift; sourceTree = "<group>"; };
 		AC26CA5D2D8052D9006ADA75 /* BaseStreamingUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseStreamingUseCase.swift; sourceTree = "<group>"; };
-		AC26CA602D805D6A006ADA75 /* ProfileError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileError.swift; sourceTree = "<group>"; };
+		AC26CA602D805D6A006ADA75 /* AccountError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountError.swift; sourceTree = "<group>"; };
 		AC26CA632D805E52006ADA75 /* FeedError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedError.swift; sourceTree = "<group>"; };
 		AC26CA672D80650D006ADA75 /* Utilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utilities.swift; sourceTree = "<group>"; };
 		AC32E3F52D26FEB4001DDA43 /* UIColor+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIColor+Extensions.swift"; sourceTree = "<group>"; };
@@ -353,14 +353,14 @@
 		AC32E4232D2712EE001DDA43 /* ProfileInfoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileInfoView.swift; sourceTree = "<group>"; };
 		AC32E4402D295E92001DDA43 /* UserInfoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserInfoView.swift; sourceTree = "<group>"; };
 		AC32E4452D2961BE001DDA43 /* URLImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLImage.swift; sourceTree = "<group>"; };
-		AC32E44A2D29659F001DDA43 /* ProfileViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileViewModel.swift; sourceTree = "<group>"; };
-		AC32E44E2D296623001DDA43 /* ProfileUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileUseCase.swift; sourceTree = "<group>"; };
-		AC32E4522D296633001DDA43 /* ProfileRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileRepository.swift; sourceTree = "<group>"; };
-		AC32E4562D296656001DDA43 /* ProfileInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileInfo.swift; sourceTree = "<group>"; };
-		AC32E45A2D296728001DDA43 /* ProfileRepositoryProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileRepositoryProtocol.swift; sourceTree = "<group>"; };
+		AC32E44A2D29659F001DDA43 /* AccountViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountViewModel.swift; sourceTree = "<group>"; };
+		AC32E44E2D296623001DDA43 /* AccountUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountUseCase.swift; sourceTree = "<group>"; };
+		AC32E4522D296633001DDA43 /* AccountRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountRepository.swift; sourceTree = "<group>"; };
+		AC32E4562D296656001DDA43 /* AccountInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountInfo.swift; sourceTree = "<group>"; };
+		AC32E45A2D296728001DDA43 /* AccountRepositoryProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountRepositoryProtocol.swift; sourceTree = "<group>"; };
 		AC32E4602D298E0A001DDA43 /* ProfileOptionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileOptionsView.swift; sourceTree = "<group>"; };
-		AC32E4642D2991AD001DDA43 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
-		AC32E4672D2998D0001DDA43 /* ProfileDIContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileDIContainer.swift; sourceTree = "<group>"; };
+		AC32E4642D2991AD001DDA43 /* AccountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountView.swift; sourceTree = "<group>"; };
+		AC32E4672D2998D0001DDA43 /* AccountDIContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountDIContainer.swift; sourceTree = "<group>"; };
 		AC32E46A2D299DF9001DDA43 /* ShareOptionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareOptionsView.swift; sourceTree = "<group>"; };
 		AC32E46E2D299E6B001DDA43 /* ICPBrandingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ICPBrandingView.swift; sourceTree = "<group>"; };
 		AC32E4722D2AD674001DDA43 /* ToggleLikeUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToggleLikeUseCase.swift; sourceTree = "<group>"; };
@@ -548,7 +548,7 @@
 				AC638BF72D230DA900481E94 /* HomeTabController */,
 				ACEBE9962D0C4AA50056F033 /* Feed */,
 				AC9B77E92D5A6F2300270FC9 /* Upload */,
-				AC32E4292D27A412001DDA43 /* Profile */,
+				AC32E4292D27A412001DDA43 /* Account */,
 				AC6BECB92D09F0F0002E2021 /* Infrastructure */,
 				AC09AA1E2CDBB69B009A39A4 /* Extensions */,
 				AC26CA662D806501006ADA75 /* Utils */,
@@ -738,7 +738,7 @@
 			path = Helper;
 			sourceTree = "<group>";
 		};
-		AC32E4292D27A412001DDA43 /* Profile */ = {
+		AC32E4292D27A412001DDA43 /* Account */ = {
 			isa = PBXGroup;
 			children = (
 				AC32E4492D296593001DDA43 /* View */,
@@ -746,7 +746,7 @@
 				AC32E4512D29662C001DDA43 /* Domain */,
 				AC32E4552D29663A001DDA43 /* Data */,
 			);
-			path = Profile;
+			path = Account;
 			sourceTree = "<group>";
 		};
 		AC32E4432D295EA0001DDA43 /* UserInfo */ = {
@@ -785,7 +785,7 @@
 		AC32E4492D296593001DDA43 /* View */ = {
 			isa = PBXGroup;
 			children = (
-				AC32E4642D2991AD001DDA43 /* ProfileView.swift */,
+				AC32E4642D2991AD001DDA43 /* AccountView.swift */,
 				AC32E4432D295EA0001DDA43 /* UserInfo */,
 				AC32E4632D298E0E001DDA43 /* OptionsView */,
 				AC32E46D2D299E02001DDA43 /* ShareOptions */,
@@ -797,7 +797,7 @@
 		AC32E44D2D29661B001DDA43 /* ViewModel */ = {
 			isa = PBXGroup;
 			children = (
-				AC32E44A2D29659F001DDA43 /* ProfileViewModel.swift */,
+				AC32E44A2D29659F001DDA43 /* AccountViewModel.swift */,
 			);
 			path = ViewModel;
 			sourceTree = "<group>";
@@ -823,8 +823,8 @@
 		AC32E4592D296664001DDA43 /* Entity */ = {
 			isa = PBXGroup;
 			children = (
-				AC26CA602D805D6A006ADA75 /* ProfileError.swift */,
-				AC32E4562D296656001DDA43 /* ProfileInfo.swift */,
+				AC26CA602D805D6A006ADA75 /* AccountError.swift */,
+				AC32E4562D296656001DDA43 /* AccountInfo.swift */,
 			);
 			path = Entity;
 			sourceTree = "<group>";
@@ -832,7 +832,7 @@
 		AC32E45D2D296749001DDA43 /* Interfaces */ = {
 			isa = PBXGroup;
 			children = (
-				AC32E45A2D296728001DDA43 /* ProfileRepositoryProtocol.swift */,
+				AC32E45A2D296728001DDA43 /* AccountRepositoryProtocol.swift */,
 			);
 			path = Interfaces;
 			sourceTree = "<group>";
@@ -840,7 +840,7 @@
 		AC32E45E2D296776001DDA43 /* Repository */ = {
 			isa = PBXGroup;
 			children = (
-				AC32E4522D296633001DDA43 /* ProfileRepository.swift */,
+				AC32E4522D296633001DDA43 /* AccountRepository.swift */,
 			);
 			path = Repository;
 			sourceTree = "<group>";
@@ -848,7 +848,7 @@
 		AC32E45F2D2967DF001DDA43 /* UseCases */ = {
 			isa = PBXGroup;
 			children = (
-				AC32E44E2D296623001DDA43 /* ProfileUseCase.swift */,
+				AC32E44E2D296623001DDA43 /* AccountUseCase.swift */,
 			);
 			path = UseCases;
 			sourceTree = "<group>";
@@ -1059,7 +1059,7 @@
 			children = (
 				ACB46A2B2D0EC82F002E200C /* AppDIContainer.swift */,
 				ACB46A352D0EC991002E200C /* FeedDIContainer.swift */,
-				AC32E4672D2998D0001DDA43 /* ProfileDIContainer.swift */,
+				AC32E4672D2998D0001DDA43 /* AccountDIContainer.swift */,
 				AC92940A2D64C9BB003DB102 /* UploadDIContainer.swift */,
 			);
 			path = DIContainer;
@@ -1627,7 +1627,7 @@
 				AC26CA642D805E58006ADA75 /* FeedError.swift in Sources */,
 				AC638BFA2D230DCD00481E94 /* HomeTabController.swift in Sources */,
 				AC9293FD2D620B6C003DB102 /* MediaPicker.swift in Sources */,
-				AC32E4572D29665B001DDA43 /* ProfileInfo.swift in Sources */,
+				AC32E4572D29665B001DDA43 /* AccountInfo.swift in Sources */,
 				AC26CA5C2D802BB0006ADA75 /* BaseResultUseCase.swift in Sources */,
 				AC32E4462D2961CA001DDA43 /* URLImage.swift in Sources */,
 				ACB46A732D105AF4002E200C /* CollectionView+Extensions.swift in Sources */,
@@ -1648,7 +1648,7 @@
 				ACEBF7DB2D6EDC8500B594A0 /* GradientProgressViewStyle.swift in Sources */,
 				ACB46A502D0ED195002E200C /* FeedResult.swift in Sources */,
 				ACB46A532D0ED22B002E200C /* FeedQuery.swift in Sources */,
-				AC32E4502D296628001DDA43 /* ProfileUseCase.swift in Sources */,
+				AC32E4502D296628001DDA43 /* AccountUseCase.swift in Sources */,
 				ACEBF7EF2D6F847300B594A0 /* ToastManager.swift in Sources */,
 				ACEBF7E22D6F505A00B594A0 /* UploadCompletedView.swift in Sources */,
 				AC7F7EAE2D771EB300215162 /* UploadEndpointResponse.swift in Sources */,
@@ -1658,7 +1658,7 @@
 				ACC0F3972D2ED5D700FA5BD0 /* LottieView.swift in Sources */,
 				ACB46A7D2D105BEB002E200C /* UIKitInitializers.swift in Sources */,
 				AC26CA562D80281D006ADA75 /* FirebaseCrashlyticsReporter.swift in Sources */,
-				AC32E4692D2998D6001DDA43 /* ProfileDIContainer.swift in Sources */,
+				AC32E4692D2998D6001DDA43 /* AccountDIContainer.swift in Sources */,
 				ACB46A362D0EC998002E200C /* FeedDIContainer.swift in Sources */,
 				AC26CA572D80287E006ADA75 /* AuthClient.swift in Sources */,
 				2152FB042600AC8F00CF470E /* IosApp.swift in Sources */,
@@ -1668,7 +1668,7 @@
 				AC7F7EAA2D771DF400215162 /* GetUploadEndpointUseCase.swift in Sources */,
 				AC8472AE2D1D9540004A4259 /* AVFoundation+Extensions.swift in Sources */,
 				AC92941A2D65F308003DB102 /* View+Extensions.swift in Sources */,
-				AC32E4652D2991AD001DDA43 /* ProfileView.swift in Sources */,
+				AC32E4652D2991AD001DDA43 /* AccountView.swift in Sources */,
 				AC4DECA92D3E06AC008EC8F5 /* FooterLoaderView.swift in Sources */,
 				AC6BECBD2D09F68C002E2021 /* Endpoint.swift in Sources */,
 				AC09A9B32CDB775C009A39A4 /* SwiftBridgeCore.swift in Sources */,
@@ -1682,17 +1682,17 @@
 				AC7F7ED72D79648100215162 /* UpdateMetaDataRequest.swift in Sources */,
 				AC32E47A2D2AF599001DDA43 /* CacheDTO.swift in Sources */,
 				AC8472AB2D1D9139004A4259 /* HLSDownloadManager.swift in Sources */,
-				AC32E45B2D296731001DDA43 /* ProfileRepositoryProtocol.swift in Sources */,
+				AC32E45B2D296731001DDA43 /* AccountRepositoryProtocol.swift in Sources */,
 				AC7F7ECA2D786F8E00215162 /* UploadVideoUseCase.swift in Sources */,
 				AC26CA682D806514006ADA75 /* Utilities.swift in Sources */,
 				AC92940F2D64CBFB003DB102 /* SelectFileView.swift in Sources */,
-				AC32E44C2D2965A3001DDA43 /* ProfileViewModel.swift in Sources */,
+				AC32E44C2D2965A3001DDA43 /* AccountViewModel.swift in Sources */,
 				AC09AA742CDD210D009A39A4 /* Data+Extensions.swift in Sources */,
 				AC09A9FA2CDB7A5D009A39A4 /* SwiftBindings+Extensions.swift in Sources */,
 				ACEBF8052D7473E600B594A0 /* UploadErrorView.swift in Sources */,
 				AC8958D92D3EA46800E19ED7 /* FeedsViewController+ScrollView.swift in Sources */,
 				ACB46A772D105B17002E200C /* ReusableView.swift in Sources */,
-				AC32E4542D296637001DDA43 /* ProfileRepository.swift in Sources */,
+				AC32E4542D296637001DDA43 /* AccountRepository.swift in Sources */,
 				AC9294092D630266003DB102 /* UploadView.swift in Sources */,
 				AC7F7EBF2D7734BB00215162 /* UploadRepository.swift in Sources */,
 				ACB46A812D106034002E200C /* FeedsCell.swift in Sources */,
@@ -1702,7 +1702,7 @@
 				ACEBF7ED2D6F845C00B594A0 /* ToastView.swift in Sources */,
 				AC32E4742D2AD67D001DDA43 /* ToggleLikeUseCase.swift in Sources */,
 				AC7F7EB22D77200000215162 /* UploadRepositoryProtocol.swift in Sources */,
-				AC26CA612D805D6D006ADA75 /* ProfileError.swift in Sources */,
+				AC26CA612D805D6D006ADA75 /* AccountError.swift in Sources */,
 				AC32E46B2D299DFD001DDA43 /* ShareOptionsView.swift in Sources */,
 				AC9294112D6599A1003DB102 /* CaptionsView.swift in Sources */,
 				AC638BF62D2309C000481E94 /* KeychainHelper.swift in Sources */,
@@ -1746,7 +1746,7 @@
 				AC26CA652D805E58006ADA75 /* FeedError.swift in Sources */,
 				AC638BF92D230DCD00481E94 /* HomeTabController.swift in Sources */,
 				AC9293FF2D620B6C003DB102 /* MediaPicker.swift in Sources */,
-				AC32E4582D29665B001DDA43 /* ProfileInfo.swift in Sources */,
+				AC32E4582D29665B001DDA43 /* AccountInfo.swift in Sources */,
 				AC26CA5B2D802BB0006ADA75 /* BaseResultUseCase.swift in Sources */,
 				AC32E4472D2961CA001DDA43 /* URLImage.swift in Sources */,
 				ACB46A742D105AF4002E200C /* CollectionView+Extensions.swift in Sources */,
@@ -1767,7 +1767,7 @@
 				ACEBF7DC2D6EDC8500B594A0 /* GradientProgressViewStyle.swift in Sources */,
 				ACB46A512D0ED195002E200C /* FeedResult.swift in Sources */,
 				ACB46A542D0ED22B002E200C /* FeedQuery.swift in Sources */,
-				AC32E44F2D296628001DDA43 /* ProfileUseCase.swift in Sources */,
+				AC32E44F2D296628001DDA43 /* AccountUseCase.swift in Sources */,
 				ACEBF7F02D6F847300B594A0 /* ToastManager.swift in Sources */,
 				ACEBF7E12D6F505A00B594A0 /* UploadCompletedView.swift in Sources */,
 				AC7F7EAD2D771EB300215162 /* UploadEndpointResponse.swift in Sources */,
@@ -1777,7 +1777,7 @@
 				ACC0F3982D2ED5D700FA5BD0 /* LottieView.swift in Sources */,
 				ACB46A7C2D105BEB002E200C /* UIKitInitializers.swift in Sources */,
 				AC26CA552D80281D006ADA75 /* FirebaseCrashlyticsReporter.swift in Sources */,
-				AC32E4682D2998D6001DDA43 /* ProfileDIContainer.swift in Sources */,
+				AC32E4682D2998D6001DDA43 /* AccountDIContainer.swift in Sources */,
 				ACB46A372D0EC998002E200C /* FeedDIContainer.swift in Sources */,
 				AC26CA582D80287E006ADA75 /* AuthClient.swift in Sources */,
 				ACD941872CFF575C0038FCB6 /* IosApp.swift in Sources */,
@@ -1787,7 +1787,7 @@
 				AC7F7EA92D771DF400215162 /* GetUploadEndpointUseCase.swift in Sources */,
 				AC8472AD2D1D9540004A4259 /* AVFoundation+Extensions.swift in Sources */,
 				AC9294192D65F308003DB102 /* View+Extensions.swift in Sources */,
-				AC32E4662D2991AD001DDA43 /* ProfileView.swift in Sources */,
+				AC32E4662D2991AD001DDA43 /* AccountView.swift in Sources */,
 				AC4DECAA2D3E06AC008EC8F5 /* FooterLoaderView.swift in Sources */,
 				AC6BECBC2D09F68C002E2021 /* Endpoint.swift in Sources */,
 				ACD941892CFF575C0038FCB6 /* SwiftBridgeCore.swift in Sources */,
@@ -1801,17 +1801,17 @@
 				AC7F7ED62D79648100215162 /* UpdateMetaDataRequest.swift in Sources */,
 				AC32E4792D2AF599001DDA43 /* CacheDTO.swift in Sources */,
 				AC8472AA2D1D9139004A4259 /* HLSDownloadManager.swift in Sources */,
-				AC32E45C2D296731001DDA43 /* ProfileRepositoryProtocol.swift in Sources */,
+				AC32E45C2D296731001DDA43 /* AccountRepositoryProtocol.swift in Sources */,
 				AC7F7ECB2D786F8E00215162 /* UploadVideoUseCase.swift in Sources */,
 				AC26CA692D806514006ADA75 /* Utilities.swift in Sources */,
 				AC92940E2D64CBFB003DB102 /* SelectFileView.swift in Sources */,
-				AC32E44B2D2965A3001DDA43 /* ProfileViewModel.swift in Sources */,
+				AC32E44B2D2965A3001DDA43 /* AccountViewModel.swift in Sources */,
 				ACD9418A2CFF575C0038FCB6 /* Data+Extensions.swift in Sources */,
 				ACD9418B2CFF575C0038FCB6 /* SwiftBindings+Extensions.swift in Sources */,
 				ACEBF8062D7473E600B594A0 /* UploadErrorView.swift in Sources */,
 				AC8958D82D3EA46800E19ED7 /* FeedsViewController+ScrollView.swift in Sources */,
 				ACB46A762D105B17002E200C /* ReusableView.swift in Sources */,
-				AC32E4532D296637001DDA43 /* ProfileRepository.swift in Sources */,
+				AC32E4532D296637001DDA43 /* AccountRepository.swift in Sources */,
 				AC9294082D630266003DB102 /* UploadView.swift in Sources */,
 				AC7F7EC02D7734BB00215162 /* UploadRepository.swift in Sources */,
 				ACB46A802D106034002E200C /* FeedsCell.swift in Sources */,
@@ -1821,7 +1821,7 @@
 				ACEBF7EC2D6F845C00B594A0 /* ToastView.swift in Sources */,
 				AC32E4732D2AD67D001DDA43 /* ToggleLikeUseCase.swift in Sources */,
 				AC7F7EB32D77200000215162 /* UploadRepositoryProtocol.swift in Sources */,
-				AC26CA622D805D6D006ADA75 /* ProfileError.swift in Sources */,
+				AC26CA622D805D6D006ADA75 /* AccountError.swift in Sources */,
 				AC32E46C2D299DFD001DDA43 /* ShareOptionsView.swift in Sources */,
 				AC9294122D6599A1003DB102 /* CaptionsView.swift in Sources */,
 				AC638BF52D2309C000481E94 /* KeychainHelper.swift in Sources */,
