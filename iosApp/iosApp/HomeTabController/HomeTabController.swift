@@ -74,7 +74,7 @@ struct HomeTabController: View {
         let tabWidth = geometry.size.width / .three
         let indicatorXPosition = CGFloat(selectedTab) * tabWidth + (tabWidth - Constants.indicatorWidth) / .two
         VStack {
-          Spacer().frame(height: geometry.size.height - Constants.tabIndicatorHeight)
+          Spacer().frame(height: geometry.size.height)
           HStack {
             Spacer().frame(width: indicatorXPosition)
             Rectangle()
