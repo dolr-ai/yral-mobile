@@ -11,8 +11,7 @@ import SwiftUI
 struct SelectFileView: View {
   @Binding var showVideoPicker: Bool
   var body: some View {
-    VStack(spacing: Constants.outerVStackSpacing) {
-      Color.black.edgesIgnoringSafeArea(.all)
+    VStack(alignment: .center, spacing: Constants.outerVStackSpacing) {
       VStack(alignment: .center, spacing: Constants.innerVStackSpacing) {
         Text(Constants.uploadText)
           .font(Constants.uploadTextFont)
@@ -26,10 +25,18 @@ struct SelectFileView: View {
         Text(Constants.selectFileText)
           .font(Constants.selectFileFont)
           .foregroundColor(Constants.selectFileColor)
-          .frame(maxWidth: .infinity, minHeight: Constants.selectFileButtonHeight)
+          .frame(width: Constants.selectFileButtonWidth, height: Constants.selectFileButtonHeight)
           .cornerRadius(Constants.selectFileButtonRadius)
+          .overlay(
+            RoundedRectangle(cornerRadius: Constants.selectFileButtonRadius)
+              .stroke(Constants.selectFileColor, lineWidth: .one)
+          )
       }
-    }.overlay {
+    }
+    .frame(maxWidth: .infinity)
+    .background(Color.black.edgesIgnoringSafeArea(.all))
+    .frame(height: Constants.selectFileViewHeight)
+    .overlay {
       RoundedRectangle(cornerRadius: Constants.outerVStackRadius)
         .stroke(Constants.outerVStackStrokeColor, lineWidth: .one)
     }
@@ -55,7 +62,8 @@ extension SelectFileView {
       .weight(.semibold)
     static let selectFileColor = Color(red: 0.89, green: 0, blue: 0.48)
     static let selectFileButtonRadius = 8.0
-    static let selectFileButtonHeight = 68.0
-
+    static let selectFileButtonWidth = 107.0
+    static let selectFileButtonHeight = 40.0
+    static let selectFileViewHeight = 300.0
   }
 }

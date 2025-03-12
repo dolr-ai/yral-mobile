@@ -32,6 +32,7 @@ struct HomeTabController: View {
     ZStack {
       TabView(selection: $selectedTab) {
         feedsViewControllerWrapper
+          .background(Color.black.edgesIgnoringSafeArea(.all))
           .tabItem {
             Image(
               ImageResource(
@@ -89,7 +90,6 @@ struct HomeTabController: View {
       }
       .ignoresSafeArea([.keyboard])
     }
-    .background(Color.black.edgesIgnoringSafeArea(.all))
   }
 }
 
