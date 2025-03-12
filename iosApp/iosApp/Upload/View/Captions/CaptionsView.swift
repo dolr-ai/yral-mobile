@@ -10,6 +10,8 @@ import SwiftUI
 
 struct CaptionsView: View {
   @Binding var caption: String
+  var onFocus: (() -> Void)?
+  @FocusState private var isCaptionFocused: Bool
 
   var body: some View {
     VStack(alignment: .leading, spacing: Constants.vStackSpacing) {
@@ -20,6 +22,7 @@ struct CaptionsView: View {
       ZStack(alignment: .topLeading) {
         if #available(iOS 16.0, *) {
           TextEditor(text: $caption)
+            .focused($isCaptionFocused)
             .scrollContentBackground(.hidden)
             .padding(Constants.cursorPadding)
             .foregroundColor(Constants.textColor)
@@ -31,8 +34,13 @@ struct CaptionsView: View {
               RoundedRectangle(cornerRadius: Constants.textEditorRadius)
                 .stroke(Constants.textEditorStrokeColor)
             )
+            .onTapGesture {
+              isCaptionFocused = true
+              onFocus?()
+            }
         } else {
           TextEditor(text: $caption)
+            .focused($isCaptionFocused)
             .padding(Constants.cursorPadding)
             .foregroundColor(Constants.textColor)
             .font(Constants.font)
@@ -43,6 +51,10 @@ struct CaptionsView: View {
               RoundedRectangle(cornerRadius: Constants.textEditorRadius)
                 .stroke(Constants.textEditorStrokeColor)
             )
+            .onTapGesture {
+              isCaptionFocused = true
+              onFocus?()
+            }
         }
         if caption.isEmpty {
           Text(Constants.textFieldPlaceholder)

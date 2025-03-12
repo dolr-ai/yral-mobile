@@ -162,8 +162,12 @@ struct UploadView: View {
                 SelectFileView(showVideoPicker: $showVideoPicker)
               }
 
-              CaptionsView(caption: $caption)
-                .id(Constants.captionsViewId)
+              CaptionsView(caption: $caption, onFocus: {
+                withAnimation {
+                  proxy.scrollTo(Constants.captionsViewId, anchor: .center)
+                }
+              })
+              .id(Constants.captionsViewId)
 
               HashtagView(hashtags: $hashtags) {
                 withAnimation {

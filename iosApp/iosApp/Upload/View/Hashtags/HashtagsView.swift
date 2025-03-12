@@ -70,7 +70,12 @@ struct HashtagView: View {
             }
             .onSubmit {
               addNewHashtag()
-              newFieldIsFocused = true
+              newFieldIsFocused = false
+            }
+            .onChange(of: newHashtag) { newValue in
+              if newValue.last == " " {
+                addNewHashtag()
+              }
             }
         }
         .padding(Constants.hStackPadding)
@@ -193,7 +198,7 @@ extension HashtagView {
     static let placeholderText = "Hit enter to add #hashtags"
     static let placeholderColor = Color(red: 0.32, green: 0.32, blue: 0.32)
     static let chipSpacing = 6.0
-    static let hStackPadding = 8.0
+    static let hStackPadding = 12.0
     static let hStackBGColor = Color(red: 0.09, green: 0.09, blue: 0.09)
     static let hStackRadius = 8.0
     static let strokeColor = Color(red: 0.13, green: 0.13, blue: 0.13)
