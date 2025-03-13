@@ -58,6 +58,9 @@ struct UploadErrorView: View {
       }
       .padding(.horizontal, Constants.horizontalPadding)
     }
+    .onDisappear {
+      UIView.setAnimationsEnabled(true)
+    }
   }
 }
 

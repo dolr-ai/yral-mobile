@@ -44,35 +44,7 @@ struct UploadView: View {
 
   var body: some View {
     ZStack {
-      if showUploadCompletedView, showUploadProgressView {
-        UploadCompletedView(
-          doneAction: {
-            Task {
-              await viewModel.getUploadEndpoint()
-            }
-            resetUploadScreen()
-            doneAction()
-          },
-          showUploadCompletedView: $showUploadCompletedView
-        )
-        .transition(.opacity)
-        .zIndex(1)
-      } else if showUploadFailedView, showUploadProgressView {
-        UploadErrorView(
-          showUploadFailedView: $showUploadFailedView,
-          tryAgainAction: {
-          },
-          goHomeAction: {
-            Task {
-              await viewModel.getUploadEndpoint()
-            }
-            resetUploadScreen()
-            doneAction()
-          }
-        )
-        .transition(.opacity)
-        .zIndex(1)
-      } else if showUploadProgressView, let url = videoURL {
+      if showUploadProgressView, let url = videoURL {
         VStack(spacing: .zero) {
           Text(Constants.navigationTitle)
             .font(Constants.navigationTitleFont)
@@ -234,9 +206,11 @@ struct UploadView: View {
         viewModel.startUpload(fileURL: url, caption: caption, hashtags: hashtags.map { $0.text })
 
       case .videoUploadSuccess:
+        UIView.setAnimationsEnabled(false)
         showUploadCompletedView = true
 
       case .videoUploadFailure(let error):
+        UIView.setAnimationsEnabled(false)
         showUploadFailedView = true
         print(error)
       case .videoUploadCancelled:
@@ -247,9 +221,53 @@ struct UploadView: View {
       }
       viewModel.event = nil
     }
+    .fullScreenCover(
+      isPresented: Binding<Bool>(
+        get: { showUploadCompletedView && showUploadProgressView },
+        set: { _ in }
+      )
+    ) {
+      UploadCompletedView(
+        doneAction: {
+          Task {
+            await viewModel.getUploadEndpoint()
+          }
+          resetUploadScreen()
+          doneAction()
+        },
+        showUploadCompletedView: $showUploadCompletedView
+      )
+      .transition(.opacity)
+    }
+    .fullScreenCover(
+      isPresented: Binding<Bool>(
+        get: { showUploadFailedView && showUploadProgressView },
+        set: { _ in }
+      )
+    ) {
+      UploadErrorView(
+        showUploadFailedView: $showUploadFailedView,
+        tryAgainAction: {
+          Task {
+            await viewModel.getUploadEndpoint()
+          }
+          resetUploadScreen()
+        },
+        goHomeAction: {
+          Task {
+            await viewModel.getUploadEndpoint()
+          }
+          resetUploadScreen()
+          doneAction()
+        }
+      )
+      .transition(.opacity)
+    }
   }
+}
 
-  private func togglePlayback() {
+extension UploadView {
+  fileprivate func togglePlayback() {
     if isPlaying {
       player?.pause()
       isPlaying = false
@@ -264,7 +282,7 @@ struct UploadView: View {
     }
   }
 
-  private func resetUploadScreen() {
+  fileprivate func resetUploadScreen() {
     showUploadCompletedView = false
     showUploadFailedView = false
     showUploadProgressView = false
@@ -279,9 +297,7 @@ struct UploadView: View {
 
     currentProgress = .zero
   }
-}
 
-extension UploadView {
   func onDoneAction(_ action: @escaping () -> Void) -> UploadView {
     var copy = self
     copy.doneAction = action
