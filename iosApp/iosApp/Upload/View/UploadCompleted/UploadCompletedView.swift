@@ -65,7 +65,7 @@ struct UploadCompletedView: View {
               horizontalPadding: Constants.vStackPadding,
               alignment: .center
             )
-            .frame(height: Constants.descriptionHeight)
+            .frame(height: 66.0)
           }
           Button(action: {
             doneAction()
@@ -96,6 +96,8 @@ extension UploadCompletedView {
   enum Constants {
     static let backgroundColor: Color = .black
 
+    static let lottieName = "upload_completed_lottie"
+
     static let uploadSuccessImage = "upload_succes_tick"
     static let iconSizeWidth: CGFloat = 120.0
     static let iconSizeHeight: CGFloat = 133.0
@@ -116,7 +118,6 @@ extension UploadCompletedView {
     ?? UIFont.systemFont(ofSize: 16)
     static let descriptionBoldFont = UIFont(name: "Kumbh Sans-Bold", size: 16)
     ?? UIFont.boldSystemFont(ofSize: 16)
-    static let descriptionHeight = 66.0
 
     static let descriptionLineHeight = 1.13
     static let buttonTitle = "Done"
