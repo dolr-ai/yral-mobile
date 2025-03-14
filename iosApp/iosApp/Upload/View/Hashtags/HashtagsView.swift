@@ -70,8 +70,14 @@ struct HashtagView: View {
             }
             .onSubmit {
               addNewHashtag()
-              newFieldIsFocused = true
+              newFieldIsFocused = false
             }
+            .onChange(of: newHashtag) { newValue in
+              if newValue.last == " " {
+                addNewHashtag()
+              }
+            }
+            .tint(Constants.tintColor)
         }
         .padding(Constants.hStackPadding)
       }
@@ -79,7 +85,10 @@ struct HashtagView: View {
       .cornerRadius(Constants.hStackRadius)
       .overlay(
         RoundedRectangle(cornerRadius: Constants.hStackRadius)
-          .stroke(Constants.strokeColor, lineWidth: .one)
+          .stroke(
+            newFieldIsFocused ? Constants.strokeColorSelected : Constants.strokeColorUnselected,
+            lineWidth: .one
+          )
       )
     }
   }
@@ -134,6 +143,7 @@ struct EditableChip: View {
 
   var body: some View {
     TextField("", text: $localText)
+      .frame(height: Constants.hashtagChipHeight)
       .font(Constants.hashtagChipFont)
       .foregroundColor(Constants.hashtagChipTextColor)
       .padding(Constants.hashtagChipPadding)
@@ -157,6 +167,11 @@ struct EditableChip: View {
           commitOrRemove()
         }
       }
+      .onChange(of: localText) { newValue in
+        if newValue.last == " " {
+          commitOrRemove()
+        }
+      }
   }
 
   private func commitOrRemove() {
@@ -176,6 +191,7 @@ struct HashtagChip: View {
     Text("#\(tag)")
       .font(Constants.hashtagChipFont)
       .foregroundColor(Constants.hashtagChipTextColor)
+      .frame(height: Constants.hashtagChipHeight)
       .padding(Constants.hashtagChipPadding)
       .background(Constants.hashtagChipBackgroundColor)
       .cornerRadius(Constants.hashtagChipCornerRadius)
@@ -193,16 +209,19 @@ extension HashtagView {
     static let placeholderText = "Hit enter to add #hashtags"
     static let placeholderColor = Color(red: 0.32, green: 0.32, blue: 0.32)
     static let chipSpacing = 6.0
-    static let hStackPadding = 8.0
+    static let hStackPadding = 12.0
     static let hStackBGColor = Color(red: 0.09, green: 0.09, blue: 0.09)
     static let hStackRadius = 8.0
-    static let strokeColor = Color(red: 0.13, green: 0.13, blue: 0.13)
+    static let strokeColorSelected = Color(red: 0.64, green: 0.64, blue: 0.64)
+    static let strokeColorUnselected = Color(red: 0.13, green: 0.13, blue: 0.13)
 
     static let hashtagChipTextColor = Color(red: 0.98, green: 0.98, blue: 0.98)
     static let hashtagChipFont = Font.custom("Kumbh Sans", size: 12)
     static let hashtagChipPadding: CGFloat = 5
     static let hashtagChipBackgroundColor = Color(red: 0.25, green: 0.25, blue: 0.25)
     static let hashtagChipCornerRadius: CGFloat = 8.0
+    static let hashtagChipHeight = 10.0
+    static let tintColor: Color =  Color(red: 0.89, green: 0, blue: 0.48)
   }
 }
 

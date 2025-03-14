@@ -55,9 +55,9 @@ final class AppDIContainer {
     )
   }
 
-  func makeProfileDIContainer() -> ProfileDIContainer {
-    return ProfileDIContainer(
-      dependencies: ProfileDIContainer.Dependencies(
+  func makeAccountDIContainer() -> AccountDIContainer {
+    return AccountDIContainer(
+      dependencies: AccountDIContainer.Dependencies(
         httpService: HTTPService(),
         authClient: authClient,
         crashReporter: crashReporter

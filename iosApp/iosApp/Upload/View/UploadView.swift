@@ -44,35 +44,7 @@ struct UploadView: View {
 
   var body: some View {
     ZStack {
-      if showUploadCompletedView, showUploadProgressView {
-        UploadCompletedView(
-          doneAction: {
-            Task {
-              await viewModel.getUploadEndpoint()
-            }
-            resetUploadScreen()
-            doneAction()
-          },
-          showUploadCompletedView: $showUploadCompletedView
-        )
-        .transition(.opacity)
-        .zIndex(1)
-      } else if showUploadFailedView, showUploadProgressView {
-        UploadErrorView(
-          showUploadFailedView: $showUploadFailedView,
-          tryAgainAction: {
-          },
-          goHomeAction: {
-            Task {
-              await viewModel.getUploadEndpoint()
-            }
-            resetUploadScreen()
-            doneAction()
-          }
-        )
-        .transition(.opacity)
-        .zIndex(1)
-      } else if showUploadProgressView, let url = videoURL {
+      if showUploadProgressView, let url = videoURL {
         VStack(spacing: .zero) {
           Text(Constants.navigationTitle)
             .font(Constants.navigationTitleFont)
@@ -162,8 +134,12 @@ struct UploadView: View {
                 SelectFileView(showVideoPicker: $showVideoPicker)
               }
 
-              CaptionsView(caption: $caption)
-                .id(Constants.captionsViewId)
+              CaptionsView(caption: $caption, onFocus: {
+                withAnimation {
+                  proxy.scrollTo(Constants.captionsViewId, anchor: .center)
+                }
+              })
+              .id(Constants.captionsViewId)
 
               HashtagView(hashtags: $hashtags) {
                 withAnimation {
@@ -200,6 +176,7 @@ struct UploadView: View {
                 .presentationBackground(.clear)
             } else {
               VideoPickerViewControllerRepresentable(viewModel: viewModel)
+
             }
           }
         }
@@ -207,11 +184,6 @@ struct UploadView: View {
     }
     .animation(.easeInOut, value: showUploadCompletedView)
     .animation(.easeInOut, value: showUploadFailedView)
-    .onAppear {
-      Task {
-        await viewModel.getUploadEndpoint()
-      }
-    }
     .onReceive(viewModel.$event) { event in
       guard let event = event else { return }
       switch event {
@@ -230,9 +202,11 @@ struct UploadView: View {
         viewModel.startUpload(fileURL: url, caption: caption, hashtags: hashtags.map { $0.text })
 
       case .videoUploadSuccess:
+        UIView.setAnimationsEnabled(false)
         showUploadCompletedView = true
 
       case .videoUploadFailure(let error):
+        UIView.setAnimationsEnabled(false)
         showUploadFailedView = true
         print(error)
       case .videoUploadCancelled:
@@ -243,9 +217,44 @@ struct UploadView: View {
       }
       viewModel.event = nil
     }
+    .fullScreenCover(
+      isPresented: Binding<Bool>(
+        get: { showUploadCompletedView && showUploadProgressView },
+        set: { _ in }
+      )
+    ) {
+      UploadCompletedView(
+        doneAction: {
+          resetUploadScreen()
+          doneAction()
+        },
+        showUploadCompletedView: $showUploadCompletedView
+      )
+      .transition(.opacity)
+    }
+    .fullScreenCover(
+      isPresented: Binding<Bool>(
+        get: { showUploadFailedView && showUploadProgressView },
+        set: { _ in }
+      )
+    ) {
+      UploadErrorView(
+        showUploadFailedView: $showUploadFailedView,
+        tryAgainAction: {
+          resetUploadScreen()
+        },
+        goHomeAction: {
+          resetUploadScreen()
+          doneAction()
+        }
+      )
+      .transition(.opacity)
+    }
   }
+}
 
-  private func togglePlayback() {
+extension UploadView {
+  fileprivate func togglePlayback() {
     if isPlaying {
       player?.pause()
       isPlaying = false
@@ -260,7 +269,7 @@ struct UploadView: View {
     }
   }
 
-  private func resetUploadScreen() {
+  fileprivate func resetUploadScreen() {
     showUploadCompletedView = false
     showUploadFailedView = false
     showUploadProgressView = false
@@ -274,10 +283,9 @@ struct UploadView: View {
     hashtags = []
 
     currentProgress = .zero
+    viewModel.state = .initialized
   }
-}
 
-extension UploadView {
   func onDoneAction(_ action: @escaping () -> Void) -> UploadView {
     var copy = self
     copy.doneAction = action

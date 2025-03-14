@@ -75,15 +75,15 @@ class FeedsViewController: UIViewController {
   override func viewWillDisappear(_ animated: Bool) {
     super.viewWillDisappear(animated)
     isCurrentlyVisible = false
+    yralPlayer.isPlayerVisible = false
     yralPlayer.pause()
   }
 
   override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
     isCurrentlyVisible = true
-    if feedsCV.indexPathsForVisibleItems.first != nil {
-      yralPlayer.play()
-    }
+    yralPlayer.isPlayerVisible = true
+    yralPlayer.play()
   }
 
   func bindViewModel() {
