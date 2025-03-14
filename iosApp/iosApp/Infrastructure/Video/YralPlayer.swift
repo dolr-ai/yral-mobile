@@ -19,6 +19,7 @@ final class YralPlayer {
   private var lastPlayedTimes: [Int: CMTime] = [:]
   private var playerItems: [Int: AVPlayerItem] = [:]
   private var currentlyDownloadingIndexes: Set<Int> = []
+  var isPlayerVisible: Bool = true
   weak var delegate: YralPlayerProtocol?
 
   func loadInitialVideos(_ feedResults: [FeedResult]) {
@@ -103,7 +104,9 @@ final class YralPlayer {
   }
 
   func play() {
-    player.play()
+    if isPlayerVisible == true {
+      player.play()
+    }
   }
 
   func pause() {
