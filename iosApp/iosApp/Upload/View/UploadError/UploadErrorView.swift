@@ -13,6 +13,20 @@ struct UploadErrorView: View {
   var goHomeAction: () -> Void
   @Environment(\.dismiss) private var dismiss
 
+  private var descriptionAttributedText: NSAttributedString {
+    let paragraphStyle = NSMutableParagraphStyle()
+    paragraphStyle.lineHeightMultiple = Constants.descriptionLineHeightMultiplier
+    let baseFont = Constants.descriptionFont
+    let attributed = NSMutableAttributedString()
+    let attrs: [NSAttributedString.Key: Any] = [
+      .font: baseFont,
+      .foregroundColor: Constants.descriptionColor,
+      .paragraphStyle: paragraphStyle
+    ]
+    attributed.append(NSAttributedString(string: Constants.descriptionText, attributes: attrs))
+    return attributed
+  }
+
   var body: some View {
     ZStack {
       Constants.backgroundColor
@@ -26,10 +40,12 @@ struct UploadErrorView: View {
           Text(Constants.titleText)
             .font(Constants.titleFont)
             .foregroundColor(Constants.titleColor)
-          Text(Constants.descriptionText)
-            .font(Constants.descriptionFont)
-            .foregroundColor(Constants.descriptionColor)
-            .multilineTextAlignment(.center)
+          AttributedText(
+            attributedString: descriptionAttributedText,
+            horizontalPadding: Constants.horizontalPadding,
+            alignment: .center
+          )
+          .frame(height: Constants.descriptionHeight)
         }
 
         Button {
@@ -52,7 +68,10 @@ struct UploadErrorView: View {
         } label: {
           Text(Constants.goHomeButtonText)
             .font(Constants.goHomeButtonFont)
-            .foregroundColor(Constants.goHomeButtonColor)
+            .overlay(
+              Constants.buttonGradient
+                .mask(Text(Constants.goHomeButtonText).font(Constants.goHomeButtonFont))
+            )
         }
         .padding(.top, Constants.goHomeButtonTopPadding)
       }
@@ -82,10 +101,13 @@ extension UploadErrorView {
       .weight(.bold)
     static let titleColor = Color.white
 
-    static let descriptionText = "We couldn’t upload your video due to XYZ reasons. Try uploading it again."
-    static let descriptionFont = Font.custom("Kumbh Sans", size: 16)
-    static let descriptionColor =  Color(red: 0.83, green: 0.83, blue: 0.83)
+    static let descriptionText = "We couldn’t upload your video due to some reasons. Try uploading it again."
+    static let descriptionFont = UIFont(name: "Kumbh Sans", size: 16)
+    ?? UIFont.systemFont(ofSize: 16)
+    static let descriptionColor =  UIColor(red: 0.83, green: 0.83, blue: 0.83, alpha: 1.0)
+    static let descriptionLineHeightMultiplier = 1.13
     static let descriptionHorizontalPadding: CGFloat = 32
+    static let descriptionHeight = 66.0
 
     static let tryAgainButtonTitle = "Try Again"
     static let tryAgainButtonFont = Font.custom("Kumbh Sans", size: 16).weight(.bold)
@@ -98,5 +120,14 @@ extension UploadErrorView {
     static let goHomeButtonFont = Font.custom("Kumbh Sans", size: 16).weight(.bold)
     static let goHomeButtonColor = Color(red: 1, green: 0.47, blue: 0.76)
     static let goHomeButtonTopPadding: CGFloat = 8.0
+    static let buttonGradient = LinearGradient(
+      gradient: Gradient(stops: [
+        .init(color: Color(red: 1.0, green: 120/255, blue: 193/255), location: 0.0),
+        .init(color: Color(red: 226/255, green: 1/255, blue: 123/255), location: 0.5),
+        .init(color: Color(red: 173/255, green: 0, blue: 94/255), location: 1.0)
+      ]),
+      startPoint: .topTrailing,
+      endPoint: .topLeading
+    )
   }
 }

@@ -11,6 +11,7 @@ import AVFoundation
 import UniformTypeIdentifiers
 
 protocol VideoPickerDelegate: AnyObject {
+  func viewDidLoad()
   func videoPicker(_ picker: VideoPickerViewController, didPickVideo url: URL)
   func cancelled()
 }
@@ -23,6 +24,7 @@ class VideoPickerViewController: UIViewController {
 
   override func viewDidLoad() {
     super.viewDidLoad()
+    delegate?.viewDidLoad()
     view.backgroundColor = .clear
     modalPresentationStyle = .overFullScreen
   }

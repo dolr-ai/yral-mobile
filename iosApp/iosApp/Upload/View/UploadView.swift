@@ -176,6 +176,7 @@ struct UploadView: View {
                 .presentationBackground(.clear)
             } else {
               VideoPickerViewControllerRepresentable(viewModel: viewModel)
+
             }
           }
         }
@@ -183,11 +184,6 @@ struct UploadView: View {
     }
     .animation(.easeInOut, value: showUploadCompletedView)
     .animation(.easeInOut, value: showUploadFailedView)
-    .onAppear {
-      Task {
-        await viewModel.getUploadEndpoint()
-      }
-    }
     .onReceive(viewModel.$event) { event in
       guard let event = event else { return }
       switch event {
@@ -229,9 +225,6 @@ struct UploadView: View {
     ) {
       UploadCompletedView(
         doneAction: {
-          Task {
-            await viewModel.getUploadEndpoint()
-          }
           resetUploadScreen()
           doneAction()
         },
@@ -248,15 +241,9 @@ struct UploadView: View {
       UploadErrorView(
         showUploadFailedView: $showUploadFailedView,
         tryAgainAction: {
-          Task {
-            await viewModel.getUploadEndpoint()
-          }
           resetUploadScreen()
         },
         goHomeAction: {
-          Task {
-            await viewModel.getUploadEndpoint()
-          }
           resetUploadScreen()
           doneAction()
         }
@@ -296,6 +283,7 @@ extension UploadView {
     hashtags = []
 
     currentProgress = .zero
+    viewModel.state = .initialized
   }
 
   func onDoneAction(_ action: @escaping () -> Void) -> UploadView {

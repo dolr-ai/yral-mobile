@@ -32,7 +32,11 @@ struct CaptionsView: View {
             .cornerRadius(Constants.textEditorRadius)
             .overlay(
               RoundedRectangle(cornerRadius: Constants.textEditorRadius)
-                .stroke(Constants.textEditorStrokeColor)
+                .stroke(
+                  isCaptionFocused ? Constants.textEditorStrokeColorSelected :
+                    Constants.textEditorStrokeColorUnselected,
+                  lineWidth: CGFloat.one
+                )
             )
             .onTapGesture {
               isCaptionFocused = true
@@ -49,7 +53,11 @@ struct CaptionsView: View {
             .cornerRadius(Constants.textEditorRadius)
             .overlay(
               RoundedRectangle(cornerRadius: Constants.textEditorRadius)
-                .stroke(Constants.textEditorStrokeColor)
+                .stroke(
+                  isCaptionFocused ? Constants.textEditorStrokeColorSelected :
+                    Constants.textEditorStrokeColorUnselected,
+                  lineWidth: CGFloat.one
+                )
             )
             .onTapGesture {
               isCaptionFocused = true
@@ -64,14 +72,18 @@ struct CaptionsView: View {
         }
       }
     }
+    .onAppear {
+      UITextView.appearance().tintColor = Constants.tintColor
+    }
   }
 }
 
 extension CaptionsView {
   enum Constants {
     static let textColor = Color(red: 0.98, green: 0.98, blue: 0.98)
-    static let textEditorBackgroundColor =  Color(red: 0.09, green: 0.09, blue: 0.09)
-    static let textEditorStrokeColor =   Color(red: 0.13, green: 0.13, blue: 0.13)
+    static let textEditorBackgroundColor = Color(red: 0.09, green: 0.09, blue: 0.09)
+    static let textEditorStrokeColorUnselected = Color(red: 0.13, green: 0.13, blue: 0.13)
+    static let textEditorStrokeColorSelected = Color(red: 0.64, green: 0.64, blue: 0.64)
     static let placeholderTextColor =  Color(red: 0.32, green: 0.32, blue: 0.32)
     static let font = Font.custom("Kumbh Sans", size: 14)
     static let captionText = "Caption"
@@ -82,5 +94,6 @@ extension CaptionsView {
     static let placeholderPadding = EdgeInsets(top: 12.0, leading: 12.0, bottom: .zero, trailing: .zero)
     static let cursorPadding = EdgeInsets(top: 4.0, leading: 8.0, bottom: .zero, trailing: .zero)
     static let textPadding = 12.0
+    static let tintColor: UIColor =  UIColor(red: 0.89, green: 0, blue: 0.48, alpha: 1.0)
   }
 }
