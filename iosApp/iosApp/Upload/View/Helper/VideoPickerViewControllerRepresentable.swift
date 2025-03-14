@@ -50,5 +50,11 @@ struct VideoPickerViewControllerRepresentable: UIViewControllerRepresentable {
         self.parent.presentationMode.wrappedValue.dismiss()
       }
     }
+
+    func viewDidLoad() {
+      Task {
+        await viewModel.getUploadEndpoint()
+      }
+    }
   }
 }
