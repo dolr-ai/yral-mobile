@@ -49,9 +49,9 @@ extension ShareOptionsView {
     static let verticalPadding: CGFloat = 114
     static let horizontalPadding: CGFloat = 45
     static let titleText = "Follow us on"
-    static let titleFont = Font.custom("Kumbh Sans", size: 12).weight(.medium)
-    static let titleColor = Color(red: 0.64, green: 0.64, blue: 0.64)
-    static let iconBackground = Color(red: 0.13, green: 0.13, blue: 0.13)
+    static let titleFont = YralFont.pt12.medium.swiftUIFont
+    static let titleColor = YralColor.grey500.swiftUIColor
+    static let iconBackground = YralColor.grey800.swiftUIColor
 
     static let socialMediaPlatforms = [
       SocialMediaPlatform(

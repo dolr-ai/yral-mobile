@@ -48,16 +48,16 @@ extension UploadProgressView {
     // swiftlint: disable line_length
     static let uploadingMessage = "Uploading may take a moment. Feel free to explore more videos on the home page while you wait!"
     // swiftlint: enable line_length
-    static let uploadingMessageColor =  Color(red: 0.98, green: 0.98, blue: 0.98)
-    static let uploadingMessageFont = Font.custom("Kumbh Sans", size: 12)
+    static let uploadingMessageColor =  YralColor.grey50.swiftUIColor
+    static let uploadingMessageFont = YralFont.pt12.swiftUIFont
     static let uploadingText = "Uploading…"
-    static let uploadingTextColor =  Color(red: 0.64, green: 0.64, blue: 0.64)
-    static let uploadingTextFont =  Font.custom("Kumbh Sans", size: 12)
+    static let uploadingTextColor =  YralColor.grey400.swiftUIColor
+    static let uploadingTextFont =  YralFont.pt12.swiftUIFont
 
     static let progressBarGradient = LinearGradient(
       stops: [
-        Gradient.Stop(color: Color(red: 0.93, green: 0.33, blue: 0.65), location: 0.00),
-        Gradient.Stop(color: Color(red: 0.89, green: 0, blue: 0.48), location: 1.00)
+        Gradient.Stop(color: YralColor.primary200.swiftUIColor, location: 0.00),
+        Gradient.Stop(color: YralColor.primary300.swiftUIColor, location: 1.00)
       ],
       startPoint: .leading,
       endPoint: .trailing

@@ -119,15 +119,15 @@ extension ProfileInfoView {
     static let imageViewSize = 40.0
     static let titleLabelHeight = 20.0
     static let subtitleLabelHeight = 16.0
-    static let titleLabelFont = UIFont(name: "KumbhSans-SemiBold", size: 15.0)
-    static let subtitleLabelFont = UIFont(name: "KumbhSans-Medium", size: 15.0)
-    static let textColor = UIColor.white
-    static let imageBorderColor = UIColor(red: 226/255, green: 1/255, blue: 123/255, alpha: 1.0).cgColor
+    static let titleLabelFont = YralFont.pt16.semiBold.uiFont
+    static let subtitleLabelFont = YralFont.pt12.medium.uiFont
+    static let textColor = YralColor.grey0.uiColor
+    static let imageBorderColor = YralColor.primary300.uiColor.cgColor
     static let imageBorderWidth = 2.0
     static let imageViewLeading = 8.0
     static let imageViewTop = 8.0
     static let labelLeading = 12.0
-    static let gradientStartColor = UIColor(red: 0, green: 0, blue: 0, alpha: 1).cgColor
+    static let gradientStartColor = UIColor.black.cgColor
     static let gradientEndColor = UIColor(red: 0.4, green: 0.4, blue: 0.4, alpha: 0).cgColor
     static let defaultProfileImage = UIImage(named: "default_profile")
   }

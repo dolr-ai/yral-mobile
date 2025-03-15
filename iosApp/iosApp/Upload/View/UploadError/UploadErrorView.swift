@@ -97,28 +97,25 @@ extension UploadErrorView {
 
     static let textVStackSpacing = 8.0
     static let titleText = "Something went wrong!"
-    static let titleFont = Font.custom("Kumbh Sans", size: 18)
-      .weight(.bold)
-    static let titleColor = Color.white
+    static let titleFont = YralFont.pt18.bold.swiftUIFont
+    static let titleColor = YralColor.grey0.swiftUIColor
 
     static let descriptionText = "We couldn’t upload your video due to some reasons. Try uploading it again."
-    static let descriptionFont = UIFont(name: "Kumbh Sans", size: 16)
-    ?? UIFont.systemFont(ofSize: 16)
-    static let descriptionColor =  UIColor(red: 0.83, green: 0.83, blue: 0.83, alpha: 1.0)
+    static let descriptionFont = YralFont.pt16.uiFont
+    static let descriptionColor =  YralColor.grey300.uiColor
     static let descriptionLineHeightMultiplier = 1.13
     static let descriptionHorizontalPadding: CGFloat = 32
     static let descriptionHeight = 66.0
 
     static let tryAgainButtonTitle = "Try Again"
-    static let tryAgainButtonFont = Font.custom("Kumbh Sans", size: 16).weight(.bold)
-    static let tryAgainButtonTextColor = Color(red: 0.98, green: 0.98, blue: 0.98)
+    static let tryAgainButtonFont = YralFont.pt16.bold.swiftUIFont
+    static let tryAgainButtonTextColor = YralColor.grey50.swiftUIColor
     static let tryAgainButtonHeight: CGFloat = 45.0
     static let tryAgainButtonCornerRadius: CGFloat = 8.0
     static let tryAgainButtonGradient = UploadView.Constants.uploadButtonEnabledGradient
 
     static let goHomeButtonText = "Go to Home"
-    static let goHomeButtonFont = Font.custom("Kumbh Sans", size: 16).weight(.bold)
-    static let goHomeButtonColor = Color(red: 1, green: 0.47, blue: 0.76)
+    static let goHomeButtonFont = YralFont.pt16.bold.swiftUIFont
     static let goHomeButtonTopPadding: CGFloat = 8.0
     static let buttonGradient = LinearGradient(
       gradient: Gradient(stops: [

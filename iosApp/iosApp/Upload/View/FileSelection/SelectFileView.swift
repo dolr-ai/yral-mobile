@@ -47,20 +47,17 @@ extension SelectFileView {
   enum Constants {
     static let outerVStackSpacing = 20.0
     static let outerVStackRadius = 8.0
-    static let outerVStackStrokeColor =  Color(red: 0.13, green: 0.13, blue: 0.13)
+    static let outerVStackStrokeColor =  YralColor.grey800.swiftUIColor
     static let innerVStackSpacing = 10.0
     static let uploadText = "Upload a video to share with the world!"
-    static let uploadTextFont = Font.custom("Kumbh Sans", size: 16)
-      .weight(.medium)
-    static let uploadTextColor =  Color(red: 0.98, green: 0.98, blue: 0.98)
+    static let uploadTextFont = YralFont.pt16.medium.swiftUIFont
+    static let uploadTextColor =  YralColor.grey50.swiftUIColor
     static let fileSizeText = "Video file ( Max 60s)"
-    static let fileSizeFont = Font.custom("Kumbh Sans", size: 12)
-      .weight(.medium)
-    static let fileSizeColor =  Color(red: 0.64, green: 0.64, blue: 0.64)
+    static let fileSizeFont = YralFont.pt12.medium.swiftUIFont
+    static let fileSizeColor =  YralColor.grey500.swiftUIColor
     static let selectFileText = "Select File"
-    static let selectFileFont = Font.custom("Kumbh Sans", size: 14)
-      .weight(.semibold)
-    static let selectFileColor = Color(red: 0.89, green: 0, blue: 0.48)
+    static let selectFileFont = YralFont.pt14.semiBold.swiftUIFont
+    static let selectFileColor = YralColor.primary300.swiftUIColor
     static let selectFileButtonRadius = 8.0
     static let selectFileButtonWidth = 107.0
     static let selectFileButtonHeight = 40.0

@@ -17,7 +17,7 @@ struct CaptionsView: View {
     VStack(alignment: .leading, spacing: Constants.vStackSpacing) {
       Text(Constants.captionText)
         .foregroundColor(Constants.textColor)
-        .font(Constants.font)
+        .font(Constants.captionTextFont)
         .background(Color.clear)
       ZStack(alignment: .topLeading) {
         if #available(iOS 16.0, *) {
@@ -26,7 +26,7 @@ struct CaptionsView: View {
             .scrollContentBackground(.hidden)
             .padding(Constants.cursorPadding)
             .foregroundColor(Constants.textColor)
-            .font(Constants.font)
+            .font(Constants.captionTextFieldFont)
             .frame(minHeight: Constants.textFieldHeight)
             .background(Constants.textEditorBackgroundColor)
             .cornerRadius(Constants.textEditorRadius)
@@ -47,7 +47,7 @@ struct CaptionsView: View {
             .focused($isCaptionFocused)
             .padding(Constants.cursorPadding)
             .foregroundColor(Constants.textColor)
-            .font(Constants.font)
+            .font(Constants.captionTextFieldFont)
             .frame(minHeight: Constants.textFieldHeight)
             .background(Constants.textEditorBackgroundColor)
             .cornerRadius(Constants.textEditorRadius)
@@ -67,7 +67,7 @@ struct CaptionsView: View {
         if caption.isEmpty {
           Text(Constants.textFieldPlaceholder)
             .foregroundColor(Constants.placeholderTextColor)
-            .font(Constants.font)
+            .font(Constants.captionTextFieldFont)
             .padding(Constants.placeholderPadding)
         }
       }
@@ -80,20 +80,21 @@ struct CaptionsView: View {
 
 extension CaptionsView {
   enum Constants {
-    static let textColor = Color(red: 0.98, green: 0.98, blue: 0.98)
-    static let textEditorBackgroundColor = Color(red: 0.09, green: 0.09, blue: 0.09)
-    static let textEditorStrokeColorUnselected = Color(red: 0.13, green: 0.13, blue: 0.13)
-    static let textEditorStrokeColorSelected = Color(red: 0.64, green: 0.64, blue: 0.64)
-    static let placeholderTextColor =  Color(red: 0.32, green: 0.32, blue: 0.32)
-    static let font = Font.custom("Kumbh Sans", size: 14)
+    static let textColor = YralColor.grey50.swiftUIColor
+    static let textEditorBackgroundColor = YralColor.grey900.swiftUIColor
+    static let textEditorStrokeColorUnselected = YralColor.grey800.swiftUIColor
+    static let textEditorStrokeColorSelected = YralColor.grey500.swiftUIColor
+    static let placeholderTextColor =  YralColor.grey600.swiftUIColor
+    static let captionTextFont = YralFont.pt14.medium.swiftUIFont
     static let captionText = "Caption"
     static let textFieldPlaceholder = "Enter the caption here"
+    static let captionTextFieldFont = YralFont.pt14.swiftUIFont
     static let textFieldHeight: CGFloat = 100
     static let textEditorRadius = 8.0
     static let vStackSpacing = 8.0
     static let placeholderPadding = EdgeInsets(top: 12.0, leading: 12.0, bottom: .zero, trailing: .zero)
     static let cursorPadding = EdgeInsets(top: 4.0, leading: 8.0, bottom: .zero, trailing: .zero)
     static let textPadding = 12.0
-    static let tintColor: UIColor =  UIColor(red: 0.89, green: 0, blue: 0.48, alpha: 1.0)
+    static let tintColor: UIColor =  YralColor.primary300.uiColor
   }
 }

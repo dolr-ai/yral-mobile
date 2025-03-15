@@ -58,8 +58,8 @@ struct HomeTabController: View {
                 bundle: .main
               )
             )
-              .renderingMode(.original)
-              .ignoresSafeArea()
+            .renderingMode(.original)
+            .ignoresSafeArea()
           }
           .tag(Int.one)
         accountView
@@ -79,7 +79,7 @@ struct HomeTabController: View {
           HStack {
             Spacer().frame(width: indicatorXPosition)
             Rectangle()
-              .fill(Color(ColorResource(name: Constants.indicatorColorName, bundle: .main)))
+              .fill(Constants.indicatorColor)
               .frame(width: Constants.indicatorWidth, height: Constants.tabIndicatorHeight)
               .cornerRadius(Constants.tabIndicatorHeight / .two)
               .offset(x: .zero, y: -self.tabBarHeight)
@@ -113,6 +113,6 @@ extension HomeTabController {
     static let accountIconImageName = "account_tab"
     static let tabIndicatorHeight: CGFloat = 2.0
     static let indicatorWidth = 30.0
-    static let indicatorColorName = "tabIndicatorColor"
+    static let indicatorColor = YralColor.primary300.swiftUIColor
   }
 }

@@ -297,8 +297,8 @@ extension UploadView {
   enum Constants {
     static let uploadProgessVStackSpacing: CGFloat = 30.0
     static let navigationTitle = "Upload Video"
-    static let navigationTitleFont = Font.custom("Kumbh Sans", size: 20).weight(.bold)
-    static let navigationTitleTextColor = Color(red: 0.98, green: 0.98, blue: 0.98)
+    static let navigationTitleFont = YralFont.pt20.bold.swiftUIFont
+    static let navigationTitleTextColor = YralColor.grey50.swiftUIColor
     static let navigationTitlePadding = EdgeInsets(top: 24.0, leading: 0, bottom: 0, trailing: 0)
     static let verticalSpacing = 20.0
     static let horizontalPadding = 16.0
@@ -322,15 +322,15 @@ extension UploadView {
       endPoint: UnitPoint(x: 0.03, y: 1)
     )
     static let uploadButtonTitle = "Upload"
-    static let uploadButtonTextColor = Color(red: 0.98, green: 0.98, blue: 0.98)
-    static let uploadButtonFont = Font.custom("Kumbh Sans", size: 16).weight(.bold)
+    static let uploadButtonTextColor = YralColor.grey50.swiftUIColor
+    static let uploadButtonFont = YralFont.pt16.bold.swiftUIFont
     static let uploadButtonHeight = 45.0
     static let uploadButtonRadius = 8.0
 
     static let videoPlayerHeight = 300.0
     static let videoPlayerRadius = 8.0
-    static let videoPlayerBGColor = Color(red: 0.04, green: 0.04, blue: 0.04)
-    static let videoPlayerStrokeColor = Color(red: 0.13, green: 0.13, blue: 0.13)
+    static let videoPlayerBGColor = YralColor.grey950.swiftUIColor
+    static let videoPlayerStrokeColor = YralColor.grey800.swiftUIColor
     static let closeButtonPadding = EdgeInsets(top: 10, leading: 0, bottom: 0, trailing: 10)
     static let uploadPlayerCloseImageName = "upload_player_close"
     static let captionsViewId = "CaptionsView"

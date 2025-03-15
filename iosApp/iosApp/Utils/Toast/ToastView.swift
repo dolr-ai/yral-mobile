@@ -174,12 +174,12 @@ final class ToastView: UIView {
 extension ToastView {
   enum Constants {
     static let closeButtonImage = UIImage(named: "toast_close")
-    static let titleLabelTextColor = UIColor(red: 0.98, green: 0.98, blue: 0.98, alpha: 1)
-    static let titleLabelFont = UIFont(name: "KumbhSans-Medium", size: 14)
-    static let subtitleLabelTextColor = UIColor(red: 0.831, green: 0.831, blue: 0.831, alpha: 1)
-    static let subtitleLabelFont = UIFont(name: "KumbhSans-Regular", size: 14)
-    static let retryButtonTextColor = UIColor(red: 0.671, green: 0.188, blue: 0.137, alpha: 1)
-    static let retryButtonFont = UIFont(name: "KumbhSans-Medium", size: 14)
+    static let titleLabelTextColor = YralColor.grey50.uiColor
+    static let titleLabelFont = YralFont.pt14.medium.uiFont
+    static let subtitleLabelTextColor = YralColor.grey300.uiColor
+    static let subtitleLabelFont = YralFont.pt14.uiFont
+    static let retryButtonTextColor = YralColor.red400.uiColor
+    static let retryButtonFont = YralFont.pt14.medium.uiFont
     static let cornerRadius = 6.0
     static let topPadding: CGFloat = 12
     static let horizontalPadding: CGFloat = 16
