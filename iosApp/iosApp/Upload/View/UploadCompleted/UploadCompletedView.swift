@@ -102,28 +102,23 @@ extension UploadCompletedView {
     static let iconBottomPadding: CGFloat = 16
 
     static let titleText = "Upload Completed"
-    static let titleColor: Color = .white
-    static let titleFont = Font.custom("Kumbh Sans", size: 18)
-      .weight(.bold)
+    static let titleColor: Color = YralColor.grey0.swiftUIColor
+    static let titleFont = YralFont.pt18.bold.swiftUIFont
     static let descriptionText1 = "We’re processing your video. It’ll be in "
     static let descriptionText2 = "\n'Your Videos'"
     static let descriptionText3 = " under "
     static let descriptionText4 = "My Profile"
     static let descriptionText5 = " soon."
     static let descriptionText6 = "\nHappy scrolling!"
-    static let descriptionColor =  UIColor(red: 0.83, green: 0.83, blue: 0.83, alpha: 1.0)
-    static let descriptionBaseFont = UIFont(name: "Kumbh Sans", size: 16)
-    ?? UIFont.systemFont(ofSize: 16)
-    static let descriptionBoldFont = UIFont(name: "Kumbh Sans-Bold", size: 16)
-    ?? UIFont.boldSystemFont(ofSize: 16)
+    static let descriptionColor =  YralColor.grey300.uiColor
+    static let descriptionBaseFont = YralFont.pt16.uiFont
+    static let descriptionBoldFont = YralFont.pt16.bold.uiFont
     static let descriptionHeight = 66.0
 
     static let descriptionLineHeight = 1.13
     static let buttonTitle = "Done"
-    static let buttonTextColor = Color(red: 1, green: 0.47, blue: 0.76)
     static let buttonHeight: CGFloat = 45
-    static let buttonFont = Font.custom("Kumbh Sans", size: 18)
-      .weight(.bold)
+    static let buttonFont = YralFont.pt18.bold.swiftUIFont
     static let buttonGradient = LinearGradient(
       gradient: Gradient(stops: [
         .init(color: Color(red: 1.0, green: 120/255, blue: 193/255), location: 0.0),

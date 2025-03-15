@@ -98,9 +98,8 @@ extension ProfileOptionsView {
     static let hStackSpacing: CGFloat = 16
     static let hStackPadding: CGFloat = 16
     static let iconSize: CGFloat = 24
-    static let font = Font.custom("Kumbh Sans", size: 16)
-      .weight(.medium)
-    static let textColor = Color.white
+    static let font = YralFont.pt16.medium.swiftUIFont
+    static let textColor = YralColor.grey0.swiftUIColor
     static let closeButtonTitle = "Close"
     static let progressViewSize = 16.0
     static let progressViewCornerRadius = 8.0
