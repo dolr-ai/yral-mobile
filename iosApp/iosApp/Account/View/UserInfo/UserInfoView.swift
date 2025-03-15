@@ -60,19 +60,15 @@ extension UserInfoView {
     static let horizontalSpacing: CGFloat = 16
     static let horizontalPadding: CGFloat = 16
     static let imageSize: CGFloat = 60
-    static let profileLabelFont = Font
-      .custom("Kumbh Sans", fixedSize: 14)
-      .weight(.medium)
-    static let profileLabelColor =  Color(red: 0.64, green: 0.64, blue: 0.64)
+    static let profileLabelFont = YralFont.pt14.medium.swiftUIFont
+    static let profileLabelColor =  YralColor.grey500.swiftUIColor
     static let secondaryVStackSpacing = 16.0
     static let loginButtonTitle = "Login"
-    static let loginButtonTextColor =  Color(red: 0.98, green: 0.98, blue: 0.98)
-    static let loginButtonFont = Font.custom("Kumbh Sans", size: 16)
-      .weight(.bold)
+    static let loginButtonTextColor =  YralColor.grey50.swiftUIColor
+    static let loginButtonFont = YralFont.pt16.bold.swiftUIFont
     static let loginMessageString = "Your Yral account has been setup. Login with Google to not lose progress."
-    static let loginLabelColor = Color.white
-    static let loginLabelFont = Font.custom("Kumbh Sans", size: 12)
-      .weight(.medium)
+    static let loginLabelColor = YralColor.grey0.swiftUIColor
+    static let loginLabelFont = YralFont.pt12.medium.swiftUIFont
     static let loginButtonGradient = LinearGradient(
       stops: [
         Gradient.Stop(color: Color(red: 1, green: 0.47, blue: 0.76), location: 0.00),
@@ -84,6 +80,6 @@ extension UserInfoView {
     )
     static let loginButtonHeight = 45.0
     static let loginButtonCornerRadius: CGFloat = 8
-    static let dividerColor = Color(red: 0.14, green: 0.14, blue: 0.14)
+    static let dividerColor = YralColor.grey800.swiftUIColor
   }
 }
