@@ -202,26 +202,26 @@ extension HashtagView {
   enum Constants {
     static let vStackSpacing = 8.0
     static let addHashtagText = "Add Hashtag"
-    static let addHashtagColor = Color(red: 0.83, green: 0.83, blue: 0.83)
-    static let addHashtagFont = Font.custom("Kumbh Sans", size: 14).weight(.medium)
-    static let enterColor = Color(red: 0.98, green: 0.98, blue: 0.98)
-    static let enterFont = Font.custom("Kumbh Sans", size: 14)
+    static let addHashtagColor = YralColor.grey300.swiftUIColor
+    static let addHashtagFont = YralFont.pt14.medium.swiftUIFont
+    static let enterColor = YralColor.grey50.swiftUIColor
+    static let enterFont = YralFont.pt14.swiftUIFont
     static let placeholderText = "Hit enter to add #hashtags"
-    static let placeholderColor = Color(red: 0.32, green: 0.32, blue: 0.32)
+    static let placeholderColor = YralColor.grey600.swiftUIColor
     static let chipSpacing = 6.0
     static let hStackPadding = 12.0
-    static let hStackBGColor = Color(red: 0.09, green: 0.09, blue: 0.09)
+    static let hStackBGColor = YralColor.grey900.swiftUIColor
     static let hStackRadius = 8.0
-    static let strokeColorSelected = Color(red: 0.64, green: 0.64, blue: 0.64)
-    static let strokeColorUnselected = Color(red: 0.13, green: 0.13, blue: 0.13)
+    static let strokeColorSelected = YralColor.grey400.swiftUIColor
+    static let strokeColorUnselected = YralColor.grey800.swiftUIColor
 
-    static let hashtagChipTextColor = Color(red: 0.98, green: 0.98, blue: 0.98)
-    static let hashtagChipFont = Font.custom("Kumbh Sans", size: 12)
+    static let hashtagChipTextColor = YralColor.grey50.swiftUIColor
+    static let hashtagChipFont = YralFont.pt12.swiftUIFont
     static let hashtagChipPadding: CGFloat = 5
-    static let hashtagChipBackgroundColor = Color(red: 0.25, green: 0.25, blue: 0.25)
+    static let hashtagChipBackgroundColor = YralColor.grey700.swiftUIColor
     static let hashtagChipCornerRadius: CGFloat = 8.0
     static let hashtagChipHeight = 10.0
-    static let tintColor: Color =  Color(red: 0.89, green: 0, blue: 0.48)
+    static let tintColor: Color =  YralColor.primary300.swiftUIColor
   }
 }
 

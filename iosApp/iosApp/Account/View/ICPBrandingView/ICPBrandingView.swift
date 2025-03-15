@@ -19,7 +19,7 @@ struct ICPBrandingView: View {
           .font(Constants.font)
           .foregroundColor(Constants.textColor)
         Text(Constants.icpText)
-          .font(Constants.font.weight(.bold))
+          .font(Constants.font)
           .foregroundColor(Constants.textColor)
       }
       .padding(.vertical, Constants.elementPadding)
@@ -42,9 +42,8 @@ extension ICPBrandingView {
     static let padding: CGFloat = 16
     static let elementPadding = 8.0
     static let cornerRadius: CGFloat = 8
-    static let font = Font.custom("Kumbh Sans", size: 14)
-      .weight(.semibold)
-    static let textColor = Color.white
-    static let background = Color(red: 0.13, green: 0.13, blue: 0.13)
+    static let font = YralFont.pt14.semiBold.swiftUIFont
+    static let textColor = YralColor.grey0.swiftUIColor
+    static let background = YralColor.grey800.swiftUIColor
   }
 }

@@ -210,14 +210,14 @@ extension FeedsCell {
     static let stackViewHeight = 106.0
     static let stackViewBottom = 74.0
     static let stackViewBGColor = UIColor.clear
-    static let actionButtonFont = UIFont(name: "KumbhSans-SemiBold", size: 15) ?? UIFont.systemFont(ofSize: 15)
+    static let actionButtonFont = YralFont.pt16.semiBold.uiFont
     static let likeSelectedImage = UIImage(named: "like_selected_feed")
     static let likeUnSelectedImage = UIImage(named: "like_unselected_feed")
     static let shareButtonImage = UIImage(named: "share_feed")
     static let actionButtonHeight: CGFloat = 51.0
     static let actionButtonWidth: CGFloat = 34.0
     static let actionButtonImagePadding = 4.0
-    static let actionButtonTitleColor = UIColor.white
+    static let actionButtonTitleColor = YralColor.grey50.uiColor
     static let profileInfoLeading = 16.0
     static let profileInfoTop = 8.0
     static let profileInfoTrailing = 60.0
