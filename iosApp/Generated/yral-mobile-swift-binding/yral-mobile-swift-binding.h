@@ -1429,18 +1429,6 @@ void* __swift_bridge__$Vec_RejectionCode$get_mut(void* vec_ptr, uintptr_t index)
 uintptr_t __swift_bridge__$Vec_RejectionCode$len(void* vec_ptr);
 void* __swift_bridge__$Vec_RejectionCode$as_ptr(void* vec_ptr);
 
-typedef struct PostDetailsFromFrontend PostDetailsFromFrontend;
-void __swift_bridge__$PostDetailsFromFrontend$_free(void* self);
-
-void* __swift_bridge__$Vec_PostDetailsFromFrontend$new(void);
-void __swift_bridge__$Vec_PostDetailsFromFrontend$drop(void* vec_ptr);
-void __swift_bridge__$Vec_PostDetailsFromFrontend$push(void* vec_ptr, void* item_ptr);
-void* __swift_bridge__$Vec_PostDetailsFromFrontend$pop(void* vec_ptr);
-void* __swift_bridge__$Vec_PostDetailsFromFrontend$get(void* vec_ptr, uintptr_t index);
-void* __swift_bridge__$Vec_PostDetailsFromFrontend$get_mut(void* vec_ptr, uintptr_t index);
-uintptr_t __swift_bridge__$Vec_PostDetailsFromFrontend$len(void* vec_ptr);
-void* __swift_bridge__$Vec_PostDetailsFromFrontend$as_ptr(void* vec_ptr);
-
 typedef struct Result_ Result_;
 void __swift_bridge__$Result_$_free(void* self);
 
@@ -1464,6 +1452,18 @@ void* __swift_bridge__$Vec_PostDetailsForFrontend$get(void* vec_ptr, uintptr_t i
 void* __swift_bridge__$Vec_PostDetailsForFrontend$get_mut(void* vec_ptr, uintptr_t index);
 uintptr_t __swift_bridge__$Vec_PostDetailsForFrontend$len(void* vec_ptr);
 void* __swift_bridge__$Vec_PostDetailsForFrontend$as_ptr(void* vec_ptr);
+
+typedef struct PostDetailsFromFrontend PostDetailsFromFrontend;
+void __swift_bridge__$PostDetailsFromFrontend$_free(void* self);
+
+void* __swift_bridge__$Vec_PostDetailsFromFrontend$new(void);
+void __swift_bridge__$Vec_PostDetailsFromFrontend$drop(void* vec_ptr);
+void __swift_bridge__$Vec_PostDetailsFromFrontend$push(void* vec_ptr, void* item_ptr);
+void* __swift_bridge__$Vec_PostDetailsFromFrontend$pop(void* vec_ptr);
+void* __swift_bridge__$Vec_PostDetailsFromFrontend$get(void* vec_ptr, uintptr_t index);
+void* __swift_bridge__$Vec_PostDetailsFromFrontend$get_mut(void* vec_ptr, uintptr_t index);
+uintptr_t __swift_bridge__$Vec_PostDetailsFromFrontend$len(void* vec_ptr);
+void* __swift_bridge__$Vec_PostDetailsFromFrontend$as_ptr(void* vec_ptr);
 
 typedef struct Service Service;
 void __swift_bridge__$Service$_free(void* self);
@@ -1506,6 +1506,11 @@ struct RustStr __swift_bridge__$PostDetailsForFrontend$description(void* self);
 uint64_t __swift_bridge__$PostDetailsForFrontend$like_count(void* self);
 bool __swift_bridge__$PostDetailsForFrontend$liked_by_me(void* self);
 struct RustStr __swift_bridge__$PostDetailsForFrontend$created_by_profile_photo_url(void* self);
+bool __swift_bridge__$PostDetailsFromFrontend$is_nsfw(void* self);
+void* __swift_bridge__$PostDetailsFromFrontend$hashtags(void* self);
+struct RustStr __swift_bridge__$PostDetailsFromFrontend$description(void* self);
+struct RustStr __swift_bridge__$PostDetailsFromFrontend$video_uid(void* self);
+bool __swift_bridge__$PostDetailsFromFrontend$creator_consent_for_inclusion_in_hot_or_not(void* self);
 struct __private__ResultPtrAndPtr __swift_bridge__$Service$new(void* principal, void* identity);
 void __swift_bridge__$Service$add_device_id(void* callback_wrapper, void __swift_bridge__$Service$add_device_id$async(void* callback_wrapper, struct __private__ResultPtrAndPtr ret), void* self, void* arg0);
 void __swift_bridge__$Service$add_post_v_2(void* callback_wrapper, void __swift_bridge__$Service$add_post_v_2$async(void* callback_wrapper, struct __private__ResultPtrAndPtr ret), void* self, void* arg0);
@@ -1588,6 +1593,8 @@ struct __private__ResultPtrAndPtr __swift_bridge__$get_secp256k1_identity(void* 
 struct __private__ResultPtrAndPtr __swift_bridge__$get_jwk_ec_key(void* json_string);
 struct __private__ResultPtrAndPtr __swift_bridge__$delegated_identity_from_bytes(struct __private__FfiSlice data);
 struct __private__ResultPtrAndPtr __swift_bridge__$delegated_identity_wire_from_bytes(struct __private__FfiSlice data);
+struct __private__ResultPtrAndPtr __swift_bridge__$delegate_identity_with_max_age_public(void* parent_wire, void* new_pub_jwk_json, uint64_t max_age_seconds);
+void* __swift_bridge__$delegated_identity_wire_to_json(void* wire);
 void __swift_bridge__$authenticate_with_network(void* callback_wrapper, void __swift_bridge__$authenticate_with_network$async(void* callback_wrapper, struct __private__ResultPtrAndPtr ret), void* auth, void* referrer);
 void* __swift_bridge__$CanistersWrapper$get_canister_principal(void* self);
 void* __swift_bridge__$CanistersWrapper$get_canister_principal_string(void* self);

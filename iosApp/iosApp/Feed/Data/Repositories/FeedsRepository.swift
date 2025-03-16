@@ -21,52 +21,76 @@ class FeedsRepository: FeedRepositoryProtocol {
     self.authClient = authClient
   }
 
-  func getInitialFeeds(numResults: Int) async throws {
+  func getInitialFeeds(numResults: Int) async -> Result<Void, FeedError> {
     guard let principal = authClient.principalString else {
-      throw AuthError.authenticationFailed("Missing principal")
+      return .failure(FeedError.authError(.authenticationFailed("Missing principal")))
     }
-    var cacheResponse = try await httpService.performRequest(
-      for: CacheEndPoints.getUserCanisterCache(
-        canisterID: principal,
-        numPosts: numResults
-      ),
-      decodeAs: [CacheDTO].self
-    )
-    if cacheResponse.isEmpty {
+    var cacheResponse: [CacheDTO]
+    do {
       cacheResponse = try await httpService.performRequest(
-        for: CacheEndPoints.getGlobalCache(
+        for: CacheEndPoints.getUserCanisterCache(
+          canisterID: principal,
           numPosts: numResults
         ),
         decodeAs: [CacheDTO].self
       )
+
+      if cacheResponse.isEmpty {
+        cacheResponse = try await httpService.performRequest(
+          for: CacheEndPoints.getGlobalCache(
+            numPosts: numResults
+          ),
+          decodeAs: [CacheDTO].self
+        )
+      }
+    } catch {
+      switch error {
+      case let error as NetworkError:
+        return .failure(FeedError.networkError(error))
+      default:
+        return .failure(FeedError.unknown(error.localizedDescription))
+      }
     }
-    _ = try await cacheResponse.asyncMap { feed in
-      do {
-        let feed = try await self.mapToFeedResults(feed: feed)
-        self.feedsUpdateSubject.send([feed])
-      } catch {
-        print(error)
+    do {
+      _ = try await cacheResponse.asyncMap { feed in
+        let mappedFeed = try await self.mapToFeedResults(feed: feed)
+        self.feedsUpdateSubject.send([mappedFeed])
+      }
+    } catch {
+      switch error {
+      case let error as NetworkError:
+        return .failure(FeedError.networkError(error))
+      case let error as RustError:
+        return .failure(FeedError.rustError(error))
+      default:
+        return .failure(FeedError.unknown(error.localizedDescription))
       }
     }
     self.feedsUpdateSubject.send(completion: .finished)
+    return .success(())
   }
 
-  func fetchMoreFeeds(request: MoreFeedsRequest) async -> Result<[FeedResult], Error> {
+  func fetchMoreFeeds(request: MoreFeedsRequest) async -> Result<[FeedResult], FeedError> {
+    var mlRequest = MlFeed_FeedRequest()
+    mlRequest.canisterID = authClient.principalString ?? ""
+    mlRequest.filterPosts = request.filteredPosts
+    mlRequest.numResults = UInt32(request.numResults)
+    let response: MlFeed_FeedResponse
     do {
-      var mlRequest = MlFeed_FeedRequest()
-      mlRequest.canisterID = authClient.principalString ?? ""
-      mlRequest.filterPosts = request.filteredPosts
-      mlRequest.numResults = UInt32(request.numResults)
-      let response = try await mlClient.get_feed_clean(
+      response = try await mlClient.get_feed_clean(
         mlRequest
       ).response.get()
+    } catch {
+      return .failure(FeedError.networkError(.grpc(error.localizedDescription)))
+    }
+    do {
       let feeds = try await response.feed.asyncMap { feed in
         let feedResult = try await self.mapToFeedResults(feed: feed)
         return feedResult
       }
       return .success(feeds)
     } catch {
-      return .failure(error)
+      return .failure(FeedError.rustError(RustError.unknown(error.localizedDescription)))
     }
   }
 
@@ -97,15 +121,27 @@ class FeedsRepository: FeedRepositoryProtocol {
     }
   }
 
-  func toggleLikeStatus(for request: LikeQuery) async throws -> Result<LikeResult, Error> {
+  func toggleLikeStatus(for request: LikeQuery) async -> Result<LikeResult, FeedError> {
+    let identity: DelegatedIdentity
     do {
-      let identity = try self.authClient.generateNewDelegatedIdentity()
+      identity = try self.authClient.generateNewDelegatedIdentity()
+    } catch {
+      switch error {
+      case let error as NetworkError:
+        return .failure(FeedError.networkError(error))
+      case let error as RustError:
+        return .failure(FeedError.rustError(error))
+      default:
+        return .failure(FeedError.unknown(error.localizedDescription))
+      }
+    }
+    do {
       let principal = try get_principal(request.canisterID)
       let service = try Service(principal, identity)
       let status = try await service.update_post_toggle_like_status_by_caller(UInt64(request.postID))
       return .success(LikeResult(status: status, index: request.index))
     } catch {
-      return .failure(error)
+      return .failure(FeedError.rustError(RustError.unknown(error.localizedDescription)))
     }
   }
 }

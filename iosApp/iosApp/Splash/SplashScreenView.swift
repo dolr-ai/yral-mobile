@@ -8,15 +8,30 @@
 import SwiftUI
 
 struct SplashScreenView: View {
+  @State var isInitialAnimationComplete = false
   var body: some View {
     ZStack {
-      Color.white.ignoresSafeArea()
-      LottieView(name: Constants.splashAnimation,
-                 loopMode: .playOnce,
-                 animationSpeed: 1.0)
-      .ignoresSafeArea()
-      .background(.black)
-      .edgesIgnoringSafeArea(.all)
+      Color.black.ignoresSafeArea()
+      if isInitialAnimationComplete {
+        LottieView(name: Constants.lightningAnimation,
+                   loopMode: .loop,
+                   animationSpeed: .one) {
+        }
+                   .ignoresSafeArea()
+                   .background(.black)
+                   .edgesIgnoringSafeArea(.all)
+      } else {
+        LottieView(name: Constants.splashAnimation,
+                   loopMode: .playOnce,
+                   animationSpeed: .one) {
+          DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.one) {
+            isInitialAnimationComplete = true
+          }
+        }
+                   .ignoresSafeArea()
+                   .background(.black)
+                   .edgesIgnoringSafeArea(.all)
+      }
     }
   }
 }
@@ -24,5 +39,6 @@ struct SplashScreenView: View {
 extension SplashScreenView {
   enum Constants {
     static let splashAnimation = "Splash_Lottie"
+    static let lightningAnimation = "Lightning_Lottie"
   }
 }
