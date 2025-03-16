@@ -26,7 +26,7 @@ final class AccountDIContainer {
   func makeAccountViewModel() -> AccountViewModel {
     AccountViewModel(
       useCase: AccountUseCase(
-        profileRepository: makeAccountRepository(),
+        accountRepository: makeAccountRepository(),
         crashReporter: dependencies.crashReporter
       )
     )

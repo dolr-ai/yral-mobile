@@ -15,6 +15,7 @@ extension CGFloat {
   static let one: CGFloat = 1
   static let two: CGFloat = 2
   static let three: CGFloat = 3
+  static let four: CGFloat = 4
   static let hundred: CGFloat = 100.0
   static let apiDelay: CGFloat = 0.2
 }
