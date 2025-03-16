@@ -21,9 +21,16 @@ struct AccountView: View {
       VStack(spacing: Constants.vStackSpacing) {
         switch viewModel.state {
         case .successfullyFetched(let info):
-          UserInfoView(accountInfo: .constant(info))
+          UserInfoView(accountInfo: .constant(info), shouldApplySpacing: true)
         default:
-          UserInfoView(accountInfo: .constant(AccountInfo(imageURL: URL(fileURLWithPath: ""), canisterID: "")))
+          UserInfoView(
+            accountInfo: .constant(
+              AccountInfo(
+                imageURL: URL(fileURLWithPath: ""),
+                canisterID: "")
+            )
+            , shouldApplySpacing: true
+          )
         }
         ProfileOptionsView()
         ShareOptionsView()
@@ -42,7 +49,7 @@ struct AccountView: View {
   AccountView(
     viewModel: AccountViewModel(
       useCase: AccountUseCase(
-        profileRepository: AccountRepository(httpService: HTTPService(),
+        accountRepository: AccountRepository(httpService: HTTPService(),
                                              authClient:
                                               DefaultAuthClient(
                                                 networkService: HTTPService(),
