@@ -833,13 +833,16 @@ pub struct Service {
 }
 
 impl Service {
-    pub fn new(principal: Principal, identity: DelegatedIdentity) -> std::result::Result<Service, PrincipalError> {
+    pub fn new(
+        principal: Principal,
+        identity: DelegatedIdentity,
+    ) -> std::result::Result<Service, PrincipalError> {
         let agent = Agent::builder()
             .with_url("https://ic0.app/")
             .with_identity(identity)
             .build()
             .expect("Failed to create agent");
-                
+
         Ok(Service {
             principal: principal,
             agent: Arc::new(agent),
@@ -1083,7 +1086,7 @@ impl Service {
             .with_arg(args)
             .call()
             .await;
-    
+
         match call_result {
             Ok(bytes) => {
                 // Decode the bytes if the call succeeded

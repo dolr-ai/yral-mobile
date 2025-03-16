@@ -20,6 +20,10 @@
 	<string>1</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Allow Yral access to camera</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Allow Yral access to microphone</string>
 	<key>UIAppFonts</key>
 	<array>
 		<string>KumbhSans-Black.ttf</string>

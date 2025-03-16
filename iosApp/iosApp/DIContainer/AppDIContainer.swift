@@ -31,8 +31,17 @@ final class AppDIContainer {
   }()
 
   lazy var authClient: DefaultAuthClient = {
-    let client = DefaultAuthClient(networkService: HTTPService())
+    let client = DefaultAuthClient(
+      networkService: HTTPService(),
+      crashReporter: crashReporter
+    )
     return client
+  }()
+
+  lazy var crashReporter: CrashReporter = {
+    let firebase = FirebaseCrashlyticsReporter()
+    let composite = CompositeCrashReporter(reporters: [firebase])
+    return composite
   }()
 
   func makeFeedDIContainer() -> FeedDIContainer {
@@ -40,16 +49,28 @@ final class AppDIContainer {
       dependencies: FeedDIContainer.Dependencies(
         mlfeedService: mlFeedClient,
         httpService: HTTPService(),
-        authClient: authClient
+        authClient: authClient,
+        crashReporter: crashReporter
       )
     )
   }
 
-  func makeProfileDIContainer() -> ProfileDIContainer {
-    return ProfileDIContainer(
-      dependencies: ProfileDIContainer.Dependencies(
+  func makeAccountDIContainer() -> AccountDIContainer {
+    return AccountDIContainer(
+      dependencies: AccountDIContainer.Dependencies(
         httpService: HTTPService(),
-        authClient: authClient
+        authClient: authClient,
+        crashReporter: crashReporter
+      )
+    )
+  }
+
+  func makeUploadDIContainer() -> UploadDIContainer {
+    return UploadDIContainer(
+      dependencies: UploadDIContainer.Dependencies(
+        httpService: HTTPService(baseURLString: appConfiguration.uploadBaseURLString),
+        authClient: authClient,
+        crashReporter: crashReporter
       )
     )
   }

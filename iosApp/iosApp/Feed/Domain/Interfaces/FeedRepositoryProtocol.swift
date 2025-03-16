@@ -8,8 +8,8 @@
 import Combine
 
 protocol FeedRepositoryProtocol {
-  func getInitialFeeds(numResults: Int) async throws
-  func fetchMoreFeeds(request: MoreFeedsRequest) async throws -> Result<[FeedResult], Error>
-  func toggleLikeStatus(for request: LikeQuery) async throws -> Result<LikeResult, Error>
+  func getInitialFeeds(numResults: Int) async -> Result<Void, FeedError>
+  func fetchMoreFeeds(request: MoreFeedsRequest) async -> Result<[FeedResult], FeedError>
+  func toggleLikeStatus(for request: LikeQuery) async -> Result<LikeResult, FeedError>
   var feedUpdates: AnyPublisher<[FeedResult], Never> { get }
 }
