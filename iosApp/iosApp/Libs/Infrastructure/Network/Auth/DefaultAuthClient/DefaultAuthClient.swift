@@ -17,7 +17,6 @@ class DefaultAuthClient: AuthClient {
   private let cookieStorage = HTTPCookieStorage.shared
   private(set) var identityData: Data?
   private let keychainIdentityKey = Constants.keychainIdentity
-
   private let crashReporter: CrashReporter
 
   init(networkService: NetworkService, crashReporter: CrashReporter) {
@@ -29,7 +28,13 @@ class DefaultAuthClient: AuthClient {
   func initialize() async throws {
     try await recordThrowingOperation {
       if let existingCookie = cookieStorage.cookies?.first(where: { $0.name == AuthConstants.cookieName }) {
-        try await refreshAuthIfNeeded(using: existingCookie)
+        do {
+          try await refreshAuthIfNeeded(using: existingCookie)
+        } catch {
+          crashReporter.recordException(error)
+          crashReporter.log("Error received from refreshAuthIfNeeded")
+          try await fetchAndSetAuthCookie()
+        }
       } else {
         try await fetchAndSetAuthCookie()
       }
@@ -49,7 +54,9 @@ class DefaultAuthClient: AuthClient {
             return
           }
           identityData = data
-          try await handleExtractIdentityResponse(from: data)
+          if let identityData {
+            try await handleExtractIdentityResponse(from: identityData)
+          }
         } catch {
           try? KeychainHelper.deleteItem(for: keychainIdentityKey)
           identityData = nil
@@ -137,8 +144,10 @@ class DefaultAuthClient: AuthClient {
       let endpoint = AuthEndpoints.extractIdentity(cookie: cookie)
       let data = try await networkService.performRequest(for: endpoint)
       identityData = data
-      try KeychainHelper.store(data: data, for: keychainIdentityKey)
-      try await handleExtractIdentityResponse(from: data)
+      if let identityData {
+        try KeychainHelper.store(data: identityData, for: keychainIdentityKey)
+        try await handleExtractIdentityResponse(from: identityData)
+      }
     }
   }
 
@@ -147,6 +156,7 @@ class DefaultAuthClient: AuthClient {
       guard !data.isEmpty else {
         throw NetworkError.invalidResponse("Empty identity data received.")
       }
+      crashReporter.log("Reached unsafe bytes start")
       let (wire, identity): (DelegatedIdentityWire, DelegatedIdentity) = try data.withUnsafeBytes { buffer in
         guard buffer.count > 0 else {
           throw NetworkError.invalidResponse("Empty data received")
@@ -156,11 +166,11 @@ class DefaultAuthClient: AuthClient {
         let identity = try delegated_identity_from_bytes(uint8Buffer)
         return (wire, identity)
       }
-
+      crashReporter.log("Reached unsafe bytes end")
       let canistersWrapper = try await authenticate_with_network(wire, nil)
       let principal = canistersWrapper.get_canister_principal()
       let principalString = canistersWrapper.get_canister_principal_string().toString()
-
+      crashReporter.log("canistersWrapper executed succesfully")
       await MainActor.run {
         self.identity = identity
         self.principal = principal
