@@ -188,6 +188,14 @@
 		AC99BB982D848667008012C2 /* YralFont.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC99BB962D848654008012C2 /* YralFont.swift */; };
 		AC99BB9A2D84913C008012C2 /* YralColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC99BB992D84913C008012C2 /* YralColor.swift */; };
 		AC99BB9B2D84913C008012C2 /* YralColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC99BB992D84913C008012C2 /* YralColor.swift */; };
+		AC99BBB02D86C563008012C2 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC99BBAF2D86C55E008012C2 /* ProfileView.swift */; };
+		AC99BBB12D86C563008012C2 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC99BBAF2D86C55E008012C2 /* ProfileView.swift */; };
+		AC99BBB72D86C645008012C2 /* ProfileDIContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC99BBB62D86C63F008012C2 /* ProfileDIContainer.swift */; };
+		AC99BBB82D86C645008012C2 /* ProfileDIContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC99BBB62D86C63F008012C2 /* ProfileDIContainer.swift */; };
+		AC99BBBA2D86C8B1008012C2 /* ProfileViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC99BBB92D86C8AC008012C2 /* ProfileViewModel.swift */; };
+		AC99BBBB2D86C8B1008012C2 /* ProfileViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC99BBB92D86C8AC008012C2 /* ProfileViewModel.swift */; };
+		AC99BBC12D86FF81008012C2 /* ProfileEmptyState.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC99BBC02D86FF7D008012C2 /* ProfileEmptyState.swift */; };
+		AC99BBC22D86FF81008012C2 /* ProfileEmptyState.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC99BBC02D86FF7D008012C2 /* ProfileEmptyState.swift */; };
 		AC9B77E62D58C84000270FC9 /* HLSDownloadManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9B77D52D58C2F300270FC9 /* HLSDownloadManagerTests.swift */; };
 		ACB46A262D0EC0A3002E200C /* YralPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A252D0EC09C002E200C /* YralPlayer.swift */; };
 		ACB46A272D0EC0A3002E200C /* YralPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A252D0EC09C002E200C /* YralPlayer.swift */; };
@@ -414,6 +422,10 @@
 		AC99BB912D834387008012C2 /* Lightning_Lottie.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Lightning_Lottie.json; sourceTree = "<group>"; };
 		AC99BB962D848654008012C2 /* YralFont.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralFont.swift; sourceTree = "<group>"; };
 		AC99BB992D84913C008012C2 /* YralColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralColor.swift; sourceTree = "<group>"; };
+		AC99BBAF2D86C55E008012C2 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		AC99BBB62D86C63F008012C2 /* ProfileDIContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileDIContainer.swift; sourceTree = "<group>"; };
+		AC99BBB92D86C8AC008012C2 /* ProfileViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileViewModel.swift; sourceTree = "<group>"; };
+		AC99BBC02D86FF7D008012C2 /* ProfileEmptyState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileEmptyState.swift; sourceTree = "<group>"; };
 		AC9B77D52D58C2F300270FC9 /* HLSDownloadManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HLSDownloadManagerTests.swift; sourceTree = "<group>"; };
 		AC9B77DD2D58C7E300270FC9 /* YralTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = YralTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACB46A252D0EC09C002E200C /* YralPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralPlayer.swift; sourceTree = "<group>"; };
@@ -557,8 +569,9 @@
 				AC638BF72D230DA900481E94 /* HomeTabController */,
 				ACEBE9962D0C4AA50056F033 /* Feed */,
 				AC9B77E92D5A6F2300270FC9 /* Upload */,
+				AC99BBAE2D86C54D008012C2 /* Profile */,
 				AC32E4292D27A412001DDA43 /* Account */,
-				AC6BECB92D09F0F0002E2021 /* Infrastructure */,
+				AC99BBBD2D86F3C9008012C2 /* Libs */,
 				AC26CA662D806501006ADA75 /* Utils */,
 				ACC0F3992D2ED61100FA5BD0 /* Resources */,
 				7555FF82242A565900829871 /* ContentView.swift */,
@@ -755,8 +768,6 @@
 			children = (
 				AC32E4492D296593001DDA43 /* View */,
 				AC32E44D2D29661B001DDA43 /* ViewModel */,
-				AC32E4512D29662C001DDA43 /* Domain */,
-				AC32E4552D29663A001DDA43 /* Data */,
 			);
 			path = Account;
 			sourceTree = "<group>";
@@ -796,7 +807,6 @@
 			isa = PBXGroup;
 			children = (
 				AC32E4642D2991AD001DDA43 /* AccountView.swift */,
-				AC32E4432D295EA0001DDA43 /* UserInfo */,
 				AC32E4632D298E0E001DDA43 /* OptionsView */,
 				AC32E46D2D299E02001DDA43 /* ShareOptions */,
 				AC32E4712D299E77001DDA43 /* ICPBrandingView */,
@@ -1035,6 +1045,83 @@
 			path = View;
 			sourceTree = "<group>";
 		};
+		AC99BBAE2D86C54D008012C2 /* Profile */ = {
+			isa = PBXGroup;
+			children = (
+				AC99BBB22D86C568008012C2 /* View */,
+				AC99BBB32D86C571008012C2 /* ViewModel */,
+				AC99BBB42D86C579008012C2 /* Domain */,
+				AC99BBB52D86C581008012C2 /* Data */,
+			);
+			path = Profile;
+			sourceTree = "<group>";
+		};
+		AC99BBB22D86C568008012C2 /* View */ = {
+			isa = PBXGroup;
+			children = (
+				AC99BBAF2D86C55E008012C2 /* ProfileView.swift */,
+				AC99BBBF2D86FF76008012C2 /* ProfileEmptyState */,
+			);
+			path = View;
+			sourceTree = "<group>";
+		};
+		AC99BBB32D86C571008012C2 /* ViewModel */ = {
+			isa = PBXGroup;
+			children = (
+				AC99BBB92D86C8AC008012C2 /* ProfileViewModel.swift */,
+			);
+			path = ViewModel;
+			sourceTree = "<group>";
+		};
+		AC99BBB42D86C579008012C2 /* Domain */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Domain;
+			sourceTree = "<group>";
+		};
+		AC99BBB52D86C581008012C2 /* Data */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Data;
+			sourceTree = "<group>";
+		};
+		AC99BBBC2D86F354008012C2 /* AccountInfo */ = {
+			isa = PBXGroup;
+			children = (
+				AC99BBBE2D86FD5B008012C2 /* View */,
+				AC32E4512D29662C001DDA43 /* Domain */,
+				AC32E4552D29663A001DDA43 /* Data */,
+			);
+			path = AccountInfo;
+			sourceTree = "<group>";
+		};
+		AC99BBBD2D86F3C9008012C2 /* Libs */ = {
+			isa = PBXGroup;
+			children = (
+				AC99BBBC2D86F354008012C2 /* AccountInfo */,
+				AC6BECB92D09F0F0002E2021 /* Infrastructure */,
+			);
+			path = Libs;
+			sourceTree = "<group>";
+		};
+		AC99BBBE2D86FD5B008012C2 /* View */ = {
+			isa = PBXGroup;
+			children = (
+				AC32E4432D295EA0001DDA43 /* UserInfo */,
+			);
+			path = View;
+			sourceTree = "<group>";
+		};
+		AC99BBBF2D86FF76008012C2 /* ProfileEmptyState */ = {
+			isa = PBXGroup;
+			children = (
+				AC99BBC02D86FF7D008012C2 /* ProfileEmptyState.swift */,
+			);
+			path = ProfileEmptyState;
+			sourceTree = "<group>";
+		};
 		AC9B77D82D58C2FA00270FC9 /* HLSDownloadManager */ = {
 			isa = PBXGroup;
 			children = (
@@ -1069,8 +1156,9 @@
 			children = (
 				ACB46A2B2D0EC82F002E200C /* AppDIContainer.swift */,
 				ACB46A352D0EC991002E200C /* FeedDIContainer.swift */,
-				AC32E4672D2998D0001DDA43 /* AccountDIContainer.swift */,
 				AC92940A2D64C9BB003DB102 /* UploadDIContainer.swift */,
+				AC99BBB62D86C63F008012C2 /* ProfileDIContainer.swift */,
+				AC32E4672D2998D0001DDA43 /* AccountDIContainer.swift */,
 			);
 			path = DIContainer;
 			sourceTree = "<group>";
@@ -1664,10 +1752,12 @@
 				ACEBF7EF2D6F847300B594A0 /* ToastManager.swift in Sources */,
 				ACEBF7E22D6F505A00B594A0 /* UploadCompletedView.swift in Sources */,
 				AC7F7EAE2D771EB300215162 /* UploadEndpointResponse.swift in Sources */,
+				AC99BBBB2D86C8B1008012C2 /* ProfileViewModel.swift in Sources */,
 				AC99BB572D81F517008012C2 /* AttributedText.swift in Sources */,
 				ACB46A2D2D0EC833002E200C /* AppDIContainer.swift in Sources */,
 				AC32E3F72D26FEB9001DDA43 /* UIColor+Extensions.swift in Sources */,
 				AC7F7EBD2D77335900215162 /* AuthErrors.swift in Sources */,
+				AC99BBB82D86C645008012C2 /* ProfileDIContainer.swift in Sources */,
 				ACC0F3972D2ED5D700FA5BD0 /* LottieView.swift in Sources */,
 				ACB46A7D2D105BEB002E200C /* UIKitInitializers.swift in Sources */,
 				AC26CA562D80281D006ADA75 /* FirebaseCrashlyticsReporter.swift in Sources */,
@@ -1685,6 +1775,7 @@
 				AC4DECA92D3E06AC008EC8F5 /* FooterLoaderView.swift in Sources */,
 				AC6BECBD2D09F68C002E2021 /* Endpoint.swift in Sources */,
 				AC09A9B32CDB775C009A39A4 /* SwiftBridgeCore.swift in Sources */,
+				AC99BBC12D86FF81008012C2 /* ProfileEmptyState.swift in Sources */,
 				ACEBF7F72D70A8D700B594A0 /* AnimatedCheckbox.swift in Sources */,
 				AC7F7EA52D771D5D00215162 /* UploadViewModel.swift in Sources */,
 				AC7F7EC82D78696200215162 /* UploadDelegate.swift in Sources */,
@@ -1712,6 +1803,7 @@
 				AC7F7ECE2D78707200215162 /* UploadVideoRequest.swift in Sources */,
 				AC6BECC22D09F91C002E2021 /* HTTPService.swift in Sources */,
 				ACC0F3942D2ED5B700FA5BD0 /* SplashScreenView.swift in Sources */,
+				AC99BBB12D86C563008012C2 /* ProfileView.swift in Sources */,
 				AC99BB972D848667008012C2 /* YralFont.swift in Sources */,
 				ACEBF7ED2D6F845C00B594A0 /* ToastView.swift in Sources */,
 				AC32E4742D2AD67D001DDA43 /* ToggleLikeUseCase.swift in Sources */,
@@ -1786,10 +1878,12 @@
 				ACEBF7F02D6F847300B594A0 /* ToastManager.swift in Sources */,
 				ACEBF7E12D6F505A00B594A0 /* UploadCompletedView.swift in Sources */,
 				AC7F7EAD2D771EB300215162 /* UploadEndpointResponse.swift in Sources */,
+				AC99BBBA2D86C8B1008012C2 /* ProfileViewModel.swift in Sources */,
 				AC99BB582D81F517008012C2 /* AttributedText.swift in Sources */,
 				ACB46A2C2D0EC833002E200C /* AppDIContainer.swift in Sources */,
 				AC32E3F62D26FEB9001DDA43 /* UIColor+Extensions.swift in Sources */,
 				AC7F7EBC2D77335900215162 /* AuthErrors.swift in Sources */,
+				AC99BBB72D86C645008012C2 /* ProfileDIContainer.swift in Sources */,
 				ACC0F3982D2ED5D700FA5BD0 /* LottieView.swift in Sources */,
 				ACB46A7C2D105BEB002E200C /* UIKitInitializers.swift in Sources */,
 				AC26CA552D80281D006ADA75 /* FirebaseCrashlyticsReporter.swift in Sources */,
@@ -1807,6 +1901,7 @@
 				AC4DECAA2D3E06AC008EC8F5 /* FooterLoaderView.swift in Sources */,
 				AC6BECBC2D09F68C002E2021 /* Endpoint.swift in Sources */,
 				ACD941892CFF575C0038FCB6 /* SwiftBridgeCore.swift in Sources */,
+				AC99BBC22D86FF81008012C2 /* ProfileEmptyState.swift in Sources */,
 				ACEBF7F62D70A8D700B594A0 /* AnimatedCheckbox.swift in Sources */,
 				AC7F7EA62D771D5D00215162 /* UploadViewModel.swift in Sources */,
 				AC7F7EC72D78696200215162 /* UploadDelegate.swift in Sources */,
@@ -1834,6 +1929,7 @@
 				AC7F7ECD2D78707200215162 /* UploadVideoRequest.swift in Sources */,
 				AC6BECC32D09F91C002E2021 /* HTTPService.swift in Sources */,
 				ACC0F3952D2ED5B700FA5BD0 /* SplashScreenView.swift in Sources */,
+				AC99BBB02D86C563008012C2 /* ProfileView.swift in Sources */,
 				AC99BB982D848667008012C2 /* YralFont.swift in Sources */,
 				ACEBF7EC2D6F845C00B594A0 /* ToastView.swift in Sources */,
 				AC32E4732D2AD67D001DDA43 /* ToggleLikeUseCase.swift in Sources */,

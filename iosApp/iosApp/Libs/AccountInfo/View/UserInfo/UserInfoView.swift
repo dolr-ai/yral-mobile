@@ -10,10 +10,18 @@ import SwiftUI
 
 struct UserInfoView: View {
   @Binding var accountInfo: AccountInfo?
+  var shouldApplySpacing: Bool
+
+  init(accountInfo: Binding<AccountInfo?>, shouldApplySpacing: Bool) {
+    self._accountInfo = accountInfo
+    self.shouldApplySpacing = shouldApplySpacing
+  }
 
   var body: some View {
     VStack(spacing: Constants.verticalSpacing) {
-      Spacer().frame(width: Constants.verticalSpacing)
+      if shouldApplySpacing {
+        Spacer().frame(width: Constants.verticalSpacing)
+      }
       HStack(spacing: Constants.horizontalSpacing) {
         URLImage(url: accountInfo?.imageURL)
           .frame(
@@ -44,14 +52,9 @@ struct UserInfoView: View {
         .fill(Constants.dividerColor)
         .frame(height: .one)
     }
-    .padding([.horizontal], Constants.horizontalPadding)
+    .padding([.horizontal], shouldApplySpacing ? Constants.horizontalPadding : .zero)
     .background(Color.black.edgesIgnoringSafeArea(.all))
   }
-}
-
-#Preview {
-  @State var info: AccountInfo? = AccountInfo(imageURL: URL(fileURLWithPath: ""), canisterID: "")
-  UserInfoView(accountInfo: $info)
 }
 
 extension UserInfoView {

@@ -14,6 +14,7 @@ struct FeedsViewControllerWrapper: UIViewControllerRepresentable {
 
   func makeUIViewController(context: Context) -> UINavigationController {
     let navigationController = UINavigationController(rootViewController: feedsViewController)
+    navigationController.edgesForExtendedLayout = .all
     navigationController.navigationBar.isHidden = true
     feedsViewController.edgesForExtendedLayout = .all
     feedsViewController.extendedLayoutIncludesOpaqueBars = true
