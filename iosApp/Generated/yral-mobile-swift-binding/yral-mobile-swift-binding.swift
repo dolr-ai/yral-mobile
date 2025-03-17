@@ -9097,6 +9097,10 @@ extension PostDetailsForFrontendRef {
     public func created_by_profile_photo_url() -> Optional<RustStr> {
         { let val = __swift_bridge__$PostDetailsForFrontend$created_by_profile_photo_url(ptr); if val.start != nil { return val; } else { return nil; } }()
     }
+
+    public func created_by_user_principal_id() -> RustString {
+        RustString(ptr: __swift_bridge__$PostDetailsForFrontend$created_by_user_principal_id(ptr))
+    }
 }
 extension PostDetailsForFrontend: Vectorizable {
     public static func vecOfSelfNew() -> UnsafeMutableRawPointer {
@@ -9257,6 +9261,7 @@ public class Service: ServiceRefMut {
         }
     }
 }
+
 extension Service {
   public convenience init(_ principal: Principal, _ identity: DelegatedIdentity) throws {
     let val = __swift_bridge__$Service$new(
@@ -9271,6 +9276,7 @@ extension Service {
     }
   }
 }
+
 public class ServiceRefMut: ServiceRef {
     public override init(ptr: UnsafeMutableRawPointer) {
         super.init(ptr: ptr)
@@ -11670,6 +11676,10 @@ extension CanistersWrapperRef {
 
     public func get_user_principal() -> Principal {
         Principal(ptr: __swift_bridge__$CanistersWrapper$get_user_principal(ptr))
+    }
+
+    public func get_user_principal_string() -> RustString {
+        RustString(ptr: __swift_bridge__$CanistersWrapper$get_user_principal_string(ptr))
     }
 }
 extension CanistersWrapper: Vectorizable {
