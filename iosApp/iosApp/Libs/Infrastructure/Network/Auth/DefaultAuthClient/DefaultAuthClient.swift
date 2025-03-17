@@ -11,8 +11,10 @@ import secp256k1
 
 class DefaultAuthClient: AuthClient {
   private(set) var identity: DelegatedIdentity?
-  private(set) var principal: Principal?
-  private(set) var principalString: String?
+  private(set) var canisterPrincipal: Principal?
+  private(set) var canisterPrincipalString: String?
+  private(set) var userPrincipal: Principal?
+  private(set) var userPrincipalString: String?
   private let networkService: NetworkService
   private let cookieStorage = HTTPCookieStorage.shared
   private(set) var identityData: Data?
@@ -158,13 +160,17 @@ class DefaultAuthClient: AuthClient {
       }
 
       let canistersWrapper = try await authenticate_with_network(wire, nil)
-      let principal = canistersWrapper.get_canister_principal()
-      let principalString = canistersWrapper.get_canister_principal_string().toString()
+      let canisterPrincipal = canistersWrapper.get_canister_principal()
+      let canisterPrincipalString = canistersWrapper.get_canister_principal_string().toString()
+      let userPrincipal = canistersWrapper.get_user_principal()
+      let userPrincipalString = canistersWrapper.get_user_principal_string().toString()
 
       await MainActor.run {
         self.identity = identity
-        self.principal = principal
-        self.principalString = principalString
+        self.canisterPrincipal = canisterPrincipal
+        self.canisterPrincipalString = canisterPrincipalString
+        self.userPrincipal = userPrincipal
+        self.userPrincipalString = userPrincipalString
       }
     }
   }
@@ -199,8 +205,10 @@ class DefaultAuthClient: AuthClient {
     }
     try? KeychainHelper.deleteItem(for: keychainIdentityKey)
     self.identity = nil
-    self.principal = nil
-    self.principalString = nil
+    self.canisterPrincipal = nil
+    self.canisterPrincipalString = nil
+    self.userPrincipal = nil
+    self.userPrincipalString = nil
     self.identityData = nil
   }
 }

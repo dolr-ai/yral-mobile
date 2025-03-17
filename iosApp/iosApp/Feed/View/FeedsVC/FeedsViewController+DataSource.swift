@@ -28,7 +28,7 @@ extension FeedsViewController {
           ),
           profileInfo: ProfileInfoView.ProfileInfo(
             imageURL: feed.profileImageURL,
-            title: feed.canisterID,
+            title: feed.principalID,
             subtitle: feed.postDescription),
           index: indexPath.item
         )
@@ -43,7 +43,7 @@ extension FeedsViewController {
           ),
           profileInfo: ProfileInfoView.ProfileInfo(
             imageURL: feed.profileImageURL,
-            title: feed.canisterID,
+            title: feed.principalID,
             subtitle: feed.postDescription),
           index: indexPath.item
         )
