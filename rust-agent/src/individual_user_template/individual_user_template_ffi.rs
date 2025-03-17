@@ -150,6 +150,8 @@ mod ffi {
         fn liked_by_me(&self) -> bool;
         #[swift_bridge(get(&created_by_profile_photo_url))]
         fn created_by_profile_photo_url(&self) -> Option<&str>;
+        #[swift_bridge(get_with(&created_by_user_principal_id = principal_to_string))]
+        fn created_by_user_principal_id(&self) -> String;
     }
 
     extern "Rust" {
@@ -446,6 +448,7 @@ mod ffi {
         fn get_canister_principal(&self) -> Principal;
         fn get_canister_principal_string(&self) -> String;
         fn get_user_principal(&self) -> Principal;
+        fn get_user_principal_string(&self) -> String;
     }
 
     extern "Rust" {

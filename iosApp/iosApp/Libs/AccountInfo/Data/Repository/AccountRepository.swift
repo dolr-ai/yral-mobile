@@ -17,6 +17,6 @@ class AccountRepository: AccountRepositoryProtocol {
   }
 
   func fetchProfile() async -> Result<AccountInfo, AccountError> {
-    return .success(AccountInfo(imageURL: nil, canisterID: authClient.principalString ?? ""))
+    return .success(AccountInfo(imageURL: nil, canisterID: authClient.userPrincipalString ?? ""))
   }
 }

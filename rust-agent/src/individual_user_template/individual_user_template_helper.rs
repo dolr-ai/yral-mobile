@@ -147,6 +147,10 @@ impl CanistersWrapper {
     pub fn get_user_principal(&self) -> Principal {
         return self.inner.user_principal();
     }
+
+    pub fn get_user_principal_string(&self) -> String {
+        return self.inner.user_principal().to_string();
+    }
 }
 
 pub async fn authenticate_with_network(
@@ -164,6 +168,10 @@ pub fn extract_time_as_double(result: Result11) -> Option<u64> {
         Result11::Ok(system_time) => Some(system_time.secs_since_epoch),
         Result11::Err(_) => None,
     }
+}
+
+pub fn principal_to_string(principal: &Principal) -> String {
+    principal.to_string()
 }
 
 pub fn get_principal(text: String) -> std::result::Result<Principal, PrincipalError> {

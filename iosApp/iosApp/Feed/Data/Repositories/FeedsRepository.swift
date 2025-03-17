@@ -22,7 +22,7 @@ class FeedsRepository: FeedRepositoryProtocol {
   }
 
   func getInitialFeeds(numResults: Int) async -> Result<Void, FeedError> {
-    guard let principal = authClient.principalString else {
+    guard let principal = authClient.canisterPrincipalString else {
       return .failure(FeedError.authError(.authenticationFailed("Missing principal")))
     }
     var cacheResponse: [CacheDTO]
@@ -72,7 +72,7 @@ class FeedsRepository: FeedRepositoryProtocol {
 
   func fetchMoreFeeds(request: MoreFeedsRequest) async -> Result<[FeedResult], FeedError> {
     var mlRequest = MlFeed_FeedRequest()
-    mlRequest.canisterID = authClient.principalString ?? ""
+    mlRequest.canisterID = authClient.canisterPrincipalString ?? ""
     mlRequest.filterPosts = request.filteredPosts
     mlRequest.numResults = UInt32(request.numResults)
     let response: MlFeed_FeedResponse
@@ -111,6 +111,7 @@ class FeedsRepository: FeedRepositoryProtocol {
         postID: String(feed.postID),
         videoID: result.video_uid().toString(),
         canisterID: feed.canisterID,
+        principalID: result.created_by_user_principal_id().toString(),
         url: videoURL,
         thumbnail: thumbnailURL,
         postDescription: result.description().toString(),

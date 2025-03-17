@@ -1506,6 +1506,7 @@ struct RustStr __swift_bridge__$PostDetailsForFrontend$description(void* self);
 uint64_t __swift_bridge__$PostDetailsForFrontend$like_count(void* self);
 bool __swift_bridge__$PostDetailsForFrontend$liked_by_me(void* self);
 struct RustStr __swift_bridge__$PostDetailsForFrontend$created_by_profile_photo_url(void* self);
+void* __swift_bridge__$PostDetailsForFrontend$created_by_user_principal_id(void* self);
 bool __swift_bridge__$PostDetailsFromFrontend$is_nsfw(void* self);
 void* __swift_bridge__$PostDetailsFromFrontend$hashtags(void* self);
 struct RustStr __swift_bridge__$PostDetailsFromFrontend$description(void* self);
@@ -1599,6 +1600,7 @@ void __swift_bridge__$authenticate_with_network(void* callback_wrapper, void __s
 void* __swift_bridge__$CanistersWrapper$get_canister_principal(void* self);
 void* __swift_bridge__$CanistersWrapper$get_canister_principal_string(void* self);
 void* __swift_bridge__$CanistersWrapper$get_user_principal(void* self);
+void* __swift_bridge__$CanistersWrapper$get_user_principal_string(void* self);
 struct __private__OptionU64 __swift_bridge__$extract_time_as_double(void* result);
 struct __private__ResultPtrAndPtr __swift_bridge__$get_principal(void* text);
 typedef enum __swift_bridge__$ResultU32AndAgentError$Tag {__swift_bridge__$ResultU32AndAgentError$ResultOk, __swift_bridge__$ResultU32AndAgentError$ResultErr} __swift_bridge__$ResultU32AndAgentError$Tag;
