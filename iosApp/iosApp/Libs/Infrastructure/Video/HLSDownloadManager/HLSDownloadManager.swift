@@ -111,13 +111,15 @@ final class HLSDownloadManager: NSObject {
   }
 
   func removeAsset(_ url: URL) {
-    do {
-      if fileManager.fileExists(atPath: url.path) {
-        try fileManager.removeItem(at: url)
-        print("Removed asset from disk: \(url)")
+    Task.detached(priority: .background) {
+      do {
+        if FileManager.default.fileExists(atPath: url.path) {
+          try FileManager.default.removeItem(at: url)
+          print("Removed asset from disk: \(url)")
+        }
+      } catch {
+        print("Failed to remove asset: \(error)")
       }
-    } catch {
-      print("Failed to remove asset: \(error)")
     }
   }
 
