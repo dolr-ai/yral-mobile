@@ -10,15 +10,8 @@ import SwiftUI
 
 struct ProfileView: View {
   @State var showAccountInfo = false
-  @State var showEmptyState = true
-  @State var showDelete = false
-  @State private var isLoadingFirstTime = true
-  @State var accountInfo: AccountInfo?
-  @State var videos: [ProfileVideoInfo] = []
-  @State private var deleteInfo: ProfileVideoInfo?
-  @State private var showDeleteIndicator: Bool = false
+  @State var profileInfo: AccountInfo?
   var uploadVideoPressed: (() -> Void) = {}
-
   let viewModel: ProfileViewModel
 
   init(viewModel: ProfileViewModel) {
@@ -35,92 +28,27 @@ struct ProfileView: View {
           .padding(Constants.navigationTitlePadding)
 
         if showAccountInfo {
-          UserInfoView(accountInfo: $accountInfo, shouldApplySpacing: false)
+          UserInfoView(accountInfo: $profileInfo, shouldApplySpacing: false)
         }
-        if showEmptyState {
-          Group {
-            Spacer(minLength: Constants.minimumTopSpacing)
-            ProfileEmptyStateView {
-              uploadVideoPressed()
-            }
-            Spacer(minLength: Constants.minimumBottomSpacing)
-          }
-        } else {
-          ProfileVideosGridView(
-            videos: $videos,
-            currentlyDeletingPostInfo: $deleteInfo,
-            showDeleteIndictor: $showDeleteIndicator,
-            onDelete: { info in
-              self.deleteInfo = info
-              withAnimation(.easeInOut(duration: CGFloat.animationPeriod)) {
-                UIView.setAnimationsEnabled(false)
-                showDelete = true
-              }
-            },
-            onVideoTapped: { _ in },
-            onLoadMore: {
-              Task { @MainActor in
-                await viewModel.getVideos()
-              }
-            }
-          )
+        Spacer(minLength: Constants.minimumTopSpacing)
+        ProfileEmptyStateView {
+          uploadVideoPressed()
         }
+        Spacer(minLength: Constants.minimumBottomSpacing)
       }
       .padding(.horizontal, Constants.horizontalPadding)
-    }
-    .fullScreenCover(isPresented: $showDelete) {
-      NudgePopupView(
-        nudgeTitle: Constants.deleteTitle,
-        nudgeMessage: Constants.deleteText,
-        confirmLabel: Constants.deleteButtonTitle,
-        cancelLabel: Constants.cancelTitle,
-        onConfirm: {
-          showDelete = false
-          showDeleteIndicator = true
-          Task { @MainActor in
-            guard let deleteInfo else { return }
-            await self.viewModel.deleteVideo(
-              request: DeleteVideoRequest(
-                postId: UInt64(deleteInfo.postID) ?? .zero,
-                videoId: deleteInfo.videoId
-              )
-            )
-          }
-        },
-        onCancel: { showDelete = false }
-      )
-      .background( ClearBackgroundView() )
     }
     .onReceive(viewModel.$event) { event in
       switch event {
       case .fetchedAccountInfo(let info):
         showAccountInfo = true
-        accountInfo = info
-      case .loadedVideos(let videos):
-        guard !videos.isEmpty else { return }
-        showEmptyState = false
-        self.videos += videos
-      case .deletedVideos(let videos):
-        withAnimation {
-          self.videos.removeAll { $0.postID == videos[.zero].postID }
-        }
-        if self.videos.isEmpty {
-          showEmptyState = true
-        }
-        self.showDeleteIndicator = false
-      case .deleteVideoFailed:
-        self.deleteInfo = nil
-        self.showDeleteIndicator = false
+        profileInfo = info
       default:
         break
       }
     }
     .task {
-      guard isLoadingFirstTime else { return }
-      isLoadingFirstTime = false
-      async let fetchProfile: () = viewModel.fetchProfileInfo()
-      async let fetchVideos: () = viewModel.getVideos()
-      _ = await (fetchProfile, fetchVideos)
+      await viewModel.fetchProfileInfo()
     }
   }
 
@@ -147,11 +75,6 @@ extension ProfileView {
     static let horizontalPadding: CGFloat = 16.0
     static let minimumTopSpacing: CGFloat = 16.0
     static let minimumBottomSpacing: CGFloat = 16.0
-
-    static let deleteTitle = "Delete video?"
-    static let deleteText = "This video will be permanently deleted from your Yral account."
-    static let cancelTitle = "Cancel"
-    static let deleteButtonTitle = "Delete"
   }
 }
 
@@ -178,23 +101,9 @@ extension ProfileView {
         crashReporter: FirebaseCrashlyticsReporter()
       ),
       myVideosUseCase: MyVideosUseCase(
-        profileRepository: ProfileRepository(
-          httpService: HTTPService(),
-          authClient: DefaultAuthClient(
-            networkService: HTTPService(),
-            crashReporter: FirebaseCrashlyticsReporter()
-          )
-        ),
+        accountRepository: accountRepository,
         crashReporter: FirebaseCrashlyticsReporter()
-      ), deleteVideoUseCase: DeleteVideoUseCase(
-        profileRepository: ProfileRepository(
-          httpService: HTTPService(),
-          authClient: DefaultAuthClient(
-            networkService: HTTPService(),
-            crashReporter: FirebaseCrashlyticsReporter()
-          )
-        ),
-        crashReporter: FirebaseCrashlyticsReporter())
+      )
     )
   )
 }

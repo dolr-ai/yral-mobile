@@ -34,6 +34,10 @@ final class ProfileDIContainer {
       ), deleteVideoUseCase: DeleteVideoUseCase(
         profileRepository: profileRepository,
         crashReporter: dependencies.crashReporter
+      ),
+      myVideosUseCase: MyVideosUseCase(
+        accountRepository: accountRepository,
+        crashReporter: dependencies.crashReporter
       )
     )
   }

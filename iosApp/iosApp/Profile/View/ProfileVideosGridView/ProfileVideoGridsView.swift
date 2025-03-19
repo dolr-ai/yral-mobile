@@ -8,16 +8,10 @@
 
 import SwiftUI
 
-struct ProfileVideo: Identifiable {
-  let id: UUID = UUID()
-  let thumbnailURL: URL?
-  let likesCount: Int
-}
-
 struct ProfileVideosGridView: View {
-  let videos: [ProfileVideo]
-  var onDelete: ((ProfileVideo) -> Void)?
-  var onVideoTapped: ((ProfileVideo) -> Void)?
+  let videos: [ProfileVideoInfo]
+  var onDelete: ((ProfileVideoInfo) -> Void)?
+  var onVideoTapped: ((ProfileVideoInfo) -> Void)?
 
   private let columns = [
     GridItem(.flexible(), spacing: Constants.gridItemSpacing),
@@ -35,8 +29,8 @@ struct ProfileVideosGridView: View {
 
           HStack {
             Text("\(video.likesCount)")
-              .foregroundColor(.white)
-              .font(.footnote)
+              .font(Constants.likeTextFont)
+              .foregroundColor(Constants.likeTextColor)
               .padding(.leading, Constants.buttonHorizontalPadding)
             Spacer()
             Button { onDelete?(video) }
@@ -47,7 +41,6 @@ struct ProfileVideosGridView: View {
           }
           .padding(.bottom, Constants.bottomPadding)
         }
-        .background(Color.gray.opacity(0.3))
         .cornerRadius(Constants.thumbnailCornerRadius)
       }
     }
@@ -64,36 +57,34 @@ extension ProfileVideosGridView {
     static let bottomPadding: CGFloat = 12.0
 
     static let deleteImageName = "delete_video_profile"
+
+    static let likeTextFont = YralFont.pt14.medium.swiftUIFont
+    static let likeTextColor = YralColor.grey50.swiftUIColor
   }
 }
 
 struct VideoThumbnailView: View {
-  let video: ProfileVideo
+  let video: ProfileVideoInfo
 
   var body: some View {
     GeometryReader { proxy in
-      if let url = video.thumbnailURL {
-        AsyncImage(url: url) { phase in
-          switch phase {
-          case .empty:
-            ProgressView()
-              .frame(width: proxy.size.width, height: proxy.size.height)
-          case .success(let image):
-            image
-              .resizable()
-              .scaledToFill()
-              .frame(width: proxy.size.width, height: proxy.size.height)
-              .clipped()
-          case .failure:
-            Color.gray
-              .overlay(Text("Failed to load").foregroundColor(.white))
-          @unknown default:
-            EmptyView()
-          }
+      AsyncImage(url: video.thumbnailUrl) { phase in
+        switch phase {
+        case .empty:
+          ProgressView()
+            .frame(width: proxy.size.width, height: proxy.size.height)
+        case .success(let image):
+          image
+            .resizable()
+            .scaledToFill()
+            .frame(width: proxy.size.width, height: proxy.size.height)
+            .clipped()
+        case .failure:
+          Color.gray
+            .overlay(Text("Failed to load").foregroundColor(.white))
+        @unknown default:
+          EmptyView()
         }
-      } else {
-        Color.gray
-          .overlay(Text("No Thumbnail").foregroundColor(.white))
       }
     }
     .aspectRatio(Constants.thumbnailAspectRatio, contentMode: .fit)

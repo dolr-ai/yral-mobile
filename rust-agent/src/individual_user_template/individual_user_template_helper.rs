@@ -5,19 +5,19 @@ use candid::Nat;
 use candid::{self, ser, CandidType, Decode, Deserialize, Encode, Principal};
 use ic_agent::export::PrincipalError;
 use ic_agent::identity::DelegatedIdentity;
+use ic_agent::identity::Delegation;
 use ic_agent::identity::Secp256k1Identity;
+use ic_agent::identity::SignedDelegation;
 use ic_agent::AgentError;
+use ic_agent::Identity;
+use k256::elliptic_curve::sec1::ToEncodedPoint;
 use k256::elliptic_curve::JwkEcKey;
+use k256::Secp256k1;
 use serde_bytes::ByteBuf;
+use std::time::UNIX_EPOCH;
+use tokio::time::Duration;
 use yral_canisters_common::Canisters;
 use yral_types::delegated_identity::DelegatedIdentityWire;
-use std::time::UNIX_EPOCH;
-use ic_agent::identity::SignedDelegation;
-use ic_agent::identity::Delegation;
-use ic_agent::Identity;
-use tokio::time::Duration;
-use k256::Secp256k1;
-use k256::elliptic_curve::sec1::ToEncodedPoint;
 
 pub type Secp256k1Error = k256::elliptic_curve::Error;
 
@@ -74,7 +74,6 @@ pub fn delegate_identity_with_max_age_public(
 ) -> std::result::Result<DelegatedIdentityWire, String> {
     let new_jwk: JwkEcKey = serde_json::from_slice(&new_pub_jwk_json)
         .map_err(|e| format!("Failed to parse new JWK JSON: {e}"))?;
-    println!("Sarvesh new_jwk: {:?}", new_jwk);
     let pk = new_jwk
         .to_public_key::<Secp256k1>()
         .map_err(|e| format!("Could not parse JWK into Secp256k1 public key: {e:?}"))?;
@@ -84,7 +83,8 @@ pub fn delegate_identity_with_max_age_public(
 
     let parent_sk = k256::SecretKey::from_jwk(&parent_wire.to_secret)
         .map_err(|e| format!("Failed to parse parent's private key: {e}"))?;
-    let parent_identity = DelegatedIdentity::try_from(parent_wire.clone()).map_err(|e| e.to_string())?;
+    let parent_identity =
+        DelegatedIdentity::try_from(parent_wire.clone()).map_err(|e| e.to_string())?;
 
     let now = std::time::SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -123,7 +123,7 @@ pub fn delegate_identity_with_max_age_public(
 }
 
 pub fn delegated_identity_wire_to_json(wire: &DelegatedIdentityWire) -> String {
-    serde_json::to_string(wire).unwrap() 
+    serde_json::to_string(wire).unwrap()
 }
 pub struct CanistersWrapper {
     inner: Canisters<true>,
@@ -170,4 +170,42 @@ pub fn principal_to_string(principal: &Principal) -> String {
 
 pub fn get_principal(text: String) -> std::result::Result<Principal, PrincipalError> {
     Principal::from_text(text)
+}
+
+impl Result12 {
+    pub fn is_ok(&self) -> bool {
+        matches!(self, Result12::Ok(_))
+    }
+
+    pub fn is_err(&self) -> bool {
+        matches!(self, Result12::Err(_))
+    }
+
+    pub fn ok_value(self) -> Option<Vec<PostDetailsForFrontend>> {
+        match self {
+            Result12::Ok(val) => Some(val),
+            Result12::Err(_) => None,
+        }
+    }
+    
+    pub fn err_value(self) -> Option<GetPostsOfUserProfileError> {
+        match self {
+            Result12::Ok(_) => None,
+            Result12::Err(err) => Some(err),
+        }
+    }
+}
+
+impl GetPostsOfUserProfileError {
+    pub fn is_reached_end_of_items_list(&self) -> bool {
+        matches!(self, GetPostsOfUserProfileError::ReachedEndOfItemsList)
+    }
+
+    pub fn is_invalid_bounds_passed(&self) -> bool {
+        matches!(self, GetPostsOfUserProfileError::InvalidBoundsPassed)
+    }
+
+    pub fn is_exceeded_max_number_of_items_allowed_in_one_request(&self) -> bool {
+        matches!(self, GetPostsOfUserProfileError::ExceededMaxNumberOfItemsAllowedInOneRequest)
+    }
 }

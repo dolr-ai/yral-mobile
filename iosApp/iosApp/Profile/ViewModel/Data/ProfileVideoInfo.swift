@@ -7,23 +7,19 @@
 //
 import Foundation
 
-struct ProfileVideoInfo {
-  let id = UUID()
-  let postID: String
-  let videoId: String
+struct ProfileVideoInfo: Identifiable {
+  let uuid = UUID()
+  let id: String
   let thumbnailUrl: URL
   let likeCount: Int
-  let isLiked: Bool
 }
 
 extension FeedResult {
   func toProfileVideoInfo() -> ProfileVideoInfo {
     return ProfileVideoInfo(
-      postID: self.postID,
-      videoId: self.videoID,
+      id: self.postID,
       thumbnailUrl: self.thumbnail,
-      likeCount: self.likeCount,
-      isLiked: self.isLiked
+      likeCount: self.likeCount
     )
   }
 }
