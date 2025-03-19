@@ -29,9 +29,16 @@ class DefaultAuthClient: AuthClient {
 
   @MainActor
   func initialize() async throws {
+
     try await recordThrowingOperation {
       if let existingCookie = cookieStorage.cookies?.first(where: { $0.name == AuthConstants.cookieName }) {
-        try await refreshAuthIfNeeded(using: existingCookie)
+        do {
+          try await refreshAuthIfNeeded(using: existingCookie)
+        } catch {
+          crashReporter.recordException(error)
+          crashReporter.log("Error received from refreshAuthIfNeeded")
+          try await fetchAndSetAuthCookie()
+        }
       } else {
         try await fetchAndSetAuthCookie()
       }
@@ -51,7 +58,9 @@ class DefaultAuthClient: AuthClient {
             return
           }
           identityData = data
-          try await handleExtractIdentityResponse(from: data)
+          if let identityData {
+            try await handleExtractIdentityResponse(from: identityData)
+          }
         } catch {
           try? KeychainHelper.deleteItem(for: keychainIdentityKey)
           identityData = nil
@@ -139,8 +148,10 @@ class DefaultAuthClient: AuthClient {
       let endpoint = AuthEndpoints.extractIdentity(cookie: cookie)
       let data = try await networkService.performRequest(for: endpoint)
       identityData = data
-      try KeychainHelper.store(data: data, for: keychainIdentityKey)
-      try await handleExtractIdentityResponse(from: data)
+      if let identityData {
+        try KeychainHelper.store(data: identityData, for: keychainIdentityKey)
+        try await handleExtractIdentityResponse(from: identityData)
+      }
     }
   }
 
@@ -149,6 +160,7 @@ class DefaultAuthClient: AuthClient {
       guard !data.isEmpty else {
         throw NetworkError.invalidResponse("Empty identity data received.")
       }
+      crashReporter.log("Reached unsafe bytes start")
       let (wire, identity): (DelegatedIdentityWire, DelegatedIdentity) = try data.withUnsafeBytes { buffer in
         guard buffer.count > 0 else {
           throw NetworkError.invalidResponse("Empty data received")
@@ -158,12 +170,18 @@ class DefaultAuthClient: AuthClient {
         let identity = try delegated_identity_from_bytes(uint8Buffer)
         return (wire, identity)
       }
+      crashReporter.log("Reached unsafe bytes end")
 
       let canistersWrapper = try await authenticate_with_network(wire, nil)
+      crashReporter.log("canistersWrapper authenticate_with_network success")
       let canisterPrincipal = canistersWrapper.get_canister_principal()
+      crashReporter.log("canistersWrapper get_canister_principal success")
       let canisterPrincipalString = canistersWrapper.get_canister_principal_string().toString()
+      crashReporter.log("canistersWrapper get_canister_principal_string success")
       let userPrincipal = canistersWrapper.get_user_principal()
+      crashReporter.log("canistersWrapper get_user_principal success")
       let userPrincipalString = canistersWrapper.get_user_principal_string().toString()
+      crashReporter.log("canistersWrapper executed succesfully")
 
       await MainActor.run {
         self.identity = identity
