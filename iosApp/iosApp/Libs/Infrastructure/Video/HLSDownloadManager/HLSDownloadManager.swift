@@ -95,8 +95,9 @@ final class HLSDownloadManager: NSObject {
     if let task = activeDownloads[hlsURL] {
       task.cancel()
       activeDownloads.removeValue(forKey: hlsURL)
-      downloadContinuations[hlsURL]?.resume(throwing: CancellationError())
-      downloadContinuations[hlsURL] = nil
+      if let continuation = downloadContinuations.removeValue(forKey: hlsURL) {
+        continuation.resume(throwing: CancellationError())
+      }
       print("Canceled ongoing download for \(hlsURL.absoluteString)")
     }
   }
@@ -110,13 +111,15 @@ final class HLSDownloadManager: NSObject {
   }
 
   func removeAsset(_ url: URL) {
-    do {
-      if fileManager.fileExists(atPath: url.path) {
-        try fileManager.removeItem(at: url)
-        print("Removed asset from disk: \(url)")
+    Task.detached(priority: .background) {
+      do {
+        if FileManager.default.fileExists(atPath: url.path) {
+          try FileManager.default.removeItem(at: url)
+          print("Removed asset from disk: \(url)")
+        }
+      } catch {
+        print("Failed to remove asset: \(error)")
       }
-    } catch {
-      print("Failed to remove asset: \(error)")
     }
   }
 
@@ -147,9 +150,11 @@ extension HLSDownloadManager: AVAssetDownloadDelegate {
       defer {
         self.enforceCacheLimitIfNeeded()
         self.activeDownloads.removeValue(forKey: feedURL)
-        self.downloadContinuations.removeValue(forKey: feedURL)
       }
-      self.downloadContinuations[feedURL]?.resume(returning: location)
+
+      if let continuation = self.downloadContinuations.removeValue(forKey: feedURL) {
+        continuation.resume(returning: location)
+      }
 
       //      let policy = AVMutableAssetDownloadStorageManagementPolicy()
       //      policy.expirationDate = Calendar.current.date(byAdding: .minute, value: 2, to: .now) ?? .now
