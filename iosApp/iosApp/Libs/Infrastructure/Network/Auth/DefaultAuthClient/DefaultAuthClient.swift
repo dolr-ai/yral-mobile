@@ -99,24 +99,27 @@ class DefaultAuthClient: AuthClient {
         return try delegated_identity_wire_from_bytes(buf.bindMemory(to: UInt8.self))
       }
 
-      let privateKey = try secp256k1.Signing.PrivateKey(format: .uncompressed)
-      let publicKeyData = privateKey.publicKey.dataRepresentation
+      let ephemeralJsonData = try createAuthPayload()
+      guard
+        let parsed = try JSONSerialization.jsonObject(with: ephemeralJsonData) as? [String: Any],
+        var anon = parsed["anonymous_identity"] as? [String: Any]
+      else {
+        throw NetworkError.invalidResponse("Failed to parse ephemeral JSON.")
+      }
 
-      let xData = publicKeyData[1...32].base64URLEncodedString()
-      let yData = publicKeyData[33...64].base64URLEncodedString()
-      let dData = privateKey.dataRepresentation.base64URLEncodedString()
-
-      let jwk: [String: Any] = [
-        "kty": "EC",
-        "crv": "secp256k1",
-        "x": xData,
-        "y": yData,
-        "d": dData
+      var ephemeralPublicDict: [String: Any] = [
+        "kty": anon["kty"] ?? "EC",
+        "crv": anon["crv"] ?? "secp256k1",
+        "x": anon["x"] ?? "",
+        "y": anon["y"] ?? ""
       ]
 
-      let jwkData = try JSONSerialization.data(withJSONObject: jwk, options: [])
+      if let privateKey = anon["d"] {
+        ephemeralPublicDict["d"] = privateKey
+      }
+      let ephemeralPublicData = try JSONSerialization.data(withJSONObject: ephemeralPublicDict)
 
-      let newWire = try jwkData.withUnsafeBytes { buffer in
+      let newWire = try ephemeralPublicData.withUnsafeBytes { buffer in
         let rustVec = RustVec<UInt8>(bytes: buffer)
         return try delegate_identity_with_max_age_public(
           parentWire,
