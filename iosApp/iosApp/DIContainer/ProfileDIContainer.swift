@@ -29,6 +29,10 @@ final class ProfileDIContainer {
       accountUseCase: AccountUseCase(
         accountRepository: makeAccountRepository(),
         crashReporter: dependencies.crashReporter
+      ),
+      myVideosUseCase: MyVideosUseCase(
+        accountRepository: accountRepository,
+        crashReporter: dependencies.crashReporter
       )
     )
   }

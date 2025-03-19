@@ -8,4 +8,9 @@
 
 enum AccountError: Error {
   case invalidInfo(Error)
+  case authError(String)
+  case rustError(RustError)
+  case invalidVideoRequest(String)
+  case pageEndReached
+  case unkown(String)
 }

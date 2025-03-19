@@ -8,4 +8,5 @@
 
 protocol AccountRepositoryProtocol {
   func fetchProfile() async -> Result<AccountInfo, AccountError>
+  func fetchVideos(request: AccountVideoRequest) async -> Result<[FeedResult], AccountError>
 }

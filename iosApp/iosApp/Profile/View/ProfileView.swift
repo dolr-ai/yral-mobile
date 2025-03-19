@@ -79,6 +79,14 @@ extension ProfileView {
 }
 
 #Preview {
+  let accountRepository = AccountRepository(
+    httpService: HTTPService(),
+    authClient:
+      DefaultAuthClient(
+        networkService: HTTPService(),
+        crashReporter: FirebaseCrashlyticsReporter()
+      )
+  )
   ProfileView(
     viewModel: ProfileViewModel(
       accountUseCase: AccountUseCase(
@@ -90,6 +98,10 @@ extension ProfileView {
               crashReporter: FirebaseCrashlyticsReporter()
             )
         ),
+        crashReporter: FirebaseCrashlyticsReporter()
+      ),
+      myVideosUseCase: MyVideosUseCase(
+        accountRepository: accountRepository,
         crashReporter: FirebaseCrashlyticsReporter()
       )
     )

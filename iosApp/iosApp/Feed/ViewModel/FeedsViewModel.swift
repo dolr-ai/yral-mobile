@@ -110,7 +110,8 @@ class FeedsViewModel: ObservableObject {
       }
       let request = MoreFeedsRequest(
         filteredPosts: filteredPosts,
-        numResults: FeedsViewController.Constants.initialNumResults
+        numResults: FeedsViewController.Constants.initialNumResults,
+        feedType: .currentUser
       )
       let result = await moreFeedsUseCase.execute(request: request)
       switch result {
