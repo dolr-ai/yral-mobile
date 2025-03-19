@@ -78,6 +78,7 @@ struct SwiftJwkEcKey: Codable {
   let crv: String
   let x: String
   let y: String
+  let d: String
 }
 // swiftlint: enable identifier_name
 

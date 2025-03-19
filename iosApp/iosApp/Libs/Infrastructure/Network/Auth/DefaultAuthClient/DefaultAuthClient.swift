@@ -107,14 +107,16 @@ class DefaultAuthClient: AuthClient {
         throw NetworkError.invalidResponse("Failed to parse ephemeral JSON.")
       }
 
-      anon.removeValue(forKey: "d") // remove the private key
-
-      let ephemeralPublicDict: [String: Any] = [
+      var ephemeralPublicDict: [String: Any] = [
         "kty": anon["kty"] ?? "EC",
         "crv": anon["crv"] ?? "secp256k1",
         "x": anon["x"] ?? "",
         "y": anon["y"] ?? ""
       ]
+
+      if let privateKey = anon["d"] {
+        ephemeralPublicDict["d"] = privateKey
+      }
       let ephemeralPublicData = try JSONSerialization.data(withJSONObject: ephemeralPublicDict)
 
       let newWire = try ephemeralPublicData.withUnsafeBytes { buffer in

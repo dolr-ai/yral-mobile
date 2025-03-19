@@ -24,7 +24,7 @@ extension RustString: Error {
 
 extension RustString: LocalizedError {
   public var errorDescription: String? {
-    return self.toString() // or whatever gives the actual Rust text
+    return self.toString()
   }
 }
 

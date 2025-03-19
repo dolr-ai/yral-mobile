@@ -74,7 +74,7 @@ pub fn delegate_identity_with_max_age_public(
 ) -> std::result::Result<DelegatedIdentityWire, String> {
     let new_jwk: JwkEcKey = serde_json::from_slice(&new_pub_jwk_json)
         .map_err(|e| format!("Failed to parse new JWK JSON: {e}"))?;
-
+    println!("Sarvesh new_jwk: {:?}", new_jwk);
     let pk = new_jwk
         .to_public_key::<Secp256k1>()
         .map_err(|e| format!("Could not parse JWK into Secp256k1 public key: {e:?}"))?;
@@ -84,13 +84,7 @@ pub fn delegate_identity_with_max_age_public(
 
     let parent_sk = k256::SecretKey::from_jwk(&parent_wire.to_secret)
         .map_err(|e| format!("Failed to parse parent's private key: {e}"))?;
-    let parent_identity = Secp256k1Identity::from_private_key(parent_sk);
-
-    let existing_delegated = DelegatedIdentity::new(
-        parent_wire.from_key.clone(),
-        Box::new(parent_identity),
-        parent_wire.delegation_chain.clone(),
-    );
+    let parent_identity = DelegatedIdentity::try_from(parent_wire.clone()).map_err(|e| e.to_string())?;
 
     let now = std::time::SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -104,7 +98,7 @@ pub fn delegate_identity_with_max_age_public(
         targets: None,
     };
 
-    let signed_result = existing_delegated
+    let signed_result = parent_identity
         .sign_delegation(&delegation)
         .map_err(|e| format!("Failed to sign delegation: {e:?}"))?;
 
@@ -123,7 +117,7 @@ pub fn delegate_identity_with_max_age_public(
 
     Ok(DelegatedIdentityWire {
         from_key: parent_pubkey,
-        to_secret: parent_wire.to_secret,
+        to_secret: new_jwk,
         delegation_chain: new_chain,
     })
 }
