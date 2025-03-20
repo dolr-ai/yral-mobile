@@ -74,16 +74,11 @@ pub fn delegate_identity_with_max_age_public(
 ) -> std::result::Result<DelegatedIdentityWire, String> {
     let new_jwk: JwkEcKey = serde_json::from_slice(&new_pub_jwk_json)
         .map_err(|e| format!("Failed to parse new JWK JSON: {e}"))?;
-    let pk = new_jwk
-        .to_public_key::<Secp256k1>()
-        .map_err(|e| format!("Could not parse JWK into Secp256k1 public key: {e:?}"))?;
 
-    let encoded = pk.to_encoded_point(/*compress=*/ false);
-    let child_pub_bytes = encoded.as_bytes().to_vec();
+    let to_identity =
+        Secp256k1Identity::from_private_key(new_jwk.to_secret_key().map_err(|e| e.to_string())?);
 
-    let parent_sk = k256::SecretKey::from_jwk(&parent_wire.to_secret)
-        .map_err(|e| format!("Failed to parse parent's private key: {e}"))?;
-    let parent_identity =
+    let existing_delegated =
         DelegatedIdentity::try_from(parent_wire.clone()).map_err(|e| e.to_string())?;
 
     let now = std::time::SystemTime::now()
@@ -93,30 +88,26 @@ pub fn delegate_identity_with_max_age_public(
     let expiry_ns = expiry.as_nanos() as u64;
 
     let delegation = Delegation {
-        pubkey: child_pub_bytes,
+        pubkey: to_identity.public_key().unwrap(),
         expiration: expiry_ns,
         targets: None,
     };
 
-    let signed_result = parent_identity
+    let signed_delegation_signature = existing_delegated
         .sign_delegation(&delegation)
         .map_err(|e| format!("Failed to sign delegation: {e:?}"))?;
 
-    let signature_bytes = signed_result
-        .signature
-        .ok_or_else(|| "No signature in sign_delegation result".to_string())?;
-    let parent_pubkey = signed_result
-        .public_key
-        .ok_or_else(|| "No public key in sign_delegation result".to_string())?;
-
-    let mut new_chain = parent_wire.delegation_chain.clone();
-    new_chain.push(SignedDelegation {
+    let signed_delegation = SignedDelegation {
         delegation,
-        signature: signature_bytes,
-    });
+        signature: signed_delegation_signature.signature.unwrap(),
+    };
+
+    let mut new_chain = existing_delegated.delegation_chain();
+
+    new_chain.push(signed_delegation);
 
     Ok(DelegatedIdentityWire {
-        from_key: parent_pubkey,
+        from_key: signed_delegation_signature.public_key.unwrap(),
         to_secret: new_jwk,
         delegation_chain: new_chain,
     })
