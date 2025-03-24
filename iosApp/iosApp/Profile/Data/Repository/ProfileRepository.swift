@@ -10,9 +10,15 @@ import Combine
 
 class ProfileRepository: ProfileRepositoryProtocol {
   @Published private(set) var videos: [FeedResult] = []
+
   private let newVideosSubject = PassthroughSubject<[FeedResult], Never>()
   var newVideosPublisher: AnyPublisher<[FeedResult], Never> {
     newVideosSubject.eraseToAnyPublisher()
+  }
+
+  private let deletedVideoSubject = PassthroughSubject<[FeedResult], Never>()
+  var deletedVideoPublisher: AnyPublisher<[FeedResult], Never> {
+    deletedVideoSubject.eraseToAnyPublisher()
   }
 
   var videosPublisher: AnyPublisher<[FeedResult], Never> {
@@ -59,6 +65,46 @@ class ProfileRepository: ProfileRepositoryProtocol {
     }
   }
 
+  func deleteVideo(request: DeleteVideoRequest) async -> Result<Void, AccountError> {
+    guard let principalString = authClient.canisterPrincipalString else {
+      return .failure(AccountError.authError("No canister principal"))
+    }
+    guard let baseURL = httpService.baseURL else { return .failure(.invalidInfo("No base URL found")) }
+    do {
+      let delegatedWire = try authClient.generateNewDelegatedIdentityWireOneHour()
+      let swiftWire = try swiftDelegatedIdentityWire(from: delegatedWire)
+      let deleteVideoDTO = DeleteVideoRequestDTO(
+        canisterId: principalString,
+        postId: request.postId,
+        videoId: request.videoId,
+        delegatedIdentityWire: swiftWire
+      )
+      let endpoint = Endpoint(
+        http: "",
+        baseURL: baseURL,
+        path: Constants.deleteVideoPath,
+        method: .delete,
+        headers: ["Content-Type": "application/json"],
+        body: try JSONEncoder().encode(deleteVideoDTO)
+      )
+      _ = try await httpService.performRequest(for: endpoint)
+      if let index = videos.firstIndex(where: { $0.postID == String(request.postId) }) {
+        let deletedVideo = videos.remove(at: index)
+        deletedVideoSubject.send([deletedVideo])
+      }
+      return .success(())
+    } catch {
+      switch error {
+      case let netErr as NetworkError:
+        return .failure(AccountError.networkError(netErr.localizedDescription))
+      case let authErr as AuthError:
+        return .failure(AccountError.authError(authErr.localizedDescription))
+      default:
+        return .failure(.unknown(error.localizedDescription))
+      }
+    }
+  }
+
   private func getUserVideos(
     with startIndex: UInt64,
     offset: UInt64
@@ -97,7 +143,7 @@ class ProfileRepository: ProfileRepositoryProtocol {
         }
         return .success(feedResult)
       } else {
-        guard let error = result.err_value() else { return .failure(AccountError.unkown("Invalid state")) }
+        guard let error = result.err_value() else { return .failure(AccountError.unknown("Invalid state")) }
         if error.is_exceeded_max_number_of_items_allowed_in_one_request() {
           return .failure(AccountError.invalidVideoRequest("Exceeded max number of items allowed in one request"))
         } else if error.is_invalid_bounds_passed() {
@@ -105,12 +151,20 @@ class ProfileRepository: ProfileRepositoryProtocol {
         } else if error.is_reached_end_of_items_list() {
           return .failure(AccountError.pageEndReached)
         } else {
-          return .failure(AccountError.unkown("Invalid state"))
+          return .failure(AccountError.unknown("Invalid state"))
         }
       }
     } catch {
       return .failure(AccountError.rustError(RustError.unknown(error.localizedDescription)))
     }
+  }
+
+  private func swiftDelegatedIdentityWire(from rustWire: DelegatedIdentityWire) throws -> SwiftDelegatedIdentityWire {
+    let wireJsonString = delegated_identity_wire_to_json(rustWire).toString()
+    guard let data = wireJsonString.data(using: .utf8) else {
+      throw AuthError.authenticationFailed("Failed to convert wire JSON string to Data")
+    }
+    return try JSONDecoder().decode(SwiftDelegatedIdentityWire.self, from: data)
   }
 }
 
@@ -119,6 +173,7 @@ extension ProfileRepository {
     static let cloudfarePrefix = "https://customer-2p3jflss4r4hmpnz.cloudflarestream.com/"
     static let cloudflareSuffix = "/manifest/video.m3u8"
     static let thumbnailSuffix = "/thumbnails/thumbnail.jpg"
+    static let deleteVideoPath = "/api/v1/posts"
     static let offset = 10
   }
 }

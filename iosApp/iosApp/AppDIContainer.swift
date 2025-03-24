@@ -117,7 +117,7 @@ final class AppDIContainer {
   func makeProfileDIContainer() -> ProfileDIContainer {
     return ProfileDIContainer(
       dependencies: ProfileDIContainer.Dependencies(
-        httpService: HTTPService(),
+        httpService: HTTPService(baseURLString: appConfiguration.profileBaseURLString),
         authClient: authClient,
         crashReporter: crashReporter,
         accountRepository: accountsRepository,

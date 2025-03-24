@@ -22,13 +22,17 @@ final class ProfileDIContainer {
   }
 
   func makeAccountViewModel() -> ProfileViewModel {
+    let profileRepository = ProfileRepository(
+      httpService: dependencies.httpService,
+      authClient: dependencies.authClient
+    )
     return ProfileViewModel(
       accountUseCase: dependencies.accountUseCase,
       myVideosUseCase: MyVideosUseCase(
-        profileRepository: ProfileRepository(
-          httpService: dependencies.httpService,
-          authClient: dependencies.authClient
-        ),
+        profileRepository: profileRepository,
+        crashReporter: dependencies.crashReporter
+      ), deleteVideoUseCase: DeleteVideoUseCase(
+        profileRepository: profileRepository,
         crashReporter: dependencies.crashReporter
       )
     )

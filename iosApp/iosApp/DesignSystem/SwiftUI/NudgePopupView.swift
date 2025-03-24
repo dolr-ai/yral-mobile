@@ -71,7 +71,10 @@ struct NudgePopupView: View {
                   .frame(height: Constants.buttonHeight)
 
                 Button(
-                  action: { dismiss() },
+                  action: {
+                    onConfirm()
+                    dismiss()
+                  },
                   label: {
                     Text(confirmLabel)
                       .font(Constants.buttonFont)

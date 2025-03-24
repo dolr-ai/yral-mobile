@@ -10,6 +10,8 @@ import SwiftUI
 
 struct ProfileVideosGridView: View {
   @Binding var videos: [ProfileVideoInfo]
+  @Binding var currentlyDeletingPostInfo: ProfileVideoInfo?
+  @Binding var showDeleteIndictor: Bool
   @State private var lastLoadedItemID: String?
   var onDelete: ((ProfileVideoInfo) -> Void)?
   var onVideoTapped: ((ProfileVideoInfo) -> Void)?
@@ -38,13 +40,24 @@ struct ProfileVideosGridView: View {
             }
             .padding(.leading, Constants.buttonHorizontalPadding)
             Spacer()
-            Button { onDelete?(video) }
+            Button {
+              onDelete?(video)
+            }
             label: {
               Image(Constants.deleteImageName)
             }
             .padding(.trailing, Constants.buttonHorizontalPadding)
           }
           .padding(.bottom, Constants.bottomPadding)
+          if video.postID == currentlyDeletingPostInfo?.postID && showDeleteIndictor {
+            ZStack(alignment: .center) {
+              Color.black.opacity(0.4)
+              ProgressView()
+                .background(Color.white.opacity(0.8))
+                .padding()
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+          }
         }
         .cornerRadius(Constants.thumbnailCornerRadius)
         .onAppear {
