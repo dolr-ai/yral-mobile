@@ -44,13 +44,51 @@ final class AppDIContainer {
     return composite
   }()
 
+  lazy var feedsRepository: FeedsRepository = {
+    FeedsRepository(
+      httpService: HTTPService(),
+      mlClient: mlFeedClient,
+      authClient: authClient
+    )
+  }()
+
+  lazy var accountsRepository: AccountRepository = {
+    AccountRepository(
+      httpService: HTTPService(),
+      authClient: authClient)
+  }()
+
+  lazy var moreFeedsUseCase: FetchMoreFeedsUseCase = {
+    FetchMoreFeedsUseCase(
+      feedRepository: feedsRepository,
+      crashReporter: crashReporter
+    )
+  }()
+
+  lazy var toggleLikeUseCase: ToggleLikeUseCase = {
+    ToggleLikeUseCase(
+      feedRepository: feedsRepository,
+      crashReporter: crashReporter
+    )
+  }()
+
+  lazy var accountUseCase: AccountUseCase = {
+    AccountUseCase(
+      accountRepository: accountsRepository,
+      crashReporter: crashReporter
+    )
+  }()
+
   func makeFeedDIContainer() -> FeedDIContainer {
     return FeedDIContainer(
       dependencies: FeedDIContainer.Dependencies(
         mlfeedService: mlFeedClient,
         httpService: HTTPService(),
         authClient: authClient,
-        crashReporter: crashReporter
+        crashReporter: crashReporter,
+        feedsRepository: feedsRepository,
+        fetchMoreFeedsUseCase: moreFeedsUseCase,
+        toggleLikeUseCase: toggleLikeUseCase
       )
     )
   }
@@ -60,7 +98,8 @@ final class AppDIContainer {
       dependencies: AccountDIContainer.Dependencies(
         httpService: HTTPService(),
         authClient: authClient,
-        crashReporter: crashReporter
+        crashReporter: crashReporter,
+        accountUseCase: accountUseCase
       )
     )
   }
@@ -80,7 +119,9 @@ final class AppDIContainer {
       dependencies: ProfileDIContainer.Dependencies(
         httpService: HTTPService(),
         authClient: authClient,
-        crashReporter: crashReporter
+        crashReporter: crashReporter,
+        accountRepository: accountsRepository,
+        accountUseCase: accountUseCase
       )
     )
   }

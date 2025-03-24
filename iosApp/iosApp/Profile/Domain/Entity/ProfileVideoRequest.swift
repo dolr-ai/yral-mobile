@@ -6,7 +6,7 @@
 //  Copyright © 2025 orgName. All rights reserved.
 //
 
-struct AccountVideoRequest {
+struct ProfileVideoRequest {
   let startIndex: UInt64
   let offset: UInt64
 }

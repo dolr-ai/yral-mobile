@@ -11,6 +11,8 @@ final class ProfileDIContainer {
     let httpService: HTTPService
     let authClient: AuthClient
     let crashReporter: CrashReporter
+    let accountRepository: AccountRepository
+    let accountUseCase: AccountUseCase
   }
 
   private let dependencies: Dependencies
@@ -19,19 +21,14 @@ final class ProfileDIContainer {
     self.dependencies = dependencies
   }
 
-  func makeAccountRepository() -> AccountRepository {
-    AccountRepository(httpService: dependencies.httpService, authClient: dependencies.authClient)
-  }
-
   func makeAccountViewModel() -> ProfileViewModel {
-    let accountRepository = makeAccountRepository()
     return ProfileViewModel(
-      accountUseCase: AccountUseCase(
-        accountRepository: makeAccountRepository(),
-        crashReporter: dependencies.crashReporter
-      ),
+      accountUseCase: dependencies.accountUseCase,
       myVideosUseCase: MyVideosUseCase(
-        accountRepository: accountRepository,
+        profileRepository: ProfileRepository(
+          httpService: dependencies.httpService,
+          authClient: dependencies.authClient
+        ),
         crashReporter: dependencies.crashReporter
       )
     )
