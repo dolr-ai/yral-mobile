@@ -258,6 +258,14 @@
 		ACC0D44F2D8DDB21006DCF5C /* ProfileRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC0D44D2D8DDB1C006DCF5C /* ProfileRepository.swift */; };
 		ACC0D4522D8DDB97006DCF5C /* ProfileRepositoryProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC0D4512D8DDB8D006DCF5C /* ProfileRepositoryProtocol.swift */; };
 		ACC0D4532D8DDB97006DCF5C /* ProfileRepositoryProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC0D4512D8DDB8D006DCF5C /* ProfileRepositoryProtocol.swift */; };
+		ACC0D4572D9177C2006DCF5C /* DeleteVideoRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC0D4562D9177BF006DCF5C /* DeleteVideoRequest.swift */; };
+		ACC0D4582D9177C2006DCF5C /* DeleteVideoRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC0D4562D9177BF006DCF5C /* DeleteVideoRequest.swift */; };
+		ACC0D45D2D91785B006DCF5C /* SwiftDelegatedIdentityWire.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC0D45C2D917850006DCF5C /* SwiftDelegatedIdentityWire.swift */; };
+		ACC0D45E2D91785B006DCF5C /* SwiftDelegatedIdentityWire.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC0D45C2D917850006DCF5C /* SwiftDelegatedIdentityWire.swift */; };
+		ACC0D4612D917908006DCF5C /* DeleteVideoRequestDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC0D4602D917905006DCF5C /* DeleteVideoRequestDTO.swift */; };
+		ACC0D4622D917908006DCF5C /* DeleteVideoRequestDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC0D4602D917905006DCF5C /* DeleteVideoRequestDTO.swift */; };
+		ACC0D4642D9179C1006DCF5C /* DeleteVideoUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC0D4632D9179BB006DCF5C /* DeleteVideoUseCase.swift */; };
+		ACC0D4652D9179C1006DCF5C /* DeleteVideoUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC0D4632D9179BB006DCF5C /* DeleteVideoUseCase.swift */; };
 		ACC0F3942D2ED5B700FA5BD0 /* SplashScreenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC0F3922D2ED5B700FA5BD0 /* SplashScreenView.swift */; };
 		ACC0F3952D2ED5B700FA5BD0 /* SplashScreenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC0F3922D2ED5B700FA5BD0 /* SplashScreenView.swift */; };
 		ACC0F3972D2ED5D700FA5BD0 /* LottieView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC0F3962D2ED5D700FA5BD0 /* LottieView.swift */; };
@@ -476,6 +484,10 @@
 		ACC0D4472D8DA202006DCF5C /* RefreshVideosUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RefreshVideosUseCase.swift; sourceTree = "<group>"; };
 		ACC0D44D2D8DDB1C006DCF5C /* ProfileRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileRepository.swift; sourceTree = "<group>"; };
 		ACC0D4512D8DDB8D006DCF5C /* ProfileRepositoryProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileRepositoryProtocol.swift; sourceTree = "<group>"; };
+		ACC0D4562D9177BF006DCF5C /* DeleteVideoRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeleteVideoRequest.swift; sourceTree = "<group>"; };
+		ACC0D45C2D917850006DCF5C /* SwiftDelegatedIdentityWire.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftDelegatedIdentityWire.swift; sourceTree = "<group>"; };
+		ACC0D4602D917905006DCF5C /* DeleteVideoRequestDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeleteVideoRequestDTO.swift; sourceTree = "<group>"; };
+		ACC0D4632D9179BB006DCF5C /* DeleteVideoUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeleteVideoUseCase.swift; sourceTree = "<group>"; };
 		ACC0F3922D2ED5B700FA5BD0 /* SplashScreenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashScreenView.swift; sourceTree = "<group>"; };
 		ACC0F3962D2ED5D700FA5BD0 /* LottieView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LottieView.swift; sourceTree = "<group>"; };
 		ACD2E8232D6746E400E750FE /* UploadingProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadingProgressView.swift; sourceTree = "<group>"; };
@@ -1137,6 +1149,7 @@
 		AC99BBBD2D86F3C9008012C2 /* Libs */ = {
 			isa = PBXGroup;
 			children = (
+				ACC0D4592D91783F006DCF5C /* Upload */,
 				ACDD23DF2D8B18B900AB0DAF /* Feed */,
 				ACC0D4412D8D9E58006DCF5C /* RefreshVideos */,
 				AC99BBBC2D86F354008012C2 /* AccountInfo */,
@@ -1351,6 +1364,7 @@
 			isa = PBXGroup;
 			children = (
 				ACDD23E32D8B19FB00AB0DAF /* MyVideosUseCase.swift */,
+				ACC0D4632D9179BB006DCF5C /* DeleteVideoUseCase.swift */,
 			);
 			path = UseCase;
 			sourceTree = "<group>";
@@ -1358,6 +1372,7 @@
 		ACC0D44B2D8DDB07006DCF5C /* Data */ = {
 			isa = PBXGroup;
 			children = (
+				ACC0D45F2D9178FD006DCF5C /* DTO */,
 				ACC0D44C2D8DDB13006DCF5C /* Repository */,
 			);
 			path = Data;
@@ -1377,6 +1392,38 @@
 				ACC0D4512D8DDB8D006DCF5C /* ProfileRepositoryProtocol.swift */,
 			);
 			path = Interface;
+			sourceTree = "<group>";
+		};
+		ACC0D4592D91783F006DCF5C /* Upload */ = {
+			isa = PBXGroup;
+			children = (
+				ACC0D45A2D917844006DCF5C /* Repository */,
+			);
+			path = Upload;
+			sourceTree = "<group>";
+		};
+		ACC0D45A2D917844006DCF5C /* Repository */ = {
+			isa = PBXGroup;
+			children = (
+				ACC0D45B2D91784C006DCF5C /* Entity */,
+			);
+			path = Repository;
+			sourceTree = "<group>";
+		};
+		ACC0D45B2D91784C006DCF5C /* Entity */ = {
+			isa = PBXGroup;
+			children = (
+				ACC0D45C2D917850006DCF5C /* SwiftDelegatedIdentityWire.swift */,
+			);
+			path = Entity;
+			sourceTree = "<group>";
+		};
+		ACC0D45F2D9178FD006DCF5C /* DTO */ = {
+			isa = PBXGroup;
+			children = (
+				ACC0D4602D917905006DCF5C /* DeleteVideoRequestDTO.swift */,
+			);
+			path = DTO;
 			sourceTree = "<group>";
 		};
 		ACC0F3932D2ED5B700FA5BD0 /* Splash */ = {
@@ -1459,6 +1506,7 @@
 			isa = PBXGroup;
 			children = (
 				ACDD23E62D8B1B5400AB0DAF /* ProfileVideoRequest.swift */,
+				ACC0D4562D9177BF006DCF5C /* DeleteVideoRequest.swift */,
 			);
 			path = Entity;
 			sourceTree = "<group>";
@@ -1884,16 +1932,19 @@
 				ACB46A7A2D105B35002E200C /* NibLoadableVIew.swift in Sources */,
 				ACD2E8252D6746E900E750FE /* UploadingProgressView.swift in Sources */,
 				AC32E4702D299E74001DDA43 /* ICPBrandingView.swift in Sources */,
+				ACC0D4612D917908006DCF5C /* DeleteVideoRequestDTO.swift in Sources */,
 				AC26CA4A2D8026B4006ADA75 /* CrashReporter.swift in Sources */,
 				AC4960652D2D693B008D59D9 /* Foundation+Extensions.swift in Sources */,
 				ACEBF7EA2D6F844E00B594A0 /* ToastType.swift in Sources */,
 				ACB46A652D0F0B75002E200C /* FetchInitialFeedsUseCase.swift in Sources */,
 				ACB46A442D0ECBB3002E200C /* ml_feed.pb.swift in Sources */,
 				AC8958E32D3EB0DB00E19ED7 /* ProfileOptionsWebView.swift in Sources */,
+				ACC0D4642D9179C1006DCF5C /* DeleteVideoUseCase.swift in Sources */,
 				ACB46A482D0ECBD5002E200C /* FeedsRepository.swift in Sources */,
 				AC32E4412D295E97001DDA43 /* UserInfoView.swift in Sources */,
 				AC92941D2D6622EE003DB102 /* VideoPickerViewControllerRepresentable.swift in Sources */,
 				ACEBF7DB2D6EDC8500B594A0 /* GradientProgressViewStyle.swift in Sources */,
+				ACC0D4582D9177C2006DCF5C /* DeleteVideoRequest.swift in Sources */,
 				ACB46A502D0ED195002E200C /* FeedResult.swift in Sources */,
 				ACB46A532D0ED22B002E200C /* FeedQuery.swift in Sources */,
 				AC32E4502D296628001DDA43 /* AccountUseCase.swift in Sources */,
@@ -1956,6 +2007,7 @@
 				AC32E4542D296637001DDA43 /* AccountRepository.swift in Sources */,
 				AC9294092D630266003DB102 /* UploadView.swift in Sources */,
 				AC7F7EBF2D7734BB00215162 /* UploadRepository.swift in Sources */,
+				ACC0D45D2D91785B006DCF5C /* SwiftDelegatedIdentityWire.swift in Sources */,
 				ACB46A812D106034002E200C /* FeedsCell.swift in Sources */,
 				AC7F7ECE2D78707200215162 /* UploadVideoRequest.swift in Sources */,
 				AC6BECC22D09F91C002E2021 /* HTTPService.swift in Sources */,
@@ -2019,16 +2071,19 @@
 				ACB46A792D105B35002E200C /* NibLoadableVIew.swift in Sources */,
 				ACD2E8242D6746E900E750FE /* UploadingProgressView.swift in Sources */,
 				AC32E46F2D299E74001DDA43 /* ICPBrandingView.swift in Sources */,
+				ACC0D4622D917908006DCF5C /* DeleteVideoRequestDTO.swift in Sources */,
 				AC26CA492D8026B4006ADA75 /* CrashReporter.swift in Sources */,
 				AC4960642D2D693B008D59D9 /* Foundation+Extensions.swift in Sources */,
 				ACEBF7E92D6F844E00B594A0 /* ToastType.swift in Sources */,
 				ACB46A642D0F0B75002E200C /* FetchInitialFeedsUseCase.swift in Sources */,
 				ACB46A412D0ECBB3002E200C /* ml_feed.pb.swift in Sources */,
 				AC8958E22D3EB0DB00E19ED7 /* ProfileOptionsWebView.swift in Sources */,
+				ACC0D4652D9179C1006DCF5C /* DeleteVideoUseCase.swift in Sources */,
 				ACB46A472D0ECBD5002E200C /* FeedsRepository.swift in Sources */,
 				AC32E4422D295E97001DDA43 /* UserInfoView.swift in Sources */,
 				AC92941C2D6622EE003DB102 /* VideoPickerViewControllerRepresentable.swift in Sources */,
 				ACEBF7DC2D6EDC8500B594A0 /* GradientProgressViewStyle.swift in Sources */,
+				ACC0D4572D9177C2006DCF5C /* DeleteVideoRequest.swift in Sources */,
 				ACB46A512D0ED195002E200C /* FeedResult.swift in Sources */,
 				ACB46A542D0ED22B002E200C /* FeedQuery.swift in Sources */,
 				AC32E44F2D296628001DDA43 /* AccountUseCase.swift in Sources */,
@@ -2091,6 +2146,7 @@
 				AC32E4532D296637001DDA43 /* AccountRepository.swift in Sources */,
 				AC9294082D630266003DB102 /* UploadView.swift in Sources */,
 				AC7F7EC02D7734BB00215162 /* UploadRepository.swift in Sources */,
+				ACC0D45E2D91785B006DCF5C /* SwiftDelegatedIdentityWire.swift in Sources */,
 				ACB46A802D106034002E200C /* FeedsCell.swift in Sources */,
 				AC7F7ECD2D78707200215162 /* UploadVideoRequest.swift in Sources */,
 				AC6BECC32D09F91C002E2021 /* HTTPService.swift in Sources */,

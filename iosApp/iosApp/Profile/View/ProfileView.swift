@@ -15,6 +15,8 @@ struct ProfileView: View {
   @State private var isLoadingFirstTime = true
   @State var accountInfo: AccountInfo?
   @State var videos: [ProfileVideoInfo] = []
+  @State private var deleteInfo: ProfileVideoInfo?
+  @State private var showDeleteIndicator: Bool = false
   var uploadVideoPressed: (() -> Void) = {}
 
   let viewModel: ProfileViewModel
@@ -46,7 +48,15 @@ struct ProfileView: View {
         } else {
           ProfileVideosGridView(
             videos: $videos,
-            onDelete: { _ in },
+            currentlyDeletingPostInfo: $deleteInfo,
+            showDeleteIndictor: $showDeleteIndicator,
+            onDelete: { info in
+              self.deleteInfo = info
+              withAnimation(.easeInOut(duration: CGFloat.animationPeriod)) {
+                UIView.setAnimationsEnabled(false)
+                showDelete = true
+              }
+            },
             onVideoTapped: { _ in },
             onLoadMore: {
               Task { @MainActor in
@@ -64,7 +74,19 @@ struct ProfileView: View {
         nudgeMessage: Constants.deleteText,
         confirmLabel: Constants.deleteButtonTitle,
         cancelLabel: Constants.cancelTitle,
-        onConfirm: { showDelete = false },
+        onConfirm: {
+          showDelete = false
+          showDeleteIndicator = true
+          Task { @MainActor in
+            guard let deleteInfo else { return }
+            await self.viewModel.deleteVideo(
+              request: DeleteVideoRequest(
+                postId: UInt64(deleteInfo.postID) ?? .zero,
+                videoId: deleteInfo.videoId
+              )
+            )
+          }
+        },
         onCancel: { showDelete = false }
       )
       .background( ClearBackgroundView() )
@@ -74,14 +96,21 @@ struct ProfileView: View {
       case .fetchedAccountInfo(let info):
         showAccountInfo = true
         accountInfo = info
-        //        withAnimation(.easeInOut(duration: CGFloat.animationPeriod)) {
-        //          UIView.setAnimationsEnabled(false)
-        //          showDelete = true
-        //        }
       case .loadedVideos(let videos):
+        guard !videos.isEmpty else { return }
         showEmptyState = false
         self.videos += videos
-
+      case .deletedVideos(let videos):
+        withAnimation {
+          self.videos.removeAll { $0.postID == videos[.zero].postID }
+        }
+        if self.videos.isEmpty {
+          showEmptyState = true
+        }
+        self.showDeleteIndicator = false
+      case .deleteVideoFailed:
+        self.deleteInfo = nil
+        self.showDeleteIndicator = false
       default:
         break
       }
@@ -157,7 +186,15 @@ extension ProfileView {
           )
         ),
         crashReporter: FirebaseCrashlyticsReporter()
-      )
+      ), deleteVideoUseCase: DeleteVideoUseCase(
+        profileRepository: ProfileRepository(
+          httpService: HTTPService(),
+          authClient: DefaultAuthClient(
+            networkService: HTTPService(),
+            crashReporter: FirebaseCrashlyticsReporter()
+          )
+        ),
+        crashReporter: FirebaseCrashlyticsReporter())
     )
   )
 }
