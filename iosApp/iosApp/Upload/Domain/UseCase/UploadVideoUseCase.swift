@@ -7,7 +7,7 @@
 //
 
 protocol UploadVideoUseCaseProtocol {
-  func execute(request: UploadVideoRequest) async -> AsyncThrowingStream<Double, Error>
+  func execute(request: UploadVideoRequest) -> AsyncThrowingStream<Double, Error>
 }
 
 class UploadVideoUseCase:

@@ -30,11 +30,11 @@ enum AccountPageState: Equatable {
 }
 
 class AccountViewModel: ObservableObject {
-  let useCase: AccountUseCase
+  let useCase: AccountUseCaseProtocol
 
   @Published var state: AccountPageState = .initalized
 
-  init(useCase: AccountUseCase) {
+  init(useCase: AccountUseCaseProtocol) {
     self.useCase = useCase
   }
 

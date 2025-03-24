@@ -16,7 +16,7 @@ enum HTTPMethod: String {
   case get
   case post
   case put
-  case delete
+  case delete = "DELETE"
 }
 
 struct Endpoint {

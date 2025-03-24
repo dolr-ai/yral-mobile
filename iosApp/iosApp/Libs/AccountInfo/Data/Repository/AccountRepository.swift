@@ -16,7 +16,7 @@ class AccountRepository: AccountRepositoryProtocol {
     self.authClient = authClient
   }
 
-  func fetchProfile() async -> Result<AccountInfo, AccountError> {
+  func fetchAccount() async -> Result<AccountInfo, AccountError> {
     return .success(AccountInfo(imageURL: nil, canisterID: authClient.userPrincipalString ?? ""))
   }
 }

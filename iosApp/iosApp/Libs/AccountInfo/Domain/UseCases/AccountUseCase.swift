@@ -27,6 +27,6 @@ class AccountUseCase:
   }
 
   override func runImplementation(_ request: Void) async -> Result<AccountInfo, AccountError> {
-    await accountRepository.fetchProfile()
+    await accountRepository.fetchAccount()
   }
 }

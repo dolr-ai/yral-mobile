@@ -11,6 +11,7 @@ final class AccountDIContainer {
     let httpService: HTTPService
     let authClient: AuthClient
     let crashReporter: CrashReporter
+    let accountUseCase: AccountUseCase
   }
 
   private let dependencies: Dependencies
@@ -25,14 +26,7 @@ final class AccountDIContainer {
 
   func makeAccountViewModel() -> AccountViewModel {
     AccountViewModel(
-      useCase: AccountUseCase(
-        accountRepository: makeAccountRepository(),
-        crashReporter: dependencies.crashReporter
-      )
+      useCase: dependencies.accountUseCase
     )
-  }
-
-  func makeAccountRepository() -> AccountRepository {
-    AccountRepository(httpService: dependencies.httpService, authClient: dependencies.authClient)
   }
 }

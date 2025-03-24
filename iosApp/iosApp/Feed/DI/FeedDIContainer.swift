@@ -13,6 +13,9 @@ final class FeedDIContainer {
     let httpService: HTTPService
     let authClient: AuthClient
     let crashReporter: CrashReporter
+    let feedsRepository: FeedsRepository
+    let fetchMoreFeedsUseCase: FetchMoreFeedsUseCaseProtocol
+    let toggleLikeUseCase: ToggleLikeUseCaseProtocol
   }
 
   private let dependencies: Dependencies
@@ -26,27 +29,13 @@ final class FeedDIContainer {
   }
 
   func makeFeedsViewModel() -> FeedsViewModel {
-    let feedRepository = makeFeedsRepository()
     return FeedsViewModel(
       fetchFeedsUseCase: FetchInitialFeedsUseCase(
-        feedRepository: feedRepository,
+        feedRepository: dependencies.feedsRepository,
         crashReporter: dependencies.crashReporter
       ),
-      moreFeedsUseCase: FetchMoreFeedsUseCase(feedRepository: feedRepository,
-                                              crashReporter: dependencies.crashReporter
-                                             ),
-      likeUseCase: ToggleLikeUseCase(
-        feedRepository: feedRepository,
-        crashReporter: dependencies.crashReporter
-      )
-    )
-  }
-
-  func makeFeedsRepository() -> FeedsRepository {
-    FeedsRepository(
-      httpService: dependencies.httpService,
-      mlClient: dependencies.mlfeedService,
-      authClient: dependencies.authClient
+      moreFeedsUseCase: dependencies.fetchMoreFeedsUseCase,
+      likeUseCase: dependencies.toggleLikeUseCase
     )
   }
 }

@@ -8,11 +8,23 @@
 
 import Foundation
 
+enum FeedType {
+  case currentUser
+  case otherUser
+}
+
 struct MoreFeedsRequest {
   let filteredPosts: [MlFeed_PostItem]
   let numResults: Int
+  let feedType: FeedType
 }
 
 struct InitialFeedRequest {
   let numResults: Int
+  let feedType: FeedType
+
+  init(numResults: Int, feedType: FeedType = .currentUser) {
+    self.numResults = numResults
+    self.feedType = feedType
+  }
 }

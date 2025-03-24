@@ -7,7 +7,7 @@
 //
 
 protocol FetchMoreFeedsUseCaseProtocol {
-  func execute(request: MoreFeedsRequest) async throws -> Result<[FeedResult], FeedError>
+  func execute(request: MoreFeedsRequest) async -> Result<[FeedResult], FeedError>
 }
 
 class FetchMoreFeedsUseCase:
