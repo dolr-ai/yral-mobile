@@ -5,6 +5,7 @@
 //  Created by Sarvesh Sharma on 16/03/25.
 //  Copyright © 2025 orgName. All rights reserved.
 //
+import Foundation
 import Combine
 
 enum ProfilePageState {
@@ -16,7 +17,7 @@ enum ProfilePageState {
 
 enum ProfilePageEvent {
   case fetchedAccountInfo(AccountInfo)
-  case loadedVideos([FeedResult])
+  case loadedVideos([ProfileVideoInfo])
   case pageEndReached
 }
 
@@ -24,22 +25,36 @@ class ProfileViewModel: ObservableObject {
   @Published var state: ProfilePageState = .initialized
   @Published var event: ProfilePageEvent?
 
-  let accountUseCase: AccountUseCase
-  let myVideosUseCase: MyVideosUseCase
-  var videos: [FeedResult] = []
+  let accountUseCase: AccountUseCaseProtocol
+  let myVideosUseCase: MyVideosUseCaseProtocol
+  private var cancellables = Set<AnyCancellable>()
   var startIndex = Int.zero
-  var offset = Constants.offset
+  var offset = ProfileRepository.Constants.offset
+  private var isLoading = false
+  private(set) var hasMorePages = true
 
   init(
-    accountUseCase: AccountUseCase,
-    myVideosUseCase: MyVideosUseCase
+    accountUseCase: AccountUseCaseProtocol,
+    myVideosUseCase: MyVideosUseCaseProtocol
   ) {
     self.accountUseCase = accountUseCase
     self.myVideosUseCase = myVideosUseCase
+    myVideosUseCase.newVideosPublisher
+      .map { feedResults in
+        feedResults.map { $0.toProfileVideoInfo() }
+      }
+      .receive(on: RunLoop.main)
+      .sink { [weak self] newVideos in
+        guard let self = self else { return }
+        self.event = .loadedVideos(newVideos)
+      }
+      .store(in: &cancellables)
   }
 
   func fetchProfileInfo() async {
-    state = .loading
+    await MainActor.run {
+      state = .loading
+    }
     let result = await accountUseCase.execute()
     await MainActor.run {
       switch result {
@@ -53,10 +68,14 @@ class ProfileViewModel: ObservableObject {
   }
 
   func getVideos() async {
-    state = .loading
-    startIndex += offset
+    guard !isLoading, hasMorePages else { return }
+
+    await MainActor.run {
+      state = .loading
+      isLoading = true
+    }
     let result = await myVideosUseCase.execute(
-      request: AccountVideoRequest(
+      request: ProfileVideoRequest(
         startIndex: UInt64(startIndex),
         offset: UInt64(offset)
       )
@@ -64,24 +83,19 @@ class ProfileViewModel: ObservableObject {
     await MainActor.run {
       switch result {
       case .success(let feedResult):
-        videos += feedResult
-        event = .loadedVideos(videos)
         state = .success
+        startIndex += offset
       case .failure(let error):
         switch error {
         case .pageEndReached:
           event = .pageEndReached
           state = .success
+          hasMorePages = false
         default:
           state = .failure(error.localizedDescription)
         }
       }
+      isLoading = false
     }
-  }
-}
-
-extension ProfileViewModel {
-  enum Constants {
-    static let offset = 10
   }
 }

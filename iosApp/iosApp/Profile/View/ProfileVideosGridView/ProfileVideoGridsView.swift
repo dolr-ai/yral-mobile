@@ -9,9 +9,11 @@
 import SwiftUI
 
 struct ProfileVideosGridView: View {
-  let videos: [ProfileVideoInfo]
+  @Binding var videos: [ProfileVideoInfo]
+  @State private var lastLoadedItemID: String?
   var onDelete: ((ProfileVideoInfo) -> Void)?
   var onVideoTapped: ((ProfileVideoInfo) -> Void)?
+  var onLoadMore: (() -> Void)?
 
   private let columns = [
     GridItem(.flexible(), spacing: Constants.gridItemSpacing),
@@ -20,7 +22,7 @@ struct ProfileVideosGridView: View {
 
   var body: some View {
     LazyVGrid(columns: columns, spacing: Constants.verticalSpacing) {
-      ForEach(videos) { video in
+      ForEach(videos, id: \.id) { video in
         ZStack(alignment: .bottomLeading) {
           VideoThumbnailView(video: video)
             .onTapGesture {
@@ -28,10 +30,13 @@ struct ProfileVideosGridView: View {
             }
 
           HStack {
-            Text("\(video.likesCount)")
-              .font(Constants.likeTextFont)
-              .foregroundColor(Constants.likeTextColor)
-              .padding(.leading, Constants.buttonHorizontalPadding)
+            HStack(spacing: Constants.innerHStackSpacing) {
+              Image(video.isLiked ? Constants.likeImageNameSelected : Constants.likeImageNameUnselected)
+              Text("\(video.likeCount)")
+                .font(Constants.likeTextFont)
+                .foregroundColor(Constants.likeTextColor)
+            }
+            .padding(.leading, Constants.buttonHorizontalPadding)
             Spacer()
             Button { onDelete?(video) }
             label: {
@@ -42,6 +47,14 @@ struct ProfileVideosGridView: View {
           .padding(.bottom, Constants.bottomPadding)
         }
         .cornerRadius(Constants.thumbnailCornerRadius)
+        .onAppear {
+          if let lastVideo = videos.last, video.postID == lastVideo.postID {
+            if lastLoadedItemID != lastVideo.postID {
+              lastLoadedItemID = lastVideo.postID
+              onLoadMore?()
+            }
+          }
+        }
       }
     }
   }
@@ -51,12 +64,15 @@ extension ProfileVideosGridView {
   enum Constants {
     static let gridItemSpacing: CGFloat = 16.0
     static let verticalSpacing: CGFloat = 16.0
+    static let innerHStackSpacing: CGFloat = 4.0
 
     static let thumbnailCornerRadius: CGFloat = 8.0
     static let buttonHorizontalPadding: CGFloat = 12.0
     static let bottomPadding: CGFloat = 12.0
 
     static let deleteImageName = "delete_video_profile"
+    static let likeImageNameSelected = "like_selected_feed"
+    static let likeImageNameUnselected = "like_unselected_feed"
 
     static let likeTextFont = YralFont.pt14.medium.swiftUIFont
     static let likeTextColor = YralColor.grey50.swiftUIColor
@@ -67,25 +83,8 @@ struct VideoThumbnailView: View {
   let video: ProfileVideoInfo
 
   var body: some View {
-    GeometryReader { proxy in
-      AsyncImage(url: video.thumbnailUrl) { phase in
-        switch phase {
-        case .empty:
-          ProgressView()
-            .frame(width: proxy.size.width, height: proxy.size.height)
-        case .success(let image):
-          image
-            .resizable()
-            .scaledToFill()
-            .frame(width: proxy.size.width, height: proxy.size.height)
-            .clipped()
-        case .failure:
-          Color.gray
-            .overlay(Text("Failed to load").foregroundColor(.white))
-        @unknown default:
-          EmptyView()
-        }
-      }
+    GeometryReader { _ in
+      URLImage(url: video.thumbnailUrl)
     }
     .aspectRatio(Constants.thumbnailAspectRatio, contentMode: .fit)
   }

@@ -10,8 +10,13 @@ import SwiftUI
 
 struct ProfileView: View {
   @State var showAccountInfo = false
-  @State var profileInfo: AccountInfo?
+  @State var showEmptyState = true
+  @State var showDelete = false
+  @State private var isLoadingFirstTime = true
+  @State var accountInfo: AccountInfo?
+  @State var videos: [ProfileVideoInfo] = []
   var uploadVideoPressed: (() -> Void) = {}
+
   let viewModel: ProfileViewModel
 
   init(viewModel: ProfileViewModel) {
@@ -28,27 +33,65 @@ struct ProfileView: View {
           .padding(Constants.navigationTitlePadding)
 
         if showAccountInfo {
-          UserInfoView(accountInfo: $profileInfo, shouldApplySpacing: false)
+          UserInfoView(accountInfo: $accountInfo, shouldApplySpacing: false)
         }
-        Spacer(minLength: Constants.minimumTopSpacing)
-        ProfileEmptyStateView {
-          uploadVideoPressed()
+        if showEmptyState {
+          Group {
+            Spacer(minLength: Constants.minimumTopSpacing)
+            ProfileEmptyStateView {
+              uploadVideoPressed()
+            }
+            Spacer(minLength: Constants.minimumBottomSpacing)
+          }
+        } else {
+          ProfileVideosGridView(
+            videos: $videos,
+            onDelete: { _ in },
+            onVideoTapped: { _ in },
+            onLoadMore: {
+              Task { @MainActor in
+                await viewModel.getVideos()
+              }
+            }
+          )
         }
-        Spacer(minLength: Constants.minimumBottomSpacing)
       }
       .padding(.horizontal, Constants.horizontalPadding)
+    }
+    .fullScreenCover(isPresented: $showDelete) {
+      NudgePopupView(
+        nudgeTitle: Constants.deleteTitle,
+        nudgeMessage: Constants.deleteText,
+        confirmLabel: Constants.deleteButtonTitle,
+        cancelLabel: Constants.cancelTitle,
+        onConfirm: { showDelete = false },
+        onCancel: { showDelete = false }
+      )
+      .background( ClearBackgroundView() )
     }
     .onReceive(viewModel.$event) { event in
       switch event {
       case .fetchedAccountInfo(let info):
         showAccountInfo = true
-        profileInfo = info
+        accountInfo = info
+        //        withAnimation(.easeInOut(duration: CGFloat.animationPeriod)) {
+        //          UIView.setAnimationsEnabled(false)
+        //          showDelete = true
+        //        }
+      case .loadedVideos(let videos):
+        showEmptyState = false
+        self.videos += videos
+
       default:
         break
       }
     }
     .task {
-      await viewModel.fetchProfileInfo()
+      guard isLoadingFirstTime else { return }
+      isLoadingFirstTime = false
+      async let fetchProfile: () = viewModel.fetchProfileInfo()
+      async let fetchVideos: () = viewModel.getVideos()
+      _ = await (fetchProfile, fetchVideos)
     }
   }
 
@@ -75,6 +118,11 @@ extension ProfileView {
     static let horizontalPadding: CGFloat = 16.0
     static let minimumTopSpacing: CGFloat = 16.0
     static let minimumBottomSpacing: CGFloat = 16.0
+
+    static let deleteTitle = "Delete video?"
+    static let deleteText = "This video will be permanently deleted from your Yral account."
+    static let cancelTitle = "Cancel"
+    static let deleteButtonTitle = "Delete"
   }
 }
 
@@ -101,7 +149,13 @@ extension ProfileView {
         crashReporter: FirebaseCrashlyticsReporter()
       ),
       myVideosUseCase: MyVideosUseCase(
-        accountRepository: accountRepository,
+        profileRepository: ProfileRepository(
+          httpService: HTTPService(),
+          authClient: DefaultAuthClient(
+            networkService: HTTPService(),
+            crashReporter: FirebaseCrashlyticsReporter()
+          )
+        ),
         crashReporter: FirebaseCrashlyticsReporter()
       )
     )
