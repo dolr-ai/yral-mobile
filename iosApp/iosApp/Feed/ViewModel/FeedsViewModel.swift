@@ -48,9 +48,9 @@ enum FeedsPageEvent: Equatable {
 }
 
 class FeedsViewModel: ObservableObject {
-  let initialFeedsUseCase: FetchInitialFeedsUseCase
-  let moreFeedsUseCase: FetchMoreFeedsUseCase
-  let likesUseCase: ToggleLikeUseCase
+  let initialFeedsUseCase: FetchInitialFeedsUseCaseProtocol
+  let moreFeedsUseCase: FetchMoreFeedsUseCaseProtocol
+  let likesUseCase: ToggleLikeUseCaseProtocol
   private var currentFeeds = [FeedResult]()
   private var feedPostIDSet = Set<String>()
   private var cancellables = Set<AnyCancellable>()
@@ -60,9 +60,9 @@ class FeedsViewModel: ObservableObject {
   @Published var event: FeedsPageEvent?
 
   init(
-    fetchFeedsUseCase: FetchInitialFeedsUseCase,
-    moreFeedsUseCase: FetchMoreFeedsUseCase,
-    likeUseCase: ToggleLikeUseCase
+    fetchFeedsUseCase: FetchInitialFeedsUseCaseProtocol,
+    moreFeedsUseCase: FetchMoreFeedsUseCaseProtocol,
+    likeUseCase: ToggleLikeUseCaseProtocol
   ) {
     self.initialFeedsUseCase = fetchFeedsUseCase
     self.moreFeedsUseCase = moreFeedsUseCase
@@ -110,7 +110,8 @@ class FeedsViewModel: ObservableObject {
       }
       let request = MoreFeedsRequest(
         filteredPosts: filteredPosts,
-        numResults: FeedsViewController.Constants.initialNumResults
+        numResults: FeedsViewController.Constants.initialNumResults,
+        feedType: .currentUser
       )
       let result = await moreFeedsUseCase.execute(request: request)
       switch result {

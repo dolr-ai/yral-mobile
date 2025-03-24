@@ -685,30 +685,6 @@ void* __swift_bridge__$Vec_FollowEntryDetail$get_mut(void* vec_ptr, uintptr_t in
 uintptr_t __swift_bridge__$Vec_FollowEntryDetail$len(void* vec_ptr);
 void* __swift_bridge__$Vec_FollowEntryDetail$as_ptr(void* vec_ptr);
 
-typedef struct Result12 Result12;
-void __swift_bridge__$Result12$_free(void* self);
-
-void* __swift_bridge__$Vec_Result12$new(void);
-void __swift_bridge__$Vec_Result12$drop(void* vec_ptr);
-void __swift_bridge__$Vec_Result12$push(void* vec_ptr, void* item_ptr);
-void* __swift_bridge__$Vec_Result12$pop(void* vec_ptr);
-void* __swift_bridge__$Vec_Result12$get(void* vec_ptr, uintptr_t index);
-void* __swift_bridge__$Vec_Result12$get_mut(void* vec_ptr, uintptr_t index);
-uintptr_t __swift_bridge__$Vec_Result12$len(void* vec_ptr);
-void* __swift_bridge__$Vec_Result12$as_ptr(void* vec_ptr);
-
-typedef struct GetPostsOfUserProfileError GetPostsOfUserProfileError;
-void __swift_bridge__$GetPostsOfUserProfileError$_free(void* self);
-
-void* __swift_bridge__$Vec_GetPostsOfUserProfileError$new(void);
-void __swift_bridge__$Vec_GetPostsOfUserProfileError$drop(void* vec_ptr);
-void __swift_bridge__$Vec_GetPostsOfUserProfileError$push(void* vec_ptr, void* item_ptr);
-void* __swift_bridge__$Vec_GetPostsOfUserProfileError$pop(void* vec_ptr);
-void* __swift_bridge__$Vec_GetPostsOfUserProfileError$get(void* vec_ptr, uintptr_t index);
-void* __swift_bridge__$Vec_GetPostsOfUserProfileError$get_mut(void* vec_ptr, uintptr_t index);
-uintptr_t __swift_bridge__$Vec_GetPostsOfUserProfileError$len(void* vec_ptr);
-void* __swift_bridge__$Vec_GetPostsOfUserProfileError$as_ptr(void* vec_ptr);
-
 typedef struct MlFeedCacheItem MlFeedCacheItem;
 void __swift_bridge__$MlFeedCacheItem$_free(void* self);
 
@@ -1501,6 +1477,31 @@ void* __swift_bridge__$Vec_CanistersWrapper$get_mut(void* vec_ptr, uintptr_t ind
 uintptr_t __swift_bridge__$Vec_CanistersWrapper$len(void* vec_ptr);
 void* __swift_bridge__$Vec_CanistersWrapper$as_ptr(void* vec_ptr);
 
+typedef struct GetPostsOfUserProfileError GetPostsOfUserProfileError;
+void __swift_bridge__$GetPostsOfUserProfileError$_free(void* self);
+
+void* __swift_bridge__$Vec_GetPostsOfUserProfileError$new(void);
+void __swift_bridge__$Vec_GetPostsOfUserProfileError$drop(void* vec_ptr);
+void __swift_bridge__$Vec_GetPostsOfUserProfileError$push(void* vec_ptr, void* item_ptr);
+void* __swift_bridge__$Vec_GetPostsOfUserProfileError$pop(void* vec_ptr);
+void* __swift_bridge__$Vec_GetPostsOfUserProfileError$get(void* vec_ptr, uintptr_t index);
+void* __swift_bridge__$Vec_GetPostsOfUserProfileError$get_mut(void* vec_ptr, uintptr_t index);
+uintptr_t __swift_bridge__$Vec_GetPostsOfUserProfileError$len(void* vec_ptr);
+void* __swift_bridge__$Vec_GetPostsOfUserProfileError$as_ptr(void* vec_ptr);
+
+typedef struct Result12 Result12;
+void __swift_bridge__$Result12$_free(void* self);
+
+void* __swift_bridge__$Vec_Result12$new(void);
+void __swift_bridge__$Vec_Result12$drop(void* vec_ptr);
+void __swift_bridge__$Vec_Result12$push(void* vec_ptr, void* item_ptr);
+void* __swift_bridge__$Vec_Result12$pop(void* vec_ptr);
+void* __swift_bridge__$Vec_Result12$get(void* vec_ptr, uintptr_t index);
+void* __swift_bridge__$Vec_Result12$get_mut(void* vec_ptr, uintptr_t index);
+uintptr_t __swift_bridge__$Vec_Result12$len(void* vec_ptr);
+void* __swift_bridge__$Vec_Result12$as_ptr(void* vec_ptr);
+
+uint64_t __swift_bridge__$PostDetailsForFrontend$id(void* self);
 struct RustStr __swift_bridge__$PostDetailsForFrontend$video_uid(void* self);
 struct RustStr __swift_bridge__$PostDetailsForFrontend$description(void* self);
 uint64_t __swift_bridge__$PostDetailsForFrontend$like_count(void* self);
@@ -1603,6 +1604,13 @@ void* __swift_bridge__$CanistersWrapper$get_user_principal(void* self);
 void* __swift_bridge__$CanistersWrapper$get_user_principal_string(void* self);
 struct __private__OptionU64 __swift_bridge__$extract_time_as_double(void* result);
 struct __private__ResultPtrAndPtr __swift_bridge__$get_principal(void* text);
+bool __swift_bridge__$GetPostsOfUserProfileError$is_reached_end_of_items_list(void* self);
+bool __swift_bridge__$GetPostsOfUserProfileError$is_invalid_bounds_passed(void* self);
+bool __swift_bridge__$GetPostsOfUserProfileError$is_exceeded_max_number_of_items_allowed_in_one_request(void* self);
+bool __swift_bridge__$Result12$is_ok(void* self);
+bool __swift_bridge__$Result12$is_err(void* self);
+void* __swift_bridge__$Result12$ok_value(void* self);
+void* __swift_bridge__$Result12$err_value(void* self);
 typedef enum __swift_bridge__$ResultU32AndAgentError$Tag {__swift_bridge__$ResultU32AndAgentError$ResultOk, __swift_bridge__$ResultU32AndAgentError$ResultErr} __swift_bridge__$ResultU32AndAgentError$Tag;
 union __swift_bridge__$ResultU32AndAgentError$Fields {uint32_t ok; void* err;};
 typedef struct __swift_bridge__$ResultU32AndAgentError{__swift_bridge__$ResultU32AndAgentError$Tag tag; union __swift_bridge__$ResultU32AndAgentError$Fields payload;} __swift_bridge__$ResultU32AndAgentError;

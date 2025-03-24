@@ -77,8 +77,6 @@ mod ffi {
         type PlacedBetDetailResult;
         type Result11;
         type MlFeedCacheItem;
-        type GetPostsOfUserProfileError;
-        type Result12;
         type FollowEntryDetail;
         type FollowEntry;
         type UserProfileGlobalStats;
@@ -140,6 +138,8 @@ mod ffi {
 
     extern "Rust" {
         type PostDetailsForFrontend;
+        #[swift_bridge(get(id))]
+        fn id(&self) -> u64;
         #[swift_bridge(get(&video_uid))]
         fn video_uid(&self) -> &str;
         #[swift_bridge(get(&description))]
@@ -431,12 +431,10 @@ mod ffi {
         fn delegate_identity_with_max_age_public(
             parent_wire: DelegatedIdentityWire,
             new_pub_jwk_json: Vec<u8>,
-            max_age_seconds: u64
-        ) -> Result<DelegatedIdentityWire, String>; 
-        fn delegated_identity_wire_to_json(
-            wire: &DelegatedIdentityWire
-        ) -> String;
-   }
+            max_age_seconds: u64,
+        ) -> Result<DelegatedIdentityWire, String>;
+        fn delegated_identity_wire_to_json(wire: &DelegatedIdentityWire) -> String;
+    }
 
     extern "Rust" {
         type CanistersWrapper;
@@ -455,4 +453,22 @@ mod ffi {
         fn extract_time_as_double(result: Result11) -> Option<u64>;
         fn get_principal(text: String) -> Result<Principal, PrincipalError>;
     }
-}
+
+    extern "Rust" {
+        type GetPostsOfUserProfileError;
+
+        fn is_reached_end_of_items_list(&self) -> bool;
+        fn is_invalid_bounds_passed(&self) -> bool;
+        fn is_exceeded_max_number_of_items_allowed_in_one_request(&self) -> bool;
+    }
+
+    extern "Rust" {
+        type Result12;
+
+        fn is_ok(&self) -> bool;
+        fn is_err(&self) -> bool;
+
+        fn ok_value(self) -> Option<Vec<PostDetailsForFrontend>>;
+        fn err_value(self) -> Option<GetPostsOfUserProfileError>;
+    }
+ }

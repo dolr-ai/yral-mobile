@@ -38,9 +38,9 @@ enum UploadViewEvent {
 }
 
 class UploadViewModel: ObservableObject {
-  let getUploadEndpointUseCase: GetUploadEndpointUseCase
-  let uploadVideoUseCase: UploadVideoUseCase
-  let updateMetaUseCase: UpdateMetaUseCase
+  let getUploadEndpointUseCase: GetUploadEndpointUseCaseProtocol
+  let uploadVideoUseCase: UploadVideoUseCaseProtocol
+  let updateMetaUseCase: UpdateMetaUseCaseProtocol
   var uploadEndpointResponse: UploadEndpointResponse!
   private var fetchEndpointTask: Task<Void, Never>?
 
@@ -49,9 +49,9 @@ class UploadViewModel: ObservableObject {
 
   private var uploadTask: Task<Void, Never>?
 
-  init(getUploadEndpointUseCase: GetUploadEndpointUseCase,
-       uploadVideoUseCase: UploadVideoUseCase,
-       updateMetaUseCase: UpdateMetaUseCase) {
+  init(getUploadEndpointUseCase: GetUploadEndpointUseCaseProtocol,
+       uploadVideoUseCase: UploadVideoUseCaseProtocol,
+       updateMetaUseCase: UpdateMetaUseCaseProtocol) {
     self.getUploadEndpointUseCase = getUploadEndpointUseCase
     self.uploadVideoUseCase = uploadVideoUseCase
     self.updateMetaUseCase = updateMetaUseCase
