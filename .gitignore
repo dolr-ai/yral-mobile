@@ -119,3 +119,6 @@ Cargo.lock
 # Rust analyzer and other tools
 /rust-agent/target/
 rust-analyzer.json
+
+# kotlin
+.kotlin
