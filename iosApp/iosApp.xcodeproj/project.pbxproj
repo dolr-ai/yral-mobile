@@ -199,6 +199,20 @@
 		AC99BBC12D86FF81008012C2 /* ProfileEmptyState.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC99BBC02D86FF7D008012C2 /* ProfileEmptyState.swift */; };
 		AC99BBC22D86FF81008012C2 /* ProfileEmptyState.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC99BBC02D86FF7D008012C2 /* ProfileEmptyState.swift */; };
 		AC9B77E62D58C84000270FC9 /* HLSDownloadManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9B77D52D58C2F300270FC9 /* HLSDownloadManagerTests.swift */; };
+		ACB09FC92D92CB6400EE3239 /* ProfileRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB09FC82D92CB6000EE3239 /* ProfileRouter.swift */; };
+		ACB09FCA2D92CB6400EE3239 /* ProfileRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB09FC82D92CB6000EE3239 /* ProfileRouter.swift */; };
+		ACB09FCE2D92D51200EE3239 /* LikeRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB09FCD2D92D50D00EE3239 /* LikeRepository.swift */; };
+		ACB09FCF2D92D51200EE3239 /* LikeRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB09FCD2D92D50D00EE3239 /* LikeRepository.swift */; };
+		ACB09FD12D92D52E00EE3239 /* LikeRepositoryProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB09FD02D92D52700EE3239 /* LikeRepositoryProtocol.swift */; };
+		ACB09FD22D92D52E00EE3239 /* LikeRepositoryProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB09FD02D92D52700EE3239 /* LikeRepositoryProtocol.swift */; };
+		ACB09FD52D92D66400EE3239 /* FeedsViewModelProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB09FD42D92D65E00EE3239 /* FeedsViewModelProtocol.swift */; };
+		ACB09FD62D92D66400EE3239 /* FeedsViewModelProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB09FD42D92D65E00EE3239 /* FeedsViewModelProtocol.swift */; };
+		ACB09FDA2D92D6E900EE3239 /* MoreFeedsRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB09FD92D92D6E400EE3239 /* MoreFeedsRequest.swift */; };
+		ACB09FDB2D92D6E900EE3239 /* MoreFeedsRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB09FD92D92D6E400EE3239 /* MoreFeedsRequest.swift */; };
+		ACB09FDD2D92F87E00EE3239 /* MyVideosFeedViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB09FDC2D92F87000EE3239 /* MyVideosFeedViewModel.swift */; };
+		ACB09FDE2D92F87E00EE3239 /* MyVideosFeedViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB09FDC2D92F87000EE3239 /* MyVideosFeedViewModel.swift */; };
+		ACB09FE72D93289000EE3239 /* MyVideosFeedInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB09FE62D93288400EE3239 /* MyVideosFeedInfo.swift */; };
+		ACB09FE82D93289000EE3239 /* MyVideosFeedInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB09FE62D93288400EE3239 /* MyVideosFeedInfo.swift */; };
 		ACB46A262D0EC0A3002E200C /* YralPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A252D0EC09C002E200C /* YralPlayer.swift */; };
 		ACB46A272D0EC0A3002E200C /* YralPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A252D0EC09C002E200C /* YralPlayer.swift */; };
 		ACB46A292D0EC76A002E200C /* AppConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A282D0EC765002E200C /* AppConfiguration.swift */; };
@@ -455,6 +469,13 @@
 		AC99BBC02D86FF7D008012C2 /* ProfileEmptyState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileEmptyState.swift; sourceTree = "<group>"; };
 		AC9B77D52D58C2F300270FC9 /* HLSDownloadManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HLSDownloadManagerTests.swift; sourceTree = "<group>"; };
 		AC9B77DD2D58C7E300270FC9 /* YralTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = YralTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		ACB09FC82D92CB6000EE3239 /* ProfileRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileRouter.swift; sourceTree = "<group>"; };
+		ACB09FCD2D92D50D00EE3239 /* LikeRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LikeRepository.swift; sourceTree = "<group>"; };
+		ACB09FD02D92D52700EE3239 /* LikeRepositoryProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LikeRepositoryProtocol.swift; sourceTree = "<group>"; };
+		ACB09FD42D92D65E00EE3239 /* FeedsViewModelProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedsViewModelProtocol.swift; sourceTree = "<group>"; };
+		ACB09FD92D92D6E400EE3239 /* MoreFeedsRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoreFeedsRequest.swift; sourceTree = "<group>"; };
+		ACB09FDC2D92F87000EE3239 /* MyVideosFeedViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyVideosFeedViewModel.swift; sourceTree = "<group>"; };
+		ACB09FE62D93288400EE3239 /* MyVideosFeedInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyVideosFeedInfo.swift; sourceTree = "<group>"; };
 		ACB46A252D0EC09C002E200C /* YralPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralPlayer.swift; sourceTree = "<group>"; };
 		ACB46A282D0EC765002E200C /* AppConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfiguration.swift; sourceTree = "<group>"; };
 		ACB46A2B2D0EC82F002E200C /* AppDIContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDIContainer.swift; sourceTree = "<group>"; };
@@ -1102,6 +1123,7 @@
 				AC99BBB32D86C571008012C2 /* ViewModel */,
 				AC99BBB42D86C579008012C2 /* Domain */,
 				ACC0D44B2D8DDB07006DCF5C /* Data */,
+				ACB09FC72D92CB5600EE3239 /* Router */,
 				ACC0D4442D8DA076006DCF5C /* DI */,
 			);
 			path = Profile;
@@ -1120,6 +1142,7 @@
 		AC99BBB32D86C571008012C2 /* ViewModel */ = {
 			isa = PBXGroup;
 			children = (
+				ACB09FDC2D92F87000EE3239 /* MyVideosFeedViewModel.swift */,
 				AC99BBB92D86C8AC008012C2 /* ProfileViewModel.swift */,
 				ACDD23F52D8B3D5200AB0DAF /* Data */,
 			);
@@ -1149,7 +1172,7 @@
 		AC99BBBD2D86F3C9008012C2 /* Libs */ = {
 			isa = PBXGroup;
 			children = (
-				ACC0D4592D91783F006DCF5C /* Upload */,
+				ACC0D4592D91783F006DCF5C /* SwiftIdentityWire */,
 				ACDD23DF2D8B18B900AB0DAF /* Feed */,
 				ACC0D4412D8D9E58006DCF5C /* RefreshVideos */,
 				AC99BBBC2D86F354008012C2 /* AccountInfo */,
@@ -1193,6 +1216,46 @@
 				ACC0D4432D8DA059006DCF5C /* DI */,
 			);
 			path = Upload;
+			sourceTree = "<group>";
+		};
+		ACB09FC72D92CB5600EE3239 /* Router */ = {
+			isa = PBXGroup;
+			children = (
+				ACB09FC82D92CB6000EE3239 /* ProfileRouter.swift */,
+			);
+			path = Router;
+			sourceTree = "<group>";
+		};
+		ACB09FCB2D92D50400EE3239 /* Data */ = {
+			isa = PBXGroup;
+			children = (
+				ACB09FCC2D92D50900EE3239 /* Repository */,
+			);
+			path = Data;
+			sourceTree = "<group>";
+		};
+		ACB09FCC2D92D50900EE3239 /* Repository */ = {
+			isa = PBXGroup;
+			children = (
+				ACB09FCD2D92D50D00EE3239 /* LikeRepository.swift */,
+			);
+			path = Repository;
+			sourceTree = "<group>";
+		};
+		ACB09FD32D92D64700EE3239 /* ViewModel */ = {
+			isa = PBXGroup;
+			children = (
+				ACB09FD42D92D65E00EE3239 /* FeedsViewModelProtocol.swift */,
+			);
+			path = ViewModel;
+			sourceTree = "<group>";
+		};
+		ACB09FD82D92D6DC00EE3239 /* Entity */ = {
+			isa = PBXGroup;
+			children = (
+				ACB09FD92D92D6E400EE3239 /* MoreFeedsRequest.swift */,
+			);
+			path = Entity;
 			sourceTree = "<group>";
 		};
 		ACB46A242D0EC083002E200C /* Video */ = {
@@ -1243,6 +1306,7 @@
 		ACB46A492D0ED0E9002E200C /* Domain */ = {
 			isa = PBXGroup;
 			children = (
+				ACB09FD82D92D6DC00EE3239 /* Entity */,
 				ACB46A622D0F0B67002E200C /* Usecases */,
 			);
 			path = Domain;
@@ -1251,6 +1315,7 @@
 		ACB46A4A2D0ED0F8002E200C /* Interfaces */ = {
 			isa = PBXGroup;
 			children = (
+				ACB09FD02D92D52700EE3239 /* LikeRepositoryProtocol.swift */,
 				ACB46A4B2D0ED100002E200C /* FeedRepositoryProtocol.swift */,
 			);
 			path = Interfaces;
@@ -1270,6 +1335,7 @@
 			isa = PBXGroup;
 			children = (
 				ACB46A632D0F0B70002E200C /* FetchInitialFeedsUseCase.swift */,
+				AC49605A2D2C4BE5008D59D9 /* FetchMoreFeedsUseCase.swift */,
 			);
 			path = Usecases;
 			sourceTree = "<group>";
@@ -1394,12 +1460,12 @@
 			path = Interface;
 			sourceTree = "<group>";
 		};
-		ACC0D4592D91783F006DCF5C /* Upload */ = {
+		ACC0D4592D91783F006DCF5C /* SwiftIdentityWire */ = {
 			isa = PBXGroup;
 			children = (
 				ACC0D45A2D917844006DCF5C /* Repository */,
 			);
-			path = Upload;
+			path = SwiftIdentityWire;
 			sourceTree = "<group>";
 		};
 		ACC0D45A2D917844006DCF5C /* Repository */ = {
@@ -1465,8 +1531,10 @@
 		ACDD23DF2D8B18B900AB0DAF /* Feed */ = {
 			isa = PBXGroup;
 			children = (
+				ACB46A6D2D0F3F9E002E200C /* View */,
+				ACB09FD32D92D64700EE3239 /* ViewModel */,
 				ACDD23E02D8B18BD00AB0DAF /* Domain */,
-				ACB46A3E2D0ECBB3002E200C /* Data */,
+				ACB09FCB2D92D50400EE3239 /* Data */,
 			);
 			path = Feed;
 			sourceTree = "<group>";
@@ -1485,7 +1553,6 @@
 			isa = PBXGroup;
 			children = (
 				AC32E4722D2AD674001DDA43 /* ToggleLikeUseCase.swift */,
-				AC49605A2D2C4BE5008D59D9 /* FetchMoreFeedsUseCase.swift */,
 			);
 			path = Usecase;
 			sourceTree = "<group>";
@@ -1498,6 +1565,7 @@
 				AC26CA632D805E52006ADA75 /* FeedError.swift */,
 				AC49605D2D2C5E63008D59D9 /* LikeQuery.swift */,
 				AC4960602D2D6649008D59D9 /* LikeResult.swift */,
+				ACB09FE62D93288400EE3239 /* MyVideosFeedInfo.swift */,
 			);
 			path = Entity;
 			sourceTree = "<group>";
@@ -1522,9 +1590,9 @@
 		ACEBE9962D0C4AA50056F033 /* Feed */ = {
 			isa = PBXGroup;
 			children = (
-				ACB46A6D2D0F3F9E002E200C /* View */,
 				ACB46A662D0F35FD002E200C /* ViewModel */,
 				ACB46A492D0ED0E9002E200C /* Domain */,
+				ACB46A3E2D0ECBB3002E200C /* Data */,
 				ACC0D4422D8DA051006DCF5C /* DI */,
 			);
 			path = Feed;
@@ -1914,6 +1982,7 @@
 			files = (
 				AC6BECC02D09F86C002E2021 /* NetworkService.swift in Sources */,
 				ACEBF8012D74673600B594A0 /* HashtagsView.swift in Sources */,
+				ACB09FDD2D92F87E00EE3239 /* MyVideosFeedViewModel.swift in Sources */,
 				ACB46A262D0EC0A3002E200C /* YralPlayer.swift in Sources */,
 				ACB46A682D0F3609002E200C /* FeedsViewModel.swift in Sources */,
 				ACB46A422D0ECBB3002E200C /* ml_feed.proto in Sources */,
@@ -1930,6 +1999,7 @@
 				ACB46A432D0ECBB3002E200C /* ml_feed.grpc.swift in Sources */,
 				AC49605B2D2C4BF7008D59D9 /* FetchMoreFeedsUseCase.swift in Sources */,
 				ACB46A7A2D105B35002E200C /* NibLoadableVIew.swift in Sources */,
+				ACB09FE82D93289000EE3239 /* MyVideosFeedInfo.swift in Sources */,
 				ACD2E8252D6746E900E750FE /* UploadingProgressView.swift in Sources */,
 				AC32E4702D299E74001DDA43 /* ICPBrandingView.swift in Sources */,
 				ACC0D4612D917908006DCF5C /* DeleteVideoRequestDTO.swift in Sources */,
@@ -1967,9 +2037,11 @@
 				ACB46A362D0EC998002E200C /* FeedDIContainer.swift in Sources */,
 				AC26CA572D80287E006ADA75 /* AuthClient.swift in Sources */,
 				2152FB042600AC8F00CF470E /* IosApp.swift in Sources */,
+				ACB09FCF2D92D51200EE3239 /* LikeRepository.swift in Sources */,
 				AC8958DF2D3EA60500E19ED7 /* FeedsViewController+DataSource.swift in Sources */,
 				AC09A9B22CDB775C009A39A4 /* yral-mobile-swift-binding.swift in Sources */,
 				AC26CA5E2D8052E2006ADA75 /* BaseStreamingUseCase.swift in Sources */,
+				ACB09FD52D92D66400EE3239 /* FeedsViewModelProtocol.swift in Sources */,
 				AC7F7EAA2D771DF400215162 /* GetUploadEndpointUseCase.swift in Sources */,
 				AC8472AE2D1D9540004A4259 /* AVFoundation+Extensions.swift in Sources */,
 				AC92941A2D65F308003DB102 /* View+Extensions.swift in Sources */,
@@ -1994,6 +2066,7 @@
 				AC8472AB2D1D9139004A4259 /* HLSDownloadManager.swift in Sources */,
 				AC32E45B2D296731001DDA43 /* AccountRepositoryProtocol.swift in Sources */,
 				AC7F7ECA2D786F8E00215162 /* UploadVideoUseCase.swift in Sources */,
+				ACB09FDA2D92D6E900EE3239 /* MoreFeedsRequest.swift in Sources */,
 				ACDD23E42D8B19FF00AB0DAF /* MyVideosUseCase.swift in Sources */,
 				AC26CA682D806514006ADA75 /* RustError.swift in Sources */,
 				ACC0D4342D8BFE67006DCF5C /* NudgePopupView.swift in Sources */,
@@ -2008,6 +2081,7 @@
 				AC9294092D630266003DB102 /* UploadView.swift in Sources */,
 				AC7F7EBF2D7734BB00215162 /* UploadRepository.swift in Sources */,
 				ACC0D45D2D91785B006DCF5C /* SwiftDelegatedIdentityWire.swift in Sources */,
+				ACB09FC92D92CB6400EE3239 /* ProfileRouter.swift in Sources */,
 				ACB46A812D106034002E200C /* FeedsCell.swift in Sources */,
 				AC7F7ECE2D78707200215162 /* UploadVideoRequest.swift in Sources */,
 				AC6BECC22D09F91C002E2021 /* HTTPService.swift in Sources */,
@@ -2024,6 +2098,7 @@
 				AC99BB9A2D84913C008012C2 /* YralColor.swift in Sources */,
 				AC6E31232D22F08F001EBE6C /* ImageLoaderProtocol.swift in Sources */,
 				ACB46A5B2D0EF91F002E200C /* AuthConstants.swift in Sources */,
+				ACB09FD22D92D52E00EE3239 /* LikeRepositoryProtocol.swift in Sources */,
 				ACB46A292D0EC76A002E200C /* AppConfiguration.swift in Sources */,
 				ACEBF7DF2D6F215800B594A0 /* VideoPlayerView.swift in Sources */,
 				ACB46A342D0EC8FF002E200C /* Numbers+Extensions.swift in Sources */,
@@ -2053,6 +2128,7 @@
 			files = (
 				AC6BECBF2D09F86C002E2021 /* NetworkService.swift in Sources */,
 				ACEBF8022D74673600B594A0 /* HashtagsView.swift in Sources */,
+				ACB09FDE2D92F87E00EE3239 /* MyVideosFeedViewModel.swift in Sources */,
 				ACB46A272D0EC0A3002E200C /* YralPlayer.swift in Sources */,
 				ACB46A692D0F3609002E200C /* FeedsViewModel.swift in Sources */,
 				ACB46A3F2D0ECBB3002E200C /* ml_feed.proto in Sources */,
@@ -2069,6 +2145,7 @@
 				ACB46A402D0ECBB3002E200C /* ml_feed.grpc.swift in Sources */,
 				AC49605C2D2C4BF7008D59D9 /* FetchMoreFeedsUseCase.swift in Sources */,
 				ACB46A792D105B35002E200C /* NibLoadableVIew.swift in Sources */,
+				ACB09FE72D93289000EE3239 /* MyVideosFeedInfo.swift in Sources */,
 				ACD2E8242D6746E900E750FE /* UploadingProgressView.swift in Sources */,
 				AC32E46F2D299E74001DDA43 /* ICPBrandingView.swift in Sources */,
 				ACC0D4622D917908006DCF5C /* DeleteVideoRequestDTO.swift in Sources */,
@@ -2106,9 +2183,11 @@
 				ACB46A372D0EC998002E200C /* FeedDIContainer.swift in Sources */,
 				AC26CA582D80287E006ADA75 /* AuthClient.swift in Sources */,
 				ACD941872CFF575C0038FCB6 /* IosApp.swift in Sources */,
+				ACB09FCE2D92D51200EE3239 /* LikeRepository.swift in Sources */,
 				AC8958E02D3EA60500E19ED7 /* FeedsViewController+DataSource.swift in Sources */,
 				ACD941882CFF575C0038FCB6 /* yral-mobile-swift-binding.swift in Sources */,
 				AC26CA5F2D8052E2006ADA75 /* BaseStreamingUseCase.swift in Sources */,
+				ACB09FD62D92D66400EE3239 /* FeedsViewModelProtocol.swift in Sources */,
 				AC7F7EA92D771DF400215162 /* GetUploadEndpointUseCase.swift in Sources */,
 				AC8472AD2D1D9540004A4259 /* AVFoundation+Extensions.swift in Sources */,
 				AC9294192D65F308003DB102 /* View+Extensions.swift in Sources */,
@@ -2133,6 +2212,7 @@
 				AC8472AA2D1D9139004A4259 /* HLSDownloadManager.swift in Sources */,
 				AC32E45C2D296731001DDA43 /* AccountRepositoryProtocol.swift in Sources */,
 				AC7F7ECB2D786F8E00215162 /* UploadVideoUseCase.swift in Sources */,
+				ACB09FDB2D92D6E900EE3239 /* MoreFeedsRequest.swift in Sources */,
 				ACDD23E52D8B19FF00AB0DAF /* MyVideosUseCase.swift in Sources */,
 				AC26CA692D806514006ADA75 /* RustError.swift in Sources */,
 				ACC0D4352D8BFE67006DCF5C /* NudgePopupView.swift in Sources */,
@@ -2147,6 +2227,7 @@
 				AC9294082D630266003DB102 /* UploadView.swift in Sources */,
 				AC7F7EC02D7734BB00215162 /* UploadRepository.swift in Sources */,
 				ACC0D45E2D91785B006DCF5C /* SwiftDelegatedIdentityWire.swift in Sources */,
+				ACB09FCA2D92CB6400EE3239 /* ProfileRouter.swift in Sources */,
 				ACB46A802D106034002E200C /* FeedsCell.swift in Sources */,
 				AC7F7ECD2D78707200215162 /* UploadVideoRequest.swift in Sources */,
 				AC6BECC32D09F91C002E2021 /* HTTPService.swift in Sources */,
@@ -2163,6 +2244,7 @@
 				AC99BB9B2D84913C008012C2 /* YralColor.swift in Sources */,
 				AC6E31222D22F08F001EBE6C /* ImageLoaderProtocol.swift in Sources */,
 				ACB46A5A2D0EF91F002E200C /* AuthConstants.swift in Sources */,
+				ACB09FD12D92D52E00EE3239 /* LikeRepositoryProtocol.swift in Sources */,
 				ACB46A2A2D0EC76A002E200C /* AppConfiguration.swift in Sources */,
 				ACEBF7DE2D6F215800B594A0 /* VideoPlayerView.swift in Sources */,
 				ACB46A332D0EC8FF002E200C /* Numbers+Extensions.swift in Sources */,

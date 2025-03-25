@@ -14,9 +14,11 @@ class FeedsViewController: UIViewController {
   typealias DataSource = UICollectionViewDiffableDataSource<Int, FeedResult>
   typealias Snapshot = NSDiffableDataSourceSnapshot<Int, FeedResult>
 
-  var viewModel: FeedsViewModel
+  let viewModel: any FeedViewModelProtocol
+  var feedType: FeedType = .otherUsers
   var initalFeedscancellables: Set<AnyCancellable> = []
   var paginatedFeedscancellables: Set<AnyCancellable> = []
+
   lazy var yralPlayer: YralPlayer = {
     let player = YralPlayer()
     player.delegate = self
@@ -47,8 +49,9 @@ class FeedsViewController: UIViewController {
   var loadMoreRequestMade: Bool = false
   var shouldShowFooterLoader: Bool = false
 
-  init(viewModel: FeedsViewModel) {
+  init(viewModel: any FeedViewModelProtocol, feedType: FeedType = .otherUsers) {
     self.viewModel = viewModel
+    self.feedType = feedType
     super.init(nibName: nil, bundle: nil)
   }
 
@@ -87,52 +90,66 @@ class FeedsViewController: UIViewController {
   }
 
   func bindViewModel() {
-    viewModel.$state.receive(on: RunLoop.main).sink { [weak self] state in
-      guard let self = self else { return }
-      switch state {
-      case .initalized:
-        activityIndicator.startAnimating()
-      case .loading:
-        guard viewModel.event != .loadingMoreFeeds else { return }
-        activityIndicator.startAnimating()
-      case .successfullyFetched(let feeds):
-        DispatchQueue.main.async {
+    viewModel.unifiedStatePublisher
+      .receive(on: RunLoop.main)
+      .sink { [weak self] state in
+        guard let self = self else { return }
+        switch state {
+        case .initialized:
+          self.activityIndicator.startAnimating()
+        case .loading:
+          guard viewModel.unifiedEvent != .loadingMoreFeeds else { return }
+          self.activityIndicator.startAnimating()
+        case .success(let feeds):
+          DispatchQueue.main.async {
+            self.activityIndicator.stopAnimating()
+            self.updateData(withFeeds: feeds)
+          }
+        case .failure(let errorMessage):
           self.activityIndicator.stopAnimating()
-          self.updateData(withFeeds: feeds)
+          self.loadMoreRequestMade = false
+          print("Error: \(errorMessage)")
         }
-      case .failure(let error):
-        activityIndicator.stopAnimating()
-        loadMoreRequestMade = false
-        print(error)
       }
-    }.store(in: &initalFeedscancellables)
+      .store(in: &initalFeedscancellables)
   }
 
+  // swiftlint: disable cyclomatic_complexity
   func handleEvents() {
-    viewModel.$event.receive(on: RunLoop.main).sink { [weak self] event in
-      guard let self = self else { return }
-      switch event {
-      case .loadedMoreFeeds:
-        DispatchQueue.main.async {
-          self.shouldShowFooterLoader = false
-          let snapshot = self.feedsDataSource.snapshot()
-          self.feedsDataSource.apply(snapshot, animatingDifferences: true)
+    viewModel.unifiedEventPublisher
+      .receive(on: RunLoop.main)
+      .sink { [weak self] event in
+        guard let self = self, let event = event else { return }
+        switch event {
+        case .fetchingInitialFeeds:
+          loadMoreRequestMade = true
+        case .loadedMoreFeeds:
+          DispatchQueue.main.async {
+            self.shouldShowFooterLoader = false
+            let snapshot = self.feedsDataSource.snapshot()
+            self.feedsDataSource.apply(snapshot, animatingDifferences: true)
+          }
+        case .loadMoreFeedsFailed(let errorMessage):
+          print("Load more feeds failed: \(errorMessage)")
+        case .loadingMoreFeeds:
+          self.loadMoreRequestMade = true
+        case .finishedLoadingInitialFeeds:
+          self.loadMoreRequestMade = false
+        case .toggledLikeSuccessfully(let response):
+          self.toggleLikeStatus(response)
+        case .toggleLikeFailed(let errorMessage):
+          print("Toggle like failed: \(errorMessage)")
+        case .deleteVideoSuccess(let feeds):
+          self.updateData(withFeeds: feeds)
+        case .deleteVideoFailed(let errorMessage):
+          print("Delete video failed: \(errorMessage)")
+        case .pageEndReached:
+          print("No more pages.")
         }
-      case .loadMoreFeedsFailed(let error):
-        print(error)
-      case .fetchingInitialFeeds:
-        loadMoreRequestMade = true
-      case .finishedLoadingInitialFeeds:
-        loadMoreRequestMade = false
-      case .toggledLikeSuccessfully(let response):
-        toggleLikeStatus(response)
-      case .toggleLikeFailed(let error):
-        print(error)
-      default:
-        break
       }
-    }.store(in: &paginatedFeedscancellables)
+      .store(in: &paginatedFeedscancellables)
   }
+  // swiftlint: enable cyclomatic_complexity
 
   func setupUI() {
     self.view.backgroundColor = .black
@@ -179,11 +196,10 @@ class FeedsViewController: UIViewController {
       } else {
         footer.stopAnimating()
       }
-
       return footer
     }
-
   }
+
   private func createLayout() -> UICollectionViewCompositionalLayout {
     return UICollectionViewCompositionalLayout { (_, _) -> NSCollectionLayoutSection? in
       let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(.one),
@@ -225,10 +241,7 @@ class FeedsViewController: UIViewController {
       options: .highPriority,
       progress: nil
     ) { [weak self] image, _, error, _, _, _ in
-      guard
-        let image = image,
-        error == nil
-      else {
+      guard let image = image, error == nil else {
         return
       }
       SDImageCache.shared.store(image, forKey: baseString, completion: nil)

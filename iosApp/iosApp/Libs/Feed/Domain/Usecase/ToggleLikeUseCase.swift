@@ -14,14 +14,14 @@ protocol ToggleLikeUseCaseProtocol: AnyObject {
 class ToggleLikeUseCase:
   BaseResultUseCase<LikeQuery, LikeResult, FeedError>,
   ToggleLikeUseCaseProtocol {
-  private let feedRepository: FeedRepositoryProtocol
+  private let likeRepository: LikeRepositoryProtocol
 
-  init(feedRepository: FeedRepositoryProtocol, crashReporter: CrashReporter) {
-    self.feedRepository = feedRepository
+  init(likeRepository: LikeRepositoryProtocol, crashReporter: CrashReporter) {
+    self.likeRepository = likeRepository
     super.init(crashReporter: crashReporter)
   }
 
   override func runImplementation(_ request: LikeQuery) async -> Result<LikeResult, FeedError> {
-    await feedRepository.toggleLikeStatus(for: request)
+    await likeRepository.toggleLikeStatus(for: request)
   }
 }

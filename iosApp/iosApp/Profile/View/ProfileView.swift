@@ -17,12 +17,16 @@ struct ProfileView: View {
   @State var videos: [ProfileVideoInfo] = []
   @State private var deleteInfo: ProfileVideoInfo?
   @State private var showDeleteIndicator: Bool = false
+  @State private var showFeeds = false
+  @State private var currentIndex: Int = .zero
   var uploadVideoPressed: (() -> Void) = {}
 
   let viewModel: ProfileViewModel
+  let router: ProfileRouterProtocol
 
-  init(viewModel: ProfileViewModel) {
+  init(viewModel: ProfileViewModel, router: ProfileRouterProtocol) {
     self.viewModel = viewModel
+    self.router = router
   }
 
   var body: some View {
@@ -57,7 +61,16 @@ struct ProfileView: View {
                 showDelete = true
               }
             },
-            onVideoTapped: { _ in },
+            onVideoTapped: { videoInfo in
+//              feedsWrapper = router.displayUserVideoFeed(
+//                existingFeeds: viewModel.feeds,
+//                info: MyVideosFeedInfo(
+//                  startIndex: viewModel.startIndex,
+//                  currentIndex: videos.firstIndex(where: { $0.postID == videoInfo.postID } ) ?? .zero)
+//              )
+              currentIndex = videos.firstIndex(where: { $0.postID == videoInfo.postID }) ?? .zero
+              showFeeds = true
+            },
             onLoadMore: {
               Task { @MainActor in
                 await viewModel.getVideos()
@@ -67,6 +80,33 @@ struct ProfileView: View {
         }
       }
       .padding(.horizontal, Constants.horizontalPadding)
+    }
+    .fullScreenCover(isPresented: $showFeeds) {
+      NavigationView {
+        router.displayUserVideoFeed(
+          existingFeeds: viewModel.feeds,
+          info: MyVideosFeedInfo(
+            startIndex: viewModel.startIndex,
+            currentIndex: currentIndex
+          )
+        )
+        .navigationBarTitle("Your Videos", displayMode: .inline)
+        .navigationBarItems(leading: Button("Back") {
+          showFeeds = false
+        })
+      }
+      .onAppear {
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithTransparentBackground() // Makes the bar transparent
+        appearance.titleTextAttributes = [.foregroundColor: UIColor.white]
+        appearance.largeTitleTextAttributes = [.foregroundColor: UIColor.white]
+
+        // Apply the appearance to the navigation bar
+        UINavigationBar.appearance().standardAppearance = appearance
+        UINavigationBar.appearance().compactAppearance = appearance
+        UINavigationBar.appearance().scrollEdgeAppearance = appearance
+      }
+      .interactiveDismissDisabled(true)
     }
     .fullScreenCover(isPresented: $showDelete) {
       NudgePopupView(
@@ -153,48 +193,4 @@ extension ProfileView {
     static let cancelTitle = "Cancel"
     static let deleteButtonTitle = "Delete"
   }
-}
-
-#Preview {
-  let accountRepository = AccountRepository(
-    httpService: HTTPService(),
-    authClient:
-      DefaultAuthClient(
-        networkService: HTTPService(),
-        crashReporter: FirebaseCrashlyticsReporter()
-      )
-  )
-  ProfileView(
-    viewModel: ProfileViewModel(
-      accountUseCase: AccountUseCase(
-        accountRepository: AccountRepository(
-          httpService: HTTPService(),
-          authClient:
-            DefaultAuthClient(
-              networkService: HTTPService(),
-              crashReporter: FirebaseCrashlyticsReporter()
-            )
-        ),
-        crashReporter: FirebaseCrashlyticsReporter()
-      ),
-      myVideosUseCase: MyVideosUseCase(
-        profileRepository: ProfileRepository(
-          httpService: HTTPService(),
-          authClient: DefaultAuthClient(
-            networkService: HTTPService(),
-            crashReporter: FirebaseCrashlyticsReporter()
-          )
-        ),
-        crashReporter: FirebaseCrashlyticsReporter()
-      ), deleteVideoUseCase: DeleteVideoUseCase(
-        profileRepository: ProfileRepository(
-          httpService: HTTPService(),
-          authClient: DefaultAuthClient(
-            networkService: HTTPService(),
-            crashReporter: FirebaseCrashlyticsReporter()
-          )
-        ),
-        crashReporter: FirebaseCrashlyticsReporter())
-    )
-  )
 }

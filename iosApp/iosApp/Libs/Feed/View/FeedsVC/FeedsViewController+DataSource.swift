@@ -81,7 +81,7 @@ extension FeedsViewController {
     snapshot.appendItems(feeds, toSection: .zero)
     feedsDataSource.apply(snapshot, animatingDifferences: shouldAnimate) {
       self.loadMoreRequestMade = {
-        if case .fetchingInitialFeeds = self.viewModel.event {
+        if case .fetchingInitialFeeds = self.viewModel.unifiedEvent {
           return true
         }
         return false
