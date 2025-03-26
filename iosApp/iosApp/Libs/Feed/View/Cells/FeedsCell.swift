@@ -5,20 +5,23 @@
 //  Created by Sarvesh Sharma on 16/12/24.
 //  Copyright © 2024 orgName. All rights reserved.
 //
-
+// swiftlint: disable file_length type_body_length
 import UIKit
 import AVFoundation
 
 protocol FeedsCellProtocol: AnyObject {
   func shareButtonTapped(index: Int)
   func likeButtonTapped(index: Int)
+  func deleteButtonTapped(index: Int)
 }
 
 class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
 
   var playerLayer: AVPlayerLayer?
   var index: Int = .zero
+  var feedType: FeedType = .otherUsers
   weak var delegate: FeedsCellProtocol?
+
   private let playerContainerView = getUIImageView()
 
   private var actionsStackView: UIStackView = {
@@ -39,6 +42,38 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     return getActionButton(withTitle: "", image: Constants.shareButtonImage)
   }()
 
+  private var deleteButton: UIButton = {
+    return getActionButton(withTitle: "", image: Constants.deleteButtonImage)
+  }()
+
+  private let captionScrollView: UIScrollView = {
+    let scrollView = UIScrollView()
+    scrollView.translatesAutoresizingMaskIntoConstraints = false
+    scrollView.showsVerticalScrollIndicator = true
+    scrollView.isScrollEnabled = false
+    scrollView.showsVerticalScrollIndicator = false
+    scrollView.showsHorizontalScrollIndicator = false
+    return scrollView
+  }()
+
+  private let captionLabel: UILabel = {
+    let label = UILabel()
+    label.translatesAutoresizingMaskIntoConstraints = false
+    label.numberOfLines = 1
+    label.lineBreakMode = .byTruncatingTail
+    label.font = Constants.captionTitleFont
+    label.textColor = Constants.captionTextColor
+    label.textAlignment = .left
+    return label
+  }()
+
+  private var isCaptionExpanded = false
+  private var collapsedCaptionHeight: CGFloat = 0
+  private var expandedCaptionHeight: CGFloat = 0
+  private var isCaptionCollapsible = false
+
+  private var captionScrollViewHeightConstraint: NSLayoutConstraint!
+
   private static func getActionButton(withTitle title: String, image: UIImage?) -> UIButton {
     var configuration = UIButton.Configuration.plain()
     configuration.image = image ?? UIImage()
@@ -54,7 +89,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     let button = UIButton(type: .custom)
     button.translatesAutoresizingMaskIntoConstraints = false
     button.configuration = configuration
-    button.titleLabel?.numberOfLines = .one
+    button.titleLabel?.numberOfLines = 1
     button.backgroundColor = .clear
     button.widthAnchor.constraint(equalToConstant: Constants.actionButtonWidth).isActive = true
     button.heightAnchor.constraint(equalToConstant: Constants.actionButtonHeight).isActive = true
@@ -82,6 +117,11 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     addPlayerContainerView()
     setupProfileInfoView()
     setupStackView()
+    setupCaptionLabel()
+
+    let cellTapGesture = UITapGestureRecognizer(target: self, action: #selector(handleCellTap))
+    cellTapGesture.cancelsTouchesInView = false
+    contentView.addGestureRecognizer(cellTapGesture)
   }
 
   func addPlayerContainerView() {
@@ -129,9 +169,60 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     ])
 
     actionsStackView.addArrangedSubview(likeButton)
-//    actionsStackView.addArrangedSubview(shareButton)
+    // actionsStackView.addArrangedSubview(shareButton)
     likeButton.addTarget(self, action: #selector(likeButtonTapped), for: .touchUpInside)
     shareButton.addTarget(self, action: #selector(shareButtonTapped), for: .touchUpInside)
+    deleteButton.addTarget(self, action: #selector(deleteButtonTapped), for: .touchUpInside)
+  }
+
+  private func setupCaptionLabel() {
+    contentView.addSubview(captionScrollView)
+    captionScrollView.addSubview(captionLabel)
+
+    captionScrollViewHeightConstraint = captionScrollView.heightAnchor
+      .constraint(equalToConstant: Constants.captionSingleLineHeight)
+    captionScrollViewHeightConstraint.isActive = true
+
+    NSLayoutConstraint.activate([
+      captionScrollView.leadingAnchor.constraint(
+        equalTo: contentView.leadingAnchor,
+        constant: Constants.horizontalMargin
+      ),
+      captionScrollView.trailingAnchor.constraint(
+        equalTo: actionsStackView.leadingAnchor,
+        constant: -Constants.horizontalMargin
+      ),
+      captionScrollView.bottomAnchor.constraint(
+        equalTo: contentView.bottomAnchor,
+        constant: -Constants.captionsBottomMargin
+      )
+    ])
+
+    NSLayoutConstraint.activate([
+      captionLabel.topAnchor.constraint(equalTo: captionScrollView.contentLayoutGuide.topAnchor),
+      captionLabel.leadingAnchor.constraint(equalTo: captionScrollView.contentLayoutGuide.leadingAnchor),
+      captionLabel.trailingAnchor.constraint(equalTo: captionScrollView.contentLayoutGuide.trailingAnchor),
+      captionLabel.bottomAnchor.constraint(equalTo: captionScrollView.contentLayoutGuide.bottomAnchor),
+      captionLabel.widthAnchor.constraint(equalTo: captionScrollView.frameLayoutGuide.widthAnchor)
+    ])
+
+    let captionTapGesture = UITapGestureRecognizer(target: self, action: #selector(handleCaptionTap))
+    captionScrollView.addGestureRecognizer(captionTapGesture)
+  }
+
+  @objc private func handleCaptionTap() {
+    if !isCaptionExpanded {
+      expandCaption()
+    } else {
+      collapseCaption()
+    }
+  }
+
+  @objc private func handleCellTap(_ gesture: UITapGestureRecognizer) {
+    guard isCaptionCollapsible else { return }
+    if isCaptionExpanded {
+      collapseCaption()
+    }
   }
 
   @objc func likeButtonTapped() {
@@ -140,6 +231,10 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
 
   @objc func shareButtonTapped() {
     delegate?.shareButtonTapped(index: index)
+  }
+
+  @objc func deleteButtonTapped() {
+    delegate?.deleteButtonTapped(index: index)
   }
 
   func configure(
@@ -155,13 +250,14 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     } else {
       playerContainerView.image = Constants.defaultProfileImage
     }
+
     playerLayer?.removeFromSuperlayer()
     let layer = AVPlayerLayer(player: player)
     layer.videoGravity = .resize
     playerContainerView.layer.addSublayer(layer)
     playerLayer = layer
     playerLayer?.frame = contentView.bounds
-    profileInfoView.set(data: profileInfo)
+
     likeButton.configuration?.attributedTitle = AttributedString(
       String(feedInfo.likeCount),
       attributes: AttributeContainer([
@@ -169,14 +265,90 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
       ])
     )
     likeButton.configuration?.image = feedInfo.isLiked ? Constants.likeSelectedImage : Constants.likeUnSelectedImage
+
     self.index = index
+    self.feedType = feedInfo.feedType
+
+    if feedInfo.feedType == .otherUsers {
+      profileInfoView.set(data: profileInfo)
+      profileInfoView.isHidden = false
+      captionScrollView.isHidden = true
+      deleteButton.removeFromSuperview()
+    } else {
+      actionsStackView.addArrangedSubview(deleteButton)
+      profileInfoView.isHidden = true
+      captionScrollView.isHidden = false
+      setCaptionHeight(captionText: profileInfo.subtitle)
+    }
+  }
+
+  private func setCaptionHeight(captionText: String) {
+    captionLabel.text = captionText
+
+    let availableWidth = contentView.frame.width - (Constants.horizontalMargin * 2) - actionsStackView.frame.width
+    let fullHeight = captionLabel.heightForWidth(availableWidth, maxLines: 0)
+    let singleLineHeight = captionLabel.font.lineHeight
+    let maxHeightForTenLines = singleLineHeight * Constants.maxLinesCaption
+    let linesNeeded = ceil(fullHeight / singleLineHeight)
+
+    if linesNeeded <= 1 {
+      isCaptionCollapsible = false
+      collapsedCaptionHeight = singleLineHeight
+      expandedCaptionHeight = singleLineHeight
+      captionLabel.numberOfLines = 1
+      captionLabel.lineBreakMode = .byTruncatingTail
+      captionScrollView.isScrollEnabled = false
+    } else {
+      isCaptionCollapsible = true
+      collapsedCaptionHeight = singleLineHeight
+      if linesNeeded <= Constants.maxLinesCaption {
+        expandedCaptionHeight = fullHeight
+      } else {
+        expandedCaptionHeight = maxHeightForTenLines
+      }
+      captionLabel.numberOfLines = 1
+      captionLabel.lineBreakMode = .byTruncatingTail
+      captionScrollView.isScrollEnabled = false
+    }
+    captionScrollViewHeightConstraint.constant = collapsedCaptionHeight
+    isCaptionExpanded = false
+
+    captionScrollView.setNeedsLayout()
+    captionScrollView.layoutIfNeeded()
+  }
+
+  private func expandCaption() {
+    captionLabel.numberOfLines = 0
+    captionLabel.lineBreakMode = .byWordWrapping
+    captionScrollView.isScrollEnabled = (
+      expandedCaptionHeight >
+      captionLabel.font.lineHeight * Constants.maxLinesCaption * 0.99
+    )
+    UIView.animate(withDuration: CGFloat.animationPeriod, animations: {
+      self.captionScrollViewHeightConstraint.constant = self.expandedCaptionHeight
+      self.layoutIfNeeded()
+      self.captionScrollView.layoutIfNeeded()
+    })
+    isCaptionExpanded = true
+  }
+
+  private func collapseCaption() {
+    captionLabel.numberOfLines = 1
+    captionLabel.lineBreakMode = .byTruncatingTail
+    captionScrollView.isScrollEnabled = false
+    UIView.animate(withDuration: CGFloat.animationPeriod, animations: {
+      self.captionScrollViewHeightConstraint.constant = self.collapsedCaptionHeight
+      self.layoutIfNeeded()
+      self.captionScrollView.layoutIfNeeded()
+    })
+    isCaptionExpanded = false
   }
 
   func setLikeStatus(isLiked: Bool) {
     likeButton.configuration?.image = isLiked ? Constants.likeSelectedImage : Constants.likeUnSelectedImage
-    var likeButtonString = String((Int(likeButton.titleLabel?.text ?? "") ?? .zero) - .one)
+    var likeButtonString = String((Int(likeButton.titleLabel?.text ?? "") ?? 0) - 1)
     if isLiked {
-      likeButtonString = String((Int(likeButton.titleLabel?.text ?? "") ?? .zero) + .one)
+      likeButtonString = String((Int(likeButton.titleLabel?.text ?? "") ?? 0) + 1)
     }
     likeButton.configuration?.attributedTitle = AttributedString(
       likeButtonString,
@@ -187,12 +359,13 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   }
 
   override func layoutSubviews() {
+    super.layoutSubviews()
     playerLayer?.frame = playerContainerView.bounds
   }
 
   override func prepareForReuse() {
-      super.prepareForReuse()
-      playerLayer?.player = nil
+    super.prepareForReuse()
+    playerLayer?.player = nil
   }
 
   struct FeedCellInfo {
@@ -200,6 +373,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     let likeCount: Int
     let isLiked: Bool
     let lastThumbnailImage: UIImage?
+    let feedType: FeedType
   }
 }
 
@@ -214,6 +388,7 @@ extension FeedsCell {
     static let likeSelectedImage = UIImage(named: "like_selected_feed")
     static let likeUnSelectedImage = UIImage(named: "like_unselected_feed")
     static let shareButtonImage = UIImage(named: "share_feed")
+    static let deleteButtonImage = UIImage(named: "delete_video_profile")
     static let actionButtonHeight: CGFloat = 51.0
     static let actionButtonWidth: CGFloat = 34.0
     static let actionButtonImagePadding = 4.0
@@ -224,5 +399,12 @@ extension FeedsCell {
     static let profileInfoViewHeight = 56.0
     static let defaultProfileImage = UIImage(named: "default_profile")
     static let playerPlaceHolderImage = UIImage(named: "player_placeholder")
+    static let captionTitleFont = YralFont.pt14.regular.uiFont
+    static let captionTextColor = YralColor.grey200.uiColor
+    static let captionsBottomMargin = 40.0
+    static let captionSingleLineHeight: CGFloat = 20
+    static let maxLinesCaption = 10.0
+    static let animationPeriod = 0.3
   }
 }
+// swiftlint: enable file_length type_body_length

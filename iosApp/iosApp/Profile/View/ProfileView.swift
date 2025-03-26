@@ -19,6 +19,7 @@ struct ProfileView: View {
   @State private var showDeleteIndicator: Bool = false
   @State private var showFeeds = false
   @State private var currentIndex: Int = .zero
+  @State private var scrollOffset: CGPoint = .zero
   var uploadVideoPressed: (() -> Void) = {}
 
   let viewModel: ProfileViewModel
@@ -30,137 +31,124 @@ struct ProfileView: View {
   }
 
   var body: some View {
-    ScrollView {
-      VStack(spacing: Constants.vStackSpacing) {
-        Text(Constants.navigationTitle)
-          .font(Constants.navigationTitleFont)
-          .foregroundColor(Constants.navigationTitleTextColor)
-          .frame(maxWidth: .infinity, alignment: .leading)
-          .padding(Constants.navigationTitlePadding)
+    if showFeeds {
+      router.displayUserVideoFeed(
+        existingFeeds: viewModel.feeds,
+        info: MyVideosFeedInfo(
+          startIndex: viewModel.startIndex,
+          currentIndex: currentIndex
+        ),
+        showFeeds: $showFeeds
+      )
+      .edgesIgnoringSafeArea(.all)
+    } else {
+      ScrollView {
+        VStack(spacing: Constants.vStackSpacing) {
+          Text(Constants.navigationTitle)
+            .font(Constants.navigationTitleFont)
+            .foregroundColor(Constants.navigationTitleTextColor)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(Constants.navigationTitlePadding)
 
-        if showAccountInfo {
-          UserInfoView(accountInfo: $accountInfo, shouldApplySpacing: false)
-        }
-        if showEmptyState {
-          Group {
-            Spacer(minLength: Constants.minimumTopSpacing)
-            ProfileEmptyStateView {
-              uploadVideoPressed()
-            }
-            Spacer(minLength: Constants.minimumBottomSpacing)
+          if showAccountInfo {
+            UserInfoView(accountInfo: $accountInfo, shouldApplySpacing: false)
           }
-        } else {
-          ProfileVideosGridView(
-            videos: $videos,
-            currentlyDeletingPostInfo: $deleteInfo,
-            showDeleteIndictor: $showDeleteIndicator,
-            onDelete: { info in
-              self.deleteInfo = info
-              withAnimation(.easeInOut(duration: CGFloat.animationPeriod)) {
-                UIView.setAnimationsEnabled(false)
-                showDelete = true
+          if showEmptyState {
+            Group {
+              Spacer(minLength: Constants.minimumTopSpacing)
+              ProfileEmptyStateView {
+                uploadVideoPressed()
               }
-            },
-            onVideoTapped: { videoInfo in
-//              feedsWrapper = router.displayUserVideoFeed(
-//                existingFeeds: viewModel.feeds,
-//                info: MyVideosFeedInfo(
-//                  startIndex: viewModel.startIndex,
-//                  currentIndex: videos.firstIndex(where: { $0.postID == videoInfo.postID } ) ?? .zero)
-//              )
-              currentIndex = videos.firstIndex(where: { $0.postID == videoInfo.postID }) ?? .zero
-              showFeeds = true
-            },
-            onLoadMore: {
-              Task { @MainActor in
-                await viewModel.getVideos()
-              }
+              Spacer(minLength: Constants.minimumBottomSpacing)
             }
-          )
-        }
-      }
-      .padding(.horizontal, Constants.horizontalPadding)
-    }
-    .fullScreenCover(isPresented: $showFeeds) {
-      NavigationView {
-        router.displayUserVideoFeed(
-          existingFeeds: viewModel.feeds,
-          info: MyVideosFeedInfo(
-            startIndex: viewModel.startIndex,
-            currentIndex: currentIndex
-          )
-        )
-        .navigationBarTitle("Your Videos", displayMode: .inline)
-        .navigationBarItems(leading: Button("Back") {
-          showFeeds = false
-        })
-      }
-      .onAppear {
-        let appearance = UINavigationBarAppearance()
-        appearance.configureWithTransparentBackground() // Makes the bar transparent
-        appearance.titleTextAttributes = [.foregroundColor: UIColor.white]
-        appearance.largeTitleTextAttributes = [.foregroundColor: UIColor.white]
-
-        // Apply the appearance to the navigation bar
-        UINavigationBar.appearance().standardAppearance = appearance
-        UINavigationBar.appearance().compactAppearance = appearance
-        UINavigationBar.appearance().scrollEdgeAppearance = appearance
-      }
-      .interactiveDismissDisabled(true)
-    }
-    .fullScreenCover(isPresented: $showDelete) {
-      NudgePopupView(
-        nudgeTitle: Constants.deleteTitle,
-        nudgeMessage: Constants.deleteText,
-        confirmLabel: Constants.deleteButtonTitle,
-        cancelLabel: Constants.cancelTitle,
-        onConfirm: {
-          showDelete = false
-          showDeleteIndicator = true
-          Task { @MainActor in
-            guard let deleteInfo else { return }
-            await self.viewModel.deleteVideo(
-              request: DeleteVideoRequest(
-                postId: UInt64(deleteInfo.postID) ?? .zero,
-                videoId: deleteInfo.videoId
-              )
+          } else {
+            ProfileVideosGridView(
+              videos: $videos,
+              currentlyDeletingPostInfo: $deleteInfo,
+              showDeleteIndictor: $showDeleteIndicator,
+              onDelete: { info in
+                self.deleteInfo = info
+                withAnimation(.easeInOut(duration: CGFloat.animationPeriod)) {
+                  UIView.setAnimationsEnabled(false)
+                  showDelete = true
+                }
+              },
+              onVideoTapped: { videoInfo in
+                //              feedsWrapper = router.displayUserVideoFeed(
+                //                existingFeeds: viewModel.feeds,
+                //                info: MyVideosFeedInfo(
+                //                  startIndex: viewModel.startIndex,
+                //                  currentIndex: videos.firstIndex(where: { $0.postID == videoInfo.postID } ) ?? .zero)
+                //              )
+                currentIndex = videos.firstIndex(where: { $0.postID == videoInfo.postID }) ?? .zero
+                withAnimation {
+                  showFeeds = true
+                }
+              },
+              onLoadMore: {
+                Task { @MainActor in
+                  await viewModel.getVideos()
+                }
+              }
             )
           }
-        },
-        onCancel: { showDelete = false }
-      )
-      .background( ClearBackgroundView() )
-    }
-    .onReceive(viewModel.$event) { event in
-      switch event {
-      case .fetchedAccountInfo(let info):
-        showAccountInfo = true
-        accountInfo = info
-      case .loadedVideos(let videos):
-        guard !videos.isEmpty else { return }
-        showEmptyState = false
-        self.videos += videos
-      case .deletedVideos(let videos):
-        withAnimation {
-          self.videos.removeAll { $0.postID == videos[.zero].postID }
         }
-        if self.videos.isEmpty {
-          showEmptyState = true
-        }
-        self.showDeleteIndicator = false
-      case .deleteVideoFailed:
-        self.deleteInfo = nil
-        self.showDeleteIndicator = false
-      default:
-        break
+        .padding(.horizontal, Constants.horizontalPadding)
       }
-    }
-    .task {
-      guard isLoadingFirstTime else { return }
-      isLoadingFirstTime = false
-      async let fetchProfile: () = viewModel.fetchProfileInfo()
-      async let fetchVideos: () = viewModel.getVideos()
-      _ = await (fetchProfile, fetchVideos)
+      .fullScreenCover(isPresented: $showDelete) {
+        NudgePopupView(
+          nudgeTitle: Constants.deleteTitle,
+          nudgeMessage: Constants.deleteText,
+          confirmLabel: Constants.deleteButtonTitle,
+          cancelLabel: Constants.cancelTitle,
+          onConfirm: {
+            showDelete = false
+            showDeleteIndicator = true
+            Task { @MainActor in
+              guard let deleteInfo else { return }
+              await self.viewModel.deleteVideo(
+                request: DeleteVideoRequest(
+                  postId: UInt64(deleteInfo.postID) ?? .zero,
+                  videoId: deleteInfo.videoId
+                )
+              )
+            }
+          },
+          onCancel: { showDelete = false }
+        )
+        .background( ClearBackgroundView() )
+      }
+      .onReceive(viewModel.$event) { event in
+        switch event {
+        case .fetchedAccountInfo(let info):
+          showAccountInfo = true
+          accountInfo = info
+        case .loadedVideos(let videos):
+          guard !videos.isEmpty else { return }
+          showEmptyState = false
+          self.videos += videos
+        case .deletedVideos(let videos):
+          withAnimation {
+            self.videos.removeAll { $0.postID == videos[.zero].postID }
+          }
+          if self.videos.isEmpty {
+            showEmptyState = true
+          }
+          self.showDeleteIndicator = false
+        case .deleteVideoFailed:
+          self.deleteInfo = nil
+          self.showDeleteIndicator = false
+        default:
+          break
+        }
+      }
+      .task {
+        guard isLoadingFirstTime else { return }
+        isLoadingFirstTime = false
+        async let fetchProfile: () = viewModel.fetchProfileInfo()
+        async let fetchVideos: () = viewModel.getVideos()
+        _ = await (fetchProfile, fetchVideos)
+      }
     }
   }
 

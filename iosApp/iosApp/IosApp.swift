@@ -28,7 +28,7 @@ struct IosApp: App {
          let uploadDIContainer = uploadDIContainer,
          let profileDIContainer = profileDIContainer {
         HomeTabController(
-          feedsViewControllerWrapper: feedsDIContainer.makeFeedsViewControllerWrapper(),
+          feedsViewController: feedsDIContainer.makeFeedsViewController(),
           uploadView: uploadDIContainer.makeUploadView(),
           profileView: profileDIContainer.makeProfileView(),
           accountView: accountDIContainer.makeAccountView()

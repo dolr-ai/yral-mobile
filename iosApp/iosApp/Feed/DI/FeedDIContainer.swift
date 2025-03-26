@@ -6,6 +6,7 @@
 //  Copyright © 2024 orgName. All rights reserved.
 //
 import Foundation
+import SwiftUI
 
 final class FeedDIContainer {
   struct Dependencies {
@@ -22,8 +23,15 @@ final class FeedDIContainer {
     self.dependencies = dependencies
   }
 
-  func makeFeedsViewControllerWrapper() -> FeedsViewControllerWrapper {
-    FeedsViewControllerWrapper(feedsViewController: FeedsViewController(viewModel: makeFeedsViewModel()))
+  func makeFeedsViewControllerWrapper(showFeeds: Binding<Bool>) -> FeedsViewControllerWrapper {
+    FeedsViewControllerWrapper(
+      feedsViewController: FeedsViewController(viewModel: makeFeedsViewModel()),
+      showFeeds: showFeeds
+    )
+  }
+
+  func makeFeedsViewController() -> FeedsViewController {
+    FeedsViewController(viewModel: makeFeedsViewModel())
   }
 
   func makeFeedsViewModel() -> FeedsViewModel {

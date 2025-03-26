@@ -5,6 +5,7 @@
 //  Created by Sarvesh Sharma on 16/03/25.
 //  Copyright © 2025 orgName. All rights reserved.
 //
+import SwiftUI
 
 final class ProfileDIContainer {
   struct Dependencies {
@@ -68,14 +69,20 @@ final class ProfileDIContainer {
     )
   }
 
-  func makeMyVideosView(existingFeeds: [FeedResult], info: MyVideosFeedInfo) -> FeedsViewControllerWrapper {
-    let viewController = FeedsViewController(
-      viewModel: makeMyVideosFeedViewModel(
-        existingFeeds: existingFeeds,
-        info: info
+  func makeMyVideosView(
+    existingFeeds: [FeedResult],
+    info: MyVideosFeedInfo,
+    showFeeds: Binding<Bool>
+  ) -> FeedsViewControllerWrapper {
+    return FeedsViewControllerWrapper(
+      feedsViewController: FeedsViewController(
+        viewModel: makeMyVideosFeedViewModel(
+          existingFeeds: existingFeeds,
+          info: info
+        ),
+        feedType: .currentUser
       ),
-      feedType: .currentUser
+      showFeeds: showFeeds
     )
-    return FeedsViewControllerWrapper(feedsViewController: viewController)
   }
 }

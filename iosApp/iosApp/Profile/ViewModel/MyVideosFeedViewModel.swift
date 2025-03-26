@@ -149,4 +149,8 @@ class MyVideosFeedViewModel: FeedViewModelProtocol, ObservableObject {
       }
     }
   }
+
+  func getCurrentFeedIndex() -> Int {
+    return currentIndex
+  }
 }

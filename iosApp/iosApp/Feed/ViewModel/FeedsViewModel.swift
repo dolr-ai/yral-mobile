@@ -153,4 +153,8 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
       }
     }
   }
+
+  func getCurrentFeedIndex() -> Int {
+    return .zero
+  }
 }

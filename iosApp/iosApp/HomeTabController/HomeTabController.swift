@@ -9,20 +9,26 @@
 import SwiftUI
 
 struct HomeTabController: View {
-  let feedsViewControllerWrapper: FeedsViewControllerWrapper
+  let feedsViewController: FeedsViewController
   let accountView: AccountView
   let uploadView: UploadView
   let profileView: ProfileView
+  private var feedsViewControllerWrapper: FeedsViewControllerWrapper {
+    FeedsViewControllerWrapper(
+      feedsViewController: feedsViewController,
+      showFeeds: $showFeeds
+    )
+  }
   @State private var selectedTab: Int = .zero
   @State private var tabBarHeight = UITabBarController().tabBar.frame.height
-
+  @State private var showFeeds = false
   init(
-    feedsViewControllerWrapper: FeedsViewControllerWrapper,
+    feedsViewController: FeedsViewController,
     uploadView: UploadView,
     profileView: ProfileView,
     accountView: AccountView
   ) {
-    self.feedsViewControllerWrapper = feedsViewControllerWrapper
+    self.feedsViewController = feedsViewController
     self.uploadView = uploadView
     self.profileView = profileView
     self.accountView = accountView
@@ -111,19 +117,6 @@ struct HomeTabController: View {
       .ignoresSafeArea([.keyboard])
     }
   }
-}
-
-#Preview {
-  let feedsDIContainer = AppDIContainer().makeFeedDIContainer()
-  let accountDIContainer = AppDIContainer().makeAccountDIContainer()
-  let uploadDIContainer = AppDIContainer().makeUploadDIContainer()
-  let profileDIContainer = AppDIContainer().makeProfileDIContainer()
-  HomeTabController(
-    feedsViewControllerWrapper: feedsDIContainer .makeFeedsViewControllerWrapper(),
-    uploadView: uploadDIContainer.makeUploadView(),
-    profileView: profileDIContainer.makeProfileView(),
-    accountView: accountDIContainer.makeAccountView()
-  )
 }
 
 extension HomeTabController {

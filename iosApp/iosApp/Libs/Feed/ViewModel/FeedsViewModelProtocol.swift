@@ -66,4 +66,5 @@ protocol FeedViewModelProtocol: ObservableObject {
   func fetchFeeds(request: InitialFeedRequest) async
   func loadMoreFeeds() async
   func toggleLike(request: LikeQuery) async
+  func getCurrentFeedIndex() -> Int
 }

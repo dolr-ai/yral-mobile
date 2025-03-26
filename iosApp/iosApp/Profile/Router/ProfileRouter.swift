@@ -7,9 +7,14 @@
 //
 
 import Foundation
+import SwiftUI
 
 protocol ProfileRouterProtocol {
-  func displayUserVideoFeed(existingFeeds: [FeedResult], info: MyVideosFeedInfo) -> FeedsViewControllerWrapper
+  func displayUserVideoFeed(
+    existingFeeds: [FeedResult],
+    info: MyVideosFeedInfo,
+    showFeeds: Binding<Bool>
+  ) -> FeedsViewControllerWrapper
 }
 
 final class ProfileRouter: ProfileRouterProtocol {
@@ -19,7 +24,11 @@ final class ProfileRouter: ProfileRouterProtocol {
     self.profileDI = profileDI
   }
 
-  func displayUserVideoFeed(existingFeeds: [FeedResult], info: MyVideosFeedInfo) -> FeedsViewControllerWrapper {
-    return profileDI.makeMyVideosView(existingFeeds: existingFeeds, info: info)
+  func displayUserVideoFeed(
+    existingFeeds: [FeedResult],
+    info: MyVideosFeedInfo,
+    showFeeds: Binding<Bool>
+  ) -> FeedsViewControllerWrapper {
+    return profileDI.makeMyVideosView(existingFeeds: existingFeeds, info: info, showFeeds: showFeeds)
   }
 }

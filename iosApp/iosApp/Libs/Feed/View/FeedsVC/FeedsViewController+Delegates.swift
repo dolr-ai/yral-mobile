@@ -35,6 +35,8 @@ extension FeedsViewController: FeedsCellProtocol {
     guard let cell = feedsCV.cellForItem(at: IndexPath(item: index, section: .zero)) as? FeedsCell else { return }
     cell.setLikeStatus(isLiked: cell.likeButton.configuration?.image == FeedsCell.Constants.likeUnSelectedImage)
   }
+
+  func deleteButtonTapped(index: Int) { }
 }
 
 extension FeedsViewController: YralPlayerProtocol {
