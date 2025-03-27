@@ -114,4 +114,43 @@ extension FeedsViewController {
     snapshot.appendItems(items)
     feedsDataSource.apply(snapshot, animatingDifferences: false)
   }
+
+  func removeFeeds(with feeds: [FeedResult], animated: Bool = false) {
+    // 1. Get the current snapshot and delete the feed items from it.
+    var snapshot = feedsDataSource.snapshot()
+    snapshot.deleteItems(feeds)
+
+    // 2. Remove the feeds from YralPlayer's internal feedResults.
+    // Capture the IDs of the feeds to remove.
+    let removedIDs = Set(feeds.map { $0.postID })
+
+    // Save the currently playing feed's id (if any) before removal.
+    let currentFeedID = yralPlayer.feedResults.indices.contains(yralPlayer.currentIndex)
+      ? yralPlayer.feedResults[yralPlayer.currentIndex].postID
+      : nil
+
+    // Filter out the removed feeds from the player's feedResults.
+    yralPlayer.feedResults = yralPlayer.feedResults.filter { !removedIDs.contains($0.postID) }
+
+    // 3. Clear the cached AVPlayerItems since indices may have changed.
+    // This forces the player to reload the necessary items.
+    yralPlayer.playerItems.removeAll()
+
+    // 4. If the currently playing feed was removed, adjust currentIndex and advance.
+    if let currentFeedID = currentFeedID,
+       !yralPlayer.feedResults.contains(where: { $0.postID == currentFeedID }) {
+      // Choose the next valid index (or the last one if needed)
+      let newIndex = min(yralPlayer.currentIndex, max(yralPlayer.feedResults.count - 1, 0))
+      yralPlayer.currentIndex = newIndex
+      yralPlayer.advanceToVideo(at: newIndex)
+    }
+
+    // 5. Apply the updated snapshot to update the UI.
+    feedsDataSource.apply(snapshot, animatingDifferences: true)
+
+    // 6. If no feeds remain, trigger the back action (e.g. to exit the view).
+    if snapshot.itemIdentifiers.isEmpty {
+      onBackButtonTap?()
+    }
+  }
 }

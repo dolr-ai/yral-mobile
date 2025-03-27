@@ -11,13 +11,13 @@ import AVFoundation
 
 @MainActor
 final class YralPlayer {
-  private var feedResults: [FeedResult] = []
+  var feedResults: [FeedResult] = []
   var currentIndex: Int = .zero
 
   let player = AVQueuePlayer()
   private var playerLooper: AVPlayerLooper?
   private var lastPlayedTimes: [Int: CMTime] = [:]
-  private var playerItems: [Int: AVPlayerItem] = [:]
+  var playerItems: [Int: AVPlayerItem] = [:]
   private var currentlyDownloadingIndexes: Set<Int> = []
   var isPlayerVisible: Bool = true
   weak var delegate: YralPlayerProtocol?
@@ -68,6 +68,12 @@ final class YralPlayer {
         await prepareCurrentVideo()
       }
     }
+  }
+
+  func removeVideo(at index: Int) {
+    guard index >= .zero && index < feedResults.count else { return }
+    self.feedResults.remove(at: index)
+    self.advanceToVideo(at: index)
   }
 
   private func prepareCurrentVideo() async {

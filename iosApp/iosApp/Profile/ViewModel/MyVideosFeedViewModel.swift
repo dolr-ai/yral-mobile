@@ -71,6 +71,7 @@ class MyVideosFeedViewModel: FeedViewModelProtocol, ObservableObject {
       .receive(on: RunLoop.main)
       .sink { [weak self] deletedVideos in
         guard let self = self else { return }
+        self.feeds.removeAll(where: { $0.postID == deletedVideos.first?.postID })
         self.unifiedEvent = .deleteVideoSuccess(feeds: deletedVideos)
       }
       .store(in: &cancellables)
@@ -104,7 +105,6 @@ class MyVideosFeedViewModel: FeedViewModelProtocol, ObservableObject {
     await MainActor.run {
       switch result {
       case .success:
-        unifiedState = .success(feeds: feeds)
         startIndex += offset
       case .failure(let error):
         switch error {
@@ -136,13 +136,14 @@ class MyVideosFeedViewModel: FeedViewModelProtocol, ObservableObject {
   }
 
   func deleteVideo(request: DeleteVideoRequest) async {
+    unifiedEvent = .deleteVideoInitiated
     let result = await deleteVideoUseCase.execute(
       request: DeleteVideoRequest(postId: request.postId, videoId: request.videoId)
     )
     await MainActor.run {
       switch result {
       case .success:
-        unifiedState = .success(feeds: feeds)
+        break
       case .failure(let failure):
         unifiedEvent = .deleteVideoFailed(errorMessage: failure.localizedDescription)
         unifiedState = .failure(errorMessage: failure.localizedDescription)

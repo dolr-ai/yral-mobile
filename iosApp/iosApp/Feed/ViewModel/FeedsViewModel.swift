@@ -157,4 +157,6 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
   func getCurrentFeedIndex() -> Int {
     return .zero
   }
+
+  func deleteVideo(request: DeleteVideoRequest) async { }
 }

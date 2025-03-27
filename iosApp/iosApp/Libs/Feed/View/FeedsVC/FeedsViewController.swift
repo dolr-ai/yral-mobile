@@ -10,6 +10,7 @@ import Combine
 import AVFoundation
 import SDWebImage
 
+// swiftlint: disable type_body_length
 class FeedsViewController: UIViewController {
   typealias DataSource = UICollectionViewDiffableDataSource<Int, FeedResult>
   typealias Snapshot = NSDiffableDataSourceSnapshot<Int, FeedResult>
@@ -49,6 +50,7 @@ class FeedsViewController: UIViewController {
   lazy var feedsDataSource = getConfiguredDataSource()
   var loadMoreRequestMade: Bool = false
   var shouldShowFooterLoader: Bool = false
+  var pageEndReached: Bool = false
   var onBackButtonTap: (() -> Void)?
 
   init(viewModel: any FeedViewModelProtocol, feedType: FeedType = .otherUsers) {
@@ -142,12 +144,16 @@ class FeedsViewController: UIViewController {
           self.toggleLikeStatus(response)
         case .toggleLikeFailed(let errorMessage):
           print("Toggle like failed: \(errorMessage)")
+        case .deleteVideoInitiated:
+          self.activityIndicator.startAnimating()
         case .deleteVideoSuccess(let feeds):
-          self.updateData(withFeeds: feeds)
+          self.activityIndicator.stopAnimating()
+          self.removeFeeds(with: feeds)
         case .deleteVideoFailed(let errorMessage):
+          self.activityIndicator.stopAnimating()
           print("Delete video failed: \(errorMessage)")
         case .pageEndReached:
-          print("No more pages.")
+          pageEndReached = true
         }
       }
       .store(in: &paginatedFeedscancellables)
@@ -225,7 +231,7 @@ class FeedsViewController: UIViewController {
         return UICollectionReusableView()
       }
       let footer = collectionView.dequeueReusableSupplementaryView(FooterLoaderView.self, ofKind: kind, for: indexPath)
-      if self.loadMoreRequestMade && self.shouldShowFooterLoader {
+      if self.loadMoreRequestMade && self.shouldShowFooterLoader && !pageEndReached {
         footer.startAnimating()
       } else {
         footer.stopAnimating()
@@ -302,3 +308,4 @@ extension FeedsViewController {
     static let navTitlefont = YralFont.pt20.bold.uiFont
   }
 }
+// swiftlint: enable type_body_length

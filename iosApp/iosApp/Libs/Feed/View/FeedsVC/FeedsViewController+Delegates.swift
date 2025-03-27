@@ -6,6 +6,7 @@
 //  Copyright © 2025 orgName. All rights reserved.
 //
 import UIKit
+import SwiftUI
 
 extension FeedsViewController: FeedsCellProtocol {
   func shareButtonTapped(index: Int) {
@@ -36,7 +37,43 @@ extension FeedsViewController: FeedsCellProtocol {
     cell.setLikeStatus(isLiked: cell.likeButton.configuration?.image == FeedsCell.Constants.likeUnSelectedImage)
   }
 
-  func deleteButtonTapped(index: Int) { }
+  func deleteButtonTapped(index: Int) {
+    let snapshot = feedsDataSource.snapshot()
+    guard index < snapshot.itemIdentifiers.count else { return }
+    let feedItem = snapshot.itemIdentifiers[index]
+
+    var hostingController: UIHostingController<NudgePopupView>?
+
+    let nudgeView = NudgePopupView(
+      nudgeTitle: "Delete video?",
+      nudgeMessage: "This video will be permanently deleted from your Yral account.",
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
+      onConfirm: { [weak self] in
+        // Dismiss the popup first.
+        hostingController?.dismiss(animated: true, completion: nil)
+        guard let self = self else { return }
+        Task { @MainActor in
+          await self.viewModel.deleteVideo(
+            request: DeleteVideoRequest(
+              postId: UInt64(feedItem.postID) ?? .zero,
+              videoId: feedItem.videoID
+            )
+          )
+        }
+      },
+      onCancel: {
+        hostingController?.dismiss(animated: true, completion: nil)
+      }
+    )
+
+    hostingController = UIHostingController(rootView: nudgeView)
+    hostingController!.modalPresentationStyle = .overFullScreen
+    hostingController!.modalTransitionStyle = .crossDissolve
+    hostingController?.view.backgroundColor = .clear
+    self.present(hostingController!, animated: true, completion: nil)
+  }
+
 }
 
 extension FeedsViewController: YralPlayerProtocol {

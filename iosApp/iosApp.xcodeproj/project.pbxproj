@@ -1570,6 +1570,7 @@
 				AC49605D2D2C5E63008D59D9 /* LikeQuery.swift */,
 				AC4960602D2D6649008D59D9 /* LikeResult.swift */,
 				ACB09FE62D93288400EE3239 /* MyVideosFeedInfo.swift */,
+				ACC0D4562D9177BF006DCF5C /* DeleteVideoRequest.swift */,
 			);
 			path = Entity;
 			sourceTree = "<group>";
@@ -1578,7 +1579,6 @@
 			isa = PBXGroup;
 			children = (
 				ACDD23E62D8B1B5400AB0DAF /* ProfileVideoRequest.swift */,
-				ACC0D4562D9177BF006DCF5C /* DeleteVideoRequest.swift */,
 			);
 			path = Entity;
 			sourceTree = "<group>";

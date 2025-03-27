@@ -16,6 +16,7 @@ struct ProfileVideosGridView: View {
   var onDelete: ((ProfileVideoInfo) -> Void)?
   var onVideoTapped: ((ProfileVideoInfo) -> Void)?
   var onLoadMore: (() -> Void)?
+  var onScroll: ((String) -> Void)?
 
   private let columns = [
     GridItem(.flexible(), spacing: Constants.gridItemSpacing),
@@ -23,48 +24,65 @@ struct ProfileVideosGridView: View {
   ]
 
   var body: some View {
-    LazyVGrid(columns: columns, spacing: Constants.verticalSpacing) {
-      ForEach(videos, id: \.id) { video in
-        ZStack(alignment: .bottomLeading) {
-          VideoThumbnailView(video: video)
-            .onTapGesture {
-              onVideoTapped?(video)
-            }
+    VStack(spacing: .zero) {
+      LazyVGrid(columns: columns, spacing: Constants.verticalSpacing) {
+        ForEach(videos, id: \.postID) { video in
+          ZStack(alignment: .bottomLeading) {
+            VideoThumbnailView(video: video)
+              .onTapGesture {
+                onVideoTapped?(video)
+              }
+              .overlay(
+                GeometryReader { geo in
+                  Color.clear
+                    .onAppear {
+                      if geo.frame(in: .global).minY < 150 {
+                        onScroll?(video.postID)
+                      }
+                    }
+                    .onChange(of: geo.frame(in: .global).minY) { newValue in
+                      if newValue < 150 {
+                        onScroll?(video.postID)
+                      }
+                    }
+                }
+              )
 
-          HStack {
-            HStack(spacing: Constants.innerHStackSpacing) {
-              Image(video.isLiked ? Constants.likeImageNameSelected : Constants.likeImageNameUnselected)
-              Text("\(video.likeCount)")
-                .font(Constants.likeTextFont)
-                .foregroundColor(Constants.likeTextColor)
+            HStack {
+              HStack(spacing: Constants.innerHStackSpacing) {
+                Image(video.isLiked ? Constants.likeImageNameSelected : Constants.likeImageNameUnselected)
+                Text("\(video.likeCount)")
+                  .font(Constants.likeTextFont)
+                  .foregroundColor(Constants.likeTextColor)
+              }
+              .padding(.leading, Constants.buttonHorizontalPadding)
+              Spacer()
+              Button {
+                onDelete?(video)
+              }
+              label: {
+                Image(Constants.deleteImageName)
+              }
+              .padding(.trailing, Constants.buttonHorizontalPadding)
             }
-            .padding(.leading, Constants.buttonHorizontalPadding)
-            Spacer()
-            Button {
-              onDelete?(video)
+            .padding(.bottom, Constants.bottomPadding)
+            if video.postID == currentlyDeletingPostInfo?.postID && showDeleteIndictor {
+              ZStack(alignment: .center) {
+                Color.black.opacity(0.4)
+                ProgressView()
+                  .background(Color.white.opacity(0.8))
+                  .padding()
+              }
+              .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            label: {
-              Image(Constants.deleteImageName)
-            }
-            .padding(.trailing, Constants.buttonHorizontalPadding)
           }
-          .padding(.bottom, Constants.bottomPadding)
-          if video.postID == currentlyDeletingPostInfo?.postID && showDeleteIndictor {
-            ZStack(alignment: .center) {
-              Color.black.opacity(0.4)
-              ProgressView()
-                .background(Color.white.opacity(0.8))
-                .padding()
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-          }
-        }
-        .cornerRadius(Constants.thumbnailCornerRadius)
-        .onAppear {
-          if let lastVideo = videos.last, video.postID == lastVideo.postID {
-            if lastLoadedItemID != lastVideo.postID {
-              lastLoadedItemID = lastVideo.postID
-              onLoadMore?()
+          .cornerRadius(Constants.thumbnailCornerRadius)
+          .onAppear {
+            if let lastVideo = videos.last, video.postID == lastVideo.postID {
+              if lastLoadedItemID != lastVideo.postID {
+                lastLoadedItemID = lastVideo.postID
+                onLoadMore?()
+              }
             }
           }
         }

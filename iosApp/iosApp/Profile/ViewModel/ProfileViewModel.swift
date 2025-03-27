@@ -32,6 +32,7 @@ class ProfileViewModel: ObservableObject {
   let myVideosUseCase: MyVideosUseCaseProtocol
   let deleteVideoUseCase: DeleteVideoUseCaseProtocol
   private var cancellables = Set<AnyCancellable>()
+  var deletedVideos: [ProfileVideoInfo] = []
   var startIndex = Int.zero
   var offset = ProfileRepository.Constants.offset
   private var isLoading = false
@@ -70,6 +71,7 @@ class ProfileViewModel: ObservableObject {
     .receive(on: RunLoop.main)
     .sink { [weak self] deletedVideos in
       guard let self = self else { return }
+      self.deletedVideos += deletedVideos
       self.event = .deletedVideos(deletedVideos)
     }
     .store(in: &cancellables)
