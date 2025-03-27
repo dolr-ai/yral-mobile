@@ -62,7 +62,6 @@ mod ffi {
         type BetDetails;
         type Result9;
         type DeviceIdentity;
-        type PostStatus;
         type FeedScore;
         type PostViewStatistics;
         type AggregateStats;
@@ -152,6 +151,13 @@ mod ffi {
         fn created_by_profile_photo_url(&self) -> Option<&str>;
         #[swift_bridge(get_with(&created_by_user_principal_id = principal_to_string))]
         fn created_by_user_principal_id(&self) -> String;
+        #[swift_bridge(get(&status))]
+        fn status(&self) -> &PostStatus;
+    }
+
+    extern "Rust" {
+        type PostStatus;
+        fn is_banned_due_to_user_reporting(&self) -> bool;
     }
 
     extern "Rust" {

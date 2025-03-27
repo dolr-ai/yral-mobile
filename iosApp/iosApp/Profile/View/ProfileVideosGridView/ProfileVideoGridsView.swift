@@ -16,7 +16,6 @@ struct ProfileVideosGridView: View {
   var onDelete: ((ProfileVideoInfo) -> Void)?
   var onVideoTapped: ((ProfileVideoInfo) -> Void)?
   var onLoadMore: (() -> Void)?
-  var onScroll: ((String) -> Void)?
 
   private let columns = [
     GridItem(.flexible(), spacing: Constants.gridItemSpacing),
@@ -32,22 +31,6 @@ struct ProfileVideosGridView: View {
               .onTapGesture {
                 onVideoTapped?(video)
               }
-              .overlay(
-                GeometryReader { geo in
-                  Color.clear
-                    .onAppear {
-                      if geo.frame(in: .global).minY < 150 {
-                        onScroll?(video.postID)
-                      }
-                    }
-                    .onChange(of: geo.frame(in: .global).minY) { newValue in
-                      if newValue < 150 {
-                        onScroll?(video.postID)
-                      }
-                    }
-                }
-              )
-
             HStack {
               HStack(spacing: Constants.innerHStackSpacing) {
                 Image(video.isLiked ? Constants.likeImageNameSelected : Constants.likeImageNameUnselected)

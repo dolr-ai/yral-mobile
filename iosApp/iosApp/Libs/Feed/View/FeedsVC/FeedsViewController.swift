@@ -180,7 +180,6 @@ class FeedsViewController: UIViewController {
     appearance.titleTextAttributes = [.foregroundColor: UIColor.white]
     navigationController?.navigationBar.standardAppearance = appearance
     navigationController?.navigationBar.scrollEdgeAppearance = appearance
-
   }
 
   @objc func didTapBack() {

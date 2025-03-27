@@ -25,3 +25,20 @@ enum NetworkError: Error {
   case transportError(String)
   case grpc(String)
 }
+
+extension NetworkError: LocalizedError {
+  public var errorDescription: String? {
+    switch self {
+    case .invalidRequest:
+      return "Invalid Request"
+    case .invalidResponse(let message):
+      return "Invalid Response: \(message)"
+    case .decodingFailed(let error):
+      return "Decoding Failed: \(error.localizedDescription)"
+    case .transportError(let message):
+      return "Transport Error: \(message)"
+    case .grpc(let message):
+      return "gRPC Error: \(message)"
+    }
+  }
+}

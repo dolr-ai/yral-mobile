@@ -19,7 +19,6 @@ struct ProfileView: View {
   @State private var showDeleteIndicator: Bool = false
   @State private var showFeeds = false
   @State private var currentIndex: Int = .zero
-  @State private var topVisiblePostID: String?
   var uploadVideoPressed: (() -> Void) = {}
 
   let viewModel: ProfileViewModel
@@ -84,9 +83,6 @@ struct ProfileView: View {
                   Task { @MainActor in
                     await viewModel.getVideos()
                   }
-                },
-                onScroll: { id in
-                  self.topVisiblePostID = id
                 }
               )
             }
@@ -148,13 +144,6 @@ struct ProfileView: View {
           async let fetchProfile: () = viewModel.fetchProfileInfo()
           async let fetchVideos: () = viewModel.getVideos()
           _ = await (fetchProfile, fetchVideos)
-        }
-        .onAppear {
-//          if let savedID = topVisiblePostID {
-//            withAnimation {
-//              proxy.scrollTo(savedID, anchor: .center)
-//            }
-//          }
         }
       }
     }

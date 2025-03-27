@@ -94,6 +94,7 @@ class MyVideosFeedViewModel: FeedViewModelProtocol, ObservableObject {
 
     await MainActor.run {
       unifiedState = .loading
+      unifiedEvent = .loadingMoreFeeds
       isLoading = true
     }
     let result = await myVideosUseCase.execute(

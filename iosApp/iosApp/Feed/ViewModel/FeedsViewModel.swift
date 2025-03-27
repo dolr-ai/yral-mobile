@@ -97,7 +97,6 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
       unifiedEvent = .finishedLoadingInitialFeeds
       switch result {
       case .failure(let failure):
-        unifiedEvent = .finishedLoadingInitialFeeds
         print(failure)
       default: break
       }

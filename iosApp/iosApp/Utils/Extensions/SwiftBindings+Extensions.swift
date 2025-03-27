@@ -8,12 +8,18 @@
 
 import Foundation
 
-extension AgentError: Error {
-
+extension AgentError: Error {}
+extension AgentError: LocalizedError {
+  public var errorDescription: String? {
+    return String(describing: self)
+  }
 }
 
-extension PrincipalError: Error {
-
+extension PrincipalError: Error {}
+extension PrincipalError: LocalizedError {
+  public var errorDescription: String? {
+    return String(describing: self)
+  }
 }
 
 extension RustString: Error {
@@ -28,8 +34,11 @@ extension RustString: LocalizedError {
   }
 }
 
-extension Secp256k1Error: Error {
-
+extension Secp256k1Error: Error {}
+extension Secp256k1Error: LocalizedError {
+  public var errorDescription: String? {
+    return String(describing: self)
+  }
 }
 
 extension MlFeed_PostItemResponse: FeedMapping { }
