@@ -5,7 +5,7 @@
 //  Created by Sarvesh Sharma on 16/12/24.
 //  Copyright © 2024 orgName. All rights reserved.
 //
-// swiftlint: disable file_length type_body_length
+
 import UIKit
 import AVFoundation
 
@@ -13,8 +13,9 @@ protocol FeedsCellProtocol: AnyObject {
   func shareButtonTapped(index: Int)
   func likeButtonTapped(index: Int)
   func deleteButtonTapped(index: Int)
+  func reportButtonTapped(index: Int)
 }
-
+// swiftlint: disable type_body_length
 class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
 
   var playerLayer: AVPlayerLayer?
@@ -24,7 +25,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
 
   private let playerContainerView = getUIImageView()
 
-  private var actionsStackView: UIStackView = {
+  var actionsStackView: UIStackView = {
     let stackView = getUIStackView()
     stackView.axis = .vertical
     stackView.distribution = .fillEqually
@@ -46,7 +47,11 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     return getActionButton(withTitle: "", image: Constants.deleteButtonImage)
   }()
 
-  private let captionScrollView: UIScrollView = {
+  private var reportButton: UIButton = {
+    return getActionButton(withTitle: "", image: Constants.reportButtonImage)
+  }()
+
+  let captionScrollView: UIScrollView = {
     let scrollView = UIScrollView()
     scrollView.translatesAutoresizingMaskIntoConstraints = false
     scrollView.showsVerticalScrollIndicator = true
@@ -56,7 +61,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     return scrollView
   }()
 
-  private let captionLabel: UILabel = {
+  let captionLabel: UILabel = {
     let label = UILabel()
     label.translatesAutoresizingMaskIntoConstraints = false
     label.numberOfLines = 1
@@ -67,12 +72,11 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     return label
   }()
 
-  private var isCaptionExpanded = false
-  private var collapsedCaptionHeight: CGFloat = 0
-  private var expandedCaptionHeight: CGFloat = 0
-  private var isCaptionCollapsible = false
-
-  private var captionScrollViewHeightConstraint: NSLayoutConstraint!
+  var isCaptionExpanded = false
+  var collapsedCaptionHeight: CGFloat = 0
+  var expandedCaptionHeight: CGFloat = 0
+  var isCaptionCollapsible = false
+  var captionScrollViewHeightConstraint: NSLayoutConstraint!
 
   private static func getActionButton(withTitle title: String, image: UIImage?) -> UIButton {
     var configuration = UIButton.Configuration.plain()
@@ -173,6 +177,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     likeButton.addTarget(self, action: #selector(likeButtonTapped), for: .touchUpInside)
     shareButton.addTarget(self, action: #selector(shareButtonTapped), for: .touchUpInside)
     deleteButton.addTarget(self, action: #selector(deleteButtonTapped), for: .touchUpInside)
+    reportButton.addTarget(self, action: #selector(reportButtonTapped), for: .touchUpInside)
   }
 
   private func setupCaptionLabel() {
@@ -218,13 +223,6 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     }
   }
 
-  @objc private func handleCellTap(_ gesture: UITapGestureRecognizer) {
-    guard isCaptionCollapsible else { return }
-    if isCaptionExpanded {
-      collapseCaption()
-    }
-  }
-
   @objc func likeButtonTapped() {
     delegate?.likeButtonTapped(index: index)
   }
@@ -235,6 +233,10 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
 
   @objc func deleteButtonTapped() {
     delegate?.deleteButtonTapped(index: index)
+  }
+
+  @objc func reportButtonTapped() {
+    delegate?.reportButtonTapped(index: index)
   }
 
   func configure(
@@ -273,8 +275,10 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
       profileInfoView.set(data: profileInfo)
       profileInfoView.isHidden = false
       captionScrollView.isHidden = true
+      actionsStackView.addArrangedSubview(reportButton)
       deleteButton.removeFromSuperview()
     } else {
+      reportButton.removeFromSuperview()
       actionsStackView.addArrangedSubview(deleteButton)
       profileInfoView.isHidden = true
       captionScrollView.isHidden = false
@@ -282,73 +286,11 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     }
   }
 
-  private func setCaptionHeight(captionText: String) {
-    captionLabel.text = captionText
-
-    let availableWidth = contentView.frame.width - (Constants.horizontalMargin * 2) - actionsStackView.frame.width
-    let fullHeight = captionLabel.heightForWidth(availableWidth, maxLines: 0)
-    let singleLineHeight = captionLabel.font.lineHeight
-    let maxHeightForTenLines = singleLineHeight * Constants.maxLinesCaption
-    let linesNeeded = ceil(fullHeight / singleLineHeight)
-
-    if linesNeeded <= 1 {
-      isCaptionCollapsible = false
-      collapsedCaptionHeight = singleLineHeight
-      expandedCaptionHeight = singleLineHeight
-      captionLabel.numberOfLines = 1
-      captionLabel.lineBreakMode = .byTruncatingTail
-      captionScrollView.isScrollEnabled = false
-    } else {
-      isCaptionCollapsible = true
-      collapsedCaptionHeight = singleLineHeight
-      if linesNeeded <= Constants.maxLinesCaption {
-        expandedCaptionHeight = fullHeight
-      } else {
-        expandedCaptionHeight = maxHeightForTenLines
-      }
-      captionLabel.numberOfLines = 1
-      captionLabel.lineBreakMode = .byTruncatingTail
-      captionScrollView.isScrollEnabled = false
-    }
-    captionScrollViewHeightConstraint.constant = collapsedCaptionHeight
-    isCaptionExpanded = false
-
-    captionScrollView.setNeedsLayout()
-    captionScrollView.layoutIfNeeded()
-  }
-
-  private func expandCaption() {
-    captionLabel.numberOfLines = 0
-    captionLabel.lineBreakMode = .byWordWrapping
-    captionScrollView.isScrollEnabled = (
-      expandedCaptionHeight >
-      captionLabel.font.lineHeight * Constants.maxLinesCaption * 0.99
-    )
-    UIView.animate(withDuration: CGFloat.animationPeriod, animations: {
-      self.captionScrollViewHeightConstraint.constant = self.expandedCaptionHeight
-      self.layoutIfNeeded()
-      self.captionScrollView.layoutIfNeeded()
-    })
-    isCaptionExpanded = true
-  }
-
-  private func collapseCaption() {
-    captionLabel.numberOfLines = 1
-    captionLabel.lineBreakMode = .byTruncatingTail
-    captionScrollView.isScrollEnabled = false
-    UIView.animate(withDuration: CGFloat.animationPeriod, animations: {
-      self.captionScrollViewHeightConstraint.constant = self.collapsedCaptionHeight
-      self.layoutIfNeeded()
-      self.captionScrollView.layoutIfNeeded()
-    })
-    isCaptionExpanded = false
-  }
-
   func setLikeStatus(isLiked: Bool) {
     likeButton.configuration?.image = isLiked ? Constants.likeSelectedImage : Constants.likeUnSelectedImage
-    var likeButtonString = String((Int(likeButton.titleLabel?.text ?? "") ?? 0) - 1)
+    var likeButtonString = String((Int(likeButton.titleLabel?.text ?? "") ?? .zero) - .one)
     if isLiked {
-      likeButtonString = String((Int(likeButton.titleLabel?.text ?? "") ?? 0) + 1)
+      likeButtonString = String((Int(likeButton.titleLabel?.text ?? "") ?? Int.zero) + Int.one)
     }
     likeButton.configuration?.attributedTitle = AttributedString(
       likeButtonString,
@@ -389,6 +331,7 @@ extension FeedsCell {
     static let likeUnSelectedImage = UIImage(named: "like_unselected_feed")
     static let shareButtonImage = UIImage(named: "share_feed")
     static let deleteButtonImage = UIImage(named: "delete_video_profile")
+    static let reportButtonImage = UIImage(named: "report_feed")
     static let actionButtonHeight: CGFloat = 51.0
     static let actionButtonWidth: CGFloat = 34.0
     static let actionButtonImagePadding = 4.0
@@ -407,4 +350,4 @@ extension FeedsCell {
     static let animationPeriod = 0.3
   }
 }
-// swiftlint: enable file_length type_body_length
+// swiftlint: enable type_body_length

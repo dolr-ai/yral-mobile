@@ -50,7 +50,6 @@ extension FeedsViewController: FeedsCellProtocol {
       confirmLabel: "Delete",
       cancelLabel: "Cancel",
       onConfirm: { [weak self] in
-        // Dismiss the popup first.
         hostingController?.dismiss(animated: true, completion: nil)
         guard let self = self else { return }
         Task { @MainActor in
@@ -74,6 +73,39 @@ extension FeedsViewController: FeedsCellProtocol {
     self.present(hostingController!, animated: true, completion: nil)
   }
 
+  func reportButtonTapped(index: Int) {
+    let snapshot = feedsDataSource.snapshot()
+    guard index < snapshot.itemIdentifiers.count else { return }
+    let feedItem = snapshot.itemIdentifiers[index]
+
+    var hostingController: UIHostingController<ReportNudgeView>?
+
+    let reportView = ReportNudgeView(
+      onSubmit: { [weak self] _, _ in
+        hostingController?.dismiss(animated: true, completion: nil)
+        guard let self = self else { return }
+        Task { @MainActor in
+//          await self.viewModel.reportVideo(
+//            request: ReportVideoRequest(
+//              postId: UInt64(feedItem.postID) ?? .zero,
+//              videoId: feedItem.videoID,
+//              reason: selectedReason,
+//              additionalInfo: othersText
+//            )
+//          )
+        }
+      },
+      onDismiss: {
+        hostingController?.dismiss(animated: true, completion: nil)
+      }
+    )
+
+    hostingController = UIHostingController(rootView: reportView)
+    hostingController!.modalPresentationStyle = .overFullScreen
+    hostingController!.modalTransitionStyle = .crossDissolve
+    hostingController?.view.backgroundColor = .clear
+    self.present(hostingController!, animated: true, completion: nil)
+  }
 }
 
 extension FeedsViewController: YralPlayerProtocol {
