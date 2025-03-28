@@ -116,10 +116,12 @@ extension FeedsViewController {
   }
 
   func removeFeeds(with feeds: [FeedResult], animated: Bool = false) {
-    yralPlayer.removeFeeds(feeds)
     var snapshot = feedsDataSource.snapshot()
     snapshot.deleteItems(feeds)
-    feedsDataSource.apply(snapshot, animatingDifferences: animated)
+    feedsDataSource.apply(snapshot, animatingDifferences: animated) { [weak self] in
+      guard let self else { return }
+      yralPlayer.removeFeeds(feeds)
+    }
     if snapshot.itemIdentifiers.isEmpty {
       onBackButtonTap?()
     }

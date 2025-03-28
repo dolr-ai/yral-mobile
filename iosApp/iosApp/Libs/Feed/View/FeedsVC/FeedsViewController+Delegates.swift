@@ -81,18 +81,17 @@ extension FeedsViewController: FeedsCellProtocol {
     var hostingController: UIHostingController<ReportNudgeView>?
 
     let reportView = ReportNudgeView(
-      onSubmit: { [weak self] _, _ in
+      onSubmit: { [weak self] reason, othersText in
         hostingController?.dismiss(animated: true, completion: nil)
         guard let self = self else { return }
         Task { @MainActor in
-//          await self.viewModel.reportVideo(
-//            request: ReportVideoRequest(
-//              postId: UInt64(feedItem.postID) ?? .zero,
-//              videoId: feedItem.videoID,
-//              reason: selectedReason,
-//              additionalInfo: othersText
-//            )
-//          )
+          let reportReason = othersText.isEmpty ? reason : othersText
+          await self.viewModel.report(request: ReportRequest(
+            postId: UInt64(feedItem.postID) ?? .zero,
+            videoId: feedItem.videoID,
+            reason: reportReason,
+            canisterID: feedItem.canisterID
+          ))
         }
       },
       onDismiss: {

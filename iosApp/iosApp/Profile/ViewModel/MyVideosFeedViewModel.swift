@@ -155,4 +155,6 @@ class MyVideosFeedViewModel: FeedViewModelProtocol, ObservableObject {
   func getCurrentFeedIndex() -> Int {
     return currentIndex
   }
+
+  func report(request: ReportRequest) async { }
 }

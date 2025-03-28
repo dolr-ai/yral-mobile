@@ -148,6 +148,54 @@ class FeedsRepository: FeedRepositoryProtocol {
       return FeedError.unknown(error.localizedDescription)
     }
   }
+
+  func reportVideo(request: ReportRequest) async -> Result<String, FeedError> {
+    guard let canisterPrincipalString = authClient.canisterPrincipalString,
+          let userPrincipalString = authClient.userPrincipalString else {
+      return .failure(FeedError.authError(AuthError.authenticationFailed("No canister principal")))
+    }
+    guard let baseURL = httpService.baseURL else { return .failure(.networkError(NetworkError.invalidRequest)) }
+    do {
+      let delegatedWire = try authClient.generateNewDelegatedIdentityWireOneHour()
+      let swiftWire = try swiftDelegatedIdentityWire(from: delegatedWire)
+      let reportRequestDTO = ReportRequestDTO(
+        canisterId: request.canisterID,
+        postId: request.postId,
+        reason: request.reason,
+        userCanisterId: canisterPrincipalString,
+        userPrincipal: userPrincipalString,
+        videoId: request.videoId,
+        delegatedIdentityWire: swiftWire
+      )
+      let endpoint = Endpoint(
+        http: "",
+        baseURL: baseURL,
+        path: Constants.reportVideoPath,
+        method: .post,
+        headers: ["Content-Type": "application/json"],
+        body: try JSONEncoder().encode(reportRequestDTO)
+      )
+      _ = try await httpService.performRequest(for: endpoint)
+      return .success((String(request.postId)))
+    } catch {
+      switch error {
+      case let netErr as NetworkError:
+        return .failure(FeedError.networkError(netErr))
+      case let authErr as AuthError:
+        return .failure(FeedError.authError(authErr))
+      default:
+        return .failure(.unknown(error.localizedDescription))
+      }
+    }
+  }
+
+  private func swiftDelegatedIdentityWire(from rustWire: DelegatedIdentityWire) throws -> SwiftDelegatedIdentityWire {
+    let wireJsonString = delegated_identity_wire_to_json(rustWire).toString()
+    guard let data = wireJsonString.data(using: .utf8) else {
+      throw AuthError.authenticationFailed("Failed to convert wire JSON string to Data")
+    }
+    return try JSONDecoder().decode(SwiftDelegatedIdentityWire.self, from: data)
+  }
 }
 
 class CacheEndPoints {
@@ -191,5 +239,7 @@ extension FeedsRepository {
     static let cloudflareSuffix = "/manifest/video.m3u8"
     static let thumbnailSuffix = "/thumbnails/thumbnail.jpg"
     static let cacheBaseURL = "https://yral-ml-feed-cache.go-bazzinga.workers.dev/feed-cache/"
+    static let reportVideoPath = "/api/v1/posts/report"
+
   }
 }

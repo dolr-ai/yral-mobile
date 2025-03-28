@@ -154,6 +154,20 @@ class FeedsViewController: UIViewController {
           print("Delete video failed: \(errorMessage)")
         case .pageEndReached:
           pageEndReached = true
+        case .reportInitiated:
+          self.activityIndicator.startAnimating()
+        case .reportSuccess(let postID):
+          self.activityIndicator.stopAnimating()
+          guard let feedIndex = self.feedsDataSource.snapshot().itemIdentifiers.firstIndex(
+            where: {
+              $0.postID == postID
+            }
+          ) else { return }
+          lastDisplayedThumbnailPath.removeValue(forKey: feedIndex)
+          self.removeFeeds(with: [self.feedsDataSource.snapshot().itemIdentifiers[feedIndex]])
+        case .reportFailed(let error):
+          self.activityIndicator.stopAnimating()
+          print("Report video failed: \(error.localizedDescription)")
         }
       }
       .store(in: &paginatedFeedscancellables)

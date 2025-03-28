@@ -75,7 +75,7 @@ final class AppDIContainer {
     return FeedDIContainer(
       dependencies: FeedDIContainer.Dependencies(
         mlfeedService: mlFeedClient,
-        httpService: HTTPService(),
+        httpService: HTTPService(baseURLString: appConfiguration.offchainBaseURLString),
         authClient: authClient,
         crashReporter: crashReporter,
         toggleLikeUseCase: toggleLikeUseCase
@@ -107,7 +107,7 @@ final class AppDIContainer {
   func makeProfileDIContainer() -> ProfileDIContainer {
     return ProfileDIContainer(
       dependencies: ProfileDIContainer.Dependencies(
-        httpService: HTTPService(baseURLString: appConfiguration.profileBaseURLString),
+        httpService: HTTPService(baseURLString: appConfiguration.offchainBaseURLString),
         authClient: authClient,
         crashReporter: crashReporter,
         accountUseCase: accountUseCase,

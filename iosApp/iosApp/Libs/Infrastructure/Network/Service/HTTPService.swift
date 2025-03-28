@@ -21,7 +21,7 @@ class HTTPService: NetworkService {
 
   func performRequest(for endPoint: Endpoint) async throws -> Data {
     guard endPoint.transport == .http,
-          let baseURL = baseURL ?? endPoint.baseURL,
+          let baseURL = endPoint.baseURL ?? baseURL,
           let path = endPoint.path,
           let method = endPoint.httpMethod else {
       throw NetworkError.invalidRequest

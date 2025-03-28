@@ -36,7 +36,7 @@ final class FeedDIContainer {
 
   func makeFeedsViewModel() -> FeedsViewModel {
     let repository = FeedsRepository(
-      httpService: HTTPService(),
+      httpService: dependencies.httpService,
       mlClient: dependencies.mlfeedService,
       authClient: dependencies.authClient
     )
@@ -49,7 +49,11 @@ final class FeedDIContainer {
         feedRepository: repository,
         crashReporter: dependencies.crashReporter
       ),
-      likeUseCase: dependencies.toggleLikeUseCase
+      likeUseCase: dependencies.toggleLikeUseCase,
+      reportUseCase: ReportFeedsUseCase(
+        feedRepository: repository,
+        crashReporter: dependencies.crashReporter
+      )
     )
   }
 }

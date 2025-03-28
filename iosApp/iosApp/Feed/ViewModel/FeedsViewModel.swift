@@ -8,49 +8,11 @@
 import Foundation
 import Combine
 
-enum FeedsPageState: Equatable {
-  case initalized
-  case loading
-  case successfullyFetched([FeedResult])
-  case failure(Error)
-
-  static func == (lhs: FeedsPageState, rhs: FeedsPageState) -> Bool {
-    switch (lhs, rhs) {
-    case (.initalized, .initalized): return true
-    case (.loading, .loading): return true
-    case (.successfullyFetched, .successfullyFetched): return true
-    default: return false
-    }
-  }
-}
-
-enum FeedsPageEvent: Equatable {
-  case loadingMoreFeeds
-  case loadedMoreFeeds
-  case loadMoreFeedsFailed(Error)
-  case toggledLikeSuccessfully(LikeResult)
-  case toggleLikeFailed(Error)
-  case fetchingInitialFeeds
-  case finishedLoadingInitialFeeds
-
-  static func == (lhs: FeedsPageEvent, rhs: FeedsPageEvent) -> Bool {
-    switch (lhs, rhs) {
-    case (.loadingMoreFeeds, .loadingMoreFeeds): return true
-    case (.loadedMoreFeeds, .loadedMoreFeeds): return true
-    case (.loadMoreFeedsFailed, .loadMoreFeedsFailed): return true
-    case (.toggledLikeSuccessfully, .toggledLikeSuccessfully): return true
-    case (.toggleLikeFailed, .toggleLikeFailed): return true
-    case (.fetchingInitialFeeds, .fetchingInitialFeeds): return true
-    case (.finishedLoadingInitialFeeds, .finishedLoadingInitialFeeds): return true
-    default: return false
-    }
-  }
-}
-
 class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
   let initialFeedsUseCase: FetchInitialFeedsUseCaseProtocol
   let moreFeedsUseCase: FetchMoreFeedsUseCaseProtocol
   let likesUseCase: ToggleLikeUseCaseProtocol
+  let reportUseCase: ReportFeedsUseCaseProtocol
   private var currentFeeds = [FeedResult]()
   private var feedPostIDSet = Set<String>()
   private var cancellables = Set<AnyCancellable>()
@@ -62,11 +24,13 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
   init(
     fetchFeedsUseCase: FetchInitialFeedsUseCaseProtocol,
     moreFeedsUseCase: FetchMoreFeedsUseCaseProtocol,
-    likeUseCase: ToggleLikeUseCaseProtocol
+    likeUseCase: ToggleLikeUseCaseProtocol,
+    reportUseCase: ReportFeedsUseCaseProtocol
   ) {
     self.initialFeedsUseCase = fetchFeedsUseCase
     self.moreFeedsUseCase = moreFeedsUseCase
     self.likesUseCase = likeUseCase
+    self.reportUseCase = reportUseCase
     self.unifiedEvent = .fetchingInitialFeeds
     isFetchingInitialFeeds = true
     initialFeedsUseCase.feedUpdates
@@ -150,6 +114,18 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
       case .failure(let error):
         unifiedEvent = .toggleLikeFailed(errorMessage: error.localizedDescription)
       }
+    }
+  }
+
+  @MainActor func report(request: ReportRequest) async {
+    unifiedEvent = .reportInitiated
+    let result = await reportUseCase.execute(request: request)
+    switch result {
+    case .success(let postID):
+      unifiedEvent = .reportSuccess(postID)
+    case .failure(let failure):
+      unifiedEvent = .reportFailed(failure)
+      print(failure.localizedDescription)
     }
   }
 

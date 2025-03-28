@@ -10,5 +10,6 @@ import Combine
 protocol FeedRepositoryProtocol {
   func getInitialFeeds(numResults: Int) async -> Result<Void, FeedError>
   func fetchMoreFeeds(request: MoreFeedsRequest) async -> Result<[FeedResult], FeedError>
+  func reportVideo(request: ReportRequest) async -> Result<String, FeedError>
   var feedUpdates: AnyPublisher<[FeedResult], Never> { get }
 }

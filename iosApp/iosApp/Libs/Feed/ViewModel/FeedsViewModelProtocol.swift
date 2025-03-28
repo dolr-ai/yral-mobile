@@ -28,6 +28,9 @@ enum UnifiedFeedEvent: Equatable {
   case deleteVideoSuccess(feeds: [FeedResult])
   case deleteVideoFailed(errorMessage: String)
   case pageEndReached
+  case reportInitiated
+  case reportSuccess(String)
+  case reportFailed(Error)
 
   // swiftlint: disable cyclomatic_complexity
   static func == (lhs: UnifiedFeedEvent, rhs: UnifiedFeedEvent) -> Bool {
@@ -69,4 +72,5 @@ protocol FeedViewModelProtocol: ObservableObject {
   func toggleLike(request: LikeQuery) async
   func deleteVideo(request: DeleteVideoRequest) async
   func getCurrentFeedIndex() -> Int
+  func report(request: ReportRequest) async
 }

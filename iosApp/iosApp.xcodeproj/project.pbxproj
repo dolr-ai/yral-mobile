@@ -33,8 +33,12 @@
 		AC26CA622D805D6D006ADA75 /* AccountError.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC26CA602D805D6A006ADA75 /* AccountError.swift */; };
 		AC26CA642D805E58006ADA75 /* FeedError.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC26CA632D805E52006ADA75 /* FeedError.swift */; };
 		AC26CA652D805E58006ADA75 /* FeedError.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC26CA632D805E52006ADA75 /* FeedError.swift */; };
-		AC26CA682D806514006ADA75 /* Errors.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC26CA672D80650D006ADA75 /* Errors.swift */; };
-		AC26CA692D806514006ADA75 /* Errors.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC26CA672D80650D006ADA75 /* Errors.swift */; };
+		AC2C30CD2D96C49800DA9F81 /* ReportUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC2C30CC2D96C49200DA9F81 /* ReportUseCase.swift */; };
+		AC2C30CE2D96C49800DA9F81 /* ReportUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC2C30CC2D96C49200DA9F81 /* ReportUseCase.swift */; };
+		AC2C30D12D96C51600DA9F81 /* ReportEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC2C30D02D96C51600DA9F81 /* ReportEntity.swift */; };
+		AC2C30D22D96C51600DA9F81 /* ReportEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC2C30D02D96C51600DA9F81 /* ReportEntity.swift */; };
+		AC2C30D42D96C68700DA9F81 /* ReportRequestDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC2C30D32D96C68100DA9F81 /* ReportRequestDTO.swift */; };
+		AC2C30D52D96C68700DA9F81 /* ReportRequestDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC2C30D32D96C68100DA9F81 /* ReportRequestDTO.swift */; };
 		AC32E3F62D26FEB9001DDA43 /* UIColor+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E3F52D26FEB4001DDA43 /* UIColor+Extensions.swift */; };
 		AC32E3F72D26FEB9001DDA43 /* UIColor+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E3F52D26FEB4001DDA43 /* UIColor+Extensions.swift */; };
 		AC32E4062D270097001DDA43 /* README.txt in Resources */ = {isa = PBXBuildFile; fileRef = AC32E4042D270097001DDA43 /* README.txt */; };
@@ -339,6 +343,8 @@
 		ACEBF8022D74673600B594A0 /* HashtagsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACEBF7FF2D74673600B594A0 /* HashtagsView.swift */; };
 		ACEBF8052D7473E600B594A0 /* UploadErrorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACEBF8042D7473DD00B594A0 /* UploadErrorView.swift */; };
 		ACEBF8062D7473E600B594A0 /* UploadErrorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACEBF8042D7473DD00B594A0 /* UploadErrorView.swift */; };
+		ACFEDFA12D96CEC2003116EA /* Errors.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFEDFA02D96CEC2003116EA /* Errors.swift */; };
+		ACFEDFA22D96CEC2003116EA /* Errors.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFEDFA02D96CEC2003116EA /* Errors.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -398,7 +404,9 @@
 		AC26CA5D2D8052D9006ADA75 /* BaseStreamingUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseStreamingUseCase.swift; sourceTree = "<group>"; };
 		AC26CA602D805D6A006ADA75 /* AccountError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountError.swift; sourceTree = "<group>"; };
 		AC26CA632D805E52006ADA75 /* FeedError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedError.swift; sourceTree = "<group>"; };
-		AC26CA672D80650D006ADA75 /* Errors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Errors.swift; sourceTree = "<group>"; };
+		AC2C30CC2D96C49200DA9F81 /* ReportUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportUseCase.swift; sourceTree = "<group>"; };
+		AC2C30D02D96C51600DA9F81 /* ReportEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportEntity.swift; sourceTree = "<group>"; };
+		AC2C30D32D96C68100DA9F81 /* ReportRequestDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportRequestDTO.swift; sourceTree = "<group>"; };
 		AC32E3F52D26FEB4001DDA43 /* UIColor+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIColor+Extensions.swift"; sourceTree = "<group>"; };
 		AC32E3F82D270097001DDA43 /* KumbhSans-Black.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "KumbhSans-Black.ttf"; sourceTree = "<group>"; };
 		AC32E3F92D270097001DDA43 /* KumbhSans-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "KumbhSans-Bold.ttf"; sourceTree = "<group>"; };
@@ -539,6 +547,7 @@
 		ACEBF7F52D70A8CF00B594A0 /* AnimatedCheckbox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimatedCheckbox.swift; sourceTree = "<group>"; };
 		ACEBF7FF2D74673600B594A0 /* HashtagsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HashtagsView.swift; sourceTree = "<group>"; };
 		ACEBF8042D7473DD00B594A0 /* UploadErrorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadErrorView.swift; sourceTree = "<group>"; };
+		ACFEDFA02D96CEC2003116EA /* Errors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Errors.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -782,14 +791,21 @@
 		AC26CA662D806501006ADA75 /* Utils */ = {
 			isa = PBXGroup;
 			children = (
+				ACFEDFA02D96CEC2003116EA /* Errors.swift */,
 				ACCB98772D94420D002B9675 /* UILabel+Extensions.swift */,
-				AC26CA672D80650D006ADA75 /* Errors.swift */,
 				ACC0F3962D2ED5D700FA5BD0 /* LottieView.swift */,
 				AC32E4452D2961BE001DDA43 /* URLImage.swift */,
 				AC09AA1E2CDBB69B009A39A4 /* Extensions */,
 				ACEBF7E72D6F844100B594A0 /* Toast */,
 			);
 			path = Utils;
+			sourceTree = "<group>";
+		};
+		AC2C30CF2D96C4C100DA9F81 /* Entity */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Entity;
 			sourceTree = "<group>";
 		};
 		AC32E4012D270097001DDA43 /* static */ = {
@@ -978,6 +994,7 @@
 		AC32E47B2D2AF5A5001DDA43 /* HTTP */ = {
 			isa = PBXGroup;
 			children = (
+				AC2C30D32D96C68100DA9F81 /* ReportRequestDTO.swift */,
 				AC32E4782D2AF594001DDA43 /* CacheDTO.swift */,
 			);
 			path = HTTP;
@@ -1330,6 +1347,7 @@
 			children = (
 				ACB09FD82D92D6DC00EE3239 /* Entity */,
 				ACB46A622D0F0B67002E200C /* Usecases */,
+				AC2C30CF2D96C4C100DA9F81 /* Entity */,
 			);
 			path = Domain;
 			sourceTree = "<group>";
@@ -1576,6 +1594,7 @@
 		ACDD23E12D8B18D400AB0DAF /* Usecase */ = {
 			isa = PBXGroup;
 			children = (
+				AC2C30CC2D96C49200DA9F81 /* ReportUseCase.swift */,
 				AC32E4722D2AD674001DDA43 /* ToggleLikeUseCase.swift */,
 			);
 			path = Usecase;
@@ -1591,6 +1610,7 @@
 				AC4960602D2D6649008D59D9 /* LikeResult.swift */,
 				ACB09FE62D93288400EE3239 /* MyVideosFeedInfo.swift */,
 				ACC0D4562D9177BF006DCF5C /* DeleteVideoRequest.swift */,
+				AC2C30D02D96C51600DA9F81 /* ReportEntity.swift */,
 			);
 			path = Entity;
 			sourceTree = "<group>";
@@ -2032,6 +2052,7 @@
 				AC4960652D2D693B008D59D9 /* Foundation+Extensions.swift in Sources */,
 				ACEBF7EA2D6F844E00B594A0 /* ToastType.swift in Sources */,
 				ACB46A652D0F0B75002E200C /* FetchInitialFeedsUseCase.swift in Sources */,
+				ACFEDFA12D96CEC2003116EA /* Errors.swift in Sources */,
 				ACB46A442D0ECBB3002E200C /* ml_feed.pb.swift in Sources */,
 				AC8958E32D3EB0DB00E19ED7 /* ProfileOptionsWebView.swift in Sources */,
 				ACC0D4642D9179C1006DCF5C /* DeleteVideoUseCase.swift in Sources */,
@@ -2040,6 +2061,7 @@
 				AC462F482D95B7F8004957B3 /* ReportView.swift in Sources */,
 				AC92941D2D6622EE003DB102 /* VideoPickerViewControllerRepresentable.swift in Sources */,
 				ACCB98782D944213002B9675 /* UILabel+Extensions.swift in Sources */,
+				AC2C30D52D96C68700DA9F81 /* ReportRequestDTO.swift in Sources */,
 				ACEBF7DB2D6EDC8500B594A0 /* GradientProgressViewStyle.swift in Sources */,
 				ACC0D4582D9177C2006DCF5C /* DeleteVideoRequest.swift in Sources */,
 				ACB46A502D0ED195002E200C /* FeedResult.swift in Sources */,
@@ -2058,6 +2080,7 @@
 				AC7F7EBD2D77335900215162 /* AuthErrors.swift in Sources */,
 				AC99BBB82D86C645008012C2 /* ProfileDIContainer.swift in Sources */,
 				ACC0F3972D2ED5D700FA5BD0 /* LottieView.swift in Sources */,
+				AC2C30D22D96C51600DA9F81 /* ReportEntity.swift in Sources */,
 				ACB46A7D2D105BEB002E200C /* UIKitInitializers.swift in Sources */,
 				AC26CA562D80281D006ADA75 /* FirebaseCrashlyticsReporter.swift in Sources */,
 				AC32E4692D2998D6001DDA43 /* AccountDIContainer.swift in Sources */,
@@ -2095,7 +2118,6 @@
 				AC7F7ECA2D786F8E00215162 /* UploadVideoUseCase.swift in Sources */,
 				ACB09FDA2D92D6E900EE3239 /* MoreFeedsRequest.swift in Sources */,
 				ACDD23E42D8B19FF00AB0DAF /* MyVideosUseCase.swift in Sources */,
-				AC26CA682D806514006ADA75 /* Errors.swift in Sources */,
 				ACC0D4342D8BFE67006DCF5C /* NudgePopupView.swift in Sources */,
 				AC92940F2D64CBFB003DB102 /* SelectFileView.swift in Sources */,
 				AC32E44C2D2965A3001DDA43 /* AccountViewModel.swift in Sources */,
@@ -2112,6 +2134,7 @@
 				ACB46A812D106034002E200C /* FeedsCell.swift in Sources */,
 				AC7F7ECE2D78707200215162 /* UploadVideoRequest.swift in Sources */,
 				AC6BECC22D09F91C002E2021 /* HTTPService.swift in Sources */,
+				AC2C30CD2D96C49800DA9F81 /* ReportUseCase.swift in Sources */,
 				ACC0F3942D2ED5B700FA5BD0 /* SplashScreenView.swift in Sources */,
 				AC99BBB12D86C563008012C2 /* ProfileView.swift in Sources */,
 				AC99BB972D848667008012C2 /* YralFont.swift in Sources */,
@@ -2182,6 +2205,7 @@
 				AC4960642D2D693B008D59D9 /* Foundation+Extensions.swift in Sources */,
 				ACEBF7E92D6F844E00B594A0 /* ToastType.swift in Sources */,
 				ACB46A642D0F0B75002E200C /* FetchInitialFeedsUseCase.swift in Sources */,
+				ACFEDFA22D96CEC2003116EA /* Errors.swift in Sources */,
 				ACB46A412D0ECBB3002E200C /* ml_feed.pb.swift in Sources */,
 				AC8958E22D3EB0DB00E19ED7 /* ProfileOptionsWebView.swift in Sources */,
 				ACC0D4652D9179C1006DCF5C /* DeleteVideoUseCase.swift in Sources */,
@@ -2190,6 +2214,7 @@
 				AC462F472D95B7F8004957B3 /* ReportView.swift in Sources */,
 				AC92941C2D6622EE003DB102 /* VideoPickerViewControllerRepresentable.swift in Sources */,
 				ACCB98792D944213002B9675 /* UILabel+Extensions.swift in Sources */,
+				AC2C30D42D96C68700DA9F81 /* ReportRequestDTO.swift in Sources */,
 				ACEBF7DC2D6EDC8500B594A0 /* GradientProgressViewStyle.swift in Sources */,
 				ACC0D4572D9177C2006DCF5C /* DeleteVideoRequest.swift in Sources */,
 				ACB46A512D0ED195002E200C /* FeedResult.swift in Sources */,
@@ -2208,6 +2233,7 @@
 				AC7F7EBC2D77335900215162 /* AuthErrors.swift in Sources */,
 				AC99BBB72D86C645008012C2 /* ProfileDIContainer.swift in Sources */,
 				ACC0F3982D2ED5D700FA5BD0 /* LottieView.swift in Sources */,
+				AC2C30D12D96C51600DA9F81 /* ReportEntity.swift in Sources */,
 				ACB46A7C2D105BEB002E200C /* UIKitInitializers.swift in Sources */,
 				AC26CA552D80281D006ADA75 /* FirebaseCrashlyticsReporter.swift in Sources */,
 				AC32E4682D2998D6001DDA43 /* AccountDIContainer.swift in Sources */,
@@ -2245,7 +2271,6 @@
 				AC7F7ECB2D786F8E00215162 /* UploadVideoUseCase.swift in Sources */,
 				ACB09FDB2D92D6E900EE3239 /* MoreFeedsRequest.swift in Sources */,
 				ACDD23E52D8B19FF00AB0DAF /* MyVideosUseCase.swift in Sources */,
-				AC26CA692D806514006ADA75 /* Errors.swift in Sources */,
 				ACC0D4352D8BFE67006DCF5C /* NudgePopupView.swift in Sources */,
 				AC92940E2D64CBFB003DB102 /* SelectFileView.swift in Sources */,
 				AC32E44B2D2965A3001DDA43 /* AccountViewModel.swift in Sources */,
@@ -2262,6 +2287,7 @@
 				ACB46A802D106034002E200C /* FeedsCell.swift in Sources */,
 				AC7F7ECD2D78707200215162 /* UploadVideoRequest.swift in Sources */,
 				AC6BECC32D09F91C002E2021 /* HTTPService.swift in Sources */,
+				AC2C30CE2D96C49800DA9F81 /* ReportUseCase.swift in Sources */,
 				ACC0F3952D2ED5B700FA5BD0 /* SplashScreenView.swift in Sources */,
 				AC99BBB02D86C563008012C2 /* ProfileView.swift in Sources */,
 				AC99BB982D848667008012C2 /* YralFont.swift in Sources */,
