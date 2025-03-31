@@ -6,7 +6,7 @@
 //  Copyright © 2025 orgName. All rights reserved.
 //
 
-struct LikeResult {
+struct LikeResult: Equatable {
   let status: Bool
   let index: Int
 }

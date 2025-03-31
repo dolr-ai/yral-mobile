@@ -44,37 +44,29 @@ final class AppDIContainer {
     return composite
   }()
 
-  lazy var feedsRepository: FeedsRepository = {
-    FeedsRepository(
+  lazy var likeRepository: LikeRepositoryProtocol = {
+    LikeRepository(
       httpService: HTTPService(),
-      mlClient: mlFeedClient,
       authClient: authClient
     )
   }()
 
-  lazy var accountsRepository: AccountRepository = {
+  lazy var accountsRepository: AccountRepositoryProtocol = {
     AccountRepository(
       httpService: HTTPService(),
       authClient: authClient)
   }()
 
-  lazy var moreFeedsUseCase: FetchMoreFeedsUseCase = {
-    FetchMoreFeedsUseCase(
-      feedRepository: feedsRepository,
-      crashReporter: crashReporter
-    )
-  }()
-
-  lazy var toggleLikeUseCase: ToggleLikeUseCase = {
-    ToggleLikeUseCase(
-      feedRepository: feedsRepository,
-      crashReporter: crashReporter
-    )
-  }()
-
-  lazy var accountUseCase: AccountUseCase = {
+  lazy var accountUseCase: AccountUseCaseProtocol = {
     AccountUseCase(
       accountRepository: accountsRepository,
+      crashReporter: crashReporter
+    )
+  }()
+
+  lazy var toggleLikeUseCase: ToggleLikeUseCaseProtocol = {
+    ToggleLikeUseCase(
+      likeRepository: likeRepository,
       crashReporter: crashReporter
     )
   }()
@@ -83,11 +75,9 @@ final class AppDIContainer {
     return FeedDIContainer(
       dependencies: FeedDIContainer.Dependencies(
         mlfeedService: mlFeedClient,
-        httpService: HTTPService(),
+        httpService: HTTPService(baseURLString: appConfiguration.offchainBaseURLString),
         authClient: authClient,
         crashReporter: crashReporter,
-        feedsRepository: feedsRepository,
-        fetchMoreFeedsUseCase: moreFeedsUseCase,
         toggleLikeUseCase: toggleLikeUseCase
       )
     )
@@ -117,11 +107,11 @@ final class AppDIContainer {
   func makeProfileDIContainer() -> ProfileDIContainer {
     return ProfileDIContainer(
       dependencies: ProfileDIContainer.Dependencies(
-        httpService: HTTPService(baseURLString: appConfiguration.profileBaseURLString),
+        httpService: HTTPService(baseURLString: appConfiguration.offchainBaseURLString),
         authClient: authClient,
         crashReporter: crashReporter,
-        accountRepository: accountsRepository,
-        accountUseCase: accountUseCase
+        accountUseCase: accountUseCase,
+        likesUseCase: toggleLikeUseCase
       )
     )
   }

@@ -200,3 +200,9 @@ impl GetPostsOfUserProfileError {
         matches!(self, GetPostsOfUserProfileError::ExceededMaxNumberOfItemsAllowedInOneRequest)
     }
 }
+
+impl PostStatus {
+    pub fn is_banned_due_to_user_reporting(&self) -> bool {
+        matches!(self, PostStatus::BannedDueToUserReporting)
+    }
+}

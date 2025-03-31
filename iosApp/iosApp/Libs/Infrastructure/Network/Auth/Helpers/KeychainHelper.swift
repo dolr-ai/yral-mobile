@@ -78,3 +78,12 @@ struct KeychainHelper {
 enum KeychainError: Error {
   case unhandledError(status: OSStatus)
 }
+
+extension KeychainError: LocalizedError {
+  public var errorDescription: String? {
+    switch self {
+    case .unhandledError(let status):
+      return "Unhandled keychain error with status: \(status)"
+    }
+  }
+}

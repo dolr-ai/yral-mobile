@@ -22,7 +22,15 @@ open class BaseResultUseCase<Parameter, Success, DomainError: Error> {
     case .success:
       return result
     case .failure(let error):
-      crashReporter.recordException(error)
+      if let aggregated = error as? AggregatedError {
+        for err in aggregated.errors {
+          crashReporter.recordException(err)
+          crashReporter.log(err.localizedDescription)
+        }
+      } else {
+        crashReporter.recordException(error)
+        crashReporter.log(error.localizedDescription)
+      }
       return result
     }
   }

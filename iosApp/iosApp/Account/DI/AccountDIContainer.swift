@@ -11,7 +11,7 @@ final class AccountDIContainer {
     let httpService: HTTPService
     let authClient: AuthClient
     let crashReporter: CrashReporter
-    let accountUseCase: AccountUseCase
+    let accountUseCase: AccountUseCaseProtocol
   }
 
   private let dependencies: Dependencies

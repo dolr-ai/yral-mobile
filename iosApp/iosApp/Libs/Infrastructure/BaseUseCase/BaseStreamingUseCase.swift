@@ -25,7 +25,15 @@ open class BaseStreamingUseCase<Parameter, Success, DomainError: Error> {
           }
           continuation.finish()
         } catch {
-          crashReporter.recordException(error)
+          if let aggregated = error as? AggregatedError {
+            for err in aggregated.errors {
+              crashReporter.recordException(err)
+              crashReporter.log(err.localizedDescription)
+            }
+          } else {
+            crashReporter.recordException(error)
+            crashReporter.log(error.localizedDescription)
+          }
           let mapped = convertToDomainError(error)
           continuation.finish(throwing: mapped)
         }
