@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "Delete.png",
+      "filename" : "like_selected_feed.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "Delete@2x.png",
+      "filename" : "like_profile.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "Delete@3x.png",
+      "filename" : "Heart@3x.png 18-28-55-033.png",
       "idiom" : "universal",
       "scale" : "3x"
     }

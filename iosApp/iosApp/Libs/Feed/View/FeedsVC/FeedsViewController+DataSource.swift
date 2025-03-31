@@ -115,12 +115,17 @@ extension FeedsViewController {
     feedsDataSource.apply(snapshot, animatingDifferences: false)
   }
 
-  func removeFeeds(with feeds: [FeedResult], animated: Bool = false) {
+  func removeFeeds(with feeds: [FeedResult], isReport: Bool = false, animated: Bool = false) {
     var snapshot = feedsDataSource.snapshot()
     snapshot.deleteItems(feeds)
     feedsDataSource.apply(snapshot, animatingDifferences: animated) { [weak self] in
       guard let self else { return }
       yralPlayer.removeFeeds(feeds)
+    }
+    if isReport {
+      DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.animationPeriod) {
+        ToastManager.showToast(type: .reportSuccess)
+      }
     }
     if snapshot.itemIdentifiers.isEmpty {
       onBackButtonTap?()

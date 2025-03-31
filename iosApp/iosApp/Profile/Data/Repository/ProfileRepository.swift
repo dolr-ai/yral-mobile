@@ -37,8 +37,11 @@ class ProfileRepository: ProfileRepositoryProtocol {
     let result = await getUserVideos(with: request.startIndex, offset: request.offset)
     switch result {
     case .success(let newVideos):
-      newVideosSubject.send(newVideos)
-      videos.append(contentsOf: newVideos)
+      let filteredNewVideos = newVideos.filter { newVideo in
+        !videos.contains { $0.postID == newVideo.postID }
+      }
+      newVideosSubject.send(filteredNewVideos)
+      videos.append(contentsOf: filteredNewVideos)
       return .success(newVideos)
     case .failure(let error):
       return .failure(error)
@@ -46,18 +49,12 @@ class ProfileRepository: ProfileRepositoryProtocol {
   }
 
   func refreshVideos() async -> Result<[FeedResult], AccountError> {
-    let result = await getUserVideos(with: 0, offset: UInt64(Constants.offset))
+    let result = await getUserVideos(with: .zero, offset: UInt64(Constants.offset))
     switch result {
     case .success(let newChunk):
-      let oldChunkCount = min(videos.count, 10)
-      if newChunk.count > oldChunkCount {
-        videos = newChunk
-      } else {
-        for item in 0..<newChunk.count {
-          guard item < videos.count else { break }
-          videos[item] = newChunk[item]
-        }
-      }
+      let newVideoIDs = Set(newChunk.map { $0.postID })
+      let filteredOldVideos = videos.filter { !newVideoIDs.contains($0.postID) }
+      videos = newChunk + filteredOldVideos
       return .success(videos)
 
     case .failure(let error):

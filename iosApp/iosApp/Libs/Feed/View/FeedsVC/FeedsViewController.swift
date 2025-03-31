@@ -39,12 +39,18 @@ class FeedsViewController: UIViewController {
     return collectionView
   }()
 
-  lazy var activityIndicator: UIActivityIndicatorView = {
-    let indicator = UIActivityIndicatorView(style: .medium)
-    indicator.translatesAutoresizingMaskIntoConstraints = false
-    indicator.color = .white
-    indicator.hidesWhenStopped = true
-    return indicator
+//  lazy var activityIndicator: UIActivityIndicatorView = {
+//    let indicator = UIActivityIndicatorView(style: .medium)
+//    indicator.translatesAutoresizingMaskIntoConstraints = false
+//    indicator.color = .white
+//    indicator.hidesWhenStopped = true
+//    return indicator
+//  }()
+
+  lazy var activityIndicator: LottieLoaderContainerView = {
+    let loader = LottieLoaderContainerView(animationName: Constants.loaderLottie)
+    loader.translatesAutoresizingMaskIntoConstraints = false
+    return loader
   }()
 
   lazy var feedsDataSource = getConfiguredDataSource()
@@ -101,10 +107,10 @@ class FeedsViewController: UIViewController {
         guard let self = self else { return }
         switch state {
         case .initialized:
-          self.activityIndicator.startAnimating()
+          self.activityIndicator.startAnimating(in: self.view)
         case .loading:
           guard viewModel.unifiedEvent != .loadingMoreFeeds else { return }
-          self.activityIndicator.startAnimating()
+          self.activityIndicator.startAnimating(in: self.view)
         case .success(let feeds):
           DispatchQueue.main.async {
             self.activityIndicator.stopAnimating()
@@ -145,7 +151,7 @@ class FeedsViewController: UIViewController {
         case .toggleLikeFailed(let errorMessage):
           print("Toggle like failed: \(errorMessage)")
         case .deleteVideoInitiated:
-          self.activityIndicator.startAnimating()
+          self.activityIndicator.startAnimating(in: self.view)
         case .deleteVideoSuccess(let feeds):
           self.activityIndicator.stopAnimating()
           self.removeFeeds(with: feeds)
@@ -155,7 +161,7 @@ class FeedsViewController: UIViewController {
         case .pageEndReached:
           pageEndReached = true
         case .reportInitiated:
-          self.activityIndicator.startAnimating()
+          self.activityIndicator.startAnimating(in: self.view)
         case .reportSuccess(let postID):
           self.activityIndicator.stopAnimating()
           guard let feedIndex = self.feedsDataSource.snapshot().itemIdentifiers.firstIndex(
@@ -164,7 +170,7 @@ class FeedsViewController: UIViewController {
             }
           ) else { return }
           lastDisplayedThumbnailPath.removeValue(forKey: feedIndex)
-          self.removeFeeds(with: [self.feedsDataSource.snapshot().itemIdentifiers[feedIndex]])
+          self.removeFeeds(with: [self.feedsDataSource.snapshot().itemIdentifiers[feedIndex]], isReport: true)
         case .reportFailed(let error):
           self.activityIndicator.stopAnimating()
           print("Report video failed: \(error.localizedDescription)")
@@ -204,6 +210,7 @@ class FeedsViewController: UIViewController {
     self.view.backgroundColor = .black
     setupCollectionView()
     setupActivityIndicator()
+
   }
 
   func setupCollectionView() {
@@ -233,7 +240,9 @@ class FeedsViewController: UIViewController {
     view.addSubview(activityIndicator)
     NSLayoutConstraint.activate([
       activityIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-      activityIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+      activityIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+      activityIndicator.widthAnchor.constraint(equalToConstant: Constants.indicatorSize),
+      activityIndicator.heightAnchor.constraint(equalToConstant: Constants.indicatorSize)
     ])
   }
 
@@ -319,6 +328,8 @@ extension FeedsViewController {
     static let navbarTitle = "Your Videos"
     static let navTitleTextColor = YralColor.grey0.uiColor
     static let navTitlefont = YralFont.pt20.bold.uiFont
+    static let loaderLottie = "Yral_Loader"
+    static let indicatorSize = 24.0
   }
 }
 // swiftlint: enable type_body_length
