@@ -11,15 +11,16 @@ import AVFoundation
 
 @MainActor
 final class YralPlayer {
-  private var feedResults: [FeedResult] = []
+  var feedResults: [FeedResult] = []
   var currentIndex: Int = .zero
 
   let player = AVQueuePlayer()
   private var playerLooper: AVPlayerLooper?
   private var lastPlayedTimes: [Int: CMTime] = [:]
-  private var playerItems: [Int: AVPlayerItem] = [:]
+  var playerItems: [Int: AVPlayerItem] = [:]
   private var currentlyDownloadingIndexes: Set<Int> = []
   var isPlayerVisible: Bool = true
+  var didEmptyFeeds: (() -> Void)?
   weak var delegate: YralPlayerProtocol?
 
   func loadInitialVideos(_ feedResults: [FeedResult]) {
@@ -67,6 +68,24 @@ final class YralPlayer {
       } else {
         await prepareCurrentVideo()
       }
+    }
+  }
+
+  func removeFeeds(_ feeds: [FeedResult]) {
+    guard !feeds.isEmpty else { return }
+    let removedIDs = Set(feeds.map { $0.postID })
+    let currentFeedID = feedResults.indices.contains(currentIndex)
+    ? feedResults[currentIndex].postID
+    : nil
+    feedResults.removeAll(where: { removedIDs.contains($0.postID) })
+    playerItems.removeAll()
+    if let currentFeedID = currentFeedID,
+       !feedResults.contains(where: { $0.postID == currentFeedID }) {
+      currentIndex = min(currentIndex, max(feedResults.count - 1, .zero))
+      advanceToVideo(at: currentIndex)
+    }
+    if feedResults.isEmpty {
+      didEmptyFeeds?()
     }
   }
 

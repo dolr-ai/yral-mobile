@@ -11,15 +11,19 @@ import SwiftUI
 
 struct FeedsViewControllerWrapper: UIViewControllerRepresentable {
   let feedsViewController: FeedsViewController
+  @Binding var showFeeds: Bool
 
   func makeUIViewController(context: Context) -> UINavigationController {
+    feedsViewController.onBackButtonTap = {
+      self.showFeeds = false
+    }
     let navigationController = UINavigationController(rootViewController: feedsViewController)
+    navigationController.view.backgroundColor = .clear
     navigationController.edgesForExtendedLayout = .all
-    navigationController.navigationBar.isHidden = true
     feedsViewController.edgesForExtendedLayout = .all
     feedsViewController.extendedLayoutIncludesOpaqueBars = true
     return navigationController
   }
 
-  func updateUIViewController(_ uiViewController: UINavigationController, context: Context) { }
+  func updateUIViewController(_ uiViewController: UINavigationController, context: Context) {  }
 }

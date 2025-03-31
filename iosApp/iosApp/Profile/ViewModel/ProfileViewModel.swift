@@ -26,11 +26,13 @@ enum ProfilePageEvent {
 class ProfileViewModel: ObservableObject {
   @Published var state: ProfilePageState = .initialized
   @Published var event: ProfilePageEvent?
+  var feeds = [FeedResult]()
 
   let accountUseCase: AccountUseCaseProtocol
   let myVideosUseCase: MyVideosUseCaseProtocol
   let deleteVideoUseCase: DeleteVideoUseCaseProtocol
   private var cancellables = Set<AnyCancellable>()
+  var deletedVideos: [ProfileVideoInfo] = []
   var startIndex = Int.zero
   var offset = ProfileRepository.Constants.offset
   private var isLoading = false
@@ -44,6 +46,14 @@ class ProfileViewModel: ObservableObject {
     self.accountUseCase = accountUseCase
     self.myVideosUseCase = myVideosUseCase
     self.deleteVideoUseCase = deleteVideoUseCase
+    myVideosUseCase.videosPublisher
+      .receive(on: RunLoop.main)
+      .sink { [weak self] videos in
+        guard let self = self else { return }
+        self.feeds = videos
+      }
+      .store(in: &cancellables)
+
     myVideosUseCase.newVideosPublisher
       .map { feedResults in
         feedResults.map { $0.toProfileVideoInfo() }
@@ -61,6 +71,7 @@ class ProfileViewModel: ObservableObject {
     .receive(on: RunLoop.main)
     .sink { [weak self] deletedVideos in
       guard let self = self else { return }
+      self.deletedVideos += deletedVideos
       self.event = .deletedVideos(deletedVideos)
     }
     .store(in: &cancellables)

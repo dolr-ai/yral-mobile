@@ -6,6 +6,7 @@
 //  Copyright © 2024 orgName. All rights reserved.
 //
 import Foundation
+import SwiftUI
 
 final class FeedDIContainer {
   struct Dependencies {
@@ -13,8 +14,6 @@ final class FeedDIContainer {
     let httpService: HTTPService
     let authClient: AuthClient
     let crashReporter: CrashReporter
-    let feedsRepository: FeedsRepository
-    let fetchMoreFeedsUseCase: FetchMoreFeedsUseCaseProtocol
     let toggleLikeUseCase: ToggleLikeUseCaseProtocol
   }
 
@@ -24,18 +23,37 @@ final class FeedDIContainer {
     self.dependencies = dependencies
   }
 
-  func makeFeedsViewControllerWrapper() -> FeedsViewControllerWrapper {
-    FeedsViewControllerWrapper(feedsViewController: FeedsViewController(viewModel: makeFeedsViewModel()))
+  func makeFeedsViewControllerWrapper(showFeeds: Binding<Bool>) -> FeedsViewControllerWrapper {
+    FeedsViewControllerWrapper(
+      feedsViewController: FeedsViewController(viewModel: makeFeedsViewModel()),
+      showFeeds: showFeeds
+    )
+  }
+
+  func makeFeedsViewController() -> FeedsViewController {
+    FeedsViewController(viewModel: makeFeedsViewModel())
   }
 
   func makeFeedsViewModel() -> FeedsViewModel {
+    let repository = FeedsRepository(
+      httpService: dependencies.httpService,
+      mlClient: dependencies.mlfeedService,
+      authClient: dependencies.authClient
+    )
     return FeedsViewModel(
       fetchFeedsUseCase: FetchInitialFeedsUseCase(
-        feedRepository: dependencies.feedsRepository,
+        feedRepository: repository,
         crashReporter: dependencies.crashReporter
       ),
-      moreFeedsUseCase: dependencies.fetchMoreFeedsUseCase,
-      likeUseCase: dependencies.toggleLikeUseCase
+      moreFeedsUseCase: FetchMoreFeedsUseCase(
+        feedRepository: repository,
+        crashReporter: dependencies.crashReporter
+      ),
+      likeUseCase: dependencies.toggleLikeUseCase,
+      reportUseCase: ReportFeedsUseCase(
+        feedRepository: repository,
+        crashReporter: dependencies.crashReporter
+      )
     )
   }
 }

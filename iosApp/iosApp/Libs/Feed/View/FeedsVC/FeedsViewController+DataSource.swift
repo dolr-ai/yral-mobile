@@ -24,12 +24,14 @@ extension FeedsViewController {
             thumbnailURL: feed.thumbnail,
             likeCount: feed.likeCount,
             isLiked: feed.isLiked,
-            lastThumbnailImage: SDImageCache.shared.imageFromCache(forKey: lastDisplayedThumbnailPath)
+            lastThumbnailImage: SDImageCache.shared.imageFromCache(forKey: lastDisplayedThumbnailPath),
+            feedType: self.feedType
           ),
           profileInfo: ProfileInfoView.ProfileInfo(
             imageURL: feed.profileImageURL,
             title: feed.principalID,
-            subtitle: feed.postDescription),
+            subtitle: feed.postDescription
+          ),
           index: indexPath.item
         )
       } else {
@@ -39,12 +41,14 @@ extension FeedsViewController {
             thumbnailURL: feed.thumbnail,
             likeCount: feed.likeCount,
             isLiked: feed.isLiked,
-            lastThumbnailImage: SDImageCache.shared.imageFromCache(forKey: lastDisplayedThumbnailPath)
+            lastThumbnailImage: SDImageCache.shared.imageFromCache(forKey: lastDisplayedThumbnailPath),
+            feedType: self.feedType
           ),
           profileInfo: ProfileInfoView.ProfileInfo(
             imageURL: feed.profileImageURL,
             title: feed.principalID,
-            subtitle: feed.postDescription),
+            subtitle: feed.postDescription
+          ),
           index: indexPath.item
         )
       }
@@ -67,7 +71,18 @@ extension FeedsViewController {
     snapshot.appendSections([.zero])
     snapshot.appendItems(feeds, toSection: .zero)
 
-    feedsDataSource.apply(snapshot, animatingDifferences: shouldAnimate)
+    feedsDataSource.apply(snapshot, animatingDifferences: shouldAnimate) { [weak self] in
+      guard let self = self else { return }
+      guard feedType == .currentUser else { return }
+      yralPlayer.advanceToVideo(at: viewModel.getCurrentFeedIndex())
+      self.feedsCV.scrollToItem(
+        at: IndexPath(
+          item: viewModel.getCurrentFeedIndex(),
+          section: .zero
+        ),
+        at: .centeredVertically, animated: false
+      )
+    }
   }
 
   func addFeeds(with feeds: [FeedResult], animated: Bool = false) {
@@ -81,7 +96,7 @@ extension FeedsViewController {
     snapshot.appendItems(feeds, toSection: .zero)
     feedsDataSource.apply(snapshot, animatingDifferences: shouldAnimate) {
       self.loadMoreRequestMade = {
-        if case .fetchingInitialFeeds = self.viewModel.event {
+        if case .fetchingInitialFeeds = self.viewModel.unifiedEvent {
           return true
         }
         return false
@@ -98,5 +113,17 @@ extension FeedsViewController {
     snapshot.deleteItems(snapshot.itemIdentifiers)
     snapshot.appendItems(items)
     feedsDataSource.apply(snapshot, animatingDifferences: false)
+  }
+
+  func removeFeeds(with feeds: [FeedResult], animated: Bool = false) {
+    var snapshot = feedsDataSource.snapshot()
+    snapshot.deleteItems(feeds)
+    feedsDataSource.apply(snapshot, animatingDifferences: animated) { [weak self] in
+      guard let self else { return }
+      yralPlayer.removeFeeds(feeds)
+    }
+    if snapshot.itemIdentifiers.isEmpty {
+      onBackButtonTap?()
+    }
   }
 }

@@ -853,18 +853,6 @@ void* __swift_bridge__$Vec_FeedScore$get_mut(void* vec_ptr, uintptr_t index);
 uintptr_t __swift_bridge__$Vec_FeedScore$len(void* vec_ptr);
 void* __swift_bridge__$Vec_FeedScore$as_ptr(void* vec_ptr);
 
-typedef struct PostStatus PostStatus;
-void __swift_bridge__$PostStatus$_free(void* self);
-
-void* __swift_bridge__$Vec_PostStatus$new(void);
-void __swift_bridge__$Vec_PostStatus$drop(void* vec_ptr);
-void __swift_bridge__$Vec_PostStatus$push(void* vec_ptr, void* item_ptr);
-void* __swift_bridge__$Vec_PostStatus$pop(void* vec_ptr);
-void* __swift_bridge__$Vec_PostStatus$get(void* vec_ptr, uintptr_t index);
-void* __swift_bridge__$Vec_PostStatus$get_mut(void* vec_ptr, uintptr_t index);
-uintptr_t __swift_bridge__$Vec_PostStatus$len(void* vec_ptr);
-void* __swift_bridge__$Vec_PostStatus$as_ptr(void* vec_ptr);
-
 typedef struct DeviceIdentity DeviceIdentity;
 void __swift_bridge__$DeviceIdentity$_free(void* self);
 
@@ -1429,6 +1417,18 @@ void* __swift_bridge__$Vec_PostDetailsForFrontend$get_mut(void* vec_ptr, uintptr
 uintptr_t __swift_bridge__$Vec_PostDetailsForFrontend$len(void* vec_ptr);
 void* __swift_bridge__$Vec_PostDetailsForFrontend$as_ptr(void* vec_ptr);
 
+typedef struct PostStatus PostStatus;
+void __swift_bridge__$PostStatus$_free(void* self);
+
+void* __swift_bridge__$Vec_PostStatus$new(void);
+void __swift_bridge__$Vec_PostStatus$drop(void* vec_ptr);
+void __swift_bridge__$Vec_PostStatus$push(void* vec_ptr, void* item_ptr);
+void* __swift_bridge__$Vec_PostStatus$pop(void* vec_ptr);
+void* __swift_bridge__$Vec_PostStatus$get(void* vec_ptr, uintptr_t index);
+void* __swift_bridge__$Vec_PostStatus$get_mut(void* vec_ptr, uintptr_t index);
+uintptr_t __swift_bridge__$Vec_PostStatus$len(void* vec_ptr);
+void* __swift_bridge__$Vec_PostStatus$as_ptr(void* vec_ptr);
+
 typedef struct PostDetailsFromFrontend PostDetailsFromFrontend;
 void __swift_bridge__$PostDetailsFromFrontend$_free(void* self);
 
@@ -1508,6 +1508,8 @@ uint64_t __swift_bridge__$PostDetailsForFrontend$like_count(void* self);
 bool __swift_bridge__$PostDetailsForFrontend$liked_by_me(void* self);
 struct RustStr __swift_bridge__$PostDetailsForFrontend$created_by_profile_photo_url(void* self);
 void* __swift_bridge__$PostDetailsForFrontend$created_by_user_principal_id(void* self);
+void* __swift_bridge__$PostDetailsForFrontend$status(void* self);
+bool __swift_bridge__$PostStatus$is_banned_due_to_user_reporting(void* self);
 bool __swift_bridge__$PostDetailsFromFrontend$is_nsfw(void* self);
 void* __swift_bridge__$PostDetailsFromFrontend$hashtags(void* self);
 struct RustStr __swift_bridge__$PostDetailsFromFrontend$description(void* self);
