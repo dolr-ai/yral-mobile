@@ -14,7 +14,7 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
   let likesUseCase: ToggleLikeUseCaseProtocol
   let reportUseCase: ReportFeedsUseCaseProtocol
   private var currentFeeds = [FeedResult]()
-  private var feedPostIDSet = Set<String>()
+  private var feedvideoIDSet = Set<String>()
   private var cancellables = Set<AnyCancellable>()
   private var isFetchingInitialFeeds = false
 
@@ -33,15 +33,16 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
     self.reportUseCase = reportUseCase
     self.unifiedEvent = .fetchingInitialFeeds
     isFetchingInitialFeeds = true
+
     initialFeedsUseCase.feedUpdates
       .receive(on: DispatchQueue.main)
       .sink { [weak self] updatedFeed in
         guard let self = self else { return }
-        if !Set(updatedFeed.map { $0.postID }).subtracting(feedPostIDSet).isEmpty {
-          feedPostIDSet = feedPostIDSet.union(Set(updatedFeed.map { $0.postID }))
-          self.currentFeeds += updatedFeed
-          self.unifiedState = .success(feeds: updatedFeed)
-        }
+        let newFeeds = updatedFeed.filter { !self.feedvideoIDSet.contains($0.videoID) }
+        guard !newFeeds.isEmpty else { return }
+        self.feedvideoIDSet.formUnion(newFeeds.map { $0.videoID })
+        self.currentFeeds += newFeeds
+        self.unifiedState = .success(feeds: newFeeds)
       }
       .store(in: &cancellables)
   }
@@ -71,12 +72,13 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
     unifiedEvent = .loadingMoreFeeds
     unifiedState = .loading
     do {
-      let filteredPosts = currentFeeds.map { feed in
-        var item = MlFeed_PostItem()
-        item.canisterID = feed.canisterID
-        item.postID = UInt32(feed.postID) ?? .zero
-        item.videoID = feed.videoID
-        return item
+      let filteredPosts = currentFeeds.map {
+        FilteredPosts(
+          postID: $0.postID,
+          canisterID: $0.canisterID,
+          videoID: $0.videoID,
+          nsfwProbability: $0.nsfwProbability
+        )
       }
       let request = MoreFeedsRequest(
         filteredPosts: filteredPosts,
@@ -87,11 +89,19 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
       switch result {
       case .success(let response):
         unifiedEvent = .loadedMoreFeeds
-        if !feedPostIDSet.subtracting(Set(response.map { $0.postID })).isEmpty {
-          feedPostIDSet = feedPostIDSet.union(Set(response.map { $0.postID }))
-          currentFeeds += response
-          unifiedState = .success(feeds: response)
+        var tempSet = Set<String>()
+        let uniqueInBatch = response.filter { feed in
+          guard !tempSet.contains(feed.videoID) else { return false }
+          tempSet.insert(feed.videoID)
+          return true
         }
+        let newFeeds = uniqueInBatch.filter { !feedvideoIDSet.contains($0.videoID) }
+        guard !newFeeds.isEmpty else { return }
+
+        feedvideoIDSet.formUnion(newFeeds.map { $0.videoID })
+        currentFeeds += newFeeds
+        unifiedState = .success(feeds: newFeeds)
+
       case .failure(let error):
         unifiedEvent = .loadMoreFeedsFailed(errorMessage: error.localizedDescription)
         unifiedState = .failure(errorMessage: error.localizedDescription)
@@ -134,4 +144,4 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
   }
 
   func deleteVideo(request: DeleteVideoRequest) async { }
-}
+  }

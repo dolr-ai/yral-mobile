@@ -64,7 +64,7 @@ final class ToastView: UIView {
 
     NSLayoutConstraint.activate([
       iconImageView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: Constants.horizontalPadding),
-      iconImageView.topAnchor.constraint(equalTo: topAnchor, constant: Constants.topPadding),
+      iconImageView.centerYAnchor.constraint(equalTo: centerYAnchor),
       iconImageView.widthAnchor.constraint(equalToConstant: Constants.iconSize),
       iconImageView.heightAnchor.constraint(equalToConstant: Constants.iconSize)
     ])

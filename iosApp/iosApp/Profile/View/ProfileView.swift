@@ -41,110 +41,127 @@ struct ProfileView: View {
       )
       .edgesIgnoringSafeArea(.all)
     } else {
-      ScrollViewReader { _ in
-        ScrollView {
-          VStack(spacing: Constants.vStackSpacing) {
-            Text(Constants.navigationTitle)
-              .font(Constants.navigationTitleFont)
-              .foregroundColor(Constants.navigationTitleTextColor)
-              .frame(maxWidth: .infinity, alignment: .leading)
-              .padding(Constants.navigationTitlePadding)
-
-            if showAccountInfo {
-              UserInfoView(accountInfo: $accountInfo, shouldApplySpacing: false)
-            }
-            if showEmptyState {
-              Group {
-                Spacer(minLength: Constants.minimumTopSpacing)
-                ProfileEmptyStateView {
-                  uploadVideoPressed()
-                }
-                Spacer(minLength: Constants.minimumBottomSpacing)
-              }
-            } else {
-              ProfileVideosGridView(
-                videos: $videos,
-                currentlyDeletingPostInfo: $deleteInfo,
-                showDeleteIndictor: $showDeleteIndicator,
-                onDelete: { info in
-                  self.deleteInfo = info
-                  withAnimation(.easeInOut(duration: CGFloat.animationPeriod)) {
-                    UIView.setAnimationsEnabled(false)
-                    showDelete = true
-                  }
-                },
-                onVideoTapped: { videoInfo in
-                  currentIndex = videos.firstIndex(where: { $0.postID == videoInfo.postID }) ?? .zero
-                  withAnimation {
-                    showFeeds = true
-                  }
-                },
-                onLoadMore: {
-                  Task { @MainActor in
-                    await viewModel.getVideos()
-                  }
-                }
-              )
-            }
+      VStack(spacing: .zero) {
+        VStack(alignment: .leading, spacing: Constants.vStackSpacing) {
+          Text(Constants.navigationTitle)
+            .font(Constants.navigationTitleFont)
+            .foregroundColor(Constants.navigationTitleTextColor)
+            .padding(Constants.navigationTitlePadding)
+          if showAccountInfo {
+            UserInfoView(accountInfo: $accountInfo, shouldApplySpacing: false)
           }
-          .padding(.horizontal, Constants.horizontalPadding)
         }
-        .fullScreenCover(isPresented: $showDelete) {
-          NudgePopupView(
-            nudgeTitle: Constants.deleteTitle,
-            nudgeMessage: Constants.deleteText,
-            confirmLabel: Constants.deleteButtonTitle,
-            cancelLabel: Constants.cancelTitle,
-            onConfirm: {
-              showDelete = false
-              showDeleteIndicator = true
-              Task { @MainActor in
-                guard let deleteInfo else { return }
-                await self.viewModel.deleteVideo(
-                  request: DeleteVideoRequest(
-                    postId: UInt64(deleteInfo.postID) ?? .zero,
-                    videoId: deleteInfo.videoId
-                  )
+        .padding(.horizontal, Constants.horizontalPadding)
+
+        ScrollViewReader { _ in
+          ScrollView {
+            Group {
+              if showEmptyState {
+                VStack {
+                  Spacer(minLength: Constants.minimumTopSpacing)
+                  ProfileEmptyStateView {
+                    uploadVideoPressed()
+                  }
+                  Spacer(minLength: Constants.minimumBottomSpacing)
+                }
+              } else {
+                ProfileVideosGridView(
+                  videos: $videos,
+                  currentlyDeletingPostInfo: $deleteInfo,
+                  showDeleteIndictor: $showDeleteIndicator,
+                  onDelete: { info in
+                    self.deleteInfo = info
+                    withAnimation(.easeInOut(duration: CGFloat.animationPeriod)) {
+                      UIView.setAnimationsEnabled(false)
+                      showDelete = true
+                    }
+                  },
+                  onVideoTapped: { videoInfo in
+                    currentIndex = videos.firstIndex(where: { $0.postID == videoInfo.postID }) ?? .zero
+                    withAnimation {
+                      showFeeds = true
+                    }
+                  },
+                  onLoadMore: {
+                    Task { @MainActor in
+                      await viewModel.getVideos()
+                    }
+                  }
                 )
               }
-            },
-            onCancel: { showDelete = false }
-          )
-          .background( ClearBackgroundView() )
-        }
-        .onReceive(viewModel.$event) { event in
-          switch event {
-          case .fetchedAccountInfo(let info):
-            showAccountInfo = true
-            accountInfo = info
-          case .loadedVideos(let videos):
-            guard !videos.isEmpty else { return }
-            showEmptyState = false
-            self.videos += videos
-          case .deletedVideos:
-            withAnimation {
-              self.viewModel.deletedVideos.forEach { item in
-                self.videos.removeAll { $0.postID == item.postID }
-              }
             }
-            if self.videos.isEmpty {
-              showEmptyState = true
+            .padding(.horizontal, Constants.horizontalPadding)
+          }
+          .offset(y: 20.0)
+          .refreshable {
+            Task {
+              await self.viewModel.refreshVideos()
             }
-            self.showDeleteIndicator = false
-          case .deleteVideoFailed:
-            self.deleteInfo = nil
-            self.showDeleteIndicator = false
-          default:
-            break
           }
         }
-        .task {
-          guard isLoadingFirstTime else { return }
-          isLoadingFirstTime = false
-          async let fetchProfile: () = viewModel.fetchProfileInfo()
-          async let fetchVideos: () = viewModel.getVideos()
-          _ = await (fetchProfile, fetchVideos)
+      }
+      .fullScreenCover(isPresented: $showDelete) {
+        NudgePopupView(
+          nudgeTitle: Constants.deleteTitle,
+          nudgeMessage: Constants.deleteText,
+          confirmLabel: Constants.deleteButtonTitle,
+          cancelLabel: Constants.cancelTitle,
+          onConfirm: {
+            showDelete = false
+            showDeleteIndicator = true
+            Task { @MainActor in
+              guard let deleteInfo else { return }
+              await self.viewModel.deleteVideo(
+                request: DeleteVideoRequest(
+                  postId: UInt64(deleteInfo.postID) ?? .zero,
+                  videoId: deleteInfo.videoId
+                )
+              )
+            }
+          },
+          onCancel: { showDelete = false }
+        )
+        .background( ClearBackgroundView() )
+      }
+      .onReceive(viewModel.$event) { event in
+        switch event {
+        case .fetchedAccountInfo(let info):
+          showAccountInfo = true
+          accountInfo = info
+        case .loadedVideos(let videos):
+          guard !videos.isEmpty else { return }
+          showEmptyState = false
+          self.videos += videos
+        case .deletedVideos:
+          withAnimation {
+            self.viewModel.deletedVideos.forEach { item in
+              self.videos.removeAll { $0.postID == item.postID }
+            }
+          }
+          if self.videos.isEmpty {
+            showEmptyState = true
+          }
+          self.showDeleteIndicator = false
+        case .deleteVideoFailed:
+          self.deleteInfo = nil
+          self.showDeleteIndicator = false
+        case .refreshed(let videos):
+          self.videos = videos
+          showEmptyState = self.videos.isEmpty
+        default:
+          break
         }
+      }
+      .task {
+        guard isLoadingFirstTime else { return }
+        isLoadingFirstTime = false
+        async let fetchProfile: () = viewModel.fetchProfileInfo()
+        async let fetchVideos: () = viewModel.getVideos()
+        _ = await (fetchProfile, fetchVideos)
+      }
+      .onAppear {
+        UIRefreshControl.appearance().tintColor = .clear
+        UIRefreshControl.appearance().addSubview(LottieRefreshSingletonView.shared)
       }
     }
   }

@@ -177,6 +177,10 @@
 		AC8958E02D3EA60500E19ED7 /* FeedsViewController+DataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC8958DE2D3EA5FE00E19ED7 /* FeedsViewController+DataSource.swift */; };
 		AC8958E22D3EB0DB00E19ED7 /* ProfileOptionsWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC8958E12D3EB0D100E19ED7 /* ProfileOptionsWebView.swift */; };
 		AC8958E32D3EB0DB00E19ED7 /* ProfileOptionsWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC8958E12D3EB0D100E19ED7 /* ProfileOptionsWebView.swift */; };
+		AC8FC76A2D9BE09A006F29BC /* FeedRequestDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC8FC7692D9BE095006F29BC /* FeedRequestDTO.swift */; };
+		AC8FC76B2D9BE09A006F29BC /* FeedRequestDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC8FC7692D9BE095006F29BC /* FeedRequestDTO.swift */; };
+		AC8FC76D2D9C01E9006F29BC /* Yral_Loader.json in Resources */ = {isa = PBXBuildFile; fileRef = AC8FC76C2D9C01E9006F29BC /* Yral_Loader.json */; };
+		AC8FC76E2D9C01E9006F29BC /* Yral_Loader.json in Resources */ = {isa = PBXBuildFile; fileRef = AC8FC76C2D9C01E9006F29BC /* Yral_Loader.json */; };
 		AC9293FD2D620B6C003DB102 /* MediaPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9293F82D620B6C003DB102 /* MediaPicker.swift */; };
 		AC9293FF2D620B6C003DB102 /* MediaPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9293F82D620B6C003DB102 /* MediaPicker.swift */; };
 		AC9294062D620BDD003DB102 /* MediaPickerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9294032D620BDD003DB102 /* MediaPickerTests.swift */; };
@@ -296,6 +300,12 @@
 		ACC0F3982D2ED5D700FA5BD0 /* LottieView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC0F3962D2ED5D700FA5BD0 /* LottieView.swift */; };
 		ACC0F39F2D2ED68500FA5BD0 /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = ACC0F39E2D2ED68500FA5BD0 /* Lottie */; };
 		ACC0F3A32D2ED69200FA5BD0 /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = ACC0F3A22D2ED69200FA5BD0 /* Lottie */; };
+		ACC1C3942D9AF854005A7539 /* LottieLoaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC1C3932D9AF84B005A7539 /* LottieLoaderView.swift */; };
+		ACC1C3952D9AF854005A7539 /* LottieLoaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC1C3932D9AF84B005A7539 /* LottieLoaderView.swift */; };
+		ACC1C3982D9AF8BD005A7539 /* LottieLoaderContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC1C3972D9AF8B3005A7539 /* LottieLoaderContainerView.swift */; };
+		ACC1C3992D9AF8BD005A7539 /* LottieLoaderContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC1C3972D9AF8B3005A7539 /* LottieLoaderContainerView.swift */; };
+		ACC1C39E2D9B046F005A7539 /* LottieRefreshSingletonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC1C39D2D9B046F005A7539 /* LottieRefreshSingletonView.swift */; };
+		ACC1C39F2D9B046F005A7539 /* LottieRefreshSingletonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC1C39D2D9B046F005A7539 /* LottieRefreshSingletonView.swift */; };
 		ACCB98782D944213002B9675 /* UILabel+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACCB98772D94420D002B9675 /* UILabel+Extensions.swift */; };
 		ACCB98792D944213002B9675 /* UILabel+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACCB98772D94420D002B9675 /* UILabel+Extensions.swift */; };
 		ACD2E8242D6746E900E750FE /* UploadingProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD2E8232D6746E400E750FE /* UploadingProgressView.swift */; };
@@ -470,6 +480,8 @@
 		AC8958DB2D3EA54000E19ED7 /* FeedsViewController+Delegates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FeedsViewController+Delegates.swift"; sourceTree = "<group>"; };
 		AC8958DE2D3EA5FE00E19ED7 /* FeedsViewController+DataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FeedsViewController+DataSource.swift"; sourceTree = "<group>"; };
 		AC8958E12D3EB0D100E19ED7 /* ProfileOptionsWebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileOptionsWebView.swift; sourceTree = "<group>"; };
+		AC8FC7692D9BE095006F29BC /* FeedRequestDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedRequestDTO.swift; sourceTree = "<group>"; };
+		AC8FC76C2D9C01E9006F29BC /* Yral_Loader.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Yral_Loader.json; sourceTree = "<group>"; };
 		AC9293F82D620B6C003DB102 /* MediaPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaPicker.swift; sourceTree = "<group>"; };
 		AC9294032D620BDD003DB102 /* MediaPickerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaPickerTests.swift; sourceTree = "<group>"; };
 		AC9294072D630259003DB102 /* UploadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadView.swift; sourceTree = "<group>"; };
@@ -530,6 +542,9 @@
 		ACC0D4632D9179BB006DCF5C /* DeleteVideoUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeleteVideoUseCase.swift; sourceTree = "<group>"; };
 		ACC0F3922D2ED5B700FA5BD0 /* SplashScreenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashScreenView.swift; sourceTree = "<group>"; };
 		ACC0F3962D2ED5D700FA5BD0 /* LottieView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LottieView.swift; sourceTree = "<group>"; };
+		ACC1C3932D9AF84B005A7539 /* LottieLoaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LottieLoaderView.swift; sourceTree = "<group>"; };
+		ACC1C3972D9AF8B3005A7539 /* LottieLoaderContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LottieLoaderContainerView.swift; sourceTree = "<group>"; };
+		ACC1C39D2D9B046F005A7539 /* LottieRefreshSingletonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LottieRefreshSingletonView.swift; sourceTree = "<group>"; };
 		ACCB98772D94420D002B9675 /* UILabel+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UILabel+Extensions.swift"; sourceTree = "<group>"; };
 		ACD2E8232D6746E400E750FE /* UploadingProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadingProgressView.swift; sourceTree = "<group>"; };
 		ACD941B82CFF575C0038FCB6 /* Yral-Staging.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Yral-Staging.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -801,13 +816,6 @@
 			path = Utils;
 			sourceTree = "<group>";
 		};
-		AC2C30CF2D96C4C100DA9F81 /* Entity */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = Entity;
-			sourceTree = "<group>";
-		};
 		AC32E4012D270097001DDA43 /* static */ = {
 			isa = PBXGroup;
 			children = (
@@ -886,6 +894,7 @@
 		AC32E4482D2961CE001DDA43 /* SwiftUI */ = {
 			isa = PBXGroup;
 			children = (
+				ACC1C3962D9AF8AB005A7539 /* Loader */,
 				AC462F412D95A4A8004957B3 /* OffsetableScrollView.swift */,
 				ACC0D43C2D8C6BEB006DCF5C /* ClearBackgroundView.swift */,
 				ACC0D4332D8BFE5B006DCF5C /* NudgePopupView.swift */,
@@ -994,6 +1003,7 @@
 		AC32E47B2D2AF5A5001DDA43 /* HTTP */ = {
 			isa = PBXGroup;
 			children = (
+				AC8FC7692D9BE095006F29BC /* FeedRequestDTO.swift */,
 				AC2C30D32D96C68100DA9F81 /* ReportRequestDTO.swift */,
 				AC32E4782D2AF594001DDA43 /* CacheDTO.swift */,
 			);
@@ -1347,7 +1357,6 @@
 			children = (
 				ACB09FD82D92D6DC00EE3239 /* Entity */,
 				ACB46A622D0F0B67002E200C /* Usecases */,
-				AC2C30CF2D96C4C100DA9F81 /* Entity */,
 			);
 			path = Domain;
 			sourceTree = "<group>";
@@ -1552,6 +1561,16 @@
 			path = Resources;
 			sourceTree = "<group>";
 		};
+		ACC1C3962D9AF8AB005A7539 /* Loader */ = {
+			isa = PBXGroup;
+			children = (
+				ACC1C39D2D9B046F005A7539 /* LottieRefreshSingletonView.swift */,
+				ACC1C3932D9AF84B005A7539 /* LottieLoaderView.swift */,
+				ACC1C3972D9AF8B3005A7539 /* LottieLoaderContainerView.swift */,
+			);
+			path = Loader;
+			sourceTree = "<group>";
+		};
 		ACD941BC2CFF57A90038FCB6 /* Prod */ = {
 			isa = PBXGroup;
 			children = (
@@ -1645,6 +1664,7 @@
 		ACEBF7E62D6F56F400B594A0 /* Lottie */ = {
 			isa = PBXGroup;
 			children = (
+				AC8FC76C2D9C01E9006F29BC /* Yral_Loader.json */,
 				AC99BB912D834387008012C2 /* Lightning_Lottie.json */,
 				AC233D342D314CA3007040F1 /* Splash_Lottie.json */,
 			);
@@ -1856,6 +1876,7 @@
 				AC4714EA2D38120800A64E29 /* GoogleService-Info.plist in Resources */,
 				AC32E4192D270097001DDA43 /* OFL.txt in Resources */,
 				AC32E41A2D270097001DDA43 /* KumbhSans-Thin.ttf in Resources */,
+				AC8FC76D2D9C01E9006F29BC /* Yral_Loader.json in Resources */,
 				AC32E41B2D270097001DDA43 /* KumbhSans-VariableFont_YOPQ,wght.ttf in Resources */,
 				AC32E41C2D270097001DDA43 /* KumbhSans-Bold.ttf in Resources */,
 				AC99BB922D834387008012C2 /* Lightning_Lottie.json in Resources */,
@@ -1887,6 +1908,7 @@
 				AC12B9D22D3809B7004E9EA9 /* GoogleService-Info.plist in Resources */,
 				AC32E40D2D270097001DDA43 /* OFL.txt in Resources */,
 				AC32E40E2D270097001DDA43 /* KumbhSans-Thin.ttf in Resources */,
+				AC8FC76E2D9C01E9006F29BC /* Yral_Loader.json in Resources */,
 				AC32E40F2D270097001DDA43 /* KumbhSans-VariableFont_YOPQ,wght.ttf in Resources */,
 				AC32E4102D270097001DDA43 /* KumbhSans-Bold.ttf in Resources */,
 				AC99BB932D834387008012C2 /* Lightning_Lottie.json in Resources */,
@@ -2092,16 +2114,19 @@
 				AC09A9B22CDB775C009A39A4 /* yral-mobile-swift-binding.swift in Sources */,
 				AC26CA5E2D8052E2006ADA75 /* BaseStreamingUseCase.swift in Sources */,
 				ACB09FD52D92D66400EE3239 /* FeedsViewModelProtocol.swift in Sources */,
+				AC8FC76B2D9BE09A006F29BC /* FeedRequestDTO.swift in Sources */,
 				AC7F7EAA2D771DF400215162 /* GetUploadEndpointUseCase.swift in Sources */,
 				AC8472AE2D1D9540004A4259 /* AVFoundation+Extensions.swift in Sources */,
 				AC92941A2D65F308003DB102 /* View+Extensions.swift in Sources */,
 				AC32E4652D2991AD001DDA43 /* AccountView.swift in Sources */,
 				ACC0D43E2D8C6BF3006DCF5C /* ClearBackgroundView.swift in Sources */,
 				AC4DECA92D3E06AC008EC8F5 /* FooterLoaderView.swift in Sources */,
+				ACC1C3982D9AF8BD005A7539 /* LottieLoaderContainerView.swift in Sources */,
 				AC4E99692D884BDB000B47B3 /* ProfileVideoGridsView.swift in Sources */,
 				ACC0D4522D8DDB97006DCF5C /* ProfileRepositoryProtocol.swift in Sources */,
 				AC6BECBD2D09F68C002E2021 /* Endpoint.swift in Sources */,
 				AC09A9B32CDB775C009A39A4 /* SwiftBridgeCore.swift in Sources */,
+				ACC1C3942D9AF854005A7539 /* LottieLoaderView.swift in Sources */,
 				AC99BBC12D86FF81008012C2 /* ProfileEmptyState.swift in Sources */,
 				ACEBF7F72D70A8D700B594A0 /* AnimatedCheckbox.swift in Sources */,
 				AC7F7EA52D771D5D00215162 /* UploadViewModel.swift in Sources */,
@@ -2124,6 +2149,7 @@
 				AC09AA742CDD210D009A39A4 /* Data+Extensions.swift in Sources */,
 				AC09A9FA2CDB7A5D009A39A4 /* SwiftBindings+Extensions.swift in Sources */,
 				ACEBF8052D7473E600B594A0 /* UploadErrorView.swift in Sources */,
+				ACC1C39E2D9B046F005A7539 /* LottieRefreshSingletonView.swift in Sources */,
 				AC8958D92D3EA46800E19ED7 /* FeedsViewController+ScrollView.swift in Sources */,
 				ACB46A772D105B17002E200C /* ReusableView.swift in Sources */,
 				AC32E4542D296637001DDA43 /* AccountRepository.swift in Sources */,
@@ -2245,16 +2271,19 @@
 				ACD941882CFF575C0038FCB6 /* yral-mobile-swift-binding.swift in Sources */,
 				AC26CA5F2D8052E2006ADA75 /* BaseStreamingUseCase.swift in Sources */,
 				ACB09FD62D92D66400EE3239 /* FeedsViewModelProtocol.swift in Sources */,
+				AC8FC76A2D9BE09A006F29BC /* FeedRequestDTO.swift in Sources */,
 				AC7F7EA92D771DF400215162 /* GetUploadEndpointUseCase.swift in Sources */,
 				AC8472AD2D1D9540004A4259 /* AVFoundation+Extensions.swift in Sources */,
 				AC9294192D65F308003DB102 /* View+Extensions.swift in Sources */,
 				AC32E4662D2991AD001DDA43 /* AccountView.swift in Sources */,
 				ACC0D43D2D8C6BF3006DCF5C /* ClearBackgroundView.swift in Sources */,
 				AC4DECAA2D3E06AC008EC8F5 /* FooterLoaderView.swift in Sources */,
+				ACC1C3992D9AF8BD005A7539 /* LottieLoaderContainerView.swift in Sources */,
 				AC4E99682D884BDB000B47B3 /* ProfileVideoGridsView.swift in Sources */,
 				ACC0D4532D8DDB97006DCF5C /* ProfileRepositoryProtocol.swift in Sources */,
 				AC6BECBC2D09F68C002E2021 /* Endpoint.swift in Sources */,
 				ACD941892CFF575C0038FCB6 /* SwiftBridgeCore.swift in Sources */,
+				ACC1C3952D9AF854005A7539 /* LottieLoaderView.swift in Sources */,
 				AC99BBC22D86FF81008012C2 /* ProfileEmptyState.swift in Sources */,
 				ACEBF7F62D70A8D700B594A0 /* AnimatedCheckbox.swift in Sources */,
 				AC7F7EA62D771D5D00215162 /* UploadViewModel.swift in Sources */,
@@ -2277,6 +2306,7 @@
 				ACD9418A2CFF575C0038FCB6 /* Data+Extensions.swift in Sources */,
 				ACD9418B2CFF575C0038FCB6 /* SwiftBindings+Extensions.swift in Sources */,
 				ACEBF8062D7473E600B594A0 /* UploadErrorView.swift in Sources */,
+				ACC1C39F2D9B046F005A7539 /* LottieRefreshSingletonView.swift in Sources */,
 				AC8958D82D3EA46800E19ED7 /* FeedsViewController+ScrollView.swift in Sources */,
 				ACB46A762D105B17002E200C /* ReusableView.swift in Sources */,
 				AC32E4532D296637001DDA43 /* AccountRepository.swift in Sources */,

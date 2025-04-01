@@ -30,19 +30,14 @@ class FeedsRepository: FeedRepositoryProtocol {
     var cacheResponse: [CacheDTO]
     do {
       cacheResponse = try await httpService.performRequest(
-        for: CacheEndPoints.getUserCanisterCache(
+        for: CacheEndPoints.getGlobalCache(
+          request: FeedRequestDTO(
           canisterID: principal,
-          numPosts: numResults
-        ),
-        decodeAs: [CacheDTO].self
-      )
-
-      if cacheResponse.isEmpty {
-        cacheResponse = try await httpService.performRequest(
-          for: CacheEndPoints.getGlobalCache(numPosts: numResults),
-          decodeAs: [CacheDTO].self
-        )
-      }
+          filterResults: [],
+          numResults: Constants.initialNumResults
+        )),
+        decodeAs: PostsResponse.self
+      ).posts
     } catch {
       switch error {
       case let error as NetworkError:
@@ -74,22 +69,29 @@ class FeedsRepository: FeedRepositoryProtocol {
   }
 
   func fetchMoreFeeds(request: MoreFeedsRequest) async -> Result<[FeedResult], FeedError> {
-    var mlRequest = MlFeed_FeedRequest()
-    mlRequest.canisterID = authClient.canisterPrincipalString ?? ""
-    mlRequest.filterPosts = request.filteredPosts
-    mlRequest.numResults = UInt32(request.numResults)
-
-    let response: MlFeed_FeedResponse
+    guard let principal = authClient.canisterPrincipalString else {
+      return .failure(FeedError.authError(.authenticationFailed("Missing principal")))
+    }
+    var feedResponse: [CacheDTO]
     do {
-      response = try await mlClient.get_feed_clean(mlRequest).response.get()
+      let filteredPosts = request.filteredPosts.map { $0.asFilteredResultDTO() }
+      feedResponse = try await httpService.performRequest(
+        for: CacheEndPoints.getMLFeed(
+          request: FeedRequestDTO(
+          canisterID: principal,
+          filterResults: filteredPosts,
+          numResults: Constants.mlNumResults
+        )),
+        decodeAs: PostsResponse.self
+      ).posts
     } catch {
-      return .failure(FeedError.networkError(.grpc(error.localizedDescription)))
+      return .failure(FeedError.networkError(.invalidResponse(error.localizedDescription)))
     }
 
     var aggregatedErrors: [Error] = []
     var successfulFeeds: [FeedResult] = []
 
-    for feed in response.feed {
+    for feed in feedResponse {
       do {
         let feedResult = try await self.mapToFeedResults(feed: feed)
         successfulFeeds.append(feedResult)
@@ -102,7 +104,6 @@ class FeedsRepository: FeedRepositoryProtocol {
     if !aggregatedErrors.isEmpty {
       return .failure(FeedError.aggregated(AggregatedError(errors: aggregatedErrors)))
     }
-
     return .success(successfulFeeds)
   }
 
@@ -134,7 +135,8 @@ class FeedsRepository: FeedRepositoryProtocol {
       postDescription: result.description().toString(),
       profileImageURL: urlString != nil ? URL(string: urlString!) : nil,
       likeCount: Int(result.like_count()),
-      isLiked: result.liked_by_me()
+      isLiked: result.liked_by_me(),
+      nsfwProbability: feed.nsfwProbability
     )
   }
 
@@ -199,31 +201,25 @@ class FeedsRepository: FeedRepositoryProtocol {
 }
 
 class CacheEndPoints {
-  static func getUserCanisterCache(canisterID: String, numPosts: Int) -> Endpoint {
+  static func getGlobalCache(request: FeedRequestDTO) throws -> Endpoint {
     return Endpoint(
-      http: "\(canisterID)",
-      baseURL: URL(string: FeedsRepository.Constants.cacheBaseURL)!,
-      path: "\(canisterID)",
-      method: .get,
-      queryItems: [
-        URLQueryItem(name: "start", value: "\(Int.zero)"),
-        URLQueryItem(name: "limit", value: String(numPosts))
-      ],
-      headers: ["Content-Type": "application/json"]
+      http: "global-feed",
+      baseURL: URL(string: FeedsRepository.Constants.feedsBaseURL)!,
+      path: FeedsRepository.Constants.cacheSuffix,
+      method: .post,
+      headers: ["Content-Type": "application/json"],
+      body: try JSONEncoder().encode(request)
     )
   }
 
-  static func getGlobalCache(numPosts: Int) -> Endpoint {
+  static func getMLFeed(request: FeedRequestDTO) throws -> Endpoint {
     return Endpoint(
       http: "global-feed",
-      baseURL: URL(string: FeedsRepository.Constants.cacheBaseURL)!,
-      path: "global-feed",
-      method: .get,
-      queryItems: [
-        URLQueryItem(name: "start", value: "\(Int.zero)"),
-        URLQueryItem(name: "limit", value: String(numPosts))
-      ],
-      headers: ["Content-Type": "application/json"]
+      baseURL: URL(string: FeedsRepository.Constants.feedsBaseURL)!,
+      path: FeedsRepository.Constants.mlFeedSuffix,
+      method: .post,
+      headers: ["Content-Type": "application/json"],
+      body: try JSONEncoder().encode(request)
     )
   }
 }
@@ -231,6 +227,7 @@ class CacheEndPoints {
 protocol FeedMapping {
   var postID: UInt32 { get }
   var canisterID: String { get }
+  var nsfwProbability: Double { get }
 }
 
 extension FeedsRepository {
@@ -238,8 +235,11 @@ extension FeedsRepository {
     static let cloudfarePrefix = "https://customer-2p3jflss4r4hmpnz.cloudflarestream.com/"
     static let cloudflareSuffix = "/manifest/video.m3u8"
     static let thumbnailSuffix = "/thumbnails/thumbnail.jpg"
-    static let cacheBaseURL = "https://yral-ml-feed-cache.go-bazzinga.workers.dev/feed-cache/"
+    static let feedsBaseURL = "https://yral-ml-feed-server.fly.dev"
+    static let cacheSuffix = "/api/v1/feed/coldstart/clean"
+    static let mlFeedSuffix = "/api/v1/feed/clean"
     static let reportVideoPath = "/api/v1/posts/report"
-
+    static let initialNumResults: Int64 = 20
+    static let mlNumResults: Int64 = 10
   }
 }

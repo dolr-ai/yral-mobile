@@ -31,7 +31,7 @@ struct ProfileVideosGridView: View {
               .onTapGesture {
                 onVideoTapped?(video)
               }
-            HStack {
+            HStack(alignment: .bottom) {
               HStack(spacing: Constants.innerHStackSpacing) {
                 Image(video.isLiked ? Constants.likeImageNameSelected : Constants.likeImageNameUnselected)
                 Text("\(video.likeCount)")
@@ -44,16 +44,20 @@ struct ProfileVideosGridView: View {
                 onDelete?(video)
               }
               label: {
-                Image(Constants.deleteImageName)
+                ZStack(alignment: .bottomTrailing) {
+                  Color.clear
+                  Image(Constants.deleteImageName)
+                }
+                .frame(width: Constants.deleteTappableSize, height: Constants.deleteTappableSize)
               }
               .padding(.trailing, Constants.buttonHorizontalPadding)
             }
             .padding(.bottom, Constants.bottomPadding)
             if video.postID == currentlyDeletingPostInfo?.postID && showDeleteIndictor {
               ZStack(alignment: .center) {
-                Color.black.opacity(0.4)
-                ProgressView()
-                  .background(Color.white.opacity(0.8))
+                Color.black.opacity(Constants.loadingOpacity)
+                LottieLoaderView(animationName: Constants.loaderName)
+                  .frame(width: Constants.loaderSize, height: Constants.loaderSize)
                   .padding()
               }
               .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -83,13 +87,18 @@ extension ProfileVideosGridView {
     static let thumbnailCornerRadius: CGFloat = 8.0
     static let buttonHorizontalPadding: CGFloat = 12.0
     static let bottomPadding: CGFloat = 12.0
+    static let deleteTappableSize = 50.0
 
-    static let deleteImageName = "delete_video_profile"
-    static let likeImageNameSelected = "like_selected_feed"
-    static let likeImageNameUnselected = "like_unselected_feed"
+    static let deleteImageName = "delete_profile"
+    static let likeImageNameSelected = "like_profile"
+    static let likeImageNameUnselected = "dislike_profile"
 
     static let likeTextFont = YralFont.pt14.medium.swiftUIFont
     static let likeTextColor = YralColor.grey50.swiftUIColor
+
+    static let loaderName = "Yral_Loader"
+    static let loaderSize = 24.0
+    static let loadingOpacity = 0.8
   }
 }
 

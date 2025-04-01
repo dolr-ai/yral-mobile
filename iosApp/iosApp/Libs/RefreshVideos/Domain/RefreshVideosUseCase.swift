@@ -5,6 +5,7 @@
 //  Created by Sarvesh Sharma on 21/03/25.
 //  Copyright © 2025 orgName. All rights reserved.
 //
+import Combine
 
 protocol RefreshVideosUseCaseProtocol {
   func execute(request: ()) async -> Result<[FeedResult], AccountError>
@@ -14,7 +15,6 @@ protocol RefreshVideosUseCaseProtocol {
   BaseResultUseCase<Void, [FeedResult], AccountError>,
   RefreshVideosUseCaseProtocol {
   let profileRepository: ProfileRepositoryProtocol
-
   init(profileRepository: ProfileRepositoryProtocol, crashReporter: CrashReporter) {
     self.profileRepository = profileRepository
     super.init(crashReporter: crashReporter)

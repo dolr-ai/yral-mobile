@@ -28,7 +28,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   var actionsStackView: UIStackView = {
     let stackView = getUIStackView()
     stackView.axis = .vertical
-    stackView.distribution = .fillEqually
+    stackView.distribution = .fill
     stackView.spacing = Constants.stackViewSpacing
     stackView.backgroundColor = Constants.stackViewBGColor
     stackView.alignment = .trailing
@@ -323,7 +323,7 @@ extension FeedsCell {
   enum Constants {
     static let stackViewSpacing = 14.0
     static let horizontalMargin = 16.0
-    static let stackViewHeight = 106.0
+    static let stackViewHeight = 116.0
     static let stackViewBottom = 74.0
     static let stackViewBGColor = UIColor.clear
     static let actionButtonFont = YralFont.pt16.semiBold.uiFont

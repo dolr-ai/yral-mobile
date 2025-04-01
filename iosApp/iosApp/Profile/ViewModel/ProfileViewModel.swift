@@ -21,6 +21,7 @@ enum ProfilePageEvent {
   case pageEndReached
   case deletedVideos([ProfileVideoInfo])
   case deleteVideoFailed(String)
+  case refreshed([ProfileVideoInfo])
 }
 
 class ProfileViewModel: ObservableObject {
@@ -31,6 +32,7 @@ class ProfileViewModel: ObservableObject {
   let accountUseCase: AccountUseCaseProtocol
   let myVideosUseCase: MyVideosUseCaseProtocol
   let deleteVideoUseCase: DeleteVideoUseCaseProtocol
+  let refreshVideoUseCase: RefreshVideosUseCaseProtocol
   private var cancellables = Set<AnyCancellable>()
   var deletedVideos: [ProfileVideoInfo] = []
   var startIndex = Int.zero
@@ -41,11 +43,13 @@ class ProfileViewModel: ObservableObject {
   init(
     accountUseCase: AccountUseCaseProtocol,
     myVideosUseCase: MyVideosUseCaseProtocol,
-    deleteVideoUseCase: DeleteVideoUseCaseProtocol
+    deleteVideoUseCase: DeleteVideoUseCaseProtocol,
+    refreshVideoUseCase: RefreshVideosUseCaseProtocol
   ) {
     self.accountUseCase = accountUseCase
     self.myVideosUseCase = myVideosUseCase
     self.deleteVideoUseCase = deleteVideoUseCase
+    self.refreshVideoUseCase = refreshVideoUseCase
     myVideosUseCase.videosPublisher
       .receive(on: RunLoop.main)
       .sink { [weak self] videos in
@@ -131,12 +135,39 @@ class ProfileViewModel: ObservableObject {
     )
     await MainActor.run {
       switch result {
-      case .success(let success):
+      case .success:
         state = .success
       case .failure(let failure):
         event = .deleteVideoFailed(failure.localizedDescription)
         state = .failure(failure.localizedDescription)
       }
+    }
+  }
+
+  func refreshVideos() async {
+    guard !isLoading else { return }
+
+    await MainActor.run {
+      state = .loading
+      isLoading = true
+    }
+    let result = await refreshVideoUseCase.execute(request: ())
+    await MainActor.run {
+      switch result {
+      case .success(let videos):
+        state = .success
+        event = .refreshed(videos.map { $0.toProfileVideoInfo() })
+      case .failure(let error):
+        switch error {
+        case .pageEndReached:
+          event = .pageEndReached
+          state = .success
+          hasMorePages = false
+        default:
+          state = .failure(error.localizedDescription)
+        }
+      }
+      isLoading = false
     }
   }
 }

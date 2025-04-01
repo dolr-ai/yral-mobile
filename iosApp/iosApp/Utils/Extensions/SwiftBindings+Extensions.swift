@@ -41,10 +41,6 @@ extension Secp256k1Error: LocalizedError {
   }
 }
 
-extension MlFeed_PostItemResponse: FeedMapping { }
-
-extension CacheDTO: FeedMapping { }
-
 extension RustVec where T == UInt8 {
   public convenience init(bytes: UnsafeRawBufferPointer) {
     self.init()

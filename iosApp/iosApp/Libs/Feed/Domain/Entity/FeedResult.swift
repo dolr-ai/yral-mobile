@@ -18,4 +18,5 @@ struct FeedResult: Hashable {
   var profileImageURL: URL?
   var likeCount: Int
   var isLiked: Bool
+  var nsfwProbability: Double
 }

@@ -298,7 +298,7 @@ extension ReportNudgeView {
     static let submitButtonTextColor = YralColor.grey50.swiftUIColor
     static let submitButtonHeight: CGFloat = 45
     static let submitButtonCornerRadius: CGFloat = 8
-    static let submitButtonTopPadding: CGFloat = 16
+    static let submitButtonTopPadding: CGFloat = 8
 
     static let submitButtonEnabledGradient = LinearGradient(
       stops: [

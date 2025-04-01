@@ -10,12 +10,10 @@ import UIKit
 
 final class FooterLoaderView: UICollectionReusableView, ReusableView {
 
-  private let activityIndicator: UIActivityIndicatorView = {
-    let indicator = UIActivityIndicatorView(style: .medium)
-    indicator.color = .white
-    indicator.translatesAutoresizingMaskIntoConstraints = false
-    indicator.hidesWhenStopped = true
-    return indicator
+  private let activityIndicator: LottieLoaderContainerView = {
+    let loader = LottieLoaderContainerView(animationName: FeedsViewController.Constants.loaderLottie)
+    loader.translatesAutoresizingMaskIntoConstraints = false
+    return loader
   }()
 
   override init(frame: CGRect) {
@@ -23,7 +21,9 @@ final class FooterLoaderView: UICollectionReusableView, ReusableView {
     addSubview(activityIndicator)
     NSLayoutConstraint.activate([
       activityIndicator.centerXAnchor.constraint(equalTo: centerXAnchor),
-      activityIndicator.centerYAnchor.constraint(equalTo: centerYAnchor)
+      activityIndicator.centerYAnchor.constraint(equalTo: centerYAnchor),
+      activityIndicator.widthAnchor.constraint(equalToConstant: FeedsViewController.Constants.indicatorSize),
+      activityIndicator.heightAnchor.constraint(equalToConstant: FeedsViewController.Constants.indicatorSize)
     ])
   }
 
@@ -32,7 +32,7 @@ final class FooterLoaderView: UICollectionReusableView, ReusableView {
   }
 
   func startAnimating() {
-    activityIndicator.startAnimating()
+    activityIndicator.startAnimating(in: self)
   }
 
   func stopAnimating() {
