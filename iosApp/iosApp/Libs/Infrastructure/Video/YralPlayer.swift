@@ -144,6 +144,7 @@ final class YralPlayer {
   }
 
   private func downloadVideo(at index: Int) async {
+    guard index < feedResults.count else { return }
     currentlyDownloadingIndexes.insert(index)
     let feed = feedResults[index]
     let assetTitle = "\(feed.videoID)"
@@ -178,6 +179,7 @@ final class YralPlayer {
   }
 
   private func loadVideo(at index: Int) async throws -> AVPlayerItem? {
+    guard index < feedResults.count else { return nil }
     let feed = feedResults[index]
     if let localAsset = HLSDownloadManager.shared.createLocalAssetIfAvailable(for: feed.url) {
       do {

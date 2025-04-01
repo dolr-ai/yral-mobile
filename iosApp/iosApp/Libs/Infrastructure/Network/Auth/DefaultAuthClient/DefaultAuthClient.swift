@@ -1,5 +1,5 @@
 //
-//  AuthClient.swift
+//  DefaultAuthClient.swift
 //  iosApp
 //
 //  Created by Sarvesh Sharma on 15/12/24.
@@ -10,15 +10,21 @@ import Foundation
 import secp256k1
 
 class DefaultAuthClient: AuthClient {
+
   private(set) var identity: DelegatedIdentity?
   private(set) var canisterPrincipal: Principal?
   private(set) var canisterPrincipalString: String?
   private(set) var userPrincipal: Principal?
   private(set) var userPrincipalString: String?
+
   private let networkService: NetworkService
   private let cookieStorage = HTTPCookieStorage.shared
+
   private(set) var identityData: Data?
+
   private let keychainIdentityKey = Constants.keychainIdentity
+
+  private let keychainPayloadKey = Constants.keychainPayload
 
   private let crashReporter: CrashReporter
 
@@ -29,16 +35,9 @@ class DefaultAuthClient: AuthClient {
 
   @MainActor
   func initialize() async throws {
-
     try await recordThrowingOperation {
       if let existingCookie = cookieStorage.cookies?.first(where: { $0.name == AuthConstants.cookieName }) {
-        do {
-          try await refreshAuthIfNeeded(using: existingCookie)
-        } catch {
-          crashReporter.recordException(error)
-          crashReporter.log("Error received from refreshAuthIfNeeded")
-          try await fetchAndSetAuthCookie()
-        }
+        try await refreshAuthIfNeeded(using: existingCookie)
       } else {
         try await fetchAndSetAuthCookie()
       }
@@ -51,15 +50,11 @@ class DefaultAuthClient: AuthClient {
         try await fetchAndSetAuthCookie()
       } else {
         do {
-          guard let data =
-                  try KeychainHelper.retrieveData(for: keychainIdentityKey),
-                !data.isEmpty else {
+          if let data = try KeychainHelper.retrieveData(for: keychainIdentityKey), !data.isEmpty {
+            identityData = data
+            try await handleExtractIdentityResponse(from: data)
+          } else {
             try await extractIdentity(from: cookie)
-            return
-          }
-          identityData = data
-          if let identityData {
-            try await handleExtractIdentityResponse(from: identityData)
           }
         } catch {
           try? KeychainHelper.deleteItem(for: keychainIdentityKey)
@@ -73,14 +68,14 @@ class DefaultAuthClient: AuthClient {
   func generateNewDelegatedIdentity() throws -> DelegatedIdentity {
     return try recordThrowingOperation {
       guard let data = identityData else {
-        throw NetworkError.invalidResponse("No identity data available")
+        throw NetworkError.invalidResponse("No identity data available.")
       }
       return try data.withUnsafeBytes { (buffer: UnsafeRawBufferPointer) in
-        if buffer.count > .zero {
+        if buffer.count > 0 {
           let uint8Buffer = buffer.bindMemory(to: UInt8.self)
           return try delegated_identity_from_bytes(uint8Buffer)
         } else {
-          throw NetworkError.invalidResponse("Empty data received")
+          throw NetworkError.invalidResponse("Empty identity data received.")
         }
       }
     }
@@ -93,7 +88,7 @@ class DefaultAuthClient: AuthClient {
       }
 
       let parentWire: DelegatedIdentityWire = try parentData.withUnsafeBytes { buf in
-        guard buf.count > .zero else {
+        guard buf.count > 0 else {
           throw NetworkError.invalidResponse("Empty parent identity data.")
         }
         return try delegated_identity_wire_from_bytes(buf.bindMemory(to: UInt8.self))
@@ -128,15 +123,31 @@ class DefaultAuthClient: AuthClient {
     }
   }
 
+  func logout() {
+    if let cookies = cookieStorage.cookies {
+      for cookie in cookies where cookie.name == AuthConstants.cookieName {
+        cookieStorage.deleteCookie(cookie)
+      }
+    }
+
+    try? KeychainHelper.deleteItem(for: keychainIdentityKey)
+    try? KeychainHelper.deleteItem(for: keychainPayloadKey)
+
+    self.identity = nil
+    self.canisterPrincipal = nil
+    self.canisterPrincipalString = nil
+    self.userPrincipal = nil
+    self.userPrincipalString = nil
+    self.identityData = nil
+  }
+
   private func fetchAndSetAuthCookie() async throws {
     try await recordThrowingOperation {
-      let payload = try createAuthPayload()
+      let payload = try createOrRetrieveAuthPayload()
       let endpoint = AuthEndpoints.setAnonymousIdentityCookie(payload: payload)
-
       _ = try await networkService.performRequest(for: endpoint)
-
       guard let newCookie = cookieStorage.cookies?.first(where: { $0.name == AuthConstants.cookieName }) else {
-        throw NetworkError.invalidResponse("Failed to fetch cookie")
+        throw NetworkError.invalidResponse("Failed to fetch cookie from setAnonymousIdentityCookie response.")
       }
       try await extractIdentity(from: newCookie)
     }
@@ -146,11 +157,11 @@ class DefaultAuthClient: AuthClient {
     try await recordThrowingOperation {
       let endpoint = AuthEndpoints.extractIdentity(cookie: cookie)
       let data = try await networkService.performRequest(for: endpoint)
+
       identityData = data
-      if let identityData {
-        try KeychainHelper.store(data: identityData, for: keychainIdentityKey)
-        try await handleExtractIdentityResponse(from: identityData)
-      }
+      try KeychainHelper.store(data: data, for: keychainIdentityKey)
+
+      try await handleExtractIdentityResponse(from: data)
     }
   }
 
@@ -159,10 +170,11 @@ class DefaultAuthClient: AuthClient {
       guard !data.isEmpty else {
         throw NetworkError.invalidResponse("Empty identity data received.")
       }
+
       crashReporter.log("Reached unsafe bytes start")
       let (wire, identity): (DelegatedIdentityWire, DelegatedIdentity) = try data.withUnsafeBytes { buffer in
         guard buffer.count > 0 else {
-          throw NetworkError.invalidResponse("Empty data received")
+          throw NetworkError.invalidResponse("Empty data received.")
         }
         let uint8Buffer = buffer.bindMemory(to: UInt8.self)
         let wire = try delegated_identity_wire_from_bytes(uint8Buffer)
@@ -173,14 +185,12 @@ class DefaultAuthClient: AuthClient {
 
       let canistersWrapper = try await authenticate_with_network(wire, nil)
       crashReporter.log("canistersWrapper authenticate_with_network success")
+
       let canisterPrincipal = canistersWrapper.get_canister_principal()
-      crashReporter.log("canistersWrapper get_canister_principal success")
       let canisterPrincipalString = canistersWrapper.get_canister_principal_string().toString()
-      crashReporter.log("canistersWrapper get_canister_principal_string success")
       let userPrincipal = canistersWrapper.get_user_principal()
-      crashReporter.log("canistersWrapper get_user_principal success")
       let userPrincipalString = canistersWrapper.get_user_principal_string().toString()
-      crashReporter.log("canistersWrapper executed succesfully")
+      crashReporter.log("canistersWrapper executed successfully")
 
       await MainActor.run {
         self.identity = identity
@@ -192,45 +202,34 @@ class DefaultAuthClient: AuthClient {
     }
   }
 
-  private func createAuthPayload() throws -> Data {
-    try recordThrowingOperation {
-      let privateKey = try secp256k1.Signing.PrivateKey(format: .uncompressed)
-      let publicKeyData = privateKey.publicKey.dataRepresentation
-
-      let xData = publicKeyData[1...32].base64URLEncodedString()
-      let yData = publicKeyData[33...64].base64URLEncodedString()
-      let dData = privateKey.dataRepresentation.base64URLEncodedString()
-
-      let jwk: [String: Any] = [
-        "kty": "EC",
-        "crv": "secp256k1",
-        "x": xData,
-        "y": yData,
-        "d": dData
-      ]
-
-      let payload: [String: Any] = ["anonymous_identity": jwk]
-      return try JSONSerialization.data(withJSONObject: payload)
+  private func createOrRetrieveAuthPayload() throws -> Data {
+    if let stored = try? KeychainHelper.retrieveData(for: keychainPayloadKey),
+        !stored.isEmpty {
+      return stored
     }
+
+    let privateKey = try secp256k1.Signing.PrivateKey(format: .uncompressed)
+    let publicKeyData = privateKey.publicKey.dataRepresentation
+
+    let xData = publicKeyData[1...32].base64URLEncodedString()
+    let yData = publicKeyData[33...64].base64URLEncodedString()
+    let dData = privateKey.dataRepresentation.base64URLEncodedString()
+
+    let jwk: [String: Any] = [
+      "kty": "EC",
+      "crv": "secp256k1",
+      "x": xData,
+      "y": yData,
+      "d": dData
+    ]
+
+    let payload: [String: Any] = ["anonymous_identity": jwk]
+    let payloadData = try JSONSerialization.data(withJSONObject: payload)
+
+    try KeychainHelper.store(data: payloadData, for: keychainPayloadKey)
+    return payloadData
   }
 
-  func logout() {
-    if let cookies = cookieStorage.cookies {
-      for cookie in cookies where cookie.name == AuthConstants.cookieName {
-        cookieStorage.deleteCookie(cookie)
-      }
-    }
-    try? KeychainHelper.deleteItem(for: keychainIdentityKey)
-    self.identity = nil
-    self.canisterPrincipal = nil
-    self.canisterPrincipalString = nil
-    self.userPrincipal = nil
-    self.userPrincipalString = nil
-    self.identityData = nil
-  }
-}
-
-extension DefaultAuthClient {
   @discardableResult
   fileprivate func recordThrowingOperation<T>(_ operation: () throws -> T) throws -> T {
     do {
@@ -255,6 +254,7 @@ extension DefaultAuthClient {
 extension DefaultAuthClient {
   enum Constants {
     static let keychainIdentity = "yral.delegatedIdentity"
+    static let keychainPayload  = "yral.delegatedIdentityPayload"
     static let temporaryIdentityExpirySecond: UInt64 = 3600
   }
 }

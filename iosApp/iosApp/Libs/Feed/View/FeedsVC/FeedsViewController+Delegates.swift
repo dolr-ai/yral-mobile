@@ -10,7 +10,7 @@ import SwiftUI
 
 extension FeedsViewController: FeedsCellProtocol {
   func shareButtonTapped(index: Int) {
-    activityIndicator.startAnimating()
+    activityIndicator.startAnimating(in: self.view)
     // swiftlint: disable line_length
     guard let shareURL = URL(
       string: "https://yral.com/hot-or-not/\(self.feedsDataSource.snapshot().itemIdentifiers[index].canisterID)/\(self.feedsDataSource.snapshot().itemIdentifiers[index].postID)"

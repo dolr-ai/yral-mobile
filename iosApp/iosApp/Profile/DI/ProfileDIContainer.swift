@@ -43,11 +43,15 @@ final class ProfileDIContainer {
     self.dependencies = dependencies
   }
 
-  private func makeProfileViewModel() -> ProfileViewModel {
+  @MainActor private func makeProfileViewModel() -> ProfileViewModel {
     return ProfileViewModel(
       accountUseCase: dependencies.accountUseCase,
       myVideosUseCase: myVideosUseCase,
-      deleteVideoUseCase: deleteVideosUseCase
+      deleteVideoUseCase: deleteVideosUseCase,
+      refreshVideoUseCase: RefreshVideosUseCase(
+        profileRepository: profileRepository,
+        crashReporter: dependencies.crashReporter
+      )
     )
   }
 
@@ -61,7 +65,7 @@ final class ProfileDIContainer {
     )
   }
 
-  func makeProfileView() -> ProfileView {
+  @MainActor func makeProfileView() -> ProfileView {
     let router = ProfileRouter(profileDI: self)
     return ProfileView(
       viewModel: makeProfileViewModel(),

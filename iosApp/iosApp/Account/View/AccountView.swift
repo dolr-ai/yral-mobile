@@ -34,7 +34,7 @@ struct AccountView: View {
         }
         ProfileOptionsView()
         ShareOptionsView()
-        ICPBrandingView()
+//        ICPBrandingView()
         Spacer().frame(height: Constants.bottomSpacing)
       }
       .padding([.top], Constants.vStackPadding)
