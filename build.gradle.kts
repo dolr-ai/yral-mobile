@@ -5,6 +5,10 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform).apply(false)
     alias(libs.plugins.ktlint)
     alias(libs.plugins.detekt)
+    alias(libs.plugins.gobleyCargo).apply(false)
+    alias(libs.plugins.gobleyUniffi).apply(false)
+    alias(libs.plugins.kotlinAtomicfu).apply(false)
+    alias(libs.plugins.kotlinxSerialisartion).apply(false)
 }
 
 subprojects {

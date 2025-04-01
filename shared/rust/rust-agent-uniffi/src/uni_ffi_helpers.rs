@@ -1,0 +1,118 @@
+use crate::UniffiCustomTypeConverter;
+use candid::{CandidType, Deserialize, Nat, Principal};
+use std::str::FromStr;
+use android_logger::{Config, FilterBuilder};
+use ic_agent::AgentError;
+use serde_bytes::ByteBuf;
+use candid::Error as CandidError;
+use ic_agent::export::PrincipalError;
+use log::{error, trace, LevelFilter};
+use uniffi::Record;
+
+uniffi::custom_type!(Principal, String);
+impl UniffiCustomTypeConverter for Principal {
+    type Builtin = String;
+
+    fn into_custom(val: Self::Builtin) -> uniffi::Result<Self> {
+        Ok(Principal::from_text(val)?)
+    }
+
+    fn from_custom(obj: Self) -> Self::Builtin {
+        obj.to_text()
+    }
+}
+
+uniffi::custom_type!(Nat, String);
+impl UniffiCustomTypeConverter for Nat {
+    type Builtin = String;
+    fn into_custom(val: Self::Builtin) -> uniffi::Result<Self> {
+        Ok(Nat::from_str(&val)?)
+    }
+
+    fn from_custom(obj: Self) -> Self::Builtin {
+        obj.0.to_string()
+    }
+}
+
+uniffi::custom_type!(ByteBuf, Vec<u8>);
+impl UniffiCustomTypeConverter for ByteBuf {
+    type Builtin = Vec<u8>;
+    fn into_custom(val: Self::Builtin) -> uniffi::Result<Self> {
+        Ok(ByteBuf::from(val))
+    }
+
+    fn from_custom(obj: Self) -> Self::Builtin {
+        obj.into_vec()
+    }
+}
+
+#[derive(CandidType, Deserialize, Record)]
+pub struct NumberPair {
+    pub first: u64,
+    pub second: u8,
+}
+
+#[derive(CandidType, Deserialize, Record)]
+pub struct StringPair {
+    pub first: String,
+    pub second: String,
+}
+
+#[derive(Deserialize, CandidType, Record)]
+pub struct KeyValuePair {
+    pub key: String,
+    pub value: String,
+}
+
+#[derive(Debug, uniffi::Enum)]
+pub enum FFIError {
+    AgentError(String),
+    CandidError(String),
+    PrincipalError(String),
+    UnknownError(String),
+}
+
+impl From<AgentError> for FFIError {
+    fn from(err: AgentError) -> Self {
+        FFIError::AgentError(err.to_string())
+    }
+}
+
+impl From<CandidError> for FFIError {
+    fn from(err: CandidError) -> Self {
+        FFIError::CandidError(err.to_string())
+    }
+}
+
+impl From<PrincipalError> for FFIError {
+    fn from(err: PrincipalError) -> Self {
+        FFIError::PrincipalError(err.to_string())
+    }
+}
+
+impl std::fmt::Display for FFIError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            FFIError::AgentError(msg) => write!(f, "AgentError: {}", msg),
+            FFIError::CandidError(msg) => write!(f, "CandidError: {}", msg),
+            FFIError::PrincipalError(msg) => write!(f, "PrincipalError: {}", msg),
+            FFIError::UnknownError(msg) => write!(f, "UnknownError: {}", msg),
+        }
+    }
+}
+
+#[uniffi::export]
+pub fn native_activity_create() {
+    android_logger::init_once(
+        Config::default()
+            .with_max_level(LevelFilter::Trace) // limit log level
+            .with_tag("Rust Logger") // logs will show under mytag tag
+            .with_filter( // configure messages for specific crate
+                          FilterBuilder::new()
+                              .parse("debug,hello::crate=error")
+                              .build())
+    );
+
+    trace!("this is a verbose {}", "message");
+    error!("this is printed by default");
+}

@@ -122,3 +122,6 @@ rust-analyzer.json
 
 # kotlin
 .kotlin
+
+# Rust generated
+shared/rust/rust-agent-uniffi/target
