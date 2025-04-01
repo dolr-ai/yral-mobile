@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.yral.shared.core.Greeting
 import com.yral.shared.rust.RustGreeting
+import com.yral.shared.rust.auth.DefaultAuthClient
 import com.yral.shared.uniffi.generated.Result12
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -50,8 +51,13 @@ fun Root() {
         Column {
           GreetingView(Greeting().greet())
           Spacer(Modifier.height(16.dp))
-          TraceFFIInvocation()
+          //TraceFFIInvocation()
         }
+      }
+    }
+    LaunchedEffect(Unit) {
+      withContext(Dispatchers.IO) {
+        DefaultAuthClient().initialize()
       }
     }
   }

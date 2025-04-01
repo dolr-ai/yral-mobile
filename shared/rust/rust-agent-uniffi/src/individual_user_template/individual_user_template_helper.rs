@@ -117,10 +117,13 @@ pub fn delegate_identity_with_max_age_public(
 pub fn delegated_identity_wire_to_json(wire: &DelegatedIdentityWire) -> String {
     serde_json::to_string(wire).unwrap()
 }
+
+#[derive(uniffi::Object)]
 pub struct CanistersWrapper {
     inner: Canisters<true>,
 }
 
+#[uniffi::export]
 impl CanistersWrapper {
     pub fn get_canister_principal(&self) -> Principal {
         return self.inner.user_canister();
@@ -139,14 +142,20 @@ impl CanistersWrapper {
     }
 }
 
+#[uniffi::export]
 pub async fn authenticate_with_network(
-    auth: DelegatedIdentityWire,
+    auth_data: Vec<u8>,
     referrer: Option<Principal>,
-) -> std::result::Result<CanistersWrapper, String> {
-    let canisters: Canisters<true> = Canisters::<true>::authenticate_with_network(auth, referrer)
-        .await
-        .map_err(|error| error.to_string())?;
-    Ok(CanistersWrapper { inner: canisters })
+) -> std::result::Result<CanistersWrapper, FFIError> {
+    RUNTIME.spawn(async move {
+        let auth = delegated_identity_wire_from_bytes(&auth_data)
+            .map_err(|e| FFIError::UnknownError(format!("Invalid: {:?}", e)))?;
+        error!("Auth data expiry: {:?}", auth.delegation_chain.first().unwrap().delegation.expiration);
+        let canisters: Canisters<true> = Canisters::<true>::authenticate_with_network(auth, referrer)
+            .await
+            .map_err(|e| FFIError::AgentError(format!("Invalid: {:?}", e)))?;
+        Ok(CanistersWrapper { inner: canisters })
+    }).await.map_err(|e| FFIError::AgentError(format!("{:?}", e)))?
 }
 
 pub fn extract_time_as_double(result: Result11) -> Option<u64> {
@@ -200,17 +209,4 @@ impl GetPostsOfUserProfileError {
     pub fn is_exceeded_max_number_of_items_allowed_in_one_request(&self) -> bool {
         matches!(self, GetPostsOfUserProfileError::ExceededMaxNumberOfItemsAllowedInOneRequest)
     }
-}
-
-#[uniffi::export]
-pub fn test_principal(text: String) -> std::result::Result<Principal, FFIError> {
-    error!("data {}", text);
-    Ok(Principal::from_text(text)?)
-}
-
-#[uniffi::export]
-pub fn test_identity(data: &[u8]) -> std::result::Result<Principal, FFIError> {
-    error!("data {}", std::str::from_utf8(data).expect("Invalid UTF-8"));
-    let identity = delegated_identity_from_bytes(data).unwrap();
-    Ok(identity.sender().unwrap())
 }
