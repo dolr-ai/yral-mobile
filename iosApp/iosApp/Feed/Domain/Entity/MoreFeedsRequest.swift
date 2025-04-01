@@ -7,7 +7,14 @@
 //
 
 struct MoreFeedsRequest {
-  let filteredPosts: [MlFeed_PostItem]
+  let filteredPosts: [FilteredPosts]
   let numResults: Int
   let feedType: FeedType
+}
+
+struct FilteredPosts {
+  let postID: String
+  let canisterID: String
+  let videoID: String
+  let nsfwProbability: Double
 }

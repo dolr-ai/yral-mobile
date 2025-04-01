@@ -136,7 +136,9 @@ class ProfileRepository: ProfileRepositoryProtocol {
             thumbnail: thumbnailURL,
             postDescription: postDetail.description().toString(),
             likeCount: Int(postDetail.like_count()),
-            isLiked: postDetail.liked_by_me())
+            isLiked: postDetail.liked_by_me(),
+            nsfwProbability: .zero
+          )
         }
         return .success(feedResult)
       } else {
