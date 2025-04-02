@@ -191,7 +191,7 @@ class DefaultAuthClient: AuthClient {
       let userPrincipal = canistersWrapper.get_user_principal()
       let userPrincipalString = canistersWrapper.get_user_principal_string().toString()
       crashReporter.log("canistersWrapper executed successfully")
-
+      crashReporter.setUserId(userPrincipalString)
       await MainActor.run {
         self.identity = identity
         self.canisterPrincipal = canisterPrincipal
@@ -235,6 +235,7 @@ class DefaultAuthClient: AuthClient {
     do {
       return try operation()
     } catch {
+      crashReporter.log(error.localizedDescription)
       crashReporter.recordException(error)
       throw error
     }
@@ -245,6 +246,7 @@ class DefaultAuthClient: AuthClient {
     do {
       return try await operation()
     } catch {
+      crashReporter.log(error.localizedDescription)
       crashReporter.recordException(error)
       throw error
     }
