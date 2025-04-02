@@ -36,11 +36,14 @@ class DefaultAuthClient: AuthClient {
   @MainActor
   func initialize() async throws {
     try await recordThrowingOperation {
-      if let existingCookie = cookieStorage.cookies?.first(where: { $0.name == AuthConstants.cookieName }) {
-        try await refreshAuthIfNeeded(using: existingCookie)
-      } else {
+      guard let existingCookie = cookieStorage.cookies?.first(where: { $0.name == AuthConstants.cookieName }) else {
+        try? KeychainHelper.deleteItem(for: keychainPayloadKey)
+        try? KeychainHelper.deleteItem(for: keychainIdentityKey)
         try await fetchAndSetAuthCookie()
+        return
       }
+
+      try await refreshAuthIfNeeded(using: existingCookie)
     }
   }
 
@@ -183,6 +186,8 @@ class DefaultAuthClient: AuthClient {
       }
       crashReporter.log("Reached unsafe bytes end")
 
+      let principal = get_principal_from_identity(identity).toString()
+      crashReporter.log("Principal id before authenticate_with_network: \(principal)")
       let canistersWrapper = try await authenticate_with_network(wire, nil)
       crashReporter.log("canistersWrapper authenticate_with_network success")
 

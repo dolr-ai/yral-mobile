@@ -78,8 +78,8 @@ pub fn delegate_identity_with_max_age_public(
     let to_identity =
         Secp256k1Identity::from_private_key(new_jwk.to_secret_key().map_err(|e| e.to_string())?);
 
-    let existing_delegated =
-        DelegatedIdentity::try_from(parent_wire.clone()).map_err(|e: k256::elliptic_curve::Error| e.to_string())?;
+    let existing_delegated = DelegatedIdentity::try_from(parent_wire.clone())
+        .map_err(|e: k256::elliptic_curve::Error| e.to_string())?;
 
     let now = std::time::SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -178,7 +178,7 @@ impl Result12 {
             Result12::Err(_) => None,
         }
     }
-    
+
     pub fn err_value(self) -> Option<GetPostsOfUserProfileError> {
         match self {
             Result12::Ok(_) => None,
@@ -197,12 +197,22 @@ impl GetPostsOfUserProfileError {
     }
 
     pub fn is_exceeded_max_number_of_items_allowed_in_one_request(&self) -> bool {
-        matches!(self, GetPostsOfUserProfileError::ExceededMaxNumberOfItemsAllowedInOneRequest)
+        matches!(
+            self,
+            GetPostsOfUserProfileError::ExceededMaxNumberOfItemsAllowedInOneRequest
+        )
     }
 }
 
 impl PostStatus {
     pub fn is_banned_due_to_user_reporting(&self) -> bool {
         matches!(self, PostStatus::BannedDueToUserReporting)
+    }
+}
+
+pub fn get_principal_from_identity(identity: DelegatedIdentity) -> String {
+    match identity.sender() {
+        Ok(principal) => principal.to_string(),
+        Err(_) => "Unknown sender".to_string(),
     }
 }
