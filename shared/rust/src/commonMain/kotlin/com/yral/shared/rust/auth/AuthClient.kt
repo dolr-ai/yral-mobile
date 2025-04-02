@@ -1,7 +1,6 @@
 package com.yral.shared.rust.auth
 
 import com.yral.shared.uniffi.generated.Principal
-import io.ktor.client.plugins.cookies.HttpCookies
 
 interface AuthClient {
     var identity: ByteArray?
@@ -9,7 +8,7 @@ interface AuthClient {
     var userPrincipal: Principal?
 
     suspend fun initialize()
-    suspend fun refreshAuthIfNeeded(cookie: HttpCookies)
+    suspend fun refreshAuthIfNeeded()
     suspend fun generateNewDelegatedIdentity(): ByteArray
     suspend fun generateNewDelegatedIdentityWireOneHour(): ByteArray
 }

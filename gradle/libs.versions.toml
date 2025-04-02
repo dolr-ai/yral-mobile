@@ -14,6 +14,8 @@ nimbus-jose-jwt = "10.0.2"
 androidx-security-crypto = "1.1.0-alpha06"
 multiplatform-settings = "1.2.0"
 
+kotlinx-datetime = "0.6.2"
+
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
@@ -28,6 +30,8 @@ nimbus-jose-jwt = { module = "com.nimbusds:nimbus-jose-jwt", version.ref = "nimb
 
 androidx-security-crypto = { module = "androidx.security:security-crypto", version.ref = "androidx-security-crypto"}
 multiplatform-settings = { module = "com.russhwolf:multiplatform-settings", version.ref = "multiplatform-settings"}
+
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

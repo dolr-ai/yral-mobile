@@ -27,14 +27,6 @@ class PrefUtils(val settings: Settings = Preferences.settings) {
         return settings.getIntOrNull(key.name)
     }
 
-    fun putInt(key: String, int: Int) {
-        settings.putInt(key, int)
-    }
-
-    fun getInt(key: String): Int? {
-        return settings.getIntOrNull(key)
-    }
-
     fun getIntWithDefaultValue(key: PrefKeys, default: Int): Int {
         return settings.getInt(key.name, default)
     }
@@ -45,14 +37,6 @@ class PrefUtils(val settings: Settings = Preferences.settings) {
 
     fun getLong(key: PrefKeys): Long? {
         return settings.getLongOrNull(key.name)
-    }
-
-    fun putLong(key: String, long: Long) {
-        settings.putLong(key, long)
-    }
-
-    fun getLong(key: String): Long? {
-        return settings.getLongOrNull(key)
     }
 
     fun getLongWithDefaultValue(key: PrefKeys, default: Long): Long {
@@ -75,16 +59,16 @@ class PrefUtils(val settings: Settings = Preferences.settings) {
         settings.putString(key.name, string)
     }
 
+    fun getString(key: PrefKeys): String? {
+        return settings.getStringOrNull(key.name)
+    }
+
     fun putString(key: String, string: String) {
         settings.putString(key, string)
     }
 
     fun getString(key: String): String? {
         return settings.getStringOrNull(key)
-    }
-
-    fun getString(key: PrefKeys): String? {
-        return settings.getStringOrNull(key.name)
     }
 
     fun getStringWithDefaultValue(key: PrefKeys, default: String): String {
@@ -123,5 +107,9 @@ class PrefUtils(val settings: Settings = Preferences.settings) {
 
     fun remove(key: PrefKeys) {
         settings.remove(key.name)
+    }
+
+    fun remove(key: String) {
+        settings.remove(key)
     }
 }

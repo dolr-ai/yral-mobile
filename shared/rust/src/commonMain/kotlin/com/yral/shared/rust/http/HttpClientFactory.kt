@@ -1,5 +1,6 @@
 package com.yral.shared.rust.http
 
+import com.yral.shared.preferences.PrefUtils
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -43,6 +44,7 @@ object HttpClientFactory {
                 )
             }
             install(HttpCookies) {
+                storage = PersistentCookieStorage(PrefUtils())
             }
             defaultRequest {
                 url {

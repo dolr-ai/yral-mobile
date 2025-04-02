@@ -38,6 +38,9 @@ kotlin {
             implementation(libs.ktor.client.logging)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.json)
+            implementation(libs.kotlinx.datetime)
+
+            implementation(projects.shared.preferences)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
