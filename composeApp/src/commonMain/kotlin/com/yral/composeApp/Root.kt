@@ -27,82 +27,88 @@ import com.yral.shared.core.PlatformResourcesHolder
 import com.yral.shared.features.auth.DefaultAuthClient
 import com.yral.shared.http.HttpClientFactory
 import com.yral.shared.preferences.AsyncPreferencesFactory
-import com.yral.shared.rust.RustGreeting
-import com.yral.shared.uniffi.generated.Result12
+import com.yral.shared.rust.data.IndividualUserDataSourceImpl
+import com.yral.shared.rust.data.IndividualUserRepositoryImpl
+import com.yral.shared.rust.services.IndividualUserServiceFactory
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
 @Composable
 fun Root() {
-  val preferences = remember {
-    AsyncPreferencesFactory.getInstance(
-      platformResources = PlatformResourcesHolder.platformResources,
-      ioDispatcher = Dispatchers.IO
-    ).build()
-  }
-  val client = remember {
-    HttpClientFactory.getInstance(preferences).build()
-  }
-  val defaultAuthClient = remember {
-    DefaultAuthClient(
-      preferences = preferences,
-      client = client,
-      ioDispatcher = Dispatchers.IO,
-    )
-  }
-  MyApplicationTheme {
-    Scaffold(
-      modifier = Modifier.fillMaxSize(),
-      containerColor = MaterialTheme.colorScheme.background,
-      contentWindowInsets = WindowInsets(0, 0, 0, 0),
-    ) { innerPadding ->
-      Box(
-        modifier = Modifier
-          .fillMaxSize()
-          .padding(innerPadding)
-          .consumeWindowInsets(innerPadding)
-          .windowInsetsPadding(
-            WindowInsets.safeDrawing,
-          ),
-        contentAlignment = Alignment.Center,
-      ) {
-        Column {
-          GreetingView(Greeting().greet())
-          Spacer(Modifier.height(16.dp))
-          //TraceFFIInvocation()
-        }
-      }
+    val preferences = remember {
+        AsyncPreferencesFactory.getInstance(
+            platformResources = PlatformResourcesHolder.platformResources,
+            ioDispatcher = Dispatchers.IO
+        ).build()
     }
+    val client = remember {
+        HttpClientFactory.getInstance(preferences).build()
+    }
+    val defaultAuthClient = remember {
+        DefaultAuthClient(
+            preferences = preferences,
+            client = client,
+        )
+    }
+    val individualUserRepository = remember {
+        IndividualUserRepositoryImpl(
+            dataSource = IndividualUserDataSourceImpl(),
+        )
+    }
+    var initialised by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
-      withContext(Dispatchers.IO) {
-        defaultAuthClient.initialize()
-      }
+        withContext(Dispatchers.IO) {
+            defaultAuthClient.initialize()
+            defaultAuthClient.canisterPrincipal?.let { principal ->
+                defaultAuthClient.identity?.let { identity ->
+                    IndividualUserServiceFactory.getInstance().initialize(
+                        principal = principal,
+                        identityData = identity,
+                    )
+                }
+            }
+            initialised = true
+        }
     }
-  }
+    LaunchedEffect(initialised) {
+        if (defaultAuthClient.canisterPrincipal != null) {
+            withContext(Dispatchers.IO) {
+                val posts = defaultAuthClient.canisterPrincipal?.let {
+                    individualUserRepository.getPostsOfThisUserProfileWithPaginationCursor(
+                        pageNo = 0UL,
+                    )
+                }
+                println("xxxx $posts")
+            }
+        }
+    }
+    MyApplicationTheme {
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            containerColor = MaterialTheme.colorScheme.background,
+            contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        ) { innerPadding ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .consumeWindowInsets(innerPadding)
+                    .windowInsetsPadding(
+                        WindowInsets.safeDrawing,
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Column {
+                    GreetingView(Greeting().greet())
+                    Spacer(Modifier.height(16.dp))
+                }
+            }
+        }
+    }
 }
 
 @Composable
 fun GreetingView(text: String) {
-  Text(text = text)
-}
-
-@Composable
-fun TraceFFIInvocation() {
-  var text by remember { mutableStateOf("") }
-  Text(text = text)
-  LaunchedEffect(Unit) {
-    val result = withContext(Dispatchers.IO) {
-      val rustGreeting = RustGreeting()
-      text = rustGreeting.greet("Shivam")
-      delay(1000L)
-      RustGreeting().getPostsOfThisUserProfileWithPaginationCursor()
-    }
-    if (result is Result12.Ok) {
-      text = result.v1.toString()
-    } else if (result is Result12.Err) {
-      text = result.v1.toString()
-    }
-  }
+    Text(text = text)
 }
 

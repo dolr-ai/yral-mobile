@@ -150,7 +150,6 @@ pub async fn authenticate_with_network(
     RUNTIME.spawn(async move {
         let auth = delegated_identity_wire_from_bytes(&auth_data)
             .map_err(|e| FFIError::UnknownError(format!("Invalid: {:?}", e)))?;
-        error!("Auth data expiry: {:?}", auth.delegation_chain.first().unwrap().delegation.expiration);
         let canisters: Canisters<true> = Canisters::<true>::authenticate_with_network(auth, referrer)
             .await
             .map_err(|e| FFIError::AgentError(format!("Invalid: {:?}", e)))?;

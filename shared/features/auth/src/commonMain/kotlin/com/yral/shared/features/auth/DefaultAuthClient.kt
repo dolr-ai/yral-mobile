@@ -12,44 +12,33 @@ import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsBytes
 import io.ktor.http.Cookie
 import io.ktor.http.headers
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
 import kotlinx.serialization.json.JsonObject
 
 class DefaultAuthClient(
     private val preferences: Preferences,
     private val client: HttpClient,
-    private val ioDispatcher: CoroutineDispatcher,
 ) : AuthClient {
     override var identity: ByteArray? = null
     override var canisterPrincipal: Principal? = null
     override var userPrincipal: Principal? = null
 
     override suspend fun initialize() {
-        withContext(ioDispatcher) {
-            try {
-                refreshAuthIfNeeded()
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
+        refreshAuthIfNeeded()
     }
 
     override suspend fun refreshAuthIfNeeded() {
-        withContext(ioDispatcher) {
-            val cookie = client.cookies("https://${com.yral.shared.http.BaseURL}").firstOrNull { it.name == com.yral.shared.http.CookieType.USER_IDENTITY.value }
-            cookie?.let {
-                if ((it.maxAgeOrExpires(Clock.System.now().toEpochMilliseconds()) ?: 0) > Clock.System.now()
-                        .toEpochMilliseconds()
-                ) {
-                    val storedData = preferences.getBytes(PrefKeys.IDENTITY_DATA.name)
-                    storedData?.let { data -> handleExtractIdentityResponse(data) } ?: extractIdentity(it)
-                } else {
-                    fetchAndSetAuthCookie()
-                }
-            } ?: fetchAndSetAuthCookie()
-        }
+        val cookie = client.cookies("https://${com.yral.shared.http.BaseURL}").firstOrNull { it.name == com.yral.shared.http.CookieType.USER_IDENTITY.value }
+        cookie?.let {
+            if ((it.maxAgeOrExpires(Clock.System.now().toEpochMilliseconds()) ?: 0) > Clock.System.now()
+                    .toEpochMilliseconds()
+            ) {
+                val storedData = preferences.getBytes(PrefKeys.IDENTITY_DATA.name)
+                storedData?.let { data -> handleExtractIdentityResponse(data) } ?: extractIdentity(it)
+            } else {
+                fetchAndSetAuthCookie()
+            }
+        } ?: fetchAndSetAuthCookie()
     }
 
     private suspend fun fetchAndSetAuthCookie() {
