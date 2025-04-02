@@ -1,4 +1,4 @@
-package com.yral.shared.rust.auth
+package com.yral.shared.features.auth
 
 import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.ECKey

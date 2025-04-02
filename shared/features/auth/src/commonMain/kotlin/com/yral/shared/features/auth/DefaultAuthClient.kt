@@ -1,4 +1,4 @@
-package com.yral.shared.rust.auth
+package com.yral.shared.features.auth
 
 import com.yral.shared.http.maxAgeOrExpires
 import com.yral.shared.preferences.PrefKeys

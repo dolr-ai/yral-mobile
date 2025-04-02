@@ -24,10 +24,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.yral.shared.core.Greeting
 import com.yral.shared.core.PlatformResourcesHolder
+import com.yral.shared.features.auth.DefaultAuthClient
 import com.yral.shared.http.HttpClientFactory
 import com.yral.shared.preferences.AsyncPreferencesFactory
 import com.yral.shared.rust.RustGreeting
-import com.yral.shared.rust.auth.DefaultAuthClient
 import com.yral.shared.uniffi.generated.Result12
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay

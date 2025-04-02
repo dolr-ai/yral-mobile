@@ -1,3 +1,3 @@
-package com.yral.shared.rust.auth
+package com.yral.shared.features.auth
 
 expect fun createAuthPayload(): ByteArray

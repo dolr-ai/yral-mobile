@@ -26,14 +26,20 @@ kotlin {
 
     sourceSets {
         androidMain.dependencies {
-            api(libs.androidx.security.crypto)
+            implementation(libs.nimbus.jose.jwt)
         }
         commonMain.dependencies {
             //put your multiplatform dependencies here
-            api(libs.multiplatform.settings)
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.cio)
+            implementation(libs.ktor.client.logging)
+            implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.json)
+            implementation(libs.kotlinx.datetime)
 
-            implementation(projects.shared.core)
+            implementation(projects.shared.libs.preferences)
+            implementation(projects.shared.libs.http)
+            implementation(projects.shared.rust)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -42,7 +48,7 @@ kotlin {
 }
 
 android {
-    namespace = "com.yral.shared.preferences"
+    namespace = "com.yral.shared.features.auth"
     compileSdk = libs.versions.compileSDK.get().toInt()
     defaultConfig {
         minSdk = libs.versions.minSDK.get().toInt()

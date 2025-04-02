@@ -5,6 +5,7 @@ plugins {
   alias(libs.plugins.androidApplication)
   alias(libs.plugins.compose.jetbrains)
   alias(libs.plugins.compose.compiler)
+  alias(libs.plugins.kotlinxSerialisartion)
 }
 
 kotlin {
@@ -35,10 +36,18 @@ kotlin {
       implementation(compose.components.resources)
       implementation(compose.components.uiToolingPreview)
 
+      implementation(libs.ktor.client.core)
+      implementation(libs.ktor.client.cio)
+      implementation(libs.ktor.client.logging)
+      implementation(libs.ktor.client.content.negotiation)
+      implementation(libs.ktor.json)
+      implementation(libs.kotlinx.datetime)
+
       implementation(projects.shared.core)
-      implementation(projects.shared.rust)
       implementation(projects.shared.libs.preferences)
       implementation(projects.shared.libs.http)
+      implementation(projects.shared.features.auth)
+      implementation(projects.shared.rust)
     }
   }
 }

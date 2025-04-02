@@ -28,20 +28,9 @@ kotlin {
 //    }
 
     sourceSets {
-        androidMain.dependencies {
-            implementation(libs.nimbus.jose.jwt)
-        }
         commonMain.dependencies {
             //put your multiplatform dependencies here
-            implementation(libs.ktor.client.core)
-            implementation(libs.ktor.client.cio)
-            implementation(libs.ktor.client.logging)
-            implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.json)
-            implementation(libs.kotlinx.datetime)
-
-            implementation(projects.shared.libs.preferences)
-            implementation(projects.shared.libs.http)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
