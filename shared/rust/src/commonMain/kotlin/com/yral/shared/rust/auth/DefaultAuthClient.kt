@@ -1,59 +1,62 @@
 package com.yral.shared.rust.auth
 
 import com.yral.shared.preferences.PrefKeys
-import com.yral.shared.preferences.PrefUtils
+import com.yral.shared.preferences.Preferences
 import com.yral.shared.rust.http.BaseURL
 import com.yral.shared.rust.http.CookieType
-import com.yral.shared.rust.http.HttpClientFactory.client
 import com.yral.shared.rust.http.maxAgeOrExpires
 import com.yral.shared.uniffi.generated.Principal
 import com.yral.shared.uniffi.generated.authenticateWithNetwork
+import io.ktor.client.HttpClient
 import io.ktor.client.plugins.cookies.cookies
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsBytes
 import io.ktor.http.Cookie
 import io.ktor.http.headers
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
 import kotlinx.serialization.json.JsonObject
 
-
-class DefaultAuthClient : AuthClient {
+class DefaultAuthClient(
+    private val preferences: Preferences,
+    private val client: HttpClient,
+    private val ioDispatcher: CoroutineDispatcher,
+) : AuthClient {
     override var identity: ByteArray? = null
     override var canisterPrincipal: Principal? = null
     override var userPrincipal: Principal? = null
 
     override suspend fun initialize() {
-        try {
-            refreshAuthIfNeeded()
-        } catch (e: Exception) {
-            e.printStackTrace()
+        withContext(ioDispatcher) {
+            try {
+                refreshAuthIfNeeded()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 
     override suspend fun refreshAuthIfNeeded() {
-        val cookie = client.cookies("https://$BaseURL").firstOrNull { it.name == CookieType.USER_IDENTITY.value }
-        cookie?.let {
-            if ((it.maxAgeOrExpires(Clock.System.now().toEpochMilliseconds()) ?: 0) > Clock.System.now().toEpochMilliseconds()) {
-                val storedData = PrefUtils().getByteArray(PrefKeys.IDENTITY_DATA)
-                storedData?.let { data -> handleExtractIdentityResponse(data) } ?: extractIdentity(it)
-            } else {
-                fetchAndSetAuthCookie()
-            }
-        } ?: fetchAndSetAuthCookie()
-    }
-
-    override suspend fun generateNewDelegatedIdentity(): ByteArray {
-        TODO("Not yet implemented")
-    }
-
-    override suspend fun generateNewDelegatedIdentityWireOneHour(): ByteArray {
-        TODO("Not yet implemented")
+        withContext(ioDispatcher) {
+            val cookie = client.cookies("https://$BaseURL").firstOrNull { it.name == CookieType.USER_IDENTITY.value }
+            cookie?.let {
+                if ((it.maxAgeOrExpires(Clock.System.now().toEpochMilliseconds()) ?: 0) > Clock.System.now()
+                        .toEpochMilliseconds()
+                ) {
+                    val storedData = preferences.getBytes(PrefKeys.IDENTITY_DATA.name)
+                    storedData?.let { data -> handleExtractIdentityResponse(data) } ?: extractIdentity(it)
+                } else {
+                    fetchAndSetAuthCookie()
+                }
+            } ?: fetchAndSetAuthCookie()
+        }
     }
 
     private suspend fun fetchAndSetAuthCookie() {
-        PrefUtils().remove(CookieType.USER_IDENTITY.value)
-        PrefUtils().remove(PrefKeys.IDENTITY_DATA)
+        preferences.remove(CookieType.USER_IDENTITY.value)
+        preferences.remove(PrefKeys.IDENTITY_DATA.name)
         val setAnonymousIdentityCookiePath = "api/set_anonymous_identity_cookie"
         val payload = createAuthPayload()
         client.post(setAnonymousIdentityCookiePath) {
@@ -73,7 +76,7 @@ class DefaultAuthClient : AuthClient {
         }.bodyAsBytes()
         if (result.isNotEmpty()) {
             handleExtractIdentityResponse(result)
-            PrefUtils().putByteArray(PrefKeys.IDENTITY_DATA, result)
+            preferences.putBytes(PrefKeys.IDENTITY_DATA.name, result)
         }
     }
 
@@ -84,5 +87,13 @@ class DefaultAuthClient : AuthClient {
         userPrincipal = canisterWrapper.getUserPrincipal()
         println("xxxxx canisterPrincipal: $canisterPrincipal")
         println("xxxxx userPrincipal: $userPrincipal")
+    }
+
+    override suspend fun generateNewDelegatedIdentity(): ByteArray {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun generateNewDelegatedIdentityWireOneHour(): ByteArray {
+        TODO("Not yet implemented")
     }
 }

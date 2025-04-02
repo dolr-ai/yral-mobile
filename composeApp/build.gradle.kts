@@ -37,6 +37,7 @@ kotlin {
 
       implementation(projects.shared.core)
       implementation(projects.shared.rust)
+      implementation(projects.shared.libs.preferences)
     }
   }
 }

@@ -1,6 +1,6 @@
 package com.yral.shared.rust.http
 
-import com.yral.shared.preferences.PrefUtils
+import com.yral.shared.preferences.Preferences
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -13,15 +13,15 @@ import io.ktor.http.ContentType
 import io.ktor.http.URLProtocol
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.internal.SynchronizedObject
 import kotlinx.serialization.json.Json
 
 const val BaseURL = "yral.com"
 
-object HttpClientFactory {
-    var client: HttpClient = createClient()
-
-    fun recreateHttpClient() {
-        client = createClient()
+class HttpClientFactory(private val preferences: Preferences) {
+    private val client: HttpClient by lazy {
+        createClient()
     }
 
     private fun createClient(): HttpClient {
@@ -44,7 +44,7 @@ object HttpClientFactory {
                 )
             }
             install(HttpCookies) {
-                storage = PersistentCookieStorage(PrefUtils())
+                storage = PersistentCookieStorage(preferences)
             }
             defaultRequest {
                 url {
@@ -54,5 +54,18 @@ object HttpClientFactory {
                 contentType(ContentType.Application.Json)
             }
         }
+    }
+
+    fun build(): HttpClient = client
+
+    @OptIn(InternalCoroutinesApi::class)
+    companion object : SynchronizedObject() {
+        @Volatile
+        private var instance: HttpClientFactory? = null
+
+        fun getInstance(preferences: Preferences): HttpClientFactory =
+            instance ?: synchronized(this) {
+                instance ?: HttpClientFactory(preferences).also { instance = it }
+            }
     }
 }

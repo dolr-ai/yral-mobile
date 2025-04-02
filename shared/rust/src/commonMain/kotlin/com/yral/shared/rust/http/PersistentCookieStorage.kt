@@ -1,6 +1,6 @@
 package com.yral.shared.rust.http
 
-import com.yral.shared.preferences.PrefUtils
+import com.yral.shared.preferences.Preferences
 import io.ktor.client.plugins.cookies.CookiesStorage
 import io.ktor.http.Cookie
 import io.ktor.http.Url
@@ -12,13 +12,13 @@ enum class CookieType(val value: String) {
     USER_IDENTITY("user-identity")
 }
 
-class PersistentCookieStorage(private val prefUtils: PrefUtils) : CookiesStorage {
+class PersistentCookieStorage(private val preferences: Preferences) : CookiesStorage {
     private val mutex = Mutex()
 
     override suspend fun addCookie(requestUrl: Url, cookie: Cookie) {
         if (CookieType.entries.any { it.value == cookie.name }) {
             mutex.withLock {
-                prefUtils.putString(cookie.name, Json.encodeToString(cookie))
+                preferences.putString(cookie.name, Json.encodeToString(cookie))
             }
         }
     }
@@ -27,7 +27,7 @@ class PersistentCookieStorage(private val prefUtils: PrefUtils) : CookiesStorage
         return mutex.withLock {
             val cookies = mutableListOf<Cookie>()
             CookieType.entries.forEach { entry ->
-                prefUtils.getString(entry.value)?.let { value ->
+                preferences.getString(entry.value)?.let { value ->
                     cookies.add(Json.decodeFromString(value))
                 }
             }

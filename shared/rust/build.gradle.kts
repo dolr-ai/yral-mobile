@@ -40,7 +40,7 @@ kotlin {
             implementation(libs.ktor.json)
             implementation(libs.kotlinx.datetime)
 
-            implementation(projects.shared.preferences)
+            implementation(projects.shared.libs.preferences)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
