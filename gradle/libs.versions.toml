@@ -11,6 +11,9 @@ ktor = "3.1.1"
 
 nimbus-jose-jwt = "10.0.2"
 
+androidx-security-crypto = "1.1.0-alpha06"
+multiplatform-settings = "1.2.0"
+
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
@@ -22,6 +25,9 @@ ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "k
 ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
 
 nimbus-jose-jwt = { module = "com.nimbusds:nimbus-jose-jwt", version.ref = "nimbus-jose-jwt" }
+
+androidx-security-crypto = { module = "androidx.security:security-crypto", version.ref = "androidx-security-crypto"}
+multiplatform-settings = { module = "com.russhwolf:multiplatform-settings", version.ref = "multiplatform-settings"}
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
