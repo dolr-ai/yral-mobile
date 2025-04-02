@@ -1,4 +1,4 @@
-package com.yral.shared.rust.http
+package com.yral.shared.http
 
 import com.yral.shared.preferences.Preferences
 import io.ktor.client.plugins.cookies.CookiesStorage

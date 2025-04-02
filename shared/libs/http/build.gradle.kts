@@ -3,9 +3,6 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
-    alias(libs.plugins.gobleyCargo)
-    alias(libs.plugins.gobleyUniffi)
-    alias(libs.plugins.kotlinAtomicfu)
     alias(libs.plugins.kotlinxSerialisartion)
 }
 
@@ -29,7 +26,6 @@ kotlin {
 
     sourceSets {
         androidMain.dependencies {
-            implementation(libs.nimbus.jose.jwt)
         }
         commonMain.dependencies {
             //put your multiplatform dependencies here
@@ -41,7 +37,6 @@ kotlin {
             implementation(libs.kotlinx.datetime)
 
             implementation(projects.shared.libs.preferences)
-            implementation(projects.shared.libs.http)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -50,7 +45,7 @@ kotlin {
 }
 
 android {
-    namespace = "com.yral.shared.rustLib"
+    namespace = "com.yral.shared.http"
     compileSdk = libs.versions.compileSDK.get().toInt()
     defaultConfig {
         minSdk = libs.versions.minSDK.get().toInt()
@@ -61,12 +56,3 @@ android {
     }
 }
 
-cargo {
-    // The Cargo package is located in a `rust` subdirectory.
-    packageDirectory = layout.projectDirectory.dir("rust-agent-uniffi")
-}
-
-uniffi {
-    // Generate the bindings using library mode.
-    generateFromLibrary()
-}

@@ -18,4 +18,5 @@ rootProject.name = "yral-mobile"
 include(":composeApp")
 include(":shared:core")
 include(":shared:rust")
-include(":shared:preferences")
+include(":shared:libs:preferences")
+include(":shared:libs:http")

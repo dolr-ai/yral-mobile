@@ -38,6 +38,7 @@ kotlin {
       implementation(projects.shared.core)
       implementation(projects.shared.rust)
       implementation(projects.shared.libs.preferences)
+      implementation(projects.shared.libs.http)
     }
   }
 }

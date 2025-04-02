@@ -1,10 +1,8 @@
 package com.yral.shared.rust.auth
 
+import com.yral.shared.http.maxAgeOrExpires
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
-import com.yral.shared.rust.http.BaseURL
-import com.yral.shared.rust.http.CookieType
-import com.yral.shared.rust.http.maxAgeOrExpires
 import com.yral.shared.uniffi.generated.Principal
 import com.yral.shared.uniffi.generated.authenticateWithNetwork
 import io.ktor.client.HttpClient
@@ -40,7 +38,7 @@ class DefaultAuthClient(
 
     override suspend fun refreshAuthIfNeeded() {
         withContext(ioDispatcher) {
-            val cookie = client.cookies("https://$BaseURL").firstOrNull { it.name == CookieType.USER_IDENTITY.value }
+            val cookie = client.cookies("https://${com.yral.shared.http.BaseURL}").firstOrNull { it.name == com.yral.shared.http.CookieType.USER_IDENTITY.value }
             cookie?.let {
                 if ((it.maxAgeOrExpires(Clock.System.now().toEpochMilliseconds()) ?: 0) > Clock.System.now()
                         .toEpochMilliseconds()
@@ -55,7 +53,7 @@ class DefaultAuthClient(
     }
 
     private suspend fun fetchAndSetAuthCookie() {
-        preferences.remove(CookieType.USER_IDENTITY.value)
+        preferences.remove(com.yral.shared.http.CookieType.USER_IDENTITY.value)
         preferences.remove(PrefKeys.IDENTITY_DATA.name)
         val setAnonymousIdentityCookiePath = "api/set_anonymous_identity_cookie"
         val payload = createAuthPayload()
