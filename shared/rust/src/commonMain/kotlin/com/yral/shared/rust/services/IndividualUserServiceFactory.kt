@@ -12,7 +12,7 @@ class IndividualUserServiceFactory {
 
     fun initialize(principal: Principal, identityData: ByteArray) {
         service = IndividualUserService(
-            principal = principal,
+            principalText = principal,
             identityData = identityData,
         )
     }

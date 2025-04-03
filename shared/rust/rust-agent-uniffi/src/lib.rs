@@ -7,6 +7,7 @@ pub mod sns_governance;
 pub mod post_cache;
 pub mod platform_orchestrator;
 mod uni_ffi_helpers;
+mod commons;
 
 lazy_static::lazy_static! {
     static ref RUNTIME: tokio::runtime::Runtime = {

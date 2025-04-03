@@ -1,5 +1,5 @@
 use crate::UniffiCustomTypeConverter;
-use candid::{CandidType, Deserialize, Nat, Principal};
+use candid::{CandidType, Deserialize, Int, Nat, Principal};
 use std::str::FromStr;
 use android_logger::{Config, FilterBuilder};
 use ic_agent::AgentError;
@@ -7,7 +7,7 @@ use serde_bytes::ByteBuf;
 use candid::Error as CandidError;
 use ic_agent::export::PrincipalError;
 use log::{error, trace, LevelFilter};
-use uniffi::Record;
+use uniffi::{Enum, Record};
 
 uniffi::custom_type!(Principal, String);
 impl UniffiCustomTypeConverter for Principal {
@@ -47,9 +47,21 @@ impl UniffiCustomTypeConverter for ByteBuf {
 }
 
 #[derive(CandidType, Deserialize, Record)]
-pub struct NumberPair {
+pub struct IntBytePair {
     pub first: u64,
     pub second: u8,
+}
+
+#[derive(CandidType, Deserialize, Record)]
+pub struct IntDoublePair {
+    pub first: u64,
+    pub second: f64,
+}
+
+#[derive(CandidType, Deserialize, Record)]
+pub struct IntPair {
+    pub first: u64,
+    pub second: u64,
 }
 
 #[derive(CandidType, Deserialize, Record)]
@@ -64,7 +76,13 @@ pub struct KeyValuePair {
     pub value: String,
 }
 
-#[derive(Debug, uniffi::Enum)]
+#[derive(CandidType, Deserialize, Record)]
+pub struct PrincipalStringPair {
+    pub first: Principal,
+    pub second: String,
+}
+
+#[derive(Debug, Enum)]
 pub enum FFIError {
     AgentError(String),
     CandidError(String),

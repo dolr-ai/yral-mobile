@@ -1,6 +1,7 @@
 use std::str::FromStr;
 
-use crate::{individual_user_template::*, sns_swap::Err, uni_ffi_helpers::*};
+use crate::individual_user_template::*;
+use crate::uni_ffi_helpers::*;
 use candid::Nat;
 use candid::{self, ser, CandidType, Decode, Deserialize, Encode, Principal};
 use ic_agent::export::PrincipalError;
@@ -32,7 +33,7 @@ pub fn get_secp256k1_identity(
 }
 
 pub fn get_jwk_ec_key(json_string: String) -> std::result::Result<JwkEcKey, Secp256k1Error> {
-    return JwkEcKey::from_str(&json_string);
+    JwkEcKey::from_str(&json_string)
 }
 
 pub trait FromBytes {
@@ -50,12 +51,12 @@ impl FromBytes for DelegatedIdentityWire {
 pub fn delegated_identity_wire_from_bytes(
     data: &[u8],
 ) -> std::result::Result<DelegatedIdentityWire, String> {
-    return DelegatedIdentityWire::from_bytes(data).map_err(|e| e.to_string());
+    DelegatedIdentityWire::from_bytes(data).map_err(|e| e.to_string())
 }
 
 pub fn delegated_identity_from_bytes(
     data: &[u8],
-) -> std::result::Result<ic_agent::identity::DelegatedIdentity, String> {
+) -> std::result::Result<DelegatedIdentity, String> {
     let wire = DelegatedIdentityWire::from_bytes(data)?;
     let to_secret = k256::SecretKey::from_jwk(&wire.to_secret)
         .map_err(|e| format!("Failed to parse secret key: {:?}", e))?;
@@ -126,19 +127,19 @@ pub struct CanistersWrapper {
 #[uniffi::export]
 impl CanistersWrapper {
     pub fn get_canister_principal(&self) -> Principal {
-        return self.inner.user_canister();
+        self.inner.user_canister()
     }
 
     pub fn get_canister_principal_string(&self) -> String {
-        return self.inner.user_canister().to_string();
+        self.inner.user_canister().to_string()
     }
 
     pub fn get_user_principal(&self) -> Principal {
-        return self.inner.user_principal();
+        self.inner.user_principal()
     }
 
     pub fn get_user_principal_string(&self) -> String {
-        return self.inner.user_principal().to_string();
+        self.inner.user_principal().to_string()
     }
 }
 

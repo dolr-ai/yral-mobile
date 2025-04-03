@@ -13,6 +13,7 @@ use std::sync::Arc;
 use serde_bytes::ByteBuf;
 use uniffi::Enum;
 use uniffi::Record;
+use crate::commons::*;
 use crate::individual_user_template::individual_user_template_helper::*;
 use crate::RUNTIME;
 use crate::uni_ffi_helpers::*;
@@ -57,30 +58,6 @@ pub enum RejectionCode {
     CanisterReject,
 }
 #[derive(CandidType, Deserialize, Enum)]
-pub enum TransferError {
-    GenericError {
-        message: String,
-        error_code: Nat,
-    },
-    TemporarilyUnavailable,
-    BadBurn {
-        min_burn_amount: Nat,
-    },
-    Duplicate {
-        duplicate_of: Nat,
-    },
-    BadFee {
-        expected_fee: Nat,
-    },
-    CreatedInFuture {
-        ledger_time: u64,
-    },
-    TooOld,
-    InsufficientFunds {
-        balance: Nat,
-    },
-}
-#[derive(CandidType, Deserialize, Enum)]
 pub enum CdaoTokenError {
     NoBalance,
     InvalidRoot,
@@ -104,11 +81,6 @@ pub struct PlaceBetArg {
     pub post_id: u64,
     pub bet_direction: BetDirection,
     pub post_canister_id: Principal,
-}
-#[derive(CandidType, Deserialize, Record)]
-pub struct SystemTime {
-    pub nanos_since_epoch: u32,
-    pub secs_since_epoch: u64,
 }
 #[derive(CandidType, Deserialize, Enum)]
 pub enum BettingStatus {
@@ -165,47 +137,12 @@ pub enum Result6 {
     Err(NamespaceErrors),
 }
 #[derive(CandidType, Deserialize, Record)]
-pub struct NeuronBasketConstructionParameters {
-    pub dissolve_delay_interval_seconds: u64,
-    pub count: u64,
-}
-#[derive(CandidType, Deserialize, Record)]
 pub struct Canister {
     pub id: Option<Principal>,
 }
 #[derive(CandidType, Deserialize, Record)]
 pub struct DappCanisters {
     pub canisters: Vec<Canister>,
-}
-#[derive(CandidType, Deserialize, Record)]
-pub struct LinearScalingCoefficient {
-    pub slope_numerator: Option<u64>,
-    pub intercept_icp_e8s: Option<u64>,
-    pub from_direct_participation_icp_e8s: Option<u64>,
-    pub slope_denominator: Option<u64>,
-    pub to_direct_participation_icp_e8s: Option<u64>,
-}
-#[derive(CandidType, Deserialize, Record)]
-pub struct IdealMatchedParticipationFunction {
-    pub serialized_representation: Option<String>,
-}
-#[derive(CandidType, Deserialize, Record)]
-pub struct NeuronsFundParticipationConstraints {
-    pub coefficient_intervals: Vec<LinearScalingCoefficient>,
-    pub max_neurons_fund_participation_icp_e8s: Option<u64>,
-    pub min_direct_participation_threshold_icp_e8s: Option<u64>,
-    pub ideal_matched_participation_function: Option<IdealMatchedParticipationFunction>,
-}
-#[derive(CandidType, Deserialize, Record)]
-pub struct CfNeuron {
-    pub has_created_neuron_recipes: Option<bool>,
-    pub nns_neuron_id: u64,
-    pub amount_icp_e8s: u64,
-}
-#[derive(CandidType, Deserialize, Record)]
-pub struct CfParticipant {
-    pub hotkey_principal: String,
-    pub cf_neurons: Vec<CfNeuron>,
 }
 #[derive(CandidType, Deserialize, Record)]
 pub struct NeuronsFundParticipants {
@@ -246,10 +183,6 @@ pub struct MFractionalDeveloperVotingPower {
 #[derive(CandidType, Deserialize, Enum)]
 pub enum InitialTokenDistribution {
     FractionalDeveloperVotingPower(MFractionalDeveloperVotingPower),
-}
-#[derive(CandidType, Deserialize, Record)]
-pub struct Countries {
-    pub iso_codes: Vec<String>,
 }
 #[derive(CandidType, Deserialize, Record)]
 pub struct SnsInitPayload {
@@ -360,16 +293,6 @@ pub enum Result9 {
 pub struct DeviceIdentity {
     pub device_id: String,
     pub timestamp: u64,
-}
-#[derive(CandidType, Deserialize, Enum)]
-pub enum PostStatus {
-    BannedForExplicitness,
-    BannedDueToUserReporting,
-    Uploaded,
-    CheckingExplicitness,
-    ReadyToView,
-    Transcoding,
-    Deleted,
 }
 #[derive(CandidType, Deserialize, Record)]
 pub struct FeedScore {
@@ -662,43 +585,13 @@ pub enum Result17 {
     Err(String),
 }
 #[derive(CandidType, Deserialize, Enum)]
-pub enum KnownPrincipalType {
-    CanisterIdUserIndex,
-    CanisterIdPlatformOrchestrator,
-    CanisterIdConfiguration,
-    CanisterIdHotOrNotSubnetOrchestrator,
-    CanisterIdProjectMemberIndex,
-    CanisterIdTopicCacheIndex,
-    CanisterIdRootCanister,
-    CanisterIdDataBackup,
-    CanisterIdSnsWasm,
-    CanisterIdPostCache,
-    #[serde(rename = "CanisterIdSNSController")]
-    CanisterIdSnsController,
-    CanisterIdSnsGovernance,
-    UserIdGlobalSuperAdmin,
-}
-#[derive(CandidType, Deserialize, Record)]
-pub struct HttpRequest {
-    pub url: String,
-    pub method: String,
-    pub body: ByteBuf,
-    pub headers: Vec<StringPair>,
-}
-#[derive(CandidType, Deserialize, Record)]
-pub struct HttpResponse {
-    pub body: ByteBuf,
-    pub headers: Vec<StringPair>,
-    pub status_code: u16,
-}
-#[derive(CandidType, Deserialize, Enum)]
 pub enum Result18 {
     Ok(Vec<String>),
     Err(NamespaceErrors),
 }
 #[derive(CandidType, Deserialize, Enum)]
 pub enum Result19 {
-    Ok(Vec<NumberPair>),
+    Ok(Vec<IntBytePair>),
     Err(String),
 }
 #[derive(CandidType, Deserialize, Enum)]
@@ -747,11 +640,6 @@ pub struct NeuronsFundNeuron {
 #[derive(CandidType, Deserialize, Record)]
 pub struct NeuronsOk {
     pub neurons_fund_neuron_portions: Vec<NeuronsFundNeuron>,
-}
-#[derive(CandidType, Deserialize, Record)]
-pub struct GovernanceError {
-    pub error_message: String,
-    pub error_type: i32,
 }
 #[derive(CandidType, Deserialize, Enum)]
 pub enum Result22 {
@@ -855,16 +743,18 @@ pub struct IndividualUserService {
 impl IndividualUserService {
     #[uniffi::constructor]
     pub fn new(
-        principal: Principal,
+        principal_text: &str,
         identity_data: Vec<u8>,
     ) -> std::result::Result<IndividualUserService, FFIError> {
+        let principal = Principal::from_text(principal_text)
+            .map_err(|e| FFIError::PrincipalError(format!("Invalid principal: {:?}", e)))?;
         let identity = delegated_identity_from_bytes(&identity_data.as_slice())
             .map_err(|e| FFIError::UnknownError(format!("Invalid: {:?}", e)))?;
         let agent = Agent::builder()
             .with_url("https://ic0.app/")
             .with_identity(identity)
             .build()
-            .expect("Failed to create agent");
+            .map_err(|e| FFIError::AgentError(format!("Failed to create agent: {:?}", e)))?;
 
         Ok(IndividualUserService {
             principal,
@@ -1167,7 +1057,7 @@ impl IndividualUserService {
     pub async fn get_stable_memory_size(&self) -> Result<U64Wrapper> {
         let args = Encode!()?;
         let bytes = self.query_canister("get_stable_memory_size", args).await?;
-        return Ok(Decode!(&bytes, U64Wrapper)?);
+        Ok(Decode!(&bytes, U64Wrapper)?)
     }
     #[uniffi::method]
     pub async fn get_success_history(&self) -> Result<Result14> {
@@ -1234,7 +1124,7 @@ impl IndividualUserService {
         let bytes = self.query_canister("get_well_known_principal_value", args).await?;
         let result = Decode!(&bytes, Option<Principal>)?;
         match result {
-            Some(principal) => std::result::Result::Ok(PrincipalResult::Found(principal)),
+            Some(principal) => Ok(PrincipalResult::Found(principal)),
             None => Ok(PrincipalResult::NotFound),
         }
     }

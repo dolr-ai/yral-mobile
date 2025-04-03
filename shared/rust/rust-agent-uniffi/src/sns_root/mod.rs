@@ -3,13 +3,18 @@
 #![allow(dead_code, unused_imports)]
 use crate::individual_user_template;
 use crate::RUNTIME;
+use crate::uni_ffi_helpers::*;
 use candid::{self, CandidType, Decode, Deserialize, Encode, Principal};
 use ic_agent::export::PrincipalError;
 use ic_agent::Agent;
 use std::sync::Arc;
-type Result<T> = std::result::Result<T, ic_agent::AgentError>;
+use uniffi::Record;
+use uniffi::Enum;
+use crate::commons::*;
 
-#[derive(CandidType, Deserialize)]
+type Result<T> = std::result::Result<T, FFIError>;
+
+#[derive(CandidType, Deserialize, Record)]
 pub struct SnsRootCanister {
     pub dapp_canister_ids: Vec<Principal>,
     pub testflight: bool,
@@ -20,20 +25,13 @@ pub struct SnsRootCanister {
     pub swap_canister_id: Option<Principal>,
     pub ledger_canister_id: Option<Principal>,
 }
-#[derive(CandidType, Deserialize)]
+
+#[derive(CandidType, Deserialize, Record)]
 pub struct CanisterIdRecord {
     pub canister_id: Principal,
 }
-#[derive(CandidType, Deserialize)]
-pub enum CanisterStatusType {
-    #[serde(rename = "stopped")]
-    Stopped,
-    #[serde(rename = "stopping")]
-    Stopping,
-    #[serde(rename = "running")]
-    Running,
-}
-#[derive(CandidType, Deserialize)]
+
+#[derive(CandidType, Deserialize, Record)]
 pub struct DefiniteCanisterSettings {
     pub freezing_threshold: Option<candid::Nat>,
     pub controllers: Vec<Principal>,
@@ -41,7 +39,8 @@ pub struct DefiniteCanisterSettings {
     pub memory_allocation: Option<candid::Nat>,
     pub compute_allocation: Option<candid::Nat>,
 }
-#[derive(CandidType, Deserialize)]
+
+#[derive(CandidType, Deserialize, Record)]
 pub struct CanisterStatusResult {
     pub status: CanisterStatusType,
     pub memory_size: candid::Nat,
@@ -51,7 +50,8 @@ pub struct CanisterStatusResult {
     pub module_hash: Option<serde_bytes::ByteBuf>,
     pub reserved_cycles: Option<candid::Nat>,
 }
-#[derive(CandidType, Deserialize)]
+
+#[derive(CandidType, Deserialize, Enum)]
 pub enum CanisterInstallMode {
     #[serde(rename = "reinstall")]
     Reinstall,
@@ -60,7 +60,8 @@ pub enum CanisterInstallMode {
     #[serde(rename = "install")]
     Install,
 }
-#[derive(CandidType, Deserialize)]
+
+#[derive(CandidType, Deserialize, Record)]
 pub struct ChangeCanisterRequest {
     pub arg: serde_bytes::ByteBuf,
     pub wasm_module: serde_bytes::ByteBuf,
@@ -70,32 +71,19 @@ pub struct ChangeCanisterRequest {
     pub memory_allocation: Option<candid::Nat>,
     pub compute_allocation: Option<candid::Nat>,
 }
-#[derive(CandidType, Deserialize)]
+
+#[derive(CandidType, Deserialize, Record)]
 pub struct GetSnsCanistersSummaryRequest {
     pub update_canister_list: Option<bool>,
 }
-#[derive(CandidType, Deserialize)]
-pub struct DefiniteCanisterSettingsArgs {
-    pub freezing_threshold: candid::Nat,
-    pub controllers: Vec<Principal>,
-    pub memory_allocation: candid::Nat,
-    pub compute_allocation: candid::Nat,
-}
-#[derive(CandidType, Deserialize)]
-pub struct CanisterStatusResultV2 {
-    pub status: CanisterStatusType,
-    pub memory_size: candid::Nat,
-    pub cycles: candid::Nat,
-    pub settings: DefiniteCanisterSettingsArgs,
-    pub idle_cycles_burned_per_day: candid::Nat,
-    pub module_hash: Option<serde_bytes::ByteBuf>,
-}
-#[derive(CandidType, Deserialize)]
+
+#[derive(CandidType, Deserialize, Record)]
 pub struct CanisterSummary {
     pub status: Option<CanisterStatusResultV2>,
     pub canister_id: Option<Principal>,
 }
-#[derive(CandidType, Deserialize)]
+
+#[derive(CandidType, Deserialize, Record)]
 pub struct GetSnsCanistersSummaryResponse {
     pub root: Option<CanisterSummary>,
     pub swap: Option<CanisterSummary>,
@@ -105,9 +93,11 @@ pub struct GetSnsCanistersSummaryResponse {
     pub dapps: Vec<CanisterSummary>,
     pub archives: Vec<CanisterSummary>,
 }
-#[derive(CandidType, Deserialize)]
+
+#[derive(CandidType, Deserialize, Record)]
 pub struct ListSnsCanistersArg {}
-#[derive(CandidType, Deserialize)]
+
+#[derive(CandidType, Deserialize, Record)]
 pub struct ListSnsCanistersResponse {
     pub root: Option<Principal>,
     pub swap: Option<Principal>,
@@ -117,7 +107,8 @@ pub struct ListSnsCanistersResponse {
     pub dapps: Vec<Principal>,
     pub archives: Vec<Principal>,
 }
-#[derive(CandidType, Deserialize)]
+
+#[derive(CandidType, Deserialize, Record)]
 pub struct ManageDappCanisterSettingsRequest {
     pub freezing_threshold: Option<u64>,
     pub canister_ids: Vec<Principal>,
@@ -126,170 +117,170 @@ pub struct ManageDappCanisterSettingsRequest {
     pub memory_allocation: Option<u64>,
     pub compute_allocation: Option<u64>,
 }
-#[derive(CandidType, Deserialize)]
+
+#[derive(CandidType, Deserialize, Record)]
 pub struct ManageDappCanisterSettingsResponse {
     pub failure_reason: Option<String>,
 }
-#[derive(CandidType, Deserialize)]
+
+#[derive(CandidType, Deserialize, Record)]
 pub struct RegisterDappCanisterRequest {
     pub canister_id: Option<Principal>,
 }
-#[derive(CandidType, Deserialize)]
+
+#[derive(CandidType, Deserialize, Record)]
 pub struct RegisterDappCanisterRet {}
-#[derive(CandidType, Deserialize)]
+
+#[derive(CandidType, Deserialize, Record)]
 pub struct RegisterDappCanistersRequest {
     pub canister_ids: Vec<Principal>,
 }
-#[derive(CandidType, Deserialize)]
+
+#[derive(CandidType, Deserialize, Record)]
 pub struct RegisterDappCanistersRet {}
-#[derive(CandidType, Deserialize)]
+
+#[derive(CandidType, Deserialize, Record)]
 pub struct SetDappControllersRequest {
     pub canister_ids: Option<RegisterDappCanistersRequest>,
     pub controller_principal_ids: Vec<Principal>,
 }
-#[derive(CandidType, Deserialize)]
-pub struct CanisterCallError {
-    pub code: Option<i32>,
-    pub description: String,
-}
-#[derive(CandidType, Deserialize)]
-pub struct FailedUpdate {
-    pub err: Option<CanisterCallError>,
-    pub dapp_canister_id: Option<Principal>,
-}
-#[derive(CandidType, Deserialize)]
-pub struct SetDappControllersResponse {
-    pub failed_updates: Vec<FailedUpdate>,
-}
 
-pub struct Service {
+#[derive(uniffi::Object)]
+pub struct SnsRootService {
     pub principal: Principal,
     pub agent: Arc<Agent>,
 }
-impl Service {
+
+#[uniffi::export]
+impl SnsRootService {
+    #[uniffi::constructor]
     pub fn new(
         principal_text: &str,
         agent_url: &str,
-    ) -> std::result::Result<Service, PrincipalError> {
-        let principal = Principal::from_text(principal_text)?;
+    ) -> std::result::Result<SnsRootService, FFIError> {
+        let principal = Principal::from_text(principal_text)
+            .map_err(|e| FFIError::PrincipalError(format!("Invalid principal: {:?}", e)))?;
         let agent = Agent::builder()
             .with_url("https://ic0.app/")
             .build()
-            .expect("Failed to create agent");
+            .map_err(|e| FFIError::AgentError(format!("Failed to create agent: {:?}", e)))?;
         RUNTIME
             .block_on(agent.fetch_root_key())
-            .expect("Failed to fetch root key");
+            .map_err(|e| FFIError::UnknownError(format!("Failed to fetch root key: {:?}", e)))?;
         Ok(Self {
             principal,
             agent: Arc::new(agent),
         })
     }
+
+    async fn query_canister(&self, method: &str, args: Vec<u8>) -> Result<Vec<u8>> {
+        let agent = Arc::clone(&self.agent);
+        let principal = self.principal;
+        let method = method.to_string();
+        RUNTIME.spawn(async move {
+            agent
+                .query(&principal, &method)
+                .with_arg(args)
+                .call()
+                .await
+                .map_err(|e| FFIError::AgentError(format!("{:?}", e)))
+        })
+        .await.map_err(|e| FFIError::AgentError(format!("{:?}", e)))?
+    }
+
+    async fn update_canister(&self, method: &str, args: Vec<u8>) -> Result<Vec<u8>> {
+        let agent = Arc::clone(&self.agent);
+        let principal = self.principal;
+        let method = method.to_string();
+        RUNTIME.spawn(async move {
+            agent
+                .update(&principal, &method)
+                .with_arg(args)
+                .call_and_wait()
+                .await
+                .map_err(|e| FFIError::AgentError(format!("{:?}", e)))
+        })
+        .await.map_err(|e| FFIError::AgentError(format!("{:?}", e)))?
+    }
+
+    #[uniffi::method]
     pub async fn canister_status(&self, arg0: CanisterIdRecord) -> Result<CanisterStatusResult> {
         let args = Encode!(&arg0)?;
-        let bytes = self
-            .agent
-            .update(&self.principal, "canister_status")
-            .with_arg(args)
-            .call_and_wait()
-            .await?;
+        let bytes = self.update_canister("canister_status", args).await?;
         Ok(Decode!(&bytes, CanisterStatusResult)?)
     }
+
+    #[uniffi::method]
     pub async fn change_canister(&self, arg0: ChangeCanisterRequest) -> Result<()> {
         let args = Encode!(&arg0)?;
-        let bytes = self
-            .agent
-            .update(&self.principal, "change_canister")
-            .with_arg(args)
-            .call_and_wait()
-            .await?;
+        let bytes = self.update_canister("change_canister", args).await?;
         Ok(Decode!(&bytes)?)
     }
+
+    #[uniffi::method]
     pub async fn get_build_metadata(&self) -> Result<String> {
         let args = Encode!()?;
-        let bytes = self
-            .agent
-            .query(&self.principal, "get_build_metadata")
-            .with_arg(args)
-            .call()
-            .await?;
+        let bytes = self.query_canister("get_build_metadata", args).await?;
         Ok(Decode!(&bytes, String)?)
     }
+
+    #[uniffi::method]
     pub async fn get_sns_canisters_summary(
         &self,
         arg0: GetSnsCanistersSummaryRequest,
     ) -> Result<GetSnsCanistersSummaryResponse> {
         let args = Encode!(&arg0)?;
-        let bytes = self
-            .agent
-            .update(&self.principal, "get_sns_canisters_summary")
-            .with_arg(args)
-            .call_and_wait()
-            .await?;
+        let bytes = self.update_canister("get_sns_canisters_summary", args).await?;
         Ok(Decode!(&bytes, GetSnsCanistersSummaryResponse)?)
     }
+
+    #[uniffi::method]
     pub async fn list_sns_canisters(
         &self,
         arg0: ListSnsCanistersArg,
     ) -> Result<ListSnsCanistersResponse> {
         let args = Encode!(&arg0)?;
-        let bytes = self
-            .agent
-            .query(&self.principal, "list_sns_canisters")
-            .with_arg(args)
-            .call()
-            .await?;
+        let bytes = self.query_canister("list_sns_canisters", args).await?;
         Ok(Decode!(&bytes, ListSnsCanistersResponse)?)
     }
+
+    #[uniffi::method]
     pub async fn manage_dapp_canister_settings(
         &self,
         arg0: ManageDappCanisterSettingsRequest,
     ) -> Result<ManageDappCanisterSettingsResponse> {
         let args = Encode!(&arg0)?;
-        let bytes = self
-            .agent
-            .update(&self.principal, "manage_dapp_canister_settings")
-            .with_arg(args)
-            .call_and_wait()
-            .await?;
+        let bytes = self.update_canister("manage_dapp_canister_settings", args).await?;
         Ok(Decode!(&bytes, ManageDappCanisterSettingsResponse)?)
     }
+
+    #[uniffi::method]
     pub async fn register_dapp_canister(
         &self,
         arg0: RegisterDappCanisterRequest,
     ) -> Result<RegisterDappCanisterRet> {
         let args = Encode!(&arg0)?;
-        let bytes = self
-            .agent
-            .update(&self.principal, "register_dapp_canister")
-            .with_arg(args)
-            .call_and_wait()
-            .await?;
+        let bytes = self.update_canister("register_dapp_canister", args).await?;
         Ok(Decode!(&bytes, RegisterDappCanisterRet)?)
     }
+
+    #[uniffi::method]
     pub async fn register_dapp_canisters(
         &self,
         arg0: RegisterDappCanistersRequest,
     ) -> Result<RegisterDappCanistersRet> {
         let args = Encode!(&arg0)?;
-        let bytes = self
-            .agent
-            .update(&self.principal, "register_dapp_canisters")
-            .with_arg(args)
-            .call_and_wait()
-            .await?;
+        let bytes = self.update_canister("register_dapp_canisters", args).await?;
         Ok(Decode!(&bytes, RegisterDappCanistersRet)?)
     }
+
+    #[uniffi::method]
     pub async fn set_dapp_controllers(
         &self,
         arg0: SetDappControllersRequest,
     ) -> Result<SetDappControllersResponse> {
         let args = Encode!(&arg0)?;
-        let bytes = self
-            .agent
-            .update(&self.principal, "set_dapp_controllers")
-            .with_arg(args)
-            .call_and_wait()
-            .await?;
+        let bytes = self.update_canister("set_dapp_controllers", args).await?;
         Ok(Decode!(&bytes, SetDappControllersResponse)?)
     }
 }
