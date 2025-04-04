@@ -25,7 +25,10 @@ class AsyncPreferencesFactory(
         @Volatile
         private var instance: AsyncPreferencesFactory? = null
 
-        fun getInstance(platformResources: PlatformResources, ioDispatcher: CoroutineDispatcher): AsyncPreferencesFactory =
+        fun getInstance(
+            platformResources: PlatformResources,
+            ioDispatcher: CoroutineDispatcher,
+        ): AsyncPreferencesFactory =
             instance ?: synchronized(this) {
                 instance ?: AsyncPreferencesFactory(platformResources, ioDispatcher).also { instance = it }
             }

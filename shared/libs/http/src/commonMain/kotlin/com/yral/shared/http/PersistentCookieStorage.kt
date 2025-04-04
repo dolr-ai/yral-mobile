@@ -8,14 +8,21 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
 
-enum class CookieType(val value: String) {
-    USER_IDENTITY("user-identity")
+enum class CookieType(
+    val value: String,
+) {
+    USER_IDENTITY("user-identity"),
 }
 
-class PersistentCookieStorage(private val preferences: Preferences) : CookiesStorage {
+class PersistentCookieStorage(
+    private val preferences: Preferences,
+) : CookiesStorage {
     private val mutex = Mutex()
 
-    override suspend fun addCookie(requestUrl: Url, cookie: Cookie) {
+    override suspend fun addCookie(
+        requestUrl: Url,
+        cookie: Cookie,
+    ) {
         if (CookieType.entries.any { it.value == cookie.name }) {
             mutex.withLock {
                 preferences.putString(cookie.name, Json.encodeToString(cookie))
@@ -35,9 +42,13 @@ class PersistentCookieStorage(private val preferences: Preferences) : CookiesSto
         }
     }
 
-    override fun close() {}
+    override fun close() {
+        TODO("Not yet implemented")
+    }
 }
 
-
 fun Cookie.maxAgeOrExpires(createdAt: Long): Long? =
-    maxAge?.let { createdAt + it * 1000L } ?: expires?.timestamp
+    maxAge?.let { createdAt + it * SECONDS_TO_MILLIS_MULTIPLIER }
+        ?: expires?.timestamp
+
+const val SECONDS_TO_MILLIS_MULTIPLIER = 1000L

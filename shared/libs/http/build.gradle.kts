@@ -12,7 +12,6 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_17)
         }
     }
-    
 //    listOf(
 //        iosX64(),
 //        iosArm64(),
@@ -28,7 +27,7 @@ kotlin {
         androidMain.dependencies {
         }
         commonMain.dependencies {
-            //put your multiplatform dependencies here
+            // put your multiplatform dependencies here
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.cio)
             implementation(libs.ktor.client.logging)
@@ -55,4 +54,3 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 }
-

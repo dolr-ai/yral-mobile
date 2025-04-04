@@ -8,13 +8,17 @@ import kotlinx.coroutines.internal.SynchronizedObject
 class IndividualUserServiceFactory {
     private var service: IndividualUserService? = null
 
-    fun service(): IndividualUserService = service ?: throw IllegalStateException("Service not initialised")
+    fun service(): IndividualUserService = service ?: error("Service not initialised")
 
-    fun initialize(principal: Principal, identityData: ByteArray) {
-        service = IndividualUserService(
-            principalText = principal,
-            identityData = identityData,
-        )
+    fun initialize(
+        principal: Principal,
+        identityData: ByteArray,
+    ) {
+        service =
+            IndividualUserService(
+                principalText = principal,
+                identityData = identityData,
+            )
     }
 
     @OptIn(InternalCoroutinesApi::class)

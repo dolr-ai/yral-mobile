@@ -16,7 +16,6 @@ actual interface PlatformResources {
 class AndroidPlatformResources(
     private val context: Context,
 ) : PlatformResources {
-
     override val applicationContext: Context
         get() = context.applicationContext
 

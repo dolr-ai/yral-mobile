@@ -17,21 +17,24 @@ import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.internal.SynchronizedObject
 import kotlinx.serialization.json.Json
 
-const val BaseURL = "yral.com"
+const val BASE_URL = "yral.com"
 
-class HttpClientFactory(private val preferences: Preferences) {
+class HttpClientFactory(
+    private val preferences: Preferences,
+) {
     private val client: HttpClient by lazy {
         createClient()
     }
 
-    private fun createClient(): HttpClient {
-        return HttpClient(CIO) {
+    private fun createClient(): HttpClient =
+        HttpClient(CIO) {
             install(Logging) {
-                logger = object : Logger {
-                    override fun log(message: String) {
-                        println("HTTP Client $message")
+                logger =
+                    object : Logger {
+                        override fun log(message: String) {
+                            println("HTTP Client $message")
+                        }
                     }
-                }
                 level = LogLevel.BODY
             }
             install(ContentNegotiation) {
@@ -49,12 +52,11 @@ class HttpClientFactory(private val preferences: Preferences) {
             defaultRequest {
                 url {
                     protocol = URLProtocol.HTTPS
-                    host = BaseURL
+                    host = BASE_URL
                 }
                 contentType(ContentType.Application.Json)
             }
         }
-    }
 
     fun build(): HttpClient = client
 

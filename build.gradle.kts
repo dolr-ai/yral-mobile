@@ -29,15 +29,18 @@ subprojects {
 
     detekt {
         toolVersion = "1.23.8"
-        //config.from(files("$rootDir/detekt-config.yml"))
+        config.from(files("$rootDir/detekt-config.yml"))
         buildUponDefaultConfig = true
 
         val detektFiles = project.findProperty("detektFiles") as? String
         if (detektFiles != null) {
             source.from(files(detektFiles.split(",")))
         } else {
-            // Default source
-            source.from(files("src/main/java", "src/main/kotlin"))
+            source.setFrom(
+                "$projectDir/src/commonMain/kotlin",
+                "$projectDir/src/androidMain/kotlin",
+                "$projectDir/src/iosMain/kotlin",
+            )
         }
     }
 

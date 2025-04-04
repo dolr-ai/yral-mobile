@@ -1,7 +1,5 @@
 package com.yral.shared.rust
 
 class RustGreeting {
-    fun greet(name: String): String {
-        return "Hello, ${name}! from rustLib"
-    }
+    fun greet(name: String): String = "Hello, $name! from rustLib"
 }

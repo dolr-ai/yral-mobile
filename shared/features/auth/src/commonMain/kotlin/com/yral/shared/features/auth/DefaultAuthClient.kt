@@ -28,10 +28,13 @@ class DefaultAuthClient(
     }
 
     override suspend fun refreshAuthIfNeeded() {
-        val cookie = client.cookies("https://${com.yral.shared.http.BaseURL}").firstOrNull { it.name == com.yral.shared.http.CookieType.USER_IDENTITY.value }
+        val cookie =
+            client
+                .cookies("https://${com.yral.shared.http.BASE_URL}")
+                .firstOrNull { it.name == com.yral.shared.http.CookieType.USER_IDENTITY.value }
         cookie?.let {
-            if ((it.maxAgeOrExpires(Clock.System.now().toEpochMilliseconds()) ?: 0) > Clock.System.now()
-                    .toEpochMilliseconds()
+            if ((it.maxAgeOrExpires(Clock.System.now().toEpochMilliseconds()) ?: 0) >
+                Clock.System.now().toEpochMilliseconds()
             ) {
                 val storedData = preferences.getBytes(PrefKeys.IDENTITY_DATA.name)
                 storedData?.let { data -> handleExtractIdentityResponse(data) } ?: extractIdentity(it)
@@ -55,12 +58,14 @@ class DefaultAuthClient(
     private suspend fun extractIdentity(cookie: Cookie) {
         val extractIdentityPath = "api/extract_identity"
         val payload = JsonObject(mapOf()).toString().toByteArray()
-        val result = client.post(extractIdentityPath) {
-            headers {
-                "Cookie" to "${cookie.name}=${cookie.value}"
-            }
-            setBody(payload)
-        }.bodyAsBytes()
+        val result =
+            client
+                .post(extractIdentityPath) {
+                    headers {
+                        "Cookie" to "${cookie.name}=${cookie.value}"
+                    }
+                    setBody(payload)
+                }.bodyAsBytes()
         if (result.isNotEmpty()) {
             handleExtractIdentityResponse(result)
             preferences.putBytes(PrefKeys.IDENTITY_DATA.name, result)

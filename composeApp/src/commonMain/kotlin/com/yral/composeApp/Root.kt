@@ -33,28 +33,34 @@ import com.yral.shared.rust.services.IndividualUserServiceFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+@Suppress("LongMethod")
 @Composable
 fun Root() {
-    val preferences = remember {
-        AsyncPreferencesFactory.getInstance(
-            platformResources = PlatformResourcesHolder.platformResources,
-            ioDispatcher = Dispatchers.IO
-        ).build()
-    }
-    val client = remember {
-        HttpClientFactory.getInstance(preferences).build()
-    }
-    val defaultAuthClient = remember {
-        DefaultAuthClient(
-            preferences = preferences,
-            client = client,
-        )
-    }
-    val individualUserRepository = remember {
-        IndividualUserRepositoryImpl(
-            dataSource = IndividualUserDataSourceImpl(),
-        )
-    }
+    val preferences =
+        remember {
+            AsyncPreferencesFactory
+                .getInstance(
+                    platformResources = PlatformResourcesHolder.platformResources,
+                    ioDispatcher = Dispatchers.IO,
+                ).build()
+        }
+    val client =
+        remember {
+            HttpClientFactory.getInstance(preferences).build()
+        }
+    val defaultAuthClient =
+        remember {
+            DefaultAuthClient(
+                preferences = preferences,
+                client = client,
+            )
+        }
+    val individualUserRepository =
+        remember {
+            IndividualUserRepositoryImpl(
+                dataSource = IndividualUserDataSourceImpl(),
+            )
+        }
     var initialised by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) {
@@ -73,11 +79,12 @@ fun Root() {
     LaunchedEffect(initialised) {
         if (defaultAuthClient.canisterPrincipal != null) {
             withContext(Dispatchers.IO) {
-                val posts = defaultAuthClient.canisterPrincipal?.let {
-                    individualUserRepository.getPostsOfThisUserProfileWithPaginationCursor(
-                        pageNo = 0UL,
-                    )
-                }
+                val posts =
+                    defaultAuthClient.canisterPrincipal?.let {
+                        individualUserRepository.getPostsOfThisUserProfileWithPaginationCursor(
+                            pageNo = 0UL,
+                        )
+                    }
                 println("xxxx $posts")
             }
         }
@@ -89,13 +96,14 @@ fun Root() {
             contentWindowInsets = WindowInsets(0, 0, 0, 0),
         ) { innerPadding ->
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .consumeWindowInsets(innerPadding)
-                    .windowInsetsPadding(
-                        WindowInsets.safeDrawing,
-                    ),
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                        .consumeWindowInsets(innerPadding)
+                        .windowInsetsPadding(
+                            WindowInsets.safeDrawing,
+                        ),
                 contentAlignment = Alignment.Center,
             ) {
                 Column {
@@ -111,4 +119,3 @@ fun Root() {
 fun GreetingView(text: String) {
     Text(text = text)
 }
-

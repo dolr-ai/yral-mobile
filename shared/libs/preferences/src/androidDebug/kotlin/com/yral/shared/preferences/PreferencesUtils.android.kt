@@ -7,27 +7,31 @@ import com.russhwolf.settings.Settings
 import com.russhwolf.settings.SharedPreferencesSettings
 import com.yral.shared.core.PlatformResources
 
-actual fun provideSharedPreferences(preferenceName: String, platformResources: PlatformResources): Settings {
-    return SharedPreferencesSettings(
+actual fun provideSharedPreferences(
+    preferenceName: String,
+    platformResources: PlatformResources,
+): Settings =
+    SharedPreferencesSettings(
         initializeEncryptedSharedPreferencesManager(
             preferenceName = preferenceName,
-            platformResources = platformResources
-        )
+            platformResources = platformResources,
+        ),
     )
-}
 
 private fun initializeEncryptedSharedPreferencesManager(
     preferenceName: String,
-    platformResources: PlatformResources
+    platformResources: PlatformResources,
 ): SharedPreferences {
-    val keyGenParameterSpec = MasterKey.Builder(platformResources.applicationContext)
-        .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-        .build()
+    val keyGenParameterSpec =
+        MasterKey
+            .Builder(platformResources.applicationContext)
+            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+            .build()
     return EncryptedSharedPreferences.create(
         platformResources.applicationContext,
         preferenceName,
         keyGenParameterSpec,
         EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
     )
 }

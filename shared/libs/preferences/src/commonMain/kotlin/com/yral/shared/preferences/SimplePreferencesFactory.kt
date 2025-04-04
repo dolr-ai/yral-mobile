@@ -4,7 +4,9 @@ import com.yral.shared.core.PlatformResources
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.internal.SynchronizedObject
 
-class SimplePreferencesFactory(private val platformResources: PlatformResources) {
+class SimplePreferencesFactory(
+    private val platformResources: PlatformResources,
+) {
     private val prefs by lazy {
         SimplePreferences(
             settings = provideSharedPreferences(USER_SHARED_PREF_NAME, platformResources),
