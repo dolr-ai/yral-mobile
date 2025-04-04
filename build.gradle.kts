@@ -28,23 +28,16 @@ subprojects {
     }
 
     detekt {
-        toolVersion = "1.23.1"
-        config = files("$rootDir/detekt-config.yml")
+        toolVersion = "1.23.8"
+        //config.from(files("$rootDir/detekt-config.yml"))
         buildUponDefaultConfig = true
 
         val detektFiles = project.findProperty("detektFiles") as? String
         if (detektFiles != null) {
-            source = files(detektFiles.split(","))
+            source.from(files(detektFiles.split(",")))
         } else {
             // Default source
-            source = files("src/main/java", "src/main/kotlin")
-        }
-
-        reports {
-            xml.required.set(true)
-            xml.outputLocation.set(file("build/reports/detekt/detekt.xml"))
-            sarif.required.set(true)
-            sarif.outputLocation.set(file("build/reports/detekt/detekt.sarif"))
+            source.from(files("src/main/java", "src/main/kotlin"))
         }
     }
 
@@ -54,6 +47,12 @@ subprojects {
             path.contains("/build/") ||
                 path.endsWith("build.gradle.kts") ||
                 path.endsWith("settings.gradle.kts")
+        }
+        reports {
+            xml.required.set(true)
+            xml.outputLocation.set(file("build/reports/detekt/detekt.xml"))
+            sarif.required.set(true)
+            sarif.outputLocation.set(file("build/reports/detekt/detekt.sarif"))
         }
     }
 }

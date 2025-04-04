@@ -42,7 +42,7 @@ kotlinCocoapods = { id = "org.jetbrains.kotlin.native.cocoapods", version.ref = 
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 compose-jetbrains = { id = "org.jetbrains.compose", version.ref = "compose-jetbrains-plugin" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version = "12.1.2" }
-detekt = { id = "io.gitlab.arturbosch.detekt", version = "1.23.7" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version = "1.23.8" }
 gobleyCargo = { id = "dev.gobley.cargo", version.ref = "gobley" }
 gobleyUniffi = { id = "dev.gobley.uniffi", version.ref = "gobley" }
 kotlinAtomicfu = { id = "org.jetbrains.kotlin.plugin.atomicfu", version.ref = "kotlin" }
