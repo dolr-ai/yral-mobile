@@ -8,7 +8,7 @@ use candid::{self, CandidType, Decode, Deserialize, Encode, Principal};
 use ic_agent::export::PrincipalError;
 use ic_agent::Agent;
 use std::sync::Arc;
-type Result<T> = std::result::Result<T, FfiError>;
+type Result<T> = std::result::Result<T, ic_agent::AgentError>;
 
 #[derive(CandidType, Deserialize)]
 pub struct NeuronBasketConstructionParameters {
