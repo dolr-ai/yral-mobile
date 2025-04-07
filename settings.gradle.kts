@@ -15,5 +15,10 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "yral-mobile"
+include(":composeApp")
 include(":androidApp")
-include(":shared")
+include(":shared:core")
+include(":shared:rust")
+include(":shared:libs:preferences")
+include(":shared:libs:http")
+include(":shared:features:auth")

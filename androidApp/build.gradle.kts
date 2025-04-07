@@ -1,15 +1,16 @@
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.kotlinAndroid)
+    alias(libs.plugins.compose.compiler)
 }
 
 android {
-    namespace = "com.example.yral_mobile.android"
-    compileSdk = 34
+    namespace = "com.yral.android"
+    compileSdk = libs.versions.compileSDK.get().toInt()
     defaultConfig {
-        applicationId = "com.example.yral_mobile.android"
-        minSdk = 24
-        targetSdk = 34
+        applicationId = "com.yral.android"
+        minSdk = libs.versions.minSDK.get().toInt()
+        targetSdk = libs.versions.targetSDK.get().toInt()
         versionCode = 1
         versionName = "1.0"
     }
@@ -30,19 +31,31 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "17"
     }
 }
 
 dependencies {
-    implementation(projects.shared)
     implementation(libs.compose.ui)
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.compose.material3)
     implementation(libs.androidx.activity.compose)
     debugImplementation(libs.compose.ui.tooling)
+
+    implementation(projects.shared.core)
+    implementation(projects.shared.libs.preferences)
+    implementation(projects.shared.libs.http)
+    implementation(projects.shared.features.auth)
+    implementation(projects.shared.rust)
+
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.cio)
+    implementation(libs.ktor.client.logging)
+    implementation(libs.ktor.client.content.negotiation)
+    implementation(libs.ktor.json)
+    implementation(libs.kotlinx.datetime)
 }
