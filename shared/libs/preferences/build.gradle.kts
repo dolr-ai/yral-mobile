@@ -28,7 +28,6 @@ kotlin {
             api(libs.androidx.security.crypto)
         }
         commonMain.dependencies {
-            // put your multiplatform dependencies here
             api(libs.multiplatform.settings)
             implementation(libs.ktor.json)
 
