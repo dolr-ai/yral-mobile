@@ -107,7 +107,7 @@ fun Root() {
                 contentAlignment = Alignment.Center,
             ) {
                 Column {
-                    GreetingView(Greeting().greet())
+                    GreetingView(Greeting().greet().plus("from Compose Multiplatform!"))
                     Spacer(Modifier.height(16.dp))
                 }
             }
