@@ -52,7 +52,7 @@ jobs:
 
       - name: Build APK
         if: steps.changed_files.outputs.any_changed == 'true'
-        run: ./gradlew androidApp:assembleDebug
+        run: ./gradlew androidApp:build
         env:
           JAVA_HOME: ${{ steps.setup-jdk.outputs.java-home }}
         continue-on-error: true
