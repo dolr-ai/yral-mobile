@@ -46,6 +46,10 @@ jobs:
           build-tools-version: 36.0.0
         continue-on-error: true
 
+      - name: Build project
+        if: steps.changed_files.outputs.any_changed == 'true'
+        run: ./gradlew build
+
       - name: Build APK
         if: steps.changed_files.outputs.any_changed == 'true'
         run: ./gradlew androidApp:assembleDebug
