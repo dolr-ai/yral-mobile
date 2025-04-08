@@ -73,6 +73,20 @@ struct KeychainHelper {
       }
     }
   }
+
+  static func storeSet(_ set: Set<String>, for key: String) throws {
+    let array = Array(set)
+    let data = try JSONEncoder().encode(array)
+    try store(data: data, for: key)
+  }
+
+  static func retrieveSet(for key: String) throws -> Set<String>? {
+    guard let data = try retrieveData(for: key) else {
+      return nil
+    }
+    let array = try JSONDecoder().decode([String].self, from: data)
+    return Set(array)
+  }
 }
 
 enum KeychainError: Error {

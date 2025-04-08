@@ -14,7 +14,17 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
   let likesUseCase: ToggleLikeUseCaseProtocol
   let reportUseCase: ReportFeedsUseCaseProtocol
   private var currentFeeds = [FeedResult]()
+  private var filteredFeeds = [FeedResult]()
   private var feedvideoIDSet = Set<String>()
+  private var blockedPrincipalIDSet: Set<String> = {
+    do {
+      return try KeychainHelper.retrieveSet(for: Constants.blockedPrincipalsIdentifier) ?? Set<String>()
+    } catch {
+      print(error.localizedDescription)
+      return Set<String>()
+    }
+  }()
+
   private var cancellables = Set<AnyCancellable>()
   private var isFetchingInitialFeeds = false
 
@@ -38,11 +48,14 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
       .receive(on: DispatchQueue.main)
       .sink { [weak self] updatedFeed in
         guard let self = self else { return }
-        let newFeeds = updatedFeed.filter { !self.feedvideoIDSet.contains($0.videoID) }
-        guard !newFeeds.isEmpty else { return }
-        self.feedvideoIDSet.formUnion(newFeeds.map { $0.videoID })
-        self.currentFeeds += newFeeds
-        self.unifiedState = .success(feeds: newFeeds)
+        self.filteredFeeds = updatedFeed.filter {
+          !self.feedvideoIDSet.contains($0.videoID)
+        }
+        var unblockedFeeds = self.filteredFeeds.filter { !self.blockedPrincipalIDSet.contains($0.principalID) }
+        guard !unblockedFeeds.isEmpty else { return }
+        self.feedvideoIDSet.formUnion(unblockedFeeds.map { $0.videoID })
+        self.currentFeeds += unblockedFeeds
+        self.unifiedState = .success(feeds: unblockedFeeds)
       }
       .store(in: &cancellables)
   }
@@ -50,6 +63,7 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
   var unifiedStatePublisher: AnyPublisher<UnifiedFeedState, Never> {
     $unifiedState.eraseToAnyPublisher()
   }
+
   var unifiedEventPublisher: AnyPublisher<UnifiedFeedEvent?, Never> {
     $unifiedEvent.eraseToAnyPublisher()
   }
@@ -60,6 +74,9 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
       let result = await initialFeedsUseCase.execute(request: request)
       isFetchingInitialFeeds = false
       unifiedEvent = .finishedLoadingInitialFeeds
+      if self.currentFeeds.count <= FeedsViewController.Constants.initialNumResults {
+        await loadMoreFeeds()
+      }
       switch result {
       case .failure(let failure):
         print(failure)
@@ -72,7 +89,7 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
     unifiedEvent = .loadingMoreFeeds
     unifiedState = .loading
     do {
-      let filteredPosts = currentFeeds.map {
+      let filteredPosts = filteredFeeds.map {
         FilteredPosts(
           postID: $0.postID,
           canisterID: $0.canisterID,
@@ -87,24 +104,14 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
       )
       let result = await moreFeedsUseCase.execute(request: request)
       switch result {
-      case .success(let response):
+      case .success:
         unifiedEvent = .loadedMoreFeeds
-        var tempSet = Set<String>()
-        let uniqueInBatch = response.filter { feed in
-          guard !tempSet.contains(feed.videoID) else { return false }
-          tempSet.insert(feed.videoID)
-          return true
-        }
-        let newFeeds = uniqueInBatch.filter { !feedvideoIDSet.contains($0.videoID) }
-        guard !newFeeds.isEmpty else { return }
-
-        feedvideoIDSet.formUnion(newFeeds.map { $0.videoID })
-        currentFeeds += newFeeds
-        unifiedState = .success(feeds: newFeeds)
-
       case .failure(let error):
         unifiedEvent = .loadMoreFeedsFailed(errorMessage: error.localizedDescription)
         unifiedState = .failure(errorMessage: error.localizedDescription)
+      }
+      if self.currentFeeds.count <= FeedsViewController.Constants.initialNumResults {
+        await loadMoreFeeds()
       }
     }
   }
@@ -139,9 +146,26 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
     }
   }
 
+  @MainActor func blockUser(principalId: String) async {
+    blockedPrincipalIDSet.insert(principalId)
+    do {
+      try KeychainHelper.storeSet(blockedPrincipalIDSet, for: Constants.blockedPrincipalsIdentifier)
+    } catch {
+      print(error.localizedDescription)
+    }
+    self.currentFeeds.removeAll(where: { $0.principalID == principalId})
+    self.unifiedEvent = .blockedUser(principalId)
+  }
+
   func getCurrentFeedIndex() -> Int {
     return .zero
   }
 
   func deleteVideo(request: DeleteVideoRequest) async { }
+}
+
+extension FeedsViewModel {
+  enum Constants {
+    static let blockedPrincipalsIdentifier: String = "blockedPrincipalsIdentifier"
   }
+}

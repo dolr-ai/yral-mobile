@@ -39,6 +39,7 @@ class DefaultAuthClient: AuthClient {
       guard let existingCookie = cookieStorage.cookies?.first(where: { $0.name == AuthConstants.cookieName }) else {
         try? KeychainHelper.deleteItem(for: keychainPayloadKey)
         try? KeychainHelper.deleteItem(for: keychainIdentityKey)
+        try? KeychainHelper.deleteItem(for: FeedsViewModel.Constants.blockedPrincipalsIdentifier)
         try await fetchAndSetAuthCookie()
         return
       }
