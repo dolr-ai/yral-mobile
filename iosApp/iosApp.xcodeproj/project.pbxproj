@@ -1796,7 +1796,6 @@
 			buildConfigurationList = ACD941B52CFF575C0038FCB6 /* Build configuration list for PBXNativeTarget "Yral-Staging" */;
 			buildPhases = (
 				ACD941842CFF575C0038FCB6 /* Generate rust bindings */,
-				ACD941852CFF575C0038FCB6 /* Run Script */,
 				ACD941862CFF575C0038FCB6 /* Sources */,
 				ACD9418D2CFF575C0038FCB6 /* Frameworks */,
 				ACD941B02CFF575C0038FCB6 /* Resources */,
@@ -1977,25 +1976,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\n#./build-rust.sh\n";
-		};
-		ACD941852CFF575C0038FCB6 /* Run Script */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-			);
-			name = "Run Script";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(DERIVED_FILE_DIR)/../rust-agent/src/lib.rs",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "cd \"$SRCROOT/..\"\n./gradlew :shared:embedAndSignAppleFrameworkForXcode\n";
 		};
 		ACD941B42CFF575C0038FCB6 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
