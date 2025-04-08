@@ -46,9 +46,9 @@ jobs:
           build-tools-version: 36.0.0
         continue-on-error: true
 
-      - name: Build project
+      - name: Build rust project
         if: steps.changed_files.outputs.any_changed == 'true'
-        run: ./gradlew build
+        run: ./gradlew shared:rust:assembleDebug
 
       - name: Build APK
         if: steps.changed_files.outputs.any_changed == 'true'
