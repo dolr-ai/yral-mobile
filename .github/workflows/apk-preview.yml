@@ -40,10 +40,7 @@ jobs:
 
       - name: Install android SDK
         if: steps.changed_files.outputs.any_changed == 'true'
-        uses: android-actions/setup-android@v2
-        with:
-          api-level: 35
-          build-tools-version: 36.0.0
+        uses: android-actions/setup-android@v3
         continue-on-error: true
 
       - name: Cache NDK
