@@ -43,18 +43,6 @@ jobs:
         uses: android-actions/setup-android@v3
         continue-on-error: true
 
-      - name: Cache NDK
-        if: steps.changed_files.outputs.any_changed == 'true'
-        id: ndk-cache
-        uses: actions/cache@v3
-        with:
-          path: /usr/local/lib/android/sdk/ndk
-          key: ndk-cache
-
-      - name: Install NDK
-        if: steps.ndk-cache.outputs.cache-hit != 'true' && steps.changed_files.outputs.any_changed == 'true'
-        run: echo "y" | sdkmanager --install "ndk;28.0.13004108"
-
       - name: Clean project
         if: steps.changed_files.outputs.any_changed == 'true'
         run: ./gradlew clean

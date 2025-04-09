@@ -42,7 +42,7 @@ android {
     defaultConfig {
         minSdk = libs.versions.minSDK.get().toInt()
         ndk {
-            version = "28.0.13004108"
+            version = "25.2.9519653"
         }
     }
     compileOptions {
