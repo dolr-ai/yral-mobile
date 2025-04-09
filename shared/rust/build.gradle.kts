@@ -41,6 +41,9 @@ android {
     compileSdk = libs.versions.compileSDK.get().toInt()
     defaultConfig {
         minSdk = libs.versions.minSDK.get().toInt()
+        ndk {
+            version = "28.0.13004108"
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
