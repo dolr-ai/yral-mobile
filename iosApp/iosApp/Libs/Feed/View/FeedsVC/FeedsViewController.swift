@@ -20,13 +20,13 @@ class FeedsViewController: UIViewController {
   var initalFeedscancellables: Set<AnyCancellable> = []
   var paginatedFeedscancellables: Set<AnyCancellable> = []
 
-  lazy var yralPlayer: YralPlayer = {
-    let player = YralPlayer()
-    player.delegate = self
-    return player
-  }()
-  var isCurrentlyVisible = true
-  var lastDisplayedThumbnailPath: [String: String] = [:]
+    lazy var feedsPlayer: YralPlayer = {
+        let player = FeedsPlayer()
+        player.delegate = self
+        return player
+    }()
+    var isCurrentlyVisible = true
+    var lastDisplayedThumbnailPath: [Int: String] = [:]
 
   var feedsCV: UICollectionView = {
     let collectionView = getUICollectionView()

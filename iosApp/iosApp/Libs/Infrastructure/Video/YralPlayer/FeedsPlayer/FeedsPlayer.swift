@@ -1,5 +1,5 @@
 //
-//  YralPlayer.swift
+//  FeedsPlayer.swift
 //  iosApp
 //
 //  Created by Sarvesh Sharma on 15/12/24.
@@ -10,7 +10,7 @@ import UIKit
 import AVFoundation
 
 @MainActor
-final class YralPlayer {
+final class FeedsPlayer: YralPlayer {
   var feedResults: [FeedResult] = []
   var currentIndex: Int = .zero
 
@@ -21,10 +21,10 @@ final class YralPlayer {
   private var currentlyDownloadingIndexes: Set<Int> = []
   var isPlayerVisible: Bool = true
   var didEmptyFeeds: (() -> Void)?
-  weak var delegate: YralPlayerProtocol?
+  weak var delegate: FeedsPlayerProtocol?
 
-  func loadInitialVideos(_ feedResults: [FeedResult]) {
-    self.feedResults = feedResults
+  func loadInitialVideos(_ feeds: [FeedResult]) {
+    self.feedResults = feeds
     configureAudioSession()
     currentIndex = .zero
     HLSDownloadManager.shared.delegate = self
@@ -43,8 +43,8 @@ final class YralPlayer {
     }
   }
 
-  func addFeedResults(_ feedResults: [FeedResult]) {
-    self.feedResults += feedResults
+  func addFeedResults(_ feeds: [FeedResult]) {
+    self.feedResults += feeds
     if self.feedResults.count <= Constants.radius {
       Task {
         await preloadFeeds()
@@ -198,7 +198,7 @@ final class YralPlayer {
   }
 }
 
-extension YralPlayer: HLSDownloadManagerProtocol {
+extension FeedsPlayer: HLSDownloadManagerProtocol {
   nonisolated func clearedCache(for assetTitle: String) {
     Task { @MainActor [weak self] in
       guard let self else { return }
@@ -209,12 +209,12 @@ extension YralPlayer: HLSDownloadManagerProtocol {
   }
 }
 
-protocol YralPlayerProtocol: AnyObject {
+protocol FeedsPlayerProtocol: AnyObject {
   func cacheCleared(atc index: Int)
   func removeThumbnails(for set: Set<Int>)
 }
 
-extension YralPlayer {
+extension FeedsPlayer {
   enum Constants {
     static let radius = 5
   }
