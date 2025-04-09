@@ -4,8 +4,7 @@ on:
     branches:
       - 'develop'
     types:
-      - ready_for_review
-      - synchronize
+      - closed
 
 jobs:
   build-apk:
