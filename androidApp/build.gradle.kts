@@ -26,6 +26,12 @@ android {
         }
     }
     signingConfigs {
+        create("staging") {
+            storeFile = file("my-debug-key.keystore")
+            storePassword = System.getenv("DEBUG_KEYSTORE_PASSWORD")
+            keyAlias = "android"
+            keyPassword = System.getenv("DEBUG_KEY_PASSWORD")
+        }
         create("release") {
             storeFile = file("my-release-key.keystore")
             storePassword = System.getenv("KEYSTORE_PASSWORD")
@@ -34,6 +40,10 @@ android {
         }
     }
     buildTypes {
+        getByName("debug") {
+            signingConfig = signingConfigs.getByName("staging")
+            applicationIdSuffix = ".staging"
+        }
         getByName("release") {
             signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
