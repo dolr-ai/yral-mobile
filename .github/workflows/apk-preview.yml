@@ -4,7 +4,8 @@ on:
     branches:
       - 'develop'
     types:
-      - closed
+      - ready_for_review
+      - synchronize
 
 jobs:
   build-apk:
@@ -41,6 +42,11 @@ jobs:
         if: steps.changed_files.outputs.any_changed == 'true'
         uses: android-actions/setup-android@v3
         continue-on-error: true
+
+      - name: Setup environment variables
+        run: |
+          echo "KEYSTORE_PASSWORD=${{ secrets.ANDROID_DEBUG_SIGNING_SECRET_PASSWORD }}" >> $GITHUB_ENV
+          echo "KEY_PASSWORD=${{ secrets.ANDROID_DEBUG_SIGNING_SECRET_PASSWORD }}" >> $GITHUB_ENV
 
       - name: Clean project
         if: steps.changed_files.outputs.any_changed == 'true'
