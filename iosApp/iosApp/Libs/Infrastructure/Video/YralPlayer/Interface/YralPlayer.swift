@@ -18,7 +18,7 @@ protocol YralPlayer {
     var currentIndex: Int { get }
 
     /// Gets the instance of player
-    var player: AVQueuePlayer { get }
+    var player: YralQueuePlayer { get }
 
     /// Plays the video
     func play()

@@ -14,7 +14,7 @@ final class FeedsPlayer: YralPlayer {
   var feedResults: [FeedResult] = []
   var currentIndex: Int = .zero
 
-  let player = AVQueuePlayer()
+  var player: YralQueuePlayer
   private var playerLooper: AVPlayerLooper?
   private var lastPlayedTimes: [Int: CMTime] = [:]
   var playerItems: [Int: AVPlayerItem] = [:]
@@ -22,6 +22,10 @@ final class FeedsPlayer: YralPlayer {
   var isPlayerVisible: Bool = true
   var didEmptyFeeds: (() -> Void)?
   weak var delegate: FeedsPlayerProtocol?
+
+  init(player: YralQueuePlayer = AVQueuePlayer()) {
+    self.player = player
+  }
 
   func loadInitialVideos(_ feeds: [FeedResult]) {
     self.feedResults = feeds
@@ -104,6 +108,15 @@ final class FeedsPlayer: YralPlayer {
     playerLooper?.disableLooping()
     playerLooper = nil
     player.removeAllItems()
+
+    guard let player = player as? AVQueuePlayer else {
+      player.play()
+        Task {
+          await preloadFeeds()
+        }
+        return
+    }
+
     playerLooper = AVPlayerLooper(player: player, templateItem: item)
 
     if let lastTime = lastPlayedTimes[currentIndex] {
