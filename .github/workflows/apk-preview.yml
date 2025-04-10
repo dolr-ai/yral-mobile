@@ -45,8 +45,8 @@ jobs:
 
       - name: Setup environment variables
         run: |
-          echo "KEYSTORE_PASSWORD=${{ secrets.ANDROID_DEBUG_SIGNING_SECRET_PASSWORD }}" >> $GITHUB_ENV
-          echo "KEY_PASSWORD=${{ secrets.ANDROID_DEBUG_SIGNING_SECRET_PASSWORD }}" >> $GITHUB_ENV
+          echo "DEBUG_KEYSTORE_PASSWORD=${{ secrets.ANDROID_DEBUG_SIGNING_SECRET_PASSWORD }}" >> $GITHUB_ENV
+          echo "DEBUG_KEY_PASSWORD=${{ secrets.ANDROID_DEBUG_SIGNING_SECRET_PASSWORD }}" >> $GITHUB_ENV
 
       - name: Clean project
         if: steps.changed_files.outputs.any_changed == 'true'
