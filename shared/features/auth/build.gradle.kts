@@ -37,7 +37,9 @@ kotlin {
 
             implementation(projects.shared.libs.preferences)
             implementation(projects.shared.libs.http)
-            implementation(projects.shared.rust)
+
+            //implementation(projects.shared.rust)
+            implementation("com.yral.shared:rust-android-debug:1.0")
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
