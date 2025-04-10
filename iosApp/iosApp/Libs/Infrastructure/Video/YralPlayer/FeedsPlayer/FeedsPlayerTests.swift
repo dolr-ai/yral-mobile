@@ -17,14 +17,20 @@ final class FeedsPlayerTests: XCTestCase {
 
     override func setUpWithError() throws {
         sut = FeedsPlayer()
-        feedResults = [
-            // swiftlint:disable:next line_length
-            .init(postID: "1", videoID: "1", canisterID: "1", principalID: "1", url: URL(string: "https://www.google.com")!, thumbnail: URL(string: "https://www.google.com")!, postDescription: "sample description", likeCount: 1, isLiked: true, nsfwProbability: 0),
-            // swiftlint:disable:next line_length
-            .init(postID: "2", videoID: "2", canisterID: "2", principalID: "2", url: URL(string: "https://www.google.com")!, thumbnail: URL(string: "https://www.google.com")!, postDescription: "sample description", likeCount: 2, isLiked: true, nsfwProbability: 0),
-            // swiftlint:disable:next line_length
-            .init(postID: "3", videoID: "3", canisterID: "3", principalID: "3", url: URL(string: "https://www.google.com")!, thumbnail: URL(string: "https://www.google.com")!, postDescription: "sample description", likeCount: 3, isLiked: true, nsfwProbability: 0)
-        ]
+        feedResults = (1...15).map { index in
+            FeedResult(
+                postID: "\(index)",
+                videoID: "\(index)",
+                canisterID: "\(index)",
+                principalID: "\(index)",
+                url: URL(string: "https://www.google.com")!,
+                thumbnail: URL(string: "https://www.google.com")!,
+                postDescription: "sample description \(index)",
+                likeCount: index,
+                isLiked: index % 2 == 1,
+                nsfwProbability: 0
+            )
+        }
     }
 
     override func tearDownWithError() throws {
