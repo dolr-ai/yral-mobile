@@ -66,7 +66,8 @@ final class FeedsPlayerTests: XCTestCase {
 
     // MARK: - Add Feed Tests
     func testAddFeedResults_ShouldAddAllFeeds() async throws {
-        sut.addFeedResults(feedResults)
+        sut.loadInitialVideos(Array(feedResults[0...9]))
+        sut.addFeedResults(Array(feedResults[10...19]))
         XCTAssertEqual(sut.feedResults.count, 20)
     }
 
@@ -92,8 +93,7 @@ final class FeedsPlayerTests: XCTestCase {
         await fulfillment(of: [expectations[0]], timeout: 2)
         XCTAssertEqual(mockPlayer.playCallCount, 1)
 
-        let index = 1
-        sut.advanceToVideo(at: index)
+        sut.advanceToVideo(at: 1)
         XCTAssertEqual(sut.currentIndex, 1)
 
         await fulfillment(of: [expectations[1]], timeout: 2)
@@ -139,8 +139,7 @@ final class FeedsPlayerTests: XCTestCase {
 
     func testAdvanceToVideo_ShouldNotAdvanceToNextVideo() throws {
         sut.feedResults = feedResults
-        let index = 20
-        sut.advanceToVideo(at: index)
+        sut.advanceToVideo(at: 20)
         XCTAssertEqual(sut.currentIndex, 0)
     }
 
@@ -149,6 +148,7 @@ final class FeedsPlayerTests: XCTestCase {
         sut.feedResults = feedResults
         sut.removeFeeds(feedResults)
         XCTAssertEqual(sut.feedResults.count, 0)
+        XCTAssertEqual(sut.playerItems.count, 0)
     }
 
     func testRemoveFeeds_ShouldNotRemoveAllFeeds() throws {
