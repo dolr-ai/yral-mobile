@@ -83,11 +83,14 @@ final class FeedsPlayer: YralPlayer {
   func removeFeeds(_ feeds: [FeedResult]) {
     guard !feeds.isEmpty else { return }
     let removedIDs = Set(feeds.map { $0.postID })
+    let removedIndexes = removedIDs.compactMap { removedID in
+      feedResults.firstIndex { $0.postID == removedID }
+    }
     let currentFeedID = feedResults.indices.contains(currentIndex)
     ? feedResults[currentIndex].postID
     : nil
     feedResults.removeAll(where: { removedIDs.contains($0.postID) })
-    playerItems.removeAll()
+    removedIndexes.forEach { playerItems.removeValue(forKey: $0) }
     if let currentFeedID = currentFeedID,
        !feedResults.contains(where: { $0.postID == currentFeedID }) {
       currentIndex = min(currentIndex, max(feedResults.count - 1, .zero))
