@@ -59,8 +59,6 @@ class FeedsRepository: FeedRepositoryProtocol {
       }
     }
 
-    self.feedsUpdateSubject.send(completion: .finished)
-
     if !aggregatedErrors.isEmpty {
       return .failure(FeedError.aggregated(AggregatedError(errors: aggregatedErrors)))
     }
@@ -89,12 +87,13 @@ class FeedsRepository: FeedRepositoryProtocol {
     }
 
     var aggregatedErrors: [Error] = []
-    var successfulFeeds: [FeedResult] = []
+    var result: [FeedResult] = []
 
     for feed in feedResponse {
       do {
         let feedResult = try await self.mapToFeedResults(feed: feed)
-        successfulFeeds.append(feedResult)
+        result.append(feedResult)
+        self.feedsUpdateSubject.send([feedResult])
       } catch {
         let feedError = self.handleFeedError(error: error)
         aggregatedErrors.append(feedError)
@@ -104,7 +103,7 @@ class FeedsRepository: FeedRepositoryProtocol {
     if !aggregatedErrors.isEmpty {
       return .failure(FeedError.aggregated(AggregatedError(errors: aggregatedErrors)))
     }
-    return .success(successfulFeeds)
+    return .success(result)
   }
 
   func mapToFeedResults<T: FeedMapping>(feed: T) async throws -> FeedResult {

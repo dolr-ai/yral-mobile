@@ -38,39 +38,7 @@ extension FeedsViewController: FeedsCellProtocol {
   }
 
   func deleteButtonTapped(index: Int) {
-    let snapshot = feedsDataSource.snapshot()
-    guard index < snapshot.itemIdentifiers.count else { return }
-    let feedItem = snapshot.itemIdentifiers[index]
-
-    var hostingController: UIHostingController<NudgePopupView>?
-
-    let nudgeView = NudgePopupView(
-      nudgeTitle: "Delete video?",
-      nudgeMessage: "This video will be permanently deleted from your Yral account.",
-      confirmLabel: "Delete",
-      cancelLabel: "Cancel",
-      onConfirm: { [weak self] in
-        hostingController?.dismiss(animated: true, completion: nil)
-        guard let self = self else { return }
-        Task { @MainActor in
-          await self.viewModel.deleteVideo(
-            request: DeleteVideoRequest(
-              postId: UInt64(feedItem.postID) ?? .zero,
-              videoId: feedItem.videoID
-            )
-          )
-        }
-      },
-      onCancel: {
-        hostingController?.dismiss(animated: true, completion: nil)
-      }
-    )
-
-    hostingController = UIHostingController(rootView: nudgeView)
-    hostingController!.modalPresentationStyle = .overFullScreen
-    hostingController!.modalTransitionStyle = .crossDissolve
-    hostingController?.view.backgroundColor = .clear
-    self.present(hostingController!, animated: true, completion: nil)
+    getNudgeView(at: index, isDelete: true)
   }
 
   func reportButtonTapped(index: Int) {
@@ -93,6 +61,7 @@ extension FeedsViewController: FeedsCellProtocol {
             canisterID: feedItem.canisterID
           ))
         }
+        self.getNudgeView(at: index, isDelete: false)
       },
       onDismiss: {
         hostingController?.dismiss(animated: true, completion: nil)
@@ -105,16 +74,64 @@ extension FeedsViewController: FeedsCellProtocol {
     hostingController?.view.backgroundColor = .clear
     self.present(hostingController!, animated: true, completion: nil)
   }
+
+  func getNudgeView(at index: Int, isDelete: Bool) {
+    let snapshot = feedsDataSource.snapshot()
+    guard index < snapshot.itemIdentifiers.count else { return }
+    let feedItem = snapshot.itemIdentifiers[index]
+
+    var hostingController: UIHostingController<NudgePopupView>?
+    let title = isDelete ? Constants.deleteNudgeTitle : Constants.blockNudgeTitle
+    let subtitle = isDelete ? Constants.deleteNudgeSubtitle : Constants.blockNudgeSubtitle
+    let confrimLabel = isDelete ? Constants.deleteConfirmButton : Constants.blockConfirmButton
+    let cancelLabel = isDelete ? Constants.deleteCancelButton : Constants.blockCancelButton
+    let nudgeView = NudgePopupView(
+      nudgeTitle: title,
+      nudgeMessage: subtitle,
+      confirmLabel: confrimLabel,
+      cancelLabel: cancelLabel,
+      onConfirm: { [weak self] in
+        hostingController?.dismiss(animated: true, completion: nil)
+        guard let self = self else { return }
+        Task { @MainActor in
+          if isDelete {
+            await self.viewModel.deleteVideo(
+              request: DeleteVideoRequest(
+                postId: UInt64(feedItem.postID) ?? .zero,
+                videoId: feedItem.videoID
+              )
+            )
+          } else {
+            await self.viewModel.blockUser(principalId: feedItem.principalID)
+          }
+        }
+      },
+      onCancel: {
+        hostingController?.dismiss(animated: true, completion: nil)
+      }
+    )
+
+    hostingController = UIHostingController(rootView: nudgeView)
+    hostingController!.modalPresentationStyle = .overFullScreen
+    hostingController!.modalTransitionStyle = .crossDissolve
+    hostingController?.view.backgroundColor = .clear
+    self.present(hostingController!, animated: true, completion: nil)
+  }
 }
 
 extension FeedsViewController: YralPlayerProtocol {
   func cacheCleared(atc index: Int) {
-    lastDisplayedThumbnailPath.removeValue(forKey: index)
+
+    lastDisplayedThumbnailPath.removeValue(
+      forKey: feedsDataSource.snapshot().itemIdentifiers[index].videoID
+    )
   }
 
   func removeThumbnails(for set: Set<Int>) {
     for index in set {
-      lastDisplayedThumbnailPath.removeValue(forKey: index)
+      lastDisplayedThumbnailPath.removeValue(
+        forKey: feedsDataSource.snapshot().itemIdentifiers[index].videoID
+      )
     }
   }
 }
