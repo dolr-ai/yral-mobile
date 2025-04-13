@@ -26,7 +26,7 @@ class FeedsViewController: UIViewController {
     return player
   }()
   var isCurrentlyVisible = true
-  var lastDisplayedThumbnailPath: [Int: String] = [:]
+  var lastDisplayedThumbnailPath: [String: String] = [:]
 
   var feedsCV: UICollectionView = {
     let collectionView = getUICollectionView()
@@ -38,14 +38,6 @@ class FeedsViewController: UIViewController {
     collectionView.contentInsetAdjustmentBehavior = .never
     return collectionView
   }()
-
-//  lazy var activityIndicator: UIActivityIndicatorView = {
-//    let indicator = UIActivityIndicatorView(style: .medium)
-//    indicator.translatesAutoresizingMaskIntoConstraints = false
-//    indicator.color = .white
-//    indicator.hidesWhenStopped = true
-//    return indicator
-//  }()
 
   lazy var activityIndicator: LottieLoaderContainerView = {
     let loader = LottieLoaderContainerView(animationName: Constants.loaderLottie)
@@ -97,6 +89,7 @@ class FeedsViewController: UIViewController {
     super.viewWillAppear(animated)
     isCurrentlyVisible = true
     yralPlayer.isPlayerVisible = true
+    guard !feedsDataSource.snapshot().itemIdentifiers.isEmpty else { return }
     yralPlayer.play()
   }
 
@@ -125,7 +118,7 @@ class FeedsViewController: UIViewController {
       .store(in: &initalFeedscancellables)
   }
 
-  // swiftlint: disable cyclomatic_complexity
+  // swiftlint: disable cyclomatic_complexity function_body_length
   func handleEvents() {
     viewModel.unifiedEventPublisher
       .receive(on: RunLoop.main)
@@ -169,16 +162,18 @@ class FeedsViewController: UIViewController {
               $0.postID == postID
             }
           ) else { return }
-          lastDisplayedThumbnailPath.removeValue(forKey: feedIndex)
           self.removeFeeds(with: [self.feedsDataSource.snapshot().itemIdentifiers[feedIndex]], isReport: true)
         case .reportFailed(let error):
           self.activityIndicator.stopAnimating()
           print("Report video failed: \(error.localizedDescription)")
+        case .blockedUser(let principalId):
+          let itemsToRemove = self.feedsDataSource.snapshot().itemIdentifiers.filter { $0.principalID == principalId }
+          self.removeFeeds(with: itemsToRemove, isReport: false)
         }
       }
       .store(in: &paginatedFeedscancellables)
   }
-  // swiftlint: enable cyclomatic_complexity
+  // swiftlint: enable cyclomatic_complexity function_body_length
 
   func setupNavigationBar() {
     navigationController?.navigationBar.isHidden = feedType == .otherUsers
@@ -285,6 +280,7 @@ class FeedsViewController: UIViewController {
 
   @objc func appDidBecomeActive() {
     if isCurrentlyVisible {
+      guard !feedsDataSource.snapshot().itemIdentifiers.isEmpty else { return }
       yralPlayer.play()
     }
   }
@@ -293,11 +289,11 @@ class FeedsViewController: UIViewController {
     let currentTimeSec = yralPlayer.player.currentTime().seconds
     let roundedTime = String(format: "%.2f", currentTimeSec)
     guard let visibleIndexPath = feedsCV.indexPathsForVisibleItems.sorted().first else { return }
-    let baseString = FeedsRepository.Constants.cloudfarePrefix +
-    (feedsDataSource.itemIdentifier(for: visibleIndexPath)?.videoID ?? "") +
+    let videoID = feedsDataSource.itemIdentifier(for: visibleIndexPath)?.videoID ?? ""
+    let baseString = FeedsRepository.Constants.cloudfarePrefix + videoID +
     FeedsRepository.Constants.thumbnailSuffix + "?time=\(roundedTime)s"
     guard let url = URL(string: baseString) else { return }
-    lastDisplayedThumbnailPath[yralPlayer.currentIndex] = baseString
+    lastDisplayedThumbnailPath[videoID] = baseString
     SDWebImageManager.shared.loadImage(
       with: url,
       options: .highPriority,
@@ -330,6 +326,18 @@ extension FeedsViewController {
     static let navTitlefont = YralFont.pt20.bold.uiFont
     static let loaderLottie = "Yral_Loader"
     static let indicatorSize = 24.0
+
+    static let deleteNudgeTitle = "Delete video?"
+    static let deleteNudgeSubtitle = "This video will be permanently deleted from your Yral account."
+    static let deleteConfirmButton = "Delete"
+    static let deleteCancelButton = "Cancel"
+
+    static let blockNudgeTitle = "Do you want to block this user?"
+    // swiftlint: disable line_length
+    static let blockNudgeSubtitle = "Blocking a user will hide their videos and activity from appearing in your home feed"
+    // swiftlint: enable line_length
+    static let blockConfirmButton = "Confrim"
+    static let blockCancelButton = "Cancel"
   }
 }
 // swiftlint: enable type_body_length

@@ -36,11 +36,15 @@ class DefaultAuthClient: AuthClient {
   @MainActor
   func initialize() async throws {
     try await recordThrowingOperation {
-      if let existingCookie = cookieStorage.cookies?.first(where: { $0.name == AuthConstants.cookieName }) {
-        try await refreshAuthIfNeeded(using: existingCookie)
-      } else {
+      guard let existingCookie = cookieStorage.cookies?.first(where: { $0.name == AuthConstants.cookieName }) else {
+        try? KeychainHelper.deleteItem(for: keychainPayloadKey)
+        try? KeychainHelper.deleteItem(for: keychainIdentityKey)
+        try? KeychainHelper.deleteItem(for: FeedsViewModel.Constants.blockedPrincipalsIdentifier)
         try await fetchAndSetAuthCookie()
+        return
       }
+
+      try await refreshAuthIfNeeded(using: existingCookie)
     }
   }
 
@@ -183,6 +187,8 @@ class DefaultAuthClient: AuthClient {
       }
       crashReporter.log("Reached unsafe bytes end")
 
+      let principal = get_principal_from_identity(identity).toString()
+      crashReporter.log("Principal id before authenticate_with_network: \(principal)")
       let canistersWrapper = try await authenticate_with_network(wire, nil)
       crashReporter.log("canistersWrapper authenticate_with_network success")
 
@@ -191,7 +197,7 @@ class DefaultAuthClient: AuthClient {
       let userPrincipal = canistersWrapper.get_user_principal()
       let userPrincipalString = canistersWrapper.get_user_principal_string().toString()
       crashReporter.log("canistersWrapper executed successfully")
-
+      crashReporter.setUserId(userPrincipalString)
       await MainActor.run {
         self.identity = identity
         self.canisterPrincipal = canisterPrincipal
@@ -235,6 +241,7 @@ class DefaultAuthClient: AuthClient {
     do {
       return try operation()
     } catch {
+      crashReporter.log(error.localizedDescription)
       crashReporter.recordException(error)
       throw error
     }
@@ -245,6 +252,7 @@ class DefaultAuthClient: AuthClient {
     do {
       return try await operation()
     } catch {
+      crashReporter.log(error.localizedDescription)
       crashReporter.recordException(error)
       throw error
     }

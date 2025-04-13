@@ -1606,6 +1606,7 @@ void* __swift_bridge__$CanistersWrapper$get_user_principal(void* self);
 void* __swift_bridge__$CanistersWrapper$get_user_principal_string(void* self);
 struct __private__OptionU64 __swift_bridge__$extract_time_as_double(void* result);
 struct __private__ResultPtrAndPtr __swift_bridge__$get_principal(void* text);
+void* __swift_bridge__$get_principal_from_identity(void* identity);
 bool __swift_bridge__$GetPostsOfUserProfileError$is_reached_end_of_items_list(void* self);
 bool __swift_bridge__$GetPostsOfUserProfileError$is_invalid_bounds_passed(void* self);
 bool __swift_bridge__$GetPostsOfUserProfileError$is_exceeded_max_number_of_items_allowed_in_one_request(void* self);

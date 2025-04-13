@@ -15,7 +15,7 @@ extension FeedsViewController {
       guard let self = self else { return UICollectionViewCell() }
       let cell = collectionView.dequeueReusableCell(FeedsCell.self, for: indexPath)
       cell.delegate = self
-      let lastDisplayedThumbnailPath = self.lastDisplayedThumbnailPath[indexPath.item] ?? ""
+      let lastDisplayedThumbnailPath = self.lastDisplayedThumbnailPath[feed.videoID] ?? ""
 
       if indexPath.row == self.yralPlayer.currentIndex {
         cell.configure(
@@ -68,7 +68,9 @@ extension FeedsViewController {
     }
     self.yralPlayer.loadInitialVideos(feeds)
     var snapshot = feedsDataSource.snapshot()
-    snapshot.appendSections([.zero])
+    if snapshot.sectionIdentifiers.isEmpty {
+      snapshot.appendSections([.zero])
+    }
     snapshot.appendItems(feeds, toSection: .zero)
 
     feedsDataSource.apply(snapshot, animatingDifferences: shouldAnimate) { [weak self] in
@@ -116,11 +118,17 @@ extension FeedsViewController {
   }
 
   func removeFeeds(with feeds: [FeedResult], isReport: Bool = false, animated: Bool = false) {
+    for feed in feeds {
+        lastDisplayedThumbnailPath.removeValue(forKey: feed.videoID)
+    }
     var snapshot = feedsDataSource.snapshot()
     snapshot.deleteItems(feeds)
     feedsDataSource.apply(snapshot, animatingDifferences: animated) { [weak self] in
       guard let self else { return }
       yralPlayer.removeFeeds(feeds)
+      if snapshot.itemIdentifiers.isEmpty {
+        yralPlayer.pause()
+      }
     }
     if isReport {
       DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.animationPeriod) {

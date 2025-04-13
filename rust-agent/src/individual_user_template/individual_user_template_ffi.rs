@@ -458,6 +458,7 @@ mod ffi {
     extern "Rust" {
         fn extract_time_as_double(result: Result11) -> Option<u64>;
         fn get_principal(text: String) -> Result<Principal, PrincipalError>;
+        fn get_principal_from_identity(identity: DelegatedIdentity) -> String;
     }
 
     extern "Rust" {
@@ -477,4 +478,4 @@ mod ffi {
         fn ok_value(self) -> Option<Vec<PostDetailsForFrontend>>;
         fn err_value(self) -> Option<GetPostsOfUserProfileError>;
     }
- }
+}

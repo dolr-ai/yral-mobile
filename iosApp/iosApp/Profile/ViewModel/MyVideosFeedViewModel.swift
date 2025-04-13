@@ -157,4 +157,6 @@ class MyVideosFeedViewModel: FeedViewModelProtocol, ObservableObject {
   }
 
   func report(request: ReportRequest) async { }
+
+  func blockUser(principalId: String) async { }
 }
