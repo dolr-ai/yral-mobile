@@ -11,9 +11,7 @@ import AVFoundation
 import Network
 
 @MainActor
-final class HLSDownloadManager: NSObject {
-  static let shared = HLSDownloadManager()
-
+final class HLSDownloadManager: NSObject, HLSDownloadManaging {
   weak var delegate: HLSDownloadManagerProtocol?
 
   private let networkMonitor: NetworkMonitorProtocol
@@ -24,7 +22,11 @@ final class HLSDownloadManager: NSObject {
     _downloadSession
   }
 
-  var activeDownloads: [URL: AVAssetDownloadTaskProtocol] = [:]
+    var activeDownloads: [URL: AVAssetDownloadTaskProtocol] = [:] {
+        didSet {
+            print("Sample: \(activeDownloads.count)")
+        }
+    }
   var assetTitleForURL: [URL: String] = [:]
   var localRemoteUrlMapping: [URL: URL] = [:]
   var downloadContinuations: [URL: CheckedContinuation<URL, Error>] = [:]
@@ -47,7 +49,7 @@ final class HLSDownloadManager: NSObject {
     super.init()
     self.networkMonitor.startMonitoring()
 
-    let config = URLSessionConfiguration.background(withIdentifier: Constants.downloadIdentifier)
+      let config = URLSessionConfiguration.background(withIdentifier: UUID().uuidString)
     config.httpMaximumConnectionsPerHost = Constants.maxConnectionsPerHost
     let session = AVAssetDownloadURLSession(
       configuration: config,

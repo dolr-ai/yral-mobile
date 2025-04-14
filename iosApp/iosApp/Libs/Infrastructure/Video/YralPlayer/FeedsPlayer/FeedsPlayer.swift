@@ -15,28 +15,35 @@ final class FeedsPlayer: YralPlayer {
   var currentIndex: Int = .zero
 
   var player: YralQueuePlayer
+  var hlsDownloadManager: HLSDownloadManaging
+
   private var playerLooper: AVPlayerLooper?
   private var lastPlayedTimes: [Int: CMTime] = [:]
   var playerItems: [Int: AVPlayerItem] = [:] {
     didSet {
         onPlayerItemsChanged?(playerItems.keys.filter { oldValue[$0] == nil }.first, playerItems.count)
+        if playerItems.count == 9 {
+            didRemoveAllItems?()
+        }
     }
   }
   private var currentlyDownloadingIndexes: Set<Int> = []
   var isPlayerVisible: Bool = true
   var didEmptyFeeds: (() -> Void)?
   var onPlayerItemsChanged: ((Int?, Int) -> Void)?
+    var didRemoveAllItems: (() -> Void)?
   weak var delegate: FeedsPlayerProtocol?
 
-  init(player: YralQueuePlayer = AVQueuePlayer()) {
+  init(player: YralQueuePlayer = AVQueuePlayer(), hlsDownloadManager: HLSDownloadManaging) {
     self.player = player
+    self.hlsDownloadManager = hlsDownloadManager
   }
 
   func loadInitialVideos(_ feeds: [FeedResult]) {
     self.feedResults = feeds
     configureAudioSession()
     currentIndex = .zero
-    HLSDownloadManager.shared.delegate = self
+    hlsDownloadManager.delegate = self
     Task {
       await prepareCurrentVideo()
     }
@@ -171,7 +178,7 @@ final class FeedsPlayer: YralPlayer {
     let assetTitle = "\(feed.videoID)"
 
     do {
-      _ = try await HLSDownloadManager.shared.startDownloadAsync(
+      _ = try await hlsDownloadManager.startDownloadAsync(
         hlsURL: feed.url,
         assetTitle: assetTitle
       )
@@ -195,8 +202,8 @@ final class FeedsPlayer: YralPlayer {
     delegate?.removeThumbnails(for: indicesToCancel)
     for idx in indicesToCancel {
       let feed = feedResults[idx]
-      HLSDownloadManager.shared.cancelDownload(for: feed.url)
-      HLSDownloadManager.shared.clearMappingsAndCache(for: feed.url, assetTitle: feed.videoID)
+      hlsDownloadManager.cancelDownload(for: feed.url)
+      hlsDownloadManager.clearMappingsAndCache(for: feed.url, assetTitle: feed.videoID)
       currentlyDownloadingIndexes.remove(idx)
     }
   }
@@ -204,7 +211,7 @@ final class FeedsPlayer: YralPlayer {
   private func loadVideo(at index: Int) async throws -> AVPlayerItem? {
     guard index < feedResults.count else { return nil }
     let feed = feedResults[index]
-    if let localAsset = HLSDownloadManager.shared.createLocalAssetIfAvailable(for: feed.url) {
+    if let localAsset = hlsDownloadManager.createLocalAssetIfAvailable(for: feed.url) {
       do {
         try await localAsset.loadPlayableAsync()
         let item = AVPlayerItem(asset: localAsset)

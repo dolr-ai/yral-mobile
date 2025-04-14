@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		058557BB273AAA24004C7B11 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557BA273AAA24004C7B11 /* Assets.xcassets */; };
 		058557D9273AAEEB004C7B11 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */; };
+		103BBB042DACE23A00C0BFD0 /* HLSDownloadManaging.swift in Sources */ = {isa = PBXBuildFile; fileRef = 103BBB032DACE21D00C0BFD0 /* HLSDownloadManaging.swift */; };
+		103BBB052DACE23A00C0BFD0 /* HLSDownloadManaging.swift in Sources */ = {isa = PBXBuildFile; fileRef = 103BBB032DACE21D00C0BFD0 /* HLSDownloadManaging.swift */; };
 		10512A432DA666AD00114BAA /* YralPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10512A422DA666A900114BAA /* YralPlayer.swift */; };
 		10512A442DA666AD00114BAA /* YralPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10512A422DA666A900114BAA /* YralPlayer.swift */; };
 		10512A522DA795A800114BAA /* YralQueuePlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10512A512DA7959D00114BAA /* YralQueuePlayer.swift */; };
@@ -398,6 +400,7 @@
 /* Begin PBXFileReference section */
 		058557BA273AAA24004C7B11 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		103BBB032DACE21D00C0BFD0 /* HLSDownloadManaging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HLSDownloadManaging.swift; sourceTree = "<group>"; };
 		10512A422DA666A900114BAA /* YralPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralPlayer.swift; sourceTree = "<group>"; };
 		10512A512DA7959D00114BAA /* YralQueuePlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralQueuePlayer.swift; sourceTree = "<group>"; };
 		10BA2E822DA64E6A00B6BE97 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Platforms/iPhoneOS.platform/Developer/Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
@@ -637,6 +640,14 @@
 				058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */,
 			);
 			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		103BBB022DACE1FE00C0BFD0 /* Interface */ = {
+			isa = PBXGroup;
+			children = (
+				103BBB032DACE21D00C0BFD0 /* HLSDownloadManaging.swift */,
+			);
+			path = Interface;
 			sourceTree = "<group>";
 		};
 		10512A402DA6666B00114BAA /* Interface */ = {
@@ -1286,6 +1297,7 @@
 		AC9B77D82D58C2FA00270FC9 /* HLSDownloadManager */ = {
 			isa = PBXGroup;
 			children = (
+				103BBB022DACE1FE00C0BFD0 /* Interface */,
 				AC8472A92D1D9135004A4259 /* HLSDownloadManager.swift */,
 				AC9B77D52D58C2F300270FC9 /* HLSDownloadManagerTests.swift */,
 			);
@@ -2109,6 +2121,7 @@
 				2152FB042600AC8F00CF470E /* IosApp.swift in Sources */,
 				ACB09FCF2D92D51200EE3239 /* LikeRepository.swift in Sources */,
 				AC8958DF2D3EA60500E19ED7 /* FeedsViewController+DataSource.swift in Sources */,
+				103BBB052DACE23A00C0BFD0 /* HLSDownloadManaging.swift in Sources */,
 				AC09A9B22CDB775C009A39A4 /* yral-mobile-swift-binding.swift in Sources */,
 				AC26CA5E2D8052E2006ADA75 /* BaseStreamingUseCase.swift in Sources */,
 				ACB09FD52D92D66400EE3239 /* FeedsViewModelProtocol.swift in Sources */,
@@ -2269,6 +2282,7 @@
 				ACD941872CFF575C0038FCB6 /* IosApp.swift in Sources */,
 				ACB09FCE2D92D51200EE3239 /* LikeRepository.swift in Sources */,
 				AC8958E02D3EA60500E19ED7 /* FeedsViewController+DataSource.swift in Sources */,
+				103BBB042DACE23A00C0BFD0 /* HLSDownloadManaging.swift in Sources */,
 				ACD941882CFF575C0038FCB6 /* yral-mobile-swift-binding.swift in Sources */,
 				AC26CA5F2D8052E2006ADA75 /* BaseStreamingUseCase.swift in Sources */,
 				ACB09FD62D92D66400EE3239 /* FeedsViewModelProtocol.swift in Sources */,
@@ -2521,12 +2535,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
-				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
-				DEVELOPMENT_TEAM = "";
-				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 2UL556KNXC;
+				DEVELOPMENT_TEAM = 2UL556KNXC;
 				ENABLE_PREVIEWS = YES;
 				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)";
 				INFOPLIST_FILE = Prod/Info.plist;
@@ -2547,7 +2560,6 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.yral.iosApp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "Yral distribution";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
@@ -2612,12 +2624,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
-				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
-				DEVELOPMENT_TEAM = "";
-				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 2UL556KNXC;
+				DEVELOPMENT_TEAM = 2UL556KNXC;
 				ENABLE_PREVIEWS = YES;
 				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)";
 				INFOPLIST_FILE = "Staging/Info-Staging.plist";
@@ -2638,7 +2649,6 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.yral.iosApp.staging;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "Yral-Staging-Development";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
@@ -2653,12 +2663,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "Apple Development";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
-				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
-				DEVELOPMENT_TEAM = "";
-				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 2UL556KNXC;
+				DEVELOPMENT_TEAM = 2UL556KNXC;
 				ENABLE_PREVIEWS = YES;
 				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)";
 				INFOPLIST_FILE = "Staging/Info-Staging.plist";
@@ -2679,7 +2687,6 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.yral.iosApp.staging;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "Yral-Staging distribution";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;

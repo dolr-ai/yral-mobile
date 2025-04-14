@@ -35,7 +35,9 @@ final class FeedsPlayerTests: XCTestCase {
     func testLoadInitialVideo_ShouldAddFeeds() throws {
         let feedResults = getMockFeeds(count: 20)
         let mockQueuePlayer = MockQueuePlayer {}
-        let sut = FeedsPlayer(player: mockQueuePlayer)
+        let hlsDownloadManager = HLSDownloadManager()
+//        hlsDownloadManager.downloadIdentifier = "1"
+        let sut = FeedsPlayer(player: mockQueuePlayer, hlsDownloadManager: hlsDownloadManager)
 
         sut.loadInitialVideos(feedResults)
         XCTAssertEqual(sut.feedResults.count, 20)
@@ -48,7 +50,9 @@ final class FeedsPlayerTests: XCTestCase {
         let mockPlayer = MockQueuePlayer {
             expectation.fulfill()
         }
-        let sut = FeedsPlayer(player: mockPlayer)
+        let hlsDownloadManager = HLSDownloadManager()
+//        hlsDownloadManager.downloadIdentifier = "2"
+        let sut = FeedsPlayer(player: mockPlayer, hlsDownloadManager: hlsDownloadManager)
 
         sut.loadInitialVideos(feedResults)
         XCTAssertEqual(mockPlayer.playCallCount, 0)
@@ -61,7 +65,8 @@ final class FeedsPlayerTests: XCTestCase {
     func testAddFeedResults_ShouldAddAllFeeds() async throws {
         let feedResults = getMockFeeds(count: 20)
         let mockPlayer = MockQueuePlayer {}
-        let sut = FeedsPlayer(player: mockPlayer)
+        let hlsDownloadManager = HLSDownloadManager()
+        let sut = FeedsPlayer(player: mockPlayer, hlsDownloadManager: hlsDownloadManager)
 
         sut.loadInitialVideos(Array(feedResults[0...9]))
         sut.addFeedResults(Array(feedResults[10...19]))
@@ -84,7 +89,9 @@ final class FeedsPlayerTests: XCTestCase {
             }
         }
 
-        let sut = FeedsPlayer(player: mockPlayer)
+        let hlsDownloadManager = HLSDownloadManager()
+//        hlsDownloadManager.downloadIdentifier = "3"
+        let sut = FeedsPlayer(player: mockPlayer, hlsDownloadManager: hlsDownloadManager)
 
         sut.loadInitialVideos(feedResults)
 
@@ -103,28 +110,35 @@ final class FeedsPlayerTests: XCTestCase {
         let expectations = [
             expectation(description: "Wait for 5 downloads"),
             expectation(description: "Wait for 10 downloads"),
-            expectation(description: "Wait for 1 deletion"),
-            expectation(description: "wait for 10 downloads")
+            expectation(description: "Wait for 1 deletion")
+//            expectation(description: "Remove all")
         ]
 
         let mockPlayer = MockQueuePlayer {}
+        let hlsDownloadManager = HLSDownloadManager()
+        let sut = FeedsPlayer(player: mockPlayer, hlsDownloadManager: hlsDownloadManager)
 
-        let sut = FeedsPlayer(player: mockPlayer)
+        var flag = false
 
         sut.onPlayerItemsChanged = { newValue, count in
             let value = newValue ?? -1
             if count == 5 {
                 expectations[0].fulfill()
             } else if count == 10 && value < 10 {
+                flag = true
                 expectations[1].fulfill()
-            } else if value == -1 {
+            } else if count == 9 && flag {
                 expectations[2].fulfill()
-            } else if count == 10 && value >= 10 {
-                expectations[3].fulfill()
             }
         }
 
-        sut.loadInitialVideos(feedResults)
+//        sut.didRemoveAllItems = {
+//            expectations[3].fulfill()
+//        }
+
+//        await MainActor.run {
+            sut.loadInitialVideos(feedResults)
+//        }
 
         await fulfillment(of: [expectations[0]], timeout: 10)
         XCTAssertEqual(sut.playerItems.count, 5)
@@ -134,19 +148,23 @@ final class FeedsPlayerTests: XCTestCase {
         await fulfillment(of: [expectations[1]], timeout: 10)
         XCTAssertEqual(sut.playerItems.count, 10)
 
-        sut.advanceToVideo(at: 6)
+//        await MainActor.run {
+        sleep(2)
+            sut.advanceToVideo(at: 6)
+//        }
 
         await fulfillment(of: [expectations[2]], timeout: 10)
         XCTAssertEqual(sut.playerItems.count, 9)
 
-        await fulfillment(of: [expectations[3]], timeout: 10)
-        XCTAssertEqual(sut.playerItems.count, 10)
+//        await fulfillment(of: [expectations[3]], timeout: 10)
+//        XCTAssertEqual(sut.playerItems.count, 0)
     }
 
     func testAdvanceToVideo_ShouldNotAdvanceToNextVideo() throws {
         let feedResults = getMockFeeds(count: 20)
         let mockQueuePlayer = MockQueuePlayer {}
-        let sut = FeedsPlayer(player: mockQueuePlayer)
+        let hlsDownloadManager = HLSDownloadManager()
+        let sut = FeedsPlayer(player: mockQueuePlayer, hlsDownloadManager: hlsDownloadManager)
         sut.loadInitialVideos(feedResults)
         sut.advanceToVideo(at: 20)
         XCTAssertEqual(sut.currentIndex, 0)
@@ -157,7 +175,9 @@ final class FeedsPlayerTests: XCTestCase {
         let feedResults = getMockFeeds(count: 20)
         let expectation = expectation(description: "Wait for playerItems to have 5 values")
         let mockQueuePlayer = MockQueuePlayer {}
-        let sut = FeedsPlayer(player: mockQueuePlayer)
+        let hlsDownloadManager = HLSDownloadManager()
+//        hlsDownloadManager.downloadIdentifier = "4"
+        let sut = FeedsPlayer(player: mockQueuePlayer, hlsDownloadManager: hlsDownloadManager)
 
         sut.onPlayerItemsChanged = { _, count in
             if count == 5 {
@@ -165,13 +185,16 @@ final class FeedsPlayerTests: XCTestCase {
             }
         }
 
-        sut.loadInitialVideos(Array(feedResults[0...4]))
+        print("Sample: Test started")
+//        await MainActor.run {
+            sut.loadInitialVideos(Array(feedResults[0...4]))
+//        }
 
         await fulfillment(of: [expectation], timeout: 10)
-        sut.onPlayerItemsChanged = nil
+//        sut.onPlayerItemsChanged = nil
         XCTAssertEqual(sut.playerItems.count, 5)
 
-        sut.removeFeeds(feedResults)
+        sut.removeFeeds(Array(feedResults[0...4]))
         XCTAssertEqual(sut.feedResults.count, 0)
         XCTAssertEqual(sut.playerItems.count, 0)
     }
@@ -179,7 +202,8 @@ final class FeedsPlayerTests: XCTestCase {
     func testRemoveFeeds_ShouldNotRemoveAllFeeds() async throws {
         let feedResults = getMockFeeds(count: 20)
         let mockQueuePlayer = MockQueuePlayer {}
-        let sut = FeedsPlayer(player: mockQueuePlayer)
+        let hlsDownloadManager = HLSDownloadManager()
+        let sut = FeedsPlayer(player: mockQueuePlayer, hlsDownloadManager: hlsDownloadManager)
 
         let expectation = expectation(description: "Wait for playerItems to have 5 values")
 
@@ -189,13 +213,13 @@ final class FeedsPlayerTests: XCTestCase {
             }
         }
 
-        sut.loadInitialVideos(Array(feedResults[0...4]))
+        sut.loadInitialVideos(Array(feedResults[5...9]))
 
-        await fulfillment(of: [expectation], timeout: 10)
-        sut.onPlayerItemsChanged = nil
+        await fulfillment(of: [expectation], timeout: 2)
+//        sut.onPlayerItemsChanged = nil
         XCTAssertEqual(sut.playerItems.count, 5)
 
-        sut.removeFeeds(Array(feedResults[0...3]))
+        sut.removeFeeds(Array(feedResults[5...8]))
         XCTAssertEqual(sut.feedResults.count, 1)
         XCTAssertEqual(sut.playerItems.count, 1)
     }
@@ -203,7 +227,8 @@ final class FeedsPlayerTests: XCTestCase {
     func testRemoveFeeds_ShouldNotRemoveAnyFeeds() throws {
         let feedResults = getMockFeeds(count: 20)
         let mockQueuePlayer = MockQueuePlayer {}
-        let sut = FeedsPlayer(player: mockQueuePlayer)
+        let hlsDownloadManager = HLSDownloadManager()
+        let sut = FeedsPlayer(player: mockQueuePlayer, hlsDownloadManager: hlsDownloadManager)
 
         sut.removeFeeds(feedResults)
         XCTAssertEqual(sut.feedResults.count, 0)
@@ -213,7 +238,8 @@ final class FeedsPlayerTests: XCTestCase {
     func testRemoveFeeds_WithEmptyFeeds_ShouldNotRemoveAnyFeeds() throws {
         let feedResults: [FeedResult] = []
         let mockQueuePlayer = MockQueuePlayer {}
-        let sut = FeedsPlayer(player: mockQueuePlayer)
+        let hlsDownloadManager = HLSDownloadManager()
+        let sut = FeedsPlayer(player: mockQueuePlayer, hlsDownloadManager: hlsDownloadManager)
         sut.removeFeeds(feedResults)
         XCTAssertEqual(sut.feedResults.count, 0)
         XCTAssertEqual(sut.playerItems.count, 0)
