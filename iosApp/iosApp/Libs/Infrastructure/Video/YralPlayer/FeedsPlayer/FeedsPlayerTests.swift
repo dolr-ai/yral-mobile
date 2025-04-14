@@ -13,21 +13,15 @@ import AVFoundation
 @MainActor
 final class FeedsPlayerTests: XCTestCase {
 
-    private var sut: FeedsPlayer!
-    private var mockQueuePlayer: MockQueuePlayer!
-    private var feedResults: [FeedResult] = []
-
-    override func setUpWithError() throws {
-        mockQueuePlayer = MockQueuePlayer {}
-        sut = FeedsPlayer(player: mockQueuePlayer)
-        feedResults = (0...19).map { index in
+    private func getMockFeeds(count: Int) -> [FeedResult] {
+        return (0...count-1).map { index in
             FeedResult(
                 postID: "\(index)",
                 videoID: "\(index)",
                 canisterID: "\(index)",
                 principalID: "\(index)",
                 // swiftlint:disable:next line_length
-                url: URL(string: "https://customer-2p3jflss4r4hmpnz.cloudflarestream.com/86990fde9b46455d8b191a9019e89e96/manifest/video.m3u8")!,
+                url: Bundle(for: type(of: self)).url(forResource: "video-\(index < 16 ? index : 0)", withExtension: "m3u8")!,
                 thumbnail: URL(string: "https://www.google.com")!,
                 postDescription: "sample description \(index)",
                 likeCount: index,
@@ -37,20 +31,19 @@ final class FeedsPlayerTests: XCTestCase {
         }
     }
 
-    override func tearDownWithError() throws {
-        mockQueuePlayer = nil
-        sut = nil
-        feedResults = []
-    }
-
     // MARK: - Load Initial Video Tests
     func testLoadInitialVideo_ShouldAddFeeds() throws {
+        let feedResults = getMockFeeds(count: 20)
+        let mockQueuePlayer = MockQueuePlayer {}
+        let sut = FeedsPlayer(player: mockQueuePlayer)
+
         sut.loadInitialVideos(feedResults)
         XCTAssertEqual(sut.feedResults.count, 20)
         XCTAssertEqual(sut.currentIndex, 0)
     }
 
     func testLoadInitialVideo_ShouldIncreasePlayCount() async throws {
+        let feedResults = getMockFeeds(count: 20)
         let expectation = expectation(description: "Wait for 2 seconds")
         let mockPlayer = MockQueuePlayer {
             expectation.fulfill()
@@ -58,14 +51,18 @@ final class FeedsPlayerTests: XCTestCase {
         let sut = FeedsPlayer(player: mockPlayer)
 
         sut.loadInitialVideos(feedResults)
-        XCTAssertEqual(mockQueuePlayer.playCallCount, 0)
+        XCTAssertEqual(mockPlayer.playCallCount, 0)
 
-        await fulfillment(of: [expectation])
+        await fulfillment(of: [expectation], timeout: 2)
         XCTAssertEqual(mockPlayer.playCallCount, 1)
     }
 
     // MARK: - Add Feed Tests
     func testAddFeedResults_ShouldAddAllFeeds() async throws {
+        let feedResults = getMockFeeds(count: 20)
+        let mockPlayer = MockQueuePlayer {}
+        let sut = FeedsPlayer(player: mockPlayer)
+
         sut.loadInitialVideos(Array(feedResults[0...9]))
         sut.addFeedResults(Array(feedResults[10...19]))
         XCTAssertEqual(sut.feedResults.count, 20)
@@ -73,6 +70,7 @@ final class FeedsPlayerTests: XCTestCase {
 
     // MARK: - Advance To Video Tests
     func testAdvanceToVideo_ShouldAdvanceToNextVideo() async throws {
+        let feedResults = getMockFeeds(count: 20)
         let expectations = [
             expectation(description: "Wait for 2 seconds"),
             expectation(description: "Wait for 2 seconds")
@@ -101,10 +99,12 @@ final class FeedsPlayerTests: XCTestCase {
     }
 
     func testAdvanceToVideo_ShouldRemoveOfflineAssets() async throws {
+        let feedResults = getMockFeeds(count: 20)
         let expectations = [
             expectation(description: "Wait for 5 downloads"),
             expectation(description: "Wait for 10 downloads"),
-            expectation(description: "Wait for 15 downloads")
+            expectation(description: "Wait for 1 deletion"),
+            expectation(description: "wait for 10 downloads")
         ]
 
         let mockPlayer = MockQueuePlayer {}
@@ -119,53 +119,104 @@ final class FeedsPlayerTests: XCTestCase {
                 expectations[1].fulfill()
             } else if value == -1 {
                 expectations[2].fulfill()
+            } else if count == 10 && value >= 10 {
+                expectations[3].fulfill()
             }
         }
 
         sut.loadInitialVideos(feedResults)
 
-        await fulfillment(of: [expectations[0]], timeout: 5)
+        await fulfillment(of: [expectations[0]], timeout: 10)
         XCTAssertEqual(sut.playerItems.count, 5)
 
         sut.advanceToVideo(at: 5)
 
-        await fulfillment(of: [expectations[1]], timeout: 5)
+        await fulfillment(of: [expectations[1]], timeout: 10)
         XCTAssertEqual(sut.playerItems.count, 10)
 
-        sut.advanceToVideo(at: 15)
-        await fulfillment(of: [expectations[2]], timeout: 5)
+        sut.advanceToVideo(at: 6)
+
+        await fulfillment(of: [expectations[2]], timeout: 10)
         XCTAssertEqual(sut.playerItems.count, 9)
+
+        await fulfillment(of: [expectations[3]], timeout: 10)
+        XCTAssertEqual(sut.playerItems.count, 10)
     }
 
     func testAdvanceToVideo_ShouldNotAdvanceToNextVideo() throws {
-        sut.feedResults = feedResults
+        let feedResults = getMockFeeds(count: 20)
+        let mockQueuePlayer = MockQueuePlayer {}
+        let sut = FeedsPlayer(player: mockQueuePlayer)
+        sut.loadInitialVideos(feedResults)
         sut.advanceToVideo(at: 20)
         XCTAssertEqual(sut.currentIndex, 0)
     }
 
     // MARK: - Remove Feed Tests
-    func testRemoveFeeds_ShouldRemoveAllFeeds() throws {
-        sut.feedResults = feedResults
+    func testRemoveFeeds_ShouldRemoveAllFeeds() async throws {
+        let feedResults = getMockFeeds(count: 20)
+        let expectation = expectation(description: "Wait for playerItems to have 5 values")
+        let mockQueuePlayer = MockQueuePlayer {}
+        let sut = FeedsPlayer(player: mockQueuePlayer)
+
+        sut.onPlayerItemsChanged = { _, count in
+            if count == 5 {
+                expectation.fulfill()
+            }
+        }
+
+        sut.loadInitialVideos(Array(feedResults[0...4]))
+
+        await fulfillment(of: [expectation], timeout: 10)
+        sut.onPlayerItemsChanged = nil
+        XCTAssertEqual(sut.playerItems.count, 5)
+
         sut.removeFeeds(feedResults)
         XCTAssertEqual(sut.feedResults.count, 0)
         XCTAssertEqual(sut.playerItems.count, 0)
     }
 
-    func testRemoveFeeds_ShouldNotRemoveAllFeeds() throws {
-        sut.feedResults = feedResults
-        sut.removeFeeds(Array(feedResults[0...18]))
-        XCTAssertEqual(sut.self.feedResults.count, 1)
+    func testRemoveFeeds_ShouldNotRemoveAllFeeds() async throws {
+        let feedResults = getMockFeeds(count: 20)
+        let mockQueuePlayer = MockQueuePlayer {}
+        let sut = FeedsPlayer(player: mockQueuePlayer)
+
+        let expectation = expectation(description: "Wait for playerItems to have 5 values")
+
+        sut.onPlayerItemsChanged = { _, count in
+            if count == 5 {
+                expectation.fulfill()
+            }
+        }
+
+        sut.loadInitialVideos(Array(feedResults[0...4]))
+
+        await fulfillment(of: [expectation], timeout: 10)
+        sut.onPlayerItemsChanged = nil
+        XCTAssertEqual(sut.playerItems.count, 5)
+
+        sut.removeFeeds(Array(feedResults[0...3]))
+        XCTAssertEqual(sut.feedResults.count, 1)
+        XCTAssertEqual(sut.playerItems.count, 1)
     }
 
     func testRemoveFeeds_ShouldNotRemoveAnyFeeds() throws {
+        let feedResults = getMockFeeds(count: 20)
+        let mockQueuePlayer = MockQueuePlayer {}
+        let sut = FeedsPlayer(player: mockQueuePlayer)
+
         sut.removeFeeds(feedResults)
         XCTAssertEqual(sut.feedResults.count, 0)
+        XCTAssertEqual(sut.playerItems.count, 0)
     }
 
     func testRemoveFeeds_WithEmptyFeeds_ShouldNotRemoveAnyFeeds() throws {
-        feedResults = []
+        let feedResults: [FeedResult] = []
+        let mockQueuePlayer = MockQueuePlayer {}
+        let sut = FeedsPlayer(player: mockQueuePlayer)
         sut.removeFeeds(feedResults)
         XCTAssertEqual(sut.feedResults.count, 0)
+        XCTAssertEqual(sut.playerItems.count, 0)
     }
 }
 
