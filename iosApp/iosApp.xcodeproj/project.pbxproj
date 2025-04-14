@@ -9,6 +9,13 @@
 /* Begin PBXBuildFile section */
 		058557BB273AAA24004C7B11 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557BA273AAA24004C7B11 /* Assets.xcassets */; };
 		058557D9273AAEEB004C7B11 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */; };
+		103BBB042DACE23A00C0BFD0 /* HLSDownloadManaging.swift in Sources */ = {isa = PBXBuildFile; fileRef = 103BBB032DACE21D00C0BFD0 /* HLSDownloadManaging.swift */; };
+		103BBB052DACE23A00C0BFD0 /* HLSDownloadManaging.swift in Sources */ = {isa = PBXBuildFile; fileRef = 103BBB032DACE21D00C0BFD0 /* HLSDownloadManaging.swift */; };
+		10512A432DA666AD00114BAA /* YralPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10512A422DA666A900114BAA /* YralPlayer.swift */; };
+		10512A442DA666AD00114BAA /* YralPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10512A422DA666A900114BAA /* YralPlayer.swift */; };
+		10512A522DA795A800114BAA /* YralQueuePlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10512A512DA7959D00114BAA /* YralQueuePlayer.swift */; };
+		10512A532DA795A800114BAA /* YralQueuePlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10512A512DA7959D00114BAA /* YralQueuePlayer.swift */; };
+		10BA2E872DA6507E00B6BE97 /* FeedsPlayerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10BA2E842DA6507E00B6BE97 /* FeedsPlayerTests.swift */; };
 		2152FB042600AC8F00CF470E /* IosApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* IosApp.swift */; };
 		7555FF83242A565900829871 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* ContentView.swift */; };
 		AC09A9B22CDB775C009A39A4 /* yral-mobile-swift-binding.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC09A9AD2CDB775C009A39A4 /* yral-mobile-swift-binding.swift */; };
@@ -227,8 +234,8 @@
 		ACB09FDE2D92F87E00EE3239 /* MyVideosFeedViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB09FDC2D92F87000EE3239 /* MyVideosFeedViewModel.swift */; };
 		ACB09FE72D93289000EE3239 /* MyVideosFeedInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB09FE62D93288400EE3239 /* MyVideosFeedInfo.swift */; };
 		ACB09FE82D93289000EE3239 /* MyVideosFeedInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB09FE62D93288400EE3239 /* MyVideosFeedInfo.swift */; };
-		ACB46A262D0EC0A3002E200C /* YralPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A252D0EC09C002E200C /* YralPlayer.swift */; };
-		ACB46A272D0EC0A3002E200C /* YralPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A252D0EC09C002E200C /* YralPlayer.swift */; };
+		ACB46A262D0EC0A3002E200C /* FeedsPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A252D0EC09C002E200C /* FeedsPlayer.swift */; };
+		ACB46A272D0EC0A3002E200C /* FeedsPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A252D0EC09C002E200C /* FeedsPlayer.swift */; };
 		ACB46A292D0EC76A002E200C /* AppConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A282D0EC765002E200C /* AppConfiguration.swift */; };
 		ACB46A2A2D0EC76A002E200C /* AppConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A282D0EC765002E200C /* AppConfiguration.swift */; };
 		ACB46A2C2D0EC833002E200C /* AppDIContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A2B2D0EC82F002E200C /* AppDIContainer.swift */; };
@@ -358,7 +365,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		AC9B77E12D58C7E300270FC9 /* PBXContainerItemProxy */ = {
+		10512A3E2DA6552C00114BAA /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 7555FF73242A565900829871 /* Project object */;
 			proxyType = 1;
@@ -393,6 +400,11 @@
 /* Begin PBXFileReference section */
 		058557BA273AAA24004C7B11 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		103BBB032DACE21D00C0BFD0 /* HLSDownloadManaging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HLSDownloadManaging.swift; sourceTree = "<group>"; };
+		10512A422DA666A900114BAA /* YralPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralPlayer.swift; sourceTree = "<group>"; };
+		10512A512DA7959D00114BAA /* YralQueuePlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralQueuePlayer.swift; sourceTree = "<group>"; };
+		10BA2E822DA64E6A00B6BE97 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Platforms/iPhoneOS.platform/Developer/Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
+		10BA2E842DA6507E00B6BE97 /* FeedsPlayerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedsPlayerTests.swift; sourceTree = "<group>"; };
 		2152FB032600AC8F00CF470E /* IosApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IosApp.swift; sourceTree = "<group>"; };
 		7555FF7B242A565900829871 /* Yral.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Yral.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7555FF82242A565900829871 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -507,7 +519,7 @@
 		ACB09FD92D92D6E400EE3239 /* MoreFeedsRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoreFeedsRequest.swift; sourceTree = "<group>"; };
 		ACB09FDC2D92F87000EE3239 /* MyVideosFeedViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyVideosFeedViewModel.swift; sourceTree = "<group>"; };
 		ACB09FE62D93288400EE3239 /* MyVideosFeedInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyVideosFeedInfo.swift; sourceTree = "<group>"; };
-		ACB46A252D0EC09C002E200C /* YralPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralPlayer.swift; sourceTree = "<group>"; };
+		ACB46A252D0EC09C002E200C /* FeedsPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedsPlayer.swift; sourceTree = "<group>"; };
 		ACB46A282D0EC765002E200C /* AppConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfiguration.swift; sourceTree = "<group>"; };
 		ACB46A2B2D0EC82F002E200C /* AppDIContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDIContainer.swift; sourceTree = "<group>"; };
 		ACB46A322D0EC8F9002E200C /* Numbers+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Numbers+Extensions.swift"; sourceTree = "<group>"; };
@@ -630,6 +642,41 @@
 			path = "Preview Content";
 			sourceTree = "<group>";
 		};
+		103BBB022DACE1FE00C0BFD0 /* Interface */ = {
+			isa = PBXGroup;
+			children = (
+				103BBB032DACE21D00C0BFD0 /* HLSDownloadManaging.swift */,
+			);
+			path = Interface;
+			sourceTree = "<group>";
+		};
+		10512A402DA6666B00114BAA /* Interface */ = {
+			isa = PBXGroup;
+			children = (
+				10512A422DA666A900114BAA /* YralPlayer.swift */,
+				10512A512DA7959D00114BAA /* YralQueuePlayer.swift */,
+			);
+			path = Interface;
+			sourceTree = "<group>";
+		};
+		10512A412DA6667600114BAA /* FeedsPlayer */ = {
+			isa = PBXGroup;
+			children = (
+				ACB46A252D0EC09C002E200C /* FeedsPlayer.swift */,
+				10BA2E842DA6507E00B6BE97 /* FeedsPlayerTests.swift */,
+			);
+			path = FeedsPlayer;
+			sourceTree = "<group>";
+		};
+		10BA2E7E2DA63D8600B6BE97 /* YralPlayer */ = {
+			isa = PBXGroup;
+			children = (
+				10512A412DA6667600114BAA /* FeedsPlayer */,
+				10512A402DA6666B00114BAA /* Interface */,
+			);
+			path = YralPlayer;
+			sourceTree = "<group>";
+		};
 		7555FF72242A565900829871 = {
 			isa = PBXGroup;
 			children = (
@@ -679,6 +726,7 @@
 		7555FFB0242A642200829871 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				10BA2E822DA64E6A00B6BE97 /* XCTest.framework */,
 				AC09AA0A2CDB7F2A009A39A4 /* shared.framework */,
 				AC09A9F72CDB78B9009A39A4 /* libyral_mobile_swift_binding.a */,
 			);
@@ -1249,6 +1297,7 @@
 		AC9B77D82D58C2FA00270FC9 /* HLSDownloadManager */ = {
 			isa = PBXGroup;
 			children = (
+				103BBB022DACE1FE00C0BFD0 /* Interface */,
 				AC8472A92D1D9135004A4259 /* HLSDownloadManager.swift */,
 				AC9B77D52D58C2F300270FC9 /* HLSDownloadManagerTests.swift */,
 			);
@@ -1310,8 +1359,8 @@
 		ACB46A242D0EC083002E200C /* Video */ = {
 			isa = PBXGroup;
 			children = (
+				10BA2E7E2DA63D8600B6BE97 /* YralPlayer */,
 				AC9B77D82D58C2FA00270FC9 /* HLSDownloadManager */,
-				ACB46A252D0EC09C002E200C /* YralPlayer.swift */,
 			);
 			path = Video;
 			sourceTree = "<group>";
@@ -1779,7 +1828,7 @@
 			buildRules = (
 			);
 			dependencies = (
-				AC9B77E22D58C7E300270FC9 /* PBXTargetDependency */,
+				10512A3F2DA6552C00114BAA /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				AC9B77DE2D58C7E300270FC9 /* YralTests */,
@@ -1796,7 +1845,6 @@
 			buildConfigurationList = ACD941B52CFF575C0038FCB6 /* Build configuration list for PBXNativeTarget "Yral-Staging" */;
 			buildPhases = (
 				ACD941842CFF575C0038FCB6 /* Generate rust bindings */,
-				ACD941852CFF575C0038FCB6 /* Run Script */,
 				ACD941862CFF575C0038FCB6 /* Sources */,
 				ACD9418D2CFF575C0038FCB6 /* Frameworks */,
 				ACD941B02CFF575C0038FCB6 /* Resources */,
@@ -1978,25 +2026,6 @@
 			shellPath = /bin/sh;
 			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\n#./build-rust.sh\n";
 		};
-		ACD941852CFF575C0038FCB6 /* Run Script */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-			);
-			name = "Run Script";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(DERIVED_FILE_DIR)/../rust-agent/src/lib.rs",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "cd \"$SRCROOT/..\"\n./gradlew :shared:embedAndSignAppleFrameworkForXcode\n";
-		};
 		ACD941B42CFF575C0038FCB6 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 8;
@@ -2029,7 +2058,7 @@
 				AC6BECC02D09F86C002E2021 /* NetworkService.swift in Sources */,
 				ACEBF8012D74673600B594A0 /* HashtagsView.swift in Sources */,
 				ACB09FDD2D92F87E00EE3239 /* MyVideosFeedViewModel.swift in Sources */,
-				ACB46A262D0EC0A3002E200C /* YralPlayer.swift in Sources */,
+				ACB46A262D0EC0A3002E200C /* FeedsPlayer.swift in Sources */,
 				ACB46A682D0F3609002E200C /* FeedsViewModel.swift in Sources */,
 				ACB46A422D0ECBB3002E200C /* ml_feed.proto in Sources */,
 				ACB46A5E2D0EF92D002E200C /* AuthEndPoints.swift in Sources */,
@@ -2042,6 +2071,7 @@
 				AC32E4572D29665B001DDA43 /* AccountInfo.swift in Sources */,
 				AC26CA5C2D802BB0006ADA75 /* BaseResultUseCase.swift in Sources */,
 				AC32E4462D2961CA001DDA43 /* URLImage.swift in Sources */,
+				10512A442DA666AD00114BAA /* YralPlayer.swift in Sources */,
 				ACB46A732D105AF4002E200C /* CollectionView+Extensions.swift in Sources */,
 				ACB46A432D0ECBB3002E200C /* ml_feed.grpc.swift in Sources */,
 				AC49605B2D2C4BF7008D59D9 /* FetchMoreFeedsUseCase.swift in Sources */,
@@ -2091,6 +2121,7 @@
 				2152FB042600AC8F00CF470E /* IosApp.swift in Sources */,
 				ACB09FCF2D92D51200EE3239 /* LikeRepository.swift in Sources */,
 				AC8958DF2D3EA60500E19ED7 /* FeedsViewController+DataSource.swift in Sources */,
+				103BBB052DACE23A00C0BFD0 /* HLSDownloadManaging.swift in Sources */,
 				AC09A9B22CDB775C009A39A4 /* yral-mobile-swift-binding.swift in Sources */,
 				AC26CA5E2D8052E2006ADA75 /* BaseStreamingUseCase.swift in Sources */,
 				ACB09FD52D92D66400EE3239 /* FeedsViewModelProtocol.swift in Sources */,
@@ -2110,6 +2141,7 @@
 				AC99BBC12D86FF81008012C2 /* ProfileEmptyState.swift in Sources */,
 				ACEBF7F72D70A8D700B594A0 /* AnimatedCheckbox.swift in Sources */,
 				AC7F7EA52D771D5D00215162 /* UploadViewModel.swift in Sources */,
+				10512A532DA795A800114BAA /* YralQueuePlayer.swift in Sources */,
 				AC7F7EC82D78696200215162 /* UploadDelegate.swift in Sources */,
 				AC49605E2D2C5E65008D59D9 /* LikeQuery.swift in Sources */,
 				AC32E4252D2712F1001DDA43 /* ProfileInfoView.swift in Sources */,
@@ -2174,6 +2206,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				10BA2E872DA6507E00B6BE97 /* FeedsPlayerTests.swift in Sources */,
 				AC9B77E62D58C84000270FC9 /* HLSDownloadManagerTests.swift in Sources */,
 				AC9294062D620BDD003DB102 /* MediaPickerTests.swift in Sources */,
 			);
@@ -2186,7 +2219,7 @@
 				AC6BECBF2D09F86C002E2021 /* NetworkService.swift in Sources */,
 				ACEBF8022D74673600B594A0 /* HashtagsView.swift in Sources */,
 				ACB09FDE2D92F87E00EE3239 /* MyVideosFeedViewModel.swift in Sources */,
-				ACB46A272D0EC0A3002E200C /* YralPlayer.swift in Sources */,
+				ACB46A272D0EC0A3002E200C /* FeedsPlayer.swift in Sources */,
 				ACB46A692D0F3609002E200C /* FeedsViewModel.swift in Sources */,
 				ACB46A3F2D0ECBB3002E200C /* ml_feed.proto in Sources */,
 				ACB46A5D2D0EF92D002E200C /* AuthEndPoints.swift in Sources */,
@@ -2199,6 +2232,7 @@
 				AC32E4582D29665B001DDA43 /* AccountInfo.swift in Sources */,
 				AC26CA5B2D802BB0006ADA75 /* BaseResultUseCase.swift in Sources */,
 				AC32E4472D2961CA001DDA43 /* URLImage.swift in Sources */,
+				10512A432DA666AD00114BAA /* YralPlayer.swift in Sources */,
 				ACB46A742D105AF4002E200C /* CollectionView+Extensions.swift in Sources */,
 				ACB46A402D0ECBB3002E200C /* ml_feed.grpc.swift in Sources */,
 				AC49605C2D2C4BF7008D59D9 /* FetchMoreFeedsUseCase.swift in Sources */,
@@ -2248,6 +2282,7 @@
 				ACD941872CFF575C0038FCB6 /* IosApp.swift in Sources */,
 				ACB09FCE2D92D51200EE3239 /* LikeRepository.swift in Sources */,
 				AC8958E02D3EA60500E19ED7 /* FeedsViewController+DataSource.swift in Sources */,
+				103BBB042DACE23A00C0BFD0 /* HLSDownloadManaging.swift in Sources */,
 				ACD941882CFF575C0038FCB6 /* yral-mobile-swift-binding.swift in Sources */,
 				AC26CA5F2D8052E2006ADA75 /* BaseStreamingUseCase.swift in Sources */,
 				ACB09FD62D92D66400EE3239 /* FeedsViewModelProtocol.swift in Sources */,
@@ -2267,6 +2302,7 @@
 				AC99BBC22D86FF81008012C2 /* ProfileEmptyState.swift in Sources */,
 				ACEBF7F62D70A8D700B594A0 /* AnimatedCheckbox.swift in Sources */,
 				AC7F7EA62D771D5D00215162 /* UploadViewModel.swift in Sources */,
+				10512A522DA795A800114BAA /* YralQueuePlayer.swift in Sources */,
 				AC7F7EC72D78696200215162 /* UploadDelegate.swift in Sources */,
 				AC49605F2D2C5E65008D59D9 /* LikeQuery.swift in Sources */,
 				AC32E4242D2712F1001DDA43 /* ProfileInfoView.swift in Sources */,
@@ -2330,10 +2366,10 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		AC9B77E22D58C7E300270FC9 /* PBXTargetDependency */ = {
+		10512A3F2DA6552C00114BAA /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 7555FF7A242A565900829871 /* Yral */;
-			targetProxy = AC9B77E12D58C7E300270FC9 /* PBXContainerItemProxy */;
+			targetProxy = 10512A3E2DA6552C00114BAA /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -2499,12 +2535,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
-				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
-				DEVELOPMENT_TEAM = "";
-				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 2UL556KNXC;
+				DEVELOPMENT_TEAM = 2UL556KNXC;
 				ENABLE_PREVIEWS = YES;
 				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)";
 				INFOPLIST_FILE = Prod/Info.plist;
@@ -2525,7 +2560,6 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.yral.iosApp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "Yral distribution";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
@@ -2590,17 +2624,16 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
-				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
-				DEVELOPMENT_TEAM = "";
-				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 2UL556KNXC;
+				DEVELOPMENT_TEAM = 2UL556KNXC;
 				ENABLE_PREVIEWS = YES;
 				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)";
 				INFOPLIST_FILE = "Staging/Info-Staging.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Yral-Staging";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -2616,7 +2649,6 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.yral.iosApp.staging;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "Yral-Staging-Development";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
@@ -2631,12 +2663,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "Apple Development";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
-				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
-				DEVELOPMENT_TEAM = "";
-				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 2UL556KNXC;
+				DEVELOPMENT_TEAM = 2UL556KNXC;
 				ENABLE_PREVIEWS = YES;
 				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)";
 				INFOPLIST_FILE = "Staging/Info-Staging.plist";
@@ -2657,7 +2687,6 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.yral.iosApp.staging;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "Yral-Staging distribution";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;

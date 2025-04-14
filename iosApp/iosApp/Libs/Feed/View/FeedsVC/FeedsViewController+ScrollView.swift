@@ -13,20 +13,20 @@ extension FeedsViewController: UICollectionViewDelegate {
       storeThumbnail()
       return
     }
-    yralPlayer.pause()
+    feedsPlayer.pause()
     storeThumbnail()
   }
 
   func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
     feedsCV.layoutIfNeeded()
     guard let visibleIndexPath = feedsCV.indexPathsForVisibleItems.sorted().first else { return }
-    let oldIndex = yralPlayer.currentIndex
+    let oldIndex = feedsPlayer.currentIndex
     let newIndex = visibleIndexPath.item
     if newIndex != oldIndex {
-      yralPlayer.advanceToVideo(at: newIndex)
+      feedsPlayer.advanceToVideo(at: newIndex)
       feedsCV.reloadData()
     } else {
-      yralPlayer.play()
+      feedsPlayer.play()
     }
   }
 
