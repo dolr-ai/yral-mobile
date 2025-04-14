@@ -155,7 +155,7 @@ final class FeedsPlayer: YralPlayer {
 
   private func preloadFeeds() async {
     let startIndex = currentIndex
-    let endIndex = min(feedResults.count, currentIndex + .one + Constants.radius)
+    let endIndex = min(feedResults.count, currentIndex + Constants.radius)
 
     for index in startIndex..<endIndex {
       guard playerItems[index] == nil else { continue }
