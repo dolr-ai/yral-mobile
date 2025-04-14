@@ -39,7 +39,11 @@ kotlin {
             implementation(projects.shared.libs.http)
 
             //implementation(projects.shared.rust)
-            implementation("com.yral.shared:rust-android-debug:1.0")
+            BuildConfig.getDependencies(project).forEach { dependency ->
+                if (dependency.isNotEmpty()) {
+                    implementation(dependency)
+                }
+            }
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

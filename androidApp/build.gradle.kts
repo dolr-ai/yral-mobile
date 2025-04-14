@@ -71,7 +71,11 @@ dependencies {
     implementation(projects.shared.features.auth)
 
     //implementation(projects.shared.rust)
-    implementation("com.yral.shared:rust-android-debug:1.0")
+    BuildConfig.getDependencies(project).forEach { dependency ->
+        if (dependency.isNotEmpty()) {
+            implementation(dependency)
+        }
+    }
 
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.cio)
