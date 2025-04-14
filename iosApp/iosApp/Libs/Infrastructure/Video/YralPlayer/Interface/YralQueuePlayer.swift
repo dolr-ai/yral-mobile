@@ -10,15 +10,19 @@ import Foundation
 import AVFoundation
 
 protocol YralQueuePlayer {
-    var isMuted: Bool { get set }
-    var currentItem: AVPlayerItem? { get }
+  var isMuted: Bool { get set }
+  var currentItem: AVPlayerItem? { get }
 
-    func play()
-    func pause()
-    func removeAllItems()
-    func currentTime() -> CMTime
-    // swiftlint:disable:next line_length
-    func seek(to time: CMTime, toleranceBefore: CMTime, toleranceAfter: CMTime, completionHandler: @escaping @Sendable (Bool) -> Void)
+  func play()
+  func pause()
+  func removeAllItems()
+  func currentTime() -> CMTime
+  func seek(
+    to time: CMTime,
+    toleranceBefore: CMTime,
+    toleranceAfter: CMTime,
+    completionHandler: @escaping @Sendable (Bool) -> Void
+  )
 }
 
 extension AVQueuePlayer: YralQueuePlayer {}

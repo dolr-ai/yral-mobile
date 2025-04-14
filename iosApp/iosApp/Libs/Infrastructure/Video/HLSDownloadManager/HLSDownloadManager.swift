@@ -22,11 +22,7 @@ final class HLSDownloadManager: NSObject, HLSDownloadManaging {
     _downloadSession
   }
 
-    var activeDownloads: [URL: AVAssetDownloadTaskProtocol] = [:] {
-        didSet {
-            print("Sample: \(activeDownloads.count)")
-        }
-    }
+  var activeDownloads: [URL: AVAssetDownloadTaskProtocol] = [:]
   var assetTitleForURL: [URL: String] = [:]
   var localRemoteUrlMapping: [URL: URL] = [:]
   var downloadContinuations: [URL: CheckedContinuation<URL, Error>] = [:]
@@ -49,7 +45,7 @@ final class HLSDownloadManager: NSObject, HLSDownloadManaging {
     super.init()
     self.networkMonitor.startMonitoring()
 
-      let config = URLSessionConfiguration.background(withIdentifier: UUID().uuidString)
+    let config = URLSessionConfiguration.background(withIdentifier: UUID().uuidString)
     config.httpMaximumConnectionsPerHost = Constants.maxConnectionsPerHost
     let session = AVAssetDownloadURLSession(
       configuration: config,
@@ -232,7 +228,6 @@ final class DefaultAssetDownloadURLSession: AVAssetDownloadURLSessionProtocol {
 final class DefaultNetworkMonitor: NetworkMonitorProtocol {
   private let monitor = NWPathMonitor()
   private let monitorQueue = DispatchQueue.global(qos: .background)
-
   var isNetworkAvailable: Bool = true
 
   func startMonitoring() {

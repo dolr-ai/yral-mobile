@@ -13,25 +13,19 @@ import AVFoundation
 final class FeedsPlayer: YralPlayer {
   var feedResults: [FeedResult] = []
   var currentIndex: Int = .zero
-
   var player: YralQueuePlayer
   var hlsDownloadManager: HLSDownloadManaging
-
   private var playerLooper: AVPlayerLooper?
   private var lastPlayedTimes: [Int: CMTime] = [:]
   var playerItems: [Int: AVPlayerItem] = [:] {
     didSet {
-        onPlayerItemsChanged?(playerItems.keys.filter { oldValue[$0] == nil }.first, playerItems.count)
-        if playerItems.count == 9 {
-            didRemoveAllItems?()
-        }
+      onPlayerItemsChanged?(playerItems.keys.filter { oldValue[$0] == nil }.first, playerItems.count)
     }
   }
   private var currentlyDownloadingIndexes: Set<Int> = []
   var isPlayerVisible: Bool = true
   var didEmptyFeeds: (() -> Void)?
   var onPlayerItemsChanged: ((Int?, Int) -> Void)?
-    var didRemoveAllItems: (() -> Void)?
   weak var delegate: FeedsPlayerProtocol?
 
   init(player: YralQueuePlayer = AVQueuePlayer(), hlsDownloadManager: HLSDownloadManaging) {
@@ -126,10 +120,10 @@ final class FeedsPlayer: YralPlayer {
 
     guard let player = player as? AVQueuePlayer else {
       player.play()
-        Task {
-          await preloadFeeds()
-        }
-        return
+      Task {
+        await preloadFeeds()
+      }
+      return
     }
 
     playerLooper = AVPlayerLooper(player: player, templateItem: item)
@@ -183,9 +177,9 @@ final class FeedsPlayer: YralPlayer {
         assetTitle: assetTitle
       )
       if let item = try await loadVideo(at: index) {
-          if !playerItems.keys.contains(index) {
-              playerItems[index] = item
-          }
+        if !playerItems.keys.contains(index) {
+          playerItems[index] = item
+        }
       }
     } catch is CancellationError {
       print("Preload canceled for index \(index).")
@@ -224,6 +218,7 @@ final class FeedsPlayer: YralPlayer {
     let remoteAsset = AVURLAsset(url: feed.url)
     try await remoteAsset.loadPlayableAsync()
     let item = AVPlayerItem(asset: remoteAsset)
+    playerItems[index] = item
     return item
   }
 }

@@ -119,7 +119,7 @@ extension FeedsViewController: FeedsCellProtocol {
   }
 }
 
-extension FeedsViewController: YralPlayerProtocol {
+extension FeedsViewController: FeedsPlayerProtocol {
   func cacheCleared(atc index: Int) {
 
     lastDisplayedThumbnailPath.removeValue(

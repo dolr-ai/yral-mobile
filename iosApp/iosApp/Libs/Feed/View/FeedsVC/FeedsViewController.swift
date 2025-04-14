@@ -20,13 +20,13 @@ class FeedsViewController: UIViewController {
   var initalFeedscancellables: Set<AnyCancellable> = []
   var paginatedFeedscancellables: Set<AnyCancellable> = []
 
-    lazy var feedsPlayer: YralPlayer = {
-        let player = FeedsPlayer(hlsDownloadManager: HLSDownloadManager())
-        player.delegate = self
-        return player
-    }()
-    var isCurrentlyVisible = true
-    var lastDisplayedThumbnailPath: [Int: String] = [:]
+  lazy var feedsPlayer: YralPlayer = {
+    let player = FeedsPlayer(hlsDownloadManager: HLSDownloadManager())
+    player.delegate = self
+    return player
+  }()
+  var isCurrentlyVisible = true
+  var lastDisplayedThumbnailPath: [String: String] = [:]
 
   var feedsCV: UICollectionView = {
     let collectionView = getUICollectionView()
@@ -81,16 +81,16 @@ class FeedsViewController: UIViewController {
   override func viewWillDisappear(_ animated: Bool) {
     super.viewWillDisappear(animated)
     isCurrentlyVisible = false
-    yralPlayer.isPlayerVisible = false
-    yralPlayer.pause()
+    feedsPlayer.isPlayerVisible = false
+    feedsPlayer.pause()
   }
 
   override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
     isCurrentlyVisible = true
-    yralPlayer.isPlayerVisible = true
+    feedsPlayer.isPlayerVisible = true
     guard !feedsDataSource.snapshot().itemIdentifiers.isEmpty else { return }
-    yralPlayer.play()
+    feedsPlayer.play()
   }
 
   func bindViewModel() {
@@ -281,12 +281,12 @@ class FeedsViewController: UIViewController {
   @objc func appDidBecomeActive() {
     if isCurrentlyVisible {
       guard !feedsDataSource.snapshot().itemIdentifiers.isEmpty else { return }
-      yralPlayer.play()
+      feedsPlayer.play()
     }
   }
 
   func storeThumbnail() {
-    let currentTimeSec = yralPlayer.player.currentTime().seconds
+    let currentTimeSec = feedsPlayer.player.currentTime().seconds
     let roundedTime = String(format: "%.2f", currentTimeSec)
     guard let visibleIndexPath = feedsCV.indexPathsForVisibleItems.sorted().first else { return }
     let videoID = feedsDataSource.itemIdentifier(for: visibleIndexPath)?.videoID ?? ""
