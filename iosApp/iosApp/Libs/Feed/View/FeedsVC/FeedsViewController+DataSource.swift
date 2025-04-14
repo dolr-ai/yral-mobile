@@ -17,9 +17,10 @@ extension FeedsViewController {
       cell.delegate = self
       let lastDisplayedThumbnailPath = self.lastDisplayedThumbnailPath[feed.videoID] ?? ""
 
-      if indexPath.row == self.yralPlayer.currentIndex {
+      if let player = feedsPlayer.player as? AVQueuePlayer,
+         indexPath.row == self.feedsPlayer.currentIndex {
         cell.configure(
-          withPlayer: self.yralPlayer.player,
+          withPlayer: player,
           feedInfo: FeedsCell.FeedCellInfo(
             thumbnailURL: feed.thumbnail,
             likeCount: feed.likeCount,
@@ -66,7 +67,7 @@ extension FeedsViewController {
     if #available(iOS 15, *) {
       shouldAnimate = animated
     }
-    self.yralPlayer.loadInitialVideos(feeds)
+    self.feedsPlayer.loadInitialVideos(feeds)
     var snapshot = feedsDataSource.snapshot()
     if snapshot.sectionIdentifiers.isEmpty {
       snapshot.appendSections([.zero])
@@ -76,7 +77,7 @@ extension FeedsViewController {
     feedsDataSource.apply(snapshot, animatingDifferences: shouldAnimate) { [weak self] in
       guard let self = self else { return }
       guard feedType == .currentUser else { return }
-      yralPlayer.advanceToVideo(at: viewModel.getCurrentFeedIndex())
+      feedsPlayer.advanceToVideo(at: viewModel.getCurrentFeedIndex())
       self.feedsCV.scrollToItem(
         at: IndexPath(
           item: viewModel.getCurrentFeedIndex(),
@@ -88,7 +89,7 @@ extension FeedsViewController {
   }
 
   func addFeeds(with feeds: [FeedResult], animated: Bool = false) {
-    yralPlayer.addFeedResults(feeds)
+    feedsPlayer.addFeedResults(feeds)
     var shouldAnimate = false
     if #available(iOS 15, *) {
       shouldAnimate = animated
@@ -119,15 +120,15 @@ extension FeedsViewController {
 
   func removeFeeds(with feeds: [FeedResult], isReport: Bool = false, animated: Bool = false) {
     for feed in feeds {
-        lastDisplayedThumbnailPath.removeValue(forKey: feed.videoID)
+      lastDisplayedThumbnailPath.removeValue(forKey: feed.videoID)
     }
     var snapshot = feedsDataSource.snapshot()
     snapshot.deleteItems(feeds)
     feedsDataSource.apply(snapshot, animatingDifferences: animated) { [weak self] in
       guard let self else { return }
-      yralPlayer.removeFeeds(feeds)
+      feedsPlayer.removeFeeds(feeds)
       if snapshot.itemIdentifiers.isEmpty {
-        yralPlayer.pause()
+        feedsPlayer.pause()
       }
     }
     if isReport {
