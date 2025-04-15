@@ -9,10 +9,19 @@ plugins {
     alias(libs.plugins.gobleyUniffi).apply(false)
     alias(libs.plugins.kotlinAtomicfu).apply(false)
     alias(libs.plugins.kotlinxSerialisartion).apply(false)
+    id("maven-publish")
 }
 
 val reportMerge by tasks.registering(io.gitlab.arturbosch.detekt.report.ReportMergeTask::class) {
     output.set(rootProject.layout.buildDirectory.file("reports/detekt/merge.sarif")) // or "reports/detekt/merge.sarif"
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        mavenLocal()
+    }
 }
 
 subprojects {
@@ -70,6 +79,17 @@ subprojects {
         finalizedBy(reportMerge)
         reportMerge.configure {
             input.from(sarifReportFile)
+        }
+    }
+
+    group = "com.yral.shared"
+    version = "1.0"
+
+    apply(plugin = "maven-publish")
+    publishing {
+        repositories {
+            maven {
+            }
         }
     }
 }

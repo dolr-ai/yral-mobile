@@ -69,7 +69,13 @@ dependencies {
     implementation(projects.shared.libs.preferences)
     implementation(projects.shared.libs.http)
     implementation(projects.shared.features.auth)
-    implementation(projects.shared.rust)
+
+    //implementation(projects.shared.rust)
+    BuildConfig.getDependencies(project).forEach { dependency ->
+        if (dependency.isNotEmpty()) {
+            implementation(dependency)
+        }
+    }
 
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.cio)
