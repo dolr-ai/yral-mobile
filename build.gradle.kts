@@ -5,6 +5,14 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform).apply(false)
     alias(libs.plugins.ktlint)
     alias(libs.plugins.detekt)
+    alias(libs.plugins.gobleyCargo).apply(false)
+    alias(libs.plugins.gobleyUniffi).apply(false)
+    alias(libs.plugins.kotlinAtomicfu).apply(false)
+    alias(libs.plugins.kotlinxSerialisartion).apply(false)
+}
+
+val reportMerge by tasks.registering(io.gitlab.arturbosch.detekt.report.ReportMergeTask::class) {
+    output.set(rootProject.layout.buildDirectory.file("reports/detekt/merge.sarif")) // or "reports/detekt/merge.sarif"
 }
 
 subprojects {
@@ -24,23 +32,20 @@ subprojects {
     }
 
     detekt {
-        toolVersion = "1.23.1"
-        config = files("$rootDir/detekt-config.yml")
+        toolVersion = "1.23.8"
+        config.from(files("$rootDir/detekt-config.yml"))
         buildUponDefaultConfig = true
 
         val detektFiles = project.findProperty("detektFiles") as? String
         if (detektFiles != null) {
-            source = files(detektFiles.split(","))
+            source.from(files(detektFiles.split(",")))
         } else {
-            // Default source
-            source = files("src/main/java", "src/main/kotlin")
-        }
-
-        reports {
-            xml.required.set(true)
-            xml.outputLocation.set(file("build/reports/detekt/detekt.xml"))
-            sarif.required.set(true)
-            sarif.outputLocation.set(file("build/reports/detekt/detekt.sarif"))
+            source.setFrom(
+                "$projectDir/src/commonMain/kotlin",
+                "$projectDir/src/androidMain/kotlin",
+                "$projectDir/src/iosMain/kotlin",
+                "$projectDir/src/main/kotlin",
+            )
         }
     }
 
@@ -50,6 +55,21 @@ subprojects {
             path.contains("/build/") ||
                 path.endsWith("build.gradle.kts") ||
                 path.endsWith("settings.gradle.kts")
+        }
+        basePath = rootProject.projectDir.absolutePath
+        reports {
+            xml {
+                required.set(true)
+                outputLocation.set(file("build/reports/detekt/detekt.xml"))
+            }
+            sarif {
+                required.set(true)
+                outputLocation.set(file("build/reports/detekt/detekt.sarif"))
+            }
+        }
+        finalizedBy(reportMerge)
+        reportMerge.configure {
+            input.from(sarifReportFile)
         }
     }
 }

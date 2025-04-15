@@ -1,0 +1,13 @@
+# noinspection EditorConfigKeyCorrectness
+root = true
+
+# Exclude Compose generated resources
+[**/generated/**.kt]
+ktlint_standard = disabled
+
+[**/compose/resource/**.kt]
+ktlint_standard = disabled
+
+[*.{kt,kts}]
+ktlint_standard_blank-line-before-declaration = disabled
+ktlint_function_naming_ignore_when_annotated_with = Composable

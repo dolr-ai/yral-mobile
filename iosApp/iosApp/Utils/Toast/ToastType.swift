@@ -9,57 +9,62 @@
 import UIKit
 
 enum ToastType {
-  case success
-  case failure
+  case uploadSuccess
+  case uploadFailure
+  case reportSuccess
 
   var title: String {
     switch self {
-    case .success:
-      return Constants.successTitle
-    case .failure:
+    case .uploadSuccess:
+      return Constants.uploadSuccessTitle
+    case .uploadFailure:
       return Constants.failureTitle
+    case .reportSuccess:
+      return Constants.reportSuccessTitle
     }
   }
 
   var subtitle: String {
     switch self {
-    case .success:
-      return Constants.successSubtitle
-    case .failure:
+    case .uploadSuccess:
+      return Constants.uploadSuccessSubtitle
+    case .uploadFailure:
       return Constants.failureSubtitle
+    case .reportSuccess:
+      return Constants.reportSuccessSubtitle
     }
   }
 
   var subtitleColor: UIColor {
     switch self {
-    case .success:
+    case .uploadSuccess, .reportSuccess:
       return Constants.successSubtitleColor
-    case .failure:
+    case .uploadFailure:
       return Constants.failureSubtitleColor
     }
   }
 
   var buttonTitle: String? {
     switch self {
-    case .success:
+    case .uploadSuccess, .reportSuccess:
       return nil
-    case .failure:
+    case .uploadFailure:
       return Constants.failureButtonTitle
     }
   }
 
   var icon: UIImage? {
     switch self {
-    case .success:
+    case .uploadSuccess, .reportSuccess:
       return UIImage(named: Constants.successIconName)
-    case .failure:
+    case .uploadFailure:
       return UIImage(named: Constants.failureIconName)
     }
   }
 
   var backgroundColor: UIColor {
     switch self {
-    case .success, .failure:
+    case .uploadSuccess, .uploadFailure, .reportSuccess:
       return Constants.bgColor
     }
   }
@@ -67,8 +72,10 @@ enum ToastType {
 
 extension ToastType {
   enum Constants {
-    static let successTitle = "Video Uploaded"
-    static let successSubtitle = "Your video has been uploaded successfully. Browse and add more videos."
+    static let uploadSuccessTitle = "Video Uploaded"
+    static let uploadSuccessSubtitle = "Your video has been uploaded successfully. Browse and add more videos."
+    static let reportSuccessTitle = "Report Submitted!"
+    static let reportSuccessSubtitle = "Thanks for letting us know! Our team will review this video soon."
     static let successSubtitleColor =  UIColor(red: 0.831, green: 0.831, blue: 0.831, alpha: 1)
     static let failureTitle = "Error"
     static let failureSubtitle = "Please try uploading your video again."
