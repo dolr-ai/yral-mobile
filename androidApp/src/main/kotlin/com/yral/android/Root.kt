@@ -2,7 +2,6 @@ package com.yral.android
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
@@ -34,7 +33,6 @@ import com.yral.shared.rust.services.IndividualUserServiceFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-@OptIn(ExperimentalLayoutApi::class)
 @Suppress("LongMethod")
 @Composable
 fun Root() {
@@ -109,7 +107,7 @@ fun Root() {
                 contentAlignment = Alignment.Center,
             ) {
                 Column {
-                    GreetingView(Greeting().greet())
+                    GreetingView(Greeting().greet().plus("from Native!"))
                     Spacer(Modifier.height(16.dp))
                 }
             }
