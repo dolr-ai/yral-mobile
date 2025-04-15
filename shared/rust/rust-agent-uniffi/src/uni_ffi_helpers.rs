@@ -1,12 +1,11 @@
 use crate::UniffiCustomTypeConverter;
-use candid::{CandidType, Deserialize, Int, Nat, Principal};
-use std::str::FromStr;
-use android_logger::{Config, FilterBuilder};
+use candid::Error as CandidError;
+use candid::{CandidType, Deserialize, Nat, Principal};
+use cfg_if::cfg_if;
+use ic_agent::export::PrincipalError;
 use ic_agent::AgentError;
 use serde_bytes::ByteBuf;
-use candid::Error as CandidError;
-use ic_agent::export::PrincipalError;
-use log::{error, trace, LevelFilter};
+use std::str::FromStr;
 use uniffi::{Enum, Record};
 
 uniffi::custom_type!(Principal, String);
@@ -119,18 +118,21 @@ impl std::fmt::Display for FFIError {
     }
 }
 
-#[uniffi::export]
-pub fn native_activity_create() {
-    android_logger::init_once(
-        Config::default()
-            .with_max_level(LevelFilter::Trace) // limit log level
-            .with_tag("Rust Logger") // logs will show under mytag tag
-            .with_filter( // configure messages for specific crate
+cfg_if! {
+    if #[cfg(target_os = "android")] {
+        #[uniffi::export]
+        fn init_rust_logger() {
+            use android_logger::{Config, FilterBuilder};
+            use log::{LevelFilter};
+            android_logger::init_once(
+                Config::default()
+                    .with_max_level(LevelFilter::Trace) // limit log level
+                    .with_tag("Rust Logger") // logs will show under mytag tag
+                    .with_filter( // configure messages for specific crate
                           FilterBuilder::new()
                               .parse("debug,hello::crate=error")
                               .build())
-    );
-
-    trace!("this is a verbose {}", "message");
-    error!("this is printed by default");
+            );
+        }
+    }
 }
