@@ -8,25 +8,38 @@
 
 import Foundation
 
-extension AgentError: Error {
-
+extension AgentError: Error {}
+extension AgentError: LocalizedError {
+  public var errorDescription: String? {
+    return String(describing: self)
+  }
 }
 
-extension PrincipalError: Error {
-
+extension PrincipalError: Error {}
+extension PrincipalError: LocalizedError {
+  public var errorDescription: String? {
+    return String(describing: self)
+  }
 }
 
 extension RustString: Error {
-
+  public var localizedDescription: String? {
+    return self.toString()
+  }
 }
 
-extension Secp256k1Error: Error {
-
+extension RustString: LocalizedError {
+  public var errorDescription: String? {
+    return self.toString()
+  }
 }
 
-extension MlFeed_PostItemResponse: FeedMapping { }
-
-extension CacheDTO: FeedMapping { }
+extension Secp256k1Error: Error {}
+extension Secp256k1Error: LocalizedError {
+  public var errorDescription: String? {
+    return String(describing: self)
+  }
+}
 
 extension RustVec where T == UInt8 {
   public convenience init(bytes: UnsafeRawBufferPointer) {

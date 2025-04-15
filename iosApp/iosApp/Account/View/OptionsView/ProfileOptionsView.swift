@@ -51,7 +51,7 @@ struct ProfileOptionsView: View {
         }
       }
       if isShowingLoader {
-        ProgressView()
+        LottieLoaderView(animationName: Constants.loaderName)
           .padding()
           .background(Color.clear)
           .cornerRadius(Constants.progressViewCornerRadius)
@@ -104,5 +104,6 @@ extension ProfileOptionsView {
     static let progressViewSize = 16.0
     static let progressViewCornerRadius = 8.0
     static let vStackSpacing = 30.0
+    static let loaderName = "Yral_Loader"
   }
 }

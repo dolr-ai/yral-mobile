@@ -62,7 +62,6 @@ mod ffi {
         type BetDetails;
         type Result9;
         type DeviceIdentity;
-        type PostStatus;
         type FeedScore;
         type PostViewStatistics;
         type AggregateStats;
@@ -77,8 +76,6 @@ mod ffi {
         type PlacedBetDetailResult;
         type Result11;
         type MlFeedCacheItem;
-        type GetPostsOfUserProfileError;
-        type Result12;
         type FollowEntryDetail;
         type FollowEntry;
         type UserProfileGlobalStats;
@@ -140,6 +137,8 @@ mod ffi {
 
     extern "Rust" {
         type PostDetailsForFrontend;
+        #[swift_bridge(get(id))]
+        fn id(&self) -> u64;
         #[swift_bridge(get(&video_uid))]
         fn video_uid(&self) -> &str;
         #[swift_bridge(get(&description))]
@@ -150,6 +149,15 @@ mod ffi {
         fn liked_by_me(&self) -> bool;
         #[swift_bridge(get(&created_by_profile_photo_url))]
         fn created_by_profile_photo_url(&self) -> Option<&str>;
+        #[swift_bridge(get_with(&created_by_user_principal_id = principal_to_string))]
+        fn created_by_user_principal_id(&self) -> String;
+        #[swift_bridge(get(&status))]
+        fn status(&self) -> &PostStatus;
+    }
+
+    extern "Rust" {
+        type PostStatus;
+        fn is_banned_due_to_user_reporting(&self) -> bool;
     }
 
     extern "Rust" {
@@ -429,12 +437,10 @@ mod ffi {
         fn delegate_identity_with_max_age_public(
             parent_wire: DelegatedIdentityWire,
             new_pub_jwk_json: Vec<u8>,
-            max_age_seconds: u64
-        ) -> Result<DelegatedIdentityWire, String>; 
-        fn delegated_identity_wire_to_json(
-            wire: &DelegatedIdentityWire
-        ) -> String;
-   }
+            max_age_seconds: u64,
+        ) -> Result<DelegatedIdentityWire, String>;
+        fn delegated_identity_wire_to_json(wire: &DelegatedIdentityWire) -> String;
+    }
 
     extern "Rust" {
         type CanistersWrapper;
@@ -446,10 +452,30 @@ mod ffi {
         fn get_canister_principal(&self) -> Principal;
         fn get_canister_principal_string(&self) -> String;
         fn get_user_principal(&self) -> Principal;
+        fn get_user_principal_string(&self) -> String;
     }
 
     extern "Rust" {
         fn extract_time_as_double(result: Result11) -> Option<u64>;
         fn get_principal(text: String) -> Result<Principal, PrincipalError>;
+        fn get_principal_from_identity(identity: DelegatedIdentity) -> String;
+    }
+
+    extern "Rust" {
+        type GetPostsOfUserProfileError;
+
+        fn is_reached_end_of_items_list(&self) -> bool;
+        fn is_invalid_bounds_passed(&self) -> bool;
+        fn is_exceeded_max_number_of_items_allowed_in_one_request(&self) -> bool;
+    }
+
+    extern "Rust" {
+        type Result12;
+
+        fn is_ok(&self) -> bool;
+        fn is_err(&self) -> bool;
+
+        fn ok_value(self) -> Option<Vec<PostDetailsForFrontend>>;
+        fn err_value(self) -> Option<GetPostsOfUserProfileError>;
     }
 }

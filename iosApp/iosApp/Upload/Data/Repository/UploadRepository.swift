@@ -96,6 +96,7 @@ class UploadRepository: UploadRepositoryProtocol {
           videoUid: request.videoUID
         )
       )
+
       let endpoint = Endpoint(
         http: "",
         baseURL: baseURL,

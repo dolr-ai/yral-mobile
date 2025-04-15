@@ -1,0 +1,68 @@
+name: Build APK for preview
+on:
+  pull_request:
+    branches:
+      - 'develop'
+    types:
+      - ready_for_review
+      - synchronize
+
+jobs:
+  build-apk:
+    if: ${{ github.event.pull_request.draft == false }}
+    runs-on: ubuntu-latest
+      
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with: 
+          java-version: 17
+          distribution: 'temurin'
+          
+      - name: Cache Gradle packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Get Changed Files
+        id: changed_files
+        uses: step-security/changed-files@v45
+        with:
+          files: |
+            **/*.kt
+            **/*.kts
+
+      - name: Install android SDK
+        if: steps.changed_files.outputs.any_changed == 'true'
+        uses: android-actions/setup-android@v3
+        continue-on-error: true
+
+      - name: Setup environment variables
+        run: |
+          echo "DEBUG_KEYSTORE_PASSWORD=${{ secrets.ANDROID_DEBUG_SIGNING_SECRET_PASSWORD }}" >> $GITHUB_ENV
+          echo "DEBUG_KEY_PASSWORD=${{ secrets.ANDROID_DEBUG_SIGNING_SECRET_PASSWORD }}" >> $GITHUB_ENV
+
+      - name: Clean project
+        if: steps.changed_files.outputs.any_changed == 'true'
+        run: ./gradlew clean
+
+      - name: Build APK
+        if: steps.changed_files.outputs.any_changed == 'true'
+        run: ./gradlew androidApp:assembleDebug
+        env:
+          JAVA_HOME: ${{ steps.setup-jdk.outputs.java-home }}
+        continue-on-error: true
+
+      - name: Upload APK (PR-preview)
+        if: steps.changed_files.outputs.any_changed == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: androidApp-debug
+          path: androidApp/build/outputs/apk/debug/androidApp-debug.apk
+        continue-on-error: true

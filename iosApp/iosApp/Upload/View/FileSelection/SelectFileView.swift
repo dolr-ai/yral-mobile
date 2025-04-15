@@ -16,6 +16,7 @@ struct SelectFileView: View {
         Text(Constants.uploadText)
           .font(Constants.uploadTextFont)
           .foregroundColor(Constants.uploadTextColor)
+          .multilineTextAlignment(.center)
         Text(Constants.fileSizeText)
           .font(Constants.fileSizeFont)
           .foregroundColor(Constants.fileSizeColor)
