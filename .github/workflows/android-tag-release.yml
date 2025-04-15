@@ -56,7 +56,7 @@ jobs:
         run: ./gradlew clean
 
       - name: Build AAB with Gradle
-        run: ./gradlew androidApp:assembleRelease
+        run: ./gradlew androidApp:assembleRelease -PisDebug=false
         env:
           JAVA_HOME: ${{ steps.setup-jdk.outputs.java-home }}
 
