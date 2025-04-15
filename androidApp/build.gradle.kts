@@ -1,7 +1,12 @@
+import com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension
+import java.util.*
+
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.kotlinAndroid)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.crashlytics)
+    alias(libs.plugins.play.services)
 }
 
 android {
@@ -13,6 +18,7 @@ android {
         targetSdk = libs.versions.targetSDK.get().toInt()
         versionCode = 1
         versionName = "1.0.0"
+        ndkVersion = "25.2.9519653"
     }
     buildFeatures {
         compose = true
@@ -47,6 +53,10 @@ android {
         getByName("release") {
             signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
+            configure<CrashlyticsExtension> {
+                mappingFileUploadEnabled = true
+                nativeSymbolUploadEnabled = true
+            }
         }
     }
     compileOptions {
@@ -83,4 +93,24 @@ dependencies {
     implementation(libs.ktor.client.content.negotiation)
     implementation(libs.ktor.json)
     implementation(libs.kotlinx.datetime)
+
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
+    implementation(libs.firebase.crashlytics)
+}
+
+afterEvaluate {
+    android.buildTypes.forEach { buildType ->
+        if (buildType.name.equals("release", ignoreCase = true)) {
+            tasks.named(
+                "bundle${
+                    buildType.name.replaceFirstChar {
+                        if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
+                    }
+                }"
+            ).configure {
+                dependsOn("uploadCrashlyticsSymbolFileRelease")
+            }
+        }
+    }
 }
