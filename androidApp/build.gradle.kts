@@ -1,4 +1,5 @@
 import com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension
+import java.util.*
 
 plugins {
     alias(libs.plugins.androidApplication)
@@ -96,4 +97,20 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.crashlytics)
+}
+
+afterEvaluate {
+    android.buildTypes.forEach { buildType ->
+        if (buildType.name.equals("release", ignoreCase = true)) {
+            tasks.named(
+                "bundle${
+                    buildType.name.replaceFirstChar {
+                        if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
+                    }
+                }"
+            ).configure {
+                dependsOn("uploadCrashlyticsSymbolFileRelease")
+            }
+        }
+    }
 }
