@@ -8891,6 +8891,18 @@ extension PostDetailsForFrontendRef {
     public func status() -> PostStatusRef {
         PostStatusRef(ptr: __swift_bridge__$PostDetailsForFrontend$status(ptr))
     }
+
+    public func hashtags() -> RustVec<RustString> {
+        RustVec(ptr: __swift_bridge__$PostDetailsForFrontend$hashtags(ptr))
+    }
+
+    public func created_by_display_name() -> Optional<RustStr> {
+        { let val = __swift_bridge__$PostDetailsForFrontend$created_by_display_name(ptr); if val.start != nil { return val; } else { return nil; } }()
+    }
+
+    public func total_view_count() -> UInt64 {
+        __swift_bridge__$PostDetailsForFrontend$total_view_count(ptr)
+    }
 }
 extension PostDetailsForFrontend: Vectorizable {
     public static func vecOfSelfNew() -> UnsafeMutableRawPointer {
@@ -23153,7 +23165,6 @@ extension InitArgs: Vectorizable {
         __swift_bridge__$Vec_InitArgs$len(vecPtr)
     }
 }
-
 
 
 public class Icrc3DataCertificateResult: Icrc3DataCertificateResultRefMut {
