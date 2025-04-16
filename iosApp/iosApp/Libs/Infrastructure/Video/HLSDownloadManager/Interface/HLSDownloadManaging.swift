@@ -9,7 +9,6 @@
 import Foundation
 import AVFoundation
 
-@MainActor
 protocol HLSDownloadManaging {
     var delegate: HLSDownloadManagerProtocol? { get set }
 

@@ -56,8 +56,8 @@ final class FeedsPlayer: YralPlayer {
   func addFeedResults(_ feeds: [FeedResult]) {
     self.feedResults += feeds
     if self.feedResults.count <= Constants.radius {
-      Task {
-        await preloadFeeds()
+      Task.detached(priority: .background) {
+        await self.preloadFeeds()
       }
     }
   }
@@ -120,8 +120,8 @@ final class FeedsPlayer: YralPlayer {
 
     guard let player = player as? AVQueuePlayer else {
       player.play()
-      Task {
-        await preloadFeeds()
+      Task.detached(priority: .background) {
+        await self.preloadFeeds()
       }
       return
     }
@@ -139,8 +139,8 @@ final class FeedsPlayer: YralPlayer {
       play()
     }
 
-    Task {
-      await preloadFeeds()
+    Task.detached(priority: .background) {
+      await self.preloadFeeds()
     }
   }
 
