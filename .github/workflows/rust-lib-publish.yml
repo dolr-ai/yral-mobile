@@ -7,9 +7,6 @@ on:
         required: true
         default: '1.0'
 
-#permissions:
-#  contents: write
-
 jobs:
   build-apk:
     runs-on: ubuntu-latest
@@ -45,17 +42,9 @@ jobs:
         run: ./gradlew clean
 
       - name: Publish to maven local
-        run: ./gradlew shared:rust:publishToMavenLocal
+        run: ./gradlew shared:rust:publish
         env:
+          GITHUB_USERNAME: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           JAVA_HOME: ${{ steps.setup-jdk.outputs.java-home }}
         continue-on-error: true
-
-#      - name: Create Github Release (production-release)
-#        id: create_release
-#        uses: ncipollo/release-action@v1
-#        with:
-#          token: ${{ secrets.GITHUB_TOKEN }}
-#          tag: rustLib-${{ github.event.inputs.version }}
-#          name: rustLib-${{ github.event.inputs.version }}
-#          draft: false
-#          prerelease: false
