@@ -161,6 +161,7 @@ class FeedsRepository: FeedRepositoryProtocol {
       let swiftWire = try swiftDelegatedIdentityWire(from: delegatedWire)
       let reportRequestDTO = ReportRequestDTO(
         canisterId: request.canisterID,
+        principal: request.principal,
         postId: request.postId,
         reason: request.reason,
         userCanisterId: canisterPrincipalString,

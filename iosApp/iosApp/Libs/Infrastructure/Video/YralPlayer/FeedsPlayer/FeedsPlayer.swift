@@ -37,8 +37,8 @@ final class FeedsPlayer: YralPlayer {
     self.feedResults = feeds
     configureAudioSession()
     currentIndex = .zero
-    hlsDownloadManager.delegate = self
     Task {
+      await hlsDownloadManager.setDelegate(self)
       await prepareCurrentVideo()
     }
   }
@@ -68,7 +68,9 @@ final class FeedsPlayer: YralPlayer {
       lastPlayedTimes[currentIndex] = currentTime
     }
     if abs(index - currentIndex) > Constants.radius {
-      cancelPreloadOutsideRange(center: index, radius: Constants.radius)
+      Task {
+        await cancelPreloadOutsideRange(center: index, radius: Constants.radius)
+      }
     }
 
     currentIndex = index
@@ -190,14 +192,14 @@ final class FeedsPlayer: YralPlayer {
     currentlyDownloadingIndexes.remove(index)
   }
 
-  private func cancelPreloadOutsideRange(center: Int, radius: Int) {
+  private func cancelPreloadOutsideRange(center: Int, radius: Int) async {
     let validRange = (center - radius)...(center + radius)
     let indicesToCancel = currentlyDownloadingIndexes.filter { !validRange.contains($0) }
     delegate?.removeThumbnails(for: indicesToCancel)
     for idx in indicesToCancel {
       let feed = feedResults[idx]
-      hlsDownloadManager.cancelDownload(for: feed.url)
-      hlsDownloadManager.clearMappingsAndCache(for: feed.url, assetTitle: feed.videoID)
+      await hlsDownloadManager.cancelDownload(for: feed.url)
+      await hlsDownloadManager.clearMappingsAndCache(for: feed.url, assetTitle: feed.videoID)
       currentlyDownloadingIndexes.remove(idx)
     }
   }
@@ -205,7 +207,7 @@ final class FeedsPlayer: YralPlayer {
   private func loadVideo(at index: Int) async throws -> AVPlayerItem? {
     guard index < feedResults.count else { return nil }
     let feed = feedResults[index]
-    if let localAsset = hlsDownloadManager.createLocalAssetIfAvailable(for: feed.url) {
+    if let localAsset = await hlsDownloadManager.createLocalAssetIfAvailable(for: feed.url) {
       do {
         try await localAsset.loadPlayableAsync()
         let item = AVPlayerItem(asset: localAsset)
