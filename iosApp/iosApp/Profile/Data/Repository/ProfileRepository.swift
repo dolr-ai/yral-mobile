@@ -102,6 +102,7 @@ class ProfileRepository: ProfileRepositoryProtocol {
     }
   }
 
+  // swiftlint: disable function_body_length
   private func getUserVideos(
     with startIndex: UInt64,
     offset: UInt64
@@ -119,7 +120,11 @@ class ProfileRepository: ProfileRepositoryProtocol {
       )
       if result.is_ok() {
         guard let postResult = result.ok_value() else { return .success([FeedResult]()) }
-        let feedResult = postResult.map { postDetail in
+        let result = postResult.filter {
+          !$0.status().is_banned_due_to_user_reporting() &&
+          !$0.is_nsfw()
+        }
+        let feedResult = result.map { postDetail in
           let videoURL = URL(
             string: "\(Constants.cloudfarePrefix)\(postDetail.video_uid().toString())\(Constants.cloudflareSuffix)"
           ) ?? URL(fileURLWithPath: "")
@@ -157,6 +162,7 @@ class ProfileRepository: ProfileRepositoryProtocol {
       return .failure(AccountError.rustError(RustError.unknown(error.localizedDescription)))
     }
   }
+  // swiftlint: enable function_body_length
 
   private func swiftDelegatedIdentityWire(from rustWire: DelegatedIdentityWire) throws -> SwiftDelegatedIdentityWire {
     let wireJsonString = delegated_identity_wire_to_json(rustWire).toString()

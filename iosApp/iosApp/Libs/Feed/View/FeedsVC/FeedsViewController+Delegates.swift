@@ -58,7 +58,8 @@ extension FeedsViewController: FeedsCellProtocol {
             postId: UInt64(feedItem.postID) ?? .zero,
             videoId: feedItem.videoID,
             reason: reportReason,
-            canisterID: feedItem.canisterID
+            canisterID: feedItem.canisterID,
+            principal: feedItem.principalID
           ))
         }
         self.getNudgeView(at: index, isDelete: false)

@@ -139,6 +139,8 @@ mod ffi {
         type PostDetailsForFrontend;
         #[swift_bridge(get(id))]
         fn id(&self) -> u64;
+        #[swift_bridge(get(is_nsfw))]
+        fn is_nsfw(&self) -> bool;
         #[swift_bridge(get(&video_uid))]
         fn video_uid(&self) -> &str;
         #[swift_bridge(get(&description))]

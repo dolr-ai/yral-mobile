@@ -13,4 +13,5 @@ struct ReportRequest: Codable {
   let videoId: String
   let reason: String
   let canisterID: String
+  let principal: String
 }
