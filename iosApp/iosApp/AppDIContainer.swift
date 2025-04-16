@@ -75,7 +75,7 @@ final class AppDIContainer {
     return FeedDIContainer(
       dependencies: FeedDIContainer.Dependencies(
         mlfeedService: mlFeedClient,
-        httpService: HTTPService(baseURLString: appConfiguration.reportBaseURLString),
+        httpService: HTTPService(baseURLString: appConfiguration.offchainBaseURLString),
         authClient: authClient,
         crashReporter: crashReporter,
         toggleLikeUseCase: toggleLikeUseCase
