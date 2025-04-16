@@ -107,7 +107,7 @@ fun Root() {
                 contentAlignment = Alignment.Center,
             ) {
                 Column {
-                    GreetingView(Greeting().greet().plus("from Native!"))
+                    GreetingView(Greeting().greet().plus(" from Native!"))
                     Spacer(Modifier.height(16.dp))
                 }
             }
