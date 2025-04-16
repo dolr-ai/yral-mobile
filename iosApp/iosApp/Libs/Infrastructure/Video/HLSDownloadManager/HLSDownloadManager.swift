@@ -10,9 +10,13 @@ import Foundation
 import AVFoundation
 import Network
 
-@MainActor
-final class HLSDownloadManager: NSObject, HLSDownloadManaging {
-  weak var delegate: HLSDownloadManagerProtocol?
+actor HLSDownloadManager: NSObject, HLSDownloadManaging {
+
+  private weak var _delegate: HLSDownloadManagerProtocol?
+  var delegate: HLSDownloadManagerProtocol? {
+    get { _delegate }
+    set { _delegate = newValue }
+  }
 
   private let networkMonitor: NetworkMonitorProtocol
   private let fileManager: FileManager
@@ -55,8 +59,12 @@ final class HLSDownloadManager: NSObject, HLSDownloadManaging {
     self._downloadSession = DefaultAssetDownloadURLSession(session: session)
   }
 
-  override convenience init() {
+  override init() {
     self.init(networkMonitor: DefaultNetworkMonitor(), fileManager: .default)
+  }
+
+  func setDelegate(_ delegate: HLSDownloadManagerProtocol?) {
+    self._delegate = delegate
   }
 
   func startDownloadAsync(hlsURL: URL, assetTitle: String) async throws -> URL {
@@ -131,48 +139,66 @@ final class HLSDownloadManager: NSObject, HLSDownloadManaging {
       }
     }
   }
+
+  private func onStartDownload(
+    _ session: URLSession,
+    assetDownloadTask: AVAssetDownloadTask,
+    didFinishDownloadingTo location: URL
+  ) {
+    let matchingEntry = self.activeDownloads.first {
+      $0.value.underlyingTask === assetDownloadTask
+    }
+    guard let (feedURL, _) = matchingEntry else { return }
+    self.localRemoteUrlMapping[feedURL] = location
+    print("Started writing to location: \(location)")
+  }
+
+  private func onEndDownload(_ session: URLSession,
+                             assetDownloadTask: AVAssetDownloadTask,
+                             didFinishDownloadingTo location: URL) {
+    let matchingEntry = self.activeDownloads.first {
+      $0.value.underlyingTask === assetDownloadTask
+    }
+    guard let (feedURL, _) = matchingEntry else { return }
+    defer {
+      self.enforceCacheLimitIfNeeded()
+      self.activeDownloads.removeValue(forKey: feedURL)
+    }
+
+    if let continuation = self.downloadContinuations.removeValue(forKey: feedURL) {
+      continuation.resume(returning: location)
+    }
+    print("Finished writing to location: \(location)")
+  }
 }
 
 extension HLSDownloadManager: AVAssetDownloadDelegate {
 
-  nonisolated func urlSession(_ session: URLSession,
-                              assetDownloadTask: AVAssetDownloadTask,
-                              didFinishDownloadingTo location: URL) {
-    Task { @MainActor [weak self] in
+  nonisolated func urlSession(
+    _ session: URLSession,
+    assetDownloadTask: AVAssetDownloadTask,
+    didFinishDownloadingTo location: URL
+  ) {
+    Task { [weak self] in
       guard let self = self else { return }
-      let matchingEntry = self.activeDownloads.first {
-        $0.value.underlyingTask === assetDownloadTask
-      }
-      guard let (feedURL, _) = matchingEntry else { return }
-
-      defer {
-        self.enforceCacheLimitIfNeeded()
-        self.activeDownloads.removeValue(forKey: feedURL)
-      }
-
-      if let continuation = self.downloadContinuations.removeValue(forKey: feedURL) {
-        continuation.resume(returning: location)
-      }
-
-      //      let policy = AVMutableAssetDownloadStorageManagementPolicy()
-      //      policy.expirationDate = Calendar.current.date(byAdding: .minute, value: 2, to: .now) ?? .now
-      //      AVAssetDownloadStorageManager.shared().setStorageManagementPolicy(policy, for: location)
-
-      print("Finished writing to location: \(location)")
+      await self.onEndDownload(
+        session,
+        assetDownloadTask: assetDownloadTask,
+        didFinishDownloadingTo: location
+      )
     }
   }
 
   nonisolated func urlSession(_ session: URLSession,
                               assetDownloadTask: AVAssetDownloadTask,
                               willDownloadTo location: URL) {
-    Task { @MainActor [weak self] in
+    Task { [weak self] in
       guard let self = self else { return }
-      let matchingEntry = self.activeDownloads.first {
-        $0.value.underlyingTask === assetDownloadTask
-      }
-      guard let (feedURL, _) = matchingEntry else { return }
-      self.localRemoteUrlMapping[feedURL] = location
-      print("Started writing to location: \(location)")
+      await self.onStartDownload(
+        session,
+        assetDownloadTask: assetDownloadTask,
+        didFinishDownloadingTo: location
+      )
     }
   }
 }
