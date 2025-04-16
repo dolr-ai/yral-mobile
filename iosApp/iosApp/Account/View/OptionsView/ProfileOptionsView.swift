@@ -86,7 +86,7 @@ extension ProfileOptionsView {
       Options(
         image: Image("option_tnc"),
         text: "Terms of service",
-        redirection: "https://yral.com/terms-of-service"
+        redirection: "https://yral.com/terms-ios"
       ),
       Options(
         image: Image("option_privacy"),
