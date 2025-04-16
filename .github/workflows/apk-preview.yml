@@ -41,8 +41,14 @@ jobs:
       - name: Install android SDK
         if: steps.changed_files.outputs.any_changed == 'true'
         uses: android-actions/setup-android@v3
+
+      - name: Install android ndk
+        if: steps.changed_files.outputs.any_changed == 'true'
+        uses: nttld/setup-ndk@v1
         with:
-          ndk-version: 25.2.9519653
+          ndk-version: r28
+          link-to-sdk: true
+          local-cache: true
 
       - name: Setup environment variables
         run: |

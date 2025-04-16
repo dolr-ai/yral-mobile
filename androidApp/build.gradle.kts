@@ -18,7 +18,7 @@ android {
         targetSdk = libs.versions.targetSDK.get().toInt()
         versionCode = 1
         versionName = "1.0.0"
-        ndkVersion = "25.2.9519653"
+        ndkVersion = "28.0.13004108"
     }
     buildFeatures {
         compose = true
