@@ -1,4 +1,4 @@
-name: Publish Rust lib to Maven local
+name: Publish Rust lib to github packages
 on:
   workflow_dispatch:
     inputs:
@@ -35,7 +35,6 @@ jobs:
 
       - name: Install android SDK
         uses: android-actions/setup-android@v3
-        continue-on-error: true
 
       - name: Update version code
         run: |
@@ -51,4 +50,3 @@ jobs:
           GITHUB_USERNAME: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           JAVA_HOME: ${{ steps.setup-jdk.outputs.java-home }}
-        continue-on-error: true

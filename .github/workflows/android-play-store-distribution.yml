@@ -71,6 +71,8 @@ jobs:
       - name: Build AAB with Gradle
         run: ./gradlew androidApp:bundleRelease -PisDebug=false
         env:
+          GITHUB_USERNAME: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           JAVA_HOME: ${{ steps.setup-jdk.outputs.java-home }}
 
       - name: Authenticate to Google Cloud
