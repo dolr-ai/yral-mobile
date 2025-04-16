@@ -8860,6 +8860,10 @@ extension PostDetailsForFrontendRef {
         __swift_bridge__$PostDetailsForFrontend$id(ptr)
     }
 
+    public func is_nsfw() -> Bool {
+        __swift_bridge__$PostDetailsForFrontend$is_nsfw(ptr)
+    }
+
     public func video_uid() -> RustStr {
         __swift_bridge__$PostDetailsForFrontend$video_uid(ptr)
     }

@@ -1502,6 +1502,7 @@ uintptr_t __swift_bridge__$Vec_Result12$len(void* vec_ptr);
 void* __swift_bridge__$Vec_Result12$as_ptr(void* vec_ptr);
 
 uint64_t __swift_bridge__$PostDetailsForFrontend$id(void* self);
+bool __swift_bridge__$PostDetailsForFrontend$is_nsfw(void* self);
 struct RustStr __swift_bridge__$PostDetailsForFrontend$video_uid(void* self);
 struct RustStr __swift_bridge__$PostDetailsForFrontend$description(void* self);
 uint64_t __swift_bridge__$PostDetailsForFrontend$like_count(void* self);
