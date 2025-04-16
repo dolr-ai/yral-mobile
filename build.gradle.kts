@@ -9,7 +9,6 @@ plugins {
     alias(libs.plugins.gobleyUniffi).apply(false)
     alias(libs.plugins.kotlinAtomicfu).apply(false)
     alias(libs.plugins.kotlinxSerialisartion).apply(false)
-    id("maven-publish")
     alias(libs.plugins.crashlytics).apply(false)
     alias(libs.plugins.play.services).apply(false)
 }
@@ -22,7 +21,15 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-        mavenLocal()
+        //mavenLocal()
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/dolr-ai/yral-mobile")
+            credentials {
+                username = System.getenv("GITHUB_USERNAME")
+                password = System.getenv("GITHUB_TOKEN")
+            }
+        }
     }
 }
 
@@ -81,17 +88,6 @@ subprojects {
         finalizedBy(reportMerge)
         reportMerge.configure {
             input.from(sarifReportFile)
-        }
-    }
-
-    group = "com.yral.shared"
-    version = "1.0"
-
-    apply(plugin = "maven-publish")
-    publishing {
-        repositories {
-            maven {
-            }
         }
     }
 }

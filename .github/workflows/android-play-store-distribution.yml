@@ -38,6 +38,14 @@ jobs:
       - name: Install android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Install android ndk
+        if: steps.changed_files.outputs.any_changed == 'true'
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r28
+          link-to-sdk: true
+          local-cache: true
+
       - name: Bump version (ephemeral, no commit)
         run: |
           # Example approach: Use the GitHub run number as a unique versionCode
@@ -71,6 +79,8 @@ jobs:
       - name: Build AAB with Gradle
         run: ./gradlew androidApp:bundleRelease -PisDebug=false
         env:
+          GITHUB_USERNAME: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           JAVA_HOME: ${{ steps.setup-jdk.outputs.java-home }}
 
       - name: Authenticate to Google Cloud
