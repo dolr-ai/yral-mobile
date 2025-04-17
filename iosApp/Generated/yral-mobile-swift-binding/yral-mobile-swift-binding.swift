@@ -54,6 +54,9 @@ public func get_principal<GenericIntoRustString: IntoRustString>(_ text: Generic
 public func get_principal_from_identity(_ identity: DelegatedIdentity) -> RustString {
     RustString(ptr: __swift_bridge__$get_principal_from_identity({identity.isOwned = false; return identity.ptr;}()))
 }
+public func propic_from_principal(_ principal: Principal) -> RustString {
+    RustString(ptr: __swift_bridge__$propic_from_principal({principal.isOwned = false; return principal.ptr;}()))
+}
 
 public class KeyValuePair: KeyValuePairRefMut {
     var isOwned: Bool = true
