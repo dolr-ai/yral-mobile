@@ -122,7 +122,10 @@ class FeedsRepository: FeedRepositoryProtocol {
       string: "\(Constants.cloudfarePrefix)\(result.video_uid().toString())\(Constants.thumbnailSuffix)"
     ) ?? URL(fileURLWithPath: "")
 
-    let urlString = result.created_by_profile_photo_url()?.toString()
+    var profileImageURL: URL?
+    if let userPrincipal = try? get_principal(result.created_by_user_principal_id()) {
+      profileImageURL = URL(string: propic_from_principal(userPrincipal).toString())
+    }
 
     return FeedResult(
       postID: String(feed.postID),
@@ -135,7 +138,7 @@ class FeedsRepository: FeedRepositoryProtocol {
       viewCount: Int64(result.total_view_count()),
       displayName: result.created_by_display_name()?.toString() ?? "",
       postDescription: result.description().toString(),
-      profileImageURL: urlString != nil ? URL(string: urlString!) : nil,
+      profileImageURL: profileImageURL,
       likeCount: Int(result.like_count()),
       isLiked: result.liked_by_me(),
       nsfwProbability: feed.nsfwProbability

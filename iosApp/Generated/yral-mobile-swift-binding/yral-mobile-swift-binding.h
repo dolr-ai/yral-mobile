@@ -1618,6 +1618,7 @@ bool __swift_bridge__$Result12$is_ok(void* self);
 bool __swift_bridge__$Result12$is_err(void* self);
 void* __swift_bridge__$Result12$ok_value(void* self);
 void* __swift_bridge__$Result12$err_value(void* self);
+void* __swift_bridge__$propic_from_principal(void* principal);
 typedef enum __swift_bridge__$ResultU32AndAgentError$Tag {__swift_bridge__$ResultU32AndAgentError$ResultOk, __swift_bridge__$ResultU32AndAgentError$ResultErr} __swift_bridge__$ResultU32AndAgentError$Tag;
 union __swift_bridge__$ResultU32AndAgentError$Fields {uint32_t ok; void* err;};
 typedef struct __swift_bridge__$ResultU32AndAgentError{__swift_bridge__$ResultU32AndAgentError$Tag tag; union __swift_bridge__$ResultU32AndAgentError$Fields payload;} __swift_bridge__$ResultU32AndAgentError;
