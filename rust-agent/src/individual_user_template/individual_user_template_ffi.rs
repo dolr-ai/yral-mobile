@@ -486,4 +486,8 @@ mod ffi {
         fn ok_value(self) -> Option<Vec<PostDetailsForFrontend>>;
         fn err_value(self) -> Option<GetPostsOfUserProfileError>;
     }
+
+    extern "Rust" {
+        fn propic_from_principal(principal: Principal) -> String;
+    }
 }

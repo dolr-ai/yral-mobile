@@ -17,6 +17,11 @@ class AccountRepository: AccountRepositoryProtocol {
   }
 
   func fetchAccount() async -> Result<AccountInfo, AccountError> {
-    return .success(AccountInfo(imageURL: nil, canisterID: authClient.userPrincipalString ?? ""))
+    var imageURL: URL?
+    if let principalString = authClient.userPrincipalString,
+       let principal = try? get_principal(principalString) {
+      imageURL = URL(string: propic_from_principal(principal).toString())
+    }
+    return .success(AccountInfo(imageURL: imageURL, canisterID: authClient.userPrincipalString ?? ""))
   }
 }
