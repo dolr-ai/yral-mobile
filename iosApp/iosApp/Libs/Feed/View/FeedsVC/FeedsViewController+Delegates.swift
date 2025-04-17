@@ -172,7 +172,7 @@ extension FeedsViewController: FeedsPlayerProtocol {
       absoluteWatched   = duration * 0.95
       percentageWatched = 95
     }
-
+    guard index < feedsDataSource.snapshot().itemIdentifiers.count else { return }
     let feed = feedsDataSource.snapshot().itemIdentifiers[index]
 
     Task { @MainActor in
