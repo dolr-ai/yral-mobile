@@ -150,6 +150,7 @@ extension FeedsViewController: FeedsPlayerProtocol {
 
   func removeThumbnails(for set: Set<Int>) {
     for index in set {
+      guard index < feedsDataSource.snapshot().itemIdentifiers.count else { continue }
       lastDisplayedThumbnailPath.removeValue(
         forKey: feedsDataSource.snapshot().itemIdentifiers[index].videoID
       )

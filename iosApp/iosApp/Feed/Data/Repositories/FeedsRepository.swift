@@ -297,7 +297,7 @@ extension FeedsRepository {
     static let feedsBaseURL = "https://yral-ml-feed-server.fly.dev"
     static let cacheSuffix = "/api/v1/feed/coldstart/clean"
     static let mlFeedSuffix = "/api/v1/feed/clean"
-    static let reportVideoPath = "/api/v1/posts/report"
+    static let reportVideoPath = "/api/v1/posts/report_v2"
     static let videoEventPath = "/api/v1/events/bulk"
     static let initialNumResults: Int64 = 20
     static let mlNumResults: Int64 = 10
