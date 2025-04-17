@@ -1,6 +1,9 @@
 package com.yral.shared.features.auth
 
+import com.yral.shared.core.AnalyticsManager
+import com.yral.shared.core.Event
 import com.yral.shared.http.maxAgeOrExpires
+import com.yral.shared.main.FeatureEvents
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import com.yral.shared.uniffi.generated.Principal
@@ -16,6 +19,7 @@ import kotlinx.datetime.Clock
 import kotlinx.serialization.json.JsonObject
 
 class DefaultAuthClient(
+    private val analyticsManager: AnalyticsManager,
     private val preferences: Preferences,
     private val client: HttpClient,
 ) : AuthClient {
@@ -77,6 +81,7 @@ class DefaultAuthClient(
         val canisterWrapper = authenticateWithNetwork(data, null)
         canisterPrincipal = canisterWrapper.getCanisterPrincipal()
         userPrincipal = canisterWrapper.getUserPrincipal()
+        analyticsManager.trackEvent(event = Event(name = FeatureEvents.AUTH_SUCCESSFUL.name.lowercase()))
         println("xxxxx canisterPrincipal: $canisterPrincipal")
         println("xxxxx userPrincipal: $userPrincipal")
     }
