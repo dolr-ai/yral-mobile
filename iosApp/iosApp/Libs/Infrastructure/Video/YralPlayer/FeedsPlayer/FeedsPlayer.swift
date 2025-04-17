@@ -28,6 +28,10 @@ final class FeedsPlayer: YralPlayer {
   var onPlayerItemsChanged: ((Int?, Int) -> Void)?
   weak var delegate: FeedsPlayerProtocol?
 
+  private var timeObserver: Any?
+  private var startLogged = Set<Int>()
+  private var finishLogged = Set<Int>()
+
   init(player: YralQueuePlayer = AVQueuePlayer(), hlsDownloadManager: HLSDownloadManaging) {
     self.player = player
     self.hlsDownloadManager = hlsDownloadManager
@@ -62,6 +66,41 @@ final class FeedsPlayer: YralPlayer {
     }
   }
 
+  private func attachTimeObserver() {
+    if let token = timeObserver {
+      (player as? AVQueuePlayer)?.removeTimeObserver(token)
+      timeObserver = nil
+    }
+    guard let queue = player as? AVQueuePlayer else { return }
+    let interval = CMTime(
+      seconds: Constants.videoDurationEventMinThreshold,
+      preferredTimescale: CMTimeScale(Constants.timescaleEventSamping)
+    )
+    timeObserver = queue.addPeriodicTimeObserver(
+      forInterval: interval, queue: .main
+    ) { [weak self] currentTime in
+      self?.evaluateProgress(currentTime)
+    }
+  }
+
+  private func evaluateProgress(_ time: CMTime) {
+    guard currentIndex < feedResults.count,
+          let item = player.currentItem,
+          item.status == .readyToPlay else { return }
+
+    let seconds  = time.seconds
+    let duration = item.duration.seconds
+    if seconds >= CGFloat.pointOne, startLogged.insert(currentIndex).inserted {
+      delegate?.reachedPlaybackMilestone(.started, for: currentIndex)
+    }
+
+    if duration.isFinite,
+       seconds / duration >= Constants.videoDurationEventMaxThreshold,
+       finishLogged.insert(currentIndex).inserted {
+      delegate?.reachedPlaybackMilestone(.almostFinished, for: currentIndex)
+    }
+  }
+
   func advanceToVideo(at index: Int) {
     guard index >= 0 && index < feedResults.count else { return }
     if let currentTime = player.currentItem?.currentTime() {
@@ -72,6 +111,9 @@ final class FeedsPlayer: YralPlayer {
         await cancelPreloadOutsideRange(center: index, radius: Constants.radius)
       }
     }
+
+    startLogged.remove(index)
+    finishLogged.remove(index)
 
     currentIndex = index
     Task {
@@ -129,6 +171,7 @@ final class FeedsPlayer: YralPlayer {
     }
 
     playerLooper = AVPlayerLooper(player: player, templateItem: item)
+    attachTimeObserver()
 
     if let lastTime = lastPlayedTimes[currentIndex] {
       player.seek(to: lastTime, toleranceBefore: .zero, toleranceAfter: .zero) { [weak self] _ in
@@ -223,6 +266,12 @@ final class FeedsPlayer: YralPlayer {
     playerItems[index] = item
     return item
   }
+
+  deinit {
+    if let token = timeObserver {
+      (player as? AVQueuePlayer)?.removeTimeObserver(token)
+    }
+  }
 }
 
 extension FeedsPlayer: HLSDownloadManagerProtocol {
@@ -239,10 +288,22 @@ extension FeedsPlayer: HLSDownloadManagerProtocol {
 protocol FeedsPlayerProtocol: AnyObject {
   func cacheCleared(atc index: Int)
   func removeThumbnails(for set: Set<Int>)
+  func reachedPlaybackMilestone(
+    _ milestone: PlaybackMilestone,
+    for index: Int
+  )
 }
 
 extension FeedsPlayer {
   enum Constants {
     static let radius = 5
+    static let videoDurationEventMinThreshold = 0.05
+    static let videoDurationEventMaxThreshold = 0.95
+    static let timescaleEventSamping = 600.0
   }
+}
+
+enum PlaybackMilestone {
+  case started
+  case almostFinished
 }

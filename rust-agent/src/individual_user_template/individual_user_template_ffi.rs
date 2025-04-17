@@ -155,6 +155,12 @@ mod ffi {
         fn created_by_user_principal_id(&self) -> String;
         #[swift_bridge(get(&status))]
         fn status(&self) -> &PostStatus;
+        #[swift_bridge(get_with(&hashtags = Clone::clone))]
+        fn hashtags(&self) -> Vec<String>;
+        #[swift_bridge(get(&created_by_display_name))]
+        fn created_by_display_name(&self) -> Option<&str>;
+        #[swift_bridge(get(total_view_count))]
+        fn total_view_count(&self) -> u64;
     }
 
     extern "Rust" {

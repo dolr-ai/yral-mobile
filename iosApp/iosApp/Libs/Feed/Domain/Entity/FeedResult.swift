@@ -13,7 +13,10 @@ struct FeedResult: Hashable {
   let canisterID: String
   let principalID: String
   let url: URL
+  let hashtags: [String]
   let thumbnail: URL
+  let viewCount: Int64
+  let displayName: String
   let postDescription: String
   var profileImageURL: URL?
   var likeCount: Int

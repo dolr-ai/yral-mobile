@@ -24,3 +24,11 @@ extension Array where Element == FeedResult {
 extension URL: Identifiable {
   public var id: String { absoluteString }
 }
+
+extension Encodable {
+  func prettyPrintedJSON() throws -> String {
+    let encoder = JSONEncoder()
+    encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+    return String(data: try encoder.encode(self), encoding: .utf8)!
+  }
+}
