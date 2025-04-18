@@ -17,7 +17,9 @@ class AnalyticsManager(
         eventBus.events
             .onEach { event ->
                 trackEventToProviders(event)
-                coreService?.trackEvent(event)
+                if (coreService?.shouldTrackEvent(event) == true) {
+                    coreService.trackEvent(event)
+                }
             }.launchIn(scope)
     }
 

@@ -74,4 +74,6 @@ class CoreService(
     fun setUser(user: User) {
         this.user = user
     }
+
+    fun shouldTrackEvent(event: Event): Boolean = event.name.isNotEmpty()
 }
