@@ -127,6 +127,8 @@
 		AC5A7B8F2DACF5B2009E9E42 /* VideoEventRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC5A7B8D2DACF5AC009E9E42 /* VideoEventRequest.swift */; };
 		AC5A7C672DAD72A6009E9E42 /* LogUploadEventUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC5A7C662DAD72A0009E9E42 /* LogUploadEventUseCase.swift */; };
 		AC5A7C682DAD72A6009E9E42 /* LogUploadEventUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC5A7C662DAD72A0009E9E42 /* LogUploadEventUseCase.swift */; };
+		AC61D3B12DB28AAB00A7EA92 /* EULAPopUpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC61D3B02DB28AA500A7EA92 /* EULAPopUpView.swift */; };
+		AC61D3B22DB28AAB00A7EA92 /* EULAPopUpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC61D3B02DB28AA500A7EA92 /* EULAPopUpView.swift */; };
 		AC638BF52D2309C000481E94 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC638BF42D2309BA00481E94 /* KeychainHelper.swift */; };
 		AC638BF62D2309C000481E94 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC638BF42D2309BA00481E94 /* KeychainHelper.swift */; };
 		AC638BF92D230DCD00481E94 /* HomeTabController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC638BF82D230DCD00481E94 /* HomeTabController.swift */; };
@@ -476,6 +478,7 @@
 		AC5A7B8A2DACF1DE009E9E42 /* VideoEventDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoEventDTO.swift; sourceTree = "<group>"; };
 		AC5A7B8D2DACF5AC009E9E42 /* VideoEventRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoEventRequest.swift; sourceTree = "<group>"; };
 		AC5A7C662DAD72A0009E9E42 /* LogUploadEventUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogUploadEventUseCase.swift; sourceTree = "<group>"; };
+		AC61D3B02DB28AA500A7EA92 /* EULAPopUpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EULAPopUpView.swift; sourceTree = "<group>"; };
 		AC638BF42D2309BA00481E94 /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
 		AC638BF82D230DCD00481E94 /* HomeTabController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeTabController.swift; sourceTree = "<group>"; };
 		AC6BECBB2D09F685002E2021 /* Endpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Endpoint.swift; sourceTree = "<group>"; };
@@ -868,6 +871,7 @@
 				ACC0F3962D2ED5D700FA5BD0 /* LottieView.swift */,
 				AC32E4452D2961BE001DDA43 /* URLImage.swift */,
 				AC09AA1E2CDBB69B009A39A4 /* Extensions */,
+				AC61D3B32DB28AB000A7EA92 /* EULA */,
 				ACEBF7E72D6F844100B594A0 /* Toast */,
 			);
 			path = Utils;
@@ -1082,6 +1086,14 @@
 				AC4E99672D884BD6000B47B3 /* ProfileVideoGridsView.swift */,
 			);
 			path = ProfileVideosGridView;
+			sourceTree = "<group>";
+		};
+		AC61D3B32DB28AB000A7EA92 /* EULA */ = {
+			isa = PBXGroup;
+			children = (
+				AC61D3B02DB28AA500A7EA92 /* EULAPopUpView.swift */,
+			);
+			path = EULA;
 			sourceTree = "<group>";
 		};
 		AC638BF72D230DA900481E94 /* HomeTabController */ = {
@@ -2103,6 +2115,7 @@
 				ACB46A482D0ECBD5002E200C /* FeedsRepository.swift in Sources */,
 				AC32E4412D295E97001DDA43 /* UserInfoView.swift in Sources */,
 				AC462F482D95B7F8004957B3 /* ReportView.swift in Sources */,
+				AC61D3B12DB28AAB00A7EA92 /* EULAPopUpView.swift in Sources */,
 				AC92941D2D6622EE003DB102 /* VideoPickerViewControllerRepresentable.swift in Sources */,
 				ACCB98782D944213002B9675 /* UILabel+Extensions.swift in Sources */,
 				AC2C30D52D96C68700DA9F81 /* ReportRequestDTO.swift in Sources */,
@@ -2267,6 +2280,7 @@
 				ACB46A472D0ECBD5002E200C /* FeedsRepository.swift in Sources */,
 				AC32E4422D295E97001DDA43 /* UserInfoView.swift in Sources */,
 				AC462F472D95B7F8004957B3 /* ReportView.swift in Sources */,
+				AC61D3B22DB28AAB00A7EA92 /* EULAPopUpView.swift in Sources */,
 				AC92941C2D6622EE003DB102 /* VideoPickerViewControllerRepresentable.swift in Sources */,
 				ACCB98792D944213002B9675 /* UILabel+Extensions.swift in Sources */,
 				AC2C30D42D96C68700DA9F81 /* ReportRequestDTO.swift in Sources */,

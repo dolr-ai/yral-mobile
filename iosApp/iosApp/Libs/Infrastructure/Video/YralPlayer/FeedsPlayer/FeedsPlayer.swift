@@ -7,13 +7,13 @@
 import UIKit
 import AVFoundation
 
+// swiftlint: disable type_body_length
 @MainActor
 final class FeedsPlayer: YralPlayer {
   var feedResults: [FeedResult] = []
   var currentIndex: Int = .zero
   var player: YralQueuePlayer
   var hlsDownloadManager: HLSDownloadManaging
-
   var playerItems: [String: AVPlayerItem] = [:] {
     didSet {
       onPlayerItemsChanged?(playerItems.keys.filter { oldValue[$0] == nil }.first, playerItems.count)
@@ -21,7 +21,6 @@ final class FeedsPlayer: YralPlayer {
   }
   private var lastPlayedTimes: [String: CMTime] = [:]
   private var currentlyDownloadingIDs: Set<String> = []
-
   private var playerLooper: AVPlayerLooper?
 
   var isPlayerVisible: Bool = true
@@ -36,6 +35,12 @@ final class FeedsPlayer: YralPlayer {
   init(player: YralQueuePlayer = AVQueuePlayer(), hlsDownloadManager: HLSDownloadManaging) {
     self.player = player
     self.hlsDownloadManager = hlsDownloadManager
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(handleEULAAccepted(_:)),
+      name: .eulaAcceptedChanged,
+      object: nil
+    )
   }
 
   func loadInitialVideos(_ feeds: [FeedResult]) {
@@ -50,7 +55,7 @@ final class FeedsPlayer: YralPlayer {
 
   private func configureAudioSession() {
     do {
-      player.isMuted = false
+      updateMuteState()
       try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
       try AVAudioSession.sharedInstance().setActive(true)
     } catch {
@@ -65,6 +70,18 @@ final class FeedsPlayer: YralPlayer {
         await preloadFeeds()
       }
     }
+  }
+
+  @objc private func handleEULAAccepted(_ note: Notification) {
+    updateMuteState()
+  }
+
+  private func updateMuteState() {
+    let accepted = KeychainHelper.bool(
+      for: HomeTabController.Constants.eulaAccepted,
+      default: false
+    )
+    player.isMuted = !accepted
   }
 
   private func attachTimeObserver() {
@@ -324,3 +341,8 @@ enum PlaybackMilestone {
   case started
   case almostFinished
 }
+
+extension Notification.Name {
+  static let eulaAcceptedChanged = Notification.Name("yral.eulaAcceptedChanged")
+}
+// swiftlint: enable type_body_length
