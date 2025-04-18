@@ -1,9 +1,9 @@
 package com.yral.shared.features.auth
 
-import com.yral.shared.core.AnalyticsManager
-import com.yral.shared.core.Event
+import com.yral.shared.analytics.core.AnalyticsManager
+import com.yral.shared.analytics.core.Event
+import com.yral.shared.analytics.main.FeatureEvents
 import com.yral.shared.http.maxAgeOrExpires
-import com.yral.shared.main.FeatureEvents
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import com.yral.shared.uniffi.generated.Principal

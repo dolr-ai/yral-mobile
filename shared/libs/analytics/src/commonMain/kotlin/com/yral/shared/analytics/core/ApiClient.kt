@@ -1,4 +1,4 @@
-package com.yral.shared.core
+package com.yral.shared.analytics.core
 
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation

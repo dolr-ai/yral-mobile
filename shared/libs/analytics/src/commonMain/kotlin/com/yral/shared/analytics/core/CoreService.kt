@@ -1,4 +1,4 @@
-package com.yral.shared.core
+package com.yral.shared.analytics.core
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -14,7 +14,7 @@ class CoreService(
     private val apiClient: ApiClient,
     private val batchSize: Int = 20,
     private val autoFlushEvents: Boolean = true,
-    private val autoFlushIntervalMs: Long = 120000, // 2 minutes in milliseconds
+    private val autoFlushIntervalMs: Long = 120000,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val eventQueue = mutableListOf<Event>()

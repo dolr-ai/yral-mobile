@@ -1,4 +1,4 @@
-package com.yral.shared.core
+package com.yral.shared.analytics.core
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
