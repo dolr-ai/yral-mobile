@@ -1,9 +1,9 @@
 package com.yral.android.analytics
 
-import com.yral.shared.core.AnalyticsFactory
-import com.yral.shared.core.AnalyticsManager
-import com.yral.shared.core.ApiClient
-import com.yral.shared.core.CoreService
+import com.yral.shared.analytics.core.AnalyticsFactory
+import com.yral.shared.analytics.core.AnalyticsManager
+import com.yral.shared.analytics.core.ApiClient
+import com.yral.shared.analytics.core.CoreService
 import com.yral.shared.core.PlatformResources
 
 fun provideAnalyticsManager(platformResources: PlatformResources): AnalyticsManager =

@@ -43,7 +43,7 @@ kotlin {
 }
 
 android {
-    namespace = "com.yral.shared.libs.analytics"
+    namespace = "com.yral.shared.analytics"
     compileSdk = libs.versions.compileSDK.get().toInt()
     defaultConfig {
         minSdk = libs.versions.minSDK.get().toInt()

@@ -1,4 +1,4 @@
-package com.yral.shared.core
+package com.yral.shared.analytics.core
 
 interface AnalyticsProvider {
     val name: String

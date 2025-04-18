@@ -3,8 +3,8 @@ package com.yral.android.analytics
 import android.content.Context
 import android.os.Bundle
 import com.google.firebase.analytics.FirebaseAnalytics
-import com.yral.shared.core.AnalyticsProvider
-import com.yral.shared.core.Event
+import com.yral.shared.analytics.core.AnalyticsProvider
+import com.yral.shared.analytics.core.Event
 
 class FirebaseAnalyticsProvider(
     private val context: Context,
