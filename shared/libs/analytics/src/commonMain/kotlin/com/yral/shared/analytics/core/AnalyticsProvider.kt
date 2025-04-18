@@ -5,4 +5,7 @@ interface AnalyticsProvider {
     fun shouldTrackEvent(event: Event): Boolean
     fun trackEvent(event: Event)
     fun flush()
+
+    fun setUserProperties(user: User)
+    fun reset()
 }

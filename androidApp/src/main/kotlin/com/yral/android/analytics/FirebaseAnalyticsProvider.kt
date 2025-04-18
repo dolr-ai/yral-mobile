@@ -5,6 +5,7 @@ import android.os.Bundle
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.yral.shared.analytics.core.AnalyticsProvider
 import com.yral.shared.analytics.core.Event
+import com.yral.shared.analytics.core.User
 
 class FirebaseAnalyticsProvider(
     private val context: Context,
@@ -36,5 +37,18 @@ class FirebaseAnalyticsProvider(
 
     override fun flush() {
         // Firebase Analytics automatically batches and sends events
+    }
+
+    override fun setUserProperties(user: User) {
+        firebaseAnalytics.setUserId(user.userId)
+        firebaseAnalytics.setUserProperty("name", user.name)
+        firebaseAnalytics.setUserProperty("emailId", user.emailId)
+    }
+
+    override fun reset() {
+        firebaseAnalytics.resetAnalyticsData()
+        firebaseAnalytics.setUserId("")
+        firebaseAnalytics.setUserProperty("name", "")
+        firebaseAnalytics.setUserProperty("emailId", "")
     }
 }

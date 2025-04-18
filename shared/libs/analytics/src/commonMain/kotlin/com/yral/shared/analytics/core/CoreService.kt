@@ -20,6 +20,7 @@ class CoreService(
     private val eventQueue = mutableListOf<Event>()
     private val mutex = Mutex()
     private var lastFlushTime = Clock.System.now().toEpochMilliseconds()
+    private var user: User? = null
 
     init {
         if (autoFlushEvents) {
@@ -70,5 +71,9 @@ class CoreService(
                 eventQueue.addAll(0, eventsToSend)
             }
         }
+    }
+
+    fun setUser(user: User) {
+        this.user = user
     }
 }
