@@ -106,7 +106,7 @@ class FeedsRepository: FeedRepositoryProtocol {
     return .success(result)
   }
 
-  func mapToFeedResults<T: FeedMapping>(feed: T) async throws -> FeedResult {
+  private func mapToFeedResults<T: FeedMapping>(feed: T) async throws -> FeedResult {
     let principal = try get_principal(feed.canisterID)
     let identity = try self.authClient.generateNewDelegatedIdentity()
     let service = try Service(principal, identity)
@@ -122,7 +122,10 @@ class FeedsRepository: FeedRepositoryProtocol {
       string: "\(Constants.cloudfarePrefix)\(result.video_uid().toString())\(Constants.thumbnailSuffix)"
     ) ?? URL(fileURLWithPath: "")
 
-    let urlString = result.created_by_profile_photo_url()?.toString()
+    var profileImageURL: URL?
+    if let userPrincipal = try? get_principal(result.created_by_user_principal_id()) {
+      profileImageURL = URL(string: propic_from_principal(userPrincipal).toString())
+    }
 
     return FeedResult(
       postID: String(feed.postID),
@@ -130,9 +133,12 @@ class FeedsRepository: FeedRepositoryProtocol {
       canisterID: feed.canisterID,
       principalID: result.created_by_user_principal_id().toString(),
       url: videoURL,
+      hashtags: result.hashtags().map { $0.as_str().toString() },
       thumbnail: thumbnailURL,
+      viewCount: Int64(result.total_view_count()),
+      displayName: result.created_by_display_name()?.toString() ?? "",
       postDescription: result.description().toString(),
-      profileImageURL: urlString != nil ? URL(string: urlString!) : nil,
+      profileImageURL: profileImageURL,
       likeCount: Int(result.like_count()),
       isLiked: result.liked_by_me(),
       nsfwProbability: feed.nsfwProbability
@@ -161,6 +167,7 @@ class FeedsRepository: FeedRepositoryProtocol {
       let swiftWire = try swiftDelegatedIdentityWire(from: delegatedWire)
       let reportRequestDTO = ReportRequestDTO(
         canisterId: request.canisterID,
+        principal: request.principal,
         postId: request.postId,
         reason: request.reason,
         userCanisterId: canisterPrincipalString,
@@ -178,6 +185,59 @@ class FeedsRepository: FeedRepositoryProtocol {
       )
       _ = try await httpService.performRequest(for: endpoint)
       return .success((String(request.postId)))
+    } catch {
+      switch error {
+      case let netErr as NetworkError:
+        return .failure(FeedError.networkError(netErr))
+      case let authErr as AuthError:
+        return .failure(FeedError.authError(authErr))
+      default:
+        return .failure(.unknown(error.localizedDescription))
+      }
+    }
+  }
+
+  func logEvent(request: [VideoEventRequest]) async -> Result<Void, FeedError> {
+    guard let canisterPrincipalString = authClient.canisterPrincipalString,
+          let userPrincipalString = authClient.userPrincipalString else {
+      return .failure(FeedError.authError(AuthError.authenticationFailed("No canister principal")))
+    }
+    guard let baseURL = httpService.baseURL else { return .failure(.networkError(NetworkError.invalidRequest)) }
+    do {
+      let delegatedWire = try authClient.generateNewDelegatedIdentityWireOneHour()
+      let swiftWire = try swiftDelegatedIdentityWire(from: delegatedWire)
+      let events = request.map {
+        VideoEventDTO(
+          event: $0.event,
+          canisterId: canisterPrincipalString,
+          displayName: $0.displayName,
+          hashtagCount: $0.hashtagCount,
+          isHotOrNot: $0.isHotOrNot,
+          isLoggedIn: $0.isLoggedIn,
+          isNsfw: $0.isNsfw,
+          likeCount: $0.likeCount,
+          postID: $0.postID,
+          publisherCanisterId: $0.publisherCanisterID,
+          publisherUserId: $0.publisherUserID,
+          userID: userPrincipalString,
+          videoID: $0.videoID,
+          viewCount: Int32($0.viewCount)
+        )
+      }
+      let videoRequestDTO = VideoEventRequestDTO(
+        delegatedIdentityWire: swiftWire,
+        events: events
+      )
+      let endpoint = Endpoint(
+        http: "",
+        baseURL: baseURL,
+        path: Constants.videoEventPath,
+        method: .post,
+        headers: ["Content-Type": "application/json"],
+        body: try JSONEncoder().encode(videoRequestDTO)
+      )
+      _ = try await httpService.performRequest(for: endpoint)
+      return .success(())
     } catch {
       switch error {
       case let netErr as NetworkError:
@@ -237,7 +297,8 @@ extension FeedsRepository {
     static let feedsBaseURL = "https://yral-ml-feed-server.fly.dev"
     static let cacheSuffix = "/api/v1/feed/coldstart/clean"
     static let mlFeedSuffix = "/api/v1/feed/clean"
-    static let reportVideoPath = "/api/v1/posts/report"
+    static let reportVideoPath = "/api/v1/posts/report_v2"
+    static let videoEventPath = "/api/v1/events/bulk"
     static let initialNumResults: Int64 = 20
     static let mlNumResults: Int64 = 10
   }

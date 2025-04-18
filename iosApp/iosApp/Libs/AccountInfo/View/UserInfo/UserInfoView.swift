@@ -28,6 +28,8 @@ struct UserInfoView: View {
             width: Constants.imageSize,
             height: Constants.imageSize
           )
+          .clipShape(Circle())
+          .overlay(Circle().stroke(Color.white, lineWidth: .one))
         Text(accountInfo?.canisterID ?? "")
           .font(Constants.profileLabelFont)
           .foregroundColor(Constants.profileLabelColor)
