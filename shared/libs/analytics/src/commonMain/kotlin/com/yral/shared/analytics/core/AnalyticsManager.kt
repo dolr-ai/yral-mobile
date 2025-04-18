@@ -39,9 +39,16 @@ class AnalyticsManager(
 
     fun trackEvent(
         name: String,
+        featureName: String,
         properties: Map<String, Any> = emptyMap(),
     ) {
-        trackEvent(Event(name, properties))
+        trackEvent(
+            Event(
+                name = name,
+                featureName = featureName,
+                properties = properties,
+            ),
+        )
     }
 
     private fun trackEventToProviders(event: Event) {
