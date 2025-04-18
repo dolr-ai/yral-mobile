@@ -8,4 +8,6 @@ interface AnalyticsProvider {
 
     fun setUserProperties(user: User)
     fun reset()
+
+    fun toValidKeyName(key: String): String
 }
