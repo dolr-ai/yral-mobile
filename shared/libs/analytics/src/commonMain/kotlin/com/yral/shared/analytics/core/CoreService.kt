@@ -8,7 +8,6 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.datetime.Clock
 
 class CoreService(
     private val apiClient: ApiClient,
@@ -19,7 +18,6 @@ class CoreService(
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val eventQueue = mutableListOf<Event>()
     private val mutex = Mutex()
-    private var lastFlushTime = Clock.System.now().toEpochMilliseconds()
     private var user: User? = null
 
     init {
@@ -58,11 +56,11 @@ class CoreService(
 
     @Suppress("TooGenericExceptionCaught", "SwallowedException")
     private suspend fun flushEvents() {
+        startAutoFlushTimer()
         if (eventQueue.isEmpty()) return
 
         val eventsToSend = eventQueue.toList()
         eventQueue.clear()
-        lastFlushTime = Clock.System.now().toEpochMilliseconds()
         try {
             apiClient.sendEvents(eventsToSend)
         } catch (e: Exception) {
