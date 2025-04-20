@@ -1,11 +1,3 @@
-//
-//  HomeTabController.swift
-//  iosApp
-//
-//  Created by Sarvesh Sharma on 30/12/24.
-//  Copyright © 2024 orgName. All rights reserved.
-//
-
 import SwiftUI
 
 struct HomeTabController: View {
@@ -13,15 +5,19 @@ struct HomeTabController: View {
   let accountView: AccountView
   let uploadView: UploadView
   let profileView: ProfileView
+
   private var feedsViewControllerWrapper: FeedsViewControllerWrapper {
     FeedsViewControllerWrapper(
       feedsViewController: feedsViewController,
       showFeeds: $showFeeds
     )
   }
+
   @State private var selectedTab: Int = .zero
   @State private var tabBarHeight = UITabBarController().tabBar.frame.height
   @State private var showFeeds = false
+  @State private var showEULA = !KeychainHelper.bool(for: Constants.eulaAccepted, default: false)
+
   init(
     feedsViewController: FeedsViewController,
     uploadView: UploadView,
@@ -42,58 +38,32 @@ struct HomeTabController: View {
       TabView(selection: $selectedTab) {
         feedsViewControllerWrapper
           .background(Color.black.edgesIgnoringSafeArea(.all))
-          .tabItem {
-            Image(
-              ImageResource(
-                name: selectedTab == .zero ?
-                Constants.homeIconImageNameSelected : Constants.homeIconImageNameUnselected,
-                bundle: .main
-              )
-            )
-            .renderingMode(.original)
-            .ignoresSafeArea()
-          }
+          .tabItem { tabIcon(selected: selectedTab == .zero,
+                             selectedName: Constants.homeIconImageNameSelected,
+                             unselectedName: Constants.homeIconImageNameUnselected) }
           .tag(Int.zero)
+
         uploadView
-          .onDoneAction {
-            selectedTab = .zero
-          }
+          .onDoneAction { selectedTab = .zero }
           .background(Color.black.edgesIgnoringSafeArea(.all))
-          .tabItem {
-            Image(
-              ImageResource(
-                name: selectedTab == .one ?
-                Constants.uploadIconImageNameSelected : Constants.uploadIconImageNameUnselected,
-                bundle: .main
-              )
-            )
-            .renderingMode(.original)
-            .ignoresSafeArea()
-          }
+          .tabItem { tabIcon(selected: selectedTab == .one,
+                             selectedName: Constants.uploadIconImageNameSelected,
+                             unselectedName: Constants.uploadIconImageNameUnselected) }
           .tag(Int.one)
+
         profileView
-          .onUploadAction {
-            selectedTab = .one
-          }
+          .onUploadAction { selectedTab = .one }
           .background(Color.black.edgesIgnoringSafeArea(.all))
-          .tabItem {
-            Image(
-              ImageResource(
-                name: selectedTab == .two ?
-                Constants.profileIconImageNameSelected : Constants.profileIconImageNameUnSelected,
-                bundle: .main
-              )
-            )
-            .renderingMode(.original)
-            .ignoresSafeArea()
-          }
+          .tabItem { tabIcon(selected: selectedTab == .two,
+                             selectedName: Constants.profileIconImageNameSelected,
+                             unselectedName: Constants.profileIconImageNameUnSelected) }
           .tag(Int.two)
+
         accountView
           .background(Color.black.edgesIgnoringSafeArea(.all))
           .tabItem {
             Image(ImageResource(name: Constants.accountIconImageName, bundle: .main))
               .renderingMode(.original)
-              .ignoresSafeArea()
           }
           .tag(Int.three)
       }
@@ -114,8 +84,26 @@ struct HomeTabController: View {
           }
         }
       }
-      .ignoresSafeArea([.keyboard])
     }
+    .fullScreenCover(isPresented: $showEULA) {
+      EULAPopupView(isPresented: $showEULA) {
+        try? KeychainHelper.store(true, for: Constants.eulaAccepted)
+        NotificationCenter.default.post(name: .eulaAcceptedChanged, object: nil)
+      }
+      .background( ClearBackgroundView() )
+    }
+    .ignoresSafeArea([.keyboard])
+  }
+
+  @ViewBuilder
+  private func tabIcon(selected: Bool, selectedName: String, unselectedName: String) -> some View {
+    Image(
+      ImageResource(
+        name: selected ? selectedName : unselectedName,
+        bundle: .main
+      )
+    )
+    .renderingMode(.original)
   }
 }
 
@@ -131,5 +119,6 @@ extension HomeTabController {
     static let tabIndicatorHeight: CGFloat = 2.0
     static let indicatorWidth = 30.0
     static let indicatorColor = YralColor.primary300.swiftUIColor
+    static let eulaAccepted = "yral.eula.accepted"
   }
 }

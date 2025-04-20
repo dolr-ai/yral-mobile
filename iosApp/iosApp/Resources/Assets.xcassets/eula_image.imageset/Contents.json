@@ -1,0 +1,23 @@
+{
+  "images" : [
+    {
+      "filename" : "eula_image.png",
+      "idiom" : "universal",
+      "scale" : "1x"
+    },
+    {
+      "filename" : "reminder-schedule-checklist-deadline-icon-symbol-planner-concept-pink-background-3d-rendering 1@2x.png",
+      "idiom" : "universal",
+      "scale" : "2x"
+    },
+    {
+      "filename" : "reminder-schedule-checklist-deadline-icon-symbol-planner-concept-pink-background-3d-rendering 1@3x.png",
+      "idiom" : "universal",
+      "scale" : "3x"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}
