@@ -87,6 +87,22 @@ struct KeychainHelper {
     let array = try JSONDecoder().decode([String].self, from: data)
     return Set(array)
   }
+
+  static func store(_ value: Bool, for key: String) throws {
+    try store(data: Data([value ? 1 : 0]), for: key)
+  }
+
+  static func retrieveBool(for key: String) throws -> Bool? {
+    guard let data = try retrieveData(for: key),
+          let byte  = data.first else { return nil }
+    return byte == 1
+  }
+
+  static func bool(for key: String, default fallback: Bool) -> Bool {
+    (try? retrieveBool(for: key))
+      .flatMap { $0 }
+    ?? fallback
+  }
 }
 
 enum KeychainError: Error {
