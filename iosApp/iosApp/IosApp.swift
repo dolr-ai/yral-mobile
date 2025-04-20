@@ -39,6 +39,7 @@ struct IosApp: App {
       } else {
         SplashScreenView()
           .task {
+            await HLSDownloadManager().removeAllBookmarkedAssetsOnLaunch()
             await initializeDependencies()
           }
       }

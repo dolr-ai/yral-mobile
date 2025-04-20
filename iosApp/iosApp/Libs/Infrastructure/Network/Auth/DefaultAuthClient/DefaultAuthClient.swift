@@ -40,6 +40,7 @@ class DefaultAuthClient: AuthClient {
         try? KeychainHelper.deleteItem(for: keychainPayloadKey)
         try? KeychainHelper.deleteItem(for: keychainIdentityKey)
         try? KeychainHelper.deleteItem(for: FeedsViewModel.Constants.blockedPrincipalsIdentifier)
+        try? KeychainHelper.deleteItem(for: HomeTabController.Constants.eulaAccepted)
         try await fetchAndSetAuthCookie()
         return
       }

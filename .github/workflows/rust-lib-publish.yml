@@ -1,4 +1,4 @@
-name: Publish Rust lib to Maven local
+name: Publish Rust lib to github packages
 on:
   workflow_dispatch:
     inputs:
@@ -6,6 +6,10 @@ on:
         description: 'Version for the release'
         required: true
         default: '1.0'
+
+permissions:
+  contents: read
+  packages: write
 
 jobs:
   build-apk:
@@ -17,10 +21,10 @@ jobs:
 
       - name: Set up JDK
         uses: actions/setup-java@v3
-        with: 
+        with:
           java-version: 17
           distribution: 'temurin'
-          
+
       - name: Cache Gradle packages
         uses: actions/cache@v3
         with:
@@ -31,18 +35,18 @@ jobs:
 
       - name: Install android SDK
         uses: android-actions/setup-android@v3
-        continue-on-error: true
 
       - name: Update version code
         run: |
-          sed -i 's/version[[:space:]]*=[[:space:]]*[0-9][0-9]*/version = '"${{ github.event.inputs.version }}"'/' ./build.gradle.kts
-          cat ./build.gradle.kts | grep version 
+          sed -i 's/version[[:space:]]*=[[:space:]]*[0-9][0-9]*/version = '"${{ github.event.inputs.version }}"'/' ./shared/rust/build.gradle.kts
+          cat ./shared/rust/build.gradle.kts | grep version 
 
       - name: Clean project
         run: ./gradlew clean
 
       - name: Publish to maven local
-        run: ./gradlew shared:rust:publishToMavenLocal
+        run: ./gradlew shared:rust:publish
         env:
+          GITHUB_USERNAME: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           JAVA_HOME: ${{ steps.setup-jdk.outputs.java-home }}
-        continue-on-error: true

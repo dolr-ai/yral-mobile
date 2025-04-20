@@ -2,7 +2,7 @@ name: Build APK for preview
 on:
   pull_request:
     branches:
-      - 'develop'
+      - develop
     types:
       - ready_for_review
       - synchronize
@@ -41,7 +41,14 @@ jobs:
       - name: Install android SDK
         if: steps.changed_files.outputs.any_changed == 'true'
         uses: android-actions/setup-android@v3
-        continue-on-error: true
+
+      - name: Install android ndk
+        if: steps.changed_files.outputs.any_changed == 'true'
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r28
+          link-to-sdk: true
+          local-cache: true
 
       - name: Setup environment variables
         run: |
@@ -56,8 +63,9 @@ jobs:
         if: steps.changed_files.outputs.any_changed == 'true'
         run: ./gradlew androidApp:assembleDebug
         env:
+          GITHUB_USERNAME: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           JAVA_HOME: ${{ steps.setup-jdk.outputs.java-home }}
-        continue-on-error: true
 
       - name: Upload APK (PR-preview)
         if: steps.changed_files.outputs.any_changed == 'true'
@@ -65,4 +73,3 @@ jobs:
         with:
           name: androidApp-debug
           path: androidApp/build/outputs/apk/debug/androidApp-debug.apk
-        continue-on-error: true

@@ -18,6 +18,7 @@ use std::time::UNIX_EPOCH;
 use tokio::time::Duration;
 use yral_canisters_common::Canisters;
 use yral_types::delegated_identity::DelegatedIdentityWire;
+use yral_canisters_common::utils::profile::propic_from_principal as inner_propic_from_principal;
 
 pub type Secp256k1Error = k256::elliptic_curve::Error;
 
@@ -215,4 +216,8 @@ pub fn get_principal_from_identity(identity: DelegatedIdentity) -> String {
         Ok(principal) => principal.to_string(),
         Err(_) => "Unknown sender".to_string(),
     }
+}
+
+pub fn propic_from_principal(principal: Principal) -> String {
+    inner_propic_from_principal(principal)
 }

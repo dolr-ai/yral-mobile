@@ -13,6 +13,7 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
   let moreFeedsUseCase: FetchMoreFeedsUseCaseProtocol
   let likesUseCase: ToggleLikeUseCaseProtocol
   let reportUseCase: ReportFeedsUseCaseProtocol
+  let logEventUseCase: LogUploadEventUseCaseProtocol
   private var currentFeeds = [FeedResult]()
   private var filteredFeeds = [FeedResult]()
   private var feedvideoIDSet = Set<String>()
@@ -35,12 +36,14 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
     fetchFeedsUseCase: FetchInitialFeedsUseCaseProtocol,
     moreFeedsUseCase: FetchMoreFeedsUseCaseProtocol,
     likeUseCase: ToggleLikeUseCaseProtocol,
-    reportUseCase: ReportFeedsUseCaseProtocol
+    reportUseCase: ReportFeedsUseCaseProtocol,
+    logEventUseCase: LogUploadEventUseCaseProtocol
   ) {
     self.initialFeedsUseCase = fetchFeedsUseCase
     self.moreFeedsUseCase = moreFeedsUseCase
     self.likesUseCase = likeUseCase
     self.reportUseCase = reportUseCase
+    self.logEventUseCase = logEventUseCase
     self.unifiedEvent = .fetchingInitialFeeds
     isFetchingInitialFeeds = true
 
@@ -51,7 +54,7 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
         self.filteredFeeds = updatedFeed.filter {
           !self.feedvideoIDSet.contains($0.videoID)
         }
-        var unblockedFeeds = self.filteredFeeds.filter { !self.blockedPrincipalIDSet.contains($0.principalID) }
+        let unblockedFeeds = self.filteredFeeds.filter { !self.blockedPrincipalIDSet.contains($0.principalID) }
         guard !unblockedFeeds.isEmpty else { return }
         self.feedvideoIDSet.formUnion(unblockedFeeds.map { $0.videoID })
         self.currentFeeds += unblockedFeeds
@@ -162,6 +165,15 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
   }
 
   func deleteVideo(request: DeleteVideoRequest) async { }
+
+  func log(event: VideoEventRequest) async {
+    let result = await logEventUseCase.execute(request: [event])
+    switch result {
+    case .failure(let failure):
+      print(failure.localizedDescription)
+    default: break
+    }
+  }
 }
 
 extension FeedsViewModel {

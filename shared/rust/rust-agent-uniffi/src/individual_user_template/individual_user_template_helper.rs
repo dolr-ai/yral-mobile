@@ -16,7 +16,6 @@ use k256::elliptic_curve::JwkEcKey;
 use k256::Secp256k1;
 use serde_bytes::ByteBuf;
 use std::time::UNIX_EPOCH;
-use log::error;
 use tokio::time::Duration;
 use yral_canisters_common::Canisters;
 use yral_types::delegated_identity::DelegatedIdentityWire;

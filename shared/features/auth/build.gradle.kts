@@ -37,7 +37,13 @@ kotlin {
 
             implementation(projects.shared.libs.preferences)
             implementation(projects.shared.libs.http)
-            implementation(projects.shared.rust)
+
+            //implementation(projects.shared.rust)
+            BuildConfig.getDependencies(project).forEach { dependency ->
+                if (dependency.isNotEmpty()) {
+                    implementation(dependency)
+                }
+            }
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

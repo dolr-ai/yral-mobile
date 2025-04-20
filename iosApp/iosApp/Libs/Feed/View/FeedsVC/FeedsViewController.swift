@@ -338,6 +338,8 @@ extension FeedsViewController {
     // swiftlint: enable line_length
     static let blockConfirmButton = "Confrim"
     static let blockCancelButton = "Cancel"
+
+    static let nsfwProbability = 0.4
   }
 }
 // swiftlint: enable type_body_length

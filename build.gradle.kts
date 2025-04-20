@@ -9,10 +9,28 @@ plugins {
     alias(libs.plugins.gobleyUniffi).apply(false)
     alias(libs.plugins.kotlinAtomicfu).apply(false)
     alias(libs.plugins.kotlinxSerialisartion).apply(false)
+    alias(libs.plugins.crashlytics).apply(false)
+    alias(libs.plugins.play.services).apply(false)
 }
 
 val reportMerge by tasks.registering(io.gitlab.arturbosch.detekt.report.ReportMergeTask::class) {
     output.set(rootProject.layout.buildDirectory.file("reports/detekt/merge.sarif")) // or "reports/detekt/merge.sarif"
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        //mavenLocal()
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/dolr-ai/yral-mobile")
+            credentials {
+                username = System.getenv("GITHUB_USERNAME")
+                password = System.getenv("GITHUB_TOKEN")
+            }
+        }
+    }
 }
 
 subprojects {

@@ -1,51 +1,61 @@
-//
 //  FeedsPlayer.swift
 //  iosApp
 //
 //  Created by Sarvesh Sharma on 15/12/24.
 //  Copyright © 2024 orgName. All rights reserved.
-//
 
 import UIKit
 import AVFoundation
 
+// swiftlint: disable type_body_length
 @MainActor
 final class FeedsPlayer: YralPlayer {
   var feedResults: [FeedResult] = []
   var currentIndex: Int = .zero
   var player: YralQueuePlayer
   var hlsDownloadManager: HLSDownloadManaging
-  private var playerLooper: AVPlayerLooper?
-  private var lastPlayedTimes: [Int: CMTime] = [:]
-  var playerItems: [Int: AVPlayerItem] = [:] {
+  var playerItems: [String: AVPlayerItem] = [:] {
     didSet {
       onPlayerItemsChanged?(playerItems.keys.filter { oldValue[$0] == nil }.first, playerItems.count)
     }
   }
-  private var currentlyDownloadingIndexes: Set<Int> = []
+  private var lastPlayedTimes: [String: CMTime] = [:]
+  private var currentlyDownloadingIDs: Set<String> = []
+  private var playerLooper: AVPlayerLooper?
+
   var isPlayerVisible: Bool = true
   var didEmptyFeeds: (() -> Void)?
-  var onPlayerItemsChanged: ((Int?, Int) -> Void)?
+  var onPlayerItemsChanged: ((String?, Int) -> Void)?
   weak var delegate: FeedsPlayerProtocol?
+
+  private var timeObserver: Any?
+  private var startLogged = Set<Int>()
+  private var finishLogged = Set<Int>()
 
   init(player: YralQueuePlayer = AVQueuePlayer(), hlsDownloadManager: HLSDownloadManaging) {
     self.player = player
     self.hlsDownloadManager = hlsDownloadManager
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(handleEULAAccepted(_:)),
+      name: .eulaAcceptedChanged,
+      object: nil
+    )
   }
 
   func loadInitialVideos(_ feeds: [FeedResult]) {
     self.feedResults = feeds
     configureAudioSession()
     currentIndex = .zero
-    hlsDownloadManager.delegate = self
     Task {
+      await hlsDownloadManager.setDelegate(self)
       await prepareCurrentVideo()
     }
   }
 
   private func configureAudioSession() {
     do {
-      player.isMuted = false
+      updateMuteState()
       try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
       try AVAudioSession.sharedInstance().setActive(true)
     } catch {
@@ -62,18 +72,72 @@ final class FeedsPlayer: YralPlayer {
     }
   }
 
+  @objc private func handleEULAAccepted(_ note: Notification) {
+    updateMuteState()
+  }
+
+  private func updateMuteState() {
+    let accepted = KeychainHelper.bool(
+      for: HomeTabController.Constants.eulaAccepted,
+      default: false
+    )
+    player.isMuted = !accepted
+  }
+
+  private func attachTimeObserver() {
+    if let token = timeObserver {
+      (player as? AVQueuePlayer)?.removeTimeObserver(token)
+      timeObserver = nil
+    }
+    guard let queue = player as? AVQueuePlayer else { return }
+    let interval = CMTime(
+      seconds: Constants.videoDurationEventMinThreshold,
+      preferredTimescale: CMTimeScale(Constants.timescaleEventSamping)
+    )
+    timeObserver = queue.addPeriodicTimeObserver(
+      forInterval: interval, queue: .main
+    ) { [weak self] currentTime in
+      self?.evaluateProgress(currentTime)
+    }
+  }
+
+  private func evaluateProgress(_ time: CMTime) {
+    guard currentIndex < feedResults.count,
+          let item = player.currentItem,
+          item.status == .readyToPlay else { return }
+
+    let seconds  = time.seconds
+    let duration = item.duration.seconds
+    if seconds >= CGFloat.pointOne, startLogged.insert(currentIndex).inserted {
+      delegate?.reachedPlaybackMilestone(.started, for: currentIndex)
+    }
+
+    if duration.isFinite,
+       seconds / duration >= Constants.videoDurationEventMaxThreshold,
+       finishLogged.insert(currentIndex).inserted {
+      delegate?.reachedPlaybackMilestone(.almostFinished, for: currentIndex)
+    }
+  }
+
   func advanceToVideo(at index: Int) {
-    guard index >= 0 && index < feedResults.count else { return }
+    guard index >= 0 && index < feedResults.count && currentIndex < feedResults.count else { return }
     if let currentTime = player.currentItem?.currentTime() {
-      lastPlayedTimes[currentIndex] = currentTime
+      let currentVideoID = feedResults[currentIndex].videoID
+      lastPlayedTimes[currentVideoID] = currentTime
     }
     if abs(index - currentIndex) > Constants.radius {
-      cancelPreloadOutsideRange(center: index, radius: Constants.radius)
+      Task {
+        await cancelPreloadOutsideRange(center: index, radius: Constants.radius)
+      }
     }
+
+    startLogged.remove(index)
+    finishLogged.remove(index)
 
     currentIndex = index
     Task {
-      if let preloadedItem = playerItems[index] {
+      let currentVideoID = feedResults[index].videoID
+      if let preloadedItem = playerItems[currentVideoID] {
         startLooping(with: preloadedItem)
       } else {
         await prepareCurrentVideo()
@@ -83,17 +147,19 @@ final class FeedsPlayer: YralPlayer {
 
   func removeFeeds(_ feeds: [FeedResult]) {
     guard !feeds.isEmpty else { return }
-    let removedIDs = Set(feeds.map { $0.postID })
-    let removedIndexes = removedIDs.compactMap { removedID in
-      feedResults.firstIndex { $0.postID == removedID }
-    }
+    let removedVideoIDs = Set(feeds.map { $0.videoID })
     let currentFeedID = feedResults.indices.contains(currentIndex)
-    ? feedResults[currentIndex].postID
-    : nil
-    feedResults.removeAll(where: { removedIDs.contains($0.postID) })
-    removedIndexes.forEach { playerItems.removeValue(forKey: $0) }
+    ? feedResults[currentIndex].videoID
+    : nil // CHANGED
+
+    feedResults.removeAll(where: { removedVideoIDs.contains($0.videoID) })
+    removedVideoIDs.forEach {
+      playerItems.removeValue(forKey: $0)
+      lastPlayedTimes.removeValue(forKey: $0)
+    }
+
     if let currentFeedID = currentFeedID,
-       !feedResults.contains(where: { $0.postID == currentFeedID }) {
+       !feedResults.contains(where: { $0.videoID == currentFeedID }) {
       currentIndex = min(currentIndex, max(feedResults.count - 1, .zero))
       advanceToVideo(at: currentIndex)
     }
@@ -127,12 +193,13 @@ final class FeedsPlayer: YralPlayer {
     }
 
     playerLooper = AVPlayerLooper(player: player, templateItem: item)
+    attachTimeObserver()
 
-    if let lastTime = lastPlayedTimes[currentIndex] {
+    let currentVideoID = feedResults[currentIndex].videoID
+    if let lastTime = lastPlayedTimes[currentVideoID] {
       player.seek(to: lastTime, toleranceBefore: .zero, toleranceAfter: .zero) { [weak self] _ in
         Task { @MainActor [weak self] in
-          guard let self = self else { return }
-          self.play()
+          self?.play()
         }
       }
     } else {
@@ -159,17 +226,21 @@ final class FeedsPlayer: YralPlayer {
     let endIndex = min(feedResults.count, currentIndex + Constants.radius)
 
     for index in startIndex..<endIndex {
-      guard playerItems[index] == nil else { continue }
-      guard !currentlyDownloadingIndexes.contains(index) else { continue }
+      let feed = feedResults[index]
+      let videoID = feed.videoID
+      guard playerItems[videoID] == nil else { continue }
+      guard !currentlyDownloadingIDs.contains(videoID) else { continue }
       await downloadVideo(at: index)
     }
   }
 
   private func downloadVideo(at index: Int) async {
     guard index < feedResults.count else { return }
-    currentlyDownloadingIndexes.insert(index)
     let feed = feedResults[index]
-    let assetTitle = "\(feed.videoID)"
+    let videoID = feed.videoID
+    let assetTitle = videoID
+
+    currentlyDownloadingIDs.insert(videoID)
 
     do {
       _ = try await hlsDownloadManager.startDownloadAsync(
@@ -177,8 +248,8 @@ final class FeedsPlayer: YralPlayer {
         assetTitle: assetTitle
       )
       if let item = try await loadVideo(at: index) {
-        if !playerItems.keys.contains(index) {
-          playerItems[index] = item
+        if !playerItems.keys.contains(videoID) {
+          playerItems[videoID] = item
         }
       }
     } catch is CancellationError {
@@ -187,29 +258,36 @@ final class FeedsPlayer: YralPlayer {
       print("Preload failed for index \(index): \(error)")
     }
 
-    currentlyDownloadingIndexes.remove(index)
+    currentlyDownloadingIDs.remove(videoID)
   }
 
-  private func cancelPreloadOutsideRange(center: Int, radius: Int) {
-    let validRange = (center - radius)...(center + radius)
-    let indicesToCancel = currentlyDownloadingIndexes.filter { !validRange.contains($0) }
+  private func cancelPreloadOutsideRange(center: Int, radius: Int) async {
+    let validIDs = Set((max(center - radius, 0)...min(center + radius, feedResults.count - 1))
+      .map { feedResults[$0].videoID })
+
+    let idsToCancel = currentlyDownloadingIDs.subtracting(validIDs)
+    let indicesToCancel = Set(idsToCancel.compactMap { id in
+      feedResults.firstIndex { $0.videoID == id }
+    })
     delegate?.removeThumbnails(for: indicesToCancel)
-    for idx in indicesToCancel {
-      let feed = feedResults[idx]
-      hlsDownloadManager.cancelDownload(for: feed.url)
-      hlsDownloadManager.clearMappingsAndCache(for: feed.url, assetTitle: feed.videoID)
-      currentlyDownloadingIndexes.remove(idx)
+
+    for id in idsToCancel {
+      guard let feed = feedResults.first(where: { $0.videoID == id }) else { continue }
+      await hlsDownloadManager.cancelDownload(for: feed.url)
+      await hlsDownloadManager.clearMappingsAndCache(for: feed.url, assetTitle: id)
+      currentlyDownloadingIDs.remove(id)
     }
   }
 
   private func loadVideo(at index: Int) async throws -> AVPlayerItem? {
     guard index < feedResults.count else { return nil }
     let feed = feedResults[index]
-    if let localAsset = hlsDownloadManager.createLocalAssetIfAvailable(for: feed.url) {
+    let videoID = feed.videoID
+    if let localAsset = await hlsDownloadManager.createLocalAssetIfAvailable(for: feed.url) {
       do {
         try await localAsset.loadPlayableAsync()
         let item = AVPlayerItem(asset: localAsset)
-        playerItems[index] = item
+        playerItems[videoID] = item
         return item
       } catch {
         print("Local asset not playable (fallback to remote). Error: \(error)")
@@ -218,8 +296,14 @@ final class FeedsPlayer: YralPlayer {
     let remoteAsset = AVURLAsset(url: feed.url)
     try await remoteAsset.loadPlayableAsync()
     let item = AVPlayerItem(asset: remoteAsset)
-    playerItems[index] = item
+    playerItems[videoID] = item
     return item
+  }
+
+  deinit {
+    if let token = timeObserver {
+      (player as? AVQueuePlayer)?.removeTimeObserver(token)
+    }
   }
 }
 
@@ -227,8 +311,9 @@ extension FeedsPlayer: HLSDownloadManagerProtocol {
   nonisolated func clearedCache(for assetTitle: String) {
     Task { @MainActor [weak self] in
       guard let self else { return }
+      self.playerItems.removeValue(forKey: assetTitle)
+      self.lastPlayedTimes.removeValue(forKey: assetTitle)
       guard let index = feedResults.firstIndex(where: { $0.videoID == assetTitle }) else { return }
-      self.playerItems.removeValue(forKey: index)
       self.delegate?.cacheCleared(atc: index)
     }
   }
@@ -237,10 +322,27 @@ extension FeedsPlayer: HLSDownloadManagerProtocol {
 protocol FeedsPlayerProtocol: AnyObject {
   func cacheCleared(atc index: Int)
   func removeThumbnails(for set: Set<Int>)
+  func reachedPlaybackMilestone(
+    _ milestone: PlaybackMilestone,
+    for index: Int
+  )
 }
 
 extension FeedsPlayer {
   enum Constants {
     static let radius = 5
+    static let videoDurationEventMinThreshold = 0.05
+    static let videoDurationEventMaxThreshold = 0.95
+    static let timescaleEventSamping = 600.0
   }
 }
+
+enum PlaybackMilestone {
+  case started
+  case almostFinished
+}
+
+extension Notification.Name {
+  static let eulaAcceptedChanged = Notification.Name("yral.eulaAcceptedChanged")
+}
+// swiftlint: enable type_body_length
