@@ -53,6 +53,10 @@ final class FeedDIContainer {
       reportUseCase: ReportFeedsUseCase(
         feedRepository: repository,
         crashReporter: dependencies.crashReporter
+      ),
+      logEventUseCase: LogUploadEventUseCase(
+        feedRepository: repository,
+        crashReporter: dependencies.crashReporter
       )
     )
   }

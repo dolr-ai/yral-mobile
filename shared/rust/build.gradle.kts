@@ -7,10 +7,15 @@ plugins {
     alias(libs.plugins.gobleyUniffi)
     alias(libs.plugins.kotlinAtomicfu)
     alias(libs.plugins.kotlinxSerialisartion)
+    id("maven-publish")
 }
+
+group = "com.yral.shared"
+version = "1.0"
 
 kotlin {
     androidTarget {
+        publishLibraryVariants("release", "debug")
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_17)
         }
@@ -34,6 +39,19 @@ kotlin {
             implementation(libs.kotlin.test)
         }
     }
+
+    publishing {
+        repositories {
+            maven {
+                name = "GitHubPackages"
+                url = uri("https://maven.pkg.github.com/dolr-ai/yral-mobile")
+                credentials {
+                    username = System.getenv("GITHUB_USERNAME")
+                    password = System.getenv("GITHUB_TOKEN")
+                }
+            }
+        }
+    }
 }
 
 android {
@@ -45,6 +63,9 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+    }
+    packaging {
+        jniLibs.keepDebugSymbols += "**/*.so"
     }
 }
 

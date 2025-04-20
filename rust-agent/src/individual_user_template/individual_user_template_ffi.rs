@@ -139,6 +139,8 @@ mod ffi {
         type PostDetailsForFrontend;
         #[swift_bridge(get(id))]
         fn id(&self) -> u64;
+        #[swift_bridge(get(is_nsfw))]
+        fn is_nsfw(&self) -> bool;
         #[swift_bridge(get(&video_uid))]
         fn video_uid(&self) -> &str;
         #[swift_bridge(get(&description))]
@@ -153,6 +155,12 @@ mod ffi {
         fn created_by_user_principal_id(&self) -> String;
         #[swift_bridge(get(&status))]
         fn status(&self) -> &PostStatus;
+        #[swift_bridge(get_with(&hashtags = Clone::clone))]
+        fn hashtags(&self) -> Vec<String>;
+        #[swift_bridge(get(&created_by_display_name))]
+        fn created_by_display_name(&self) -> Option<&str>;
+        #[swift_bridge(get(total_view_count))]
+        fn total_view_count(&self) -> u64;
     }
 
     extern "Rust" {
@@ -477,5 +485,9 @@ mod ffi {
 
         fn ok_value(self) -> Option<Vec<PostDetailsForFrontend>>;
         fn err_value(self) -> Option<GetPostsOfUserProfileError>;
+    }
+
+    extern "Rust" {
+        fn propic_from_principal(principal: Principal) -> String;
     }
 }

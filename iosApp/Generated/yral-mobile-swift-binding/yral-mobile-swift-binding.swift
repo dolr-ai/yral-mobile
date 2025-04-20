@@ -54,6 +54,9 @@ public func get_principal<GenericIntoRustString: IntoRustString>(_ text: Generic
 public func get_principal_from_identity(_ identity: DelegatedIdentity) -> RustString {
     RustString(ptr: __swift_bridge__$get_principal_from_identity({identity.isOwned = false; return identity.ptr;}()))
 }
+public func propic_from_principal(_ principal: Principal) -> RustString {
+    RustString(ptr: __swift_bridge__$propic_from_principal({principal.isOwned = false; return principal.ptr;}()))
+}
 
 public class KeyValuePair: KeyValuePairRefMut {
     var isOwned: Bool = true
@@ -8860,6 +8863,10 @@ extension PostDetailsForFrontendRef {
         __swift_bridge__$PostDetailsForFrontend$id(ptr)
     }
 
+    public func is_nsfw() -> Bool {
+        __swift_bridge__$PostDetailsForFrontend$is_nsfw(ptr)
+    }
+
     public func video_uid() -> RustStr {
         __swift_bridge__$PostDetailsForFrontend$video_uid(ptr)
     }
@@ -8886,6 +8893,18 @@ extension PostDetailsForFrontendRef {
 
     public func status() -> PostStatusRef {
         PostStatusRef(ptr: __swift_bridge__$PostDetailsForFrontend$status(ptr))
+    }
+
+    public func hashtags() -> RustVec<RustString> {
+        RustVec(ptr: __swift_bridge__$PostDetailsForFrontend$hashtags(ptr))
+    }
+
+    public func created_by_display_name() -> Optional<RustStr> {
+        { let val = __swift_bridge__$PostDetailsForFrontend$created_by_display_name(ptr); if val.start != nil { return val; } else { return nil; } }()
+    }
+
+    public func total_view_count() -> UInt64 {
+        __swift_bridge__$PostDetailsForFrontend$total_view_count(ptr)
     }
 }
 extension PostDetailsForFrontend: Vectorizable {
@@ -23149,7 +23168,6 @@ extension InitArgs: Vectorizable {
         __swift_bridge__$Vec_InitArgs$len(vecPtr)
     }
 }
-
 
 
 public class Icrc3DataCertificateResult: Icrc3DataCertificateResultRefMut {

@@ -11,7 +11,7 @@ import SwiftUI
 struct AccountView: View {
   @ObservedObject var viewModel: AccountViewModel
   @State var profileInfo: AccountInfo?
-
+  @State private var isLoadingFirstTime = true
   init(viewModel: AccountViewModel) {
     self.viewModel = viewModel
   }
@@ -40,6 +40,8 @@ struct AccountView: View {
       .padding([.top], Constants.vStackPadding)
     }
     .task {
+      guard isLoadingFirstTime else { return }
+      isLoadingFirstTime = false
       await viewModel.fetchProfileInfo()
     }
   }
