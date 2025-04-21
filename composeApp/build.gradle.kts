@@ -27,6 +27,7 @@ kotlin {
     sourceSets {
         androidMain.dependencies {
             implementation(libs.androidx.activity.compose)
+            implementation(libs.koin.android)
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -48,6 +49,9 @@ kotlin {
             implementation(projects.shared.libs.http)
             implementation(projects.shared.features.auth)
             implementation(projects.shared.rust)
+            implementation(projects.shared.libs.koin)
+
+            implementation(libs.koin.core)
         }
     }
 }
