@@ -13,20 +13,12 @@ import io.ktor.http.ContentType
 import io.ktor.http.URLProtocol
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
-import kotlinx.coroutines.InternalCoroutinesApi
-import kotlinx.coroutines.internal.SynchronizedObject
 import kotlinx.serialization.json.Json
-
-const val BASE_URL = "yral.com"
 
 class HttpClientFactory(
     private val preferences: Preferences,
 ) {
-    private val client: HttpClient by lazy {
-        createClient()
-    }
-
-    private fun createClient(): HttpClient =
+    fun createClient(baseUrl: String? = BASE_URL): HttpClient =
         HttpClient(CIO) {
             install(Logging) {
                 logger =
@@ -52,22 +44,13 @@ class HttpClientFactory(
             defaultRequest {
                 url {
                     protocol = URLProtocol.HTTPS
-                    host = BASE_URL
+                    host = baseUrl ?: BASE_URL
                 }
                 contentType(ContentType.Application.Json)
             }
         }
 
-    fun build(): HttpClient = client
-
-    @OptIn(InternalCoroutinesApi::class)
-    companion object : SynchronizedObject() {
-        @Volatile
-        private var instance: HttpClientFactory? = null
-
-        fun getInstance(preferences: Preferences): HttpClientFactory =
-            instance ?: synchronized(this) {
-                instance ?: HttpClientFactory(preferences).also { instance = it }
-            }
+    companion object {
+        private const val BASE_URL = "https://icp-off-chain-agent.fly.dev"
     }
 }

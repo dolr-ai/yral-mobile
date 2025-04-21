@@ -35,7 +35,7 @@ class DefaultAuthClient(
     override suspend fun refreshAuthIfNeeded() {
         val cookie =
             client
-                .cookies("https://${com.yral.shared.http.BASE_URL}")
+                .cookies("https://${BASE_URL}")
                 .firstOrNull { it.name == com.yral.shared.http.CookieType.USER_IDENTITY.value }
         cookie?.let {
             if ((it.maxAgeOrExpires(Clock.System.now().toEpochMilliseconds()) ?: 0) >
@@ -57,6 +57,9 @@ class DefaultAuthClient(
         val setAnonymousIdentityCookiePath = "api/set_anonymous_identity_cookie"
         val payload = createAuthPayload()
         client.post(setAnonymousIdentityCookiePath) {
+            url {
+                host = BASE_URL
+            }
             setBody(payload)
         }
         refreshAuthIfNeeded()
@@ -91,8 +94,6 @@ class DefaultAuthClient(
                     name = FeatureEvents.AUTH_SUCCESSFUL.name.lowercase(),
                 ),
         )
-        println("xxxxx canisterPrincipal: $canisterPrincipal")
-        println("xxxxx userPrincipal: $userPrincipal")
     }
 
     override suspend fun generateNewDelegatedIdentity(): ByteArray {
@@ -101,5 +102,9 @@ class DefaultAuthClient(
 
     override suspend fun generateNewDelegatedIdentityWireOneHour(): ByteArray {
         TODO("Not yet implemented")
+    }
+
+    companion object {
+        private const val BASE_URL = "yral.com"
     }
 }

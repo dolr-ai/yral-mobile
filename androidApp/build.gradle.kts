@@ -89,13 +89,6 @@ dependencies {
         }
     }
 
-    implementation(libs.ktor.client.core)
-    implementation(libs.ktor.client.cio)
-    implementation(libs.ktor.client.logging)
-    implementation(libs.ktor.client.content.negotiation)
-    implementation(libs.ktor.json)
-    implementation(libs.kotlinx.datetime)
-
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.crashlytics)

@@ -6,5 +6,5 @@ import org.koin.dsl.module
 
 internal val networkModule =
     module {
-        single { HttpClientFactory.getInstance(koinInstance.get()).build() }
+        single { HttpClientFactory(koinInstance.get()).createClient() }
     }

@@ -28,13 +28,6 @@ kotlin {
             implementation(libs.nimbus.jose.jwt)
         }
         commonMain.dependencies {
-            implementation(libs.ktor.client.core)
-            implementation(libs.ktor.client.cio)
-            implementation(libs.ktor.client.logging)
-            implementation(libs.ktor.client.content.negotiation)
-            implementation(libs.ktor.json)
-            implementation(libs.kotlinx.datetime)
-
             implementation(projects.shared.libs.preferences)
             implementation(projects.shared.libs.http)
             implementation(projects.shared.libs.analytics)
