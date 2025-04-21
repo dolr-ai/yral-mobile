@@ -4,9 +4,9 @@ import com.yral.shared.analytics.core.AnalyticsFactory
 import com.yral.shared.analytics.core.AnalyticsManager
 import com.yral.shared.analytics.core.ApiClient
 import com.yral.shared.analytics.core.CoreService
-import com.yral.shared.core.PlatformResources
+import com.yral.shared.core.PlatformResourcesHolder.platformResources
 
-fun provideAnalyticsManager(platformResources: PlatformResources): AnalyticsManager =
+fun provideAnalyticsManager(): AnalyticsManager =
     AnalyticsFactory(
         providers =
             listOf(

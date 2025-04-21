@@ -3,6 +3,7 @@ package com.yral.shared.features.auth
 import com.yral.shared.analytics.core.AnalyticsManager
 import com.yral.shared.analytics.core.Event
 import com.yral.shared.analytics.main.FeatureEvents
+import com.yral.shared.analytics.main.Features
 import com.yral.shared.http.maxAgeOrExpires
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
@@ -41,7 +42,9 @@ class DefaultAuthClient(
                 Clock.System.now().toEpochMilliseconds()
             ) {
                 val storedData = preferences.getBytes(PrefKeys.IDENTITY_DATA.name)
-                storedData?.let { data -> handleExtractIdentityResponse(data) } ?: extractIdentity(it)
+                storedData?.let { data -> handleExtractIdentityResponse(data) } ?: extractIdentity(
+                    it,
+                )
             } else {
                 fetchAndSetAuthCookie()
             }
@@ -81,7 +84,13 @@ class DefaultAuthClient(
         val canisterWrapper = authenticateWithNetwork(data, null)
         canisterPrincipal = canisterWrapper.getCanisterPrincipal()
         userPrincipal = canisterWrapper.getUserPrincipal()
-        analyticsManager.trackEvent(event = Event(name = FeatureEvents.AUTH_SUCCESSFUL.name.lowercase()))
+        analyticsManager.trackEvent(
+            event =
+                Event(
+                    featureName = Features.AUTH.name.lowercase(),
+                    name = FeatureEvents.AUTH_SUCCESSFUL.name.lowercase(),
+                ),
+        )
         println("xxxxx canisterPrincipal: $canisterPrincipal")
         println("xxxxx userPrincipal: $userPrincipal")
     }
