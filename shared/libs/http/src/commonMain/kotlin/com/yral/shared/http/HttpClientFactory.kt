@@ -15,10 +15,13 @@ import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
+const val BASE_URL = "https://icp-off-chain-agent.fly.dev"
+
 class HttpClientFactory(
+    private val json: Json,
     private val preferences: Preferences,
 ) {
-    fun createClient(baseUrl: String? = BASE_URL): HttpClient =
+    fun createClient(): HttpClient =
         HttpClient(CIO) {
             install(Logging) {
                 logger =
@@ -27,16 +30,10 @@ class HttpClientFactory(
                             println("HTTP Client $message")
                         }
                     }
-                level = LogLevel.BODY
+                level = LogLevel.ALL
             }
             install(ContentNegotiation) {
-                json(
-                    Json {
-                        prettyPrint = true
-                        isLenient = true
-                        ignoreUnknownKeys = true
-                    },
-                )
+                json(json)
             }
             install(HttpCookies) {
                 storage = PersistentCookieStorage(preferences)
@@ -44,13 +41,9 @@ class HttpClientFactory(
             defaultRequest {
                 url {
                     protocol = URLProtocol.HTTPS
-                    host = baseUrl ?: BASE_URL
+                    host = BASE_URL
                 }
                 contentType(ContentType.Application.Json)
             }
         }
-
-    companion object {
-        private const val BASE_URL = "https://icp-off-chain-agent.fly.dev"
-    }
 }
