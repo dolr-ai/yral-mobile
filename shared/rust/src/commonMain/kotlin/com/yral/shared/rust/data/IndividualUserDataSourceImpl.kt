@@ -3,10 +3,11 @@ package com.yral.shared.rust.data
 import com.yral.shared.rust.services.IndividualUserServiceFactory
 import com.yral.shared.uniffi.generated.Result12
 
-class IndividualUserDataSourceImpl : IndividualUserDataSource {
+class IndividualUserDataSourceImpl(
+    private val individualUserServiceFactory: IndividualUserServiceFactory,
+) : IndividualUserDataSource {
     override suspend fun getPostsOfThisUserProfileWithPaginationCursor(pageNo: ULong): Result12 =
-        IndividualUserServiceFactory
-            .getInstance()
+        individualUserServiceFactory
             .service()
             .getPostsOfThisUserProfileWithPaginationCursor(pageNo, PAGE_SIZE)
 

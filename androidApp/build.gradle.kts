@@ -80,6 +80,7 @@ dependencies {
     implementation(projects.shared.libs.http)
     implementation(projects.shared.features.auth)
     implementation(projects.shared.libs.analytics)
+    implementation(projects.shared.libs.koin)
 
     //implementation(projects.shared.rust)
     BuildConfig.getDependencies(project).forEach { dependency ->
@@ -98,6 +99,8 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.crashlytics)
+
+    implementation(libs.koin.android)
 }
 
 afterEvaluate {
