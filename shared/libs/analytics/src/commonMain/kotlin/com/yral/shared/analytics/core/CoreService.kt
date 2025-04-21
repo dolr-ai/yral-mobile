@@ -14,7 +14,8 @@ class CoreService(
     private val batchSize: Int = 20,
     private val autoFlushEvents: Boolean = true,
     private val autoFlushIntervalMs: Long = 120000,
-) {
+    override val name: String = "CoreAnalytics",
+) : AnalyticsProvider {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val eventQueue = mutableListOf<Event>()
     private val mutex = Mutex()
@@ -35,7 +36,7 @@ class CoreService(
         }
     }
 
-    fun trackEvent(event: Event) {
+    override fun trackEvent(event: Event) {
         scope.launch {
             mutex.withLock {
                 eventQueue.add(event)
@@ -46,13 +47,23 @@ class CoreService(
         }
     }
 
-    fun flush() {
+    override fun flush() {
         scope.launch {
             mutex.withLock {
                 flushEvents()
             }
         }
     }
+
+    override fun setUserProperties(user: User) {
+        this.user = user
+    }
+
+    override fun reset() {
+        this.user = null
+    }
+
+    override fun toValidKeyName(key: String): String = key
 
     @Suppress("TooGenericExceptionCaught", "SwallowedException")
     private suspend fun flushEvents() {
@@ -71,9 +82,5 @@ class CoreService(
         }
     }
 
-    fun setUser(user: User) {
-        this.user = user
-    }
-
-    fun shouldTrackEvent(event: Event): Boolean = event.name.isNotEmpty()
+    override fun shouldTrackEvent(event: Event): Boolean = event.name.isNotEmpty()
 }
