@@ -17,7 +17,10 @@ import kotlinx.serialization.json.Json
 
 const val BASE_URL = "yral.com"
 
-fun createClient(preferences: Preferences): HttpClient =
+fun createClient(
+    preferences: Preferences,
+    json: Json,
+): HttpClient =
     HttpClient(CIO) {
         install(Logging) {
             logger =
@@ -29,13 +32,7 @@ fun createClient(preferences: Preferences): HttpClient =
             level = LogLevel.BODY
         }
         install(ContentNegotiation) {
-            json(
-                Json {
-                    prettyPrint = true
-                    isLenient = true
-                    ignoreUnknownKeys = true
-                },
-            )
+            json(json)
         }
         install(HttpCookies) {
             storage = PersistentCookieStorage(preferences)
