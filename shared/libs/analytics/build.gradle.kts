@@ -25,7 +25,6 @@ kotlin {
 
     sourceSets {
         androidMain.dependencies {
-            implementation(libs.nimbus.jose.jwt)
         }
         commonMain.dependencies {
             implementation(libs.ktor.client.core)
@@ -35,16 +34,7 @@ kotlin {
             implementation(libs.ktor.json)
             implementation(libs.kotlinx.datetime)
 
-            implementation(projects.shared.libs.preferences)
-            implementation(projects.shared.libs.http)
-            implementation(projects.shared.libs.analytics)
-
-            //implementation(projects.shared.rust)
-            BuildConfig.getDependencies(project).forEach { dependency ->
-                if (dependency.isNotEmpty()) {
-                    implementation(dependency)
-                }
-            }
+            implementation(projects.shared.core)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -53,7 +43,7 @@ kotlin {
 }
 
 android {
-    namespace = "com.yral.shared.features.auth"
+    namespace = "com.yral.shared.analytics"
     compileSdk = libs.versions.compileSDK.get().toInt()
     defaultConfig {
         minSdk = libs.versions.minSDK.get().toInt()
