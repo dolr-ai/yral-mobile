@@ -10,4 +10,8 @@ internal class FirebaseCrashlyticsProvider : CrashlyticsProvider {
     override fun recordException(exception: Exception) {
         Firebase.crashlytics.recordException(exception)
     }
+
+    override fun logMessage(message: String) {
+        Firebase.crashlytics.log(message)
+    }
 }
