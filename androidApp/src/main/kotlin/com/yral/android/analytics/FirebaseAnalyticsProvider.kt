@@ -56,9 +56,9 @@ class FirebaseAnalyticsProvider(
     override fun toValidKeyName(key: String): String {
         if (isEventKeyValid(key)) return key
 
-        val sb = StringBuilder(key.length + EXTRA_SB_CAPACITY)
+        val keyNameBuilder = StringBuilder(key.length + EXTRA_SB_CAPACITY)
         key.forEachIndexed { index, ch ->
-            if (sb.isNotBlank()) {
+            if (keyNameBuilder.isNotBlank()) {
                 val appendUnderscore =
                     when {
                         ch.replaceWithUnderscore() -> true
@@ -66,27 +66,27 @@ class FirebaseAnalyticsProvider(
                         else -> false
                     }
                 if (appendUnderscore) {
-                    sb.appendUnderscoreIfNotPresent()
+                    keyNameBuilder.appendUnderscoreIfNotPresent()
                 }
             }
             if (!ch.replaceWithUnderscore()) {
                 if (ch.isUnderscore()) {
-                    sb.appendUnderscoreIfNotPresent()
+                    keyNameBuilder.appendUnderscoreIfNotPresent()
                 } else {
-                    sb.append(ch.lowercaseChar())
+                    keyNameBuilder.append(ch.lowercaseChar())
                 }
             }
         }
 
-        val lastCorrectIndex = sb.indexOfLast { it != '_' }
-        if (lastCorrectIndex != sb.lastIndex) {
-            sb.deleteRange(lastCorrectIndex + 1, sb.length)
+        val lastCorrectIndex = keyNameBuilder.indexOfLast { it != '_' }
+        if (lastCorrectIndex != keyNameBuilder.lastIndex) {
+            keyNameBuilder.deleteRange(lastCorrectIndex + 1, keyNameBuilder.length)
         }
 
-        check(sb.first().isLetter()) { "Event key must start with an alphabetic character $sb" }
-        check(isEventKeyValid(sb)) { "Event key does not confirm to valid string $sb" }
+        check(keyNameBuilder.first().isLetter()) { "Event key must start with an alphabetic character $keyNameBuilder" }
+        check(isEventKeyValid(keyNameBuilder)) { "Event key does not confirm to valid string $keyNameBuilder" }
 
-        return sb.toString()
+        return keyNameBuilder.toString()
     }
 
     private fun isEventKeyValid(charSequence: CharSequence): Boolean = validityCheckRegex.matches(charSequence)
