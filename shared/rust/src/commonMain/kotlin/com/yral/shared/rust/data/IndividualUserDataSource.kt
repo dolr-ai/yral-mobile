@@ -1,7 +1,9 @@
 package com.yral.shared.rust.data
 
-import com.yral.shared.uniffi.generated.Result12
+import com.yral.shared.rust.data.models.FeedRequestDTO
+import com.yral.shared.rust.data.models.PostResponseDTO
 
 interface IndividualUserDataSource {
-    suspend fun getPostsOfThisUserProfileWithPaginationCursor(pageNo: ULong): Result12
+    suspend fun getInitialFeeds(feedRequestDTO: FeedRequestDTO): PostResponseDTO
+    suspend fun fetchMoreFeeds(feedRequestDTO: FeedRequestDTO): PostResponseDTO
 }

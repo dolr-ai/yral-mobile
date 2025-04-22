@@ -4,18 +4,22 @@ import com.yral.shared.uniffi.generated.IndividualUserService
 import com.yral.shared.uniffi.generated.Principal
 
 class IndividualUserServiceFactory {
-    private var service: IndividualUserService? = null
+    private var principal: Principal? = null
+    private var identityData: ByteArray? = null
 
-    fun service(): IndividualUserService = service ?: error("Service not initialised")
+    fun service(principal: Principal): IndividualUserService =
+        identityData?.let {
+            IndividualUserService(
+                principalText = principal,
+                identityData = it,
+            )
+        } ?: error("Identity data not available")
 
     fun initialize(
         principal: Principal,
         identityData: ByteArray,
     ) {
-        service =
-            IndividualUserService(
-                principalText = principal,
-                identityData = identityData,
-            )
+        this.principal = principal
+        this.identityData = identityData
     }
 }
