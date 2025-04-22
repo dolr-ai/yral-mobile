@@ -34,7 +34,8 @@ extension FeedsViewController {
           profileInfo: ProfileInfoView.ProfileInfo(
             imageURL: feed.profileImageURL,
             title: feed.principalID,
-            subtitle: feed.postDescription
+            subtitle: feed.postDescription,
+            coins: 2000
           ), index: indexPath.item
         )
       } else {
@@ -54,8 +55,10 @@ extension FeedsViewController {
           profileInfo: ProfileInfoView.ProfileInfo(
             imageURL: feed.profileImageURL,
             title: feed.principalID,
-            subtitle: feed.postDescription
-          ), index: indexPath.item
+            subtitle: feed.postDescription,
+            coins: 2000
+          ),
+          index: indexPath.item
         )
       }
       // swiftlint: enable force_cast
