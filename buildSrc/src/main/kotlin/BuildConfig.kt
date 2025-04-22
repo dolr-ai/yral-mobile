@@ -1,7 +1,7 @@
 import org.gradle.api.Project
 
 object BuildConfig {
-    private val yralRust = "1.0"
+    private val yralRust = "1.1"
     private val yralRustDebug = "com.yral.shared:rust-android-debug"
     private val yralRustRelease = "com.yral.shared:rust-android"
 
