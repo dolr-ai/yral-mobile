@@ -8,10 +8,12 @@ expect fun getPlatform(): Platform
 
 expect interface PlatformResources
 
-object PlatformResourcesHolder {
-    lateinit var platformResources: PlatformResources
+class PlatformResourcesFactory {
+    private var resources: PlatformResources? = null
+
+    fun resources(): PlatformResources = resources ?: error("Not initialised")
 
     fun initialize(platformResources: PlatformResources) {
-        this.platformResources = platformResources
+        this.resources = platformResources
     }
 }
