@@ -92,6 +92,9 @@ dependencies {
     }
 
     implementation(libs.koin.android)
+
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
 }
 
 afterEvaluate {

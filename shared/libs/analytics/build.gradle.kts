@@ -24,10 +24,6 @@ kotlin {
 //    }
 
     sourceSets {
-        androidMain.dependencies {
-            implementation(project.dependencies.platform(libs.firebase.bom))
-            implementation(libs.firebase.analytics)
-        }
         commonMain.dependencies {
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.cio)
