@@ -22,6 +22,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.yral.android.analytics.provideAnalyticsManager
 import com.yral.shared.core.Greeting
 import com.yral.shared.core.PlatformResourcesHolder
 import com.yral.shared.features.auth.DefaultAuthClient
@@ -53,6 +54,7 @@ fun Root() {
             DefaultAuthClient(
                 preferences = preferences,
                 client = client,
+                analyticsManager = provideAnalyticsManager(),
             )
         }
     val individualUserRepository =
