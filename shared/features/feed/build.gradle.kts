@@ -26,6 +26,8 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(projects.shared.core)
+            implementation(projects.shared.libs.koin)
+
             // implementation(projects.shared.rust)
             BuildConfig.getDependencies(project).forEach { dependency ->
                 if (dependency.isNotEmpty()) {
