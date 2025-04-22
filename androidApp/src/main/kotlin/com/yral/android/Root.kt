@@ -35,13 +35,14 @@ import kotlinx.coroutines.withContext
 fun Root() {
     val defaultAuthClient = remember { koinInstance.get<AuthClient>() }
     val individualUserRepository = remember { koinInstance.get<IndividualUserRepository>() }
+    val individualUserServiceFactory = remember { koinInstance.get<IndividualUserServiceFactory>() }
     var initialised by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) {
             defaultAuthClient.initialize()
             defaultAuthClient.canisterPrincipal?.let { principal ->
                 defaultAuthClient.identity?.let { identity ->
-                    IndividualUserServiceFactory.getInstance().initialize(
+                    individualUserServiceFactory.initialize(
                         principal = principal,
                         identityData = identity,
                     )
