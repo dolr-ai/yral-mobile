@@ -6,15 +6,16 @@ import androidx.security.crypto.MasterKey
 import com.russhwolf.settings.Settings
 import com.russhwolf.settings.SharedPreferencesSettings
 import com.yral.shared.core.PlatformResources
+import com.yral.shared.core.PlatformResourcesFactory
 
 actual fun provideSharedPreferences(
     preferenceName: String,
-    platformResources: PlatformResources,
+    platformResourcesFactory: PlatformResourcesFactory,
 ): Settings =
     SharedPreferencesSettings(
         initializeEncryptedSharedPreferencesManager(
             preferenceName = preferenceName,
-            platformResources = platformResources,
+            platformResources = platformResourcesFactory.resources(),
         ),
     )
 

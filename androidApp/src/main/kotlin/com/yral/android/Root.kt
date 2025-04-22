@@ -22,14 +22,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.yral.android.analytics.provideAnalyticsManager
 import com.yral.shared.core.Greeting
-import com.yral.shared.core.PlatformResourcesHolder
-import com.yral.shared.features.auth.DefaultAuthClient
-import com.yral.shared.http.HttpClientFactory
-import com.yral.shared.preferences.AsyncPreferencesFactory
-import com.yral.shared.rust.data.IndividualUserDataSourceImpl
-import com.yral.shared.rust.data.IndividualUserRepositoryImpl
+import com.yral.shared.features.auth.AuthClient
+import com.yral.shared.koin.koinInstance
+import com.yral.shared.rust.domain.IndividualUserRepository
 import com.yral.shared.rust.services.IndividualUserServiceFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -37,39 +33,16 @@ import kotlinx.coroutines.withContext
 @Suppress("LongMethod")
 @Composable
 fun Root() {
-    val preferences =
-        remember {
-            AsyncPreferencesFactory
-                .getInstance(
-                    platformResources = PlatformResourcesHolder.platformResources,
-                    ioDispatcher = Dispatchers.IO,
-                ).build()
-        }
-    val client =
-        remember {
-            HttpClientFactory.getInstance(preferences).build()
-        }
-    val defaultAuthClient =
-        remember {
-            DefaultAuthClient(
-                preferences = preferences,
-                client = client,
-                analyticsManager = provideAnalyticsManager(),
-            )
-        }
-    val individualUserRepository =
-        remember {
-            IndividualUserRepositoryImpl(
-                dataSource = IndividualUserDataSourceImpl(),
-            )
-        }
+    val defaultAuthClient = remember { koinInstance.get<AuthClient>() }
+    val individualUserRepository = remember { koinInstance.get<IndividualUserRepository>() }
+    val individualUserServiceFactory = remember { koinInstance.get<IndividualUserServiceFactory>() }
     var initialised by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) {
             defaultAuthClient.initialize()
             defaultAuthClient.canisterPrincipal?.let { principal ->
                 defaultAuthClient.identity?.let { identity ->
-                    IndividualUserServiceFactory.getInstance().initialize(
+                    individualUserServiceFactory.initialize(
                         principal = principal,
                         identityData = identity,
                     )

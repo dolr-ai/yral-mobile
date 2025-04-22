@@ -1,17 +1,10 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
-    alias(libs.plugins.kotlinxSerialisartion)
 }
 
 kotlin {
-    androidTarget {
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_21)
-        }
-    }
+    androidTarget()
 //    listOf(
 //        iosX64(),
 //        iosArm64(),
@@ -24,23 +17,17 @@ kotlin {
 //    }
 
     sourceSets {
-        androidMain.dependencies {
-            api(libs.androidx.security.crypto)
-        }
-        commonMain.dependencies {
-            api(libs.multiplatform.settings)
-            implementation(libs.ktor.json)
-
-            implementation(projects.shared.core)
-        }
-        commonTest.dependencies {
-            implementation(libs.kotlin.test)
+        commonMain {
+            dependencies {
+                // Koin for Kotlin Multiplatform
+                api(libs.koin.core)
+            }
         }
     }
 }
 
 android {
-    namespace = "com.yral.shared.preferences"
+    namespace = "com.yral.shared.koin"
     compileSdk = libs.versions.compileSDK.get().toInt()
     defaultConfig {
         minSdk = libs.versions.minSDK.get().toInt()
