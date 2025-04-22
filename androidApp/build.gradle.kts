@@ -81,6 +81,7 @@ dependencies {
     implementation(projects.shared.features.auth)
     implementation(projects.shared.libs.analytics)
     implementation(projects.shared.libs.koin)
+    implementation(projects.shared.features.feed)
 
     //implementation(projects.shared.rust)
     BuildConfig.getDependencies(project).forEach { dependency ->

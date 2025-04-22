@@ -22,10 +22,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.github.michaelbull.result.mapBoth
 import com.yral.shared.core.Greeting
 import com.yral.shared.features.auth.AuthClient
+import com.yral.shared.features.feed.useCases.FetchMoreFeedUseCase
+import com.yral.shared.features.feed.useCases.GetInitialFeedUseCase
 import com.yral.shared.koin.koinInstance
-import com.yral.shared.rust.domain.IndividualUserRepository
+import com.yral.shared.rust.domain.models.toFilteredResult
 import com.yral.shared.rust.services.IndividualUserServiceFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -34,8 +37,9 @@ import kotlinx.coroutines.withContext
 @Composable
 fun Root() {
     val defaultAuthClient = remember { koinInstance.get<AuthClient>() }
-    val individualUserRepository = remember { koinInstance.get<IndividualUserRepository>() }
     val individualUserServiceFactory = remember { koinInstance.get<IndividualUserServiceFactory>() }
+    val getInitialPostsUseCase = remember { koinInstance.get<GetInitialFeedUseCase>() }
+    val fetchMoreFeedUseCase = remember { koinInstance.get<FetchMoreFeedUseCase>() }
     var initialised by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) {
@@ -54,13 +58,42 @@ fun Root() {
     LaunchedEffect(initialised) {
         if (initialised && defaultAuthClient.canisterPrincipal != null) {
             withContext(Dispatchers.IO) {
-                val posts =
-                    defaultAuthClient.canisterPrincipal?.let {
-                        individualUserRepository.getPostsOfThisUserProfileWithPaginationCursor(
-                            pageNo = 0UL,
+                defaultAuthClient.canisterPrincipal?.let { principal ->
+                    getInitialPostsUseCase
+                        .invoke(
+                            parameter =
+                                GetInitialFeedUseCase.Params(
+                                    canisterID = principal,
+                                    filterResults = emptyList(),
+                                ),
+                        ).mapBoth(
+                            success = { initialPosts ->
+                                fetchMoreFeedUseCase
+                                    .invoke(
+                                        parameter =
+                                            FetchMoreFeedUseCase.Params(
+                                                canisterID = principal,
+                                                filterResults =
+                                                    initialPosts.posts.map { post ->
+                                                        post.toFilteredResult()
+                                                    },
+                                            ),
+                                    ).mapBoth(
+                                        success = { moreFeed ->
+                                            println(
+                                                "xxxx duplicate post found: ${
+                                                    initialPosts.posts.filter { post ->
+                                                        moreFeed.posts.any { feed -> feed.videoID == post.videoID }
+                                                    }
+                                                }",
+                                            )
+                                        },
+                                        failure = { println("xxxx error: $it") },
+                                    )
+                            },
+                            failure = { println("xxxx error: $it") },
                         )
-                    }
-                println("xxxx $posts")
+                }
             }
         }
     }
