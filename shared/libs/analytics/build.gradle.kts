@@ -25,6 +25,8 @@ kotlin {
 
     sourceSets {
         androidMain.dependencies {
+            implementation(project.dependencies.platform(libs.firebase.bom))
+            implementation(libs.firebase.analytics)
         }
         commonMain.dependencies {
             implementation(libs.ktor.client.core)
@@ -36,6 +38,8 @@ kotlin {
 
             implementation(projects.shared.core)
             implementation(projects.shared.libs.koin)
+
+            api(libs.gitlive.firebase.kotlin.anlaytics)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

@@ -1,7 +1,9 @@
 package com.yral.shared.analytics.di
 
+import com.yral.shared.analytics.core.AnalyticsManager
 import com.yral.shared.analytics.core.ApiClient
 import com.yral.shared.analytics.core.CoreService
+import com.yral.shared.analytics.main.providers.FirebaseAnalyticsProvider
 import org.koin.dsl.module
 
 private const val ANALYTICS_BASE_URL = "https://yral.com"
@@ -18,5 +20,15 @@ val analyticsModule =
                 autoFlushEvents = true,
                 autoFlushIntervalMs = ANALYTICS_FLUSH_MS,
             )
+        }
+        single {
+            FirebaseAnalyticsProvider(
+                eventFilter = { true },
+            )
+        }
+        single {
+            AnalyticsManager()
+                .addProvider(get<FirebaseAnalyticsProvider>())
+                .setCoreService(get<CoreService>())
         }
     }

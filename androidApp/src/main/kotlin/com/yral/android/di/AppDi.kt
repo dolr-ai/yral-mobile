@@ -17,7 +17,6 @@ fun initKoin(appDeclaration: KoinAppDeclaration) {
         modules(
             coreModule,
             preferencesModule,
-            appAnalyticsModule,
             analyticsModule,
             networkModule,
             rustModule,
