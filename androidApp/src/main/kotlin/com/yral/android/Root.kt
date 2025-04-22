@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import com.github.michaelbull.result.mapBoth
 import com.yral.shared.core.Greeting
 import com.yral.shared.features.auth.AuthClient
+import com.yral.shared.features.feed.useCases.FetchFeedDetailsUseCase
 import com.yral.shared.features.feed.useCases.FetchMoreFeedUseCase
 import com.yral.shared.features.feed.useCases.GetInitialFeedUseCase
 import com.yral.shared.koin.koinInstance
@@ -40,6 +41,7 @@ fun Root() {
     val individualUserServiceFactory = remember { koinInstance.get<IndividualUserServiceFactory>() }
     val getInitialPostsUseCase = remember { koinInstance.get<GetInitialFeedUseCase>() }
     val fetchMoreFeedUseCase = remember { koinInstance.get<FetchMoreFeedUseCase>() }
+    val fetchFeedDetailsUseCase = remember { koinInstance.get<FetchFeedDetailsUseCase>() }
     var initialised by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) {
@@ -80,13 +82,16 @@ fun Root() {
                                             ),
                                     ).mapBoth(
                                         success = { moreFeed ->
-                                            println(
-                                                "xxxx duplicate post found: ${
-                                                    initialPosts.posts.filter { post ->
-                                                        moreFeed.posts.any { feed -> feed.videoID == post.videoID }
-                                                    }
-                                                }",
-                                            )
+                                            moreFeed.posts.forEach { post ->
+                                                fetchFeedDetailsUseCase
+                                                    .invoke(post)
+                                                    .mapBoth(
+                                                        success = {
+                                                            println("Feed Details $it")
+                                                        },
+                                                        failure = { println("xxxx error: $it") },
+                                                    )
+                                            }
                                         },
                                         failure = { println("xxxx error: $it") },
                                     )

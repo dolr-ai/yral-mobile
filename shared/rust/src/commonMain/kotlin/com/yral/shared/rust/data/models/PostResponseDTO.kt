@@ -1,17 +1,17 @@
 package com.yral.shared.rust.data.models
 
-import com.yral.shared.rust.domain.models.CachedPost
+import com.yral.shared.rust.domain.models.Post
 import com.yral.shared.rust.domain.models.PostResponse
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class PostResponseDTO(
-    val posts: List<CacheDTO>,
+    val posts: List<PostDTO>,
 )
 
 @Serializable
-data class CacheDTO(
+data class PostDTO(
     @SerialName("canister_id")
     val canisterID: String,
     @SerialName("post_id")
@@ -26,7 +26,7 @@ fun PostResponseDTO.toPostResponse(): PostResponse =
     PostResponse(
         posts =
             posts.map {
-                CachedPost(
+                Post(
                     canisterID = it.canisterID,
                     postID = it.postID,
                     videoID = it.videoID,
