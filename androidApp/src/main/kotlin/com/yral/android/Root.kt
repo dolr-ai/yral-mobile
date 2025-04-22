@@ -33,8 +33,8 @@ import kotlinx.coroutines.withContext
 @Suppress("LongMethod")
 @Composable
 fun Root() {
-    val defaultAuthClient: AuthClient = remember { koinInstance.get() }
-    val individualUserRepository: IndividualUserRepository = remember { koinInstance.get() }
+    val defaultAuthClient = remember { koinInstance.get<AuthClient>() }
+    val individualUserRepository = remember { koinInstance.get<IndividualUserRepository>() }
     var initialised by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) {
