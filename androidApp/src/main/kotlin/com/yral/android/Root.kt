@@ -46,13 +46,13 @@ fun Root() {
                         principal = principal,
                         identityData = identity,
                     )
+                    initialised = true
                 }
             }
-            initialised = true
         }
     }
     LaunchedEffect(initialised) {
-        if (defaultAuthClient.canisterPrincipal != null) {
+        if (initialised && defaultAuthClient.canisterPrincipal != null) {
             withContext(Dispatchers.IO) {
                 val posts =
                     defaultAuthClient.canisterPrincipal?.let {
