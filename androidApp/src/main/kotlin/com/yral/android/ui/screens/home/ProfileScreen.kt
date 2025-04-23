@@ -1,4 +1,4 @@
-package com.yral.android.ui.home
+package com.yral.android.ui.screens.home
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize

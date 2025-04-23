@@ -1,4 +1,4 @@
-package com.yral.android.ui.home
+package com.yral.android.ui.screens.home
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding

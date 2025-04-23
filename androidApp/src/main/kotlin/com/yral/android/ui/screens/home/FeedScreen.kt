@@ -1,4 +1,4 @@
-package com.yral.android.ui.home
+package com.yral.android.ui.screens.home
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -19,16 +19,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.yral.android.ui.widgets.YralLoader
 import com.yral.shared.features.feed.useCases.GetInitialFeedUseCase.Companion.INITIAL_REQUEST
 import com.yral.shared.rust.domain.models.FeedDetails
 
-private const val PRE_FETCH_BEFORE_LAST = 3
+private const val PRE_FETCH_BEFORE_LAST = 1
 
 @Composable
 fun FeedScreen(
     modifier: Modifier = Modifier,
     feedDetails: List<FeedDetails>,
-    @Suppress("UnusedParameter") isLoadingMore: Boolean,
+    isLoadingMore: Boolean,
     loadMoreFeed: () -> Unit,
 ) {
     val listState = rememberLazyListState()
@@ -58,6 +59,11 @@ fun FeedScreen(
     ) {
         items(feedDetails) { item ->
             FeedItem(item)
+        }
+        if (isLoadingMore) {
+            item {
+                YralLoader()
+            }
         }
     }
 }
