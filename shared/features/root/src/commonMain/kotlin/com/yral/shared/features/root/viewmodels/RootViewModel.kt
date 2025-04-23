@@ -6,8 +6,11 @@ import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.AuthClient
 import com.yral.shared.features.feed.useCases.FetchFeedDetailsUseCase
+import com.yral.shared.features.feed.useCases.FetchMoreFeedUseCase
 import com.yral.shared.features.feed.useCases.GetInitialFeedUseCase
 import com.yral.shared.rust.domain.models.FeedDetails
+import com.yral.shared.rust.domain.models.Post
+import com.yral.shared.rust.domain.models.toFilteredResult
 import com.yral.shared.rust.services.IndividualUserServiceFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,6 +26,7 @@ class RootViewModel(
     private val authClient: AuthClient,
     private val individualUserServiceFactory: IndividualUserServiceFactory,
     private val getInitialFeedUseCase: GetInitialFeedUseCase,
+    private val fetchMoreFeedUseCase: FetchMoreFeedUseCase,
     private val fetchFeedDetailsUseCase: FetchFeedDetailsUseCase,
     private val crashlyticsManager: CrashlyticsManager,
 ) : ViewModel() {
@@ -51,7 +55,7 @@ class RootViewModel(
                                     principal = principal,
                                     identityData = identity,
                                 )
-                                loadFeedData(principal)
+                                initialFeedData(principal)
                             } ?: error("Identity is null")
                         } ?: error("Principal is null after initialization")
                     } catch (e: Exception) {
@@ -59,12 +63,12 @@ class RootViewModel(
                     }
                 }
             } else {
-                loadFeedData(authClient.canisterPrincipal!!)
+                initialFeedData(authClient.canisterPrincipal!!)
             }
         }
     }
 
-    private suspend fun loadFeedData(principal: String) {
+    private suspend fun initialFeedData(principal: String) {
         getInitialFeedUseCase
             .invoke(
                 parameter =
@@ -75,30 +79,37 @@ class RootViewModel(
             ).mapBoth(
                 success = { result ->
                     val posts = result.posts
+                    _state.emit(
+                        _state.value.copy(
+                            posts = posts,
+                        ),
+                    )
                     if (posts.isNotEmpty()) {
-                        val feedDetailsList = mutableListOf<FeedDetails>()
-                        posts.forEach { post ->
-                            fetchFeedDetailsUseCase
-                                .invoke(post)
-                                .mapBoth(
-                                    success = { detail ->
-                                        feedDetailsList.add(detail)
-                                        _state.emit(
-                                            _state.value.copy(
-                                                feedDetails = feedDetailsList.toList(),
-                                                showSplash = feedDetailsList.size < MIN_REQUIRED_ITEMS,
-                                            ),
-                                        )
-                                    },
-                                    failure = { error ->
-                                        error("Error loading feed details: $error")
-                                    },
-                                )
-                        }
+                        posts.forEach { post -> fetchFeedDetail(post) }
                     }
                 },
                 failure = { error ->
                     error("Error loading initial posts: $error")
+                },
+            )
+    }
+
+    private suspend fun fetchFeedDetail(post: Post) {
+        fetchFeedDetailsUseCase
+            .invoke(post)
+            .mapBoth(
+                success = { detail ->
+                    val feedDetailsList = _state.value.feedDetails.toMutableList()
+                    feedDetailsList.add(detail)
+                    _state.emit(
+                        _state.value.copy(
+                            feedDetails = feedDetailsList.toList(),
+                            showSplash = feedDetailsList.size < MIN_REQUIRED_ITEMS,
+                        ),
+                    )
+                },
+                failure = { error ->
+                    error("Error loading feed details: $error")
                 },
             )
     }
@@ -108,10 +119,62 @@ class RootViewModel(
             _state.emit(_state.value.copy(initialAnimationComplete = true))
         }
     }
+
+    fun loadMoreFeed() {
+        if (_state.value.isLoadingMore) {
+            return
+        }
+        coroutineScope.launch {
+            if (authClient.canisterPrincipal != null) {
+                try {
+                    setLoadingMore(true)
+                    fetchMoreFeedUseCase
+                        .invoke(
+                            parameter =
+                                FetchMoreFeedUseCase.Params(
+                                    canisterID = authClient.canisterPrincipal!!,
+                                    filterResults =
+                                        _state.value.posts.map { post ->
+                                            post.toFilteredResult()
+                                        },
+                                ),
+                        ).mapBoth(
+                            success = { moreFeed ->
+                                val posts = _state.value.posts.toMutableList()
+                                posts.addAll(moreFeed.posts)
+                                _state.emit(
+                                    _state.value.copy(
+                                        posts = posts,
+                                    ),
+                                )
+                                moreFeed.posts.forEach { post ->
+                                    fetchFeedDetail(post)
+                                }
+                            },
+                            failure = { println("xxxx error: $it") },
+                        )
+                    setLoadingMore(false)
+                } catch (e: Exception) {
+                    setLoadingMore(false)
+                    crashlyticsManager.recordException(e)
+                }
+            }
+        }
+    }
+
+    private suspend fun setLoadingMore(isLoading: Boolean) {
+        _state.emit(
+            _state.value.copy(
+                isLoadingMore = isLoading,
+            ),
+        )
+    }
 }
 
 data class RootState(
+    val posts: List<Post> = emptyList(),
     val feedDetails: List<FeedDetails> = emptyList(),
     val showSplash: Boolean = true,
     val initialAnimationComplete: Boolean = false,
+    val isLoadingMore: Boolean = false,
 )

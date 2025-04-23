@@ -52,7 +52,12 @@ fun RootScreen(viewModel: RootViewModel = koinViewModel()) {
                 ).show(WindowInsetsCompat.Type.systemBars())
             }
         }
-        HomeScreen(feedDetails = state.feedDetails)
+        HomeScreen(
+            feedDetails = state.feedDetails,
+            isLoadingMore = state.isLoadingMore,
+        ) {
+            viewModel.loadMoreFeed()
+        }
     }
 }
 

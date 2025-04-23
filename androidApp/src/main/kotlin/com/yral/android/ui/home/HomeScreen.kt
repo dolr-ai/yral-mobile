@@ -19,7 +19,11 @@ import androidx.compose.ui.Modifier
 import com.yral.shared.rust.domain.models.FeedDetails
 
 @Composable
-fun HomeScreen(feedDetails: List<FeedDetails>) {
+fun HomeScreen(
+    feedDetails: List<FeedDetails>,
+    isLoadingMore: Boolean,
+    loadMoreFeed: () -> Unit,
+) {
     var selectedTab by remember { mutableStateOf(HomeTab.Feed) }
 
     Scaffold(
@@ -47,6 +51,8 @@ fun HomeScreen(feedDetails: List<FeedDetails>) {
                 FeedScreen(
                     modifier = Modifier.padding(innerPadding),
                     feedDetails = feedDetails,
+                    isLoadingMore = isLoadingMore,
+                    loadMoreFeed = loadMoreFeed,
                 )
 
             HomeTab.Profile ->
