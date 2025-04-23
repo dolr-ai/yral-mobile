@@ -22,6 +22,7 @@ koin = "4.0.3"
 kotlinxCoroutines = "1.10.1"
 kotlinResult = "2.0.0"
 firebase-gitlive-sdk = "2.1.0"
+lottie = "6.6.6"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -59,6 +60,8 @@ kotlinResult-coroutines = { group = "com.michael-bull.kotlin-result", name = "ko
 
 gitlive-firebase-kotlin-crashlytics = { module = "dev.gitlive:firebase-crashlytics", version.ref = "firebase-gitlive-sdk" }
 gitlive-firebase-kotlin-anlaytics = { module = "dev.gitlive:firebase-analytics", version.ref = "firebase-gitlive-sdk" }
+
+lottie = { module = "com.airbnb.android:lottie-compose", version.ref = "lottie" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
