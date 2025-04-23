@@ -11,14 +11,20 @@ import SwiftUI
 struct ProfileOptionsView: View {
   @State private var selectedOption: ProfileOptionsView.Options?
   @State private var isShowingLoader = false
+  @Binding var showLogoutButton: Bool
+  weak var delegate: ProfileOptionsViewDelegate?
 
   var body: some View {
     ZStack {
       VStack(spacing: Constants.vStackSpacing) {
-        ForEach(Constants.options) { option in
+        ForEach(Constants.options.filter { showLogoutButton || $0.id != Constants.logoutId }) { option in
           Button {
-            isShowingLoader = true
-            selectedOption = option
+            if option.id == Constants.logoutId {
+              delegate?.logout()
+            } else {
+              isShowingLoader = true
+              selectedOption = option
+            }
           } label: {
             HStack(spacing: Constants.hStackSpacing) {
               option.image
@@ -71,10 +77,6 @@ struct ProfileOptionsView: View {
   }
 }
 
-#Preview {
-  ProfileOptionsView()
-}
-
 extension ProfileOptionsView {
   enum Constants {
     static let options = [
@@ -92,6 +94,11 @@ extension ProfileOptionsView {
         image: Image("option_privacy"),
         text: "Privacy Policy",
         redirection: "https://yral.com/privacy-policy"
+      ),
+      Options(
+        image: Image("option_logout"),
+        text: "Log Out",
+        redirection: Constants.logoutId
       )
     ]
 
@@ -105,5 +112,11 @@ extension ProfileOptionsView {
     static let progressViewCornerRadius = 8.0
     static let vStackSpacing = 30.0
     static let loaderName = "Yral_Loader"
+    static let logoutId = ""
   }
+}
+
+protocol ProfileOptionsViewDelegate: AnyObject {
+  func login()
+  func logout()
 }

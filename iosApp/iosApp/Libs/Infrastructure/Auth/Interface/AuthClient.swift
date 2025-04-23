@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 
 protocol AuthClient {
   var identity: DelegatedIdentity? { get }
@@ -10,4 +11,5 @@ protocol AuthClient {
   func refreshAuthIfNeeded(using cookie: HTTPCookie) async throws
   func generateNewDelegatedIdentity() throws -> DelegatedIdentity
   func generateNewDelegatedIdentityWireOneHour() throws -> DelegatedIdentityWire
+  var authStatePublisher: AnyPublisher<AuthState, Never> { get }
 }

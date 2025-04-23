@@ -7,7 +7,7 @@
 //
 import Foundation
 
-enum AuthError: Error {
+public enum AuthError: Error, Equatable {
   case authenticationFailed(String)
 }
 
