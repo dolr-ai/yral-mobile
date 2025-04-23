@@ -56,11 +56,16 @@ internal fun YRALReelsPlayerView(
             },
         )
 
+    // Report initial pager state
+    LaunchedEffect(Unit) {
+        // Call the callback with the initial page to make sure it's registered
+        onPageLoaded(pagerState.currentPage)
+    }
+
     // Animate scrolling to the current page when it changes
     LaunchedEffect(key1 = pagerState) {
         snapshotFlow { pagerState.currentPage }.distinctUntilChanged().collect { page ->
             pagerState.animateScrollToPage(page)
-            onPageLoaded(page)
         }
     }
 
@@ -84,7 +89,15 @@ internal fun YRALReelsPlayerView(
     if (playerConfig.reelVerticalScrolling) {
         VerticalPager(
             state = pagerState,
+            userScrollEnabled = true, // Ensure user scrolling is enabled
         ) { page ->
+            // Create a side effect to detect when this page is shown
+            LaunchedEffect(page, pagerState.currentPage) {
+                if (pagerState.currentPage == page) {
+                    // Call the callback directly from here
+                    onPageLoaded(page)
+                }
+            }
             var isPause by remember { mutableStateOf(false) } // State for pausing/resuming video
             // Video player with control
             YRALVideoPlayerWithControl(
@@ -110,7 +123,15 @@ internal fun YRALReelsPlayerView(
     } else {
         HorizontalPager(
             state = pagerState,
+            userScrollEnabled = true, // Ensure user scrolling is enabled
         ) { page ->
+            // Create a side effect to detect when this page is shown
+            LaunchedEffect(page, pagerState.currentPage) {
+                if (pagerState.currentPage == page) {
+                    // Call the callback directly from here
+                    onPageLoaded(page)
+                }
+            }
             var isPause by remember { mutableStateOf(false) } // State for pausing/resuming video
             // Video player with control
             YRALVideoPlayerWithControl(

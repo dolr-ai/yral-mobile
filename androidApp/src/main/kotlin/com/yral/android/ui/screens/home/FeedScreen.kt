@@ -3,7 +3,6 @@ package com.yral.android.ui.screens.home
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -26,23 +25,23 @@ fun FeedScreen(
     loadMoreFeed: () -> Unit,
 ) {
     val coroutineScope = rememberCoroutineScope()
+    var currentPage by remember { mutableIntStateOf(0) }
     // Keep track of the last feed size to detect when new items are loaded
     var lastFeedSize by remember { mutableIntStateOf(0) }
     // Track when a load was triggered to prevent multiple calls
     var loadTriggered by remember { mutableStateOf(false) }
-    var currentPage by remember { mutableIntStateOf(0) }
-    val shouldLoadMore by remember {
-        derivedStateOf {
-            val totalItemsNumber = feedDetails.size
-            val lastVisibleItemIndex = currentPage
-            lastVisibleItemIndex > 0 &&
-                totalItemsNumber >= INITIAL_REQUEST &&
-                (totalItemsNumber - lastVisibleItemIndex) <= PRE_FETCH_BEFORE_LAST &&
+
+    // Function to determine if we should load more content
+    val shouldLoadMore =
+        remember(currentPage, feedDetails.size, isLoadingMore, loadTriggered) {
+            val hasSufficientItems = feedDetails.size >= INITIAL_REQUEST
+            val isValidPage = currentPage > 0
+            val isCloseToEnd =
                 feedDetails.isNotEmpty() &&
-                !isLoadingMore &&
-                !loadTriggered
+                    (feedDetails.size - currentPage) <= PRE_FETCH_BEFORE_LAST
+            isValidPage && hasSufficientItems && isCloseToEnd && !isLoadingMore && !loadTriggered
         }
-    }
+
     // Reset load triggered when feed size changes (meaning new data arrived)
     LaunchedEffect(feedDetails.size) {
         if (feedDetails.size > lastFeedSize) {
@@ -50,13 +49,15 @@ fun FeedScreen(
             lastFeedSize = feedDetails.size
         }
     }
+
     // Reset load triggered when loading state changes to not loading
     LaunchedEffect(isLoadingMore) {
         if (!isLoadingMore) {
             loadTriggered = false
         }
     }
-    // Trigger load more when conditions are met
+
+    // Handle loading more when currentPage changes
     LaunchedEffect(shouldLoadMore) {
         if (shouldLoadMore) {
             loadTriggered = true
@@ -65,12 +66,16 @@ fun FeedScreen(
             }
         }
     }
+
     Box(modifier = modifier) {
-        YRALReelPlayer(
-            videoUrlArray = feedDetails.map { it.url.toString() }.toList(),
-        ) { page ->
-            println("HTTP Client REQUEST: current page $currentPage")
-            currentPage = page
+        if (feedDetails.isNotEmpty()) {
+            YRALReelPlayer(
+                videoUrlArray = feedDetails.map { it.url.toString() }.toList(),
+                onPageLoaded = { page ->
+                    currentPage = page
+                    println("HTTP Client REQUEST: current page updated to $currentPage, totalItems=${feedDetails.size}")
+                },
+            )
         }
     }
 }
