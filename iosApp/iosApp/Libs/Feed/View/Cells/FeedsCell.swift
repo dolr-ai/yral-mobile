@@ -77,6 +77,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   var expandedCaptionHeight: CGFloat = 0
   var isCaptionCollapsible = false
   var captionScrollViewHeightConstraint: NSLayoutConstraint!
+//  var smileyGame: SmileyGame
 
   private static func getActionButton(withTitle title: String, image: UIImage?) -> UIButton {
     var configuration = UIButton.Configuration.plain()
@@ -106,7 +107,21 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     return profileInfoView
   }()
 
+//  private lazy var smileyView: UIHostingController<SmileyView> = {
+//    let view = UIHostingController<SmileyView>(
+//      rootView: SmileyView(
+//        smileyGame: Binding(
+//          get: { self.smileyGame },
+//          set: { self.smileyGame = $0 }
+//        ),
+//        smileyTapped: { tappedSmiley in
+//
+//        }))
+//    return view
+//  }()
+
   override init(frame: CGRect) {
+//    smileyGame = SmileyGame(smileys: [])
     super.init(frame: frame)
     setupUI()
   }
@@ -120,6 +135,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     setupProfileInfoView()
     setupStackView()
     setupCaptionLabel()
+//    setupSmileyView()
 
     let cellTapGesture = UITapGestureRecognizer(target: self, action: #selector(handleCellTap))
     cellTapGesture.cancelsTouchesInView = false
@@ -212,6 +228,24 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     let captionTapGesture = UITapGestureRecognizer(target: self, action: #selector(handleCaptionTap))
     captionScrollView.addGestureRecognizer(captionTapGesture)
   }
+
+//  private func setupSmileyView() {
+//    guard let smView = smileyView.view else { return }
+//    smView.translatesAutoresizingMaskIntoConstraints = false
+//    smView.backgroundColor = .clear
+//
+//    contentView.addSubview(smView)
+//    NSLayoutConstraint.activate([
+//      smView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+//      smView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+//      smView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -16),
+//      smView.heightAnchor.constraint(equalToConstant: 64)
+//    ])
+//  }
+//
+//  private func handleSmileyTap(_ smiley: Smiley) {
+//    
+//  }
 
   @objc private func handleCaptionTap() {
     if !isCaptionExpanded {
