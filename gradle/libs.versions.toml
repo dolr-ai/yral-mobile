@@ -23,6 +23,7 @@ kotlinxCoroutines = "1.10.1"
 kotlinResult = "2.0.0"
 firebase-gitlive-sdk = "2.1.0"
 lottie = "6.6.6"
+lifecycleViewmodel = "2.8.4"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -54,6 +55,7 @@ firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
 
 koin-core = { module = "io.insert-koin:koin-core", version.ref = "koin" }
 koin-android = { module = "io.insert-koin:koin-android", version.ref = "koin" }
+koin-composeVM = { module = "io.insert-koin:koin-compose-viewmodel", version.ref = "koin" }
 
 kotlinResult-core = { group = "com.michael-bull.kotlin-result", name = "kotlin-result", version.ref = "kotlinResult" }
 kotlinResult-coroutines = { group = "com.michael-bull.kotlin-result", name = "kotlin-result-coroutines", version.ref = "kotlinResult" }
@@ -62,6 +64,8 @@ gitlive-firebase-kotlin-crashlytics = { module = "dev.gitlive:firebase-crashlyti
 gitlive-firebase-kotlin-anlaytics = { module = "dev.gitlive:firebase-analytics", version.ref = "firebase-gitlive-sdk" }
 
 lottie = { module = "com.airbnb.android:lottie-compose", version.ref = "lottie" }
+
+androidx-lifecycle-viewmodel = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel", version.ref = "lifecycleViewmodel" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

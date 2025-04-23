@@ -17,6 +17,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.yral.android.ui.screens.RootScreen
 import com.yral.shared.core.platform.AndroidPlatformResources
 import com.yral.shared.core.platform.PlatformResourcesFactory
 import com.yral.shared.koin.koinInstance
@@ -29,7 +30,7 @@ class MainActivity : ComponentActivity() {
         initRustLogger()
         setContent {
             MyApplicationTheme {
-                Root()
+                RootScreen()
             }
         }
     }

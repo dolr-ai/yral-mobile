@@ -1,4 +1,4 @@
-package com.yral.android
+package com.yral.android.ui.screens
 
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
@@ -16,10 +16,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -31,63 +29,16 @@ import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
-import com.github.michaelbull.result.mapBoth
-import com.yral.shared.core.dispatchers.AppDispatchers
-import com.yral.shared.features.auth.AuthClient
-import com.yral.shared.features.feed.useCases.FetchFeedDetailsUseCase
-import com.yral.shared.features.feed.useCases.GetInitialFeedUseCase
-import com.yral.shared.koin.koinInstance
+import com.yral.android.R
+import com.yral.shared.features.root.viewmodels.RootViewModel
 import com.yral.shared.rust.domain.models.FeedDetails
-import com.yral.shared.rust.domain.models.Post
-import com.yral.shared.rust.services.IndividualUserServiceFactory
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.withContext
+import org.koin.compose.viewmodel.koinViewModel
 
-const val MIN_REQUIRED_ITEMS = 3
-
-@Suppress("LongMethod")
 @Composable
-fun Root() {
-    val appDispatchers = koinInstance.get<AppDispatchers>()
-    val defaultAuthClient = koinInstance.get<AuthClient>()
-    val individualUserServiceFactory = koinInstance.get<IndividualUserServiceFactory>()
+fun RootScreen(viewModel: RootViewModel = koinViewModel()) {
+    val state by viewModel.state.collectAsState()
 
-    // State management
-    var showSplash by remember { mutableStateOf(true) }
-    var feedDetails by remember { mutableStateOf(emptyList<FeedDetails>()) }
-
-    // Create StateFlow for feed updates
-    val feedFlow = remember { MutableStateFlow(emptyList<FeedDetails>()) }
-
-    // Collect the flow changes and update state
-    LaunchedEffect(key1 = feedFlow) {
-        feedFlow.collect { newFeedDetails ->
-            feedDetails = newFeedDetails
-            showSplash = defaultAuthClient.canisterPrincipal == null ||
-                newFeedDetails.size < MIN_REQUIRED_ITEMS
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        if (defaultAuthClient.canisterPrincipal == null) {
-            withContext(appDispatchers.io) {
-                defaultAuthClient.initialize()
-                defaultAuthClient.canisterPrincipal?.let { principal ->
-                    defaultAuthClient.identity?.let { identity ->
-                        individualUserServiceFactory.initialize(
-                            principal = principal,
-                            identityData = identity,
-                        )
-                        loadFeedData(
-                            principal = principal,
-                            feedFlow = feedFlow,
-                        )
-                    } ?: error("Identity is null")
-                } ?: error("Principal is null after initialization")
-            }
-        }
-    }
-    if (showSplash) {
+    if (state.showSplash) {
         val window = (LocalActivity.current as? ComponentActivity)?.window
         LaunchedEffect(Unit) {
             window?.let { w ->
@@ -99,9 +50,11 @@ fun Root() {
         }
         Splash(
             modifier = Modifier.fillMaxSize(),
+            initialAnimationComplete = state.initialAnimationComplete,
+            onAnimationComplete = { viewModel.onSplashAnimationComplete() },
         )
     } else {
-        // Reset system bars to normal when initialized
+        // Reset system bars to normal
         val window = (LocalActivity.current as? ComponentActivity)?.window
         LaunchedEffect(Unit) {
             window?.let { w ->
@@ -112,9 +65,7 @@ fun Root() {
             }
         }
         Scaffold(
-            modifier =
-                Modifier
-                    .fillMaxSize(),
+            modifier = Modifier.fillMaxSize(),
             containerColor = MaterialTheme.colorScheme.background,
         ) { innerPadding ->
             Box(
@@ -124,15 +75,18 @@ fun Root() {
                         .padding(innerPadding),
                 contentAlignment = Alignment.Center,
             ) {
-                FeedContent(feedDetails)
+                FeedContent(state.feedDetails)
             }
         }
     }
 }
 
 @Composable
-private fun Splash(modifier: Modifier) {
-    var initialAnimationComplete by remember { mutableStateOf(false) }
+private fun Splash(
+    modifier: Modifier,
+    initialAnimationComplete: Boolean,
+    onAnimationComplete: () -> Unit = {},
+) {
     Box(
         modifier = modifier.background(Color.Black),
     ) {
@@ -164,7 +118,7 @@ private fun Splash(modifier: Modifier) {
             )
             LaunchedEffect(progress) {
                 if (progress == 1f) {
-                    initialAnimationComplete = true
+                    onAnimationComplete()
                 }
             }
         }
@@ -208,43 +162,6 @@ private fun FeedItem(item: FeedDetails) {
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-        }
-    }
-}
-
-private suspend fun loadFeedData(
-    principal: String,
-    feedFlow: MutableStateFlow<List<FeedDetails>>,
-) {
-    val getInitialPostsUseCase = koinInstance.get<GetInitialFeedUseCase>()
-    val fetchFeedDetailsUseCase = koinInstance.get<FetchFeedDetailsUseCase>()
-
-    var initialPosts = emptyList<Post>()
-    var feedDetails = emptyList<FeedDetails>()
-
-    getInitialPostsUseCase
-        .invoke(
-            parameter =
-                GetInitialFeedUseCase.Params(
-                    canisterID = principal,
-                    filterResults = emptyList(),
-                ),
-        ).mapBoth(
-            success = { initialPosts = it.posts },
-            failure = { error("Error loading initial posts: $it") },
-        )
-
-    if (initialPosts.isNotEmpty()) {
-        initialPosts.forEach { post ->
-            fetchFeedDetailsUseCase
-                .invoke(post)
-                .mapBoth(
-                    success = { detail ->
-                        feedDetails = feedDetails + detail
-                        feedFlow.value = feedDetails
-                    },
-                    failure = { error("Error loading feed details: $it") },
-                )
         }
     }
 }
