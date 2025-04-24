@@ -17,6 +17,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.home.RootScreen
 import com.yral.shared.core.platform.AndroidPlatformResources
 import com.yral.shared.core.platform.PlatformResourcesFactory
@@ -54,12 +55,16 @@ private fun MyApplicationTheme(
                 primary = Color(0xFFBB86FC),
                 secondary = Color(0xFF03DAC5),
                 tertiary = Color(0xFF3700B3),
+                primaryContainer = YralColors.primaryContainer,
+                onPrimaryContainer = YralColors.onPrimaryContainer,
             )
         } else {
             lightColorScheme(
                 primary = Color(0xFF6200EE),
                 secondary = Color(0xFF03DAC5),
                 tertiary = Color(0xFF3700B3),
+                primaryContainer = YralColors.primaryContainer,
+                onPrimaryContainer = YralColors.onPrimaryContainer,
             )
         }
     val typography =

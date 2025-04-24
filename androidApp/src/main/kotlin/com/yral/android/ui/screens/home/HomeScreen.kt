@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
@@ -28,6 +29,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.yral.android.R
+import com.yral.android.ui.design.YralColors
 import com.yral.shared.rust.domain.models.FeedDetails
 
 @Composable
@@ -44,7 +46,7 @@ fun HomeScreen(
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
             NavigationBar(
-                containerColor = HomeScreenDesign.backgroundColor,
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
                 modifier =
                     Modifier
                         .navigationBarsPadding()
@@ -78,7 +80,7 @@ fun HomeScreen(
                     modifier =
                         Modifier
                             .padding(innerPadding)
-                            .background(HomeScreenDesign.backgroundColor),
+                            .background(MaterialTheme.colorScheme.primaryContainer),
                     feedDetails = feedDetails,
                     isLoadingMore = isLoadingMore,
                     loadMoreFeed = loadMoreFeed,
@@ -91,7 +93,7 @@ fun HomeScreen(
                     modifier =
                         Modifier
                             .padding(innerPadding)
-                            .background(HomeScreenDesign.backgroundColor),
+                            .background(MaterialTheme.colorScheme.primaryContainer),
                 )
         }
     }
@@ -115,7 +117,7 @@ private fun NavBarIcon(
                     .background(
                         color =
                             if (isSelected) {
-                                HomeScreenDesign.navBarSelectionIndicationColor
+                                YralColors.navBarSelectionIndicationColor
                             } else {
                                 Color.Transparent
                             },
@@ -150,10 +152,4 @@ enum class HomeTab(
 ) {
     HOME("Home", R.drawable.home_nav_selected, R.drawable.home_nav_unselected),
     Account("Account", R.drawable.account_nav, R.drawable.account_nav),
-}
-
-@Suppress("MagicNumber")
-object HomeScreenDesign {
-    val backgroundColor: Color = Color(0xFF0A0A0A)
-    val navBarSelectionIndicationColor: Color = Color(0xFFE2017B)
 }
