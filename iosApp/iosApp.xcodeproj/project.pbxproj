@@ -23,6 +23,12 @@
 		107C60992DB8BCB1006FC467 /* SmileyGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C60972DB8BCB1006FC467 /* SmileyGameView.swift */; };
 		107C609B2DB90B22006FC467 /* SmileyGameResultBottomSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C609A2DB90B22006FC467 /* SmileyGameResultBottomSheetView.swift */; };
 		107C609C2DB90B22006FC467 /* SmileyGameResultBottomSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C609A2DB90B22006FC467 /* SmileyGameResultBottomSheetView.swift */; };
+		107C609F2DB9FDA0006FC467 /* Smiley_Game_Lose.json in Resources */ = {isa = PBXBuildFile; fileRef = 107C609D2DB9FDA0006FC467 /* Smiley_Game_Lose.json */; };
+		107C60A02DB9FDA0006FC467 /* Smiley_Game_Win.json in Resources */ = {isa = PBXBuildFile; fileRef = 107C609E2DB9FDA0006FC467 /* Smiley_Game_Win.json */; };
+		107C60A12DB9FDA0006FC467 /* Smiley_Game_Lose.json in Resources */ = {isa = PBXBuildFile; fileRef = 107C609D2DB9FDA0006FC467 /* Smiley_Game_Lose.json */; };
+		107C60A22DB9FDA0006FC467 /* Smiley_Game_Win.json in Resources */ = {isa = PBXBuildFile; fileRef = 107C609E2DB9FDA0006FC467 /* Smiley_Game_Win.json */; };
+		107C60A42DBA01F0006FC467 /* RoundedCorner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C60A32DBA01EB006FC467 /* RoundedCorner.swift */; };
+		107C60A52DBA01F0006FC467 /* RoundedCorner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C60A32DBA01EB006FC467 /* RoundedCorner.swift */; };
 		10BA2E872DA6507E00B6BE97 /* FeedsPlayerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10BA2E842DA6507E00B6BE97 /* FeedsPlayerTests.swift */; };
 		2152FB042600AC8F00CF470E /* IosApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* IosApp.swift */; };
 		7555FF83242A565900829871 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* ContentView.swift */; };
@@ -475,6 +481,9 @@
 		107C60942DB7AAD7006FC467 /* AboutGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutGameView.swift; sourceTree = "<group>"; };
 		107C60972DB8BCB1006FC467 /* SmileyGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameView.swift; sourceTree = "<group>"; };
 		107C609A2DB90B22006FC467 /* SmileyGameResultBottomSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameResultBottomSheetView.swift; sourceTree = "<group>"; };
+		107C609D2DB9FDA0006FC467 /* Smiley_Game_Lose.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Smiley_Game_Lose.json; sourceTree = "<group>"; };
+		107C609E2DB9FDA0006FC467 /* Smiley_Game_Win.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Smiley_Game_Win.json; sourceTree = "<group>"; };
+		107C60A32DBA01EB006FC467 /* RoundedCorner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoundedCorner.swift; sourceTree = "<group>"; };
 		10BA2E822DA64E6A00B6BE97 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Platforms/iPhoneOS.platform/Developer/Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		10BA2E842DA6507E00B6BE97 /* FeedsPlayerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedsPlayerTests.swift; sourceTree = "<group>"; };
 		2152FB032600AC8F00CF470E /* IosApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IosApp.swift; sourceTree = "<group>"; };
@@ -1004,6 +1013,7 @@
 			children = (
 				ACAA4D5E2DDC75C3001092A6 /* Notifications.swift */,
 				ACF639DE2DC25B9C00C4BCCC /* UserDefaultsManager.swift */,
+				107C60A32DBA01EB006FC467 /* RoundedCorner.swift */,
 				107C608F2DB78093006FC467 /* UIView+Extensions.swift */,
 				ACFEDFA02D96CEC2003116EA /* Errors.swift */,
 				ACCB98772D94420D002B9675 /* UILabel+Extensions.swift */,
@@ -1976,6 +1986,8 @@
 		ACEBF7E62D6F56F400B594A0 /* Lottie */ = {
 			isa = PBXGroup;
 			children = (
+				107C609D2DB9FDA0006FC467 /* Smiley_Game_Lose.json */,
+				107C609E2DB9FDA0006FC467 /* Smiley_Game_Win.json */,
 				AC8FC76C2D9C01E9006F29BC /* Yral_Loader.json */,
 				AC99BB912D834387008012C2 /* Lightning_Lottie.json */,
 				AC233D342D314CA3007040F1 /* Splash_Lottie.json */,
@@ -2192,6 +2204,8 @@
 				AC32E41B2D270097001DDA43 /* KumbhSans-VariableFont_YOPQ,wght.ttf in Resources */,
 				AC32E41C2D270097001DDA43 /* KumbhSans-Bold.ttf in Resources */,
 				AC99BB922D834387008012C2 /* Lightning_Lottie.json in Resources */,
+				107C609F2DB9FDA0006FC467 /* Smiley_Game_Lose.json in Resources */,
+				107C60A02DB9FDA0006FC467 /* Smiley_Game_Win.json in Resources */,
 				AC32E41D2D270097001DDA43 /* KumbhSans-Light.ttf in Resources */,
 				058557BB273AAA24004C7B11 /* Assets.xcassets in Resources */,
 			);
@@ -2225,6 +2239,8 @@
 				AC32E40F2D270097001DDA43 /* KumbhSans-VariableFont_YOPQ,wght.ttf in Resources */,
 				AC32E4102D270097001DDA43 /* KumbhSans-Bold.ttf in Resources */,
 				AC99BB932D834387008012C2 /* Lightning_Lottie.json in Resources */,
+				107C60A12DB9FDA0006FC467 /* Smiley_Game_Lose.json in Resources */,
+				107C60A22DB9FDA0006FC467 /* Smiley_Game_Win.json in Resources */,
 				AC32E4112D270097001DDA43 /* KumbhSans-Light.ttf in Resources */,
 				ACD941B22CFF575C0038FCB6 /* Assets.xcassets in Resources */,
 			);
@@ -2427,6 +2443,7 @@
 				AC7F7EC82D78696200215162 /* UploadDelegate.swift in Sources */,
 				AC5A7B8F2DACF5B2009E9E42 /* VideoEventRequest.swift in Sources */,
 				AC49605E2D2C5E65008D59D9 /* LikeQuery.swift in Sources */,
+				107C60A52DBA01F0006FC467 /* RoundedCorner.swift in Sources */,
 				AC32E4252D2712F1001DDA43 /* ProfileInfoView.swift in Sources */,
 				AC4960612D2D664B008D59D9 /* LikeResult.swift in Sources */,
 				AC7F7EB72D7732AC00215162 /* VideoUploadError.swift in Sources */,
@@ -2620,6 +2637,7 @@
 				AC7F7EC72D78696200215162 /* UploadDelegate.swift in Sources */,
 				AC5A7B8E2DACF5B2009E9E42 /* VideoEventRequest.swift in Sources */,
 				AC49605F2D2C5E65008D59D9 /* LikeQuery.swift in Sources */,
+				107C60A42DBA01F0006FC467 /* RoundedCorner.swift in Sources */,
 				AC32E4242D2712F1001DDA43 /* ProfileInfoView.swift in Sources */,
 				AC4960622D2D664B008D59D9 /* LikeResult.swift in Sources */,
 				AC7F7EB62D7732AC00215162 /* VideoUploadError.swift in Sources */,
