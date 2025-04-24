@@ -88,8 +88,10 @@ internal fun YRALReelsPlayerView(
     // Render vertical pager if enabled, otherwise render horizontal pager
     if (playerConfig.reelVerticalScrolling) {
         VerticalPager(
+            modifier = modifier,
             state = pagerState,
             userScrollEnabled = true, // Ensure user scrolling is enabled
+            beyondViewportPageCount = 3,
         ) { page ->
             // Create a side effect to detect when this page is shown
             LaunchedEffect(page, pagerState.currentPage) {
@@ -101,7 +103,7 @@ internal fun YRALReelsPlayerView(
             var isPause by remember { mutableStateOf(false) } // State for pausing/resuming video
             // Video player with control
             YRALVideoPlayerWithControl(
-                modifier = modifier,
+                modifier = Modifier.fillMaxSize(),
                 url = urls[page],
                 playerConfig = playerConfig,
                 isPause =
@@ -122,8 +124,10 @@ internal fun YRALReelsPlayerView(
         }
     } else {
         HorizontalPager(
+            modifier = modifier,
             state = pagerState,
             userScrollEnabled = true, // Ensure user scrolling is enabled
+            beyondViewportPageCount = 3,
         ) { page ->
             // Create a side effect to detect when this page is shown
             LaunchedEffect(page, pagerState.currentPage) {
@@ -135,7 +139,7 @@ internal fun YRALReelsPlayerView(
             var isPause by remember { mutableStateOf(false) } // State for pausing/resuming video
             // Video player with control
             YRALVideoPlayerWithControl(
-                modifier = modifier,
+                modifier = Modifier.fillMaxSize(),
                 url = urls[page], // URL of the video
                 playerConfig = playerConfig,
                 isPause =
