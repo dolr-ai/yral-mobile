@@ -13,5 +13,5 @@ internal val rustModule =
     module {
         singleOf(::IndividualUserRepositoryImpl) { bind<IndividualUserRepository>() }
         singleOf(::IndividualUserDataSourceImpl) { bind<IndividualUserDataSource>() }
-        single { IndividualUserServiceFactory() }
+        single { IndividualUserServiceFactory.getInstance() }
     }
