@@ -12,6 +12,8 @@ struct AccountView: View {
   @ObservedObject var viewModel: AccountViewModel
   @State var profileInfo: AccountInfo?
   @State private var isLoadingFirstTime = true
+  @State private var showLoginButton: Bool = false
+  @EnvironmentObject var session: SessionManager
   init(viewModel: AccountViewModel) {
     self.viewModel = viewModel
   }
@@ -21,7 +23,11 @@ struct AccountView: View {
       VStack(spacing: Constants.vStackSpacing) {
         switch viewModel.state {
         case .successfullyFetched(let info):
-          UserInfoView(accountInfo: .constant(info), shouldApplySpacing: true)
+          UserInfoView(
+            accountInfo: .constant(info),
+            shouldApplySpacing: true,
+            showLoginButton: $showLoginButton
+          )
         default:
           UserInfoView(
             accountInfo: .constant(
@@ -29,15 +35,19 @@ struct AccountView: View {
                 imageURL: URL(fileURLWithPath: ""),
                 canisterID: "")
             )
-            , shouldApplySpacing: true
+            , shouldApplySpacing: true,
+            showLoginButton: $showLoginButton
           )
         }
-        ProfileOptionsView()
+        ProfileOptionsView(showLogoutButton: $showLoginButton.inverted)
         ShareOptionsView()
 //        ICPBrandingView()
         Spacer().frame(height: Constants.bottomSpacing)
       }
       .padding([.top], Constants.vStackPadding)
+    }
+    .onReceive(session.$state) { state in
+      self.showLoginButton = !state.isLoggedIn
     }
     .task {
       guard isLoadingFirstTime else { return }

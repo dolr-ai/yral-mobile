@@ -14,6 +14,7 @@ final class ProfileDIContainer {
     let crashReporter: CrashReporter
     let accountUseCase: AccountUseCaseProtocol
     let likesUseCase: ToggleLikeUseCaseProtocol
+    let session: SessionManager
   }
 
   private let dependencies: Dependencies
@@ -84,7 +85,8 @@ final class ProfileDIContainer {
           existingFeeds: existingFeeds,
           info: info
         ),
-        feedType: .currentUser
+        feedType: .currentUser,
+        session: dependencies.session
       ),
       showFeeds: showFeeds
     )

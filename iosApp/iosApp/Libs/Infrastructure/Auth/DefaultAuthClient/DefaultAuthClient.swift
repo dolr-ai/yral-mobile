@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import Combine
 import secp256k1
 
 class DefaultAuthClient: AuthClient {
@@ -16,17 +17,20 @@ class DefaultAuthClient: AuthClient {
   private(set) var canisterPrincipalString: String?
   private(set) var userPrincipal: Principal?
   private(set) var userPrincipalString: String?
+  private(set) var identityData: Data?
 
   private let networkService: NetworkService
   private let cookieStorage = HTTPCookieStorage.shared
 
-  private(set) var identityData: Data?
-
   private let keychainIdentityKey = Constants.keychainIdentity
-
   private let keychainPayloadKey = Constants.keychainPayload
 
   private let crashReporter: CrashReporter
+
+  private let stateSubject = CurrentValueSubject<AuthState, Never>(.uninitialized)
+  var authStatePublisher: AnyPublisher<AuthState, Never> {
+    stateSubject.eraseToAnyPublisher()
+  }
 
   init(networkService: NetworkService, crashReporter: CrashReporter) {
     self.networkService = networkService
@@ -205,13 +209,17 @@ class DefaultAuthClient: AuthClient {
         self.canisterPrincipalString = canisterPrincipalString
         self.userPrincipal = userPrincipal
         self.userPrincipalString = userPrincipalString
+        self.stateSubject.value = .ephemeralAuthentication(
+          userPrincipal: userPrincipalString,
+          canisterPrincipal: canisterPrincipalString
+        )
       }
     }
   }
 
   private func createOrRetrieveAuthPayload() throws -> Data {
     if let stored = try? KeychainHelper.retrieveData(for: keychainPayloadKey),
-        !stored.isEmpty {
+       !stored.isEmpty {
       return stored
     }
 
@@ -242,6 +250,7 @@ class DefaultAuthClient: AuthClient {
     do {
       return try operation()
     } catch {
+      self.stateSubject.value = .error(AuthError.authenticationFailed(error.localizedDescription))
       crashReporter.log(error.localizedDescription)
       crashReporter.recordException(error)
       throw error
@@ -253,6 +262,7 @@ class DefaultAuthClient: AuthClient {
     do {
       return try await operation()
     } catch {
+      self.stateSubject.value = .error(AuthError.authenticationFailed(error.localizedDescription))
       crashReporter.log(error.localizedDescription)
       crashReporter.recordException(error)
       throw error

@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct HomeTabController: View {
+  @EnvironmentObject var session: SessionManager
   let feedsViewController: FeedsViewController
   let accountView: AccountView
   let uploadView: UploadView

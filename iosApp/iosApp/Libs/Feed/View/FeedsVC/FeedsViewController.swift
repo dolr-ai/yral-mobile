@@ -50,10 +50,16 @@ class FeedsViewController: UIViewController {
   var shouldShowFooterLoader: Bool = false
   var pageEndReached: Bool = false
   var onBackButtonTap: (() -> Void)?
+  var session: SessionManager
 
-  init(viewModel: any FeedViewModelProtocol, feedType: FeedType = .otherUsers) {
+  init(
+    viewModel: any FeedViewModelProtocol,
+    feedType: FeedType = .otherUsers,
+    session: SessionManager
+  ) {
     self.viewModel = viewModel
     self.feedType = feedType
+    self.session = session
     super.init(nibName: nil, bundle: nil)
   }
 
