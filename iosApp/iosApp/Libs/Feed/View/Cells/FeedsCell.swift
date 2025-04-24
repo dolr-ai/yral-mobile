@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import SwiftUI
 import AVFoundation
 
 protocol FeedsCellProtocol: AnyObject {
@@ -15,7 +16,6 @@ protocol FeedsCellProtocol: AnyObject {
   func deleteButtonTapped(index: Int)
   func reportButtonTapped(index: Int)
 }
-// swiftlint: disable type_body_length
 class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
 
   var playerLayer: AVPlayerLayer?
@@ -24,6 +24,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   weak var delegate: FeedsCellProtocol?
 
   private let playerContainerView = getUIImageView()
+  private lazy var signupOverlayHost = UIHostingController(rootView: SignupOverlay())
 
   var actionsStackView: UIStackView = {
     let stackView = getUIStackView()
@@ -122,6 +123,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     setupProfileInfoView()
     setupStackView()
     setupCaptionLabel()
+    addSignupOverlay()
 
     let cellTapGesture = UITapGestureRecognizer(target: self, action: #selector(handleCellTap))
     cellTapGesture.cancelsTouchesInView = false
@@ -180,47 +182,20 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     reportButton.addTarget(self, action: #selector(reportButtonTapped), for: .touchUpInside)
   }
 
-  private func setupCaptionLabel() {
-    contentView.addSubview(captionScrollView)
-    captionScrollView.addSubview(captionLabel)
+  private func addSignupOverlay() {
+    let overlayView = signupOverlayHost.view
+    overlayView?.backgroundColor = .clear
+    overlayView?.translatesAutoresizingMaskIntoConstraints = false
 
-    captionScrollViewHeightConstraint = captionScrollView.heightAnchor
-      .constraint(equalToConstant: Constants.captionSingleLineHeight)
-    captionScrollViewHeightConstraint.isActive = true
-
-    NSLayoutConstraint.activate([
-      captionScrollView.leadingAnchor.constraint(
-        equalTo: contentView.leadingAnchor,
-        constant: Constants.horizontalMargin
-      ),
-      captionScrollView.trailingAnchor.constraint(
-        equalTo: actionsStackView.leadingAnchor,
-        constant: -Constants.horizontalMargin
-      ),
-      captionScrollView.bottomAnchor.constraint(
-        equalTo: contentView.bottomAnchor,
-        constant: -Constants.captionsBottomMargin
-      )
-    ])
+    contentView.addSubview(overlayView!)
 
     NSLayoutConstraint.activate([
-      captionLabel.topAnchor.constraint(equalTo: captionScrollView.contentLayoutGuide.topAnchor),
-      captionLabel.leadingAnchor.constraint(equalTo: captionScrollView.contentLayoutGuide.leadingAnchor),
-      captionLabel.trailingAnchor.constraint(equalTo: captionScrollView.contentLayoutGuide.trailingAnchor),
-      captionLabel.bottomAnchor.constraint(equalTo: captionScrollView.contentLayoutGuide.bottomAnchor),
-      captionLabel.widthAnchor.constraint(equalTo: captionScrollView.frameLayoutGuide.widthAnchor)
+      overlayView!.topAnchor.constraint(equalTo: contentView.topAnchor),
+      overlayView!.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+      overlayView!.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+      overlayView!.trailingAnchor.constraint(equalTo: contentView.trailingAnchor)
     ])
-
-    let captionTapGesture = UITapGestureRecognizer(target: self, action: #selector(handleCaptionTap))
-    captionScrollView.addGestureRecognizer(captionTapGesture)
-  }
-
-  @objc private func handleCaptionTap() {
-    if !isCaptionExpanded {
-      expandCaption()
-    } else {
-      collapseCaption()
-    }
+    overlayView?.isHidden = true
   }
 
   @objc func likeButtonTapped() {
@@ -284,6 +259,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
       captionScrollView.isHidden = false
       setCaptionHeight(captionText: profileInfo.subtitle)
     }
+    signupOverlayHost.view.isHidden = !feedInfo.showLoginOverlay
   }
 
   func setLikeStatus(isLiked: Bool) {
@@ -316,6 +292,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     let isLiked: Bool
     let lastThumbnailImage: UIImage?
     let feedType: FeedType
+    let showLoginOverlay: Bool
   }
 }
 
@@ -350,4 +327,3 @@ extension FeedsCell {
     static let animationPeriod = 0.3
   }
 }
-// swiftlint: enable type_body_length
