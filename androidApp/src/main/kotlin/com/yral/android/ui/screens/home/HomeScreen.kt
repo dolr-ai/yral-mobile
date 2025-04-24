@@ -33,6 +33,8 @@ import com.yral.shared.rust.domain.models.FeedDetails
 @Composable
 fun HomeScreen(
     feedDetails: List<FeedDetails>,
+    currentPage: Int,
+    onCurrentPageChange: (pageNo: Int) -> Unit,
     isLoadingMore: Boolean,
     loadMoreFeed: () -> Unit,
 ) {
@@ -80,6 +82,8 @@ fun HomeScreen(
                     feedDetails = feedDetails,
                     isLoadingMore = isLoadingMore,
                     loadMoreFeed = loadMoreFeed,
+                    currentPage = currentPage,
+                    onCurrentPageChange = onCurrentPageChange,
                 )
 
             HomeTab.Account ->

@@ -169,11 +169,24 @@ class RootViewModel(
             ),
         )
     }
+
+    fun onCurrentPageChange(pageNo: Int) {
+        coroutineScope.launch {
+            withContext(appDispatchers.io) {
+                _state.emit(
+                    _state.value.copy(
+                        currentPageOfFeed = pageNo,
+                    ),
+                )
+            }
+        }
+    }
 }
 
 data class RootState(
     val posts: List<Post> = emptyList(),
     val feedDetails: List<FeedDetails> = emptyList(),
+    val currentPageOfFeed: Int = 0,
     val showSplash: Boolean = true,
     val initialAnimationComplete: Boolean = false,
     val isLoadingMore: Boolean = false,

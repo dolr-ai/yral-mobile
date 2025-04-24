@@ -54,6 +54,8 @@ fun RootScreen(viewModel: RootViewModel = koinViewModel()) {
         }
         HomeScreen(
             feedDetails = state.feedDetails,
+            currentPage = state.currentPageOfFeed,
+            onCurrentPageChange = { viewModel.onCurrentPageChange(it) },
             isLoadingMore = state.isLoadingMore,
         ) {
             viewModel.loadMoreFeed()
