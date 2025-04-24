@@ -33,7 +33,7 @@ class RootViewModel(
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
     companion object {
-        const val MIN_REQUIRED_ITEMS = 3
+        const val MIN_REQUIRED_ITEMS = 1
     }
 
     private val _state = MutableStateFlow(RootState())
