@@ -20,6 +20,44 @@ enum SmileyGameResult {
   case looser(Smiley, Int)
 }
 
+extension SmileyGameResult {
+  var bottomSheetHeading: String {
+    switch self {
+    case .winner:
+      return "Congratulations!"
+    case .looser:
+      return "OOPS!!!"
+    }
+  }
+
+  var bottomSheetTitle: String {
+    switch self {
+    case .winner:
+      return "Since most people voted on"
+    case .looser:
+      return "Since most people didn't voted on"
+    }
+  }
+
+  var bottomSheetSubheading: String {
+    switch self {
+    case .winner(_, let points):
+      return "You Won \(points) Points"
+    case .looser(_, let points):
+      return "You Lost \(points) Points"
+    }
+  }
+
+  var lottieName: String {
+    switch self {
+    case .winner:
+      return "Smiley_Game_Win"
+    case .looser:
+      return "Smiley_Game_Lose"
+    }
+  }
+}
+
 struct SmileyGame {
   var smileys: [Smiley]
   var myResult: SmileyGameResult?
