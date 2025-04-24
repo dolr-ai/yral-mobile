@@ -26,14 +26,17 @@ extension FeedsViewController {
             likeCount: feed.likeCount,
             isLiked: feed.isLiked,
             lastThumbnailImage: SDImageCache.shared.imageFromCache(forKey: lastDisplayedThumbnailPath),
-            feedType: self.feedType
+            feedType: self.feedType,
+            showLoginOverlay: (
+              indexPath.item != .zero &&
+              indexPath.item % Constants.overlayIndex == .zero
+            ) && !session.state.isLoggedIn
           ),
           profileInfo: ProfileInfoView.ProfileInfo(
             imageURL: feed.profileImageURL,
             title: feed.principalID,
             subtitle: feed.postDescription
-          ),
-          index: indexPath.item
+          ), index: indexPath.item
         )
       } else {
         cell.configure(
@@ -43,14 +46,17 @@ extension FeedsViewController {
             likeCount: feed.likeCount,
             isLiked: feed.isLiked,
             lastThumbnailImage: SDImageCache.shared.imageFromCache(forKey: lastDisplayedThumbnailPath),
-            feedType: self.feedType
+            feedType: self.feedType,
+            showLoginOverlay: (
+              indexPath.item != .zero &&
+              indexPath.item % Constants.overlayIndex == .zero
+            ) && !session.state.isLoggedIn
           ),
           profileInfo: ProfileInfoView.ProfileInfo(
             imageURL: feed.profileImageURL,
             title: feed.principalID,
             subtitle: feed.postDescription
-          ),
-          index: indexPath.item
+          ), index: indexPath.item
         )
       }
       return cell
