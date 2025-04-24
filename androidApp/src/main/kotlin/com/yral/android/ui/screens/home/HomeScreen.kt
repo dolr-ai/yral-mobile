@@ -90,7 +90,7 @@ fun HomeScreen(
                 )
 
             HomeTab.Account ->
-                ProfileScreen(
+                AccountScreen(
                     modifier =
                         Modifier
                             .padding(innerPadding)
@@ -118,7 +118,7 @@ private fun NavBarIcon(
                     .background(
                         color =
                             if (isSelected) {
-                                YralColors.navBarSelectionIndicationColor
+                                YralColors.Pink300
                             } else {
                                 Color.Transparent
                             },

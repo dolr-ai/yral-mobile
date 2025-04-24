@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">Yral</string>
+    <string name="accounts">Accounts</string>
+    <string name="coming_soon">Coming soon</string>
+    <string name="talk_to_the_team">Talk to the team</string>
+    <string name="terms_of_service">Terms of service</string>
+    <string name="privacy_policy">Privacy Policy</string>
+    <string name="follow_us_on">Follow us on</string>
+    <string name="login">Login</string>
+    <string name="logout">Logout</string>
 </resources>

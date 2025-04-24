@@ -28,12 +28,20 @@ object YralTypoGraphy {
 
 data class AppTopography(
     val xlBold: TextStyle,
+    val baseMedium: TextStyle,
+    val mdBold: TextStyle,
+    val mdRegular: TextStyle,
+    val regRegular: TextStyle,
 )
 
 val LocalAppTopography =
     staticCompositionLocalOf {
         AppTopography(
             xlBold = TextStyle.Default,
+            baseMedium = TextStyle.Default,
+            mdBold = TextStyle.Default,
+            mdRegular = TextStyle.Default,
+            regRegular = TextStyle.Default,
         )
     }
 
@@ -45,7 +53,38 @@ fun appTypoGraphy() =
                 lineHeight = 30.sp,
                 fontFamily = YralTypoGraphy.KumbhSans,
                 fontWeight = FontWeight(700),
-                color = YralColors.neutralTextPrimary,
+                color = YralColors.NeutralTextPrimary,
+                textAlign = TextAlign.Center,
+            ),
+        baseMedium =
+            TextStyle(
+                fontSize = 14.sp,
+                lineHeight = 19.6.sp,
+                fontFamily = YralTypoGraphy.KumbhSans,
+                fontWeight = FontWeight(500),
+                color = YralColors.NeutralTextSecondary,
+            ),
+        mdBold =
+            TextStyle(
+                fontSize = 16.sp,
+                lineHeight = 22.4.sp,
+                fontFamily = YralTypoGraphy.KumbhSans,
+                fontWeight = FontWeight(700),
+                textAlign = TextAlign.Center,
+            ),
+        mdRegular =
+            TextStyle(
+                fontSize = 16.sp,
+                lineHeight = 22.4.sp,
+                fontFamily = YralTypoGraphy.KumbhSans,
+                fontWeight = FontWeight(400),
+            ),
+        regRegular =
+            TextStyle(
+                fontSize = 12.sp,
+                lineHeight = 16.8.sp,
+                fontFamily = YralTypoGraphy.KumbhSans,
+                fontWeight = FontWeight(400),
                 textAlign = TextAlign.Center,
             ),
     )

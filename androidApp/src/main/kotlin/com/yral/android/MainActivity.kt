@@ -62,16 +62,16 @@ private fun MyApplicationTheme(
                 primary = Color(0xFFBB86FC),
                 secondary = Color(0xFF03DAC5),
                 tertiary = Color(0xFF3700B3),
-                primaryContainer = YralColors.primaryContainer,
-                onPrimaryContainer = YralColors.onPrimaryContainer,
+                primaryContainer = YralColors.PrimaryContainer,
+                onPrimaryContainer = YralColors.OnPrimaryContainer,
             )
         } else {
             lightColorScheme(
                 primary = Color(0xFF6200EE),
                 secondary = Color(0xFF03DAC5),
                 tertiary = Color(0xFF3700B3),
-                primaryContainer = YralColors.primaryContainer,
-                onPrimaryContainer = YralColors.onPrimaryContainer,
+                primaryContainer = YralColors.PrimaryContainer,
+                onPrimaryContainer = YralColors.OnPrimaryContainer,
             )
         }
     val typography =
