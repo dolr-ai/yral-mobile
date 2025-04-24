@@ -22,6 +22,7 @@ struct UploadView: View {
   @State private var showUploadCompletedView = false
   @State private var showUploadFailedView = false
   @ObservedObject var viewModel: UploadViewModel
+  @EnvironmentObject var session: SessionManager
 
   var doneAction: () -> Void = {}
   var isUploadEnabled: Bool {

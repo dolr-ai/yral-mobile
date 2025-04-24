@@ -8,7 +8,7 @@
 import Foundation
 import GRPC
 
-final class AppDIContainer {
+@MainActor final class AppDIContainer {
   let appConfiguration = AppConfiguration()
 
   lazy var mlFeedClient: MlFeed_MLFeedNIOClient = {
@@ -44,6 +44,8 @@ final class AppDIContainer {
     return composite
   }()
 
+  lazy var session: SessionManager = SessionManager(auth: authClient)
+
   lazy var likeRepository: LikeRepositoryProtocol = {
     LikeRepository(
       httpService: HTTPService(),
@@ -71,14 +73,15 @@ final class AppDIContainer {
     )
   }()
 
-  func makeFeedDIContainer() -> FeedDIContainer {
+  func makeFeedDIContainer() async -> FeedDIContainer {
     return FeedDIContainer(
       dependencies: FeedDIContainer.Dependencies(
         mlfeedService: mlFeedClient,
         httpService: HTTPService(baseURLString: appConfiguration.offchainBaseURLString),
         authClient: authClient,
         crashReporter: crashReporter,
-        toggleLikeUseCase: toggleLikeUseCase
+        toggleLikeUseCase: toggleLikeUseCase,
+        session: session
       )
     )
   }
@@ -111,7 +114,8 @@ final class AppDIContainer {
         authClient: authClient,
         crashReporter: crashReporter,
         accountUseCase: accountUseCase,
-        likesUseCase: toggleLikeUseCase
+        likesUseCase: toggleLikeUseCase,
+        session: session
       )
     )
   }

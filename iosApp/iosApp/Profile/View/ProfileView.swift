@@ -19,6 +19,7 @@ struct ProfileView: View {
   @State private var showDeleteIndicator: Bool = false
   @State private var showFeeds = false
   @State private var currentIndex: Int = .zero
+  @EnvironmentObject var session: SessionManager
   var uploadVideoPressed: (() -> Void) = {}
 
   let viewModel: ProfileViewModel
@@ -48,7 +49,11 @@ struct ProfileView: View {
             .foregroundColor(Constants.navigationTitleTextColor)
             .padding(Constants.navigationTitlePadding)
           if showAccountInfo {
-            UserInfoView(accountInfo: $accountInfo, shouldApplySpacing: false)
+            UserInfoView(
+              accountInfo: $accountInfo,
+              shouldApplySpacing: false,
+              showLoginButton: Binding(get: { false }, set: { _ in })
+            )
           }
         }
         .padding(.horizontal, Constants.horizontalPadding)
