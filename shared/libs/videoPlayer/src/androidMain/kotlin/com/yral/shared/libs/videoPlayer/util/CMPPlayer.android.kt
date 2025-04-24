@@ -18,6 +18,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
+import androidx.media3.ui.PlayerView
 import com.yral.shared.libs.videoPlayer.model.PlayerSpeed
 import com.yral.shared.libs.videoPlayer.model.ScreenResize
 import com.yral.shared.libs.videoPlayer.rememberExoPlayerWithLifecycle
@@ -76,6 +77,7 @@ actual fun CMPPlayer(
                 exoPlayer.volume = if (isMute) 0f else 1f
                 sliderTime?.let { exoPlayer.seekTo(it.toLong()) }
                 exoPlayer.setPlaybackSpeed(speed.toFloat())
+                playerView.artworkDisplayMode = PlayerView.ARTWORK_DISPLAY_MODE_FILL
                 playerView.resizeMode =
                     when (size) {
                         ScreenResize.FIT -> AspectRatioFrameLayout.RESIZE_MODE_FIT
