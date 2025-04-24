@@ -346,6 +346,7 @@ extension FeedsViewController {
     static let blockCancelButton = "Cancel"
 
     static let nsfwProbability = 0.4
+    static let overlayIndex = 9
   }
 }
 // swiftlint: enable type_body_length

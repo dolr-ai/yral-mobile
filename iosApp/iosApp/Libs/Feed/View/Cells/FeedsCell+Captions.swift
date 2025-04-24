@@ -1,6 +1,49 @@
 import UIKit
 
 extension FeedsCell {
+  func setupCaptionLabel() {
+    contentView.addSubview(captionScrollView)
+    captionScrollView.addSubview(captionLabel)
+
+    captionScrollViewHeightConstraint = captionScrollView.heightAnchor
+      .constraint(equalToConstant: Constants.captionSingleLineHeight)
+    captionScrollViewHeightConstraint.isActive = true
+
+    NSLayoutConstraint.activate([
+      captionScrollView.leadingAnchor.constraint(
+        equalTo: contentView.leadingAnchor,
+        constant: Constants.horizontalMargin
+      ),
+      captionScrollView.trailingAnchor.constraint(
+        equalTo: actionsStackView.leadingAnchor,
+        constant: -Constants.horizontalMargin
+      ),
+      captionScrollView.bottomAnchor.constraint(
+        equalTo: contentView.bottomAnchor,
+        constant: -Constants.captionsBottomMargin
+      )
+    ])
+
+    NSLayoutConstraint.activate([
+      captionLabel.topAnchor.constraint(equalTo: captionScrollView.contentLayoutGuide.topAnchor),
+      captionLabel.leadingAnchor.constraint(equalTo: captionScrollView.contentLayoutGuide.leadingAnchor),
+      captionLabel.trailingAnchor.constraint(equalTo: captionScrollView.contentLayoutGuide.trailingAnchor),
+      captionLabel.bottomAnchor.constraint(equalTo: captionScrollView.contentLayoutGuide.bottomAnchor),
+      captionLabel.widthAnchor.constraint(equalTo: captionScrollView.frameLayoutGuide.widthAnchor)
+    ])
+
+    let captionTapGesture = UITapGestureRecognizer(target: self, action: #selector(handleCaptionTap))
+    captionScrollView.addGestureRecognizer(captionTapGesture)
+  }
+
+  @objc private func handleCaptionTap() {
+    if !isCaptionExpanded {
+      expandCaption()
+    } else {
+      collapseCaption()
+    }
+  }
+
   @objc func handleCellTap(_ gesture: UITapGestureRecognizer) {
     guard isCaptionCollapsible else { return }
     if isCaptionExpanded {
