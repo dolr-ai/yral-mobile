@@ -43,6 +43,7 @@ fun HomeScreen(
     var selectedTab by remember { mutableStateOf(HomeTab.HOME) }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.primaryContainer,
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
             NavigationBar(
