@@ -5,18 +5,15 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.paint
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
-import com.yral.android.ui.design.YralColors
 
 @Composable
 fun YralButton(
@@ -41,10 +38,10 @@ fun YralButton(
         horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
+        YralMaskedVectorText(
             text = text,
-            style = LocalAppTopography.current.mdBold,
-            color = getTextColor(buttonType, buttonState),
+            vectorRes = getButtonTextBackground(buttonType, buttonState),
+            textStyle = LocalAppTopography.current.mdBold,
         )
     }
 }
@@ -60,23 +57,23 @@ enum class YralButtonType {
     White,
 }
 
-private fun getTextColor(
+private fun getButtonTextBackground(
     buttonType: YralButtonType,
     buttonState: YralButtonState,
-): Color =
+): Int =
     when (buttonType) {
         YralButtonType.Pink ->
             when (buttonState) {
-                YralButtonState.Enabled -> YralColors.Neutral50
-                YralButtonState.Disabled -> YralColors.Pink100
-                YralButtonState.Loading -> YralColors.Neutral50
+                YralButtonState.Enabled -> R.drawable.white_background
+                YralButtonState.Disabled -> R.drawable.white_background_disabled
+                YralButtonState.Loading -> R.drawable.white_background
             }
 
         YralButtonType.White ->
             when (buttonState) {
-                YralButtonState.Enabled -> YralColors.Pink300
-                YralButtonState.Disabled -> YralColors.Pink300
-                YralButtonState.Loading -> YralColors.Pink300
+                YralButtonState.Enabled -> R.drawable.pink_gradient
+                YralButtonState.Disabled -> R.drawable.disbaled_pink_gradient
+                YralButtonState.Loading -> R.drawable.pink_gradient
             }
     }
 
