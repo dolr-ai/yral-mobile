@@ -71,9 +71,9 @@ private fun getButtonTextBackground(
 
         YralButtonType.White ->
             when (buttonState) {
-                YralButtonState.Enabled -> R.drawable.pink_gradient
-                YralButtonState.Disabled -> R.drawable.disbaled_pink_gradient
-                YralButtonState.Loading -> R.drawable.pink_gradient
+                YralButtonState.Enabled -> R.drawable.pink_gradient_background
+                YralButtonState.Disabled -> R.drawable.pink_gradient_background_disabled
+                YralButtonState.Loading -> R.drawable.pink_gradient_background
             }
     }
 
@@ -84,9 +84,9 @@ private fun getButtonBackground(
     when (buttonType) {
         YralButtonType.Pink ->
             when (buttonState) {
-                YralButtonState.Enabled -> R.drawable.pink_gradient
-                YralButtonState.Disabled -> R.drawable.disbaled_pink_gradient
-                YralButtonState.Loading -> R.drawable.pink_gradient
+                YralButtonState.Enabled -> R.drawable.pink_gradient_background
+                YralButtonState.Disabled -> R.drawable.pink_gradient_background_disabled
+                YralButtonState.Loading -> R.drawable.pink_gradient_background
             }
 
         YralButtonType.White ->
