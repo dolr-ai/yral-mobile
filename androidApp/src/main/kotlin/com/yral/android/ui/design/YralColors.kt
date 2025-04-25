@@ -15,9 +15,15 @@ object YralColors {
     val Neutral300: Color = Color(0xFFD4D4D4)
     val Neutral500: Color = Color(0xFFA3A3A3)
     val Neutral900: Color = Color(0xFF171717)
+    val NeutralBlack: Color = Color(0xFF1D1C2B)
 
     val Pink100: Color = Color(0xFFF6B0D6)
     val Pink300: Color = Color(0xFFE2017B)
 
     val Divider: Color = Color(0xFF232323)
+
+    val shadowSpotColor: Color = Color(0x1C8377C6)
+    val shadowAmbientColor: Color = Color(0x1C8377C6)
+
+    val buttonBorderColor: Color = Color(0xFFE0E0E9)
 }

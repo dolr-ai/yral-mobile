@@ -1,5 +1,6 @@
 package com.yral.android.ui.screens.home
 
+import android.content.Context
 import android.content.Intent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -36,6 +37,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import coil3.compose.AsyncImage
@@ -45,7 +47,7 @@ import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.design.YralDimens
 import com.yral.android.ui.screens.home.AccountScreenConstants.SOCIAL_MEDIA_LINK_BOTTOM_SPACER_WEIGHT
 import com.yral.android.ui.widgets.YralButton
-import com.yral.android.ui.widgets.YralButtonState
+import com.yral.android.ui.widgets.YralGradientButton
 import com.yral.android.ui.widgets.YralWebView
 import com.yral.shared.features.root.viewmodels.AccountInfo
 
@@ -56,30 +58,33 @@ fun AccountScreen(
     accountInfo: AccountInfo?,
 ) {
     var linkToOpen by remember { mutableStateOf(Pair("", false)) }
-    val bottomSheetState = rememberModalBottomSheetState()
+    val webBottomSheetState = rememberModalBottomSheetState()
     var showWebBottomSheet by remember { mutableStateOf(false) }
     val context = LocalContext.current
     LaunchedEffect(linkToOpen) {
-        if (linkToOpen.first.isNotEmpty()) {
-            if (linkToOpen.second) {
-                val intent = Intent(Intent.ACTION_VIEW, linkToOpen.first.toUri())
-                context.startActivity(intent)
-                linkToOpen = Pair("", false)
-            } else {
-                showWebBottomSheet = true
-            }
-        } else {
-            showWebBottomSheet = false
-        }
+        handleLinkOpen(
+            context,
+            linkToOpen,
+            setLinkToOpen = { linkToOpen = it },
+            setShowWebBottomSheet = { showWebBottomSheet = it },
+        )
     }
     if (showWebBottomSheet) {
         WebViewBottomSheet(
             link = linkToOpen.first,
-            bottomSheetState = bottomSheetState,
+            bottomSheetState = webBottomSheetState,
         ) {
             showWebBottomSheet = false
             linkToOpen = Pair("", false)
         }
+    }
+    var showLoginBottomSheet by remember { mutableStateOf(false) }
+    val loginBottomSheetState = rememberModalBottomSheetState()
+    if (showLoginBottomSheet) {
+        LoginBottomSheet(
+            bottomSheetState = loginBottomSheetState,
+            onDismissRequest = { showLoginBottomSheet = false },
+        ) { }
     }
     Column(
         modifier = modifier.padding(top = 8.dp),
@@ -88,7 +93,11 @@ fun AccountScreen(
     ) {
         AccountsTitle()
         accountInfo?.let {
-            AccountDetail(accountInfo)
+            AccountDetail(
+                accountInfo = accountInfo,
+            ) {
+                showLoginBottomSheet = true
+            }
         }
         Divider()
         HelpLinks { link, shouldOpenOutside ->
@@ -99,6 +108,25 @@ fun AccountScreen(
             linkToOpen = Pair(link, shouldOpenOutside)
         }
         Spacer(Modifier.weight(SOCIAL_MEDIA_LINK_BOTTOM_SPACER_WEIGHT))
+    }
+}
+
+private fun handleLinkOpen(
+    context: Context,
+    linkToOpen: Pair<String, Boolean>,
+    setLinkToOpen: (linkToOpen: Pair<String, Boolean>) -> Unit,
+    setShowWebBottomSheet: (show: Boolean) -> Unit,
+) {
+    if (linkToOpen.first.isNotEmpty()) {
+        if (linkToOpen.second) {
+            val intent = Intent(Intent.ACTION_VIEW, linkToOpen.first.toUri())
+            context.startActivity(intent)
+            setLinkToOpen(Pair("", false))
+        } else {
+            setShowWebBottomSheet(true)
+        }
+    } else {
+        setShowWebBottomSheet(false)
     }
 }
 
@@ -125,7 +153,10 @@ private fun AccountsTitle() {
 }
 
 @Composable
-private fun AccountDetail(accountInfo: AccountInfo) {
+private fun AccountDetail(
+    accountInfo: AccountInfo,
+    onLoginClicked: () -> Unit,
+) {
     Column(
         modifier =
             Modifier
@@ -159,10 +190,10 @@ private fun AccountDetail(accountInfo: AccountInfo) {
                 style = LocalAppTopography.current.baseMedium,
             )
         }
-        YralButton(
-            buttonState = YralButtonState.Disabled,
+        YralGradientButton(
             text = stringResource(R.string.login),
-        ) { }
+            onClick = onLoginClicked,
+        )
     }
 }
 
@@ -376,6 +407,103 @@ private fun WebViewBottomSheet(
             }
         },
     )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LoginBottomSheet(
+    bottomSheetState: SheetState,
+    onDismissRequest: () -> Unit,
+    onSignupClicked: () -> Unit,
+) {
+    ModalBottomSheet(
+        modifier = Modifier.safeDrawingPadding(),
+        onDismissRequest = onDismissRequest,
+        sheetState = bottomSheetState,
+        containerColor = YralColors.Neutral900,
+        dragHandle = null,
+        content = {
+            Column(
+                modifier =
+                    Modifier
+                        .padding(
+                            start = 16.dp,
+                            top = 45.dp,
+                            end = 16.dp,
+                            bottom = 316.dp,
+                        ),
+                verticalArrangement = Arrangement.spacedBy(0.dp, Alignment.Top),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                SignupView(onSignupClicked = onSignupClicked)
+            }
+        },
+    )
+}
+
+@Suppress("LongMethod")
+@Composable
+fun SignupView(onSignupClicked: () -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(46.dp, Alignment.Top),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Image(
+            painter = painterResource(R.drawable.join_yral),
+            contentDescription = "Join Yral",
+            modifier =
+                Modifier
+                    .padding(0.dp)
+                    .width(240.dp)
+                    .height(86.dp),
+        )
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(28.dp, Alignment.Top),
+            horizontalAlignment = Alignment.Start,
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top),
+                horizontalAlignment = Alignment.Start,
+            ) {
+                Text(
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    text = stringResource(R.string.continue_to_sign_up_for_free),
+                    style = LocalAppTopography.current.xlSemiBold,
+                    color = Color.White,
+                )
+                Text(
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    text = stringResource(R.string.sign_up_disclaimer),
+                    style = LocalAppTopography.current.baseRegular,
+                    color = Color.White,
+                )
+            }
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(20.dp, Alignment.Top),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                YralButton(
+                    text = stringResource(R.string.signup_with_google),
+                    icon = R.drawable.google,
+                ) {
+                    onSignupClicked()
+                }
+                Text(
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    text = stringResource(R.string.signup_consent),
+                    style = LocalAppTopography.current.baseRegular,
+                    color = Color.White,
+                )
+            }
+        }
+    }
 }
 
 object AccountScreenConstants {

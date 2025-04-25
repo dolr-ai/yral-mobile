@@ -1,25 +1,33 @@
 package com.yral.android.ui.widgets
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.paint
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
+import com.yral.android.ui.design.YralColors
 
 @Composable
 fun YralButton(
-    buttonState: YralButtonState = YralButtonState.Enabled,
-    buttonType: YralButtonType = YralButtonType.Pink,
     text: String,
+    textColor: Color = YralColors.NeutralBlack,
+    backgroundColor: Color = Color.White,
+    icon: Int? = null,
     onClick: () -> Unit,
 ) {
     Row(
@@ -27,72 +35,39 @@ fun YralButton(
             Modifier
                 .fillMaxWidth()
                 .height(45.dp)
-                .paint(
-                    painter = painterResource(getButtonBackground(buttonType, buttonState)),
-                    contentScale = ContentScale.FillBounds,
+                .background(
+                    color = backgroundColor,
+                    shape = RoundedCornerShape(8.dp),
+                ).shadow(
+                    elevation = 22.5.dp,
+                    spotColor = YralColors.shadowSpotColor,
+                    ambientColor = YralColors.shadowAmbientColor,
+                ).border(
+                    width = 0.75.dp,
+                    color = YralColors.buttonBorderColor,
+                    shape = RoundedCornerShape(size = 8.dp),
+                ).padding(
+                    start = 69.dp,
+                    top = 11.dp,
+                    end = 69.dp,
+                    bottom = 11.dp,
                 ).clickable {
-                    if (buttonState == YralButtonState.Enabled) {
-                        onClick()
-                    }
+                    onClick()
                 },
         horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        YralMaskedVectorText(
+        icon?.let {
+            Image(
+                painter = painterResource(id = icon),
+                contentDescription = "image description",
+                contentScale = ContentScale.None,
+            )
+        }
+        Text(
             text = text,
-            vectorRes = getButtonTextBackground(buttonType, buttonState),
-            textStyle = LocalAppTopography.current.mdBold,
+            style = LocalAppTopography.current.mdBold,
+            color = textColor,
         )
     }
 }
-
-enum class YralButtonState {
-    Enabled,
-    Disabled,
-    Loading,
-}
-
-enum class YralButtonType {
-    Pink,
-    White,
-}
-
-private fun getButtonTextBackground(
-    buttonType: YralButtonType,
-    buttonState: YralButtonState,
-): Int =
-    when (buttonType) {
-        YralButtonType.Pink ->
-            when (buttonState) {
-                YralButtonState.Enabled -> R.drawable.white_background
-                YralButtonState.Disabled -> R.drawable.white_background_disabled
-                YralButtonState.Loading -> R.drawable.white_background
-            }
-
-        YralButtonType.White ->
-            when (buttonState) {
-                YralButtonState.Enabled -> R.drawable.pink_gradient_background
-                YralButtonState.Disabled -> R.drawable.pink_gradient_background_disabled
-                YralButtonState.Loading -> R.drawable.pink_gradient_background
-            }
-    }
-
-private fun getButtonBackground(
-    buttonType: YralButtonType,
-    buttonState: YralButtonState,
-): Int =
-    when (buttonType) {
-        YralButtonType.Pink ->
-            when (buttonState) {
-                YralButtonState.Enabled -> R.drawable.pink_gradient_background
-                YralButtonState.Disabled -> R.drawable.pink_gradient_background_disabled
-                YralButtonState.Loading -> R.drawable.pink_gradient_background
-            }
-
-        YralButtonType.White ->
-            when (buttonState) {
-                YralButtonState.Enabled -> R.drawable.white_background
-                YralButtonState.Disabled -> R.drawable.white_background_disabled
-                YralButtonState.Loading -> R.drawable.white_background
-            }
-    }
