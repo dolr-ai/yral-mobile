@@ -57,7 +57,7 @@ fun AccountScreen(
 ) {
     var linkToOpen by remember { mutableStateOf(Pair("", false)) }
     val bottomSheetState = rememberModalBottomSheetState()
-    var showBottomSheet by remember { mutableStateOf(false) }
+    var showWebBottomSheet by remember { mutableStateOf(false) }
     val context = LocalContext.current
     LaunchedEffect(linkToOpen) {
         if (linkToOpen.first.isNotEmpty()) {
@@ -66,10 +66,19 @@ fun AccountScreen(
                 context.startActivity(intent)
                 linkToOpen = Pair("", false)
             } else {
-                showBottomSheet = true
+                showWebBottomSheet = true
             }
         } else {
-            showBottomSheet = false
+            showWebBottomSheet = false
+        }
+    }
+    if (showWebBottomSheet) {
+        WebViewBottomSheet(
+            link = linkToOpen.first,
+            bottomSheetState = bottomSheetState,
+        ) {
+            showWebBottomSheet = false
+            linkToOpen = Pair("", false)
         }
     }
     Column(
@@ -90,16 +99,6 @@ fun AccountScreen(
             linkToOpen = Pair(link, shouldOpenOutside)
         }
         Spacer(Modifier.weight(SOCIAL_MEDIA_LINK_BOTTOM_SPACER_WEIGHT))
-    }
-
-    if (showBottomSheet) {
-        WebViewBottomSheet(
-            link = linkToOpen.first,
-            bottomSheetState = bottomSheetState,
-        ) {
-            showBottomSheet = false
-            linkToOpen = Pair("", false)
-        }
     }
 }
 
