@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
+import com.yral.android.ui.design.pinkDisabledGradient
 import com.yral.android.ui.design.pinkGradient
 
 @Composable
@@ -50,7 +51,11 @@ fun YralButton(
                             cornerRadius = CornerRadius(8.dp.toPx(), 8.dp.toPx()),
                         )
                     }
-                }.clickable { onClick() },
+                }.clickable {
+                    if (buttonState == YralButtonState.Enabled) {
+                        onClick()
+                    }
+                },
         horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -81,7 +86,7 @@ private fun getTextColor(
         YralButtonType.Pink ->
             when (buttonState) {
                 YralButtonState.Enabled -> YralColors.Neutral50
-                YralButtonState.Disabled -> YralColors.Neutral50
+                YralButtonState.Disabled -> YralColors.Pink100
                 YralButtonState.Loading -> YralColors.Neutral50
             }
 
@@ -102,7 +107,7 @@ private fun getBackGroundBrush(
         YralButtonType.Pink ->
             when (buttonState) {
                 YralButtonState.Enabled -> pinkGradient(size)
-                YralButtonState.Disabled -> pinkGradient(size)
+                YralButtonState.Disabled -> pinkDisabledGradient(size)
                 YralButtonState.Loading -> pinkGradient(size)
             }
 

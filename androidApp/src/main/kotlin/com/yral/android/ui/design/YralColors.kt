@@ -21,6 +21,7 @@ object YralColors {
     val Neutral500: Color = Color(0xFFA3A3A3)
     val Neutral900: Color = Color(0xFF171717)
 
+    val Pink100: Color = Color(0xFFF6B0D6)
     val Pink300: Color = Color(0xFFE2017B)
 
     val Divider: Color = Color(0xFF232323)
@@ -43,6 +44,29 @@ fun pinkGradient(size: Size): Brush {
                 0.0f to Color(0xFFFF78C1),
                 0.509f to Color(0xFFE2017B),
                 1.0f to Color(0xFFAD005E),
+            ),
+        start = start,
+        end = end,
+    )
+}
+
+fun pinkDisabledGradient(size: Size): Brush {
+    val angle = Math.toRadians(128.273)
+    val radius = hypot(size.width, size.height) / 2f
+    val center = Offset(size.width / 2f, size.height / 2f)
+
+    val dx = cos(angle).toFloat() * radius
+    val dy = sin(angle).toFloat() * radius
+
+    val start = Offset(center.x - dx, center.y - dy)
+    val end = Offset(center.x + dx, center.y + dy)
+
+    return Brush.linearGradient(
+        colorStops =
+            arrayOf(
+                0.0f to Color(0xFFEA94C0),
+                0.509f to Color(0xFFD35597),
+                1.0f to Color(0xFF89516E),
             ),
         start = start,
         end = end,

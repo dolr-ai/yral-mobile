@@ -45,6 +45,7 @@ import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.design.YralDimens
 import com.yral.android.ui.screens.home.AccountScreenConstants.SOCIAL_MEDIA_LINK_BOTTOM_SPACER_WEIGHT
 import com.yral.android.ui.widgets.YralButton
+import com.yral.android.ui.widgets.YralButtonState
 import com.yral.android.ui.widgets.YralWebView
 import com.yral.shared.features.root.viewmodels.AccountInfo
 
@@ -160,6 +161,7 @@ private fun AccountDetail(accountInfo: AccountInfo) {
             )
         }
         YralButton(
+            buttonState = YralButtonState.Disabled,
             text = stringResource(R.string.login),
         ) { }
     }
