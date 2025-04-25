@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.BottomSheetDefaults.DragHandle
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
@@ -29,22 +30,30 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import coil3.compose.AsyncImage
 import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.design.YralDimens
 import com.yral.android.ui.screens.home.AccountScreenConstants.SOCIAL_MEDIA_LINK_BOTTOM_SPACER_WEIGHT
+import com.yral.android.ui.widgets.YralButton
 import com.yral.android.ui.widgets.YralWebView
+import com.yral.shared.features.root.viewmodels.AccountInfo
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AccountScreen(modifier: Modifier = Modifier) {
+fun AccountScreen(
+    modifier: Modifier = Modifier,
+    accountInfo: AccountInfo?,
+) {
     var linkToOpen by remember { mutableStateOf(Pair("", false)) }
     val bottomSheetState = rememberModalBottomSheetState()
     var showBottomSheet by remember { mutableStateOf(false) }
@@ -68,7 +77,9 @@ fun AccountScreen(modifier: Modifier = Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         AccountsTitle()
-        AccountDetail()
+        accountInfo?.let {
+            AccountDetail(accountInfo)
+        }
         Divider()
         HelpLinks { link, shouldOpenOutside ->
             linkToOpen = Pair(link, shouldOpenOutside)
@@ -114,7 +125,7 @@ private fun AccountsTitle() {
 }
 
 @Composable
-private fun AccountDetail() {
+private fun AccountDetail(accountInfo: AccountInfo) {
     Column(
         modifier =
             Modifier
@@ -128,27 +139,29 @@ private fun AccountDetail() {
         verticalArrangement = Arrangement.spacedBy(30.dp, Alignment.Top),
         horizontalAlignment = Alignment.Start,
     ) {
-//            Row(
-//                horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.Start),
-//                verticalAlignment = Alignment.CenterVertically,
-//            ) {
-//                Image(
-//                    painter = painterResource(id = R.drawable.image5),
-//                    contentDescription = "image description",
-//                    contentScale = ContentScale.FillBounds
-//                )
-//                Text(
-//                    text = "mqxpy-vp4st-vhw6p-poxzk-i363n-y4fagmqxpy-vp4st",
-//                    style = LocalAppTopography.current.baseMedium,
-//                )
-//            }
-//            YralButton(
-//                text = stringResource(R.string.login)
-//            ) { }
-        Text(
-            text = stringResource(R.string.coming_soon),
-            style = LocalAppTopography.current.baseMedium,
-        )
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.Start),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            AsyncImage(
+                modifier =
+                    Modifier
+                        .width(60.dp)
+                        .height(60.dp)
+                        .clip(CircleShape)
+                        .background(color = Color.Blue),
+                contentScale = ContentScale.FillBounds,
+                model = accountInfo.profilePic,
+                contentDescription = "Profile pic",
+            )
+            Text(
+                text = accountInfo.userPrincipal,
+                style = LocalAppTopography.current.baseMedium,
+            )
+        }
+        YralButton(
+            text = stringResource(R.string.login),
+        ) { }
     }
 }
 
@@ -346,7 +359,7 @@ private fun WebViewBottomSheet(
         containerColor = YralColors.Neutral900,
         dragHandle = {
             DragHandle(
-                color = YralColors.Neutral50,
+                color = YralColors.Pink300,
             )
         },
         content = {
