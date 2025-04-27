@@ -60,14 +60,14 @@ struct AccountView: View {
       await viewModel.fetchProfileInfo()
     }
     .fullScreenCover(isPresented: $showSignupSheet) {
-      SignupSheet(
-        onComplete: { showSignupSheet = false },
-        delegate: self
-      )
-//      SignupFailureSheet(onComplete: {
-//        showSignupSheet = false
-//      })
-//      .background( ClearBackgroundView() )
+//      SignupSheet(
+//        onComplete: { showSignupSheet = false },
+//        delegate: self
+//      )
+      SignupFailureSheet(onComplete: {
+        showSignupSheet = false
+      })
+      .background( ClearBackgroundView() )
     }
   }
 }
