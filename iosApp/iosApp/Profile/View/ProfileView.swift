@@ -52,7 +52,8 @@ struct ProfileView: View {
             UserInfoView(
               accountInfo: $accountInfo,
               shouldApplySpacing: false,
-              showLoginButton: Binding(get: { false }, set: { _ in })
+              showLoginButton: Binding(get: { false }, set: { _ in }),
+              delegate: nil
             )
           }
         }
