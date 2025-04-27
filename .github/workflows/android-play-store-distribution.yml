@@ -24,7 +24,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
-          java-version: 17
+          java-version: 21
           distribution: 'temurin'
 
       - name: Cache Gradle packages
@@ -87,8 +87,8 @@ jobs:
         id: Auth
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: 'projects/804814798298/locations/global/workloadIdentityPools/github/providers/yral-mobile'
-          service_account: 'publisher-action-play-store@internet-computer-web2-oauth.iam.gserviceaccount.com'
+          workload_identity_provider: 'projects/1035262663512/locations/global/workloadIdentityPools/github/providers/yral-mobile'
+          service_account: 'my-service-account@yral-mobile.iam.gserviceaccount.com'
 
       - name: Upload to Play Store
         uses: r0adkll/upload-google-play@v1.1.3
