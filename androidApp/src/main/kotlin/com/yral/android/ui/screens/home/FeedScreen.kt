@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -17,22 +18,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.yral.android.ui.widgets.YralLoader
 import com.yral.shared.features.feed.useCases.GetInitialFeedUseCase.Companion.INITIAL_REQUEST
+import com.yral.shared.features.feed.viewmodel.FeedViewModel
+import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.PRE_FETCH_BEFORE_LAST
 import com.yral.shared.libs.videoPlayer.YRALReelPlayer
-import com.yral.shared.rust.domain.models.FeedDetails
 import kotlinx.coroutines.launch
-
-private const val PRE_FETCH_BEFORE_LAST = 1
+import org.koin.compose.viewmodel.koinViewModel
 
 @Suppress("LongMethod")
 @Composable
 fun FeedScreen(
     modifier: Modifier = Modifier,
-    feedDetails: List<FeedDetails>,
-    currentPage: Int,
-    onCurrentPageChange: (pageNo: Int) -> Unit,
-    isLoadingMore: Boolean,
-    loadMoreFeed: () -> Unit,
+    viewModel: FeedViewModel = koinViewModel(),
 ) {
+    val state by viewModel.state.collectAsState()
     val coroutineScope = rememberCoroutineScope()
     // Keep track of the last feed size to detect when new items are loaded
     var lastFeedSize by remember { mutableIntStateOf(0) }
@@ -43,31 +41,31 @@ fun FeedScreen(
 
     // Function to determine if we should load more content
     val shouldLoadMore =
-        remember(currentPage, feedDetails.size, isLoadingMore, loadTriggered) {
-            val hasSufficientItems = feedDetails.size >= INITIAL_REQUEST
-            val isValidPage = currentPage > 0
+        remember(state.currentPageOfFeed, state.feedDetails.size, state.isLoadingMore, loadTriggered) {
+            val hasSufficientItems = state.feedDetails.size >= INITIAL_REQUEST
+            val isValidPage = state.currentPageOfFeed > 0
             val isCloseToEnd =
-                feedDetails.isNotEmpty() &&
-                    (feedDetails.size - currentPage) <= PRE_FETCH_BEFORE_LAST
-            isValidPage && hasSufficientItems && isCloseToEnd && !isLoadingMore && !loadTriggered
+                state.feedDetails.isNotEmpty() &&
+                    (state.feedDetails.size - state.currentPageOfFeed) <= PRE_FETCH_BEFORE_LAST
+            isValidPage && hasSufficientItems && isCloseToEnd && !state.isLoadingMore && !loadTriggered
         }
 
     // Reset load triggered when feed size changes (meaning new data arrived)
-    LaunchedEffect(feedDetails.size) {
-        if (feedDetails.size > lastFeedSize) {
+    LaunchedEffect(state.feedDetails.size) {
+        if (state.feedDetails.size > lastFeedSize) {
             // New items have been added
             loadTriggered = false
-            lastFeedSize = feedDetails.size
+            lastFeedSize = state.feedDetails.size
             // Mark that we've received new items since loading started
-            if (isLoadingMore) {
+            if (state.isLoadingMore) {
                 newItemsAddedSinceLoading = true
             }
         }
     }
 
     // Reset states when loading state changes
-    LaunchedEffect(isLoadingMore) {
-        if (isLoadingMore) {
+    LaunchedEffect(state.isLoadingMore) {
+        if (state.isLoadingMore) {
             // Reset flag when loading starts
             newItemsAddedSinceLoading = false
         } else {
@@ -81,22 +79,22 @@ fun FeedScreen(
         if (shouldLoadMore) {
             loadTriggered = true
             coroutineScope.launch {
-                loadMoreFeed()
+                viewModel.loadMoreFeed()
             }
         }
     }
 
     // Determine if we should show the loader
-    val showLoader = isLoadingMore && !newItemsAddedSinceLoading
+    val showLoader = state.isLoadingMore && !newItemsAddedSinceLoading
 
     Column(modifier = modifier) {
-        if (feedDetails.isNotEmpty()) {
+        if (state.feedDetails.isNotEmpty()) {
             Box(modifier = Modifier.weight(1f)) {
                 YRALReelPlayer(
-                    videoUrlArray = feedDetails.map { it.url.toString() }.toList(),
-                    initialPage = currentPage,
+                    videoUrlArray = state.feedDetails.map { it.url.toString() }.toList(),
+                    initialPage = state.currentPageOfFeed,
                     onPageLoaded = { page ->
-                        onCurrentPageChange(page)
+                        viewModel.onCurrentPageChange(page)
                     },
                 )
             }

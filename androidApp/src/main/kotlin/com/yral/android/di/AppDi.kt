@@ -3,6 +3,7 @@ package com.yral.android.di
 import com.yral.shared.analytics.di.analyticsModule
 import com.yral.shared.core.di.coreModule
 import com.yral.shared.crashlytics.di.crashlyticsModule
+import com.yral.shared.features.account.di.accountsModule
 import com.yral.shared.features.auth.di.authModule
 import com.yral.shared.features.feed.di.feedModule
 import com.yral.shared.features.root.di.rootModule
@@ -28,6 +29,7 @@ fun initKoin(appDeclaration: KoinAppDeclaration) {
             authModule,
             feedModule,
             rootModule,
+            accountsModule,
         )
     }
 }
