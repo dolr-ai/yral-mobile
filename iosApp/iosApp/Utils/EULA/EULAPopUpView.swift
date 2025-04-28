@@ -63,7 +63,7 @@ struct EULAPopupView: View {
                 }
                 .disabled(!isChecked)
                 .padding(.top, Constants.continueButtonpadding)
-                .padding(.bottom, geo.safeAreaInsets.bottom + Constants.bottomPadding)
+                .padding(.bottom, geo.safeAreaInsets.bottom + Constants.bottomPadding + Constants.containerOffset)
               }
               .padding(.horizontal, Constants.horizontalPadding)
               .edgesIgnoringSafeArea(.bottom)
@@ -73,7 +73,7 @@ struct EULAPopupView: View {
           .frame(maxWidth: .infinity, alignment: .bottom)
           .frame(height: geo.size.height * Constants.screenRatio, alignment: .bottom)
           .frame(maxHeight: .infinity, alignment: .bottom)
-          .padding(.bottom, -geo.safeAreaInsets.bottom)
+          .padding(.bottom, -geo.safeAreaInsets.bottom - Constants.containerOffset)
           .shadow(radius: Constants.cardShadowRadius)
           .transition(.move(edge: .bottom))
         }
@@ -124,7 +124,7 @@ struct EULAPopupView: View {
         .fixedSize(horizontal: false, vertical: true)
     }
     .frame(maxWidth: .infinity, alignment: .leading)
-    .padding(.horizontal, 4.0)
+    .padding(.horizontal, Constants.checkboxHStackHorizontalPadding)
   }
 }
 
@@ -154,7 +154,7 @@ extension EULAPopupView {
     static let privacyURL = URL(string: "https://yral.com/privacy-policy")!
     static let eulaURL = URL(string: "https://yral.com/terms-ios")!
 
-    static let screenRatio = 0.8
+    static let screenRatio = 0.9
     static let horizontalPadding = 16.0
     static let linksTextHorizontalPadding: CGFloat = 24
     static let eulaImagePadding = 30.0
@@ -162,9 +162,10 @@ extension EULAPopupView {
     static let linksBlockPadding = 16.0
     static let policyTopPadding: CGFloat = 30.0
     static let checkboxBlockPadding = 30.0
-    static let checkboxHStackHorizontalPadding = 8.0
+    static let checkboxHStackHorizontalPadding: CGFloat = 4.0
     static let continueButtonpadding = 28.0
     static let bottomPadding: CGFloat = 16
+    static let containerOffset: CGFloat = 15
 
     static let cardCornerRadius: CGFloat = 20
     static let cardShadowRadius: CGFloat = 8

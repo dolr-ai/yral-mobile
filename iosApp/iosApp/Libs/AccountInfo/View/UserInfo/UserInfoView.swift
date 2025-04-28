@@ -12,11 +12,18 @@ struct UserInfoView: View {
   @Binding var accountInfo: AccountInfo?
   @Binding var showLoginButton: Bool
   var shouldApplySpacing: Bool
+  var delegate: UserInfoViewProtocol?
 
-  init(accountInfo: Binding<AccountInfo?>, shouldApplySpacing: Bool, showLoginButton: Binding<Bool>) {
+  init(
+    accountInfo: Binding<AccountInfo?>,
+    shouldApplySpacing: Bool,
+    showLoginButton: Binding<Bool>,
+    delegate: UserInfoViewProtocol?
+  ) {
     self._accountInfo = accountInfo
     self.shouldApplySpacing = shouldApplySpacing
     self._showLoginButton = showLoginButton
+    self.delegate = delegate
   }
 
   var body: some View {
@@ -39,7 +46,9 @@ struct UserInfoView: View {
       }
       .frame(maxWidth: .infinity, alignment: .leading)
       if showLoginButton {
-        Button { }
+        Button {
+          delegate?.loginPressed()
+        }
         label: {
           Text(Constants.loginButtonTitle)
             .foregroundColor(Constants.loginButtonTextColor)
@@ -82,4 +91,8 @@ extension UserInfoView {
     static let loginButtonCornerRadius: CGFloat = 8
     static let dividerColor = YralColor.grey800.swiftUIColor
   }
+}
+
+protocol UserInfoViewProtocol: Any {
+  func loginPressed()
 }

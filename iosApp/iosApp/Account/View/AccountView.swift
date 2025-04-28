@@ -13,7 +13,9 @@ struct AccountView: View {
   @State var profileInfo: AccountInfo?
   @State private var isLoadingFirstTime = true
   @State private var showLoginButton: Bool = false
+  @State private var showSignupSheet: Bool = false
   @EnvironmentObject var session: SessionManager
+
   init(viewModel: AccountViewModel) {
     self.viewModel = viewModel
   }
@@ -26,22 +28,25 @@ struct AccountView: View {
           UserInfoView(
             accountInfo: .constant(info),
             shouldApplySpacing: true,
-            showLoginButton: $showLoginButton
+            showLoginButton: $showLoginButton,
+            delegate: self
           )
         default:
           UserInfoView(
             accountInfo: .constant(
               AccountInfo(
                 imageURL: URL(fileURLWithPath: ""),
-                canisterID: "")
+                canisterID: ""
+              )
             )
             , shouldApplySpacing: true,
-            showLoginButton: $showLoginButton
+            showLoginButton: $showLoginButton,
+            delegate: self
           )
         }
         ProfileOptionsView(showLogoutButton: $showLoginButton.inverted)
         ShareOptionsView()
-//        ICPBrandingView()
+        //        ICPBrandingView()
         Spacer().frame(height: Constants.bottomSpacing)
       }
       .padding([.top], Constants.vStackPadding)
@@ -54,6 +59,33 @@ struct AccountView: View {
       isLoadingFirstTime = false
       await viewModel.fetchProfileInfo()
     }
+    .fullScreenCover(isPresented: $showSignupSheet) {
+      SignupSheet(
+        onComplete: { showSignupSheet = false },
+        delegate: self
+      )
+//      SignupFailureSheet(onComplete: {
+//        showSignupSheet = false
+//      })
+//      .background( ClearBackgroundView() )
+    }
+  }
+}
+
+extension AccountView: UserInfoViewProtocol {
+  func loginPressed() {
+    UIView.setAnimationsEnabled(false)
+    showSignupSheet = true
+  }
+}
+
+extension AccountView: SignupSheetProtocol {
+  func signupwithGoogle() {
+
+  }
+
+  func signupwithApple() {
+
   }
 }
 
