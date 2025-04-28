@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.home
+package com.yral.android.ui.screens
 
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
@@ -19,13 +19,13 @@ import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.yral.android.R
+import com.yral.android.ui.screens.home.HomeScreen
 import com.yral.shared.features.root.viewmodels.RootViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun RootScreen(viewModel: RootViewModel = koinViewModel()) {
     val state by viewModel.state.collectAsState()
-
     if (state.showSplash) {
         val window = (LocalActivity.current as? ComponentActivity)?.window
         LaunchedEffect(Unit) {
@@ -53,12 +53,7 @@ fun RootScreen(viewModel: RootViewModel = koinViewModel()) {
             }
         }
         HomeScreen(
-            feedDetails = state.feedDetails,
-            currentPage = state.currentPageOfFeed,
-            onCurrentPageChange = { viewModel.onCurrentPageChange(it) },
-            isLoadingMore = state.isLoadingMore,
-            accountInfo = viewModel.getAccountInfo(),
-            loadMoreFeed = { viewModel.loadMoreFeed() },
+            createFeedViewModel = { viewModel.createFeedViewModel() },
         )
     }
 }

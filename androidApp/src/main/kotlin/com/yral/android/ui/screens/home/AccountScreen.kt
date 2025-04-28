@@ -25,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -49,14 +50,17 @@ import com.yral.android.ui.screens.home.AccountScreenConstants.SOCIAL_MEDIA_LINK
 import com.yral.android.ui.widgets.YralButton
 import com.yral.android.ui.widgets.YralGradientButton
 import com.yral.android.ui.widgets.YralWebView
-import com.yral.shared.features.root.viewmodels.AccountInfo
+import com.yral.shared.features.account.viewmodel.AccountInfo
+import com.yral.shared.features.account.viewmodel.AccountsViewModel
+import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AccountScreen(
     modifier: Modifier = Modifier,
-    accountInfo: AccountInfo?,
+    viewModel: AccountsViewModel = koinViewModel(),
 ) {
+    val state by viewModel.state.collectAsState()
     var linkToOpen by remember { mutableStateOf(Pair("", false)) }
     val webBottomSheetState = rememberModalBottomSheetState()
     var showWebBottomSheet by remember { mutableStateOf(false) }
@@ -92,9 +96,9 @@ fun AccountScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         AccountsTitle()
-        accountInfo?.let {
+        state.accountInfo?.let {
             AccountDetail(
-                accountInfo = accountInfo,
+                accountInfo = it,
             ) {
                 showLoginBottomSheet = true
             }
