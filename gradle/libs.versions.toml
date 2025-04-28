@@ -26,6 +26,7 @@ lottie = "6.6.6"
 lifecycleViewmodel = "2.8.4"
 media3Exoplayer = "1.6.1"
 androidx-lifecycle = "2.8.4"
+coil = "3.1.0"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -75,6 +76,9 @@ androidx-media3-exoplayer-hls = { group = "androidx.media3", name = "media3-exop
 media3-ui = { module = "androidx.media3:media3-ui", version.ref = "media3Exoplayer" }
 
 androidx-lifecycle-runtime-compose = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
+
+coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
+coil-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

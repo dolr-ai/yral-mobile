@@ -30,6 +30,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.yral.android.R
 import com.yral.android.ui.design.YralColors
+import com.yral.shared.features.root.viewmodels.AccountInfo
 import com.yral.shared.rust.domain.models.FeedDetails
 
 @Composable
@@ -39,6 +40,7 @@ fun HomeScreen(
     onCurrentPageChange: (pageNo: Int) -> Unit,
     isLoadingMore: Boolean,
     loadMoreFeed: () -> Unit,
+    accountInfo: AccountInfo?,
 ) {
     var selectedTab by remember { mutableStateOf(HomeTab.HOME) }
 
@@ -90,11 +92,12 @@ fun HomeScreen(
                 )
 
             HomeTab.Account ->
-                ProfileScreen(
+                AccountScreen(
                     modifier =
                         Modifier
                             .padding(innerPadding)
                             .background(MaterialTheme.colorScheme.primaryContainer),
+                    accountInfo = accountInfo,
                 )
         }
     }
@@ -118,7 +121,7 @@ private fun NavBarIcon(
                     .background(
                         color =
                             if (isSelected) {
-                                YralColors.navBarSelectionIndicationColor
+                                YralColors.Pink300
                             } else {
                                 Color.Transparent
                             },

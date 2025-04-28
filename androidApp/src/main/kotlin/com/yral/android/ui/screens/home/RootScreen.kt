@@ -57,9 +57,9 @@ fun RootScreen(viewModel: RootViewModel = koinViewModel()) {
             currentPage = state.currentPageOfFeed,
             onCurrentPageChange = { viewModel.onCurrentPageChange(it) },
             isLoadingMore = state.isLoadingMore,
-        ) {
-            viewModel.loadMoreFeed()
-        }
+            accountInfo = viewModel.getAccountInfo(),
+            loadMoreFeed = { viewModel.loadMoreFeed() },
+        )
     }
 }
 

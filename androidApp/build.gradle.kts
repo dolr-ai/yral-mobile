@@ -101,6 +101,9 @@ dependencies {
     implementation(libs.lottie)
 
     implementation(libs.koin.composeVM)
+
+    implementation(libs.coil.compose)
+    implementation(libs.coil.okhttp)
 }
 
 afterEvaluate {
