@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct SignupView: View {
-  weak var delegate: SignupViewProtocol?
+  var delegate: SignupViewProtocol?
 
   var body: some View {
     VStack(alignment: .center, spacing: .zero) {
@@ -103,7 +103,7 @@ extension SignupView {
   }
 }
 
-protocol SignupViewProtocol: AnyObject {
+protocol SignupViewProtocol: Any {
   func signupwithGoogle()
   func signupwithApple()
 }
