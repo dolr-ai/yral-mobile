@@ -13,8 +13,11 @@ fun initKoin(appDeclaration: KoinAppDeclaration) {
             libModule,
             analyticsModule,
             networkModule,
-            authModule,
             rustModule,
+        )
+        modules(
+            authModule,
+            feedModule,
         )
     }
 }

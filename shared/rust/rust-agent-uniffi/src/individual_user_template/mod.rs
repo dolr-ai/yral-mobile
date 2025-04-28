@@ -939,29 +939,8 @@ impl IndividualUserService {
         arg0: u64,
     ) -> Result<PostDetailsForFrontend> {
         let args = Encode!(&arg0)?;
-        let call_result = self
-            .agent
-            .query(&self.principal, "get_individual_post_details_by_id")
-            .with_arg(args)
-            .call()
-            .await;
-        match call_result {
-            Ok(bytes) => {
-                // Decode the bytes if the call succeeded
-                match Decode!(&bytes, PostDetailsForFrontend) {
-                    Ok(details) => Ok(details),
-                    Err(e) => {
-                        eprintln!("Failed to decode PostDetailsForFrontend: {:?}", e);
-                        Err(e.into())
-                    }
-                }
-            }
-            Err(e) => {
-                // Log the error here
-                eprintln!("Error calling get_individual_post_details_by_id: {:?}", e);
-                Err(e.into())
-            }
-        }
+        let bytes = self.query_canister("get_individual_post_details_by_id", args).await?;
+        Ok(Decode!(&bytes, PostDetailsForFrontend)?)
     }
     #[uniffi::method]
     pub async fn get_last_access_time(&self) -> Result<Result11> {

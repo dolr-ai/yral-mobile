@@ -1,21 +1,29 @@
 package com.yral.shared.rust.data
 
+import com.yral.shared.rust.data.models.toFeedDetails
+import com.yral.shared.rust.data.models.toPostResponse
 import com.yral.shared.rust.domain.IndividualUserRepository
-import com.yral.shared.uniffi.generated.PostDetailsForFrontend
-import com.yral.shared.uniffi.generated.Result12
+import com.yral.shared.rust.domain.models.FeedDetails
+import com.yral.shared.rust.domain.models.FeedRequest
+import com.yral.shared.rust.domain.models.Post
+import com.yral.shared.rust.domain.models.PostResponse
+import com.yral.shared.rust.domain.models.toDTO
 
 class IndividualUserRepositoryImpl(
     private val dataSource: IndividualUserDataSource,
 ) : IndividualUserRepository {
-    override suspend fun getPostsOfThisUserProfileWithPaginationCursor(pageNo: ULong): List<PostDetailsForFrontend> {
-        val result =
-            dataSource.getPostsOfThisUserProfileWithPaginationCursor(
-                pageNo = pageNo,
+    override suspend fun getInitialFeeds(feedRequest: FeedRequest): PostResponse =
+        dataSource.getInitialFeeds(feedRequest.toDTO()).toPostResponse()
+
+    override suspend fun fetchMoreFeeds(feedRequest: FeedRequest): PostResponse =
+        dataSource.fetchMoreFeeds(feedRequest.toDTO()).toPostResponse()
+
+    override suspend fun fetchFeedDetails(post: Post): FeedDetails =
+        dataSource
+            .fetchFeedDetails(post.toDTO())
+            .toFeedDetails(
+                postId = post.postID,
+                canisterId = post.canisterID,
+                nsfwProbability = post.nsfwProbability,
             )
-        return if (result is Result12.Ok) {
-            result.v1
-        } else {
-            emptyList()
-        }
-    }
 }
