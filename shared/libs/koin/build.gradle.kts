@@ -19,7 +19,6 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                // Koin for Kotlin Multiplatform
                 api(libs.koin.core)
             }
         }

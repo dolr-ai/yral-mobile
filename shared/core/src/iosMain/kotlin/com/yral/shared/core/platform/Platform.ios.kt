@@ -1,4 +1,4 @@
-package com.yral.shared.core
+package com.yral.shared.core.platform
 
 import platform.UIKit.UIDevice
 

@@ -65,24 +65,26 @@ class EventSerializer : KSerializer<Event> {
                     is List<*> -> JsonArray(v.mapNotNull { item -> serializeAny(item, json) })
                     is Map<*, *> -> {
                         val mapEntries =
-                            (v as Map<Any?, Any?>)
+                            v
                                 .entries
                                 .mapNotNull { (key, value) ->
                                     val keyStr = key?.toString() ?: return@mapNotNull null
                                     val valueJson =
-                                        serializeAny(value, json) ?: return@mapNotNull null
+                                        serializeAny(value, json)
                                     keyStr to valueJson
                                 }.toMap()
                         JsonObject(mapEntries)
                     }
 
-                    null -> JsonNull
                     else -> {
                         try {
                             // Try to serialize if it's a serializable object
                             json.parseToJsonElement(json.encodeToString(v))
                         } catch (e: SerializationException) {
-                            throw IllegalStateException("Can't serialize type: ${v::class.simpleName}", e)
+                            throw IllegalStateException(
+                                "Can't serialize type: ${v::class.simpleName}",
+                                e,
+                            )
                         }
                     }
                 }
@@ -114,7 +116,7 @@ class EventSerializer : KSerializer<Event> {
                         .entries
                         .mapNotNull { (key, v) ->
                             val keyStr = key?.toString() ?: return@mapNotNull null
-                            val valueJson = serializeAny(v, json) ?: return@mapNotNull null
+                            val valueJson = serializeAny(v, json)
                             keyStr to valueJson
                         }.toMap()
                 JsonObject(mapEntries)
@@ -125,7 +127,10 @@ class EventSerializer : KSerializer<Event> {
                     // Try to serialize if it's a serializable object
                     json.parseToJsonElement(json.encodeToString(value))
                 } catch (e: SerializationException) {
-                    throw IllegalStateException("Can't serialize type: ${value::class.simpleName}", e)
+                    throw IllegalStateException(
+                        "Can't serialize type: ${value::class.simpleName}",
+                        e,
+                    )
                 }
             }
         }
@@ -169,7 +174,7 @@ class EventSerializer : KSerializer<Event> {
     // Helper function to deserialize JsonElement to appropriate Kotlin types
     private fun deserializeJsonElement(element: JsonElement): Any =
         when (element) {
-            is JsonNull -> null as Any
+            is JsonNull -> Unit
             is JsonPrimitive -> {
                 when {
                     element.isString -> element.content

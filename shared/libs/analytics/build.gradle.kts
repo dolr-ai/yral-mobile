@@ -24,8 +24,6 @@ kotlin {
 //    }
 
     sourceSets {
-        androidMain.dependencies {
-        }
         commonMain.dependencies {
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.cio)
@@ -35,6 +33,9 @@ kotlin {
             implementation(libs.kotlinx.datetime)
 
             implementation(projects.shared.core)
+            implementation(projects.shared.libs.koin)
+
+            api(libs.gitlive.firebase.kotlin.anlaytics)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
