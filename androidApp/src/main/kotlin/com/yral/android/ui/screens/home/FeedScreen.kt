@@ -28,11 +28,12 @@ private const val PRE_FETCH_BEFORE_LAST = 1
 fun FeedScreen(
     modifier: Modifier = Modifier,
     feedDetails: List<FeedDetails>,
+    currentPage: Int,
+    onCurrentPageChange: (pageNo: Int) -> Unit,
     isLoadingMore: Boolean,
     loadMoreFeed: () -> Unit,
 ) {
     val coroutineScope = rememberCoroutineScope()
-    var currentPage by remember { mutableIntStateOf(0) }
     // Keep track of the last feed size to detect when new items are loaded
     var lastFeedSize by remember { mutableIntStateOf(0) }
     // Track when a load was triggered to prevent multiple calls
@@ -93,8 +94,9 @@ fun FeedScreen(
             Box(modifier = Modifier.weight(1f)) {
                 YRALReelPlayer(
                     videoUrlArray = feedDetails.map { it.url.toString() }.toList(),
+                    initialPage = currentPage,
                     onPageLoaded = { page ->
-                        currentPage = page
+                        onCurrentPageChange(page)
                     },
                 )
             }

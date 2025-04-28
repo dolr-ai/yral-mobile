@@ -19,11 +19,13 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 @Composable
 fun YRALReelPlayer(
     videoUrlArray: List<String>,
+    initialPage: Int,
     onPageLoaded: (currentPage: Int) -> Unit,
 ) {
     YRALReelsPlayerView(
         modifier = Modifier.fillMaxSize(),
         urls = videoUrlArray,
+        initialPage = initialPage,
         playerConfig =
             PlayerConfig(
                 isAutoHideControlEnabled = true,
@@ -45,6 +47,7 @@ fun YRALReelPlayer(
 internal fun YRALReelsPlayerView(
     modifier: Modifier = Modifier, // Modifier for the composable
     urls: List<String>, // List of video URLs
+    initialPage: Int,
     playerConfig: PlayerConfig = PlayerConfig(), // Configuration for the player,
     onPageLoaded: (currentPage: Int) -> Unit,
 ) {
@@ -54,6 +57,7 @@ internal fun YRALReelsPlayerView(
             pageCount = {
                 urls.size // Set the page count based on the number of URLs
             },
+            initialPage = initialPage,
         )
 
     // Report initial pager state
