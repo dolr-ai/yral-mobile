@@ -12,6 +12,7 @@ import com.yral.shared.rust.domain.models.FeedDetails
 import com.yral.shared.rust.domain.models.Post
 import com.yral.shared.rust.domain.models.toFilteredResult
 import com.yral.shared.rust.services.IndividualUserServiceFactory
+import com.yral.shared.uniffi.generated.propicFromPrincipal
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -33,7 +34,7 @@ class RootViewModel(
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
     companion object {
-        const val MIN_REQUIRED_ITEMS = 3
+        const val MIN_REQUIRED_ITEMS = 1
     }
 
     private val _state = MutableStateFlow(RootState())
@@ -181,6 +182,20 @@ class RootViewModel(
             }
         }
     }
+
+    fun getAccountInfo(): AccountInfo? {
+        val canisterPrincipal = authClient.canisterPrincipal
+        val userPrincipal = authClient.userPrincipal
+        canisterPrincipal?.let { principal ->
+            userPrincipal?.let { userPrincipal ->
+                return AccountInfo(
+                    profilePic = propicFromPrincipal(principal),
+                    userPrincipal = userPrincipal,
+                )
+            }
+        }
+        return null
+    }
 }
 
 data class RootState(
@@ -190,4 +205,9 @@ data class RootState(
     val showSplash: Boolean = true,
     val initialAnimationComplete: Boolean = false,
     val isLoadingMore: Boolean = false,
+)
+
+data class AccountInfo(
+    val userPrincipal: String,
+    val profilePic: String,
 )
