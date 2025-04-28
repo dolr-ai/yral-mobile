@@ -4,7 +4,7 @@ import java.util.*
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.kotlinAndroid)
-    alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.composeCompiler)
     alias(libs.plugins.crashlytics)
     alias(libs.plugins.play.services)
 }
@@ -84,6 +84,7 @@ dependencies {
     implementation(projects.shared.libs.koin)
     implementation(projects.shared.features.feed)
     implementation(projects.shared.features.root)
+    implementation(projects.shared.libs.videoPlayer)
 
     // implementation(projects.shared.rust)
     BuildConfig.getDependencies(project).forEach { dependency ->

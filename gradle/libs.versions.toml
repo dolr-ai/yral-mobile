@@ -8,7 +8,7 @@ compose = "1.7.8"
 compose-compiler = "1.5.4"
 compose-material3 = "1.3.2"
 androidx-activityCompose = "1.10.1"
-compose-jetbrains-plugin = "1.8.0-alpha03"
+compose-multiplatform = "1.8.0-alpha03"
 gobley = "0.2.0"
 ktor = "3.1.1"
 nimbus-jose-jwt = "10.0.2"
@@ -24,6 +24,8 @@ kotlinResult = "2.0.0"
 firebase-gitlive-sdk = "2.1.0"
 lottie = "6.6.6"
 lifecycleViewmodel = "2.8.4"
+media3Exoplayer = "1.6.1"
+androidx-lifecycle = "2.8.4"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -67,14 +69,19 @@ lottie = { module = "com.airbnb.android:lottie-compose", version.ref = "lottie" 
 
 androidx-lifecycle-viewmodel = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel", version.ref = "lifecycleViewmodel" }
 
+androidx-media3-exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "media3Exoplayer" }
+media3-exoplayer-dash = { module = "androidx.media3:media3-exoplayer-dash", version.ref = "media3Exoplayer" }
+androidx-media3-exoplayer-hls = { group = "androidx.media3", name = "media3-exoplayer-hls", version.ref = "media3Exoplayer" }
+media3-ui = { module = "androidx.media3:media3-ui", version.ref = "media3Exoplayer" }
+
+androidx-lifecycle-runtime-compose = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
+
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
 androidLibrary = { id = "com.android.library", version.ref = "agp" }
 kotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlinCocoapods = { id = "org.jetbrains.kotlin.native.cocoapods", version.ref = "kotlin" }
-compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-compose-jetbrains = { id = "org.jetbrains.compose", version.ref = "compose-jetbrains-plugin" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version = "12.1.2" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version = "1.23.8" }
 gobleyCargo = { id = "dev.gobley.cargo", version.ref = "gobley" }
@@ -83,3 +90,6 @@ kotlinAtomicfu = { id = "org.jetbrains.kotlin.plugin.atomicfu", version.ref = "k
 kotlinxSerialisartion = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "crashlytics-plugin" }
 play-services = { id = "com.google.gms.google-services", version.ref = "play-services" }
+composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "compose-multiplatform" }
+composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+

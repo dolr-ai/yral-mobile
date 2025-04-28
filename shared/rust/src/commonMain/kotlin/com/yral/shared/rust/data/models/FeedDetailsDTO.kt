@@ -1,7 +1,7 @@
 package com.yral.shared.rust.data.models
 
 import com.yral.shared.rust.data.IndividualUserDataSourceImpl.Companion.CLOUD_FLARE_PREFIX
-import com.yral.shared.rust.data.IndividualUserDataSourceImpl.Companion.CLOUD_FLARE_SUFFIX
+import com.yral.shared.rust.data.IndividualUserDataSourceImpl.Companion.CLOUD_FLARE_SUFFIX_MP4
 import com.yral.shared.rust.data.IndividualUserDataSourceImpl.Companion.THUMBNAIL_SUFFIX
 import com.yral.shared.rust.domain.models.FeedDetails
 import com.yral.shared.uniffi.generated.PostDetailsForFrontend
@@ -17,7 +17,7 @@ fun PostDetailsForFrontend.toFeedDetails(
     if (status == PostStatus.BANNED_DUE_TO_USER_REPORTING) {
         error("Post is banned")
     }
-    val videoUrl = Url("$CLOUD_FLARE_PREFIX$videoUid$CLOUD_FLARE_SUFFIX")
+    val videoUrl = Url("$CLOUD_FLARE_PREFIX$videoUid$CLOUD_FLARE_SUFFIX_MP4")
     val thumbnailUrl = Url("$CLOUD_FLARE_PREFIX$videoUid$THUMBNAIL_SUFFIX")
     val profileImageUrl = Url(propicFromPrincipal(createdByUserPrincipalId))
     return FeedDetails(
