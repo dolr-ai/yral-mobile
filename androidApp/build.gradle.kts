@@ -83,6 +83,7 @@ dependencies {
     implementation(projects.shared.libs.crashlytics)
     implementation(projects.shared.libs.koin)
     implementation(projects.shared.features.feed)
+    implementation(projects.shared.features.root)
 
     // implementation(projects.shared.rust)
     BuildConfig.getDependencies(project).forEach { dependency ->
@@ -95,6 +96,10 @@ dependencies {
 
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
+
+    implementation(libs.lottie)
+
+    implementation(libs.koin.composeVM)
 }
 
 afterEvaluate {

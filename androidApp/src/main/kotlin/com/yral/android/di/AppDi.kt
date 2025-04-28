@@ -5,6 +5,7 @@ import com.yral.shared.core.di.coreModule
 import com.yral.shared.crashlytics.di.crashlyticsModule
 import com.yral.shared.features.auth.di.authModule
 import com.yral.shared.features.feed.di.feedModule
+import com.yral.shared.features.root.di.rootModule
 import com.yral.shared.http.di.networkModule
 import com.yral.shared.preferences.di.preferencesModule
 import org.koin.core.context.startKoin
@@ -26,6 +27,7 @@ fun initKoin(appDeclaration: KoinAppDeclaration) {
         modules(
             authModule,
             feedModule,
+            rootModule,
         )
     }
 }
