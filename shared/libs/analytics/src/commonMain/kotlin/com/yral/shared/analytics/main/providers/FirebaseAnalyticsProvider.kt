@@ -1,18 +1,17 @@
-package com.yral.android.analytics
+package com.yral.shared.analytics.main.providers
 
-import android.content.Context
-import android.os.Bundle
-import com.google.firebase.analytics.FirebaseAnalytics
 import com.yral.shared.analytics.core.AnalyticsProvider
 import com.yral.shared.analytics.core.Event
 import com.yral.shared.analytics.core.User
+import dev.gitlive.firebase.Firebase
+import dev.gitlive.firebase.analytics.FirebaseAnalytics
+import dev.gitlive.firebase.analytics.analytics
 
 class FirebaseAnalyticsProvider(
-    private val context: Context,
     private val eventFilter: (Event) -> Boolean = { true },
 ) : AnalyticsProvider {
     private val firebaseAnalytics: FirebaseAnalytics by lazy {
-        FirebaseAnalytics.getInstance(context)
+        Firebase.analytics
     }
 
     override val name: String = "firebase"
@@ -20,20 +19,8 @@ class FirebaseAnalyticsProvider(
     override fun shouldTrackEvent(event: Event): Boolean = eventFilter(event)
 
     override fun trackEvent(event: Event) {
-        val bundle = Bundle()
-        event.properties.forEach { (key, value) ->
-            val validKey = toValidKeyName(key)
-            when (value) {
-                is String -> bundle.putString(validKey, value)
-                is Int -> bundle.putInt(validKey, value)
-                is Long -> bundle.putLong(validKey, value)
-                is Float -> bundle.putFloat(validKey, value)
-                is Double -> bundle.putDouble(validKey, value)
-                is Boolean -> bundle.putBoolean(validKey, value)
-                else -> bundle.putString(validKey, value.toString())
-            }
-        }
-        firebaseAnalytics.logEvent(toValidKeyName(event.name), bundle)
+        val parameters = event.properties.mapKeys { toValidKeyName(it.key) }
+        firebaseAnalytics.logEvent(toValidKeyName(event.name), parameters)
     }
 
     override fun flush() {

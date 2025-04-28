@@ -1,7 +1,7 @@
 package com.yral.shared.preferences
 
 import com.russhwolf.settings.Settings
-import com.yral.shared.core.AppDispatchers
+import com.yral.shared.core.dispatchers.AppDispatchers
 import io.ktor.util.decodeBase64Bytes
 import io.ktor.util.encodeBase64
 import kotlinx.coroutines.withContext

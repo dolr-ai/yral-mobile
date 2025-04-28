@@ -23,13 +23,13 @@ class AnalyticsManager(
             }.launchIn(scope)
     }
 
-    fun addProvider(provider: AnalyticsProvider) =
+    internal fun addProvider(provider: AnalyticsProvider) =
         AnalyticsManager(
             providers = providers + provider,
             coreService = coreService,
         )
 
-    fun setCoreService(service: CoreService) =
+    internal fun setCoreService(service: CoreService) =
         AnalyticsManager(
             providers = providers,
             coreService = service,

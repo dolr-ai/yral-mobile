@@ -32,6 +32,7 @@ kotlin {
             implementation(libs.ktor.json)
 
             implementation(projects.shared.core)
+            implementation(projects.shared.libs.koin)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

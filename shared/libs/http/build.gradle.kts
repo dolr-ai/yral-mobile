@@ -35,6 +35,7 @@ kotlin {
             api(libs.kotlinx.datetime)
 
             implementation(projects.shared.libs.preferences)
+            implementation(projects.shared.libs.koin)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

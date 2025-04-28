@@ -25,7 +25,6 @@ import androidx.compose.ui.unit.dp
 import com.yral.shared.core.Greeting
 import com.yral.shared.features.auth.DefaultAuthClient
 import com.yral.shared.koin.koinInstance
-import com.yral.shared.rust.domain.IndividualUserRepository
 import com.yral.shared.rust.services.IndividualUserServiceFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -34,7 +33,6 @@ import kotlinx.coroutines.withContext
 @Composable
 fun Root() {
     val defaultAuthClient: DefaultAuthClient = remember { koinInstance.get() }
-    val individualUserRepository: IndividualUserRepository = remember { koinInstance.get() }
     val individualUserServiceFactory: IndividualUserServiceFactory = remember { koinInstance.get() }
     var initialised by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
@@ -46,21 +44,8 @@ fun Root() {
                         principal = principal,
                         identityData = identity,
                     )
+                    initialised = true
                 }
-            }
-            initialised = true
-        }
-    }
-    LaunchedEffect(initialised) {
-        if (defaultAuthClient.canisterPrincipal != null) {
-            withContext(Dispatchers.IO) {
-                val posts =
-                    defaultAuthClient.canisterPrincipal?.let {
-                        individualUserRepository.getPostsOfThisUserProfileWithPaginationCursor(
-                            pageNo = 0UL,
-                        )
-                    }
-                println("xxxx $posts")
             }
         }
     }
