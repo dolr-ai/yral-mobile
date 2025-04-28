@@ -24,14 +24,8 @@ kotlin {
 //    }
 
     sourceSets {
-        androidMain.dependencies {
-            implementation(libs.nimbus.jose.jwt)
-        }
         commonMain.dependencies {
-            implementation(projects.shared.libs.preferences)
-            implementation(projects.shared.libs.http)
-            implementation(projects.shared.libs.analytics)
-
+            implementation(projects.shared.core)
             // implementation(projects.shared.rust)
             BuildConfig.getDependencies(project).forEach { dependency ->
                 if (dependency.isNotEmpty()) {
@@ -46,7 +40,7 @@ kotlin {
 }
 
 android {
-    namespace = "com.yral.shared.features.auth"
+    namespace = "com.yral.shared.features.feed"
     compileSdk = libs.versions.compileSDK.get().toInt()
     defaultConfig {
         minSdk = libs.versions.minSDK.get().toInt()

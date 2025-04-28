@@ -19,6 +19,7 @@ use std::time::UNIX_EPOCH;
 use tokio::time::Duration;
 use yral_canisters_common::Canisters;
 use yral_types::delegated_identity::DelegatedIdentityWire;
+use yral_canisters_common::utils::profile::propic_from_principal as inner_propic_from_principal;
 
 pub type Secp256k1Error = k256::elliptic_curve::Error;
 
@@ -208,4 +209,9 @@ impl GetPostsOfUserProfileError {
     pub fn is_exceeded_max_number_of_items_allowed_in_one_request(&self) -> bool {
         matches!(self, GetPostsOfUserProfileError::ExceededMaxNumberOfItemsAllowedInOneRequest)
     }
+}
+
+#[uniffi::export]
+fn propic_from_principal(principal: Principal) -> String {
+    inner_propic_from_principal(principal)
 }
