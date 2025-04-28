@@ -7,6 +7,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 
 @Composable
 fun ProfileScreen(modifier: Modifier = Modifier) {
@@ -15,8 +16,9 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            text = "Profile Screen Coming Soon",
+            text = "Account Screen Coming Soon",
             style = MaterialTheme.typography.headlineMedium,
+            color = Color.White,
         )
     }
 }
