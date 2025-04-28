@@ -85,6 +85,7 @@ dependencies {
     implementation(projects.shared.features.feed)
     implementation(projects.shared.features.root)
     implementation(projects.shared.libs.videoPlayer)
+    implementation(projects.shared.features.account)
 
     // implementation(projects.shared.rust)
     BuildConfig.getDependencies(project).forEach { dependency ->

@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.sp
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.design.appTypoGraphy
-import com.yral.android.ui.screens.home.RootScreen
+import com.yral.android.ui.screens.RootScreen
 import com.yral.shared.core.platform.AndroidPlatformResources
 import com.yral.shared.core.platform.PlatformResourcesFactory
 import com.yral.shared.koin.koinInstance

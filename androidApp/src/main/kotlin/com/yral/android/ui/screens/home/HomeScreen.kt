@@ -30,18 +30,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.yral.android.R
 import com.yral.android.ui.design.YralColors
-import com.yral.shared.features.root.viewmodels.AccountInfo
-import com.yral.shared.rust.domain.models.FeedDetails
+import com.yral.shared.features.feed.viewmodel.FeedViewModel
 
 @Composable
-fun HomeScreen(
-    feedDetails: List<FeedDetails>,
-    currentPage: Int,
-    onCurrentPageChange: (pageNo: Int) -> Unit,
-    isLoadingMore: Boolean,
-    loadMoreFeed: () -> Unit,
-    accountInfo: AccountInfo?,
-) {
+fun HomeScreen(createFeedViewModel: () -> FeedViewModel) {
     var selectedTab by remember { mutableStateOf(HomeTab.HOME) }
 
     Scaffold(
@@ -84,11 +76,7 @@ fun HomeScreen(
                         Modifier
                             .padding(innerPadding)
                             .background(MaterialTheme.colorScheme.primaryContainer),
-                    feedDetails = feedDetails,
-                    isLoadingMore = isLoadingMore,
-                    loadMoreFeed = loadMoreFeed,
-                    currentPage = currentPage,
-                    onCurrentPageChange = onCurrentPageChange,
+                    viewModel = createFeedViewModel(),
                 )
 
             HomeTab.Account ->
@@ -97,7 +85,6 @@ fun HomeScreen(
                         Modifier
                             .padding(innerPadding)
                             .background(MaterialTheme.colorScheme.primaryContainer),
-                    accountInfo = accountInfo,
                 )
         }
     }

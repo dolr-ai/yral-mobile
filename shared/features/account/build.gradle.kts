@@ -46,7 +46,7 @@ kotlin {
 }
 
 android {
-    namespace = "com.yral.shared.features.feed"
+    namespace = "com.yral.shared.features.account"
     compileSdk = libs.versions.compileSDK.get().toInt()
     defaultConfig {
         minSdk = libs.versions.minSDK.get().toInt()
