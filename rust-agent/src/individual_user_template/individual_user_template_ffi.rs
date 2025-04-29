@@ -489,5 +489,6 @@ mod ffi {
 
     extern "Rust" {
         fn propic_from_principal(principal: Principal) -> String;
+        fn yral_auth_login_hint(data: &[u8]) -> Result<String, String>;
     }
 }
