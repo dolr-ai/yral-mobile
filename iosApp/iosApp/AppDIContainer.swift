@@ -33,7 +33,8 @@ import GRPC
   lazy var authClient: DefaultAuthClient = {
     let client = DefaultAuthClient(
       networkService: HTTPService(),
-      crashReporter: crashReporter
+      crashReporter: crashReporter,
+      baseURL: URL(string: appConfiguration.authBaseURLString) ?? URL(fileURLWithPath: "")
     )
     return client
   }()
@@ -92,7 +93,8 @@ import GRPC
         httpService: HTTPService(),
         authClient: authClient,
         crashReporter: crashReporter,
-        accountUseCase: accountUseCase
+        accountUseCase: accountUseCase,
+        accountRepository: accountsRepository
       )
     )
   }

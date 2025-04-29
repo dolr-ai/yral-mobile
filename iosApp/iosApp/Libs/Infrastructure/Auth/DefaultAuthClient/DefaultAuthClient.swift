@@ -24,17 +24,20 @@ final class DefaultAuthClient: NSObject, AuthClient {
 
   private let keychainIdentityKey = Constants.keychainIdentity
   private let keychainPayloadKey = Constants.keychainPayload
+  private var pendingAuthState: String!
 
   private let crashReporter: CrashReporter
+  let baseURL: URL
 
   private let stateSubject = CurrentValueSubject<AuthState, Never>(.uninitialized)
   var authStatePublisher: AnyPublisher<AuthState, Never> {
     stateSubject.eraseToAnyPublisher()
   }
 
-  init(networkService: NetworkService, crashReporter: CrashReporter) {
+  init(networkService: NetworkService, crashReporter: CrashReporter, baseURL: URL) {
     self.networkService = networkService
     self.crashReporter = crashReporter
+    self.baseURL = baseURL
   }
 
   @MainActor
@@ -271,84 +274,126 @@ final class DefaultAuthClient: NSObject, AuthClient {
 }
 
 extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
-
-  func signInWithSocial(provider: SocialProvider,
-                        from window: UIWindow?) async throws {
-    let verifier  = PKCE.generateCodeVerifier()
+  @MainActor
+  func signInWithSocial(provider: SocialProvider) async throws {
+    let verifier = PKCE.generateCodeVerifier()
     let challenge = PKCE.codeChallenge(for: verifier)
-    let redirect  = Constants.redirectURI
-
-    let req = SocialURLService.authorize(
-      provider: provider,
-      codeChallenge: challenge,
-      redirectURI: redirect
-    ).urlRequest
-
+    let redirect = Constants.redirectURI
+    pendingAuthState = UUID().uuidString
+    guard let identityData = identityData else { throw AuthError.invalidRequest("No identity data found") }
+    let loginHint: String = try identityData.withUnsafeBytes { buffer in
+      guard buffer.count > 0 else { throw NetworkError.invalidResponse("Empty data received.") }
+      let uint8Buffer = buffer.bindMemory(to: UInt8.self)
+      let hint = try yral_auth_login_hint(uint8Buffer)
+      return hint.toString()
+    }
+    let authURL = try getAuthURL(provider: provider, redirect: redirect, challenge: challenge, loginHint: loginHint)
     let session = ASWebAuthenticationSession(
-      url: req.url!,
+      url: authURL,
       callbackURLScheme: redirect.components(separatedBy: "://")[0]
     ) { callbackURL, error in
       Task {
-        if let callback = callbackURL,
-           let comps = URLComponents(url: callback, resolvingAgainstBaseURL: false),
-           let code = comps.queryItems?.first(where: { $0.name == "code" })?.value {
-          do {
-            try await self.exchangeCodeForTokens(
-              code: code,
-              verifier: verifier,
-              redirectURI: redirect
-            )
-          } catch {
-            self.stateSubject.value = .error(.authenticationFailed(error.localizedDescription))
-          }
-        } else if let err = error {
-          self.stateSubject.value = .error(.authenticationFailed(err.localizedDescription))
+        if let error = error {
+          self.stateSubject.value = .error(.authenticationFailed(error.localizedDescription))
+          return
+        }
+        guard
+          let callbackURL = callbackURL,
+          let comps = URLComponents(url: callbackURL, resolvingAgainstBaseURL: false),
+          let returned = comps.queryItems?.first(where: { $0.name == "state" })?.value,
+          returned == self.pendingAuthState
+        else {
+          self.stateSubject.value = .error(.authenticationFailed("Invalid OAuth state"))
+          return
+        }
+        guard let code = comps.queryItems?.first(where: { $0.name == "code" })?.value else {
+          self.stateSubject.value = .error(.authenticationFailed("Missing authorization code"))
+          return
+        }
+        do {
+          try await self.exchangeCodeForTokens(code: code, verifier: verifier, redirectURI: redirect)
+        } catch {
+          self.stateSubject.value = .error(.authenticationFailed(error.localizedDescription))
         }
       }
     }
-
     session.presentationContextProvider = self
     session.prefersEphemeralWebBrowserSession = true
     session.start()
   }
 
-  private func exchangeCodeForTokens(code: String,
-                                     verifier: String,
-                                     redirectURI: String) async throws {
-    // Re-build the body dictionary
-    let body: [String: String] = [
-      "grant_type": "authorization_code",
-      "code": code,
-      "redirect_uri": redirectURI,
-      "client_id": SocialURLService.Constants.clientID,
-      "code_verifier": verifier
+  private func getAuthURL(
+    provider: SocialProvider,
+    redirect: String,
+    challenge: String,
+    loginHint: String? = nil
+  ) throws -> URL {
+    var comps = URLComponents(string: baseURL.appendingPathComponent(Constants.authPath).absoluteString)!
+    comps.queryItems = [
+      URLQueryItem(name: "provider", value: provider.rawValue),
+      URLQueryItem(name: "client_id", value: Constants.clientID),
+      URLQueryItem(name: "response_type", value: "code"),
+      URLQueryItem(name: "response_mode", value: "query"),
+      URLQueryItem(name: "redirect_uri", value: redirect),
+      URLQueryItem(name: "scope", value: "openid"),
+      URLQueryItem(name: "code_challenge", value: challenge),
+      URLQueryItem(name: "code_challenge_method", value: "S256"),
+      URLQueryItem(name: "login_hint", value: loginHint),
+      URLQueryItem(name: "state", value: pendingAuthState)
     ]
-    let bodyData = try JSONEncoder().encode(body)
+    guard let authURL = comps.url else { throw AuthError.invalidRequest("Cannot form auth URL") }
+    return authURL
+  }
+  private func exchangeCodeForTokens(code: String, verifier: String, redirectURI: String) async throws {
+    let request = TokenRequest(
+      grantType: "authorization_code",
+      code: code,
+      redirectUri: redirectURI,
+      clientId: Constants.clientID,
+      codeVerifier: verifier
+    )
+    let formData = try request.formURLEncoded()
 
-    let tokenEndpoint = Endpoint(
+    let endpoint = Endpoint(
       http: "socialToken",
-      baseURL: SocialURLService.base,
-      path: "/oauth/token",
+      baseURL: baseURL,
+      path: Constants.tokenPath,
       method: .post,
       queryItems: nil,
-      headers: ["Content-Type": "application/json"],
-      body: bodyData
+      headers: ["Content-Type": "application/x-www-form-urlencoded"],
+      body: formData
     )
-
-    let respData = try await networkService.performRequest(for: tokenEndpoint)
-    try await handleExtractIdentityResponse(from: respData)
+    let respData = try await networkService.performRequest(for: endpoint)
+    let tokenResponse = try JSONDecoder().decode(TokenResponse.self, from: respData)
+    if let jsonString = String(data: respData, encoding: .utf8) {
+      print("Token response:\n\(jsonString)")
+    }
   }
 
   func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
-    UIApplication.shared.windows.first { $0.isKeyWindow }!
+    let scenes = UIApplication.shared.connectedScenes
+      .compactMap { $0 as? UIWindowScene }
+      .filter { $0.activationState == .foregroundActive }
+    for scene in scenes {
+      if let window = scene.windows.first(where: { $0.isKeyWindow }) {
+        return window
+      }
+    }
+    return UIApplication.shared.connectedScenes
+      .compactMap { $0 as? UIWindowScene }
+      .flatMap { $0.windows }
+      .first ?? UIWindow()
   }
 }
 
 extension DefaultAuthClient {
   enum Constants {
+    static let clientID = "e1a6a7fb-8a1d-42dc-87b4-13ff94ecbe34"
+    static let redirectURI = "com.yral.iosApp.staging://oauth/callback"
+    static let authPath = "/oauth/auth"
+    static let tokenPath = "/oauth/token"
     static let keychainIdentity = "yral.delegatedIdentity"
     static let keychainPayload  = "yral.delegatedIdentityPayload"
     static let temporaryIdentityExpirySecond: UInt64 = 3600
-    static let redirectURI = "https://yral-auth-v2.fly.dev/oauth_callback"
   }
 }

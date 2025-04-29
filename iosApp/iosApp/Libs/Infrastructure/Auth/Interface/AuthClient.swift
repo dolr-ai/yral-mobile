@@ -11,6 +11,6 @@ protocol AuthClient {
   func refreshAuthIfNeeded(using cookie: HTTPCookie) async throws
   func generateNewDelegatedIdentity() throws -> DelegatedIdentity
   func generateNewDelegatedIdentityWireOneHour() throws -> DelegatedIdentityWire
-  func signInWithSocial(provider: SocialProvider, from window: UIWindow?) async throws
+  func signInWithSocial(provider: SocialProvider) async throws
   var authStatePublisher: AnyPublisher<AuthState, Never> { get }
 }

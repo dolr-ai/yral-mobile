@@ -10,7 +10,7 @@ import Foundation
 
 enum AccountError: Error {
   case invalidInfo(String)
-  case authError(String)
+  case authError(AuthError)
   case rustError(RustError)
   case invalidVideoRequest(String)
   case networkError(String)

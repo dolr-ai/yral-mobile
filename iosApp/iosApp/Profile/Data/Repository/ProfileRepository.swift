@@ -64,7 +64,7 @@ class ProfileRepository: ProfileRepositoryProtocol {
 
   func deleteVideo(request: DeleteVideoRequest) async -> Result<Void, AccountError> {
     guard let principalString = authClient.canisterPrincipalString else {
-      return .failure(AccountError.authError("No canister principal"))
+      return .failure(AccountError.authError(AuthError.invalidRequest("No canister principal")))
     }
     guard let baseURL = httpService.baseURL else { return .failure(.invalidInfo("No base URL found")) }
     do {
@@ -95,7 +95,7 @@ class ProfileRepository: ProfileRepositoryProtocol {
       case let netErr as NetworkError:
         return .failure(AccountError.networkError(netErr.localizedDescription))
       case let authErr as AuthError:
-        return .failure(AccountError.authError(authErr.localizedDescription))
+        return .failure(AccountError.authError(authErr))
       default:
         return .failure(.unknown(error.localizedDescription))
       }
@@ -108,7 +108,7 @@ class ProfileRepository: ProfileRepositoryProtocol {
     offset: UInt64
   ) async -> Result<[FeedResult], AccountError> {
     guard let principalString = authClient.canisterPrincipalString else {
-      return .failure(AccountError.authError("No canister principal"))
+      return .failure(AccountError.authError(AuthError.invalidRequest("No canister principal")))
     }
     do {
       let identity = try self.authClient.generateNewDelegatedIdentity()

@@ -81,29 +81,16 @@ extension AccountView: UserInfoViewProtocol {
 
 extension AccountView: SignupSheetProtocol {
   func signupwithGoogle() {
-
+    Task {
+      await viewModel.socialSignIn(request: .google)
+    }
   }
 
   func signupwithApple() {
-
+    Task {
+      await viewModel.socialSignIn(request: .apple)
+    }
   }
-}
-
-#Preview {
-  AccountView(
-    viewModel: AccountViewModel(
-      useCase: AccountUseCase(
-        accountRepository: AccountRepository(httpService: HTTPService(),
-                                             authClient:
-                                              DefaultAuthClient(
-                                                networkService: HTTPService(),
-                                                crashReporter: FirebaseCrashlyticsReporter()
-                                              )
-                                            ),
-        crashReporter: FirebaseCrashlyticsReporter()
-      )
-    )
-  )
 }
 
 extension AccountView {

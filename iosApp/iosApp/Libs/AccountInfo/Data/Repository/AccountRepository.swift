@@ -24,4 +24,16 @@ class AccountRepository: AccountRepositoryProtocol {
     }
     return .success(AccountInfo(imageURL: imageURL, canisterID: authClient.userPrincipalString ?? ""))
   }
+
+  func socialSignIn(provider: SocialProvider) async -> Result<Void, AccountError> {
+    do {
+      try await authClient.signInWithSocial(provider: provider)
+      return .success(())
+    } catch {
+      if let error = error as? AuthError {
+        return .failure(AccountError.authError(error))
+      }
+      return .failure(AccountError.unknown(error.localizedDescription))
+    }
+  }
 }

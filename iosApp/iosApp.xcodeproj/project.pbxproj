@@ -32,8 +32,12 @@
 		AC1ACFA02DB964AB001BDCFD /* SwiftUI+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1ACF9E2DB964A4001BDCFD /* SwiftUI+Extensions.swift */; };
 		AC1F92D72DBFE56D00F322E1 /* PKCE.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1F92D62DBFE56300F322E1 /* PKCE.swift */; };
 		AC1F92D82DBFE56D00F322E1 /* PKCE.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1F92D62DBFE56300F322E1 /* PKCE.swift */; };
-		AC1F92DA2DBFE5FF00F322E1 /* SocialURLService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1F92D92DBFE5E800F322E1 /* SocialURLService.swift */; };
-		AC1F92DB2DBFE5FF00F322E1 /* SocialURLService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1F92D92DBFE5E800F322E1 /* SocialURLService.swift */; };
+		AC1F938C2DC112F000F322E1 /* SocialSignInUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1F938B2DC112E800F322E1 /* SocialSignInUseCase.swift */; };
+		AC1F938D2DC112F000F322E1 /* SocialSignInUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1F938B2DC112E800F322E1 /* SocialSignInUseCase.swift */; };
+		AC1F93922DC1494800F322E1 /* TokenRequestDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1F93912DC1494500F322E1 /* TokenRequestDTO.swift */; };
+		AC1F93932DC1494800F322E1 /* TokenRequestDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1F93912DC1494500F322E1 /* TokenRequestDTO.swift */; };
+		AC1F93952DC1495400F322E1 /* TokenResponseDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1F93942DC1495100F322E1 /* TokenResponseDTO.swift */; };
+		AC1F93962DC1495400F322E1 /* TokenResponseDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1F93942DC1495100F322E1 /* TokenResponseDTO.swift */; };
 		AC233D352D314CA3007040F1 /* Splash_Lottie.json in Resources */ = {isa = PBXBuildFile; fileRef = AC233D342D314CA3007040F1 /* Splash_Lottie.json */; };
 		AC233D362D314CA3007040F1 /* Splash_Lottie.json in Resources */ = {isa = PBXBuildFile; fileRef = AC233D342D314CA3007040F1 /* Splash_Lottie.json */; };
 		AC26CA492D8026B4006ADA75 /* CrashReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC26CA482D8026A8006ADA75 /* CrashReporter.swift */; };
@@ -388,6 +392,8 @@
 		ACEBF8022D74673600B594A0 /* HashtagsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACEBF7FF2D74673600B594A0 /* HashtagsView.swift */; };
 		ACEBF8052D7473E600B594A0 /* UploadErrorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACEBF8042D7473DD00B594A0 /* UploadErrorView.swift */; };
 		ACEBF8062D7473E600B594A0 /* UploadErrorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACEBF8042D7473DD00B594A0 /* UploadErrorView.swift */; };
+		ACF639DC2DC24D2B00C4BCCC /* SocialProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACF639DB2DC24D2700C4BCCC /* SocialProvider.swift */; };
+		ACF639DD2DC24D2B00C4BCCC /* SocialProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACF639DB2DC24D2700C4BCCC /* SocialProvider.swift */; };
 		ACFEDFA12D96CEC2003116EA /* Errors.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFEDFA02D96CEC2003116EA /* Errors.swift */; };
 		ACFEDFA22D96CEC2003116EA /* Errors.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFEDFA02D96CEC2003116EA /* Errors.swift */; };
 /* End PBXBuildFile section */
@@ -450,7 +456,10 @@
 		AC1ACF9B2DB9179F001BDCFD /* SessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionManager.swift; sourceTree = "<group>"; };
 		AC1ACF9E2DB964A4001BDCFD /* SwiftUI+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SwiftUI+Extensions.swift"; sourceTree = "<group>"; };
 		AC1F92D62DBFE56300F322E1 /* PKCE.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PKCE.swift; sourceTree = "<group>"; };
-		AC1F92D92DBFE5E800F322E1 /* SocialURLService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialURLService.swift; sourceTree = "<group>"; };
+		AC1F938B2DC112E800F322E1 /* SocialSignInUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialSignInUseCase.swift; sourceTree = "<group>"; };
+		AC1F93912DC1494500F322E1 /* TokenRequestDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenRequestDTO.swift; sourceTree = "<group>"; };
+		AC1F93942DC1495100F322E1 /* TokenResponseDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenResponseDTO.swift; sourceTree = "<group>"; };
+		AC1F93982DC1501B00F322E1 /* Yral.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Yral.entitlements; sourceTree = "<group>"; };
 		AC233D342D314CA3007040F1 /* Splash_Lottie.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Splash_Lottie.json; sourceTree = "<group>"; };
 		AC26CA482D8026A8006ADA75 /* CrashReporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrashReporter.swift; sourceTree = "<group>"; };
 		AC26CA4B2D80271D006ADA75 /* AuthClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthClient.swift; sourceTree = "<group>"; };
@@ -616,6 +625,7 @@
 		ACEBF7F52D70A8CF00B594A0 /* AnimatedCheckbox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimatedCheckbox.swift; sourceTree = "<group>"; };
 		ACEBF7FF2D74673600B594A0 /* HashtagsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HashtagsView.swift; sourceTree = "<group>"; };
 		ACEBF8042D7473DD00B594A0 /* UploadErrorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadErrorView.swift; sourceTree = "<group>"; };
+		ACF639DB2DC24D2700C4BCCC /* SocialProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialProvider.swift; sourceTree = "<group>"; };
 		ACFEDFA02D96CEC2003116EA /* Errors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Errors.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -722,6 +732,7 @@
 		7555FF72242A565900829871 = {
 			isa = PBXGroup;
 			children = (
+				AC1F93982DC1501B00F322E1 /* Yral.entitlements */,
 				ACD941BD2CFF57BC0038FCB6 /* Staging */,
 				ACD941BC2CFF57A90038FCB6 /* Prod */,
 				AC09A9B12CDB775C009A39A4 /* Generated */,
@@ -815,6 +826,15 @@
 			path = SessionManager;
 			sourceTree = "<group>";
 		};
+		AC1F93972DC14A9000F322E1 /* DTO */ = {
+			isa = PBXGroup;
+			children = (
+				AC1F93912DC1494500F322E1 /* TokenRequestDTO.swift */,
+				AC1F93942DC1495100F322E1 /* TokenResponseDTO.swift */,
+			);
+			path = DTO;
+			sourceTree = "<group>";
+		};
 		AC26CA472D802683006ADA75 /* CrashReporting */ = {
 			isa = PBXGroup;
 			children = (
@@ -837,10 +857,11 @@
 		AC26CA4D2D802751006ADA75 /* DefaultAuthClient */ = {
 			isa = PBXGroup;
 			children = (
+				ACF639DB2DC24D2700C4BCCC /* SocialProvider.swift */,
 				ACB46A5F2D0EF947002E200C /* DefaultAuthClient.swift */,
 				ACB46A5C2D0EF927002E200C /* AuthEndPoints.swift */,
-				AC1F92D92DBFE5E800F322E1 /* SocialURLService.swift */,
 				ACB46A592D0EF91A002E200C /* AuthConstants.swift */,
+				AC1F93972DC14A9000F322E1 /* DTO */,
 			);
 			path = DefaultAuthClient;
 			sourceTree = "<group>";
@@ -1076,6 +1097,7 @@
 		AC32E45F2D2967DF001DDA43 /* UseCases */ = {
 			isa = PBXGroup;
 			children = (
+				AC1F938B2DC112E800F322E1 /* SocialSignInUseCase.swift */,
 				AC32E44E2D296623001DDA43 /* AccountUseCase.swift */,
 			);
 			path = UseCases;
@@ -2201,6 +2223,7 @@
 				AC92941D2D6622EE003DB102 /* VideoPickerViewControllerRepresentable.swift in Sources */,
 				ACCB98782D944213002B9675 /* UILabel+Extensions.swift in Sources */,
 				AC2C30D52D96C68700DA9F81 /* ReportRequestDTO.swift in Sources */,
+				AC1F938C2DC112F000F322E1 /* SocialSignInUseCase.swift in Sources */,
 				AC1F92D82DBFE56D00F322E1 /* PKCE.swift in Sources */,
 				AC1ACF992DB9161F001BDCFD /* AuthState.swift in Sources */,
 				ACEBF7DB2D6EDC8500B594A0 /* GradientProgressViewStyle.swift in Sources */,
@@ -2213,6 +2236,7 @@
 				ACC0D44E2D8DDB21006DCF5C /* ProfileRepository.swift in Sources */,
 				ACEBF7E22D6F505A00B594A0 /* UploadCompletedView.swift in Sources */,
 				AC7F7EAE2D771EB300215162 /* UploadEndpointResponse.swift in Sources */,
+				ACF639DC2DC24D2B00C4BCCC /* SocialProvider.swift in Sources */,
 				AC99BBBB2D86C8B1008012C2 /* ProfileViewModel.swift in Sources */,
 				ACDD23F32D8B3D4700AB0DAF /* ProfileVideoInfo.swift in Sources */,
 				AC99BB572D81F517008012C2 /* AttributedText.swift in Sources */,
@@ -2234,6 +2258,7 @@
 				103BBB052DACE23A00C0BFD0 /* HLSDownloadManaging.swift in Sources */,
 				AC811BDC2DBA95760094C5F6 /* SignupFailureSheet.swift in Sources */,
 				AC09A9B22CDB775C009A39A4 /* yral-mobile-swift-binding.swift in Sources */,
+				AC1F93962DC1495400F322E1 /* TokenResponseDTO.swift in Sources */,
 				AC26CA5E2D8052E2006ADA75 /* BaseStreamingUseCase.swift in Sources */,
 				ACB09FD52D92D66400EE3239 /* FeedsViewModelProtocol.swift in Sources */,
 				AC8FC76B2D9BE09A006F29BC /* FeedRequestDTO.swift in Sources */,
@@ -2262,7 +2287,6 @@
 				AC7F7EB72D7732AC00215162 /* VideoUploadError.swift in Sources */,
 				ACC0D4482D8DA208006DCF5C /* RefreshVideosUseCase.swift in Sources */,
 				AC7F7ED72D79648100215162 /* UpdateMetaDataRequest.swift in Sources */,
-				AC1F92DA2DBFE5FF00F322E1 /* SocialURLService.swift in Sources */,
 				AC32E47A2D2AF599001DDA43 /* CacheDTO.swift in Sources */,
 				AC5A7C682DAD72A6009E9E42 /* LogUploadEventUseCase.swift in Sources */,
 				AC8472AB2D1D9139004A4259 /* HLSDownloadManager.swift in Sources */,
@@ -2290,6 +2314,7 @@
 				AC7F7ECE2D78707200215162 /* UploadVideoRequest.swift in Sources */,
 				AC6BECC22D09F91C002E2021 /* HTTPService.swift in Sources */,
 				AC2C30CD2D96C49800DA9F81 /* ReportUseCase.swift in Sources */,
+				AC1F93932DC1494800F322E1 /* TokenRequestDTO.swift in Sources */,
 				ACC0F3942D2ED5B700FA5BD0 /* SplashScreenView.swift in Sources */,
 				AC99BBB12D86C563008012C2 /* ProfileView.swift in Sources */,
 				AC99BB972D848667008012C2 /* YralFont.swift in Sources */,
@@ -2375,6 +2400,7 @@
 				AC92941C2D6622EE003DB102 /* VideoPickerViewControllerRepresentable.swift in Sources */,
 				ACCB98792D944213002B9675 /* UILabel+Extensions.swift in Sources */,
 				AC2C30D42D96C68700DA9F81 /* ReportRequestDTO.swift in Sources */,
+				AC1F938D2DC112F000F322E1 /* SocialSignInUseCase.swift in Sources */,
 				AC1F92D72DBFE56D00F322E1 /* PKCE.swift in Sources */,
 				AC1ACF982DB9161F001BDCFD /* AuthState.swift in Sources */,
 				ACEBF7DC2D6EDC8500B594A0 /* GradientProgressViewStyle.swift in Sources */,
@@ -2387,6 +2413,7 @@
 				ACC0D44F2D8DDB21006DCF5C /* ProfileRepository.swift in Sources */,
 				ACEBF7E12D6F505A00B594A0 /* UploadCompletedView.swift in Sources */,
 				AC7F7EAD2D771EB300215162 /* UploadEndpointResponse.swift in Sources */,
+				ACF639DD2DC24D2B00C4BCCC /* SocialProvider.swift in Sources */,
 				AC99BBBA2D86C8B1008012C2 /* ProfileViewModel.swift in Sources */,
 				ACDD23F42D8B3D4700AB0DAF /* ProfileVideoInfo.swift in Sources */,
 				AC99BB582D81F517008012C2 /* AttributedText.swift in Sources */,
@@ -2408,6 +2435,7 @@
 				103BBB042DACE23A00C0BFD0 /* HLSDownloadManaging.swift in Sources */,
 				AC811BDD2DBA95760094C5F6 /* SignupFailureSheet.swift in Sources */,
 				ACD941882CFF575C0038FCB6 /* yral-mobile-swift-binding.swift in Sources */,
+				AC1F93952DC1495400F322E1 /* TokenResponseDTO.swift in Sources */,
 				AC26CA5F2D8052E2006ADA75 /* BaseStreamingUseCase.swift in Sources */,
 				ACB09FD62D92D66400EE3239 /* FeedsViewModelProtocol.swift in Sources */,
 				AC8FC76A2D9BE09A006F29BC /* FeedRequestDTO.swift in Sources */,
@@ -2436,7 +2464,6 @@
 				AC7F7EB62D7732AC00215162 /* VideoUploadError.swift in Sources */,
 				ACC0D4492D8DA208006DCF5C /* RefreshVideosUseCase.swift in Sources */,
 				AC7F7ED62D79648100215162 /* UpdateMetaDataRequest.swift in Sources */,
-				AC1F92DB2DBFE5FF00F322E1 /* SocialURLService.swift in Sources */,
 				AC32E4792D2AF599001DDA43 /* CacheDTO.swift in Sources */,
 				AC5A7C672DAD72A6009E9E42 /* LogUploadEventUseCase.swift in Sources */,
 				AC8472AA2D1D9139004A4259 /* HLSDownloadManager.swift in Sources */,
@@ -2464,6 +2491,7 @@
 				AC7F7ECD2D78707200215162 /* UploadVideoRequest.swift in Sources */,
 				AC6BECC32D09F91C002E2021 /* HTTPService.swift in Sources */,
 				AC2C30CE2D96C49800DA9F81 /* ReportUseCase.swift in Sources */,
+				AC1F93922DC1494800F322E1 /* TokenRequestDTO.swift in Sources */,
 				ACC0F3952D2ED5B700FA5BD0 /* SplashScreenView.swift in Sources */,
 				AC99BBB02D86C563008012C2 /* ProfileView.swift in Sources */,
 				AC99BB982D848667008012C2 /* YralFont.swift in Sources */,
@@ -2630,6 +2658,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Yral.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
@@ -2667,6 +2696,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Yral.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;

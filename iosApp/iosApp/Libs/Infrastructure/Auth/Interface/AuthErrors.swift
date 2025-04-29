@@ -9,6 +9,7 @@ import Foundation
 
 public enum AuthError: Error, Equatable {
   case authenticationFailed(String)
+  case invalidRequest(String)
 }
 
 extension AuthError: LocalizedError {
@@ -16,6 +17,8 @@ extension AuthError: LocalizedError {
     switch self {
     case .authenticationFailed(let message):
       return "Authentication Failed: \(message)"
+    case .invalidRequest(let message):
+      return "Invalid request: \(message)"
     }
   }
 }
