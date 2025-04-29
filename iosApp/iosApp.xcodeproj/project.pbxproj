@@ -17,8 +17,8 @@
 		10512A532DA795A800114BAA /* YralQueuePlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10512A512DA7959D00114BAA /* YralQueuePlayer.swift */; };
 		107C60902DB7809A006FC467 /* UIView+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C608F2DB78093006FC467 /* UIView+Extensions.swift */; };
 		107C60912DB7809A006FC467 /* UIView+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C608F2DB78093006FC467 /* UIView+Extensions.swift */; };
-		107C60952DB7AAD7006FC467 /* AboutGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C60942DB7AAD7006FC467 /* AboutGameView.swift */; };
-		107C60962DB7AAD7006FC467 /* AboutGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C60942DB7AAD7006FC467 /* AboutGameView.swift */; };
+		107C60952DB7AAD7006FC467 /* SmileyGameRuleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C60942DB7AAD7006FC467 /* SmileyGameRuleView.swift */; };
+		107C60962DB7AAD7006FC467 /* SmileyGameRuleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C60942DB7AAD7006FC467 /* SmileyGameRuleView.swift */; };
 		107C60982DB8BCB1006FC467 /* SmileyGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C60972DB8BCB1006FC467 /* SmileyGameView.swift */; };
 		107C60992DB8BCB1006FC467 /* SmileyGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C60972DB8BCB1006FC467 /* SmileyGameView.swift */; };
 		107C609B2DB90B22006FC467 /* SmileyGameResultBottomSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C609A2DB90B22006FC467 /* SmileyGameResultBottomSheetView.swift */; };
@@ -29,6 +29,32 @@
 		107C60A22DB9FDA0006FC467 /* Smiley_Game_Win.json in Resources */ = {isa = PBXBuildFile; fileRef = 107C609E2DB9FDA0006FC467 /* Smiley_Game_Win.json */; };
 		107C60A42DBA01F0006FC467 /* RoundedCorner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C60A32DBA01EB006FC467 /* RoundedCorner.swift */; };
 		107C60A52DBA01F0006FC467 /* RoundedCorner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C60A32DBA01EB006FC467 /* RoundedCorner.swift */; };
+		107C60B02DBF45B4006FC467 /* SmileyGameRuleResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C60AF2DBF45A6006FC467 /* SmileyGameRuleResponse.swift */; };
+		107C60B12DBF45B4006FC467 /* SmileyGameRuleResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C60AF2DBF45A6006FC467 /* SmileyGameRuleResponse.swift */; };
+		107C60B42DBF4857006FC467 /* SmileyGameRuleUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C60B32DBF483D006FC467 /* SmileyGameRuleUseCase.swift */; };
+		107C60B52DBF4857006FC467 /* SmileyGameRuleUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C60B32DBF483D006FC467 /* SmileyGameRuleUseCase.swift */; };
+		107C60B82DBF49D8006FC467 /* SmileyGameRuleRepositoryProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C60B72DBF49CE006FC467 /* SmileyGameRuleRepositoryProtocol.swift */; };
+		107C60B92DBF49D8006FC467 /* SmileyGameRuleRepositoryProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C60B72DBF49CE006FC467 /* SmileyGameRuleRepositoryProtocol.swift */; };
+		107C60BC2DBF4A6F006FC467 /* SmileyGameRuleRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C60BB2DBF4A69006FC467 /* SmileyGameRuleRepository.swift */; };
+		107C60BD2DBF4A6F006FC467 /* SmileyGameRuleRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C60BB2DBF4A69006FC467 /* SmileyGameRuleRepository.swift */; };
+		107C60BF2DBF4C17006FC467 /* FirebaseServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C60BE2DBF4C0E006FC467 /* FirebaseServiceProtocol.swift */; };
+		107C60C02DBF4C17006FC467 /* FirebaseServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C60BE2DBF4C0E006FC467 /* FirebaseServiceProtocol.swift */; };
+		107C60C22DBF4CE2006FC467 /* FirebaseService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C60C12DBF4CDD006FC467 /* FirebaseService.swift */; };
+		107C60C32DBF4CE2006FC467 /* FirebaseService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C60C12DBF4CDD006FC467 /* FirebaseService.swift */; };
+		107C60C52DBF6109006FC467 /* SmileyGameRuleDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C60C42DBF60FE006FC467 /* SmileyGameRuleDTO.swift */; };
+		107C60C62DBF6109006FC467 /* SmileyGameRuleDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C60C42DBF60FE006FC467 /* SmileyGameRuleDTO.swift */; };
+		107C60C82DBF7A2D006FC467 /* SmileyGameRuleDIContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C60C72DBF7A23006FC467 /* SmileyGameRuleDIContainer.swift */; };
+		107C60C92DBF7A2D006FC467 /* SmileyGameRuleDIContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C60C72DBF7A23006FC467 /* SmileyGameRuleDIContainer.swift */; };
+		107C60CB2DBF7B19006FC467 /* SmileyGameRuleViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C60CA2DBF7B13006FC467 /* SmileyGameRuleViewModel.swift */; };
+		107C60CC2DBF7B19006FC467 /* SmileyGameRuleViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C60CA2DBF7B13006FC467 /* SmileyGameRuleViewModel.swift */; };
+		107C60CE2DBF94C3006FC467 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 107C60CD2DBF94C3006FC467 /* FirebaseFirestore */; };
+		107C60D02DBF94D0006FC467 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 107C60CF2DBF94D0006FC467 /* FirebaseFirestore */; };
+		107C60D32DBF9FC4006FC467 /* GameRuleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C60D22DBF9FC4006FC467 /* GameRuleView.swift */; };
+		107C60D42DBF9FC4006FC467 /* GameRuleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C60D22DBF9FC4006FC467 /* GameRuleView.swift */; };
+		107C60D62DBFA7C0006FC467 /* FirebaseImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C60D52DBFA7C0006FC467 /* FirebaseImageView.swift */; };
+		107C60D72DBFA7C0006FC467 /* FirebaseImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C60D52DBFA7C0006FC467 /* FirebaseImageView.swift */; };
+		107C60D92DBFA818006FC467 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 107C60D82DBFA818006FC467 /* FirebaseStorage */; };
+		107C60DB2DBFA820006FC467 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 107C60DA2DBFA820006FC467 /* FirebaseStorage */; };
 		10BA2E872DA6507E00B6BE97 /* FeedsPlayerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10BA2E842DA6507E00B6BE97 /* FeedsPlayerTests.swift */; };
 		2152FB042600AC8F00CF470E /* IosApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* IosApp.swift */; };
 		7555FF83242A565900829871 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* ContentView.swift */; };
@@ -426,12 +452,23 @@
 		10512A422DA666A900114BAA /* YralPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralPlayer.swift; sourceTree = "<group>"; };
 		10512A512DA7959D00114BAA /* YralQueuePlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralQueuePlayer.swift; sourceTree = "<group>"; };
 		107C608F2DB78093006FC467 /* UIView+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIView+Extensions.swift"; sourceTree = "<group>"; };
-		107C60942DB7AAD7006FC467 /* AboutGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutGameView.swift; sourceTree = "<group>"; };
+		107C60942DB7AAD7006FC467 /* SmileyGameRuleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameRuleView.swift; sourceTree = "<group>"; };
 		107C60972DB8BCB1006FC467 /* SmileyGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameView.swift; sourceTree = "<group>"; };
 		107C609A2DB90B22006FC467 /* SmileyGameResultBottomSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameResultBottomSheetView.swift; sourceTree = "<group>"; };
 		107C609D2DB9FDA0006FC467 /* Smiley_Game_Lose.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Smiley_Game_Lose.json; sourceTree = "<group>"; };
 		107C609E2DB9FDA0006FC467 /* Smiley_Game_Win.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Smiley_Game_Win.json; sourceTree = "<group>"; };
 		107C60A32DBA01EB006FC467 /* RoundedCorner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoundedCorner.swift; sourceTree = "<group>"; };
+		107C60AF2DBF45A6006FC467 /* SmileyGameRuleResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameRuleResponse.swift; sourceTree = "<group>"; };
+		107C60B32DBF483D006FC467 /* SmileyGameRuleUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameRuleUseCase.swift; sourceTree = "<group>"; };
+		107C60B72DBF49CE006FC467 /* SmileyGameRuleRepositoryProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameRuleRepositoryProtocol.swift; sourceTree = "<group>"; };
+		107C60BB2DBF4A69006FC467 /* SmileyGameRuleRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameRuleRepository.swift; sourceTree = "<group>"; };
+		107C60BE2DBF4C0E006FC467 /* FirebaseServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseServiceProtocol.swift; sourceTree = "<group>"; };
+		107C60C12DBF4CDD006FC467 /* FirebaseService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseService.swift; sourceTree = "<group>"; };
+		107C60C42DBF60FE006FC467 /* SmileyGameRuleDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameRuleDTO.swift; sourceTree = "<group>"; };
+		107C60C72DBF7A23006FC467 /* SmileyGameRuleDIContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameRuleDIContainer.swift; sourceTree = "<group>"; };
+		107C60CA2DBF7B13006FC467 /* SmileyGameRuleViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameRuleViewModel.swift; sourceTree = "<group>"; };
+		107C60D22DBF9FC4006FC467 /* GameRuleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameRuleView.swift; sourceTree = "<group>"; };
+		107C60D52DBFA7C0006FC467 /* FirebaseImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseImageView.swift; sourceTree = "<group>"; };
 		10BA2E822DA64E6A00B6BE97 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Platforms/iPhoneOS.platform/Developer/Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		10BA2E842DA6507E00B6BE97 /* FeedsPlayerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedsPlayerTests.swift; sourceTree = "<group>"; };
 		2152FB032600AC8F00CF470E /* IosApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IosApp.swift; sourceTree = "<group>"; };
@@ -623,12 +660,14 @@
 				AC6BECAC2D09D52B002E2021 /* GRPC in Frameworks */,
 				ACD941D12CFF5B720038FCB6 /* secp256k1 in Frameworks */,
 				AC0E49C42CEBA6F0002DC158 /* secp256k1 in Frameworks */,
+				107C60CE2DBF94C3006FC467 /* FirebaseFirestore in Frameworks */,
 				ACD941802CFF55BB0038FCB6 /* FirebaseAnalyticsWithoutAdIdSupport in Frameworks */,
 				ACC0F3A32D2ED69200FA5BD0 /* Lottie in Frameworks */,
 				ACD941C42CFF5B3D0038FCB6 /* FirebaseCore in Frameworks */,
 				ACD941C62CFF5B3D0038FCB6 /* FirebaseCrashlytics in Frameworks */,
 				AC6BECAA2D09D52B002E2021 /* CGRPCZlib in Frameworks */,
 				AC6BECB02D09D52B002E2021 /* protoc-gen-grpc-swift in Frameworks */,
+				107C60D92DBFA818006FC467 /* FirebaseStorage in Frameworks */,
 				AC6E311A2D22F050001EBE6C /* SDWebImage in Frameworks */,
 				AC6BECAE2D09D52B002E2021 /* GRPCReflectionService in Frameworks */,
 				ACB815482CFA146800104B7B /* FirebaseCore in Frameworks */,
@@ -655,11 +694,13 @@
 				AC6BECB82D09D55B002E2021 /* protoc-gen-grpc-swift in Frameworks */,
 				AC6BECB22D09D541002E2021 /* CGRPCZlib in Frameworks */,
 				ACD941D32CFF5B8B0038FCB6 /* secp256k1 in Frameworks */,
+				107C60DB2DBFA820006FC467 /* FirebaseStorage in Frameworks */,
 				ACD941CA2CFF5B5B0038FCB6 /* FirebaseAnalyticsOnDeviceConversion in Frameworks */,
 				AC6E311E2D22F069001EBE6C /* SDWebImage in Frameworks */,
 				ACD941CE2CFF5B5B0038FCB6 /* FirebaseCrashlytics in Frameworks */,
 				AC6E31202D22F069001EBE6C /* SDWebImageMapKit in Frameworks */,
 				ACD941CC2CFF5B5B0038FCB6 /* FirebaseCore in Frameworks */,
+				107C60D02DBF94D0006FC467 /* FirebaseFirestore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -703,6 +744,10 @@
 		107C60922DB7AA86006FC467 /* SmileyGame */ = {
 			isa = PBXGroup;
 			children = (
+				107C60AD2DBF43EB006FC467 /* DI */,
+				107C60AC2DBF43DA006FC467 /* Data */,
+				107C60AB2DBF43D5006FC467 /* Domain */,
+				107C60AA2DBF43CC006FC467 /* ViewModel */,
 				107C60932DB7AA99006FC467 /* View */,
 			);
 			path = SmileyGame;
@@ -711,11 +756,88 @@
 		107C60932DB7AA99006FC467 /* View */ = {
 			isa = PBXGroup;
 			children = (
-				107C60942DB7AAD7006FC467 /* AboutGameView.swift */,
+				107C60D12DBF9F96006FC467 /* SmileyGameRule */,
 				107C60972DB8BCB1006FC467 /* SmileyGameView.swift */,
 				107C609A2DB90B22006FC467 /* SmileyGameResultBottomSheetView.swift */,
 			);
 			path = View;
+			sourceTree = "<group>";
+		};
+		107C60AA2DBF43CC006FC467 /* ViewModel */ = {
+			isa = PBXGroup;
+			children = (
+				107C60CA2DBF7B13006FC467 /* SmileyGameRuleViewModel.swift */,
+			);
+			path = ViewModel;
+			sourceTree = "<group>";
+		};
+		107C60AB2DBF43D5006FC467 /* Domain */ = {
+			isa = PBXGroup;
+			children = (
+				107C60B62DBF49A0006FC467 /* Interface */,
+				107C60B22DBF4814006FC467 /* UseCase */,
+				107C60AE2DBF459E006FC467 /* Entity */,
+			);
+			path = Domain;
+			sourceTree = "<group>";
+		};
+		107C60AC2DBF43DA006FC467 /* Data */ = {
+			isa = PBXGroup;
+			children = (
+				107C60C42DBF60FE006FC467 /* SmileyGameRuleDTO.swift */,
+				107C60BA2DBF4A60006FC467 /* Repository */,
+			);
+			path = Data;
+			sourceTree = "<group>";
+		};
+		107C60AD2DBF43EB006FC467 /* DI */ = {
+			isa = PBXGroup;
+			children = (
+				107C60C72DBF7A23006FC467 /* SmileyGameRuleDIContainer.swift */,
+			);
+			path = DI;
+			sourceTree = "<group>";
+		};
+		107C60AE2DBF459E006FC467 /* Entity */ = {
+			isa = PBXGroup;
+			children = (
+				107C60AF2DBF45A6006FC467 /* SmileyGameRuleResponse.swift */,
+			);
+			path = Entity;
+			sourceTree = "<group>";
+		};
+		107C60B22DBF4814006FC467 /* UseCase */ = {
+			isa = PBXGroup;
+			children = (
+				107C60B32DBF483D006FC467 /* SmileyGameRuleUseCase.swift */,
+			);
+			path = UseCase;
+			sourceTree = "<group>";
+		};
+		107C60B62DBF49A0006FC467 /* Interface */ = {
+			isa = PBXGroup;
+			children = (
+				107C60B72DBF49CE006FC467 /* SmileyGameRuleRepositoryProtocol.swift */,
+			);
+			path = Interface;
+			sourceTree = "<group>";
+		};
+		107C60BA2DBF4A60006FC467 /* Repository */ = {
+			isa = PBXGroup;
+			children = (
+				107C60BB2DBF4A69006FC467 /* SmileyGameRuleRepository.swift */,
+			);
+			path = Repository;
+			sourceTree = "<group>";
+		};
+		107C60D12DBF9F96006FC467 /* SmileyGameRule */ = {
+			isa = PBXGroup;
+			children = (
+				107C60942DB7AAD7006FC467 /* SmileyGameRuleView.swift */,
+				107C60D22DBF9FC4006FC467 /* GameRuleView.swift */,
+				107C60D52DBFA7C0006FC467 /* FirebaseImageView.swift */,
+			);
+			path = SmileyGameRule;
 			sourceTree = "<group>";
 		};
 		10BA2E7E2DA63D8600B6BE97 /* YralPlayer */ = {
@@ -853,6 +975,7 @@
 		AC26CA4F2D80277F006ADA75 /* Interface */ = {
 			isa = PBXGroup;
 			children = (
+				107C60BE2DBF4C0E006FC467 /* FirebaseServiceProtocol.swift */,
 				AC6BECBE2D09F866002E2021 /* NetworkService.swift */,
 				AC6BECBB2D09F685002E2021 /* Endpoint.swift */,
 			);
@@ -862,6 +985,7 @@
 		AC26CA502D80278F006ADA75 /* Service */ = {
 			isa = PBXGroup;
 			children = (
+				107C60C12DBF4CDD006FC467 /* FirebaseService.swift */,
 				AC6BECC12D09F917002E2021 /* HTTPService.swift */,
 				AC26CA512D8027A6006ADA75 /* Helpers */,
 			);
@@ -2130,11 +2254,13 @@
 				ACB09FDD2D92F87E00EE3239 /* MyVideosFeedViewModel.swift in Sources */,
 				ACB46A262D0EC0A3002E200C /* FeedsPlayer.swift in Sources */,
 				ACB46A682D0F3609002E200C /* FeedsViewModel.swift in Sources */,
+				107C60D32DBF9FC4006FC467 /* GameRuleView.swift in Sources */,
 				ACB46A422D0ECBB3002E200C /* ml_feed.proto in Sources */,
 				ACB46A5E2D0EF92D002E200C /* AuthEndPoints.swift in Sources */,
 				AC8958DD2D3EA54700E19ED7 /* FeedsViewController+Delegates.swift in Sources */,
 				ACB46A612D0EF94B002E200C /* DefaultAuthClient.swift in Sources */,
 				AC462F4A2D95BB61004957B3 /* FeedsCell+Captions.swift in Sources */,
+				107C60BC2DBF4A6F006FC467 /* SmileyGameRuleRepository.swift in Sources */,
 				AC26CA642D805E58006ADA75 /* FeedError.swift in Sources */,
 				AC638BFA2D230DCD00481E94 /* HomeTabController.swift in Sources */,
 				AC9293FD2D620B6C003DB102 /* MediaPicker.swift in Sources */,
@@ -2143,7 +2269,9 @@
 				AC32E4462D2961CA001DDA43 /* URLImage.swift in Sources */,
 				10512A442DA666AD00114BAA /* YralPlayer.swift in Sources */,
 				ACB46A732D105AF4002E200C /* CollectionView+Extensions.swift in Sources */,
+				107C60C32DBF4CE2006FC467 /* FirebaseService.swift in Sources */,
 				ACB46A432D0ECBB3002E200C /* ml_feed.grpc.swift in Sources */,
+				107C60CB2DBF7B19006FC467 /* SmileyGameRuleViewModel.swift in Sources */,
 				AC49605B2D2C4BF7008D59D9 /* FetchMoreFeedsUseCase.swift in Sources */,
 				ACB46A7A2D105B35002E200C /* NibLoadableVIew.swift in Sources */,
 				ACB09FE82D93289000EE3239 /* MyVideosFeedInfo.swift in Sources */,
@@ -2161,6 +2289,7 @@
 				ACC0D4642D9179C1006DCF5C /* DeleteVideoUseCase.swift in Sources */,
 				ACB46A482D0ECBD5002E200C /* FeedsRepository.swift in Sources */,
 				AC32E4412D295E97001DDA43 /* UserInfoView.swift in Sources */,
+				107C60B82DBF49D8006FC467 /* SmileyGameRuleRepositoryProtocol.swift in Sources */,
 				AC462F482D95B7F8004957B3 /* ReportView.swift in Sources */,
 				AC61D3B12DB28AAB00A7EA92 /* EULAPopUpView.swift in Sources */,
 				AC92941D2D6622EE003DB102 /* VideoPickerViewControllerRepresentable.swift in Sources */,
@@ -2179,10 +2308,12 @@
 				AC99BBBB2D86C8B1008012C2 /* ProfileViewModel.swift in Sources */,
 				ACDD23F32D8B3D4700AB0DAF /* ProfileVideoInfo.swift in Sources */,
 				AC99BB572D81F517008012C2 /* AttributedText.swift in Sources */,
+				107C60B12DBF45B4006FC467 /* SmileyGameRuleResponse.swift in Sources */,
 				ACB46A2D2D0EC833002E200C /* AppDIContainer.swift in Sources */,
 				AC32E3F72D26FEB9001DDA43 /* UIColor+Extensions.swift in Sources */,
 				AC7F7EBD2D77335900215162 /* AuthErrors.swift in Sources */,
 				AC99BBB82D86C645008012C2 /* ProfileDIContainer.swift in Sources */,
+				107C60C62DBF6109006FC467 /* SmileyGameRuleDTO.swift in Sources */,
 				ACC0F3972D2ED5D700FA5BD0 /* LottieView.swift in Sources */,
 				AC2C30D22D96C51600DA9F81 /* ReportEntity.swift in Sources */,
 				ACB46A7D2D105BEB002E200C /* UIKitInitializers.swift in Sources */,
@@ -2262,22 +2393,26 @@
 				AC9294112D6599A1003DB102 /* CaptionsView.swift in Sources */,
 				AC638BF62D2309C000481E94 /* KeychainHelper.swift in Sources */,
 				AC99BB9A2D84913C008012C2 /* YralColor.swift in Sources */,
+				107C60C92DBF7A2D006FC467 /* SmileyGameRuleDIContainer.swift in Sources */,
 				AC6E31232D22F08F001EBE6C /* ImageLoaderProtocol.swift in Sources */,
 				AC462F422D95A4AD004957B3 /* OffsetableScrollView.swift in Sources */,
 				ACB46A5B2D0EF91F002E200C /* AuthConstants.swift in Sources */,
 				ACB09FD22D92D52E00EE3239 /* LikeRepositoryProtocol.swift in Sources */,
+				107C60D62DBFA7C0006FC467 /* FirebaseImageView.swift in Sources */,
+				107C60B42DBF4857006FC467 /* SmileyGameRuleUseCase.swift in Sources */,
 				ACB46A292D0EC76A002E200C /* AppConfiguration.swift in Sources */,
 				ACEBF7DF2D6F215800B594A0 /* VideoPlayerView.swift in Sources */,
 				ACB46A342D0EC8FF002E200C /* Numbers+Extensions.swift in Sources */,
 				AC7F7EC52D7741C900215162 /* UploadResponseDTO.swift in Sources */,
 				AC32E4612D298E0A001DDA43 /* ProfileOptionsView.swift in Sources */,
+				107C60C02DBF4C17006FC467 /* FirebaseServiceProtocol.swift in Sources */,
 				AC7F7EE32D7A8E1600215162 /* UpdateMetaUseCase.swift in Sources */,
 				ACB46A6F2D0F417F002E200C /* FeedsViewControllerWrapper.swift in Sources */,
 				ACB46A6C2D0F3F8E002E200C /* FeedsViewController.swift in Sources */,
 				AC92940C2D64C9C0003DB102 /* UploadDIContainer.swift in Sources */,
 				7555FF83242A565900829871 /* ContentView.swift in Sources */,
 				ACB46A4C2D0ED110002E200C /* FeedRepositoryProtocol.swift in Sources */,
-				107C60962DB7AAD7006FC467 /* AboutGameView.swift in Sources */,
+				107C60962DB7AAD7006FC467 /* SmileyGameRuleView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2300,11 +2435,13 @@
 				ACB09FDE2D92F87E00EE3239 /* MyVideosFeedViewModel.swift in Sources */,
 				ACB46A272D0EC0A3002E200C /* FeedsPlayer.swift in Sources */,
 				ACB46A692D0F3609002E200C /* FeedsViewModel.swift in Sources */,
+				107C60D42DBF9FC4006FC467 /* GameRuleView.swift in Sources */,
 				ACB46A3F2D0ECBB3002E200C /* ml_feed.proto in Sources */,
 				ACB46A5D2D0EF92D002E200C /* AuthEndPoints.swift in Sources */,
 				AC8958DC2D3EA54700E19ED7 /* FeedsViewController+Delegates.swift in Sources */,
 				ACB46A602D0EF94B002E200C /* DefaultAuthClient.swift in Sources */,
 				AC462F4B2D95BB61004957B3 /* FeedsCell+Captions.swift in Sources */,
+				107C60BD2DBF4A6F006FC467 /* SmileyGameRuleRepository.swift in Sources */,
 				AC26CA652D805E58006ADA75 /* FeedError.swift in Sources */,
 				AC638BF92D230DCD00481E94 /* HomeTabController.swift in Sources */,
 				AC9293FF2D620B6C003DB102 /* MediaPicker.swift in Sources */,
@@ -2313,7 +2450,9 @@
 				AC32E4472D2961CA001DDA43 /* URLImage.swift in Sources */,
 				10512A432DA666AD00114BAA /* YralPlayer.swift in Sources */,
 				ACB46A742D105AF4002E200C /* CollectionView+Extensions.swift in Sources */,
+				107C60C22DBF4CE2006FC467 /* FirebaseService.swift in Sources */,
 				ACB46A402D0ECBB3002E200C /* ml_feed.grpc.swift in Sources */,
+				107C60CC2DBF7B19006FC467 /* SmileyGameRuleViewModel.swift in Sources */,
 				AC49605C2D2C4BF7008D59D9 /* FetchMoreFeedsUseCase.swift in Sources */,
 				ACB46A792D105B35002E200C /* NibLoadableVIew.swift in Sources */,
 				ACB09FE72D93289000EE3239 /* MyVideosFeedInfo.swift in Sources */,
@@ -2331,6 +2470,7 @@
 				ACC0D4652D9179C1006DCF5C /* DeleteVideoUseCase.swift in Sources */,
 				ACB46A472D0ECBD5002E200C /* FeedsRepository.swift in Sources */,
 				AC32E4422D295E97001DDA43 /* UserInfoView.swift in Sources */,
+				107C60B92DBF49D8006FC467 /* SmileyGameRuleRepositoryProtocol.swift in Sources */,
 				AC462F472D95B7F8004957B3 /* ReportView.swift in Sources */,
 				AC61D3B22DB28AAB00A7EA92 /* EULAPopUpView.swift in Sources */,
 				AC92941C2D6622EE003DB102 /* VideoPickerViewControllerRepresentable.swift in Sources */,
@@ -2349,10 +2489,12 @@
 				AC99BBBA2D86C8B1008012C2 /* ProfileViewModel.swift in Sources */,
 				ACDD23F42D8B3D4700AB0DAF /* ProfileVideoInfo.swift in Sources */,
 				AC99BB582D81F517008012C2 /* AttributedText.swift in Sources */,
+				107C60B02DBF45B4006FC467 /* SmileyGameRuleResponse.swift in Sources */,
 				ACB46A2C2D0EC833002E200C /* AppDIContainer.swift in Sources */,
 				AC32E3F62D26FEB9001DDA43 /* UIColor+Extensions.swift in Sources */,
 				AC7F7EBC2D77335900215162 /* AuthErrors.swift in Sources */,
 				AC99BBB72D86C645008012C2 /* ProfileDIContainer.swift in Sources */,
+				107C60C52DBF6109006FC467 /* SmileyGameRuleDTO.swift in Sources */,
 				ACC0F3982D2ED5D700FA5BD0 /* LottieView.swift in Sources */,
 				AC2C30D12D96C51600DA9F81 /* ReportEntity.swift in Sources */,
 				ACB46A7C2D105BEB002E200C /* UIKitInitializers.swift in Sources */,
@@ -2432,22 +2574,26 @@
 				AC9294122D6599A1003DB102 /* CaptionsView.swift in Sources */,
 				AC638BF52D2309C000481E94 /* KeychainHelper.swift in Sources */,
 				AC99BB9B2D84913C008012C2 /* YralColor.swift in Sources */,
+				107C60C82DBF7A2D006FC467 /* SmileyGameRuleDIContainer.swift in Sources */,
 				AC6E31222D22F08F001EBE6C /* ImageLoaderProtocol.swift in Sources */,
 				AC462F432D95A4AD004957B3 /* OffsetableScrollView.swift in Sources */,
 				ACB46A5A2D0EF91F002E200C /* AuthConstants.swift in Sources */,
 				ACB09FD12D92D52E00EE3239 /* LikeRepositoryProtocol.swift in Sources */,
+				107C60D72DBFA7C0006FC467 /* FirebaseImageView.swift in Sources */,
+				107C60B52DBF4857006FC467 /* SmileyGameRuleUseCase.swift in Sources */,
 				ACB46A2A2D0EC76A002E200C /* AppConfiguration.swift in Sources */,
 				ACEBF7DE2D6F215800B594A0 /* VideoPlayerView.swift in Sources */,
 				ACB46A332D0EC8FF002E200C /* Numbers+Extensions.swift in Sources */,
 				AC7F7EC42D7741C900215162 /* UploadResponseDTO.swift in Sources */,
 				AC32E4622D298E0A001DDA43 /* ProfileOptionsView.swift in Sources */,
+				107C60BF2DBF4C17006FC467 /* FirebaseServiceProtocol.swift in Sources */,
 				AC7F7EE22D7A8E1600215162 /* UpdateMetaUseCase.swift in Sources */,
 				ACB46A702D0F417F002E200C /* FeedsViewControllerWrapper.swift in Sources */,
 				ACB46A6B2D0F3F8E002E200C /* FeedsViewController.swift in Sources */,
 				AC92940B2D64C9C0003DB102 /* UploadDIContainer.swift in Sources */,
 				ACD9418C2CFF575C0038FCB6 /* ContentView.swift in Sources */,
 				ACB46A4D2D0ED110002E200C /* FeedRepositoryProtocol.swift in Sources */,
-				107C60952DB7AAD7006FC467 /* AboutGameView.swift in Sources */,
+				107C60952DB7AAD7006FC467 /* SmileyGameRuleView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2881,6 +3027,26 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		107C60CD2DBF94C3006FC467 /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = ACD941C02CFF5B3D0038FCB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+		107C60CF2DBF94D0006FC467 /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = ACD941C02CFF5B3D0038FCB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+		107C60D82DBFA818006FC467 /* FirebaseStorage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = ACD941C02CFF5B3D0038FCB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseStorage;
+		};
+		107C60DA2DBFA820006FC467 /* FirebaseStorage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = ACD941C02CFF5B3D0038FCB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseStorage;
+		};
 		AC0E49C32CEBA6F0002DC158 /* secp256k1 */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = AC0E49C22CEBA6F0002DC158 /* XCRemoteSwiftPackageReference "swift-secp256k1" */;
