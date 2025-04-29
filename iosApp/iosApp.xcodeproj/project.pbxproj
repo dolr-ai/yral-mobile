@@ -30,6 +30,10 @@
 		AC1ACF9D2DB917A3001BDCFD /* SessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1ACF9B2DB9179F001BDCFD /* SessionManager.swift */; };
 		AC1ACF9F2DB964AB001BDCFD /* SwiftUI+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1ACF9E2DB964A4001BDCFD /* SwiftUI+Extensions.swift */; };
 		AC1ACFA02DB964AB001BDCFD /* SwiftUI+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1ACF9E2DB964A4001BDCFD /* SwiftUI+Extensions.swift */; };
+		AC1F92D72DBFE56D00F322E1 /* PKCE.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1F92D62DBFE56300F322E1 /* PKCE.swift */; };
+		AC1F92D82DBFE56D00F322E1 /* PKCE.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1F92D62DBFE56300F322E1 /* PKCE.swift */; };
+		AC1F92DA2DBFE5FF00F322E1 /* SocialURLService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1F92D92DBFE5E800F322E1 /* SocialURLService.swift */; };
+		AC1F92DB2DBFE5FF00F322E1 /* SocialURLService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1F92D92DBFE5E800F322E1 /* SocialURLService.swift */; };
 		AC233D352D314CA3007040F1 /* Splash_Lottie.json in Resources */ = {isa = PBXBuildFile; fileRef = AC233D342D314CA3007040F1 /* Splash_Lottie.json */; };
 		AC233D362D314CA3007040F1 /* Splash_Lottie.json in Resources */ = {isa = PBXBuildFile; fileRef = AC233D342D314CA3007040F1 /* Splash_Lottie.json */; };
 		AC26CA492D8026B4006ADA75 /* CrashReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC26CA482D8026A8006ADA75 /* CrashReporter.swift */; };
@@ -445,6 +449,8 @@
 		AC1ACF972DB9161D001BDCFD /* AuthState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthState.swift; sourceTree = "<group>"; };
 		AC1ACF9B2DB9179F001BDCFD /* SessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionManager.swift; sourceTree = "<group>"; };
 		AC1ACF9E2DB964A4001BDCFD /* SwiftUI+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SwiftUI+Extensions.swift"; sourceTree = "<group>"; };
+		AC1F92D62DBFE56300F322E1 /* PKCE.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PKCE.swift; sourceTree = "<group>"; };
+		AC1F92D92DBFE5E800F322E1 /* SocialURLService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialURLService.swift; sourceTree = "<group>"; };
 		AC233D342D314CA3007040F1 /* Splash_Lottie.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Splash_Lottie.json; sourceTree = "<group>"; };
 		AC26CA482D8026A8006ADA75 /* CrashReporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrashReporter.swift; sourceTree = "<group>"; };
 		AC26CA4B2D80271D006ADA75 /* AuthClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthClient.swift; sourceTree = "<group>"; };
@@ -833,6 +839,7 @@
 			children = (
 				ACB46A5F2D0EF947002E200C /* DefaultAuthClient.swift */,
 				ACB46A5C2D0EF927002E200C /* AuthEndPoints.swift */,
+				AC1F92D92DBFE5E800F322E1 /* SocialURLService.swift */,
 				ACB46A592D0EF91A002E200C /* AuthConstants.swift */,
 			);
 			path = DefaultAuthClient;
@@ -841,6 +848,7 @@
 		AC26CA4E2D802765006ADA75 /* Helpers */ = {
 			isa = PBXGroup;
 			children = (
+				AC1F92D62DBFE56300F322E1 /* PKCE.swift */,
 				AC638BF42D2309BA00481E94 /* KeychainHelper.swift */,
 			);
 			path = Helpers;
@@ -2193,6 +2201,7 @@
 				AC92941D2D6622EE003DB102 /* VideoPickerViewControllerRepresentable.swift in Sources */,
 				ACCB98782D944213002B9675 /* UILabel+Extensions.swift in Sources */,
 				AC2C30D52D96C68700DA9F81 /* ReportRequestDTO.swift in Sources */,
+				AC1F92D82DBFE56D00F322E1 /* PKCE.swift in Sources */,
 				AC1ACF992DB9161F001BDCFD /* AuthState.swift in Sources */,
 				ACEBF7DB2D6EDC8500B594A0 /* GradientProgressViewStyle.swift in Sources */,
 				ACC0D4582D9177C2006DCF5C /* DeleteVideoRequest.swift in Sources */,
@@ -2253,6 +2262,7 @@
 				AC7F7EB72D7732AC00215162 /* VideoUploadError.swift in Sources */,
 				ACC0D4482D8DA208006DCF5C /* RefreshVideosUseCase.swift in Sources */,
 				AC7F7ED72D79648100215162 /* UpdateMetaDataRequest.swift in Sources */,
+				AC1F92DA2DBFE5FF00F322E1 /* SocialURLService.swift in Sources */,
 				AC32E47A2D2AF599001DDA43 /* CacheDTO.swift in Sources */,
 				AC5A7C682DAD72A6009E9E42 /* LogUploadEventUseCase.swift in Sources */,
 				AC8472AB2D1D9139004A4259 /* HLSDownloadManager.swift in Sources */,
@@ -2365,6 +2375,7 @@
 				AC92941C2D6622EE003DB102 /* VideoPickerViewControllerRepresentable.swift in Sources */,
 				ACCB98792D944213002B9675 /* UILabel+Extensions.swift in Sources */,
 				AC2C30D42D96C68700DA9F81 /* ReportRequestDTO.swift in Sources */,
+				AC1F92D72DBFE56D00F322E1 /* PKCE.swift in Sources */,
 				AC1ACF982DB9161F001BDCFD /* AuthState.swift in Sources */,
 				ACEBF7DC2D6EDC8500B594A0 /* GradientProgressViewStyle.swift in Sources */,
 				ACC0D4572D9177C2006DCF5C /* DeleteVideoRequest.swift in Sources */,
@@ -2425,6 +2436,7 @@
 				AC7F7EB62D7732AC00215162 /* VideoUploadError.swift in Sources */,
 				ACC0D4492D8DA208006DCF5C /* RefreshVideosUseCase.swift in Sources */,
 				AC7F7ED62D79648100215162 /* UpdateMetaDataRequest.swift in Sources */,
+				AC1F92DB2DBFE5FF00F322E1 /* SocialURLService.swift in Sources */,
 				AC32E4792D2AF599001DDA43 /* CacheDTO.swift in Sources */,
 				AC5A7C672DAD72A6009E9E42 /* LogUploadEventUseCase.swift in Sources */,
 				AC8472AA2D1D9139004A4259 /* HLSDownloadManager.swift in Sources */,
