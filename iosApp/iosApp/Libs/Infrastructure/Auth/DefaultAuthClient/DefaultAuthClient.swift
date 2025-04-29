@@ -9,9 +9,9 @@
 import Foundation
 import Combine
 import secp256k1
+import AuthenticationServices
 
-class DefaultAuthClient: AuthClient {
-
+final class DefaultAuthClient: NSObject, AuthClient {
   private(set) var identity: DelegatedIdentity?
   private(set) var canisterPrincipal: Principal?
   private(set) var canisterPrincipalString: String?
@@ -270,10 +270,85 @@ class DefaultAuthClient: AuthClient {
   }
 }
 
+extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
+
+  func signInWithSocial(provider: SocialProvider,
+                        from window: UIWindow?) async throws {
+    let verifier  = PKCE.generateCodeVerifier()
+    let challenge = PKCE.codeChallenge(for: verifier)
+    let redirect  = Constants.redirectURI
+
+    let req = SocialURLService.authorize(
+      provider: provider,
+      codeChallenge: challenge,
+      redirectURI: redirect
+    ).urlRequest
+
+    let session = ASWebAuthenticationSession(
+      url: req.url!,
+      callbackURLScheme: redirect.components(separatedBy: "://")[0]
+    ) { callbackURL, error in
+      Task {
+        if let callback = callbackURL,
+           let comps = URLComponents(url: callback, resolvingAgainstBaseURL: false),
+           let code = comps.queryItems?.first(where: { $0.name == "code" })?.value {
+          do {
+            try await self.exchangeCodeForTokens(
+              code: code,
+              verifier: verifier,
+              redirectURI: redirect
+            )
+          } catch {
+            self.stateSubject.value = .error(.authenticationFailed(error.localizedDescription))
+          }
+        } else if let err = error {
+          self.stateSubject.value = .error(.authenticationFailed(err.localizedDescription))
+        }
+      }
+    }
+
+    session.presentationContextProvider = self
+    session.prefersEphemeralWebBrowserSession = true
+    session.start()
+  }
+
+  private func exchangeCodeForTokens(code: String,
+                                     verifier: String,
+                                     redirectURI: String) async throws {
+    // Re-build the body dictionary
+    let body: [String: String] = [
+      "grant_type": "authorization_code",
+      "code": code,
+      "redirect_uri": redirectURI,
+      "client_id": SocialURLService.Constants.clientID,
+      "code_verifier": verifier
+    ]
+    let bodyData = try JSONEncoder().encode(body)
+
+    let tokenEndpoint = Endpoint(
+      http: "socialToken",
+      baseURL: SocialURLService.base,
+      path: "/oauth/token",
+      method: .post,
+      queryItems: nil,
+      headers: ["Content-Type": "application/json"],
+      body: bodyData
+    )
+
+    let respData = try await networkService.performRequest(for: tokenEndpoint)
+    try await handleExtractIdentityResponse(from: respData)
+  }
+
+  func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
+    UIApplication.shared.windows.first { $0.isKeyWindow }!
+  }
+}
+
 extension DefaultAuthClient {
   enum Constants {
     static let keychainIdentity = "yral.delegatedIdentity"
     static let keychainPayload  = "yral.delegatedIdentityPayload"
     static let temporaryIdentityExpirySecond: UInt64 = 3600
+    static let redirectURI = "https://yral-auth-v2.fly.dev/oauth_callback"
   }
 }
