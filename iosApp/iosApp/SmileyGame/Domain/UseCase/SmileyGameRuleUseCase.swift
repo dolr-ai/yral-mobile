@@ -10,10 +10,11 @@ import Foundation
 import FirebaseFirestore
 
 protocol SmileyGameRuleUseCaseProtocol {
-  func execute() async -> Result<[SmileyGameRuleResponse], Error>
+  func execute() async -> Result<[SmileyGameRuleResponse], SmileyGameRuleError>
 }
 
-class SmileyGameRuleUseCase: BaseResultUseCase<Void, [SmileyGameRuleResponse], Error>, SmileyGameRuleUseCaseProtocol {
+class SmileyGameRuleUseCase: BaseResultUseCase<Void, [SmileyGameRuleResponse], SmileyGameRuleError>,
+                             SmileyGameRuleUseCaseProtocol {
 
   private let repository: SmileyGameRuleRepositoryProtocol
 
@@ -22,11 +23,11 @@ class SmileyGameRuleUseCase: BaseResultUseCase<Void, [SmileyGameRuleResponse], E
     super.init(crashReporter: crashRepoerter)
   }
 
-  func execute() async -> Result<[SmileyGameRuleResponse], any Error> {
+  func execute() async -> Result<[SmileyGameRuleResponse], SmileyGameRuleError> {
     await super.execute(request: ())
   }
 
-  override func runImplementation(_ request: Void) async -> Result<[SmileyGameRuleResponse], any Error> {
+  override func runImplementation(_ request: Void) async -> Result<[SmileyGameRuleResponse], SmileyGameRuleError> {
     await repository.fetchSmileyGameRules()
   }
 }

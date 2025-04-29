@@ -16,7 +16,7 @@ class SmileyGameRuleRepository: SmileyGameRuleRepositoryProtocol {
     self.firebaseService = firebaseService
   }
 
-  func fetchSmileyGameRules() async -> Result<[SmileyGameRuleResponse], Error> {
+  func fetchSmileyGameRules() async -> Result<[SmileyGameRuleResponse], SmileyGameRuleError> {
     do {
       let response = try await firebaseService.fetchCollection(
         from: Constants.collectionPath,
@@ -26,7 +26,12 @@ class SmileyGameRuleRepository: SmileyGameRuleRepositoryProtocol {
 
       return .success(response.map({ $0.toDomain() }))
     } catch {
-      return .failure(error)
+      switch error {
+      case let error as NetworkError:
+        return .failure(SmileyGameRuleError.networkError(error))
+      default:
+        return .failure(SmileyGameRuleError.unknown(error.localizedDescription))
+      }
     }
   }
 }

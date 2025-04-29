@@ -55,6 +55,8 @@
 		107C60D72DBFA7C0006FC467 /* FirebaseImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C60D52DBFA7C0006FC467 /* FirebaseImageView.swift */; };
 		107C60D92DBFA818006FC467 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 107C60D82DBFA818006FC467 /* FirebaseStorage */; };
 		107C60DB2DBFA820006FC467 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 107C60DA2DBFA820006FC467 /* FirebaseStorage */; };
+		107C61232DC0F2C8006FC467 /* SmileyGameRuleError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C61222DC0F2B9006FC467 /* SmileyGameRuleError.swift */; };
+		107C61242DC0F2C8006FC467 /* SmileyGameRuleError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C61222DC0F2B9006FC467 /* SmileyGameRuleError.swift */; };
 		10BA2E872DA6507E00B6BE97 /* FeedsPlayerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10BA2E842DA6507E00B6BE97 /* FeedsPlayerTests.swift */; };
 		2152FB042600AC8F00CF470E /* IosApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* IosApp.swift */; };
 		7555FF83242A565900829871 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* ContentView.swift */; };
@@ -469,6 +471,7 @@
 		107C60CA2DBF7B13006FC467 /* SmileyGameRuleViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameRuleViewModel.swift; sourceTree = "<group>"; };
 		107C60D22DBF9FC4006FC467 /* GameRuleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameRuleView.swift; sourceTree = "<group>"; };
 		107C60D52DBFA7C0006FC467 /* FirebaseImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseImageView.swift; sourceTree = "<group>"; };
+		107C61222DC0F2B9006FC467 /* SmileyGameRuleError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameRuleError.swift; sourceTree = "<group>"; };
 		10BA2E822DA64E6A00B6BE97 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Platforms/iPhoneOS.platform/Developer/Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		10BA2E842DA6507E00B6BE97 /* FeedsPlayerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedsPlayerTests.swift; sourceTree = "<group>"; };
 		2152FB032600AC8F00CF470E /* IosApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IosApp.swift; sourceTree = "<group>"; };
@@ -801,6 +804,7 @@
 		107C60AE2DBF459E006FC467 /* Entity */ = {
 			isa = PBXGroup;
 			children = (
+				107C61222DC0F2B9006FC467 /* SmileyGameRuleError.swift */,
 				107C60AF2DBF45A6006FC467 /* SmileyGameRuleResponse.swift */,
 			);
 			path = Entity;
@@ -2375,6 +2379,7 @@
 				AC32E4542D296637001DDA43 /* AccountRepository.swift in Sources */,
 				AC9294092D630266003DB102 /* UploadView.swift in Sources */,
 				AC7F7EBF2D7734BB00215162 /* UploadRepository.swift in Sources */,
+				107C61242DC0F2C8006FC467 /* SmileyGameRuleError.swift in Sources */,
 				ACC0D45D2D91785B006DCF5C /* SwiftDelegatedIdentityWire.swift in Sources */,
 				ACB09FC92D92CB6400EE3239 /* ProfileRouter.swift in Sources */,
 				ACB46A812D106034002E200C /* FeedsCell.swift in Sources */,
@@ -2556,6 +2561,7 @@
 				AC32E4532D296637001DDA43 /* AccountRepository.swift in Sources */,
 				AC9294082D630266003DB102 /* UploadView.swift in Sources */,
 				AC7F7EC02D7734BB00215162 /* UploadRepository.swift in Sources */,
+				107C61232DC0F2C8006FC467 /* SmileyGameRuleError.swift in Sources */,
 				ACC0D45E2D91785B006DCF5C /* SwiftDelegatedIdentityWire.swift in Sources */,
 				ACB09FCA2D92CB6400EE3239 /* ProfileRouter.swift in Sources */,
 				ACB46A802D106034002E200C /* FeedsCell.swift in Sources */,
