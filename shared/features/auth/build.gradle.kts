@@ -34,10 +34,10 @@ kotlin {
             implementation(projects.shared.libs.analytics)
             implementation(projects.shared.libs.koin)
 
-            // implementation(projects.shared.rust)
+            implementation(projects.shared.rust)
             BuildConfig.getDependencies(project).forEach { dependency ->
                 if (dependency.isNotEmpty()) {
-                    implementation(dependency)
+                    // implementation(dependency)
                 }
             }
         }

@@ -87,10 +87,10 @@ dependencies {
     implementation(projects.shared.libs.videoPlayer)
     implementation(projects.shared.features.account)
 
-    // implementation(projects.shared.rust)
+    implementation(projects.shared.rust)
     BuildConfig.getDependencies(project).forEach { dependency ->
         if (dependency.isNotEmpty()) {
-            implementation(dependency)
+            // implementation(dependency)
         }
     }
 
