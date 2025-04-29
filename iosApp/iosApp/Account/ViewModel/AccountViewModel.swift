@@ -29,23 +29,43 @@ enum AccountPageState: Equatable {
   }
 }
 
+enum AccountPageEvent {
+  case socialSignInSuccess
+  case socialSignInFailure
+}
+
 class AccountViewModel: ObservableObject {
-  let useCase: AccountUseCaseProtocol
+  let accountUseCase: AccountUseCaseProtocol
+  let socialSignInUseCase: SocialSignInUseCaseProtocol
 
   @Published var state: AccountPageState = .initalized
+  @Published var event: AccountPageEvent?
 
-  init(useCase: AccountUseCaseProtocol) {
-    self.useCase = useCase
+  init(accountUseCase: AccountUseCaseProtocol, socialSignInUseCase: SocialSignInUseCaseProtocol) {
+    self.accountUseCase = accountUseCase
+    self.socialSignInUseCase = socialSignInUseCase
   }
 
   @MainActor func fetchProfileInfo() async {
     state = .loading
-    let result = await useCase.execute()
+    let result = await accountUseCase.execute()
     switch result {
     case .success(let profileInfo):
       state = .successfullyFetched(profileInfo)
     case .failure(let error):
       state = .failure(error)
+    }
+  }
+
+  func socialSignIn(request: SocialProvider) async {
+    let result = await self.socialSignInUseCase.execute(request: request)
+    await MainActor.run {
+      switch result {
+      case .success:
+        self.event = .socialSignInSuccess
+      case .failure:
+        self.event = .socialSignInFailure
+      }
     }
   }
 }
