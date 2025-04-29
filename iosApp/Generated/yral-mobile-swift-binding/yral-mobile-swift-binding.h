@@ -1619,6 +1619,7 @@ bool __swift_bridge__$Result12$is_err(void* self);
 void* __swift_bridge__$Result12$ok_value(void* self);
 void* __swift_bridge__$Result12$err_value(void* self);
 void* __swift_bridge__$propic_from_principal(void* principal);
+struct __private__ResultPtrAndPtr __swift_bridge__$yral_auth_login_hint(struct __private__FfiSlice data);
 typedef enum __swift_bridge__$ResultU32AndAgentError$Tag {__swift_bridge__$ResultU32AndAgentError$ResultOk, __swift_bridge__$ResultU32AndAgentError$ResultErr} __swift_bridge__$ResultU32AndAgentError$Tag;
 union __swift_bridge__$ResultU32AndAgentError$Fields {uint32_t ok; void* err;};
 typedef struct __swift_bridge__$ResultU32AndAgentError{__swift_bridge__$ResultU32AndAgentError$Tag tag; union __swift_bridge__$ResultU32AndAgentError$Fields payload;} __swift_bridge__$ResultU32AndAgentError;
