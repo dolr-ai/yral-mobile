@@ -88,7 +88,9 @@ fun AccountScreen(
         LoginBottomSheet(
             bottomSheetState = loginBottomSheetState,
             onDismissRequest = { showLoginBottomSheet = false },
-        ) { }
+        ) {
+            viewModel.logout()
+        }
     }
     Column(
         modifier = modifier.padding(top = 8.dp),

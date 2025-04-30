@@ -38,13 +38,11 @@ class RootViewModel(
 
     private val _state = MutableStateFlow(RootState())
     val state: StateFlow<RootState> = _state.asStateFlow()
+    val sessionManagerState = sessionManager.state
 
-    init {
-        initialize()
-    }
-
-    private fun initialize() {
+    fun initialize() {
         coroutineScope.launch {
+            _state.emit(RootState())
             sessionManager.getCanisterPrincipal()?.let {
                 initialFeedData(it)
             } ?: try {
@@ -55,7 +53,6 @@ class RootViewModel(
                             principal = principal,
                             identityData = identity,
                         )
-                        initialFeedData(principal)
                     } ?: error("Identity is null")
                 } ?: error("Principal is null after initialization")
             } catch (e: Exception) {
