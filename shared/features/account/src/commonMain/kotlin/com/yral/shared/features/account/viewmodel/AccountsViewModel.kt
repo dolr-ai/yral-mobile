@@ -1,21 +1,21 @@
 package com.yral.shared.features.account.viewmodel
 
 import androidx.lifecycle.ViewModel
-import com.yral.shared.features.auth.AuthClient
+import com.yral.shared.core.session.SessionManager
 import com.yral.shared.uniffi.generated.propicFromPrincipal
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 class AccountsViewModel(
-    private val authClient: AuthClient,
+    private val sessionManager: SessionManager,
 ) : ViewModel() {
     private val _state = MutableStateFlow(AccountsState(getAccountInfo()))
     val state: StateFlow<AccountsState> = _state.asStateFlow()
 
     private fun getAccountInfo(): AccountInfo? {
-        val canisterPrincipal = authClient.canisterPrincipal
-        val userPrincipal = authClient.userPrincipal
+        val canisterPrincipal = sessionManager.getCanisterPrincipal()
+        val userPrincipal = sessionManager.getUserPrincipal()
         canisterPrincipal?.let { principal ->
             userPrincipal?.let { userPrincipal ->
                 return AccountInfo(

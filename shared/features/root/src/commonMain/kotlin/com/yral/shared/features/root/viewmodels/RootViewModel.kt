@@ -3,6 +3,7 @@ package com.yral.shared.features.root.viewmodels
 import androidx.lifecycle.ViewModel
 import com.github.michaelbull.result.mapBoth
 import com.yral.shared.core.dispatchers.AppDispatchers
+import com.yral.shared.core.session.SessionManager
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.AuthClient
 import com.yral.shared.features.feed.useCases.FetchFeedDetailsUseCase
@@ -23,6 +24,7 @@ import org.koin.core.parameter.parametersOf
 class RootViewModel(
     appDispatchers: AppDispatchers,
     private val authClient: AuthClient,
+    private val sessionManager: SessionManager,
     private val individualUserServiceFactory: IndividualUserServiceFactory,
     private val getInitialFeedUseCase: GetInitialFeedUseCase,
     private val fetchFeedDetailsUseCase: FetchFeedDetailsUseCase,
@@ -43,23 +45,21 @@ class RootViewModel(
 
     private fun initialize() {
         coroutineScope.launch {
-            if (authClient.canisterPrincipal == null) {
-                try {
-                    authClient.initialize()
-                    authClient.canisterPrincipal?.let { principal ->
-                        authClient.identity?.let { identity ->
-                            individualUserServiceFactory.initialize(
-                                principal = principal,
-                                identityData = identity,
-                            )
-                            initialFeedData(principal)
-                        } ?: error("Identity is null")
-                    } ?: error("Principal is null after initialization")
-                } catch (e: Exception) {
-                    crashlyticsManager.recordException(e)
-                }
-            } else {
-                initialFeedData(authClient.canisterPrincipal!!)
+            sessionManager.getCanisterPrincipal()?.let {
+                initialFeedData(it)
+            } ?: try {
+                authClient.initialize()
+                sessionManager.getCanisterPrincipal()?.let { principal ->
+                    sessionManager.getIdentity()?.let { identity ->
+                        individualUserServiceFactory.initialize(
+                            principal = principal,
+                            identityData = identity,
+                        )
+                        initialFeedData(principal)
+                    } ?: error("Identity is null")
+                } ?: error("Principal is null after initialization")
+            } catch (e: Exception) {
+                crashlyticsManager.recordException(e)
             }
         }
     }

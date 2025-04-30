@@ -4,13 +4,15 @@ import com.yral.shared.analytics.core.AnalyticsManager
 import com.yral.shared.analytics.core.Event
 import com.yral.shared.analytics.main.FeatureEvents
 import com.yral.shared.analytics.main.Features
+import com.yral.shared.core.session.Session
+import com.yral.shared.core.session.SessionManager
+import com.yral.shared.core.session.SessionState
 import com.yral.shared.http.CookieType
 import com.yral.shared.http.httpPost
 import com.yral.shared.http.httpPostWithBytesResponse
 import com.yral.shared.http.maxAgeOrExpires
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
-import com.yral.shared.uniffi.generated.Principal
 import com.yral.shared.uniffi.generated.authenticateWithNetwork
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.cookies.cookies
@@ -23,15 +25,12 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 
 class DefaultAuthClient(
+    private val sessionManager: SessionManager,
     private val analyticsManager: AnalyticsManager,
     private val preferences: Preferences,
     private val client: HttpClient,
     private val json: Json,
 ) : AuthClient {
-    override var identity: ByteArray? = null
-    override var canisterPrincipal: Principal? = null
-    override var userPrincipal: Principal? = null
-
     override suspend fun initialize() {
         refreshAuthIfNeeded()
     }
@@ -94,10 +93,17 @@ class DefaultAuthClient(
     }
 
     private suspend fun handleExtractIdentityResponse(data: ByteArray) {
-        identity = data
         val canisterWrapper = authenticateWithNetwork(data, null)
-        canisterPrincipal = canisterWrapper.getCanisterPrincipal()
-        userPrincipal = canisterWrapper.getUserPrincipal()
+        sessionManager.updateState(
+            SessionState.SignedIn(
+                session =
+                    Session(
+                        identity = data,
+                        canisterPrincipal = canisterWrapper.getCanisterPrincipal(),
+                        userPrincipal = canisterWrapper.getUserPrincipal(),
+                    ),
+            ),
+        )
         analyticsManager.trackEvent(
             event =
                 Event(
@@ -105,14 +111,6 @@ class DefaultAuthClient(
                     name = FeatureEvents.AUTH_SUCCESSFUL.name.lowercase(),
                 ),
         )
-    }
-
-    override suspend fun generateNewDelegatedIdentity(): ByteArray {
-        TODO("Not yet implemented")
-    }
-
-    override suspend fun generateNewDelegatedIdentityWireOneHour(): ByteArray {
-        TODO("Not yet implemented")
     }
 
     companion object {

@@ -3,8 +3,8 @@ package com.yral.shared.features.feed.viewmodel
 import androidx.lifecycle.ViewModel
 import com.github.michaelbull.result.mapBoth
 import com.yral.shared.core.dispatchers.AppDispatchers
+import com.yral.shared.core.session.SessionManager
 import com.yral.shared.crashlytics.core.CrashlyticsManager
-import com.yral.shared.features.auth.AuthClient
 import com.yral.shared.features.feed.useCases.FetchFeedDetailsUseCase
 import com.yral.shared.features.feed.useCases.FetchMoreFeedUseCase
 import com.yral.shared.rust.domain.models.FeedDetails
@@ -21,7 +21,7 @@ class FeedViewModel(
     initialPosts: List<Post>,
     initialFeedDetails: List<FeedDetails>,
     appDispatchers: AppDispatchers,
-    private val authClient: AuthClient,
+    private val sessionManager: SessionManager,
     private val fetchMoreFeedUseCase: FetchMoreFeedUseCase,
     private val fetchFeedDetailsUseCase: FetchFeedDetailsUseCase,
     private val crashlyticsManager: CrashlyticsManager,
@@ -80,14 +80,14 @@ class FeedViewModel(
             return
         }
         coroutineScope.launch {
-            if (authClient.canisterPrincipal != null) {
+            sessionManager.getCanisterPrincipal()?.let {
                 try {
                     setLoadingMore(true)
                     fetchMoreFeedUseCase
                         .invoke(
                             parameter =
                                 FetchMoreFeedUseCase.Params(
-                                    canisterID = authClient.canisterPrincipal!!,
+                                    canisterID = it,
                                     filterResults =
                                         _state.value.posts.map { post ->
                                             post.toFilteredResult()
