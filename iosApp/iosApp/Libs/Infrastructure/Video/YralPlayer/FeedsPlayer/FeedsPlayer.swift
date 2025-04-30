@@ -77,11 +77,12 @@ final class FeedsPlayer: YralPlayer {
   }
 
   private func updateMuteState() {
-    let accepted = KeychainHelper.bool(
-      for: HomeTabController.Constants.eulaAccepted,
-      default: false
-    )
-    player.isMuted = !accepted
+//    let accepted = KeychainHelper.bool(
+//      for: HomeTabController.Constants.eulaAccepted,
+//      default: false
+//    )
+    let accepted: Bool? = UserDefaultsManager.shared.get(for: .eulaAccepted)
+    player.isMuted = !(accepted ?? true)
   }
 
   private func attachTimeObserver() {

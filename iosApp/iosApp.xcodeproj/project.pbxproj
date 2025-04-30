@@ -290,10 +290,6 @@
 		ACB46A512D0ED195002E200C /* FeedResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A4F2D0ED18B002E200C /* FeedResult.swift */; };
 		ACB46A532D0ED22B002E200C /* FeedQuery.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A522D0ED222002E200C /* FeedQuery.swift */; };
 		ACB46A542D0ED22B002E200C /* FeedQuery.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A522D0ED222002E200C /* FeedQuery.swift */; };
-		ACB46A5A2D0EF91F002E200C /* AuthConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A592D0EF91A002E200C /* AuthConstants.swift */; };
-		ACB46A5B2D0EF91F002E200C /* AuthConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A592D0EF91A002E200C /* AuthConstants.swift */; };
-		ACB46A5D2D0EF92D002E200C /* AuthEndPoints.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A5C2D0EF927002E200C /* AuthEndPoints.swift */; };
-		ACB46A5E2D0EF92D002E200C /* AuthEndPoints.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A5C2D0EF927002E200C /* AuthEndPoints.swift */; };
 		ACB46A602D0EF94B002E200C /* DefaultAuthClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A5F2D0EF947002E200C /* DefaultAuthClient.swift */; };
 		ACB46A612D0EF94B002E200C /* DefaultAuthClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A5F2D0EF947002E200C /* DefaultAuthClient.swift */; };
 		ACB46A642D0F0B75002E200C /* FetchInitialFeedsUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A632D0F0B70002E200C /* FetchInitialFeedsUseCase.swift */; };
@@ -394,6 +390,8 @@
 		ACEBF8062D7473E600B594A0 /* UploadErrorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACEBF8042D7473DD00B594A0 /* UploadErrorView.swift */; };
 		ACF639DC2DC24D2B00C4BCCC /* SocialProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACF639DB2DC24D2700C4BCCC /* SocialProvider.swift */; };
 		ACF639DD2DC24D2B00C4BCCC /* SocialProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACF639DB2DC24D2700C4BCCC /* SocialProvider.swift */; };
+		ACF639DF2DC25BA600C4BCCC /* UserDefaultsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACF639DE2DC25B9C00C4BCCC /* UserDefaultsManager.swift */; };
+		ACF639E02DC25BA600C4BCCC /* UserDefaultsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACF639DE2DC25B9C00C4BCCC /* UserDefaultsManager.swift */; };
 		ACFEDFA12D96CEC2003116EA /* Errors.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFEDFA02D96CEC2003116EA /* Errors.swift */; };
 		ACFEDFA22D96CEC2003116EA /* Errors.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFEDFA02D96CEC2003116EA /* Errors.swift */; };
 /* End PBXBuildFile section */
@@ -582,8 +580,6 @@
 		ACB46A4B2D0ED100002E200C /* FeedRepositoryProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedRepositoryProtocol.swift; sourceTree = "<group>"; };
 		ACB46A4F2D0ED18B002E200C /* FeedResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedResult.swift; sourceTree = "<group>"; };
 		ACB46A522D0ED222002E200C /* FeedQuery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedQuery.swift; sourceTree = "<group>"; };
-		ACB46A592D0EF91A002E200C /* AuthConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthConstants.swift; sourceTree = "<group>"; };
-		ACB46A5C2D0EF927002E200C /* AuthEndPoints.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthEndPoints.swift; sourceTree = "<group>"; };
 		ACB46A5F2D0EF947002E200C /* DefaultAuthClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultAuthClient.swift; sourceTree = "<group>"; };
 		ACB46A632D0F0B70002E200C /* FetchInitialFeedsUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FetchInitialFeedsUseCase.swift; sourceTree = "<group>"; };
 		ACB46A672D0F3604002E200C /* FeedsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedsViewModel.swift; sourceTree = "<group>"; };
@@ -626,6 +622,7 @@
 		ACEBF7FF2D74673600B594A0 /* HashtagsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HashtagsView.swift; sourceTree = "<group>"; };
 		ACEBF8042D7473DD00B594A0 /* UploadErrorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadErrorView.swift; sourceTree = "<group>"; };
 		ACF639DB2DC24D2700C4BCCC /* SocialProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialProvider.swift; sourceTree = "<group>"; };
+		ACF639DE2DC25B9C00C4BCCC /* UserDefaultsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDefaultsManager.swift; sourceTree = "<group>"; };
 		ACFEDFA02D96CEC2003116EA /* Errors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Errors.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -859,8 +856,6 @@
 			children = (
 				ACF639DB2DC24D2700C4BCCC /* SocialProvider.swift */,
 				ACB46A5F2D0EF947002E200C /* DefaultAuthClient.swift */,
-				ACB46A5C2D0EF927002E200C /* AuthEndPoints.swift */,
-				ACB46A592D0EF91A002E200C /* AuthConstants.swift */,
 				AC1F93972DC14A9000F322E1 /* DTO */,
 			);
 			path = DefaultAuthClient;
@@ -929,6 +924,7 @@
 		AC26CA662D806501006ADA75 /* Utils */ = {
 			isa = PBXGroup;
 			children = (
+				ACF639DE2DC25B9C00C4BCCC /* UserDefaultsManager.swift */,
 				ACFEDFA02D96CEC2003116EA /* Errors.swift */,
 				ACCB98772D94420D002B9675 /* UILabel+Extensions.swift */,
 				ACC0F3962D2ED5D700FA5BD0 /* LottieView.swift */,
@@ -2189,7 +2185,6 @@
 				ACB46A262D0EC0A3002E200C /* FeedsPlayer.swift in Sources */,
 				ACB46A682D0F3609002E200C /* FeedsViewModel.swift in Sources */,
 				ACB46A422D0ECBB3002E200C /* ml_feed.proto in Sources */,
-				ACB46A5E2D0EF92D002E200C /* AuthEndPoints.swift in Sources */,
 				AC8958DD2D3EA54700E19ED7 /* FeedsViewController+Delegates.swift in Sources */,
 				ACB46A612D0EF94B002E200C /* DefaultAuthClient.swift in Sources */,
 				AC462F4A2D95BB61004957B3 /* FeedsCell+Captions.swift in Sources */,
@@ -2261,6 +2256,7 @@
 				AC1F93962DC1495400F322E1 /* TokenResponseDTO.swift in Sources */,
 				AC26CA5E2D8052E2006ADA75 /* BaseStreamingUseCase.swift in Sources */,
 				ACB09FD52D92D66400EE3239 /* FeedsViewModelProtocol.swift in Sources */,
+				ACF639DF2DC25BA600C4BCCC /* UserDefaultsManager.swift in Sources */,
 				AC8FC76B2D9BE09A006F29BC /* FeedRequestDTO.swift in Sources */,
 				AC7F7EAA2D771DF400215162 /* GetUploadEndpointUseCase.swift in Sources */,
 				AC8472AE2D1D9540004A4259 /* AVFoundation+Extensions.swift in Sources */,
@@ -2329,7 +2325,6 @@
 				AC99BB9A2D84913C008012C2 /* YralColor.swift in Sources */,
 				AC6E31232D22F08F001EBE6C /* ImageLoaderProtocol.swift in Sources */,
 				AC462F422D95A4AD004957B3 /* OffsetableScrollView.swift in Sources */,
-				ACB46A5B2D0EF91F002E200C /* AuthConstants.swift in Sources */,
 				ACB09FD22D92D52E00EE3239 /* LikeRepositoryProtocol.swift in Sources */,
 				ACB46A292D0EC76A002E200C /* AppConfiguration.swift in Sources */,
 				ACEBF7DF2D6F215800B594A0 /* VideoPlayerView.swift in Sources */,
@@ -2366,7 +2361,6 @@
 				ACB46A272D0EC0A3002E200C /* FeedsPlayer.swift in Sources */,
 				ACB46A692D0F3609002E200C /* FeedsViewModel.swift in Sources */,
 				ACB46A3F2D0ECBB3002E200C /* ml_feed.proto in Sources */,
-				ACB46A5D2D0EF92D002E200C /* AuthEndPoints.swift in Sources */,
 				AC8958DC2D3EA54700E19ED7 /* FeedsViewController+Delegates.swift in Sources */,
 				ACB46A602D0EF94B002E200C /* DefaultAuthClient.swift in Sources */,
 				AC462F4B2D95BB61004957B3 /* FeedsCell+Captions.swift in Sources */,
@@ -2438,6 +2432,7 @@
 				AC1F93952DC1495400F322E1 /* TokenResponseDTO.swift in Sources */,
 				AC26CA5F2D8052E2006ADA75 /* BaseStreamingUseCase.swift in Sources */,
 				ACB09FD62D92D66400EE3239 /* FeedsViewModelProtocol.swift in Sources */,
+				ACF639E02DC25BA600C4BCCC /* UserDefaultsManager.swift in Sources */,
 				AC8FC76A2D9BE09A006F29BC /* FeedRequestDTO.swift in Sources */,
 				AC7F7EA92D771DF400215162 /* GetUploadEndpointUseCase.swift in Sources */,
 				AC8472AD2D1D9540004A4259 /* AVFoundation+Extensions.swift in Sources */,
@@ -2506,7 +2501,6 @@
 				AC99BB9B2D84913C008012C2 /* YralColor.swift in Sources */,
 				AC6E31222D22F08F001EBE6C /* ImageLoaderProtocol.swift in Sources */,
 				AC462F432D95A4AD004957B3 /* OffsetableScrollView.swift in Sources */,
-				ACB46A5A2D0EF91F002E200C /* AuthConstants.swift in Sources */,
 				ACB09FD12D92D52E00EE3239 /* LikeRepositoryProtocol.swift in Sources */,
 				ACB46A2A2D0EC76A002E200C /* AppConfiguration.swift in Sources */,
 				ACEBF7DE2D6F215800B594A0 /* VideoPlayerView.swift in Sources */,
