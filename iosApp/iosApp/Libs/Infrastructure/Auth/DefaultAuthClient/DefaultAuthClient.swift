@@ -20,10 +20,8 @@ final class DefaultAuthClient: NSObject, AuthClient {
   private(set) var identityData: Data?
 
   private let networkService: NetworkService
-  private let cookieStorage = HTTPCookieStorage.shared
 
   private let keychainIdentityKey = Constants.keychainIdentity
-  private let keychainPayloadKey = Constants.keychainPayload
   private var pendingAuthState: String!
 
   private let crashReporter: CrashReporter
@@ -43,37 +41,17 @@ final class DefaultAuthClient: NSObject, AuthClient {
   @MainActor
   func initialize() async throws {
     try await recordThrowingOperation {
-      guard let existingCookie = cookieStorage.cookies?.first(where: { $0.name == AuthConstants.cookieName }) else {
-        try? KeychainHelper.deleteItem(for: keychainPayloadKey)
-        try? KeychainHelper.deleteItem(for: keychainIdentityKey)
-        try? KeychainHelper.deleteItem(for: FeedsViewModel.Constants.blockedPrincipalsIdentifier)
-        try? KeychainHelper.deleteItem(for: HomeTabController.Constants.eulaAccepted)
-        try await fetchAndSetAuthCookie()
-        return
-      }
+      if let data = try KeychainHelper.retrieveData(for: keychainIdentityKey), !data.isEmpty {
+        identityData = data
+        try await handleExtractIdentityResponse(from: data)
+      } else {
 
-      try await refreshAuthIfNeeded(using: existingCookie)
+      }
     }
   }
 
   func refreshAuthIfNeeded(using cookie: HTTPCookie) async throws {
     try await recordThrowingOperation {
-      if let expiresDate = cookie.expiresDate, expiresDate < Date() {
-        try await fetchAndSetAuthCookie()
-      } else {
-        do {
-          if let data = try KeychainHelper.retrieveData(for: keychainIdentityKey), !data.isEmpty {
-            identityData = data
-            try await handleExtractIdentityResponse(from: data)
-          } else {
-            try await extractIdentity(from: cookie)
-          }
-        } catch {
-          try? KeychainHelper.deleteItem(for: keychainIdentityKey)
-          identityData = nil
-          try await extractIdentity(from: cookie)
-        }
-      }
     }
   }
 
@@ -136,45 +114,13 @@ final class DefaultAuthClient: NSObject, AuthClient {
   }
 
   func logout() {
-    if let cookies = cookieStorage.cookies {
-      for cookie in cookies where cookie.name == AuthConstants.cookieName {
-        cookieStorage.deleteCookie(cookie)
-      }
-    }
-
     try? KeychainHelper.deleteItem(for: keychainIdentityKey)
-    try? KeychainHelper.deleteItem(for: keychainPayloadKey)
-
     self.identity = nil
     self.canisterPrincipal = nil
     self.canisterPrincipalString = nil
     self.userPrincipal = nil
     self.userPrincipalString = nil
     self.identityData = nil
-  }
-
-  private func fetchAndSetAuthCookie() async throws {
-    try await recordThrowingOperation {
-      let payload = try createOrRetrieveAuthPayload()
-      let endpoint = AuthEndpoints.setAnonymousIdentityCookie(payload: payload)
-      _ = try await networkService.performRequest(for: endpoint)
-      guard let newCookie = cookieStorage.cookies?.first(where: { $0.name == AuthConstants.cookieName }) else {
-        throw NetworkError.invalidResponse("Failed to fetch cookie from setAnonymousIdentityCookie response.")
-      }
-      try await extractIdentity(from: newCookie)
-    }
-  }
-
-  private func extractIdentity(from cookie: HTTPCookie) async throws {
-    try await recordThrowingOperation {
-      let endpoint = AuthEndpoints.extractIdentity(cookie: cookie)
-      let data = try await networkService.performRequest(for: endpoint)
-
-      identityData = data
-      try KeychainHelper.store(data: data, for: keychainIdentityKey)
-
-      try await handleExtractIdentityResponse(from: data)
-    }
   }
 
   private func handleExtractIdentityResponse(from data: Data) async throws {
@@ -220,60 +166,6 @@ final class DefaultAuthClient: NSObject, AuthClient {
     }
   }
 
-  private func createOrRetrieveAuthPayload() throws -> Data {
-    if let stored = try? KeychainHelper.retrieveData(for: keychainPayloadKey),
-       !stored.isEmpty {
-      return stored
-    }
-
-    let privateKey = try secp256k1.Signing.PrivateKey(format: .uncompressed)
-    let publicKeyData = privateKey.publicKey.dataRepresentation
-
-    let xData = publicKeyData[1...32].base64URLEncodedString()
-    let yData = publicKeyData[33...64].base64URLEncodedString()
-    let dData = privateKey.dataRepresentation.base64URLEncodedString()
-
-    let jwk: [String: Any] = [
-      "kty": "EC",
-      "crv": "secp256k1",
-      "x": xData,
-      "y": yData,
-      "d": dData
-    ]
-
-    let payload: [String: Any] = ["anonymous_identity": jwk]
-    let payloadData = try JSONSerialization.data(withJSONObject: payload)
-
-    try KeychainHelper.store(data: payloadData, for: keychainPayloadKey)
-    return payloadData
-  }
-
-  @discardableResult
-  fileprivate func recordThrowingOperation<T>(_ operation: () throws -> T) throws -> T {
-    do {
-      return try operation()
-    } catch {
-      self.stateSubject.value = .error(AuthError.authenticationFailed(error.localizedDescription))
-      crashReporter.log(error.localizedDescription)
-      crashReporter.recordException(error)
-      throw error
-    }
-  }
-
-  @discardableResult
-  fileprivate func recordThrowingOperation<T>(_ operation: () async throws -> T) async throws -> T {
-    do {
-      return try await operation()
-    } catch {
-      self.stateSubject.value = .error(AuthError.authenticationFailed(error.localizedDescription))
-      crashReporter.log(error.localizedDescription)
-      crashReporter.recordException(error)
-      throw error
-    }
-  }
-}
-
-extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
   @MainActor
   func signInWithSocial(provider: SocialProvider) async throws {
     let verifier = PKCE.generateCodeVerifier()
@@ -344,6 +236,7 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
     guard let authURL = comps.url else { throw AuthError.invalidRequest("Cannot form auth URL") }
     return authURL
   }
+
   private func exchangeCodeForTokens(code: String, verifier: String, redirectURI: String) async throws {
     let request = TokenRequest(
       grantType: "authorization_code",
@@ -369,7 +262,35 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
       print("Token response:\n\(jsonString)")
     }
   }
+}
 
+extension DefaultAuthClient {
+  @discardableResult
+  fileprivate func recordThrowingOperation<T>(_ operation: () throws -> T) throws -> T {
+    do {
+      return try operation()
+    } catch {
+      self.stateSubject.value = .error(AuthError.authenticationFailed(error.localizedDescription))
+      crashReporter.log(error.localizedDescription)
+      crashReporter.recordException(error)
+      throw error
+    }
+  }
+
+  @discardableResult
+  fileprivate func recordThrowingOperation<T>(_ operation: () async throws -> T) async throws -> T {
+    do {
+      return try await operation()
+    } catch {
+      self.stateSubject.value = .error(AuthError.authenticationFailed(error.localizedDescription))
+      crashReporter.log(error.localizedDescription)
+      crashReporter.recordException(error)
+      throw error
+    }
+  }
+}
+
+extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
   func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
     let scenes = UIApplication.shared.connectedScenes
       .compactMap { $0 as? UIWindowScene }
@@ -393,7 +314,6 @@ extension DefaultAuthClient {
     static let authPath = "/oauth/auth"
     static let tokenPath = "/oauth/token"
     static let keychainIdentity = "yral.delegatedIdentity"
-    static let keychainPayload  = "yral.delegatedIdentityPayload"
     static let temporaryIdentityExpirySecond: UInt64 = 3600
   }
 }
