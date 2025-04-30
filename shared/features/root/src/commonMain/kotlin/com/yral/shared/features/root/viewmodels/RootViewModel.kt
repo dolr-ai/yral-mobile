@@ -120,6 +120,16 @@ class RootViewModel(
         koinInstance.get<FeedViewModel> {
             parametersOf(_state.value.posts, _state.value.feedDetails)
         }
+
+    fun updateCurrentTab(tab: String) {
+        coroutineScope.launch {
+            _state.emit(
+                _state.value.copy(
+                    currentHomePageTab = tab,
+                ),
+            )
+        }
+    }
 }
 
 data class RootState(
@@ -127,4 +137,5 @@ data class RootState(
     val feedDetails: List<FeedDetails> = emptyList(),
     val showSplash: Boolean = true,
     val initialAnimationComplete: Boolean = false,
+    val currentHomePageTab: String = "Home",
 )

@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.core.view.WindowInsetsCompat
@@ -52,8 +53,11 @@ fun RootScreen(viewModel: RootViewModel = koinViewModel()) {
                 ).show(WindowInsetsCompat.Type.systemBars())
             }
         }
+        val feedViewModel = remember { viewModel.createFeedViewModel() }
         HomeScreen(
-            createFeedViewModel = { viewModel.createFeedViewModel() },
+            createFeedViewModel = { feedViewModel },
+            currentTab = state.currentHomePageTab,
+            updateCurrentTab = { viewModel.updateCurrentTab(it) },
         )
     }
 }
