@@ -19,10 +19,6 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -33,9 +29,11 @@ import com.yral.android.ui.design.YralColors
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 
 @Composable
-fun HomeScreen(createFeedViewModel: () -> FeedViewModel) {
-    var selectedTab by remember { mutableStateOf(HomeTab.HOME) }
-
+fun HomeScreen(
+    createFeedViewModel: () -> FeedViewModel,
+    currentTab: String,
+    updateCurrentTab: (tab: String) -> Unit,
+) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.primaryContainer,
         modifier = Modifier.fillMaxSize(),
@@ -50,11 +48,11 @@ fun HomeScreen(createFeedViewModel: () -> FeedViewModel) {
             ) {
                 HomeTab.entries.forEach { tab ->
                     NavigationBarItem(
-                        selected = selectedTab == tab,
-                        onClick = { selectedTab = tab },
+                        selected = currentTab == tab.title,
+                        onClick = { updateCurrentTab(tab.title) },
                         icon = {
                             NavBarIcon(
-                                isSelected = selectedTab == tab,
+                                isSelected = currentTab == tab.title,
                                 tab = tab,
                             )
                         },
@@ -69,8 +67,8 @@ fun HomeScreen(createFeedViewModel: () -> FeedViewModel) {
             }
         },
     ) { innerPadding ->
-        when (selectedTab) {
-            HomeTab.HOME ->
+        when (currentTab) {
+            HomeTab.HOME.title ->
                 FeedScreen(
                     modifier =
                         Modifier
@@ -79,7 +77,7 @@ fun HomeScreen(createFeedViewModel: () -> FeedViewModel) {
                     viewModel = createFeedViewModel(),
                 )
 
-            HomeTab.Account ->
+            HomeTab.Account.title ->
                 AccountScreen(
                     modifier =
                         Modifier
