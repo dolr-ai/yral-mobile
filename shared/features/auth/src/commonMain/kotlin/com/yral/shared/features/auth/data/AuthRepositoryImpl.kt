@@ -10,7 +10,6 @@ import com.yral.shared.features.auth.utils.SocialProvider
 import com.yral.shared.features.auth.utils.generateCodeChallenge
 import com.yral.shared.features.auth.utils.generateCodeVerifier
 import com.yral.shared.uniffi.generated.yralAuthLoginHint
-import io.ktor.http.Cookie
 import io.ktor.http.Parameters
 import io.ktor.http.URLBuilder
 import io.ktor.http.URLProtocol
@@ -20,14 +19,6 @@ class AuthRepositoryImpl(
     private val dataSource: AuthDataSource,
 ) : AuthRepository {
     private var verifier: String = ""
-
-    override suspend fun setAnonymousIdentityCookie() =
-        dataSource
-            .setAnonymousIdentityCookie()
-
-    override suspend fun extractIdentity(cookie: Cookie): ByteArray =
-        dataSource
-            .extractIdentity(cookie)
 
     override suspend fun getOAuthUrl(
         provider: SocialProvider,
@@ -62,7 +53,8 @@ class AuthRepositoryImpl(
             .authenticateToken(code, verifier)
             .toTokenResponse()
 
-    override suspend fun getAnonymousIdentityCookie(): Cookie? =
+    override suspend fun obtainAnonymousIdentity(): TokenResponse =
         dataSource
-            .getAnonymousIdentityCookie()
+            .obtainAnonymousIdentity()
+            .toTokenResponse()
 }

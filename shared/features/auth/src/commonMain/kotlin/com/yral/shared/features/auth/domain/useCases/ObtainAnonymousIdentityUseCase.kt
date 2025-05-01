@@ -3,13 +3,13 @@ package com.yral.shared.features.auth.domain.useCases
 import com.yral.shared.core.SuspendUseCase
 import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.features.auth.domain.AuthRepository
-import io.ktor.http.Cookie
+import com.yral.shared.features.auth.domain.models.TokenResponse
 
-class ExtractIdentityUseCase(
+class ObtainAnonymousIdentityUseCase(
     appDispatchers: AppDispatchers,
     private val authRepository: AuthRepository,
-) : SuspendUseCase<Cookie, ByteArray>(appDispatchers.io) {
-    override suspend fun execute(parameter: Cookie): ByteArray =
+) : SuspendUseCase<Unit, TokenResponse>(appDispatchers.io) {
+    override suspend fun execute(parameter: Unit): TokenResponse =
         authRepository
-            .extractIdentity(parameter)
+            .obtainAnonymousIdentity()
 }

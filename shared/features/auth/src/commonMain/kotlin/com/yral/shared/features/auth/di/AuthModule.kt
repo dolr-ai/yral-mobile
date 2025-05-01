@@ -7,8 +7,7 @@ import com.yral.shared.features.auth.data.AuthDataSourceImpl
 import com.yral.shared.features.auth.data.AuthRepositoryImpl
 import com.yral.shared.features.auth.domain.AuthRepository
 import com.yral.shared.features.auth.domain.useCases.AuthenticateTokenUseCase
-import com.yral.shared.features.auth.domain.useCases.ExtractIdentityUseCase
-import com.yral.shared.features.auth.domain.useCases.SetAnonymousIdentityCookieUseCase
+import com.yral.shared.features.auth.domain.useCases.ObtainAnonymousIdentityUseCase
 import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
@@ -19,7 +18,6 @@ val authModule =
         singleOf(::AuthRepositoryImpl) { bind<AuthRepository>() }
         singleOf(::AuthDataSourceImpl) { bind<AuthDataSource>() }
 
-        singleOf(::SetAnonymousIdentityCookieUseCase)
-        singleOf(::ExtractIdentityUseCase)
         singleOf(::AuthenticateTokenUseCase)
+        singleOf(::ObtainAnonymousIdentityUseCase)
     }

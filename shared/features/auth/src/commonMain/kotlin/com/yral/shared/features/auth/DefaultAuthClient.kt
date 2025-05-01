@@ -11,18 +11,13 @@ import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.features.auth.domain.AuthRepository
 import com.yral.shared.features.auth.domain.useCases.AuthenticateTokenUseCase
-import com.yral.shared.features.auth.domain.useCases.ExtractIdentityUseCase
-import com.yral.shared.features.auth.domain.useCases.SetAnonymousIdentityCookieUseCase
+import com.yral.shared.features.auth.domain.useCases.ObtainAnonymousIdentityUseCase
 import com.yral.shared.features.auth.utils.SocialProvider
 import com.yral.shared.features.auth.utils.openOAuth
 import com.yral.shared.features.auth.utils.parseAccessTokenForIdentity
-import com.yral.shared.http.CookieType
-import com.yral.shared.http.maxAgeOrExpires
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import com.yral.shared.uniffi.generated.authenticateWithNetwork
-import io.ktor.http.Cookie
-import kotlinx.datetime.Clock
 
 class DefaultAuthClient(
     private val sessionManager: SessionManager,
@@ -30,60 +25,32 @@ class DefaultAuthClient(
     private val preferences: Preferences,
     private val platformResourcesFactory: PlatformResourcesFactory,
     private val authRepository: AuthRepository,
-    private val setAnonymousIdentityCookieUseCase: SetAnonymousIdentityCookieUseCase,
-    private val extractIdentityUseCase: ExtractIdentityUseCase,
     private val authenticateTokenUseCase: AuthenticateTokenUseCase,
+    private val obtainAnonymousIdentityUseCase: ObtainAnonymousIdentityUseCase,
 ) : AuthClient {
     private var currentState: String? = null
 
     override suspend fun initialize() {
-        checkSocialSignIn()
-    }
-
-    private suspend fun checkSocialSignIn() {
-        if (preferences.getBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name) == true) {
-            preferences.getBytes(PrefKeys.IDENTITY_DATA.name)?.let {
-                handleExtractIdentityResponse(it)
-            } ?: refreshAuthIfNeeded()
-        } else {
-            refreshAuthIfNeeded()
-        }
-    }
-
-    private suspend fun refreshAuthIfNeeded() {
-        val cookie = authRepository.getAnonymousIdentityCookie()
-        cookie?.let {
-            if ((it.maxAgeOrExpires(Clock.System.now().toEpochMilliseconds()) ?: 0) >
-                Clock.System.now().toEpochMilliseconds()
-            ) {
-                val storedData = preferences.getBytes(PrefKeys.IDENTITY_DATA.name)
-                storedData?.let { data -> handleExtractIdentityResponse(data) } ?: extractIdentity(
-                    it,
-                )
-            } else {
-                fetchAndSetAuthCookie()
-            }
-        } ?: fetchAndSetAuthCookie()
-    }
-
-    private suspend fun fetchAndSetAuthCookie() {
-        setAnonymousIdentityCookieUseCase
-            .invoke(Unit)
-            .mapBoth(
-                success = { refreshAuthIfNeeded() },
-                failure = { error(it.localizedMessage ?: "") },
-            )
         refreshAuthIfNeeded()
     }
 
-    private suspend fun extractIdentity(cookie: Cookie) {
-        extractIdentityUseCase
-            .invoke(cookie)
+    private suspend fun refreshAuthIfNeeded() {
+        preferences.getBytes(PrefKeys.IDENTITY_DATA.name)?.let {
+            handleExtractIdentityResponse(it)
+        } ?: obtainAnonymousIdentity()
+    }
+
+    private suspend fun obtainAnonymousIdentity() {
+        obtainAnonymousIdentityUseCase
+            .invoke(Unit)
             .mapBoth(
-                success = {
-                    if (it.isNotEmpty()) {
-                        handleExtractIdentityResponse(it)
-                    }
+                success = { tokenResponse ->
+                    val identity = parseAccessTokenForIdentity(tokenResponse.accessToken)
+                    handleExtractIdentityResponse(identity)
+                    preferences.putString(
+                        PrefKeys.REFRESH_TOKEN.name,
+                        tokenResponse.refreshToken,
+                    )
                 },
                 failure = { error(it.localizedMessage ?: "") },
             )
@@ -142,13 +109,12 @@ class DefaultAuthClient(
             .mapBoth(
                 success = { tokenResponse ->
                     val identity = parseAccessTokenForIdentity(tokenResponse.accessToken)
+                    handleExtractIdentityResponse(identity)
+                    preferences.putBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name, true)
                     preferences.putString(
                         PrefKeys.REFRESH_TOKEN.name,
                         tokenResponse.refreshToken,
                     )
-                    preferences.putBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name, true)
-                    preferences.remove(CookieType.USER_IDENTITY.value)
-                    handleExtractIdentityResponse(identity)
                 },
                 failure = { error(it.localizedMessage ?: "") },
             )

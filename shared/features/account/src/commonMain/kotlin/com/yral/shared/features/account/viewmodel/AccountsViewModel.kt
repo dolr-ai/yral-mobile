@@ -6,7 +6,6 @@ import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.features.auth.AuthClient
 import com.yral.shared.features.auth.utils.SocialProvider
-import com.yral.shared.http.CookieType
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import com.yral.shared.uniffi.generated.propicFromPrincipal
@@ -59,7 +58,6 @@ class AccountsViewModel(
     fun logout() {
         coroutineScope.launch {
             preferences.remove(PrefKeys.IDENTITY_DATA.name)
-            preferences.remove(CookieType.USER_IDENTITY.value)
             preferences.remove(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name)
             preferences.remove(PrefKeys.REFRESH_TOKEN.name)
             sessionManager.updateState(SessionState.Initial)
