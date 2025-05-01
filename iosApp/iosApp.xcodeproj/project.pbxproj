@@ -57,6 +57,8 @@
 		107C60DB2DBFA820006FC467 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 107C60DA2DBFA820006FC467 /* FirebaseStorage */; };
 		107C61232DC0F2C8006FC467 /* SmileyGameRuleError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C61222DC0F2B9006FC467 /* SmileyGameRuleError.swift */; };
 		107C61242DC0F2C8006FC467 /* SmileyGameRuleError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C61222DC0F2B9006FC467 /* SmileyGameRuleError.swift */; };
+		107C61772DC35ED6006FC467 /* CoinsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C61762DC35ED3006FC467 /* CoinsView.swift */; };
+		107C61782DC35ED6006FC467 /* CoinsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C61762DC35ED3006FC467 /* CoinsView.swift */; };
 		10BA2E872DA6507E00B6BE97 /* FeedsPlayerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10BA2E842DA6507E00B6BE97 /* FeedsPlayerTests.swift */; };
 		2152FB042600AC8F00CF470E /* IosApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* IosApp.swift */; };
 		7555FF83242A565900829871 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* ContentView.swift */; };
@@ -472,6 +474,7 @@
 		107C60D22DBF9FC4006FC467 /* GameRuleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameRuleView.swift; sourceTree = "<group>"; };
 		107C60D52DBFA7C0006FC467 /* FirebaseImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseImageView.swift; sourceTree = "<group>"; };
 		107C61222DC0F2B9006FC467 /* SmileyGameRuleError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameRuleError.swift; sourceTree = "<group>"; };
+		107C61762DC35ED3006FC467 /* CoinsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoinsView.swift; sourceTree = "<group>"; };
 		10BA2E822DA64E6A00B6BE97 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Platforms/iPhoneOS.platform/Developer/Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		10BA2E842DA6507E00B6BE97 /* FeedsPlayerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedsPlayerTests.swift; sourceTree = "<group>"; };
 		2152FB032600AC8F00CF470E /* IosApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IosApp.swift; sourceTree = "<group>"; };
@@ -760,6 +763,8 @@
 			isa = PBXGroup;
 			children = (
 				107C60D12DBF9F96006FC467 /* SmileyGameRule */,
+				107C61762DC35ED3006FC467 /* CoinsView.swift */,
+				107C60942DB7AAD7006FC467 /* AboutGameView.swift */,
 				107C60972DB8BCB1006FC467 /* SmileyGameView.swift */,
 				107C609A2DB90B22006FC467 /* SmileyGameResultBottomSheetView.swift */,
 			);
@@ -2256,6 +2261,7 @@
 				AC6BECC02D09F86C002E2021 /* NetworkService.swift in Sources */,
 				ACEBF8012D74673600B594A0 /* HashtagsView.swift in Sources */,
 				ACB09FDD2D92F87E00EE3239 /* MyVideosFeedViewModel.swift in Sources */,
+				107C61782DC35ED6006FC467 /* CoinsView.swift in Sources */,
 				ACB46A262D0EC0A3002E200C /* FeedsPlayer.swift in Sources */,
 				ACB46A682D0F3609002E200C /* FeedsViewModel.swift in Sources */,
 				107C60D32DBF9FC4006FC467 /* GameRuleView.swift in Sources */,
@@ -2438,6 +2444,7 @@
 				AC6BECBF2D09F86C002E2021 /* NetworkService.swift in Sources */,
 				ACEBF8022D74673600B594A0 /* HashtagsView.swift in Sources */,
 				ACB09FDE2D92F87E00EE3239 /* MyVideosFeedViewModel.swift in Sources */,
+				107C61772DC35ED6006FC467 /* CoinsView.swift in Sources */,
 				ACB46A272D0EC0A3002E200C /* FeedsPlayer.swift in Sources */,
 				ACB46A692D0F3609002E200C /* FeedsViewModel.swift in Sources */,
 				107C60D42DBF9FC4006FC467 /* GameRuleView.swift in Sources */,
