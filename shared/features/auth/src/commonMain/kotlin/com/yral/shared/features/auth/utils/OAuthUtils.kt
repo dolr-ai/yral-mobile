@@ -1,7 +1,7 @@
-package com.yral.shared.features.auth
+package com.yral.shared.features.auth.utils
 
-import android.net.Uri
 import com.yral.shared.core.platform.PlatformResourcesFactory
+import io.ktor.http.Url
 
 const val CODE_VERIFIER_LENGTH = 64
 const val KEY_AUD = "aud" // Client ID
@@ -15,7 +15,7 @@ const val KEY_DELEGATED_IDENTITY = "ext_delegated_identity" // DelegatedIdentity
 
 expect fun openOAuth(
     platformResourcesFactory: PlatformResourcesFactory,
-    authUri: Uri,
+    authUrl: Url,
 )
 
 expect fun generateCodeVerifier(): String

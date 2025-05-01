@@ -1,17 +1,21 @@
-package com.yral.shared.features.auth
+package com.yral.shared.features.auth.utils
 
+import android.annotation.SuppressLint
 import android.net.Uri
 import android.util.Base64
 import androidx.browser.customtabs.CustomTabsIntent
 import com.nimbusds.jose.shaded.gson.Gson
 import com.nimbusds.jwt.JWTParser
 import com.yral.shared.core.platform.PlatformResourcesFactory
+import io.ktor.http.Url
+import io.ktor.http.toURI
 import java.security.MessageDigest
 import java.security.SecureRandom
 
+@SuppressLint("UseKtx")
 actual fun openOAuth(
     platformResourcesFactory: PlatformResourcesFactory,
-    authUri: Uri,
+    authUrl: Url,
 ) {
     val customTabsIntent =
         CustomTabsIntent
@@ -25,7 +29,11 @@ actual fun openOAuth(
     customTabsIntent.intent.addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP)
 
     // Launch the custom tab
-    customTabsIntent.launchUrl(platformResourcesFactory.resources().activityContext, authUri)
+    customTabsIntent
+        .launchUrl(
+            platformResourcesFactory.resources().activityContext,
+            Uri.parse(authUrl.toURI().toString()),
+        )
 }
 
 actual fun generateCodeVerifier(): String {

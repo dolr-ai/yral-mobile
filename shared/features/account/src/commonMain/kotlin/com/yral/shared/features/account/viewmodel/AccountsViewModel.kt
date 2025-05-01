@@ -5,7 +5,7 @@ import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.features.auth.AuthClient
-import com.yral.shared.features.auth.SocialProvider
+import com.yral.shared.features.auth.utils.SocialProvider
 import com.yral.shared.http.CookieType
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences

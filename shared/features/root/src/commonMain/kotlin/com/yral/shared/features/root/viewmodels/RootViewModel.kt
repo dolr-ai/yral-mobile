@@ -49,18 +49,20 @@ class RootViewModel(
                     currentHomePageTab = _state.value.currentHomePageTab,
                 ),
             )
-            sessionManager.getCanisterPrincipal()?.let {
-                initialFeedData(it)
-            } ?: try {
-                authClient.initialize()
-                sessionManager.getCanisterPrincipal()?.let { principal ->
-                    sessionManager.getIdentity()?.let { identity ->
-                        individualUserServiceFactory.initialize(
-                            principal = principal,
-                            identityData = identity,
-                        )
-                    } ?: error("Identity is null")
-                } ?: error("Principal is null after initialization")
+            try {
+                if (sessionManager.getCanisterPrincipal() != null) {
+                    initialFeedData(sessionManager.getUserPrincipal()!!)
+                } else {
+                    authClient.initialize()
+                    sessionManager.getCanisterPrincipal()?.let { principal ->
+                        sessionManager.getIdentity()?.let { identity ->
+                            individualUserServiceFactory.initialize(
+                                principal = principal,
+                                identityData = identity,
+                            )
+                        } ?: error("Identity is null")
+                    } ?: error("Principal is null after initialization")
+                }
             } catch (e: Exception) {
                 crashlyticsManager.recordException(e)
             }

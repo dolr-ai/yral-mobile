@@ -33,6 +33,7 @@ kotlin {
             implementation(projects.shared.libs.preferences)
             implementation(projects.shared.libs.http)
             implementation(projects.shared.libs.analytics)
+            implementation(projects.shared.libs.crashlytics)
             implementation(projects.shared.libs.koin)
             implementation(projects.shared.core)
 

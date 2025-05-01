@@ -57,22 +57,26 @@ class FeedViewModel(
     }
 
     private suspend fun fetchFeedDetail(post: Post) {
-        fetchFeedDetailsUseCase
-            .invoke(post)
-            .mapBoth(
-                success = { detail ->
-                    val feedDetailsList = _state.value.feedDetails.toMutableList()
-                    feedDetailsList.add(detail)
-                    _state.emit(
-                        _state.value.copy(
-                            feedDetails = feedDetailsList.toList(),
-                        ),
-                    )
-                },
-                failure = { error ->
-                    error("Error loading feed details: $error")
-                },
-            )
+        try {
+            fetchFeedDetailsUseCase
+                .invoke(post)
+                .mapBoth(
+                    success = { detail ->
+                        val feedDetailsList = _state.value.feedDetails.toMutableList()
+                        feedDetailsList.add(detail)
+                        _state.emit(
+                            _state.value.copy(
+                                feedDetails = feedDetailsList.toList(),
+                            ),
+                        )
+                    },
+                    failure = { error ->
+                        error("Error loading feed details: $error")
+                    },
+                )
+        } catch (e: Exception) {
+            crashlyticsManager.recordException(e)
+        }
     }
 
     fun loadMoreFeed() {
@@ -106,7 +110,9 @@ class FeedViewModel(
                                     fetchFeedDetail(post)
                                 }
                             },
-                            failure = { println("xxxx error: $it") },
+                            failure = { error ->
+                                error("Error loading more feed: $error")
+                            },
                         )
                     setLoadingMore(false)
                 } catch (e: Exception) {
