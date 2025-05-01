@@ -48,13 +48,18 @@ class AuthRepositoryImpl(
         return Pair(authUrl, codeChallenge)
     }
 
+    override suspend fun obtainAnonymousIdentity(): TokenResponse =
+        dataSource
+            .obtainAnonymousIdentity()
+            .toTokenResponse()
+
     override suspend fun authenticateToken(code: String): TokenResponse =
         dataSource
             .authenticateToken(code, verifier)
             .toTokenResponse()
 
-    override suspend fun obtainAnonymousIdentity(): TokenResponse =
+    override suspend fun refreshToken(token: String): TokenResponse =
         dataSource
-            .obtainAnonymousIdentity()
+            .refreshToken(token)
             .toTokenResponse()
 }

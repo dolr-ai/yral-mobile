@@ -9,7 +9,8 @@ interface AuthRepository {
         provider: SocialProvider,
         identity: ByteArray,
     ): Pair<Url, String>
-    suspend fun authenticateToken(code: String): TokenResponse
 
     suspend fun obtainAnonymousIdentity(): TokenResponse
+    suspend fun authenticateToken(code: String): TokenResponse
+    suspend fun refreshToken(token: String): TokenResponse
 }

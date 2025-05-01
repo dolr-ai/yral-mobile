@@ -14,6 +14,27 @@ class AuthDataSourceImpl(
     private val client: HttpClient,
     private val json: Json,
 ) : AuthDataSource {
+    override suspend fun obtainAnonymousIdentity(): TokenResponseDto {
+        val formData =
+            listOf(
+                "grant_type" to GRANT_TYPE_CLIENT_CREDS,
+                "client_id" to CLIENT_ID,
+            ).joinToString("&") { (key, value) ->
+                "$key=$value"
+            }
+        val response =
+            client
+                .post {
+                    url {
+                        host = OAUTH_BASE_URL
+                        path(PATH_AUTHENTICATE_TOKEN)
+                    }
+                    setBody(formData)
+                    contentType(ContentType.Application.FormUrlEncoded)
+                }.bodyAsText()
+        return json.decodeFromString<TokenResponseDto>(response)
+    }
+
     override suspend fun authenticateToken(
         code: String,
         verifier: String,
@@ -41,10 +62,11 @@ class AuthDataSourceImpl(
         return json.decodeFromString<TokenResponseDto>(response)
     }
 
-    override suspend fun obtainAnonymousIdentity(): TokenResponseDto {
+    override suspend fun refreshToken(token: String): TokenResponseDto {
         val formData =
             listOf(
-                "grant_type" to GRANT_TYPE_CLIENT_CREDS,
+                "grant_type" to GRANT_TYPE_REFRESH_TOEKN,
+                "refresh_token" to token,
                 "client_id" to CLIENT_ID,
             ).joinToString("&") { (key, value) ->
                 "$key=$value"
@@ -69,5 +91,6 @@ class AuthDataSourceImpl(
         private const val PATH_AUTHENTICATE_TOKEN = "oauth/token"
         private const val GRANT_TYPE_AUTHORIZATION = "authorization_code"
         private const val GRANT_TYPE_CLIENT_CREDS = "client_credentials"
+        private const val GRANT_TYPE_REFRESH_TOEKN = "refresh_token"
     }
 }

@@ -12,6 +12,7 @@ import com.yral.shared.core.session.SessionState
 import com.yral.shared.features.auth.domain.AuthRepository
 import com.yral.shared.features.auth.domain.useCases.AuthenticateTokenUseCase
 import com.yral.shared.features.auth.domain.useCases.ObtainAnonymousIdentityUseCase
+import com.yral.shared.features.auth.domain.useCases.RefreshTokenUseCase
 import com.yral.shared.features.auth.utils.SocialProvider
 import com.yral.shared.features.auth.utils.openOAuth
 import com.yral.shared.features.auth.utils.parseAccessTokenForIdentity
@@ -27,6 +28,7 @@ class DefaultAuthClient(
     private val authRepository: AuthRepository,
     private val authenticateTokenUseCase: AuthenticateTokenUseCase,
     private val obtainAnonymousIdentityUseCase: ObtainAnonymousIdentityUseCase,
+    private val refreshTokenUseCase: RefreshTokenUseCase,
 ) : AuthClient {
     private var currentState: String? = null
 
@@ -76,6 +78,26 @@ class DefaultAuthClient(
                     name = FeatureEvents.AUTH_SUCCESSFUL.name.lowercase(),
                 ),
         )
+    }
+
+    @Suppress("UnusedPrivateMember")
+    private suspend fun refreshAccessToken() {
+        val refreshToken = preferences.getString(PrefKeys.REFRESH_TOKEN.name)
+        refreshToken?.let {
+            refreshTokenUseCase
+                .invoke(refreshToken)
+                .mapBoth(
+                    success = { tokenResponse ->
+                        val identity = parseAccessTokenForIdentity(tokenResponse.accessToken)
+                        handleExtractIdentityResponse(identity)
+                        preferences.putString(
+                            PrefKeys.REFRESH_TOKEN.name,
+                            tokenResponse.refreshToken,
+                        )
+                    },
+                    failure = { error(it.localizedMessage ?: "") },
+                )
+        } ?: obtainAnonymousIdentity()
     }
 
     override suspend fun signInWithSocial(provider: SocialProvider) {
