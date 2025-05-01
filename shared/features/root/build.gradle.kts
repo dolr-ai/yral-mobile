@@ -25,10 +25,10 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.koin.composeVM)
 
-            implementation(projects.shared.rust)
+            // implementation(projects.shared.rust)
             BuildConfig.getDependencies(project).forEach { dependency ->
                 if (dependency.isNotEmpty()) {
-                    // implementation(dependency)
+                    implementation(dependency)
                 }
             }
         }
