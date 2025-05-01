@@ -44,7 +44,7 @@ struct AccountView: View {
             delegate: self
           )
         }
-        ProfileOptionsView(showLogoutButton: $showLoginButton.inverted)
+        ProfileOptionsView(showLogoutButton: $showLoginButton.inverted, delegate: self)
         ShareOptionsView()
         //        ICPBrandingView()
         Spacer().frame(height: Constants.bottomSpacing)
@@ -90,6 +90,16 @@ extension AccountView: SignupSheetProtocol {
     Task {
       await viewModel.socialSignIn(request: .apple)
     }
+  }
+}
+
+extension AccountView: ProfileOptionsViewDelegate {
+  func login() {
+
+  }
+
+  func logout() {
+
   }
 }
 

@@ -392,6 +392,12 @@
 		ACF639DD2DC24D2B00C4BCCC /* SocialProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACF639DB2DC24D2700C4BCCC /* SocialProvider.swift */; };
 		ACF639DF2DC25BA600C4BCCC /* UserDefaultsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACF639DE2DC25B9C00C4BCCC /* UserDefaultsManager.swift */; };
 		ACF639E02DC25BA600C4BCCC /* UserDefaultsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACF639DE2DC25B9C00C4BCCC /* UserDefaultsManager.swift */; };
+		ACF63A742DC26C9500C4BCCC /* TokenClaimsDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACF63A732DC26C8F00C4BCCC /* TokenClaimsDTO.swift */; };
+		ACF63A752DC26C9500C4BCCC /* TokenClaimsDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACF63A732DC26C8F00C4BCCC /* TokenClaimsDTO.swift */; };
+		ACF63A772DC271F900C4BCCC /* DefaultAuthClient+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACF63A762DC271F300C4BCCC /* DefaultAuthClient+Extensions.swift */; };
+		ACF63A782DC271F900C4BCCC /* DefaultAuthClient+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACF63A762DC271F300C4BCCC /* DefaultAuthClient+Extensions.swift */; };
+		ACF63A7A2DC29A3100C4BCCC /* ClientCredentialsRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACF63A792DC29A2700C4BCCC /* ClientCredentialsRequest.swift */; };
+		ACF63A7B2DC29A3100C4BCCC /* ClientCredentialsRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACF63A792DC29A2700C4BCCC /* ClientCredentialsRequest.swift */; };
 		ACFEDFA12D96CEC2003116EA /* Errors.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFEDFA02D96CEC2003116EA /* Errors.swift */; };
 		ACFEDFA22D96CEC2003116EA /* Errors.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFEDFA02D96CEC2003116EA /* Errors.swift */; };
 /* End PBXBuildFile section */
@@ -623,6 +629,9 @@
 		ACEBF8042D7473DD00B594A0 /* UploadErrorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadErrorView.swift; sourceTree = "<group>"; };
 		ACF639DB2DC24D2700C4BCCC /* SocialProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialProvider.swift; sourceTree = "<group>"; };
 		ACF639DE2DC25B9C00C4BCCC /* UserDefaultsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDefaultsManager.swift; sourceTree = "<group>"; };
+		ACF63A732DC26C8F00C4BCCC /* TokenClaimsDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenClaimsDTO.swift; sourceTree = "<group>"; };
+		ACF63A762DC271F300C4BCCC /* DefaultAuthClient+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DefaultAuthClient+Extensions.swift"; sourceTree = "<group>"; };
+		ACF63A792DC29A2700C4BCCC /* ClientCredentialsRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientCredentialsRequest.swift; sourceTree = "<group>"; };
 		ACFEDFA02D96CEC2003116EA /* Errors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Errors.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -826,6 +835,8 @@
 		AC1F93972DC14A9000F322E1 /* DTO */ = {
 			isa = PBXGroup;
 			children = (
+				ACF63A792DC29A2700C4BCCC /* ClientCredentialsRequest.swift */,
+				ACF63A732DC26C8F00C4BCCC /* TokenClaimsDTO.swift */,
 				AC1F93912DC1494500F322E1 /* TokenRequestDTO.swift */,
 				AC1F93942DC1495100F322E1 /* TokenResponseDTO.swift */,
 			);
@@ -856,6 +867,7 @@
 			children = (
 				ACF639DB2DC24D2700C4BCCC /* SocialProvider.swift */,
 				ACB46A5F2D0EF947002E200C /* DefaultAuthClient.swift */,
+				ACF63A762DC271F300C4BCCC /* DefaultAuthClient+Extensions.swift */,
 				AC1F93972DC14A9000F322E1 /* DTO */,
 			);
 			path = DefaultAuthClient;
@@ -2246,6 +2258,7 @@
 				AC32E4692D2998D6001DDA43 /* AccountDIContainer.swift in Sources */,
 				AC5A7B8C2DACF1E2009E9E42 /* VideoEventDTO.swift in Sources */,
 				ACB46A362D0EC998002E200C /* FeedDIContainer.swift in Sources */,
+				ACF63A7B2DC29A3100C4BCCC /* ClientCredentialsRequest.swift in Sources */,
 				AC26CA572D80287E006ADA75 /* AuthClient.swift in Sources */,
 				2152FB042600AC8F00CF470E /* IosApp.swift in Sources */,
 				ACB09FCF2D92D51200EE3239 /* LikeRepository.swift in Sources */,
@@ -2291,6 +2304,7 @@
 				AC7F7ECA2D786F8E00215162 /* UploadVideoUseCase.swift in Sources */,
 				ACB09FDA2D92D6E900EE3239 /* MoreFeedsRequest.swift in Sources */,
 				ACDD23E42D8B19FF00AB0DAF /* MyVideosUseCase.swift in Sources */,
+				ACF63A742DC26C9500C4BCCC /* TokenClaimsDTO.swift in Sources */,
 				ACC0D4342D8BFE67006DCF5C /* NudgePopupView.swift in Sources */,
 				AC92940F2D64CBFB003DB102 /* SelectFileView.swift in Sources */,
 				AC1ACFA02DB964AB001BDCFD /* SwiftUI+Extensions.swift in Sources */,
@@ -2325,6 +2339,7 @@
 				AC99BB9A2D84913C008012C2 /* YralColor.swift in Sources */,
 				AC6E31232D22F08F001EBE6C /* ImageLoaderProtocol.swift in Sources */,
 				AC462F422D95A4AD004957B3 /* OffsetableScrollView.swift in Sources */,
+				ACF63A782DC271F900C4BCCC /* DefaultAuthClient+Extensions.swift in Sources */,
 				ACB09FD22D92D52E00EE3239 /* LikeRepositoryProtocol.swift in Sources */,
 				ACB46A292D0EC76A002E200C /* AppConfiguration.swift in Sources */,
 				ACEBF7DF2D6F215800B594A0 /* VideoPlayerView.swift in Sources */,
@@ -2422,6 +2437,7 @@
 				AC32E4682D2998D6001DDA43 /* AccountDIContainer.swift in Sources */,
 				AC5A7B8B2DACF1E2009E9E42 /* VideoEventDTO.swift in Sources */,
 				ACB46A372D0EC998002E200C /* FeedDIContainer.swift in Sources */,
+				ACF63A7A2DC29A3100C4BCCC /* ClientCredentialsRequest.swift in Sources */,
 				AC26CA582D80287E006ADA75 /* AuthClient.swift in Sources */,
 				ACD941872CFF575C0038FCB6 /* IosApp.swift in Sources */,
 				ACB09FCE2D92D51200EE3239 /* LikeRepository.swift in Sources */,
@@ -2467,6 +2483,7 @@
 				AC7F7ECB2D786F8E00215162 /* UploadVideoUseCase.swift in Sources */,
 				ACB09FDB2D92D6E900EE3239 /* MoreFeedsRequest.swift in Sources */,
 				ACDD23E52D8B19FF00AB0DAF /* MyVideosUseCase.swift in Sources */,
+				ACF63A752DC26C9500C4BCCC /* TokenClaimsDTO.swift in Sources */,
 				ACC0D4352D8BFE67006DCF5C /* NudgePopupView.swift in Sources */,
 				AC92940E2D64CBFB003DB102 /* SelectFileView.swift in Sources */,
 				AC1ACF9F2DB964AB001BDCFD /* SwiftUI+Extensions.swift in Sources */,
@@ -2501,6 +2518,7 @@
 				AC99BB9B2D84913C008012C2 /* YralColor.swift in Sources */,
 				AC6E31222D22F08F001EBE6C /* ImageLoaderProtocol.swift in Sources */,
 				AC462F432D95A4AD004957B3 /* OffsetableScrollView.swift in Sources */,
+				ACF63A772DC271F900C4BCCC /* DefaultAuthClient+Extensions.swift in Sources */,
 				ACB09FD12D92D52E00EE3239 /* LikeRepositoryProtocol.swift in Sources */,
 				ACB46A2A2D0EC76A002E200C /* AppConfiguration.swift in Sources */,
 				ACEBF7DE2D6F215800B594A0 /* VideoPlayerView.swift in Sources */,

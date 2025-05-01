@@ -8,7 +8,6 @@ protocol AuthClient {
   var userPrincipal: Principal? { get }
   var userPrincipalString: String? { get }
   func initialize() async throws
-  func refreshAuthIfNeeded(using cookie: HTTPCookie) async throws
   func generateNewDelegatedIdentity() throws -> DelegatedIdentity
   func generateNewDelegatedIdentityWireOneHour() throws -> DelegatedIdentityWire
   func signInWithSocial(provider: SocialProvider) async throws

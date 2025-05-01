@@ -10,6 +10,8 @@ import Foundation
 
 enum DefaultsKey: String {
   case eulaAccepted
+  case userDefaultsLoggedIn
+  case keychainTokenExpiryDateKey
 }
 
 final class UserDefaultsManager {
