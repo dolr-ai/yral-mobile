@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.detekt)
     alias(libs.plugins.gobleyCargo).apply(false)
     alias(libs.plugins.gobleyUniffi).apply(false)
+    alias(libs.plugins.gobleyRust).apply(false)
     alias(libs.plugins.kotlinAtomicfu).apply(false)
     alias(libs.plugins.kotlinxSerialisartion).apply(false)
     alias(libs.plugins.crashlytics).apply(false)
