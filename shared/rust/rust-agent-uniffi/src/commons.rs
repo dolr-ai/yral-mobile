@@ -37,6 +37,12 @@ pub enum KnownPrincipalType {
     CanisterIdSnsGovernance,
     UserIdGlobalSuperAdmin,
 }
+#[derive(CandidType, Deserialize, Record)]
+pub struct KnownPrincipalTypePrincipalPair {
+    pub known_principal_type: KnownPrincipalType,
+    pub principal: Principal,
+}
+
 #[derive(CandidType, Deserialize, Enum)]
 pub enum PostStatus {
     BannedForExplicitness,
