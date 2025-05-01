@@ -15,10 +15,11 @@ import com.yral.shared.features.auth.domain.useCases.ObtainAnonymousIdentityUseC
 import com.yral.shared.features.auth.domain.useCases.RefreshTokenUseCase
 import com.yral.shared.features.auth.utils.SocialProvider
 import com.yral.shared.features.auth.utils.openOAuth
-import com.yral.shared.features.auth.utils.parseAccessTokenForIdentity
+import com.yral.shared.features.auth.utils.parseOAuthToken
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import com.yral.shared.uniffi.generated.authenticateWithNetwork
+import kotlinx.datetime.Clock
 
 class DefaultAuthClient(
     private val sessionManager: SessionManager,
@@ -37,8 +38,12 @@ class DefaultAuthClient(
     }
 
     private suspend fun refreshAuthIfNeeded() {
-        preferences.getBytes(PrefKeys.IDENTITY_DATA.name)?.let {
-            handleExtractIdentityResponse(it)
+        preferences.getString(PrefKeys.ACCESS_TOKEN.name)?.let { accessToken ->
+            handleToken(
+                token = accessToken,
+                refreshToken = "",
+                shouldRefreshToken = true,
+            )
         } ?: obtainAnonymousIdentity()
     }
 
@@ -47,15 +52,54 @@ class DefaultAuthClient(
             .invoke(Unit)
             .mapBoth(
                 success = { tokenResponse ->
-                    val identity = parseAccessTokenForIdentity(tokenResponse.accessToken)
-                    handleExtractIdentityResponse(identity)
-                    preferences.putString(
-                        PrefKeys.REFRESH_TOKEN.name,
-                        tokenResponse.refreshToken,
+                    handleToken(
+                        token = tokenResponse.accessToken,
+                        refreshToken = tokenResponse.refreshToken,
+                        shouldRefreshToken = true,
                     )
                 },
                 failure = { error(it.localizedMessage ?: "") },
             )
+    }
+
+    private suspend fun handleToken(
+        token: String,
+        refreshToken: String,
+        shouldRefreshToken: Boolean,
+    ) {
+        preferences.putString(
+            PrefKeys.ACCESS_TOKEN.name,
+            token,
+        )
+        if (refreshToken.isNotEmpty()) {
+            preferences.putString(
+                PrefKeys.REFRESH_TOKEN.name,
+                refreshToken,
+            )
+        }
+        val tokenClaim = parseOAuthToken(token)
+        if (tokenClaim.isExpired(Clock.System.now().epochSeconds)) {
+            tokenClaim.delegatedIdentity?.let {
+                handleExtractIdentityResponse(it)
+            }
+        } else if (shouldRefreshToken) {
+            val rToken = preferences.getString(PrefKeys.REFRESH_TOKEN.name)
+            rToken?.let {
+                val rTokenClaim = parseOAuthToken(it)
+                if (rTokenClaim.isExpired(Clock.System.now().epochSeconds)) {
+                    refreshAccessToken()
+                } else {
+                    logout()
+                }
+            } ?: logout()
+        }
+    }
+
+    override suspend fun logout() {
+        preferences.remove(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name)
+        preferences.remove(PrefKeys.REFRESH_TOKEN.name)
+        preferences.remove(PrefKeys.ACCESS_TOKEN.name)
+        sessionManager.updateState(SessionState.Initial)
     }
 
     private suspend fun handleExtractIdentityResponse(data: ByteArray) {
@@ -70,7 +114,6 @@ class DefaultAuthClient(
                     ),
             ),
         )
-        preferences.putBytes(PrefKeys.IDENTITY_DATA.name, data)
         analyticsManager.trackEvent(
             event =
                 Event(
@@ -80,7 +123,6 @@ class DefaultAuthClient(
         )
     }
 
-    @Suppress("UnusedPrivateMember")
     private suspend fun refreshAccessToken() {
         val refreshToken = preferences.getString(PrefKeys.REFRESH_TOKEN.name)
         refreshToken?.let {
@@ -88,11 +130,10 @@ class DefaultAuthClient(
                 .invoke(refreshToken)
                 .mapBoth(
                     success = { tokenResponse ->
-                        val identity = parseAccessTokenForIdentity(tokenResponse.accessToken)
-                        handleExtractIdentityResponse(identity)
-                        preferences.putString(
-                            PrefKeys.REFRESH_TOKEN.name,
-                            tokenResponse.refreshToken,
+                        handleToken(
+                            token = tokenResponse.accessToken,
+                            refreshToken = tokenResponse.refreshToken,
+                            shouldRefreshToken = true,
                         )
                     },
                     failure = { error(it.localizedMessage ?: "") },
@@ -130,13 +171,12 @@ class DefaultAuthClient(
             .invoke(code)
             .mapBoth(
                 success = { tokenResponse ->
-                    val identity = parseAccessTokenForIdentity(tokenResponse.accessToken)
-                    handleExtractIdentityResponse(identity)
-                    preferences.putBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name, true)
-                    preferences.putString(
-                        PrefKeys.REFRESH_TOKEN.name,
-                        tokenResponse.refreshToken,
+                    handleToken(
+                        token = tokenResponse.accessToken,
+                        refreshToken = tokenResponse.refreshToken,
+                        shouldRefreshToken = true,
                     )
+                    preferences.putBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name, true)
                 },
                 failure = { error(it.localizedMessage ?: "") },
             )

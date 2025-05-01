@@ -9,4 +9,5 @@ interface AuthClient {
         code: String,
         state: String,
     )
+    suspend fun logout()
 }

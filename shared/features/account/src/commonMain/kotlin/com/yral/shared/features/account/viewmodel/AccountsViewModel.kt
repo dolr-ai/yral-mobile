@@ -3,7 +3,6 @@ package com.yral.shared.features.account.viewmodel
 import androidx.lifecycle.ViewModel
 import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.core.session.SessionManager
-import com.yral.shared.core.session.SessionState
 import com.yral.shared.features.auth.AuthClient
 import com.yral.shared.features.auth.utils.SocialProvider
 import com.yral.shared.preferences.PrefKeys
@@ -57,10 +56,7 @@ class AccountsViewModel(
 
     fun logout() {
         coroutineScope.launch {
-            preferences.remove(PrefKeys.IDENTITY_DATA.name)
-            preferences.remove(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name)
-            preferences.remove(PrefKeys.REFRESH_TOKEN.name)
-            sessionManager.updateState(SessionState.Initial)
+            authClient.logout()
         }
     }
 

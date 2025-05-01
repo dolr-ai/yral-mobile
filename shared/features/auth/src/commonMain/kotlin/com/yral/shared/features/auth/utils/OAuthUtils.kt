@@ -1,6 +1,7 @@
 package com.yral.shared.features.auth.utils
 
 import com.yral.shared.core.platform.PlatformResourcesFactory
+import com.yral.shared.features.auth.domain.models.TokenClaims
 import io.ktor.http.Url
 
 const val CODE_VERIFIER_LENGTH = 64
@@ -24,4 +25,4 @@ expect fun generateCodeChallenge(codeVerifier: String): String
 
 expect fun generateState(): String
 
-expect fun parseAccessTokenForIdentity(accessToken: String): ByteArray
+expect fun parseOAuthToken(token: String): TokenClaims
