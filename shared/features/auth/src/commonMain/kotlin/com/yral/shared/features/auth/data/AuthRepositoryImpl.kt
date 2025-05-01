@@ -30,7 +30,7 @@ class AuthRepositoryImpl(
             URLBuilder(
                 protocol = URLProtocol.HTTPS,
                 host = OAUTH_BASE_URL,
-                pathSegments = listOf("/oauth/auth"),
+                pathSegments = listOf("oauth", "auth"),
                 parameters =
                     Parameters.build {
                         append("provider", provider.value)
