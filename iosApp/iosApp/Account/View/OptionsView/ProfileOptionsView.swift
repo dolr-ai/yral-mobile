@@ -12,7 +12,12 @@ struct ProfileOptionsView: View {
   @State private var selectedOption: ProfileOptionsView.Options?
   @State private var isShowingLoader = false
   @Binding var showLogoutButton: Bool
-  weak var delegate: ProfileOptionsViewDelegate?
+  var delegate: ProfileOptionsViewDelegate?
+
+  init(showLogoutButton: Binding<Bool>, delegate: ProfileOptionsViewDelegate? = nil) {
+    self._showLogoutButton = showLogoutButton
+    self.delegate = delegate
+  }
 
   var body: some View {
     ZStack {
@@ -116,7 +121,9 @@ extension ProfileOptionsView {
   }
 }
 
-protocol ProfileOptionsViewDelegate: AnyObject {
+// swiftlint: disable class_delegate_protocol
+protocol ProfileOptionsViewDelegate: Any {
   func login()
   func logout()
 }
+// swiftlint: enable class_delegate_protocol
