@@ -142,11 +142,21 @@ class RootViewModel(
     ) {
         coroutineScope.launch {
             try {
+                setLoading(true)
                 authClient.handleOAuthCallback(code, state)
             } catch (e: Exception) {
+                setLoading(false)
                 crashlyticsManager.recordException(e)
             }
         }
+    }
+
+    private suspend fun setLoading(isLoading: Boolean) {
+        _state.emit(
+            _state.value.copy(
+                isLoading = isLoading,
+            ),
+        )
     }
 }
 
@@ -157,4 +167,5 @@ data class RootState(
     val initialAnimationComplete: Boolean = false,
     val currentHomePageTab: String = "Home",
     val currentSessionState: SessionState? = null,
+    val isLoading: Boolean = false,
 )
