@@ -11567,6 +11567,10 @@ extension CanistersWrapperRef {
     public func get_user_principal_string() -> RustString {
         RustString(ptr: __swift_bridge__$CanistersWrapper$get_user_principal_string(ptr))
     }
+
+    public func expiry_ns() -> UInt64 {
+        __swift_bridge__$CanistersWrapper$expiry_ns(ptr)
+    }
 }
 extension CanistersWrapper: Vectorizable {
     public static func vecOfSelfNew() -> UnsafeMutableRawPointer {

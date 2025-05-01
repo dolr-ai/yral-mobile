@@ -461,6 +461,7 @@ mod ffi {
         fn get_canister_principal_string(&self) -> String;
         fn get_user_principal(&self) -> Principal;
         fn get_user_principal_string(&self) -> String;
+        fn expiry_ns(&self) -> u64;
     }
 
     extern "Rust" {

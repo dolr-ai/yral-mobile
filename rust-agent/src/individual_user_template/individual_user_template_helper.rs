@@ -137,6 +137,10 @@ impl CanistersWrapper {
     pub fn get_user_principal_string(&self) -> String {
         return self.inner.user_principal().to_string();
     }
+
+    pub fn expiry_ns(&self) -> u64 {
+        return self.inner.expiry_ns();
+    }
 }
 
 pub async fn authenticate_with_network(

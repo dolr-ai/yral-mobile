@@ -1608,6 +1608,7 @@ void* __swift_bridge__$CanistersWrapper$get_canister_principal(void* self);
 void* __swift_bridge__$CanistersWrapper$get_canister_principal_string(void* self);
 void* __swift_bridge__$CanistersWrapper$get_user_principal(void* self);
 void* __swift_bridge__$CanistersWrapper$get_user_principal_string(void* self);
+uint64_t __swift_bridge__$CanistersWrapper$expiry_ns(void* self);
 struct __private__OptionU64 __swift_bridge__$extract_time_as_double(void* result);
 struct __private__ResultPtrAndPtr __swift_bridge__$get_principal(void* text);
 void* __swift_bridge__$get_principal_from_identity(void* identity);
