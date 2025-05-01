@@ -5,12 +5,10 @@ import com.yral.shared.analytics.core.AnalyticsManager
 import com.yral.shared.analytics.core.Event
 import com.yral.shared.analytics.main.FeatureEvents
 import com.yral.shared.analytics.main.Features
-import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.core.platform.PlatformResourcesFactory
 import com.yral.shared.core.session.Session
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
-import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.domain.AuthRepository
 import com.yral.shared.features.auth.domain.useCases.AuthenticateTokenUseCase
 import com.yral.shared.features.auth.domain.useCases.ExtractIdentityUseCase
@@ -24,24 +22,18 @@ import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import com.yral.shared.uniffi.generated.authenticateWithNetwork
 import io.ktor.http.Cookie
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 
-@Suppress("TooGenericExceptionCaught", "LongParameterList")
 class DefaultAuthClient(
     private val sessionManager: SessionManager,
     private val analyticsManager: AnalyticsManager,
-    private val crashlyticsManager: CrashlyticsManager,
     private val preferences: Preferences,
     private val platformResourcesFactory: PlatformResourcesFactory,
     private val authRepository: AuthRepository,
     private val setAnonymousIdentityCookieUseCase: SetAnonymousIdentityCookieUseCase,
     private val extractIdentityUseCase: ExtractIdentityUseCase,
     private val authenticateTokenUseCase: AuthenticateTokenUseCase,
-    appDispatchers: AppDispatchers,
 ) : AuthClient {
-    private val coroutineScope = CoroutineScope(appDispatchers.io)
     private var currentState: String? = null
 
     override suspend fun initialize() {
@@ -134,7 +126,7 @@ class DefaultAuthClient(
         }
     }
 
-    override fun handleOAuthCallback(
+    override suspend fun handleOAuthCallback(
         code: String,
         state: String,
     ) {
@@ -144,27 +136,21 @@ class DefaultAuthClient(
         authenticate(code)
     }
 
-    private fun authenticate(code: String) {
-        coroutineScope.launch {
-            try {
-                authenticateTokenUseCase
-                    .invoke(code)
-                    .mapBoth(
-                        success = { tokenResponse ->
-                            val identity = parseAccessTokenForIdentity(tokenResponse.accessToken)
-                            preferences.putString(
-                                PrefKeys.REFRESH_TOKEN.name,
-                                tokenResponse.refreshToken,
-                            )
-                            preferences.putBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name, true)
-                            preferences.remove(CookieType.USER_IDENTITY.value)
-                            handleExtractIdentityResponse(identity)
-                        },
-                        failure = { error(it.localizedMessage ?: "") },
+    private suspend fun authenticate(code: String) {
+        authenticateTokenUseCase
+            .invoke(code)
+            .mapBoth(
+                success = { tokenResponse ->
+                    val identity = parseAccessTokenForIdentity(tokenResponse.accessToken)
+                    preferences.putString(
+                        PrefKeys.REFRESH_TOKEN.name,
+                        tokenResponse.refreshToken,
                     )
-            } catch (e: Exception) {
-                crashlyticsManager.recordException(e)
-            }
-        }
+                    preferences.putBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name, true)
+                    preferences.remove(CookieType.USER_IDENTITY.value)
+                    handleExtractIdentityResponse(identity)
+                },
+                failure = { error(it.localizedMessage ?: "") },
+            )
     }
 }

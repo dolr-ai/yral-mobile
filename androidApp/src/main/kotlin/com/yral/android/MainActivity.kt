@@ -26,24 +26,24 @@ import com.yral.android.ui.design.appTypoGraphy
 import com.yral.android.ui.screens.RootScreen
 import com.yral.shared.core.platform.AndroidPlatformResources
 import com.yral.shared.core.platform.PlatformResourcesFactory
-import com.yral.shared.features.auth.AuthClient
+import com.yral.shared.features.root.viewmodels.RootViewModel
 import com.yral.shared.koin.koinInstance
 import com.yral.shared.uniffi.generated.initRustLogger
 
 class MainActivity : ComponentActivity() {
-    private lateinit var authClient: AuthClient
+    private lateinit var rootViewModel: RootViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         initPlatformResources()
         initRustLogger()
-        authClient = koinInstance.get()
+        rootViewModel = koinInstance.get()
         handleIntent(intent)
         setContent {
             CompositionLocalProvider(LocalAppTopography provides appTypoGraphy()) {
                 MyApplicationTheme {
-                    RootScreen()
+                    RootScreen(rootViewModel)
                 }
             }
         }
@@ -66,7 +66,7 @@ class MainActivity : ComponentActivity() {
             val code = uri.getQueryParameter("code")
             val state = uri.getQueryParameter("state")
             if (code != null && state != null) {
-                authClient.handleOAuthCallback(code, state)
+                rootViewModel.handleOAuthCallback(code, state)
             }
         }
     }

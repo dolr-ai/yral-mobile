@@ -135,6 +135,19 @@ class RootViewModel(
             )
         }
     }
+
+    fun handleOAuthCallback(
+        code: String,
+        state: String,
+    ) {
+        coroutineScope.launch {
+            try {
+                authClient.handleOAuthCallback(code, state)
+            } catch (e: Exception) {
+                crashlyticsManager.recordException(e)
+            }
+        }
+    }
 }
 
 data class RootState(
