@@ -26,6 +26,7 @@ kotlin {
     sourceSets {
         androidMain.dependencies {
             implementation(libs.nimbus.jose.jwt)
+            implementation(libs.androidx.browser)
         }
         commonMain.dependencies {
             implementation(projects.shared.core)
@@ -33,6 +34,7 @@ kotlin {
             implementation(projects.shared.libs.http)
             implementation(projects.shared.libs.analytics)
             implementation(projects.shared.libs.koin)
+            implementation(projects.shared.core)
 
             implementation(projects.shared.rust)
             BuildConfig.getDependencies(project).forEach { dependency ->

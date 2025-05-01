@@ -1,5 +1,6 @@
 package com.yral.android
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -25,15 +26,20 @@ import com.yral.android.ui.design.appTypoGraphy
 import com.yral.android.ui.screens.RootScreen
 import com.yral.shared.core.platform.AndroidPlatformResources
 import com.yral.shared.core.platform.PlatformResourcesFactory
+import com.yral.shared.features.auth.AuthClient
 import com.yral.shared.koin.koinInstance
 import com.yral.shared.uniffi.generated.initRustLogger
 
 class MainActivity : ComponentActivity() {
+    private lateinit var authClient: AuthClient
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         initPlatformResources()
         initRustLogger()
+        authClient = koinInstance.get()
+        handleIntent(intent)
         setContent {
             CompositionLocalProvider(LocalAppTopography provides appTypoGraphy()) {
                 MyApplicationTheme {
@@ -47,6 +53,22 @@ class MainActivity : ComponentActivity() {
         koinInstance
             .get<PlatformResourcesFactory>()
             .initialize(AndroidPlatformResources(this))
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleIntent(intent)
+    }
+
+    private fun handleIntent(intent: Intent?) {
+        val uri = intent?.data
+        if (uri?.scheme == "yral" && uri.host == "oauth" && uri.path == "/callback") {
+            val code = uri.getQueryParameter("code")
+            val state = uri.getQueryParameter("state")
+            if (code != null && state != null) {
+                authClient.handleOAuthCallback(code, state)
+            }
+        }
     }
 }
 

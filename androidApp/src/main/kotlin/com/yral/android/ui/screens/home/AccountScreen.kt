@@ -46,6 +46,7 @@ import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.design.YralDimens
+import com.yral.android.ui.screens.home.AccountScreenConstants.LOGOUT_URI
 import com.yral.android.ui.screens.home.AccountScreenConstants.SOCIAL_MEDIA_LINK_BOTTOM_SPACER_WEIGHT
 import com.yral.android.ui.widgets.YralButton
 import com.yral.android.ui.widgets.YralGradientButton
@@ -71,6 +72,7 @@ fun AccountScreen(
             linkToOpen,
             setLinkToOpen = { linkToOpen = it },
             setShowWebBottomSheet = { showWebBottomSheet = it },
+            logout = { viewModel.logout() },
         )
     }
     if (showWebBottomSheet) {
@@ -89,7 +91,7 @@ fun AccountScreen(
             bottomSheetState = loginBottomSheetState,
             onDismissRequest = { showLoginBottomSheet = false },
         ) {
-            viewModel.logout()
+            viewModel.signInWithGoogle()
         }
     }
     Column(
@@ -101,14 +103,18 @@ fun AccountScreen(
         state.accountInfo?.let {
             AccountDetail(
                 accountInfo = it,
+                isSocialSignIn = state.isSocialSignInSuccessful,
             ) {
                 showLoginBottomSheet = true
             }
         }
         Divider()
-        HelpLinks { link, shouldOpenOutside ->
-            linkToOpen = Pair(link, shouldOpenOutside)
-        }
+        HelpLinks(
+            isSocialSignIn = state.isSocialSignInSuccessful,
+            onLinkClicked = { link, shouldOpenOutside ->
+                linkToOpen = Pair(link, shouldOpenOutside)
+            },
+        )
         Spacer(Modifier.weight(1f))
         SocialMediaHelpLinks { link, shouldOpenOutside ->
             linkToOpen = Pair(link, shouldOpenOutside)
@@ -122,9 +128,12 @@ private fun handleLinkOpen(
     linkToOpen: Pair<String, Boolean>,
     setLinkToOpen: (linkToOpen: Pair<String, Boolean>) -> Unit,
     setShowWebBottomSheet: (show: Boolean) -> Unit,
+    logout: () -> Unit,
 ) {
     if (linkToOpen.first.isNotEmpty()) {
-        if (linkToOpen.second) {
+        if (linkToOpen.first == LOGOUT_URI) {
+            logout()
+        } else if (linkToOpen.second) {
             val intent = Intent(Intent.ACTION_VIEW, linkToOpen.first.toUri())
             context.startActivity(intent)
             setLinkToOpen(Pair("", false))
@@ -161,6 +170,7 @@ private fun AccountsTitle() {
 @Composable
 private fun AccountDetail(
     accountInfo: AccountInfo,
+    isSocialSignIn: Boolean,
     onLoginClicked: () -> Unit,
 ) {
     Column(
@@ -196,10 +206,12 @@ private fun AccountDetail(
                 style = LocalAppTopography.current.baseMedium,
             )
         }
-        YralGradientButton(
-            text = stringResource(R.string.login),
-            onClick = onLoginClicked,
-        )
+        if (!isSocialSignIn) {
+            YralGradientButton(
+                text = stringResource(R.string.login),
+                onClick = onLoginClicked,
+            )
+        }
     }
 }
 
@@ -222,9 +234,12 @@ data class HelpLink(
 )
 
 @Composable
-private fun HelpLinks(onLinkClicked: (link: String, shouldOpenOutside: Boolean) -> Unit) {
+private fun HelpLinks(
+    onLinkClicked: (link: String, shouldOpenOutside: Boolean) -> Unit,
+    isSocialSignIn: Boolean,
+) {
     val links =
-        listOf(
+        mutableListOf(
             HelpLink(
                 icon = R.drawable.sms,
                 text = stringResource(R.string.talk_to_the_team),
@@ -243,13 +258,17 @@ private fun HelpLinks(onLinkClicked: (link: String, shouldOpenOutside: Boolean) 
                 link = "https://yral.com/privacy-policy",
                 openInExternalBrowser = false,
             ),
-//            HelpLink(
-//                icon = R.drawable.logout,
-//                text = stringResource(R.string.logout),
-//                link = "",
-//                openInExternalBrowser = false,
-//            ),
         )
+    if (isSocialSignIn) {
+        links.add(
+            HelpLink(
+                icon = R.drawable.logout,
+                text = stringResource(R.string.logout),
+                link = LOGOUT_URI,
+                openInExternalBrowser = false,
+            ),
+        )
+    }
     Column(
         modifier =
             Modifier
@@ -514,4 +533,5 @@ fun SignupView(onSignupClicked: () -> Unit) {
 
 object AccountScreenConstants {
     const val SOCIAL_MEDIA_LINK_BOTTOM_SPACER_WEIGHT = 0.2f
+    const val LOGOUT_URI = "yral://logout"
 }

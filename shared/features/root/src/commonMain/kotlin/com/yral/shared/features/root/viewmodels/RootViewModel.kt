@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import com.github.michaelbull.result.mapBoth
 import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.core.session.SessionManager
+import com.yral.shared.core.session.SessionState
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.AuthClient
 import com.yral.shared.features.feed.useCases.FetchFeedDetailsUseCase
@@ -42,7 +43,12 @@ class RootViewModel(
 
     fun initialize() {
         coroutineScope.launch {
-            _state.emit(RootState())
+            _state.emit(
+                RootState(
+                    currentSessionState = sessionManager.state.value,
+                    currentHomePageTab = _state.value.currentHomePageTab,
+                ),
+            )
             sessionManager.getCanisterPrincipal()?.let {
                 initialFeedData(it)
             } ?: try {
@@ -135,4 +141,5 @@ data class RootState(
     val showSplash: Boolean = true,
     val initialAnimationComplete: Boolean = false,
     val currentHomePageTab: String = "Home",
+    val currentSessionState: SessionState? = null,
 )

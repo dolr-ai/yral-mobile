@@ -29,7 +29,9 @@ fun RootScreen(viewModel: RootViewModel = koinViewModel()) {
     val state by viewModel.state.collectAsState()
     val sessionState by viewModel.sessionManagerState.collectAsState()
     LaunchedEffect(sessionState) {
-        viewModel.initialize()
+        if (sessionState != state.currentSessionState) {
+            viewModel.initialize()
+        }
     }
     if (state.showSplash) {
         val window = (LocalActivity.current as? ComponentActivity)?.window
