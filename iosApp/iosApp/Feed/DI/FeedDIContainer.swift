@@ -15,6 +15,7 @@ final class FeedDIContainer {
     let authClient: AuthClient
     let crashReporter: CrashReporter
     let toggleLikeUseCase: ToggleLikeUseCaseProtocol
+    let socialSignInUseCase: SocialSignInUseCaseProtocol
     let session: SessionManager
   }
 
@@ -64,7 +65,8 @@ final class FeedDIContainer {
       logEventUseCase: LogUploadEventUseCase(
         feedRepository: repository,
         crashReporter: dependencies.crashReporter
-      )
+      ),
+      socialSignInUseCase: dependencies.socialSignInUseCase
     )
   }
 }

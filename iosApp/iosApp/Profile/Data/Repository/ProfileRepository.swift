@@ -48,7 +48,11 @@ class ProfileRepository: ProfileRepositoryProtocol {
     }
   }
 
-  func refreshVideos() async -> Result<[FeedResult], AccountError> {
+  func refreshVideos(shouldPurge: Bool) async -> Result<[FeedResult], AccountError> {
+    if shouldPurge {
+      self.deletedVideoSubject.send(videos)
+      self.videos.removeAll()
+    }
     let result = await getUserVideos(with: .zero, offset: UInt64(Constants.offset))
     switch result {
     case .success(let newChunk):

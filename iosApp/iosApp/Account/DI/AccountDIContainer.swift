@@ -13,6 +13,7 @@ final class AccountDIContainer {
     let crashReporter: CrashReporter
     let accountUseCase: AccountUseCaseProtocol
     let accountRepository: AccountRepositoryProtocol
+    let socialSignInUseCase: SocialSignInUseCaseProtocol
   }
 
   private let dependencies: Dependencies
@@ -28,10 +29,7 @@ final class AccountDIContainer {
   func makeAccountViewModel() -> AccountViewModel {
     AccountViewModel(
       accountUseCase: dependencies.accountUseCase,
-      socialSignInUseCase: SocialSignInUseCase(
-        accountRepository: dependencies.accountRepository,
-        crashReporter: dependencies.crashReporter
-      ),
+      socialSignInUseCase: dependencies.socialSignInUseCase,
       logoutUseCase: LogoutUseCase(
         accountRepository: dependencies.accountRepository,
         crashReporter: dependencies.crashReporter

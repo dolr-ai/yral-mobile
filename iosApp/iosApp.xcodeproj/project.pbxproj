@@ -139,6 +139,8 @@
 		AC51C0472DC3905700D5BA34 /* RefreshTokenRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC51C0452DC3905100D5BA34 /* RefreshTokenRequest.swift */; };
 		AC51C04B2DC392B500D5BA34 /* LogoutUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC51C04A2DC392AF00D5BA34 /* LogoutUseCase.swift */; };
 		AC51C04C2DC392B500D5BA34 /* LogoutUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC51C04A2DC392AF00D5BA34 /* LogoutUseCase.swift */; };
+		AC51C0522DC4E0D200D5BA34 /* RefreshVideosRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC51C0512DC4E0CC00D5BA34 /* RefreshVideosRequest.swift */; };
+		AC51C0532DC4E0D200D5BA34 /* RefreshVideosRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC51C0512DC4E0CC00D5BA34 /* RefreshVideosRequest.swift */; };
 		AC5A7B8B2DACF1E2009E9E42 /* VideoEventDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC5A7B8A2DACF1DE009E9E42 /* VideoEventDTO.swift */; };
 		AC5A7B8C2DACF1E2009E9E42 /* VideoEventDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC5A7B8A2DACF1DE009E9E42 /* VideoEventDTO.swift */; };
 		AC5A7B8E2DACF5B2009E9E42 /* VideoEventRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC5A7B8D2DACF5AC009E9E42 /* VideoEventRequest.swift */; };
@@ -519,6 +521,7 @@
 		AC4E99672D884BD6000B47B3 /* ProfileVideoGridsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileVideoGridsView.swift; sourceTree = "<group>"; };
 		AC51C0452DC3905100D5BA34 /* RefreshTokenRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RefreshTokenRequest.swift; sourceTree = "<group>"; };
 		AC51C04A2DC392AF00D5BA34 /* LogoutUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogoutUseCase.swift; sourceTree = "<group>"; };
+		AC51C0512DC4E0CC00D5BA34 /* RefreshVideosRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RefreshVideosRequest.swift; sourceTree = "<group>"; };
 		AC5A7B8A2DACF1DE009E9E42 /* VideoEventDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoEventDTO.swift; sourceTree = "<group>"; };
 		AC5A7B8D2DACF5AC009E9E42 /* VideoEventRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoEventRequest.swift; sourceTree = "<group>"; };
 		AC5A7C662DAD72A0009E9E42 /* LogUploadEventUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogUploadEventUseCase.swift; sourceTree = "<group>"; };
@@ -1114,6 +1117,7 @@
 			isa = PBXGroup;
 			children = (
 				AC32E44E2D296623001DDA43 /* AccountUseCase.swift */,
+				AC1F938B2DC112E800F322E1 /* SocialSignInUseCase.swift */,
 			);
 			path = UseCases;
 			sourceTree = "<group>";
@@ -1182,9 +1186,24 @@
 			isa = PBXGroup;
 			children = (
 				AC51C04A2DC392AF00D5BA34 /* LogoutUseCase.swift */,
-				AC1F938B2DC112E800F322E1 /* SocialSignInUseCase.swift */,
 			);
 			path = UseCases;
+			sourceTree = "<group>";
+		};
+		AC51C04D2DC4E0B000D5BA34 /* UseCases */ = {
+			isa = PBXGroup;
+			children = (
+				ACC0D4472D8DA202006DCF5C /* RefreshVideosUseCase.swift */,
+			);
+			path = UseCases;
+			sourceTree = "<group>";
+		};
+		AC51C0542DC4E0D600D5BA34 /* Entity */ = {
+			isa = PBXGroup;
+			children = (
+				AC51C0512DC4E0CC00D5BA34 /* RefreshVideosRequest.swift */,
+			);
+			path = Entity;
 			sourceTree = "<group>";
 		};
 		AC61D3B32DB28AB000A7EA92 /* EULA */ = {
@@ -1677,7 +1696,8 @@
 		ACC0D4462D8DA1FC006DCF5C /* Domain */ = {
 			isa = PBXGroup;
 			children = (
-				ACC0D4472D8DA202006DCF5C /* RefreshVideosUseCase.swift */,
+				AC51C04D2DC4E0B000D5BA34 /* UseCases */,
+				AC51C0542DC4E0D600D5BA34 /* Entity */,
 			);
 			path = Domain;
 			sourceTree = "<group>";
@@ -2303,6 +2323,7 @@
 				AC32E4652D2991AD001DDA43 /* AccountView.swift in Sources */,
 				ACC0D43E2D8C6BF3006DCF5C /* ClearBackgroundView.swift in Sources */,
 				AC4DECA92D3E06AC008EC8F5 /* FooterLoaderView.swift in Sources */,
+				AC51C0522DC4E0D200D5BA34 /* RefreshVideosRequest.swift in Sources */,
 				ACC1C3982D9AF8BD005A7539 /* LottieLoaderContainerView.swift in Sources */,
 				AC4E99692D884BDB000B47B3 /* ProfileVideoGridsView.swift in Sources */,
 				ACC0D4522D8DDB97006DCF5C /* ProfileRepositoryProtocol.swift in Sources */,
@@ -2484,6 +2505,7 @@
 				AC32E4662D2991AD001DDA43 /* AccountView.swift in Sources */,
 				ACC0D43D2D8C6BF3006DCF5C /* ClearBackgroundView.swift in Sources */,
 				AC4DECAA2D3E06AC008EC8F5 /* FooterLoaderView.swift in Sources */,
+				AC51C0532DC4E0D200D5BA34 /* RefreshVideosRequest.swift in Sources */,
 				ACC1C3992D9AF8BD005A7539 /* LottieLoaderContainerView.swift in Sources */,
 				AC4E99682D884BDB000B47B3 /* ProfileVideoGridsView.swift in Sources */,
 				ACC0D4532D8DDB97006DCF5C /* ProfileRepositoryProtocol.swift in Sources */,

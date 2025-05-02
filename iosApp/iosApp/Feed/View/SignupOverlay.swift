@@ -9,6 +9,8 @@
 import SwiftUI
 
 struct SignupOverlay: View {
+  let onLoginTap: (_ provider: SocialProvider) -> Void
+
   var body: some View {
     ZStack(alignment: .top) {
       Rectangle()
@@ -16,7 +18,7 @@ struct SignupOverlay: View {
         .ignoresSafeArea()
         .padding(-Constants.overshoot)
       VStack(spacing: .zero) {
-        SignupView()
+        SignupView(delegate: self)
           .padding(.top, Constants.topSpacing)
         Spacer()
         VStack(spacing: Constants.bottomVStackSpacing) {
@@ -34,6 +36,16 @@ struct SignupOverlay: View {
         .padding(.bottom, Constants.bottomSpacing)
       }
     }
+  }
+}
+
+extension SignupOverlay: SignupViewProtocol {
+  func signupwithGoogle() {
+    onLoginTap(.google)
+  }
+
+  func signupwithApple() {
+    onLoginTap(.apple)
   }
 }
 

@@ -22,11 +22,11 @@ struct ProfileView: View {
   @EnvironmentObject var session: SessionManager
   var uploadVideoPressed: (() -> Void) = {}
 
-  let viewModel: ProfileViewModel
+  @StateObject var viewModel: ProfileViewModel
   let router: ProfileRouterProtocol
 
   init(viewModel: ProfileViewModel, router: ProfileRouterProtocol) {
-    self.viewModel = viewModel
+    self._viewModel = StateObject(wrappedValue: viewModel)
     self.router = router
   }
 
@@ -101,7 +101,7 @@ struct ProfileView: View {
           .offset(y: 20.0)
           .refreshable {
             Task {
-              await self.viewModel.refreshVideos()
+              await self.viewModel.refreshVideos(request: RefreshVideosRequest(shouldPurge: false))
             }
           }
         }
@@ -154,17 +154,26 @@ struct ProfileView: View {
         case .refreshed(let videos):
           self.videos = videos
           showEmptyState = self.videos.isEmpty
+        case .pageEndReached(let isEmpty):
+          showEmptyState = isEmpty
         default:
           break
         }
       }
-      .onReceive(session.$state) { _ in
-        self.videos = []
-        showEmptyState =  true
-        Task {
-          async let fetchProfile: () = viewModel.fetchProfileInfo()
-          async let fetchVideos: () = viewModel.getVideos()
-          _ = await (fetchProfile, fetchVideos)
+      .onReceive(session.$state) { state in
+        switch state {
+        case .loggedOut,
+            .ephemeralAuthentication,
+            .permanentAuthentication:
+          Task {
+            await viewModel.fetchProfileInfo()
+            await viewModel.refreshVideos(
+              request: RefreshVideosRequest(
+                shouldPurge: true
+              )
+            )
+          }
+        default: break
         }
       }
       .task {
