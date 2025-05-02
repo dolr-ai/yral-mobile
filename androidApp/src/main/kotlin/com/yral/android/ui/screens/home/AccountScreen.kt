@@ -163,6 +163,8 @@ private fun AccountsTitle() {
         Text(
             text = stringResource(R.string.accounts),
             style = LocalAppTopography.current.xlBold,
+            color = YralColors.NeutralTextPrimary,
+            textAlign = TextAlign.Center,
         )
     }
 }
@@ -204,6 +206,7 @@ private fun AccountDetail(
             Text(
                 text = accountInfo.userPrincipal,
                 style = LocalAppTopography.current.baseMedium,
+                color = YralColors.NeutralTextSecondary,
             )
         }
         if (!isSocialSignIn) {
@@ -369,6 +372,7 @@ private fun SocialMediaHelpLinks(onLinkClicked: (link: String, shouldOpenOutside
             text = stringResource(R.string.follow_us_on),
             style = LocalAppTopography.current.regRegular,
             color = YralColors.Neutral500,
+            textAlign = TextAlign.Center,
         )
         Row(
             horizontalArrangement = Arrangement.spacedBy(30.dp, Alignment.CenterHorizontally),

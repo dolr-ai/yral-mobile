@@ -140,6 +140,16 @@ class FeedViewModel(
             )
         }
     }
+
+    fun setPostDescriptionExpanded(isExpanded: Boolean) {
+        coroutineScope.launch {
+            _state.emit(
+                _state.value.copy(
+                    isPostDescriptionExpanded = isExpanded,
+                ),
+            )
+        }
+    }
 }
 
 data class FeedState(
@@ -147,4 +157,5 @@ data class FeedState(
     val feedDetails: List<FeedDetails> = emptyList(),
     val currentPageOfFeed: Int = 0,
     val isLoadingMore: Boolean = false,
+    val isPostDescriptionExpanded: Boolean = false,
 )
