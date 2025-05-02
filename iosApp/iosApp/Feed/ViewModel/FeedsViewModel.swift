@@ -167,12 +167,12 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
   func deleteVideo(request: DeleteVideoRequest) async { }
 
   func log(event: VideoEventRequest) async {
-    let result = await logEventUseCase.execute(request: [event])
-    switch result {
-    case .failure(let failure):
-      print(failure.localizedDescription)
-    default: break
-    }
+//    let result = await logEventUseCase.execute(request: [event])
+//    switch result {
+//    case .failure(let failure):
+//      print(failure.localizedDescription)
+//    default: break
+//    }
   }
 }
 

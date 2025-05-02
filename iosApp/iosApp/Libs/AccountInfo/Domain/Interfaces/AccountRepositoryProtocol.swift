@@ -9,4 +9,5 @@
 protocol AccountRepositoryProtocol {
   func fetchAccount() async -> Result<AccountInfo, AccountError>
   func socialSignIn(provider: SocialProvider) async -> Result<Void, AccountError>
+  func logout() async -> Result<Void, AccountError>
 }

@@ -158,6 +158,15 @@ struct ProfileView: View {
           break
         }
       }
+      .onReceive(session.$state) { _ in
+        self.videos = []
+        showEmptyState =  true
+        Task {
+          async let fetchProfile: () = viewModel.fetchProfileInfo()
+          async let fetchVideos: () = viewModel.getVideos()
+          _ = await (fetchProfile, fetchVideos)
+        }
+      }
       .task {
         guard isLoadingFirstTime else { return }
         isLoadingFirstTime = false

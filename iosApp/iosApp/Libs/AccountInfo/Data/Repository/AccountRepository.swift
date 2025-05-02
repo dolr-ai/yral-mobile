@@ -36,4 +36,16 @@ class AccountRepository: AccountRepositoryProtocol {
       return .failure(AccountError.unknown(error.localizedDescription))
     }
   }
+
+  func logout() async -> Result<Void, AccountError> {
+    do {
+      try await authClient.logout()
+      return .success(())
+    } catch {
+      if let error = error as? AuthError {
+        return .failure(AccountError.authError(error))
+      }
+      return .failure(AccountError.unknown(error.localizedDescription))
+    }
+  }
 }

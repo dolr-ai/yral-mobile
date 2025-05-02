@@ -11,5 +11,6 @@ protocol AuthClient {
   func generateNewDelegatedIdentity() throws -> DelegatedIdentity
   func generateNewDelegatedIdentityWireOneHour() throws -> DelegatedIdentityWire
   func signInWithSocial(provider: SocialProvider) async throws
+  func logout() async throws
   var authStatePublisher: AnyPublisher<AuthState, Never> { get }
 }

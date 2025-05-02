@@ -11,7 +11,6 @@ import Combine
 import secp256k1
 import AuthenticationServices
 
-// swiftlint: disable type_body_length
 final class DefaultAuthClient: NSObject, AuthClient {
   private(set) var identity: DelegatedIdentity?
   private(set) var canisterPrincipal: Principal?
@@ -26,9 +25,9 @@ final class DefaultAuthClient: NSObject, AuthClient {
 
   let networkService: NetworkService
   let crashReporter: CrashReporter
-  private let baseURL: URL
+  let baseURL: URL
 
-  private var pendingAuthState: String!
+  var pendingAuthState: String!
 
   init(networkService: NetworkService, crashReporter: CrashReporter, baseURL: URL) {
     self.networkService = networkService
@@ -43,7 +42,8 @@ final class DefaultAuthClient: NSObject, AuthClient {
 //    try KeychainHelper.deleteItem(for: Constants.keychainIdentity)
 //    try KeychainHelper.deleteItem(for: Constants.keychainRefreshToken)
 //    try KeychainHelper.deleteItem(for: Constants.keychainAccessToken)
-//    UserDefaultsManager.shared.remove(.keychainTokenExpiryDateKey)
+//    UserDefaultsManager.shared.remove(.authRefreshTokenExpiryDateKey)
+//    UserDefaultsManager.shared.remove(.authIdentityExpiryDateKey)
     if loadIdentityFromKeychain() {
       if UserDefaultsManager.shared.get(for: DefaultsKey.userDefaultsLoggedIn) as Bool? ?? false {
         try await ensureTokensFresh(permanent: true)
@@ -64,37 +64,56 @@ final class DefaultAuthClient: NSObject, AuthClient {
 
   private func ensureTokensFresh(permanent: Bool) async throws {
     let now = Date().timeIntervalSince1970
-    let expiry: Double = UserDefaultsManager.shared.get(for: .keychainTokenExpiryDateKey) as Double? ?? .zero
+    let accessExpiry: Double = UserDefaultsManager.shared
+      .get(for: .authIdentityExpiryDateKey)   as Double? ?? .zero
+    let refreshExpiry: Double = UserDefaultsManager.shared
+      .get(for: .authRefreshTokenExpiryDateKey) as Double? ?? .zero
 
-    if now >= expiry {
-      // token really is expired → either re‐login or refresh
-      if permanent {
+    if permanent {
+      if now < accessExpiry {
+        if let data = identityData {
+          try await handleExtractIdentityResponse(from: data, type: .permanent)
+        }
+        Task { [weak self] in
+          guard let self = self else { return }
+          try? await self.refreshAccessToken()
+        }
+        return
+      }
+
+      if now >= refreshExpiry {
         stateSubject.value = .loggedOut
         try await obtainAnonymousIdentity()
-      } else {
-        try await refreshAccessToken()
+        return
       }
+
+      try await refreshAccessToken()
+      return
+    }
+
+    if now < accessExpiry {
+      guard let data = identityData else { return }
+      try await handleExtractIdentityResponse(from: data, type: .ephemeral)
+      return
+    }
+
+    if now >= refreshExpiry {
+      try await obtainAnonymousIdentity()
     } else {
-      // still fresh
-      if permanent {
-        try await refreshAccessToken()    // optional: you could skip or refresh early
-      } else {
-        guard let data = identityData else { return }
-        try await handleExtractIdentityResponse(from: data, type: .ephemeral)
-      }
+      try await refreshAccessToken()
     }
   }
 
   private func obtainAnonymousIdentity() async throws {
     let requestBody = ClientCredentialsRequest(clientId: Constants.clientID)
-    let bodyData = try requestBody.formURLEncoded()
+    let body = try requestBody.formURLEncodedData()
     let endpoint = Endpoint(
       http: "clientCredentials",
       baseURL: baseURL,
       path: Constants.tokenPath,
       method: .post,
       headers: ["Content-Type": "application/x-www-form-urlencoded"],
-      body: bodyData
+      body: body
     )
     let resp = try await networkService.performRequest(for: endpoint)
     let token = try JSONDecoder().decode(TokenResponse.self, from: resp)
@@ -104,15 +123,15 @@ final class DefaultAuthClient: NSObject, AuthClient {
 
   private func refreshAccessToken() async throws {
     let refreshToken = try KeychainHelper.retrieveString(for: Constants.keychainRefreshToken) ?? ""
-    let body = "grant_type=refresh_token&refresh_token=\(refreshToken)&client_id=\(Constants.clientID)"
-    let data = Data(body.utf8)
+    let request = RefreshTokenRequest(refreshToken: refreshToken, clientId: Constants.clientID)
+    let body = try request.formURLEncodedData()
     let endpoint = Endpoint(
       http: "refreshToken",
       baseURL: baseURL,
       path: Constants.tokenPath,
       method: .post,
       headers: ["Content-Type": "application/x-www-form-urlencoded"],
-      body: data
+      body: body
     )
     let resp = try await networkService.performRequest(for: endpoint)
     let token = try JSONDecoder().decode(TokenResponse.self, from: resp)
@@ -125,7 +144,7 @@ final class DefaultAuthClient: NSObject, AuthClient {
     )
   }
 
-  private func storeTokens(_ token: TokenResponse) throws {
+  func storeTokens(_ token: TokenResponse) throws {
     if let accessTokenData = token.accessToken.data(using: .utf8) {
       try KeychainHelper.store(data: accessTokenData, for: Constants.keychainAccessToken)
     }
@@ -133,11 +152,14 @@ final class DefaultAuthClient: NSObject, AuthClient {
       try KeychainHelper.store(data: refreshTokenData, for: Constants.keychainRefreshToken)
     }
     let expiresAt = Date().timeIntervalSince1970 + Double(token.expiresIn)
-    UserDefaultsManager.shared.set(expiresAt, for: .keychainTokenExpiryDateKey)
+    UserDefaultsManager.shared.set(expiresAt, for: .authIdentityExpiryDateKey)
+
+    let refreshClaims = try decodeClaimsAccessToken(from: token.refreshToken)
+    UserDefaultsManager.shared.set(refreshClaims.exp, for: .authRefreshTokenExpiryDateKey)
   }
 
-  private func processDelegatedIdentity(from token: TokenResponse, type: DelegateIdentityType) async throws {
-    let claims = try decodeClaims(from: token.accessToken)
+  func processDelegatedIdentity(from token: TokenResponse, type: DelegateIdentityType) async throws {
+    let claims = try decodeClaimsAccessToken(from: token.accessToken)
     let wire = claims.delegatedIdentity
     let wireData = try JSONEncoder().encode(wire)
     identityData = wireData
@@ -186,20 +208,21 @@ final class DefaultAuthClient: NSObject, AuthClient {
     }
   }
 
-  func logout() async throws {
-    UserDefaultsManager.shared.set(false, for: DefaultsKey.userDefaultsLoggedIn)
+  @MainActor func logout() async throws {
     try? KeychainHelper.deleteItem(for: Constants.keychainIdentity)
     try? KeychainHelper.deleteItem(for: Constants.keychainAccessToken)
     try? KeychainHelper.deleteItem(for: Constants.keychainRefreshToken)
-    UserDefaultsManager.shared.remove(.keychainTokenExpiryDateKey)
+    UserDefaultsManager.shared.remove(.authIdentityExpiryDateKey)
+    UserDefaultsManager.shared.remove(.authRefreshTokenExpiryDateKey)
     identity = nil
     canisterPrincipal = nil
     canisterPrincipalString = nil
     userPrincipal = nil
     userPrincipalString = nil
     identityData = nil
-    stateSubject.value = .loggedOut
     try await obtainAnonymousIdentity()
+    stateSubject.value = .loggedOut
+    UserDefaultsManager.shared.set(false, for: DefaultsKey.userDefaultsLoggedIn)
   }
 
   func generateNewDelegatedIdentity() throws -> DelegatedIdentity {
@@ -259,127 +282,9 @@ final class DefaultAuthClient: NSObject, AuthClient {
       return newWire
     }
   }
-
-  @MainActor
-  func signInWithSocial(provider: SocialProvider) async throws {
-    pendingAuthState = UUID().uuidString
-    let verifier = PKCE.generateCodeVerifier()
-    let challenge = PKCE.codeChallenge(for: verifier)
-    let redirect = Constants.redirectURI
-    let authURL = try getAuthURL(
-      provider: provider,
-      redirect: redirect,
-      challenge: challenge,
-      loginHint: nil
-    )
-    let session = ASWebAuthenticationSession(
-      url: authURL,
-      callbackURLScheme: redirect.components(separatedBy: "://")[0]
-    ) { callbackURL, error in
-      Task {
-        if let error = error {
-          self.stateSubject.value = .error(.authenticationFailed(error.localizedDescription))
-          return
-        }
-        guard
-          let url = callbackURL,
-          let comps = URLComponents(url: url, resolvingAgainstBaseURL: false),
-          let state = comps.queryItems?.first(where: { $0.name == "state" })?.value,
-          state == self.pendingAuthState,
-          let code = comps.queryItems?.first(where: { $0.name == "code" })?.value
-        else {
-          self.stateSubject.value = .error(.authenticationFailed("Invalid callback"))
-          return
-        }
-        do {
-          let token = try await self.exchangeCodeForTokens(
-            code: code,
-            verifier: verifier,
-            redirectURI: redirect
-          )
-          try self.storeTokens(token)
-          try await self.processDelegatedIdentity(from: token, type: .permanent)
-          UserDefaultsManager.shared.set(true, for: .userDefaultsLoggedIn)
-        } catch {
-          self.stateSubject.value = .error(.authenticationFailed(error.localizedDescription))
-        }
-      }
-    }
-    session.presentationContextProvider = self
-    session.prefersEphemeralWebBrowserSession = true
-    session.start()
-  }
-
-  private func getAuthURL(
-    provider: SocialProvider,
-    redirect: String,
-    challenge: String,
-    loginHint: String?
-  ) throws -> URL {
-    guard var comps = URLComponents(
-      string: baseURL.appendingPathComponent(Constants.authPath).absoluteString
-    ) else { throw AuthError.invalidRequest("Invalid url components") }
-    comps.queryItems = [
-      .init(name: "provider", value: provider.rawValue),
-      .init(name: "client_id", value: Constants.clientID),
-      .init(name: "response_type", value: "code"),
-      .init(name: "response_mode", value: "query"),
-      .init(name: "redirect_uri", value: redirect),
-      .init(name: "scope", value: "openid"),
-      .init(name: "code_challenge", value: challenge),
-      .init(name: "code_challenge_method", value: "S256"),
-      .init(name: "state", value: pendingAuthState)
-    ]
-    guard let url = comps.url else { throw AuthError.invalidRequest("Bad URL") }
-    return url
-  }
-
-  private func exchangeCodeForTokens(
-    code: String,
-    verifier: String,
-    redirectURI: String
-  ) async throws -> TokenResponse {
-    let req = TokenRequest(
-      grantType: "authorization_code",
-      code: code,
-      redirectUri: redirectURI,
-      clientId: Constants.clientID,
-      codeVerifier: verifier
-    )
-    let form = try req.formURLEncoded()
-    let endpoint = Endpoint(
-      http: "exchangeCode",
-      baseURL: baseURL,
-      path: Constants.tokenPath,
-      method: .post,
-      headers: ["Content-Type": "application/x-www-form-urlencoded"],
-      body: form
-    )
-    let data = try await networkService.performRequest(for: endpoint)
-    return try JSONDecoder().decode(TokenResponse.self, from: data)
-  }
-
-  func decodeClaims(from jwt: String) throws -> TokenClaims {
-    let parts = jwt.split(separator: ".")
-    guard parts.count == 3 else {
-      throw AuthError.authenticationFailed("Malformed JWT")
-    }
-    let rawPayload = String(parts[1])
-    let paddedLength = ((rawPayload.count + 3) / 4) * 4
-    let base64 = rawPayload
-      .padding(toLength: paddedLength, withPad: "=", startingAt: 0)
-      .replacingOccurrences(of: "-", with: "+")
-      .replacingOccurrences(of: "_", with: "/")
-    guard let data = Data(base64Encoded: base64) else {
-      throw AuthError.authenticationFailed("JWT payload not Base64")
-    }
-    return try JSONDecoder().decode(TokenClaims.self, from: data)
-  }
 }
 
 enum DelegateIdentityType {
   case ephemeral
   case permanent
 }
-
-// swiftlint: enable type_body_length

@@ -31,6 +31,10 @@ final class AccountDIContainer {
       socialSignInUseCase: SocialSignInUseCase(
         accountRepository: dependencies.accountRepository,
         crashReporter: dependencies.crashReporter
+      ),
+      logoutUseCase: LogoutUseCase(
+        accountRepository: dependencies.accountRepository,
+        crashReporter: dependencies.crashReporter
       )
     )
   }

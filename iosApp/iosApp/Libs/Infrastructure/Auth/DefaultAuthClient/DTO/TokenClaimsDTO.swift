@@ -7,7 +7,7 @@
 //
 import Foundation
 
-struct TokenClaims: Decodable {
+struct TokenClaimsDTO: Decodable {
   let aud: String
   let exp: TimeInterval
   let iat: TimeInterval
@@ -15,7 +15,7 @@ struct TokenClaims: Decodable {
   let sub: String
   let nonce: String?
   let extIsAnonymous: Bool
-  let delegatedIdentity: SwiftDelegatedIdentityWire
+  let delegatedIdentity: SwiftDelegatedIdentityWire?
 
   private enum CodingKeys: String, CodingKey {
     case aud

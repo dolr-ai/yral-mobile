@@ -83,6 +83,7 @@ struct SignupFailureSheet: View {
         }
       }
       .onAppear {
+        UIView.setAnimationsEnabled(false)
         withAnimation(.easeInOut(duration: CGFloat.animationPeriod)) {
           showContainer = true
         }
