@@ -7,7 +7,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import com.yral.android.R
 
@@ -34,6 +33,8 @@ data class AppTopography(
     val regRegular: TextStyle,
     val xlSemiBold: TextStyle,
     val baseRegular: TextStyle,
+    val feedCanisterId: TextStyle,
+    val feedDescription: TextStyle,
 )
 
 val LocalAppTopography =
@@ -46,6 +47,8 @@ val LocalAppTopography =
             regRegular = TextStyle.Default,
             xlSemiBold = TextStyle.Default,
             baseRegular = TextStyle.Default,
+            feedCanisterId = TextStyle.Default,
+            feedDescription = TextStyle.Default,
         )
     }
 
@@ -57,8 +60,6 @@ fun appTypoGraphy() =
                 lineHeight = 30.sp,
                 fontFamily = YralTypoGraphy.KumbhSans,
                 fontWeight = FontWeight(700),
-                color = YralColors.NeutralTextPrimary,
-                textAlign = TextAlign.Center,
             ),
         baseMedium =
             TextStyle(
@@ -66,7 +67,6 @@ fun appTypoGraphy() =
                 lineHeight = 19.6.sp,
                 fontFamily = YralTypoGraphy.KumbhSans,
                 fontWeight = FontWeight(500),
-                color = YralColors.NeutralTextSecondary,
             ),
         mdBold =
             TextStyle(
@@ -74,7 +74,6 @@ fun appTypoGraphy() =
                 lineHeight = 22.4.sp,
                 fontFamily = YralTypoGraphy.KumbhSans,
                 fontWeight = FontWeight(700),
-                textAlign = TextAlign.Center,
             ),
         mdRegular =
             TextStyle(
@@ -89,7 +88,6 @@ fun appTypoGraphy() =
                 lineHeight = 16.8.sp,
                 fontFamily = YralTypoGraphy.KumbhSans,
                 fontWeight = FontWeight(400),
-                textAlign = TextAlign.Center,
             ),
         xlSemiBold =
             TextStyle(
@@ -104,5 +102,18 @@ fun appTypoGraphy() =
                 lineHeight = 19.6.sp,
                 fontFamily = YralTypoGraphy.KumbhSans,
                 fontWeight = FontWeight(400),
+            ),
+        feedCanisterId =
+            TextStyle(
+                fontSize = 15.sp,
+                fontFamily = YralTypoGraphy.KumbhSans,
+                fontWeight = FontWeight(600),
+            ),
+        feedDescription =
+            TextStyle(
+                fontSize = 12.sp,
+                lineHeight = 16.sp,
+                fontFamily = YralTypoGraphy.KumbhSans,
+                fontWeight = FontWeight(500),
             ),
     )
