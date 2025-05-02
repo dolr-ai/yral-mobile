@@ -8,11 +8,11 @@
 import Combine
 
 protocol RefreshVideosUseCaseProtocol {
-  func execute(request: ()) async -> Result<[FeedResult], AccountError>
+  func execute(request: RefreshVideosRequest) async -> Result<[FeedResult], AccountError>
 }
 
 @MainActor class RefreshVideosUseCase:
-  BaseResultUseCase<Void, [FeedResult], AccountError>,
+  BaseResultUseCase<RefreshVideosRequest, [FeedResult], AccountError>,
   RefreshVideosUseCaseProtocol {
   let profileRepository: ProfileRepositoryProtocol
   init(profileRepository: ProfileRepositoryProtocol, crashReporter: CrashReporter) {
@@ -20,7 +20,7 @@ protocol RefreshVideosUseCaseProtocol {
     super.init(crashReporter: crashReporter)
   }
 
-  override func runImplementation(_ request: Void) async -> Result<[FeedResult], AccountError> {
-    await profileRepository.refreshVideos()
+  override func runImplementation(_ request: RefreshVideosRequest) async -> Result<[FeedResult], AccountError> {
+    await profileRepository.refreshVideos(shouldPurge: request.shouldPurge)
   }
 }

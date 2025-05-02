@@ -15,10 +15,10 @@ enum ProfilePageState {
   case failure(String)
 }
 
-enum ProfilePageEvent {
+enum ProfilePageEvent: Equatable {
   case fetchedAccountInfo(AccountInfo)
   case loadedVideos([ProfileVideoInfo])
-  case pageEndReached
+  case pageEndReached(isEmpty: Bool)
   case deletedVideos([ProfileVideoInfo])
   case deleteVideoFailed(String)
   case refreshed([ProfileVideoInfo])
@@ -118,7 +118,7 @@ class ProfileViewModel: ObservableObject {
       case .failure(let error):
         switch error {
         case .pageEndReached:
-          event = .pageEndReached
+          event = .pageEndReached(isEmpty: self.feeds.isEmpty)
           state = .success
           hasMorePages = false
         default:
@@ -144,14 +144,14 @@ class ProfileViewModel: ObservableObject {
     }
   }
 
-  func refreshVideos() async {
+  func refreshVideos(request: RefreshVideosRequest) async {
     guard !isLoading else { return }
 
     await MainActor.run {
       state = .loading
       isLoading = true
     }
-    let result = await refreshVideoUseCase.execute(request: ())
+    let result = await refreshVideoUseCase.execute(request: request)
     await MainActor.run {
       switch result {
       case .success(let videos):
@@ -160,7 +160,7 @@ class ProfileViewModel: ObservableObject {
       case .failure(let error):
         switch error {
         case .pageEndReached:
-          event = .pageEndReached
+          event = .pageEndReached(isEmpty: self.feeds.isEmpty)
           state = .success
           hasMorePages = false
         default:

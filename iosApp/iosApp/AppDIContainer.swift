@@ -74,6 +74,13 @@ import GRPC
     )
   }()
 
+  lazy var socialSignInUseCase: SocialSignInUseCaseProtocol = {
+    SocialSignInUseCase(
+      accountRepository: accountsRepository,
+      crashReporter: crashReporter
+    )
+  }()
+
   func makeFeedDIContainer() async -> FeedDIContainer {
     return FeedDIContainer(
       dependencies: FeedDIContainer.Dependencies(
@@ -82,6 +89,7 @@ import GRPC
         authClient: authClient,
         crashReporter: crashReporter,
         toggleLikeUseCase: toggleLikeUseCase,
+        socialSignInUseCase: socialSignInUseCase,
         session: session
       )
     )
@@ -94,7 +102,8 @@ import GRPC
         authClient: authClient,
         crashReporter: crashReporter,
         accountUseCase: accountUseCase,
-        accountRepository: accountsRepository
+        accountRepository: accountsRepository,
+        socialSignInUseCase: socialSignInUseCase
       )
     )
   }
