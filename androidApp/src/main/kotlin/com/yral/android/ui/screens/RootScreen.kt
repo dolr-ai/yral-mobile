@@ -2,6 +2,9 @@ package com.yral.android.ui.screens
 
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -89,36 +92,50 @@ private fun Splash(
     Box(
         modifier = modifier.background(Color.Black),
     ) {
-        if (initialAnimationComplete) {
-            val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.lightning_lottie))
-            val progress by animateLottieCompositionAsState(
-                composition = composition,
-                iterations = LottieConstants.IterateForever,
-                isPlaying = true,
-            )
+        // The initial splash animation
+        val splashComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.splash_lottie))
+        val splashProgress by animateLottieCompositionAsState(
+            composition = splashComposition,
+            iterations = 1,
+            isPlaying = true,
+        )
 
+        // The continuous lightning animation
+        val lightningComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.lightning_lottie))
+        val lightningProgress by animateLottieCompositionAsState(
+            composition = lightningComposition,
+            iterations = LottieConstants.IterateForever,
+            isPlaying = initialAnimationComplete, // Only start playing when initial animation is complete
+        )
+
+        // Crossfade between animations
+        AnimatedVisibility(
+            visible = !initialAnimationComplete,
+            enter = fadeIn(),
+            exit = fadeOut(),
+        ) {
             LottieAnimation(
                 modifier = Modifier.fillMaxSize(),
-                composition = composition,
-                progress = { progress },
+                composition = splashComposition,
+                progress = { splashProgress },
             )
-        } else {
-            val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.splash_lottie))
-            val progress by animateLottieCompositionAsState(
-                composition = composition,
-                iterations = 1,
-                isPlaying = true,
-            )
+        }
 
+        AnimatedVisibility(
+            visible = initialAnimationComplete,
+            enter = fadeIn(),
+            exit = fadeOut(),
+        ) {
             LottieAnimation(
                 modifier = Modifier.fillMaxSize(),
-                composition = composition,
-                progress = { progress },
+                composition = lightningComposition,
+                progress = { lightningProgress },
             )
-            LaunchedEffect(progress) {
-                if (progress == 1f) {
-                    onAnimationComplete()
-                }
+        }
+
+        LaunchedEffect(splashProgress) {
+            if (splashProgress == 1f) {
+                onAnimationComplete()
             }
         }
     }
