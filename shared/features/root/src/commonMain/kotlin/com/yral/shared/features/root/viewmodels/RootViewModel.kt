@@ -47,6 +47,7 @@ class RootViewModel(
                 RootState(
                     currentSessionState = sessionManager.state.value,
                     currentHomePageTab = _state.value.currentHomePageTab,
+                    initialAnimationComplete = _state.value.initialAnimationComplete,
                 ),
             )
             try {
