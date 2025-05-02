@@ -32,7 +32,7 @@ extension Encodable {
     return String(data: try encoder.encode(self), encoding: .utf8)!
   }
 
-  func formURLEncoded() throws -> Data {
+  func formURLEncodedData() throws -> Data {
     let jsonData = try JSONEncoder().encode(self)
     let dict = try JSONSerialization.jsonObject(with: jsonData) as? [String: Any] ?? [:]
     let query = dict.map { key, value in

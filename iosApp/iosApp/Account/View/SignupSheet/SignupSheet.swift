@@ -12,49 +12,61 @@ struct SignupSheet: View {
   let onComplete: () -> Void
   @State private var showCard = false
   @State private var dragOffset: CGFloat = .zero
+  @Binding var isSigningUp: Bool
   var delegate: SignupSheetProtocol?
 
   var body: some View {
     GeometryReader { geo in
-      ZStack(alignment: .top) {
-        Color.black.opacity(Constants.dimmedBackgroundOpacity)
-          .ignoresSafeArea()
-          .onTapGesture { dismiss() }
-          .transition(.opacity)
+      ZStack {
+        ZStack(alignment: .top) {
+          Color.black.opacity(Constants.dimmedBackgroundOpacity)
+            .ignoresSafeArea()
+            .onTapGesture { dismiss() }
+            .transition(.opacity)
 
-        if showCard {
-          ZStack(alignment: .top) {
-            Constants.cardBackgroundColor
-              .cornerRadius(Constants.cardCornerRadius)
-            SignupView(delegate: self)
-              .padding(.top, Constants.topPadding)
-          }
-          .frame(maxWidth: .infinity, alignment: .bottom)
-          .frame(height: geo.size.height * Constants.screenRatio, alignment: .bottom)
-          .frame(maxHeight: .infinity, alignment: .bottom)
-          .padding(.bottom, -geo.safeAreaInsets.bottom)
-          .shadow(radius: Constants.cardShadowRadius)
-          .offset(y: dragOffset)
-          .gesture(
-            DragGesture()
-              .onChanged { value in
-                dragOffset = max(value.translation.height, 0)
-              }
-              .onEnded { value in
-                if value.translation.height > 100 {
-                  dismiss()
-                } else {
-                  withAnimation(.easeInOut(duration: CGFloat.pointOne)) {
-                    dragOffset = .zero
+          if showCard {
+            ZStack(alignment: .top) {
+              Constants.cardBackgroundColor
+                .cornerRadius(Constants.cardCornerRadius)
+              SignupView(delegate: self)
+                .padding(.top, Constants.topPadding)
+            }
+            .frame(maxWidth: .infinity, alignment: .bottom)
+            .frame(height: geo.size.height * Constants.screenRatio, alignment: .bottom)
+            .frame(maxHeight: .infinity, alignment: .bottom)
+            .padding(.bottom, -geo.safeAreaInsets.bottom)
+            .shadow(radius: Constants.cardShadowRadius)
+            .offset(y: dragOffset)
+            .gesture(
+              DragGesture()
+                .onChanged { value in
+                  dragOffset = max(value.translation.height, 0)
+                }
+                .onEnded { value in
+                  if value.translation.height > 100 {
+                    dismiss()
+                  } else {
+                    withAnimation(.easeInOut(duration: CGFloat.pointOne)) {
+                      dragOffset = .zero
+                    }
                   }
                 }
-              }
-          )
-          .transition(.move(edge: .bottom))
+            )
+            .transition(.move(edge: .bottom))
+          }
+        }
+        .onAppear { withAnimation(Constants.appearAnimation) { showCard = true } }
+        .onDisappear { UIView.setAnimationsEnabled(true) }
+        if isSigningUp {
+          ZStack {
+            Color.black.opacity(Constants.loadingStateOpacity)
+              .ignoresSafeArea()
+
+            LottieLoaderView(animationName: Constants.lottieName)
+              .frame(width: Constants.loaderSize, height: Constants.loaderSize)
+          }
         }
       }
-      .onAppear { withAnimation(Constants.appearAnimation) { showCard = true } }
-      .onDisappear { UIView.setAnimationsEnabled(true) }
     }
   }
 
@@ -91,6 +103,9 @@ extension SignupSheet {
     static let cardBackgroundColor = YralColor.grey900.swiftUIColor
     static let dimmedBackgroundOpacity = 0.8
     static let appearAnimation = Animation.easeInOut(duration: CGFloat.animationPeriod)
+    static let loadingStateOpacity = 0.4
+    static let loaderSize = 24.0
+    static let lottieName = "Yral_Loader"
   }
 }
 
