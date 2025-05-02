@@ -41,7 +41,12 @@ fun FeedScreen(
 
     // Function to determine if we should load more content
     val shouldLoadMore =
-        remember(state.currentPageOfFeed, state.feedDetails.size, state.isLoadingMore, loadTriggered) {
+        remember(
+            state.currentPageOfFeed,
+            state.feedDetails.size,
+            state.isLoadingMore,
+            loadTriggered,
+        ) {
             val hasSufficientItems = state.feedDetails.size >= INITIAL_REQUEST
             val isValidPage = state.currentPageOfFeed > 0
             val isCloseToEnd =
@@ -91,7 +96,15 @@ fun FeedScreen(
         if (state.feedDetails.isNotEmpty()) {
             Box(modifier = Modifier.weight(1f)) {
                 YRALReelPlayer(
-                    videoUrlArray = state.feedDetails.map { it.url.toString() }.toList(),
+                    videoUrlArray =
+                        state
+                            .feedDetails
+                            .map {
+                                Pair(
+                                    it.url.toString(),
+                                    it.thumbnail.toString(),
+                                )
+                            }.toList(),
                     initialPage = state.currentPageOfFeed,
                     onPageLoaded = { page ->
                         viewModel.onCurrentPageChange(page)
