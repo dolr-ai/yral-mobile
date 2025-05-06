@@ -110,7 +110,8 @@ internal fun YRALReelsPlayerView(
                 modifier = Modifier.fillMaxSize(),
                 url = urls[page].first,
                 thumbnailUrl = urls[page].second,
-                prefetchThumbnails = urls.nextTwo(page).map { it.second },
+                prefetchThumbnails = urls.nextN(page, PREFETCH_NEXT_N_THUMBNAILS).map { it.second },
+                prefetchVideos = urls.nextN(page, PREFETCH_NEXT_N_VIDEOS).map { it.first },
                 playerConfig = playerConfig,
                 isPause =
                     if (pagerState.currentPage == page) {
@@ -167,11 +168,15 @@ internal fun YRALReelsPlayerView(
     }
 }
 
-private fun <T> List<T>.nextTwo(i: Int): List<T> =
-    if (i + 1 < size) {
-        subList(i + 1, minOf(i + PREFETCH_NEXT_N_THUMBNAILS, size))
+private fun <T> List<T>.nextN(
+    startIndex: Int,
+    n: Int,
+): List<T> =
+    if (startIndex + 1 < size) {
+        subList(startIndex + 1, minOf(startIndex + n, size))
     } else {
         emptyList()
     }
 
 private const val PREFETCH_NEXT_N_THUMBNAILS = 3
+private const val PREFETCH_NEXT_N_VIDEOS = 1

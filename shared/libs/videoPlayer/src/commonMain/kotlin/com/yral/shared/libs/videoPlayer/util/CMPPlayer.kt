@@ -11,6 +11,7 @@ expect fun CMPPlayer(
     url: String,
     thumbnailUrl: String,
     prefetchThumbnails: List<String>,
+    prefetchVideos: List<String>,
     playerParams: CMPPlayerParams,
 )
 
