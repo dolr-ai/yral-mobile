@@ -31,6 +31,7 @@ import com.yral.shared.libs.videoPlayer.model.PlayerSpeed
 import com.yral.shared.libs.videoPlayer.model.ScreenResize
 import com.yral.shared.libs.videoPlayer.rememberExoPlayerWithLifecycle
 import com.yral.shared.libs.videoPlayer.rememberPlayerView
+import com.yral.shared.libs.videoPlayer.rememberPrefetchExoPlayerWithLifecycle
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 
@@ -41,10 +42,15 @@ actual fun CMPPlayer(
     url: String,
     thumbnailUrl: String,
     prefetchThumbnails: List<String>,
+    prefetchVideos: List<String>,
     playerParams: CMPPlayerParams,
 ) {
     val context = LocalContext.current
     val exoPlayer = rememberExoPlayerWithLifecycle(url, context, playerParams.isPause)
+    var preFetchExoPlayer: ExoPlayer? by remember { mutableStateOf(null) }
+    if (prefetchVideos.isNotEmpty()) {
+        preFetchExoPlayer = rememberPrefetchExoPlayerWithLifecycle(prefetchVideos[0], context)
+    }
     val playerView = rememberPlayerView(exoPlayer, context)
 
     var isBuffering by remember { mutableStateOf(false) }
@@ -136,6 +142,7 @@ actual fun CMPPlayer(
         DisposableEffect(Unit) {
             onDispose {
                 exoPlayer.release()
+                preFetchExoPlayer?.release()
                 playerView.keepScreenOn = false
             }
         }
