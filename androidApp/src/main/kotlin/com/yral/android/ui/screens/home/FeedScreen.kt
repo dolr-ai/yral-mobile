@@ -207,15 +207,6 @@ private fun UserBrief(
                 isPostDescriptionExpanded = isPostDescriptionExpanded,
                 setPostDescriptionExpanded = setPostDescriptionExpanded,
             )
-            Image(
-                modifier =
-                    Modifier
-                        .width(67.dp)
-                        .height(30.dp),
-                painter = painterResource(id = R.drawable.logo_overlay_9),
-                contentDescription = "image description",
-                contentScale = ContentScale.FillBounds,
-            )
         }
     }
 }
