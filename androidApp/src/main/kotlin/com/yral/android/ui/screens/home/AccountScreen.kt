@@ -43,12 +43,12 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import coil3.compose.AsyncImage
 import com.yral.android.R
+import com.yral.android.ui.components.SignupView
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.design.YralDimens
 import com.yral.android.ui.screens.home.AccountScreenConstants.LOGOUT_URI
 import com.yral.android.ui.screens.home.AccountScreenConstants.SOCIAL_MEDIA_LINK_BOTTOM_SPACER_WEIGHT
-import com.yral.android.ui.widgets.YralButton
 import com.yral.android.ui.widgets.YralGradientButton
 import com.yral.android.ui.widgets.YralWebView
 import com.yral.shared.features.account.viewmodel.AccountInfo
@@ -85,7 +85,10 @@ fun AccountScreen(
         }
     }
     var showLoginBottomSheet by remember { mutableStateOf(false) }
-    val loginBottomSheetState = rememberModalBottomSheetState()
+    val loginBottomSheetState =
+        rememberModalBottomSheetState(
+            skipPartiallyExpanded = true,
+        )
     if (showLoginBottomSheet) {
         LoginBottomSheet(
             bottomSheetState = loginBottomSheetState,
@@ -459,80 +462,16 @@ private fun LoginBottomSheet(
                             start = 16.dp,
                             top = 45.dp,
                             end = 16.dp,
-                            bottom = 316.dp,
+                            bottom = 16.dp,
                         ),
                 verticalArrangement = Arrangement.spacedBy(0.dp, Alignment.Top),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 SignupView(onSignupClicked = onSignupClicked)
+                Spacer(modifier = Modifier.height(300.dp))
             }
         },
     )
-}
-
-@Suppress("LongMethod")
-@Composable
-fun SignupView(onSignupClicked: () -> Unit) {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(46.dp, Alignment.Top),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Image(
-            painter = painterResource(R.drawable.join_yral),
-            contentDescription = "Join Yral",
-            modifier =
-                Modifier
-                    .padding(0.dp)
-                    .width(240.dp)
-                    .height(86.dp),
-        )
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(28.dp, Alignment.Top),
-            horizontalAlignment = Alignment.Start,
-        ) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top),
-                horizontalAlignment = Alignment.Start,
-            ) {
-                Text(
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center,
-                    text = stringResource(R.string.continue_to_sign_up_for_free),
-                    style = LocalAppTopography.current.xlSemiBold,
-                    color = Color.White,
-                )
-                Text(
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center,
-                    text = stringResource(R.string.sign_up_disclaimer),
-                    style = LocalAppTopography.current.baseRegular,
-                    color = Color.White,
-                )
-            }
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(20.dp, Alignment.Top),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                YralButton(
-                    text = stringResource(R.string.signup_with_google),
-                    icon = R.drawable.google,
-                ) {
-                    onSignupClicked()
-                }
-                Text(
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center,
-                    text = stringResource(R.string.signup_consent),
-                    style = LocalAppTopography.current.baseRegular,
-                    color = Color.White,
-                )
-            }
-        }
-    }
 }
 
 object AccountScreenConstants {
