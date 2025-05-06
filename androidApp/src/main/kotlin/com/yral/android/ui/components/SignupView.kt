@@ -14,15 +14,28 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withLink
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
+import com.yral.android.ui.design.YralColors
+import com.yral.android.ui.screens.home.AccountScreenConstants
 import com.yral.android.ui.widgets.YralButton
 
 @Suppress("LongMethod")
 @Composable
-fun SignupView(onSignupClicked: () -> Unit) {
+fun SignupView(
+    onSignupClicked: () -> Unit,
+    openTerms: () -> Unit,
+) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(46.dp, Alignment.Top),
@@ -74,12 +87,62 @@ fun SignupView(onSignupClicked: () -> Unit) {
                     onSignupClicked()
                 }
                 Text(
+                    text = annotateText(openTerms),
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center,
-                    text = stringResource(R.string.signup_consent),
-                    style = LocalAppTopography.current.baseRegular,
-                    color = Color.White,
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun annotateText(openTerms: () -> Unit): AnnotatedString {
+    val consentText = stringResource(R.string.signup_consent)
+    val termOfServiceText = stringResource(R.string.terms_of_service_signup_consent)
+    return buildAnnotatedString {
+        val termsStart = consentText.indexOf(termOfServiceText)
+        val termsEnd = termsStart + termOfServiceText.length
+        val textStyle = LocalAppTopography.current.baseRegular
+        val spanStyle =
+            SpanStyle(
+                fontSize = textStyle.fontSize,
+                fontFamily = textStyle.fontFamily,
+                fontWeight = textStyle.fontWeight,
+            )
+        if (termsStart >= 0) {
+            withStyle(
+                style = spanStyle.copy(color = Color.White),
+            ) {
+                append(consentText.substring(0, termsStart))
+            }
+            withLink(
+                LinkAnnotation.Url(
+                    url = AccountScreenConstants.TERMS_OF_SERVICE_URL,
+                    styles =
+                        TextLinkStyles(
+                            style =
+                                spanStyle.copy(
+                                    color = YralColors.Pink300,
+                                    fontWeight = FontWeight.Bold,
+                                ),
+                        ),
+                ) {
+                    openTerms()
+                },
+            ) { append(consentText.substring(termsStart, termsEnd)) }
+            if (termsEnd < consentText.length) {
+                withStyle(
+                    style = spanStyle.copy(color = Color.White),
+                ) {
+                    append(consentText.substring(termsEnd))
+                }
+            }
+        } else {
+            withStyle(
+                style = spanStyle.copy(color = Color.White),
+            ) {
+                append(consentText)
             }
         }
     }

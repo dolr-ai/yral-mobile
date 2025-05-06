@@ -11,5 +11,6 @@
     <string name="continue_to_sign_up_for_free">Continue to sign up for free</string>
     <string name="sign_up_disclaimer">If you already have an account, we’ll log you in</string>
     <string name="signup_consent">By signing up, you agree to our Terms of Service</string>
+    <string name="terms_of_service_signup_consent">Terms of Service</string>
     <string name="signup_with_google">Sign up with Google</string>
 </resources>
