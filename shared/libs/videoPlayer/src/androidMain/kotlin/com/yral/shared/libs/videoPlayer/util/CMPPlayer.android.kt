@@ -2,6 +2,7 @@
 
 package com.yral.shared.libs.videoPlayer.util
 
+import android.content.Context
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -23,7 +24,9 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
+import coil3.ImageLoader
 import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
 import com.yral.shared.libs.videoPlayer.model.PlayerSpeed
 import com.yral.shared.libs.videoPlayer.model.ScreenResize
 import com.yral.shared.libs.videoPlayer.rememberExoPlayerWithLifecycle
@@ -37,6 +40,7 @@ actual fun CMPPlayer(
     modifier: Modifier,
     url: String,
     thumbnailUrl: String,
+    prefetchThumbnails: List<String>,
     playerParams: CMPPlayerParams,
 ) {
     val context = LocalContext.current
@@ -62,6 +66,15 @@ actual fun CMPPlayer(
     // Keep screen on while the player view is active
     LaunchedEffect(playerView) {
         playerView.keepScreenOn = true
+    }
+
+    LaunchedEffect(prefetchThumbnails) {
+        prefetchThumbnails.forEach {
+            prefetchThumbnail(
+                context = context,
+                url = it,
+            )
+        }
     }
 
     Box(modifier) {
@@ -182,3 +195,17 @@ private fun createPlayerListener(
             }
         }
     }
+
+private fun prefetchThumbnail(
+    context: Context,
+    url: String,
+) {
+    val request =
+        ImageRequest
+            .Builder(context)
+            .data(url)
+            .build()
+
+    val imageLoader = ImageLoader(context)
+    imageLoader.enqueue(request)
+}
