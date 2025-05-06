@@ -29,7 +29,8 @@ fun YRALReelPlayer(
         playerConfig =
             PlayerConfig(
                 isAutoHideControlEnabled = true,
-                isPauseResumeEnabled = true,
+                isPauseResumeEnabled = false,
+                isFastForwardBackwardEnabled = false,
                 isSeekBarVisible = false,
                 isDurationVisible = false,
                 isMuteControlEnabled = false,
