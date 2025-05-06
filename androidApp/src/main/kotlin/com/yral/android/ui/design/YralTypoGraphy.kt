@@ -59,61 +59,61 @@ fun appTypoGraphy() =
                 fontSize = 20.sp,
                 lineHeight = 30.sp,
                 fontFamily = YralTypoGraphy.KumbhSans,
-                fontWeight = FontWeight(700),
+                fontWeight = FontWeight.Bold,
             ),
         baseMedium =
             TextStyle(
                 fontSize = 14.sp,
                 lineHeight = 19.6.sp,
                 fontFamily = YralTypoGraphy.KumbhSans,
-                fontWeight = FontWeight(500),
+                fontWeight = FontWeight.Medium,
             ),
         mdBold =
             TextStyle(
                 fontSize = 16.sp,
                 lineHeight = 22.4.sp,
                 fontFamily = YralTypoGraphy.KumbhSans,
-                fontWeight = FontWeight(700),
+                fontWeight = FontWeight.Bold,
             ),
         mdRegular =
             TextStyle(
                 fontSize = 16.sp,
                 lineHeight = 22.4.sp,
                 fontFamily = YralTypoGraphy.KumbhSans,
-                fontWeight = FontWeight(400),
+                fontWeight = FontWeight.Normal,
             ),
         regRegular =
             TextStyle(
                 fontSize = 12.sp,
                 lineHeight = 16.8.sp,
                 fontFamily = YralTypoGraphy.KumbhSans,
-                fontWeight = FontWeight(400),
+                fontWeight = FontWeight.Normal,
             ),
         xlSemiBold =
             TextStyle(
                 fontSize = 20.sp,
                 lineHeight = 28.sp,
                 fontFamily = YralTypoGraphy.KumbhSans,
-                fontWeight = FontWeight(600),
+                fontWeight = FontWeight.SemiBold,
             ),
         baseRegular =
             TextStyle(
                 fontSize = 14.sp,
                 lineHeight = 19.6.sp,
                 fontFamily = YralTypoGraphy.KumbhSans,
-                fontWeight = FontWeight(400),
+                fontWeight = FontWeight.Normal,
             ),
         feedCanisterId =
             TextStyle(
                 fontSize = 15.sp,
                 fontFamily = YralTypoGraphy.KumbhSans,
-                fontWeight = FontWeight(600),
+                fontWeight = FontWeight.SemiBold,
             ),
         feedDescription =
             TextStyle(
                 fontSize = 12.sp,
                 lineHeight = 16.sp,
                 fontFamily = YralTypoGraphy.KumbhSans,
-                fontWeight = FontWeight(500),
+                fontWeight = FontWeight.Medium,
             ),
     )
