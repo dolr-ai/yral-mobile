@@ -47,8 +47,14 @@ import com.yral.android.ui.components.SignupView
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.design.YralDimens
+import com.yral.android.ui.screens.home.AccountScreenConstants.DISCORD_LINK
 import com.yral.android.ui.screens.home.AccountScreenConstants.LOGOUT_URI
+import com.yral.android.ui.screens.home.AccountScreenConstants.PRIVACY_POLICY_URL
 import com.yral.android.ui.screens.home.AccountScreenConstants.SOCIAL_MEDIA_LINK_BOTTOM_SPACER_WEIGHT
+import com.yral.android.ui.screens.home.AccountScreenConstants.TALK_TO_TEAM_URL
+import com.yral.android.ui.screens.home.AccountScreenConstants.TELEGRAM_LINK
+import com.yral.android.ui.screens.home.AccountScreenConstants.TERMS_OF_SERVICE_URL
+import com.yral.android.ui.screens.home.AccountScreenConstants.TWITTER_LINK
 import com.yral.android.ui.widgets.YralGradientButton
 import com.yral.android.ui.widgets.YralWebView
 import com.yral.shared.features.account.viewmodel.AccountInfo
@@ -93,9 +99,11 @@ fun AccountScreen(
         LoginBottomSheet(
             bottomSheetState = loginBottomSheetState,
             onDismissRequest = { showLoginBottomSheet = false },
-        ) {
-            viewModel.signInWithGoogle()
-        }
+            onSignupClicked = { viewModel.signInWithGoogle() },
+            openTerms = {
+                linkToOpen = Pair(TERMS_OF_SERVICE_URL, false)
+            },
+        )
     }
     Column(
         modifier = modifier.padding(top = 8.dp),
@@ -249,19 +257,19 @@ private fun HelpLinks(
             HelpLink(
                 icon = R.drawable.sms,
                 text = stringResource(R.string.talk_to_the_team),
-                link = "https://t.me/+c-LTX0Cp-ENmMzI1",
+                link = TALK_TO_TEAM_URL,
                 openInExternalBrowser = false,
             ),
             HelpLink(
                 icon = R.drawable.document,
                 text = stringResource(R.string.terms_of_service),
-                link = "https://yral.com/terms-ios",
+                link = TERMS_OF_SERVICE_URL,
                 openInExternalBrowser = false,
             ),
             HelpLink(
                 icon = R.drawable.lock,
                 text = stringResource(R.string.privacy_policy),
-                link = "https://yral.com/privacy-policy",
+                link = PRIVACY_POLICY_URL,
                 openInExternalBrowser = false,
             ),
         )
@@ -342,19 +350,19 @@ private fun SocialMediaHelpLinks(onLinkClicked: (link: String, shouldOpenOutside
             HelpLink(
                 icon = R.drawable.telegram,
                 text = "",
-                link = "https://t.me/+c-LTX0Cp-ENmMzI1",
+                link = TELEGRAM_LINK,
                 openInExternalBrowser = true,
             ),
             HelpLink(
                 icon = R.drawable.discord,
                 text = "",
-                link = "https://discord.com/invite/GZ9QemnZuj",
+                link = DISCORD_LINK,
                 openInExternalBrowser = true,
             ),
             HelpLink(
                 icon = R.drawable.twitter,
                 text = "",
-                link = "https://twitter.com/Yral_app",
+                link = TWITTER_LINK,
                 openInExternalBrowser = true,
             ),
         )
@@ -447,6 +455,7 @@ private fun LoginBottomSheet(
     bottomSheetState: SheetState,
     onDismissRequest: () -> Unit,
     onSignupClicked: () -> Unit,
+    openTerms: () -> Unit,
 ) {
     ModalBottomSheet(
         modifier = Modifier.safeDrawingPadding(),
@@ -467,7 +476,10 @@ private fun LoginBottomSheet(
                 verticalArrangement = Arrangement.spacedBy(0.dp, Alignment.Top),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                SignupView(onSignupClicked = onSignupClicked)
+                SignupView(
+                    onSignupClicked = onSignupClicked,
+                    openTerms = openTerms,
+                )
                 Spacer(modifier = Modifier.height(300.dp))
             }
         },
@@ -477,4 +489,10 @@ private fun LoginBottomSheet(
 object AccountScreenConstants {
     const val SOCIAL_MEDIA_LINK_BOTTOM_SPACER_WEIGHT = 0.2f
     const val LOGOUT_URI = "yral://logout"
+    const val TALK_TO_TEAM_URL = "https://t.me/+c-LTX0Cp-ENmMzI1"
+    const val TERMS_OF_SERVICE_URL = "https://yral.com/terms-ios"
+    const val PRIVACY_POLICY_URL = "https://yral.com/privacy-policy"
+    const val TELEGRAM_LINK = "https://t.me/+c-LTX0Cp-ENmMzI1"
+    const val DISCORD_LINK = "https://discord.com/invite/GZ9QemnZuj"
+    const val TWITTER_LINK = "https://twitter.com/Yral_app"
 }
