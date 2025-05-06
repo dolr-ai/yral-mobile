@@ -1,103 +1,119 @@
 package com.yral.shared.features.auth
 
+import com.github.michaelbull.result.mapBoth
 import com.yral.shared.analytics.core.AnalyticsManager
 import com.yral.shared.analytics.core.Event
 import com.yral.shared.analytics.main.FeatureEvents
 import com.yral.shared.analytics.main.Features
-import com.yral.shared.http.CookieType
-import com.yral.shared.http.httpPost
-import com.yral.shared.http.httpPostWithBytesResponse
-import com.yral.shared.http.maxAgeOrExpires
+import com.yral.shared.core.platform.PlatformResourcesFactory
+import com.yral.shared.core.session.Session
+import com.yral.shared.core.session.SessionManager
+import com.yral.shared.core.session.SessionState
+import com.yral.shared.features.auth.domain.AuthRepository
+import com.yral.shared.features.auth.domain.useCases.AuthenticateTokenUseCase
+import com.yral.shared.features.auth.domain.useCases.ObtainAnonymousIdentityUseCase
+import com.yral.shared.features.auth.domain.useCases.RefreshTokenUseCase
+import com.yral.shared.features.auth.utils.SocialProvider
+import com.yral.shared.features.auth.utils.openOAuth
+import com.yral.shared.features.auth.utils.parseOAuthToken
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
-import com.yral.shared.uniffi.generated.Principal
 import com.yral.shared.uniffi.generated.authenticateWithNetwork
-import io.ktor.client.HttpClient
-import io.ktor.client.plugins.cookies.cookies
-import io.ktor.client.request.setBody
-import io.ktor.http.Cookie
-import io.ktor.http.headers
-import io.ktor.http.path
 import kotlinx.datetime.Clock
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
 
 class DefaultAuthClient(
+    private val sessionManager: SessionManager,
     private val analyticsManager: AnalyticsManager,
     private val preferences: Preferences,
-    private val client: HttpClient,
-    private val json: Json,
+    private val platformResourcesFactory: PlatformResourcesFactory,
+    private val authRepository: AuthRepository,
+    private val authenticateTokenUseCase: AuthenticateTokenUseCase,
+    private val obtainAnonymousIdentityUseCase: ObtainAnonymousIdentityUseCase,
+    private val refreshTokenUseCase: RefreshTokenUseCase,
 ) : AuthClient {
-    override var identity: ByteArray? = null
-    override var canisterPrincipal: Principal? = null
-    override var userPrincipal: Principal? = null
+    private var currentState: String? = null
 
     override suspend fun initialize() {
         refreshAuthIfNeeded()
     }
 
-    override suspend fun refreshAuthIfNeeded() {
-        val cookie =
-            client
-                .cookies("https://${BASE_URL}")
-                .firstOrNull { it.name == CookieType.USER_IDENTITY.value }
-        cookie?.let {
-            if ((it.maxAgeOrExpires(Clock.System.now().toEpochMilliseconds()) ?: 0) >
-                Clock.System.now().toEpochMilliseconds()
-            ) {
-                val storedData = preferences.getBytes(PrefKeys.IDENTITY_DATA.name)
-                storedData?.let { data -> handleExtractIdentityResponse(data) } ?: extractIdentity(
-                    it,
-                )
-            } else {
-                fetchAndSetAuthCookie()
-            }
-        } ?: fetchAndSetAuthCookie()
+    private suspend fun refreshAuthIfNeeded() {
+        preferences.getString(PrefKeys.ACCESS_TOKEN.name)?.let { accessToken ->
+            handleToken(
+                token = accessToken,
+                refreshToken = "",
+                shouldRefreshToken = true,
+            )
+        } ?: obtainAnonymousIdentity()
     }
 
-    private suspend fun fetchAndSetAuthCookie() {
-        val setCookiePath = "api/set_anonymous_identity_cookie"
-        preferences.remove(CookieType.USER_IDENTITY.value)
-        preferences.remove(PrefKeys.IDENTITY_DATA.name)
-        val payload = createAuthPayload()
-        httpPost<String?>(
-            httpClient = client,
-            json = json,
-        ) {
-            url {
-                host = BASE_URL
-                path(setCookiePath)
-            }
-            setBody(payload)
-        }
-        refreshAuthIfNeeded()
+    private suspend fun obtainAnonymousIdentity() {
+        obtainAnonymousIdentityUseCase
+            .invoke(Unit)
+            .mapBoth(
+                success = { tokenResponse ->
+                    handleToken(
+                        token = tokenResponse.accessToken,
+                        refreshToken = tokenResponse.refreshToken,
+                        shouldRefreshToken = true,
+                    )
+                },
+                failure = { error(it.localizedMessage ?: "") },
+            )
     }
 
-    private suspend fun extractIdentity(cookie: Cookie) {
-        val extractIdentityPath = "api/extract_identity"
-        val payload = JsonObject(mapOf()).toString().toByteArray()
-        val result =
-            httpPostWithBytesResponse(client) {
-                url {
-                    host = BASE_URL
-                    path(extractIdentityPath)
-                }
-                headers {
-                    "Cookie" to "${cookie.name}=${cookie.value}"
-                }
-                setBody(payload)
-            }
-        if (result.isNotEmpty()) {
-            handleExtractIdentityResponse(result)
-            preferences.putBytes(PrefKeys.IDENTITY_DATA.name, result)
+    private suspend fun handleToken(
+        token: String,
+        refreshToken: String,
+        shouldRefreshToken: Boolean,
+    ) {
+        preferences.putString(
+            PrefKeys.ACCESS_TOKEN.name,
+            token,
+        )
+        if (refreshToken.isNotEmpty()) {
+            preferences.putString(
+                PrefKeys.REFRESH_TOKEN.name,
+                refreshToken,
+            )
         }
+        val tokenClaim = parseOAuthToken(token)
+        if (tokenClaim.isExpired(Clock.System.now().epochSeconds)) {
+            tokenClaim.delegatedIdentity?.let {
+                handleExtractIdentityResponse(it)
+            }
+        } else if (shouldRefreshToken) {
+            val rToken = preferences.getString(PrefKeys.REFRESH_TOKEN.name)
+            rToken?.let {
+                val rTokenClaim = parseOAuthToken(it)
+                if (rTokenClaim.isExpired(Clock.System.now().epochSeconds)) {
+                    refreshAccessToken()
+                } else {
+                    logout()
+                }
+            } ?: logout()
+        }
+    }
+
+    override suspend fun logout() {
+        preferences.remove(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name)
+        preferences.remove(PrefKeys.REFRESH_TOKEN.name)
+        preferences.remove(PrefKeys.ACCESS_TOKEN.name)
+        sessionManager.updateState(SessionState.Initial)
     }
 
     private suspend fun handleExtractIdentityResponse(data: ByteArray) {
-        identity = data
         val canisterWrapper = authenticateWithNetwork(data, null)
-        canisterPrincipal = canisterWrapper.getCanisterPrincipal()
-        userPrincipal = canisterWrapper.getUserPrincipal()
+        sessionManager.updateState(
+            SessionState.SignedIn(
+                session =
+                    Session(
+                        identity = data,
+                        canisterPrincipal = canisterWrapper.getCanisterPrincipal(),
+                        userPrincipal = canisterWrapper.getUserPrincipal(),
+                    ),
+            ),
+        )
         analyticsManager.trackEvent(
             event =
                 Event(
@@ -107,15 +123,62 @@ class DefaultAuthClient(
         )
     }
 
-    override suspend fun generateNewDelegatedIdentity(): ByteArray {
-        TODO("Not yet implemented")
+    private suspend fun refreshAccessToken() {
+        val refreshToken = preferences.getString(PrefKeys.REFRESH_TOKEN.name)
+        refreshToken?.let {
+            refreshTokenUseCase
+                .invoke(refreshToken)
+                .mapBoth(
+                    success = { tokenResponse ->
+                        handleToken(
+                            token = tokenResponse.accessToken,
+                            refreshToken = tokenResponse.refreshToken,
+                            shouldRefreshToken = true,
+                        )
+                    },
+                    failure = { error(it.localizedMessage ?: "") },
+                )
+        } ?: obtainAnonymousIdentity()
     }
 
-    override suspend fun generateNewDelegatedIdentityWireOneHour(): ByteArray {
-        TODO("Not yet implemented")
+    override suspend fun signInWithSocial(provider: SocialProvider) {
+        initiateOAuthFlow(provider)
     }
 
-    companion object {
-        private const val BASE_URL = "yral.com"
+    private suspend fun initiateOAuthFlow(provider: SocialProvider) {
+        sessionManager.getIdentity()?.let { identity ->
+            val authUrl = authRepository.getOAuthUrl(provider, identity)
+            currentState = authUrl.second
+            openOAuth(
+                platformResourcesFactory = platformResourcesFactory,
+                authUrl = authUrl.first,
+            )
+        }
+    }
+
+    override suspend fun handleOAuthCallback(
+        code: String,
+        state: String,
+    ) {
+        if (state != currentState) {
+            throw SecurityException("Invalid state parameter - possible CSRF attack")
+        }
+        authenticate(code)
+    }
+
+    private suspend fun authenticate(code: String) {
+        authenticateTokenUseCase
+            .invoke(code)
+            .mapBoth(
+                success = { tokenResponse ->
+                    handleToken(
+                        token = tokenResponse.accessToken,
+                        refreshToken = tokenResponse.refreshToken,
+                        shouldRefreshToken = true,
+                    )
+                    preferences.putBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name, true)
+                },
+                failure = { error(it.localizedMessage ?: "") },
+            )
     }
 }

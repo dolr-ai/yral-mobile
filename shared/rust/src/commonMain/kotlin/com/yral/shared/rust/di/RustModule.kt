@@ -1,4 +1,4 @@
-package com.yral.android.di
+package com.yral.shared.rust.di
 
 import com.yral.shared.rust.data.IndividualUserDataSource
 import com.yral.shared.rust.data.IndividualUserDataSourceImpl
@@ -9,7 +9,7 @@ import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 
-internal val rustModule =
+val rustModule =
     module {
         singleOf(::IndividualUserRepositoryImpl) { bind<IndividualUserRepository>() }
         singleOf(::IndividualUserDataSourceImpl) { bind<IndividualUserDataSource>() }

@@ -1,12 +1,16 @@
 package com.yral.android
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.ripple.RippleAlpha
+import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RippleConfiguration
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
@@ -25,19 +29,37 @@ import com.yral.android.ui.design.appTypoGraphy
 import com.yral.android.ui.screens.RootScreen
 import com.yral.shared.core.platform.AndroidPlatformResources
 import com.yral.shared.core.platform.PlatformResourcesFactory
+import com.yral.shared.features.root.viewmodels.RootViewModel
 import com.yral.shared.koin.koinInstance
 import com.yral.shared.uniffi.generated.initRustLogger
 
 class MainActivity : ComponentActivity() {
+    private lateinit var rootViewModel: RootViewModel
+    private val rippleConfiguration =
+        RippleConfiguration(
+            color = Color.Transparent,
+            rippleAlpha =
+                RippleAlpha(
+                    draggedAlpha = 0f,
+                    focusedAlpha = 0f,
+                    hoveredAlpha = 0f,
+                    pressedAlpha = 0f,
+                ),
+        )
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         initPlatformResources()
         initRustLogger()
+        rootViewModel = koinInstance.get()
+        handleIntent(intent)
         setContent {
-            CompositionLocalProvider(LocalAppTopography provides appTypoGraphy()) {
-                MyApplicationTheme {
-                    RootScreen()
+            CompositionLocalProvider(LocalRippleConfiguration provides rippleConfiguration) {
+                CompositionLocalProvider(LocalAppTopography provides appTypoGraphy()) {
+                    MyApplicationTheme {
+                        RootScreen(rootViewModel)
+                    }
                 }
             }
         }
@@ -47,6 +69,22 @@ class MainActivity : ComponentActivity() {
         koinInstance
             .get<PlatformResourcesFactory>()
             .initialize(AndroidPlatformResources(this))
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleIntent(intent)
+    }
+
+    private fun handleIntent(intent: Intent?) {
+        val uri = intent?.data
+        if (uri?.scheme == "yral" && uri.host == "oauth" && uri.path == "/callback") {
+            val code = uri.getQueryParameter("code")
+            val state = uri.getQueryParameter("state")
+            if (code != null && state != null) {
+                rootViewModel.handleOAuthCallback(code, state)
+            }
+        }
     }
 }
 
