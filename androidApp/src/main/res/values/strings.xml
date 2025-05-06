@@ -13,4 +13,7 @@
     <string name="signup_consent">By signing up, you agree to our Terms of Service</string>
     <string name="terms_of_service_signup_consent">Terms of Service</string>
     <string name="signup_with_google">Sign up with Google</string>
+    <string name="could_not_login">Couldn\'t Log In</string>
+    <string name="could_not_login_desc">The operation couldn’t be completed. Please try again</string>
+    <string name="ok">OK</string>
 </resources>
