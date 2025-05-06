@@ -10,6 +10,7 @@ expect fun CMPPlayer(
     modifier: Modifier,
     url: String,
     thumbnailUrl: String,
+    prefetchThumbnails: List<String>,
     playerParams: CMPPlayerParams,
 )
 
