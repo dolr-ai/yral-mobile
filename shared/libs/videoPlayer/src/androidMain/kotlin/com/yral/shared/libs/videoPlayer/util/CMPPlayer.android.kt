@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -35,6 +36,7 @@ import com.yral.shared.libs.videoPlayer.rememberPrefetchExoPlayerWithLifecycle
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 
+@Suppress("LongMethod")
 @OptIn(UnstableApi::class)
 @Composable
 actual fun CMPPlayer(
@@ -48,8 +50,15 @@ actual fun CMPPlayer(
     val context = LocalContext.current
     val exoPlayer = rememberExoPlayerWithLifecycle(url, context, playerParams.isPause)
     var preFetchExoPlayer: ExoPlayer? by remember { mutableStateOf(null) }
+    var currentPrefetchIndex by remember { mutableIntStateOf(0) }
     if (prefetchVideos.isNotEmpty()) {
-        preFetchExoPlayer = rememberPrefetchExoPlayerWithLifecycle(prefetchVideos[0], context)
+        if (currentPrefetchIndex < prefetchVideos.size) {
+            preFetchExoPlayer =
+                rememberPrefetchExoPlayerWithLifecycle(
+                    url = prefetchVideos[currentPrefetchIndex],
+                    context = context,
+                )
+        }
     }
     val playerView = rememberPlayerView(exoPlayer, context)
 
@@ -100,7 +109,6 @@ actual fun CMPPlayer(
                     }
             },
         )
-
         if (showThumbnail) {
             AsyncImage(
                 model = thumbnailUrl,
@@ -112,39 +120,55 @@ actual fun CMPPlayer(
                         .background(Color.Black),
             )
         }
+    }
 
-        // Manage player listener and lifecycle
-        DisposableEffect(key1 = exoPlayer) {
-            val listener =
-                createPlayerListener(
-                    playerParams.isSliding,
-                    playerParams.totalTime,
-                    playerParams.currentTime,
-                    loadingState = { isBuffering = it },
-                    playerParams.didEndVideo,
-                    playerParams.loop,
-                    exoPlayer,
-                    hideThumbnail = {
-                        if (showThumbnail) {
-                            showThumbnail = false
-                        }
-                    },
-                )
+    // Manage player listener and lifecycle
+    DisposableEffect(key1 = exoPlayer) {
+        val listener =
+            createPlayerListener(
+                playerParams.isSliding,
+                playerParams.totalTime,
+                playerParams.currentTime,
+                loadingState = { isBuffering = it },
+                playerParams.didEndVideo,
+                playerParams.loop,
+                exoPlayer,
+                hideThumbnail = {
+                    if (showThumbnail) {
+                        showThumbnail = false
+                    }
+                },
+            )
 
-            exoPlayer.addListener(listener)
+        exoPlayer.addListener(listener)
 
-            onDispose {
-                exoPlayer.removeListener(listener)
-                exoPlayer.release()
-            }
+        onDispose {
+            exoPlayer.removeListener(listener)
+            exoPlayer.release()
         }
+    }
 
-        DisposableEffect(Unit) {
-            onDispose {
-                exoPlayer.release()
-                preFetchExoPlayer?.release()
-                playerView.keepScreenOn = false
+    DisposableEffect(key1 = preFetchExoPlayer) {
+        val listener =
+            object : Player.Listener {
+                override fun onPlaybackStateChanged(state: Int) {
+                    if (state == Player.STATE_READY) {
+                        currentPrefetchIndex++
+                    }
+                }
             }
+        preFetchExoPlayer?.addListener(listener)
+        onDispose {
+            preFetchExoPlayer?.removeListener(listener)
+            preFetchExoPlayer?.release()
+        }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            exoPlayer.release()
+            preFetchExoPlayer?.release()
+            playerView.keepScreenOn = false
         }
     }
 }
