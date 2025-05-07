@@ -7,12 +7,12 @@
 //
 
 import SwiftUI
+import Combine
 
 struct Smiley {
   let id: String
   let name: String
-  let imageURL: String
-  let votes: Int
+  let imageName: String
 }
 
 enum SmileyGameResult {
@@ -68,24 +68,19 @@ struct SmileyGameView: View {
     smileys: [
       Smiley(id: "laugh",
              name: "Laugh",
-             imageURL: "",
-             votes: 0),
+             imageName: "laugh"),
       Smiley(id: "heart",
              name: "Heart",
-             imageURL: "",
-             votes: 0),
+             imageName: "heart"),
       Smiley(id: "fire",
              name: "Fire",
-             imageURL: "",
-             votes: 0),
+             imageName: "fire"),
       Smiley(id: "shock",
              name: "Shock",
-             imageURL: "",
-             votes: 0),
+             imageName: "shock"),
       Smiley(id: "rocket",
              name: "Rocket",
-             imageURL: "",
-             votes: 0)
+             imageName: "rocket")
     ],
     myResult: nil
   )
@@ -96,19 +91,21 @@ struct SmileyGameView: View {
   @State private var showWinnerOnly = false
 
   let smileyTapped: (Smiley) -> Void
+  let resultAnimationSubscriber: PassthroughSubject<SmileyGameResult, Never>
+  let initialStateSubscriber: PassthroughSubject<SmileyGameResult?, Never>
 
   var body: some View {
     HStack(spacing: 0) {
       if let result = smileyGame.myResult {
-        Color.red
-          .frame(width: 48, height: 48)
-          .clipShape(Circle())
-          .padding(.vertical, 8)
-          .padding(.trailing, 12)
+        switch result {
+        case .winner(let smiley, let points):
+          Image(smiley.imageName)
+            .frame(width: 48, height: 48)
+            .clipShape(Circle())
+            .padding(.vertical, 8)
+            .padding(.trailing, 12)
 
-        VStack(alignment: .leading, spacing: 2) {
-          switch result {
-          case .winner(let smiley, let points):
+          VStack(alignment: .leading, spacing: 2) {
             Text("\(smiley.name) was the most people choice.")
               .font(YralFont.pt16.bold.swiftUIFont)
               .foregroundColor(YralColor.green50.swiftUIColor)
@@ -116,7 +113,15 @@ struct SmileyGameView: View {
             Text("You win \(points) Points!")
               .font(YralFont.pt16.bold.swiftUIFont)
               .foregroundColor(YralColor.green300.swiftUIColor)
-          case .looser(_, let points):
+          }
+        case .looser(let smiley, let points):
+          Image(smiley.imageName)
+            .frame(width: 48, height: 48)
+            .clipShape(Circle())
+            .padding(.vertical, 8)
+            .padding(.trailing, 12)
+
+          VStack(alignment: .leading, spacing: 2) {
             Text("Not the most popular pick!")
               .font(YralFont.pt16.bold.swiftUIFont)
               .foregroundColor(YralColor.green50.swiftUIColor)
@@ -128,7 +133,8 @@ struct SmileyGameView: View {
         }
       } else {
         ForEach(smileyGame.smileys, id: \.id) { smiley in
-          Color.red
+          Image(smiley.imageName)
+            .resizable()
             .frame(width: 48, height: 48)
             .clipShape(Circle())
             .opacity(
@@ -141,33 +147,12 @@ struct SmileyGameView: View {
             .animation(.easeOut(duration: 0.1), value: isFocused)
             .animation(.easeOut(duration: 0.3), value: showWinnerOnly)
             .onTapGesture {
+              smileyTapped(smiley)
               selectedID = smiley.id
-              isPopped = true
-
-              DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                withAnimation(.easeOut(duration: 0.2)) {
-                  isPopped = false
-                }
-              }
-
-              DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
-                isFocused = true
-              }
-
-              DispatchQueue.main.asyncAfter(deadline: .now() + 1.9) {
-                guard let id = selectedID,
-                      let index = smileyGame.smileys.firstIndex(where: { $0.id == id })
-                else {
-                  return
-                }
-
-                smileyGame.smileys.move(fromOffsets: IndexSet(integer: index), toOffset: 0)
-                showWinnerOnly = true
-              }
-
-              DispatchQueue.main.asyncAfter(deadline: .now() + 2.2) {
-                smileyGame.myResult = .winner(smiley, 30)
-              }
+              startPopAnimation(for: smiley)
+            }
+            .onReceive(resultAnimationSubscriber) { result in
+              startAnimation(for: result)
             }
             .padding(.vertical, 8)
 
@@ -177,6 +162,9 @@ struct SmileyGameView: View {
         }
       }
     }
+    .onReceive(initialStateSubscriber) { result in
+      setInitialState(with: result)
+    }
     .frame(height: 64)
     .frame(maxWidth: .infinity, alignment: .leading)
     .padding(.horizontal, 16)
@@ -185,8 +173,60 @@ struct SmileyGameView: View {
     )
     .clipShape(RoundedRectangle(cornerRadius: 32))
   }
-}
 
-#Preview {
-  SmileyGameView { _ in }
+  private func setInitialState(with result: SmileyGameResult?) {
+    selectedID = nil
+    isPopped = false
+    isFocused = false
+    showWinnerOnly = false
+    smileyGame = SmileyGame(
+      smileys: [
+        Smiley(id: "laugh",
+               name: "Laugh",
+               imageName: "laugh"),
+        Smiley(id: "heart",
+               name: "Heart",
+               imageName: "heart"),
+        Smiley(id: "fire",
+               name: "Fire",
+               imageName: "fire"),
+        Smiley(id: "shock",
+               name: "Shock",
+               imageName: "shock"),
+        Smiley(id: "rocket",
+               name: "Rocket",
+               imageName: "rocket")
+      ],
+      myResult: nil
+    )
+  }
+
+  private func startPopAnimation(for smiley: Smiley) {
+    isPopped = true
+
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+      withAnimation(.easeOut(duration: 0.2)) {
+        isPopped = false
+      }
+    }
+  }
+
+  private func startAnimation(for result: SmileyGameResult) {
+    isFocused = true
+
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+      guard let id = selectedID,
+            let index = smileyGame.smileys.firstIndex(where: { $0.id == id })
+      else {
+        return
+      }
+
+      smileyGame.smileys.move(fromOffsets: IndexSet(integer: index), toOffset: 0)
+      showWinnerOnly = true
+    }
+
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+      smileyGame.myResult = result
+    }
+  }
 }

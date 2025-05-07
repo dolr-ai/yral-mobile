@@ -9,6 +9,22 @@ import UIKit
 import SwiftUI
 
 extension FeedsViewController: FeedsCellProtocol {
+  func smileyTapped(index: Int, smiley: Smiley) {}
+
+  func showGameResultBottomSheet(index: Int, gameResult: SmileyGameResult) {
+    var hostingController: UIHostingController<SmileyGameResultBottomSheetView>?
+    let bottomSheetView = SmileyGameResultBottomSheetView(
+      gameResult: gameResult) {
+        hostingController?.dismiss(animated: true)
+      } onLearnMoreTapped: {}
+
+    hostingController = UIHostingController(rootView: bottomSheetView)
+    hostingController!.modalPresentationStyle = .overFullScreen
+    hostingController!.modalTransitionStyle = .crossDissolve
+    hostingController?.view.backgroundColor = .clear
+    self.present(hostingController!, animated: true, completion: nil)
+  }
+
   func shareButtonTapped(index: Int) {
     activityIndicator.startAnimating(in: self.view)
     // swiftlint: disable line_length

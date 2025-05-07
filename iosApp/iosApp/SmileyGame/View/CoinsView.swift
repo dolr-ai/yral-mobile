@@ -145,7 +145,6 @@ class CoinsView: UIView {
   }
 
   func set(coins: Int) {
-    resetUIState()
     self.coins = coins
   }
 
@@ -158,13 +157,13 @@ class CoinsView: UIView {
   }
 }
 
-private extension CoinsView {
+extension CoinsView {
 
-  func animate(duration: TimeInterval,
-               delay: TimeInterval = .zero,
-               options: UIView.AnimationOptions = [],
-               changes: @escaping () -> Void,
-               completion: ((Bool) -> Void)? = nil) {
+  private func animate(duration: TimeInterval,
+                       delay: TimeInterval = .zero,
+                       options: UIView.AnimationOptions = [],
+                       changes: @escaping () -> Void,
+                       completion: ((Bool) -> Void)? = nil) {
     UIView.animate(
       withDuration: duration,
       delay: delay,
@@ -176,7 +175,7 @@ private extension CoinsView {
       completion: completion)
   }
 
-  func animateIn(completion: @escaping () -> Void) {
+  private func animateIn(completion: @escaping () -> Void) {
     animate(duration: Constants.animateInDuration) {
       self.imageView.alpha = .one
     } completion: { _ in
@@ -184,7 +183,7 @@ private extension CoinsView {
     }
   }
 
-  func animateBagBounce(labelTintColor: UIColor, completion: @escaping () -> Void) {
+  private func animateBagBounce(labelTintColor: UIColor, completion: @escaping () -> Void) {
     animate(duration: Constants.animateBagDuration, delay: Constants.animateBagDelay) {
       self.bagImageView.transform = CGAffineTransform
         .identity
@@ -210,7 +209,7 @@ private extension CoinsView {
     }
   }
 
-  func animationReset() {
+  private func animationReset() {
     animate(duration: Constants.animateResetDuration) {
       self.bagImageView.transform = .identity
       self.bagImageView.layer.opacity = 1
