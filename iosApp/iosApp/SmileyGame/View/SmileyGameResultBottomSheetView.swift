@@ -51,7 +51,7 @@ struct SmileyGameResultBottomSheetView: View {
 
         Text(gameResult.bottomSheetSubheading)
           .font(YralFont.pt18.bold.swiftUIFont)
-          .foregroundColor(YralColor.green300.swiftUIColor)
+          .foregroundColor(gameResult.bottomSheetSubheadingColor)
           .padding(.top, 2)
 
         HStack(spacing: 8) {

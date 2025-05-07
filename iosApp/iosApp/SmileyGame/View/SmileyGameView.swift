@@ -48,6 +48,15 @@ extension SmileyGameResult {
     }
   }
 
+  var bottomSheetSubheadingColor: Color {
+    switch self {
+    case .winner:
+      return YralColor.green300.swiftUIColor
+    case .looser:
+      return YralColor.red300.swiftUIColor
+    }
+  }
+
   var lottieName: String {
     switch self {
     case .winner:
@@ -106,40 +115,7 @@ struct SmileyGameView: View {
   var body: some View {
     HStack(spacing: 0) {
       if let result = smileyGame.myResult {
-        switch result {
-        case .winner(let smiley, let points):
-          Image(smiley.imageName)
-            .frame(width: 48, height: 48)
-            .clipShape(Circle())
-            .padding(.vertical, 8)
-            .padding(.trailing, 12)
-
-          VStack(alignment: .leading, spacing: 2) {
-            Text("\(smiley.name) was the most people choice.")
-              .font(YralFont.pt16.bold.swiftUIFont)
-              .foregroundColor(YralColor.green50.swiftUIColor)
-
-            Text("You win \(points) Points!")
-              .font(YralFont.pt16.bold.swiftUIFont)
-              .foregroundColor(YralColor.green300.swiftUIColor)
-          }
-        case .looser(let smiley, let points):
-          Image(smiley.imageName)
-            .frame(width: 48, height: 48)
-            .clipShape(Circle())
-            .padding(.vertical, 8)
-            .padding(.trailing, 12)
-
-          VStack(alignment: .leading, spacing: 2) {
-            Text("Not the most popular pick!")
-              .font(YralFont.pt16.bold.swiftUIFont)
-              .foregroundColor(YralColor.green50.swiftUIColor)
-
-            Text("You lost \(points) Points")
-              .font(YralFont.pt16.bold.swiftUIFont)
-              .foregroundColor(YralColor.red300.swiftUIColor)
-          }
-        }
+        resultView(for: result)
       } else {
         ForEach(smileyGame.smileys, id: \.id) { smiley in
           Image(smiley.imageName)
@@ -152,6 +128,7 @@ struct SmileyGameView: View {
             .scaleEffect(
               (smiley.id == selectedID && isPopped) ? 1.17 : 1
             )
+            .rotationEffect(getRotation(for: smiley))
             .animation(.easeOut(duration: 0.2), value: selectedID)
             .animation(.easeOut(duration: 0.1), value: isFocused)
             .animation(.easeOut(duration: 0.3), value: showWinnerOnly)
@@ -181,6 +158,47 @@ struct SmileyGameView: View {
       YralColor.grey950.swiftUIColor.opacity(0.4)
     )
     .clipShape(RoundedRectangle(cornerRadius: 32))
+  }
+
+  @ViewBuilder func resultView(for result: SmileyGameResult) -> some View {
+    switch result {
+    case .winner(let smiley, let points):
+      Image(smiley.imageName)
+        .frame(width: 48, height: 48)
+        .clipShape(Circle())
+        .padding(.vertical, 8)
+        .padding(.trailing, 12)
+
+      VStack(alignment: .leading, spacing: 2) {
+        Text("\(smiley.name) was the most people choice.")
+          .font(YralFont.pt16.bold.swiftUIFont)
+          .foregroundColor(YralColor.green50.swiftUIColor)
+
+        Text("You win \(points) Points!")
+          .font(YralFont.pt16.bold.swiftUIFont)
+          .foregroundColor(YralColor.green300.swiftUIColor)
+      }
+    case .looser(let smiley, let points):
+      Image(smiley.imageName)
+        .frame(width: 48, height: 48)
+        .clipShape(Circle())
+        .padding(.vertical, 8)
+        .padding(.trailing, 12)
+
+      VStack(alignment: .leading, spacing: 2) {
+        Text("Not the most popular pick!")
+          .font(YralFont.pt16.bold.swiftUIFont)
+          .foregroundColor(YralColor.green50.swiftUIColor)
+
+        Text("You lost \(points) Points")
+          .font(YralFont.pt16.bold.swiftUIFont)
+          .foregroundColor(YralColor.red300.swiftUIColor)
+      }
+    }
+  }
+
+  private func getRotation(for smiley: Smiley) -> Angle {
+    (smiley.id == selectedID && isPopped) ? Angle(degrees: -15.53) : Angle(degrees: 0)
   }
 
   private func setInitialState(with result: SmileyGameResult?) {
