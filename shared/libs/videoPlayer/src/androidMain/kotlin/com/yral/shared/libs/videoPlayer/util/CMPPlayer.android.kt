@@ -53,6 +53,7 @@ actual fun CMPPlayer(
     var currentPrefetchIndex by remember { mutableIntStateOf(0) }
     if (prefetchVideos.isNotEmpty()) {
         if (currentPrefetchIndex < prefetchVideos.size) {
+            preFetchExoPlayer?.release()
             preFetchExoPlayer =
                 rememberPrefetchExoPlayerWithLifecycle(
                     url = prefetchVideos[currentPrefetchIndex],
