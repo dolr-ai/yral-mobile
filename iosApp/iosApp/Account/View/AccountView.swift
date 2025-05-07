@@ -27,14 +27,20 @@ struct AccountView: View {
     ZStack {
       ScrollView {
         VStack(spacing: Constants.vStackSpacing) {
+          Text(Constants.navigationTitle)
+            .font(Constants.navigationTitleFont)
+            .foregroundColor(Constants.navigationTitleTextColor)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(Constants.navigationTitlePadding)
           switch viewModel.state {
           case .successfullyFetched(let info):
             UserInfoView(
               accountInfo: .constant(info),
-              shouldApplySpacing: true,
+              shouldApplySpacing: false,
               showLoginButton: $showLoginButton,
               delegate: self
             )
+            .padding(.horizontal, Constants.userInfoHorizontalPadding)
           default:
             UserInfoView(
               accountInfo: .constant(
@@ -43,12 +49,14 @@ struct AccountView: View {
                   canisterID: ""
                 )
               )
-              , shouldApplySpacing: true,
+              , shouldApplySpacing: false,
               showLoginButton: $showLoginButton,
               delegate: self
             )
+            .padding(.horizontal, Constants.userInfoHorizontalPadding)
           }
           ProfileOptionsView(showLogoutButton: $showLoginButton.inverted, delegate: self)
+          Spacer()
           ShareOptionsView()
           //        ICPBrandingView()
           Spacer().frame(height: Constants.bottomSpacing)
@@ -155,10 +163,21 @@ extension AccountView: ProfileOptionsViewDelegate {
 
 extension AccountView {
   enum Constants {
+    static let navigationTitle = "Accounts"
+    static let navigationTitleFont = YralFont.pt20.bold.swiftUIFont
+    static let navigationTitleTextColor = YralColor.grey50.swiftUIColor
+    static let navigationTitlePadding = EdgeInsets(
+      top: -12.0,
+      leading: 16.0,
+      bottom: 8.0,
+      trailing: 0.0
+    )
+
     static let vStackSpacing = 30.0
     static let vStackPadding = 30.0
     static let bottomSpacing = 40.0
     static let loadingStateOpacity = 0.4
+    static let userInfoHorizontalPadding = 16.0
     static let loaderSize = 24.0
     static let lottieName = "Yral_Loader"
   }
