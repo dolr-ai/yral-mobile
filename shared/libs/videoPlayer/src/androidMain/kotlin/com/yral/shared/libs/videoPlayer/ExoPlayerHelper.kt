@@ -133,6 +133,11 @@ fun rememberPrefetchExoPlayerWithLifecycle(
                 .Builder(context)
                 .setLoadControl(loadControl)
                 .build()
+                .apply {
+                    videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT
+                    repeatMode = Player.REPEAT_MODE_OFF
+                    setHandleAudioBecomingNoisy(true)
+                }
         }
     LaunchedEffect(url) {
         val videoUri = url.toUri()
