@@ -145,6 +145,10 @@ class ProfileViewModel: ObservableObject {
   }
 
   func refreshVideos(request: RefreshVideosRequest) async {
+    if request.shouldPurge {
+      startIndex = .zero
+      offset = ProfileRepository.Constants.offset
+    }
     guard !isLoading else { return }
 
     await MainActor.run {
