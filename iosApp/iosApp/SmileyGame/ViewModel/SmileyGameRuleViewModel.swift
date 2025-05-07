@@ -30,7 +30,7 @@ enum SmileyGameRuleViewState {
 
 class SmileyGameRuleViewModel: ObservableObject {
   let smileyGameRuleUseCase: SmileyGameRuleUseCaseProtocol
-  var smileyGameRuleResponse: [SmileyGameRuleResponse]!
+  var smileyGameRuleResponse: [SmileyGameRuleResponse]?
 
   @Published var state: SmileyGameRuleViewState = .initialized
 

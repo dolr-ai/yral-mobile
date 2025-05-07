@@ -839,7 +839,6 @@
 			children = (
 				107C60942DB7AAD7006FC467 /* SmileyGameRuleView.swift */,
 				107C60D22DBF9FC4006FC467 /* GameRuleView.swift */,
-				107C60D52DBFA7C0006FC467 /* FirebaseImageView.swift */,
 			);
 			path = SmileyGameRule;
 			sourceTree = "<group>";
@@ -1032,6 +1031,7 @@
 		AC26CA662D806501006ADA75 /* Utils */ = {
 			isa = PBXGroup;
 			children = (
+				107C60D52DBFA7C0006FC467 /* FirebaseImageView.swift */,
 				107C60A32DBA01EB006FC467 /* RoundedCorner.swift */,
 				107C608F2DB78093006FC467 /* UIView+Extensions.swift */,
 				ACFEDFA02D96CEC2003116EA /* Errors.swift */,

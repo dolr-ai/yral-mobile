@@ -9,15 +9,15 @@
 import Foundation
 
 enum SmileyGameRuleError: Error {
-  case networkError(NetworkError)
+  case firebaseError(Error)
   case unknown(String)
 }
 
 extension SmileyGameRuleError: LocalizedError {
   public var errorDescription: String? {
     switch self {
-    case .networkError(let networkError):
-      return "Network Error: \(networkError)"
+    case .firebaseError(let firebaseError):
+      return "Firebase Error: \(firebaseError)"
     case .unknown(let message):
       return "Unknown Error: \(message)"
     }

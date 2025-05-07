@@ -16,7 +16,7 @@ protocol FirebaseServiceProtocol {
 
   func fetchCollection<T: Decodable>(
     from path: String,
-    orderBy field: FieldPath?,
+    orderBy fields: [String]?,
     decodeAs type: T.Type
   ) async throws -> [T]
 }

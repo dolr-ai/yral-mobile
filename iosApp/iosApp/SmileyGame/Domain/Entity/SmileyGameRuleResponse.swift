@@ -7,10 +7,9 @@
 //
 
 import Foundation
-import FirebaseFirestore
 
 struct SmileyGameRuleResponse: Identifiable {
-  @DocumentID var id: String?
+  var id: String?
   let name: String
   let imageURL: String
   let body: [BodyElement]

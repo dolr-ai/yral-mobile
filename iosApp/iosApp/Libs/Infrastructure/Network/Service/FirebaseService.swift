@@ -23,12 +23,12 @@ class FirebaseService: FirebaseServiceProtocol {
 
   func fetchCollection<T>(
     from path: String,
-    orderBy field: FieldPath?,
+    orderBy fields: [String]?,
     decodeAs type: T.Type
   ) async throws -> [T] where T: Decodable {
     var query: Query = database.collection(path)
-    if let field {
-      query = query.order(by: field)
+    if let fields {
+      query = query.order(by: FieldPath(fields))
     }
 
     let snapshot = try await query.getDocuments()

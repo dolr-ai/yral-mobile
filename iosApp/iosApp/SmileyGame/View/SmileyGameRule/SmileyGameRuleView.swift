@@ -10,20 +10,28 @@ import SwiftUI
 
 struct SmileyGameRuleView: View {
   @ObservedObject var viewModel: SmileyGameRuleViewModel
+  @State private var showRules: Bool = false
 
   var body: some View {
     ScrollView {
-      switch viewModel.state {
-      case .success:
-        ForEach(viewModel.smileyGameRuleResponse, id: \.name) { rule in
+      if let gameRules = viewModel.smileyGameRuleResponse, showRules {
+        ForEach(gameRules, id: \.name) { rule in
           GameRuleView(rule: rule)
             .padding(.horizontal, Constants.ruleHorizontalPadding)
             .padding(.bottom, Constants.ruleBottomPadding)
         }
-      default:
+      } else {
         EmptyView()
       }
     }
+    .onReceive(viewModel.$state, perform: { state in
+      switch state {
+      case .success:
+        showRules = true
+      default:
+        break
+      }
+    })
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
     .padding(.top, Constants.pageTopPadding)
     .background(Constants.backgroundColor)

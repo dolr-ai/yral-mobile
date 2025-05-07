@@ -10,9 +10,9 @@ import Foundation
 import FirebaseFirestore
 
 class SmileyGameRuleRepository: SmileyGameRuleRepositoryProtocol {
-  private let firebaseService: FirebaseService
+  private let firebaseService: FirebaseServiceProtocol
 
-  init(firebaseService: FirebaseService) {
+  init(firebaseService: FirebaseServiceProtocol) {
     self.firebaseService = firebaseService
   }
 
@@ -20,18 +20,13 @@ class SmileyGameRuleRepository: SmileyGameRuleRepositoryProtocol {
     do {
       let response = try await firebaseService.fetchCollection(
         from: Constants.collectionPath,
-        orderBy: FieldPath.documentID(),
+        orderBy: ["__name__"],
         decodeAs: SmileyGameRuleDTO.self
       )
 
       return .success(response.map({ $0.toDomain() }))
     } catch {
-      switch error {
-      case let error as NetworkError:
-        return .failure(SmileyGameRuleError.networkError(error))
-      default:
-        return .failure(SmileyGameRuleError.unknown(error.localizedDescription))
-      }
+      return .failure(SmileyGameRuleError.firebaseError(error))
     }
   }
 }
