@@ -32,7 +32,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   private static let resultBottomSheetKey = "ResultBottomSheetKey"
 
   private lazy var showResultBottomSheet: Bool = {
-    userDefaults.integer(forKey: Self.resultBottomSheetKey) == 0 ? true : false
+    userDefaults.integer(forKey: Self.resultBottomSheetKey) < 3 ? true : false
   }()
 
   private let playerContainerView = getUIImageView()
@@ -308,6 +308,9 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     case .winner(_, let coinsWon):
       profileInfoView.coinsView.updateCoins(by: coinsWon)
       if showResultBottomSheet {
+        let existingCount = userDefaults.integer(forKey: Self.resultBottomSheetKey)
+        userDefaults.set(existingCount + 1, forKey: Self.resultBottomSheetKey)
+        userDefaults.synchronize()
         delegate?.showGameResultBottomSheet(index: index, gameResult: result)
       } else {
         smileyGameScoreLabel.text = "+\(coinsWon)"
@@ -316,6 +319,9 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     case .looser(_, let coinsLoose):
       profileInfoView.coinsView.updateCoins(by: coinsLoose)
       if showResultBottomSheet {
+        let existingCount = userDefaults.integer(forKey: Self.resultBottomSheetKey)
+        userDefaults.set(existingCount + 1, forKey: Self.resultBottomSheetKey)
+        userDefaults.synchronize()
         delegate?.showGameResultBottomSheet(index: index, gameResult: result)
       } else {
         smileyGameScoreLabel.text = "\(coinsLoose)"
