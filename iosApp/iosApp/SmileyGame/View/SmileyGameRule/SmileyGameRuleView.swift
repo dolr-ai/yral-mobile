@@ -12,13 +12,32 @@ struct SmileyGameRuleView: View {
   @ObservedObject var viewModel: SmileyGameRuleViewModel
   @State private var showRules: Bool = false
 
+  let onDismiss: () -> Void
+
   var body: some View {
-    ScrollView {
+    VStack(alignment: .leading, spacing: 0) {
       if let gameRules = viewModel.smileyGameRuleResponse, showRules {
-        ForEach(gameRules, id: \.name) { rule in
-          GameRuleView(rule: rule)
-            .padding(.horizontal, Constants.ruleHorizontalPadding)
-            .padding(.bottom, Constants.ruleBottomPadding)
+        HStack(alignment: .center, spacing: 12) {
+          Image("chevron-left")
+            .resizable()
+            .frame(width: 24, height: 24)
+            .padding(.leading, 12)
+            .onTapGesture {
+              onDismiss()
+            }
+
+          Text("How to play?")
+            .font(YralFont.pt20.bold.swiftUIFont)
+            .foregroundColor(YralColor.grey0.swiftUIColor)
+        }
+        .padding(.bottom, 24)
+
+        ScrollView {
+          ForEach(gameRules, id: \.name) { rule in
+            GameRuleView(rule: rule)
+              .padding(.horizontal, Constants.ruleHorizontalPadding)
+              .padding(.bottom, Constants.ruleBottomPadding)
+          }
         }
       } else {
         EmptyView()

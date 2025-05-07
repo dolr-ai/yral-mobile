@@ -56,6 +56,15 @@ extension SmileyGameResult {
       return "Smiley_Game_Lose"
     }
   }
+
+  var smiley: Smiley {
+    switch self {
+    case .winner(let smiley, _):
+      return smiley
+    case .looser(let smiley, _):
+      return smiley
+    }
+  }
 }
 
 struct SmileyGame {

@@ -11,12 +11,30 @@ import SwiftUI
 extension FeedsViewController: FeedsCellProtocol {
   func smileyTapped(index: Int, smiley: Smiley) {}
 
+  func makeSmileyGameRulesDIContainer() -> SmileyGameRuleDIContainer {
+    return SmileyGameRuleDIContainer(
+      dependencies: SmileyGameRuleDIContainer.Dependencies(
+        firebaseService: FirebaseService(),
+        crashReporter: CompositeCrashReporter(reporters: [FirebaseCrashlyticsReporter()])
+      )
+    )
+  }
+
   func showGameResultBottomSheet(index: Int, gameResult: SmileyGameResult) {
     var hostingController: UIHostingController<SmileyGameResultBottomSheetView>?
     let bottomSheetView = SmileyGameResultBottomSheetView(
       gameResult: gameResult) {
         hostingController?.dismiss(animated: true)
-      } onLearnMoreTapped: {}
+      } onLearnMoreTapped: {
+        hostingController?.dismiss(animated: true) {
+          let smileyGameRuleView = self.makeSmileyGameRulesDIContainer().makeSmileyGameRuleView {
+            self.navigationController?.popViewController(animated: true)
+          }
+          let smileyGameRuleVC = UIHostingController(rootView: smileyGameRuleView)
+          smileyGameRuleVC.extendedLayoutIncludesOpaqueBars = true
+          self.navigationController?.pushViewController(smileyGameRuleVC, animated: true)
+        }
+      }
 
     hostingController = UIHostingController(rootView: bottomSheetView)
     hostingController!.modalPresentationStyle = .overFullScreen

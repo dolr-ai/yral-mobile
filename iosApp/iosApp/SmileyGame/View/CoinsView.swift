@@ -63,7 +63,7 @@ class CoinsView: UIView {
     fatalError("init(coder:) has not been implemented")
   }
 
-  private func resetUIState() {
+  func resetUIState() {
     imageView.alpha = .zero
     imageView.transform = .identity
     bagImageView.alpha = .one

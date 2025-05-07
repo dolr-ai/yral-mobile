@@ -43,9 +43,9 @@ struct SmileyGameResultBottomSheetView: View {
             .font(YralFont.pt16.medium.swiftUIFont)
             .foregroundColor(YralColor.green50.swiftUIColor)
 
-          Color.red
+          Image(gameResult.smiley.imageName)
+            .resizable()
             .frame(width: 28, height: 28)
-            .clipShape(Circle())
         }
         .padding(.top, 12)
 
