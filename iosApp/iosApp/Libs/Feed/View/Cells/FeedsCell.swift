@@ -6,14 +6,20 @@
 //  Copyright © 2024 orgName. All rights reserved.
 //
 
+// swiftlint: disable file_length
 import UIKit
+import SwiftUI
 import AVFoundation
+import Lottie
+import Combine
 
 protocol FeedsCellProtocol: AnyObject {
   func shareButtonTapped(index: Int)
   func likeButtonTapped(index: Int)
   func deleteButtonTapped(index: Int)
   func reportButtonTapped(index: Int)
+  func smileyTapped(index: Int, smiley: Smiley)
+  func showGameResultBottomSheet(index: Int, gameResult: SmileyGameResult)
 }
 // swiftlint: disable type_body_length
 class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
@@ -22,6 +28,12 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   var index: Int = .zero
   var feedType: FeedType = .otherUsers
   weak var delegate: FeedsCellProtocol?
+  private let userDefaults = UserDefaults.standard
+  private static let resultBottomSheetKey = "ResultBottomSheetKey"
+
+  private lazy var showResultBottomSheet: Bool = {
+    userDefaults.integer(forKey: Self.resultBottomSheetKey) == 0 ? true : false
+  }()
 
   private let playerContainerView = getUIImageView()
 
@@ -72,12 +84,42 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     return label
   }()
 
+  lazy var smileyGameView: UIView = {
+    let view = UIHostingController(rootView:
+                                    SmileyGameView(smileyTapped: { [weak self] smiley in
+      self?.handleSmileyTap(smiley)
+    },
+                                                   resultAnimationSubscriber: resultAnimationPublisher,
+                                                   initialStateSubscriber: initialStatePublisher
+                                                  ))
+    view.view.translatesAutoresizingMaskIntoConstraints = false
+    view.view.backgroundColor = .clear
+    return view.view
+  }()
+
+  let lottieView: LottieAnimationView = {
+    let view = LottieAnimationView()
+    view.translatesAutoresizingMaskIntoConstraints = false
+    view.contentMode = .scaleAspectFit
+    view.loopMode = .playOnce
+    view.animationSpeed = 1.0
+    return view
+  }()
+
+  let smileyGameScoreLabel: UILabel = {
+    let label = getUILabel()
+    label.font = YralFont.pt64.uiFont
+    return label
+  }()
+
   var isCaptionExpanded = false
   var collapsedCaptionHeight: CGFloat = 0
   var expandedCaptionHeight: CGFloat = 0
   var isCaptionCollapsible = false
   var captionScrollViewHeightConstraint: NSLayoutConstraint!
-//  var smileyGame: SmileyGame
+
+  let resultAnimationPublisher = PassthroughSubject<SmileyGameResult, Never>()
+  let initialStatePublisher = PassthroughSubject<SmileyGameResult?, Never>()
 
   private static func getActionButton(withTitle title: String, image: UIImage?) -> UIButton {
     var configuration = UIButton.Configuration.plain()
@@ -107,21 +149,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     return profileInfoView
   }()
 
-//  private lazy var smileyView: UIHostingController<SmileyView> = {
-//    let view = UIHostingController<SmileyView>(
-//      rootView: SmileyView(
-//        smileyGame: Binding(
-//          get: { self.smileyGame },
-//          set: { self.smileyGame = $0 }
-//        ),
-//        smileyTapped: { tappedSmiley in
-//
-//        }))
-//    return view
-//  }()
-
   override init(frame: CGRect) {
-//    smileyGame = SmileyGame(smileys: [])
     super.init(frame: frame)
     setupUI()
   }
@@ -132,10 +160,11 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
 
   private func setupUI() {
     addPlayerContainerView()
+    setupLottieView()
     setupProfileInfoView()
     setupStackView()
     setupCaptionLabel()
-//    setupSmileyView()
+    setupSmileyGameView()
 
     let cellTapGesture = UITapGestureRecognizer(target: self, action: #selector(handleCellTap))
     cellTapGesture.cancelsTouchesInView = false
@@ -229,23 +258,93 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     captionScrollView.addGestureRecognizer(captionTapGesture)
   }
 
-//  private func setupSmileyView() {
-//    guard let smView = smileyView.view else { return }
-//    smView.translatesAutoresizingMaskIntoConstraints = false
-//    smView.backgroundColor = .clear
-//
-//    contentView.addSubview(smView)
-//    NSLayoutConstraint.activate([
-//      smView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-//      smView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
-//      smView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -16),
-//      smView.heightAnchor.constraint(equalToConstant: 64)
-//    ])
-//  }
-//
-//  private func handleSmileyTap(_ smiley: Smiley) {
-//    
-//  }
+  private func setupLottieView() {
+    contentView.addSubview(lottieView)
+    contentView.addSubview(smileyGameScoreLabel)
+    smileyGameScoreLabel.isHidden = true
+
+    NSLayoutConstraint.activate([
+      lottieView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+      lottieView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+      lottieView.topAnchor.constraint(equalTo: contentView.topAnchor),
+      lottieView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+
+      smileyGameScoreLabel.topAnchor.constraint(equalTo: contentView.bottomAnchor),
+      smileyGameScoreLabel.centerXAnchor.constraint(equalTo: contentView.centerXAnchor)
+    ])
+  }
+
+  private func setupSmileyGameView() {
+    contentView.addSubview(smileyGameView)
+    NSLayoutConstraint.activate([
+      smileyGameView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+      smileyGameView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+      smileyGameView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -16),
+      smileyGameView.heightAnchor.constraint(equalToConstant: 64)
+    ])
+  }
+
+  private func handleSmileyTap(_ smiley: Smiley) {
+    delegate?.smileyTapped(index: index, smiley: smiley)
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+      self.startFlowingAnimation(for: smiley)
+    }
+  }
+
+  private func startFlowingAnimation(for smiley: Smiley) {
+    let animation = LottieAnimation.named("Smiley_Game_\(smiley.name)")
+    lottieView.animation = animation
+    lottieView.play { [weak self] completed in
+      if completed {
+        // This animation will run after data is received from API
+        let result: SmileyGameResult = Int.random(in: 0...100) % 2 == 0 ? .winner(smiley, 30) : .looser(smiley, -10)
+        self?.startSmileyGamResultAnimation(for: result)
+      }
+    }
+  }
+
+  private func startSmileyGamResultAnimation(for result: SmileyGameResult) {
+    switch result {
+    case .winner(_, let coinsWon):
+      profileInfoView.coinsView.updateCoins(by: coinsWon)
+      if showResultBottomSheet {
+        delegate?.showGameResultBottomSheet(index: index, gameResult: result)
+      } else {
+        smileyGameScoreLabel.text = "+\(coinsWon)"
+        smileyGameScoreLabel.textColor = YralColor.green300.uiColor
+      }
+    case .looser(_, let coinsLoose):
+      profileInfoView.coinsView.updateCoins(by: coinsLoose)
+      if showResultBottomSheet {
+        delegate?.showGameResultBottomSheet(index: index, gameResult: result)
+      } else {
+        smileyGameScoreLabel.text = "\(coinsLoose)"
+        smileyGameScoreLabel.textColor = YralColor.red300.uiColor
+      }
+    }
+
+    if !showResultBottomSheet {
+      startScoreLabelAnimation(for: result)
+    } else {
+      resultAnimationPublisher.send(result)
+    }
+  }
+
+  private func startScoreLabelAnimation(for result: SmileyGameResult) {
+    smileyGameScoreLabel.isHidden = false
+    smileyGameScoreLabel.alpha = 0.5
+    UIView.animate(withDuration: 2) {
+      self.smileyGameScoreLabel.transform = CGAffineTransform(translationX: 0, y: -UIScreen.main.bounds.height)
+      self.smileyGameScoreLabel.alpha = 1
+    } completion: { complete in
+      if complete {
+        self.smileyGameScoreLabel.isHidden = true
+        self.smileyGameScoreLabel.transform = .identity
+        self.smileyGameScoreLabel.alpha = 1
+        self.resultAnimationPublisher.send(result)
+      }
+    }
+  }
 
   @objc private func handleCaptionTap() {
     if !isCaptionExpanded {
@@ -340,6 +439,12 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   override func prepareForReuse() {
     super.prepareForReuse()
     playerLayer?.player = nil
+    profileInfoView.coinsView.resetUIState()
+    lottieView.stop()
+    smileyGameScoreLabel.transform = .identity
+    smileyGameScoreLabel.isHidden = true
+    smileyGameScoreLabel.alpha = 1
+    initialStatePublisher.send(nil)
   }
 
   struct FeedCellInfo {
@@ -383,3 +488,4 @@ extension FeedsCell {
   }
 }
 // swiftlint: enable type_body_length
+// swiftlint: enable file_length

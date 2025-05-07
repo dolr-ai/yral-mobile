@@ -27,7 +27,7 @@ class CoinsView: UIView {
                     y: .zero,
                     width: Constants.backgroundMinimumWidth,
                     height: Constants.backgroundHeight),
-      cornerRadius: Constants.backgroundHeight / 2,
+      cornerRadius: Constants.backgroundHeight / .two,
       opacity: Constants.backgroundOpacity
     )
     view.clipsToBounds = false
@@ -48,7 +48,7 @@ class CoinsView: UIView {
     return label
   }()
 
-  var coins: Int = 0 {
+  var coins: Int = .zero {
     didSet {
       label.text = "\(coins)"
     }
@@ -64,11 +64,11 @@ class CoinsView: UIView {
   }
 
   private func resetUIState() {
-    imageView.alpha = 0
+    imageView.alpha = .zero
     imageView.transform = .identity
-    bagImageView.alpha = 1
+    bagImageView.alpha = .one
     bagImageView.transform = .identity
-    label.alpha = 1
+    label.alpha = .one
     label.transform = .identity
     label.textColor = Constants.labelTextColor
 
@@ -110,7 +110,7 @@ class CoinsView: UIView {
 
   private func addImageView() {
     addSubview(imageView)
-    imageView.alpha = 0
+    imageView.alpha = .zero
 
     NSLayoutConstraint.activate([
       imageView.leadingAnchor.constraint(equalTo: leadingAnchor),
@@ -145,26 +145,25 @@ class CoinsView: UIView {
   }
 
   func set(coins: Int) {
-    resetUIState()
     self.coins = coins
   }
 
   func updateCoins(by newCoins: Int) {
-    if newCoins > 0 {
+    if newCoins > .zero {
       incrementCoins(by: newCoins)
-    } else if newCoins < 0 {
+    } else if newCoins < .zero {
       decrementCoins(by: newCoins)
     }
   }
 }
 
-private extension CoinsView {
+extension CoinsView {
 
-  func animate(duration: TimeInterval,
-               delay: TimeInterval = 0,
-               options: UIView.AnimationOptions = [],
-               changes: @escaping () -> Void,
-               completion: ((Bool) -> Void)? = nil) {
+  private func animate(duration: TimeInterval,
+                       delay: TimeInterval = .zero,
+                       options: UIView.AnimationOptions = [],
+                       changes: @escaping () -> Void,
+                       completion: ((Bool) -> Void)? = nil) {
     UIView.animate(
       withDuration: duration,
       delay: delay,
@@ -176,15 +175,15 @@ private extension CoinsView {
       completion: completion)
   }
 
-  func animateIn(completion: @escaping () -> Void) {
+  private func animateIn(completion: @escaping () -> Void) {
     animate(duration: Constants.animateInDuration) {
-      self.imageView.alpha = 1
+      self.imageView.alpha = .one
     } completion: { _ in
       completion()
     }
   }
 
-  func animateBagBounce(labelTintColor: UIColor, completion: @escaping () -> Void) {
+  private func animateBagBounce(labelTintColor: UIColor, completion: @escaping () -> Void) {
     animate(duration: Constants.animateBagDuration, delay: Constants.animateBagDelay) {
       self.bagImageView.transform = CGAffineTransform
         .identity
@@ -195,11 +194,11 @@ private extension CoinsView {
         .identity
         .scaledBy(x: Constants.imageScale, y: Constants.imageScale)
         .translatedBy(x: Constants.imageTranslationX, y: -Constants.imageTranslationY)
-      self.imageView.alpha = 0
+      self.imageView.alpha = .zero
       self.label.transform = CGAffineTransform
         .identity
         .translatedBy(x: Constants.labelTranslationX, y: -Constants.labelTranslationY)
-      self.label.alpha = 0
+      self.label.alpha = .zero
     } completion: { _ in
       self.imageView.transform = .identity
       self.label.transform = CGAffineTransform
@@ -210,12 +209,12 @@ private extension CoinsView {
     }
   }
 
-  func animationReset() {
+  private func animationReset() {
     animate(duration: Constants.animateResetDuration) {
       self.bagImageView.transform = .identity
       self.bagImageView.layer.opacity = 1
       self.label.transform = .identity
-      self.label.alpha = 1
+      self.label.alpha = .one
     } completion: { _ in
       self.animate(duration: Constants.animateResetDuration) {
         self.label.textColor = Constants.labelTextColor

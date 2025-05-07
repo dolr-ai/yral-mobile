@@ -11,6 +11,9 @@ import SwiftUI
 struct SmileyGameResultBottomSheetView: View {
   var gameResult: SmileyGameResult
 
+  let onKeepPlayingTapped: () -> Void
+  let onLearnMoreTapped: () -> Void
+
   var body: some View {
     ZStack(alignment: .bottom) {
       Color.black.opacity(0.8)
@@ -53,7 +56,7 @@ struct SmileyGameResultBottomSheetView: View {
 
         HStack(spacing: 8) {
           Button {
-
+            onKeepPlayingTapped()
           } label: {
             Text("Keep Playing")
               .font(YralFont.pt16.semiBold.swiftUIFont)
@@ -65,7 +68,7 @@ struct SmileyGameResultBottomSheetView: View {
           }
 
           Button {
-
+            onLearnMoreTapped()
           } label: {
             Text("Learn More")
               .font(YralFont.pt16.semiBold.swiftUIFont)
@@ -100,13 +103,4 @@ extension SmileyGameResultBottomSheetView {
       endPoint: .init(x: 0.35, y: 0.89)
     )
   }
-}
-
-#Preview {
-  SmileyGameResultBottomSheetView(
-    gameResult: .looser(
-      .init(id: "heart", name: "Heart", imageURL: "", votes: 1),
-      10
-    )
-  )
 }
