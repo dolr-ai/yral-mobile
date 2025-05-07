@@ -8,7 +8,6 @@
 
 import UIKit
 
-// swiftlint: disable type_body_length
 class ProfileInfoView: UIView, ImageLoaderProtocol {
   var imageView: UIImageView = {
     let imageView = getUIImageView()
@@ -36,42 +35,7 @@ class ProfileInfoView: UIView, ImageLoaderProtocol {
     return label
   }()
 
-  var coinsView: UIView = {
-    let view = getUIView()
-    view.setGradientBackground(
-      colors: [
-        Constants.coinsViewGradientStartColor,
-        Constants.coinsViewGradientEndColor
-      ],
-      frame: CGRect(x: .zero,
-                    y: .zero,
-                    width: Constants.coinsViewMinimumWidth,
-                    height: Constants.coinsViewHeight),
-      cornerRadius: Constants.coinsViewHeight / 2,
-      opacity: Constants.coinsViewOpacity)
-    view.clipsToBounds = false
-    return view
-  }()
-
-  var coinsLabel: UILabel = {
-    let label = getUILabel()
-    label.backgroundColor = .clear
-    label.font = Constants.coinsLabelFont
-    label.textColor = Constants.coinsLabelTextColor
-    return label
-  }()
-
-  var coinsBagImageView: UIImageView = {
-    let imageView = getUIImageView()
-    imageView.image = Constants.coinsBagFilledImage
-    return imageView
-  }()
-
-  var coinsImageView: UIImageView = {
-    let imageView = getUIImageView()
-    imageView.image = Constants.coinsImage
-    return imageView
-  }()
+  let coinsView = CoinsView()
 
   var profileInfo: ProfileInfo?
 
@@ -87,7 +51,7 @@ class ProfileInfoView: UIView, ImageLoaderProtocol {
   func setupUI() {
     self.translatesAutoresizingMaskIntoConstraints = false
     addImageView()
-    addCoinView()
+    addCoinsView()
     addTitleLabel()
     addSubtitleLabel()
   }
@@ -99,6 +63,14 @@ class ProfileInfoView: UIView, ImageLoaderProtocol {
       imageView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: Constants.imageViewLeading),
       imageView.heightAnchor.constraint(equalToConstant: Constants.imageViewSize),
       imageView.widthAnchor.constraint(equalToConstant: Constants.imageViewSize)
+    ])
+  }
+
+  func addCoinsView() {
+    addSubview(coinsView)
+    NSLayoutConstraint.activate([
+      coinsView.trailingAnchor.constraint(equalTo: trailingAnchor),
+      coinsView.centerYAnchor.constraint(equalTo: imageView.centerYAnchor)
     ])
   }
 
@@ -122,41 +94,6 @@ class ProfileInfoView: UIView, ImageLoaderProtocol {
     ])
   }
 
-  func addCoinView() {
-    addSubview(coinsImageView)
-    addSubview(coinsView)
-    coinsView.addSubview(coinsLabel)
-    coinsView.addSubview(coinsBagImageView)
-
-    coinsImageView.alpha = 0
-
-    NSLayoutConstraint.activate([
-      coinsView.trailingAnchor.constraint(equalTo: trailingAnchor),
-      coinsView.centerYAnchor.constraint(equalTo: imageView.centerYAnchor),
-      coinsView.heightAnchor.constraint(equalToConstant: Constants.coinsViewHeight),
-      coinsView.widthAnchor.constraint(greaterThanOrEqualToConstant: Constants.coinsViewMinimumWidth),
-
-      coinsLabel.trailingAnchor.constraint(equalTo: coinsView.trailingAnchor,
-                                           constant: -Constants.coinsLabelTrailing),
-      coinsLabel.leadingAnchor.constraint(equalTo: coinsView.leadingAnchor,
-                                          constant: Constants.coinsLabelLeading),
-      coinsLabel.centerYAnchor.constraint(equalTo: coinsView.centerYAnchor),
-
-      coinsBagImageView.widthAnchor.constraint(equalToConstant: Constants.coinsBagImageSize),
-      coinsBagImageView.heightAnchor.constraint(equalToConstant: Constants.coinsBagImageSize),
-      coinsBagImageView.centerYAnchor.constraint(equalTo: coinsView.centerYAnchor),
-      coinsBagImageView.trailingAnchor.constraint(equalTo: coinsLabel.leadingAnchor,
-                                                  constant: -Constants.coinsBagTrailing),
-
-      coinsImageView.trailingAnchor.constraint(equalTo: coinsView.leadingAnchor,
-                                               constant: -Constants.coinsImageLeading),
-      coinsImageView.widthAnchor.constraint(equalToConstant: Constants.coinsImageSize),
-      coinsImageView.heightAnchor.constraint(equalToConstant: Constants.coinsImageSize),
-      coinsImageView.topAnchor.constraint(equalTo: coinsView.topAnchor,
-                                          constant: -Constants.coinsImageTop)
-    ])
-  }
-
   func set(data: ProfileInfo) {
     profileInfo = data
 
@@ -167,131 +104,11 @@ class ProfileInfoView: UIView, ImageLoaderProtocol {
     }
     titleLabel.text = data.title
     subtitleLabel.text = data.subtitle
-    coinsLabel.text = "\(data.coins)"
+    coinsView.set(coins: data.coins)
   }
 
-  func update(coins: Int) {
-    guard var profileInfo else { return }
-
-    if coins > profileInfo.coins {
-      profileInfo.coins = coins
-      incrementCoins()
-    } else if coins < profileInfo.coins {
-      profileInfo.coins = coins
-      decrementCoins()
-    }
-  }
-
-  func incrementCoins() {
-    UIView.animate(withDuration: 0.5) {
-      self.coinsImageView.alpha = 1
-      self.layoutIfNeeded()
-    } completion: { complete in
-      if complete {
-        UIView.animate(withDuration: 0.5, delay: 0.25) {
-          self.coinsBagImageView.transform = CGAffineTransform
-            .identity
-            .scaledBy(x: 1.4, y: 1.4)
-            .rotated(by: -15.53 * .pi / 180)
-          self.coinsBagImageView.layer.opacity = 0.82
-          self.coinsImageView.transform = CGAffineTransform
-            .identity
-            .scaledBy(x: 0.5, y: 0.5)
-            .translatedBy(x: 80, y: -60)
-          self.coinsImageView.alpha = 0
-          self.coinsLabel.transform = CGAffineTransform
-            .identity
-            .translatedBy(x: 0, y: -10)
-          self.coinsLabel.alpha = 0
-          self.layoutIfNeeded()
-        } completion: { complete in
-          if complete {
-            self.coinsImageView.transform = .identity
-            self.coinsLabel.transform = CGAffineTransform
-              .identity
-              .translatedBy(x: 0, y: 10)
-            self.coinsLabel.textColor = YralColor.green400.uiColor
-            UIView.animate(withDuration: 0.5) {
-              self.coinsBagImageView.transform = .identity
-              self.coinsBagImageView.layer.opacity = 1
-              self.coinsLabel.transform = .identity
-              self.coinsLabel.alpha = 1
-              self.layoutIfNeeded()
-            } completion: { complete in
-              if complete {
-                UIView.animate(withDuration: 0.5) {
-                  self.coinsLabel.textColor = Constants.coinsLabelTextColor
-                } completion: { complete in
-                  if complete {
-
-                  }
-                }
-
-              }
-            }
-
-          }
-        }
-
-      }
-    }
-
-  }
-
-  func decrementCoins() {
-    self.coinsImageView.transform = CGAffineTransform
-      .identity
-      .scaledBy(x: 0.5, y: 0.5)
-      .translatedBy(x: 80, y: -60)
-    UIView.animate(withDuration: 0.5) {
-      self.coinsImageView.alpha = 1
-      self.layoutIfNeeded()
-    } completion: { complete in
-      if complete {
-        UIView.animate(withDuration: 0.5, delay: 0.25) {
-          self.coinsBagImageView.transform = CGAffineTransform
-            .identity
-            .scaledBy(x: 1.4, y: 1.4)
-            .rotated(by: -15.53 * .pi / 180)
-          self.coinsBagImageView.layer.opacity = 0.82
-          self.coinsImageView.transform = .identity
-          self.coinsImageView.alpha = 0
-          self.coinsLabel.transform = CGAffineTransform
-            .identity
-            .translatedBy(x: 0, y: -10)
-          self.coinsLabel.alpha = 0
-          self.layoutIfNeeded()
-        } completion: { complete in
-          if complete {
-            self.coinsImageView.transform = .identity
-            self.coinsLabel.transform = CGAffineTransform
-              .identity
-              .translatedBy(x: 0, y: 10)
-            self.coinsLabel.textColor = YralColor.red300.uiColor
-            UIView.animate(withDuration: 0.5) {
-              self.coinsBagImageView.transform = .identity
-              self.coinsBagImageView.layer.opacity = 1
-              self.coinsLabel.transform = .identity
-              self.coinsLabel.alpha = 1
-              self.layoutIfNeeded()
-            } completion: { complete in
-              if complete {
-                UIView.animate(withDuration: 0.5) {
-                  self.coinsLabel.textColor = Constants.coinsLabelTextColor
-                } completion: { complete in
-                  if complete {
-
-                  }
-                }
-
-              }
-            }
-
-          }
-        }
-
-      }
-    }
+  func updateCoins(by newCoins: Int) {
+    coinsView.updateCoins(by: newCoins)
   }
 
   struct ProfileInfo {
@@ -301,7 +118,6 @@ class ProfileInfoView: UIView, ImageLoaderProtocol {
     var coins: Int
   }
 }
-// swiftlint: enable type_body_length
 
 extension ProfileInfoView {
   enum Constants {
@@ -316,29 +132,7 @@ extension ProfileInfoView {
     static let imageViewLeading = 8.0
     static let imageViewTop = 8.0
     static let labelLeading = 12.0
-    static let labelTrailing = 115.0
+    static let labelTrailing = 12.0
     static let defaultProfileImage = UIImage(named: "default_profile")
-    static let coinsViewHeight = 32.0
-    static let coinsViewMinimumWidth = 75.0
-    static let coinsViewGradientStartColor = UIColor(red: 255/255,
-                                                     green: 205/255,
-                                                     blue: 0,
-                                                     alpha: 1)
-    static let coinsViewGradientEndColor = UIColor(red: 218/255,
-                                                   green: 129/255,
-                                                   blue: 0,
-                                                   alpha: 1)
-    static let coinsViewOpacity: Float = 0.8
-    static let coinsLabelFont = YralFont.pt16.semiBold.uiFont
-    static let coinsLabelTextColor = YralColor.grey950.uiColor
-    static let coinsLabelTrailing = 10.0
-    static let coinsLabelLeading = 22.0
-    static let coinsBagImageSize = 36.0
-    static let coinsBagTrailing = 2.0
-    static let coinsBagFilledImage = UIImage(named: "coin_bag_filled")
-    static let coinsImageSize = 67.0
-    static let coinsImageLeading = 18.0
-    static let coinsImageTop = 8.0
-    static let coinsImage = UIImage(named: "coins")
   }
 }
