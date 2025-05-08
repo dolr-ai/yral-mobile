@@ -28,6 +28,7 @@ import androidx.media3.ui.PlayerView
 import coil3.ImageLoader
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
+import com.yral.shared.libs.videoPlayer.model.PlayerData
 import com.yral.shared.libs.videoPlayer.model.PlayerSpeed
 import com.yral.shared.libs.videoPlayer.model.ScreenResize
 import com.yral.shared.libs.videoPlayer.rememberExoPlayerWithLifecycle
@@ -41,19 +42,16 @@ import kotlinx.coroutines.isActive
 @Composable
 actual fun CMPPlayer(
     modifier: Modifier,
-    url: String,
-    thumbnailUrl: String,
-    prefetchThumbnails: List<String>,
-    prefetchVideos: List<String>,
+    playerData: PlayerData,
     playerParams: CMPPlayerParams,
 ) {
     val context = LocalContext.current
-    val exoPlayer = rememberExoPlayerWithLifecycle(url, context, playerParams.isPause)
+    val exoPlayer = rememberExoPlayerWithLifecycle(playerData.url, context, playerParams.isPause)
     var currentPrefetchIndex by remember { mutableIntStateOf(0) }
     var currentPrefetchUrl by remember { mutableStateOf("") }
-    LaunchedEffect(currentPrefetchIndex, prefetchVideos) {
-        if (prefetchVideos.isNotEmpty() && prefetchVideos.size > currentPrefetchIndex) {
-            currentPrefetchUrl = prefetchVideos[currentPrefetchIndex]
+    LaunchedEffect(currentPrefetchIndex, playerData.prefetchVideos) {
+        if (playerData.prefetchVideos.isNotEmpty() && playerData.prefetchVideos.size > currentPrefetchIndex) {
+            currentPrefetchUrl = playerData.prefetchVideos[currentPrefetchIndex]
         }
     }
     val preFetchExoPlayer =
@@ -85,8 +83,8 @@ actual fun CMPPlayer(
         playerView.keepScreenOn = true
     }
 
-    LaunchedEffect(prefetchThumbnails) {
-        prefetchThumbnails.forEach {
+    LaunchedEffect(playerData.prefetchThumbnails) {
+        playerData.prefetchThumbnails.forEach {
             prefetchThumbnail(
                 context = context,
                 url = it,
@@ -113,7 +111,7 @@ actual fun CMPPlayer(
         )
         if (showThumbnail) {
             AsyncImage(
-                model = thumbnailUrl,
+                model = playerData.thumbnailUrl,
                 contentDescription = "Thumbnail",
                 contentScale = ContentScale.Crop,
                 modifier =
@@ -155,7 +153,7 @@ actual fun CMPPlayer(
             object : Player.Listener {
                 override fun onPlaybackStateChanged(state: Int) {
                     if (state == Player.STATE_READY) {
-                        if (currentPrefetchIndex < prefetchVideos.size) {
+                        if (currentPrefetchIndex < playerData.prefetchVideos.size) {
                             currentPrefetchIndex++
                         }
                     }
