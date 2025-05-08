@@ -31,9 +31,9 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   private let userDefaults = UserDefaults.standard
   private static let resultBottomSheetKey = "ResultBottomSheetKey"
 
-  private lazy var showResultBottomSheet: Bool = {
+  private var showResultBottomSheet: Bool {
     userDefaults.integer(forKey: Self.resultBottomSheetKey) < 3 ? true : false
-  }()
+  }
 
   private let playerContainerView = getUIImageView()
 
@@ -286,9 +286,10 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
 
   private func handleSmileyTap(_ smiley: Smiley) {
     delegate?.smileyTapped(index: index, smiley: smiley)
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-      self.startFlowingAnimation(for: smiley)
-    }
+    // Add this delay when lottie files are fixed
+    //    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+    self.startFlowingAnimation(for: smiley)
+    //    }
   }
 
   private func startFlowingAnimation(for smiley: Smiley) {
