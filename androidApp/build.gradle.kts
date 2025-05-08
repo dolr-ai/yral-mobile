@@ -74,6 +74,12 @@ dependencies {
     implementation(libs.compose.material3)
     implementation(libs.androidx.activity.compose)
     debugImplementation(libs.compose.ui.tooling)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
+    implementation(libs.lottie)
+    implementation(libs.coil.compose)
+    implementation(libs.coil.okhttp)
+
 
     implementation(projects.shared.core)
     implementation(projects.shared.libs.preferences)
@@ -87,24 +93,15 @@ dependencies {
     implementation(projects.shared.libs.videoPlayer)
     implementation(projects.shared.features.account)
 
-    // implementation(projects.shared.rust)
-    BuildConfig.getDependencies(project).forEach { dependency ->
+    val (dependencies, shouldAddRustModule) = BuildConfig.getAndProcessDependencies(project)
+    dependencies.forEach { dependency ->
         if (dependency.isNotEmpty()) {
             implementation(dependency)
         }
     }
-
-    implementation(libs.koin.android)
-
-    implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.analytics)
-
-    implementation(libs.lottie)
-
-    implementation(libs.koin.composeVM)
-
-    implementation(libs.coil.compose)
-    implementation(libs.coil.okhttp)
+    if (shouldAddRustModule) {
+        implementation(projects.shared.rust)
+    }
 }
 
 afterEvaluate {
