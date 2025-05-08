@@ -125,7 +125,8 @@ fun rememberPrefetchExoPlayerWithLifecycle(
                 BUFFER_MS_FOR_PLAYBACK,
                 BUFFER_MS_FOR_PLAYBACK,
             ).build(),
-): ExoPlayer {
+): ExoPlayer? {
+    if (url.isEmpty()) return null
     val lifecycleOwner = LocalLifecycleOwner.current
     val exoPlayer =
         remember(context) {
