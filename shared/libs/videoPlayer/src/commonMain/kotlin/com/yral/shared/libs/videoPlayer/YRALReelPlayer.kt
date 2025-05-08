@@ -180,4 +180,4 @@ private fun <T> List<T>.nextN(
     }
 
 private const val PREFETCH_NEXT_N_THUMBNAILS = 3
-private const val PREFETCH_NEXT_N_VIDEOS = 1
+private const val PREFETCH_NEXT_N_VIDEOS = 3

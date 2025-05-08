@@ -49,18 +49,19 @@ actual fun CMPPlayer(
 ) {
     val context = LocalContext.current
     val exoPlayer = rememberExoPlayerWithLifecycle(url, context, playerParams.isPause)
-    var preFetchExoPlayer: ExoPlayer? by remember { mutableStateOf(null) }
     var currentPrefetchIndex by remember { mutableIntStateOf(0) }
-    if (prefetchVideos.isNotEmpty()) {
-        if (currentPrefetchIndex < prefetchVideos.size) {
-            preFetchExoPlayer?.release()
-            preFetchExoPlayer =
-                rememberPrefetchExoPlayerWithLifecycle(
-                    url = prefetchVideos[currentPrefetchIndex],
-                    context = context,
-                )
+    var currentPrefetchUrl by remember { mutableStateOf("") }
+    LaunchedEffect(currentPrefetchIndex, prefetchVideos) {
+        if (prefetchVideos.isNotEmpty() && prefetchVideos.size > currentPrefetchIndex) {
+            currentPrefetchUrl = prefetchVideos[currentPrefetchIndex]
         }
     }
+    val preFetchExoPlayer =
+        rememberPrefetchExoPlayerWithLifecycle(
+            url = currentPrefetchUrl,
+            context = context,
+        )
+
     val playerView = rememberPlayerView(exoPlayer, context)
 
     var isBuffering by remember { mutableStateOf(false) }
@@ -154,7 +155,9 @@ actual fun CMPPlayer(
             object : Player.Listener {
                 override fun onPlaybackStateChanged(state: Int) {
                     if (state == Player.STATE_READY) {
-                        currentPrefetchIndex++
+                        if (currentPrefetchIndex < prefetchVideos.size) {
+                            currentPrefetchIndex++
+                        }
                     }
                 }
             }
