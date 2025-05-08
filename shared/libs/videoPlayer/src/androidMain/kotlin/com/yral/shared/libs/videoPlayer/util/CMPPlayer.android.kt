@@ -229,6 +229,17 @@ private fun createPlayerListener(
                 }
             }
         }
+
+        override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
+            // Check if it's a decoder initialization exception
+            if (error.errorCode == androidx.media3.common.PlaybackException.ERROR_CODE_DECODER_INIT_FAILED) {
+                // Attempt to play again with a 1-second delay
+                exoPlayer.seekTo(0)
+                exoPlayer.prepare()
+
+                // For hardware decoder issues, we've already configured fallback in ExoPlayerHelper
+            }
+        }
     }
 
 private fun prefetchThumbnail(
