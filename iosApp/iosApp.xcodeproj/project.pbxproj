@@ -9,8 +9,6 @@
 /* Begin PBXBuildFile section */
 		058557BB273AAA24004C7B11 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557BA273AAA24004C7B11 /* Assets.xcassets */; };
 		058557D9273AAEEB004C7B11 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */; };
-		100F63D32DCB4630000BC17E /* SmileyGameRuleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100F63D22DCB4630000BC17E /* SmileyGameRuleView.swift */; };
-		100F63D42DCB4630000BC17E /* SmileyGameRuleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100F63D22DCB4630000BC17E /* SmileyGameRuleView.swift */; };
 		100E43CE2DC9F556002AADBA /* Smiley_Game_Rocket.json in Resources */ = {isa = PBXBuildFile; fileRef = 100E43CC2DC9F556002AADBA /* Smiley_Game_Rocket.json */; };
 		100E43CF2DC9F556002AADBA /* Smiley_Game_Fire.json in Resources */ = {isa = PBXBuildFile; fileRef = 100E43C92DC9F556002AADBA /* Smiley_Game_Fire.json */; };
 		100E43D02DC9F556002AADBA /* Smiley_Game_Heart.json in Resources */ = {isa = PBXBuildFile; fileRef = 100E43CA2DC9F556002AADBA /* Smiley_Game_Heart.json */; };
@@ -21,6 +19,10 @@
 		100E43D52DC9F556002AADBA /* Smiley_Game_Heart.json in Resources */ = {isa = PBXBuildFile; fileRef = 100E43CA2DC9F556002AADBA /* Smiley_Game_Heart.json */; };
 		100E43D62DC9F556002AADBA /* Smiley_Game_Shock.json in Resources */ = {isa = PBXBuildFile; fileRef = 100E43CD2DC9F556002AADBA /* Smiley_Game_Shock.json */; };
 		100E43D72DC9F556002AADBA /* Smiley_Game_Laugh.json in Resources */ = {isa = PBXBuildFile; fileRef = 100E43CB2DC9F556002AADBA /* Smiley_Game_Laugh.json */; };
+		100F63D32DCB4630000BC17E /* SmileyGameRuleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100F63D22DCB4630000BC17E /* SmileyGameRuleView.swift */; };
+		100F63D42DCB4630000BC17E /* SmileyGameRuleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100F63D22DCB4630000BC17E /* SmileyGameRuleView.swift */; };
+		100F64EE2DCC96C9000BC17E /* ImageCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100F64ED2DCC96C5000BC17E /* ImageCache.swift */; };
+		100F64EF2DCC96C9000BC17E /* ImageCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100F64ED2DCC96C5000BC17E /* ImageCache.swift */; };
 		103BBB042DACE23A00C0BFD0 /* HLSDownloadManaging.swift in Sources */ = {isa = PBXBuildFile; fileRef = 103BBB032DACE21D00C0BFD0 /* HLSDownloadManaging.swift */; };
 		103BBB052DACE23A00C0BFD0 /* HLSDownloadManaging.swift in Sources */ = {isa = PBXBuildFile; fileRef = 103BBB032DACE21D00C0BFD0 /* HLSDownloadManaging.swift */; };
 		10512A432DA666AD00114BAA /* YralPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10512A422DA666A900114BAA /* YralPlayer.swift */; };
@@ -462,12 +464,13 @@
 /* Begin PBXFileReference section */
 		058557BA273AAA24004C7B11 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
-		100F63D22DCB4630000BC17E /* SmileyGameRuleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameRuleView.swift; sourceTree = "<group>"; };
 		100E43C92DC9F556002AADBA /* Smiley_Game_Fire.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Smiley_Game_Fire.json; sourceTree = "<group>"; };
 		100E43CA2DC9F556002AADBA /* Smiley_Game_Heart.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Smiley_Game_Heart.json; sourceTree = "<group>"; };
 		100E43CB2DC9F556002AADBA /* Smiley_Game_Laugh.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Smiley_Game_Laugh.json; sourceTree = "<group>"; };
 		100E43CC2DC9F556002AADBA /* Smiley_Game_Rocket.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Smiley_Game_Rocket.json; sourceTree = "<group>"; };
 		100E43CD2DC9F556002AADBA /* Smiley_Game_Shock.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Smiley_Game_Shock.json; sourceTree = "<group>"; };
+		100F63D22DCB4630000BC17E /* SmileyGameRuleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameRuleView.swift; sourceTree = "<group>"; };
+		100F64ED2DCC96C5000BC17E /* ImageCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageCache.swift; sourceTree = "<group>"; };
 		103BBB032DACE21D00C0BFD0 /* HLSDownloadManaging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HLSDownloadManaging.swift; sourceTree = "<group>"; };
 		10512A422DA666A900114BAA /* YralPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralPlayer.swift; sourceTree = "<group>"; };
 		10512A512DA7959D00114BAA /* YralQueuePlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralQueuePlayer.swift; sourceTree = "<group>"; };
@@ -1049,6 +1052,7 @@
 		AC26CA662D806501006ADA75 /* Utils */ = {
 			isa = PBXGroup;
 			children = (
+				100F64ED2DCC96C5000BC17E /* ImageCache.swift */,
 				107C60D52DBFA7C0006FC467 /* FirebaseImageView.swift */,
 				107C60A32DBA01EB006FC467 /* RoundedCorner.swift */,
 				107C608F2DB78093006FC467 /* UIView+Extensions.swift */,
@@ -2367,6 +2371,7 @@
 				AC32E4652D2991AD001DDA43 /* AccountView.swift in Sources */,
 				ACC0D43E2D8C6BF3006DCF5C /* ClearBackgroundView.swift in Sources */,
 				AC4DECA92D3E06AC008EC8F5 /* FooterLoaderView.swift in Sources */,
+				100F64EF2DCC96C9000BC17E /* ImageCache.swift in Sources */,
 				ACC1C3982D9AF8BD005A7539 /* LottieLoaderContainerView.swift in Sources */,
 				AC4E99692D884BDB000B47B3 /* ProfileVideoGridsView.swift in Sources */,
 				ACC0D4522D8DDB97006DCF5C /* ProfileRepositoryProtocol.swift in Sources */,
@@ -2550,6 +2555,7 @@
 				AC32E4662D2991AD001DDA43 /* AccountView.swift in Sources */,
 				ACC0D43D2D8C6BF3006DCF5C /* ClearBackgroundView.swift in Sources */,
 				AC4DECAA2D3E06AC008EC8F5 /* FooterLoaderView.swift in Sources */,
+				100F64EE2DCC96C9000BC17E /* ImageCache.swift in Sources */,
 				ACC1C3992D9AF8BD005A7539 /* LottieLoaderContainerView.swift in Sources */,
 				AC4E99682D884BDB000B47B3 /* ProfileVideoGridsView.swift in Sources */,
 				ACC0D4532D8DDB97006DCF5C /* ProfileRepositoryProtocol.swift in Sources */,
