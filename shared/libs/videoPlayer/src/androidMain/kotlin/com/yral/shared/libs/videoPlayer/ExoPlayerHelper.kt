@@ -17,9 +17,11 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.DefaultLoadControl
+import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.LoadControl
 import androidx.media3.exoplayer.hls.HlsMediaSource
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.ui.AspectRatioFrameLayout
@@ -66,8 +68,14 @@ fun rememberExoPlayerWithLifecycle(
 
     val exoPlayer =
         remember(context) {
+            val renderersFactory =
+                DefaultRenderersFactory(context)
+                    .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER)
+                    .setEnableDecoderFallback(true)
             ExoPlayer
                 .Builder(context)
+                .setMediaSourceFactory(DefaultMediaSourceFactory(context))
+                .setRenderersFactory(renderersFactory)
                 .build()
                 .apply {
                     videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT
@@ -130,9 +138,15 @@ fun rememberPrefetchExoPlayerWithLifecycle(
     val lifecycleOwner = LocalLifecycleOwner.current
     val exoPlayer =
         remember(context) {
+            val renderersFactory =
+                DefaultRenderersFactory(context)
+                    .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER)
+                    .setEnableDecoderFallback(true)
             ExoPlayer
                 .Builder(context)
                 .setLoadControl(loadControl)
+                .setMediaSourceFactory(DefaultMediaSourceFactory(context))
+                .setRenderersFactory(renderersFactory)
                 .build()
                 .apply {
                     videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT
