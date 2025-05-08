@@ -161,4 +161,11 @@ internal fun YRALVideoPlayerWithControl(
             showSpeedSelectionCallback = { showSpeedSelection = it },
         )
     }
+
+    LaunchedEffect(currentTime) {
+        playerControls.recordTime(
+            currentTime,
+            totalTime,
+        )
+    }
 }

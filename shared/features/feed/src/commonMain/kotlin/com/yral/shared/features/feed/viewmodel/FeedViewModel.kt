@@ -30,6 +30,8 @@ class FeedViewModel(
 
     companion object {
         const val PRE_FETCH_BEFORE_LAST = 1
+        private const val FIRST_SECOND_WATCHED_THRESHOLD_MS = 1500L
+        private const val FULL_VIDEO_WATCHED_THRESHOLD = 0.95f
     }
 
     private val _state =
@@ -136,6 +138,7 @@ class FeedViewModel(
             _state.emit(
                 _state.value.copy(
                     currentPageOfFeed = pageNo,
+                    didCurrentVideoEnd = false,
                 ),
             )
         }
@@ -150,6 +153,30 @@ class FeedViewModel(
             )
         }
     }
+
+    fun recordTime(
+        currentTime: Int,
+        totalTime: Int,
+    ) {
+        if (_state.value.didCurrentVideoEnd.not()) {
+            if (currentTime < FIRST_SECOND_WATCHED_THRESHOLD_MS) {
+                println("record event")
+            }
+            if (currentTime.toFloat() / totalTime >= FULL_VIDEO_WATCHED_THRESHOLD) {
+                println("record event")
+            }
+        }
+    }
+
+    fun didCurrentVideoEnd() {
+        coroutineScope.launch {
+            _state.emit(
+                _state.value.copy(
+                    didCurrentVideoEnd = true,
+                ),
+            )
+        }
+    }
 }
 
 data class FeedState(
@@ -158,4 +185,5 @@ data class FeedState(
     val currentPageOfFeed: Int = 0,
     val isLoadingMore: Boolean = false,
     val isPostDescriptionExpanded: Boolean = false,
+    val didCurrentVideoEnd: Boolean = false,
 )
