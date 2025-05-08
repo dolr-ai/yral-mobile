@@ -172,10 +172,16 @@ struct SmileyGameView: View {
       VStack(alignment: .leading, spacing: 2) {
         Text("\(smiley.name) was the most people choice.")
           .font(YralFont.pt16.bold.swiftUIFont)
+          .lineLimit(1)
+          .minimumScaleFactor(0.5)
+          .allowsTightening(true)
           .foregroundColor(YralColor.green50.swiftUIColor)
 
         Text("You win \(points) Points!")
           .font(YralFont.pt16.bold.swiftUIFont)
+          .lineLimit(1)
+          .minimumScaleFactor(0.5)
+          .allowsTightening(true)
           .foregroundColor(YralColor.green300.swiftUIColor)
       }
     case .looser(let smiley, let points):
@@ -188,10 +194,16 @@ struct SmileyGameView: View {
       VStack(alignment: .leading, spacing: 2) {
         Text("Not the most popular pick!")
           .font(YralFont.pt16.bold.swiftUIFont)
+          .lineLimit(1)
+          .minimumScaleFactor(0.5)
+          .allowsTightening(true)
           .foregroundColor(YralColor.green50.swiftUIColor)
 
         Text("You lost \(points) Points")
           .font(YralFont.pt16.bold.swiftUIFont)
+          .lineLimit(1)
+          .minimumScaleFactor(0.5)
+          .allowsTightening(true)
           .foregroundColor(YralColor.red300.swiftUIColor)
       }
     }
