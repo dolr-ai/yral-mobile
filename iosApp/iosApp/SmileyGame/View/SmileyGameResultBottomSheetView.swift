@@ -14,6 +14,7 @@ struct SmileyGameResultBottomSheetView: View {
   let onKeepPlayingTapped: () -> Void
   let onLearnMoreTapped: () -> Void
 
+  @State private var dragOffset: CGFloat = .zero
   @State private var showBottomSheet = false
 
   var body: some View {
@@ -94,6 +95,22 @@ struct SmileyGameResultBottomSheetView: View {
         .frame(maxWidth: .infinity, alignment: .bottom)
         .padding(.horizontal, 16)
         .background(YralColor.grey900.swiftUIColor)
+        .offset(y: dragOffset)
+        .gesture(
+          DragGesture()
+            .onChanged { value in
+              dragOffset = max(value.translation.height, 0)
+            }
+            .onEnded { value in
+              if value.translation.height > 100 {
+                dismiss()
+              } else {
+                withAnimation(.easeInOut(duration: 0.1)) {
+                  dragOffset = .zero
+                }
+              }
+            }
+        )
         .transition(.move(edge: .bottom))
       }
     }
