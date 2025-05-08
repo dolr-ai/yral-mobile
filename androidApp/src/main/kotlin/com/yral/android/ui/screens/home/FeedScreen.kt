@@ -137,6 +137,10 @@ fun FeedScreen(
                         viewModel.onCurrentPageChange(page)
                         viewModel.setPostDescriptionExpanded(false)
                     },
+                    recordTime = { currentTime, totalTime ->
+                        viewModel.recordTime(currentTime, totalTime)
+                    },
+                    didVideoEnd = { viewModel.didCurrentVideoEnd() },
                 )
                 UserBrief(
                     principalId = state.feedDetails[state.currentPageOfFeed].principalID,

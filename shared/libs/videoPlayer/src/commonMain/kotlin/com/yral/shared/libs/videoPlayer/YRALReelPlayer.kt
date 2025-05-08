@@ -22,12 +22,15 @@ fun YRALReelPlayer(
     videoUrlArray: List<Pair<String, String>>,
     initialPage: Int,
     onPageLoaded: (currentPage: Int) -> Unit,
+    recordTime: (Int, Int) -> Unit,
+    didVideoEnd: () -> Unit,
 ) {
     YRALReelsPlayerView(
         modifier = Modifier.fillMaxSize(),
         urls = videoUrlArray,
         initialPage = initialPage,
         onPageLoaded = onPageLoaded,
+        recordTime = recordTime,
         playerConfig =
             PlayerConfig(
                 isAutoHideControlEnabled = true,
@@ -41,6 +44,7 @@ fun YRALReelPlayer(
                 isScreenLockEnabled = false,
                 reelVerticalScrolling = true,
                 loaderView = {},
+                didEndVideo = didVideoEnd,
             ),
     )
 }
@@ -52,6 +56,7 @@ internal fun YRALReelsPlayerView(
     urls: List<Pair<String, String>>, // List of video URLs
     initialPage: Int,
     onPageLoaded: (currentPage: Int) -> Unit,
+    recordTime: (Int, Int) -> Unit,
     playerConfig: PlayerConfig = PlayerConfig(), // Configuration for the player,
 ) {
     // Remember the state of the pager
@@ -118,8 +123,7 @@ internal fun YRALReelsPlayerView(
                                 true
                             }, // Pause video when not in focus
                         onPauseToggle = { isPause = isPause.not() }, // Toggle pause/resume
-                        firstSecondWatched = {},
-                        fullVideoWatched = {},
+                        recordTime = recordTime,
                     ),
             )
         }
@@ -162,8 +166,7 @@ internal fun YRALReelsPlayerView(
                                 true
                             }, // Pause video when not in focus
                         onPauseToggle = { isPause = isPause.not() }, // Toggle pause/resume
-                        firstSecondWatched = {},
-                        fullVideoWatched = {},
+                        recordTime = recordTime,
                     ),
             )
         }
