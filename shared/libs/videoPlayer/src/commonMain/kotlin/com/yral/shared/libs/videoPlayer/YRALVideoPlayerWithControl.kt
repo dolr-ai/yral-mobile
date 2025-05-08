@@ -2,51 +2,40 @@ package com.yral.shared.libs.videoPlayer
 
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
-import com.yral.shared.libs.videoPlayer.extension.formattedInterval
 import com.yral.shared.libs.videoPlayer.model.PlayerConfig
+import com.yral.shared.libs.videoPlayer.model.PlayerControls
+import com.yral.shared.libs.videoPlayer.model.PlayerData
+import com.yral.shared.libs.videoPlayer.model.PlayerInnerControls
 import com.yral.shared.libs.videoPlayer.model.PlayerSpeed
 import com.yral.shared.libs.videoPlayer.model.ScreenResize
-import com.yral.shared.libs.videoPlayer.ui.component.LiveStreamView
-import com.yral.shared.libs.videoPlayer.ui.video.controls.BottomControlView
-import com.yral.shared.libs.videoPlayer.ui.video.controls.CenterControlView
+import com.yral.shared.libs.videoPlayer.ui.component.LoaderView
+import com.yral.shared.libs.videoPlayer.ui.video.controls.ControlsView
 import com.yral.shared.libs.videoPlayer.ui.video.controls.LockScreenView
 import com.yral.shared.libs.videoPlayer.ui.video.controls.SpeedSelectionOverlay
-import com.yral.shared.libs.videoPlayer.ui.video.controls.TopControlView
 import com.yral.shared.libs.videoPlayer.util.CMPPlayer
 import com.yral.shared.libs.videoPlayer.util.CMPPlayerParams
 import com.yral.shared.libs.videoPlayer.util.isLiveStream
+import kotlinx.coroutines.delay
 
 @Suppress("LongMethod")
 @Composable
 internal fun YRALVideoPlayerWithControl(
     modifier: Modifier,
-    url: String, // URL of the video
-    thumbnailUrl: String,
-    prefetchThumbnails: List<String> = emptyList(),
-    prefetchVideos: List<String> = emptyList(),
-    playerConfig: PlayerConfig, // Configuration for the player
-    isPause: Boolean, // Flag indicating if the video is paused
-    onPauseToggle: (() -> Unit), // Callback for toggling pause/resume
-    showControls: Boolean, // Flag indicating if controls should be shown
-    onShowControlsToggle: (() -> Unit), // Callback for toggling show/hide controls
-    onChangeSeekbar: ((Boolean) -> Unit), // Callback for seek bar sliding
-    isFullScreen: Boolean,
-    onFullScreenToggle: (() -> Unit),
+    playerData: PlayerData,
+    playerConfig: PlayerConfig,
+    playerControls: PlayerControls,
 ) {
-    var totalTime by remember { mutableStateOf(0) } // Total duration of the video
-    var currentTime by remember { mutableStateOf(0) } // Current playback time
+    var totalTime by remember { mutableIntStateOf(0) } // Total duration of the video
+    var currentTime by remember { mutableIntStateOf(0) } // Current playback time
     var isSliding by remember { mutableStateOf(false) } // Flag indicating if the seek bar is being slid
     var sliderTime: Int? by remember { mutableStateOf(null) } // Time indicated by the seek bar
     var isMute by remember { mutableStateOf(false) } // Flag indicating if the audio is muted
@@ -55,6 +44,8 @@ internal fun YRALVideoPlayerWithControl(
     var isScreenLocked by remember { mutableStateOf(false) }
     var screenSize by remember { mutableStateOf(ScreenResize.FILL) } // Selected playback speed
     var isBuffering by remember { mutableStateOf(true) }
+    var isFullScreen by remember { mutableStateOf(false) }
+    var showControls by remember { mutableStateOf(true) } // State for showing/hiding controls
 
     playerConfig.isMute?.let {
         isMute = it
@@ -64,13 +55,25 @@ internal fun YRALVideoPlayerWithControl(
         playerConfig.bufferCallback?.invoke(isBuffering)
     }
 
+    // Auto-hide controls if enabled
+    if (playerConfig.isAutoHideControlEnabled) {
+        LaunchedEffect(showControls) {
+            if (showControls) {
+                delay(timeMillis = (playerConfig.controlHideIntervalSeconds * 1000).toLong()) // Delay hiding controls
+                if (isSliding.not()) {
+                    showControls = false // Hide controls if seek bar is not being slid
+                }
+            }
+        }
+    }
+
     // Container for the video player and control components
     Box(
         modifier =
             modifier
                 .pointerInput(Unit) {
                     detectTapGestures { _ ->
-                        onShowControlsToggle() // Toggle show/hide controls on tap
+                        showControls = showControls.not() // Toggle show/hide controls on tap
                         showSpeedSelection = false
                     }
                 },
@@ -78,13 +81,10 @@ internal fun YRALVideoPlayerWithControl(
         // Video player component
         CMPPlayer(
             modifier = modifier,
-            url = url,
-            thumbnailUrl = thumbnailUrl,
-            prefetchThumbnails = prefetchThumbnails,
-            prefetchVideos = prefetchVideos,
+            playerData = playerData,
             playerParams =
                 CMPPlayerParams(
-                    isPause = isPause,
+                    isPause = playerControls.isPause,
                     isMute = isMute,
                     totalTime = { totalTime = it }, // Update total time of the video
                     currentTime = {
@@ -101,125 +101,56 @@ internal fun YRALVideoPlayerWithControl(
                     didEndVideo = {
                         playerConfig.didEndVideo?.invoke()
                         if (playerConfig.loop.not()) {
-                            onPauseToggle()
+                            playerControls.onPauseToggle()
                         }
                     },
                     loop = playerConfig.loop,
-                    volume = 0f,
+                    volume = if (isMute) 0f else 1f,
                 ),
         )
 
         if (isScreenLocked.not()) {
-            // Top control view for playback speed and mute/unMute
-            TopControlView(
+            ControlsView(
                 playerConfig = playerConfig,
-                isMute = isMute,
-                onMuteToggle = {
-                    playerConfig.muteCallback?.invoke(isMute.not())
-                    isMute = isMute.not()
-                }, // Toggle mute/unMute
-                showControls = showControls, // Pass show/hide controls state
-                onTapSpeed = { showSpeedSelection = showSpeedSelection.not() },
-                isFullScreen = isFullScreen,
-                onFullScreenToggle = { onFullScreenToggle() },
-                onLockScreenToggle = { isScreenLocked = isScreenLocked.not() },
-                onResizeScreenToggle = {
-                    screenSize =
-                        when (screenSize) {
-                            ScreenResize.FIT -> ScreenResize.FILL
-                            ScreenResize.FILL -> ScreenResize.FIT
-                        }
-                },
-                isLiveStream = isLiveStream(url),
-                selectedSize = screenSize,
+                playerControls = playerControls,
+                playerInnerControls =
+                    PlayerInnerControls(
+                        isMute = isMute,
+                        onMuteToggle = {
+                            playerConfig.muteCallback?.invoke(isMute.not())
+                            isMute = isMute.not()
+                        }, // Toggle mute/unMute
+                        showControls = showControls,
+                        onSpeedSelectionToggle = { showSpeedSelection = showSpeedSelection.not() },
+                        isFullScreen = isFullScreen,
+                        onFullScreenToggle = { isFullScreen = isFullScreen.not() },
+                        onLockScreenToggle = { isScreenLocked = isScreenLocked.not() },
+                        onResizeScreenToggle = {
+                            screenSize =
+                                when (screenSize) {
+                                    ScreenResize.FIT -> ScreenResize.FILL
+                                    ScreenResize.FILL -> ScreenResize.FIT
+                                }
+                        },
+                        isLiveStream = isLiveStream(playerData.url),
+                        selectedSize = screenSize,
+                        updateIsSliding = { isSliding = it },
+                        onChangeSliderTime = { sliderTime = it },
+                        totalTime = totalTime,
+                        currentTime = currentTime,
+                        onChangeCurrentTime = { currentTime = it },
+                    ),
             )
-
-            // Center control view for pause/resume and fast forward/backward actions
-            CenterControlView(
+        } else if (playerConfig.isScreenLockEnabled) {
+            LockScreenView(
                 playerConfig = playerConfig,
-                isPause = isPause,
-                onPauseToggle = onPauseToggle,
-                onBackwardToggle =
-                    {
-                        // Seek backward
-                        isSliding = true
-                        val newTime =
-                            currentTime - playerConfig.fastForwardBackwardIntervalSeconds.formattedInterval()
-                        sliderTime =
-                            if (newTime < 0) {
-                                0
-                            } else {
-                                newTime
-                            }
-                        isSliding = false
-                    },
-                onForwardToggle = {
-                    // Seek forward
-                    isSliding = true
-                    val newTime =
-                        currentTime + playerConfig.fastForwardBackwardIntervalSeconds.formattedInterval()
-                    sliderTime =
-                        if (newTime > totalTime) {
-                            totalTime
-                        } else {
-                            newTime
-                        }
-                    isSliding = false
-                },
                 showControls = showControls,
-                isLiveStream = isLiveStream(url),
+                onLockScreenToggle = { isScreenLocked = isScreenLocked.not() },
             )
-
-            if (isLiveStream(url)) {
-                LiveStreamView(playerConfig)
-            } else {
-                // Bottom control view for seek bar and time duration display
-                BottomControlView(
-                    playerConfig = playerConfig,
-                    currentTime = currentTime, // Pass current playback time
-                    totalTime = totalTime, // Pass total duration of the video
-                    showControls = showControls, // Pass show/hide controls state
-                    onChangeSliderTime = {
-                        // Update seek bar slider time
-                        sliderTime = it
-                    },
-                    onChangeCurrentTime = {
-                        // Update current playback time
-                        currentTime = it
-                    },
-                    onChangeSliding = {
-                        // Update seek bar sliding state
-                        isSliding = it
-                        onChangeSeekbar(isSliding)
-                    },
-                )
-            }
-        } else {
-            if (playerConfig.isScreenLockEnabled) {
-                LockScreenView(
-                    playerConfig = playerConfig,
-                    showControls = showControls,
-                    onLockScreenToggle = { isScreenLocked = isScreenLocked.not() },
-                )
-            }
         }
+
         if (isBuffering) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center,
-            ) {
-                if (playerConfig.loaderView != null) {
-                    playerConfig.loaderView?.invoke()
-                } else {
-                    CircularProgressIndicator(
-                        modifier =
-                            Modifier
-                                .align(Alignment.Center)
-                                .size(playerConfig.pauseResumeIconSize),
-                        color = playerConfig.loadingIndicatorColor,
-                    )
-                }
-            }
+            LoaderView(playerConfig)
         }
 
         SpeedSelectionOverlay(
