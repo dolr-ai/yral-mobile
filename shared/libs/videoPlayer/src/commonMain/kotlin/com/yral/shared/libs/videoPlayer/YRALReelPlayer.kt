@@ -18,7 +18,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 
 @Composable
 fun YRALReelPlayer(
-    videoUrlArray: List<String>,
+    videoUrlArray: List<Pair<String, String>>,
     initialPage: Int,
     onPageLoaded: (currentPage: Int) -> Unit,
 ) {
@@ -29,7 +29,8 @@ fun YRALReelPlayer(
         playerConfig =
             PlayerConfig(
                 isAutoHideControlEnabled = true,
-                isPauseResumeEnabled = true,
+                isPauseResumeEnabled = false,
+                isFastForwardBackwardEnabled = false,
                 isSeekBarVisible = false,
                 isDurationVisible = false,
                 isMuteControlEnabled = false,
@@ -37,6 +38,7 @@ fun YRALReelPlayer(
                 isFullScreenEnabled = false,
                 isScreenLockEnabled = false,
                 reelVerticalScrolling = true,
+                loaderView = {},
             ),
         onPageLoaded = onPageLoaded,
     )
@@ -46,7 +48,7 @@ fun YRALReelPlayer(
 @Composable
 internal fun YRALReelsPlayerView(
     modifier: Modifier = Modifier, // Modifier for the composable
-    urls: List<String>, // List of video URLs
+    urls: List<Pair<String, String>>, // List of video URLs
     initialPage: Int,
     playerConfig: PlayerConfig = PlayerConfig(), // Configuration for the player,
     onPageLoaded: (currentPage: Int) -> Unit,
@@ -95,7 +97,6 @@ internal fun YRALReelsPlayerView(
             modifier = modifier,
             state = pagerState,
             userScrollEnabled = true, // Ensure user scrolling is enabled
-            beyondViewportPageCount = 3,
         ) { page ->
             // Create a side effect to detect when this page is shown
             LaunchedEffect(page, pagerState.currentPage) {
@@ -108,7 +109,10 @@ internal fun YRALReelsPlayerView(
             // Video player with control
             YRALVideoPlayerWithControl(
                 modifier = Modifier.fillMaxSize(),
-                url = urls[page],
+                url = urls[page].first,
+                thumbnailUrl = urls[page].second,
+                prefetchThumbnails = urls.nextN(page, PREFETCH_NEXT_N_THUMBNAILS).map { it.second },
+                prefetchVideos = urls.nextN(page, PREFETCH_NEXT_N_VIDEOS).map { it.first },
                 playerConfig = playerConfig,
                 isPause =
                     if (pagerState.currentPage == page) {
@@ -131,7 +135,6 @@ internal fun YRALReelsPlayerView(
             modifier = modifier,
             state = pagerState,
             userScrollEnabled = true, // Ensure user scrolling is enabled
-            beyondViewportPageCount = 3,
         ) { page ->
             // Create a side effect to detect when this page is shown
             LaunchedEffect(page, pagerState.currentPage) {
@@ -144,7 +147,8 @@ internal fun YRALReelsPlayerView(
             // Video player with control
             YRALVideoPlayerWithControl(
                 modifier = Modifier.fillMaxSize(),
-                url = urls[page], // URL of the video
+                url = urls[page].first, // URL of the video
+                thumbnailUrl = urls[page].second,
                 playerConfig = playerConfig,
                 isPause =
                     if (pagerState.currentPage == page) {
@@ -164,3 +168,16 @@ internal fun YRALReelsPlayerView(
         }
     }
 }
+
+private fun <T> List<T>.nextN(
+    startIndex: Int,
+    n: Int,
+): List<T> =
+    if (startIndex + 1 < size) {
+        subList(startIndex + 1, minOf(startIndex + n, size))
+    } else {
+        emptyList()
+    }
+
+private const val PREFETCH_NEXT_N_THUMBNAILS = 3
+private const val PREFETCH_NEXT_N_VIDEOS = 3

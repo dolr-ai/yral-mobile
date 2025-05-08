@@ -3,8 +3,8 @@ package com.yral.shared.features.feed.viewmodel
 import androidx.lifecycle.ViewModel
 import com.github.michaelbull.result.mapBoth
 import com.yral.shared.core.dispatchers.AppDispatchers
+import com.yral.shared.core.session.SessionManager
 import com.yral.shared.crashlytics.core.CrashlyticsManager
-import com.yral.shared.features.auth.AuthClient
 import com.yral.shared.features.feed.useCases.FetchFeedDetailsUseCase
 import com.yral.shared.features.feed.useCases.FetchMoreFeedUseCase
 import com.yral.shared.rust.domain.models.FeedDetails
@@ -21,7 +21,7 @@ class FeedViewModel(
     initialPosts: List<Post>,
     initialFeedDetails: List<FeedDetails>,
     appDispatchers: AppDispatchers,
-    private val authClient: AuthClient,
+    private val sessionManager: SessionManager,
     private val fetchMoreFeedUseCase: FetchMoreFeedUseCase,
     private val fetchFeedDetailsUseCase: FetchFeedDetailsUseCase,
     private val crashlyticsManager: CrashlyticsManager,
@@ -57,22 +57,26 @@ class FeedViewModel(
     }
 
     private suspend fun fetchFeedDetail(post: Post) {
-        fetchFeedDetailsUseCase
-            .invoke(post)
-            .mapBoth(
-                success = { detail ->
-                    val feedDetailsList = _state.value.feedDetails.toMutableList()
-                    feedDetailsList.add(detail)
-                    _state.emit(
-                        _state.value.copy(
-                            feedDetails = feedDetailsList.toList(),
-                        ),
-                    )
-                },
-                failure = { error ->
-                    error("Error loading feed details: $error")
-                },
-            )
+        try {
+            fetchFeedDetailsUseCase
+                .invoke(post)
+                .mapBoth(
+                    success = { detail ->
+                        val feedDetailsList = _state.value.feedDetails.toMutableList()
+                        feedDetailsList.add(detail)
+                        _state.emit(
+                            _state.value.copy(
+                                feedDetails = feedDetailsList.toList(),
+                            ),
+                        )
+                    },
+                    failure = { error ->
+                        error("Error loading feed details: $error")
+                    },
+                )
+        } catch (e: Exception) {
+            crashlyticsManager.recordException(e)
+        }
     }
 
     fun loadMoreFeed() {
@@ -80,14 +84,14 @@ class FeedViewModel(
             return
         }
         coroutineScope.launch {
-            if (authClient.canisterPrincipal != null) {
+            sessionManager.getCanisterPrincipal()?.let {
                 try {
                     setLoadingMore(true)
                     fetchMoreFeedUseCase
                         .invoke(
                             parameter =
                                 FetchMoreFeedUseCase.Params(
-                                    canisterID = authClient.canisterPrincipal!!,
+                                    canisterID = it,
                                     filterResults =
                                         _state.value.posts.map { post ->
                                             post.toFilteredResult()
@@ -106,7 +110,9 @@ class FeedViewModel(
                                     fetchFeedDetail(post)
                                 }
                             },
-                            failure = { println("xxxx error: $it") },
+                            failure = { error ->
+                                error("Error loading more feed: $error")
+                            },
                         )
                     setLoadingMore(false)
                 } catch (e: Exception) {
@@ -134,6 +140,16 @@ class FeedViewModel(
             )
         }
     }
+
+    fun setPostDescriptionExpanded(isExpanded: Boolean) {
+        coroutineScope.launch {
+            _state.emit(
+                _state.value.copy(
+                    isPostDescriptionExpanded = isExpanded,
+                ),
+            )
+        }
+    }
 }
 
 data class FeedState(
@@ -141,4 +157,5 @@ data class FeedState(
     val feedDetails: List<FeedDetails> = emptyList(),
     val currentPageOfFeed: Int = 0,
     val isLoadingMore: Boolean = false,
+    val isPostDescriptionExpanded: Boolean = false,
 )

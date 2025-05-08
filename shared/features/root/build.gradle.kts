@@ -24,7 +24,8 @@ kotlin {
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.koin.composeVM)
-            
+
+            // implementation(projects.shared.rust)
             BuildConfig.getDependencies(project).forEach { dependency ->
                 if (dependency.isNotEmpty()) {
                     implementation(dependency)
@@ -47,4 +48,4 @@ android {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
     }
-} 
+}

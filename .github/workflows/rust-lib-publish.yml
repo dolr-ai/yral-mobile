@@ -22,7 +22,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
-          java-version: 17
+          java-version: 21
           distribution: 'temurin'
 
       - name: Cache Gradle packages
@@ -44,7 +44,7 @@ jobs:
       - name: Clean project
         run: ./gradlew clean
 
-      - name: Publish to maven local
+      - name: Publish to Github packages
         run: ./gradlew shared:rust:publish
         env:
           GITHUB_USERNAME: ${{ github.actor }}

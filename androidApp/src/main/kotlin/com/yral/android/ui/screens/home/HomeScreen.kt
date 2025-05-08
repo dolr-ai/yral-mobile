@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import com.yral.android.R
 import com.yral.android.ui.design.YralColors
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
+import com.yral.shared.koin.koinInstance
 
 @Composable
 fun HomeScreen(
@@ -43,26 +44,42 @@ fun HomeScreen(
                 modifier =
                     Modifier
                         .navigationBarsPadding()
-                        .height(67.dp),
+                        .height(67.dp)
+                        .padding(start = 36.dp, end = 36.dp),
                 windowInsets = WindowInsets(0, 0, 0, 0),
             ) {
                 HomeTab.entries.forEach { tab ->
-                    NavigationBarItem(
-                        selected = currentTab == tab.title,
-                        onClick = { updateCurrentTab(tab.title) },
-                        icon = {
-                            NavBarIcon(
-                                isSelected = currentTab == tab.title,
-                                tab = tab,
-                            )
-                        },
-                        colors =
-                            NavigationBarItemDefaults.colors(
-                                selectedIconColor = Color.White,
-                                unselectedIconColor = Color.White,
-                                indicatorColor = Color.Transparent, // Remove the default indicator
-                            ),
-                    )
+                    if (tab.isGhost) {
+                        // Create invisible spacer item
+                        NavigationBarItem(
+                            selected = false,
+                            onClick = { /* No-op */ },
+                            icon = { Box {} },
+                            colors =
+                                NavigationBarItemDefaults.colors(
+                                    selectedIconColor = Color.Transparent,
+                                    unselectedIconColor = Color.Transparent,
+                                    indicatorColor = Color.Transparent,
+                                ),
+                        )
+                    } else {
+                        NavigationBarItem(
+                            selected = currentTab == tab.title,
+                            onClick = { updateCurrentTab(tab.title) },
+                            icon = {
+                                NavBarIcon(
+                                    isSelected = currentTab == tab.title,
+                                    tab = tab,
+                                )
+                            },
+                            colors =
+                                NavigationBarItemDefaults.colors(
+                                    selectedIconColor = Color.White,
+                                    unselectedIconColor = Color.White,
+                                    indicatorColor = Color.Transparent,
+                                ),
+                        )
+                    }
                 }
             }
         },
@@ -77,12 +94,13 @@ fun HomeScreen(
                     viewModel = createFeedViewModel(),
                 )
 
-            HomeTab.Account.title ->
+            HomeTab.ACCOUNT.title ->
                 AccountScreen(
                     modifier =
                         Modifier
                             .padding(innerPadding)
                             .background(MaterialTheme.colorScheme.primaryContainer),
+                    viewModel = koinInstance.get(),
                 )
         }
     }
@@ -138,7 +156,10 @@ enum class HomeTab(
     val title: String,
     val icon: Int,
     val unSelectedIcon: Int,
+    val isGhost: Boolean = false,
 ) {
     HOME("Home", R.drawable.home_nav_selected, R.drawable.home_nav_unselected),
-    Account("Account", R.drawable.account_nav, R.drawable.account_nav),
+    GHOST_1("", 0, 0, true),
+    GHOST_2("", 0, 0, true),
+    ACCOUNT("Account", R.drawable.account_nav, R.drawable.account_nav),
 }
