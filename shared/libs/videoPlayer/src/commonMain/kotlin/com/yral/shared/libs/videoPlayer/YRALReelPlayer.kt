@@ -38,6 +38,7 @@ fun YRALReelPlayer(
                 isFullScreenEnabled = false,
                 isScreenLockEnabled = false,
                 reelVerticalScrolling = true,
+                loaderView = {},
             ),
         onPageLoaded = onPageLoaded,
     )
