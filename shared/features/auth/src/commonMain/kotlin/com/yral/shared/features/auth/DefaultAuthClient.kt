@@ -99,11 +99,13 @@ class DefaultAuthClient(
         preferences.remove(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name)
         preferences.remove(PrefKeys.REFRESH_TOKEN.name)
         preferences.remove(PrefKeys.ACCESS_TOKEN.name)
+        preferences.remove(PrefKeys.IDENTITY.name)
         sessionManager.updateState(SessionState.Initial)
     }
 
     private suspend fun handleExtractIdentityResponse(data: ByteArray) {
         val canisterWrapper = authenticateWithNetwork(data, null)
+        preferences.putBytes(PrefKeys.IDENTITY.name, data)
         sessionManager.updateState(
             SessionState.SignedIn(
                 session =
