@@ -43,7 +43,6 @@ class CoreService(
     }
 
     override fun trackEvent(event: EventData) {
-        println("xxxx event added")
         scope.launch {
             var shouldFlush: Boolean
             mutex.withLock {
@@ -74,7 +73,6 @@ class CoreService(
 
     @Suppress("TooGenericExceptionCaught")
     private suspend fun flushEvents() {
-        println("xxxx flusing events")
         // Don't return early if queue is empty because it might have been modified
         // since we're not under a mutex lock yet
         val eventsToSend =
@@ -88,7 +86,6 @@ class CoreService(
         try {
             analyticsApiService.sendEvents(eventsToSend)
         } catch (e: Exception) {
-            println("xxxx request failed")
             crashlyticsManager.recordException(e)
             mutex.withLock {
                 // Add the unsent events back to the beginning of the queue
