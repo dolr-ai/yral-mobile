@@ -18,9 +18,9 @@ object BuildConfig {
     // Get all dependencies based on build type
     private fun getDependencies(project: Project): List<String> =
         if (isDebug(project)) {
-            commonDependencies + debugOnlyDependencies
+            commonDependencies // + debugOnlyDependencies
         } else {
-            commonDependencies + releaseOnlyDependencies
+            commonDependencies // + releaseOnlyDependencies
         }
 
     // Check if rust dependency is included in the dependencies list
