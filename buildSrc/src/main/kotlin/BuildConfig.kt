@@ -1,7 +1,7 @@
 import org.gradle.api.Project
 
 object BuildConfig {
-    private const val YRAL_RUST = "1.2"
+    private const val YRAL_RUST = "1.3"
     private const val YRAL_RUST_DEBUG = "com.yral.shared:rust-android-debug"
     private const val YRAL_RUST_RELEASE = "com.yral.shared:rust-android"
     private val commonDependencies = emptyList<String>()
@@ -18,9 +18,9 @@ object BuildConfig {
     // Get all dependencies based on build type
     private fun getDependencies(project: Project): List<String> =
         if (isDebug(project)) {
-            commonDependencies // + debugOnlyDependencies
+            commonDependencies + debugOnlyDependencies
         } else {
-            commonDependencies // + releaseOnlyDependencies
+            commonDependencies + releaseOnlyDependencies
         }
 
     // Check if rust dependency is included in the dependencies list
