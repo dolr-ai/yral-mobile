@@ -13,23 +13,29 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import com.yral.shared.libs.videoPlayer.model.PlayerConfig
-import kotlinx.coroutines.delay
+import com.yral.shared.libs.videoPlayer.model.PlayerControls
+import com.yral.shared.libs.videoPlayer.model.PlayerData
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 @Composable
 fun YRALReelPlayer(
-    videoUrlArray: List<String>,
+    videoUrlArray: List<Pair<String, String>>,
     initialPage: Int,
     onPageLoaded: (currentPage: Int) -> Unit,
+    recordTime: (Int, Int) -> Unit,
+    didVideoEnd: () -> Unit,
 ) {
     YRALReelsPlayerView(
         modifier = Modifier.fillMaxSize(),
         urls = videoUrlArray,
         initialPage = initialPage,
+        onPageLoaded = onPageLoaded,
+        recordTime = recordTime,
         playerConfig =
             PlayerConfig(
                 isAutoHideControlEnabled = true,
-                isPauseResumeEnabled = true,
+                isPauseResumeEnabled = false,
+                isFastForwardBackwardEnabled = false,
                 isSeekBarVisible = false,
                 isDurationVisible = false,
                 isMuteControlEnabled = false,
@@ -37,8 +43,9 @@ fun YRALReelPlayer(
                 isFullScreenEnabled = false,
                 isScreenLockEnabled = false,
                 reelVerticalScrolling = true,
+                loaderView = {},
+                didEndVideo = didVideoEnd,
             ),
-        onPageLoaded = onPageLoaded,
     )
 }
 
@@ -46,10 +53,11 @@ fun YRALReelPlayer(
 @Composable
 internal fun YRALReelsPlayerView(
     modifier: Modifier = Modifier, // Modifier for the composable
-    urls: List<String>, // List of video URLs
+    urls: List<Pair<String, String>>, // List of video URLs
     initialPage: Int,
-    playerConfig: PlayerConfig = PlayerConfig(), // Configuration for the player,
     onPageLoaded: (currentPage: Int) -> Unit,
+    recordTime: (Int, Int) -> Unit,
+    playerConfig: PlayerConfig = PlayerConfig(), // Configuration for the player,
 ) {
     // Remember the state of the pager
     val pagerState =
@@ -73,21 +81,7 @@ internal fun YRALReelsPlayerView(
         }
     }
 
-    var showControls by remember { mutableStateOf(true) } // State for showing/hiding controls
-    var isSeekbarSliding = false // Flag for indicating if the seek bar is being slid
-    var isFullScreen by remember { mutableStateOf(false) }
-
-    // Auto-hide controls if enabled
-    if (playerConfig.isAutoHideControlEnabled) {
-        LaunchedEffect(showControls) {
-            if (showControls) {
-                delay(timeMillis = (playerConfig.controlHideIntervalSeconds * 1000).toLong()) // Delay hiding controls
-                if (isSeekbarSliding.not()) {
-                    showControls = false // Hide controls if seek bar is not being slid
-                }
-            }
-        }
-    }
+    var isPause by remember { mutableStateOf(false) } // State for pausing/resuming video
 
     // Render vertical pager if enabled, otherwise render horizontal pager
     if (playerConfig.reelVerticalScrolling) {
@@ -95,7 +89,6 @@ internal fun YRALReelsPlayerView(
             modifier = modifier,
             state = pagerState,
             userScrollEnabled = true, // Ensure user scrolling is enabled
-            beyondViewportPageCount = 3,
         ) { page ->
             // Create a side effect to detect when this page is shown
             LaunchedEffect(page, pagerState.currentPage) {
@@ -104,26 +97,34 @@ internal fun YRALReelsPlayerView(
                     onPageLoaded(page)
                 }
             }
-            var isPause by remember { mutableStateOf(false) } // State for pausing/resuming video
             // Video player with control
             YRALVideoPlayerWithControl(
                 modifier = Modifier.fillMaxSize(),
-                url = urls[page],
+                playerData =
+                    PlayerData(
+                        url = urls[page].first,
+                        thumbnailUrl = urls[page].second,
+                        prefetchThumbnails =
+                            urls
+                                .nextN(page, PREFETCH_NEXT_N_THUMBNAILS)
+                                .map { it.second },
+                        prefetchVideos =
+                            urls
+                                .nextN(page, PREFETCH_NEXT_N_VIDEOS)
+                                .map { it.first },
+                    ),
                 playerConfig = playerConfig,
-                isPause =
-                    if (pagerState.currentPage == page) {
-                        isPause
-                    } else {
-                        true
-                    }, // Pause video when not in focus
-                onPauseToggle = { isPause = isPause.not() }, // Toggle pause/resume
-                showControls = showControls, // Show/hide controls
-                onShowControlsToggle = {
-                    showControls = showControls.not()
-                }, // Toggle show/hide controls
-                onChangeSeekbar = { isSeekbarSliding = it }, // Update seek bar sliding state
-                isFullScreen = isFullScreen,
-                onFullScreenToggle = { isFullScreen = isFullScreen.not() },
+                playerControls =
+                    PlayerControls(
+                        isPause =
+                            if (pagerState.currentPage == page) {
+                                isPause
+                            } else {
+                                true
+                            }, // Pause video when not in focus
+                        onPauseToggle = { isPause = isPause.not() }, // Toggle pause/resume
+                        recordTime = recordTime,
+                    ),
             )
         }
     } else {
@@ -131,7 +132,6 @@ internal fun YRALReelsPlayerView(
             modifier = modifier,
             state = pagerState,
             userScrollEnabled = true, // Ensure user scrolling is enabled
-            beyondViewportPageCount = 3,
         ) { page ->
             // Create a side effect to detect when this page is shown
             LaunchedEffect(page, pagerState.currentPage) {
@@ -140,27 +140,48 @@ internal fun YRALReelsPlayerView(
                     onPageLoaded(page)
                 }
             }
-            var isPause by remember { mutableStateOf(false) } // State for pausing/resuming video
             // Video player with control
             YRALVideoPlayerWithControl(
                 modifier = Modifier.fillMaxSize(),
-                url = urls[page], // URL of the video
+                playerData =
+                    PlayerData(
+                        url = urls[page].first,
+                        thumbnailUrl = urls[page].second,
+                        prefetchThumbnails =
+                            urls
+                                .nextN(page, PREFETCH_NEXT_N_THUMBNAILS)
+                                .map { it.second },
+                        prefetchVideos =
+                            urls
+                                .nextN(page, PREFETCH_NEXT_N_VIDEOS)
+                                .map { it.first },
+                    ),
                 playerConfig = playerConfig,
-                isPause =
-                    if (pagerState.currentPage == page) {
-                        isPause
-                    } else {
-                        true
-                    }, // Pause video when not in focus
-                onPauseToggle = { isPause = isPause.not() }, // Toggle pause/resume
-                showControls = showControls, // Show/hide controls
-                onShowControlsToggle = {
-                    showControls = showControls.not()
-                }, // Toggle show/hide controls
-                onChangeSeekbar = { isSeekbarSliding = it }, // Update seek bar sliding state
-                isFullScreen = isFullScreen,
-                onFullScreenToggle = { isFullScreen = isFullScreen.not() },
+                playerControls =
+                    PlayerControls(
+                        isPause =
+                            if (pagerState.currentPage == page) {
+                                isPause
+                            } else {
+                                true
+                            }, // Pause video when not in focus
+                        onPauseToggle = { isPause = isPause.not() }, // Toggle pause/resume
+                        recordTime = recordTime,
+                    ),
             )
         }
     }
 }
+
+private fun <T> List<T>.nextN(
+    startIndex: Int,
+    n: Int,
+): List<T> =
+    if (startIndex + 1 < size) {
+        subList(startIndex + 1, minOf(startIndex + n, size))
+    } else {
+        emptyList()
+    }
+
+private const val PREFETCH_NEXT_N_THUMBNAILS = 3
+private const val PREFETCH_NEXT_N_VIDEOS = 3

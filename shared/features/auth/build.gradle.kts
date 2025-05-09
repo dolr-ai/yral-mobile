@@ -26,18 +26,25 @@ kotlin {
     sourceSets {
         androidMain.dependencies {
             implementation(libs.nimbus.jose.jwt)
+            implementation(libs.androidx.browser)
         }
         commonMain.dependencies {
+            implementation(projects.shared.core)
             implementation(projects.shared.libs.preferences)
             implementation(projects.shared.libs.http)
             implementation(projects.shared.libs.analytics)
+            implementation(projects.shared.libs.crashlytics)
             implementation(projects.shared.libs.koin)
+            implementation(projects.shared.core)
 
-            // implementation(projects.shared.rust)
-            BuildConfig.getDependencies(project).forEach { dependency ->
+            val (dependencies, shouldAddRustModule) = BuildConfig.getAndProcessDependencies(project)
+            dependencies.forEach { dependency ->
                 if (dependency.isNotEmpty()) {
                     implementation(dependency)
                 }
+            }
+            if (shouldAddRustModule) {
+                implementation(projects.shared.rust)
             }
         }
         commonTest.dependencies {

@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
+    alias(libs.plugins.gobleyRust)
 }
 
 kotlin {
@@ -17,9 +18,15 @@ kotlin {
 //    }
 
     sourceSets {
+        androidMain {
+            dependencies {
+                api(libs.koin.android)
+            }
+        }
         commonMain {
             dependencies {
                 api(libs.koin.core)
+                api(libs.koin.composeVM)
             }
         }
     }

@@ -18,6 +18,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
@@ -68,6 +69,7 @@ fun YralButton(
             text = text,
             style = LocalAppTopography.current.mdBold,
             color = textColor,
+            textAlign = TextAlign.Center,
         )
     }
 }

@@ -3,6 +3,8 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
+    alias(libs.plugins.gobleyRust)
+    alias(libs.plugins.kotlinxSerialisartion)
 }
 
 kotlin {
@@ -27,6 +29,7 @@ kotlin {
             api(libs.kotlinx.coroutines.core)
             api(libs.kotlinResult.core)
             api(libs.kotlinResult.coroutines)
+            implementation(libs.ktor.json)
 
             implementation(projects.shared.libs.koin)
         }
