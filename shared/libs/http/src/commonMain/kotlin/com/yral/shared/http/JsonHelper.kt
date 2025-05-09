@@ -6,4 +6,5 @@ fun createClientJson() =
     Json {
         isLenient = true
         ignoreUnknownKeys = true
+        encodeDefaults = true
     }

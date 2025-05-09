@@ -55,11 +55,9 @@ class MapSerializer : KSerializer<Map<String, Any?>> {
     ): JsonElement {
         return when (value) {
             null -> JsonNull
-            is Number, is Boolean, is String ->
-                json.parseToJsonElement(
-                    json.encodeToString(value),
-                )
-
+            is String -> JsonPrimitive(value)
+            is Number -> JsonPrimitive(value)
+            is Boolean -> JsonPrimitive(value)
             is List<*> -> JsonArray(value.mapNotNull { item -> serializeAny(item, json) })
             is Map<*, *> -> {
                 val mapEntries =
@@ -72,18 +70,8 @@ class MapSerializer : KSerializer<Map<String, Any?>> {
                         }.toMap()
                 JsonObject(mapEntries)
             }
-
-            else -> {
-                try {
-                    // Try to serialize if it's a serializable object
-                    json.parseToJsonElement(json.encodeToString(value))
-                } catch (e: SerializationException) {
-                    throw IllegalStateException(
-                        "Can't serialize type: ${value::class.simpleName}",
-                        e,
-                    )
-                }
-            }
+            // For all other types, convert to string representation
+            else -> JsonPrimitive(value.toString())
         }
     }
 

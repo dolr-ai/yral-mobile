@@ -2,11 +2,16 @@ package com.yral.shared.features.feed.viewmodel
 
 import androidx.lifecycle.ViewModel
 import com.github.michaelbull.result.mapBoth
+import com.yral.shared.analytics.AnalyticsManager
+import com.yral.shared.analytics.events.VideoDurationWatchedEventData
 import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.crashlytics.core.CrashlyticsManager
+import com.yral.shared.features.feed.data.toVideoEventData
 import com.yral.shared.features.feed.useCases.FetchFeedDetailsUseCase
 import com.yral.shared.features.feed.useCases.FetchMoreFeedUseCase
+import com.yral.shared.preferences.PrefKeys
+import com.yral.shared.preferences.Preferences
 import com.yral.shared.rust.domain.models.FeedDetails
 import com.yral.shared.rust.domain.models.Post
 import com.yral.shared.rust.domain.models.toFilteredResult
@@ -24,14 +29,17 @@ class FeedViewModel(
     private val sessionManager: SessionManager,
     private val fetchMoreFeedUseCase: FetchMoreFeedUseCase,
     private val fetchFeedDetailsUseCase: FetchFeedDetailsUseCase,
+    private val analyticsManager: AnalyticsManager,
+    private val preferences: Preferences,
     private val crashlyticsManager: CrashlyticsManager,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(appDispatchers.io)
 
     companion object {
         const val PRE_FETCH_BEFORE_LAST = 1
-        private const val FIRST_SECOND_WATCHED_THRESHOLD_MS = 1500L
-        private const val FULL_VIDEO_WATCHED_THRESHOLD = 0.95f
+        private const val FIRST_SECOND_WATCHED_THRESHOLD_MS = 1000L
+        private const val FULL_VIDEO_WATCHED_THRESHOLD = 95.0
+        const val NSFW_PROBABILITY = 0.4
     }
 
     private val _state =
@@ -138,7 +146,7 @@ class FeedViewModel(
             _state.emit(
                 _state.value.copy(
                     currentPageOfFeed = pageNo,
-                    didCurrentVideoEnd = false,
+                    videoData = VideoData(), // Reset all video data for new page
                 ),
             )
         }
@@ -158,23 +166,99 @@ class FeedViewModel(
         currentTime: Int,
         totalTime: Int,
     ) {
-        if (_state.value.didCurrentVideoEnd.not()) {
-            if (currentTime < FIRST_SECOND_WATCHED_THRESHOLD_MS) {
-                println("record event")
+        coroutineScope.launch {
+            // If we've already logged full video watched, no need to continue processing
+            if (_state.value.videoData.didLogFullVideoWatched) {
+                return@launch
             }
-            if (currentTime.toFloat() / totalTime >= FULL_VIDEO_WATCHED_THRESHOLD) {
-                println("record event")
+            // Get current state values before any updates
+            val videoData = _state.value.videoData
+            // Check for threshold crossing - only if not the first update and we haven't logged it yet
+            val shouldLogFirstSecond =
+                !videoData.isFirstTimeUpdate &&
+                    !videoData.didLogFirstSecondWatched &&
+                    currentTime >= FIRST_SECOND_WATCHED_THRESHOLD_MS
+            val shouldLogFullVideo =
+                currentTime.percentageOf(totalTime) >= FULL_VIDEO_WATCHED_THRESHOLD &&
+                    !videoData.didLogFullVideoWatched
+            // Update the last known time values
+            _state.emit(
+                _state.value.copy(
+                    videoData =
+                        _state.value.videoData.copy(
+                            lastKnownCurrentTime = currentTime,
+                            lastKnownTotalTime = totalTime,
+                            isFirstTimeUpdate = false, // Mark that we've had at least one update
+                        ),
+                ),
+            )
+            // Log first second event if needed
+            if (shouldLogFirstSecond) {
+                recordEvent(
+                    videoData =
+                        _state.value.videoData.copy(
+                            didLogFirstSecondWatched = true,
+                        ),
+                )
+            } else if (shouldLogFullVideo) {
+                recordEvent(
+                    videoData =
+                        state.value.videoData.copy(
+                            didLogFullVideoWatched = true,
+                        ),
+                )
             }
         }
     }
 
+    private suspend fun getVideoEvent(
+        currentTime: Int,
+        totalTime: Int,
+        percentageWatched: Double,
+    ): VideoDurationWatchedEventData {
+        val currentFeed = _state.value.feedDetails[_state.value.currentPageOfFeed]
+        return currentFeed.toVideoEventData().copy(
+            canisterId = sessionManager.getCanisterPrincipal() ?: "",
+            userID = sessionManager.getUserPrincipal() ?: "",
+            isLoggedIn = preferences.getBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name) ?: false,
+            absoluteWatched = currentTime.toDouble(),
+            percentageWatched = percentageWatched,
+            videoDuration = totalTime.toDouble(),
+        )
+    }
+
+    private suspend fun recordEvent(videoData: VideoData) {
+        val videoEvent =
+            getVideoEvent(
+                currentTime = videoData.lastKnownCurrentTime,
+                totalTime = videoData.lastKnownTotalTime,
+                percentageWatched =
+                    videoData.lastKnownCurrentTime
+                        .percentageOf(videoData.lastKnownTotalTime),
+            )
+        analyticsManager.trackEvent(
+            event = videoEvent,
+        )
+        _state.emit(
+            _state.value.copy(
+                videoData = videoData,
+            ),
+        )
+    }
+
     fun didCurrentVideoEnd() {
         coroutineScope.launch {
-            _state.emit(
-                _state.value.copy(
-                    didCurrentVideoEnd = true,
-                ),
-            )
+            if (!_state.value.videoData.didLogFullVideoWatched &&
+                _state.value.videoData.lastKnownTotalTime > 0
+            ) {
+                recordEvent(
+                    videoData =
+                        _state.value.videoData.copy(
+                            didLogFullVideoWatched = true,
+                            lastKnownCurrentTime = _state.value.videoData.lastKnownTotalTime,
+                        ),
+                )
+            }
         }
     }
 }
@@ -185,5 +269,25 @@ data class FeedState(
     val currentPageOfFeed: Int = 0,
     val isLoadingMore: Boolean = false,
     val isPostDescriptionExpanded: Boolean = false,
-    val didCurrentVideoEnd: Boolean = false,
+    val videoData: VideoData = VideoData(),
 )
+
+data class VideoData(
+    val didLogFirstSecondWatched: Boolean = false,
+    val didLogFullVideoWatched: Boolean = false,
+    val lastKnownCurrentTime: Int = 0,
+    val lastKnownTotalTime: Int = 0,
+    val isFirstTimeUpdate: Boolean = true,
+)
+
+/**
+ * Extension function to calculate percentage of a value relative to total
+ * @return Percentage value (0-100)
+ */
+@Suppress("MagicNumber")
+private fun Int.percentageOf(total: Int): Double =
+    if (total > 0) {
+        (this.toDouble() / total.toDouble()) * 100.0
+    } else {
+        0.0
+    }

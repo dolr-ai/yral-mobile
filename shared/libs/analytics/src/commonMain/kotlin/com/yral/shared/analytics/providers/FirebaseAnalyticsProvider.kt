@@ -1,14 +1,15 @@
-package com.yral.shared.analytics.main.providers
+package com.yral.shared.analytics.providers
 
-import com.yral.shared.analytics.core.AnalyticsProvider
-import com.yral.shared.analytics.core.Event
-import com.yral.shared.analytics.core.User
+import com.yral.shared.analytics.AnalyticsProvider
+import com.yral.shared.analytics.User
+import com.yral.shared.analytics.events.EventData
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.analytics.FirebaseAnalytics
 import dev.gitlive.firebase.analytics.analytics
 
 class FirebaseAnalyticsProvider(
-    private val eventFilter: (Event) -> Boolean = { true },
+    private val eventFilter: (EventData) -> Boolean = { true },
+    private val mapConverter: (EventData) -> Map<String, Any>,
 ) : AnalyticsProvider {
     private val firebaseAnalytics: FirebaseAnalytics by lazy {
         Firebase.analytics
@@ -16,11 +17,13 @@ class FirebaseAnalyticsProvider(
 
     override val name: String = "firebase"
 
-    override fun shouldTrackEvent(event: Event): Boolean = eventFilter(event)
+    override fun shouldTrackEvent(event: EventData): Boolean = eventFilter(event)
 
-    override fun trackEvent(event: Event) {
-        val parameters = event.properties.mapKeys { toValidKeyName(it.key) }
-        firebaseAnalytics.logEvent(toValidKeyName(event.name), parameters)
+    override fun trackEvent(event: EventData) {
+        firebaseAnalytics.logEvent(
+            name = toValidKeyName(event.event),
+            parameters = mapConverter(event),
+        )
     }
 
     override fun flush() {

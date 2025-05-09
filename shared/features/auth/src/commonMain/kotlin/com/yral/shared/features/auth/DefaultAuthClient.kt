@@ -1,10 +1,8 @@
 package com.yral.shared.features.auth
 
 import com.github.michaelbull.result.mapBoth
-import com.yral.shared.analytics.core.AnalyticsManager
-import com.yral.shared.analytics.core.Event
-import com.yral.shared.analytics.main.FeatureEvents
-import com.yral.shared.analytics.main.Features
+import com.yral.shared.analytics.AnalyticsManager
+import com.yral.shared.analytics.events.AuthSuccessfulEventData
 import com.yral.shared.core.platform.PlatformResourcesFactory
 import com.yral.shared.core.session.Session
 import com.yral.shared.core.session.SessionManager
@@ -117,11 +115,7 @@ class DefaultAuthClient(
             ),
         )
         analyticsManager.trackEvent(
-            event =
-                Event(
-                    featureName = Features.AUTH.name.lowercase(),
-                    name = FeatureEvents.AUTH_SUCCESSFUL.name.lowercase(),
-                ),
+            event = AuthSuccessfulEventData(),
         )
     }
 
