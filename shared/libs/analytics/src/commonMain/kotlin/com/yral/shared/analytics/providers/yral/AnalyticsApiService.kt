@@ -32,7 +32,6 @@ class AnalyticsApiService(
                     delegatedIdentity = delegatedIdentity,
                     events = events,
                 )
-            println("xxxx making request")
             client.post {
                 url {
                     host = AppConfigurations.ANALYTICS_BASE_URL
@@ -41,7 +40,6 @@ class AnalyticsApiService(
                 contentType(ContentType.Application.Json)
                 setBody(params)
             }
-            println("xxxx request successful")
         }
     }
 

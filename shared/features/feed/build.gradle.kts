@@ -31,7 +31,6 @@ kotlin {
             implementation(projects.shared.libs.crashlytics)
             implementation(projects.shared.libs.analytics)
             implementation(projects.shared.libs.preferences)
-            implementation(projects.shared.libs.http)
 
             val (dependencies, shouldAddRustModule) = BuildConfig.getAndProcessDependencies(project)
             dependencies.forEach { dependency ->
