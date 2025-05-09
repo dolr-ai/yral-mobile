@@ -116,6 +116,8 @@
 		AC32E4742D2AD67D001DDA43 /* ToggleLikeUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E4722D2AD674001DDA43 /* ToggleLikeUseCase.swift */; };
 		AC32E4792D2AF599001DDA43 /* CacheDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E4782D2AF594001DDA43 /* CacheDTO.swift */; };
 		AC32E47A2D2AF599001DDA43 /* CacheDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E4782D2AF594001DDA43 /* CacheDTO.swift */; };
+		AC391EE62DCE476400A8DFA9 /* Signup_scroll_lottie.json in Resources */ = {isa = PBXBuildFile; fileRef = AC391EE52DCE476400A8DFA9 /* Signup_scroll_lottie.json */; };
+		AC391EE72DCE476400A8DFA9 /* Signup_scroll_lottie.json in Resources */ = {isa = PBXBuildFile; fileRef = AC391EE52DCE476400A8DFA9 /* Signup_scroll_lottie.json */; };
 		AC462F422D95A4AD004957B3 /* OffsetableScrollView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC462F412D95A4A8004957B3 /* OffsetableScrollView.swift */; };
 		AC462F432D95A4AD004957B3 /* OffsetableScrollView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC462F412D95A4A8004957B3 /* OffsetableScrollView.swift */; };
 		AC462F472D95B7F8004957B3 /* ReportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC462F462D95B7F5004957B3 /* ReportView.swift */; };
@@ -204,8 +206,6 @@
 		AC811B412DBA56F70094C5F6 /* SignupOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC811B3F2DBA56F00094C5F6 /* SignupOverlay.swift */; };
 		AC811B442DBA66A30094C5F6 /* SignupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC811B432DBA669F0094C5F6 /* SignupView.swift */; };
 		AC811B452DBA66A30094C5F6 /* SignupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC811B432DBA669F0094C5F6 /* SignupView.swift */; };
-		AC811B482DBA754A0094C5F6 /* Signup_scroll_lottie.json in Resources */ = {isa = PBXBuildFile; fileRef = AC811B472DBA754A0094C5F6 /* Signup_scroll_lottie.json */; };
-		AC811B492DBA754A0094C5F6 /* Signup_scroll_lottie.json in Resources */ = {isa = PBXBuildFile; fileRef = AC811B472DBA754A0094C5F6 /* Signup_scroll_lottie.json */; };
 		AC811B922DBA7C3B0094C5F6 /* SignupSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC811B912DBA7C390094C5F6 /* SignupSheet.swift */; };
 		AC811B932DBA7C3B0094C5F6 /* SignupSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC811B912DBA7C390094C5F6 /* SignupSheet.swift */; };
 		AC811BDC2DBA95760094C5F6 /* SignupFailureSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC811BDB2DBA95700094C5F6 /* SignupFailureSheet.swift */; };
@@ -509,6 +509,7 @@
 		AC32E46E2D299E6B001DDA43 /* ICPBrandingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ICPBrandingView.swift; sourceTree = "<group>"; };
 		AC32E4722D2AD674001DDA43 /* ToggleLikeUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToggleLikeUseCase.swift; sourceTree = "<group>"; };
 		AC32E4782D2AF594001DDA43 /* CacheDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CacheDTO.swift; sourceTree = "<group>"; };
+		AC391EE52DCE476400A8DFA9 /* Signup_scroll_lottie.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Signup_scroll_lottie.json; sourceTree = "<group>"; };
 		AC462F412D95A4A8004957B3 /* OffsetableScrollView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OffsetableScrollView.swift; sourceTree = "<group>"; };
 		AC462F462D95B7F5004957B3 /* ReportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportView.swift; sourceTree = "<group>"; };
 		AC462F492D95BB61004957B3 /* FeedsCell+Captions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FeedsCell+Captions.swift"; sourceTree = "<group>"; };
@@ -547,7 +548,6 @@
 		AC7F7EE12D7A8E0B00215162 /* UpdateMetaUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateMetaUseCase.swift; sourceTree = "<group>"; };
 		AC811B3F2DBA56F00094C5F6 /* SignupOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignupOverlay.swift; sourceTree = "<group>"; };
 		AC811B432DBA669F0094C5F6 /* SignupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignupView.swift; sourceTree = "<group>"; };
-		AC811B472DBA754A0094C5F6 /* Signup_scroll_lottie.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Signup_scroll_lottie.json; sourceTree = "<group>"; };
 		AC811B912DBA7C390094C5F6 /* SignupSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignupSheet.swift; sourceTree = "<group>"; };
 		AC811BDB2DBA95700094C5F6 /* SignupFailureSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignupFailureSheet.swift; sourceTree = "<group>"; };
 		AC8472A92D1D9135004A4259 /* HLSDownloadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HLSDownloadManager.swift; sourceTree = "<group>"; };
@@ -1893,7 +1893,7 @@
 				AC8FC76C2D9C01E9006F29BC /* Yral_Loader.json */,
 				AC99BB912D834387008012C2 /* Lightning_Lottie.json */,
 				AC233D342D314CA3007040F1 /* Splash_Lottie.json */,
-				AC811B472DBA754A0094C5F6 /* Signup_scroll_lottie.json */,
+				AC391EE52DCE476400A8DFA9 /* Signup_scroll_lottie.json */,
 			);
 			path = Lottie;
 			sourceTree = "<group>";
@@ -2089,10 +2089,10 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AC811B482DBA754A0094C5F6 /* Signup_scroll_lottie.json in Resources */,
 				058557D9273AAEEB004C7B11 /* Preview Assets.xcassets in Resources */,
 				AC32E4122D270097001DDA43 /* README.txt in Resources */,
 				AC32E4132D270097001DDA43 /* KumbhSans-ExtraBold.ttf in Resources */,
+				AC391EE62DCE476400A8DFA9 /* Signup_scroll_lottie.json in Resources */,
 				AC32E4142D270097001DDA43 /* KumbhSans-SemiBold.ttf in Resources */,
 				AC32E4152D270097001DDA43 /* KumbhSans-Black.ttf in Resources */,
 				AC233D352D314CA3007040F1 /* Splash_Lottie.json in Resources */,
@@ -2122,10 +2122,10 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AC811B492DBA754A0094C5F6 /* Signup_scroll_lottie.json in Resources */,
 				AC233D362D314CA3007040F1 /* Splash_Lottie.json in Resources */,
 				ACD941B12CFF575C0038FCB6 /* Preview Assets.xcassets in Resources */,
 				AC32E4062D270097001DDA43 /* README.txt in Resources */,
+				AC391EE72DCE476400A8DFA9 /* Signup_scroll_lottie.json in Resources */,
 				AC32E4072D270097001DDA43 /* KumbhSans-ExtraBold.ttf in Resources */,
 				AC32E4082D270097001DDA43 /* KumbhSans-SemiBold.ttf in Resources */,
 				AC32E4092D270097001DDA43 /* KumbhSans-Black.ttf in Resources */,
