@@ -15,8 +15,6 @@ import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
-const val BASE_URL = "yral.com"
-
 fun createClient(
     preferences: Preferences,
     json: Json,
@@ -40,7 +38,6 @@ fun createClient(
         defaultRequest {
             url {
                 protocol = URLProtocol.HTTPS
-                host = BASE_URL
             }
             contentType(ContentType.Application.Json)
         }

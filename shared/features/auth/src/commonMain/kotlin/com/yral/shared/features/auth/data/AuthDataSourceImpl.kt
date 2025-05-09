@@ -1,5 +1,6 @@
 package com.yral.shared.features.auth.data
 
+import com.yral.shared.core.AppConfigurations.OAUTH_BASE_URL
 import com.yral.shared.features.auth.data.models.TokenResponseDto
 import io.ktor.client.HttpClient
 import io.ktor.client.request.post
@@ -85,7 +86,6 @@ class AuthDataSourceImpl(
     }
 
     companion object {
-        const val OAUTH_BASE_URL = "yral-auth-v2.fly.dev"
         const val REDIRECT_URI = "yral://oauth/callback"
         const val CLIENT_ID = "c89b29de-8366-4e62-9b9e-c29585740acf"
         private const val PATH_AUTHENTICATE_TOKEN = "oauth/token"

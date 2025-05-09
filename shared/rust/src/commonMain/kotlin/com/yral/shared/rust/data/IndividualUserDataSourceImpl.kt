@@ -1,5 +1,6 @@
 package com.yral.shared.rust.data
 
+import com.yral.shared.core.AppConfigurations.FEED_BASE_URL
 import com.yral.shared.http.httpPost
 import com.yral.shared.rust.data.models.FeedRequestDTO
 import com.yral.shared.rust.data.models.PostDTO
@@ -49,7 +50,6 @@ class IndividualUserDataSourceImpl(
     }
 
     companion object {
-        private const val FEED_BASE_URL = "yral-ml-feed-server.fly.dev"
         private const val CACHED_FEED_PATH = "/api/v1/feed/coldstart/clean"
         private const val ML_FEED_PATH = "/api/v1/feed/clean"
         const val CLOUD_FLARE_PREFIX = "https://customer-2p3jflss4r4hmpnz.cloudflarestream.com/"
