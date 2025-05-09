@@ -26,7 +26,7 @@ import com.yral.shared.libs.videoPlayer.util.CMPPlayerParams
 import com.yral.shared.libs.videoPlayer.util.isLiveStream
 import kotlinx.coroutines.delay
 
-@Suppress("LongMethod")
+@Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
 internal fun YRALVideoPlayerWithControl(
     modifier: Modifier,
@@ -163,9 +163,11 @@ internal fun YRALVideoPlayerWithControl(
     }
 
     LaunchedEffect(currentTime) {
-        playerControls.recordTime(
-            currentTime,
-            totalTime,
-        )
+        if (currentTime > 0 && totalTime > 0) {
+            playerControls.recordTime(
+                currentTime,
+                totalTime,
+            )
+        }
     }
 }

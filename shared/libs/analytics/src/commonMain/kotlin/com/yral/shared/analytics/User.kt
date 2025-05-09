@@ -1,4 +1,4 @@
-package com.yral.shared.analytics.core
+package com.yral.shared.analytics
 
 data class User(
     val userId: String,
