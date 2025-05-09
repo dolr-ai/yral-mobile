@@ -35,6 +35,7 @@ kotlin {
         commonMain.dependencies {
             implementation(projects.shared.libs.http)
             implementation(projects.shared.libs.koin)
+            implementation(projects.shared.core)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

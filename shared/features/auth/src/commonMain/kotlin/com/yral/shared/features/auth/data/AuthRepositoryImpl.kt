@@ -1,7 +1,7 @@
 package com.yral.shared.features.auth.data
 
+import com.yral.shared.core.AppConfigurations.OAUTH_BASE_URL
 import com.yral.shared.features.auth.data.AuthDataSourceImpl.Companion.CLIENT_ID
-import com.yral.shared.features.auth.data.AuthDataSourceImpl.Companion.OAUTH_BASE_URL
 import com.yral.shared.features.auth.data.AuthDataSourceImpl.Companion.REDIRECT_URI
 import com.yral.shared.features.auth.data.models.toTokenResponse
 import com.yral.shared.features.auth.domain.AuthRepository
