@@ -33,6 +33,10 @@ final class AccountDIContainer {
       logoutUseCase: LogoutUseCase(
         accountRepository: dependencies.accountRepository,
         crashReporter: dependencies.crashReporter
+      ),
+      deleteUseCase: DeleteUseCase(
+        accountRepository: dependencies.accountRepository,
+        crashReporter: dependencies.crashReporter
       )
     )
   }

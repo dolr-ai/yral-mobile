@@ -118,6 +118,8 @@
 		AC32E47A2D2AF599001DDA43 /* CacheDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E4782D2AF594001DDA43 /* CacheDTO.swift */; };
 		AC391EE62DCE476400A8DFA9 /* Signup_scroll_lottie.json in Resources */ = {isa = PBXBuildFile; fileRef = AC391EE52DCE476400A8DFA9 /* Signup_scroll_lottie.json */; };
 		AC391EE72DCE476400A8DFA9 /* Signup_scroll_lottie.json in Resources */ = {isa = PBXBuildFile; fileRef = AC391EE52DCE476400A8DFA9 /* Signup_scroll_lottie.json */; };
+		AC391EE92DCE4DE600A8DFA9 /* DeleteUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC391EE82DCE4DE100A8DFA9 /* DeleteUseCase.swift */; };
+		AC391EEA2DCE4DE600A8DFA9 /* DeleteUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC391EE82DCE4DE100A8DFA9 /* DeleteUseCase.swift */; };
 		AC462F422D95A4AD004957B3 /* OffsetableScrollView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC462F412D95A4A8004957B3 /* OffsetableScrollView.swift */; };
 		AC462F432D95A4AD004957B3 /* OffsetableScrollView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC462F412D95A4A8004957B3 /* OffsetableScrollView.swift */; };
 		AC462F472D95B7F8004957B3 /* ReportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC462F462D95B7F5004957B3 /* ReportView.swift */; };
@@ -510,6 +512,7 @@
 		AC32E4722D2AD674001DDA43 /* ToggleLikeUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToggleLikeUseCase.swift; sourceTree = "<group>"; };
 		AC32E4782D2AF594001DDA43 /* CacheDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CacheDTO.swift; sourceTree = "<group>"; };
 		AC391EE52DCE476400A8DFA9 /* Signup_scroll_lottie.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Signup_scroll_lottie.json; sourceTree = "<group>"; };
+		AC391EE82DCE4DE100A8DFA9 /* DeleteUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeleteUseCase.swift; sourceTree = "<group>"; };
 		AC462F412D95A4A8004957B3 /* OffsetableScrollView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OffsetableScrollView.swift; sourceTree = "<group>"; };
 		AC462F462D95B7F5004957B3 /* ReportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportView.swift; sourceTree = "<group>"; };
 		AC462F492D95BB61004957B3 /* FeedsCell+Captions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FeedsCell+Captions.swift"; sourceTree = "<group>"; };
@@ -1186,6 +1189,7 @@
 			isa = PBXGroup;
 			children = (
 				AC51C04A2DC392AF00D5BA34 /* LogoutUseCase.swift */,
+				AC391EE82DCE4DE100A8DFA9 /* DeleteUseCase.swift */,
 			);
 			path = UseCases;
 			sourceTree = "<group>";
@@ -2395,6 +2399,7 @@
 				AC32E4612D298E0A001DDA43 /* ProfileOptionsView.swift in Sources */,
 				AC7F7EE32D7A8E1600215162 /* UpdateMetaUseCase.swift in Sources */,
 				ACB46A6F2D0F417F002E200C /* FeedsViewControllerWrapper.swift in Sources */,
+				AC391EEA2DCE4DE600A8DFA9 /* DeleteUseCase.swift in Sources */,
 				ACB46A6C2D0F3F8E002E200C /* FeedsViewController.swift in Sources */,
 				AC92940C2D64C9C0003DB102 /* UploadDIContainer.swift in Sources */,
 				AC811B932DBA7C3B0094C5F6 /* SignupSheet.swift in Sources */,
@@ -2577,6 +2582,7 @@
 				AC32E4622D298E0A001DDA43 /* ProfileOptionsView.swift in Sources */,
 				AC7F7EE22D7A8E1600215162 /* UpdateMetaUseCase.swift in Sources */,
 				ACB46A702D0F417F002E200C /* FeedsViewControllerWrapper.swift in Sources */,
+				AC391EE92DCE4DE600A8DFA9 /* DeleteUseCase.swift in Sources */,
 				ACB46A6B2D0F3F8E002E200C /* FeedsViewController.swift in Sources */,
 				AC92940B2D64C9C0003DB102 /* UploadDIContainer.swift in Sources */,
 				AC811B922DBA7C3B0094C5F6 /* SignupSheet.swift in Sources */,

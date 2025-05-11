@@ -22,10 +22,18 @@ struct ProfileOptionsView: View {
   var body: some View {
     ZStack {
       VStack(spacing: Constants.vStackSpacing) {
-        ForEach(Constants.options.filter { showLogoutButton || $0.id != Constants.logoutId }) { option in
+        ForEach(
+          Constants.options.filter { option in
+            guard !showLogoutButton else { return true }
+            return option.id != Constants.logoutId
+            && option.id != Constants.deleteId
+          }
+        ) { option in
           Button {
             if option.id == Constants.logoutId {
               delegate?.logout()
+            } else if option.id == Constants.deleteId {
+              delegate?.delete()
             } else {
               isShowingLoader = true
               selectedOption = option
@@ -104,6 +112,11 @@ extension ProfileOptionsView {
         image: Image("option_logout"),
         text: "Log Out",
         redirection: Constants.logoutId
+      ),
+      Options(
+        image: Image("option_delete"),
+        text: "Delete Account",
+        redirection: Constants.deleteId
       )
     ]
 
@@ -117,7 +130,8 @@ extension ProfileOptionsView {
     static let progressViewCornerRadius = 8.0
     static let vStackSpacing = 30.0
     static let loaderName = "Yral_Loader"
-    static let logoutId = ""
+    static let logoutId = "logoutId"
+    static let deleteId = "deleteId"
   }
 }
 
@@ -125,5 +139,6 @@ extension ProfileOptionsView {
 protocol ProfileOptionsViewDelegate: Any {
   func login()
   func logout()
+  func delete()
 }
 // swiftlint: enable class_delegate_protocol

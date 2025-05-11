@@ -181,5 +181,6 @@ extension DefaultAuthClient {
     static let keychainRefreshToken = "yral.refreshToken"
     static let keychainTokenExpiryDateKey = "keychainTokenExpiryDate"
     static let temporaryIdentityExpirySecond: UInt64 = 3600
+    static let keychainDeletedVideosKey = "keychainDeletedVideosKey"
   }
 }

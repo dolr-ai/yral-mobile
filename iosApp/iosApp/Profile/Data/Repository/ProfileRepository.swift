@@ -124,10 +124,15 @@ class ProfileRepository: ProfileRepositoryProtocol {
       )
       if result.is_ok() {
         guard let postResult = result.ok_value() else { return .success([FeedResult]()) }
+        let filteredVideoIds = try KeychainHelper.retrieveSet(
+          for: DefaultAuthClient.Constants.keychainDeletedVideosKey
+        )
         let result = postResult.filter {
           !$0.status().is_banned_due_to_user_reporting() &&
-          !$0.is_nsfw()
+          !$0.is_nsfw() &&
+          !(filteredVideoIds?.contains($0.video_uid().toString()) ?? false)
         }
+
         let feedResult = result.map { postDetail in
           let videoURL = URL(
             string: "\(Constants.cloudfarePrefix)\(postDetail.video_uid().toString())\(Constants.cloudflareSuffix)"

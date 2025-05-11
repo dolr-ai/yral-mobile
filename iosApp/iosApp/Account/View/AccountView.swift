@@ -17,6 +17,8 @@ struct AccountView: View {
   @State private var showSignupFailureSheet: Bool = false
   @State private var isSigningUp = false
   @State private var isLoggingOut = false
+  @State private var showDelete = false
+  @State private var isDeleting = false
   @EnvironmentObject var session: SessionManager
 
   init(viewModel: AccountViewModel) {
@@ -87,10 +89,12 @@ struct AccountView: View {
           showSignupFailureSheet = true
         case .logoutSuccess, .logoutFailure:
           isLoggingOut = false
+        case .deleteSuccess, .deleteFailure:
+          isDeleting = false
         }
         viewModel.event = nil
       }
-      if isLoggingOut {
+      if isLoggingOut || isDeleting {
         ZStack {
           Color.black.opacity(Constants.loadingStateOpacity)
             .ignoresSafeArea()
@@ -120,6 +124,25 @@ struct AccountView: View {
         showSignupSheet = false
         showSignupFailureSheet = false
       })
+      .background( ClearBackgroundView() )
+    }
+    .fullScreenCover(isPresented: $showDelete) {
+      NudgePopupView(
+        nudgeTitle: Constants.deleteTitle,
+        nudgeMessage: Constants.deleteText,
+        confirmLabel: Constants.deleteButtonTitle,
+        cancelLabel: Constants.cancelTitle,
+        onConfirm: {
+          showDelete = false
+          isDeleting = true
+          Task { @MainActor in
+            await self.viewModel.delete()
+          }
+        },
+        onCancel: {
+          showDelete = false
+        }
+      )
       .background( ClearBackgroundView() )
     }
   }
@@ -159,6 +182,11 @@ extension AccountView: ProfileOptionsViewDelegate {
       await viewModel.logout()
     }
   }
+
+  func delete() {
+    UIView.setAnimationsEnabled(false)
+    showDelete = true
+  }
 }
 
 extension AccountView {
@@ -180,5 +208,9 @@ extension AccountView {
     static let userInfoHorizontalPadding = 16.0
     static let loaderSize = 24.0
     static let lottieName = "Yral_Loader"
+    static let deleteTitle = "Delete Account?"
+    static let deleteText = "Are you sure you want to delete your account?"
+    static let cancelTitle = "Cancel"
+    static let deleteButtonTitle = "Delete"
   }
 }

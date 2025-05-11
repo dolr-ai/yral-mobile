@@ -132,16 +132,13 @@ struct ProfileView: View {
       .onChange(of: viewModel.event) { event in
         switch event {
         case .fetchedAccountInfo(let info):
-          print("Sarvesh 1")
           showAccountInfo = true
           accountInfo = info
         case .loadedVideos(let videos):
-          print("Sarvesh 2")
           guard !videos.isEmpty else { return }
           showEmptyState = false
           self.videos += videos
         case .deletedVideos:
-          print("Sarvesh 3")
           withAnimation {
             self.viewModel.deletedVideos.forEach { item in
               self.videos.removeAll { $0.postID == item.postID }
@@ -152,22 +149,18 @@ struct ProfileView: View {
           }
           self.showDeleteIndicator = false
         case .deleteVideoFailed:
-          print("Sarvesh 4")
           self.deleteInfo = nil
           self.showDeleteIndicator = false
         case .refreshed(let videos):
-          print("Sarvesh 5")
           self.videos = videos
           showEmptyState = self.videos.isEmpty
         case .pageEndReached(let isEmpty):
-          print("Sarvesh 6")
           showEmptyState = isEmpty
         default:
           break
         }
       }
       .onChange(of: session.state) { state in
-        print("Sarvesh 7")
         switch state {
         case .loggedOut,
             .ephemeralAuthentication,

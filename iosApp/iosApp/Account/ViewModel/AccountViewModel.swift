@@ -34,12 +34,15 @@ enum AccountPageEvent {
   case socialSignInFailure
   case logoutSuccess
   case logoutFailure
+  case deleteSuccess
+  case deleteFailure
 }
 
 class AccountViewModel: ObservableObject {
   let accountUseCase: AccountUseCaseProtocol
   let socialSignInUseCase: SocialSignInUseCaseProtocol
   let logoutUseCase: LogoutUseCaseProtocol
+  let deleteUseCase: DeleteUseCaseProtocol
 
   @Published var state: AccountPageState = .initalized
   @Published var event: AccountPageEvent?
@@ -47,11 +50,13 @@ class AccountViewModel: ObservableObject {
   init(
     accountUseCase: AccountUseCaseProtocol,
     socialSignInUseCase: SocialSignInUseCaseProtocol,
-    logoutUseCase: LogoutUseCaseProtocol
+    logoutUseCase: LogoutUseCaseProtocol,
+    deleteUseCase: DeleteUseCaseProtocol
   ) {
     self.accountUseCase = accountUseCase
     self.socialSignInUseCase = socialSignInUseCase
     self.logoutUseCase = logoutUseCase
+    self.deleteUseCase = deleteUseCase
   }
 
   @MainActor func fetchProfileInfo() async {
@@ -85,6 +90,18 @@ class AccountViewModel: ObservableObject {
         self.event = .logoutSuccess
       case .failure(let failure):
         self.event = .logoutFailure
+      }
+    }
+  }
+
+  func delete() async {
+    let result = await deleteUseCase.execute(request: ())
+    await MainActor.run {
+      switch result {
+      case .success(let success):
+        self.event = .deleteSuccess
+      case .failure(let failure):
+        self.event = .deleteFailure
       }
     }
   }

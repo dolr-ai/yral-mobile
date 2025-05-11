@@ -16,6 +16,7 @@ enum AccountError: Error {
   case networkError(String)
   case pageEndReached
   case unknown(String)
+  case keychainError(String)
 }
 
 extension AccountError: LocalizedError {
@@ -34,6 +35,8 @@ extension AccountError: LocalizedError {
     case .pageEndReached:
       return "Page end reached."
     case .unknown(let message):
+      return "Unknown Error: \(message)"
+    case .keychainError(let message):
       return "Unknown Error: \(message)"
     }
   }
