@@ -11,6 +11,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.paint
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
@@ -41,7 +43,15 @@ fun YralGradientButton(
         YralMaskedVectorText(
             text = text,
             vectorRes = getButtonTextBackground(buttonType, buttonState),
-            textStyle = LocalAppTopography.current.mdBold,
+            textStyle =
+                LocalAppTopography
+                    .current
+                    .mdBold
+                    .plus(
+                        TextStyle(
+                            textAlign = TextAlign.Center,
+                        ),
+                    ),
         )
     }
 }
