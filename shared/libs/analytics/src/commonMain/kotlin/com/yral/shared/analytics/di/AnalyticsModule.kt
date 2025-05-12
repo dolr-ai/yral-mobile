@@ -1,29 +1,33 @@
 package com.yral.shared.analytics.di
 
-import com.yral.shared.analytics.core.AnalyticsManager
-import com.yral.shared.analytics.core.ApiClient
-import com.yral.shared.analytics.core.CoreService
-import com.yral.shared.analytics.main.providers.FirebaseAnalyticsProvider
+import com.yral.shared.analytics.AnalyticsManager
+import com.yral.shared.analytics.events.shouldSendToYralBE
+import com.yral.shared.analytics.providers.FirebaseAnalyticsProvider
+import com.yral.shared.analytics.providers.yral.AnalyticsApiService
+import com.yral.shared.analytics.providers.yral.CoreService
+import com.yral.shared.core.utils.toMap
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.encodeToJsonElement
+import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
-
-private const val ANALYTICS_BASE_URL = "https://yral.com"
-private const val ANALYTICS_BATCH_SIZE = 10
-private const val ANALYTICS_FLUSH_MS = 120000L
 
 val analyticsModule =
     module {
-        single { ApiClient(ANALYTICS_BASE_URL) }
+        singleOf(::AnalyticsApiService)
         single {
             CoreService(
-                apiClient = get(),
-                batchSize = ANALYTICS_BATCH_SIZE,
-                autoFlushEvents = true,
-                autoFlushIntervalMs = ANALYTICS_FLUSH_MS,
+                get(),
+                get(),
+                eventFilter = { it.shouldSendToYralBE() },
             )
         }
         single {
             FirebaseAnalyticsProvider(
-                eventFilter = { true },
+                eventFilter = { !it.shouldSendToYralBE() },
+                mapConverter = { event ->
+                    val json: Json = get()
+                    json.encodeToJsonElement(event).toMap().mapValues { it.value != null }
+                },
             )
         }
         single {

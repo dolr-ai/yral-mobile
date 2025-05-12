@@ -56,15 +56,7 @@ fun RootScreen(viewModel: RootViewModel = koinViewModel()) {
         }
     }
     if (state.showSplash) {
-        val window = (LocalActivity.current as? ComponentActivity)?.window
-        LaunchedEffect(Unit) {
-            window?.let { w ->
-                WindowInsetsControllerCompat(
-                    w,
-                    w.decorView,
-                ).hide(WindowInsetsCompat.Type.systemBars())
-            }
-        }
+        HandleSystemBars(show = false)
         Splash(
             modifier = Modifier.fillMaxSize(),
             initialAnimationComplete = state.initialAnimationComplete,
@@ -72,15 +64,7 @@ fun RootScreen(viewModel: RootViewModel = koinViewModel()) {
         )
     } else {
         // Reset system bars to normal
-        val window = (LocalActivity.current as? ComponentActivity)?.window
-        LaunchedEffect(Unit) {
-            window?.let { w ->
-                WindowInsetsControllerCompat(
-                    w,
-                    w.decorView,
-                ).show(WindowInsetsCompat.Type.systemBars())
-            }
-        }
+        HandleSystemBars(show = true)
         val feedViewModel = remember { viewModel.createFeedViewModel() }
         HomeScreen(
             createFeedViewModel = { feedViewModel },
@@ -105,6 +89,30 @@ fun RootScreen(viewModel: RootViewModel = koinViewModel()) {
                     ),
                 onDismissRequest = { viewModel.setShowSignupFailedBottomSheet(false) },
             )
+        }
+    }
+}
+
+@Composable
+private fun HandleSystemBars(show: Boolean) {
+    val window = (LocalActivity.current as? ComponentActivity)?.window
+    if (show) {
+        LaunchedEffect(Unit) {
+            window?.let { w ->
+                WindowInsetsControllerCompat(
+                    w,
+                    w.decorView,
+                ).show(WindowInsetsCompat.Type.systemBars())
+            }
+        }
+    } else {
+        LaunchedEffect(Unit) {
+            window?.let { w ->
+                WindowInsetsControllerCompat(
+                    w,
+                    w.decorView,
+                ).hide(WindowInsetsCompat.Type.systemBars())
+            }
         }
     }
 }

@@ -25,15 +25,21 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation(libs.ktor.client.core)
-            implementation(libs.ktor.client.cio)
-            implementation(libs.ktor.client.logging)
-            implementation(libs.ktor.client.content.negotiation)
-            implementation(libs.ktor.json)
-            implementation(libs.kotlinx.datetime)
-
+            implementation(projects.shared.libs.http)
             implementation(projects.shared.core)
             implementation(projects.shared.libs.koin)
+            implementation(projects.shared.libs.preferences)
+            implementation(projects.shared.libs.crashlytics)
+
+            val (dependencies, shouldAddRustModule) = BuildConfig.getAndProcessDependencies(project)
+            dependencies.forEach { dependency ->
+                if (dependency.isNotEmpty()) {
+                    implementation(dependency)
+                }
+            }
+            if (shouldAddRustModule) {
+                implementation(projects.shared.rust)
+            }
 
             api(libs.gitlive.firebase.kotlin.anlaytics)
         }
