@@ -20,9 +20,9 @@ k256 = { version = "0.13.4", default-features = false, features = [
     "std",
     "jwk",
 ] }
-yral-types = { git = "https://github.com/yral-dapp/yral-common.git" }
-yral-canisters-common = {git = "https://github.com/yral-dapp/yral-common.git"}
-yral-canisters-client = {git = "https://github.com/yral-dapp/yral-common.git"}
+yral-types = { git = "https://github.com/yral-dapp/yral-common.git", rev = "18b20f6bc2caccbdb8af0d16f8e80d1806ea4a79" }
+yral-canisters-common = { git = "https://github.com/yral-dapp/yral-common.git", rev = "18b20f6bc2caccbdb8af0d16f8e80d1806ea4a79" }
+yral-canisters-client = { git = "https://github.com/yral-dapp/yral-common.git", rev = "18b20f6bc2caccbdb8af0d16f8e80d1806ea4a79" }
 
 log = "0.4.27"
 cfg-if = "1.0"

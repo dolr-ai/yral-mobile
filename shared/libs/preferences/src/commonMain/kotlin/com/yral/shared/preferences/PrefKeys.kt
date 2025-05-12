@@ -1,6 +1,7 @@
 package com.yral.shared.preferences
 
 enum class PrefKeys {
-    IDENTITY_DATA,
-    PRINCIPAL,
+    SOCIAL_SIGN_IN_SUCCESSFUL,
+    ACCESS_TOKEN,
+    REFRESH_TOKEN,
 }
