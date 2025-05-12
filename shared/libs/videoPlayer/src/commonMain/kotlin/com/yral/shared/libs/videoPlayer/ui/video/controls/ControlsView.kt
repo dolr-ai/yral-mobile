@@ -7,6 +7,7 @@ import com.yral.shared.libs.videoPlayer.model.PlayerControls
 import com.yral.shared.libs.videoPlayer.model.PlayerInnerControls
 import com.yral.shared.libs.videoPlayer.ui.component.LiveStreamView
 
+@Suppress("LongMethod")
 @Composable
 internal fun ControlsView(
     playerConfig: PlayerConfig,

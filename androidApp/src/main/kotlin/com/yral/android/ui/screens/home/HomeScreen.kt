@@ -39,49 +39,10 @@ fun HomeScreen(
         containerColor = MaterialTheme.colorScheme.primaryContainer,
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
-            NavigationBar(
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                modifier =
-                    Modifier
-                        .navigationBarsPadding()
-                        .height(67.dp)
-                        .padding(start = 36.dp, end = 36.dp),
-                windowInsets = WindowInsets(0, 0, 0, 0),
-            ) {
-                HomeTab.entries.forEach { tab ->
-                    if (tab.isGhost) {
-                        // Create invisible spacer item
-                        NavigationBarItem(
-                            selected = false,
-                            onClick = { /* No-op */ },
-                            icon = { Box {} },
-                            colors =
-                                NavigationBarItemDefaults.colors(
-                                    selectedIconColor = Color.Transparent,
-                                    unselectedIconColor = Color.Transparent,
-                                    indicatorColor = Color.Transparent,
-                                ),
-                        )
-                    } else {
-                        NavigationBarItem(
-                            selected = currentTab == tab.title,
-                            onClick = { updateCurrentTab(tab.title) },
-                            icon = {
-                                NavBarIcon(
-                                    isSelected = currentTab == tab.title,
-                                    tab = tab,
-                                )
-                            },
-                            colors =
-                                NavigationBarItemDefaults.colors(
-                                    selectedIconColor = Color.White,
-                                    unselectedIconColor = Color.White,
-                                    indicatorColor = Color.Transparent,
-                                ),
-                        )
-                    }
-                }
-            }
+            HomeNavigationBar(
+                currentTab = currentTab,
+                updateCurrentTab = updateCurrentTab,
+            )
         },
     ) { innerPadding ->
         when (currentTab) {
@@ -102,6 +63,56 @@ fun HomeScreen(
                             .background(MaterialTheme.colorScheme.primaryContainer),
                     viewModel = koinInstance.get(),
                 )
+        }
+    }
+}
+
+@Composable
+private fun HomeNavigationBar(
+    currentTab: String,
+    updateCurrentTab: (tab: String) -> Unit,
+) {
+    NavigationBar(
+        containerColor = MaterialTheme.colorScheme.primaryContainer,
+        modifier =
+            Modifier
+                .navigationBarsPadding()
+                .height(67.dp)
+                .padding(start = 36.dp, end = 36.dp),
+        windowInsets = WindowInsets(0, 0, 0, 0),
+    ) {
+        HomeTab.entries.forEach { tab ->
+            if (tab.isGhost) {
+                // Create invisible spacer item
+                NavigationBarItem(
+                    selected = false,
+                    onClick = { /* No-op */ },
+                    icon = { Box {} },
+                    colors =
+                        NavigationBarItemDefaults.colors(
+                            selectedIconColor = Color.Transparent,
+                            unselectedIconColor = Color.Transparent,
+                            indicatorColor = Color.Transparent,
+                        ),
+                )
+            } else {
+                NavigationBarItem(
+                    selected = currentTab == tab.title,
+                    onClick = { updateCurrentTab(tab.title) },
+                    icon = {
+                        NavBarIcon(
+                            isSelected = currentTab == tab.title,
+                            tab = tab,
+                        )
+                    },
+                    colors =
+                        NavigationBarItemDefaults.colors(
+                            selectedIconColor = Color.White,
+                            unselectedIconColor = Color.White,
+                            indicatorColor = Color.Transparent,
+                        ),
+                )
+            }
         }
     }
 }

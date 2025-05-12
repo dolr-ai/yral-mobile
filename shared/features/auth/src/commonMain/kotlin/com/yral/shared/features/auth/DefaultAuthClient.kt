@@ -76,7 +76,7 @@ class DefaultAuthClient(
             )
         }
         val tokenClaim = parseOAuthToken(token)
-        if (tokenClaim.isExpired(Clock.System.now().epochSeconds)) {
+        if (tokenClaim.isValid(Clock.System.now().epochSeconds)) {
             tokenClaim.delegatedIdentity?.let {
                 handleExtractIdentityResponse(it)
             }
@@ -84,7 +84,7 @@ class DefaultAuthClient(
             val rToken = preferences.getString(PrefKeys.REFRESH_TOKEN.name)
             rToken?.let {
                 val rTokenClaim = parseOAuthToken(it)
-                if (rTokenClaim.isExpired(Clock.System.now().epochSeconds)) {
+                if (rTokenClaim.isValid(Clock.System.now().epochSeconds)) {
                     refreshAccessToken()
                 } else {
                     logout()
