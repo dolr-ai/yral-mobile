@@ -25,6 +25,7 @@ import com.yral.shared.libs.videoPlayer.ui.video.controls.LockScreenView
 import com.yral.shared.libs.videoPlayer.ui.video.controls.SpeedSelectionOverlay
 import com.yral.shared.libs.videoPlayer.ui.video.controls.TopControlView
 import com.yral.shared.libs.videoPlayer.util.CMPPlayer
+import com.yral.shared.libs.videoPlayer.util.CMPPlayerParams
 import com.yral.shared.libs.videoPlayer.util.isLiveStream
 
 @Suppress("LongMethod")
@@ -32,6 +33,7 @@ import com.yral.shared.libs.videoPlayer.util.isLiveStream
 internal fun YRALVideoPlayerWithControl(
     modifier: Modifier,
     url: String, // URL of the video
+    thumbnailUrl: String,
     playerConfig: PlayerConfig, // Configuration for the player
     isPause: Boolean, // Flag indicating if the video is paused
     onPauseToggle: (() -> Unit), // Callback for toggling pause/resume
@@ -75,28 +77,32 @@ internal fun YRALVideoPlayerWithControl(
         CMPPlayer(
             modifier = modifier,
             url = url,
-            isPause = isPause,
-            isMute = isMute,
-            totalTime = { totalTime = it }, // Update total time of the video
-            currentTime = {
-                if (isSliding.not()) {
-                    currentTime = it // Update current playback time
-                    sliderTime = null // Reset slider time if not sliding
-                }
-            },
-            isSliding = isSliding, // Pass seek bar sliding state
-            sliderTime = sliderTime, // Pass seek bar slider time
-            speed = selectedSpeed, // Pass selected playback speed
-            size = screenSize,
-            bufferCallback = { isBuffering = it },
-            didEndVideo = {
-                playerConfig.didEndVideo?.invoke()
-                if (playerConfig.loop.not()) {
-                    onPauseToggle()
-                }
-            },
-            loop = playerConfig.loop,
-            volume = 0f,
+            thumbnailUrl = thumbnailUrl,
+            playerParams =
+                CMPPlayerParams(
+                    isPause = isPause,
+                    isMute = isMute,
+                    totalTime = { totalTime = it }, // Update total time of the video
+                    currentTime = {
+                        if (isSliding.not()) {
+                            currentTime = it // Update current playback time
+                            sliderTime = null // Reset slider time if not sliding
+                        }
+                    },
+                    isSliding = isSliding, // Pass seek bar sliding state
+                    sliderTime = sliderTime, // Pass seek bar slider time
+                    speed = selectedSpeed, // Pass selected playback speed
+                    size = screenSize,
+                    bufferCallback = { isBuffering = it },
+                    didEndVideo = {
+                        playerConfig.didEndVideo?.invoke()
+                        if (playerConfig.loop.not()) {
+                            onPauseToggle()
+                        }
+                    },
+                    loop = playerConfig.loop,
+                    volume = 0f,
+                ),
         )
 
         if (isScreenLocked.not()) {

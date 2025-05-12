@@ -26,4 +26,6 @@ object YralColors {
     val shadowAmbientColor: Color = Color(0x1C8377C6)
 
     val buttonBorderColor: Color = Color(0xFFE0E0E9)
+
+    val profilePicBackground: Color = Color(0xFFC4C4C4)
 }

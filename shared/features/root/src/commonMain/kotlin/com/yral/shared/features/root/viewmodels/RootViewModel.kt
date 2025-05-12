@@ -47,6 +47,7 @@ class RootViewModel(
                 RootState(
                     currentSessionState = sessionManager.state.value,
                     currentHomePageTab = _state.value.currentHomePageTab,
+                    initialAnimationComplete = _state.value.initialAnimationComplete,
                 ),
             )
             try {
@@ -146,6 +147,7 @@ class RootViewModel(
                 authClient.handleOAuthCallback(code, state)
             } catch (e: Exception) {
                 setLoading(false)
+                setShowSignupFailedBottomSheet(true)
                 crashlyticsManager.recordException(e)
             }
         }
@@ -158,6 +160,16 @@ class RootViewModel(
             ),
         )
     }
+
+    fun setShowSignupFailedBottomSheet(show: Boolean) {
+        coroutineScope.launch {
+            _state.emit(
+                _state.value.copy(
+                    showSignupFailedBottomSheet = show,
+                ),
+            )
+        }
+    }
 }
 
 data class RootState(
@@ -168,4 +180,5 @@ data class RootState(
     val currentHomePageTab: String = "Home",
     val currentSessionState: SessionState? = null,
     val isLoading: Boolean = false,
+    val showSignupFailedBottomSheet: Boolean = false,
 )

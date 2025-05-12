@@ -3,7 +3,9 @@
 package com.yral.shared.libs.videoPlayer.util
 
 import androidx.annotation.OptIn
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -12,6 +14,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.Player
@@ -19,6 +23,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
+import coil3.compose.AsyncImage
 import com.yral.shared.libs.videoPlayer.model.PlayerSpeed
 import com.yral.shared.libs.videoPlayer.model.ScreenResize
 import com.yral.shared.libs.videoPlayer.rememberExoPlayerWithLifecycle
@@ -31,34 +36,25 @@ import kotlinx.coroutines.isActive
 actual fun CMPPlayer(
     modifier: Modifier,
     url: String,
-    isPause: Boolean,
-    isMute: Boolean,
-    totalTime: (Int) -> Unit,
-    currentTime: (Int) -> Unit,
-    isSliding: Boolean,
-    sliderTime: Int?,
-    speed: PlayerSpeed,
-    size: ScreenResize,
-    bufferCallback: (Boolean) -> Unit,
-    didEndVideo: () -> Unit,
-    loop: Boolean,
-    volume: Float,
+    thumbnailUrl: String,
+    playerParams: CMPPlayerParams,
 ) {
     val context = LocalContext.current
-    val exoPlayer = rememberExoPlayerWithLifecycle(url, context, isPause)
+    val exoPlayer = rememberExoPlayerWithLifecycle(url, context, playerParams.isPause)
     val playerView = rememberPlayerView(exoPlayer, context)
 
     var isBuffering by remember { mutableStateOf(false) }
+    var showThumbnail by remember { mutableStateOf(true) }
 
     // Notify buffer state changes
     LaunchedEffect(isBuffering) {
-        bufferCallback(isBuffering)
+        playerParams.bufferCallback(isBuffering)
     }
 
     // Update current time every second
     LaunchedEffect(exoPlayer) {
         while (isActive) {
-            currentTime(exoPlayer.currentPosition.coerceAtLeast(0L).toInt())
+            playerParams.currentTime(exoPlayer.currentPosition.coerceAtLeast(0L).toInt())
             delay(1000) // Delay for 1 second
         }
     }
@@ -68,35 +64,52 @@ actual fun CMPPlayer(
         playerView.keepScreenOn = true
     }
 
-    Box {
+    Box(modifier) {
         AndroidView(
             factory = { playerView },
             modifier = modifier,
             update = {
-                exoPlayer.playWhenReady = !isPause
-                exoPlayer.volume = if (isMute) 0f else 1f
-                sliderTime?.let { exoPlayer.seekTo(it.toLong()) }
-                exoPlayer.setPlaybackSpeed(speed.toFloat())
+                exoPlayer.playWhenReady = !playerParams.isPause
+                exoPlayer.volume = if (playerParams.isMute) 0f else 1f
+                playerParams.sliderTime?.let { exoPlayer.seekTo(it.toLong()) }
+                exoPlayer.setPlaybackSpeed(playerParams.speed.toFloat())
                 playerView.artworkDisplayMode = PlayerView.ARTWORK_DISPLAY_MODE_FILL
                 playerView.resizeMode =
-                    when (size) {
+                    when (playerParams.size) {
                         ScreenResize.FIT -> AspectRatioFrameLayout.RESIZE_MODE_FIT
                         ScreenResize.FILL -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM
                     }
             },
         )
 
+        if (showThumbnail) {
+            AsyncImage(
+                model = thumbnailUrl,
+                contentDescription = "Thumbnail",
+                contentScale = ContentScale.Crop,
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .background(Color.Black),
+            )
+        }
+
         // Manage player listener and lifecycle
         DisposableEffect(key1 = exoPlayer) {
             val listener =
                 createPlayerListener(
-                    isSliding,
-                    totalTime,
-                    currentTime,
+                    playerParams.isSliding,
+                    playerParams.totalTime,
+                    playerParams.currentTime,
                     loadingState = { isBuffering = it },
-                    didEndVideo,
-                    loop,
+                    playerParams.didEndVideo,
+                    playerParams.loop,
                     exoPlayer,
+                    hideThumbnail = {
+                        if (showThumbnail) {
+                            showThumbnail = false
+                        }
+                    },
                 )
 
             exoPlayer.addListener(listener)
@@ -132,6 +145,7 @@ private fun createPlayerListener(
     didEndVideo: () -> Unit,
     loop: Boolean,
     exoPlayer: ExoPlayer,
+    hideThumbnail: () -> Unit,
 ): Player.Listener =
     object : Player.Listener {
         override fun onEvents(
@@ -152,6 +166,7 @@ private fun createPlayerListener(
 
                 Player.STATE_READY -> {
                     loadingState(false)
+                    hideThumbnail()
                 }
 
                 Player.STATE_ENDED -> {
