@@ -34,6 +34,8 @@ internal fun YRALVideoPlayerWithControl(
     modifier: Modifier,
     url: String, // URL of the video
     thumbnailUrl: String,
+    prefetchThumbnails: List<String> = emptyList(),
+    prefetchVideos: List<String> = emptyList(),
     playerConfig: PlayerConfig, // Configuration for the player
     isPause: Boolean, // Flag indicating if the video is paused
     onPauseToggle: (() -> Unit), // Callback for toggling pause/resume
@@ -78,6 +80,8 @@ internal fun YRALVideoPlayerWithControl(
             modifier = modifier,
             url = url,
             thumbnailUrl = thumbnailUrl,
+            prefetchThumbnails = prefetchThumbnails,
+            prefetchVideos = prefetchVideos,
             playerParams =
                 CMPPlayerParams(
                     isPause = isPause,

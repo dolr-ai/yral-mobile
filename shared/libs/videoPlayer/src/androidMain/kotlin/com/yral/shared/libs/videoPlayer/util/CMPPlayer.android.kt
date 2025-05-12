@@ -2,6 +2,7 @@
 
 package com.yral.shared.libs.videoPlayer.util
 
+import android.content.Context
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -10,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -23,24 +25,43 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
+import coil3.ImageLoader
 import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
 import com.yral.shared.libs.videoPlayer.model.PlayerSpeed
 import com.yral.shared.libs.videoPlayer.model.ScreenResize
 import com.yral.shared.libs.videoPlayer.rememberExoPlayerWithLifecycle
 import com.yral.shared.libs.videoPlayer.rememberPlayerView
+import com.yral.shared.libs.videoPlayer.rememberPrefetchExoPlayerWithLifecycle
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 
+@Suppress("LongMethod")
 @OptIn(UnstableApi::class)
 @Composable
 actual fun CMPPlayer(
     modifier: Modifier,
     url: String,
     thumbnailUrl: String,
+    prefetchThumbnails: List<String>,
+    prefetchVideos: List<String>,
     playerParams: CMPPlayerParams,
 ) {
     val context = LocalContext.current
     val exoPlayer = rememberExoPlayerWithLifecycle(url, context, playerParams.isPause)
+    var currentPrefetchIndex by remember { mutableIntStateOf(0) }
+    var currentPrefetchUrl by remember { mutableStateOf("") }
+    LaunchedEffect(currentPrefetchIndex, prefetchVideos) {
+        if (prefetchVideos.isNotEmpty() && prefetchVideos.size > currentPrefetchIndex) {
+            currentPrefetchUrl = prefetchVideos[currentPrefetchIndex]
+        }
+    }
+    val preFetchExoPlayer =
+        rememberPrefetchExoPlayerWithLifecycle(
+            url = currentPrefetchUrl,
+            context = context,
+        )
+
     val playerView = rememberPlayerView(exoPlayer, context)
 
     var isBuffering by remember { mutableStateOf(false) }
@@ -64,6 +85,15 @@ actual fun CMPPlayer(
         playerView.keepScreenOn = true
     }
 
+    LaunchedEffect(prefetchThumbnails) {
+        prefetchThumbnails.forEach {
+            prefetchThumbnail(
+                context = context,
+                url = it,
+            )
+        }
+    }
+
     Box(modifier) {
         AndroidView(
             factory = { playerView },
@@ -81,7 +111,6 @@ actual fun CMPPlayer(
                     }
             },
         )
-
         if (showThumbnail) {
             AsyncImage(
                 model = thumbnailUrl,
@@ -93,38 +122,57 @@ actual fun CMPPlayer(
                         .background(Color.Black),
             )
         }
+    }
 
-        // Manage player listener and lifecycle
-        DisposableEffect(key1 = exoPlayer) {
-            val listener =
-                createPlayerListener(
-                    playerParams.isSliding,
-                    playerParams.totalTime,
-                    playerParams.currentTime,
-                    loadingState = { isBuffering = it },
-                    playerParams.didEndVideo,
-                    playerParams.loop,
-                    exoPlayer,
-                    hideThumbnail = {
-                        if (showThumbnail) {
-                            showThumbnail = false
-                        }
-                    },
-                )
+    // Manage player listener and lifecycle
+    DisposableEffect(key1 = exoPlayer) {
+        val listener =
+            createPlayerListener(
+                playerParams.isSliding,
+                playerParams.totalTime,
+                playerParams.currentTime,
+                loadingState = { isBuffering = it },
+                playerParams.didEndVideo,
+                playerParams.loop,
+                exoPlayer,
+                hideThumbnail = {
+                    if (showThumbnail) {
+                        showThumbnail = false
+                    }
+                },
+            )
 
-            exoPlayer.addListener(listener)
+        exoPlayer.addListener(listener)
 
-            onDispose {
-                exoPlayer.removeListener(listener)
-                exoPlayer.release()
-            }
+        onDispose {
+            exoPlayer.removeListener(listener)
+            exoPlayer.release()
         }
+    }
 
-        DisposableEffect(Unit) {
-            onDispose {
-                exoPlayer.release()
-                playerView.keepScreenOn = false
+    DisposableEffect(key1 = preFetchExoPlayer) {
+        val listener =
+            object : Player.Listener {
+                override fun onPlaybackStateChanged(state: Int) {
+                    if (state == Player.STATE_READY) {
+                        if (currentPrefetchIndex < prefetchVideos.size) {
+                            currentPrefetchIndex++
+                        }
+                    }
+                }
             }
+        preFetchExoPlayer?.addListener(listener)
+        onDispose {
+            preFetchExoPlayer?.removeListener(listener)
+            preFetchExoPlayer?.release()
+        }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            exoPlayer.release()
+            preFetchExoPlayer?.release()
+            playerView.keepScreenOn = false
         }
     }
 }
@@ -181,4 +229,29 @@ private fun createPlayerListener(
                 }
             }
         }
+
+        override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
+            // Check if it's a decoder initialization exception
+            if (error.errorCode == androidx.media3.common.PlaybackException.ERROR_CODE_DECODER_INIT_FAILED) {
+                // Attempt to play again with a 1-second delay
+                exoPlayer.seekTo(0)
+                exoPlayer.prepare()
+
+                // For hardware decoder issues, we've already configured fallback in ExoPlayerHelper
+            }
+        }
     }
+
+private fun prefetchThumbnail(
+    context: Context,
+    url: String,
+) {
+    val request =
+        ImageRequest
+            .Builder(context)
+            .data(url)
+            .build()
+
+    val imageLoader = ImageLoader(context)
+    imageLoader.enqueue(request)
+}
