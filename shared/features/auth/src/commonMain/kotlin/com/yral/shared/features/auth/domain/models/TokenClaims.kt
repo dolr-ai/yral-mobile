@@ -21,5 +21,5 @@ data class TokenClaims(
     @SerialName("ext_delegated_identity")
     val delegatedIdentity: ByteArray?,
 ) {
-    fun isExpired(currentTimeInEpochSeconds: Long): Boolean = expiry > currentTimeInEpochSeconds
+    fun isValid(currentTimeInEpochSeconds: Long): Boolean = expiry > currentTimeInEpochSeconds
 }

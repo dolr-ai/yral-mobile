@@ -18,9 +18,15 @@ kotlin {
 //    }
 
     sourceSets {
+        androidMain {
+            dependencies {
+                api(libs.koin.android)
+            }
+        }
         commonMain {
             dependencies {
                 api(libs.koin.core)
+                api(libs.koin.composeVM)
             }
         }
     }

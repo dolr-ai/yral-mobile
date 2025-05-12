@@ -52,6 +52,7 @@ val LocalAppTopography =
         )
     }
 
+@Suppress("LongMethod")
 fun appTypoGraphy() =
     AppTopography(
         xlBold =

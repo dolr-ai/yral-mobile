@@ -6,8 +6,6 @@ import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.cookies.HttpCookies
 import io.ktor.client.plugins.defaultRequest
-import io.ktor.client.plugins.logging.LogLevel
-import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.http.ContentType
 import io.ktor.http.URLProtocol
@@ -15,21 +13,15 @@ import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
-const val BASE_URL = "yral.com"
-
 fun createClient(
     preferences: Preferences,
     json: Json,
+    consoleLogger: ConsoleLogger,
 ): HttpClient =
     HttpClient(CIO) {
         install(Logging) {
-            logger =
-                object : Logger {
-                    override fun log(message: String) {
-                        println("HTTP Client $message")
-                    }
-                }
-            level = LogLevel.BODY
+            logger = consoleLogger
+            level = consoleLogger.logLevel
         }
         install(ContentNegotiation) {
             json(json)
@@ -40,7 +32,6 @@ fun createClient(
         defaultRequest {
             url {
                 protocol = URLProtocol.HTTPS
-                host = BASE_URL
             }
             contentType(ContentType.Application.Json)
         }

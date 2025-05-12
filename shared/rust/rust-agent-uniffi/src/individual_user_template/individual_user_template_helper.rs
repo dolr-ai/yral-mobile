@@ -115,8 +115,10 @@ pub fn delegate_identity_with_max_age_public(
     })
 }
 
-pub fn delegated_identity_wire_to_json(wire: &DelegatedIdentityWire) -> String {
-    serde_json::to_string(wire).unwrap()
+#[uniffi::export]
+pub fn delegated_identity_wire_to_json(data: &[u8]) -> String {
+    let wire = delegated_identity_wire_from_bytes(data).unwrap();
+    serde_json::to_string(&wire).unwrap()
 }
 
 #[derive(uniffi::Object)]

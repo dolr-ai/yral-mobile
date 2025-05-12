@@ -1,5 +1,6 @@
-package com.yral.shared.analytics.core
+package com.yral.shared.analytics
 
+import com.yral.shared.analytics.events.EventData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -10,10 +11,10 @@ import kotlinx.coroutines.launch
 
 class EventBus {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-    private val _events = MutableSharedFlow<Event>(replay = 0, extraBufferCapacity = 64)
-    val events: SharedFlow<Event> = _events.asSharedFlow()
+    private val _events = MutableSharedFlow<EventData>(replay = 0, extraBufferCapacity = 64)
+    val events: SharedFlow<EventData> = _events.asSharedFlow()
 
-    fun publish(event: Event) {
+    fun publish(event: EventData) {
         scope.launch {
             _events.emit(event)
         }

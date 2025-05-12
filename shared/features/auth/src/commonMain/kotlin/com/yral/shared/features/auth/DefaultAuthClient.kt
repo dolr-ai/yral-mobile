@@ -1,10 +1,8 @@
 package com.yral.shared.features.auth
 
 import com.github.michaelbull.result.mapBoth
-import com.yral.shared.analytics.core.AnalyticsManager
-import com.yral.shared.analytics.core.Event
-import com.yral.shared.analytics.main.FeatureEvents
-import com.yral.shared.analytics.main.Features
+import com.yral.shared.analytics.AnalyticsManager
+import com.yral.shared.analytics.events.AuthSuccessfulEventData
 import com.yral.shared.core.platform.PlatformResourcesFactory
 import com.yral.shared.core.session.Session
 import com.yral.shared.core.session.SessionManager
@@ -78,7 +76,7 @@ class DefaultAuthClient(
             )
         }
         val tokenClaim = parseOAuthToken(token)
-        if (tokenClaim.isExpired(Clock.System.now().epochSeconds)) {
+        if (tokenClaim.isValid(Clock.System.now().epochSeconds)) {
             tokenClaim.delegatedIdentity?.let {
                 handleExtractIdentityResponse(it)
             }
@@ -86,7 +84,7 @@ class DefaultAuthClient(
             val rToken = preferences.getString(PrefKeys.REFRESH_TOKEN.name)
             rToken?.let {
                 val rTokenClaim = parseOAuthToken(it)
-                if (rTokenClaim.isExpired(Clock.System.now().epochSeconds)) {
+                if (rTokenClaim.isValid(Clock.System.now().epochSeconds)) {
                     refreshAccessToken()
                 } else {
                     logout()
@@ -99,11 +97,13 @@ class DefaultAuthClient(
         preferences.remove(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name)
         preferences.remove(PrefKeys.REFRESH_TOKEN.name)
         preferences.remove(PrefKeys.ACCESS_TOKEN.name)
+        preferences.remove(PrefKeys.IDENTITY.name)
         sessionManager.updateState(SessionState.Initial)
     }
 
     private suspend fun handleExtractIdentityResponse(data: ByteArray) {
         val canisterWrapper = authenticateWithNetwork(data, null)
+        preferences.putBytes(PrefKeys.IDENTITY.name, data)
         sessionManager.updateState(
             SessionState.SignedIn(
                 session =
@@ -115,11 +115,7 @@ class DefaultAuthClient(
             ),
         )
         analyticsManager.trackEvent(
-            event =
-                Event(
-                    featureName = Features.AUTH.name.lowercase(),
-                    name = FeatureEvents.AUTH_SUCCESSFUL.name.lowercase(),
-                ),
+            event = AuthSuccessfulEventData(),
         )
     }
 

@@ -29,6 +29,9 @@ import com.yral.android.ui.design.appTypoGraphy
 import com.yral.android.ui.screens.RootScreen
 import com.yral.shared.core.platform.AndroidPlatformResources
 import com.yral.shared.core.platform.PlatformResourcesFactory
+import com.yral.shared.features.auth.data.AuthDataSourceImpl.Companion.REDIRECT_URI_HOST
+import com.yral.shared.features.auth.data.AuthDataSourceImpl.Companion.REDIRECT_URI_PATH
+import com.yral.shared.features.auth.data.AuthDataSourceImpl.Companion.REDIRECT_URI_SCHEME
 import com.yral.shared.features.root.viewmodels.RootViewModel
 import com.yral.shared.koin.koinInstance
 import com.yral.shared.uniffi.generated.initRustLogger
@@ -78,7 +81,10 @@ class MainActivity : ComponentActivity() {
 
     private fun handleIntent(intent: Intent?) {
         val uri = intent?.data
-        if (uri?.scheme == "yral" && uri.host == "oauth" && uri.path == "/callback") {
+        if (uri?.scheme == REDIRECT_URI_SCHEME &&
+            uri.host == REDIRECT_URI_HOST &&
+            uri.path == REDIRECT_URI_PATH
+        ) {
             val code = uri.getQueryParameter("code")
             val state = uri.getQueryParameter("state")
             if (code != null && state != null) {

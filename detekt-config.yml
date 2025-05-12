@@ -6,8 +6,6 @@ complexity:
     thresholdInFiles: 20
     thresholdInClasses: 20
     thresholdInInterfaces: 20
-  LongMethod:
-    threshold: 100
 
 naming:
   FunctionNaming:

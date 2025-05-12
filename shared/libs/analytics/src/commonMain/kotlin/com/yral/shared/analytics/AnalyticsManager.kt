@@ -1,5 +1,7 @@
-package com.yral.shared.analytics.core
+package com.yral.shared.analytics
 
+import com.yral.shared.analytics.events.EventData
+import com.yral.shared.analytics.providers.yral.CoreService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -35,25 +37,11 @@ class AnalyticsManager(
             coreService = service,
         )
 
-    fun trackEvent(event: Event) {
+    fun trackEvent(event: EventData) {
         eventBus.publish(event)
     }
 
-    fun trackEvent(
-        name: String,
-        featureName: String,
-        properties: Map<String, Any> = emptyMap(),
-    ) {
-        trackEvent(
-            Event(
-                name = name,
-                featureName = featureName,
-                properties = properties,
-            ),
-        )
-    }
-
-    private fun trackEventToProviders(event: Event) {
+    private fun trackEventToProviders(event: EventData) {
         providers.forEach { provider ->
             if (provider.shouldTrackEvent(event)) {
                 provider.trackEvent(event)

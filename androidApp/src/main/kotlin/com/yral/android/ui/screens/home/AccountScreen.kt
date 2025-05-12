@@ -61,6 +61,7 @@ import com.yral.shared.features.account.viewmodel.AccountInfo
 import com.yral.shared.features.account.viewmodel.AccountsViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
+@Suppress("LongMethod")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AccountScreen(
