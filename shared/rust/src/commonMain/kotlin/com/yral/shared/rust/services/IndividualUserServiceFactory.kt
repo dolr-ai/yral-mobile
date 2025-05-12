@@ -1,5 +1,6 @@
 package com.yral.shared.rust.services
 
+import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.uniffi.generated.IndividualUserService
 import com.yral.shared.uniffi.generated.Principal
 
@@ -13,7 +14,7 @@ class IndividualUserServiceFactory {
                 principalText = principal,
                 identityData = it,
             )
-        } ?: error("Identity data not available")
+        } ?: throw YralException("Identity data not available")
 
     fun initialize(
         principal: Principal,

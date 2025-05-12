@@ -20,6 +20,7 @@ kotlin {
             implementation(projects.shared.features.feed)
             implementation(projects.shared.features.auth)
             implementation(projects.shared.libs.crashlytics)
+            implementation(projects.shared.libs.useCase)
 
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.androidx.lifecycle.viewmodel)
