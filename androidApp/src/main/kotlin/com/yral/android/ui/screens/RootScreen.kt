@@ -10,6 +10,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.core.view.WindowInsetsCompat
@@ -21,12 +22,19 @@ import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.yral.android.R
 import com.yral.android.ui.screens.home.HomeScreen
+import com.yral.android.ui.widgets.YralLoader
 import com.yral.shared.features.root.viewmodels.RootViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun RootScreen(viewModel: RootViewModel = koinViewModel()) {
     val state by viewModel.state.collectAsState()
+    val sessionState by viewModel.sessionManagerState.collectAsState()
+    LaunchedEffect(sessionState) {
+        if (sessionState != state.currentSessionState) {
+            viewModel.initialize()
+        }
+    }
     if (state.showSplash) {
         val window = (LocalActivity.current as? ComponentActivity)?.window
         LaunchedEffect(Unit) {
@@ -59,6 +67,16 @@ fun RootScreen(viewModel: RootViewModel = koinViewModel()) {
             currentTab = state.currentHomePageTab,
             updateCurrentTab = { viewModel.updateCurrentTab(it) },
         )
+        if (state.isLoading) {
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxSize(),
+                contentAlignment = Alignment.Center,
+            ) {
+                YralLoader()
+            }
+        }
     }
 }
 

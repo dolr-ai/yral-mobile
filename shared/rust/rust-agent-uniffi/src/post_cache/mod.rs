@@ -10,15 +10,9 @@ use ic_agent::Agent;
 use std::sync::Arc;
 use uniffi::Record;
 use uniffi::Enum;
-use crate::commons::{HttpRequest, HttpResponse, KnownPrincipalType, PostStatus, SystemTime};
+use crate::commons::*;
 
 type Result<T> = std::result::Result<T, FFIError>;
-
-#[derive(CandidType, Deserialize, Record)]
-pub struct KnownPrincipalTypePrincipalPair {
-    pub known_principal_type: KnownPrincipalType,
-    pub principal: Principal,
-}
 
 #[derive(CandidType, Deserialize, Record)]
 pub struct PostCacheInitArgs {

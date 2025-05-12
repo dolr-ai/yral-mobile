@@ -1,6 +1,6 @@
 package com.yral.shared.rust.data
 
-import com.yral.shared.rust.base.httpPost
+import com.yral.shared.http.httpPost
 import com.yral.shared.rust.data.models.FeedRequestDTO
 import com.yral.shared.rust.data.models.PostDTO
 import com.yral.shared.rust.data.models.PostResponseDTO

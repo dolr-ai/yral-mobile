@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import com.yral.android.R
 import com.yral.android.ui.design.YralColors
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
+import com.yral.shared.koin.koinInstance
 
 @Composable
 fun HomeScreen(
@@ -83,6 +84,7 @@ fun HomeScreen(
                         Modifier
                             .padding(innerPadding)
                             .background(MaterialTheme.colorScheme.primaryContainer),
+                    viewModel = koinInstance.get(),
                 )
         }
     }

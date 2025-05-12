@@ -9,6 +9,7 @@ import com.yral.shared.features.feed.di.feedModule
 import com.yral.shared.features.root.di.rootModule
 import com.yral.shared.http.di.networkModule
 import com.yral.shared.preferences.di.preferencesModule
+import com.yral.shared.rust.di.rustModule
 import org.koin.core.context.startKoin
 import org.koin.dsl.KoinAppDeclaration
 

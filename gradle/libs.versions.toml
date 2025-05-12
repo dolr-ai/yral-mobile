@@ -27,6 +27,7 @@ lifecycleViewmodel = "2.8.4"
 media3Exoplayer = "1.6.1"
 androidx-lifecycle = "2.8.4"
 coil = "3.1.0"
+browser = "1.8.0"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -80,6 +81,8 @@ androidx-lifecycle-runtime-compose = { group = "org.jetbrains.androidx.lifecycle
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 coil-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil" }
 
+androidx-browser = { group = "androidx.browser", name = "browser", version.ref = "browser" }
+
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
 androidLibrary = { id = "com.android.library", version.ref = "agp" }
@@ -90,6 +93,7 @@ ktlint = { id = "org.jlleitschuh.gradle.ktlint", version = "12.1.2" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version = "1.23.8" }
 gobleyCargo = { id = "dev.gobley.cargo", version.ref = "gobley" }
 gobleyUniffi = { id = "dev.gobley.uniffi", version.ref = "gobley" }
+gobleyRust= { id = "dev.gobley.rust", version.ref = "gobley" }
 kotlinAtomicfu = { id = "org.jetbrains.kotlin.plugin.atomicfu", version.ref = "kotlin" }
 kotlinxSerialisartion = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "crashlytics-plugin" }
