@@ -9,6 +9,7 @@ import com.yral.shared.features.auth.domain.AuthRepository
 import com.yral.shared.features.auth.domain.useCases.AuthenticateTokenUseCase
 import com.yral.shared.features.auth.domain.useCases.ObtainAnonymousIdentityUseCase
 import com.yral.shared.features.auth.domain.useCases.RefreshTokenUseCase
+import com.yral.shared.features.auth.utils.OAuthUtils
 import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
@@ -22,4 +23,6 @@ val authModule =
         singleOf(::AuthenticateTokenUseCase)
         singleOf(::ObtainAnonymousIdentityUseCase)
         singleOf(::RefreshTokenUseCase)
+
+        singleOf(::OAuthUtils)
     }
