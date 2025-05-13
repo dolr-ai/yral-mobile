@@ -69,6 +69,8 @@ extension FeedsViewController {
       self.addFeeds(with: feeds, animated: animated)
       return
     }
+    guard !feeds.isEmpty else { return }
+
     var shouldAnimate = false
     if #available(iOS 15, *) {
       shouldAnimate = animated

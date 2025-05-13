@@ -7,7 +7,7 @@
 //
 import Foundation
 
-struct ProfileVideoInfo {
+struct ProfileVideoInfo: Equatable {
   let id = UUID()
   let postID: String
   let videoId: String

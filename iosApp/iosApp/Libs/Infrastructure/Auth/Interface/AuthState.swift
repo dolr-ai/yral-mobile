@@ -12,6 +12,7 @@ public enum AuthState: Equatable {
   case ephemeralAuthentication(userPrincipal: String, canisterPrincipal: String)
   case permanentAuthentication(userPrincipal: String, canisterPrincipal: String)
   case loggedOut
+  case accountDeleted
   case error(AuthError)
 
   var isLoggedIn: Bool {

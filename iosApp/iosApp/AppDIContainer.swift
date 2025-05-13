@@ -33,7 +33,8 @@ import GRPC
   lazy var authClient: DefaultAuthClient = {
     let client = DefaultAuthClient(
       networkService: HTTPService(),
-      crashReporter: crashReporter
+      crashReporter: crashReporter,
+      baseURL: URL(string: appConfiguration.authBaseURLString) ?? URL(fileURLWithPath: "")
     )
     return client
   }()
@@ -73,6 +74,13 @@ import GRPC
     )
   }()
 
+  lazy var socialSignInUseCase: SocialSignInUseCaseProtocol = {
+    SocialSignInUseCase(
+      accountRepository: accountsRepository,
+      crashReporter: crashReporter
+    )
+  }()
+
   func makeFeedDIContainer() async -> FeedDIContainer {
     return FeedDIContainer(
       dependencies: FeedDIContainer.Dependencies(
@@ -81,6 +89,7 @@ import GRPC
         authClient: authClient,
         crashReporter: crashReporter,
         toggleLikeUseCase: toggleLikeUseCase,
+        socialSignInUseCase: socialSignInUseCase,
         session: session
       )
     )
@@ -92,7 +101,9 @@ import GRPC
         httpService: HTTPService(),
         authClient: authClient,
         crashReporter: crashReporter,
-        accountUseCase: accountUseCase
+        accountUseCase: accountUseCase,
+        accountRepository: accountsRepository,
+        socialSignInUseCase: socialSignInUseCase
       )
     )
   }
