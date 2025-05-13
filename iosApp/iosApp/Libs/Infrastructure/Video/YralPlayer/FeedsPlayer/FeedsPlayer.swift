@@ -77,11 +77,8 @@ final class FeedsPlayer: YralPlayer {
   }
 
   private func updateMuteState() {
-    let accepted = KeychainHelper.bool(
-      for: HomeTabController.Constants.eulaAccepted,
-      default: false
-    )
-    player.isMuted = !accepted
+    let accepted: Bool? = UserDefaultsManager.shared.get(for: .eulaAccepted)
+    player.isMuted = !(accepted ?? false)
   }
 
   private func attachTimeObserver() {
@@ -222,10 +219,10 @@ final class FeedsPlayer: YralPlayer {
   }
 
   private func preloadFeeds() async {
-    let startIndex = currentIndex
+    guard !feedResults.isEmpty, currentIndex < feedResults.count else { return }
     let endIndex = min(feedResults.count, currentIndex + Constants.radius)
-
-    for index in startIndex..<endIndex {
+    for index in currentIndex..<endIndex {
+      guard feedResults.indices.contains(index) else { continue }
       let feed = feedResults[index]
       let videoID = feed.videoID
       guard playerItems[videoID] == nil else { continue }

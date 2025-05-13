@@ -175,6 +175,13 @@ class FeedsViewController: UIViewController {
         case .blockedUser(let principalId):
           let itemsToRemove = self.feedsDataSource.snapshot().itemIdentifiers.filter { $0.principalID == principalId }
           self.removeFeeds(with: itemsToRemove, isReport: false)
+        case .socialSignInSuccess, .socialSignInFailure:
+          guard let visibleIndexPath = feedsCV.indexPathsForVisibleItems.sorted().first else { return }
+          var snapshot = feedsDataSource.snapshot()
+          let item = snapshot.itemIdentifiers[visibleIndexPath.item]
+          snapshot.reloadItems([item])
+          feedsDataSource.apply(snapshot, animatingDifferences: true)
+          self.activityIndicator.stopAnimating()
         }
       }
       .store(in: &paginatedFeedscancellables)

@@ -17,7 +17,7 @@ struct HomeTabController: View {
   @State private var selectedTab: Int = .zero
   @State private var tabBarHeight = UITabBarController().tabBar.frame.height
   @State private var showFeeds = false
-  @State private var showEULA = !KeychainHelper.bool(for: Constants.eulaAccepted, default: false)
+  @State private var showEULA: Bool = !(UserDefaultsManager.shared.get(for: .eulaAccepted) as Bool? ?? false)
 
   init(
     feedsViewController: FeedsViewController,
@@ -88,7 +88,7 @@ struct HomeTabController: View {
     }
     .fullScreenCover(isPresented: $showEULA) {
       EULAPopupView(isPresented: $showEULA) {
-        try? KeychainHelper.store(true, for: Constants.eulaAccepted)
+        UserDefaultsManager.shared.set(true, for: .eulaAccepted)
         NotificationCenter.default.post(name: .eulaAcceptedChanged, object: nil)
       }
       .background( ClearBackgroundView() )
@@ -120,6 +120,5 @@ extension HomeTabController {
     static let tabIndicatorHeight: CGFloat = 2.0
     static let indicatorWidth = 30.0
     static let indicatorColor = YralColor.primary300.swiftUIColor
-    static let eulaAccepted = "yral.eula.accepted"
   }
 }

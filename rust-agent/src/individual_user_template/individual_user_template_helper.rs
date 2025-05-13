@@ -137,6 +137,10 @@ impl CanistersWrapper {
     pub fn get_user_principal_string(&self) -> String {
         return self.inner.user_principal().to_string();
     }
+
+    pub fn expiry_ns(&self) -> u64 {
+        return self.inner.expiry_ns();
+    }
 }
 
 pub async fn authenticate_with_network(
@@ -220,4 +224,12 @@ pub fn get_principal_from_identity(identity: DelegatedIdentity) -> String {
 
 pub fn propic_from_principal(principal: Principal) -> String {
     inner_propic_from_principal(principal)
+}
+
+pub fn yral_auth_login_hint(data: &[u8]) -> std::result::Result<String, String> {
+    let identity = delegated_identity_from_bytes(data).map_err(|error| error.to_string())?;
+    match yral_canisters_common::yral_auth_login_hint(&identity) {
+        Ok(signature) => Ok(signature),
+        Err(error)     => Err(error.to_string()),
+    }
 }

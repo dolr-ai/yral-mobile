@@ -15,6 +15,7 @@ protocol FeedsCellProtocol: AnyObject {
   func likeButtonTapped(index: Int)
   func deleteButtonTapped(index: Int)
   func reportButtonTapped(index: Int)
+  func loginTapped(provider: SocialProvider)
 }
 class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
 
@@ -24,7 +25,11 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   weak var delegate: FeedsCellProtocol?
 
   private let playerContainerView = getUIImageView()
-  private lazy var signupOverlayHost = UIHostingController(rootView: SignupOverlay())
+  private lazy var signupOverlayHost = UIHostingController(
+    rootView: SignupOverlay { provider in
+      self.delegate?.loginTapped(provider: provider)
+    }
+  )
 
   var actionsStackView: UIStackView = {
     let stackView = getUIStackView()

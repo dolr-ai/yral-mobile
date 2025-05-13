@@ -9,69 +9,220 @@
 import Foundation
 import Combine
 import secp256k1
+import AuthenticationServices
 
-class DefaultAuthClient: AuthClient {
-
+final class DefaultAuthClient: NSObject, AuthClient {
   private(set) var identity: DelegatedIdentity?
   private(set) var canisterPrincipal: Principal?
   private(set) var canisterPrincipalString: String?
   private(set) var userPrincipal: Principal?
   private(set) var userPrincipalString: String?
   private(set) var identityData: Data?
-
-  private let networkService: NetworkService
-  private let cookieStorage = HTTPCookieStorage.shared
-
-  private let keychainIdentityKey = Constants.keychainIdentity
-  private let keychainPayloadKey = Constants.keychainPayload
-
-  private let crashReporter: CrashReporter
-
-  private let stateSubject = CurrentValueSubject<AuthState, Never>(.uninitialized)
+  var stateSubject = CurrentValueSubject<AuthState, Never>(.uninitialized)
   var authStatePublisher: AnyPublisher<AuthState, Never> {
     stateSubject.eraseToAnyPublisher()
   }
 
-  init(networkService: NetworkService, crashReporter: CrashReporter) {
+  let networkService: NetworkService
+  let crashReporter: CrashReporter
+  let baseURL: URL
+
+  var pendingAuthState: String!
+
+  init(networkService: NetworkService, crashReporter: CrashReporter, baseURL: URL) {
     self.networkService = networkService
     self.crashReporter = crashReporter
+    self.baseURL = baseURL
+    super.init()
   }
 
   @MainActor
   func initialize() async throws {
-    try await recordThrowingOperation {
-      guard let existingCookie = cookieStorage.cookies?.first(where: { $0.name == AuthConstants.cookieName }) else {
-        try? KeychainHelper.deleteItem(for: keychainPayloadKey)
-        try? KeychainHelper.deleteItem(for: keychainIdentityKey)
-        try? KeychainHelper.deleteItem(for: FeedsViewModel.Constants.blockedPrincipalsIdentifier)
-        try? KeychainHelper.deleteItem(for: HomeTabController.Constants.eulaAccepted)
-        try await fetchAndSetAuthCookie()
-        return
+    stateSubject.value = .authenticating
+//    try KeychainHelper.deleteItem(for: Constants.keychainIdentity)
+//    try KeychainHelper.deleteItem(for: Constants.keychainRefreshToken)
+//    try KeychainHelper.deleteItem(for: Constants.keychainAccessToken)
+//    UserDefaultsManager.shared.remove(.authRefreshTokenExpiryDateKey)
+//    UserDefaultsManager.shared.remove(.authIdentityExpiryDateKey)
+    if loadIdentityFromKeychain() {
+      if UserDefaultsManager.shared.get(for: DefaultsKey.userDefaultsLoggedIn) as Bool? ?? false {
+        try await ensureTokensFresh(permanent: true)
+      } else {
+        try await ensureTokensFresh(permanent: false)
       }
-
-      try await refreshAuthIfNeeded(using: existingCookie)
+    } else {
+      try await obtainAnonymousIdentity()
     }
   }
 
-  func refreshAuthIfNeeded(using cookie: HTTPCookie) async throws {
-    try await recordThrowingOperation {
-      if let expiresDate = cookie.expiresDate, expiresDate < Date() {
-        try await fetchAndSetAuthCookie()
-      } else {
-        do {
-          if let data = try KeychainHelper.retrieveData(for: keychainIdentityKey), !data.isEmpty {
-            identityData = data
-            try await handleExtractIdentityResponse(from: data)
-          } else {
-            try await extractIdentity(from: cookie)
-          }
-        } catch {
-          try? KeychainHelper.deleteItem(for: keychainIdentityKey)
-          identityData = nil
-          try await extractIdentity(from: cookie)
+  private func loadIdentityFromKeychain() -> Bool {
+    guard let data = try? KeychainHelper.retrieveData(for: Constants.keychainIdentity),
+          !data.isEmpty else { return false }
+    identityData = data
+    return true
+  }
+
+  private func ensureTokensFresh(permanent: Bool) async throws {
+    let now = Date().timeIntervalSince1970
+    let accessExpiry: Double = UserDefaultsManager.shared
+      .get(for: .authIdentityExpiryDateKey)   as Double? ?? .zero
+    let refreshExpiry: Double = UserDefaultsManager.shared
+      .get(for: .authRefreshTokenExpiryDateKey) as Double? ?? .zero
+
+    if permanent {
+      if now < accessExpiry {
+        if let data = identityData {
+          try await handleExtractIdentityResponse(from: data, type: .permanent)
         }
+        Task { [weak self] in
+          guard let self = self else { return }
+          try? await self.refreshAccessToken()
+        }
+        return
+      }
+
+      if now >= refreshExpiry {
+        stateSubject.value = .loggedOut
+        try await obtainAnonymousIdentity()
+        return
+      }
+
+      try await refreshAccessToken()
+      return
+    }
+
+    if now < accessExpiry {
+      guard let data = identityData else { return }
+      try await handleExtractIdentityResponse(from: data, type: .ephemeral)
+      return
+    }
+
+    if now >= refreshExpiry {
+      try await obtainAnonymousIdentity()
+    } else {
+      try await refreshAccessToken()
+    }
+  }
+
+  private func obtainAnonymousIdentity() async throws {
+    let requestBody = ClientCredentialsRequest(clientId: Constants.clientID)
+    let body = try requestBody.formURLEncodedData()
+    let endpoint = Endpoint(
+      http: "clientCredentials",
+      baseURL: baseURL,
+      path: Constants.tokenPath,
+      method: .post,
+      headers: ["Content-Type": "application/x-www-form-urlencoded"],
+      body: body
+    )
+    let resp = try await networkService.performRequest(for: endpoint)
+    let token = try JSONDecoder().decode(TokenResponse.self, from: resp)
+    try storeTokens(token)
+    try await processDelegatedIdentity(from: token, type: .ephemeral)
+  }
+
+  private func refreshAccessToken() async throws {
+    let refreshToken = try KeychainHelper.retrieveString(for: Constants.keychainRefreshToken) ?? ""
+    let request = RefreshTokenRequest(refreshToken: refreshToken, clientId: Constants.clientID)
+    let body = try request.formURLEncodedData()
+    let endpoint = Endpoint(
+      http: "refreshToken",
+      baseURL: baseURL,
+      path: Constants.tokenPath,
+      method: .post,
+      headers: ["Content-Type": "application/x-www-form-urlencoded"],
+      body: body
+    )
+    let resp = try await networkService.performRequest(for: endpoint)
+    let token = try JSONDecoder().decode(TokenResponse.self, from: resp)
+    try storeTokens(token)
+    try await processDelegatedIdentity(
+      from: token,
+      type: (
+        UserDefaultsManager.shared.get(for: DefaultsKey.userDefaultsLoggedIn) as Bool? ?? false
+      ) ? .permanent : .ephemeral
+    )
+  }
+
+  func storeTokens(_ token: TokenResponse) throws {
+    if let accessTokenData = token.accessToken.data(using: .utf8) {
+      try KeychainHelper.store(data: accessTokenData, for: Constants.keychainAccessToken)
+    }
+    if let refreshTokenData = token.refreshToken.data(using: .utf8) {
+      try KeychainHelper.store(data: refreshTokenData, for: Constants.keychainRefreshToken)
+    }
+    let expiresAt = Date().timeIntervalSince1970 + Double(token.expiresIn)
+    UserDefaultsManager.shared.set(expiresAt, for: .authIdentityExpiryDateKey)
+
+    let refreshClaims = try decodeClaimsAccessToken(from: token.refreshToken)
+    UserDefaultsManager.shared.set(refreshClaims.exp, for: .authRefreshTokenExpiryDateKey)
+  }
+
+  func processDelegatedIdentity(from token: TokenResponse, type: DelegateIdentityType) async throws {
+    let claims = try decodeClaimsAccessToken(from: token.accessToken)
+    let wire = claims.delegatedIdentity
+    let wireData = try JSONEncoder().encode(wire)
+    identityData = wireData
+    try KeychainHelper.store(data: wireData, for: Constants.keychainIdentity)
+    try await handleExtractIdentityResponse(from: wireData, type: type)
+  }
+
+  private func handleExtractIdentityResponse(from data: Data, type: DelegateIdentityType) async throws {
+    try await recordThrowingOperation {
+      guard !data.isEmpty else {
+        throw NetworkError.invalidResponse("Empty identity data received.")
+      }
+      let (wire, identity): (DelegatedIdentityWire, DelegatedIdentity) = try data.withUnsafeBytes { buffer in
+        guard buffer.count > 0 else {
+          throw NetworkError.invalidResponse("Empty data received.")
+        }
+        let uint8Buffer = buffer.bindMemory(to: UInt8.self)
+        let wire = try delegated_identity_wire_from_bytes(uint8Buffer)
+        let identity = try delegated_identity_from_bytes(uint8Buffer)
+        return (wire, identity)
+      }
+
+      let principal = get_principal_from_identity(identity).toString()
+      crashReporter.log("Principal id before authenticate_with_network: \(principal)")
+      let canistersWrapper = try await authenticate_with_network(wire, nil)
+
+      let canisterPrincipal = canistersWrapper.get_canister_principal()
+      let canisterPrincipalString = canistersWrapper.get_canister_principal_string().toString()
+      let userPrincipal = canistersWrapper.get_user_principal()
+      let userPrincipalString = canistersWrapper.get_user_principal_string().toString()
+      crashReporter.setUserId(userPrincipalString)
+      await MainActor.run {
+        self.identity = identity
+        self.canisterPrincipal = canisterPrincipal
+        self.canisterPrincipalString = canisterPrincipalString
+        self.userPrincipal = userPrincipal
+        self.userPrincipalString = userPrincipalString
+        stateSubject.value = (type == .ephemeral) ? .ephemeralAuthentication(
+          userPrincipal: userPrincipalString,
+          canisterPrincipal: canisterPrincipalString
+        ) : .permanentAuthentication(
+          userPrincipal: userPrincipalString,
+          canisterPrincipal: canisterPrincipalString
+        )
       }
     }
+  }
+
+  @MainActor func logout() async throws {
+    try? KeychainHelper.deleteItem(for: Constants.keychainIdentity)
+    try? KeychainHelper.deleteItem(for: Constants.keychainAccessToken)
+    try? KeychainHelper.deleteItem(for: Constants.keychainRefreshToken)
+    UserDefaultsManager.shared.remove(.authIdentityExpiryDateKey)
+    UserDefaultsManager.shared.remove(.authRefreshTokenExpiryDateKey)
+    identity = nil
+    canisterPrincipal = nil
+    canisterPrincipalString = nil
+    userPrincipal = nil
+    userPrincipalString = nil
+    identityData = nil
+    UserDefaultsManager.shared.set(false, for: DefaultsKey.userDefaultsLoggedIn)
+    try await obtainAnonymousIdentity()
+    stateSubject.value = .loggedOut
   }
 
   func generateNewDelegatedIdentity() throws -> DelegatedIdentity {
@@ -131,149 +282,9 @@ class DefaultAuthClient: AuthClient {
       return newWire
     }
   }
-
-  func logout() {
-    if let cookies = cookieStorage.cookies {
-      for cookie in cookies where cookie.name == AuthConstants.cookieName {
-        cookieStorage.deleteCookie(cookie)
-      }
-    }
-
-    try? KeychainHelper.deleteItem(for: keychainIdentityKey)
-    try? KeychainHelper.deleteItem(for: keychainPayloadKey)
-
-    self.identity = nil
-    self.canisterPrincipal = nil
-    self.canisterPrincipalString = nil
-    self.userPrincipal = nil
-    self.userPrincipalString = nil
-    self.identityData = nil
-  }
-
-  private func fetchAndSetAuthCookie() async throws {
-    try await recordThrowingOperation {
-      let payload = try createOrRetrieveAuthPayload()
-      let endpoint = AuthEndpoints.setAnonymousIdentityCookie(payload: payload)
-      _ = try await networkService.performRequest(for: endpoint)
-      guard let newCookie = cookieStorage.cookies?.first(where: { $0.name == AuthConstants.cookieName }) else {
-        throw NetworkError.invalidResponse("Failed to fetch cookie from setAnonymousIdentityCookie response.")
-      }
-      try await extractIdentity(from: newCookie)
-    }
-  }
-
-  private func extractIdentity(from cookie: HTTPCookie) async throws {
-    try await recordThrowingOperation {
-      let endpoint = AuthEndpoints.extractIdentity(cookie: cookie)
-      let data = try await networkService.performRequest(for: endpoint)
-
-      identityData = data
-      try KeychainHelper.store(data: data, for: keychainIdentityKey)
-
-      try await handleExtractIdentityResponse(from: data)
-    }
-  }
-
-  private func handleExtractIdentityResponse(from data: Data) async throws {
-    try await recordThrowingOperation {
-      guard !data.isEmpty else {
-        throw NetworkError.invalidResponse("Empty identity data received.")
-      }
-
-      crashReporter.log("Reached unsafe bytes start")
-      let (wire, identity): (DelegatedIdentityWire, DelegatedIdentity) = try data.withUnsafeBytes { buffer in
-        guard buffer.count > 0 else {
-          throw NetworkError.invalidResponse("Empty data received.")
-        }
-        let uint8Buffer = buffer.bindMemory(to: UInt8.self)
-        let wire = try delegated_identity_wire_from_bytes(uint8Buffer)
-        let identity = try delegated_identity_from_bytes(uint8Buffer)
-        return (wire, identity)
-      }
-      crashReporter.log("Reached unsafe bytes end")
-
-      let principal = get_principal_from_identity(identity).toString()
-      crashReporter.log("Principal id before authenticate_with_network: \(principal)")
-      let canistersWrapper = try await authenticate_with_network(wire, nil)
-      crashReporter.log("canistersWrapper authenticate_with_network success")
-
-      let canisterPrincipal = canistersWrapper.get_canister_principal()
-      let canisterPrincipalString = canistersWrapper.get_canister_principal_string().toString()
-      let userPrincipal = canistersWrapper.get_user_principal()
-      let userPrincipalString = canistersWrapper.get_user_principal_string().toString()
-      crashReporter.log("canistersWrapper executed successfully")
-      crashReporter.setUserId(userPrincipalString)
-      await MainActor.run {
-        self.identity = identity
-        self.canisterPrincipal = canisterPrincipal
-        self.canisterPrincipalString = canisterPrincipalString
-        self.userPrincipal = userPrincipal
-        self.userPrincipalString = userPrincipalString
-        self.stateSubject.value = .ephemeralAuthentication(
-          userPrincipal: userPrincipalString,
-          canisterPrincipal: canisterPrincipalString
-        )
-      }
-    }
-  }
-
-  private func createOrRetrieveAuthPayload() throws -> Data {
-    if let stored = try? KeychainHelper.retrieveData(for: keychainPayloadKey),
-       !stored.isEmpty {
-      return stored
-    }
-
-    let privateKey = try secp256k1.Signing.PrivateKey(format: .uncompressed)
-    let publicKeyData = privateKey.publicKey.dataRepresentation
-
-    let xData = publicKeyData[1...32].base64URLEncodedString()
-    let yData = publicKeyData[33...64].base64URLEncodedString()
-    let dData = privateKey.dataRepresentation.base64URLEncodedString()
-
-    let jwk: [String: Any] = [
-      "kty": "EC",
-      "crv": "secp256k1",
-      "x": xData,
-      "y": yData,
-      "d": dData
-    ]
-
-    let payload: [String: Any] = ["anonymous_identity": jwk]
-    let payloadData = try JSONSerialization.data(withJSONObject: payload)
-
-    try KeychainHelper.store(data: payloadData, for: keychainPayloadKey)
-    return payloadData
-  }
-
-  @discardableResult
-  fileprivate func recordThrowingOperation<T>(_ operation: () throws -> T) throws -> T {
-    do {
-      return try operation()
-    } catch {
-      self.stateSubject.value = .error(AuthError.authenticationFailed(error.localizedDescription))
-      crashReporter.log(error.localizedDescription)
-      crashReporter.recordException(error)
-      throw error
-    }
-  }
-
-  @discardableResult
-  fileprivate func recordThrowingOperation<T>(_ operation: () async throws -> T) async throws -> T {
-    do {
-      return try await operation()
-    } catch {
-      self.stateSubject.value = .error(AuthError.authenticationFailed(error.localizedDescription))
-      crashReporter.log(error.localizedDescription)
-      crashReporter.recordException(error)
-      throw error
-    }
-  }
 }
 
-extension DefaultAuthClient {
-  enum Constants {
-    static let keychainIdentity = "yral.delegatedIdentity"
-    static let keychainPayload  = "yral.delegatedIdentityPayload"
-    static let temporaryIdentityExpirySecond: UInt64 = 3600
-  }
+enum DelegateIdentityType {
+  case ephemeral
+  case permanent
 }

@@ -103,6 +103,16 @@ struct KeychainHelper {
       .flatMap { $0 }
     ?? fallback
   }
+
+  static func store(_ string: String, for key: String) throws {
+    let data = Data(string.utf8)
+    try store(data: data, for: key)
+  }
+
+  static func retrieveString(for key: String) throws -> String? {
+    guard let data = try retrieveData(for: key) else { return nil }
+    return String(data: data, encoding: .utf8)
+  }
 }
 
 enum KeychainError: Error {
