@@ -77,7 +77,7 @@ jobs:
         run: ./gradlew clean
 
       - name: Build AAB with Gradle
-        run: ./gradlew androidApp:bundleRelease -PisDebug=false
+        run: ./gradlew androidApp:bundleProdRelease -PisDebug=false
         env:
           GITHUB_USERNAME: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -95,6 +95,6 @@ jobs:
         with:
           serviceAccountJson: ${{ steps.auth.outputs.credentials_file_path }}
           packageName: com.yral.android
-          releaseFiles: androidApp/build/outputs/bundle/release/androidApp-release.aab
+          releaseFiles: androidApp/build/outputs/bundle/prodRelease/androidApp-prod-release.aab
           track: internal
           status: draft
