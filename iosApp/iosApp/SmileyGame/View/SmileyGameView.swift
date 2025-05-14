@@ -42,9 +42,9 @@ extension SmileyGameResult {
   var bottomSheetSubheading: String {
     switch self {
     case .winner(_, let points):
-      return "You Won \(points) Points"
+      return "You Won \(abs(points)) Points"
     case .looser(_, let points):
-      return "You Lost \(points) Points"
+      return "You Lost \(abs(points)) Points"
     }
   }
 
@@ -93,9 +93,9 @@ struct SmileyGameView: View {
       Smiley(id: "fire",
              name: "Fire",
              imageName: "fire"),
-      Smiley(id: "shock",
-             name: "Shock",
-             imageName: "shock"),
+      Smiley(id: "surprise",
+             name: "Surprise",
+             imageName: "surprise"),
       Smiley(id: "rocket",
              name: "Rocket",
              imageName: "rocket")
@@ -121,13 +121,16 @@ struct SmileyGameView: View {
           Image(smiley.imageName)
             .resizable()
             .frame(width: 48, height: 48)
-            .clipShape(Circle())
             .opacity(
               (!isFocused || smiley.id == selectedID) ? 1 : 0
             )
             .scaleEffect(
               (smiley.id == selectedID && isPopped) ? 1.17 : 1
             )
+            .shadow(color: (smiley.id == selectedID && isPopped) ? Color.white.opacity(0.25) : Color.white.opacity(0),
+                    radius: (smiley.id == selectedID && isPopped) ? 5 : 0,
+                    x: (smiley.id == selectedID && isPopped) ? -1 : 0,
+                    y: 0)
             .rotationEffect(getRotation(for: smiley))
             .animation(.easeOut(duration: 0.2), value: selectedID)
             .animation(.easeOut(duration: 0.1), value: isFocused)
@@ -177,7 +180,7 @@ struct SmileyGameView: View {
           .allowsTightening(true)
           .foregroundColor(YralColor.green50.swiftUIColor)
 
-        Text("You win \(points) Points!")
+        Text("You win \(abs(points)) Points!")
           .font(YralFont.pt16.bold.swiftUIFont)
           .lineLimit(1)
           .minimumScaleFactor(0.5)
@@ -199,7 +202,7 @@ struct SmileyGameView: View {
           .allowsTightening(true)
           .foregroundColor(YralColor.green50.swiftUIColor)
 
-        Text("You lost \(points) Points")
+        Text("You lost \(abs(points)) Points")
           .font(YralFont.pt16.bold.swiftUIFont)
           .lineLimit(1)
           .minimumScaleFactor(0.5)
@@ -229,9 +232,9 @@ struct SmileyGameView: View {
         Smiley(id: "fire",
                name: "Fire",
                imageName: "fire"),
-        Smiley(id: "shock",
-               name: "Shock",
-               imageName: "shock"),
+        Smiley(id: "surprise",
+               name: "Surprise",
+               imageName: "surprise"),
         Smiley(id: "rocket",
                name: "Rocket",
                imageName: "rocket")

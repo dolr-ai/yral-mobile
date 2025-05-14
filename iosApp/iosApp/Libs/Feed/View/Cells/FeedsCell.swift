@@ -108,7 +108,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
 
   let smileyGameScoreLabel: UILabel = {
     let label = getUILabel()
-    label.font = YralFont.pt64.uiFont
+    label.font = YralFont.pt64.bold.uiFont
     return label
   }()
 
@@ -205,7 +205,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     NSLayoutConstraint.activate([
       actionsStackView.trailingAnchor.constraint(
         equalTo: contentView.trailingAnchor,
-        constant: -Constants.horizontalMargin
+        constant: -24
       ),
       actionsStackView.widthAnchor.constraint(equalToConstant: Constants.actionButtonWidth),
       actionsStackView.heightAnchor.constraint(equalToConstant: Constants.stackViewHeight),
@@ -286,10 +286,9 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
 
   private func handleSmileyTap(_ smiley: Smiley) {
     delegate?.smileyTapped(index: index, smiley: smiley)
-    // Add this delay when lottie files are fixed
-    //    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-    self.startFlowingAnimation(for: smiley)
-    //    }
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+      self.startFlowingAnimation(for: smiley)
+    }
   }
 
   private func startFlowingAnimation(for smiley: Smiley) {
@@ -315,7 +314,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
         delegate?.showGameResultBottomSheet(index: index, gameResult: result)
       } else {
         smileyGameScoreLabel.text = "+\(coinsWon)"
-        smileyGameScoreLabel.textColor = YralColor.green300.uiColor
+        smileyGameScoreLabel.textColor = YralColor.green300.uiColor.withAlphaComponent(0.3)
       }
     case .looser(_, let coinsLoose):
       profileInfoView.coinsView.updateCoins(by: coinsLoose)
@@ -326,7 +325,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
         delegate?.showGameResultBottomSheet(index: index, gameResult: result)
       } else {
         smileyGameScoreLabel.text = "\(coinsLoose)"
-        smileyGameScoreLabel.textColor = YralColor.red300.uiColor
+        smileyGameScoreLabel.textColor = YralColor.red300.uiColor.withAlphaComponent(0.3)
       }
     }
 
@@ -339,15 +338,12 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
 
   private func startScoreLabelAnimation(for result: SmileyGameResult) {
     smileyGameScoreLabel.isHidden = false
-    smileyGameScoreLabel.alpha = 0.5
     UIView.animate(withDuration: 2) {
       self.smileyGameScoreLabel.transform = CGAffineTransform(translationX: 0, y: -UIScreen.main.bounds.height)
-      self.smileyGameScoreLabel.alpha = 1
     } completion: { complete in
       if complete {
         self.smileyGameScoreLabel.isHidden = true
         self.smileyGameScoreLabel.transform = .identity
-        self.smileyGameScoreLabel.alpha = 1
         self.resultAnimationPublisher.send(result)
       }
     }
@@ -450,7 +446,6 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     lottieView.stop()
     smileyGameScoreLabel.transform = .identity
     smileyGameScoreLabel.isHidden = true
-    smileyGameScoreLabel.alpha = 1
     initialStatePublisher.send(nil)
   }
 
@@ -468,7 +463,7 @@ extension FeedsCell {
     static let stackViewSpacing = 14.0
     static let horizontalMargin = 16.0
     static let stackViewHeight = 116.0
-    static let stackViewBottom = 74.0
+    static let stackViewBottom = 90.0
     static let stackViewBGColor = UIColor.clear
     static let actionButtonFont = YralFont.pt16.semiBold.uiFont
     static let likeSelectedImage = UIImage(named: "like_selected_feed")

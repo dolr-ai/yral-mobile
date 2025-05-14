@@ -122,8 +122,13 @@ class CoinsView: UIView {
   }
 
   private func incrementCoins(by newCoins: Int) {
+    let imageViewTransform = CGAffineTransform
+      .identity
+      .scaledBy(x: Constants.imageScale, y: Constants.imageScale)
+      .translatedBy(x: Constants.imageTranslationX, y: -Constants.imageTranslationY)
+
     animateIn {
-      self.animateBagBounce(labelTintColor: Constants.labelWinTextColor) {
+      self.animateBagBounce(labelTintColor: Constants.labelWinTextColor, imageViewTransform: imageViewTransform) {
         self.coins += newCoins
         self.animationReset()
       }
@@ -137,7 +142,7 @@ class CoinsView: UIView {
       .translatedBy(x: Constants.imageTranslationX, y: -Constants.imageTranslationY)
 
     animateIn {
-      self.animateBagBounce(labelTintColor: Constants.labelLoseTextColor) {
+      self.animateBagBounce(labelTintColor: Constants.labelLoseTextColor, imageViewTransform: .identity) {
         self.coins += newCoins
         self.animationReset()
       }
@@ -183,17 +188,16 @@ extension CoinsView {
     }
   }
 
-  private func animateBagBounce(labelTintColor: UIColor, completion: @escaping () -> Void) {
+  private func animateBagBounce(labelTintColor: UIColor,
+                                imageViewTransform: CGAffineTransform,
+                                completion: @escaping () -> Void) {
     animate(duration: Constants.animateBagDuration, delay: Constants.animateBagDelay) {
       self.bagImageView.transform = CGAffineTransform
         .identity
         .scaledBy(x: Constants.bagScale, y: Constants.bagScale)
         .rotated(by: Constants.bagRotationAngle)
       self.bagImageView.layer.opacity = Constants.bagOpacity
-      self.imageView.transform = CGAffineTransform
-        .identity
-        .scaledBy(x: Constants.imageScale, y: Constants.imageScale)
-        .translatedBy(x: Constants.imageTranslationX, y: -Constants.imageTranslationY)
+      self.imageView.transform = imageViewTransform
       self.imageView.alpha = .zero
       self.label.transform = CGAffineTransform
         .identity

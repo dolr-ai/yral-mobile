@@ -44,7 +44,7 @@ struct SmileyGameResultBottomSheetView: View {
             animationSpeed: .one
           ) {}
             .frame(width: 250)
-            .frame(height: 150)
+            .frame(height: 130)
 
           HStack(spacing: 8) {
             Text(gameResult.bottomSheetTitle)
@@ -55,7 +55,6 @@ struct SmileyGameResultBottomSheetView: View {
               .resizable()
               .frame(width: 28, height: 28)
           }
-          .padding(.top, 12)
 
           Text(gameResult.bottomSheetSubheading)
             .font(YralFont.pt18.bold.swiftUIFont)
