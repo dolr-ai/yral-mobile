@@ -47,17 +47,24 @@ android {
         }
     }
     buildTypes {
-        getByName("debug") {
-            signingConfig = signingConfigs.getByName("staging")
-            applicationIdSuffix = ".staging"
-        }
         getByName("release") {
-            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
             configure<CrashlyticsExtension> {
                 mappingFileUploadEnabled = true
                 nativeSymbolUploadEnabled = true
             }
+        }
+    }
+    flavorDimensions += "version"
+    productFlavors {
+        create("staging") {
+            dimension = "version"
+            signingConfig = signingConfigs.getByName("staging")
+            applicationIdSuffix = ".staging"
+        }
+        create("prod") {
+            dimension = "version"
+            signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {
