@@ -25,6 +25,12 @@
 		105034212DD4955C00571B4E /* Smiley_Game_Fire.json in Resources */ = {isa = PBXBuildFile; fileRef = 105034152DD4955C00571B4E /* Smiley_Game_Fire.json */; };
 		105034222DD4955C00571B4E /* Smiley_Game_Laugh.json in Resources */ = {isa = PBXBuildFile; fileRef = 105034172DD4955C00571B4E /* Smiley_Game_Laugh.json */; };
 		105034232DD4955C00571B4E /* Smiley_Game_Rocket.json in Resources */ = {isa = PBXBuildFile; fileRef = 105034182DD4955C00571B4E /* Smiley_Game_Rocket.json */; };
+		1050348E2DD4B6AA00571B4E /* AudioPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1050348D2DD4B6A300571B4E /* AudioPlayer.swift */; };
+		1050348F2DD4B6AA00571B4E /* AudioPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1050348D2DD4B6A300571B4E /* AudioPlayer.swift */; };
+		105034992DD4C9B600571B4E /* smiley_tap.caf in Resources */ = {isa = PBXBuildFile; fileRef = 105034982DD4C9B600571B4E /* smiley_tap.caf */; };
+		1050349A2DD4C9B600571B4E /* smiley_game_win.caf in Resources */ = {isa = PBXBuildFile; fileRef = 105034972DD4C9B600571B4E /* smiley_game_win.caf */; };
+		1050349B2DD4C9B600571B4E /* smiley_tap.caf in Resources */ = {isa = PBXBuildFile; fileRef = 105034982DD4C9B600571B4E /* smiley_tap.caf */; };
+		1050349C2DD4C9B600571B4E /* smiley_game_win.caf in Resources */ = {isa = PBXBuildFile; fileRef = 105034972DD4C9B600571B4E /* smiley_game_win.caf */; };
 		10512A432DA666AD00114BAA /* YralPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10512A422DA666A900114BAA /* YralPlayer.swift */; };
 		10512A442DA666AD00114BAA /* YralPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10512A422DA666A900114BAA /* YralPlayer.swift */; };
 		10512A522DA795A800114BAA /* YralQueuePlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10512A512DA7959D00114BAA /* YralQueuePlayer.swift */; };
@@ -472,6 +478,9 @@
 		105034172DD4955C00571B4E /* Smiley_Game_Laugh.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Smiley_Game_Laugh.json; sourceTree = "<group>"; };
 		105034182DD4955C00571B4E /* Smiley_Game_Rocket.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Smiley_Game_Rocket.json; sourceTree = "<group>"; };
 		105034192DD4955C00571B4E /* Smiley_Game_Surprise.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Smiley_Game_Surprise.json; sourceTree = "<group>"; };
+		1050348D2DD4B6A300571B4E /* AudioPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPlayer.swift; sourceTree = "<group>"; };
+		105034972DD4C9B600571B4E /* smiley_game_win.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = smiley_game_win.caf; sourceTree = "<group>"; };
+		105034982DD4C9B600571B4E /* smiley_tap.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = smiley_tap.caf; sourceTree = "<group>"; };
 		10512A422DA666A900114BAA /* YralPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralPlayer.swift; sourceTree = "<group>"; };
 		10512A512DA7959D00114BAA /* YralQueuePlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralQueuePlayer.swift; sourceTree = "<group>"; };
 		107C608F2DB78093006FC467 /* UIView+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIView+Extensions.swift"; sourceTree = "<group>"; };
@@ -745,6 +754,15 @@
 				103BBB032DACE21D00C0BFD0 /* HLSDownloadManaging.swift */,
 			);
 			path = Interface;
+			sourceTree = "<group>";
+		};
+		105034902DD4B75B00571B4E /* Audio */ = {
+			isa = PBXGroup;
+			children = (
+				105034972DD4C9B600571B4E /* smiley_game_win.caf */,
+				105034982DD4C9B600571B4E /* smiley_tap.caf */,
+			);
+			path = Audio;
 			sourceTree = "<group>";
 		};
 		10512A402DA6666B00114BAA /* Interface */ = {
@@ -1052,6 +1070,7 @@
 		AC26CA662D806501006ADA75 /* Utils */ = {
 			isa = PBXGroup;
 			children = (
+				1050348D2DD4B6A300571B4E /* AudioPlayer.swift */,
 				100F64ED2DCC96C5000BC17E /* ImageCache.swift */,
 				107C60D52DBFA7C0006FC467 /* FirebaseImageView.swift */,
 				107C60A32DBA01EB006FC467 /* RoundedCorner.swift */,
@@ -1810,6 +1829,7 @@
 		ACC0F3992D2ED61100FA5BD0 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				105034902DD4B75B00571B4E /* Audio */,
 				ACEBF7E62D6F56F400B594A0 /* Lottie */,
 				AC32E41E2D2700DC001DDA43 /* Fonts */,
 				058557BA273AAA24004C7B11 /* Assets.xcassets */,
@@ -2130,6 +2150,8 @@
 				AC32E4132D270097001DDA43 /* KumbhSans-ExtraBold.ttf in Resources */,
 				AC32E4142D270097001DDA43 /* KumbhSans-SemiBold.ttf in Resources */,
 				AC32E4152D270097001DDA43 /* KumbhSans-Black.ttf in Resources */,
+				105034992DD4C9B600571B4E /* smiley_tap.caf in Resources */,
+				1050349A2DD4C9B600571B4E /* smiley_game_win.caf in Resources */,
 				AC233D352D314CA3007040F1 /* Splash_Lottie.json in Resources */,
 				AC32E4162D270097001DDA43 /* KumbhSans-ExtraLight.ttf in Resources */,
 				AC32E4172D270097001DDA43 /* KumbhSans-Regular.ttf in Resources */,
@@ -2169,6 +2191,8 @@
 				AC32E4062D270097001DDA43 /* README.txt in Resources */,
 				AC32E4072D270097001DDA43 /* KumbhSans-ExtraBold.ttf in Resources */,
 				AC32E4082D270097001DDA43 /* KumbhSans-SemiBold.ttf in Resources */,
+				1050349B2DD4C9B600571B4E /* smiley_tap.caf in Resources */,
+				1050349C2DD4C9B600571B4E /* smiley_game_win.caf in Resources */,
 				AC32E4092D270097001DDA43 /* KumbhSans-Black.ttf in Resources */,
 				AC32E40A2D270097001DDA43 /* KumbhSans-ExtraLight.ttf in Resources */,
 				AC32E40B2D270097001DDA43 /* KumbhSans-Regular.ttf in Resources */,
@@ -2366,6 +2390,7 @@
 				ACB09FD52D92D66400EE3239 /* FeedsViewModelProtocol.swift in Sources */,
 				AC8FC76B2D9BE09A006F29BC /* FeedRequestDTO.swift in Sources */,
 				AC7F7EAA2D771DF400215162 /* GetUploadEndpointUseCase.swift in Sources */,
+				1050348F2DD4B6AA00571B4E /* AudioPlayer.swift in Sources */,
 				AC8472AE2D1D9540004A4259 /* AVFoundation+Extensions.swift in Sources */,
 				AC92941A2D65F308003DB102 /* View+Extensions.swift in Sources */,
 				AC32E4652D2991AD001DDA43 /* AccountView.swift in Sources */,
@@ -2550,6 +2575,7 @@
 				ACB09FD62D92D66400EE3239 /* FeedsViewModelProtocol.swift in Sources */,
 				AC8FC76A2D9BE09A006F29BC /* FeedRequestDTO.swift in Sources */,
 				AC7F7EA92D771DF400215162 /* GetUploadEndpointUseCase.swift in Sources */,
+				1050348E2DD4B6AA00571B4E /* AudioPlayer.swift in Sources */,
 				AC8472AD2D1D9540004A4259 /* AVFoundation+Extensions.swift in Sources */,
 				AC9294192D65F308003DB102 /* View+Extensions.swift in Sources */,
 				AC32E4662D2991AD001DDA43 /* AccountView.swift in Sources */,

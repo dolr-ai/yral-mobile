@@ -136,6 +136,7 @@ struct SmileyGameView: View {
             .animation(.easeOut(duration: 0.1), value: isFocused)
             .animation(.easeOut(duration: 0.3), value: showWinnerOnly)
             .onTapGesture {
+              AudioPlayer.shared.play(named: "smiley_tap")
               smileyTapped(smiley)
               selectedID = smiley.id
               startPopAnimation(for: smiley)

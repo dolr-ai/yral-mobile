@@ -304,6 +304,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   }
 
   private func startSmileyGamResultAnimation(for result: SmileyGameResult) {
+    AudioPlayer.shared.play(named: "smiley_game_win")
     switch result {
     case .winner(_, let coinsWon):
       profileInfoView.coinsView.updateCoins(by: coinsWon)
