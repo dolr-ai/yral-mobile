@@ -48,7 +48,11 @@ android {
     }
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
             configure<CrashlyticsExtension> {
                 mappingFileUploadEnabled = true
                 nativeSymbolUploadEnabled = true
@@ -70,6 +74,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
+        isCoreLibraryDesugaringEnabled = true
     }
     kotlinOptions {
         jvmTarget = "21"
@@ -87,7 +92,7 @@ dependencies {
     implementation(libs.lottie)
     implementation(libs.coil.compose)
     implementation(libs.coil.okhttp)
-
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
 
     implementation(projects.shared.core)
     implementation(projects.shared.libs.preferences)
