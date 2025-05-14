@@ -32,12 +32,12 @@ import com.yral.shared.core.platform.PlatformResourcesFactory
 import com.yral.shared.features.auth.data.AuthDataSourceImpl.Companion.REDIRECT_URI_HOST
 import com.yral.shared.features.auth.data.AuthDataSourceImpl.Companion.REDIRECT_URI_PATH
 import com.yral.shared.features.auth.data.AuthDataSourceImpl.Companion.REDIRECT_URI_SCHEME
-import com.yral.shared.features.root.viewmodels.RootViewModel
+import com.yral.shared.features.auth.utils.OAuthUtils
 import com.yral.shared.koin.koinInstance
 import com.yral.shared.uniffi.generated.initRustLogger
 
 class MainActivity : ComponentActivity() {
-    private lateinit var rootViewModel: RootViewModel
+    private lateinit var oAuthUtils: OAuthUtils
     private val rippleConfiguration =
         RippleConfiguration(
             color = Color.Transparent,
@@ -55,13 +55,13 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         initPlatformResources()
         initRustLogger()
-        rootViewModel = koinInstance.get()
+        oAuthUtils = koinInstance.get()
         handleIntent(intent)
         setContent {
             CompositionLocalProvider(LocalRippleConfiguration provides rippleConfiguration) {
                 CompositionLocalProvider(LocalAppTopography provides appTypoGraphy()) {
                     MyApplicationTheme {
-                        RootScreen(rootViewModel)
+                        RootScreen()
                     }
                 }
             }
@@ -88,7 +88,7 @@ class MainActivity : ComponentActivity() {
             val code = uri.getQueryParameter("code")
             val state = uri.getQueryParameter("state")
             if (code != null && state != null) {
-                rootViewModel.handleOAuthCallback(code, state)
+                oAuthUtils.invokeCallback(code, state)
             }
         }
     }

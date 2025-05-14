@@ -31,6 +31,8 @@ kotlin {
             api(libs.kotlinResult.coroutines)
             implementation(libs.ktor.json)
 
+            api(libs.touchlab.logger)
+
             implementation(projects.shared.libs.koin)
         }
         commonTest.dependencies {

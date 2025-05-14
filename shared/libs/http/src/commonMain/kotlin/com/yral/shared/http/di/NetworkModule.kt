@@ -1,6 +1,6 @@
 package com.yral.shared.http.di
 
-import com.yral.shared.http.ConsoleLogger
+import com.yral.shared.http.HttpLogger
 import com.yral.shared.http.createClient
 import com.yral.shared.http.createClientJson
 import org.koin.dsl.module
@@ -15,5 +15,5 @@ val networkModule =
                 get(),
             )
         }
-        single { ConsoleLogger() }
+        single { HttpLogger(get()) }
     }

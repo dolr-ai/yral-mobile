@@ -138,40 +138,6 @@ class RootViewModel(
             )
         }
     }
-
-    fun handleOAuthCallback(
-        code: String,
-        state: String,
-    ) {
-        coroutineScope.launch {
-            try {
-                setLoading(true)
-                authClient.handleOAuthCallback(code, state)
-            } catch (e: Exception) {
-                setLoading(false)
-                setShowSignupFailedBottomSheet(true)
-                crashlyticsManager.recordException(e)
-            }
-        }
-    }
-
-    private suspend fun setLoading(isLoading: Boolean) {
-        _state.emit(
-            _state.value.copy(
-                isLoading = isLoading,
-            ),
-        )
-    }
-
-    fun setShowSignupFailedBottomSheet(show: Boolean) {
-        coroutineScope.launch {
-            _state.emit(
-                _state.value.copy(
-                    showSignupFailedBottomSheet = show,
-                ),
-            )
-        }
-    }
 }
 
 data class RootState(
@@ -181,6 +147,4 @@ data class RootState(
     val initialAnimationComplete: Boolean = false,
     val currentHomePageTab: String = "Home",
     val currentSessionState: SessionState? = null,
-    val isLoading: Boolean = false,
-    val showSignupFailedBottomSheet: Boolean = false,
 )

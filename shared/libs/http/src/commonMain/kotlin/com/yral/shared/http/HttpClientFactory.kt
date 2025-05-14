@@ -16,12 +16,12 @@ import kotlinx.serialization.json.Json
 fun createClient(
     preferences: Preferences,
     json: Json,
-    consoleLogger: ConsoleLogger,
+    httpLogger: HttpLogger,
 ): HttpClient =
     HttpClient(CIO) {
         install(Logging) {
-            logger = consoleLogger
-            level = consoleLogger.logLevel
+            logger = httpLogger
+            level = httpLogger.logLevel
         }
         install(ContentNegotiation) {
             json(json)

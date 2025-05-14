@@ -1,6 +1,7 @@
 package com.yral.android.di
 
 import com.yral.shared.analytics.di.analyticsModule
+import com.yral.shared.core.AppConfig
 import com.yral.shared.core.di.coreModule
 import com.yral.shared.crashlytics.di.crashlyticsModule
 import com.yral.shared.features.account.di.accountsModule
@@ -12,13 +13,20 @@ import com.yral.shared.preferences.di.preferencesModule
 import com.yral.shared.rust.di.rustModule
 import org.koin.core.context.startKoin
 import org.koin.dsl.KoinAppDeclaration
+import org.koin.dsl.module
 
-fun initKoin(appDeclaration: KoinAppDeclaration) {
+fun initKoin(
+    appDeclaration: KoinAppDeclaration,
+    appConfig: AppConfig,
+) {
     startKoin {
         // Forbid definition override
         allowOverride(false)
         appDeclaration()
         modules(
+            module {
+                single { appConfig }
+            },
             coreModule,
             preferencesModule,
             analyticsModule,

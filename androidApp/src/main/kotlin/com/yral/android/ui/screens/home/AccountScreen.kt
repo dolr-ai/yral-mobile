@@ -6,6 +6,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -56,6 +57,7 @@ import com.yral.android.ui.screens.home.AccountScreenConstants.TELEGRAM_LINK
 import com.yral.android.ui.screens.home.AccountScreenConstants.TERMS_OF_SERVICE_URL
 import com.yral.android.ui.screens.home.AccountScreenConstants.TWITTER_LINK
 import com.yral.android.ui.widgets.YralGradientButton
+import com.yral.android.ui.widgets.YralLoader
 import com.yral.android.ui.widgets.YralWebView
 import com.yral.shared.features.account.viewmodel.AccountInfo
 import com.yral.shared.features.account.viewmodel.AccountsViewModel
@@ -69,6 +71,10 @@ fun AccountScreen(
     viewModel: AccountsViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
+    val sessionState by viewModel.sessionState.collectAsState()
+    LaunchedEffect(sessionState) {
+        viewModel.refreshAccountInfo()
+    }
     var linkToOpen by remember { mutableStateOf(Pair("", false)) }
     val webBottomSheetState = rememberModalBottomSheetState()
     var showWebBottomSheet by remember { mutableStateOf(false) }
@@ -106,32 +112,51 @@ fun AccountScreen(
             },
         )
     }
-    Column(
-        modifier = modifier.padding(top = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(30.dp, Alignment.Top),
-        horizontalAlignment = Alignment.CenterHorizontally,
+    Box(
+        modifier =
+            Modifier
+                .fillMaxSize(),
+        contentAlignment = Alignment.Center,
     ) {
-        AccountsTitle()
-        state.accountInfo?.let {
-            AccountDetail(
-                accountInfo = it,
-                isSocialSignIn = state.isSocialSignInSuccessful,
-            ) {
-                showLoginBottomSheet = true
+        Column(
+            modifier = modifier.padding(top = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(30.dp, Alignment.Top),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            AccountsTitle()
+            state.accountInfo?.let {
+                AccountDetail(
+                    accountInfo = it,
+                    isSocialSignIn = state.isSocialSignInSuccessful,
+                ) {
+                    showLoginBottomSheet = true
+                }
             }
-        }
-        Divider()
-        HelpLinks(
-            isSocialSignIn = state.isSocialSignInSuccessful,
-            onLinkClicked = { link, shouldOpenOutside ->
+            Divider()
+            HelpLinks(
+                isSocialSignIn = state.isSocialSignInSuccessful,
+                onLinkClicked = { link, shouldOpenOutside ->
+                    linkToOpen = Pair(link, shouldOpenOutside)
+                },
+            )
+            Spacer(Modifier.weight(1f))
+            SocialMediaHelpLinks { link, shouldOpenOutside ->
                 linkToOpen = Pair(link, shouldOpenOutside)
-            },
-        )
-        Spacer(Modifier.weight(1f))
-        SocialMediaHelpLinks { link, shouldOpenOutside ->
-            linkToOpen = Pair(link, shouldOpenOutside)
+            }
+            Spacer(Modifier.weight(SOCIAL_MEDIA_LINK_BOTTOM_SPACER_WEIGHT))
         }
-        Spacer(Modifier.weight(SOCIAL_MEDIA_LINK_BOTTOM_SPACER_WEIGHT))
+        if (state.isLoading) {
+            YralLoader()
+        }
+    }
+    if (state.showSignupFailedBottomSheet) {
+        SingUpFailedBottomSheet(
+            bottomSheetState =
+                rememberModalBottomSheetState(
+                    skipPartiallyExpanded = true,
+                ),
+            onDismissRequest = { viewModel.setShowSignupFailedBottomSheet(false) },
+        )
     }
 }
 
@@ -482,6 +507,61 @@ private fun LoginBottomSheet(
                     openTerms = openTerms,
                 )
                 Spacer(modifier = Modifier.height(300.dp))
+            }
+        },
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SingUpFailedBottomSheet(
+    bottomSheetState: SheetState,
+    onDismissRequest: () -> Unit,
+) {
+    ModalBottomSheet(
+        modifier = Modifier.safeDrawingPadding(),
+        onDismissRequest = onDismissRequest,
+        sheetState = bottomSheetState,
+        containerColor = YralColors.Neutral900,
+        dragHandle = null,
+        content = {
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            start = 16.dp,
+                            top = 24.dp,
+                            end = 16.dp,
+                            bottom = 36.dp,
+                        ),
+                verticalArrangement = Arrangement.spacedBy(32.dp, Alignment.Top),
+                horizontalAlignment = Alignment.Start,
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top),
+                    horizontalAlignment = Alignment.Start,
+                ) {
+                    Text(
+                        modifier = Modifier.fillMaxWidth(),
+                        text = stringResource(R.string.could_not_login),
+                        style = LocalAppTopography.current.xlSemiBold,
+                        textAlign = TextAlign.Center,
+                        color = Color.White,
+                    )
+                    Text(
+                        modifier = Modifier.fillMaxWidth(),
+                        text = stringResource(R.string.could_not_login_desc),
+                        style = LocalAppTopography.current.regRegular,
+                        textAlign = TextAlign.Center,
+                        color = Color.White,
+                    )
+                }
+                YralGradientButton(
+                    text = stringResource(R.string.ok),
+                    onClick = onDismissRequest,
+                )
             }
         },
     )
