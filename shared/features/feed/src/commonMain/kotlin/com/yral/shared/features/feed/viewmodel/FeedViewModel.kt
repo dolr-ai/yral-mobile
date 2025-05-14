@@ -6,7 +6,6 @@ import com.yral.shared.analytics.AnalyticsManager
 import com.yral.shared.analytics.events.VideoDurationWatchedEventData
 import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.core.session.SessionManager
-import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.feed.data.toVideoEventData
 import com.yral.shared.features.feed.useCases.FetchFeedDetailsUseCase
 import com.yral.shared.features.feed.useCases.FetchMoreFeedUseCase
@@ -31,7 +30,6 @@ class FeedViewModel(
     private val fetchFeedDetailsUseCase: FetchFeedDetailsUseCase,
     private val analyticsManager: AnalyticsManager,
     private val preferences: Preferences,
-    private val crashlyticsManager: CrashlyticsManager,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(appDispatchers.io)
 
@@ -67,26 +65,23 @@ class FeedViewModel(
     }
 
     private suspend fun fetchFeedDetail(post: Post) {
-        try {
-            fetchFeedDetailsUseCase
-                .invoke(post)
-                .mapBoth(
-                    success = { detail ->
-                        val feedDetailsList = _state.value.feedDetails.toMutableList()
-                        feedDetailsList.add(detail)
-                        _state.emit(
-                            _state.value.copy(
-                                feedDetails = feedDetailsList.toList(),
-                            ),
-                        )
-                    },
-                    failure = { error ->
-                        error("Error loading feed details: $error")
-                    },
-                )
-        } catch (e: Exception) {
-            crashlyticsManager.recordException(e)
-        }
+        fetchFeedDetailsUseCase
+            .invoke(post)
+            .mapBoth(
+                success = { detail ->
+                    val feedDetailsList = _state.value.feedDetails.toMutableList()
+                    feedDetailsList.add(detail)
+                    _state.emit(
+                        _state.value.copy(
+                            feedDetails = feedDetailsList.toList(),
+                        ),
+                    )
+                },
+                failure = { _ ->
+                    // No need to throw error, BaseUseCase reports to CrashlyticsManager
+                    // error("Error loading initial posts: $error")
+                },
+            )
     }
 
     fun loadMoreFeed() {
@@ -95,40 +90,35 @@ class FeedViewModel(
         }
         coroutineScope.launch {
             sessionManager.getCanisterPrincipal()?.let {
-                try {
-                    setLoadingMore(true)
-                    fetchMoreFeedUseCase
-                        .invoke(
-                            parameter =
-                                FetchMoreFeedUseCase.Params(
-                                    canisterID = it,
-                                    filterResults =
-                                        _state.value.posts.map { post ->
-                                            post.toFilteredResult()
-                                        },
+                setLoadingMore(true)
+                fetchMoreFeedUseCase
+                    .invoke(
+                        parameter =
+                            FetchMoreFeedUseCase.Params(
+                                canisterID = it,
+                                filterResults =
+                                    _state.value.posts.map { post ->
+                                        post.toFilteredResult()
+                                    },
+                            ),
+                    ).mapBoth(
+                        success = { moreFeed ->
+                            setLoadingMore(false)
+                            val posts = _state.value.posts.toMutableList()
+                            posts.addAll(moreFeed.posts)
+                            _state.emit(
+                                _state.value.copy(
+                                    posts = posts,
                                 ),
-                        ).mapBoth(
-                            success = { moreFeed ->
-                                val posts = _state.value.posts.toMutableList()
-                                posts.addAll(moreFeed.posts)
-                                _state.emit(
-                                    _state.value.copy(
-                                        posts = posts,
-                                    ),
-                                )
-                                moreFeed.posts.forEach { post ->
-                                    fetchFeedDetail(post)
-                                }
-                            },
-                            failure = { error ->
-                                error("Error loading more feed: $error")
-                            },
-                        )
-                    setLoadingMore(false)
-                } catch (e: Exception) {
-                    setLoadingMore(false)
-                    crashlyticsManager.recordException(e)
-                }
+                            )
+                            moreFeed.posts.forEach { post ->
+                                fetchFeedDetail(post)
+                            }
+                        },
+                        failure = { _ ->
+                            setLoadingMore(false)
+                        },
+                    )
             }
         }
     }

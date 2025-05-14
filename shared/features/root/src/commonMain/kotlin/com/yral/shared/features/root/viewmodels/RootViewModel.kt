@@ -90,8 +90,9 @@ class RootViewModel(
                         posts.take(MIN_REQUIRED_ITEMS).forEach { post -> fetchFeedDetail(post) }
                     }
                 },
-                failure = { error ->
-                    error("Error loading initial posts: $error")
+                failure = { _ ->
+                    // No need to throw error, BaseUseCase reports to CrashlyticsManager
+                    // error("Error loading initial posts: $error")
                 },
             )
     }
@@ -110,8 +111,9 @@ class RootViewModel(
                         ),
                     )
                 },
-                failure = { error ->
-                    error("Error loading feed details: $error")
+                failure = { _ ->
+                    // No need to throw error, BaseUseCase reports to CrashlyticsManager
+                    // error("Error loading initial posts: $error")
                 },
             )
     }

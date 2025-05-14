@@ -1,22 +1,25 @@
-package com.yral.shared.core
+package com.yral.shared.libs.useCase
 
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.onFailure
+import com.yral.shared.crashlytics.core.CrashlyticsManager
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 
 abstract class SuspendUseCase<in P, out R>(
     coroutineDispatcher: CoroutineDispatcher,
-) : BaseSuspendUseCase<P, R, Throwable>(coroutineDispatcher) {
+    crashlyticsManager: CrashlyticsManager,
+) : BaseSuspendUseCase<P, R, Throwable>(coroutineDispatcher, crashlyticsManager) {
     final override fun Throwable.toError() = this
 }
 
 abstract class ResultSuspendUseCase<in P, out R, out E>(
     coroutineDispatcher: CoroutineDispatcher,
-) : BaseSuspendUseCase<P, R, E>(coroutineDispatcher) {
+    crashlyticsManager: CrashlyticsManager,
+) : BaseSuspendUseCase<P, R, E>(coroutineDispatcher, crashlyticsManager) {
     abstract override suspend fun executeWith(parameter: P): Result<R, E>
 
     @Suppress("UseCheckOrError")
@@ -25,6 +28,7 @@ abstract class ResultSuspendUseCase<in P, out R, out E>(
 
 abstract class BaseSuspendUseCase<in P, out R, out E> internal constructor(
     private val coroutineDispatcher: CoroutineDispatcher,
+    private val crashlyticsManager: CrashlyticsManager,
 ) {
     suspend operator fun invoke(parameter: P): Result<R, E> =
         try {
@@ -42,8 +46,7 @@ abstract class BaseSuspendUseCase<in P, out R, out E> internal constructor(
         }
 
     private fun onFailure(throwable: Throwable) {
-        Err(throwable.toError())
-        // crashReporter.recordException(throwable)
+        crashlyticsManager.recordException(Exception(throwable))
     }
 
     open suspend fun executeWith(parameter: P): Result<R, E> = Ok(execute(parameter))

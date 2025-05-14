@@ -3,7 +3,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
-    alias(libs.plugins.kotlinxSerialisartion)
+    alias(libs.plugins.gobleyRust)
 }
 
 kotlin {
@@ -25,23 +25,11 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation(projects.shared.core)
-            implementation(projects.shared.features.auth)
-            implementation(projects.shared.libs.koin)
-            implementation(projects.shared.libs.crashlytics)
-            implementation(projects.shared.libs.analytics)
-            implementation(projects.shared.libs.preferences)
-            implementation(projects.shared.libs.useCase)
+            api(libs.kotlinx.coroutines.core)
+            api(libs.kotlinResult.core)
+            api(libs.kotlinResult.coroutines)
 
-            val (dependencies, shouldAddRustModule) = BuildConfig.getAndProcessDependencies(project)
-            dependencies.forEach { dependency ->
-                if (dependency.isNotEmpty()) {
-                    implementation(dependency)
-                }
-            }
-            if (shouldAddRustModule) {
-                implementation(projects.shared.rust)
-            }
+            implementation(projects.shared.libs.crashlytics)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -50,7 +38,7 @@ kotlin {
 }
 
 android {
-    namespace = "com.yral.shared.features.feed"
+    namespace = "com.yral.shared.libs.useCase"
     compileSdk = libs.versions.compileSDK.get().toInt()
     defaultConfig {
         minSdk = libs.versions.minSDK.get().toInt()

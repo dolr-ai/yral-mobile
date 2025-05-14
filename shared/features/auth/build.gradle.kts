@@ -35,7 +35,7 @@ kotlin {
             implementation(projects.shared.libs.analytics)
             implementation(projects.shared.libs.crashlytics)
             implementation(projects.shared.libs.koin)
-            implementation(projects.shared.core)
+            implementation(projects.shared.libs.useCase)
 
             val (dependencies, shouldAddRustModule) = BuildConfig.getAndProcessDependencies(project)
             dependencies.forEach { dependency ->
