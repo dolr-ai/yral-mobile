@@ -37,6 +37,7 @@ kotlin {
 
             implementation(projects.shared.libs.preferences)
             implementation(projects.shared.libs.koin)
+            implementation(projects.shared.core)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

@@ -3,7 +3,8 @@ package com.yral.shared.features.auth
 import com.github.michaelbull.result.mapBoth
 import com.yral.shared.analytics.AnalyticsManager
 import com.yral.shared.analytics.events.AuthSuccessfulEventData
-import com.yral.shared.core.platform.PlatformResourcesFactory
+import com.yral.shared.core.dispatchers.AppDispatchers
+import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.Session
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
@@ -11,25 +12,29 @@ import com.yral.shared.features.auth.domain.AuthRepository
 import com.yral.shared.features.auth.domain.useCases.AuthenticateTokenUseCase
 import com.yral.shared.features.auth.domain.useCases.ObtainAnonymousIdentityUseCase
 import com.yral.shared.features.auth.domain.useCases.RefreshTokenUseCase
+import com.yral.shared.features.auth.utils.OAuthListener
+import com.yral.shared.features.auth.utils.OAuthUtils
 import com.yral.shared.features.auth.utils.SocialProvider
-import com.yral.shared.features.auth.utils.openOAuth
-import com.yral.shared.features.auth.utils.parseOAuthToken
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import com.yral.shared.uniffi.generated.authenticateWithNetwork
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 
 class DefaultAuthClient(
     private val sessionManager: SessionManager,
     private val analyticsManager: AnalyticsManager,
     private val preferences: Preferences,
-    private val platformResourcesFactory: PlatformResourcesFactory,
     private val authRepository: AuthRepository,
     private val authenticateTokenUseCase: AuthenticateTokenUseCase,
     private val obtainAnonymousIdentityUseCase: ObtainAnonymousIdentityUseCase,
     private val refreshTokenUseCase: RefreshTokenUseCase,
+    private val oAuthUtils: OAuthUtils,
+    appDispatchers: AppDispatchers,
 ) : AuthClient {
     private var currentState: String? = null
+    private val scope = CoroutineScope(appDispatchers.io)
 
     override suspend fun initialize() {
         refreshAuthIfNeeded()
@@ -75,7 +80,7 @@ class DefaultAuthClient(
                 refreshToken,
             )
         }
-        val tokenClaim = parseOAuthToken(token)
+        val tokenClaim = oAuthUtils.parseOAuthToken(token)
         if (tokenClaim.isValid(Clock.System.now().epochSeconds)) {
             tokenClaim.delegatedIdentity?.let {
                 handleExtractIdentityResponse(it)
@@ -83,7 +88,7 @@ class DefaultAuthClient(
         } else if (shouldRefreshToken) {
             val rToken = preferences.getString(PrefKeys.REFRESH_TOKEN.name)
             rToken?.let {
-                val rTokenClaim = parseOAuthToken(it)
+                val rTokenClaim = oAuthUtils.parseOAuthToken(it)
                 if (rTokenClaim.isValid(Clock.System.now().epochSeconds)) {
                     refreshAccessToken()
                 } else {
@@ -137,22 +142,37 @@ class DefaultAuthClient(
         } ?: obtainAnonymousIdentity()
     }
 
-    override suspend fun signInWithSocial(provider: SocialProvider) {
-        initiateOAuthFlow(provider)
+    override suspend fun signInWithSocial(
+        provider: SocialProvider,
+        oAuthListener: OAuthListener,
+    ) {
+        initiateOAuthFlow(provider, oAuthListener)
     }
 
-    private suspend fun initiateOAuthFlow(provider: SocialProvider) {
+    private suspend fun initiateOAuthFlow(
+        provider: SocialProvider,
+        oAuthListener: OAuthListener,
+    ) {
         sessionManager.getIdentity()?.let { identity ->
             val authUrl = authRepository.getOAuthUrl(provider, identity)
             currentState = authUrl.second
-            openOAuth(
-                platformResourcesFactory = platformResourcesFactory,
+            oAuthUtils.openOAuth(
                 authUrl = authUrl.first,
-            )
+            ) { code, state ->
+                scope.launch {
+                    try {
+                        oAuthListener.setLoading(true)
+                        handleOAuthCallback(code, state)
+                        oAuthListener.setLoading(false)
+                    } catch (e: YralException) {
+                        oAuthListener.exception(e)
+                    }
+                }
+            }
         }
     }
 
-    override suspend fun handleOAuthCallback(
+    private suspend fun handleOAuthCallback(
         code: String,
         state: String,
     ) {
@@ -174,7 +194,7 @@ class DefaultAuthClient(
                     )
                     preferences.putBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name, true)
                 },
-                failure = { error(it.localizedMessage ?: "") },
+                failure = { YralException(it.localizedMessage ?: "") },
             )
     }
 }
