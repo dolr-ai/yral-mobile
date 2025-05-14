@@ -1,4 +1,4 @@
-name: Build APK for preview
+name: Build App for preview
 on:
   pull_request:
     branches:
@@ -7,8 +7,12 @@ on:
       - ready_for_review
       - synchronize
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
-  build-apk:
+  build-app:
     if: ${{ github.event.pull_request.draft == false }}
     runs-on: ubuntu-latest
       
@@ -50,6 +54,12 @@ jobs:
           link-to-sdk: true
           local-cache: true
 
+      - name: Bump version (ephemeral, no commit)
+        run: |
+          echo "GITHUB_RUN_NUMBER is $GITHUB_RUN_NUMBER"
+          sed -i 's/versionCode[[:space:]]*=[[:space:]]*[0-9][0-9]*/versionCode = '"$GITHUB_RUN_NUMBER"'/' ./androidApp/build.gradle.kts
+          cat ./androidApp/build.gradle.kts | grep versionCode
+
       - name: Setup environment variables
         run: |
           echo "DEBUG_KEYSTORE_PASSWORD=${{ secrets.ANDROID_DEBUG_SIGNING_SECRET_PASSWORD }}" >> $GITHUB_ENV
@@ -61,15 +71,25 @@ jobs:
 
       - name: Build APK
         if: steps.changed_files.outputs.any_changed == 'true'
-        run: ./gradlew androidApp:assembleDebug
+        run: ./gradlew androidApp:bundleStagingRelease -PisDebug=false
         env:
           GITHUB_USERNAME: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           JAVA_HOME: ${{ steps.setup-jdk.outputs.java-home }}
 
-      - name: Upload APK (PR-preview)
-        if: steps.changed_files.outputs.any_changed == 'true'
-        uses: actions/upload-artifact@v4
+      - name: Authenticate to Google Cloud
+        id: Auth
+        uses: google-github-actions/auth@v2
         with:
-          name: androidApp-debug
-          path: androidApp/build/outputs/apk/debug/androidApp-debug.apk
+          workload_identity_provider: 'projects/1035262663512/locations/global/workloadIdentityPools/github/providers/yral-mobile'
+          service_account: 'my-service-account@yral-mobile.iam.gserviceaccount.com'
+          
+      - name: Upload to Play Store
+        id: Upload
+        uses: r0adkll/upload-google-play@v1.1.3
+        with:
+          serviceAccountJson: ${{ steps.auth.outputs.credentials_file_path }}
+          packageName: com.yral.android.staging
+          releaseFiles: androidApp/build/outputs/bundle/stagingRelease/androidApp-staging-release.aab
+          track: internal
+          status: draft
