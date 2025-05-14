@@ -44,13 +44,6 @@ final class AppDIContainer {
     return composite
   }()
 
-  lazy var likeRepository: LikeRepositoryProtocol = {
-    LikeRepository(
-      httpService: HTTPService(),
-      authClient: authClient
-    )
-  }()
-
   lazy var accountsRepository: AccountRepositoryProtocol = {
     AccountRepository(
       httpService: HTTPService(),
@@ -64,21 +57,13 @@ final class AppDIContainer {
     )
   }()
 
-  lazy var toggleLikeUseCase: ToggleLikeUseCaseProtocol = {
-    ToggleLikeUseCase(
-      likeRepository: likeRepository,
-      crashReporter: crashReporter
-    )
-  }()
-
   func makeFeedDIContainer() -> FeedDIContainer {
     return FeedDIContainer(
       dependencies: FeedDIContainer.Dependencies(
         mlfeedService: mlFeedClient,
         httpService: HTTPService(baseURLString: appConfiguration.offchainBaseURLString),
         authClient: authClient,
-        crashReporter: crashReporter,
-        toggleLikeUseCase: toggleLikeUseCase
+        crashReporter: crashReporter
       )
     )
   }
@@ -110,8 +95,7 @@ final class AppDIContainer {
         httpService: HTTPService(baseURLString: appConfiguration.offchainBaseURLString),
         authClient: authClient,
         crashReporter: crashReporter,
-        accountUseCase: accountUseCase,
-        likesUseCase: toggleLikeUseCase
+        accountUseCase: accountUseCase
       )
     )
   }

@@ -11,7 +11,6 @@ import Combine
 class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
   let initialFeedsUseCase: FetchInitialFeedsUseCaseProtocol
   let moreFeedsUseCase: FetchMoreFeedsUseCaseProtocol
-  let likesUseCase: ToggleLikeUseCaseProtocol
   let reportUseCase: ReportFeedsUseCaseProtocol
   let logEventUseCase: LogUploadEventUseCaseProtocol
   private var currentFeeds = [FeedResult]()
@@ -35,13 +34,11 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
   init(
     fetchFeedsUseCase: FetchInitialFeedsUseCaseProtocol,
     moreFeedsUseCase: FetchMoreFeedsUseCaseProtocol,
-    likeUseCase: ToggleLikeUseCaseProtocol,
     reportUseCase: ReportFeedsUseCaseProtocol,
     logEventUseCase: LogUploadEventUseCaseProtocol
   ) {
     self.initialFeedsUseCase = fetchFeedsUseCase
     self.moreFeedsUseCase = moreFeedsUseCase
-    self.likesUseCase = likeUseCase
     self.reportUseCase = reportUseCase
     self.logEventUseCase = logEventUseCase
     self.unifiedEvent = .fetchingInitialFeeds
@@ -115,24 +112,6 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
       }
       if self.currentFeeds.count <= FeedsViewController.Constants.initialNumResults {
         await loadMoreFeeds()
-      }
-    }
-  }
-
-  @MainActor func toggleLike(request: LikeQuery) async {
-    do {
-      let result = await likesUseCase.execute(request: request)
-      switch result {
-      case .success(let response):
-        currentFeeds[response.index].isLiked = response.status
-        let likeCountDifference = response.status ? Int.one : -Int.one
-        currentFeeds[response.index].likeCount += likeCountDifference
-        unifiedEvent = .toggledLikeSuccessfully(likeResult: response)
-        if isFetchingInitialFeeds {
-          unifiedEvent = .finishedLoadingInitialFeeds
-        }
-      case .failure(let error):
-        unifiedEvent = .toggleLikeFailed(errorMessage: error.localizedDescription)
       }
     }
   }

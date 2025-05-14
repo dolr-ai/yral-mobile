@@ -15,7 +15,6 @@ import Combine
 
 protocol FeedsCellProtocol: AnyObject {
   func shareButtonTapped(index: Int)
-  func likeButtonTapped(index: Int)
   func deleteButtonTapped(index: Int)
   func reportButtonTapped(index: Int)
   func smileyTapped(index: Int, smiley: Smiley)
@@ -45,10 +44,6 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     stackView.backgroundColor = Constants.stackViewBGColor
     stackView.alignment = .trailing
     return stackView
-  }()
-
-  var likeButton: UIButton = {
-    getActionButton(withTitle: "100", image: Constants.likeUnSelectedImage)
   }()
 
   private var shareButton: UIButton = {
@@ -215,9 +210,6 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
       )
     ])
 
-    actionsStackView.addArrangedSubview(likeButton)
-    // actionsStackView.addArrangedSubview(shareButton)
-    likeButton.addTarget(self, action: #selector(likeButtonTapped), for: .touchUpInside)
     shareButton.addTarget(self, action: #selector(shareButtonTapped), for: .touchUpInside)
     deleteButton.addTarget(self, action: #selector(deleteButtonTapped), for: .touchUpInside)
     reportButton.addTarget(self, action: #selector(reportButtonTapped), for: .touchUpInside)
@@ -357,10 +349,6 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     }
   }
 
-  @objc func likeButtonTapped() {
-    delegate?.likeButtonTapped(index: index)
-  }
-
   @objc func shareButtonTapped() {
     delegate?.shareButtonTapped(index: index)
   }
@@ -394,14 +382,6 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     playerLayer = layer
     playerLayer?.frame = contentView.bounds
 
-    likeButton.configuration?.attributedTitle = AttributedString(
-      String(feedInfo.likeCount),
-      attributes: AttributeContainer([
-        .font: Constants.actionButtonFont
-      ])
-    )
-    likeButton.configuration?.image = feedInfo.isLiked ? Constants.likeSelectedImage : Constants.likeUnSelectedImage
-
     self.index = index
     self.feedType = feedInfo.feedType
 
@@ -418,20 +398,6 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
       captionScrollView.isHidden = false
       setCaptionHeight(captionText: profileInfo.subtitle)
     }
-  }
-
-  func setLikeStatus(isLiked: Bool) {
-    likeButton.configuration?.image = isLiked ? Constants.likeSelectedImage : Constants.likeUnSelectedImage
-    var likeButtonString = String((Int(likeButton.titleLabel?.text ?? "") ?? .zero) - .one)
-    if isLiked {
-      likeButtonString = String((Int(likeButton.titleLabel?.text ?? "") ?? Int.zero) + Int.one)
-    }
-    likeButton.configuration?.attributedTitle = AttributedString(
-      likeButtonString,
-      attributes: AttributeContainer([
-        .font: Constants.actionButtonFont
-      ])
-    )
   }
 
   override func layoutSubviews() {
@@ -462,12 +428,10 @@ extension FeedsCell {
   enum Constants {
     static let stackViewSpacing = 14.0
     static let horizontalMargin = 16.0
-    static let stackViewHeight = 116.0
+    static let stackViewHeight = 51.0
     static let stackViewBottom = 90.0
     static let stackViewBGColor = UIColor.clear
     static let actionButtonFont = YralFont.pt16.semiBold.uiFont
-    static let likeSelectedImage = UIImage(named: "like_selected_feed")
-    static let likeUnSelectedImage = UIImage(named: "like_unselected_feed")
     static let shareButtonImage = UIImage(named: "share_feed")
     static let deleteButtonImage = UIImage(named: "delete_video_profile")
     static let reportButtonImage = UIImage(named: "report_feed")
