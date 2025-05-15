@@ -1,13 +1,15 @@
 package com.yral.android.ui.widgets
 
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.paint
@@ -16,9 +18,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.LottieConstants
+import com.airbnb.lottie.compose.animateLottieCompositionAsState
+import com.airbnb.lottie.compose.rememberLottieComposition
 import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
-import com.yral.android.ui.design.YralColors
 
 @Composable
 fun YralGradientButton(
@@ -58,16 +64,26 @@ fun YralGradientButton(
                         ),
             )
         } else {
-            CircularProgressIndicator(
-                modifier = Modifier.size(20.dp),
-                color =
-                    if (buttonType == YralButtonType.Pink) {
-                        YralColors.Neutral50
-                    } else {
-                        YralColors.Pink300
-                    },
-                trackColor = YralColors.Pink50,
+            // The continuous loader animation
+            val loaderComposition by rememberLottieComposition(
+                spec = LottieCompositionSpec.RawRes(getLoaderResource(buttonType)),
             )
+            val loaderProgress by animateLottieCompositionAsState(
+                composition = loaderComposition,
+                iterations = LottieConstants.IterateForever,
+                isPlaying = true,
+            )
+            androidx.compose.animation.AnimatedVisibility(
+                visible = true,
+                enter = fadeIn(),
+                exit = fadeOut(),
+            ) {
+                LottieAnimation(
+                    modifier = Modifier.size(20.dp),
+                    composition = loaderComposition,
+                    progress = { loaderProgress },
+                )
+            }
         }
     }
 }
@@ -82,6 +98,12 @@ enum class YralButtonType {
     Pink,
     White,
 }
+
+private fun getLoaderResource(buttonType: YralButtonType): Int =
+    when (buttonType) {
+        YralButtonType.Pink -> R.raw.white_loader
+        YralButtonType.White -> R.raw.pink_loader
+    }
 
 private fun getButtonTextBackground(
     buttonType: YralButtonType,
