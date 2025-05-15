@@ -57,13 +57,27 @@ final class AppDIContainer {
     )
   }()
 
+  lazy var smileyConfigRepository: SmileyRepositoryProtocol = {
+    SmileyRepository(
+      firebaseService: FirebaseService()
+    )
+  }()
+
+  lazy var smileyConfigUseCase: SmileyUseCaseProtocol = {
+    SmileyUseCase(
+      repository: smileyConfigRepository,
+      crashReporter: crashReporter
+    )
+  }()
+
   func makeFeedDIContainer() -> FeedDIContainer {
     return FeedDIContainer(
       dependencies: FeedDIContainer.Dependencies(
         mlfeedService: mlFeedClient,
         httpService: HTTPService(baseURLString: appConfiguration.offchainBaseURLString),
         authClient: authClient,
-        crashReporter: crashReporter
+        crashReporter: crashReporter,
+        smileyConfigUseCase: smileyConfigUseCase
       )
     )
   }

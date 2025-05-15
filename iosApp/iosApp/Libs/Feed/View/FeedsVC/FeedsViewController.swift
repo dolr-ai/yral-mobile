@@ -68,6 +68,9 @@ class FeedsViewController: UIViewController {
     setupNavigationBar()
     setupUI()
     Task { @MainActor in
+      if feedType == .otherUsers {
+        await viewModel.fetchSmileys()
+      }
       await viewModel.fetchFeeds(request: InitialFeedRequest(numResults: Constants.initialNumResults))
     }
     NotificationCenter.default.addObserver(

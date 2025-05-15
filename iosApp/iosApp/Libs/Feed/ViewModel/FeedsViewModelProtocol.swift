@@ -70,4 +70,9 @@ protocol FeedViewModelProtocol: ObservableObject {
   func report(request: ReportRequest) async
   func blockUser(principalId: String) async
   func log(event: VideoEventRequest) async
+  func fetchSmileys() async
+}
+
+extension FeedViewModelProtocol {
+  func fetchSmileys() async {}
 }

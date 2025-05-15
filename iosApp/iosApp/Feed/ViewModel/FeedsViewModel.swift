@@ -13,6 +13,9 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
   let moreFeedsUseCase: FetchMoreFeedsUseCaseProtocol
   let reportUseCase: ReportFeedsUseCaseProtocol
   let logEventUseCase: LogUploadEventUseCaseProtocol
+  let smileyConfigUseCase: SmileyUseCaseProtocol
+
+  private var smileys = [Smiley]()
   private var currentFeeds = [FeedResult]()
   private var filteredFeeds = [FeedResult]()
   private var feedvideoIDSet = Set<String>()
@@ -35,12 +38,14 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
     fetchFeedsUseCase: FetchInitialFeedsUseCaseProtocol,
     moreFeedsUseCase: FetchMoreFeedsUseCaseProtocol,
     reportUseCase: ReportFeedsUseCaseProtocol,
-    logEventUseCase: LogUploadEventUseCaseProtocol
+    logEventUseCase: LogUploadEventUseCaseProtocol,
+    smileyConfigUseCase: SmileyUseCaseProtocol
   ) {
     self.initialFeedsUseCase = fetchFeedsUseCase
     self.moreFeedsUseCase = moreFeedsUseCase
     self.reportUseCase = reportUseCase
     self.logEventUseCase = logEventUseCase
+    self.smileyConfigUseCase = smileyConfigUseCase
     self.unifiedEvent = .fetchingInitialFeeds
     isFetchingInitialFeeds = true
 
@@ -54,8 +59,13 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
         let unblockedFeeds = self.filteredFeeds.filter { !self.blockedPrincipalIDSet.contains($0.principalID) }
         guard !unblockedFeeds.isEmpty else { return }
         self.feedvideoIDSet.formUnion(unblockedFeeds.map { $0.videoID })
-        self.currentFeeds += unblockedFeeds
-        self.unifiedState = .success(feeds: unblockedFeeds)
+        let modifiedUnblockedFeeds = unblockedFeeds.map { item in
+          var modified = item
+          modified.smileyGame = SmileyGame(smileys: self.smileys, result: nil)
+          return modified
+        }
+        self.currentFeeds += modifiedUnblockedFeeds
+        self.unifiedState = .success(feeds: modifiedUnblockedFeeds)
       }
       .store(in: &cancellables)
   }
@@ -66,6 +76,19 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
 
   var unifiedEventPublisher: AnyPublisher<UnifiedFeedEvent?, Never> {
     $unifiedEvent.eraseToAnyPublisher()
+  }
+
+  @MainActor func fetchSmileys() async {
+    unifiedState = .loading
+    do {
+      let result = await smileyConfigUseCase.execute()
+      switch result {
+      case .success(let smileyConfig):
+        smileys = smileyConfig.smileys
+      case .failure(let error):
+        print(error.localizedDescription)
+      }
+    }
   }
 
   @MainActor func fetchFeeds(request: InitialFeedRequest) async {

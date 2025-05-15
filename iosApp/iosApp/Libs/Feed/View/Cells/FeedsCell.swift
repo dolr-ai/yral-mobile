@@ -29,9 +29,10 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   weak var delegate: FeedsCellProtocol?
   private let userDefaults = UserDefaults.standard
   private static let resultBottomSheetKey = "ResultBottomSheetKey"
+  private var smileyGame: SmileyGame?
 
   private var showResultBottomSheet: Bool {
-    userDefaults.integer(forKey: Self.resultBottomSheetKey) < 3 ? true : false
+    userDefaults.integer(forKey: Self.resultBottomSheetKey) < 1 ? true : false
   }
 
   private let playerContainerView = getUIImageView()
@@ -79,25 +80,12 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     return label
   }()
 
-  lazy var smileyGameView: UIView = {
-    let view = UIHostingController(rootView:
-                                    SmileyGameView(smileyTapped: { [weak self] smiley in
-      self?.handleSmileyTap(smiley)
-    },
-                                                   resultAnimationSubscriber: resultAnimationPublisher,
-                                                   initialStateSubscriber: initialStatePublisher
-                                                  ))
-    view.view.translatesAutoresizingMaskIntoConstraints = false
-    view.view.backgroundColor = .clear
-    return view.view
-  }()
+  var smileyGameHostController: UIHostingController<SmileyGameView>?
 
   let lottieView: LottieAnimationView = {
     let view = LottieAnimationView()
     view.translatesAutoresizingMaskIntoConstraints = false
     view.contentMode = .scaleAspectFit
-    view.loopMode = .playOnce
-    view.animationSpeed = 1.0
     return view
   }()
 
@@ -114,7 +102,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   var captionScrollViewHeightConstraint: NSLayoutConstraint!
 
   let resultAnimationPublisher = PassthroughSubject<SmileyGameResult, Never>()
-  let initialStatePublisher = PassthroughSubject<SmileyGameResult?, Never>()
+  let initialStatePublisher = PassthroughSubject<SmileyGame, Never>()
 
   private static func getActionButton(withTitle title: String, image: UIImage?) -> UIButton {
     var configuration = UIButton.Configuration.plain()
@@ -159,7 +147,6 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     setupProfileInfoView()
     setupStackView()
     setupCaptionLabel()
-    setupSmileyGameView()
 
     let cellTapGesture = UITapGestureRecognizer(target: self, action: #selector(handleCellTap))
     cellTapGesture.cancelsTouchesInView = false
@@ -250,6 +237,37 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     captionScrollView.addGestureRecognizer(captionTapGesture)
   }
 
+  private func setupSmileyGameView() {
+    if let game = smileyGame, game.smileys.count > 0 {
+      let smileyGameView = SmileyGameView(
+        smileyGame: game,
+        smileyTapped: { [weak self] smiley in
+          self?.handleSmileyTap(smiley)
+        },
+        resultAnimationSubscriber: resultAnimationPublisher,
+        initialStateSubscriber: initialStatePublisher
+      )
+
+      if let host = smileyGameHostController {
+        host.rootView = smileyGameView
+      } else {
+        let controller = UIHostingController(rootView: smileyGameView)
+        controller.view.backgroundColor = .clear
+        controller.view.translatesAutoresizingMaskIntoConstraints = false
+
+        contentView.addSubview(controller.view)
+        NSLayoutConstraint.activate([
+          controller.view.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+          controller.view.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+          controller.view.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -16),
+          controller.view.heightAnchor.constraint(equalToConstant: 64)
+        ])
+
+        smileyGameHostController = controller
+      }
+    }
+  }
+
   private func setupLottieView() {
     contentView.addSubview(lottieView)
     contentView.addSubview(smileyGameScoreLabel)
@@ -266,16 +284,6 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     ])
   }
 
-  private func setupSmileyGameView() {
-    contentView.addSubview(smileyGameView)
-    NSLayoutConstraint.activate([
-      smileyGameView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-      smileyGameView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
-      smileyGameView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -16),
-      smileyGameView.heightAnchor.constraint(equalToConstant: 64)
-    ])
-  }
-
   private func handleSmileyTap(_ smiley: Smiley) {
     delegate?.smileyTapped(index: index, smiley: smiley)
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
@@ -284,15 +292,9 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   }
 
   private func startFlowingAnimation(for smiley: Smiley) {
-    let animation = LottieAnimation.named("Smiley_Game_\(smiley.name)")
+    let animation = LottieAnimation.named("smiley_game_\(smiley.imageName)")
     lottieView.animation = animation
-    lottieView.play { [weak self] completed in
-      if completed {
-        // This animation will run after data is received from API
-        let result: SmileyGameResult = Int.random(in: 0...100) % 2 == 0 ? .winner(smiley, 30) : .looser(smiley, -10)
-        self?.startSmileyGamResultAnimation(for: result)
-      }
-    }
+    lottieView.play()
   }
 
   private func startSmileyGamResultAnimation(for result: SmileyGameResult) {
@@ -366,6 +368,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     withPlayer player: AVPlayer,
     feedInfo: FeedCellInfo,
     profileInfo: ProfileInfoView.ProfileInfo,
+    smileyGame: SmileyGame?,
     index: Int
   ) {
     if let lastThumbnailImage = feedInfo.lastThumbnailImage {
@@ -385,6 +388,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
 
     self.index = index
     self.feedType = feedInfo.feedType
+    self.smileyGame = smileyGame
 
     if feedInfo.feedType == .otherUsers {
       profileInfoView.set(data: profileInfo)
@@ -392,6 +396,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
       captionScrollView.isHidden = true
       actionsStackView.addArrangedSubview(reportButton)
       deleteButton.removeFromSuperview()
+      setupSmileyGameView()
     } else {
       reportButton.removeFromSuperview()
       actionsStackView.addArrangedSubview(deleteButton)
@@ -413,7 +418,9 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     lottieView.stop()
     smileyGameScoreLabel.transform = .identity
     smileyGameScoreLabel.isHidden = true
-    initialStatePublisher.send(nil)
+    if let game = smileyGame {
+      initialStatePublisher.send(game)
+    }
   }
 
   struct FeedCellInfo {

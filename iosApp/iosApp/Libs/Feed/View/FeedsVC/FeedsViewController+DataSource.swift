@@ -34,6 +34,7 @@ extension FeedsViewController {
             subtitle: feed.postDescription,
             coins: 2000
           ),
+          smileyGame: feed.smileyGame,
           index: indexPath.item
         )
       } else {
@@ -52,6 +53,7 @@ extension FeedsViewController {
             subtitle: feed.postDescription,
             coins: 2000
           ),
+          smileyGame: feed.smileyGame,
           index: indexPath.item
         )
       }

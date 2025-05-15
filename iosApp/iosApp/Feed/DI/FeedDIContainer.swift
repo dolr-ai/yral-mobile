@@ -14,6 +14,7 @@ final class FeedDIContainer {
     let httpService: HTTPService
     let authClient: AuthClient
     let crashReporter: CrashReporter
+    let smileyConfigUseCase: SmileyUseCaseProtocol
   }
 
   private let dependencies: Dependencies
@@ -55,7 +56,8 @@ final class FeedDIContainer {
       logEventUseCase: LogUploadEventUseCase(
         feedRepository: repository,
         crashReporter: dependencies.crashReporter
-      )
+      ),
+      smileyConfigUseCase: dependencies.smileyConfigUseCase
     )
   }
 }

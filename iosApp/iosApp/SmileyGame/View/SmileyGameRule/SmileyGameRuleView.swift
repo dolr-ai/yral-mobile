@@ -15,22 +15,22 @@ struct SmileyGameRuleView: View {
   let onDismiss: () -> Void
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 0) {
+    VStack(alignment: .leading, spacing: .zero) {
       if let gameRules = viewModel.smileyGameRuleResponse, showRules {
-        HStack(alignment: .center, spacing: 12) {
-          Image("chevron-left")
+        HStack(alignment: .center, spacing: Constants.hStackSpacing) {
+          Image(Constants.backImage)
             .resizable()
-            .frame(width: 24, height: 24)
-            .padding(.leading, 12)
+            .frame(width: Constants.backImageSize, height: Constants.backImageSize)
+            .padding(.leading, Constants.backImageLeadingPadding)
             .onTapGesture {
               onDismiss()
             }
 
-          Text("How to play?")
-            .font(YralFont.pt20.bold.swiftUIFont)
-            .foregroundColor(YralColor.grey0.swiftUIColor)
+          Text(Constants.screenTitle)
+            .font(Constants.screenFont)
+            .foregroundColor(Constants.screenTextColor)
         }
-        .padding(.bottom, 24)
+        .padding(.bottom, Constants.hStackBottomPadding)
 
         ScrollView {
           ForEach(gameRules, id: \.name) { rule in
@@ -62,6 +62,14 @@ struct SmileyGameRuleView: View {
 
 extension SmileyGameRuleView {
   enum Constants {
+    static let hStackSpacing = 12.0
+    static let hStackBottomPadding = 24.0
+    static let backImage = "chevron-left"
+    static let backImageSize = 24.0
+    static let backImageLeadingPadding = 12.0
+    static let screenTitle = "How to play?"
+    static let screenFont = YralFont.pt20.bold.swiftUIFont
+    static let screenTextColor = YralColor.grey0.swiftUIColor
     static let ruleHorizontalPadding = 16.0
     static let ruleBottomPadding = 20.0
     static let pageTopPadding = 12.0

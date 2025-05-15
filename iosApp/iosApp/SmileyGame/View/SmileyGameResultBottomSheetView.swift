@@ -19,7 +19,7 @@ struct SmileyGameResultBottomSheetView: View {
 
   var body: some View {
     ZStack(alignment: .bottom) {
-      Color.black.opacity(0.8)
+      Color.black.opacity(Constants.backgroundOpacity)
         .ignoresSafeArea()
         .onTapGesture {
           dismiss()
@@ -27,84 +27,84 @@ struct SmileyGameResultBottomSheetView: View {
         .transition(.opacity)
 
       if showBottomSheet {
-        VStack(spacing: 0) {
-          RoundedRectangle(cornerRadius: 1)
-            .frame(width: 32, height: 2)
-            .foregroundColor(YralColor.grey500.swiftUIColor)
-            .padding(.top, 12)
+        VStack(spacing: .zero) {
+          RoundedRectangle(cornerRadius: Constants.handleHeight / .two)
+            .frame(width: Constants.handleWidth, height: Constants.handleHeight)
+            .foregroundColor(Constants.handleColor)
+            .padding(.top, Constants.handleTopPadding)
 
           Text(gameResult.bottomSheetHeading)
-            .font(YralFont.pt18.bold.swiftUIFont)
-            .foregroundColor(YralColor.grey0.swiftUIColor)
-            .padding(.top, 28)
+            .font(Constants.headingFont)
+            .foregroundColor(Constants.headingTextColor)
+            .padding(.top, Constants.headingTopPadding)
 
           LottieView(
             name: gameResult.lottieName,
             loopMode: .playOnce,
             animationSpeed: .one
           ) {}
-            .frame(width: 250)
-            .frame(height: 130)
+            .frame(width: Constants.lottieWidht)
+            .frame(height: Constants.lottieHeight)
 
-          HStack(spacing: 8) {
+          HStack(spacing: Constants.hStackSpacing) {
             Text(gameResult.bottomSheetTitle)
-              .font(YralFont.pt16.medium.swiftUIFont)
-              .foregroundColor(YralColor.green50.swiftUIColor)
+              .font(Constants.titleFont)
+              .foregroundColor(Constants.titleTextColor)
 
             Image(gameResult.smiley.imageName)
               .resizable()
-              .frame(width: 28, height: 28)
+              .frame(width: Constants.imageViewSize, height: Constants.imageViewSize)
           }
 
           Text(gameResult.bottomSheetSubheading)
-            .font(YralFont.pt18.bold.swiftUIFont)
+            .font(Constants.subheadingFont)
             .foregroundColor(gameResult.bottomSheetSubheadingColor)
-            .padding(.top, 2)
+            .padding(.top, Constants.subheadingTopPadding)
 
-          HStack(spacing: 8) {
+          HStack(spacing: Constants.hStackSpacing) {
             Button {
               dismiss()
             } label: {
-              Text("Keep Playing")
-                .font(YralFont.pt16.semiBold.swiftUIFont)
-                .foregroundColor(YralColor.grey50.swiftUIColor)
+              Text(Constants.keepPlaying)
+                .font(Constants.keepPlayingFont)
+                .foregroundColor(Constants.keepPlayingTextColor)
                 .frame(maxWidth: .infinity)
-                .frame(height: 42)
+                .frame(height: Constants.ctaHeight)
                 .background(Constants.buttonGradient)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .clipShape(RoundedRectangle(cornerRadius: Constants.ctaCornerRadius))
             }
 
             Button {
               learnMore()
             } label: {
-              Text("Learn More")
-                .font(YralFont.pt16.semiBold.swiftUIFont)
-                .foregroundColor(YralColor.primary300.swiftUIColor)
+              Text(Constants.learnMore)
+                .font(Constants.learnMoreFont)
+                .foregroundColor(Constants.learnMoreTextColor)
                 .frame(maxWidth: .infinity)
-                .frame(height: 42)
+                .frame(height: Constants.ctaHeight)
                 .overlay(
-                  RoundedRectangle(cornerRadius: 8)
-                    .stroke(Constants.buttonGradient, lineWidth: 1)
+                  RoundedRectangle(cornerRadius: Constants.ctaCornerRadius)
+                    .stroke(Constants.buttonGradient, lineWidth: .one)
                 )
             }
           }
-          .padding(.top, 32)
-          .padding(.bottom, 16)
+          .padding(.top, Constants.hStackTopPadding)
+          .padding(.bottom, Constants.hStackBottomPadding)
         }
         .frame(maxWidth: .infinity, alignment: .bottom)
-        .padding(.horizontal, 16)
-        .background(YralColor.grey900.swiftUIColor)
+        .padding(.horizontal, Constants.vStackHorizontalPadding)
+        .background(Constants.backgroundColor)
         .offset(y: dragOffset)
         .gesture(
           DragGesture()
             .onChanged { value in
-              dragOffset = max(value.translation.height, 0)
+              dragOffset = max(value.translation.height, .zero)
             }
             .onEnded { value in
-              if value.translation.height > 100 {
+              if value.translation.height > Constants.bottomSheetDismissValue {
                 dismiss()
               } else {
-                withAnimation(.easeInOut(duration: 0.1)) {
+                withAnimation(.easeInOut(duration: Constants.bottomSheetDismissTime)) {
                   dragOffset = .zero
                 }
               }
@@ -114,7 +114,7 @@ struct SmileyGameResultBottomSheetView: View {
       }
     }
     .onAppear {
-      withAnimation(.easeInOut(duration: 0.3)) {
+      withAnimation(.easeInOut(duration: Constants.bottomSheetAppearTime)) {
         showBottomSheet = true
       }
     }
@@ -124,19 +124,19 @@ struct SmileyGameResultBottomSheetView: View {
   }
 
   private func dismiss() {
-    withAnimation(.easeInOut(duration: 0.3)) {
+    withAnimation(.easeInOut(duration: Constants.bottomSheetAppearTime)) {
       showBottomSheet = false
     }
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+    DispatchQueue.main.asyncAfter(deadline: .now() + Constants.bottomSheetAppearTime) {
       onKeepPlayingTapped()
     }
   }
 
   private func learnMore() {
-    withAnimation(.easeInOut(duration: 0.3)) {
+    withAnimation(.easeInOut(duration: Constants.bottomSheetAppearTime)) {
       showBottomSheet = false
     }
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+    DispatchQueue.main.asyncAfter(deadline: .now() + Constants.bottomSheetAppearTime) {
       onLearnMoreTapped()
     }
   }
@@ -144,6 +144,44 @@ struct SmileyGameResultBottomSheetView: View {
 
 extension SmileyGameResultBottomSheetView {
   enum Constants {
+    static let backgroundOpacity = 0.8
+    static let backgroundColor = YralColor.grey900.swiftUIColor
+    static let vStackHorizontalPadding = 16.0
+
+    static let handleWidth = 32.0
+    static let handleHeight = 2.0
+    static let handleColor = YralColor.grey500.swiftUIColor
+    static let handleTopPadding = 12.0
+
+    static let headingFont = YralFont.pt18.bold.swiftUIFont
+    static let headingTextColor = YralColor.grey0.swiftUIColor
+    static let headingTopPadding = 28.0
+
+    static let lottieWidht = 250.0
+    static let lottieHeight = 130.0
+
+    static let hStackSpacing = 8.0
+    static let hStackTopPadding = 32.0
+    static let hStackBottomPadding = 16.0
+
+    static let titleFont = YralFont.pt16.medium.swiftUIFont
+    static let titleTextColor = YralColor.green50.swiftUIColor
+    static let imageViewSize = 28.0
+
+    static let subheadingFont = YralFont.pt18.bold.swiftUIFont
+    static let subheadingTopPadding = 2.0
+
+    static let keepPlaying = "Keep Playing"
+    static let keepPlayingFont = YralFont.pt16.semiBold.swiftUIFont
+    static let keepPlayingTextColor = YralColor.grey50.swiftUIColor
+
+    static let learnMore = "Learn More"
+    static let learnMoreFont = YralFont.pt16.semiBold.swiftUIFont
+    static let learnMoreTextColor = YralColor.primary300.swiftUIColor
+
+    static let ctaHeight = 32.0
+    static let ctaCornerRadius = 8.0
+
     static let buttonGradient = LinearGradient(
       stops: [
         .init(color: Color(red: 1, green: 0.47, blue: 0.76), location: 0),
@@ -153,5 +191,65 @@ extension SmileyGameResultBottomSheetView {
       startPoint: .init(x: 0.94, y: 0.13),
       endPoint: .init(x: 0.35, y: 0.89)
     )
+
+    static let bottomSheetDismissValue = 100.0
+    static let bottomSheetDismissTime = 0.1
+    static let bottomSheetAppearTime = 0.3
+  }
+}
+
+extension SmileyGameResult {
+  var bottomSheetHeading: String {
+    switch self {
+    case .winner:
+      return "Congratulations!"
+    case .looser:
+      return "OOPS!!!"
+    }
+  }
+
+  var bottomSheetTitle: String {
+    switch self {
+    case .winner:
+      return "Since most people voted on"
+    case .looser:
+      return "Since most people didn't voted on"
+    }
+  }
+
+  var bottomSheetSubheading: String {
+    switch self {
+    case .winner(_, let points):
+      return "You Won \(abs(points)) Points"
+    case .looser(_, let points):
+      return "You Lost \(abs(points)) Points"
+    }
+  }
+
+  var bottomSheetSubheadingColor: Color {
+    switch self {
+    case .winner:
+      return YralColor.green300.swiftUIColor
+    case .looser:
+      return YralColor.red300.swiftUIColor
+    }
+  }
+
+  var lottieName: String {
+    switch self {
+    case .winner:
+      return "smiley_game_win"
+    case .looser:
+      return "smiley_game_lose"
+    }
+  }
+
+  var smiley: Smiley {
+    switch self {
+    case .winner(let smiley, _):
+      return smiley
+    case .looser(let smiley, _):
+      return smiley
+    }
   }
 }
