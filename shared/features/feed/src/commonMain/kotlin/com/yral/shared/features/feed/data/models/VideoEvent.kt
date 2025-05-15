@@ -1,4 +1,4 @@
-package com.yral.shared.features.feed.data
+package com.yral.shared.features.feed.data.models
 
 import com.yral.shared.analytics.events.VideoDurationWatchedEventData
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.NSFW_PROBABILITY

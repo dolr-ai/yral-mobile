@@ -34,7 +34,7 @@ class AnalyticsApiService(
                 )
             client.post {
                 url {
-                    host = AppConfigurations.ANALYTICS_BASE_URL
+                    host = AppConfigurations.OFF_CHAIN_BASE_URL
                     path(BULK_EVENTS_END_POINT)
                 }
                 contentType(ContentType.Application.Json)
