@@ -6,9 +6,11 @@ import com.yral.shared.analytics.AnalyticsManager
 import com.yral.shared.analytics.events.VideoDurationWatchedEventData
 import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.core.session.SessionManager
-import com.yral.shared.features.feed.data.toVideoEventData
+import com.yral.shared.features.feed.data.models.toVideoEventData
 import com.yral.shared.features.feed.useCases.FetchFeedDetailsUseCase
 import com.yral.shared.features.feed.useCases.FetchMoreFeedUseCase
+import com.yral.shared.features.feed.useCases.ReportRequestParams
+import com.yral.shared.features.feed.useCases.ReportVideoUseCase
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import com.yral.shared.rust.domain.models.FeedDetails
@@ -28,6 +30,7 @@ class FeedViewModel(
     private val sessionManager: SessionManager,
     private val fetchMoreFeedUseCase: FetchMoreFeedUseCase,
     private val fetchFeedDetailsUseCase: FetchFeedDetailsUseCase,
+    private val reportVideoUseCase: ReportVideoUseCase,
     private val analyticsManager: AnalyticsManager,
     private val preferences: Preferences,
 ) : ViewModel() {
@@ -251,6 +254,62 @@ class FeedViewModel(
             }
         }
     }
+
+    private suspend fun setLoading(isLoading: Boolean) {
+        _state.emit(
+            _state.value.copy(
+                isLoading = isLoading,
+            ),
+        )
+    }
+
+    fun reportVideo(
+        reason: VideoReportReason,
+        text: String,
+    ) {
+        coroutineScope
+            .launch {
+                val currentFeed = _state.value.feedDetails[_state.value.currentPageOfFeed]
+                setLoading(true)
+                reportVideoUseCase
+                    .invoke(
+                        parameter =
+                            ReportRequestParams(
+                                postId = currentFeed.postID,
+                                videoId = currentFeed.videoID,
+                                reason = text.ifEmpty { reason.reason },
+                                canisterID = currentFeed.canisterID,
+                                principal = currentFeed.principalID,
+                            ),
+                    ).mapBoth(
+                        success = {
+                            setLoading(false)
+                            toggleReportSheet(false)
+                            // show toast message
+                            // remove post from feed
+                        },
+                        failure = {
+                            setLoading(false)
+                            toggleReportSheet(true)
+                        },
+                    )
+            }
+    }
+
+    fun toggleReportSheet(isOpen: Boolean) {
+        coroutineScope.launch {
+            _state.emit(
+                _state.value.copy(
+                    reportSheetState =
+                        if (isOpen) {
+                            ReportSheetState.Open()
+                        } else {
+                            ReportSheetState.Closed
+                        },
+                ),
+            )
+        }
+    }
 }
 
 data class FeedState(
@@ -260,6 +319,8 @@ data class FeedState(
     val isLoadingMore: Boolean = false,
     val isPostDescriptionExpanded: Boolean = false,
     val videoData: VideoData = VideoData(),
+    val isLoading: Boolean = false,
+    val reportSheetState: ReportSheetState = ReportSheetState.Closed,
 )
 
 data class VideoData(
@@ -269,6 +330,30 @@ data class VideoData(
     val lastKnownTotalTime: Int = 0,
     val isFirstTimeUpdate: Boolean = true,
 )
+
+sealed interface ReportSheetState {
+    data object Closed : ReportSheetState
+    data class Open(
+        val reasons: List<VideoReportReason> =
+            listOf(
+                VideoReportReason.NUDITY_PORN,
+                VideoReportReason.VIOLENCE,
+                VideoReportReason.OFFENSIVE,
+                VideoReportReason.SPAM,
+                VideoReportReason.OTHERS,
+            ),
+    ) : ReportSheetState
+}
+
+enum class VideoReportReason(
+    val reason: String,
+) {
+    NUDITY_PORN("Nudity / Porn"),
+    VIOLENCE("Violence / Gore"),
+    OFFENSIVE("Offensive"),
+    SPAM("Spam / Ad"),
+    OTHERS("Others"),
+}
 
 /**
  * Extension function to calculate percentage of a value relative to total
