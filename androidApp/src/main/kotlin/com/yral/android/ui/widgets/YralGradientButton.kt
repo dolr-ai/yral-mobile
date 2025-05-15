@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -16,6 +18,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
+import com.yral.android.ui.design.YralColors
 
 @Composable
 fun YralGradientButton(
@@ -40,19 +43,32 @@ fun YralGradientButton(
         horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        YralMaskedVectorText(
-            text = text,
-            vectorRes = getButtonTextBackground(buttonType, buttonState),
-            textStyle =
-                LocalAppTopography
-                    .current
-                    .mdBold
-                    .plus(
-                        TextStyle(
-                            textAlign = TextAlign.Center,
+        if (buttonState != YralButtonState.Loading) {
+            YralMaskedVectorText(
+                text = text,
+                vectorRes = getButtonTextBackground(buttonType, buttonState),
+                textStyle =
+                    LocalAppTopography
+                        .current
+                        .mdBold
+                        .plus(
+                            TextStyle(
+                                textAlign = TextAlign.Center,
+                            ),
                         ),
-                    ),
-        )
+            )
+        } else {
+            CircularProgressIndicator(
+                modifier = Modifier.size(20.dp),
+                color =
+                    if (buttonType == YralButtonType.Pink) {
+                        YralColors.Neutral50
+                    } else {
+                        YralColors.Pink300
+                    },
+                trackColor = YralColors.Pink50,
+            )
+        }
     }
 }
 
