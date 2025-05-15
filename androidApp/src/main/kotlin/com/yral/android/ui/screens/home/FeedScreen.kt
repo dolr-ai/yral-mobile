@@ -51,6 +51,7 @@ import com.yral.android.ui.design.YralBottomSheet
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.home.FeedScreenConstants.MAX_LINES_FOR_POST_DESCRIPTION
 import com.yral.android.ui.widgets.YralButtonState
+import com.yral.android.ui.widgets.YralButtonType
 import com.yral.android.ui.widgets.YralGradientButton
 import com.yral.android.ui.widgets.YralLoader
 import com.yral.shared.features.feed.useCases.GetInitialFeedUseCase.Companion.INITIAL_REQUEST
@@ -361,13 +362,12 @@ private fun VideoReportSheet(
 ) {
     var selectedReason by remember { mutableStateOf<VideoReportReason?>(null) }
     var text by remember { mutableStateOf("") }
-    var buttonState =
-        if (isLoading) {
-            YralButtonState.Loading
-        } else if (selectedReason != null) {
-            YralButtonState.Enabled
-        } else {
-            YralButtonState.Disabled
+    val buttonState =
+        when {
+            isLoading -> YralButtonState.Loading
+            selectedReason == null -> YralButtonState.Disabled
+            selectedReason == VideoReportReason.OTHERS && text.isEmpty() -> YralButtonState.Disabled
+            else -> YralButtonState.Enabled
         }
     YralBottomSheet(
         onDismissRequest = onDismissRequest,
@@ -396,6 +396,7 @@ private fun VideoReportSheet(
             }
             YralGradientButton(
                 text = stringResource(R.string.submit),
+                buttonType = YralButtonType.White,
                 buttonState = buttonState,
             ) {
                 selectedReason?.let {
