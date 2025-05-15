@@ -285,8 +285,37 @@ class FeedViewModel(
                         success = {
                             setLoading(false)
                             toggleReportSheet(false)
-                            // show toast message
-                            // remove post from feed
+                            // Remove post from feed
+                            val updatedPosts = _state.value.posts.toMutableList()
+                            val updatedFeedDetails = _state.value.feedDetails.toMutableList()
+
+                            // Find and remove the post with matching videoID
+                            val postIndex =
+                                updatedPosts.indexOfFirst { it.videoID == currentFeed.videoID }
+                            if (postIndex != -1) {
+                                updatedPosts.removeAt(postIndex)
+                            }
+
+                            // Find and remove the feed detail with matching videoID
+                            val feedDetailIndex =
+                                updatedFeedDetails.indexOfFirst { it.videoID == currentFeed.videoID }
+                            if (feedDetailIndex != -1) {
+                                updatedFeedDetails.removeAt(feedDetailIndex)
+                            }
+
+                            // Update state with modified lists
+                            _state.emit(
+                                _state.value.copy(
+                                    posts = updatedPosts,
+                                    feedDetails = updatedFeedDetails,
+                                    // Adjust current page if necessary to prevent out of bounds
+                                    currentPageOfFeed =
+                                        minOf(
+                                            _state.value.currentPageOfFeed,
+                                            updatedFeedDetails.size - 1,
+                                        ).coerceAtLeast(0),
+                                ),
+                            )
                         },
                         failure = {
                             setLoading(false)
