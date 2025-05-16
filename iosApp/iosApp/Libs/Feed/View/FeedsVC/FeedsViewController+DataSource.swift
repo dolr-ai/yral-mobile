@@ -34,6 +34,7 @@ extension FeedsViewController {
             subtitle: feed.postDescription,
             coins: 2000
           ),
+          smileyGame: feed.smileyGame,
           index: indexPath.item
         )
       } else {
@@ -52,6 +53,7 @@ extension FeedsViewController {
             subtitle: feed.postDescription,
             coins: 2000
           ),
+          smileyGame: feed.smileyGame,
           index: indexPath.item
         )
       }
@@ -106,6 +108,26 @@ extension FeedsViewController {
         }
         return false
       }()
+    }
+  }
+
+  func handleCastVote(_ response: SmileyGameResultResponse) {
+    var snapshot = feedsDataSource.snapshot()
+    var items = snapshot.itemIdentifiers
+    guard let index = items.firstIndex(where: { $0.videoID == response.videoID }) else {
+      return
+    }
+
+    guard let cell = feedsCV.cellForItem(at: IndexPath(item: index, section: 0)) as? FeedsCell else {
+      return
+    }
+
+    cell.startSmileyGamResultAnimation(for: response) { [weak self] in
+      items[index].smileyGame?.result = response
+
+      snapshot.deleteItems(snapshot.itemIdentifiers)
+      snapshot.appendItems(items)
+      self?.feedsDataSource.apply(snapshot, animatingDifferences: false)
     }
   }
 

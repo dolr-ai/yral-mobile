@@ -31,6 +31,8 @@ enum UnifiedFeedEvent: Equatable {
   case reportSuccess(String)
   case reportFailed(Error)
   case blockedUser(String)
+  case castVoteSuccess(SmileyGameResultResponse)
+  case castVoteFailure(errorMessage: String)
 
   static func == (lhs: UnifiedFeedEvent, rhs: UnifiedFeedEvent) -> Bool {
     switch (lhs, rhs) {
@@ -70,4 +72,11 @@ protocol FeedViewModelProtocol: ObservableObject {
   func report(request: ReportRequest) async
   func blockUser(principalId: String) async
   func log(event: VideoEventRequest) async
+  func fetchSmileys() async
+  func castVote(request: CastVoteQuery) async
+}
+
+extension FeedViewModelProtocol {
+  func fetchSmileys() async {}
+  func castVote(request: CastVoteQuery) async {}
 }

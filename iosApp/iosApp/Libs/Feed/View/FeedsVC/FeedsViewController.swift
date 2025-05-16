@@ -68,6 +68,9 @@ class FeedsViewController: UIViewController {
     setupNavigationBar()
     setupUI()
     Task { @MainActor in
+      if feedType == .otherUsers {
+        await viewModel.fetchSmileys()
+      }
       await viewModel.fetchFeeds(request: InitialFeedRequest(numResults: Constants.initialNumResults))
     }
     NotificationCenter.default.addObserver(
@@ -125,6 +128,10 @@ class FeedsViewController: UIViewController {
       .sink { [weak self] event in
         guard let self = self, let event = event else { return }
         switch event {
+        case .castVoteSuccess(let response):
+          self.handleCastVote(response)
+        case .castVoteFailure(let errorMessage):
+          print("Cast vote failed: \(errorMessage)")
         case .fetchingInitialFeeds:
           loadMoreRequestMade = true
         case .loadedMoreFeeds:

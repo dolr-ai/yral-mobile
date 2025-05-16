@@ -57,13 +57,43 @@ final class AppDIContainer {
     )
   }()
 
+  lazy var smileyConfigRepository: SmileyRepositoryProtocol = {
+    SmileyRepository(
+      firebaseService: FirebaseService()
+    )
+  }()
+
+  lazy var smileyConfigUseCase: SmileyUseCaseProtocol = {
+    SmileyUseCase(
+      repository: smileyConfigRepository,
+      crashReporter: crashReporter
+    )
+  }()
+
+  lazy var castVoteRepository: CastVoteRepositoryProtocol = {
+    CastVoteRepository(
+      firebaseService: FirebaseService(),
+      httpService: HTTPService(baseURLString: appConfiguration.firebaseBaseURLString),
+      authClient: authClient
+    )
+  }()
+
+  lazy var castVoteUseCase: CastVoteUseCaseProtocol = {
+    CastVoteUseCase(
+      castVoteRepository: castVoteRepository,
+      crashReporter: crashReporter
+    )
+  }()
+
   func makeFeedDIContainer() -> FeedDIContainer {
     return FeedDIContainer(
       dependencies: FeedDIContainer.Dependencies(
         mlfeedService: mlFeedClient,
         httpService: HTTPService(baseURLString: appConfiguration.offchainBaseURLString),
         authClient: authClient,
-        crashReporter: crashReporter
+        crashReporter: crashReporter,
+        smileyConfigUseCase: smileyConfigUseCase,
+        castVoteUseCase: castVoteUseCase
       )
     )
   }

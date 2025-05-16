@@ -9,99 +9,8 @@
 import SwiftUI
 import Combine
 
-struct Smiley {
-  let id: String
-  let name: String
-  let imageName: String
-}
-
-enum SmileyGameResult {
-  case winner(Smiley, Int)
-  case looser(Smiley, Int)
-}
-
-extension SmileyGameResult {
-  var bottomSheetHeading: String {
-    switch self {
-    case .winner:
-      return "Congratulations!"
-    case .looser:
-      return "OOPS!!!"
-    }
-  }
-
-  var bottomSheetTitle: String {
-    switch self {
-    case .winner:
-      return "Since most people voted on"
-    case .looser:
-      return "Since most people didn't voted on"
-    }
-  }
-
-  var bottomSheetSubheading: String {
-    switch self {
-    case .winner(_, let points):
-      return "You Won \(abs(points)) Points"
-    case .looser(_, let points):
-      return "You Lost \(abs(points)) Points"
-    }
-  }
-
-  var bottomSheetSubheadingColor: Color {
-    switch self {
-    case .winner:
-      return YralColor.green300.swiftUIColor
-    case .looser:
-      return YralColor.red300.swiftUIColor
-    }
-  }
-
-  var lottieName: String {
-    switch self {
-    case .winner:
-      return "Smiley_Game_Win"
-    case .looser:
-      return "Smiley_Game_Lose"
-    }
-  }
-
-  var smiley: Smiley {
-    switch self {
-    case .winner(let smiley, _):
-      return smiley
-    case .looser(let smiley, _):
-      return smiley
-    }
-  }
-}
-
-struct SmileyGame {
-  var smileys: [Smiley]
-  var myResult: SmileyGameResult?
-}
-
 struct SmileyGameView: View {
-  @State private var smileyGame: SmileyGame = SmileyGame(
-    smileys: [
-      Smiley(id: "laugh",
-             name: "Laugh",
-             imageName: "laugh"),
-      Smiley(id: "heart",
-             name: "Heart",
-             imageName: "heart"),
-      Smiley(id: "fire",
-             name: "Fire",
-             imageName: "fire"),
-      Smiley(id: "surprise",
-             name: "Surprise",
-             imageName: "surprise"),
-      Smiley(id: "rocket",
-             name: "Rocket",
-             imageName: "rocket")
-    ],
-    myResult: nil
-  )
+  @State var smileyGame: SmileyGame
 
   @State private var selectedID: String?
   @State private var isPopped = false
@@ -109,35 +18,38 @@ struct SmileyGameView: View {
   @State private var showWinnerOnly = false
 
   let smileyTapped: (Smiley) -> Void
-  let resultAnimationSubscriber: PassthroughSubject<SmileyGameResult, Never>
-  let initialStateSubscriber: PassthroughSubject<SmileyGameResult?, Never>
+  let resultAnimationSubscriber: PassthroughSubject<SmileyGameResultResponse, Never>
+  let initialStateSubscriber: PassthroughSubject<SmileyGame, Never>
 
   var body: some View {
-    HStack(spacing: 0) {
-      if let result = smileyGame.myResult {
+    HStack(spacing: Constants.zero) {
+      if let result = smileyGame.result {
         resultView(for: result)
       } else {
         ForEach(smileyGame.smileys, id: \.id) { smiley in
           Image(smiley.imageName)
             .resizable()
-            .frame(width: 48, height: 48)
+            .frame(width: Constants.smileySize, height: Constants.smileySize)
             .opacity(
-              (!isFocused || smiley.id == selectedID) ? 1 : 0
+              (!isFocused || smiley.id == selectedID) ? Constants.one : Constants.zero
             )
             .scaleEffect(
-              (smiley.id == selectedID && isPopped) ? 1.17 : 1
+              (smiley.id == selectedID && isPopped) ? Constants.smileyScale : Constants.one
             )
-            .shadow(color: (smiley.id == selectedID && isPopped) ? Color.white.opacity(0.25) : Color.white.opacity(0),
-                    radius: (smiley.id == selectedID && isPopped) ? 5 : 0,
-                    x: (smiley.id == selectedID && isPopped) ? -1 : 0,
-                    y: 0)
+            .shadow(
+              color: (smiley.id == selectedID && isPopped) ?
+              Color.white.opacity(Constants.shadownOpacity) : Color.white.opacity(.zero),
+              radius: (smiley.id == selectedID && isPopped) ? Constants.shadowRadius : Constants.zero,
+              x: (smiley.id == selectedID && isPopped) ? -Constants.one : Constants.zero,
+              y: Constants.zero
+            )
             .rotationEffect(getRotation(for: smiley))
-            .animation(.easeOut(duration: 0.2), value: selectedID)
-            .animation(.easeOut(duration: 0.1), value: isFocused)
-            .animation(.easeOut(duration: 0.3), value: showWinnerOnly)
+            .animation(.easeOut(duration: Constants.durationPointTwo), value: selectedID)
+            .animation(.easeOut(duration: Constants.durationPointOne), value: isFocused)
+            .animation(.easeOut(duration: Constants.durationPointThree), value: showWinnerOnly)
             .onTapGesture {
               if selectedID == nil {
-                AudioPlayer.shared.play(named: "smiley_tap")
+                AudioPlayer.shared.play(named: Constants.smileyTapAudio)
                 smileyTapped(smiley)
                 selectedID = smiley.id
                 startPopAnimation(for: smiley)
@@ -146,132 +58,124 @@ struct SmileyGameView: View {
             .onReceive(resultAnimationSubscriber) { result in
               startAnimation(for: result)
             }
-            .padding(.vertical, 8)
+            .padding(.vertical, Constants.smileyVerticalPadding)
 
           if smiley.id != smileyGame.smileys.last?.id {
-            Spacer(minLength: 16)
+            Spacer(minLength: Constants.smileySpacer)
           }
         }
       }
     }
-    .onReceive(initialStateSubscriber) { result in
-      setInitialState(with: result)
+    .onReceive(initialStateSubscriber) { game in
+      setInitialState(with: game)
     }
-    .frame(height: 64)
+    .frame(height: Constants.viewHeight)
     .frame(maxWidth: .infinity, alignment: .leading)
-    .padding(.horizontal, 16)
+    .padding(.horizontal, Constants.viewHorizontalPadding)
     .background(
-      YralColor.grey950.swiftUIColor.opacity(0.4)
+      Constants.viewBackground.opacity(Constants.viewOpacity)
     )
-    .clipShape(RoundedRectangle(cornerRadius: 32))
+    .clipShape(RoundedRectangle(cornerRadius: Constants.viewHeight / Constants.two))
   }
 
-  @ViewBuilder func resultView(for result: SmileyGameResult) -> some View {
-    switch result {
-    case .winner(let smiley, let points):
-      Image(smiley.imageName)
-        .frame(width: 48, height: 48)
-        .clipShape(Circle())
-        .padding(.vertical, 8)
-        .padding(.trailing, 12)
+  @ViewBuilder func resultView(for result: SmileyGameResultResponse) -> some View {
+    Image(result.smiley.imageName)
+      .frame(width: Constants.smileySize, height: Constants.smileySize)
+      .clipShape(Circle())
+      .padding(.vertical, Constants.smileyVerticalPadding)
+      .padding(.trailing, Constants.smileyTrailingPadding)
 
-      VStack(alignment: .leading, spacing: 2) {
-        Text("\(smiley.name) was the most people choice.")
-          .font(YralFont.pt16.bold.swiftUIFont)
-          .lineLimit(1)
-          .minimumScaleFactor(0.5)
-          .allowsTightening(true)
-          .foregroundColor(YralColor.green50.swiftUIColor)
+    VStack(alignment: .leading, spacing: Constants.two) {
+      Text(result.outcome == "WIN" ?
+           "\(result.smiley.imageName.capitalized) was the most people choice." :
+            "Not the most popular pick!")
+      .font(YralFont.pt16.bold.swiftUIFont)
+      .lineLimit(Constants.textLineLimit)
+      .minimumScaleFactor(Constants.textMinScale)
+      .allowsTightening(true)
+      .foregroundColor(YralColor.green50.swiftUIColor)
 
-        Text("You win \(abs(points)) Points!")
-          .font(YralFont.pt16.bold.swiftUIFont)
-          .lineLimit(1)
-          .minimumScaleFactor(0.5)
-          .allowsTightening(true)
-          .foregroundColor(YralColor.green300.swiftUIColor)
-      }
-    case .looser(let smiley, let points):
-      Image(smiley.imageName)
-        .frame(width: 48, height: 48)
-        .clipShape(Circle())
-        .padding(.vertical, 8)
-        .padding(.trailing, 12)
-
-      VStack(alignment: .leading, spacing: 2) {
-        Text("Not the most popular pick!")
-          .font(YralFont.pt16.bold.swiftUIFont)
-          .lineLimit(1)
-          .minimumScaleFactor(0.5)
-          .allowsTightening(true)
-          .foregroundColor(YralColor.green50.swiftUIColor)
-
-        Text("You lost \(abs(points)) Points")
-          .font(YralFont.pt16.bold.swiftUIFont)
-          .lineLimit(1)
-          .minimumScaleFactor(0.5)
-          .allowsTightening(true)
-          .foregroundColor(YralColor.red300.swiftUIColor)
-      }
+      Text(result.outcome == "WIN" ?
+           "You win \(abs(result.coinDelta)) Points!" :
+            "You lost \(abs(result.coinDelta)) Points")
+      .font(YralFont.pt16.bold.swiftUIFont)
+      .lineLimit(Constants.textLineLimit)
+      .minimumScaleFactor(Constants.textMinScale)
+      .allowsTightening(true)
+      .foregroundColor(result.outcome == "WIN" ? YralColor.green300.swiftUIColor : YralColor.red300.swiftUIColor)
     }
   }
 
   private func getRotation(for smiley: Smiley) -> Angle {
-    (smiley.id == selectedID && isPopped) ? Angle(degrees: -15.53) : Angle(degrees: 0)
+    (smiley.id == selectedID && isPopped) ? Angle(degrees: -Constants.smileyRotation) : Angle(degrees: Constants.zero)
   }
 
-  private func setInitialState(with result: SmileyGameResult?) {
+  private func setInitialState(with game: SmileyGame) {
     selectedID = nil
     isPopped = false
     isFocused = false
     showWinnerOnly = false
-    smileyGame = SmileyGame(
-      smileys: [
-        Smiley(id: "laugh",
-               name: "Laugh",
-               imageName: "laugh"),
-        Smiley(id: "heart",
-               name: "Heart",
-               imageName: "heart"),
-        Smiley(id: "fire",
-               name: "Fire",
-               imageName: "fire"),
-        Smiley(id: "surprise",
-               name: "Surprise",
-               imageName: "surprise"),
-        Smiley(id: "rocket",
-               name: "Rocket",
-               imageName: "rocket")
-      ],
-      myResult: nil
-    )
+    smileyGame = game
   }
 
   private func startPopAnimation(for smiley: Smiley) {
     isPopped = true
 
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-      withAnimation(.easeOut(duration: 0.2)) {
+    DispatchQueue.main.asyncAfter(deadline: .now() + Constants.durationPointSix) {
+      withAnimation(.easeOut(duration: Constants.durationPointTwo)) {
         isPopped = false
       }
     }
   }
 
-  private func startAnimation(for result: SmileyGameResult) {
+  private func startAnimation(for result: SmileyGameResultResponse) {
     isFocused = true
 
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+    DispatchQueue.main.asyncAfter(deadline: .now() + Constants.durationPointOne) {
       guard let id = selectedID,
             let index = smileyGame.smileys.firstIndex(where: { $0.id == id })
       else {
         return
       }
 
-      smileyGame.smileys.move(fromOffsets: IndexSet(integer: index), toOffset: 0)
+      smileyGame.smileys.move(fromOffsets: IndexSet(integer: index), toOffset: .zero)
       showWinnerOnly = true
     }
 
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-      smileyGame.myResult = result
+    DispatchQueue.main.asyncAfter(deadline: .now() + Constants.durationPointFour) {
+      smileyGame.result = result
     }
+  }
+}
+
+extension SmileyGameView {
+  enum Constants {
+    static let smileySize = 48.0
+    static let smileyScale = 1.17
+    static let smileyVerticalPadding = 8.0
+    static let smileyTrailingPadding = 12.0
+    static let smileySpacer = 16.0
+    static let smileyRotation = 15.53
+    static let shadownOpacity = 0.25
+    static let shadowRadius = 5.0
+
+    static let zero = 0.0
+    static let one = 1.0
+    static let two = 2.0
+    static let durationPointOne = 0.1
+    static let durationPointTwo = 0.2
+    static let durationPointThree = 0.3
+    static let durationPointFour = 0.4
+    static let durationPointSix = 0.6
+
+    static let smileyTapAudio = "smiley_tap"
+
+    static let textLineLimit = 1
+    static let textMinScale = 0.5
+
+    static let viewHeight = 64.0
+    static let viewHorizontalPadding = 16.0
+    static let viewBackground = YralColor.grey950.swiftUIColor
+    static let viewOpacity = 0.4
   }
 }

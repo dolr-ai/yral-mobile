@@ -9,8 +9,6 @@ import UIKit
 import SwiftUI
 
 extension FeedsViewController: FeedsCellProtocol {
-  func smileyTapped(index: Int, smiley: Smiley) {}
-
   func makeSmileyGameRulesDIContainer() -> SmileyGameRuleDIContainer {
     return SmileyGameRuleDIContainer(
       dependencies: SmileyGameRuleDIContainer.Dependencies(
@@ -20,7 +18,7 @@ extension FeedsViewController: FeedsCellProtocol {
     )
   }
 
-  func showGameResultBottomSheet(index: Int, gameResult: SmileyGameResult) {
+  func showGameResultBottomSheet(index: Int, gameResult: SmileyGameResultResponse) {
     var hostingController: UIHostingController<SmileyGameResultBottomSheetView>?
     let bottomSheetView = SmileyGameResultBottomSheetView(
       gameResult: gameResult) {
@@ -60,6 +58,17 @@ extension FeedsViewController: FeedsCellProtocol {
       self.activityIndicator.stopAnimating()
     }
   }
+
+  func smileyTapped(index: Int, smiley: Smiley) {
+    let item = feedsDataSource.snapshot().itemIdentifiers[index]
+    let videoID = item.videoID
+    let smileyID = smiley.id
+
+    Task { @MainActor in
+      await self.viewModel.castVote(request: CastVoteQuery(videoID: videoID, smileyID: smileyID))
+    }
+  }
+
 
   func deleteButtonTapped(index: Int) {
     getNudgeView(at: index, isDelete: true)
