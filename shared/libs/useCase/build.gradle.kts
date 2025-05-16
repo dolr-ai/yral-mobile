@@ -3,7 +3,6 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
-    alias(libs.plugins.kotlinxSerialisartion)
     alias(libs.plugins.gobleyRust)
 }
 
@@ -25,19 +24,12 @@ kotlin {
 //    }
 
     sourceSets {
-        androidMain.dependencies {
-        }
         commonMain.dependencies {
-            api(libs.ktor.client.core)
-            api(libs.ktor.client.cio)
-            api(libs.ktor.client.logging)
-            api(libs.ktor.client.content.negotiation)
-            api(libs.ktor.json)
-            api(libs.kotlinx.datetime)
+            api(libs.kotlinx.coroutines.core)
+            api(libs.kotlinResult.core)
+            api(libs.kotlinResult.coroutines)
 
-            implementation(projects.shared.libs.preferences)
-            implementation(projects.shared.libs.koin)
-            implementation(projects.shared.core)
+            implementation(projects.shared.libs.crashlytics)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -46,7 +38,7 @@ kotlin {
 }
 
 android {
-    namespace = "com.yral.shared.http"
+    namespace = "com.yral.shared.libs.useCase"
     compileSdk = libs.versions.compileSDK.get().toInt()
     defaultConfig {
         minSdk = libs.versions.minSDK.get().toInt()
