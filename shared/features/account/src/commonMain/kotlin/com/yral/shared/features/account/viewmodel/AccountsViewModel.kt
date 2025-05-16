@@ -152,6 +152,12 @@ class AccountsViewModel(
                     openInExternalBrowser = true,
                 ),
             )
+            links.add(
+                AccountHelpLink(
+                    link = DELETE_ACCOUNT_URI,
+                    openInExternalBrowser = true,
+                ),
+            )
         }
         return links
     }
@@ -177,6 +183,7 @@ class AccountsViewModel(
 
     companion object {
         const val LOGOUT_URI = "yral://logout"
+        const val DELETE_ACCOUNT_URI = "yral://deleteAccount"
         const val TALK_TO_TEAM_URL = "https://t.me/+c-LTX0Cp-ENmMzI1"
         const val TERMS_OF_SERVICE_URL = "https://yral.com/terms-ios"
         const val PRIVACY_POLICY_URL = "https://yral.com/privacy-policy"
@@ -203,8 +210,10 @@ sealed interface AccountBottomSheet {
     data class ShowWebView(
         val linkToOpen: Pair<String, Boolean>,
     ) : AccountBottomSheet
+
     data object SignUpFailed : AccountBottomSheet
     data object SingUp : AccountBottomSheet
+    data object DeleteAccount : AccountBottomSheet
 }
 
 data class AccountInfo(
