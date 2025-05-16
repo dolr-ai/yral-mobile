@@ -109,17 +109,6 @@ extension FeedsViewController {
     }
   }
 
-  func toggleLikeStatus(_ response: LikeResult) {
-    var snapshot = feedsDataSource.snapshot()
-    var items = snapshot.itemIdentifiers
-    items[response.index].isLiked = response.status
-    items[response.index].likeCount += response.status ? .one : -.one
-
-    snapshot.deleteItems(snapshot.itemIdentifiers)
-    snapshot.appendItems(items)
-    feedsDataSource.apply(snapshot, animatingDifferences: false)
-  }
-
   func removeFeeds(with feeds: [FeedResult], isReport: Bool = false, animated: Bool = false) {
     for feed in feeds {
       lastDisplayedThumbnailPath.removeValue(forKey: feed.videoID)

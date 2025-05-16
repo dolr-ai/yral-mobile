@@ -14,7 +14,6 @@ final class FeedDIContainer {
     let httpService: HTTPService
     let authClient: AuthClient
     let crashReporter: CrashReporter
-    let toggleLikeUseCase: ToggleLikeUseCaseProtocol
   }
 
   private let dependencies: Dependencies
@@ -49,7 +48,6 @@ final class FeedDIContainer {
         feedRepository: repository,
         crashReporter: dependencies.crashReporter
       ),
-      likeUseCase: dependencies.toggleLikeUseCase,
       reportUseCase: ReportFeedsUseCase(
         feedRepository: repository,
         crashReporter: dependencies.crashReporter
