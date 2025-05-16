@@ -27,20 +27,31 @@ final class FeedsPlayer: YralPlayer {
   var didEmptyFeeds: (() -> Void)?
   var onPlayerItemsChanged: ((String?, Int) -> Void)?
   weak var delegate: FeedsPlayerProtocol?
+  private let networkMonitor: NetworkMonitorProtocol
+
+  private var preloadRadius: Int {
+    networkMonitor.isGoodForPrefetch ? Constants.radius : .one
+  }
 
   private var timeObserver: Any?
   private var startLogged = Set<Int>()
   private var finishLogged = Set<Int>()
 
-  init(player: YralQueuePlayer = AVQueuePlayer(), hlsDownloadManager: HLSDownloadManaging) {
+  init(
+    player: YralQueuePlayer = AVQueuePlayer(),
+    hlsDownloadManager: HLSDownloadManaging,
+    networkMonitor: NetworkMonitorProtocol
+  ) {
     self.player = player
     self.hlsDownloadManager = hlsDownloadManager
+    self.networkMonitor = networkMonitor
     NotificationCenter.default.addObserver(
       self,
       selector: #selector(handleEULAAccepted(_:)),
       name: .eulaAcceptedChanged,
       object: nil
     )
+    networkMonitor.startMonitoring()
   }
 
   func loadInitialVideos(_ feeds: [FeedResult]) {
@@ -65,7 +76,7 @@ final class FeedsPlayer: YralPlayer {
 
   func addFeedResults(_ feeds: [FeedResult]) {
     self.feedResults += feeds
-    if self.feedResults.count <= Constants.radius {
+    if self.feedResults.count <= preloadRadius {
       Task {
         await preloadFeeds()
       }
@@ -122,10 +133,8 @@ final class FeedsPlayer: YralPlayer {
       let currentVideoID = feedResults[currentIndex].videoID
       lastPlayedTimes[currentVideoID] = currentTime
     }
-    if abs(index - currentIndex) > Constants.radius {
-      Task {
-        await cancelPreloadOutsideRange(center: index, radius: Constants.radius)
-      }
+    Task {
+      await cancelPreloadOutsideRange(center: index, radius: preloadRadius)
     }
 
     startLogged.remove(index)
@@ -133,6 +142,8 @@ final class FeedsPlayer: YralPlayer {
 
     currentIndex = index
     Task {
+      let feed = feedResults[index]
+      await self.hlsDownloadManager.elevatePriority(for: feed.url)
       let currentVideoID = feedResults[index].videoID
       if let preloadedItem = playerItems[currentVideoID] {
         startLooping(with: preloadedItem)
@@ -219,9 +230,9 @@ final class FeedsPlayer: YralPlayer {
   }
 
   private func preloadFeeds() async {
-    guard !feedResults.isEmpty, currentIndex < feedResults.count else { return }
-    let endIndex = min(feedResults.count, currentIndex + Constants.radius)
-    for index in currentIndex..<endIndex {
+    guard !feedResults.isEmpty, currentIndex + .one < feedResults.count else { return }
+    let endIndex = min(feedResults.count, currentIndex + preloadRadius)
+    for index in currentIndex + .one..<endIndex {
       guard feedResults.indices.contains(index) else { continue }
       let feed = feedResults[index]
       let videoID = feed.videoID
@@ -280,10 +291,10 @@ final class FeedsPlayer: YralPlayer {
     guard index < feedResults.count else { return nil }
     let feed = feedResults[index]
     let videoID = feed.videoID
-    if let localAsset = await hlsDownloadManager.createLocalAssetIfAvailable(for: feed.url) {
+    if let asset = await hlsDownloadManager.localOrInflightAsset(for: feed.url) {
       do {
-        try await localAsset.loadPlayableAsync()
-        let item = AVPlayerItem(asset: localAsset)
+        try await asset.loadPlayableAsync()
+        let item = AVPlayerItem(asset: asset)
         playerItems[videoID] = item
         return item
       } catch {
@@ -327,10 +338,10 @@ protocol FeedsPlayerProtocol: AnyObject {
 
 extension FeedsPlayer {
   enum Constants {
-    static let radius = 5
     static let videoDurationEventMinThreshold = 0.05
     static let videoDurationEventMaxThreshold = 0.95
     static let timescaleEventSamping = 600.0
+    static let radius = 5
   }
 }
 

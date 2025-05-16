@@ -21,7 +21,15 @@ class FeedsViewController: UIViewController {
   var paginatedFeedscancellables: Set<AnyCancellable> = []
 
   lazy var feedsPlayer: YralPlayer = {
-    let player = FeedsPlayer(hlsDownloadManager: HLSDownloadManager())
+    let monitor = DefaultNetworkMonitor()
+    let downloadManager = HLSDownloadManager(
+      networkMonitor: monitor,
+      fileManager: .default
+    )
+    let player = FeedsPlayer(
+      hlsDownloadManager: downloadManager,
+      networkMonitor: monitor
+    )
     player.delegate = self
     return player
   }()

@@ -11,10 +11,13 @@ import AVFoundation
 
 protocol HLSDownloadManaging: Actor {
   var delegate: HLSDownloadManagerProtocol? { get set }
+  var activeDownloads: [URL: AVAssetDownloadTaskProtocol] { get }
 
   func startDownloadAsync(hlsURL: URL, assetTitle: String) async throws -> URL
   func cancelDownload(for hls: URL)
   func clearMappingsAndCache(for hls: URL, assetTitle: String)
   func createLocalAssetIfAvailable(for hlsURL: URL) -> AVURLAsset?
+  func localOrInflightAsset(for hlsURL: URL) -> AVURLAsset?
+  func elevatePriority(for url: URL)
   func setDelegate(_ delegate: HLSDownloadManagerProtocol?)
 }

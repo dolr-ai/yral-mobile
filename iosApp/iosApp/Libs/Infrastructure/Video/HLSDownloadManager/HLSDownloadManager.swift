@@ -30,6 +30,7 @@ actor HLSDownloadManager: NSObject, HLSDownloadManaging {
   var assetTitleForURL: [URL: String] = [:]
   var downloadContinuations: [URL: CheckedContinuation<URL, Error>] = [:]
   var downloadedAssetsLRU: [String: Date] = [:]
+  var inflightAssetForURL: [URL: AVURLAsset] = [:]
 
   private let userDefaults = UserDefaults.standard
   private static let bookmarksKey = "HLSBookmarks"
@@ -43,7 +44,6 @@ actor HLSDownloadManager: NSObject, HLSDownloadManaging {
     self.networkMonitor = networkMonitor
     self.fileManager = fileManager
     super.init()
-    self.networkMonitor.startMonitoring()
 
     let config = URLSessionConfiguration.background(withIdentifier: UUID().uuidString)
     config.httpMaximumConnectionsPerHost = Constants.maxConnectionsPerHost
@@ -74,10 +74,12 @@ actor HLSDownloadManager: NSObject, HLSDownloadManaging {
   }
 
   func startDownloadAsync(hlsURL: URL, assetTitle: String) async throws -> URL {
+    removeBookmark(for: assetTitle)
     if activeDownloads[hlsURL] != nil {
       print("Download already in progress for: \(hlsURL.absoluteString)")
     }
     let asset = AVURLAsset(url: hlsURL)
+    inflightAssetForURL[hlsURL] = asset
     let downloadConfig = AVAssetDownloadConfiguration(asset: asset, title: assetTitle)
     guard let downloadTask = downloadSession.makeAssetDownloadTask(downloadConfiguration: downloadConfig) else {
       throw URLError(.badURL)
@@ -107,14 +109,26 @@ actor HLSDownloadManager: NSObject, HLSDownloadManaging {
     return nil
   }
 
+  func localOrInflightAsset(for hlsURL: URL) -> AVURLAsset? {
+    if let asset = createLocalAssetIfAvailable(for: hlsURL) { return asset }
+    return inflightAssetForURL[hlsURL]
+  }
+
   func cancelDownload(for hlsURL: URL) {
     if let task = activeDownloads[hlsURL] {
       task.cancel()
       activeDownloads.removeValue(forKey: hlsURL)
+      inflightAssetForURL.removeValue(forKey: hlsURL)
       if let continuation = downloadContinuations.removeValue(forKey: hlsURL) {
         continuation.resume(throwing: CancellationError())
       }
       print("Canceled ongoing download for \(hlsURL.absoluteString)")
+    }
+  }
+
+  func elevatePriority(for url: URL) {
+    if let task = activeDownloads[url] {
+      task.underlyingTask?.priority = URLSessionTask.defaultPriority
     }
   }
 
@@ -171,6 +185,7 @@ actor HLSDownloadManager: NSObject, HLSDownloadManaging {
     defer {
       self.enforceCacheLimitIfNeeded()
       self.activeDownloads.removeValue(forKey: feedURL)
+      inflightAssetForURL.removeValue(forKey: feedURL)
     }
 
     if let assetTitle = assetTitleForURL[feedURL] {
@@ -279,6 +294,7 @@ protocol AVAssetDownloadURLSessionProtocol: AnyObject {
 }
 
 protocol NetworkMonitorProtocol: AnyObject {
+  var isGoodForPrefetch: Bool { get }
   var isNetworkAvailable: Bool { get set }
   func startMonitoring()
 }
@@ -312,6 +328,7 @@ final class DefaultAssetDownloadURLSession: AVAssetDownloadURLSessionProtocol {
 
   func makeAssetDownloadTask(downloadConfiguration: AVAssetDownloadConfiguration) -> AVAssetDownloadTaskProtocol? {
     let avTask = session.makeAssetDownloadTask(downloadConfiguration: downloadConfiguration)
+    avTask.priority = URLSessionTask.lowPriority
     return DefaultAssetDownloadTask(realTask: avTask)
   }
 }
@@ -320,11 +337,14 @@ final class DefaultNetworkMonitor: NetworkMonitorProtocol {
   private let monitor = NWPathMonitor()
   private let monitorQueue = DispatchQueue.global(qos: .background)
   var isNetworkAvailable: Bool = true
+  var isGoodForPrefetch: Bool = true
 
   func startMonitoring() {
     monitor.pathUpdateHandler = { [weak self] path in
+      let expensive   = path.isExpensive
+      let constrained = path.isConstrained
       Task { @MainActor in
-        self?.isNetworkAvailable = (path.status == .satisfied)
+        self?.isGoodForPrefetch = (!expensive && !constrained && path.status == .satisfied)
       }
     }
     monitor.start(queue: monitorQueue)
@@ -334,7 +354,7 @@ final class DefaultNetworkMonitor: NetworkMonitorProtocol {
 extension HLSDownloadManager {
   enum Constants {
     static let maxOfflineAssets = 10
-    static let maxConnectionsPerHost = 5
+    static let maxConnectionsPerHost = 3
     static let downloadIdentifier = "com.yral.HLSDownloadManager.async"
     static let videoKey = "userVideos"
   }

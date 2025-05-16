@@ -164,6 +164,7 @@ final class HLSDownloadManagerTests: XCTestCase {
   }
 
   final class MockNetworkMonitor: NetworkMonitorProtocol {
+    var isGoodForPrefetch: Bool = true
     var isNetworkAvailable: Bool = true
     func startMonitoring() {
     }
