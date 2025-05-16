@@ -48,6 +48,7 @@ import com.yral.shared.features.account.viewmodel.AccountBottomSheet
 import com.yral.shared.features.account.viewmodel.AccountHelpLink
 import com.yral.shared.features.account.viewmodel.AccountInfo
 import com.yral.shared.features.account.viewmodel.AccountsViewModel
+import com.yral.shared.features.account.viewmodel.AccountsViewModel.Companion.DELETE_ACCOUNT_URI
 import com.yral.shared.features.account.viewmodel.AccountsViewModel.Companion.DISCORD_LINK
 import com.yral.shared.features.account.viewmodel.AccountsViewModel.Companion.LOGOUT_URI
 import com.yral.shared.features.account.viewmodel.AccountsViewModel.Companion.PRIVACY_POLICY_URL
@@ -124,6 +125,7 @@ private fun handleHelpLink(
 ) {
     when (link) {
         LOGOUT_URI -> viewModel.logout()
+        DELETE_ACCOUNT_URI -> viewModel.setBottomSheetType(AccountBottomSheet.DeleteAccount)
         else ->
             viewModel.setBottomSheetType(
                 AccountBottomSheet.ShowWebView(
@@ -139,20 +141,13 @@ private fun SheetContent(
     bottomSheetType: AccountBottomSheet,
     setType: (type: AccountBottomSheet) -> Unit,
     signInWithGoogle: () -> Unit,
+    logout: () -> Unit,
 ) {
     val bottomSheetState =
         rememberModalBottomSheetState(
             skipPartiallyExpanded = true,
         )
-    val extraSheetState = rememberModalBottomSheetState()
     var extraSheetLink by remember { mutableStateOf("") }
-    LaunchedEffect(extraSheetLink) {
-        if (extraSheetLink.isEmpty()) {
-            extraSheetState.hide()
-        } else {
-            extraSheetState.show()
-        }
-    }
     when (bottomSheetType) {
         is AccountBottomSheet.SingUp -> {
             LoginBottomSheet(
@@ -189,15 +184,43 @@ private fun SheetContent(
             )
         }
 
+        is AccountBottomSheet.DeleteAccount -> {
+            DeleteAccountSheet(
+                bottomSheetState = bottomSheetState,
+                onDismissRequest = { setType(AccountBottomSheet.None) },
+                logout = logout,
+            )
+        }
+
         is AccountBottomSheet.None -> Unit
     }
     if (extraSheetLink.isNotEmpty()) {
-        WebViewBottomSheet(
-            link = extraSheetLink,
-            bottomSheetState = extraSheetState,
+        ExtraLinkSheet(
+            extraSheetLink = extraSheetLink,
             onDismissRequest = { extraSheetLink = "" },
         )
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ExtraLinkSheet(
+    extraSheetLink: String,
+    onDismissRequest: () -> Unit,
+) {
+    val extraSheetState = rememberModalBottomSheetState()
+    LaunchedEffect(extraSheetLink) {
+        if (extraSheetLink.isEmpty()) {
+            extraSheetState.hide()
+        } else {
+            extraSheetState.show()
+        }
+    }
+    WebViewBottomSheet(
+        link = extraSheetLink,
+        bottomSheetState = extraSheetState,
+        onDismissRequest = onDismissRequest,
+    )
 }
 
 @Composable
@@ -417,6 +440,7 @@ private fun AccountHelpLink.getIcon() =
         TERMS_OF_SERVICE_URL -> R.drawable.document
         PRIVACY_POLICY_URL -> R.drawable.lock
         LOGOUT_URI -> R.drawable.logout
+        DELETE_ACCOUNT_URI -> R.drawable.delete
         else -> null
     }
 
@@ -434,6 +458,7 @@ private fun AccountHelpLink.getText() =
         TERMS_OF_SERVICE_URL -> R.string.terms_of_service
         PRIVACY_POLICY_URL -> R.string.privacy_policy
         LOGOUT_URI -> R.string.logout
+        DELETE_ACCOUNT_URI -> R.string.delete_account
         else -> null
     }
 
