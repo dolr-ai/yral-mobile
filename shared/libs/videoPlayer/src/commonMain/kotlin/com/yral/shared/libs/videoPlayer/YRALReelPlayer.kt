@@ -1,5 +1,6 @@
 package com.yral.shared.libs.videoPlayer
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.VerticalPager
@@ -11,6 +12,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.yral.shared.libs.videoPlayer.model.PlayerConfig
 import com.yral.shared.libs.videoPlayer.model.PlayerControls
@@ -24,6 +26,7 @@ fun YRALReelPlayer(
     onPageLoaded: (currentPage: Int) -> Unit,
     recordTime: (Int, Int) -> Unit,
     didVideoEnd: () -> Unit,
+    overlayContent: @Composable (pageNo: Int) -> Unit,
 ) {
     YRALReelsPlayerView(
         modifier = Modifier.fillMaxSize(),
@@ -46,6 +49,7 @@ fun YRALReelPlayer(
                 loaderView = {},
                 didEndVideo = didVideoEnd,
             ),
+        overlayContent = overlayContent,
     )
 }
 
@@ -58,6 +62,7 @@ internal fun YRALReelsPlayerView(
     onPageLoaded: (currentPage: Int) -> Unit,
     recordTime: (Int, Int) -> Unit,
     playerConfig: PlayerConfig = PlayerConfig(), // Configuration for the player,
+    overlayContent: @Composable (pageNo: Int) -> Unit,
 ) {
     // Remember the state of the pager
     val pagerState =
@@ -97,35 +102,41 @@ internal fun YRALReelsPlayerView(
                     onPageLoaded(page)
                 }
             }
-            // Video player with control
-            YRALVideoPlayerWithControl(
+            Box(
                 modifier = Modifier.fillMaxSize(),
-                playerData =
-                    PlayerData(
-                        url = urls[page].first,
-                        thumbnailUrl = urls[page].second,
-                        prefetchThumbnails =
-                            urls
-                                .nextN(page, PREFETCH_NEXT_N_THUMBNAILS)
-                                .map { it.second },
-                        prefetchVideos =
-                            urls
-                                .nextN(page, PREFETCH_NEXT_N_VIDEOS)
-                                .map { it.first },
-                    ),
-                playerConfig = playerConfig,
-                playerControls =
-                    PlayerControls(
-                        isPause =
-                            if (pagerState.currentPage == page) {
-                                isPause
-                            } else {
-                                true
-                            }, // Pause video when not in focus
-                        onPauseToggle = { isPause = isPause.not() }, // Toggle pause/resume
-                        recordTime = recordTime,
-                    ),
-            )
+                contentAlignment = Alignment.TopStart,
+            ) {
+                // Video player with control
+                YRALVideoPlayerWithControl(
+                    modifier = Modifier.fillMaxSize(),
+                    playerData =
+                        PlayerData(
+                            url = urls[page].first,
+                            thumbnailUrl = urls[page].second,
+                            prefetchThumbnails =
+                                urls
+                                    .nextN(page, PREFETCH_NEXT_N_THUMBNAILS)
+                                    .map { it.second },
+                            prefetchVideos =
+                                urls
+                                    .nextN(page, PREFETCH_NEXT_N_VIDEOS)
+                                    .map { it.first },
+                        ),
+                    playerConfig = playerConfig,
+                    playerControls =
+                        PlayerControls(
+                            isPause =
+                                if (pagerState.currentPage == page) {
+                                    isPause
+                                } else {
+                                    true
+                                }, // Pause video when not in focus
+                            onPauseToggle = { isPause = isPause.not() }, // Toggle pause/resume
+                            recordTime = recordTime,
+                        ),
+                )
+                overlayContent(page)
+            }
         }
     } else {
         HorizontalPager(
@@ -140,35 +151,41 @@ internal fun YRALReelsPlayerView(
                     onPageLoaded(page)
                 }
             }
-            // Video player with control
-            YRALVideoPlayerWithControl(
+            Box(
                 modifier = Modifier.fillMaxSize(),
-                playerData =
-                    PlayerData(
-                        url = urls[page].first,
-                        thumbnailUrl = urls[page].second,
-                        prefetchThumbnails =
-                            urls
-                                .nextN(page, PREFETCH_NEXT_N_THUMBNAILS)
-                                .map { it.second },
-                        prefetchVideos =
-                            urls
-                                .nextN(page, PREFETCH_NEXT_N_VIDEOS)
-                                .map { it.first },
-                    ),
-                playerConfig = playerConfig,
-                playerControls =
-                    PlayerControls(
-                        isPause =
-                            if (pagerState.currentPage == page) {
-                                isPause
-                            } else {
-                                true
-                            }, // Pause video when not in focus
-                        onPauseToggle = { isPause = isPause.not() }, // Toggle pause/resume
-                        recordTime = recordTime,
-                    ),
-            )
+                contentAlignment = Alignment.TopStart,
+            ) {
+                // Video player with control
+                YRALVideoPlayerWithControl(
+                    modifier = Modifier.fillMaxSize(),
+                    playerData =
+                        PlayerData(
+                            url = urls[page].first,
+                            thumbnailUrl = urls[page].second,
+                            prefetchThumbnails =
+                                urls
+                                    .nextN(page, PREFETCH_NEXT_N_THUMBNAILS)
+                                    .map { it.second },
+                            prefetchVideos =
+                                urls
+                                    .nextN(page, PREFETCH_NEXT_N_VIDEOS)
+                                    .map { it.first },
+                        ),
+                    playerConfig = playerConfig,
+                    playerControls =
+                        PlayerControls(
+                            isPause =
+                                if (pagerState.currentPage == page) {
+                                    isPause
+                                } else {
+                                    true
+                                }, // Pause video when not in focus
+                            onPauseToggle = { isPause = isPause.not() }, // Toggle pause/resume
+                            recordTime = recordTime,
+                        ),
+                )
+                overlayContent(page)
+            }
         }
     }
 }

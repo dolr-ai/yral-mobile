@@ -264,12 +264,13 @@ class FeedViewModel(
     }
 
     fun reportVideo(
+        pageNo: Int,
         reason: VideoReportReason,
         text: String,
     ) {
         coroutineScope
             .launch {
-                val currentFeed = _state.value.feedDetails[_state.value.currentPageOfFeed]
+                val currentFeed = _state.value.feedDetails[pageNo]
                 setLoading(true)
                 reportVideoUseCase
                     .invoke(
@@ -284,7 +285,7 @@ class FeedViewModel(
                     ).mapBoth(
                         success = {
                             setLoading(false)
-                            toggleReportSheet(false)
+                            toggleReportSheet(false, pageNo)
                             // Remove post from feed
                             val updatedPosts = _state.value.posts.toMutableList()
                             val updatedFeedDetails = _state.value.feedDetails.toMutableList()
@@ -311,7 +312,7 @@ class FeedViewModel(
                                     // Adjust current page if necessary to prevent out of bounds
                                     currentPageOfFeed =
                                         minOf(
-                                            _state.value.currentPageOfFeed,
+                                            pageNo,
                                             updatedFeedDetails.size - 1,
                                         ).coerceAtLeast(0),
                                 ),
@@ -319,19 +320,22 @@ class FeedViewModel(
                         },
                         failure = {
                             setLoading(false)
-                            toggleReportSheet(true)
+                            toggleReportSheet(true, pageNo)
                         },
                     )
             }
     }
 
-    fun toggleReportSheet(isOpen: Boolean) {
+    fun toggleReportSheet(
+        isOpen: Boolean,
+        pageNo: Int,
+    ) {
         coroutineScope.launch {
             _state.emit(
                 _state.value.copy(
                     reportSheetState =
                         if (isOpen) {
-                            ReportSheetState.Open()
+                            ReportSheetState.Open(pageNo)
                         } else {
                             ReportSheetState.Closed
                         },
@@ -363,6 +367,7 @@ data class VideoData(
 sealed interface ReportSheetState {
     data object Closed : ReportSheetState
     data class Open(
+        val pageNo: Int,
         val reasons: List<VideoReportReason> =
             listOf(
                 VideoReportReason.NUDITY_PORN,
