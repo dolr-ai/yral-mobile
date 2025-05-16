@@ -47,9 +47,9 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
-import com.yral.android.ui.design.YralBottomSheet
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.home.FeedScreenConstants.MAX_LINES_FOR_POST_DESCRIPTION
+import com.yral.android.ui.widgets.YralBottomSheet
 import com.yral.android.ui.widgets.YralButtonState
 import com.yral.android.ui.widgets.YralButtonType
 import com.yral.android.ui.widgets.YralGradientButton
