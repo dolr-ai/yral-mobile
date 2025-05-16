@@ -9,7 +9,7 @@
 import SwiftUI
 
 struct SmileyGameResultBottomSheetView: View {
-  var gameResult: SmileyGameResult
+  var gameResult: SmileyGameResultResponse
 
   let onKeepPlayingTapped: () -> Void
   let onLearnMoreTapped: () -> Void
@@ -179,7 +179,7 @@ extension SmileyGameResultBottomSheetView {
     static let learnMoreFont = YralFont.pt16.semiBold.swiftUIFont
     static let learnMoreTextColor = YralColor.primary300.swiftUIColor
 
-    static let ctaHeight = 32.0
+    static let ctaHeight = 42.0
     static let ctaCornerRadius = 8.0
 
     static let buttonGradient = LinearGradient(
@@ -198,58 +198,24 @@ extension SmileyGameResultBottomSheetView {
   }
 }
 
-extension SmileyGameResult {
+extension SmileyGameResultResponse {
   var bottomSheetHeading: String {
-    switch self {
-    case .winner:
-      return "Congratulations!"
-    case .looser:
-      return "OOPS!!!"
-    }
+    outcome == "WIN" ? "Congratulations!" : "OOPS!!!"
   }
 
   var bottomSheetTitle: String {
-    switch self {
-    case .winner:
-      return "Since most people voted on"
-    case .looser:
-      return "Since most people didn't voted on"
-    }
+    outcome == "WIN" ? "Since most people voted on" : "Since most people didn't voted on"
   }
 
   var bottomSheetSubheading: String {
-    switch self {
-    case .winner(_, let points):
-      return "You Won \(abs(points)) Points"
-    case .looser(_, let points):
-      return "You Lost \(abs(points)) Points"
-    }
+    outcome == "WIN" ? "You Won \(abs(coinDelta)) Points" : "You Lost \(abs(coinDelta)) Points"
   }
 
   var bottomSheetSubheadingColor: Color {
-    switch self {
-    case .winner:
-      return YralColor.green300.swiftUIColor
-    case .looser:
-      return YralColor.red300.swiftUIColor
-    }
+    outcome == "WIN" ? YralColor.green300.swiftUIColor : YralColor.red300.swiftUIColor
   }
 
   var lottieName: String {
-    switch self {
-    case .winner:
-      return "smiley_game_win"
-    case .looser:
-      return "smiley_game_lose"
-    }
-  }
-
-  var smiley: Smiley {
-    switch self {
-    case .winner(let smiley, _):
-      return smiley
-    case .looser(let smiley, _):
-      return smiley
-    }
+    outcome == "WIN" ? "smiley_game_win" : "smiley_game_lose"
   }
 }

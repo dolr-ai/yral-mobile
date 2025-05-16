@@ -18,7 +18,7 @@ protocol FeedsCellProtocol: AnyObject {
   func deleteButtonTapped(index: Int)
   func reportButtonTapped(index: Int)
   func smileyTapped(index: Int, smiley: Smiley)
-  func showGameResultBottomSheet(index: Int, gameResult: SmileyGameResult)
+  func showGameResultBottomSheet(index: Int, gameResult: SmileyGameResultResponse)
 }
 // swiftlint: disable type_body_length
 class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
@@ -32,7 +32,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   private var smileyGame: SmileyGame?
 
   private var showResultBottomSheet: Bool {
-    userDefaults.integer(forKey: Self.resultBottomSheetKey) < 1 ? true : false
+    userDefaults.integer(forKey: Self.resultBottomSheetKey) < Int.one ? true : false
   }
 
   private let playerContainerView = getUIImageView()
@@ -101,7 +101,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   var isCaptionCollapsible = false
   var captionScrollViewHeightConstraint: NSLayoutConstraint!
 
-  let resultAnimationPublisher = PassthroughSubject<SmileyGameResult, Never>()
+  let resultAnimationPublisher = PassthroughSubject<SmileyGameResultResponse, Never>()
   let initialStatePublisher = PassthroughSubject<SmileyGame, Never>()
 
   private static func getActionButton(withTitle title: String, image: UIImage?) -> UIButton {
@@ -248,23 +248,30 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
         initialStateSubscriber: initialStatePublisher
       )
 
-      if let host = smileyGameHostController {
-        host.rootView = smileyGameView
-      } else {
-        let controller = UIHostingController(rootView: smileyGameView)
-        controller.view.backgroundColor = .clear
-        controller.view.translatesAutoresizingMaskIntoConstraints = false
+      let controller = UIHostingController(rootView: smileyGameView)
+      controller.view.backgroundColor = .clear
+      controller.view.translatesAutoresizingMaskIntoConstraints = false
 
-        contentView.addSubview(controller.view)
-        NSLayoutConstraint.activate([
-          controller.view.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-          controller.view.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
-          controller.view.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -16),
-          controller.view.heightAnchor.constraint(equalToConstant: 64)
-        ])
+      contentView.addSubview(controller.view)
+      NSLayoutConstraint.activate([
+        controller.view.leadingAnchor.constraint(
+          equalTo: contentView.leadingAnchor,
+          constant: Constants.smileyGameHorizontal
+        ),
+        controller.view.trailingAnchor.constraint(
+          equalTo: contentView.trailingAnchor,
+          constant: -Constants.smileyGameHorizontal
+        ),
+        controller.view.bottomAnchor.constraint(
+          equalTo: contentView.bottomAnchor,
+          constant: -Constants.smileyGameBottom
+        ),
+        controller.view.heightAnchor.constraint(
+          equalToConstant: Constants.smileyGameHeight
+        )
+      ])
 
-        smileyGameHostController = controller
-      }
+      smileyGameHostController = controller
     }
   }
 
@@ -286,7 +293,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
 
   private func handleSmileyTap(_ smiley: Smiley) {
     delegate?.smileyTapped(index: index, smiley: smiley)
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+    DispatchQueue.main.asyncAfter(deadline: .now() + Constants.smileyTapDuration) {
       self.startFlowingAnimation(for: smiley)
     }
   }
@@ -297,44 +304,41 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     lottieView.play()
   }
 
-  private func startSmileyGamResultAnimation(for result: SmileyGameResult) {
-    AudioPlayer.shared.play(named: "smiley_game_win")
-    switch result {
-    case .winner(_, let coinsWon):
-      profileInfoView.coinsView.updateCoins(by: coinsWon)
-      if showResultBottomSheet {
-        let existingCount = userDefaults.integer(forKey: Self.resultBottomSheetKey)
-        userDefaults.set(existingCount + 1, forKey: Self.resultBottomSheetKey)
-        userDefaults.synchronize()
-        delegate?.showGameResultBottomSheet(index: index, gameResult: result)
+  func startSmileyGamResultAnimation(for result: SmileyGameResultResponse, completion: @escaping () -> Void) {
+    AudioPlayer.shared.play(named: Constants.winSound)
+    profileInfoView.coinsView.updateCoins(by: result.coinDelta)
+    if showResultBottomSheet {
+      let existingCount = userDefaults.integer(forKey: Self.resultBottomSheetKey)
+      userDefaults.set(existingCount + Int.one, forKey: Self.resultBottomSheetKey)
+      userDefaults.synchronize()
+      delegate?.showGameResultBottomSheet(index: index, gameResult: result)
+    } else {
+      if result.outcome == "WIN" {
+        smileyGameScoreLabel.text = "+\(result.coinDelta)"
+        smileyGameScoreLabel.textColor = Constants.scoreLabelWinColor
       } else {
-        smileyGameScoreLabel.text = "+\(coinsWon)"
-        smileyGameScoreLabel.textColor = YralColor.green300.uiColor.withAlphaComponent(0.3)
-      }
-    case .looser(_, let coinsLoose):
-      profileInfoView.coinsView.updateCoins(by: coinsLoose)
-      if showResultBottomSheet {
-        let existingCount = userDefaults.integer(forKey: Self.resultBottomSheetKey)
-        userDefaults.set(existingCount + 1, forKey: Self.resultBottomSheetKey)
-        userDefaults.synchronize()
-        delegate?.showGameResultBottomSheet(index: index, gameResult: result)
-      } else {
-        smileyGameScoreLabel.text = "\(coinsLoose)"
-        smileyGameScoreLabel.textColor = YralColor.red300.uiColor.withAlphaComponent(0.3)
+        smileyGameScoreLabel.text = "\(result.coinDelta)"
+        smileyGameScoreLabel.textColor = Constants.scoreLabelLooseColor
       }
     }
 
     if !showResultBottomSheet {
       startScoreLabelAnimation(for: result)
+      DispatchQueue.main.asyncAfter(deadline: .now() + Constants.resultAnimationDuration) {
+        completion()
+      }
     } else {
       resultAnimationPublisher.send(result)
+      DispatchQueue.main.asyncAfter(deadline: .now() + Constants.resultAnimationDurationWithBS) {
+        completion()
+      }
     }
   }
 
-  private func startScoreLabelAnimation(for result: SmileyGameResult) {
+  private func startScoreLabelAnimation(for result: SmileyGameResultResponse) {
     smileyGameScoreLabel.isHidden = false
-    UIView.animate(withDuration: 2) {
-      self.smileyGameScoreLabel.transform = CGAffineTransform(translationX: 0, y: -UIScreen.main.bounds.height)
+    UIView.animate(withDuration: Constants.scoreLabelDuration) {
+      self.smileyGameScoreLabel.transform = CGAffineTransform(translationX: .zero, y: -UIScreen.main.bounds.height)
     } completion: { complete in
       if complete {
         self.smileyGameScoreLabel.isHidden = true
@@ -421,6 +425,8 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     if let game = smileyGame {
       initialStatePublisher.send(game)
     }
+    smileyGameHostController?.view.removeFromSuperview()
+    smileyGameHostController = nil
   }
 
   struct FeedCellInfo {
@@ -459,6 +465,16 @@ extension FeedsCell {
     static let captionSingleLineHeight: CGFloat = 20
     static let maxLinesCaption = 10.0
     static let animationPeriod = 0.3
+    static let smileyGameHorizontal = 20.0
+    static let smileyGameBottom = 16.0
+    static let smileyGameHeight = 64.0
+    static let smileyTapDuration = 0.2
+    static let winSound = "smiley_game_win"
+    static let scoreLabelWinColor = YralColor.green300.uiColor.withAlphaComponent(0.3)
+    static let scoreLabelLooseColor = YralColor.red300.uiColor.withAlphaComponent(0.3)
+    static let resultAnimationDuration = 2.5
+    static let resultAnimationDurationWithBS = 0.5
+    static let scoreLabelDuration = 2.0
   }
 }
 // swiftlint: enable type_body_length

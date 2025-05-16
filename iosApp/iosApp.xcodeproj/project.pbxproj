@@ -43,6 +43,22 @@
 		105034AB2DD5E59800571B4E /* SmileyUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105034A92DD5E58100571B4E /* SmileyUseCase.swift */; };
 		105034AD2DD5E68D00571B4E /* SmileyRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105034AC2DD5E67A00571B4E /* SmileyRepository.swift */; };
 		105034AE2DD5E68D00571B4E /* SmileyRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105034AC2DD5E67A00571B4E /* SmileyRepository.swift */; };
+		105034B02DD62DB900571B4E /* CastVote.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105034AF2DD62DB400571B4E /* CastVote.swift */; };
+		105034B12DD62DB900571B4E /* CastVote.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105034AF2DD62DB400571B4E /* CastVote.swift */; };
+		105034B32DD630DB00571B4E /* CastVoteRepositoryProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105034B22DD630D300571B4E /* CastVoteRepositoryProtocol.swift */; };
+		105034B42DD630DB00571B4E /* CastVoteRepositoryProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105034B22DD630D300571B4E /* CastVoteRepositoryProtocol.swift */; };
+		105034B62DD6316B00571B4E /* CastVoteRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105034B52DD6316500571B4E /* CastVoteRepository.swift */; };
+		105034B72DD6316B00571B4E /* CastVoteRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105034B52DD6316500571B4E /* CastVoteRepository.swift */; };
+		105034B92DD6332C00571B4E /* CastVoteError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105034B82DD6332700571B4E /* CastVoteError.swift */; };
+		105034BA2DD6332C00571B4E /* CastVoteError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105034B82DD6332700571B4E /* CastVoteError.swift */; };
+		105034BC2DD6353800571B4E /* SmileyGameResultResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105034BB2DD6353100571B4E /* SmileyGameResultResponse.swift */; };
+		105034BD2DD6353800571B4E /* SmileyGameResultResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105034BB2DD6353100571B4E /* SmileyGameResultResponse.swift */; };
+		105034BF2DD636CC00571B4E /* CastVoteUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105034BE2DD636C800571B4E /* CastVoteUseCase.swift */; };
+		105034C02DD636CC00571B4E /* CastVoteUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105034BE2DD636C800571B4E /* CastVoteUseCase.swift */; };
+		105034C22DD7253200571B4E /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 105034C12DD7253200571B4E /* FirebaseAuth */; };
+		105034C42DD7253700571B4E /* FirebaseAppCheck in Frameworks */ = {isa = PBXBuildFile; productRef = 105034C32DD7253700571B4E /* FirebaseAppCheck */; };
+		105034C62DD7253D00571B4E /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 105034C52DD7253D00571B4E /* FirebaseAuth */; };
+		105034C82DD7254200571B4E /* FirebaseAppCheck in Frameworks */ = {isa = PBXBuildFile; productRef = 105034C72DD7254200571B4E /* FirebaseAppCheck */; };
 		10512A432DA666AD00114BAA /* YralPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10512A422DA666A900114BAA /* YralPlayer.swift */; };
 		10512A442DA666AD00114BAA /* YralPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10512A422DA666A900114BAA /* YralPlayer.swift */; };
 		10512A522DA795A800114BAA /* YralQueuePlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10512A512DA7959D00114BAA /* YralQueuePlayer.swift */; };
@@ -489,6 +505,12 @@
 		105034A62DD5E50800571B4E /* SmileyConfigError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyConfigError.swift; sourceTree = "<group>"; };
 		105034A92DD5E58100571B4E /* SmileyUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyUseCase.swift; sourceTree = "<group>"; };
 		105034AC2DD5E67A00571B4E /* SmileyRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyRepository.swift; sourceTree = "<group>"; };
+		105034AF2DD62DB400571B4E /* CastVote.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CastVote.swift; sourceTree = "<group>"; };
+		105034B22DD630D300571B4E /* CastVoteRepositoryProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CastVoteRepositoryProtocol.swift; sourceTree = "<group>"; };
+		105034B52DD6316500571B4E /* CastVoteRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CastVoteRepository.swift; sourceTree = "<group>"; };
+		105034B82DD6332700571B4E /* CastVoteError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CastVoteError.swift; sourceTree = "<group>"; };
+		105034BB2DD6353100571B4E /* SmileyGameResultResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameResultResponse.swift; sourceTree = "<group>"; };
+		105034BE2DD636C800571B4E /* CastVoteUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CastVoteUseCase.swift; sourceTree = "<group>"; };
 		10512A422DA666A900114BAA /* YralPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralPlayer.swift; sourceTree = "<group>"; };
 		10512A512DA7959D00114BAA /* YralQueuePlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralQueuePlayer.swift; sourceTree = "<group>"; };
 		107C608F2DB78093006FC467 /* UIView+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIView+Extensions.swift"; sourceTree = "<group>"; };
@@ -691,6 +713,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				105034C42DD7253700571B4E /* FirebaseAppCheck in Frameworks */,
 				AC6CBA802CE46CA6002454F8 /* libyral_mobile_swift_binding.a in Frameworks */,
 				AC6E311C2D22F050001EBE6C /* SDWebImageMapKit in Frameworks */,
 				AC6BECAC2D09D52B002E2021 /* GRPC in Frameworks */,
@@ -704,6 +727,7 @@
 				AC6BECAA2D09D52B002E2021 /* CGRPCZlib in Frameworks */,
 				AC6BECB02D09D52B002E2021 /* protoc-gen-grpc-swift in Frameworks */,
 				107C60D92DBFA818006FC467 /* FirebaseStorage in Frameworks */,
+				105034C22DD7253200571B4E /* FirebaseAuth in Frameworks */,
 				AC6E311A2D22F050001EBE6C /* SDWebImage in Frameworks */,
 				AC6BECAE2D09D52B002E2021 /* GRPCReflectionService in Frameworks */,
 				ACB815482CFA146800104B7B /* FirebaseCore in Frameworks */,
@@ -723,6 +747,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				ACC0F39F2D2ED68500FA5BD0 /* Lottie in Frameworks */,
+				105034C82DD7254200571B4E /* FirebaseAppCheck in Frameworks */,
 				AC6BECB42D09D541002E2021 /* GRPC in Frameworks */,
 				ACD941C82CFF5B5B0038FCB6 /* FirebaseAnalytics in Frameworks */,
 				ACD941D92CFF63D90038FCB6 /* libyral_mobile_swift_binding.a in Frameworks */,
@@ -737,6 +762,7 @@
 				AC6E31202D22F069001EBE6C /* SDWebImageMapKit in Frameworks */,
 				ACD941CC2CFF5B5B0038FCB6 /* FirebaseCore in Frameworks */,
 				107C60D02DBF94D0006FC467 /* FirebaseFirestore in Frameworks */,
+				105034C62DD7253D00571B4E /* FirebaseAuth in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -830,6 +856,7 @@
 		107C60AC2DBF43DA006FC467 /* Data */ = {
 			isa = PBXGroup;
 			children = (
+				105034AF2DD62DB400571B4E /* CastVote.swift */,
 				105034A02DD5E3D100571B4E /* SmileyConfigDTO.swift */,
 				107C60C42DBF60FE006FC467 /* SmileyGameRuleDTO.swift */,
 				107C60BA2DBF4A60006FC467 /* Repository */,
@@ -848,6 +875,8 @@
 		107C60AE2DBF459E006FC467 /* Entity */ = {
 			isa = PBXGroup;
 			children = (
+				105034BB2DD6353100571B4E /* SmileyGameResultResponse.swift */,
+				105034B82DD6332700571B4E /* CastVoteError.swift */,
 				105034A62DD5E50800571B4E /* SmileyConfigError.swift */,
 				1050349D2DD5E32D00571B4E /* SmileyConfig.swift */,
 				107C61222DC0F2B9006FC467 /* SmileyGameRuleError.swift */,
@@ -859,6 +888,7 @@
 		107C60B22DBF4814006FC467 /* UseCase */ = {
 			isa = PBXGroup;
 			children = (
+				105034BE2DD636C800571B4E /* CastVoteUseCase.swift */,
 				105034A92DD5E58100571B4E /* SmileyUseCase.swift */,
 				107C60B32DBF483D006FC467 /* SmileyGameRuleUseCase.swift */,
 			);
@@ -868,6 +898,7 @@
 		107C60B62DBF49A0006FC467 /* Interface */ = {
 			isa = PBXGroup;
 			children = (
+				105034B22DD630D300571B4E /* CastVoteRepositoryProtocol.swift */,
 				105034A32DD5E4D900571B4E /* SmileyRepositoryProtocol.swift */,
 				107C60B72DBF49CE006FC467 /* SmileyGameRuleRepositoryProtocol.swift */,
 			);
@@ -877,6 +908,7 @@
 		107C60BA2DBF4A60006FC467 /* Repository */ = {
 			isa = PBXGroup;
 			children = (
+				105034B52DD6316500571B4E /* CastVoteRepository.swift */,
 				105034AC2DD5E67A00571B4E /* SmileyRepository.swift */,
 				107C60BB2DBF4A69006FC467 /* SmileyGameRuleRepository.swift */,
 			);
@@ -2344,6 +2376,7 @@
 				AC26CA4A2D8026B4006ADA75 /* CrashReporter.swift in Sources */,
 				AC4960652D2D693B008D59D9 /* Foundation+Extensions.swift in Sources */,
 				ACEBF7EA2D6F844E00B594A0 /* ToastType.swift in Sources */,
+				105034BD2DD6353800571B4E /* SmileyGameResultResponse.swift in Sources */,
 				ACB46A652D0F0B75002E200C /* FetchInitialFeedsUseCase.swift in Sources */,
 				107C609C2DB90B22006FC467 /* SmileyGameResultBottomSheetView.swift in Sources */,
 				ACFEDFA12D96CEC2003116EA /* Errors.swift in Sources */,
@@ -2387,6 +2420,7 @@
 				AC5A7B8C2DACF1E2009E9E42 /* VideoEventDTO.swift in Sources */,
 				ACB46A362D0EC998002E200C /* FeedDIContainer.swift in Sources */,
 				AC26CA572D80287E006ADA75 /* AuthClient.swift in Sources */,
+				105034B32DD630DB00571B4E /* CastVoteRepositoryProtocol.swift in Sources */,
 				2152FB042600AC8F00CF470E /* IosApp.swift in Sources */,
 				AC8958DF2D3EA60500E19ED7 /* FeedsViewController+DataSource.swift in Sources */,
 				103BBB052DACE23A00C0BFD0 /* HLSDownloadManaging.swift in Sources */,
@@ -2406,6 +2440,7 @@
 				ACC1C3982D9AF8BD005A7539 /* LottieLoaderContainerView.swift in Sources */,
 				AC4E99692D884BDB000B47B3 /* ProfileVideoGridsView.swift in Sources */,
 				ACC0D4522D8DDB97006DCF5C /* ProfileRepositoryProtocol.swift in Sources */,
+				105034BA2DD6332C00571B4E /* CastVoteError.swift in Sources */,
 				AC6BECBD2D09F68C002E2021 /* Endpoint.swift in Sources */,
 				AC09A9B32CDB775C009A39A4 /* SwiftBridgeCore.swift in Sources */,
 				105034AA2DD5E59800571B4E /* SmileyUseCase.swift in Sources */,
@@ -2437,6 +2472,7 @@
 				AC09A9FA2CDB7A5D009A39A4 /* SwiftBindings+Extensions.swift in Sources */,
 				ACEBF8052D7473E600B594A0 /* UploadErrorView.swift in Sources */,
 				ACC1C39E2D9B046F005A7539 /* LottieRefreshSingletonView.swift in Sources */,
+				105034B02DD62DB900571B4E /* CastVote.swift in Sources */,
 				AC8958D92D3EA46800E19ED7 /* FeedsViewController+ScrollView.swift in Sources */,
 				ACB46A772D105B17002E200C /* ReusableView.swift in Sources */,
 				AC32E4542D296637001DDA43 /* AccountRepository.swift in Sources */,
@@ -2465,12 +2501,14 @@
 				AC6E31232D22F08F001EBE6C /* ImageLoaderProtocol.swift in Sources */,
 				105034A22DD5E3D500571B4E /* SmileyConfigDTO.swift in Sources */,
 				AC462F422D95A4AD004957B3 /* OffsetableScrollView.swift in Sources */,
+				105034B62DD6316B00571B4E /* CastVoteRepository.swift in Sources */,
 				ACB46A5B2D0EF91F002E200C /* AuthConstants.swift in Sources */,
 				107C60D62DBFA7C0006FC467 /* FirebaseImageView.swift in Sources */,
 				107C60B42DBF4857006FC467 /* SmileyGameRuleUseCase.swift in Sources */,
 				ACB46A292D0EC76A002E200C /* AppConfiguration.swift in Sources */,
 				ACEBF7DF2D6F215800B594A0 /* VideoPlayerView.swift in Sources */,
 				ACB46A342D0EC8FF002E200C /* Numbers+Extensions.swift in Sources */,
+				105034BF2DD636CC00571B4E /* CastVoteUseCase.swift in Sources */,
 				AC7F7EC52D7741C900215162 /* UploadResponseDTO.swift in Sources */,
 				AC32E4612D298E0A001DDA43 /* ProfileOptionsView.swift in Sources */,
 				107C60C02DBF4C17006FC467 /* FirebaseServiceProtocol.swift in Sources */,
@@ -2530,6 +2568,7 @@
 				AC26CA492D8026B4006ADA75 /* CrashReporter.swift in Sources */,
 				AC4960642D2D693B008D59D9 /* Foundation+Extensions.swift in Sources */,
 				ACEBF7E92D6F844E00B594A0 /* ToastType.swift in Sources */,
+				105034BC2DD6353800571B4E /* SmileyGameResultResponse.swift in Sources */,
 				ACB46A642D0F0B75002E200C /* FetchInitialFeedsUseCase.swift in Sources */,
 				107C609B2DB90B22006FC467 /* SmileyGameResultBottomSheetView.swift in Sources */,
 				ACFEDFA22D96CEC2003116EA /* Errors.swift in Sources */,
@@ -2573,6 +2612,7 @@
 				AC5A7B8B2DACF1E2009E9E42 /* VideoEventDTO.swift in Sources */,
 				ACB46A372D0EC998002E200C /* FeedDIContainer.swift in Sources */,
 				AC26CA582D80287E006ADA75 /* AuthClient.swift in Sources */,
+				105034B42DD630DB00571B4E /* CastVoteRepositoryProtocol.swift in Sources */,
 				ACD941872CFF575C0038FCB6 /* IosApp.swift in Sources */,
 				AC8958E02D3EA60500E19ED7 /* FeedsViewController+DataSource.swift in Sources */,
 				103BBB042DACE23A00C0BFD0 /* HLSDownloadManaging.swift in Sources */,
@@ -2592,6 +2632,7 @@
 				ACC1C3992D9AF8BD005A7539 /* LottieLoaderContainerView.swift in Sources */,
 				AC4E99682D884BDB000B47B3 /* ProfileVideoGridsView.swift in Sources */,
 				ACC0D4532D8DDB97006DCF5C /* ProfileRepositoryProtocol.swift in Sources */,
+				105034B92DD6332C00571B4E /* CastVoteError.swift in Sources */,
 				AC6BECBC2D09F68C002E2021 /* Endpoint.swift in Sources */,
 				ACD941892CFF575C0038FCB6 /* SwiftBridgeCore.swift in Sources */,
 				105034AB2DD5E59800571B4E /* SmileyUseCase.swift in Sources */,
@@ -2623,6 +2664,7 @@
 				ACD9418B2CFF575C0038FCB6 /* SwiftBindings+Extensions.swift in Sources */,
 				ACEBF8062D7473E600B594A0 /* UploadErrorView.swift in Sources */,
 				ACC1C39F2D9B046F005A7539 /* LottieRefreshSingletonView.swift in Sources */,
+				105034B12DD62DB900571B4E /* CastVote.swift in Sources */,
 				AC8958D82D3EA46800E19ED7 /* FeedsViewController+ScrollView.swift in Sources */,
 				ACB46A762D105B17002E200C /* ReusableView.swift in Sources */,
 				AC32E4532D296637001DDA43 /* AccountRepository.swift in Sources */,
@@ -2651,12 +2693,14 @@
 				AC6E31222D22F08F001EBE6C /* ImageLoaderProtocol.swift in Sources */,
 				105034A12DD5E3D500571B4E /* SmileyConfigDTO.swift in Sources */,
 				AC462F432D95A4AD004957B3 /* OffsetableScrollView.swift in Sources */,
+				105034B72DD6316B00571B4E /* CastVoteRepository.swift in Sources */,
 				ACB46A5A2D0EF91F002E200C /* AuthConstants.swift in Sources */,
 				107C60D72DBFA7C0006FC467 /* FirebaseImageView.swift in Sources */,
 				107C60B52DBF4857006FC467 /* SmileyGameRuleUseCase.swift in Sources */,
 				ACB46A2A2D0EC76A002E200C /* AppConfiguration.swift in Sources */,
 				ACEBF7DE2D6F215800B594A0 /* VideoPlayerView.swift in Sources */,
 				ACB46A332D0EC8FF002E200C /* Numbers+Extensions.swift in Sources */,
+				105034C02DD636CC00571B4E /* CastVoteUseCase.swift in Sources */,
 				AC7F7EC42D7741C900215162 /* UploadResponseDTO.swift in Sources */,
 				AC32E4622D298E0A001DDA43 /* ProfileOptionsView.swift in Sources */,
 				107C60BF2DBF4C17006FC467 /* FirebaseServiceProtocol.swift in Sources */,
@@ -3099,6 +3143,26 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		105034C12DD7253200571B4E /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = ACD941C02CFF5B3D0038FCB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		105034C32DD7253700571B4E /* FirebaseAppCheck */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = ACD941C02CFF5B3D0038FCB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAppCheck;
+		};
+		105034C52DD7253D00571B4E /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = ACD941C02CFF5B3D0038FCB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		105034C72DD7254200571B4E /* FirebaseAppCheck */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = ACD941C02CFF5B3D0038FCB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAppCheck;
+		};
 		107C60CD2DBF94C3006FC467 /* FirebaseFirestore */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = ACD941C02CFF5B3D0038FCB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;

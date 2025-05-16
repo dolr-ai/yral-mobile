@@ -18,7 +18,7 @@ struct SmileyGameView: View {
   @State private var showWinnerOnly = false
 
   let smileyTapped: (Smiley) -> Void
-  let resultAnimationSubscriber: PassthroughSubject<SmileyGameResult, Never>
+  let resultAnimationSubscriber: PassthroughSubject<SmileyGameResultResponse, Never>
   let initialStateSubscriber: PassthroughSubject<SmileyGame, Never>
 
   var body: some View {
@@ -78,52 +78,31 @@ struct SmileyGameView: View {
     .clipShape(RoundedRectangle(cornerRadius: Constants.viewHeight / Constants.two))
   }
 
-  @ViewBuilder func resultView(for result: SmileyGameResult) -> some View {
-    switch result {
-    case .winner(let smiley, let points):
-      Image(smiley.imageName)
-        .frame(width: Constants.smileySize, height: Constants.smileySize)
-        .clipShape(Circle())
-        .padding(.vertical, Constants.smileyVerticalPadding)
-        .padding(.trailing, Constants.smileyTrailingPadding)
+  @ViewBuilder func resultView(for result: SmileyGameResultResponse) -> some View {
+    Image(result.smiley.imageName)
+      .frame(width: Constants.smileySize, height: Constants.smileySize)
+      .clipShape(Circle())
+      .padding(.vertical, Constants.smileyVerticalPadding)
+      .padding(.trailing, Constants.smileyTrailingPadding)
 
-      VStack(alignment: .leading, spacing: Constants.two) {
-        Text("\(smiley.imageName.capitalized) was the most people choice.")
-          .font(YralFont.pt16.bold.swiftUIFont)
-          .lineLimit(Constants.textLineLimit)
-          .minimumScaleFactor(Constants.textMinScale)
-          .allowsTightening(true)
-          .foregroundColor(YralColor.green50.swiftUIColor)
+    VStack(alignment: .leading, spacing: Constants.two) {
+      Text(result.outcome == "WIN" ?
+           "\(result.smiley.imageName.capitalized) was the most people choice." :
+            "Not the most popular pick!")
+      .font(YralFont.pt16.bold.swiftUIFont)
+      .lineLimit(Constants.textLineLimit)
+      .minimumScaleFactor(Constants.textMinScale)
+      .allowsTightening(true)
+      .foregroundColor(YralColor.green50.swiftUIColor)
 
-        Text("You win \(abs(points)) Points!")
-          .font(YralFont.pt16.bold.swiftUIFont)
-          .lineLimit(Constants.textLineLimit)
-          .minimumScaleFactor(Constants.textMinScale)
-          .allowsTightening(true)
-          .foregroundColor(YralColor.green300.swiftUIColor)
-      }
-    case .looser(let smiley, let points):
-      Image(smiley.imageName)
-        .frame(width: Constants.smileySize, height: Constants.smileySize)
-        .clipShape(Circle())
-        .padding(.vertical, Constants.smileyVerticalPadding)
-        .padding(.trailing, Constants.smileyTrailingPadding)
-
-      VStack(alignment: .leading, spacing: Constants.two) {
-        Text("Not the most popular pick!")
-          .font(YralFont.pt16.bold.swiftUIFont)
-          .lineLimit(Constants.textLineLimit)
-          .minimumScaleFactor(Constants.textMinScale)
-          .allowsTightening(true)
-          .foregroundColor(YralColor.green50.swiftUIColor)
-
-        Text("You lost \(abs(points)) Points")
-          .font(YralFont.pt16.bold.swiftUIFont)
-          .lineLimit(Constants.textLineLimit)
-          .minimumScaleFactor(Constants.textMinScale)
-          .allowsTightening(true)
-          .foregroundColor(YralColor.red300.swiftUIColor)
-      }
+      Text(result.outcome == "WIN" ?
+           "You win \(abs(result.coinDelta)) Points!" :
+            "You lost \(abs(result.coinDelta)) Points")
+      .font(YralFont.pt16.bold.swiftUIFont)
+      .lineLimit(Constants.textLineLimit)
+      .minimumScaleFactor(Constants.textMinScale)
+      .allowsTightening(true)
+      .foregroundColor(result.outcome == "WIN" ? YralColor.green300.swiftUIColor : YralColor.red300.swiftUIColor)
     }
   }
 
@@ -149,7 +128,7 @@ struct SmileyGameView: View {
     }
   }
 
-  private func startAnimation(for result: SmileyGameResult) {
+  private func startAnimation(for result: SmileyGameResultResponse) {
     isFocused = true
 
     DispatchQueue.main.asyncAfter(deadline: .now() + Constants.durationPointOne) {

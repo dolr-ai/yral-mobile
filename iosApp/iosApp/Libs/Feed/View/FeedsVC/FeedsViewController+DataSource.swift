@@ -111,6 +111,26 @@ extension FeedsViewController {
     }
   }
 
+  func handleCastVote(_ response: SmileyGameResultResponse) {
+    var snapshot = feedsDataSource.snapshot()
+    var items = snapshot.itemIdentifiers
+    guard let index = items.firstIndex(where: { $0.videoID == response.videoID }) else {
+      return
+    }
+
+    guard let cell = feedsCV.cellForItem(at: IndexPath(item: index, section: 0)) as? FeedsCell else {
+      return
+    }
+
+    cell.startSmileyGamResultAnimation(for: response) { [weak self] in
+      items[index].smileyGame?.result = response
+
+      snapshot.deleteItems(snapshot.itemIdentifiers)
+      snapshot.appendItems(items)
+      self?.feedsDataSource.apply(snapshot, animatingDifferences: false)
+    }
+  }
+
   func removeFeeds(with feeds: [FeedResult], isReport: Bool = false, animated: Bool = false) {
     for feed in feeds {
       lastDisplayedThumbnailPath.removeValue(forKey: feed.videoID)

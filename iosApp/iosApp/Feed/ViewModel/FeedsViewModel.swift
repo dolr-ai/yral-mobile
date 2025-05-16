@@ -14,6 +14,7 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
   let reportUseCase: ReportFeedsUseCaseProtocol
   let logEventUseCase: LogUploadEventUseCaseProtocol
   let smileyConfigUseCase: SmileyUseCaseProtocol
+  let castVoteUseCase: CastVoteUseCaseProtocol
 
   private var smileys = [Smiley]()
   private var currentFeeds = [FeedResult]()
@@ -39,13 +40,15 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
     moreFeedsUseCase: FetchMoreFeedsUseCaseProtocol,
     reportUseCase: ReportFeedsUseCaseProtocol,
     logEventUseCase: LogUploadEventUseCaseProtocol,
-    smileyConfigUseCase: SmileyUseCaseProtocol
+    smileyConfigUseCase: SmileyUseCaseProtocol,
+    castVoteUseCase: CastVoteUseCaseProtocol
   ) {
     self.initialFeedsUseCase = fetchFeedsUseCase
     self.moreFeedsUseCase = moreFeedsUseCase
     self.reportUseCase = reportUseCase
     self.logEventUseCase = logEventUseCase
     self.smileyConfigUseCase = smileyConfigUseCase
+    self.castVoteUseCase = castVoteUseCase
     self.unifiedEvent = .fetchingInitialFeeds
     isFetchingInitialFeeds = true
 
@@ -135,6 +138,18 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
       }
       if self.currentFeeds.count <= FeedsViewController.Constants.initialNumResults {
         await loadMoreFeeds()
+      }
+    }
+  }
+
+  @MainActor func castVote(request: CastVoteQuery) async {
+    do {
+      let result = await castVoteUseCase.execute(request: request)
+      switch result {
+      case .success(let response):
+        unifiedEvent = .castVoteSuccess(response)
+      case .failure(let error):
+        unifiedEvent = .castVoteFailure(errorMessage: error.localizedDescription)
       }
     }
   }

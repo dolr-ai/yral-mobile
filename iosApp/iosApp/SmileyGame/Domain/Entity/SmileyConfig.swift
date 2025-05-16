@@ -18,12 +18,7 @@ struct Smiley: Identifiable, Hashable {
   let isActive: Bool
 }
 
-enum SmileyGameResult: Hashable {
-  case winner(Smiley, Int)
-  case looser(Smiley, Int)
-}
-
 struct SmileyGame: Hashable {
   var smileys: [Smiley]
-  var result: SmileyGameResult?
+  var result: SmileyGameResultResponse?
 }

@@ -70,6 +70,21 @@ final class AppDIContainer {
     )
   }()
 
+  lazy var castVoteRepository: CastVoteRepositoryProtocol = {
+    CastVoteRepository(
+      firebaseService: FirebaseService(),
+      httpService: HTTPService(baseURLString: appConfiguration.firebaseBaseURLString),
+      authClient: authClient
+    )
+  }()
+
+  lazy var castVoteUseCase: CastVoteUseCaseProtocol = {
+    CastVoteUseCase(
+      castVoteRepository: castVoteRepository,
+      crashReporter: crashReporter
+    )
+  }()
+
   func makeFeedDIContainer() -> FeedDIContainer {
     return FeedDIContainer(
       dependencies: FeedDIContainer.Dependencies(
@@ -77,7 +92,8 @@ final class AppDIContainer {
         httpService: HTTPService(baseURLString: appConfiguration.offchainBaseURLString),
         authClient: authClient,
         crashReporter: crashReporter,
-        smileyConfigUseCase: smileyConfigUseCase
+        smileyConfigUseCase: smileyConfigUseCase,
+        castVoteUseCase: castVoteUseCase
       )
     )
   }

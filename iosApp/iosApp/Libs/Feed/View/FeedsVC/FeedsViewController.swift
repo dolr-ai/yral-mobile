@@ -128,6 +128,10 @@ class FeedsViewController: UIViewController {
       .sink { [weak self] event in
         guard let self = self, let event = event else { return }
         switch event {
+        case .castVoteSuccess(let response):
+          self.handleCastVote(response)
+        case .castVoteFailure(let errorMessage):
+          print("Cast vote failed: \(errorMessage)")
         case .fetchingInitialFeeds:
           loadMoreRequestMade = true
         case .loadedMoreFeeds:
