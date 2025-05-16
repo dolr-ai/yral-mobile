@@ -1,0 +1,50 @@
+package com.yral.android.ui.screens.home.account
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.SheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import com.yral.android.ui.components.SignupView
+import com.yral.android.ui.widgets.YralBottomSheet
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun LoginBottomSheet(
+    termsLink: String,
+    bottomSheetState: SheetState,
+    onDismissRequest: () -> Unit,
+    onSignupClicked: () -> Unit,
+    openTerms: () -> Unit,
+) {
+    YralBottomSheet(
+        onDismissRequest = onDismissRequest,
+        bottomSheetState = bottomSheetState,
+    ) {
+        Column(
+            modifier =
+                Modifier
+                    .padding(
+                        start = 16.dp,
+                        top = 45.dp,
+                        end = 16.dp,
+                        bottom = 16.dp,
+                    ),
+            verticalArrangement = Arrangement.spacedBy(0.dp, Alignment.Top),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            SignupView(
+                onSignupClicked = onSignupClicked,
+                termsLink = termsLink,
+                openTerms = openTerms,
+            )
+            Spacer(modifier = Modifier.height(300.dp))
+        }
+    }
+}

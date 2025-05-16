@@ -27,12 +27,12 @@ import androidx.compose.ui.unit.dp
 import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
-import com.yral.android.ui.screens.home.AccountScreenConstants
 import com.yral.android.ui.widgets.YralButton
 
 @Suppress("LongMethod")
 @Composable
 fun SignupView(
+    termsLink: String,
     onSignupClicked: () -> Unit,
     openTerms: () -> Unit,
 ) {
@@ -87,7 +87,7 @@ fun SignupView(
                     onSignupClicked()
                 }
                 Text(
-                    text = annotateText(openTerms),
+                    text = annotateText(termsLink, openTerms),
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center,
                 )
@@ -97,7 +97,10 @@ fun SignupView(
 }
 
 @Composable
-private fun annotateText(openTerms: () -> Unit): AnnotatedString {
+private fun annotateText(
+    termsLink: String,
+    openTerms: () -> Unit,
+): AnnotatedString {
     val consentText = stringResource(R.string.signup_consent)
     val termOfServiceText = stringResource(R.string.terms_of_service_signup_consent)
     return buildAnnotatedString {
@@ -118,7 +121,7 @@ private fun annotateText(openTerms: () -> Unit): AnnotatedString {
             }
             withLink(
                 LinkAnnotation.Url(
-                    url = AccountScreenConstants.TERMS_OF_SERVICE_URL,
+                    url = termsLink,
                     styles =
                         TextLinkStyles(
                             style =
