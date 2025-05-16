@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.home
+package com.yral.android.ui.screens.home.feed
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -51,8 +51,8 @@ import coil3.compose.AsyncImage
 import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
-import com.yral.android.ui.screens.home.FeedScreenConstants.MAX_LINES_FOR_POST_DESCRIPTION
-import com.yral.android.ui.screens.home.FeedScreenConstants.VIDEO_REPORT_SHEET_MAX_HEIGHT
+import com.yral.android.ui.screens.home.feed.FeedScreenConstants.MAX_LINES_FOR_POST_DESCRIPTION
+import com.yral.android.ui.screens.home.feed.FeedScreenConstants.VIDEO_REPORT_SHEET_MAX_HEIGHT
 import com.yral.android.ui.widgets.YralBottomSheet
 import com.yral.android.ui.widgets.YralButtonState
 import com.yral.android.ui.widgets.YralButtonType
@@ -182,6 +182,9 @@ fun FeedScreen(
                             pageNo = pageNo,
                         )
                     }
+                    GameIconsRow(
+                        modifier = Modifier.align(Alignment.BottomEnd),
+                    ) { }
                 }
             }
             // Show loader at the bottom when loading more content AND no new items have been added yet
