@@ -6,7 +6,3 @@ object AppConfigurations {
     const val FEED_BASE_URL = "yral-ml-feed-server.fly.dev"
     const val ANALYTICS_BASE_URL = "icp-off-chain-agent.fly.dev"
 }
-
-data class AppConfig(
-    val isDebug: Boolean,
-)

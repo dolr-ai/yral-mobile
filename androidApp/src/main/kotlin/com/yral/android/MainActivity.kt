@@ -54,7 +54,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         initPlatformResources()
-        initRustLogger()
+        if (BuildConfig.DEBUG) {
+            initRustLogger()
+        }
         oAuthUtils = koinInstance.get()
         handleIntent(intent)
         setContent {

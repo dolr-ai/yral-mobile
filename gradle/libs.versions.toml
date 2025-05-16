@@ -29,6 +29,7 @@ androidx-lifecycle = "2.8.4"
 coil = "3.1.0"
 browser = "1.8.0"
 touchlab-logger = "2.0.5"
+desugar-jdk-libs = "2.1.5"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -85,6 +86,8 @@ coil-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "
 androidx-browser = { group = "androidx.browser", name = "browser", version.ref = "browser" }
 
 touchlab-logger = { module = "co.touchlab:kermit", version.ref = "touchlab-logger"}
+
+desugar-jdk-libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar-jdk-libs" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
