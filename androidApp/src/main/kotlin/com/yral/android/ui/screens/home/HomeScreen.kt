@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import com.yral.android.R
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.home.account.AccountScreen
+import com.yral.android.ui.screens.home.feed.FeedScreen
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.koin.koinInstance
 
