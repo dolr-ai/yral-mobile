@@ -189,6 +189,9 @@ fun FeedScreen(
                             pageNo = pageNo,
                         )
                     }
+                    GameIconsRow(
+                        modifier = Modifier.align(Alignment.BottomEnd),
+                    ) { }
                 }
             }
             // Show loader at the bottom when loading more content AND no new items have been added yet
