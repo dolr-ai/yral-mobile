@@ -218,7 +218,7 @@ def cast_vote(request: Request):
                 shard_ref(random.randrange(SHARDS)),
                 {sid: firestore.Increment(1)}
             )
-            return True
+            return {"result": "OK"}
 
         tx_out = _vote_tx(db().transaction())
         if tx_out["result"] == "DUP":
