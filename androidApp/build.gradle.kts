@@ -105,6 +105,7 @@ dependencies {
     implementation(projects.shared.features.root)
     implementation(projects.shared.libs.videoPlayer)
     implementation(projects.shared.features.account)
+    implementation(projects.shared.features.game)
 
     val (dependencies, shouldAddRustModule) = BuildConfig.getAndProcessDependencies(project)
     dependencies.forEach { dependency ->

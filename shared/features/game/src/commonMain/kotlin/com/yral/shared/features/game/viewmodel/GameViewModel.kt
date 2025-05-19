@@ -1,0 +1,47 @@
+package com.yral.shared.features.game.viewmodel
+
+import androidx.lifecycle.ViewModel
+import com.github.michaelbull.result.mapBoth
+import com.yral.shared.core.dispatchers.AppDispatchers
+import com.yral.shared.features.game.domain.GameIcon
+import com.yral.shared.features.game.domain.GetGameIconsUseCase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+
+class GameViewModel(
+    appDispatchers: AppDispatchers,
+    private val gameIconsUseCase: GetGameIconsUseCase,
+) : ViewModel() {
+    private val coroutineScope = CoroutineScope(appDispatchers.io)
+    private val _state =
+        MutableStateFlow(
+            GameState(
+                gameIcons = emptyList(),
+            ),
+        )
+    val state: StateFlow<GameState> = _state.asStateFlow()
+
+    init {
+        coroutineScope.launch {
+            gameIconsUseCase
+                .invoke(Unit)
+                .mapBoth(
+                    success = {
+                        _state.emit(
+                            _state.value.copy(
+                                gameIcons = it,
+                            ),
+                        )
+                    },
+                    failure = { },
+                )
+        }
+    }
+}
+
+data class GameState(
+    val gameIcons: List<GameIcon>,
+)
