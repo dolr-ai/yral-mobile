@@ -13,6 +13,16 @@ import FirebaseAppCheck
 class FirebaseService: FirebaseServiceProtocol {
   private let database = Firestore.firestore()
 
+  func signInAnonymously() async throws {
+    if Auth.auth().currentUser == nil {
+      try await Auth.auth().signInAnonymously()
+    }
+  }
+
+  func signIn(withCustomToken token: String) async throws {
+    try await Auth.auth().signIn(withCustomToken: token)
+  }
+
   func fetchUserIDToken() async throws -> String? {
     do {
       let idToken = try await Auth.auth().currentUser?.getIDToken()
