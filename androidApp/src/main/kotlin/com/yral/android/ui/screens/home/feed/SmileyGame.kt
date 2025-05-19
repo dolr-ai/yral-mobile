@@ -1,5 +1,7 @@
 package com.yral.android.ui.screens.home.feed
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -12,19 +14,31 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.yral.android.R
 import com.yral.android.ui.design.YralColors.smileyGameCardBackground
+import com.yral.android.ui.screens.home.feed.IconAnimationConstant.ANIMATION_DURATION
+import com.yral.android.ui.screens.home.feed.IconAnimationConstant.ROTATION_DEGREE
+import com.yral.android.ui.screens.home.feed.IconAnimationConstant.SCALING_FACTOR
 import com.yral.shared.features.game.domain.GameIcon
 import com.yral.shared.features.game.domain.GameIconNames
+import kotlinx.coroutines.delay
+
+private object IconAnimationConstant {
+    const val ROTATION_DEGREE = -15f
+    const val SCALING_FACTOR = 1.17f
+    const val ANIMATION_DURATION = 200L
+}
 
 @Composable
 internal fun GameIconsRow(
@@ -61,16 +75,20 @@ internal fun GameIconsRow(
             ) {
                 gameIcons.forEach {
                     val resourceId = it.getResource()
+                    var animate by remember { mutableStateOf(false) }
                     if (resourceId > 0) {
                         GameIcon(
                             modifier =
                                 Modifier.clickable {
                                     if (clickedIcon == null) {
+                                        animate = true
                                         clickedIcon = it
                                         onIconClicked(it)
                                     }
                                 },
                             icon = resourceId,
+                            animate = animate,
+                            setAnimate = { shouldAnimate -> animate = shouldAnimate },
                         )
                     }
                 }
@@ -88,11 +106,32 @@ internal fun GameIconsRow(
 private fun GameIcon(
     modifier: Modifier,
     icon: Int,
+    animate: Boolean = false,
+    setAnimate: (Boolean) -> Unit,
 ) {
+    val rotation by animateFloatAsState(
+        targetValue = if (animate) ROTATION_DEGREE else 0f,
+        animationSpec = tween(durationMillis = ANIMATION_DURATION.toInt()),
+        label = "rotation",
+    )
+    val scale by animateFloatAsState(
+        targetValue = if (animate) SCALING_FACTOR else 1f,
+        animationSpec = tween(durationMillis = ANIMATION_DURATION.toInt()),
+        label = "scale",
+    )
+    LaunchedEffect(animate) {
+        delay(ANIMATION_DURATION)
+        setAnimate(false)
+    }
     Image(
         modifier =
             modifier
-                .size(46.dp),
+                .size(46.dp)
+                .graphicsLayer(
+                    rotationZ = rotation,
+                    scaleX = scale,
+                    scaleY = scale,
+                ),
         painter = painterResource(id = icon),
         contentDescription = "image description",
         contentScale = ContentScale.FillBounds,
