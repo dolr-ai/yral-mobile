@@ -40,8 +40,48 @@ class GameViewModel(
                 )
         }
     }
+
+    fun setClickedIcon(
+        icon: GameIcon,
+        videoId: String,
+    ) {
+        coroutineScope.launch {
+            val temp = _state.value.gameResult.toMutableMap()
+            temp[videoId] = Pair(icon, 0)
+            _state.emit(
+                _state.value.copy(
+                    gameResult = temp,
+                ),
+            )
+        }
+    }
+
+    fun getFeedGameResult(videoId: String): Int =
+        _state
+            .value
+            .gameResult[videoId]
+            ?.second ?: 0
+
+    fun setFeedGameResult(
+        videoId: String,
+        coinDelta: Int,
+    ) {
+        coroutineScope.launch {
+            val temp = _state.value.gameResult.toMutableMap()
+            val tempPair = _state.value.gameResult[videoId]
+            tempPair?.let {
+                temp[videoId] = tempPair.copy(second = coinDelta)
+            }
+            _state.emit(
+                _state.value.copy(
+                    gameResult = temp,
+                ),
+            )
+        }
+    }
 }
 
 data class GameState(
     val gameIcons: List<GameIcon>,
+    val gameResult: Map<String, Pair<GameIcon, Int>> = emptyMap(),
 )
