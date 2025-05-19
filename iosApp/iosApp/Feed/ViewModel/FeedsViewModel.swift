@@ -11,10 +11,13 @@ import Combine
 class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
   let initialFeedsUseCase: FetchInitialFeedsUseCaseProtocol
   let moreFeedsUseCase: FetchMoreFeedsUseCaseProtocol
-  let likesUseCase: ToggleLikeUseCaseProtocol
   let reportUseCase: ReportFeedsUseCaseProtocol
   let logEventUseCase: LogUploadEventUseCaseProtocol
   let socialSignInUseCase: SocialSignInUseCaseProtocol
+  let smileyConfigUseCase: SmileyUseCaseProtocol
+  let castVoteUseCase: CastVoteUseCaseProtocol
+
+  private var smileys = [Smiley]()
   private var currentFeeds = [FeedResult]()
   private var filteredFeeds = [FeedResult]()
   private var feedvideoIDSet = Set<String>()
@@ -36,17 +39,19 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
   init(
     fetchFeedsUseCase: FetchInitialFeedsUseCaseProtocol,
     moreFeedsUseCase: FetchMoreFeedsUseCaseProtocol,
-    likeUseCase: ToggleLikeUseCaseProtocol,
     reportUseCase: ReportFeedsUseCaseProtocol,
     logEventUseCase: LogUploadEventUseCaseProtocol,
     socialSignInUseCase: SocialSignInUseCaseProtocol
+    smileyConfigUseCase: SmileyUseCaseProtocol,
+    castVoteUseCase: CastVoteUseCaseProtocol
   ) {
     self.initialFeedsUseCase = fetchFeedsUseCase
     self.moreFeedsUseCase = moreFeedsUseCase
-    self.likesUseCase = likeUseCase
     self.reportUseCase = reportUseCase
     self.logEventUseCase = logEventUseCase
     self.socialSignInUseCase = socialSignInUseCase
+    self.smileyConfigUseCase = smileyConfigUseCase
+    self.castVoteUseCase = castVoteUseCase
     self.unifiedEvent = .fetchingInitialFeeds
     isFetchingInitialFeeds = true
 
@@ -60,8 +65,13 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
         let unblockedFeeds = self.filteredFeeds.filter { !self.blockedPrincipalIDSet.contains($0.principalID) }
         guard !unblockedFeeds.isEmpty else { return }
         self.feedvideoIDSet.formUnion(unblockedFeeds.map { $0.videoID })
-        self.currentFeeds += unblockedFeeds
-        self.unifiedState = .success(feeds: unblockedFeeds)
+        let modifiedUnblockedFeeds = unblockedFeeds.map { item in
+          var modified = item
+          modified.smileyGame = SmileyGame(smileys: self.smileys, result: nil)
+          return modified
+        }
+        self.currentFeeds += modifiedUnblockedFeeds
+        self.unifiedState = .success(feeds: modifiedUnblockedFeeds)
       }
       .store(in: &cancellables)
   }
@@ -72,6 +82,19 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
 
   var unifiedEventPublisher: AnyPublisher<UnifiedFeedEvent?, Never> {
     $unifiedEvent.eraseToAnyPublisher()
+  }
+
+  @MainActor func fetchSmileys() async {
+    unifiedState = .loading
+    do {
+      let result = await smileyConfigUseCase.execute()
+      switch result {
+      case .success(let smileyConfig):
+        smileys = smileyConfig.smileys
+      case .failure(let error):
+        print(error.localizedDescription)
+      }
+    }
   }
 
   @MainActor func fetchFeeds(request: InitialFeedRequest) async {
@@ -122,20 +145,14 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
     }
   }
 
-  @MainActor func toggleLike(request: LikeQuery) async {
+  @MainActor func castVote(request: CastVoteQuery) async {
     do {
-      let result = await likesUseCase.execute(request: request)
+      let result = await castVoteUseCase.execute(request: request)
       switch result {
       case .success(let response):
-        currentFeeds[response.index].isLiked = response.status
-        let likeCountDifference = response.status ? Int.one : -Int.one
-        currentFeeds[response.index].likeCount += likeCountDifference
-        unifiedEvent = .toggledLikeSuccessfully(likeResult: response)
-        if isFetchingInitialFeeds {
-          unifiedEvent = .finishedLoadingInitialFeeds
-        }
+        unifiedEvent = .castVoteSuccess(response)
       case .failure(let error):
-        unifiedEvent = .toggleLikeFailed(errorMessage: error.localizedDescription)
+        unifiedEvent = .castVoteFailure(errorMessage: error.localizedDescription)
       }
     }
   }

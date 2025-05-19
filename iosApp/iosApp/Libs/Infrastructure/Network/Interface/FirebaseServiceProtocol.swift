@@ -9,6 +9,9 @@
 import FirebaseFirestore
 
 protocol FirebaseServiceProtocol {
+  func fetchUserIDToken() async throws -> String?
+  func fetchAppCheckToken() async throws -> String
+
   func fetchDocument<T: Decodable>(
     path: String,
     decodeAs type: T.Type
