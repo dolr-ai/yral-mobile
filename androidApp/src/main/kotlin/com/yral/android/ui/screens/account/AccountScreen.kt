@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.home.account
+package com.yral.android.ui.screens.account
 
 import android.content.Intent
 import androidx.compose.foundation.Image
@@ -44,7 +44,7 @@ import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.design.YralDimens
-import com.yral.android.ui.screens.home.account.AccountScreenConstants.SOCIAL_MEDIA_LINK_BOTTOM_SPACER_WEIGHT
+import com.yral.android.ui.screens.account.AccountScreenConstants.SOCIAL_MEDIA_LINK_BOTTOM_SPACER_WEIGHT
 import com.yral.android.ui.widgets.YralLoader
 import com.yral.shared.features.account.viewmodel.AccountBottomSheet
 import com.yral.shared.features.account.viewmodel.AccountHelpLink
