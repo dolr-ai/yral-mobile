@@ -22,33 +22,35 @@ struct FirebaseImageView: View {
           .scaledToFill()
           .transition(.opacity.animation(.easeIn))
       } else if isLoading {
-        ProgressView("Loading…")
+        ProgressView()
       }
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .onAppear {
-      loadImage()
+    .task {
+      await loadImage()
     }
   }
 
-  private func loadImage() {
+  @MainActor
+  private func loadImage() async {
+    if let cachedImageData = ImageCache.shared.data(forPath: path) {
+      imageData = cachedImageData
+      return
+    }
+
     guard !isLoading else { return }
     isLoading = true
 
-    let ref = Storage.storage().reference(withPath: path)
-    ref.getData(maxSize: Constants.maxBytes, completion: { data, error in
-      guard let data = data, error == nil else {
-        DispatchQueue.main.async {
-          self.isLoading = false
-        }
-        return
-      }
+    do {
+      let ref = Storage.storage().reference(withPath: path)
+      let data = try await ref.data(maxSize: Constants.maxBytes)
+      imageData = data
+      ImageCache.shared.store(data, forPath: path)
+    } catch {
+      print("Firebase image download failed: \(error.localizedDescription)")
+    }
 
-      DispatchQueue.main.async {
-        self.imageData = data
-        self.isLoading = false
-      }
-    })
+    isLoading = false
   }
 }
 

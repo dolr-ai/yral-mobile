@@ -141,7 +141,8 @@ class FeedsRepository: FeedRepositoryProtocol {
       profileImageURL: profileImageURL,
       likeCount: Int(result.like_count()),
       isLiked: result.liked_by_me(),
-      nsfwProbability: feed.nsfwProbability
+      nsfwProbability: feed.nsfwProbability,
+      smileyGame: nil
     )
   }
 
