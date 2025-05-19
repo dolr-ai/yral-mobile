@@ -1,8 +1,19 @@
 {
   "images" : [
     {
-      "filename" : "rocket.svg",
-      "idiom" : "universal"
+      "filename" : "rocket.png",
+      "idiom" : "universal",
+      "scale" : "1x"
+    },
+    {
+      "filename" : "rocket@2x.png",
+      "idiom" : "universal",
+      "scale" : "2x"
+    },
+    {
+      "filename" : "rocket@3x.png",
+      "idiom" : "universal",
+      "scale" : "3x"
     }
   ],
   "info" : {
