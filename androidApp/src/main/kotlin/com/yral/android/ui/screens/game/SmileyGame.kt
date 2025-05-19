@@ -102,15 +102,57 @@ fun GameIconsRow(
                 )
             }
         }
-        if (animateBubbles) {
-            clickedIcon?.let {
-                BubbleAnimation(it.getResource()) {
-                    animateBubbles = false
-                }
+        GameIconBubbles(clickedIcon, animateBubbles) { animate ->
+            animateBubbles = animate
+        }
+        GameResultAnimation(coinDelta = coinDelta)
+    }
+}
+
+@Composable
+private fun GameIconBubbles(
+    clickedIcon: GameIcon?,
+    animateBubbles: Boolean,
+    setAnimateBubbles: (Boolean) -> Unit,
+) {
+    if (animateBubbles) {
+        clickedIcon?.let {
+            BubbleAnimation(it.getResource()) {
+                setAnimateBubbles(false)
             }
         }
     }
 }
+
+@Composable
+private fun GameResultAnimation(coinDelta: Int) {
+    var animateCoinDelta by remember { mutableStateOf(false) }
+    LaunchedEffect(coinDelta) {
+        if (coinDelta != 0) {
+            animateCoinDelta = true
+        }
+    }
+    if (animateCoinDelta) {
+        CoinDeltaAnimation(
+            text = coinDelta.toSignedString(),
+            textColor =
+                if (coinDelta > 0) {
+                    YralColors.Green300
+                } else {
+                    YralColors.Red300
+                },
+        ) {
+            animateCoinDelta = false
+        }
+    }
+}
+
+private fun Int.toSignedString(): String =
+    if (this >= 0) {
+        "+$this"
+    } else {
+        "$this"
+    }
 
 @Composable
 private fun GameResultView(
@@ -173,6 +215,56 @@ private fun GameResultView(
         }
     }
 }
+
+@Composable
+private fun gameResultText(
+    iconName: String,
+    coinDelta: Int,
+): AnnotatedString =
+    buildAnnotatedString {
+        val textStyle = LocalAppTopography.current.mdBold
+        val spanStyle =
+            SpanStyle(
+                fontSize = textStyle.fontSize,
+                fontFamily = textStyle.fontFamily,
+                fontWeight = textStyle.fontWeight,
+                color = YralColors.Green50,
+            )
+        if (coinDelta > 0) {
+            withStyle(spanStyle) {
+                append(
+                    stringResource(
+                        R.string.was_most_people_choice,
+                        iconName.lowercase().capitalize(Locale.current),
+                    ),
+                )
+                append("\n")
+            }
+            withStyle(spanStyle.plus(SpanStyle(color = YralColors.Green300))) {
+                append(
+                    stringResource(
+                        R.string.you_win_x_coins,
+                        coinDelta,
+                    ),
+                )
+            }
+        } else {
+            withStyle(spanStyle) {
+                append(
+                    stringResource(R.string.not_most_popular_pick),
+                )
+                append("\n")
+            }
+            withStyle(spanStyle.plus(SpanStyle(color = YralColors.Red300))) {
+                append(
+                    stringResource(
+                        R.string.you_lost_x_coins,
+                        abs(coinDelta),
+                    ),
+                )
+            }
+        }
+    }
 
 @Composable
 private fun GameIconStrip(
@@ -269,54 +361,4 @@ private fun GameIcon.getResource(): Int =
         GameIconNames.SURPRISE.name -> R.drawable.surprise
         GameIconNames.ROCKET.name -> R.drawable.rocket
         else -> 0
-    }
-
-@Composable
-private fun gameResultText(
-    iconName: String,
-    coinDelta: Int,
-): AnnotatedString =
-    buildAnnotatedString {
-        val textStyle = LocalAppTopography.current.mdBold
-        val spanStyle =
-            SpanStyle(
-                fontSize = textStyle.fontSize,
-                fontFamily = textStyle.fontFamily,
-                fontWeight = textStyle.fontWeight,
-                color = YralColors.Green50,
-            )
-        if (coinDelta > 0) {
-            withStyle(spanStyle) {
-                append(
-                    stringResource(
-                        R.string.was_most_people_choice,
-                        iconName.lowercase().capitalize(Locale.current),
-                    ),
-                )
-                append("\n")
-            }
-            withStyle(spanStyle.plus(SpanStyle(color = YralColors.Green300))) {
-                append(
-                    stringResource(
-                        R.string.you_win_x_coins,
-                        coinDelta,
-                    ),
-                )
-            }
-        } else {
-            withStyle(spanStyle) {
-                append(
-                    stringResource(R.string.not_most_popular_pick),
-                )
-                append("\n")
-            }
-            withStyle(spanStyle.plus(SpanStyle(color = YralColors.Red300))) {
-                append(
-                    stringResource(
-                        R.string.you_lost_x_coins,
-                        abs(coinDelta),
-                    ),
-                )
-            }
-        }
     }
