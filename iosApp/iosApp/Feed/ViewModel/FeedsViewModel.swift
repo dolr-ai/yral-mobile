@@ -41,7 +41,7 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
     moreFeedsUseCase: FetchMoreFeedsUseCaseProtocol,
     reportUseCase: ReportFeedsUseCaseProtocol,
     logEventUseCase: LogUploadEventUseCaseProtocol,
-    socialSignInUseCase: SocialSignInUseCaseProtocol
+    socialSignInUseCase: SocialSignInUseCaseProtocol,
     smileyConfigUseCase: SmileyUseCaseProtocol,
     castVoteUseCase: CastVoteUseCaseProtocol
   ) {
