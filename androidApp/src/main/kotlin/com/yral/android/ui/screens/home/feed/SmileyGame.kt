@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -24,8 +25,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.capitalize
+import androidx.compose.ui.text.intl.Locale
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.yral.android.R
+import com.yral.android.ui.design.LocalAppTopography
+import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.design.YralColors.smileyGameCardBackground
 import com.yral.android.ui.screens.home.feed.IconAnimationConstant.ANIMATION_DURATION
 import com.yral.android.ui.screens.home.feed.IconAnimationConstant.ROTATION_DEGREE
@@ -33,6 +43,7 @@ import com.yral.android.ui.screens.home.feed.IconAnimationConstant.SCALING_FACTO
 import com.yral.shared.features.game.domain.GameIcon
 import com.yral.shared.features.game.domain.GameIconNames
 import kotlinx.coroutines.delay
+import kotlin.math.abs
 
 private object IconAnimationConstant {
     const val ROTATION_DEGREE = -15f
@@ -44,9 +55,11 @@ private object IconAnimationConstant {
 internal fun GameIconsRow(
     modifier: Modifier = Modifier,
     gameIcons: List<GameIcon>,
+    clickedIcon: GameIcon? = null,
+    coinDelta: Int = 0,
     onIconClicked: (emoji: GameIcon) -> Unit,
 ) {
-    var clickedIcon by remember { mutableStateOf<GameIcon?>(null) }
+    var animateBubbles by remember { mutableStateOf(false) }
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.BottomCenter,
@@ -59,44 +72,101 @@ internal fun GameIconsRow(
                         vertical = 16.dp,
                     ),
         ) {
-            Row(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .background(
-                            color = smileyGameCardBackground,
-                            shape = RoundedCornerShape(size = 49.dp),
-                        ).padding(
-                            horizontal = 12.dp,
-                            vertical = 4.dp,
-                        ),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                gameIcons.forEach {
-                    val resourceId = it.getResource()
-                    var animate by remember { mutableStateOf(false) }
-                    if (resourceId > 0) {
-                        GameIcon(
-                            modifier =
-                                Modifier.clickable {
-                                    if (clickedIcon == null) {
-                                        animate = true
-                                        clickedIcon = it
-                                        onIconClicked(it)
-                                    }
-                                },
-                            icon = resourceId,
-                            animate = animate,
-                            setAnimate = { shouldAnimate -> animate = shouldAnimate },
-                        )
-                    }
+            if (coinDelta != 0) {
+                clickedIcon?.let {
+                    GameResultView(it, coinDelta)
+                }
+            } else {
+                GameIconStrip(
+                    gameIcons = gameIcons,
+                    clickedIcon = clickedIcon,
+                    onIconClicked = onIconClicked,
+                    setAnimateBubbles = { animateBubbles = true },
+                )
+            }
+        }
+        if (animateBubbles) {
+            clickedIcon?.let {
+                BubbleAnimation(it.getResource()) {
+                    animateBubbles = false
                 }
             }
         }
-        clickedIcon?.let {
-            BubbleAnimation(it.getResource()) {
-                clickedIcon = null
+    }
+}
+
+@Composable
+private fun GameResultView(
+    icon: GameIcon,
+    coinDelta: Int,
+) {
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(
+                    color = smileyGameCardBackground,
+                    shape = RoundedCornerShape(size = 49.dp),
+                ).padding(
+                    horizontal = 12.dp,
+                    vertical = 4.dp,
+                ),
+        horizontalArrangement =
+            Arrangement.spacedBy(
+                12.dp,
+                Alignment.Start,
+            ),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        GameIcon(
+            modifier = Modifier,
+            icon = icon.getResource(),
+            animate = false,
+            setAnimate = { },
+        )
+        Text(
+            text = gameResultText(icon.imageName, coinDelta),
+        )
+    }
+}
+
+@Composable
+private fun GameIconStrip(
+    gameIcons: List<GameIcon>,
+    clickedIcon: GameIcon? = null,
+    onIconClicked: (emoji: GameIcon) -> Unit,
+    setAnimateBubbles: (Boolean) -> Unit,
+) {
+    var animateIcon by remember { mutableStateOf(false) }
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(
+                    color = smileyGameCardBackground,
+                    shape = RoundedCornerShape(size = 49.dp),
+                ).padding(
+                    horizontal = 12.dp,
+                    vertical = 4.dp,
+                ),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        gameIcons.forEach {
+            val resourceId = it.getResource()
+            if (resourceId > 0) {
+                GameIcon(
+                    modifier =
+                        Modifier.clickable {
+                            animateIcon = true
+                            setAnimateBubbles(true)
+                            onIconClicked(it)
+                        },
+                    icon = resourceId,
+                    animate =
+                        if (clickedIcon?.id == it.id) animateIcon else false,
+                    setAnimate = { shouldAnimate -> animateIcon = shouldAnimate },
+                )
             }
         }
     }
@@ -146,4 +216,54 @@ private fun GameIcon.getResource(): Int =
         GameIconNames.SURPRISE.name -> R.drawable.surprise
         GameIconNames.ROCKET.name -> R.drawable.rocket
         else -> 0
+    }
+
+@Composable
+private fun gameResultText(
+    iconName: String,
+    coinDelta: Int,
+): AnnotatedString =
+    buildAnnotatedString {
+        val textStyle = LocalAppTopography.current.mdBold
+        val spanStyle =
+            SpanStyle(
+                fontSize = textStyle.fontSize,
+                fontFamily = textStyle.fontFamily,
+                fontWeight = textStyle.fontWeight,
+                color = YralColors.Green50,
+            )
+        if (coinDelta > 0) {
+            withStyle(spanStyle) {
+                append(
+                    stringResource(
+                        R.string.was_most_people_choice,
+                        iconName.lowercase().capitalize(Locale.current),
+                    ),
+                )
+                append("\n")
+            }
+            withStyle(spanStyle.plus(SpanStyle(color = YralColors.Green300))) {
+                append(
+                    stringResource(
+                        R.string.you_win_x_coins,
+                        coinDelta,
+                    ),
+                )
+            }
+        } else {
+            withStyle(spanStyle) {
+                append(
+                    stringResource(R.string.not_most_popular_pick),
+                )
+                append("\n")
+            }
+            withStyle(spanStyle.plus(SpanStyle(color = YralColors.Red300))) {
+                append(
+                    stringResource(
+                        R.string.you_lost_x_coins,
+                        abs(coinDelta),
+                    ),
+                )
+            }
+        }
     }

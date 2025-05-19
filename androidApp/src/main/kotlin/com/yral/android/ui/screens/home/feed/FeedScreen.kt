@@ -175,11 +175,9 @@ fun FeedScreen(
                 FeedOverlay(
                     pageNo = pageNo,
                     state = state,
+                    feedViewModel = viewModel,
                     gameState = gameState,
-                    setPostDescriptionExpanded = { viewModel.setPostDescriptionExpanded(it) },
-                    toggleReportSheet = { isOpen ->
-                        viewModel.toggleReportSheet(isOpen = isOpen, pageNo)
-                    },
+                    gameViewModel = gameViewModel,
                 )
             }
             // Show loader at the bottom when loading more content AND no new items have been added yet
@@ -233,9 +231,9 @@ private fun FeedDetails.toReel() =
 private fun FeedOverlay(
     pageNo: Int,
     state: FeedState,
+    feedViewModel: FeedViewModel,
     gameState: GameState,
-    setPostDescriptionExpanded: (Boolean) -> Unit,
-    toggleReportSheet: (isOpen: Boolean) -> Unit,
+    gameViewModel: GameViewModel,
 ) {
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -246,7 +244,7 @@ private fun FeedOverlay(
             profileImageUrl = state.feedDetails[pageNo].profileImageURL,
             postDescription = state.feedDetails[pageNo].postDescription,
             isPostDescriptionExpanded = state.isPostDescriptionExpanded,
-            setPostDescriptionExpanded = { setPostDescriptionExpanded(it) },
+            setPostDescriptionExpanded = { feedViewModel.setPostDescriptionExpanded(it) },
         )
         ReportVideo(
             modifier =
@@ -254,13 +252,21 @@ private fun FeedOverlay(
                     .align(Alignment.BottomEnd)
                     .padding(end = 16.dp, bottom = 89.dp),
         ) {
-            toggleReportSheet(true)
+            feedViewModel.toggleReportSheet(true, pageNo)
         }
         if (gameState.gameIcons.isNotEmpty()) {
             GameIconsRow(
                 modifier = Modifier.align(Alignment.BottomEnd),
                 gameIcons = gameState.gameIcons,
-            ) { }
+                clickedIcon = gameState.gameResult[state.feedDetails[pageNo].videoID]?.first,
+                onIconClicked = {
+                    gameViewModel.setClickedIcon(
+                        icon = it,
+                        videoId = state.feedDetails[pageNo].videoID,
+                    )
+                },
+                coinDelta = gameViewModel.getFeedGameResult(state.feedDetails[pageNo].videoID),
+            )
         }
     }
 }
