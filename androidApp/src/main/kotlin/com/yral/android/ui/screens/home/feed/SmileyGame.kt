@@ -1,5 +1,7 @@
 package com.yral.android.ui.screens.home.feed
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
@@ -24,6 +26,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -38,6 +42,7 @@ import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.design.YralColors.smileyGameCardBackground
 import com.yral.android.ui.screens.home.feed.IconAnimationConstant.ANIMATION_DURATION
+import com.yral.android.ui.screens.home.feed.IconAnimationConstant.RESULT_ANIMATION_DURATION
 import com.yral.android.ui.screens.home.feed.IconAnimationConstant.ROTATION_DEGREE
 import com.yral.android.ui.screens.home.feed.IconAnimationConstant.SCALING_FACTOR
 import com.yral.shared.features.game.domain.GameIcon
@@ -49,6 +54,7 @@ private object IconAnimationConstant {
     const val ROTATION_DEGREE = -15f
     const val SCALING_FACTOR = 1.17f
     const val ANIMATION_DURATION = 200L
+    const val RESULT_ANIMATION_DURATION = 400L
 }
 
 @Composable
@@ -60,6 +66,8 @@ internal fun GameIconsRow(
     onIconClicked: (emoji: GameIcon) -> Unit,
 ) {
     var animateBubbles by remember { mutableStateOf(false) }
+    var iconPositions by remember { mutableStateOf(mapOf<Int, Float>()) }
+
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.BottomCenter,
@@ -74,14 +82,23 @@ internal fun GameIconsRow(
         ) {
             if (coinDelta != 0) {
                 clickedIcon?.let {
-                    GameResultView(it, coinDelta)
+                    GameResultView(
+                        icon = clickedIcon,
+                        coinDelta = coinDelta,
+                        originalPos =
+                            iconPositions[gameIcons.indexOfFirst { clickedIcon.id == it.id }] ?: 0f,
+                    )
                 }
             } else {
                 GameIconStrip(
                     gameIcons = gameIcons,
                     clickedIcon = clickedIcon,
                     onIconClicked = onIconClicked,
-                    setAnimateBubbles = { animateBubbles = true },
+                    setAnimateBubbles = { animate -> animateBubbles = animate },
+                    onIconPositioned = { id, xPos ->
+                        // Store position of each icon for later animation
+                        iconPositions = iconPositions + (id to xPos)
+                    },
                 )
             }
         }
@@ -99,7 +116,28 @@ internal fun GameIconsRow(
 private fun GameResultView(
     icon: GameIcon,
     coinDelta: Int,
+    originalPos: Float,
 ) {
+    var animate by remember { mutableStateOf(true) }
+    val iconOffsetX = remember { Animatable(originalPos) }
+    LaunchedEffect(coinDelta) {
+        if (coinDelta != 0) {
+            iconOffsetX.snapTo(originalPos)
+            iconOffsetX.animateTo(
+                targetValue = 0f,
+                animationSpec =
+                    tween(
+                        durationMillis = RESULT_ANIMATION_DURATION.toInt(),
+                        easing = FastOutLinearInEasing,
+                    ),
+            )
+            delay(RESULT_ANIMATION_DURATION)
+            animate = false
+        } else {
+            animate = false
+            iconOffsetX.snapTo(0f)
+        }
+    }
     Row(
         modifier =
             Modifier
@@ -119,14 +157,20 @@ private fun GameResultView(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         GameIcon(
-            modifier = Modifier,
+            modifier =
+                Modifier
+                    .graphicsLayer {
+                        translationX = iconOffsetX.value
+                    },
             icon = icon.getResource(),
             animate = false,
             setAnimate = { },
         )
-        Text(
-            text = gameResultText(icon.imageName, coinDelta),
-        )
+        if (iconOffsetX.value == 0f) {
+            Text(
+                text = gameResultText(icon.imageName, coinDelta),
+            )
+        }
     }
 }
 
@@ -136,6 +180,7 @@ private fun GameIconStrip(
     clickedIcon: GameIcon? = null,
     onIconClicked: (emoji: GameIcon) -> Unit,
     setAnimateBubbles: (Boolean) -> Unit,
+    onIconPositioned: (Int, Float) -> Unit = { _, _ -> },
 ) {
     var animateIcon by remember { mutableStateOf(false) }
     Row(
@@ -152,21 +197,29 @@ private fun GameIconStrip(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        gameIcons.forEach {
-            val resourceId = it.getResource()
+        gameIcons.forEachIndexed { index, icon ->
+            val resourceId = icon.getResource()
             if (resourceId > 0) {
-                GameIcon(
+                Box(
                     modifier =
-                        Modifier.clickable {
-                            animateIcon = true
-                            setAnimateBubbles(true)
-                            onIconClicked(it)
-                        },
-                    icon = resourceId,
-                    animate =
-                        if (clickedIcon?.id == it.id) animateIcon else false,
-                    setAnimate = { shouldAnimate -> animateIcon = shouldAnimate },
-                )
+                        Modifier
+                            .onGloballyPositioned { coordinates ->
+                                onIconPositioned(index, coordinates.positionInParent().x)
+                            },
+                ) {
+                    GameIcon(
+                        modifier =
+                            Modifier.clickable {
+                                animateIcon = true
+                                setAnimateBubbles(true)
+                                onIconClicked(icon)
+                            },
+                        icon = resourceId,
+                        animate =
+                            if (clickedIcon?.id == icon.id) animateIcon else false,
+                        setAnimate = { shouldAnimate -> animateIcon = shouldAnimate },
+                    )
+                }
             }
         }
     }
