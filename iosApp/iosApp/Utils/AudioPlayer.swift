@@ -16,7 +16,7 @@ final class AudioPlayer {
 
     func play(named name: String) {
         guard let url = Bundle.main.url(forResource: name, withExtension: "caf") else {
-            print("Samarth: ❗️Sound file not found")
+            print("❗️Sound file not found")
             return
         }
 
@@ -27,7 +27,7 @@ final class AudioPlayer {
 
         let status = AudioServicesCreateSystemSoundID(url as CFURL, &soundID)
         guard status == kAudioServicesNoError else {
-            print("Samarth: ❗️Could not play sound: OSStatus \(status)")
+            print("❗️Could not play sound: OSStatus \(status)")
             return
         }
 
