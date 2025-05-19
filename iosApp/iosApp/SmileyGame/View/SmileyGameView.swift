@@ -150,11 +150,11 @@ struct SmileyGameView: View {
 
 extension SmileyGameView {
   enum Constants {
-    static let smileySize = 48.0
+    static let smileySize = 56.0
     static let smileyScale = 1.17
-    static let smileyVerticalPadding = 8.0
-    static let smileyTrailingPadding = 12.0
-    static let smileySpacer = 16.0
+    static let smileyVerticalPadding = 4.0
+    static let smileyTrailingPadding = 8.0
+    static let smileySpacer = 12.0
     static let smileyRotation = 15.53
     static let shadownOpacity = 0.25
     static let shadowRadius = 5.0
@@ -174,7 +174,7 @@ extension SmileyGameView {
     static let textMinScale = 0.5
 
     static let viewHeight = 64.0
-    static let viewHorizontalPadding = 16.0
+    static let viewHorizontalPadding = 12.0
     static let viewBackground = YralColor.grey950.swiftUIColor
     static let viewOpacity = 0.4
   }
