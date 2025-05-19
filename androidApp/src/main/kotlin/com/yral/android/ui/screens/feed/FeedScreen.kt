@@ -238,7 +238,6 @@ private fun FeedOverlay(
         }
         if (gameState.gameIcons.isNotEmpty()) {
             GameIconsRow(
-                modifier = Modifier.align(Alignment.BottomEnd),
                 gameIcons = gameState.gameIcons,
                 clickedIcon = gameState.gameResult[state.feedDetails[pageNo].videoID]?.first,
                 onIconClicked = {
