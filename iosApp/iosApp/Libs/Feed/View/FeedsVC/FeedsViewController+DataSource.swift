@@ -36,7 +36,9 @@ extension FeedsViewController {
             title: feed.principalID,
             subtitle: feed.postDescription,
             coins: 2000
-          ), index: indexPath.item
+          ),
+          smileyGame: feed.smileyGame,
+          index: indexPath.item
         )
       } else {
         cell.configure(
@@ -58,6 +60,7 @@ extension FeedsViewController {
             subtitle: feed.postDescription,
             coins: 2000
           ),
+          smileyGame: feed.smileyGame,
           index: indexPath.item
         )
       }
@@ -118,15 +121,24 @@ extension FeedsViewController {
     }
   }
 
-  func toggleLikeStatus(_ response: LikeResult) {
+  func handleCastVote(_ response: SmileyGameResultResponse) {
     var snapshot = feedsDataSource.snapshot()
     var items = snapshot.itemIdentifiers
-    items[response.index].isLiked = response.status
-    items[response.index].likeCount += response.status ? .one : -.one
+    guard let index = items.firstIndex(where: { $0.videoID == response.videoID }) else {
+      return
+    }
 
-    snapshot.deleteItems(snapshot.itemIdentifiers)
-    snapshot.appendItems(items)
-    feedsDataSource.apply(snapshot, animatingDifferences: false)
+    guard let cell = feedsCV.cellForItem(at: IndexPath(item: index, section: 0)) as? FeedsCell else {
+      return
+    }
+
+    cell.startSmileyGamResultAnimation(for: response) { [weak self] in
+      items[index].smileyGame?.result = response
+
+      snapshot.deleteItems(snapshot.itemIdentifiers)
+      snapshot.appendItems(items)
+      self?.feedsDataSource.apply(snapshot, animatingDifferences: false)
+    }
   }
 
   func removeFeeds(with feeds: [FeedResult], isReport: Bool = false, animated: Bool = false) {

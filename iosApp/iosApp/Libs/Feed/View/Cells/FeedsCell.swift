@@ -6,17 +6,21 @@
 //  Copyright © 2024 orgName. All rights reserved.
 //
 
+// swiftlint: disable file_length
 import UIKit
 import SwiftUI
 import AVFoundation
+import Lottie
+import Combine
 
 // swiftlint: disable type_body_length
 protocol FeedsCellProtocol: AnyObject {
   func shareButtonTapped(index: Int)
-  func likeButtonTapped(index: Int)
   func deleteButtonTapped(index: Int)
   func reportButtonTapped(index: Int)
   func loginTapped(provider: SocialProvider)
+  func smileyTapped(index: Int, smiley: Smiley)
+  func showGameResultBottomSheet(index: Int, gameResult: SmileyGameResultResponse)
 }
 class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
 
@@ -24,6 +28,13 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   var index: Int = .zero
   var feedType: FeedType = .otherUsers
   weak var delegate: FeedsCellProtocol?
+  private let userDefaults = UserDefaults.standard
+  private static let resultBottomSheetKey = "ResultBottomSheetKey"
+  private var smileyGame: SmileyGame?
+
+  private var showResultBottomSheet: Bool {
+    userDefaults.integer(forKey: Self.resultBottomSheetKey) < Int.one ? true : false
+  }
 
   private let playerContainerView = getUIImageView()
   private lazy var signupOverlayHost = UIHostingController(
@@ -40,10 +51,6 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     stackView.backgroundColor = Constants.stackViewBGColor
     stackView.alignment = .trailing
     return stackView
-  }()
-
-  var likeButton: UIButton = {
-    getActionButton(withTitle: "100", image: Constants.likeUnSelectedImage)
   }()
 
   private var shareButton: UIButton = {
@@ -79,12 +86,29 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     return label
   }()
 
+  var smileyGameHostController: UIHostingController<SmileyGameView>?
+
+  let lottieView: LottieAnimationView = {
+    let view = LottieAnimationView()
+    view.translatesAutoresizingMaskIntoConstraints = false
+    view.contentMode = .scaleAspectFit
+    return view
+  }()
+
+  let smileyGameScoreLabel: UILabel = {
+    let label = getUILabel()
+    label.font = YralFont.pt64.bold.uiFont
+    return label
+  }()
+
   var isCaptionExpanded = false
   var collapsedCaptionHeight: CGFloat = 0
   var expandedCaptionHeight: CGFloat = 0
   var isCaptionCollapsible = false
   var captionScrollViewHeightConstraint: NSLayoutConstraint!
-//  var smileyGame: SmileyGame
+
+  let resultAnimationPublisher = PassthroughSubject<SmileyGameResultResponse, Never>()
+  let initialStatePublisher = PassthroughSubject<SmileyGame, Never>()
 
   private static func getActionButton(withTitle title: String, image: UIImage?) -> UIButton {
     var configuration = UIButton.Configuration.plain()
@@ -114,21 +138,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     return profileInfoView
   }()
 
-//  private lazy var smileyView: UIHostingController<SmileyView> = {
-//    let view = UIHostingController<SmileyView>(
-//      rootView: SmileyView(
-//        smileyGame: Binding(
-//          get: { self.smileyGame },
-//          set: { self.smileyGame = $0 }
-//        ),
-//        smileyTapped: { tappedSmiley in
-//
-//        }))
-//    return view
-//  }()
-
   override init(frame: CGRect) {
-//    smileyGame = SmileyGame(smileys: [])
     super.init(frame: frame)
     setupUI()
     NotificationCenter.default.addObserver(
@@ -145,6 +155,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
 
   private func setupUI() {
     addPlayerContainerView()
+    setupLottieView()
     setupProfileInfoView()
     setupStackView()
     setupCaptionLabel()
@@ -189,7 +200,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     NSLayoutConstraint.activate([
       actionsStackView.trailingAnchor.constraint(
         equalTo: contentView.trailingAnchor,
-        constant: -Constants.horizontalMargin
+        constant: -24
       ),
       actionsStackView.widthAnchor.constraint(equalToConstant: Constants.actionButtonWidth),
       actionsStackView.heightAnchor.constraint(equalToConstant: Constants.stackViewHeight),
@@ -199,9 +210,6 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
       )
     ])
 
-    actionsStackView.addArrangedSubview(likeButton)
-    // actionsStackView.addArrangedSubview(shareButton)
-    likeButton.addTarget(self, action: #selector(likeButtonTapped), for: .touchUpInside)
     shareButton.addTarget(self, action: #selector(shareButtonTapped), for: .touchUpInside)
     deleteButton.addTarget(self, action: #selector(deleteButtonTapped), for: .touchUpInside)
     reportButton.addTarget(self, action: #selector(reportButtonTapped), for: .touchUpInside)
@@ -223,13 +231,121 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     overlayView?.isHidden = true
   }
 
+
   @objc private func handleFirstFrameReady(_ note: Notification) {
     guard let idx = note.userInfo?["index"] as? Int, idx == index else { return }
     playerLayer?.isHidden = false
   }
 
-  @objc func likeButtonTapped() {
-    delegate?.likeButtonTapped(index: index)
+  private func setupSmileyGameView() {
+    if let game = smileyGame, game.smileys.count > 0 {
+      let smileyGameView = SmileyGameView(
+        smileyGame: game,
+        smileyTapped: { [weak self] smiley in
+          self?.handleSmileyTap(smiley)
+        },
+        resultAnimationSubscriber: resultAnimationPublisher,
+        initialStateSubscriber: initialStatePublisher
+      )
+
+      let controller = UIHostingController(rootView: smileyGameView)
+      controller.view.backgroundColor = .clear
+      controller.view.translatesAutoresizingMaskIntoConstraints = false
+
+      contentView.addSubview(controller.view)
+      NSLayoutConstraint.activate([
+        controller.view.leadingAnchor.constraint(
+          equalTo: contentView.leadingAnchor,
+          constant: Constants.smileyGameHorizontal
+        ),
+        controller.view.trailingAnchor.constraint(
+          equalTo: contentView.trailingAnchor,
+          constant: -Constants.smileyGameHorizontal
+        ),
+        controller.view.bottomAnchor.constraint(
+          equalTo: contentView.bottomAnchor,
+          constant: -Constants.smileyGameBottom
+        ),
+        controller.view.heightAnchor.constraint(
+          equalToConstant: Constants.smileyGameHeight
+        )
+      ])
+
+      smileyGameHostController = controller
+    }
+  }
+
+  private func setupLottieView() {
+    contentView.addSubview(lottieView)
+    contentView.addSubview(smileyGameScoreLabel)
+    smileyGameScoreLabel.isHidden = true
+
+    NSLayoutConstraint.activate([
+      lottieView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+      lottieView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+      lottieView.topAnchor.constraint(equalTo: contentView.topAnchor),
+      lottieView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+
+      smileyGameScoreLabel.topAnchor.constraint(equalTo: contentView.bottomAnchor),
+      smileyGameScoreLabel.centerXAnchor.constraint(equalTo: contentView.centerXAnchor)
+    ])
+  }
+
+  private func handleSmileyTap(_ smiley: Smiley) {
+    delegate?.smileyTapped(index: index, smiley: smiley)
+    DispatchQueue.main.asyncAfter(deadline: .now() + Constants.smileyTapDuration) {
+      self.startFlowingAnimation(for: smiley)
+    }
+  }
+
+  private func startFlowingAnimation(for smiley: Smiley) {
+    let animation = LottieAnimation.named("smiley_game_\(smiley.imageName)")
+    lottieView.animation = animation
+    lottieView.play()
+  }
+
+  func startSmileyGamResultAnimation(for result: SmileyGameResultResponse, completion: @escaping () -> Void) {
+    AudioPlayer.shared.play(named: Constants.winSound)
+    profileInfoView.coinsView.updateCoins(by: result.coinDelta)
+    if showResultBottomSheet {
+      let existingCount = userDefaults.integer(forKey: Self.resultBottomSheetKey)
+      userDefaults.set(existingCount + Int.one, forKey: Self.resultBottomSheetKey)
+      userDefaults.synchronize()
+      delegate?.showGameResultBottomSheet(index: index, gameResult: result)
+    } else {
+      if result.outcome == "WIN" {
+        smileyGameScoreLabel.text = "+\(result.coinDelta)"
+        smileyGameScoreLabel.textColor = Constants.scoreLabelWinColor
+      } else {
+        smileyGameScoreLabel.text = "\(result.coinDelta)"
+        smileyGameScoreLabel.textColor = Constants.scoreLabelLooseColor
+      }
+    }
+
+    if !showResultBottomSheet {
+      startScoreLabelAnimation(for: result)
+      DispatchQueue.main.asyncAfter(deadline: .now() + Constants.resultAnimationDuration) {
+        completion()
+      }
+    } else {
+      resultAnimationPublisher.send(result)
+      DispatchQueue.main.asyncAfter(deadline: .now() + Constants.resultAnimationDurationWithBS) {
+        completion()
+      }
+    }
+  }
+
+  private func startScoreLabelAnimation(for result: SmileyGameResultResponse) {
+    smileyGameScoreLabel.isHidden = false
+    UIView.animate(withDuration: Constants.scoreLabelDuration) {
+      self.smileyGameScoreLabel.transform = CGAffineTransform(translationX: .zero, y: -UIScreen.main.bounds.height)
+    } completion: { complete in
+      if complete {
+        self.smileyGameScoreLabel.isHidden = true
+        self.smileyGameScoreLabel.transform = .identity
+        self.resultAnimationPublisher.send(result)
+      }
+    }
   }
 
   @objc func shareButtonTapped() {
@@ -248,6 +364,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     withPlayer feedsPlayer: FeedsPlayer,
     feedInfo: FeedCellInfo,
     profileInfo: ProfileInfoView.ProfileInfo,
+    smileyGame: SmileyGame?,
     index: Int
   ) {
     playerContainerView.sd_cancelCurrentImageLoad()
@@ -275,16 +392,10 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     playerContainerView.layer.addSublayer(layer)
     playerLayer = layer
     playerLayer?.frame = contentView.bounds
-    likeButton.configuration?.attributedTitle = AttributedString(
-      String(feedInfo.likeCount),
-      attributes: AttributeContainer([
-        .font: Constants.actionButtonFont
-      ])
-    )
-    likeButton.configuration?.image = feedInfo.isLiked ? Constants.likeSelectedImage : Constants.likeUnSelectedImage
 
     self.index = index
     self.feedType = feedInfo.feedType
+    self.smileyGame = smileyGame
 
     if feedInfo.feedType == .otherUsers {
       profileInfoView.set(data: profileInfo)
@@ -292,6 +403,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
       captionScrollView.isHidden = true
       actionsStackView.addArrangedSubview(reportButton)
       deleteButton.removeFromSuperview()
+      setupSmileyGameView()
     } else {
       reportButton.removeFromSuperview()
       actionsStackView.addArrangedSubview(deleteButton)
@@ -300,20 +412,6 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
       setCaptionHeight(captionText: profileInfo.subtitle)
     }
     signupOverlayHost.view.isHidden = !feedInfo.showLoginOverlay
-  }
-
-  func setLikeStatus(isLiked: Bool) {
-    likeButton.configuration?.image = isLiked ? Constants.likeSelectedImage : Constants.likeUnSelectedImage
-    var likeButtonString = String((Int(likeButton.titleLabel?.text ?? "") ?? .zero) - .one)
-    if isLiked {
-      likeButtonString = String((Int(likeButton.titleLabel?.text ?? "") ?? Int.zero) + Int.one)
-    }
-    likeButton.configuration?.attributedTitle = AttributedString(
-      likeButtonString,
-      attributes: AttributeContainer([
-        .font: Constants.actionButtonFont
-      ])
-    )
   }
 
   override func layoutSubviews() {
@@ -328,6 +426,16 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     playerLayer = nil
     playerContainerView.sd_cancelCurrentImageLoad()
     playerContainerView.image = nil
+
+    profileInfoView.coinsView.resetUIState()
+    lottieView.stop()
+    smileyGameScoreLabel.transform = .identity
+    smileyGameScoreLabel.isHidden = true
+    if let game = smileyGame {
+      initialStatePublisher.send(game)
+    }
+    smileyGameHostController?.view.removeFromSuperview()
+    smileyGameHostController = nil
   }
 
   struct FeedCellInfo {
@@ -344,12 +452,10 @@ extension FeedsCell {
   enum Constants {
     static let stackViewSpacing = 14.0
     static let horizontalMargin = 16.0
-    static let stackViewHeight = 116.0
-    static let stackViewBottom = 74.0
+    static let stackViewHeight = 51.0
+    static let stackViewBottom = 90.0
     static let stackViewBGColor = UIColor.clear
     static let actionButtonFont = YralFont.pt16.semiBold.uiFont
-    static let likeSelectedImage = UIImage(named: "like_selected_feed")
-    static let likeUnSelectedImage = UIImage(named: "like_unselected_feed")
     static let shareButtonImage = UIImage(named: "share_feed")
     static let deleteButtonImage = UIImage(named: "delete_video_profile")
     static let reportButtonImage = UIImage(named: "report_feed")
@@ -369,6 +475,16 @@ extension FeedsCell {
     static let captionSingleLineHeight: CGFloat = 20
     static let maxLinesCaption = 10.0
     static let animationPeriod = 0.3
+    static let smileyGameHorizontal = 20.0
+    static let smileyGameBottom = 16.0
+    static let smileyGameHeight = 64.0
+    static let smileyTapDuration = 0.2
+    static let winSound = "smiley_game_win"
+    static let scoreLabelWinColor = YralColor.green300.uiColor.withAlphaComponent(0.3)
+    static let scoreLabelLooseColor = YralColor.red300.uiColor.withAlphaComponent(0.3)
+    static let resultAnimationDuration = 2.5
+    static let resultAnimationDurationWithBS = 0.5
+    static let scoreLabelDuration = 2.0
   }
 }
 // swiftlint: enable type_body_length

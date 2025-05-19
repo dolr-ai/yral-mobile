@@ -13,4 +13,5 @@ final class AppConfiguration {
   let uploadBaseURLString = "https://yral-upload-video.go-bazzinga.workers.dev/"
   let offchainBaseURLString = "https://icp-off-chain-agent.fly.dev"
   let authBaseURLString = "https://auth.yral.com"
+  let firebaseBaseURLString = "https://us-central1-yral-staging.cloudfunctions.net/"
 }

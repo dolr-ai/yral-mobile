@@ -14,9 +14,10 @@ final class FeedDIContainer {
     let httpService: HTTPService
     let authClient: AuthClient
     let crashReporter: CrashReporter
-    let toggleLikeUseCase: ToggleLikeUseCaseProtocol
     let socialSignInUseCase: SocialSignInUseCaseProtocol
     let session: SessionManager
+    let smileyConfigUseCase: SmileyUseCaseProtocol
+    let castVoteUseCase: CastVoteUseCaseProtocol
   }
 
   private let dependencies: Dependencies
@@ -59,7 +60,6 @@ final class FeedDIContainer {
         feedRepository: repository,
         crashReporter: dependencies.crashReporter
       ),
-      likeUseCase: dependencies.toggleLikeUseCase,
       reportUseCase: ReportFeedsUseCase(
         feedRepository: repository,
         crashReporter: dependencies.crashReporter
@@ -67,6 +67,9 @@ final class FeedDIContainer {
       logEventUseCase: LogUploadEventUseCase(
         feedRepository: repository,
         crashReporter: dependencies.crashReporter
+      ),
+      smileyConfigUseCase: dependencies.smileyConfigUseCase,
+      castVoteUseCase: dependencies.castVoteUseCase
       ),
       socialSignInUseCase: dependencies.socialSignInUseCase
     )

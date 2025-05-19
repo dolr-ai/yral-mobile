@@ -32,7 +32,7 @@ final class SmileyGameRuleDIContainer {
     )
   }
 
-  func makeSmileyGameRuleView() -> SmileyGameRuleView {
-    SmileyGameRuleView(viewModel: makeSmileyGameRuleViewModel())
+  func makeSmileyGameRuleView(onDismiss: @escaping () -> Void) -> SmileyGameRuleView {
+    SmileyGameRuleView(viewModel: makeSmileyGameRuleViewModel(), onDismiss: onDismiss)
   }
 }
