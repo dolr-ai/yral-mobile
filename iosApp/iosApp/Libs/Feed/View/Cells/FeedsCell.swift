@@ -21,6 +21,8 @@ protocol FeedsCellProtocol: AnyObject {
   func smileyTapped(index: Int, smiley: Smiley)
   func showGameResultBottomSheet(index: Int, gameResult: SmileyGameResultResponse)
 }
+
+// swiftlint: disable type_body_length
 class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
 
   var playerLayer: AVPlayerLayer?
@@ -224,7 +226,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     overlayView?.isHidden = true
   }
 
-private func setupSmileyGameView() {
+  private func setupSmileyGameView() {
     if let game = smileyGame, game.smileys.count > 0 {
       let smileyGameView = SmileyGameView(
         smileyGame: game,
@@ -240,6 +242,11 @@ private func setupSmileyGameView() {
       controller.view.translatesAutoresizingMaskIntoConstraints = false
 
       contentView.addSubview(controller.view)
+
+      if let overlayView = signupOverlayHost.view {
+        contentView.bringSubviewToFront(overlayView)
+      }
+
       NSLayoutConstraint.activate([
         controller.view.leadingAnchor.constraint(
           equalTo: contentView.leadingAnchor,
@@ -418,6 +425,7 @@ private func setupSmileyGameView() {
     let showLoginOverlay: Bool
   }
 }
+// swiftlint: enable type_body_length
 
 extension FeedsCell {
   enum Constants {
