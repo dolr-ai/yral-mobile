@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.home.feed
+package com.yral.android.ui.screens.game
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutLinearInEasing
@@ -27,15 +27,15 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import com.yral.android.ui.screens.home.feed.BubbleAnimationConstants.ANIMATION_DURATION
-import com.yral.android.ui.screens.home.feed.BubbleAnimationConstants.BUBBLE_START_DELAY
-import com.yral.android.ui.screens.home.feed.BubbleAnimationConstants.HORIZONTAL_PADDING
-import com.yral.android.ui.screens.home.feed.BubbleAnimationConstants.MAX_ALPHA
-import com.yral.android.ui.screens.home.feed.BubbleAnimationConstants.MAX_BUBBLE_SIZE
-import com.yral.android.ui.screens.home.feed.BubbleAnimationConstants.MIN_ALPHA
-import com.yral.android.ui.screens.home.feed.BubbleAnimationConstants.MIN_BUBBLE_SIZE
-import com.yral.android.ui.screens.home.feed.BubbleAnimationConstants.NUM_OF_BUBBLES
-import com.yral.android.ui.screens.home.feed.BubbleAnimationConstants.TILT_ANGLE
+import com.yral.android.ui.screens.game.BubbleAnimationConstants.ANIMATION_DURATION
+import com.yral.android.ui.screens.game.BubbleAnimationConstants.BUBBLE_START_DELAY
+import com.yral.android.ui.screens.game.BubbleAnimationConstants.HORIZONTAL_PADDING
+import com.yral.android.ui.screens.game.BubbleAnimationConstants.MAX_ALPHA
+import com.yral.android.ui.screens.game.BubbleAnimationConstants.MAX_BUBBLE_SIZE
+import com.yral.android.ui.screens.game.BubbleAnimationConstants.MIN_ALPHA
+import com.yral.android.ui.screens.game.BubbleAnimationConstants.MIN_BUBBLE_SIZE
+import com.yral.android.ui.screens.game.BubbleAnimationConstants.NUM_OF_BUBBLES
+import com.yral.android.ui.screens.game.BubbleAnimationConstants.TILT_ANGLE
 import kotlinx.coroutines.delay
 import java.util.UUID
 import kotlin.random.Random

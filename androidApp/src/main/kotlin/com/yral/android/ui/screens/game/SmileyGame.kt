@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.home.feed
+package com.yral.android.ui.screens.game
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutLinearInEasing
@@ -41,10 +41,10 @@ import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.design.YralColors.smileyGameCardBackground
-import com.yral.android.ui.screens.home.feed.IconAnimationConstant.ANIMATION_DURATION
-import com.yral.android.ui.screens.home.feed.IconAnimationConstant.RESULT_ANIMATION_DURATION
-import com.yral.android.ui.screens.home.feed.IconAnimationConstant.ROTATION_DEGREE
-import com.yral.android.ui.screens.home.feed.IconAnimationConstant.SCALING_FACTOR
+import com.yral.android.ui.screens.game.IconAnimationConstant.ANIMATION_DURATION
+import com.yral.android.ui.screens.game.IconAnimationConstant.RESULT_ANIMATION_DURATION
+import com.yral.android.ui.screens.game.IconAnimationConstant.ROTATION_DEGREE
+import com.yral.android.ui.screens.game.IconAnimationConstant.SCALING_FACTOR
 import com.yral.shared.features.game.domain.GameIcon
 import com.yral.shared.features.game.domain.GameIconNames
 import kotlinx.coroutines.delay
@@ -58,7 +58,7 @@ private object IconAnimationConstant {
 }
 
 @Composable
-internal fun GameIconsRow(
+fun GameIconsRow(
     modifier: Modifier = Modifier,
     gameIcons: List<GameIcon>,
     clickedIcon: GameIcon? = null,

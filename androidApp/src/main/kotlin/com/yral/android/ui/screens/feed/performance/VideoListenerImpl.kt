@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.home.feed.performance
+package com.yral.android.ui.screens.feed.performance
 
 import co.touchlab.kermit.Logger
 import com.yral.shared.libs.firebasePerf.FirebaseOperationTrace
@@ -71,23 +71,20 @@ class VideoListenerImpl(
         when (type) {
             TraceType.LOAD_TRACE -> {
                 loadTrace =
-                    VideoPerformanceFactoryProvider
-                        .createLoadTimeTrace(reel)
+                    VideoPerformanceFactoryProvider.createLoadTimeTrace(reel)
                         .apply { start() }
             }
 
             TraceType.FIRST_FRAME_TRACE -> {
                 firstFrameTrace =
-                    VideoPerformanceFactoryProvider
-                        .createFirstFrameTrace(reel)
+                    VideoPerformanceFactoryProvider.createFirstFrameTrace(reel)
                         .apply { start() }
             }
 
             TraceType.PLAYBACK_TRACE -> {
                 if (playbackTimeTrace != null) return
                 playbackTimeTrace =
-                    VideoPerformanceFactoryProvider
-                        .createPlaybackTimeTrace(reel)
+                    VideoPerformanceFactoryProvider.createPlaybackTimeTrace(reel)
                         .apply { start() }
             }
         }

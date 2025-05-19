@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.home.feed.performance
+package com.yral.android.ui.screens.feed.performance
 
 import co.touchlab.kermit.Logger
 import com.yral.shared.libs.firebasePerf.FirebaseOperationTrace
@@ -54,15 +54,13 @@ class PrefetchVideoListenerImpl(
         when (type) {
             PrefetchTraceType.READY_TRACE -> {
                 readyTrace =
-                    VideoPerformanceFactoryProvider
-                        .createPrefetchReadyTrace(reel)
+                    VideoPerformanceFactoryProvider.createPrefetchReadyTrace(reel)
                         .apply { start() }
             }
 
             PrefetchTraceType.LOAD_TRACE -> {
                 loadTrace =
-                    VideoPerformanceFactoryProvider
-                        .createPrefetchLoadTimeTrace(reel)
+                    VideoPerformanceFactoryProvider.createPrefetchLoadTimeTrace(reel)
                         .apply { start() }
             }
         }
