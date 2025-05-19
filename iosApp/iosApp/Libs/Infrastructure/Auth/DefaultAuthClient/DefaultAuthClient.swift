@@ -270,6 +270,7 @@ final class DefaultAuthClient: NSObject, AuthClient {
   }
 
   @MainActor func logout() async throws {
+    try? firebaseService.signOut()
     try? KeychainHelper.deleteItem(for: Constants.keychainIdentity)
     try? KeychainHelper.deleteItem(for: Constants.keychainAccessToken)
     try? KeychainHelper.deleteItem(for: Constants.keychainRefreshToken)
