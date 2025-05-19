@@ -59,6 +59,10 @@
 		105034C42DD7253700571B4E /* FirebaseAppCheck in Frameworks */ = {isa = PBXBuildFile; productRef = 105034C32DD7253700571B4E /* FirebaseAppCheck */; };
 		105034C62DD7253D00571B4E /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 105034C52DD7253D00571B4E /* FirebaseAuth */; };
 		105034C82DD7254200571B4E /* FirebaseAppCheck in Frameworks */ = {isa = PBXBuildFile; productRef = 105034C72DD7254200571B4E /* FirebaseAppCheck */; };
+		105036E92DDB287700571B4E /* ExchangePrincipal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105036E82DDB287700571B4E /* ExchangePrincipal.swift */; };
+		105036EA2DDB287700571B4E /* ExchangePrincipal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105036E82DDB287700571B4E /* ExchangePrincipal.swift */; };
+		105036F62DDB289D00571B4E /* ExchangePrincipalResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105036F52DDB289D00571B4E /* ExchangePrincipalResponse.swift */; };
+		105036F82DDB289D00571B4E /* ExchangePrincipalResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105036F52DDB289D00571B4E /* ExchangePrincipalResponse.swift */; };
 		10512A432DA666AD00114BAA /* YralPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10512A422DA666A900114BAA /* YralPlayer.swift */; };
 		10512A442DA666AD00114BAA /* YralPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10512A422DA666A900114BAA /* YralPlayer.swift */; };
 		10512A522DA795A800114BAA /* YralQueuePlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10512A512DA7959D00114BAA /* YralQueuePlayer.swift */; };
@@ -563,6 +567,8 @@
 		105034B82DD6332700571B4E /* CastVoteError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CastVoteError.swift; sourceTree = "<group>"; };
 		105034BB2DD6353100571B4E /* SmileyGameResultResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameResultResponse.swift; sourceTree = "<group>"; };
 		105034BE2DD636C800571B4E /* CastVoteUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CastVoteUseCase.swift; sourceTree = "<group>"; };
+		105036E82DDB287700571B4E /* ExchangePrincipal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExchangePrincipal.swift; sourceTree = "<group>"; };
+		105036F52DDB289D00571B4E /* ExchangePrincipalResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExchangePrincipalResponse.swift; sourceTree = "<group>"; };
 		10512A422DA666A900114BAA /* YralPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralPlayer.swift; sourceTree = "<group>"; };
 		10512A512DA7959D00114BAA /* YralQueuePlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralQueuePlayer.swift; sourceTree = "<group>"; };
 		107C608F2DB78093006FC467 /* UIView+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIView+Extensions.swift"; sourceTree = "<group>"; };
@@ -937,6 +943,7 @@
 		107C60AC2DBF43DA006FC467 /* Data */ = {
 			isa = PBXGroup;
 			children = (
+				105036E82DDB287700571B4E /* ExchangePrincipal.swift */,
 				105034AF2DD62DB400571B4E /* CastVote.swift */,
 				105034A02DD5E3D100571B4E /* SmileyConfigDTO.swift */,
 				107C60C42DBF60FE006FC467 /* SmileyGameRuleDTO.swift */,
@@ -956,6 +963,7 @@
 		107C60AE2DBF459E006FC467 /* Entity */ = {
 			isa = PBXGroup;
 			children = (
+				105036F52DDB289D00571B4E /* ExchangePrincipalResponse.swift */,
 				105034BB2DD6353100571B4E /* SmileyGameResultResponse.swift */,
 				105034B82DD6332700571B4E /* CastVoteError.swift */,
 				105034A62DD5E50800571B4E /* SmileyConfigError.swift */,
@@ -2577,6 +2585,7 @@
 				AC26CA5C2D802BB0006ADA75 /* BaseResultUseCase.swift in Sources */,
 				AC32E4462D2961CA001DDA43 /* URLImage.swift in Sources */,
 				10512A442DA666AD00114BAA /* YralPlayer.swift in Sources */,
+				105036F62DDB289D00571B4E /* ExchangePrincipalResponse.swift in Sources */,
 				ACB46A732D105AF4002E200C /* CollectionView+Extensions.swift in Sources */,
 				107C60C32DBF4CE2006FC467 /* FirebaseService.swift in Sources */,
 				ACB46A432D0ECBB3002E200C /* ml_feed.grpc.swift in Sources */,
@@ -2707,6 +2716,7 @@
 				AC8958D92D3EA46800E19ED7 /* FeedsViewController+ScrollView.swift in Sources */,
 				ACB46A772D105B17002E200C /* ReusableView.swift in Sources */,
 				AC32E4542D296637001DDA43 /* AccountRepository.swift in Sources */,
+				105036EA2DDB287700571B4E /* ExchangePrincipal.swift in Sources */,
 				AC9294092D630266003DB102 /* UploadView.swift in Sources */,
 				AC7F7EBF2D7734BB00215162 /* UploadRepository.swift in Sources */,
 				107C61242DC0F2C8006FC467 /* SmileyGameRuleError.swift in Sources */,
@@ -2736,7 +2746,6 @@
 				105034A22DD5E3D500571B4E /* SmileyConfigDTO.swift in Sources */,
 				AC462F422D95A4AD004957B3 /* OffsetableScrollView.swift in Sources */,
 				105034B62DD6316B00571B4E /* CastVoteRepository.swift in Sources */,
-				ACB46A5B2D0EF91F002E200C /* AuthConstants.swift in Sources */,
 				ACF63A782DC271F900C4BCCC /* DefaultAuthClient+Extensions.swift in Sources */,
 				107C60D62DBFA7C0006FC467 /* FirebaseImageView.swift in Sources */,
 				107C60B42DBF4857006FC467 /* SmileyGameRuleUseCase.swift in Sources */,
@@ -2794,6 +2803,7 @@
 				AC26CA5B2D802BB0006ADA75 /* BaseResultUseCase.swift in Sources */,
 				AC32E4472D2961CA001DDA43 /* URLImage.swift in Sources */,
 				10512A432DA666AD00114BAA /* YralPlayer.swift in Sources */,
+				105036F82DDB289D00571B4E /* ExchangePrincipalResponse.swift in Sources */,
 				ACB46A742D105AF4002E200C /* CollectionView+Extensions.swift in Sources */,
 				107C60C22DBF4CE2006FC467 /* FirebaseService.swift in Sources */,
 				ACB46A402D0ECBB3002E200C /* ml_feed.grpc.swift in Sources */,
@@ -2924,6 +2934,7 @@
 				AC8958D82D3EA46800E19ED7 /* FeedsViewController+ScrollView.swift in Sources */,
 				ACB46A762D105B17002E200C /* ReusableView.swift in Sources */,
 				AC32E4532D296637001DDA43 /* AccountRepository.swift in Sources */,
+				105036E92DDB287700571B4E /* ExchangePrincipal.swift in Sources */,
 				AC9294082D630266003DB102 /* UploadView.swift in Sources */,
 				AC7F7EC02D7734BB00215162 /* UploadRepository.swift in Sources */,
 				107C61232DC0F2C8006FC467 /* SmileyGameRuleError.swift in Sources */,
@@ -2954,7 +2965,6 @@
 				AC462F432D95A4AD004957B3 /* OffsetableScrollView.swift in Sources */,
 				ACF63A772DC271F900C4BCCC /* DefaultAuthClient+Extensions.swift in Sources */,
 				105034B72DD6316B00571B4E /* CastVoteRepository.swift in Sources */,
-				ACB46A5A2D0EF91F002E200C /* AuthConstants.swift in Sources */,
 				107C60D72DBFA7C0006FC467 /* FirebaseImageView.swift in Sources */,
 				107C60B52DBF4857006FC467 /* SmileyGameRuleUseCase.swift in Sources */,
 				ACB46A2A2D0EC76A002E200C /* AppConfiguration.swift in Sources */,

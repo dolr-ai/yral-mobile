@@ -33,8 +33,10 @@ import GRPC
   lazy var authClient: DefaultAuthClient = {
     let client = DefaultAuthClient(
       networkService: HTTPService(),
+      firebaseService: FirebaseService(),
       crashReporter: crashReporter,
-      baseURL: URL(string: appConfiguration.authBaseURLString) ?? URL(fileURLWithPath: "")
+      baseURL: URL(string: appConfiguration.authBaseURLString) ?? URL(fileURLWithPath: ""),
+      firebaseBaseURL: URL(string: appConfiguration.firebaseBaseURLString) ?? URL(fileURLWithPath: "")
     )
     return client
   }()
