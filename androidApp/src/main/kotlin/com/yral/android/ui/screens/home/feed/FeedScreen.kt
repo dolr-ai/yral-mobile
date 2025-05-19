@@ -59,10 +59,13 @@ import com.yral.android.ui.widgets.YralButtonType
 import com.yral.android.ui.widgets.YralGradientButton
 import com.yral.android.ui.widgets.YralLoader
 import com.yral.shared.features.feed.useCases.GetInitialFeedUseCase.Companion.INITIAL_REQUEST
+import com.yral.shared.features.feed.viewmodel.FeedState
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.PRE_FETCH_BEFORE_LAST
 import com.yral.shared.features.feed.viewmodel.ReportSheetState
 import com.yral.shared.features.feed.viewmodel.VideoReportReason
+import com.yral.shared.features.game.viewmodel.GameState
+import com.yral.shared.features.game.viewmodel.GameViewModel
 import com.yral.shared.libs.videoPlayer.YRALReelPlayer
 import io.ktor.http.Url
 import kotlinx.coroutines.launch
@@ -74,8 +77,10 @@ import org.koin.compose.viewmodel.koinViewModel
 fun FeedScreen(
     modifier: Modifier = Modifier,
     viewModel: FeedViewModel = koinViewModel(),
+    gameViewModel: GameViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
+    val gameState by gameViewModel.state.collectAsState()
     val coroutineScope = rememberCoroutineScope()
     // Keep track of the last feed size to detect when new items are loaded
     var lastFeedSize by remember { mutableIntStateOf(0) }
@@ -160,32 +165,15 @@ fun FeedScreen(
                 },
                 didVideoEnd = { viewModel.didCurrentVideoEnd() },
             ) { pageNo ->
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.TopStart,
-                ) {
-                    UserBrief(
-                        principalId = state.feedDetails[pageNo].principalID,
-                        profileImageUrl = state.feedDetails[pageNo].profileImageURL,
-                        postDescription = state.feedDetails[pageNo].postDescription,
-                        isPostDescriptionExpanded = state.isPostDescriptionExpanded,
-                        setPostDescriptionExpanded = { viewModel.setPostDescriptionExpanded(it) },
-                    )
-                    ReportVideo(
-                        modifier =
-                            Modifier
-                                .align(Alignment.BottomEnd)
-                                .padding(end = 16.dp, bottom = 89.dp),
-                    ) {
-                        viewModel.toggleReportSheet(
-                            isOpen = true,
-                            pageNo = pageNo,
-                        )
-                    }
-                    GameIconsRow(
-                        modifier = Modifier.align(Alignment.BottomEnd),
-                    ) { }
-                }
+                FeedOverlay(
+                    pageNo = pageNo,
+                    state = state,
+                    gameState = gameState,
+                    setPostDescriptionExpanded = { viewModel.setPostDescriptionExpanded(it) },
+                    toggleReportSheet = { isOpen ->
+                        viewModel.toggleReportSheet(isOpen = isOpen, pageNo)
+                    },
+                )
             }
             // Show loader at the bottom when loading more content AND no new items have been added yet
             if (showLoader) {
@@ -218,6 +206,42 @@ fun FeedScreen(
                 )
             },
         )
+    }
+}
+
+@Composable
+private fun FeedOverlay(
+    pageNo: Int,
+    state: FeedState,
+    gameState: GameState,
+    setPostDescriptionExpanded: (Boolean) -> Unit,
+    toggleReportSheet: (isOpen: Boolean) -> Unit,
+) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.TopStart,
+    ) {
+        UserBrief(
+            principalId = state.feedDetails[pageNo].principalID,
+            profileImageUrl = state.feedDetails[pageNo].profileImageURL,
+            postDescription = state.feedDetails[pageNo].postDescription,
+            isPostDescriptionExpanded = state.isPostDescriptionExpanded,
+            setPostDescriptionExpanded = { setPostDescriptionExpanded(it) },
+        )
+        ReportVideo(
+            modifier =
+                Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 16.dp, bottom = 89.dp),
+        ) {
+            toggleReportSheet(true)
+        }
+        if (gameState.gameIcons.isNotEmpty()) {
+            GameIconsRow(
+                modifier = Modifier.align(Alignment.BottomEnd),
+                gameIcons = gameState.gameIcons,
+            ) { }
+        }
     }
 }
 
