@@ -22,4 +22,5 @@ struct FeedResult: Hashable {
   var likeCount: Int
   var isLiked: Bool
   var nsfwProbability: Double
+  var smileyGame: SmileyGame?
 }

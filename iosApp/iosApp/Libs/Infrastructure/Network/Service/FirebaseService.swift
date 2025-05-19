@@ -7,9 +7,29 @@
 //
 
 import FirebaseFirestore
+import FirebaseAuth
+import FirebaseAppCheck
 
 class FirebaseService: FirebaseServiceProtocol {
   private let database = Firestore.firestore()
+
+  func fetchUserIDToken() async throws -> String? {
+    do {
+      let idToken = try await Auth.auth().currentUser?.getIDToken()
+      return idToken
+    } catch {
+      throw(error)
+    }
+  }
+
+  func fetchAppCheckToken() async throws -> String {
+    do {
+      let appCheckToken = try await AppCheck.appCheck().token(forcingRefresh: false).token
+      return appCheckToken
+    } catch {
+      throw(error)
+    }
+  }
 
   func fetchDocument<T>(
     path: String,

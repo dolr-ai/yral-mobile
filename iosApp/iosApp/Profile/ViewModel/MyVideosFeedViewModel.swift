@@ -20,7 +20,6 @@ enum MyVideosPageEvent {
   case loadingMoreFeeds
   case loadedMoreFeeds
   case loadMoreFeedsFailed(Error)
-  case toggledLikeSuccessfully(LikeResult)
   case toggleLikeFailed(Error)
   case finishedLoadingInitialFeeds
   case deleteVideoSuccess([FeedResult])
@@ -31,7 +30,6 @@ enum MyVideosPageEvent {
 class MyVideosFeedViewModel: FeedViewModelProtocol, ObservableObject {
   let myVideosUseCase: MyVideosUseCaseProtocol
   let deleteVideoUseCase: DeleteVideoUseCaseProtocol
-  let likeVideoUseCase: ToggleLikeUseCaseProtocol
   var feeds: [FeedResult]
   var startIndex = Int.zero
   var currentIndex = Int.zero
@@ -46,13 +44,11 @@ class MyVideosFeedViewModel: FeedViewModelProtocol, ObservableObject {
   init(
     myVideosUseCase: MyVideosUseCaseProtocol,
     deleteVideoUseCase: DeleteVideoUseCaseProtocol,
-    likeVideoUseCase: ToggleLikeUseCaseProtocol,
     existingFeeds: [FeedResult],
     info: MyVideosFeedInfo
   ) {
     self.myVideosUseCase = myVideosUseCase
     self.deleteVideoUseCase = deleteVideoUseCase
-    self.likeVideoUseCase = likeVideoUseCase
     self.feeds = existingFeeds
     self.startIndex = info.startIndex
     self.currentIndex = info.currentIndex
@@ -118,21 +114,6 @@ class MyVideosFeedViewModel: FeedViewModelProtocol, ObservableObject {
         }
       }
       isLoading = false
-    }
-  }
-
-  func toggleLike(request: LikeQuery) async {
-    do {
-      let result = await likeVideoUseCase.execute(request: request)
-      switch result {
-      case .success(let response):
-        feeds[response.index].isLiked = response.status
-        let likeCountDifference = response.status ? Int.one : -Int.one
-        feeds[response.index].likeCount += likeCountDifference
-        unifiedEvent = .toggledLikeSuccessfully(likeResult: response)
-      case .failure(let error):
-        unifiedEvent = .toggleLikeFailed(errorMessage: error.localizedDescription)
-      }
     }
   }
 

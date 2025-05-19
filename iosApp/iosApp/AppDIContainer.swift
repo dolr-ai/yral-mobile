@@ -47,13 +47,6 @@ import GRPC
 
   lazy var session: SessionManager = SessionManager(auth: authClient)
 
-  lazy var likeRepository: LikeRepositoryProtocol = {
-    LikeRepository(
-      httpService: HTTPService(),
-      authClient: authClient
-    )
-  }()
-
   lazy var accountsRepository: AccountRepositoryProtocol = {
     AccountRepository(
       httpService: HTTPService(),
@@ -67,9 +60,30 @@ import GRPC
     )
   }()
 
-  lazy var toggleLikeUseCase: ToggleLikeUseCaseProtocol = {
-    ToggleLikeUseCase(
-      likeRepository: likeRepository,
+  lazy var smileyConfigRepository: SmileyRepositoryProtocol = {
+    SmileyRepository(
+      firebaseService: FirebaseService()
+    )
+  }()
+
+  lazy var smileyConfigUseCase: SmileyUseCaseProtocol = {
+    SmileyUseCase(
+      repository: smileyConfigRepository,
+      crashReporter: crashReporter
+    )
+  }()
+
+  lazy var castVoteRepository: CastVoteRepositoryProtocol = {
+    CastVoteRepository(
+      firebaseService: FirebaseService(),
+      httpService: HTTPService(baseURLString: appConfiguration.firebaseBaseURLString),
+      authClient: authClient
+    )
+  }()
+
+  lazy var castVoteUseCase: CastVoteUseCaseProtocol = {
+    CastVoteUseCase(
+      castVoteRepository: castVoteRepository,
       crashReporter: crashReporter
     )
   }()
@@ -88,7 +102,8 @@ import GRPC
         httpService: HTTPService(baseURLString: appConfiguration.offchainBaseURLString),
         authClient: authClient,
         crashReporter: crashReporter,
-        toggleLikeUseCase: toggleLikeUseCase,
+        smileyConfigUseCase: smileyConfigUseCase,
+        castVoteUseCase: castVoteUseCase,
         socialSignInUseCase: socialSignInUseCase,
         session: session
       )
@@ -125,7 +140,6 @@ import GRPC
         authClient: authClient,
         crashReporter: crashReporter,
         accountUseCase: accountUseCase,
-        likesUseCase: toggleLikeUseCase,
         session: session
       )
     )
