@@ -66,10 +66,9 @@ final class FeedDIContainer {
         feedRepository: repository,
         crashReporter: dependencies.crashReporter
       ),
+      socialSignInUseCase: dependencies.socialSignInUseCase,
       smileyConfigUseCase: dependencies.smileyConfigUseCase,
       castVoteUseCase: dependencies.castVoteUseCase
-      ),
-      socialSignInUseCase: dependencies.socialSignInUseCase
     )
   }
 }

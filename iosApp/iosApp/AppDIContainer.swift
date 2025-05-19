@@ -102,10 +102,10 @@ import GRPC
         httpService: HTTPService(baseURLString: appConfiguration.offchainBaseURLString),
         authClient: authClient,
         crashReporter: crashReporter,
-        smileyConfigUseCase: smileyConfigUseCase,
-        castVoteUseCase: castVoteUseCase,
         socialSignInUseCase: socialSignInUseCase,
-        session: session
+        session: session,
+        smileyConfigUseCase: smileyConfigUseCase,
+        castVoteUseCase: castVoteUseCase
       )
     )
   }
