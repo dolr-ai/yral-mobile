@@ -11,6 +11,7 @@ import Combine
 import secp256k1
 import AuthenticationServices
 
+// swiftlint: disable type_body_length
 final class DefaultAuthClient: NSObject, AuthClient {
   private(set) var identity: DelegatedIdentity?
   private(set) var canisterPrincipal: Principal?
@@ -24,15 +25,23 @@ final class DefaultAuthClient: NSObject, AuthClient {
   }
 
   let networkService: NetworkService
+  let firebaseService: FirebaseService
   let crashReporter: CrashReporter
   let baseURL: URL
+  let firebaseBaseURL: URL
 
   var pendingAuthState: String!
 
-  init(networkService: NetworkService, crashReporter: CrashReporter, baseURL: URL) {
+  init(networkService: NetworkService,
+       firebaseService: FirebaseService,
+       crashReporter: CrashReporter,
+       baseURL: URL,
+       firebaseBaseURL: URL) {
     self.networkService = networkService
+    self.firebaseService = firebaseService
     self.crashReporter = crashReporter
     self.baseURL = baseURL
+    self.firebaseBaseURL = firebaseBaseURL
     super.init()
   }
 
@@ -201,12 +210,64 @@ final class DefaultAuthClient: NSObject, AuthClient {
         self.canisterPrincipalString = canisterPrincipalString
         self.userPrincipal = userPrincipal
         self.userPrincipalString = userPrincipalString
+      }
+
+      try await exchangePrincipalID(type: type)
+    }
+  }
+
+  private func exchangePrincipalID(type: DelegateIdentityType) async throws {
+    try? await firebaseService.signInAnonymously()
+
+    var httpHeaders = [
+      "Content-Type": "application/json"
+    ]
+    let userIDToken = try? await firebaseService.fetchUserIDToken()
+    guard let userIDToken else {
+      return
+    }
+    httpHeaders["Authorization"] = "Bearer \(userIDToken)"
+
+    let httpBody: [String: String] = [
+      "principal_id": userPrincipalString ?? ""
+    ]
+
+    let endpoint = Endpoint(http: "",
+                            baseURL: firebaseBaseURL,
+                            path: "exchange_principal_id",
+                            method: .post,
+                            headers: httpHeaders,
+                            body: try? JSONSerialization.data(withJSONObject: httpBody)
+                           )
+
+    do {
+      let response = try await networkService.performRequest(
+        for: endpoint,
+        decodeAs: ExchangePrincipalDTO.self
+      ).toDomain()
+      await MainActor.run {
         stateSubject.value = (type == .ephemeral) ? .ephemeralAuthentication(
-          userPrincipal: userPrincipalString,
-          canisterPrincipal: canisterPrincipalString
+          userPrincipal: userPrincipalString ?? "",
+          canisterPrincipal: canisterPrincipalString ?? "",
+          coins: response.coins
         ) : .permanentAuthentication(
-          userPrincipal: userPrincipalString,
-          canisterPrincipal: canisterPrincipalString
+          userPrincipal: userPrincipalString ?? "",
+          canisterPrincipal: canisterPrincipalString ?? "",
+          coins: response.coins
+        )
+      }
+
+      try await firebaseService.signIn(withCustomToken: response.token)
+    } catch {
+      await MainActor.run {
+        stateSubject.value = (type == .ephemeral) ? .ephemeralAuthentication(
+          userPrincipal: userPrincipalString ?? "",
+          canisterPrincipal: canisterPrincipalString ?? "",
+          coins: 0
+        ) : .permanentAuthentication(
+          userPrincipal: userPrincipalString ?? "",
+          canisterPrincipal: canisterPrincipalString ?? "",
+          coins: 0
         )
       }
     }
@@ -288,6 +349,7 @@ final class DefaultAuthClient: NSObject, AuthClient {
     }
   }
 }
+// swiftlint: enable type_body_length
 
 enum DelegateIdentityType {
   case ephemeral
