@@ -9,6 +9,7 @@ import com.yral.shared.crashlytics.di.crashlyticsModule
 import com.yral.shared.features.account.di.accountsModule
 import com.yral.shared.features.auth.di.authModule
 import com.yral.shared.features.feed.di.feedModule
+import com.yral.shared.features.game.di.gameModule
 import com.yral.shared.features.root.di.rootModule
 import com.yral.shared.http.di.networkModule
 import com.yral.shared.preferences.di.preferencesModule
@@ -36,6 +37,7 @@ fun initKoin(appDeclaration: KoinAppDeclaration) {
             feedModule,
             rootModule,
             accountsModule,
+            gameModule,
         )
     }
 }
