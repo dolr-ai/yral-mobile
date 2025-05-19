@@ -10,6 +10,7 @@ import SDWebImage
 import AVFoundation
 
 extension FeedsViewController {
+  // swiftlint: disable function_body_length
   func getConfiguredDataSource() -> DataSource {
     let dataSource = DataSource(collectionView: feedsCV) { [weak self] collectionView, indexPath, feed in
       guard let self = self else { return UICollectionViewCell() }
@@ -35,7 +36,7 @@ extension FeedsViewController {
             imageURL: feed.profileImageURL,
             title: feed.principalID,
             subtitle: feed.postDescription,
-            coins: 2000
+            coins: session.state.coins
           ),
           smileyGame: feed.smileyGame,
           index: indexPath.item
@@ -58,7 +59,7 @@ extension FeedsViewController {
             imageURL: feed.profileImageURL,
             title: feed.principalID,
             subtitle: feed.postDescription,
-            coins: 2000
+            coins: session.state.coins
           ),
           smileyGame: feed.smileyGame,
           index: indexPath.item
@@ -69,6 +70,7 @@ extension FeedsViewController {
     }
     return dataSource
   }
+  // swiftlint: enable function_body_length
 
   func updateData(withFeeds feeds: [FeedResult], animated: Bool = false) {
     guard self.feedsDataSource.snapshot().itemIdentifiers.isEmpty else {
@@ -131,6 +133,8 @@ extension FeedsViewController {
     guard let cell = feedsCV.cellForItem(at: IndexPath(item: index, section: 0)) as? FeedsCell else {
       return
     }
+
+    session.update(coins: response.coins)
 
     cell.startSmileyGamResultAnimation(for: response) { [weak self] in
       items[index].smileyGame?.result = response
