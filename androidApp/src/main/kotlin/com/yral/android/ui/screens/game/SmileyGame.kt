@@ -59,7 +59,6 @@ private object IconAnimationConstant {
 
 @Composable
 fun GameIconsRow(
-    modifier: Modifier = Modifier,
     gameIcons: List<GameIcon>,
     clickedIcon: GameIcon? = null,
     coinDelta: Int = 0,
@@ -67,45 +66,45 @@ fun GameIconsRow(
 ) {
     var animateBubbles by remember { mutableStateOf(false) }
     var iconPositions by remember { mutableStateOf(mapOf<Int, Float>()) }
-
+    var animateCoinDelta by remember { mutableStateOf(false) }
+    var resultViewVisible by remember { mutableStateOf(coinDelta != 0) }
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.BottomCenter,
     ) {
-        Row(
-            modifier =
-                modifier
-                    .padding(
-                        horizontal = 20.dp,
-                        vertical = 16.dp,
-                    ),
-        ) {
-            if (coinDelta != 0) {
-                clickedIcon?.let {
-                    GameResultView(
-                        icon = clickedIcon,
-                        coinDelta = coinDelta,
-                        originalPos =
-                            iconPositions[gameIcons.indexOfFirst { clickedIcon.id == it.id }] ?: 0f,
-                    )
-                }
-            } else {
-                GameIconStrip(
-                    gameIcons = gameIcons,
-                    clickedIcon = clickedIcon,
-                    onIconClicked = onIconClicked,
-                    setAnimateBubbles = { animate -> animateBubbles = animate },
-                    onIconPositioned = { id, xPos ->
-                        // Store position of each icon for later animation
-                        iconPositions = iconPositions + (id to xPos)
-                    },
+        if (!resultViewVisible) {
+            GameIconStrip(
+                modifier = Modifier.align(Alignment.BottomCenter),
+                gameIcons = gameIcons,
+                clickedIcon = clickedIcon,
+                onIconClicked = onIconClicked,
+                setAnimateBubbles = { animate -> animateBubbles = animate },
+                onIconPositioned = { id, xPos ->
+                    // Store position of each icon for later animation
+                    iconPositions = iconPositions + (id to xPos)
+                },
+            )
+        } else {
+            clickedIcon?.let {
+                GameResultView(
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                    icon = clickedIcon,
+                    coinDelta = coinDelta,
+                    originalPos =
+                        iconPositions[gameIcons.indexOfFirst { clickedIcon.id == it.id }] ?: 0f,
                 )
             }
         }
         GameIconBubbles(clickedIcon, animateBubbles) { animate ->
             animateBubbles = animate
         }
-        GameResultAnimation(coinDelta = coinDelta)
+        GameResultAnimation(
+            coinDelta,
+            animateCoinDelta = animateCoinDelta,
+            resultViewVisible = resultViewVisible,
+            setAnimateCoinDelta = { animateCoinDelta = it },
+            onAnimationComplete = { resultViewVisible = coinDelta != 0 },
+        )
     }
 }
 
@@ -125,11 +124,16 @@ private fun GameIconBubbles(
 }
 
 @Composable
-private fun GameResultAnimation(coinDelta: Int) {
-    var animateCoinDelta by remember { mutableStateOf(false) }
+private fun GameResultAnimation(
+    coinDelta: Int,
+    animateCoinDelta: Boolean,
+    resultViewVisible: Boolean,
+    setAnimateCoinDelta: (Boolean) -> Unit,
+    onAnimationComplete: () -> Unit,
+) {
     LaunchedEffect(coinDelta) {
-        if (coinDelta != 0) {
-            animateCoinDelta = true
+        if (coinDelta != 0 && !resultViewVisible) {
+            setAnimateCoinDelta(true)
         }
     }
     if (animateCoinDelta) {
@@ -142,7 +146,8 @@ private fun GameResultAnimation(coinDelta: Int) {
                     YralColors.Red300
                 },
         ) {
-            animateCoinDelta = false
+            setAnimateCoinDelta(false)
+            onAnimationComplete()
         }
     }
 }
@@ -156,6 +161,7 @@ private fun Int.toSignedString(): String =
 
 @Composable
 private fun GameResultView(
+    modifier: Modifier,
     icon: GameIcon,
     coinDelta: Int,
     originalPos: Float,
@@ -176,27 +182,17 @@ private fun GameResultView(
             delay(RESULT_ANIMATION_DURATION)
             animate = false
         } else {
-            animate = false
-            iconOffsetX.snapTo(0f)
+            animate = true
+            iconOffsetX.snapTo(originalPos)
         }
     }
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .background(
-                    color = smileyGameCardBackground,
-                    shape = RoundedCornerShape(size = 49.dp),
-                ).padding(
-                    horizontal = 12.dp,
-                    vertical = 4.dp,
-                ),
+    GameIconStripBackground(
+        modifier = modifier,
         horizontalArrangement =
             Arrangement.spacedBy(
                 12.dp,
                 Alignment.Start,
             ),
-        verticalAlignment = Alignment.CenterVertically,
     ) {
         GameIcon(
             modifier =
@@ -268,6 +264,7 @@ private fun gameResultText(
 
 @Composable
 private fun GameIconStrip(
+    modifier: Modifier,
     gameIcons: List<GameIcon>,
     clickedIcon: GameIcon? = null,
     onIconClicked: (emoji: GameIcon) -> Unit,
@@ -275,20 +272,7 @@ private fun GameIconStrip(
     onIconPositioned: (Int, Float) -> Unit = { _, _ -> },
 ) {
     var animateIcon by remember { mutableStateOf(false) }
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .background(
-                    color = smileyGameCardBackground,
-                    shape = RoundedCornerShape(size = 49.dp),
-                ).padding(
-                    horizontal = 12.dp,
-                    vertical = 4.dp,
-                ),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
+    GameIconStripBackground(modifier) {
         gameIcons.forEachIndexed { index, icon ->
             val resourceId = icon.getResource()
             if (resourceId > 0) {
@@ -351,6 +335,39 @@ private fun GameIcon(
         contentDescription = "image description",
         contentScale = ContentScale.FillBounds,
     )
+}
+
+@Composable
+private fun GameIconStripBackground(
+    modifier: Modifier,
+    horizontalArrangement: Arrangement.Horizontal = Arrangement.SpaceBetween,
+    content: @Composable () -> Unit,
+) {
+    Row(
+        modifier =
+            modifier
+                .padding(
+                    horizontal = 20.dp,
+                    vertical = 16.dp,
+                ),
+    ) {
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .background(
+                        color = smileyGameCardBackground,
+                        shape = RoundedCornerShape(size = 49.dp),
+                    ).padding(
+                        horizontal = 12.dp,
+                        vertical = 4.dp,
+                    ),
+            horizontalArrangement = horizontalArrangement,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            content()
+        }
+    }
 }
 
 private fun GameIcon.getResource(): Int =
