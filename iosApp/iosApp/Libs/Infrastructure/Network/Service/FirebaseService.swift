@@ -23,6 +23,10 @@ class FirebaseService: FirebaseServiceProtocol {
     try await Auth.auth().signIn(withCustomToken: token)
   }
 
+  func signOut() throws {
+    try Auth.auth().signOut()
+  }
+
   func fetchUserIDToken() async throws -> String? {
     do {
       let idToken = try await Auth.auth().currentUser?.getIDToken()
