@@ -22,11 +22,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yral.android.ui.design.LocalAppTopography
+import com.yral.android.ui.design.YralTypoGraphy
 import com.yral.android.ui.screens.game.CoinAnimationConstants.FONT_SIZE
+import com.yral.android.ui.screens.game.CoinAnimationConstants.FONT_WIGHT
 import kotlinx.coroutines.delay
 import java.util.UUID
 import kotlin.random.Random
@@ -39,7 +41,8 @@ private object CoinAnimationConstants {
     const val TEXT_START_DELAY = 300
     const val TILT_ANGLE = 10f
     const val HORIZONTAL_PADDING = 16
-    const val FONT_SIZE = 46
+    const val FONT_SIZE = 64
+    val FONT_WIGHT = FontWeight.Black
 }
 
 @Composable
@@ -129,8 +132,9 @@ fun SingleAnimatedText(
     )
     Text(
         text = text,
-        style = LocalAppTopography.current.xlBold,
+        fontFamily = YralTypoGraphy.KumbhSans,
         fontSize = FONT_SIZE.sp,
+        fontWeight = FONT_WIGHT,
         color = textColor,
         modifier =
             Modifier
