@@ -1,27 +1,30 @@
 //
-//  SmileyRepository.swift
+//  SmileyGameConfig.swift
 //  iosApp
 //
-//  Created by Samarth Paboowal on 15/05/25.
+//  Created by Samarth Paboowal on 20/05/25.
 //  Copyright © 2025 orgName. All rights reserved.
 //
 
 import Foundation
 
-class SmileyRepository: SmileyRepositoryProtocol {
-  private let firebaseService: FirebaseServiceProtocol
+class SmileyGameConfig {
+  static let shared = SmileyGameConfig()
+  private let firebaseService = FirebaseService()
 
-  init(firebaseService: FirebaseServiceProtocol) {
-    self.firebaseService = firebaseService
-  }
+  var config = SmileyConfig(smileys: [])
 
-  func fetchSmileyConfig() async -> Result<SmileyConfig, SmileyConfigError> {
+  private init() {}
+
+  func fetch() async -> Result<SmileyConfig, SmileyConfigError> {
     do {
       let response = try await firebaseService.fetchDocument(
         path: Constants.documentPath,
         decodeAs: SmileyConfigDTO.self
       )
 
+      let domainResponse = response.toDomain()
+      config = domainResponse
       return .success(response.toDomain())
     } catch {
       return .failure(SmileyConfigError.firebaseError(error))
@@ -29,7 +32,7 @@ class SmileyRepository: SmileyRepositoryProtocol {
   }
 }
 
-extension SmileyRepository {
+extension SmileyGameConfig {
   enum Constants {
     static let documentPath = "config/smiley_game_v1"
   }

@@ -16,7 +16,6 @@ final class FeedDIContainer {
     let crashReporter: CrashReporter
     let socialSignInUseCase: SocialSignInUseCaseProtocol
     let session: SessionManager
-    let smileyConfigUseCase: SmileyUseCaseProtocol
     let castVoteUseCase: CastVoteUseCaseProtocol
   }
 
@@ -67,7 +66,6 @@ final class FeedDIContainer {
         crashReporter: dependencies.crashReporter
       ),
       socialSignInUseCase: dependencies.socialSignInUseCase,
-      smileyConfigUseCase: dependencies.smileyConfigUseCase,
       castVoteUseCase: dependencies.castVoteUseCase
     )
   }

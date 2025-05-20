@@ -8,8 +8,8 @@
 
 import Foundation
 
-struct SmileyConfig {
-  let smileys: [Smiley]
+struct SmileyConfig: Hashable {
+  var smileys: [Smiley]
 }
 
 struct Smiley: Identifiable, Hashable {
@@ -19,6 +19,6 @@ struct Smiley: Identifiable, Hashable {
 }
 
 struct SmileyGame: Hashable {
-  var smileys: [Smiley]
+  var config: SmileyConfig
   var result: SmileyGameResultResponse?
 }

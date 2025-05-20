@@ -142,7 +142,7 @@ class FeedsRepository: FeedRepositoryProtocol {
       likeCount: Int(result.like_count()),
       isLiked: result.liked_by_me(),
       nsfwProbability: feed.nsfwProbability,
-      smileyGame: nil
+      smileyGame: SmileyGame(config: SmileyGameConfig.shared.config)
     )
   }
 

@@ -227,7 +227,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   }
 
   private func setupSmileyGameView() {
-    if let game = smileyGame, game.smileys.count > 0 {
+    if let game = smileyGame, game.config.smileys.count > 0 {
       let smileyGameView = SmileyGameView(
         smileyGame: game,
         smileyTapped: { [weak self] smiley in

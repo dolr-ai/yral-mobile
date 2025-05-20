@@ -62,19 +62,6 @@ import GRPC
     )
   }()
 
-  lazy var smileyConfigRepository: SmileyRepositoryProtocol = {
-    SmileyRepository(
-      firebaseService: FirebaseService()
-    )
-  }()
-
-  lazy var smileyConfigUseCase: SmileyUseCaseProtocol = {
-    SmileyUseCase(
-      repository: smileyConfigRepository,
-      crashReporter: crashReporter
-    )
-  }()
-
   lazy var castVoteRepository: CastVoteRepositoryProtocol = {
     CastVoteRepository(
       firebaseService: FirebaseService(),
@@ -106,7 +93,6 @@ import GRPC
         crashReporter: crashReporter,
         socialSignInUseCase: socialSignInUseCase,
         session: session,
-        smileyConfigUseCase: smileyConfigUseCase,
         castVoteUseCase: castVoteUseCase
       )
     )

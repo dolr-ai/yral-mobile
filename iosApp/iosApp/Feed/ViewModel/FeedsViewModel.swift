@@ -14,10 +14,8 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
   let reportUseCase: ReportFeedsUseCaseProtocol
   let logEventUseCase: LogUploadEventUseCaseProtocol
   let socialSignInUseCase: SocialSignInUseCaseProtocol
-  let smileyConfigUseCase: SmileyUseCaseProtocol
   let castVoteUseCase: CastVoteUseCaseProtocol
 
-  private var smileys = [Smiley]()
   private var currentFeeds = [FeedResult]()
   private var filteredFeeds = [FeedResult]()
   private var feedvideoIDSet = Set<String>()
@@ -42,7 +40,6 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
     reportUseCase: ReportFeedsUseCaseProtocol,
     logEventUseCase: LogUploadEventUseCaseProtocol,
     socialSignInUseCase: SocialSignInUseCaseProtocol,
-    smileyConfigUseCase: SmileyUseCaseProtocol,
     castVoteUseCase: CastVoteUseCaseProtocol
   ) {
     self.initialFeedsUseCase = fetchFeedsUseCase
@@ -50,7 +47,6 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
     self.reportUseCase = reportUseCase
     self.logEventUseCase = logEventUseCase
     self.socialSignInUseCase = socialSignInUseCase
-    self.smileyConfigUseCase = smileyConfigUseCase
     self.castVoteUseCase = castVoteUseCase
     self.unifiedEvent = .fetchingInitialFeeds
     isFetchingInitialFeeds = true
@@ -65,13 +61,8 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
         let unblockedFeeds = self.filteredFeeds.filter { !self.blockedPrincipalIDSet.contains($0.principalID) }
         guard !unblockedFeeds.isEmpty else { return }
         self.feedvideoIDSet.formUnion(unblockedFeeds.map { $0.videoID })
-        let modifiedUnblockedFeeds = unblockedFeeds.map { item in
-          var modified = item
-          modified.smileyGame = SmileyGame(smileys: self.smileys, result: nil)
-          return modified
-        }
-        self.currentFeeds += modifiedUnblockedFeeds
-        self.unifiedState = .success(feeds: modifiedUnblockedFeeds)
+        self.currentFeeds += unblockedFeeds
+        self.unifiedState = .success(feeds: unblockedFeeds)
       }
       .store(in: &cancellables)
   }
@@ -87,11 +78,8 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
   @MainActor func fetchSmileys() async {
     unifiedState = .loading
     do {
-      let result = await smileyConfigUseCase.execute()
-      switch result {
-      case .success(let smileyConfig):
-        smileys = smileyConfig.smileys
-      case .failure(let error):
+      let result = await SmileyGameConfig.shared.fetch()
+      if case .failure(let error) = result {
         print(error.localizedDescription)
       }
     }

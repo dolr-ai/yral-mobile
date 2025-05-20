@@ -26,7 +26,7 @@ struct SmileyGameView: View {
       if let result = smileyGame.result {
         resultView(for: result)
       } else {
-        ForEach(smileyGame.smileys, id: \.id) { smiley in
+        ForEach(smileyGame.config.smileys, id: \.id) { smiley in
           Image(smiley.imageName)
             .resizable()
             .frame(width: Constants.smileySize, height: Constants.smileySize)
@@ -60,7 +60,7 @@ struct SmileyGameView: View {
             }
             .padding(.vertical, Constants.smileyVerticalPadding)
 
-          if smiley.id != smileyGame.smileys.last?.id {
+          if smiley.id != smileyGame.config.smileys.last?.id {
             Spacer(minLength: Constants.smileySpacer)
           }
         }
@@ -133,12 +133,12 @@ struct SmileyGameView: View {
 
     DispatchQueue.main.asyncAfter(deadline: .now() + Constants.durationPointOne) {
       guard let id = selectedID,
-            let index = smileyGame.smileys.firstIndex(where: { $0.id == id })
+            let index = smileyGame.config.smileys.firstIndex(where: { $0.id == id })
       else {
         return
       }
 
-      smileyGame.smileys.move(fromOffsets: IndexSet(integer: index), toOffset: .zero)
+      smileyGame.config.smileys.move(fromOffsets: IndexSet(integer: index), toOffset: .zero)
       showWinnerOnly = true
     }
 
