@@ -91,6 +91,16 @@ class GameViewModel(
             )
         }
     }
+
+    fun setLoading(isLoading: Boolean) {
+        coroutineScope.launch {
+            _state.emit(
+                _state.value.copy(
+                    isLoading = isLoading,
+                ),
+            )
+        }
+    }
 }
 
 data class GameState(
@@ -98,4 +108,5 @@ data class GameState(
     val gameResult: Map<String, Pair<GameIcon, Int>> = emptyMap(),
     val coinBalance: Long = 2000,
     val animateCoinBalance: Boolean = false,
+    val isLoading: Boolean = false,
 )
