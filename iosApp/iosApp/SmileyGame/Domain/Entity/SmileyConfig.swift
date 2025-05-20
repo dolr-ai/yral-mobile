@@ -10,6 +10,7 @@ import Foundation
 
 struct SmileyConfig: Hashable {
   var smileys: [Smiley]
+  let lossPenalty: Int
 }
 
 struct Smiley: Identifiable, Hashable {

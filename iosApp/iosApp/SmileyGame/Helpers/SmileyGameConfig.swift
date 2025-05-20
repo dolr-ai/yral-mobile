@@ -12,7 +12,10 @@ class SmileyGameConfig {
   static let shared = SmileyGameConfig()
   private let firebaseService = FirebaseService()
 
-  var config = SmileyConfig(smileys: [])
+  var config = SmileyConfig(
+    smileys: [],
+    lossPenalty: 10
+  )
 
   private init() {}
 

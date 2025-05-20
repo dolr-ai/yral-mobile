@@ -32,6 +32,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   private let userDefaults = UserDefaults.standard
   private static let resultBottomSheetKey = "ResultBottomSheetKey"
   private var smileyGame: SmileyGame?
+  private var coins: Int?
 
   private var showResultBottomSheet: Bool {
     userDefaults.integer(forKey: Self.resultBottomSheetKey) < Int.one ? true : false
@@ -227,6 +228,10 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   }
 
   private func setupSmileyGameView() {
+    guard (coins ?? 0) >= SmileyGameConfig.shared.config.lossPenalty else {
+      return
+    }
+
     if let game = smileyGame, game.config.smileys.count > 0 {
       let smileyGameView = SmileyGameView(
         smileyGame: game,
@@ -354,11 +359,13 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     delegate?.reportButtonTapped(index: index)
   }
 
+  // swiftlint: disable function_parameter_count
   func configure(
     withPlayer player: AVPlayer,
     feedInfo: FeedCellInfo,
     profileInfo: ProfileInfoView.ProfileInfo,
     smileyGame: SmileyGame?,
+    coins: Int,
     index: Int
   ) {
     if let lastThumbnailImage = feedInfo.lastThumbnailImage {
@@ -379,6 +386,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     self.index = index
     self.feedType = feedInfo.feedType
     self.smileyGame = smileyGame
+    self.coins = coins
 
     if feedInfo.feedType == .otherUsers {
       profileInfoView.set(data: profileInfo)
@@ -396,6 +404,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     }
     signupOverlayHost.view.isHidden = !feedInfo.showLoginOverlay
   }
+  // swiftlint: enable function_parameter_count
 
   override func layoutSubviews() {
     super.layoutSubviews()

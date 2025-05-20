@@ -40,6 +40,7 @@ extension FeedsViewController {
             coins: session.state.coins
           ),
           smileyGame: feed.smileyGame,
+          coins: session.state.coins,
           index: indexPath.item
         )
       } else {
@@ -63,6 +64,7 @@ extension FeedsViewController {
             coins: session.state.coins
           ),
           smileyGame: feed.smileyGame,
+          coins: session.state.coins,
           index: indexPath.item
         )
       }
