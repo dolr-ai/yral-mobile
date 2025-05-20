@@ -141,9 +141,9 @@ private fun GameResultAnimation(
             text = coinDelta.toSignedString(),
             textColor =
                 if (coinDelta > 0) {
-                    YralColors.Green300
+                    YralColors.Green300.copy(alpha = 0.3f)
                 } else {
-                    YralColors.Red300
+                    YralColors.Red300.copy(alpha = 0.3f)
                 },
         ) {
             setAnimateCoinDelta(false)
