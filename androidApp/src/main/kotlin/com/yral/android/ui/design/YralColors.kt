@@ -38,5 +38,7 @@ object YralColors {
     val Green50: Color = Color(0xFFE9FAF2)
     val Green300: Color = Color(0xFF1EC981)
 
+    val coinBalanceBGStart = Color(0xFFFFCC00)
+    val coinBalanceBGEnd = Color(0xFFDA8100)
     val smileyGameCardBackground = Color(0x66000000)
 }

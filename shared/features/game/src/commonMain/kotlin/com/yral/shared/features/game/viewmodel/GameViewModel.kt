@@ -84,4 +84,5 @@ class GameViewModel(
 data class GameState(
     val gameIcons: List<GameIcon>,
     val gameResult: Map<String, Pair<GameIcon, Int>> = emptyMap(),
+    val coinBalance: Long = 0,
 )
