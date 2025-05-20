@@ -28,6 +28,7 @@ import com.yral.android.ui.design.LocalAppTopography
 
 @Composable
 fun YralGradientButton(
+    modifier: Modifier = Modifier,
     buttonState: YralButtonState = YralButtonState.Enabled,
     buttonType: YralButtonType = YralButtonType.Pink,
     text: String,
@@ -35,7 +36,7 @@ fun YralGradientButton(
 ) {
     Row(
         modifier =
-            Modifier
+            modifier
                 .fillMaxWidth()
                 .height(45.dp)
                 .paint(
