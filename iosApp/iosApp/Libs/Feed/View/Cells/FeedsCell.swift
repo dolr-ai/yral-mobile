@@ -10,6 +10,7 @@ import UIKit
 import SwiftUI
 import AVFoundation
 
+// swiftlint: disable type_body_length
 protocol FeedsCellProtocol: AnyObject {
   func shareButtonTapped(index: Int)
   func likeButtonTapped(index: Int)
@@ -117,6 +118,12 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   override init(frame: CGRect) {
     super.init(frame: frame)
     setupUI()
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(handleFirstFrameReady(_:)),
+      name: .feedItemReady,
+      object: nil
+    )
   }
 
   required init?(coder: NSCoder) {
@@ -203,6 +210,11 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     overlayView?.isHidden = true
   }
 
+  @objc private func handleFirstFrameReady(_ note: Notification) {
+    guard let idx = note.userInfo?["index"] as? Int, idx == index else { return }
+    playerLayer?.isHidden = false
+  }
+
   @objc func likeButtonTapped() {
     delegate?.likeButtonTapped(index: index)
   }
@@ -230,11 +242,14 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     } else if let thumbnailURL = feedInfo.thumbnailURL {
       loadImage(with: thumbnailURL, placeholderImage: Constants.playerPlaceHolderImage, on: playerContainerView)
     } else {
-      playerContainerView.image = Constants.defaultProfileImage
+      playerContainerView.image = Constants.playerPlaceHolderImage
     }
 
     playerLayer?.removeFromSuperlayer()
+    playerLayer?.player = nil
+    playerLayer = nil
     let layer = AVPlayerLayer(player: player)
+    layer.isHidden = true
     layer.videoGravity = .resize
     playerContainerView.layer.addSublayer(layer)
     playerLayer = layer
@@ -289,6 +304,10 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   override func prepareForReuse() {
     super.prepareForReuse()
     playerLayer?.player = nil
+    playerLayer?.removeFromSuperlayer()
+    playerLayer = nil
+    playerContainerView.sd_cancelCurrentImageLoad()
+    playerContainerView.image = nil
   }
 
   struct FeedCellInfo {
@@ -332,3 +351,4 @@ extension FeedsCell {
     static let animationPeriod = 0.3
   }
 }
+// swiftlint: enable type_body_length

@@ -260,6 +260,8 @@
 		AC99BBC12D86FF81008012C2 /* ProfileEmptyState.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC99BBC02D86FF7D008012C2 /* ProfileEmptyState.swift */; };
 		AC99BBC22D86FF81008012C2 /* ProfileEmptyState.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC99BBC02D86FF7D008012C2 /* ProfileEmptyState.swift */; };
 		AC9B77E62D58C84000270FC9 /* HLSDownloadManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9B77D52D58C2F300270FC9 /* HLSDownloadManagerTests.swift */; };
+		ACAA4D5F2DDC75CB001092A6 /* Notifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAA4D5E2DDC75C3001092A6 /* Notifications.swift */; };
+		ACAA4D602DDC75CB001092A6 /* Notifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAA4D5E2DDC75C3001092A6 /* Notifications.swift */; };
 		ACB09FC92D92CB6400EE3239 /* ProfileRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB09FC82D92CB6000EE3239 /* ProfileRouter.swift */; };
 		ACB09FCA2D92CB6400EE3239 /* ProfileRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB09FC82D92CB6000EE3239 /* ProfileRouter.swift */; };
 		ACB09FCE2D92D51200EE3239 /* LikeRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB09FCD2D92D50D00EE3239 /* LikeRepository.swift */; };
@@ -579,6 +581,7 @@
 		AC99BBC02D86FF7D008012C2 /* ProfileEmptyState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileEmptyState.swift; sourceTree = "<group>"; };
 		AC9B77D52D58C2F300270FC9 /* HLSDownloadManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HLSDownloadManagerTests.swift; sourceTree = "<group>"; };
 		AC9B77DD2D58C7E300270FC9 /* YralTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = YralTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		ACAA4D5E2DDC75C3001092A6 /* Notifications.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Notifications.swift; sourceTree = "<group>"; };
 		ACB09FC82D92CB6000EE3239 /* ProfileRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileRouter.swift; sourceTree = "<group>"; };
 		ACB09FCD2D92D50D00EE3239 /* LikeRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LikeRepository.swift; sourceTree = "<group>"; };
 		ACB09FD02D92D52700EE3239 /* LikeRepositoryProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LikeRepositoryProtocol.swift; sourceTree = "<group>"; };
@@ -949,6 +952,7 @@
 		AC26CA662D806501006ADA75 /* Utils */ = {
 			isa = PBXGroup;
 			children = (
+				ACAA4D5E2DDC75C3001092A6 /* Notifications.swift */,
 				ACF639DE2DC25B9C00C4BCCC /* UserDefaultsManager.swift */,
 				ACFEDFA02D96CEC2003116EA /* Errors.swift */,
 				ACCB98772D94420D002B9675 /* UILabel+Extensions.swift */,
@@ -2371,6 +2375,7 @@
 				AC7F7EBF2D7734BB00215162 /* UploadRepository.swift in Sources */,
 				ACC0D45D2D91785B006DCF5C /* SwiftDelegatedIdentityWire.swift in Sources */,
 				ACB09FC92D92CB6400EE3239 /* ProfileRouter.swift in Sources */,
+				ACAA4D602DDC75CB001092A6 /* Notifications.swift in Sources */,
 				ACB46A812D106034002E200C /* FeedsCell.swift in Sources */,
 				AC7F7ECE2D78707200215162 /* UploadVideoRequest.swift in Sources */,
 				AC6BECC22D09F91C002E2021 /* HTTPService.swift in Sources */,
@@ -2554,6 +2559,7 @@
 				AC7F7EC02D7734BB00215162 /* UploadRepository.swift in Sources */,
 				ACC0D45E2D91785B006DCF5C /* SwiftDelegatedIdentityWire.swift in Sources */,
 				ACB09FCA2D92CB6400EE3239 /* ProfileRouter.swift in Sources */,
+				ACAA4D5F2DDC75CB001092A6 /* Notifications.swift in Sources */,
 				ACB46A802D106034002E200C /* FeedsCell.swift in Sources */,
 				AC7F7ECD2D78707200215162 /* UploadVideoRequest.swift in Sources */,
 				AC6BECC32D09F91C002E2021 /* HTTPService.swift in Sources */,

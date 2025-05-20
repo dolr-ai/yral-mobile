@@ -202,7 +202,21 @@ final class FeedsPlayer: YralPlayer {
 
     playerLooper = AVPlayerLooper(player: player, templateItem: item)
     attachTimeObserver()
+    player.playImmediately(atRate: .zero)
 
+    Task { @MainActor in
+      let queueItem = await player.waitForFirstItem()
+      do {
+        try await queueItem.waitUntilReady()
+        NotificationCenter.default.post(
+          name: .feedItemReady,
+          object: self,
+          userInfo: ["index": currentIndex]
+        )
+      } catch {
+        print("Item failed to become ready: \(error)")
+      }
+    }
     let currentVideoID = feedResults[currentIndex].videoID
     if let lastTime = lastPlayedTimes[currentVideoID] {
       player.seek(to: lastTime, toleranceBefore: .zero, toleranceAfter: .zero) { [weak self] _ in
@@ -350,7 +364,4 @@ enum PlaybackMilestone {
   case almostFinished
 }
 
-extension Notification.Name {
-  static let eulaAcceptedChanged = Notification.Name("yral.eulaAcceptedChanged")
-}
 // swiftlint: enable type_body_length
