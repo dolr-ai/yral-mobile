@@ -255,6 +255,8 @@ private fun FeedOverlay(
             CoinBalance(
                 coinBalance = gameState.coinBalance,
                 coinDelta = gameViewModel.getFeedGameResult(state.feedDetails[pageNo].videoID),
+                animateBag = gameState.animateCoinBalance,
+                setAnimate = { gameViewModel.setAnimateCoinBalance(it) },
             )
         }
         ReportVideo(
