@@ -37,6 +37,10 @@ import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.animateLottieCompositionAsState
+import com.airbnb.lottie.compose.rememberLottieComposition
 import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
@@ -60,7 +64,8 @@ private object IconAnimationConstant {
 @Composable
 fun GameIconsRow(
     gameIcons: List<GameIcon>,
-    clickedIcon: GameIcon? = null,
+    clickedIcon: GameIcon?,
+    isLoading: Boolean,
     coinDelta: Int = 0,
     onIconClicked: (emoji: GameIcon) -> Unit,
 ) {
@@ -78,6 +83,8 @@ fun GameIconsRow(
                 gameIcons = gameIcons,
                 clickedIcon = clickedIcon,
                 onIconClicked = onIconClicked,
+                isLoading = isLoading,
+                coinDelta = coinDelta,
                 setAnimateBubbles = { animate -> animateBubbles = animate },
                 onIconPositioned = { id, xPos ->
                     // Store position of each icon for later animation
@@ -116,8 +123,29 @@ private fun GameIconBubbles(
 ) {
     if (animateBubbles) {
         clickedIcon?.let {
-            BubbleAnimation(it.getResource()) {
-                setAnimateBubbles(false)
+//            BubbleAnimation(it.getResource()) {
+//                setAnimateBubbles(false)
+//            }
+            val animationRes = it.getBubbleResource()
+            val animationComposition by rememberLottieComposition(
+                LottieCompositionSpec.RawRes(
+                    animationRes,
+                ),
+            )
+            val animationProgress by animateLottieCompositionAsState(
+                composition = animationComposition,
+                iterations = 1,
+                isPlaying = true, // Only start playing when initial animation is complete
+            )
+            LottieAnimation(
+                modifier = Modifier.fillMaxSize(),
+                composition = animationComposition,
+                progress = { animationProgress },
+            )
+            LaunchedEffect(animationProgress) {
+                if (animationProgress == 1f) {
+                    setAnimateBubbles(false)
+                }
             }
         }
     }
@@ -268,6 +296,8 @@ private fun GameIconStrip(
     gameIcons: List<GameIcon>,
     clickedIcon: GameIcon? = null,
     onIconClicked: (emoji: GameIcon) -> Unit,
+    isLoading: Boolean,
+    coinDelta: Int = 0,
     setAnimateBubbles: (Boolean) -> Unit,
     onIconPositioned: (Int, Float) -> Unit = { _, _ -> },
 ) {
@@ -286,9 +316,11 @@ private fun GameIconStrip(
                     GameIcon(
                         modifier =
                             Modifier.clickable {
-                                animateIcon = true
-                                setAnimateBubbles(true)
-                                onIconClicked(icon)
+                                if (coinDelta == 0 && !isLoading) {
+                                    animateIcon = true
+                                    setAnimateBubbles(true)
+                                    onIconClicked(icon)
+                                }
                             },
                         icon = resourceId,
                         animate =
@@ -377,5 +409,15 @@ private fun GameIcon.getResource(): Int =
         GameIconNames.FIRE.name -> R.drawable.fire
         GameIconNames.SURPRISE.name -> R.drawable.surprise
         GameIconNames.ROCKET.name -> R.drawable.rocket
+        else -> 0
+    }
+
+private fun GameIcon.getBubbleResource(): Int =
+    when (imageName) {
+        GameIconNames.LAUGH.name -> R.raw.smiley_game_laugh
+        GameIconNames.HEART.name -> R.raw.smiley_game_heart
+        GameIconNames.FIRE.name -> R.raw.smiley_game_fire
+        GameIconNames.SURPRISE.name -> R.raw.smiley_game_surprise
+        GameIconNames.ROCKET.name -> R.raw.smiley_game_rocket
         else -> 0
     }
