@@ -299,7 +299,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   }
 
   func startSmileyGamResultAnimation(for result: SmileyGameResultResponse, completion: @escaping () -> Void) {
-    AudioPlayer.shared.play(named: Constants.winSound)
+    AudioPlayer.shared.play(named: result.outcome == "WIN" ? Constants.winSound : Constants.lossSound)
     profileInfoView.coinsView.updateCoins(by: result.coinDelta)
     if showResultBottomSheet {
       let existingCount = userDefaults.integer(forKey: Self.resultBottomSheetKey)
@@ -459,6 +459,7 @@ extension FeedsCell {
     static let smileyGameHeight = 64.0
     static let smileyTapDuration = 0.2
     static let winSound = "smiley_game_win"
+    static let lossSound = "smiley_game_loss"
     static let scoreLabelWinColor = YralColor.green300.uiColor.withAlphaComponent(0.3)
     static let scoreLabelLooseColor = YralColor.red300.uiColor.withAlphaComponent(0.3)
     static let resultAnimationDuration = 2.5

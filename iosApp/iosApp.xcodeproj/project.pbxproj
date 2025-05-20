@@ -63,6 +63,8 @@
 		105036EA2DDB287700571B4E /* ExchangePrincipal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105036E82DDB287700571B4E /* ExchangePrincipal.swift */; };
 		105036F62DDB289D00571B4E /* ExchangePrincipalResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105036F52DDB289D00571B4E /* ExchangePrincipalResponse.swift */; };
 		105036F82DDB289D00571B4E /* ExchangePrincipalResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105036F52DDB289D00571B4E /* ExchangePrincipalResponse.swift */; };
+		105037642DDC5C4700571B4E /* smiley_game_loss.caf in Resources */ = {isa = PBXBuildFile; fileRef = 105037632DDC5C4700571B4E /* smiley_game_loss.caf */; };
+		105037652DDC5C4700571B4E /* smiley_game_loss.caf in Resources */ = {isa = PBXBuildFile; fileRef = 105037632DDC5C4700571B4E /* smiley_game_loss.caf */; };
 		10512A432DA666AD00114BAA /* YralPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10512A422DA666A900114BAA /* YralPlayer.swift */; };
 		10512A442DA666AD00114BAA /* YralPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10512A422DA666A900114BAA /* YralPlayer.swift */; };
 		10512A522DA795A800114BAA /* YralQueuePlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10512A512DA7959D00114BAA /* YralQueuePlayer.swift */; };
@@ -555,6 +557,7 @@
 		105034BE2DD636C800571B4E /* CastVoteUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CastVoteUseCase.swift; sourceTree = "<group>"; };
 		105036E82DDB287700571B4E /* ExchangePrincipal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExchangePrincipal.swift; sourceTree = "<group>"; };
 		105036F52DDB289D00571B4E /* ExchangePrincipalResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExchangePrincipalResponse.swift; sourceTree = "<group>"; };
+		105037632DDC5C4700571B4E /* smiley_game_loss.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = smiley_game_loss.caf; sourceTree = "<group>"; };
 		10512A422DA666A900114BAA /* YralPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralPlayer.swift; sourceTree = "<group>"; };
 		10512A512DA7959D00114BAA /* YralQueuePlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralQueuePlayer.swift; sourceTree = "<group>"; };
 		107C608F2DB78093006FC467 /* UIView+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIView+Extensions.swift"; sourceTree = "<group>"; };
@@ -852,6 +855,7 @@
 		105034902DD4B75B00571B4E /* Audio */ = {
 			isa = PBXGroup;
 			children = (
+				105037632DDC5C4700571B4E /* smiley_game_loss.caf */,
 				105034972DD4C9B600571B4E /* smiley_game_win.caf */,
 				105034982DD4C9B600571B4E /* smiley_tap.caf */,
 			);
@@ -2366,6 +2370,7 @@
 				1050341F2DD4955C00571B4E /* smiley_game_surprise.json in Resources */,
 				105034202DD4955C00571B4E /* smiley_game_heart.json in Resources */,
 				105034212DD4955C00571B4E /* smiley_game_fire.json in Resources */,
+				105037642DDC5C4700571B4E /* smiley_game_loss.caf in Resources */,
 				105034222DD4955C00571B4E /* smiley_game_laugh.json in Resources */,
 				105034232DD4955C00571B4E /* smiley_game_rocket.json in Resources */,
 				AC32E41B2D270097001DDA43 /* KumbhSans-VariableFont_YOPQ,wght.ttf in Resources */,
@@ -2408,6 +2413,7 @@
 				1050341A2DD4955C00571B4E /* smiley_game_surprise.json in Resources */,
 				1050341B2DD4955C00571B4E /* smiley_game_heart.json in Resources */,
 				1050341C2DD4955C00571B4E /* smiley_game_fire.json in Resources */,
+				105037652DDC5C4700571B4E /* smiley_game_loss.caf in Resources */,
 				1050341D2DD4955C00571B4E /* smiley_game_laugh.json in Resources */,
 				1050341E2DD4955C00571B4E /* smiley_game_rocket.json in Resources */,
 				AC32E40F2D270097001DDA43 /* KumbhSans-VariableFont_YOPQ,wght.ttf in Resources */,
