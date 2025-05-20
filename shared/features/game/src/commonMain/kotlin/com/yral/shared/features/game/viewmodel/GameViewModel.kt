@@ -75,6 +75,18 @@ class GameViewModel(
             _state.emit(
                 _state.value.copy(
                     gameResult = temp,
+                    coinBalance = _state.value.coinBalance.plus(coinDelta),
+                    animateCoinBalance = true,
+                ),
+            )
+        }
+    }
+
+    fun setAnimateCoinBalance(shouldAnimate: Boolean) {
+        coroutineScope.launch {
+            _state.emit(
+                _state.value.copy(
+                    animateCoinBalance = shouldAnimate,
                 ),
             )
         }
@@ -84,5 +96,6 @@ class GameViewModel(
 data class GameState(
     val gameIcons: List<GameIcon>,
     val gameResult: Map<String, Pair<GameIcon, Int>> = emptyMap(),
-    val coinBalance: Long = 0,
+    val coinBalance: Long = 2000,
+    val animateCoinBalance: Boolean = false,
 )
