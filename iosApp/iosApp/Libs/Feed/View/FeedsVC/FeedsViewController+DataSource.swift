@@ -143,7 +143,7 @@ extension FeedsViewController {
 
       snapshot.deleteItems(snapshot.itemIdentifiers)
       snapshot.appendItems(items)
-      self?.feedsDataSource.apply(snapshot, animatingDifferences: false)
+      self?.feedsDataSource.apply(snapshot, animatingDifferences: true)
     }
   }
 
