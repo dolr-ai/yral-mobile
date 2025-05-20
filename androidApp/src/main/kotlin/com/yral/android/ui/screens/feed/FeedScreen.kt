@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -54,6 +55,7 @@ import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.feed.FeedScreenConstants.MAX_LINES_FOR_POST_DESCRIPTION
 import com.yral.android.ui.screens.feed.FeedScreenConstants.VIDEO_REPORT_SHEET_MAX_HEIGHT
 import com.yral.android.ui.screens.feed.FeedScreenConstants.MAX_LINES_FOR_POST_DESCRIPTION
+import com.yral.android.ui.screens.game.CoinBalance
 import com.yral.android.ui.screens.game.GameIconsRow
 import com.yral.android.ui.widgets.YralBottomSheet
 import com.yral.android.ui.widgets.YralButtonState
@@ -221,13 +223,22 @@ private fun FeedOverlay(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.TopStart,
     ) {
-        UserBrief(
-            principalId = state.feedDetails[pageNo].principalID,
-            profileImageUrl = state.feedDetails[pageNo].profileImageURL,
-            postDescription = state.feedDetails[pageNo].postDescription,
-            isPostDescriptionExpanded = state.isPostDescriptionExpanded,
-            setPostDescriptionExpanded = { feedViewModel.setPostDescriptionExpanded(it) },
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            UserBrief(
+                principalId = state.feedDetails[pageNo].principalID,
+                profileImageUrl = state.feedDetails[pageNo].profileImageURL,
+                postDescription = state.feedDetails[pageNo].postDescription,
+                isPostDescriptionExpanded = state.isPostDescriptionExpanded,
+                setPostDescriptionExpanded = { feedViewModel.setPostDescriptionExpanded(it) },
+            )
+            CoinBalance(
+                coinBalance = gameState.coinBalance,
+                coinDelta = gameViewModel.getFeedGameResult(state.feedDetails[pageNo].videoID),
+            )
+        }
         ReportVideo(
             modifier =
                 Modifier
@@ -253,7 +264,7 @@ private fun FeedOverlay(
 }
 
 @Composable
-private fun UserBrief(
+private fun RowScope.UserBrief(
     profileImageUrl: Url?,
     principalId: String,
     postDescription: String,
@@ -263,7 +274,7 @@ private fun UserBrief(
     Box(
         modifier =
             Modifier
-                .fillMaxWidth()
+                .weight(1f)
                 .padding(
                     top = 22.dp,
                     end = 46.dp,
