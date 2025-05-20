@@ -31,9 +31,11 @@ actor HLSDownloadManager: NSObject, HLSDownloadManaging {
   var downloadContinuations: [URL: CheckedContinuation<URL, Error>] = [:]
   var downloadedAssetsLRU: [String: Date] = [:]
   var inflightAssetForURL: [URL: AVURLAsset] = [:]
+  private var downloadMonitors: [URL: PerformanceMonitor] = [:]
 
   private let userDefaults = UserDefaults.standard
   private static let bookmarksKey = "HLSBookmarks"
+  private static let traceKey = "HLSDownload"
 
   private lazy var storedBookmarks: [String: Data] = {
     return (userDefaults.dictionary(forKey: Self.bookmarksKey) as? [String: Data]) ?? [:]
@@ -87,6 +89,11 @@ actor HLSDownloadManager: NSObject, HLSDownloadManaging {
     activeDownloads[hlsURL] = downloadTask
     assetTitleForURL[hlsURL] = assetTitle
 
+    let monitor: PerformanceMonitor = FirebasePerformanceMonitor(traceName: HLSDownloadManager.traceKey)
+    monitor.setMetadata(key: Constants.assetTitleKey, value: assetTitle)
+    monitor.start()
+    downloadMonitors[hlsURL] = monitor
+
     return try await withCheckedThrowingContinuation { continuation in
       downloadContinuations[hlsURL] = continuation
       downloadTask.resume()
@@ -121,6 +128,10 @@ actor HLSDownloadManager: NSObject, HLSDownloadManaging {
       inflightAssetForURL.removeValue(forKey: hlsURL)
       if let continuation = downloadContinuations.removeValue(forKey: hlsURL) {
         continuation.resume(throwing: CancellationError())
+      }
+      if let monitor = downloadMonitors.removeValue(forKey: hlsURL) {
+        monitor.setMetadata(key: Constants.performanceResultKey, value: Constants.performanceCancelKey)
+        monitor.stop()
       }
       print("Canceled ongoing download for \(hlsURL.absoluteString)")
     }
@@ -195,11 +206,43 @@ actor HLSDownloadManager: NSObject, HLSDownloadManaging {
     if let continuation = self.downloadContinuations.removeValue(forKey: feedURL) {
       continuation.resume(returning: location)
     }
+    if let monitor = downloadMonitors.removeValue(forKey: feedURL) {
+      monitor.setMetadata(key: Constants.performanceResultKey, value: Constants.performanceSuccessKey)
+      monitor.stop()
+    }
     print("Finished writing to location: \(location)")
+  }
+
+  fileprivate func handleDownloadError(_ url: URL, error: Error?) {
+    if let monitor = self.downloadMonitors.removeValue(forKey: url) {
+      monitor.setMetadata(key: Constants.performanceResultKey, value: Constants.performanceErrorKey)
+      monitor.stop()
+    }
+
+    if let continuation = downloadContinuations.removeValue(forKey: url) {
+      continuation.resume(throwing: error ?? URLError(.unknown))
+    }
+
+    activeDownloads.removeValue(forKey: url)
+    inflightAssetForURL.removeValue(forKey: url)
+    enforceCacheLimitIfNeeded()
   }
 }
 
 extension HLSDownloadManager: AVAssetDownloadDelegate {
+
+  nonisolated func urlSession(_ session: URLSession,
+                              assetDownloadTask: AVAssetDownloadTask,
+                              willDownloadTo location: URL) {
+    Task { [weak self] in
+      guard let self = self else { return }
+      await self.onStartDownload(
+        session,
+        assetDownloadTask: assetDownloadTask,
+        didFinishDownloadingTo: location
+      )
+    }
+  }
 
   nonisolated func urlSession(
     _ session: URLSession,
@@ -216,16 +259,17 @@ extension HLSDownloadManager: AVAssetDownloadDelegate {
     }
   }
 
-  nonisolated func urlSession(_ session: URLSession,
-                              assetDownloadTask: AVAssetDownloadTask,
-                              willDownloadTo location: URL) {
+  nonisolated func urlSession(
+    _ session: URLSession,
+    task: URLSessionTask,
+    didCompleteWithError error: (any Error)?
+  ) {
+    guard let assetTask = task as? AVAssetDownloadTask else { return }
     Task { [weak self] in
-      guard let self = self else { return }
-      await self.onStartDownload(
-        session,
-        assetDownloadTask: assetDownloadTask,
-        didFinishDownloadingTo: location
-      )
+      guard let self,
+            let url = await self.activeDownloads.first(where: { $0.value.underlyingTask === assetTask })?.key
+      else { return }
+      await handleDownloadError(url, error: error)
     }
   }
 }
@@ -283,6 +327,24 @@ extension HLSDownloadManager {
   }
 }
 
+extension HLSDownloadManager {
+  enum Constants {
+    static let maxOfflineAssets = 10
+    static let maxConnectionsPerHost = 3
+    static let downloadIdentifier = "com.yral.HLSDownloadManager.async"
+    static let videoKey = "userVideos"
+    static let assetTitleKey = "asset_title"
+    static let performanceResultKey = "result"
+    static let performanceErrorKey = "error"
+    static let performanceSuccessKey = "success"
+    static let performanceCancelKey = "cancelled"
+  }
+}
+
+protocol HLSDownloadManagerProtocol: AnyObject {
+  func clearedCache(for assetTitle: String)
+}
+
 protocol AVAssetDownloadTaskProtocol: AnyObject {
   func resume()
   func cancel()
@@ -291,12 +353,6 @@ protocol AVAssetDownloadTaskProtocol: AnyObject {
 
 protocol AVAssetDownloadURLSessionProtocol: AnyObject {
   func makeAssetDownloadTask(downloadConfiguration: AVAssetDownloadConfiguration) -> AVAssetDownloadTaskProtocol?
-}
-
-protocol NetworkMonitorProtocol: AnyObject {
-  var isGoodForPrefetch: Bool { get }
-  var isNetworkAvailable: Bool { get set }
-  func startMonitoring()
 }
 
 final class DefaultAssetDownloadTask: AVAssetDownloadTaskProtocol {
@@ -331,35 +387,4 @@ final class DefaultAssetDownloadURLSession: AVAssetDownloadURLSessionProtocol {
     avTask.priority = URLSessionTask.lowPriority
     return DefaultAssetDownloadTask(realTask: avTask)
   }
-}
-
-final class DefaultNetworkMonitor: NetworkMonitorProtocol {
-  private let monitor = NWPathMonitor()
-  private let monitorQueue = DispatchQueue.global(qos: .background)
-  var isNetworkAvailable: Bool = true
-  var isGoodForPrefetch: Bool = true
-
-  func startMonitoring() {
-    monitor.pathUpdateHandler = { [weak self] path in
-      let expensive   = path.isExpensive
-      let constrained = path.isConstrained
-      Task { @MainActor in
-        self?.isGoodForPrefetch = (!expensive && !constrained && path.status == .satisfied)
-      }
-    }
-    monitor.start(queue: monitorQueue)
-  }
-}
-
-extension HLSDownloadManager {
-  enum Constants {
-    static let maxOfflineAssets = 10
-    static let maxConnectionsPerHost = 3
-    static let downloadIdentifier = "com.yral.HLSDownloadManager.async"
-    static let videoKey = "userVideos"
-  }
-}
-
-protocol HLSDownloadManagerProtocol: AnyObject {
-  func clearedCache(for assetTitle: String)
 }

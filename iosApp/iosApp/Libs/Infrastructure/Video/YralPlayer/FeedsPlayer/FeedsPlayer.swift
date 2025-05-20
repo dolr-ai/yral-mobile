@@ -30,13 +30,22 @@ final class FeedsPlayer: YralPlayer {
   private let networkMonitor: NetworkMonitorProtocol
 
   private var preloadRadius: Int {
-    networkMonitor.isGoodForPrefetch ? Constants.radius : .one
+    networkMonitor.isGoodForPrefetch ? Constants.radius : .two
   }
 
-  private var timeObserver: Any?
-  private var startLogged = Set<Int>()
-  private var finishLogged = Set<Int>()
+  // MARK: Video duration event loggers
+  var timeObserver: Any?
+  var startLogged = Set<Int>()
+  var finishLogged = Set<Int>()
 
+  // MARK: Performance monitor
+  var videoLoadMonitors: [String: PerformanceMonitor] = [:]
+  var firstFrameMonitor: PerformanceMonitor?
+  var playbackMonitor: PerformanceMonitor?
+  var timeControlObservation: NSKeyValueObservation?
+  var stallStart: Date?
+
+  // MARK: Method implementations
   init(
     player: YralQueuePlayer = AVQueuePlayer(),
     hlsDownloadManager: HLSDownloadManaging,
@@ -49,6 +58,12 @@ final class FeedsPlayer: YralPlayer {
       self,
       selector: #selector(handleEULAAccepted(_:)),
       name: .eulaAcceptedChanged,
+      object: nil
+    )
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(handlePlaybackStalled(_:)),
+      name: .AVPlayerItemPlaybackStalled,
       object: nil
     )
     networkMonitor.startMonitoring()
@@ -90,41 +105,6 @@ final class FeedsPlayer: YralPlayer {
   private func updateMuteState() {
     let accepted: Bool? = UserDefaultsManager.shared.get(for: .eulaAccepted)
     player.isMuted = !(accepted ?? false)
-  }
-
-  private func attachTimeObserver() {
-    if let token = timeObserver {
-      (player as? AVQueuePlayer)?.removeTimeObserver(token)
-      timeObserver = nil
-    }
-    guard let queue = player as? AVQueuePlayer else { return }
-    let interval = CMTime(
-      seconds: Constants.videoDurationEventMinThreshold,
-      preferredTimescale: CMTimeScale(Constants.timescaleEventSamping)
-    )
-    timeObserver = queue.addPeriodicTimeObserver(
-      forInterval: interval, queue: .main
-    ) { [weak self] currentTime in
-      self?.evaluateProgress(currentTime)
-    }
-  }
-
-  private func evaluateProgress(_ time: CMTime) {
-    guard currentIndex < feedResults.count,
-          let item = player.currentItem,
-          item.status == .readyToPlay else { return }
-
-    let seconds  = time.seconds
-    let duration = item.duration.seconds
-    if seconds >= CGFloat.pointOne, startLogged.insert(currentIndex).inserted {
-      delegate?.reachedPlaybackMilestone(.started, for: currentIndex)
-    }
-
-    if duration.isFinite,
-       seconds / duration >= Constants.videoDurationEventMaxThreshold,
-       finishLogged.insert(currentIndex).inserted {
-      delegate?.reachedPlaybackMilestone(.almostFinished, for: currentIndex)
-    }
   }
 
   func advanceToVideo(at index: Int) {
@@ -188,6 +168,7 @@ final class FeedsPlayer: YralPlayer {
   }
 
   private func startLooping(with item: AVPlayerItem) {
+    handlePerformanceMonitors()
     playerLooper?.disableLooping()
     playerLooper = nil
     player.removeAllItems()
@@ -203,6 +184,7 @@ final class FeedsPlayer: YralPlayer {
     playerLooper = AVPlayerLooper(player: player, templateItem: item)
     attachTimeObserver()
     player.playImmediately(atRate: .zero)
+    startTimeControlObservations(player)
 
     Task { @MainActor in
       let queueItem = await player.waitForFirstItem()
@@ -305,6 +287,12 @@ final class FeedsPlayer: YralPlayer {
     guard index < feedResults.count else { return nil }
     let feed = feedResults[index]
     let videoID = feed.videoID
+
+    let startupMonitor: PerformanceMonitor = FirebasePerformanceMonitor(traceName: Constants.videoStartTrace)
+    startupMonitor.setMetadata(key: Constants.videoIDKey, value: videoID)
+    startupMonitor.start()
+    videoLoadMonitors[videoID] = startupMonitor
+
     if let asset = await hlsDownloadManager.localOrInflightAsset(for: feed.url) {
       do {
         try await asset.loadPlayableAsync()
@@ -312,20 +300,36 @@ final class FeedsPlayer: YralPlayer {
         playerItems[videoID] = item
         return item
       } catch {
+        startupMonitor.setMetadata(key: Constants.performanceResultKey, value: Constants.performanceErrorKey)
+        startupMonitor.stop()
+        videoLoadMonitors.removeValue(forKey: videoID)
         print("Local asset not playable (fallback to remote). Error: \(error)")
+        throw error
       }
     }
+
     let remoteAsset = AVURLAsset(url: feed.url)
-    try await remoteAsset.loadPlayableAsync()
-    let item = AVPlayerItem(asset: remoteAsset)
-    playerItems[videoID] = item
-    return item
+    do {
+      try await remoteAsset.loadPlayableAsync()
+      let item = AVPlayerItem(asset: remoteAsset)
+      playerItems[videoID] = item
+      return item
+    } catch {
+      startupMonitor.setMetadata(key: Constants.performanceResultKey, value: Constants.performanceErrorKey)
+      startupMonitor.stop()
+      videoLoadMonitors.removeValue(forKey: videoID)
+      throw error
+    }
   }
 
   deinit {
+    playbackMonitor?.stop()
     if let token = timeObserver {
       (player as? AVQueuePlayer)?.removeTimeObserver(token)
     }
+    timeControlObservation?.invalidate()
+    stallStart = nil
+    NotificationCenter.default.removeObserver(self)
   }
 }
 
@@ -354,8 +358,17 @@ extension FeedsPlayer {
   enum Constants {
     static let videoDurationEventMinThreshold = 0.05
     static let videoDurationEventMaxThreshold = 0.95
-    static let timescaleEventSamping = 600.0
+    static let timescaleEventSampling = 600.0
     static let radius = 5
+    static let videoStartTrace = "VideoStartup"
+    static let firstFrameTrace = "FirstFrame"
+    static let videoPlaybackTrace = "VideoPlayback"
+    static let videoIDKey = "video_id"
+    static let performanceResultKey = "result"
+    static let performanceErrorKey = "error"
+    static let performanceSuccessKey = "success"
+    static let rebufferTimeMetric = "rebuffer_time_ms"
+    static let rebufferCountMetric = "rebuffer_count"
   }
 }
 
@@ -363,5 +376,4 @@ enum PlaybackMilestone {
   case started
   case almostFinished
 }
-
 // swiftlint: enable type_body_length

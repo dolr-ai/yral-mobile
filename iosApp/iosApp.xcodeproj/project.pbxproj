@@ -262,6 +262,16 @@
 		AC9B77E62D58C84000270FC9 /* HLSDownloadManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9B77D52D58C2F300270FC9 /* HLSDownloadManagerTests.swift */; };
 		ACAA4D5F2DDC75CB001092A6 /* Notifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAA4D5E2DDC75C3001092A6 /* Notifications.swift */; };
 		ACAA4D602DDC75CB001092A6 /* Notifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAA4D5E2DDC75C3001092A6 /* Notifications.swift */; };
+		ACAA4D622DDCA813001092A6 /* FirebasePerformance in Frameworks */ = {isa = PBXBuildFile; productRef = ACAA4D612DDCA813001092A6 /* FirebasePerformance */; };
+		ACAA4D642DDCA81B001092A6 /* FirebasePerformance in Frameworks */ = {isa = PBXBuildFile; productRef = ACAA4D632DDCA81B001092A6 /* FirebasePerformance */; };
+		ACAA4D692DDCB162001092A6 /* PerformanceMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAA4D682DDCB15B001092A6 /* PerformanceMonitor.swift */; };
+		ACAA4D6A2DDCB162001092A6 /* PerformanceMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAA4D682DDCB15B001092A6 /* PerformanceMonitor.swift */; };
+		ACAA4D6C2DDCB257001092A6 /* FirebasePerformanceMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAA4D6B2DDCB24F001092A6 /* FirebasePerformanceMonitor.swift */; };
+		ACAA4D6D2DDCB257001092A6 /* FirebasePerformanceMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAA4D6B2DDCB24F001092A6 /* FirebasePerformanceMonitor.swift */; };
+		ACAA4D6F2DDCD529001092A6 /* NetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAA4D6E2DDCD522001092A6 /* NetworkMonitor.swift */; };
+		ACAA4D702DDCD529001092A6 /* NetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAA4D6E2DDCD522001092A6 /* NetworkMonitor.swift */; };
+		ACAA4D722DDCF866001092A6 /* FeedsPlayer+Events.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAA4D712DDCF85E001092A6 /* FeedsPlayer+Events.swift */; };
+		ACAA4D732DDCF866001092A6 /* FeedsPlayer+Events.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAA4D712DDCF85E001092A6 /* FeedsPlayer+Events.swift */; };
 		ACB09FC92D92CB6400EE3239 /* ProfileRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB09FC82D92CB6000EE3239 /* ProfileRouter.swift */; };
 		ACB09FCA2D92CB6400EE3239 /* ProfileRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB09FC82D92CB6000EE3239 /* ProfileRouter.swift */; };
 		ACB09FCE2D92D51200EE3239 /* LikeRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB09FCD2D92D50D00EE3239 /* LikeRepository.swift */; };
@@ -582,6 +592,10 @@
 		AC9B77D52D58C2F300270FC9 /* HLSDownloadManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HLSDownloadManagerTests.swift; sourceTree = "<group>"; };
 		AC9B77DD2D58C7E300270FC9 /* YralTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = YralTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACAA4D5E2DDC75C3001092A6 /* Notifications.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Notifications.swift; sourceTree = "<group>"; };
+		ACAA4D682DDCB15B001092A6 /* PerformanceMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PerformanceMonitor.swift; sourceTree = "<group>"; };
+		ACAA4D6B2DDCB24F001092A6 /* FirebasePerformanceMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebasePerformanceMonitor.swift; sourceTree = "<group>"; };
+		ACAA4D6E2DDCD522001092A6 /* NetworkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; };
+		ACAA4D712DDCF85E001092A6 /* FeedsPlayer+Events.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FeedsPlayer+Events.swift"; sourceTree = "<group>"; };
 		ACB09FC82D92CB6000EE3239 /* ProfileRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileRouter.swift; sourceTree = "<group>"; };
 		ACB09FCD2D92D50D00EE3239 /* LikeRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LikeRepository.swift; sourceTree = "<group>"; };
 		ACB09FD02D92D52700EE3239 /* LikeRepositoryProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LikeRepositoryProtocol.swift; sourceTree = "<group>"; };
@@ -665,6 +679,7 @@
 				ACD941D12CFF5B720038FCB6 /* secp256k1 in Frameworks */,
 				AC0E49C42CEBA6F0002DC158 /* secp256k1 in Frameworks */,
 				ACD941802CFF55BB0038FCB6 /* FirebaseAnalyticsWithoutAdIdSupport in Frameworks */,
+				ACAA4D622DDCA813001092A6 /* FirebasePerformance in Frameworks */,
 				ACC0F3A32D2ED69200FA5BD0 /* Lottie in Frameworks */,
 				ACD941C42CFF5B3D0038FCB6 /* FirebaseCore in Frameworks */,
 				ACD941C62CFF5B3D0038FCB6 /* FirebaseCrashlytics in Frameworks */,
@@ -688,6 +703,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				ACAA4D642DDCA81B001092A6 /* FirebasePerformance in Frameworks */,
 				ACC0F39F2D2ED68500FA5BD0 /* Lottie in Frameworks */,
 				AC6BECB42D09D541002E2021 /* GRPC in Frameworks */,
 				ACD941C82CFF5B5B0038FCB6 /* FirebaseAnalytics in Frameworks */,
@@ -736,6 +752,7 @@
 			isa = PBXGroup;
 			children = (
 				ACB46A252D0EC09C002E200C /* FeedsPlayer.swift */,
+				ACAA4D712DDCF85E001092A6 /* FeedsPlayer+Events.swift */,
 				10BA2E842DA6507E00B6BE97 /* FeedsPlayerTests.swift */,
 			);
 			path = FeedsPlayer;
@@ -919,6 +936,7 @@
 		AC26CA512D8027A6006ADA75 /* Helpers */ = {
 			isa = PBXGroup;
 			children = (
+				ACAA4D6E2DDCD522001092A6 /* NetworkMonitor.swift */,
 				AC7F7EC62D78695F00215162 /* UploadDelegate.swift */,
 			);
 			path = Helpers;
@@ -1239,6 +1257,7 @@
 				ACB46A582D0EF912002E200C /* Auth */,
 				AC6BECBA2D09F0FD002E2021 /* Network */,
 				AC26CA472D802683006ADA75 /* CrashReporting */,
+				ACAA4D652DDCB123001092A6 /* PerformanceMonitor */,
 			);
 			path = Infrastructure;
 			sourceTree = "<group>";
@@ -1494,6 +1513,31 @@
 				ACC0D4432D8DA059006DCF5C /* DI */,
 			);
 			path = Upload;
+			sourceTree = "<group>";
+		};
+		ACAA4D652DDCB123001092A6 /* PerformanceMonitor */ = {
+			isa = PBXGroup;
+			children = (
+				ACAA4D672DDCB144001092A6 /* FirebasePerformanceMonitor */,
+				ACAA4D662DDCB139001092A6 /* Interface */,
+			);
+			path = PerformanceMonitor;
+			sourceTree = "<group>";
+		};
+		ACAA4D662DDCB139001092A6 /* Interface */ = {
+			isa = PBXGroup;
+			children = (
+				ACAA4D682DDCB15B001092A6 /* PerformanceMonitor.swift */,
+			);
+			path = Interface;
+			sourceTree = "<group>";
+		};
+		ACAA4D672DDCB144001092A6 /* FirebasePerformanceMonitor */ = {
+			isa = PBXGroup;
+			children = (
+				ACAA4D6B2DDCB24F001092A6 /* FirebasePerformanceMonitor.swift */,
+			);
+			path = FirebasePerformanceMonitor;
 			sourceTree = "<group>";
 		};
 		ACB09FC72D92CB5600EE3239 /* Router */ = {
@@ -2248,6 +2292,7 @@
 				ACB09FDD2D92F87E00EE3239 /* MyVideosFeedViewModel.swift in Sources */,
 				ACB46A262D0EC0A3002E200C /* FeedsPlayer.swift in Sources */,
 				ACB46A682D0F3609002E200C /* FeedsViewModel.swift in Sources */,
+				ACAA4D692DDCB162001092A6 /* PerformanceMonitor.swift in Sources */,
 				ACB46A422D0ECBB3002E200C /* ml_feed.proto in Sources */,
 				AC8958DD2D3EA54700E19ED7 /* FeedsViewController+Delegates.swift in Sources */,
 				ACB46A612D0EF94B002E200C /* DefaultAuthClient.swift in Sources */,
@@ -2293,6 +2338,7 @@
 				ACB46A532D0ED22B002E200C /* FeedQuery.swift in Sources */,
 				AC32E4502D296628001DDA43 /* AccountUseCase.swift in Sources */,
 				ACEBF7EF2D6F847300B594A0 /* ToastManager.swift in Sources */,
+				ACAA4D6D2DDCB257001092A6 /* FirebasePerformanceMonitor.swift in Sources */,
 				ACDD23E72D8B1B5F00AB0DAF /* ProfileVideoRequest.swift in Sources */,
 				ACC0D44E2D8DDB21006DCF5C /* ProfileRepository.swift in Sources */,
 				ACEBF7E22D6F505A00B594A0 /* UploadCompletedView.swift in Sources */,
@@ -2363,11 +2409,13 @@
 				ACC0D4342D8BFE67006DCF5C /* NudgePopupView.swift in Sources */,
 				AC92940F2D64CBFB003DB102 /* SelectFileView.swift in Sources */,
 				AC1ACFA02DB964AB001BDCFD /* SwiftUI+Extensions.swift in Sources */,
+				ACAA4D722DDCF866001092A6 /* FeedsPlayer+Events.swift in Sources */,
 				AC32E44C2D2965A3001DDA43 /* AccountViewModel.swift in Sources */,
 				AC09AA742CDD210D009A39A4 /* Data+Extensions.swift in Sources */,
 				AC09A9FA2CDB7A5D009A39A4 /* SwiftBindings+Extensions.swift in Sources */,
 				ACEBF8052D7473E600B594A0 /* UploadErrorView.swift in Sources */,
 				ACC1C39E2D9B046F005A7539 /* LottieRefreshSingletonView.swift in Sources */,
+				ACAA4D6F2DDCD529001092A6 /* NetworkMonitor.swift in Sources */,
 				AC8958D92D3EA46800E19ED7 /* FeedsViewController+ScrollView.swift in Sources */,
 				ACB46A772D105B17002E200C /* ReusableView.swift in Sources */,
 				AC32E4542D296637001DDA43 /* AccountRepository.swift in Sources */,
@@ -2432,6 +2480,7 @@
 				ACB09FDE2D92F87E00EE3239 /* MyVideosFeedViewModel.swift in Sources */,
 				ACB46A272D0EC0A3002E200C /* FeedsPlayer.swift in Sources */,
 				ACB46A692D0F3609002E200C /* FeedsViewModel.swift in Sources */,
+				ACAA4D6A2DDCB162001092A6 /* PerformanceMonitor.swift in Sources */,
 				ACB46A3F2D0ECBB3002E200C /* ml_feed.proto in Sources */,
 				AC8958DC2D3EA54700E19ED7 /* FeedsViewController+Delegates.swift in Sources */,
 				ACB46A602D0EF94B002E200C /* DefaultAuthClient.swift in Sources */,
@@ -2477,6 +2526,7 @@
 				ACB46A542D0ED22B002E200C /* FeedQuery.swift in Sources */,
 				AC32E44F2D296628001DDA43 /* AccountUseCase.swift in Sources */,
 				ACEBF7F02D6F847300B594A0 /* ToastManager.swift in Sources */,
+				ACAA4D6C2DDCB257001092A6 /* FirebasePerformanceMonitor.swift in Sources */,
 				ACDD23E82D8B1B5F00AB0DAF /* ProfileVideoRequest.swift in Sources */,
 				ACC0D44F2D8DDB21006DCF5C /* ProfileRepository.swift in Sources */,
 				ACEBF7E12D6F505A00B594A0 /* UploadCompletedView.swift in Sources */,
@@ -2547,11 +2597,13 @@
 				ACC0D4352D8BFE67006DCF5C /* NudgePopupView.swift in Sources */,
 				AC92940E2D64CBFB003DB102 /* SelectFileView.swift in Sources */,
 				AC1ACF9F2DB964AB001BDCFD /* SwiftUI+Extensions.swift in Sources */,
+				ACAA4D732DDCF866001092A6 /* FeedsPlayer+Events.swift in Sources */,
 				AC32E44B2D2965A3001DDA43 /* AccountViewModel.swift in Sources */,
 				ACD9418A2CFF575C0038FCB6 /* Data+Extensions.swift in Sources */,
 				ACD9418B2CFF575C0038FCB6 /* SwiftBindings+Extensions.swift in Sources */,
 				ACEBF8062D7473E600B594A0 /* UploadErrorView.swift in Sources */,
 				ACC1C39F2D9B046F005A7539 /* LottieRefreshSingletonView.swift in Sources */,
+				ACAA4D702DDCD529001092A6 /* NetworkMonitor.swift in Sources */,
 				AC8958D82D3EA46800E19ED7 /* FeedsViewController+ScrollView.swift in Sources */,
 				ACB46A762D105B17002E200C /* ReusableView.swift in Sources */,
 				AC32E4532D296637001DDA43 /* AccountRepository.swift in Sources */,
@@ -3105,6 +3157,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = AC6E31182D22F050001EBE6C /* XCRemoteSwiftPackageReference "SDWebImage" */;
 			productName = SDWebImageMapKit;
+		};
+		ACAA4D612DDCA813001092A6 /* FirebasePerformance */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = ACD941C02CFF5B3D0038FCB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebasePerformance;
+		};
+		ACAA4D632DDCA81B001092A6 /* FirebasePerformance */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = ACD941C02CFF5B3D0038FCB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebasePerformance;
 		};
 		ACB815472CFA146800104B7B /* FirebaseCore */ = {
 			isa = XCSwiftPackageProductDependency;
