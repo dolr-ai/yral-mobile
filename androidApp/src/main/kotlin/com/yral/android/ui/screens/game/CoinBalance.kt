@@ -1,8 +1,5 @@
 package com.yral.android.ui.screens.game
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -16,10 +13,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -39,8 +34,9 @@ import com.yral.android.ui.design.YralColors
 fun CoinBalance(
     coinBalance: Long,
     coinDelta: Int,
+    animateBag: Boolean,
+    setAnimate: (Boolean) -> Unit,
 ) {
-    var animateBag by remember { mutableStateOf(true) }
     Box(
         modifier =
             Modifier
@@ -60,7 +56,8 @@ fun CoinBalance(
                                 ),
                             ),
                         shape = RoundedCornerShape(16.dp),
-                    ).padding(start = 22.dp, end = 10.dp),
+                    ).padding(start = 22.dp, end = 10.dp)
+                    .align(Alignment.CenterEnd),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.Start,
         ) {
@@ -79,31 +76,36 @@ fun CoinBalance(
                         .size(36.dp)
                         .offset(x = (-22).dp),
             )
-        }
-        val bagAnimationRes = if (coinDelta > 0) R.raw.smiley_game_win else R.raw.smiley_game_lose
-        val bagAnimationComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(bagAnimationRes))
-        val bagAnimationProgress by animateLottieCompositionAsState(
-            composition = bagAnimationComposition,
-            iterations = 1,
-            isPlaying = true, // Only start playing when initial animation is complete
-        )
-        AnimatedVisibility(
-            visible = animateBag,
-            enter = fadeIn(),
-            exit = fadeOut(),
-        ) {
+        } else {
+            val bagAnimationRes =
+                if (coinDelta > 0) R.raw.smiley_game_win else R.raw.smiley_game_lose
+            val bagAnimationComposition by rememberLottieComposition(
+                LottieCompositionSpec.RawRes(
+                    bagAnimationRes,
+                ),
+            )
+            val bagAnimationProgress by animateLottieCompositionAsState(
+                composition = bagAnimationComposition,
+                iterations = 1,
+                isPlaying = true, // Only start playing when initial animation is complete
+            )
             LottieAnimation(
                 modifier =
                     Modifier
                         .height(52.dp)
                         .width(105.dp)
-                        .offset(x = (-52).dp)
+                        .offset(x = (-22).dp)
                         .graphicsLayer {
                             clip = false
                         },
                 composition = bagAnimationComposition,
                 progress = { bagAnimationProgress },
             )
+            LaunchedEffect(bagAnimationProgress) {
+                if (bagAnimationProgress == 1f) {
+                    setAnimate(false)
+                }
+            }
         }
     }
 }
