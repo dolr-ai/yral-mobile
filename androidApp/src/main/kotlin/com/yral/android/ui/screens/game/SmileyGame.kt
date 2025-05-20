@@ -402,7 +402,7 @@ private fun GameIconStripBackground(
     }
 }
 
-private fun GameIcon.getResource(): Int =
+fun GameIcon.getResource(): Int =
     when (imageName) {
         GameIconNames.LAUGH.name -> R.drawable.laughing
         GameIconNames.HEART.name -> R.drawable.heart
