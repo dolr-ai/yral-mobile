@@ -33,6 +33,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,6 +44,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -235,24 +240,13 @@ private fun FeedOverlay(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.TopStart,
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            UserBrief(
-                principalId = state.feedDetails[pageNo].principalID,
-                profileImageUrl = state.feedDetails[pageNo].profileImageURL,
-                postDescription = state.feedDetails[pageNo].postDescription,
-                isPostDescriptionExpanded = state.isPostDescriptionExpanded,
-                setPostDescriptionExpanded = { feedViewModel.setPostDescriptionExpanded(it) },
-            )
-            CoinBalance(
-                coinBalance = gameState.coinBalance,
-                coinDelta = gameViewModel.getFeedGameResult(state.feedDetails[pageNo].videoID),
-                animateBag = gameState.animateCoinBalance,
-                setAnimate = { gameViewModel.setAnimateCoinBalance(it) },
-            )
-        }
+        TopView(
+            state = state,
+            pageNo = pageNo,
+            feedViewModel = feedViewModel,
+            gameState = gameState,
+            gameViewModel = gameViewModel,
+        )
         ReportVideo(
             modifier =
                 Modifier
@@ -279,20 +273,63 @@ private fun FeedOverlay(
 }
 
 @Composable
-private fun RowScope.UserBrief(
+private fun TopView(
+    state: FeedState,
+    pageNo: Int,
+    feedViewModel: FeedViewModel,
+    gameState: GameState,
+    gameViewModel: GameViewModel,
+) {
+    Box(
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        var paddingEnd by remember { mutableFloatStateOf(0f) }
+        val density = LocalDensity.current
+        val configuration = LocalConfiguration.current
+        val screenWidthPx = with(density) { (configuration.screenWidthDp.dp).toPx() }
+        UserBrief(
+            principalId = state.feedDetails[pageNo].principalID,
+            profileImageUrl = state.feedDetails[pageNo].profileImageURL,
+            postDescription = state.feedDetails[pageNo].postDescription,
+            isPostDescriptionExpanded = state.isPostDescriptionExpanded,
+            setPostDescriptionExpanded = { feedViewModel.setPostDescriptionExpanded(it) },
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(end = with(density) { paddingEnd.toDp() + 46.dp }),
+        )
+        CoinBalance(
+            coinBalance = gameState.coinBalance,
+            coinDelta = gameViewModel.getFeedGameResult(state.feedDetails[pageNo].videoID),
+            animateBag = gameState.animateCoinBalance,
+            setAnimate = { gameViewModel.setAnimateCoinBalance(it) },
+            modifier =
+                Modifier
+                    .align(Alignment.CenterEnd)
+                    .onGloballyPositioned { coordinates ->
+                        if (!gameState.animateCoinBalance) {
+                            val x = coordinates.positionInParent().x
+                            paddingEnd = screenWidthPx - x
+                        }
+                    },
+        )
+    }
+}
+
+@Composable
+private fun UserBrief(
     profileImageUrl: Url?,
     principalId: String,
     postDescription: String,
     isPostDescriptionExpanded: Boolean,
     setPostDescriptionExpanded: (isExpanded: Boolean) -> Unit,
+    modifier: Modifier,
 ) {
     Box(
         modifier =
-            Modifier
-                .weight(1f)
+            modifier
                 .padding(
                     top = 22.dp,
-                    end = 46.dp,
                     start = 16.dp,
                     bottom = 22.dp,
                 ),
