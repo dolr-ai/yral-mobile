@@ -58,6 +58,7 @@ import com.yral.android.ui.screens.feed.performance.PrefetchVideoListenerImpl
 import com.yral.android.ui.screens.feed.performance.VideoListenerImpl
 import com.yral.android.ui.screens.game.CoinBalance
 import com.yral.android.ui.screens.game.GameIconsRow
+import com.yral.android.ui.screens.game.GameResultSheet
 import com.yral.android.ui.widgets.YralBottomSheet
 import com.yral.android.ui.widgets.YralButtonState
 import com.yral.android.ui.widgets.YralButtonType
@@ -78,7 +79,7 @@ import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Suppress("LongMethod")
+@Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
 fun FeedScreen(
     modifier: Modifier = Modifier,
@@ -212,6 +213,17 @@ fun FeedScreen(
                     pageNo = (state.reportSheetState as ReportSheetState.Open).pageNo,
                 )
             },
+        )
+    }
+    if (gameState.showResultSheet && state.currentPageOfFeed < state.feedDetails.size) {
+        val currentVideoId = state.feedDetails[state.currentPageOfFeed].videoID
+        GameResultSheet(
+            coinDelta = gameViewModel.getFeedGameResult(currentVideoId),
+            gameIcon = gameState.gameResult[currentVideoId]?.first,
+            onDismissRequest = {
+                gameViewModel.toggleResultSheet(false)
+            },
+            openAboutGame = { },
         )
     }
 }
