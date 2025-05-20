@@ -278,6 +278,7 @@ private fun FeedOverlay(
                     )
                 },
                 coinDelta = gameViewModel.getFeedGameResult(state.feedDetails[pageNo].videoID),
+                isLoading = gameState.isLoading,
             )
         }
     }
