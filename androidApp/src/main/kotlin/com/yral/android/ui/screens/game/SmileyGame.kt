@@ -49,8 +49,8 @@ import com.yral.android.ui.screens.game.IconAnimationConstant.ANIMATION_DURATION
 import com.yral.android.ui.screens.game.IconAnimationConstant.RESULT_ANIMATION_DURATION
 import com.yral.android.ui.screens.game.IconAnimationConstant.ROTATION_DEGREE
 import com.yral.android.ui.screens.game.IconAnimationConstant.SCALING_FACTOR
-import com.yral.shared.features.game.domain.GameIcon
-import com.yral.shared.features.game.domain.GameIconNames
+import com.yral.shared.features.game.domain.models.GameIcon
+import com.yral.shared.features.game.domain.models.GameIconNames
 import kotlinx.coroutines.delay
 import kotlin.math.abs
 
@@ -242,7 +242,7 @@ private fun GameResultView(
 
 @Composable
 private fun gameResultText(
-    iconName: String,
+    iconName: GameIconNames,
     coinDelta: Int,
 ): AnnotatedString =
     buildAnnotatedString {
@@ -259,7 +259,7 @@ private fun gameResultText(
                 append(
                     stringResource(
                         R.string.was_most_people_choice,
-                        iconName.lowercase().capitalize(Locale.current),
+                        iconName.name.lowercase().capitalize(Locale.current),
                     ),
                 )
                 append("\n")
@@ -404,20 +404,20 @@ private fun GameIconStripBackground(
 
 fun GameIcon.getResource(): Int =
     when (imageName) {
-        GameIconNames.LAUGH.name -> R.drawable.laughing
-        GameIconNames.HEART.name -> R.drawable.heart
-        GameIconNames.FIRE.name -> R.drawable.fire
-        GameIconNames.SURPRISE.name -> R.drawable.surprise
-        GameIconNames.ROCKET.name -> R.drawable.rocket
+        GameIconNames.LAUGH -> R.drawable.laughing
+        GameIconNames.HEART -> R.drawable.heart
+        GameIconNames.FIRE -> R.drawable.fire
+        GameIconNames.SURPRISE -> R.drawable.surprise
+        GameIconNames.ROCKET -> R.drawable.rocket
         else -> 0
     }
 
 private fun GameIcon.getBubbleResource(): Int =
     when (imageName) {
-        GameIconNames.LAUGH.name -> R.raw.smiley_game_laugh
-        GameIconNames.HEART.name -> R.raw.smiley_game_heart
-        GameIconNames.FIRE.name -> R.raw.smiley_game_fire
-        GameIconNames.SURPRISE.name -> R.raw.smiley_game_surprise
-        GameIconNames.ROCKET.name -> R.raw.smiley_game_rocket
+        GameIconNames.LAUGH -> R.raw.smiley_game_laugh
+        GameIconNames.HEART -> R.raw.smiley_game_heart
+        GameIconNames.FIRE -> R.raw.smiley_game_fire
+        GameIconNames.SURPRISE -> R.raw.smiley_game_surprise
+        GameIconNames.ROCKET -> R.raw.smiley_game_rocket
         else -> 0
     }
