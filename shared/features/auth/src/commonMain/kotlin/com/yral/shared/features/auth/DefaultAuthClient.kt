@@ -41,9 +41,10 @@ class DefaultAuthClient(
     }
 
     private suspend fun refreshAuthIfNeeded() {
-        preferences.getString(PrefKeys.ACCESS_TOKEN.name)?.let { accessToken ->
+        preferences.getString(PrefKeys.ID_TOKEN.name)?.let { idToken ->
             handleToken(
-                token = accessToken,
+                idToken = idToken,
+                accessToken = "",
                 refreshToken = "",
                 shouldRefreshToken = true,
             )
@@ -56,7 +57,8 @@ class DefaultAuthClient(
             .mapBoth(
                 success = { tokenResponse ->
                     handleToken(
-                        token = tokenResponse.accessToken,
+                        idToken = tokenResponse.idToken,
+                        accessToken = tokenResponse.accessToken,
                         refreshToken = tokenResponse.refreshToken,
                         shouldRefreshToken = true,
                     )
@@ -66,13 +68,14 @@ class DefaultAuthClient(
     }
 
     private suspend fun handleToken(
-        token: String,
+        idToken: String,
+        accessToken: String,
         refreshToken: String,
         shouldRefreshToken: Boolean,
     ) {
         preferences.putString(
-            PrefKeys.ACCESS_TOKEN.name,
-            token,
+            PrefKeys.ID_TOKEN.name,
+            idToken,
         )
         if (refreshToken.isNotEmpty()) {
             preferences.putString(
@@ -80,7 +83,13 @@ class DefaultAuthClient(
                 refreshToken,
             )
         }
-        val tokenClaim = oAuthUtils.parseOAuthToken(token)
+        if (accessToken.isNotEmpty()) {
+            preferences.putString(
+                PrefKeys.ACCESS_TOKEN.name,
+                refreshToken,
+            )
+        }
+        val tokenClaim = oAuthUtils.parseOAuthToken(idToken)
         if (tokenClaim.isValid(Clock.System.now().epochSeconds)) {
             tokenClaim.delegatedIdentity?.let {
                 handleExtractIdentityResponse(it)
@@ -102,6 +111,7 @@ class DefaultAuthClient(
         preferences.remove(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name)
         preferences.remove(PrefKeys.REFRESH_TOKEN.name)
         preferences.remove(PrefKeys.ACCESS_TOKEN.name)
+        preferences.remove(PrefKeys.ID_TOKEN.name)
         preferences.remove(PrefKeys.IDENTITY.name)
         sessionManager.updateState(SessionState.Initial)
     }
@@ -132,7 +142,8 @@ class DefaultAuthClient(
                 .mapBoth(
                     success = { tokenResponse ->
                         handleToken(
-                            token = tokenResponse.accessToken,
+                            idToken = tokenResponse.idToken,
+                            accessToken = tokenResponse.accessToken,
                             refreshToken = tokenResponse.refreshToken,
                             shouldRefreshToken = true,
                         )
@@ -188,7 +199,8 @@ class DefaultAuthClient(
             .mapBoth(
                 success = { tokenResponse ->
                     handleToken(
-                        token = tokenResponse.accessToken,
+                        idToken = tokenResponse.idToken,
+                        accessToken = tokenResponse.accessToken,
                         refreshToken = tokenResponse.refreshToken,
                         shouldRefreshToken = true,
                     )
