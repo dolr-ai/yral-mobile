@@ -26,6 +26,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(libs.ktor.json)
+            implementation(libs.gitlive.firebase.storage)
 
             implementation(projects.shared.core)
             implementation(projects.shared.libs.koin)
