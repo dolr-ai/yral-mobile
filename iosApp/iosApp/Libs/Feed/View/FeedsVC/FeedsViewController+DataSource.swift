@@ -139,7 +139,7 @@ extension FeedsViewController {
     session.update(coins: response.coins)
 
     cell.startSmileyGamResultAnimation(for: response) { [weak self] in
-      items[index].smileyGame?.result = response
+      items[index].smileyGame?.state = .played(response)
 
       snapshot.deleteItems(snapshot.itemIdentifiers)
       snapshot.appendItems(items)

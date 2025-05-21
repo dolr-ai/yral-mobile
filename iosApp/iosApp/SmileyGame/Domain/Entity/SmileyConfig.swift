@@ -19,7 +19,12 @@ struct Smiley: Identifiable, Hashable {
   let isActive: Bool
 }
 
+enum SmileyGameState: Hashable {
+  case notPlayed
+  case played(SmileyGameResultResponse)
+}
+
 struct SmileyGame: Hashable {
   var config: SmileyConfig
-  var result: SmileyGameResultResponse?
+  var state: SmileyGameState
 }

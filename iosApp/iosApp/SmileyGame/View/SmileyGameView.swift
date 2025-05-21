@@ -23,9 +23,8 @@ struct SmileyGameView: View {
 
   var body: some View {
     HStack(spacing: Constants.zero) {
-      if let result = smileyGame.result {
-        resultView(for: result)
-      } else {
+      switch smileyGame.state {
+      case .notPlayed:
         ForEach(smileyGame.config.smileys, id: \.id) { smiley in
           Image(smiley.imageName)
             .resizable()
@@ -64,6 +63,8 @@ struct SmileyGameView: View {
             Spacer(minLength: Constants.smileySpacer)
           }
         }
+      case .played(let result):
+        resultView(for: result)
       }
     }
     .onReceive(initialStateSubscriber) { game in
@@ -143,7 +144,7 @@ struct SmileyGameView: View {
     }
 
     DispatchQueue.main.asyncAfter(deadline: .now() + Constants.durationPointFour) {
-      smileyGame.result = result
+      smileyGame.state = .played(result)
     }
   }
 }
