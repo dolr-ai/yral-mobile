@@ -1,9 +1,12 @@
 package com.yral.shared.features.game.viewmodel
 
 import androidx.lifecycle.ViewModel
-import com.github.michaelbull.result.mapBoth
+import com.github.michaelbull.result.onFailure
+import com.github.michaelbull.result.onSuccess
 import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.features.game.domain.GetGameIconsUseCase
+import com.yral.shared.features.game.domain.GetGameRulesUseCase
+import com.yral.shared.features.game.domain.models.AboutGameItem
 import com.yral.shared.features.game.domain.models.GameIcon
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,12 +17,14 @@ import kotlinx.coroutines.launch
 class GameViewModel(
     appDispatchers: AppDispatchers,
     private val gameIconsUseCase: GetGameIconsUseCase,
+    private val gameRulesUseCase: GetGameRulesUseCase,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(appDispatchers.io)
     private val _state =
         MutableStateFlow(
             GameState(
                 gameIcons = emptyList(),
+                gameRules = emptyList(),
                 coinBalance = 2000,
             ),
         )
@@ -27,24 +32,38 @@ class GameViewModel(
 
     init {
         coroutineScope.launch {
+            getGameRules()
             // First get coin balance
-            gameIconsUseCase
-                .invoke(
-                    parameter =
-                        GetGameIconsUseCase.GetGameIconsParams(
-                            coinBalance = _state.value.coinBalance,
-                        ),
-                ).mapBoth(
-                    success = {
-                        _state.emit(
-                            _state.value.copy(
-                                gameIcons = it,
-                            ),
-                        )
-                    },
-                    failure = { },
-                )
+            getGameIcons()
         }
+    }
+
+    private suspend fun getGameRules() {
+        gameRulesUseCase
+            .invoke(Unit)
+            .onSuccess {
+                _state.emit(
+                    _state.value.copy(
+                        gameRules = it,
+                    ),
+                )
+            }.onFailure { }
+    }
+
+    private suspend fun getGameIcons() {
+        gameIconsUseCase
+            .invoke(
+                parameter =
+                    GetGameIconsUseCase.GetGameIconsParams(
+                        coinBalance = _state.value.coinBalance,
+                    ),
+            ).onSuccess {
+                _state.emit(
+                    _state.value.copy(
+                        gameIcons = it,
+                    ),
+                )
+            }.onFailure { }
     }
 
     fun setClickedIcon(
@@ -128,4 +147,5 @@ data class GameState(
     val animateCoinBalance: Boolean = false,
     val isLoading: Boolean = false,
     val showResultSheet: Boolean = false,
+    val gameRules: List<AboutGameItem>,
 )
