@@ -37,6 +37,7 @@ import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
@@ -304,15 +305,37 @@ private fun GameIconStrip(
     var animateIcon by remember { mutableStateOf(false) }
     GameIconStripBackground(modifier) {
         gameIcons.forEachIndexed { index, icon ->
+            var loadLocal by remember { mutableStateOf(false) }
             val resourceId = icon.getResource()
-            if (resourceId > 0) {
-                Box(
+            LaunchedEffect(icon.imageUrl) {
+                if (icon.imageUrl.isEmpty() && !loadLocal) {
+                    loadLocal = true
+                }
+            }
+
+            Box(
+                modifier =
+                    Modifier
+                        .onGloballyPositioned { coordinates ->
+                            onIconPositioned(index, coordinates.positionInParent().x)
+                        },
+            ) {
+                AsyncGameIcon(
                     modifier =
-                        Modifier
-                            .onGloballyPositioned { coordinates ->
-                                onIconPositioned(index, coordinates.positionInParent().x)
-                            },
-                ) {
+                        Modifier.clickable {
+                            if (coinDelta == 0 && !isLoading) {
+                                animateIcon = true
+                                setAnimateBubbles(true)
+                                onIconClicked(icon)
+                            }
+                        },
+                    icon = icon.imageUrl,
+                    animate =
+                        if (clickedIcon?.id == icon.id) animateIcon else false,
+                    setAnimate = { shouldAnimate -> animateIcon = shouldAnimate },
+                    loadLocal = { loadLocal = true },
+                )
+                if (loadLocal && resourceId > 0) {
                     GameIcon(
                         modifier =
                             Modifier.clickable {
@@ -366,6 +389,44 @@ private fun GameIcon(
         painter = painterResource(id = icon),
         contentDescription = "image description",
         contentScale = ContentScale.FillBounds,
+    )
+}
+
+@Composable
+private fun AsyncGameIcon(
+    modifier: Modifier,
+    icon: String,
+    animate: Boolean = false,
+    setAnimate: (Boolean) -> Unit,
+    loadLocal: () -> Unit,
+) {
+    val rotation by animateFloatAsState(
+        targetValue = if (animate) ROTATION_DEGREE else 0f,
+        animationSpec = tween(durationMillis = ANIMATION_DURATION.toInt()),
+        label = "rotation",
+    )
+    val scale by animateFloatAsState(
+        targetValue = if (animate) SCALING_FACTOR else 1f,
+        animationSpec = tween(durationMillis = ANIMATION_DURATION.toInt()),
+        label = "scale",
+    )
+    LaunchedEffect(animate) {
+        delay(ANIMATION_DURATION)
+        setAnimate(false)
+    }
+    AsyncImage(
+        model = icon,
+        modifier =
+            modifier
+                .size(46.dp)
+                .graphicsLayer(
+                    rotationZ = rotation,
+                    scaleX = scale,
+                    scaleY = scale,
+                ),
+        contentDescription = "image description",
+        contentScale = ContentScale.FillBounds,
+        onError = { loadLocal() },
     )
 }
 
