@@ -42,6 +42,7 @@ final class DefaultAuthClient: NSObject, AuthClient {
 //    try KeychainHelper.deleteItem(for: Constants.keychainIdentity)
 //    try KeychainHelper.deleteItem(for: Constants.keychainRefreshToken)
 //    try KeychainHelper.deleteItem(for: Constants.keychainAccessToken)
+//    try KeychainHelper.deleteItem(for: Constants.keychainIDToken)
 //    UserDefaultsManager.shared.remove(.authRefreshTokenExpiryDateKey)
 //    UserDefaultsManager.shared.remove(.authIdentityExpiryDateKey)
     if loadIdentityFromKeychain() {
@@ -148,18 +149,21 @@ final class DefaultAuthClient: NSObject, AuthClient {
     if let accessTokenData = token.accessToken.data(using: .utf8) {
       try KeychainHelper.store(data: accessTokenData, for: Constants.keychainAccessToken)
     }
+    if let iDTokenData = token.idToken.data(using: .utf8) {
+      try KeychainHelper.store(data: iDTokenData, for: Constants.keychainIDToken)
+    }
     if let refreshTokenData = token.refreshToken.data(using: .utf8) {
       try KeychainHelper.store(data: refreshTokenData, for: Constants.keychainRefreshToken)
     }
     let expiresAt = Date().timeIntervalSince1970 + Double(token.expiresIn)
     UserDefaultsManager.shared.set(expiresAt, for: .authIdentityExpiryDateKey)
 
-    let refreshClaims = try decodeClaimsAccessToken(from: token.refreshToken)
+    let refreshClaims = try decodeTokenClaims(from: token.refreshToken)
     UserDefaultsManager.shared.set(refreshClaims.exp, for: .authRefreshTokenExpiryDateKey)
   }
 
   func processDelegatedIdentity(from token: TokenResponse, type: DelegateIdentityType) async throws {
-    let claims = try decodeClaimsAccessToken(from: token.accessToken)
+    let claims = try decodeTokenClaims(from: token.idToken)
     let wire = claims.delegatedIdentity
     let wireData = try JSONEncoder().encode(wire)
     identityData = wireData
@@ -211,6 +215,7 @@ final class DefaultAuthClient: NSObject, AuthClient {
   @MainActor func logout() async throws {
     try? KeychainHelper.deleteItem(for: Constants.keychainIdentity)
     try? KeychainHelper.deleteItem(for: Constants.keychainAccessToken)
+    try? KeychainHelper.deleteItem(for: Constants.keychainIDToken)
     try? KeychainHelper.deleteItem(for: Constants.keychainRefreshToken)
     UserDefaultsManager.shared.remove(.authIdentityExpiryDateKey)
     UserDefaultsManager.shared.remove(.authRefreshTokenExpiryDateKey)
