@@ -8,6 +8,7 @@ data class GameConfig(
 data class GameIcon(
     val id: String,
     val imageName: GameIconNames,
+    val imageUrl: String,
 )
 
 enum class GameIconNames {
