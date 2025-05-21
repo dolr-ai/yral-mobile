@@ -1,5 +1,6 @@
 package com.yral.shared.features.game.domain
 
+import com.yral.shared.core.AppConfigurations.FIREBASE_BUCKET
 import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.game.domain.models.GameIcon
@@ -17,21 +18,21 @@ class GetGameIconsUseCase(
         if (config.lossPenalty < parameter.coinBalance) {
             val storage = Firebase.storage(FIREBASE_BUCKET)
             val storageRef = storage.reference
-            return config.availableSmileys.map {
-                var temp = it.copy()
-                if (it.imageUrl.isNotEmpty()) {
-                    temp =
-                        temp.copy(
-                            imageUrl = storageRef.child(it.imageUrl).getDownloadUrl(),
-                        )
-                }
-                if (it.clickAnimation.isNotEmpty()) {
-                    temp =
-                        temp.copy(
-                            clickAnimation = storageRef.child(it.clickAnimation).getDownloadUrl(),
-                        )
-                }
-                temp
+            return config.availableSmileys.map { smiley ->
+                smiley.copy(
+                    imageUrl =
+                        if (smiley.imageUrl.isNotEmpty()) {
+                            storageRef.child(smiley.imageUrl).getDownloadUrl()
+                        } else {
+                            smiley.imageUrl
+                        },
+                    clickAnimation =
+                        if (smiley.clickAnimation.isNotEmpty()) {
+                            storageRef.child(smiley.clickAnimation).getDownloadUrl()
+                        } else {
+                            smiley.clickAnimation
+                        },
+                )
             }
         }
         return emptyList()
@@ -40,8 +41,4 @@ class GetGameIconsUseCase(
     data class GetGameIconsParams(
         val coinBalance: Long,
     )
-
-    companion object {
-        private const val FIREBASE_BUCKET = "gs://yral-staging.firebasestorage.app"
-    }
 }
