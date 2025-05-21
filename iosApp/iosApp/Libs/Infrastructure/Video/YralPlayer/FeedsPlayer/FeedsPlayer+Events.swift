@@ -17,9 +17,10 @@ extension FeedsPlayer {
       playbackMonitor = nil
     }
     if let videoID = feedResults[safe: currentIndex]?.videoID,
-       let monitor = videoLoadMonitors.removeValue(forKey: videoID) {
+       let monitor = videoLoadMonitors[videoID] {
       monitor.setMetadata(key: Constants.performanceResultKey, value: Constants.performanceSuccessKey)
       monitor.stop()
+      videoLoadMonitors.removeValue(forKey: videoID)
     }
   }
 

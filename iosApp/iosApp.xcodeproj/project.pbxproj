@@ -272,6 +272,8 @@
 		ACAA4D702DDCD529001092A6 /* NetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAA4D6E2DDCD522001092A6 /* NetworkMonitor.swift */; };
 		ACAA4D722DDCF866001092A6 /* FeedsPlayer+Events.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAA4D712DDCF85E001092A6 /* FeedsPlayer+Events.swift */; };
 		ACAA4D732DDCF866001092A6 /* FeedsPlayer+Events.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAA4D712DDCF85E001092A6 /* FeedsPlayer+Events.swift */; };
+		ACAA4DBB2DDE08D6001092A6 /* HLSDownloadManager+Mockers.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAA4DBA2DDE08CB001092A6 /* HLSDownloadManager+Mockers.swift */; };
+		ACAA4DBC2DDE08D6001092A6 /* HLSDownloadManager+Mockers.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAA4DBA2DDE08CB001092A6 /* HLSDownloadManager+Mockers.swift */; };
 		ACB09FC92D92CB6400EE3239 /* ProfileRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB09FC82D92CB6000EE3239 /* ProfileRouter.swift */; };
 		ACB09FCA2D92CB6400EE3239 /* ProfileRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB09FC82D92CB6000EE3239 /* ProfileRouter.swift */; };
 		ACB09FCE2D92D51200EE3239 /* LikeRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB09FCD2D92D50D00EE3239 /* LikeRepository.swift */; };
@@ -596,6 +598,7 @@
 		ACAA4D6B2DDCB24F001092A6 /* FirebasePerformanceMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebasePerformanceMonitor.swift; sourceTree = "<group>"; };
 		ACAA4D6E2DDCD522001092A6 /* NetworkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; };
 		ACAA4D712DDCF85E001092A6 /* FeedsPlayer+Events.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FeedsPlayer+Events.swift"; sourceTree = "<group>"; };
+		ACAA4DBA2DDE08CB001092A6 /* HLSDownloadManager+Mockers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HLSDownloadManager+Mockers.swift"; sourceTree = "<group>"; };
 		ACB09FC82D92CB6000EE3239 /* ProfileRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileRouter.swift; sourceTree = "<group>"; };
 		ACB09FCD2D92D50D00EE3239 /* LikeRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LikeRepository.swift; sourceTree = "<group>"; };
 		ACB09FD02D92D52700EE3239 /* LikeRepositoryProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LikeRepositoryProtocol.swift; sourceTree = "<group>"; };
@@ -1498,6 +1501,7 @@
 			children = (
 				103BBB022DACE1FE00C0BFD0 /* Interface */,
 				AC8472A92D1D9135004A4259 /* HLSDownloadManager.swift */,
+				ACAA4DBA2DDE08CB001092A6 /* HLSDownloadManager+Mockers.swift */,
 				AC9B77D52D58C2F300270FC9 /* HLSDownloadManagerTests.swift */,
 			);
 			path = HLSDownloadManager;
@@ -2403,6 +2407,7 @@
 				AC32E45B2D296731001DDA43 /* AccountRepositoryProtocol.swift in Sources */,
 				AC811B402DBA56F70094C5F6 /* SignupOverlay.swift in Sources */,
 				AC7F7ECA2D786F8E00215162 /* UploadVideoUseCase.swift in Sources */,
+				ACAA4DBC2DDE08D6001092A6 /* HLSDownloadManager+Mockers.swift in Sources */,
 				ACB09FDA2D92D6E900EE3239 /* MoreFeedsRequest.swift in Sources */,
 				ACDD23E42D8B19FF00AB0DAF /* MyVideosUseCase.swift in Sources */,
 				ACF63A742DC26C9500C4BCCC /* TokenClaimsDTO.swift in Sources */,
@@ -2591,6 +2596,7 @@
 				AC32E45C2D296731001DDA43 /* AccountRepositoryProtocol.swift in Sources */,
 				AC811B412DBA56F70094C5F6 /* SignupOverlay.swift in Sources */,
 				AC7F7ECB2D786F8E00215162 /* UploadVideoUseCase.swift in Sources */,
+				ACAA4DBB2DDE08D6001092A6 /* HLSDownloadManager+Mockers.swift in Sources */,
 				ACB09FDB2D92D6E900EE3239 /* MoreFeedsRequest.swift in Sources */,
 				ACDD23E52D8B19FF00AB0DAF /* MyVideosUseCase.swift in Sources */,
 				ACF63A752DC26C9500C4BCCC /* TokenClaimsDTO.swift in Sources */,

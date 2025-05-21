@@ -20,6 +20,7 @@ actor HLSDownloadManager: NSObject, HLSDownloadManaging {
 
   private let networkMonitor: NetworkMonitorProtocol
   private let fileManager: FileManager
+  private let crashReporter: CrashReporter
 
   private var _downloadSession: AVAssetDownloadURLSessionProtocol!
   private var downloadSession: AVAssetDownloadURLSessionProtocol {
@@ -41,10 +42,14 @@ actor HLSDownloadManager: NSObject, HLSDownloadManaging {
     return (userDefaults.dictionary(forKey: Self.bookmarksKey) as? [String: Data]) ?? [:]
   }()
 
-  init(networkMonitor: NetworkMonitorProtocol,
-       fileManager: FileManager) {
+  init(
+    networkMonitor: NetworkMonitorProtocol,
+    fileManager: FileManager,
+    crashReporter: CrashReporter
+  ) {
     self.networkMonitor = networkMonitor
     self.fileManager = fileManager
+    self.crashReporter = crashReporter
     super.init()
 
     let config = URLSessionConfiguration.background(withIdentifier: UUID().uuidString)
@@ -58,15 +63,22 @@ actor HLSDownloadManager: NSObject, HLSDownloadManaging {
   }
 
   override init() {
-    self.init(networkMonitor: DefaultNetworkMonitor(), fileManager: .default)
+    self.init(
+      networkMonitor: DefaultNetworkMonitor(),
+      fileManager: .default,
+      crashReporter: FirebaseCrashlyticsReporter()
+    )
   }
 
   init(downloadSession: AVAssetDownloadURLSessionProtocol,
        networkMonitor: NetworkMonitorProtocol,
-       fileManager: FileManager) {
+       fileManager: FileManager,
+       crashReporter: CrashReporter
+  ) {
     self._downloadSession = downloadSession
     self.networkMonitor = networkMonitor
     self.fileManager = fileManager
+    self.crashReporter = crashReporter
     super.init()
     self.networkMonitor.startMonitoring()
   }
@@ -129,9 +141,11 @@ actor HLSDownloadManager: NSObject, HLSDownloadManaging {
       if let continuation = downloadContinuations.removeValue(forKey: hlsURL) {
         continuation.resume(throwing: CancellationError())
       }
-      if let monitor = downloadMonitors.removeValue(forKey: hlsURL) {
-        monitor.setMetadata(key: Constants.performanceResultKey, value: Constants.performanceCancelKey)
+      if let monitor = downloadMonitors[hlsURL] {
+        monitor.setMetadata(key: Constants.performanceResultKey,
+                            value: Constants.performanceCancelKey)
         monitor.stop()
+        downloadMonitors.removeValue(forKey: hlsURL)
       }
       print("Canceled ongoing download for \(hlsURL.absoluteString)")
     }
@@ -157,6 +171,7 @@ actor HLSDownloadManager: NSObject, HLSDownloadManaging {
           print("Removed asset from disk: \(url)")
         }
       } catch {
+        self.crashReporter.recordException(error)
         print("Failed to remove asset: \(error)")
       }
     }
@@ -206,17 +221,19 @@ actor HLSDownloadManager: NSObject, HLSDownloadManaging {
     if let continuation = self.downloadContinuations.removeValue(forKey: feedURL) {
       continuation.resume(returning: location)
     }
-    if let monitor = downloadMonitors.removeValue(forKey: feedURL) {
+    if let monitor = downloadMonitors[feedURL] {
       monitor.setMetadata(key: Constants.performanceResultKey, value: Constants.performanceSuccessKey)
       monitor.stop()
+      downloadMonitors.removeValue(forKey: feedURL)
     }
     print("Finished writing to location: \(location)")
   }
 
   fileprivate func handleDownloadError(_ url: URL, error: Error?) {
-    if let monitor = self.downloadMonitors.removeValue(forKey: url) {
+    if let monitor = self.downloadMonitors[url] {
       monitor.setMetadata(key: Constants.performanceResultKey, value: Constants.performanceErrorKey)
       monitor.stop()
+      self.downloadMonitors.removeValue(forKey: url)
     }
 
     if let continuation = downloadContinuations.removeValue(forKey: url) {
@@ -282,6 +299,7 @@ extension HLSDownloadManager {
       userDefaults.set(storedBookmarks, forKey: Self.bookmarksKey)
       userDefaults.synchronize()
     } catch {
+      crashReporter.recordException(error)
       print("Failed to create bookmark for \(assetTitle): \(error)")
     }
   }
@@ -303,6 +321,7 @@ extension HLSDownloadManager {
       }
       return resolvedURL
     } catch {
+      crashReporter.recordException(error)
       print("Failed to resolve bookmark for \(assetTitle): \(error)")
       return nil
     }
@@ -318,6 +337,7 @@ extension HLSDownloadManager {
           print("Removed leftover HLS file: \(url.lastPathComponent)")
         }
       } catch {
+        crashReporter.recordException(error)
         print("Error removing leftover asset for \(assetTitle): \(error)")
       }
       storedBookmarks.removeValue(forKey: assetTitle)
@@ -338,53 +358,5 @@ extension HLSDownloadManager {
     static let performanceErrorKey = "error"
     static let performanceSuccessKey = "success"
     static let performanceCancelKey = "cancelled"
-  }
-}
-
-protocol HLSDownloadManagerProtocol: AnyObject {
-  func clearedCache(for assetTitle: String)
-}
-
-protocol AVAssetDownloadTaskProtocol: AnyObject {
-  func resume()
-  func cancel()
-  var underlyingTask: AVAssetDownloadTask? { get }
-}
-
-protocol AVAssetDownloadURLSessionProtocol: AnyObject {
-  func makeAssetDownloadTask(downloadConfiguration: AVAssetDownloadConfiguration) -> AVAssetDownloadTaskProtocol?
-}
-
-final class DefaultAssetDownloadTask: AVAssetDownloadTaskProtocol {
-  private let realTask: AVAssetDownloadTask
-
-  init(realTask: AVAssetDownloadTask) {
-    self.realTask = realTask
-  }
-
-  func resume() {
-    realTask.resume()
-  }
-
-  func cancel() {
-    realTask.cancel()
-  }
-
-  var underlyingTask: AVAssetDownloadTask? {
-    realTask
-  }
-}
-
-final class DefaultAssetDownloadURLSession: AVAssetDownloadURLSessionProtocol {
-  private let session: AVAssetDownloadURLSession
-
-  init(session: AVAssetDownloadURLSession) {
-    self.session = session
-  }
-
-  func makeAssetDownloadTask(downloadConfiguration: AVAssetDownloadConfiguration) -> AVAssetDownloadTaskProtocol? {
-    let avTask = session.makeAssetDownloadTask(downloadConfiguration: downloadConfiguration)
-    avTask.priority = URLSessionTask.lowPriority
-    return DefaultAssetDownloadTask(realTask: avTask)
   }
 }

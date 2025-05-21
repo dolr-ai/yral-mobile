@@ -20,15 +20,17 @@ class FeedsViewController: UIViewController {
   var initalFeedscancellables: Set<AnyCancellable> = []
   var paginatedFeedscancellables: Set<AnyCancellable> = []
 
-  lazy var feedsPlayer: YralPlayer = {
+  lazy var feedsPlayer: YralPlayer = { [unowned self] in
     let monitor = DefaultNetworkMonitor()
     let downloadManager = HLSDownloadManager(
       networkMonitor: monitor,
-      fileManager: .default
+      fileManager: .default,
+      crashReporter: self.crashReporter
     )
     let player = FeedsPlayer(
       hlsDownloadManager: downloadManager,
-      networkMonitor: monitor
+      networkMonitor: monitor,
+      crashReporter: self.crashReporter
     )
     player.delegate = self
     return player
@@ -59,15 +61,18 @@ class FeedsViewController: UIViewController {
   var pageEndReached: Bool = false
   var onBackButtonTap: (() -> Void)?
   var session: SessionManager
+  let crashReporter: CrashReporter
 
   init(
     viewModel: any FeedViewModelProtocol,
     feedType: FeedType = .otherUsers,
-    session: SessionManager
+    session: SessionManager,
+    crashReporter: CrashReporter
   ) {
     self.viewModel = viewModel
     self.feedType = feedType
     self.session = session
+    self.crashReporter = crashReporter
     super.init(nibName: nil, bundle: nil)
   }
 

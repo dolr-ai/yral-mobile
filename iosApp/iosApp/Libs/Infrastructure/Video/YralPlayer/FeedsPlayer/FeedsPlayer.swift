@@ -28,6 +28,7 @@ final class FeedsPlayer: YralPlayer {
   var onPlayerItemsChanged: ((String?, Int) -> Void)?
   weak var delegate: FeedsPlayerProtocol?
   private let networkMonitor: NetworkMonitorProtocol
+  private let crashReporter: CrashReporter
 
   private var preloadRadius: Int {
     networkMonitor.isGoodForPrefetch ? Constants.radius : .two
@@ -49,11 +50,13 @@ final class FeedsPlayer: YralPlayer {
   init(
     player: YralQueuePlayer = AVQueuePlayer(),
     hlsDownloadManager: HLSDownloadManaging,
-    networkMonitor: NetworkMonitorProtocol
+    networkMonitor: NetworkMonitorProtocol,
+    crashReporter: CrashReporter
   ) {
     self.player = player
     self.hlsDownloadManager = hlsDownloadManager
     self.networkMonitor = networkMonitor
+    self.crashReporter = crashReporter
     NotificationCenter.default.addObserver(
       self,
       selector: #selector(handleEULAAccepted(_:)),
@@ -85,6 +88,7 @@ final class FeedsPlayer: YralPlayer {
       try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
       try AVAudioSession.sharedInstance().setActive(true)
     } catch {
+      crashReporter.recordException(error)
       print("Failed to configure AVAudioSession: \(error)")
     }
   }
@@ -163,6 +167,7 @@ final class FeedsPlayer: YralPlayer {
         startLooping(with: item)
       }
     } catch {
+      crashReporter.recordException(error)
       print("Error loading current video at index \(currentIndex): \(error)")
     }
   }
@@ -196,6 +201,7 @@ final class FeedsPlayer: YralPlayer {
           userInfo: ["index": currentIndex]
         )
       } catch {
+        crashReporter.recordException(error)
         print("Item failed to become ready: \(error)")
       }
     }
@@ -259,6 +265,7 @@ final class FeedsPlayer: YralPlayer {
     } catch is CancellationError {
       print("Preload canceled for index \(index).")
     } catch {
+      crashReporter.recordException(error)
       print("Preload failed for index \(index): \(error)")
     }
 
@@ -303,6 +310,7 @@ final class FeedsPlayer: YralPlayer {
         startupMonitor.setMetadata(key: Constants.performanceResultKey, value: Constants.performanceErrorKey)
         startupMonitor.stop()
         videoLoadMonitors.removeValue(forKey: videoID)
+        crashReporter.recordException(error)
         print("Local asset not playable (fallback to remote). Error: \(error)")
         throw error
       }
@@ -318,6 +326,7 @@ final class FeedsPlayer: YralPlayer {
       startupMonitor.setMetadata(key: Constants.performanceResultKey, value: Constants.performanceErrorKey)
       startupMonitor.stop()
       videoLoadMonitors.removeValue(forKey: videoID)
+      crashReporter.recordException(error)
       throw error
     }
   }
