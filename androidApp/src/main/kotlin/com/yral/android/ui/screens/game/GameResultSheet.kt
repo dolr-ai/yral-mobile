@@ -32,7 +32,7 @@ import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.widgets.YralBottomSheet
 import com.yral.android.ui.widgets.YralButton
 import com.yral.android.ui.widgets.YralGradientButton
-import com.yral.shared.features.game.domain.GameIcon
+import com.yral.shared.features.game.domain.models.GameIcon
 import kotlin.math.abs
 
 @OptIn(ExperimentalMaterial3Api::class)
