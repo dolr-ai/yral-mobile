@@ -6,6 +6,8 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class TokenResponseDto(
+    @SerialName("id_token")
+    val idToken: String,
     @SerialName("access_token")
     val accessToken: String,
     @SerialName("expires_in")
@@ -18,6 +20,7 @@ data class TokenResponseDto(
 
 fun TokenResponseDto.toTokenResponse(): TokenResponse =
     TokenResponse(
+        idToken = idToken,
         accessToken = accessToken,
         expiresIn = expiresIn,
         refreshToken = refreshToken,
