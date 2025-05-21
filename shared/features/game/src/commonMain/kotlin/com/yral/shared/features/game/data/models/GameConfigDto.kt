@@ -21,6 +21,8 @@ data class GameIconDto(
     val imageName: String,
     @SerialName("image_url")
     val imageUrl: String,
+    @SerialName("click_animation")
+    val clickAnimation: String,
     @SerialName("is_active")
     val isActive: Boolean,
 )
@@ -42,4 +44,5 @@ fun GameIconDto.toGameIcon(): GameIcon =
                 imageName.uppercase(),
             ),
         imageUrl = imageUrl,
+        clickAnimation = clickAnimation,
     )

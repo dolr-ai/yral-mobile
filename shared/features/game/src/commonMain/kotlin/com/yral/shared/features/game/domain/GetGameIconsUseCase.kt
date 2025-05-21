@@ -18,13 +18,20 @@ class GetGameIconsUseCase(
             val storage = Firebase.storage(FIREBASE_BUCKET)
             val storageRef = storage.reference
             return config.availableSmileys.map {
+                var temp = it.copy()
                 if (it.imageUrl.isNotEmpty()) {
-                    it.copy(
-                        imageUrl = storageRef.child(it.imageUrl).getDownloadUrl(),
-                    )
-                } else {
-                    it
+                    temp =
+                        temp.copy(
+                            imageUrl = storageRef.child(it.imageUrl).getDownloadUrl(),
+                        )
                 }
+                if (it.clickAnimation.isNotEmpty()) {
+                    temp =
+                        temp.copy(
+                            clickAnimation = storageRef.child(it.clickAnimation).getDownloadUrl(),
+                        )
+                }
+                temp
             }
         }
         return emptyList()

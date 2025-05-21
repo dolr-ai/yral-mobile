@@ -9,6 +9,7 @@ data class GameIcon(
     val id: String,
     val imageName: GameIconNames,
     val imageUrl: String,
+    val clickAnimation: String,
 )
 
 enum class GameIconNames {

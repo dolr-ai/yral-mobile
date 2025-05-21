@@ -129,9 +129,16 @@ private fun GameIconBubbles(
 //            }
             val animationRes = it.getBubbleResource()
             val animationComposition by rememberLottieComposition(
-                LottieCompositionSpec.RawRes(
-                    animationRes,
-                ),
+                spec =
+                    if (it.clickAnimation.isNotEmpty()) {
+                        LottieCompositionSpec.Url(
+                            it.clickAnimation,
+                        )
+                    } else {
+                        LottieCompositionSpec.RawRes(
+                            animationRes,
+                        )
+                    },
             )
             val animationProgress by animateLottieCompositionAsState(
                 composition = animationComposition,
