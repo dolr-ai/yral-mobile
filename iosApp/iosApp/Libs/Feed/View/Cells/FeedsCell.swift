@@ -249,7 +249,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     playerLayer?.player = nil
     playerLayer = nil
     let layer = AVPlayerLayer(player: player)
-    layer.isHidden = true
+    layer.isHidden = player.currentItem?.status != .readyToPlay
     layer.videoGravity = .resize
     playerContainerView.layer.addSublayer(layer)
     playerLayer = layer
