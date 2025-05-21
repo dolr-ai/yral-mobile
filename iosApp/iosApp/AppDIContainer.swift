@@ -62,21 +62,6 @@ import GRPC
     )
   }()
 
-  lazy var castVoteRepository: CastVoteRepositoryProtocol = {
-    CastVoteRepository(
-      firebaseService: FirebaseService(),
-      httpService: HTTPService(baseURLString: appConfiguration.firebaseBaseURLString),
-      authClient: authClient
-    )
-  }()
-
-  lazy var castVoteUseCase: CastVoteUseCaseProtocol = {
-    CastVoteUseCase(
-      castVoteRepository: castVoteRepository,
-      crashReporter: crashReporter
-    )
-  }()
-
   lazy var socialSignInUseCase: SocialSignInUseCaseProtocol = {
     SocialSignInUseCase(
       accountRepository: accountsRepository,
@@ -94,7 +79,14 @@ import GRPC
         crashReporter: crashReporter,
         socialSignInUseCase: socialSignInUseCase,
         session: session,
-        castVoteUseCase: castVoteUseCase
+        castVoteUseCase: CastVoteUseCase(
+          castVoteRepository: CastVoteRepository(
+            firebaseService: FirebaseService(),
+            httpService: HTTPService(baseURLString: appConfiguration.firebaseBaseURLString),
+            authClient: authClient
+          ),
+          crashReporter: crashReporter
+        )
       )
     )
   }
