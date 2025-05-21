@@ -3,8 +3,8 @@ package com.yral.shared.features.game.viewmodel
 import androidx.lifecycle.ViewModel
 import com.github.michaelbull.result.mapBoth
 import com.yral.shared.core.dispatchers.AppDispatchers
-import com.yral.shared.features.game.domain.GameIcon
 import com.yral.shared.features.game.domain.GetGameIconsUseCase
+import com.yral.shared.features.game.domain.models.GameIcon
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,15 +20,21 @@ class GameViewModel(
         MutableStateFlow(
             GameState(
                 gameIcons = emptyList(),
+                coinBalance = 2000,
             ),
         )
     val state: StateFlow<GameState> = _state.asStateFlow()
 
     init {
         coroutineScope.launch {
+            // First get coin balance
             gameIconsUseCase
-                .invoke(Unit)
-                .mapBoth(
+                .invoke(
+                    parameter =
+                        GetGameIconsUseCase.GetGameIconsParams(
+                            coinBalance = _state.value.coinBalance,
+                        ),
+                ).mapBoth(
                     success = {
                         _state.emit(
                             _state.value.copy(
@@ -77,7 +83,7 @@ class GameViewModel(
                     gameResult = temp,
                     coinBalance = _state.value.coinBalance.plus(coinDelta),
                     animateCoinBalance = true,
-                    showResultSheet = true,
+                    // showResultSheet = true,
                     isLoading = false,
                 ),
             )
@@ -118,7 +124,7 @@ class GameViewModel(
 data class GameState(
     val gameIcons: List<GameIcon>,
     val gameResult: Map<String, Pair<GameIcon, Int>> = emptyMap(),
-    val coinBalance: Long = 2000,
+    val coinBalance: Long,
     val animateCoinBalance: Boolean = false,
     val isLoading: Boolean = false,
     val showResultSheet: Boolean = false,
