@@ -25,4 +25,6 @@ protocol FirebaseServiceProtocol {
     orderBy fields: [String]?,
     decodeAs type: T.Type
   ) async throws -> [T]
+
+  func documentExists(for path: String) async throws -> Bool
 }

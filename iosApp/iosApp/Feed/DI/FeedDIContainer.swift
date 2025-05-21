@@ -12,6 +12,7 @@ final class FeedDIContainer {
   struct Dependencies {
     let mlfeedService: MlFeed_MLFeedNIOClient
     let httpService: HTTPService
+    let firebaseService: FirebaseServiceProtocol
     let authClient: AuthClient
     let crashReporter: CrashReporter
     let socialSignInUseCase: SocialSignInUseCaseProtocol
@@ -45,6 +46,7 @@ final class FeedDIContainer {
   func makeFeedsViewModel() -> FeedsViewModel {
     let repository = FeedsRepository(
       httpService: dependencies.httpService,
+      firebaseService: dependencies.firebaseService,
       mlClient: dependencies.mlfeedService,
       authClient: dependencies.authClient
     )

@@ -89,6 +89,7 @@ import GRPC
       dependencies: FeedDIContainer.Dependencies(
         mlfeedService: mlFeedClient,
         httpService: HTTPService(baseURLString: appConfiguration.offchainBaseURLString),
+        firebaseService: FirebaseService(),
         authClient: authClient,
         crashReporter: crashReporter,
         socialSignInUseCase: socialSignInUseCase,
