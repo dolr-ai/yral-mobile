@@ -14,7 +14,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.yral.android.ui.components.SignupView
 import com.yral.android.ui.screens.home.account.LoginBottomSheetConstants.BOTTOM_SHEET_SPACER_PERCENT_TO_SCREEN
-import com.yral.android.ui.screens.home.account.LoginBottomSheetConstants.MIN_BOTTOM_SHEET_SPACER_HEIGHT
 import com.yral.android.ui.widgets.YralBottomSheet
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -32,9 +31,7 @@ internal fun LoginBottomSheet(
     ) {
         BoxWithConstraints {
             val maxHeight = maxHeight
-            val adaptiveHeight =
-                (maxHeight * BOTTOM_SHEET_SPACER_PERCENT_TO_SCREEN)
-                    .coerceAtLeast(MIN_BOTTOM_SHEET_SPACER_HEIGHT.dp)
+            val adaptiveHeight = (maxHeight * BOTTOM_SHEET_SPACER_PERCENT_TO_SCREEN)
             Column(
                 modifier =
                     Modifier
@@ -60,5 +57,4 @@ internal fun LoginBottomSheet(
 
 private object LoginBottomSheetConstants {
     const val BOTTOM_SHEET_SPACER_PERCENT_TO_SCREEN = 0.3f
-    const val MIN_BOTTOM_SHEET_SPACER_HEIGHT = 300f
 }

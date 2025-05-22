@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -150,7 +151,7 @@ private fun SheetContent(
                 val context = LocalContext.current
                 val intent = Intent(Intent.ACTION_VIEW, linkToOpen.first.toUri())
                 context.startActivity(intent)
-                onDismissRequest
+                onDismissRequest()
             } else {
                 WebViewBottomSheet(
                     link = linkToOpen.first,
@@ -281,13 +282,14 @@ private fun AccountDetail(
 
 @Composable
 private fun Divider() {
-    Row(
+    HorizontalDivider(
         modifier =
             Modifier
                 .fillMaxWidth()
                 .height(1.dp)
-                .background(color = YralColors.Divider),
-    ) {}
+                .padding(horizontal = 16.dp),
+        color = YralColors.Divider,
+    )
 }
 
 @Composable
@@ -406,12 +408,11 @@ private fun SocialMediaHelpLinkItem(
         Image(
             modifier =
                 Modifier
-                    .padding(0.dp)
                     .width(45.dp)
                     .height(45.dp)
                     .clickable { onLinkClicked(item.link, item.openInExternalBrowser) },
             painter = painterResource(id = it),
-            contentDescription = "image description",
+            contentDescription = "social account icon",
             contentScale = ContentScale.None,
         )
     }
