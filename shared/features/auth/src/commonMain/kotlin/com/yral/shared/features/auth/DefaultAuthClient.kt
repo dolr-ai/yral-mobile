@@ -20,6 +20,7 @@ import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import com.yral.shared.uniffi.generated.authenticateWithNetwork
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 
@@ -33,7 +34,7 @@ class DefaultAuthClient(
     appDispatchers: AppDispatchers,
 ) : AuthClient {
     private var currentState: String? = null
-    private val scope = CoroutineScope(appDispatchers.io)
+    private val scope = CoroutineScope(SupervisorJob() + appDispatchers.io)
 
     override suspend fun initialize() {
         refreshAuthIfNeeded()
