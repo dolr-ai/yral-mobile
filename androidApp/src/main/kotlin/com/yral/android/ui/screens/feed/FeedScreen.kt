@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -59,7 +58,7 @@ import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.feed.FeedScreenConstants.MAX_LINES_FOR_POST_DESCRIPTION
 import com.yral.android.ui.screens.feed.FeedScreenConstants.VIDEO_REPORT_SHEET_MAX_HEIGHT
-import com.yral.android.ui.screens.feed.FeedScreenConstants.MAX_LINES_FOR_POST_DESCRIPTION
+import com.yral.android.ui.screens.game.AboutGameSheet
 import com.yral.android.ui.screens.game.CoinBalance
 import com.yral.android.ui.screens.game.GameIconsRow
 import com.yral.android.ui.screens.game.GameResultSheet
@@ -223,7 +222,17 @@ fun FeedScreen(
             onDismissRequest = {
                 gameViewModel.toggleResultSheet(false)
             },
-            openAboutGame = { },
+            openAboutGame = {
+                gameViewModel.toggleAboutGame(true)
+            },
+        )
+    }
+    if (gameState.showAboutGame && state.currentPageOfFeed < state.feedDetails.size) {
+        AboutGameSheet(
+            gameRules = gameState.gameRules,
+            onDismissRequest = {
+                gameViewModel.toggleAboutGame(false)
+            },
         )
     }
 }
@@ -381,7 +390,7 @@ private fun UserBriefProfileImage(profileImageUrl: Url?) {
                 ).width(40.dp)
                 .height(40.dp)
                 .background(
-                    color = YralColors.profilePicBackground,
+                    color = YralColors.ProfilePicBackground,
                     shape = shape,
                 ),
     )

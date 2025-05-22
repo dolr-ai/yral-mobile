@@ -122,7 +122,7 @@ class GameViewModel(
                     gameResult = temp,
                     coinBalance = _state.value.coinBalance.plus(coinDelta),
                     animateCoinBalance = true,
-                    // showResultSheet = true,
+                    showResultSheet = true,
                     isLoading = false,
                 ),
             )
@@ -158,6 +158,16 @@ class GameViewModel(
             )
         }
     }
+
+    fun toggleAboutGame(isVisible: Boolean) {
+        coroutineScope.launch {
+            _state.emit(
+                _state.value.copy(
+                    showAboutGame = isVisible,
+                ),
+            )
+        }
+    }
 }
 
 data class GameState(
@@ -167,5 +177,6 @@ data class GameState(
     val animateCoinBalance: Boolean = false,
     val isLoading: Boolean = false,
     val showResultSheet: Boolean = false,
+    val showAboutGame: Boolean = false,
     val gameRules: List<AboutGameItem>,
 )

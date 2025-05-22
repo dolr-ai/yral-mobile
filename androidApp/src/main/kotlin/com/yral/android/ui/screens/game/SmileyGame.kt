@@ -45,7 +45,7 @@ import com.airbnb.lottie.compose.rememberLottieComposition
 import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
-import com.yral.android.ui.design.YralColors.smileyGameCardBackground
+import com.yral.android.ui.design.YralColors.SmileyGameCardBackground
 import com.yral.android.ui.screens.game.IconAnimationConstant.ANIMATION_DURATION
 import com.yral.android.ui.screens.game.IconAnimationConstant.RESULT_ANIMATION_DURATION
 import com.yral.android.ui.screens.game.IconAnimationConstant.ROTATION_DEGREE
@@ -456,7 +456,7 @@ private fun GameIconStripBackground(
                 Modifier
                     .fillMaxWidth()
                     .background(
-                        color = smileyGameCardBackground,
+                        color = SmileyGameCardBackground,
                         shape = RoundedCornerShape(size = 49.dp),
                     ).padding(
                         horizontal = 12.dp,
