@@ -26,4 +26,10 @@
     <string name="submit">Submit</string>
     <string name="please_provide_more_details">Please provide more details.</string>
     <string name="add_details">Add details</string>
+    <string name="delete_account">Delete Account</string>
+    <string name="delete_your_account">Delete your account</string>
+    <string name="delete_account_disclaimer">This action will not be reverted. All your data will be removed from our platform.</string>
+    <string name="delete_account_question">Are you sure you want to delete your account?</string>
+    <string name="no_take_me_back">No, take me back</string>
+    <string name="yes_delete">Yes, Delete</string>
 </resources>

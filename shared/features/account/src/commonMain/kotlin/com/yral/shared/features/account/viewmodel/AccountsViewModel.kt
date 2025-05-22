@@ -23,8 +23,7 @@ class AccountsViewModel(
     private val preferences: Preferences,
     private val authClient: AuthClient,
     private val crashlyticsManager: CrashlyticsManager,
-) : ViewModel(),
-    OAuthListener {
+) : ViewModel() {
     private val coroutineScope = CoroutineScope(appDispatchers.io)
     private val _state =
         MutableStateFlow(
@@ -52,6 +51,7 @@ class AccountsViewModel(
                 _state.value.copy(
                     accountInfo = getAccountInfo(),
                     isSocialSignInSuccessful = isSocialSignInSuccessful(),
+                    bottomSheetType = AccountBottomSheet.None,
                 ),
             )
         }
@@ -78,30 +78,31 @@ class AccountsViewModel(
     }
 
     fun signInWithGoogle() {
-        val oAuthListener = this
         coroutineScope
             .launch {
                 try {
                     authClient.signInWithSocial(
                         provider = SocialProvider.GOOGLE,
-                        oAuthListener = oAuthListener,
+                        oAuthListener =
+                            object : OAuthListener {
+                                override fun setLoading(loading: Boolean) {
+                                    showLoading(loading)
+                                }
+
+                                override fun exception(e: YralException) {
+                                    showLoading(false)
+                                    setBottomSheetType(type = AccountBottomSheet.SignUpFailed)
+                                }
+                            },
                     )
                 } catch (
                     @Suppress("TooGenericExceptionCaught") e: Exception,
                 ) {
                     crashlyticsManager.recordException(e)
-                    setShowSignupFailedBottomSheet(true)
+                    showLoading(false)
+                    setBottomSheetType(type = AccountBottomSheet.SignUpFailed)
                 }
             }
-    }
-
-    override fun setLoading(loading: Boolean) {
-        showLoading(loading)
-    }
-
-    override fun exception(e: YralException) {
-        showLoading(false)
-        setShowSignupFailedBottomSheet(true)
     }
 
     private suspend fun isSocialSignInSuccessful(): Boolean =
@@ -118,23 +119,118 @@ class AccountsViewModel(
         }
     }
 
-    fun setShowSignupFailedBottomSheet(show: Boolean) {
+    fun setBottomSheetType(type: AccountBottomSheet) {
         coroutineScope.launch {
             _state.emit(
                 _state.value.copy(
-                    showSignupFailedBottomSheet = show,
+                    bottomSheetType = type,
                 ),
             )
         }
     }
+
+    fun getHelperLinks(): List<AccountHelpLink> {
+        val links =
+            mutableListOf(
+                AccountHelpLink(
+                    link = TALK_TO_TEAM_URL,
+                    openInExternalBrowser = false,
+                ),
+                AccountHelpLink(
+                    link = TERMS_OF_SERVICE_URL,
+                    openInExternalBrowser = false,
+                ),
+                AccountHelpLink(
+                    link = PRIVACY_POLICY_URL,
+                    openInExternalBrowser = false,
+                ),
+            )
+        if (_state.value.isSocialSignInSuccessful) {
+            links.add(
+                AccountHelpLink(
+                    link = LOGOUT_URI,
+                    openInExternalBrowser = true,
+                ),
+            )
+            links.add(
+                AccountHelpLink(
+                    link = DELETE_ACCOUNT_URI,
+                    openInExternalBrowser = true,
+                ),
+            )
+        }
+        return links
+    }
+
+    fun getSocialLinks(): List<AccountHelpLink> {
+        val links =
+            listOf(
+                AccountHelpLink(
+                    link = TELEGRAM_LINK,
+                    openInExternalBrowser = true,
+                ),
+                AccountHelpLink(
+                    link = DISCORD_LINK,
+                    openInExternalBrowser = true,
+                ),
+                AccountHelpLink(
+                    link = TWITTER_LINK,
+                    openInExternalBrowser = true,
+                ),
+            )
+        return links
+    }
+
+    fun handleHelpLink(
+        link: String,
+        shouldOpenOutside: Boolean,
+    ) {
+        when (link) {
+            LOGOUT_URI -> logout()
+            DELETE_ACCOUNT_URI -> setBottomSheetType(AccountBottomSheet.DeleteAccount)
+            else ->
+                setBottomSheetType(
+                    AccountBottomSheet.ShowWebView(
+                        linkToOpen = Pair(link, shouldOpenOutside),
+                    ),
+                )
+        }
+    }
+
+    companion object {
+        const val LOGOUT_URI = "yral://logout"
+        const val DELETE_ACCOUNT_URI = "yral://deleteAccount"
+        const val TALK_TO_TEAM_URL = "https://t.me/+c-LTX0Cp-ENmMzI1"
+        const val TERMS_OF_SERVICE_URL = "https://yral.com/terms-ios"
+        const val PRIVACY_POLICY_URL = "https://yral.com/privacy-policy"
+        const val TELEGRAM_LINK = "https://t.me/+c-LTX0Cp-ENmMzI1"
+        const val DISCORD_LINK = "https://discord.com/invite/GZ9QemnZuj"
+        const val TWITTER_LINK = "https://twitter.com/Yral_app"
+    }
 }
+
+data class AccountHelpLink(
+    val link: String,
+    val openInExternalBrowser: Boolean,
+)
 
 data class AccountsState(
     val accountInfo: AccountInfo?,
     val isSocialSignInSuccessful: Boolean,
     val isLoading: Boolean = false,
-    val showSignupFailedBottomSheet: Boolean = false,
+    val bottomSheetType: AccountBottomSheet = AccountBottomSheet.None,
 )
+
+sealed interface AccountBottomSheet {
+    data object None : AccountBottomSheet
+    data class ShowWebView(
+        val linkToOpen: Pair<String, Boolean>,
+    ) : AccountBottomSheet
+
+    data object SignUpFailed : AccountBottomSheet
+    data object SignUp : AccountBottomSheet
+    data object DeleteAccount : AccountBottomSheet
+}
 
 data class AccountInfo(
     val userPrincipal: String,
