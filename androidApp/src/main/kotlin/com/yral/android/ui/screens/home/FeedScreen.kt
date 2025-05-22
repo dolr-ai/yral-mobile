@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -138,44 +139,48 @@ fun FeedScreen(
 
     Column(modifier = modifier) {
         if (state.feedDetails.isNotEmpty()) {
-            Box(
-                modifier = Modifier.weight(1f),
-                contentAlignment = Alignment.TopStart,
-            ) {
-                YRALReelPlayer(
-                    videoUrlArray =
-                        state
-                            .feedDetails
-                            .map {
-                                Pair(
-                                    it.url.toString(),
-                                    it.thumbnail.toString(),
-                                )
-                            }.toList(),
-                    initialPage = state.currentPageOfFeed,
-                    onPageLoaded = { page ->
-                        viewModel.onCurrentPageChange(page)
-                        viewModel.setPostDescriptionExpanded(false)
-                    },
-                    recordTime = { currentTime, totalTime ->
-                        viewModel.recordTime(currentTime, totalTime)
-                    },
-                    didVideoEnd = { viewModel.didCurrentVideoEnd() },
-                )
-                UserBrief(
-                    principalId = state.feedDetails[state.currentPageOfFeed].principalID,
-                    profileImageUrl = state.feedDetails[state.currentPageOfFeed].profileImageURL,
-                    postDescription = state.feedDetails[state.currentPageOfFeed].postDescription,
-                    isPostDescriptionExpanded = state.isPostDescriptionExpanded,
-                    setPostDescriptionExpanded = { viewModel.setPostDescriptionExpanded(it) },
-                )
-                ReportVideo(
-                    modifier =
-                        Modifier
-                            .align(Alignment.BottomEnd)
-                            .padding(end = 16.dp, bottom = 89.dp),
+            YRALReelPlayer(
+                videoUrlArray =
+                    state
+                        .feedDetails
+                        .map {
+                            Pair(
+                                it.url.toString(),
+                                it.thumbnail.toString(),
+                            )
+                        }.toList(),
+                initialPage = state.currentPageOfFeed,
+                onPageLoaded = { page ->
+                    viewModel.onCurrentPageChange(page)
+                    viewModel.setPostDescriptionExpanded(false)
+                },
+                recordTime = { currentTime, totalTime ->
+                    viewModel.recordTime(currentTime, totalTime)
+                },
+                didVideoEnd = { viewModel.didCurrentVideoEnd() },
+            ) { pageNo ->
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.TopStart,
                 ) {
-                    viewModel.toggleReportSheet(true)
+                    UserBrief(
+                        principalId = state.feedDetails[pageNo].principalID,
+                        profileImageUrl = state.feedDetails[pageNo].profileImageURL,
+                        postDescription = state.feedDetails[pageNo].postDescription,
+                        isPostDescriptionExpanded = state.isPostDescriptionExpanded,
+                        setPostDescriptionExpanded = { viewModel.setPostDescriptionExpanded(it) },
+                    )
+                    ReportVideo(
+                        modifier =
+                            Modifier
+                                .align(Alignment.BottomEnd)
+                                .padding(end = 16.dp, bottom = 89.dp),
+                    ) {
+                        viewModel.toggleReportSheet(
+                            isOpen = true,
+                            pageNo = pageNo,
+                        )
+                    }
                 }
             }
             // Show loader at the bottom when loading more content AND no new items have been added yet
@@ -198,10 +203,16 @@ fun FeedScreen(
                 rememberModalBottomSheetState(
                     skipPartiallyExpanded = true,
                 ),
-            onDismissRequest = { viewModel.toggleReportSheet(false) },
+            onDismissRequest = { viewModel.toggleReportSheet(false, 0) },
             isLoading = state.isLoading,
             reasons = (state.reportSheetState as ReportSheetState.Open).reasons,
-            onSubmit = { reason, text -> viewModel.reportVideo(reason, text) },
+            onSubmit = { reason, text ->
+                viewModel.reportVideo(
+                    reason = reason,
+                    text = text,
+                    pageNo = (state.reportSheetState as ReportSheetState.Open).pageNo,
+                )
+            },
         )
     }
 }
