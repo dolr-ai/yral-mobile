@@ -32,7 +32,7 @@ fun YralButton(
     textStyle: TextStyle? = null,
     backgroundColor: Color = Color.White,
     borderWidth: Dp = 0.75.dp,
-    borderColor: Color = YralColors.buttonBorderColor,
+    borderColor: Color = YralColors.ButtonBorderColor,
     icon: Int? = null,
     onClick: () -> Unit,
 ) {
@@ -46,8 +46,8 @@ fun YralButton(
                     shape = RoundedCornerShape(8.dp),
                 ).shadow(
                     elevation = 22.5.dp,
-                    spotColor = YralColors.shadowSpotColor,
-                    ambientColor = YralColors.shadowAmbientColor,
+                    spotColor = YralColors.ShadowSpotColor,
+                    ambientColor = YralColors.ShadowAmbientColor,
                 ).border(
                     width = borderWidth,
                     color = borderColor,
