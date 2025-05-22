@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -49,6 +51,7 @@ import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.home.FeedScreenConstants.MAX_LINES_FOR_POST_DESCRIPTION
+import com.yral.android.ui.screens.home.FeedScreenConstants.VIDEO_REPORT_SHEET_MAX_HEIGHT
 import com.yral.android.ui.widgets.YralBottomSheet
 import com.yral.android.ui.widgets.YralButtonState
 import com.yral.android.ui.widgets.YralButtonType
@@ -372,6 +375,7 @@ private fun ReportVideoSheet(
         Column(
             modifier =
                 Modifier
+                    .fillMaxHeight(VIDEO_REPORT_SHEET_MAX_HEIGHT)
                     .padding(
                         start = 16.dp,
                         top = 28.dp,
@@ -383,13 +387,13 @@ private fun ReportVideoSheet(
         ) {
             VideoReportSheetTitle()
             VideoReportReasons(
+                modifier = Modifier.weight(1f),
                 reasons = reasons,
                 selectedReason = selectedReason,
                 onSelected = { selectedReason = it },
+                text = text,
+                onTextUpdate = { text = it },
             )
-            if (selectedReason == VideoReportReason.OTHERS) {
-                ReasonDetailsInput(text) { text = it }
-            }
             YralGradientButton(
                 text = stringResource(R.string.submit),
                 buttonType = YralButtonType.White,
@@ -428,11 +432,22 @@ private fun VideoReportSheetTitle() {
 
 @Composable
 private fun VideoReportReasons(
+    modifier: Modifier,
     reasons: List<VideoReportReason>,
     selectedReason: VideoReportReason?,
     onSelected: (reason: VideoReportReason) -> Unit,
+    text: String,
+    onTextUpdate: (String) -> Unit,
 ) {
+    val listState = rememberLazyListState()
+    LaunchedEffect(selectedReason) {
+        if (selectedReason == VideoReportReason.OTHERS) {
+            listState.animateScrollToItem(reasons.size)
+        }
+    }
     LazyColumn(
+        modifier = modifier,
+        state = listState,
         verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.Top),
         horizontalAlignment = Alignment.Start,
     ) {
@@ -440,8 +455,18 @@ private fun VideoReportReasons(
             ReasonItem(
                 reason = reason,
                 isSelected = reason.name == selectedReason?.name,
-                onClick = { onSelected(reason) },
+                onClick = {
+                    onSelected(reason)
+                },
             )
+        }
+        if (selectedReason == VideoReportReason.OTHERS) {
+            item {
+                ReasonDetailsInput(
+                    text = text,
+                    onValueChange = onTextUpdate,
+                )
+            }
         }
     }
 }
@@ -543,4 +568,5 @@ private fun VideoReportReason.displayText(): String =
 
 object FeedScreenConstants {
     const val MAX_LINES_FOR_POST_DESCRIPTION = 5
+    const val VIDEO_REPORT_SHEET_MAX_HEIGHT = 0.8f
 }
