@@ -10,6 +10,7 @@ data class ReportRequestDto(
     val postId: Long,
     @SerialName("video_id")
     val videoId: String,
+    @SerialName("reason")
     val reason: String,
     @SerialName("canister_id")
     val canisterID: String,

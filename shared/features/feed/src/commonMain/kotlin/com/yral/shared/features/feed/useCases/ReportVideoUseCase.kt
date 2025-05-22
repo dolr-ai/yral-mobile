@@ -23,9 +23,9 @@ class ReportVideoUseCase(
     ) {
     override suspend fun execute(parameter: ReportRequestParams): String {
         val userCanister = sessionManager.getCanisterPrincipal()
-        val userPrincipal = sessionManager.getCanisterPrincipal()
+        val userPrincipal = sessionManager.getUserPrincipal()
         val identity = sessionManager.getIdentity()
-        if (identity != null) {
+        if (identity != null && userCanister != null && userPrincipal != null) {
             val identityWireJson = delegatedIdentityWireToJson(identity)
             val delegatedIdentityWire =
                 json.decodeFromString<KotlinDelegatedIdentityWire>(identityWireJson)
@@ -37,8 +37,8 @@ class ReportVideoUseCase(
                         reason = parameter.reason,
                         canisterID = parameter.canisterID,
                         principal = parameter.principal,
-                        userCanisterId = userCanister ?: "",
-                        userPrincipal = userPrincipal ?: "",
+                        userCanisterId = userCanister,
+                        userPrincipal = userPrincipal,
                         delegatedIdentityWire = delegatedIdentityWire,
                     ),
                 )

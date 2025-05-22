@@ -166,7 +166,7 @@ fun FeedScreen(
                     isPostDescriptionExpanded = state.isPostDescriptionExpanded,
                     setPostDescriptionExpanded = { viewModel.setPostDescriptionExpanded(it) },
                 )
-                VideoReport(
+                ReportVideo(
                     modifier =
                         Modifier
                             .align(Alignment.BottomEnd)
@@ -190,7 +190,7 @@ fun FeedScreen(
         }
     }
     if (state.reportSheetState is ReportSheetState.Open) {
-        VideoReportSheet(
+        ReportVideoSheet(
             bottomSheetState =
                 rememberModalBottomSheetState(
                     skipPartiallyExpanded = true,
@@ -329,15 +329,11 @@ private fun UserBriefDetails(
 }
 
 @Composable
-private fun VideoReport(
+private fun ReportVideo(
     modifier: Modifier = Modifier,
     onReportClicked: () -> Unit,
 ) {
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(20.dp, Alignment.Top),
-        horizontalAlignment = Alignment.Start,
-    ) {
+    Box(modifier = modifier) {
         Image(
             modifier =
                 Modifier
@@ -353,7 +349,7 @@ private fun VideoReport(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun VideoReportSheet(
+private fun ReportVideoSheet(
     onDismissRequest: () -> Unit,
     bottomSheetState: SheetState,
     isLoading: Boolean,
@@ -465,39 +461,34 @@ private fun ReasonDetailsInput(
             style = LocalAppTopography.current.baseMedium,
             color = YralColors.Neutral300,
         )
-        Column(
-            verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.Top),
-            horizontalAlignment = Alignment.Start,
-        ) {
-            TextField(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp)),
-                value = text,
-                onValueChange = onValueChange,
-                colors =
-                    TextFieldDefaults.colors().copy(
-                        focusedTextColor = YralColors.Neutral600,
-                        unfocusedTextColor = YralColors.Neutral600,
-                        disabledTextColor = YralColors.Neutral600,
-                        focusedContainerColor = YralColors.Neutral800,
-                        unfocusedContainerColor = YralColors.Neutral800,
-                        disabledContainerColor = YralColors.Neutral800,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent,
-                        disabledIndicatorColor = Color.Transparent,
-                    ),
-                textStyle = LocalAppTopography.current.baseRegular,
-                placeholder = {
-                    Text(
-                        text = stringResource(R.string.add_details),
-                        style = LocalAppTopography.current.baseRegular,
-                        color = YralColors.Neutral600,
-                    )
-                },
-            )
-        }
+        TextField(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp)),
+            value = text,
+            onValueChange = onValueChange,
+            colors =
+                TextFieldDefaults.colors().copy(
+                    focusedTextColor = YralColors.Neutral600,
+                    unfocusedTextColor = YralColors.Neutral600,
+                    disabledTextColor = YralColors.Neutral600,
+                    focusedContainerColor = YralColors.Neutral800,
+                    unfocusedContainerColor = YralColors.Neutral800,
+                    disabledContainerColor = YralColors.Neutral800,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    disabledIndicatorColor = Color.Transparent,
+                ),
+            textStyle = LocalAppTopography.current.baseRegular,
+            placeholder = {
+                Text(
+                    text = stringResource(R.string.add_details),
+                    style = LocalAppTopography.current.baseRegular,
+                    color = YralColors.Neutral600,
+                )
+            },
+        )
     }
 }
 

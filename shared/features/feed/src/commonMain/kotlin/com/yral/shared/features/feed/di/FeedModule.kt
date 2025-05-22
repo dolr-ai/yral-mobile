@@ -11,7 +11,6 @@ import com.yral.shared.features.feed.useCases.ReportVideoUseCase
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.factoryOf
-import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
@@ -22,6 +21,6 @@ val feedModule =
         factoryOf(::FetchFeedDetailsUseCase)
         viewModelOf(::FeedViewModel)
         factoryOf(::ReportVideoUseCase)
-        singleOf(::FeedRepository) { bind<IFeedRepository>() }
-        singleOf(::FeedRemoteDataSource) { bind<IFeedRemoteDataSource>() }
+        factoryOf(::FeedRepository) { bind<IFeedRepository>() }
+        factoryOf(::FeedRemoteDataSource) { bind<IFeedRemoteDataSource>() }
     }
