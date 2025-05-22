@@ -232,29 +232,36 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   }
 
   func configure(
-    withPlayer player: AVPlayer,
+    withPlayer feedsPlayer: FeedsPlayer,
     feedInfo: FeedCellInfo,
     profileInfo: ProfileInfoView.ProfileInfo,
     index: Int
   ) {
+    playerContainerView.sd_cancelCurrentImageLoad()
+    playerContainerView.image = Constants.playerPlaceHolderImage
+
     if let lastThumbnailImage = feedInfo.lastThumbnailImage {
       playerContainerView.image = lastThumbnailImage
     } else if let thumbnailURL = feedInfo.thumbnailURL {
       loadImage(with: thumbnailURL, placeholderImage: Constants.playerPlaceHolderImage, on: playerContainerView)
-    } else {
-      playerContainerView.image = Constants.playerPlaceHolderImage
     }
 
     playerLayer?.removeFromSuperlayer()
     playerLayer?.player = nil
     playerLayer = nil
+    guard let player = feedsPlayer.player as? AVQueuePlayer else { return }
     let layer = AVPlayerLayer(player: player)
-    layer.isHidden = player.currentItem?.status != .readyToPlay
     layer.videoGravity = .resize
+
+    let isCurrentReel = index == feedsPlayer.currentIndex
+    let itemReady = player.currentItem?.status == .readyToPlay
+    let alreadyPlaying = player.timeControlStatus == .playing
+
+    layer.isHidden = !(isCurrentReel && alreadyPlaying && itemReady)
+
     playerContainerView.layer.addSublayer(layer)
     playerLayer = layer
     playerLayer?.frame = contentView.bounds
-
     likeButton.configuration?.attributedTitle = AttributedString(
       String(feedInfo.likeCount),
       attributes: AttributeContainer([
