@@ -2,6 +2,7 @@ package com.yral.shared.features.auth.di
 
 import com.yral.shared.features.auth.AuthClient
 import com.yral.shared.features.auth.DefaultAuthClient
+import com.yral.shared.features.auth.DefaultAuthClient.RequiredUseCases
 import com.yral.shared.features.auth.data.AuthDataSource
 import com.yral.shared.features.auth.data.AuthDataSourceImpl
 import com.yral.shared.features.auth.data.AuthRepositoryImpl
@@ -9,6 +10,7 @@ import com.yral.shared.features.auth.domain.AuthRepository
 import com.yral.shared.features.auth.domain.useCases.AuthenticateTokenUseCase
 import com.yral.shared.features.auth.domain.useCases.ObtainAnonymousIdentityUseCase
 import com.yral.shared.features.auth.domain.useCases.RefreshTokenUseCase
+import com.yral.shared.features.auth.domain.useCases.UpdateSessionAsRegisteredUseCase
 import com.yral.shared.features.auth.utils.OAuthUtils
 import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.singleOf
@@ -23,6 +25,8 @@ val authModule =
         singleOf(::AuthenticateTokenUseCase)
         singleOf(::ObtainAnonymousIdentityUseCase)
         singleOf(::RefreshTokenUseCase)
+        singleOf(::UpdateSessionAsRegisteredUseCase)
+        singleOf(::RequiredUseCases)
 
         singleOf(::OAuthUtils)
     }
