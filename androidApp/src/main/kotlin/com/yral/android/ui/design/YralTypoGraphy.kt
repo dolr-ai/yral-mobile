@@ -35,6 +35,8 @@ data class AppTopography(
     val baseRegular: TextStyle,
     val feedCanisterId: TextStyle,
     val feedDescription: TextStyle,
+    val lgBold: TextStyle,
+    val mdMedium: TextStyle,
 )
 
 val LocalAppTopography =
@@ -49,6 +51,8 @@ val LocalAppTopography =
             baseRegular = TextStyle.Default,
             feedCanisterId = TextStyle.Default,
             feedDescription = TextStyle.Default,
+            lgBold = TextStyle.Default,
+            mdMedium = TextStyle.Default,
         )
     }
 
@@ -116,5 +120,19 @@ fun appTypoGraphy() =
                 lineHeight = 16.sp,
                 fontFamily = YralTypoGraphy.KumbhSans,
                 fontWeight = FontWeight.Medium,
+            ),
+        lgBold =
+            TextStyle(
+                fontSize = 18.sp,
+                lineHeight = 25.2.sp,
+                fontFamily = YralTypoGraphy.KumbhSans,
+                fontWeight = FontWeight(700),
+            ),
+        mdMedium =
+            TextStyle(
+                fontSize = 16.sp,
+                lineHeight = 22.4.sp,
+                fontFamily = YralTypoGraphy.KumbhSans,
+                fontWeight = FontWeight(500),
             ),
     )
