@@ -9,4 +9,8 @@ interface AuthDataSource {
         verifier: String,
     ): TokenResponseDto
     suspend fun refreshToken(token: String): TokenResponseDto
+    suspend fun updateSessionAsRegistered(
+        idToken: String,
+        canisterId: String,
+    )
 }

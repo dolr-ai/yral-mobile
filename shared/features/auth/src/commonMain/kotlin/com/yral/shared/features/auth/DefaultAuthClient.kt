@@ -12,6 +12,7 @@ import com.yral.shared.features.auth.domain.AuthRepository
 import com.yral.shared.features.auth.domain.useCases.AuthenticateTokenUseCase
 import com.yral.shared.features.auth.domain.useCases.ObtainAnonymousIdentityUseCase
 import com.yral.shared.features.auth.domain.useCases.RefreshTokenUseCase
+import com.yral.shared.features.auth.domain.useCases.UpdateSessionAsRegisteredUseCase
 import com.yral.shared.features.auth.utils.OAuthListener
 import com.yral.shared.features.auth.utils.OAuthUtils
 import com.yral.shared.features.auth.utils.SocialProvider
@@ -27,9 +28,7 @@ class DefaultAuthClient(
     private val analyticsManager: AnalyticsManager,
     private val preferences: Preferences,
     private val authRepository: AuthRepository,
-    private val authenticateTokenUseCase: AuthenticateTokenUseCase,
-    private val obtainAnonymousIdentityUseCase: ObtainAnonymousIdentityUseCase,
-    private val refreshTokenUseCase: RefreshTokenUseCase,
+    private val requiredUseCases: RequiredUseCases,
     private val oAuthUtils: OAuthUtils,
     appDispatchers: AppDispatchers,
 ) : AuthClient {
@@ -52,7 +51,7 @@ class DefaultAuthClient(
     }
 
     private suspend fun obtainAnonymousIdentity() {
-        obtainAnonymousIdentityUseCase
+        requiredUseCases.obtainAnonymousIdentityUseCase
             .invoke(Unit)
             .mapBoth(
                 success = { tokenResponse ->
@@ -72,6 +71,7 @@ class DefaultAuthClient(
         accessToken: String,
         refreshToken: String,
         shouldRefreshToken: Boolean,
+        shouldSetMetadata: Boolean = false,
     ) {
         preferences.putString(
             PrefKeys.ID_TOKEN.name,
@@ -92,7 +92,7 @@ class DefaultAuthClient(
         val tokenClaim = oAuthUtils.parseOAuthToken(idToken)
         if (tokenClaim.isValid(Clock.System.now().epochSeconds)) {
             tokenClaim.delegatedIdentity?.let {
-                handleExtractIdentityResponse(it)
+                handleExtractIdentityResponse(it, shouldSetMetadata)
             }
         } else if (shouldRefreshToken) {
             val rToken = preferences.getString(PrefKeys.REFRESH_TOKEN.name)
@@ -116,7 +116,10 @@ class DefaultAuthClient(
         sessionManager.updateState(SessionState.Initial)
     }
 
-    private suspend fun handleExtractIdentityResponse(data: ByteArray) {
+    private suspend fun handleExtractIdentityResponse(
+        data: ByteArray,
+        shouldSetMetaData: Boolean,
+    ) {
         val canisterWrapper = authenticateWithNetwork(data, null)
         preferences.putBytes(PrefKeys.IDENTITY.name, data)
         sessionManager.updateState(
@@ -129,6 +132,16 @@ class DefaultAuthClient(
                     ),
             ),
         )
+        if (shouldSetMetaData) {
+            preferences.getString(PrefKeys.ID_TOKEN.name)?.let { idToken ->
+                sessionManager.getCanisterPrincipal()?.let { canisterId ->
+                    updateSessionAsRegistered(
+                        idToken = idToken,
+                        canisterId = canisterId,
+                    )
+                }
+            }
+        }
         analyticsManager.trackEvent(
             event = AuthSuccessfulEventData(),
         )
@@ -137,7 +150,7 @@ class DefaultAuthClient(
     private suspend fun refreshAccessToken() {
         val refreshToken = preferences.getString(PrefKeys.REFRESH_TOKEN.name)
         refreshToken?.let {
-            refreshTokenUseCase
+            requiredUseCases.refreshTokenUseCase
                 .invoke(refreshToken)
                 .mapBoth(
                     success = { tokenResponse ->
@@ -194,7 +207,7 @@ class DefaultAuthClient(
     }
 
     private suspend fun authenticate(code: String) {
-        authenticateTokenUseCase
+        requiredUseCases.authenticateTokenUseCase
             .invoke(code)
             .mapBoth(
                 success = { tokenResponse ->
@@ -203,10 +216,31 @@ class DefaultAuthClient(
                         accessToken = tokenResponse.accessToken,
                         refreshToken = tokenResponse.refreshToken,
                         shouldRefreshToken = true,
+                        shouldSetMetadata = true,
                     )
                     preferences.putBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name, true)
                 },
                 failure = { YralException(it.localizedMessage ?: "") },
             )
     }
+
+    private suspend fun updateSessionAsRegistered(
+        idToken: String,
+        canisterId: String,
+    ) {
+        requiredUseCases.updateSessionAsRegisteredUseCase.invoke(
+            parameter =
+                UpdateSessionAsRegisteredUseCase.Params(
+                    idToken = idToken,
+                    canisterId = canisterId,
+                ),
+        )
+    }
+
+    data class RequiredUseCases(
+        val authenticateTokenUseCase: AuthenticateTokenUseCase,
+        val obtainAnonymousIdentityUseCase: ObtainAnonymousIdentityUseCase,
+        val refreshTokenUseCase: RefreshTokenUseCase,
+        val updateSessionAsRegisteredUseCase: UpdateSessionAsRegisteredUseCase,
+    )
 }
