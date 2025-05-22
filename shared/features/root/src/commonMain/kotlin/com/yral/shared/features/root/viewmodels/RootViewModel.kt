@@ -15,6 +15,7 @@ import com.yral.shared.rust.domain.models.FeedDetails
 import com.yral.shared.rust.domain.models.Post
 import com.yral.shared.rust.services.IndividualUserServiceFactory
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,7 +32,7 @@ class RootViewModel(
     private val fetchFeedDetailsUseCase: FetchFeedDetailsUseCase,
     private val crashlyticsManager: CrashlyticsManager,
 ) : ViewModel() {
-    private val coroutineScope = CoroutineScope(appDispatchers.io)
+    private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.io)
 
     companion object {
         const val MIN_REQUIRED_ITEMS = 1

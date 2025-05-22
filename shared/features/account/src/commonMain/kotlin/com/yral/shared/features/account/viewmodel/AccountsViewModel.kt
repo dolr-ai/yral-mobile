@@ -12,6 +12,7 @@ import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import com.yral.shared.uniffi.generated.propicFromPrincipal
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,7 +25,7 @@ class AccountsViewModel(
     private val authClient: AuthClient,
     private val crashlyticsManager: CrashlyticsManager,
 ) : ViewModel() {
-    private val coroutineScope = CoroutineScope(appDispatchers.io)
+    private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.io)
     private val _state =
         MutableStateFlow(
             AccountsState(

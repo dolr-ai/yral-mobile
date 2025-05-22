@@ -17,6 +17,7 @@ import com.yral.shared.rust.domain.models.FeedDetails
 import com.yral.shared.rust.domain.models.Post
 import com.yral.shared.rust.domain.models.toFilteredResult
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -34,7 +35,7 @@ class FeedViewModel(
     private val analyticsManager: AnalyticsManager,
     private val preferences: Preferences,
 ) : ViewModel() {
-    private val coroutineScope = CoroutineScope(appDispatchers.io)
+    private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.io)
 
     companion object {
         const val PRE_FETCH_BEFORE_LAST = 1
