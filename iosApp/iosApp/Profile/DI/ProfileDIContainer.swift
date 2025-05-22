@@ -86,7 +86,8 @@ final class ProfileDIContainer {
           info: info
         ),
         feedType: .currentUser,
-        session: dependencies.session
+        session: dependencies.session,
+        crashReporter: dependencies.crashReporter
       ),
       showFeeds: showFeeds
     )
