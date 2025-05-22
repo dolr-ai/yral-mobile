@@ -96,7 +96,7 @@ class AuthDataSourceImpl(
                     host = METADATA_BASE_URL
                     path(UPDATE_SESSION_AS_REGISTERED, canisterId)
                 }
-                headers.append("authorization", idToken)
+                headers.append("authorization", "Bearer $idToken")
             }.bodyAsText()
     }
 
