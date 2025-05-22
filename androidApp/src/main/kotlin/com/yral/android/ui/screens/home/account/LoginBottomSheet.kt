@@ -1,6 +1,7 @@
 package com.yral.android.ui.screens.home.account
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -12,6 +13,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.yral.android.ui.components.SignupView
+import com.yral.android.ui.screens.home.account.LoginBottomSheetConstants.BOTTOM_SHEET_SPACER_PERCENT_TO_SCREEN
+import com.yral.android.ui.screens.home.account.LoginBottomSheetConstants.MIN_BOTTOM_SHEET_SPACER_HEIGHT
 import com.yral.android.ui.widgets.YralBottomSheet
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -27,24 +30,35 @@ internal fun LoginBottomSheet(
         onDismissRequest = onDismissRequest,
         bottomSheetState = bottomSheetState,
     ) {
-        Column(
-            modifier =
-                Modifier
-                    .padding(
-                        start = 16.dp,
-                        top = 45.dp,
-                        end = 16.dp,
-                        bottom = 16.dp,
-                    ),
-            verticalArrangement = Arrangement.spacedBy(0.dp, Alignment.Top),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            SignupView(
-                onSignupClicked = onSignupClicked,
-                termsLink = termsLink,
-                openTerms = openTerms,
-            )
-            Spacer(modifier = Modifier.height(300.dp))
+        BoxWithConstraints {
+            val maxHeight = maxHeight
+            val adaptiveHeight =
+                (maxHeight * BOTTOM_SHEET_SPACER_PERCENT_TO_SCREEN)
+                    .coerceAtLeast(MIN_BOTTOM_SHEET_SPACER_HEIGHT.dp)
+            Column(
+                modifier =
+                    Modifier
+                        .padding(
+                            start = 16.dp,
+                            top = 45.dp,
+                            end = 16.dp,
+                            bottom = 16.dp,
+                        ),
+                verticalArrangement = Arrangement.spacedBy(0.dp, Alignment.Top),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                SignupView(
+                    onSignupClicked = onSignupClicked,
+                    termsLink = termsLink,
+                    openTerms = openTerms,
+                )
+                Spacer(modifier = Modifier.height(adaptiveHeight))
+            }
         }
     }
+}
+
+private object LoginBottomSheetConstants {
+    const val BOTTOM_SHEET_SPACER_PERCENT_TO_SCREEN = 0.3f
+    const val MIN_BOTTOM_SHEET_SPACER_HEIGHT = 300f
 }

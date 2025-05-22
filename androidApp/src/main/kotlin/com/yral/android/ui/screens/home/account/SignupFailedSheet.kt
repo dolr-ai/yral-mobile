@@ -21,7 +21,7 @@ import com.yral.android.ui.widgets.YralGradientButton
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun SingUpFailedBottomSheet(
+internal fun SignUpFailedBottomSheet(
     bottomSheetState: SheetState,
     onDismissRequest: () -> Unit,
 ) {

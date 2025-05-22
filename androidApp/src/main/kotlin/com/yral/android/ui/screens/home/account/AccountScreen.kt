@@ -70,12 +70,12 @@ fun AccountScreen(
     }
     Box(
         modifier =
-            Modifier
+            modifier
                 .fillMaxSize(),
         contentAlignment = Alignment.Center,
     ) {
         Column(
-            modifier = modifier.padding(top = 8.dp),
+            modifier = Modifier.padding(top = 8.dp),
             verticalArrangement = Arrangement.spacedBy(30.dp, Alignment.Top),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
@@ -85,14 +85,14 @@ fun AccountScreen(
                     accountInfo = it,
                     isSocialSignIn = state.isSocialSignInSuccessful,
                 ) {
-                    viewModel.setBottomSheetType(AccountBottomSheet.SingUp)
+                    viewModel.setBottomSheetType(AccountBottomSheet.SignUp)
                 }
             }
             Divider()
             HelpLinks(
                 links = viewModel.getHelperLinks(),
             ) { link, shouldOpenOutside ->
-                handleHelpLink(link, shouldOpenOutside, viewModel)
+                viewModel.handleHelpLink(link, shouldOpenOutside)
             }
             Spacer(Modifier.weight(1f))
             SocialMediaHelpLinks(
@@ -108,7 +108,7 @@ fun AccountScreen(
         }
         SheetContent(
             bottomSheetType = state.bottomSheetType,
-            setType = { viewModel.setBottomSheetType(it) },
+            onDismissRequest = { viewModel.setBottomSheetType(AccountBottomSheet.None) },
             signInWithGoogle = { viewModel.signInWithGoogle() },
             logout = { viewModel.logout() },
         )
@@ -118,28 +118,11 @@ fun AccountScreen(
     }
 }
 
-private fun handleHelpLink(
-    link: String,
-    shouldOpenOutside: Boolean,
-    viewModel: AccountsViewModel,
-) {
-    when (link) {
-        LOGOUT_URI -> viewModel.logout()
-        DELETE_ACCOUNT_URI -> viewModel.setBottomSheetType(AccountBottomSheet.DeleteAccount)
-        else ->
-            viewModel.setBottomSheetType(
-                AccountBottomSheet.ShowWebView(
-                    linkToOpen = Pair(link, shouldOpenOutside),
-                ),
-            )
-    }
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SheetContent(
     bottomSheetType: AccountBottomSheet,
-    setType: (type: AccountBottomSheet) -> Unit,
+    onDismissRequest: () -> Unit,
     signInWithGoogle: () -> Unit,
     logout: () -> Unit,
 ) {
@@ -149,10 +132,10 @@ private fun SheetContent(
         )
     var extraSheetLink by remember { mutableStateOf("") }
     when (bottomSheetType) {
-        is AccountBottomSheet.SingUp -> {
+        is AccountBottomSheet.SignUp -> {
             LoginBottomSheet(
                 bottomSheetState = bottomSheetState,
-                onDismissRequest = { setType(AccountBottomSheet.None) },
+                onDismissRequest = onDismissRequest,
                 onSignupClicked = { signInWithGoogle() },
                 termsLink = TERMS_OF_SERVICE_URL,
                 openTerms = {
@@ -167,27 +150,27 @@ private fun SheetContent(
                 val context = LocalContext.current
                 val intent = Intent(Intent.ACTION_VIEW, linkToOpen.first.toUri())
                 context.startActivity(intent)
-                setType(AccountBottomSheet.None)
+                onDismissRequest
             } else {
                 WebViewBottomSheet(
                     link = linkToOpen.first,
                     bottomSheetState = bottomSheetState,
-                    onDismissRequest = { setType(AccountBottomSheet.None) },
+                    onDismissRequest = onDismissRequest,
                 )
             }
         }
 
         is AccountBottomSheet.SignUpFailed -> {
-            SingUpFailedBottomSheet(
+            SignUpFailedBottomSheet(
                 bottomSheetState = bottomSheetState,
-                onDismissRequest = { setType(AccountBottomSheet.None) },
+                onDismissRequest = onDismissRequest,
             )
         }
 
         is AccountBottomSheet.DeleteAccount -> {
             DeleteAccountSheet(
                 bottomSheetState = bottomSheetState,
-                onDismissRequest = { setType(AccountBottomSheet.None) },
+                onDismissRequest = onDismissRequest,
                 logout = logout,
             )
         }

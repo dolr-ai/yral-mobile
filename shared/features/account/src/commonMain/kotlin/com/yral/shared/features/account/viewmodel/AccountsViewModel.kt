@@ -181,6 +181,22 @@ class AccountsViewModel(
         return links
     }
 
+    fun handleHelpLink(
+        link: String,
+        shouldOpenOutside: Boolean,
+    ) {
+        when (link) {
+            LOGOUT_URI -> logout()
+            DELETE_ACCOUNT_URI -> setBottomSheetType(AccountBottomSheet.DeleteAccount)
+            else ->
+                setBottomSheetType(
+                    AccountBottomSheet.ShowWebView(
+                        linkToOpen = Pair(link, shouldOpenOutside),
+                    ),
+                )
+        }
+    }
+
     companion object {
         const val LOGOUT_URI = "yral://logout"
         const val DELETE_ACCOUNT_URI = "yral://deleteAccount"
@@ -212,7 +228,7 @@ sealed interface AccountBottomSheet {
     ) : AccountBottomSheet
 
     data object SignUpFailed : AccountBottomSheet
-    data object SingUp : AccountBottomSheet
+    data object SignUp : AccountBottomSheet
     data object DeleteAccount : AccountBottomSheet
 }
 

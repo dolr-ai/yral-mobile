@@ -100,7 +100,8 @@ private fun DeleteSheetButtons(
                 TextStyle(
                     color = YralColors.NeutralTextPrimary,
                 ),
-        ) { onDismissRequest() }
+            onClick = onDismissRequest,
+        )
         YralButton(
             modifier = Modifier.weight(1f),
             text = stringResource(R.string.yes_delete),
@@ -111,6 +112,7 @@ private fun DeleteSheetButtons(
                 TextStyle(
                     color = YralColors.NeutralTextPrimary,
                 ),
-        ) { logout() }
+            onClick = logout,
+        )
     }
 }
