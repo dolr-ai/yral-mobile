@@ -14,7 +14,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
@@ -48,6 +50,7 @@ import com.yral.android.ui.widgets.YralLoader
 import com.yral.shared.features.account.viewmodel.AccountBottomSheet
 import com.yral.shared.features.account.viewmodel.AccountHelpLink
 import com.yral.shared.features.account.viewmodel.AccountInfo
+import com.yral.shared.features.account.viewmodel.AccountsState
 import com.yral.shared.features.account.viewmodel.AccountsViewModel
 import com.yral.shared.features.account.viewmodel.AccountsViewModel.Companion.DELETE_ACCOUNT_URI
 import com.yral.shared.features.account.viewmodel.AccountsViewModel.Companion.DISCORD_LINK
@@ -75,38 +78,10 @@ fun AccountScreen(
                 .fillMaxSize(),
         contentAlignment = Alignment.Center,
     ) {
-        Column(
-            modifier = Modifier.padding(top = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(30.dp, Alignment.Top),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            AccountsTitle()
-            state.accountInfo?.let {
-                AccountDetail(
-                    accountInfo = it,
-                    isSocialSignIn = state.isSocialSignInSuccessful,
-                ) {
-                    viewModel.setBottomSheetType(AccountBottomSheet.SignUp)
-                }
-            }
-            Divider()
-            HelpLinks(
-                links = viewModel.getHelperLinks(),
-            ) { link, shouldOpenOutside ->
-                viewModel.handleHelpLink(link, shouldOpenOutside)
-            }
-            Spacer(Modifier.weight(1f))
-            SocialMediaHelpLinks(
-                links = viewModel.getSocialLinks(),
-            ) { link, shouldOpenOutside ->
-                viewModel.setBottomSheetType(
-                    AccountBottomSheet.ShowWebView(
-                        Pair(link, shouldOpenOutside),
-                    ),
-                )
-            }
-            Spacer(Modifier.weight(SOCIAL_MEDIA_LINK_BOTTOM_SPACER_WEIGHT))
-        }
+        AccountScreenContent(
+            state = state,
+            viewModel = viewModel,
+        )
         SheetContent(
             bottomSheetType = state.bottomSheetType,
             onDismissRequest = { viewModel.setBottomSheetType(AccountBottomSheet.None) },
@@ -116,6 +91,49 @@ fun AccountScreen(
         if (state.isLoading) {
             YralLoader()
         }
+    }
+}
+
+@Composable
+private fun AccountScreenContent(
+    state: AccountsState,
+    viewModel: AccountsViewModel,
+) {
+    Column(
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .padding(top = 8.dp)
+                .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(30.dp, Alignment.Top),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        AccountsTitle()
+        state.accountInfo?.let {
+            AccountDetail(
+                accountInfo = it,
+                isSocialSignIn = state.isSocialSignInSuccessful,
+            ) {
+                viewModel.setBottomSheetType(AccountBottomSheet.SignUp)
+            }
+        }
+        Divider()
+        HelpLinks(
+            links = viewModel.getHelperLinks(),
+        ) { link, shouldOpenOutside ->
+            viewModel.handleHelpLink(link, shouldOpenOutside)
+        }
+        Spacer(Modifier.weight(1f))
+        SocialMediaHelpLinks(
+            links = viewModel.getSocialLinks(),
+        ) { link, shouldOpenOutside ->
+            viewModel.setBottomSheetType(
+                AccountBottomSheet.ShowWebView(
+                    Pair(link, shouldOpenOutside),
+                ),
+            )
+        }
+        Spacer(Modifier.weight(SOCIAL_MEDIA_LINK_BOTTOM_SPACER_WEIGHT))
     }
 }
 
