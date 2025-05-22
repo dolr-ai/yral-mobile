@@ -79,6 +79,22 @@ suspend inline fun httpPostWithBytesResponse(
     throw UnknownException("Error making network call")
 }
 
+@Suppress("TooGenericExceptionCaught")
+suspend inline fun httpPostWithStringResponse(
+    httpClient: HttpClient,
+    block: HttpRequestBuilder.() -> Unit,
+): String {
+    try {
+        val response: HttpResponse = httpClient.post(block)
+        if (HTTPResponseStatus.from(response.status.value) == HTTPResponseStatus.SUCCESS) {
+            return response.bodyAsText()
+        }
+    } catch (e: Exception) {
+        return handleException(e)
+    }
+    throw UnknownException("Error making network call")
+}
+
 fun <K> handleException(exception: Exception): K =
     when (exception) {
         is RedirectResponseException,
