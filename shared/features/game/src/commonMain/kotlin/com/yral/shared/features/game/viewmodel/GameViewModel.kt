@@ -9,16 +9,24 @@ import com.yral.shared.features.game.domain.GetGameRulesUseCase
 import com.yral.shared.features.game.domain.models.AboutGameItem
 import com.yral.shared.features.game.domain.models.GameIcon
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlin.random.Random
 
 class GameViewModel(
     appDispatchers: AppDispatchers,
     private val gameIconsUseCase: GetGameIconsUseCase,
     private val gameRulesUseCase: GetGameRulesUseCase,
 ) : ViewModel() {
+    companion object {
+        const val GAME_RESULT_API_DELAY = 2000L
+        const val WIN_PRIZE = 30
+        const val LOSE_PENALTY = -10
+    }
+
     private val coroutineScope = CoroutineScope(appDispatchers.io)
     private val _state =
         MutableStateFlow(
@@ -77,6 +85,18 @@ class GameViewModel(
                 _state.value.copy(
                     gameResult = temp,
                 ),
+            )
+            setLoading(true)
+            // Temp mocking of api result
+            delay(GAME_RESULT_API_DELAY)
+            setFeedGameResult(
+                videoId = videoId,
+                coinDelta =
+                    if (Random.nextBoolean()) {
+                        WIN_PRIZE
+                    } else {
+                        LOSE_PENALTY
+                    },
             )
         }
     }
