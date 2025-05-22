@@ -7,8 +7,13 @@ data class AboutGameItem(
 )
 
 data class AboutGameItemBody(
-    val type: String,
+    val type: AboutGameBodyType,
     val content: List<String>?,
     val colors: List<String>?,
     val imageUrls: List<String>?,
 )
+
+enum class AboutGameBodyType {
+    TEXT,
+    IMAGES,
+}

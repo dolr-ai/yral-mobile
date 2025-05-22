@@ -144,8 +144,8 @@ private fun BoxScope.Balance(
                     brush =
                         Brush.linearGradient(
                             listOf(
-                                YralColors.coinBalanceBGStart,
-                                YralColors.coinBalanceBGEnd,
+                                YralColors.CoinBalanceBGStart,
+                                YralColors.CoinBalanceBGEnd,
                             ),
                         ),
                     shape = RoundedCornerShape(16.dp),
