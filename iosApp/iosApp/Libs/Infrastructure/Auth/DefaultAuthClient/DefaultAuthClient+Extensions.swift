@@ -185,23 +185,28 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
   }
 
   func updateSession(canisterID: String) async throws {
-    try await recordThrowingOperation {
-      guard let accessTokenData = try KeychainHelper.retrieveData(for: Constants.keychainAccessToken),
-            let accessTokenString = String(data: accessTokenData, encoding: .utf8),
-            let url = URL(string: Constants.yralMetaDataBaseURLString) else { return }
-      let body = Data("{}".utf8)
-      let endpoint = Endpoint(
-        http: "update_session_as_registered",
-        baseURL: url,
-        path: Constants.sessionRegistrationPath + canisterID,
-        method: .post,
-        headers: [
-          "authorization": "Bearer \(accessTokenString)",
-          "Content-Type": "application/json"
-        ],
-        body: body
-      )
-      try await networkService.performRequest(for: endpoint)
+    let oldState = stateSubject.value
+    do {
+      try await recordThrowingOperation {
+        guard let accessTokenData = try KeychainHelper.retrieveData(for: Constants.keychainAccessToken),
+              let accessTokenString = String(data: accessTokenData, encoding: .utf8),
+              let url = URL(string: Constants.yralMetaDataBaseURLString) else { return }
+        let body = Data("{}".utf8)
+        let endpoint = Endpoint(
+          http: "update_session_as_registered",
+          baseURL: url,
+          path: Constants.sessionRegistrationPath + canisterID,
+          method: .post,
+          headers: [
+            "authorization": "Bearer \(accessTokenString)",
+            "Content-Type": "application/json"
+          ],
+          body: body
+        )
+        try await networkService.performRequest(for: endpoint)
+      }
+    } catch {
+      stateSubject.value = oldState
     }
   }
 }

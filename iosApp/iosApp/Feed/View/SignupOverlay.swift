@@ -10,15 +10,20 @@ import SwiftUI
 
 struct SignupOverlay: View {
   let onLoginTap: (_ provider: SocialProvider) -> Void
+  @State private var loadingProvider: SocialProvider?
 
   var body: some View {
     ZStack(alignment: .top) {
       Rectangle()
         .fill(.ultraThinMaterial)
+        .environment(\.colorScheme, .dark)
         .ignoresSafeArea()
         .padding(-Constants.overshoot)
       VStack(spacing: .zero) {
-        SignupView(delegate: self)
+        SignupView(
+          delegate: self,
+          loadingProvider: $loadingProvider
+        )
           .padding(.top, Constants.topSpacing)
         Spacer()
         VStack(spacing: Constants.bottomVStackSpacing) {
@@ -41,10 +46,12 @@ struct SignupOverlay: View {
 
 extension SignupOverlay: SignupViewProtocol {
   func signupwithGoogle() {
+    loadingProvider = .google
     onLoginTap(.google)
   }
 
   func signupwithApple() {
+    loadingProvider = .apple
     onLoginTap(.apple)
   }
 }
@@ -55,8 +62,8 @@ extension SignupOverlay {
     static let topSpacing = 146.0
     static let bottomSpacing = 44.0
     static let bottomVStackSpacing = 8.0
-    static let lottieWidth = 34.0
-    static let lottieHeight = 32.0
+    static let lottieWidth = 42.0
+    static let lottieHeight = 36.0
 
     static let scrollText = "Scroll To Next Video"
     static let scrollTextColor = YralColor.grey50.swiftUIColor
