@@ -1,5 +1,6 @@
 package com.yral.shared.features.game.data.models
 
+import com.yral.shared.features.game.domain.models.AboutGameBodyType
 import com.yral.shared.features.game.domain.models.AboutGameItem
 import com.yral.shared.features.game.domain.models.AboutGameItemBody
 import kotlinx.serialization.SerialName
@@ -34,7 +35,12 @@ fun AboutGameItemDto.toAboutGameItem(): AboutGameItem =
 
 fun AboutGameItemBodyDto.toAboutGameItemBody(): AboutGameItemBody =
     AboutGameItemBody(
-        type = type,
+        type =
+            when (type) {
+                "text" -> AboutGameBodyType.TEXT
+                "images" -> AboutGameBodyType.IMAGES
+                else -> throw IllegalArgumentException("Unknown type: $type")
+            },
         content = content,
         colors = colors,
         imageUrls = imageUrls,

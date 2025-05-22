@@ -11,6 +11,8 @@ object YralColors {
     val NeutralTextPrimary: Color = Color(0xFFFAFAFA)
     val NeutralTextSecondary: Color = Color(0xFFA3A3A3)
 
+    val NeutralBackgroundCardBackground: Color = Color(0xFF171717)
+
     val Neutral50: Color = Color(0xFFFAFAFA)
     val Neutral300: Color = Color(0xFFD4D4D4)
     val Neutral500: Color = Color(0xFFA3A3A3)
@@ -26,12 +28,12 @@ object YralColors {
 
     val Divider: Color = Color(0xFF232323)
 
-    val shadowSpotColor: Color = Color(0x1C8377C6)
-    val shadowAmbientColor: Color = Color(0x1C8377C6)
+    val ShadowSpotColor: Color = Color(0x1C8377C6)
+    val ShadowAmbientColor: Color = Color(0x1C8377C6)
 
-    val buttonBorderColor: Color = Color(0xFFE0E0E9)
+    val ButtonBorderColor: Color = Color(0xFFE0E0E9)
 
-    val profilePicBackground: Color = Color(0xFFC4C4C4)
+    val ProfilePicBackground: Color = Color(0xFFC4C4C4)
 
     val Red300: Color = Color(0xFFF14331)
 
@@ -39,7 +41,31 @@ object YralColors {
     val Green300: Color = Color(0xFF1EC981)
     val Green400: Color = Color(0xFF158F5C)
 
-    val coinBalanceBGStart = Color(0xFFFFCC00)
-    val coinBalanceBGEnd = Color(0xFFDA8100)
-    val smileyGameCardBackground = Color(0x66000000)
+    val Grey50: Color = Neutral50
+
+    val CoinBalanceBGStart = Color(0xFFFFCC00)
+    val CoinBalanceBGEnd = Color(0xFFDA8100)
+    val SmileyGameCardBackground = Color(0x66000000)
+
+    fun getColorByName(name: String): Color =
+        try {
+            val titleCaseName =
+                name
+                    .split(Regex("(?<=.)(?=\\d)"))
+                    .joinToString("") {
+                        it.replaceFirstChar { char -> char.uppercase() }
+                    }
+
+            val field = this::class.java.getDeclaredField(titleCaseName)
+            field.isAccessible = true
+            when (val value = field.get(this)) {
+                is Long -> Color(value.toULong())
+                is Color -> value
+                else -> {
+                    Grey50
+                }
+            }
+        } catch (_: Exception) {
+            Grey50
+        }
 }
