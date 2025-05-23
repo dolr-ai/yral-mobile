@@ -10,17 +10,20 @@ import Foundation
 import AVFoundation
 
 extension FeedsPlayer {
-  func handlePerformanceMonitors() {
+
+  func stop(startupMonitor: PerformanceMonitor, isSuccess: Bool) {
+    startupMonitor.setMetadata(
+      key: Constants.performanceResultKey,
+      value: isSuccess ? Constants.performanceSuccessKey : Constants.performanceErrorKey
+    )
+    startupMonitor.stop()
+  }
+
+  func stopPlaybackMonitor() {
     if let monitor = playbackMonitor {
       monitor.setMetadata(key: Constants.performanceResultKey, value: Constants.performanceSuccessKey)
       monitor.stop()
       playbackMonitor = nil
-    }
-    if let videoID = feedResults[safe: currentIndex]?.videoID,
-       let monitor = videoLoadMonitors[videoID] {
-      monitor.setMetadata(key: Constants.performanceResultKey, value: Constants.performanceSuccessKey)
-      monitor.stop()
-      videoLoadMonitors.removeValue(forKey: videoID)
     }
   }
 

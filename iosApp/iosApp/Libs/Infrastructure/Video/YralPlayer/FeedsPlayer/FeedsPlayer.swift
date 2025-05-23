@@ -40,7 +40,6 @@ final class FeedsPlayer: YralPlayer {
   var finishLogged = Set<Int>()
 
   // MARK: Performance monitor
-  var videoLoadMonitors: [String: PerformanceMonitor] = [:]
   var firstFrameMonitor: PerformanceMonitor?
   var playbackMonitor: PerformanceMonitor?
   var timeControlObservation: NSKeyValueObservation?
@@ -173,7 +172,7 @@ final class FeedsPlayer: YralPlayer {
   }
 
   private func startLooping(with item: AVPlayerItem) {
-    handlePerformanceMonitors()
+    stopPlaybackMonitor()
     playerLooper?.disableLooping()
     playerLooper = nil
     player.removeAllItems()
@@ -251,6 +250,9 @@ final class FeedsPlayer: YralPlayer {
     let assetTitle = videoID
 
     currentlyDownloadingIDs.insert(videoID)
+    defer {
+      currentlyDownloadingIDs.remove(videoID)
+    }
 
     do {
       _ = try await hlsDownloadManager.startDownloadAsync(
@@ -268,8 +270,6 @@ final class FeedsPlayer: YralPlayer {
       crashReporter.recordException(error)
       print("Preload failed for index \(index): \(error)")
     }
-
-    currentlyDownloadingIDs.remove(videoID)
   }
 
   private func cancelPreloadOutsideRange(center: Int, radius: Int) async {
@@ -298,18 +298,16 @@ final class FeedsPlayer: YralPlayer {
     let startupMonitor: PerformanceMonitor = FirebasePerformanceMonitor(traceName: Constants.videoStartTrace)
     startupMonitor.setMetadata(key: Constants.videoIDKey, value: videoID)
     startupMonitor.start()
-    videoLoadMonitors[videoID] = startupMonitor
 
     if let asset = await hlsDownloadManager.localOrInflightAsset(for: feed.url) {
       do {
         try await asset.loadPlayableAsync()
         let item = AVPlayerItem(asset: asset)
         playerItems[videoID] = item
+        stop(startupMonitor: startupMonitor, isSuccess: true)
         return item
       } catch {
-        startupMonitor.setMetadata(key: Constants.performanceResultKey, value: Constants.performanceErrorKey)
-        startupMonitor.stop()
-        videoLoadMonitors.removeValue(forKey: videoID)
+        stop(startupMonitor: startupMonitor, isSuccess: false)
         crashReporter.recordException(error)
         print("Local asset not playable (fallback to remote). Error: \(error)")
         throw error
@@ -321,11 +319,10 @@ final class FeedsPlayer: YralPlayer {
       try await remoteAsset.loadPlayableAsync()
       let item = AVPlayerItem(asset: remoteAsset)
       playerItems[videoID] = item
+      stop(startupMonitor: startupMonitor, isSuccess: true)
       return item
     } catch {
-      startupMonitor.setMetadata(key: Constants.performanceResultKey, value: Constants.performanceErrorKey)
-      startupMonitor.stop()
-      videoLoadMonitors.removeValue(forKey: videoID)
+      stop(startupMonitor: startupMonitor, isSuccess: false)
       crashReporter.recordException(error)
       throw error
     }
