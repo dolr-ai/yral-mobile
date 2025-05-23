@@ -15,7 +15,6 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
   let logEventUseCase: LogUploadEventUseCaseProtocol
   let socialSignInUseCase: SocialSignInUseCaseProtocol
   let castVoteUseCase: CastVoteUseCaseProtocol
-
   private var currentFeeds = [FeedResult]()
   private var filteredFeeds = [FeedResult]()
   private var feedvideoIDSet = Set<String>()
@@ -61,8 +60,13 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
         let unblockedFeeds = self.filteredFeeds.filter { !self.blockedPrincipalIDSet.contains($0.principalID) }
         guard !unblockedFeeds.isEmpty else { return }
         self.feedvideoIDSet.formUnion(unblockedFeeds.map { $0.videoID })
-        self.currentFeeds += unblockedFeeds
-        self.unifiedState = .success(feeds: unblockedFeeds)
+        let modifiedUnblockedFeeds = unblockedFeeds.map { item in
+          var modified = item
+          modified.smileyGame = SmileyGame(smileys: self.smileys, result: nil)
+          return modified
+        }
+        self.currentFeeds += modifiedUnblockedFeeds
+        self.unifiedState = .success(feeds: modifiedUnblockedFeeds)
       }
       .store(in: &cancellables)
   }

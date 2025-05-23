@@ -133,7 +133,6 @@ struct ProfileView: View {
         .task {
           guard isLoadingFirstTime else { return }
           isLoadingFirstTime = false
-          print("Sarvesh 8")
           async let fetchProfile: () = viewModel.fetchProfileInfo()
           async let fetchVideos: () = viewModel.getVideos()
           _ = await (fetchProfile, fetchVideos)

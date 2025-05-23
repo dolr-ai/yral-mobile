@@ -27,3 +27,44 @@ extension AVURLAsset {
     }
   }
 }
+
+extension AVPlayerItem {
+  @MainActor
+  func waitUntilReady() async throws {
+    if status == .readyToPlay { return }
+
+    try await withCheckedThrowingContinuation { continuation in
+      var token: NSKeyValueObservation?
+      token = observe(\.status, options: [.initial, .new]) { item, _ in
+        switch item.status {
+        case .readyToPlay:
+          token?.invalidate()
+          continuation.resume()
+        case .failed:
+          token?.invalidate()
+          continuation.resume(throwing: item.error ?? AVError(.unknown))
+        case .unknown:
+          break
+        @unknown default:
+          break
+        }
+      }
+    }
+  }
+}
+
+extension AVQueuePlayer {
+  @MainActor
+  func waitForFirstItem() async -> AVPlayerItem {
+    if let item = currentItem { return item }
+    return await withCheckedContinuation { continuation in
+      var observation: NSKeyValueObservation?
+      observation = observe(\.currentItem, options: [.new]) { _, change in
+        if let newItem = change.newValue as? AVPlayerItem {
+          observation?.invalidate()
+          continuation.resume(returning: newItem)
+        }
+      }
+    }
+  }
+}

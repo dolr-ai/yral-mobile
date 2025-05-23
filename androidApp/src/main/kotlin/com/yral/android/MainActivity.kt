@@ -54,7 +54,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         initPlatformResources()
-        initRustLogger()
+        if (BuildConfig.DEBUG) {
+            initRustLogger()
+        }
         oAuthUtils = koinInstance.get()
         handleIntent(intent)
         setContent {
@@ -103,7 +105,7 @@ private fun MyApplicationTheme(
     val colors =
         if (darkTheme) {
             darkColorScheme(
-                primary = Color(0xFFBB86FC),
+                primary = YralColors.Pink300,
                 secondary = Color(0xFF03DAC5),
                 tertiary = Color(0xFF3700B3),
                 primaryContainer = YralColors.PrimaryContainer,
@@ -111,7 +113,7 @@ private fun MyApplicationTheme(
             )
         } else {
             lightColorScheme(
-                primary = Color(0xFF6200EE),
+                primary = YralColors.Pink300,
                 secondary = Color(0xFF03DAC5),
                 tertiary = Color(0xFF3700B3),
                 primaryContainer = YralColors.PrimaryContainer,

@@ -13,6 +13,7 @@ import AVFoundation
 import Lottie
 import Combine
 
+// swiftlint: disable type_body_length
 protocol FeedsCellProtocol: AnyObject {
   func shareButtonTapped(index: Int)
   func deleteButtonTapped(index: Int)
@@ -143,6 +144,12 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   override init(frame: CGRect) {
     super.init(frame: frame)
     setupUI()
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(handleFirstFrameReady(_:)),
+      name: .feedItemReady,
+      object: nil
+    )
   }
 
   required init?(coder: NSCoder) {
@@ -225,6 +232,11 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
       overlayView!.trailingAnchor.constraint(equalTo: contentView.trailingAnchor)
     ])
     overlayView?.isHidden = true
+  }
+  
+  @objc private func handleFirstFrameReady(_ note: Notification) {
+    guard let idx = note.userInfo?["index"] as? Int, idx == index else { return }
+    playerLayer?.isHidden = false
   }
 
   private func setupSmileyGameView() {
@@ -361,24 +373,35 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
 
   // swiftlint: disable function_parameter_count
   func configure(
-    withPlayer player: AVPlayer,
+    withPlayer feedsPlayer: FeedsPlayer,
     feedInfo: FeedCellInfo,
     profileInfo: ProfileInfoView.ProfileInfo,
     smileyGame: SmileyGame?,
     coins: Int,
     index: Int
   ) {
+    playerContainerView.sd_cancelCurrentImageLoad()
+    playerContainerView.image = Constants.playerPlaceHolderImage
+
     if let lastThumbnailImage = feedInfo.lastThumbnailImage {
       playerContainerView.image = lastThumbnailImage
     } else if let thumbnailURL = feedInfo.thumbnailURL {
       loadImage(with: thumbnailURL, placeholderImage: Constants.playerPlaceHolderImage, on: playerContainerView)
-    } else {
-      playerContainerView.image = Constants.defaultProfileImage
     }
 
     playerLayer?.removeFromSuperlayer()
+    playerLayer?.player = nil
+    playerLayer = nil
+    guard let player = feedsPlayer.player as? AVQueuePlayer else { return }
     let layer = AVPlayerLayer(player: player)
     layer.videoGravity = .resize
+
+    let isCurrentReel = index == feedsPlayer.currentIndex
+    let itemReady = player.currentItem?.status == .readyToPlay
+    let alreadyPlaying = player.timeControlStatus == .playing
+
+    layer.isHidden = !(isCurrentReel && alreadyPlaying && itemReady)
+
     playerContainerView.layer.addSublayer(layer)
     playerLayer = layer
     playerLayer?.frame = contentView.bounds
@@ -414,6 +437,11 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   override func prepareForReuse() {
     super.prepareForReuse()
     playerLayer?.player = nil
+    playerLayer?.removeFromSuperlayer()
+    playerLayer = nil
+    playerContainerView.sd_cancelCurrentImageLoad()
+    playerContainerView.image = nil
+
     profileInfoView.coinsView.resetUIState()
     lottieView.stop()
     smileyGameScoreLabel.transform = .identity
@@ -476,3 +504,4 @@ extension FeedsCell {
     static let scoreLabelDuration = 2.0
   }
 }
+// swiftlint: enable type_body_length

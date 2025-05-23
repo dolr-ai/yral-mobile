@@ -17,11 +17,10 @@ extension FeedsViewController {
       let cell = collectionView.dequeueReusableCell(FeedsCell.self, for: indexPath)
       cell.delegate = self
       let lastDisplayedThumbnailPath = self.lastDisplayedThumbnailPath[feed.videoID] ?? ""
-
-      if let player = feedsPlayer.player as? AVQueuePlayer,
-         indexPath.row == self.feedsPlayer.currentIndex {
+      // swiftlint: disable force_cast
+      if indexPath.row == self.feedsPlayer.currentIndex {
         cell.configure(
-          withPlayer: player,
+          withPlayer: feedsPlayer as! FeedsPlayer,
           feedInfo: FeedsCell.FeedCellInfo(
             thumbnailURL: feed.thumbnail,
             likeCount: feed.likeCount,
@@ -45,7 +44,7 @@ extension FeedsViewController {
         )
       } else {
         cell.configure(
-          withPlayer: AVPlayer(),
+          withPlayer: feedsPlayer as! FeedsPlayer,
           feedInfo: FeedsCell.FeedCellInfo(
             thumbnailURL: feed.thumbnail,
             likeCount: feed.likeCount,
@@ -68,6 +67,7 @@ extension FeedsViewController {
           index: indexPath.item
         )
       }
+      // swiftlint: enable force_cast
       return cell
     }
     return dataSource

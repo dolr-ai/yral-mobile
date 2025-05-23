@@ -51,56 +51,72 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
       .first ?? UIWindow()
   }
 
+  // swiftlint: disable function_body_length
   @MainActor
   func signInWithSocial(provider: SocialProvider) async throws {
+    let oldState = stateSubject.value
     stateSubject.value = .authenticating
-    try await recordThrowingOperation {
-      pendingAuthState = UUID().uuidString
-      let verifier  = PKCE.generateCodeVerifier()
-      let challenge = PKCE.codeChallenge(for: verifier)
-      let redirect  = Constants.redirectURI
-      let authURL   = try getAuthURL(provider: provider,
-                                     redirect: redirect,
-                                     challenge: challenge,
-                                     loginHint: nil)
+    do {
+      try await recordThrowingOperation {
+        pendingAuthState = UUID().uuidString
+        let verifier = PKCE.generateCodeVerifier()
+        let challenge = PKCE.codeChallenge(for: verifier)
+        let redirect = Constants.redirectURI
+        let authURL = try getAuthURL(provider: provider,
+                                       redirect: redirect,
+                                       challenge: challenge,
+                                       loginHint: nil)
 
-      let callbackURL: URL = try await withCheckedThrowingContinuation { cont in
-        let session = ASWebAuthenticationSession(
-          url: authURL,
-          callbackURLScheme: redirect.components(separatedBy: "://")[0]
-        ) { url, error in
-          if let error = error {
-            cont.resume(throwing: error)
-          } else if let url = url {
-            cont.resume(returning: url)
-          } else {
-            cont.resume(throwing: AuthError.authenticationFailed("No callback URL"))
+        let callbackURL: URL = try await withCheckedThrowingContinuation { continuation in
+          let session = ASWebAuthenticationSession(
+            url: authURL,
+            callbackURLScheme: redirect.components(separatedBy: "://")[0]
+          ) { url, error in
+            if let error = error {
+              continuation.resume(throwing: error)
+            } else if let url = url {
+              continuation.resume(returning: url)
+            } else {
+              continuation.resume(throwing: AuthError.authenticationFailed("No callback URL"))
+            }
+          }
+          session.presentationContextProvider = self
+          session.prefersEphemeralWebBrowserSession = true
+          session.start()
+        }
+
+        let comps = URLComponents(url: callbackURL, resolvingAgainstBaseURL: false)
+        guard
+          let state = comps?.queryItems?.first(where: { $0.name == "state" })?.value,
+          state == pendingAuthState,
+          let code  = comps?.queryItems?.first(where: { $0.name == "code" })?.value
+        else {
+          throw AuthError.authenticationFailed("Invalid callback parameters")
+        }
+
+        let token = try await exchangeCodeForTokens(
+          code: code,
+          verifier: verifier,
+          redirectURI: redirect
+        )
+        try storeTokens(token)
+        try await processDelegatedIdentity(from: token, type: .permanent)
+        UserDefaultsManager.shared.set(true, for: .userDefaultsLoggedIn)
+        guard let canisterPrincipalString = self.canisterPrincipalString else { return }
+        Task {
+          do {
+            try await updateSession(canisterID: canisterPrincipalString)
+          } catch {
+            crashReporter.recordException(error)
           }
         }
-        session.presentationContextProvider     = self
-        session.prefersEphemeralWebBrowserSession = true
-        session.start()
       }
-
-      let comps = URLComponents(url: callbackURL, resolvingAgainstBaseURL: false)
-      guard
-        let state = comps?.queryItems?.first(where: { $0.name == "state" })?.value,
-        state == pendingAuthState,
-        let code  = comps?.queryItems?.first(where: { $0.name == "code" })?.value
-      else {
-        throw AuthError.authenticationFailed("Invalid callback parameters")
-      }
-
-      let token = try await exchangeCodeForTokens(
-        code: code,
-        verifier: verifier,
-        redirectURI: redirect
-      )
-      try storeTokens(token)
-      try await processDelegatedIdentity(from: token, type: .permanent)
-      UserDefaultsManager.shared.set(true, for: .userDefaultsLoggedIn)
+    } catch {
+      stateSubject.value = oldState
+      throw error
     }
   }
+  // swiftlint: enable function_body_length
 
   private func getAuthURL(
     provider: SocialProvider,
@@ -151,7 +167,7 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
     return try JSONDecoder().decode(TokenResponse.self, from: data)
   }
 
-  func decodeClaimsAccessToken(from jwt: String) throws -> TokenClaimsDTO {
+  func decodeTokenClaims(from jwt: String) throws -> TokenClaimsDTO {
     let parts = jwt.split(separator: ".")
     guard parts.count == 3 else {
       throw AuthError.authenticationFailed("Malformed JWT")
@@ -168,6 +184,31 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
     return try JSONDecoder().decode(TokenClaimsDTO.self, from: data)
   }
 
+  func updateSession(canisterID: String) async throws {
+    let oldState = stateSubject.value
+    do {
+      try await recordThrowingOperation {
+        guard let accessTokenData = try KeychainHelper.retrieveData(for: Constants.keychainAccessToken),
+              let accessTokenString = String(data: accessTokenData, encoding: .utf8),
+              let url = URL(string: Constants.yralMetaDataBaseURLString) else { return }
+        let body = Data("{}".utf8)
+        let endpoint = Endpoint(
+          http: "update_session_as_registered",
+          baseURL: url,
+          path: Constants.sessionRegistrationPath + canisterID,
+          method: .post,
+          headers: [
+            "authorization": "Bearer \(accessTokenString)",
+            "Content-Type": "application/json"
+          ],
+          body: body
+        )
+        try await networkService.performRequest(for: endpoint)
+      }
+    } catch {
+      stateSubject.value = oldState
+    }
+  }
 }
 
 extension DefaultAuthClient {
@@ -178,9 +219,12 @@ extension DefaultAuthClient {
     static let tokenPath = "/oauth/token"
     static let keychainIdentity = "yral.delegatedIdentity"
     static let keychainAccessToken = "yral.accessToken"
+    static let keychainIDToken = "yral.idToken"
     static let keychainRefreshToken = "yral.refreshToken"
     static let keychainTokenExpiryDateKey = "keychainTokenExpiryDate"
     static let temporaryIdentityExpirySecond: UInt64 = 3600
     static let keychainDeletedVideosKey = "keychainDeletedVideosKey"
+    static let yralMetaDataBaseURLString = "https://yral-metadata.fly.dev"
+    static let sessionRegistrationPath = "/update_session_as_registered/"
   }
 }

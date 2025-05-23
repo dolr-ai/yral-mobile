@@ -18,22 +18,27 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 
 @Composable
 fun YralButton(
+    modifier: Modifier = Modifier,
     text: String,
-    textColor: Color = YralColors.NeutralBlack,
+    textStyle: TextStyle? = null,
     backgroundColor: Color = Color.White,
+    borderWidth: Dp = 0.75.dp,
+    borderColor: Color = YralColors.buttonBorderColor,
     icon: Int? = null,
     onClick: () -> Unit,
 ) {
     Row(
         modifier =
-            Modifier
+            modifier
                 .fillMaxWidth()
                 .height(45.dp)
                 .background(
@@ -44,15 +49,11 @@ fun YralButton(
                     spotColor = YralColors.shadowSpotColor,
                     ambientColor = YralColors.shadowAmbientColor,
                 ).border(
-                    width = 0.75.dp,
-                    color = YralColors.buttonBorderColor,
+                    width = borderWidth,
+                    color = borderColor,
                     shape = RoundedCornerShape(size = 8.dp),
-                ).padding(
-                    start = 69.dp,
-                    top = 11.dp,
-                    end = 69.dp,
-                    bottom = 11.dp,
-                ).clickable {
+                ).padding(all = 10.dp)
+                .clickable {
                     onClick()
                 },
         horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
@@ -65,11 +66,20 @@ fun YralButton(
                 contentScale = ContentScale.None,
             )
         }
+        val defaultStyle =
+            LocalAppTopography
+                .current
+                .mdBold
+                .copy(
+                    color = YralColors.NeutralBlack,
+                    textAlign = TextAlign.Center,
+                )
         Text(
             text = text,
-            style = LocalAppTopography.current.mdBold,
-            color = textColor,
-            textAlign = TextAlign.Center,
+            style =
+                textStyle?.let {
+                    defaultStyle.plus(it)
+                } ?: defaultStyle,
         )
     }
 }

@@ -30,7 +30,8 @@ final class FeedDIContainer {
     FeedsViewControllerWrapper(
       feedsViewController: FeedsViewController(
         viewModel: makeFeedsViewModel(),
-        session: dependencies.session
+        session: dependencies.session,
+        crashReporter: dependencies.crashReporter
       ),
       showFeeds: showFeeds
     )
@@ -39,7 +40,8 @@ final class FeedDIContainer {
   func makeFeedsViewController() -> FeedsViewController {
     FeedsViewController(
       viewModel: makeFeedsViewModel(),
-      session: dependencies.session
+      session: dependencies.session,
+      crashReporter: dependencies.crashReporter
     )
   }
 

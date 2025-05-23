@@ -213,7 +213,6 @@ extension FeedsViewController: FeedsPlayerProtocol {
   }
 
   func loginTapped(provider: SocialProvider) {
-    self.activityIndicator.startAnimating(in: self.view)
     Task {
       await self.viewModel.socialSignIn(request: provider)
     }
