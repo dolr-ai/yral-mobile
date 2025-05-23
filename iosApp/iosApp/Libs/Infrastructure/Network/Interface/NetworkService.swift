@@ -8,9 +8,9 @@
 import Foundation
 
 protocol NetworkService {
-  func performRequest(for endPoint: Endpoint) async throws -> Data
-  func performRequest<T: Decodable>(for endPoint: Endpoint, decodeAs type: T.Type) async throws -> T
-  func performMultipartRequestWithProgress(
+  @discardableResult func performRequest(for endPoint: Endpoint) async throws -> Data
+  @discardableResult func performRequest<T: Decodable>(for endPoint: Endpoint, decodeAs type: T.Type) async throws -> T
+  @discardableResult func performMultipartRequestWithProgress(
     for endpoint: Endpoint,
     fileURL: URL,
     fileKey: String,

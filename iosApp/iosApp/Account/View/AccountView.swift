@@ -15,7 +15,7 @@ struct AccountView: View {
   @State private var showLoginButton: Bool = false
   @State private var showSignupSheet: Bool = false
   @State private var showSignupFailureSheet: Bool = false
-  @State private var isSigningUp = false
+  @State private var loadingProvider: SocialProvider?
   @State private var isLoggingOut = false
   @State private var showDelete = false
   @State private var isDeleting = false
@@ -81,10 +81,10 @@ struct AccountView: View {
         guard let event = event else { return }
         switch event {
         case .socialSignInSuccess:
-          isSigningUp = false
+          loadingProvider = nil
           showSignupSheet = false
         case .socialSignInFailure:
-          isSigningUp = false
+          loadingProvider = nil
           showSignupSheet = false
           showSignupFailureSheet = true
         case .logoutSuccess, .logoutFailure:
@@ -113,7 +113,7 @@ struct AccountView: View {
       ZStack(alignment: .center) {
         SignupSheet(
           onComplete: { showSignupSheet = false },
-          isSigningUp: $isSigningUp,
+          loadingProvider: $loadingProvider,
           delegate: self
         )
         .background( ClearBackgroundView() )
@@ -157,14 +157,14 @@ extension AccountView: UserInfoViewProtocol {
 
 extension AccountView: SignupSheetProtocol {
   func signupwithGoogle() {
-    isSigningUp = true
+    loadingProvider = .google
     Task {
       await viewModel.socialSignIn(request: .google)
     }
   }
 
   func signupwithApple() {
-    isSigningUp = true
+    loadingProvider = .apple
     Task {
       await viewModel.socialSignIn(request: .apple)
     }
