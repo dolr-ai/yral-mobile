@@ -14,6 +14,12 @@ class FirebaseService: FirebaseServiceProtocol {
   private let database = Firestore.firestore()
 
   func signInAnonymously() async throws {
+    if let hasLaunchedAppBefore = (UserDefaultsManager.shared.get(for: DefaultsKey.hasLaunchedAppBefore) ?? false),
+    !hasLaunchedAppBefore {
+      try signOut()
+      UserDefaultsManager.shared.set(true, for: DefaultsKey.hasLaunchedAppBefore)
+    }
+
     if Auth.auth().currentUser == nil {
       try await Auth.auth().signInAnonymously()
     }
