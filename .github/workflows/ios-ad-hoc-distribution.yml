@@ -5,9 +5,10 @@ on:
     branches:
       - 'develop'
     types:
+      - opened
       - ready_for_review
       - synchronize
-
+      - reopened
 jobs:
   build-ad-hoc-staging:
     if: ${{ github.event.pull_request.draft == false }}
