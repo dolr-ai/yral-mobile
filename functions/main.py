@@ -234,8 +234,14 @@ def cast_vote(request: Request):
                 counts[sm] += n
 
         max_votes = max(counts.values())
-        winner_id = min(sm for sm, n in counts.items() if n == max_votes)
-        outcome   = "WIN" if sid == winner_id else "LOSS"
+        leaders = [sm for sm, v in counts.items() if v == max_votes]
+
+        if len(leaders) == 1:
+            winner_id = leaders[0]
+            outcome = "WIN" if sid == winner_id else "LOSS"
+        else:
+            winner_id = None
+            outcome = "LOSS"
 
         # 5. coin mutation ───────────────────────────────────────────────
         delta  = WIN_REWARD if outcome == "WIN" else LOSS_PENALTY

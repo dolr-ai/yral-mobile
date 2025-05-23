@@ -39,6 +39,7 @@ extension FeedsViewController {
             coins: session.state.coins
           ),
           smileyGame: feed.smileyGame,
+          coins: session.state.coins,
           index: indexPath.item
         )
       } else {
@@ -62,6 +63,7 @@ extension FeedsViewController {
             coins: session.state.coins
           ),
           smileyGame: feed.smileyGame,
+          coins: session.state.coins,
           index: indexPath.item
         )
       }
@@ -137,11 +139,11 @@ extension FeedsViewController {
     session.update(coins: response.coins)
 
     cell.startSmileyGamResultAnimation(for: response) { [weak self] in
-      items[index].smileyGame?.result = response
+      items[index].smileyGame?.state = .played(response)
 
       snapshot.deleteItems(snapshot.itemIdentifiers)
       snapshot.appendItems(items)
-      self?.feedsDataSource.apply(snapshot, animatingDifferences: false)
+      self?.feedsDataSource.apply(snapshot, animatingDifferences: true)
     }
   }
 

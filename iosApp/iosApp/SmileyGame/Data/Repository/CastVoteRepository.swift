@@ -24,11 +24,7 @@ class CastVoteRepository: CastVoteRepositoryProtocol {
       return .failure(.network(.invalidRequest))
     }
 
-    var httpHeaders = [
-      "Content-Type": "application/json"
-    ]
-    var httpBody = [String: String]()
-
+    var httpHeaders = ["Content-Type": "application/json"]
     do {
       guard let userIDToken = try await firebaseService.fetchUserIDToken() else {
         return .failure(.unknown("Failed to fetch user ID token"))
@@ -38,9 +34,10 @@ class CastVoteRepository: CastVoteRepositoryProtocol {
       return .failure(.firebaseError(error))
     }
 
-    httpBody["video_id"] = request.videoID
-    httpBody["smiley_id"] = request.smileyID
-    httpBody["principal_id"] = authClient.userPrincipalString ?? ""
+    guard let principalID = authClient.userPrincipalString else {
+      return .failure(.unknown("Failed to fetch princiapl ID"))
+    }
+    let httpBody = request.addingPrincipal(principalID)
 
     do {
       let response = try await httpService.performRequest(
@@ -50,7 +47,7 @@ class CastVoteRepository: CastVoteRepositoryProtocol {
           path: "cast_vote",
           method: .post,
           headers: httpHeaders,
-          body: try? JSONSerialization.data(withJSONObject: httpBody)
+          body: try? JSONEncoder().encode(httpBody)
         ),
         decodeAs: SmileyGameResultDTO.self
       )

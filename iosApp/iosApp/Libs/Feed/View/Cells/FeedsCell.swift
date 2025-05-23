@@ -33,6 +33,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   private let userDefaults = UserDefaults.standard
   private static let resultBottomSheetKey = "ResultBottomSheetKey"
   private var smileyGame: SmileyGame?
+  private var coins: Int?
 
   private var showResultBottomSheet: Bool {
     userDefaults.integer(forKey: Self.resultBottomSheetKey) < Int.one ? true : false
@@ -232,14 +233,18 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     ])
     overlayView?.isHidden = true
   }
-
+  
   @objc private func handleFirstFrameReady(_ note: Notification) {
     guard let idx = note.userInfo?["index"] as? Int, idx == index else { return }
     playerLayer?.isHidden = false
   }
 
   private func setupSmileyGameView() {
-    if let game = smileyGame, game.smileys.count > 0 {
+    guard (coins ?? 0) >= SmileyGameConfig.shared.config.lossPenalty else {
+      return
+    }
+
+    if let game = smileyGame, game.config.smileys.count > 0 {
       let smileyGameView = SmileyGameView(
         smileyGame: game,
         smileyTapped: { [weak self] smiley in
@@ -311,7 +316,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   }
 
   func startSmileyGamResultAnimation(for result: SmileyGameResultResponse, completion: @escaping () -> Void) {
-    AudioPlayer.shared.play(named: Constants.winSound)
+    AudioPlayer.shared.play(named: result.outcome == "WIN" ? Constants.winSound : Constants.lossSound)
     profileInfoView.coinsView.updateCoins(by: result.coinDelta)
     if showResultBottomSheet {
       let existingCount = userDefaults.integer(forKey: Self.resultBottomSheetKey)
@@ -366,11 +371,13 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     delegate?.reportButtonTapped(index: index)
   }
 
+  // swiftlint: disable function_parameter_count
   func configure(
     withPlayer feedsPlayer: FeedsPlayer,
     feedInfo: FeedCellInfo,
     profileInfo: ProfileInfoView.ProfileInfo,
     smileyGame: SmileyGame?,
+    coins: Int,
     index: Int
   ) {
     playerContainerView.sd_cancelCurrentImageLoad()
@@ -402,6 +409,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     self.index = index
     self.feedType = feedInfo.feedType
     self.smileyGame = smileyGame
+    self.coins = coins
 
     if feedInfo.feedType == .otherUsers {
       profileInfoView.set(data: profileInfo)
@@ -419,6 +427,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     }
     signupOverlayHost.view.isHidden = !feedInfo.showLoginOverlay
   }
+  // swiftlint: enable function_parameter_count
 
   override func layoutSubviews() {
     super.layoutSubviews()
@@ -487,6 +496,7 @@ extension FeedsCell {
     static let smileyGameHeight = 64.0
     static let smileyTapDuration = 0.2
     static let winSound = "smiley_game_win"
+    static let lossSound = "smiley_game_loss"
     static let scoreLabelWinColor = YralColor.green300.uiColor.withAlphaComponent(0.3)
     static let scoreLabelLooseColor = YralColor.red300.uiColor.withAlphaComponent(0.3)
     static let resultAnimationDuration = 2.5
