@@ -60,13 +60,8 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
         let unblockedFeeds = self.filteredFeeds.filter { !self.blockedPrincipalIDSet.contains($0.principalID) }
         guard !unblockedFeeds.isEmpty else { return }
         self.feedvideoIDSet.formUnion(unblockedFeeds.map { $0.videoID })
-        let modifiedUnblockedFeeds = unblockedFeeds.map { item in
-          var modified = item
-          modified.smileyGame = SmileyGame(smileys: self.smileys, result: nil)
-          return modified
-        }
-        self.currentFeeds += modifiedUnblockedFeeds
-        self.unifiedState = .success(feeds: modifiedUnblockedFeeds)
+        self.currentFeeds += unblockedFeeds
+        self.unifiedState = .success(feeds: unblockedFeeds)
       }
       .store(in: &cancellables)
   }
