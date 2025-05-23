@@ -35,14 +35,8 @@
 		1050349F2DD5E33000571B4E /* SmileyConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1050349D2DD5E32D00571B4E /* SmileyConfig.swift */; };
 		105034A12DD5E3D500571B4E /* SmileyConfigDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105034A02DD5E3D100571B4E /* SmileyConfigDTO.swift */; };
 		105034A22DD5E3D500571B4E /* SmileyConfigDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105034A02DD5E3D100571B4E /* SmileyConfigDTO.swift */; };
-		105034A42DD5E4E500571B4E /* SmileyRepositoryProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105034A32DD5E4D900571B4E /* SmileyRepositoryProtocol.swift */; };
-		105034A52DD5E4E500571B4E /* SmileyRepositoryProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105034A32DD5E4D900571B4E /* SmileyRepositoryProtocol.swift */; };
 		105034A72DD5E50D00571B4E /* SmileyConfigError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105034A62DD5E50800571B4E /* SmileyConfigError.swift */; };
 		105034A82DD5E50D00571B4E /* SmileyConfigError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105034A62DD5E50800571B4E /* SmileyConfigError.swift */; };
-		105034AA2DD5E59800571B4E /* SmileyUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105034A92DD5E58100571B4E /* SmileyUseCase.swift */; };
-		105034AB2DD5E59800571B4E /* SmileyUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105034A92DD5E58100571B4E /* SmileyUseCase.swift */; };
-		105034AD2DD5E68D00571B4E /* SmileyRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105034AC2DD5E67A00571B4E /* SmileyRepository.swift */; };
-		105034AE2DD5E68D00571B4E /* SmileyRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105034AC2DD5E67A00571B4E /* SmileyRepository.swift */; };
 		105034B02DD62DB900571B4E /* CastVote.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105034AF2DD62DB400571B4E /* CastVote.swift */; };
 		105034B12DD62DB900571B4E /* CastVote.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105034AF2DD62DB400571B4E /* CastVote.swift */; };
 		105034B32DD630DB00571B4E /* CastVoteRepositoryProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105034B22DD630D300571B4E /* CastVoteRepositoryProtocol.swift */; };
@@ -63,6 +57,10 @@
 		105036EA2DDB287700571B4E /* ExchangePrincipal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105036E82DDB287700571B4E /* ExchangePrincipal.swift */; };
 		105036F62DDB289D00571B4E /* ExchangePrincipalResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105036F52DDB289D00571B4E /* ExchangePrincipalResponse.swift */; };
 		105036F82DDB289D00571B4E /* ExchangePrincipalResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105036F52DDB289D00571B4E /* ExchangePrincipalResponse.swift */; };
+		105037642DDC5C4700571B4E /* smiley_game_loss.caf in Resources */ = {isa = PBXBuildFile; fileRef = 105037632DDC5C4700571B4E /* smiley_game_loss.caf */; };
+		105037652DDC5C4700571B4E /* smiley_game_loss.caf in Resources */ = {isa = PBXBuildFile; fileRef = 105037632DDC5C4700571B4E /* smiley_game_loss.caf */; };
+		105037682DDC5DB500571B4E /* SmileyGameConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105037672DDC5DB000571B4E /* SmileyGameConfig.swift */; };
+		105037692DDC5DB500571B4E /* SmileyGameConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105037672DDC5DB000571B4E /* SmileyGameConfig.swift */; };
 		10512A432DA666AD00114BAA /* YralPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10512A422DA666A900114BAA /* YralPlayer.swift */; };
 		10512A442DA666AD00114BAA /* YralPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10512A422DA666A900114BAA /* YralPlayer.swift */; };
 		10512A522DA795A800114BAA /* YralQueuePlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10512A512DA7959D00114BAA /* YralQueuePlayer.swift */; };
@@ -557,10 +555,7 @@
 		105034982DD4C9B600571B4E /* smiley_tap.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = smiley_tap.caf; sourceTree = "<group>"; };
 		1050349D2DD5E32D00571B4E /* SmileyConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyConfig.swift; sourceTree = "<group>"; };
 		105034A02DD5E3D100571B4E /* SmileyConfigDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyConfigDTO.swift; sourceTree = "<group>"; };
-		105034A32DD5E4D900571B4E /* SmileyRepositoryProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyRepositoryProtocol.swift; sourceTree = "<group>"; };
 		105034A62DD5E50800571B4E /* SmileyConfigError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyConfigError.swift; sourceTree = "<group>"; };
-		105034A92DD5E58100571B4E /* SmileyUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyUseCase.swift; sourceTree = "<group>"; };
-		105034AC2DD5E67A00571B4E /* SmileyRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyRepository.swift; sourceTree = "<group>"; };
 		105034AF2DD62DB400571B4E /* CastVote.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CastVote.swift; sourceTree = "<group>"; };
 		105034B22DD630D300571B4E /* CastVoteRepositoryProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CastVoteRepositoryProtocol.swift; sourceTree = "<group>"; };
 		105034B52DD6316500571B4E /* CastVoteRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CastVoteRepository.swift; sourceTree = "<group>"; };
@@ -569,6 +564,8 @@
 		105034BE2DD636C800571B4E /* CastVoteUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CastVoteUseCase.swift; sourceTree = "<group>"; };
 		105036E82DDB287700571B4E /* ExchangePrincipal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExchangePrincipal.swift; sourceTree = "<group>"; };
 		105036F52DDB289D00571B4E /* ExchangePrincipalResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExchangePrincipalResponse.swift; sourceTree = "<group>"; };
+		105037632DDC5C4700571B4E /* smiley_game_loss.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = smiley_game_loss.caf; sourceTree = "<group>"; };
+		105037672DDC5DB000571B4E /* SmileyGameConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameConfig.swift; sourceTree = "<group>"; };
 		10512A422DA666A900114BAA /* YralPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralPlayer.swift; sourceTree = "<group>"; };
 		10512A512DA7959D00114BAA /* YralQueuePlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralQueuePlayer.swift; sourceTree = "<group>"; };
 		107C608F2DB78093006FC467 /* UIView+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIView+Extensions.swift"; sourceTree = "<group>"; };
@@ -874,10 +871,19 @@
 		105034902DD4B75B00571B4E /* Audio */ = {
 			isa = PBXGroup;
 			children = (
+				105037632DDC5C4700571B4E /* smiley_game_loss.caf */,
 				105034972DD4C9B600571B4E /* smiley_game_win.caf */,
 				105034982DD4C9B600571B4E /* smiley_tap.caf */,
 			);
 			path = Audio;
+			sourceTree = "<group>";
+		};
+		105037662DDC5D4900571B4E /* Helpers */ = {
+			isa = PBXGroup;
+			children = (
+				105037672DDC5DB000571B4E /* SmileyGameConfig.swift */,
+			);
+			path = Helpers;
 			sourceTree = "<group>";
 		};
 		10512A402DA6666B00114BAA /* Interface */ = {
@@ -902,6 +908,7 @@
 		107C60922DB7AA86006FC467 /* SmileyGame */ = {
 			isa = PBXGroup;
 			children = (
+				105037662DDC5D4900571B4E /* Helpers */,
 				107C60AD2DBF43EB006FC467 /* DI */,
 				107C60AC2DBF43DA006FC467 /* Data */,
 				107C60AB2DBF43D5006FC467 /* Domain */,
@@ -978,7 +985,6 @@
 			isa = PBXGroup;
 			children = (
 				105034BE2DD636C800571B4E /* CastVoteUseCase.swift */,
-				105034A92DD5E58100571B4E /* SmileyUseCase.swift */,
 				107C60B32DBF483D006FC467 /* SmileyGameRuleUseCase.swift */,
 			);
 			path = UseCase;
@@ -988,7 +994,6 @@
 			isa = PBXGroup;
 			children = (
 				105034B22DD630D300571B4E /* CastVoteRepositoryProtocol.swift */,
-				105034A32DD5E4D900571B4E /* SmileyRepositoryProtocol.swift */,
 				107C60B72DBF49CE006FC467 /* SmileyGameRuleRepositoryProtocol.swift */,
 			);
 			path = Interface;
@@ -998,7 +1003,6 @@
 			isa = PBXGroup;
 			children = (
 				105034B52DD6316500571B4E /* CastVoteRepository.swift */,
-				105034AC2DD5E67A00571B4E /* SmileyRepository.swift */,
 				107C60BB2DBF4A69006FC467 /* SmileyGameRuleRepository.swift */,
 			);
 			path = Repository;
@@ -2418,6 +2422,7 @@
 				1050341F2DD4955C00571B4E /* smiley_game_surprise.json in Resources */,
 				105034202DD4955C00571B4E /* smiley_game_heart.json in Resources */,
 				105034212DD4955C00571B4E /* smiley_game_fire.json in Resources */,
+				105037642DDC5C4700571B4E /* smiley_game_loss.caf in Resources */,
 				105034222DD4955C00571B4E /* smiley_game_laugh.json in Resources */,
 				105034232DD4955C00571B4E /* smiley_game_rocket.json in Resources */,
 				AC32E41B2D270097001DDA43 /* KumbhSans-VariableFont_YOPQ,wght.ttf in Resources */,
@@ -2460,6 +2465,7 @@
 				1050341A2DD4955C00571B4E /* smiley_game_surprise.json in Resources */,
 				1050341B2DD4955C00571B4E /* smiley_game_heart.json in Resources */,
 				1050341C2DD4955C00571B4E /* smiley_game_fire.json in Resources */,
+				105037652DDC5C4700571B4E /* smiley_game_loss.caf in Resources */,
 				1050341D2DD4955C00571B4E /* smiley_game_laugh.json in Resources */,
 				1050341E2DD4955C00571B4E /* smiley_game_rocket.json in Resources */,
 				AC32E40F2D270097001DDA43 /* KumbhSans-VariableFont_YOPQ,wght.ttf in Resources */,
@@ -2588,6 +2594,7 @@
 				105036F62DDB289D00571B4E /* ExchangePrincipalResponse.swift in Sources */,
 				ACB46A732D105AF4002E200C /* CollectionView+Extensions.swift in Sources */,
 				107C60C32DBF4CE2006FC467 /* FirebaseService.swift in Sources */,
+				105037682DDC5DB500571B4E /* SmileyGameConfig.swift in Sources */,
 				ACB46A432D0ECBB3002E200C /* ml_feed.grpc.swift in Sources */,
 				107C60CB2DBF7B19006FC467 /* SmileyGameRuleViewModel.swift in Sources */,
 				AC49605B2D2C4BF7008D59D9 /* FetchMoreFeedsUseCase.swift in Sources */,
@@ -2806,6 +2813,7 @@
 				105036F82DDB289D00571B4E /* ExchangePrincipalResponse.swift in Sources */,
 				ACB46A742D105AF4002E200C /* CollectionView+Extensions.swift in Sources */,
 				107C60C22DBF4CE2006FC467 /* FirebaseService.swift in Sources */,
+				105037692DDC5DB500571B4E /* SmileyGameConfig.swift in Sources */,
 				ACB46A402D0ECBB3002E200C /* ml_feed.grpc.swift in Sources */,
 				107C60CC2DBF7B19006FC467 /* SmileyGameRuleViewModel.swift in Sources */,
 				AC49605C2D2C4BF7008D59D9 /* FetchMoreFeedsUseCase.swift in Sources */,

@@ -8,9 +8,24 @@
 
 import Foundation
 
-struct CastVoteQuery {
+struct CastVoteQuery: Encodable {
   let videoID: String
   let smileyID: String
+  var principalID: String?
+
+  enum CodingKeys: String, CodingKey {
+    case videoID = "video_id"
+    case smileyID = "smiley_id"
+    case principalID = "principal_id"
+  }
+}
+
+extension CastVoteQuery {
+  func addingPrincipal(_ id: String) -> CastVoteQuery {
+    var copy = self
+    copy.principalID = id
+    return copy
+  }
 }
 
 struct SmileyGameResultDTO: Decodable {

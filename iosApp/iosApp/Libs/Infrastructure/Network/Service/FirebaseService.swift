@@ -68,4 +68,9 @@ class FirebaseService: FirebaseServiceProtocol {
     let snapshot = try await query.getDocuments()
     return try snapshot.documents.compactMap { try $0.data(as: T.self) }
   }
+
+  func documentExists(for path: String) async throws -> Bool {
+    let doc = database.document(path)
+    return try await doc.getDocument().exists
+  }
 }
