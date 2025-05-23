@@ -9,15 +9,23 @@
 import Foundation
 import Combine
 
+// swiftlint: disable type_body_length
 class FeedsRepository: FeedRepositoryProtocol {
   private let httpService: HTTPService
+  private let firebaseService: FirebaseServiceProtocol
   private let mlClient: MlFeed_MLFeedNIOClient
   private let authClient: AuthClient
   private let feedsUpdateSubject = PassthroughSubject<[FeedResult], Never>()
   var feedUpdates: AnyPublisher<[FeedResult], Never> { feedsUpdateSubject.eraseToAnyPublisher() }
 
-  init(httpService: HTTPService, mlClient: MlFeed_MLFeedNIOClient, authClient: AuthClient) {
+  init(
+    httpService: HTTPService,
+    firebaseService: FirebaseServiceProtocol,
+    mlClient: MlFeed_MLFeedNIOClient,
+    authClient: AuthClient
+  ) {
     self.httpService = httpService
+    self.firebaseService = firebaseService
     self.mlClient = mlClient
     self.authClient = authClient
   }
@@ -111,9 +119,16 @@ class FeedsRepository: FeedRepositoryProtocol {
     let identity = try self.authClient.generateNewDelegatedIdentity()
     let service = try Service(principal, identity)
     let result = try await service.get_individual_post_details_by_id(UInt64(feed.postID))
+    let voteExistsForSmileyGame = (try? await fetchSmileyGamePlayedStatus(for: result.video_uid().toString())) ?? false
+
     guard result.status().is_banned_due_to_user_reporting() == false else {
       throw FeedError.rustError(RustError.unknown("Post is banned"))
     }
+
+    guard !voteExistsForSmileyGame else {
+      throw FeedError.firebaseError("User has already voted for this video")
+    }
+
     let videoURL = URL(
       string: "\(Constants.cloudfarePrefix)\(result.video_uid().toString())\(Constants.cloudflareSuffix)"
     ) ?? URL(fileURLWithPath: "")
@@ -142,7 +157,7 @@ class FeedsRepository: FeedRepositoryProtocol {
       likeCount: Int(result.like_count()),
       isLiked: result.liked_by_me(),
       nsfwProbability: feed.nsfwProbability,
-      smileyGame: nil
+      smileyGame: SmileyGame(config: SmileyGameConfig.shared.config, state: .notPlayed)
     )
   }
 
@@ -258,7 +273,22 @@ class FeedsRepository: FeedRepositoryProtocol {
     }
     return try JSONDecoder().decode(SwiftDelegatedIdentityWire.self, from: data)
   }
+
+  private func fetchSmileyGamePlayedStatus(for videoID: String) async throws -> Bool {
+    guard let userPrincipalID = authClient.userPrincipalString else {
+      throw FeedError.unknown("User principal ID not found")
+    }
+
+    do {
+      let documentPath = "videos/\(videoID)/votes/\(userPrincipalID)"
+      let documentExists = try await firebaseService.documentExists(for: documentPath)
+      return documentExists
+    } catch {
+      throw FeedError.firebaseError(error.localizedDescription)
+    }
+  }
 }
+// swiftlint: enable type_body_length
 
 class CacheEndPoints {
   static func getGlobalCache(request: FeedRequestDTO) throws -> Endpoint {

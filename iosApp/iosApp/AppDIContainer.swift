@@ -62,34 +62,6 @@ import GRPC
     )
   }()
 
-  lazy var smileyConfigRepository: SmileyRepositoryProtocol = {
-    SmileyRepository(
-      firebaseService: FirebaseService()
-    )
-  }()
-
-  lazy var smileyConfigUseCase: SmileyUseCaseProtocol = {
-    SmileyUseCase(
-      repository: smileyConfigRepository,
-      crashReporter: crashReporter
-    )
-  }()
-
-  lazy var castVoteRepository: CastVoteRepositoryProtocol = {
-    CastVoteRepository(
-      firebaseService: FirebaseService(),
-      httpService: HTTPService(baseURLString: appConfiguration.firebaseBaseURLString),
-      authClient: authClient
-    )
-  }()
-
-  lazy var castVoteUseCase: CastVoteUseCaseProtocol = {
-    CastVoteUseCase(
-      castVoteRepository: castVoteRepository,
-      crashReporter: crashReporter
-    )
-  }()
-
   lazy var socialSignInUseCase: SocialSignInUseCaseProtocol = {
     SocialSignInUseCase(
       accountRepository: accountsRepository,
@@ -102,12 +74,19 @@ import GRPC
       dependencies: FeedDIContainer.Dependencies(
         mlfeedService: mlFeedClient,
         httpService: HTTPService(baseURLString: appConfiguration.offchainBaseURLString),
+        firebaseService: FirebaseService(),
         authClient: authClient,
         crashReporter: crashReporter,
         socialSignInUseCase: socialSignInUseCase,
         session: session,
-        smileyConfigUseCase: smileyConfigUseCase,
-        castVoteUseCase: castVoteUseCase
+        castVoteUseCase: CastVoteUseCase(
+          castVoteRepository: CastVoteRepository(
+            firebaseService: FirebaseService(),
+            httpService: HTTPService(baseURLString: appConfiguration.firebaseBaseURLString),
+            authClient: authClient
+          ),
+          crashReporter: crashReporter
+        )
       )
     )
   }

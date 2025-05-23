@@ -23,10 +23,9 @@ struct SmileyGameView: View {
 
   var body: some View {
     HStack(spacing: Constants.zero) {
-      if let result = smileyGame.result {
-        resultView(for: result)
-      } else {
-        ForEach(smileyGame.smileys, id: \.id) { smiley in
+      switch smileyGame.state {
+      case .notPlayed:
+        ForEach(smileyGame.config.smileys, id: \.id) { smiley in
           Image(smiley.imageName)
             .resizable()
             .frame(width: Constants.smileySize, height: Constants.smileySize)
@@ -60,10 +59,12 @@ struct SmileyGameView: View {
             }
             .padding(.vertical, Constants.smileyVerticalPadding)
 
-          if smiley.id != smileyGame.smileys.last?.id {
+          if smiley.id != smileyGame.config.smileys.last?.id {
             Spacer(minLength: Constants.smileySpacer)
           }
         }
+      case .played(let result):
+        resultView(for: result)
       }
     }
     .onReceive(initialStateSubscriber) { game in
@@ -133,17 +134,17 @@ struct SmileyGameView: View {
 
     DispatchQueue.main.asyncAfter(deadline: .now() + Constants.durationPointOne) {
       guard let id = selectedID,
-            let index = smileyGame.smileys.firstIndex(where: { $0.id == id })
+            let index = smileyGame.config.smileys.firstIndex(where: { $0.id == id })
       else {
         return
       }
 
-      smileyGame.smileys.move(fromOffsets: IndexSet(integer: index), toOffset: .zero)
+      smileyGame.config.smileys.move(fromOffsets: IndexSet(integer: index), toOffset: .zero)
       showWinnerOnly = true
     }
 
     DispatchQueue.main.asyncAfter(deadline: .now() + Constants.durationPointFour) {
-      smileyGame.result = result
+      smileyGame.state = .played(result)
     }
   }
 }

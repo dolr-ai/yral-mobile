@@ -10,9 +10,11 @@ import Foundation
 
 struct SmileyConfigDTO: Decodable {
   let availableSmileys: [SmileyDTO]
+  let lossPenalty: Int
 
   enum CodingKeys: String, CodingKey {
     case availableSmileys = "available_smileys"
+    case lossPenalty = "loss_penalty"
   }
 }
 
@@ -30,7 +32,7 @@ struct SmileyDTO: Decodable {
 
 extension SmileyConfigDTO {
   func toDomain() -> SmileyConfig {
-    return SmileyConfig(smileys: availableSmileys.map { $0.toDomain() })
+    return SmileyConfig(smileys: availableSmileys.map { $0.toDomain() }, lossPenalty: lossPenalty)
   }
 }
 

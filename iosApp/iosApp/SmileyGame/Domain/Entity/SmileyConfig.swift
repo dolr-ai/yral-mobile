@@ -8,8 +8,9 @@
 
 import Foundation
 
-struct SmileyConfig {
-  let smileys: [Smiley]
+struct SmileyConfig: Hashable {
+  var smileys: [Smiley]
+  let lossPenalty: Int
 }
 
 struct Smiley: Identifiable, Hashable {
@@ -18,7 +19,12 @@ struct Smiley: Identifiable, Hashable {
   let isActive: Bool
 }
 
+enum SmileyGameState: Hashable {
+  case notPlayed
+  case played(SmileyGameResultResponse)
+}
+
 struct SmileyGame: Hashable {
-  var smileys: [Smiley]
-  var result: SmileyGameResultResponse?
+  var config: SmileyConfig
+  var state: SmileyGameState
 }
