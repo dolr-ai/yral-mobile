@@ -475,7 +475,6 @@
 		AC09A9B02CDB775C009A39A4 /* SwiftBridgeCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftBridgeCore.swift; sourceTree = "<group>"; };
 		AC09A9F72CDB78B9009A39A4 /* libyral_mobile_swift_binding.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libyral_mobile_swift_binding.a; path = "../rust-agent/target/universal/debug/libyral_mobile_swift_binding.a"; sourceTree = "<group>"; };
 		AC09A9F92CDB7A5D009A39A4 /* SwiftBindings+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SwiftBindings+Extensions.swift"; sourceTree = "<group>"; };
-		AC09AA0A2CDB7F2A009A39A4 /* shared.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = shared.framework; path = "../shared/build/xcode-frameworks/Debug/iphoneos18.1/shared.framework"; sourceTree = "<group>"; };
 		AC09AA732CDD2107009A39A4 /* Data+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Data+Extensions.swift"; sourceTree = "<group>"; };
 		AC12B9D12D3809B7004E9EA9 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		AC1ACF972DB9161D001BDCFD /* AuthState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthState.swift; sourceTree = "<group>"; };
@@ -821,7 +820,6 @@
 			isa = PBXGroup;
 			children = (
 				10BA2E822DA64E6A00B6BE97 /* XCTest.framework */,
-				AC09AA0A2CDB7F2A009A39A4 /* shared.framework */,
 				AC09A9F72CDB78B9009A39A4 /* libyral_mobile_swift_binding.a */,
 			);
 			name = Frameworks;
