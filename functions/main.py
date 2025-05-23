@@ -71,6 +71,7 @@ def error_response(status: int, code: str, message: str):
 @https_fn.on_request(region="us-central1")
 def exchange_principal_id(request: Request):
     try:
+        # 1. validate & auth -------------------------------------------------
         if request.method != "POST":
             return error_response(405, "METHOD_NOT_ALLOWED", "POST required")
 
@@ -80,74 +81,93 @@ def exchange_principal_id(request: Request):
             return error_response(400, "INVALID_PRINCIPAL_ID",
                                   "principal_id must be 6–64 chars A-Z a-z 0-9 _-")
 
-        # ── verify caller’s ID token ───────────────────────────
         auth_header = request.headers.get("Authorization", "")
         if not auth_header.startswith("Bearer "):
-            return error_response(401, "MISSING_ID_TOKEN", "Authorization: Bearer <token> required")
+            return error_response(401, "MISSING_ID_TOKEN", "Authorization header required")
         caller_token = auth.verify_id_token(auth_header.split(" ", 1)[1])
-        old_uid = caller_token["uid"]
+        old_uid = caller_token["uid"]                      # could equal principal_id
 
-        # ── optional App Check ─────────────────────────────────
-        ac_token = request.headers.get("X-Firebase-AppCheck")
-        if ac_token:
+        # optional App Check
+        actok = request.headers.get("X-Firebase-AppCheck")
+        if actok:
             try:
-                app_check.verify_token(ac_token)
-            except Exception:   # noqa: BLE001
+                app_check.verify_token(actok)
+            except Exception:
                 return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
 
-        # ── Auth user: create if not present ──────────────────
+        # 2. ensure Auth user for principal_id ------------------------------
         try:
-            auth.get_user(principal_id)          # already exists
+            auth.get_user(principal_id)
         except auth.UserNotFoundError:
-            auth.create_user(uid=principal_id)   # first time
+            auth.create_user(uid=principal_id)
 
-        custom_token = auth.create_custom_token(principal_id).decode()
-
-        # ── Firestore profile & INIT ledger (idempotent) ──────
-        user_ref = db().document(f"users/{principal_id}")
-        ledger_ref = user_ref.collection("transactions").document(_tx_id())
+        # 3. Firestore merge / init -----------------------------------------
+        new_ref = db().document(f"users/{principal_id}")
+        old_ref = db().document(f"users/{old_uid}") if old_uid != principal_id else None
 
         @firestore.transactional
-        def _init_profile(tx: firestore.Transaction):
-            snap = user_ref.get(transaction=tx)
-            if not snap.exists:
-                tx.set(user_ref,
-                       {"coins": DEFAULT_COINS,
-                        "created_at": firestore.SERVER_TIMESTAMP},
-                       merge=True)
-                try:
-                    tx.set(ledger_ref,
-                           {"delta": DEFAULT_COINS,
-                            "reason": "INIT",
-                            "video_id": None,
-                            "at": firestore.SERVER_TIMESTAMP})
-                except AlreadyExists:
-                    pass   # racing INIT – safe to ignore
+        def _merge(tx: firestore.Transaction) -> int:
+            # destination snapshot
+            dst_snap   = new_ref.get(transaction=tx)
+            dst_exists = dst_snap.exists
+            dst_coins  = dst_snap.get("coins") if dst_exists else None
 
-        _init_profile(db().transaction())
+            # old balance (only if different UID)
+            src_coins = 0
+            if old_ref:
+                src_coins = (old_ref.get(transaction=tx).get("coins") or 0)
 
-        # current balance (prevents extra read if doc just created)
-        coins = (user_ref.get().get("coins") or DEFAULT_COINS)
+            # ---- rule 1: destination missing → create --------------------
+            if not dst_exists:
+                initial = src_coins or DEFAULT_COINS
+                tx.set(new_ref,
+                       {"coins": initial,
+                        "created_at": firestore.SERVER_TIMESTAMP})
+                reason = "MERGE_IN" if src_coins else "INIT"
+                tx.set(new_ref.collection("transactions").document(_tx_id()),
+                       {"delta": initial,
+                        "reason": reason,
+                        "video_id": None,
+                        "at": firestore.SERVER_TIMESTAMP})
+                dst_coins = initial
 
-        # ── best-effort cleanup of anonymous UID ───────────────
-        try:
-            if (old_uid != principal_id and caller_token.get("firebase", {}).get("sign_in_provider") == "anonymous"):
+            # ---- rule 2: destination exists → NO merge -------------------
+            # (dst_coins already holds current balance)
+
+            # ---- debit & delete old account if we transferred ------------
+            if src_coins and not dst_exists:
+                tx.set(old_ref.collection("transactions").document(_tx_id()),
+                       {"delta": -src_coins,
+                        "reason": "MERGE_OUT",
+                        "video_id": None,
+                        "at": firestore.SERVER_TIMESTAMP})
+
+            if old_ref:
+                tx.delete(old_ref)
+
+            return dst_coins
+
+        coins = _merge(db().transaction())
+
+        # 4. delete old Auth user (best-effort) -----------------------------
+        if old_uid != principal_id:
+            try:
                 auth.delete_user(old_uid)
-        except auth.UserNotFoundError:
-            pass
+            except auth.UserNotFoundError:
+                pass
 
-        # ✔️  SUCCESS
-        return jsonify({"token": custom_token, "coins": coins}), 200
+        # 5. return custom token + coins -----------------------------------
+        token = auth.create_custom_token(principal_id).decode()
+        return jsonify({"token": token, "coins": coins}), 200
 
-    # ────────── KNOWN EXCEPTIONS → JSON ERROR SHAPE ───────────
+    # -------- known errors to JSON ---------------------------------------
     except auth.InvalidIdTokenError:
         return error_response(401, "ID_TOKEN_INVALID", "ID token malformed or expired")
     except auth.TokenSignError as e:
         return error_response(500, "TOKEN_SIGN_ERROR", str(e))
     except GoogleAPICallError as e:
         return error_response(500, "FIRESTORE_ERROR", str(e))
-
-    # ────────── CATCH-ALL LAST RESORT (logs & hides) ──────────
+    # -------- fallback ----------------------------------------------------
     except Exception as e:  # noqa: BLE001
         print("Unhandled error:", e, file=sys.stderr)
         return error_response(500, "INTERNAL", "Internal server error")
