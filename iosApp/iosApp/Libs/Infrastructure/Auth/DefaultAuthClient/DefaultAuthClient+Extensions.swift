@@ -51,6 +51,7 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
       .first ?? UIWindow()
   }
 
+  // swiftlint: disable function_body_length
   @MainActor
   func signInWithSocial(provider: SocialProvider) async throws {
     let oldState = stateSubject.value
@@ -101,12 +102,21 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
         try storeTokens(token)
         try await processDelegatedIdentity(from: token, type: .permanent)
         UserDefaultsManager.shared.set(true, for: .userDefaultsLoggedIn)
+        guard let canisterPrincipalString = self.canisterPrincipalString else { return }
+        Task {
+          do {
+            try await updateSession(canisterID: canisterPrincipalString)
+          } catch {
+            crashReporter.recordException(error)
+          }
+        }
       }
     } catch {
       stateSubject.value = oldState
       throw error
     }
   }
+  // swiftlint: enable function_body_length
 
   private func getAuthURL(
     provider: SocialProvider,
@@ -174,6 +184,31 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
     return try JSONDecoder().decode(TokenClaimsDTO.self, from: data)
   }
 
+  func updateSession(canisterID: String) async throws {
+    let oldState = stateSubject.value
+    do {
+      try await recordThrowingOperation {
+        guard let accessTokenData = try KeychainHelper.retrieveData(for: Constants.keychainAccessToken),
+              let accessTokenString = String(data: accessTokenData, encoding: .utf8),
+              let url = URL(string: Constants.yralMetaDataBaseURLString) else { return }
+        let body = Data("{}".utf8)
+        let endpoint = Endpoint(
+          http: "update_session_as_registered",
+          baseURL: url,
+          path: Constants.sessionRegistrationPath + canisterID,
+          method: .post,
+          headers: [
+            "authorization": "Bearer \(accessTokenString)",
+            "Content-Type": "application/json"
+          ],
+          body: body
+        )
+        try await networkService.performRequest(for: endpoint)
+      }
+    } catch {
+      stateSubject.value = oldState
+    }
+  }
 }
 
 extension DefaultAuthClient {
@@ -189,5 +224,7 @@ extension DefaultAuthClient {
     static let keychainTokenExpiryDateKey = "keychainTokenExpiryDate"
     static let temporaryIdentityExpirySecond: UInt64 = 3600
     static let keychainDeletedVideosKey = "keychainDeletedVideosKey"
+    static let yralMetaDataBaseURLString = "https://yral-metadata.fly.dev"
+    static let sessionRegistrationPath = "/update_session_as_registered/"
   }
 }
