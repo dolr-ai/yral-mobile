@@ -2807,7 +2807,6 @@
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-framework",
-					shared,
 					"-ObjC",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.yral.iosApp;
@@ -2848,7 +2847,6 @@
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-framework",
-					shared,
 					"-ObjC",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.yral.iosApp;
@@ -2927,7 +2925,6 @@
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 2UL556KNXC;
 				ENABLE_PREVIEWS = YES;
-				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)";
 				INFOPLIST_FILE = "Staging/Info-Staging.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Yral-Staging";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
@@ -2939,8 +2936,6 @@
 				MARKETING_VERSION = 1.0.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
-					"-framework",
-					shared,
 					"-ObjC",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.yral.iosApp.staging;
@@ -2968,7 +2963,6 @@
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 2UL556KNXC;
 				ENABLE_PREVIEWS = YES;
-				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)";
 				INFOPLIST_FILE = "Staging/Info-Staging.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Yral-Staging";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
@@ -2980,8 +2974,6 @@
 				MARKETING_VERSION = 1.0.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
-					"-framework",
-					shared,
 					"-ObjC",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.yral.iosApp.staging;
