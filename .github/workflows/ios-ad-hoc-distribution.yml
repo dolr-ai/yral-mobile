@@ -5,8 +5,31 @@ on:
     branches:
       - 'develop'
     types:
+      - opened
       - ready_for_review
       - synchronize
+      - reopened
+    paths:
+      - 'iosApp/**/*.swift'
+      - 'iosApp/**/*.h'
+      - 'iosApp/**/*.m'
+      - 'iosApp/**/*.mm'
+      - 'iosApp/**/*.storyboard'
+      - 'iosApp/**/*.xib'
+      - 'iosApp/**/*.xcassets/**'
+      - 'iosApp/**/Info.plist'
+      - 'iosApp/*.xcodeproj/**'
+      - 'iosApp/*.xcworkspace/**'
+      - 'iosApp/**/*.xcscheme'
+      - 'iosApp/Package.swift'
+      - 'iosApp/Podfile'
+      - 'iosApp/Podfile.lock'
+      - 'fastlane/**'
+      - 'iosApp/build-rust.sh'
+      - 'scripts/ios/**'
+      - 'Package.swift'
+      - 'iosApp/**/*.xcconfig'
+      - 'iosApp/**/*.entitlements'
 
 jobs:
   build-ad-hoc-staging:
@@ -20,7 +43,7 @@ jobs:
       - name: Set up Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '16.1.0'
+          xcode-version: '16.2'
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1

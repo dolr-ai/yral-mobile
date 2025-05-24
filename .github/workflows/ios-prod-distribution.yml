@@ -5,8 +5,31 @@ on:
     branches:
       - main
     types:
+      - opened
       - ready_for_review
       - synchronize
+      - reopened
+    paths:
+      - 'iosApp/**/*.swift'
+      - 'iosApp/**/*.h'
+      - 'iosApp/**/*.m'
+      - 'iosApp/**/*.mm'
+      - 'iosApp/**/*.storyboard'
+      - 'iosApp/**/*.xib'
+      - 'iosApp/**/*.xcassets/**'
+      - 'iosApp/**/Info.plist'
+      - 'iosApp/*.xcodeproj/**'
+      - 'iosApp/*.xcworkspace/**'
+      - 'iosApp/**/*.xcscheme'
+      - 'iosApp/Package.swift'
+      - 'iosApp/Podfile'
+      - 'iosApp/Podfile.lock'
+      - 'fastlane/**'
+      - 'iosApp/build-rust.sh'
+      - 'scripts/ios/**'
+      - 'Package.swift'
+      - 'iosApp/**/*.xcconfig'
+      - 'iosApp/**/*.entitlements'
 
 jobs:
   build-release-branch:

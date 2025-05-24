@@ -4,8 +4,18 @@ on:
     branches:
       - develop
     types:
+      - opened
       - ready_for_review
       - synchronize
+      - reopened
+    paths:
+      - '**/*.kt'
+      - '**/*.kts'
+      - '**/*.gradle*'
+      - 'gradle/**'
+      - 'gradle.properties'
+      - '**/version.properties'
+      - 'androidApp/src/**/res/values/version.xml'
 
 permissions:
   id-token: write
@@ -34,20 +44,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - name: Get Changed Files
-        id: changed_files
-        uses: step-security/changed-files@v45
-        with:
-          files: |
-            **/*.kt
-            **/*.kts
-
       - name: Install android SDK
-        if: steps.changed_files.outputs.any_changed == 'true'
         uses: android-actions/setup-android@v3
 
       - name: Install android ndk
-        if: steps.changed_files.outputs.any_changed == 'true'
         uses: nttld/setup-ndk@v1
         with:
           ndk-version: r28
@@ -66,11 +66,9 @@ jobs:
           echo "DEBUG_KEY_PASSWORD=${{ secrets.ANDROID_DEBUG_SIGNING_SECRET_PASSWORD }}" >> $GITHUB_ENV
 
       - name: Clean project
-        if: steps.changed_files.outputs.any_changed == 'true'
         run: ./gradlew clean
 
       - name: Build APK
-        if: steps.changed_files.outputs.any_changed == 'true'
         run: ./gradlew androidApp:bundleStagingRelease -PisDebug=false
         env:
           GITHUB_USERNAME: ${{ github.actor }}
