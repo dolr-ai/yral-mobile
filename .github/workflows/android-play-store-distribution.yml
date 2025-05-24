@@ -5,8 +5,18 @@ on:
     branches:
       - main
     types:
+      - opened
       - ready_for_review
       - synchronize
+      - reopened
+    paths:
+      - '**/*.kt'
+      - '**/*.kts'
+      - '**/*.gradle*'
+      - 'gradle/**'
+      - 'gradle.properties'
+      - '**/version.properties'
+      - 'androidApp/src/**/res/values/version.xml'
 
 permissions:
   id-token: write
@@ -22,6 +32,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Set up JDK
+        id: setup-jdk
         uses: actions/setup-java@v3
         with:
           java-version: 21
@@ -39,7 +50,6 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Install android ndk
-        if: steps.changed_files.outputs.any_changed == 'true'
         uses: nttld/setup-ndk@v1
         with:
           ndk-version: r28
@@ -81,10 +91,10 @@ jobs:
         env:
           GITHUB_USERNAME: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          JAVA_HOME: ${{ steps.setup-jdk.outputs.java-home }}
+          JAVA_HOME: ${{ steps.setup-jdk.outputs.path }}
 
       - name: Authenticate to Google Cloud
-        id: Auth
+        id: auth
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: 'projects/1035262663512/locations/global/workloadIdentityPools/github/providers/yral-mobile'

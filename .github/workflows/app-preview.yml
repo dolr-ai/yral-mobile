@@ -4,8 +4,18 @@ on:
     branches:
       - develop
     types:
+      - opened
       - ready_for_review
       - synchronize
+      - reopened
+    paths:
+      - '**/*.kt'
+      - '**/*.kts'
+      - '**/*.gradle*'
+      - 'gradle/**'
+      - 'gradle.properties'
+      - '**/version.properties'
+      - 'androidApp/src/**/res/values/version.xml'
 
 permissions:
   id-token: write
@@ -34,20 +44,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - name: Get Changed Files
-        id: changed_files
-        uses: step-security/changed-files@v45
-        with:
-          files: |
-            **/*.kt
-            **/*.kts
-
       - name: Install android SDK
-        if: steps.changed_files.outputs.any_changed == 'true'
         uses: android-actions/setup-android@v3
 
       - name: Install android ndk
-        if: steps.changed_files.outputs.any_changed == 'true'
         uses: nttld/setup-ndk@v1
         with:
           ndk-version: r28
@@ -55,24 +55,20 @@ jobs:
           local-cache: true
 
       - name: Bump version (ephemeral, no commit)
-        if: steps.changed_files.outputs.any_changed == 'true'
         run: |
           echo "GITHUB_RUN_NUMBER is $GITHUB_RUN_NUMBER"
           sed -i 's/versionCode[[:space:]]*=[[:space:]]*[0-9][0-9]*/versionCode = '"$GITHUB_RUN_NUMBER"'/' ./androidApp/build.gradle.kts
           cat ./androidApp/build.gradle.kts | grep versionCode
 
       - name: Setup environment variables
-        if: steps.changed_files.outputs.any_changed == 'true'
         run: |
           echo "DEBUG_KEYSTORE_PASSWORD=${{ secrets.ANDROID_DEBUG_SIGNING_SECRET_PASSWORD }}" >> $GITHUB_ENV
           echo "DEBUG_KEY_PASSWORD=${{ secrets.ANDROID_DEBUG_SIGNING_SECRET_PASSWORD }}" >> $GITHUB_ENV
 
       - name: Clean project
-        if: steps.changed_files.outputs.any_changed == 'true'
         run: ./gradlew clean
 
       - name: Build APK
-        if: steps.changed_files.outputs.any_changed == 'true'
         run: ./gradlew androidApp:bundleStagingRelease -PisDebug=false
         env:
           GITHUB_USERNAME: ${{ github.actor }}
@@ -81,7 +77,6 @@ jobs:
 
       - name: Authenticate to Google Cloud
         id: Auth
-        if: steps.changed_files.outputs.any_changed == 'true'
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: 'projects/1035262663512/locations/global/workloadIdentityPools/github/providers/yral-mobile'
@@ -89,7 +84,6 @@ jobs:
           
       - name: Upload to Play Store
         id: Upload
-        if: steps.changed_files.outputs.any_changed == 'true'
         uses: r0adkll/upload-google-play@v1.1.3
         with:
           serviceAccountJson: ${{ steps.auth.outputs.credentials_file_path }}
