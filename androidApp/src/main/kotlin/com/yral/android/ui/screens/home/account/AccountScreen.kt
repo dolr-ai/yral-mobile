@@ -466,4 +466,5 @@ private fun AccountHelpLink.getText() =
 
 object AccountScreenConstants {
     const val SOCIAL_MEDIA_LINK_BOTTOM_SPACER_WEIGHT = 0.2f
+    const val SOCIAL_MEDIA_LINK_BOTTOM_SPACER_WEIGHT_TEST = 0.2f
 }
