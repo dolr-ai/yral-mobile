@@ -147,6 +147,26 @@ extension FeedsViewController {
     }
   }
 
+  func handleCastVoteFailure(_ errorMessage: String, videoID: String) {
+    var snapshot = feedsDataSource.snapshot()
+    var items = snapshot.itemIdentifiers
+    guard let index = items.firstIndex(where: { $0.videoID == videoID }) else {
+      return
+    }
+
+    guard let cell = feedsCV.cellForItem(at: IndexPath(item: index, section: 0)) as? FeedsCell else {
+      return
+    }
+
+    cell.handleSmileyGameError(errorMessage)
+
+    items[0].smileyGame?.state = .error(errorMessage)
+
+    snapshot.deleteItems(snapshot.itemIdentifiers)
+    snapshot.appendItems(items)
+    feedsDataSource.apply(snapshot, animatingDifferences: true)
+  }
+
   func removeFeeds(with feeds: [FeedResult], isReport: Bool = false, animated: Bool = false) {
     for feed in feeds {
       lastDisplayedThumbnailPath.removeValue(forKey: feed.videoID)

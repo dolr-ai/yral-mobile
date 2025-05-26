@@ -13,7 +13,6 @@ import AVFoundation
 import Lottie
 import Combine
 
-// swiftlint: disable type_body_length
 protocol FeedsCellProtocol: AnyObject {
   func shareButtonTapped(index: Int)
   func deleteButtonTapped(index: Int)
@@ -112,6 +111,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
 
   let resultAnimationPublisher = PassthroughSubject<SmileyGameResultResponse, Never>()
   let initialStatePublisher = PassthroughSubject<SmileyGame, Never>()
+  let smileyGameErrorPublisher = PassthroughSubject<String, Never>()
 
   private static func getActionButton(withTitle title: String, image: UIImage?) -> UIButton {
     var configuration = UIButton.Configuration.plain()
@@ -233,7 +233,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     ])
     overlayView?.isHidden = true
   }
-  
+
   @objc private func handleFirstFrameReady(_ note: Notification) {
     guard let idx = note.userInfo?["index"] as? Int, idx == index else { return }
     playerLayer?.isHidden = false
@@ -251,7 +251,8 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
           self?.handleSmileyTap(smiley)
         },
         resultAnimationSubscriber: resultAnimationPublisher,
-        initialStateSubscriber: initialStatePublisher
+        initialStateSubscriber: initialStatePublisher,
+        errorSubscriber: smileyGameErrorPublisher
       )
 
       let controller = UIHostingController(rootView: smileyGameView)
@@ -357,6 +358,10 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
         self.resultAnimationPublisher.send(result)
       }
     }
+  }
+
+  func handleSmileyGameError(_ errorMessage: String) {
+    smileyGameErrorPublisher.send(errorMessage)
   }
 
   @objc func shareButtonTapped() {
@@ -504,4 +509,3 @@ extension FeedsCell {
     static let scoreLabelDuration = 2.0
   }
 }
-// swiftlint: enable type_body_length

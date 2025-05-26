@@ -20,6 +20,7 @@ struct SmileyGameView: View {
   let smileyTapped: (Smiley) -> Void
   let resultAnimationSubscriber: PassthroughSubject<SmileyGameResultResponse, Never>
   let initialStateSubscriber: PassthroughSubject<SmileyGame, Never>
+  let errorSubscriber: PassthroughSubject<String, Never>
 
   var body: some View {
     HStack(spacing: Constants.zero) {
@@ -65,10 +66,20 @@ struct SmileyGameView: View {
         }
       case .played(let result):
         resultView(for: result)
+      case .error(let errorMessage):
+        Text(errorMessage)
+          .font(YralFont.pt16.bold.swiftUIFont)
+          .lineLimit(Constants.textLineLimit)
+          .minimumScaleFactor(Constants.textMinScale)
+          .allowsTightening(true)
+          .foregroundColor(YralColor.green50.swiftUIColor)
       }
     }
     .onReceive(initialStateSubscriber) { game in
       setInitialState(with: game)
+    }
+    .onReceive(errorSubscriber) { errorMessage in
+      smileyGame.state = .error(errorMessage)
     }
     .frame(height: Constants.viewHeight)
     .frame(maxWidth: .infinity, alignment: .leading)

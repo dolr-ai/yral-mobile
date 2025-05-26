@@ -150,10 +150,10 @@ class FeedsViewController: UIViewController {
         switch event {
         case .castVoteSuccess(let response):
           self.handleCastVote(response)
-        case .castVoteFailure(let error):
+        case .castVoteFailure(let error, let videoID):
           switch error {
           case .cloudFunctionError(let error):
-            print("Cloud function failure: \(error.description)")
+            self.handleCastVoteFailure(error.description, videoID: videoID)
           default:
             print("Cast vote failure: \(error.localizedDescription)")
           }
