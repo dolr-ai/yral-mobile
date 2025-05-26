@@ -31,8 +31,13 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   weak var delegate: FeedsCellProtocol?
   private let userDefaults = UserDefaults.standard
   private static let resultBottomSheetKey = "ResultBottomSheetKey"
+  private var cancellables = Set<AnyCancellable>()
   private var smileyGame: SmileyGame?
-  private var coins: Int?
+  private var sessionManager: SessionManager? {
+    didSet {
+      bindSession()
+    }
+  }
 
   private var showResultBottomSheet: Bool {
     userDefaults.integer(forKey: Self.resultBottomSheetKey) < Int.one ? true : false
@@ -239,8 +244,20 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     playerLayer?.isHidden = false
   }
 
+  private func bindSession() {
+    cancellables.forEach( { $0.cancel() })
+    cancellables.removeAll()
+
+    sessionManager?.$state
+      .receive(on: RunLoop.main)
+      .sink { [weak self] newState in
+        self?.profileInfoView.coinsView.coins = newState.coins
+      }
+      .store(in: &cancellables)
+  }
+
   private func setupSmileyGameView() {
-    guard (coins ?? 0) >= SmileyGameConfig.shared.config.lossPenalty else {
+    guard (sessionManager?.state.coins ?? 0) >= SmileyGameConfig.shared.config.lossPenalty else {
       return
     }
 
@@ -391,7 +408,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     feedInfo: FeedCellInfo,
     profileInfo: ProfileInfoView.ProfileInfo,
     smileyGame: SmileyGame?,
-    coins: Int,
+    session: SessionManager,
     index: Int
   ) {
     playerContainerView.sd_cancelCurrentImageLoad()
@@ -423,7 +440,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     self.index = index
     self.feedType = feedInfo.feedType
     self.smileyGame = smileyGame
-    self.coins = coins
+    self.sessionManager = session
 
     if feedInfo.feedType == .otherUsers {
       profileInfoView.set(data: profileInfo)
@@ -465,6 +482,9 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     }
     smileyGameHostController?.view.removeFromSuperview()
     smileyGameHostController = nil
+
+    cancellables.forEach({ $0.cancel() })
+    cancellables.removeAll()
   }
 
   struct FeedCellInfo {
