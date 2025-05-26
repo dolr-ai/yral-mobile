@@ -311,7 +311,16 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   }
 
   private func startFlowingAnimation(for smiley: Smiley) {
-    let animation = LottieAnimation.named("smiley_game_\(smiley.imageName)")
+//    FirebaseLottieManager.shared.data(forPath: smiley.clickAnimation, completion: { [weak self] result in
+//      if case .success(let data) = result {
+//        DispatchQueue.main.async {
+//          self?.lottieView.animation = try? LottieAnimation.from(data: data)
+//          self?.lottieView.play()
+//        }
+//      }
+//    })
+
+    let animation = LottieAnimation.named("smiley_game_\(smiley.id)")
     lottieView.animation = animation
     lottieView.play()
   }

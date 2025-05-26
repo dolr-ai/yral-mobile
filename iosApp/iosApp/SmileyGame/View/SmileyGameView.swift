@@ -27,8 +27,7 @@ struct SmileyGameView: View {
       switch smileyGame.state {
       case .notPlayed:
         ForEach(smileyGame.config.smileys, id: \.id) { smiley in
-          Image(smiley.imageName)
-            .resizable()
+          FirebaseImageView(path: smiley.imageURL)
             .frame(width: Constants.smileySize, height: Constants.smileySize)
             .opacity(
               (!isFocused || smiley.id == selectedID) ? Constants.one : Constants.zero
@@ -91,7 +90,7 @@ struct SmileyGameView: View {
   }
 
   @ViewBuilder func resultView(for result: SmileyGameResultResponse) -> some View {
-    Image(result.smiley.imageName)
+    FirebaseImageView(path: result.smiley.imageURL)
       .frame(width: Constants.smileySize, height: Constants.smileySize)
       .clipShape(Circle())
       .padding(.vertical, Constants.smileyVerticalPadding)
@@ -99,7 +98,7 @@ struct SmileyGameView: View {
 
     VStack(alignment: .leading, spacing: Constants.two) {
       Text(result.outcome == "WIN" ?
-           "\(result.smiley.imageName.capitalized) was the most people choice." :
+           "\(result.smiley.id.capitalized) was the most people choice." :
             "Not the most popular pick!")
       .font(YralFont.pt16.bold.swiftUIFont)
       .lineLimit(Constants.textLineLimit)

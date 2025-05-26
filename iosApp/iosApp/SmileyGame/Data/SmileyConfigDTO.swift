@@ -20,13 +20,15 @@ struct SmileyConfigDTO: Decodable {
 
 struct SmileyDTO: Decodable {
   let id: String
-  let imageName: String
+  let imageURL: String
   let isActive: Bool
+  let clickAnimation: String
 
   enum CodingKeys: String, CodingKey {
     case id
-    case imageName = "image_name"
+    case imageURL = "image_url"
     case isActive = "is_active"
+    case clickAnimation = "click_animation"
   }
 }
 
@@ -39,7 +41,8 @@ extension SmileyConfigDTO {
 extension SmileyDTO {
   func toDomain() -> Smiley {
     return Smiley(id: id,
-                  imageName: imageName,
-                  isActive: isActive)
+                  imageURL: imageURL,
+                  isActive: isActive,
+                  clickAnimation: clickAnimation)
   }
 }

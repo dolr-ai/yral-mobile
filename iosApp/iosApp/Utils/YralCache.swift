@@ -8,8 +8,8 @@
 
 import Foundation
 
-final class ImageCache {
-  static let shared = ImageCache()
+final class YralCache {
+  static let shared = YralCache()
   private let memory = NSCache<NSString, NSData>()
   private let diskURL: URL
 
