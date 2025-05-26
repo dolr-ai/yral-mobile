@@ -41,7 +41,16 @@ class HTTPService: NetworkService {
       throw NetworkError.invalidResponse("")
     }
     guard HTTPResponse.from(statusCode: httpResponse.statusCode) == .success else {
-      throw NetworkError.invalidResponse(httpResponse.description)
+      if let errorResponse = try? JSONDecoder().decode(CloudFunctionErrorParentResponse.self, from: data) {
+        switch errorResponse.error.code {
+        case .alreadyVoted:
+          throw CloudFunctionError.alreadyVoted(errorResponse.error.code, errorResponse.error.message)
+        case .unknown:
+          throw CloudFunctionError.unknown(errorResponse.error.code, errorResponse.error.message)
+        }
+      } else {
+        throw NetworkError.invalidResponse(httpResponse.description)
+      }
     }
     return data
   }

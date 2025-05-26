@@ -141,6 +141,7 @@ class FeedsViewController: UIViewController {
   }
 
   // swiftlint: disable cyclomatic_complexity
+  // swiftlint: disable function_body_length
   func handleEvents() {
     viewModel.unifiedEventPublisher
       .receive(on: RunLoop.main)
@@ -149,8 +150,13 @@ class FeedsViewController: UIViewController {
         switch event {
         case .castVoteSuccess(let response):
           self.handleCastVote(response)
-        case .castVoteFailure(let errorMessage):
-          print("Cast vote failed: \(errorMessage)")
+        case .castVoteFailure(let error):
+          switch error {
+          case .cloudFunctionError(let error):
+            print("Cloud function failure: \(error.description)")
+          default:
+            print("Cast vote failure: \(error.localizedDescription)")
+          }
         case .fetchingInitialFeeds:
           loadMoreRequestMade = true
         case .loadedMoreFeeds:
@@ -204,6 +210,7 @@ class FeedsViewController: UIViewController {
       }
       .store(in: &paginatedFeedscancellables)
   }
+  // swiftlint: enable function_body_length
   // swiftlint: enable cyclomatic_complexity
 
   func setupNavigationBar() {
