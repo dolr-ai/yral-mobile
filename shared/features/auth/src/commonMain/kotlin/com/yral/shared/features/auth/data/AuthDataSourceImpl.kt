@@ -1,8 +1,11 @@
 package com.yral.shared.features.auth.data
 
+import com.yral.shared.core.AppConfigurations.FIREBASE_AUTH_URL
 import com.yral.shared.core.AppConfigurations.METADATA_BASE_URL
 import com.yral.shared.core.AppConfigurations.OAUTH_BASE_URL
+import com.yral.shared.features.auth.data.models.ExchangePrincipalResponseDto
 import com.yral.shared.features.auth.data.models.TokenResponseDto
+import com.yral.shared.http.httpPost
 import io.ktor.client.HttpClient
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
@@ -100,6 +103,22 @@ class AuthDataSourceImpl(
             }.bodyAsText()
     }
 
+    override suspend fun exchangePrincipalId(
+        idToken: String,
+        principalId: String,
+    ): ExchangePrincipalResponseDto =
+        httpPost(
+            httpClient = client,
+            json = json,
+        ) {
+            url {
+                host = FIREBASE_AUTH_URL
+                path(EXCHANGE_PRINCIPAL_PATH)
+            }
+            headers.append("authorization", "Bearer $idToken")
+            setBody(mapOf("principal_id" to principalId))
+        }
+
     companion object {
         const val REDIRECT_URI_SCHEME = "yral"
         const val REDIRECT_URI_HOST = "oauth"
@@ -111,5 +130,6 @@ class AuthDataSourceImpl(
         private const val GRANT_TYPE_CLIENT_CREDS = "client_credentials"
         private const val GRANT_TYPE_REFRESH_TOKEN = "refresh_token"
         private const val UPDATE_SESSION_AS_REGISTERED = "update_session_as_registered"
+        private const val EXCHANGE_PRINCIPAL_PATH = "exchange_principal_id"
     }
 }
