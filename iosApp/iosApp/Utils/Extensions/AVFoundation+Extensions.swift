@@ -68,3 +68,17 @@ extension AVQueuePlayer {
     }
   }
 }
+
+extension AVPlayer {
+  func prerollVideo(atRate rate: Float) async throws {
+    try await withCheckedThrowingContinuation { continuation in
+      self.preroll(atRate: rate) { finished in
+        if finished {
+          continuation.resume()
+        } else {
+          continuation.resume(throwing: AVError(.unknown))
+        }
+      }
+    }
+  }
+}
