@@ -169,6 +169,16 @@ class GameViewModel(
             )
         }
     }
+
+    fun updateCacheFetched() {
+        coroutineScope.launch {
+            _state.emit(
+                _state.value.copy(
+                    cacheFetched = true,
+                ),
+            )
+        }
+    }
 }
 
 data class GameState(
@@ -180,4 +190,5 @@ data class GameState(
     val showResultSheet: Boolean = false,
     val showAboutGame: Boolean = false,
     val gameRules: List<AboutGameItem>,
+    val cacheFetched: Boolean = false,
 )
