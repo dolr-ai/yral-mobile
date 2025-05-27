@@ -76,6 +76,7 @@ gitlive-firebase-kotlin-anlaytics = { module = "dev.gitlive:firebase-analytics",
 gitlive-firebase-kotlin-perf = { module = "dev.gitlive:firebase-perf", version.ref = "firebase-gitlive-sdk" }
 gitlive-firebase-storage = { module = "dev.gitlive:firebase-storage", version.ref = "firebase-gitlive-sdk" }
 gitlive-firebase-auth = { module = "dev.gitlive:firebase-auth", version.ref = "firebase-gitlive-sdk" }
+gitlive-firebase-store-db = { module = "dev.gitlive:firebase-firestore", version.ref = "firebase-gitlive-sdk" }
 
 lottie = { module = "com.airbnb.android:lottie-compose", version.ref = "lottie" }
 
