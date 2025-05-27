@@ -17,8 +17,8 @@ class LogUploadEventUseCase:
   BaseResultUseCase<[VideoEventRequest], Void, FeedError>,
   LogUploadEventUseCaseProtocol {
   private let feedRepository: FeedRepositoryProtocol
-  private var eventBuffer = [VideoEventRequest]()
-  private var flushTimer: Timer?
+  private let buffer = EventBuffer()
+  private var flushTimer: DispatchSourceTimer?
 
   init(feedRepository: FeedRepositoryProtocol, crashReporter: CrashReporter) {
     self.feedRepository = feedRepository
@@ -27,12 +27,12 @@ class LogUploadEventUseCase:
   }
 
   deinit {
-    flushTimer?.invalidate()
+    flushTimer?.cancel()
   }
 
   override func execute(request: [VideoEventRequest]) async -> Result<Void, FeedError> {
-    eventBuffer.append(contentsOf: request)
-    if eventBuffer.count >= Constants.bufferSize {
+    let shouldFlush = await buffer.append(request, threshold: Constants.bufferSize)
+    if shouldFlush {
       return await flushEvents()
     }
     return .success(())
@@ -43,27 +43,27 @@ class LogUploadEventUseCase:
   }
 
   private func startPeriodicFlush() {
-    flushTimer = Timer.scheduledTimer(withTimeInterval: Constants.timeDuration, repeats: true) { [weak self] _ in
-      guard let self = self else { return }
-      Task {
-        _ = await self.flushEvents()
-      }
+    let queue = DispatchQueue(label: "com.yral.logUploadFlush", qos: .background)
+    let timer = DispatchSource.makeTimerSource(queue: queue)
+    timer.schedule(
+      deadline: .now() + Constants.timeDuration,
+      repeating: Constants.timeDuration
+    )
+    timer.setEventHandler { [weak self] in
+      Task { _ = await self?.flushEvents() }
     }
+    timer.activate()
+    self.flushTimer = timer
   }
 
   private func flushEvents() async -> Result<Void, FeedError> {
-    guard !eventBuffer.isEmpty else { return .success(()) }
-    let eventsToSend = eventBuffer
-    eventBuffer.removeAll()
-
+    let eventsToSend = await buffer.drain()
+    guard !eventsToSend.isEmpty else { return .success(()) }
     let result = await super.execute(request: eventsToSend)
-    switch result {
-    case .success:
-      return .success(())
-    case .failure(let error):
-      eventBuffer.insert(contentsOf: eventsToSend, at: .zero)
-      return .failure(error)
+    if case .failure = result {
+      await buffer.restore(eventsToSend)
     }
+    return result
   }
 
   override func runImplementation(_ request: [VideoEventRequest]) async -> Result<Void, FeedError> {

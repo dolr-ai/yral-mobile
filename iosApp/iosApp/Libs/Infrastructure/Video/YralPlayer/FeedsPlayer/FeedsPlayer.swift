@@ -31,7 +31,7 @@ final class FeedsPlayer: YralPlayer {
   private let crashReporter: CrashReporter
 
   private var preloadRadius: Int {
-    networkMonitor.isGoodForPrefetch ? Constants.radius : .two
+    networkMonitor.isGoodForPrefetch ? Constants.radiusGoodNetwork : Constants.radiusbadNetwork
   }
 
   // MARK: Video duration event loggers
@@ -69,6 +69,7 @@ final class FeedsPlayer: YralPlayer {
       object: nil
     )
     networkMonitor.startMonitoring()
+//    (player as? AVQueuePlayer)?.automaticallyWaitsToMinimizeStalling = false
   }
 
   func loadInitialVideos(_ feeds: [FeedResult]) {
@@ -129,7 +130,11 @@ final class FeedsPlayer: YralPlayer {
       await self.hlsDownloadManager.elevatePriority(for: feed.url)
       let currentVideoID = feedResults[index].videoID
       if let preloadedItem = playerItems[currentVideoID] {
-        startLooping(with: preloadedItem)
+        do {
+          try await startLooping(with: preloadedItem)
+        } catch {
+          crashReporter.recordException(error)
+        }
       } else {
         await prepareCurrentVideo()
       }
@@ -141,7 +146,7 @@ final class FeedsPlayer: YralPlayer {
     let removedVideoIDs = Set(feeds.map { $0.videoID })
     let currentFeedID = feedResults.indices.contains(currentIndex)
     ? feedResults[currentIndex].videoID
-    : nil // CHANGED
+    : nil
 
     feedResults.removeAll(where: { removedVideoIDs.contains($0.videoID) })
     removedVideoIDs.forEach {
@@ -163,7 +168,7 @@ final class FeedsPlayer: YralPlayer {
     guard currentIndex < feedResults.count else { return }
     do {
       if let item = try await loadVideo(at: currentIndex) {
-        startLooping(with: item)
+        try await startLooping(with: item)
       }
     } catch {
       crashReporter.recordException(error)
@@ -171,7 +176,13 @@ final class FeedsPlayer: YralPlayer {
     }
   }
 
-  private func startLooping(with item: AVPlayerItem) {
+  private func startLooping(with item: AVPlayerItem) async throws {
+    finishFirstFrameTrace(success: false)
+    if let videoID = feedResults[safe: currentIndex]?.videoID {
+      firstFrameMonitor = FirebasePerformanceMonitor(traceName: Constants.firstFrameTrace)
+      firstFrameMonitor?.setMetadata(key: Constants.videoIDKey, value: videoID)
+      firstFrameMonitor?.start()
+    }
     stopPlaybackMonitor()
     playerLooper?.disableLooping()
     playerLooper = nil
@@ -187,13 +198,13 @@ final class FeedsPlayer: YralPlayer {
 
     playerLooper = AVPlayerLooper(player: player, templateItem: item)
     attachTimeObserver()
-    player.playImmediately(atRate: .zero)
     startTimeControlObservations(player)
 
     Task { @MainActor in
       let queueItem = await player.waitForFirstItem()
       do {
         try await queueItem.waitUntilReady()
+//        try await player.prerollVideo(atRate: 0)
         NotificationCenter.default.post(
           name: .feedItemReady,
           object: self,
@@ -203,16 +214,16 @@ final class FeedsPlayer: YralPlayer {
         crashReporter.recordException(error)
         print("Item failed to become ready: \(error)")
       }
-    }
-    let currentVideoID = feedResults[currentIndex].videoID
-    if let lastTime = lastPlayedTimes[currentVideoID] {
-      player.seek(to: lastTime, toleranceBefore: .zero, toleranceAfter: .zero) { [weak self] _ in
-        Task { @MainActor [weak self] in
-          self?.play()
+      let currentVideoID = feedResults[currentIndex].videoID
+      if let lastTime = lastPlayedTimes[currentVideoID] {
+        player.seek(to: lastTime, toleranceBefore: .zero, toleranceAfter: .zero) { [weak self] _ in
+          Task { @MainActor [weak self] in
+            self?.play()
+          }
         }
+      } else {
+        play()
       }
-    } else {
-      play()
     }
 
     Task {
@@ -228,6 +239,9 @@ final class FeedsPlayer: YralPlayer {
 
   func pause() {
     player.pause()
+    if (player as? AVQueuePlayer)?.timeControlStatus != .playing {
+      finishFirstFrameTrace(success: false)
+    }
   }
 
   private func preloadFeeds() async {
@@ -303,6 +317,8 @@ final class FeedsPlayer: YralPlayer {
       do {
         try await asset.loadPlayableAsync()
         let item = AVPlayerItem(asset: asset)
+        item.preferredForwardBufferDuration = CGFloat.half
+        item.canUseNetworkResourcesForLiveStreamingWhilePaused = true
         playerItems[videoID] = item
         stop(startupMonitor: startupMonitor, isSuccess: true)
         return item
@@ -318,6 +334,8 @@ final class FeedsPlayer: YralPlayer {
     do {
       try await remoteAsset.loadPlayableAsync()
       let item = AVPlayerItem(asset: remoteAsset)
+      item.preferredForwardBufferDuration = CGFloat.half
+      item.canUseNetworkResourcesForLiveStreamingWhilePaused = true
       playerItems[videoID] = item
       stop(startupMonitor: startupMonitor, isSuccess: true)
       return item
@@ -365,7 +383,8 @@ extension FeedsPlayer {
     static let videoDurationEventMinThreshold = 0.05
     static let videoDurationEventMaxThreshold = 0.95
     static let timescaleEventSampling = 600.0
-    static let radius = 5
+    static let radiusGoodNetwork = 5
+    static let radiusbadNetwork = 3
     static let videoStartTrace = "VideoStartup"
     static let firstFrameTrace = "FirstFrame"
     static let videoPlaybackTrace = "VideoPlayback"
@@ -376,10 +395,5 @@ extension FeedsPlayer {
     static let rebufferTimeMetric = "rebuffer_time_ms"
     static let rebufferCountMetric = "rebuffer_count"
   }
-}
-
-enum PlaybackMilestone {
-  case started
-  case almostFinished
 }
 // swiftlint: enable type_body_length

@@ -28,12 +28,6 @@ extension FeedsPlayer {
   }
 
   func startTimeControlObservations(_ player: AVQueuePlayer) {
-    if let videoID = feedResults[safe: currentIndex]?.videoID {
-      firstFrameMonitor = FirebasePerformanceMonitor(traceName: Constants.firstFrameTrace)
-      firstFrameMonitor?.setMetadata(key: Constants.videoIDKey, value: videoID)
-      firstFrameMonitor?.start()
-    }
-
     timeControlObservation = player.observe(
       \AVQueuePlayer.timeControlStatus,
        options: [.initial, .new]
@@ -49,18 +43,15 @@ extension FeedsPlayer {
   func startTimerMonitoring(_ newStatus: AVPlayer.TimeControlStatus) {
     switch newStatus {
     case .playing:
-      if let ffm = self.firstFrameMonitor {
-        ffm.setMetadata(key: Constants.performanceResultKey, value: Constants.performanceSuccessKey)
-        ffm.stop()
-        self.firstFrameMonitor = nil
-        if let videoID = self.feedResults[safe: self.currentIndex]?.videoID {
-          self.playbackMonitor = FirebasePerformanceMonitor(traceName: Constants.videoPlaybackTrace)
-          self.playbackMonitor?.setMetadata(key: Constants.videoIDKey, value: videoID)
-          self.playbackMonitor?.start()
-          self.playbackMonitor?.incrementMetric(Constants.rebufferTimeMetric, by: .zero)
-          self.playbackMonitor?.incrementMetric(Constants.rebufferCountMetric, by: .zero)
-        }
-      } else if let stallStart = self.stallStart {
+      finishFirstFrameTrace(success: true)
+      if let videoID = self.feedResults[safe: self.currentIndex]?.videoID {
+        self.playbackMonitor = FirebasePerformanceMonitor(traceName: Constants.videoPlaybackTrace)
+        self.playbackMonitor?.setMetadata(key: Constants.videoIDKey, value: videoID)
+        self.playbackMonitor?.start()
+        self.playbackMonitor?.incrementMetric(Constants.rebufferTimeMetric, by: .zero)
+        self.playbackMonitor?.incrementMetric(Constants.rebufferCountMetric, by: .zero)
+      }
+      if let stallStart = self.stallStart {
         let timeMs = Int64(Date().timeIntervalSince(stallStart) * CGFloat.thousand)
         self.playbackMonitor?.incrementMetric(Constants.rebufferTimeMetric, by: timeMs)
         self.stallStart = nil
@@ -110,4 +101,21 @@ extension FeedsPlayer {
       delegate?.reachedPlaybackMilestone(.almostFinished, for: currentIndex)
     }
   }
+
+  func finishFirstFrameTrace(success: Bool) {
+    if let ffm = firstFrameMonitor {
+      ffm.setMetadata(
+        key: Constants.performanceResultKey,
+        value: success ? Constants.performanceSuccessKey
+        : Constants.performanceErrorKey
+      )
+      ffm.stop()
+      firstFrameMonitor = nil
+    }
+  }
+}
+
+enum PlaybackMilestone {
+  case started
+  case almostFinished
 }

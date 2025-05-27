@@ -158,6 +158,9 @@ actor HLSDownloadManager: NSObject, HLSDownloadManaging {
   }
 
   func clearMappingsAndCache(for hlsURL: URL, assetTitle: String) {
+    if let localURL = resolveBookmarkIfPresent(for: assetTitle) {
+      removeAsset(localURL)
+    }
     removeBookmark(for: assetTitle)
     downloadedAssetsLRU.removeValue(forKey: assetTitle)
     delegate?.clearedCache(for: assetTitle)
