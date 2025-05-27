@@ -1,143 +1,33 @@
 package com.yral.shared.features.game.data
 
-import com.yral.shared.features.game.data.models.AboutGameItemDto
-import com.yral.shared.features.game.data.models.GameConfigDto
-import kotlinx.serialization.json.Json
+import com.github.michaelbull.result.getOrThrow
+import com.yral.shared.firebaseStore.model.AboutGameItemDto
+import com.yral.shared.firebaseStore.model.GameConfigDto
+import com.yral.shared.firebaseStore.usecase.GetCollectionUseCase
+import com.yral.shared.firebaseStore.usecase.GetFBDocumentUseCase
 
 class GameRemoteDataSource(
-    private val json: Json,
+    private val getConfigUseCase: GetFBDocumentUseCase<GameConfigDto>,
+    private val getAboutUseCase: GetCollectionUseCase<AboutGameItemDto>,
 ) : IGameRemoteDataSource {
     override suspend fun getConfig(): GameConfigDto =
-        json
-            .decodeFromString(dummyConfig())
+        getConfigUseCase
+            .invoke(
+                parameter =
+                    GetFBDocumentUseCase.Params(
+                        collectionPath = GAME_CONFIG_COLLECTION,
+                        documentId = GAME_CONFIG_DOCUMENT,
+                    ),
+            ).getOrThrow()
 
     override suspend fun getRules(): List<AboutGameItemDto> =
-        json
-            .decodeFromString(dummyRules())
-}
+        getAboutUseCase
+            .invoke(GAME_ABOUT_COLLECTION)
+            .getOrThrow()
 
-private fun dummyConfig(): String =
-    """
-{
-  "available_smileys": [
-    {
-      "id": "laugh",
-      "image_name": "laugh",
-      "image_url": "smiley_game/how_to_play/laughing.png",
-      "click_animation": "smiley_game/animations/smiley_game_laugh.json",
-      "is_active": true
-    },
-    {
-      "id": "heart",
-      "image_name": "heart",
-      "image_url": "smiley_game/how_to_play/heart.png",
-      "click_animation": "smiley_game/animations/smiley_game_heart.json",
-      "is_active": true
-    },
-    {
-      "id": "fire",
-      "image_name": "fire",
-      "image_url": "smiley_game/how_to_play/fire.png",
-      "click_animation": "smiley_game/animations/smiley_game_fire.json",
-      "is_active": true
-    },
-    {
-      "id": "surprise",
-      "image_name": "surprise",
-      "image_url": "smiley_game/how_to_play/surprise.png",
-      "click_animation": "smiley_game/animations/smiley_game_surprise.json",
-      "is_active": true
-    },
-    {
-      "id": "rocket",
-      "image_name": "rocket",
-      "image_url": "smiley_game/how_to_play/rocket.png",
-      "click_animation": "smiley_game/animations/smiley_game_rocket.json",
-      "is_active": true
+    companion object {
+        private const val GAME_CONFIG_COLLECTION = "config"
+        private const val GAME_CONFIG_DOCUMENT = "smiley_game_v1"
+        private const val GAME_ABOUT_COLLECTION = "smiley_game_rules"
     }
-  ],
-  "loss_penalty": 10
 }
-    """.trimIndent()
-
-@Suppress("LongMethod")
-private fun dummyRules(): String =
-    """
-[
-    {
-      "body": [
-        {
-          "colors": ["grey50"],
-          "content": ["While watching a video, vote for one of 5 emojis:"],
-          "type": "text"
-        },
-        {
-          "image_urls": [
-            "smiley_game/how_to_play/laughing.png",
-            "smiley_game/how_to_play/heart.png",
-            "smiley_game/how_to_play/fire.png",
-            "smiley_game/how_to_play/surprise.png",
-            "smiley_game/how_to_play/rocket.png"
-          ],
-          "type": "images"
-        },
-        {
-          "colors": ["grey50"],
-          "content": ["Each vote costs 10 points"],
-          "type": "text"
-        }
-      ],
-      "name": "Pick an emoji",
-      "thumbnail_url": "smiley_game/how_to_play/rule_1.png"
-    },
-    {
-      "body": [
-        {
-          "colors": ["grey50"],
-          "content": ["You can only vote once per video, so choose wisely!"],
-          "type": "text"
-        }
-      ],
-      "name": "One Vote per Video",
-      "thumbnail_url": "smiley_game/how_to_play/rule_2.png"
-    },
-    {
-      "body": [
-        {
-          "colors": ["grey50", "green300", "grey50", "red300"],
-          "content": [
-            "If your emoji gets that most votes, you ",
-            "win 30 points. ",
-            "If not, ",
-            "you lose 10 points"
-          ],
-          "type": "text"
-        }
-      ],
-      "name": "Win or Loose",
-      "thumbnail_url": "smiley_game/how_to_play/rule_3.png"
-    },
-    {
-      "body": [
-        {
-          "colors": ["grey50"],
-          "content": ["Your balance updates in real time on the home screen"],
-          "type": "text"
-        }
-      ],
-      "name": "Live Points Update",
-      "thumbnail_url": "smiley_game/how_to_play/rule_4.png"
-    },
-    {
-      "body": [
-        {
-          "colors": ["grey50"],
-          "content": ["Top 10 users ranked by total points (tie-breaker: most wins)."],
-          "type": "text"
-        }
-      ],
-      "name": "Leaderboard",
-      "thumbnail_url": "smiley_game/how_to_play/rule_5.png"
-    }
-]
-    """.trimIndent()
