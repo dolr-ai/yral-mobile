@@ -6,4 +6,5 @@ enum class PrefKeys {
     ACCESS_TOKEN,
     REFRESH_TOKEN,
     IDENTITY,
+    IS_RESULT_SHEET_SHOWN,
 }
