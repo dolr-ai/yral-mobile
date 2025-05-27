@@ -13,6 +13,8 @@ import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -46,8 +48,6 @@ class GameViewModel(
 
     init {
         coroutineScope.launch {
-            getGameRules()
-            getGameIcons()
             preferences.getBoolean(PrefKeys.IS_RESULT_SHEET_SHOWN.name)?.let { shown ->
                 _state.emit(
                     _state.value.copy(
@@ -55,6 +55,10 @@ class GameViewModel(
                     ),
                 )
             }
+            listOf(
+                async { getGameRules() },
+                async { getGameIcons() },
+            ).awaitAll()
             // Observe coin balance changes
             sessionManager.coinBalance.collect { balance ->
                 _state.emit(
