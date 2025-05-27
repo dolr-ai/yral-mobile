@@ -37,11 +37,8 @@ import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import co.touchlab.kermit.Logger
 import coil3.compose.AsyncImage
-import com.airbnb.lottie.compose.LottieAnimation
-import com.airbnb.lottie.compose.LottieCompositionSpec
-import com.airbnb.lottie.compose.animateLottieCompositionAsState
-import com.airbnb.lottie.compose.rememberLottieComposition
 import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
@@ -50,6 +47,8 @@ import com.yral.android.ui.screens.game.IconAnimationConstant.ANIMATION_DURATION
 import com.yral.android.ui.screens.game.IconAnimationConstant.RESULT_ANIMATION_DURATION
 import com.yral.android.ui.screens.game.IconAnimationConstant.ROTATION_DEGREE
 import com.yral.android.ui.screens.game.IconAnimationConstant.SCALING_FACTOR
+import com.yral.android.ui.widgets.YralLottieAnimation
+import com.yral.android.ui.widgets.YralRemoteLottieAnimation
 import com.yral.shared.features.game.domain.models.GameIcon
 import com.yral.shared.features.game.domain.models.GameIconNames
 import kotlinx.coroutines.delay
@@ -127,31 +126,31 @@ private fun GameIconBubbles(
 //            BubbleAnimation(it.getResource()) {
 //                setAnimateBubbles(false)
 //            }
-            val animationRes = it.getBubbleResource()
-            val animationComposition by rememberLottieComposition(
-                spec =
-                    if (it.clickAnimation.isNotEmpty()) {
-                        LottieCompositionSpec.Url(
-                            it.clickAnimation,
-                        )
-                    } else {
-                        LottieCompositionSpec.RawRes(
-                            animationRes,
-                        )
+            var playLocalAnimation by remember { mutableStateOf(it.clickAnimation.isEmpty()) }
+            if (!playLocalAnimation) {
+                YralRemoteLottieAnimation(
+                    modifier = Modifier.fillMaxSize(),
+                    url = it.clickAnimation,
+                    iterations = 1,
+                    onAnimationComplete = {
+                        setAnimateBubbles(false)
+                        Logger.d("xxxx Lottie Animation completed")
                     },
-            )
-            val animationProgress by animateLottieCompositionAsState(
-                composition = animationComposition,
-                iterations = 1,
-                isPlaying = true, // Only start playing when initial animation is complete
-            )
-            LottieAnimation(
-                modifier = Modifier.fillMaxSize(),
-                composition = animationComposition,
-                progress = { animationProgress },
-            )
-            LaunchedEffect(animationProgress) {
-                if (animationProgress == 1f) {
+                    onError = { error ->
+                        playLocalAnimation = true
+                        Logger.e("xxxx Lottie Error loading animation", error)
+                    },
+                    onLoading = {
+                        Logger.d("xxxx Lottie Loading animation...")
+                    },
+                )
+            } else {
+                val animationRes = it.getBubbleResource()
+                YralLottieAnimation(
+                    modifier = Modifier.fillMaxSize(),
+                    rawRes = animationRes,
+                    iterations = 1,
+                ) {
                     setAnimateBubbles(false)
                 }
             }
