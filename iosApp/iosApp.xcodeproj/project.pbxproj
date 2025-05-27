@@ -447,6 +447,8 @@
 		ACC1C3992D9AF8BD005A7539 /* LottieLoaderContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC1C3972D9AF8B3005A7539 /* LottieLoaderContainerView.swift */; };
 		ACC1C39E2D9B046F005A7539 /* LottieRefreshSingletonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC1C39D2D9B046F005A7539 /* LottieRefreshSingletonView.swift */; };
 		ACC1C39F2D9B046F005A7539 /* LottieRefreshSingletonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC1C39D2D9B046F005A7539 /* LottieRefreshSingletonView.swift */; };
+		ACCA778E2DE4C1A2005BC0FA /* EventBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACCA778D2DE4C19E005BC0FA /* EventBuffer.swift */; };
+		ACCA778F2DE4C1A2005BC0FA /* EventBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACCA778D2DE4C19E005BC0FA /* EventBuffer.swift */; };
 		ACCB98782D944213002B9675 /* UILabel+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACCB98772D94420D002B9675 /* UILabel+Extensions.swift */; };
 		ACCB98792D944213002B9675 /* UILabel+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACCB98772D94420D002B9675 /* UILabel+Extensions.swift */; };
 		ACD2E8242D6746E900E750FE /* UploadingProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD2E8232D6746E400E750FE /* UploadingProgressView.swift */; };
@@ -763,6 +765,7 @@
 		ACC1C3932D9AF84B005A7539 /* LottieLoaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LottieLoaderView.swift; sourceTree = "<group>"; };
 		ACC1C3972D9AF8B3005A7539 /* LottieLoaderContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LottieLoaderContainerView.swift; sourceTree = "<group>"; };
 		ACC1C39D2D9B046F005A7539 /* LottieRefreshSingletonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LottieRefreshSingletonView.swift; sourceTree = "<group>"; };
+		ACCA778D2DE4C19E005BC0FA /* EventBuffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventBuffer.swift; sourceTree = "<group>"; };
 		ACCB98772D94420D002B9675 /* UILabel+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UILabel+Extensions.swift"; sourceTree = "<group>"; };
 		ACD2E8232D6746E400E750FE /* UploadingProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadingProgressView.swift; sourceTree = "<group>"; };
 		ACD941B82CFF575C0038FCB6 /* Yral-Staging.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Yral-Staging.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -1922,6 +1925,7 @@
 				ACB46A632D0F0B70002E200C /* FetchInitialFeedsUseCase.swift */,
 				AC49605A2D2C4BE5008D59D9 /* FetchMoreFeedsUseCase.swift */,
 				AC5A7C662DAD72A0009E9E42 /* LogUploadEventUseCase.swift */,
+				ACCA778D2DE4C19E005BC0FA /* EventBuffer.swift */,
 			);
 			path = Usecases;
 			sourceTree = "<group>";
@@ -2619,6 +2623,7 @@
 				AC8958E32D3EB0DB00E19ED7 /* ProfileOptionsWebView.swift in Sources */,
 				ACC0D4642D9179C1006DCF5C /* DeleteVideoUseCase.swift in Sources */,
 				ACB46A482D0ECBD5002E200C /* FeedsRepository.swift in Sources */,
+				105034AD2DD5E68D00571B4E /* SmileyRepository.swift in Sources */,
 				AC32E4412D295E97001DDA43 /* UserInfoView.swift in Sources */,
 				107C60B82DBF49D8006FC467 /* SmileyGameRuleRepositoryProtocol.swift in Sources */,
 				AC462F482D95B7F8004957B3 /* ReportView.swift in Sources */,
@@ -2633,7 +2638,9 @@
 				ACC0D4582D9177C2006DCF5C /* DeleteVideoRequest.swift in Sources */,
 				ACB46A502D0ED195002E200C /* FeedResult.swift in Sources */,
 				ACB46A532D0ED22B002E200C /* FeedQuery.swift in Sources */,
+				105034A42DD5E4E500571B4E /* SmileyRepositoryProtocol.swift in Sources */,
 				AC32E4502D296628001DDA43 /* AccountUseCase.swift in Sources */,
+				ACCA778F2DE4C1A2005BC0FA /* EventBuffer.swift in Sources */,
 				ACEBF7EF2D6F847300B594A0 /* ToastManager.swift in Sources */,
 				ACAA4D6D2DDCB257001092A6 /* FirebasePerformanceMonitor.swift in Sources */,
 				ACDD23E72D8B1B5F00AB0DAF /* ProfileVideoRequest.swift in Sources */,
@@ -2686,6 +2693,7 @@
 				105034BA2DD6332C00571B4E /* CastVoteError.swift in Sources */,
 				AC6BECBD2D09F68C002E2021 /* Endpoint.swift in Sources */,
 				AC09A9B32CDB775C009A39A4 /* SwiftBridgeCore.swift in Sources */,
+				105034AA2DD5E59800571B4E /* SmileyUseCase.swift in Sources */,
 				ACC1C3942D9AF854005A7539 /* LottieLoaderView.swift in Sources */,
 				AC99BBC12D86FF81008012C2 /* ProfileEmptyState.swift in Sources */,
 				ACEBF7F72D70A8D700B594A0 /* AnimatedCheckbox.swift in Sources */,
@@ -2836,6 +2844,7 @@
 				AC8958E22D3EB0DB00E19ED7 /* ProfileOptionsWebView.swift in Sources */,
 				ACC0D4652D9179C1006DCF5C /* DeleteVideoUseCase.swift in Sources */,
 				ACB46A472D0ECBD5002E200C /* FeedsRepository.swift in Sources */,
+				105034AE2DD5E68D00571B4E /* SmileyRepository.swift in Sources */,
 				AC32E4422D295E97001DDA43 /* UserInfoView.swift in Sources */,
 				107C60B92DBF49D8006FC467 /* SmileyGameRuleRepositoryProtocol.swift in Sources */,
 				AC462F472D95B7F8004957B3 /* ReportView.swift in Sources */,
@@ -2850,7 +2859,9 @@
 				ACC0D4572D9177C2006DCF5C /* DeleteVideoRequest.swift in Sources */,
 				ACB46A512D0ED195002E200C /* FeedResult.swift in Sources */,
 				ACB46A542D0ED22B002E200C /* FeedQuery.swift in Sources */,
+				105034A52DD5E4E500571B4E /* SmileyRepositoryProtocol.swift in Sources */,
 				AC32E44F2D296628001DDA43 /* AccountUseCase.swift in Sources */,
+				ACCA778E2DE4C1A2005BC0FA /* EventBuffer.swift in Sources */,
 				ACEBF7F02D6F847300B594A0 /* ToastManager.swift in Sources */,
 				ACAA4D6C2DDCB257001092A6 /* FirebasePerformanceMonitor.swift in Sources */,
 				ACDD23E82D8B1B5F00AB0DAF /* ProfileVideoRequest.swift in Sources */,
@@ -2903,6 +2914,7 @@
 				105034B92DD6332C00571B4E /* CastVoteError.swift in Sources */,
 				AC6BECBC2D09F68C002E2021 /* Endpoint.swift in Sources */,
 				ACD941892CFF575C0038FCB6 /* SwiftBridgeCore.swift in Sources */,
+				105034AB2DD5E59800571B4E /* SmileyUseCase.swift in Sources */,
 				ACC1C3952D9AF854005A7539 /* LottieLoaderView.swift in Sources */,
 				AC99BBC22D86FF81008012C2 /* ProfileEmptyState.swift in Sources */,
 				ACEBF7F62D70A8D700B594A0 /* AnimatedCheckbox.swift in Sources */,
@@ -3129,10 +3141,12 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Yral.entitlements;
-				CODE_SIGN_STYLE = Automatic;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
+				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
-				DEVELOPMENT_TEAM = 2UL556KNXC;
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 2UL556KNXC;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = Prod/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Yral;
@@ -3141,7 +3155,6 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/../rust-agent/target/universal/debug";
 				MARKETING_VERSION = 1.0.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
@@ -3149,6 +3162,8 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.yral.iosApp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "Yral distribution";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
@@ -3165,10 +3180,12 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Yral.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
+				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
-				DEVELOPMENT_TEAM = 2UL556KNXC;
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 2UL556KNXC;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = Prod/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Yral;
@@ -3177,7 +3194,6 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/../rust-agent/target/universal/release";
 				MARKETING_VERSION = 1.0.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
@@ -3186,6 +3202,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.yral.iosApp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "Yral distribution";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
@@ -3251,10 +3268,12 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
-				DEVELOPMENT_TEAM = 2UL556KNXC;
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 2UL556KNXC;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = "Staging/Info-Staging.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Yral-Staging";
@@ -3272,6 +3291,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.yral.iosApp.staging;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "Yral-Staging-Development";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
@@ -3286,10 +3306,12 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
-				DEVELOPMENT_TEAM = 2UL556KNXC;
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 2UL556KNXC;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = "Staging/Info-Staging.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Yral-Staging";
@@ -3307,6 +3329,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.yral.iosApp.staging;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "Yral-Staging-Development";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;

@@ -135,7 +135,7 @@ extension FeedsViewController {
     guard let cell = feedsCV.cellForItem(at: IndexPath(item: index, section: 0)) as? FeedsCell else {
       return
     }
-
+    
     cell.startSmileyGamResultAnimation(for: response) { [weak self] in
       items[index].smileyGame?.state = .played(response)
 

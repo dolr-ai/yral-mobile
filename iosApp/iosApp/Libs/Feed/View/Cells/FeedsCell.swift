@@ -238,7 +238,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     ])
     overlayView?.isHidden = true
   }
-
+  
   @objc private func handleFirstFrameReady(_ note: Notification) {
     guard let idx = note.userInfo?["index"] as? Int, idx == index else { return }
     playerLayer?.isHidden = false
