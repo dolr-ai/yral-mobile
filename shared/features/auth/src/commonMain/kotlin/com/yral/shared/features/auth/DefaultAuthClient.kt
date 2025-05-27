@@ -183,7 +183,7 @@ class DefaultAuthClient(
                     principalId = canisterWrapper.getUserPrincipal(),
                 ),
             ).onSuccess {
-                setSession(data, canisterWrapper)
+                setSession(data, canisterWrapper, it.coins)
             }.onFailure { error ->
                 throw YralException(error.message ?: "Failed to exchange principal ID")
             }
@@ -192,6 +192,7 @@ class DefaultAuthClient(
     private suspend fun setSession(
         data: ByteArray,
         canisterWrapper: CanistersWrapper,
+        initialCoinBalance: Long,
     ) {
         sessionManager.updateState(
             SessionState.SignedIn(
@@ -203,6 +204,7 @@ class DefaultAuthClient(
                     ),
             ),
         )
+        sessionManager.updateCoinBalance(initialCoinBalance)
         analyticsManager.trackEvent(
             event = AuthSuccessfulEventData(),
         )
