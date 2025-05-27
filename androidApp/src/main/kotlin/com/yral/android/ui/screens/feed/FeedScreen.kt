@@ -62,6 +62,7 @@ import com.yral.android.ui.screens.game.AboutGameSheet
 import com.yral.android.ui.screens.game.CoinBalance
 import com.yral.android.ui.screens.game.GameIconsRow
 import com.yral.android.ui.screens.game.GameResultSheet
+import com.yral.android.ui.widgets.PreloadLottieAnimation
 import com.yral.android.ui.widgets.YralBottomSheet
 import com.yral.android.ui.widgets.YralButtonState
 import com.yral.android.ui.widgets.YralButtonType
@@ -277,6 +278,11 @@ private fun FeedOverlay(
                 coinDelta = gameViewModel.getFeedGameResult(state.feedDetails[pageNo].videoID),
                 isLoading = gameState.isLoading,
             )
+            if (!gameState.cacheFetched) {
+                gameState.gameIcons.forEach { icon ->
+                    PreloadLottieAnimation(icon.clickAnimation)
+                }
+            }
         }
     }
 }
