@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.core.dispatchers.AppDispatchers
+import com.yral.shared.core.session.SessionManager
 import com.yral.shared.features.game.domain.GetGameIconsUseCase
 import com.yral.shared.features.game.domain.GetGameRulesUseCase
 import com.yral.shared.features.game.domain.models.AboutGameItem
@@ -19,6 +20,7 @@ import kotlin.random.Random
 
 class GameViewModel(
     appDispatchers: AppDispatchers,
+    private val sessionManager: SessionManager,
     private val gameIconsUseCase: GetGameIconsUseCase,
     private val gameRulesUseCase: GetGameRulesUseCase,
 ) : ViewModel() {
@@ -34,7 +36,7 @@ class GameViewModel(
             GameState(
                 gameIcons = emptyList(),
                 gameRules = emptyList(),
-                coinBalance = 2000,
+                coinBalance = sessionManager.coinBalance.value,
             ),
         )
     val state: StateFlow<GameState> = _state.asStateFlow()
@@ -44,6 +46,14 @@ class GameViewModel(
             getGameRules()
             // First get coin balance
             getGameIcons()
+            // Observe coin balance changes
+            sessionManager.coinBalance.collect { balance ->
+                _state.emit(
+                    _state.value.copy(
+                        coinBalance = balance,
+                    ),
+                )
+            }
         }
     }
 
@@ -118,15 +128,18 @@ class GameViewModel(
             tempPair?.let {
                 temp[videoId] = tempPair.copy(second = coinDelta)
             }
+            val newCoinBalance = _state.value.coinBalance.plus(coinDelta)
             _state.emit(
                 _state.value.copy(
                     gameResult = temp,
-                    coinBalance = _state.value.coinBalance.plus(coinDelta),
+                    coinBalance = newCoinBalance,
                     animateCoinBalance = true,
                     showResultSheet = true,
                     isLoading = false,
                 ),
             )
+            // Update session with new coin balance
+            sessionManager.updateCoinBalance(newCoinBalance)
         }
     }
 
