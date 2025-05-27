@@ -9,6 +9,8 @@ import com.yral.shared.features.game.domain.GetGameIconsUseCase
 import com.yral.shared.features.game.domain.GetGameRulesUseCase
 import com.yral.shared.features.game.domain.models.AboutGameItem
 import com.yral.shared.features.game.domain.models.GameIcon
+import com.yral.shared.preferences.PrefKeys
+import com.yral.shared.preferences.Preferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
@@ -20,6 +22,7 @@ import kotlin.random.Random
 
 class GameViewModel(
     appDispatchers: AppDispatchers,
+    private val preferences: Preferences,
     private val sessionManager: SessionManager,
     private val gameIconsUseCase: GetGameIconsUseCase,
     private val gameRulesUseCase: GetGameRulesUseCase,
@@ -44,8 +47,14 @@ class GameViewModel(
     init {
         coroutineScope.launch {
             getGameRules()
-            // First get coin balance
             getGameIcons()
+            preferences.getBoolean(PrefKeys.IS_RESULT_SHEET_SHOWN.name)?.let { shown ->
+                _state.emit(
+                    _state.value.copy(
+                        isResultSheetShown = shown,
+                    ),
+                )
+            }
             // Observe coin balance changes
             sessionManager.coinBalance.collect { balance ->
                 _state.emit(
@@ -129,12 +138,19 @@ class GameViewModel(
                 temp[videoId] = tempPair.copy(second = coinDelta)
             }
             val newCoinBalance = _state.value.coinBalance.plus(coinDelta)
+            val showResultSheet = !_state.value.isResultSheetShown
+            if (showResultSheet) {
+                preferences.putBoolean(PrefKeys.IS_RESULT_SHEET_SHOWN.name, true)
+                _state.emit(
+                    _state.value.copy(isResultSheetShown = true),
+                )
+            }
             _state.emit(
                 _state.value.copy(
                     gameResult = temp,
                     coinBalance = newCoinBalance,
                     animateCoinBalance = true,
-                    showResultSheet = true,
+                    showResultSheet = showResultSheet,
                     isLoading = false,
                 ),
             )
@@ -204,4 +220,5 @@ data class GameState(
     val showAboutGame: Boolean = false,
     val gameRules: List<AboutGameItem>,
     val cacheFetched: Boolean = false,
+    val isResultSheetShown: Boolean = false,
 )
