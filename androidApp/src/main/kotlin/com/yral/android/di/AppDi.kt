@@ -12,6 +12,7 @@ import com.yral.shared.features.feed.di.feedModule
 import com.yral.shared.features.game.di.gameModule
 import com.yral.shared.features.root.di.rootModule
 import com.yral.shared.firebaseAuth.di.firebaseAuthModule
+import com.yral.shared.firebaseStore.di.firestoreModule
 import com.yral.shared.http.di.networkModule
 import com.yral.shared.preferences.di.preferencesModule
 import com.yral.shared.rust.di.rustModule
@@ -33,6 +34,7 @@ fun initKoin(appDeclaration: KoinAppDeclaration) {
             networkModule,
             rustModule,
             firebaseAuthModule,
+            firestoreModule,
         )
         modules(
             authModule,

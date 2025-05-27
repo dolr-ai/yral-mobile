@@ -33,6 +33,7 @@ kotlin {
             implementation(projects.shared.libs.useCase)
             implementation(projects.shared.libs.crashlytics)
             implementation(projects.shared.libs.preferences)
+            implementation(projects.shared.libs.firebaseStore)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

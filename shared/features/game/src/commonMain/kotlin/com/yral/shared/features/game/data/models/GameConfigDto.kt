@@ -3,29 +3,8 @@ package com.yral.shared.features.game.data.models
 import com.yral.shared.features.game.domain.models.GameConfig
 import com.yral.shared.features.game.domain.models.GameIcon
 import com.yral.shared.features.game.domain.models.GameIconNames
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
-
-@Serializable
-data class GameConfigDto(
-    @SerialName("available_smileys")
-    val availableSmileys: List<GameIconDto>,
-    @SerialName("loss_penalty")
-    val lossPenalty: Int,
-)
-
-@Serializable
-data class GameIconDto(
-    val id: String,
-    @SerialName("image_name")
-    val imageName: String,
-    @SerialName("image_url")
-    val imageUrl: String,
-    @SerialName("click_animation")
-    val clickAnimation: String,
-    @SerialName("is_active")
-    val isActive: Boolean,
-)
+import com.yral.shared.firebaseStore.model.GameConfigDto
+import com.yral.shared.firebaseStore.model.GameIconDto
 
 fun GameConfigDto.toGameConfig(): GameConfig =
     GameConfig(
