@@ -12,12 +12,14 @@ import com.yral.shared.core.session.SessionState
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.domain.AuthRepository
 import com.yral.shared.features.auth.domain.useCases.AuthenticateTokenUseCase
+import com.yral.shared.features.auth.domain.useCases.ExchangePrincipalIdUseCase
 import com.yral.shared.features.auth.domain.useCases.ObtainAnonymousIdentityUseCase
 import com.yral.shared.features.auth.domain.useCases.RefreshTokenUseCase
 import com.yral.shared.features.auth.domain.useCases.UpdateSessionAsRegisteredUseCase
 import com.yral.shared.features.auth.utils.OAuthListener
 import com.yral.shared.features.auth.utils.OAuthUtils
 import com.yral.shared.features.auth.utils.SocialProvider
+import com.yral.shared.firebaseAuth.usecase.GetIdTokenUseCase
 import com.yral.shared.firebaseAuth.usecase.SignInAnonymouslyUseCase
 import com.yral.shared.firebaseAuth.usecase.SignOutUseCase
 import com.yral.shared.preferences.PrefKeys
@@ -174,8 +176,32 @@ class DefaultAuthClient(
             .signInAnonymouslyUseCase
             .invoke(Unit)
             .onSuccess {
-                setSession(data, canisterWrapper)
+                requiredUseCases
+                    .getIdTokenUseCase
+                    .invoke(GetIdTokenUseCase.DEFAULT)
+                    .onSuccess { idToken ->
+                        exchangePrincipalId(idToken, data, canisterWrapper)
+                    }.onFailure { throw YralException(it.localizedMessage ?: "") }
             }.onFailure { }
+    }
+
+    private suspend fun exchangePrincipalId(
+        idToken: String,
+        data: ByteArray,
+        canisterWrapper: CanistersWrapper,
+    ) {
+        crashlyticsManager.logMessage("exchanging token")
+        requiredUseCases.exchangePrincipalIdUseCase
+            .invoke(
+                ExchangePrincipalIdUseCase.Params(
+                    idToken = idToken,
+                    principalId = canisterWrapper.getUserPrincipal(),
+                ),
+            ).onSuccess {
+                setSession(data, canisterWrapper)
+            }.onFailure { error ->
+                throw YralException(error.message ?: "Failed to exchange principal ID")
+            }
     }
 
     private suspend fun setSession(
@@ -288,5 +314,7 @@ class DefaultAuthClient(
         val updateSessionAsRegisteredUseCase: UpdateSessionAsRegisteredUseCase,
         val signOutUseCase: SignOutUseCase,
         val signInAnonymouslyUseCase: SignInAnonymouslyUseCase,
+        val exchangePrincipalIdUseCase: ExchangePrincipalIdUseCase,
+        val getIdTokenUseCase: GetIdTokenUseCase,
     )
 }
