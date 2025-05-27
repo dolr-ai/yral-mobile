@@ -23,6 +23,10 @@
 			<string>Editor</string>
 			<key>CFBundleURLName</key>
 			<string>com.yral.iosApp</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.yral.iosApp</string>
+			</array>
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
