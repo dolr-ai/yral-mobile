@@ -30,17 +30,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import com.airbnb.lottie.compose.LottieAnimation
-import com.airbnb.lottie.compose.LottieCompositionSpec
-import com.airbnb.lottie.compose.LottieConstants
-import com.airbnb.lottie.compose.animateLottieCompositionAsState
-import com.airbnb.lottie.compose.rememberLottieComposition
 import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.screens.home.HomeScreen
 import com.yral.android.ui.widgets.YralBottomSheet
 import com.yral.android.ui.widgets.YralGradientButton
 import com.yral.shared.features.root.viewmodels.RootError
+import com.yral.android.ui.widgets.YralLottieAnimation
 import com.yral.shared.features.root.viewmodels.RootViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -125,33 +121,19 @@ private fun Splash(
     Box(
         modifier = modifier.background(Color.Black),
     ) {
-        // The initial splash animation
-        val splashComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.splash_lottie))
-        val splashProgress by animateLottieCompositionAsState(
-            composition = splashComposition,
-            iterations = 1,
-            isPlaying = true,
-        )
-
-        // The continuous lightning animation
-        val lightningComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.lightning_lottie))
-        val lightningProgress by animateLottieCompositionAsState(
-            composition = lightningComposition,
-            iterations = LottieConstants.IterateForever,
-            isPlaying = initialAnimationComplete, // Only start playing when initial animation is complete
-        )
-
         // Crossfade between animations
         AnimatedVisibility(
             visible = !initialAnimationComplete,
             enter = fadeIn(),
             exit = fadeOut(),
         ) {
-            LottieAnimation(
+            YralLottieAnimation(
                 modifier = Modifier.fillMaxSize(),
-                composition = splashComposition,
-                progress = { splashProgress },
-            )
+                rawRes = R.raw.splash_lottie,
+                iterations = 1,
+            ) {
+                onAnimationComplete()
+            }
         }
 
         AnimatedVisibility(
@@ -159,17 +141,10 @@ private fun Splash(
             enter = fadeIn(),
             exit = fadeOut(),
         ) {
-            LottieAnimation(
+            YralLottieAnimation(
                 modifier = Modifier.fillMaxSize(),
-                composition = lightningComposition,
-                progress = { lightningProgress },
+                rawRes = R.raw.lightning_lottie,
             )
-        }
-
-        LaunchedEffect(splashProgress) {
-            if (splashProgress == 1f) {
-                onAnimationComplete()
-            }
         }
     }
 }
