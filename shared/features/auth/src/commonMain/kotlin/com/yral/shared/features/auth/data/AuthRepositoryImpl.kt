@@ -3,8 +3,10 @@ package com.yral.shared.features.auth.data
 import com.yral.shared.core.AppConfigurations.OAUTH_BASE_URL
 import com.yral.shared.features.auth.data.AuthDataSourceImpl.Companion.CLIENT_ID
 import com.yral.shared.features.auth.data.AuthDataSourceImpl.Companion.REDIRECT_URI
+import com.yral.shared.features.auth.data.models.toExchangePrincipalResponse
 import com.yral.shared.features.auth.data.models.toTokenResponse
 import com.yral.shared.features.auth.domain.AuthRepository
+import com.yral.shared.features.auth.domain.models.ExchangePrincipalResponse
 import com.yral.shared.features.auth.domain.models.TokenResponse
 import com.yral.shared.features.auth.utils.OAuthUtils
 import com.yral.shared.features.auth.utils.SocialProvider
@@ -68,4 +70,12 @@ class AuthRepositoryImpl(
         canisterId: String,
     ) = dataSource
         .updateSessionAsRegistered(idToken, canisterId)
+
+    override suspend fun exchangePrincipalId(
+        idToken: String,
+        principalId: String,
+    ): ExchangePrincipalResponse =
+        dataSource
+            .exchangePrincipalId(idToken, principalId)
+            .toExchangePrincipalResponse()
 }

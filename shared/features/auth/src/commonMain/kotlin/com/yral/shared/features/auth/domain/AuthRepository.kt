@@ -1,5 +1,6 @@
 package com.yral.shared.features.auth.domain
 
+import com.yral.shared.features.auth.domain.models.ExchangePrincipalResponse
 import com.yral.shared.features.auth.domain.models.TokenResponse
 import com.yral.shared.features.auth.utils.SocialProvider
 import io.ktor.http.Url
@@ -17,4 +18,8 @@ interface AuthRepository {
         idToken: String,
         canisterId: String,
     )
+    suspend fun exchangePrincipalId(
+        idToken: String,
+        principalId: String,
+    ): ExchangePrincipalResponse
 }
