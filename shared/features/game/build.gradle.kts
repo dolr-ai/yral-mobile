@@ -32,6 +32,7 @@ kotlin {
             implementation(projects.shared.libs.koin)
             implementation(projects.shared.libs.useCase)
             implementation(projects.shared.libs.crashlytics)
+            implementation(projects.shared.libs.preferences)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
