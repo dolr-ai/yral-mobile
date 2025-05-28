@@ -46,7 +46,8 @@ struct IosApp: App {
         feedsViewController: feedsDIContainer.makeFeedsViewController(),
         uploadView: uploadDIContainer.makeUploadView(),
         profileView: profileDIContainer.makeProfileView(),
-        accountView: accountDIContainer.makeAccountView()
+        accountView: accountDIContainer.makeAccountView(),
+        leaderboardView: LeaderboardView()
       )
       .environmentObject(session)
     } else if let error = initializationError {
