@@ -40,6 +40,8 @@ interface FBFirestoreRepositoryApi {
         queryOptions: QueryOptions,
     ): Flow<List<T>>
 
+    suspend fun documentExists(path: String): Result<Boolean>
+
 //    suspend fun <T : FirestoreDocument> setDocument(
 //        collectionPath: String,
 //        document: T,
