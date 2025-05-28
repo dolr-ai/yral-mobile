@@ -15,6 +15,7 @@ import com.yral.shared.features.feed.useCases.FetchMoreFeedUseCase
 import com.yral.shared.features.feed.useCases.GetInitialFeedUseCase
 import com.yral.shared.features.feed.useCases.ReportRequestParams
 import com.yral.shared.features.feed.useCases.ReportVideoUseCase
+import com.yral.shared.firebaseStore.usecase.CheckVideoVoteUseCase
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import com.yral.shared.rust.domain.models.FeedDetails
@@ -34,9 +35,9 @@ class FeedViewModel(
     initialFeedDetails: List<FeedDetails>,
     appDispatchers: AppDispatchers,
     private val sessionManager: SessionManager,
+    private val requiredUseCases: RequiredUseCases,
     private val analyticsManager: AnalyticsManager,
     private val crashlyticsManager: CrashlyticsManager,
-    private val requiredUseCases: RequiredUseCases,
     private val preferences: Preferences,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.io)
@@ -101,6 +102,15 @@ class FeedViewModel(
         )
     }
 
+    private suspend fun isAlreadyVoted(post: Post): Boolean =
+        requiredUseCases.checkVideoVoteUseCase
+            .invoke(
+                CheckVideoVoteUseCase.Params(
+                    videoId = post.videoID,
+                    principalId = sessionManager.getUserPrincipal() ?: "",
+                ),
+            ).value
+
     private suspend fun fetchFeedDetail(post: Post) {
         requiredUseCases.fetchFeedDetailsUseCase
             .invoke(post)
@@ -146,6 +156,7 @@ class FeedViewModel(
                                 moreFeed
                                     .posts
                                     .filter { post -> post.videoID !in existingIds }
+                                    .filter { post -> !isAlreadyVoted(post) }
                             _state.update { currentState ->
                                 currentState.copy(
                                     posts = currentState.posts + filteredPosts,
@@ -402,6 +413,14 @@ class FeedViewModel(
         _state.value.videoTracing.any {
             videoID == it.first && traceType == it.second
         }
+
+    data class RequiredUseCases(
+        val getInitialFeedUseCase: GetInitialFeedUseCase,
+        val fetchMoreFeedUseCase: FetchMoreFeedUseCase,
+        val fetchFeedDetailsUseCase: FetchFeedDetailsUseCase,
+        val reportVideoUseCase: ReportVideoUseCase,
+        val checkVideoVoteUseCase: CheckVideoVoteUseCase,
+    )
 }
 
 data class FeedState(
@@ -448,13 +467,6 @@ enum class VideoReportReason(
     SPAM("Spam / Ad"),
     OTHERS("Others"),
 }
-
-data class RequiredUseCases(
-    val getInitialFeedUseCase: GetInitialFeedUseCase,
-    val fetchMoreFeedUseCase: FetchMoreFeedUseCase,
-    val fetchFeedDetailsUseCase: FetchFeedDetailsUseCase,
-    val reportVideoUseCase: ReportVideoUseCase,
-)
 
 /**
  * Extension function to calculate percentage of a value relative to total

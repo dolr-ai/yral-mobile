@@ -9,7 +9,7 @@ import com.yral.shared.features.feed.useCases.FetchMoreFeedUseCase
 import com.yral.shared.features.feed.useCases.GetInitialFeedUseCase
 import com.yral.shared.features.feed.useCases.ReportVideoUseCase
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
-import com.yral.shared.features.feed.viewmodel.RequiredUseCases
+import com.yral.shared.features.feed.viewmodel.FeedViewModel.RequiredUseCases
 import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.viewModelOf
@@ -20,8 +20,9 @@ val feedModule =
         factoryOf(::GetInitialFeedUseCase)
         factoryOf(::FetchMoreFeedUseCase)
         factoryOf(::FetchFeedDetailsUseCase)
-        viewModelOf(::FeedViewModel)
         factoryOf(::ReportVideoUseCase)
+        factoryOf(::RequiredUseCases)
+        viewModelOf(::FeedViewModel)
         factoryOf(::FeedRepository) { bind<IFeedRepository>() }
         factoryOf(::FeedRemoteDataSource) { bind<IFeedRemoteDataSource>() }
         factoryOf(::RequiredUseCases)
