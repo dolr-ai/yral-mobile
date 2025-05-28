@@ -12,7 +12,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -22,16 +21,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.airbnb.lottie.compose.LottieAnimation
-import com.airbnb.lottie.compose.LottieCompositionSpec
-import com.airbnb.lottie.compose.animateLottieCompositionAsState
-import com.airbnb.lottie.compose.rememberLottieComposition
 import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.widgets.YralBottomSheet
 import com.yral.android.ui.widgets.YralButton
 import com.yral.android.ui.widgets.YralGradientButton
+import com.yral.android.ui.widgets.YralLottieAnimation
 import com.yral.shared.features.game.domain.models.GameIcon
 import kotlin.math.abs
 
@@ -176,19 +172,9 @@ private fun getResultCentsTextColor(coinDelta: Int): Color =
 private fun GameResultBagAnimation(coinDelta: Int) {
     val bagAnimationRes =
         if (coinDelta > 0) R.raw.smiley_game_win else R.raw.smiley_game_lose
-    val bagAnimationComposition by rememberLottieComposition(
-        LottieCompositionSpec.RawRes(
-            bagAnimationRes,
-        ),
-    )
-    val bagAnimationProgress by animateLottieCompositionAsState(
-        composition = bagAnimationComposition,
+    YralLottieAnimation(
+        rawRes = bagAnimationRes,
         iterations = 1,
-        isPlaying = true, // Only start playing when initial animation is complete
-    )
-    LottieAnimation(
-        composition = bagAnimationComposition,
-        progress = { bagAnimationProgress },
     )
 }
 
