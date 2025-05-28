@@ -11,6 +11,8 @@ import com.yral.shared.features.game.domain.GetGameRulesUseCase
 import com.yral.shared.features.game.domain.models.AboutGameItem
 import com.yral.shared.features.game.domain.models.CastVoteRequest
 import com.yral.shared.features.game.domain.models.GameIcon
+import com.yral.shared.features.game.domain.models.VoteResult
+import com.yral.shared.features.game.domain.models.toVoteResult
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import kotlinx.coroutines.CoroutineScope
@@ -99,7 +101,7 @@ class GameViewModel(
     ) {
         coroutineScope.launch {
             val temp = _state.value.gameResult.toMutableMap()
-            temp[videoId] = Pair(icon, 0)
+            temp[videoId] = Pair(icon, VoteResult(0, ""))
             _state.emit(
                 _state.value.copy(
                     gameResult = temp,
@@ -118,7 +120,7 @@ class GameViewModel(
                     ).onSuccess { result ->
                         setFeedGameResult(
                             videoId = videoId,
-                            coinDelta = result.coinDelta,
+                            voteResult = result.toVoteResult(),
                         )
                     }.onFailure { setLoading(false) }
             }
@@ -129,20 +131,30 @@ class GameViewModel(
         _state
             .value
             .gameResult[videoId]
-            ?.second ?: 0
+            ?.second
+            ?.coinDelta ?: 0
 
-    fun setFeedGameResult(
+    fun getFeedGameResultError(videoId: String): String =
+        _state
+            .value
+            .gameResult[videoId]
+            ?.second
+            ?.errorMessage ?: ""
+
+    private fun setFeedGameResult(
         videoId: String,
-        coinDelta: Int,
+        voteResult: VoteResult,
     ) {
         coroutineScope.launch {
             val temp = _state.value.gameResult.toMutableMap()
             val tempPair = _state.value.gameResult[videoId]
             tempPair?.let {
-                temp[videoId] = tempPair.copy(second = coinDelta)
+                temp[videoId] = tempPair.copy(second = voteResult)
             }
-            val newCoinBalance = _state.value.coinBalance.plus(coinDelta)
-            val showResultSheet = !_state.value.isResultSheetShown
+            val newCoinBalance = _state.value.coinBalance.plus(voteResult.coinDelta)
+            val showResultSheet =
+                !_state.value.isResultSheetShown &&
+                    newCoinBalance != _state.value.coinBalance
             if (showResultSheet) {
                 preferences.putBoolean(PrefKeys.IS_RESULT_SHEET_SHOWN.name, true)
                 _state.emit(
@@ -153,7 +165,7 @@ class GameViewModel(
                 _state.value.copy(
                     gameResult = temp,
                     coinBalance = newCoinBalance,
-                    animateCoinBalance = true,
+                    animateCoinBalance = newCoinBalance != _state.value.coinBalance,
                     showResultSheet = showResultSheet,
                     isLoading = false,
                 ),
@@ -216,7 +228,7 @@ class GameViewModel(
 
 data class GameState(
     val gameIcons: List<GameIcon>,
-    val gameResult: Map<String, Pair<GameIcon, Int>> = emptyMap(),
+    val gameResult: Map<String, Pair<GameIcon, VoteResult>> = emptyMap(),
     val coinBalance: Long,
     val animateCoinBalance: Boolean = false,
     val isLoading: Boolean = false,

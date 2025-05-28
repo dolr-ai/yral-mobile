@@ -7,16 +7,23 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class CastVoteResponseDto(
-    @SerialName("outcome")
-    val outcome: String,
-    @SerialName("coins")
-    val coins: Long,
-    @SerialName("coin_delta")
-    val coinDelta: Int,
-    @SerialName("error")
-    val error: CastVoteErrorDto? = null,
-)
+sealed class CastVoteResponseDto {
+    @Serializable
+    data class Success(
+        @SerialName("outcome")
+        val outcome: String,
+        @SerialName("coins")
+        val coins: Long,
+        @SerialName("coin_delta")
+        val coinDelta: Int,
+    ) : CastVoteResponseDto()
+
+    @Serializable
+    data class Error(
+        @SerialName("error")
+        val error: CastVoteErrorDto,
+    ) : CastVoteResponseDto()
+}
 
 @Serializable
 data class CastVoteErrorDto(
@@ -27,15 +34,20 @@ data class CastVoteErrorDto(
 )
 
 fun CastVoteResponseDto.toCastVoteResponse(): CastVoteResponse =
-    CastVoteResponse(
-        outcome = outcome,
-        coins = coins,
-        coinDelta = coinDelta,
-        error =
-            error?.let {
-                CastVoteError(
-                    code = CastVoteErrorCodes.valueOf(it.code),
-                    message = it.message,
-                )
-            },
-    )
+    when (this) {
+        is CastVoteResponseDto.Success ->
+            CastVoteResponse.Success(
+                outcome = outcome,
+                coins = coins,
+                coinDelta = coinDelta,
+            )
+
+        is CastVoteResponseDto.Error ->
+            CastVoteResponse.Error(
+                error =
+                    CastVoteError(
+                        code = CastVoteErrorCodes.valueOf(error.code),
+                        message = error.message,
+                    ),
+            )
+    }
