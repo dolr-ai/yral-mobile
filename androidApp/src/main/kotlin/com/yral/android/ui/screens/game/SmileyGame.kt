@@ -80,7 +80,7 @@ fun GameIconsRow(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.BottomCenter,
     ) {
-        if (!resultViewVisible) {
+        if (!resultViewVisible || animateBubbles) {
             GameIconStrip(
                 modifier = Modifier.align(Alignment.BottomCenter),
                 gameIcons = gameIcons,
@@ -109,13 +109,17 @@ fun GameIconsRow(
         GameIconBubbles(clickedIcon, animateBubbles) { animate ->
             animateBubbles = animate
         }
-        GameResultAnimation(
-            coinDelta,
-            animateCoinDelta = animateCoinDelta,
-            resultViewVisible = resultViewVisible,
-            setAnimateCoinDelta = { animateCoinDelta = it },
-            onAnimationComplete = { resultViewVisible = shouldShowResult(coinDelta, errorMessage) },
-        )
+        if (!animateBubbles) {
+            GameResultAnimation(
+                coinDelta,
+                animateCoinDelta = animateCoinDelta,
+                resultViewVisible = resultViewVisible,
+                setAnimateCoinDelta = { animateCoinDelta = it },
+                onAnimationComplete = {
+                    resultViewVisible = shouldShowResult(coinDelta, errorMessage)
+                },
+            )
+        }
     }
 }
 
