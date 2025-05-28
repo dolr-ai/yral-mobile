@@ -11,12 +11,14 @@ jobs:
   check-releases:
     runs-on: ubuntu-latest
     permissions:
-      contents: 'read'
+      contents: 'write'  # Changed to write to allow committing changes
       id-token: 'write'
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for proper versioning
 
       - name: Restore last notified release from cache
         id: cache-release
@@ -77,16 +79,136 @@ jobs:
           path: last_release.txt
           key: last-notified-release
 
-      - name: Send notification to Google Chat
+      - name: Install didc tool
         if: steps.check_release.outputs.new_release == 'true'
         run: |
-          curl -X POST "${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}" \
-          -H "Content-Type: application/json" \
-          -d '{
-            "text": "🎉 *New Release Alert!*\n\n📦 **Hot-or-Not Backend Canister**\n🏷️ Release: ${{ steps.check_release.outputs.release_name }} (${{ steps.check_release.outputs.release_tag }})\n👤 Author: ${{ steps.check_release.outputs.author }}\n📅 Published: ${{ steps.check_release.outputs.published_at }}\n\n📝 **Release Notes:**\n${{ steps.check_release.outputs.release_body }}\n\n🔗 [View Release](${{ steps.check_release.outputs.release_url }})\n🔗 [Repository](https://github.com/dolr-ai/hot-or-not-backend-canister)"
-          }'
+          curl -L -o didc https://github.com/dfinity/candid/releases/download/2024-02-08/didc-linux64
+          chmod +x didc
+          sudo mv didc /usr/local/bin/
+
+      - name: Download and compare .did files
+        if: steps.check_release.outputs.new_release == 'true'
+        id: compare_did
+        run: |
+          # Create temporary directory for new release files
+          mkdir -p temp_release
+          
+          # Create did directory if it doesn't exist
+          mkdir -p shared/rust/rust-agent-uniffi/did
+          
+          # Download release assets
+          RELEASE_ASSETS=$(curl -s "https://api.github.com/repos/dolr-ai/hot-or-not-backend-canister/releases/latest" | jq -r '.assets[].browser_download_url')
+          
+          # Download .did files to temp directory
+          for asset_url in $RELEASE_ASSETS; do
+            if [[ $asset_url == *.did ]]; then
+              echo "Downloading $(basename $asset_url)..."
+              curl -L -o "temp_release/$(basename $asset_url)" "$asset_url"
+            fi
+          done
+          
+          # Compare and update files
+          HAS_CHANGES=false
+          HAS_BREAKING_CHANGES=false
+          for did_file in temp_release/*.did; do
+            if [ -f "$did_file" ]; then
+              local_file="shared/rust/rust-agent-uniffi/did/$(basename $did_file)"
+              if [ -f "$local_file" ]; then
+                echo "Comparing $(basename $did_file)..."
+                # Run didc check and capture both output and exit code
+                DIFF_OUTPUT=$(didc check "$local_file" "$did_file" 2>&1)
+                DIFF_EXIT_CODE=$?
+                
+                if [ $DIFF_EXIT_CODE -ne 0 ]; then
+                  echo "❌ Breaking changes detected in $(basename $did_file):"
+                  echo "$DIFF_OUTPUT"
+                  echo "breaking_changes=true" >> $GITHUB_OUTPUT
+                  HAS_BREAKING_CHANGES=true
+                  # Don't automatically update files with breaking changes
+                else
+                  echo "✅ No breaking changes in $(basename $did_file)"
+                  # Check if files are different despite being compatible
+                  if ! cmp -s "$local_file" "$did_file"; then
+                    echo "ℹ️ Non-breaking updates found in $(basename $did_file)"
+                    echo "differences=true" >> $GITHUB_OUTPUT
+                    echo "Updating $(basename $did_file)..."
+                    cp "$did_file" "$local_file"
+                    HAS_CHANGES=true
+                  else
+                    echo "✅ Files are identical"
+                  fi
+                fi
+              else
+                echo "⚠️ New .did file found: $(basename $did_file)"
+                echo "new_files=true" >> $GITHUB_OUTPUT
+                echo "Adding new file $(basename $did_file)..."
+                cp "$did_file" "$local_file"
+                HAS_CHANGES=true
+              fi
+            fi
+          done
+          
+          # Cleanup
+          rm -rf temp_release
+          
+          # Set outputs for next steps
+          echo "has_changes=$HAS_CHANGES" >> $GITHUB_OUTPUT
+          echo "has_breaking_changes=$HAS_BREAKING_CHANGES" >> $GITHUB_OUTPUT
+
+      - name: Commit and push changes
+        if: steps.compare_did.outputs.has_changes == 'true'
+        run: |
+          git config --global user.name 'GitHub Actions'
+          git config --global user.email 'actions@github.com'
+          
+          # Create a new branch for the changes
+          BRANCH_NAME="update-did-files-$(date +%Y%m%d-%H%M%S)"
+          git checkout -b $BRANCH_NAME
+          
+          # Add and commit changes
+          git add shared/rust/rust-agent-uniffi/did/
+          git commit -m "Update .did files from release ${{ steps.check_release.outputs.release_tag }}"
+          
+          # Push changes
+          git push origin $BRANCH_NAME
+          
+          # Create pull request with appropriate labels
+          PR_LABELS=""
+          if [ "${{ steps.compare_did.outputs.has_breaking_changes }}" == "true" ]; then
+            PR_LABELS="breaking-change"
+          fi
+          
+          gh pr create \
+            --title "Update .did files from release ${{ steps.check_release.outputs.release_tag }}" \
+            --body "This PR updates the .did files from the latest release.
+            
+            Release: ${{ steps.check_release.outputs.release_name }}
+            Tag: ${{ steps.check_release.outputs.release_tag }}
+            Published: ${{ steps.check_release.outputs.published_at }}
+            Author: ${{ steps.check_release.outputs.author }}
+            
+            Release Notes:
+            ${{ steps.check_release.outputs.release_body }}
+            
+            [View Release](${{ steps.check_release.outputs.release_url }})" \
+            --base main \
+            --label "$PR_LABELS"
 
       - name: Log notification status
         if: steps.check_release.outputs.new_release == 'true'
         run: |
-          echo "✅ Notification sent for release ${{ steps.check_release.outputs.release_tag }}"
+          echo "✅ Processed release ${{ steps.check_release.outputs.release_tag }}"
+          if [ "${{ steps.compare_did.outputs.differences }}" == "true" ]; then
+            echo "⚠️ Non-breaking updates found in .did files"
+          fi
+          if [ "${{ steps.compare_did.outputs.breaking_changes }}" == "true" ]; then
+            echo "🚨 Breaking changes detected in .did files"
+          fi
+          if [ "${{ steps.compare_did.outputs.new_files }}" == "true" ]; then
+            echo "ℹ️ New .did files found in release"
+          fi
+          if [ "${{ steps.compare_did.outputs.has_changes }}" == "true" ]; then
+            echo "✅ Changes committed and PR created"
+          else
+            echo "ℹ️ No changes needed"
+          fi
