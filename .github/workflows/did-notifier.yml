@@ -133,8 +133,10 @@ jobs:
               if [ -f "$local_file" ]; then
                 echo "Comparing $(basename $did_file)..."
                 # Run didc check and capture both output and exit code
+                set +e  # Disable exit on error
                 DIFF_OUTPUT=$(didc check "$local_file" "$did_file" 2>&1)
                 DIFF_EXIT_CODE=$?
+                set -e  # Re-enable exit on error
                 
                 if [ $DIFF_EXIT_CODE -ne 0 ]; then
                   echo "❌ Breaking changes detected in $(basename $did_file):"
