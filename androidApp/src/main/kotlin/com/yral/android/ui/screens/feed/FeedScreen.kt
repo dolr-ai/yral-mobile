@@ -60,8 +60,8 @@ import com.yral.android.ui.screens.feed.FeedScreenConstants.MAX_LINES_FOR_POST_D
 import com.yral.android.ui.screens.feed.FeedScreenConstants.VIDEO_REPORT_SHEET_MAX_HEIGHT
 import com.yral.android.ui.screens.game.AboutGameSheet
 import com.yral.android.ui.screens.game.CoinBalance
-import com.yral.android.ui.screens.game.GameIconsRow
 import com.yral.android.ui.screens.game.GameResultSheet
+import com.yral.android.ui.screens.game.SmileyGame
 import com.yral.android.ui.widgets.PreloadLottieAnimation
 import com.yral.android.ui.widgets.YralBottomSheet
 import com.yral.android.ui.widgets.YralButtonState
@@ -267,7 +267,7 @@ private fun FeedOverlay(
             feedViewModel.toggleReportSheet(true, pageNo)
         }
         if (gameState.gameIcons.isNotEmpty()) {
-            GameIconsRow(
+            SmileyGame(
                 gameIcons = gameState.gameIcons,
                 clickedIcon = gameState.gameResult[state.feedDetails[pageNo].videoID]?.first,
                 onIconClicked = {
