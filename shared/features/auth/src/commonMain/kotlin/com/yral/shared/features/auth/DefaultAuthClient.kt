@@ -12,6 +12,7 @@ import com.yral.shared.features.auth.domain.AuthRepository
 import com.yral.shared.features.auth.domain.useCases.AuthenticateTokenUseCase
 import com.yral.shared.features.auth.domain.useCases.ObtainAnonymousIdentityUseCase
 import com.yral.shared.features.auth.domain.useCases.RefreshTokenUseCase
+import com.yral.shared.features.auth.domain.useCases.UpdateSessionAsRegisteredUseCase
 import com.yral.shared.features.auth.utils.OAuthListener
 import com.yral.shared.features.auth.utils.OAuthUtils
 import com.yral.shared.features.auth.utils.SocialProvider
@@ -19,6 +20,7 @@ import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import com.yral.shared.uniffi.generated.authenticateWithNetwork
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 
@@ -27,23 +29,22 @@ class DefaultAuthClient(
     private val analyticsManager: AnalyticsManager,
     private val preferences: Preferences,
     private val authRepository: AuthRepository,
-    private val authenticateTokenUseCase: AuthenticateTokenUseCase,
-    private val obtainAnonymousIdentityUseCase: ObtainAnonymousIdentityUseCase,
-    private val refreshTokenUseCase: RefreshTokenUseCase,
+    private val requiredUseCases: RequiredUseCases,
     private val oAuthUtils: OAuthUtils,
     appDispatchers: AppDispatchers,
 ) : AuthClient {
     private var currentState: String? = null
-    private val scope = CoroutineScope(appDispatchers.io)
+    private val scope = CoroutineScope(SupervisorJob() + appDispatchers.io)
 
     override suspend fun initialize() {
         refreshAuthIfNeeded()
     }
 
     private suspend fun refreshAuthIfNeeded() {
-        preferences.getString(PrefKeys.ACCESS_TOKEN.name)?.let { accessToken ->
+        preferences.getString(PrefKeys.ID_TOKEN.name)?.let { idToken ->
             handleToken(
-                token = accessToken,
+                idToken = idToken,
+                accessToken = "",
                 refreshToken = "",
                 shouldRefreshToken = true,
             )
@@ -51,12 +52,13 @@ class DefaultAuthClient(
     }
 
     private suspend fun obtainAnonymousIdentity() {
-        obtainAnonymousIdentityUseCase
+        requiredUseCases.obtainAnonymousIdentityUseCase
             .invoke(Unit)
             .mapBoth(
                 success = { tokenResponse ->
                     handleToken(
-                        token = tokenResponse.accessToken,
+                        idToken = tokenResponse.idToken,
+                        accessToken = tokenResponse.accessToken,
                         refreshToken = tokenResponse.refreshToken,
                         shouldRefreshToken = true,
                     )
@@ -66,13 +68,15 @@ class DefaultAuthClient(
     }
 
     private suspend fun handleToken(
-        token: String,
+        idToken: String,
+        accessToken: String,
         refreshToken: String,
         shouldRefreshToken: Boolean,
+        shouldSetMetadata: Boolean = false,
     ) {
         preferences.putString(
-            PrefKeys.ACCESS_TOKEN.name,
-            token,
+            PrefKeys.ID_TOKEN.name,
+            idToken,
         )
         if (refreshToken.isNotEmpty()) {
             preferences.putString(
@@ -80,10 +84,16 @@ class DefaultAuthClient(
                 refreshToken,
             )
         }
-        val tokenClaim = oAuthUtils.parseOAuthToken(token)
+        if (accessToken.isNotEmpty()) {
+            preferences.putString(
+                PrefKeys.ACCESS_TOKEN.name,
+                refreshToken,
+            )
+        }
+        val tokenClaim = oAuthUtils.parseOAuthToken(idToken)
         if (tokenClaim.isValid(Clock.System.now().epochSeconds)) {
             tokenClaim.delegatedIdentity?.let {
-                handleExtractIdentityResponse(it)
+                handleExtractIdentityResponse(it, shouldSetMetadata)
             }
         } else if (shouldRefreshToken) {
             val rToken = preferences.getString(PrefKeys.REFRESH_TOKEN.name)
@@ -102,11 +112,15 @@ class DefaultAuthClient(
         preferences.remove(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name)
         preferences.remove(PrefKeys.REFRESH_TOKEN.name)
         preferences.remove(PrefKeys.ACCESS_TOKEN.name)
+        preferences.remove(PrefKeys.ID_TOKEN.name)
         preferences.remove(PrefKeys.IDENTITY.name)
         sessionManager.updateState(SessionState.Initial)
     }
 
-    private suspend fun handleExtractIdentityResponse(data: ByteArray) {
+    private suspend fun handleExtractIdentityResponse(
+        data: ByteArray,
+        shouldSetMetaData: Boolean,
+    ) {
         val canisterWrapper = authenticateWithNetwork(data, null)
         preferences.putBytes(PrefKeys.IDENTITY.name, data)
         sessionManager.updateState(
@@ -119,6 +133,16 @@ class DefaultAuthClient(
                     ),
             ),
         )
+        if (shouldSetMetaData) {
+            preferences.getString(PrefKeys.ID_TOKEN.name)?.let { idToken ->
+                sessionManager.getCanisterPrincipal()?.let { canisterId ->
+                    updateSessionAsRegistered(
+                        idToken = idToken,
+                        canisterId = canisterId,
+                    )
+                }
+            }
+        }
         analyticsManager.trackEvent(
             event = AuthSuccessfulEventData(),
         )
@@ -127,12 +151,13 @@ class DefaultAuthClient(
     private suspend fun refreshAccessToken() {
         val refreshToken = preferences.getString(PrefKeys.REFRESH_TOKEN.name)
         refreshToken?.let {
-            refreshTokenUseCase
+            requiredUseCases.refreshTokenUseCase
                 .invoke(refreshToken)
                 .mapBoth(
                     success = { tokenResponse ->
                         handleToken(
-                            token = tokenResponse.accessToken,
+                            idToken = tokenResponse.idToken,
+                            accessToken = tokenResponse.accessToken,
                             refreshToken = tokenResponse.refreshToken,
                             shouldRefreshToken = true,
                         )
@@ -183,18 +208,40 @@ class DefaultAuthClient(
     }
 
     private suspend fun authenticate(code: String) {
-        authenticateTokenUseCase
+        requiredUseCases.authenticateTokenUseCase
             .invoke(code)
             .mapBoth(
                 success = { tokenResponse ->
                     handleToken(
-                        token = tokenResponse.accessToken,
+                        idToken = tokenResponse.idToken,
+                        accessToken = tokenResponse.accessToken,
                         refreshToken = tokenResponse.refreshToken,
                         shouldRefreshToken = true,
+                        shouldSetMetadata = true,
                     )
                     preferences.putBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name, true)
                 },
                 failure = { YralException(it.localizedMessage ?: "") },
             )
     }
+
+    private suspend fun updateSessionAsRegistered(
+        idToken: String,
+        canisterId: String,
+    ) {
+        requiredUseCases.updateSessionAsRegisteredUseCase.invoke(
+            parameter =
+                UpdateSessionAsRegisteredUseCase.Params(
+                    idToken = idToken,
+                    canisterId = canisterId,
+                ),
+        )
+    }
+
+    data class RequiredUseCases(
+        val authenticateTokenUseCase: AuthenticateTokenUseCase,
+        val obtainAnonymousIdentityUseCase: ObtainAnonymousIdentityUseCase,
+        val refreshTokenUseCase: RefreshTokenUseCase,
+        val updateSessionAsRegisteredUseCase: UpdateSessionAsRegisteredUseCase,
+    )
 }
