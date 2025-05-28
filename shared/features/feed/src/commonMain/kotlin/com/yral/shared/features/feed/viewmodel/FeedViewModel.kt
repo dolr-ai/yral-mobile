@@ -116,7 +116,6 @@ class FeedViewModel(
                             ),
                     ).mapBoth(
                         success = { moreFeed ->
-                            setLoadingMore(false)
                             // Do the filtering outside the update block since it's a long operation
                             val filteredPosts = moreFeed.posts.filter { post -> !isAlreadyVoted(post) }
 
@@ -131,6 +130,7 @@ class FeedViewModel(
                             filteredPosts.forEach { post ->
                                 fetchFeedDetail(post)
                             }
+                            setLoadingMore(false)
                         },
                         failure = { _ ->
                             setLoadingMore(false)
@@ -140,11 +140,13 @@ class FeedViewModel(
         }
     }
 
-    private suspend fun setLoadingMore(isLoading: Boolean) {
-        _state.update { currentState ->
-            currentState.copy(
-                isLoadingMore = isLoading,
-            )
+    private fun setLoadingMore(isLoading: Boolean) {
+        coroutineScope.launch {
+            _state.update { currentState ->
+                currentState.copy(
+                    isLoadingMore = isLoading,
+                )
+            }
         }
     }
 
