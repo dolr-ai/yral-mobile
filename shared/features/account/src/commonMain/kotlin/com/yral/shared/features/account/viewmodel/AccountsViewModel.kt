@@ -202,7 +202,7 @@ class AccountsViewModel(
         const val LOGOUT_URI = "yral://logout"
         const val DELETE_ACCOUNT_URI = "yral://deleteAccount"
         const val TALK_TO_TEAM_URL = "https://t.me/+c-LTX0Cp-ENmMzI1"
-        const val TERMS_OF_SERVICE_URL = "https://yral.com/terms-ios"
+        const val TERMS_OF_SERVICE_URL = "https://yral.com/terms-android"
         const val PRIVACY_POLICY_URL = "https://yral.com/privacy-policy"
         const val TELEGRAM_LINK = "https://t.me/+c-LTX0Cp-ENmMzI1"
         const val DISCORD_LINK = "https://discord.com/invite/GZ9QemnZuj"
