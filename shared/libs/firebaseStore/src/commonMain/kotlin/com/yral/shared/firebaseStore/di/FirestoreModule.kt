@@ -22,7 +22,7 @@ inline fun <reified T : FirestoreDocument> getFBDocumentUseCaseFactory(): Module
 
 val firestoreModule: Module =
     module {
-        single<FBFirestoreRepositoryApi> { FBFirestoreRepository() }
+        factory<FBFirestoreRepositoryApi> { FBFirestoreRepository() }
         includes(
             getFBDocumentUseCaseFactory<GameConfigDto>(),
             getCollectionUseCaseFactory<AboutGameItemDto>(),
