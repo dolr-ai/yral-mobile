@@ -265,6 +265,7 @@ private fun FeedOverlay(
     gameState: GameState,
     gameViewModel: GameViewModel,
 ) {
+    var lottieCached by remember { mutableStateOf(false) }
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.TopStart,
@@ -298,10 +299,11 @@ private fun FeedOverlay(
                 errorMessage = gameViewModel.getFeedGameResultError(state.feedDetails[pageNo].videoID),
                 isLoading = gameState.isLoading,
             )
-            if (!gameState.cacheFetched) {
+            if (!lottieCached) {
                 gameState.gameIcons.forEach { icon ->
                     PreloadLottieAnimation(icon.clickAnimation)
                 }
+                lottieCached = true
             }
         }
     }

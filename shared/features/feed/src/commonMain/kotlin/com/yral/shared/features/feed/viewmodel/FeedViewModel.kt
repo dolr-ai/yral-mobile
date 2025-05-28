@@ -116,10 +116,10 @@ class FeedViewModel(
             .invoke(post)
             .mapBoth(
                 success = { detail ->
-                    val feedDetailsList = _state.value.feedDetails.toMutableList()
-                    feedDetailsList.add(detail)
-                    _state.update {
-                        it.copy(
+                    _state.update { currentState ->
+                        val feedDetailsList = currentState.feedDetails.toMutableList()
+                        feedDetailsList.add(detail)
+                        currentState.copy(
                             feedDetails = feedDetailsList.toList(),
                         )
                     }
@@ -176,31 +176,31 @@ class FeedViewModel(
     }
 
     private suspend fun setLoadingMore(isLoading: Boolean) {
-        _state.emit(
-            _state.value.copy(
+        _state.update { currentState ->
+            currentState.copy(
                 isLoadingMore = isLoading,
-            ),
-        )
+            )
+        }
     }
 
     fun onCurrentPageChange(pageNo: Int) {
         coroutineScope.launch {
-            _state.emit(
-                _state.value.copy(
+            _state.update { currentState ->
+                currentState.copy(
                     currentPageOfFeed = pageNo,
                     videoData = VideoData(), // Reset all video data for new page
-                ),
-            )
+                )
+            }
         }
     }
 
     fun setPostDescriptionExpanded(isExpanded: Boolean) {
         coroutineScope.launch {
-            _state.emit(
-                _state.value.copy(
+            _state.update { currentState ->
+                currentState.copy(
                     isPostDescriptionExpanded = isExpanded,
-                ),
-            )
+                )
+            }
         }
     }
 
@@ -224,16 +224,16 @@ class FeedViewModel(
                 currentTime.percentageOf(totalTime) >= FULL_VIDEO_WATCHED_THRESHOLD &&
                     !videoData.didLogFullVideoWatched
             // Update the last known time values
-            _state.emit(
-                _state.value.copy(
+            _state.update {
+                it.copy(
                     videoData =
-                        _state.value.videoData.copy(
+                        it.videoData.copy(
                             lastKnownCurrentTime = currentTime,
                             lastKnownTotalTime = totalTime,
                             isFirstTimeUpdate = false, // Mark that we've had at least one update
                         ),
-                ),
-            )
+                )
+            }
             // Log first second event if needed
             if (shouldLogFirstSecond) {
                 recordEvent(
@@ -281,11 +281,11 @@ class FeedViewModel(
         analyticsManager.trackEvent(
             event = videoEvent,
         )
-        _state.emit(
-            _state.value.copy(
+        _state.update { currentState ->
+            currentState.copy(
                 videoData = videoData,
-            ),
-        )
+            )
+        }
     }
 
     fun didCurrentVideoEnd() {
@@ -304,12 +304,14 @@ class FeedViewModel(
         }
     }
 
-    private suspend fun setLoading(isLoading: Boolean) {
-        _state.emit(
-            _state.value.copy(
-                isLoading = isLoading,
-            ),
-        )
+    private fun setLoading(isLoading: Boolean) {
+        coroutineScope.launch {
+            _state.update { currentState ->
+                currentState.copy(
+                    isLoading = isLoading,
+                )
+            }
+        }
     }
 
     fun reportVideo(
@@ -335,27 +337,25 @@ class FeedViewModel(
                         success = {
                             setLoading(false)
                             toggleReportSheet(false, pageNo)
-                            // Remove post from feed
-                            val updatedPosts = _state.value.posts.toMutableList()
-                            val updatedFeedDetails = _state.value.feedDetails.toMutableList()
+                            _state.update { currentState ->
+                                val updatedPosts = currentState.posts.toMutableList()
+                                val updatedFeedDetails = currentState.feedDetails.toMutableList()
 
-                            // Find and remove the post with matching videoID
-                            val postIndex =
-                                updatedPosts.indexOfFirst { it.videoID == currentFeed.videoID }
-                            if (postIndex != -1) {
-                                updatedPosts.removeAt(postIndex)
-                            }
+                                // Find and remove the post with matching videoID
+                                val postIndex =
+                                    updatedPosts.indexOfFirst { it.videoID == currentFeed.videoID }
+                                if (postIndex != -1) {
+                                    updatedPosts.removeAt(postIndex)
+                                }
 
-                            // Find and remove the feed detail with matching videoID
-                            val feedDetailIndex =
-                                updatedFeedDetails.indexOfFirst { it.videoID == currentFeed.videoID }
-                            if (feedDetailIndex != -1) {
-                                updatedFeedDetails.removeAt(feedDetailIndex)
-                            }
+                                // Find and remove the feed detail with matching videoID
+                                val feedDetailIndex =
+                                    updatedFeedDetails.indexOfFirst { it.videoID == currentFeed.videoID }
+                                if (feedDetailIndex != -1) {
+                                    updatedFeedDetails.removeAt(feedDetailIndex)
+                                }
 
-                            // Update state with modified lists
-                            _state.emit(
-                                _state.value.copy(
+                                currentState.copy(
                                     posts = updatedPosts,
                                     feedDetails = updatedFeedDetails,
                                     // Adjust current page if necessary to prevent out of bounds
@@ -364,8 +364,8 @@ class FeedViewModel(
                                             pageNo,
                                             updatedFeedDetails.size - 1,
                                         ).coerceAtLeast(0),
-                                ),
-                            )
+                                )
+                            }
                         },
                         failure = {
                             setLoading(false)
@@ -380,16 +380,16 @@ class FeedViewModel(
         pageNo: Int,
     ) {
         coroutineScope.launch {
-            _state.emit(
-                _state.value.copy(
+            _state.update { currentState ->
+                currentState.copy(
                     reportSheetState =
                         if (isOpen) {
                             ReportSheetState.Open(pageNo)
                         } else {
                             ReportSheetState.Closed
                         },
-                ),
-            )
+                )
+            }
         }
     }
 
