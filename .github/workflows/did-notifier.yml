@@ -1,0 +1,92 @@
+name: Hot-or-Not Backend Release Monitor
+
+on:
+  push:
+  schedule:
+    # Check for new releases every 30 minutes (more frequent)
+    - cron: '*/30 * * * *'
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  check-releases:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Restore last notified release from cache
+        id: cache-release
+        uses: actions/cache/restore@v4
+        with:
+          path: last_release.txt
+          key: last-notified-release
+
+      - name: Check for new releases
+        id: check_release
+        run: |
+          # Get the latest release from the target repository
+          LATEST_RELEASE=$(curl -s "https://api.github.com/repos/dolr-ai/hot-or-not-backend-canister/releases/latest")
+          
+          # Extract release information
+          RELEASE_TAG=$(echo "$LATEST_RELEASE" | jq -r '.tag_name')
+          RELEASE_NAME=$(echo "$LATEST_RELEASE" | jq -r '.name')
+          RELEASE_URL=$(echo "$LATEST_RELEASE" | jq -r '.html_url')
+          RELEASE_BODY=$(echo "$LATEST_RELEASE" | jq -r '.body')
+          PUBLISHED_AT=$(echo "$LATEST_RELEASE" | jq -r '.published_at')
+          AUTHOR=$(echo "$LATEST_RELEASE" | jq -r '.author.login')
+          
+          echo "Latest release tag: $RELEASE_TAG"
+          echo "release_tag=$RELEASE_TAG" >> $GITHUB_OUTPUT
+          echo "release_name=$RELEASE_NAME" >> $GITHUB_OUTPUT
+          echo "release_url=$RELEASE_URL" >> $GITHUB_OUTPUT
+          echo "published_at=$PUBLISHED_AT" >> $GITHUB_OUTPUT
+          echo "author=$AUTHOR" >> $GITHUB_OUTPUT
+          
+          # Escape newlines and quotes in release body for JSON
+          ESCAPED_BODY=$(echo "$RELEASE_BODY" | sed 's/"/\\"/g' | sed ':a;N;$!ba;s/\n/\\n/g' | head -c 500)
+          echo "release_body=$ESCAPED_BODY" >> $GITHUB_OUTPUT
+          
+          # Check if we've seen this release before
+          if [ -f "last_release.txt" ]; then
+            LAST_NOTIFIED=$(cat last_release.txt)
+            echo "Last notified release: $LAST_NOTIFIED"
+          else
+            LAST_NOTIFIED="v3.5.4"  # Initialize with current latest
+            echo "No previous notifications found, initializing with v3.5.4"
+          fi
+          
+          if [ "$RELEASE_TAG" != "$LAST_NOTIFIED" ] && [ "$RELEASE_TAG" != "null" ]; then
+            echo "New release detected!"
+            echo "new_release=true" >> $GITHUB_OUTPUT
+            
+            # Update the last notified release
+            echo "$RELEASE_TAG" > last_release.txt
+          else
+            echo "No new release"
+            echo "new_release=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Save last notified release to cache
+        if: steps.check_release.outputs.new_release == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: last_release.txt
+          key: last-notified-release
+
+      - name: Send notification to Google Chat
+        if: steps.check_release.outputs.new_release == 'true'
+        run: |
+          curl -X POST "${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "text": "🎉 *New Release Alert!*\n\n📦 **Hot-or-Not Backend Canister**\n🏷️ Release: ${{ steps.check_release.outputs.release_name }} (${{ steps.check_release.outputs.release_tag }})\n👤 Author: ${{ steps.check_release.outputs.author }}\n📅 Published: ${{ steps.check_release.outputs.published_at }}\n\n📝 **Release Notes:**\n${{ steps.check_release.outputs.release_body }}\n\n🔗 [View Release](${{ steps.check_release.outputs.release_url }})\n🔗 [Repository](https://github.com/dolr-ai/hot-or-not-backend-canister)"
+          }'
+
+      - name: Log notification status
+        if: steps.check_release.outputs.new_release == 'true'
+        run: |
+          echo "✅ Notification sent for release ${{ steps.check_release.outputs.release_tag }}"
