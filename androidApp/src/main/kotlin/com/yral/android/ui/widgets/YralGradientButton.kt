@@ -1,5 +1,6 @@
 package com.yral.android.ui.widgets
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.clickable
@@ -9,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.paint
@@ -18,11 +18,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.airbnb.lottie.compose.LottieAnimation
-import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
-import com.airbnb.lottie.compose.animateLottieCompositionAsState
-import com.airbnb.lottie.compose.rememberLottieComposition
 import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 
@@ -66,23 +62,15 @@ fun YralGradientButton(
             )
         } else {
             // The continuous loader animation
-            val loaderComposition by rememberLottieComposition(
-                spec = LottieCompositionSpec.RawRes(getLoaderResource(buttonType)),
-            )
-            val loaderProgress by animateLottieCompositionAsState(
-                composition = loaderComposition,
-                iterations = LottieConstants.IterateForever,
-                isPlaying = true,
-            )
-            androidx.compose.animation.AnimatedVisibility(
+            AnimatedVisibility(
                 visible = true,
                 enter = fadeIn(),
                 exit = fadeOut(),
             ) {
-                LottieAnimation(
+                YralLottieAnimation(
                     modifier = Modifier.size(20.dp),
-                    composition = loaderComposition,
-                    progress = { loaderProgress },
+                    rawRes = getLoaderResource(buttonType),
+                    iterations = LottieConstants.IterateForever,
                 )
             }
         }
