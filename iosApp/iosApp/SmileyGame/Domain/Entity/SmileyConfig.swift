@@ -15,13 +15,15 @@ struct SmileyConfig: Hashable {
 
 struct Smiley: Identifiable, Hashable {
   let id: String
-  let imageName: String
+  let imageURL: String
   let isActive: Bool
+  let clickAnimation: String
 }
 
 enum SmileyGameState: Hashable {
   case notPlayed
   case played(SmileyGameResultResponse)
+  case error(String)
 }
 
 struct SmileyGame: Hashable {

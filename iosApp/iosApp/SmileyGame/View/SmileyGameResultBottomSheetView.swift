@@ -51,8 +51,7 @@ struct SmileyGameResultBottomSheetView: View {
               .font(Constants.titleFont)
               .foregroundColor(Constants.titleTextColor)
 
-            Image(gameResult.smiley.imageName)
-              .resizable()
+            FirebaseImageView(path: gameResult.smiley.imageURL)
               .frame(width: Constants.imageViewSize, height: Constants.imageViewSize)
           }
 

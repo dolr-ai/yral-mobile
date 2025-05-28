@@ -139,7 +139,7 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
       case .success(let response):
         unifiedEvent = .castVoteSuccess(response)
       case .failure(let error):
-        unifiedEvent = .castVoteFailure(errorMessage: error.localizedDescription)
+        unifiedEvent = .castVoteFailure(error, request.videoID)
       }
     }
   }

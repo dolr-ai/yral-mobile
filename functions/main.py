@@ -242,7 +242,7 @@ def cast_vote(request: Request):
 
         tx_out = _vote_tx(db().transaction())
         if tx_out["result"] == "DUP":
-            return error_response(409, "DUPLICATE_VOTE", "Already voted")
+            return error_response(409, "DUPLICATE_VOTE", "You have already voted on this video. Scroll to Next Video to keep Voting.")
 
         if tx_out["result"] == "INSUFFICIENT":
             return error_response(402, "INSUFFICIENT_COINS", f"Balance {tx_out['coins']} < {abs(LOSS_PENALTY)} required")
@@ -278,8 +278,9 @@ def cast_vote(request: Request):
             "outcome":    outcome,
             "smiley": {
                 "id":         voted["id"],
-                "image_name": voted["image_name"],
-                "is_active":  voted["is_active"]
+                "image_url": voted["image_url"],
+                "is_active":  voted["is_active"],
+                "click_animation": voted["click_animation"]
             },
             "coins":       coins,
             "coin_delta":  delta

@@ -9,10 +9,12 @@
 /* Begin PBXBuildFile section */
 		058557BB273AAA24004C7B11 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557BA273AAA24004C7B11 /* Assets.xcassets */; };
 		058557D9273AAEEB004C7B11 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */; };
+		1002088F2DE4840000DF269E /* FirebaseLottieManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1002088E2DE483EC00DF269E /* FirebaseLottieManager.swift */; };
+		100208902DE4840000DF269E /* FirebaseLottieManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1002088E2DE483EC00DF269E /* FirebaseLottieManager.swift */; };
 		100F63D32DCB4630000BC17E /* SmileyGameRuleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100F63D22DCB4630000BC17E /* SmileyGameRuleView.swift */; };
 		100F63D42DCB4630000BC17E /* SmileyGameRuleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100F63D22DCB4630000BC17E /* SmileyGameRuleView.swift */; };
-		100F64EE2DCC96C9000BC17E /* ImageCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100F64ED2DCC96C5000BC17E /* ImageCache.swift */; };
-		100F64EF2DCC96C9000BC17E /* ImageCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100F64ED2DCC96C5000BC17E /* ImageCache.swift */; };
+		100F64EE2DCC96C9000BC17E /* YralCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100F64ED2DCC96C5000BC17E /* YralCache.swift */; };
+		100F64EF2DCC96C9000BC17E /* YralCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100F64ED2DCC96C5000BC17E /* YralCache.swift */; };
 		103BBB042DACE23A00C0BFD0 /* HLSDownloadManaging.swift in Sources */ = {isa = PBXBuildFile; fileRef = 103BBB032DACE21D00C0BFD0 /* HLSDownloadManaging.swift */; };
 		103BBB052DACE23A00C0BFD0 /* HLSDownloadManaging.swift in Sources */ = {isa = PBXBuildFile; fileRef = 103BBB032DACE21D00C0BFD0 /* HLSDownloadManaging.swift */; };
 		1050341A2DD4955C00571B4E /* smiley_game_surprise.json in Resources */ = {isa = PBXBuildFile; fileRef = 105034192DD4955C00571B4E /* smiley_game_surprise.json */; };
@@ -544,8 +546,9 @@
 /* Begin PBXFileReference section */
 		058557BA273AAA24004C7B11 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		1002088E2DE483EC00DF269E /* FirebaseLottieManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseLottieManager.swift; sourceTree = "<group>"; };
 		100F63D22DCB4630000BC17E /* SmileyGameRuleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameRuleView.swift; sourceTree = "<group>"; };
-		100F64ED2DCC96C5000BC17E /* ImageCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageCache.swift; sourceTree = "<group>"; };
+		100F64ED2DCC96C5000BC17E /* YralCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralCache.swift; sourceTree = "<group>"; };
 		103BBB032DACE21D00C0BFD0 /* HLSDownloadManaging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HLSDownloadManaging.swift; sourceTree = "<group>"; };
 		105034152DD4955C00571B4E /* smiley_game_fire.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = smiley_game_fire.json; sourceTree = "<group>"; };
 		105034162DD4955C00571B4E /* smiley_game_heart.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = smiley_game_heart.json; sourceTree = "<group>"; };
@@ -1233,9 +1236,10 @@
 		AC26CA662D806501006ADA75 /* Utils */ = {
 			isa = PBXGroup;
 			children = (
+				1002088E2DE483EC00DF269E /* FirebaseLottieManager.swift */,
 				ACAA4D5E2DDC75C3001092A6 /* Notifications.swift */,
 				1050348D2DD4B6A300571B4E /* AudioPlayer.swift */,
-				100F64ED2DCC96C5000BC17E /* ImageCache.swift */,
+				100F64ED2DCC96C5000BC17E /* YralCache.swift */,
 				107C60D52DBFA7C0006FC467 /* FirebaseImageView.swift */,
 				ACF639DE2DC25B9C00C4BCCC /* UserDefaultsManager.swift */,
 				107C60A32DBA01EB006FC467 /* RoundedCorner.swift */,
@@ -2600,6 +2604,7 @@
 				107C60C32DBF4CE2006FC467 /* FirebaseService.swift in Sources */,
 				105037682DDC5DB500571B4E /* SmileyGameConfig.swift in Sources */,
 				ACB46A432D0ECBB3002E200C /* ml_feed.grpc.swift in Sources */,
+				100208902DE4840000DF269E /* FirebaseLottieManager.swift in Sources */,
 				107C60CB2DBF7B19006FC467 /* SmileyGameRuleViewModel.swift in Sources */,
 				AC49605B2D2C4BF7008D59D9 /* FetchMoreFeedsUseCase.swift in Sources */,
 				ACB46A7A2D105B35002E200C /* NibLoadableVIew.swift in Sources */,
@@ -2681,7 +2686,7 @@
 				ACC0D43E2D8C6BF3006DCF5C /* ClearBackgroundView.swift in Sources */,
 				AC4DECA92D3E06AC008EC8F5 /* FooterLoaderView.swift in Sources */,
 				AC51C0522DC4E0D200D5BA34 /* RefreshVideosRequest.swift in Sources */,
-				100F64EF2DCC96C9000BC17E /* ImageCache.swift in Sources */,
+				100F64EF2DCC96C9000BC17E /* YralCache.swift in Sources */,
 				ACC1C3982D9AF8BD005A7539 /* LottieLoaderContainerView.swift in Sources */,
 				AC4E99692D884BDB000B47B3 /* ProfileVideoGridsView.swift in Sources */,
 				ACC0D4522D8DDB97006DCF5C /* ProfileRepositoryProtocol.swift in Sources */,
@@ -2820,6 +2825,7 @@
 				107C60C22DBF4CE2006FC467 /* FirebaseService.swift in Sources */,
 				105037692DDC5DB500571B4E /* SmileyGameConfig.swift in Sources */,
 				ACB46A402D0ECBB3002E200C /* ml_feed.grpc.swift in Sources */,
+				1002088F2DE4840000DF269E /* FirebaseLottieManager.swift in Sources */,
 				107C60CC2DBF7B19006FC467 /* SmileyGameRuleViewModel.swift in Sources */,
 				AC49605C2D2C4BF7008D59D9 /* FetchMoreFeedsUseCase.swift in Sources */,
 				ACB46A792D105B35002E200C /* NibLoadableVIew.swift in Sources */,
@@ -2900,7 +2906,7 @@
 				AC32E4662D2991AD001DDA43 /* AccountView.swift in Sources */,
 				ACC0D43D2D8C6BF3006DCF5C /* ClearBackgroundView.swift in Sources */,
 				AC4DECAA2D3E06AC008EC8F5 /* FooterLoaderView.swift in Sources */,
-				100F64EE2DCC96C9000BC17E /* ImageCache.swift in Sources */,
+				100F64EE2DCC96C9000BC17E /* YralCache.swift in Sources */,
 				AC51C0532DC4E0D200D5BA34 /* RefreshVideosRequest.swift in Sources */,
 				ACC1C3992D9AF8BD005A7539 /* LottieLoaderContainerView.swift in Sources */,
 				AC4E99682D884BDB000B47B3 /* ProfileVideoGridsView.swift in Sources */,
@@ -3152,7 +3158,6 @@
 				MARKETING_VERSION = 1.0.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
-					"-framework",
 					"-ObjC",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.yral.iosApp;
@@ -3192,7 +3197,6 @@
 				MARKETING_VERSION = 1.0.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
-					"-framework",
 					"-ObjC",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.yral.iosApp;

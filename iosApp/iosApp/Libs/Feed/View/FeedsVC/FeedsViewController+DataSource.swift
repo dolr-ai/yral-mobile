@@ -39,7 +39,7 @@ extension FeedsViewController {
             coins: session.state.coins
           ),
           smileyGame: feed.smileyGame,
-          coins: session.state.coins,
+          session: session,
           index: indexPath.item
         )
       } else {
@@ -63,7 +63,7 @@ extension FeedsViewController {
             coins: session.state.coins
           ),
           smileyGame: feed.smileyGame,
-          coins: session.state.coins,
+          session: session,
           index: indexPath.item
         )
       }
@@ -135,16 +135,35 @@ extension FeedsViewController {
     guard let cell = feedsCV.cellForItem(at: IndexPath(item: index, section: 0)) as? FeedsCell else {
       return
     }
-
-    session.update(coins: response.coins)
-
+    
     cell.startSmileyGamResultAnimation(for: response) { [weak self] in
       items[index].smileyGame?.state = .played(response)
 
       snapshot.deleteItems(snapshot.itemIdentifiers)
       snapshot.appendItems(items)
       self?.feedsDataSource.apply(snapshot, animatingDifferences: true)
+      self?.session.update(coins: response.coins)
     }
+  }
+
+  func handleCastVoteFailure(_ errorMessage: String, videoID: String) {
+    var snapshot = feedsDataSource.snapshot()
+    var items = snapshot.itemIdentifiers
+    guard let index = items.firstIndex(where: { $0.videoID == videoID }) else {
+      return
+    }
+
+    guard let cell = feedsCV.cellForItem(at: IndexPath(item: index, section: 0)) as? FeedsCell else {
+      return
+    }
+
+    cell.handleSmileyGameError(errorMessage)
+
+    items[0].smileyGame?.state = .error(errorMessage)
+
+    snapshot.deleteItems(snapshot.itemIdentifiers)
+    snapshot.appendItems(items)
+    feedsDataSource.apply(snapshot, animatingDifferences: true)
   }
 
   func removeFeeds(with feeds: [FeedResult], isReport: Bool = false, animated: Bool = false) {

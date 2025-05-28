@@ -9,6 +9,7 @@ import Foundation
 
 enum CastVoteError: Error {
   case network(NetworkError)
+  case cloudFunctionError(CloudFunctionError)
   case firebaseError(Error)
   case unknown(String)
 }
@@ -18,6 +19,8 @@ extension CastVoteError: LocalizedError {
     switch self {
     case .network(let networkError):
       return "Network Error: \(networkError)"
+    case .cloudFunctionError(let cloudFunctionError):
+      return "Cloud Function Error: \(cloudFunctionError)"
     case .firebaseError(let firebaseError):
       return "Firebase Error: \(firebaseError)"
     case .unknown(let message):

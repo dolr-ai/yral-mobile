@@ -62,6 +62,8 @@ class CastVoteRepository: CastVoteRepositoryProtocol {
       switch error {
       case let error as NetworkError:
         return .failure(.network(error))
+      case let error as CloudFunctionError:
+        return .failure(.cloudFunctionError(error))
       default:
         return .failure(.firebaseError(error))
       }
