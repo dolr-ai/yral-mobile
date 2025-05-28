@@ -34,7 +34,7 @@ enum UnifiedFeedEvent: Equatable {
   case socialSignInSuccess
   case socialSignInFailure
   case castVoteSuccess(SmileyGameResultResponse)
-  case castVoteFailure(errorMessage: String)
+  case castVoteFailure(CastVoteError, String)
 
   static func == (lhs: UnifiedFeedEvent, rhs: UnifiedFeedEvent) -> Bool {
     switch (lhs, rhs) {

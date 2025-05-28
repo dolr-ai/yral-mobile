@@ -20,20 +20,21 @@ struct FirebaseImageView: View {
         Image(uiImage: uiImage)
           .resizable()
           .scaledToFill()
-          .transition(.opacity.animation(.easeIn))
       } else if isLoading {
         ProgressView()
       }
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .task {
-      await loadImage()
+    .onAppear {
+      Task {
+        await loadImage()
+      }
     }
   }
 
   @MainActor
   private func loadImage() async {
-    if let cachedImageData = ImageCache.shared.data(forPath: path) {
+    if let cachedImageData = YralCache.shared.data(forPath: path) {
       imageData = cachedImageData
       return
     }
@@ -45,7 +46,7 @@ struct FirebaseImageView: View {
       let ref = Storage.storage().reference(withPath: path)
       let data = try await ref.data(maxSize: Constants.maxBytes)
       imageData = data
-      ImageCache.shared.store(data, forPath: path)
+      YralCache.shared.store(data, forPath: path)
     } catch {
       print("Firebase image download failed: \(error.localizedDescription)")
     }
