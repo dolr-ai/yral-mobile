@@ -59,11 +59,11 @@ class RootViewModel(
 
     fun initialize() {
         coroutineScope.launch {
-            _state.update {
-                it.copy(
+            _state.update { currentState ->
+                RootState(
                     currentSessionState = sessionManager.state.value,
-                    currentHomePageTab = it.currentHomePageTab,
-                    initialAnimationComplete = it.initialAnimationComplete,
+                    currentHomePageTab = currentState.currentHomePageTab,
+                    initialAnimationComplete = currentState.initialAnimationComplete,
                     error = null,
                 )
             }
@@ -77,7 +77,6 @@ class RootViewModel(
                     )
                 }
             }
-
             try {
                 delay(INITIAL_DELAY_FOR_SETUP)
                 if (sessionManager.getCanisterPrincipal() != null) {
