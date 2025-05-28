@@ -83,7 +83,7 @@ jobs:
         if: steps.check_release.outputs.new_release == 'true'
         run: |
           # Download didc
-          curl -L -o didc https://github.com/dfinity/candid/releases/download/2024-02-08/didc-linux64
+          curl -L -o didc https://github.com/dfinity/candid/releases/download/2024-07-29/didc-linux64
           
           # Make it executable
           chmod +x didc
