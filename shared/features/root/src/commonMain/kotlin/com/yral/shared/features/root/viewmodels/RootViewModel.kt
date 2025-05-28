@@ -6,6 +6,7 @@ import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
+import com.yral.shared.core.utils.filterFirstNSuspendFlow
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.AuthClient
 import com.yral.shared.features.feed.useCases.FetchFeedDetailsUseCase
@@ -22,6 +23,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.core.parameter.parametersOf
@@ -114,8 +116,8 @@ class RootViewModel(
                         _state.update { it.copy(posts = posts) }
                         if (posts.isNotEmpty()) {
                             posts
-                            .filter { !isAlreadyVoted(it) }
-                            .take(MIN_REQUIRED_ITEMS)
+                            .filterFirstNSuspendFlow(MIN_REQUIRED_ITEMS) { !isAlreadyVoted(it) }
+                            .toList()
                             .forEach { post -> fetchFeedDetail(post) }
                         } else {
                             // No posts available, but session is initialized
