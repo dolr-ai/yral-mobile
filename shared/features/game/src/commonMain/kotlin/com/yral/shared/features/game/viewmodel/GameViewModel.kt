@@ -5,9 +5,11 @@ import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.core.session.SessionManager
+import com.yral.shared.features.game.domain.CastVoteUseCase
 import com.yral.shared.features.game.domain.GetGameIconsUseCase
 import com.yral.shared.features.game.domain.GetGameRulesUseCase
 import com.yral.shared.features.game.domain.models.AboutGameItem
+import com.yral.shared.features.game.domain.models.CastVoteRequest
 import com.yral.shared.features.game.domain.models.GameIcon
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
@@ -15,12 +17,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlin.random.Random
 
 class GameViewModel(
     appDispatchers: AppDispatchers,
@@ -28,13 +28,8 @@ class GameViewModel(
     private val sessionManager: SessionManager,
     private val gameIconsUseCase: GetGameIconsUseCase,
     private val gameRulesUseCase: GetGameRulesUseCase,
+    private val castVoteUseCase: CastVoteUseCase,
 ) : ViewModel() {
-    companion object {
-        const val GAME_RESULT_API_DELAY = 2000L
-        const val WIN_PRIZE = 30
-        const val LOSE_PENALTY = -10
-    }
-
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.io)
     private val _state =
         MutableStateFlow(
@@ -111,17 +106,22 @@ class GameViewModel(
                 ),
             )
             setLoading(true)
-            // Temp mocking of api result
-            delay(GAME_RESULT_API_DELAY)
-            setFeedGameResult(
-                videoId = videoId,
-                coinDelta =
-                    if (Random.nextBoolean()) {
-                        WIN_PRIZE
-                    } else {
-                        LOSE_PENALTY
-                    },
-            )
+            sessionManager.getUserPrincipal()?.let { principal ->
+                castVoteUseCase
+                    .invoke(
+                        parameter =
+                            CastVoteRequest(
+                                principalId = principal,
+                                videoId = videoId,
+                                gameIconId = icon.id,
+                            ),
+                    ).onSuccess { result ->
+                        setFeedGameResult(
+                            videoId = videoId,
+                            coinDelta = result.coinDelta,
+                        )
+                    }.onFailure { setLoading(false) }
+            }
         }
     }
 
@@ -173,7 +173,7 @@ class GameViewModel(
         }
     }
 
-    fun setLoading(isLoading: Boolean) {
+    private fun setLoading(isLoading: Boolean) {
         coroutineScope.launch {
             _state.emit(
                 _state.value.copy(
