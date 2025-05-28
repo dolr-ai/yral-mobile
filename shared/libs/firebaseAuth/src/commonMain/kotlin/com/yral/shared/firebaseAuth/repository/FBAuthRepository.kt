@@ -37,6 +37,23 @@ internal class FBAuthRepository(
             Result.failure(YralException(errorMessage))
         }
 
+    override suspend fun signInWithToken(token: String): Result<String> =
+        try {
+            _authState.emit(AuthState.Loading)
+            val result = auth.signInWithCustomToken(token)
+            val user = result.user ?: throw YralException("Sign in successful but user is null")
+            _authState.emit(AuthState.Authenticated(user.uid))
+            Result.success(user.uid)
+        } catch (e: FirebaseAuthException) {
+            val errorMessage = e.message ?: "Unknown error during sign in"
+            _authState.emit(AuthState.Error(errorMessage))
+            Result.failure(YralException(errorMessage))
+        } catch (e: Exception) {
+            val errorMessage = "Unexpected error during sign in: ${e.message}"
+            _authState.emit(AuthState.Error(errorMessage))
+            Result.failure(YralException(errorMessage))
+        }
+
     override suspend fun signOut() =
         try {
             auth.signOut()
