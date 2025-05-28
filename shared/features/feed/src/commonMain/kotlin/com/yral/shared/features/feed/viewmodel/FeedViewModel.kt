@@ -6,6 +6,7 @@ import com.yral.shared.analytics.AnalyticsManager
 import com.yral.shared.analytics.events.VideoDurationWatchedEventData
 import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.core.session.SessionManager
+import com.yral.shared.core.utils.filterFirstNSuspendFlow
 import com.yral.shared.features.feed.data.models.toVideoEventData
 import com.yral.shared.features.feed.useCases.FetchFeedDetailsUseCase
 import com.yral.shared.features.feed.useCases.FetchMoreFeedUseCase
@@ -22,6 +23,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -58,12 +60,17 @@ class FeedViewModel(
             if (_state.value.posts.isEmpty()) {
                 loadMoreFeed()
             } else {
-                _state.value.posts
-                    .filter { post ->
-                        _state.value.feedDetails.any { feedDetails -> feedDetails.videoID != post.videoID }
-                    }.forEach {
-                        fetchFeedDetail(it)
-                    }
+                val alreadyFetched =
+                    _state.value.posts
+                        .filter { post ->
+                            // already fetched
+                            _state.value.feedDetails.any { feedDetails -> feedDetails.videoID != post.videoID }
+                        }
+                alreadyFetched
+                    .filterFirstNSuspendFlow(alreadyFetched.size) {
+                        !isAlreadyVoted(it)
+                    }.toList()
+                    .forEach { fetchFeedDetail(it) }
             }
         }
     }
