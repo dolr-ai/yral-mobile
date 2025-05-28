@@ -62,8 +62,8 @@ import com.yral.android.ui.screens.feed.performance.PrefetchVideoListenerImpl
 import com.yral.android.ui.screens.feed.performance.VideoListenerImpl
 import com.yral.android.ui.screens.game.AboutGameSheet
 import com.yral.android.ui.screens.game.CoinBalance
-import com.yral.android.ui.screens.game.GameIconsRow
 import com.yral.android.ui.screens.game.GameResultSheet
+import com.yral.android.ui.screens.game.SmileyGame
 import com.yral.android.ui.widgets.PreloadLottieAnimation
 import com.yral.android.ui.widgets.YralBottomSheet
 import com.yral.android.ui.widgets.YralButtonState
@@ -286,7 +286,7 @@ private fun FeedOverlay(
             feedViewModel.toggleReportSheet(true, pageNo)
         }
         if (gameState.gameIcons.isNotEmpty()) {
-            GameIconsRow(
+            SmileyGame(
                 gameIcons = gameState.gameIcons,
                 clickedIcon = gameState.gameResult[state.feedDetails[pageNo].videoID]?.first,
                 onIconClicked = {
