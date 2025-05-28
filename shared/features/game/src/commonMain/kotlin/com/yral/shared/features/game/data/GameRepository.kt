@@ -1,10 +1,14 @@
-package com.yral.shared.features.game.domain
+package com.yral.shared.features.game.data
 
-import com.yral.shared.features.game.data.IGameRemoteDataSource
 import com.yral.shared.features.game.data.models.toAboutGameItem
+import com.yral.shared.features.game.data.models.toCastVoteResponse
 import com.yral.shared.features.game.data.models.toGameConfig
+import com.yral.shared.features.game.domain.IGameRepository
 import com.yral.shared.features.game.domain.models.AboutGameItem
+import com.yral.shared.features.game.domain.models.CastVoteRequest
+import com.yral.shared.features.game.domain.models.CastVoteResponse
 import com.yral.shared.features.game.domain.models.GameConfig
+import com.yral.shared.features.game.domain.models.toDto
 
 class GameRepository(
     private val gamRemoteDataSource: IGameRemoteDataSource,
@@ -18,4 +22,9 @@ class GameRepository(
         gamRemoteDataSource
             .getRules()
             .map { it.toAboutGameItem() }
+
+    override suspend fun castVote(request: CastVoteRequest): CastVoteResponse =
+        gamRemoteDataSource
+            .castVote(request.toDto())
+            .toCastVoteResponse()
 }
