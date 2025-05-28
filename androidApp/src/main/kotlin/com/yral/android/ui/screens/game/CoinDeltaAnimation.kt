@@ -103,7 +103,6 @@ fun SingleAnimatedText(
     onAnimationEnd: () -> Unit,
 ) {
     val anim = remember { Animatable(animatedText.startY) }
-
     LaunchedEffect(Unit) {
         delay(animatedText.delay.toLong())
         anim.animateTo(
@@ -116,7 +115,6 @@ fun SingleAnimatedText(
         )
         onAnimationEnd()
     }
-
     val alphaAnim = rememberInfiniteTransition()
     val alpha by alphaAnim.animateFloat(
         initialValue = CoinAnimationConstants.MIN_ALPHA,

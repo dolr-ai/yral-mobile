@@ -1,0 +1,112 @@
+package com.yral.android.ui.screens.game
+
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
+import com.yral.android.R
+import com.yral.android.ui.screens.game.GameIconConstants.ANIMATION_DURATION
+import com.yral.android.ui.screens.game.GameIconConstants.ROTATION_DEGREE
+import com.yral.android.ui.screens.game.GameIconConstants.SCALING_FACTOR
+import com.yral.shared.features.game.domain.models.GameIcon
+import com.yral.shared.features.game.domain.models.GameIconNames
+import kotlinx.coroutines.delay
+
+private object GameIconConstants {
+    const val ROTATION_DEGREE = -15f
+    const val SCALING_FACTOR = 1.17f
+    const val ANIMATION_DURATION = 200L
+}
+
+@Composable
+fun LocalGameIcon(
+    modifier: Modifier,
+    icon: GameIcon,
+    animate: Boolean = false,
+    onAnimationComplete: () -> Unit,
+) {
+    val rotation by animateFloatAsState(
+        targetValue = if (animate) ROTATION_DEGREE else 0f,
+        animationSpec = tween(durationMillis = ANIMATION_DURATION.toInt()),
+        label = "rotation",
+    )
+    val scale by animateFloatAsState(
+        targetValue = if (animate) SCALING_FACTOR else 1f,
+        animationSpec = tween(durationMillis = ANIMATION_DURATION.toInt()),
+        label = "scale",
+    )
+    LaunchedEffect(animate) {
+        delay(ANIMATION_DURATION)
+        onAnimationComplete()
+    }
+    Image(
+        modifier =
+            modifier
+                .size(46.dp)
+                .graphicsLayer(
+                    rotationZ = rotation,
+                    scaleX = scale,
+                    scaleY = scale,
+                ),
+        painter = painterResource(id = icon.getResource()),
+        contentDescription = "image description",
+        contentScale = ContentScale.FillBounds,
+    )
+}
+
+@Composable
+fun AsyncGameIcon(
+    modifier: Modifier,
+    icon: GameIcon,
+    animate: Boolean = false,
+    onAnimationComplete: () -> Unit,
+    loadLocal: () -> Unit,
+) {
+    val rotation by animateFloatAsState(
+        targetValue = if (animate) ROTATION_DEGREE else 0f,
+        animationSpec = tween(durationMillis = ANIMATION_DURATION.toInt()),
+        label = "rotation",
+    )
+    val scale by animateFloatAsState(
+        targetValue = if (animate) SCALING_FACTOR else 1f,
+        animationSpec = tween(durationMillis = ANIMATION_DURATION.toInt()),
+        label = "scale",
+    )
+    LaunchedEffect(animate) {
+        delay(ANIMATION_DURATION)
+        onAnimationComplete()
+    }
+    AsyncImage(
+        model = icon.imageUrl,
+        modifier =
+            modifier
+                .size(46.dp)
+                .graphicsLayer(
+                    rotationZ = rotation,
+                    scaleX = scale,
+                    scaleY = scale,
+                ),
+        contentDescription = "image description",
+        contentScale = ContentScale.FillBounds,
+        onError = { loadLocal() },
+    )
+}
+
+fun GameIcon.getResource(): Int =
+    when (imageName) {
+        GameIconNames.LAUGH -> R.drawable.laughing
+        GameIconNames.HEART -> R.drawable.heart
+        GameIconNames.FIRE -> R.drawable.fire
+        GameIconNames.SURPRISE -> R.drawable.surprise
+        GameIconNames.ROCKET -> R.drawable.rocket
+        else -> 0
+    }
