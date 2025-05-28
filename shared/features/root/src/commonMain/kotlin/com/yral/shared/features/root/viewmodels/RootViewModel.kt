@@ -11,6 +11,7 @@ import com.yral.shared.features.auth.AuthClient
 import com.yral.shared.features.feed.useCases.FetchFeedDetailsUseCase
 import com.yral.shared.features.feed.useCases.GetInitialFeedUseCase
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
+import com.yral.shared.firebaseStore.usecase.CheckVideoVoteUseCase
 import com.yral.shared.koin.koinInstance
 import com.yral.shared.rust.domain.models.FeedDetails
 import com.yral.shared.rust.domain.models.Post
@@ -41,6 +42,7 @@ class RootViewModel(
     private val individualUserServiceFactory: IndividualUserServiceFactory,
     private val getInitialFeedUseCase: GetInitialFeedUseCase,
     private val fetchFeedDetailsUseCase: FetchFeedDetailsUseCase,
+    private val checkVideoVoteUseCase: CheckVideoVoteUseCase,
     private val crashlyticsManager: CrashlyticsManager,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.io)
@@ -112,7 +114,10 @@ class RootViewModel(
                         val posts = result.posts
                         _state.update { it.copy(posts = posts) }
                         if (posts.isNotEmpty()) {
-                            posts.take(MIN_REQUIRED_ITEMS).forEach { post -> fetchFeedDetail(post) }
+                            posts
+                            .filter { !isAlreadyVoted(it) }
+                            .take(MIN_REQUIRED_ITEMS)
+                            .forEach { post -> fetchFeedDetail(post) }
                         } else {
                             // No posts available, but session is initialized
                             _state.update { it.copy(showSplash = false) }
@@ -128,6 +133,15 @@ class RootViewModel(
             _state.update { it.copy(error = RootError.UNEXPECTED_ERROR) }
         }
     }
+
+    private suspend fun isAlreadyVoted(post: Post): Boolean =
+        checkVideoVoteUseCase
+            .invoke(
+                CheckVideoVoteUseCase.Params(
+                    videoId = post.videoID,
+                    principalId = sessionManager.getUserPrincipal() ?: "",
+                ),
+            ).value
 
     private suspend fun fetchFeedDetail(post: Post) {
         try {
