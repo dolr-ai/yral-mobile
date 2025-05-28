@@ -16,6 +16,12 @@ interface FBAuthRepositoryApi {
     suspend fun signInAnonymously(): Result<String>
 
     /**
+     * Signs in with custom token
+     * @return Result containing the user ID if successful, or an exception if failed
+     */
+    suspend fun signInWithToken(token: String): Result<String>
+
+    /**
      * Signs out the current user
      */
     suspend fun signOut()

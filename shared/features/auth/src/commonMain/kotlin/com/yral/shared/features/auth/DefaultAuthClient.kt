@@ -10,6 +10,7 @@ import com.yral.shared.core.session.Session
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.features.auth.domain.AuthRepository
+import com.yral.shared.features.auth.domain.models.ExchangePrincipalResponse
 import com.yral.shared.features.auth.domain.useCases.AuthenticateTokenUseCase
 import com.yral.shared.features.auth.domain.useCases.ExchangePrincipalIdUseCase
 import com.yral.shared.features.auth.domain.useCases.ObtainAnonymousIdentityUseCase
@@ -20,6 +21,7 @@ import com.yral.shared.features.auth.utils.OAuthUtils
 import com.yral.shared.features.auth.utils.SocialProvider
 import com.yral.shared.firebaseAuth.usecase.GetIdTokenUseCase
 import com.yral.shared.firebaseAuth.usecase.SignInAnonymouslyUseCase
+import com.yral.shared.firebaseAuth.usecase.SignInWithTokenUseCase
 import com.yral.shared.firebaseAuth.usecase.SignOutUseCase
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
@@ -58,17 +60,23 @@ class DefaultAuthClient(
     }
 
     private suspend fun obtainAnonymousIdentity() {
-        requiredUseCases.signOutUseCase.invoke(Unit)
-        requiredUseCases.obtainAnonymousIdentityUseCase
+        requiredUseCases
+            .signOutUseCase
             .invoke(Unit)
-            .onSuccess { tokenResponse ->
-                handleToken(
-                    idToken = tokenResponse.idToken,
-                    accessToken = tokenResponse.accessToken,
-                    refreshToken = tokenResponse.refreshToken,
-                    shouldRefreshToken = true,
-                )
-            }.onFailure { throw YralException(it.localizedMessage ?: "") }
+            .onSuccess {
+                requiredUseCases.obtainAnonymousIdentityUseCase
+                    .invoke(Unit)
+                    .onSuccess { tokenResponse ->
+                        handleToken(
+                            idToken = tokenResponse.idToken,
+                            accessToken = tokenResponse.accessToken,
+                            refreshToken = tokenResponse.refreshToken,
+                            shouldRefreshToken = true,
+                        )
+                    }.onFailure { throw YralException(it.localizedMessage ?: "") }
+            }.onFailure { error ->
+                throw YralException(error.message ?: "Failed to sing out for fresh sing in")
+            }
     }
 
     private suspend fun handleToken(
@@ -182,10 +190,31 @@ class DefaultAuthClient(
                     idToken = idToken,
                     principalId = canisterWrapper.getUserPrincipal(),
                 ),
-            ).onSuccess {
-                setSession(data, canisterWrapper, it.coins)
+            ).onSuccess { response ->
+                signInWithToken(data, canisterWrapper, response)
             }.onFailure { error ->
                 throw YralException(error.message ?: "Failed to exchange principal ID")
+            }
+    }
+
+    private suspend fun signInWithToken(
+        data: ByteArray,
+        canisterWrapper: CanistersWrapper,
+        fbResponse: ExchangePrincipalResponse,
+    ) {
+        requiredUseCases
+            .signOutUseCase
+            .invoke(Unit)
+            .onSuccess {
+                requiredUseCases.signInWithTokenUseCase
+                    .invoke(fbResponse.token)
+                    .onSuccess {
+                        setSession(data, canisterWrapper, fbResponse.coins)
+                    }.onFailure { error ->
+                        throw YralException(error.message ?: "Failed to sign in with custom token")
+                    }
+            }.onFailure { error ->
+                throw YralException(error.message ?: "Failed to sing out for custom token sign in")
             }
     }
 
@@ -301,6 +330,7 @@ class DefaultAuthClient(
         val updateSessionAsRegisteredUseCase: UpdateSessionAsRegisteredUseCase,
         val signOutUseCase: SignOutUseCase,
         val signInAnonymouslyUseCase: SignInAnonymouslyUseCase,
+        val signInWithTokenUseCase: SignInWithTokenUseCase,
         val exchangePrincipalIdUseCase: ExchangePrincipalIdUseCase,
         val getIdTokenUseCase: GetIdTokenUseCase,
     )
