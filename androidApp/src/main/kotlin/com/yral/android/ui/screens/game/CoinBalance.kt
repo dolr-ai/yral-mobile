@@ -32,15 +32,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import com.airbnb.lottie.compose.LottieAnimation
-import com.airbnb.lottie.compose.LottieCompositionSpec
-import com.airbnb.lottie.compose.animateLottieCompositionAsState
-import com.airbnb.lottie.compose.rememberLottieComposition
 import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.game.CoinBalanceConstants.BALANCE_TEXT_ANIMATION_DURATION
 import com.yral.android.ui.screens.game.CoinBalanceConstants.BALANCE_TEXT_HEIGHT
+import com.yral.android.ui.widgets.YralLottieAnimation
 import kotlinx.coroutines.launch
 
 @Composable
@@ -88,23 +85,13 @@ private fun CoinBag(
     } else {
         val bagAnimationRes =
             if (coinDelta > 0) R.raw.smiley_game_win else R.raw.smiley_game_lose
-        val bagAnimationComposition by rememberLottieComposition(
-            LottieCompositionSpec.RawRes(
-                bagAnimationRes,
-            ),
-        )
-        val bagAnimationProgress by animateLottieCompositionAsState(
-            composition = bagAnimationComposition,
-            iterations = 1,
-            isPlaying = true, // Only start playing when initial animation is complete
-        )
         var animate by remember { mutableStateOf(true) }
         AnimatedVisibility(
             visible = animate,
             enter = fadeIn(),
             exit = fadeOut(),
         ) {
-            LottieAnimation(
+            YralLottieAnimation(
                 modifier =
                     Modifier
                         .height(52.dp)
@@ -117,12 +104,9 @@ private fun CoinBag(
                             scaleX = 2f
                             scaleY = 2f
                         },
-                composition = bagAnimationComposition,
-                progress = { bagAnimationProgress },
-            )
-        }
-        LaunchedEffect(bagAnimationProgress) {
-            if (bagAnimationProgress == 1f) {
+                rawRes = bagAnimationRes,
+                iterations = 1,
+            ) {
                 setAnimate(false)
                 animate = false
             }
