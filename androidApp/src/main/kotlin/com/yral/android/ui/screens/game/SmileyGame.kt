@@ -67,12 +67,15 @@ fun GameIconsRow(
     clickedIcon: GameIcon?,
     isLoading: Boolean,
     coinDelta: Int = 0,
+    errorMessage: String = "",
     onIconClicked: (emoji: GameIcon) -> Unit,
 ) {
     var animateBubbles by remember { mutableStateOf(false) }
     var iconPositions by remember { mutableStateOf(mapOf<Int, Float>()) }
     var animateCoinDelta by remember { mutableStateOf(false) }
-    var resultViewVisible by remember { mutableStateOf(coinDelta != 0) }
+    var resultViewVisible by remember(coinDelta, errorMessage) {
+        mutableStateOf(shouldShowResult(coinDelta, errorMessage))
+    }
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.BottomCenter,
@@ -97,6 +100,7 @@ fun GameIconsRow(
                     modifier = Modifier.align(Alignment.BottomCenter),
                     icon = clickedIcon,
                     coinDelta = coinDelta,
+                    errorMessage = errorMessage,
                     originalPos =
                         iconPositions[gameIcons.indexOfFirst { clickedIcon.id == it.id }] ?: 0f,
                 )
@@ -110,10 +114,15 @@ fun GameIconsRow(
             animateCoinDelta = animateCoinDelta,
             resultViewVisible = resultViewVisible,
             setAnimateCoinDelta = { animateCoinDelta = it },
-            onAnimationComplete = { resultViewVisible = coinDelta != 0 },
+            onAnimationComplete = { resultViewVisible = shouldShowResult(coinDelta, errorMessage) },
         )
     }
 }
+
+private fun shouldShowResult(
+    coinDelta: Int,
+    errorMessage: String,
+) = coinDelta != 0 || errorMessage.isNotEmpty()
 
 @Composable
 private fun GameIconBubbles(
@@ -199,12 +208,13 @@ private fun GameResultView(
     modifier: Modifier,
     icon: GameIcon,
     coinDelta: Int,
+    errorMessage: String = "",
     originalPos: Float,
 ) {
     var animate by remember { mutableStateOf(true) }
     val iconOffsetX = remember { Animatable(originalPos) }
     LaunchedEffect(coinDelta) {
-        if (coinDelta != 0) {
+        if (shouldShowResult(coinDelta, errorMessage)) {
             iconOffsetX.snapTo(originalPos)
             iconOffsetX.animateTo(
                 targetValue = 0f,
@@ -241,7 +251,7 @@ private fun GameResultView(
         )
         if (iconOffsetX.value == 0f) {
             Text(
-                text = gameResultText(icon.imageName, coinDelta),
+                text = gameResultText(icon.imageName, coinDelta, errorMessage),
             )
         }
     }
@@ -251,6 +261,7 @@ private fun GameResultView(
 private fun gameResultText(
     iconName: GameIconNames,
     coinDelta: Int,
+    errorMessage: String = "",
 ): AnnotatedString =
     buildAnnotatedString {
         val textStyle = LocalAppTopography.current.mdBold
@@ -261,6 +272,12 @@ private fun gameResultText(
                 fontWeight = textStyle.fontWeight,
                 color = YralColors.Green50,
             )
+        if (errorMessage.isNotEmpty()) {
+            withStyle(spanStyle.plus(SpanStyle(color = YralColors.Red300))) {
+                append(errorMessage)
+            }
+            return@buildAnnotatedString
+        }
         if (coinDelta > 0) {
             withStyle(spanStyle) {
                 append(

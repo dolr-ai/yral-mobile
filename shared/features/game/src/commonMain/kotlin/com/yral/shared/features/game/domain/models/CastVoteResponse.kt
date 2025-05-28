@@ -1,11 +1,16 @@
 package com.yral.shared.features.game.domain.models
 
-data class CastVoteResponse(
-    val outcome: String,
-    val coins: Long,
-    val coinDelta: Int,
-    val error: CastVoteError? = null,
-)
+sealed class CastVoteResponse {
+    data class Success(
+        val outcome: String,
+        val coins: Long,
+        val coinDelta: Int,
+    ) : CastVoteResponse()
+
+    data class Error(
+        val error: CastVoteError,
+    ) : CastVoteResponse()
+}
 
 data class CastVoteError(
     val code: CastVoteErrorCodes,
