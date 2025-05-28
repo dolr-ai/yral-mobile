@@ -134,7 +134,7 @@ jobs:
                 echo "Comparing $(basename $did_file)..."
                 # Run didc check and capture both output and exit code
                 set +e  # Disable exit on error
-                DIFF_OUTPUT=$(didc check "$local_file" "$did_file" 2>&1)
+                DIFF_OUTPUT=$(didc check "$did_file" "$local_file" 2>&1)
                 DIFF_EXIT_CODE=$?
                 set -e  # Re-enable exit on error
                 
