@@ -34,6 +34,8 @@ kotlin {
             implementation(projects.shared.libs.crashlytics)
             implementation(projects.shared.libs.preferences)
             implementation(projects.shared.libs.firebaseStore)
+            implementation(projects.shared.libs.firebaseAuth)
+            implementation(projects.shared.libs.http)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

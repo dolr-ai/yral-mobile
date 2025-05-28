@@ -1,8 +1,9 @@
 package com.yral.shared.features.game.di
 
 import com.yral.shared.features.game.data.GameRemoteDataSource
+import com.yral.shared.features.game.data.GameRepository
 import com.yral.shared.features.game.data.IGameRemoteDataSource
-import com.yral.shared.features.game.domain.GameRepository
+import com.yral.shared.features.game.domain.CastVoteUseCase
 import com.yral.shared.features.game.domain.GetGameIconsUseCase
 import com.yral.shared.features.game.domain.GetGameRulesUseCase
 import com.yral.shared.features.game.domain.IGameRepository
@@ -14,6 +15,7 @@ import org.koin.dsl.module
 
 val gameModule =
     module {
+        factoryOf(::CastVoteUseCase)
         factoryOf(::GetGameIconsUseCase)
         factoryOf(::GetGameRulesUseCase)
         viewModelOf(::GameViewModel)
