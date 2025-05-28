@@ -13,4 +13,8 @@ interface AuthRepository {
     suspend fun obtainAnonymousIdentity(): TokenResponse
     suspend fun authenticateToken(code: String): TokenResponse
     suspend fun refreshToken(token: String): TokenResponse
+    suspend fun updateSessionAsRegistered(
+        idToken: String,
+        canisterId: String,
+    )
 }

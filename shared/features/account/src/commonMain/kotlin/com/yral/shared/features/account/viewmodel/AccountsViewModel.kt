@@ -12,6 +12,7 @@ import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import com.yral.shared.uniffi.generated.propicFromPrincipal
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,7 +25,7 @@ class AccountsViewModel(
     private val authClient: AuthClient,
     private val crashlyticsManager: CrashlyticsManager,
 ) : ViewModel() {
-    private val coroutineScope = CoroutineScope(appDispatchers.io)
+    private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.io)
     private val _state =
         MutableStateFlow(
             AccountsState(
@@ -201,7 +202,7 @@ class AccountsViewModel(
         const val LOGOUT_URI = "yral://logout"
         const val DELETE_ACCOUNT_URI = "yral://deleteAccount"
         const val TALK_TO_TEAM_URL = "https://t.me/+c-LTX0Cp-ENmMzI1"
-        const val TERMS_OF_SERVICE_URL = "https://yral.com/terms-ios"
+        const val TERMS_OF_SERVICE_URL = "https://yral.com/terms-android"
         const val PRIVACY_POLICY_URL = "https://yral.com/privacy-policy"
         const val TELEGRAM_LINK = "https://t.me/+c-LTX0Cp-ENmMzI1"
         const val DISCORD_LINK = "https://discord.com/invite/GZ9QemnZuj"

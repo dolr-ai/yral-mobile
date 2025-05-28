@@ -62,4 +62,10 @@ class AuthRepositoryImpl(
         dataSource
             .refreshToken(token)
             .toTokenResponse()
+
+    override suspend fun updateSessionAsRegistered(
+        idToken: String,
+        canisterId: String,
+    ) = dataSource
+        .updateSessionAsRegistered(idToken, canisterId)
 }
