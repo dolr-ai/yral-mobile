@@ -1,10 +1,9 @@
 name: Hot-or-Not Backend Release Monitor
 
 on:
-  push:
   schedule:
-    # Check for new releases every 30 minutes
-    - cron: '*/30 * * * *'
+    # Check for new releases daily
+    - cron: '0 0 * * *'
   workflow_dispatch: # Allow manual triggering
 
 jobs:
