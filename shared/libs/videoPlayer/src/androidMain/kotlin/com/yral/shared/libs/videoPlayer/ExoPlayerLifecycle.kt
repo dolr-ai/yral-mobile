@@ -34,6 +34,7 @@ private fun handleOnResume(
     setWasAppInBackground: (Boolean) -> Unit,
 ) {
     if (wasAppInBackground) {
+        exoPlayer.prepare()
         exoPlayer.playWhenReady = !isPause
     }
     setWasAppInBackground(false)
@@ -44,6 +45,8 @@ private fun handleOnPause(
     setWasAppInBackground: (Boolean) -> Unit,
 ) {
     exoPlayer.playWhenReady = false
+    exoPlayer.pause()
+    exoPlayer.stop()
     setWasAppInBackground(true)
 }
 
@@ -52,6 +55,8 @@ private fun handleOnStop(
     setWasAppInBackground: (Boolean) -> Unit,
 ) {
     exoPlayer.playWhenReady = false
+    exoPlayer.pause()
+    exoPlayer.stop()
     setWasAppInBackground(true)
 }
 
