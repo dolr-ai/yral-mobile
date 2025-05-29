@@ -3,7 +3,7 @@ name: Hot-or-Not Backend Release Monitor
 on:
   push:
   schedule:
-    # Check for new releases every 30 minutes (more frequent)
+    # Check for new releases every 30 minutes
     - cron: '*/30 * * * *'
   workflow_dispatch: # Allow manual triggering
 
@@ -11,7 +11,7 @@ jobs:
   check-releases:
     runs-on: ubuntu-latest
     permissions:
-      contents: 'write'  # Changed to write to allow committing changes
+      contents: 'write'
       id-token: 'write'
       pull-requests: 'write'
 
@@ -19,410 +19,55 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-#      - name: Restore last notified release from cache
-#        id: cache-release
-#        uses: actions/cache/restore@v4
-#        with:
-#          path: last_release.txt
-#          key: last-notified-release
-
       - name: Check for new releases
         id: check_release
-        run: |
-          # Get the latest release from the target repository
-          LATEST_RELEASE=$(curl -s "https://api.github.com/repos/dolr-ai/hot-or-not-backend-canister/releases/latest")
-          
-          # Extract release information
-          RELEASE_TAG=$(echo "$LATEST_RELEASE" | jq -r '.tag_name')
-          RELEASE_NAME=$(echo "$LATEST_RELEASE" | jq -r '.name')
-          RELEASE_URL=$(echo "$LATEST_RELEASE" | jq -r '.html_url')
-          RELEASE_BODY=$(echo "$LATEST_RELEASE" | jq -r '.body')
-          PUBLISHED_AT=$(echo "$LATEST_RELEASE" | jq -r '.published_at')
-          AUTHOR=$(echo "$LATEST_RELEASE" | jq -r '.author.login')
-          
-          echo "Latest release tag: $RELEASE_TAG"
-          echo "release_tag=$RELEASE_TAG" >> $GITHUB_OUTPUT
-          echo "release_name=$RELEASE_NAME" >> $GITHUB_OUTPUT
-          echo "release_url=$RELEASE_URL" >> $GITHUB_OUTPUT
-          echo "published_at=$PUBLISHED_AT" >> $GITHUB_OUTPUT
-          echo "author=$AUTHOR" >> $GITHUB_OUTPUT
-          
-          # Escape newlines and quotes in release body for JSON
-          ESCAPED_BODY=$(echo "$RELEASE_BODY" | sed 's/"/\\"/g' | sed ':a;N;$!ba;s/\n/\\n/g' | head -c 500)
-          echo "release_body=$ESCAPED_BODY" >> $GITHUB_OUTPUT
-          
-          # Check if we've seen this release before
-          if [ -f "last_release.txt" ]; then
-            LAST_NOTIFIED=$(cat last_release.txt)
-            echo "Last notified release: $LAST_NOTIFIED"
-          else
-            LAST_NOTIFIED="v3.5.4"  # Initialize with current latest
-            echo "No previous notifications found, initializing with v3.5.4"
-          fi
-          
-          if [ "$RELEASE_TAG" != "$LAST_NOTIFIED" ] && [ "$RELEASE_TAG" != "null" ]; then
-            echo "New release detected!"
-            echo "new_release=true" >> $GITHUB_OUTPUT
-            
-            # Update the last notified release
-            echo "$RELEASE_TAG" > last_release.txt
-          else
-            echo "No new release"
-            echo "new_release=false" >> $GITHUB_OUTPUT
-          fi
+        uses: ./.github/actions/check-release
 
-      - name: Send release notification to Google Chat
+      - name: Send release notification
         if: steps.check_release.outputs.new_release == 'true'
-        run: |
-          # Process and escape release notes for JSON
-          RELEASE_NOTES=$(echo "${{ steps.check_release.outputs.release_body }}" | .github/helperscripts/cleanup_release_notes_for_google_chat.sh | jq -Rs .)
-          
-          curl -X POST "${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}" \
-          -H "Content-Type: application/json" \
-          -d '{
-            "cardsV2": [
-              {
-                "cardId": "release-alert",
-                "card": {
-                  "header": {
-                    "title": "New Release Alert!",
-                    "subtitle": "Hot-or-Not Backend Canister",
-                    "imageUrl": "https://avatars.githubusercontent.com/u/79742232?s=200&v=4"
-                  },
-                  "sections": [
-                    {
-                      "widgets": [
-                        {
-                          "decoratedText": {
-                            "startIcon": { "knownIcon": "DESCRIPTION" },
-                            "topLabel": "Release",
-                            "text": "${{ steps.check_release.outputs.release_name }} ( ${{ steps.check_release.outputs.release_tag }} )"
-                          }
-                        },
-                        {
-                          "decoratedText": {
-                            "startIcon": { "knownIcon": "PERSON" },
-                            "topLabel": "Author",
-                            "text": "${{ steps.check_release.outputs.author }}"
-                          }
-                        },
-                        {
-                          "decoratedText": {
-                            "startIcon": { "knownIcon": "INVITE" },
-                            "topLabel": "Published",
-                            "text": "${{ steps.check_release.outputs.published_at }}"
-                          }
-                        }
-                      ]
-                    },
-                    {
-                      "header": "Release Notes",
-                      "widgets": [
-                        { "textParagraph": { "text": '"$RELEASE_NOTES"' } }
-                      ]
-                    },
-                    {
-                      "widgets": [
-                        {
-                          "buttonList": {
-                            "buttons": [
-                              {
-                                "text": "View Release",
-                                "onClick": {
-                                  "openLink": {
-                                    "url": "${{ steps.check_release.outputs.release_url }}"
-                                  }
-                                }
-                              }
-                            ]
-                          }
-                        }
-                      ]
-                    },
-                    {
-                      "widgets": [
-                        {
-                          "textParagraph": {
-                            "text": "<i><a href=\"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\">View workflow run</a></i>"
-                          }
-                        }
-                      ]
-                    }
-                  ]
-                }
-              }
-            ]
-          }'
+        uses: ./.github/actions/notify-release
+        with:
+          webhook_url: ${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}
+          release_tag: ${{ steps.check_release.outputs.release_tag }}
+          release_name: ${{ steps.check_release.outputs.release_name }}
+          release_url: ${{ steps.check_release.outputs.release_url }}
+          release_body: ${{ steps.check_release.outputs.release_body }}
+          published_at: ${{ steps.check_release.outputs.published_at }}
+          author: ${{ steps.check_release.outputs.author }}
+          workflow_url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
-#      - name: Save last notified release to cache
-#        if: steps.check_release.outputs.new_release == 'true'
-#        uses: actions/cache/save@v4
-#        with:
-#          path: last_release.txt
-#          key: last-notified-release
-
-      - name: Install didc tool
+      - name: Handle DID files
         if: steps.check_release.outputs.new_release == 'true'
-        run: |
-          # Download didc
-          curl -L -o didc https://github.com/dfinity/candid/releases/download/2024-07-29/didc-linux64
-          
-          # Make it executable
-          chmod +x didc
-          
-          # Move to a directory in PATH and verify installation
-          sudo mv didc /usr/local/bin/
-          export PATH="/usr/local/bin:$PATH"
-          
-          # Verify installation
-          which didc
-          didc --version
-          
-          # Ensure the directory exists and is writable
-          sudo mkdir -p /usr/local/bin
-          sudo chmod 755 /usr/local/bin
-
-      - name: Download and compare .did files
-        if: steps.check_release.outputs.new_release == 'true'
-        id: compare_did
-        run: |
-          # Verify didc is available
-          which didc || { echo "didc not found in PATH"; exit 1; }
-          
-          # Create temporary directory for new release files
-          mkdir -p temp_release
-          
-          # Create did directory if it doesn't exist
-          mkdir -p shared/rust/rust-agent-uniffi/did
-          
-          # Download release assets
-          RELEASE_ASSETS=$(curl -s "https://api.github.com/repos/dolr-ai/hot-or-not-backend-canister/releases/latest" | jq -r '.assets[].browser_download_url')
-          
-          # Download .did files to temp directory
-          for asset_url in $RELEASE_ASSETS; do
-            if [[ $asset_url == *.did ]]; then
-              echo "Downloading $(basename $asset_url)..."
-              curl -L -o "temp_release/$(basename $asset_url)" "$asset_url"
-            fi
-          done
-          
-          # Compare and update files
-          HAS_CHANGES=false
-          HAS_BREAKING_CHANGES=false
-          CHANGED_FILES=""
-          for did_file in temp_release/*.did; do
-            if [ -f "$did_file" ]; then
-              local_file="shared/rust/rust-agent-uniffi/did/$(basename $did_file)"
-              if [ -f "$local_file" ]; then
-                echo "Comparing $(basename $did_file)..."
-                # Run didc check and capture both output and exit code
-                set +e  # Disable exit on error
-                DIFF_OUTPUT=$(didc check "$did_file" "$local_file" 2>&1)
-                DIFF_EXIT_CODE=$?
-                set -e  # Re-enable exit on error
-                
-                if [ $DIFF_EXIT_CODE -ne 0 ]; then
-                  echo "❌ Breaking changes detected in $(basename $did_file):"
-                  echo "$DIFF_OUTPUT"
-                  echo "breaking_changes=true" >> $GITHUB_OUTPUT
-                  HAS_BREAKING_CHANGES=true
-                  CHANGED_FILES="$CHANGED_FILES\n• $(basename $did_file) (breaking changes)"
-                else
-                  echo "✅ No breaking changes in $(basename $did_file)"
-                  # Check if files are different despite being compatible
-                  if ! cmp -s "$local_file" "$did_file"; then
-                    echo "ℹ️ Non-breaking updates found in $(basename $did_file)"
-                    echo "differences=true" >> $GITHUB_OUTPUT
-                    echo "Updating $(basename $did_file)..."
-                    cp "$did_file" "$local_file"
-                    HAS_CHANGES=true
-                    CHANGED_FILES="$CHANGED_FILES\n• $(basename $did_file) (updated)"
-                  else
-                    echo "✅ Files are identical"
-                  fi
-                fi
-              else
-                echo "⚠️ New .did file found: $(basename $did_file)"
-                echo "new_files=true" >> $GITHUB_OUTPUT
-                echo "Adding new file $(basename $did_file)..."
-                cp "$did_file" "$local_file"
-                HAS_CHANGES=true
-                CHANGED_FILES="$CHANGED_FILES\n• $(basename $did_file) (new)"
-              fi
-            fi
-          done
-          
-          # Cleanup
-          rm -rf temp_release
-          
-          # Set outputs for next steps
-          echo "has_changes=$HAS_CHANGES" >> $GITHUB_OUTPUT
-          echo "has_breaking_changes=$HAS_BREAKING_CHANGES" >> $GITHUB_OUTPUT
-          # Format changed files for JSON
-          CHANGED_FILES_JSON=$(echo -e "$CHANGED_FILES" | sed '1d' | jq -Rs .)
-          echo "changed_files=$CHANGED_FILES_JSON" >> $GITHUB_OUTPUT
-
-      - name: Process Release Notes
-        id: process_notes
-        run: |
-          # Convert release notes to proper markdown and clean up formatting
-          NOTES=$(echo '${{ steps.check_release.outputs.release_body }}' | sed 's/\\n/\n/g' | sed 's/^## /### /g')
-          echo "PROCESSED_NOTES<<EOF" >> $GITHUB_ENV
-          echo "$NOTES" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+        id: handle_did
+        uses: ./.github/actions/handle-did-files
+        with:
+          release_tag: ${{ steps.check_release.outputs.release_tag }}
 
       - name: Create Pull Request
-        if: steps.compare_did.outputs.has_changes == 'true'
-        uses: peter-evans/create-pull-request@v7
-        id: cpr
-        continue-on-error: true
+        if: steps.check_release.outputs.new_release == 'true' && steps.handle_did.outputs.has_changes == 'true'
+        id: create_pr
+        uses: ./.github/actions/create-pr
         with:
-          commit-message: "Update .did files from release ${{ steps.check_release.outputs.release_tag }}"
-          title: "Update .did files from release ${{ steps.check_release.outputs.release_tag }}"
-          add-paths: |
-            *.did
-          body: |
-            This PR updates the .did files from the latest release.
+          release_tag: ${{ steps.check_release.outputs.release_tag }}
+          release_name: ${{ steps.check_release.outputs.release_name }}
+          release_url: ${{ steps.check_release.outputs.release_url }}
+          published_at: ${{ steps.check_release.outputs.published_at }}
+          author: ${{ steps.check_release.outputs.author }}
+          release_body: ${{ steps.check_release.outputs.release_body }}
+          changed_files: ${{ steps.handle_did.outputs.changed_files }}
+          breaking_changes: ${{ steps.handle_did.outputs.has_breaking_changes }}
 
-            ## Release Details
-            - **Release:** ${{ steps.check_release.outputs.release_name }}
-            - **Tag:** ${{ steps.check_release.outputs.release_tag }}
-            - **Published:** ${{ steps.check_release.outputs.published_at }}
-            - **Author:** ${{ steps.check_release.outputs.author }}
-
-            ## Release Notes
-            ${{ env.PROCESSED_NOTES }}
-
-            ## Changes Summary
-            The following .did files were affected:
-            ${{ fromJSON(steps.compare_did.outputs.changed_files) }}
-
-            ## Breaking Changes Status
-            ${{ steps.compare_did.outputs.breaking_changes == 'true' && '⚠️ **Warning:** This update contains breaking changes!' || '✅ No breaking changes detected' }}
-
-            ---
-            [View Original Release](${{ steps.check_release.outputs.release_url }})
-          branch: create-pull-request/update-did-files-${{ steps.check_release.outputs.release_tag }}
-
-      - name: Send DID changes notification to Google Chat
-        if: steps.check_release.outputs.new_release == 'true' && steps.compare_did.outputs.has_changes == 'true'
-        run: |
-          # Check if PR was created successfully
-          PR_STATUS="${{ steps.cpr.outcome }}"
-          PR_URL="${{ steps.cpr.outputs.pull-request-url }}"
-          
-          # Prepare PR status widgets
-          if [ "$PR_STATUS" = "success" ]; then
-            PR_WIDGETS='[
-              {
-                "decoratedText": {
-                  "text": "✅ Pull Request created successfully"
-                }
-              },
-              {
-                "buttonList": {
-                  "buttons": [
-                    {
-                      "text": "View Pull Request",
-                      "onClick": {
-                        "openLink": {
-                          "url": "'"$PR_URL"'"
-                        }
-                      }
-                    }
-                  ]
-                }
-              }
-            ]'
-          else
-            PR_WIDGETS='[
-              {
-                "decoratedText": {
-                  "text": "❌ Failed to create Pull Request"
-                }
-              }
-            ]'
-          fi
-          
-          curl -X POST "${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}" \
-          -H "Content-Type: application/json" \
-          -d '{
-            "cardsV2": [
-              {
-                "cardId": "did-changes",
-                "card": {
-                  "header": {
-                    "title": "DID File Changes Detected",
-                    "subtitle": "Changes from release ${{ steps.check_release.outputs.release_tag }}"
-                  },
-                  "sections": [
-                    {
-                      "header": "Findings",
-                      "widgets": [
-                        {
-                          "decoratedText": {
-                            "text": "${{ steps.compare_did.outputs.breaking_changes == 'true' && '🚨 Breaking changes detected in .did files' || '✅ No breaking changes detected' }}"
-                          }
-                        },
-                        {
-                          "decoratedText": {
-                            "text": "${{ steps.compare_did.outputs.differences == 'true' && 'ℹ️ Non-breaking updates found in .did files' || '✅ No non breaking changes detected' }}"
-                          }
-                        },
-                        {
-                          "decoratedText": {
-                            "text": "${{ steps.compare_did.outputs.new_files == 'true' && 'ℹ️ New .did files found in release' || '✅ No new files' }}"
-                          }
-                        }
-                      ]
-                    },
-                    {
-                      "header": "Changed Files",
-                      "widgets": [
-                        {
-                          "textParagraph": {
-                            "text": "${{ fromJSON(steps.compare_did.outputs.changed_files) }}"
-                          }
-                        }
-                      ]
-                    },
-                    {
-                      "header": "Pull Request Status",
-                      "widgets": '"$PR_WIDGETS"'
-                    },
-                    {
-                      "widgets": [
-                        {
-                          "textParagraph": {
-                            "text": "<i><a href=\"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\">View workflow run</a></i>"
-                          }
-                        }
-                      ]
-                    }
-                  ]
-                }
-              }
-            ]
-          }'
-
-      - name: Log notification status
-        if: steps.check_release.outputs.new_release == 'true'
-        run: |
-          echo "✅ Processed release ${{ steps.check_release.outputs.release_tag }}"
-          if [ "${{ steps.compare_did.outputs.differences }}" == "true" ]; then
-            echo "⚠️ Non-breaking updates found in .did files"
-          fi
-          if [ "${{ steps.compare_did.outputs.breaking_changes }}" == "true" ]; then
-            echo "🚨 Breaking changes detected in .did files"
-          fi
-          if [ "${{ steps.compare_did.outputs.new_files }}" == "true" ]; then
-            echo "ℹ️ New .did files found in release"
-          fi
-          if [ "${{ steps.compare_did.outputs.has_changes }}" == "true" ]; then
-            echo "✅ Changes committed and PR created"
-          else
-            echo "ℹ️ No changes needed"
-          fi
+      - name: Send DID changes notification
+        if: steps.check_release.outputs.new_release == 'true' && steps.handle_did.outputs.has_changes == 'true'
+        uses: ./.github/actions/notify-did-changes
+        with:
+          webhook_url: ${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}
+          release_tag: ${{ steps.check_release.outputs.release_tag }}
+          changed_files: ${{ steps.handle_did.outputs.changed_files }}
+          breaking_changes: ${{ steps.handle_did.outputs.has_breaking_changes }}
+          pr_url: ${{ steps.create_pr.outputs.pr_url }}
+          pr_status: ${{ steps.create_pr.outputs.pr_status }}
+          workflow_url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
       - name: Create GitHub Summary
         if: steps.check_release.outputs.new_release == 'true'
@@ -438,34 +83,34 @@ jobs:
           echo "- **Release URL:** [${{ steps.check_release.outputs.release_url }}](${{ steps.check_release.outputs.release_url }})" >> $GITHUB_STEP_SUMMARY
           
           echo "## Release Notes" >> $GITHUB_STEP_SUMMARY
-          echo "${{ env.PROCESSED_NOTES }}" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.check_release.outputs.release_body }}" >> $GITHUB_STEP_SUMMARY
           
           echo "## DID Changes Analysis" >> $GITHUB_STEP_SUMMARY
           
           # Add status indicators
-          if [ "${{ steps.compare_did.outputs.has_changes }}" == "true" ]; then
+          if [ "${{ steps.handle_did.outputs.has_changes }}" == "true" ]; then
             echo "### Changed Files" >> $GITHUB_STEP_SUMMARY
-            echo "${{ fromJSON(steps.compare_did.outputs.changed_files) }}" >> $GITHUB_STEP_SUMMARY
+            echo "${{ steps.handle_did.outputs.changed_files }}" >> $GITHUB_STEP_SUMMARY
             
             echo "### Change Status" >> $GITHUB_STEP_SUMMARY
-            if [ "${{ steps.compare_did.outputs.breaking_changes }}" == "true" ]; then
+            if [ "${{ steps.handle_did.outputs.breaking_changes }}" == "true" ]; then
               echo "🚨 **Breaking changes detected in .did files**" >> $GITHUB_STEP_SUMMARY
             else
               echo "✅ No breaking changes detected" >> $GITHUB_STEP_SUMMARY
             fi
             
-            if [ "${{ steps.compare_did.outputs.differences }}" == "true" ]; then
+            if [ "${{ steps.handle_did.outputs.differences }}" == "true" ]; then
               echo "ℹ️ Non-breaking updates found in .did files" >> $GITHUB_STEP_SUMMARY
             fi
             
-            if [ "${{ steps.compare_did.outputs.new_files }}" == "true" ]; then
+            if [ "${{ steps.handle_did.outputs.new_files }}" == "true" ]; then
               echo "📄 New .did files added from release" >> $GITHUB_STEP_SUMMARY
             fi
             
             # Add PR information if available
-            if [ "${{ steps.cpr.outcome }}" == "success" ]; then
+            if [ "${{ steps.create_pr.outputs.pr_status }}" == "success" ]; then
               echo "### Pull Request" >> $GITHUB_STEP_SUMMARY
-              echo "✅ Pull Request created successfully: [${{ steps.cpr.outputs.pull-request-url }}](${{ steps.cpr.outputs.pull-request-url }})" >> $GITHUB_STEP_SUMMARY
+              echo "✅ Pull Request created successfully: [${{ steps.create_pr.outputs.pr_url }}](${{ steps.create_pr.outputs.pr_url }})" >> $GITHUB_STEP_SUMMARY
             else
               echo "### Pull Request" >> $GITHUB_STEP_SUMMARY
               echo "❌ Failed to create Pull Request" >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,119 @@
+name: 'Handle DID Files'
+description: 'Downloads and compares DID files from the latest release'
+
+inputs:
+  release_tag:
+    description: 'The tag of the release to check'
+    required: true
+
+outputs:
+  has_changes:
+    description: 'Whether there are changes in DID files'
+    value: ${{ steps.compare_did.outputs.has_changes }}
+  has_breaking_changes:
+    description: 'Whether there are breaking changes'
+    value: ${{ steps.compare_did.outputs.has_breaking_changes }}
+  changed_files:
+    description: 'List of changed files'
+    value: ${{ steps.compare_did.outputs.changed_files }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install didc tool
+      shell: bash
+      run: |
+        # Download didc
+        curl -L -o didc https://github.com/dfinity/candid/releases/download/2024-07-29/didc-linux64
+        
+        # Make it executable
+        chmod +x didc
+        
+        # Move to a directory in PATH and verify installation
+        sudo mv didc /usr/local/bin/
+        export PATH="/usr/local/bin:$PATH"
+        
+        # Verify installation
+        which didc
+        didc --version
+        
+        # Ensure the directory exists and is writable
+        sudo mkdir -p /usr/local/bin
+        sudo chmod 755 /usr/local/bin
+
+    - name: Download and compare .did files
+      id: compare_did
+      shell: bash
+      run: |
+        # Create temporary directory for new release files
+        mkdir -p temp_release
+        
+        # Create did directory if it doesn't exist
+        mkdir -p shared/rust/rust-agent-uniffi/did
+        
+        # Download release assets
+        RELEASE_ASSETS=$(curl -s "https://api.github.com/repos/dolr-ai/hot-or-not-backend-canister/releases/latest" | jq -r '.assets[].browser_download_url')
+        
+        # Download .did files to temp directory
+        for asset_url in $RELEASE_ASSETS; do
+          if [[ $asset_url == *.did ]]; then
+            echo "Downloading $(basename $asset_url)..."
+            curl -L -o "temp_release/$(basename $asset_url)" "$asset_url"
+          fi
+        done
+        
+        # Compare and update files
+        HAS_CHANGES=false
+        HAS_BREAKING_CHANGES=false
+        CHANGED_FILES=""
+        for did_file in temp_release/*.did; do
+          if [ -f "$did_file" ]; then
+            local_file="shared/rust/rust-agent-uniffi/did/$(basename $did_file)"
+            if [ -f "$local_file" ]; then
+              echo "Comparing $(basename $did_file)..."
+              # Run didc check and capture both output and exit code
+              set +e  # Disable exit on error
+              DIFF_OUTPUT=$(didc check "$did_file" "$local_file" 2>&1)
+              DIFF_EXIT_CODE=$?
+              set -e  # Re-enable exit on error
+              
+              if [ $DIFF_EXIT_CODE -ne 0 ]; then
+                echo "❌ Breaking changes detected in $(basename $did_file):"
+                echo "$DIFF_OUTPUT"
+                echo "breaking_changes=true" >> $GITHUB_OUTPUT
+                HAS_BREAKING_CHANGES=true
+                CHANGED_FILES="$CHANGED_FILES\n• $(basename $did_file) (breaking changes)"
+              else
+                echo "✅ No breaking changes in $(basename $did_file)"
+                # Check if files are different despite being compatible
+                if ! cmp -s "$local_file" "$did_file"; then
+                  echo "ℹ️ Non-breaking updates found in $(basename $did_file)"
+                  echo "differences=true" >> $GITHUB_OUTPUT
+                  echo "Updating $(basename $did_file)..."
+                  cp "$did_file" "$local_file"
+                  HAS_CHANGES=true
+                  CHANGED_FILES="$CHANGED_FILES\n• $(basename $did_file) (updated)"
+                else
+                  echo "✅ Files are identical"
+                fi
+              fi
+            else
+              echo "⚠️ New .did file found: $(basename $did_file)"
+              echo "new_files=true" >> $GITHUB_OUTPUT
+              echo "Adding new file $(basename $did_file)..."
+              cp "$did_file" "$local_file"
+              HAS_CHANGES=true
+              CHANGED_FILES="$CHANGED_FILES\n• $(basename $did_file) (new)"
+            fi
+          fi
+        done
+        
+        # Cleanup
+        rm -rf temp_release
+        
+        # Set outputs
+        echo "has_changes=$HAS_CHANGES" >> $GITHUB_OUTPUT
+        echo "has_breaking_changes=$HAS_BREAKING_CHANGES" >> $GITHUB_OUTPUT
+        # Format changed files for JSON
+        CHANGED_FILES_JSON=$(echo -e "$CHANGED_FILES" | sed '1d' | jq -Rs .)
+        echo "changed_files=$CHANGED_FILES_JSON" >> $GITHUB_OUTPUT 
