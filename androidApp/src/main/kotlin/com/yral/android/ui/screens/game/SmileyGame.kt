@@ -22,6 +22,8 @@ fun SmileyGame(
     coinDelta: Int = 0,
     errorMessage: String = "",
     onIconClicked: (emoji: GameIcon) -> Unit,
+    hasShownCoinDeltaAnimation: Boolean,
+    onDeltaAnimationComplete: () -> Unit,
 ) {
     var animateBubbles by remember { mutableStateOf(false) }
     var iconPositions by remember { mutableStateOf(mapOf<Int, Float>()) }
@@ -43,6 +45,8 @@ fun SmileyGame(
                     coinDelta = coinDelta,
                     errorMessage = errorMessage,
                     originalPos = iconPositions[gameIcons.indexOf(clickedIcon)] ?: 0f,
+                    hasShownCoinDeltaAnimation = hasShownCoinDeltaAnimation,
+                    onAnimationComplete = onDeltaAnimationComplete,
                 )
             }
             else -> {
@@ -78,6 +82,8 @@ private fun BoxScope.SmileyGameResult(
     coinDelta: Int,
     errorMessage: String,
     originalPos: Float,
+    hasShownCoinDeltaAnimation: Boolean,
+    onAnimationComplete: () -> Unit,
 ) {
     clickedIcon?.let {
         GameResultView(
@@ -88,16 +94,18 @@ private fun BoxScope.SmileyGameResult(
             originalPos = originalPos,
         )
     }
-    CoinDeltaAnimation(
-        text = coinDelta.toSignedString(),
-        textColor =
-            if (coinDelta > 0) {
-                YralColors.Green300.copy(alpha = 0.3f)
-            } else {
-                YralColors.Red300.copy(alpha = 0.3f)
-            },
-        onAnimationEnd = { },
-    )
+    if (!hasShownCoinDeltaAnimation) {
+        CoinDeltaAnimation(
+            text = coinDelta.toSignedString(),
+            textColor =
+                if (coinDelta > 0) {
+                    YralColors.Green300.copy(alpha = 0.3f)
+                } else {
+                    YralColors.Red300.copy(alpha = 0.3f)
+                },
+            onAnimationEnd = onAnimationComplete,
+        )
+    }
 }
 
 private fun Int.toSignedString(): String =
