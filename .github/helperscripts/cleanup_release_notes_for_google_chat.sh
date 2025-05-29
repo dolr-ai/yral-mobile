@@ -3,23 +3,19 @@
 # Function to process release notes
 process_release_notes() {
     local input="$1"
-    
+
     # Process the input text
-    # First convert literal \n to actual newlines, then process
+    # First convert literal \n to actual newlines for processing
     echo -e "$input" | sed -E '
-        # Convert ## Headers to *Bold*
-        s/^## (.*)$/\*\1\*/g
+        # Convert ## Headers to <b>Bold</b>
+        s/^## (.*)$/<b>\1<\/b>/g
 
-        # Remove complete URLs from markdown links: [text](url) -> [text]
-        s/\]\([^)]*\)/]/g
+        # Convert markdown links [text](url) to <a href="url">text</a>
+        s/\[([^]]*)\]\(([^)]*)\)/<a href="\2">\1<\/a>/g
 
-        # Handle truncated cases at the end of input
-        # Case 1: ends with incomplete URL like ](https://github.com/dolr-ai/h
-        s/\]\([^)]*$/]/g
-
-        # Case 2: ends with ([Name](incomplete_url -> ([Name]
-        s/\(\[([^]]*)\]\([^)]*$/(\[\1]/g
-    '
+        # Handle truncated links at the end - remove incomplete ones
+        s/\[([^]]*)\]\([^)]*$/<a href="">\1<\/a>/g
+    ' | sed ':a;N;$!ba;s/\n/<br>/g'
 }
 
 # Main script logic
