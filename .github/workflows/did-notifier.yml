@@ -213,6 +213,24 @@ jobs:
 #            --base main \
 #            --label "$PR_LABELS"
 
+      - name: Process release notes for Google Chat
+        if: steps.check_release.outputs.new_release == 'true'
+        id: process_release_notes
+        run: |
+          set -euo pipefail
+          # Save the original release notes to a file
+          echo "${{ steps.check_release.outputs.release_body }}" > release_notes_raw.txt
+
+          # Convert headings (##,###) to <b>...</b>, remove GitHub PR/commit links, incomplete Markdown links, and empty lines
+          sed -E 's/^###? (.*)$/<b>\1<\/b>/g' release_notes_raw.txt | \
+            grep -vE 'https://github.com/dolr-ai/hot-or-not-backend-canister/(pull|commit)/' | \
+            grep -vE '\[.*\]\(https://github.com/dolr-ai/h$' | \
+            grep -vE '^\s*$' > release_notes_clean.txt || true
+
+          # Read cleaned notes into a variable, escape for JSON
+          CLEANED_NOTES=$(cat release_notes_clean.txt | sed ':a;N;$!ba;s/\n/\\n/g' | sed 's/"/\\"/g')
+          echo "cleaned_body=$CLEANED_NOTES" >> $GITHUB_OUTPUT
+
       - name: Send notification to Google Chat
         if: steps.check_release.outputs.new_release == 'true'
         run: |
@@ -225,25 +243,30 @@ jobs:
                 "card": {
                   "header": {
                     "title": "🎉 New Release Alert!",
-                    "subtitle": "Hot-or-Not Backend Canister"
+                    "subtitle": "Hot-or-Not Backend Canister",
+                    "imageUrl": "https://avatars.githubusercontent.com/u/79742232?s=200&v=4",
+                    "imageType": "CIRCLE"
                   },
                   "sections": [
                     {
                       "widgets": [
                         {
                           "decoratedText": {
+                            "startIcon": { "knownIcon": "DESCRIPTION" },
                             "topLabel": "Release",
                             "text": "${{ steps.check_release.outputs.release_name }} ( ${{ steps.check_release.outputs.release_tag }} )"
                           }
                         },
                         {
                           "decoratedText": {
+                            "startIcon": { "knownIcon": "PERSON" },
                             "topLabel": "Author",
                             "text": "${{ steps.check_release.outputs.author }}"
                           }
                         },
                         {
                           "decoratedText": {
+                            "startIcon": { "knownIcon": "EVENT" },
                             "topLabel": "Published",
                             "text": "${{ steps.check_release.outputs.published_at }}"
                           }
@@ -251,9 +274,9 @@ jobs:
                       ]
                     },
                     {
-                      "header": "Release Notes",
+                      "header": "📝 Release Notes",
                       "widgets": [
-                        { "textParagraph": { "text": "${{ steps.check_release.outputs.release_body }}" } }
+                        { "textParagraph": { "text": "${{ steps.process_release_notes.outputs.cleaned_body }}" } }
                       ]
                     },
                     {
@@ -262,20 +285,22 @@ jobs:
                           "buttonList": {
                             "buttons": [
                               {
-                                "text": "View Release",
+                                "text": "🔗 View Release",
                                 "onClick": {
                                   "openLink": {
                                     "url": "${{ steps.check_release.outputs.release_url }}"
                                   }
-                                }
+                                },
+                                "icon": { "knownIcon": "BOOKMARK" }
                               },
                               {
-                                "text": "Repository",
+                                "text": "📦 Repository",
                                 "onClick": {
                                   "openLink": {
                                     "url": "https://github.com/dolr-ai/hot-or-not-backend-canister"
                                   }
-                                }
+                                },
+                                "icon": { "materialIcon": { "name": "code", "fill": true } }
                               }
                             ]
                           }
