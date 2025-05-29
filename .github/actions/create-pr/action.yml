@@ -1,0 +1,80 @@
+name: 'Create Pull Request'
+description: 'Creates a pull request for DID file changes'
+
+inputs:
+  release_tag:
+    description: 'The tag of the release'
+    required: true
+  release_name:
+    description: 'The name of the release'
+    required: true
+  release_url:
+    description: 'The URL of the release'
+    required: true
+  published_at:
+    description: 'When the release was published'
+    required: true
+  author:
+    description: 'The author of the release'
+    required: true
+  release_body:
+    description: 'The body/description of the release'
+    required: true
+  changed_files:
+    description: 'List of changed files'
+    required: true
+  breaking_changes:
+    description: 'Whether there are breaking changes'
+    required: true
+
+outputs:
+  pr_url:
+    description: 'The URL of the created pull request'
+    value: ${{ steps.cpr.outputs.pull-request-url }}
+  pr_status:
+    description: 'The status of the pull request creation'
+    value: ${{ steps.cpr.outcome }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Process Release Notes
+      id: process_notes
+      shell: bash
+      run: |
+        # Convert release notes to proper markdown and clean up formatting
+        NOTES=$(echo '${{ inputs.release_body }}' | sed 's/\\n/\n/g' | sed 's/^## /### /g')
+        echo "PROCESSED_NOTES<<EOF" >> $GITHUB_ENV
+        echo "$NOTES" >> $GITHUB_ENV
+        echo "EOF" >> $GITHUB_ENV
+
+    - name: Create Pull Request
+      uses: peter-evans/create-pull-request@v7
+      id: cpr
+      continue-on-error: true
+      with:
+        commit-message: "Update .did files from release ${{ inputs.release_tag }}"
+        title: "Update .did files from release ${{ inputs.release_tag }}"
+        add-paths: |
+          *.did
+        body: |
+          This PR updates the .did files from the latest release.
+
+          ## Release Details
+          - **Release:** ${{ inputs.release_name }}
+          - **Tag:** ${{ inputs.release_tag }}
+          - **Published:** ${{ inputs.published_at }}
+          - **Author:** ${{ inputs.author }}
+
+          ## Release Notes
+          ${{ env.PROCESSED_NOTES }}
+
+          ## Changes Summary
+          The following .did files were affected:
+          ${{ inputs.changed_files }}
+
+          ## Breaking Changes Status
+          ${{ inputs.breaking_changes == 'true' && '⚠️ **Warning:** This update contains breaking changes!' || '✅ No breaking changes detected' }}
+
+          ---
+          [View Original Release](${{ inputs.release_url }}) 
