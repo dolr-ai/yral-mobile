@@ -204,6 +204,7 @@ class GameViewModel(
                     animateCoinBalance = newCoinBalance != it.coinBalance,
                     showResultSheet = shouldShowResultSheet,
                     isLoading = false,
+                    lastBalanceDifference = voteResult.coinDelta,
                 )
             }
             if (shouldShowResultSheet) {
@@ -278,4 +279,5 @@ data class GameState(
     val gameRules: List<AboutGameItem>,
     val isResultSheetShown: Boolean = false,
     val currentVideoId: String = "",
+    val lastBalanceDifference: Int = 0,
 )
