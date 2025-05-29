@@ -104,7 +104,7 @@ class GameViewModel(
         coroutineScope.launch {
             _state.update { currentState ->
                 // Create initial game result outside state update
-                val initialGameResult = Pair(icon, VoteResult(0, ""))
+                val initialGameResult = Pair(icon, VoteResult(0, "", false))
                 val updatedGameResult = currentState.gameResult.toMutableMap()
                 updatedGameResult[videoId] = initialGameResult
                 currentState.copy(
@@ -145,6 +145,33 @@ class GameViewModel(
             ?.second
             ?.errorMessage ?: ""
 
+    fun hasShownCoinDeltaAnimation(videoId: String): Boolean =
+        _state
+            .value
+            .gameResult[videoId]
+            ?.second
+            ?.hasShownAnimation ?: false
+
+    fun markCoinDeltaAnimationShown(videoId: String) {
+        coroutineScope.launch {
+            _state.update { currentState ->
+                val updatedGameResult = currentState.gameResult.toMutableMap()
+                updatedGameResult[videoId]?.let { currentPair ->
+                    updatedGameResult[videoId] =
+                        currentPair.copy(
+                            second =
+                                currentPair.second.copy(
+                                    hasShownAnimation = true,
+                                ),
+                        )
+                }
+                currentState.copy(
+                    gameResult = updatedGameResult,
+                )
+            }
+        }
+    }
+
     private fun setFeedGameResult(
         videoId: String,
         voteResult: VoteResult,
@@ -156,7 +183,15 @@ class GameViewModel(
             val updatedGameResult =
                 currentState.gameResult.toMutableMap().apply {
                     get(videoId)?.let { currentPair ->
-                        put(videoId, currentPair.copy(second = voteResult))
+                        // If this vote result is for a different video than current page, mark as shown
+                        val shouldMarkShown = videoId != currentState.currentVideoId
+                        put(
+                            videoId,
+                            currentPair
+                                .copy(
+                                    second = voteResult.copy(hasShownAnimation = shouldMarkShown),
+                                ),
+                        )
                     }
                 }
             val newCoinBalance = currentState.coinBalance + voteResult.coinDelta
@@ -220,6 +255,16 @@ class GameViewModel(
             }
         }
     }
+
+    fun setCurrentVideoId(videoId: String) {
+        coroutineScope.launch {
+            _state.update { currentState ->
+                currentState.copy(
+                    currentVideoId = videoId,
+                )
+            }
+        }
+    }
 }
 
 data class GameState(
@@ -232,4 +277,5 @@ data class GameState(
     val showAboutGame: Boolean = false,
     val gameRules: List<AboutGameItem>,
     val isResultSheetShown: Boolean = false,
+    val currentVideoId: String = "",
 )
