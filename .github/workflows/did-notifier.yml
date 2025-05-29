@@ -219,7 +219,73 @@ jobs:
           curl -X POST "${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}" \
           -H "Content-Type: application/json" \
           -d '{
-            "text": "TEST: 🎉 *New Release Alert!*\n\n📦 **Hot-or-Not Backend Canister**\n🏷️ Release: ${{ steps.check_release.outputs.release_name }} (${{ steps.check_release.outputs.release_tag }})\n👤 Author: ${{ steps.check_release.outputs.author }}\n📅 Published: ${{ steps.check_release.outputs.published_at }}\n\n📝 **Release Notes:**\n${{ steps.check_release.outputs.release_body }}\n\n🔗 [View Release](${{ steps.check_release.outputs.release_url }})\n🔗 [Repository](https://github.com/dolr-ai/hot-or-not-backend-canister)"
+            "cardsV2": [
+              {
+                "cardId": "release-alert",
+                "card": {
+                  "header": {
+                    "title": "🎉 New Release Alert!",
+                    "subtitle": "Hot-or-Not Backend Canister"
+                  },
+                  "sections": [
+                    {
+                      "widgets": [
+                        {
+                          "decoratedText": {
+                            "topLabel": "Release",
+                            "text": "${{ steps.check_release.outputs.release_name }} ( ${{ steps.check_release.outputs.release_tag }} )"
+                          }
+                        },
+                        {
+                          "decoratedText": {
+                            "topLabel": "Author",
+                            "text": "${{ steps.check_release.outputs.author }}"
+                          }
+                        },
+                        {
+                          "decoratedText": {
+                            "topLabel": "Published",
+                            "text": "${{ steps.check_release.outputs.published_at }}"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "header": "Release Notes",
+                      "widgets": [
+                        { "textParagraph": { "text": "${{ steps.check_release.outputs.release_body }}" } }
+                      ]
+                    },
+                    {
+                      "widgets": [
+                        {
+                          "buttonList": {
+                            "buttons": [
+                              {
+                                "text": "View Release",
+                                "onClick": {
+                                  "openLink": {
+                                    "url": "${{ steps.check_release.outputs.release_url }}"
+                                  }
+                                }
+                              },
+                              {
+                                "text": "Repository",
+                                "onClick": {
+                                  "openLink": {
+                                    "url": "https://github.com/dolr-ai/hot-or-not-backend-canister"
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
           }'
 
       - name: Log notification status
