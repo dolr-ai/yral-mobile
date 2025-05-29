@@ -185,6 +185,7 @@ jobs:
         if: steps.compare_did.outputs.has_changes == 'true'
         uses: peter-evans/create-pull-request@v7
         id: cpr
+        continue-on-error: true
         with:
           commit-message: "Update .did files from release ${{ steps.check_release.outputs.release_tag }}"
           title: "Update .did files from release ${{ steps.check_release.outputs.release_tag }}"
@@ -204,7 +205,7 @@ jobs:
             [View Release](${{ steps.check_release.outputs.release_url }})
           branch: create-pull-request/update-did-files-${{ steps.check_release.outputs.release_tag }}
 
-      - name: Send notification to Google Chat
+      - name: Send release notification to Google Chat
         if: steps.check_release.outputs.new_release == 'true'
         run: |
           # Process and escape release notes for JSON
@@ -255,6 +256,82 @@ jobs:
                       ]
                     },
                     {
+                      "widgets": [
+                        {
+                          "buttonList": {
+                            "buttons": [
+                              {
+                                "text": "View Release",
+                                "onClick": {
+                                  "openLink": {
+                                    "url": "${{ steps.check_release.outputs.release_url }}"
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          }'
+
+      - name: Send DID changes notification to Google Chat
+        if: steps.check_release.outputs.new_release == 'true' && steps.compare_did.outputs.has_changes == 'true'
+        run: |
+          # Check if PR was created successfully
+          PR_STATUS="${{ steps.cpr.outcome }}"
+          PR_URL="${{ steps.cpr.outputs.pull-request-url }}"
+          
+          # Prepare PR status widgets
+          if [ "$PR_STATUS" = "success" ]; then
+            PR_WIDGETS='[
+              {
+                "decoratedText": {
+                  "text": "✅ Pull Request created successfully"
+                }
+              },
+              {
+                "buttonList": {
+                  "buttons": [
+                    {
+                      "text": "View Pull Request",
+                      "onClick": {
+                        "openLink": {
+                          "url": "'"$PR_URL"'"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            ]'
+          else
+            PR_WIDGETS='[
+              {
+                "decoratedText": {
+                  "text": "❌ Failed to create Pull Request"
+                }
+              }
+            ]'
+          fi
+          
+          curl -X POST "${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "cardsV2": [
+              {
+                "cardId": "did-changes",
+                "card": {
+                  "header": {
+                    "title": "DID File Changes Detected",
+                    "subtitle": "Changes from release ${{ steps.check_release.outputs.release_tag }}"
+                  },
+                  "sections": [
+                    {
                       "header": "Findings",
                       "widgets": [
                         {
@@ -279,48 +356,14 @@ jobs:
                       "widgets": [
                         {
                           "textParagraph": {
-                            "text": "${{ steps.compare_did.outputs.has_changes == 'true' && fromJSON(steps.compare_did.outputs.changed_files) || '✅ No changes needed' }}"
+                            "text": "${{ fromJSON(steps.compare_did.outputs.changed_files) }}"
                           }
                         }
                       ]
                     },
                     {
-                      "header": "Actions Taken",
-                      "widgets": [
-                        {
-                          "decoratedText": {
-                            "topLabel": "Pull Request",
-                            "text": "${{ steps.compare_did.outputs.has_changes == 'true' && '✅ PR created for .did file updates' || 'ℹ️ No PR needed - no changes detected' }}"
-                          }
-                        }
-                      ]
-                    },
-                    {
-                      "widgets": [
-                        {
-                          "buttonList": {
-                            "buttons": [
-                              {
-                                "text": "View Release",
-                                "onClick": {
-                                  "openLink": {
-                                    "url": "${{ steps.check_release.outputs.release_url }}"
-                                  }
-                                },
-                                "icon": { "knownIcon": "BOOKMARK" }
-                              }
-                              ${{ steps.compare_did.outputs.has_changes == 'true' && ',{
-                                "text": "View PR",
-                                "onClick": {
-                                  "openLink": {
-                                    "url": "${{ steps.cpr.outputs.pull-request-url }}"
-                                  }
-                                }
-                              }' || '' }}
-                            ]
-                          }
-                        }
-                      ]
+                      "header": "Pull Request Status",
+                      "widgets": '"$PR_WIDGETS"'
                     }
                   ]
                 }
@@ -346,3 +389,4 @@ jobs:
           else
             echo "ℹ️ No changes needed"
           fi
+
