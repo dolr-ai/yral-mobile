@@ -345,7 +345,7 @@ private fun TopView(
         )
         CoinBalance(
             coinBalance = gameState.coinBalance,
-            coinDelta = gameViewModel.getFeedGameResult(state.feedDetails[pageNo].videoID),
+            coinDelta = gameState.lastBalanceDifference,
             animateBag = gameState.animateCoinBalance,
             setAnimate = { gameViewModel.setAnimateCoinBalance(it) },
             modifier =
