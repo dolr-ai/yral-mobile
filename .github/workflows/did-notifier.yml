@@ -177,7 +177,7 @@ jobs:
           echo "has_changes=$HAS_CHANGES" >> $GITHUB_OUTPUT
           echo "has_breaking_changes=$HAS_BREAKING_CHANGES" >> $GITHUB_OUTPUT
           # Format changed files for JSON
-          CHANGED_FILES_JSON=$(echo -e "$CHANGED_FILES" | jq -Rs .)
+          CHANGED_FILES_JSON=$(echo -e "$CHANGED_FILES" | sed '1d' | jq -Rs .)
           echo "changed_files=$CHANGED_FILES_JSON" >> $GITHUB_OUTPUT
 
 #      - name: Commit and push changes
@@ -264,8 +264,7 @@ jobs:
                       ]
                     },
                     {
-                      "header": "📝 Release Notes",
-                      collapsible: true,
+                      "header": "Release Notes",
                       "widgets": [
                         { "textParagraph": { "text": '"$RELEASE_NOTES"' } },
                         {
@@ -286,30 +285,27 @@ jobs:
                       ]
                     },
                     {
-                      "header": "🔍 Findings",
+                      "header": "Findings",
                       "widgets": [
                         {
                           "decoratedText": {
-                            "topLabel": "Breaking Changes",
                             "text": "${{ steps.compare_did.outputs.breaking_changes == 'true' && '🚨 Breaking changes detected in .did files' || '✅ No breaking changes detected' }}"
                           }
                         },
                         {
                           "decoratedText": {
-                            "topLabel": "Non Breaking Changes",
                             "text": "${{ steps.compare_did.outputs.differences == 'true' && 'ℹ️ Non-breaking updates found in .did files' || '✅ No non breaking changes detected' }}"
                           }
                         },
                         {
                           "decoratedText": {
-                            "topLabel": "New Files",
                             "text": "${{ steps.compare_did.outputs.new_files == 'true' && 'ℹ️ New .did files found in release' || '✅ No new files' }}"
                           }
                         }
                       ]
                     },
                     {
-                      "header": "📝 Changed Files",
+                      "header": "Changed Files",
                       "widgets": [
                         {
                           "textParagraph": {
@@ -319,7 +315,7 @@ jobs:
                       ]
                     },
                     {
-                      "header": "🔄 Actions Taken",
+                      "header": "Actions Taken",
                       "widgets": [
                         {
                           "decoratedText": {
