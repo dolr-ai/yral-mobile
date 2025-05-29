@@ -253,6 +253,15 @@ jobs:
           CHANGED_FILES_JSON=$(echo -e "$CHANGED_FILES" | sed '1d' | jq -Rs .)
           echo "changed_files=$CHANGED_FILES_JSON" >> $GITHUB_OUTPUT
 
+      - name: Process Release Notes
+        id: process_notes
+        run: |
+          # Convert release notes to proper markdown and clean up formatting
+          NOTES=$(echo '${{ steps.check_release.outputs.release_body }}' | sed 's/\\n/\n/g' | sed 's/^## /### /g')
+          echo "PROCESSED_NOTES<<EOF" >> $GITHUB_ENV
+          echo "$NOTES" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
       - name: Create Pull Request
         if: steps.compare_did.outputs.has_changes == 'true'
         uses: peter-evans/create-pull-request@v7
@@ -266,15 +275,24 @@ jobs:
           body: |
             This PR updates the .did files from the latest release.
 
-            Release: ${{ steps.check_release.outputs.release_name }}
-            Tag: ${{ steps.check_release.outputs.release_tag }}
-            Published: ${{ steps.check_release.outputs.published_at }}
-            Author: ${{ steps.check_release.outputs.author }}
+            ## Release Details
+            - **Release:** ${{ steps.check_release.outputs.release_name }}
+            - **Tag:** ${{ steps.check_release.outputs.release_tag }}
+            - **Published:** ${{ steps.check_release.outputs.published_at }}
+            - **Author:** ${{ steps.check_release.outputs.author }}
 
-            Release Notes:
-            ${{ steps.check_release.outputs.release_body }}
+            ## Release Notes
+            ${{ env.PROCESSED_NOTES }}
 
-            [View Release](${{ steps.check_release.outputs.release_url }})
+            ## Changes Summary
+            The following .did files were affected:
+            ${{ fromJSON(steps.compare_did.outputs.changed_files) }}
+
+            ## Breaking Changes Status
+            ${{ steps.compare_did.outputs.breaking_changes == 'true' && '⚠️ **Warning:** This update contains breaking changes!' || '✅ No breaking changes detected' }}
+
+            ---
+            [View Original Release](${{ steps.check_release.outputs.release_url }})
           branch: create-pull-request/update-did-files-${{ steps.check_release.outputs.release_tag }}
 
       - name: Send DID changes notification to Google Chat
