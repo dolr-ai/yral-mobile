@@ -14,6 +14,12 @@ inputs:
   breaking_changes:
     description: 'Whether there are breaking changes'
     required: true
+  differences:
+    description: 'Whether there are non-breaking changes'
+    required: true
+  new_files:
+    description: 'Whether there are new files'
+    required: true
   pr_url:
     description: 'Pull request URL'
     required: true
@@ -30,8 +36,12 @@ runs:
     - name: Send DID changes notification
       shell: bash
       run: |
-        # Prepare PR status widgets based on inputs
-        if [ "${{ inputs.pr_status }}" = "success" ]; then
+        # Check if PR was created successfully
+        PR_STATUS="${{ inputs.pr_status }}"
+        PR_URL="${{ inputs.pr_url }}"
+        
+        # Prepare PR status widgets
+        if [ "$PR_STATUS" = "success" ]; then
           PR_WIDGETS='[
             {
               "decoratedText": {
@@ -45,7 +55,7 @@ runs:
                     "text": "View Pull Request",
                     "onClick": {
                       "openLink": {
-                        "url": "${{ inputs.pr_url }}"
+                        "url": "'"$PR_URL"'"
                       }
                     }
                   }
@@ -82,6 +92,16 @@ runs:
                         "decoratedText": {
                           "text": "${{ inputs.breaking_changes == 'true' && '🚨 Breaking changes detected in .did files' || '✅ No breaking changes detected' }}"
                         }
+                      },
+                      {
+                        "decoratedText": {
+                          "text": "${{ inputs.differences == 'true' && 'ℹ️ Non-breaking updates found in .did files' || '✅ No non breaking changes detected' }}"
+                        }
+                      },
+                      {
+                        "decoratedText": {
+                          "text": "${{ inputs.new_files == 'true' && 'ℹ️ New .did files found in release' || '✅ No new files' }}"
+                        }
                       }
                     ]
                   },
@@ -90,7 +110,7 @@ runs:
                     "widgets": [
                       {
                         "textParagraph": {
-                          "text": "${{ inputs.changed_files }}"
+                          "text": "${{ fromJSON(inputs.changed_files) }}"
                         }
                       }
                     ]

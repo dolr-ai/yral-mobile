@@ -65,6 +65,8 @@ jobs:
           release_tag: ${{ steps.check_release.outputs.release_tag }}
           changed_files: ${{ steps.handle_did.outputs.changed_files }}
           breaking_changes: ${{ steps.handle_did.outputs.has_breaking_changes }}
+          differences: ${{ steps.handle_did.outputs.differences }}
+          new_files: ${{ steps.handle_did.outputs.new_files }}
           pr_url: ${{ steps.create_pr.outputs.pr_url }}
           pr_status: ${{ steps.create_pr.outputs.pr_status }}
           workflow_url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
@@ -82,15 +84,17 @@ jobs:
           echo "- **Author:** ${{ steps.check_release.outputs.author }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Release URL:** [${{ steps.check_release.outputs.release_url }}](${{ steps.check_release.outputs.release_url }})" >> $GITHUB_STEP_SUMMARY
           
+          # Convert release notes to proper markdown and clean up formatting
+          PROCESSED_NOTES=$(echo '${{ steps.check_release.outputs.release_body }}' | sed 's/\\n/\n/g' | sed 's/^## /### /g')
           echo "## Release Notes" >> $GITHUB_STEP_SUMMARY
-          echo "${{ steps.check_release.outputs.release_body }}" >> $GITHUB_STEP_SUMMARY
+          echo "$PROCESSED_NOTES" >> $GITHUB_STEP_SUMMARY
           
           echo "## DID Changes Analysis" >> $GITHUB_STEP_SUMMARY
           
           # Add status indicators
           if [ "${{ steps.handle_did.outputs.has_changes }}" == "true" ]; then
             echo "### Changed Files" >> $GITHUB_STEP_SUMMARY
-            echo "${{ steps.handle_did.outputs.changed_files }}" >> $GITHUB_STEP_SUMMARY
+            echo "${{ fromJSON(steps.handle_did.outputs.changed_files) }}" >> $GITHUB_STEP_SUMMARY
             
             echo "### Change Status" >> $GITHUB_STEP_SUMMARY
             if [ "${{ steps.handle_did.outputs.breaking_changes }}" == "true" ]; then
