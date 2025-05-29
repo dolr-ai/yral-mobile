@@ -138,6 +138,15 @@ jobs:
                           }
                         }
                       ]
+                    },
+                    {
+                      "widgets": [
+                        {
+                          "textParagraph": {
+                            "text": "<i><a href=\"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\">View workflow run</a></i>"
+                          }
+                        }
+                      ]
                     }
                   ]
                 }
@@ -380,6 +389,15 @@ jobs:
                     {
                       "header": "Pull Request Status",
                       "widgets": '"$PR_WIDGETS"'
+                    },
+                    {
+                      "widgets": [
+                        {
+                          "textParagraph": {
+                            "text": "<i><a href=\"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\">View workflow run</a></i>"
+                          }
+                        }
+                      ]
                     }
                   ]
                 }
