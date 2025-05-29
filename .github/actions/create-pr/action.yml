@@ -77,4 +77,5 @@ runs:
           ${{ inputs.breaking_changes == 'true' && '⚠️ **Warning:** This update contains breaking changes!' || '✅ No breaking changes detected' }}
 
           ---
-          [View Original Release](${{ inputs.release_url }}) 
+          [View Original Release](${{ inputs.release_url }})
+        branch: create-pull-request/update-did-files-${{ inputs.release_tag }}
