@@ -213,27 +213,12 @@ jobs:
 #            --base main \
 #            --label "$PR_LABELS"
 
-      - name: Process release notes for Google Chat
-        if: steps.check_release.outputs.new_release == 'true'
-        id: process_release_notes
-        run: |
-          set -euo pipefail
-          # Save the original release notes to a file
-          echo "${{ steps.check_release.outputs.release_body }}" > release_notes_raw.txt
-
-          # Convert headings (##,###) to <b>...</b>, remove GitHub PR/commit links, incomplete Markdown links, and empty lines
-          sed -E 's/^###? (.*)$/<b>\1<\/b>/g' release_notes_raw.txt | \
-            grep -vE 'https://github.com/dolr-ai/hot-or-not-backend-canister/(pull|commit)/' | \
-            grep -vE '\[.*\]\(https://github.com/dolr-ai/h$' | \
-            grep -vE '^\s*$' > release_notes_clean.txt || true
-
-          # Read cleaned notes into a variable, escape for JSON
-          CLEANED_NOTES=$(cat release_notes_clean.txt | sed ':a;N;$!ba;s/\n/\\n/g' | sed 's/"/\\"/g')
-          echo "cleaned_body=$CLEANED_NOTES" >> $GITHUB_OUTPUT
-
       - name: Send notification to Google Chat
         if: steps.check_release.outputs.new_release == 'true'
         run: |
+          # Process and escape release notes for JSON
+          RELEASE_NOTES=$(echo "${{ steps.check_release.outputs.release_body }}" | .github/helperscripts/cleanup_release_notes_for_google_chat.sh | jq -Rs .)
+          
           curl -X POST "${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}" \
           -H "Content-Type: application/json" \
           -d '{
@@ -242,10 +227,9 @@ jobs:
                 "cardId": "release-alert",
                 "card": {
                   "header": {
-                    "title": "🎉 New Release Alert!",
+                    "title": "New Release Alert!",
                     "subtitle": "Hot-or-Not Backend Canister",
-                    "imageUrl": "https://avatars.githubusercontent.com/u/79742232?s=200&v=4",
-                    "imageType": "CIRCLE"
+                    "imageUrl": "https://avatars.githubusercontent.com/u/79742232?s=200&v=4"
                   },
                   "sections": [
                     {
@@ -266,7 +250,7 @@ jobs:
                         },
                         {
                           "decoratedText": {
-                            "startIcon": { "knownIcon": "EVENT" },
+                            "startIcon": { "knownIcon": "INVITE" },
                             "topLabel": "Published",
                             "text": "${{ steps.check_release.outputs.published_at }}"
                           }
@@ -276,7 +260,7 @@ jobs:
                     {
                       "header": "📝 Release Notes",
                       "widgets": [
-                        { "textParagraph": { "text": "${{ steps.process_release_notes.outputs.cleaned_body }}" } }
+                        { "textParagraph": { "text": '"$RELEASE_NOTES"' } }
                       ]
                     },
                     {
@@ -285,7 +269,7 @@ jobs:
                           "buttonList": {
                             "buttons": [
                               {
-                                "text": "🔗 View Release",
+                                "text": "View Release",
                                 "onClick": {
                                   "openLink": {
                                     "url": "${{ steps.check_release.outputs.release_url }}"
@@ -294,7 +278,7 @@ jobs:
                                 "icon": { "knownIcon": "BOOKMARK" }
                               },
                               {
-                                "text": "📦 Repository",
+                                "text": "Repository",
                                 "onClick": {
                                   "openLink": {
                                     "url": "https://github.com/dolr-ai/hot-or-not-backend-canister"
