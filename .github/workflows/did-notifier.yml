@@ -267,7 +267,22 @@ jobs:
                       "header": "📝 Release Notes",
                       collapsible: true,
                       "widgets": [
-                        { "textParagraph": { "text": '"$RELEASE_NOTES"' } }
+                        { "textParagraph": { "text": '"$RELEASE_NOTES"' } },
+                        {
+                          "buttonList": {
+                            "buttons": [
+                              {
+                                "text": "View Release",
+                                "onClick": {
+                                  "openLink": {
+                                    "url": "${{ steps.check_release.outputs.release_url }}"
+                                  }
+                                },
+                                "icon": { "knownIcon": "BOOKMARK" }
+                              }
+                            ]
+                          }
+                        }
                       ]
                     },
                     {
@@ -327,34 +342,6 @@ jobs:
                             ]
                           }
                         }' || '' }}
-                      ]
-                    },
-                    {
-                      "widgets": [
-                        {
-                          "buttonList": {
-                            "buttons": [
-                              {
-                                "text": "View Release",
-                                "onClick": {
-                                  "openLink": {
-                                    "url": "${{ steps.check_release.outputs.release_url }}"
-                                  }
-                                },
-                                "icon": { "knownIcon": "BOOKMARK" }
-                              },
-                              {
-                                "text": "Repository",
-                                "onClick": {
-                                  "openLink": {
-                                    "url": "https://github.com/dolr-ai/hot-or-not-backend-canister"
-                                  }
-                                },
-                                "icon": { "materialIcon": { "name": "code", "fill": true } }
-                              }
-                            ]
-                          }
-                        }
                       ]
                     }
                   ]
