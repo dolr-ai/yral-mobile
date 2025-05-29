@@ -259,8 +259,43 @@ jobs:
                     },
                     {
                       "header": "📝 Release Notes",
+                      collapsible: true,
                       "widgets": [
                         { "textParagraph": { "text": '"$RELEASE_NOTES"' } }
+                      ]
+                    },
+                    {
+                      "header": "🔍 Findings",
+                      "widgets": [
+                        {
+                          "decoratedText": {
+                            "topLabel": "Breaking Changes",
+                            "text": "${{ steps.compare_did.outputs.breaking_changes == 'true' && '🚨 Breaking changes detected in .did files' || '✅ No breaking changes detected' }}"
+                          }
+                        },
+                        {
+                          "decoratedText": {
+                            "topLabel": "File Updates",
+                            "text": "${{ steps.compare_did.outputs.differences == 'true' && 'ℹ️ Non-breaking updates found in .did files' || '✅ No updates needed' }}"
+                          }
+                        },
+                        {
+                          "decoratedText": {
+                            "topLabel": "New Files",
+                            "text": "${{ steps.compare_did.outputs.new_files == 'true' && 'ℹ️ New .did files found in release' || '✅ No new files' }}"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "header": "🔄 Actions Taken",
+                      "widgets": [
+                        {
+                          "decoratedText": {
+                            "topLabel": "Pull Request",
+                            "text": "${{ steps.compare_did.outputs.has_changes == 'true' && '✅ PR created for .did file updates' || 'ℹ️ No PR needed - no changes detected' }}"
+                          }
+                        }
                       ]
                     },
                     {
