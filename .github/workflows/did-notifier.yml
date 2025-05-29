@@ -213,6 +213,15 @@ jobs:
 #            --base main \
 #            --label "$PR_LABELS"
 
+      - name: Send notification to Google Chat
+        if: steps.check_release.outputs.new_release == 'true'
+        run: |
+          curl -X POST "${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "text": "TEST: 🎉 *New Release Alert!*\n\n📦 **Hot-or-Not Backend Canister**\n🏷️ Release: ${{ steps.check_release.outputs.release_name }} (${{ steps.check_release.outputs.release_tag }})\n👤 Author: ${{ steps.check_release.outputs.author }}\n📅 Published: ${{ steps.check_release.outputs.published_at }}\n\n📝 **Release Notes:**\n${{ steps.check_release.outputs.release_body }}\n\n🔗 [View Release](${{ steps.check_release.outputs.release_url }})\n🔗 [Repository](https://github.com/dolr-ai/hot-or-not-backend-canister)"
+          }'
+
       - name: Log notification status
         if: steps.check_release.outputs.new_release == 'true'
         run: |
