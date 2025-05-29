@@ -13,6 +13,7 @@ jobs:
     permissions:
       contents: 'write'  # Changed to write to allow committing changes
       id-token: 'write'
+      pull-requests: 'write'
 
     steps:
       - name: Checkout repository
@@ -180,44 +181,28 @@ jobs:
           CHANGED_FILES_JSON=$(echo -e "$CHANGED_FILES" | sed '1d' | jq -Rs .)
           echo "changed_files=$CHANGED_FILES_JSON" >> $GITHUB_OUTPUT
 
-#      - name: Commit and push changes
-#        if: steps.compare_did.outputs.has_changes == 'true'
-#        run: |
-#          git config --global user.name 'GitHub Actions'
-#          git config --global user.email 'actions@github.com'
-#
-#          # Create a new branch for the changes
-#          BRANCH_NAME="update-did-files-$(date +%Y%m%d-%H%M%S)"
-#          git checkout -b $BRANCH_NAME
-#
-#          # Add and commit changes
-#          git add shared/rust/rust-agent-uniffi/did/
-#          git commit -m "Update .did files from release ${{ steps.check_release.outputs.release_tag }}"
-#
-#          # Push changes
-#          git push origin $BRANCH_NAME
-#
-#          # Create pull request with appropriate labels
-#          PR_LABELS=""
-#          if [ "${{ steps.compare_did.outputs.has_breaking_changes }}" == "true" ]; then
-#            PR_LABELS="breaking-change"
-#          fi
-#
-#          gh pr create \
-#            --title "Update .did files from release ${{ steps.check_release.outputs.release_tag }}" \
-#            --body "This PR updates the .did files from the latest release.
-#
-#            Release: ${{ steps.check_release.outputs.release_name }}
-#            Tag: ${{ steps.check_release.outputs.release_tag }}
-#            Published: ${{ steps.check_release.outputs.published_at }}
-#            Author: ${{ steps.check_release.outputs.author }}
-#
-#            Release Notes:
-#            ${{ steps.check_release.outputs.release_body }}
-#
-#            [View Release](${{ steps.check_release.outputs.release_url }})" \
-#            --base main \
-#            --label "$PR_LABELS"
+      - name: Create Pull Request
+        if: steps.compare_did.outputs.has_changes == 'true'
+        uses: peter-evans/create-pull-request@v7
+        id: cpr
+        with:
+          commit-message: "Update .did files from release ${{ steps.check_release.outputs.release_tag }}"
+          title: "Update .did files from release ${{ steps.check_release.outputs.release_tag }}"
+          add-paths: |
+            *.did
+          body: |
+            This PR updates the .did files from the latest release.
+
+            Release: ${{ steps.check_release.outputs.release_name }}
+            Tag: ${{ steps.check_release.outputs.release_tag }}
+            Published: ${{ steps.check_release.outputs.published_at }}
+            Author: ${{ steps.check_release.outputs.author }}
+
+            Release Notes:
+            ${{ steps.check_release.outputs.release_body }}
+
+            [View Release](${{ steps.check_release.outputs.release_url }})
+          branch: create-pull-request/update-did-files-${{ steps.check_release.outputs.release_tag }}
 
       - name: Send notification to Google Chat
         if: steps.check_release.outputs.new_release == 'true'
@@ -324,12 +309,11 @@ jobs:
                                 },
                                 "icon": { "knownIcon": "BOOKMARK" }
                               }
-                              ${{ steps.compare_did.outputs.has_changes == 'true' && ',
-                              {
+                              ${{ steps.compare_did.outputs.has_changes == 'true' && ',{
                                 "text": "View PR",
                                 "onClick": {
                                   "openLink": {
-                                    "url": "https://github.com/dolr-ai/yral-mobile/pull/${{ github.event.pull_request.number }}"
+                                    "url": "${{ steps.cpr.outputs.pull-request-url }}"
                                   }
                                 }
                               }' || '' }}
