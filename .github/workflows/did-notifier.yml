@@ -424,3 +424,53 @@ jobs:
             echo "ℹ️ No changes needed"
           fi
 
+      - name: Create GitHub Summary
+        if: steps.check_release.outputs.new_release == 'true'
+        run: |
+          # Start creating the summary
+          echo "# Hot-or-Not Backend Release Summary" >> $GITHUB_STEP_SUMMARY
+          
+          echo "## Release Details" >> $GITHUB_STEP_SUMMARY
+          echo "- **Release:** ${{ steps.check_release.outputs.release_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag:** ${{ steps.check_release.outputs.release_tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Published:** ${{ steps.check_release.outputs.published_at }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Author:** ${{ steps.check_release.outputs.author }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Release URL:** [${{ steps.check_release.outputs.release_url }}](${{ steps.check_release.outputs.release_url }})" >> $GITHUB_STEP_SUMMARY
+          
+          echo "## Release Notes" >> $GITHUB_STEP_SUMMARY
+          echo "${{ env.PROCESSED_NOTES }}" >> $GITHUB_STEP_SUMMARY
+          
+          echo "## DID Changes Analysis" >> $GITHUB_STEP_SUMMARY
+          
+          # Add status indicators
+          if [ "${{ steps.compare_did.outputs.has_changes }}" == "true" ]; then
+            echo "### Changed Files" >> $GITHUB_STEP_SUMMARY
+            echo "${{ fromJSON(steps.compare_did.outputs.changed_files) }}" >> $GITHUB_STEP_SUMMARY
+            
+            echo "### Change Status" >> $GITHUB_STEP_SUMMARY
+            if [ "${{ steps.compare_did.outputs.breaking_changes }}" == "true" ]; then
+              echo "🚨 **Breaking changes detected in .did files**" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "✅ No breaking changes detected" >> $GITHUB_STEP_SUMMARY
+            fi
+            
+            if [ "${{ steps.compare_did.outputs.differences }}" == "true" ]; then
+              echo "ℹ️ Non-breaking updates found in .did files" >> $GITHUB_STEP_SUMMARY
+            fi
+            
+            if [ "${{ steps.compare_did.outputs.new_files }}" == "true" ]; then
+              echo "📄 New .did files added from release" >> $GITHUB_STEP_SUMMARY
+            fi
+            
+            # Add PR information if available
+            if [ "${{ steps.cpr.outcome }}" == "success" ]; then
+              echo "### Pull Request" >> $GITHUB_STEP_SUMMARY
+              echo "✅ Pull Request created successfully: [${{ steps.cpr.outputs.pull-request-url }}](${{ steps.cpr.outputs.pull-request-url }})" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "### Pull Request" >> $GITHUB_STEP_SUMMARY
+              echo "❌ Failed to create Pull Request" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "✅ No changes needed to .did files" >> $GITHUB_STEP_SUMMARY
+          fi
+
