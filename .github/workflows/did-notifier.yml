@@ -127,6 +127,7 @@ jobs:
           # Compare and update files
           HAS_CHANGES=false
           HAS_BREAKING_CHANGES=false
+          CHANGED_FILES=""
           for did_file in temp_release/*.did; do
             if [ -f "$did_file" ]; then
               local_file="shared/rust/rust-agent-uniffi/did/$(basename $did_file)"
@@ -143,7 +144,7 @@ jobs:
                   echo "$DIFF_OUTPUT"
                   echo "breaking_changes=true" >> $GITHUB_OUTPUT
                   HAS_BREAKING_CHANGES=true
-                  # Don't automatically update files with breaking changes
+                  CHANGED_FILES="$CHANGED_FILES\n• $(basename $did_file) (breaking changes)"
                 else
                   echo "✅ No breaking changes in $(basename $did_file)"
                   # Check if files are different despite being compatible
@@ -153,6 +154,7 @@ jobs:
                     echo "Updating $(basename $did_file)..."
                     cp "$did_file" "$local_file"
                     HAS_CHANGES=true
+                    CHANGED_FILES="$CHANGED_FILES\n• $(basename $did_file) (updated)"
                   else
                     echo "✅ Files are identical"
                   fi
@@ -163,6 +165,7 @@ jobs:
                 echo "Adding new file $(basename $did_file)..."
                 cp "$did_file" "$local_file"
                 HAS_CHANGES=true
+                CHANGED_FILES="$CHANGED_FILES\n• $(basename $did_file) (new)"
               fi
             fi
           done
@@ -173,6 +176,9 @@ jobs:
           # Set outputs for next steps
           echo "has_changes=$HAS_CHANGES" >> $GITHUB_OUTPUT
           echo "has_breaking_changes=$HAS_BREAKING_CHANGES" >> $GITHUB_OUTPUT
+          # Format changed files for JSON
+          CHANGED_FILES_JSON=$(echo -e "$CHANGED_FILES" | jq -Rs .)
+          echo "changed_files=$CHANGED_FILES_JSON" >> $GITHUB_OUTPUT
 
 #      - name: Commit and push changes
 #        if: steps.compare_did.outputs.has_changes == 'true'
@@ -275,14 +281,24 @@ jobs:
                         },
                         {
                           "decoratedText": {
-                            "topLabel": "File Updates",
-                            "text": "${{ steps.compare_did.outputs.differences == 'true' && 'ℹ️ Non-breaking updates found in .did files' || '✅ No updates needed' }}"
+                            "topLabel": "Non Breaking Changes",
+                            "text": "${{ steps.compare_did.outputs.differences == 'true' && 'ℹ️ Non-breaking updates found in .did files' || '✅ No non breaking changes detected' }}"
                           }
                         },
                         {
                           "decoratedText": {
                             "topLabel": "New Files",
                             "text": "${{ steps.compare_did.outputs.new_files == 'true' && 'ℹ️ New .did files found in release' || '✅ No new files' }}"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "header": "📝 Changed Files",
+                      "widgets": [
+                        {
+                          "textParagraph": {
+                            "text": "${{ steps.compare_did.outputs.has_changes == 'true' && fromJSON(steps.compare_did.outputs.changed_files) || '✅ No changes needed' }}"
                           }
                         }
                       ]
@@ -296,6 +312,21 @@ jobs:
                             "text": "${{ steps.compare_did.outputs.has_changes == 'true' && '✅ PR created for .did file updates' || 'ℹ️ No PR needed - no changes detected' }}"
                           }
                         }
+                        ${{ steps.compare_did.outputs.has_changes == 'true' && ',
+                        {
+                          "buttonList": {
+                            "buttons": [
+                              {
+                                "text": "View PR",
+                                "onClick": {
+                                  "openLink": {
+                                    "url": "https://github.com/dolr-ai/yral-mobile/pull/${{ github.event.pull_request.number }}"
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }' || '' }}
                       ]
                     },
                     {
