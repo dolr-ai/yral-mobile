@@ -266,22 +266,7 @@ jobs:
                     {
                       "header": "Release Notes",
                       "widgets": [
-                        { "textParagraph": { "text": '"$RELEASE_NOTES"' } },
-                        {
-                          "buttonList": {
-                            "buttons": [
-                              {
-                                "text": "View Release",
-                                "onClick": {
-                                  "openLink": {
-                                    "url": "${{ steps.check_release.outputs.release_url }}"
-                                  }
-                                },
-                                "icon": { "knownIcon": "BOOKMARK" }
-                              }
-                            ]
-                          }
-                        }
+                        { "textParagraph": { "text": '"$RELEASE_NOTES"' } }
                       ]
                     },
                     {
@@ -323,10 +308,23 @@ jobs:
                             "text": "${{ steps.compare_did.outputs.has_changes == 'true' && '✅ PR created for .did file updates' || 'ℹ️ No PR needed - no changes detected' }}"
                           }
                         }
-                        ${{ steps.compare_did.outputs.has_changes == 'true' && ',
+                      ]
+                    },
+                    {
+                      "widgets": [
                         {
                           "buttonList": {
                             "buttons": [
+                              {
+                                "text": "View Release",
+                                "onClick": {
+                                  "openLink": {
+                                    "url": "${{ steps.check_release.outputs.release_url }}"
+                                  }
+                                },
+                                "icon": { "knownIcon": "BOOKMARK" }
+                              }
+                              ${{ steps.compare_did.outputs.has_changes == 'true' && ',
                               {
                                 "text": "View PR",
                                 "onClick": {
@@ -334,10 +332,10 @@ jobs:
                                     "url": "https://github.com/dolr-ai/yral-mobile/pull/${{ github.event.pull_request.number }}"
                                   }
                                 }
-                              }
+                              }' || '' }}
                             ]
                           }
-                        }' || '' }}
+                        }
                       ]
                     }
                   ]
