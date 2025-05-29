@@ -3,6 +3,7 @@ package com.yral.shared.features.game.domain.models
 data class VoteResult(
     val coinDelta: Int,
     val errorMessage: String,
+    val hasShownAnimation: Boolean = false,
 )
 
 fun CastVoteResponse.toVoteResult(): VoteResult =

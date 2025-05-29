@@ -99,6 +99,13 @@ fun FeedScreen(
     // Track if new items have been loaded since loading started
     var newItemsAddedSinceLoading by remember { mutableStateOf(false) }
 
+    // Set initial video ID when feed loads
+    LaunchedEffect(state.feedDetails.isNotEmpty()) {
+        if (state.feedDetails.isNotEmpty() && state.currentPageOfFeed < state.feedDetails.size) {
+            gameViewModel.setCurrentVideoId(state.feedDetails[state.currentPageOfFeed].videoID)
+        }
+    }
+
     // Function to determine if we should load more content
     val shouldLoadMore =
         remember(
@@ -167,6 +174,17 @@ fun FeedScreen(
                         }.toList(),
                 initialPage = state.currentPageOfFeed,
                 onPageLoaded = { page ->
+                    // Mark animation as shown for the previous page when changing pages
+                    if (page != state.currentPageOfFeed && state.currentPageOfFeed < state.feedDetails.size) {
+                        val previousVideoId = state.feedDetails[state.currentPageOfFeed].videoID
+                        if (gameState.gameResult[previousVideoId]?.second?.coinDelta != 0) {
+                            gameViewModel.markCoinDeltaAnimationShown(previousVideoId)
+                        }
+                    }
+                    // Set current video ID for the new page
+                    if (page < state.feedDetails.size) {
+                        gameViewModel.setCurrentVideoId(state.feedDetails[page].videoID)
+                    }
                     viewModel.onCurrentPageChange(page)
                     viewModel.setPostDescriptionExpanded(false)
                 },
@@ -279,6 +297,15 @@ private fun FeedOverlay(
                 coinDelta = gameViewModel.getFeedGameResult(state.feedDetails[pageNo].videoID),
                 errorMessage = gameViewModel.getFeedGameResultError(state.feedDetails[pageNo].videoID),
                 isLoading = gameState.isLoading,
+                hasShownCoinDeltaAnimation =
+                    gameViewModel.hasShownCoinDeltaAnimation(
+                        state.feedDetails[pageNo].videoID,
+                    ),
+                onDeltaAnimationComplete = {
+                    gameViewModel.markCoinDeltaAnimationShown(
+                        state.feedDetails[pageNo].videoID,
+                    )
+                },
             )
             if (!lottieCached) {
                 gameState.gameIcons.forEach { icon ->
