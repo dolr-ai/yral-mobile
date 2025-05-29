@@ -45,7 +45,6 @@ import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.design.YralDimens
 import com.yral.android.ui.screens.home.account.AccountScreenConstants.SOCIAL_MEDIA_LINK_BOTTOM_SPACER_WEIGHT
-import com.yral.android.ui.widgets.YralGradientButton
 import com.yral.android.ui.widgets.YralLoader
 import com.yral.shared.features.account.viewmodel.AccountBottomSheet
 import com.yral.shared.features.account.viewmodel.AccountHelpLink
@@ -249,6 +248,7 @@ private fun AccountsTitle() {
     }
 }
 
+@Suppress("UnusedParameter")
 @Composable
 private fun AccountDetail(
     accountInfo: AccountInfo,
@@ -290,10 +290,10 @@ private fun AccountDetail(
             )
         }
         if (!isSocialSignIn) {
-            YralGradientButton(
-                text = stringResource(R.string.login),
-                onClick = onLoginClicked,
-            )
+//            YralGradientButton(
+//                text = stringResource(R.string.login),
+//                onClick = onLoginClicked,
+//            )
         }
     }
 }
