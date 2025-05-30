@@ -34,8 +34,8 @@
     <string name="yes_delete">Yes, Delete</string>
     
     <!-- Root Error Messages -->
-    <string name="error_timeout">Unable to initialize app. Please check your internet connection and try again.</string>
-    <string name="error_session_init">Unable to initialize session. Please try again.</string>
+    <string name="error_timeout">Unable to load content. Please try again.</string>
+    <string name="error_session_init">Unable to load content. Please try again.</string>
     <string name="error_initial_content">Unable to load content. Please try again.</string>
     <string name="error_feed_details">Unable to load content. Please try again.</string>
     <string name="error_unexpected">An unexpected error occurred. Please try again.</string>
