@@ -48,7 +48,11 @@ class ProfileRepository: ProfileRepositoryProtocol {
     }
   }
 
-  func refreshVideos() async -> Result<[FeedResult], AccountError> {
+  func refreshVideos(shouldPurge: Bool) async -> Result<[FeedResult], AccountError> {
+    if shouldPurge {
+      self.deletedVideoSubject.send(videos)
+      self.videos.removeAll()
+    }
     let result = await getUserVideos(with: .zero, offset: UInt64(Constants.offset))
     switch result {
     case .success(let newChunk):
@@ -64,7 +68,7 @@ class ProfileRepository: ProfileRepositoryProtocol {
 
   func deleteVideo(request: DeleteVideoRequest) async -> Result<Void, AccountError> {
     guard let principalString = authClient.canisterPrincipalString else {
-      return .failure(AccountError.authError("No canister principal"))
+      return .failure(AccountError.authError(AuthError.invalidRequest("No canister principal")))
     }
     guard let baseURL = httpService.baseURL else { return .failure(.invalidInfo("No base URL found")) }
     do {
@@ -95,7 +99,7 @@ class ProfileRepository: ProfileRepositoryProtocol {
       case let netErr as NetworkError:
         return .failure(AccountError.networkError(netErr.localizedDescription))
       case let authErr as AuthError:
-        return .failure(AccountError.authError(authErr.localizedDescription))
+        return .failure(AccountError.authError(authErr))
       default:
         return .failure(.unknown(error.localizedDescription))
       }
@@ -108,7 +112,7 @@ class ProfileRepository: ProfileRepositoryProtocol {
     offset: UInt64
   ) async -> Result<[FeedResult], AccountError> {
     guard let principalString = authClient.canisterPrincipalString else {
-      return .failure(AccountError.authError("No canister principal"))
+      return .failure(AccountError.authError(AuthError.invalidRequest("No canister principal")))
     }
     do {
       let identity = try self.authClient.generateNewDelegatedIdentity()
@@ -120,10 +124,15 @@ class ProfileRepository: ProfileRepositoryProtocol {
       )
       if result.is_ok() {
         guard let postResult = result.ok_value() else { return .success([FeedResult]()) }
+        let filteredVideoIds = try KeychainHelper.retrieveSet(
+          for: DefaultAuthClient.Constants.keychainDeletedVideosKey
+        )
         let result = postResult.filter {
           !$0.status().is_banned_due_to_user_reporting() &&
-          !$0.is_nsfw()
+          !$0.is_nsfw() &&
+          !(filteredVideoIds?.contains($0.video_uid().toString()) ?? false)
         }
+
         let feedResult = result.map { postDetail in
           let videoURL = URL(
             string: "\(Constants.cloudfarePrefix)\(postDetail.video_uid().toString())\(Constants.cloudflareSuffix)"

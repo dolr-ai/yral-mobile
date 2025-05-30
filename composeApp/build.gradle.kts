@@ -3,15 +3,15 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidApplication)
-    alias(libs.plugins.compose.jetbrains)
-    alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.composeMultiplatform)
+    alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinxSerialisartion)
 }
 
 kotlin {
     androidTarget {
         compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_17)
+            jvmTarget.set(JvmTarget.JVM_21)
         }
     }
 //  listOf(
@@ -36,18 +36,21 @@ kotlin {
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
 
-            implementation(libs.ktor.client.core)
-            implementation(libs.ktor.client.cio)
-            implementation(libs.ktor.client.logging)
-            implementation(libs.ktor.client.content.negotiation)
-            implementation(libs.ktor.json)
-            implementation(libs.kotlinx.datetime)
-
             implementation(projects.shared.core)
             implementation(projects.shared.libs.preferences)
             implementation(projects.shared.libs.http)
             implementation(projects.shared.features.auth)
-            implementation(projects.shared.rust)
+            implementation(projects.shared.libs.koin)
+
+            val (dependencies, shouldAddRustModule) = BuildConfig.getAndProcessDependencies(project)
+            dependencies.forEach { dependency ->
+                if (dependency.isNotEmpty()) {
+                    implementation(dependency)
+                }
+            }
+            if (shouldAddRustModule) {
+                implementation(projects.shared.rust)
+            }
         }
     }
 }
@@ -73,8 +76,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 }
 

@@ -16,43 +16,49 @@ extension FeedsViewController {
       let cell = collectionView.dequeueReusableCell(FeedsCell.self, for: indexPath)
       cell.delegate = self
       let lastDisplayedThumbnailPath = self.lastDisplayedThumbnailPath[feed.videoID] ?? ""
-
-      if let player = feedsPlayer.player as? AVQueuePlayer,
-         indexPath.row == self.feedsPlayer.currentIndex {
+      // swiftlint: disable force_cast
+      if indexPath.row == self.feedsPlayer.currentIndex {
         cell.configure(
-          withPlayer: player,
+          withPlayer: feedsPlayer as! FeedsPlayer,
           feedInfo: FeedsCell.FeedCellInfo(
             thumbnailURL: feed.thumbnail,
             likeCount: feed.likeCount,
             isLiked: feed.isLiked,
             lastThumbnailImage: SDImageCache.shared.imageFromCache(forKey: lastDisplayedThumbnailPath),
-            feedType: self.feedType
+            feedType: self.feedType,
+            showLoginOverlay: (
+              indexPath.item != .zero &&
+              indexPath.item % Constants.overlayIndex == .zero
+            ) && !session.state.isLoggedIn
           ),
           profileInfo: ProfileInfoView.ProfileInfo(
             imageURL: feed.profileImageURL,
             title: feed.principalID,
             subtitle: feed.postDescription
-          ),
-          index: indexPath.item
+          ), index: indexPath.item
         )
       } else {
         cell.configure(
-          withPlayer: AVPlayer(),
+          withPlayer: feedsPlayer as! FeedsPlayer,
           feedInfo: FeedsCell.FeedCellInfo(
             thumbnailURL: feed.thumbnail,
             likeCount: feed.likeCount,
             isLiked: feed.isLiked,
             lastThumbnailImage: SDImageCache.shared.imageFromCache(forKey: lastDisplayedThumbnailPath),
-            feedType: self.feedType
+            feedType: self.feedType,
+            showLoginOverlay: (
+              indexPath.item != .zero &&
+              indexPath.item % Constants.overlayIndex == .zero
+            ) && !session.state.isLoggedIn
           ),
           profileInfo: ProfileInfoView.ProfileInfo(
             imageURL: feed.profileImageURL,
             title: feed.principalID,
             subtitle: feed.postDescription
-          ),
-          index: indexPath.item
+          ), index: indexPath.item
         )
       }
+      // swiftlint: enable force_cast
       return cell
     }
     return dataSource
@@ -63,6 +69,8 @@ extension FeedsViewController {
       self.addFeeds(with: feeds, animated: animated)
       return
     }
+    guard !feeds.isEmpty else { return }
+
     var shouldAnimate = false
     if #available(iOS 15, *) {
       shouldAnimate = animated

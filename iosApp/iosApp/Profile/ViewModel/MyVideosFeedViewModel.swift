@@ -161,4 +161,6 @@ class MyVideosFeedViewModel: FeedViewModelProtocol, ObservableObject {
   func blockUser(principalId: String) async { }
 
   func log(event: VideoEventRequest) async {  }
+
+  func socialSignIn(request: SocialProvider) async {  }
 }

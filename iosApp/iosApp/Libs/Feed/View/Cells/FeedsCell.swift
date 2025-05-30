@@ -7,15 +7,17 @@
 //
 
 import UIKit
+import SwiftUI
 import AVFoundation
 
+// swiftlint: disable type_body_length
 protocol FeedsCellProtocol: AnyObject {
   func shareButtonTapped(index: Int)
   func likeButtonTapped(index: Int)
   func deleteButtonTapped(index: Int)
   func reportButtonTapped(index: Int)
+  func loginTapped(provider: SocialProvider)
 }
-// swiftlint: disable type_body_length
 class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
 
   var playerLayer: AVPlayerLayer?
@@ -24,6 +26,11 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   weak var delegate: FeedsCellProtocol?
 
   private let playerContainerView = getUIImageView()
+  private lazy var signupOverlayHost = UIHostingController(
+    rootView: SignupOverlay { provider in
+      self.delegate?.loginTapped(provider: provider)
+    }
+  )
 
   var actionsStackView: UIStackView = {
     let stackView = getUIStackView()
@@ -111,6 +118,12 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   override init(frame: CGRect) {
     super.init(frame: frame)
     setupUI()
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(handleFirstFrameReady(_:)),
+      name: .feedItemReady,
+      object: nil
+    )
   }
 
   required init?(coder: NSCoder) {
@@ -122,6 +135,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     setupProfileInfoView()
     setupStackView()
     setupCaptionLabel()
+    addSignupOverlay()
 
     let cellTapGesture = UITapGestureRecognizer(target: self, action: #selector(handleCellTap))
     cellTapGesture.cancelsTouchesInView = false
@@ -180,47 +194,25 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     reportButton.addTarget(self, action: #selector(reportButtonTapped), for: .touchUpInside)
   }
 
-  private func setupCaptionLabel() {
-    contentView.addSubview(captionScrollView)
-    captionScrollView.addSubview(captionLabel)
+  private func addSignupOverlay() {
+    let overlayView = signupOverlayHost.view
+    overlayView?.backgroundColor = .clear
+    overlayView?.translatesAutoresizingMaskIntoConstraints = false
 
-    captionScrollViewHeightConstraint = captionScrollView.heightAnchor
-      .constraint(equalToConstant: Constants.captionSingleLineHeight)
-    captionScrollViewHeightConstraint.isActive = true
-
-    NSLayoutConstraint.activate([
-      captionScrollView.leadingAnchor.constraint(
-        equalTo: contentView.leadingAnchor,
-        constant: Constants.horizontalMargin
-      ),
-      captionScrollView.trailingAnchor.constraint(
-        equalTo: actionsStackView.leadingAnchor,
-        constant: -Constants.horizontalMargin
-      ),
-      captionScrollView.bottomAnchor.constraint(
-        equalTo: contentView.bottomAnchor,
-        constant: -Constants.captionsBottomMargin
-      )
-    ])
+    contentView.addSubview(overlayView!)
 
     NSLayoutConstraint.activate([
-      captionLabel.topAnchor.constraint(equalTo: captionScrollView.contentLayoutGuide.topAnchor),
-      captionLabel.leadingAnchor.constraint(equalTo: captionScrollView.contentLayoutGuide.leadingAnchor),
-      captionLabel.trailingAnchor.constraint(equalTo: captionScrollView.contentLayoutGuide.trailingAnchor),
-      captionLabel.bottomAnchor.constraint(equalTo: captionScrollView.contentLayoutGuide.bottomAnchor),
-      captionLabel.widthAnchor.constraint(equalTo: captionScrollView.frameLayoutGuide.widthAnchor)
+      overlayView!.topAnchor.constraint(equalTo: contentView.topAnchor),
+      overlayView!.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+      overlayView!.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+      overlayView!.trailingAnchor.constraint(equalTo: contentView.trailingAnchor)
     ])
-
-    let captionTapGesture = UITapGestureRecognizer(target: self, action: #selector(handleCaptionTap))
-    captionScrollView.addGestureRecognizer(captionTapGesture)
+    overlayView?.isHidden = true
   }
 
-  @objc private func handleCaptionTap() {
-    if !isCaptionExpanded {
-      expandCaption()
-    } else {
-      collapseCaption()
-    }
+  @objc private func handleFirstFrameReady(_ note: Notification) {
+    guard let idx = note.userInfo?["index"] as? Int, idx == index else { return }
+    playerLayer?.isHidden = false
   }
 
   @objc func likeButtonTapped() {
@@ -240,26 +232,36 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   }
 
   func configure(
-    withPlayer player: AVPlayer,
+    withPlayer feedsPlayer: FeedsPlayer,
     feedInfo: FeedCellInfo,
     profileInfo: ProfileInfoView.ProfileInfo,
     index: Int
   ) {
+    playerContainerView.sd_cancelCurrentImageLoad()
+    playerContainerView.image = Constants.playerPlaceHolderImage
+
     if let lastThumbnailImage = feedInfo.lastThumbnailImage {
       playerContainerView.image = lastThumbnailImage
     } else if let thumbnailURL = feedInfo.thumbnailURL {
       loadImage(with: thumbnailURL, placeholderImage: Constants.playerPlaceHolderImage, on: playerContainerView)
-    } else {
-      playerContainerView.image = Constants.defaultProfileImage
     }
 
     playerLayer?.removeFromSuperlayer()
+    playerLayer?.player = nil
+    playerLayer = nil
+    guard let player = feedsPlayer.player as? AVQueuePlayer else { return }
     let layer = AVPlayerLayer(player: player)
     layer.videoGravity = .resize
+
+    let isCurrentReel = index == feedsPlayer.currentIndex
+    let itemReady = player.currentItem?.status == .readyToPlay
+    let alreadyPlaying = player.timeControlStatus == .playing
+
+    layer.isHidden = !(isCurrentReel && alreadyPlaying && itemReady)
+
     playerContainerView.layer.addSublayer(layer)
     playerLayer = layer
     playerLayer?.frame = contentView.bounds
-
     likeButton.configuration?.attributedTitle = AttributedString(
       String(feedInfo.likeCount),
       attributes: AttributeContainer([
@@ -284,6 +286,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
       captionScrollView.isHidden = false
       setCaptionHeight(captionText: profileInfo.subtitle)
     }
+    signupOverlayHost.view.isHidden = !feedInfo.showLoginOverlay
   }
 
   func setLikeStatus(isLiked: Bool) {
@@ -308,6 +311,10 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   override func prepareForReuse() {
     super.prepareForReuse()
     playerLayer?.player = nil
+    playerLayer?.removeFromSuperlayer()
+    playerLayer = nil
+    playerContainerView.sd_cancelCurrentImageLoad()
+    playerContainerView.image = nil
   }
 
   struct FeedCellInfo {
@@ -316,6 +323,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     let isLiked: Bool
     let lastThumbnailImage: UIImage?
     let feedType: FeedType
+    let showLoginOverlay: Bool
   }
 }
 

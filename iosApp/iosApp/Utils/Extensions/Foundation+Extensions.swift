@@ -31,4 +31,16 @@ extension Encodable {
     encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
     return String(data: try encoder.encode(self), encoding: .utf8)!
   }
+
+  func formURLEncodedData() throws -> Data {
+    let jsonData = try JSONEncoder().encode(self)
+    let dict = try JSONSerialization.jsonObject(with: jsonData) as? [String: Any] ?? [:]
+    let query = dict.map { key, value in
+      let name = key.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+      let val = "\(value)".addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+      return "\(name)=\(val)"
+    }
+      .joined(separator: "&")
+    return Data(query.utf8)
+  }
 }

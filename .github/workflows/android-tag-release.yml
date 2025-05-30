@@ -22,7 +22,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
-          java-version: 17
+          java-version: 21
           distribution: 'temurin'
 
       - name: Cache Gradle packages
@@ -64,7 +64,7 @@ jobs:
         run: ./gradlew clean
 
       - name: Build AAB with Gradle
-        run: ./gradlew androidApp:assembleRelease -PisDebug=false
+        run: ./gradlew androidApp:assembleProdRelease -PisDebug=false
         env:
           GITHUB_USERNAME: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -85,6 +85,6 @@ jobs:
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: androidApp/build/outputs/apk/release/androidApp-release.apk
+          asset_path: androidApp/build/outputs/apk/prodRelease/androidApp-prod-release.apk
           asset_name: androidApp-release.apk
           asset_content_type: application/vnd.android.package-archive

@@ -4,12 +4,13 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.kotlinxSerialisartion)
+    alias(libs.plugins.gobleyRust)
 }
 
 kotlin {
     androidTarget {
         compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_17)
+            jvmTarget.set(JvmTarget.JVM_21)
         }
     }
 //    listOf(
@@ -27,14 +28,16 @@ kotlin {
         androidMain.dependencies {
         }
         commonMain.dependencies {
-            implementation(libs.ktor.client.core)
-            implementation(libs.ktor.client.cio)
-            implementation(libs.ktor.client.logging)
-            implementation(libs.ktor.client.content.negotiation)
-            implementation(libs.ktor.json)
-            implementation(libs.kotlinx.datetime)
+            api(libs.ktor.client.core)
+            api(libs.ktor.client.cio)
+            api(libs.ktor.client.logging)
+            api(libs.ktor.client.content.negotiation)
+            api(libs.ktor.json)
+            api(libs.kotlinx.datetime)
 
             implementation(projects.shared.libs.preferences)
+            implementation(projects.shared.libs.koin)
+            implementation(projects.shared.core)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -49,7 +52,7 @@ android {
         minSdk = libs.versions.minSDK.get().toInt()
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 }

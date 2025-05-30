@@ -1,23 +1,35 @@
 [versions]
-agp = "8.6.1"
+agp = "8.9.1"
 compileSDK = "35"
 minSDK = "24"
 targetSDK = "35"
 kotlin = "2.1.10"
 compose = "1.7.8"
 compose-compiler = "1.5.4"
-compose-material3 = "1.3.1"
+compose-material3 = "1.3.2"
 androidx-activityCompose = "1.10.1"
-compose-jetbrains-plugin = "1.8.0-alpha03"
+compose-multiplatform = "1.8.0-alpha03"
 gobley = "0.2.0"
 ktor = "3.1.1"
 nimbus-jose-jwt = "10.0.2"
-androidx-security-crypto = "1.1.0-alpha06"
+androidx-security-crypto = "1.1.0-alpha07"
 multiplatform-settings = "1.2.0"
 kotlinx-datetime = "0.6.2"
 firebase-bom = "33.12.0"
 crashlytics-plugin = "3.0.3"
 play-services = "4.4.2"
+koin = "4.0.3"
+kotlinxCoroutines = "1.10.1"
+kotlinResult = "2.0.0"
+firebase-gitlive-sdk = "2.1.0"
+lottie = "6.6.6"
+lifecycleViewmodel = "2.8.4"
+media3Exoplayer = "1.6.1"
+androidx-lifecycle = "2.8.4"
+coil = "3.1.0"
+browser = "1.8.0"
+touchlab-logger = "2.0.5"
+desugar-jdk-libs = "2.1.5"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -41,10 +53,41 @@ androidx-security-crypto = { module = "androidx.security:security-crypto", versi
 multiplatform-settings = { module = "com.russhwolf:multiplatform-settings", version.ref = "multiplatform-settings"}
 
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
+kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
 
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebase-bom"}
 firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics" }
 firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
+
+koin-core = { module = "io.insert-koin:koin-core", version.ref = "koin" }
+koin-android = { module = "io.insert-koin:koin-android", version.ref = "koin" }
+koin-composeVM = { module = "io.insert-koin:koin-compose-viewmodel", version.ref = "koin" }
+
+kotlinResult-core = { group = "com.michael-bull.kotlin-result", name = "kotlin-result", version.ref = "kotlinResult" }
+kotlinResult-coroutines = { group = "com.michael-bull.kotlin-result", name = "kotlin-result-coroutines", version.ref = "kotlinResult" }
+
+gitlive-firebase-kotlin-crashlytics = { module = "dev.gitlive:firebase-crashlytics", version.ref = "firebase-gitlive-sdk" }
+gitlive-firebase-kotlin-anlaytics = { module = "dev.gitlive:firebase-analytics", version.ref = "firebase-gitlive-sdk" }
+
+lottie = { module = "com.airbnb.android:lottie-compose", version.ref = "lottie" }
+
+androidx-lifecycle-viewmodel = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel", version.ref = "lifecycleViewmodel" }
+
+androidx-media3-exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "media3Exoplayer" }
+media3-exoplayer-dash = { module = "androidx.media3:media3-exoplayer-dash", version.ref = "media3Exoplayer" }
+androidx-media3-exoplayer-hls = { group = "androidx.media3", name = "media3-exoplayer-hls", version.ref = "media3Exoplayer" }
+media3-ui = { module = "androidx.media3:media3-ui", version.ref = "media3Exoplayer" }
+
+androidx-lifecycle-runtime-compose = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
+
+coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
+coil-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil" }
+
+androidx-browser = { group = "androidx.browser", name = "browser", version.ref = "browser" }
+
+touchlab-logger = { module = "co.touchlab:kermit", version.ref = "touchlab-logger"}
+
+desugar-jdk-libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar-jdk-libs" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
@@ -52,13 +95,15 @@ androidLibrary = { id = "com.android.library", version.ref = "agp" }
 kotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlinCocoapods = { id = "org.jetbrains.kotlin.native.cocoapods", version.ref = "kotlin" }
-compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-compose-jetbrains = { id = "org.jetbrains.compose", version.ref = "compose-jetbrains-plugin" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version = "12.1.2" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version = "1.23.8" }
 gobleyCargo = { id = "dev.gobley.cargo", version.ref = "gobley" }
 gobleyUniffi = { id = "dev.gobley.uniffi", version.ref = "gobley" }
+gobleyRust= { id = "dev.gobley.rust", version.ref = "gobley" }
 kotlinAtomicfu = { id = "org.jetbrains.kotlin.plugin.atomicfu", version.ref = "kotlin" }
 kotlinxSerialisartion = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "crashlytics-plugin" }
 play-services = { id = "com.google.gms.google-services", version.ref = "play-services" }
+composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "compose-multiplatform" }
+composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+

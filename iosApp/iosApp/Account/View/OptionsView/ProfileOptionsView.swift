@@ -11,14 +11,33 @@ import SwiftUI
 struct ProfileOptionsView: View {
   @State private var selectedOption: ProfileOptionsView.Options?
   @State private var isShowingLoader = false
+  @Binding var showLogoutButton: Bool
+  var delegate: ProfileOptionsViewDelegate?
+
+  init(showLogoutButton: Binding<Bool>, delegate: ProfileOptionsViewDelegate? = nil) {
+    self._showLogoutButton = showLogoutButton
+    self.delegate = delegate
+  }
 
   var body: some View {
     ZStack {
       VStack(spacing: Constants.vStackSpacing) {
-        ForEach(Constants.options) { option in
+        ForEach(
+          Constants.options.filter { option in
+            guard !showLogoutButton else { return true }
+            return option.id != Constants.logoutId
+            && option.id != Constants.deleteId
+          }
+        ) { option in
           Button {
-            isShowingLoader = true
-            selectedOption = option
+            if option.id == Constants.logoutId {
+              delegate?.logout()
+            } else if option.id == Constants.deleteId {
+              delegate?.delete()
+            } else {
+              isShowingLoader = true
+              selectedOption = option
+            }
           } label: {
             HStack(spacing: Constants.hStackSpacing) {
               option.image
@@ -71,10 +90,6 @@ struct ProfileOptionsView: View {
   }
 }
 
-#Preview {
-  ProfileOptionsView()
-}
-
 extension ProfileOptionsView {
   enum Constants {
     static let options = [
@@ -92,6 +107,16 @@ extension ProfileOptionsView {
         image: Image("option_privacy"),
         text: "Privacy Policy",
         redirection: "https://yral.com/privacy-policy"
+      ),
+      Options(
+        image: Image("option_logout"),
+        text: "Log Out",
+        redirection: Constants.logoutId
+      ),
+      Options(
+        image: Image("option_delete"),
+        text: "Delete Account",
+        redirection: Constants.deleteId
       )
     ]
 
@@ -105,5 +130,15 @@ extension ProfileOptionsView {
     static let progressViewCornerRadius = 8.0
     static let vStackSpacing = 30.0
     static let loaderName = "Yral_Loader"
+    static let logoutId = "logoutId"
+    static let deleteId = "deleteId"
   }
 }
+
+// swiftlint: disable class_delegate_protocol
+protocol ProfileOptionsViewDelegate: Any {
+  func login()
+  func logout()
+  func delete()
+}
+// swiftlint: enable class_delegate_protocol

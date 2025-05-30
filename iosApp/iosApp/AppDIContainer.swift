@@ -8,7 +8,7 @@
 import Foundation
 import GRPC
 
-final class AppDIContainer {
+@MainActor final class AppDIContainer {
   let appConfiguration = AppConfiguration()
 
   lazy var mlFeedClient: MlFeed_MLFeedNIOClient = {
@@ -33,7 +33,8 @@ final class AppDIContainer {
   lazy var authClient: DefaultAuthClient = {
     let client = DefaultAuthClient(
       networkService: HTTPService(),
-      crashReporter: crashReporter
+      crashReporter: crashReporter,
+      baseURL: URL(string: appConfiguration.authBaseURLString) ?? URL(fileURLWithPath: "")
     )
     return client
   }()
@@ -43,6 +44,8 @@ final class AppDIContainer {
     let composite = CompositeCrashReporter(reporters: [firebase])
     return composite
   }()
+
+  lazy var session: SessionManager = SessionManager(auth: authClient)
 
   lazy var likeRepository: LikeRepositoryProtocol = {
     LikeRepository(
@@ -71,14 +74,23 @@ final class AppDIContainer {
     )
   }()
 
-  func makeFeedDIContainer() -> FeedDIContainer {
+  lazy var socialSignInUseCase: SocialSignInUseCaseProtocol = {
+    SocialSignInUseCase(
+      accountRepository: accountsRepository,
+      crashReporter: crashReporter
+    )
+  }()
+
+  func makeFeedDIContainer() async -> FeedDIContainer {
     return FeedDIContainer(
       dependencies: FeedDIContainer.Dependencies(
         mlfeedService: mlFeedClient,
         httpService: HTTPService(baseURLString: appConfiguration.offchainBaseURLString),
         authClient: authClient,
         crashReporter: crashReporter,
-        toggleLikeUseCase: toggleLikeUseCase
+        toggleLikeUseCase: toggleLikeUseCase,
+        socialSignInUseCase: socialSignInUseCase,
+        session: session
       )
     )
   }
@@ -89,7 +101,9 @@ final class AppDIContainer {
         httpService: HTTPService(),
         authClient: authClient,
         crashReporter: crashReporter,
-        accountUseCase: accountUseCase
+        accountUseCase: accountUseCase,
+        accountRepository: accountsRepository,
+        socialSignInUseCase: socialSignInUseCase
       )
     )
   }
@@ -111,7 +125,8 @@ final class AppDIContainer {
         authClient: authClient,
         crashReporter: crashReporter,
         accountUseCase: accountUseCase,
-        likesUseCase: toggleLikeUseCase
+        likesUseCase: toggleLikeUseCase,
+        session: session
       )
     )
   }

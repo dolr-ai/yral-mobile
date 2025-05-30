@@ -57,6 +57,9 @@ public func get_principal_from_identity(_ identity: DelegatedIdentity) -> RustSt
 public func propic_from_principal(_ principal: Principal) -> RustString {
     RustString(ptr: __swift_bridge__$propic_from_principal({principal.isOwned = false; return principal.ptr;}()))
 }
+public func yral_auth_login_hint(_ data: UnsafeBufferPointer<UInt8>) throws -> RustString {
+    try { let val = __swift_bridge__$yral_auth_login_hint(data.toFfiSlice()); if val.is_ok { return RustString(ptr: val.ok_or_err!) } else { throw RustString(ptr: val.ok_or_err!) } }()
+}
 
 public class KeyValuePair: KeyValuePairRefMut {
     var isOwned: Bool = true
@@ -11563,6 +11566,10 @@ extension CanistersWrapperRef {
 
     public func get_user_principal_string() -> RustString {
         RustString(ptr: __swift_bridge__$CanistersWrapper$get_user_principal_string(ptr))
+    }
+
+    public func expiry_ns() -> UInt64 {
+        __swift_bridge__$CanistersWrapper$expiry_ns(ptr)
     }
 }
 extension CanistersWrapper: Vectorizable {
@@ -23168,6 +23175,7 @@ extension InitArgs: Vectorizable {
         __swift_bridge__$Vec_InitArgs$len(vecPtr)
     }
 }
+
 
 
 public class Icrc3DataCertificateResult: Icrc3DataCertificateResultRefMut {
