@@ -71,7 +71,7 @@ runs:
 
           ## Changes Summary
           The following .did files were affected:
-          ${{ inputs.changed_files }}
+          ${{ fromJSON(inputs.changed_files) }}
 
           ## Breaking Changes Status
           ${{ inputs.breaking_changes == 'true' && '⚠️ **Warning:** This update contains breaking changes!' || '✅ No breaking changes detected' }}
