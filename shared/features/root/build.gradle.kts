@@ -36,16 +36,25 @@ kotlin {
             }
         }
         commonTest.dependencies {
-            implementation(libs.kotlin.test)
+            implementation(kotlin("test"))
+            implementation(libs.kotlinx.coroutines.test)
+            implementation(libs.turbine)
+            implementation(libs.mockk)
         }
     }
 }
 
 android {
     namespace = "com.yral.shared.features.root"
-    compileSdk = libs.versions.compileSDK.get().toInt()
+    compileSdk =
+        libs.versions.compileSDK
+            .get()
+            .toInt()
     defaultConfig {
-        minSdk = libs.versions.minSDK.get().toInt()
+        minSdk =
+            libs.versions.minSDK
+                .get()
+                .toInt()
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
