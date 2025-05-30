@@ -13,7 +13,7 @@
     <string name="signup_consent">By signing up, you agree to our Terms of Service</string>
     <string name="terms_of_service_signup_consent">Terms of Service</string>
     <string name="signup_with_google">Sign up with Google</string>
-    <string name="could_not_login">Couldn\'t Log In</string>
+    <string name="could_not_login">Couldn’t Log In</string>
     <string name="could_not_login_desc">The operation couldn’t be completed. Please try again</string>
     <string name="ok">OK</string>
     <string name="reason_nudity">Nudity / Porn</string>
@@ -32,4 +32,12 @@
     <string name="delete_account_question">Are you sure you want to delete your account?</string>
     <string name="no_take_me_back">No, take me back</string>
     <string name="yes_delete">Yes, Delete</string>
+    
+    <!-- Root Error Messages -->
+    <string name="error_timeout">Unable to initialize app. Please check your internet connection and try again.</string>
+    <string name="error_session_init">Unable to initialize session. Please try again.</string>
+    <string name="error_initial_content">Unable to load content. Please try again.</string>
+    <string name="error_feed_details">Unable to load content. Please try again.</string>
+    <string name="error_unexpected">An unexpected error occurred. Please try again.</string>
+    <string name="error_retry">Retry</string>
 </resources>
