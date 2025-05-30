@@ -81,6 +81,8 @@ fun rememberExoPlayerWithLifecycle(
                     videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT
                     repeatMode = Player.REPEAT_MODE_OFF
                     setHandleAudioBecomingNoisy(true)
+                    playWhenReady = false
+                    setForegroundMode(false)
                 }
         }
     LaunchedEffect(url) {
@@ -152,6 +154,8 @@ fun rememberPrefetchExoPlayerWithLifecycle(
                     videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT
                     repeatMode = Player.REPEAT_MODE_OFF
                     setHandleAudioBecomingNoisy(true)
+                    playWhenReady = false
+                    setForegroundMode(false)
                 }
         }
     LaunchedEffect(url) {

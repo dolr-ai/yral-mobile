@@ -140,6 +140,7 @@ fun FeedScreen(
     Column(modifier = modifier) {
         if (state.feedDetails.isNotEmpty()) {
             YRALReelPlayer(
+                modifier = Modifier.weight(1f),
                 videoUrlArray =
                     state
                         .feedDetails
