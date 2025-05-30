@@ -16,6 +16,12 @@ outputs:
   changed_files:
     description: 'List of changed files'
     value: ${{ steps.compare_did.outputs.changed_files }}
+  differences:
+    description: 'Whether there are non-breaking changes'
+    value: ${{ steps.compare_did.outputs.differences }}
+  new_files:
+    description: 'Whether there are new files'
+    value: ${{ steps.compare_did.outputs.new_files }}
 
 runs:
   using: "composite"
@@ -83,6 +89,10 @@ runs:
                 echo "breaking_changes=true" >> $GITHUB_OUTPUT
                 HAS_BREAKING_CHANGES=true
                 CHANGED_FILES="$CHANGED_FILES\n• $(basename $did_file) (breaking changes)"
+                # Copy the file even though it has breaking changes
+                echo "Updating $(basename $did_file) despite breaking changes..."
+                cp "$did_file" "$local_file"
+                HAS_CHANGES=true
               else
                 echo "✅ No breaking changes in $(basename $did_file)"
                 # Check if files are different despite being compatible
