@@ -486,7 +486,6 @@
 		AC1F938B2DC112E800F322E1 /* SocialSignInUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialSignInUseCase.swift; sourceTree = "<group>"; };
 		AC1F93912DC1494500F322E1 /* TokenRequestDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenRequestDTO.swift; sourceTree = "<group>"; };
 		AC1F93942DC1495100F322E1 /* TokenResponseDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenResponseDTO.swift; sourceTree = "<group>"; };
-		AC1F93982DC1501B00F322E1 /* Yral.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Yral.entitlements; sourceTree = "<group>"; };
 		AC233D342D314CA3007040F1 /* Splash_Lottie.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Splash_Lottie.json; sourceTree = "<group>"; };
 		AC26CA482D8026A8006ADA75 /* CrashReporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrashReporter.swift; sourceTree = "<group>"; };
 		AC26CA4B2D80271D006ADA75 /* AuthClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthClient.swift; sourceTree = "<group>"; };
@@ -775,7 +774,6 @@
 		7555FF72242A565900829871 = {
 			isa = PBXGroup;
 			children = (
-				AC1F93982DC1501B00F322E1 /* Yral.entitlements */,
 				ACD941BD2CFF57BC0038FCB6 /* Staging */,
 				ACD941BC2CFF57A90038FCB6 /* Prod */,
 				AC09A9B12CDB775C009A39A4 /* Generated */,
@@ -2794,7 +2792,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_ENTITLEMENTS = Yral.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 1;
@@ -2809,10 +2807,10 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
+				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/../rust-agent/target/universal/debug";
+				MARKETING_VERSION = 1.1.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
-					"-framework",
 					"-ObjC",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.yral.iosApp;
@@ -2833,7 +2831,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_ENTITLEMENTS = Yral.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				CODE_SIGN_STYLE = Manual;
@@ -2849,10 +2846,10 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
+				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/../rust-agent/target/universal/release";
+				MARKETING_VERSION = 1.1.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
-					"-framework",
 					"-ObjC",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.yral.iosApp;
