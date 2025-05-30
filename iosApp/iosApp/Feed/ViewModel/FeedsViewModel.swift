@@ -14,6 +14,7 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
   let likesUseCase: ToggleLikeUseCaseProtocol
   let reportUseCase: ReportFeedsUseCaseProtocol
   let logEventUseCase: LogUploadEventUseCaseProtocol
+  let socialSignInUseCase: SocialSignInUseCaseProtocol
   private var currentFeeds = [FeedResult]()
   private var filteredFeeds = [FeedResult]()
   private var feedvideoIDSet = Set<String>()
@@ -37,13 +38,15 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
     moreFeedsUseCase: FetchMoreFeedsUseCaseProtocol,
     likeUseCase: ToggleLikeUseCaseProtocol,
     reportUseCase: ReportFeedsUseCaseProtocol,
-    logEventUseCase: LogUploadEventUseCaseProtocol
+    logEventUseCase: LogUploadEventUseCaseProtocol,
+    socialSignInUseCase: SocialSignInUseCaseProtocol
   ) {
     self.initialFeedsUseCase = fetchFeedsUseCase
     self.moreFeedsUseCase = moreFeedsUseCase
     self.likesUseCase = likeUseCase
     self.reportUseCase = reportUseCase
     self.logEventUseCase = logEventUseCase
+    self.socialSignInUseCase = socialSignInUseCase
     self.unifiedEvent = .fetchingInitialFeeds
     isFetchingInitialFeeds = true
 
@@ -172,6 +175,18 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
     case .failure(let failure):
       print(failure.localizedDescription)
     default: break
+    }
+  }
+
+  func socialSignIn(request: SocialProvider) async {
+    let result = await self.socialSignInUseCase.execute(request: request)
+    await MainActor.run {
+      switch result {
+      case .success:
+        self.unifiedEvent = .socialSignInSuccess
+      case .failure:
+        self.unifiedEvent = .socialSignInFailure
+      }
     }
   }
 }

@@ -1,26 +1,26 @@
 package com.yral.shared.preferences
 
 import com.russhwolf.settings.Settings
+import com.yral.shared.core.dispatchers.AppDispatchers
 import io.ktor.util.decodeBase64Bytes
 import io.ktor.util.encodeBase64
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 
 class AsyncPreferencesImpl(
     private val settings: Settings,
-    private val ioDispatcher: CoroutineDispatcher,
+    private val appDispatchers: AppDispatchers,
 ) : Preferences {
     override suspend fun putBoolean(
         key: String,
         boolean: Boolean,
     ) {
-        withContext(ioDispatcher) {
+        withContext(appDispatchers.io) {
             settings.putBoolean(key, boolean)
         }
     }
 
     override suspend fun getBoolean(key: String): Boolean? =
-        withContext(ioDispatcher) {
+        withContext(appDispatchers.io) {
             settings.getBooleanOrNull(key)
         }
 
@@ -28,13 +28,13 @@ class AsyncPreferencesImpl(
         key: String,
         value: String,
     ) {
-        withContext(ioDispatcher) {
+        withContext(appDispatchers.io) {
             settings.putString(key, value)
         }
     }
 
     override suspend fun getString(key: String): String? =
-        withContext(ioDispatcher) {
+        withContext(appDispatchers.io) {
             settings.getStringOrNull(key)
         }
 
@@ -42,13 +42,13 @@ class AsyncPreferencesImpl(
         key: String,
         int: Int,
     ) {
-        withContext(ioDispatcher) {
+        withContext(appDispatchers.io) {
             settings.putInt(key, int)
         }
     }
 
     override suspend fun getInt(key: String): Int? =
-        withContext(ioDispatcher) {
+        withContext(appDispatchers.io) {
             settings.getIntOrNull(key)
         }
 
@@ -56,13 +56,13 @@ class AsyncPreferencesImpl(
         key: String,
         long: Long,
     ) {
-        withContext(ioDispatcher) {
+        withContext(appDispatchers.io) {
             settings.putLong(key, long)
         }
     }
 
     override suspend fun getLong(key: String): Long? =
-        withContext(ioDispatcher) {
+        withContext(appDispatchers.io) {
             settings.getLongOrNull(key)
         }
 
@@ -70,13 +70,13 @@ class AsyncPreferencesImpl(
         key: String,
         float: Float,
     ) {
-        withContext(ioDispatcher) {
+        withContext(appDispatchers.io) {
             settings.putFloat(key, float)
         }
     }
 
     override suspend fun getFloat(key: String): Float? =
-        withContext(ioDispatcher) {
+        withContext(appDispatchers.io) {
             settings.getFloatOrNull(key)
         }
 
@@ -84,13 +84,13 @@ class AsyncPreferencesImpl(
         key: String,
         double: Double,
     ) {
-        withContext(ioDispatcher) {
+        withContext(appDispatchers.io) {
             settings.putDouble(key, double)
         }
     }
 
     override suspend fun getDouble(key: String): Double? =
-        withContext(ioDispatcher) {
+        withContext(appDispatchers.io) {
             settings.getDoubleOrNull(key)
         }
 
@@ -98,24 +98,24 @@ class AsyncPreferencesImpl(
         key: String,
         bytes: ByteArray,
     ) {
-        withContext(ioDispatcher) {
+        withContext(appDispatchers.io) {
             settings.putString(key, bytes.encodeBase64())
         }
     }
 
     override suspend fun getBytes(key: String): ByteArray? =
-        withContext(ioDispatcher) {
+        withContext(appDispatchers.io) {
             settings.getStringOrNull(key)?.decodeBase64Bytes()
         }
 
     override suspend fun remove(key: String) {
-        withContext(ioDispatcher) {
+        withContext(appDispatchers.io) {
             settings.remove(key)
         }
     }
 
     override suspend fun clearAll() {
-        withContext(ioDispatcher) {
+        withContext(appDispatchers.io) {
             settings.clear()
         }
     }

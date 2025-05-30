@@ -9,7 +9,7 @@ plugins {
 kotlin {
     androidTarget {
         compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_17)
+            jvmTarget.set(JvmTarget.JVM_21)
         }
     }
 //    listOf(
@@ -26,23 +26,25 @@ kotlin {
     sourceSets {
         androidMain.dependencies {
             implementation(libs.nimbus.jose.jwt)
+            implementation(libs.androidx.browser)
         }
         commonMain.dependencies {
-            implementation(libs.ktor.client.core)
-            implementation(libs.ktor.client.cio)
-            implementation(libs.ktor.client.logging)
-            implementation(libs.ktor.client.content.negotiation)
-            implementation(libs.ktor.json)
-            implementation(libs.kotlinx.datetime)
-
+            implementation(projects.shared.core)
             implementation(projects.shared.libs.preferences)
             implementation(projects.shared.libs.http)
+            implementation(projects.shared.libs.analytics)
+            implementation(projects.shared.libs.crashlytics)
+            implementation(projects.shared.libs.koin)
+            implementation(projects.shared.libs.useCase)
 
-            //implementation(projects.shared.rust)
-            BuildConfig.getDependencies(project).forEach { dependency ->
+            val (dependencies, shouldAddRustModule) = BuildConfig.getAndProcessDependencies(project)
+            dependencies.forEach { dependency ->
                 if (dependency.isNotEmpty()) {
                     implementation(dependency)
                 }
+            }
+            if (shouldAddRustModule) {
+                implementation(projects.shared.rust)
             }
         }
         commonTest.dependencies {
@@ -58,7 +60,7 @@ android {
         minSdk = libs.versions.minSDK.get().toInt()
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 }

@@ -12,6 +12,7 @@ import SwiftUI
 struct FeedsViewControllerWrapper: UIViewControllerRepresentable {
   let feedsViewController: FeedsViewController
   @Binding var showFeeds: Bool
+  @EnvironmentObject var session: SessionManager
 
   func makeUIViewController(context: Context) -> UINavigationController {
     feedsViewController.onBackButtonTap = {
@@ -25,5 +26,9 @@ struct FeedsViewControllerWrapper: UIViewControllerRepresentable {
     return navigationController
   }
 
-  func updateUIViewController(_ uiViewController: UINavigationController, context: Context) {  }
+  func updateUIViewController(_ uiViewController: UINavigationController, context: Context) {
+    if let feedVC = uiViewController.viewControllers.first as? FeedsViewController {
+      feedVC.session = session
+    }
+  }
 }

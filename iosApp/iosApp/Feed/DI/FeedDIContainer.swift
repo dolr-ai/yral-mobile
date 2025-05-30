@@ -15,6 +15,8 @@ final class FeedDIContainer {
     let authClient: AuthClient
     let crashReporter: CrashReporter
     let toggleLikeUseCase: ToggleLikeUseCaseProtocol
+    let socialSignInUseCase: SocialSignInUseCaseProtocol
+    let session: SessionManager
   }
 
   private let dependencies: Dependencies
@@ -25,13 +27,21 @@ final class FeedDIContainer {
 
   func makeFeedsViewControllerWrapper(showFeeds: Binding<Bool>) -> FeedsViewControllerWrapper {
     FeedsViewControllerWrapper(
-      feedsViewController: FeedsViewController(viewModel: makeFeedsViewModel()),
+      feedsViewController: FeedsViewController(
+        viewModel: makeFeedsViewModel(),
+        session: dependencies.session,
+        crashReporter: dependencies.crashReporter
+      ),
       showFeeds: showFeeds
     )
   }
 
   func makeFeedsViewController() -> FeedsViewController {
-    FeedsViewController(viewModel: makeFeedsViewModel())
+    FeedsViewController(
+      viewModel: makeFeedsViewModel(),
+      session: dependencies.session,
+      crashReporter: dependencies.crashReporter
+    )
   }
 
   func makeFeedsViewModel() -> FeedsViewModel {
@@ -57,7 +67,8 @@ final class FeedDIContainer {
       logEventUseCase: LogUploadEventUseCase(
         feedRepository: repository,
         crashReporter: dependencies.crashReporter
-      )
+      ),
+      socialSignInUseCase: dependencies.socialSignInUseCase
     )
   }
 }

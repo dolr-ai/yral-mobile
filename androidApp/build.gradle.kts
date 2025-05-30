@@ -4,7 +4,7 @@ import java.util.*
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.kotlinAndroid)
-    alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.composeCompiler)
     alias(libs.plugins.crashlytics)
     alias(libs.plugins.play.services)
 }
@@ -22,6 +22,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = libs.versions.compose.compiler.get()
@@ -46,25 +47,37 @@ android {
         }
     }
     buildTypes {
-        getByName("debug") {
-            signingConfig = signingConfigs.getByName("staging")
-            applicationIdSuffix = ".staging"
-        }
         getByName("release") {
-            signingConfig = signingConfigs.getByName("release")
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
             configure<CrashlyticsExtension> {
                 mappingFileUploadEnabled = true
                 nativeSymbolUploadEnabled = true
             }
         }
     }
+    flavorDimensions += "version"
+    productFlavors {
+        create("staging") {
+            dimension = "version"
+            signingConfig = signingConfigs.getByName("staging")
+            applicationIdSuffix = ".staging"
+        }
+        create("prod") {
+            dimension = "version"
+            signingConfig = signingConfigs.getByName("release")
+        }
+    }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
+        isCoreLibraryDesugaringEnabled = true
     }
     kotlinOptions {
-        jvmTarget = "17"
+        jvmTarget = "21"
     }
 }
 
@@ -74,29 +87,34 @@ dependencies {
     implementation(libs.compose.material3)
     implementation(libs.androidx.activity.compose)
     debugImplementation(libs.compose.ui.tooling)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
+    implementation(libs.lottie)
+    implementation(libs.coil.compose)
+    implementation(libs.coil.okhttp)
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
 
     implementation(projects.shared.core)
     implementation(projects.shared.libs.preferences)
     implementation(projects.shared.libs.http)
     implementation(projects.shared.features.auth)
+    implementation(projects.shared.libs.analytics)
+    implementation(projects.shared.libs.crashlytics)
+    implementation(projects.shared.libs.koin)
+    implementation(projects.shared.features.feed)
+    implementation(projects.shared.features.root)
+    implementation(projects.shared.libs.videoPlayer)
+    implementation(projects.shared.features.account)
 
-    //implementation(projects.shared.rust)
-    BuildConfig.getDependencies(project).forEach { dependency ->
+    val (dependencies, shouldAddRustModule) = BuildConfig.getAndProcessDependencies(project)
+    dependencies.forEach { dependency ->
         if (dependency.isNotEmpty()) {
             implementation(dependency)
         }
     }
-
-    implementation(libs.ktor.client.core)
-    implementation(libs.ktor.client.cio)
-    implementation(libs.ktor.client.logging)
-    implementation(libs.ktor.client.content.negotiation)
-    implementation(libs.ktor.json)
-    implementation(libs.kotlinx.datetime)
-
-    implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.analytics)
-    implementation(libs.firebase.crashlytics)
+    if (shouldAddRustModule) {
+        implementation(projects.shared.rust)
+    }
 }
 
 afterEvaluate {

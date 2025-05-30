@@ -19,6 +19,7 @@ use std::time::UNIX_EPOCH;
 use tokio::time::Duration;
 use yral_canisters_common::Canisters;
 use yral_types::delegated_identity::DelegatedIdentityWire;
+use yral_canisters_common::utils::profile::propic_from_principal as inner_propic_from_principal;
 
 pub type Secp256k1Error = k256::elliptic_curve::Error;
 
@@ -114,8 +115,10 @@ pub fn delegate_identity_with_max_age_public(
     })
 }
 
-pub fn delegated_identity_wire_to_json(wire: &DelegatedIdentityWire) -> String {
-    serde_json::to_string(wire).unwrap()
+#[uniffi::export]
+pub fn delegated_identity_wire_to_json(data: &[u8]) -> String {
+    let wire = delegated_identity_wire_from_bytes(data).unwrap();
+    serde_json::to_string(&wire).unwrap()
 }
 
 #[derive(uniffi::Object)]
@@ -209,3 +212,18 @@ impl GetPostsOfUserProfileError {
         matches!(self, GetPostsOfUserProfileError::ExceededMaxNumberOfItemsAllowedInOneRequest)
     }
 }
+
+#[uniffi::export]
+fn propic_from_principal(principal: Principal) -> String {
+    inner_propic_from_principal(principal)
+}
+
+#[uniffi::export]
+fn yral_auth_login_hint(data: &[u8]) -> std::result::Result<String, FFIError> {
+     let identity = delegated_identity_from_bytes(data)
+        .map_err(|e| FFIError::UnknownError(format!("Failed to parse identity: {:?}", e)))?;
+     match yral_canisters_common::yral_auth_login_hint(&identity) {
+         Ok(signature) => Ok(signature),
+         Err(error) => Err(FFIError::UnknownError(format!("Failed to create login hint: {:?}", error))),
+     }
+ }

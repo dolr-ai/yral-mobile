@@ -32,6 +32,8 @@ enum UnifiedFeedEvent: Equatable {
   case reportSuccess(String)
   case reportFailed(Error)
   case blockedUser(String)
+  case socialSignInSuccess
+  case socialSignInFailure
 
   // swiftlint: disable cyclomatic_complexity
   static func == (lhs: UnifiedFeedEvent, rhs: UnifiedFeedEvent) -> Bool {
@@ -76,4 +78,5 @@ protocol FeedViewModelProtocol: ObservableObject {
   func report(request: ReportRequest) async
   func blockUser(principalId: String) async
   func log(event: VideoEventRequest) async
+  func socialSignIn(request: SocialProvider) async
 }

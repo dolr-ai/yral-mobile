@@ -42,7 +42,7 @@ extension FeedsViewController: FeedsCellProtocol {
           displayName: item.displayName,
           hashtagCount: Int32(item.hashtags.count),
           isHotOrNot: item.nsfwProbability > Constants.nsfwProbability,
-          isLoggedIn: false,
+          isLoggedIn: session.state.isLoggedIn,
           isNsfw: false,
           likeCount: Int32(item.likeCount),
           nsfwProbability: item.nsfwProbability,
@@ -181,7 +181,7 @@ extension FeedsViewController: FeedsPlayerProtocol {
           displayName: feed.displayName,
           hashtagCount: Int32(feed.hashtags.count),
           isHotOrNot: feed.nsfwProbability > Constants.nsfwProbability,
-          isLoggedIn: false,
+          isLoggedIn: session.state.isLoggedIn,
           isNsfw: false,
           likeCount: Int32(feed.likeCount),
           nsfwProbability: feed.nsfwProbability,
@@ -196,6 +196,12 @@ extension FeedsViewController: FeedsPlayerProtocol {
           event: VideoEventType.durationWatched.rawValue
         )
       )
+    }
+  }
+
+  func loginTapped(provider: SocialProvider) {
+    Task {
+      await self.viewModel.socialSignIn(request: provider)
     }
   }
 }

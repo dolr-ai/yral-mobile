@@ -20,8 +20,18 @@ class FeedsViewController: UIViewController {
   var initalFeedscancellables: Set<AnyCancellable> = []
   var paginatedFeedscancellables: Set<AnyCancellable> = []
 
-  lazy var feedsPlayer: YralPlayer = {
-    let player = FeedsPlayer(hlsDownloadManager: HLSDownloadManager())
+  lazy var feedsPlayer: YralPlayer = { [unowned self] in
+    let monitor = DefaultNetworkMonitor()
+    let downloadManager = HLSDownloadManager(
+      networkMonitor: monitor,
+      fileManager: .default,
+      crashReporter: self.crashReporter
+    )
+    let player = FeedsPlayer(
+      hlsDownloadManager: downloadManager,
+      networkMonitor: monitor,
+      crashReporter: self.crashReporter
+    )
     player.delegate = self
     return player
   }()
@@ -50,10 +60,19 @@ class FeedsViewController: UIViewController {
   var shouldShowFooterLoader: Bool = false
   var pageEndReached: Bool = false
   var onBackButtonTap: (() -> Void)?
+  var session: SessionManager
+  let crashReporter: CrashReporter
 
-  init(viewModel: any FeedViewModelProtocol, feedType: FeedType = .otherUsers) {
+  init(
+    viewModel: any FeedViewModelProtocol,
+    feedType: FeedType = .otherUsers,
+    session: SessionManager,
+    crashReporter: CrashReporter
+  ) {
     self.viewModel = viewModel
     self.feedType = feedType
+    self.session = session
+    self.crashReporter = crashReporter
     super.init(nibName: nil, bundle: nil)
   }
 
@@ -169,6 +188,13 @@ class FeedsViewController: UIViewController {
         case .blockedUser(let principalId):
           let itemsToRemove = self.feedsDataSource.snapshot().itemIdentifiers.filter { $0.principalID == principalId }
           self.removeFeeds(with: itemsToRemove, isReport: false)
+        case .socialSignInSuccess, .socialSignInFailure:
+          guard let visibleIndexPath = feedsCV.indexPathsForVisibleItems.sorted().first else { return }
+          var snapshot = feedsDataSource.snapshot()
+          let item = snapshot.itemIdentifiers[visibleIndexPath.item]
+          snapshot.reloadItems([item])
+          feedsDataSource.apply(snapshot, animatingDifferences: true)
+          self.activityIndicator.stopAnimating()
         }
       }
       .store(in: &paginatedFeedscancellables)
@@ -340,6 +366,7 @@ extension FeedsViewController {
     static let blockCancelButton = "Cancel"
 
     static let nsfwProbability = 0.4
+    static let overlayIndex = 9
   }
 }
 // swiftlint: enable type_body_length

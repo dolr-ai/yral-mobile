@@ -17,7 +17,7 @@ kotlin {
     androidTarget {
         publishLibraryVariants("release", "debug")
         compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_17)
+            jvmTarget.set(JvmTarget.JVM_21)
         }
     }
 //    listOf(
@@ -33,7 +33,9 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation(libs.ktor.json)
+            implementation(projects.shared.libs.http)
+            implementation(projects.shared.libs.koin)
+            implementation(projects.shared.core)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -59,10 +61,11 @@ android {
     compileSdk = libs.versions.compileSDK.get().toInt()
     defaultConfig {
         minSdk = libs.versions.minSDK.get().toInt()
+        ndkVersion = "28.0.13004108"
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
     packaging {
         jniLibs.keepDebugSymbols += "**/*.so"
