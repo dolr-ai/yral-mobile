@@ -60,8 +60,8 @@ import com.yral.android.ui.screens.feed.FeedScreenConstants.MAX_LINES_FOR_POST_D
 import com.yral.android.ui.screens.feed.FeedScreenConstants.VIDEO_REPORT_SHEET_MAX_HEIGHT
 import com.yral.android.ui.screens.game.AboutGameSheet
 import com.yral.android.ui.screens.game.CoinBalance
-import com.yral.android.ui.screens.game.GameIconsRow
 import com.yral.android.ui.screens.game.GameResultSheet
+import com.yral.android.ui.screens.game.SmileyGame
 import com.yral.android.ui.widgets.PreloadLottieAnimation
 import com.yral.android.ui.widgets.YralBottomSheet
 import com.yral.android.ui.widgets.YralButtonState
@@ -98,6 +98,13 @@ fun FeedScreen(
     var loadTriggered by remember { mutableStateOf(false) }
     // Track if new items have been loaded since loading started
     var newItemsAddedSinceLoading by remember { mutableStateOf(false) }
+
+    // Set initial video ID when feed loads
+    LaunchedEffect(state.feedDetails.isNotEmpty()) {
+        if (state.feedDetails.isNotEmpty() && state.currentPageOfFeed < state.feedDetails.size) {
+            gameViewModel.setCurrentVideoId(state.feedDetails[state.currentPageOfFeed].videoID)
+        }
+    }
 
     // Function to determine if we should load more content
     val shouldLoadMore =
@@ -167,6 +174,17 @@ fun FeedScreen(
                         }.toList(),
                 initialPage = state.currentPageOfFeed,
                 onPageLoaded = { page ->
+                    // Mark animation as shown for the previous page when changing pages
+                    if (page != state.currentPageOfFeed && state.currentPageOfFeed < state.feedDetails.size) {
+                        val previousVideoId = state.feedDetails[state.currentPageOfFeed].videoID
+                        if (gameState.gameResult[previousVideoId]?.second?.coinDelta != 0) {
+                            gameViewModel.markCoinDeltaAnimationShown(previousVideoId)
+                        }
+                    }
+                    // Set current video ID for the new page
+                    if (page < state.feedDetails.size) {
+                        gameViewModel.setCurrentVideoId(state.feedDetails[page].videoID)
+                    }
                     viewModel.onCurrentPageChange(page)
                     viewModel.setPostDescriptionExpanded(false)
                 },
@@ -246,6 +264,7 @@ private fun FeedOverlay(
     gameState: GameState,
     gameViewModel: GameViewModel,
 ) {
+    var lottieCached by remember { mutableStateOf(false) }
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.TopStart,
@@ -266,7 +285,7 @@ private fun FeedOverlay(
             feedViewModel.toggleReportSheet(true, pageNo)
         }
         if (gameState.gameIcons.isNotEmpty()) {
-            GameIconsRow(
+            SmileyGame(
                 gameIcons = gameState.gameIcons,
                 clickedIcon = gameState.gameResult[state.feedDetails[pageNo].videoID]?.first,
                 onIconClicked = {
@@ -278,11 +297,21 @@ private fun FeedOverlay(
                 coinDelta = gameViewModel.getFeedGameResult(state.feedDetails[pageNo].videoID),
                 errorMessage = gameViewModel.getFeedGameResultError(state.feedDetails[pageNo].videoID),
                 isLoading = gameState.isLoading,
+                hasShownCoinDeltaAnimation =
+                    gameViewModel.hasShownCoinDeltaAnimation(
+                        state.feedDetails[pageNo].videoID,
+                    ),
+                onDeltaAnimationComplete = {
+                    gameViewModel.markCoinDeltaAnimationShown(
+                        state.feedDetails[pageNo].videoID,
+                    )
+                },
             )
-            if (!gameState.cacheFetched) {
+            if (!lottieCached) {
                 gameState.gameIcons.forEach { icon ->
                     PreloadLottieAnimation(icon.clickAnimation)
                 }
+                lottieCached = true
             }
         }
     }
@@ -316,7 +345,7 @@ private fun TopView(
         )
         CoinBalance(
             coinBalance = gameState.coinBalance,
-            coinDelta = gameViewModel.getFeedGameResult(state.feedDetails[pageNo].videoID),
+            coinDelta = gameState.lastBalanceDifference,
             animateBag = gameState.animateCoinBalance,
             setAnimate = { gameViewModel.setAnimateCoinBalance(it) },
             modifier =

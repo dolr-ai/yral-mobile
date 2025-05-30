@@ -22,6 +22,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class GameViewModel(
@@ -45,12 +46,13 @@ class GameViewModel(
 
     init {
         coroutineScope.launch {
+            // Get result sheet shown preference outside state update
             preferences.getBoolean(PrefKeys.IS_RESULT_SHEET_SHOWN.name)?.let { shown ->
-                _state.emit(
-                    _state.value.copy(
+                _state.update { currentState ->
+                    currentState.copy(
                         isResultSheetShown = shown,
-                    ),
-                )
+                    )
+                }
             }
             listOf(
                 async { getGameRules() },
@@ -58,11 +60,11 @@ class GameViewModel(
             ).awaitAll()
             // Observe coin balance changes
             sessionManager.coinBalance.collect { balance ->
-                _state.emit(
-                    _state.value.copy(
+                _state.update { currentState ->
+                    currentState.copy(
                         coinBalance = balance,
-                    ),
-                )
+                    )
+                }
             }
         }
     }
@@ -70,12 +72,12 @@ class GameViewModel(
     private suspend fun getGameRules() {
         gameRulesUseCase
             .invoke(Unit)
-            .onSuccess {
-                _state.emit(
-                    _state.value.copy(
-                        gameRules = it,
-                    ),
-                )
+            .onSuccess { rules ->
+                _state.update { currentState ->
+                    currentState.copy(
+                        gameRules = rules,
+                    )
+                }
             }.onFailure { }
     }
 
@@ -86,12 +88,12 @@ class GameViewModel(
                     GetGameIconsUseCase.GetGameIconsParams(
                         coinBalance = _state.value.coinBalance,
                     ),
-            ).onSuccess {
-                _state.emit(
-                    _state.value.copy(
-                        gameIcons = it,
-                    ),
-                )
+            ).onSuccess { icons ->
+                _state.update { currentState ->
+                    currentState.copy(
+                        gameIcons = icons,
+                    )
+                }
             }.onFailure { }
     }
 
@@ -100,13 +102,15 @@ class GameViewModel(
         videoId: String,
     ) {
         coroutineScope.launch {
-            val temp = _state.value.gameResult.toMutableMap()
-            temp[videoId] = Pair(icon, VoteResult(0, ""))
-            _state.emit(
-                _state.value.copy(
-                    gameResult = temp,
-                ),
-            )
+            _state.update { currentState ->
+                // Create initial game result outside state update
+                val initialGameResult = Pair(icon, VoteResult(0, "", false))
+                val updatedGameResult = currentState.gameResult.toMutableMap()
+                updatedGameResult[videoId] = initialGameResult
+                currentState.copy(
+                    gameResult = updatedGameResult,
+                )
+            }
             setLoading(true)
             sessionManager.getUserPrincipal()?.let { principal ->
                 castVoteUseCase
@@ -141,87 +145,125 @@ class GameViewModel(
             ?.second
             ?.errorMessage ?: ""
 
+    fun hasShownCoinDeltaAnimation(videoId: String): Boolean =
+        _state
+            .value
+            .gameResult[videoId]
+            ?.second
+            ?.hasShownAnimation ?: false
+
+    fun markCoinDeltaAnimationShown(videoId: String) {
+        coroutineScope.launch {
+            _state.update { currentState ->
+                val updatedGameResult = currentState.gameResult.toMutableMap()
+                updatedGameResult[videoId]?.let { currentPair ->
+                    updatedGameResult[videoId] =
+                        currentPair.copy(
+                            second =
+                                currentPair.second.copy(
+                                    hasShownAnimation = true,
+                                ),
+                        )
+                }
+                currentState.copy(
+                    gameResult = updatedGameResult,
+                )
+            }
+        }
+    }
+
     private fun setFeedGameResult(
         videoId: String,
         voteResult: VoteResult,
     ) {
         coroutineScope.launch {
-            val temp = _state.value.gameResult.toMutableMap()
-            val tempPair = _state.value.gameResult[videoId]
-            tempPair?.let {
-                temp[videoId] = tempPair.copy(second = voteResult)
-            }
-            val newCoinBalance = _state.value.coinBalance.plus(voteResult.coinDelta)
-            val showResultSheet =
-                !_state.value.isResultSheetShown &&
-                    newCoinBalance != _state.value.coinBalance
-            if (showResultSheet) {
-                preferences.putBoolean(PrefKeys.IS_RESULT_SHEET_SHOWN.name, true)
-                _state.emit(
-                    _state.value.copy(isResultSheetShown = true),
+            // Get current state once to avoid multiple reads
+            val currentState = _state.value
+            // Calculate all updates outside state update
+            val updatedGameResult =
+                currentState.gameResult.toMutableMap().apply {
+                    get(videoId)?.let { currentPair ->
+                        // If this vote result is for a different video than current page, mark as shown
+                        val shouldMarkShown = videoId != currentState.currentVideoId
+                        put(
+                            videoId,
+                            currentPair
+                                .copy(
+                                    second = voteResult.copy(hasShownAnimation = shouldMarkShown),
+                                ),
+                        )
+                    }
+                }
+            val newCoinBalance = currentState.coinBalance + voteResult.coinDelta
+            val shouldShowResultSheet = !currentState.isResultSheetShown && newCoinBalance != currentState.coinBalance
+            // Single atomic state update for all game result changes
+            _state.update {
+                it.copy(
+                    gameResult = updatedGameResult,
+                    coinBalance = newCoinBalance,
+                    animateCoinBalance = newCoinBalance != it.coinBalance,
+                    showResultSheet = shouldShowResultSheet,
+                    isLoading = false,
+                    lastBalanceDifference = voteResult.coinDelta,
                 )
             }
-            _state.emit(
-                _state.value.copy(
-                    gameResult = temp,
-                    coinBalance = newCoinBalance,
-                    animateCoinBalance = newCoinBalance != _state.value.coinBalance,
-                    showResultSheet = showResultSheet,
-                    isLoading = false,
-                ),
-            )
-            // Update session with new coin balance
+            if (shouldShowResultSheet) {
+                preferences.putBoolean(PrefKeys.IS_RESULT_SHEET_SHOWN.name, true)
+                _state.update { it.copy(isResultSheetShown = true) }
+            }
+
+            // Update session after state update is complete
             sessionManager.updateCoinBalance(newCoinBalance)
         }
     }
 
     fun setAnimateCoinBalance(shouldAnimate: Boolean) {
         coroutineScope.launch {
-            _state.emit(
-                _state.value.copy(
+            _state.update { currentState ->
+                currentState.copy(
                     animateCoinBalance = shouldAnimate,
-                ),
-            )
+                )
+            }
         }
     }
 
     private fun setLoading(isLoading: Boolean) {
         coroutineScope.launch {
-            _state.emit(
-                _state.value.copy(
+            _state.update { currentState ->
+                currentState.copy(
                     isLoading = isLoading,
-                ),
-            )
+                )
+            }
         }
     }
 
     fun toggleResultSheet(isVisible: Boolean) {
         coroutineScope.launch {
-            _state.emit(
-                _state.value.copy(
+            _state.update { currentState ->
+                currentState.copy(
                     showResultSheet = isVisible,
-                ),
-            )
+                )
+            }
         }
     }
 
     fun toggleAboutGame(isVisible: Boolean) {
         coroutineScope.launch {
-            _state.emit(
-                _state.value.copy(
+            _state.update { currentState ->
+                currentState.copy(
                     showAboutGame = isVisible,
-                ),
-            )
+                )
+            }
         }
     }
 
-    fun updateCacheFetched() {
+    fun setCurrentVideoId(videoId: String) {
         coroutineScope.launch {
-            _state.emit(
-                _state.value.copy(
-                    cacheFetched = true,
-                ),
-            )
+            _state.update { currentState ->
+                currentState.copy(
+                    currentVideoId = videoId,
+                )
+            }
         }
     }
 }
@@ -235,6 +277,7 @@ data class GameState(
     val showResultSheet: Boolean = false,
     val showAboutGame: Boolean = false,
     val gameRules: List<AboutGameItem>,
-    val cacheFetched: Boolean = false,
     val isResultSheetShown: Boolean = false,
+    val currentVideoId: String = "",
+    val lastBalanceDifference: Int = 0,
 )
