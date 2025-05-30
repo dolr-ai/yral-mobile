@@ -214,7 +214,7 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
 extension DefaultAuthClient {
   enum Constants {
     static let clientID = "e1a6a7fb-8a1d-42dc-87b4-13ff94ecbe34"
-    static let redirectURI = "com.yral.iosApp.staging://oauth/callback"
+    static let redirectURI = "com.yral.iosApp://oauth/callback"
     static let authPath = "/oauth/auth"
     static let tokenPath = "/oauth/token"
     static let keychainIdentity = "yral.delegatedIdentity"
