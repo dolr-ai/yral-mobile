@@ -1,6 +1,7 @@
 name: Hot-or-Not Backend Release Monitor
 
 on:
+  push:
   schedule:
     # Check for new releases daily
     - cron: '0 0 * * *'
