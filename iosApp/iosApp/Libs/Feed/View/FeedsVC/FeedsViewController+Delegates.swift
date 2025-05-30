@@ -9,6 +9,38 @@ import UIKit
 import SwiftUI
 
 extension FeedsViewController: FeedsCellProtocol {
+  func makeSmileyGameRulesDIContainer() -> SmileyGameRuleDIContainer {
+    return SmileyGameRuleDIContainer(
+      dependencies: SmileyGameRuleDIContainer.Dependencies(
+        firebaseService: FirebaseService(),
+        crashReporter: CompositeCrashReporter(reporters: [FirebaseCrashlyticsReporter()])
+      )
+    )
+  }
+
+  func showGameResultBottomSheet(index: Int, gameResult: SmileyGameResultResponse) {
+    var hostingController: UIHostingController<SmileyGameResultBottomSheetView>?
+    let bottomSheetView = SmileyGameResultBottomSheetView(
+      gameResult: gameResult) {
+        hostingController?.dismiss(animated: true)
+      } onLearnMoreTapped: {
+        hostingController?.dismiss(animated: true) {
+          let smileyGameRuleView = self.makeSmileyGameRulesDIContainer().makeSmileyGameRuleView {
+            self.navigationController?.popViewController(animated: true)
+          }
+          let smileyGameRuleVC = UIHostingController(rootView: smileyGameRuleView)
+          smileyGameRuleVC.extendedLayoutIncludesOpaqueBars = true
+          self.navigationController?.pushViewController(smileyGameRuleVC, animated: true)
+        }
+      }
+
+    hostingController = UIHostingController(rootView: bottomSheetView)
+    hostingController!.modalPresentationStyle = .overFullScreen
+    hostingController!.modalTransitionStyle = .crossDissolve
+    hostingController?.view.backgroundColor = .clear
+    self.present(hostingController!, animated: true, completion: nil)
+  }
+
   func shareButtonTapped(index: Int) {
     activityIndicator.startAnimating(in: self.view)
     // swiftlint: disable line_length
@@ -27,35 +59,16 @@ extension FeedsViewController: FeedsCellProtocol {
     }
   }
 
-  func likeButtonTapped(index: Int) {
+  func smileyTapped(index: Int, smiley: Smiley) {
     let item = feedsDataSource.snapshot().itemIdentifiers[index]
-    guard let postID = Int(item.postID) else { return }
-    let canisterID = item.canisterID
+    let videoID = item.videoID
+    let smileyID = smiley.id
+
     Task { @MainActor in
-      await self.viewModel.toggleLike(request: LikeQuery(postID: postID, canisterID: canisterID, index: index))
-    }
-    guard let cell = feedsCV.cellForItem(at: IndexPath(item: index, section: .zero)) as? FeedsCell else { return }
-    cell.setLikeStatus(isLiked: cell.likeButton.configuration?.image == FeedsCell.Constants.likeUnSelectedImage)
-    Task {
-      await self.viewModel.log(
-        event: VideoEventRequest(
-          displayName: item.displayName,
-          hashtagCount: Int32(item.hashtags.count),
-          isHotOrNot: item.nsfwProbability > Constants.nsfwProbability,
-          isLoggedIn: session.state.isLoggedIn,
-          isNsfw: false,
-          likeCount: Int32(item.likeCount),
-          nsfwProbability: item.nsfwProbability,
-          postID: Int32(item.postID) ?? .zero,
-          publisherCanisterID: item.canisterID,
-          publisherUserID: item.principalID,
-          videoID: item.videoID,
-          viewCount: item.viewCount,
-          event: VideoEventType.like.rawValue
-        )
-      )
+      await self.viewModel.castVote(request: CastVoteQuery(videoID: videoID, smileyID: smileyID))
     }
   }
+
 
   func deleteButtonTapped(index: Int) {
     getNudgeView(at: index, isDelete: true)
