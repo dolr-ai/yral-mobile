@@ -276,6 +276,7 @@ private fun FeedOverlay(
                     )
                 },
                 coinDelta = gameViewModel.getFeedGameResult(state.feedDetails[pageNo].videoID),
+                errorMessage = gameViewModel.getFeedGameResultError(state.feedDetails[pageNo].videoID),
                 isLoading = gameState.isLoading,
             )
             if (!gameState.cacheFetched) {

@@ -7,4 +7,5 @@ object AppConfigurations {
     const val FEED_BASE_URL = "yral-ml-feed-server.fly.dev"
     const val OFF_CHAIN_BASE_URL = "icp-off-chain-agent.fly.dev"
     const val FIREBASE_BUCKET = "gs://yral-staging.firebasestorage.app"
+    const val FIREBASE_AUTH_URL = "us-central1-yral-staging.cloudfunctions.net"
 }
