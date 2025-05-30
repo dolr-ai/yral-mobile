@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 
 @Composable
 fun YRALReelPlayer(
+    modifier: Modifier = Modifier,
     videoUrlArray: List<Pair<String, String>>,
     initialPage: Int,
     onPageLoaded: (currentPage: Int) -> Unit,
@@ -29,7 +30,7 @@ fun YRALReelPlayer(
     overlayContent: @Composable (pageNo: Int) -> Unit,
 ) {
     YRALReelsPlayerView(
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
         urls = videoUrlArray,
         initialPage = initialPage,
         onPageLoaded = onPageLoaded,

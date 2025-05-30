@@ -3,6 +3,7 @@ package com.yral.shared.features.root.viewmodels
 import androidx.lifecycle.ViewModel
 import com.github.michaelbull.result.mapBoth
 import com.yral.shared.core.dispatchers.AppDispatchers
+import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.crashlytics.core.CrashlyticsManager
@@ -16,11 +17,21 @@ import com.yral.shared.rust.domain.models.Post
 import com.yral.shared.rust.services.IndividualUserServiceFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.core.parameter.parametersOf
+
+enum class RootError {
+    TIMEOUT,
+    SESSION_INITIALIZATION_FAILED,
+    INITIAL_CONTENT_FAILED,
+    FEED_DETAILS_FAILED,
+    UNEXPECTED_ERROR,
+}
 
 @Suppress("TooGenericExceptionCaught")
 class RootViewModel(
@@ -36,6 +47,8 @@ class RootViewModel(
 
     companion object {
         const val MIN_REQUIRED_ITEMS = 1
+        private const val SPLASH_SCREEN_TIMEOUT = 20000L // 20 seconds timeout
+        private const val INITIAL_DELAY_FOR_SETUP = 300L
     }
 
     private val _state = MutableStateFlow(RootState())
@@ -44,14 +57,27 @@ class RootViewModel(
 
     fun initialize() {
         coroutineScope.launch {
-            _state.emit(
-                RootState(
+            _state.update {
+                it.copy(
                     currentSessionState = sessionManager.state.value,
-                    currentHomePageTab = _state.value.currentHomePageTab,
-                    initialAnimationComplete = _state.value.initialAnimationComplete,
-                ),
-            )
+                    currentHomePageTab = it.currentHomePageTab,
+                    initialAnimationComplete = it.initialAnimationComplete,
+                    error = null,
+                )
+            }
+            // Launch timeout coroutine
+            launch {
+                delay(SPLASH_SCREEN_TIMEOUT)
+                if (_state.value.showSplash) {
+                    _state.update { it.copy(error = RootError.TIMEOUT) }
+                    crashlyticsManager.recordException(
+                        YralException("Splash screen timeout - initialization took too long"),
+                    )
+                }
+            }
+
             try {
+                delay(INITIAL_DELAY_FOR_SETUP)
                 if (sessionManager.getCanisterPrincipal() != null) {
                     initialFeedData(sessionManager.getUserPrincipal()!!)
                 } else {
@@ -62,66 +88,82 @@ class RootViewModel(
                                 principal = principal,
                                 identityData = identity,
                             )
-                        } ?: error("Identity is null")
-                    } ?: error("Principal is null after initialization")
+                        } ?: throw YralException("Identity is null")
+                    } ?: throw YralException("Principal is null after initialization")
                 }
             } catch (e: Exception) {
                 crashlyticsManager.recordException(e)
+                _state.update { it.copy(error = RootError.SESSION_INITIALIZATION_FAILED) }
             }
         }
     }
 
     private suspend fun initialFeedData(principal: String) {
-        getInitialFeedUseCase
-            .invoke(
-                parameter =
-                    GetInitialFeedUseCase.Params(
-                        canisterID = principal,
-                        filterResults = emptyList(),
-                    ),
-            ).mapBoth(
-                success = { result ->
-                    val posts = result.posts
-                    _state.emit(
-                        _state.value.copy(
-                            posts = posts,
+        try {
+            getInitialFeedUseCase
+                .invoke(
+                    parameter =
+                        GetInitialFeedUseCase.Params(
+                            canisterID = principal,
+                            filterResults = emptyList(),
                         ),
-                    )
-                    if (posts.isNotEmpty()) {
-                        posts.take(MIN_REQUIRED_ITEMS).forEach { post -> fetchFeedDetail(post) }
-                    }
-                },
-                failure = { _ ->
-                    // No need to throw error, BaseUseCase reports to CrashlyticsManager
-                    // error("Error loading initial posts: $error")
-                },
-            )
+                ).mapBoth(
+                    success = { result ->
+                        val posts = result.posts
+                        _state.update { it.copy(posts = posts) }
+                        if (posts.isNotEmpty()) {
+                            posts.take(MIN_REQUIRED_ITEMS).forEach { post -> fetchFeedDetail(post) }
+                        } else {
+                            // No posts available, but session is initialized
+                            _state.update { it.copy(showSplash = false) }
+                        }
+                    },
+                    failure = { _ ->
+                        // UseCase already records the exception
+                        _state.update { it.copy(error = RootError.INITIAL_CONTENT_FAILED) }
+                    },
+                )
+        } catch (e: Exception) {
+            crashlyticsManager.recordException(e)
+            _state.update { it.copy(error = RootError.UNEXPECTED_ERROR) }
+        }
     }
 
     private suspend fun fetchFeedDetail(post: Post) {
-        fetchFeedDetailsUseCase
-            .invoke(post)
-            .mapBoth(
-                success = { detail ->
-                    val feedDetailsList = _state.value.feedDetails.toMutableList()
-                    feedDetailsList.add(detail)
-                    _state.emit(
-                        _state.value.copy(
-                            feedDetails = feedDetailsList.toList(),
-                            showSplash = feedDetailsList.size < MIN_REQUIRED_ITEMS,
-                        ),
-                    )
-                },
-                failure = { _ ->
-                    // No need to throw error, BaseUseCase reports to CrashlyticsManager
-                    // error("Error loading initial posts: $error")
-                },
-            )
+        try {
+            fetchFeedDetailsUseCase
+                .invoke(post)
+                .mapBoth(
+                    success = { detail ->
+                        updateFeedDetailsState(detail)
+                    },
+                    failure = { _ ->
+                        // UseCase already records the exception
+                        _state.update { it.copy(error = RootError.FEED_DETAILS_FAILED) }
+                    },
+                )
+        } catch (e: Exception) {
+            crashlyticsManager.recordException(e)
+            _state.update { it.copy(error = RootError.UNEXPECTED_ERROR) }
+        }
+    }
+
+    private fun updateFeedDetailsState(newDetail: FeedDetails) {
+        coroutineScope.launch {
+            _state.update { currentState ->
+                val feedDetailsList = currentState.feedDetails.toMutableList()
+                feedDetailsList.add(newDetail)
+                currentState.copy(
+                    feedDetails = feedDetailsList.toList(),
+                    showSplash = feedDetailsList.size < MIN_REQUIRED_ITEMS,
+                )
+            }
+        }
     }
 
     fun onSplashAnimationComplete() {
         coroutineScope.launch {
-            _state.emit(_state.value.copy(initialAnimationComplete = true))
+            _state.update { it.copy(initialAnimationComplete = true) }
         }
     }
 
@@ -132,11 +174,7 @@ class RootViewModel(
 
     fun updateCurrentTab(tab: String) {
         coroutineScope.launch {
-            _state.emit(
-                _state.value.copy(
-                    currentHomePageTab = tab,
-                ),
-            )
+            _state.update { it.copy(currentHomePageTab = tab) }
         }
     }
 }
@@ -148,4 +186,5 @@ data class RootState(
     val initialAnimationComplete: Boolean = false,
     val currentHomePageTab: String = "Home",
     val currentSessionState: SessionState? = null,
+    val error: RootError? = null,
 )
