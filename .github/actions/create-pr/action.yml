@@ -55,8 +55,7 @@ runs:
       with:
         commit-message: "Update .did files from release ${{ inputs.release_tag }}"
         title: "${{ inputs.breaking_changes == 'true' && '🚨 BREAKING CHANGES: ' || '' }}Update .did files from release ${{ inputs.release_tag }}"
-        add-paths: |
-          *.did
+        path: shared/rust/rust-agent-uniffi/did/
         body: |
           ${{ inputs.breaking_changes == 'true' && '# ⚠️ WARNING: This PR Contains Breaking Changes ⚠️
 

@@ -53,21 +53,37 @@ runs:
         ESCAPED_BODY=$(echo "$RELEASE_BODY" | sed 's/"/\\"/g' | sed ':a;N;$!ba;s/\n/\\n/g' | head -c 500)
         echo "release_body=$ESCAPED_BODY" >> $GITHUB_OUTPUT
         
-        # Check if we've seen this release before
-        if [ -f "last_release.txt" ]; then
-          LAST_NOTIFIED=$(cat last_release.txt)
-          echo "Last notified release: $LAST_NOTIFIED"
+        # Check version file in codebase
+        VERSION_FILE="shared/rust/rust-agent-uniffi/did/VERSION"
+        if [ -f "$VERSION_FILE" ]; then
+          VERSION_FILE_TAG=$(cat "$VERSION_FILE")
+          echo "Last notified release from version file: $VERSION_FILE_TAG"
         else
-          LAST_NOTIFIED="v3.5.4"  # Initialize with current latest
-          echo "No previous notifications found, initializing with v3.5.4"
+          echo "No version file found"
+          # Create version file directory
+          mkdir -p "$(dirname "$VERSION_FILE")"
         fi
         
-        if [ "$RELEASE_TAG" != "$LAST_NOTIFIED" ] && [ "$RELEASE_TAG" != "null" ]; then
+        # Check cache for last processed version
+        CACHE_KEY="last-processed-release"
+        CACHE_PATH=".github/cache"
+        mkdir -p "$CACHE_PATH"
+        
+        if [ -f "$CACHE_PATH/$CACHE_KEY" ]; then
+          CACHE_TAG=$(cat "$CACHE_PATH/$CACHE_KEY")
+          echo "Last processed release from cache: $CACHE_TAG"
+        else
+          echo "No cache found"
+        fi
+        
+        # Determine if this is a new release by checking both version file and cache
+        if [ "$RELEASE_TAG" != "$VERSION_FILE_TAG" ] && [ "$RELEASE_TAG" != "$CACHE_TAG" ] && [ "$RELEASE_TAG" != "null" ]; then
           echo "New release detected!"
           echo "new_release=true" >> $GITHUB_OUTPUT
           
-          # Update the last notified release
-          echo "$RELEASE_TAG" > last_release.txt
+          # Update both version file and cache
+          echo "$RELEASE_TAG" > "$VERSION_FILE"
+          echo "$RELEASE_TAG" > "$CACHE_PATH/$CACHE_KEY"
         else
           echo "No new release"
           echo "new_release=false" >> $GITHUB_OUTPUT

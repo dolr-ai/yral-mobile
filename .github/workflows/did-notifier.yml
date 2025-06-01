@@ -19,6 +19,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Cache last processed release
+        uses: actions/cache@v4
+        id: release-cache
+        with:
+          path: .github/cache
+          key: last-processed-release
+          restore-keys: |
+            last-processed-release
+
       - name: Check for new releases
         id: check_release
         uses: ./.github/actions/check-release
