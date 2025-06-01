@@ -24,7 +24,9 @@ jobs:
         id: release-cache
         with:
           path: .github/cache
-          key: last-processed-release
+          key: ${{ github.ref }}-last-processed-release
+          restore-keys: |
+            ${{ github.ref }}-last-processed-release-
 
       - name: Check for new releases
         id: check_release
