@@ -25,7 +25,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
@@ -68,7 +67,6 @@ class RootViewModelTest {
     private lateinit var crashlyticsManager: CrashlyticsManager
 
     private val testDispatcher = StandardTestDispatcher()
-    private val testScope = TestScope(testDispatcher)
     private val sessionState = MutableStateFlow<SessionState>(SessionState.Initial)
 
     private lateinit var viewModel: RootViewModel
@@ -123,7 +121,7 @@ class RootViewModelTest {
      */
     @Test
     fun `initialization flow completes successfully and shows feed screen`() =
-        testScope.runTest {
+        runTest {
             // Given
             val mockPosts = createMockPosts(5)
             val mockFeedDetails = createMockFeedDetails(mockPosts)
@@ -201,7 +199,7 @@ class RootViewModelTest {
      */
     @Test
     fun `initialization shows error when initial feed loading fails`() =
-        testScope.runTest {
+        runTest {
             // Given
             coEvery {
                 getInitialFeedUseCase.invoke(any())
@@ -245,7 +243,7 @@ class RootViewModelTest {
      */
     @Test
     fun `initialization times out after threshold`() =
-        testScope.runTest {
+        runTest {
             // Given
             coEvery {
                 getInitialFeedUseCase.invoke(any())
@@ -300,7 +298,7 @@ class RootViewModelTest {
      */
     @Test
     fun `retry initialization after error works`() =
-        testScope.runTest {
+        runTest {
             // Given
             var shouldFail = true
             val mockPosts = List(5) { createMockPost(it.toString()) }
@@ -388,7 +386,7 @@ class RootViewModelTest {
      */
     @Test
     fun `initialization waits for initial delay before starting`() =
-        testScope.runTest {
+        runTest {
             // Given
             var initializationStarted = false
             coEvery {
@@ -444,7 +442,7 @@ class RootViewModelTest {
      */
     @Test
     fun `multiple initialization calls respect delay for each call`() =
-        testScope.runTest {
+        runTest {
             // Given
             var initializationCount = 0
             coEvery {
@@ -503,7 +501,7 @@ class RootViewModelTest {
      */
     @Test
     fun `initialization delay does not affect timeout threshold`() =
-        testScope.runTest {
+        runTest {
             // Given
             coEvery {
                 getInitialFeedUseCase.invoke(any())
