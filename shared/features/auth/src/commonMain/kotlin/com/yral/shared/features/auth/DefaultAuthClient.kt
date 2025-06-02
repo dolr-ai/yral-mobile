@@ -188,7 +188,7 @@ class DefaultAuthClient(
                     .invoke(GetIdTokenUseCase.DEFAULT)
                     .onSuccess { idToken ->
                         exchangePrincipalId(idToken, data, canisterWrapper)
-                    }.onFailure { throw YralException(it.localizedMessage ?: "") }
+                    }.onFailure { }
             }.onFailure { }
     }
 

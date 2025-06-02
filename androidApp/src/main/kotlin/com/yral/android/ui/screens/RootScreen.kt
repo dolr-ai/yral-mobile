@@ -35,8 +35,8 @@ import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.screens.home.HomeScreen
 import com.yral.android.ui.widgets.YralBottomSheet
 import com.yral.android.ui.widgets.YralGradientButton
-import com.yral.shared.features.root.viewmodels.RootError
 import com.yral.android.ui.widgets.YralLottieAnimation
+import com.yral.shared.features.root.viewmodels.RootError
 import com.yral.shared.features.root.viewmodels.RootViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
