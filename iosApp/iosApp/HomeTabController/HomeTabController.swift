@@ -60,7 +60,15 @@ struct HomeTabController: View {
           .tag(Tab.leaderboard)
 
         uploadView
-          .onDoneAction { selectedTab = .home }
+          .onDoneAction {
+            selectedTab = .home
+            let authOptions: UNAuthorizationOptions = [.alert, .badge, .sound]
+            UNUserNotificationCenter.current().requestAuthorization(
+              options: authOptions,
+              completionHandler: { _, _ in }
+            )
+            UIApplication.shared.registerForRemoteNotifications()
+          }
           .background(Color.black.edgesIgnoringSafeArea(.all))
           .tabItem { tabIcon(selected: selectedTab == .upload,
                              selectedName: Constants.uploadIconImageNameSelected,
@@ -87,6 +95,13 @@ struct HomeTabController: View {
       }
       .onChange(of: selectedTab) { tab in
         tabDidChange(to: tab)
+      }
+      .onReceive(
+        NotificationCenter.default.publisher(
+          for: .videoUploadNotificationReceived
+        )
+      ) { _ in
+        uploadNotificationReceived()
       }
       GeometryReader { geometry in
         let tabWidth = geometry.size.width / .five
@@ -155,6 +170,13 @@ struct HomeTabController: View {
         categoryName: categoryName
       )
     )
+  }
+
+  func uploadNotificationReceived() {
+    self.selectedTab = .profile
+    Task {
+      await profileView.refreshVideos(shouldPurge: false)
+    }
   }
 }
 

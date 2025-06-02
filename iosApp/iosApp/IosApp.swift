@@ -3,8 +3,9 @@ import FirebaseCore
 import FirebaseAppCheck
 import iosSharedUmbrella
 import FBSDKCoreKit
+import FirebaseMessaging
 
-class AppDelegate: NSObject, UIApplicationDelegate {
+class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate, MessagingDelegate {
   func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
@@ -41,6 +42,8 @@ class AppDelegate: NSObject, UIApplicationDelegate {
       }
     }
 #endif
+    Messaging.messaging().delegate = self
+    UNUserNotificationCenter.current().delegate = self
     return true
   }
 
@@ -50,6 +53,39 @@ class AppDelegate: NSObject, UIApplicationDelegate {
     options: [UIApplication.OpenURLOptionsKey: Any] = [:]
   ) -> Bool {
     return ApplicationDelegate.shared.application(app, open: url, options: options)
+  }
+
+  func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
+    guard let token = fcmToken else { return }
+  }
+
+  func userNotificationCenter(
+    _ center: UNUserNotificationCenter,
+    didReceive response: UNNotificationResponse,
+    withCompletionHandler completionHandler: @escaping () -> Void
+  ) {
+    NotificationCenter.default.post(name: .videoUploadNotificationReceived, object: nil)
+  }
+
+  func userNotificationCenter(
+    _ center: UNUserNotificationCenter,
+    willPresent notification: UNNotification
+  ) async -> UNNotificationPresentationOptions {
+    ToastManager.showToast(type: .uploadSuccess) {
+        NotificationCenter.default.post(name: .videoUploadNotificationReceived, object: nil)
+    }
+    return [.banner, .sound, .badge]
+  }
+
+  func application(
+    _ application: UIApplication,
+    didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
+  ) {
+    Messaging.messaging().apnsToken = deviceToken
+  }
+
+  func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: any Error) {
+    print(error)
   }
 }
 
