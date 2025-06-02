@@ -3,6 +3,7 @@ package com.yral.shared.core.utils
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.Semaphore
@@ -17,17 +18,30 @@ class InsufficientItemsException(
 
 fun <T> Iterable<T>.filterFirstNSuspendFlow(
     n: Int,
-    maxConcurrency: Int = MAX_CONCURRENCY, // Optional cap to prevent excessive parallelism
+    // Optional cap to prevent excessive parallelism
+    maxConcurrency: Int = MAX_CONCURRENCY,
     predicate: suspend (T) -> Boolean,
-): Flow<T> =
-    channelFlow {
+): Flow<T> {
+    // Handle edge case where n is 0
+    if (n <= 0) {
+        return emptyFlow()
+    }
+
+    return channelFlow {
+        val items = this@filterFirstNSuspendFlow.toList()
+
+        // Handle edge case where input is empty
+        if (items.isEmpty()) {
+            throw InsufficientItemsException("Found only 0 items out of required $n")
+        }
+
         val semaphore = Semaphore(maxConcurrency)
         val resultChannel = Channel<T>(Channel.UNLIMITED)
         val completedJobsMutex = Mutex()
         var completedJobs = 0
-        val totalJobs = count()
+        val totalJobs = items.size
         val jobs =
-            map { item ->
+            items.map { item ->
                 launch {
                     semaphore.withPermit {
                         if (predicate(item)) {
@@ -60,3 +74,4 @@ fun <T> Iterable<T>.filterFirstNSuspendFlow(
             }
         }
     }
+}
