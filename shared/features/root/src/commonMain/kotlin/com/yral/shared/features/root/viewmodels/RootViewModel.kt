@@ -51,8 +51,8 @@ class RootViewModel(
 
     companion object {
         const val MIN_REQUIRED_ITEMS = 1
-        private const val SPLASH_SCREEN_TIMEOUT = 20000L // 20 seconds timeout
-        private const val INITIAL_DELAY_FOR_SETUP = 300L
+        const val SPLASH_SCREEN_TIMEOUT = 20000L // 20 seconds timeout
+        const val INITIAL_DELAY_FOR_SETUP = 300L
     }
 
     private val _state = MutableStateFlow(RootState())

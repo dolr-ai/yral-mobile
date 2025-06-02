@@ -30,6 +30,8 @@ coil = "3.1.0"
 browser = "1.8.0"
 touchlab-logger = "2.0.5"
 desugar-jdk-libs = "2.1.5"
+turbine = "1.2.0"
+mockk = "1.14.2"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -54,6 +56,7 @@ multiplatform-settings = { module = "com.russhwolf:multiplatform-settings", vers
 
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
 
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebase-bom"}
 firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics" }
@@ -88,6 +91,9 @@ androidx-browser = { group = "androidx.browser", name = "browser", version.ref =
 touchlab-logger = { module = "co.touchlab:kermit", version.ref = "touchlab-logger"}
 
 desugar-jdk-libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar-jdk-libs" }
+
+turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
