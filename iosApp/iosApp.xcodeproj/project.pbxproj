@@ -241,6 +241,10 @@
 		AC391EEA2DCE4DE600A8DFA9 /* DeleteUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC391EE82DCE4DE100A8DFA9 /* DeleteUseCase.swift */; };
 		AC42D3672E0BFDCB009C2D92 /* DeleteAccountDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC42D3662E0BFDC6009C2D92 /* DeleteAccountDTO.swift */; };
 		AC42D3682E0BFDCB009C2D92 /* DeleteAccountDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC42D3662E0BFDC6009C2D92 /* DeleteAccountDTO.swift */; };
+		AC42D3FB2E0D6E7E009C2D92 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC42D3F82E0D6E7E009C2D92 /* NotificationService.swift */; };
+		AC42D3FC2E0D6E7E009C2D92 /* FirebaseNotifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC42D3F62E0D6E7E009C2D92 /* FirebaseNotifications.swift */; };
+		AC42D3FD2E0D6E7E009C2D92 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC42D3F82E0D6E7E009C2D92 /* NotificationService.swift */; };
+		AC42D3FE2E0D6E7E009C2D92 /* FirebaseNotifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC42D3F62E0D6E7E009C2D92 /* FirebaseNotifications.swift */; };
 		AC462F422D95A4AD004957B3 /* OffsetableScrollView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC462F412D95A4A8004957B3 /* OffsetableScrollView.swift */; };
 		AC462F432D95A4AD004957B3 /* OffsetableScrollView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC462F412D95A4A8004957B3 /* OffsetableScrollView.swift */; };
 		AC462F472D95B7F8004957B3 /* ReportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC462F462D95B7F5004957B3 /* ReportView.swift */; };
@@ -694,6 +698,9 @@
 		AC391EE52DCE476400A8DFA9 /* Signup_scroll_lottie.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Signup_scroll_lottie.json; sourceTree = "<group>"; };
 		AC391EE82DCE4DE100A8DFA9 /* DeleteUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeleteUseCase.swift; sourceTree = "<group>"; };
 		AC42D3662E0BFDC6009C2D92 /* DeleteAccountDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeleteAccountDTO.swift; sourceTree = "<group>"; };
+		AC42D3F62E0D6E7E009C2D92 /* FirebaseNotifications.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseNotifications.swift; sourceTree = "<group>"; };
+		AC42D3F82E0D6E7E009C2D92 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
+		AC42D4682E0D8EF7009C2D92 /* YralRelease.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = YralRelease.entitlements; sourceTree = "<group>"; };
 		AC462F412D95A4A8004957B3 /* OffsetableScrollView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OffsetableScrollView.swift; sourceTree = "<group>"; };
 		AC462F462D95B7F5004957B3 /* ReportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportView.swift; sourceTree = "<group>"; };
 		AC462F492D95BB61004957B3 /* FeedsCell+Captions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FeedsCell+Captions.swift"; sourceTree = "<group>"; };
@@ -1173,6 +1180,7 @@
 		7555FF72242A565900829871 = {
 			isa = PBXGroup;
 			children = (
+				AC42D4682E0D8EF7009C2D92 /* YralRelease.entitlements */,
 				AC04D3002E059E3A0055C4AA /* Yral.entitlements */,
 				ACD941BD2CFF57BC0038FCB6 /* Staging */,
 				ACD941BC2CFF57A90038FCB6 /* Prod */,
@@ -1610,6 +1618,31 @@
 			path = DTO;
 			sourceTree = "<group>";
 		};
+		AC42D3F72E0D6E7E009C2D92 /* FirebaseNotifications */ = {
+			isa = PBXGroup;
+			children = (
+				AC42D3F62E0D6E7E009C2D92 /* FirebaseNotifications.swift */,
+			);
+			path = FirebaseNotifications;
+			sourceTree = "<group>";
+		};
+		AC42D3F92E0D6E7E009C2D92 /* Interface */ = {
+			isa = PBXGroup;
+			children = (
+				AC42D3F82E0D6E7E009C2D92 /* NotificationService.swift */,
+			);
+			path = Interface;
+			sourceTree = "<group>";
+		};
+		AC42D3FA2E0D6E7E009C2D92 /* NotificationService */ = {
+			isa = PBXGroup;
+			children = (
+				AC42D3F72E0D6E7E009C2D92 /* FirebaseNotifications */,
+				AC42D3F92E0D6E7E009C2D92 /* Interface */,
+			);
+			path = NotificationService;
+			sourceTree = "<group>";
+		};
 		AC462F452D95B7E7004957B3 /* Report */ = {
 			isa = PBXGroup;
 			children = (
@@ -1683,6 +1716,7 @@
 				ACB46A242D0EC083002E200C /* Video */,
 				ACB46A582D0EF912002E200C /* Auth */,
 				AC6BECBA2D09F0FD002E2021 /* Network */,
+				AC42D3FA2E0D6E7E009C2D92 /* NotificationService */,
 				AC26CA472D802683006ADA75 /* CrashReporting */,
 				ACAA4D652DDCB123001092A6 /* PerformanceMonitor */,
 			);
@@ -3025,6 +3059,8 @@
 				ACB46A7D2D105BEB002E200C /* UIKitInitializers.swift in Sources */,
 				AC26CA562D80281D006ADA75 /* FirebaseCrashlyticsReporter.swift in Sources */,
 				10020A0E2DE8438600DF269E /* LeaderboardViewModel.swift in Sources */,
+				AC42D3FB2E0D6E7E009C2D92 /* NotificationService.swift in Sources */,
+				AC42D3FC2E0D6E7E009C2D92 /* FirebaseNotifications.swift in Sources */,
 				AC32E4692D2998D6001DDA43 /* AccountDIContainer.swift in Sources */,
 				AC5A7B8C2DACF1E2009E9E42 /* VideoEventDTO.swift in Sources */,
 				ACB46A362D0EC998002E200C /* FeedDIContainer.swift in Sources */,
@@ -3259,6 +3295,8 @@
 				ACB46A7C2D105BEB002E200C /* UIKitInitializers.swift in Sources */,
 				AC26CA552D80281D006ADA75 /* FirebaseCrashlyticsReporter.swift in Sources */,
 				10020A0F2DE8438600DF269E /* LeaderboardViewModel.swift in Sources */,
+				AC42D3FD2E0D6E7E009C2D92 /* NotificationService.swift in Sources */,
+				AC42D3FE2E0D6E7E009C2D92 /* FirebaseNotifications.swift in Sources */,
 				AC32E4682D2998D6001DDA43 /* AccountDIContainer.swift in Sources */,
 				AC5A7B8B2DACF1E2009E9E42 /* VideoEventDTO.swift in Sources */,
 				ACB46A372D0EC998002E200C /* FeedDIContainer.swift in Sources */,
@@ -3561,7 +3599,7 @@
 			baseConfigurationReference = 08F40604DAAC742B08F402D9 /* Pods-Yral.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_ENTITLEMENTS = Yral.entitlements;
+				CODE_SIGN_ENTITLEMENTS = YralRelease.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				CODE_SIGN_STYLE = Manual;

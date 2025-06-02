@@ -18,6 +18,7 @@ Pod::Spec.new do |spec|
     spec.dependency 'FirebaseCrashlytics', '11.14.0'
     spec.dependency 'FirebaseFirestore', '11.14.0'
     spec.dependency 'FirebaseInstallations', '11.14.0'
+    spec.dependency 'FirebaseMessaging', '11.14.0'
     spec.dependency 'FirebasePerformance', '11.14.0'
     spec.dependency 'FirebaseStorage', '11.14.0'
     spec.dependency 'GoogleUtilities', '8.1'

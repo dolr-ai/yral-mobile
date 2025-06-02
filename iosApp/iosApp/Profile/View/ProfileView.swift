@@ -103,7 +103,7 @@ struct ProfileView: View {
             .offset(y: 20.0)
             .refreshable {
               Task {
-                await self.viewModel.refreshVideos(request: RefreshVideosRequest(shouldPurge: false))
+                await self.refreshVideos(shouldPurge: false)
               }
             }
           }
@@ -190,11 +190,7 @@ struct ProfileView: View {
           .permanentAuthentication:
         Task {
           await viewModel.fetchProfileInfo()
-          await viewModel.refreshVideos(
-            request: RefreshVideosRequest(
-              shouldPurge: true
-            )
-          )
+          await refreshVideos(shouldPurge: true)
         }
       default: break
       }
@@ -205,6 +201,10 @@ struct ProfileView: View {
     var copy = self
     copy.uploadVideoPressed = action
     return copy
+  }
+
+  func refreshVideos(shouldPurge: Bool) async {
+    await self.viewModel.refreshVideos(request: RefreshVideosRequest(shouldPurge: shouldPurge))
   }
 }
 
