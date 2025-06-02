@@ -9,6 +9,7 @@ import Foundation
 import Combine
 import AuthenticationServices
 import iosSharedUmbrella
+import FirebaseMessaging
 
 extension DefaultAuthClient {
   @discardableResult
@@ -241,6 +242,24 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
       }
     } catch {
       stateSubject.value = oldState
+    }
+  }
+
+  @objc func notificationTokenUpdated(_ notification: Notification) {
+    Task {
+      return try await recordThrowingOperation {
+        guard let token = notification.object as? String else { return }
+        let identity = try self.generateNewDelegatedIdentity()
+        try await register_device(identity, token.intoRustString())
+      }
+    }
+  }
+
+  func deregisterForNotifications() async throws {
+    try await recordThrowingOperation {
+      let token = try await notificationService.getRegistrationToken()
+      let identity = try self.generateNewDelegatedIdentity()
+      try await unregister_device(identity, token.intoRustString())
     }
   }
 }
