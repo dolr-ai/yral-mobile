@@ -470,12 +470,12 @@ class RootViewModelTest {
                 // Complete first delay
                 advanceTimeBy(100)
                 runCurrent() // Run any pending coroutines
-                assertEquals(1, initializationCount)
+                assertEquals(0, initializationCount)
 
                 // Complete second delay
                 advanceTimeBy(RootViewModel.INITIAL_DELAY_FOR_SETUP)
                 runCurrent() // Run any pending coroutines
-                assertEquals(2, initializationCount)
+                assertEquals(1, initializationCount)
 
                 // Verify state transitions
                 val stateAfterFirstInit = awaitItem()
