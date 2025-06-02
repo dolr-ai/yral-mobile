@@ -45,7 +45,15 @@ struct HomeTabController: View {
           .tag(Int.zero)
 
         uploadView
-          .onDoneAction { selectedTab = .zero }
+          .onDoneAction {
+            selectedTab = .zero
+            let authOptions: UNAuthorizationOptions = [.alert, .badge, .sound]
+            UNUserNotificationCenter.current().requestAuthorization(
+              options: authOptions,
+              completionHandler: { _, _ in }
+            )
+            UIApplication.shared.registerForRemoteNotifications()
+          }
           .background(Color.black.edgesIgnoringSafeArea(.all))
           .tabItem { tabIcon(selected: selectedTab == .one,
                              selectedName: Constants.uploadIconImageNameSelected,

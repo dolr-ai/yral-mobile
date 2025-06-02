@@ -34,7 +34,8 @@ import GRPC
     let client = DefaultAuthClient(
       networkService: HTTPService(),
       crashReporter: crashReporter,
-      baseURL: URL(string: appConfiguration.authBaseURLString) ?? URL(fileURLWithPath: "")
+      baseURL: URL(string: appConfiguration.authBaseURLString) ?? URL(fileURLWithPath: ""),
+      notificationService: FirebaseNotifications()
     )
     return client
   }()

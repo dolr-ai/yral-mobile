@@ -11,6 +11,7 @@ import Combine
 import secp256k1
 import AuthenticationServices
 
+// swiftlint: disable type_body_length
 final class DefaultAuthClient: NSObject, AuthClient {
   private(set) var identity: DelegatedIdentity?
   private(set) var canisterPrincipal: Principal?
@@ -26,14 +27,27 @@ final class DefaultAuthClient: NSObject, AuthClient {
   let networkService: NetworkService
   let crashReporter: CrashReporter
   let baseURL: URL
+  let notificationService: NotificationService
 
   var pendingAuthState: String!
 
-  init(networkService: NetworkService, crashReporter: CrashReporter, baseURL: URL) {
+  init(
+    networkService: NetworkService,
+    crashReporter: CrashReporter,
+    baseURL: URL,
+    notificationService: NotificationService
+  ) {
     self.networkService = networkService
     self.crashReporter = crashReporter
     self.baseURL = baseURL
+    self.notificationService = notificationService
     super.init()
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(notificationTokenUpdated(_:)),
+      name: .registrationTokenUpdated,
+      object: nil
+    )
   }
 
   @MainActor
@@ -215,6 +229,7 @@ final class DefaultAuthClient: NSObject, AuthClient {
     try? KeychainHelper.deleteItem(for: Constants.keychainRefreshToken)
     UserDefaultsManager.shared.remove(.authIdentityExpiryDateKey)
     UserDefaultsManager.shared.remove(.authRefreshTokenExpiryDateKey)
+    try await deregisterForNotifications()
     identity = nil
     canisterPrincipal = nil
     canisterPrincipalString = nil
@@ -289,3 +304,4 @@ enum DelegateIdentityType {
   case ephemeral
   case permanent
 }
+// swiftlint: enable type_body_length

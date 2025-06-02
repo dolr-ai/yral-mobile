@@ -8,6 +8,7 @@
 import Foundation
 import Combine
 import AuthenticationServices
+import FirebaseMessaging
 
 extension DefaultAuthClient {
   @discardableResult
@@ -63,9 +64,9 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
         let challenge = PKCE.codeChallenge(for: verifier)
         let redirect = Constants.redirectURI
         let authURL = try getAuthURL(provider: provider,
-                                       redirect: redirect,
-                                       challenge: challenge,
-                                       loginHint: nil)
+                                     redirect: redirect,
+                                     challenge: challenge,
+                                     loginHint: nil)
 
         let callbackURL: URL = try await withCheckedThrowingContinuation { continuation in
           let session = ASWebAuthenticationSession(
@@ -207,6 +208,24 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
       }
     } catch {
       stateSubject.value = oldState
+    }
+  }
+
+  @objc private func notificationTokenUpdated(_ notification: Notification) {
+    Task {
+      return try await recordThrowingOperation {
+        guard let token = notification.object as? String else { return }
+        let identity = try self.generateNewDelegatedIdentity()
+        try await register_device(identity, token.intoRustString())
+      }
+    }
+  }
+
+  func deregisterForNotifications() async throws {
+    try await recordThrowingOperation {
+      let token = try await notificationService.getRegistrationToken()
+      let identity = try self.generateNewDelegatedIdentity()
+      try await unregister_device(identity, token.intoRustString())
     }
   }
 }

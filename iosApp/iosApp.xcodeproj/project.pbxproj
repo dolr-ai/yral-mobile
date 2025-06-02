@@ -145,6 +145,10 @@
 		AC51C04C2DC392B500D5BA34 /* LogoutUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC51C04A2DC392AF00D5BA34 /* LogoutUseCase.swift */; };
 		AC51C0522DC4E0D200D5BA34 /* RefreshVideosRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC51C0512DC4E0CC00D5BA34 /* RefreshVideosRequest.swift */; };
 		AC51C0532DC4E0D200D5BA34 /* RefreshVideosRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC51C0512DC4E0CC00D5BA34 /* RefreshVideosRequest.swift */; };
+		AC52C4F02DEDCD4700553935 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC52C4EF2DEDCD3E00553935 /* NotificationService.swift */; };
+		AC52C4F12DEDCD4700553935 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC52C4EF2DEDCD3E00553935 /* NotificationService.swift */; };
+		AC52C4F62DEDCD9A00553935 /* FirebaseNotifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC52C4F52DEDCD9500553935 /* FirebaseNotifications.swift */; };
+		AC52C4F72DEDCD9A00553935 /* FirebaseNotifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC52C4F52DEDCD9500553935 /* FirebaseNotifications.swift */; };
 		AC5A7B8B2DACF1E2009E9E42 /* VideoEventDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC5A7B8A2DACF1DE009E9E42 /* VideoEventDTO.swift */; };
 		AC5A7B8C2DACF1E2009E9E42 /* VideoEventDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC5A7B8A2DACF1DE009E9E42 /* VideoEventDTO.swift */; };
 		AC5A7B8E2DACF5B2009E9E42 /* VideoEventRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC5A7B8D2DACF5AC009E9E42 /* VideoEventRequest.swift */; };
@@ -260,6 +264,8 @@
 		AC99BBC12D86FF81008012C2 /* ProfileEmptyState.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC99BBC02D86FF7D008012C2 /* ProfileEmptyState.swift */; };
 		AC99BBC22D86FF81008012C2 /* ProfileEmptyState.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC99BBC02D86FF7D008012C2 /* ProfileEmptyState.swift */; };
 		AC9B77E62D58C84000270FC9 /* HLSDownloadManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9B77D52D58C2F300270FC9 /* HLSDownloadManagerTests.swift */; };
+		AC9D32C82DE890CA00C53678 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = AC9D32C72DE890CA00C53678 /* FirebaseMessaging */; };
+		AC9D32CA2DE890D100C53678 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = AC9D32C92DE890D100C53678 /* FirebaseMessaging */; };
 		ACAA4D5F2DDC75CB001092A6 /* Notifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAA4D5E2DDC75C3001092A6 /* Notifications.swift */; };
 		ACAA4D602DDC75CB001092A6 /* Notifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAA4D5E2DDC75C3001092A6 /* Notifications.swift */; };
 		ACAA4D622DDCA813001092A6 /* FirebasePerformance in Frameworks */ = {isa = PBXBuildFile; productRef = ACAA4D612DDCA813001092A6 /* FirebasePerformance */; };
@@ -540,6 +546,9 @@
 		AC51C0452DC3905100D5BA34 /* RefreshTokenRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RefreshTokenRequest.swift; sourceTree = "<group>"; };
 		AC51C04A2DC392AF00D5BA34 /* LogoutUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogoutUseCase.swift; sourceTree = "<group>"; };
 		AC51C0512DC4E0CC00D5BA34 /* RefreshVideosRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RefreshVideosRequest.swift; sourceTree = "<group>"; };
+		AC52C4EF2DEDCD3E00553935 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
+		AC52C4F52DEDCD9500553935 /* FirebaseNotifications.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseNotifications.swift; sourceTree = "<group>"; };
+		AC590D422DE9CFB000E09B83 /* Yral.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Yral.entitlements; sourceTree = "<group>"; };
 		AC5A7B8A2DACF1DE009E9E42 /* VideoEventDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoEventDTO.swift; sourceTree = "<group>"; };
 		AC5A7B8D2DACF5AC009E9E42 /* VideoEventRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoEventRequest.swift; sourceTree = "<group>"; };
 		AC5A7C662DAD72A0009E9E42 /* LogUploadEventUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogUploadEventUseCase.swift; sourceTree = "<group>"; };
@@ -593,6 +602,7 @@
 		AC99BBC02D86FF7D008012C2 /* ProfileEmptyState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileEmptyState.swift; sourceTree = "<group>"; };
 		AC9B77D52D58C2F300270FC9 /* HLSDownloadManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HLSDownloadManagerTests.swift; sourceTree = "<group>"; };
 		AC9B77DD2D58C7E300270FC9 /* YralTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = YralTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		AC9D32C62DE8858800C53678 /* Yral-Staging.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "Yral-Staging.entitlements"; sourceTree = "<group>"; };
 		ACAA4D5E2DDC75C3001092A6 /* Notifications.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Notifications.swift; sourceTree = "<group>"; };
 		ACAA4D682DDCB15B001092A6 /* PerformanceMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PerformanceMonitor.swift; sourceTree = "<group>"; };
 		ACAA4D6B2DDCB24F001092A6 /* FirebasePerformanceMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebasePerformanceMonitor.swift; sourceTree = "<group>"; };
@@ -686,6 +696,7 @@
 				ACAA4D622DDCA813001092A6 /* FirebasePerformance in Frameworks */,
 				ACC0F3A32D2ED69200FA5BD0 /* Lottie in Frameworks */,
 				ACD941C42CFF5B3D0038FCB6 /* FirebaseCore in Frameworks */,
+				AC9D32C82DE890CA00C53678 /* FirebaseMessaging in Frameworks */,
 				ACD941C62CFF5B3D0038FCB6 /* FirebaseCrashlytics in Frameworks */,
 				AC6BECAA2D09D52B002E2021 /* CGRPCZlib in Frameworks */,
 				AC6BECB02D09D52B002E2021 /* protoc-gen-grpc-swift in Frameworks */,
@@ -719,6 +730,7 @@
 				ACD941CA2CFF5B5B0038FCB6 /* FirebaseAnalyticsOnDeviceConversion in Frameworks */,
 				AC6E311E2D22F069001EBE6C /* SDWebImage in Frameworks */,
 				ACD941CE2CFF5B5B0038FCB6 /* FirebaseCrashlytics in Frameworks */,
+				AC9D32CA2DE890D100C53678 /* FirebaseMessaging in Frameworks */,
 				AC6E31202D22F069001EBE6C /* SDWebImageMapKit in Frameworks */,
 				ACD941CC2CFF5B5B0038FCB6 /* FirebaseCore in Frameworks */,
 			);
@@ -774,6 +786,8 @@
 		7555FF72242A565900829871 = {
 			isa = PBXGroup;
 			children = (
+				AC590D422DE9CFB000E09B83 /* Yral.entitlements */,
+				AC9D32C62DE8858800C53678 /* Yral-Staging.entitlements */,
 				ACD941BD2CFF57BC0038FCB6 /* Staging */,
 				ACD941BC2CFF57A90038FCB6 /* Prod */,
 				AC09A9B12CDB775C009A39A4 /* Generated */,
@@ -1234,6 +1248,31 @@
 			path = Entity;
 			sourceTree = "<group>";
 		};
+		AC52C4F22DEDCD6B00553935 /* NotificationService */ = {
+			isa = PBXGroup;
+			children = (
+				AC52C4F32DEDCD7C00553935 /* Interface */,
+				AC52C4F42DEDCD8900553935 /* FirebaseNotifications */,
+			);
+			path = NotificationService;
+			sourceTree = "<group>";
+		};
+		AC52C4F32DEDCD7C00553935 /* Interface */ = {
+			isa = PBXGroup;
+			children = (
+				AC52C4EF2DEDCD3E00553935 /* NotificationService.swift */,
+			);
+			path = Interface;
+			sourceTree = "<group>";
+		};
+		AC52C4F42DEDCD8900553935 /* FirebaseNotifications */ = {
+			isa = PBXGroup;
+			children = (
+				AC52C4F52DEDCD9500553935 /* FirebaseNotifications.swift */,
+			);
+			path = FirebaseNotifications;
+			sourceTree = "<group>";
+		};
 		AC61D3B32DB28AB000A7EA92 /* EULA */ = {
 			isa = PBXGroup;
 			children = (
@@ -1253,6 +1292,7 @@
 		AC6BECB92D09F0F0002E2021 /* Infrastructure */ = {
 			isa = PBXGroup;
 			children = (
+				AC52C4F22DEDCD6B00553935 /* NotificationService */,
 				ACB46A282D0EC765002E200C /* AppConfiguration.swift */,
 				AC26CA592D802BA4006ADA75 /* BaseUseCase */,
 				ACB46A242D0EC083002E200C /* Video */,
@@ -2403,10 +2443,12 @@
 				ACC0D4482D8DA208006DCF5C /* RefreshVideosUseCase.swift in Sources */,
 				AC7F7ED72D79648100215162 /* UpdateMetaDataRequest.swift in Sources */,
 				AC32E47A2D2AF599001DDA43 /* CacheDTO.swift in Sources */,
+				AC52C4F02DEDCD4700553935 /* NotificationService.swift in Sources */,
 				AC5A7C682DAD72A6009E9E42 /* LogUploadEventUseCase.swift in Sources */,
 				AC8472AB2D1D9139004A4259 /* HLSDownloadManager.swift in Sources */,
 				AC32E45B2D296731001DDA43 /* AccountRepositoryProtocol.swift in Sources */,
 				AC811B402DBA56F70094C5F6 /* SignupOverlay.swift in Sources */,
+				AC52C4F62DEDCD9A00553935 /* FirebaseNotifications.swift in Sources */,
 				AC7F7ECA2D786F8E00215162 /* UploadVideoUseCase.swift in Sources */,
 				ACAA4DBC2DDE08D6001092A6 /* HLSDownloadManager+Mockers.swift in Sources */,
 				ACB09FDA2D92D6E900EE3239 /* MoreFeedsRequest.swift in Sources */,
@@ -2593,10 +2635,12 @@
 				ACC0D4492D8DA208006DCF5C /* RefreshVideosUseCase.swift in Sources */,
 				AC7F7ED62D79648100215162 /* UpdateMetaDataRequest.swift in Sources */,
 				AC32E4792D2AF599001DDA43 /* CacheDTO.swift in Sources */,
+				AC52C4F12DEDCD4700553935 /* NotificationService.swift in Sources */,
 				AC5A7C672DAD72A6009E9E42 /* LogUploadEventUseCase.swift in Sources */,
 				AC8472AA2D1D9139004A4259 /* HLSDownloadManager.swift in Sources */,
 				AC32E45C2D296731001DDA43 /* AccountRepositoryProtocol.swift in Sources */,
 				AC811B412DBA56F70094C5F6 /* SignupOverlay.swift in Sources */,
+				AC52C4F72DEDCD9A00553935 /* FirebaseNotifications.swift in Sources */,
 				AC7F7ECB2D786F8E00215162 /* UploadVideoUseCase.swift in Sources */,
 				ACAA4DBB2DDE08D6001092A6 /* HLSDownloadManager+Mockers.swift in Sources */,
 				ACB09FDB2D92D6E900EE3239 /* MoreFeedsRequest.swift in Sources */,
@@ -2792,6 +2836,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Yral.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				CODE_SIGN_STYLE = Manual;
@@ -2831,6 +2876,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Yral.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				CODE_SIGN_STYLE = Manual;
@@ -2920,6 +2966,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = "Yral-Staging.entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CODE_SIGN_STYLE = Manual;
@@ -2958,6 +3005,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = "Yral-Staging.entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CODE_SIGN_STYLE = Manual;
@@ -3165,6 +3213,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = AC6E31182D22F050001EBE6C /* XCRemoteSwiftPackageReference "SDWebImage" */;
 			productName = SDWebImageMapKit;
+		};
+		AC9D32C72DE890CA00C53678 /* FirebaseMessaging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = ACD941C02CFF5B3D0038FCB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseMessaging;
+		};
+		AC9D32C92DE890D100C53678 /* FirebaseMessaging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = ACD941C02CFF5B3D0038FCB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseMessaging;
 		};
 		ACAA4D612DDCA813001092A6 /* FirebasePerformance */ = {
 			isa = XCSwiftPackageProductDependency;

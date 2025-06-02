@@ -6,7 +6,7 @@
 //  Copyright © 2025 orgName. All rights reserved.
 //
 
-import Foundation
+import UIKit
 
 enum UploadViewState {
   case initialized
