@@ -269,7 +269,8 @@ class KotlinExtensionsTest {
             val result =
                 items
                     .filterFirstNSuspendFlow(n) { item ->
-                        delay(1) // Small delay to simulate real work
+                        // Small delay to simulate real work
+                        delay(1)
                         item % 100 == 0
                     }.toList()
 
@@ -298,7 +299,8 @@ class KotlinExtensionsTest {
                     .filterFirstNSuspendFlow(n) { item ->
                         jobsStarted++
                         delay(10)
-                        val passes = item <= 6 && item % 2 == 0 // Only 2, 4, 6 should pass
+                        // Only 2, 4, 6 should pass
+                        val passes = item <= 6 && item % 2 == 0
                         jobsCompleted++
                         passes
                     }.toList()
@@ -343,7 +345,8 @@ class KotlinExtensionsTest {
             val result =
                 items
                     .filterFirstNSuspendFlow(n) { item ->
-                        delay(5) // Simulate async validation
+                        // Simulate async validation
+                        delay(5)
                         item.active && item.name.length > 3
                     }.toList()
 
@@ -352,5 +355,132 @@ class KotlinExtensionsTest {
             assertTrue(result.all { it.active && it.name.length > 3 })
             // Should get Alice and Charlie (or David, or Frank - depends on execution order)
             assertTrue(result.all { it.name in listOf("Alice", "Charlie", "David", "Frank") })
+        }
+
+    /**
+     * Tests throwOnInsufficient = false: should return available items without throwing exception.
+     */
+    @Test
+    fun `filterFirstNSuspendFlow with throwOnInsufficient false returns available items`() =
+        runTest {
+            // Given
+            // Only 1 even number
+            val items = listOf(1, 2, 3, 5, 7, 9)
+            val n = 3
+
+            // When - trying to get 3 even numbers when only 1 exists, but don't throw
+            val result =
+                items
+                    .filterFirstNSuspendFlow(
+                        n = n,
+                        throwOnInsufficient = false,
+                    ) { it % 2 == 0 }
+                    .toList()
+
+            // Then - should get the 1 available even number without exception
+            assertEquals(1, result.size)
+            assertEquals(2, result.first())
+        }
+
+    /**
+     * Tests throwOnInsufficient = false with empty input: should return empty list.
+     */
+    @Test
+    fun `filterFirstNSuspendFlow with throwOnInsufficient false and empty input returns empty list`() =
+        runTest {
+            // Given
+            val items = emptyList<Int>()
+            val n = 1
+
+            // When
+            val result =
+                items
+                    .filterFirstNSuspendFlow(
+                        n = n,
+                        throwOnInsufficient = false,
+                    ) { true }
+                    .toList()
+
+            // Then
+            assertEquals(0, result.size)
+        }
+
+    /**
+     * Tests throwOnInsufficient = false when no items pass predicate: should return empty list.
+     */
+    @Test
+    fun `filterFirstNSuspendFlow with throwOnInsufficient false and no matching items returns empty list`() =
+        runTest {
+            // Given
+            // All odd numbers
+            val items = listOf(1, 3, 5, 7, 9)
+            val n = 3
+
+            // When - trying to filter for even numbers with throwOnInsufficient = false
+            val result =
+                items
+                    .filterFirstNSuspendFlow(
+                        n = n,
+                        throwOnInsufficient = false,
+                    ) { it % 2 == 0 }
+                    .toList()
+
+            // Then
+            assertEquals(0, result.size)
+        }
+
+    /**
+     * Tests throwOnInsufficient = true (default behavior): should throw exception when insufficient items.
+     */
+    @Test
+    fun `filterFirstNSuspendFlow with throwOnInsufficient true throws exception when insufficient items`() =
+        runTest {
+            // Given
+            // Only 1 even number
+            val items = listOf(1, 2, 3, 5, 7, 9)
+            val n = 3
+
+            // When & Then - should throw exception (default behavior)
+            val exception =
+                assertFailsWith<InsufficientItemsException> {
+                    items
+                        .filterFirstNSuspendFlow(
+                            n = n,
+                            throwOnInsufficient = true,
+                        ) { it % 2 == 0 }
+                        .toList()
+                }
+            assertEquals("Found only 1 items out of required 3", exception.message)
+        }
+
+    /**
+     * Tests pagination scenario: get whatever items are available without errors.
+     */
+    @Test
+    fun `filterFirstNSuspendFlow supports pagination scenario with partial results`() =
+        runTest {
+            // Given - simulating a feed where some items are already voted/seen
+            val allPosts = (1..10).toList()
+            // Half are voted
+            val votedPosts = setOf(2, 4, 6, 8, 10)
+            val requestedCount = 8
+
+            // When - trying to get 8 unvoted posts but only 5 are available
+            val result =
+                allPosts
+                    .filterFirstNSuspendFlow(
+                        n = requestedCount,
+                        // Don't throw, just return what's available
+                        throwOnInsufficient = false,
+                    ) { post ->
+                        // Simulate async vote checking
+                        delay(1)
+                        !votedPosts.contains(post)
+                    }.toList()
+
+            // Then - should get the 5 available unvoted posts
+            assertEquals(5, result.size)
+            assertEquals(listOf(1, 3, 5, 7, 9), result.sorted())
+            assertTrue(result.none { it in votedPosts })
         }
 }

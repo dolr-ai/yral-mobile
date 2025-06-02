@@ -20,6 +20,8 @@ fun <T> Iterable<T>.filterFirstNSuspendFlow(
     n: Int,
     // Optional cap to prevent excessive parallelism
     maxConcurrency: Int = MAX_CONCURRENCY,
+    // Whether to throw exception when insufficient items are found
+    throwOnInsufficient: Boolean = true,
     predicate: suspend (T) -> Boolean,
 ): Flow<T> {
     // Handle edge case where n is 0
@@ -32,7 +34,10 @@ fun <T> Iterable<T>.filterFirstNSuspendFlow(
 
         // Handle edge case where input is empty
         if (items.isEmpty()) {
-            throw InsufficientItemsException("Found only 0 items out of required $n")
+            if (throwOnInsufficient) {
+                throw InsufficientItemsException("Found only 0 items out of required $n")
+            }
+            return@channelFlow
         }
 
         val semaphore = Semaphore(maxConcurrency)
@@ -69,7 +74,7 @@ fun <T> Iterable<T>.filterFirstNSuspendFlow(
                 }
             }
             // If we exit the loop because channel was closed but didn't get enough items
-            if (count < n) {
+            if (count < n && throwOnInsufficient) {
                 throw InsufficientItemsException("Found only $count items out of required $n")
             }
         }

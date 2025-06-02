@@ -67,7 +67,10 @@ class FeedViewModel(
                             _state.value.feedDetails.any { feedDetails -> feedDetails.videoID != post.videoID }
                         }
                 alreadyFetched
-                    .filterFirstNSuspendFlow(alreadyFetched.size) {
+                    .filterFirstNSuspendFlow(
+                        n = alreadyFetched.size,
+                        throwOnInsufficient = false,
+                    ) {
                         !isAlreadyVoted(it)
                     }.toList()
                     .forEach { fetchFeedDetail(it) }
@@ -124,7 +127,15 @@ class FeedViewModel(
                     ).mapBoth(
                         success = { moreFeed ->
                             // Do the filtering outside the update block since it's a long operation
-                            val filteredPosts = moreFeed.posts.filter { post -> !isAlreadyVoted(post) }
+                            val filteredPosts =
+                                moreFeed
+                                    .posts
+                                    .filterFirstNSuspendFlow(
+                                        n = moreFeed.posts.size,
+                                        throwOnInsufficient = false,
+                                    ) {
+                                        !isAlreadyVoted(it)
+                                    }.toList()
 
                             _state.update { currentState ->
                                 val posts = currentState.posts.toMutableList()
