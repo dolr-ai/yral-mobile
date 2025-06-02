@@ -35,8 +35,8 @@ import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.screens.home.HomeScreen
 import com.yral.android.ui.widgets.YralBottomSheet
 import com.yral.android.ui.widgets.YralGradientButton
-import com.yral.shared.features.root.viewmodels.RootError
 import com.yral.android.ui.widgets.YralLottieAnimation
+import com.yral.shared.features.root.viewmodels.RootError
 import com.yral.shared.features.root.viewmodels.RootViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -189,5 +189,6 @@ fun RootError.toErrorMessage(): String =
             RootError.SESSION_INITIALIZATION_FAILED -> R.string.error_session_init
             RootError.INITIAL_CONTENT_FAILED -> R.string.error_initial_content
             RootError.FEED_DETAILS_FAILED -> R.string.error_feed_details
+            RootError.NO_UNVOTED_POSTS -> R.string.error_feed_details
         },
     )

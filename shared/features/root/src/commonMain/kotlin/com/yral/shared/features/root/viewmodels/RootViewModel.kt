@@ -35,6 +35,7 @@ enum class RootError {
     SESSION_INITIALIZATION_FAILED,
     INITIAL_CONTENT_FAILED,
     FEED_DETAILS_FAILED,
+    NO_UNVOTED_POSTS,
 }
 
 @Suppress("TooGenericExceptionCaught")
@@ -123,10 +124,14 @@ class RootViewModel(
                     val posts = result.posts
                     _state.update { it.copy(posts = posts) }
                     if (posts.isNotEmpty()) {
-                        posts
-                            .filter { !isAlreadyVoted(it) }
-                            .take(MIN_REQUIRED_ITEMS)
-                            .forEach { post -> fetchFeedDetail(post) }
+                        val unVotedPosts = posts.filter { !isAlreadyVoted(it) }
+                        if (unVotedPosts.isEmpty()) {
+                            _state.update { it.copy(error = RootError.NO_UNVOTED_POSTS) }
+                        } else {
+                            unVotedPosts
+                                .take(MIN_REQUIRED_ITEMS)
+                                .forEach { post -> fetchFeedDetail(post) }
+                        }
                     } else {
                         // No posts available, but session is initialized
                         _state.update { it.copy(showSplash = false) }
