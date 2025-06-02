@@ -135,6 +135,11 @@ class RootViewModelTest {
                 getInitialFeedUseCase.invoke(any())
             } returns Ok(PostResponse(posts = mockPosts))
 
+            // Mock checkVideoVoteUseCase to return false (not voted) for all posts
+            coEvery {
+                checkVideoVoteUseCase.invoke(any())
+            } returns Ok(false)
+
             mockPosts.forEach { post ->
                 coEvery {
                     fetchFeedDetailsUseCase.invoke(post)
@@ -170,7 +175,7 @@ class RootViewModelTest {
                 assertFalse(finalState.showSplash)
                 assertEquals(
                     finalState.feedDetails.map { it.videoID },
-                    mockFeedDetails.take(1).map { it.videoID },
+                    mockFeedDetails.take(RootViewModel.MIN_REQUIRED_ITEMS).map { it.videoID },
                 )
                 assertNull(finalState.error)
 
@@ -186,8 +191,8 @@ class RootViewModelTest {
                     ),
                 )
             }
-            coVerify(exactly = 1) {
-                fetchFeedDetailsUseCase.invoke(mockPosts.first())
+            coVerify(exactly = RootViewModel.MIN_REQUIRED_ITEMS) {
+                fetchFeedDetailsUseCase.invoke(any())
             }
         }
 
@@ -320,6 +325,11 @@ class RootViewModelTest {
                 }
             }
 
+            // Mock checkVideoVoteUseCase to return false (not voted) for all posts
+            coEvery {
+                checkVideoVoteUseCase.invoke(any())
+            } returns Ok(false)
+
             mockPosts.forEach { post ->
                 coEvery {
                     fetchFeedDetailsUseCase.invoke(post)
@@ -356,22 +366,21 @@ class RootViewModelTest {
                 assertTrue(stateAfterSecondSession.showSplash)
                 assertNull(stateAfterSecondSession.error)
 
-                // Skip states until final
-                var currentState = awaitItem()
-                while (currentState.showSplash) {
-                    currentState = awaitItem()
-                }
+                // Verify posts are loaded
+                val stateWithPosts = awaitItem()
+                assertEquals(stateWithPosts.posts.map { it.videoID }, mockPosts.map { it.videoID })
+                assertTrue(stateWithPosts.showSplash)
 
-                // Verify successful state
-                assertFalse(currentState.showSplash)
-                assertNull(currentState.error)
-                assertEquals(currentState.posts.map { it.videoID }, mockPosts.map { it.videoID })
+                // Verify feed details are loaded and splash is hidden
+                val finalState = awaitItem()
+                assertFalse(finalState.showSplash)
                 assertEquals(
-                    currentState.feedDetails.map { it.videoID },
+                    finalState.feedDetails.map { it.videoID },
                     mockFeedDetails
-                        .take(1)
+                        .take(RootViewModel.MIN_REQUIRED_ITEMS)
                         .map { it.videoID },
                 )
+                assertNull(finalState.error)
 
                 cancelAndIgnoreRemainingEvents()
             }
@@ -550,6 +559,71 @@ class RootViewModelTest {
                 coVerify { crashlyticsManager.recordException(any()) }
 
                 cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    /**
+     * Tests error handling when there are not enough unvoted posts:
+     * 1. Shows splash screen initially
+     * 2. Loads initial posts successfully
+     * 3. All posts are already voted (filtered out)
+     * 4. Shows appropriate error state for no unvoted posts
+     *
+     * Verifies:
+     * - Correct handling of insufficient unvoted posts
+     * - Appropriate error state is set
+     * - Splash screen remains visible during error
+     */
+    @Test
+    fun `initialization shows error when not enough unvoted posts available`() =
+        runTest {
+            // Given
+            val mockPosts = createMockPosts(2) // Less than MIN_REQUIRED_ITEMS but posts exist
+
+            coEvery {
+                getInitialFeedUseCase.invoke(any())
+            } returns Ok(PostResponse(posts = mockPosts))
+
+            // Mock checkVideoVoteUseCase to return true (already voted) for all posts
+            coEvery {
+                checkVideoVoteUseCase.invoke(any())
+            } returns Ok(true)
+
+            // When
+            viewModel.state.test {
+                // Initial state
+                val initialState = awaitItem()
+                assertTrue(initialState.showSplash)
+                assertNull(initialState.error)
+
+                // Start initialization
+                viewModel.initialize()
+
+                // Skip initial delay
+                advanceTimeBy(RootViewModel.INITIAL_DELAY_FOR_SETUP)
+                runCurrent()
+
+                // State after session initialization
+                val stateAfterSession = awaitItem()
+                assertTrue(stateAfterSession.showSplash)
+                assertNull(stateAfterSession.error)
+
+                // Verify posts are loaded
+                val stateWithPosts = awaitItem()
+                assertEquals(stateWithPosts.posts.map { it.videoID }, mockPosts.map { it.videoID })
+                assertTrue(stateWithPosts.showSplash)
+
+                // Verify error state for no unvoted posts
+                val errorState = awaitItem()
+                assertEquals(RootError.NO_UNVOTED_POSTS, errorState.error)
+                assertTrue(errorState.showSplash)
+
+                cancelAndIgnoreRemainingEvents()
+            }
+
+            // Verify that checkVideoVoteUseCase was called for each post
+            coVerify(exactly = mockPosts.size) {
+                checkVideoVoteUseCase.invoke(any())
             }
         }
 
