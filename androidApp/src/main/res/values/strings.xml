@@ -38,6 +38,5 @@
     <string name="error_session_init">Unable to load content. Please try again.</string>
     <string name="error_initial_content">Unable to load content. Please try again.</string>
     <string name="error_feed_details">Unable to load content. Please try again.</string>
-    <string name="error_unexpected">An unexpected error occurred. Please try again.</string>
     <string name="error_retry">Retry</string>
 </resources>

@@ -214,6 +214,5 @@ fun RootError.toErrorMessage(): String =
             RootError.SESSION_INITIALIZATION_FAILED -> R.string.error_session_init
             RootError.INITIAL_CONTENT_FAILED -> R.string.error_initial_content
             RootError.FEED_DETAILS_FAILED -> R.string.error_feed_details
-            RootError.UNEXPECTED_ERROR -> R.string.error_unexpected
         },
     )

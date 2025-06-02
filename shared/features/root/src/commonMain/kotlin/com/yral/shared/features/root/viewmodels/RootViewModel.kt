@@ -15,14 +15,19 @@ import com.yral.shared.koin.koinInstance
 import com.yral.shared.rust.domain.models.FeedDetails
 import com.yral.shared.rust.domain.models.Post
 import com.yral.shared.rust.services.IndividualUserServiceFactory
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 import org.koin.core.parameter.parametersOf
 
 enum class RootError {
@@ -30,7 +35,6 @@ enum class RootError {
     SESSION_INITIALIZATION_FAILED,
     INITIAL_CONTENT_FAILED,
     FEED_DETAILS_FAILED,
-    UNEXPECTED_ERROR,
 }
 
 @Suppress("TooGenericExceptionCaught")
@@ -55,97 +59,94 @@ class RootViewModel(
     val state: StateFlow<RootState> = _state.asStateFlow()
     val sessionManagerState = sessionManager.state
 
+    private var initialisationJob: Job? = null
+
     fun initialize() {
-        coroutineScope.launch {
-            _state.update {
-                it.copy(
-                    currentSessionState = sessionManager.state.value,
-                    currentHomePageTab = it.currentHomePageTab,
-                    initialAnimationComplete = it.initialAnimationComplete,
-                    error = null,
-                )
-            }
-            // Launch timeout coroutine
-            launch {
-                delay(SPLASH_SCREEN_TIMEOUT)
-                if (_state.value.showSplash) {
+        initialisationJob?.cancel()
+        initialisationJob =
+            coroutineScope.launch {
+                _state.update {
+                    it.copy(
+                        currentSessionState = sessionManager.state.value,
+                        currentHomePageTab = it.currentHomePageTab,
+                        initialAnimationComplete = it.initialAnimationComplete,
+                        error = null,
+                    )
+                }
+                try {
+                    withTimeout(SPLASH_SCREEN_TIMEOUT) {
+                        checkLoginAndInitialize()
+                    }
+                } catch (e: TimeoutCancellationException) {
                     _state.update { it.copy(error = RootError.TIMEOUT) }
                     crashlyticsManager.recordException(
                         YralException("Splash screen timeout - initialization took too long"),
                     )
+                    throw e
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    crashlyticsManager.recordException(e)
+                    _state.update { it.copy(error = RootError.SESSION_INITIALIZATION_FAILED) }
                 }
             }
+    }
 
-            try {
-                delay(INITIAL_DELAY_FOR_SETUP)
-                if (sessionManager.getCanisterPrincipal() != null) {
-                    initialFeedData(sessionManager.getUserPrincipal()!!)
-                } else {
-                    authClient.initialize()
-                    sessionManager.getCanisterPrincipal()?.let { principal ->
-                        sessionManager.getIdentity()?.let { identity ->
-                            individualUserServiceFactory.initialize(
-                                principal = principal,
-                                identityData = identity,
-                            )
-                        } ?: throw YralException("Identity is null")
-                    } ?: throw YralException("Principal is null after initialization")
-                }
-            } catch (e: Exception) {
-                crashlyticsManager.recordException(e)
-                _state.update { it.copy(error = RootError.SESSION_INITIALIZATION_FAILED) }
-            }
+    private suspend fun checkLoginAndInitialize() {
+        delay(INITIAL_DELAY_FOR_SETUP)
+        if (sessionManager.getCanisterPrincipal() != null) {
+            initialFeedData(sessionManager.getUserPrincipal()!!)
+        } else {
+            authClient.initialize()
+            sessionManager.getCanisterPrincipal()?.let { principal ->
+                sessionManager.getIdentity()?.let { identity ->
+                    individualUserServiceFactory.initialize(
+                        principal = principal,
+                        identityData = identity,
+                    )
+                } ?: throw YralException("Identity is null")
+            } ?: throw YralException("Principal is null after initialization")
         }
     }
 
     private suspend fun initialFeedData(principal: String) {
-        try {
-            getInitialFeedUseCase
-                .invoke(
-                    parameter =
-                        GetInitialFeedUseCase.Params(
-                            canisterID = principal,
-                            filterResults = emptyList(),
-                        ),
-                ).mapBoth(
-                    success = { result ->
-                        val posts = result.posts
-                        _state.update { it.copy(posts = posts) }
-                        if (posts.isNotEmpty()) {
-                            posts.take(MIN_REQUIRED_ITEMS).forEach { post -> fetchFeedDetail(post) }
-                        } else {
-                            // No posts available, but session is initialized
-                            _state.update { it.copy(showSplash = false) }
-                        }
-                    },
-                    failure = { _ ->
-                        // UseCase already records the exception
-                        _state.update { it.copy(error = RootError.INITIAL_CONTENT_FAILED) }
-                    },
-                )
-        } catch (e: Exception) {
-            crashlyticsManager.recordException(e)
-            _state.update { it.copy(error = RootError.UNEXPECTED_ERROR) }
-        }
+        getInitialFeedUseCase
+            .invoke(
+                parameter =
+                    GetInitialFeedUseCase.Params(
+                        canisterID = principal,
+                        filterResults = emptyList(),
+                    ),
+            ).mapBoth(
+                success = { result ->
+                    val posts = result.posts
+                    _state.update { it.copy(posts = posts) }
+                    if (posts.isNotEmpty()) {
+                        posts.take(MIN_REQUIRED_ITEMS).forEach { post -> fetchFeedDetail(post) }
+                    } else {
+                        // No posts available, but session is initialized
+                        _state.update { it.copy(showSplash = false) }
+                    }
+                },
+                failure = { _ ->
+                    // UseCase already records the exception
+                    _state.update { it.copy(error = RootError.INITIAL_CONTENT_FAILED) }
+                },
+            )
     }
 
     private suspend fun fetchFeedDetail(post: Post) {
-        try {
-            fetchFeedDetailsUseCase
-                .invoke(post)
-                .mapBoth(
-                    success = { detail ->
-                        updateFeedDetailsState(detail)
-                    },
-                    failure = { _ ->
-                        // UseCase already records the exception
-                        _state.update { it.copy(error = RootError.FEED_DETAILS_FAILED) }
-                    },
-                )
-        } catch (e: Exception) {
-            crashlyticsManager.recordException(e)
-            _state.update { it.copy(error = RootError.UNEXPECTED_ERROR) }
-        }
+        fetchFeedDetailsUseCase
+            .invoke(post)
+            .mapBoth(
+                success = { detail ->
+                    updateFeedDetailsState(detail)
+                },
+                failure = { _ ->
+                    // UseCase already records the exception
+                    _state.update { it.copy(error = RootError.FEED_DETAILS_FAILED) }
+                },
+            )
     }
 
     private fun updateFeedDetailsState(newDetail: FeedDetails) {
