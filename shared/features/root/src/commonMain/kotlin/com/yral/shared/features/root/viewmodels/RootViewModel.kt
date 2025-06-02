@@ -6,6 +6,7 @@ import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
+import com.yral.shared.core.utils.InsufficientItemsException
 import com.yral.shared.core.utils.filterFirstNSuspendFlow
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.AuthClient
@@ -126,10 +127,15 @@ class RootViewModel(
                     val posts = result.posts
                     _state.update { it.copy(posts = posts) }
                     if (posts.isNotEmpty()) {
-                        posts
-                            .filterFirstNSuspendFlow(MIN_REQUIRED_ITEMS) { !isAlreadyVoted(it) }
-                            .toList()
-                            .forEach { post -> fetchFeedDetail(post) }
+                        try {
+                            posts
+                                .filterFirstNSuspendFlow(MIN_REQUIRED_ITEMS) { !isAlreadyVoted(it) }
+                                .toList()
+                                .forEach { post -> fetchFeedDetail(post) }
+                        } catch (e: InsufficientItemsException) {
+                            _state.update { it.copy(error = RootError.NO_UNVOTED_POSTS) }
+                            crashlyticsManager.recordException(e)
+                        }
                     } else {
                         // No posts available, but session is initialized
                         _state.update { it.copy(showSplash = false) }

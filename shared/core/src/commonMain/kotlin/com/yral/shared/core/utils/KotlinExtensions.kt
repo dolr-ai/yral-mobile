@@ -4,10 +4,16 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.sync.withPermit
 
 private const val MAX_CONCURRENCY = 64
+
+class InsufficientItemsException(
+    message: String,
+) : Exception(message)
 
 fun <T> Iterable<T>.filterFirstNSuspendFlow(
     n: Int,
@@ -17,12 +23,22 @@ fun <T> Iterable<T>.filterFirstNSuspendFlow(
     channelFlow {
         val semaphore = Semaphore(maxConcurrency)
         val resultChannel = Channel<T>(Channel.UNLIMITED)
+        val completedJobsMutex = Mutex()
+        var completedJobs = 0
+        val totalJobs = count()
         val jobs =
             map { item ->
                 launch {
                     semaphore.withPermit {
                         if (predicate(item)) {
                             resultChannel.send(item)
+                        }
+                    }
+                    // Track completion
+                    completedJobsMutex.withLock {
+                        completedJobs++
+                        if (completedJobs == totalJobs) {
+                            resultChannel.close()
                         }
                     }
                 }
@@ -37,6 +53,10 @@ fun <T> Iterable<T>.filterFirstNSuspendFlow(
                     resultChannel.close()
                     break
                 }
+            }
+            // If we exit the loop because channel was closed but didn't get enough items
+            if (count < n) {
+                throw InsufficientItemsException("Found only $count items out of required $n")
             }
         }
     }
