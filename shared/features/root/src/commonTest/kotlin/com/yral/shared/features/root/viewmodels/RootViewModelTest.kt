@@ -10,6 +10,7 @@ import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.AuthClient
 import com.yral.shared.features.feed.useCases.FetchFeedDetailsUseCase
 import com.yral.shared.features.feed.useCases.GetInitialFeedUseCase
+import com.yral.shared.firebaseStore.usecase.CheckVideoVoteUseCase
 import com.yral.shared.rust.domain.models.FeedDetails
 import com.yral.shared.rust.domain.models.Post
 import com.yral.shared.rust.domain.models.PostResponse
@@ -64,6 +65,9 @@ class RootViewModelTest {
     private lateinit var fetchFeedDetailsUseCase: FetchFeedDetailsUseCase
 
     @MockK
+    private lateinit var checkVideoVoteUseCase: CheckVideoVoteUseCase
+
+    @MockK
     private lateinit var crashlyticsManager: CrashlyticsManager
 
     private val testDispatcher = StandardTestDispatcher()
@@ -97,6 +101,7 @@ class RootViewModelTest {
                 individualUserServiceFactory = individualUserServiceFactory,
                 getInitialFeedUseCase = getInitialFeedUseCase,
                 fetchFeedDetailsUseCase = fetchFeedDetailsUseCase,
+                checkVideoVoteUseCase = checkVideoVoteUseCase,
                 crashlyticsManager = crashlyticsManager,
             )
     }
@@ -309,8 +314,7 @@ class RootViewModelTest {
             } answers {
                 if (shouldFail) {
                     shouldFail = false
-                    com.github.michaelbull.result
-                        .Err(Exception("First attempt fails"))
+                    Err(Exception("First attempt fails"))
                 } else {
                     Ok(PostResponse(posts = mockPosts))
                 }
