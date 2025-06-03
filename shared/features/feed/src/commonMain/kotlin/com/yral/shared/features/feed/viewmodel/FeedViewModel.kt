@@ -11,6 +11,7 @@ import com.yral.shared.features.feed.useCases.FetchFeedDetailsUseCase
 import com.yral.shared.features.feed.useCases.FetchMoreFeedUseCase
 import com.yral.shared.features.feed.useCases.ReportRequestParams
 import com.yral.shared.features.feed.useCases.ReportVideoUseCase
+import com.yral.shared.firebaseStore.usecase.CheckVideoVoteUseCase
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import com.yral.shared.rust.domain.models.FeedDetails
@@ -29,9 +30,7 @@ class FeedViewModel(
     initialFeedDetails: List<FeedDetails>,
     appDispatchers: AppDispatchers,
     private val sessionManager: SessionManager,
-    private val fetchMoreFeedUseCase: FetchMoreFeedUseCase,
-    private val fetchFeedDetailsUseCase: FetchFeedDetailsUseCase,
-    private val reportVideoUseCase: ReportVideoUseCase,
+    private val requiredUseCases: RequiredUseCases,
     private val analyticsManager: AnalyticsManager,
     private val preferences: Preferences,
 ) : ViewModel() {
@@ -68,8 +67,17 @@ class FeedViewModel(
         }
     }
 
+    private suspend fun isAlreadyVoted(post: Post): Boolean =
+        requiredUseCases.checkVideoVoteUseCase
+            .invoke(
+                CheckVideoVoteUseCase.Params(
+                    videoId = post.videoID,
+                    principalId = sessionManager.getUserPrincipal() ?: "",
+                ),
+            ).value
+
     private suspend fun fetchFeedDetail(post: Post) {
-        fetchFeedDetailsUseCase
+        requiredUseCases.fetchFeedDetailsUseCase
             .invoke(post)
             .mapBoth(
                 success = { detail ->
@@ -95,7 +103,7 @@ class FeedViewModel(
         coroutineScope.launch {
             sessionManager.getCanisterPrincipal()?.let {
                 setLoadingMore(true)
-                fetchMoreFeedUseCase
+                requiredUseCases.fetchMoreFeedUseCase
                     .invoke(
                         parameter =
                             FetchMoreFeedUseCase.Params(
@@ -109,7 +117,9 @@ class FeedViewModel(
                         success = { moreFeed ->
                             setLoadingMore(false)
                             val posts = _state.value.posts.toMutableList()
-                            posts.addAll(moreFeed.posts)
+                            posts.addAll(
+                                moreFeed.posts.filter { post -> !isAlreadyVoted(post) },
+                            )
                             _state.emit(
                                 _state.value.copy(
                                     posts = posts,
@@ -273,7 +283,7 @@ class FeedViewModel(
             .launch {
                 val currentFeed = _state.value.feedDetails[pageNo]
                 setLoading(true)
-                reportVideoUseCase
+                requiredUseCases.reportVideoUseCase
                     .invoke(
                         parameter =
                             ReportRequestParams(
@@ -344,6 +354,13 @@ class FeedViewModel(
             )
         }
     }
+
+    data class RequiredUseCases(
+        val fetchMoreFeedUseCase: FetchMoreFeedUseCase,
+        val fetchFeedDetailsUseCase: FetchFeedDetailsUseCase,
+        val reportVideoUseCase: ReportVideoUseCase,
+        val checkVideoVoteUseCase: CheckVideoVoteUseCase,
+    )
 }
 
 data class FeedState(

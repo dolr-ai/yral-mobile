@@ -21,6 +21,7 @@ kotlin {
             implementation(projects.shared.features.auth)
             implementation(projects.shared.libs.crashlytics)
             implementation(projects.shared.libs.useCase)
+            implementation(projects.shared.libs.firebaseStore)
 
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.androidx.lifecycle.viewmodel)

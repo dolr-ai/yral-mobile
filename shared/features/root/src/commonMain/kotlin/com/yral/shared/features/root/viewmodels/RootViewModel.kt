@@ -11,6 +11,7 @@ import com.yral.shared.features.auth.AuthClient
 import com.yral.shared.features.feed.useCases.FetchFeedDetailsUseCase
 import com.yral.shared.features.feed.useCases.GetInitialFeedUseCase
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
+import com.yral.shared.firebaseStore.usecase.CheckVideoVoteUseCase
 import com.yral.shared.koin.koinInstance
 import com.yral.shared.rust.domain.models.FeedDetails
 import com.yral.shared.rust.domain.models.Post
@@ -20,7 +21,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -35,6 +35,7 @@ enum class RootError {
     SESSION_INITIALIZATION_FAILED,
     INITIAL_CONTENT_FAILED,
     FEED_DETAILS_FAILED,
+    NO_UNVOTED_POSTS,
 }
 
 @Suppress("TooGenericExceptionCaught")
@@ -45,6 +46,7 @@ class RootViewModel(
     private val individualUserServiceFactory: IndividualUserServiceFactory,
     private val getInitialFeedUseCase: GetInitialFeedUseCase,
     private val fetchFeedDetailsUseCase: FetchFeedDetailsUseCase,
+    private val checkVideoVoteUseCase: CheckVideoVoteUseCase,
     private val crashlyticsManager: CrashlyticsManager,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.io)
@@ -122,7 +124,14 @@ class RootViewModel(
                     val posts = result.posts
                     _state.update { it.copy(posts = posts) }
                     if (posts.isNotEmpty()) {
-                        posts.take(MIN_REQUIRED_ITEMS).forEach { post -> fetchFeedDetail(post) }
+                        val unVotedPosts = posts.filter { !isAlreadyVoted(it) }
+                        if (unVotedPosts.isEmpty()) {
+                            _state.update { it.copy(error = RootError.NO_UNVOTED_POSTS) }
+                        } else {
+                            unVotedPosts
+                                .take(MIN_REQUIRED_ITEMS)
+                                .forEach { post -> fetchFeedDetail(post) }
+                        }
                     } else {
                         // No posts available, but session is initialized
                         _state.update { it.copy(showSplash = false) }
@@ -134,6 +143,15 @@ class RootViewModel(
                 },
             )
     }
+
+    private suspend fun isAlreadyVoted(post: Post): Boolean =
+        checkVideoVoteUseCase
+            .invoke(
+                CheckVideoVoteUseCase.Params(
+                    videoId = post.videoID,
+                    principalId = sessionManager.getUserPrincipal() ?: "",
+                ),
+            ).value
 
     private suspend fun fetchFeedDetail(post: Post) {
         fetchFeedDetailsUseCase

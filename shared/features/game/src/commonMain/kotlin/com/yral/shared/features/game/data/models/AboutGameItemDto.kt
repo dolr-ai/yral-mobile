@@ -3,25 +3,8 @@ package com.yral.shared.features.game.data.models
 import com.yral.shared.features.game.domain.models.AboutGameBodyType
 import com.yral.shared.features.game.domain.models.AboutGameItem
 import com.yral.shared.features.game.domain.models.AboutGameItemBody
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
-
-@Serializable
-data class AboutGameItemDto(
-    val name: String,
-    @SerialName("thumbnail_url")
-    val thumbnailUrl: String,
-    val body: List<AboutGameItemBodyDto>,
-)
-
-@Serializable
-data class AboutGameItemBodyDto(
-    val type: String,
-    val content: List<String>? = null,
-    val colors: List<String>? = null,
-    @SerialName("image_urls")
-    val imageUrls: List<String>? = null,
-)
+import com.yral.shared.firebaseStore.model.AboutGameItemBodyDto
+import com.yral.shared.firebaseStore.model.AboutGameItemDto
 
 fun AboutGameItemDto.toAboutGameItem(): AboutGameItem =
     AboutGameItem(
