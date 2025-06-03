@@ -23,6 +23,8 @@ protocol FirebaseServiceProtocol {
   func fetchCollection<T: Decodable>(
     from path: String,
     orderBy fields: [String]?,
+    descending: Bool,
+    limit: Int?,
     decodeAs type: T.Type
   ) async throws -> [T]
 

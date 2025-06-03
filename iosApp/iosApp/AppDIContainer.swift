@@ -91,6 +91,16 @@ import GRPC
     )
   }
 
+  func makeLeaderboardDIContainer() -> LeaderboardDIContainer {
+    return LeaderboardDIContainer(
+      dependencies: LeaderboardDIContainer.Dependencies(
+        firebaseService: FirebaseService(),
+        crashReporter: crashReporter,
+        authClient: authClient
+      )
+    )
+  }
+
   func makeAccountDIContainer() -> AccountDIContainer {
     return AccountDIContainer(
       dependencies: AccountDIContainer.Dependencies(

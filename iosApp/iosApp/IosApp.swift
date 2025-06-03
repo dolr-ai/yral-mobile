@@ -16,6 +16,7 @@ struct IosApp: App {
   @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
   private let appDIContainer: AppDIContainer
   @State private var feedsDIContainer: FeedDIContainer?
+  @State private var leaderboardDIContainer: LeaderboardDIContainer?
   @State private var profileDIContainer: ProfileDIContainer?
   @State private var uploadDIContainer: UploadDIContainer?
   @State private var accountDIContainer: AccountDIContainer?
@@ -39,6 +40,7 @@ struct IosApp: App {
 
   @ViewBuilder private func contentView() -> some View {
     if let feedsDIContainer = feedsDIContainer,
+       let leaderboardDIContainer = leaderboardDIContainer,
        let accountDIContainer = accountDIContainer,
        let uploadDIContainer = uploadDIContainer,
        let profileDIContainer = profileDIContainer {
@@ -47,7 +49,7 @@ struct IosApp: App {
         uploadView: uploadDIContainer.makeUploadView(),
         profileView: profileDIContainer.makeProfileView(),
         accountView: accountDIContainer.makeAccountView(),
-        leaderboardView: LeaderboardView()
+        leaderboardView: leaderboardDIContainer.makeLeaderboardView()
       )
       .environmentObject(session)
     } else if let error = initializationError {
@@ -70,6 +72,7 @@ struct IosApp: App {
       uploadDIContainer = appDIContainer.makeUploadDIContainer()
       profileDIContainer = appDIContainer.makeProfileDIContainer()
       accountDIContainer = appDIContainer.makeAccountDIContainer()
+      leaderboardDIContainer = appDIContainer.makeLeaderboardDIContainer()
     } catch {
       initializationError = error
     }

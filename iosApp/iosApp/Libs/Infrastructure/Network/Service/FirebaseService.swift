@@ -64,11 +64,17 @@ class FirebaseService: FirebaseServiceProtocol {
   func fetchCollection<T>(
     from path: String,
     orderBy fields: [String]?,
+    descending: Bool = false,
+    limit: Int? = nil,
     decodeAs type: T.Type
   ) async throws -> [T] where T: Decodable {
     var query: Query = database.collection(path)
     if let fields {
-      query = query.order(by: FieldPath(fields))
+      query = query.order(by: FieldPath(fields), descending: descending)
+    }
+
+    if let limit {
+      query = query.limit(to: limit)
     }
 
     let snapshot = try await query.getDocuments()

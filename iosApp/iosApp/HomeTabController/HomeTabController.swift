@@ -95,6 +95,14 @@ struct HomeTabController: View {
               .animation(.easeInOut, value: selectedTab)
             Spacer()
           }
+
+//          Text("New")
+//            .font(YralFont.pt8.bold.swiftUIFont)
+//            .foregroundColor(YralColor.grey0.swiftUIColor)
+//            .padding(.horizontal, 4)
+//            .background(YralColor.primary300.swiftUIColor)
+//            .clipShape(RoundedRectangle(cornerRadius: 12))
+//            .offset(x: -tabWidth, y: -self.tabBarHeight - 2.5)
         }
       }
     }

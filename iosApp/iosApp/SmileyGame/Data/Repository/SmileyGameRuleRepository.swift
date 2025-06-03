@@ -21,6 +21,8 @@ class SmileyGameRuleRepository: SmileyGameRuleRepositoryProtocol {
       let response = try await firebaseService.fetchCollection(
         from: Constants.collectionPath,
         orderBy: ["__name__"],
+        descending: false,
+        limit: nil,
         decodeAs: SmileyGameRuleDTO.self
       )
 
