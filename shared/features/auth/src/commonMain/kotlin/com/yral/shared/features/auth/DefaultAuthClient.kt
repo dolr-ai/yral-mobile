@@ -63,7 +63,7 @@ class DefaultAuthClient(
                         shouldRefreshToken = true,
                     )
                 },
-                failure = { error(it.localizedMessage ?: "") },
+                failure = { YralException(it.localizedMessage ?: "") },
             )
     }
 
@@ -162,7 +162,7 @@ class DefaultAuthClient(
                             shouldRefreshToken = true,
                         )
                     },
-                    failure = { error(it.localizedMessage ?: "") },
+                    failure = { YralException(it.localizedMessage ?: "") },
                 )
         } ?: obtainAnonymousIdentity()
     }

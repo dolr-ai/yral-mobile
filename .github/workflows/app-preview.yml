@@ -91,4 +91,3 @@ jobs:
           releaseFiles: androidApp/build/outputs/bundle/stagingRelease/androidApp-staging-release.aab
           track: internal
           status: draft
-          changesNotSentForReview: true
