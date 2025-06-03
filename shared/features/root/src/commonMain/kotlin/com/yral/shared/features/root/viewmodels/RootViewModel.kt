@@ -67,11 +67,11 @@ class RootViewModel(
         initialisationJob?.cancel()
         initialisationJob =
             coroutineScope.launch {
-                _state.update {
-                    it.copy(
+                _state.update { currentState ->
+                    RootState(
                         currentSessionState = sessionManager.state.value,
-                        currentHomePageTab = it.currentHomePageTab,
-                        initialAnimationComplete = it.initialAnimationComplete,
+                        currentHomePageTab = currentState.currentHomePageTab,
+                        initialAnimationComplete = currentState.initialAnimationComplete,
                         error = null,
                     )
                 }
