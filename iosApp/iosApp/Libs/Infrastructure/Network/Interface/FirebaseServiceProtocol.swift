@@ -9,11 +9,12 @@
 import FirebaseFirestore
 
 protocol FirebaseServiceProtocol {
-  func signInAnonymously() async throws
+  func signInAnonymously() async throws -> Bool
   func signIn(withCustomToken token: String) async throws
   func signOut() throws
   func fetchUserIDToken() async throws -> String?
   func fetchAppCheckToken() async throws -> String
+  func fetchCoins(for principal: String) async throws -> Int
 
   func fetchDocument<T: Decodable>(
     path: String,
