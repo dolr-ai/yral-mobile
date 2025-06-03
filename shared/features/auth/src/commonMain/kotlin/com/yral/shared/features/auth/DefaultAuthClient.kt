@@ -153,7 +153,6 @@ class DefaultAuthClient(
     private suspend fun updateYralSession() {
         preferences.getString(PrefKeys.ID_TOKEN.name)?.let { idToken ->
             sessionManager.getCanisterPrincipal()?.let { canisterId ->
-                println("HTTP trying to update session as registered")
                 updateSessionAsRegistered(
                     idToken = idToken,
                     canisterId = canisterId,
