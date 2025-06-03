@@ -1,0 +1,90 @@
+name: 'Check Hot-or-Not Backend Release'
+description: 'Checks for new releases of the Hot-or-Not Backend'
+
+outputs:
+  new_release:
+    description: 'Whether a new release was found'
+    value: ${{ steps.check_release.outputs.new_release }}
+  release_tag:
+    description: 'The tag of the latest release'
+    value: ${{ steps.check_release.outputs.release_tag }}
+  release_name:
+    description: 'The name of the latest release'
+    value: ${{ steps.check_release.outputs.release_name }}
+  release_url:
+    description: 'The URL of the latest release'
+    value: ${{ steps.check_release.outputs.release_url }}
+  release_body:
+    description: 'The body/description of the latest release'
+    value: ${{ steps.check_release.outputs.release_body }}
+  published_at:
+    description: 'When the release was published'
+    value: ${{ steps.check_release.outputs.published_at }}
+  author:
+    description: 'The author of the release'
+    value: ${{ steps.check_release.outputs.author }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Check for new releases
+      id: check_release
+      shell: bash
+      run: |
+        # Get the latest release from the target repository
+        LATEST_RELEASE=$(curl -s "https://api.github.com/repos/dolr-ai/hot-or-not-backend-canister/releases/latest")
+        
+        # Extract release information
+        RELEASE_TAG=$(echo "$LATEST_RELEASE" | jq -r '.tag_name')
+        RELEASE_NAME=$(echo "$LATEST_RELEASE" | jq -r '.name')
+        RELEASE_URL=$(echo "$LATEST_RELEASE" | jq -r '.html_url')
+        RELEASE_BODY=$(echo "$LATEST_RELEASE" | jq -r '.body')
+        PUBLISHED_AT=$(echo "$LATEST_RELEASE" | jq -r '.published_at')
+        AUTHOR=$(echo "$LATEST_RELEASE" | jq -r '.author.login')
+        
+        echo "Latest release tag: $RELEASE_TAG"
+        echo "release_tag=$RELEASE_TAG" >> $GITHUB_OUTPUT
+        echo "release_name=$RELEASE_NAME" >> $GITHUB_OUTPUT
+        echo "release_url=$RELEASE_URL" >> $GITHUB_OUTPUT
+        echo "published_at=$PUBLISHED_AT" >> $GITHUB_OUTPUT
+        echo "author=$AUTHOR" >> $GITHUB_OUTPUT
+        
+        # Escape newlines and quotes in release body for JSON
+        ESCAPED_BODY=$(echo "$RELEASE_BODY" | sed 's/"/\\"/g' | sed ':a;N;$!ba;s/\n/\\n/g' | head -c 500)
+        echo "release_body=$ESCAPED_BODY" >> $GITHUB_OUTPUT
+        
+        # Check version file in codebase
+        VERSION_FILE="shared/rust/rust-agent-uniffi/did/VERSION"
+        if [ -f "$VERSION_FILE" ]; then
+          VERSION_FILE_TAG=$(cat "$VERSION_FILE")
+          echo "Last notified release from version file: $VERSION_FILE_TAG"
+        else
+          echo "No version file found"
+          # Create version file directory
+          mkdir -p "$(dirname "$VERSION_FILE")"
+        fi
+        
+        # Check cache for last processed version
+        CACHE_KEY="last-processed-release"
+        CACHE_PATH=".github/cache"
+        mkdir -p "$CACHE_PATH"
+        
+        if [ -f "$CACHE_PATH/$CACHE_KEY" ]; then
+          CACHE_TAG=$(cat "$CACHE_PATH/$CACHE_KEY")
+          echo "Last processed release from cache: $CACHE_TAG"
+        else
+          echo "No cache found"
+        fi
+        
+        # Determine if this is a new release by checking both version file and cache
+        if [ "$RELEASE_TAG" != "$VERSION_FILE_TAG" ] && [ "$RELEASE_TAG" != "$CACHE_TAG" ] && [ "$RELEASE_TAG" != "null" ]; then
+          echo "New release detected!"
+          echo "new_release=true" >> $GITHUB_OUTPUT
+          
+          # Update both version file and cache
+          echo "$RELEASE_TAG" > "$VERSION_FILE"
+          echo "$RELEASE_TAG" > "$CACHE_PATH/$CACHE_KEY"
+        else
+          echo "No new release"
+          echo "new_release=false" >> $GITHUB_OUTPUT
+        fi 

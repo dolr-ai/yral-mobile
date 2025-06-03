@@ -1,0 +1,133 @@
+name: Hot-or-Not Backend Release Monitor
+
+on:
+  schedule:
+    # Check for new releases daily
+    - cron: '30 6 * * *'
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  check-releases:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'write'
+      id-token: 'write'
+      pull-requests: 'write'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Cache last processed release
+        uses: actions/cache@v4
+        id: release-cache
+        with:
+          path: .github/cache
+          key: ${{ github.ref }}-last-processed-release
+          restore-keys: |
+            ${{ github.ref }}-last-processed-release-
+
+      - name: Check for new releases
+        id: check_release
+        uses: ./.github/actions/check-release
+
+      - name: Send release notification
+        if: steps.check_release.outputs.new_release == 'true'
+        uses: ./.github/actions/notify-release
+        with:
+          webhook_url: ${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}
+          release_tag: ${{ steps.check_release.outputs.release_tag }}
+          release_name: ${{ steps.check_release.outputs.release_name }}
+          release_url: ${{ steps.check_release.outputs.release_url }}
+          release_body: ${{ steps.check_release.outputs.release_body }}
+          published_at: ${{ steps.check_release.outputs.published_at }}
+          author: ${{ steps.check_release.outputs.author }}
+          workflow_url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+      - name: Handle DID files
+        if: steps.check_release.outputs.new_release == 'true'
+        id: handle_did
+        uses: ./.github/actions/handle-did-files
+        with:
+          release_tag: ${{ steps.check_release.outputs.release_tag }}
+
+      - name: Create Pull Request
+        if: steps.check_release.outputs.new_release == 'true' && steps.handle_did.outputs.has_changes == 'true'
+        id: create_pr
+        uses: ./.github/actions/create-pr
+        with:
+          release_tag: ${{ steps.check_release.outputs.release_tag }}
+          release_name: ${{ steps.check_release.outputs.release_name }}
+          release_url: ${{ steps.check_release.outputs.release_url }}
+          published_at: ${{ steps.check_release.outputs.published_at }}
+          author: ${{ steps.check_release.outputs.author }}
+          release_body: ${{ steps.check_release.outputs.release_body }}
+          changed_files: ${{ steps.handle_did.outputs.changed_files }}
+          breaking_changes: ${{ steps.handle_did.outputs.has_breaking_changes }}
+
+      - name: Send DID changes notification
+        if: steps.check_release.outputs.new_release == 'true' && steps.handle_did.outputs.has_changes == 'true'
+        uses: ./.github/actions/notify-did-changes
+        with:
+          webhook_url: ${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}
+          release_tag: ${{ steps.check_release.outputs.release_tag }}
+          changed_files: ${{ steps.handle_did.outputs.changed_files }}
+          breaking_changes: ${{ steps.handle_did.outputs.has_breaking_changes }}
+          differences: ${{ steps.handle_did.outputs.differences }}
+          new_files: ${{ steps.handle_did.outputs.new_files }}
+          pr_url: ${{ steps.create_pr.outputs.pr_url }}
+          pr_status: ${{ steps.create_pr.outputs.pr_status }}
+          workflow_url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+      - name: Create GitHub Summary
+        if: steps.check_release.outputs.new_release == 'true'
+        run: |
+          # Start creating the summary
+          echo "# Hot-or-Not Backend Release Summary" >> $GITHUB_STEP_SUMMARY
+          
+          echo "## Release Details" >> $GITHUB_STEP_SUMMARY
+          echo "- **Release:** ${{ steps.check_release.outputs.release_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag:** ${{ steps.check_release.outputs.release_tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Published:** ${{ steps.check_release.outputs.published_at }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Author:** ${{ steps.check_release.outputs.author }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Release URL:** [${{ steps.check_release.outputs.release_url }}](${{ steps.check_release.outputs.release_url }})" >> $GITHUB_STEP_SUMMARY
+          
+          # Convert release notes to proper markdown and clean up formatting
+          PROCESSED_NOTES=$(echo '${{ steps.check_release.outputs.release_body }}' | sed 's/\\n/\n/g' | sed 's/^## /### /g')
+          echo "## Release Notes" >> $GITHUB_STEP_SUMMARY
+          echo "$PROCESSED_NOTES" >> $GITHUB_STEP_SUMMARY
+          
+          echo "## DID Changes Analysis" >> $GITHUB_STEP_SUMMARY
+          
+          # Add status indicators
+          if [ "${{ steps.handle_did.outputs.has_changes }}" == "true" ]; then
+            echo "### Changed Files" >> $GITHUB_STEP_SUMMARY
+            echo "${{ fromJSON(steps.handle_did.outputs.changed_files) }}" >> $GITHUB_STEP_SUMMARY
+            
+            echo "### Change Status" >> $GITHUB_STEP_SUMMARY
+            if [ "${{ steps.handle_did.outputs.breaking_changes }}" == "true" ]; then
+              echo "🚨 **Breaking changes detected in .did files**" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "✅ No breaking changes detected" >> $GITHUB_STEP_SUMMARY
+            fi
+            
+            if [ "${{ steps.handle_did.outputs.differences }}" == "true" ]; then
+              echo "ℹ️ Non-breaking updates found in .did files" >> $GITHUB_STEP_SUMMARY
+            fi
+            
+            if [ "${{ steps.handle_did.outputs.new_files }}" == "true" ]; then
+              echo "📄 New .did files added from release" >> $GITHUB_STEP_SUMMARY
+            fi
+            
+            # Add PR information if available
+            if [ "${{ steps.create_pr.outputs.pr_status }}" == "success" ]; then
+              echo "### Pull Request" >> $GITHUB_STEP_SUMMARY
+              echo "✅ Pull Request created successfully: [${{ steps.create_pr.outputs.pr_url }}](${{ steps.create_pr.outputs.pr_url }})" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "### Pull Request" >> $GITHUB_STEP_SUMMARY
+              echo "❌ Failed to create Pull Request" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "✅ No changes needed to .did files" >> $GITHUB_STEP_SUMMARY
+          fi
+
