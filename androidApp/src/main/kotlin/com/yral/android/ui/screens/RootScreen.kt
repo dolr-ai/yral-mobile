@@ -211,8 +211,5 @@ fun RootError.toErrorMessage(): String =
     stringResource(
         when (this) {
             RootError.TIMEOUT -> R.string.error_timeout
-            RootError.SESSION_INITIALIZATION_FAILED -> R.string.error_session_init
-            RootError.INITIAL_CONTENT_FAILED -> R.string.error_initial_content
-            RootError.FEED_DETAILS_FAILED -> R.string.error_feed_details
         },
     )
