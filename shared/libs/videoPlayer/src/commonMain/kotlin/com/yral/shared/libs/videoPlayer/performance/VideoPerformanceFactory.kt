@@ -2,6 +2,38 @@ package com.yral.shared.libs.videoPlayer.performance
 
 import com.yral.shared.libs.firebasePerf.OperationTrace
 import com.yral.shared.libs.videoPlayer.util.isHlsUrl
+import io.ktor.http.Url
+
+/**
+ * Helper function to extract video ID from URL for Firebase Performance attributes
+ * Firebase has a 100-character limit for attribute values
+ */
+private const val MAX_ATTRIBUTE_LENGTH = 90
+
+@Suppress("TooGenericExceptionCaught", "SwallowedException")
+private fun extractVideoId(url: String): String =
+    try {
+        // Parse URL using Ktor's multiplatform Url class
+        val parsedUrl = Url(url)
+        val pathAndQuery =
+            buildString {
+                // Remove leading slash and take path
+                append(parsedUrl.encodedPath.removePrefix("/"))
+                // Add query parameters if present
+                if (parsedUrl.encodedQuery.isNotEmpty()) {
+                    // append("?").append(parsedUrl.encodedQuery)
+                }
+            }
+        // If still too long, take the last part
+        if (pathAndQuery.length > MAX_ATTRIBUTE_LENGTH) {
+            pathAndQuery.takeLast(MAX_ATTRIBUTE_LENGTH)
+        } else {
+            pathAndQuery.ifEmpty { url.takeLast(MAX_ATTRIBUTE_LENGTH) }
+        }
+    } catch (e: Exception) {
+        // Fallback: if URL parsing fails, take last 50 characters
+        url.takeLast(MAX_ATTRIBUTE_LENGTH)
+    }
 
 /**
  * Simple video performance traces based on OperationTrace
@@ -10,7 +42,7 @@ class DownloadTrace(
     url: String,
 ) : OperationTrace(VideoPerformanceConstants.VIDEO_DOWNLOAD_TRACE) {
     init {
-        putAttribute(VideoPerformanceConstants.VIDEO_URL_KEY, url)
+        putAttribute(VideoPerformanceConstants.VIDEO_URL_KEY, extractVideoId(url))
         putAttribute(
             VideoPerformanceConstants.VIDEO_FORMAT_KEY,
             if (isHlsUrl(url)) {
@@ -27,7 +59,7 @@ class LoadTimeTrace(
     url: String,
 ) : OperationTrace(VideoPerformanceConstants.VIDEO_LOAD_TRACE) {
     init {
-        putAttribute(VideoPerformanceConstants.VIDEO_URL_KEY, url)
+        putAttribute(VideoPerformanceConstants.VIDEO_URL_KEY, extractVideoId(url))
         putAttribute(
             VideoPerformanceConstants.VIDEO_FORMAT_KEY,
             if (isHlsUrl(url)) {
@@ -44,7 +76,7 @@ class FirstFrameTrace(
     url: String,
 ) : OperationTrace(VideoPerformanceConstants.FIRST_FRAME_RENDER_TRACE) {
     init {
-        putAttribute(VideoPerformanceConstants.VIDEO_URL_KEY, url)
+        putAttribute(VideoPerformanceConstants.VIDEO_URL_KEY, extractVideoId(url))
         putAttribute(
             VideoPerformanceConstants.VIDEO_FORMAT_KEY,
             if (isHlsUrl(url)) {
@@ -61,7 +93,7 @@ class PrefetchDownloadTrace(
     url: String,
 ) : OperationTrace("${VideoPerformanceConstants.VIDEO_DOWNLOAD_TRACE}_prefetch") {
     init {
-        putAttribute(VideoPerformanceConstants.VIDEO_URL_KEY, url)
+        putAttribute(VideoPerformanceConstants.VIDEO_URL_KEY, extractVideoId(url))
         putAttribute(
             VideoPerformanceConstants.VIDEO_FORMAT_KEY,
             if (isHlsUrl(url)) {
@@ -78,7 +110,7 @@ class PrefetchLoadTimeTrace(
     url: String,
 ) : OperationTrace("${VideoPerformanceConstants.VIDEO_LOAD_TRACE}_prefetch") {
     init {
-        putAttribute(VideoPerformanceConstants.VIDEO_URL_KEY, url)
+        putAttribute(VideoPerformanceConstants.VIDEO_URL_KEY, extractVideoId(url))
         putAttribute(
             VideoPerformanceConstants.VIDEO_FORMAT_KEY,
             if (isHlsUrl(url)) {
