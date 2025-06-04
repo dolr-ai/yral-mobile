@@ -13,4 +13,10 @@ class CrashlyticsManager(
             it.recordException(exception)
         }
     }
+
+    fun setUserId(id: String) {
+        providers.forEach {
+            it.setUserId(id)
+        }
+    }
 }

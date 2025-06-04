@@ -8,6 +8,7 @@ import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.Session
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
+import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.domain.AuthRepository
 import com.yral.shared.features.auth.domain.useCases.AuthenticateTokenUseCase
 import com.yral.shared.features.auth.domain.useCases.ObtainAnonymousIdentityUseCase
@@ -27,6 +28,7 @@ import kotlinx.datetime.Clock
 class DefaultAuthClient(
     private val sessionManager: SessionManager,
     private val analyticsManager: AnalyticsManager,
+    private val crashlyticsManager: CrashlyticsManager,
     private val preferences: Preferences,
     private val authRepository: AuthRepository,
     private val requiredUseCases: RequiredUseCases,
@@ -115,6 +117,7 @@ class DefaultAuthClient(
         preferences.remove(PrefKeys.ID_TOKEN.name)
         preferences.remove(PrefKeys.IDENTITY.name)
         sessionManager.updateState(SessionState.Initial)
+        crashlyticsManager.setUserId("")
     }
 
     private suspend fun handleExtractIdentityResponse(
@@ -123,6 +126,7 @@ class DefaultAuthClient(
     ) {
         val canisterWrapper = authenticateWithNetwork(data, null)
         preferences.putBytes(PrefKeys.IDENTITY.name, data)
+        crashlyticsManager.setUserId(canisterWrapper.getUserPrincipal())
         sessionManager.updateState(
             SessionState.SignedIn(
                 session =
