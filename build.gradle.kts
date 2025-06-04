@@ -12,6 +12,7 @@ plugins {
     alias(libs.plugins.kotlinxSerialisartion).apply(false)
     alias(libs.plugins.crashlytics).apply(false)
     alias(libs.plugins.play.services).apply(false)
+    alias(libs.plugins.firebase.performance).apply(false)
 }
 
 val reportMerge by tasks.registering(io.gitlab.arturbosch.detekt.report.ReportMergeTask::class) {
