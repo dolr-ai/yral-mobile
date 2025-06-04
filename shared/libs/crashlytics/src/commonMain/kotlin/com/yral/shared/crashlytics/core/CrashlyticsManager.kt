@@ -19,4 +19,10 @@ class CrashlyticsManager(
             it.setUserId(id)
         }
     }
+
+    fun logMessage(message: String) {
+        providers.forEach {
+            it.logMessage(message)
+        }
+    }
 }
