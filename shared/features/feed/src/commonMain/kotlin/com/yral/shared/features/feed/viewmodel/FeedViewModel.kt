@@ -5,10 +5,13 @@ import com.github.michaelbull.result.mapBoth
 import com.yral.shared.analytics.AnalyticsManager
 import com.yral.shared.analytics.events.VideoDurationWatchedEventData
 import com.yral.shared.core.dispatchers.AppDispatchers
+import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.SessionManager
+import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.feed.data.models.toVideoEventData
 import com.yral.shared.features.feed.useCases.FetchFeedDetailsUseCase
 import com.yral.shared.features.feed.useCases.FetchMoreFeedUseCase
+import com.yral.shared.features.feed.useCases.GetInitialFeedUseCase
 import com.yral.shared.features.feed.useCases.ReportRequestParams
 import com.yral.shared.features.feed.useCases.ReportVideoUseCase
 import com.yral.shared.preferences.PrefKeys
@@ -21,6 +24,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 @Suppress("TooGenericExceptionCaught")
@@ -29,10 +33,9 @@ class FeedViewModel(
     initialFeedDetails: List<FeedDetails>,
     appDispatchers: AppDispatchers,
     private val sessionManager: SessionManager,
-    private val fetchMoreFeedUseCase: FetchMoreFeedUseCase,
-    private val fetchFeedDetailsUseCase: FetchFeedDetailsUseCase,
-    private val reportVideoUseCase: ReportVideoUseCase,
     private val analyticsManager: AnalyticsManager,
+    private val crashlyticsManager: CrashlyticsManager,
+    private val requiredUseCases: RequiredUseCases,
     private val preferences: Preferences,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.io)
@@ -56,7 +59,7 @@ class FeedViewModel(
     init {
         coroutineScope.launch {
             if (_state.value.posts.isEmpty()) {
-                loadMoreFeed()
+                initialFeedData()
             } else {
                 _state.value.posts
                     .filter { post ->
@@ -68,18 +71,46 @@ class FeedViewModel(
         }
     }
 
+    private suspend fun initialFeedData() {
+        sessionManager.getCanisterPrincipal()?.let { principal ->
+            requiredUseCases.getInitialFeedUseCase
+                .invoke(
+                    parameter =
+                        GetInitialFeedUseCase.Params(
+                            canisterID = principal,
+                            filterResults = emptyList(),
+                        ),
+                ).mapBoth(
+                    success = { result ->
+                        val posts = result.posts
+                        _state.update { it.copy(posts = posts) }
+                        if (posts.isNotEmpty()) {
+                            posts.forEach { post -> fetchFeedDetail(post) }
+                        } else {
+                            loadMoreFeed()
+                        }
+                    },
+                    failure = { _ ->
+                        loadMoreFeed()
+                    },
+                )
+        } ?: crashlyticsManager.recordException(
+            YralException("Principal is null while fetching initial feed"),
+        )
+    }
+
     private suspend fun fetchFeedDetail(post: Post) {
-        fetchFeedDetailsUseCase
+        requiredUseCases.fetchFeedDetailsUseCase
             .invoke(post)
             .mapBoth(
                 success = { detail ->
                     val feedDetailsList = _state.value.feedDetails.toMutableList()
                     feedDetailsList.add(detail)
-                    _state.emit(
-                        _state.value.copy(
+                    _state.update {
+                        it.copy(
                             feedDetails = feedDetailsList.toList(),
-                        ),
-                    )
+                        )
+                    }
                 },
                 failure = { _ ->
                     // No need to throw error, BaseUseCase reports to CrashlyticsManager
@@ -95,7 +126,7 @@ class FeedViewModel(
         coroutineScope.launch {
             sessionManager.getCanisterPrincipal()?.let {
                 setLoadingMore(true)
-                fetchMoreFeedUseCase
+                requiredUseCases.fetchMoreFeedUseCase
                     .invoke(
                         parameter =
                             FetchMoreFeedUseCase.Params(
@@ -273,7 +304,7 @@ class FeedViewModel(
             .launch {
                 val currentFeed = _state.value.feedDetails[pageNo]
                 setLoading(true)
-                reportVideoUseCase
+                requiredUseCases.reportVideoUseCase
                     .invoke(
                         parameter =
                             ReportRequestParams(
@@ -389,6 +420,13 @@ enum class VideoReportReason(
     SPAM("Spam / Ad"),
     OTHERS("Others"),
 }
+
+data class RequiredUseCases(
+    val getInitialFeedUseCase: GetInitialFeedUseCase,
+    val fetchMoreFeedUseCase: FetchMoreFeedUseCase,
+    val fetchFeedDetailsUseCase: FetchFeedDetailsUseCase,
+    val reportVideoUseCase: ReportVideoUseCase,
+)
 
 /**
  * Extension function to calculate percentage of a value relative to total

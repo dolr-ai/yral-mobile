@@ -14,4 +14,8 @@ internal class FirebaseCrashlyticsProvider : CrashlyticsProvider {
     override fun logMessage(message: String) {
         Firebase.crashlytics.log(message)
     }
+
+    override fun setUserId(id: String) {
+        Firebase.crashlytics.setUserId(id)
+    }
 }
