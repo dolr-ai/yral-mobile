@@ -33,6 +33,7 @@ class LeaderboardRepository: LeaderboardRepositoryProtocol {
 
     async let userTask = firebaseService.fetchDocument(
       path: "\(Constants.usersCollectionPath)/\(userPrincipalID)",
+      checkCache: false,
       decodeAs: LeaderboardRowDTO.self
     )
 

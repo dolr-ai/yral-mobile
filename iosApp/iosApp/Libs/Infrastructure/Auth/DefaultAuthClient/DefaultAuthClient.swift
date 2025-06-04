@@ -217,7 +217,7 @@ final class DefaultAuthClient: NSObject, AuthClient {
   }
 
   private func exchangePrincipalID(type: DelegateIdentityType) async throws {
-    try? await firebaseService.signInAnonymously()
+    let newSignIn = try? await firebaseService.signInAnonymously()
 
     var httpHeaders = [
       "Content-Type": "application/json"
@@ -232,44 +232,47 @@ final class DefaultAuthClient: NSObject, AuthClient {
       "principal_id": userPrincipalString ?? ""
     ]
 
-    let endpoint = Endpoint(http: "",
-                            baseURL: firebaseBaseURL,
-                            path: "exchange_principal_id",
-                            method: .post,
-                            headers: httpHeaders,
-                            body: try? JSONSerialization.data(withJSONObject: httpBody)
-                           )
-
-    do {
-      let response = try await networkService.performRequest(
-        for: endpoint,
-        decodeAs: ExchangePrincipalDTO.self
-      ).toDomain()
-      await MainActor.run {
-        stateSubject.value = (type == .ephemeral) ? .ephemeralAuthentication(
-          userPrincipal: userPrincipalString ?? "",
-          canisterPrincipal: canisterPrincipalString ?? "",
-          coins: response.coins
-        ) : .permanentAuthentication(
-          userPrincipal: userPrincipalString ?? "",
-          canisterPrincipal: canisterPrincipalString ?? "",
-          coins: response.coins
-        )
+    if let principalID = userPrincipalString, !(newSignIn ?? true) {
+      do {
+        let coinBalance = try await firebaseService.fetchCoins(for: principalID)
+        await updateAuthState(for: type, withCoins: coinBalance)
+      } catch {
+        await updateAuthState(for: type, withCoins: 0)
       }
+    } else {
+      let endpoint = Endpoint(http: "",
+                              baseURL: firebaseBaseURL,
+                              path: "exchange_principal_id",
+                              method: .post,
+                              headers: httpHeaders,
+                              body: try? JSONSerialization.data(withJSONObject: httpBody)
+                             )
 
-      try await firebaseService.signIn(withCustomToken: response.token)
-    } catch {
-      await MainActor.run {
-        stateSubject.value = (type == .ephemeral) ? .ephemeralAuthentication(
-          userPrincipal: userPrincipalString ?? "",
-          canisterPrincipal: canisterPrincipalString ?? "",
-          coins: 0
-        ) : .permanentAuthentication(
-          userPrincipal: userPrincipalString ?? "",
-          canisterPrincipal: canisterPrincipalString ?? "",
-          coins: 0
-        )
+      do {
+        let response = try await networkService.performRequest(
+          for: endpoint,
+          decodeAs: ExchangePrincipalDTO.self
+        ).toDomain()
+        await updateAuthState(for: type, withCoins: response.coins)
+
+        try await firebaseService.signIn(withCustomToken: response.token)
+      } catch {
+        await updateAuthState(for: type, withCoins: 0)
       }
+    }
+  }
+
+  private func updateAuthState(for type: DelegateIdentityType, withCoins coins: Int) async {
+    await MainActor.run {
+      stateSubject.value = (type == .ephemeral) ? .ephemeralAuthentication(
+        userPrincipal: userPrincipalString ?? "",
+        canisterPrincipal: canisterPrincipalString ?? "",
+        coins: coins
+      ) : .permanentAuthentication(
+        userPrincipal: userPrincipalString ?? "",
+        canisterPrincipal: canisterPrincipalString ?? "",
+        coins: coins
+      )
     }
   }
 
