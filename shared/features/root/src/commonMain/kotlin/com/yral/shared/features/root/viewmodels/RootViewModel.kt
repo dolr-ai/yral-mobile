@@ -12,7 +12,6 @@ import com.yral.shared.koin.koinInstance
 import com.yral.shared.rust.domain.models.FeedDetails
 import com.yral.shared.rust.domain.models.Post
 import com.yral.shared.rust.services.IndividualUserServiceFactory
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -28,7 +27,6 @@ import org.koin.core.parameter.parametersOf
 
 enum class RootError {
     TIMEOUT,
-    SESSION_INITIALIZATION_FAILED,
 }
 
 @Suppress("TooGenericExceptionCaught")
@@ -57,7 +55,7 @@ class RootViewModel(
         initialisationJob =
             coroutineScope.launch {
                 _state.update {
-                    it.copy(
+                    RootState(
                         currentSessionState = sessionManager.state.value,
                         currentHomePageTab = it.currentHomePageTab,
                         initialAnimationComplete = it.initialAnimationComplete,
@@ -74,30 +72,21 @@ class RootViewModel(
                         YralException("Splash screen timeout - initialization took too long"),
                     )
                     throw e
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    crashlyticsManager.recordException(e)
-                    _state.update { it.copy(error = RootError.SESSION_INITIALIZATION_FAILED) }
                 }
             }
     }
 
     private suspend fun checkLoginAndInitialize() {
         delay(INITIAL_DELAY_FOR_SETUP)
-        if (sessionManager.getCanisterPrincipal() != null) {
-            _state.update { it.copy(showSplash = false) }
-        } else {
-            authClient.initialize()
-            sessionManager.getCanisterPrincipal()?.let { principal ->
-                sessionManager.getIdentity()?.let { identity ->
-                    individualUserServiceFactory.initialize(
-                        principal = principal,
-                        identityData = identity,
-                    )
-                } ?: throw YralException("Identity is null")
-            } ?: throw YralException("Principal is null after initialization")
-        }
+        sessionManager.getCanisterPrincipal()?.let { principal ->
+            sessionManager.getIdentity()?.let { identity ->
+                individualUserServiceFactory.initialize(
+                    principal = principal,
+                    identityData = identity,
+                )
+                _state.update { it.copy(showSplash = false) }
+            } ?: authClient.initialize()
+        } ?: authClient.initialize()
     }
 
     fun onSplashAnimationComplete() {

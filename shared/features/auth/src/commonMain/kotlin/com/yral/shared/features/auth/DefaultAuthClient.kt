@@ -19,6 +19,7 @@ import com.yral.shared.features.auth.utils.OAuthUtils
 import com.yral.shared.features.auth.utils.SocialProvider
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
+import com.yral.shared.uniffi.generated.FfiException
 import com.yral.shared.uniffi.generated.authenticateWithNetwork
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -43,6 +44,7 @@ class DefaultAuthClient(
     }
 
     private suspend fun refreshAuthIfNeeded() {
+        crashlyticsManager.logMessage("obtaining token from local storage")
         preferences.getString(PrefKeys.ID_TOKEN.name)?.let { idToken ->
             handleToken(
                 idToken = idToken,
@@ -54,6 +56,7 @@ class DefaultAuthClient(
     }
 
     private suspend fun obtainAnonymousIdentity() {
+        crashlyticsManager.logMessage("obtaining anonymous token")
         requiredUseCases.obtainAnonymousIdentityUseCase
             .invoke(Unit)
             .mapBoth(
@@ -65,7 +68,7 @@ class DefaultAuthClient(
                         shouldRefreshToken = true,
                     )
                 },
-                failure = { YralException(it.localizedMessage ?: "") },
+                failure = { },
             )
     }
 
@@ -76,6 +79,7 @@ class DefaultAuthClient(
         shouldRefreshToken: Boolean,
         shouldSetMetadata: Boolean = false,
     ) {
+        crashlyticsManager.logMessage("setting token to local storage")
         preferences.putString(
             PrefKeys.ID_TOKEN.name,
             idToken,
@@ -92,6 +96,7 @@ class DefaultAuthClient(
                 refreshToken,
             )
         }
+        crashlyticsManager.logMessage("parsing token")
         val tokenClaim = oAuthUtils.parseOAuthToken(idToken)
         if (tokenClaim.isValid(Clock.System.now().epochSeconds)) {
             tokenClaim.delegatedIdentity?.let {
@@ -124,32 +129,31 @@ class DefaultAuthClient(
         data: ByteArray,
         shouldSetMetaData: Boolean,
     ) {
-        val canisterWrapper = authenticateWithNetwork(data, null)
-        preferences.putBytes(PrefKeys.IDENTITY.name, data)
-        crashlyticsManager.setUserId(canisterWrapper.getUserPrincipal())
-        sessionManager.updateState(
-            SessionState.SignedIn(
-                session =
-                    Session(
-                        identity = data,
-                        canisterPrincipal = canisterWrapper.getCanisterPrincipal(),
-                        userPrincipal = canisterWrapper.getUserPrincipal(),
-                    ),
-            ),
-        )
-        if (shouldSetMetaData) {
-            preferences.getString(PrefKeys.ID_TOKEN.name)?.let { idToken ->
-                sessionManager.getCanisterPrincipal()?.let { canisterId ->
-                    updateSessionAsRegistered(
-                        idToken = idToken,
-                        canisterId = canisterId,
-                    )
-                }
+        crashlyticsManager.logMessage("extracting identity")
+        try {
+            val canisterWrapper = authenticateWithNetwork(data, null)
+            preferences.putBytes(PrefKeys.IDENTITY.name, data)
+            crashlyticsManager.setUserId(canisterWrapper.getUserPrincipal())
+            crashlyticsManager.logMessage("Session logged in")
+            sessionManager.updateState(
+                SessionState.SignedIn(
+                    session =
+                        Session(
+                            identity = data,
+                            canisterPrincipal = canisterWrapper.getCanisterPrincipal(),
+                            userPrincipal = canisterWrapper.getUserPrincipal(),
+                        ),
+                ),
+            )
+            if (shouldSetMetaData) {
+                updateSessionAsRegistered()
             }
+            analyticsManager.trackEvent(
+                event = AuthSuccessfulEventData(),
+            )
+        } catch (e: FfiException) {
+            crashlyticsManager.recordException(e)
         }
-        analyticsManager.trackEvent(
-            event = AuthSuccessfulEventData(),
-        )
     }
 
     private suspend fun refreshAccessToken() {
@@ -166,7 +170,7 @@ class DefaultAuthClient(
                             shouldRefreshToken = true,
                         )
                     },
-                    failure = { YralException(it.localizedMessage ?: "") },
+                    failure = { logout() },
                 )
         } ?: obtainAnonymousIdentity()
     }
@@ -229,17 +233,18 @@ class DefaultAuthClient(
             )
     }
 
-    private suspend fun updateSessionAsRegistered(
-        idToken: String,
-        canisterId: String,
-    ) {
-        requiredUseCases.updateSessionAsRegisteredUseCase.invoke(
-            parameter =
-                UpdateSessionAsRegisteredUseCase.Params(
-                    idToken = idToken,
-                    canisterId = canisterId,
-                ),
-        )
+    private suspend fun updateSessionAsRegistered() {
+        preferences.getString(PrefKeys.ID_TOKEN.name)?.let { idToken ->
+            sessionManager.getCanisterPrincipal()?.let { canisterId ->
+                requiredUseCases.updateSessionAsRegisteredUseCase.invoke(
+                    parameter =
+                        UpdateSessionAsRegisteredUseCase.Params(
+                            idToken = idToken,
+                            canisterId = canisterId,
+                        ),
+                )
+            }
+        }
     }
 
     data class RequiredUseCases(
