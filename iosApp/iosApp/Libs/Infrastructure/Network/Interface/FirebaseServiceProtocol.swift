@@ -18,6 +18,7 @@ protocol FirebaseServiceProtocol {
 
   func fetchDocument<T: Decodable>(
     path: String,
+    checkCache: Bool,
     decodeAs type: T.Type
   ) async throws -> T
 

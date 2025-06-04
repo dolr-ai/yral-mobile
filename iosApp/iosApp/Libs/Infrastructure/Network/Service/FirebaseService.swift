@@ -61,8 +61,15 @@ class FirebaseService: FirebaseServiceProtocol {
 
   func fetchDocument<T>(
     path: String,
+    checkCache: Bool,
     decodeAs type: T.Type
   ) async throws -> T where T: Decodable {
+    if checkCache {
+      if let cachedSnap = try? await database.document(path).getDocument(source: .cache) {
+        return try cachedSnap.data(as: T.self)
+      }
+    }
+
     let doc = database.document(path)
     let snapshot = try await doc.getDocument()
 
