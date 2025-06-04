@@ -55,10 +55,11 @@ This implementation adds three key Firebase Performance traces to monitor differ
 - **Single trace per video**: Each video URL creates exactly one trace of each type
 
 ### Prefetch Support:
-- Prefetch players also have performance monitoring
-- Prefetch traces are suffixed with "_prefetch"
-- Same timing logic applies for background video loading performance
-- Helps monitor preloading effectiveness
+- Prefetch players have simplified performance monitoring
+- Only `video_download_time_prefetch` is tracked for background video loading
+- Focuses on network/caching performance since videos aren't immediately played
+- Helps monitor preloading effectiveness and CDN performance
+- No decoder or rendering traces for prefetch since videos aren't decoded until played
 
 ### Usage:
 The traces are automatically initialized and managed within the `rememberExoPlayerWithLifecycle` and `rememberPrefetchExoPlayerWithLifecycle` composables. No additional setup is required by the calling code.
