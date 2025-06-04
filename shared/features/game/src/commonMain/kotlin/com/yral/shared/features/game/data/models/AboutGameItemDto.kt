@@ -39,7 +39,7 @@ fun AboutGameItemBodyDto.toAboutGameItemBody(): AboutGameItemBody =
             when (type) {
                 "text" -> AboutGameBodyType.TEXT
                 "images" -> AboutGameBodyType.IMAGES
-                else -> throw IllegalArgumentException("Unknown type: $type")
+                else -> AboutGameBodyType.UNKNOWN
             },
         content = content,
         colors = colors,

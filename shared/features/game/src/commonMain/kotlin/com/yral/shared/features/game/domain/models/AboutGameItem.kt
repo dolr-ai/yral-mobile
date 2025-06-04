@@ -16,4 +16,5 @@ data class AboutGameItemBody(
 enum class AboutGameBodyType {
     TEXT,
     IMAGES,
+    UNKNOWN,
 }
