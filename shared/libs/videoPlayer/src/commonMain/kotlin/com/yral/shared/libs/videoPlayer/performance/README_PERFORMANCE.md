@@ -1,12 +1,12 @@
 # Firebase Performance Monitoring for ExoPlayer
 
-This implementation adds three key Firebase Performance traces to monitor video playback performance:
+This implementation adds three key Firebase Performance traces to monitor different phases of video playback performance:
 
 ## 1. Video Download Time
 **Trace Name:** `video_download_time`
-- **What it measures:** Time taken to download/fetch the video content and buffer enough data
+- **What it measures:** Time taken to download/fetch video content from network
 - **Start:** When media source loading begins (`LaunchedEffect(url)`)
-- **End:** When player reaches `STATE_READY` (buffering complete, sufficient data downloaded)
+- **End:** When player reaches `STATE_BUFFERING` (network data received, buffering starts)
 - **Attributes:**
   - `video_url`: The URL of the video
   - `video_format`: Either "hls" or "progressive"
@@ -14,9 +14,9 @@ This implementation adds three key Firebase Performance traces to monitor video 
 
 ## 2. Video Load Time
 **Trace Name:** `video_load_time`
-- **What it measures:** Time taken for decoders to initialize and prepare video
+- **What it measures:** Time taken for decoder initialization and preparation
 - **Start:** When `ExoPlayer.prepare()` is called (decoder initialization begins)
-- **End:** When player reaches `STATE_READY` (decoder ready)
+- **End:** When player reaches `STATE_READY` (decoder ready to play)
 - **Attributes:**
   - `video_url`: The URL of the video
   - `video_format`: Either "hls" or "progressive"
@@ -24,8 +24,8 @@ This implementation adds three key Firebase Performance traces to monitor video 
 
 ## 3. First Frame Render Time
 **Trace Name:** `first_frame_render_time`
-- **What it measures:** Time taken for first frame to be ready for display
-- **Start:** When player enters `STATE_BUFFERING` (actively preparing to render)
+- **What it measures:** Time taken for complete video initialization to first frame readiness
+- **Start:** When video loading begins (`LaunchedEffect(url)`) - after prepare() is called
 - **End:** When player reaches `STATE_READY` (ready to display first frame)
 - **Attributes:**
   - `video_url`: The URL of the video
@@ -35,17 +35,24 @@ This implementation adds three key Firebase Performance traces to monitor video 
 ## Implementation Details
 
 ### ExoPlayer States and Trace Lifecycle:
-1. **LaunchedEffect starts** → Download trace starts, Load trace starts
-2. **ExoPlayer.prepare() called** → Decoder initialization begins
-3. **STATE_BUFFERING** → First frame trace starts (preparing to render)
-4. **STATE_READY** → All traces end (download complete, decoder ready, first frame ready)
-5. **Errors** → All active traces stop with error result
+1. **LaunchedEffect starts** → Download trace starts
+2. **ExoPlayer.prepare() called** → Load trace starts (decoder initialization)
+3. **After prepare()** → First frame trace starts (complete initialization to ready)
+4. **STATE_BUFFERING** → Download trace ends (network data received)
+5. **STATE_READY** → Load trace and First frame trace end (everything ready)
+6. **Errors** → All active traces stop with error result
 
-### Key Timing Changes:
-- **Download trace** now properly measures until buffering is complete (`STATE_READY`)
-- **Load trace** measures decoder preparation time
-- **First frame trace** measures from buffering start to ready state
-- All traces stop simultaneously at `STATE_READY` for accurate measurements
+### Distinct Phase Measurements:
+- **Download Time**: Network performance and data fetching (start → buffering)
+- **Load Time**: Device decoder performance and initialization (prepare → ready)
+- **First Frame Time**: Complete initialization to ready (prepare → ready)
+- Each trace measures a different aspect with **no duplicate creation**
+
+### Key Timing Benefits:
+- **Download trace** measures pure network/CDN performance
+- **Load trace** measures device-specific decoder performance
+- **First frame trace** measures total time from decoder start to display ready
+- **Single trace per video**: Each video URL creates exactly one trace of each type
 
 ### Prefetch Support:
 - Prefetch players also have performance monitoring
