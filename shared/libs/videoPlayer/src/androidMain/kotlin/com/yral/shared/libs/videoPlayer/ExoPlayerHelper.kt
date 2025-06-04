@@ -26,6 +26,12 @@ import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
+import com.yral.shared.libs.videoPlayer.performance.DownloadTrace
+import com.yral.shared.libs.videoPlayer.performance.FirstFrameTrace
+import com.yral.shared.libs.videoPlayer.performance.LoadTimeTrace
+import com.yral.shared.libs.videoPlayer.performance.PrefetchDownloadTrace
+import com.yral.shared.libs.videoPlayer.performance.PrefetchLoadTimeTrace
+import com.yral.shared.libs.videoPlayer.performance.VideoPerformanceFactoryProvider
 import com.yral.shared.libs.videoPlayer.util.isHlsUrl
 
 @androidx.annotation.OptIn(UnstableApi::class)
@@ -57,6 +63,7 @@ fun rememberPlayerView(
     return playerView
 }
 
+@Suppress("LongMethod")
 @androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 fun rememberExoPlayerWithLifecycle(
@@ -65,6 +72,11 @@ fun rememberExoPlayerWithLifecycle(
     isPause: Boolean,
 ): ExoPlayer {
     val lifecycleOwner = LocalLifecycleOwner.current
+
+    // Performance monitoring traces
+    var downloadTrace by remember { mutableStateOf<DownloadTrace?>(null) }
+    var loadTrace by remember { mutableStateOf<LoadTimeTrace?>(null) }
+    var firstFrameTrace by remember { mutableStateOf<FirstFrameTrace?>(null) }
 
     val exoPlayer =
         remember(context) {
@@ -85,23 +97,65 @@ fun rememberExoPlayerWithLifecycle(
                     setForegroundMode(false)
                 }
         }
+
+    // Add performance monitoring listener
+    DisposableEffect(exoPlayer) {
+        val listener =
+            createMainPlayerListener(
+                downloadTrace = { downloadTrace },
+                loadTrace = { loadTrace },
+                firstFrameTrace = { firstFrameTrace },
+                onDownloadTraceUpdate = { downloadTrace = it },
+                onLoadTraceUpdate = { loadTrace = it },
+                onFirstFrameTraceUpdate = { firstFrameTrace = it },
+                url = url,
+            )
+
+        exoPlayer.addListener(listener)
+
+        onDispose {
+            exoPlayer.removeListener(listener)
+            // Clean up any remaining traces
+            downloadTrace?.stop()
+            loadTrace?.stop()
+            firstFrameTrace?.stop()
+        }
+    }
+
     LaunchedEffect(url) {
-        val videoUri = url.toUri()
-        val mediaItem = MediaItem.fromUri(videoUri)
+        if (url.isNotEmpty()) {
+            // Start download trace
+            downloadTrace =
+                VideoPerformanceFactoryProvider
+                    .createDownloadTrace(url)
+                    .apply { start() }
 
-        // Reset the player to the start
-        exoPlayer.seekTo(0, 0)
+            val videoUri = url.toUri()
+            val mediaItem = MediaItem.fromUri(videoUri)
 
-        // Prepare the appropriate media source based on the URL type
-        val mediaSource =
-            if (isHlsUrl(url)) {
-                createHlsMediaSource(mediaItem)
-            } else {
-                createProgressiveMediaSource(mediaItem, context)
-            }
+            // Reset the player to the start
+            exoPlayer.seekTo(0, 0)
 
-        exoPlayer.setMediaSource(mediaSource)
-        exoPlayer.prepare()
+            // Prepare the appropriate media source based on the URL type
+            val mediaSource =
+                if (isHlsUrl(url)) {
+                    createHlsMediaSource(mediaItem)
+                } else {
+                    createProgressiveMediaSource(mediaItem, context)
+                }
+
+            // Start load trace
+            loadTrace =
+                VideoPerformanceFactoryProvider
+                    .createLoadTimeTrace(url)
+                    .apply { start() }
+
+            exoPlayer.setMediaSource(mediaSource)
+            exoPlayer.prepare()
+
+            // Don't stop download trace here - let the player listener handle it
+            // when we know the data is actually loaded
+        }
     }
 
     var appInBackground by remember {
@@ -121,6 +175,7 @@ fun rememberExoPlayerWithLifecycle(
     return exoPlayer
 }
 
+@Suppress("LongMethod")
 @androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 fun rememberPrefetchExoPlayerWithLifecycle(
@@ -138,6 +193,11 @@ fun rememberPrefetchExoPlayerWithLifecycle(
 ): ExoPlayer? {
     if (url.isEmpty()) return null
     val lifecycleOwner = LocalLifecycleOwner.current
+
+    // Performance monitoring traces for prefetch
+    var downloadTrace by remember { mutableStateOf<PrefetchDownloadTrace?>(null) }
+    var loadTrace by remember { mutableStateOf<PrefetchLoadTimeTrace?>(null) }
+
     val exoPlayer =
         remember(context) {
             val renderersFactory =
@@ -158,7 +218,34 @@ fun rememberPrefetchExoPlayerWithLifecycle(
                     setForegroundMode(false)
                 }
         }
+
+    // Add performance monitoring listener for prefetch
+    DisposableEffect(exoPlayer) {
+        val listener =
+            createPrefetchPlayerListener(
+                downloadTrace = { downloadTrace },
+                loadTrace = { loadTrace },
+                onDownloadTraceUpdate = { downloadTrace = it },
+                onLoadTraceUpdate = { loadTrace = it },
+            )
+
+        exoPlayer.addListener(listener)
+
+        onDispose {
+            exoPlayer.removeListener(listener)
+            // Clean up prefetch traces
+            downloadTrace?.stop()
+            loadTrace?.stop()
+        }
+    }
+
     LaunchedEffect(url) {
+        // Start download trace for prefetch
+        downloadTrace =
+            VideoPerformanceFactoryProvider
+                .createPrefetchDownloadTrace(url)
+                .apply { start() }
+
         val videoUri = url.toUri()
         val mediaItem = MediaItem.fromUri(videoUri)
 
@@ -173,8 +260,16 @@ fun rememberPrefetchExoPlayerWithLifecycle(
                 createProgressiveMediaSource(mediaItem, context)
             }
 
+        // Start load trace for prefetch
+        loadTrace =
+            VideoPerformanceFactoryProvider
+                .createPrefetchLoadTimeTrace(url)
+                .apply { start() }
+
         exoPlayer.setMediaSource(mediaSource)
         exoPlayer.prepare()
+
+        // Don't stop download trace here - let the player listener handle it
     }
 
     var appInBackground by remember {
@@ -217,3 +312,113 @@ private fun createProgressiveMediaSource(
 
 private const val MIN_BUFFER_MS = 5000
 private const val BUFFER_MS_FOR_PLAYBACK = 1000
+
+/**
+ * Creates a performance monitoring listener for the main video player
+ */
+private fun createMainPlayerListener(
+    downloadTrace: () -> DownloadTrace?,
+    loadTrace: () -> LoadTimeTrace?,
+    firstFrameTrace: () -> FirstFrameTrace?,
+    onDownloadTraceUpdate: (DownloadTrace?) -> Unit,
+    onLoadTraceUpdate: (LoadTimeTrace?) -> Unit,
+    onFirstFrameTraceUpdate: (FirstFrameTrace?) -> Unit,
+    url: String,
+): Player.Listener =
+    object : Player.Listener {
+        override fun onPlaybackStateChanged(playbackState: Int) {
+            when (playbackState) {
+                Player.STATE_BUFFERING -> {
+                    // Start first frame trace when buffering starts
+                    if (firstFrameTrace() == null) {
+                        onFirstFrameTraceUpdate(
+                            VideoPerformanceFactoryProvider
+                                .createFirstFrameTrace(url)
+                                .apply { start() },
+                        )
+                    }
+                }
+
+                Player.STATE_READY -> {
+                    // Stop download trace when buffering is complete (data downloaded)
+                    downloadTrace()?.success()
+                    onDownloadTraceUpdate(null)
+
+                    // Stop load trace when player is ready (decoder ready)
+                    loadTrace()?.success()
+                    onLoadTraceUpdate(null)
+
+                    // Stop first frame trace when ready to play (first frame ready)
+                    firstFrameTrace()?.success()
+                    onFirstFrameTraceUpdate(null)
+                }
+
+                Player.STATE_ENDED -> {
+                    // Clean up any remaining traces
+                    firstFrameTrace()?.success()
+                    onFirstFrameTraceUpdate(null)
+                }
+
+                Player.STATE_IDLE -> {
+                    // Handle errors or idle state
+                    downloadTrace()?.error()
+                    onDownloadTraceUpdate(null)
+                    loadTrace()?.error()
+                    onLoadTraceUpdate(null)
+                    firstFrameTrace()?.error()
+                    onFirstFrameTraceUpdate(null)
+                }
+            }
+        }
+
+        override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
+            // Stop all traces on error
+            downloadTrace()?.error()
+            onDownloadTraceUpdate(null)
+            loadTrace()?.error()
+            onLoadTraceUpdate(null)
+            firstFrameTrace()?.error()
+            onFirstFrameTraceUpdate(null)
+        }
+    }
+
+/**
+ * Creates a performance monitoring listener for prefetch video player
+ */
+private fun createPrefetchPlayerListener(
+    downloadTrace: () -> PrefetchDownloadTrace?,
+    loadTrace: () -> PrefetchLoadTimeTrace?,
+    onDownloadTraceUpdate: (PrefetchDownloadTrace?) -> Unit,
+    onLoadTraceUpdate: (PrefetchLoadTimeTrace?) -> Unit,
+): Player.Listener =
+    object : Player.Listener {
+        override fun onPlaybackStateChanged(playbackState: Int) {
+            when (playbackState) {
+                Player.STATE_READY -> {
+                    // Stop download trace when prefetch buffering is complete
+                    downloadTrace()?.success()
+                    onDownloadTraceUpdate(null)
+
+                    // Stop load trace when prefetch player is ready
+                    loadTrace()?.success()
+                    onLoadTraceUpdate(null)
+                }
+
+                Player.STATE_IDLE -> {
+                    // Handle errors for prefetch
+                    downloadTrace()?.error()
+                    onDownloadTraceUpdate(null)
+                    loadTrace()?.error()
+                    onLoadTraceUpdate(null)
+                }
+            }
+        }
+
+        override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
+            // Stop traces on prefetch error
+            downloadTrace()?.error()
+            onDownloadTraceUpdate(null)
+            loadTrace()?.error()
+            onLoadTraceUpdate(null)
+        }
+    }
