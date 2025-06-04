@@ -1,4 +1,3 @@
-
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -21,7 +20,6 @@ kotlin {
 //    )
     
     sourceSets {
-        
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
@@ -41,6 +39,7 @@ kotlin {
             implementation(compose.components.uiToolingPreview)
 
             implementation(projects.shared.core)
+            implementation(projects.shared.libs.firebasePerf)
 
             implementation(libs.coil.compose)
         }
