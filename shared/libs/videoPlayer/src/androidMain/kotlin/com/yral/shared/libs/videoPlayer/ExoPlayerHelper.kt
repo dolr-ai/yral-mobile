@@ -108,7 +108,6 @@ fun rememberExoPlayerWithLifecycle(
                 onDownloadTraceUpdate = { downloadTrace = it },
                 onLoadTraceUpdate = { loadTrace = it },
                 onFirstFrameTraceUpdate = { firstFrameTrace = it },
-                url = url,
             )
 
         exoPlayer.addListener(listener)
@@ -124,7 +123,7 @@ fun rememberExoPlayerWithLifecycle(
 
     LaunchedEffect(url) {
         if (url.isNotEmpty()) {
-            // Start download trace
+            // Start download trace - measures network/media source loading time
             downloadTrace =
                 VideoPerformanceFactoryProvider
                     .createDownloadTrace(url)
@@ -144,17 +143,21 @@ fun rememberExoPlayerWithLifecycle(
                     createProgressiveMediaSource(mediaItem, context)
                 }
 
-            // Start load trace
+            exoPlayer.setMediaSource(mediaSource)
+
+            // Start load trace - measures decoder initialization time
             loadTrace =
                 VideoPerformanceFactoryProvider
                     .createLoadTimeTrace(url)
                     .apply { start() }
 
-            exoPlayer.setMediaSource(mediaSource)
             exoPlayer.prepare()
 
-            // Don't stop download trace here - let the player listener handle it
-            // when we know the data is actually loaded
+            // Start first frame trace - will be stopped when buffering completes
+            firstFrameTrace =
+                VideoPerformanceFactoryProvider
+                    .createFirstFrameTrace(url)
+                    .apply { start() }
         }
     }
 
@@ -323,32 +326,24 @@ private fun createMainPlayerListener(
     onDownloadTraceUpdate: (DownloadTrace?) -> Unit,
     onLoadTraceUpdate: (LoadTimeTrace?) -> Unit,
     onFirstFrameTraceUpdate: (FirstFrameTrace?) -> Unit,
-    url: String,
 ): Player.Listener =
     object : Player.Listener {
         override fun onPlaybackStateChanged(playbackState: Int) {
             when (playbackState) {
                 Player.STATE_BUFFERING -> {
-                    // Start first frame trace when buffering starts
-                    if (firstFrameTrace() == null) {
-                        onFirstFrameTraceUpdate(
-                            VideoPerformanceFactoryProvider
-                                .createFirstFrameTrace(url)
-                                .apply { start() },
-                        )
-                    }
+                    // Stop download trace when buffering starts (network data received)
+                    downloadTrace()?.success()
+                    onDownloadTraceUpdate(null)
+                    // First frame trace already started in LaunchedEffect
+                    // Don't create new traces here to avoid duplicates
                 }
 
                 Player.STATE_READY -> {
-                    // Stop download trace when buffering is complete (data downloaded)
-                    downloadTrace()?.success()
-                    onDownloadTraceUpdate(null)
-
-                    // Stop load trace when player is ready (decoder ready)
+                    // Stop load trace when decoder is ready
                     loadTrace()?.success()
                     onLoadTraceUpdate(null)
 
-                    // Stop first frame trace when ready to play (first frame ready)
+                    // Stop first frame trace when ready to display first frame
                     firstFrameTrace()?.success()
                     onFirstFrameTraceUpdate(null)
                 }
