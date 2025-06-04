@@ -30,7 +30,6 @@ import com.yral.shared.libs.videoPlayer.performance.DownloadTrace
 import com.yral.shared.libs.videoPlayer.performance.FirstFrameTrace
 import com.yral.shared.libs.videoPlayer.performance.LoadTimeTrace
 import com.yral.shared.libs.videoPlayer.performance.PrefetchDownloadTrace
-import com.yral.shared.libs.videoPlayer.performance.PrefetchLoadTimeTrace
 import com.yral.shared.libs.videoPlayer.performance.VideoPerformanceFactoryProvider
 import com.yral.shared.libs.videoPlayer.util.isHlsUrl
 
@@ -197,9 +196,8 @@ fun rememberPrefetchExoPlayerWithLifecycle(
     if (url.isEmpty()) return null
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    // Performance monitoring traces for prefetch
+    // Performance monitoring trace for prefetch - only download time
     var downloadTrace by remember { mutableStateOf<PrefetchDownloadTrace?>(null) }
-    var loadTrace by remember { mutableStateOf<PrefetchLoadTimeTrace?>(null) }
 
     val exoPlayer =
         remember(context) {
@@ -222,28 +220,25 @@ fun rememberPrefetchExoPlayerWithLifecycle(
                 }
         }
 
-    // Add performance monitoring listener for prefetch
+    // Add performance monitoring listener for prefetch - only download trace
     DisposableEffect(exoPlayer) {
         val listener =
             createPrefetchPlayerListener(
                 downloadTrace = { downloadTrace },
-                loadTrace = { loadTrace },
                 onDownloadTraceUpdate = { downloadTrace = it },
-                onLoadTraceUpdate = { loadTrace = it },
             )
 
         exoPlayer.addListener(listener)
 
         onDispose {
             exoPlayer.removeListener(listener)
-            // Clean up prefetch traces
+            // Clean up prefetch download trace
             downloadTrace?.stop()
-            loadTrace?.stop()
         }
     }
 
     LaunchedEffect(url) {
-        // Start download trace for prefetch
+        // Start download trace for prefetch - only measure network performance
         downloadTrace =
             VideoPerformanceFactoryProvider
                 .createPrefetchDownloadTrace(url)
@@ -262,12 +257,6 @@ fun rememberPrefetchExoPlayerWithLifecycle(
             } else {
                 createProgressiveMediaSource(mediaItem, context)
             }
-
-        // Start load trace for prefetch
-        loadTrace =
-            VideoPerformanceFactoryProvider
-                .createPrefetchLoadTimeTrace(url)
-                .apply { start() }
 
         exoPlayer.setMediaSource(mediaSource)
         exoPlayer.prepare()
@@ -382,9 +371,7 @@ private fun createMainPlayerListener(
  */
 private fun createPrefetchPlayerListener(
     downloadTrace: () -> PrefetchDownloadTrace?,
-    loadTrace: () -> PrefetchLoadTimeTrace?,
     onDownloadTraceUpdate: (PrefetchDownloadTrace?) -> Unit,
-    onLoadTraceUpdate: (PrefetchLoadTimeTrace?) -> Unit,
 ): Player.Listener =
     object : Player.Listener {
         override fun onPlaybackStateChanged(playbackState: Int) {
@@ -393,18 +380,12 @@ private fun createPrefetchPlayerListener(
                     // Stop download trace when prefetch buffering is complete
                     downloadTrace()?.success()
                     onDownloadTraceUpdate(null)
-
-                    // Stop load trace when prefetch player is ready
-                    loadTrace()?.success()
-                    onLoadTraceUpdate(null)
                 }
 
                 Player.STATE_IDLE -> {
                     // Handle errors for prefetch
                     downloadTrace()?.error()
                     onDownloadTraceUpdate(null)
-                    loadTrace()?.error()
-                    onLoadTraceUpdate(null)
                 }
             }
         }
@@ -413,7 +394,5 @@ private fun createPrefetchPlayerListener(
             // Stop traces on prefetch error
             downloadTrace()?.error()
             onDownloadTraceUpdate(null)
-            loadTrace()?.error()
-            onLoadTraceUpdate(null)
         }
     }
