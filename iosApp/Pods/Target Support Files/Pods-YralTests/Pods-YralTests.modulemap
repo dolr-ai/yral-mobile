@@ -1,0 +1,6 @@
+module Pods_YralTests {
+  umbrella header "Pods-YralTests-umbrella.h"
+
+  export *
+  module * { export * }
+}

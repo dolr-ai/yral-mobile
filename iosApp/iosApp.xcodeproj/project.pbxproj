@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 70;
+	objectVersion = 77;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -17,6 +17,7 @@
 		10512A532DA795A800114BAA /* YralQueuePlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10512A512DA7959D00114BAA /* YralQueuePlayer.swift */; };
 		10BA2E872DA6507E00B6BE97 /* FeedsPlayerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10BA2E842DA6507E00B6BE97 /* FeedsPlayerTests.swift */; };
 		2152FB042600AC8F00CF470E /* IosApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* IosApp.swift */; };
+		4CD1E193C1626E3FD5066C7B /* Pods_Yral.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CF643E3B8DE78CADEA2798DB /* Pods_Yral.framework */; };
 		7555FF83242A565900829871 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* ContentView.swift */; };
 		AC09A9B22CDB775C009A39A4 /* yral-mobile-swift-binding.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC09A9AD2CDB775C009A39A4 /* yral-mobile-swift-binding.swift */; };
 		AC09A9B32CDB775C009A39A4 /* SwiftBridgeCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC09A9B02CDB775C009A39A4 /* SwiftBridgeCore.swift */; };
@@ -424,6 +425,8 @@
 		ACF63A7B2DC29A3100C4BCCC /* ClientCredentialsRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACF63A792DC29A2700C4BCCC /* ClientCredentialsRequest.swift */; };
 		ACFEDFA12D96CEC2003116EA /* Errors.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFEDFA02D96CEC2003116EA /* Errors.swift */; };
 		ACFEDFA22D96CEC2003116EA /* Errors.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFEDFA02D96CEC2003116EA /* Errors.swift */; };
+		BA46E2DE7702E3271AC4F6B5 /* libPods-YralTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CD1E674E5741EFAEF5681540 /* libPods-YralTests.a */; };
+		BCC232E6D41C66A2AB1263A6 /* Pods_Yral_Staging.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 182C8772CDF1B9CE93EA1073 /* Pods_Yral_Staging.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -462,12 +465,17 @@
 /* Begin PBXFileReference section */
 		058557BA273AAA24004C7B11 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		0C6D8BF798E0DFF61C80C506 /* Pods-Yral.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Yral.release.xcconfig"; path = "Target Support Files/Pods-Yral/Pods-Yral.release.xcconfig"; sourceTree = "<group>"; };
+		0C9971B5038EC2E84F73A1D6 /* Pods-Yral-Staging.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Yral-Staging.release.xcconfig"; path = "Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging.release.xcconfig"; sourceTree = "<group>"; };
 		103BBB032DACE21D00C0BFD0 /* HLSDownloadManaging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HLSDownloadManaging.swift; sourceTree = "<group>"; };
 		10512A422DA666A900114BAA /* YralPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralPlayer.swift; sourceTree = "<group>"; };
 		10512A512DA7959D00114BAA /* YralQueuePlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralQueuePlayer.swift; sourceTree = "<group>"; };
 		10BA2E822DA64E6A00B6BE97 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Platforms/iPhoneOS.platform/Developer/Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		10BA2E842DA6507E00B6BE97 /* FeedsPlayerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedsPlayerTests.swift; sourceTree = "<group>"; };
+		16F51214614BC8E722DA7B40 /* Pods-YralTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-YralTests.debug.xcconfig"; path = "Target Support Files/Pods-YralTests/Pods-YralTests.debug.xcconfig"; sourceTree = "<group>"; };
+		182C8772CDF1B9CE93EA1073 /* Pods_Yral_Staging.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Yral_Staging.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		2152FB032600AC8F00CF470E /* IosApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IosApp.swift; sourceTree = "<group>"; };
+		5964C6DFEA494E268157ECCD /* Pods-Yral.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Yral.debug.xcconfig"; path = "Target Support Files/Pods-Yral/Pods-Yral.debug.xcconfig"; sourceTree = "<group>"; };
 		7555FF7B242A565900829871 /* Yral.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Yral.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7555FF82242A565900829871 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		AC09A99C2CDB75AA009A39A4 /* BridgingHeader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BridgingHeader.h; sourceTree = "<group>"; };
@@ -666,10 +674,20 @@
 		ACF63A762DC271F300C4BCCC /* DefaultAuthClient+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DefaultAuthClient+Extensions.swift"; sourceTree = "<group>"; };
 		ACF63A792DC29A2700C4BCCC /* ClientCredentialsRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientCredentialsRequest.swift; sourceTree = "<group>"; };
 		ACFEDFA02D96CEC2003116EA /* Errors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Errors.swift; sourceTree = "<group>"; };
+		B6F1C5A05A45071933205C46 /* Pods-Yral-Staging.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Yral-Staging.debug.xcconfig"; path = "Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging.debug.xcconfig"; sourceTree = "<group>"; };
+		B87A1F58A09B1EC03439369A /* Pods-YralTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-YralTests.release.xcconfig"; path = "Target Support Files/Pods-YralTests/Pods-YralTests.release.xcconfig"; sourceTree = "<group>"; };
+		CD1E674E5741EFAEF5681540 /* libPods-YralTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-YralTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		CF643E3B8DE78CADEA2798DB /* Pods_Yral.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Yral.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		AC9B77DE2D58C7E300270FC9 /* YralTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = YralTests; sourceTree = "<group>"; };
+		AC9B77DE2D58C7E300270FC9 /* YralTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			path = YralTests;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -693,6 +711,7 @@
 				AC6BECAE2D09D52B002E2021 /* GRPCReflectionService in Frameworks */,
 				ACB815482CFA146800104B7B /* FirebaseCore in Frameworks */,
 				ACD941822CFF55BB0038FCB6 /* FirebaseCrashlytics in Frameworks */,
+				4CD1E193C1626E3FD5066C7B /* Pods_Yral.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -700,6 +719,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BA46E2DE7702E3271AC4F6B5 /* libPods-YralTests.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -721,6 +741,7 @@
 				ACD941CE2CFF5B5B0038FCB6 /* FirebaseCrashlytics in Frameworks */,
 				AC6E31202D22F069001EBE6C /* SDWebImageMapKit in Frameworks */,
 				ACD941CC2CFF5B5B0038FCB6 /* FirebaseCore in Frameworks */,
+				BCC232E6D41C66A2AB1263A6 /* Pods_Yral_Staging.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -771,6 +792,20 @@
 			path = YralPlayer;
 			sourceTree = "<group>";
 		};
+		687AB5303B57626264B38E96 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				5964C6DFEA494E268157ECCD /* Pods-Yral.debug.xcconfig */,
+				0C6D8BF798E0DFF61C80C506 /* Pods-Yral.release.xcconfig */,
+				B6F1C5A05A45071933205C46 /* Pods-Yral-Staging.debug.xcconfig */,
+				0C9971B5038EC2E84F73A1D6 /* Pods-Yral-Staging.release.xcconfig */,
+				16F51214614BC8E722DA7B40 /* Pods-YralTests.debug.xcconfig */,
+				B87A1F58A09B1EC03439369A /* Pods-YralTests.release.xcconfig */,
+			);
+			name = Pods;
+			path = Pods;
+			sourceTree = "<group>";
+		};
 		7555FF72242A565900829871 = {
 			isa = PBXGroup;
 			children = (
@@ -783,6 +818,7 @@
 				7555FF7C242A565900829871 /* Products */,
 				7555FFB0242A642200829871 /* Frameworks */,
 				AC9293F52D620B5F003DB102 /* Recovered References */,
+				687AB5303B57626264B38E96 /* Pods */,
 			);
 			sourceTree = "<group>";
 		};
@@ -822,6 +858,9 @@
 			children = (
 				10BA2E822DA64E6A00B6BE97 /* XCTest.framework */,
 				AC09A9F72CDB78B9009A39A4 /* libyral_mobile_swift_binding.a */,
+				CF643E3B8DE78CADEA2798DB /* Pods_Yral.framework */,
+				182C8772CDF1B9CE93EA1073 /* Pods_Yral_Staging.framework */,
+				CD1E674E5741EFAEF5681540 /* libPods-YralTests.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -2035,12 +2074,14 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 7555FFA5242A565B00829871 /* Build configuration list for PBXNativeTarget "Yral" */;
 			buildPhases = (
+				CE0D626F7C814F0841ADDF17 /* [CP] Check Pods Manifest.lock */,
 				AC09AA1D2CDBAC9A009A39A4 /* Generate rust bindings */,
 				7555FF77242A565900829871 /* Sources */,
 				7555FF78242A565900829871 /* Frameworks */,
 				7555FF79242A565900829871 /* Resources */,
 				ACB815362CF9CEF600104B7B /* ShellScript */,
 				ACC0F3A72D2ED69300FA5BD0 /* Embed Frameworks */,
+				D08AF3C57900F0F178D05D9C /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -2055,9 +2096,11 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = AC9B77E32D58C7E300270FC9 /* Build configuration list for PBXNativeTarget "YralTests" */;
 			buildPhases = (
+				12878E25237B11FE369EE9F1 /* [CP] Check Pods Manifest.lock */,
 				AC9B77D92D58C7E300270FC9 /* Sources */,
 				AC9B77DA2D58C7E300270FC9 /* Frameworks */,
 				AC9B77DB2D58C7E300270FC9 /* Resources */,
+				0AC00D43D2F268D6C616ABED /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -2068,8 +2111,6 @@
 				AC9B77DE2D58C7E300270FC9 /* YralTests */,
 			);
 			name = YralTests;
-			packageProductDependencies = (
-			);
 			productName = YralTests;
 			productReference = AC9B77DD2D58C7E300270FC9 /* YralTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -2078,12 +2119,14 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = ACD941B52CFF575C0038FCB6 /* Build configuration list for PBXNativeTarget "Yral-Staging" */;
 			buildPhases = (
+				6F911CE4C82738A5975C6400 /* [CP] Check Pods Manifest.lock */,
 				ACD941842CFF575C0038FCB6 /* Generate rust bindings */,
 				ACD941862CFF575C0038FCB6 /* Sources */,
 				ACD9418D2CFF575C0038FCB6 /* Frameworks */,
 				ACD941B02CFF575C0038FCB6 /* Resources */,
 				ACD941B42CFF575C0038FCB6 /* ShellScript */,
 				ACC0F3AA2D2ED77200FA5BD0 /* Embed Frameworks */,
+				F7552B01061950931F3ACE51 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -2114,7 +2157,6 @@
 				};
 			};
 			buildConfigurationList = 7555FF76242A565900829871 /* Build configuration list for PBXProject "iosApp" */;
-			compatibilityVersion = "Xcode 9.3";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -2129,6 +2171,7 @@
 				AC6E31182D22F050001EBE6C /* XCRemoteSwiftPackageReference "SDWebImage" */,
 				ACC0F39D2D2ED68500FA5BD0 /* XCRemoteSwiftPackageReference "lottie-ios" */,
 			);
+			preferredProjectObjectVersion = 77;
 			productRefGroup = 7555FF7C242A565900829871 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -2203,6 +2246,67 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		0AC00D43D2F268D6C616ABED /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		12878E25237B11FE369EE9F1 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-YralTests-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		6F911CE4C82738A5975C6400 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-Yral-Staging-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
 		AC09AA1D2CDBAC9A009A39A4 /* Generate rust bindings */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -2283,6 +2387,62 @@
 			runOnlyForDeploymentPostprocessing = 1;
 			shellPath = /bin/sh;
 			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\n\"${BUILD_DIR%/Build/*}/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run\"\n";
+		};
+		CE0D626F7C814F0841ADDF17 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-Yral-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		D08AF3C57900F0F178D05D9C /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		F7552B01061950931F3ACE51 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -2790,6 +2950,7 @@
 		};
 		7555FFA6242A565B00829871 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 5964C6DFEA494E268157ECCD /* Pods-Yral.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "Apple Development";
@@ -2829,6 +2990,7 @@
 		};
 		7555FFA7242A565B00829871 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 0C6D8BF798E0DFF61C80C506 /* Pods-Yral.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "Apple Development";
@@ -2868,6 +3030,7 @@
 		};
 		AC9B77E42D58C7E300270FC9 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 16F51214614BC8E722DA7B40 /* Pods-YralTests.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -2894,6 +3057,7 @@
 		};
 		AC9B77E52D58C7E300270FC9 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = B87A1F58A09B1EC03439369A /* Pods-YralTests.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -2918,6 +3082,7 @@
 		};
 		ACD941B62CFF575C0038FCB6 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = B6F1C5A05A45071933205C46 /* Pods-Yral-Staging.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "Apple Development";
@@ -2956,6 +3121,7 @@
 		};
 		ACD941B72CFF575C0038FCB6 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 0C9971B5038EC2E84F73A1D6 /* Pods-Yral-Staging.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "Apple Development";

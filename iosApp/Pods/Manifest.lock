@@ -1,0 +1,16 @@
+PODS:
+  - iosSharedUmbrella (1.0)
+
+DEPENDENCIES:
+  - iosSharedUmbrella (from `../iosSharedUmbrella`)
+
+EXTERNAL SOURCES:
+  iosSharedUmbrella:
+    :path: "../iosSharedUmbrella"
+
+SPEC CHECKSUMS:
+  iosSharedUmbrella: 7641f749f4e780412df2bec020753133466fc318
+
+PODFILE CHECKSUM: 1f9f885898b7614ef6cafd7ec784b18b496621d5
+
+COCOAPODS: 1.16.2

@@ -1,0 +1,4 @@
+${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-resources.sh
+${PODS_CONFIGURATION_BUILD_DIR}/FirebaseCore-library/FirebaseCore_Privacy.bundle
+${PODS_CONFIGURATION_BUILD_DIR}/FirebaseCoreInternal-library/FirebaseCoreInternal_Privacy.bundle
+${PODS_CONFIGURATION_BUILD_DIR}/GoogleUtilities-library/GoogleUtilities_Privacy.bundle
