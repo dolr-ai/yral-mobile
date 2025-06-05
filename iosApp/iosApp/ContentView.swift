@@ -1,5 +1,5 @@
 import SwiftUI
-import secp256k1
+import P256K
 import Firebase
 import GRPC
 
@@ -33,7 +33,7 @@ struct ContentView: View {
   }
 
   func getAuthCookie() async throws {
-    let privateKey = try secp256k1.Signing.PrivateKey(format: .uncompressed)
+    let privateKey = try P256K.Signing.PrivateKey(format: .uncompressed)
     let publicKeyData = privateKey.publicKey.dataRepresentation
 
     let xData = publicKeyData[1...32].base64URLEncodedString()
