@@ -12,39 +12,45 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_21)
         }
     }
-//    listOf(
-//        iosX64(),
-//        iosArm64(),
-//        iosSimulatorArm64()
-//    ).forEach {
-//        it.binaries.framework {
-//            baseName = "shared"
+    listOf(
+        iosX64(),
+        iosArm64(),
+        iosSimulatorArm64()
+    ).forEach {
+        it.binaries.framework {
+            baseName = "shared"
 //            isStatic = true
-//        }
-//    }
+        }
+    }
 
     sourceSets {
-        commonMain.dependencies {
-            implementation(projects.shared.libs.http)
-            implementation(projects.shared.core)
-            implementation(projects.shared.libs.koin)
-            implementation(projects.shared.libs.preferences)
-            implementation(projects.shared.libs.crashlytics)
-
-            val (dependencies, shouldAddRustModule) = BuildConfig.getAndProcessDependencies(project)
-            dependencies.forEach { dependency ->
-                if (dependency.isNotEmpty()) {
-                    implementation(dependency)
-                }
+        val commonMain by getting {
+            dependencies {
+                implementation(projects.shared.libs.http)
+                implementation(projects.shared.core)
+                implementation(projects.shared.libs.koin)
+                implementation(projects.shared.libs.crashlytics)
+                api(libs.gitlive.firebase.kotlin.anlaytics)
             }
-            if (shouldAddRustModule) {
-                implementation(projects.shared.rust)
-            }
-
-            api(libs.gitlive.firebase.kotlin.anlaytics)
         }
-        commonTest.dependencies {
-            implementation(libs.kotlin.test)
+        val androidMain by getting {
+            dependencies {
+                implementation(projects.shared.libs.preferences)
+                val (deps, addRust) = BuildConfig.getAndProcessDependencies(project)
+                deps.forEach { implementation(it) }
+                if (addRust) implementation(projects.shared.rust)
+            }
+        }
+
+        val iosMain by creating {
+            dependsOn(commonMain)
+        }
+        val iosArm64Main by getting { dependsOn(iosMain) }
+        val iosSimulatorArm64Main by getting { dependsOn(iosMain) }
+        val iosX64Main by getting { dependsOn(iosMain) }
+
+        val commonTest by getting {
+            dependencies { implementation(libs.kotlin.test) }
         }
     }
 }
