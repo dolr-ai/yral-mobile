@@ -123,6 +123,23 @@ class PrefetchLoadTimeTrace(
     }
 }
 
+class PlaybackTimeTrace(
+    url: String,
+) : OperationTrace(VideoPerformanceConstants.PLAYBACK_TIME_TRACE) {
+    init {
+        putAttribute(VideoPerformanceConstants.VIDEO_ID_KEY, extractVideoId(url))
+        putAttribute(
+            VideoPerformanceConstants.VIDEO_FORMAT_KEY,
+            if (isHlsUrl(url)) {
+                VideoPerformanceConstants.HLS_FORMAT
+            } else {
+                VideoPerformanceConstants.PROGRESSIVE_FORMAT
+            },
+        )
+        setModule("video_player")
+    }
+}
+
 /**
  * Factory interface for creating video performance traces
  */
@@ -132,6 +149,7 @@ interface VideoPerformanceFactory {
     fun createFirstFrameTrace(url: String): FirstFrameTrace
     fun createPrefetchDownloadTrace(url: String): PrefetchDownloadTrace
     fun createPrefetchLoadTimeTrace(url: String): PrefetchLoadTimeTrace
+    fun createPlaybackTimeTrace(url: String): PlaybackTimeTrace
 }
 
 object VideoPerformanceFactoryProvider : VideoPerformanceFactory {
@@ -140,6 +158,7 @@ object VideoPerformanceFactoryProvider : VideoPerformanceFactory {
     override fun createFirstFrameTrace(url: String): FirstFrameTrace = FirstFrameTrace(url)
     override fun createPrefetchDownloadTrace(url: String): PrefetchDownloadTrace = PrefetchDownloadTrace(url)
     override fun createPrefetchLoadTimeTrace(url: String): PrefetchLoadTimeTrace = PrefetchLoadTimeTrace(url)
+    override fun createPlaybackTimeTrace(url: String): PlaybackTimeTrace = PlaybackTimeTrace(url)
 }
 
 /**
@@ -150,6 +169,7 @@ object VideoPerformanceConstants {
     const val VIDEO_DOWNLOAD_TRACE = "VideoDownload"
     const val VIDEO_LOAD_TRACE = "VideoStartup"
     const val FIRST_FRAME_RENDER_TRACE = "FirstFrame"
+    const val PLAYBACK_TIME_TRACE = "VideoPlayback"
 
     // Video-specific attribute keys
     const val VIDEO_URL_KEY = "video_url"
@@ -166,4 +186,5 @@ object VideoPerformanceConstants {
     const val LOAD_TIME_MS = "load_time_ms"
     const val FIRST_FRAME_TIME_MS = "first_frame_time_ms"
     const val BUFFER_TIME_MS = "buffer_time_ms"
+    const val PLAYBACK_TIME_MS = "playback_time_ms"
 }

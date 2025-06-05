@@ -29,6 +29,7 @@ import androidx.media3.ui.PlayerView
 import com.yral.shared.libs.videoPlayer.performance.DownloadTrace
 import com.yral.shared.libs.videoPlayer.performance.FirstFrameTrace
 import com.yral.shared.libs.videoPlayer.performance.LoadTimeTrace
+import com.yral.shared.libs.videoPlayer.performance.PlaybackTimeTrace
 import com.yral.shared.libs.videoPlayer.performance.PrefetchDownloadTrace
 import com.yral.shared.libs.videoPlayer.performance.VideoPerformanceFactoryProvider
 import com.yral.shared.libs.videoPlayer.util.isHlsUrl
@@ -69,6 +70,7 @@ fun rememberExoPlayerWithLifecycle(
     url: String,
     context: Context,
     isPause: Boolean,
+    enablePerformanceTracing: Boolean = true, // Allow disabling traces when not needed
 ): ExoPlayer {
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -76,6 +78,10 @@ fun rememberExoPlayerWithLifecycle(
     var downloadTrace by remember { mutableStateOf<DownloadTrace?>(null) }
     var loadTrace by remember { mutableStateOf<LoadTimeTrace?>(null) }
     var firstFrameTrace by remember { mutableStateOf<FirstFrameTrace?>(null) }
+    var playbackTimeTrace by remember { mutableStateOf<PlaybackTimeTrace?>(null) }
+
+    // State reset mechanism for new URLs
+    var resetFlags by remember { mutableStateOf(false) }
 
     val exoPlayer =
         remember(context) {
@@ -97,16 +103,20 @@ fun rememberExoPlayerWithLifecycle(
                 }
         }
 
-    // Add performance monitoring listener
-    DisposableEffect(exoPlayer) {
+    // Add performance monitoring listener - recreate for each player instance
+    DisposableEffect(exoPlayer, url) {
         val listener =
             createMainPlayerListener(
                 downloadTrace = { downloadTrace },
                 loadTrace = { loadTrace },
                 firstFrameTrace = { firstFrameTrace },
+                playbackTimeTrace = { playbackTimeTrace },
                 onDownloadTraceUpdate = { downloadTrace = it },
                 onLoadTraceUpdate = { loadTrace = it },
                 onFirstFrameTraceUpdate = { firstFrameTrace = it },
+                onPlaybackTimeTraceUpdate = { playbackTimeTrace = it },
+                resetFlags = { resetFlags },
+                onResetFlagsHandled = { resetFlags = false },
             )
 
         exoPlayer.addListener(listener)
@@ -117,16 +127,17 @@ fun rememberExoPlayerWithLifecycle(
             downloadTrace?.stop()
             loadTrace?.stop()
             firstFrameTrace?.stop()
+            playbackTimeTrace?.stop()
         }
     }
 
     LaunchedEffect(url) {
         if (url.isNotEmpty()) {
-            // Start download trace - measures network/media source loading time
-            downloadTrace =
-                VideoPerformanceFactoryProvider
-                    .createDownloadTrace(url)
-                    .apply { start() }
+            // Clean up any existing traces before creating new ones
+            downloadTrace?.stop()
+            loadTrace?.stop()
+            firstFrameTrace?.stop()
+            playbackTimeTrace?.stop()
 
             val videoUri = url.toUri()
             val mediaItem = MediaItem.fromUri(videoUri)
@@ -144,19 +155,36 @@ fun rememberExoPlayerWithLifecycle(
 
             exoPlayer.setMediaSource(mediaSource)
 
-            // Start load trace - measures decoder initialization time
-            loadTrace =
-                VideoPerformanceFactoryProvider
-                    .createLoadTimeTrace(url)
-                    .apply { start() }
+            // Create performance traces if enabled (create them regardless of pause state)
+            if (enablePerformanceTracing) {
+                // Start download trace - measures network/media source loading time
+                downloadTrace =
+                    VideoPerformanceFactoryProvider
+                        .createDownloadTrace(url)
+                        .apply { start() }
+
+                // Start load trace - measures decoder initialization time
+                loadTrace =
+                    VideoPerformanceFactoryProvider
+                        .createLoadTimeTrace(url)
+                        .apply { start() }
+
+                // Create and start first frame trace - will be completed when first frame is rendered
+                firstFrameTrace =
+                    VideoPerformanceFactoryProvider
+                        .createFirstFrameTrace(url)
+                        .apply { start() }
+
+                // Create playback time trace - will be started when actual playback begins
+                playbackTimeTrace =
+                    VideoPerformanceFactoryProvider
+                        .createPlaybackTimeTrace(url)
+            }
+
+            // Reset listener state flags for new URL - regardless of performance tracing settings
+            resetFlags = true
 
             exoPlayer.prepare()
-
-            // Start first frame trace - will be stopped when buffering completes
-            firstFrameTrace =
-                VideoPerformanceFactoryProvider
-                    .createFirstFrameTrace(url)
-                    .apply { start() }
         }
     }
 
@@ -282,7 +310,7 @@ fun rememberPrefetchExoPlayerWithLifecycle(
 }
 
 @androidx.annotation.OptIn(UnstableApi::class)
-private fun createHlsMediaSource(mediaItem: MediaItem): MediaSource {
+internal fun createHlsMediaSource(mediaItem: MediaItem): MediaSource {
     val dataSourceFactory =
         DefaultHttpDataSource
             .Factory()
@@ -291,7 +319,7 @@ private fun createHlsMediaSource(mediaItem: MediaItem): MediaSource {
 }
 
 @androidx.annotation.OptIn(UnstableApi::class)
-private fun createProgressiveMediaSource(
+internal fun createProgressiveMediaSource(
     mediaItem: MediaItem,
     context: Context,
 ): MediaSource =
@@ -307,17 +335,36 @@ private const val BUFFER_MS_FOR_PLAYBACK = 1000
 
 /**
  * Creates a performance monitoring listener for the main video player
+ * Uses multiple ExoPlayer.Listener callbacks for comprehensive monitoring
  */
-private fun createMainPlayerListener(
+internal fun createMainPlayerListener(
     downloadTrace: () -> DownloadTrace?,
     loadTrace: () -> LoadTimeTrace?,
     firstFrameTrace: () -> FirstFrameTrace?,
+    playbackTimeTrace: () -> PlaybackTimeTrace?,
     onDownloadTraceUpdate: (DownloadTrace?) -> Unit,
     onLoadTraceUpdate: (LoadTimeTrace?) -> Unit,
     onFirstFrameTraceUpdate: (FirstFrameTrace?) -> Unit,
+    onPlaybackTimeTraceUpdate: (PlaybackTimeTrace?) -> Unit,
+    resetFlags: () -> Boolean,
+    onResetFlagsHandled: () -> Unit,
 ): Player.Listener =
     object : Player.Listener {
+        private var hasStartedPlayback = false
+        private var hasCompletedFirstPlaythrough = false
+        private var hasReachedReady = false
+        private var hasRenderedFirstFrame = false
+
         override fun onPlaybackStateChanged(playbackState: Int) {
+            // Check if we need to reset flags for new URL
+            if (resetFlags()) {
+                hasStartedPlayback = false
+                hasCompletedFirstPlaythrough = false
+                hasReachedReady = false
+                hasRenderedFirstFrame = false
+                onResetFlagsHandled()
+            }
+
             when (playbackState) {
                 Player.STATE_BUFFERING -> {
                     // Stop download trace when buffering starts (network data received)
@@ -332,15 +379,27 @@ private fun createMainPlayerListener(
                     loadTrace()?.success()
                     onLoadTraceUpdate(null)
 
-                    // Stop first frame trace when ready to display first frame
-                    firstFrameTrace()?.success()
-                    onFirstFrameTraceUpdate(null)
+                    // Mark that we've reached ready state
+                    hasReachedReady = true
+
+                    // FirstFrame trace already started in LaunchedEffect, just check if we need to complete it
+                    if (hasRenderedFirstFrame) {
+                        firstFrameTrace()?.let { trace ->
+                            trace.success()
+                            onFirstFrameTraceUpdate(null)
+                        }
+                    }
                 }
 
                 Player.STATE_ENDED -> {
-                    // Clean up any remaining traces
-                    firstFrameTrace()?.success()
-                    onFirstFrameTraceUpdate(null)
+                    // Video completed - stop playback time trace if this is first completion
+                    if (!hasCompletedFirstPlaythrough) {
+                        playbackTimeTrace()?.let { trace ->
+                            trace.success()
+                            onPlaybackTimeTraceUpdate(null)
+                            hasCompletedFirstPlaythrough = true
+                        }
+                    }
                 }
 
                 Player.STATE_IDLE -> {
@@ -351,7 +410,67 @@ private fun createMainPlayerListener(
                     onLoadTraceUpdate(null)
                     firstFrameTrace()?.error()
                     onFirstFrameTraceUpdate(null)
+                    playbackTimeTrace()?.error()
+                    onPlaybackTimeTraceUpdate(null)
+
+                    // Reset state flags
+                    hasStartedPlayback = false
+                    hasCompletedFirstPlaythrough = false
+                    hasReachedReady = false
+                    hasRenderedFirstFrame = false
                 }
+            }
+        }
+
+        override fun onIsPlayingChanged(isPlaying: Boolean) {
+            if (isPlaying && !hasStartedPlayback && !hasCompletedFirstPlaythrough) {
+                // Start playback time trace when video actually starts playing for the first time
+                playbackTimeTrace()?.let { trace ->
+                    trace.start()
+                    hasStartedPlayback = true
+                }
+            }
+        }
+
+        override fun onRenderedFirstFrame() {
+            // Complete the trace on the FIRST onRenderedFirstFrame call only
+            if (!hasRenderedFirstFrame) {
+                hasRenderedFirstFrame = true
+                firstFrameTrace()?.let { trace ->
+                    trace.success()
+                    onFirstFrameTraceUpdate(null)
+                }
+            }
+        }
+
+        override fun onMediaItemTransition(
+            mediaItem: androidx.media3.common.MediaItem?,
+            reason: Int,
+        ) {
+            // Reset playback state for new media items
+            if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED ||
+                reason == Player.MEDIA_ITEM_TRANSITION_REASON_SEEK
+            ) {
+                hasStartedPlayback = false
+                hasCompletedFirstPlaythrough = false
+                hasReachedReady = false
+                hasRenderedFirstFrame = false
+            }
+        }
+
+        override fun onPositionDiscontinuity(
+            oldPosition: Player.PositionInfo,
+            newPosition: Player.PositionInfo,
+            reason: Int,
+        ) {
+            // Handle seeks that might affect playback time measurement
+            if (reason == Player.DISCONTINUITY_REASON_SEEK &&
+                !hasCompletedFirstPlaythrough &&
+                newPosition.positionMs < oldPosition.positionMs
+            ) {
+                // User seeked backwards - this might be during first playthrough
+                // Keep playback trace running but note the seek
+                playbackTimeTrace()?.putAttribute("seek_during_playback", "true")
             }
         }
 
@@ -363,6 +482,14 @@ private fun createMainPlayerListener(
             onLoadTraceUpdate(null)
             firstFrameTrace()?.error()
             onFirstFrameTraceUpdate(null)
+            playbackTimeTrace()?.error()
+            onPlaybackTimeTraceUpdate(null)
+
+            // Reset state flags
+            hasStartedPlayback = false
+            hasCompletedFirstPlaythrough = false
+            hasReachedReady = false
+            hasRenderedFirstFrame = false
         }
     }
 
