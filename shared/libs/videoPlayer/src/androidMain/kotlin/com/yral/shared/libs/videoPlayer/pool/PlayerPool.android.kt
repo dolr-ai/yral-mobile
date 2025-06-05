@@ -49,6 +49,8 @@ actual class PlayerPool(
         var loadTrace: LoadTimeTrace? = null,
         var firstFrameTrace: FirstFrameTrace? = null,
         var playbackTimeTrace: PlaybackTimeTrace? = null,
+        var isFirstFrameTraceStarted: Boolean = false, // Track if firstFrameTrace has been started
+        var shouldResetFirstFrameFlag: Boolean = false, // Flag to reset hasRenderedFirstFrame in listener
     )
 
     actual suspend fun getPlayer(url: String): PlatformPlayer =
@@ -177,7 +179,7 @@ actual class PlayerPool(
         pooledPlayer.firstFrameTrace =
             VideoPerformanceFactoryProvider
                 .createFirstFrameTrace(url)
-                .apply { start() }
+        pooledPlayer.isFirstFrameTraceStarted = false
 
         pooledPlayer.playbackTimeTrace =
             VideoPerformanceFactoryProvider
@@ -205,6 +207,7 @@ actual class PlayerPool(
         pooledPlayer.loadTrace = null
         pooledPlayer.firstFrameTrace = null
         pooledPlayer.playbackTimeTrace = null
+        pooledPlayer.isFirstFrameTraceStarted = false
     }
 
     private fun createPooledPlayerListener(pooledPlayer: PooledExoPlayer): Player.Listener =
@@ -266,8 +269,14 @@ actual class PlayerPool(
             }
 
             override fun onRenderedFirstFrame() {
+                // Check if we need to reset the hasRenderedFirstFrame flag
+                if (pooledPlayer.shouldResetFirstFrameFlag) {
+                    hasRenderedFirstFrame = false
+                    pooledPlayer.shouldResetFirstFrameFlag = false
+                }
                 // Complete the trace on the FIRST onRenderedFirstFrame call only
-                if (!hasRenderedFirstFrame) {
+                // and only if the trace has been started (i.e., video is visible)
+                if (!hasRenderedFirstFrame && pooledPlayer.isFirstFrameTraceStarted) {
                     hasRenderedFirstFrame = true
                     pooledPlayer.firstFrameTrace?.let { trace ->
                         trace.success()
@@ -320,6 +329,48 @@ actual class PlayerPool(
                 hasRenderedFirstFrame = false
             }
         }
+
+    /**
+     * Starts the first frame trace for a specific URL when it becomes visible
+     */
+    @OptIn(UnstableApi::class)
+    actual suspend fun startFirstFrameTraceForUrl(url: String): Unit =
+        mutex.withLock {
+            val foundPlayer = pool.find { it.currentUrl == url && it.isInUse }
+            if (foundPlayer == null) {
+                return@withLock
+            }
+            foundPlayer.let { pooledPlayer ->
+                if (!pooledPlayer.isFirstFrameTraceStarted &&
+                    pooledPlayer.firstFrameTrace != null &&
+                    pooledPlayer.currentUrl == url
+                ) {
+                    pooledPlayer.firstFrameTrace?.start()
+                    pooledPlayer.isFirstFrameTraceStarted = true
+                    // Check if first frame was already rendered during prefetch
+                    // If so, complete the trace immediately since the video is ready to display
+                    val exoPlayer = pooledPlayer.exoPlayer
+                    if (exoPlayer.playbackState == Player.STATE_READY &&
+                        exoPlayer.videoFormat != null
+                    ) {
+                        // Video is ready and has video format - first frame is available
+                        pooledPlayer.firstFrameTrace?.success()
+                        pooledPlayer.firstFrameTrace = null
+                    } else {
+                        // Video not ready yet, use reset mechanism for future callback
+                        resetListenerFlags(pooledPlayer)
+                    }
+                }
+            }
+        }
+
+    /**
+     * Reset listener flags so FirstFrame trace can complete even if onRenderedFirstFrame
+     * was called during setup/prefetch before the user actually sees the video
+     */
+    private fun resetListenerFlags(pooledPlayer: PooledExoPlayer) {
+        pooledPlayer.shouldResetFirstFrameFlag = true
+    }
 }
 
 /**
