@@ -2,6 +2,7 @@ package com.yral.shared.libs.videoPlayer
 
 import android.content.Context
 import android.view.ViewGroup
+import androidx.annotation.OptIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -32,9 +33,11 @@ import com.yral.shared.libs.videoPlayer.performance.LoadTimeTrace
 import com.yral.shared.libs.videoPlayer.performance.PlaybackTimeTrace
 import com.yral.shared.libs.videoPlayer.performance.PrefetchDownloadTrace
 import com.yral.shared.libs.videoPlayer.performance.VideoPerformanceFactoryProvider
+import com.yral.shared.libs.videoPlayer.pool.PlatformPlayer
+import com.yral.shared.libs.videoPlayer.pool.PlayerPool
 import com.yral.shared.libs.videoPlayer.util.isHlsUrl
 
-@androidx.annotation.OptIn(UnstableApi::class)
+@OptIn(UnstableApi::class)
 @Composable
 fun rememberPlayerView(
     exoPlayer: ExoPlayer,
@@ -63,8 +66,7 @@ fun rememberPlayerView(
     return playerView
 }
 
-@Suppress("LongMethod")
-@androidx.annotation.OptIn(UnstableApi::class)
+@OptIn(UnstableApi::class)
 @Composable
 fun rememberExoPlayerWithLifecycle(
     url: String,
@@ -73,16 +75,6 @@ fun rememberExoPlayerWithLifecycle(
     enablePerformanceTracing: Boolean = true, // Allow disabling traces when not needed
 ): ExoPlayer {
     val lifecycleOwner = LocalLifecycleOwner.current
-
-    // Performance monitoring traces
-    var downloadTrace by remember { mutableStateOf<DownloadTrace?>(null) }
-    var loadTrace by remember { mutableStateOf<LoadTimeTrace?>(null) }
-    var firstFrameTrace by remember { mutableStateOf<FirstFrameTrace?>(null) }
-    var playbackTimeTrace by remember { mutableStateOf<PlaybackTimeTrace?>(null) }
-
-    // State reset mechanism for new URLs
-    var resetFlags by remember { mutableStateOf(false) }
-
     val exoPlayer =
         remember(context) {
             val renderersFactory =
@@ -102,6 +94,104 @@ fun rememberExoPlayerWithLifecycle(
                     setForegroundMode(false)
                 }
         }
+
+    // Performance tracing and media setup - consolidated to ensure proper timing
+    rememberPerformanceTracingWithMediaSetup(url, enablePerformanceTracing, exoPlayer, context)
+
+    var appInBackground by remember {
+        mutableStateOf(false)
+    }
+    DisposableEffect(key1 = lifecycleOwner, appInBackground) {
+        val lifecycleObserver =
+            getExoPlayerLifecycleObserver(exoPlayer, isPause, appInBackground) {
+                appInBackground = it
+            }
+        lifecycleOwner.lifecycle.addObserver(lifecycleObserver)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(lifecycleObserver)
+        }
+    }
+
+    return exoPlayer
+}
+
+@Suppress("LongMethod")
+@OptIn(UnstableApi::class)
+@Composable
+fun rememberPrefetchExoPlayerWithLifecycle(
+    url: String,
+    context: Context,
+    enablePerformanceTracing: Boolean = true,
+    loadControl: LoadControl =
+        DefaultLoadControl
+            .Builder()
+            .setBufferDurationsMs(
+                MIN_BUFFER_MS,
+                MIN_BUFFER_MS,
+                BUFFER_MS_FOR_PLAYBACK,
+                BUFFER_MS_FOR_PLAYBACK,
+            ).build(),
+): ExoPlayer? {
+    if (url.isEmpty()) return null
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val exoPlayer =
+        remember(context) {
+            val renderersFactory =
+                DefaultRenderersFactory(context)
+                    .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER)
+                    .setEnableDecoderFallback(true)
+            ExoPlayer
+                .Builder(context)
+                .setLoadControl(loadControl)
+                .setMediaSourceFactory(DefaultMediaSourceFactory(context))
+                .setRenderersFactory(renderersFactory)
+                .build()
+                .apply {
+                    videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT
+                    repeatMode = Player.REPEAT_MODE_OFF
+                    setHandleAudioBecomingNoisy(true)
+                    playWhenReady = false
+                    setForegroundMode(false)
+                }
+        }
+
+    // Consolidated prefetch performance tracing and media setup
+    rememberPrefetchPerformanceTracingWithMediaSetup(url, exoPlayer, context, enablePerformanceTracing)
+
+    var appInBackground by remember {
+        mutableStateOf(false)
+    }
+    DisposableEffect(key1 = lifecycleOwner, appInBackground) {
+        val lifecycleObserver =
+            getExoPlayerLifecycleObserver(exoPlayer, true, appInBackground) {
+                appInBackground = it
+            }
+        lifecycleOwner.lifecycle.addObserver(lifecycleObserver)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(lifecycleObserver)
+        }
+    }
+
+    return exoPlayer
+}
+
+@Suppress("LongMethod")
+@OptIn(UnstableApi::class)
+@Composable
+private fun rememberPerformanceTracingWithMediaSetup(
+    url: String,
+    enablePerformanceTracing: Boolean,
+    exoPlayer: ExoPlayer,
+    context: Context,
+) {
+    // Performance monitoring traces
+    var downloadTrace by remember { mutableStateOf<DownloadTrace?>(null) }
+    var loadTrace by remember { mutableStateOf<LoadTimeTrace?>(null) }
+    var firstFrameTrace by remember { mutableStateOf<FirstFrameTrace?>(null) }
+    var playbackTimeTrace by remember { mutableStateOf<PlaybackTimeTrace?>(null) }
+
+    // State reset mechanism for new URLs
+    var resetFlags by remember { mutableStateOf(false) }
 
     // Add performance monitoring listener - recreate for each player instance
     DisposableEffect(exoPlayer, url) {
@@ -131,6 +221,7 @@ fun rememberExoPlayerWithLifecycle(
         }
     }
 
+    // Consolidated LaunchedEffect for both tracing and media setup to ensure proper timing
     LaunchedEffect(url) {
         if (url.isNotEmpty()) {
             // Clean up any existing traces before creating new ones
@@ -139,23 +230,7 @@ fun rememberExoPlayerWithLifecycle(
             firstFrameTrace?.stop()
             playbackTimeTrace?.stop()
 
-            val videoUri = url.toUri()
-            val mediaItem = MediaItem.fromUri(videoUri)
-
-            // Reset the player to the start
-            exoPlayer.seekTo(0, 0)
-
-            // Prepare the appropriate media source based on the URL type
-            val mediaSource =
-                if (isHlsUrl(url)) {
-                    createHlsMediaSource(mediaItem)
-                } else {
-                    createProgressiveMediaSource(mediaItem, context)
-                }
-
-            exoPlayer.setMediaSource(mediaSource)
-
-            // Create performance traces if enabled (create them regardless of pause state)
+            // Create performance traces FIRST if enabled
             if (enablePerformanceTracing) {
                 // Start download trace - measures network/media source loading time
                 downloadTrace =
@@ -179,105 +254,83 @@ fun rememberExoPlayerWithLifecycle(
                 playbackTimeTrace =
                     VideoPerformanceFactoryProvider
                         .createPlaybackTimeTrace(url)
+            } else {
+                downloadTrace = null
+                loadTrace = null
+                firstFrameTrace = null
+                playbackTimeTrace = null
             }
 
-            // Reset listener state flags for new URL - regardless of performance tracing settings
+            // Reset listener state flags for new URL
             resetFlags = true
 
+            // NOW set up media source after traces have been started
+            val videoUri = url.toUri()
+            val mediaItem = MediaItem.fromUri(videoUri)
+            // Reset the player to the start
+            exoPlayer.seekTo(0, 0)
+            // Prepare the appropriate media source based on the URL type
+            val mediaSource =
+                if (isHlsUrl(url)) {
+                    createHlsMediaSource(mediaItem)
+                } else {
+                    createProgressiveMediaSource(mediaItem, context)
+                }
+
+            exoPlayer.setMediaSource(mediaSource)
             exoPlayer.prepare()
         }
     }
-
-    var appInBackground by remember {
-        mutableStateOf(false)
-    }
-
-    DisposableEffect(key1 = lifecycleOwner, appInBackground) {
-        val lifecycleObserver =
-            getExoPlayerLifecycleObserver(exoPlayer, isPause, appInBackground) {
-                appInBackground = it
-            }
-        lifecycleOwner.lifecycle.addObserver(lifecycleObserver)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(lifecycleObserver)
-        }
-    }
-    return exoPlayer
 }
 
-@Suppress("LongMethod")
-@androidx.annotation.OptIn(UnstableApi::class)
+@OptIn(UnstableApi::class)
 @Composable
-fun rememberPrefetchExoPlayerWithLifecycle(
+private fun rememberPrefetchPerformanceTracingWithMediaSetup(
     url: String,
+    exoPlayer: ExoPlayer,
     context: Context,
-    loadControl: LoadControl =
-        DefaultLoadControl
-            .Builder()
-            .setBufferDurationsMs(
-                MIN_BUFFER_MS,
-                MIN_BUFFER_MS,
-                BUFFER_MS_FOR_PLAYBACK,
-                BUFFER_MS_FOR_PLAYBACK,
-            ).build(),
-): ExoPlayer? {
-    if (url.isEmpty()) return null
-    val lifecycleOwner = LocalLifecycleOwner.current
-
+    enablePerformanceTracing: Boolean,
+) {
     // Performance monitoring trace for prefetch - only download time
     var downloadTrace by remember { mutableStateOf<PrefetchDownloadTrace?>(null) }
 
-    val exoPlayer =
-        remember(context) {
-            val renderersFactory =
-                DefaultRenderersFactory(context)
-                    .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER)
-                    .setEnableDecoderFallback(true)
-            ExoPlayer
-                .Builder(context)
-                .setLoadControl(loadControl)
-                .setMediaSourceFactory(DefaultMediaSourceFactory(context))
-                .setRenderersFactory(renderersFactory)
-                .build()
-                .apply {
-                    videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT
-                    repeatMode = Player.REPEAT_MODE_OFF
-                    setHandleAudioBecomingNoisy(true)
-                    playWhenReady = false
-                    setForegroundMode(false)
-                }
-        }
+    if (enablePerformanceTracing) {
+        // Add performance monitoring listener for prefetch - only download trace
+        DisposableEffect(exoPlayer) {
+            val listener =
+                createPrefetchPlayerListener(
+                    downloadTrace = { downloadTrace },
+                    onDownloadTraceUpdate = { downloadTrace = it },
+                )
 
-    // Add performance monitoring listener for prefetch - only download trace
-    DisposableEffect(exoPlayer) {
-        val listener =
-            createPrefetchPlayerListener(
-                downloadTrace = { downloadTrace },
-                onDownloadTraceUpdate = { downloadTrace = it },
-            )
+            exoPlayer.addListener(listener)
 
-        exoPlayer.addListener(listener)
-
-        onDispose {
-            exoPlayer.removeListener(listener)
-            // Clean up prefetch download trace
-            downloadTrace?.stop()
+            onDispose {
+                exoPlayer.removeListener(listener)
+                // Clean up prefetch download trace
+                downloadTrace?.stop()
+            }
         }
     }
 
+    // Consolidated LaunchedEffect for prefetch tracing and media setup
     LaunchedEffect(url) {
-        // Start download trace for prefetch - only measure network performance
-        downloadTrace =
-            VideoPerformanceFactoryProvider
-                .createPrefetchDownloadTrace(url)
-                .apply { start() }
+        if (enablePerformanceTracing) {
+            // Clean up any existing trace before creating a new one
+            downloadTrace?.stop()
 
+            // Start download trace for prefetch FIRST - only measure network performance
+            downloadTrace =
+                VideoPerformanceFactoryProvider
+                    .createPrefetchDownloadTrace(url)
+                    .apply { start() }
+        }
+
+        // NOW set up media source after trace has been started
         val videoUri = url.toUri()
         val mediaItem = MediaItem.fromUri(videoUri)
-
         // Reset the player to the start
         exoPlayer.seekTo(0, 0)
-
         // Prepare the appropriate media source based on the URL type
         val mediaSource =
             if (isHlsUrl(url)) {
@@ -285,31 +338,54 @@ fun rememberPrefetchExoPlayerWithLifecycle(
             } else {
                 createProgressiveMediaSource(mediaItem, context)
             }
-
         exoPlayer.setMediaSource(mediaSource)
         exoPlayer.prepare()
+    }
+}
 
-        // Don't stop download trace here - let the player listener handle it
+@OptIn(UnstableApi::class)
+@Suppress("LongMethod")
+@Composable
+fun rememberPooledExoPlayer(
+    url: String,
+    playerPool: PlayerPool,
+    isPause: Boolean,
+): ExoPlayer? {
+    var platformPlayer: PlatformPlayer? by remember { mutableStateOf(null) }
+    var exoPlayer: ExoPlayer? by remember { mutableStateOf(null) }
+
+    // Get player from pool when URL changes
+    LaunchedEffect(url, playerPool) {
+        if (url.isNotEmpty()) {
+            platformPlayer = playerPool.getPlayer(url)
+            exoPlayer = platformPlayer?.internalExoPlayer
+        }
     }
 
+    // Note: Performance tracing is now handled internally by the PlayerPool
+    // No need for additional tracing here to avoid duplicates
+
+    val lifecycleOwner = LocalLifecycleOwner.current
     var appInBackground by remember {
         mutableStateOf(false)
     }
-
-    DisposableEffect(key1 = lifecycleOwner, appInBackground) {
-        val lifecycleObserver =
-            getExoPlayerLifecycleObserver(exoPlayer, true, appInBackground) {
-                appInBackground = it
+    exoPlayer?.let {
+        DisposableEffect(key1 = lifecycleOwner, appInBackground) {
+            val lifecycleObserver =
+                getExoPlayerLifecycleObserver(it, isPause, appInBackground) {
+                    appInBackground = it
+                }
+            lifecycleOwner.lifecycle.addObserver(lifecycleObserver)
+            onDispose {
+                lifecycleOwner.lifecycle.removeObserver(lifecycleObserver)
             }
-        lifecycleOwner.lifecycle.addObserver(lifecycleObserver)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(lifecycleObserver)
         }
     }
+
     return exoPlayer
 }
 
-@androidx.annotation.OptIn(UnstableApi::class)
+@OptIn(UnstableApi::class)
 internal fun createHlsMediaSource(mediaItem: MediaItem): MediaSource {
     val dataSourceFactory =
         DefaultHttpDataSource
@@ -318,7 +394,7 @@ internal fun createHlsMediaSource(mediaItem: MediaItem): MediaSource {
     return HlsMediaSource.Factory(dataSourceFactory).createMediaSource(mediaItem)
 }
 
-@androidx.annotation.OptIn(UnstableApi::class)
+@OptIn(UnstableApi::class)
 internal fun createProgressiveMediaSource(
     mediaItem: MediaItem,
     context: Context,
@@ -337,7 +413,7 @@ private const val BUFFER_MS_FOR_PLAYBACK = 1000
  * Creates a performance monitoring listener for the main video player
  * Uses multiple ExoPlayer.Listener callbacks for comprehensive monitoring
  */
-internal fun createMainPlayerListener(
+private fun createMainPlayerListener(
     downloadTrace: () -> DownloadTrace?,
     loadTrace: () -> LoadTimeTrace?,
     firstFrameTrace: () -> FirstFrameTrace?,
@@ -368,27 +444,26 @@ internal fun createMainPlayerListener(
             when (playbackState) {
                 Player.STATE_BUFFERING -> {
                     // Stop download trace when buffering starts (network data received)
-                    downloadTrace()?.success()
-                    onDownloadTraceUpdate(null)
+                    downloadTrace()?.let { trace ->
+                        trace.success()
+                        onDownloadTraceUpdate(null)
+                    }
                     // First frame trace already started in LaunchedEffect
                     // Don't create new traces here to avoid duplicates
                 }
 
                 Player.STATE_READY -> {
                     // Stop load trace when decoder is ready
-                    loadTrace()?.success()
-                    onLoadTraceUpdate(null)
+                    loadTrace()?.let { trace ->
+                        trace.success()
+                        onLoadTraceUpdate(null)
+                    }
 
                     // Mark that we've reached ready state
                     hasReachedReady = true
 
-                    // FirstFrame trace already started in LaunchedEffect, just check if we need to complete it
-                    if (hasRenderedFirstFrame) {
-                        firstFrameTrace()?.let { trace ->
-                            trace.success()
-                            onFirstFrameTraceUpdate(null)
-                        }
-                    }
+                    // Don't complete FirstFrame trace here - let onRenderedFirstFrame handle it
+                    // This prevents duplicate trace completions
                 }
 
                 Player.STATE_ENDED -> {
@@ -397,21 +472,29 @@ internal fun createMainPlayerListener(
                         playbackTimeTrace()?.let { trace ->
                             trace.success()
                             onPlaybackTimeTraceUpdate(null)
-                            hasCompletedFirstPlaythrough = true
                         }
+                        hasCompletedFirstPlaythrough = true
                     }
                 }
 
                 Player.STATE_IDLE -> {
                     // Handle errors or idle state
-                    downloadTrace()?.error()
-                    onDownloadTraceUpdate(null)
-                    loadTrace()?.error()
-                    onLoadTraceUpdate(null)
-                    firstFrameTrace()?.error()
-                    onFirstFrameTraceUpdate(null)
-                    playbackTimeTrace()?.error()
-                    onPlaybackTimeTraceUpdate(null)
+                    downloadTrace()?.let { trace ->
+                        trace.error()
+                        onDownloadTraceUpdate(null)
+                    }
+                    loadTrace()?.let { trace ->
+                        trace.error()
+                        onLoadTraceUpdate(null)
+                    }
+                    firstFrameTrace()?.let { trace ->
+                        trace.error()
+                        onFirstFrameTraceUpdate(null)
+                    }
+                    playbackTimeTrace()?.let { trace ->
+                        trace.error()
+                        onPlaybackTimeTraceUpdate(null)
+                    }
 
                     // Reset state flags
                     hasStartedPlayback = false
@@ -444,7 +527,7 @@ internal fun createMainPlayerListener(
         }
 
         override fun onMediaItemTransition(
-            mediaItem: androidx.media3.common.MediaItem?,
+            mediaItem: MediaItem?,
             reason: Int,
         ) {
             // Reset playback state for new media items
@@ -476,14 +559,22 @@ internal fun createMainPlayerListener(
 
         override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
             // Stop all traces on error
-            downloadTrace()?.error()
-            onDownloadTraceUpdate(null)
-            loadTrace()?.error()
-            onLoadTraceUpdate(null)
-            firstFrameTrace()?.error()
-            onFirstFrameTraceUpdate(null)
-            playbackTimeTrace()?.error()
-            onPlaybackTimeTraceUpdate(null)
+            downloadTrace()?.let { trace ->
+                trace.error()
+                onDownloadTraceUpdate(null)
+            }
+            loadTrace()?.let { trace ->
+                trace.error()
+                onLoadTraceUpdate(null)
+            }
+            firstFrameTrace()?.let { trace ->
+                trace.error()
+                onFirstFrameTraceUpdate(null)
+            }
+            playbackTimeTrace()?.let { trace ->
+                trace.error()
+                onPlaybackTimeTraceUpdate(null)
+            }
 
             // Reset state flags
             hasStartedPlayback = false
@@ -505,21 +596,27 @@ private fun createPrefetchPlayerListener(
             when (playbackState) {
                 Player.STATE_READY -> {
                     // Stop download trace when prefetch buffering is complete
-                    downloadTrace()?.success()
-                    onDownloadTraceUpdate(null)
+                    downloadTrace()?.let { trace ->
+                        trace.success()
+                        onDownloadTraceUpdate(null)
+                    }
                 }
 
                 Player.STATE_IDLE -> {
                     // Handle errors for prefetch
-                    downloadTrace()?.error()
-                    onDownloadTraceUpdate(null)
+                    downloadTrace()?.let { trace ->
+                        trace.error()
+                        onDownloadTraceUpdate(null)
+                    }
                 }
             }
         }
 
         override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
             // Stop traces on prefetch error
-            downloadTrace()?.error()
-            onDownloadTraceUpdate(null)
+            downloadTrace()?.let { trace ->
+                trace.error()
+                onDownloadTraceUpdate(null)
+            }
         }
     }
