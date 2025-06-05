@@ -42,7 +42,7 @@ class DownloadTrace(
     url: String,
 ) : OperationTrace(VideoPerformanceConstants.VIDEO_DOWNLOAD_TRACE) {
     init {
-        putAttribute(VideoPerformanceConstants.VIDEO_URL_KEY, extractVideoId(url))
+        putAttribute(VideoPerformanceConstants.VIDEO_ID_KEY, extractVideoId(url))
         putAttribute(
             VideoPerformanceConstants.VIDEO_FORMAT_KEY,
             if (isHlsUrl(url)) {
@@ -59,7 +59,7 @@ class LoadTimeTrace(
     url: String,
 ) : OperationTrace(VideoPerformanceConstants.VIDEO_LOAD_TRACE) {
     init {
-        putAttribute(VideoPerformanceConstants.VIDEO_URL_KEY, extractVideoId(url))
+        putAttribute(VideoPerformanceConstants.VIDEO_ID_KEY, extractVideoId(url))
         putAttribute(
             VideoPerformanceConstants.VIDEO_FORMAT_KEY,
             if (isHlsUrl(url)) {
@@ -76,7 +76,7 @@ class FirstFrameTrace(
     url: String,
 ) : OperationTrace(VideoPerformanceConstants.FIRST_FRAME_RENDER_TRACE) {
     init {
-        putAttribute(VideoPerformanceConstants.VIDEO_URL_KEY, extractVideoId(url))
+        putAttribute(VideoPerformanceConstants.VIDEO_ID_KEY, extractVideoId(url))
         putAttribute(
             VideoPerformanceConstants.VIDEO_FORMAT_KEY,
             if (isHlsUrl(url)) {
@@ -93,7 +93,7 @@ class PrefetchDownloadTrace(
     url: String,
 ) : OperationTrace("${VideoPerformanceConstants.VIDEO_DOWNLOAD_TRACE}_prefetch") {
     init {
-        putAttribute(VideoPerformanceConstants.VIDEO_URL_KEY, extractVideoId(url))
+        putAttribute(VideoPerformanceConstants.VIDEO_ID_KEY, extractVideoId(url))
         putAttribute(
             VideoPerformanceConstants.VIDEO_FORMAT_KEY,
             if (isHlsUrl(url)) {
@@ -110,7 +110,7 @@ class PrefetchLoadTimeTrace(
     url: String,
 ) : OperationTrace("${VideoPerformanceConstants.VIDEO_LOAD_TRACE}_prefetch") {
     init {
-        putAttribute(VideoPerformanceConstants.VIDEO_URL_KEY, extractVideoId(url))
+        putAttribute(VideoPerformanceConstants.VIDEO_ID_KEY, extractVideoId(url))
         putAttribute(
             VideoPerformanceConstants.VIDEO_FORMAT_KEY,
             if (isHlsUrl(url)) {
@@ -147,9 +147,9 @@ object VideoPerformanceFactoryProvider : VideoPerformanceFactory {
  */
 object VideoPerformanceConstants {
     // Video-specific trace names
-    const val VIDEO_DOWNLOAD_TRACE = "video_download_time"
-    const val VIDEO_LOAD_TRACE = "video_load_time"
-    const val FIRST_FRAME_RENDER_TRACE = "first_frame_render_time"
+    const val VIDEO_DOWNLOAD_TRACE = "VideoDownload"
+    const val VIDEO_LOAD_TRACE = "VideoStartup"
+    const val FIRST_FRAME_RENDER_TRACE = "FirstFrame"
 
     // Video-specific attribute keys
     const val VIDEO_URL_KEY = "video_url"
