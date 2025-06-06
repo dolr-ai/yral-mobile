@@ -13,6 +13,7 @@ enum FeedError: Error {
   case rustError(RustError)
   case unknown(String)
   case aggregated(AggregatedError)
+  case firebaseError(String)
 }
 
 extension FeedError: LocalizedError {
@@ -28,6 +29,8 @@ extension FeedError: LocalizedError {
       return "Unknown Error: \(message)"
     case .aggregated(let aggregated):
       return "Aggregated Error: \(aggregated.localizedDescription)"
+    case .firebaseError(let message):
+      return "Firebase Error: \(message)"
     }
   }
 }

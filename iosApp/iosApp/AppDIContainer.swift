@@ -33,8 +33,10 @@ import GRPC
   lazy var authClient: DefaultAuthClient = {
     let client = DefaultAuthClient(
       networkService: HTTPService(),
+      firebaseService: FirebaseService(),
       crashReporter: crashReporter,
-      baseURL: URL(string: appConfiguration.authBaseURLString) ?? URL(fileURLWithPath: "")
+      baseURL: URL(string: appConfiguration.authBaseURLString) ?? URL(fileURLWithPath: ""),
+      firebaseBaseURL: URL(string: appConfiguration.firebaseBaseURLString) ?? URL(fileURLWithPath: "")
     )
     return client
   }()
@@ -47,13 +49,6 @@ import GRPC
 
   lazy var session: SessionManager = SessionManager(auth: authClient)
 
-  lazy var likeRepository: LikeRepositoryProtocol = {
-    LikeRepository(
-      httpService: HTTPService(),
-      authClient: authClient
-    )
-  }()
-
   lazy var accountsRepository: AccountRepositoryProtocol = {
     AccountRepository(
       httpService: HTTPService(),
@@ -63,13 +58,6 @@ import GRPC
   lazy var accountUseCase: AccountUseCaseProtocol = {
     AccountUseCase(
       accountRepository: accountsRepository,
-      crashReporter: crashReporter
-    )
-  }()
-
-  lazy var toggleLikeUseCase: ToggleLikeUseCaseProtocol = {
-    ToggleLikeUseCase(
-      likeRepository: likeRepository,
       crashReporter: crashReporter
     )
   }()
@@ -86,11 +74,19 @@ import GRPC
       dependencies: FeedDIContainer.Dependencies(
         mlfeedService: mlFeedClient,
         httpService: HTTPService(baseURLString: appConfiguration.offchainBaseURLString),
+        firebaseService: FirebaseService(),
         authClient: authClient,
         crashReporter: crashReporter,
-        toggleLikeUseCase: toggleLikeUseCase,
         socialSignInUseCase: socialSignInUseCase,
-        session: session
+        session: session,
+        castVoteUseCase: CastVoteUseCase(
+          castVoteRepository: CastVoteRepository(
+            firebaseService: FirebaseService(),
+            httpService: HTTPService(baseURLString: appConfiguration.firebaseBaseURLString),
+            authClient: authClient
+          ),
+          crashReporter: crashReporter
+        )
       )
     )
   }
@@ -125,7 +121,6 @@ import GRPC
         authClient: authClient,
         crashReporter: crashReporter,
         accountUseCase: accountUseCase,
-        likesUseCase: toggleLikeUseCase,
         session: session
       )
     )

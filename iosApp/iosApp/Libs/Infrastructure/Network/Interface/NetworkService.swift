@@ -24,6 +24,7 @@ enum NetworkError: Error {
   case decodingFailed(Error)
   case transportError(String)
   case grpc(String)
+  case cloudFunctionError(CloudFunctionError)
 }
 
 extension NetworkError: LocalizedError {
@@ -39,6 +40,55 @@ extension NetworkError: LocalizedError {
       return "Transport Error: \(message)"
     case .grpc(let message):
       return "gRPC Error: \(message)"
+    case .cloudFunctionError(let error):
+      return "Cloud Function Error: \(error.localizedDescription)"
     }
   }
+}
+
+enum CloudFunctionError: Error {
+  case alreadyVoted(CloudFunctionErrorType, String)
+  case unknown(CloudFunctionErrorType, String)
+}
+
+extension CloudFunctionError: LocalizedError {
+  public var errorDescription: String? {
+    switch self {
+    case .alreadyVoted(let code, let message):
+      return "Already Voted Error: \(code), \(message)"
+    case .unknown(let code, let message):
+      return "Unknown Error: \(code), \(message)"
+    }
+  }
+}
+
+extension CloudFunctionError: CustomStringConvertible {
+  public var description: String {
+    switch self {
+    case .alreadyVoted(_, let message):
+      return message
+    case .unknown(_, let message):
+      return message
+    }
+  }
+}
+
+enum CloudFunctionErrorType: String, Decodable {
+  case alreadyVoted = "DUPLICATE_VOTE"
+  case unknown
+
+  init(from decoder: Decoder) throws {
+    let container = try decoder.singleValueContainer()
+    let raw = try container.decode(String.self)
+    self = CloudFunctionErrorType(rawValue: raw) ?? .unknown
+  }
+}
+
+struct CloudFunctionErrorParentResponse: Decodable {
+  let error: CloudFunctionErrorResponse
+}
+
+struct CloudFunctionErrorResponse: Decodable {
+  let code: CloudFunctionErrorType
+  let message: String
 }
