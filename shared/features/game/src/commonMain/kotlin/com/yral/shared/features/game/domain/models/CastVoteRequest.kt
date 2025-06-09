@@ -3,6 +3,7 @@ package com.yral.shared.features.game.domain.models
 import com.yral.shared.features.game.data.models.CastVoteRequestDto
 
 data class CastVoteRequest(
+    val idToken: String = "",
     val principalId: String,
     val videoId: String,
     val gameIconId: String,
