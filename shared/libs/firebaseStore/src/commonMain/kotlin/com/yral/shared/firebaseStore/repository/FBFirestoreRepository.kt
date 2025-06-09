@@ -1,5 +1,6 @@
 package com.yral.shared.firebaseStore.repository
 
+import android.icu.util.UniversalTimeScale.toLong
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.firebaseStore.model.AboutGameItemDto
 import com.yral.shared.firebaseStore.model.FirestoreDocument
@@ -227,6 +228,21 @@ internal class FBFirestoreRepository(
             Result.failure(YralException("Unexpected error checking document existence: ${e.message}"))
         }
     }
+
+    override suspend fun getCollectionCount(
+        collectionPath: String,
+        queryOptions: QueryOptions,
+    ): Result<Long> =
+        try {
+            val collection = firestore.collection(collectionPath)
+            val query = applyQueryOptions(collection, queryOptions)
+            val querySnapshot = query.get()
+            Result.success(querySnapshot.documents.size.toLong())
+        } catch (e: FirebaseFirestoreException) {
+            Result.failure(YralException(e.message ?: "Error getting collection count"))
+        } catch (e: Exception) {
+            Result.failure(YralException("Unexpected error getting collection count: ${e.message}"))
+        }
 
     private fun applyQueryOptions(
         collection: CollectionReference,

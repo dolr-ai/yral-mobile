@@ -4,6 +4,7 @@ import com.yral.shared.features.game.data.GameRemoteDataSource
 import com.yral.shared.features.game.data.GameRepository
 import com.yral.shared.features.game.data.IGameRemoteDataSource
 import com.yral.shared.features.game.domain.CastVoteUseCase
+import com.yral.shared.features.game.domain.GetCurrentUserInfoUseCase
 import com.yral.shared.features.game.domain.GetGameIconsUseCase
 import com.yral.shared.features.game.domain.GetGameRulesUseCase
 import com.yral.shared.features.game.domain.GetLeaderboardUseCase
@@ -22,6 +23,7 @@ val gameModule =
         factory { GetGameIconsUseCase(get(), get(), get(named("GameConfig"))) }
         factory { GetGameRulesUseCase(get(), get(), get(named("AboutGame"))) }
         factory { GetLeaderboardUseCase(get(), get(), get(named("LeaderBoard"))) }
+        factory { GetCurrentUserInfoUseCase(get(), get(), get(named("LeaderBoard")), get()) }
         viewModelOf(::GameViewModel)
         viewModelOf(::LeaderBoardViewModel)
         factoryOf(::GameRepository) { bind<IGameRepository>() }

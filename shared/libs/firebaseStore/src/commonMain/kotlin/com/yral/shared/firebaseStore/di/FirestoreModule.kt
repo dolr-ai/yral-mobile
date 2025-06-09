@@ -27,6 +27,7 @@ val firestoreModule: Module =
         factory<FBFirestoreRepositoryApi> { FBFirestoreRepository() }
         includes(
             getFBDocumentUseCaseFactory<GameConfigDto>("GameConfig"),
+            getFBDocumentUseCaseFactory<LeaderboardItemDto>("LeaderBoard"),
             getCollectionUseCaseFactory<AboutGameItemDto>("AboutGame"),
             getCollectionUseCaseFactory<LeaderboardItemDto>("LeaderBoard"),
         )
