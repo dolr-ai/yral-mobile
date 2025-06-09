@@ -20,7 +20,12 @@ class GetGameRulesUseCase(
     override suspend fun execute(parameter: Unit): List<AboutGameItem> {
         val rules =
             getAboutUseCase
-                .invoke(GAME_ABOUT_COLLECTION)
+                .invoke(
+                    parameter =
+                        GetCollectionUseCase.Params(
+                            collectionName = GAME_ABOUT_COLLECTION,
+                        ),
+                )
                 .getOrThrow()
                 .map { it.toAboutGameItem() }
         val storage = Firebase.storage(FIREBASE_BUCKET)
