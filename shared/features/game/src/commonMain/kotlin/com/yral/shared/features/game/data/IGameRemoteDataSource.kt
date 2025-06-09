@@ -8,5 +8,8 @@ import com.yral.shared.firebaseStore.model.GameConfigDto
 interface IGameRemoteDataSource {
     suspend fun getConfig(): GameConfigDto
     suspend fun getRules(): List<AboutGameItemDto>
-    suspend fun castVote(request: CastVoteRequestDto): CastVoteResponseDto
+    suspend fun castVote(
+        idToken: String,
+        request: CastVoteRequestDto,
+    ): CastVoteResponseDto
 }

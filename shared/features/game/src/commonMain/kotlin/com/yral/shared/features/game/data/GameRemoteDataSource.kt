@@ -5,7 +5,6 @@ import com.yral.shared.core.AppConfigurations.FIREBASE_AUTH_URL
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.features.game.data.models.CastVoteRequestDto
 import com.yral.shared.features.game.data.models.CastVoteResponseDto
-import com.yral.shared.firebaseAuth.usecase.GetIdTokenUseCase
 import com.yral.shared.firebaseStore.model.AboutGameItemDto
 import com.yral.shared.firebaseStore.model.GameConfigDto
 import com.yral.shared.firebaseStore.usecase.GetCollectionUseCase
@@ -22,7 +21,6 @@ import kotlinx.serialization.json.Json
 class GameRemoteDataSource(
     private val httpClient: HttpClient,
     private val json: Json,
-    private val getIdTokenUseCase: GetIdTokenUseCase,
     private val getConfigUseCase: GetFBDocumentUseCase<GameConfigDto>,
     private val getAboutUseCase: GetCollectionUseCase<AboutGameItemDto>,
 ) : IGameRemoteDataSource {
@@ -42,8 +40,10 @@ class GameRemoteDataSource(
             .getOrThrow()
 
     @Suppress("SwallowedException", "TooGenericExceptionCaught")
-    override suspend fun castVote(request: CastVoteRequestDto): CastVoteResponseDto {
-        val idToken = getIdTokenUseCase.invoke(GetIdTokenUseCase.DEFAULT).getOrThrow()
+    override suspend fun castVote(
+        idToken: String,
+        request: CastVoteRequestDto,
+    ): CastVoteResponseDto {
         try {
             val response: HttpResponse =
                 httpClient.post {
