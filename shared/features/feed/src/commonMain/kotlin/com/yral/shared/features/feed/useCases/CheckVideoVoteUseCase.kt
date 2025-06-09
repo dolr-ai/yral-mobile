@@ -1,4 +1,4 @@
-package com.yral.shared.firebaseStore.usecase
+package com.yral.shared.features.feed.useCases
 
 import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.crashlytics.core.CrashlyticsManager

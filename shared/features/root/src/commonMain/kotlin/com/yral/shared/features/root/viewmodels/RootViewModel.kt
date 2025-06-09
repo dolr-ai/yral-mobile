@@ -10,10 +10,10 @@ import com.yral.shared.core.utils.InsufficientItemsException
 import com.yral.shared.core.utils.filterFirstNSuspendFlow
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.AuthClient
+import com.yral.shared.features.feed.useCases.CheckVideoVoteUseCase
 import com.yral.shared.features.feed.useCases.FetchFeedDetailsUseCase
 import com.yral.shared.features.feed.useCases.GetInitialFeedUseCase
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
-import com.yral.shared.firebaseStore.usecase.CheckVideoVoteUseCase
 import com.yral.shared.koin.koinInstance
 import com.yral.shared.rust.domain.models.FeedDetails
 import com.yral.shared.rust.domain.models.Post
