@@ -25,6 +25,6 @@ class GameRepository(
 
     override suspend fun castVote(request: CastVoteRequest): CastVoteResponse =
         gamRemoteDataSource
-            .castVote(request.toDto())
+            .castVote(request.idToken, request.toDto())
             .toCastVoteResponse()
 }
