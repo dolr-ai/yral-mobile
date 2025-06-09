@@ -1,7 +1,10 @@
 package com.yral.shared.firebaseStore.repository
 
 import com.yral.shared.core.exceptions.YralException
+import com.yral.shared.firebaseStore.model.AboutGameItemDto
 import com.yral.shared.firebaseStore.model.FirestoreDocument
+import com.yral.shared.firebaseStore.model.GameConfigDto
+import com.yral.shared.firebaseStore.model.LeaderboardItemDto
 import com.yral.shared.firebaseStore.model.QueryOptions
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.firestore.CollectionReference
@@ -291,7 +294,13 @@ internal class FBFirestoreRepository(
 @OptIn(InternalSerializationApi::class)
 private fun <T : FirestoreDocument> DocumentSnapshot.safeData(documentType: KClass<T>): T =
     try {
-        data(documentType.serializer())
+        // Create a new instance with the document ID populated
+        when (val data = data(documentType.serializer())) {
+            is LeaderboardItemDto -> data.copy(id = id) as T
+            is AboutGameItemDto -> data.copy(id = id) as T
+            is GameConfigDto -> data.copy(id = id) as T
+            else -> data
+        }
     } catch (e: Exception) {
         throw YralException("Error deserializing document")
     }
