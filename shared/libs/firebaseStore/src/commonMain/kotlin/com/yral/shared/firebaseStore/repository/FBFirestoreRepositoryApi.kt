@@ -42,6 +42,11 @@ interface FBFirestoreRepositoryApi {
 
     suspend fun documentExists(path: String): Result<Boolean>
 
+    suspend fun getCollectionCount(
+        collectionPath: String,
+        queryOptions: QueryOptions = QueryOptions(),
+    ): Result<Long>
+
 //    suspend fun <T : FirestoreDocument> setDocument(
 //        collectionPath: String,
 //        document: T,
