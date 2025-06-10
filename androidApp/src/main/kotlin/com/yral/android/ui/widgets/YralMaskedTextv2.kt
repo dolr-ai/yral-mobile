@@ -52,11 +52,25 @@ fun YralMaskedVectorTextV2(
     ) {
         Canvas(modifier = Modifier.matchParentSize()) {
             val availableWidth = size.width.toInt()
-            val measured = textMeasurer.measure(text, style = textStyle, maxLines = maxLines, overflow = textOverflow)
+            val measured =
+                textMeasurer.measure(
+                    text,
+                    style = textStyle,
+                    maxLines = maxLines,
+                    overflow = textOverflow,
+                )
             val textWidth = measured.size.width.coerceAtMost(availableWidth)
             val textHeight = measured.size.height
 
-            val textBitmap = createTextBitmap(text, textWidth, textHeight, textStyle, textOverflow, density)
+            val textBitmap =
+                createTextBitmap(
+                    text,
+                    textWidth,
+                    textHeight,
+                    textStyle,
+                    textOverflow,
+                    density,
+                )
             val vectorBitmap = createVectorBitmap(drawable, textWidth, textHeight)
             val resultBitmap = createMaskedBitmap(textBitmap, vectorBitmap, textWidth, textHeight)
 
@@ -88,21 +102,90 @@ private fun createTextBitmap(
             isSubpixelText = true
         }
 
+    val displayText = getDisplayText(text, textWidth, androidTextPaint, textOverflow)
+    val baselineY = textHeight - androidTextPaint.descent()
+    val textX = 0f
+    textCanvas.drawText(displayText, textX, baselineY, androidTextPaint)
+    return textBitmap
+}
+
+private fun getDisplayText(
+    text: String,
+    textWidth: Int,
+    paint: TextPaint,
+    overflow: TextOverflow,
+): String =
+    when (overflow) {
+        TextOverflow.Ellipsis -> ellipsisText(text, textWidth, paint)
+        TextOverflow.MiddleEllipsis -> middleEllipsisText(text, textWidth, paint)
+        TextOverflow.StartEllipsis -> startEllipsisText(text, textWidth, paint)
+        TextOverflow.Clip -> clipText(text, textWidth, paint)
+        else -> text
+    }
+
+private fun ellipsisText(
+    text: String,
+    textWidth: Int,
+    paint: TextPaint,
+): String {
     val ellipsis = "..."
     var displayText = text
-    if (textOverflow == TextOverflow.Ellipsis && androidTextPaint.measureText(text) > textWidth) {
+    if (paint.measureText(text) > textWidth) {
         var endIndex = text.length
-        while (endIndex > 0 && androidTextPaint.measureText(displayText) > textWidth) {
+        while (endIndex > 0 && paint.measureText(displayText) > textWidth) {
             endIndex--
             displayText = text.substring(0, endIndex) + ellipsis
         }
     }
+    return displayText
+}
 
-    val baselineY = textHeight - androidTextPaint.descent()
-    val textX = 0f
-    textCanvas.drawText(displayText, textX, baselineY, androidTextPaint)
+private fun clipText(
+    text: String,
+    textWidth: Int,
+    paint: TextPaint,
+) = text.takeWhile { paint.measureText(it.toString()) <= textWidth }
 
-    return textBitmap
+private fun middleEllipsisText(
+    text: String,
+    textWidth: Int,
+    paint: TextPaint,
+): String {
+    val ellipsis = "..."
+    var displayText = text
+    if (paint.measureText(text) > textWidth) {
+        var startIndex = 0
+        var endIndex = text.length
+        while (startIndex < endIndex &&
+            paint.measureText(
+                text.substring(0, startIndex) +
+                    ellipsis +
+                    text.substring(endIndex),
+            ) < textWidth
+        ) {
+            startIndex++
+            endIndex--
+        }
+        displayText = text.substring(0, startIndex) + ellipsis + text.substring(endIndex)
+    }
+    return displayText
+}
+
+private fun startEllipsisText(
+    text: String,
+    textWidth: Int,
+    paint: TextPaint,
+): String {
+    val ellipsis = "..."
+    var displayText = text
+    if (paint.measureText(text) > textWidth) {
+        var startIndex = 0
+        while (startIndex < text.length && paint.measureText(displayText) > textWidth) {
+            startIndex++
+            displayText = ellipsis + text.substring(startIndex)
+        }
+    }
+    return displayText
 }
 
 private fun createVectorBitmap(
