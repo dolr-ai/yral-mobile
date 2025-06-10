@@ -40,7 +40,6 @@ actual class PlayerPool(
 
     private data class PooledExoPlayer(
         val platformPlayer: PlatformPlayer,
-        val exoPlayer: ExoPlayer,
         var isInUse: Boolean = false,
         var currentUrl: String? = null,
         var performanceListener: Player.Listener? = null,
@@ -64,7 +63,7 @@ actual class PlayerPool(
             } else if (pool.size < maxPoolSize) {
                 val exoPlayer = createExoPlayer()
                 val platformPlayer = PlatformPlayer(exoPlayer)
-                val pooledPlayer = PooledExoPlayer(platformPlayer, exoPlayer)
+                val pooledPlayer = PooledExoPlayer(platformPlayer)
                 pool.add(pooledPlayer)
                 setupPlayerForUrl(pooledPlayer, url)
                 platformPlayer
@@ -89,9 +88,9 @@ actual class PlayerPool(
                 // Clean up performance tracing
                 cleanupPerformanceTracing(pooledPlayer)
                 // Stop playback and reset state
-                pooledPlayer.exoPlayer.playWhenReady = false
-                pooledPlayer.exoPlayer.stop()
-                pooledPlayer.exoPlayer.clearMediaItems()
+                pooledPlayer.platformPlayer.pause()
+                pooledPlayer.platformPlayer.stop()
+                pooledPlayer.platformPlayer.clearMediaItems()
             }
         }
 
@@ -103,15 +102,13 @@ actual class PlayerPool(
         pooledPlayer.isInUse = true
         pooledPlayer.currentUrl = url
 
-        val exoPlayer = pooledPlayer.exoPlayer
-
         // Clean up previous performance traces and listeners
         cleanupPerformanceTracing(pooledPlayer)
 
         // Reset player state completely
-        exoPlayer.stop()
-        exoPlayer.clearMediaItems()
-        exoPlayer.playWhenReady = false // Ensure consistent initial state
+        pooledPlayer.platformPlayer.stop()
+        pooledPlayer.platformPlayer.clearMediaItems()
+        pooledPlayer.platformPlayer.pause() // Ensure consistent initial state
 
         // Start performance tracing BEFORE setting up media source
         setupPerformanceTracing(pooledPlayer, url)
@@ -125,9 +122,9 @@ actual class PlayerPool(
                 createProgressiveMediaSource(mediaItem, context)
             }
 
-        exoPlayer.setMediaSource(mediaSource)
-        exoPlayer.seekTo(0, 0)
-        exoPlayer.prepare()
+        pooledPlayer.platformPlayer.setMediaSource(mediaSource)
+        pooledPlayer.platformPlayer.seekTo(0, 0)
+        pooledPlayer.platformPlayer.prepare()
     }
 
     @OptIn(UnstableApi::class)
@@ -154,7 +151,7 @@ actual class PlayerPool(
     actual fun dispose() {
         pool.forEach { pooledPlayer ->
             cleanupPerformanceTracing(pooledPlayer)
-            pooledPlayer.exoPlayer.release()
+            pooledPlayer.platformPlayer.release()
         }
         pool.clear()
     }
@@ -187,13 +184,13 @@ actual class PlayerPool(
 
         // Create and attach performance listener
         pooledPlayer.performanceListener = createPooledPlayerListener(pooledPlayer)
-        pooledPlayer.exoPlayer.addListener(pooledPlayer.performanceListener!!)
+        pooledPlayer.platformPlayer.addListener(pooledPlayer.performanceListener!!)
     }
 
     private fun cleanupPerformanceTracing(pooledPlayer: PooledExoPlayer) {
         // Remove existing listener
         pooledPlayer.performanceListener?.let { listener ->
-            pooledPlayer.exoPlayer.removeListener(listener)
+            pooledPlayer.platformPlayer.removeListener(listener)
             pooledPlayer.performanceListener = null
         }
 
@@ -349,10 +346,9 @@ actual class PlayerPool(
                     pooledPlayer.isFirstFrameTraceStarted = true
                     // Check if first frame was already rendered during prefetch
                     // If so, complete the trace immediately since the video is ready to display
-                    val exoPlayer = pooledPlayer.exoPlayer
-                    if (exoPlayer.playbackState == Player.STATE_READY &&
-                        exoPlayer.videoFormat != null
-                    ) {
+                    val playBackState = pooledPlayer.platformPlayer.getPlayBackState()
+                    val videoFormat = pooledPlayer.platformPlayer.getVideoFormat()
+                    if (playBackState == Player.STATE_READY && videoFormat != null) {
                         // Video is ready and has video format - first frame is available
                         pooledPlayer.firstFrameTrace?.success()
                         pooledPlayer.firstFrameTrace = null
@@ -371,26 +367,4 @@ actual class PlayerPool(
     private fun resetListenerFlags(pooledPlayer: PooledExoPlayer) {
         pooledPlayer.shouldResetFirstFrameFlag = true
     }
-}
-
-/**
- * Simplified Android PlatformPlayer wrapping ExoPlayer
- */
-actual class PlatformPlayer(
-    private val exoPlayer: ExoPlayer,
-) {
-    actual fun play() {
-        exoPlayer.playWhenReady = true
-    }
-
-    actual fun pause() {
-        exoPlayer.playWhenReady = false
-    }
-
-    actual fun release() {
-        exoPlayer.release()
-    }
-
-    // Internal access to ExoPlayer for Android-specific operations like performance monitoring
-    internal val internalExoPlayer: ExoPlayer = exoPlayer
 }

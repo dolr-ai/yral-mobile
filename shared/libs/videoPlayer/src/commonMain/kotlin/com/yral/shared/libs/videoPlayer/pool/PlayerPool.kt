@@ -18,5 +18,13 @@ expect class PlayerPool(
 expect class PlatformPlayer {
     fun play()
     fun pause()
+    fun stop()
     fun release()
+    fun clearMediaItems()
+    fun setMediaSource(source: Any)
+    fun prepare()
+    fun seekTo(
+        mediaItemIndex: Int,
+        positionMs: Long,
+    )
 }
