@@ -8,7 +8,6 @@ from typing import List, Dict, Any
 
 firebase_admin.initialize_app()
 
-DEFAULT_COINS = 2_000
 WIN_REWARD = 30
 LOSS_PENALTY = -10
 SHARDS = 10
@@ -106,48 +105,15 @@ def exchange_principal_id(request: Request):
         old_ref = db().document(f"users/{old_uid}") if old_uid != principal_id else None
 
         @firestore.transactional
-        def _merge(tx: firestore.Transaction) -> int:
-            # destination snapshot
-            dst_snap   = new_ref.get(transaction=tx)
-            dst_exists = dst_snap.exists
-            dst_coins  = dst_snap.get("coins") if dst_exists else None
-
-            # old balance (only if different UID)
-            src_coins = 0
-            if old_ref:
-                src_coins = (old_ref.get(transaction=tx).get("coins") or 0)
-
-            # ---- rule 1: destination missing → create --------------------
-            if not dst_exists:
-                initial = src_coins or DEFAULT_COINS
+        def _ensure_profile(tx: firestore.Transaction):
+            if not new_ref.get(transaction=tx).exists:
                 tx.set(new_ref,
-                       {"coins": initial,
-                        "created_at": firestore.SERVER_TIMESTAMP})
-                reason = "MERGE_IN" if src_coins else "INIT"
-                tx.set(new_ref.collection("transactions").document(_tx_id()),
-                       {"delta": initial,
-                        "reason": reason,
-                        "video_id": None,
-                        "at": firestore.SERVER_TIMESTAMP})
-                dst_coins = initial
-
-            # ---- rule 2: destination exists → NO merge -------------------
-            # (dst_coins already holds current balance)
-
-            # ---- debit & delete old account if we transferred ------------
-            if src_coins and not dst_exists:
-                tx.set(old_ref.collection("transactions").document(_tx_id()),
-                       {"delta": -src_coins,
-                        "reason": "MERGE_OUT",
-                        "video_id": None,
-                        "at": firestore.SERVER_TIMESTAMP})
+                       {"created_at": firestore.SERVER_TIMESTAMP})
 
             if old_ref:
-                tx.delete(old_ref)
+                tx.delete(old_ref)                 # discard temp profile
 
-            return dst_coins
-
-        coins = _merge(db().transaction())
+        _ensure_profile(db().transaction())
 
         # 4. delete old Auth user (best-effort) -----------------------------
         if old_uid != principal_id:
@@ -158,7 +124,7 @@ def exchange_principal_id(request: Request):
 
         # 5. return custom token + coins -----------------------------------
         token = auth.create_custom_token(principal_id).decode()
-        return jsonify({"token": token, "coins": coins}), 200
+        return jsonify({"token": token}), 200
 
     # -------- known errors to JSON ---------------------------------------
     except auth.InvalidIdTokenError:
