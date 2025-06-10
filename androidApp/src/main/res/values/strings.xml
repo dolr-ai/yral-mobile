@@ -50,4 +50,11 @@
     <string name="error_initial_content">Unable to load content. Please try again.</string>
     <string name="error_feed_details">Unable to load content. Please try again.</string>
     <string name="error_retry">Retry</string>
+
+    <string name="leaderboard">Leaderboard</string>
+    <string name="position">Position</string>
+    <string name="player_id">Player ID</string>
+    <string name="total_sats">Total SATS</string>
+    <string name="you">You</string>
+    <string name="new_">New</string>
 </resources>
