@@ -9,6 +9,7 @@ import com.yral.shared.firebaseStore.model.QueryOptions
 import com.yral.shared.firebaseStore.repository.FBFirestoreRepositoryApi
 import com.yral.shared.firebaseStore.usecase.GetFBDocumentUseCase
 import com.yral.shared.libs.useCase.SuspendUseCase
+import com.yral.shared.uniffi.generated.propicFromPrincipal
 
 class GetCurrentUserInfoUseCase(
     appDispatchers: AppDispatchers,
@@ -52,6 +53,7 @@ class GetCurrentUserInfoUseCase(
 
         return CurrentUserInfo(
             userPrincipalId = userDocument.id,
+            profileImageUrl = propicFromPrincipal(userDocument.id),
             coins = userDocument.coins,
             leaderboardPosition = leaderboardPosition,
         )

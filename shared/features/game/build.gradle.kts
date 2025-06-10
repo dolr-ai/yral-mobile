@@ -36,6 +36,16 @@ kotlin {
             implementation(projects.shared.libs.firebaseStore)
             implementation(projects.shared.libs.firebaseAuth)
             implementation(projects.shared.libs.http)
+
+            val (dependencies, shouldAddRustModule) = BuildConfig.getAndProcessDependencies(project)
+            dependencies.forEach { dependency ->
+                if (dependency.isNotEmpty()) {
+                    implementation(dependency)
+                }
+            }
+            if (shouldAddRustModule) {
+                implementation(projects.shared.rust)
+            }
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
