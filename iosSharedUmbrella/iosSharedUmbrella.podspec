@@ -11,7 +11,11 @@ Pod::Spec.new do |spec|
     spec.ios.deployment_target    = '15.6'
     spec.dependency 'FirebaseAnalytics'
     spec.dependency 'FirebaseCore'
+    spec.dependency 'FirebaseCoreInternal'
     spec.dependency 'FirebaseCrashlytics'
+    spec.dependency 'FirebaseInstallations'
+    spec.dependency 'GoogleUtilities'
+    spec.dependency 'nanopb'
                 
     if !Dir.exist?('build/cocoapods/framework/iosSharedUmbrella.framework') || Dir.empty?('build/cocoapods/framework/iosSharedUmbrella.framework')
         raise "

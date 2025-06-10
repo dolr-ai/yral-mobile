@@ -28,14 +28,25 @@ cocoapods {
     pod("FirebaseCrashlytics") {
         extraOpts += listOf("-compiler-option", "-fmodules")
     }
-
+    pod("FirebaseInstallations") {
+        extraOpts += listOf("-compiler-option", "-fmodules")
+    }
+    pod("FirebaseCoreInternal") {
+        extraOpts += listOf("-compiler-option", "-fmodules")
+    }
+    pod("GoogleUtilities") {
+        extraOpts += listOf("-compiler-option", "-fmodules")
+    }
+    pod("nanopb") {
+        extraOpts += listOf("-compiler-option", "-fmodules")
+    }
 
     framework {
         baseName = "iosSharedUmbrella"
         @OptIn(ExperimentalKotlinGradlePluginApi::class)
         transitiveExport = true
         isStatic = false
-//        export(projects.shared.libs.analytics)
+        export(projects.shared.libs.analytics)
         export(projects.shared.libs.crashlytics)
     }
 }
@@ -43,7 +54,7 @@ cocoapods {
 sourceSets {
     val iosMain by creating {
         dependencies {
-//            api(projects.shared.libs.analytics)
+            api(projects.shared.libs.analytics)
             api(projects.shared.libs.crashlytics)
         }
         }
@@ -55,7 +66,7 @@ sourceSets {
         binaries.framework {
             baseName = "iosSharedUmbrella"
             transitiveExport = true
-//            export(projects.shared.libs.analytics)
+            export(projects.shared.libs.analytics)
             export(projects.shared.libs.crashlytics)
             xcf.add(this)
         }
