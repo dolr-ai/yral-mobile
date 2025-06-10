@@ -32,7 +32,7 @@ struct LeaderboardRowView: View {
       HStack(spacing: Constants.hStackSpacing) {
         buildUserImage()
 
-        Text(leaderboardRow.principalID)
+        Text(isCurrentUser ? "You" : leaderboardRow.principalID)
           .font(Constants.userIDFont)
           .foregroundColor(foregroundColorForPrincipal())
           .lineLimit(.one)
