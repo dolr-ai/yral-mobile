@@ -33,6 +33,18 @@
 		10020A162DE9842800DF269E /* UIApplication+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10020A142DE9841F00DF269E /* UIApplication+Extensions.swift */; };
 		10020A182DED6CED00DF269E /* LeaderboardRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10020A172DED6CE800DF269E /* LeaderboardRowView.swift */; };
 		10020A192DED6CED00DF269E /* LeaderboardRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10020A172DED6CE800DF269E /* LeaderboardRowView.swift */; };
+		10020AA72DF7FBA600DF269E /* SatsCoinRepositoryProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10020AA62DF7FB9800DF269E /* SatsCoinRepositoryProtocol.swift */; };
+		10020AA82DF7FBA600DF269E /* SatsCoinRepositoryProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10020AA62DF7FB9800DF269E /* SatsCoinRepositoryProtocol.swift */; };
+		10020AAA2DF7FBE800DF269E /* SatsCoinDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10020AA92DF7FBDB00DF269E /* SatsCoinDTO.swift */; };
+		10020AAB2DF7FBE800DF269E /* SatsCoinDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10020AA92DF7FBDB00DF269E /* SatsCoinDTO.swift */; };
+		10020AAD2DF7FDB700DF269E /* SatsCoinResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10020AAC2DF7FDAC00DF269E /* SatsCoinResponse.swift */; };
+		10020AAE2DF7FDB700DF269E /* SatsCoinResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10020AAC2DF7FDAC00DF269E /* SatsCoinResponse.swift */; };
+		10020AB02DF7FE2A00DF269E /* SatsCoinError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10020AAF2DF7FE2400DF269E /* SatsCoinError.swift */; };
+		10020AB12DF7FE2A00DF269E /* SatsCoinError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10020AAF2DF7FE2400DF269E /* SatsCoinError.swift */; };
+		10020AB32DF7FEC300DF269E /* SatsCoinRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10020AB22DF7FEBC00DF269E /* SatsCoinRepository.swift */; };
+		10020AB42DF7FEC300DF269E /* SatsCoinRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10020AB22DF7FEBC00DF269E /* SatsCoinRepository.swift */; };
+		10020AB62DF800D900DF269E /* SatsCoinUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10020AB52DF800D200DF269E /* SatsCoinUseCase.swift */; };
+		10020AB72DF800D900DF269E /* SatsCoinUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10020AB52DF800D200DF269E /* SatsCoinUseCase.swift */; };
 		100F63D32DCB4630000BC17E /* SmileyGameRuleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100F63D22DCB4630000BC17E /* SmileyGameRuleView.swift */; };
 		100F63D42DCB4630000BC17E /* SmileyGameRuleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100F63D22DCB4630000BC17E /* SmileyGameRuleView.swift */; };
 		100F64EE2DCC96C9000BC17E /* YralCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100F64ED2DCC96C5000BC17E /* YralCache.swift */; };
@@ -580,6 +592,12 @@
 		10020A112DE8445C00DF269E /* LeaderboardDIContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeaderboardDIContainer.swift; sourceTree = "<group>"; };
 		10020A142DE9841F00DF269E /* UIApplication+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIApplication+Extensions.swift"; sourceTree = "<group>"; };
 		10020A172DED6CE800DF269E /* LeaderboardRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeaderboardRowView.swift; sourceTree = "<group>"; };
+		10020AA62DF7FB9800DF269E /* SatsCoinRepositoryProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SatsCoinRepositoryProtocol.swift; sourceTree = "<group>"; };
+		10020AA92DF7FBDB00DF269E /* SatsCoinDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SatsCoinDTO.swift; sourceTree = "<group>"; };
+		10020AAC2DF7FDAC00DF269E /* SatsCoinResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SatsCoinResponse.swift; sourceTree = "<group>"; };
+		10020AAF2DF7FE2400DF269E /* SatsCoinError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SatsCoinError.swift; sourceTree = "<group>"; };
+		10020AB22DF7FEBC00DF269E /* SatsCoinRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SatsCoinRepository.swift; sourceTree = "<group>"; };
+		10020AB52DF800D200DF269E /* SatsCoinUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SatsCoinUseCase.swift; sourceTree = "<group>"; };
 		100F63D22DCB4630000BC17E /* SmileyGameRuleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameRuleView.swift; sourceTree = "<group>"; };
 		100F64ED2DCC96C5000BC17E /* YralCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralCache.swift; sourceTree = "<group>"; };
 		103BBB032DACE21D00C0BFD0 /* HLSDownloadManaging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HLSDownloadManaging.swift; sourceTree = "<group>"; };
@@ -1077,6 +1095,7 @@
 		107C60AC2DBF43DA006FC467 /* Data */ = {
 			isa = PBXGroup;
 			children = (
+				10020AA92DF7FBDB00DF269E /* SatsCoinDTO.swift */,
 				105036E82DDB287700571B4E /* ExchangePrincipal.swift */,
 				105034AF2DD62DB400571B4E /* CastVote.swift */,
 				105034A02DD5E3D100571B4E /* SmileyConfigDTO.swift */,
@@ -1097,6 +1116,8 @@
 		107C60AE2DBF459E006FC467 /* Entity */ = {
 			isa = PBXGroup;
 			children = (
+				10020AAF2DF7FE2400DF269E /* SatsCoinError.swift */,
+				10020AAC2DF7FDAC00DF269E /* SatsCoinResponse.swift */,
 				105036F52DDB289D00571B4E /* ExchangePrincipalResponse.swift */,
 				105034BB2DD6353100571B4E /* SmileyGameResultResponse.swift */,
 				105034B82DD6332700571B4E /* CastVoteError.swift */,
@@ -1111,6 +1132,7 @@
 		107C60B22DBF4814006FC467 /* UseCase */ = {
 			isa = PBXGroup;
 			children = (
+				10020AB52DF800D200DF269E /* SatsCoinUseCase.swift */,
 				105034BE2DD636C800571B4E /* CastVoteUseCase.swift */,
 				107C60B32DBF483D006FC467 /* SmileyGameRuleUseCase.swift */,
 			);
@@ -1120,6 +1142,7 @@
 		107C60B62DBF49A0006FC467 /* Interface */ = {
 			isa = PBXGroup;
 			children = (
+				10020AA62DF7FB9800DF269E /* SatsCoinRepositoryProtocol.swift */,
 				105034B22DD630D300571B4E /* CastVoteRepositoryProtocol.swift */,
 				107C60B72DBF49CE006FC467 /* SmileyGameRuleRepositoryProtocol.swift */,
 			);
@@ -1129,6 +1152,7 @@
 		107C60BA2DBF4A60006FC467 /* Repository */ = {
 			isa = PBXGroup;
 			children = (
+				10020AB22DF7FEBC00DF269E /* SatsCoinRepository.swift */,
 				105034B52DD6316500571B4E /* CastVoteRepository.swift */,
 				107C60BB2DBF4A69006FC467 /* SmileyGameRuleRepository.swift */,
 			);
@@ -2713,6 +2737,7 @@
 				ACAA4D692DDCB162001092A6 /* PerformanceMonitor.swift in Sources */,
 				107C60D32DBF9FC4006FC467 /* GameRuleView.swift in Sources */,
 				ACB46A422D0ECBB3002E200C /* ml_feed.proto in Sources */,
+				10020AAE2DF7FDB700DF269E /* SatsCoinResponse.swift in Sources */,
 				AC8958DD2D3EA54700E19ED7 /* FeedsViewController+Delegates.swift in Sources */,
 				ACB46A612D0EF94B002E200C /* DefaultAuthClient.swift in Sources */,
 				AC462F4A2D95BB61004957B3 /* FeedsCell+Captions.swift in Sources */,
@@ -2729,6 +2754,7 @@
 				105036F62DDB289D00571B4E /* ExchangePrincipalResponse.swift in Sources */,
 				ACB46A732D105AF4002E200C /* CollectionView+Extensions.swift in Sources */,
 				107C60C32DBF4CE2006FC467 /* FirebaseService.swift in Sources */,
+				10020AB02DF7FE2A00DF269E /* SatsCoinError.swift in Sources */,
 				105037682DDC5DB500571B4E /* SmileyGameConfig.swift in Sources */,
 				ACB46A432D0ECBB3002E200C /* ml_feed.grpc.swift in Sources */,
 				100208902DE4840000DF269E /* FirebaseLottieManager.swift in Sources */,
@@ -2738,6 +2764,7 @@
 				ACB09FE82D93289000EE3239 /* MyVideosFeedInfo.swift in Sources */,
 				ACD2E8252D6746E900E750FE /* UploadingProgressView.swift in Sources */,
 				AC32E4702D299E74001DDA43 /* ICPBrandingView.swift in Sources */,
+				10020AAB2DF7FBE800DF269E /* SatsCoinDTO.swift in Sources */,
 				ACC0D4612D917908006DCF5C /* DeleteVideoRequestDTO.swift in Sources */,
 				AC26CA4A2D8026B4006ADA75 /* CrashReporter.swift in Sources */,
 				AC4960652D2D693B008D59D9 /* Foundation+Extensions.swift in Sources */,
@@ -2787,6 +2814,7 @@
 				107C60C62DBF6109006FC467 /* SmileyGameRuleDTO.swift in Sources */,
 				10020A192DED6CED00DF269E /* LeaderboardRowView.swift in Sources */,
 				ACC0F3972D2ED5D700FA5BD0 /* LottieView.swift in Sources */,
+				10020AB32DF7FEC300DF269E /* SatsCoinRepository.swift in Sources */,
 				AC2C30D22D96C51600DA9F81 /* ReportEntity.swift in Sources */,
 				ACB46A7D2D105BEB002E200C /* UIKitInitializers.swift in Sources */,
 				AC26CA562D80281D006ADA75 /* FirebaseCrashlyticsReporter.swift in Sources */,
@@ -2849,6 +2877,7 @@
 				ACB09FDA2D92D6E900EE3239 /* MoreFeedsRequest.swift in Sources */,
 				107C60912DB7809A006FC467 /* UIView+Extensions.swift in Sources */,
 				ACDD23E42D8B19FF00AB0DAF /* MyVideosUseCase.swift in Sources */,
+				10020AA82DF7FBA600DF269E /* SatsCoinRepositoryProtocol.swift in Sources */,
 				ACF63A742DC26C9500C4BCCC /* TokenClaimsDTO.swift in Sources */,
 				ACC0D4342D8BFE67006DCF5C /* NudgePopupView.swift in Sources */,
 				AC92940F2D64CBFB003DB102 /* SelectFileView.swift in Sources */,
@@ -2896,6 +2925,7 @@
 				100209FE2DE8402600DF269E /* LeaderboardResponse.swift in Sources */,
 				105034B62DD6316B00571B4E /* CastVoteRepository.swift in Sources */,
 				ACF63A782DC271F900C4BCCC /* DefaultAuthClient+Extensions.swift in Sources */,
+				10020AB62DF800D900DF269E /* SatsCoinUseCase.swift in Sources */,
 				107C60D62DBFA7C0006FC467 /* FirebaseImageView.swift in Sources */,
 				107C60B42DBF4857006FC467 /* SmileyGameRuleUseCase.swift in Sources */,
 				ACB46A292D0EC76A002E200C /* AppConfiguration.swift in Sources */,
@@ -2941,6 +2971,7 @@
 				ACAA4D6A2DDCB162001092A6 /* PerformanceMonitor.swift in Sources */,
 				107C60D42DBF9FC4006FC467 /* GameRuleView.swift in Sources */,
 				ACB46A3F2D0ECBB3002E200C /* ml_feed.proto in Sources */,
+				10020AAD2DF7FDB700DF269E /* SatsCoinResponse.swift in Sources */,
 				AC8958DC2D3EA54700E19ED7 /* FeedsViewController+Delegates.swift in Sources */,
 				ACB46A602D0EF94B002E200C /* DefaultAuthClient.swift in Sources */,
 				AC462F4B2D95BB61004957B3 /* FeedsCell+Captions.swift in Sources */,
@@ -2957,6 +2988,7 @@
 				105036F82DDB289D00571B4E /* ExchangePrincipalResponse.swift in Sources */,
 				ACB46A742D105AF4002E200C /* CollectionView+Extensions.swift in Sources */,
 				107C60C22DBF4CE2006FC467 /* FirebaseService.swift in Sources */,
+				10020AB12DF7FE2A00DF269E /* SatsCoinError.swift in Sources */,
 				105037692DDC5DB500571B4E /* SmileyGameConfig.swift in Sources */,
 				ACB46A402D0ECBB3002E200C /* ml_feed.grpc.swift in Sources */,
 				1002088F2DE4840000DF269E /* FirebaseLottieManager.swift in Sources */,
@@ -2966,6 +2998,7 @@
 				ACB09FE72D93289000EE3239 /* MyVideosFeedInfo.swift in Sources */,
 				ACD2E8242D6746E900E750FE /* UploadingProgressView.swift in Sources */,
 				AC32E46F2D299E74001DDA43 /* ICPBrandingView.swift in Sources */,
+				10020AAA2DF7FBE800DF269E /* SatsCoinDTO.swift in Sources */,
 				ACC0D4622D917908006DCF5C /* DeleteVideoRequestDTO.swift in Sources */,
 				AC26CA492D8026B4006ADA75 /* CrashReporter.swift in Sources */,
 				AC4960642D2D693B008D59D9 /* Foundation+Extensions.swift in Sources */,
@@ -3015,6 +3048,7 @@
 				107C60C52DBF6109006FC467 /* SmileyGameRuleDTO.swift in Sources */,
 				10020A182DED6CED00DF269E /* LeaderboardRowView.swift in Sources */,
 				ACC0F3982D2ED5D700FA5BD0 /* LottieView.swift in Sources */,
+				10020AB42DF7FEC300DF269E /* SatsCoinRepository.swift in Sources */,
 				AC2C30D12D96C51600DA9F81 /* ReportEntity.swift in Sources */,
 				ACB46A7C2D105BEB002E200C /* UIKitInitializers.swift in Sources */,
 				AC26CA552D80281D006ADA75 /* FirebaseCrashlyticsReporter.swift in Sources */,
@@ -3077,6 +3111,7 @@
 				ACB09FDB2D92D6E900EE3239 /* MoreFeedsRequest.swift in Sources */,
 				107C60902DB7809A006FC467 /* UIView+Extensions.swift in Sources */,
 				ACDD23E52D8B19FF00AB0DAF /* MyVideosUseCase.swift in Sources */,
+				10020AA72DF7FBA600DF269E /* SatsCoinRepositoryProtocol.swift in Sources */,
 				ACF63A752DC26C9500C4BCCC /* TokenClaimsDTO.swift in Sources */,
 				ACC0D4352D8BFE67006DCF5C /* NudgePopupView.swift in Sources */,
 				AC92940E2D64CBFB003DB102 /* SelectFileView.swift in Sources */,
@@ -3124,6 +3159,7 @@
 				100209FF2DE8402600DF269E /* LeaderboardResponse.swift in Sources */,
 				ACF63A772DC271F900C4BCCC /* DefaultAuthClient+Extensions.swift in Sources */,
 				105034B72DD6316B00571B4E /* CastVoteRepository.swift in Sources */,
+				10020AB72DF800D900DF269E /* SatsCoinUseCase.swift in Sources */,
 				107C60D72DBFA7C0006FC467 /* FirebaseImageView.swift in Sources */,
 				107C60B52DBF4857006FC467 /* SmileyGameRuleUseCase.swift in Sources */,
 				ACB46A2A2D0EC76A002E200C /* AppConfiguration.swift in Sources */,
