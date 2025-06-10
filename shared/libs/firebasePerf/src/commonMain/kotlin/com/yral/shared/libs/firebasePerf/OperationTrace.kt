@@ -5,7 +5,7 @@ package com.yral.shared.libs.firebasePerf
  */
 abstract class OperationTrace(
     traceName: String,
-) : FirebasePerformanceMonitor(traceName) {
+) : FirebasePerformanceTrace(traceName) {
     /**
      * Mark trace as successful and stop it
      */

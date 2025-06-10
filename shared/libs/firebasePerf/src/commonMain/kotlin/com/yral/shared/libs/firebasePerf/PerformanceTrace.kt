@@ -5,7 +5,7 @@ package com.yral.shared.libs.firebasePerf
  * This interface can be implemented by different platforms (Android, iOS) to provide
  * performance monitoring capabilities using their respective native libraries.
  */
-interface PerformanceMonitor {
+interface PerformanceTrace {
     /**
      * Start the performance trace
      */
