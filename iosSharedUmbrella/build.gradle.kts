@@ -32,19 +32,32 @@ kotlin {
             extraOpts += listOf("-compiler-option", "-fmodules")
             version = firebaseIos
         }
-
-
-        framework {
-            baseName = "iosSharedUmbrella"
-            @OptIn(ExperimentalKotlinGradlePluginApi::class)
-            transitiveExport = true
-            isStatic = false
-            export(projects.shared.libs.crashlytics)
-        }
+    pod("FirebaseInstallations") {
+        extraOpts += listOf("-compiler-option", "-fmodules")
     }
+    pod("FirebaseCoreInternal") {
+        extraOpts += listOf("-compiler-option", "-fmodules")
+    }
+    pod("GoogleUtilities") {
+        extraOpts += listOf("-compiler-option", "-fmodules")
+    }
+    pod("nanopb") {
+        extraOpts += listOf("-compiler-option", "-fmodules")
+    }
+
+    framework {
+        baseName = "iosSharedUmbrella"
+        @OptIn(ExperimentalKotlinGradlePluginApi::class)
+        transitiveExport = true
+        isStatic = false
+        export(projects.shared.libs.analytics)
+        export(projects.shared.libs.crashlytics)
+    }
+}
 
     sourceSets {
         iosMain.dependencies {
+            api(projects.shared.libs.analytics)
             api(projects.shared.libs.crashlytics)
         }
     }
