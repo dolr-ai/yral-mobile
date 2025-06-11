@@ -44,6 +44,9 @@ kotlin {
     pod("nanopb") {
         extraOpts += listOf("-compiler-option", "-fmodules")
     }
+    pod("Mixpanel") {
+        extraOpts += listOf("-compiler-option", "-fmodules")
+    }
 
     framework {
         baseName = "iosSharedUmbrella"

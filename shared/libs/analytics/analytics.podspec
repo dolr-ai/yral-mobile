@@ -1,30 +1,23 @@
 Pod::Spec.new do |spec|
-    spec.name                     = 'iosSharedUmbrella'
+    spec.name                     = 'analytics'
     spec.version                  = '1.0'
     spec.homepage                 = 'https://github.com/dolr-ai/yral-mobile'
     spec.source                   = { :http=> ''}
     spec.authors                  = ''
-    spec.license                  = 'MIT'
-    spec.summary                  = 'Umbrella framework for shared KMM code'
-    spec.vendored_frameworks      = 'build/cocoapods/framework/iosSharedUmbrella.framework'
+    spec.license                  = ''
+    spec.summary                  = 'Analytics module with Firebase and Mixpanel'
+    spec.vendored_frameworks      = 'build/cocoapods/framework/analytics.framework'
     spec.libraries                = 'c++'
     spec.ios.deployment_target    = '15.6'
-    spec.dependency 'FirebaseAnalytics', '10.25.0'
-    spec.dependency 'FirebaseCore', '10.25.0'
-    spec.dependency 'FirebaseCoreInternal'
-    spec.dependency 'FirebaseCrashlytics', '10.25.0'
-    spec.dependency 'FirebaseInstallations'
-    spec.dependency 'GoogleUtilities'
     spec.dependency 'Mixpanel'
-    spec.dependency 'nanopb'
-
-    if !Dir.exist?('build/cocoapods/framework/iosSharedUmbrella.framework') || Dir.empty?('build/cocoapods/framework/iosSharedUmbrella.framework')
+                
+    if !Dir.exist?('build/cocoapods/framework/analytics.framework') || Dir.empty?('build/cocoapods/framework/analytics.framework')
         raise "
 
-        Kotlin framework 'iosSharedUmbrella' doesn't exist yet, so a proper Xcode project can't be generated.
+        Kotlin framework 'analytics' doesn't exist yet, so a proper Xcode project can't be generated.
         'pod install' should be executed after running ':generateDummyFramework' Gradle task:
 
-            ./gradlew :iosSharedUmbrella:generateDummyFramework
+            ./gradlew :shared:libs:analytics:generateDummyFramework
 
         Alternatively, proper pod installation is performed during Gradle sync in the IDE (if Podfile location is set)"
     end
@@ -34,13 +27,13 @@ Pod::Spec.new do |spec|
     }
                 
     spec.pod_target_xcconfig = {
-        'KOTLIN_PROJECT_PATH' => ':iosSharedUmbrella',
-        'PRODUCT_MODULE_NAME' => 'iosSharedUmbrella',
+        'KOTLIN_PROJECT_PATH' => ':shared:libs:analytics',
+        'PRODUCT_MODULE_NAME' => 'analytics',
     }
                 
     spec.script_phases = [
         {
-            :name => 'Build iosSharedUmbrella',
+            :name => 'Build analytics',
             :execution_position => :before_compile,
             :shell_path => '/bin/sh',
             :script => <<-SCRIPT
@@ -50,7 +43,7 @@ Pod::Spec.new do |spec|
                 fi
                 set -ev
                 REPO_ROOT="$PODS_TARGET_SRCROOT"
-                "$REPO_ROOT/../gradlew" -p "$REPO_ROOT" $KOTLIN_PROJECT_PATH:syncFramework \
+                "$REPO_ROOT/../../../gradlew" -p "$REPO_ROOT" $KOTLIN_PROJECT_PATH:syncFramework \
                     -Pkotlin.native.cocoapods.platform=$PLATFORM_NAME \
                     -Pkotlin.native.cocoapods.archs="$ARCHS" \
                     -Pkotlin.native.cocoapods.configuration="$CONFIGURATION"
