@@ -1,5 +1,6 @@
 import SwiftUI
 import Firebase
+import iosSharedUmbrella
 
 class AppDelegate: NSObject, UIApplicationDelegate {
   func application(
