@@ -4,5 +4,4 @@ data class PlayerData(
     val url: String,
     val thumbnailUrl: String,
     val prefetchThumbnails: List<String>,
-    val prefetchVideos: List<String>,
 )

@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -19,6 +20,8 @@ import com.yral.shared.libs.videoPlayer.model.PlayerConfig
 import com.yral.shared.libs.videoPlayer.model.PlayerControls
 import com.yral.shared.libs.videoPlayer.model.PlayerData
 import com.yral.shared.libs.videoPlayer.pool.rememberPlayerPool
+import com.yral.shared.libs.videoPlayer.util.PrefetchVideo
+import com.yral.shared.libs.videoPlayer.util.rememberPrefetchPlayerWithLifecycle
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 @Composable
@@ -69,13 +72,33 @@ internal fun YRALReelsPlayerView(
 ) {
     // Create multiplatform player pool for efficient resource management
     val playerPool = rememberPlayerPool(maxPoolSize = 3)
-
     // Clean up player pool when composable is disposed
     DisposableEffect(playerPool) {
         onDispose {
             playerPool.dispose()
         }
     }
+    var prefetchVideos by remember { mutableStateOf(listOf<String>()) }
+    var currentPrefetchIndex by remember { mutableIntStateOf(0) }
+    val prefetchPlayer =
+        rememberPrefetchPlayerWithLifecycle {
+            if (currentPrefetchIndex < prefetchVideos.size) {
+                currentPrefetchIndex++
+            }
+        }
+    var currentPrefetchUrl by remember { mutableStateOf("") }
+    LaunchedEffect(currentPrefetchIndex, prefetchVideos) {
+        if (prefetchVideos.isNotEmpty() &&
+            prefetchVideos.size > currentPrefetchIndex &&
+            currentPrefetchUrl != prefetchVideos[currentPrefetchIndex]
+        ) {
+            currentPrefetchUrl = prefetchVideos[currentPrefetchIndex]
+        }
+    }
+    PrefetchVideo(
+        player = prefetchPlayer,
+        url = currentPrefetchUrl,
+    )
 
     // Remember the state of the pager
     val pagerState =
@@ -90,6 +113,13 @@ internal fun YRALReelsPlayerView(
     LaunchedEffect(Unit) {
         // Call the callback with the initial page to make sure it's registered
         onPageLoaded(pagerState.currentPage)
+    }
+
+    LaunchedEffect(urls, pagerState.currentPage) {
+        prefetchVideos =
+            urls
+                .nextN(pagerState.currentPage, PREFETCH_NEXT_N_VIDEOS)
+                .map { it.first }
     }
 
     // Animate scrolling to the current page when it changes
@@ -114,6 +144,8 @@ internal fun YRALReelsPlayerView(
                 if (pagerState.currentPage == page) {
                     // Call the callback directly from here
                     onPageLoaded(page)
+                    // update prefetch videos index
+                    currentPrefetchIndex = 0
                 }
             }
             Box(
@@ -131,10 +163,6 @@ internal fun YRALReelsPlayerView(
                                 urls
                                     .nextN(page, PREFETCH_NEXT_N_THUMBNAILS)
                                     .map { it.second },
-                            prefetchVideos =
-                                urls
-                                    .nextN(page, PREFETCH_NEXT_N_VIDEOS)
-                                    .map { it.first },
                         ),
                     playerConfig = playerConfig,
                     playerControls =
@@ -165,6 +193,8 @@ internal fun YRALReelsPlayerView(
                 if (pagerState.currentPage == page) {
                     // Call the callback directly from here
                     onPageLoaded(page)
+                    // update prefetch videos index
+                    currentPrefetchIndex = 0
                 }
             }
             Box(
@@ -182,10 +212,6 @@ internal fun YRALReelsPlayerView(
                                 urls
                                     .nextN(page, PREFETCH_NEXT_N_THUMBNAILS)
                                     .map { it.second },
-                            prefetchVideos =
-                                urls
-                                    .nextN(page, PREFETCH_NEXT_N_VIDEOS)
-                                    .map { it.first },
                         ),
                     playerConfig = playerConfig,
                     playerControls =
