@@ -107,6 +107,7 @@ internal fun YRALReelsPlayerView(
             modifier = modifier,
             state = pagerState,
             userScrollEnabled = true, // Ensure user scrolling is enabled
+            beyondViewportPageCount = 0,
         ) { page ->
             // Create a side effect to detect when this page is shown
             LaunchedEffect(page, pagerState.currentPage) {
@@ -158,6 +159,7 @@ internal fun YRALReelsPlayerView(
             modifier = modifier,
             state = pagerState,
             userScrollEnabled = true, // Ensure user scrolling is enabled
+            beyondViewportPageCount = 0,
         ) { page ->
             // Create a side effect to detect when this page is shown
             LaunchedEffect(page, pagerState.currentPage) {
