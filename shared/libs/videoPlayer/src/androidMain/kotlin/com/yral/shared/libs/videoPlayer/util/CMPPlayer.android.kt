@@ -46,7 +46,6 @@ actual fun CMPPlayer(
     playerData: PlayerData,
     playerParams: CMPPlayerParams,
     playerPool: PlayerPool,
-    isPlayerVisible: Boolean,
 ) {
     val context = LocalContext.current
     val exoPlayer =

@@ -13,7 +13,6 @@ expect fun CMPPlayer(
     playerData: PlayerData,
     playerParams: CMPPlayerParams,
     playerPool: PlayerPool,
-    isPlayerVisible: Boolean = true,
 )
 
 data class CMPPlayerParams(
