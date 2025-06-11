@@ -381,6 +381,28 @@ class FeedViewModel(
             )
         }
     }
+
+    fun registerTrace(
+        videoID: String,
+        traceType: String,
+    ) {
+        println("Logging trace metric: registering trace $traceType for video $videoID")
+        coroutineScope.launch {
+            _state.update {
+                it.copy(
+                    videoTracing = it.videoTracing + (videoID to traceType),
+                )
+            }
+        }
+    }
+
+    fun isAlreadyTraced(
+        videoID: String,
+        traceType: String,
+    ): Boolean =
+        _state.value.videoTracing.any {
+            videoID == it.first && traceType == it.second
+        }
 }
 
 data class FeedState(
@@ -390,6 +412,7 @@ data class FeedState(
     val isLoadingMore: Boolean = false,
     val isPostDescriptionExpanded: Boolean = false,
     val videoData: VideoData = VideoData(),
+    val videoTracing: List<Pair<String, String>> = emptyList(),
     val isLoading: Boolean = false,
     val reportSheetState: ReportSheetState = ReportSheetState.Closed,
 )

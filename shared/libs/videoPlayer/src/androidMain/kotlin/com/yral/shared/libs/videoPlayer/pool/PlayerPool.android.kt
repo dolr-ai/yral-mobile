@@ -5,6 +5,7 @@ import androidx.annotation.OptIn
 import androidx.core.net.toUri
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DefaultRenderersFactory
@@ -13,6 +14,7 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.libs.videoPlayer.createHlsMediaSource
 import com.yral.shared.libs.videoPlayer.createProgressiveMediaSource
+import com.yral.shared.libs.videoPlayer.model.PlayerData
 import com.yral.shared.libs.videoPlayer.util.isHlsUrl
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -36,31 +38,40 @@ actual class PlayerPool(
         val platformPlayer: PlatformPlayer,
         var isInUse: Boolean = false,
         var currentUrl: String? = null,
-        var performanceListener: Player.Listener? = null,
+        var internalListener: Player.Listener? = null,
+        var externalListener: VideoListener?,
     )
 
-    actual suspend fun getPlayer(url: String): PlatformPlayer =
+    actual suspend fun getPlayer(
+        playerData: PlayerData,
+        videoListener: VideoListener?,
+    ): PlatformPlayer =
         mutex.withLock {
             // Find available player or create new one
             val availablePlayer = pool.find { !it.isInUse }
 
             if (availablePlayer != null) {
-                setupPlayerForUrl(availablePlayer, url)
+                setupPlayerForUrl(availablePlayer, playerData)
                 availablePlayer.platformPlayer
             } else if (pool.size < maxPoolSize) {
                 val exoPlayer = createExoPlayer()
                 val platformPlayer = PlatformPlayer(exoPlayer)
-                val pooledPlayer = PooledExoPlayer(platformPlayer)
+                val pooledPlayer =
+                    PooledExoPlayer(
+                        platformPlayer = platformPlayer,
+                        externalListener = videoListener,
+                    )
                 pool.add(pooledPlayer)
-                setupPlayerForUrl(pooledPlayer, url)
+                setupPlayerForUrl(pooledPlayer, playerData)
                 platformPlayer
             } else {
                 // Reclaim least recently used player (first in pool)
                 val playerToReclaim = pool.removeAt(0)
+                playerToReclaim.externalListener = videoListener
                 // Mark previous usage as released
                 playerToReclaim.isInUse = false
                 // Setup for new URL and mark as in use
-                setupPlayerForUrl(playerToReclaim, url)
+                setupPlayerForUrl(playerToReclaim, playerData)
                 // Move to end of pool (most recently used)
                 pool.add(playerToReclaim)
                 playerToReclaim.platformPlayer
@@ -72,35 +83,48 @@ actual class PlayerPool(
             pool.find { it.platformPlayer == player }?.let { pooledPlayer ->
                 pooledPlayer.isInUse = false
                 pooledPlayer.currentUrl = null
-                // Stop playback and reset state
                 pooledPlayer.platformPlayer.pause()
                 pooledPlayer.platformPlayer.stop()
                 pooledPlayer.platformPlayer.clearMediaItems()
+                cleanup(pooledPlayer)
             }
         }
+
+    private fun cleanup(pooledPlayer: PooledExoPlayer) {
+        pooledPlayer.internalListener?.let { listener ->
+            pooledPlayer.platformPlayer.removeListener(listener)
+        }
+    }
 
     @OptIn(UnstableApi::class)
     private fun setupPlayerForUrl(
         pooledPlayer: PooledExoPlayer,
-        url: String,
+        playerData: PlayerData,
     ) {
         // If already set up for this URL, don't recreate traces
-        if (pooledPlayer.currentUrl == url && pooledPlayer.isInUse) {
+        if (pooledPlayer.currentUrl == playerData.url && pooledPlayer.isInUse) {
             return
         }
 
+        // Clean up previous traces and listeners
+        cleanup(pooledPlayer)
+
         pooledPlayer.isInUse = true
-        pooledPlayer.currentUrl = url
+        pooledPlayer.currentUrl = playerData.url
 
         // Reset player state completely
         pooledPlayer.platformPlayer.stop()
         pooledPlayer.platformPlayer.clearMediaItems()
         pooledPlayer.platformPlayer.pause() // Ensure consistent initial state
 
-        val videoUri = url.toUri()
+        // Set up listeners
+        pooledPlayer.externalListener?.onSetupPlayer()
+        setupInternalListener(pooledPlayer)
+
+        val videoUri = playerData.url.toUri()
         val mediaItem = MediaItem.fromUri(videoUri)
         val mediaSource =
-            if (isHlsUrl(url)) {
+            if (isHlsUrl(playerData.url)) {
                 createHlsMediaSource(mediaItem)
             } else {
                 createProgressiveMediaSource(mediaItem, context)
@@ -110,6 +134,52 @@ actual class PlayerPool(
         pooledPlayer.platformPlayer.seekTo(0, 0)
         pooledPlayer.platformPlayer.prepare()
     }
+
+    private fun setupInternalListener(pooledPlayer: PooledExoPlayer) {
+        val listener =
+            createPooledPlayerPerformanceListener(
+                onStateChange = { playbackState ->
+                    when (playbackState) {
+                        Player.STATE_BUFFERING -> {
+                            pooledPlayer.externalListener?.onBuffer()
+                        }
+
+                        Player.STATE_READY -> {
+                            pooledPlayer.externalListener?.onReady()
+                        }
+
+                        Player.STATE_IDLE -> {
+                            pooledPlayer.externalListener?.onIdle()
+                        }
+
+                        Player.STATE_ENDED -> {
+                            pooledPlayer.externalListener?.onEnd()
+                        }
+                    }
+                },
+                onError = {
+                    pooledPlayer.externalListener?.onPlayerError()
+                },
+            )
+
+        pooledPlayer.internalListener = listener
+        pooledPlayer.platformPlayer.addListener(listener)
+    }
+
+    private fun createPooledPlayerPerformanceListener(
+        onStateChange: (Int) -> Unit,
+        onError: (PlaybackException) -> Unit,
+    ): Player.Listener =
+        object : Player.Listener {
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                onStateChange(playbackState)
+            }
+
+            override fun onPlayerError(error: PlaybackException) {
+                error.printStackTrace()
+                onError(error)
+            }
+        }
 
     @OptIn(UnstableApi::class)
     private fun createExoPlayer(): ExoPlayer {
@@ -134,8 +204,19 @@ actual class PlayerPool(
 
     actual fun dispose() {
         pool.forEach { pooledPlayer ->
+            cleanup(pooledPlayer)
             pooledPlayer.platformPlayer.release()
         }
         pool.clear()
+    }
+
+    actual fun onPlayBackStarted(playerData: PlayerData) {
+        val pooledPlayer = pool.find { it.currentUrl == playerData.url }
+        pooledPlayer?.externalListener?.onPlayBackStarted()
+    }
+
+    actual fun onPlayBackStopped(playerData: PlayerData) {
+        val pooledPlayer = pool.find { it.currentUrl == playerData.url }
+        pooledPlayer?.externalListener?.onPlayBackStopped()
     }
 }

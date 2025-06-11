@@ -1,23 +1,20 @@
 package com.yral.android.ui.screens.home.feed.performance
 
-import com.yral.android.ui.screens.home.feed.PrefetchLoadTimeTrace
-import com.yral.android.ui.screens.home.feed.PrefetchReadyTrace
-import com.yral.android.ui.screens.home.feed.VideoPerformanceFactoryProvider
+import co.touchlab.kermit.Logger
 import com.yral.shared.libs.firebasePerf.FirebaseOperationTrace
+import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.libs.videoPlayer.util.PrefetchVideoListener
 
 class PrefetchVideoListenerImpl(
-    private val urlToPrefetch: String,
-    private val videoId: String,
+    private val reelToPrefetch: Reels,
     override var readyTrace: PrefetchReadyTrace? = null,
     override var loadTrace: PrefetchLoadTimeTrace? = null,
 ) : PrefetchVideoListener,
     IPrefetchPerformanceMonitor {
+    private val enablePerformanceTracing: Boolean = true
+
     override fun onSetupPlayer() {
-        setupPerformanceTracingForPlayer(
-            urlToPrefetch = urlToPrefetch,
-            videoId = videoId,
-        )
+        setupPerformanceTracingForPlayer()
     }
 
     override fun onBuffer() {
@@ -42,58 +39,66 @@ class PrefetchVideoListenerImpl(
         stopTraceWithError(PrefetchTraceType.READY_TRACE)
     }
 
-    private fun setupPerformanceTracingForPlayer(
-        urlToPrefetch: String,
-        videoId: String,
-    ) {
+    private fun setupPerformanceTracingForPlayer() {
         // Start download and load traces for prefetch
-        startTrace(
-            PrefetchTraceType.LOAD_TRACE,
-            urlToPrefetch,
-            videoId,
-        )
-        startTrace(
-            PrefetchTraceType.READY_TRACE,
-            urlToPrefetch,
-            videoId,
-        )
+        startTrace(PrefetchTraceType.LOAD_TRACE, reelToPrefetch)
+        startTrace(PrefetchTraceType.READY_TRACE, reelToPrefetch)
     }
 
     override fun startTrace(
         type: PrefetchTraceType,
-        url: String,
-        videoId: String,
+        reel: Reels,
     ) {
+        if (!enablePerformanceTracing) return
+        println("Logging trace metric: startTrace $type for ${reel.videoId}")
         when (type) {
             PrefetchTraceType.READY_TRACE -> {
                 readyTrace =
                     VideoPerformanceFactoryProvider
-                        .createPrefetchReadyTrace(url, videoId)
+                        .createPrefetchReadyTrace(reel)
                         .apply { start() }
             }
 
             PrefetchTraceType.LOAD_TRACE -> {
                 loadTrace =
                     VideoPerformanceFactoryProvider
-                        .createPrefetchLoadTimeTrace(url, videoId)
+                        .createPrefetchLoadTimeTrace(reel)
                         .apply { start() }
             }
         }
     }
 
     override fun stopTrace(type: PrefetchTraceType) {
-        getTrace(type)?.stop()
-        resetTrace(type)
+        getTrace(type)?.let {
+            logTrace("stopTrace", type)
+            it.stop()
+            resetTrace(type)
+        }
     }
 
     override fun stopTraceWithSuccess(type: PrefetchTraceType) {
-        getTrace(type)?.success()
-        resetTrace(type)
+        getTrace(type)?.let {
+            logTrace("stopTraceWithSuccess", type)
+            it.success()
+            resetTrace(type)
+        }
     }
 
     override fun stopTraceWithError(type: PrefetchTraceType) {
-        getTrace(type)?.error()
-        resetTrace(type)
+        getTrace(type)?.let {
+            logTrace("stopTraceWithError", type)
+            it.error()
+            resetTrace(type)
+        }
+    }
+
+    private fun logTrace(
+        methodName: String,
+        type: PrefetchTraceType,
+    ) {
+        getTrace(type)?.let {
+            Logger.d("Logging trace metric: $methodName $type for ${reelToPrefetch.videoId}")
+        }
     }
 
     private fun getTrace(type: PrefetchTraceType): FirebaseOperationTrace? =

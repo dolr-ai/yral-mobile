@@ -25,8 +25,10 @@ import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
+import com.yral.shared.libs.videoPlayer.model.PlayerData
 import com.yral.shared.libs.videoPlayer.pool.PlatformPlayer
 import com.yral.shared.libs.videoPlayer.pool.PlayerPool
+import com.yral.shared.libs.videoPlayer.pool.VideoListener
 import com.yral.shared.libs.videoPlayer.util.isHlsUrl
 
 @OptIn(UnstableApi::class)
@@ -139,17 +141,23 @@ private fun rememberMediaSetup(
 @Suppress("LongMethod")
 @Composable
 fun rememberPooledExoPlayer(
-    url: String,
+    playerData: PlayerData,
     playerPool: PlayerPool,
     isPause: Boolean,
+    videoListener: VideoListener?,
 ): ExoPlayer? {
     var platformPlayer: PlatformPlayer? by remember { mutableStateOf(null) }
     var exoPlayer: ExoPlayer? by remember { mutableStateOf(null) }
 
     // Get player from pool when URL changes
-    LaunchedEffect(url, playerPool) {
-        if (url.isNotEmpty()) {
-            platformPlayer = playerPool.getPlayer(url)
+    LaunchedEffect(playerData.url, playerPool) {
+        if (playerData.url.isNotEmpty()) {
+            platformPlayer =
+                playerPool
+                    .getPlayer(
+                        playerData = playerData,
+                        videoListener = videoListener,
+                    )
             exoPlayer = platformPlayer?.internalExoPlayer
         }
     }

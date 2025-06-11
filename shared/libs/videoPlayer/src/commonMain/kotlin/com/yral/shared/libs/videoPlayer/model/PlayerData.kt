@@ -5,4 +5,11 @@ data class PlayerData(
     val url: String,
     val thumbnailUrl: String,
     val prefetchThumbnails: List<String>,
-)
+) {
+    constructor(videoId: String, url: String): this(
+        videoId = videoId,
+        url = url,
+        thumbnailUrl = "",
+        prefetchThumbnails = emptyList(),
+    )
+}

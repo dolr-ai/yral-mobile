@@ -19,6 +19,7 @@ import com.yral.shared.libs.videoPlayer.model.PlayerInnerControls
 import com.yral.shared.libs.videoPlayer.model.PlayerSpeed
 import com.yral.shared.libs.videoPlayer.model.ScreenResize
 import com.yral.shared.libs.videoPlayer.pool.PlayerPool
+import com.yral.shared.libs.videoPlayer.pool.VideoListener
 import com.yral.shared.libs.videoPlayer.pool.rememberPlayerPool
 import com.yral.shared.libs.videoPlayer.ui.component.LoaderView
 import com.yral.shared.libs.videoPlayer.ui.video.controls.ControlsView
@@ -37,6 +38,7 @@ internal fun YRALVideoPlayerWithControl(
     playerConfig: PlayerConfig,
     playerControls: PlayerControls,
     playerPool: PlayerPool? = null, // Optional player pool for efficient resource management
+    videoListener: VideoListener?,
 ) {
     lateinit var defaultPlayerPool: PlayerPool
     if (playerPool == null) {
@@ -100,6 +102,7 @@ internal fun YRALVideoPlayerWithControl(
             modifier = modifier,
             playerData = playerData,
             playerPool = playerPool ?: defaultPlayerPool,
+            videoListener = videoListener,
             playerParams =
                 CMPPlayerParams(
                     isPause = playerControls.isPause,
