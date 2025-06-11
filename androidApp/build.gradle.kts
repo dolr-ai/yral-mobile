@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.crashlytics)
     alias(libs.plugins.play.services)
+    alias(libs.plugins.firebase.performance)
 }
 
 android {
@@ -89,6 +90,7 @@ dependencies {
     debugImplementation(libs.compose.ui.tooling)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
+    implementation(libs.firebase.performance)
     implementation(libs.lottie)
     implementation(libs.coil.compose)
     implementation(libs.coil.okhttp)
