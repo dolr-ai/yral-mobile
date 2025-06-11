@@ -149,6 +149,7 @@ internal fun YRALReelsPlayerView(
                             recordTime = recordTime,
                         ),
                     playerPool = playerPool,
+                    isPlayerVisible = pagerState.currentPage == page,
                 )
                 overlayContent(page)
             }
@@ -200,6 +201,7 @@ internal fun YRALReelsPlayerView(
                             recordTime = recordTime,
                         ),
                     playerPool = playerPool,
+                    isPlayerVisible = pagerState.currentPage == page,
                 )
                 overlayContent(page)
             }

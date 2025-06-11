@@ -10,7 +10,7 @@ actual fun rememberPlayerPool(
     enablePerformanceTracing: Boolean,
 ): PlayerPool {
     val context = LocalContext.current
-    return remember(context, maxPoolSize) {
-        PlayerPool(context, maxPoolSize)
+    return remember(context, maxPoolSize, enablePerformanceTracing) {
+        PlayerPool(context, maxPoolSize, enablePerformanceTracing)
     }
 }

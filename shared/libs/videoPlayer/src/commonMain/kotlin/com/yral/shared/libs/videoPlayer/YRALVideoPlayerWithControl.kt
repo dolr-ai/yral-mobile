@@ -37,6 +37,7 @@ internal fun YRALVideoPlayerWithControl(
     playerConfig: PlayerConfig,
     playerControls: PlayerControls,
     playerPool: PlayerPool? = null, // Optional player pool for efficient resource management
+    isPlayerVisible: Boolean,
 ) {
     lateinit var defaultPlayerPool: PlayerPool
     if (playerPool == null) {
@@ -100,6 +101,7 @@ internal fun YRALVideoPlayerWithControl(
             modifier = modifier,
             playerData = playerData,
             playerPool = playerPool ?: defaultPlayerPool,
+            isPlayerVisible = isPlayerVisible,
             playerParams =
                 CMPPlayerParams(
                     isPause = playerControls.isPause,

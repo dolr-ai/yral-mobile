@@ -8,6 +8,7 @@ expect class PlayerPool(
 ) {
     suspend fun getPlayer(url: String): PlatformPlayer
     suspend fun releasePlayer(player: PlatformPlayer)
+    suspend fun startFirstFrameTraceForUrl(url: String)
     fun dispose()
 }
 

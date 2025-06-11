@@ -46,6 +46,7 @@ actual fun CMPPlayer(
     playerData: PlayerData,
     playerParams: CMPPlayerParams,
     playerPool: PlayerPool,
+    isPlayerVisible: Boolean,
 ) {
     val context = LocalContext.current
     val exoPlayer =
@@ -54,6 +55,15 @@ actual fun CMPPlayer(
             playerPool = playerPool,
             isPause = playerParams.isPause,
         )
+
+    // Start first frame trace when player becomes visible AND is properly set up
+    LaunchedEffect(isPlayerVisible, playerData.url, exoPlayer) {
+        if (isPlayerVisible && exoPlayer != null) {
+            // Small delay to ensure player setup is complete
+            delay(100)
+            playerPool.startFirstFrameTraceForUrl(playerData.url)
+        }
+    }
     var currentPrefetchIndex by remember { mutableIntStateOf(0) }
     var currentPrefetchUrl by remember { mutableStateOf("") }
     LaunchedEffect(currentPrefetchIndex, playerData.prefetchVideos) {

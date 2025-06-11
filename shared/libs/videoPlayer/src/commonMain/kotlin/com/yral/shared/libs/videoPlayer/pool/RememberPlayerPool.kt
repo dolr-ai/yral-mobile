@@ -9,5 +9,5 @@ import androidx.compose.runtime.Composable
 @Composable
 expect fun rememberPlayerPool(
     maxPoolSize: Int = 3,
-    enablePerformanceTracing: Boolean = false,
+    enablePerformanceTracing: Boolean = true,
 ): PlayerPool
