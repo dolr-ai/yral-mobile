@@ -3,6 +3,7 @@ package com.yral.shared.libs.videoPlayer
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -17,6 +18,8 @@ import com.yral.shared.libs.videoPlayer.model.PlayerData
 import com.yral.shared.libs.videoPlayer.model.PlayerInnerControls
 import com.yral.shared.libs.videoPlayer.model.PlayerSpeed
 import com.yral.shared.libs.videoPlayer.model.ScreenResize
+import com.yral.shared.libs.videoPlayer.pool.PlayerPool
+import com.yral.shared.libs.videoPlayer.pool.rememberPlayerPool
 import com.yral.shared.libs.videoPlayer.ui.component.LoaderView
 import com.yral.shared.libs.videoPlayer.ui.video.controls.ControlsView
 import com.yral.shared.libs.videoPlayer.ui.video.controls.LockScreenView
@@ -33,7 +36,22 @@ internal fun YRALVideoPlayerWithControl(
     playerData: PlayerData,
     playerConfig: PlayerConfig,
     playerControls: PlayerControls,
+    playerPool: PlayerPool? = null, // Optional player pool for efficient resource management
+    isPlayerVisible: Boolean = true, // Flag to indicate if the player is currently visible
 ) {
+    lateinit var defaultPlayerPool: PlayerPool
+    if (playerPool == null) {
+        // Create multiplatform player pool for efficient resource management
+        defaultPlayerPool = rememberPlayerPool(maxPoolSize = 3)
+
+        // Clean up player pool when composable is disposed
+        DisposableEffect(defaultPlayerPool) {
+            onDispose {
+                defaultPlayerPool.dispose()
+            }
+        }
+    }
+
     var totalTime by remember { mutableIntStateOf(0) } // Total duration of the video
     var currentTime by remember { mutableIntStateOf(0) } // Current playback time
     var isSliding by remember { mutableStateOf(false) } // Flag indicating if the seek bar is being slid
@@ -82,6 +100,8 @@ internal fun YRALVideoPlayerWithControl(
         CMPPlayer(
             modifier = modifier,
             playerData = playerData,
+            playerPool = playerPool ?: defaultPlayerPool,
+            isPlayerVisible = isPlayerVisible,
             playerParams =
                 CMPPlayerParams(
                     isPause = playerControls.isPause,

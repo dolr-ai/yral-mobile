@@ -31,22 +31,30 @@ import coil3.request.ImageRequest
 import com.yral.shared.libs.videoPlayer.model.PlayerData
 import com.yral.shared.libs.videoPlayer.model.PlayerSpeed
 import com.yral.shared.libs.videoPlayer.model.ScreenResize
-import com.yral.shared.libs.videoPlayer.rememberExoPlayerWithLifecycle
+import com.yral.shared.libs.videoPlayer.pool.PlayerPool
 import com.yral.shared.libs.videoPlayer.rememberPlayerView
+import com.yral.shared.libs.videoPlayer.rememberPooledExoPlayer
 import com.yral.shared.libs.videoPlayer.rememberPrefetchExoPlayerWithLifecycle
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 
-@Suppress("LongMethod")
+@Suppress("LongMethod", "CyclomaticComplexMethod")
 @OptIn(UnstableApi::class)
 @Composable
 actual fun CMPPlayer(
     modifier: Modifier,
     playerData: PlayerData,
     playerParams: CMPPlayerParams,
+    playerPool: PlayerPool,
+    isPlayerVisible: Boolean,
 ) {
     val context = LocalContext.current
-    val exoPlayer = rememberExoPlayerWithLifecycle(playerData.url, context, playerParams.isPause)
+    val exoPlayer =
+        rememberPooledExoPlayer(
+            url = playerData.url,
+            playerPool = playerPool,
+            isPause = playerParams.isPause,
+        )
     var currentPrefetchIndex by remember { mutableIntStateOf(0) }
     var currentPrefetchUrl by remember { mutableStateOf("") }
     LaunchedEffect(currentPrefetchIndex, playerData.prefetchVideos) {
@@ -60,7 +68,7 @@ actual fun CMPPlayer(
             context = context,
         )
 
-    val playerView = rememberPlayerView(exoPlayer, context)
+    val playerView = exoPlayer?.let { rememberPlayerView(it, context) }
 
     var isBuffering by remember { mutableStateOf(false) }
     var showThumbnail by remember { mutableStateOf(true) }
@@ -72,7 +80,7 @@ actual fun CMPPlayer(
 
     // Update current time every second
     LaunchedEffect(exoPlayer) {
-        while (isActive) {
+        while (isActive && exoPlayer != null) {
             playerParams.currentTime(exoPlayer.currentPosition.coerceAtLeast(0L).toInt())
             delay(1000) // Delay for 1 second
         }
@@ -80,7 +88,7 @@ actual fun CMPPlayer(
 
     // Keep screen on while the player view is active
     LaunchedEffect(playerView) {
-        playerView.keepScreenOn = true
+        playerView?.keepScreenOn = true
     }
 
     LaunchedEffect(playerData.prefetchThumbnails) {
@@ -93,22 +101,24 @@ actual fun CMPPlayer(
     }
 
     Box(modifier) {
-        AndroidView(
-            factory = { playerView },
-            modifier = modifier,
-            update = {
-                exoPlayer.playWhenReady = !playerParams.isPause
-                exoPlayer.volume = if (playerParams.isMute) 0f else 1f
-                playerParams.sliderTime?.let { exoPlayer.seekTo(it.toLong()) }
-                exoPlayer.setPlaybackSpeed(playerParams.speed.toFloat())
-                playerView.artworkDisplayMode = PlayerView.ARTWORK_DISPLAY_MODE_FILL
-                playerView.resizeMode =
-                    when (playerParams.size) {
-                        ScreenResize.FIT -> AspectRatioFrameLayout.RESIZE_MODE_FIT
-                        ScreenResize.FILL -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM
-                    }
-            },
-        )
+        playerView?.let {
+            AndroidView(
+                factory = { playerView },
+                modifier = modifier,
+                update = {
+                    exoPlayer.playWhenReady = !playerParams.isPause
+                    exoPlayer.volume = if (playerParams.isMute) 0f else 1f
+                    playerParams.sliderTime?.let { exoPlayer.seekTo(it.toLong()) }
+                    exoPlayer.setPlaybackSpeed(playerParams.speed.toFloat())
+                    playerView.artworkDisplayMode = PlayerView.ARTWORK_DISPLAY_MODE_FILL
+                    playerView.resizeMode =
+                        when (playerParams.size) {
+                            ScreenResize.FIT -> AspectRatioFrameLayout.RESIZE_MODE_FIT
+                            ScreenResize.FILL -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+                        }
+                },
+            )
+        }
         if (showThumbnail) {
             AsyncImage(
                 model = playerData.thumbnailUrl,
@@ -122,29 +132,30 @@ actual fun CMPPlayer(
         }
     }
 
-    // Manage player listener and lifecycle
-    DisposableEffect(key1 = exoPlayer) {
-        val listener =
-            createPlayerListener(
-                playerParams.isSliding,
-                playerParams.totalTime,
-                playerParams.currentTime,
-                loadingState = { isBuffering = it },
-                playerParams.didEndVideo,
-                playerParams.loop,
-                exoPlayer,
-                hideThumbnail = {
-                    if (showThumbnail) {
-                        showThumbnail = false
-                    }
-                },
-            )
+    exoPlayer?.let {
+        // Manage player listener and lifecycle
+        DisposableEffect(exoPlayer) {
+            val listener =
+                createPlayerListener(
+                    playerParams.isSliding,
+                    playerParams.totalTime,
+                    playerParams.currentTime,
+                    loadingState = { isBuffering = it },
+                    playerParams.didEndVideo,
+                    playerParams.loop,
+                    exoPlayer,
+                    hideThumbnail = {
+                        if (showThumbnail) {
+                            showThumbnail = false
+                        }
+                    },
+                )
 
-        exoPlayer.addListener(listener)
+            exoPlayer.addListener(listener)
 
-        onDispose {
-            exoPlayer.removeListener(listener)
-            exoPlayer.release()
+            onDispose {
+                exoPlayer.removeListener(listener)
+            }
         }
     }
 
@@ -168,9 +179,8 @@ actual fun CMPPlayer(
 
     DisposableEffect(Unit) {
         onDispose {
-            exoPlayer.release()
             preFetchExoPlayer?.release()
-            playerView.keepScreenOn = false
+            playerView?.keepScreenOn = false
         }
     }
 }
