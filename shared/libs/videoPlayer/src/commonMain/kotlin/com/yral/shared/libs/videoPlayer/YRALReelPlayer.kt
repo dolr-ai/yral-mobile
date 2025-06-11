@@ -6,6 +6,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -17,6 +18,7 @@ import androidx.compose.ui.Modifier
 import com.yral.shared.libs.videoPlayer.model.PlayerConfig
 import com.yral.shared.libs.videoPlayer.model.PlayerControls
 import com.yral.shared.libs.videoPlayer.model.PlayerData
+import com.yral.shared.libs.videoPlayer.pool.rememberPlayerPool
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 @Composable
@@ -65,6 +67,16 @@ internal fun YRALReelsPlayerView(
     playerConfig: PlayerConfig = PlayerConfig(), // Configuration for the player,
     overlayContent: @Composable (pageNo: Int) -> Unit,
 ) {
+    // Create multiplatform player pool for efficient resource management
+    val playerPool = rememberPlayerPool(maxPoolSize = 3)
+
+    // Clean up player pool when composable is disposed
+    DisposableEffect(playerPool) {
+        onDispose {
+            playerPool.dispose()
+        }
+    }
+
     // Remember the state of the pager
     val pagerState =
         rememberPagerState(
@@ -95,6 +107,7 @@ internal fun YRALReelsPlayerView(
             modifier = modifier,
             state = pagerState,
             userScrollEnabled = true, // Ensure user scrolling is enabled
+            beyondViewportPageCount = 0,
         ) { page ->
             // Create a side effect to detect when this page is shown
             LaunchedEffect(page, pagerState.currentPage) {
@@ -135,6 +148,7 @@ internal fun YRALReelsPlayerView(
                             onPauseToggle = { isPause = isPause.not() }, // Toggle pause/resume
                             recordTime = recordTime,
                         ),
+                    playerPool = playerPool,
                 )
                 overlayContent(page)
             }
@@ -144,6 +158,7 @@ internal fun YRALReelsPlayerView(
             modifier = modifier,
             state = pagerState,
             userScrollEnabled = true, // Ensure user scrolling is enabled
+            beyondViewportPageCount = 0,
         ) { page ->
             // Create a side effect to detect when this page is shown
             LaunchedEffect(page, pagerState.currentPage) {
@@ -184,6 +199,7 @@ internal fun YRALReelsPlayerView(
                             onPauseToggle = { isPause = isPause.not() }, // Toggle pause/resume
                             recordTime = recordTime,
                         ),
+                    playerPool = playerPool,
                 )
                 overlayContent(page)
             }
