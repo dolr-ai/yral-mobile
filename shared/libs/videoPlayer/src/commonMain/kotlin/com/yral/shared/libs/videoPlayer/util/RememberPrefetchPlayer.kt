@@ -4,10 +4,11 @@ import androidx.compose.runtime.Composable
 import com.yral.shared.libs.videoPlayer.pool.PlatformPlayer
 
 @Composable
-expect fun rememberPrefetchPlayerWithLifecycle(onUrlReady: () -> Unit): PlatformPlayer
+expect fun rememberPrefetchPlayerWithLifecycle(): PlatformPlayer
 
 @Composable
 expect fun PrefetchVideo(
-    player: PlatformPlayer = rememberPrefetchPlayerWithLifecycle { },
+    player: PlatformPlayer = rememberPrefetchPlayerWithLifecycle(),
     url: String,
+    onUrlReady: () -> Unit,
 )

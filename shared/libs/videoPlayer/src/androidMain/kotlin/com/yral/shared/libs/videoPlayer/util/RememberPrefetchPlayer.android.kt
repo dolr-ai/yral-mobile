@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -14,6 +15,7 @@ import androidx.core.net.toUri
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DefaultLoadControl
@@ -27,21 +29,11 @@ import com.yral.shared.libs.videoPlayer.pool.PlatformPlayer
 
 @OptIn(UnstableApi::class)
 @Composable
-actual fun rememberPrefetchPlayerWithLifecycle(onUrlReady: () -> Unit): PlatformPlayer {
+actual fun rememberPrefetchPlayerWithLifecycle(): PlatformPlayer {
     val context = LocalContext.current
     val exoPlayer = remember(context) { createExoPlayer(context) }
     DisposableEffect(key1 = exoPlayer) {
-        val listener =
-            object : Player.Listener {
-                override fun onPlaybackStateChanged(state: Int) {
-                    if (state == Player.STATE_READY) {
-                        onUrlReady()
-                    }
-                }
-            }
-        exoPlayer.addListener(listener)
         onDispose {
-            exoPlayer.removeListener(listener)
             exoPlayer.release()
         }
     }
@@ -62,14 +54,24 @@ actual fun rememberPrefetchPlayerWithLifecycle(onUrlReady: () -> Unit): Platform
     return PlatformPlayer(exoPlayer)
 }
 
+@Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
 actual fun PrefetchVideo(
     player: PlatformPlayer,
     url: String,
+    onUrlReady: () -> Unit,
 ) {
     if (url.isEmpty()) return
     var currentUrl by remember { mutableStateOf("") }
     var setupPlayer by remember { mutableStateOf(false) }
+    var currentPlayerState by remember { mutableIntStateOf(Player.STATE_IDLE) }
+    LaunchedEffect(currentPlayerState) {
+        when (currentPlayerState) {
+            Player.STATE_READY -> {
+                onUrlReady()
+            }
+        }
+    }
     LaunchedEffect(url) {
         if (currentUrl != url) {
             currentUrl = url
@@ -78,6 +80,7 @@ actual fun PrefetchVideo(
     }
     if (setupPlayer) {
         setupPlayer = false
+        currentPlayerState = Player.STATE_IDLE
         val context = LocalContext.current
         player.stop()
         player.clearMediaItems()
@@ -96,7 +99,36 @@ actual fun PrefetchVideo(
         player.seekTo(0, 0)
         player.prepare()
     }
+    DisposableEffect(currentUrl) {
+        val listener =
+            createPrefetchPlayerListener(
+                onStateChange = { currentPlayerState = it },
+                onErr = { },
+            )
+        player.addListener(listener)
+        onDispose {
+            player.removeListener(listener)
+        }
+    }
 }
+
+/**
+ * Creates a performance monitoring listener for prefetch video player.
+ * Handles both VideoDownload_prefetch and VideoStartup_prefetch traces.
+ */
+private fun createPrefetchPlayerListener(
+    onStateChange: (Int) -> Unit,
+    onErr: (PlaybackException) -> Unit,
+): Player.Listener =
+    object : Player.Listener {
+        override fun onPlaybackStateChanged(playbackState: Int) {
+            onStateChange(playbackState)
+        }
+
+        override fun onPlayerError(error: PlaybackException) {
+            onErr(error)
+        }
+    }
 
 @OptIn(UnstableApi::class)
 private fun createExoPlayer(context: Context): ExoPlayer {
