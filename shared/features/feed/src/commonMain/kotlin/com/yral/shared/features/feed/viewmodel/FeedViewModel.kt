@@ -138,7 +138,6 @@ class FeedViewModel(
                             ),
                     ).mapBoth(
                         success = { moreFeed ->
-                            setLoadingMore(false)
                             val currentPosts = _state.value.posts
                             val filteredPosts =
                                 moreFeed
@@ -156,6 +155,7 @@ class FeedViewModel(
                             filteredPosts.forEach { post ->
                                 fetchFeedDetail(post)
                             }
+                            setLoadingMore(false)
                         },
                         failure = { _ ->
                             setLoadingMore(false)
