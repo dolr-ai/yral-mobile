@@ -3,6 +3,7 @@ package com.yral.shared.features.feed.viewmodel
 import androidx.lifecycle.ViewModel
 import com.github.michaelbull.result.mapBoth
 import com.yral.shared.analytics.AnalyticsManager
+import com.yral.shared.analytics.events.EmptyColdStartFeedEvent
 import com.yral.shared.analytics.events.VideoDurationWatchedEventData
 import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.core.exceptions.YralException
@@ -87,6 +88,7 @@ class FeedViewModel(
                         if (posts.isNotEmpty()) {
                             posts.forEach { post -> fetchFeedDetail(post) }
                         } else {
+                            analyticsManager.trackEvent(EmptyColdStartFeedEvent())
                             loadMoreFeed()
                         }
                     },
