@@ -11,5 +11,22 @@ expect fun PrefetchVideo(
     player: PlatformPlayer = rememberPrefetchPlayerWithLifecycle(),
     url: String,
     videoId: String,
+    performanceMonitor: PrefetchPerformanceMonitor? = null,
     onUrlReady: () -> Unit,
 )
+
+interface PrefetchPerformanceMonitor {
+    fun startTrace(
+        type: PrefetchTraceType,
+        url: String,
+        videoId: String,
+    )
+    fun stopTrace(type: PrefetchTraceType)
+    fun stopTraceWithSuccess(type: PrefetchTraceType)
+    fun stopTraceWithError(type: PrefetchTraceType)
+}
+
+enum class PrefetchTraceType {
+    LOAD_TRACE,
+    DOWNLOAD_TRACE,
+}

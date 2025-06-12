@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.home
+package com.yral.android.ui.screens.home.feed
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -51,19 +51,22 @@ import coil3.compose.AsyncImage
 import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
-import com.yral.android.ui.screens.home.FeedScreenConstants.MAX_LINES_FOR_POST_DESCRIPTION
-import com.yral.android.ui.screens.home.FeedScreenConstants.VIDEO_REPORT_SHEET_MAX_HEIGHT
+import com.yral.android.ui.screens.home.feed.FeedScreenConstants.MAX_LINES_FOR_POST_DESCRIPTION
+import com.yral.android.ui.screens.home.feed.FeedScreenConstants.VIDEO_REPORT_SHEET_MAX_HEIGHT
 import com.yral.android.ui.widgets.YralBottomSheet
 import com.yral.android.ui.widgets.YralButtonState
 import com.yral.android.ui.widgets.YralButtonType
 import com.yral.android.ui.widgets.YralGradientButton
 import com.yral.android.ui.widgets.YralLoader
+import com.yral.shared.features.feed.viewmodel.FeedState
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.PRE_FETCH_BEFORE_LAST
 import com.yral.shared.features.feed.viewmodel.ReportSheetState
 import com.yral.shared.features.feed.viewmodel.VideoReportReason
 import com.yral.shared.libs.videoPlayer.ReelPlayerItem
 import com.yral.shared.libs.videoPlayer.YRALReelPlayer
+import com.yral.shared.libs.videoPlayer.util.PrefetchPerformanceMonitor
+import com.yral.shared.libs.videoPlayer.util.PrefetchTraceType
 import io.ktor.http.Url
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
@@ -138,18 +141,10 @@ fun FeedScreen(
 
     Column(modifier = modifier) {
         if (state.feedDetails.isNotEmpty()) {
+            val prefetchPerformanceMonitor = remember { getPrefetchPerformanceMonitor() }
             YRALReelPlayer(
                 modifier = Modifier.weight(1f),
-                videoUrlArray =
-                    state
-                        .feedDetails
-                        .map {
-                            ReelPlayerItem(
-                                videoUrl = it.url.toString(),
-                                thumbnailUrl = it.thumbnail.toString(),
-                                videoId = it.videoID,
-                            )
-                        }.toList(),
+                videoUrlArray = getVideoUrlArray(state),
                 initialPage = state.currentPageOfFeed,
                 onPageLoaded = { page ->
                     viewModel.onCurrentPageChange(page)
@@ -159,6 +154,7 @@ fun FeedScreen(
                     viewModel.recordTime(currentTime, totalTime)
                 },
                 didVideoEnd = { viewModel.didCurrentVideoEnd() },
+                prefetchPerformanceMonitor = prefetchPerformanceMonitor,
             ) { pageNo ->
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -217,6 +213,87 @@ fun FeedScreen(
         )
     }
 }
+
+private fun getVideoUrlArray(state: FeedState): List<ReelPlayerItem> =
+    state
+        .feedDetails
+        .map {
+            ReelPlayerItem(
+                videoUrl = it.url.toString(),
+                thumbnailUrl = it.thumbnail.toString(),
+                videoId = it.videoID,
+            )
+        }.toList()
+
+private fun getPrefetchPerformanceMonitor(): PrefetchPerformanceMonitor =
+    object : PrefetchPerformanceMonitor {
+        var downloadTrace: PrefetchDownloadTrace? = null
+        var loadTrace: PrefetchLoadTimeTrace? = null
+
+        override fun stopTrace(type: PrefetchTraceType) {
+            when (type) {
+                PrefetchTraceType.LOAD_TRACE -> {
+                    loadTrace?.stop()
+                    loadTrace = null
+                }
+
+                PrefetchTraceType.DOWNLOAD_TRACE -> {
+                    downloadTrace?.stop()
+                    downloadTrace = null
+                }
+            }
+        }
+
+        override fun startTrace(
+            type: PrefetchTraceType,
+            url: String,
+            videoId: String,
+        ) {
+            when (type) {
+                PrefetchTraceType.LOAD_TRACE -> {
+                    downloadTrace =
+                        VideoPerformanceFactoryProvider
+                            .createPrefetchDownloadTrace(url, videoId)
+                            .apply { start() }
+                }
+
+                PrefetchTraceType.DOWNLOAD_TRACE -> {
+                    loadTrace =
+                        VideoPerformanceFactoryProvider
+                            .createPrefetchLoadTimeTrace(url, videoId)
+                            .apply { start() }
+                }
+            }
+        }
+
+        override fun stopTraceWithSuccess(type: PrefetchTraceType) {
+            when (type) {
+                PrefetchTraceType.LOAD_TRACE -> {
+                    loadTrace?.success()
+                    loadTrace = null
+                }
+
+                PrefetchTraceType.DOWNLOAD_TRACE -> {
+                    downloadTrace?.success()
+                    downloadTrace = null
+                }
+            }
+        }
+
+        override fun stopTraceWithError(type: PrefetchTraceType) {
+            when (type) {
+                PrefetchTraceType.LOAD_TRACE -> {
+                    loadTrace?.error()
+                    loadTrace = null
+                }
+
+                PrefetchTraceType.DOWNLOAD_TRACE -> {
+                    downloadTrace?.error()
+                    downloadTrace = null
+                }
+            }
+        }
+    }
 
 @Composable
 private fun UserBrief(

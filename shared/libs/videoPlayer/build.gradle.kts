@@ -39,7 +39,6 @@ kotlin {
             implementation(compose.components.uiToolingPreview)
 
             implementation(projects.shared.core)
-            implementation(projects.shared.libs.firebasePerf)
 
             implementation(libs.coil.compose)
         }

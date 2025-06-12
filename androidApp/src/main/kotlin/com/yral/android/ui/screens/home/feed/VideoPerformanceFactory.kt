@@ -1,4 +1,4 @@
-package com.yral.shared.libs.videoPlayer.performance
+package com.yral.android.ui.screens.home.feed
 
 import com.yral.shared.libs.firebasePerf.FirebaseOperationTrace
 import com.yral.shared.libs.videoPlayer.util.isHlsUrl

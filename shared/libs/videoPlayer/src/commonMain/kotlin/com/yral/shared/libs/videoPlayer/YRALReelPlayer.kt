@@ -19,6 +19,7 @@ import com.yral.shared.libs.videoPlayer.model.PlayerConfig
 import com.yral.shared.libs.videoPlayer.model.PlayerControls
 import com.yral.shared.libs.videoPlayer.model.PlayerData
 import com.yral.shared.libs.videoPlayer.pool.rememberPlayerPool
+import com.yral.shared.libs.videoPlayer.util.PrefetchPerformanceMonitor
 import com.yral.shared.libs.videoPlayer.util.PrefetchVideo
 import com.yral.shared.libs.videoPlayer.util.rememberPrefetchPlayerWithLifecycle
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -31,6 +32,7 @@ fun YRALReelPlayer(
     onPageLoaded: (currentPage: Int) -> Unit,
     recordTime: (Int, Int) -> Unit,
     didVideoEnd: () -> Unit,
+    prefetchPerformanceMonitor: PrefetchPerformanceMonitor? = null,
     overlayContent: @Composable (pageNo: Int) -> Unit,
 ) {
     YRALReelsPlayerView(
@@ -54,6 +56,7 @@ fun YRALReelPlayer(
                 loaderView = {},
                 didEndVideo = didVideoEnd,
             ),
+        prefetchPerformanceMonitor = prefetchPerformanceMonitor,
         overlayContent = overlayContent,
     )
 }
@@ -67,6 +70,7 @@ internal fun YRALReelsPlayerView(
     onPageLoaded: (currentPage: Int) -> Unit,
     recordTime: (Int, Int) -> Unit,
     playerConfig: PlayerConfig = PlayerConfig(), // Configuration for the player,
+    prefetchPerformanceMonitor: PrefetchPerformanceMonitor?,
     overlayContent: @Composable (pageNo: Int) -> Unit,
 ) {
     // Remember the state of the pager
@@ -111,6 +115,7 @@ internal fun YRALReelsPlayerView(
         player = prefetchPlayer,
         url = prefetchQueue.firstOrNull() ?: "",
         videoId = urls.firstOrNull { it.videoUrl == prefetchQueue.firstOrNull() }?.videoId ?: "",
+        performanceMonitor = prefetchPerformanceMonitor,
     ) {
         prefetchQueue.firstOrNull()?.let { completedUrl ->
             prefetchedUrls = prefetchedUrls + completedUrl

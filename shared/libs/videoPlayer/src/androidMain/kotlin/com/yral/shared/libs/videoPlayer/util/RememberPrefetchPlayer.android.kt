@@ -25,9 +25,6 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import com.yral.shared.libs.videoPlayer.createHlsMediaSource
 import com.yral.shared.libs.videoPlayer.createProgressiveMediaSource
 import com.yral.shared.libs.videoPlayer.getExoPlayerLifecycleObserver
-import com.yral.shared.libs.videoPlayer.performance.PrefetchDownloadTrace
-import com.yral.shared.libs.videoPlayer.performance.PrefetchLoadTimeTrace
-import com.yral.shared.libs.videoPlayer.performance.VideoPerformanceFactoryProvider
 import com.yral.shared.libs.videoPlayer.pool.PlatformPlayer
 
 @OptIn(UnstableApi::class)
@@ -63,32 +60,22 @@ actual fun PrefetchVideo(
     player: PlatformPlayer,
     url: String,
     videoId: String,
+    performanceMonitor: PrefetchPerformanceMonitor?,
     onUrlReady: () -> Unit,
 ) {
     if (url.isEmpty()) return
     var currentUrl by remember { mutableStateOf("") }
     var setupPlayer by remember { mutableStateOf(false) }
-    // Performance monitoring traces for prefetch - download and load time
-    var downloadTrace by remember { mutableStateOf<PrefetchDownloadTrace?>(null) }
-    var loadTrace by remember { mutableStateOf<PrefetchLoadTimeTrace?>(null) }
     var currentPlayerState by remember { mutableIntStateOf(Player.STATE_IDLE) }
     LaunchedEffect(currentPlayerState) {
         when (currentPlayerState) {
             Player.STATE_BUFFERING -> {
-                // Stop VideoStartup_prefetch trace when buffering starts (decoder initialized)
-                loadTrace?.let { trace ->
-                    trace.success()
-                    loadTrace = null
-                }
+                performanceMonitor?.stopTraceWithSuccess(PrefetchTraceType.LOAD_TRACE)
             }
 
             Player.STATE_READY -> {
                 println("Logging trace metric: prefetch video ready")
-                // Stop VideoDownload_prefetch trace when prefetch is ready (network data received)
-                downloadTrace?.let { trace ->
-                    trace.success()
-                    downloadTrace = null
-                }
+                performanceMonitor?.stopTraceWithSuccess(PrefetchTraceType.DOWNLOAD_TRACE)
                 onUrlReady()
             }
 
@@ -96,14 +83,8 @@ actual fun PrefetchVideo(
                 // STATE_IDLE can occur during normal cleanup or errors
                 // Don't automatically treat as error - let onPlayerError handle actual errors
                 // Just clean up traces without marking as error
-                downloadTrace?.let { trace ->
-                    trace.stop()
-                    downloadTrace = null
-                }
-                loadTrace?.let { trace ->
-                    trace.stop()
-                    loadTrace = null
-                }
+                performanceMonitor?.stopTrace(PrefetchTraceType.LOAD_TRACE)
+                performanceMonitor?.stopTrace(PrefetchTraceType.DOWNLOAD_TRACE)
             }
         }
     }
@@ -116,17 +97,20 @@ actual fun PrefetchVideo(
     if (setupPlayer) {
         setupPlayer = false
         currentPlayerState = Player.STATE_IDLE
-        downloadTrace?.stop()
-        loadTrace?.stop()
+
+        performanceMonitor?.stopTrace(PrefetchTraceType.LOAD_TRACE)
+        performanceMonitor?.stopTrace(PrefetchTraceType.DOWNLOAD_TRACE)
         // Start download and load traces for prefetch
-        downloadTrace =
-            VideoPerformanceFactoryProvider
-                .createPrefetchDownloadTrace(url, videoId)
-                .apply { start() }
-        loadTrace =
-            VideoPerformanceFactoryProvider
-                .createPrefetchLoadTimeTrace(url, videoId)
-                .apply { start() }
+        performanceMonitor?.startTrace(
+            PrefetchTraceType.DOWNLOAD_TRACE,
+            url,
+            videoId,
+        )
+        performanceMonitor?.startTrace(
+            PrefetchTraceType.LOAD_TRACE,
+            url,
+            videoId,
+        )
 
         val context = LocalContext.current
         player.stop()
@@ -152,14 +136,8 @@ actual fun PrefetchVideo(
                 onStateChange = { currentPlayerState = it },
                 onErr = {
                     // Stop all traces on prefetch error
-                    downloadTrace?.let { trace ->
-                        trace.error()
-                        downloadTrace = null
-                    }
-                    loadTrace?.let { trace ->
-                        trace.error()
-                        loadTrace = null
-                    }
+                    performanceMonitor?.stopTraceWithError(PrefetchTraceType.LOAD_TRACE)
+                    performanceMonitor?.stopTraceWithError(PrefetchTraceType.DOWNLOAD_TRACE)
                 },
             )
         player.addListener(listener)
