@@ -2,44 +2,13 @@ package com.yral.shared.libs.videoPlayer.performance
 
 import com.yral.shared.libs.firebasePerf.FirebaseOperationTrace
 import com.yral.shared.libs.videoPlayer.util.isHlsUrl
-import io.ktor.http.Url
-
-/**
- * Helper function to extract video ID from URL for Firebase Performance attributes
- * Firebase has a 100-character limit for attribute values
- */
-private const val MAX_ATTRIBUTE_LENGTH = 90
-
-@Suppress("TooGenericExceptionCaught", "SwallowedException")
-private fun extractVideoId(url: String): String =
-    try {
-        // Parse URL using Ktor's multiplatform Url class
-        val parsedUrl = Url(url)
-        val pathAndQuery =
-            buildString {
-                // Remove leading slash and take path
-                append(parsedUrl.encodedPath.removePrefix("/"))
-                // Add query parameters if present
-                if (parsedUrl.encodedQuery.isNotEmpty()) {
-                    // append("?").append(parsedUrl.encodedQuery)
-                }
-            }
-        // If still too long, take the last part
-        if (pathAndQuery.length > MAX_ATTRIBUTE_LENGTH) {
-            pathAndQuery.takeLast(MAX_ATTRIBUTE_LENGTH)
-        } else {
-            pathAndQuery.ifEmpty { url.takeLast(MAX_ATTRIBUTE_LENGTH) }
-        }
-    } catch (e: Exception) {
-        // Fallback: if URL parsing fails, take last 50 characters
-        url.takeLast(MAX_ATTRIBUTE_LENGTH)
-    }
 
 class PrefetchDownloadTrace(
     url: String,
+    videoId: String,
 ) : FirebaseOperationTrace("${VideoPerformanceConstants.VIDEO_DOWNLOAD_TRACE}_prefetch") {
     init {
-        putAttribute(VideoPerformanceConstants.VIDEO_ID_KEY, extractVideoId(url))
+        putAttribute(VideoPerformanceConstants.VIDEO_ID_KEY, videoId)
         putAttribute(
             VideoPerformanceConstants.VIDEO_FORMAT_KEY,
             if (isHlsUrl(url)) {
@@ -54,9 +23,10 @@ class PrefetchDownloadTrace(
 
 class PrefetchLoadTimeTrace(
     url: String,
+    videoId: String,
 ) : FirebaseOperationTrace("${VideoPerformanceConstants.VIDEO_LOAD_TRACE}_prefetch") {
     init {
-        putAttribute(VideoPerformanceConstants.VIDEO_ID_KEY, extractVideoId(url))
+        putAttribute(VideoPerformanceConstants.VIDEO_ID_KEY, videoId)
         putAttribute(
             VideoPerformanceConstants.VIDEO_FORMAT_KEY,
             if (isHlsUrl(url)) {
@@ -73,13 +43,27 @@ class PrefetchLoadTimeTrace(
  * Factory interface for creating video performance traces
  */
 interface VideoPerformanceFactory {
-    fun createPrefetchDownloadTrace(url: String): PrefetchDownloadTrace
-    fun createPrefetchLoadTimeTrace(url: String): PrefetchLoadTimeTrace
+    fun createPrefetchDownloadTrace(
+        url: String,
+        videoId: String,
+    ): PrefetchDownloadTrace
+
+    fun createPrefetchLoadTimeTrace(
+        url: String,
+        videoId: String,
+    ): PrefetchLoadTimeTrace
 }
 
 object VideoPerformanceFactoryProvider : VideoPerformanceFactory {
-    override fun createPrefetchDownloadTrace(url: String): PrefetchDownloadTrace = PrefetchDownloadTrace(url)
-    override fun createPrefetchLoadTimeTrace(url: String): PrefetchLoadTimeTrace = PrefetchLoadTimeTrace(url)
+    override fun createPrefetchDownloadTrace(
+        url: String,
+        videoId: String,
+    ): PrefetchDownloadTrace = PrefetchDownloadTrace(url, videoId)
+
+    override fun createPrefetchLoadTimeTrace(
+        url: String,
+        videoId: String,
+    ): PrefetchLoadTimeTrace = PrefetchLoadTimeTrace(url, videoId)
 }
 
 /**

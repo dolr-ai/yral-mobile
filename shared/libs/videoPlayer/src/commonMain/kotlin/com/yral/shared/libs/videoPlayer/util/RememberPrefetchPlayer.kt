@@ -10,5 +10,6 @@ expect fun rememberPrefetchPlayerWithLifecycle(): PlatformPlayer
 expect fun PrefetchVideo(
     player: PlatformPlayer = rememberPrefetchPlayerWithLifecycle(),
     url: String,
+    videoId: String,
     onUrlReady: () -> Unit,
 )

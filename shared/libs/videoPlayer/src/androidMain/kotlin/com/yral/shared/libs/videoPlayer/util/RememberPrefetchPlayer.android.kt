@@ -62,6 +62,7 @@ actual fun rememberPrefetchPlayerWithLifecycle(): PlatformPlayer {
 actual fun PrefetchVideo(
     player: PlatformPlayer,
     url: String,
+    videoId: String,
     onUrlReady: () -> Unit,
 ) {
     if (url.isEmpty()) return
@@ -115,17 +116,16 @@ actual fun PrefetchVideo(
     if (setupPlayer) {
         setupPlayer = false
         currentPlayerState = Player.STATE_IDLE
-        println("Logging trace metric: prefetching $currentUrl")
         downloadTrace?.stop()
         loadTrace?.stop()
         // Start download and load traces for prefetch
         downloadTrace =
             VideoPerformanceFactoryProvider
-                .createPrefetchDownloadTrace(url)
+                .createPrefetchDownloadTrace(url, videoId)
                 .apply { start() }
         loadTrace =
             VideoPerformanceFactoryProvider
-                .createPrefetchLoadTimeTrace(url)
+                .createPrefetchLoadTimeTrace(url, videoId)
                 .apply { start() }
 
         val context = LocalContext.current

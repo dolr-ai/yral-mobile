@@ -26,7 +26,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 @Composable
 fun YRALReelPlayer(
     modifier: Modifier = Modifier,
-    videoUrlArray: List<Pair<String, String>>,
+    videoUrlArray: List<ReelPlayerItem>,
     initialPage: Int,
     onPageLoaded: (currentPage: Int) -> Unit,
     recordTime: (Int, Int) -> Unit,
@@ -62,7 +62,7 @@ fun YRALReelPlayer(
 @Composable
 internal fun YRALReelsPlayerView(
     modifier: Modifier = Modifier, // Modifier for the composable
-    urls: List<Pair<String, String>>, // List of video URLs
+    urls: List<ReelPlayerItem>, // List of video URLs
     initialPage: Int,
     onPageLoaded: (currentPage: Int) -> Unit,
     recordTime: (Int, Int) -> Unit,
@@ -98,7 +98,7 @@ internal fun YRALReelsPlayerView(
                 val newUrls =
                     urls
                         .nextN(currentPage, PREFETCH_NEXT_N_VIDEOS)
-                        .map { it.first }
+                        .map { it.videoUrl }
                         .filter { url ->
                             !prefetchedUrls.contains(url) && !prefetchQueue.contains(url)
                         }
@@ -110,6 +110,7 @@ internal fun YRALReelsPlayerView(
     PrefetchVideo(
         player = prefetchPlayer,
         url = prefetchQueue.firstOrNull() ?: "",
+        videoId = urls.firstOrNull { it.videoUrl == prefetchQueue.firstOrNull() }?.videoId ?: "",
     ) {
         prefetchQueue.firstOrNull()?.let { completedUrl ->
             prefetchedUrls = prefetchedUrls + completedUrl
@@ -154,15 +155,7 @@ internal fun YRALReelsPlayerView(
                 // Video player with control
                 YRALVideoPlayerWithControl(
                     modifier = Modifier.fillMaxSize(),
-                    playerData =
-                        PlayerData(
-                            url = urls[page].first,
-                            thumbnailUrl = urls[page].second,
-                            prefetchThumbnails =
-                                urls
-                                    .nextN(page, PREFETCH_NEXT_N_THUMBNAILS)
-                                    .map { it.second },
-                        ),
+                    playerData = urls[page].toPlayerData(urls, page),
                     playerConfig = playerConfig,
                     playerControls =
                         PlayerControls(
@@ -201,15 +194,7 @@ internal fun YRALReelsPlayerView(
                 // Video player with control
                 YRALVideoPlayerWithControl(
                     modifier = Modifier.fillMaxSize(),
-                    playerData =
-                        PlayerData(
-                            url = urls[page].first,
-                            thumbnailUrl = urls[page].second,
-                            prefetchThumbnails =
-                                urls
-                                    .nextN(page, PREFETCH_NEXT_N_THUMBNAILS)
-                                    .map { it.second },
-                        ),
+                    playerData = urls[page].toPlayerData(urls, page),
                     playerConfig = playerConfig,
                     playerControls =
                         PlayerControls(
@@ -239,6 +224,26 @@ private fun <T> List<T>.nextN(
     } else {
         emptyList()
     }
+
+data class ReelPlayerItem(
+    val videoUrl: String,
+    val thumbnailUrl: String,
+    val videoId: String,
+)
+
+fun ReelPlayerItem.toPlayerData(
+    urls: List<ReelPlayerItem>,
+    page: Int,
+): PlayerData =
+    PlayerData(
+        videoId = videoId,
+        url = videoUrl,
+        thumbnailUrl = thumbnailUrl,
+        prefetchThumbnails =
+            urls
+                .nextN(page, PREFETCH_NEXT_N_THUMBNAILS)
+                .map { it.thumbnailUrl },
+    )
 
 private const val PREFETCH_NEXT_N_THUMBNAILS = 3
 private const val PREFETCH_NEXT_N_VIDEOS = 4

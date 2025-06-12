@@ -62,6 +62,7 @@ import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.PRE_FETCH_BEFORE_LAST
 import com.yral.shared.features.feed.viewmodel.ReportSheetState
 import com.yral.shared.features.feed.viewmodel.VideoReportReason
+import com.yral.shared.libs.videoPlayer.ReelPlayerItem
 import com.yral.shared.libs.videoPlayer.YRALReelPlayer
 import io.ktor.http.Url
 import kotlinx.coroutines.launch
@@ -143,9 +144,10 @@ fun FeedScreen(
                     state
                         .feedDetails
                         .map {
-                            Pair(
-                                it.url.toString(),
-                                it.thumbnail.toString(),
+                            ReelPlayerItem(
+                                videoUrl = it.url.toString(),
+                                thumbnailUrl = it.thumbnail.toString(),
+                                videoId = it.videoID,
                             )
                         }.toList(),
                 initialPage = state.currentPageOfFeed,
