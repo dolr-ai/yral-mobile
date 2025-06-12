@@ -17,10 +17,8 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DefaultHttpDataSource
-import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.LoadControl
 import androidx.media3.exoplayer.hls.HlsMediaSource
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.MediaSource
@@ -108,65 +106,6 @@ fun rememberExoPlayerWithLifecycle(
     return exoPlayer
 }
 
-@Suppress("LongMethod")
-@OptIn(UnstableApi::class)
-@Composable
-fun rememberPrefetchExoPlayerWithLifecycle(
-    url: String,
-    context: Context,
-    loadControl: LoadControl =
-        DefaultLoadControl
-            .Builder()
-            .setBufferDurationsMs(
-                MIN_BUFFER_MS,
-                MIN_BUFFER_MS,
-                BUFFER_MS_FOR_PLAYBACK,
-                BUFFER_MS_FOR_PLAYBACK,
-            ).build(),
-): ExoPlayer? {
-    if (url.isEmpty()) return null
-    val lifecycleOwner = LocalLifecycleOwner.current
-    val exoPlayer =
-        remember(context) {
-            val renderersFactory =
-                DefaultRenderersFactory(context)
-                    .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER)
-                    .setEnableDecoderFallback(true)
-            ExoPlayer
-                .Builder(context)
-                .setLoadControl(loadControl)
-                .setMediaSourceFactory(DefaultMediaSourceFactory(context))
-                .setRenderersFactory(renderersFactory)
-                .build()
-                .apply {
-                    videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT
-                    repeatMode = Player.REPEAT_MODE_OFF
-                    setHandleAudioBecomingNoisy(true)
-                    playWhenReady = false
-                    setForegroundMode(false)
-                }
-        }
-
-    // Consolidated prefetch performance tracing and media setup
-    rememberPrefetchMediaSetup(url, exoPlayer, context)
-
-    var appInBackground by remember {
-        mutableStateOf(false)
-    }
-    DisposableEffect(key1 = lifecycleOwner, appInBackground) {
-        val lifecycleObserver =
-            getExoPlayerLifecycleObserver(exoPlayer, true, appInBackground) {
-                appInBackground = it
-            }
-        lifecycleOwner.lifecycle.addObserver(lifecycleObserver)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(lifecycleObserver)
-        }
-    }
-
-    return exoPlayer
-}
-
 @OptIn(UnstableApi::class)
 @Composable
 private fun rememberMediaSetup(
@@ -193,32 +132,6 @@ private fun rememberMediaSetup(
             exoPlayer.setMediaSource(mediaSource)
             exoPlayer.prepare()
         }
-    }
-}
-
-@OptIn(UnstableApi::class)
-@Composable
-private fun rememberPrefetchMediaSetup(
-    url: String,
-    exoPlayer: ExoPlayer,
-    context: Context,
-) {
-    // Consolidated LaunchedEffect for prefetch media setup and tracing
-    LaunchedEffect(url) {
-        // set up media source after trace has been started
-        val videoUri = url.toUri()
-        val mediaItem = MediaItem.fromUri(videoUri)
-        // Reset the player to the start
-        exoPlayer.seekTo(0, 0)
-        // Prepare the appropriate media source based on the URL type
-        val mediaSource =
-            if (isHlsUrl(url)) {
-                createHlsMediaSource(mediaItem)
-            } else {
-                createProgressiveMediaSource(mediaItem, context)
-            }
-        exoPlayer.setMediaSource(mediaSource)
-        exoPlayer.prepare()
     }
 }
 
@@ -284,6 +197,3 @@ internal fun createProgressiveMediaSource(
                 .getInstance(context)
                 .cacheFactory,
         ).createMediaSource(mediaItem)
-
-private const val MIN_BUFFER_MS = 5000
-private const val BUFFER_MS_FOR_PLAYBACK = 1000

@@ -11,7 +11,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -34,7 +33,6 @@ import com.yral.shared.libs.videoPlayer.model.ScreenResize
 import com.yral.shared.libs.videoPlayer.pool.PlayerPool
 import com.yral.shared.libs.videoPlayer.rememberPlayerView
 import com.yral.shared.libs.videoPlayer.rememberPooledExoPlayer
-import com.yral.shared.libs.videoPlayer.rememberPrefetchExoPlayerWithLifecycle
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 
@@ -53,18 +51,6 @@ actual fun CMPPlayer(
             url = playerData.url,
             playerPool = playerPool,
             isPause = playerParams.isPause,
-        )
-    var currentPrefetchIndex by remember { mutableIntStateOf(0) }
-    var currentPrefetchUrl by remember { mutableStateOf("") }
-    LaunchedEffect(currentPrefetchIndex, playerData.prefetchVideos) {
-        if (playerData.prefetchVideos.isNotEmpty() && playerData.prefetchVideos.size > currentPrefetchIndex) {
-            currentPrefetchUrl = playerData.prefetchVideos[currentPrefetchIndex]
-        }
-    }
-    val preFetchExoPlayer =
-        rememberPrefetchExoPlayerWithLifecycle(
-            url = currentPrefetchUrl,
-            context = context,
         )
 
     val playerView = exoPlayer?.let { rememberPlayerView(it, context) }
@@ -158,27 +144,8 @@ actual fun CMPPlayer(
         }
     }
 
-    DisposableEffect(key1 = preFetchExoPlayer) {
-        val listener =
-            object : Player.Listener {
-                override fun onPlaybackStateChanged(state: Int) {
-                    if (state == Player.STATE_READY) {
-                        if (currentPrefetchIndex < playerData.prefetchVideos.size) {
-                            currentPrefetchIndex++
-                        }
-                    }
-                }
-            }
-        preFetchExoPlayer?.addListener(listener)
-        onDispose {
-            preFetchExoPlayer?.removeListener(listener)
-            preFetchExoPlayer?.release()
-        }
-    }
-
     DisposableEffect(Unit) {
         onDispose {
-            preFetchExoPlayer?.release()
             playerView?.keepScreenOn = false
         }
     }

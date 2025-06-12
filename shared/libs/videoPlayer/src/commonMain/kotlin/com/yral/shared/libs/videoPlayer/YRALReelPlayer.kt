@@ -19,6 +19,8 @@ import com.yral.shared.libs.videoPlayer.model.PlayerConfig
 import com.yral.shared.libs.videoPlayer.model.PlayerControls
 import com.yral.shared.libs.videoPlayer.model.PlayerData
 import com.yral.shared.libs.videoPlayer.pool.rememberPlayerPool
+import com.yral.shared.libs.videoPlayer.util.PrefetchVideo
+import com.yral.shared.libs.videoPlayer.util.rememberPrefetchPlayerWithLifecycle
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 @Composable
@@ -67,16 +69,6 @@ internal fun YRALReelsPlayerView(
     playerConfig: PlayerConfig = PlayerConfig(), // Configuration for the player,
     overlayContent: @Composable (pageNo: Int) -> Unit,
 ) {
-    // Create multiplatform player pool for efficient resource management
-    val playerPool = rememberPlayerPool(maxPoolSize = 3)
-
-    // Clean up player pool when composable is disposed
-    DisposableEffect(playerPool) {
-        onDispose {
-            playerPool.dispose()
-        }
-    }
-
     // Remember the state of the pager
     val pagerState =
         rememberPagerState(
@@ -85,6 +77,45 @@ internal fun YRALReelsPlayerView(
             },
             initialPage = initialPage,
         )
+
+    // Create multiplatform player pool for efficient resource management
+    val playerPool = rememberPlayerPool(maxPoolSize = 3)
+    // Clean up player pool when composable is disposed
+    DisposableEffect(playerPool) {
+        onDispose {
+            playerPool.dispose()
+        }
+    }
+    // Prefetch state management
+    var prefetchedUrls by remember { mutableStateOf(setOf<String>()) }
+    var prefetchQueue by remember { mutableStateOf(listOf<String>()) }
+    val prefetchPlayer = rememberPrefetchPlayerWithLifecycle()
+    // Add new videos to prefetch queue on page change
+    LaunchedEffect(urls, pagerState) {
+        snapshotFlow { pagerState.currentPage }
+            .distinctUntilChanged()
+            .collect { currentPage ->
+                val newUrls =
+                    urls
+                        .nextN(currentPage, PREFETCH_NEXT_N_VIDEOS)
+                        .map { it.first }
+                        .filter { url ->
+                            !prefetchedUrls.contains(url) && !prefetchQueue.contains(url)
+                        }
+                if (newUrls.isNotEmpty()) {
+                    prefetchQueue = prefetchQueue + newUrls
+                }
+            }
+    }
+    PrefetchVideo(
+        player = prefetchPlayer,
+        url = prefetchQueue.firstOrNull() ?: "",
+    ) {
+        prefetchQueue.firstOrNull()?.let { completedUrl ->
+            prefetchedUrls = prefetchedUrls + completedUrl
+            prefetchQueue = prefetchQueue.drop(1)
+        }
+    }
 
     // Report initial pager state
     LaunchedEffect(Unit) {
@@ -131,10 +162,6 @@ internal fun YRALReelsPlayerView(
                                 urls
                                     .nextN(page, PREFETCH_NEXT_N_THUMBNAILS)
                                     .map { it.second },
-                            prefetchVideos =
-                                urls
-                                    .nextN(page, PREFETCH_NEXT_N_VIDEOS)
-                                    .map { it.first },
                         ),
                     playerConfig = playerConfig,
                     playerControls =
@@ -182,10 +209,6 @@ internal fun YRALReelsPlayerView(
                                 urls
                                     .nextN(page, PREFETCH_NEXT_N_THUMBNAILS)
                                     .map { it.second },
-                            prefetchVideos =
-                                urls
-                                    .nextN(page, PREFETCH_NEXT_N_VIDEOS)
-                                    .map { it.first },
                         ),
                     playerConfig = playerConfig,
                     playerControls =
@@ -218,4 +241,4 @@ private fun <T> List<T>.nextN(
     }
 
 private const val PREFETCH_NEXT_N_THUMBNAILS = 3
-private const val PREFETCH_NEXT_N_VIDEOS = 3
+private const val PREFETCH_NEXT_N_VIDEOS = 4
