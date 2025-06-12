@@ -139,14 +139,21 @@ class FeedViewModel(
                     ).mapBoth(
                         success = { moreFeed ->
                             setLoadingMore(false)
-                            val posts = _state.value.posts.toMutableList()
-                            posts.addAll(moreFeed.posts)
-                            _state.emit(
-                                _state.value.copy(
-                                    posts = posts,
-                                ),
-                            )
-                            moreFeed.posts.forEach { post ->
+                            val currentPosts = _state.value.posts
+                            val filteredPosts =
+                                moreFeed
+                                    .posts
+                                    .filter { newPost ->
+                                        currentPosts.none { currentPost ->
+                                            currentPost.videoID == newPost.videoID
+                                        }
+                                    }
+                            _state.update { currentState ->
+                                currentState.copy(
+                                    posts = currentState.posts + filteredPosts,
+                                )
+                            }
+                            filteredPosts.forEach { post ->
                                 fetchFeedDetail(post)
                             }
                         },
