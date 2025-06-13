@@ -21,7 +21,6 @@ enum UnifiedFeedEvent: Equatable {
   case loadingMoreFeeds
   case loadedMoreFeeds
   case loadMoreFeedsFailed(errorMessage: String)
-  case toggledLikeSuccessfully(likeResult: LikeResult)
   case toggleLikeFailed(errorMessage: String)
   case finishedLoadingInitialFeeds
   case deleteVideoInitiated
@@ -34,8 +33,9 @@ enum UnifiedFeedEvent: Equatable {
   case blockedUser(String)
   case socialSignInSuccess
   case socialSignInFailure
+  case castVoteSuccess(SmileyGameResultResponse)
+  case castVoteFailure(CastVoteError, String)
 
-  // swiftlint: disable cyclomatic_complexity
   static func == (lhs: UnifiedFeedEvent, rhs: UnifiedFeedEvent) -> Bool {
     switch (lhs, rhs) {
     case (.fetchingInitialFeeds, .fetchingInitialFeeds):
@@ -46,8 +46,6 @@ enum UnifiedFeedEvent: Equatable {
       return true
     case (.loadMoreFeedsFailed(let lhsMsg), .loadMoreFeedsFailed(let rhsMsg)):
       return lhsMsg == rhsMsg
-    case (.toggledLikeSuccessfully(let lhsResult), .toggledLikeSuccessfully(let rhsResult)):
-      return lhsResult == rhsResult
     case (.toggleLikeFailed(let lhsMsg), .toggleLikeFailed(let rhsMsg)):
       return lhsMsg == rhsMsg
     case (.finishedLoadingInitialFeeds, .finishedLoadingInitialFeeds):
@@ -62,7 +60,6 @@ enum UnifiedFeedEvent: Equatable {
       return false
     }
   }
-  // swiftlint: enable cyclomatic_complexity
 }
 
 protocol FeedViewModelProtocol: ObservableObject {
@@ -72,11 +69,17 @@ protocol FeedViewModelProtocol: ObservableObject {
 
   func fetchFeeds(request: InitialFeedRequest) async
   func loadMoreFeeds() async
-  func toggleLike(request: LikeQuery) async
   func deleteVideo(request: DeleteVideoRequest) async
   func getCurrentFeedIndex() -> Int
   func report(request: ReportRequest) async
   func blockUser(principalId: String) async
   func log(event: VideoEventRequest) async
   func socialSignIn(request: SocialProvider) async
+  func fetchSmileys() async
+  func castVote(request: CastVoteQuery) async
+}
+
+extension FeedViewModelProtocol {
+  func fetchSmileys() async {}
+  func castVote(request: CastVoteQuery) async {}
 }

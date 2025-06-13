@@ -9,6 +9,7 @@
 import Foundation
 
 enum DefaultsKey: String {
+  case hasLaunchedAppBefore
   case eulaAccepted
   case userDefaultsLoggedIn
   case authIdentityExpiryDateKey
