@@ -7,7 +7,4 @@ import androidx.compose.runtime.Composable
  * Uses platform-specific implementations under the hood
  */
 @Composable
-expect fun rememberPlayerPool(
-    maxPoolSize: Int = 3,
-    enablePerformanceTracing: Boolean = false,
-): PlayerPool
+expect fun rememberPlayerPool(maxPoolSize: Int = 3): PlayerPool

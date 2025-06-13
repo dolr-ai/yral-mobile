@@ -21,8 +21,3 @@ interface PrefetchVideoListener {
     fun onIdle()
     fun onPlayerError()
 }
-
-data class PrefetchVideoListenerCreator(
-    val videoId: String,
-    val url: String,
-)

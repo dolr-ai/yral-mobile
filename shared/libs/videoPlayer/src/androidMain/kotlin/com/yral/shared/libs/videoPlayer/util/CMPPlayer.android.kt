@@ -31,6 +31,7 @@ import com.yral.shared.libs.videoPlayer.model.PlayerData
 import com.yral.shared.libs.videoPlayer.model.PlayerSpeed
 import com.yral.shared.libs.videoPlayer.model.ScreenResize
 import com.yral.shared.libs.videoPlayer.pool.PlayerPool
+import com.yral.shared.libs.videoPlayer.pool.VideoListener
 import com.yral.shared.libs.videoPlayer.rememberPlayerView
 import com.yral.shared.libs.videoPlayer.rememberPooledExoPlayer
 import kotlinx.coroutines.delay
@@ -44,13 +45,15 @@ actual fun CMPPlayer(
     playerData: PlayerData,
     playerParams: CMPPlayerParams,
     playerPool: PlayerPool,
+    videoListener: VideoListener?,
 ) {
     val context = LocalContext.current
     val exoPlayer =
         rememberPooledExoPlayer(
-            url = playerData.url,
+            playerData = playerData,
             playerPool = playerPool,
             isPause = playerParams.isPause,
+            videoListener = videoListener,
         )
 
     val playerView = exoPlayer?.let { rememberPlayerView(it, context) }
