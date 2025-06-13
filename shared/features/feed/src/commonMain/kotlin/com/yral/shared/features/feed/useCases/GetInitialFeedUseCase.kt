@@ -24,7 +24,7 @@ class GetInitialFeedUseCase(
         )
 
     companion object {
-        const val INITIAL_REQUEST = 20L
+        private const val INITIAL_REQUEST = 20L
     }
 
     data class Params(

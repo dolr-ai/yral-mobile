@@ -58,7 +58,6 @@ import com.yral.android.ui.widgets.YralButtonState
 import com.yral.android.ui.widgets.YralButtonType
 import com.yral.android.ui.widgets.YralGradientButton
 import com.yral.android.ui.widgets.YralLoader
-import com.yral.shared.features.feed.useCases.GetInitialFeedUseCase.Companion.INITIAL_REQUEST
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.PRE_FETCH_BEFORE_LAST
 import com.yral.shared.features.feed.viewmodel.ReportSheetState
@@ -92,12 +91,11 @@ fun FeedScreen(
             state.isLoadingMore,
             loadTriggered,
         ) {
-            val hasSufficientItems = state.feedDetails.size >= INITIAL_REQUEST
-            val isValidPage = state.currentPageOfFeed > 0
+            val isValidPage = state.currentPageOfFeed >= 0
             val isCloseToEnd =
                 state.feedDetails.isNotEmpty() &&
                     (state.feedDetails.size - state.currentPageOfFeed) <= PRE_FETCH_BEFORE_LAST
-            isValidPage && hasSufficientItems && isCloseToEnd && !state.isLoadingMore && !loadTriggered
+            isValidPage && isCloseToEnd && !state.isLoadingMore && !loadTriggered
         }
 
     // Reset load triggered when feed size changes (meaning new data arrived)

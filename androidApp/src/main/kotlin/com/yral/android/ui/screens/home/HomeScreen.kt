@@ -1,5 +1,6 @@
 package com.yral.android.ui.screens.home
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,6 +20,9 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -36,6 +40,13 @@ fun HomeScreen(
     currentTab: String,
     updateCurrentTab: (tab: String) -> Unit,
 ) {
+    val backHandlerEnabled by remember(currentTab) {
+        mutableStateOf(currentTab != HomeTab.HOME.title)
+    }
+    BackHandler(
+        enabled = backHandlerEnabled,
+        onBack = { updateCurrentTab(HomeTab.HOME.title) },
+    )
     Scaffold(
         containerColor = MaterialTheme.colorScheme.primaryContainer,
         modifier = Modifier.fillMaxSize(),
