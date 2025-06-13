@@ -19,6 +19,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import com.yral.shared.core.exceptions.YralException
+import com.yral.shared.crashlytics.core.CrashlyticsManager
+import com.yral.shared.koin.koinInstance
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -47,6 +50,7 @@ fun YralWebView(
                     this.webViewClient =
                         object : WebViewClient() {
                             private var retryCount = 0
+                            private val crashlytics = koinInstance.get<CrashlyticsManager>()
                             override fun onPageFinished(
                                 view: WebView?,
                                 url: String?,
@@ -61,23 +65,27 @@ fun YralWebView(
                                 error: WebResourceError?,
                             ) {
                                 super.onReceivedError(view, request, error)
-                                // Only handle the main frame error (not favicon, CSS, etc.)
-                                if (request?.isForMainFrame == true && retryCount < maxRetries) {
-                                    retryCount++
-                                    scope.launch {
-                                        delay(retryDelayMillis)
-                                        loadUrl(url)
-                                    }
-                                } else {
-                                    // Optional: show error UI or toast
-                                }
+                                crashlytics.recordException(
+                                    YralException("WebView Error: ${error?.description}"),
+                                )
+                                handleErrorAndRetry(request)
                             }
+
                             override fun onReceivedHttpError(
                                 view: WebView,
                                 request: WebResourceRequest,
                                 errorResponse: WebResourceResponse,
                             ) {
-                                if (request.isForMainFrame && retryCount < maxRetries) {
+                                super.onReceivedHttpError(view, request, errorResponse)
+                                crashlytics.recordException(
+                                    YralException("WebView Error: ${errorResponse.reasonPhrase}"),
+                                )
+                                handleErrorAndRetry(request)
+                            }
+
+                            private fun handleErrorAndRetry(request: WebResourceRequest?) {
+                                // Only handle the main frame error (not favicon, CSS, etc.)
+                                if (request?.isForMainFrame == true && retryCount < maxRetries) {
                                     retryCount++
                                     scope.launch {
                                         delay(retryDelayMillis)
