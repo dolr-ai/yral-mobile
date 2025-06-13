@@ -91,7 +91,7 @@ fun FeedScreen(
             state.isLoadingMore,
             loadTriggered,
         ) {
-            val isValidPage = state.currentPageOfFeed > 0
+            val isValidPage = state.currentPageOfFeed >= 0
             val isCloseToEnd =
                 state.feedDetails.isNotEmpty() &&
                     (state.feedDetails.size - state.currentPageOfFeed) <= PRE_FETCH_BEFORE_LAST
