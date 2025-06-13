@@ -8,8 +8,10 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -19,8 +21,9 @@ import com.yral.shared.libs.videoPlayer.model.PlayerConfig
 import com.yral.shared.libs.videoPlayer.model.PlayerControls
 import com.yral.shared.libs.videoPlayer.model.PlayerData
 import com.yral.shared.libs.videoPlayer.pool.rememberPlayerPool
-import com.yral.shared.libs.videoPlayer.util.PrefetchPerformanceMonitor
 import com.yral.shared.libs.videoPlayer.util.PrefetchVideo
+import com.yral.shared.libs.videoPlayer.util.PrefetchVideoListener
+import com.yral.shared.libs.videoPlayer.util.PrefetchVideoListenerCreator
 import com.yral.shared.libs.videoPlayer.util.rememberPrefetchPlayerWithLifecycle
 import kotlinx.coroutines.flow.distinctUntilChanged
 
@@ -32,7 +35,7 @@ fun YRALReelPlayer(
     onPageLoaded: (currentPage: Int) -> Unit,
     recordTime: (Int, Int) -> Unit,
     didVideoEnd: () -> Unit,
-    prefetchPerformanceMonitor: PrefetchPerformanceMonitor? = null,
+    getPlayerListener: (creator: PrefetchVideoListenerCreator) -> PrefetchVideoListener,
     overlayContent: @Composable (pageNo: Int) -> Unit,
 ) {
     YRALReelsPlayerView(
@@ -56,7 +59,7 @@ fun YRALReelPlayer(
                 loaderView = {},
                 didEndVideo = didVideoEnd,
             ),
-        prefetchPerformanceMonitor = prefetchPerformanceMonitor,
+        getPlayerListener = getPlayerListener,
         overlayContent = overlayContent,
     )
 }
@@ -70,7 +73,7 @@ internal fun YRALReelsPlayerView(
     onPageLoaded: (currentPage: Int) -> Unit,
     recordTime: (Int, Int) -> Unit,
     playerConfig: PlayerConfig = PlayerConfig(), // Configuration for the player,
-    prefetchPerformanceMonitor: PrefetchPerformanceMonitor?,
+    getPlayerListener: (creator: PrefetchVideoListenerCreator) -> PrefetchVideoListener,
     overlayContent: @Composable (pageNo: Int) -> Unit,
 ) {
     // Remember the state of the pager
@@ -91,9 +94,8 @@ internal fun YRALReelsPlayerView(
         }
     }
     // Prefetch state management
-    var prefetchedUrls by remember { mutableStateOf(setOf<String>()) }
-    var prefetchQueue by remember { mutableStateOf(listOf<String>()) }
-    val prefetchPlayer = rememberPrefetchPlayerWithLifecycle()
+    val prefetchQueue = remember { mutableStateSetOf<Pair<String, String>>() }
+    val prefetchedUrls = remember { mutableStateSetOf<String>() }
     // Add new videos to prefetch queue on page change
     LaunchedEffect(urls, pagerState) {
         snapshotFlow { pagerState.currentPage }
@@ -102,25 +104,34 @@ internal fun YRALReelsPlayerView(
                 val newUrls =
                     urls
                         .nextN(currentPage, PREFETCH_NEXT_N_VIDEOS)
-                        .map { it.videoUrl }
-                        .filter { url ->
-                            !prefetchedUrls.contains(url) && !prefetchQueue.contains(url)
-                        }
+                        .map { it.videoUrl to it.videoId }
+                        .filter { prefetch -> prefetch.first !in prefetchedUrls }
                 if (newUrls.isNotEmpty()) {
-                    prefetchQueue = prefetchQueue + newUrls
+                    prefetchQueue.addAll(newUrls)
                 }
             }
     }
-    PrefetchVideo(
-        player = prefetchPlayer,
-        url = prefetchQueue.firstOrNull() ?: "",
-        videoId = urls.firstOrNull { it.videoUrl == prefetchQueue.firstOrNull() }?.videoId ?: "",
-        performanceMonitor = prefetchPerformanceMonitor,
-    ) {
-        prefetchQueue.firstOrNull()?.let { completedUrl ->
-            prefetchedUrls = prefetchedUrls + completedUrl
-            prefetchQueue = prefetchQueue.drop(1)
+    val prefetch by remember { derivedStateOf { prefetchQueue.firstOrNull() } }
+    val prefetchVideoListener =
+        remember(prefetch) {
+            prefetch?.let { item ->
+                getPlayerListener(
+                    PrefetchVideoListenerCreator(
+                        videoId = item.second,
+                        url = item.first,
+                        onUrlReady = {
+                            prefetchQueue.removeIf { it.first == item.first }
+                            prefetchedUrls.add(item.first)
+                        },
+                    ),
+                )
+            }
         }
+    prefetch?.let { item ->
+        PrefetchVideos(
+            url = item.first,
+            listener = prefetchVideoListener,
+        )
     }
 
     // Report initial pager state
@@ -217,6 +228,21 @@ internal fun YRALReelsPlayerView(
                 overlayContent(page)
             }
         }
+    }
+}
+
+@Composable
+private fun PrefetchVideos(
+    url: String?,
+    listener: PrefetchVideoListener?,
+) {
+    val prefetchPlayer = rememberPrefetchPlayerWithLifecycle()
+    url?.let {
+        PrefetchVideo(
+            player = prefetchPlayer,
+            url = url,
+            listener = listener,
+        )
     }
 }
 

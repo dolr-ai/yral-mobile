@@ -54,68 +54,41 @@ actual fun rememberPrefetchPlayerWithLifecycle(): PlatformPlayer {
     return PlatformPlayer(exoPlayer)
 }
 
-@Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
 actual fun PrefetchVideo(
     player: PlatformPlayer,
     url: String,
-    videoId: String,
-    performanceMonitor: PrefetchPerformanceMonitor?,
-    onUrlReady: () -> Unit,
+    listener: PrefetchVideoListener?,
 ) {
     if (url.isEmpty()) return
-    var currentUrl by remember { mutableStateOf("") }
-    var setupPlayer by remember { mutableStateOf(false) }
+    val context = LocalContext.current
     var currentPlayerState by remember { mutableIntStateOf(Player.STATE_IDLE) }
     LaunchedEffect(currentPlayerState) {
         when (currentPlayerState) {
             Player.STATE_BUFFERING -> {
-                performanceMonitor?.stopTraceWithSuccess(PrefetchTraceType.LOAD_TRACE)
+                listener?.onBuffer()
             }
 
             Player.STATE_READY -> {
-                println("Logging trace metric: prefetch video ready")
-                performanceMonitor?.stopTraceWithSuccess(PrefetchTraceType.DOWNLOAD_TRACE)
-                onUrlReady()
+                listener?.onReady()
             }
 
             Player.STATE_IDLE -> {
-                // STATE_IDLE can occur during normal cleanup or errors
-                // Don't automatically treat as error - let onPlayerError handle actual errors
-                // Just clean up traces without marking as error
-                performanceMonitor?.stopTrace(PrefetchTraceType.LOAD_TRACE)
-                performanceMonitor?.stopTrace(PrefetchTraceType.DOWNLOAD_TRACE)
+                listener?.onIdle()
             }
         }
     }
     LaunchedEffect(url) {
-        if (currentUrl != url) {
-            currentUrl = url
-            setupPlayer = true
-        }
-    }
-    if (setupPlayer) {
-        setupPlayer = false
-        currentPlayerState = Player.STATE_IDLE
-
-        performanceMonitor?.stopTrace(PrefetchTraceType.LOAD_TRACE)
-        performanceMonitor?.stopTrace(PrefetchTraceType.DOWNLOAD_TRACE)
-        // Start download and load traces for prefetch
-        performanceMonitor?.startTrace(
-            PrefetchTraceType.DOWNLOAD_TRACE,
-            url,
-            videoId,
-        )
-        performanceMonitor?.startTrace(
-            PrefetchTraceType.LOAD_TRACE,
-            url,
-            videoId,
-        )
-
-        val context = LocalContext.current
+        // Stop and reset the player *before* starting any new traces so that the
+        // inevitable STATE_IDLE callback produced by `player.stop()` does not
+        // clear traces that are about to be created in `onSetupPlayer()`.
         player.stop()
         player.clearMediaItems()
         player.pause() // Ensure consistent initial state
+
+        // Now that the player is in a clean IDLE state, start the new traces and
+        // set up the player for the incoming video.
+        listener?.onSetupPlayer()
 
         val videoUri = url.toUri()
         val mediaItem = MediaItem.fromUri(videoUri)
@@ -130,27 +103,19 @@ actual fun PrefetchVideo(
         player.seekTo(0, 0)
         player.prepare()
     }
-    DisposableEffect(currentUrl) {
-        val listener =
+    DisposableEffect(url) {
+        val playerListener =
             createPrefetchPlayerListener(
                 onStateChange = { currentPlayerState = it },
-                onErr = {
-                    // Stop all traces on prefetch error
-                    performanceMonitor?.stopTraceWithError(PrefetchTraceType.LOAD_TRACE)
-                    performanceMonitor?.stopTraceWithError(PrefetchTraceType.DOWNLOAD_TRACE)
-                },
+                onErr = { listener?.onPlayerError() },
             )
-        player.addListener(listener)
+        player.addListener(playerListener)
         onDispose {
-            player.removeListener(listener)
+            player.removeListener(playerListener)
         }
     }
 }
 
-/**
- * Creates a performance monitoring listener for prefetch video player.
- * Handles both VideoDownload_prefetch and VideoStartup_prefetch traces.
- */
 private fun createPrefetchPlayerListener(
     onStateChange: (Int) -> Unit,
     onErr: (PlaybackException) -> Unit,

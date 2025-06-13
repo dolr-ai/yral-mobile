@@ -10,23 +10,19 @@ expect fun rememberPrefetchPlayerWithLifecycle(): PlatformPlayer
 expect fun PrefetchVideo(
     player: PlatformPlayer = rememberPrefetchPlayerWithLifecycle(),
     url: String,
-    videoId: String,
-    performanceMonitor: PrefetchPerformanceMonitor? = null,
-    onUrlReady: () -> Unit,
+    listener: PrefetchVideoListener?,
 )
 
-interface PrefetchPerformanceMonitor {
-    fun startTrace(
-        type: PrefetchTraceType,
-        url: String,
-        videoId: String,
-    )
-    fun stopTrace(type: PrefetchTraceType)
-    fun stopTraceWithSuccess(type: PrefetchTraceType)
-    fun stopTraceWithError(type: PrefetchTraceType)
+interface PrefetchVideoListener {
+    fun onSetupPlayer()
+    fun onBuffer()
+    fun onReady()
+    fun onIdle()
+    fun onPlayerError()
 }
 
-enum class PrefetchTraceType {
-    LOAD_TRACE,
-    DOWNLOAD_TRACE,
-}
+data class PrefetchVideoListenerCreator(
+    val videoId: String,
+    val url: String,
+    val onUrlReady: (String) -> Unit,
+)
