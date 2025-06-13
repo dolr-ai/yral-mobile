@@ -107,6 +107,7 @@ dependencies {
     implementation(projects.shared.features.root)
     implementation(projects.shared.libs.videoPlayer)
     implementation(projects.shared.features.account)
+    implementation(projects.shared.libs.firebasePerf)
 
     val (dependencies, shouldAddRustModule) = BuildConfig.getAndProcessDependencies(project)
     dependencies.forEach { dependency ->

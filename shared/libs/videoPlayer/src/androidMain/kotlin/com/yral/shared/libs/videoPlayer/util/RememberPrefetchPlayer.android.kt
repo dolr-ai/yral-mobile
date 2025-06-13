@@ -54,37 +54,43 @@ actual fun rememberPrefetchPlayerWithLifecycle(): PlatformPlayer {
     return PlatformPlayer(exoPlayer)
 }
 
-@Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
 actual fun PrefetchVideo(
     player: PlatformPlayer,
     url: String,
-    onUrlReady: () -> Unit,
+    listener: PrefetchVideoListener?,
+    onUrlReady: (url: String) -> Unit,
 ) {
     if (url.isEmpty()) return
-    var currentUrl by remember { mutableStateOf("") }
-    var setupPlayer by remember { mutableStateOf(false) }
+    val context = LocalContext.current
     var currentPlayerState by remember { mutableIntStateOf(Player.STATE_IDLE) }
     LaunchedEffect(currentPlayerState) {
         when (currentPlayerState) {
+            Player.STATE_BUFFERING -> {
+                listener?.onBuffer()
+            }
+
             Player.STATE_READY -> {
-                onUrlReady()
+                listener?.onReady()
+                onUrlReady(url)
+            }
+
+            Player.STATE_IDLE -> {
+                listener?.onIdle()
             }
         }
     }
     LaunchedEffect(url) {
-        if (currentUrl != url) {
-            currentUrl = url
-            setupPlayer = true
-        }
-    }
-    if (setupPlayer) {
-        setupPlayer = false
-        currentPlayerState = Player.STATE_IDLE
-        val context = LocalContext.current
+        // Stop and reset the player *before* starting any new traces so that the
+        // inevitable STATE_IDLE callback produced by `player.stop()` does not
+        // clear traces that are about to be created in `onSetupPlayer()`.
         player.stop()
         player.clearMediaItems()
         player.pause() // Ensure consistent initial state
+
+        // Now that the player is in a clean IDLE state, start the new traces and
+        // set up the player for the incoming video.
+        listener?.onSetupPlayer()
 
         val videoUri = url.toUri()
         val mediaItem = MediaItem.fromUri(videoUri)
@@ -99,23 +105,19 @@ actual fun PrefetchVideo(
         player.seekTo(0, 0)
         player.prepare()
     }
-    DisposableEffect(currentUrl) {
-        val listener =
+    DisposableEffect(url) {
+        val playerListener =
             createPrefetchPlayerListener(
                 onStateChange = { currentPlayerState = it },
-                onErr = { },
+                onErr = { listener?.onPlayerError() },
             )
-        player.addListener(listener)
+        player.addListener(playerListener)
         onDispose {
-            player.removeListener(listener)
+            player.removeListener(playerListener)
         }
     }
 }
 
-/**
- * Creates a performance monitoring listener for prefetch video player.
- * Handles both VideoDownload_prefetch and VideoStartup_prefetch traces.
- */
 private fun createPrefetchPlayerListener(
     onStateChange: (Int) -> Unit,
     onErr: (PlaybackException) -> Unit,

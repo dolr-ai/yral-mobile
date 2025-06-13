@@ -10,5 +10,19 @@ expect fun rememberPrefetchPlayerWithLifecycle(): PlatformPlayer
 expect fun PrefetchVideo(
     player: PlatformPlayer = rememberPrefetchPlayerWithLifecycle(),
     url: String,
-    onUrlReady: () -> Unit,
+    listener: PrefetchVideoListener?,
+    onUrlReady: (url: String) -> Unit,
+)
+
+interface PrefetchVideoListener {
+    fun onSetupPlayer()
+    fun onBuffer()
+    fun onReady()
+    fun onIdle()
+    fun onPlayerError()
+}
+
+data class PrefetchVideoListenerCreator(
+    val videoId: String,
+    val url: String,
 )

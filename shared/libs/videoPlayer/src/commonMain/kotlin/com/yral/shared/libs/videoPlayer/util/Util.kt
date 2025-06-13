@@ -10,7 +10,7 @@ internal expect fun formatInterval(value: Int): Int
 
 internal expect fun formatYoutubeInterval(value: Int): Int
 
-internal fun isHlsUrl(url: String): Boolean =
+fun isHlsUrl(url: String): Boolean =
     url.endsWith(".m3u8") ||
         url.contains("application/vnd.apple.mpegurl")
 
