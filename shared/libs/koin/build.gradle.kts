@@ -6,27 +6,21 @@ plugins {
 
 kotlin {
     androidTarget()
-//    listOf(
-//        iosX64(),
-//        iosArm64(),
-//        iosSimulatorArm64()
-//    ).forEach {
-//        it.binaries.framework {
-//            baseName = "shared"
-//            isStatic = true
-//        }
-//    }
+    listOf(
+        iosArm64(),
+        iosSimulatorArm64()
+    )
 
     sourceSets {
         androidMain {
             dependencies {
                 api(libs.koin.android)
+                api(libs.koin.composeVM)
             }
         }
         commonMain {
             dependencies {
                 api(libs.koin.core)
-                api(libs.koin.composeVM)
             }
         }
     }
