@@ -11,6 +11,7 @@ expect fun PrefetchVideo(
     player: PlatformPlayer = rememberPrefetchPlayerWithLifecycle(),
     url: String,
     listener: PrefetchVideoListener?,
+    onUrlReady: (url: String) -> Unit,
 )
 
 interface PrefetchVideoListener {
@@ -24,5 +25,4 @@ interface PrefetchVideoListener {
 data class PrefetchVideoListenerCreator(
     val videoId: String,
     val url: String,
-    val onUrlReady: (String) -> Unit,
 )

@@ -9,7 +9,6 @@ import com.yral.shared.libs.videoPlayer.util.PrefetchVideoListener
 class PrefetchVideoListenerImpl(
     private val urlToPrefetch: String,
     private val videoId: String,
-    private val onUrlReady: (url: String) -> Unit,
     override var readyTrace: PrefetchReadyTrace? = null,
     override var loadTrace: PrefetchLoadTimeTrace? = null,
 ) : PrefetchVideoListener,
@@ -27,7 +26,6 @@ class PrefetchVideoListenerImpl(
 
     override fun onReady() {
         stopTraceWithSuccess(PrefetchTraceType.READY_TRACE)
-        onUrlReady(urlToPrefetch)
     }
 
     override fun onIdle() {

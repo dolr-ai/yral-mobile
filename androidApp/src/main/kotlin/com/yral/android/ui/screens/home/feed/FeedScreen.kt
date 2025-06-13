@@ -156,7 +156,6 @@ fun FeedScreen(
                     PrefetchVideoListenerImpl(
                         urlToPrefetch = it.url,
                         videoId = it.videoId,
-                        onUrlReady = it.onUrlReady,
                     )
                 },
             ) { pageNo ->

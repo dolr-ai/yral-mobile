@@ -59,6 +59,7 @@ actual fun PrefetchVideo(
     player: PlatformPlayer,
     url: String,
     listener: PrefetchVideoListener?,
+    onUrlReady: (url: String) -> Unit,
 ) {
     if (url.isEmpty()) return
     val context = LocalContext.current
@@ -71,6 +72,7 @@ actual fun PrefetchVideo(
 
             Player.STATE_READY -> {
                 listener?.onReady()
+                onUrlReady(url)
             }
 
             Player.STATE_IDLE -> {

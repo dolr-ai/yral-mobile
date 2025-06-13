@@ -119,10 +119,6 @@ internal fun YRALReelsPlayerView(
                     PrefetchVideoListenerCreator(
                         videoId = item.second,
                         url = item.first,
-                        onUrlReady = {
-                            prefetchQueue.removeIf { it.first == item.first }
-                            prefetchedUrls.add(item.first)
-                        },
                     ),
                 )
             }
@@ -131,6 +127,10 @@ internal fun YRALReelsPlayerView(
         PrefetchVideos(
             url = item.first,
             listener = prefetchVideoListener,
+            onUrlReady = {
+                prefetchQueue.removeIf { it.first == item.first }
+                prefetchedUrls.add(item.first)
+            },
         )
     }
 
@@ -235,6 +235,7 @@ internal fun YRALReelsPlayerView(
 private fun PrefetchVideos(
     url: String?,
     listener: PrefetchVideoListener?,
+    onUrlReady: (url: String) -> Unit,
 ) {
     val prefetchPlayer = rememberPrefetchPlayerWithLifecycle()
     url?.let {
@@ -242,6 +243,7 @@ private fun PrefetchVideos(
             player = prefetchPlayer,
             url = url,
             listener = listener,
+            onUrlReady = onUrlReady,
         )
     }
 }
