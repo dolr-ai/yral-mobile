@@ -97,7 +97,7 @@ class CoreService(
     override fun shouldTrackEvent(event: EventData): Boolean = eventFilter(event)
 
     companion object {
-        private const val ANALYTICS_BATCH_SIZE = 10
-        private const val ANALYTICS_FLUSH_MS = 120000L
+        private const val ANALYTICS_BATCH_SIZE = 5
+        private const val ANALYTICS_FLUSH_MS = 30000L
     }
 }
