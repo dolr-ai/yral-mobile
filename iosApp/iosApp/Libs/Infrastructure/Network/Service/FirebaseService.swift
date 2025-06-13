@@ -59,6 +59,13 @@ class FirebaseService: FirebaseServiceProtocol {
     return (doc.get("coins") as? Int) ?? 0
   }
 
+  func update(coins: UInt64, forPrincipal principal: String) async throws {
+    let document = database.document("users/\(principal)")
+    _ = try await database.runTransaction { transaction, _ in
+      transaction.updateData(["coins": coins], forDocument: document)
+    }
+  }
+
   func fetchDocument<T>(
     path: String,
     checkCache: Bool,

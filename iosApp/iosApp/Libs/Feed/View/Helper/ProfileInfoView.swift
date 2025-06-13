@@ -115,7 +115,7 @@ class ProfileInfoView: UIView, ImageLoaderProtocol {
     let imageURL: URL?
     let title: String
     let subtitle: String
-    var coins: Int
+    var coins: UInt64
   }
 }
 

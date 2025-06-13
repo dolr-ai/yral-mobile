@@ -48,7 +48,7 @@ class CoinsView: UIView {
     return label
   }()
 
-  var coins: Int = .zero {
+  var coins: UInt64 = .zero {
     didSet {
       label.text = "\(coins)"
     }
@@ -121,7 +121,7 @@ class CoinsView: UIView {
     ])
   }
 
-  private func incrementCoins(by newCoins: Int) {
+  private func incrementCoins(by newCoins: UInt64) {
     let imageViewTransform = CGAffineTransform
       .identity
       .scaledBy(x: Constants.imageScale, y: Constants.imageScale)
@@ -135,7 +135,7 @@ class CoinsView: UIView {
     }
   }
 
-  private func decrementCoins(by newCoins: Int) {
+  private func decrementCoins(by newCoins: UInt64) {
     imageView.transform = CGAffineTransform
       .identity
       .scaledBy(x: Constants.imageScale, y: Constants.imageScale)
@@ -143,21 +143,21 @@ class CoinsView: UIView {
 
     animateIn {
       self.animateBagBounce(labelTintColor: Constants.labelLoseTextColor, imageViewTransform: .identity) {
-        self.coins += newCoins
+        self.coins -= newCoins
         self.animationReset()
       }
     }
   }
 
-  func set(coins: Int) {
+  func set(coins: UInt64) {
     self.coins = coins
   }
 
   func updateCoins(by newCoins: Int) {
     if newCoins > .zero {
-      incrementCoins(by: newCoins)
+      incrementCoins(by: UInt64(abs(newCoins)))
     } else if newCoins < .zero {
-      decrementCoins(by: newCoins)
+      decrementCoins(by: UInt64(abs(newCoins)))
     }
   }
 }

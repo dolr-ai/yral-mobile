@@ -19,7 +19,7 @@ final class SessionManager: ObservableObject {
       .assign(to: \.state, on: self)
   }
 
-  func update(coins: Int) {
+  func update(coins: UInt64) {
     switch state {
     case .ephemeralAuthentication(let userPrincipal, let canisterPrincipal, _):
       state = .ephemeralAuthentication(userPrincipal: userPrincipal, canisterPrincipal: canisterPrincipal, coins: coins)

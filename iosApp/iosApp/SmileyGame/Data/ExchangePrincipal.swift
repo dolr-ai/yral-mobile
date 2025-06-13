@@ -10,14 +10,12 @@ import Foundation
 
 struct ExchangePrincipalDTO: Decodable {
   let token: String
-  let coins: Int
 }
 
 extension ExchangePrincipalDTO {
   func toDomain() -> ExchangePrincipalResponse {
     return ExchangePrincipalResponse(
-      token: token,
-      coins: coins
+      token: token
     )
   }
 }

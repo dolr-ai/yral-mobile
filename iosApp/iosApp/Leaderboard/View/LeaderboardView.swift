@@ -40,6 +40,7 @@ struct LeaderboardView: View {
           showLeaderboard = true
         default:
           showLoader = false
+          showLeaderboard = false
         }
       })
       .task {
