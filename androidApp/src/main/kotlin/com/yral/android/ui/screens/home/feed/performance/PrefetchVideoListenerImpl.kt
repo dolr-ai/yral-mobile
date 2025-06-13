@@ -1,7 +1,7 @@
 package com.yral.android.ui.screens.home.feed.performance
 
-import com.yral.android.ui.screens.home.feed.PrefetchDownloadTrace
 import com.yral.android.ui.screens.home.feed.PrefetchLoadTimeTrace
+import com.yral.android.ui.screens.home.feed.PrefetchReadyTrace
 import com.yral.android.ui.screens.home.feed.VideoPerformanceFactoryProvider
 import com.yral.shared.libs.firebasePerf.FirebaseOperationTrace
 import com.yral.shared.libs.videoPlayer.util.PrefetchVideoListener
@@ -10,7 +10,7 @@ class PrefetchVideoListenerImpl(
     private val urlToPrefetch: String,
     private val videoId: String,
     private val onUrlReady: (url: String) -> Unit,
-    override var downloadTrace: PrefetchDownloadTrace? = null,
+    override var readyTrace: PrefetchReadyTrace? = null,
     override var loadTrace: PrefetchLoadTimeTrace? = null,
 ) : PrefetchVideoListener,
     IPrefetchPerformanceMonitor {
@@ -26,7 +26,7 @@ class PrefetchVideoListenerImpl(
     }
 
     override fun onReady() {
-        stopTraceWithSuccess(PrefetchTraceType.DOWNLOAD_TRACE)
+        stopTraceWithSuccess(PrefetchTraceType.READY_TRACE)
         onUrlReady(urlToPrefetch)
     }
 
@@ -35,13 +35,13 @@ class PrefetchVideoListenerImpl(
         // Don't automatically treat as error - let onPlayerError handle actual errors
         // Just clean up traces without marking as error
         stopTrace(PrefetchTraceType.LOAD_TRACE)
-        stopTrace(PrefetchTraceType.DOWNLOAD_TRACE)
+        stopTrace(PrefetchTraceType.READY_TRACE)
     }
 
     override fun onPlayerError() {
         // Stop all traces on prefetch error
         stopTraceWithError(PrefetchTraceType.LOAD_TRACE)
-        stopTraceWithError(PrefetchTraceType.DOWNLOAD_TRACE)
+        stopTraceWithError(PrefetchTraceType.READY_TRACE)
     }
 
     private fun setupPerformanceTracingForPlayer(
@@ -55,7 +55,7 @@ class PrefetchVideoListenerImpl(
             videoId,
         )
         startTrace(
-            PrefetchTraceType.DOWNLOAD_TRACE,
+            PrefetchTraceType.READY_TRACE,
             urlToPrefetch,
             videoId,
         )
@@ -67,10 +67,10 @@ class PrefetchVideoListenerImpl(
         videoId: String,
     ) {
         when (type) {
-            PrefetchTraceType.DOWNLOAD_TRACE -> {
-                downloadTrace =
+            PrefetchTraceType.READY_TRACE -> {
+                readyTrace =
                     VideoPerformanceFactoryProvider
-                        .createPrefetchDownloadTrace(url, videoId)
+                        .createPrefetchReadyTrace(url, videoId)
                         .apply { start() }
             }
 
@@ -101,13 +101,13 @@ class PrefetchVideoListenerImpl(
     private fun getTrace(type: PrefetchTraceType): FirebaseOperationTrace? =
         when (type) {
             PrefetchTraceType.LOAD_TRACE -> loadTrace
-            PrefetchTraceType.DOWNLOAD_TRACE -> downloadTrace
+            PrefetchTraceType.READY_TRACE -> readyTrace
         }
 
     private fun resetTrace(type: PrefetchTraceType) {
         when (type) {
             PrefetchTraceType.LOAD_TRACE -> loadTrace = null
-            PrefetchTraceType.DOWNLOAD_TRACE -> downloadTrace = null
+            PrefetchTraceType.READY_TRACE -> readyTrace = null
         }
     }
 }

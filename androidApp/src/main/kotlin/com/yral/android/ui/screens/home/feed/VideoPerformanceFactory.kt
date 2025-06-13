@@ -3,10 +3,10 @@ package com.yral.android.ui.screens.home.feed
 import com.yral.shared.libs.firebasePerf.FirebaseOperationTrace
 import com.yral.shared.libs.videoPlayer.util.isHlsUrl
 
-class PrefetchDownloadTrace(
+class PrefetchReadyTrace(
     url: String,
     videoId: String,
-) : FirebaseOperationTrace("${VideoPerformanceConstants.VIDEO_DOWNLOAD_TRACE}_prefetch") {
+) : FirebaseOperationTrace("${VideoPerformanceConstants.VIDEO_READY_TRACE}_prefetch") {
     init {
         putAttribute(VideoPerformanceConstants.VIDEO_ID_KEY, videoId)
         putAttribute(
@@ -43,10 +43,10 @@ class PrefetchLoadTimeTrace(
  * Factory interface for creating video performance traces
  */
 interface VideoPerformanceFactory {
-    fun createPrefetchDownloadTrace(
+    fun createPrefetchReadyTrace(
         url: String,
         videoId: String,
-    ): PrefetchDownloadTrace
+    ): PrefetchReadyTrace
 
     fun createPrefetchLoadTimeTrace(
         url: String,
@@ -55,10 +55,10 @@ interface VideoPerformanceFactory {
 }
 
 object VideoPerformanceFactoryProvider : VideoPerformanceFactory {
-    override fun createPrefetchDownloadTrace(
+    override fun createPrefetchReadyTrace(
         url: String,
         videoId: String,
-    ): PrefetchDownloadTrace = PrefetchDownloadTrace(url, videoId)
+    ): PrefetchReadyTrace = PrefetchReadyTrace(url, videoId)
 
     override fun createPrefetchLoadTimeTrace(
         url: String,
@@ -71,8 +71,8 @@ object VideoPerformanceFactoryProvider : VideoPerformanceFactory {
  */
 object VideoPerformanceConstants {
     // Video-specific trace names
-    const val VIDEO_DOWNLOAD_TRACE = "VideoDownload"
     const val VIDEO_LOAD_TRACE = "VideoStartup"
+    const val VIDEO_READY_TRACE = "VideoReady"
 
     // Video-specific attribute keys
     const val VIDEO_URL_KEY = "video_url"

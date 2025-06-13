@@ -1,10 +1,10 @@
 package com.yral.android.ui.screens.home.feed.performance
 
-import com.yral.android.ui.screens.home.feed.PrefetchDownloadTrace
 import com.yral.android.ui.screens.home.feed.PrefetchLoadTimeTrace
+import com.yral.android.ui.screens.home.feed.PrefetchReadyTrace
 
 interface IPrefetchPerformanceMonitor {
-    var downloadTrace: PrefetchDownloadTrace?
+    var readyTrace: PrefetchReadyTrace?
     var loadTrace: PrefetchLoadTimeTrace?
     fun startTrace(
         type: PrefetchTraceType,
@@ -18,5 +18,5 @@ interface IPrefetchPerformanceMonitor {
 
 enum class PrefetchTraceType {
     LOAD_TRACE,
-    DOWNLOAD_TRACE,
+    READY_TRACE,
 }
