@@ -141,14 +141,11 @@ class FeedViewModel(
                     ).mapBoth(
                         success = { moreFeed ->
                             val currentPosts = _state.value.posts
+                            val existingIds = currentPosts.map { post -> post.videoID }.toHashSet()
                             val filteredPosts =
                                 moreFeed
                                     .posts
-                                    .filter { newPost ->
-                                        currentPosts.none { currentPost ->
-                                            currentPost.videoID == newPost.videoID
-                                        }
-                                    }
+                                    .filter { post -> post.videoID !in existingIds }
                             _state.update { currentState ->
                                 currentState.copy(
                                     posts = currentState.posts + filteredPosts,
