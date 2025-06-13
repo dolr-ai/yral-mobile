@@ -160,9 +160,9 @@ internal fun YRALReelsPlayerView(
                             playerData = reels[lastPage].toPlayerData(),
                         )
                     }
+                    // small delay for player setup
+                    delay(PLAYER_SETUP_DELAY)
                     if (reels.size > page && page >= 0) {
-                        // small delay for player setup
-                        delay(PLAYER_SETUP_DELAY)
                         playerPool.onPlayBackStarted(
                             playerData = reels[page].toPlayerData(),
                         )

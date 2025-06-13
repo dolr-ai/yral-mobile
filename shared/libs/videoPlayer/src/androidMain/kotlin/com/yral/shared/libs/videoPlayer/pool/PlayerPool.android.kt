@@ -52,6 +52,7 @@ actual class PlayerPool(
 
             if (availablePlayer != null) {
                 setupPlayerForUrl(availablePlayer, playerData)
+                availablePlayer.externalListener = videoListener
                 availablePlayer.platformPlayer
             } else if (pool.size < maxPoolSize) {
                 val exoPlayer = createExoPlayer()
