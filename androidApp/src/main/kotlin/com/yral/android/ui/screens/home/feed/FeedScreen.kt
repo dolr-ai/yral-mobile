@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.home
+package com.yral.android.ui.screens.home.feed
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -51,17 +51,20 @@ import coil3.compose.AsyncImage
 import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
-import com.yral.android.ui.screens.home.FeedScreenConstants.MAX_LINES_FOR_POST_DESCRIPTION
-import com.yral.android.ui.screens.home.FeedScreenConstants.VIDEO_REPORT_SHEET_MAX_HEIGHT
+import com.yral.android.ui.screens.home.feed.FeedScreenConstants.MAX_LINES_FOR_POST_DESCRIPTION
+import com.yral.android.ui.screens.home.feed.FeedScreenConstants.VIDEO_REPORT_SHEET_MAX_HEIGHT
+import com.yral.android.ui.screens.home.feed.performance.PrefetchVideoListenerImpl
 import com.yral.android.ui.widgets.YralBottomSheet
 import com.yral.android.ui.widgets.YralButtonState
 import com.yral.android.ui.widgets.YralButtonType
 import com.yral.android.ui.widgets.YralGradientButton
 import com.yral.android.ui.widgets.YralLoader
+import com.yral.shared.features.feed.viewmodel.FeedState
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.PRE_FETCH_BEFORE_LAST
 import com.yral.shared.features.feed.viewmodel.ReportSheetState
 import com.yral.shared.features.feed.viewmodel.VideoReportReason
+import com.yral.shared.libs.videoPlayer.ReelPlayerItem
 import com.yral.shared.libs.videoPlayer.YRALReelPlayer
 import io.ktor.http.Url
 import kotlinx.coroutines.launch
@@ -139,15 +142,7 @@ fun FeedScreen(
         if (state.feedDetails.isNotEmpty()) {
             YRALReelPlayer(
                 modifier = Modifier.weight(1f),
-                videoUrlArray =
-                    state
-                        .feedDetails
-                        .map {
-                            Pair(
-                                it.url.toString(),
-                                it.thumbnail.toString(),
-                            )
-                        }.toList(),
+                videoUrlArray = getVideoUrlArray(state),
                 initialPage = state.currentPageOfFeed,
                 onPageLoaded = { page ->
                     viewModel.onCurrentPageChange(page)
@@ -157,6 +152,12 @@ fun FeedScreen(
                     viewModel.recordTime(currentTime, totalTime)
                 },
                 didVideoEnd = { viewModel.didCurrentVideoEnd() },
+                getPlayerListener = {
+                    PrefetchVideoListenerImpl(
+                        urlToPrefetch = it.url,
+                        videoId = it.videoId,
+                    )
+                },
             ) { pageNo ->
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -215,6 +216,17 @@ fun FeedScreen(
         )
     }
 }
+
+private fun getVideoUrlArray(state: FeedState): List<ReelPlayerItem> =
+    state
+        .feedDetails
+        .map {
+            ReelPlayerItem(
+                videoUrl = it.url.toString(),
+                thumbnailUrl = it.thumbnail.toString(),
+                videoId = it.videoID,
+            )
+        }.toList()
 
 @Composable
 private fun UserBrief(
