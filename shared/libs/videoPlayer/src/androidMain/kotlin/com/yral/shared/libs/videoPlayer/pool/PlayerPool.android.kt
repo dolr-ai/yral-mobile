@@ -41,19 +41,6 @@ actual class PlayerPool(
 
     actual suspend fun getPlayer(url: String): PlatformPlayer =
         mutex.withLock {
-            // First, check if we already have a player for this URL (even if marked as not in use)
-            val existingPlayer = pool.find { it.currentUrl == url }
-            if (existingPlayer != null) {
-                // Reuse the existing player for this URL
-                if (!existingPlayer.isInUse) {
-                    existingPlayer.isInUse = true
-                    // Move to end of pool (most recently used)
-                    pool.remove(existingPlayer)
-                    pool.add(existingPlayer)
-                }
-                return@withLock existingPlayer.platformPlayer
-            }
-
             // Find available player or create new one
             val availablePlayer = pool.find { !it.isInUse }
 
