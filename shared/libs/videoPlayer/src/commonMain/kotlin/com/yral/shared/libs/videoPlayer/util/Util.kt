@@ -17,3 +17,13 @@ fun isHlsUrl(url: String): Boolean =
 fun isDesktop(): Boolean = isPlatform() == Platform.Desktop
 
 expect fun isPlatform(): Platform
+
+fun <T> List<T>.nextN(
+    startIndex: Int,
+    n: Int,
+): List<T> =
+    if (startIndex + 1 < size) {
+        subList(startIndex + 1, minOf(startIndex + n, size))
+    } else {
+        emptyList()
+    }

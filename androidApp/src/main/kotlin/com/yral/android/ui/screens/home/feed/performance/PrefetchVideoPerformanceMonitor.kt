@@ -1,15 +1,13 @@
 package com.yral.android.ui.screens.home.feed.performance
 
-import com.yral.android.ui.screens.home.feed.PrefetchLoadTimeTrace
-import com.yral.android.ui.screens.home.feed.PrefetchReadyTrace
+import com.yral.shared.libs.videoPlayer.model.Reels
 
 interface IPrefetchPerformanceMonitor {
     var readyTrace: PrefetchReadyTrace?
     var loadTrace: PrefetchLoadTimeTrace?
     fun startTrace(
         type: PrefetchTraceType,
-        url: String,
-        videoId: String,
+        reel: Reels,
     )
     fun stopTrace(type: PrefetchTraceType)
     fun stopTraceWithSuccess(type: PrefetchTraceType)
