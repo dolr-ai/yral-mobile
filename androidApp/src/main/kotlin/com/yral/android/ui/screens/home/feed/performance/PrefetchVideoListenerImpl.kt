@@ -50,7 +50,7 @@ class PrefetchVideoListenerImpl(
         reel: Reels,
     ) {
         if (!enablePerformanceTracing) return
-        println("Logging trace metric: startTrace $type for ${reel.videoId}")
+        Logger.d("Logging trace metric: startTrace $type for ${reel.videoId}")
         when (type) {
             PrefetchTraceType.READY_TRACE -> {
                 readyTrace =

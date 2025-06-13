@@ -67,7 +67,7 @@ class VideoListenerImpl(
 
     override fun startTrace(type: TraceType) {
         if (!enablePerformanceTracing || isTraced(reel.videoId, type)) return
-        println("Logging trace metric: startTrace $type for ${reel.videoId}")
+        Logger.d("Logging trace metric: startTrace $type for ${reel.videoId}")
         when (type) {
             TraceType.LOAD_TRACE -> {
                 loadTrace =

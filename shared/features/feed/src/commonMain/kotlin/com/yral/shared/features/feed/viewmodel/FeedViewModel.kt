@@ -386,7 +386,6 @@ class FeedViewModel(
         videoID: String,
         traceType: String,
     ) {
-        println("Logging trace metric: registering trace $traceType for video $videoID")
         coroutineScope.launch {
             _state.update {
                 it.copy(
