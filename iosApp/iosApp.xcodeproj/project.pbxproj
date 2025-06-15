@@ -265,8 +265,6 @@
 		AC9B77E62D58C84000270FC9 /* HLSDownloadManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9B77D52D58C2F300270FC9 /* HLSDownloadManagerTests.swift */; };
 		ACAA4D5F2DDC75CB001092A6 /* Notifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAA4D5E2DDC75C3001092A6 /* Notifications.swift */; };
 		ACAA4D602DDC75CB001092A6 /* Notifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAA4D5E2DDC75C3001092A6 /* Notifications.swift */; };
-		ACAA4D622DDCA813001092A6 /* FirebasePerformance in Frameworks */ = {isa = PBXBuildFile; productRef = ACAA4D612DDCA813001092A6 /* FirebasePerformance */; };
-		ACAA4D642DDCA81B001092A6 /* FirebasePerformance in Frameworks */ = {isa = PBXBuildFile; productRef = ACAA4D632DDCA81B001092A6 /* FirebasePerformance */; };
 		ACAA4D692DDCB162001092A6 /* PerformanceMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAA4D682DDCB15B001092A6 /* PerformanceMonitor.swift */; };
 		ACAA4D6A2DDCB162001092A6 /* PerformanceMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAA4D682DDCB15B001092A6 /* PerformanceMonitor.swift */; };
 		ACAA4D6C2DDCB257001092A6 /* FirebasePerformanceMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAA4D6B2DDCB24F001092A6 /* FirebasePerformanceMonitor.swift */; };
@@ -335,10 +333,6 @@
 		ACB46A7D2D105BEB002E200C /* UIKitInitializers.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A7B2D105BE0002E200C /* UIKitInitializers.swift */; };
 		ACB46A802D106034002E200C /* FeedsCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A7F2D106031002E200C /* FeedsCell.swift */; };
 		ACB46A812D106034002E200C /* FeedsCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A7F2D106031002E200C /* FeedsCell.swift */; };
-		ACBB252E2DF5DE67006EC908 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = ACBB252D2DF5DE67006EC908 /* FirebaseCrashlytics */; };
-		ACBB25302DF5DE6D006EC908 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = ACBB252F2DF5DE6D006EC908 /* FirebaseCore */; };
-		ACBB25322DF5DE72006EC908 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = ACBB25312DF5DE72006EC908 /* FirebaseCore */; };
-		ACBB25342DF5DE76006EC908 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = ACBB25332DF5DE76006EC908 /* FirebaseCrashlytics */; };
 		ACC0D4342D8BFE67006DCF5C /* NudgePopupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC0D4332D8BFE5B006DCF5C /* NudgePopupView.swift */; };
 		ACC0D4352D8BFE67006DCF5C /* NudgePopupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC0D4332D8BFE5B006DCF5C /* NudgePopupView.swift */; };
 		ACC0D43D2D8C6BF3006DCF5C /* ClearBackgroundView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC0D43C2D8C6BEB006DCF5C /* ClearBackgroundView.swift */; };
@@ -376,8 +370,6 @@
 		ACCB98792D944213002B9675 /* UILabel+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACCB98772D94420D002B9675 /* UILabel+Extensions.swift */; };
 		ACD2E8242D6746E900E750FE /* UploadingProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD2E8232D6746E400E750FE /* UploadingProgressView.swift */; };
 		ACD2E8252D6746E900E750FE /* UploadingProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD2E8232D6746E400E750FE /* UploadingProgressView.swift */; };
-		ACD941802CFF55BB0038FCB6 /* FirebaseAnalyticsWithoutAdIdSupport in Frameworks */ = {isa = PBXBuildFile; productRef = ACD9417F2CFF55BB0038FCB6 /* FirebaseAnalyticsWithoutAdIdSupport */; };
-		ACD941822CFF55BB0038FCB6 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = ACD941812CFF55BB0038FCB6 /* FirebaseCrashlytics */; };
 		ACD941872CFF575C0038FCB6 /* IosApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* IosApp.swift */; };
 		ACD941882CFF575C0038FCB6 /* yral-mobile-swift-binding.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC09A9AD2CDB775C009A39A4 /* yral-mobile-swift-binding.swift */; };
 		ACD941892CFF575C0038FCB6 /* SwiftBridgeCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC09A9B02CDB775C009A39A4 /* SwiftBridgeCore.swift */; };
@@ -386,9 +378,6 @@
 		ACD9418C2CFF575C0038FCB6 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* ContentView.swift */; };
 		ACD941B12CFF575C0038FCB6 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */; };
 		ACD941B22CFF575C0038FCB6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557BA273AAA24004C7B11 /* Assets.xcassets */; };
-		ACD941C62CFF5B3D0038FCB6 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = ACD941C52CFF5B3D0038FCB6 /* FirebaseCrashlytics */; };
-		ACD941C82CFF5B5B0038FCB6 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = ACD941C72CFF5B5B0038FCB6 /* FirebaseAnalytics */; };
-		ACD941CE2CFF5B5B0038FCB6 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = ACD941CD2CFF5B5B0038FCB6 /* FirebaseCrashlytics */; };
 		ACD941D92CFF63D90038FCB6 /* libyral_mobile_swift_binding.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AC09A9F72CDB78B9009A39A4 /* libyral_mobile_swift_binding.a */; };
 		ACDD23E42D8B19FF00AB0DAF /* MyVideosUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACDD23E32D8B19FB00AB0DAF /* MyVideosUseCase.swift */; };
 		ACDD23E52D8B19FF00AB0DAF /* MyVideosUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACDD23E32D8B19FB00AB0DAF /* MyVideosUseCase.swift */; };
@@ -697,19 +686,13 @@
 			files = (
 				AC6CBA802CE46CA6002454F8 /* libyral_mobile_swift_binding.a in Frameworks */,
 				AC6E311C2D22F050001EBE6C /* SDWebImageMapKit in Frameworks */,
-				ACBB25302DF5DE6D006EC908 /* FirebaseCore in Frameworks */,
 				AC6BECAC2D09D52B002E2021 /* GRPC in Frameworks */,
-				ACD941802CFF55BB0038FCB6 /* FirebaseAnalyticsWithoutAdIdSupport in Frameworks */,
-				ACAA4D622DDCA813001092A6 /* FirebasePerformance in Frameworks */,
 				ACC0F3A32D2ED69200FA5BD0 /* Lottie in Frameworks */,
 				ACC255172DF5DF2D001EA774 /* libsecp256k1 in Frameworks */,
-				ACD941C62CFF5B3D0038FCB6 /* FirebaseCrashlytics in Frameworks */,
 				AC6BECAA2D09D52B002E2021 /* CGRPCZlib in Frameworks */,
 				AC6BECB02D09D52B002E2021 /* protoc-gen-grpc-swift in Frameworks */,
 				AC6E311A2D22F050001EBE6C /* SDWebImage in Frameworks */,
 				AC6BECAE2D09D52B002E2021 /* GRPCReflectionService in Frameworks */,
-				ACBB252E2DF5DE67006EC908 /* FirebaseCrashlytics in Frameworks */,
-				ACD941822CFF55BB0038FCB6 /* FirebaseCrashlytics in Frameworks */,
 				4CD1E193C1626E3FD5066C7B /* Pods_Yral.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -726,20 +709,15 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				ACAA4D642DDCA81B001092A6 /* FirebasePerformance in Frameworks */,
-				ACBB25322DF5DE72006EC908 /* FirebaseCore in Frameworks */,
 				AC1233772DF5E16000DAFCF4 /* P256K in Frameworks */,
 				ACC0F39F2D2ED68500FA5BD0 /* Lottie in Frameworks */,
 				AC6BECB42D09D541002E2021 /* GRPC in Frameworks */,
-				ACD941C82CFF5B5B0038FCB6 /* FirebaseAnalytics in Frameworks */,
 				ACD941D92CFF63D90038FCB6 /* libyral_mobile_swift_binding.a in Frameworks */,
 				AC6BECB62D09D541002E2021 /* GRPCReflectionService in Frameworks */,
 				AC1233752DF5E14100DAFCF4 /* libsecp256k1 in Frameworks */,
 				AC6BECB82D09D55B002E2021 /* protoc-gen-grpc-swift in Frameworks */,
 				AC6BECB22D09D541002E2021 /* CGRPCZlib in Frameworks */,
 				AC6E311E2D22F069001EBE6C /* SDWebImage in Frameworks */,
-				ACD941CE2CFF5B5B0038FCB6 /* FirebaseCrashlytics in Frameworks */,
-				ACBB25342DF5DE76006EC908 /* FirebaseCrashlytics in Frameworks */,
 				AC6E31202D22F069001EBE6C /* SDWebImageMapKit in Frameworks */,
 				BCC232E6D41C66A2AB1263A6 /* Pods_Yral_Staging.framework in Frameworks */,
 			);
@@ -2080,7 +2058,7 @@
 				7555FF79242A565900829871 /* Resources */,
 				ACB815362CF9CEF600104B7B /* ShellScript */,
 				ACC0F3A72D2ED69300FA5BD0 /* Embed Frameworks */,
-				D08AF3C57900F0F178D05D9C /* [CP] Embed Pods Frameworks */,
+				E0D623551D39B6AD34E4904A /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -2099,7 +2077,7 @@
 				AC9B77D92D58C7E300270FC9 /* Sources */,
 				AC9B77DA2D58C7E300270FC9 /* Frameworks */,
 				AC9B77DB2D58C7E300270FC9 /* Resources */,
-				0AC00D43D2F268D6C616ABED /* [CP] Embed Pods Frameworks */,
+				1EECCB904629BA1FF7823425 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -2125,7 +2103,7 @@
 				ACD941B02CFF575C0038FCB6 /* Resources */,
 				ACD941B42CFF575C0038FCB6 /* ShellScript */,
 				ACC0F3AA2D2ED77200FA5BD0 /* Embed Frameworks */,
-				F7552B01061950931F3ACE51 /* [CP] Embed Pods Frameworks */,
+				42801639B06D90504C272F7A /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -2164,7 +2142,6 @@
 			);
 			mainGroup = 7555FF72242A565900829871;
 			packageReferences = (
-				ACD941C02CFF5B3D0038FCB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				AC6BECA82D09D52B002E2021 /* XCRemoteSwiftPackageReference "grpc-swift" */,
 				AC6E31182D22F050001EBE6C /* XCRemoteSwiftPackageReference "SDWebImage" */,
 				ACC0F39D2D2ED68500FA5BD0 /* XCRemoteSwiftPackageReference "lottie-ios" */,
@@ -2245,23 +2222,6 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		0AC00D43D2F268D6C616ABED /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
 		12878E25237B11FE369EE9F1 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -2282,6 +2242,40 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		1EECCB904629BA1FF7823425 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		42801639B06D90504C272F7A /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		6F911CE4C82738A5975C6400 /* [CP] Check Pods Manifest.lock */ = {
@@ -2409,38 +2403,21 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		D08AF3C57900F0F178D05D9C /* [CP] Embed Pods Frameworks */ = {
+		E0D623551D39B6AD34E4904A /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			name = "[CP] Embed Pods Frameworks";
+			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-resources-${CONFIGURATION}-output-files.xcfilelist",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		F7552B01061950931F3ACE51 /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-frameworks-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-frameworks.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -3239,22 +3216,6 @@
 				minimumVersion = 0.18.0;
 			};
 		};
-		ACD9417E2CFF55BB0038FCB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/firebase/firebase-ios-sdk.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 11.5.0;
-			};
-		};
-		ACD941C02CFF5B3D0038FCB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/firebase/firebase-ios-sdk.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 11.7.0;
-			};
-		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -3328,36 +3289,6 @@
 			package = AC6E31182D22F050001EBE6C /* XCRemoteSwiftPackageReference "SDWebImage" */;
 			productName = SDWebImageMapKit;
 		};
-		ACAA4D612DDCA813001092A6 /* FirebasePerformance */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = ACD941C02CFF5B3D0038FCB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebasePerformance;
-		};
-		ACAA4D632DDCA81B001092A6 /* FirebasePerformance */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = ACD941C02CFF5B3D0038FCB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebasePerformance;
-		};
-		ACBB252D2DF5DE67006EC908 /* FirebaseCrashlytics */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = ACD941C02CFF5B3D0038FCB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseCrashlytics;
-		};
-		ACBB252F2DF5DE6D006EC908 /* FirebaseCore */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = ACD941C02CFF5B3D0038FCB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseCore;
-		};
-		ACBB25312DF5DE72006EC908 /* FirebaseCore */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = ACD941C02CFF5B3D0038FCB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseCore;
-		};
-		ACBB25332DF5DE76006EC908 /* FirebaseCrashlytics */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = ACD941C02CFF5B3D0038FCB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseCrashlytics;
-		};
 		ACC0F39E2D2ED68500FA5BD0 /* Lottie */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = ACC0F39D2D2ED68500FA5BD0 /* XCRemoteSwiftPackageReference "lottie-ios" */;
@@ -3372,31 +3303,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = ACC255132DF5DF20001EA774 /* XCRemoteSwiftPackageReference "swift-secp256k1" */;
 			productName = libsecp256k1;
-		};
-		ACD9417F2CFF55BB0038FCB6 /* FirebaseAnalyticsWithoutAdIdSupport */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = ACD9417E2CFF55BB0038FCB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseAnalyticsWithoutAdIdSupport;
-		};
-		ACD941812CFF55BB0038FCB6 /* FirebaseCrashlytics */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = ACD9417E2CFF55BB0038FCB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseCrashlytics;
-		};
-		ACD941C52CFF5B3D0038FCB6 /* FirebaseCrashlytics */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = ACD941C02CFF5B3D0038FCB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseCrashlytics;
-		};
-		ACD941C72CFF5B5B0038FCB6 /* FirebaseAnalytics */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = ACD941C02CFF5B3D0038FCB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseAnalytics;
-		};
-		ACD941CD2CFF5B5B0038FCB6 /* FirebaseCrashlytics */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = ACD941C02CFF5B3D0038FCB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseCrashlytics;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
