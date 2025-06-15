@@ -1,4 +1,5 @@
 import SwiftUI
+import iosSharedUmbrella
 
 struct HomeTabController: View {
   @EnvironmentObject var session: SessionManager
@@ -14,10 +15,12 @@ struct HomeTabController: View {
     )
   }
 
-  @State private var selectedTab: Int = .zero
+  @State private var selectedTab: Tab = .home
   @State private var tabBarHeight = UITabBarController().tabBar.frame.height
   @State private var showFeeds = false
-  @State private var showEULA: Bool = !(UserDefaultsManager.shared.get(for: .eulaAccepted) as Bool? ?? false)
+  @State private var showEULA: Bool = !(
+    UserDefaultsManager.shared.get(for: .eulaAccepted) as Bool? ?? false
+  )
 
   init(
     feedsViewController: FeedsViewController,
@@ -39,45 +42,52 @@ struct HomeTabController: View {
       TabView(selection: $selectedTab) {
         feedsViewControllerWrapper
           .background(Color.black.edgesIgnoringSafeArea(.all))
-          .tabItem { tabIcon(selected: selectedTab == .zero,
+          .tabItem { tabIcon(selected: selectedTab == .home,
                              selectedName: Constants.homeIconImageNameSelected,
                              unselectedName: Constants.homeIconImageNameUnselected) }
-          .tag(Int.zero)
+          .tag(Tab.home)
 
         uploadView
-          .onDoneAction { selectedTab = .zero }
+          .onDoneAction { selectedTab = .home }
           .background(Color.black.edgesIgnoringSafeArea(.all))
-          .tabItem { tabIcon(selected: selectedTab == .one,
+          .tabItem { tabIcon(selected: selectedTab == .upload,
                              selectedName: Constants.uploadIconImageNameSelected,
                              unselectedName: Constants.uploadIconImageNameUnselected) }
-          .tag(Int.one)
+          .tag(Tab.upload)
 
         profileView
-          .onUploadAction { selectedTab = .one }
+          .onUploadAction { selectedTab = .upload }
           .background(Color.black.edgesIgnoringSafeArea(.all))
-          .tabItem { tabIcon(selected: selectedTab == .two,
+          .tabItem { tabIcon(selected: selectedTab == .profile,
                              selectedName: Constants.profileIconImageNameSelected,
                              unselectedName: Constants.profileIconImageNameUnSelected) }
-          .tag(Int.two)
+          .tag(Tab.profile)
 
         accountView
           .background(Color.black.edgesIgnoringSafeArea(.all))
           .tabItem {
-            Image(ImageResource(name: Constants.accountIconImageName, bundle: .main))
-              .renderingMode(.original)
+            Image(
+              ImageResource(name: Constants.accountIconImageName, bundle: .main)
+            )
+            .renderingMode(.original)
           }
-          .tag(Int.three)
+          .tag(Tab.account)
       }
       GeometryReader { geometry in
         let tabWidth = geometry.size.width / .four
-        let indicatorXPosition = CGFloat(selectedTab) * tabWidth + (tabWidth - Constants.indicatorWidth) / .two
+        let indicatorXPosition = CGFloat(selectedTab.intValue) * tabWidth + (
+          tabWidth - Constants.indicatorWidth
+        ) / .two
         VStack {
           Spacer().frame(height: geometry.size.height)
           HStack {
             Spacer().frame(width: indicatorXPosition)
             Rectangle()
               .fill(Constants.indicatorColor)
-              .frame(width: Constants.indicatorWidth, height: Constants.tabIndicatorHeight)
+              .frame(
+                width: Constants.indicatorWidth,
+                height: Constants.tabIndicatorHeight
+              )
               .cornerRadius(Constants.tabIndicatorHeight / .two)
               .offset(x: .zero, y: -self.tabBarHeight)
               .animation(.easeInOut, value: selectedTab)
@@ -106,6 +116,25 @@ struct HomeTabController: View {
     )
     .renderingMode(.original)
   }
+
+  private func tabDidChange(to tab: Tab) {
+    var categoryName = CategoryName.home
+    switch tab {
+    case .home:
+      categoryName = .home
+    case .upload:
+      categoryName = .uploadVideo
+    case .profile:
+      categoryName = .profile
+    case .account:
+      categoryName = .menu
+    }
+    AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+      event: BottomNavigationClickedEventData(
+        categoryName: categoryName
+      )
+    )
+  }
 }
 
 extension HomeTabController {
@@ -120,5 +149,22 @@ extension HomeTabController {
     static let tabIndicatorHeight: CGFloat = 2.0
     static let indicatorWidth = 30.0
     static let indicatorColor = YralColor.primary300.swiftUIColor
+  }
+}
+
+enum Tab: Hashable {
+  case home, upload, profile, account
+
+  var intValue: Int {
+    switch self {
+    case .home:
+      return .zero
+    case .upload:
+      return .one
+    case .profile:
+      return .two
+    case .account:
+      return .three
+    }
   }
 }

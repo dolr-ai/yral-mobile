@@ -29,6 +29,9 @@ cocoapods {
     pod("FirebaseCrashlytics") {
         extraOpts += listOf("-compiler-option", "-fmodules")
     }
+    pod("FirebasePerformance") {
+        extraOpts += listOf("-compiler-option", "-fmodules")
+    }
     pod("FirebaseInstallations") {
         extraOpts += listOf("-compiler-option", "-fmodules")
     }
@@ -49,7 +52,7 @@ cocoapods {
         baseName = "iosSharedUmbrella"
         @OptIn(ExperimentalKotlinGradlePluginApi::class)
         transitiveExport = true
-        isStatic = false
+        isStatic = true
         export(projects.shared.libs.analytics)
         export(projects.shared.libs.crashlytics)
         export(projects.shared.app)

@@ -21,7 +21,7 @@ kotlin {
     ).forEach {
         it.binaries.framework {
             baseName = "analytics"
-//            isStatic = true
+            isStatic = true
         }
     }
 
