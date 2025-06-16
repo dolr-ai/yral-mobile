@@ -11,12 +11,12 @@ import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.utils.filterFirstNSuspendFlow
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.feed.data.models.toVideoEventData
+import com.yral.shared.features.feed.useCases.CheckVideoVoteUseCase
 import com.yral.shared.features.feed.useCases.FetchFeedDetailsUseCase
 import com.yral.shared.features.feed.useCases.FetchMoreFeedUseCase
 import com.yral.shared.features.feed.useCases.GetInitialFeedUseCase
 import com.yral.shared.features.feed.useCases.ReportRequestParams
 import com.yral.shared.features.feed.useCases.ReportVideoUseCase
-import com.yral.shared.firebaseStore.usecase.CheckVideoVoteUseCase
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import com.yral.shared.rust.domain.models.FeedDetails
