@@ -8,6 +8,7 @@ import com.yral.shared.analytics.events.VideoDurationWatchedEventData
 import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.SessionManager
+import com.yral.shared.core.utils.filterFirstNSuspendFlow
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.feed.data.models.toVideoEventData
 import com.yral.shared.features.feed.useCases.FetchFeedDetailsUseCase
@@ -26,6 +27,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -63,17 +65,19 @@ class FeedViewModel(
             if (_state.value.posts.isEmpty()) {
                 initialFeedData()
             } else {
-                _state.value.posts
-                    .filter { post ->
-                        _state.value.feedDetails.any { feedDetails -> feedDetails.videoID != post.videoID }
-                    }.forEach {
-                        fetchFeedDetail(it)
-                    }
+                val fetchedIds = _state.value.feedDetails.mapTo(HashSet()) { it.videoID }
+                val newPosts = _state.value.posts.filter { post -> post.videoID !in fetchedIds }
+                newPosts
+                    .filterFirstNSuspendFlow(newPosts.size, false) {
+                        !isAlreadyVoted(it)
+                    }.toList()
+                    .forEach { fetchFeedDetail(it) }
             }
         }
     }
 
     private suspend fun initialFeedData() {
+        setLoadingMore(true)
         sessionManager.getCanisterPrincipal()?.let { principal ->
             requiredUseCases.getInitialFeedUseCase
                 .invoke(
@@ -85,12 +89,19 @@ class FeedViewModel(
                 ).mapBoth(
                     success = { result ->
                         val posts = result.posts
-                        _state.update { it.copy(posts = posts) }
-                        if (posts.isNotEmpty()) {
-                            posts.forEach { post -> fetchFeedDetail(post) }
-                        } else {
+                        if (posts.isEmpty()) {
+                            _state.update { it.copy(posts = posts) }
                             analyticsManager.trackEvent(EmptyColdStartFeedEvent())
                             loadMoreFeed()
+                        } else {
+                            val newPosts =
+                                posts
+                                    .filterFirstNSuspendFlow(posts.size, false) {
+                                        !isAlreadyVoted(it)
+                                    }.toList()
+                            _state.update { it.copy(posts = newPosts) }
+                            newPosts.forEach { post -> fetchFeedDetail(post) }
+                            setLoadingMore(false)
                         }
                     },
                     failure = { _ ->
@@ -151,18 +162,22 @@ class FeedViewModel(
                     ).mapBoth(
                         success = { moreFeed ->
                             val currentPosts = _state.value.posts
-                            val existingIds = currentPosts.map { post -> post.videoID }.toHashSet()
+                            val existingIds = currentPosts.mapTo(HashSet()) { post -> post.videoID }
                             val filteredPosts =
                                 moreFeed
                                     .posts
                                     .filter { post -> post.videoID !in existingIds }
-                                    .filter { post -> !isAlreadyVoted(post) }
+                            val filteredWithVotes =
+                                filteredPosts
+                                    .filterFirstNSuspendFlow(filteredPosts.size, false) { post ->
+                                        !isAlreadyVoted(post)
+                                    }.toList()
                             _state.update { currentState ->
                                 currentState.copy(
-                                    posts = currentState.posts + filteredPosts,
+                                    posts = currentState.posts + filteredWithVotes,
                                 )
                             }
-                            filteredPosts.forEach { post ->
+                            filteredWithVotes.forEach { post ->
                                 fetchFeedDetail(post)
                             }
                             setLoadingMore(false)
