@@ -568,7 +568,7 @@ object LeaderboardScreenConstants {
     const val COIN_BALANCE_WEIGHT = 1f
     const val PROFILE_IMAGE_SIZE = 25f
     const val TROPHY_GALLERY_SIZE = 0.45
-    const val SILVER_TROPHY_SIZE = 46
+    const val SILVER_TROPHY_SIZE = 48
     const val BRONZE_TROPHY_SIZE = 46
     const val GOLDEN_TROPHY_SIZE = 64
 }
