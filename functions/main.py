@@ -1,10 +1,13 @@
 import re, random, string, datetime as _dt, sys
 import firebase_admin
-from firebase_admin import auth, app_check, firestore
+from firebase_admin import auth, app_check, firestore, functions
 from firebase_functions import https_fn
 from flask import Request, jsonify, make_response
 from google.api_core.exceptions import AlreadyExists, GoogleAPICallError
 from typing import List, Dict, Any
+import requests
+from requests.exceptions import RequestException
+import os
 
 firebase_admin.initialize_app()
 
@@ -15,6 +18,8 @@ SHARDS = 10
 PID_REGEX = re.compile(r'^[A-Za-z0-9_-]{6,64}$')
 SMILEY_GAME_CONFIG_PATH = "config/smiley_game_v1"
 VIDEO_COLL = "videos"
+
+BALANCE_URL = "https://yral-hot-or-not.go-bazzinga.workers.dev/update_balance/"
 
 # ─────────────────────  DATABASE HELPER  ────────────────────────
 _db = None
@@ -137,9 +142,26 @@ def exchange_principal_id(request: Request):
     except Exception as e:  # noqa: BLE001
         print("Unhandled error:", e, file=sys.stderr)
         return error_response(500, "INTERNAL", "Internal server error")
+
+def _push_delta(token: str, principal_id: str, delta: int) -> bool:
+    url = f"{BALANCE_URL}{principal_id}"
+    headers = {
+        "Authorization": token,
+        "Content-Type": "application/json",
+    }
+    body = {
+        "delta": str(delta),          # radix-10 string, e.g. "-210"
+        "is_airdropped": False
+    }
+    try:
+        resp = requests.post(url, json=body, timeout=5, headers=headers)
+        return resp.status_code == 200
+    except requests.RequestException:
+        return False
     
-@https_fn.on_request(region="us-central1")
+@https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"])
 def cast_vote(request: Request):
+    balance_update_token = os.environ["BALANCE_UPDATE_TOKEN"]
     try:
         # 1. validation & auth ────────────────────────────────────────────
         if request.method != "POST":
@@ -232,6 +254,10 @@ def cast_vote(request: Request):
         # 5. coin mutation ───────────────────────────────────────────────
         delta  = WIN_REWARD if outcome == "WIN" else LOSS_PENALTY
         coins  = tx_coin_change(pid, vid, delta, outcome)
+
+        if not _push_delta(balance_update_token, pid, delta):
+            _ = tx_coin_change(pid, vid, -delta, "ROLLBACK")
+            return error_response(502, "UPSTREAM_FAILED", "We couldn’t record your vote. Please try voting again after sometime.")
 
         vote_ref.update({
             "outcome": outcome,
