@@ -17,11 +17,11 @@ class ExchangePrincipalIdUseCase(
     override suspend fun execute(parameter: Params): ExchangePrincipalResponse =
         authRepository.exchangePrincipalId(
             idToken = parameter.idToken,
-            principalId = parameter.principalId,
+            principalId = parameter.userPrincipal,
         )
 
     data class Params(
         val idToken: String,
-        val principalId: String,
+        val userPrincipal: String,
     )
 }

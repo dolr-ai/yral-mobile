@@ -4,6 +4,7 @@ import com.yral.shared.features.game.data.GameRemoteDataSource
 import com.yral.shared.features.game.data.GameRepository
 import com.yral.shared.features.game.data.IGameRemoteDataSource
 import com.yral.shared.features.game.domain.CastVoteUseCase
+import com.yral.shared.features.game.domain.GetBalanceUseCase
 import com.yral.shared.features.game.domain.GetCurrentUserInfoUseCase
 import com.yral.shared.features.game.domain.GetGameIconsUseCase
 import com.yral.shared.features.game.domain.GetGameRulesUseCase
@@ -20,6 +21,7 @@ import org.koin.dsl.module
 val gameModule =
     module {
         factoryOf(::CastVoteUseCase)
+        factoryOf(::GetBalanceUseCase)
         factory { GetGameIconsUseCase(get(), get(), get(named("GameConfig"))) }
         factory { GetGameRulesUseCase(get(), get(), get(named("AboutGame"))) }
         factory { GetLeaderboardUseCase(get(), get(), get(named("LeaderBoard"))) }

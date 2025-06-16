@@ -304,6 +304,23 @@ internal class FBFirestoreRepository(
 
         return resultQuery
     }
+
+    override suspend fun updateDocument(
+        collectionPath: String,
+        documentId: String,
+        fieldAndValue: Pair<String, Any?>,
+    ): Result<Unit> =
+        try {
+            firestore
+                .collection(collectionPath)
+                .document(documentId)
+                .update(fieldAndValue)
+            Result.success(Unit)
+        } catch (e: FirebaseFirestoreException) {
+            Result.failure(YralException(e.message ?: "Error updating document"))
+        } catch (e: Exception) {
+            Result.failure(YralException("Unexpected error updating document: ${e.message}"))
+        }
 }
 
 @Suppress("TooGenericExceptionCaught", "SwallowedException")

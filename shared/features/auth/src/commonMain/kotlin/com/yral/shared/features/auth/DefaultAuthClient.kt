@@ -1,5 +1,6 @@
 package com.yral.shared.features.auth
 
+import com.github.michaelbull.result.getOrThrow
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.analytics.AnalyticsManager
@@ -20,17 +21,22 @@ import com.yral.shared.features.auth.domain.useCases.UpdateSessionAsRegisteredUs
 import com.yral.shared.features.auth.utils.OAuthListener
 import com.yral.shared.features.auth.utils.OAuthUtils
 import com.yral.shared.features.auth.utils.SocialProvider
+import com.yral.shared.features.game.domain.GetBalanceUseCase
 import com.yral.shared.firebaseAuth.usecase.GetIdTokenUseCase
 import com.yral.shared.firebaseAuth.usecase.SignInAnonymouslyUseCase
 import com.yral.shared.firebaseAuth.usecase.SignInWithTokenUseCase
 import com.yral.shared.firebaseAuth.usecase.SignOutUseCase
+import com.yral.shared.firebaseStore.usecase.UpdateDocumentUseCase
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import com.yral.shared.uniffi.generated.CanistersWrapper
 import com.yral.shared.uniffi.generated.FfiException
 import com.yral.shared.uniffi.generated.authenticateWithNetwork
+import dev.gitlive.firebase.firestore.FieldPath.Companion.documentId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 
@@ -197,23 +203,63 @@ class DefaultAuthClient(
         canisterWrapper: CanistersWrapper,
     ) {
         crashlyticsManager.logMessage("exchanging token")
-        requiredUseCases.exchangePrincipalIdUseCase
-            .invoke(
-                ExchangePrincipalIdUseCase.Params(
-                    idToken = idToken,
-                    principalId = canisterWrapper.getUserPrincipal(),
-                ),
-            ).onSuccess { response ->
-                signInWithToken(data, canisterWrapper, response)
-            }.onFailure { error ->
-                throw YralException(error.message ?: "Failed to exchange principal ID")
+        coroutineScope {
+            val exchange =
+                async {
+                    runCatching {
+                        crashlyticsManager.logMessage("exchanging principal id")
+                        requiredUseCases.exchangePrincipalIdUseCase
+                            .invoke(
+                                ExchangePrincipalIdUseCase.Params(
+                                    idToken = idToken,
+                                    userPrincipal = canisterWrapper.getUserPrincipal(),
+                                ),
+                            ).getOrThrow()
+                    }
+                }
+            val balance =
+                async {
+                    crashlyticsManager.logMessage("getting balance")
+                    runCatching {
+                        requiredUseCases.getBalanceUseCase
+                            .invoke(canisterWrapper.getUserPrincipal())
+                            .getOrThrow()
+                    }
+                }
+            val exchangeResult = exchange.await()
+            val balanceResult = balance.await()
+            if (exchangeResult.isSuccess && balanceResult.isSuccess) {
+                val response = exchangeResult.getOrNull()
+                val balanceResponse = balanceResult.getOrNull()
+                if (response != null && balanceResponse != null) {
+                    crashlyticsManager.logMessage("updating user coins")
+                    requiredUseCases
+                        .updateDocumentUseCase
+                        .invoke(
+                            parameter =
+                                UpdateDocumentUseCase.Params(
+                                    collectionName = "users",
+                                    documentId = canisterWrapper.getUserPrincipal(),
+                                    fieldAndValue = Pair("coins", balanceResponse),
+                                ),
+                        ).onSuccess {
+                            signInWithToken(
+                                data = data,
+                                canisterWrapper = canisterWrapper,
+                                fbResponse = response,
+                                coinBalance = balanceResponse,
+                            )
+                        }
+                }
             }
+        }
     }
 
     private suspend fun signInWithToken(
         data: ByteArray,
         canisterWrapper: CanistersWrapper,
         fbResponse: ExchangePrincipalResponse,
+        coinBalance: Long,
     ) {
         crashlyticsManager.logMessage("signing with token")
         requiredUseCases
@@ -223,13 +269,9 @@ class DefaultAuthClient(
                 requiredUseCases.signInWithTokenUseCase
                     .invoke(fbResponse.token)
                     .onSuccess {
-                        setSession(data, canisterWrapper, 0)
-                    }.onFailure { error ->
-                        throw YralException(error.message ?: "Failed to sign in with custom token")
-                    }
-            }.onFailure { error ->
-                throw YralException(error.message ?: "Failed to sing out for custom token sign in")
-            }
+                        setSession(data, canisterWrapper, coinBalance)
+                    }.onFailure { }
+            }.onFailure { }
     }
 
     private suspend fun setSession(
@@ -346,6 +388,8 @@ class DefaultAuthClient(
         val signInAnonymouslyUseCase: SignInAnonymouslyUseCase,
         val signInWithTokenUseCase: SignInWithTokenUseCase,
         val exchangePrincipalIdUseCase: ExchangePrincipalIdUseCase,
+        val getBalanceUseCase: GetBalanceUseCase,
+        val updateDocumentUseCase: UpdateDocumentUseCase,
         val getIdTokenUseCase: GetIdTokenUseCase,
     )
 }

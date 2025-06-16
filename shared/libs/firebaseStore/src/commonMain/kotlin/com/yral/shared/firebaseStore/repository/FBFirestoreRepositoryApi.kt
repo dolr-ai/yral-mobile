@@ -57,4 +57,10 @@ interface FBFirestoreRepositoryApi {
         collectionPath: String,
         documentId: String,
     ): Result<Unit>
+
+    suspend fun updateDocument(
+        collectionPath: String,
+        documentId: String,
+        fieldAndValue: Pair<String, Any?>,
+    ): Result<Unit>
 }
