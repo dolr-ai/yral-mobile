@@ -100,6 +100,7 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
           redirectURI: redirect
         )
         try storeTokens(token)
+        try firebaseService.signOut()
         try await processDelegatedIdentity(from: token, type: .permanent)
         UserDefaultsManager.shared.set(true, for: .userDefaultsLoggedIn)
         guard let canisterPrincipalString = self.canisterPrincipalString else { return }
