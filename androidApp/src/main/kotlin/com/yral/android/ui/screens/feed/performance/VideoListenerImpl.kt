@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.home.feed.performance
+package com.yral.android.ui.screens.feed.performance
 
 import co.touchlab.kermit.Logger
 import com.yral.shared.libs.firebasePerf.FirebaseOperationTrace

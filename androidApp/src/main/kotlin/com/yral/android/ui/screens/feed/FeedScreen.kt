@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.home.feed
+package com.yral.android.ui.screens.feed
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -32,6 +32,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,6 +43,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -51,10 +56,15 @@ import coil3.compose.AsyncImage
 import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
-import com.yral.android.ui.screens.home.feed.FeedScreenConstants.MAX_LINES_FOR_POST_DESCRIPTION
-import com.yral.android.ui.screens.home.feed.FeedScreenConstants.VIDEO_REPORT_SHEET_MAX_HEIGHT
-import com.yral.android.ui.screens.home.feed.performance.PrefetchVideoListenerImpl
-import com.yral.android.ui.screens.home.feed.performance.VideoListenerImpl
+import com.yral.android.ui.screens.feed.FeedScreenConstants.MAX_LINES_FOR_POST_DESCRIPTION
+import com.yral.android.ui.screens.feed.FeedScreenConstants.VIDEO_REPORT_SHEET_MAX_HEIGHT
+import com.yral.android.ui.screens.feed.performance.PrefetchVideoListenerImpl
+import com.yral.android.ui.screens.feed.performance.VideoListenerImpl
+import com.yral.android.ui.screens.game.AboutGameSheet
+import com.yral.android.ui.screens.game.CoinBalance
+import com.yral.android.ui.screens.game.GameResultSheet
+import com.yral.android.ui.screens.game.SmileyGame
+import com.yral.android.ui.widgets.PreloadLottieAnimation
 import com.yral.android.ui.widgets.YralBottomSheet
 import com.yral.android.ui.widgets.YralButtonState
 import com.yral.android.ui.widgets.YralButtonType
@@ -65,6 +75,8 @@ import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.PRE_FETCH_BEFORE_LAST
 import com.yral.shared.features.feed.viewmodel.ReportSheetState
 import com.yral.shared.features.feed.viewmodel.VideoReportReason
+import com.yral.shared.features.game.viewmodel.GameState
+import com.yral.shared.features.game.viewmodel.GameViewModel
 import com.yral.shared.libs.videoPlayer.YRALReelPlayer
 import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.rust.domain.models.FeedDetails
@@ -73,13 +85,15 @@ import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Suppress("LongMethod")
+@Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
 fun FeedScreen(
     modifier: Modifier = Modifier,
     viewModel: FeedViewModel = koinViewModel(),
+    gameViewModel: GameViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
+    val gameState by gameViewModel.state.collectAsState()
     val coroutineScope = rememberCoroutineScope()
     // Keep track of the last feed size to detect when new items are loaded
     var lastFeedSize by remember { mutableIntStateOf(0) }
@@ -87,6 +101,13 @@ fun FeedScreen(
     var loadTriggered by remember { mutableStateOf(false) }
     // Track if new items have been loaded since loading started
     var newItemsAddedSinceLoading by remember { mutableStateOf(false) }
+
+    // Set initial video ID when feed loads
+    LaunchedEffect(state.feedDetails.isNotEmpty()) {
+        if (state.feedDetails.isNotEmpty() && state.currentPageOfFeed < state.feedDetails.size) {
+            gameViewModel.setCurrentVideoId(state.feedDetails[state.currentPageOfFeed].videoID)
+        }
+    }
 
     // Function to determine if we should load more content
     val shouldLoadMore =
@@ -147,6 +168,17 @@ fun FeedScreen(
                 reels = getReels(state),
                 initialPage = state.currentPageOfFeed,
                 onPageLoaded = { page ->
+                    // Mark animation as shown for the previous page when changing pages
+                    if (page != state.currentPageOfFeed && state.currentPageOfFeed < state.feedDetails.size) {
+                        val previousVideoId = state.feedDetails[state.currentPageOfFeed].videoID
+                        if (gameState.gameResult[previousVideoId]?.second?.coinDelta != 0) {
+                            gameViewModel.markCoinDeltaAnimationShown(previousVideoId)
+                        }
+                    }
+                    // Set current video ID for the new page
+                    if (page < state.feedDetails.size) {
+                        gameViewModel.setCurrentVideoId(state.feedDetails[page].videoID)
+                    }
                     viewModel.onCurrentPageChange(page)
                     viewModel.setPostDescriptionExpanded(false)
                 },
@@ -167,29 +199,13 @@ fun FeedScreen(
                     )
                 },
             ) { pageNo ->
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.TopStart,
-                ) {
-                    UserBrief(
-                        principalId = state.feedDetails[pageNo].principalID,
-                        profileImageUrl = state.feedDetails[pageNo].profileImageURL,
-                        postDescription = state.feedDetails[pageNo].postDescription,
-                        isPostDescriptionExpanded = state.isPostDescriptionExpanded,
-                        setPostDescriptionExpanded = { viewModel.setPostDescriptionExpanded(it) },
-                    )
-                    ReportVideo(
-                        modifier =
-                            Modifier
-                                .align(Alignment.BottomEnd)
-                                .padding(end = 16.dp, bottom = 89.dp),
-                    ) {
-                        viewModel.toggleReportSheet(
-                            isOpen = true,
-                            pageNo = pageNo,
-                        )
-                    }
-                }
+                FeedOverlay(
+                    pageNo = pageNo,
+                    state = state,
+                    feedViewModel = viewModel,
+                    gameState = gameState,
+                    gameViewModel = gameViewModel,
+                )
             }
             // Show loader at the bottom when loading more content AND no new items have been added yet
             if (showLoader) {
@@ -223,6 +239,27 @@ fun FeedScreen(
             },
         )
     }
+    if (gameState.showResultSheet && state.currentPageOfFeed < state.feedDetails.size) {
+        val currentVideoId = state.feedDetails[state.currentPageOfFeed].videoID
+        GameResultSheet(
+            coinDelta = gameViewModel.getFeedGameResult(currentVideoId),
+            gameIcon = gameState.gameResult[currentVideoId]?.first,
+            onDismissRequest = {
+                gameViewModel.toggleResultSheet(false)
+            },
+            openAboutGame = {
+                gameViewModel.toggleAboutGame(true)
+            },
+        )
+    }
+    if (gameState.showAboutGame && state.currentPageOfFeed < state.feedDetails.size) {
+        AboutGameSheet(
+            gameRules = gameState.gameRules,
+            onDismissRequest = {
+                gameViewModel.toggleAboutGame(false)
+            },
+        )
+    }
 }
 
 private fun getReels(state: FeedState): List<Reels> =
@@ -239,20 +276,124 @@ private fun FeedDetails.toReel() =
     )
 
 @Composable
+private fun FeedOverlay(
+    pageNo: Int,
+    state: FeedState,
+    feedViewModel: FeedViewModel,
+    gameState: GameState,
+    gameViewModel: GameViewModel,
+) {
+    var lottieCached by remember { mutableStateOf(false) }
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.TopStart,
+    ) {
+        TopView(
+            state = state,
+            pageNo = pageNo,
+            feedViewModel = feedViewModel,
+            gameState = gameState,
+            gameViewModel = gameViewModel,
+        )
+        ReportVideo(
+            modifier =
+                Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 16.dp, bottom = 89.dp),
+        ) {
+            feedViewModel.toggleReportSheet(true, pageNo)
+        }
+        if (gameState.gameIcons.isNotEmpty()) {
+            SmileyGame(
+                gameIcons = gameState.gameIcons,
+                clickedIcon = gameState.gameResult[state.feedDetails[pageNo].videoID]?.first,
+                onIconClicked = {
+                    gameViewModel.setClickedIcon(
+                        icon = it,
+                        videoId = state.feedDetails[pageNo].videoID,
+                    )
+                },
+                coinDelta = gameViewModel.getFeedGameResult(state.feedDetails[pageNo].videoID),
+                errorMessage = gameViewModel.getFeedGameResultError(state.feedDetails[pageNo].videoID),
+                isLoading = gameState.isLoading,
+                hasShownCoinDeltaAnimation =
+                    gameViewModel.hasShownCoinDeltaAnimation(
+                        state.feedDetails[pageNo].videoID,
+                    ),
+                onDeltaAnimationComplete = {
+                    gameViewModel.markCoinDeltaAnimationShown(
+                        state.feedDetails[pageNo].videoID,
+                    )
+                },
+            )
+            if (!lottieCached) {
+                gameState.gameIcons.forEach { icon ->
+                    PreloadLottieAnimation(icon.clickAnimation)
+                }
+                lottieCached = true
+            }
+        }
+    }
+}
+
+@Composable
+private fun TopView(
+    state: FeedState,
+    pageNo: Int,
+    feedViewModel: FeedViewModel,
+    gameState: GameState,
+    gameViewModel: GameViewModel,
+) {
+    Box(
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        var paddingEnd by remember { mutableFloatStateOf(0f) }
+        val density = LocalDensity.current
+        val configuration = LocalConfiguration.current
+        val screenWidthPx = with(density) { (configuration.screenWidthDp.dp).toPx() }
+        UserBrief(
+            principalId = state.feedDetails[pageNo].principalID,
+            profileImageUrl = state.feedDetails[pageNo].profileImageURL,
+            postDescription = state.feedDetails[pageNo].postDescription,
+            isPostDescriptionExpanded = state.isPostDescriptionExpanded,
+            setPostDescriptionExpanded = { feedViewModel.setPostDescriptionExpanded(it) },
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(end = with(density) { paddingEnd.toDp() + 46.dp }),
+        )
+        CoinBalance(
+            coinBalance = gameState.coinBalance,
+            coinDelta = gameState.lastBalanceDifference,
+            animateBag = gameState.animateCoinBalance,
+            setAnimate = { gameViewModel.setAnimateCoinBalance(it) },
+            modifier =
+                Modifier
+                    .align(Alignment.CenterEnd)
+                    .onGloballyPositioned { coordinates ->
+                        if (!gameState.animateCoinBalance) {
+                            val x = coordinates.positionInParent().x
+                            paddingEnd = screenWidthPx - x
+                        }
+                    },
+        )
+    }
+}
+
+@Composable
 private fun UserBrief(
     profileImageUrl: Url?,
     principalId: String,
     postDescription: String,
     isPostDescriptionExpanded: Boolean,
     setPostDescriptionExpanded: (isExpanded: Boolean) -> Unit,
+    modifier: Modifier,
 ) {
     Box(
         modifier =
-            Modifier
-                .fillMaxWidth()
+            modifier
                 .padding(
                     top = 22.dp,
-                    end = 46.dp,
                     start = 16.dp,
                     bottom = 22.dp,
                 ),
@@ -304,7 +445,7 @@ private fun UserBriefProfileImage(profileImageUrl: Url?) {
                 ).width(40.dp)
                 .height(40.dp)
                 .background(
-                    color = YralColors.profilePicBackground,
+                    color = YralColors.ProfilePicBackground,
                     shape = shape,
                 ),
     )

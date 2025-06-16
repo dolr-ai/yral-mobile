@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.home.account
+package com.yral.android.ui.screens.account
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -13,7 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.yral.android.ui.components.SignupView
-import com.yral.android.ui.screens.home.account.LoginBottomSheetConstants.BOTTOM_SHEET_SPACER_PERCENT_TO_SCREEN
+import com.yral.android.ui.screens.account.LoginBottomSheetConstants.BOTTOM_SHEET_SPACER_PERCENT_TO_SCREEN
 import com.yral.android.ui.widgets.YralBottomSheet
 
 @OptIn(ExperimentalMaterial3Api::class)
