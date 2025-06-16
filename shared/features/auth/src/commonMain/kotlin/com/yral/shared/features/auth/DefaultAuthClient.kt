@@ -80,8 +80,7 @@ class DefaultAuthClient(
                             shouldRefreshToken = true,
                         )
                     }.onFailure { }
-            }.onFailure {  }
-
+            }.onFailure { }
     }
 
     private suspend fun handleToken(
@@ -224,7 +223,7 @@ class DefaultAuthClient(
                 requiredUseCases.signInWithTokenUseCase
                     .invoke(fbResponse.token)
                     .onSuccess {
-                        setSession(data, canisterWrapper, fbResponse.coins)
+                        setSession(data, canisterWrapper, 0)
                     }.onFailure { error ->
                         throw YralException(error.message ?: "Failed to sign in with custom token")
                     }
@@ -322,7 +321,7 @@ class DefaultAuthClient(
                     shouldSetMetadata = true,
                 )
                 preferences.putBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name, true)
-            }.onFailure {  }
+            }.onFailure { }
     }
 
     private suspend fun updateSessionAsRegistered(

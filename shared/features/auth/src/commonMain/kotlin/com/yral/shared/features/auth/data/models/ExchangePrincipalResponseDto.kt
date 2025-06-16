@@ -5,12 +5,10 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class ExchangePrincipalResponseDto(
-    val coins: Long,
     val token: String,
 )
 
 fun ExchangePrincipalResponseDto.toExchangePrincipalResponse(): ExchangePrincipalResponse =
     ExchangePrincipalResponse(
-        coins = coins,
         token = token,
     )
