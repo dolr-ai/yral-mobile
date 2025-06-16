@@ -245,7 +245,7 @@ private fun Trophy(
         Box(
             modifier =
                 Modifier
-                    .offset(y = profileImageSize / 2)
+                    .offset(y = profileImageSize / 2 + 8.dp)
                     .zIndex(1f)
                     .align(Alignment.CenterHorizontally),
         ) {
