@@ -24,6 +24,7 @@ internal class FBAuthRepository(
             val result = auth.signInAnonymously()
             val user = result.user
             if (user == null) {
+                authState.emit(AuthState.Error("Sign in successful but user is null"))
                 Result.failure(YralException("Sign in successful but user is null"))
             } else {
                 authState.emit(AuthState.Authenticated(user.uid))
@@ -45,6 +46,7 @@ internal class FBAuthRepository(
             val result = auth.signInWithCustomToken(token)
             val user = result.user
             if (user == null) {
+                authState.emit(AuthState.Error("Sign in successful but user is null"))
                 Result.failure(YralException("Sign in successful but user is null"))
             } else {
                 authState.emit(AuthState.Authenticated(user.uid))
