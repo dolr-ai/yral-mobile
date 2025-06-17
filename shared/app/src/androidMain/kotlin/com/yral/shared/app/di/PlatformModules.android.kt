@@ -2,6 +2,7 @@ package com.yral.shared.app.di
 
 import android.content.pm.ApplicationInfo
 import co.touchlab.kermit.platformLogWriter
+import com.yral.shared.analytics.di.MIXPANEL_TOKEN
 import com.yral.shared.core.logging.YralLogger
 import com.yral.shared.core.platform.AndroidPlatformResources
 import com.yral.shared.core.platform.PlatformResources
@@ -19,4 +20,5 @@ actual val platformModule =
                 ) != 0
             YralLogger(if (isDebug) platformLogWriter() else null)
         }
+        single<String>(MIXPANEL_TOKEN) { TODO() }
     }
