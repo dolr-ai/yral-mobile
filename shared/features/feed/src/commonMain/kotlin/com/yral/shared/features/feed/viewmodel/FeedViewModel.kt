@@ -27,14 +27,11 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 @Suppress("TooGenericExceptionCaught")
 class FeedViewModel(
-    initialPosts: List<Post>,
-    initialFeedDetails: List<FeedDetails>,
     appDispatchers: AppDispatchers,
     private val sessionManager: SessionManager,
     private val requiredUseCases: RequiredUseCases,
@@ -51,28 +48,12 @@ class FeedViewModel(
         const val NSFW_PROBABILITY = 0.4
     }
 
-    private val _state =
-        MutableStateFlow(
-            FeedState(
-                posts = initialPosts,
-                feedDetails = initialFeedDetails,
-            ),
-        )
+    private val _state = MutableStateFlow(FeedState())
     val state: StateFlow<FeedState> = _state.asStateFlow()
 
     init {
         coroutineScope.launch {
-            if (_state.value.posts.isEmpty()) {
-                initialFeedData()
-            } else {
-                val fetchedIds = _state.value.feedDetails.mapTo(HashSet()) { it.videoID }
-                val newPosts = _state.value.posts.filter { post -> post.videoID !in fetchedIds }
-                newPosts
-                    .filterFirstNSuspendFlow(newPosts.size, false) {
-                        !isAlreadyVoted(it)
-                    }.toList()
-                    .forEach { fetchFeedDetail(it) }
-            }
+            initialFeedData()
         }
     }
 
@@ -94,13 +75,7 @@ class FeedViewModel(
                             analyticsManager.trackEvent(EmptyColdStartFeedEvent())
                             loadMoreFeed()
                         } else {
-                            val newPosts =
-                                posts
-                                    .filterFirstNSuspendFlow(posts.size, false) {
-                                        !isAlreadyVoted(it)
-                                    }.toList()
-                            _state.update { it.copy(posts = newPosts) }
-                            newPosts.forEach { post -> fetchFeedDetail(post) }
+                            filterVotedAndFetchDetails(posts)
                             setLoadingMore(false)
                         }
                     },
@@ -111,6 +86,17 @@ class FeedViewModel(
         } ?: crashlyticsManager.recordException(
             YralException("Principal is null while fetching initial feed"),
         )
+    }
+
+    private suspend fun filterVotedAndFetchDetails(posts: List<Post>) {
+        val fetchedIds = _state.value.feedDetails.mapTo(HashSet()) { it.videoID }
+        val newPosts = posts.filter { post -> post.videoID !in fetchedIds }
+        newPosts
+            .filterFirstNSuspendFlow(posts.size, false) {
+                !isAlreadyVoted(it)
+            }.collect { newPost ->
+                fetchFeedDetail(newPost)
+            }
     }
 
     private suspend fun isAlreadyVoted(post: Post): Boolean =
@@ -128,10 +114,9 @@ class FeedViewModel(
             .mapBoth(
                 success = { detail ->
                     _state.update { currentState ->
-                        val feedDetailsList = currentState.feedDetails.toMutableList()
-                        feedDetailsList.add(detail)
                         currentState.copy(
-                            feedDetails = feedDetailsList.toList(),
+                            feedDetails = currentState.feedDetails + detail,
+                            posts = currentState.posts + post,
                         )
                     }
                 },
@@ -161,24 +146,9 @@ class FeedViewModel(
                             ),
                     ).mapBoth(
                         success = { moreFeed ->
-                            val currentPosts = _state.value.posts
-                            val existingIds = currentPosts.mapTo(HashSet()) { post -> post.videoID }
-                            val filteredPosts =
-                                moreFeed
-                                    .posts
-                                    .filter { post -> post.videoID !in existingIds }
-                            val filteredWithVotes =
-                                filteredPosts
-                                    .filterFirstNSuspendFlow(filteredPosts.size, false) { post ->
-                                        !isAlreadyVoted(post)
-                                    }.toList()
-                            _state.update { currentState ->
-                                currentState.copy(
-                                    posts = currentState.posts + filteredWithVotes,
-                                )
-                            }
-                            filteredWithVotes.forEach { post ->
-                                fetchFeedDetail(post)
+                            val posts = moreFeed.posts
+                            if (posts.isNotEmpty()) {
+                                filterVotedAndFetchDetails(posts)
                             }
                             setLoadingMore(false)
                         },
