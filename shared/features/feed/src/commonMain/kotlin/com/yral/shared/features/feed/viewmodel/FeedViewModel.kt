@@ -3,6 +3,7 @@ package com.yral.shared.features.feed.viewmodel
 import androidx.lifecycle.ViewModel
 import com.github.michaelbull.result.mapBoth
 import com.yral.shared.analytics.AnalyticsManager
+import com.yral.shared.analytics.events.DuplicatePostsEvent
 import com.yral.shared.analytics.events.EmptyColdStartFeedEvent
 import com.yral.shared.analytics.events.VideoDurationWatchedEventData
 import com.yral.shared.core.dispatchers.AppDispatchers
@@ -91,6 +92,10 @@ class FeedViewModel(
     private suspend fun filterVotedAndFetchDetails(posts: List<Post>) {
         val fetchedIds = _state.value.feedDetails.mapTo(HashSet()) { it.videoID }
         val newPosts = posts.filter { post -> post.videoID !in fetchedIds }
+        val duplicates = posts.size - newPosts.size
+        if (duplicates > 0) {
+            analyticsManager.trackEvent(DuplicatePostsEvent(duplicatePosts = duplicates))
+        }
         newPosts
             .filterFirstNSuspendFlow(posts.size, false) {
                 !isAlreadyVoted(it)
