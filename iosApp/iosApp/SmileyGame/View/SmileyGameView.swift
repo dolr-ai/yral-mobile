@@ -68,7 +68,7 @@ struct SmileyGameView: View {
       case .error(let errorMessage):
         Text(errorMessage)
           .font(YralFont.pt16.bold.swiftUIFont)
-          .lineLimit(Constants.textLineLimit)
+          .lineLimit(Constants.errorTextLineLimit)
           .minimumScaleFactor(Constants.textMinScale)
           .allowsTightening(true)
           .foregroundColor(YralColor.green50.swiftUIColor)
@@ -183,6 +183,8 @@ extension SmileyGameView {
 
     static let textLineLimit = 1
     static let textMinScale = 0.5
+
+    static let errorTextLineLimit = 2
 
     static let viewHeight = 64.0
     static let viewHorizontalPadding = 12.0
