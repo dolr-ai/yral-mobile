@@ -138,10 +138,8 @@
 		107C61772DC35ED6006FC467 /* CoinsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C61762DC35ED3006FC467 /* CoinsView.swift */; };
 		107C61782DC35ED6006FC467 /* CoinsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C61762DC35ED3006FC467 /* CoinsView.swift */; };
 		10BA2E872DA6507E00B6BE97 /* FeedsPlayerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10BA2E842DA6507E00B6BE97 /* FeedsPlayerTests.swift */; };
-		10F89A462E012BB500B90BD0 /* Color+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10F89A452E012BAD00B90BD0 /* Color+Extensions.swift */; };
-		10F89A472E012BB500B90BD0 /* Color+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10F89A452E012BAD00B90BD0 /* Color+Extensions.swift */; };
-		10F89A492E012CC900B90BD0 /* UIColor+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10F89A482E012CC400B90BD0 /* UIColor+Extensions.swift */; };
-		10F89A4A2E012CC900B90BD0 /* UIColor+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10F89A482E012CC400B90BD0 /* UIColor+Extensions.swift */; };
+		10F89A4C2E01450B00B90BD0 /* Color+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10F89A4B2E0144FF00B90BD0 /* Color+Extensions.swift */; };
+		10F89A4D2E01450B00B90BD0 /* Color+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10F89A4B2E0144FF00B90BD0 /* Color+Extensions.swift */; };
 		2152FB042600AC8F00CF470E /* IosApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* IosApp.swift */; };
 		7555FF83242A565900829871 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* ContentView.swift */; };
 		AC09A9B22CDB775C009A39A4 /* yral-mobile-swift-binding.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC09A9AD2CDB775C009A39A4 /* yral-mobile-swift-binding.swift */; };
@@ -640,8 +638,7 @@
 		107C61762DC35ED3006FC467 /* CoinsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoinsView.swift; sourceTree = "<group>"; };
 		10BA2E822DA64E6A00B6BE97 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Platforms/iPhoneOS.platform/Developer/Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		10BA2E842DA6507E00B6BE97 /* FeedsPlayerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedsPlayerTests.swift; sourceTree = "<group>"; };
-		10F89A452E012BAD00B90BD0 /* Color+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Extensions.swift"; sourceTree = "<group>"; };
-		10F89A482E012CC400B90BD0 /* UIColor+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIColor+Extensions.swift"; sourceTree = "<group>"; };
+		10F89A4B2E0144FF00B90BD0 /* Color+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Extensions.swift"; sourceTree = "<group>"; };
 		2152FB032600AC8F00CF470E /* IosApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IosApp.swift; sourceTree = "<group>"; };
 		7555FF7B242A565900829871 /* Yral.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Yral.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7555FF82242A565900829871 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -1376,8 +1373,6 @@
 		AC26CA662D806501006ADA75 /* Utils */ = {
 			isa = PBXGroup;
 			children = (
-				10F89A482E012CC400B90BD0 /* UIColor+Extensions.swift */,
-				10F89A452E012BAD00B90BD0 /* Color+Extensions.swift */,
 				10020A142DE9841F00DF269E /* UIApplication+Extensions.swift */,
 				1002088E2DE483EC00DF269E /* FirebaseLottieManager.swift */,
 				ACAA4D5E2DDC75C3001092A6 /* Notifications.swift */,
@@ -1479,6 +1474,7 @@
 			isa = PBXGroup;
 			children = (
 				ACC1C3962D9AF8AB005A7539 /* Loader */,
+				10F89A4B2E0144FF00B90BD0 /* Color+Extensions.swift */,
 				AC462F412D95A4A8004957B3 /* OffsetableScrollView.swift */,
 				ACC0D43C2D8C6BEB006DCF5C /* ClearBackgroundView.swift */,
 				ACC0D4332D8BFE5B006DCF5C /* NudgePopupView.swift */,
@@ -2903,14 +2899,13 @@
 				AC1F93932DC1494800F322E1 /* TokenRequestDTO.swift in Sources */,
 				ACC0F3942D2ED5B700FA5BD0 /* SplashScreenView.swift in Sources */,
 				AC99BBB12D86C563008012C2 /* ProfileView.swift in Sources */,
-				10F89A472E012BB500B90BD0 /* Color+Extensions.swift in Sources */,
+				10F89A4D2E01450B00B90BD0 /* Color+Extensions.swift in Sources */,
 				AC99BB972D848667008012C2 /* YralFont.swift in Sources */,
 				ACEBF7ED2D6F845C00B594A0 /* ToastView.swift in Sources */,
 				AC1ACF9C2DB917A3001BDCFD /* SessionManager.swift in Sources */,
 				AC7F7EB22D77200000215162 /* UploadRepositoryProtocol.swift in Sources */,
 				AC26CA612D805D6D006ADA75 /* AccountError.swift in Sources */,
 				AC32E46B2D299DFD001DDA43 /* ShareOptionsView.swift in Sources */,
-				10F89A4A2E012CC900B90BD0 /* UIColor+Extensions.swift in Sources */,
 				AC9294112D6599A1003DB102 /* CaptionsView.swift in Sources */,
 				AC638BF62D2309C000481E94 /* KeychainHelper.swift in Sources */,
 				AC99BB9A2D84913C008012C2 /* YralColor.swift in Sources */,
@@ -3136,14 +3131,13 @@
 				107C60982DB8BCB1006FC467 /* SmileyGameView.swift in Sources */,
 				ACC0F3952D2ED5B700FA5BD0 /* SplashScreenView.swift in Sources */,
 				AC99BBB02D86C563008012C2 /* ProfileView.swift in Sources */,
-				10F89A462E012BB500B90BD0 /* Color+Extensions.swift in Sources */,
+				10F89A4C2E01450B00B90BD0 /* Color+Extensions.swift in Sources */,
 				AC99BB982D848667008012C2 /* YralFont.swift in Sources */,
 				ACEBF7EC2D6F845C00B594A0 /* ToastView.swift in Sources */,
 				AC1ACF9D2DB917A3001BDCFD /* SessionManager.swift in Sources */,
 				AC7F7EB32D77200000215162 /* UploadRepositoryProtocol.swift in Sources */,
 				AC26CA622D805D6D006ADA75 /* AccountError.swift in Sources */,
 				AC32E46C2D299DFD001DDA43 /* ShareOptionsView.swift in Sources */,
-				10F89A492E012CC900B90BD0 /* UIColor+Extensions.swift in Sources */,
 				AC9294122D6599A1003DB102 /* CaptionsView.swift in Sources */,
 				AC638BF52D2309C000481E94 /* KeychainHelper.swift in Sources */,
 				AC99BB9B2D84913C008012C2 /* YralColor.swift in Sources */,
