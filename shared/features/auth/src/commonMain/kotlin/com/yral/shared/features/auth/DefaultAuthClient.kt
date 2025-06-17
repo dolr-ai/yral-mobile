@@ -70,7 +70,7 @@ class DefaultAuthClient(
     }
 
     private suspend fun obtainAnonymousIdentity() {
-        crashlyticsManager.logMessage("singing out of firebase for obtaining anonymous token")
+        crashlyticsManager.logMessage("signing out of firebase for obtaining anonymous token")
         requiredUseCases
             .signOutUseCase
             .invoke(Unit)
