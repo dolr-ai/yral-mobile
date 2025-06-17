@@ -231,7 +231,6 @@ class FeedsViewController: UIViewController {
     self.view.backgroundColor = .black
     setupCollectionView()
     setupActivityIndicator()
-
   }
 
   func setupCollectionView() {
