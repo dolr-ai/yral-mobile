@@ -40,8 +40,10 @@ import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.screens.home.HomeScreen
 import com.yral.android.ui.widgets.YralBottomSheet
 import com.yral.android.ui.widgets.YralGradientButton
+import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.root.viewmodels.RootError
 import com.yral.shared.features.root.viewmodels.RootViewModel
+import com.yral.shared.koin.koinInstance
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -82,7 +84,7 @@ fun RootScreen(viewModel: RootViewModel = koinViewModel()) {
         } else {
             // Reset system bars to normal
             HandleSystemBars(show = true)
-            val feedViewModel = remember { viewModel.createFeedViewModel() }
+            val feedViewModel = remember { koinInstance.get<FeedViewModel>() }
             HomeScreen(
                 createFeedViewModel = { feedViewModel },
                 currentTab = state.currentHomePageTab,
