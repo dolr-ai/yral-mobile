@@ -1,16 +1,11 @@
 package com.yral.shared.firebaseStore.repository
 
-import android.icu.util.UniversalTimeScale.toLong
 import com.yral.shared.core.exceptions.YralException
-import com.yral.shared.firebaseStore.model.AboutGameItemDto
 import com.yral.shared.firebaseStore.model.FirestoreDocument
-import com.yral.shared.firebaseStore.model.GameConfigDto
-import com.yral.shared.firebaseStore.model.LeaderboardItemDto
 import com.yral.shared.firebaseStore.model.QueryOptions
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.firestore.CollectionReference
 import dev.gitlive.firebase.firestore.Direction
-import dev.gitlive.firebase.firestore.DocumentReference
 import dev.gitlive.firebase.firestore.DocumentSnapshot
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.FirebaseFirestoreException
@@ -196,38 +191,15 @@ internal class FBFirestoreRepository(
             Result.failure(YralException("Unexpected error deleting document: ${e.message}"))
         }
 
-    override suspend fun documentExists(path: String): Result<Boolean> {
-        return try {
-            // Split the path into segments to get collection and document parts
-            val segments = path.split("/")
-            if (segments.size % 2 != 0) {
-                return Result.failure(
-                    YralException("Invalid document path $path"),
-                )
-            }
-
-            // Build the document reference by traversing the path
-            var reference: Any = firestore.collection(segments[0])
-            for (i in 1 until segments.size) {
-                reference =
-                    if (i % 2 == 0) {
-                        // Even indices (0-based) are collection references
-                        (reference as DocumentReference).collection(segments[i])
-                    } else {
-                        // Odd indices are document references
-                        (reference as CollectionReference).document(segments[i])
-                    }
-            }
-
-            // The final reference must be a document reference since we validated even number of segments
-            val document = (reference as DocumentReference).get()
-            Result.success(document.exists)
+    override suspend fun documentExists(path: String): Result<Boolean> =
+        try {
+            val docSnapshot = firestore.document(path).get()
+            Result.success(docSnapshot.exists)
         } catch (e: FirebaseFirestoreException) {
             Result.failure(YralException(e.message ?: "Error checking document existence"))
         } catch (e: Exception) {
             Result.failure(YralException("Unexpected error checking document existence: ${e.message}"))
         }
-    }
 
     override suspend fun getCollectionCount(
         collectionPath: String,
@@ -329,9 +301,6 @@ private fun <T : FirestoreDocument> DocumentSnapshot.safeData(documentType: KCla
     try {
         // Create a new instance with the document ID populated
         when (val data = data(documentType.serializer())) {
-            is LeaderboardItemDto -> data.copy(id = id) as T
-            is AboutGameItemDto -> data.copy(id = id) as T
-            is GameConfigDto -> data.copy(id = id) as T
             else -> data
         }
     } catch (e: Exception) {
