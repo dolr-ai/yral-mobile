@@ -8,6 +8,7 @@
 
 import SwiftUI
 import AVKit
+import iosSharedUmbrella
 
 struct UploadView: View {
   @State private var caption: String = ""
@@ -197,10 +198,16 @@ struct UploadView: View {
         Task {
           await viewModel.finishUpload(fileURL: url, caption: caption, hashtags: hashtags.map { $0.text })
         }
+        AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+          event: VideoUploadInitiatedEventData(captionAdded: true, hashtagsAdded: true)
+        )
 
       case .videoSelected(let url):
         videoURL = url
         viewModel.startUpload(fileURL: url, caption: caption, hashtags: hashtags.map { $0.text })
+        AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+          event: FileSelectionSuccessEventData(fileType: "video")
+        )
 
       case .videoUploadSuccess:
         UIView.setAnimationsEnabled(false)
@@ -250,6 +257,11 @@ struct UploadView: View {
         }
       )
       .transition(.opacity)
+    }
+    .task {
+      AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+        event: UploadVideoPageViewedEventData()
+      )
     }
   }
 }
