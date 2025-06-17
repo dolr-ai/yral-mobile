@@ -1,6 +1,8 @@
 package com.yral.shared.features.auth
 
-import com.github.michaelbull.result.mapBoth
+import com.github.michaelbull.result.getOrThrow
+import com.github.michaelbull.result.onFailure
+import com.github.michaelbull.result.onSuccess
 import com.yral.shared.analytics.AnalyticsManager
 import com.yral.shared.analytics.events.AuthSuccessfulEventData
 import com.yral.shared.core.dispatchers.AppDispatchers
@@ -10,19 +12,31 @@ import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.domain.AuthRepository
+import com.yral.shared.features.auth.domain.models.ExchangePrincipalResponse
 import com.yral.shared.features.auth.domain.useCases.AuthenticateTokenUseCase
+import com.yral.shared.features.auth.domain.useCases.ExchangePrincipalIdUseCase
 import com.yral.shared.features.auth.domain.useCases.ObtainAnonymousIdentityUseCase
 import com.yral.shared.features.auth.domain.useCases.RefreshTokenUseCase
 import com.yral.shared.features.auth.domain.useCases.UpdateSessionAsRegisteredUseCase
 import com.yral.shared.features.auth.utils.OAuthListener
 import com.yral.shared.features.auth.utils.OAuthUtils
 import com.yral.shared.features.auth.utils.SocialProvider
+import com.yral.shared.features.game.domain.GetBalanceUseCase
+import com.yral.shared.firebaseAuth.usecase.GetIdTokenUseCase
+import com.yral.shared.firebaseAuth.usecase.SignInAnonymouslyUseCase
+import com.yral.shared.firebaseAuth.usecase.SignInWithTokenUseCase
+import com.yral.shared.firebaseAuth.usecase.SignOutUseCase
+import com.yral.shared.firebaseStore.usecase.UpdateDocumentUseCase
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
+import com.yral.shared.uniffi.generated.CanistersWrapper
 import com.yral.shared.uniffi.generated.FfiException
 import com.yral.shared.uniffi.generated.authenticateWithNetwork
+import dev.gitlive.firebase.firestore.FieldPath.Companion.documentId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 
@@ -56,20 +70,23 @@ class DefaultAuthClient(
     }
 
     private suspend fun obtainAnonymousIdentity() {
-        crashlyticsManager.logMessage("obtaining anonymous token")
-        requiredUseCases.obtainAnonymousIdentityUseCase
+        crashlyticsManager.logMessage("signing out of firebase for obtaining anonymous token")
+        requiredUseCases
+            .signOutUseCase
             .invoke(Unit)
-            .mapBoth(
-                success = { tokenResponse ->
-                    handleToken(
-                        idToken = tokenResponse.idToken,
-                        accessToken = tokenResponse.accessToken,
-                        refreshToken = tokenResponse.refreshToken,
-                        shouldRefreshToken = true,
-                    )
-                },
-                failure = { },
-            )
+            .onSuccess {
+                crashlyticsManager.logMessage("obtaining anonymous token")
+                requiredUseCases.obtainAnonymousIdentityUseCase
+                    .invoke(Unit)
+                    .onSuccess { tokenResponse ->
+                        handleToken(
+                            idToken = tokenResponse.idToken,
+                            accessToken = tokenResponse.accessToken,
+                            refreshToken = tokenResponse.refreshToken,
+                            shouldRefreshToken = true,
+                        )
+                    }.onFailure { }
+            }.onFailure { }
     }
 
     private suspend fun handleToken(
@@ -79,24 +96,8 @@ class DefaultAuthClient(
         shouldRefreshToken: Boolean,
         shouldSetMetadata: Boolean = false,
     ) {
-        crashlyticsManager.logMessage("setting token to local storage")
-        preferences.putString(
-            PrefKeys.ID_TOKEN.name,
-            idToken,
-        )
-        if (refreshToken.isNotEmpty()) {
-            preferences.putString(
-                PrefKeys.REFRESH_TOKEN.name,
-                refreshToken,
-            )
-        }
-        if (accessToken.isNotEmpty()) {
-            preferences.putString(
-                PrefKeys.ACCESS_TOKEN.name,
-                refreshToken,
-            )
-        }
         crashlyticsManager.logMessage("parsing token")
+        saveTokens(idToken, refreshToken, accessToken)
         val tokenClaim = oAuthUtils.parseOAuthToken(idToken)
         if (tokenClaim.isValid(Clock.System.now().epochSeconds)) {
             tokenClaim.delegatedIdentity?.let {
@@ -115,6 +116,30 @@ class DefaultAuthClient(
         }
     }
 
+    private suspend fun saveTokens(
+        idToken: String,
+        refreshToken: String,
+        accessToken: String,
+    ) {
+        crashlyticsManager.logMessage("setting token to local storage")
+        preferences.putString(
+            PrefKeys.ID_TOKEN.name,
+            idToken,
+        )
+        if (refreshToken.isNotEmpty()) {
+            preferences.putString(
+                PrefKeys.REFRESH_TOKEN.name,
+                refreshToken,
+            )
+        }
+        if (accessToken.isNotEmpty()) {
+            preferences.putString(
+                PrefKeys.ACCESS_TOKEN.name,
+                refreshToken,
+            )
+        }
+    }
+
     override suspend fun logout() {
         preferences.remove(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name)
         preferences.remove(PrefKeys.REFRESH_TOKEN.name)
@@ -123,6 +148,7 @@ class DefaultAuthClient(
         preferences.remove(PrefKeys.IDENTITY.name)
         sessionManager.updateState(SessionState.Initial)
         crashlyticsManager.setUserId("")
+        requiredUseCases.signOutUseCase.invoke(Unit)
     }
 
     private suspend fun handleExtractIdentityResponse(
@@ -133,27 +159,140 @@ class DefaultAuthClient(
         try {
             val canisterWrapper = authenticateWithNetwork(data, null)
             preferences.putBytes(PrefKeys.IDENTITY.name, data)
-            crashlyticsManager.setUserId(canisterWrapper.getUserPrincipal())
-            crashlyticsManager.logMessage("Session logged in")
-            sessionManager.updateState(
-                SessionState.SignedIn(
-                    session =
-                        Session(
-                            identity = data,
-                            canisterPrincipal = canisterWrapper.getCanisterPrincipal(),
-                            userPrincipal = canisterWrapper.getUserPrincipal(),
-                        ),
-                ),
-            )
             if (shouldSetMetaData) {
-                updateSessionAsRegistered()
+                updateYralSession()
             }
-            analyticsManager.trackEvent(
-                event = AuthSuccessfulEventData(),
-            )
+            authorizeFirebase(data, canisterWrapper)
         } catch (e: FfiException) {
             crashlyticsManager.recordException(e)
         }
+    }
+
+    private suspend fun updateYralSession() {
+        preferences.getString(PrefKeys.ID_TOKEN.name)?.let { idToken ->
+            sessionManager.getCanisterPrincipal()?.let { canisterId ->
+                updateSessionAsRegistered(
+                    idToken = idToken,
+                    canisterId = canisterId,
+                )
+            }
+        }
+    }
+
+    private suspend fun authorizeFirebase(
+        data: ByteArray,
+        canisterWrapper: CanistersWrapper,
+    ) {
+        crashlyticsManager.logMessage("authorizing firebase")
+        requiredUseCases
+            .signInAnonymouslyUseCase
+            .invoke(Unit)
+            .onSuccess {
+                requiredUseCases
+                    .getIdTokenUseCase
+                    .invoke(GetIdTokenUseCase.DEFAULT)
+                    .onSuccess { idToken ->
+                        exchangePrincipalId(idToken, data, canisterWrapper)
+                    }.onFailure { }
+            }.onFailure { }
+    }
+
+    private suspend fun exchangePrincipalId(
+        idToken: String,
+        data: ByteArray,
+        canisterWrapper: CanistersWrapper,
+    ) {
+        crashlyticsManager.logMessage("exchanging token")
+        coroutineScope {
+            val exchange =
+                async {
+                    runCatching {
+                        crashlyticsManager.logMessage("exchanging principal id")
+                        requiredUseCases.exchangePrincipalIdUseCase
+                            .invoke(
+                                ExchangePrincipalIdUseCase.Params(
+                                    idToken = idToken,
+                                    userPrincipal = canisterWrapper.getUserPrincipal(),
+                                ),
+                            ).getOrThrow()
+                    }
+                }
+            val balance =
+                async {
+                    crashlyticsManager.logMessage("getting balance")
+                    runCatching {
+                        requiredUseCases.getBalanceUseCase
+                            .invoke(canisterWrapper.getUserPrincipal())
+                            .getOrThrow()
+                    }
+                }
+            val exchangeResult = exchange.await()
+            val balanceResult = balance.await()
+            if (exchangeResult.isSuccess && balanceResult.isSuccess) {
+                val response = exchangeResult.getOrNull()
+                val balanceResponse = balanceResult.getOrNull()
+                if (response != null && balanceResponse != null) {
+                    crashlyticsManager.logMessage("updating user coins")
+                    requiredUseCases
+                        .updateDocumentUseCase
+                        .invoke(
+                            parameter =
+                                UpdateDocumentUseCase.Params(
+                                    collectionName = "users",
+                                    documentId = canisterWrapper.getUserPrincipal(),
+                                    fieldAndValue = Pair("coins", balanceResponse),
+                                ),
+                        ).onSuccess {
+                            signInWithToken(
+                                data = data,
+                                canisterWrapper = canisterWrapper,
+                                fbResponse = response,
+                                coinBalance = balanceResponse,
+                            )
+                        }
+                }
+            }
+        }
+    }
+
+    private suspend fun signInWithToken(
+        data: ByteArray,
+        canisterWrapper: CanistersWrapper,
+        fbResponse: ExchangePrincipalResponse,
+        coinBalance: Long,
+    ) {
+        crashlyticsManager.logMessage("signing with token")
+        requiredUseCases
+            .signOutUseCase
+            .invoke(Unit)
+            .onSuccess {
+                requiredUseCases.signInWithTokenUseCase
+                    .invoke(fbResponse.token)
+                    .onSuccess {
+                        setSession(data, canisterWrapper, coinBalance)
+                    }.onFailure { }
+            }.onFailure { }
+    }
+
+    private suspend fun setSession(
+        data: ByteArray,
+        canisterWrapper: CanistersWrapper,
+        initialCoinBalance: Long,
+    ) {
+        sessionManager.updateState(
+            SessionState.SignedIn(
+                session =
+                    Session(
+                        identity = data,
+                        canisterPrincipal = canisterWrapper.getCanisterPrincipal(),
+                        userPrincipal = canisterWrapper.getUserPrincipal(),
+                    ),
+            ),
+        )
+        sessionManager.updateCoinBalance(initialCoinBalance)
+        analyticsManager.trackEvent(
+            event = AuthSuccessfulEventData(),
+        )
     }
 
     private suspend fun refreshAccessToken() {
@@ -161,17 +300,14 @@ class DefaultAuthClient(
         refreshToken?.let {
             requiredUseCases.refreshTokenUseCase
                 .invoke(refreshToken)
-                .mapBoth(
-                    success = { tokenResponse ->
-                        handleToken(
-                            idToken = tokenResponse.idToken,
-                            accessToken = tokenResponse.accessToken,
-                            refreshToken = tokenResponse.refreshToken,
-                            shouldRefreshToken = true,
-                        )
-                    },
-                    failure = { logout() },
-                )
+                .onSuccess { tokenResponse ->
+                    handleToken(
+                        idToken = tokenResponse.idToken,
+                        accessToken = tokenResponse.accessToken,
+                        refreshToken = tokenResponse.refreshToken,
+                        shouldRefreshToken = true,
+                    )
+                }.onFailure { logout() }
         } ?: obtainAnonymousIdentity()
     }
 
@@ -218,33 +354,29 @@ class DefaultAuthClient(
     private suspend fun authenticate(code: String) {
         requiredUseCases.authenticateTokenUseCase
             .invoke(code)
-            .mapBoth(
-                success = { tokenResponse ->
-                    handleToken(
-                        idToken = tokenResponse.idToken,
-                        accessToken = tokenResponse.accessToken,
-                        refreshToken = tokenResponse.refreshToken,
-                        shouldRefreshToken = true,
-                        shouldSetMetadata = true,
-                    )
-                    preferences.putBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name, true)
-                },
-                failure = { YralException(it.localizedMessage ?: "") },
-            )
+            .onSuccess { tokenResponse ->
+                handleToken(
+                    idToken = tokenResponse.idToken,
+                    accessToken = tokenResponse.accessToken,
+                    refreshToken = tokenResponse.refreshToken,
+                    shouldRefreshToken = true,
+                    shouldSetMetadata = true,
+                )
+                preferences.putBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name, true)
+            }.onFailure { }
     }
 
-    private suspend fun updateSessionAsRegistered() {
-        preferences.getString(PrefKeys.ID_TOKEN.name)?.let { idToken ->
-            sessionManager.getCanisterPrincipal()?.let { canisterId ->
-                requiredUseCases.updateSessionAsRegisteredUseCase.invoke(
-                    parameter =
-                        UpdateSessionAsRegisteredUseCase.Params(
-                            idToken = idToken,
-                            canisterId = canisterId,
-                        ),
-                )
-            }
-        }
+    private suspend fun updateSessionAsRegistered(
+        idToken: String,
+        canisterId: String,
+    ) {
+        requiredUseCases.updateSessionAsRegisteredUseCase.invoke(
+            parameter =
+                UpdateSessionAsRegisteredUseCase.Params(
+                    idToken = idToken,
+                    canisterId = canisterId,
+                ),
+        )
     }
 
     data class RequiredUseCases(
@@ -252,5 +384,12 @@ class DefaultAuthClient(
         val obtainAnonymousIdentityUseCase: ObtainAnonymousIdentityUseCase,
         val refreshTokenUseCase: RefreshTokenUseCase,
         val updateSessionAsRegisteredUseCase: UpdateSessionAsRegisteredUseCase,
+        val signOutUseCase: SignOutUseCase,
+        val signInAnonymouslyUseCase: SignInAnonymouslyUseCase,
+        val signInWithTokenUseCase: SignInWithTokenUseCase,
+        val exchangePrincipalIdUseCase: ExchangePrincipalIdUseCase,
+        val getBalanceUseCase: GetBalanceUseCase,
+        val updateDocumentUseCase: UpdateDocumentUseCase,
+        val getIdTokenUseCase: GetIdTokenUseCase,
     )
 }
