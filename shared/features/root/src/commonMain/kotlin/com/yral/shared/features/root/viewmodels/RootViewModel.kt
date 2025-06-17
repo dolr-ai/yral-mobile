@@ -7,10 +7,6 @@ import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.AuthClient
-import com.yral.shared.features.feed.viewmodel.FeedViewModel
-import com.yral.shared.koin.koinInstance
-import com.yral.shared.rust.domain.models.FeedDetails
-import com.yral.shared.rust.domain.models.Post
 import com.yral.shared.rust.services.IndividualUserServiceFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -23,7 +19,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
-import org.koin.core.parameter.parametersOf
 
 enum class RootError {
     TIMEOUT,
@@ -95,11 +90,6 @@ class RootViewModel(
         }
     }
 
-    fun createFeedViewModel(): FeedViewModel =
-        koinInstance.get<FeedViewModel> {
-            parametersOf(_state.value.posts, _state.value.feedDetails)
-        }
-
     fun updateCurrentTab(tab: String) {
         coroutineScope.launch {
             _state.update { it.copy(currentHomePageTab = tab) }
@@ -108,8 +98,6 @@ class RootViewModel(
 }
 
 data class RootState(
-    val posts: List<Post> = emptyList(),
-    val feedDetails: List<FeedDetails> = emptyList(),
     val showSplash: Boolean = true,
     val initialAnimationComplete: Boolean = false,
     val currentHomePageTab: String = "Home",
