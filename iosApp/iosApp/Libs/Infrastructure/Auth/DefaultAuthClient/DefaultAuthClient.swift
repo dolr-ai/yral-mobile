@@ -316,8 +316,8 @@ final class DefaultAuthClient: NSObject, AuthClient {
     userPrincipalString = nil
     identityData = nil
     UserDefaultsManager.shared.set(false, for: DefaultsKey.userDefaultsLoggedIn)
-    try await obtainAnonymousIdentity()
     stateSubject.value = .loggedOut
+    try await obtainAnonymousIdentity()
   }
 
   func generateNewDelegatedIdentity() throws -> DelegatedIdentity {
