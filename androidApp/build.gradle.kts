@@ -102,6 +102,8 @@ dependencies {
     implementation(projects.shared.features.auth)
     implementation(projects.shared.libs.analytics)
     implementation(projects.shared.libs.crashlytics)
+    implementation(projects.shared.libs.firebaseAuth)
+    implementation(projects.shared.libs.firebaseStore)
     implementation(projects.shared.libs.koin)
     implementation(projects.shared.features.feed)
     implementation(projects.shared.features.root)
