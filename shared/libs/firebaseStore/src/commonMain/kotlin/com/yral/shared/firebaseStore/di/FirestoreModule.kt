@@ -1,6 +1,9 @@
 package com.yral.shared.firebaseStore.di
 
+import com.yral.shared.firebaseStore.model.AboutGameItemDto
 import com.yral.shared.firebaseStore.model.FirestoreDocument
+import com.yral.shared.firebaseStore.model.GameConfigDto
+import com.yral.shared.firebaseStore.model.LeaderboardItemDto
 import com.yral.shared.firebaseStore.repository.FBFirestoreRepository
 import com.yral.shared.firebaseStore.repository.FBFirestoreRepositoryApi
 import com.yral.shared.firebaseStore.usecase.GetCollectionUseCase
@@ -25,4 +28,10 @@ val firestoreModule: Module =
     module {
         factory<FBFirestoreRepositoryApi> { FBFirestoreRepository() }
         factoryOf(::UpdateDocumentUseCase)
+        includes(
+            getFBDocumentUseCaseFactory<GameConfigDto>("GameConfig"),
+            getFBDocumentUseCaseFactory<LeaderboardItemDto>("LeaderBoard"),
+            getCollectionUseCaseFactory<AboutGameItemDto>("AboutGame"),
+            getCollectionUseCaseFactory<LeaderboardItemDto>("LeaderBoard"),
+        )
     }
