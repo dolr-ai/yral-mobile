@@ -14,57 +14,63 @@ import kotlinx.coroutines.flow.asStateFlow
 internal class FBAuthRepository(
     private val auth: FirebaseAuth = Firebase.auth,
 ) : FBAuthRepositoryApi {
-    val authState: StateFlow<AuthState>
-        get() = _authState.asStateFlow()
-    private val _authState = MutableStateFlow<AuthState>(AuthState.NotAuthenticated)
+    private val authState = MutableStateFlow<AuthState>(AuthState.NotAuthenticated)
 
-    override fun observeAuthState(): StateFlow<AuthState> = authState
+    override fun observeAuthState(): StateFlow<AuthState> = authState.asStateFlow()
 
     override suspend fun signInAnonymously(): Result<String> =
         try {
-            _authState.emit(AuthState.Loading)
+            authState.emit(AuthState.Loading)
             val result = auth.signInAnonymously()
-            val user = result.user ?: throw YralException("Sign in successful but user is null")
-            _authState.emit(AuthState.Authenticated(user.uid))
-            Result.success(user.uid)
+            val user = result.user
+            if (user == null) {
+                Result.failure(YralException("Sign in successful but user is null"))
+            } else {
+                authState.emit(AuthState.Authenticated(user.uid))
+                Result.success(user.uid)
+            }
         } catch (e: FirebaseAuthException) {
             val errorMessage = e.message ?: "Unknown error during sign in"
-            _authState.emit(AuthState.Error(errorMessage))
+            authState.emit(AuthState.Error(errorMessage))
             Result.failure(YralException(errorMessage))
         } catch (e: Exception) {
             val errorMessage = "Unexpected error during sign in: ${e.message}"
-            _authState.emit(AuthState.Error(errorMessage))
+            authState.emit(AuthState.Error(errorMessage))
             Result.failure(YralException(errorMessage))
         }
 
     override suspend fun signInWithToken(token: String): Result<String> =
         try {
-            _authState.emit(AuthState.Loading)
+            authState.emit(AuthState.Loading)
             val result = auth.signInWithCustomToken(token)
-            val user = result.user ?: throw YralException("Sign in successful but user is null")
-            _authState.emit(AuthState.Authenticated(user.uid))
-            Result.success(user.uid)
+            val user = result.user
+            if (user == null) {
+                Result.failure(YralException("Sign in successful but user is null"))
+            } else {
+                authState.emit(AuthState.Authenticated(user.uid))
+                Result.success(user.uid)
+            }
         } catch (e: FirebaseAuthException) {
             val errorMessage = e.message ?: "Unknown error during sign in"
-            _authState.emit(AuthState.Error(errorMessage))
+            authState.emit(AuthState.Error(errorMessage))
             Result.failure(YralException(errorMessage))
         } catch (e: Exception) {
             val errorMessage = "Unexpected error during sign in: ${e.message}"
-            _authState.emit(AuthState.Error(errorMessage))
+            authState.emit(AuthState.Error(errorMessage))
             Result.failure(YralException(errorMessage))
         }
 
     override suspend fun signOut() =
         try {
             auth.signOut()
-            _authState.emit(AuthState.NotAuthenticated)
+            authState.emit(AuthState.NotAuthenticated)
         } catch (e: FirebaseAuthException) {
             val errorMessage = e.message ?: "Error during sign out"
-            _authState.emit(AuthState.Error(errorMessage))
+            authState.emit(AuthState.Error(errorMessage))
             throw YralException(errorMessage)
         } catch (e: Exception) {
             val errorMessage = "Unexpected error during sign out: ${e.message}"
-            _authState.emit(AuthState.Error(errorMessage))
+            authState.emit(AuthState.Error(errorMessage))
             throw YralException(errorMessage)
         }
 
@@ -80,9 +86,13 @@ internal class FBAuthRepository(
 
     override suspend fun refreshIdToken(): Result<String?> =
         try {
-            val user = auth.currentUser ?: throw YralException("No user is currently signed in")
-            val token = user.getIdToken(true)
-            Result.success(token)
+            val user = auth.currentUser
+            if (user == null) {
+                Result.failure(YralException("No user is currently signed in"))
+            } else {
+                val token = user.getIdToken(true)
+                Result.success(token)
+            }
         } catch (e: FirebaseAuthException) {
             Result.failure(YralException(e.message ?: "Error refreshing ID token"))
         } catch (e: Exception) {
@@ -92,7 +102,7 @@ internal class FBAuthRepository(
     init {
         // Initialize the auth state based on current user
         auth.currentUser?.let { user ->
-            _authState.tryEmit(AuthState.Authenticated(user.uid))
+            authState.tryEmit(AuthState.Authenticated(user.uid))
         }
     }
 }
