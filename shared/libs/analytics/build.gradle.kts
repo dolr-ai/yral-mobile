@@ -12,37 +12,27 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_21)
         }
     }
-//    listOf(
-//        iosX64(),
-//        iosArm64(),
-//        iosSimulatorArm64()
-//    ).forEach {
-//        it.binaries.framework {
-//            baseName = "shared"
-//            isStatic = true
-//        }
-//    }
+    listOf(
+        iosArm64(),
+        iosSimulatorArm64()
+    )
 
     sourceSets {
         commonMain.dependencies {
             implementation(projects.shared.libs.http)
             implementation(projects.shared.core)
             implementation(projects.shared.libs.koin)
-            implementation(projects.shared.libs.preferences)
             implementation(projects.shared.libs.crashlytics)
-
-            val (dependencies, shouldAddRustModule) = BuildConfig.getAndProcessDependencies(project)
-            dependencies.forEach { dependency ->
-                if (dependency.isNotEmpty()) {
-                    implementation(dependency)
-                }
-            }
-            if (shouldAddRustModule) {
-                implementation(projects.shared.rust)
-            }
-
             api(libs.gitlive.firebase.kotlin.anlaytics)
+
         }
+        androidMain.dependencies {
+            implementation(projects.shared.libs.preferences)
+            val (deps, addRust) = BuildConfig.getAndProcessDependencies(project)
+            deps.forEach { implementation(it) }
+            if (addRust) implementation(projects.shared.rust)
+        }
+
         commonTest.dependencies {
             implementation(libs.kotlin.test)
         }
