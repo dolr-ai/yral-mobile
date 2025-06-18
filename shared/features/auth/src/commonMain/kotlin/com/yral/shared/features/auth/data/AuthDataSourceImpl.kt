@@ -1,8 +1,8 @@
 package com.yral.shared.features.auth.data
 
-import com.yral.shared.core.AppConfigurations.FIREBASE_AUTH_URL
 import com.yral.shared.core.AppConfigurations.METADATA_BASE_URL
 import com.yral.shared.core.AppConfigurations.OAUTH_BASE_URL
+import com.yral.shared.core.FirebaseConfigurations
 import com.yral.shared.features.auth.data.models.ExchangePrincipalResponseDto
 import com.yral.shared.features.auth.data.models.TokenResponseDto
 import com.yral.shared.http.httpPost
@@ -18,6 +18,7 @@ import kotlinx.serialization.json.Json
 class AuthDataSourceImpl(
     private val client: HttpClient,
     private val json: Json,
+    private val firebaseConfigurations: FirebaseConfigurations,
 ) : AuthDataSource {
     override suspend fun obtainAnonymousIdentity(): TokenResponseDto {
         val formData =
@@ -112,7 +113,7 @@ class AuthDataSourceImpl(
             json = json,
         ) {
             url {
-                host = FIREBASE_AUTH_URL
+                host = firebaseConfigurations.firebaseAuthUrl
                 path(EXCHANGE_PRINCIPAL_PATH)
             }
             headers.append("authorization", "Bearer $idToken")

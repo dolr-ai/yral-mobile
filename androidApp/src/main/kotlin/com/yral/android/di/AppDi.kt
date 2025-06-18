@@ -3,6 +3,7 @@ package com.yral.android.di
 import co.touchlab.kermit.platformLogWriter
 import com.yral.android.BuildConfig
 import com.yral.shared.analytics.di.analyticsModule
+import com.yral.shared.core.FirebaseConfigurations
 import com.yral.shared.core.di.coreModule
 import com.yral.shared.core.logging.YralLogger
 import com.yral.shared.crashlytics.di.crashlyticsModule
@@ -35,6 +36,9 @@ fun initKoin(appDeclaration: KoinAppDeclaration) {
             rustModule,
             firebaseAuthModule,
             firestoreModule,
+            module {
+                single<FirebaseConfigurations> { getFirebaseEnv() }
+            },
         )
         modules(
             authModule,
@@ -45,6 +49,25 @@ fun initKoin(appDeclaration: KoinAppDeclaration) {
         )
     }
 }
+
+private fun getFirebaseEnv(): FirebaseConfigurations =
+    when (BuildConfig.FLAVOR) {
+        "staging" ->
+            FirebaseConfigurations(
+                firebaseBucket = "gs://yral-staging.firebasestorage.app",
+                firebaseAuthUrl = "us-central1-yral-staging.cloudfunctions.net",
+            )
+        "prod" ->
+            FirebaseConfigurations(
+                firebaseBucket = "gs://yral-mobile.firebasestorage.app",
+                firebaseAuthUrl = "us-central1-yral-mobile.cloudfunctions.net",
+            )
+        else -> // default would be prod
+            FirebaseConfigurations(
+                firebaseBucket = "gs://yral-mobile.firebasestorage.app",
+                firebaseAuthUrl = "us-central1-yral-mobile.cloudfunctions.net",
+            )
+    }
 
 val platformModule =
     module {

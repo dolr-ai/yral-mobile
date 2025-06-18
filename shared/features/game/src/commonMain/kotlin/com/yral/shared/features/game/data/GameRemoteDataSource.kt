@@ -1,7 +1,7 @@
 package com.yral.shared.features.game.data
 
-import com.yral.shared.core.AppConfigurations.FIREBASE_AUTH_URL
 import com.yral.shared.core.AppConfigurations.PUMP_DUMP_BASE_URL
+import com.yral.shared.core.FirebaseConfigurations
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.features.game.data.models.CastVoteRequestDto
 import com.yral.shared.features.game.data.models.CastVoteResponseDto
@@ -19,6 +19,7 @@ import kotlinx.serialization.json.Json
 class GameRemoteDataSource(
     private val httpClient: HttpClient,
     private val json: Json,
+    private val firebaseConfigurations: FirebaseConfigurations,
 ) : IGameRemoteDataSource {
     @Suppress("SwallowedException", "TooGenericExceptionCaught")
     override suspend fun castVote(
@@ -29,7 +30,7 @@ class GameRemoteDataSource(
             val response: HttpResponse =
                 httpClient.post {
                     url {
-                        host = FIREBASE_AUTH_URL
+                        host = firebaseConfigurations.firebaseAuthUrl
                         path(CAST_VOTE_PATH)
                     }
                     headers.append("authorization", "Bearer $idToken")

@@ -1,7 +1,7 @@
 package com.yral.shared.features.game.domain
 
 import com.github.michaelbull.result.getOrThrow
-import com.yral.shared.core.AppConfigurations.FIREBASE_BUCKET
+import com.yral.shared.core.FirebaseConfigurations
 import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.game.data.models.toGameConfig
@@ -15,6 +15,7 @@ import dev.gitlive.firebase.storage.storage
 class GetGameIconsUseCase(
     appDispatchers: AppDispatchers,
     crashlyticsManager: CrashlyticsManager,
+    private val firebaseConfigurations: FirebaseConfigurations,
     private val getConfigUseCase: GetFBDocumentUseCase<GameConfigDto>,
 ) : SuspendUseCase<GetGameIconsUseCase.GetGameIconsParams, List<GameIcon>>(
         appDispatchers.io,
@@ -32,7 +33,7 @@ class GetGameIconsUseCase(
                 ).getOrThrow()
                 .toGameConfig()
         if (config.lossPenalty < parameter.coinBalance) {
-            val storage = Firebase.storage(FIREBASE_BUCKET)
+            val storage = Firebase.storage(firebaseConfigurations.firebaseBucket)
             val storageRef = storage.reference
             return config.availableSmileys.map { smiley ->
                 smiley.copy(

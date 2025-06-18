@@ -1,7 +1,7 @@
 package com.yral.shared.features.game.domain
 
 import com.github.michaelbull.result.getOrThrow
-import com.yral.shared.core.AppConfigurations.FIREBASE_BUCKET
+import com.yral.shared.core.FirebaseConfigurations
 import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.game.data.models.toAboutGameItem
@@ -15,6 +15,7 @@ import dev.gitlive.firebase.storage.storage
 class GetGameRulesUseCase(
     appDispatchers: AppDispatchers,
     crashlyticsManager: CrashlyticsManager,
+    private val firebaseConfigurations: FirebaseConfigurations,
     private val getAboutUseCase: GetCollectionUseCase<AboutGameItemDto>,
 ) : SuspendUseCase<Unit, List<AboutGameItem>>(appDispatchers.io, crashlyticsManager) {
     override suspend fun execute(parameter: Unit): List<AboutGameItem> {
@@ -27,7 +28,7 @@ class GetGameRulesUseCase(
                         ),
                 ).getOrThrow()
                 .map { it.toAboutGameItem() }
-        val storage = Firebase.storage(FIREBASE_BUCKET)
+        val storage = Firebase.storage(firebaseConfigurations.firebaseBucket)
         val storageRef = storage.reference
         return rules.map { rule ->
             rule.copy(
