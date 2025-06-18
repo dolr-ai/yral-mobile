@@ -69,4 +69,19 @@ object YralColors {
         } catch (_: Exception) {
             Grey50
         }
+
+    fun getColorFromHex(hex: String): Color {
+        val cleanHex = hex.removePrefix("#")
+        return try {
+            val colorLong =
+                when (cleanHex.length) {
+                    6 -> 0xFF000000 or cleanHex.toLong(16) // RRGGBB -> add full alpha
+                    8 -> cleanHex.toLong(16) // AARRGGBB
+                    else -> return Color.White
+                }
+            Color(colorLong)
+        } catch (e: NumberFormatException) {
+            Color.White
+        }
+    }
 }

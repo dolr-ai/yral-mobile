@@ -163,7 +163,7 @@ private fun getAnnotatedString(body: AboutGameItemBody) =
         body.content?.forEachIndexed { index, text ->
             val color =
                 body.colors?.get(index)?.let {
-                    YralColors.getColorByName(it)
+                    YralColors.getColorFromHex(it)
                 } ?: YralColors.Grey50
             withStyle(
                 style = spanStyle.copy(color = color),
