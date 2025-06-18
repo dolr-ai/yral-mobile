@@ -45,7 +45,7 @@ import com.yral.shared.koin.koinInstance
 
 @Composable
 fun HomeScreen(
-    createFeedViewModel: () -> FeedViewModel,
+    feedViewModel: FeedViewModel,
     currentTab: String,
     updateCurrentTab: (tab: String) -> Unit,
 ) {
@@ -73,7 +73,7 @@ fun HomeScreen(
                         Modifier
                             .padding(innerPadding)
                             .background(MaterialTheme.colorScheme.primaryContainer),
-                    viewModel = createFeedViewModel(),
+                    viewModel = feedViewModel,
                 )
 
             HomeTab.ACCOUNT.title ->

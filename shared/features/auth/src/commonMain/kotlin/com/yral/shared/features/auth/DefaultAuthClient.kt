@@ -160,7 +160,7 @@ class DefaultAuthClient(
             val canisterWrapper = authenticateWithNetwork(data, null)
             preferences.putBytes(PrefKeys.IDENTITY.name, data)
             if (shouldSetMetaData) {
-                updateYralSession()
+                updateYralSession(canisterWrapper)
             }
             authorizeFirebase(data, canisterWrapper)
         } catch (e: FfiException) {
@@ -168,14 +168,12 @@ class DefaultAuthClient(
         }
     }
 
-    private suspend fun updateYralSession() {
+    private suspend fun updateYralSession(canisterWrapper: CanistersWrapper) {
         preferences.getString(PrefKeys.ID_TOKEN.name)?.let { idToken ->
-            sessionManager.getCanisterPrincipal()?.let { canisterId ->
-                updateSessionAsRegistered(
-                    idToken = idToken,
-                    canisterId = canisterId,
-                )
-            }
+            updateSessionAsRegistered(
+                idToken = idToken,
+                canisterId = canisterWrapper.getCanisterPrincipal(),
+            )
         }
     }
 

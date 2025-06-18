@@ -21,7 +21,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -36,6 +38,7 @@ import com.yral.android.ui.screens.home.HomeScreen
 import com.yral.android.ui.widgets.YralBottomSheet
 import com.yral.android.ui.widgets.YralGradientButton
 import com.yral.android.ui.widgets.YralLottieAnimation
+import com.yral.shared.core.session.SessionState
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.root.viewmodels.RootError
 import com.yral.shared.features.root.viewmodels.RootViewModel
@@ -47,9 +50,13 @@ import org.koin.compose.viewmodel.koinViewModel
 fun RootScreen(viewModel: RootViewModel = koinViewModel()) {
     val state by viewModel.state.collectAsState()
     val sessionState by viewModel.sessionManagerState.collectAsState()
+    var feedViewModel by remember { mutableStateOf<FeedViewModel?>(null) }
     LaunchedEffect(sessionState) {
         if (sessionState != state.currentSessionState) {
             viewModel.initialize()
+            if (sessionState is SessionState.SignedIn) {
+                feedViewModel = koinInstance.get()
+            }
         }
     }
 
@@ -80,12 +87,13 @@ fun RootScreen(viewModel: RootViewModel = koinViewModel()) {
         } else {
             // Reset system bars to normal
             HandleSystemBars(show = true)
-            val feedViewModel = remember { koinInstance.get<FeedViewModel>() }
-            HomeScreen(
-                createFeedViewModel = { feedViewModel },
-                currentTab = state.currentHomePageTab,
-                updateCurrentTab = { viewModel.updateCurrentTab(it) },
-            )
+            feedViewModel?.let {
+                HomeScreen(
+                    feedViewModel = it,
+                    currentTab = state.currentHomePageTab,
+                    updateCurrentTab = { viewModel.updateCurrentTab(it) },
+                )
+            }
         }
     }
 }
