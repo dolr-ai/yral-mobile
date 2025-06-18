@@ -8,6 +8,7 @@ from typing import List, Dict, Any
 import requests
 from requests.exceptions import RequestException
 import os
+import random
 
 firebase_admin.initialize_app()
 
@@ -210,12 +211,17 @@ def cast_vote(request: Request):
 
             vid_exists  = vid_ref.get(transaction=tx).exists
             if not vid_exists:
-                zero = {s["id"]: 0 for s in smileys}
+                seed_winner = random.choice([s["id"] for s in smileys])
                 tx.set(vid_ref, {
                     "created_at": firestore.SERVER_TIMESTAMP
                 })
-                for k in range(SHARDS):
-                    tx.set(shard_ref(k), zero, merge=True)
+
+                zero = {s["id"]: 0 for s in smileys}
+                zero[seed_winner] = 1
+                tx.set(shard_ref(0), zero, merge=True)
+
+                for k in range(1, SHARDS):
+                    tx.set(shard_ref(k), {s["id"]: 0 for s in smileys}, merge=True)
 
             # write vote + counter
             tx.set(vote_ref, {
