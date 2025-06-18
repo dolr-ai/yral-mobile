@@ -51,7 +51,6 @@ class RootViewModel(
         initialisationJob?.cancel()
         initialisationJob =
             coroutineScope.launch {
-                sessionManager.updateState(SessionState.Initial)
                 _state.update {
                     RootState(
                         currentSessionState = sessionManager.state.value,
@@ -66,6 +65,7 @@ class RootViewModel(
                     }
                 } catch (e: TimeoutCancellationException) {
                     _state.update { it.copy(error = RootError.TIMEOUT) }
+                    Logger.e("Splash timeout - ${e.message}")
                     crashlyticsManager.recordException(
                         YralException("Splash screen timeout - initialization took too long"),
                     )

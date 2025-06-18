@@ -1,6 +1,5 @@
 package com.yral.shared.features.auth
 
-import com.github.michaelbull.result.getOrThrow
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.analytics.AnalyticsManager
@@ -34,8 +33,6 @@ import com.yral.shared.uniffi.generated.FfiException
 import com.yral.shared.uniffi.generated.authenticateWithNetwork
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 
@@ -200,46 +197,44 @@ class DefaultAuthClient(
         data: ByteArray,
         canisterWrapper: CanistersWrapper,
     ) {
-        crashlyticsManager.logMessage("exchanging token")
-        coroutineScope {
-            val exchange =
-                async {
-                    runCatching {
-                        crashlyticsManager.logMessage("exchanging principal id")
-                        requiredUseCases.exchangePrincipalIdUseCase
-                            .invoke(
-                                ExchangePrincipalIdUseCase.Params(
-                                    idToken = idToken,
-                                    userPrincipal = canisterWrapper.getUserPrincipal(),
-                                ),
-                            ).getOrThrow()
-                    }.onFailure { throw YralException("exchanging principal failed") }
-                }
-            val balance =
-                async {
-                    crashlyticsManager.logMessage("getting balance")
-                    runCatching {
-                        requiredUseCases.getBalanceUseCase
-                            .invoke(canisterWrapper.getUserPrincipal())
-                            .getOrThrow()
-                    }.onFailure { throw YralException("getting balance failed") }
-                }
-            val exchangeResult = exchange.await()
-            val balanceResult = balance.await()
-            updateBalanceAndProceed(data, canisterWrapper, exchangeResult, balanceResult)
-        }
+        crashlyticsManager.logMessage("exchanging principal id")
+        requiredUseCases.exchangePrincipalIdUseCase
+            .invoke(
+                ExchangePrincipalIdUseCase.Params(
+                    idToken = idToken,
+                    userPrincipal = canisterWrapper.getUserPrincipal(),
+                ),
+            ).onSuccess {
+                signInWithToken(data, canisterWrapper, it)
+            }.onFailure { throw YralException("exchanging principal failed") }
+    }
+
+    private suspend fun signInWithToken(
+        data: ByteArray,
+        canisterWrapper: CanistersWrapper,
+        exchangeResult: ExchangePrincipalResponse,
+    ) {
+        crashlyticsManager.logMessage("signing with token")
+        requiredUseCases
+            .signOutUseCase
+            .invoke(Unit)
+            .onSuccess {
+                requiredUseCases.signInWithTokenUseCase
+                    .invoke(exchangeResult.token)
+                    .onSuccess {
+                        updateBalanceAndProceed(data, canisterWrapper)
+                    }.onFailure { throw YralException("sign in with token failed") }
+            }.onFailure { throw YralException("sign out for auth token sign in failed") }
     }
 
     private suspend fun updateBalanceAndProceed(
         data: ByteArray,
         canisterWrapper: CanistersWrapper,
-        exchangeResult: Result<ExchangePrincipalResponse>,
-        balanceResult: Result<Long>,
     ) {
-        if (exchangeResult.isSuccess && balanceResult.isSuccess) {
-            val response = exchangeResult.getOrNull()
-            val balanceResponse = balanceResult.getOrNull()
-            if (response != null && balanceResponse != null) {
+        crashlyticsManager.logMessage("getting balance")
+        requiredUseCases.getBalanceUseCase
+            .invoke(canisterWrapper.getUserPrincipal())
+            .onSuccess { coinBalance ->
                 crashlyticsManager.logMessage("updating user coins")
                 requiredUseCases
                     .updateDocumentUseCase
@@ -248,43 +243,12 @@ class DefaultAuthClient(
                             UpdateDocumentUseCase.Params(
                                 collectionName = "users",
                                 documentId = canisterWrapper.getUserPrincipal(),
-                                fieldAndValue = Pair("coins", balanceResponse),
+                                fieldAndValue = Pair("coins", coinBalance),
                             ),
                     ).onSuccess {
-                        signInWithToken(
-                            data = data,
-                            canisterWrapper = canisterWrapper,
-                            fbResponse = response,
-                            coinBalance = balanceResponse,
-                        )
-                    }.onFailure { throw YralException("update coin balance failed") }
-            }
-        } else {
-            throw YralException(
-                "exchanging principal id ${exchangeResult.isSuccess} ".plus(
-                    "getting balance ${balanceResult.isSuccess}",
-                ),
-            )
-        }
-    }
-
-    private suspend fun signInWithToken(
-        data: ByteArray,
-        canisterWrapper: CanistersWrapper,
-        fbResponse: ExchangePrincipalResponse,
-        coinBalance: Long,
-    ) {
-        crashlyticsManager.logMessage("signing with token")
-        requiredUseCases
-            .signOutUseCase
-            .invoke(Unit)
-            .onSuccess {
-                requiredUseCases.signInWithTokenUseCase
-                    .invoke(fbResponse.token)
-                    .onSuccess {
                         setSession(data, canisterWrapper, coinBalance)
-                    }.onFailure { throw YralException("sign in with token failed") }
-            }.onFailure { throw YralException("sign out for auth token sign in failed") }
+                    }.onFailure { throw YralException("update coin balance failed") }
+            }.onFailure { throw YralException("get balance failed") }
     }
 
     private suspend fun setSession(
