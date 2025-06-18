@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 70;
+	objectVersion = 77;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -17,12 +17,16 @@
 		10512A532DA795A800114BAA /* YralQueuePlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10512A512DA7959D00114BAA /* YralQueuePlayer.swift */; };
 		10BA2E872DA6507E00B6BE97 /* FeedsPlayerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10BA2E842DA6507E00B6BE97 /* FeedsPlayerTests.swift */; };
 		2152FB042600AC8F00CF470E /* IosApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* IosApp.swift */; };
+		620F6EE6C2B53BE4C4B157C5 /* Pods_YralTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2CC3364344FC81265FE7B6B8 /* Pods_YralTests.framework */; };
+		69AC5F84D602948569529C80 /* Pods_Yral_Staging.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 15C698F1EA12D71F079A089D /* Pods_Yral_Staging.framework */; };
+		7108A65B6C00D0659ED71DB8 /* Pods_Yral.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3D17D0E74B68F51CAA010DD3 /* Pods_Yral.framework */; };
 		7555FF83242A565900829871 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* ContentView.swift */; };
 		AC09A9B22CDB775C009A39A4 /* yral-mobile-swift-binding.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC09A9AD2CDB775C009A39A4 /* yral-mobile-swift-binding.swift */; };
 		AC09A9B32CDB775C009A39A4 /* SwiftBridgeCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC09A9B02CDB775C009A39A4 /* SwiftBridgeCore.swift */; };
 		AC09A9FA2CDB7A5D009A39A4 /* SwiftBindings+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC09A9F92CDB7A5D009A39A4 /* SwiftBindings+Extensions.swift */; };
 		AC09AA742CDD210D009A39A4 /* Data+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC09AA732CDD2107009A39A4 /* Data+Extensions.swift */; };
-		AC0E49C42CEBA6F0002DC158 /* secp256k1 in Frameworks */ = {isa = PBXBuildFile; productRef = AC0E49C32CEBA6F0002DC158 /* secp256k1 */; };
+		AC1233752DF5E14100DAFCF4 /* libsecp256k1 in Frameworks */ = {isa = PBXBuildFile; productRef = AC1233742DF5E14100DAFCF4 /* libsecp256k1 */; };
+		AC1233772DF5E16000DAFCF4 /* P256K in Frameworks */ = {isa = PBXBuildFile; productRef = AC1233762DF5E16000DAFCF4 /* P256K */; };
 		AC12B9D22D3809B7004E9EA9 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = AC12B9D12D3809B7004E9EA9 /* GoogleService-Info.plist */; };
 		AC1ACF982DB9161F001BDCFD /* AuthState.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1ACF972DB9161D001BDCFD /* AuthState.swift */; };
 		AC1ACF992DB9161F001BDCFD /* AuthState.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1ACF972DB9161D001BDCFD /* AuthState.swift */; };
@@ -332,7 +336,10 @@
 		ACB46A7D2D105BEB002E200C /* UIKitInitializers.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A7B2D105BE0002E200C /* UIKitInitializers.swift */; };
 		ACB46A802D106034002E200C /* FeedsCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A7F2D106031002E200C /* FeedsCell.swift */; };
 		ACB46A812D106034002E200C /* FeedsCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A7F2D106031002E200C /* FeedsCell.swift */; };
-		ACB815482CFA146800104B7B /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = ACB815472CFA146800104B7B /* FirebaseCore */; };
+		ACBB252E2DF5DE67006EC908 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = ACBB252D2DF5DE67006EC908 /* FirebaseCrashlytics */; };
+		ACBB25302DF5DE6D006EC908 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = ACBB252F2DF5DE6D006EC908 /* FirebaseCore */; };
+		ACBB25322DF5DE72006EC908 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = ACBB25312DF5DE72006EC908 /* FirebaseCore */; };
+		ACBB25342DF5DE76006EC908 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = ACBB25332DF5DE76006EC908 /* FirebaseCrashlytics */; };
 		ACC0D4342D8BFE67006DCF5C /* NudgePopupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC0D4332D8BFE5B006DCF5C /* NudgePopupView.swift */; };
 		ACC0D4352D8BFE67006DCF5C /* NudgePopupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC0D4332D8BFE5B006DCF5C /* NudgePopupView.swift */; };
 		ACC0D43D2D8C6BF3006DCF5C /* ClearBackgroundView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC0D43C2D8C6BEB006DCF5C /* ClearBackgroundView.swift */; };
@@ -363,6 +370,7 @@
 		ACC1C3992D9AF8BD005A7539 /* LottieLoaderContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC1C3972D9AF8B3005A7539 /* LottieLoaderContainerView.swift */; };
 		ACC1C39E2D9B046F005A7539 /* LottieRefreshSingletonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC1C39D2D9B046F005A7539 /* LottieRefreshSingletonView.swift */; };
 		ACC1C39F2D9B046F005A7539 /* LottieRefreshSingletonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC1C39D2D9B046F005A7539 /* LottieRefreshSingletonView.swift */; };
+		ACC255172DF5DF2D001EA774 /* libsecp256k1 in Frameworks */ = {isa = PBXBuildFile; productRef = ACC255162DF5DF2D001EA774 /* libsecp256k1 */; };
 		ACCA778E2DE4C1A2005BC0FA /* EventBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACCA778D2DE4C19E005BC0FA /* EventBuffer.swift */; };
 		ACCA778F2DE4C1A2005BC0FA /* EventBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACCA778D2DE4C19E005BC0FA /* EventBuffer.swift */; };
 		ACCB98782D944213002B9675 /* UILabel+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACCB98772D94420D002B9675 /* UILabel+Extensions.swift */; };
@@ -379,14 +387,9 @@
 		ACD9418C2CFF575C0038FCB6 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* ContentView.swift */; };
 		ACD941B12CFF575C0038FCB6 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */; };
 		ACD941B22CFF575C0038FCB6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557BA273AAA24004C7B11 /* Assets.xcassets */; };
-		ACD941C42CFF5B3D0038FCB6 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = ACD941C32CFF5B3D0038FCB6 /* FirebaseCore */; };
 		ACD941C62CFF5B3D0038FCB6 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = ACD941C52CFF5B3D0038FCB6 /* FirebaseCrashlytics */; };
 		ACD941C82CFF5B5B0038FCB6 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = ACD941C72CFF5B5B0038FCB6 /* FirebaseAnalytics */; };
-		ACD941CA2CFF5B5B0038FCB6 /* FirebaseAnalyticsOnDeviceConversion in Frameworks */ = {isa = PBXBuildFile; productRef = ACD941C92CFF5B5B0038FCB6 /* FirebaseAnalyticsOnDeviceConversion */; };
-		ACD941CC2CFF5B5B0038FCB6 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = ACD941CB2CFF5B5B0038FCB6 /* FirebaseCore */; };
 		ACD941CE2CFF5B5B0038FCB6 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = ACD941CD2CFF5B5B0038FCB6 /* FirebaseCrashlytics */; };
-		ACD941D12CFF5B720038FCB6 /* secp256k1 in Frameworks */ = {isa = PBXBuildFile; productRef = ACD941D02CFF5B720038FCB6 /* secp256k1 */; };
-		ACD941D32CFF5B8B0038FCB6 /* secp256k1 in Frameworks */ = {isa = PBXBuildFile; productRef = ACD941D22CFF5B8B0038FCB6 /* secp256k1 */; };
 		ACD941D92CFF63D90038FCB6 /* libyral_mobile_swift_binding.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AC09A9F72CDB78B9009A39A4 /* libyral_mobile_swift_binding.a */; };
 		ACDD23E42D8B19FF00AB0DAF /* MyVideosUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACDD23E32D8B19FB00AB0DAF /* MyVideosUseCase.swift */; };
 		ACDD23E52D8B19FF00AB0DAF /* MyVideosUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACDD23E32D8B19FB00AB0DAF /* MyVideosUseCase.swift */; };
@@ -467,9 +470,16 @@
 		10512A512DA7959D00114BAA /* YralQueuePlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralQueuePlayer.swift; sourceTree = "<group>"; };
 		10BA2E822DA64E6A00B6BE97 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Platforms/iPhoneOS.platform/Developer/Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		10BA2E842DA6507E00B6BE97 /* FeedsPlayerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedsPlayerTests.swift; sourceTree = "<group>"; };
+		15C698F1EA12D71F079A089D /* Pods_Yral_Staging.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Yral_Staging.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		2152FB032600AC8F00CF470E /* IosApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IosApp.swift; sourceTree = "<group>"; };
+		24E77B0D5E7085119D4AFAE8 /* Pods-Yral-Staging.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Yral-Staging.release.xcconfig"; path = "Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging.release.xcconfig"; sourceTree = "<group>"; };
+		2CC3364344FC81265FE7B6B8 /* Pods_YralTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_YralTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		3693EAE2BC9C1700FE0A3DA1 /* Pods-YralTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-YralTests.debug.xcconfig"; path = "Target Support Files/Pods-YralTests/Pods-YralTests.debug.xcconfig"; sourceTree = "<group>"; };
+		3D17D0E74B68F51CAA010DD3 /* Pods_Yral.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Yral.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		7555FF7B242A565900829871 /* Yral.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Yral.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7555FF82242A565900829871 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		9921A67E43E3456362F3C677 /* Pods-Yral.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Yral.release.xcconfig"; path = "Target Support Files/Pods-Yral/Pods-Yral.release.xcconfig"; sourceTree = "<group>"; };
+		9E4702507FB5CB91F6B3910A /* Pods-YralTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-YralTests.release.xcconfig"; path = "Target Support Files/Pods-YralTests/Pods-YralTests.release.xcconfig"; sourceTree = "<group>"; };
 		AC09A99C2CDB75AA009A39A4 /* BridgingHeader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BridgingHeader.h; sourceTree = "<group>"; };
 		AC09A9AC2CDB775C009A39A4 /* yral-mobile-swift-binding.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "yral-mobile-swift-binding.h"; sourceTree = "<group>"; };
 		AC09A9AD2CDB775C009A39A4 /* yral-mobile-swift-binding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "yral-mobile-swift-binding.swift"; sourceTree = "<group>"; };
@@ -666,10 +676,18 @@
 		ACF63A762DC271F300C4BCCC /* DefaultAuthClient+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DefaultAuthClient+Extensions.swift"; sourceTree = "<group>"; };
 		ACF63A792DC29A2700C4BCCC /* ClientCredentialsRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientCredentialsRequest.swift; sourceTree = "<group>"; };
 		ACFEDFA02D96CEC2003116EA /* Errors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Errors.swift; sourceTree = "<group>"; };
+		E10BBB4EFB3B54E49941EC52 /* Pods-Yral.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Yral.debug.xcconfig"; path = "Target Support Files/Pods-Yral/Pods-Yral.debug.xcconfig"; sourceTree = "<group>"; };
+		E39EDFC35D0EA8CB2545D88B /* Pods-Yral-Staging.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Yral-Staging.debug.xcconfig"; path = "Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		AC9B77DE2D58C7E300270FC9 /* YralTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = YralTests; sourceTree = "<group>"; };
+		AC9B77DE2D58C7E300270FC9 /* YralTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			path = YralTests;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -679,20 +697,20 @@
 			files = (
 				AC6CBA802CE46CA6002454F8 /* libyral_mobile_swift_binding.a in Frameworks */,
 				AC6E311C2D22F050001EBE6C /* SDWebImageMapKit in Frameworks */,
+				ACBB25302DF5DE6D006EC908 /* FirebaseCore in Frameworks */,
 				AC6BECAC2D09D52B002E2021 /* GRPC in Frameworks */,
-				ACD941D12CFF5B720038FCB6 /* secp256k1 in Frameworks */,
-				AC0E49C42CEBA6F0002DC158 /* secp256k1 in Frameworks */,
 				ACD941802CFF55BB0038FCB6 /* FirebaseAnalyticsWithoutAdIdSupport in Frameworks */,
 				ACAA4D622DDCA813001092A6 /* FirebasePerformance in Frameworks */,
 				ACC0F3A32D2ED69200FA5BD0 /* Lottie in Frameworks */,
-				ACD941C42CFF5B3D0038FCB6 /* FirebaseCore in Frameworks */,
+				ACC255172DF5DF2D001EA774 /* libsecp256k1 in Frameworks */,
 				ACD941C62CFF5B3D0038FCB6 /* FirebaseCrashlytics in Frameworks */,
 				AC6BECAA2D09D52B002E2021 /* CGRPCZlib in Frameworks */,
 				AC6BECB02D09D52B002E2021 /* protoc-gen-grpc-swift in Frameworks */,
 				AC6E311A2D22F050001EBE6C /* SDWebImage in Frameworks */,
 				AC6BECAE2D09D52B002E2021 /* GRPCReflectionService in Frameworks */,
-				ACB815482CFA146800104B7B /* FirebaseCore in Frameworks */,
+				ACBB252E2DF5DE67006EC908 /* FirebaseCrashlytics in Frameworks */,
 				ACD941822CFF55BB0038FCB6 /* FirebaseCrashlytics in Frameworks */,
+				7108A65B6C00D0659ED71DB8 /* Pods_Yral.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -700,6 +718,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				620F6EE6C2B53BE4C4B157C5 /* Pods_YralTests.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -708,19 +727,21 @@
 			buildActionMask = 2147483647;
 			files = (
 				ACAA4D642DDCA81B001092A6 /* FirebasePerformance in Frameworks */,
+				ACBB25322DF5DE72006EC908 /* FirebaseCore in Frameworks */,
+				AC1233772DF5E16000DAFCF4 /* P256K in Frameworks */,
 				ACC0F39F2D2ED68500FA5BD0 /* Lottie in Frameworks */,
 				AC6BECB42D09D541002E2021 /* GRPC in Frameworks */,
 				ACD941C82CFF5B5B0038FCB6 /* FirebaseAnalytics in Frameworks */,
 				ACD941D92CFF63D90038FCB6 /* libyral_mobile_swift_binding.a in Frameworks */,
 				AC6BECB62D09D541002E2021 /* GRPCReflectionService in Frameworks */,
+				AC1233752DF5E14100DAFCF4 /* libsecp256k1 in Frameworks */,
 				AC6BECB82D09D55B002E2021 /* protoc-gen-grpc-swift in Frameworks */,
 				AC6BECB22D09D541002E2021 /* CGRPCZlib in Frameworks */,
-				ACD941D32CFF5B8B0038FCB6 /* secp256k1 in Frameworks */,
-				ACD941CA2CFF5B5B0038FCB6 /* FirebaseAnalyticsOnDeviceConversion in Frameworks */,
 				AC6E311E2D22F069001EBE6C /* SDWebImage in Frameworks */,
 				ACD941CE2CFF5B5B0038FCB6 /* FirebaseCrashlytics in Frameworks */,
+				ACBB25342DF5DE76006EC908 /* FirebaseCrashlytics in Frameworks */,
 				AC6E31202D22F069001EBE6C /* SDWebImageMapKit in Frameworks */,
-				ACD941CC2CFF5B5B0038FCB6 /* FirebaseCore in Frameworks */,
+				69AC5F84D602948569529C80 /* Pods_Yral_Staging.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -771,6 +792,19 @@
 			path = YralPlayer;
 			sourceTree = "<group>";
 		};
+		687AB5303B57626264B38E96 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				E10BBB4EFB3B54E49941EC52 /* Pods-Yral.debug.xcconfig */,
+				9921A67E43E3456362F3C677 /* Pods-Yral.release.xcconfig */,
+				E39EDFC35D0EA8CB2545D88B /* Pods-Yral-Staging.debug.xcconfig */,
+				24E77B0D5E7085119D4AFAE8 /* Pods-Yral-Staging.release.xcconfig */,
+				3693EAE2BC9C1700FE0A3DA1 /* Pods-YralTests.debug.xcconfig */,
+				9E4702507FB5CB91F6B3910A /* Pods-YralTests.release.xcconfig */,
+			);
+			path = Pods;
+			sourceTree = "<group>";
+		};
 		7555FF72242A565900829871 = {
 			isa = PBXGroup;
 			children = (
@@ -783,6 +817,7 @@
 				7555FF7C242A565900829871 /* Products */,
 				7555FFB0242A642200829871 /* Frameworks */,
 				AC9293F52D620B5F003DB102 /* Recovered References */,
+				687AB5303B57626264B38E96 /* Pods */,
 			);
 			sourceTree = "<group>";
 		};
@@ -822,6 +857,9 @@
 			children = (
 				10BA2E822DA64E6A00B6BE97 /* XCTest.framework */,
 				AC09A9F72CDB78B9009A39A4 /* libyral_mobile_swift_binding.a */,
+				3D17D0E74B68F51CAA010DD3 /* Pods_Yral.framework */,
+				15C698F1EA12D71F079A089D /* Pods_Yral_Staging.framework */,
+				2CC3364344FC81265FE7B6B8 /* Pods_YralTests.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -2035,12 +2073,14 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 7555FFA5242A565B00829871 /* Build configuration list for PBXNativeTarget "Yral" */;
 			buildPhases = (
+				1B8073E38A316869DC2304D2 /* [CP] Check Pods Manifest.lock */,
 				AC09AA1D2CDBAC9A009A39A4 /* Generate rust bindings */,
 				7555FF77242A565900829871 /* Sources */,
 				7555FF78242A565900829871 /* Frameworks */,
 				7555FF79242A565900829871 /* Resources */,
 				ACB815362CF9CEF600104B7B /* ShellScript */,
 				ACC0F3A72D2ED69300FA5BD0 /* Embed Frameworks */,
+				8839D169418C4DC7410E413D /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -2055,9 +2095,11 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = AC9B77E32D58C7E300270FC9 /* Build configuration list for PBXNativeTarget "YralTests" */;
 			buildPhases = (
+				2C9EB057DB2C1F042C88B58B /* [CP] Check Pods Manifest.lock */,
 				AC9B77D92D58C7E300270FC9 /* Sources */,
 				AC9B77DA2D58C7E300270FC9 /* Frameworks */,
 				AC9B77DB2D58C7E300270FC9 /* Resources */,
+				AB75ECD7F332189B94D3D93C /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -2068,8 +2110,6 @@
 				AC9B77DE2D58C7E300270FC9 /* YralTests */,
 			);
 			name = YralTests;
-			packageProductDependencies = (
-			);
 			productName = YralTests;
 			productReference = AC9B77DD2D58C7E300270FC9 /* YralTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -2078,12 +2118,14 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = ACD941B52CFF575C0038FCB6 /* Build configuration list for PBXNativeTarget "Yral-Staging" */;
 			buildPhases = (
+				D670E0E8F2324F9982C28699 /* [CP] Check Pods Manifest.lock */,
 				ACD941842CFF575C0038FCB6 /* Generate rust bindings */,
 				ACD941862CFF575C0038FCB6 /* Sources */,
 				ACD9418D2CFF575C0038FCB6 /* Frameworks */,
 				ACD941B02CFF575C0038FCB6 /* Resources */,
 				ACD941B42CFF575C0038FCB6 /* ShellScript */,
 				ACC0F3AA2D2ED77200FA5BD0 /* Embed Frameworks */,
+				5D28D81BA42323A81A0B9ED1 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -2114,7 +2156,6 @@
 				};
 			};
 			buildConfigurationList = 7555FF76242A565900829871 /* Build configuration list for PBXProject "iosApp" */;
-			compatibilityVersion = "Xcode 9.3";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -2124,11 +2165,12 @@
 			mainGroup = 7555FF72242A565900829871;
 			packageReferences = (
 				ACD941C02CFF5B3D0038FCB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
-				ACD941CF2CFF5B720038FCB6 /* XCRemoteSwiftPackageReference "swift-secp256k1" */,
 				AC6BECA82D09D52B002E2021 /* XCRemoteSwiftPackageReference "grpc-swift" */,
 				AC6E31182D22F050001EBE6C /* XCRemoteSwiftPackageReference "SDWebImage" */,
 				ACC0F39D2D2ED68500FA5BD0 /* XCRemoteSwiftPackageReference "lottie-ios" */,
+				AC1233712DF5E0AC00DAFCF4 /* XCRemoteSwiftPackageReference "swift-secp256k1" */,
 			);
+			preferredProjectObjectVersion = 77;
 			productRefGroup = 7555FF7C242A565900829871 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -2203,6 +2245,101 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		1B8073E38A316869DC2304D2 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-Yral-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		2C9EB057DB2C1F042C88B58B /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-YralTests-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		5D28D81BA42323A81A0B9ED1 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		8839D169418C4DC7410E413D /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		AB75ECD7F332189B94D3D93C /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
 		AC09AA1D2CDBAC9A009A39A4 /* Generate rust bindings */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -2283,6 +2420,28 @@
 			runOnlyForDeploymentPostprocessing = 1;
 			shellPath = /bin/sh;
 			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\n\"${BUILD_DIR%/Build/*}/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run\"\n";
+		};
+		D670E0E8F2324F9982C28699 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-Yral-Staging-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -2790,6 +2949,7 @@
 		};
 		7555FFA6242A565B00829871 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = E10BBB4EFB3B54E49941EC52 /* Pods-Yral.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "Apple Development";
@@ -2829,6 +2989,7 @@
 		};
 		7555FFA7242A565B00829871 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 9921A67E43E3456362F3C677 /* Pods-Yral.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "Apple Development";
@@ -2868,6 +3029,7 @@
 		};
 		AC9B77E42D58C7E300270FC9 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 3693EAE2BC9C1700FE0A3DA1 /* Pods-YralTests.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -2894,6 +3056,7 @@
 		};
 		AC9B77E52D58C7E300270FC9 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 9E4702507FB5CB91F6B3910A /* Pods-YralTests.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -2918,6 +3081,7 @@
 		};
 		ACD941B62CFF575C0038FCB6 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = E39EDFC35D0EA8CB2545D88B /* Pods-Yral-Staging.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "Apple Development";
@@ -2956,6 +3120,7 @@
 		};
 		ACD941B72CFF575C0038FCB6 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 24E77B0D5E7085119D4AFAE8 /* Pods-Yral-Staging.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "Apple Development";
@@ -3034,7 +3199,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		AC0E49C22CEBA6F0002DC158 /* XCRemoteSwiftPackageReference "swift-secp256k1" */ = {
+		AC1233712DF5E0AC00DAFCF4 /* XCRemoteSwiftPackageReference "swift-secp256k1" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/21-DOT-DEV/swift-secp256k1";
 			requirement = {
@@ -3058,20 +3223,20 @@
 				minimumVersion = 5.20.0;
 			};
 		};
-		ACB815382CFA146800104B7B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/firebase/firebase-ios-sdk.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 11.5.0;
-			};
-		};
 		ACC0F39D2D2ED68500FA5BD0 /* XCRemoteSwiftPackageReference "lottie-ios" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/airbnb/lottie-ios.git";
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 4.5.1;
+			};
+		};
+		ACC255132DF5DF20001EA774 /* XCRemoteSwiftPackageReference "swift-secp256k1" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/21-DOT-DEV/swift-secp256k1";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.18.0;
 			};
 		};
 		ACD9417E2CFF55BB0038FCB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
@@ -3090,21 +3255,18 @@
 				minimumVersion = 11.7.0;
 			};
 		};
-		ACD941CF2CFF5B720038FCB6 /* XCRemoteSwiftPackageReference "swift-secp256k1" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/21-DOT-DEV/swift-secp256k1";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 0.18.0;
-			};
-		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		AC0E49C32CEBA6F0002DC158 /* secp256k1 */ = {
+		AC1233742DF5E14100DAFCF4 /* libsecp256k1 */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = AC0E49C22CEBA6F0002DC158 /* XCRemoteSwiftPackageReference "swift-secp256k1" */;
-			productName = secp256k1;
+			package = AC1233712DF5E0AC00DAFCF4 /* XCRemoteSwiftPackageReference "swift-secp256k1" */;
+			productName = libsecp256k1;
+		};
+		AC1233762DF5E16000DAFCF4 /* P256K */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AC1233712DF5E0AC00DAFCF4 /* XCRemoteSwiftPackageReference "swift-secp256k1" */;
+			productName = P256K;
 		};
 		AC6BECA92D09D52B002E2021 /* CGRPCZlib */ = {
 			isa = XCSwiftPackageProductDependency;
@@ -3176,10 +3338,25 @@
 			package = ACD941C02CFF5B3D0038FCB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebasePerformance;
 		};
-		ACB815472CFA146800104B7B /* FirebaseCore */ = {
+		ACBB252D2DF5DE67006EC908 /* FirebaseCrashlytics */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = ACB815382CFA146800104B7B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			package = ACD941C02CFF5B3D0038FCB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCrashlytics;
+		};
+		ACBB252F2DF5DE6D006EC908 /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = ACD941C02CFF5B3D0038FCB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseCore;
+		};
+		ACBB25312DF5DE72006EC908 /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = ACD941C02CFF5B3D0038FCB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		ACBB25332DF5DE76006EC908 /* FirebaseCrashlytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = ACD941C02CFF5B3D0038FCB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCrashlytics;
 		};
 		ACC0F39E2D2ED68500FA5BD0 /* Lottie */ = {
 			isa = XCSwiftPackageProductDependency;
@@ -3191,6 +3368,11 @@
 			package = ACC0F39D2D2ED68500FA5BD0 /* XCRemoteSwiftPackageReference "lottie-ios" */;
 			productName = Lottie;
 		};
+		ACC255162DF5DF2D001EA774 /* libsecp256k1 */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = ACC255132DF5DF20001EA774 /* XCRemoteSwiftPackageReference "swift-secp256k1" */;
+			productName = libsecp256k1;
+		};
 		ACD9417F2CFF55BB0038FCB6 /* FirebaseAnalyticsWithoutAdIdSupport */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = ACD9417E2CFF55BB0038FCB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
@@ -3200,11 +3382,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = ACD9417E2CFF55BB0038FCB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseCrashlytics;
-		};
-		ACD941C32CFF5B3D0038FCB6 /* FirebaseCore */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = ACD941C02CFF5B3D0038FCB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseCore;
 		};
 		ACD941C52CFF5B3D0038FCB6 /* FirebaseCrashlytics */ = {
 			isa = XCSwiftPackageProductDependency;
@@ -3216,30 +3393,10 @@
 			package = ACD941C02CFF5B3D0038FCB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseAnalytics;
 		};
-		ACD941C92CFF5B5B0038FCB6 /* FirebaseAnalyticsOnDeviceConversion */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = ACD941C02CFF5B3D0038FCB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseAnalyticsOnDeviceConversion;
-		};
-		ACD941CB2CFF5B5B0038FCB6 /* FirebaseCore */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = ACD941C02CFF5B3D0038FCB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseCore;
-		};
 		ACD941CD2CFF5B5B0038FCB6 /* FirebaseCrashlytics */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = ACD941C02CFF5B3D0038FCB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseCrashlytics;
-		};
-		ACD941D02CFF5B720038FCB6 /* secp256k1 */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = ACD941CF2CFF5B720038FCB6 /* XCRemoteSwiftPackageReference "swift-secp256k1" */;
-			productName = secp256k1;
-		};
-		ACD941D22CFF5B8B0038FCB6 /* secp256k1 */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = ACD941CF2CFF5B720038FCB6 /* XCRemoteSwiftPackageReference "swift-secp256k1" */;
-			productName = secp256k1;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

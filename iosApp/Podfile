@@ -1,0 +1,18 @@
+source 'https://cdn.cocoapods.org'
+platform :ios, '15.6'
+use_frameworks!
+
+target 'Yral' do
+  use_frameworks!
+  pod 'iosSharedUmbrella', :path => '../iosSharedUmbrella'
+end
+
+target 'YralTests' do
+  inherit! :search_paths
+  pod 'iosSharedUmbrella', :path => '../iosSharedUmbrella'
+end
+
+target 'Yral-Staging' do
+  use_frameworks!
+  pod 'iosSharedUmbrella', :path => '../iosSharedUmbrella'
+end
