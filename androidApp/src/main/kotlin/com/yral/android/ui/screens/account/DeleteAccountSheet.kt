@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.home.account
+package com.yral.android.ui.screens.account
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.home.feed.performance
+package com.yral.android.ui.screens.feed.performance
 
 interface PerformanceMonitor {
     var loadTrace: LoadTimeTrace?
