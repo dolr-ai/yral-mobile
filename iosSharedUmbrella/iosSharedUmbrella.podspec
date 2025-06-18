@@ -16,7 +16,7 @@ Pod::Spec.new do |spec|
     spec.dependency 'FirebaseInstallations', '10.29.0'
     spec.dependency 'FirebasePerformance', '10.29.0'
     spec.dependency 'GoogleUtilities'
-    spec.dependency 'Mixpanel'
+    spec.dependency 'Mixpanel', '5.0.8'
     spec.dependency 'nanopb'
                 
     if !Dir.exist?('build/cocoapods/framework/iosSharedUmbrella.framework') || Dir.empty?('build/cocoapods/framework/iosSharedUmbrella.framework')

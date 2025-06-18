@@ -32,6 +32,7 @@ kotlin {
         // Add Mixpanel pod
         pod("Mixpanel") {
             extraOpts += listOf("-compiler-option", "-fmodules")
+            version = "5.0.8"
         }
     }
 

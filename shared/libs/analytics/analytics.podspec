@@ -9,7 +9,7 @@ Pod::Spec.new do |spec|
     spec.vendored_frameworks      = 'build/cocoapods/framework/analytics.framework'
     spec.libraries                = 'c++'
     spec.ios.deployment_target    = '15.6'
-    spec.dependency 'Mixpanel'
+    spec.dependency 'Mixpanel', '5.0.8'
                 
     if !Dir.exist?('build/cocoapods/framework/analytics.framework') || Dir.empty?('build/cocoapods/framework/analytics.framework')
         raise "

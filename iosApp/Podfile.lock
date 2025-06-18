@@ -147,7 +147,7 @@ PODS:
     - FirebaseInstallations (= 10.29.0)
     - FirebasePerformance (= 10.29.0)
     - GoogleUtilities
-    - Mixpanel
+    - Mixpanel (= 5.0.8)
     - nanopb
   - Mixpanel (5.0.8)
   - nanopb (2.30910.0):
@@ -204,7 +204,7 @@ SPEC CHECKSUMS:
   GoogleAppMeasurement: f9de05ee17401e3355f68e8fc8b5064d429f5918
   GoogleDataTransport: 6c09b596d841063d76d4288cc2d2f42cc36e1e2a
   GoogleUtilities: ea963c370a38a8069cc5f7ba4ca849a60b6d7d15
-  iosSharedUmbrella: dfd6cba6c442513862b1fe0be2d1b4767f1ef6b9
+  iosSharedUmbrella: a2f85abacc8d10a7b13e4bb8362b41b5d94cf4f9
   Mixpanel: 9337782610693ef36b8f6ab531493201825f1dd6
   nanopb: 438bc412db1928dac798aa6fd75726007be04262
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
