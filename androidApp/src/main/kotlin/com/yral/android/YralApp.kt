@@ -2,6 +2,7 @@ package com.yral.android
 
 import android.app.Application
 import co.touchlab.kermit.platformLogWriter
+import com.yral.shared.app.di.initKoin
 import com.yral.shared.core.logging.YralLogger
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.crashlytics.crashlytics

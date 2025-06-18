@@ -13,7 +13,7 @@ version = "1.0"
 kotlin {
     iosArm64()
     iosSimulatorArm64()
-    val firebaseIos = "10.25.0"
+    val firebaseIos = "10.29.0"
 
     cocoapods {
         summary = "Umbrella framework for shared KMM code"
@@ -34,23 +34,26 @@ kotlin {
             version = firebaseIos
         }
         pod("FirebasePerformance") {
-        extraOpts += listOf("-compiler-option", "-fmodules")
-    }
-    pod("FirebaseInstallations") {
-        extraOpts += listOf("-compiler-option", "-fmodules")
-    }
-    pod("FirebaseCoreInternal") {
-        extraOpts += listOf("-compiler-option", "-fmodules")
-    }
-    pod("GoogleUtilities") {
-        extraOpts += listOf("-compiler-option", "-fmodules")
-    }
-    pod("nanopb") {
-        extraOpts += listOf("-compiler-option", "-fmodules")
-    }
-    pod("Mixpanel") {
-        extraOpts += listOf("-compiler-option", "-fmodules")
-    }
+            extraOpts += listOf("-compiler-option", "-fmodules")
+            version = firebaseIos
+        }
+        pod("FirebaseInstallations") {
+            extraOpts += listOf("-compiler-option", "-fmodules")
+            version = firebaseIos
+        }
+        pod("FirebaseCoreInternal") {
+            extraOpts += listOf("-compiler-option", "-fmodules")
+            version = firebaseIos
+        }
+        pod("GoogleUtilities") {
+            extraOpts += listOf("-compiler-option", "-fmodules")
+        }
+        pod("nanopb") {
+            extraOpts += listOf("-compiler-option", "-fmodules")
+        }
+        pod("Mixpanel") {
+            extraOpts += listOf("-compiler-option", "-fmodules")
+        }
 
         framework {
             baseName = "iosSharedUmbrella"
