@@ -104,7 +104,7 @@ fun FeedScreen(
 
     // Set initial video ID when feed loads
     LaunchedEffect(state.feedDetails.isNotEmpty()) {
-        if (state.feedDetails.isNotEmpty() && state.currentPageOfFeed < state.feedDetails.size) {
+        if (state.currentPageOfFeed < state.feedDetails.size) {
             gameViewModel.setCurrentVideoId(state.feedDetails[state.currentPageOfFeed].videoID)
         }
     }
@@ -169,11 +169,10 @@ fun FeedScreen(
                 initialPage = state.currentPageOfFeed,
                 onPageLoaded = { page ->
                     // Mark animation as shown for the previous page when changing pages
-                    if (page != state.currentPageOfFeed && state.currentPageOfFeed < state.feedDetails.size) {
-                        val previousVideoId = state.feedDetails[state.currentPageOfFeed].videoID
-                        if (gameState.gameResult[previousVideoId]?.second?.coinDelta != 0) {
-                            gameViewModel.markCoinDeltaAnimationShown(previousVideoId)
-                        }
+                    if (viewModel.shouldMarkAnimationAsCompleted(page)) {
+                        gameViewModel.markCoinDeltaAnimationShown(
+                            videoId = state.feedDetails[state.currentPageOfFeed].videoID,
+                        )
                     }
                     // Set current video ID for the new page
                     if (page < state.feedDetails.size) {
