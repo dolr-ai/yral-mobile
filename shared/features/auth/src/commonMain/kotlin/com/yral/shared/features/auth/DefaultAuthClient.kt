@@ -32,7 +32,6 @@ import com.yral.shared.preferences.Preferences
 import com.yral.shared.uniffi.generated.CanistersWrapper
 import com.yral.shared.uniffi.generated.FfiException
 import com.yral.shared.uniffi.generated.authenticateWithNetwork
-import dev.gitlive.firebase.firestore.FieldPath.Companion.documentId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
@@ -85,8 +84,8 @@ class DefaultAuthClient(
                             refreshToken = tokenResponse.refreshToken,
                             shouldRefreshToken = true,
                         )
-                    }.onFailure { }
-            }.onFailure { }
+                    }.onFailure { throw YralException("obtaining anonymous token failed") }
+            }.onFailure { throw YralException("sign out of firebase failed") }
     }
 
     private suspend fun handleToken(
@@ -165,6 +164,7 @@ class DefaultAuthClient(
             authorizeFirebase(data, canisterWrapper)
         } catch (e: FfiException) {
             crashlyticsManager.recordException(e)
+            throw e
         }
     }
 
@@ -191,8 +191,8 @@ class DefaultAuthClient(
                     .invoke(GetIdTokenUseCase.DEFAULT)
                     .onSuccess { idToken ->
                         exchangePrincipalId(idToken, data, canisterWrapper)
-                    }.onFailure { }
-            }.onFailure { }
+                    }.onFailure { throw YralException("firebase idToken not found") }
+            }.onFailure { throw YralException("firebase anonymous sign in failed") }
     }
 
     private suspend fun exchangePrincipalId(
@@ -213,7 +213,7 @@ class DefaultAuthClient(
                                     userPrincipal = canisterWrapper.getUserPrincipal(),
                                 ),
                             ).getOrThrow()
-                    }
+                    }.onFailure { throw YralException("exchanging principal failed") }
                 }
             val balance =
                 async {
@@ -222,34 +222,49 @@ class DefaultAuthClient(
                         requiredUseCases.getBalanceUseCase
                             .invoke(canisterWrapper.getUserPrincipal())
                             .getOrThrow()
-                    }
+                    }.onFailure { throw YralException("getting balance failed") }
                 }
             val exchangeResult = exchange.await()
             val balanceResult = balance.await()
-            if (exchangeResult.isSuccess && balanceResult.isSuccess) {
-                val response = exchangeResult.getOrNull()
-                val balanceResponse = balanceResult.getOrNull()
-                if (response != null && balanceResponse != null) {
-                    crashlyticsManager.logMessage("updating user coins")
-                    requiredUseCases
-                        .updateDocumentUseCase
-                        .invoke(
-                            parameter =
-                                UpdateDocumentUseCase.Params(
-                                    collectionName = "users",
-                                    documentId = canisterWrapper.getUserPrincipal(),
-                                    fieldAndValue = Pair("coins", balanceResponse),
-                                ),
-                        ).onSuccess {
-                            signInWithToken(
-                                data = data,
-                                canisterWrapper = canisterWrapper,
-                                fbResponse = response,
-                                coinBalance = balanceResponse,
-                            )
-                        }
-                }
+            updateBalanceAndProceed(data, canisterWrapper, exchangeResult, balanceResult)
+        }
+    }
+
+    private suspend fun updateBalanceAndProceed(
+        data: ByteArray,
+        canisterWrapper: CanistersWrapper,
+        exchangeResult: Result<ExchangePrincipalResponse>,
+        balanceResult: Result<Long>,
+    ) {
+        if (exchangeResult.isSuccess && balanceResult.isSuccess) {
+            val response = exchangeResult.getOrNull()
+            val balanceResponse = balanceResult.getOrNull()
+            if (response != null && balanceResponse != null) {
+                crashlyticsManager.logMessage("updating user coins")
+                requiredUseCases
+                    .updateDocumentUseCase
+                    .invoke(
+                        parameter =
+                            UpdateDocumentUseCase.Params(
+                                collectionName = "users",
+                                documentId = canisterWrapper.getUserPrincipal(),
+                                fieldAndValue = Pair("coins", balanceResponse),
+                            ),
+                    ).onSuccess {
+                        signInWithToken(
+                            data = data,
+                            canisterWrapper = canisterWrapper,
+                            fbResponse = response,
+                            coinBalance = balanceResponse,
+                        )
+                    }.onFailure { throw YralException("update coin balance failed") }
             }
+        } else {
+            throw YralException(
+                "exchanging principal id ${exchangeResult.isSuccess} ".plus(
+                    "getting balance ${balanceResult.isSuccess}",
+                ),
+            )
         }
     }
 
@@ -268,8 +283,8 @@ class DefaultAuthClient(
                     .invoke(fbResponse.token)
                     .onSuccess {
                         setSession(data, canisterWrapper, coinBalance)
-                    }.onFailure { }
-            }.onFailure { }
+                    }.onFailure { throw YralException("sign in with token failed") }
+            }.onFailure { throw YralException("sign out for auth token sign in failed") }
     }
 
     private suspend fun setSession(
@@ -361,7 +376,7 @@ class DefaultAuthClient(
                     shouldSetMetadata = true,
                 )
                 preferences.putBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name, true)
-            }.onFailure { }
+            }.onFailure { throw YralException("authenticate social sign in failed") }
     }
 
     private suspend fun updateSessionAsRegistered(
