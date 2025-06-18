@@ -1,6 +1,7 @@
 package com.yral.shared.features.root.viewmodels
 
 import androidx.lifecycle.ViewModel
+import co.touchlab.kermit.Logger
 import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.SessionManager
@@ -8,6 +9,7 @@ import com.yral.shared.core.session.SessionState
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.AuthClient
 import com.yral.shared.rust.services.IndividualUserServiceFactory
+import com.yral.shared.uniffi.generated.FfiException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -49,6 +51,7 @@ class RootViewModel(
         initialisationJob?.cancel()
         initialisationJob =
             coroutineScope.launch {
+                sessionManager.updateState(SessionState.Initial)
                 _state.update {
                     RootState(
                         currentSessionState = sessionManager.state.value,
@@ -67,6 +70,18 @@ class RootViewModel(
                         YralException("Splash screen timeout - initialization took too long"),
                     )
                     throw e
+                } catch (e: YralException) {
+                    _state.update { it.copy(error = RootError.TIMEOUT) }
+                    Logger.e("Splash screen error - ${e.message}")
+                    crashlyticsManager.recordException(
+                        YralException("Splash screen error - ${e.message}"),
+                    )
+                } catch (e: FfiException) {
+                    _state.update { it.copy(error = RootError.TIMEOUT) }
+                    Logger.e("Splash screen on chain error - ${e.message}")
+                    crashlyticsManager.recordException(
+                        YralException("Splash screen on chain error - ${e.message}"),
+                    )
                 }
             }
     }
