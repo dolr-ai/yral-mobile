@@ -7,10 +7,9 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.ripple.RippleAlpha
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RippleConfiguration
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
@@ -36,19 +35,9 @@ import com.yral.shared.features.auth.utils.OAuthUtils
 import com.yral.shared.koin.koinInstance
 import com.yral.shared.uniffi.generated.initRustLogger
 
+@OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
     private lateinit var oAuthUtils: OAuthUtils
-    private val rippleConfiguration =
-        RippleConfiguration(
-            color = Color.Transparent,
-            rippleAlpha =
-                RippleAlpha(
-                    draggedAlpha = 0f,
-                    focusedAlpha = 0f,
-                    hoveredAlpha = 0f,
-                    pressedAlpha = 0f,
-                ),
-        )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,7 +49,7 @@ class MainActivity : ComponentActivity() {
         oAuthUtils = koinInstance.get()
         handleIntent(intent)
         setContent {
-            CompositionLocalProvider(LocalRippleConfiguration provides rippleConfiguration) {
+            CompositionLocalProvider(LocalRippleConfiguration provides null) {
                 CompositionLocalProvider(LocalAppTopography provides appTypoGraphy()) {
                     MyApplicationTheme {
                         RootScreen()
