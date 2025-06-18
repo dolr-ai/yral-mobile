@@ -29,6 +29,7 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
 
   private var cancellables = Set<AnyCancellable>()
   private var isFetchingInitialFeeds = false
+  private var feedsBatchSize = 10
 
   @Published var unifiedState: UnifiedFeedState = .initialized
   @Published var unifiedEvent: UnifiedFeedEvent?
@@ -115,18 +116,27 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
       }
       let request = MoreFeedsRequest(
         filteredPosts: filteredPosts,
-        numResults: FeedsViewController.Constants.initialNumResults,
+        numResults: feedsBatchSize,
         feedType: .currentUser
       )
+
+      var newFeeds: [FeedResult]?
+
       let result = await moreFeedsUseCase.execute(request: request)
       switch result {
-      case .success:
+      case .success(let feeds):
         unifiedEvent = .loadedMoreFeeds
+        newFeeds = feeds
       case .failure(let error):
+        if case FeedError.aggregated(_, let feeds) = error {
+          newFeeds = feeds
+        }
         unifiedEvent = .loadMoreFeedsFailed(errorMessage: error.localizedDescription)
         unifiedState = .failure(errorMessage: error.localizedDescription)
       }
-      if self.currentFeeds.count <= FeedsViewController.Constants.initialNumResults {
+
+      if let feeds = newFeeds, feeds.count < .five {
+        feedsBatchSize = min(feedsBatchSize + .ten, FeedsViewController.Constants.maxFeedBatchSize)
         await loadMoreFeeds()
       }
     }
