@@ -33,27 +33,30 @@ kotlin {
             extraOpts += listOf("-compiler-option", "-fmodules")
             version = firebaseIos
         }
-        pod("FirebaseInstallations") {
-            extraOpts += listOf("-compiler-option", "-fmodules")
-        }
-        pod("FirebaseCoreInternal") {
-            extraOpts += listOf("-compiler-option", "-fmodules")
-        }
-        pod("GoogleUtilities") {
-            extraOpts += listOf("-compiler-option", "-fmodules")
-        }
-        pod("nanopb") {
-            extraOpts += listOf("-compiler-option", "-fmodules")
-        }
-        pod("Mixpanel") {
-            extraOpts += listOf("-compiler-option", "-fmodules")
-        }
+        pod("FirebasePerformance") {
+        extraOpts += listOf("-compiler-option", "-fmodules")
+    }
+    pod("FirebaseInstallations") {
+        extraOpts += listOf("-compiler-option", "-fmodules")
+    }
+    pod("FirebaseCoreInternal") {
+        extraOpts += listOf("-compiler-option", "-fmodules")
+    }
+    pod("GoogleUtilities") {
+        extraOpts += listOf("-compiler-option", "-fmodules")
+    }
+    pod("nanopb") {
+        extraOpts += listOf("-compiler-option", "-fmodules")
+    }
+    pod("Mixpanel") {
+        extraOpts += listOf("-compiler-option", "-fmodules")
+    }
 
         framework {
             baseName = "iosSharedUmbrella"
             @OptIn(ExperimentalKotlinGradlePluginApi::class)
             transitiveExport = true
-            isStatic = false
+            isStatic = true
             export(projects.shared.libs.analytics)
             export(projects.shared.libs.crashlytics)
             export(projects.shared.app)

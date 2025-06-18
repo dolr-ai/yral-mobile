@@ -9,6 +9,7 @@ import UIKit
 import Combine
 import AVFoundation
 import SDWebImage
+import iosSharedUmbrella
 
 // swiftlint: disable type_body_length
 class FeedsViewController: UIViewController {
@@ -110,6 +111,13 @@ class FeedsViewController: UIViewController {
     feedsPlayer.isPlayerVisible = true
     guard !feedsDataSource.snapshot().itemIdentifiers.isEmpty else { return }
     feedsPlayer.play()
+  }
+
+  override func viewDidAppear(_ animated: Bool) {
+    super.viewDidAppear(animated)
+    AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+      event: HomePageViewedEventData()
+    )
   }
 
   func bindViewModel() {

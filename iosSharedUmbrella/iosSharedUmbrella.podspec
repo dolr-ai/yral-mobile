@@ -14,6 +14,7 @@ Pod::Spec.new do |spec|
     spec.dependency 'FirebaseCoreInternal'
     spec.dependency 'FirebaseCrashlytics', '10.25.0'
     spec.dependency 'FirebaseInstallations'
+    spec.dependency 'FirebasePerformance'
     spec.dependency 'GoogleUtilities'
     spec.dependency 'Mixpanel'
     spec.dependency 'nanopb'

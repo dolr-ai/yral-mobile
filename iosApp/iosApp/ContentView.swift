@@ -1,6 +1,6 @@
 import SwiftUI
 import P256K
-import Firebase
+import FirebaseCore
 import GRPC
 
 struct ContentView: View {
