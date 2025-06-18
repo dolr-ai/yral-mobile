@@ -404,6 +404,11 @@ class FeedViewModel(
             videoID == it.first && traceType == it.second
         }
 
+    fun shouldMarkAnimationAsCompleted(page: Int): Boolean {
+        val currentPage = _state.value.currentPageOfFeed
+        return page != currentPage && currentPage < _state.value.feedDetails.size
+    }
+
     data class RequiredUseCases(
         val getInitialFeedUseCase: GetInitialFeedUseCase,
         val fetchMoreFeedUseCase: FetchMoreFeedUseCase,

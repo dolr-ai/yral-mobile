@@ -153,6 +153,12 @@ class GameViewModel(
             ?.hasShownAnimation ?: false
 
     fun markCoinDeltaAnimationShown(videoId: String) {
+        if (_state.value.gameResult[videoId]
+                ?.second
+                ?.coinDelta == 0
+        ) {
+            return
+        }
         coroutineScope.launch {
             _state.update { currentState ->
                 val updatedGameResult = currentState.gameResult.toMutableMap()

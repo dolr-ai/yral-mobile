@@ -1,12 +1,12 @@
-package com.yral.android.ui.screens.home.feed.performance
+package com.yral.android.ui.screens.feed.performance
 
-import com.yral.android.ui.screens.home.feed.performance.VideoPerformanceConstants.FIRST_FRAME_RENDER_TRACE
-import com.yral.android.ui.screens.home.feed.performance.VideoPerformanceConstants.HLS_FORMAT
-import com.yral.android.ui.screens.home.feed.performance.VideoPerformanceConstants.PLAYBACK_TIME_TRACE
-import com.yral.android.ui.screens.home.feed.performance.VideoPerformanceConstants.PROGRESSIVE_FORMAT
-import com.yral.android.ui.screens.home.feed.performance.VideoPerformanceConstants.VIDEO_FORMAT_KEY
-import com.yral.android.ui.screens.home.feed.performance.VideoPerformanceConstants.VIDEO_ID_KEY
-import com.yral.android.ui.screens.home.feed.performance.VideoPerformanceConstants.VIDEO_LOAD_TRACE
+import com.yral.android.ui.screens.feed.performance.VideoPerformanceConstants.FIRST_FRAME_RENDER_TRACE
+import com.yral.android.ui.screens.feed.performance.VideoPerformanceConstants.HLS_FORMAT
+import com.yral.android.ui.screens.feed.performance.VideoPerformanceConstants.PLAYBACK_TIME_TRACE
+import com.yral.android.ui.screens.feed.performance.VideoPerformanceConstants.PROGRESSIVE_FORMAT
+import com.yral.android.ui.screens.feed.performance.VideoPerformanceConstants.VIDEO_FORMAT_KEY
+import com.yral.android.ui.screens.feed.performance.VideoPerformanceConstants.VIDEO_ID_KEY
+import com.yral.android.ui.screens.feed.performance.VideoPerformanceConstants.VIDEO_LOAD_TRACE
 import com.yral.shared.libs.firebasePerf.FirebaseOperationTrace
 import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.libs.videoPlayer.util.isHlsUrl

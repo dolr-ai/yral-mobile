@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.home.feed.performance
+package com.yral.android.ui.screens.feed.performance
 
 import com.yral.shared.libs.videoPlayer.model.Reels
 
