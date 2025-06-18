@@ -18,3 +18,10 @@ fun EventData.shouldSendToYralBE(): Boolean =
         FeatureEvents.VIDEO_DURATION_WATCHED.getEventName() -> true
         else -> false
     }
+
+fun EventData.shouldSendToFacebook(): Boolean =
+    when (event) {
+        FeatureEvents.LOGIN_SUCCESS.getEventName() -> true
+        FeatureEvents.GAME_PLAYED.getEventName() -> true
+        else -> false
+    }

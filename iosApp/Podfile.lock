@@ -1,4 +1,10 @@
 PODS:
+  - FBAEMKit (18.0.0):
+    - FBSDKCoreKit_Basics (= 18.0.0)
+  - FBSDKCoreKit (18.0.0):
+    - FBAEMKit (= 18.0.0)
+    - FBSDKCoreKit_Basics (= 18.0.0)
+  - FBSDKCoreKit_Basics (18.0.0)
   - FirebaseABTesting (10.29.0):
     - FirebaseCore (~> 10.0)
   - FirebaseAnalytics (10.25.0):
@@ -140,6 +146,7 @@ PODS:
     - GoogleUtilities/Logger
     - GoogleUtilities/Privacy
   - iosSharedUmbrella (1.0):
+    - FBSDKCoreKit (= 18.0.0)
     - FirebaseAnalytics
     - FirebaseCore
     - FirebaseCoreInternal
@@ -164,6 +171,9 @@ DEPENDENCIES:
 
 SPEC REPOS:
   trunk:
+    - FBAEMKit
+    - FBSDKCoreKit
+    - FBSDKCoreKit_Basics
     - FirebaseABTesting
     - FirebaseAnalytics
     - FirebaseCore
@@ -189,6 +199,9 @@ EXTERNAL SOURCES:
     :path: "../iosSharedUmbrella"
 
 SPEC CHECKSUMS:
+  FBAEMKit: e34530df538b8eb8aeb53c35867715ba6c63ef0c
+  FBSDKCoreKit: d3f479a69127acebb1c6aad91c1a33907bcf6c2f
+  FBSDKCoreKit_Basics: 017b6dc2a1862024815a8229e75661e627ac1e29
   FirebaseABTesting: d87f56707159bae64e269757a6e963d490f2eebe
   FirebaseAnalytics: ec00fe8b93b41dc6fe4a28784b8e51da0647a248
   FirebaseCore: 7ec4d0484817f12c3373955bc87762d96842d483
@@ -204,7 +217,7 @@ SPEC CHECKSUMS:
   GoogleAppMeasurement: 9abf64b682732fed36da827aa2a68f0221fd2356
   GoogleDataTransport: 6c09b596d841063d76d4288cc2d2f42cc36e1e2a
   GoogleUtilities: ea963c370a38a8069cc5f7ba4ca849a60b6d7d15
-  iosSharedUmbrella: e986a55ed74e216464042082bc22722b9b0d495e
+  iosSharedUmbrella: 87f7b066bd64f65c73c2f854be12bc5614528c4e
   Mixpanel: 9337782610693ef36b8f6ab531493201825f1dd6
   nanopb: 438bc412db1928dac798aa6fd75726007be04262
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47

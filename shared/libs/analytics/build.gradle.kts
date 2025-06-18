@@ -33,6 +33,10 @@ kotlin {
         pod("Mixpanel") {
             extraOpts += listOf("-compiler-option", "-fmodules")
         }
+        pod("FBSDKCoreKit") {
+            version = "18.0.0"
+            extraOpts += listOf("-compiler-option", "-fmodules")
+        }
     }
 
     sourceSets {
