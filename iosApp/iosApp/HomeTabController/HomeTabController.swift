@@ -65,7 +65,7 @@ struct HomeTabController: View {
           .tag(Int.two)
 
         profileView
-          .onUploadAction { selectedTab = .one }
+          .onUploadAction { selectedTab = .two }
           .background(Color.black.edgesIgnoringSafeArea(.all))
           .tabItem { tabIcon(selected: selectedTab == .three,
                              selectedName: Constants.profileIconImageNameSelected,
