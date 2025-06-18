@@ -1,7 +1,10 @@
 package com.yral.shared.features.feed.viewmodel
 
 import androidx.lifecycle.ViewModel
+import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.mapBoth
+import com.github.michaelbull.result.onFailure
+import com.github.michaelbull.result.onSuccess
 import com.yral.shared.analytics.AnalyticsManager
 import com.yral.shared.analytics.events.DuplicatePostsEvent
 import com.yral.shared.analytics.events.EmptyColdStartFeedEvent
@@ -47,6 +50,9 @@ class FeedViewModel(
         private const val FIRST_SECOND_WATCHED_THRESHOLD_MS = 1000L
         private const val FULL_VIDEO_WATCHED_THRESHOLD = 95.0
         const val NSFW_PROBABILITY = 0.4
+        private const val MAX_PAGE_SIZE = 100
+        private const val FEEDS_PAGE_SIZE = 10
+        private const val SUFFICIENT_NEW_REQUIRED = 10
     }
 
     private val _state = MutableStateFlow(FeedState())
@@ -89,19 +95,22 @@ class FeedViewModel(
         )
     }
 
-    private suspend fun filterVotedAndFetchDetails(posts: List<Post>) {
+    private suspend fun filterVotedAndFetchDetails(posts: List<Post>): Int {
         val fetchedIds = _state.value.feedDetails.mapTo(HashSet()) { it.videoID }
         val newPosts = posts.filter { post -> post.videoID !in fetchedIds }
         val duplicates = posts.size - newPosts.size
         if (duplicates > 0) {
             analyticsManager.trackEvent(DuplicatePostsEvent(duplicatePosts = duplicates))
         }
+        var count = 0
         newPosts
             .filterFirstNSuspendFlow(posts.size, false) {
                 !isAlreadyVoted(it)
             }.collect { newPost ->
                 fetchFeedDetail(newPost)
+                count++
             }
+        return count
     }
 
     private suspend fun isAlreadyVoted(post: Post): Boolean =
@@ -133,35 +142,64 @@ class FeedViewModel(
     }
 
     fun loadMoreFeed() {
-        if (_state.value.isLoadingMore) {
+        if (_state.value.isLoadingMore) return
+        coroutineScope.launch {
+            loadMoreFeedRecursively(
+                currentBatchSize = FEEDS_PAGE_SIZE,
+                totalNotVotedCount = 0,
+                recursionDepth = 0,
+            )
+        }
+    }
+
+    private suspend fun loadMoreFeedRecursively(
+        currentBatchSize: Int,
+        totalNotVotedCount: Int,
+        recursionDepth: Int = 0,
+        maxDepth: Int = 5,
+    ) {
+        if (recursionDepth >= maxDepth) {
+            setLoadingMore(false)
+            // Safeguard: Max recursion depth reached
+            // Optionally log or notify here
             return
         }
-        coroutineScope.launch {
-            sessionManager.getCanisterPrincipal()?.let {
-                setLoadingMore(true)
-                requiredUseCases.fetchMoreFeedUseCase
-                    .invoke(
-                        parameter =
-                            FetchMoreFeedUseCase.Params(
-                                canisterID = it,
-                                filterResults =
-                                    _state.value.posts.map { post ->
-                                        post.toFilteredResult()
-                                    },
-                            ),
-                    ).mapBoth(
-                        success = { moreFeed ->
-                            val posts = moreFeed.posts
-                            if (posts.isNotEmpty()) {
-                                filterVotedAndFetchDetails(posts)
-                            }
+        sessionManager.getCanisterPrincipal()?.let { canisterId ->
+            setLoadingMore(true)
+            requiredUseCases.fetchMoreFeedUseCase
+                .invoke(
+                    parameter =
+                        FetchMoreFeedUseCase.Params(
+                            canisterID = canisterId,
+                            filterResults =
+                                _state.value.posts.map { post ->
+                                    post.toFilteredResult()
+                                },
+                            batchSize = currentBatchSize.coerceAtMost(MAX_PAGE_SIZE),
+                        ),
+                ).onSuccess { moreFeed ->
+                    val posts = moreFeed.posts
+                    if (posts.isNotEmpty()) {
+                        val notVotedCount = filterVotedAndFetchDetails(posts)
+                        val newTotal = totalNotVotedCount + notVotedCount
+                        Logger.d("HTTP: newItems: $newTotal")
+                        if (newTotal < SUFFICIENT_NEW_REQUIRED) {
+                            val nextBatchSize =
+                                (currentBatchSize + FEEDS_PAGE_SIZE).coerceAtMost(MAX_PAGE_SIZE)
+                            loadMoreFeedRecursively(
+                                currentBatchSize = nextBatchSize,
+                                totalNotVotedCount = newTotal,
+                                recursionDepth = recursionDepth + 1,
+                            )
+                        } else {
                             setLoadingMore(false)
-                        },
-                        failure = { _ ->
-                            setLoadingMore(false)
-                        },
-                    )
-            }
+                        }
+                    } else {
+                        setLoadingMore(false)
+                    }
+                }.onFailure {
+                    setLoadingMore(false)
+                }
         }
     }
 
