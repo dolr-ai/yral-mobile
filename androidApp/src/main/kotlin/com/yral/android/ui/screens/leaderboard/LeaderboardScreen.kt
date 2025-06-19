@@ -17,9 +17,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -70,11 +70,12 @@ fun LeaderboardScreen(
             modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.primaryContainer)
-                .padding(16.dp),
+                .verticalScroll(rememberScrollState()),
     ) {
         // Trophies
         TrophyGallery(state.leaderboard)
         // Table Header
+        Spacer(modifier = Modifier.height(16.dp))
         LeaderboardTableHeader()
         Spacer(modifier = Modifier.height(8.dp))
         // Content
@@ -96,7 +97,8 @@ fun LeaderboardScreen(
                     modifier =
                         Modifier
                             .fillMaxWidth()
-                            .weight(1f),
+                            .weight(1f)
+                            .padding(16.dp),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
@@ -157,7 +159,8 @@ private fun TrophyGallery(leaderboard: List<LeaderboardItem>) {
         modifier =
             Modifier
                 .fillMaxWidth()
-                .height((TROPHY_GALLERY_SIZE * screenHeight).dp),
+                .height((TROPHY_GALLERY_SIZE * screenHeight).dp)
+                .background(YralColors.Yellow400),
         contentAlignment = Alignment.TopCenter,
     ) {
         YralLottieAnimation(
@@ -165,7 +168,9 @@ private fun TrophyGallery(leaderboard: List<LeaderboardItem>) {
             rawRes = R.raw.leaderboard_star,
         )
         // Header
-        Column {
+        Column(
+            modifier = Modifier.padding(16.dp),
+        ) {
             Text(
                 text = stringResource(R.string.leaderboard),
                 style = LocalAppTopography.current.xlBold,
@@ -305,25 +310,24 @@ private fun LeaderboardContent(
     leaderboard: List<LeaderboardItem>,
     currentUser: CurrentUserInfo?,
 ) {
-    LazyColumn(
+    Column(
+        modifier = Modifier.padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         // Show current user first if available
         currentUser?.let { user ->
-            item {
-                LeaderboardRow(
-                    position = user.leaderboardPosition,
-                    userPrincipalId = user.userPrincipalId,
-                    profileImageUrl = user.profileImageUrl,
-                    coins = user.coins,
-                    isCurrentUser = true,
-                )
-            }
-        }
-        // Show other leaderboard items
-        items(leaderboard) { item ->
             LeaderboardRow(
-                position = leaderboard.indexOf(item),
+                position = user.leaderboardPosition,
+                userPrincipalId = user.userPrincipalId,
+                profileImageUrl = user.profileImageUrl,
+                coins = user.coins,
+                isCurrentUser = true,
+            )
+        }
+        repeat(leaderboard.size) { index ->
+            val item = leaderboard[index]
+            LeaderboardRow(
+                position = index + 1,
                 userPrincipalId = item.userPrincipalId,
                 profileImageUrl = item.profileImage,
                 coins = item.coins,
