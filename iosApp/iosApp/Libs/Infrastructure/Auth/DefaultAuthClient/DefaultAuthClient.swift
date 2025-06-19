@@ -11,6 +11,7 @@ import Combine
 import P256K
 import AuthenticationServices
 
+// swiftlint: disable type_body_length
 final class DefaultAuthClient: NSObject, AuthClient {
   private(set) var identity: DelegatedIdentity?
   private(set) var canisterPrincipal: Principal?
@@ -24,15 +25,26 @@ final class DefaultAuthClient: NSObject, AuthClient {
   }
 
   let networkService: NetworkService
+  let firebaseService: FirebaseService
   let crashReporter: CrashReporter
   let baseURL: URL
+  let satsBaseURL: URL
+  let firebaseBaseURL: URL
 
   var pendingAuthState: String!
 
-  init(networkService: NetworkService, crashReporter: CrashReporter, baseURL: URL) {
+  init(networkService: NetworkService,
+       firebaseService: FirebaseService,
+       crashReporter: CrashReporter,
+       baseURL: URL,
+       satsBaseURL: URL,
+       firebaseBaseURL: URL) {
     self.networkService = networkService
+    self.firebaseService = firebaseService
     self.crashReporter = crashReporter
     self.baseURL = baseURL
+    self.satsBaseURL = satsBaseURL
+    self.firebaseBaseURL = firebaseBaseURL
     super.init()
   }
 
@@ -197,18 +209,99 @@ final class DefaultAuthClient: NSObject, AuthClient {
         self.canisterPrincipalString = canisterPrincipalString
         self.userPrincipal = userPrincipal
         self.userPrincipalString = userPrincipalString
-        stateSubject.value = (type == .ephemeral) ? .ephemeralAuthentication(
-          userPrincipal: userPrincipalString,
-          canisterPrincipal: canisterPrincipalString
-        ) : .permanentAuthentication(
-          userPrincipal: userPrincipalString,
-          canisterPrincipal: canisterPrincipalString
-        )
+      }
+
+      try await exchangePrincipalID(type: type)
+    }
+  }
+
+  func getUserBalance(type: DelegateIdentityType) async throws {
+    guard let principalID = userPrincipalString else {
+      throw SatsCoinError.unknown("Failed to fetch princiapl ID")
+    }
+
+    do {
+      let response = try await networkService.performRequest(
+        for: Endpoint(
+          http: "",
+          baseURL: satsBaseURL,
+          path: "v2/balance/\(principalID)",
+          method: .get
+        ),
+        decodeAs: SatsCoinDTO.self
+      ).toDomain()
+      await updateAuthState(for: type, withCoins: UInt64(response.balance) ?? 0)
+      try await firebaseService.update(coins: UInt64(response.balance) ?? 0, forPrincipal: principalID)
+    } catch {
+      switch error {
+      case let error as NetworkError:
+        throw SatsCoinError.network(error)
+      default:
+        throw SatsCoinError.unknown(error.localizedDescription)
       }
     }
   }
 
+  private func exchangePrincipalID(type: DelegateIdentityType) async throws {
+    let newSignIn = try? await firebaseService.signInAnonymously()
+
+    var httpHeaders = [
+      "Content-Type": "application/json"
+    ]
+    let userIDToken = try? await firebaseService.fetchUserIDToken()
+    guard let userIDToken else {
+      return
+    }
+    httpHeaders["Authorization"] = "Bearer \(userIDToken)"
+
+    let httpBody: [String: String] = [
+      "principal_id": userPrincipalString ?? ""
+    ]
+
+    if userPrincipalString != nil, !(newSignIn ?? true) {
+      do {
+        try await getUserBalance(type: type)
+      } catch {
+        await updateAuthState(for: type, withCoins: 0)
+      }
+    } else {
+      let endpoint = Endpoint(http: "",
+                              baseURL: firebaseBaseURL,
+                              path: "exchange_principal_id",
+                              method: .post,
+                              headers: httpHeaders,
+                              body: try? JSONSerialization.data(withJSONObject: httpBody)
+                             )
+
+      do {
+        let response = try await networkService.performRequest(
+          for: endpoint,
+          decodeAs: ExchangePrincipalDTO.self
+        ).toDomain()
+        try await firebaseService.signIn(withCustomToken: response.token)
+        try await getUserBalance(type: type)
+      } catch {
+        await updateAuthState(for: type, withCoins: 0)
+      }
+    }
+  }
+
+  private func updateAuthState(for type: DelegateIdentityType, withCoins coins: UInt64) async {
+    await MainActor.run {
+      stateSubject.value = (type == .ephemeral) ? .ephemeralAuthentication(
+        userPrincipal: userPrincipalString ?? "",
+        canisterPrincipal: canisterPrincipalString ?? "",
+        coins: coins
+      ) : .permanentAuthentication(
+        userPrincipal: userPrincipalString ?? "",
+        canisterPrincipal: canisterPrincipalString ?? "",
+        coins: coins
+      )
+    }
+  }
+
   @MainActor func logout() async throws {
+    try? firebaseService.signOut()
     try? KeychainHelper.deleteItem(for: Constants.keychainIdentity)
     try? KeychainHelper.deleteItem(for: Constants.keychainAccessToken)
     try? KeychainHelper.deleteItem(for: Constants.keychainIDToken)
@@ -283,6 +376,7 @@ final class DefaultAuthClient: NSObject, AuthClient {
     }
   }
 }
+// swiftlint: enable type_body_length
 
 enum DelegateIdentityType {
   case ephemeral

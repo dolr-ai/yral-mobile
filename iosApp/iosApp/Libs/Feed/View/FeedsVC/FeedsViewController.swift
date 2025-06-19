@@ -88,6 +88,9 @@ class FeedsViewController: UIViewController {
     setupNavigationBar()
     setupUI()
     Task { @MainActor in
+      if feedType == .otherUsers {
+        await viewModel.fetchSmileys()
+      }
       await viewModel.fetchFeeds(request: InitialFeedRequest(numResults: Constants.initialNumResults))
     }
     NotificationCenter.default.addObserver(
@@ -145,13 +148,23 @@ class FeedsViewController: UIViewController {
       .store(in: &initalFeedscancellables)
   }
 
-  // swiftlint: disable cyclomatic_complexity function_body_length
+  // swiftlint: disable cyclomatic_complexity
+  // swiftlint: disable function_body_length
   func handleEvents() {
     viewModel.unifiedEventPublisher
       .receive(on: RunLoop.main)
       .sink { [weak self] event in
         guard let self = self, let event = event else { return }
         switch event {
+        case .castVoteSuccess(let response):
+          self.handleCastVote(response)
+        case .castVoteFailure(let error, let videoID):
+          switch error {
+          case .cloudFunctionError(let error):
+            self.handleCastVoteFailure(error.description, videoID: videoID)
+          default:
+            print("Cast vote failure: \(error.localizedDescription)")
+          }
         case .fetchingInitialFeeds:
           loadMoreRequestMade = true
         case .loadedMoreFeeds:
@@ -166,8 +179,6 @@ class FeedsViewController: UIViewController {
           self.loadMoreRequestMade = true
         case .finishedLoadingInitialFeeds:
           self.loadMoreRequestMade = false
-        case .toggledLikeSuccessfully(let response):
-          self.toggleLikeStatus(response)
         case .toggleLikeFailed(let errorMessage):
           print("Toggle like failed: \(errorMessage)")
         case .deleteVideoInitiated:
@@ -207,7 +218,8 @@ class FeedsViewController: UIViewController {
       }
       .store(in: &paginatedFeedscancellables)
   }
-  // swiftlint: enable cyclomatic_complexity function_body_length
+  // swiftlint: enable function_body_length
+  // swiftlint: enable cyclomatic_complexity
 
   func setupNavigationBar() {
     navigationController?.navigationBar.isHidden = feedType == .otherUsers
@@ -346,6 +358,7 @@ class FeedsViewController: UIViewController {
 
 extension FeedsViewController {
   enum Constants {
+    static let maxFeedBatchSize = 100
     static let initialNumResults = 10
     static let thresholdForLoadingMoreResults = 6
     static let radius = 5
