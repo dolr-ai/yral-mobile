@@ -299,7 +299,7 @@ private fun FeedOverlay(
         ) {
             feedViewModel.toggleReportSheet(true, pageNo)
         }
-        if (gameState.gameIcons.isNotEmpty()) {
+        if (gameState.gameIcons.isNotEmpty() && gameState.lossPenalty < gameState.coinBalance) {
             SmileyGame(
                 gameIcons = gameState.gameIcons,
                 clickedIcon = gameState.gameResult[state.feedDetails[pageNo].videoID]?.first,

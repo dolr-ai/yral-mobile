@@ -115,12 +115,7 @@ class AccountsViewModel(
                         provider = SocialProvider.GOOGLE,
                         oAuthListener =
                             object : OAuthListener {
-                                override fun setLoading(loading: Boolean) {
-                                    showLoading(loading)
-                                }
-
                                 override fun exception(e: YralException) {
-                                    showLoading(false)
                                     setBottomSheetType(type = AccountBottomSheet.SignUpFailed)
                                 }
                             },
@@ -129,7 +124,6 @@ class AccountsViewModel(
                     @Suppress("TooGenericExceptionCaught") e: Exception,
                 ) {
                     crashlyticsManager.recordException(e)
-                    showLoading(false)
                     setBottomSheetType(type = AccountBottomSheet.SignUpFailed)
                 }
             }
@@ -138,16 +132,6 @@ class AccountsViewModel(
     private suspend fun isSocialSignInSuccessful(): Boolean =
         preferences
             .getBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name) ?: false
-
-    fun showLoading(loading: Boolean) {
-        coroutineScope.launch {
-            _state.update { currentState ->
-                currentState.copy(
-                    isLoading = loading,
-                )
-            }
-        }
-    }
 
     fun setBottomSheetType(type: AccountBottomSheet) {
         coroutineScope.launch {
@@ -245,7 +229,6 @@ data class AccountHelpLink(
 data class AccountsState(
     val accountInfo: AccountInfo?,
     val isSocialSignInSuccessful: Boolean,
-    val isLoading: Boolean = false,
     val bottomSheetType: AccountBottomSheet = AccountBottomSheet.None,
 )
 

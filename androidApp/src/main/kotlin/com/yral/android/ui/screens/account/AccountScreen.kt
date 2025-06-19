@@ -47,7 +47,6 @@ import com.yral.android.ui.design.YralDimens
 import com.yral.android.ui.screens.account.AccountScreenConstants.SOCIAL_MEDIA_LINK_BOTTOM_SPACER_WEIGHT
 import com.yral.android.ui.widgets.YralErrorMessage
 import com.yral.android.ui.widgets.YralGradientButton
-import com.yral.android.ui.widgets.YralLoader
 import com.yral.shared.features.account.viewmodel.AccountBottomSheet
 import com.yral.shared.features.account.viewmodel.AccountHelpLink
 import com.yral.shared.features.account.viewmodel.AccountInfo
@@ -89,9 +88,6 @@ fun AccountScreen(
             signInWithGoogle = { viewModel.signInWithGoogle() },
             onDeleteAccount = { viewModel.deleteAccount() },
         )
-        if (state.isLoading) {
-            YralLoader()
-        }
     }
 }
 
