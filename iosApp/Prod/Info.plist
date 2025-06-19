@@ -33,6 +33,8 @@
 	<string>1</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>MIXPANEL_TOKEN</key>
+	<string>609abef3172b5fc64554f5ac6c77414d</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Yral requires camera access to allow you to record and upload videos. Your camera will only be used when you choose to create a new video.</string>
 	<key>NSMicrophoneUsageDescription</key>
@@ -71,5 +73,7 @@
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 	</array>
+	<key>YRAL_REDIRECT_URI</key>
+	<string>com.yral.iosApp://oauth/callback</string>
 </dict>
 </plist>
