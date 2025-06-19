@@ -108,12 +108,8 @@ final class DefaultAuthClient: NSObject, AuthClient {
       guard let data = identityData else { return }
       try await handleExtractIdentityResponse(from: data, type: .ephemeral)
       return
-    }
-
-    if now >= refreshExpiry {
-      try await obtainAnonymousIdentity()
     } else {
-      try await refreshAccessToken()
+      try await obtainAnonymousIdentity()
     }
   }
 
@@ -135,7 +131,7 @@ final class DefaultAuthClient: NSObject, AuthClient {
   }
 
   private func refreshAccessToken() async throws {
-    let refreshToken = try KeychainHelper.retrieveString(for: Constants.keychainRefreshToken) ?? ""
+    guard let refreshToken = try KeychainHelper.retrieveString(for: Constants.keychainRefreshToken) else { return }
     let request = RefreshTokenRequest(refreshToken: refreshToken, clientId: Constants.clientID)
     let body = try request.formURLEncodedData()
     let endpoint = Endpoint(
