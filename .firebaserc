@@ -1,5 +1,8 @@
 {
   "projects": {
-    "default": "yral-staging"
-  }
+    "default": "yral-staging",
+    "production": "yral-mobile"
+  },
+  "targets": {},
+  "etags": {}
 }

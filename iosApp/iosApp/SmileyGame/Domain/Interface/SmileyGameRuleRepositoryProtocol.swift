@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import FirebaseFirestore
 
 protocol SmileyGameRuleRepositoryProtocol {
   func fetchSmileyGameRules() async -> Result<[SmileyGameRuleResponse], SmileyGameRuleError>

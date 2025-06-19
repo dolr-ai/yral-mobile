@@ -13,7 +13,7 @@ import FirebaseAppCheck
 class FirebaseService: FirebaseServiceProtocol {
   private let database = Firestore.firestore()
 
-  func signInAnonymously() async throws {
+  func signInAnonymously() async throws -> Bool {
     if let hasLaunchedAppBefore = (UserDefaultsManager.shared.get(for: DefaultsKey.hasLaunchedAppBefore) ?? false),
     !hasLaunchedAppBefore {
       try signOut()
@@ -22,7 +22,10 @@ class FirebaseService: FirebaseServiceProtocol {
 
     if Auth.auth().currentUser == nil {
       try await Auth.auth().signInAnonymously()
+      return true
     }
+
+    return false
   }
 
   func signIn(withCustomToken token: String) async throws {
@@ -51,10 +54,29 @@ class FirebaseService: FirebaseServiceProtocol {
     }
   }
 
+  func fetchCoins(for principal: String) async throws -> Int {
+    let doc = try await database.document("users/\(principal)").getDocument()
+    return (doc.get("coins") as? Int) ?? 0
+  }
+
+  func update(coins: UInt64, forPrincipal principal: String) async throws {
+    let document = database.document("users/\(principal)")
+    _ = try await database.runTransaction { transaction, _ in
+      transaction.updateData(["coins": coins], forDocument: document)
+    }
+  }
+
   func fetchDocument<T>(
     path: String,
+    checkCache: Bool,
     decodeAs type: T.Type
   ) async throws -> T where T: Decodable {
+    if checkCache {
+      if let cachedSnap = try? await database.document(path).getDocument(source: .cache) {
+        return try cachedSnap.data(as: T.self)
+      }
+    }
+
     let doc = database.document(path)
     let snapshot = try await doc.getDocument()
 
@@ -64,11 +86,17 @@ class FirebaseService: FirebaseServiceProtocol {
   func fetchCollection<T>(
     from path: String,
     orderBy fields: [String]?,
+    descending: Bool = false,
+    limit: Int? = nil,
     decodeAs type: T.Type
   ) async throws -> [T] where T: Decodable {
     var query: Query = database.collection(path)
     if let fields {
-      query = query.order(by: FieldPath(fields))
+      query = query.order(by: FieldPath(fields), descending: descending)
+    }
+
+    if let limit {
+      query = query.limit(to: limit)
     }
 
     let snapshot = try await query.getDocuments()

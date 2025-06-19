@@ -30,7 +30,7 @@ extension CastVoteQuery {
 
 struct SmileyGameResultDTO: Decodable {
   let outcome: String
-  let coins: Int
+  let coins: UInt64
   let coinDelta: Int
   let smiley: SmileyDTO
 

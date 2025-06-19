@@ -56,7 +56,7 @@ struct GameRuleView: View {
 
     for (index, text) in texts.enumerated() {
       var attrString = AttributedString(text)
-      attrString.foregroundColor = YralColor(rawValue: textColors[index])?.swiftUIColor
+      attrString.foregroundColor = Color(hex: textColors[index])
       attributedString += attrString
     }
 

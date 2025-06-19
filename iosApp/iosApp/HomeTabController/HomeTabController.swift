@@ -6,6 +6,7 @@ struct HomeTabController: View {
   let accountView: AccountView
   let uploadView: UploadView
   let profileView: ProfileView
+  let leaderboardView: LeaderboardView
 
   private var feedsViewControllerWrapper: FeedsViewControllerWrapper {
     FeedsViewControllerWrapper(
@@ -23,12 +24,14 @@ struct HomeTabController: View {
     feedsViewController: FeedsViewController,
     uploadView: UploadView,
     profileView: ProfileView,
-    accountView: AccountView
+    accountView: AccountView,
+    leaderboardView: LeaderboardView
   ) {
     self.feedsViewController = feedsViewController
     self.uploadView = uploadView
     self.profileView = profileView
     self.accountView = accountView
+    self.leaderboardView = leaderboardView
     UITabBar.appearance().backgroundColor = .black
     UITabBar.appearance().barTintColor = .black
     UITabBar.appearance().isTranslucent = false
@@ -44,21 +47,30 @@ struct HomeTabController: View {
                              unselectedName: Constants.homeIconImageNameUnselected) }
           .tag(Int.zero)
 
+        leaderboardView
+          .background(Color.black.edgesIgnoringSafeArea(.all))
+          .tabItem {
+            tabIcon(selected: selectedTab == .one,
+                    selectedName: Constants.leaderboardIconImageNameSelected,
+                    unselectedName: Constants.leaderboardIconImageNameUnselected)
+          }
+          .tag(Int.one)
+
         uploadView
           .onDoneAction { selectedTab = .zero }
           .background(Color.black.edgesIgnoringSafeArea(.all))
-          .tabItem { tabIcon(selected: selectedTab == .one,
+          .tabItem { tabIcon(selected: selectedTab == .two,
                              selectedName: Constants.uploadIconImageNameSelected,
                              unselectedName: Constants.uploadIconImageNameUnselected) }
-          .tag(Int.one)
+          .tag(Int.two)
 
         profileView
-          .onUploadAction { selectedTab = .one }
+          .onUploadAction { selectedTab = .two }
           .background(Color.black.edgesIgnoringSafeArea(.all))
-          .tabItem { tabIcon(selected: selectedTab == .two,
+          .tabItem { tabIcon(selected: selectedTab == .three,
                              selectedName: Constants.profileIconImageNameSelected,
                              unselectedName: Constants.profileIconImageNameUnSelected) }
-          .tag(Int.two)
+          .tag(Int.three)
 
         accountView
           .background(Color.black.edgesIgnoringSafeArea(.all))
@@ -66,10 +78,10 @@ struct HomeTabController: View {
             Image(ImageResource(name: Constants.accountIconImageName, bundle: .main))
               .renderingMode(.original)
           }
-          .tag(Int.three)
+          .tag(Int.four)
       }
       GeometryReader { geometry in
-        let tabWidth = geometry.size.width / .four
+        let tabWidth = geometry.size.width / .five
         let indicatorXPosition = CGFloat(selectedTab) * tabWidth + (tabWidth - Constants.indicatorWidth) / .two
         VStack {
           Spacer().frame(height: geometry.size.height)
@@ -83,6 +95,14 @@ struct HomeTabController: View {
               .animation(.easeInOut, value: selectedTab)
             Spacer()
           }
+
+//          Text("New")
+//            .font(YralFont.pt8.bold.swiftUIFont)
+//            .foregroundColor(YralColor.grey0.swiftUIColor)
+//            .padding(.horizontal, 4)
+//            .background(YralColor.primary300.swiftUIColor)
+//            .clipShape(RoundedRectangle(cornerRadius: 12))
+//            .offset(x: -tabWidth, y: -self.tabBarHeight - 2.5)
         }
       }
     }
@@ -112,6 +132,8 @@ extension HomeTabController {
   enum Constants {
     static let homeIconImageNameUnselected = "home_tab_unselected"
     static let homeIconImageNameSelected = "home_tab_selected"
+    static let leaderboardIconImageNameSelected = "leaderboard_tab_selected"
+    static let leaderboardIconImageNameUnselected = "leaderboard_tab_unselected"
     static let uploadIconImageNameUnselected = "upload_tab_unselected"
     static let uploadIconImageNameSelected = "upload_tab_selected"
     static let profileIconImageNameUnSelected = "profile_tab_unselected"

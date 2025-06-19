@@ -126,26 +126,48 @@ extension FeedsViewController {
   }
 
   func handleCastVote(_ response: SmileyGameResultResponse) {
-    var snapshot = feedsDataSource.snapshot()
-    var items = snapshot.itemIdentifiers
+    let snapshot = feedsDataSource.snapshot()
+    let items = snapshot.itemIdentifiers
     guard let index = items.firstIndex(where: { $0.videoID == response.videoID }) else {
       return
     }
 
     guard let cell = feedsCV.cellForItem(at: IndexPath(item: index, section: 0)) as? FeedsCell else {
+      updateUIAfterCastVoteSuccess(
+        with: response,
+        forIndex: index,
+        withItems: items,
+        andSnapshot: snapshot
+      )
       return
     }
-    
     cell.startSmileyGamResultAnimation(for: response) { [weak self] in
-      items[index].smileyGame?.state = .played(response)
-
-      snapshot.deleteItems(snapshot.itemIdentifiers)
-      snapshot.appendItems(items)
-      self?.feedsDataSource.apply(snapshot, animatingDifferences: true)
-      self?.session.update(coins: response.coins)
+      self?.updateUIAfterCastVoteSuccess(
+        with: response,
+        forIndex: index,
+        withItems: items,
+        andSnapshot: snapshot
+      )
     }
   }
 
+  private func updateUIAfterCastVoteSuccess(
+    with response: SmileyGameResultResponse,
+    forIndex index: Int,
+    withItems items: [FeedResult],
+    andSnapshot snapshot: NSDiffableDataSourceSnapshot<Int, FeedResult>
+  ) {
+    var items = items
+    items[index].smileyGame?.state = .played(response)
+
+    var snapshot = snapshot
+    snapshot.deleteItems(snapshot.itemIdentifiers)
+    snapshot.appendItems(items)
+
+    self.feedsDataSource.apply(snapshot, animatingDifferences: true)
+    self.session.update(coins: response.coins)
+  }
+  
   func handleCastVoteFailure(_ errorMessage: String, videoID: String) {
     var snapshot = feedsDataSource.snapshot()
     var items = snapshot.itemIdentifiers
@@ -156,7 +178,7 @@ extension FeedsViewController {
     guard let cell = feedsCV.cellForItem(at: IndexPath(item: index, section: 0)) as? FeedsCell else {
       return
     }
-
+    
     cell.handleSmileyGameError(errorMessage)
 
     items[0].smileyGame?.state = .error(errorMessage)

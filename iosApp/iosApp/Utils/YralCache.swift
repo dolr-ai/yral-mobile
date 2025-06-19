@@ -40,6 +40,13 @@ final class YralCache {
     memory.setObject(data as NSData, forKey: path as NSString)
 
     let fileURL = diskURL.appendingPathComponent(path)
-    try? data.write(to: fileURL, options: .atomic)
+    let directoryURL = fileURL.deletingLastPathComponent()
+
+    do {
+      try FileManager.default.createDirectory(at: directoryURL, withIntermediateDirectories: true)
+      try data.write(to: fileURL, options: .atomic)
+    } catch {
+      print("Failed to save image to disk with error: \(error)")
+    }
   }
 }

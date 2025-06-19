@@ -36,6 +36,7 @@ import GRPC
       firebaseService: FirebaseService(),
       crashReporter: crashReporter,
       baseURL: URL(string: appConfiguration.authBaseURLString) ?? URL(fileURLWithPath: ""),
+      satsBaseURL: URL(string: appConfiguration.satsBalanceBaseURLString) ?? URL(fileURLWithPath: ""),
       firebaseBaseURL: URL(string: appConfiguration.firebaseBaseURLString) ?? URL(fileURLWithPath: "")
     )
     return client
@@ -87,6 +88,16 @@ import GRPC
           ),
           crashReporter: crashReporter
         )
+      )
+    )
+  }
+
+  func makeLeaderboardDIContainer() -> LeaderboardDIContainer {
+    return LeaderboardDIContainer(
+      dependencies: LeaderboardDIContainer.Dependencies(
+        firebaseService: FirebaseService(),
+        crashReporter: crashReporter,
+        authClient: authClient
       )
     )
   }

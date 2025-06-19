@@ -351,6 +351,7 @@ class FeedsViewController: UIViewController {
 
 extension FeedsViewController {
   enum Constants {
+    static let maxFeedBatchSize = 100
     static let initialNumResults = 10
     static let thresholdForLoadingMoreResults = 6
     static let radius = 5
