@@ -61,4 +61,16 @@ android {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
     }
+    flavorDimensions += "version"
+    productFlavors {
+        create("staging") {
+            dimension = "version"
+        }
+        create("prod") {
+            dimension = "version"
+        }
+    }
+    buildFeatures {
+        buildConfig = true
+    }
 }
