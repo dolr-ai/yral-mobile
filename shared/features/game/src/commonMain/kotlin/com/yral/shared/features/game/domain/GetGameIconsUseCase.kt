@@ -1,7 +1,7 @@
 package com.yral.shared.features.game.domain
 
+import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.getOrThrow
-import com.yral.shared.core.AppConfigurations.FIREBASE_BUCKET
 import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.game.data.models.toGameConfig
@@ -32,27 +32,27 @@ class GetGameIconsUseCase(
                 ).getOrThrow()
                 .toGameConfig()
         if (config.lossPenalty < parameter.coinBalance) {
-            val storage = Firebase.storage(FIREBASE_BUCKET)
-            val storageRef = storage.reference
             return config.availableSmileys.map { smiley ->
+                Logger.d("xxxx $smiley")
                 smiley.copy(
-                    imageUrl =
-                        if (smiley.imageUrl.isNotEmpty()) {
-                            storageRef.child(smiley.imageUrl).getDownloadUrl()
-                        } else {
-                            smiley.imageUrl
-                        },
-                    clickAnimation =
-                        if (smiley.clickAnimation.isNotEmpty()) {
-                            storageRef.child(smiley.clickAnimation).getDownloadUrl()
-                        } else {
-                            smiley.clickAnimation
-                        },
+                    imageUrl = getDownloadUrl(smiley.imageUrl),
+                    clickAnimation = getDownloadUrl(smiley.clickAnimation),
                 )
             }
         }
         return emptyList()
     }
+
+    private suspend fun getDownloadUrl(path: String): String =
+        if (path.isEmpty()) {
+            path
+        } else {
+            runCatching {
+                Firebase.storage.reference(path).getDownloadUrl().also {
+                    Logger.d("xxxx download url: $it")
+                }
+            }.getOrElse { "" }
+        }
 
     data class GetGameIconsParams(
         val coinBalance: Long,
