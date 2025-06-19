@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import iosSharedUmbrella
 
 struct AccountView: View {
   @StateObject var viewModel: AccountViewModel
@@ -105,6 +106,9 @@ struct AccountView: View {
       }
     }
     .task {
+      AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+        event: MenuPageViewedEventData()
+      )
       guard isLoadingFirstTime else { return }
       isLoadingFirstTime = false
       await viewModel.fetchProfileInfo()

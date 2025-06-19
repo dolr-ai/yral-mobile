@@ -17,6 +17,7 @@ protocol FeedsCellProtocol: AnyObject {
   func deleteButtonTapped(index: Int)
   func reportButtonTapped(index: Int)
   func loginTapped(provider: SocialProvider)
+  func videoStarted(index: Int)
 }
 class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
 
@@ -213,6 +214,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   @objc private func handleFirstFrameReady(_ note: Notification) {
     guard let idx = note.userInfo?["index"] as? Int, idx == index else { return }
     playerLayer?.isHidden = false
+    delegate?.videoStarted(index: index)
   }
 
   @objc func likeButtonTapped() {

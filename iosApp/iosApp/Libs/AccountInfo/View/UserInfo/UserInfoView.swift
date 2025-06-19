@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import iosSharedUmbrella
 
 struct UserInfoView: View {
   @Binding var accountInfo: AccountInfo?
@@ -48,6 +49,9 @@ struct UserInfoView: View {
       if showLoginButton {
         Button {
           delegate?.loginPressed()
+          AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+            event: MenuClickedEventData(ctaType: .login)
+          )
         }
         label: {
           Text(Constants.loginButtonTitle)

@@ -8,6 +8,7 @@
 
 import Foundation
 import Combine
+import iosSharedUmbrella
 
 enum MyVideosPageState {
   case initalized
@@ -137,6 +138,12 @@ class MyVideosFeedViewModel: FeedViewModelProtocol, ObservableObject {
   }
 
   func deleteVideo(request: DeleteVideoRequest) async {
+    AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+      event: DeleteVideoInitiatedEventData(
+        pageName: "home",
+        videoId: request.videoId
+      )
+    )
     unifiedEvent = .deleteVideoInitiated
     let result = await deleteVideoUseCase.execute(
       request: DeleteVideoRequest(postId: request.postId, videoId: request.videoId)
@@ -144,7 +151,9 @@ class MyVideosFeedViewModel: FeedViewModelProtocol, ObservableObject {
     await MainActor.run {
       switch result {
       case .success:
-        break
+        AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+          event: VideoDeletedEventData(pageName: "home", videoId: request.videoId)
+        )
       case .failure(let failure):
         unifiedEvent = .deleteVideoFailed(errorMessage: failure.localizedDescription)
         unifiedState = .failure(errorMessage: failure.localizedDescription)
