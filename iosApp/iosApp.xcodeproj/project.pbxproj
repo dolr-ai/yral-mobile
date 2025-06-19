@@ -672,6 +672,8 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		AC9B77DE2D58C7E300270FC9 /* YralTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = YralTests;
 			sourceTree = "<group>";
 		};
@@ -2049,14 +2051,15 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 7555FFA5242A565B00829871 /* Build configuration list for PBXNativeTarget "Yral" */;
 			buildPhases = (
-				BCC4D96960B9A66373AD27BF /* [CP] Check Pods Manifest.lock */,
+				63557DD56211E0BAD2F1C095 /* [CP] Check Pods Manifest.lock */,
 				AC09AA1D2CDBAC9A009A39A4 /* Generate rust bindings */,
 				7555FF77242A565900829871 /* Sources */,
 				7555FF78242A565900829871 /* Frameworks */,
 				7555FF79242A565900829871 /* Resources */,
 				ACB815362CF9CEF600104B7B /* ShellScript */,
 				ACC0F3A72D2ED69300FA5BD0 /* Embed Frameworks */,
-				015A0F56D176CA8F4B05F537 /* [CP] Copy Pods Resources */,
+				E0D623551D39B6AD34E4904A /* [CP] Copy Pods Resources */,
+				0FAFC3CAB4FE788E2CA1475F /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -2075,7 +2078,8 @@
 				AC9B77D92D58C7E300270FC9 /* Sources */,
 				AC9B77DA2D58C7E300270FC9 /* Frameworks */,
 				AC9B77DB2D58C7E300270FC9 /* Resources */,
-				6143AA104A3D3A6522DAE399 /* [CP] Copy Pods Resources */,
+				414580285933B591D290404E /* [CP] Embed Pods Frameworks */,
+				F80C2BA72A09CB45C3118A54 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -2094,14 +2098,15 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = ACD941B52CFF575C0038FCB6 /* Build configuration list for PBXNativeTarget "Yral-Staging" */;
 			buildPhases = (
-				499E92DE50525340B6202192 /* [CP] Check Pods Manifest.lock */,
+				7BC3F3078A39356C9F270293 /* [CP] Check Pods Manifest.lock */,
 				ACD941842CFF575C0038FCB6 /* Generate rust bindings */,
 				ACD941862CFF575C0038FCB6 /* Sources */,
 				ACD9418D2CFF575C0038FCB6 /* Frameworks */,
 				ACD941B02CFF575C0038FCB6 /* Resources */,
 				ACD941B42CFF575C0038FCB6 /* ShellScript */,
 				ACC0F3AA2D2ED77200FA5BD0 /* Embed Frameworks */,
-				7E2AE19FC170BB103074E887 /* [CP] Copy Pods Resources */,
+				C626938FB2B206BAED91BD52 /* [CP] Embed Pods Frameworks */,
+				899A18ACB9DB1217AF0E6BB4 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -2220,24 +2225,63 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		015A0F56D176CA8F4B05F537 /* [CP] Copy Pods Resources */ = {
+		0FAFC3CAB4FE788E2CA1475F /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-resources-${CONFIGURATION}-input-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			name = "[CP] Copy Pods Resources";
+			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-resources-${CONFIGURATION}-output-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-frameworks-${CONFIGURATION}-output-files.xcfilelist",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-resources.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		499E92DE50525340B6202192 /* [CP] Check Pods Manifest.lock */ = {
+		414580285933B591D290404E /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		63557DD56211E0BAD2F1C095 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-Yral-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		7BC3F3078A39356C9F270293 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -2259,28 +2303,7 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		6143AA104A3D3A6522DAE399 /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-resources-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			inputPaths = (
-			);
-			name = "[CP] Copy Pods Resources";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-resources.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		7E2AE19FC170BB103074E887 /* [CP] Copy Pods Resources */ = {
+		899A18ACB9DB1217AF0E6BB4 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -2288,13 +2311,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -2404,26 +2423,21 @@
 			shellPath = /bin/sh;
 			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\n\"${BUILD_DIR%/Build/*}/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run\"\n";
 		};
-		BCC4D96960B9A66373AD27BF /* [CP] Check Pods Manifest.lock */ = {
+		C626938FB2B206BAED91BD52 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
-				"${PODS_ROOT}/Manifest.lock",
-			);
-			name = "[CP] Check Pods Manifest.lock";
+			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-Yral-checkManifestLockResult.txt",
+				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-frameworks-${CONFIGURATION}-output-files.xcfilelist",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		E0D623551D39B6AD34E4904A /* [CP] Copy Pods Resources */ = {
@@ -2434,17 +2448,30 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-resources-${CONFIGURATION}-output-files.xcfilelist",
 			);
-			outputPaths = (
-			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		F80C2BA72A09CB45C3118A54 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */

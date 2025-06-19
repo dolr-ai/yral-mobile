@@ -1,7 +1,9 @@
 package com.yral.shared.analytics.di
 
 import com.yral.shared.analytics.AnalyticsManager
+import com.yral.shared.analytics.events.shouldSendToFacebook
 import com.yral.shared.analytics.events.shouldSendToYralBE
+import com.yral.shared.analytics.providers.facebook.FacebookAnalyticsProvider
 import com.yral.shared.analytics.providers.firebase.FirebaseAnalyticsProvider
 import com.yral.shared.analytics.providers.mixpanel.MixpanelAnalyticsProvider
 import com.yral.shared.analytics.providers.yral.AnalyticsApiService
@@ -43,8 +45,19 @@ val analyticsModule =
             )
         }
         single {
+            FacebookAnalyticsProvider(
+                eventFilter = { it.shouldSendToFacebook() },
+                mapConverter = { event ->
+                    val json: Json = get()
+                    json.encodeToJsonElement(event).toMap().mapValues { it.value.toString() }
+                },
+            )
+        }
+        single {
             AnalyticsManager()
                 .addProvider(get<FirebaseAnalyticsProvider>())
+                .addProvider(get<MixpanelAnalyticsProvider>())
+                .addProvider(get<FacebookAnalyticsProvider>())
                 .setCoreService(get<CoreService>())
         }
     }

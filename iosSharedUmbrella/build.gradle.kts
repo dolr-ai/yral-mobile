@@ -51,6 +51,10 @@ kotlin {
             extraOpts += listOf("-compiler-option", "-fmodules")
             version = "5.0.8"
         }
+        pod("FBSDKCoreKit") {
+            version = "18.0.0"
+            extraOpts += listOf("-compiler-option", "-fmodules")
+        }
 
         framework {
             baseName = "iosSharedUmbrella"
@@ -62,7 +66,6 @@ kotlin {
             export(projects.shared.app)
         }
     }
-
     sourceSets {
         iosMain.dependencies {
             api(projects.shared.app)
