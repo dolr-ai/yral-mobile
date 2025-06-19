@@ -36,6 +36,9 @@ class RootViewModel(
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.io)
 
+    internal var splashScreenTimeout: Long = SPLASH_SCREEN_TIMEOUT
+    internal var initialDelayForSetup: Long = INITIAL_DELAY_FOR_SETUP
+
     companion object {
         const val SPLASH_SCREEN_TIMEOUT = 20000L // 20 seconds timeout
         const val INITIAL_DELAY_FOR_SETUP = 300L
@@ -60,7 +63,7 @@ class RootViewModel(
                     )
                 }
                 try {
-                    withTimeout(SPLASH_SCREEN_TIMEOUT) {
+                    withTimeout(splashScreenTimeout) {
                         checkLoginAndInitialize()
                     }
                 } catch (e: TimeoutCancellationException) {
@@ -87,7 +90,7 @@ class RootViewModel(
     }
 
     private suspend fun checkLoginAndInitialize() {
-        delay(INITIAL_DELAY_FOR_SETUP)
+        delay(initialDelayForSetup)
         sessionManager.getCanisterPrincipal()?.let { principal ->
             sessionManager.getIdentity()?.let { identity ->
                 individualUserServiceFactory.initialize(
