@@ -28,6 +28,7 @@ final class DefaultAuthClient: NSObject, AuthClient {
   let firebaseService: FirebaseService
   let crashReporter: CrashReporter
   let baseURL: URL
+  let satsBaseURL: URL
   let firebaseBaseURL: URL
 
   var pendingAuthState: String!
@@ -36,11 +37,13 @@ final class DefaultAuthClient: NSObject, AuthClient {
        firebaseService: FirebaseService,
        crashReporter: CrashReporter,
        baseURL: URL,
+       satsBaseURL: URL,
        firebaseBaseURL: URL) {
     self.networkService = networkService
     self.firebaseService = firebaseService
     self.crashReporter = crashReporter
     self.baseURL = baseURL
+    self.satsBaseURL = satsBaseURL
     self.firebaseBaseURL = firebaseBaseURL
     super.init()
   }
@@ -225,7 +228,7 @@ final class DefaultAuthClient: NSObject, AuthClient {
       let response = try await networkService.performRequest(
         for: Endpoint(
           http: "",
-          baseURL: URL(string: "https://yral-hot-or-not.go-bazzinga.workers.dev/")!,
+          baseURL: satsBaseURL,
           path: "v2/balance/\(principalID)",
           method: .get
         ),
