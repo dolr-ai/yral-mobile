@@ -32,12 +32,12 @@
     <string name="delete_account_question">Are you sure you want to delete your account?</string>
     <string name="no_take_me_back">No, take me back</string>
     <string name="yes_delete">Yes, Delete</string>
-    <string name="was_most_people_choice">%s was the most people choice.</string>
+    <string name="was_most_people_choice">%s was the most popular choice.</string>
     <string name="you_win_x_coins">You win %d Cents!</string>
     <string name="not_most_popular_pick">Not the most popular pick!</string>
     <string name="you_lost_x_coins">You lost %d Cents!</string>
     <string name="oops">OOPS!!!</string>
-    <string name="since_most_people_not_voted_on">Since most people didn’t voted on</string>
+    <string name="since_most_people_not_voted_on">Since most people didn’t vote on</string>
     <string name="congratulations">Congratulations!</string>
     <string name="since_most_people_voted_on">Since most people voted on</string>
     <string name="keep_playing">Keep Playing</string>
