@@ -17,6 +17,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
@@ -25,6 +26,7 @@ import androidx.core.view.WindowInsetsControllerCompat
 import com.yral.android.R
 import com.yral.android.ui.screens.home.HomeScreen
 import com.yral.android.ui.widgets.YralErrorMessage
+import com.yral.android.ui.widgets.YralLoader
 import com.yral.android.ui.widgets.YralLottieAnimation
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
@@ -77,12 +79,17 @@ fun RootScreen(viewModel: RootViewModel = koinViewModel()) {
         } else {
             // Reset system bars to normal
             HandleSystemBars(show = true)
-            feedViewModel?.let {
+            feedViewModel?.let { feedViewModel ->
                 HomeScreen(
-                    feedViewModel = it,
+                    feedViewModel = feedViewModel,
                     currentTab = state.currentHomePageTab,
                     updateCurrentTab = { viewModel.updateCurrentTab(it) },
                 )
+            } ?: Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+            ) {
+                YralLoader()
             }
         }
     }
