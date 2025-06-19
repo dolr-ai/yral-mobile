@@ -740,5 +740,5 @@ private fun VideoReportReason.displayText(): String =
 
 object FeedScreenConstants {
     const val MAX_LINES_FOR_POST_DESCRIPTION = 5
-    const val VIDEO_REPORT_SHEET_MAX_HEIGHT = 0.8f
+    const val VIDEO_REPORT_SHEET_MAX_HEIGHT = 0.98f
 }

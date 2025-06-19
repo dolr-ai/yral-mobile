@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -25,7 +24,6 @@ import coil3.compose.AsyncImage
 import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
-import com.yral.android.ui.screens.feed.FeedScreenConstants.VIDEO_REPORT_SHEET_MAX_HEIGHT
 import com.yral.android.ui.widgets.YralBottomSheet
 import com.yral.shared.features.game.domain.models.AboutGameBodyType
 import com.yral.shared.features.game.domain.models.AboutGameItem
@@ -53,7 +51,6 @@ fun AboutGameSheet(
         Column(
             modifier =
                 Modifier
-                    .fillMaxHeight(VIDEO_REPORT_SHEET_MAX_HEIGHT)
                     .padding(
                         horizontal = 16.dp,
                         vertical = 28.dp,
