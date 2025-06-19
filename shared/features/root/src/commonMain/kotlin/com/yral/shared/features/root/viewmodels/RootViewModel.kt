@@ -33,10 +33,11 @@ class RootViewModel(
     private val sessionManager: SessionManager,
     private val individualUserServiceFactory: IndividualUserServiceFactory,
     private val crashlyticsManager: CrashlyticsManager,
-    private val splashScreenTimeout: Long = SPLASH_SCREEN_TIMEOUT,
-    private val initialDelayForSetup: Long = INITIAL_DELAY_FOR_SETUP,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.io)
+
+    internal var splashScreenTimeout: Long = SPLASH_SCREEN_TIMEOUT
+    internal var initialDelayForSetup: Long = INITIAL_DELAY_FOR_SETUP
 
     companion object {
         const val SPLASH_SCREEN_TIMEOUT = 20000L // 20 seconds timeout

@@ -170,9 +170,9 @@ class RootViewModelTest {
                     sessionManager = sessionManager,
                     individualUserServiceFactory = individualUserServiceFactory,
                     crashlyticsManager = crashlyticsManager,
-                    splashScreenTimeout = 2000L,
-                    initialDelayForSetup = 2000L,
                 )
+            fastTimeoutViewModel.splashScreenTimeout = 2000L
+            fastTimeoutViewModel.initialDelayForSetup = 2000L
             fastTimeoutViewModel.state.test {
                 awaitItem() // initial
                 fastTimeoutViewModel.initialize()
@@ -274,9 +274,9 @@ class RootViewModelTest {
                     sessionManager = sessionManager,
                     individualUserServiceFactory = individualUserServiceFactory,
                     crashlyticsManager = crashlyticsManager,
-                    splashScreenTimeout = 500L, // 500ms timeout
-                    initialDelayForSetup = 50L, // 50ms initial delay
                 )
+            fastEnoughViewModel.splashScreenTimeout = 500L
+            fastEnoughViewModel.initialDelayForSetup = 50L
             fastEnoughViewModel.state.test {
                 awaitItem() // initial
                 fastEnoughViewModel.initialize()
