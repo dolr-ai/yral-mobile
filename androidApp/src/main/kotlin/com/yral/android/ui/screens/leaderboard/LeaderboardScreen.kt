@@ -134,18 +134,21 @@ private fun LeaderboardTableHeader() {
             modifier = Modifier.weight(POSITION_TEXT_WEIGHT),
             style = LocalAppTopography.current.regMedium,
             color = YralColors.Neutral500,
+            maxLines = 1,
         )
         Text(
             text = stringResource(R.string.player_id),
             modifier = Modifier.weight(USER_DETAIL_WEIGHT),
             style = LocalAppTopography.current.regMedium,
             color = YralColors.Neutral500,
+            maxLines = 1,
         )
         Text(
             text = stringResource(R.string.total_sats),
             modifier = Modifier.weight(COIN_BALANCE_WEIGHT),
             style = LocalAppTopography.current.regMedium,
             color = YralColors.Neutral500,
+            maxLines = 1,
         )
     }
 }
@@ -285,6 +288,10 @@ private fun TrophyDetailsItem(
             overflow = TextOverflow.Ellipsis,
         )
         Row(
+            modifier =
+                Modifier
+                    .align(Alignment.End)
+                    .offset(x = (-12).dp),
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Image(
@@ -327,7 +334,7 @@ private fun LeaderboardContent(
         repeat(leaderboard.size) { index ->
             val item = leaderboard[index]
             LeaderboardRow(
-                position = index + 1,
+                position = index,
                 userPrincipalId = item.userPrincipalId,
                 profileImageUrl = item.profileImage,
                 coins = item.coins,
@@ -422,7 +429,7 @@ private fun UserBriefContent(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = "#$position",
+                text = "#${position + 1}",
                 style = LocalAppTopography.current.baseBold,
                 color = YralColors.Neutral50,
                 textAlign = TextAlign.Center,
@@ -484,7 +491,7 @@ private fun UserBriefGradientProfileName(
     name: String,
 ) {
     when (position) {
-        1 -> {
+        0 -> {
             YralMaskedVectorTextV2(
                 text = name,
                 vectorRes = R.drawable.golden_gradient,
@@ -494,7 +501,7 @@ private fun UserBriefGradientProfileName(
             )
         }
 
-        2 -> {
+        1 -> {
             YralMaskedVectorTextV2(
                 text = name,
                 vectorRes = R.drawable.silver_gradient,
@@ -504,7 +511,7 @@ private fun UserBriefGradientProfileName(
             )
         }
 
-        3 -> {
+        2 -> {
             YralMaskedVectorTextV2(
                 text = name,
                 vectorRes = R.drawable.bronze_gradient,
