@@ -81,7 +81,7 @@ class AccountsViewModel(
         return null
     }
 
-    fun logout() {
+    private fun logout() {
         coroutineScope.launch {
             authClient.logout()
         }

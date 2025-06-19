@@ -27,7 +27,7 @@ import com.yral.android.ui.widgets.YralButton
 internal fun DeleteAccountSheet(
     bottomSheetState: SheetState,
     onDismissRequest: () -> Unit,
-    logout: () -> Unit,
+    onDeleteAccount: () -> Unit,
 ) {
     YralBottomSheet(
         onDismissRequest = onDismissRequest,
@@ -75,7 +75,7 @@ internal fun DeleteAccountSheet(
             }
             DeleteSheetButtons(
                 onDismissRequest = onDismissRequest,
-                logout = logout,
+                onDeleteAccount = onDeleteAccount,
             )
         }
     }
@@ -84,7 +84,7 @@ internal fun DeleteAccountSheet(
 @Composable
 private fun DeleteSheetButtons(
     onDismissRequest: () -> Unit,
-    logout: () -> Unit,
+    onDeleteAccount: () -> Unit,
 ) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.Start),
@@ -112,7 +112,7 @@ private fun DeleteSheetButtons(
                 TextStyle(
                     color = YralColors.NeutralTextPrimary,
                 ),
-            onClick = logout,
+            onClick = onDeleteAccount,
         )
     }
 }
