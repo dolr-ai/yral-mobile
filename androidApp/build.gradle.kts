@@ -109,6 +109,7 @@ dependencies {
     implementation(projects.shared.features.root)
     implementation(projects.shared.libs.videoPlayer)
     implementation(projects.shared.features.account)
+    implementation(projects.shared.app)
     implementation(projects.shared.libs.firebasePerf)
     implementation(projects.shared.features.game)
 

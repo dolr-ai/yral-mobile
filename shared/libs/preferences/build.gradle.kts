@@ -16,7 +16,12 @@ kotlin {
     listOf(
         iosArm64(),
         iosSimulatorArm64()
-    )
+    ).forEach {
+        it.binaries.framework {
+            baseName = "shared_preferences"
+            isStatic = true
+        }
+    }
 
     sourceSets {
         androidMain.dependencies {

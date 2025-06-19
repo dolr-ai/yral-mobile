@@ -16,7 +16,12 @@ kotlin {
     listOf(
         iosArm64(),
         iosSimulatorArm64()
-    )
+    ).forEach {
+        it.binaries.framework {
+            baseName = "shared_http"
+            isStatic = true
+        }
+    }
 
     sourceSets {
         androidMain.dependencies {
@@ -35,6 +40,9 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+        }
+        iosMain.dependencies {
+            implementation(libs.ktor.client.darwin)
         }
     }
 }

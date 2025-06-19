@@ -1,7 +1,7 @@
 package com.yral.android
 
 import android.app.Application
-import com.yral.android.di.initKoin
+import com.yral.shared.app.di.initKoin
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.crashlytics.crashlytics
 import dev.gitlive.firebase.initialize

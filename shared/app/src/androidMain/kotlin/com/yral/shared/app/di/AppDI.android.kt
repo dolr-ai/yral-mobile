@@ -1,11 +1,9 @@
-package com.yral.android.di
+package com.yral.shared.app.di
 
-import co.touchlab.kermit.platformLogWriter
-import com.yral.android.BuildConfig
 import com.yral.shared.analytics.di.analyticsModule
+import com.yral.shared.app.BuildConfig
 import com.yral.shared.core.FirebaseConfigurations
 import com.yral.shared.core.di.coreModule
-import com.yral.shared.core.logging.YralLogger
 import com.yral.shared.crashlytics.di.crashlyticsModule
 import com.yral.shared.features.account.di.accountsModule
 import com.yral.shared.features.auth.di.authModule
@@ -21,7 +19,7 @@ import org.koin.core.context.startKoin
 import org.koin.dsl.KoinAppDeclaration
 import org.koin.dsl.module
 
-fun initKoin(appDeclaration: KoinAppDeclaration) {
+actual fun initKoin(appDeclaration: KoinAppDeclaration) {
     startKoin {
         // Forbid definition override
         allowOverride(false)
@@ -64,17 +62,4 @@ private fun getFirebaseEnv(): FirebaseConfigurations =
             FirebaseConfigurations(
                 firebaseCloudFunctionUrl = "us-central1-yral-mobile.cloudfunctions.net",
             )
-    }
-
-val platformModule =
-    module {
-        single {
-            YralLogger(
-                if (BuildConfig.DEBUG) {
-                    platformLogWriter()
-                } else {
-                    null
-                },
-            )
-        }
     }

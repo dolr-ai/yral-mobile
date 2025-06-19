@@ -1,4 +1,4 @@
-package com.yral.shared.analytics.providers
+package com.yral.shared.analytics.providers.firebase
 
 import com.yral.shared.analytics.AnalyticsProvider
 import com.yral.shared.analytics.User
@@ -24,10 +24,6 @@ class FirebaseAnalyticsProvider(
             name = toValidKeyName(event.event),
             parameters = mapConverter(event),
         )
-    }
-
-    override fun flush() {
-        // Firebase Analytics automatically batches and sends events
     }
 
     override fun setUserProperties(user: User) {

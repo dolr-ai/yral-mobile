@@ -4,7 +4,9 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.kotlinxSerialisartion)
+    alias(libs.plugins.kotlinCocoapods)
 }
+version = "1.0"
 
 kotlin {
     androidTarget {
@@ -15,7 +17,24 @@ kotlin {
     listOf(
         iosArm64(),
         iosSimulatorArm64()
-    )
+    ).forEach {
+        it.binaries.framework {
+            baseName = "analytics"
+            isStatic = true
+        }
+    }
+
+    cocoapods {
+        summary = "Analytics module with Firebase and Mixpanel"
+        homepage = "https://github.com/dolr-ai/yral-mobile"
+        ios.deploymentTarget = "15.6"
+
+        // Add Mixpanel pod
+        pod("Mixpanel") {
+            extraOpts += listOf("-compiler-option", "-fmodules")
+            version = "5.0.8"
+        }
+    }
 
     sourceSets {
         commonMain.dependencies {
