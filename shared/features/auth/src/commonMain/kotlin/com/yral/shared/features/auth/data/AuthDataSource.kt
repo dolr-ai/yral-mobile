@@ -18,4 +18,5 @@ interface AuthDataSource {
         idToken: String,
         principalId: String,
     ): ExchangePrincipalResponseDto
+    suspend fun deleteAccount(): String
 }

@@ -2,11 +2,19 @@ package com.yral.shared.features.auth.data
 
 import com.yral.shared.core.AppConfigurations.METADATA_BASE_URL
 import com.yral.shared.core.AppConfigurations.OAUTH_BASE_URL
+import com.yral.shared.core.AppConfigurations.OFF_CHAIN_BASE_URL
 import com.yral.shared.core.FirebaseConfigurations
+import com.yral.shared.core.exceptions.YralException
+import com.yral.shared.core.rust.KotlinDelegatedIdentityWire
+import com.yral.shared.features.auth.data.models.DeleteAccountRequestDto
 import com.yral.shared.features.auth.data.models.ExchangePrincipalResponseDto
 import com.yral.shared.features.auth.data.models.TokenResponseDto
 import com.yral.shared.http.httpPost
+import com.yral.shared.preferences.PrefKeys
+import com.yral.shared.preferences.Preferences
+import com.yral.shared.uniffi.generated.delegatedIdentityWireToJson
 import io.ktor.client.HttpClient
+import io.ktor.client.request.delete
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
@@ -18,6 +26,7 @@ import kotlinx.serialization.json.Json
 class AuthDataSourceImpl(
     private val client: HttpClient,
     private val json: Json,
+    private val preferences: Preferences,
     private val firebaseConfigurations: FirebaseConfigurations,
 ) : AuthDataSource {
     override suspend fun obtainAnonymousIdentity(): TokenResponseDto {
@@ -120,6 +129,27 @@ class AuthDataSourceImpl(
             setBody(mapOf("principal_id" to principalId))
         }
 
+    override suspend fun deleteAccount(): String {
+        val identityWire = preferences.getBytes(PrefKeys.IDENTITY.name)
+        return identityWire?.let {
+            val identityWireJson = delegatedIdentityWireToJson(identityWire)
+            val delegatedIdentity =
+                json.decodeFromString<KotlinDelegatedIdentityWire>(identityWireJson)
+            val params =
+                DeleteAccountRequestDto(
+                    delegatedIdentity = delegatedIdentity,
+                )
+            client
+                .delete {
+                    url {
+                        host = OFF_CHAIN_BASE_URL
+                        path(DELETE_ACCOUNT)
+                    }
+                    setBody(params)
+                }.bodyAsText()
+        } ?: throw YralException("Identity not found while deleting account")
+    }
+
     companion object {
         const val REDIRECT_URI_SCHEME = "yral"
         const val REDIRECT_URI_HOST = "oauth"
@@ -132,5 +162,6 @@ class AuthDataSourceImpl(
         private const val GRANT_TYPE_REFRESH_TOKEN = "refresh_token"
         private const val UPDATE_SESSION_AS_REGISTERED = "update_session_as_registered"
         private const val EXCHANGE_PRINCIPAL_PATH = "exchange_principal_id"
+        private const val DELETE_ACCOUNT = "api/v1/user"
     }
 }
