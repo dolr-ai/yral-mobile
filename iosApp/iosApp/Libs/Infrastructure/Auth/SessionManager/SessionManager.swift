@@ -18,4 +18,15 @@ final class SessionManager: ObservableObject {
       .receive(on: RunLoop.main)
       .assign(to: \.state, on: self)
   }
+
+  func update(coins: UInt64) {
+    switch state {
+    case .ephemeralAuthentication(let userPrincipal, let canisterPrincipal, _):
+      state = .ephemeralAuthentication(userPrincipal: userPrincipal, canisterPrincipal: canisterPrincipal, coins: coins)
+    case .permanentAuthentication(let userPrincipal, let canisterPrincipal, _):
+      state = .permanentAuthentication(userPrincipal: userPrincipal, canisterPrincipal: canisterPrincipal, coins: coins)
+    default:
+      break
+    }
+  }
 }

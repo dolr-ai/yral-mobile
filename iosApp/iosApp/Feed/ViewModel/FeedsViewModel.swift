@@ -12,10 +12,10 @@ import iosSharedUmbrella
 class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
   let initialFeedsUseCase: FetchInitialFeedsUseCaseProtocol
   let moreFeedsUseCase: FetchMoreFeedsUseCaseProtocol
-  let likesUseCase: ToggleLikeUseCaseProtocol
   let reportUseCase: ReportFeedsUseCaseProtocol
   let logEventUseCase: LogUploadEventUseCaseProtocol
   let socialSignInUseCase: SocialSignInUseCaseProtocol
+  let castVoteUseCase: CastVoteUseCaseProtocol
   private var currentFeeds = [FeedResult]()
   private var filteredFeeds = [FeedResult]()
   private var feedvideoIDSet = Set<String>()
@@ -30,6 +30,7 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
 
   private var cancellables = Set<AnyCancellable>()
   private var isFetchingInitialFeeds = false
+  private var feedsBatchSize = 10
 
   @Published var unifiedState: UnifiedFeedState = .initialized
   @Published var unifiedEvent: UnifiedFeedEvent?
@@ -37,17 +38,17 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
   init(
     fetchFeedsUseCase: FetchInitialFeedsUseCaseProtocol,
     moreFeedsUseCase: FetchMoreFeedsUseCaseProtocol,
-    likeUseCase: ToggleLikeUseCaseProtocol,
     reportUseCase: ReportFeedsUseCaseProtocol,
     logEventUseCase: LogUploadEventUseCaseProtocol,
-    socialSignInUseCase: SocialSignInUseCaseProtocol
+    socialSignInUseCase: SocialSignInUseCaseProtocol,
+    castVoteUseCase: CastVoteUseCaseProtocol
   ) {
     self.initialFeedsUseCase = fetchFeedsUseCase
     self.moreFeedsUseCase = moreFeedsUseCase
-    self.likesUseCase = likeUseCase
     self.reportUseCase = reportUseCase
     self.logEventUseCase = logEventUseCase
     self.socialSignInUseCase = socialSignInUseCase
+    self.castVoteUseCase = castVoteUseCase
     self.unifiedEvent = .fetchingInitialFeeds
     isFetchingInitialFeeds = true
 
@@ -73,6 +74,16 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
 
   var unifiedEventPublisher: AnyPublisher<UnifiedFeedEvent?, Never> {
     $unifiedEvent.eraseToAnyPublisher()
+  }
+
+  @MainActor func fetchSmileys() async {
+    unifiedState = .loading
+    do {
+      let result = await SmileyGameConfig.shared.fetch()
+      if case .failure(let error) = result {
+        print(error.localizedDescription)
+      }
+    }
   }
 
   @MainActor func fetchFeeds(request: InitialFeedRequest) async {
@@ -106,37 +117,40 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
       }
       let request = MoreFeedsRequest(
         filteredPosts: filteredPosts,
-        numResults: FeedsViewController.Constants.initialNumResults,
+        numResults: feedsBatchSize,
         feedType: .currentUser
       )
+
+      var newFeeds: [FeedResult]?
+
       let result = await moreFeedsUseCase.execute(request: request)
       switch result {
-      case .success:
+      case .success(let feeds):
         unifiedEvent = .loadedMoreFeeds
+        newFeeds = feeds
       case .failure(let error):
+        if case FeedError.aggregated(_, let feeds) = error {
+          newFeeds = feeds
+        }
         unifiedEvent = .loadMoreFeedsFailed(errorMessage: error.localizedDescription)
         unifiedState = .failure(errorMessage: error.localizedDescription)
       }
-      if self.currentFeeds.count <= FeedsViewController.Constants.initialNumResults {
+
+      if let feeds = newFeeds, feeds.count < .five {
+        feedsBatchSize = min(feedsBatchSize + .ten, FeedsViewController.Constants.maxFeedBatchSize)
         await loadMoreFeeds()
       }
     }
   }
 
-  @MainActor func toggleLike(request: LikeQuery) async {
+  @MainActor func castVote(request: CastVoteQuery) async {
     do {
-      let result = await likesUseCase.execute(request: request)
+      let result = await castVoteUseCase.execute(request: request)
       switch result {
       case .success(let response):
-        currentFeeds[response.index].isLiked = response.status
-        let likeCountDifference = response.status ? Int.one : -Int.one
-        currentFeeds[response.index].likeCount += likeCountDifference
-        unifiedEvent = .toggledLikeSuccessfully(likeResult: response)
-        if isFetchingInitialFeeds {
-          unifiedEvent = .finishedLoadingInitialFeeds
-        }
+        unifiedEvent = .castVoteSuccess(response)
       case .failure(let error):
-        unifiedEvent = .toggleLikeFailed(errorMessage: error.localizedDescription)
+        unifiedEvent = .castVoteFailure(error, request.videoID)
       }
     }
   }

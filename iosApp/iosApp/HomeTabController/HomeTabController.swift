@@ -7,6 +7,7 @@ struct HomeTabController: View {
   let accountView: AccountView
   let uploadView: UploadView
   let profileView: ProfileView
+  let leaderboardView: LeaderboardView
 
   private var feedsViewControllerWrapper: FeedsViewControllerWrapper {
     FeedsViewControllerWrapper(
@@ -26,12 +27,14 @@ struct HomeTabController: View {
     feedsViewController: FeedsViewController,
     uploadView: UploadView,
     profileView: ProfileView,
-    accountView: AccountView
+    accountView: AccountView,
+    leaderboardView: LeaderboardView
   ) {
     self.feedsViewController = feedsViewController
     self.uploadView = uploadView
     self.profileView = profileView
     self.accountView = accountView
+    self.leaderboardView = leaderboardView
     UITabBar.appearance().backgroundColor = .black
     UITabBar.appearance().barTintColor = .black
     UITabBar.appearance().isTranslucent = false
@@ -46,6 +49,15 @@ struct HomeTabController: View {
                              selectedName: Constants.homeIconImageNameSelected,
                              unselectedName: Constants.homeIconImageNameUnselected) }
           .tag(Tab.home)
+
+        leaderboardView
+          .background(Color.black.edgesIgnoringSafeArea(.all))
+          .tabItem {
+            tabIcon(selected: selectedTab == .leaderboard,
+                    selectedName: Constants.leaderboardIconImageNameSelected,
+                    unselectedName: Constants.leaderboardIconImageNameUnselected)
+          }
+          .tag(Tab.leaderboard)
 
         uploadView
           .onDoneAction { selectedTab = .home }
@@ -74,10 +86,8 @@ struct HomeTabController: View {
           .tag(Tab.account)
       }
       GeometryReader { geometry in
-        let tabWidth = geometry.size.width / .four
-        let indicatorXPosition = CGFloat(selectedTab.intValue) * tabWidth + (
-          tabWidth - Constants.indicatorWidth
-        ) / .two
+        let tabWidth = geometry.size.width / .five
+        let indicatorXPosition = CGFloat(selectedTab) * tabWidth + (tabWidth - Constants.indicatorWidth) / .two
         VStack {
           Spacer().frame(height: geometry.size.height)
           HStack {
@@ -93,6 +103,14 @@ struct HomeTabController: View {
               .animation(.easeInOut, value: selectedTab)
             Spacer()
           }
+
+//          Text("New")
+//            .font(YralFont.pt8.bold.swiftUIFont)
+//            .foregroundColor(YralColor.grey0.swiftUIColor)
+//            .padding(.horizontal, 4)
+//            .background(YralColor.primary300.swiftUIColor)
+//            .clipShape(RoundedRectangle(cornerRadius: 12))
+//            .offset(x: -tabWidth, y: -self.tabBarHeight - 2.5)
         }
       }
     }
@@ -141,6 +159,8 @@ extension HomeTabController {
   enum Constants {
     static let homeIconImageNameUnselected = "home_tab_unselected"
     static let homeIconImageNameSelected = "home_tab_selected"
+    static let leaderboardIconImageNameSelected = "leaderboard_tab_selected"
+    static let leaderboardIconImageNameUnselected = "leaderboard_tab_unselected"
     static let uploadIconImageNameUnselected = "upload_tab_unselected"
     static let uploadIconImageNameSelected = "upload_tab_selected"
     static let profileIconImageNameUnSelected = "profile_tab_unselected"
@@ -153,18 +173,20 @@ extension HomeTabController {
 }
 
 enum Tab: Hashable {
-  case home, upload, profile, account
+  case home, leaderboard, upload, profile, account
 
   var intValue: Int {
     switch self {
     case .home:
       return .zero
-    case .upload:
+    case .leaderboard:
       return .one
-    case .profile:
+    case .upload:
       return .two
-    case .account:
+    case .profile:
       return .three
+    case .account:
+      return .four
     }
   }
 }
