@@ -1,7 +1,4 @@
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
-import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
-import org.jetbrains.kotlin.gradle.plugin.mpp.BitcodeEmbeddingMode
-import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -12,7 +9,7 @@ version = "1.0"
 kotlin {
     iosArm64()
     iosSimulatorArm64()
-    val firebaseIos = "10.25.0"
+    val firebaseIos = "10.29.0"
 
     cocoapods {
         summary = "Umbrella framework for shared KMM code"
@@ -32,19 +29,44 @@ kotlin {
             extraOpts += listOf("-compiler-option", "-fmodules")
             version = firebaseIos
         }
-
+        pod("FirebasePerformance") {
+            extraOpts += listOf("-compiler-option", "-fmodules")
+            version = firebaseIos
+        }
+        pod("FirebaseInstallations") {
+            extraOpts += listOf("-compiler-option", "-fmodules")
+            version = firebaseIos
+        }
+        pod("FirebaseCoreInternal") {
+            extraOpts += listOf("-compiler-option", "-fmodules")
+            version = firebaseIos
+        }
+        pod("GoogleUtilities") {
+            extraOpts += listOf("-compiler-option", "-fmodules")
+        }
+        pod("nanopb") {
+            extraOpts += listOf("-compiler-option", "-fmodules")
+        }
+        pod("Mixpanel") {
+            extraOpts += listOf("-compiler-option", "-fmodules")
+            version = "5.0.8"
+        }
 
         framework {
             baseName = "iosSharedUmbrella"
             @OptIn(ExperimentalKotlinGradlePluginApi::class)
             transitiveExport = true
-            isStatic = false
+            isStatic = true
+            export(projects.shared.libs.analytics)
             export(projects.shared.libs.crashlytics)
+            export(projects.shared.app)
         }
     }
 
     sourceSets {
         iosMain.dependencies {
+            api(projects.shared.app)
+            api(projects.shared.libs.analytics)
             api(projects.shared.libs.crashlytics)
         }
     }

@@ -5,7 +5,6 @@ import com.yral.shared.core.AppConfigurations
 import com.yral.shared.core.rust.KotlinDelegatedIdentityWire
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
-import com.yral.shared.uniffi.generated.delegatedIdentityWireToJson
 import io.ktor.client.HttpClient
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
