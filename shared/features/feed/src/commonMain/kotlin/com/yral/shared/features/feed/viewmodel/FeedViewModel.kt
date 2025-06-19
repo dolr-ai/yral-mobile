@@ -34,7 +34,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-@Suppress("TooGenericExceptionCaught")
+@Suppress("TooManyFunctions")
 class FeedViewModel(
     appDispatchers: AppDispatchers,
     private val sessionManager: SessionManager,
@@ -58,15 +58,16 @@ class FeedViewModel(
     private val _state = MutableStateFlow(FeedState())
     val state: StateFlow<FeedState> = _state.asStateFlow()
 
-    init {
+    fun initialize() {
         coroutineScope.launch {
+            _state.emit(FeedState())
             initialFeedData()
         }
     }
 
     private suspend fun initialFeedData() {
-        setLoadingMore(true)
         sessionManager.getCanisterPrincipal()?.let { principal ->
+            setLoadingMore(true)
             requiredUseCases.getInitialFeedUseCase
                 .invoke(
                     parameter =

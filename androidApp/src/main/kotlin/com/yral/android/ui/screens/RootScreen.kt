@@ -17,7 +17,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
@@ -26,7 +25,6 @@ import androidx.core.view.WindowInsetsControllerCompat
 import com.yral.android.R
 import com.yral.android.ui.screens.home.HomeScreen
 import com.yral.android.ui.widgets.YralErrorMessage
-import com.yral.android.ui.widgets.YralLoader
 import com.yral.android.ui.widgets.YralLottieAnimation
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
@@ -40,12 +38,13 @@ import org.koin.compose.viewmodel.koinViewModel
 fun RootScreen(viewModel: RootViewModel = koinViewModel()) {
     val state by viewModel.state.collectAsState()
     val sessionState by viewModel.sessionManagerState.collectAsState()
-    var feedViewModel by remember { mutableStateOf<FeedViewModel?>(null) }
+    var feedViewModel by remember { mutableStateOf(koinInstance.get<FeedViewModel>()) }
     LaunchedEffect(sessionState) {
         if (sessionState != state.currentSessionState) {
             viewModel.initialize()
             if (sessionState is SessionState.SignedIn) {
                 feedViewModel = koinInstance.get()
+                feedViewModel.initialize()
             }
         }
     }
@@ -79,18 +78,11 @@ fun RootScreen(viewModel: RootViewModel = koinViewModel()) {
         } else {
             // Reset system bars to normal
             HandleSystemBars(show = true)
-            feedViewModel?.let { feedViewModel ->
-                HomeScreen(
-                    feedViewModel = feedViewModel,
-                    currentTab = state.currentHomePageTab,
-                    updateCurrentTab = { viewModel.updateCurrentTab(it) },
-                )
-            } ?: Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center,
-            ) {
-                YralLoader()
-            }
+            HomeScreen(
+                feedViewModel = feedViewModel,
+                currentTab = state.currentHomePageTab,
+                updateCurrentTab = { viewModel.updateCurrentTab(it) },
+            )
         }
     }
 }
