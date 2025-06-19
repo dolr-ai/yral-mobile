@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import iosSharedUmbrella
 
 struct ProfileOptionsView: View {
   @State private var selectedOption: ProfileOptionsView.Options?
@@ -37,6 +38,11 @@ struct ProfileOptionsView: View {
             } else {
               isShowingLoader = true
               selectedOption = option
+            }
+            if let selectedOption = selectedOption {
+              AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+                event: MenuClickedEventData(ctaType: selectedOption.ctaType())
+              )
             }
           } label: {
             HStack(spacing: Constants.hStackSpacing) {
@@ -87,6 +93,17 @@ struct ProfileOptionsView: View {
     let image: Image
     let text: String
     let redirection: String
+
+    func ctaType() -> MenuCtaType {
+      switch id {
+      case Constants.telegramId: return .talkToTheTeam
+      case Constants.tncIosId: return .termsOfService
+      case Constants.privacyPolicyId: return .privacyPolicy
+      case Constants.logoutId: return .logOut
+      case Constants.deleteId: return .deleteAccount
+      default: return .deleteAccount
+      }
+    }
   }
 }
 
@@ -96,7 +113,7 @@ extension ProfileOptionsView {
       Options(
         image: Image("option_chat"),
         text: "Talk to the Team",
-        redirection: "https://t.me/+c-LTX0Cp-ENmMzI1"
+        redirection: Constants.telegramId
       ),
       Options(
         image: Image("option_tnc"),
@@ -130,6 +147,9 @@ extension ProfileOptionsView {
     static let progressViewCornerRadius = 8.0
     static let vStackSpacing = 30.0
     static let loaderName = "Yral_Loader"
+    static let telegramId = "https://t.me/+c-LTX0Cp-ENmMzI1"
+    static let tncIosId = "https://yral.com/terms-ios"
+    static let privacyPolicyId = "https://yral.com/privacy-policy"
     static let logoutId = "logoutId"
     static let deleteId = "deleteId"
   }

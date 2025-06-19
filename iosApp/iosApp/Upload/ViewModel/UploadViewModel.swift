@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import iosSharedUmbrella
 
 enum UploadViewState {
   case initialized

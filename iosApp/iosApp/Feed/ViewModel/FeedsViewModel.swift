@@ -7,6 +7,7 @@
 //
 import Foundation
 import Combine
+import iosSharedUmbrella
 
 class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
   let initialFeedsUseCase: FetchInitialFeedsUseCaseProtocol
@@ -145,6 +146,16 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
     let result = await reportUseCase.execute(request: request)
     switch result {
     case .success(let postID):
+      AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+        event: VideoReportedEventData(
+          videoId: request.videoId,
+          publisherUserId: request.principal,
+          isGameEnabled: true,
+          gameType: .smiley,
+          isNsfw: false,
+          reason: request.reason
+        )
+      )
       unifiedEvent = .reportSuccess(postID)
     case .failure(let failure):
       unifiedEvent = .reportFailed(failure)

@@ -6,6 +6,7 @@
 //  Copyright © 2025 orgName. All rights reserved.
 //
 import Foundation
+import iosSharedUmbrella
 
 class UploadRepository: UploadRepositoryProtocol {
   private let httpService: HTTPService
@@ -106,8 +107,20 @@ class UploadRepository: UploadRepositoryProtocol {
         body: try JSONEncoder().encode(metaRequest)
       )
       _ = try await httpService.performRequest(for: endpoint)
+      AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+        event: VideoUploadSuccessEventData(
+          videoId: request.videoUID,
+          publisherUserId: self.authClient.userPrincipalString ?? "",
+          isGameEnabled: true,
+          gameType: .smiley,
+          isNsfw: false
+        )
+      )
       return .success(())
     } catch {
+      AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+        event: VideoUploadErrorShownEventData(reason: error.localizedDescription)
+      )
       switch error {
       case let netErr as NetworkError:
         return .failure(VideoUploadError.network(netErr))

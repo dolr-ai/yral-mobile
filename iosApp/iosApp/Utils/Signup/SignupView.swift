@@ -6,6 +6,7 @@
 //  Copyright © 2025 orgName. All rights reserved.
 //
 import SwiftUI
+import iosSharedUmbrella
 
 struct SignupView: View {
   var delegate: SignupViewProtocol?
@@ -28,6 +29,11 @@ struct SignupView: View {
       .padding(.top, Constants.signupVStackTopPadding)
       Button {
         delegate?.signupwithGoogle()
+        AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+          event: SignupClickedEventData(
+            authJourney: AuthJourney.google
+          )
+        )
       } label: {
         Group {
           if loadingProvider == .google {
@@ -56,6 +62,11 @@ struct SignupView: View {
 
       Button {
         delegate?.signupwithApple()
+        AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+          event: SignupClickedEventData(
+            authJourney: AuthJourney.apple
+          )
+        )
       } label: {
         Group {
           if loadingProvider == .apple {
@@ -94,6 +105,11 @@ struct SignupView: View {
       .padding(.top, Constants.tncTopPadding)
     }
     .padding(.horizontal, Constants.horizontalPadding)
+    .task {
+      AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+        event: AuthScreenViewedEventData()
+      )
+    }
   }
 }
 

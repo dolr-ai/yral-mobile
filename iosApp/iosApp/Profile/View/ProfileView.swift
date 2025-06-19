@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import iosSharedUmbrella
 
 struct ProfileView: View {
   @State var showAccountInfo = false
@@ -131,11 +132,19 @@ struct ProfileView: View {
           .background( ClearBackgroundView() )
         }
         .task {
-          guard isLoadingFirstTime else { return }
+          guard isLoadingFirstTime else {
+            AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+              event: ProfilePageViewedEventData(totalVideos: Int32(self.videos.count))
+            )
+            return
+          }
           isLoadingFirstTime = false
           async let fetchProfile: () = viewModel.fetchProfileInfo()
           async let fetchVideos: () = viewModel.getVideos()
           _ = await (fetchProfile, fetchVideos)
+          AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+            event: ProfilePageViewedEventData(totalVideos: Int32(self.videos.count))
+          )
         }
         .onAppear {
           UIRefreshControl.appearance().tintColor = .clear
