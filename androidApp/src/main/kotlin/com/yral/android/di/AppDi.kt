@@ -54,18 +54,15 @@ private fun getFirebaseEnv(): FirebaseConfigurations =
     when (BuildConfig.FLAVOR) {
         "staging" ->
             FirebaseConfigurations(
-                firebaseBucket = "gs://yral-staging.firebasestorage.app",
-                firebaseAuthUrl = "us-central1-yral-staging.cloudfunctions.net",
+                firebaseCloudFunctionUrl = "us-central1-yral-staging.cloudfunctions.net",
             )
         "prod" ->
             FirebaseConfigurations(
-                firebaseBucket = "gs://yral-mobile.firebasestorage.app",
-                firebaseAuthUrl = "us-central1-yral-mobile.cloudfunctions.net",
+                firebaseCloudFunctionUrl = "us-central1-yral-mobile.cloudfunctions.net",
             )
         else -> // default would be prod
             FirebaseConfigurations(
-                firebaseBucket = "gs://yral-mobile.firebasestorage.app",
-                firebaseAuthUrl = "us-central1-yral-mobile.cloudfunctions.net",
+                firebaseCloudFunctionUrl = "us-central1-yral-mobile.cloudfunctions.net",
             )
     }
 

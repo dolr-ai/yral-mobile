@@ -113,7 +113,7 @@ class AuthDataSourceImpl(
             json = json,
         ) {
             url {
-                host = firebaseConfigurations.firebaseAuthUrl
+                host = firebaseConfigurations.firebaseCloudFunctionUrl
                 path(EXCHANGE_PRINCIPAL_PATH)
             }
             headers.append("authorization", "Bearer $idToken")

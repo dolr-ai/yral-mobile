@@ -10,6 +10,5 @@ object AppConfigurations {
 }
 
 data class FirebaseConfigurations(
-    val firebaseBucket: String,
-    val firebaseAuthUrl: String,
+    val firebaseCloudFunctionUrl: String,
 )

@@ -30,7 +30,7 @@ class GameRemoteDataSource(
             val response: HttpResponse =
                 httpClient.post {
                     url {
-                        host = firebaseConfigurations.firebaseAuthUrl
+                        host = firebaseConfigurations.firebaseCloudFunctionUrl
                         path(CAST_VOTE_PATH)
                     }
                     headers.append("authorization", "Bearer $idToken")
