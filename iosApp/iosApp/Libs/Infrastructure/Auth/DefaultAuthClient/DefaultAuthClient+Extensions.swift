@@ -8,6 +8,7 @@
 import Foundation
 import Combine
 import AuthenticationServices
+import iosSharedUmbrella
 
 extension DefaultAuthClient {
   @discardableResult
@@ -63,9 +64,9 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
         let challenge = PKCE.codeChallenge(for: verifier)
         let redirect = Constants.redirectURI
         let authURL = try getAuthURL(provider: provider,
-                                       redirect: redirect,
-                                       challenge: challenge,
-                                       loginHint: nil)
+                                     redirect: redirect,
+                                     challenge: challenge,
+                                     loginHint: nil)
 
         let callbackURL: URL = try await withCheckedThrowingContinuation { continuation in
           let session = ASWebAuthenticationSession(
@@ -100,8 +101,24 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
           redirectURI: redirect
         )
         try storeTokens(token)
+        let oldPrincipal = self.userPrincipalString
         try await processDelegatedIdentity(from: token, type: .permanent)
         UserDefaultsManager.shared.set(true, for: .userDefaultsLoggedIn)
+        if oldPrincipal == self.canisterPrincipalString {
+          AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+            event: SignupSuccessEventData(
+              isReferral: false,
+              referralUserID: "",
+              authJourney: provider.authJourney()
+            )
+          )
+        } else {
+          AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+            event: LoginSuccessEventData(
+              authJourney: provider.authJourney()
+            )
+          )
+        }
         guard let canisterPrincipalString = self.canisterPrincipalString else { return }
         Task {
           do {
