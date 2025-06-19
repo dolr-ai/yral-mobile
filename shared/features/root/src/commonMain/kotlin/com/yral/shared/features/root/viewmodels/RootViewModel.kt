@@ -54,14 +54,7 @@ class RootViewModel(
         initialisationJob?.cancel()
         initialisationJob =
             coroutineScope.launch {
-                _state.update {
-                    RootState(
-                        currentSessionState = sessionManager.state.value,
-                        currentHomePageTab = it.currentHomePageTab,
-                        initialAnimationComplete = it.initialAnimationComplete,
-                        error = null,
-                    )
-                }
+                _state.update { it.copy(error = null) }
                 try {
                     withTimeout(splashScreenTimeout) {
                         checkLoginAndInitialize()

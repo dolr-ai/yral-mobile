@@ -46,6 +46,7 @@ class SessionManager {
 
 sealed interface SessionState {
     data object Initial : SessionState
+    data object Loading : SessionState
     data class SignedIn(
         val session: Session,
     ) : SessionState
