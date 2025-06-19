@@ -32,6 +32,19 @@ kotlin {
             implementation(projects.shared.libs.koin)
         }
 
+        androidMain.dependencies {
+            implementation(projects.shared.libs.firebaseStore)
+            implementation(projects.shared.libs.firebaseAuth)
+            implementation(projects.shared.features.auth)
+            implementation(projects.shared.features.feed)
+            implementation(projects.shared.features.root)
+            implementation(projects.shared.features.account)
+            implementation(projects.shared.features.game)
+            val (deps, addRust) = BuildConfig.getAndProcessDependencies(project)
+            deps.forEach { implementation(it) }
+            if (addRust) implementation(projects.shared.rust)
+        }
+
         commonTest.dependencies {
             implementation(libs.kotlin.test)
         }

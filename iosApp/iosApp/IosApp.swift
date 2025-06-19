@@ -70,7 +70,7 @@ struct IosApp: App {
       uploadDIContainer = appDIContainer.makeUploadDIContainer()
       profileDIContainer = appDIContainer.makeProfileDIContainer()
       accountDIContainer = appDIContainer.makeAccountDIContainer()
-      AppDIKt.doInitKoin { _ in  }
+      AppDI_iosKt.doInitKoin { _ in  }
     } catch {
       initializationError = error
     }
