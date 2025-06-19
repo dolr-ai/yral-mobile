@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import iosSharedUmbrella
 
 struct ProfileEmptyStateView: View {
   var uploadVideoPressed: (() -> Void)
@@ -25,7 +26,12 @@ struct ProfileEmptyStateView: View {
           .multilineTextAlignment(.center)
 
         Button(
-          action: { uploadVideoPressed() },
+          action: {
+            AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+              event: UploadVideoClickedEventData(pageName: "Profile")
+            )
+            uploadVideoPressed()
+          },
           label: {
             Text(Constants.buttonTitle)
               .font(Constants.buttonFont)
