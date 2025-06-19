@@ -68,7 +68,14 @@ class FeedsRepository: FeedRepositoryProtocol {
     }
 
     if !aggregatedErrors.isEmpty {
-      return .failure(FeedError.aggregated(AggregatedError(errors: aggregatedErrors)))
+      return .failure(
+        FeedError.aggregated(
+          AggregatedError(
+            errors: aggregatedErrors
+          ),
+          nil
+        )
+      )
     }
 
     return .success(())
@@ -109,7 +116,14 @@ class FeedsRepository: FeedRepositoryProtocol {
     }
 
     if !aggregatedErrors.isEmpty {
-      return .failure(FeedError.aggregated(AggregatedError(errors: aggregatedErrors)))
+      return .failure(
+        FeedError.aggregated(
+          AggregatedError(
+            errors: aggregatedErrors
+          ),
+          result
+        )
+      )
     }
     return .success(result)
   }

@@ -28,6 +28,7 @@ final class DefaultAuthClient: NSObject, AuthClient {
   let firebaseService: FirebaseService
   let crashReporter: CrashReporter
   let baseURL: URL
+  let satsBaseURL: URL
   let firebaseBaseURL: URL
 
   var pendingAuthState: String!
@@ -36,11 +37,13 @@ final class DefaultAuthClient: NSObject, AuthClient {
        firebaseService: FirebaseService,
        crashReporter: CrashReporter,
        baseURL: URL,
+       satsBaseURL: URL,
        firebaseBaseURL: URL) {
     self.networkService = networkService
     self.firebaseService = firebaseService
     self.crashReporter = crashReporter
     self.baseURL = baseURL
+    self.satsBaseURL = satsBaseURL
     self.firebaseBaseURL = firebaseBaseURL
     super.init()
   }
@@ -216,6 +219,33 @@ final class DefaultAuthClient: NSObject, AuthClient {
     }
   }
 
+  func getUserBalance(type: DelegateIdentityType) async throws {
+    guard let principalID = userPrincipalString else {
+      throw SatsCoinError.unknown("Failed to fetch princiapl ID")
+    }
+
+    do {
+      let response = try await networkService.performRequest(
+        for: Endpoint(
+          http: "",
+          baseURL: satsBaseURL,
+          path: "v2/balance/\(principalID)",
+          method: .get
+        ),
+        decodeAs: SatsCoinDTO.self
+      ).toDomain()
+      await updateAuthState(for: type, withCoins: UInt64(response.balance) ?? 0)
+      try await firebaseService.update(coins: UInt64(response.balance) ?? 0, forPrincipal: principalID)
+    } catch {
+      switch error {
+      case let error as NetworkError:
+        throw SatsCoinError.network(error)
+      default:
+        throw SatsCoinError.unknown(error.localizedDescription)
+      }
+    }
+  }
+
   private func exchangePrincipalID(type: DelegateIdentityType) async throws {
     let newSignIn = try? await firebaseService.signInAnonymously()
 
@@ -232,10 +262,9 @@ final class DefaultAuthClient: NSObject, AuthClient {
       "principal_id": userPrincipalString ?? ""
     ]
 
-    if let principalID = userPrincipalString, !(newSignIn ?? true) {
+    if userPrincipalString != nil, !(newSignIn ?? true) {
       do {
-        let coinBalance = try await firebaseService.fetchCoins(for: principalID)
-        await updateAuthState(for: type, withCoins: coinBalance)
+        try await getUserBalance(type: type)
       } catch {
         await updateAuthState(for: type, withCoins: 0)
       }
@@ -253,16 +282,15 @@ final class DefaultAuthClient: NSObject, AuthClient {
           for: endpoint,
           decodeAs: ExchangePrincipalDTO.self
         ).toDomain()
-        await updateAuthState(for: type, withCoins: response.coins)
-
         try await firebaseService.signIn(withCustomToken: response.token)
+        try await getUserBalance(type: type)
       } catch {
         await updateAuthState(for: type, withCoins: 0)
       }
     }
   }
 
-  private func updateAuthState(for type: DelegateIdentityType, withCoins coins: Int) async {
+  private func updateAuthState(for type: DelegateIdentityType, withCoins coins: UInt64) async {
     await MainActor.run {
       stateSubject.value = (type == .ephemeral) ? .ephemeralAuthentication(
         userPrincipal: userPrincipalString ?? "",
@@ -291,8 +319,8 @@ final class DefaultAuthClient: NSObject, AuthClient {
     userPrincipalString = nil
     identityData = nil
     UserDefaultsManager.shared.set(false, for: DefaultsKey.userDefaultsLoggedIn)
-    try await obtainAnonymousIdentity()
     stateSubject.value = .loggedOut
+    try await obtainAnonymousIdentity()
   }
 
   func generateNewDelegatedIdentity() throws -> DelegatedIdentity {

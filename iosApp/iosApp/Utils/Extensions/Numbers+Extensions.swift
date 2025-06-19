@@ -28,5 +28,7 @@ extension Int {
   static let two: Int = 2
   static let three: Int = 3
   static let four: Int = 4
+  static let five: Int = 5
+  static let ten: Int = 10
   static let thousand: Int = 1000
 }

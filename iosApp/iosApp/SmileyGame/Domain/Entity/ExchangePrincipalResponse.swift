@@ -10,5 +10,4 @@ import Foundation
 
 struct ExchangePrincipalResponse {
   let token: String
-  let coins: Int
 }

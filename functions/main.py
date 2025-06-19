@@ -1,14 +1,17 @@
 import re, random, string, datetime as _dt, sys
 import firebase_admin
-from firebase_admin import auth, app_check, firestore
+from firebase_admin import auth, app_check, firestore, functions
 from firebase_functions import https_fn
 from flask import Request, jsonify, make_response
 from google.api_core.exceptions import AlreadyExists, GoogleAPICallError
 from typing import List, Dict, Any
+import requests
+from requests.exceptions import RequestException
+import os
+import random
 
 firebase_admin.initialize_app()
 
-DEFAULT_COINS = 2_000
 WIN_REWARD = 30
 LOSS_PENALTY = -10
 SHARDS = 10
@@ -16,6 +19,8 @@ SHARDS = 10
 PID_REGEX = re.compile(r'^[A-Za-z0-9_-]{6,64}$')
 SMILEY_GAME_CONFIG_PATH = "config/smiley_game_v1"
 VIDEO_COLL = "videos"
+
+BALANCE_URL = "https://yral-hot-or-not.go-bazzinga.workers.dev/update_balance/"
 
 # ─────────────────────  DATABASE HELPER  ────────────────────────
 _db = None
@@ -106,48 +111,15 @@ def exchange_principal_id(request: Request):
         old_ref = db().document(f"users/{old_uid}") if old_uid != principal_id else None
 
         @firestore.transactional
-        def _merge(tx: firestore.Transaction) -> int:
-            # destination snapshot
-            dst_snap   = new_ref.get(transaction=tx)
-            dst_exists = dst_snap.exists
-            dst_coins  = dst_snap.get("coins") if dst_exists else None
-
-            # old balance (only if different UID)
-            src_coins = 0
-            if old_ref:
-                src_coins = (old_ref.get(transaction=tx).get("coins") or 0)
-
-            # ---- rule 1: destination missing → create --------------------
-            if not dst_exists:
-                initial = src_coins or DEFAULT_COINS
+        def _ensure_profile(tx: firestore.Transaction):
+            if not new_ref.get(transaction=tx).exists:
                 tx.set(new_ref,
-                       {"coins": initial,
-                        "created_at": firestore.SERVER_TIMESTAMP})
-                reason = "MERGE_IN" if src_coins else "INIT"
-                tx.set(new_ref.collection("transactions").document(_tx_id()),
-                       {"delta": initial,
-                        "reason": reason,
-                        "video_id": None,
-                        "at": firestore.SERVER_TIMESTAMP})
-                dst_coins = initial
-
-            # ---- rule 2: destination exists → NO merge -------------------
-            # (dst_coins already holds current balance)
-
-            # ---- debit & delete old account if we transferred ------------
-            if src_coins and not dst_exists:
-                tx.set(old_ref.collection("transactions").document(_tx_id()),
-                       {"delta": -src_coins,
-                        "reason": "MERGE_OUT",
-                        "video_id": None,
-                        "at": firestore.SERVER_TIMESTAMP})
+                       {"created_at": firestore.SERVER_TIMESTAMP})
 
             if old_ref:
-                tx.delete(old_ref)
+                tx.delete(old_ref)                 # discard temp profile
 
-            return dst_coins
-
-        coins = _merge(db().transaction())
+        _ensure_profile(db().transaction())
 
         # 4. delete old Auth user (best-effort) -----------------------------
         if old_uid != principal_id:
@@ -158,7 +130,7 @@ def exchange_principal_id(request: Request):
 
         # 5. return custom token + coins -----------------------------------
         token = auth.create_custom_token(principal_id).decode()
-        return jsonify({"token": token, "coins": coins}), 200
+        return jsonify({"token": token}), 200
 
     # -------- known errors to JSON ---------------------------------------
     except auth.InvalidIdTokenError:
@@ -171,9 +143,26 @@ def exchange_principal_id(request: Request):
     except Exception as e:  # noqa: BLE001
         print("Unhandled error:", e, file=sys.stderr)
         return error_response(500, "INTERNAL", "Internal server error")
+
+def _push_delta(token: str, principal_id: str, delta: int) -> bool:
+    url = f"{BALANCE_URL}{principal_id}"
+    headers = {
+        "Authorization": token,
+        "Content-Type": "application/json",
+    }
+    body = {
+        "delta": str(delta),          # radix-10 string, e.g. "-210"
+        "is_airdropped": False
+    }
+    try:
+        resp = requests.post(url, json=body, timeout=5, headers=headers)
+        return resp.status_code == 200
+    except requests.RequestException:
+        return False
     
-@https_fn.on_request(region="us-central1")
+@https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"])
 def cast_vote(request: Request):
+    balance_update_token = os.environ["BALANCE_UPDATE_TOKEN"]
     try:
         # 1. validation & auth ────────────────────────────────────────────
         if request.method != "POST":
@@ -222,12 +211,17 @@ def cast_vote(request: Request):
 
             vid_exists  = vid_ref.get(transaction=tx).exists
             if not vid_exists:
-                zero = {s["id"]: 0 for s in smileys}
+                seed_winner = random.choice([s["id"] for s in smileys])
                 tx.set(vid_ref, {
                     "created_at": firestore.SERVER_TIMESTAMP
                 })
-                for k in range(SHARDS):
-                    tx.set(shard_ref(k), zero, merge=True)
+
+                zero = {s["id"]: 0 for s in smileys}
+                zero[seed_winner] = 1
+                tx.set(shard_ref(0), zero, merge=True)
+
+                for k in range(1, SHARDS):
+                    tx.set(shard_ref(k), {s["id"]: 0 for s in smileys}, merge=True)
 
             # write vote + counter
             tx.set(vote_ref, {
@@ -266,6 +260,10 @@ def cast_vote(request: Request):
         # 5. coin mutation ───────────────────────────────────────────────
         delta  = WIN_REWARD if outcome == "WIN" else LOSS_PENALTY
         coins  = tx_coin_change(pid, vid, delta, outcome)
+
+        if not _push_delta(balance_update_token, pid, delta):
+            _ = tx_coin_change(pid, vid, -delta, "ROLLBACK")
+            return error_response(502, "UPSTREAM_FAILED", "We couldn’t record your vote. Please try voting again after sometime.")
 
         vote_ref.update({
             "outcome": outcome,

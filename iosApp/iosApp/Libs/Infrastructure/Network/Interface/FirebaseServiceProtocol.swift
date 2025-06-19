@@ -6,7 +6,7 @@
 //  Copyright © 2025 orgName. All rights reserved.
 //
 
-import FirebaseFirestore
+import Foundation
 
 protocol FirebaseServiceProtocol {
   func signInAnonymously() async throws -> Bool
@@ -15,6 +15,7 @@ protocol FirebaseServiceProtocol {
   func fetchUserIDToken() async throws -> String?
   func fetchAppCheckToken() async throws -> String
   func fetchCoins(for principal: String) async throws -> Int
+  func update(coins: UInt64, forPrincipal principal: String) async throws
 
   func fetchDocument<T: Decodable>(
     path: String,
