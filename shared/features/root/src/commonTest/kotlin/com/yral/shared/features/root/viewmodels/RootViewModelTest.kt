@@ -13,12 +13,13 @@ import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.unmockkAll
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -41,15 +42,15 @@ class RootViewModelTest {
     private lateinit var individualUserServiceFactory: IndividualUserServiceFactory
     private lateinit var crashlyticsManager: CrashlyticsManager
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private val testDispatcher = UnconfinedTestDispatcher()
-    private val testScope = TestScope(testDispatcher)
+    private val testDispatcher = StandardTestDispatcher()
     private val sessionState = MutableStateFlow<SessionState>(SessionState.Initial)
 
     private lateinit var viewModel: RootViewModel
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @BeforeTest
     fun setup() {
+        Dispatchers.setMain(testDispatcher)
         authClient = mockk(relaxed = true)
         sessionManager = mockk(relaxed = true)
         individualUserServiceFactory = mockk(relaxed = true)
@@ -82,7 +83,7 @@ class RootViewModelTest {
 
     @Test
     fun `initial state shows splash and no error`() =
-        testScope.runTest {
+        runTest {
             viewModel.state.test {
                 val initial = awaitItem()
                 assertTrue(initial.showSplash)
@@ -93,7 +94,7 @@ class RootViewModelTest {
 
     @Test
     fun `successful initialization with principal and identity hides splash`() =
-        testScope.runTest {
+        runTest {
             coEvery { individualUserServiceFactory.initialize(any(), any()) } returns Unit
             every { sessionManager.getCanisterPrincipal() } returns CANISTER_PRINCIPAL
             every { sessionManager.getIdentity() } returns IDENTITY_DATA
@@ -112,7 +113,7 @@ class RootViewModelTest {
 
     @Test
     fun `initialization with missing principal calls authClient and keeps splash`() =
-        testScope.runTest {
+        runTest {
             every { sessionManager.getCanisterPrincipal() } returns null
             coEvery { authClient.initialize() } returns Unit
             viewModel.state.test {
@@ -129,7 +130,7 @@ class RootViewModelTest {
 
     @Test
     fun `initialization with missing identity calls authClient and keeps splash`() =
-        testScope.runTest {
+        runTest {
             every { sessionManager.getCanisterPrincipal() } returns CANISTER_PRINCIPAL
             every { sessionManager.getIdentity() } returns null
             coEvery { authClient.initialize() } returns Unit
@@ -147,7 +148,7 @@ class RootViewModelTest {
 
     @Test
     fun `timeout during initialization sets error and keeps splash`() =
-        testScope.runTest {
+        runTest {
             // Simulate a long-running initialization
             coEvery { individualUserServiceFactory.initialize(any(), any()) } coAnswers {
                 delay(1000) // longer than the test timeout
@@ -190,7 +191,7 @@ class RootViewModelTest {
 
     @Test
     fun `YralException during initialization sets error and keeps splash`() =
-        testScope.runTest {
+        runTest {
             coEvery { individualUserServiceFactory.initialize(any(), any()) } throws YralException("Test error")
             every { sessionManager.getCanisterPrincipal() } returns CANISTER_PRINCIPAL
             every { sessionManager.getIdentity() } returns IDENTITY_DATA
@@ -208,7 +209,7 @@ class RootViewModelTest {
 
     @Test
     fun `FfiException during initialization sets error and keeps splash`() =
-        testScope.runTest {
+        runTest {
             coEvery { individualUserServiceFactory.initialize(any(), any()) } throws mockk<FfiException>(relaxed = true)
             every { sessionManager.getCanisterPrincipal() } returns CANISTER_PRINCIPAL
             every { sessionManager.getIdentity() } returns IDENTITY_DATA
@@ -226,7 +227,7 @@ class RootViewModelTest {
 
     @Test
     fun `onSplashAnimationComplete updates state`() =
-        testScope.runTest {
+        runTest {
             viewModel.state.test {
                 awaitItem() // initial
                 viewModel.onSplashAnimationComplete()
@@ -238,7 +239,7 @@ class RootViewModelTest {
 
     @Test
     fun `updateCurrentTab updates state`() =
-        testScope.runTest {
+        runTest {
             val newTab = "Profile"
             viewModel.state.test {
                 awaitItem() // initial
@@ -251,7 +252,7 @@ class RootViewModelTest {
 
     @Test
     fun `initialization completes before timeout does not set error`() =
-        testScope.runTest {
+        runTest {
             // Simulate a fast initialization
             coEvery { individualUserServiceFactory.initialize(any(), any()) } coAnswers {
                 delay(50) // 50ms, much less than the timeout
