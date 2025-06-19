@@ -18,6 +18,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlin.test.AfterTest
@@ -76,8 +77,10 @@ class RootViewModelTest {
             )
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @AfterTest
     fun tearDown() {
+        Dispatchers.resetMain()
         unmockkAll()
     }
 
