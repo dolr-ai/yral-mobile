@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -57,7 +56,6 @@ import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.feed.FeedScreenConstants.MAX_LINES_FOR_POST_DESCRIPTION
-import com.yral.android.ui.screens.feed.FeedScreenConstants.VIDEO_REPORT_SHEET_MAX_HEIGHT
 import com.yral.android.ui.screens.feed.performance.PrefetchVideoListenerImpl
 import com.yral.android.ui.screens.feed.performance.VideoListenerImpl
 import com.yral.android.ui.screens.game.AboutGameSheet
@@ -67,7 +65,6 @@ import com.yral.android.ui.screens.game.SmileyGame
 import com.yral.android.ui.widgets.PreloadLottieAnimation
 import com.yral.android.ui.widgets.YralBottomSheet
 import com.yral.android.ui.widgets.YralButtonState
-import com.yral.android.ui.widgets.YralButtonType
 import com.yral.android.ui.widgets.YralGradientButton
 import com.yral.android.ui.widgets.YralLoader
 import com.yral.shared.features.feed.viewmodel.FeedState
@@ -547,19 +544,18 @@ private fun ReportVideoSheet(
         Column(
             modifier =
                 Modifier
-                    .fillMaxHeight(VIDEO_REPORT_SHEET_MAX_HEIGHT)
                     .padding(
                         start = 16.dp,
                         top = 28.dp,
                         end = 16.dp,
                         bottom = 36.dp,
                     ),
-            verticalArrangement = Arrangement.spacedBy(28.dp, Alignment.CenterVertically),
+            verticalArrangement = Arrangement.spacedBy(28.dp, Alignment.Bottom),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             VideoReportSheetTitle()
             VideoReportReasons(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f, fill = false),
                 reasons = reasons,
                 selectedReason = selectedReason,
                 onSelected = { selectedReason = it },
@@ -568,7 +564,6 @@ private fun ReportVideoSheet(
             )
             YralGradientButton(
                 text = stringResource(R.string.submit),
-                buttonType = YralButtonType.White,
                 buttonState = buttonState,
             ) {
                 selectedReason?.let {
@@ -612,9 +607,16 @@ private fun VideoReportReasons(
     onTextUpdate: (String) -> Unit,
 ) {
     val listState = rememberLazyListState()
+    var inputHeight by remember { mutableIntStateOf(0) }
     LaunchedEffect(selectedReason) {
         if (selectedReason == VideoReportReason.OTHERS) {
-            listState.animateScrollToItem(reasons.size)
+            listState.animateScrollToItem(reasons.size, inputHeight)
+        }
+    }
+    LaunchedEffect(text) {
+        // automatically scroll to end of column as text grows
+        if (selectedReason == VideoReportReason.OTHERS) {
+            listState.scrollToItem(reasons.size, inputHeight)
         }
     }
     LazyColumn(
@@ -637,6 +639,7 @@ private fun VideoReportReasons(
                 ReasonDetailsInput(
                     text = text,
                     onValueChange = onTextUpdate,
+                    onHeightChange = { inputHeight = it },
                 )
             }
         }
@@ -647,8 +650,13 @@ private fun VideoReportReasons(
 private fun ReasonDetailsInput(
     text: String,
     onValueChange: (text: String) -> Unit,
+    onHeightChange: (height: Int) -> Unit,
 ) {
     Column(
+        modifier =
+            Modifier.onGloballyPositioned {
+                onHeightChange(it.size.height)
+            },
         verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top),
         horizontalAlignment = Alignment.Start,
     ) {
@@ -740,5 +748,4 @@ private fun VideoReportReason.displayText(): String =
 
 object FeedScreenConstants {
     const val MAX_LINES_FOR_POST_DESCRIPTION = 5
-    const val VIDEO_REPORT_SHEET_MAX_HEIGHT = 0.98f
 }
