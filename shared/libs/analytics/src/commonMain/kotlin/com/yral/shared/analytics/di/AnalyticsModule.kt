@@ -39,7 +39,7 @@ val analyticsModule =
                     val json: Json = get()
                     json.encodeToJsonElement(event).toMap().mapValues { it.value.toString() }
                 },
-                token = "AppConfigurations.MIXPANEL_TOKEN",
+                token = get<String>(MIXPANEL_TOKEN),
             )
         }
         single {
