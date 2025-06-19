@@ -1,0 +1,135 @@
+name: 'Send DID Changes Notification'
+description: 'Sends a notification to Google Chat about DID file changes'
+
+inputs:
+  webhook_url:
+    description: 'Google Chat webhook URL'
+    required: true
+  release_tag:
+    description: 'Release tag'
+    required: true
+  changed_files:
+    description: 'List of changed files'
+    required: true
+  breaking_changes:
+    description: 'Whether there are breaking changes'
+    required: true
+  differences:
+    description: 'Whether there are non-breaking changes'
+    required: true
+  new_files:
+    description: 'Whether there are new files'
+    required: true
+  pr_url:
+    description: 'Pull request URL'
+    required: true
+  pr_status:
+    description: 'Pull request creation status'
+    required: true
+  workflow_url:
+    description: 'Workflow run URL'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Send DID changes notification
+      shell: bash
+      run: |
+        # Check if PR was created successfully
+        PR_STATUS="${{ inputs.pr_status }}"
+        PR_URL="${{ inputs.pr_url }}"
+        
+        # Prepare PR status widgets
+        if [ "$PR_STATUS" = "success" ]; then
+          PR_WIDGETS='[
+            {
+              "decoratedText": {
+                "text": "✅ Pull Request created successfully"
+              }
+            },
+            {
+              "buttonList": {
+                "buttons": [
+                  {
+                    "text": "View Pull Request",
+                    "onClick": {
+                      "openLink": {
+                        "url": "'"$PR_URL"'"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          ]'
+        else
+          PR_WIDGETS='[
+            {
+              "decoratedText": {
+                "text": "❌ Failed to create Pull Request"
+              }
+            }
+          ]'
+        fi
+        
+        curl -X POST "${{ inputs.webhook_url }}" \
+        -H "Content-Type: application/json" \
+        -d '{
+          "cardsV2": [
+            {
+              "cardId": "did-changes",
+              "card": {
+                "header": {
+                  "title": "DID File Changes Detected",
+                  "subtitle": "Changes from release ${{ inputs.release_tag }}"
+                },
+                "sections": [
+                  {
+                    "header": "Findings",
+                    "widgets": [
+                      {
+                        "decoratedText": {
+                          "text": "${{ inputs.breaking_changes == 'true' && '🚨 Breaking changes detected in .did files' || '✅ No breaking changes detected' }}"
+                        }
+                      },
+                      {
+                        "decoratedText": {
+                          "text": "${{ inputs.differences == 'true' && 'ℹ️ Non-breaking updates found in .did files' || '✅ No non breaking changes detected' }}"
+                        }
+                      },
+                      {
+                        "decoratedText": {
+                          "text": "${{ inputs.new_files == 'true' && 'ℹ️ New .did files found in release' || '✅ No new files' }}"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "header": "Changed Files",
+                    "widgets": [
+                      {
+                        "textParagraph": {
+                          "text": "${{ fromJSON(inputs.changed_files) }}"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "header": "Pull Request Status",
+                    "widgets": '"$PR_WIDGETS"'
+                  },
+                  {
+                    "widgets": [
+                      {
+                        "textParagraph": {
+                          "text": "<i><a href=\"${{ inputs.workflow_url }}\">View workflow run</a></i>"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }' 

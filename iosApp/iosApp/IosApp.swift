@@ -1,5 +1,6 @@
 import SwiftUI
-import Firebase
+import FirebaseCore
+import iosSharedUmbrella
 
 class AppDelegate: NSObject, UIApplicationDelegate {
   func application(
@@ -73,6 +74,7 @@ struct IosApp: App {
       profileDIContainer = appDIContainer.makeProfileDIContainer()
       accountDIContainer = appDIContainer.makeAccountDIContainer()
       leaderboardDIContainer = appDIContainer.makeLeaderboardDIContainer()
+      AppDI_iosKt.doInitKoin { _ in  }
     } catch {
       initializationError = error
     }

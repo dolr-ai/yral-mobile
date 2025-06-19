@@ -20,6 +20,7 @@ protocol FeedsCellProtocol: AnyObject {
   func loginTapped(provider: SocialProvider)
   func smileyTapped(index: Int, smiley: Smiley)
   func showGameResultBottomSheet(index: Int, gameResult: SmileyGameResultResponse)
+  func videoStarted(index: Int)
 }
 
 // swiftlint: disable type_body_length
@@ -242,6 +243,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   @objc private func handleFirstFrameReady(_ note: Notification) {
     guard let idx = note.userInfo?["index"] as? Int, idx == index else { return }
     playerLayer?.isHidden = false
+    delegate?.videoStarted(index: index)
   }
 
   private func bindSession() {

@@ -12,9 +12,11 @@ import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import com.yral.shared.uniffi.generated.propicFromPrincipal
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class AccountsViewModel(
@@ -24,7 +26,7 @@ class AccountsViewModel(
     private val authClient: AuthClient,
     private val crashlyticsManager: CrashlyticsManager,
 ) : ViewModel() {
-    private val coroutineScope = CoroutineScope(appDispatchers.io)
+    private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.io)
     private val _state =
         MutableStateFlow(
             AccountsState(
@@ -37,23 +39,26 @@ class AccountsViewModel(
 
     init {
         coroutineScope.launch {
-            _state.emit(
-                _state.value.copy(
-                    isSocialSignInSuccessful = isSocialSignInSuccessful(),
-                ),
-            )
+            val isSignedIn = isSocialSignInSuccessful()
+            _state.update { currentState ->
+                currentState.copy(
+                    isSocialSignInSuccessful = isSignedIn,
+                )
+            }
         }
     }
 
     fun refreshAccountInfo() {
         coroutineScope.launch {
-            _state.emit(
-                _state.value.copy(
-                    accountInfo = getAccountInfo(),
-                    isSocialSignInSuccessful = isSocialSignInSuccessful(),
+            val accountInfo = getAccountInfo()
+            val isSignedIn = isSocialSignInSuccessful()
+            _state.update { currentState ->
+                currentState.copy(
+                    accountInfo = accountInfo,
+                    isSocialSignInSuccessful = isSignedIn,
                     bottomSheetType = AccountBottomSheet.None,
-                ),
-            )
+                )
+            }
         }
     }
 
@@ -111,21 +116,21 @@ class AccountsViewModel(
 
     fun showLoading(loading: Boolean) {
         coroutineScope.launch {
-            _state.emit(
-                _state.value.copy(
+            _state.update { currentState ->
+                currentState.copy(
                     isLoading = loading,
-                ),
-            )
+                )
+            }
         }
     }
 
     fun setBottomSheetType(type: AccountBottomSheet) {
         coroutineScope.launch {
-            _state.emit(
-                _state.value.copy(
+            _state.update { currentState ->
+                currentState.copy(
                     bottomSheetType = type,
-                ),
-            )
+                )
+            }
         }
     }
 
@@ -145,7 +150,8 @@ class AccountsViewModel(
                     openInExternalBrowser = false,
                 ),
             )
-        if (_state.value.isSocialSignInSuccessful) {
+        val isSocialSignIn = _state.value.isSocialSignInSuccessful
+        if (isSocialSignIn) {
             links.add(
                 AccountHelpLink(
                     link = LOGOUT_URI,
@@ -162,24 +168,21 @@ class AccountsViewModel(
         return links
     }
 
-    fun getSocialLinks(): List<AccountHelpLink> {
-        val links =
-            listOf(
-                AccountHelpLink(
-                    link = TELEGRAM_LINK,
-                    openInExternalBrowser = true,
-                ),
-                AccountHelpLink(
-                    link = DISCORD_LINK,
-                    openInExternalBrowser = true,
-                ),
-                AccountHelpLink(
-                    link = TWITTER_LINK,
-                    openInExternalBrowser = true,
-                ),
-            )
-        return links
-    }
+    fun getSocialLinks(): List<AccountHelpLink> =
+        listOf(
+            AccountHelpLink(
+                link = TELEGRAM_LINK,
+                openInExternalBrowser = true,
+            ),
+            AccountHelpLink(
+                link = DISCORD_LINK,
+                openInExternalBrowser = true,
+            ),
+            AccountHelpLink(
+                link = TWITTER_LINK,
+                openInExternalBrowser = true,
+            ),
+        )
 
     fun handleHelpLink(
         link: String,
@@ -201,7 +204,7 @@ class AccountsViewModel(
         const val LOGOUT_URI = "yral://logout"
         const val DELETE_ACCOUNT_URI = "yral://deleteAccount"
         const val TALK_TO_TEAM_URL = "https://t.me/+c-LTX0Cp-ENmMzI1"
-        const val TERMS_OF_SERVICE_URL = "https://yral.com/terms-ios"
+        const val TERMS_OF_SERVICE_URL = "https://yral.com/terms-android"
         const val PRIVACY_POLICY_URL = "https://yral.com/privacy-policy"
         const val TELEGRAM_LINK = "https://t.me/+c-LTX0Cp-ENmMzI1"
         const val DISCORD_LINK = "https://discord.com/invite/GZ9QemnZuj"

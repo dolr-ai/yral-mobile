@@ -8,7 +8,7 @@
 
 import Foundation
 import Combine
-import secp256k1
+import P256K
 import AuthenticationServices
 
 // swiftlint: disable type_body_length
@@ -347,8 +347,7 @@ final class DefaultAuthClient: NSObject, AuthClient {
         }
         return try delegated_identity_wire_from_bytes(buf.bindMemory(to: UInt8.self))
       }
-
-      let privateKey = try secp256k1.Signing.PrivateKey(format: .uncompressed)
+      let privateKey = try P256K.Signing.PrivateKey(format: .uncompressed)
       let publicKeyData = privateKey.publicKey.dataRepresentation
 
       let xData = publicKeyData[1...32].base64URLEncodedString()

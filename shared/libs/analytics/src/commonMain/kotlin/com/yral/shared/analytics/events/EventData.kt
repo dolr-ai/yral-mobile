@@ -14,7 +14,6 @@ sealed interface EventData {
 
 fun EventData.shouldSendToYralBE(): Boolean =
     when (event) {
-        FeatureEvents.AUTH_SUCCESSFUL.getEventName() -> false
         FeatureEvents.VIDEO_DURATION_WATCHED.getEventName() -> true
         else -> false
     }
