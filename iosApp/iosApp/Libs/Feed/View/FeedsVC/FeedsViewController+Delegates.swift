@@ -19,12 +19,38 @@ extension FeedsViewController: FeedsCellProtocol {
     )
   }
 
+  fileprivate func smileyGameSheetEvent(
+    _ feed: FeedResult,
+    _ result: GameResult,
+    _ sheetCtaType: GameConcludedCtaType,
+    coinDelta: Int
+  ) {
+    AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+      event: GameConcludedBottomsheetClickedEventData(
+        stakeAmount: Int32(feed.smileyGame?.config.lossPenalty ?? .zero),
+        tokenType: .sats,
+        gameResult: result,
+        wonAmount: Int32(coinDelta),
+        ctaType: sheetCtaType
+      )
+    )
+  }
+
   func showGameResultBottomSheet(index: Int, gameResult: SmileyGameResultResponse) {
     var hostingController: UIHostingController<SmileyGameResultBottomSheetView>?
+
     let bottomSheetView = SmileyGameResultBottomSheetView(
       gameResult: gameResult) {
+        let feed = self.feedsDataSource.snapshot().itemIdentifiers[index]
+        let sheetCtaType = GameConcludedCtaType.keepPlaying
+        let result = gameResult.outcome == Constants.winResult ? GameResult.win : GameResult.loss
+        self.smileyGameSheetEvent(feed, result, sheetCtaType, coinDelta: gameResult.coinDelta)
         hostingController?.dismiss(animated: true)
       } onLearnMoreTapped: {
+        let feed = self.feedsDataSource.snapshot().itemIdentifiers[index]
+        let sheetCtaType = GameConcludedCtaType.learnMore
+        let result = gameResult.outcome == Constants.winResult ? GameResult.win : GameResult.loss
+        self.smileyGameSheetEvent(feed, result, sheetCtaType, coinDelta: gameResult.coinDelta)
         hostingController?.dismiss(animated: true) {
           let smileyGameRuleView = self.makeSmileyGameRulesDIContainer().makeSmileyGameRuleView {
             self.navigationController?.popViewController(animated: true)
@@ -69,20 +95,20 @@ extension FeedsViewController: FeedsCellProtocol {
       await self.viewModel.castVote(request: CastVoteQuery(videoID: videoID, smileyID: smileyID))
     }
     AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-      event: VideoClickedEventData(
-        videoId: item.videoID,
+      event: GamePlayedEventData(
+        videoId: videoID,
         publisherUserId: item.principalID,
         likeCount: Int64(item.likeCount),
-        shareCount: .zero,
-        viewCount: item.viewCount,
-        isGameEnabled: true,
+        shareCount: Int64(.zero),
+        viewCount: Int64(item.viewCount),
         gameType: .smiley,
         isNsfw: false,
-        ctaType: .like
+        stakeAmount: Int32(item.smileyGame?.config.lossPenalty ?? Int.zero),
+        tokenType: TokenType_.sats,
+        optionChosen: smileyID
       )
     )
   }
-
 
   func deleteButtonTapped(index: Int) {
     getNudgeView(at: index, isDelete: true)

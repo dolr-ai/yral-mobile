@@ -8,6 +8,7 @@
 import UIKit
 import SDWebImage
 import AVFoundation
+import iosSharedUmbrella
 
 extension FeedsViewController {
   // swiftlint: disable function_body_length
@@ -149,6 +150,26 @@ extension FeedsViewController {
         andSnapshot: snapshot
       )
     }
+    guard index < snapshot.numberOfItems else {
+      return
+    }
+    let item = items[index]
+    let result = response.outcome == Constants.winResult ? GameResult.win : GameResult.loss
+    AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+      event: GameConcludedEventData(
+        videoId: item.videoID,
+        publisherUserId: item.principalID,
+        likeCount: Int64(item.likeCount),
+        shareCount: Int64(.zero),
+        viewCount: Int64(item.viewCount),
+        gameType: .smiley,
+        isNsfw: false,
+        stakeAmount: Int32(item.smileyGame?.config.lossPenalty ?? .zero),
+        tokenType: .sats,
+        optionChosen: response.smiley.id,
+        gameResult: result
+      )
+    )
   }
 
   private func updateUIAfterCastVoteSuccess(
@@ -167,7 +188,7 @@ extension FeedsViewController {
     self.feedsDataSource.apply(snapshot, animatingDifferences: true)
     self.session.update(coins: response.coins)
   }
-  
+
   func handleCastVoteFailure(_ errorMessage: String, videoID: String) {
     var snapshot = feedsDataSource.snapshot()
     var items = snapshot.itemIdentifiers
@@ -178,7 +199,7 @@ extension FeedsViewController {
     guard let cell = feedsCV.cellForItem(at: IndexPath(item: index, section: 0)) as? FeedsCell else {
       return
     }
-    
+
     cell.handleSmileyGameError(errorMessage)
 
     items[0].smileyGame?.state = .error(errorMessage)

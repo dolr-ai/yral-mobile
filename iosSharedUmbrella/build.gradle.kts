@@ -9,7 +9,7 @@ version = "1.0"
 kotlin {
     iosArm64()
     iosSimulatorArm64()
-    val firebaseIos = "10.29.0"
+    val firebaseIos = "11.14.0"
 
     cocoapods {
         summary = "Umbrella framework for shared KMM code"
@@ -41,10 +41,28 @@ kotlin {
             extraOpts += listOf("-compiler-option", "-fmodules")
             version = firebaseIos
         }
-        pod("GoogleUtilities") {
+        pod("FirebaseFirestore") {
+            extraOpts += listOf("-compiler-option", "-fmodules")
+            version = firebaseIos
+        }
+        pod("FirebaseAppCheck") {
+            extraOpts += listOf("-compiler-option", "-fmodules")
+            version = firebaseIos
+        }
+        pod("FirebaseStorage") {
+            extraOpts += listOf("-compiler-option", "-fmodules")
+            version = firebaseIos
+        }
+        pod("FirebaseAuth") {
+            extraOpts += listOf("-compiler-option", "-fmodules")
+            version = firebaseIos
+        }
+         pod("GoogleUtilities") {
+            version = "8.1"
             extraOpts += listOf("-compiler-option", "-fmodules")
         }
         pod("nanopb") {
+            version = "3.30910.0"
             extraOpts += listOf("-compiler-option", "-fmodules")
         }
         pod("Mixpanel") {

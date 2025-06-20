@@ -203,7 +203,7 @@ extension SmileyGameResultResponse {
   }
 
   var bottomSheetTitle: String {
-    outcome == "WIN" ? "Since most people voted on" : "Since most people didn't voted on"
+    outcome == "WIN" ? "Since most people voted on" : "Since most people didn't vote on"
   }
 
   var bottomSheetSubheading: String {
