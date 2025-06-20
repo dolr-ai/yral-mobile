@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -60,6 +61,7 @@ import com.yral.shared.features.account.viewmodel.AccountsViewModel.Companion.TA
 import com.yral.shared.features.account.viewmodel.AccountsViewModel.Companion.TELEGRAM_LINK
 import com.yral.shared.features.account.viewmodel.AccountsViewModel.Companion.TERMS_OF_SERVICE_URL
 import com.yral.shared.features.account.viewmodel.AccountsViewModel.Companion.TWITTER_LINK
+import com.yral.shared.features.account.viewmodel.ErrorType
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -134,7 +136,6 @@ private fun AccountScreenContent(
     }
 }
 
-@Suppress("LongMethod")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SheetContent(
@@ -177,8 +178,9 @@ private fun SheetContent(
             }
         }
 
-        is AccountBottomSheet.SignUpFailed -> {
-            SignUpFailedBottomSheet(
+        is AccountBottomSheet.ErrorMessage -> {
+            ErrorMessageSheet(
+                errorType = bottomSheetType.errorType,
                 bottomSheetState = bottomSheetState,
                 onDismissRequest = onDismissRequest,
             )
@@ -192,17 +194,6 @@ private fun SheetContent(
             )
         }
 
-        is AccountBottomSheet.ErrorMessage -> {
-            YralErrorMessage(
-                title = bottomSheetType.title,
-                error = bottomSheetType.message,
-                sheetState = bottomSheetState,
-                cta = stringResource(R.string.ok),
-                onClick = onDismissRequest,
-                onDismiss = onDismissRequest,
-            )
-        }
-
         is AccountBottomSheet.None -> Unit
     }
     if (extraSheetLink.isNotEmpty()) {
@@ -211,6 +202,35 @@ private fun SheetContent(
             onDismissRequest = { extraSheetLink = "" },
         )
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ErrorMessageSheet(
+    errorType: ErrorType,
+    bottomSheetState: SheetState,
+    onDismissRequest: () -> Unit,
+) {
+    val (title, error) =
+        remember {
+            when (errorType) {
+                ErrorType.SIGNUP_FAILED -> {
+                    R.string.could_not_login to R.string.could_not_login_desc
+                }
+
+                ErrorType.DELETE_ACCOUNT_FAILED -> {
+                    R.string.could_not_login to R.string.could_not_login_desc
+                }
+            }
+        }
+    YralErrorMessage(
+        title = stringResource(title),
+        error = stringResource(error),
+        sheetState = bottomSheetState,
+        cta = stringResource(R.string.ok),
+        onClick = onDismissRequest,
+        onDismiss = onDismissRequest,
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

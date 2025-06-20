@@ -2,6 +2,7 @@ package com.yral.android.ui.widgets
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SheetState
@@ -17,8 +18,6 @@ import com.yral.android.ui.design.LocalAppTopography
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun YralErrorMessage(
-    modifier: Modifier = Modifier,
-    sheetHorizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
     title: String = "",
     error: String,
     sheetState: SheetState,
@@ -31,24 +30,40 @@ fun YralErrorMessage(
         bottomSheetState = sheetState,
     ) {
         Column(
-            horizontalAlignment = sheetHorizontalAlignment,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = modifier.padding(16.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        start = 16.dp,
+                        top = 24.dp,
+                        end = 16.dp,
+                        bottom = 36.dp,
+                    ),
+            verticalArrangement = Arrangement.spacedBy(32.dp, Alignment.Top),
+            horizontalAlignment = Alignment.Start,
         ) {
-            if (title.isNotEmpty()) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top),
+                horizontalAlignment = Alignment.Start,
+            ) {
+                if (title.isNotEmpty()) {
+                    Text(
+                        modifier = Modifier.fillMaxWidth(),
+                        text = title,
+                        style = LocalAppTopography.current.xlSemiBold,
+                        textAlign = TextAlign.Center,
+                        color = Color.White,
+                    )
+                }
                 Text(
-                    text = title,
-                    style = LocalAppTopography.current.mdMedium,
-                    textAlign = TextAlign.Start,
+                    modifier = Modifier.fillMaxWidth(),
+                    text = error,
+                    style = LocalAppTopography.current.regRegular,
+                    textAlign = TextAlign.Center,
                     color = Color.White,
                 )
             }
-            Text(
-                text = error,
-                style = LocalAppTopography.current.mdMedium,
-                textAlign = TextAlign.Start,
-                color = Color.White,
-            )
             YralGradientButton(
                 text = cta,
                 onClick = onClick,
