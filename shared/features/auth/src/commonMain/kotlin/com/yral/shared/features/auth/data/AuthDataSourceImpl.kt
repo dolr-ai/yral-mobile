@@ -9,15 +9,14 @@ import com.yral.shared.core.rust.KotlinDelegatedIdentityWire
 import com.yral.shared.features.auth.data.models.DeleteAccountRequestDto
 import com.yral.shared.features.auth.data.models.ExchangePrincipalResponseDto
 import com.yral.shared.features.auth.data.models.TokenResponseDto
+import com.yral.shared.http.httpDelete
 import com.yral.shared.http.httpPost
+import com.yral.shared.http.httpPostWithStringResponse
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import com.yral.shared.uniffi.generated.delegatedIdentityWireToJson
 import io.ktor.client.HttpClient
-import io.ktor.client.request.delete
-import io.ktor.client.request.post
 import io.ktor.client.request.setBody
-import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.path
@@ -38,15 +37,14 @@ class AuthDataSourceImpl(
                 "$key=$value"
             }
         val response =
-            client
-                .post {
-                    url {
-                        host = OAUTH_BASE_URL
-                        path(PATH_AUTHENTICATE_TOKEN)
-                    }
-                    setBody(formData)
-                    contentType(ContentType.Application.FormUrlEncoded)
-                }.bodyAsText()
+            httpPostWithStringResponse(client) {
+                url {
+                    host = OAUTH_BASE_URL
+                    path(PATH_AUTHENTICATE_TOKEN)
+                }
+                setBody(formData)
+                contentType(ContentType.Application.FormUrlEncoded)
+            }
         return json.decodeFromString<TokenResponseDto>(response)
     }
 
@@ -65,15 +63,14 @@ class AuthDataSourceImpl(
                 "$key=$value"
             }
         val response =
-            client
-                .post {
-                    url {
-                        host = OAUTH_BASE_URL
-                        path(PATH_AUTHENTICATE_TOKEN)
-                    }
-                    setBody(formData)
-                    contentType(ContentType.Application.FormUrlEncoded)
-                }.bodyAsText()
+            httpPostWithStringResponse(client) {
+                url {
+                    host = OAUTH_BASE_URL
+                    path(PATH_AUTHENTICATE_TOKEN)
+                }
+                setBody(formData)
+                contentType(ContentType.Application.FormUrlEncoded)
+            }
         return json.decodeFromString<TokenResponseDto>(response)
     }
 
@@ -87,15 +84,14 @@ class AuthDataSourceImpl(
                 "$key=$value"
             }
         val response =
-            client
-                .post {
-                    url {
-                        host = OAUTH_BASE_URL
-                        path(PATH_AUTHENTICATE_TOKEN)
-                    }
-                    setBody(formData)
-                    contentType(ContentType.Application.FormUrlEncoded)
-                }.bodyAsText()
+            httpPostWithStringResponse(client) {
+                url {
+                    host = OAUTH_BASE_URL
+                    path(PATH_AUTHENTICATE_TOKEN)
+                }
+                setBody(formData)
+                contentType(ContentType.Application.FormUrlEncoded)
+            }
         return json.decodeFromString<TokenResponseDto>(response)
     }
 
@@ -103,14 +99,13 @@ class AuthDataSourceImpl(
         idToken: String,
         canisterId: String,
     ) {
-        client
-            .post {
-                url {
-                    host = METADATA_BASE_URL
-                    path(UPDATE_SESSION_AS_REGISTERED, canisterId)
-                }
-                headers.append("authorization", "Bearer $idToken")
-            }.bodyAsText()
+        httpPostWithStringResponse(client) {
+            url {
+                host = METADATA_BASE_URL
+                path(UPDATE_SESSION_AS_REGISTERED, canisterId)
+            }
+            headers.append("authorization", "Bearer $idToken")
+        }
     }
 
     override suspend fun exchangePrincipalId(
@@ -139,14 +134,13 @@ class AuthDataSourceImpl(
                 DeleteAccountRequestDto(
                     delegatedIdentity = delegatedIdentity,
                 )
-            client
-                .delete {
-                    url {
-                        host = OFF_CHAIN_BASE_URL
-                        path(DELETE_ACCOUNT)
-                    }
-                    setBody(params)
-                }.bodyAsText()
+            httpDelete(client) {
+                url {
+                    host = OFF_CHAIN_BASE_URL
+                    path(DELETE_ACCOUNT)
+                }
+                setBody(params)
+            }
         } ?: throw YralException("Identity not found while deleting account")
     }
 

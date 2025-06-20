@@ -3,11 +3,11 @@ package com.yral.shared.analytics.providers.yral
 import com.yral.shared.analytics.events.EventData
 import com.yral.shared.core.AppConfigurations
 import com.yral.shared.core.rust.KotlinDelegatedIdentityWire
+import com.yral.shared.http.httpPostWithStringResponse
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import com.yral.shared.uniffi.generated.delegatedIdentityWireToJson
 import io.ktor.client.HttpClient
-import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
@@ -32,7 +32,7 @@ class AnalyticsApiService(
                     delegatedIdentity = delegatedIdentity,
                     events = events,
                 )
-            client.post {
+            httpPostWithStringResponse(client) {
                 url {
                     host = AppConfigurations.OFF_CHAIN_BASE_URL
                     path(BULK_EVENTS_END_POINT)

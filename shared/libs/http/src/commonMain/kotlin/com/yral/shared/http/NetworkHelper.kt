@@ -7,6 +7,7 @@ import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.RedirectResponseException
 import io.ktor.client.plugins.ServerResponseException
 import io.ktor.client.request.HttpRequestBuilder
+import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.statement.HttpResponse
@@ -77,6 +78,19 @@ suspend inline fun httpPostWithStringResponse(
 ): String {
     try {
         val response: HttpResponse = httpClient.post(block)
+        return response.bodyAsText()
+    } catch (e: Exception) {
+        return handleException(e)
+    }
+}
+
+@Suppress("TooGenericExceptionCaught")
+suspend fun httpDelete(
+    httpClient: HttpClient,
+    block: HttpRequestBuilder.() -> Unit,
+): String {
+    try {
+        val response: HttpResponse = httpClient.delete(block)
         return response.bodyAsText()
     } catch (e: Exception) {
         return handleException(e)
