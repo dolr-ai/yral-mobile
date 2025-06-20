@@ -10,7 +10,6 @@ import android.text.TextPaint
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -30,10 +29,10 @@ import android.graphics.Canvas as AndroidCanvas
 
 @Composable
 fun YralMaskedVectorTextV2(
+    modifier: Modifier = Modifier, // width need to specified according to useCase
     text: String,
     vectorRes: Int,
     textStyle: TextStyle,
-    modifier: Modifier = Modifier,
     maxLines: Int = Int.MAX_VALUE,
     textOverflow: TextOverflow = TextOverflow.Clip,
 ) {
@@ -45,9 +44,7 @@ fun YralMaskedVectorTextV2(
             AppCompatResources.getDrawable(context, vectorRes)?.mutate()
         } ?: return
     Box(
-        modifier =
-            modifier
-                .fillMaxWidth(),
+        modifier = modifier,
         contentAlignment = Alignment.Center,
     ) {
         Canvas(modifier = Modifier.matchParentSize()) {
