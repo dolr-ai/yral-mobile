@@ -41,6 +41,22 @@ kotlin {
             extraOpts += listOf("-compiler-option", "-fmodules")
             version = firebaseIos
         }
+        pod("FirebaseFirestore") {
+            extraOpts += listOf("-compiler-option", "-fmodules")
+            version = firebaseIos
+        }
+        pod("FirebaseAppCheck") {
+            extraOpts += listOf("-compiler-option", "-fmodules")
+            version = firebaseIos
+        }
+        pod("FirebaseStorage") {
+            extraOpts += listOf("-compiler-option", "-fmodules")
+            version = firebaseIos
+        }
+        pod("FirebaseAuth") {
+            extraOpts += listOf("-compiler-option", "-fmodules")
+            version = firebaseIos
+        }
          pod("GoogleUtilities") {
             version = "8.1"
             extraOpts += listOf("-compiler-option", "-fmodules")

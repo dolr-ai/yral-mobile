@@ -98,7 +98,7 @@ struct SmileyGameView: View {
 
     VStack(alignment: .leading, spacing: Constants.two) {
       Text(result.outcome == "WIN" ?
-           "\(result.smiley.id.capitalized) was the most people choice." :
+           "\(result.smiley.id.capitalized) was the most people's choice." :
             "Not the most popular pick!")
       .font(YralFont.pt16.bold.swiftUIFont)
       .lineLimit(Constants.textLineLimit)
@@ -108,7 +108,7 @@ struct SmileyGameView: View {
 
       Text(result.outcome == "WIN" ?
            "You win \(abs(result.coinDelta)) Points!" :
-            "You lost \(abs(result.coinDelta)) Points")
+            "You lose \(abs(result.coinDelta)) Points")
       .font(YralFont.pt16.bold.swiftUIFont)
       .lineLimit(Constants.textLineLimit)
       .minimumScaleFactor(Constants.textMinScale)
