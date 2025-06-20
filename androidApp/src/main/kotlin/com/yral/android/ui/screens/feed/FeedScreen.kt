@@ -459,7 +459,8 @@ private fun UserBriefDetails(
         modifier =
             modifier
                 .clickable {
-                    setPostDescriptionExpanded(!isPostDescriptionExpanded)
+                    // setPostDescriptionExpanded(!isPostDescriptionExpanded)
+                    setPostDescriptionExpanded(false)
                 },
         verticalArrangement = Arrangement.spacedBy(4.dp),
         horizontalAlignment = Alignment.Start,
