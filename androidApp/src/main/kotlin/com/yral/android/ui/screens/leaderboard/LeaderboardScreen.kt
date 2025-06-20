@@ -292,6 +292,7 @@ private fun TrophyDetailsItem(
                 Modifier
                     .align(Alignment.End)
                     .offset(x = (-12).dp),
+            verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Image(
