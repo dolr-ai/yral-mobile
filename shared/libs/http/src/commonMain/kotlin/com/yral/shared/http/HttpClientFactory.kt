@@ -3,7 +3,6 @@ package com.yral.shared.http
 import com.yral.shared.preferences.Preferences
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.HttpTimeout
-import io.ktor.client.plugins.addDefaultResponseValidation
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.cookies.HttpCookies
 import io.ktor.client.plugins.defaultRequest
@@ -37,7 +36,6 @@ fun createClient(
             storage = PersistentCookieStorage(preferences)
         }
         expectSuccess = true
-        addDefaultResponseValidation()
         defaultRequest {
             url {
                 protocol = URLProtocol.HTTPS
