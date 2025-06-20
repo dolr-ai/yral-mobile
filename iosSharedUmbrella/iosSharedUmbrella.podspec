@@ -9,6 +9,7 @@ Pod::Spec.new do |spec|
     spec.vendored_frameworks      = 'build/cocoapods/framework/iosSharedUmbrella.framework'
     spec.libraries                = 'c++'
     spec.ios.deployment_target    = '15.6'
+    spec.dependency 'FBSDKCoreKit', '18.0.0'
     spec.dependency 'FirebaseAnalytics', '10.29.0'
     spec.dependency 'FirebaseCore', '10.29.0'
     spec.dependency 'FirebaseCoreInternal', '10.29.0'

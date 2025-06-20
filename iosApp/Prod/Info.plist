@@ -31,6 +31,12 @@
 	</array>
 	<key>CFBundleVersion</key>
 	<string>1</string>
+	<key>FacebookAppID</key>
+	<string>4094678660808510</string>
+	<key>FacebookClientToken</key>
+	<string></string>
+	<key>FacebookDisplayName</key>
+	<string>Yral</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>MIXPANEL_TOKEN</key>
