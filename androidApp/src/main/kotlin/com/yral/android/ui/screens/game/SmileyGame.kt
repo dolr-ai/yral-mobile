@@ -29,8 +29,8 @@ fun SmileyGame(
     var iconPositions by remember { mutableStateOf(mapOf<Int, Float>()) }
     var resultViewVisible by remember { mutableStateOf(false) }
     LaunchedEffect(coinDelta, errorMessage, animateBubbles) {
-        val isResultAvailable = (coinDelta != 0 || errorMessage.isNotEmpty()) && !isLoading
-        if (isResultAvailable && !animateBubbles) {
+        val isResultAvailable = (coinDelta != 0 || errorMessage.isNotEmpty()) // && !isLoading
+        if (isResultAvailable) { // && !animateBubbles) {
             resultViewVisible = true
         }
     }
@@ -64,12 +64,12 @@ fun SmileyGame(
                         iconPositions = iconPositions.plus(id to xPos)
                     },
                 )
-                if (animateBubbles) {
-                    clickedIcon?.let {
-                        GameIconBubbles(clickedIcon) {
-                            animateBubbles = false
-                        }
-                    }
+            }
+        }
+        if (animateBubbles) {
+            clickedIcon?.let {
+                GameIconBubbles(clickedIcon) {
+                    animateBubbles = false
                 }
             }
         }
