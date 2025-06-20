@@ -310,7 +310,9 @@ class DefaultAuthClient(
                     try {
                         handleOAuthCallback(code, state)
                     } catch (e: YralException) {
-                        oAuthListener.exception(e)
+                        oAuthListener.yralException(e)
+                    } catch (e: FfiException) {
+                        oAuthListener.ffiException(e)
                     }
                 }
             }

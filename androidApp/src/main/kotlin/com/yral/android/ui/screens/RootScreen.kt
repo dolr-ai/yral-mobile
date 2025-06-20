@@ -64,24 +64,6 @@ fun RootScreen(viewModel: RootViewModel = koinViewModel()) {
                 initialAnimationComplete = state.initialAnimationComplete,
                 onAnimationComplete = { viewModel.onSplashAnimationComplete() },
             )
-            val sheetState =
-                rememberModalBottomSheetState(
-                    skipPartiallyExpanded = true,
-                )
-            LaunchedEffect(state.error) {
-                if (state.error == null) {
-                    sheetState.hide()
-                }
-            }
-            state.error?.let { error ->
-                YralErrorMessage(
-                    error = error.toErrorMessage(),
-                    sheetState = sheetState,
-                    cta = stringResource(R.string.error_retry),
-                    onDismiss = { viewModel.initialize() },
-                    onClick = { viewModel.initialize() },
-                )
-            }
         } else {
             // Reset system bars to normal
             HandleSystemBars(show = true)
@@ -90,23 +72,46 @@ fun RootScreen(viewModel: RootViewModel = koinViewModel()) {
                 currentTab = state.currentHomePageTab,
                 updateCurrentTab = { viewModel.updateCurrentTab(it) },
             )
-            BlockingLoader(sessionState)
+        }
+        // shows login error for both splash and account screen
+        val sheetState =
+            rememberModalBottomSheetState(
+                skipPartiallyExpanded = true,
+            )
+        LaunchedEffect(state.error) {
+            if (state.error == null) {
+                sheetState.hide()
+            }
+        }
+        state.error?.let { error ->
+            YralErrorMessage(
+                error = error.toErrorMessage(),
+                sheetState = sheetState,
+                cta = stringResource(R.string.error_retry),
+                onDismiss = { viewModel.initialize() },
+                onClick = { viewModel.initialize() },
+            )
+        }
+        // when session is loading & splash is not visible
+        // 1. after logout on account screen during anonymous sign in
+        // 2. after social sign in
+        // 3. after delete account during anonymous sign in
+        if (!state.showSplash && sessionState is SessionState.Loading) {
+            BlockingLoader()
         }
     }
 }
 
 @Composable
-private fun BlockingLoader(sessionState: SessionState) {
-    if (sessionState is SessionState.Loading) {
-        Box(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .clickable { },
-            contentAlignment = Alignment.Center,
-        ) {
-            YralLoader()
-        }
+private fun BlockingLoader() {
+    Box(
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .clickable { },
+        contentAlignment = Alignment.Center,
+    ) {
+        YralLoader()
     }
 }
 
