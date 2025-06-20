@@ -22,4 +22,5 @@ interface AuthRepository {
         idToken: String,
         principalId: String,
     ): ExchangePrincipalResponse
+    suspend fun deleteAccount(): String
 }

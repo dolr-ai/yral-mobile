@@ -45,6 +45,7 @@ import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.design.YralDimens
 import com.yral.android.ui.screens.account.AccountScreenConstants.SOCIAL_MEDIA_LINK_BOTTOM_SPACER_WEIGHT
+import com.yral.android.ui.widgets.YralErrorMessage
 import com.yral.android.ui.widgets.YralGradientButton
 import com.yral.android.ui.widgets.YralLoader
 import com.yral.shared.features.account.viewmodel.AccountBottomSheet
@@ -86,7 +87,7 @@ fun AccountScreen(
             bottomSheetType = state.bottomSheetType,
             onDismissRequest = { viewModel.setBottomSheetType(AccountBottomSheet.None) },
             signInWithGoogle = { viewModel.signInWithGoogle() },
-            logout = { viewModel.logout() },
+            onDeleteAccount = { viewModel.deleteAccount() },
         )
         if (state.isLoading) {
             YralLoader()
@@ -137,13 +138,14 @@ private fun AccountScreenContent(
     }
 }
 
+@Suppress("LongMethod")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SheetContent(
     bottomSheetType: AccountBottomSheet,
     onDismissRequest: () -> Unit,
     signInWithGoogle: () -> Unit,
-    logout: () -> Unit,
+    onDeleteAccount: () -> Unit,
 ) {
     val bottomSheetState =
         rememberModalBottomSheetState(
@@ -190,7 +192,18 @@ private fun SheetContent(
             DeleteAccountSheet(
                 bottomSheetState = bottomSheetState,
                 onDismissRequest = onDismissRequest,
-                logout = logout,
+                onDeleteAccount = onDeleteAccount,
+            )
+        }
+
+        is AccountBottomSheet.ErrorMessage -> {
+            YralErrorMessage(
+                title = bottomSheetType.title,
+                error = bottomSheetType.message,
+                sheetState = bottomSheetState,
+                cta = stringResource(R.string.ok),
+                onClick = onDismissRequest,
+                onDismiss = onDismissRequest,
             )
         }
 
