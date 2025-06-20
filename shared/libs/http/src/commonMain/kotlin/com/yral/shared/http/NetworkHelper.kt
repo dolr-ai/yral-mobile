@@ -7,6 +7,7 @@ import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.RedirectResponseException
 import io.ktor.client.plugins.ServerResponseException
 import io.ktor.client.request.HttpRequestBuilder
+import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.statement.HttpResponse
@@ -23,20 +24,17 @@ suspend inline fun <reified K> httpGet(
 ): K {
     try {
         val response: HttpResponse = httpClient.get(block)
-        if (HTTPResponseStatus.from(response.status.value) == HTTPResponseStatus.SUCCESS) {
-            val deserializer = json.serializersModule.serializer<K>()
-            val apiResponseString = response.bodyAsText()
-            val apiResponse =
-                json.decodeFromString(
-                    deserializer = deserializer,
-                    string = apiResponseString,
-                )
-            return apiResponse
-        }
+        val deserializer = json.serializersModule.serializer<K>()
+        val apiResponseString = response.bodyAsText()
+        val apiResponse =
+            json.decodeFromString(
+                deserializer = deserializer,
+                string = apiResponseString,
+            )
+        return apiResponse
     } catch (e: Exception) {
         return handleException(e)
     }
-    throw UnknownException("Error making network call")
 }
 
 @Suppress("TooGenericExceptionCaught")
@@ -47,20 +45,17 @@ suspend inline fun <reified K> httpPost(
 ): K {
     try {
         val response: HttpResponse = httpClient.post(block)
-        if (HTTPResponseStatus.from(response.status.value) == HTTPResponseStatus.SUCCESS) {
-            val deserializer = json.serializersModule.serializer<K>()
-            val apiResponseString = response.bodyAsText()
-            val apiResponse =
-                json.decodeFromString(
-                    deserializer = deserializer,
-                    string = apiResponseString,
-                )
-            return apiResponse
-        }
+        val deserializer = json.serializersModule.serializer<K>()
+        val apiResponseString = response.bodyAsText()
+        val apiResponse =
+            json.decodeFromString(
+                deserializer = deserializer,
+                string = apiResponseString,
+            )
+        return apiResponse
     } catch (e: Exception) {
         return handleException(e)
     }
-    throw UnknownException("Error making network call")
 }
 
 @Suppress("TooGenericExceptionCaught")
@@ -70,13 +65,10 @@ suspend inline fun httpPostWithBytesResponse(
 ): ByteArray {
     try {
         val response: HttpResponse = httpClient.post(block)
-        if (HTTPResponseStatus.from(response.status.value) == HTTPResponseStatus.SUCCESS) {
-            return response.bodyAsBytes()
-        }
+        return response.bodyAsBytes()
     } catch (e: Exception) {
         return handleException(e)
     }
-    throw UnknownException("Error making network call")
 }
 
 @Suppress("TooGenericExceptionCaught")
@@ -86,13 +78,23 @@ suspend inline fun httpPostWithStringResponse(
 ): String {
     try {
         val response: HttpResponse = httpClient.post(block)
-        if (HTTPResponseStatus.from(response.status.value) == HTTPResponseStatus.SUCCESS) {
-            return response.bodyAsText()
-        }
+        return response.bodyAsText()
     } catch (e: Exception) {
         return handleException(e)
     }
-    throw UnknownException("Error making network call")
+}
+
+@Suppress("TooGenericExceptionCaught")
+suspend fun httpDelete(
+    httpClient: HttpClient,
+    block: HttpRequestBuilder.() -> Unit,
+): String {
+    try {
+        val response: HttpResponse = httpClient.delete(block)
+        return response.bodyAsText()
+    } catch (e: Exception) {
+        return handleException(e)
+    }
 }
 
 fun <K> handleException(exception: Exception): K =

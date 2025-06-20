@@ -78,4 +78,8 @@ class AuthRepositoryImpl(
         dataSource
             .exchangePrincipalId(idToken, principalId)
             .toExchangePrincipalResponse()
+
+    override suspend fun deleteAccount(): String =
+        dataSource
+            .deleteAccount()
 }

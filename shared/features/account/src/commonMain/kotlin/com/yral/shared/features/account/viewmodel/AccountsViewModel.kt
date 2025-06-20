@@ -1,11 +1,15 @@
 package com.yral.shared.features.account.viewmodel
 
 import androidx.lifecycle.ViewModel
+import co.touchlab.kermit.Logger
+import com.github.michaelbull.result.onFailure
+import com.github.michaelbull.result.onSuccess
 import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.AuthClient
+import com.yral.shared.features.auth.domain.useCases.DeleteAccountUseCase
 import com.yral.shared.features.auth.utils.OAuthListener
 import com.yral.shared.features.auth.utils.SocialProvider
 import com.yral.shared.preferences.PrefKeys
@@ -24,6 +28,7 @@ class AccountsViewModel(
     private val sessionManager: SessionManager,
     private val preferences: Preferences,
     private val authClient: AuthClient,
+    private val deleteAccountUseCase: DeleteAccountUseCase,
     private val crashlyticsManager: CrashlyticsManager,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.io)
@@ -76,9 +81,29 @@ class AccountsViewModel(
         return null
     }
 
-    fun logout() {
+    private fun logout() {
         coroutineScope.launch {
             authClient.logout()
+        }
+    }
+
+    fun deleteAccount() {
+        coroutineScope.launch {
+            deleteAccountUseCase
+                .invoke(Unit)
+                .onSuccess {
+                    Logger.d("Delete account $it")
+                    logout()
+                }.onFailure {
+                    Logger.e("Failed to delete account: ${it.message}")
+                    setBottomSheetType(
+                        type =
+                            AccountBottomSheet.ErrorMessage(
+                                title = "",
+                                message = it.message ?: "",
+                            ),
+                    )
+                }
         }
     }
 
@@ -233,6 +258,10 @@ sealed interface AccountBottomSheet {
     data object SignUpFailed : AccountBottomSheet
     data object SignUp : AccountBottomSheet
     data object DeleteAccount : AccountBottomSheet
+    data class ErrorMessage(
+        val title: String,
+        val message: String,
+    ) : AccountBottomSheet
 }
 
 data class AccountInfo(

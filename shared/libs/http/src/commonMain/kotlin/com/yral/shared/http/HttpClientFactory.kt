@@ -35,6 +35,7 @@ fun createClient(
         install(HttpCookies) {
             storage = PersistentCookieStorage(preferences)
         }
+        expectSuccess = true
         defaultRequest {
             url {
                 protocol = URLProtocol.HTTPS

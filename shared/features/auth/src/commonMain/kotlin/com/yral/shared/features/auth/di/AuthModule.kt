@@ -8,6 +8,7 @@ import com.yral.shared.features.auth.data.AuthDataSourceImpl
 import com.yral.shared.features.auth.data.AuthRepositoryImpl
 import com.yral.shared.features.auth.domain.AuthRepository
 import com.yral.shared.features.auth.domain.useCases.AuthenticateTokenUseCase
+import com.yral.shared.features.auth.domain.useCases.DeleteAccountUseCase
 import com.yral.shared.features.auth.domain.useCases.ExchangePrincipalIdUseCase
 import com.yral.shared.features.auth.domain.useCases.ObtainAnonymousIdentityUseCase
 import com.yral.shared.features.auth.domain.useCases.RefreshTokenUseCase
@@ -27,6 +28,7 @@ val authModule =
         factoryOf(::RefreshTokenUseCase)
         factoryOf(::UpdateSessionAsRegisteredUseCase)
         factoryOf(::ExchangePrincipalIdUseCase)
+        factoryOf(::DeleteAccountUseCase)
         factoryOf(::RequiredUseCases)
 
         // Required single
