@@ -87,7 +87,7 @@ struct HomeTabController: View {
       }
       GeometryReader { geometry in
         let tabWidth = geometry.size.width / .five
-        let indicatorXPosition = CGFloat(selectedTab) * tabWidth + (tabWidth - Constants.indicatorWidth) / .two
+        let indicatorXPosition = CGFloat(selectedTab.intValue) * tabWidth + (tabWidth - Constants.indicatorWidth) / .two
         VStack {
           Spacer().frame(height: geometry.size.height)
           HStack {
@@ -138,7 +138,7 @@ struct HomeTabController: View {
   private func tabDidChange(to tab: Tab) {
     var categoryName = CategoryName.home
     switch tab {
-    case .home:
+    case .home, .leaderboard:
       categoryName = .home
     case .upload:
       categoryName = .uploadVideo

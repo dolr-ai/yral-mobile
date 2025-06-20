@@ -387,6 +387,8 @@ extension FeedsViewController {
 
     static let nsfwProbability = 0.4
     static let overlayIndex = 9
+
+    static let winResult = "WIN"
   }
 }
 // swiftlint: enable type_body_length

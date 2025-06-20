@@ -24,7 +24,7 @@ data class SignupClickedEventData(
     @SerialName("auth_journey") val authJourney: AuthJourney,
 ) : EventData {
     constructor(authJourney: AuthJourney) : this(
-        FeatureEvents.AUTH_SCREEN_VIEWED.getEventName(),
+        FeatureEvents.SIGNUP_CLICKED.getEventName(),
         Features.AUTH.getFeatureName(),
         authJourney,
     )
@@ -37,7 +37,7 @@ data class SignupInitiatedEventData(
     @SerialName("auth_journey") val authJourney: AuthJourney,
 ) : EventData {
     constructor(authJourney: AuthJourney) : this(
-        FeatureEvents.AUTH_SCREEN_VIEWED.getEventName(),
+        FeatureEvents.SIGNUP_INITIATED.getEventName(),
         Features.AUTH.getFeatureName(),
         authJourney,
     )
@@ -52,7 +52,7 @@ data class SignupSuccessEventData(
     @SerialName("auth_journey") val authJourney: AuthJourney,
 ) : EventData {
     constructor(isReferral: Boolean, referralUserID: String, authJourney: AuthJourney) : this(
-        FeatureEvents.AUTH_SCREEN_VIEWED.getEventName(),
+        FeatureEvents.SIGNUP_SUCCESS.getEventName(),
         Features.AUTH.getFeatureName(),
         isReferral,
         referralUserID,
@@ -67,7 +67,7 @@ data class LoginSuccessEventData(
     @SerialName("auth_journey") val authJourney: AuthJourney,
 ) : EventData {
     constructor(authJourney: AuthJourney) : this(
-        FeatureEvents.AUTH_SCREEN_VIEWED.getEventName(),
+        FeatureEvents.LOGIN_SUCCESS.getEventName(),
         Features.AUTH.getFeatureName(),
         authJourney,
     )
@@ -80,7 +80,7 @@ data class HomePageViewedEventData(
     @SerialName("feature_name") override val featureName: String = Features.FEED.getFeatureName(),
 ) : EventData {
     constructor() : this(
-        FeatureEvents.AUTH_SCREEN_VIEWED.getEventName(),
+        FeatureEvents.HOME_PAGE_VIEWED.getEventName(),
         Features.AUTH.getFeatureName(),
     )
 }
@@ -92,7 +92,7 @@ data class BottomNavigationClickedEventData(
     @SerialName("category_name") val categoryName: CategoryName,
 ) : EventData {
     constructor(categoryName: CategoryName) : this(
-        FeatureEvents.AUTH_SCREEN_VIEWED.getEventName(),
+        FeatureEvents.BOTTOM_NAVIGATION_CLICKED.getEventName(),
         Features.AUTH.getFeatureName(),
         categoryName,
     )
@@ -123,7 +123,7 @@ data class VideoStartedEventData(
         gameType: GameType,
         isNsfw: Boolean,
     ) : this(
-        FeatureEvents.AUTH_SCREEN_VIEWED.getEventName(),
+        FeatureEvents.VIDEO_STARTED.getEventName(),
         Features.AUTH.getFeatureName(),
         videoId,
         publisherUserId,
@@ -159,7 +159,7 @@ data class VideoViewedEventData(
         gameType: GameType,
         isNsfw: Boolean,
     ) : this(
-        FeatureEvents.AUTH_SCREEN_VIEWED.getEventName(),
+        FeatureEvents.VIDEO_VIEWED.getEventName(),
         Features.AUTH.getFeatureName(),
         videoId,
         publisherUserId,
@@ -197,7 +197,7 @@ data class VideoClickedEventData(
         isNsfw: Boolean,
         ctaType: CtaType,
     ) : this(
-        FeatureEvents.AUTH_SCREEN_VIEWED.getEventName(),
+        FeatureEvents.VIDEO_CLICKED.getEventName(),
         Features.AUTH.getFeatureName(),
         videoId,
         publisherUserId,
@@ -218,7 +218,7 @@ data class NsfwEnabledEventData(
     @SerialName("page_name") val pageName: String,
 ) : EventData {
     constructor(pageName: String) : this(
-        FeatureEvents.AUTH_SCREEN_VIEWED.getEventName(),
+        FeatureEvents.NSFW_ENABLED.getEventName(),
         Features.AUTH.getFeatureName(),
         pageName,
     )
@@ -243,7 +243,7 @@ data class VideoReportedEventData(
         isNsfw: Boolean,
         reason: String,
     ) : this(
-        FeatureEvents.AUTH_SCREEN_VIEWED.getEventName(),
+        FeatureEvents.VIDEO_REPORTED.getEventName(),
         Features.AUTH.getFeatureName(),
         videoId,
         publisherUserId,
@@ -262,7 +262,7 @@ data class DeleteVideoInitiatedEventData(
     @SerialName("video_id") val videoId: String,
 ) : EventData {
     constructor(pageName: String, videoId: String) : this(
-        FeatureEvents.AUTH_SCREEN_VIEWED.getEventName(),
+        FeatureEvents.DELETE_VIDEO_INITIATED.getEventName(),
         Features.AUTH.getFeatureName(),
         pageName,
         videoId,
@@ -277,7 +277,7 @@ data class VideoDeletedEventData(
     @SerialName("video_id") val videoId: String,
 ) : EventData {
     constructor(pageName: String, videoId: String) : this(
-        FeatureEvents.AUTH_SCREEN_VIEWED.getEventName(),
+        FeatureEvents.VIDEO_DELETED.getEventName(),
         Features.AUTH.getFeatureName(),
         pageName,
         videoId,
@@ -298,11 +298,7 @@ data class GamePlayedEventData(
     @SerialName("is_nsfw") val isNsfw: Boolean,
     @SerialName("stake_amount") val stakeAmount: Int,
     @SerialName("token_type") val tokenType: TokenType,
-    @SerialName("option_chosen") val optionChosen: GameOption,
-    @SerialName("conclusion") val gameResult: GameResult,
-    @SerialName("nudge_type") val nudgeType: NudgeType,
-    @SerialName("creator_commission") val creatorCommission: Int,
-    @SerialName("won_amount") val wonAmount: Int,
+    @SerialName("option_chosen") val optionChosen: String,
 ) : EventData {
     constructor(
         videoId: String,
@@ -314,13 +310,9 @@ data class GamePlayedEventData(
         isNsfw: Boolean,
         stakeAmount: Int,
         tokenType: TokenType,
-        optionChosen: GameOption,
-        gameResult: GameResult,
-        nudgeType: NudgeType,
-        creatorCommission: Int,
-        wonAmount: Int,
+        optionChosen: String,
     ) : this(
-        FeatureEvents.AUTH_SCREEN_VIEWED.getEventName(),
+        FeatureEvents.GAME_PLAYED.getEventName(),
         Features.AUTH.getFeatureName(),
         videoId,
         publisherUserId,
@@ -332,10 +324,6 @@ data class GamePlayedEventData(
         stakeAmount,
         tokenType,
         optionChosen,
-        gameResult,
-        nudgeType,
-        creatorCommission,
-        wonAmount,
     )
 }
 
@@ -352,10 +340,8 @@ data class GameConcludedEventData(
     @SerialName("is_nsfw") val isNsfw: Boolean,
     @SerialName("stake_amount") val stakeAmount: Int,
     @SerialName("token_type") val tokenType: TokenType,
-    @SerialName("option_chosen") val optionChosen: GameOption,
+    @SerialName("option_chosen") val optionChosen: String,
     @SerialName("conclusion") val gameResult: GameResult,
-    @SerialName("nudge_type") val nudgeType: NudgeType,
-    @SerialName("won_amount") val wonAmount: Int,
 ) : EventData {
     constructor(
         videoId: String,
@@ -367,12 +353,10 @@ data class GameConcludedEventData(
         isNsfw: Boolean,
         stakeAmount: Int,
         tokenType: TokenType,
-        optionChosen: GameOption,
+        optionChosen: String,
         gameResult: GameResult,
-        nudgeType: NudgeType,
-        wonAmount: Int,
     ) : this(
-        FeatureEvents.AUTH_SCREEN_VIEWED.getEventName(),
+        FeatureEvents.GAME_CONCLUDED.getEventName(),
         Features.AUTH.getFeatureName(),
         videoId,
         publisherUserId,
@@ -385,8 +369,6 @@ data class GameConcludedEventData(
         tokenType,
         optionChosen,
         gameResult,
-        nudgeType,
-        wonAmount,
     )
 }
 
@@ -407,7 +389,7 @@ data class GameConcludedBottomsheetClickedEventData(
         wonAmount: Int,
         ctaType: GameConcludedCtaType,
     ) : this(
-        FeatureEvents.AUTH_SCREEN_VIEWED.getEventName(),
+        FeatureEvents.GAME_CONCLUDED_BOTTOMSHEET_CLICKED.getEventName(),
         Features.AUTH.getFeatureName(),
         stakeAmount,
         tokenType,
@@ -424,7 +406,7 @@ data class MenuPageViewedEventData(
     @SerialName("feature_name") override val featureName: String = Features.MENU.getFeatureName(),
 ) : EventData {
     constructor() : this(
-        FeatureEvents.AUTH_SCREEN_VIEWED.getEventName(),
+        FeatureEvents.MENU_PAGE_VIEWED.getEventName(),
         Features.AUTH.getFeatureName(),
     )
 }
@@ -436,7 +418,7 @@ data class MenuClickedEventData(
     @SerialName("cta_type") val ctaType: MenuCtaType,
 ) : EventData {
     constructor(ctaType: MenuCtaType) : this(
-        FeatureEvents.AUTH_SCREEN_VIEWED.getEventName(),
+        FeatureEvents.MENU_CLICKED.getEventName(),
         Features.AUTH.getFeatureName(),
         ctaType,
     )
@@ -449,7 +431,7 @@ data class UploadVideoPageViewedEventData(
     @SerialName("feature_name") override val featureName: String = Features.UPLOAD.getFeatureName(),
 ) : EventData {
     constructor() : this(
-        FeatureEvents.AUTH_SCREEN_VIEWED.getEventName(),
+        FeatureEvents.UPLOAD_VIDEO_PAGE_VIEWED.getEventName(),
         Features.AUTH.getFeatureName(),
     )
 }
@@ -460,7 +442,7 @@ data class SelectFileClickedEventData(
     @SerialName("feature_name") override val featureName: String = Features.UPLOAD.getFeatureName(),
 ) : EventData {
     constructor() : this(
-        FeatureEvents.AUTH_SCREEN_VIEWED.getEventName(),
+        FeatureEvents.SELECT_FILE_CLICKED.getEventName(),
         Features.AUTH.getFeatureName(),
     )
 }
@@ -472,7 +454,7 @@ data class FileSelectionSuccessEventData(
     @SerialName("file_type") val fileType: String,
 ) : EventData {
     constructor(fileType: String) : this(
-        FeatureEvents.AUTH_SCREEN_VIEWED.getEventName(),
+        FeatureEvents.FILE_SELECTION_SUCCESS.getEventName(),
         Features.AUTH.getFeatureName(),
         fileType,
     )
@@ -486,7 +468,7 @@ data class VideoUploadInitiatedEventData(
     @SerialName("hashtags_added") val hashtagsAdded: Boolean,
 ) : EventData {
     constructor(captionAdded: Boolean, hashtagsAdded: Boolean) : this(
-        FeatureEvents.AUTH_SCREEN_VIEWED.getEventName(),
+        FeatureEvents.VIDEO_UPLOAD_INITIATED.getEventName(),
         Features.AUTH.getFeatureName(),
         captionAdded,
         hashtagsAdded,
@@ -510,7 +492,7 @@ data class VideoUploadSuccessEventData(
         gameType: GameType,
         isNsfw: Boolean,
     ) : this(
-        FeatureEvents.AUTH_SCREEN_VIEWED.getEventName(),
+        FeatureEvents.VIDEO_UPLOAD_SUCCESS.getEventName(),
         Features.AUTH.getFeatureName(),
         videoId,
         publisherUserId,
@@ -527,7 +509,7 @@ data class VideoUploadErrorShownEventData(
     @SerialName("reason") val reason: String,
 ) : EventData {
     constructor(reason: String) : this(
-        FeatureEvents.AUTH_SCREEN_VIEWED.getEventName(),
+        FeatureEvents.VIDEO_UPLOAD_ERROR_SHOWN.getEventName(),
         Features.AUTH.getFeatureName(),
         reason,
     )
@@ -541,7 +523,7 @@ data class ProfilePageViewedEventData(
     @SerialName("total_videos") val totalVideos: Int,
 ) : EventData {
     constructor(totalVideos: Int) : this(
-        FeatureEvents.AUTH_SCREEN_VIEWED.getEventName(),
+        FeatureEvents.PROFILE_PAGE_VIEWED.getEventName(),
         Features.AUTH.getFeatureName(),
         totalVideos,
     )
@@ -554,7 +536,7 @@ data class UploadVideoClickedEventData(
     @SerialName("page_name") val pageName: String = "profile",
 ) : EventData {
     constructor(pageName: String) : this(
-        FeatureEvents.AUTH_SCREEN_VIEWED.getEventName(),
+        FeatureEvents.UPLOAD_VIDEO_CLICKED.getEventName(),
         Features.AUTH.getFeatureName(),
         pageName,
     )
@@ -681,30 +663,6 @@ enum class TokenType {
 
     @SerialName("sats")
     SATS,
-}
-
-@Serializable
-enum class GameOption {
-    @SerialName("hot")
-    HOT,
-
-    @SerialName("not")
-    NOT,
-
-    @SerialName("laugh")
-    LAUGH,
-
-    @SerialName("heart")
-    HEART,
-
-    @SerialName("fire")
-    FIRE,
-
-    @SerialName("rocket")
-    ROCKET,
-
-    @SerialName("surprise")
-    SURPRISE,
 }
 
 @Serializable

@@ -8,9 +8,10 @@ enum class UserType {
 enum class TokenType {
     CENTS,
     DOLR,
+    SATS,
 }
 
-data class User(
+public data class User(
     val userId: String,
     val name: String,
     val emailId: String,

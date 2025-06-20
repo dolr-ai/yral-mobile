@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import FirebaseFirestore
 
 class SmileyGameRuleRepository: SmileyGameRuleRepositoryProtocol {
   private let firebaseService: FirebaseServiceProtocol
