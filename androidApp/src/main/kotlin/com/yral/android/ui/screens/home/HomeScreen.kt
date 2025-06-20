@@ -84,6 +84,7 @@ fun HomeScreen(
                             .background(MaterialTheme.colorScheme.primaryContainer),
                     viewModel = koinInstance.get(),
                 )
+
             HomeTab.LEADER_BOARD.title ->
                 LeaderboardScreen(
                     modifier =
@@ -106,42 +107,42 @@ private fun HomeNavigationBar(
         modifier =
             Modifier
                 .navigationBarsPadding()
+                .fillMaxWidth()
                 .height(67.dp)
-                .padding(start = 36.dp, end = 36.dp),
+                .padding(start = 16.dp, end = 16.dp),
         windowInsets = WindowInsets(0, 0, 0, 0),
     ) {
-        HomeTab.entries.forEach { tab ->
-            if (tab.isGhost) {
-                // Create invisible spacer item
-                NavigationBarItem(
-                    selected = false,
-                    onClick = { /* No-op */ },
-                    icon = { Box {} },
-                    colors =
-                        NavigationBarItemDefaults.colors(
-                            selectedIconColor = Color.Transparent,
-                            unselectedIconColor = Color.Transparent,
-                            indicatorColor = Color.Transparent,
-                        ),
-                )
-            } else {
-                NavigationBarItem(
-                    selected = currentTab == tab.title,
-                    onClick = { updateCurrentTab(tab.title) },
-                    icon = {
+        HomeTab.entries.forEachIndexed { index, tab ->
+            val alignment =
+                remember {
+                    when (index) {
+                        0 -> Alignment.CenterStart
+                        HomeTab.entries.size - 1 -> Alignment.CenterEnd
+                        else -> Alignment.Center
+                    }
+                }
+            NavigationBarItem(
+                modifier = Modifier.weight(1f),
+                selected = currentTab == tab.title,
+                onClick = { updateCurrentTab(tab.title) },
+                icon = {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = alignment,
+                    ) {
                         NavBarIcon(
                             isSelected = currentTab == tab.title,
                             tab = tab,
                         )
-                    },
-                    colors =
-                        NavigationBarItemDefaults.colors(
-                            selectedIconColor = Color.White,
-                            unselectedIconColor = Color.White,
-                            indicatorColor = Color.Transparent,
-                        ),
-                )
-            }
+                    }
+                },
+                colors =
+                    NavigationBarItemDefaults.colors(
+                        selectedIconColor = Color.White,
+                        unselectedIconColor = Color.White,
+                        indicatorColor = Color.Transparent,
+                    ),
+            )
         }
     }
 }
@@ -153,10 +154,7 @@ private fun NavBarIcon(
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .height(67.dp),
+        modifier = Modifier.height(67.dp),
     ) {
         // Show indicator line on top when selected
         Box(
@@ -209,10 +207,10 @@ private fun NewTaggedColumn(
                     textAlign = TextAlign.Center,
                 )
             }
+        } else {
+            // Use weight to push icon to center of the available space
+            Spacer(modifier = Modifier.weight(1f))
         }
-
-        // Use weight to push icon to center of the available space
-        Spacer(modifier = Modifier.weight(1f))
 
         Icon(
             modifier = Modifier.size(32.dp),
@@ -232,7 +230,6 @@ enum class HomeTab(
     val title: String,
     val icon: Int,
     val unSelectedIcon: Int,
-    val isGhost: Boolean = false,
     val isNew: Boolean = false,
 ) {
     HOME("Home", R.drawable.home_nav_selected, R.drawable.home_nav_unselected),
@@ -242,6 +239,5 @@ enum class HomeTab(
         unSelectedIcon = R.drawable.leaderboard_nav_unselected,
         isNew = true,
     ),
-    GHOST_2("", 0, 0, true),
     ACCOUNT("Account", R.drawable.account_nav, R.drawable.account_nav),
 }
