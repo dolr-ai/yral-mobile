@@ -73,6 +73,9 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
             url: authURL,
             callbackURLScheme: redirect.components(separatedBy: "://")[0]
           ) { url, error in
+            AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+              event: SignupInitiatedEventData(authJourney: provider.authJourney())
+            )
             if let error = error {
               continuation.resume(throwing: error)
             } else if let url = url {

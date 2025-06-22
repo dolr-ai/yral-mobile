@@ -10,8 +10,9 @@ import Foundation
 import Combine
 import P256K
 import AuthenticationServices
+import iosSharedUmbrella
 
-// swiftlint: disable type_body_length
+// swiftlint: disable file_length type_body_length
 final class DefaultAuthClient: NSObject, AuthClient {
   private(set) var identity: DelegatedIdentity?
   private(set) var canisterPrincipal: Principal?
@@ -210,8 +211,17 @@ final class DefaultAuthClient: NSObject, AuthClient {
         self.userPrincipal = userPrincipal
         self.userPrincipalString = userPrincipalString
       }
-
       try await exchangePrincipalID(type: type)
+      let balance = try await firebaseService.fetchCoins(for: self.canisterPrincipalString ?? "")
+      AnalyticsModuleKt.getAnalyticsManager().setUserProperties(
+        user: User(
+          userId: self.userPrincipalString ?? "",
+          canisterId: self.canisterPrincipalString ?? "",
+          userType: type.userType(),
+          tokenWalletBalance: Double(balance),
+          tokenType: TokenType.sats
+        )
+      )
     }
   }
 
@@ -376,9 +386,18 @@ final class DefaultAuthClient: NSObject, AuthClient {
     }
   }
 }
-// swiftlint: enable type_body_length
 
 enum DelegateIdentityType {
   case ephemeral
   case permanent
+
+  func userType() -> UserType {
+    switch self {
+    case .ephemeral:
+      return .theNew
+    case .permanent:
+      return .existing
+    }
+  }
 }
+// swiftlint: enable file_length type_body_length

@@ -53,4 +53,9 @@ class AnalyticsManager(
         providers.forEach { it.flush() }
         coreService?.flush()
     }
+
+    fun setUserProperties(user: User) {
+        providers.forEach { it.setUserProperties(user) }
+        coreService?.setUserProperties(user)
+    }
 }
