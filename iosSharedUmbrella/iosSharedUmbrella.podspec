@@ -11,7 +11,7 @@ Pod::Spec.new do |spec|
     spec.ios.deployment_target    = '15.6'
     spec.dependency 'FirebaseAnalytics', '11.14.0'
     spec.dependency 'FirebaseAppCheck', '11.14.0'
-    spec.dependency 'FirebaseAuth', '11.14.0'
+    spec.dependency 'FirebaseAuth'
     spec.dependency 'FirebaseCore', '11.14.0'
     spec.dependency 'FirebaseCoreInternal', '11.14.0'
     spec.dependency 'FirebaseCrashlytics', '11.14.0'

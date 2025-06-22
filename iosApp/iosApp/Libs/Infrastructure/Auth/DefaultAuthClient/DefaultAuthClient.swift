@@ -10,8 +10,9 @@ import Foundation
 import Combine
 import P256K
 import AuthenticationServices
+import iosSharedUmbrella
 
-// swiftlint: disable type_body_length
+// swiftlint: disable file_length type_body_length
 final class DefaultAuthClient: NSObject, AuthClient {
   private(set) var identity: DelegatedIdentity?
   private(set) var canisterPrincipal: Principal?
@@ -51,12 +52,6 @@ final class DefaultAuthClient: NSObject, AuthClient {
   @MainActor
   func initialize() async throws {
     stateSubject.value = .authenticating
-//    try KeychainHelper.deleteItem(for: Constants.keychainIdentity)
-//    try KeychainHelper.deleteItem(for: Constants.keychainRefreshToken)
-//    try KeychainHelper.deleteItem(for: Constants.keychainAccessToken)
-//    try KeychainHelper.deleteItem(for: Constants.keychainIDToken)
-//    UserDefaultsManager.shared.remove(.authRefreshTokenExpiryDateKey)
-//    UserDefaultsManager.shared.remove(.authIdentityExpiryDateKey)
     if loadIdentityFromKeychain() {
       if UserDefaultsManager.shared.get(for: DefaultsKey.userDefaultsLoggedIn) as Bool? ?? false {
         try await ensureTokensFresh(permanent: true)
@@ -75,6 +70,34 @@ final class DefaultAuthClient: NSObject, AuthClient {
     return true
   }
 
+  fileprivate func setupSession(_ data: Data, type: DelegateIdentityType) async throws {
+    try await recordThrowingOperation {
+      if let canisterPrincipalString = try KeychainHelper.retrieveString(
+        for: Constants.keychainCanisterPrincipal
+      ),
+         let userPrincipalString = try KeychainHelper.retrieveString(
+          for: Constants.keychainUserPrincipal
+         ) {
+        let identity: DelegatedIdentity = try data.withUnsafeBytes { buffer in
+          guard buffer.count > 0 else {
+            throw NetworkError.invalidResponse("Empty data received.")
+          }
+          let uint8Buffer = buffer.bindMemory(to: UInt8.self)
+          let identity = try delegated_identity_from_bytes(uint8Buffer)
+          return identity
+        }
+        self.identity = identity
+        self.canisterPrincipalString = canisterPrincipalString
+        self.userPrincipalString = userPrincipalString
+        self.canisterPrincipal = try get_principal(canisterPrincipalString.intoRustString())
+        self.userPrincipal = try get_principal(userPrincipalString.intoRustString())
+        try await exchangePrincipalID(type: type)
+      } else {
+        try await handleExtractIdentityResponse(from: data, type: .permanent)
+      }
+    }
+  }
+
   private func ensureTokensFresh(permanent: Bool) async throws {
     let now = Date().timeIntervalSince1970
     let accessExpiry: Double = UserDefaultsManager.shared
@@ -85,7 +108,7 @@ final class DefaultAuthClient: NSObject, AuthClient {
     if permanent {
       if now < accessExpiry {
         if let data = identityData {
-          try await handleExtractIdentityResponse(from: data, type: .permanent)
+          try await setupSession(data, type: .permanent)
         }
         Task { [weak self] in
           guard let self = self else { return }
@@ -106,7 +129,7 @@ final class DefaultAuthClient: NSObject, AuthClient {
 
     if now < accessExpiry {
       guard let data = identityData else { return }
-      try await handleExtractIdentityResponse(from: data, type: .ephemeral)
+      try await setupSession(data, type: .ephemeral)
       return
     } else {
       try await obtainAnonymousIdentity()
@@ -170,12 +193,23 @@ final class DefaultAuthClient: NSObject, AuthClient {
     UserDefaultsManager.shared.set(refreshClaims.exp, for: .authRefreshTokenExpiryDateKey)
   }
 
+  func storeSessionData(identity: Data, canisterPrincipal: String, userPrincipal: String) {
+    do {
+      try recordThrowingOperation {
+        try KeychainHelper.store(data: identity, for: Constants.keychainIdentity)
+        try KeychainHelper.store(userPrincipal, for: Constants.keychainUserPrincipal)
+        try KeychainHelper.store(canisterPrincipal, for: Constants.keychainCanisterPrincipal)
+      }
+    } catch {
+      print(error)
+    }
+  }
+
   func processDelegatedIdentity(from token: TokenResponse, type: DelegateIdentityType) async throws {
     let claims = try decodeTokenClaims(from: token.idToken)
     let wire = claims.delegatedIdentity
     let wireData = try JSONEncoder().encode(wire)
     identityData = wireData
-    try KeychainHelper.store(data: wireData, for: Constants.keychainIdentity)
     try await handleExtractIdentityResponse(from: wireData, type: type)
   }
 
@@ -209,8 +243,12 @@ final class DefaultAuthClient: NSObject, AuthClient {
         self.canisterPrincipalString = canisterPrincipalString
         self.userPrincipal = userPrincipal
         self.userPrincipalString = userPrincipalString
+        self.storeSessionData(
+          identity: data,
+          canisterPrincipal: canisterPrincipalString,
+          userPrincipal: userPrincipalString
+        )
       }
-
       try await exchangePrincipalID(type: type)
     }
   }
@@ -232,6 +270,15 @@ final class DefaultAuthClient: NSObject, AuthClient {
       ).toDomain()
       await updateAuthState(for: type, withCoins: UInt64(response.balance) ?? 0)
       try await firebaseService.update(coins: UInt64(response.balance) ?? 0, forPrincipal: principalID)
+      AnalyticsModuleKt.getAnalyticsManager().setUserProperties(
+        user: User(
+          userId: self.userPrincipalString ?? "",
+          canisterId: self.canisterPrincipalString ?? "",
+          userType: type.userType(),
+          tokenWalletBalance: Double(response.balance) ?? .zero,
+          tokenType: TokenType.sats
+        )
+      )
     } catch {
       switch error {
       case let error as NetworkError:
@@ -245,14 +292,16 @@ final class DefaultAuthClient: NSObject, AuthClient {
   private func exchangePrincipalID(type: DelegateIdentityType) async throws {
     let newSignIn = try? await firebaseService.signInAnonymously()
 
-    var httpHeaders = [
-      "Content-Type": "application/json"
-    ]
     let userIDToken = try? await firebaseService.fetchUserIDToken()
     guard let userIDToken else {
       return
     }
-    httpHeaders["Authorization"] = "Bearer \(userIDToken)"
+    let appcheckToken = try await firebaseService.fetchAppCheckToken()
+    var httpHeaders = [
+      "Content-Type": "application/json",
+      "Authorization": "Bearer \(userIDToken)",
+      "X-Firebase-AppCheck": appcheckToken
+    ]
 
     let httpBody: [String: String] = [
       "principal_id": userPrincipalString ?? ""
@@ -271,7 +320,7 @@ final class DefaultAuthClient: NSObject, AuthClient {
                               method: .post,
                               headers: httpHeaders,
                               body: try? JSONSerialization.data(withJSONObject: httpBody)
-                             )
+      )
 
       do {
         let response = try await networkService.performRequest(
@@ -303,6 +352,8 @@ final class DefaultAuthClient: NSObject, AuthClient {
   @MainActor func logout() async throws {
     try? firebaseService.signOut()
     try? KeychainHelper.deleteItem(for: Constants.keychainIdentity)
+    try? KeychainHelper.deleteItem(for: Constants.keychainUserPrincipal)
+    try? KeychainHelper.deleteItem(for: Constants.keychainCanisterPrincipal)
     try? KeychainHelper.deleteItem(for: Constants.keychainAccessToken)
     try? KeychainHelper.deleteItem(for: Constants.keychainIDToken)
     try? KeychainHelper.deleteItem(for: Constants.keychainRefreshToken)
@@ -376,9 +427,18 @@ final class DefaultAuthClient: NSObject, AuthClient {
     }
   }
 }
-// swiftlint: enable type_body_length
 
 enum DelegateIdentityType {
   case ephemeral
   case permanent
+
+  func userType() -> UserType {
+    switch self {
+    case .ephemeral:
+      return .theNew
+    case .permanent:
+      return .existing
+    }
+  }
 }
+// swiftlint: enable file_length type_body_length

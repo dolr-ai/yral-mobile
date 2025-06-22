@@ -23,23 +23,25 @@ actual class MixpanelAnalyticsProvider actual constructor(
 
     override fun setUserProperties(user: User) {
         mixpanel.identify(user.userId)
-        mixpanel.people.set("\$name", user.name)
-        mixpanel.people.set("\$email", user.emailId)
 
         val superProps: Map<Any?, Any> =
             mapOf(
                 "user_id" to user.userId,
                 "visitor_id" to mixpanel.distinctId,
-                "is_logged_in" to (user.userId.isNotBlank()),
-                "canister_id" to user.canisterId,
-                "is_creator" to user.isCreator,
-                "is_nsfw_enabled" to user.isNsfwEnabled,
-                "user_type" to user.userType.name.lowercase(),
-                "user_token_wallet_balance" to user.tokenWalletBalance,
-                "user_dolr_wallet_balance" to user.dolrWalletBalance,
-                "token_type" to user.tokenType.name.lowercase(),
             )
         mixpanel.registerSuperProperties(superProps)
+        val peopleProps: Map<Any?, Any> =
+            mapOf(
+                "user_id" to user.userId,
+                "canister_id" to user.canisterId,
+                "user_type" to user.userType.name.lowercase(),
+                "token_wallet_balance" to user.tokenWalletBalance,
+                "token_type" to user.tokenType.name.lowercase(),
+            )
+
+        peopleProps.forEach { (k, v) ->
+            mixpanel.people.set(k as String, v)
+        }
     }
 
     override fun reset() {

@@ -23,13 +23,17 @@ class CastVoteRepository: CastVoteRepositoryProtocol {
     guard let baseURL = httpService.baseURL else {
       return .failure(.network(.invalidRequest))
     }
-
-    var httpHeaders = ["Content-Type": "application/json"]
+    var httpHeaders = [String: String]()
     do {
+      let appcheckToken = try await firebaseService.fetchAppCheckToken()
       guard let userIDToken = try await firebaseService.fetchUserIDToken() else {
         return .failure(.unknown("Failed to fetch user ID token"))
       }
-      httpHeaders["Authorization"] = "Bearer \(userIDToken)"
+      httpHeaders = [
+        "Content-Type": "application/json",
+        "X-Firebase-AppCheck": appcheckToken,
+        "Authorization": "Bearer \(userIDToken)"
+      ]
     } catch {
       return .failure(.firebaseError(error))
     }

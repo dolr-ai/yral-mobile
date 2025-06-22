@@ -73,6 +73,9 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
             url: authURL,
             callbackURLScheme: redirect.components(separatedBy: "://")[0]
           ) { url, error in
+            AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+              event: SignupInitiatedEventData(authJourney: provider.authJourney())
+            )
             if let error = error {
               continuation.resume(throwing: error)
             } else if let url = url {
@@ -243,6 +246,8 @@ extension DefaultAuthClient {
     static let authPath = "/oauth/auth"
     static let tokenPath = "/oauth/token"
     static let keychainIdentity = "yral.delegatedIdentity"
+    static let keychainCanisterPrincipal = "yral.canisterPrincipal"
+    static let keychainUserPrincipal = "yral.userPrincipal"
     static let keychainAccessToken = "yral.accessToken"
     static let keychainIDToken = "yral.idToken"
     static let keychainRefreshToken = "yral.refreshToken"

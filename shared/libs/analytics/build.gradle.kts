@@ -34,6 +34,11 @@ kotlin {
             extraOpts += listOf("-compiler-option", "-fmodules")
             version = "5.0.8"
         }
+        framework {
+            baseName = "analytics"
+            isStatic = true
+            transitiveExport = true
+        }
     }
 
     sourceSets {
