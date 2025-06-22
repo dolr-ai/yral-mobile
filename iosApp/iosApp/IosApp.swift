@@ -1,5 +1,6 @@
 import SwiftUI
 import FirebaseCore
+import FirebaseAppCheck
 import iosSharedUmbrella
 
 class AppDelegate: NSObject, UIApplicationDelegate {
@@ -68,13 +69,13 @@ struct IosApp: App {
   @MainActor
   private func initializeDependencies() async {
     do {
+      AppDI_iosKt.doInitKoin { _ in  }
       try await appDIContainer.authClient.initialize()
       feedsDIContainer = await appDIContainer.makeFeedDIContainer()
       uploadDIContainer = appDIContainer.makeUploadDIContainer()
       profileDIContainer = appDIContainer.makeProfileDIContainer()
       accountDIContainer = appDIContainer.makeAccountDIContainer()
       leaderboardDIContainer = appDIContainer.makeLeaderboardDIContainer()
-      AppDI_iosKt.doInitKoin { _ in  }
     } catch {
       initializationError = error
     }

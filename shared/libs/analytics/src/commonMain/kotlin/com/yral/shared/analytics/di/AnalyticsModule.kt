@@ -45,6 +45,7 @@ val analyticsModule =
         single {
             AnalyticsManager()
                 .addProvider(get<FirebaseAnalyticsProvider>())
+                .addProvider(get<MixpanelAnalyticsProvider>())
                 .setCoreService(get<CoreService>())
         }
     }
