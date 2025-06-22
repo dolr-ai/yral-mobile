@@ -8,7 +8,34 @@ class AppDelegate: NSObject, UIApplicationDelegate {
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
+#if DEBUG
+    AppCheck.setAppCheckProviderFactory(AppCheckDebugProviderFactory())
+#else
+    let providerFactory = YralAppCheckProviderFactory()
+    AppCheck.setAppCheckProviderFactory(providerFactory)
+#endif
+
     FirebaseApp.configure()
+
+#if DEBUG
+    DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+      AppCheck.appCheck().token(forcingRefresh: true) { token, error in
+        if let error = error {
+          print("Sarvesh 1 error: \(error.localizedDescription)")
+        } else {
+          print("Sarvesh 1 Token: \(token?.token ?? "nil")")
+        }
+      }
+    }
+    Task {
+      do {
+        let token = try await AppCheck.appCheck().limitedUseToken()
+        print("Sarvesh token: \(token)")
+      } catch {
+        print("Sarvesh error: \(error)")
+      }
+    }
+#endif
     return true
   }
 }

@@ -250,16 +250,6 @@ final class DefaultAuthClient: NSObject, AuthClient {
         )
       }
       try await exchangePrincipalID(type: type)
-      let balance = try await firebaseService.fetchCoins(for: canisterPrincipalString)
-      AnalyticsModuleKt.getAnalyticsManager().setUserProperties(
-        user: User(
-          userId: self.userPrincipalString ?? "",
-          canisterId: self.canisterPrincipalString ?? "",
-          userType: type.userType(),
-          tokenWalletBalance: Double(balance),
-          tokenType: TokenType.sats
-        )
-      )
     }
   }
 
@@ -280,6 +270,15 @@ final class DefaultAuthClient: NSObject, AuthClient {
       ).toDomain()
       await updateAuthState(for: type, withCoins: UInt64(response.balance) ?? 0)
       try await firebaseService.update(coins: UInt64(response.balance) ?? 0, forPrincipal: principalID)
+      AnalyticsModuleKt.getAnalyticsManager().setUserProperties(
+        user: User(
+          userId: self.userPrincipalString ?? "",
+          canisterId: self.canisterPrincipalString ?? "",
+          userType: type.userType(),
+          tokenWalletBalance: Double(response.balance) ?? .zero,
+          tokenType: TokenType.sats
+        )
+      )
     } catch {
       switch error {
       case let error as NetworkError:
@@ -293,14 +292,16 @@ final class DefaultAuthClient: NSObject, AuthClient {
   private func exchangePrincipalID(type: DelegateIdentityType) async throws {
     let newSignIn = try? await firebaseService.signInAnonymously()
 
-    var httpHeaders = [
-      "Content-Type": "application/json"
-    ]
     let userIDToken = try? await firebaseService.fetchUserIDToken()
     guard let userIDToken else {
       return
     }
-    httpHeaders["Authorization"] = "Bearer \(userIDToken)"
+    let appcheckToken = try await firebaseService.fetchAppCheckToken()
+    var httpHeaders = [
+      "Content-Type": "application/json",
+      "Authorization": "Bearer \(userIDToken)",
+      "X-Firebase-AppCheck": appcheckToken
+    ]
 
     let httpBody: [String: String] = [
       "principal_id": userPrincipalString ?? ""
