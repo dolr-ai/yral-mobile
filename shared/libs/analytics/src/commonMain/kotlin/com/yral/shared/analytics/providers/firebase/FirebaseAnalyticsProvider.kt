@@ -28,8 +28,6 @@ class FirebaseAnalyticsProvider(
 
     override fun setUserProperties(user: User) {
         firebaseAnalytics.setUserId(user.userId)
-        firebaseAnalytics.setUserProperty("name", user.name)
-        firebaseAnalytics.setUserProperty("emailId", user.emailId)
     }
 
     override fun reset() {

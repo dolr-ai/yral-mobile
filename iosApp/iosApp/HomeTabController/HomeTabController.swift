@@ -85,6 +85,9 @@ struct HomeTabController: View {
           }
           .tag(Tab.account)
       }
+      .onChange(of: selectedTab) { tab in
+        tabDidChange(to: tab)
+      }
       GeometryReader { geometry in
         let tabWidth = geometry.size.width / .five
         let indicatorXPosition = CGFloat(selectedTab.intValue) * tabWidth + (tabWidth - Constants.indicatorWidth) / .two
@@ -104,13 +107,13 @@ struct HomeTabController: View {
             Spacer()
           }
 
-//          Text("New")
-//            .font(YralFont.pt8.bold.swiftUIFont)
-//            .foregroundColor(YralColor.grey0.swiftUIColor)
-//            .padding(.horizontal, 4)
-//            .background(YralColor.primary300.swiftUIColor)
-//            .clipShape(RoundedRectangle(cornerRadius: 12))
-//            .offset(x: -tabWidth, y: -self.tabBarHeight - 2.5)
+          //          Text("New")
+          //            .font(YralFont.pt8.bold.swiftUIFont)
+          //            .foregroundColor(YralColor.grey0.swiftUIColor)
+          //            .padding(.horizontal, 4)
+          //            .background(YralColor.primary300.swiftUIColor)
+          //            .clipShape(RoundedRectangle(cornerRadius: 12))
+          //            .offset(x: -tabWidth, y: -self.tabBarHeight - 2.5)
         }
       }
     }

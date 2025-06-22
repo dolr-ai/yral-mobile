@@ -20,54 +20,66 @@ kotlin {
         pod("FirebaseCore") {
             extraOpts += listOf("-compiler-option", "-fmodules")
             version = firebaseIos
+            linkOnly = true
         }
         pod("FirebaseAnalytics") {
             extraOpts += listOf("-compiler-option", "-fmodules")
             version = firebaseIos
+            linkOnly = true
         }
         pod("FirebaseCrashlytics") {
             extraOpts += listOf("-compiler-option", "-fmodules")
             version = firebaseIos
+            linkOnly = true
         }
         pod("FirebasePerformance") {
             extraOpts += listOf("-compiler-option", "-fmodules")
             version = firebaseIos
+            linkOnly = true
         }
         pod("FirebaseInstallations") {
             extraOpts += listOf("-compiler-option", "-fmodules")
             version = firebaseIos
+            linkOnly = true
         }
         pod("FirebaseCoreInternal") {
             extraOpts += listOf("-compiler-option", "-fmodules")
             version = firebaseIos
+            linkOnly = true
         }
         pod("FirebaseFirestore") {
             extraOpts += listOf("-compiler-option", "-fmodules")
             version = firebaseIos
+            linkOnly = true
         }
         pod("FirebaseAppCheck") {
             extraOpts += listOf("-compiler-option", "-fmodules")
             version = firebaseIos
+            linkOnly = true
         }
         pod("FirebaseStorage") {
             extraOpts += listOf("-compiler-option", "-fmodules")
             version = firebaseIos
+            linkOnly = true
         }
         pod("FirebaseAuth") {
             extraOpts += listOf("-compiler-option", "-fmodules")
-            version = firebaseIos
+            linkOnly = true
         }
          pod("GoogleUtilities") {
             version = "8.1"
             extraOpts += listOf("-compiler-option", "-fmodules")
+             linkOnly = true
         }
         pod("nanopb") {
             version = "3.30910.0"
             extraOpts += listOf("-compiler-option", "-fmodules")
+            linkOnly = true
         }
         pod("Mixpanel") {
             extraOpts += listOf("-compiler-option", "-fmodules")
             version = "5.0.8"
+            linkOnly = true
         }
 
         framework {
