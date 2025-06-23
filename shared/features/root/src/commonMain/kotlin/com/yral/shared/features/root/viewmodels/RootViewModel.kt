@@ -9,7 +9,6 @@ import com.yral.shared.core.session.SessionState
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.AuthClient
 import com.yral.shared.rust.services.IndividualUserServiceFactory
-import com.yral.shared.uniffi.generated.FfiException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -68,16 +67,8 @@ class RootViewModel(
                     throw e
                 } catch (e: YralException) {
                     _state.update { it.copy(error = RootError.TIMEOUT) }
-                    Logger.e("Splash screen error - ${e.message}")
-                    crashlyticsManager.recordException(
-                        YralException("Splash screen error - ${e.message}"),
-                    )
-                } catch (e: FfiException) {
-                    _state.update { it.copy(error = RootError.TIMEOUT) }
-                    Logger.e("Splash screen on chain error - ${e.message}")
-                    crashlyticsManager.recordException(
-                        YralException("Splash screen on chain error - ${e.message}"),
-                    )
+                    Logger.e("Splash screen error - $e")
+                    crashlyticsManager.recordException(e)
                 }
             }
     }

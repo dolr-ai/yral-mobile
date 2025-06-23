@@ -89,7 +89,7 @@ class DefaultAuthClient(
         idToken: String,
         accessToken: String,
         refreshToken: String,
-        shouldSetMetadata: Boolean = false,
+        skipSetMetaData: Boolean = true,
         skipFirebaseAuth: Boolean = true,
     ) {
         crashlyticsManager.logMessage("parsing token")
@@ -97,7 +97,7 @@ class DefaultAuthClient(
         val tokenClaim = oAuthUtils.parseOAuthToken(idToken)
         if (tokenClaim.isValid(Clock.System.now().epochSeconds)) {
             tokenClaim.delegatedIdentity?.let {
-                handleExtractIdentityResponse(it, shouldSetMetadata, skipFirebaseAuth)
+                handleExtractIdentityResponse(it, skipSetMetaData, skipFirebaseAuth)
             }
         } else {
             refreshToken.takeIf { it.isNotEmpty() }?.let {
@@ -148,15 +148,17 @@ class DefaultAuthClient(
 
     private suspend fun handleExtractIdentityResponse(
         data: ByteArray,
-        shouldSetMetaData: Boolean,
+        skipSetMetaData: Boolean,
         skipFirebaseAuth: Boolean,
     ) {
         crashlyticsManager.logMessage("extracting identity")
         try {
             val canisterWrapper = authenticateWithNetwork(data, null)
             preferences.putBytes(PrefKeys.IDENTITY.name, data)
-            if (shouldSetMetaData) {
-                updateYralSession(canisterWrapper)
+            if (!skipSetMetaData) {
+                scope.launch {
+                    updateYralSession(canisterWrapper)
+                }
             }
             if (skipFirebaseAuth) {
                 updateBalanceAndProceed(data, canisterWrapper)
@@ -165,7 +167,7 @@ class DefaultAuthClient(
             }
         } catch (e: FfiException) {
             crashlyticsManager.recordException(e)
-            throw e
+            throw YralException(e)
         }
     }
 
@@ -314,7 +316,7 @@ class DefaultAuthClient(
                     } catch (e: YralException) {
                         oAuthListener.yralException(e)
                     } catch (e: FfiException) {
-                        oAuthListener.ffiException(e)
+                        oAuthListener.yralException(YralException(e))
                     }
                 }
             }
@@ -340,7 +342,7 @@ class DefaultAuthClient(
                     idToken = tokenResponse.idToken,
                     accessToken = tokenResponse.accessToken,
                     refreshToken = tokenResponse.refreshToken,
-                    shouldSetMetadata = true,
+                    skipSetMetaData = false,
                     skipFirebaseAuth = false,
                 )
                 preferences.putBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name, true)
