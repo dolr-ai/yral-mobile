@@ -219,12 +219,12 @@ private fun ErrorMessageSheet(
                 }
 
                 ErrorType.DELETE_ACCOUNT_FAILED -> {
-                    R.string.could_not_login to R.string.could_not_login_desc
+                    -1 to R.string.error_delete_account
                 }
             }
         }
     YralErrorMessage(
-        title = stringResource(title),
+        title = if (title > 0) stringResource(title) else "",
         error = stringResource(error),
         sheetState = bottomSheetState,
         cta = stringResource(R.string.ok),
@@ -278,7 +278,6 @@ private fun AccountsTitle() {
     }
 }
 
-@Suppress("UnusedParameter")
 @Composable
 private fun AccountDetail(
     accountInfo: AccountInfo,
