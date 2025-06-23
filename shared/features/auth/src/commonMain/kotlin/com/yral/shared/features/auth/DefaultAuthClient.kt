@@ -61,7 +61,6 @@ class DefaultAuthClient(
                 idToken = idToken,
                 accessToken = "",
                 refreshToken = "",
-                shouldRefreshToken = true,
             )
         } ?: obtainAnonymousIdentity()
     }
@@ -80,7 +79,7 @@ class DefaultAuthClient(
                             idToken = tokenResponse.idToken,
                             accessToken = tokenResponse.accessToken,
                             refreshToken = tokenResponse.refreshToken,
-                            shouldRefreshToken = true,
+                            skipFirebaseAuth = false,
                         )
                     }.onFailure { throw YralException("obtaining anonymous token failed") }
             }.onFailure { throw YralException("sign out of firebase failed") }
@@ -90,19 +89,18 @@ class DefaultAuthClient(
         idToken: String,
         accessToken: String,
         refreshToken: String,
-        shouldRefreshToken: Boolean,
         shouldSetMetadata: Boolean = false,
+        skipFirebaseAuth: Boolean = true,
     ) {
         crashlyticsManager.logMessage("parsing token")
         saveTokens(idToken, refreshToken, accessToken)
         val tokenClaim = oAuthUtils.parseOAuthToken(idToken)
         if (tokenClaim.isValid(Clock.System.now().epochSeconds)) {
             tokenClaim.delegatedIdentity?.let {
-                handleExtractIdentityResponse(it, shouldSetMetadata)
+                handleExtractIdentityResponse(it, shouldSetMetadata, skipFirebaseAuth)
             }
-        } else if (shouldRefreshToken) {
-            val rToken = preferences.getString(PrefKeys.REFRESH_TOKEN.name)
-            rToken?.let {
+        } else {
+            refreshToken.takeIf { it.isNotEmpty() }?.let {
                 val rTokenClaim = oAuthUtils.parseOAuthToken(it)
                 if (rTokenClaim.isValid(Clock.System.now().epochSeconds)) {
                     refreshAccessToken()
@@ -151,6 +149,7 @@ class DefaultAuthClient(
     private suspend fun handleExtractIdentityResponse(
         data: ByteArray,
         shouldSetMetaData: Boolean,
+        skipFirebaseAuth: Boolean,
     ) {
         crashlyticsManager.logMessage("extracting identity")
         try {
@@ -159,7 +158,11 @@ class DefaultAuthClient(
             if (shouldSetMetaData) {
                 updateYralSession(canisterWrapper)
             }
-            authorizeFirebase(data, canisterWrapper)
+            if (skipFirebaseAuth) {
+                updateBalanceAndProceed(data, canisterWrapper)
+            } else {
+                authorizeFirebase(data, canisterWrapper)
+            }
         } catch (e: FfiException) {
             crashlyticsManager.recordException(e)
             throw e
@@ -283,7 +286,6 @@ class DefaultAuthClient(
                         idToken = tokenResponse.idToken,
                         accessToken = tokenResponse.accessToken,
                         refreshToken = tokenResponse.refreshToken,
-                        shouldRefreshToken = true,
                     )
                 }.onFailure { logout() }
         } ?: obtainAnonymousIdentity()
@@ -338,8 +340,8 @@ class DefaultAuthClient(
                     idToken = tokenResponse.idToken,
                     accessToken = tokenResponse.accessToken,
                     refreshToken = tokenResponse.refreshToken,
-                    shouldRefreshToken = true,
                     shouldSetMetadata = true,
+                    skipFirebaseAuth = false,
                 )
                 preferences.putBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name, true)
             }.onFailure { throw YralException("authenticate social sign in failed") }
