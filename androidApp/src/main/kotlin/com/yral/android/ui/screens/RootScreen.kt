@@ -85,6 +85,7 @@ fun RootScreen(viewModel: RootViewModel = koinViewModel()) {
         }
         state.error?.let { error ->
             YralErrorMessage(
+                title = stringResource(R.string.error_timeout_title),
                 error = error.toErrorMessage(),
                 sheetState = sheetState,
                 cta = stringResource(R.string.error_retry),

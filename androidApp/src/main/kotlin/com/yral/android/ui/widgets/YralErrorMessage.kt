@@ -18,7 +18,7 @@ import com.yral.android.ui.design.LocalAppTopography
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun YralErrorMessage(
-    title: String = "",
+    title: String,
     error: String,
     sheetState: SheetState,
     cta: String,
@@ -47,15 +47,13 @@ fun YralErrorMessage(
                 verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top),
                 horizontalAlignment = Alignment.Start,
             ) {
-                if (title.isNotEmpty()) {
-                    Text(
-                        modifier = Modifier.fillMaxWidth(),
-                        text = title,
-                        style = LocalAppTopography.current.xlSemiBold,
-                        textAlign = TextAlign.Center,
-                        color = Color.White,
-                    )
-                }
+                Text(
+                    modifier = Modifier.fillMaxWidth(),
+                    text = title,
+                    style = LocalAppTopography.current.xlSemiBold,
+                    textAlign = TextAlign.Center,
+                    color = Color.White,
+                )
                 Text(
                     modifier = Modifier.fillMaxWidth(),
                     text = error,

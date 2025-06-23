@@ -219,12 +219,12 @@ private fun ErrorMessageSheet(
                 }
 
                 ErrorType.DELETE_ACCOUNT_FAILED -> {
-                    -1 to R.string.error_delete_account
+                    R.string.error_delete_account_title to R.string.error_delete_account
                 }
             }
         }
     YralErrorMessage(
-        title = if (title > 0) stringResource(title) else "",
+        title = stringResource(title),
         error = stringResource(error),
         sheetState = bottomSheetState,
         cta = stringResource(R.string.ok),
