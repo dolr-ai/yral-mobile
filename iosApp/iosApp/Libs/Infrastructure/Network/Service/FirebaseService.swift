@@ -15,7 +15,7 @@ class FirebaseService: FirebaseServiceProtocol {
 
   func signInAnonymously() async throws -> Bool {
     if let hasLaunchedAppBefore = (UserDefaultsManager.shared.get(for: DefaultsKey.hasLaunchedAppBefore) ?? false),
-    !hasLaunchedAppBefore {
+       !hasLaunchedAppBefore {
       try signOut()
       UserDefaultsManager.shared.set(true, for: DefaultsKey.hasLaunchedAppBefore)
     }
@@ -45,12 +45,13 @@ class FirebaseService: FirebaseServiceProtocol {
     }
   }
 
-  func fetchAppCheckToken() async throws -> String {
+  func fetchAppCheckToken() async -> String? {
     do {
       let appCheckToken = try await AppCheck.appCheck().token(forcingRefresh: false).token
       return appCheckToken
     } catch {
-      throw(error)
+      print(error)
+      return nil
     }
   }
 
@@ -79,7 +80,6 @@ class FirebaseService: FirebaseServiceProtocol {
 
     let doc = database.document(path)
     let snapshot = try await doc.getDocument()
-
     return try snapshot.data(as: T.self)
   }
 

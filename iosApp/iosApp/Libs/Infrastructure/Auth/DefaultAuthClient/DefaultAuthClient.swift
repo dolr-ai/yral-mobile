@@ -91,7 +91,9 @@ final class DefaultAuthClient: NSObject, AuthClient {
         self.userPrincipalString = userPrincipalString
         self.canisterPrincipal = try get_principal(canisterPrincipalString.intoRustString())
         self.userPrincipal = try get_principal(userPrincipalString.intoRustString())
-        try await exchangePrincipalID(type: type)
+        Task { @MainActor in
+          try await exchangePrincipalID(type: type)
+        }
       } else {
         try await handleExtractIdentityResponse(from: data, type: .permanent)
       }
@@ -130,6 +132,9 @@ final class DefaultAuthClient: NSObject, AuthClient {
     if now < accessExpiry {
       guard let data = identityData else { return }
       try await setupSession(data, type: .ephemeral)
+      Task { @MainActor in
+        try await self.handleExtractIdentityResponse(from: data, type: .ephemeral)
+      }
       return
     } else {
       try await obtainAnonymousIdentity()
@@ -249,7 +254,9 @@ final class DefaultAuthClient: NSObject, AuthClient {
           userPrincipal: userPrincipalString
         )
       }
-      try await exchangePrincipalID(type: type)
+      Task { @MainActor in
+        try await exchangePrincipalID(type: type)
+      }
     }
   }
 
@@ -296,12 +303,13 @@ final class DefaultAuthClient: NSObject, AuthClient {
     guard let userIDToken else {
       return
     }
-    let appcheckToken = try await firebaseService.fetchAppCheckToken()
     var httpHeaders = [
       "Content-Type": "application/json",
-      "Authorization": "Bearer \(userIDToken)",
-      "X-Firebase-AppCheck": appcheckToken
+      "Authorization": "Bearer \(userIDToken)"
     ]
+    if let appcheckToken = await firebaseService.fetchAppCheckToken() {
+      httpHeaders["X-Firebase-AppCheck"] = appcheckToken
+    }
 
     let httpBody: [String: String] = [
       "principal_id": userPrincipalString ?? ""
@@ -314,6 +322,7 @@ final class DefaultAuthClient: NSObject, AuthClient {
         await updateAuthState(for: type, withCoins: 0)
       }
     } else {
+      print("Sarvesh time reached")
       let endpoint = Endpoint(http: "",
                               baseURL: firebaseBaseURL,
                               path: "exchange_principal_id",

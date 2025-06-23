@@ -77,7 +77,6 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
   }
 
   @MainActor func fetchSmileys() async {
-    unifiedState = .loading
     do {
       let result = await SmileyGameConfig.shared.fetch()
       if case .failure(let error) = result {
@@ -213,6 +212,15 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
         self.unifiedEvent = .socialSignInFailure
       }
     }
+  }
+
+  @MainActor func addSmileyInfo() async {
+    self.currentFeeds = self.currentFeeds.map {
+      var newFeed = $0
+      newFeed.smileyGame = SmileyGame(config: SmileyGameConfig.shared.config, state: .notPlayed)
+      return newFeed
+    }
+    self.unifiedEvent = .smileysFetched
   }
 }
 
