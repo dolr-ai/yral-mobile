@@ -13,6 +13,8 @@ import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.utils.filterFirstNSuspendFlow
 import com.yral.shared.crashlytics.core.CrashlyticsManager
+import com.yral.shared.features.auth.AuthClientFactory
+import com.yral.shared.features.auth.utils.SocialProvider
 import com.yral.shared.features.feed.data.models.toVideoEventData
 import com.yral.shared.features.feed.useCases.CheckVideoVoteUseCase
 import com.yral.shared.features.feed.useCases.FetchFeedDetailsUseCase
@@ -41,8 +43,16 @@ class FeedViewModel(
     private val analyticsManager: AnalyticsManager,
     private val crashlyticsManager: CrashlyticsManager,
     private val preferences: Preferences,
+    private val authClientFactory: AuthClientFactory,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.io)
+
+    private val authClient =
+        authClientFactory
+            .create(coroutineScope) { e ->
+                Logger.e("Auth error - $e")
+                toggleSignupFailed(true)
+            }
 
     companion object {
         const val PRE_FETCH_BEFORE_LAST = 1
@@ -52,6 +62,7 @@ class FeedViewModel(
         private const val MAX_PAGE_SIZE = 100
         private const val FEEDS_PAGE_SIZE = 10
         private const val SUFFICIENT_NEW_REQUIRED = 10
+        private const val SIGN_UP_PAGE = 5
     }
 
     private val _state = MutableStateFlow(FeedState())
@@ -59,7 +70,9 @@ class FeedViewModel(
 
     fun initialize() {
         coroutineScope.launch {
-            _state.emit(FeedState())
+            val isSocialSignInSuccessful =
+                preferences.getBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name)
+            _state.update { FeedState(isSocialSignInSuccessful = isSocialSignInSuccessful ?: false) }
             initialFeedData()
         }
     }
@@ -251,6 +264,10 @@ class FeedViewModel(
                 currentState.copy(
                     currentPageOfFeed = pageNo,
                     videoData = VideoData(), // Reset all video data for new page
+                    showSignupNudge =
+                        !currentState.isSocialSignInSuccessful &&
+                            pageNo != 0 &&
+                            pageNo % SIGN_UP_PAGE == 0,
                 )
             }
         }
@@ -469,6 +486,30 @@ class FeedViewModel(
         return page != currentPage && currentPage < _state.value.feedDetails.size
     }
 
+    @Suppress("TooGenericExceptionCaught")
+    fun signInWithGoogle() {
+        coroutineScope
+            .launch {
+                try {
+                    authClient.signInWithSocial(SocialProvider.GOOGLE)
+                } catch (e: Exception) {
+                    crashlyticsManager.logMessage("sign in with google exception caught")
+                    crashlyticsManager.recordException(e)
+                    toggleSignupFailed(true)
+                }
+            }
+    }
+
+    fun toggleSignupFailed(shouldShow: Boolean) {
+        coroutineScope.launch {
+            _state.update { currentState ->
+                currentState.copy(
+                    showSignupFailedSheet = shouldShow,
+                )
+            }
+        }
+    }
+
     data class RequiredUseCases(
         val getInitialFeedUseCase: GetInitialFeedUseCase,
         val fetchMoreFeedUseCase: FetchMoreFeedUseCase,
@@ -489,6 +530,9 @@ data class FeedState(
     val videoTracing: List<Pair<String, String>> = emptyList(),
     val isLoading: Boolean = false,
     val reportSheetState: ReportSheetState = ReportSheetState.Closed,
+    val showSignupFailedSheet: Boolean = false,
+    val isSocialSignInSuccessful: Boolean = false,
+    val showSignupNudge: Boolean = false,
 )
 
 data class VideoData(
