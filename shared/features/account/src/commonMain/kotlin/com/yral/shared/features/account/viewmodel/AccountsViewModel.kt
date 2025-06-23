@@ -14,7 +14,6 @@ import com.yral.shared.features.auth.utils.OAuthListener
 import com.yral.shared.features.auth.utils.SocialProvider
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
-import com.yral.shared.uniffi.generated.FfiException
 import com.yral.shared.uniffi.generated.propicFromPrincipal
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -108,10 +107,6 @@ class AccountsViewModel(
                         oAuthListener =
                             object : OAuthListener {
                                 override fun yralException(e: YralException) {
-                                    handleSignupFailed()
-                                }
-
-                                override fun ffiException(e: FfiException) {
                                     handleSignupFailed()
                                 }
                             },
