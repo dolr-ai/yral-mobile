@@ -11,7 +11,7 @@ class YralApp : Application() {
     override fun onCreate() {
         super.onCreate()
         Firebase.initialize(this)
-        Firebase.crashlytics.setCrashlyticsCollectionEnabled(true)
+        Firebase.crashlytics.setCrashlyticsCollectionEnabled(!BuildConfig.DEBUG)
         initKoin {
             androidContext(this@YralApp)
         }
