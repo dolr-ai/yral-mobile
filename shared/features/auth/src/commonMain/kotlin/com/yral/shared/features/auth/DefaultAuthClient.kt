@@ -142,6 +142,7 @@ class DefaultAuthClient(
     }
 
     override suspend fun logout() {
+        analyticsManager.flush()
         preferences.remove(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name)
         preferences.remove(PrefKeys.REFRESH_TOKEN.name)
         preferences.remove(PrefKeys.ACCESS_TOKEN.name)
@@ -336,6 +337,7 @@ class DefaultAuthClient(
         if (state != currentState) {
             throw SecurityException("Invalid state parameter - possible CSRF attack")
         }
+        analyticsManager.flush()
         sessionManager.updateState(SessionState.Loading)
         authenticate(code)
     }
