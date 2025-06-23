@@ -51,9 +51,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
 import com.yral.android.R
+import com.yral.android.ui.components.SignupView
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
+import com.yral.android.ui.screens.account.WebViewBottomSheet
 import com.yral.android.ui.screens.feed.FeedScreenConstants.MAX_LINES_FOR_POST_DESCRIPTION
+import com.yral.android.ui.screens.feed.FeedScreenConstants.SIGNUP_NUDGE_WEIGHT
 import com.yral.android.ui.screens.feed.performance.PrefetchVideoListenerImpl
 import com.yral.android.ui.screens.feed.performance.VideoListenerImpl
 import com.yral.android.ui.screens.game.AboutGameSheet
@@ -64,8 +67,11 @@ import com.yral.android.ui.widgets.PreloadLottieAnimation
 import com.yral.android.ui.widgets.YralAsyncImage
 import com.yral.android.ui.widgets.YralBottomSheet
 import com.yral.android.ui.widgets.YralButtonState
+import com.yral.android.ui.widgets.YralErrorMessage
 import com.yral.android.ui.widgets.YralGradientButton
 import com.yral.android.ui.widgets.YralLoader
+import com.yral.android.ui.widgets.YralLottieAnimation
+import com.yral.shared.features.account.viewmodel.AccountsViewModel.Companion.TERMS_OF_SERVICE_URL
 import com.yral.shared.features.feed.viewmodel.FeedState
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.PRE_FETCH_BEFORE_LAST
@@ -211,6 +217,24 @@ fun FeedScreen(
             },
         )
     }
+    if (state.showSignupNudge) {
+        SignupNudge {
+            viewModel.signInWithGoogle()
+        }
+    }
+    if (state.showSignupFailedSheet) {
+        YralErrorMessage(
+            title = stringResource(R.string.could_not_login),
+            error = stringResource(R.string.could_not_login_desc),
+            sheetState =
+                rememberModalBottomSheetState(
+                    skipPartiallyExpanded = true,
+                ),
+            cta = stringResource(R.string.ok),
+            onClick = { viewModel.toggleSignupFailed(false) },
+            onDismiss = { viewModel.toggleSignupFailed(false) },
+        )
+    }
 }
 
 private fun getReels(state: FeedState): List<Reels> =
@@ -285,6 +309,73 @@ private fun FeedOverlay(
             }
         }
     }
+}
+
+@Composable
+private fun SignupNudge(onSignupClicked: () -> Unit) {
+    var link by remember { mutableStateOf("") }
+    Column(
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(YralColors.ScrimColor)
+                .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp, Alignment.Top),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Column(
+            modifier = Modifier.weight(SIGNUP_NUDGE_WEIGHT),
+            verticalArrangement = Arrangement.Bottom,
+        ) {
+            SignupView(
+                termsLink = TERMS_OF_SERVICE_URL,
+                openTerms = { link = TERMS_OF_SERVICE_URL },
+                onSignupClicked = onSignupClicked,
+            )
+        }
+        Column(
+            Modifier.weight(1 - SIGNUP_NUDGE_WEIGHT),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            Text(
+                text = stringResource(R.string.scroll_to_next_video),
+                style = LocalAppTopography.current.mdBold,
+                color = YralColors.NeutralIconsActive,
+            )
+            YralLottieAnimation(
+                modifier = Modifier.size(36.dp),
+                R.raw.signup_scroll,
+            )
+        }
+    }
+    if (link.isNotEmpty()) {
+        LinkSheet(
+            link = link,
+            onDismissRequest = { link = "" },
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LinkSheet(
+    link: String,
+    onDismissRequest: () -> Unit,
+) {
+    val extraSheetState = rememberModalBottomSheetState()
+    LaunchedEffect(link) {
+        if (link.isEmpty()) {
+            extraSheetState.hide()
+        } else {
+            extraSheetState.show()
+        }
+    }
+    WebViewBottomSheet(
+        link = link,
+        bottomSheetState = extraSheetState,
+        onDismissRequest = onDismissRequest,
+    )
 }
 
 @Composable
@@ -705,4 +796,5 @@ private fun VideoReportReason.displayText(): String =
 
 object FeedScreenConstants {
     const val MAX_LINES_FOR_POST_DESCRIPTION = 5
+    const val SIGNUP_NUDGE_WEIGHT = 0.65f
 }
