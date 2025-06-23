@@ -242,7 +242,7 @@ extension FeedsViewController: FeedsCellProtocol {
 
 extension FeedsViewController: FeedsPlayerProtocol {
   func cacheCleared(atc index: Int) {
-
+    guard index < feedsDataSource.snapshot().itemIdentifiers.count else { return }
     lastDisplayedThumbnailPath.removeValue(
       forKey: feedsDataSource.snapshot().itemIdentifiers[index].videoID
     )

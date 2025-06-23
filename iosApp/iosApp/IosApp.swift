@@ -23,21 +23,21 @@ class AppDelegate: NSObject, UIApplicationDelegate {
     )
 
 #if DEBUG
-    DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+    DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.two) {
       AppCheck.appCheck().token(forcingRefresh: true) { token, error in
         if let error = error {
-          print("Sarvesh 1 error: \(error.localizedDescription)")
+          print("Appcheck error: \(error)")
         } else {
-          print("Sarvesh 1 Token: \(token?.token ?? "nil")")
+          print("Appcheck token: \(token?.token ?? "nil")")
         }
       }
     }
     Task {
       do {
         let token = try await AppCheck.appCheck().limitedUseToken()
-        print("Sarvesh token: \(token)")
+        print("Appcheck token limited use: \(token)")
       } catch {
-        print("Sarvesh error: \(error)")
+        print("Appcheck error limited use: \(error)")
       }
     }
 #endif
@@ -110,8 +110,8 @@ struct IosApp: App {
   private func initializeDependencies() async {
     do {
       AppDI_iosKt.doInitKoin { _ in  }
-      try await appDIContainer.authClient.initialize()
       feedsDIContainer = await appDIContainer.makeFeedDIContainer()
+      try await appDIContainer.authClient.initialize()
       uploadDIContainer = appDIContainer.makeUploadDIContainer()
       profileDIContainer = appDIContainer.makeProfileDIContainer()
       accountDIContainer = appDIContainer.makeAccountDIContainer()

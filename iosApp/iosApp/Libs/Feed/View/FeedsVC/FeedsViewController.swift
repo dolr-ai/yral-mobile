@@ -11,7 +11,7 @@ import AVFoundation
 import SDWebImage
 import iosSharedUmbrella
 
-// swiftlint: disable type_body_length
+// swiftlint: disable type_body_length file_length
 class FeedsViewController: UIViewController {
   typealias DataSource = UICollectionViewDiffableDataSource<Int, FeedResult>
   typealias Snapshot = NSDiffableDataSourceSnapshot<Int, FeedResult>
@@ -61,6 +61,7 @@ class FeedsViewController: UIViewController {
   var shouldShowFooterLoader: Bool = false
   var pageEndReached: Bool = false
   var onBackButtonTap: (() -> Void)?
+  private var loaderCancellables = Set<AnyCancellable>()
   var session: SessionManager
   let crashReporter: CrashReporter
 
@@ -87,6 +88,7 @@ class FeedsViewController: UIViewController {
     handleEvents()
     setupNavigationBar()
     setupUI()
+    startLoadingBindings()
     Task { @MainActor in
       if feedType == .otherUsers {
         await viewModel.fetchSmileys()
@@ -136,20 +138,23 @@ class FeedsViewController: UIViewController {
           self.activityIndicator.startAnimating(in: self.view)
         case .success(let feeds):
           DispatchQueue.main.async {
-            self.activityIndicator.stopAnimating()
             self.updateData(withFeeds: feeds)
+            if self.feedType == .currentUser {
+              self.activityIndicator.stopAnimating()
+            }
           }
         case .failure(let errorMessage):
-          self.activityIndicator.stopAnimating()
           self.loadMoreRequestMade = false
+          if feedType == .currentUser {
+            self.activityIndicator.stopAnimating()
+          }
           print("Error: \(errorMessage)")
         }
       }
       .store(in: &initalFeedscancellables)
   }
 
-  // swiftlint: disable cyclomatic_complexity
-  // swiftlint: disable function_body_length
+  // swiftlint: disable cyclomatic_complexity function_body_length
   func handleEvents() {
     viewModel.unifiedEventPublisher
       .receive(on: RunLoop.main)
@@ -214,12 +219,16 @@ class FeedsViewController: UIViewController {
           snapshot.reloadItems([item])
           feedsDataSource.apply(snapshot, animatingDifferences: true)
           self.activityIndicator.stopAnimating()
+        case .smileysFetched:
+          self.activityIndicator.stopAnimating()
+          var snapshot = feedsDataSource.snapshot()
+          snapshot.reloadItems(snapshot.itemIdentifiers)
+          feedsDataSource.apply(snapshot, animatingDifferences: false)
         }
       }
       .store(in: &paginatedFeedscancellables)
   }
-  // swiftlint: enable function_body_length
-  // swiftlint: enable cyclomatic_complexity
+  // swiftlint: enable function_body_length cyclomatic_complexity
 
   func setupNavigationBar() {
     navigationController?.navigationBar.isHidden = feedType == .otherUsers
@@ -323,6 +332,45 @@ class FeedsViewController: UIViewController {
     }
   }
 
+  private func startLoadingBindings() {
+    let authFinished = session.$state
+      .compactMap { state -> Void? in
+        switch state {
+        case .ephemeralAuthentication,
+            .permanentAuthentication:
+          return ()
+        default:
+          return nil
+        }
+      }
+      .prefix(1)
+      .eraseToAnyPublisher()
+    let feedsFinished = viewModel.unifiedStatePublisher
+      .filter {
+        if case .success = $0 {
+          true
+        } else if case .failure = $0 {
+          true
+        } else {
+          false
+        }
+      }
+      .map { _ in () }
+      .prefix(1)
+      .eraseToAnyPublisher()
+    Publishers.Zip(authFinished, feedsFinished)
+      .sink { [weak self] _, _ in
+        guard let self else { return }
+        Task {
+          if self.feedType == .otherUsers {
+            await self.viewModel.fetchSmileys()
+            await self.viewModel.addSmileyInfo()
+          }
+        }
+      }
+      .store(in: &loaderCancellables)
+  }
+
   @objc func appDidBecomeActive() {
     if isCurrentlyVisible {
       guard !feedsDataSource.snapshot().itemIdentifiers.isEmpty else { return }
@@ -391,4 +439,4 @@ extension FeedsViewController {
     static let winResult = "WIN"
   }
 }
-// swiftlint: enable type_body_length
+// swiftlint: enable type_body_length file_length

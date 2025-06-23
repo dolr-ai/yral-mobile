@@ -153,4 +153,7 @@ class MyVideosFeedViewModel: FeedViewModelProtocol, ObservableObject {
   func log(event: VideoEventRequest) async {  }
 
   func socialSignIn(request: SocialProvider) async {  }
+
+  func addSmileyInfo() async { }
+
 }
