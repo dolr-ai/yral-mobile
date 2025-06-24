@@ -171,15 +171,19 @@ class DefaultAuthClient(
                         userPrincipalId = canisterWrapper.getUserPrincipal(),
                     )
             }
+            setSession(canisterData = cachedData)
             if (!skipSetMetaData) {
                 scope.launch {
                     updateYralSession(cachedData)
                 }
             }
-            if (skipFirebaseAuth) {
-                updateBalanceAndProceed(cachedData)
-            } else {
-                authorizeFirebase(cachedData)
+            sessionManager.updateCoinBalance(0)
+            scope.launch {
+                if (skipFirebaseAuth) {
+                    updateBalanceAndProceed(cachedData)
+                } else {
+                    authorizeFirebase(cachedData)
+                }
             }
         } catch (e: FfiException) {
             crashlyticsManager.recordException(e)
@@ -260,15 +264,12 @@ class DefaultAuthClient(
                                 fieldAndValue = Pair("coins", coinBalance),
                             ),
                     ).onSuccess {
-                        setSession(canisterData, coinBalance)
+                        sessionManager.updateCoinBalance(coinBalance)
                     }.onFailure { throw YralException("update coin balance failed") }
             }.onFailure { throw YralException("get balance failed") }
     }
 
-    private suspend fun setSession(
-        canisterData: CanisterData,
-        initialCoinBalance: Long,
-    ) {
+    private fun setSession(canisterData: CanisterData) {
         sessionManager.updateState(
             SessionState.SignedIn(
                 session =
@@ -279,7 +280,6 @@ class DefaultAuthClient(
                     ),
             ),
         )
-        sessionManager.updateCoinBalance(initialCoinBalance)
         analyticsManager.trackEvent(
             event = AuthSuccessfulEventData(),
         )
