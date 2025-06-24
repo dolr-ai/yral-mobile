@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -31,6 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -43,6 +46,7 @@ import com.yral.android.ui.screens.feed.FeedScreen
 import com.yral.android.ui.screens.leaderboard.LeaderboardScreen
 import com.yral.android.ui.screens.profile.ProfileScreen
 import com.yral.android.ui.screens.uploadVideo.UploadVideoScreen
+import com.yral.android.ui.screens.uploadVideo.keyboardHeightAsState
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.koin.koinInstance
 
@@ -108,11 +112,25 @@ private fun HomeScreenContent(
             )
 
         HomeTab.UPLOAD_VIDEO.title -> {
+            val keyboardHeight by keyboardHeightAsState()
+            val bottomPadding by remember(keyboardHeight) {
+                mutableStateOf(
+                    if (keyboardHeight > 0) {
+                        0.dp
+                    } else {
+                        innerPadding.calculateBottomPadding()
+                    },
+                )
+            }
             UploadVideoScreen(
                 modifier =
                     Modifier
-                        .padding(innerPadding)
-                        .background(MaterialTheme.colorScheme.primaryContainer),
+                        .padding(
+                            top = innerPadding.calculateTopPadding(),
+                            start = innerPadding.calculateStartPadding(LocalLayoutDirection.current),
+                            end = innerPadding.calculateEndPadding(LocalLayoutDirection.current),
+                            bottom = bottomPadding,
+                        ).background(MaterialTheme.colorScheme.primaryContainer),
             )
         }
 
