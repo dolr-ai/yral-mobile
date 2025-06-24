@@ -2,6 +2,7 @@ import SwiftUI
 import FirebaseCore
 import FirebaseAppCheck
 import iosSharedUmbrella
+import FBSDKCoreKit
 
 class AppDelegate: NSObject, UIApplicationDelegate {
   func application(
@@ -16,6 +17,10 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 #endif
 
     FirebaseApp.configure()
+    ApplicationDelegate.shared.application(
+      application,
+      didFinishLaunchingWithOptions: launchOptions
+    )
 
 #if DEBUG
     DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
@@ -37,6 +42,14 @@ class AppDelegate: NSObject, UIApplicationDelegate {
     }
 #endif
     return true
+  }
+
+  func application(
+    _ app: UIApplication,
+    open url: URL,
+    options: [UIApplication.OpenURLOptionsKey: Any] = [:]
+  ) -> Bool {
+    return ApplicationDelegate.shared.application(app, open: url, options: options)
   }
 }
 
