@@ -20,6 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -159,6 +160,7 @@ private fun Splash(
                 modifier = Modifier.fillMaxSize(),
                 rawRes = R.raw.splash_lottie,
                 iterations = 1,
+                contentScale = ContentScale.Crop,
             ) {
                 onAnimationComplete()
             }
@@ -172,6 +174,7 @@ private fun Splash(
             YralLottieAnimation(
                 modifier = Modifier.fillMaxSize(),
                 rawRes = R.raw.lightning_lottie,
+                contentScale = ContentScale.Crop,
             )
         }
     }
