@@ -63,10 +63,22 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
         let verifier = PKCE.generateCodeVerifier()
         let challenge = PKCE.codeChallenge(for: verifier)
         let redirect = Constants.redirectURI
-        let authURL = try getAuthURL(provider: provider,
-                                     redirect: redirect,
-                                     challenge: challenge,
-                                     loginHint: nil)
+        guard let data = identityData else {
+          throw NetworkError.invalidResponse("No identity data available.")
+        }
+        let loginHint = try data.withUnsafeBytes { (buffer: UnsafeRawBufferPointer) in
+          if buffer.count > 0 {
+            let uint8Buffer = buffer.bindMemory(to: UInt8.self)
+            return try yral_auth_login_hint(uint8Buffer).toString()
+          }
+          return ""
+        }
+        let authURL = try getAuthURL(
+          provider: provider,
+          redirect: redirect,
+          challenge: challenge,
+          loginHint: loginHint
+        )
 
         let callbackURL: URL = try await withCheckedThrowingContinuation { continuation in
           let session = ASWebAuthenticationSession(
@@ -150,6 +162,7 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
     ) else { throw AuthError.invalidRequest("Invalid url components") }
     comps.queryItems = [
       .init(name: "provider", value: provider.rawValue),
+      .init(name: "login_hint", value: loginHint),
       .init(name: "client_id", value: Constants.clientID),
       .init(name: "response_type", value: "code"),
       .init(name: "response_mode", value: "query"),
