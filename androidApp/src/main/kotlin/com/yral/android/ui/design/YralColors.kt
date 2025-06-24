@@ -21,6 +21,7 @@ object YralColors {
     val Neutral700: Color = Color(0xFF404040)
     val Neutral800: Color = Color(0xFF212121)
     val Neutral900: Color = Color(0xFF171717)
+    val Neutral950: Color = Color(0xFF0A0A0A)
     val NeutralBlack: Color = Color(0xFF1D1C2B)
 
     val Pink50: Color = Color(0xFFFCE6F2)
