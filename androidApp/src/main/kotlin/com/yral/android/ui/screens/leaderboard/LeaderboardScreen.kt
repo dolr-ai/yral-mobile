@@ -27,13 +27,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -49,7 +49,6 @@ import com.yral.android.ui.screens.leaderboard.LeaderboardScreenConstants.BRONZE
 import com.yral.android.ui.screens.leaderboard.LeaderboardScreenConstants.GOLDEN_TROPHY_SIZE
 import com.yral.android.ui.screens.leaderboard.LeaderboardScreenConstants.PROFILE_IMAGE_SIZE
 import com.yral.android.ui.screens.leaderboard.LeaderboardScreenConstants.SILVER_TROPHY_SIZE
-import com.yral.android.ui.screens.leaderboard.LeaderboardScreenConstants.TROPHY_GALLERY_SIZE
 import com.yral.android.ui.widgets.YralLoader
 import com.yral.android.ui.widgets.YralLottieAnimation
 import com.yral.android.ui.widgets.YralMaskedVectorTextV2
@@ -155,19 +154,17 @@ private fun LeaderboardTableHeader() {
 @Suppress("MagicNumber")
 @Composable
 private fun TrophyGallery(leaderboard: List<LeaderboardItem>) {
-    val configuration = LocalConfiguration.current
-    val screenHeight = configuration.screenHeightDp
     Box(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .height((TROPHY_GALLERY_SIZE * screenHeight).dp)
                 .background(YralColors.Yellow400),
         contentAlignment = Alignment.TopCenter,
     ) {
         YralLottieAnimation(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.matchParentSize(),
             rawRes = R.raw.leaderboard_star,
+            contentScale = ContentScale.Crop,
         )
         // Header
         Column(
@@ -181,11 +178,10 @@ private fun TrophyGallery(leaderboard: List<LeaderboardItem>) {
                 modifier = Modifier.fillMaxWidth(),
             )
             if (leaderboard.size > 3) {
-                Spacer(Modifier.weight(4f))
                 TrophyImages(leaderboard)
-                Spacer(Modifier.weight(1f))
+                Spacer(Modifier.height(12.dp))
                 TrophyDetails(leaderboard)
-                Spacer(Modifier.weight(3f))
+                Spacer(Modifier.height(39.dp))
             }
         }
     }
@@ -248,6 +244,22 @@ private fun Trophy(
     profileImageSize: Dp,
     trophyResource: Int,
 ) {
+    val width by remember {
+        when (position) {
+            0 -> mutableStateOf(66.75.dp)
+            1 -> mutableStateOf(45.75.dp)
+            2 -> mutableStateOf(45.dp)
+            else -> mutableStateOf(45.dp)
+        }
+    }
+    val height by remember {
+        when (position) {
+            0 -> mutableStateOf(146.dp)
+            1 -> mutableStateOf(106.dp)
+            2 -> mutableStateOf(91.dp)
+            else -> mutableStateOf(91.dp)
+        }
+    }
     Column {
         Box(
             modifier =
@@ -266,6 +278,7 @@ private fun Trophy(
             painter = painterResource(id = trophyResource),
             contentDescription = "image description",
             contentScale = ContentScale.Crop,
+            modifier = Modifier.width(width).height(height),
         )
     }
 }
@@ -573,7 +586,6 @@ private fun getUserBriefBorder(position: Int): Int =
 
 object LeaderboardScreenConstants {
     const val PROFILE_IMAGE_SIZE = 25f
-    const val TROPHY_GALLERY_SIZE = 0.45
     const val SILVER_TROPHY_SIZE = 48
     const val BRONZE_TROPHY_SIZE = 46
     const val GOLDEN_TROPHY_SIZE = 64
