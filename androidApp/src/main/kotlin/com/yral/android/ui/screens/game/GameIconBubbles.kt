@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import co.touchlab.kermit.Logger
 import com.yral.android.R
 import com.yral.android.ui.widgets.YralLottieAnimation
@@ -24,6 +25,7 @@ fun GameIconBubbles(
         YralRemoteLottieAnimation(
             modifier = Modifier.fillMaxSize(),
             url = icon.clickAnimation,
+            contentScale = ContentScale.Inside,
             iterations = 1,
             onAnimationComplete = {
                 onAnimationComplete()
@@ -43,6 +45,7 @@ fun GameIconBubbles(
             modifier = Modifier.fillMaxSize(),
             rawRes = animationRes,
             iterations = 1,
+            contentScale = ContentScale.Inside,
         ) {
             onAnimationComplete()
         }
