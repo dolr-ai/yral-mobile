@@ -514,7 +514,7 @@ private fun UserBriefGradientProfileName(
             textStyle = LocalAppTopography.current.baseMedium,
             maxLines = 1,
             textOverflow = TextOverflow.Ellipsis,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.wrapContentSize(),
         )
     } else {
         Text(
