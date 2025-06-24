@@ -62,7 +62,7 @@ class FeedViewModel(
         private const val MAX_PAGE_SIZE = 100
         private const val FEEDS_PAGE_SIZE = 10
         private const val SUFFICIENT_NEW_REQUIRED = 10
-        private const val SIGN_UP_PAGE = 5
+        const val SIGN_UP_PAGE = 5
     }
 
     private val _state = MutableStateFlow(FeedState())
@@ -71,8 +71,8 @@ class FeedViewModel(
     fun initialize() {
         coroutineScope.launch {
             val isSocialSignInSuccessful =
-                preferences.getBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name)
-            _state.update { FeedState(isSocialSignInSuccessful = isSocialSignInSuccessful ?: false) }
+                preferences.getBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name) ?: false
+            _state.update { FeedState(showSignupNudge = !isSocialSignInSuccessful) }
             initialFeedData()
         }
     }
@@ -264,10 +264,6 @@ class FeedViewModel(
                 currentState.copy(
                     currentPageOfFeed = pageNo,
                     videoData = VideoData(), // Reset all video data for new page
-                    showSignupNudge =
-                        !currentState.isSocialSignInSuccessful &&
-                            pageNo != 0 &&
-                            pageNo % SIGN_UP_PAGE == 0,
                 )
             }
         }
@@ -531,7 +527,6 @@ data class FeedState(
     val isLoading: Boolean = false,
     val reportSheetState: ReportSheetState = ReportSheetState.Closed,
     val showSignupFailedSheet: Boolean = false,
-    val isSocialSignInSuccessful: Boolean = false,
     val showSignupNudge: Boolean = false,
 )
 

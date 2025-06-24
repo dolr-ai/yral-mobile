@@ -75,6 +75,7 @@ import com.yral.shared.features.account.viewmodel.AccountsViewModel.Companion.TE
 import com.yral.shared.features.feed.viewmodel.FeedState
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.PRE_FETCH_BEFORE_LAST
+import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.SIGN_UP_PAGE
 import com.yral.shared.features.feed.viewmodel.ReportSheetState
 import com.yral.shared.features.feed.viewmodel.VideoReportReason
 import com.yral.shared.features.game.viewmodel.GameState
@@ -217,11 +218,6 @@ fun FeedScreen(
             },
         )
     }
-    if (state.showSignupNudge) {
-        SignupNudge {
-            viewModel.signInWithGoogle()
-        }
-    }
     if (state.showSignupFailedSheet) {
         YralErrorMessage(
             title = stringResource(R.string.could_not_login),
@@ -306,6 +302,11 @@ private fun FeedOverlay(
                     PreloadLottieAnimation(icon.clickAnimation)
                 }
                 lottieCached = true
+            }
+        }
+        if (state.showSignupNudge && pageNo != 0 && (pageNo % SIGN_UP_PAGE) == 0) {
+            SignupNudge {
+                feedViewModel.signInWithGoogle()
             }
         }
     }
