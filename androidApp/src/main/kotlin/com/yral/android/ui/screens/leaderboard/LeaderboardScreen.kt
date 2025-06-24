@@ -164,7 +164,7 @@ private fun TrophyGallery(leaderboard: List<LeaderboardItem>) {
         YralLottieAnimation(
             modifier = Modifier.matchParentSize(),
             rawRes = R.raw.leaderboard_star,
-            contentScale = ContentScale.Crop,
+            contentScale = ContentScale.Inside,
         )
         // Header
         Column(
