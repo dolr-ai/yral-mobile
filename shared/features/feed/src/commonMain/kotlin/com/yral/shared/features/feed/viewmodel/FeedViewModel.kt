@@ -367,15 +367,7 @@ class FeedViewModel(
                             setLoading(false)
                             toggleReportSheet(false, pageNo)
                             _state.update { currentState ->
-                                val updatedPosts = currentState.posts.toMutableList()
                                 val updatedFeedDetails = currentState.feedDetails.toMutableList()
-
-                                // Find and remove the post with matching videoID
-                                val postIndex =
-                                    updatedPosts.indexOfFirst { it.videoID == currentFeed.videoID }
-                                if (postIndex != -1) {
-                                    updatedPosts.removeAt(postIndex)
-                                }
 
                                 // Find and remove the feed detail with matching videoID
                                 val feedDetailIndex =
@@ -385,7 +377,6 @@ class FeedViewModel(
                                 }
 
                                 currentState.copy(
-                                    posts = updatedPosts,
                                     feedDetails = updatedFeedDetails,
                                     // Adjust current page if necessary to prevent out of bounds
                                     currentPageOfFeed =
