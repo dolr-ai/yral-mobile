@@ -278,6 +278,7 @@ private fun TrophyDetailsItem(
     Column(
         modifier = Modifier.widthIn(max = 93.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
             text = userPrincipalId,
@@ -287,10 +288,6 @@ private fun TrophyDetailsItem(
             overflow = TextOverflow.Ellipsis,
         )
         Row(
-            modifier =
-                Modifier
-                    .align(Alignment.End)
-                    .offset(x = (-12).dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
