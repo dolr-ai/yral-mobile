@@ -39,6 +39,10 @@ kotlin {
             isStatic = true
             transitiveExport = true
         }
+        pod("FBSDKCoreKit") {
+            version = "18.0.0"
+            extraOpts += listOf("-compiler-option", "-fmodules")
+        }
     }
 
     sourceSets {
