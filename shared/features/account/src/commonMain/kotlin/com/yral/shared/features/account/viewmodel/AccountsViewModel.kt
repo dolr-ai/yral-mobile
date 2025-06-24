@@ -68,19 +68,13 @@ class AccountsViewModel(
         }
     }
 
-    private fun getAccountInfo(): AccountInfo? {
-        val canisterPrincipal = sessionManager.getCanisterPrincipal()
-        val userPrincipal = sessionManager.getUserPrincipal()
-        canisterPrincipal?.let { principal ->
-            userPrincipal?.let { userPrincipal ->
-                return AccountInfo(
-                    profilePic = propicFromPrincipal(principal),
-                    userPrincipal = userPrincipal,
-                )
-            }
+    private fun getAccountInfo(): AccountInfo? =
+        sessionManager.getUserPrincipal()?.let { userPrincipal ->
+            return AccountInfo(
+                profilePic = propicFromPrincipal(userPrincipal),
+                userPrincipal = userPrincipal,
+            )
         }
-        return null
-    }
 
     private fun logout() {
         coroutineScope.launch {
