@@ -36,6 +36,7 @@ enum UnifiedFeedEvent: Equatable {
   case castVoteSuccess(SmileyGameResultResponse)
   case castVoteFailure(CastVoteError, String)
   case smileysFetched
+  case feedsRefreshed
 
   static func == (lhs: UnifiedFeedEvent, rhs: UnifiedFeedEvent) -> Bool {
     switch (lhs, rhs) {
@@ -79,6 +80,7 @@ protocol FeedViewModelProtocol: ObservableObject {
   func fetchSmileys() async
   func castVote(request: CastVoteQuery) async
   func addSmileyInfo() async
+  func refreshFeeds() async
 }
 
 extension FeedViewModelProtocol {

@@ -62,6 +62,7 @@ class FeedsViewController: UIViewController {
   var pageEndReached: Bool = false
   var onBackButtonTap: (() -> Void)?
   private var loaderCancellables = Set<AnyCancellable>()
+  private var authStateCancellables = Set<AnyCancellable>()
   var session: SessionManager
   let crashReporter: CrashReporter
 
@@ -89,6 +90,7 @@ class FeedsViewController: UIViewController {
     setupNavigationBar()
     setupUI()
     startLoadingBindings()
+    addAuthChangeListner()
     Task { @MainActor in
       if feedType == .otherUsers {
         await viewModel.fetchSmileys()
@@ -224,6 +226,15 @@ class FeedsViewController: UIViewController {
           var snapshot = feedsDataSource.snapshot()
           snapshot.reloadItems(snapshot.itemIdentifiers)
           feedsDataSource.apply(snapshot, animatingDifferences: false)
+        case .feedsRefreshed:
+          self.activityIndicator.startAnimating(in: self.view)
+          feedsDataSource.apply(Snapshot(), animatingDifferences: true) {
+            Task { @MainActor in
+              await self.viewModel.fetchFeeds(
+                request: InitialFeedRequest(numResults: .zero)
+              )
+            }
+          }
         }
       }
       .store(in: &paginatedFeedscancellables)
@@ -334,17 +345,18 @@ class FeedsViewController: UIViewController {
 
   private func startLoadingBindings() {
     let authFinished = session.$state
-      .compactMap { state -> Void? in
+      .compactMap { state -> AuthState? in
         switch state {
         case .ephemeralAuthentication,
             .permanentAuthentication:
-          return ()
+          return state
         default:
           return nil
         }
       }
-      .prefix(1)
+      .prefix(.one)
       .eraseToAnyPublisher()
+
     let feedsFinished = viewModel.unifiedStatePublisher
       .filter {
         if case .success = $0 {
@@ -356,8 +368,9 @@ class FeedsViewController: UIViewController {
         }
       }
       .map { _ in () }
-      .prefix(1)
+      .prefix(.one)
       .eraseToAnyPublisher()
+
     Publishers.Zip(authFinished, feedsFinished)
       .sink { [weak self] _, _ in
         guard let self else { return }
@@ -369,6 +382,32 @@ class FeedsViewController: UIViewController {
         }
       }
       .store(in: &loaderCancellables)
+  }
+
+  func addAuthChangeListner() {
+    session.$state
+      .compactMap { state -> (String, String)? in
+        switch state {
+        case .ephemeralAuthentication(let user, let canister, _),
+            .permanentAuthentication(let user, let canister, _):
+          return (user, canister)
+        default:
+          return nil
+        }
+      }
+      .removeDuplicates { $0 == $1 }
+      .dropFirst()
+      .sink { [weak self] _ in
+        guard let self else { return }
+        Task { @MainActor in
+          await self.viewModel.refreshFeeds()
+          if self.feedType == .otherUsers {
+            await self.viewModel.fetchSmileys()
+            await self.viewModel.addSmileyInfo()
+          }
+        }
+      }
+      .store(in: &authStateCancellables)
   }
 
   @objc func appDidBecomeActive() {

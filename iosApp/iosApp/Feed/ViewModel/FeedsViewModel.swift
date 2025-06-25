@@ -222,6 +222,19 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
     }
     self.unifiedEvent = .smileysFetched
   }
+
+  @MainActor func refreshFeeds() async {
+    currentFeeds = [FeedResult]()
+    filteredFeeds = [FeedResult]()
+    feedvideoIDSet = Set<String>()
+    blockedPrincipalIDSet = Set<String>()
+    do {
+      try KeychainHelper.deleteItem(for: Constants.blockedPrincipalsIdentifier)
+    } catch {
+      print(error)
+    }
+    self.unifiedEvent = .feedsRefreshed
+  }
 }
 
 extension FeedsViewModel {
