@@ -39,12 +39,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -301,8 +302,7 @@ private fun TopView(
     ) {
         var paddingEnd by remember { mutableFloatStateOf(0f) }
         val density = LocalDensity.current
-        val configuration = LocalConfiguration.current
-        val screenWidthPx = with(density) { (configuration.screenWidthDp.dp).toPx() }
+        val screenWidthPx = LocalWindowInfo.current.containerSize.width
         UserBrief(
             principalId = state.feedDetails[pageNo].principalID,
             profileImageUrl = state.feedDetails[pageNo].profileImageURL,
@@ -348,14 +348,26 @@ private fun UserBrief(
                     top = 22.dp,
                     start = 16.dp,
                     bottom = 22.dp,
+                ).background(
+                    brush =
+                        Brush.horizontalGradient(
+                            colors =
+                                listOf(
+                                    Color.Black.copy(alpha = 0.66f),
+                                    Color.Transparent,
+                                ),
+                            startX = 0f,
+                            endX = Float.POSITIVE_INFINITY,
+                        ),
+                    shape =
+                        RoundedCornerShape(
+                            topStart = 28.dp,
+                            topEnd = 0.dp,
+                            bottomStart = 28.dp,
+                            bottomEnd = 0.dp,
+                        ),
                 ),
     ) {
-        Image(
-            modifier = Modifier.fillMaxWidth(),
-            painter = painterResource(id = R.drawable.user_brief),
-            contentDescription = "image description",
-            contentScale = ContentScale.FillBounds,
-        )
         Row(
             modifier =
                 Modifier
@@ -365,7 +377,7 @@ private fun UserBrief(
                         bottom = 8.dp,
                         start = 8.dp,
                     ),
-            verticalAlignment = Alignment.Top,
+            verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             UserBriefProfileImage(profileImageUrl)
@@ -418,7 +430,7 @@ private fun UserBriefDetails(
                     // setPostDescriptionExpanded(!isPostDescriptionExpanded)
                     setPostDescriptionExpanded(false)
                 },
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically),
         horizontalAlignment = Alignment.Start,
     ) {
         Text(
@@ -428,31 +440,33 @@ private fun UserBriefDetails(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
-        if (isPostDescriptionExpanded) {
-            val scrollState = rememberScrollState()
-            val maxHeight =
-                LocalAppTopography
-                    .current
-                    .feedDescription
-                    .lineHeight
-                    .value * MAX_LINES_FOR_POST_DESCRIPTION
-            Text(
-                modifier =
-                    Modifier
-                        .heightIn(max = maxHeight.dp)
-                        .verticalScroll(scrollState),
-                text = postDescription,
-                style = LocalAppTopography.current.feedDescription,
-                color = Color.White,
-            )
-        } else {
-            Text(
-                text = postDescription,
-                style = LocalAppTopography.current.feedDescription,
-                color = Color.White,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+        if (postDescription.trim().isNotEmpty()) {
+            if (isPostDescriptionExpanded) {
+                val scrollState = rememberScrollState()
+                val maxHeight =
+                    LocalAppTopography
+                        .current
+                        .feedDescription
+                        .lineHeight
+                        .value * MAX_LINES_FOR_POST_DESCRIPTION
+                Text(
+                    modifier =
+                        Modifier
+                            .heightIn(max = maxHeight.dp)
+                            .verticalScroll(scrollState),
+                    text = postDescription,
+                    style = LocalAppTopography.current.feedDescription,
+                    color = Color.White,
+                )
+            } else {
+                Text(
+                    text = postDescription,
+                    style = LocalAppTopography.current.feedDescription,
+                    color = Color.White,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
     }
 }
