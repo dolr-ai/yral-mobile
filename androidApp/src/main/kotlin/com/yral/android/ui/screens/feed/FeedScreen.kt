@@ -252,7 +252,7 @@ private fun FeedOverlay(
             modifier =
                 Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(end = 16.dp, bottom = 89.dp),
+                    .padding(end = 16.dp, bottom = 100.dp),
         ) {
             feedViewModel.toggleReportSheet(true, pageNo)
         }
