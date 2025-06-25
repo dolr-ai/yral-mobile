@@ -156,4 +156,5 @@ class MyVideosFeedViewModel: FeedViewModelProtocol, ObservableObject {
 
   func addSmileyInfo() async { }
 
+  func refreshFeeds() async { }
 }

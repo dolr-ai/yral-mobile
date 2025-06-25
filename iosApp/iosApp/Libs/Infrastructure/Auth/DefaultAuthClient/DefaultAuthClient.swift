@@ -254,6 +254,7 @@ final class DefaultAuthClient: NSObject, AuthClient {
           userPrincipal: userPrincipalString
         )
       }
+      await updateAuthState(for: type, withCoins: .zero)
       Task { @MainActor in
         try await exchangePrincipalID(type: type)
       }
@@ -322,7 +323,6 @@ final class DefaultAuthClient: NSObject, AuthClient {
         await updateAuthState(for: type, withCoins: 0)
       }
     } else {
-      print("Sarvesh time reached")
       let endpoint = Endpoint(http: "",
                               baseURL: firebaseBaseURL,
                               path: "exchange_principal_id",
