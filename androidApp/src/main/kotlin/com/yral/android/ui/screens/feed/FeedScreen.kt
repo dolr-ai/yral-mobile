@@ -56,7 +56,6 @@ import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.account.WebViewBottomSheet
 import com.yral.android.ui.screens.feed.FeedScreenConstants.MAX_LINES_FOR_POST_DESCRIPTION
-import com.yral.android.ui.screens.feed.FeedScreenConstants.SIGNUP_NUDGE_WEIGHT
 import com.yral.android.ui.screens.feed.performance.PrefetchVideoListenerImpl
 import com.yral.android.ui.screens.feed.performance.VideoListenerImpl
 import com.yral.android.ui.screens.game.AboutGameSheet
@@ -320,13 +319,14 @@ private fun SignupNudge(onSignupClicked: () -> Unit) {
             Modifier
                 .fillMaxSize()
                 .background(YralColors.ScrimColor)
-                .padding(16.dp),
+                .padding(top = 16.dp, start = 16.dp, end = 16.dp)
+                .clickable { },
         verticalArrangement = Arrangement.spacedBy(20.dp, Alignment.Top),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Column(
-            modifier = Modifier.weight(SIGNUP_NUDGE_WEIGHT),
-            verticalArrangement = Arrangement.Bottom,
+            modifier = Modifier.padding(top = 58.dp),
+            verticalArrangement = Arrangement.Top,
         ) {
             SignupView(
                 termsLink = TERMS_OF_SERVICE_URL,
@@ -335,9 +335,9 @@ private fun SignupNudge(onSignupClicked: () -> Unit) {
             )
         }
         Column(
-            Modifier.weight(1 - SIGNUP_NUDGE_WEIGHT),
+            Modifier.weight(1f).padding(bottom = 40.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
+            verticalArrangement = Arrangement.Bottom,
         ) {
             Text(
                 text = stringResource(R.string.scroll_to_next_video),
@@ -797,5 +797,4 @@ private fun VideoReportReason.displayText(): String =
 
 object FeedScreenConstants {
     const val MAX_LINES_FOR_POST_DESCRIPTION = 5
-    const val SIGNUP_NUDGE_WEIGHT = 0.65f
 }
