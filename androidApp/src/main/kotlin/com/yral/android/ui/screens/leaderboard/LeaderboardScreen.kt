@@ -43,10 +43,7 @@ import androidx.compose.ui.zIndex
 import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
-import com.yral.android.ui.screens.leaderboard.LeaderboardScreenConstants.BRONZE_TROPHY_SIZE
-import com.yral.android.ui.screens.leaderboard.LeaderboardScreenConstants.GOLDEN_TROPHY_SIZE
 import com.yral.android.ui.screens.leaderboard.LeaderboardScreenConstants.PROFILE_IMAGE_SIZE
-import com.yral.android.ui.screens.leaderboard.LeaderboardScreenConstants.SILVER_TROPHY_SIZE
 import com.yral.android.ui.widgets.YralAsyncImage
 import com.yral.android.ui.widgets.YralLoader
 import com.yral.android.ui.widgets.YralLottieAnimation
@@ -177,10 +174,11 @@ private fun TrophyGallery(leaderboard: List<LeaderboardItem>) {
                 modifier = Modifier.fillMaxWidth(),
             )
             if (leaderboard.size > 3) {
+                Spacer(Modifier.height(28.dp))
                 TrophyImages(leaderboard)
                 Spacer(Modifier.height(12.dp))
                 TrophyDetails(leaderboard)
-                Spacer(Modifier.height(39.dp))
+                Spacer(Modifier.height(20.dp))
             }
         }
     }
@@ -196,19 +194,16 @@ private fun ColumnScope.TrophyImages(leaderboard: List<LeaderboardItem>) {
         Trophy(
             position = 1,
             profileImageUrl = leaderboard[1].profileImage,
-            profileImageSize = SILVER_TROPHY_SIZE.dp,
             trophyResource = R.drawable.silver_trophy,
         )
         Trophy(
             position = 0,
             profileImageUrl = leaderboard[0].profileImage,
-            profileImageSize = GOLDEN_TROPHY_SIZE.dp,
             trophyResource = R.drawable.golden_trophy,
         )
         Trophy(
             position = 2,
             profileImageUrl = leaderboard[2].profileImage,
-            profileImageSize = BRONZE_TROPHY_SIZE.dp,
             trophyResource = R.drawable.bronze_trophy,
         )
     }
@@ -240,7 +235,6 @@ private fun ColumnScope.TrophyDetails(leaderboard: List<LeaderboardItem>) {
 private fun Trophy(
     position: Int,
     profileImageUrl: String,
-    profileImageSize: Dp,
     trophyResource: Int,
 ) {
     val width by remember {
@@ -259,26 +253,36 @@ private fun Trophy(
             else -> mutableStateOf(91.dp)
         }
     }
+    val offset by remember {
+        when (position) {
+            0 -> mutableStateOf(20.dp)
+            1 -> mutableStateOf(13.75.dp)
+            2 -> mutableStateOf(17.49.dp)
+            else -> mutableStateOf(17.49.dp)
+        }
+    }
     Column {
         Box(
             modifier =
                 Modifier
-                    .offset(y = profileImageSize / 2 + 8.dp)
-                    .zIndex(1f)
-                    .align(Alignment.CenterHorizontally),
+                    .width(width)
+                    .height(height + offset),
+            contentAlignment = Alignment.TopCenter,
         ) {
+            Column(Modifier.offset(y = offset)) {
+                Image(
+                    painter = painterResource(id = trophyResource),
+                    contentDescription = "image description",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.width(width).height(height),
+                )
+            }
             UserBriefProfileImage(
                 profileImageUrl,
                 position = position,
-                size = profileImageSize,
+                size = width,
             )
         }
-        Image(
-            painter = painterResource(id = trophyResource),
-            contentDescription = "image description",
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.width(width).height(height),
-        )
     }
 }
 
@@ -576,7 +580,4 @@ private fun getUserBriefBorder(position: Int): Int =
 
 object LeaderboardScreenConstants {
     const val PROFILE_IMAGE_SIZE = 25f
-    const val SILVER_TROPHY_SIZE = 48
-    const val BRONZE_TROPHY_SIZE = 46
-    const val GOLDEN_TROPHY_SIZE = 64
 }
