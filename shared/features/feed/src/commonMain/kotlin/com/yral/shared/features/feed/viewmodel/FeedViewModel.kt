@@ -62,7 +62,7 @@ class FeedViewModel(
         private const val MAX_PAGE_SIZE = 100
         private const val FEEDS_PAGE_SIZE = 10
         private const val SUFFICIENT_NEW_REQUIRED = 10
-        const val SIGN_UP_PAGE = 5
+        const val SIGN_UP_PAGE = 9
     }
 
     private val _state = MutableStateFlow(FeedState())
