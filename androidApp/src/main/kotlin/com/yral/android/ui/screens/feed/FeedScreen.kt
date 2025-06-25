@@ -35,7 +35,6 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,6 +50,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import co.touchlab.kermit.Logger
 import coil3.compose.AsyncImage
 import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
@@ -78,7 +78,6 @@ import com.yral.shared.libs.videoPlayer.YRALReelPlayer
 import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.rust.domain.models.FeedDetails
 import io.ktor.http.Url
-import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -91,13 +90,6 @@ fun FeedScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val gameState by gameViewModel.state.collectAsState()
-    val coroutineScope = rememberCoroutineScope()
-    // Keep track of the last feed size to detect when new items are loaded
-    var lastFeedSize by remember { mutableIntStateOf(0) }
-    // Track when a load was triggered to prevent multiple calls
-    var loadTriggered by remember { mutableStateOf(false) }
-    // Track if new items have been loaded since loading started
-    var newItemsAddedSinceLoading by remember { mutableStateOf(false) }
 
     // Set initial video ID when feed loads
     LaunchedEffect(state.feedDetails.isNotEmpty()) {
@@ -106,57 +98,21 @@ fun FeedScreen(
         }
     }
 
-    // Function to determine if we should load more content
-    val shouldLoadMore =
-        remember(
-            state.currentPageOfFeed,
-            state.feedDetails.size,
-            state.isLoadingMore,
-            loadTriggered,
-        ) {
-            val isValidPage = state.currentPageOfFeed >= 0
-            val isCloseToEnd =
-                state.feedDetails.isNotEmpty() &&
-                    (state.feedDetails.size - state.currentPageOfFeed) <= PRE_FETCH_BEFORE_LAST
-            isValidPage && isCloseToEnd && !state.isLoadingMore && !loadTriggered
+    // Pagination logic
+    val isNearEnd =
+        remember(state.feedDetails.size, state.currentPageOfFeed) {
+            state.feedDetails.isNotEmpty() &&
+                (state.feedDetails.size - state.currentPageOfFeed) <= PRE_FETCH_BEFORE_LAST
         }
-
-    // Reset load triggered when feed size changes (meaning new data arrived)
-    LaunchedEffect(state.feedDetails.size) {
-        if (state.feedDetails.size > lastFeedSize) {
-            // New items have been added
-            loadTriggered = false
-            lastFeedSize = state.feedDetails.size
-            // Mark that we've received new items since loading started
-            if (state.isLoadingMore) {
-                newItemsAddedSinceLoading = true
-            }
-        }
-    }
-
-    // Reset states when loading state changes
-    LaunchedEffect(state.isLoadingMore) {
-        if (state.isLoadingMore) {
-            // Reset flag when loading starts
-            newItemsAddedSinceLoading = false
-        } else {
-            // Reset load triggered when loading completes
-            loadTriggered = false
-        }
-    }
-
-    // Handle loading more when currentPage changes
-    LaunchedEffect(shouldLoadMore) {
-        if (shouldLoadMore) {
-            loadTriggered = true
-            coroutineScope.launch {
-                viewModel.loadMoreFeed()
-            }
+    LaunchedEffect(isNearEnd, state.isLoadingMore, state.pendingFetchDetails) {
+        if (isNearEnd && !state.isLoadingMore && state.pendingFetchDetails == 0) {
+            Logger.d("FeedPagination") { "triggering pagination" }
+            viewModel.loadMoreFeed()
         }
     }
 
     // Determine if we should show the loader
-    val showLoader = state.isLoadingMore && !newItemsAddedSinceLoading
+    val showLoader = isNearEnd && (state.isLoadingMore || state.pendingFetchDetails > 0)
 
     Column(modifier = modifier) {
         if (state.feedDetails.isNotEmpty()) {
