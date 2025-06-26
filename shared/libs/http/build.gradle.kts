@@ -3,7 +3,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
-    alias(libs.plugins.kotlinxSerialisartion)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.gobleyRust)
 }
 
@@ -31,7 +31,7 @@ kotlin {
             api(libs.ktor.client.core)
             api(libs.ktor.client.logging)
             api(libs.ktor.client.content.negotiation)
-            api(libs.ktor.json)
+            api(libs.ktor.serialization.kotlinx.json)
             api(libs.kotlinx.datetime)
 
             implementation(projects.shared.libs.preferences)

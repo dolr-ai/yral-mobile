@@ -5,9 +5,9 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.kotlinAndroid)
     alias(libs.plugins.composeCompiler)
-    alias(libs.plugins.crashlytics)
-    alias(libs.plugins.play.services)
-    alias(libs.plugins.firebase.performance)
+    alias(libs.plugins.firebase.crashlytics)
+    alias(libs.plugins.gms)
+    alias(libs.plugins.firebase.perf)
 }
 
 android {
