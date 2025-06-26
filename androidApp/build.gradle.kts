@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.crashlytics)
     alias(libs.plugins.play.services)
+    alias(libs.plugins.firebase.performance)
 }
 
 android {
@@ -89,6 +90,7 @@ dependencies {
     debugImplementation(libs.compose.ui.tooling)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
+    implementation(libs.firebase.performance)
     implementation(libs.lottie)
     implementation(libs.coil.compose)
     implementation(libs.coil.okhttp)
@@ -100,11 +102,16 @@ dependencies {
     implementation(projects.shared.features.auth)
     implementation(projects.shared.libs.analytics)
     implementation(projects.shared.libs.crashlytics)
+    implementation(projects.shared.libs.firebaseAuth)
+    implementation(projects.shared.libs.firebaseStore)
     implementation(projects.shared.libs.koin)
     implementation(projects.shared.features.feed)
     implementation(projects.shared.features.root)
     implementation(projects.shared.libs.videoPlayer)
     implementation(projects.shared.features.account)
+    implementation(projects.shared.app)
+    implementation(projects.shared.libs.firebasePerf)
+    implementation(projects.shared.features.game)
 
     val (dependencies, shouldAddRustModule) = BuildConfig.getAndProcessDependencies(project)
     dependencies.forEach { dependency ->

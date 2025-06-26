@@ -7,8 +7,67 @@
 //
 import UIKit
 import SwiftUI
+import iosSharedUmbrella
 
 extension FeedsViewController: FeedsCellProtocol {
+  func makeSmileyGameRulesDIContainer() -> SmileyGameRuleDIContainer {
+    return SmileyGameRuleDIContainer(
+      dependencies: SmileyGameRuleDIContainer.Dependencies(
+        firebaseService: FirebaseService(),
+        crashReporter: CompositeCrashReporter(reporters: [FirebaseCrashlyticsReporter()])
+      )
+    )
+  }
+
+  fileprivate func smileyGameSheetEvent(
+    _ feed: FeedResult,
+    _ result: GameResult,
+    _ sheetCtaType: GameConcludedCtaType,
+    coinDelta: Int
+  ) {
+    AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+      event: GameConcludedBottomsheetClickedEventData(
+        stakeAmount: Int32(feed.smileyGame?.config.lossPenalty ?? .zero),
+        tokenType: .sats,
+        gameResult: result,
+        wonAmount: Int32(coinDelta),
+        ctaType: sheetCtaType
+      )
+    )
+  }
+
+  func showGameResultBottomSheet(index: Int, gameResult: SmileyGameResultResponse) {
+    var hostingController: UIHostingController<SmileyGameResultBottomSheetView>?
+
+    let bottomSheetView = SmileyGameResultBottomSheetView(
+      gameResult: gameResult) {
+        let feed = self.feedsDataSource.snapshot().itemIdentifiers[index]
+        let sheetCtaType = GameConcludedCtaType.keepPlaying
+        let result = gameResult.outcome == Constants.winResult ? GameResult.win : GameResult.loss
+        self.smileyGameSheetEvent(feed, result, sheetCtaType, coinDelta: gameResult.coinDelta)
+        hostingController?.dismiss(animated: true)
+      } onLearnMoreTapped: {
+        let feed = self.feedsDataSource.snapshot().itemIdentifiers[index]
+        let sheetCtaType = GameConcludedCtaType.learnMore
+        let result = gameResult.outcome == Constants.winResult ? GameResult.win : GameResult.loss
+        self.smileyGameSheetEvent(feed, result, sheetCtaType, coinDelta: gameResult.coinDelta)
+        hostingController?.dismiss(animated: true) {
+          let smileyGameRuleView = self.makeSmileyGameRulesDIContainer().makeSmileyGameRuleView {
+            self.navigationController?.popViewController(animated: true)
+          }
+          let smileyGameRuleVC = UIHostingController(rootView: smileyGameRuleView)
+          smileyGameRuleVC.extendedLayoutIncludesOpaqueBars = true
+          self.navigationController?.pushViewController(smileyGameRuleVC, animated: true)
+        }
+      }
+
+    hostingController = UIHostingController(rootView: bottomSheetView)
+    hostingController!.modalPresentationStyle = .overFullScreen
+    hostingController!.modalTransitionStyle = .crossDissolve
+    hostingController?.view.backgroundColor = .clear
+    self.present(hostingController!, animated: true, completion: nil)
+  }
+
   func shareButtonTapped(index: Int) {
     activityIndicator.startAnimating(in: self.view)
     // swiftlint: disable line_length
@@ -27,38 +86,48 @@ extension FeedsViewController: FeedsCellProtocol {
     }
   }
 
-  func likeButtonTapped(index: Int) {
+  func smileyTapped(index: Int, smiley: Smiley) {
     let item = feedsDataSource.snapshot().itemIdentifiers[index]
-    guard let postID = Int(item.postID) else { return }
-    let canisterID = item.canisterID
+    let videoID = item.videoID
+    let smileyID = smiley.id
+
     Task { @MainActor in
-      await self.viewModel.toggleLike(request: LikeQuery(postID: postID, canisterID: canisterID, index: index))
+      await self.viewModel.castVote(request: CastVoteQuery(videoID: videoID, smileyID: smileyID))
     }
-    guard let cell = feedsCV.cellForItem(at: IndexPath(item: index, section: .zero)) as? FeedsCell else { return }
-    cell.setLikeStatus(isLiked: cell.likeButton.configuration?.image == FeedsCell.Constants.likeUnSelectedImage)
-    Task {
-      await self.viewModel.log(
-        event: VideoEventRequest(
-          displayName: item.displayName,
-          hashtagCount: Int32(item.hashtags.count),
-          isHotOrNot: item.nsfwProbability > Constants.nsfwProbability,
-          isLoggedIn: session.state.isLoggedIn,
-          isNsfw: false,
-          likeCount: Int32(item.likeCount),
-          nsfwProbability: item.nsfwProbability,
-          postID: Int32(item.postID) ?? .zero,
-          publisherCanisterID: item.canisterID,
-          publisherUserID: item.principalID,
-          videoID: item.videoID,
-          viewCount: item.viewCount,
-          event: VideoEventType.like.rawValue
-        )
+    AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+      event: GamePlayedEventData(
+        videoId: videoID,
+        publisherUserId: item.principalID,
+        likeCount: Int64(item.likeCount),
+        shareCount: Int64(.zero),
+        viewCount: Int64(item.viewCount),
+        gameType: .smiley,
+        isNsfw: false,
+        stakeAmount: Int32(item.smileyGame?.config.lossPenalty ?? Int.zero),
+        tokenType: TokenType.sats,
+        optionChosen: smileyID
       )
-    }
+    )
   }
 
   func deleteButtonTapped(index: Int) {
     getNudgeView(at: index, isDelete: true)
+    let snapshot = feedsDataSource.snapshot()
+    guard index < snapshot.itemIdentifiers.count else { return }
+    let item = snapshot.itemIdentifiers[index]
+    AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+      event: VideoClickedEventData(
+        videoId: item.videoID,
+        publisherUserId: item.principalID,
+        likeCount: Int64(item.likeCount),
+        shareCount: .zero,
+        viewCount: item.viewCount,
+        isGameEnabled: true,
+        gameType: .smiley,
+        isNsfw: false,
+        ctaType: .delete_
+      )
+    )
   }
 
   func reportButtonTapped(index: Int) {
@@ -94,6 +163,37 @@ extension FeedsViewController: FeedsCellProtocol {
     hostingController!.modalTransitionStyle = .crossDissolve
     hostingController?.view.backgroundColor = .clear
     self.present(hostingController!, animated: true, completion: nil)
+    AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+      event: VideoClickedEventData(
+        videoId: feedItem.videoID,
+        publisherUserId: feedItem.principalID,
+        likeCount: Int64(feedItem.likeCount),
+        shareCount: .zero,
+        viewCount: feedItem.viewCount,
+        isGameEnabled: true,
+        gameType: .smiley,
+        isNsfw: false,
+        ctaType: .report
+      )
+    )
+  }
+
+  func videoStarted(index: Int) {
+    let snapshot = feedsDataSource.snapshot()
+    guard index < snapshot.itemIdentifiers.count else { return }
+    let feedItem = snapshot.itemIdentifiers[index]
+    AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+      event: VideoStartedEventData(
+        videoId: feedItem.videoID,
+        publisherUserId: feedItem.principalID,
+        likeCount: Int64(feedItem.likeCount),
+        shareCount: .zero,
+        viewCount: feedItem.viewCount,
+        isGameEnabled: true,
+        gameType: .smiley,
+        isNsfw: false
+      )
+    )
   }
 
   func getNudgeView(at index: Int, isDelete: Bool) {
@@ -142,7 +242,7 @@ extension FeedsViewController: FeedsCellProtocol {
 
 extension FeedsViewController: FeedsPlayerProtocol {
   func cacheCleared(atc index: Int) {
-
+    guard index < feedsDataSource.snapshot().itemIdentifiers.count else { return }
     lastDisplayedThumbnailPath.removeValue(
       forKey: feedsDataSource.snapshot().itemIdentifiers[index].videoID
     )

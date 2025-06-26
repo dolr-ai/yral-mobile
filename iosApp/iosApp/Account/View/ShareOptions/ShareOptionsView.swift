@@ -6,6 +6,7 @@
 //  Copyright © 2025 orgName. All rights reserved.
 //
 import SwiftUI
+import iosSharedUmbrella
 
 struct ShareOptionsView: View {
   @Environment(\.openURL) private var openURL
@@ -21,6 +22,9 @@ struct ShareOptionsView: View {
           // swiftlint: disable multiple_closures_with_trailing_closure
           Button(action: {
             openURL(platform.url)
+            AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+              event: MenuClickedEventData(ctaType: .followOn)
+            )
           }) {
             Image(platform.imageName)
               .frame(width: Constants.iconSize, height: Constants.iconSize)

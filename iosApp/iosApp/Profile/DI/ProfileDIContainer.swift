@@ -13,7 +13,6 @@ final class ProfileDIContainer {
     let authClient: AuthClient
     let crashReporter: CrashReporter
     let accountUseCase: AccountUseCaseProtocol
-    let likesUseCase: ToggleLikeUseCaseProtocol
     let session: SessionManager
   }
 
@@ -60,7 +59,6 @@ final class ProfileDIContainer {
     return MyVideosFeedViewModel(
       myVideosUseCase: myVideosUseCase,
       deleteVideoUseCase: deleteVideosUseCase,
-      likeVideoUseCase: dependencies.likesUseCase,
       existingFeeds: existingFeeds,
       info: info
     )

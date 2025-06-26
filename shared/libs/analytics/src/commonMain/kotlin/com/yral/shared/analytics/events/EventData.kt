@@ -14,7 +14,13 @@ sealed interface EventData {
 
 fun EventData.shouldSendToYralBE(): Boolean =
     when (event) {
-        FeatureEvents.AUTH_SUCCESSFUL.getEventName() -> false
         FeatureEvents.VIDEO_DURATION_WATCHED.getEventName() -> true
+        else -> false
+    }
+
+fun EventData.shouldSendToFacebook(): Boolean =
+    when (event) {
+        FeatureEvents.LOGIN_SUCCESS.getEventName() -> true
+        FeatureEvents.GAME_PLAYED.getEventName() -> true
         else -> false
     }

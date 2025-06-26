@@ -8,8 +8,10 @@
 import UIKit
 import SDWebImage
 import AVFoundation
+import iosSharedUmbrella
 
 extension FeedsViewController {
+  // swiftlint: disable function_body_length
   func getConfiguredDataSource() -> DataSource {
     let dataSource = DataSource(collectionView: feedsCV) { [weak self] collectionView, indexPath, feed in
       guard let self = self else { return UICollectionViewCell() }
@@ -34,8 +36,12 @@ extension FeedsViewController {
           profileInfo: ProfileInfoView.ProfileInfo(
             imageURL: feed.profileImageURL,
             title: feed.principalID,
-            subtitle: feed.postDescription
-          ), index: indexPath.item
+            subtitle: feed.postDescription,
+            coins: session.state.coins
+          ),
+          smileyGame: feed.smileyGame,
+          session: session,
+          index: indexPath.item
         )
       } else {
         cell.configure(
@@ -54,8 +60,12 @@ extension FeedsViewController {
           profileInfo: ProfileInfoView.ProfileInfo(
             imageURL: feed.profileImageURL,
             title: feed.principalID,
-            subtitle: feed.postDescription
-          ), index: indexPath.item
+            subtitle: feed.postDescription,
+            coins: session.state.coins
+          ),
+          smileyGame: feed.smileyGame,
+          session: session,
+          index: indexPath.item
         )
       }
       // swiftlint: enable force_cast
@@ -63,6 +73,7 @@ extension FeedsViewController {
     }
     return dataSource
   }
+  // swiftlint: enable function_body_length
 
   func updateData(withFeeds feeds: [FeedResult], animated: Bool = false) {
     guard self.feedsDataSource.snapshot().itemIdentifiers.isEmpty else {
@@ -115,15 +126,87 @@ extension FeedsViewController {
     }
   }
 
-  func toggleLikeStatus(_ response: LikeResult) {
+  func handleCastVote(_ response: SmileyGameResultResponse) {
+    let snapshot = feedsDataSource.snapshot()
+    let items = snapshot.itemIdentifiers
+    guard let index = items.firstIndex(where: { $0.videoID == response.videoID }) else {
+      return
+    }
+
+    guard let cell = feedsCV.cellForItem(at: IndexPath(item: index, section: 0)) as? FeedsCell else {
+      updateUIAfterCastVoteSuccess(
+        with: response,
+        forIndex: index,
+        withItems: items,
+        andSnapshot: snapshot
+      )
+      return
+    }
+    cell.startSmileyGamResultAnimation(for: response) { [weak self] in
+      self?.updateUIAfterCastVoteSuccess(
+        with: response,
+        forIndex: index,
+        withItems: items,
+        andSnapshot: snapshot
+      )
+    }
+    guard index < snapshot.numberOfItems else {
+      return
+    }
+    let item = items[index]
+    let result = response.outcome == Constants.winResult ? GameResult.win : GameResult.loss
+    AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+      event: GameConcludedEventData(
+        videoId: item.videoID,
+        publisherUserId: item.principalID,
+        likeCount: Int64(item.likeCount),
+        shareCount: Int64(.zero),
+        viewCount: Int64(item.viewCount),
+        gameType: .smiley,
+        isNsfw: false,
+        stakeAmount: Int32(item.smileyGame?.config.lossPenalty ?? .zero),
+        tokenType: .sats,
+        optionChosen: response.smiley.id,
+        gameResult: result
+      )
+    )
+  }
+
+  private func updateUIAfterCastVoteSuccess(
+    with response: SmileyGameResultResponse,
+    forIndex index: Int,
+    withItems items: [FeedResult],
+    andSnapshot snapshot: NSDiffableDataSourceSnapshot<Int, FeedResult>
+  ) {
+    var items = items
+    items[index].smileyGame?.state = .played(response)
+
+    var snapshot = snapshot
+    snapshot.deleteItems(snapshot.itemIdentifiers)
+    snapshot.appendItems(items)
+
+    self.feedsDataSource.apply(snapshot, animatingDifferences: true)
+    self.session.update(coins: response.coins)
+  }
+
+  func handleCastVoteFailure(_ errorMessage: String, videoID: String) {
     var snapshot = feedsDataSource.snapshot()
     var items = snapshot.itemIdentifiers
-    items[response.index].isLiked = response.status
-    items[response.index].likeCount += response.status ? .one : -.one
+    guard let index = items.firstIndex(where: { $0.videoID == videoID }) else {
+      return
+    }
+
+    guard let cell = feedsCV.cellForItem(at: IndexPath(item: index, section: 0)) as? FeedsCell else {
+      return
+    }
+
+    cell.handleSmileyGameError(errorMessage)
+
+    items[0].smileyGame?.state = .error(errorMessage)
 
     snapshot.deleteItems(snapshot.itemIdentifiers)
     snapshot.appendItems(items)
-    feedsDataSource.apply(snapshot, animatingDifferences: false)
+    feedsDataSource.apply(snapshot, animatingDifferences: true)
   }
 
   func removeFeeds(with feeds: [FeedResult], isReport: Bool = false, animated: Bool = false) {

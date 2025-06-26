@@ -19,16 +19,13 @@ class FetchMoreFeedUseCase(
                 FeedRequest(
                     canisterID = parameter.canisterID,
                     filterResults = parameter.filterResults,
-                    numResults = PAGE_SIZE,
+                    numResults = parameter.batchSize.toLong(),
                 ),
         )
-
-    companion object {
-        private const val PAGE_SIZE = 10L
-    }
 
     data class Params(
         val canisterID: String,
         val filterResults: List<FilteredResult>,
+        val batchSize: Int,
     )
 }

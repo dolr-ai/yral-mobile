@@ -1,13 +1,55 @@
 import SwiftUI
-import Firebase
+import FirebaseCore
+import FirebaseAppCheck
+import iosSharedUmbrella
+import FBSDKCoreKit
 
 class AppDelegate: NSObject, UIApplicationDelegate {
   func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
+#if DEBUG
+    AppCheck.setAppCheckProviderFactory(AppCheckDebugProviderFactory())
+#else
+    let providerFactory = YralAppCheckProviderFactory()
+    AppCheck.setAppCheckProviderFactory(providerFactory)
+#endif
+
     FirebaseApp.configure()
+    ApplicationDelegate.shared.application(
+      application,
+      didFinishLaunchingWithOptions: launchOptions
+    )
+
+#if DEBUG
+    DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.two) {
+      AppCheck.appCheck().token(forcingRefresh: true) { token, error in
+        if let error = error {
+          print("Appcheck error: \(error)")
+        } else {
+          print("Appcheck token: \(token?.token ?? "nil")")
+        }
+      }
+    }
+    Task {
+      do {
+        let token = try await AppCheck.appCheck().limitedUseToken()
+        print("Appcheck token limited use: \(token)")
+      } catch {
+        print("Appcheck error limited use: \(error)")
+      }
+    }
+#endif
     return true
+  }
+
+  func application(
+    _ app: UIApplication,
+    open url: URL,
+    options: [UIApplication.OpenURLOptionsKey: Any] = [:]
+  ) -> Bool {
+    return ApplicationDelegate.shared.application(app, open: url, options: options)
   }
 }
 
@@ -16,6 +58,7 @@ struct IosApp: App {
   @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
   private let appDIContainer: AppDIContainer
   @State private var feedsDIContainer: FeedDIContainer?
+  @State private var leaderboardDIContainer: LeaderboardDIContainer?
   @State private var profileDIContainer: ProfileDIContainer?
   @State private var uploadDIContainer: UploadDIContainer?
   @State private var accountDIContainer: AccountDIContainer?
@@ -39,6 +82,7 @@ struct IosApp: App {
 
   @ViewBuilder private func contentView() -> some View {
     if let feedsDIContainer = feedsDIContainer,
+       let leaderboardDIContainer = leaderboardDIContainer,
        let accountDIContainer = accountDIContainer,
        let uploadDIContainer = uploadDIContainer,
        let profileDIContainer = profileDIContainer {
@@ -46,7 +90,8 @@ struct IosApp: App {
         feedsViewController: feedsDIContainer.makeFeedsViewController(),
         uploadView: uploadDIContainer.makeUploadView(),
         profileView: profileDIContainer.makeProfileView(),
-        accountView: accountDIContainer.makeAccountView()
+        accountView: accountDIContainer.makeAccountView(),
+        leaderboardView: leaderboardDIContainer.makeLeaderboardView()
       )
       .environmentObject(session)
     } else if let error = initializationError {
@@ -64,11 +109,13 @@ struct IosApp: App {
   @MainActor
   private func initializeDependencies() async {
     do {
-      try await appDIContainer.authClient.initialize()
+      AppDI_iosKt.doInitKoin { _ in  }
       feedsDIContainer = await appDIContainer.makeFeedDIContainer()
+      try await appDIContainer.authClient.initialize()
       uploadDIContainer = appDIContainer.makeUploadDIContainer()
       profileDIContainer = appDIContainer.makeProfileDIContainer()
       accountDIContainer = appDIContainer.makeAccountDIContainer()
+      leaderboardDIContainer = appDIContainer.makeLeaderboardDIContainer()
     } catch {
       initializationError = error
     }

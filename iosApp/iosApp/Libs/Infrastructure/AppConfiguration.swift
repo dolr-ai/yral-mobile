@@ -13,4 +13,13 @@ final class AppConfiguration {
   let uploadBaseURLString = "https://yral-upload-video.go-bazzinga.workers.dev/"
   let offchainBaseURLString = "https://icp-off-chain-agent.fly.dev"
   let authBaseURLString = "https://auth.yral.com"
+  let satsBalanceBaseURLString = "https://yral-hot-or-not.go-bazzinga.workers.dev/"
+  var firebaseBaseURLString: String {
+    guard let uri = Bundle.main.object(forInfoDictionaryKey: "FIREBASE_CLOUD_BASE_URL") as? String,
+          !uri.isEmpty
+    else {
+      return "https://us-central1-yral-mobile.cloudfunctions.net/"
+    }
+    return uri
+  }
 }

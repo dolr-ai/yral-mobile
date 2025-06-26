@@ -214,6 +214,7 @@ final class FeedsPlayer: YralPlayer {
         crashReporter.recordException(error)
         print("Item failed to become ready: \(error)")
       }
+      guard currentIndex < feedResults.count else { return }
       let currentVideoID = feedResults[currentIndex].videoID
       if let lastTime = lastPlayedTimes[currentVideoID] {
         player.seek(to: lastTime, toleranceBefore: .zero, toleranceAfter: .zero) { [weak self] _ in

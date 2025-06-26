@@ -2,7 +2,7 @@ package com.yral.shared.http
 
 import com.yral.shared.preferences.Preferences
 import io.ktor.client.HttpClient
-import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.cookies.HttpCookies
 import io.ktor.client.plugins.defaultRequest
@@ -13,12 +13,18 @@ import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
+private const val TIME_OUT = 30000L
+
 fun createClient(
     preferences: Preferences,
     json: Json,
     httpLogger: HttpLogger,
 ): HttpClient =
-    HttpClient(CIO) {
+    HttpClient {
+        install(HttpTimeout) {
+            requestTimeoutMillis = TIME_OUT
+            socketTimeoutMillis = TIME_OUT
+        }
         install(Logging) {
             logger = httpLogger
             level = httpLogger.logLevel
@@ -29,6 +35,7 @@ fun createClient(
         install(HttpCookies) {
             storage = PersistentCookieStorage(preferences)
         }
+        expectSuccess = true
         defaultRequest {
             url {
                 protocol = URLProtocol.HTTPS

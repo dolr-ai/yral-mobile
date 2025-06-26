@@ -125,3 +125,9 @@ rust-analyzer.json
 
 # Rust generated
 shared/rust/rust-agent-uniffi/target
+
+# CocoaPods
+iosApp/Pods/
+iosApp/**/Pods/
+Pods/
+**/Pods/

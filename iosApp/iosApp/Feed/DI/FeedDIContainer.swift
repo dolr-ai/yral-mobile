@@ -12,11 +12,12 @@ final class FeedDIContainer {
   struct Dependencies {
     let mlfeedService: MlFeed_MLFeedNIOClient
     let httpService: HTTPService
+    let firebaseService: FirebaseServiceProtocol
     let authClient: AuthClient
     let crashReporter: CrashReporter
-    let toggleLikeUseCase: ToggleLikeUseCaseProtocol
     let socialSignInUseCase: SocialSignInUseCaseProtocol
     let session: SessionManager
+    let castVoteUseCase: CastVoteUseCaseProtocol
   }
 
   private let dependencies: Dependencies
@@ -47,6 +48,7 @@ final class FeedDIContainer {
   func makeFeedsViewModel() -> FeedsViewModel {
     let repository = FeedsRepository(
       httpService: dependencies.httpService,
+      firebaseService: dependencies.firebaseService,
       mlClient: dependencies.mlfeedService,
       authClient: dependencies.authClient
     )
@@ -59,7 +61,6 @@ final class FeedDIContainer {
         feedRepository: repository,
         crashReporter: dependencies.crashReporter
       ),
-      likeUseCase: dependencies.toggleLikeUseCase,
       reportUseCase: ReportFeedsUseCase(
         feedRepository: repository,
         crashReporter: dependencies.crashReporter
@@ -68,7 +69,8 @@ final class FeedDIContainer {
         feedRepository: repository,
         crashReporter: dependencies.crashReporter
       ),
-      socialSignInUseCase: dependencies.socialSignInUseCase
+      socialSignInUseCase: dependencies.socialSignInUseCase,
+      castVoteUseCase: dependencies.castVoteUseCase
     )
   }
 }
