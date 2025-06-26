@@ -646,8 +646,8 @@ private fun ReasonDetailsInput(
             onValueChange = onValueChange,
             colors =
                 TextFieldDefaults.colors().copy(
-                    focusedTextColor = YralColors.Neutral600,
-                    unfocusedTextColor = YralColors.Neutral600,
+                    focusedTextColor = YralColors.Neutral300,
+                    unfocusedTextColor = YralColors.Neutral300,
                     disabledTextColor = YralColors.Neutral600,
                     focusedContainerColor = YralColors.Neutral800,
                     unfocusedContainerColor = YralColors.Neutral800,
