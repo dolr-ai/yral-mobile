@@ -1,8 +1,8 @@
 package com.yral.shared.features.auth.di
 
-import com.yral.shared.features.auth.AuthClient
-import com.yral.shared.features.auth.DefaultAuthClient
+import com.yral.shared.features.auth.AuthClientFactory
 import com.yral.shared.features.auth.DefaultAuthClient.RequiredUseCases
+import com.yral.shared.features.auth.DefaultAuthClientFactory
 import com.yral.shared.features.auth.data.AuthDataSource
 import com.yral.shared.features.auth.data.AuthDataSourceImpl
 import com.yral.shared.features.auth.data.AuthRepositoryImpl
@@ -21,7 +21,7 @@ import org.koin.dsl.module
 
 val authModule =
     module {
-        factoryOf(::DefaultAuthClient) { bind<AuthClient>() }
+        factoryOf(::DefaultAuthClientFactory) { bind<AuthClientFactory>() }
         factoryOf(::AuthDataSourceImpl) { bind<AuthDataSource>() }
         factoryOf(::AuthenticateTokenUseCase)
         factoryOf(::ObtainAnonymousIdentityUseCase)

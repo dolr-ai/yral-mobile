@@ -4,8 +4,6 @@ import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.analytics.AnalyticsManager
 import com.yral.shared.analytics.events.AuthSuccessfulEventData
-import com.yral.shared.core.dispatchers.AppDispatchers
-import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.Session
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
@@ -17,7 +15,6 @@ import com.yral.shared.features.auth.domain.useCases.ExchangePrincipalIdUseCase
 import com.yral.shared.features.auth.domain.useCases.ObtainAnonymousIdentityUseCase
 import com.yral.shared.features.auth.domain.useCases.RefreshTokenUseCase
 import com.yral.shared.features.auth.domain.useCases.UpdateSessionAsRegisteredUseCase
-import com.yral.shared.features.auth.utils.OAuthListener
 import com.yral.shared.features.auth.utils.OAuthUtils
 import com.yral.shared.features.auth.utils.SocialProvider
 import com.yral.shared.features.game.domain.GetBalanceUseCase
@@ -32,7 +29,6 @@ import com.yral.shared.uniffi.generated.CanistersWrapper
 import com.yral.shared.uniffi.generated.FfiException
 import com.yral.shared.uniffi.generated.authenticateWithNetwork
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 
@@ -45,10 +41,9 @@ class DefaultAuthClient(
     private val authRepository: AuthRepository,
     private val requiredUseCases: RequiredUseCases,
     private val oAuthUtils: OAuthUtils,
-    appDispatchers: AppDispatchers,
+    private val scope: CoroutineScope,
 ) : AuthClient {
     private var currentState: String? = null
-    private val scope = CoroutineScope(SupervisorJob() + appDispatchers.io)
 
     override suspend fun initialize() {
         sessionManager.updateState(SessionState.Loading)
@@ -83,8 +78,8 @@ class DefaultAuthClient(
                             resetCanister = true,
                             skipFirebaseAuth = false,
                         )
-                    }.onFailure { throw YralException("obtaining anonymous token failed") }
-            }.onFailure { throw YralException("sign out of firebase failed") }
+                    }.onFailure { throw YralAuthException("obtaining anonymous token failed - ${it.message}") }
+            }.onFailure { throw YralAuthException("sign out of firebase failed - ${it.message}") }
     }
 
     private suspend fun handleToken(
@@ -188,7 +183,7 @@ class DefaultAuthClient(
         } catch (e: FfiException) {
             logout()
             crashlyticsManager.recordException(e)
-            throw YralException(e)
+            throw YralAuthException(e)
         }
     }
 
@@ -212,8 +207,8 @@ class DefaultAuthClient(
                     .invoke(GetIdTokenUseCase.DEFAULT)
                     .onSuccess { idToken ->
                         exchangePrincipalId(canisterData, idToken)
-                    }.onFailure { throw YralException("firebase idToken not found") }
-            }.onFailure { throw YralException("firebase anonymous sign in failed") }
+                    }.onFailure { throw YralAuthException("firebase idToken not found - ${it.message}") }
+            }.onFailure { throw YralAuthException("firebase anonymous sign in failed - ${it.message}") }
     }
 
     private suspend fun exchangePrincipalId(
@@ -229,7 +224,7 @@ class DefaultAuthClient(
                 ),
             ).onSuccess {
                 signInWithToken(canisterData, it)
-            }.onFailure { throw YralException("exchanging principal failed") }
+            }.onFailure { throw YralAuthException("exchanging principal failed - ${it.message}") }
     }
 
     private suspend fun signInWithToken(
@@ -245,8 +240,8 @@ class DefaultAuthClient(
                     .invoke(exchangeResult.token)
                     .onSuccess {
                         updateBalanceAndProceed(canisterData)
-                    }.onFailure { throw YralException("sign in with token failed") }
-            }.onFailure { throw YralException("sign out for auth token sign in failed") }
+                    }.onFailure { throw YralAuthException("sign in with token failed - ${it.message}") }
+            }.onFailure { throw YralAuthException("sign out for auth token sign in failed - ${it.message}") }
     }
 
     private suspend fun updateBalanceAndProceed(canisterData: CanisterData) {
@@ -266,8 +261,8 @@ class DefaultAuthClient(
                             ),
                     ).onSuccess {
                         sessionManager.updateCoinBalance(coinBalance)
-                    }.onFailure { throw YralException("update coin balance failed") }
-            }.onFailure { throw YralException("get balance failed") }
+                    }.onFailure { throw YralAuthException("update coin balance failed ${it.message}") }
+            }.onFailure { throw YralAuthException("get balance failed ${it.message}") }
     }
 
     private fun setSession(canisterData: CanisterData) {
@@ -301,17 +296,11 @@ class DefaultAuthClient(
         } ?: obtainAnonymousIdentity()
     }
 
-    override suspend fun signInWithSocial(
-        provider: SocialProvider,
-        oAuthListener: OAuthListener,
-    ) {
-        initiateOAuthFlow(provider, oAuthListener)
+    override suspend fun signInWithSocial(provider: SocialProvider) {
+        initiateOAuthFlow(provider)
     }
 
-    private suspend fun initiateOAuthFlow(
-        provider: SocialProvider,
-        oAuthListener: OAuthListener,
-    ) {
+    private suspend fun initiateOAuthFlow(provider: SocialProvider) {
         sessionManager.getIdentity()?.let { identity ->
             val authUrl = authRepository.getOAuthUrl(provider, identity)
             currentState = authUrl.second
@@ -319,13 +308,7 @@ class DefaultAuthClient(
                 authUrl = authUrl.first,
             ) { code, state ->
                 scope.launch {
-                    try {
-                        handleOAuthCallback(code, state)
-                    } catch (e: YralException) {
-                        oAuthListener.yralException(e)
-                    } catch (e: FfiException) {
-                        oAuthListener.yralException(YralException(e))
-                    }
+                    handleOAuthCallback(code, state)
                 }
             }
         }
@@ -356,7 +339,7 @@ class DefaultAuthClient(
                     skipFirebaseAuth = false,
                 )
                 preferences.putBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name, true)
-            }.onFailure { throw YralException("authenticate social sign in failed") }
+            }.onFailure { throw YralAuthException("authenticate social sign in failed - ${it.message}") }
     }
 
     private suspend fun updateSessionAsRegistered(

@@ -5,12 +5,10 @@ import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.core.dispatchers.AppDispatchers
-import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.crashlytics.core.CrashlyticsManager
-import com.yral.shared.features.auth.AuthClient
+import com.yral.shared.features.auth.AuthClientFactory
 import com.yral.shared.features.auth.domain.useCases.DeleteAccountUseCase
-import com.yral.shared.features.auth.utils.OAuthListener
 import com.yral.shared.features.auth.utils.SocialProvider
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
@@ -25,13 +23,21 @@ import kotlinx.coroutines.launch
 
 class AccountsViewModel(
     appDispatchers: AppDispatchers,
+    authClientFactory: AuthClientFactory,
     private val sessionManager: SessionManager,
     private val preferences: Preferences,
-    private val authClient: AuthClient,
     private val deleteAccountUseCase: DeleteAccountUseCase,
     private val crashlyticsManager: CrashlyticsManager,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.io)
+
+    private val authClient =
+        authClientFactory
+            .create(coroutineScope) { e ->
+                Logger.e("Auth error - $e")
+                handleSignupFailed()
+            }
+
     private val _state =
         MutableStateFlow(
             AccountsState(
@@ -102,15 +108,7 @@ class AccountsViewModel(
         coroutineScope
             .launch {
                 try {
-                    authClient.signInWithSocial(
-                        provider = SocialProvider.GOOGLE,
-                        oAuthListener =
-                            object : OAuthListener {
-                                override fun yralException(e: YralException) {
-                                    handleSignupFailed()
-                                }
-                            },
-                    )
+                    authClient.signInWithSocial(SocialProvider.GOOGLE)
                 } catch (e: Exception) {
                     crashlyticsManager.logMessage("sign in with google exception caught")
                     crashlyticsManager.recordException(e)
