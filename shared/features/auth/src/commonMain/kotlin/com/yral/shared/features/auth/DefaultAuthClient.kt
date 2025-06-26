@@ -186,6 +186,7 @@ class DefaultAuthClient(
                 }
             }
         } catch (e: FfiException) {
+            resetCachedCanisterData()
             crashlyticsManager.recordException(e)
             throw YralException(e)
         }
