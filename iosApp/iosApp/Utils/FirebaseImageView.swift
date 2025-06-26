@@ -14,6 +14,11 @@ struct FirebaseImageView: View {
   @State private var imageData: Data?
   @State private var isLoading: Bool = false
 
+  init(path: String) {
+    self.path = path
+    _imageData = State(initialValue: YralCache.shared.data(forPath: path))
+  }
+
   var body: some View {
     ZStack(alignment: .center) {
       if let data = imageData, let uiImage = UIImage(data: data) {
