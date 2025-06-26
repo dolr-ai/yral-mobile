@@ -20,7 +20,10 @@ fun GameIconBubbles(
     icon: GameIcon,
     onAnimationComplete: () -> Unit,
 ) {
-    var playLocalAnimation by remember { mutableStateOf(icon.clickAnimation.isEmpty()) }
+    var playLocalAnimation by remember {
+        // mutableStateOf(icon.clickAnimation.isEmpty())
+        mutableStateOf(true)
+    }
     if (!playLocalAnimation) {
         YralRemoteLottieAnimation(
             modifier = Modifier.fillMaxSize(),
