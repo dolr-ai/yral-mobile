@@ -19,21 +19,23 @@ class CastVoteRepository: CastVoteRepositoryProtocol {
     self.authClient = authClient
   }
 
+  // swiftlint: disable function_body_length
   func castVote(for request: CastVoteQuery) async -> Result<SmileyGameResultResponse, CastVoteError> {
     guard let baseURL = httpService.baseURL else {
       return .failure(.network(.invalidRequest))
     }
     var httpHeaders = [String: String]()
     do {
-      let appcheckToken = try await firebaseService.fetchAppCheckToken()
       guard let userIDToken = try await firebaseService.fetchUserIDToken() else {
         return .failure(.unknown("Failed to fetch user ID token"))
       }
       httpHeaders = [
         "Content-Type": "application/json",
-        "X-Firebase-AppCheck": appcheckToken,
         "Authorization": "Bearer \(userIDToken)"
       ]
+      if let appcheckToken = await firebaseService.fetchAppCheckToken() {
+        httpHeaders["X-Firebase-AppCheck"] = appcheckToken
+      }
     } catch {
       return .failure(.firebaseError(error))
     }
@@ -73,4 +75,5 @@ class CastVoteRepository: CastVoteRepositoryProtocol {
       }
     }
   }
+  // swiftlint: enable function_body_length
 }

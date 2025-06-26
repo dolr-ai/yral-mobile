@@ -52,7 +52,7 @@ import GRPC
 
   lazy var accountsRepository: AccountRepositoryProtocol = {
     AccountRepository(
-      httpService: HTTPService(),
+      httpService: HTTPService(baseURLString: appConfiguration.offchainBaseURLString),
       authClient: authClient)
   }()
 
@@ -105,7 +105,7 @@ import GRPC
   func makeAccountDIContainer() -> AccountDIContainer {
     return AccountDIContainer(
       dependencies: AccountDIContainer.Dependencies(
-        httpService: HTTPService(),
+        httpService: HTTPService(baseURLString: appConfiguration.offchainBaseURLString),
         authClient: authClient,
         crashReporter: crashReporter,
         accountUseCase: accountUseCase,

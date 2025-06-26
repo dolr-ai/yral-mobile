@@ -50,64 +50,46 @@ class AccountRepository: AccountRepositoryProtocol {
   }
 
   func delete() async -> Result<Void, AccountError> {
-    var videoIdsToRemove: [String] = []
-    let result = await getUserVideoIds(videoIdsToRemove: &videoIdsToRemove)
-    _ = await logout()
-    switch result {
-    case .success(let videoIdsToRemove):
-      do {
-        try KeychainHelper.storeSet(Set(videoIdsToRemove), for: DefaultAuthClient.Constants.keychainDeletedVideosKey)
-//        try KeychainHelper.deleteItem(for: DefaultAuthClient.Constants.keychainDeletedVideosKey)
-      } catch {
-        return .failure(AccountError.keychainError(error.localizedDescription))
-      }
+    do {
+      guard let baseURL = httpService.baseURL else { return .failure(.invalidInfo("No base URL found")) }
+      let delegatedWire = try authClient.generateNewDelegatedIdentityWireOneHour()
+      let swiftWire = try swiftDelegatedIdentityWire(from: delegatedWire)
+      let deleteAccountDTO = DeleteAccountDTO(delegatedIdentityWire: swiftWire)
+      let endpoint = Endpoint(
+        http: "",
+        baseURL: baseURL,
+        path: Constants.deleteAccountPath,
+        method: .delete,
+        headers: ["Content-Type": "application/json"],
+        body: try JSONEncoder().encode(deleteAccountDTO)
+      )
+      _ = try await httpService.performRequest(for: endpoint)
+      _ = await logout()
       return .success(())
-    case .failure(let failure):
-      return .failure(failure)
+    } catch {
+      switch error {
+      case let netErr as NetworkError:
+        return .failure(AccountError.networkError(netErr.localizedDescription))
+      case let authErr as AuthError:
+        return .failure(AccountError.authError(authErr))
+      default:
+        return .failure(.unknown(error.localizedDescription))
+      }
     }
   }
 
-  private func getUserVideoIds(
-    startIndex: UInt64 = .zero,
-    offset: UInt64 = Constants.offset,
-    videoIdsToRemove: inout [String]
-  ) async -> Result<[String], AccountError> {
-    var startIndex = startIndex
-
-    guard let principalString = authClient.canisterPrincipalString else {
-      return .failure(AccountError.authError(AuthError.invalidRequest("No canister principal")))
+  private func swiftDelegatedIdentityWire(from rustWire: DelegatedIdentityWire) throws -> SwiftDelegatedIdentityWire {
+    let wireJsonString = delegated_identity_wire_to_json(rustWire).toString()
+    guard let data = wireJsonString.data(using: .utf8) else {
+      throw AuthError.authenticationFailed("Failed to convert wire JSON string to Data")
     }
-    do {
-      let identity = try self.authClient.generateNewDelegatedIdentity()
-      let principal = try get_principal(principalString)
-      let service = try Service(principal, identity)
-      let result = try await service.get_posts_of_this_user_profile_with_pagination_cursor(
-        startIndex,
-        offset
-      )
-      if result.is_ok() {
-        guard let postResult = result.ok_value() else { return .success([String]()) }
-        videoIdsToRemove += postResult.map { postDetail in
-          postDetail.video_uid().toString()
-        }
-        startIndex += offset
-        return await getUserVideoIds(startIndex: startIndex, offset: offset, videoIdsToRemove: &videoIdsToRemove)
-      } else {
-        guard let error = result.err_value() else { return .failure(AccountError.unknown("Invalid state")) }
-        if error.is_reached_end_of_items_list() {
-          return .success(videoIdsToRemove)
-        } else {
-          return .failure(AccountError.unknown("Invalid state"))
-        }
-      }
-    } catch {
-      return .failure(AccountError.rustError(RustError.unknown(error.localizedDescription)))
-    }
+    return try JSONDecoder().decode(SwiftDelegatedIdentityWire.self, from: data)
   }
 }
 
 extension AccountRepository {
   enum Constants {
     static let offset: UInt64 = 10
+    static let deleteAccountPath = "/api/v1/user"
   }
 }
