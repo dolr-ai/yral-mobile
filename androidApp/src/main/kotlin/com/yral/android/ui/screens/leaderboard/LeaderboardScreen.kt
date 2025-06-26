@@ -242,7 +242,8 @@ private fun getProfileImageForTrophy(
 ): String {
     val users = leaderboard.filter { it.rank == rank }
     return if (users.size == 1) {
-        users[0].profileImage
+        // users[0].profileImage
+        ""
     } else {
         ""
     }
