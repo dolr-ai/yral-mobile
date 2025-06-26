@@ -7,7 +7,8 @@ import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.crashlytics.core.CrashlyticsManager
-import com.yral.shared.features.auth.AuthClient
+import com.yral.shared.features.auth.AuthClientFactory
+import com.yral.shared.features.auth.YralAuthException
 import com.yral.shared.rust.services.IndividualUserServiceFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -28,12 +29,22 @@ enum class RootError {
 @Suppress("TooGenericExceptionCaught")
 class RootViewModel(
     appDispatchers: AppDispatchers,
-    private val authClient: AuthClient,
+    authClientFactory: AuthClientFactory,
     private val sessionManager: SessionManager,
     private val individualUserServiceFactory: IndividualUserServiceFactory,
     private val crashlyticsManager: CrashlyticsManager,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.io)
+
+    private val authClient =
+        authClientFactory
+            .create(coroutineScope) { e ->
+                // for async calls after setSession
+                // updateSessionAsRegistered, FirebaseAuth/Coin balance update
+                _state.update { it.copy(error = RootError.TIMEOUT) }
+                Logger.e("Auth error - $e")
+                crashlyticsManager.recordException(e)
+            }
 
     internal var splashScreenTimeout: Long = SPLASH_SCREEN_TIMEOUT
     internal var initialDelayForSetup: Long = INITIAL_DELAY_FOR_SETUP
@@ -65,9 +76,10 @@ class RootViewModel(
                         YralException("Splash screen timeout - initialization took too long"),
                     )
                     throw e
-                } catch (e: YralException) {
+                } catch (e: YralAuthException) {
+                    // for async calls before setSession
                     _state.update { it.copy(error = RootError.TIMEOUT) }
-                    Logger.e("Splash screen error - $e")
+                    Logger.e("Auth error - $e")
                     crashlyticsManager.recordException(e)
                 }
             }
