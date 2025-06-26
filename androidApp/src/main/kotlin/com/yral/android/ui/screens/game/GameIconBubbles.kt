@@ -62,5 +62,4 @@ private fun GameIcon.getBubbleResource(): Int =
         GameIconNames.FIRE -> R.raw.smiley_game_fire
         GameIconNames.SURPRISE -> R.raw.smiley_game_surprise
         GameIconNames.ROCKET -> R.raw.smiley_game_rocket
-        else -> 0
     }
