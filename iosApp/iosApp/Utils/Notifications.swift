@@ -10,4 +10,5 @@ import Foundation
 extension Notification.Name {
   static let eulaAcceptedChanged = Notification.Name("yral.eulaAcceptedChanged")
   static let feedItemReady = Notification.Name("yral.feedItemReady")
+  static let appAuthenticated = Notification.Name("yral.appAuthenticated")
 }

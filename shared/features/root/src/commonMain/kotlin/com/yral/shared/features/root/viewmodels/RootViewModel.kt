@@ -1,25 +1,30 @@
 package com.yral.shared.features.root.viewmodels
 
 import androidx.lifecycle.ViewModel
-import com.github.michaelbull.result.mapBoth
+import co.touchlab.kermit.Logger
 import com.yral.shared.core.dispatchers.AppDispatchers
+import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.AuthClient
-import com.yral.shared.features.feed.useCases.FetchFeedDetailsUseCase
-import com.yral.shared.features.feed.useCases.GetInitialFeedUseCase
-import com.yral.shared.features.feed.viewmodel.FeedViewModel
-import com.yral.shared.koin.koinInstance
-import com.yral.shared.rust.domain.models.FeedDetails
-import com.yral.shared.rust.domain.models.Post
 import com.yral.shared.rust.services.IndividualUserServiceFactory
+import com.yral.shared.uniffi.generated.FfiException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.koin.core.parameter.parametersOf
+import kotlinx.coroutines.withTimeout
+
+enum class RootError {
+    TIMEOUT,
+}
 
 @Suppress("TooGenericExceptionCaught")
 class RootViewModel(
@@ -27,124 +32,93 @@ class RootViewModel(
     private val authClient: AuthClient,
     private val sessionManager: SessionManager,
     private val individualUserServiceFactory: IndividualUserServiceFactory,
-    private val getInitialFeedUseCase: GetInitialFeedUseCase,
-    private val fetchFeedDetailsUseCase: FetchFeedDetailsUseCase,
     private val crashlyticsManager: CrashlyticsManager,
 ) : ViewModel() {
-    private val coroutineScope = CoroutineScope(appDispatchers.io)
+    private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.io)
+
+    internal var splashScreenTimeout: Long = SPLASH_SCREEN_TIMEOUT
+    internal var initialDelayForSetup: Long = INITIAL_DELAY_FOR_SETUP
 
     companion object {
-        const val MIN_REQUIRED_ITEMS = 1
+        const val SPLASH_SCREEN_TIMEOUT = 20000L // 20 seconds timeout
+        const val INITIAL_DELAY_FOR_SETUP = 300L
     }
 
     private val _state = MutableStateFlow(RootState())
     val state: StateFlow<RootState> = _state.asStateFlow()
     val sessionManagerState = sessionManager.state
 
+    private var initialisationJob: Job? = null
+
     fun initialize() {
-        coroutineScope.launch {
-            _state.emit(
-                RootState(
-                    currentSessionState = sessionManager.state.value,
-                    currentHomePageTab = _state.value.currentHomePageTab,
-                    initialAnimationComplete = _state.value.initialAnimationComplete,
-                ),
-            )
-            try {
-                if (sessionManager.getCanisterPrincipal() != null) {
-                    initialFeedData(sessionManager.getUserPrincipal()!!)
-                } else {
-                    authClient.initialize()
-                    sessionManager.getCanisterPrincipal()?.let { principal ->
-                        sessionManager.getIdentity()?.let { identity ->
-                            individualUserServiceFactory.initialize(
-                                principal = principal,
-                                identityData = identity,
-                            )
-                        } ?: error("Identity is null")
-                    } ?: error("Principal is null after initialization")
+        initialisationJob?.cancel()
+        initialisationJob =
+            coroutineScope.launch {
+                _state.update {
+                    RootState(
+                        currentSessionState = sessionManager.state.value,
+                        currentHomePageTab = it.currentHomePageTab,
+                        initialAnimationComplete = it.initialAnimationComplete,
+                        error = null,
+                    )
                 }
-            } catch (e: Exception) {
-                crashlyticsManager.recordException(e)
-            }
-        }
-    }
-
-    private suspend fun initialFeedData(principal: String) {
-        getInitialFeedUseCase
-            .invoke(
-                parameter =
-                    GetInitialFeedUseCase.Params(
-                        canisterID = principal,
-                        filterResults = emptyList(),
-                    ),
-            ).mapBoth(
-                success = { result ->
-                    val posts = result.posts
-                    _state.emit(
-                        _state.value.copy(
-                            posts = posts,
-                        ),
-                    )
-                    if (posts.isNotEmpty()) {
-                        posts.take(MIN_REQUIRED_ITEMS).forEach { post -> fetchFeedDetail(post) }
+                try {
+                    withTimeout(splashScreenTimeout) {
+                        checkLoginAndInitialize()
                     }
-                },
-                failure = { _ ->
-                    // No need to throw error, BaseUseCase reports to CrashlyticsManager
-                    // error("Error loading initial posts: $error")
-                },
-            )
+                } catch (e: TimeoutCancellationException) {
+                    _state.update { it.copy(error = RootError.TIMEOUT) }
+                    Logger.e("Splash timeout - ${e.message}")
+                    crashlyticsManager.recordException(
+                        YralException("Splash screen timeout - initialization took too long"),
+                    )
+                    throw e
+                } catch (e: YralException) {
+                    _state.update { it.copy(error = RootError.TIMEOUT) }
+                    Logger.e("Splash screen error - ${e.message}")
+                    crashlyticsManager.recordException(
+                        YralException("Splash screen error - ${e.message}"),
+                    )
+                } catch (e: FfiException) {
+                    _state.update { it.copy(error = RootError.TIMEOUT) }
+                    Logger.e("Splash screen on chain error - ${e.message}")
+                    crashlyticsManager.recordException(
+                        YralException("Splash screen on chain error - ${e.message}"),
+                    )
+                }
+            }
     }
 
-    private suspend fun fetchFeedDetail(post: Post) {
-        fetchFeedDetailsUseCase
-            .invoke(post)
-            .mapBoth(
-                success = { detail ->
-                    val feedDetailsList = _state.value.feedDetails.toMutableList()
-                    feedDetailsList.add(detail)
-                    _state.emit(
-                        _state.value.copy(
-                            feedDetails = feedDetailsList.toList(),
-                            showSplash = feedDetailsList.size < MIN_REQUIRED_ITEMS,
-                        ),
-                    )
-                },
-                failure = { _ ->
-                    // No need to throw error, BaseUseCase reports to CrashlyticsManager
-                    // error("Error loading initial posts: $error")
-                },
-            )
+    private suspend fun checkLoginAndInitialize() {
+        delay(initialDelayForSetup)
+        sessionManager.getCanisterPrincipal()?.let { principal ->
+            sessionManager.getIdentity()?.let { identity ->
+                individualUserServiceFactory.initialize(
+                    principal = principal,
+                    identityData = identity,
+                )
+                _state.update { it.copy(showSplash = false) }
+            } ?: authClient.initialize()
+        } ?: authClient.initialize()
     }
 
     fun onSplashAnimationComplete() {
         coroutineScope.launch {
-            _state.emit(_state.value.copy(initialAnimationComplete = true))
+            _state.update { it.copy(initialAnimationComplete = true) }
         }
     }
 
-    fun createFeedViewModel(): FeedViewModel =
-        koinInstance.get<FeedViewModel> {
-            parametersOf(_state.value.posts, _state.value.feedDetails)
-        }
-
     fun updateCurrentTab(tab: String) {
         coroutineScope.launch {
-            _state.emit(
-                _state.value.copy(
-                    currentHomePageTab = tab,
-                ),
-            )
+            _state.update { it.copy(currentHomePageTab = tab) }
         }
     }
 }
 
 data class RootState(
-    val posts: List<Post> = emptyList(),
-    val feedDetails: List<FeedDetails> = emptyList(),
     val showSplash: Boolean = true,
     val initialAnimationComplete: Boolean = false,
     val currentHomePageTab: String = "Home",
     val currentSessionState: SessionState? = null,
+    val error: RootError? = null,
 )

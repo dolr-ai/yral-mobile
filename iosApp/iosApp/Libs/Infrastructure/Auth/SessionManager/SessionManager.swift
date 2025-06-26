@@ -7,6 +7,7 @@
 //
 import Foundation
 import Combine
+import iosSharedUmbrella
 
 @MainActor
 final class SessionManager: ObservableObject {
@@ -17,5 +18,34 @@ final class SessionManager: ObservableObject {
     bag = auth.authStatePublisher
       .receive(on: RunLoop.main)
       .assign(to: \.state, on: self)
+  }
+
+  func update(coins: UInt64) {
+    switch state {
+    case .ephemeralAuthentication(let userPrincipal, let canisterPrincipal, _):
+      state = .ephemeralAuthentication(userPrincipal: userPrincipal, canisterPrincipal: canisterPrincipal, coins: coins)
+      AnalyticsModuleKt.getAnalyticsManager().setUserProperties(
+        user: User(
+          userId: userPrincipal,
+          canisterId: canisterPrincipal,
+          userType: UserType.theNew,
+          tokenWalletBalance: Double(coins),
+          tokenType: TokenType.sats
+        )
+      )
+    case .permanentAuthentication(let userPrincipal, let canisterPrincipal, _):
+      state = .permanentAuthentication(userPrincipal: userPrincipal, canisterPrincipal: canisterPrincipal, coins: coins)
+      AnalyticsModuleKt.getAnalyticsManager().setUserProperties(
+        user: User(
+          userId: userPrincipal,
+          canisterId: canisterPrincipal,
+          userType: UserType.existing,
+          tokenWalletBalance: Double(coins),
+          tokenType: TokenType.sats
+        )
+      )
+    default:
+      break
+    }
   }
 }

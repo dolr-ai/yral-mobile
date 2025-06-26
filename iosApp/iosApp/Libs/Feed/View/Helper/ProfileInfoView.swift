@@ -35,6 +35,10 @@ class ProfileInfoView: UIView, ImageLoaderProtocol {
     return label
   }()
 
+  let coinsView = CoinsView()
+
+  var profileInfo: ProfileInfo?
+
   override init(frame: CGRect) {
     super.init(frame: .zero)
     setupUI()
@@ -44,13 +48,10 @@ class ProfileInfoView: UIView, ImageLoaderProtocol {
     fatalError("init(coder:) has not been implemented")
   }
 
-  override func layoutSubviews() {
-    addGradientLayer()
-  }
-
   func setupUI() {
     self.translatesAutoresizingMaskIntoConstraints = false
     addImageView()
+    addCoinsView()
     addTitleLabel()
     addSubtitleLabel()
   }
@@ -65,10 +66,19 @@ class ProfileInfoView: UIView, ImageLoaderProtocol {
     ])
   }
 
+  func addCoinsView() {
+    addSubview(coinsView)
+    NSLayoutConstraint.activate([
+      coinsView.trailingAnchor.constraint(equalTo: trailingAnchor),
+      coinsView.centerYAnchor.constraint(equalTo: imageView.centerYAnchor)
+    ])
+  }
+
   func addTitleLabel() {
     addSubview(titleLabel)
     NSLayoutConstraint.activate([
       titleLabel.leadingAnchor.constraint(equalTo: imageView.trailingAnchor, constant: Constants.labelLeading),
+      titleLabel.trailingAnchor.constraint(equalTo: coinsView.leadingAnchor, constant: -Constants.labelTrailing),
       titleLabel.heightAnchor.constraint(equalToConstant: Constants.titleLabelHeight),
       titleLabel.topAnchor.constraint(equalTo: imageView.topAnchor)
     ])
@@ -78,26 +88,15 @@ class ProfileInfoView: UIView, ImageLoaderProtocol {
     addSubview(subtitleLabel)
     NSLayoutConstraint.activate([
       subtitleLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
+      subtitleLabel.trailingAnchor.constraint(equalTo: titleLabel.trailingAnchor),
       subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor),
       subtitleLabel.heightAnchor.constraint(equalToConstant: Constants.subtitleLabelHeight)
     ])
   }
 
-  func addGradientLayer() {
-    if let existingGradient = layer.sublayers?.first(where: { $0 is CAGradientLayer }) {
-      existingGradient.frame = bounds
-      return
-    }
-    let gradientLayer = CAGradientLayer()
-    gradientLayer.frame = bounds
-    gradientLayer.cornerRadius = layer.cornerRadius
-    gradientLayer.colors = [Constants.gradientStartColor, Constants.gradientEndColor]
-    gradientLayer.startPoint = CGPoint(x: .zero, y: .half)
-    gradientLayer.endPoint = CGPoint(x: .one, y: .half)
-    layer.insertSublayer(gradientLayer, at: .zero)
-  }
-
   func set(data: ProfileInfo) {
+    profileInfo = data
+
     if let imageURL = data.imageURL {
       loadImage(with: imageURL, placeholderImage: nil, on: imageView)
     } else {
@@ -105,12 +104,18 @@ class ProfileInfoView: UIView, ImageLoaderProtocol {
     }
     titleLabel.text = data.title
     subtitleLabel.text = data.subtitle
+    coinsView.set(coins: data.coins)
+  }
+
+  func updateCoins(by newCoins: Int) {
+    coinsView.updateCoins(by: newCoins)
   }
 
   struct ProfileInfo {
     let imageURL: URL?
     let title: String
     let subtitle: String
+    var coins: UInt64
   }
 }
 
@@ -127,8 +132,7 @@ extension ProfileInfoView {
     static let imageViewLeading = 8.0
     static let imageViewTop = 8.0
     static let labelLeading = 12.0
-    static let gradientStartColor = UIColor.black.cgColor
-    static let gradientEndColor = UIColor(red: 0.4, green: 0.4, blue: 0.4, alpha: 0).cgColor
+    static let labelTrailing = 12.0
     static let defaultProfileImage = UIImage(named: "default_profile")
   }
 }

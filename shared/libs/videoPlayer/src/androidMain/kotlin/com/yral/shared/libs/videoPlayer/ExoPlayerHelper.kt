@@ -2,6 +2,7 @@ package com.yral.shared.libs.videoPlayer
 
 import android.content.Context
 import android.view.ViewGroup
+import androidx.annotation.OptIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -16,19 +17,21 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DefaultHttpDataSource
-import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.LoadControl
 import androidx.media3.exoplayer.hls.HlsMediaSource
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
+import com.yral.shared.libs.videoPlayer.model.PlayerData
+import com.yral.shared.libs.videoPlayer.pool.PlatformPlayer
+import com.yral.shared.libs.videoPlayer.pool.PlayerPool
+import com.yral.shared.libs.videoPlayer.pool.VideoListener
 import com.yral.shared.libs.videoPlayer.util.isHlsUrl
 
-@androidx.annotation.OptIn(UnstableApi::class)
+@OptIn(UnstableApi::class)
 @Composable
 fun rememberPlayerView(
     exoPlayer: ExoPlayer,
@@ -57,7 +60,7 @@ fun rememberPlayerView(
     return playerView
 }
 
-@androidx.annotation.OptIn(UnstableApi::class)
+@OptIn(UnstableApi::class)
 @Composable
 fun rememberExoPlayerWithLifecycle(
     url: String,
@@ -65,7 +68,6 @@ fun rememberExoPlayerWithLifecycle(
     isPause: Boolean,
 ): ExoPlayer {
     val lifecycleOwner = LocalLifecycleOwner.current
-
     val exoPlayer =
         remember(context) {
             val renderersFactory =
@@ -81,31 +83,17 @@ fun rememberExoPlayerWithLifecycle(
                     videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT
                     repeatMode = Player.REPEAT_MODE_OFF
                     setHandleAudioBecomingNoisy(true)
+                    playWhenReady = false
+                    setForegroundMode(false)
                 }
         }
-    LaunchedEffect(url) {
-        val videoUri = url.toUri()
-        val mediaItem = MediaItem.fromUri(videoUri)
 
-        // Reset the player to the start
-        exoPlayer.seekTo(0, 0)
-
-        // Prepare the appropriate media source based on the URL type
-        val mediaSource =
-            if (isHlsUrl(url)) {
-                createHlsMediaSource(mediaItem)
-            } else {
-                createProgressiveMediaSource(mediaItem, context)
-            }
-
-        exoPlayer.setMediaSource(mediaSource)
-        exoPlayer.prepare()
-    }
+    // Performance tracing and media setup - consolidated to ensure proper timing
+    rememberMediaSetup(url, exoPlayer, context)
 
     var appInBackground by remember {
         mutableStateOf(false)
     }
-
     DisposableEffect(key1 = lifecycleOwner, appInBackground) {
         val lifecycleObserver =
             getExoPlayerLifecycleObserver(exoPlayer, isPause, appInBackground) {
@@ -116,82 +104,89 @@ fun rememberExoPlayerWithLifecycle(
             lifecycleOwner.lifecycle.removeObserver(lifecycleObserver)
         }
     }
+
     return exoPlayer
 }
 
-@androidx.annotation.OptIn(UnstableApi::class)
+@OptIn(UnstableApi::class)
 @Composable
-fun rememberPrefetchExoPlayerWithLifecycle(
+private fun rememberMediaSetup(
     url: String,
+    exoPlayer: ExoPlayer,
     context: Context,
-    loadControl: LoadControl =
-        DefaultLoadControl
-            .Builder()
-            .setBufferDurationsMs(
-                MIN_BUFFER_MS,
-                MIN_BUFFER_MS,
-                BUFFER_MS_FOR_PLAYBACK,
-                BUFFER_MS_FOR_PLAYBACK,
-            ).build(),
-): ExoPlayer? {
-    if (url.isEmpty()) return null
-    val lifecycleOwner = LocalLifecycleOwner.current
-    val exoPlayer =
-        remember(context) {
-            val renderersFactory =
-                DefaultRenderersFactory(context)
-                    .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER)
-                    .setEnableDecoderFallback(true)
-            ExoPlayer
-                .Builder(context)
-                .setLoadControl(loadControl)
-                .setMediaSourceFactory(DefaultMediaSourceFactory(context))
-                .setRenderersFactory(renderersFactory)
-                .build()
-                .apply {
-                    videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT
-                    repeatMode = Player.REPEAT_MODE_OFF
-                    setHandleAudioBecomingNoisy(true)
-                }
-        }
+) {
+    // Consolidated LaunchedEffect for both media setup and tracing to ensure proper timing
     LaunchedEffect(url) {
-        val videoUri = url.toUri()
-        val mediaItem = MediaItem.fromUri(videoUri)
+        if (url.isNotEmpty()) {
+            // set up media source after traces have been started
+            val videoUri = url.toUri()
+            val mediaItem = MediaItem.fromUri(videoUri)
+            // Reset the player to the start
+            exoPlayer.seekTo(0, 0)
+            // Prepare the appropriate media source based on the URL type
+            val mediaSource =
+                if (isHlsUrl(url)) {
+                    createHlsMediaSource(mediaItem)
+                } else {
+                    createProgressiveMediaSource(mediaItem, context)
+                }
 
-        // Reset the player to the start
-        exoPlayer.seekTo(0, 0)
+            exoPlayer.setMediaSource(mediaSource)
+            exoPlayer.prepare()
+        }
+    }
+}
 
-        // Prepare the appropriate media source based on the URL type
-        val mediaSource =
-            if (isHlsUrl(url)) {
-                createHlsMediaSource(mediaItem)
-            } else {
-                createProgressiveMediaSource(mediaItem, context)
-            }
+@OptIn(UnstableApi::class)
+@Suppress("LongMethod")
+@Composable
+fun rememberPooledExoPlayer(
+    playerData: PlayerData,
+    playerPool: PlayerPool,
+    isPause: Boolean,
+    videoListener: VideoListener?,
+): ExoPlayer? {
+    var platformPlayer: PlatformPlayer? by remember { mutableStateOf(null) }
+    var exoPlayer: ExoPlayer? by remember { mutableStateOf(null) }
 
-        exoPlayer.setMediaSource(mediaSource)
-        exoPlayer.prepare()
+    // Get player from pool when URL changes
+    LaunchedEffect(playerData.url, playerPool) {
+        if (playerData.url.isNotEmpty()) {
+            platformPlayer =
+                playerPool
+                    .getPlayer(
+                        playerData = playerData,
+                        videoListener = videoListener,
+                    )
+            exoPlayer = platformPlayer?.internalExoPlayer
+        }
     }
 
+    // Note: Performance tracing is now handled internally by the PlayerPool
+    // No need for additional tracing here to avoid duplicates
+
+    val lifecycleOwner = LocalLifecycleOwner.current
     var appInBackground by remember {
         mutableStateOf(false)
     }
-
-    DisposableEffect(key1 = lifecycleOwner, appInBackground) {
-        val lifecycleObserver =
-            getExoPlayerLifecycleObserver(exoPlayer, true, appInBackground) {
-                appInBackground = it
+    exoPlayer?.let {
+        DisposableEffect(key1 = lifecycleOwner, appInBackground) {
+            val lifecycleObserver =
+                getExoPlayerLifecycleObserver(it, isPause, appInBackground) {
+                    appInBackground = it
+                }
+            lifecycleOwner.lifecycle.addObserver(lifecycleObserver)
+            onDispose {
+                lifecycleOwner.lifecycle.removeObserver(lifecycleObserver)
             }
-        lifecycleOwner.lifecycle.addObserver(lifecycleObserver)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(lifecycleObserver)
         }
     }
+
     return exoPlayer
 }
 
-@androidx.annotation.OptIn(UnstableApi::class)
-private fun createHlsMediaSource(mediaItem: MediaItem): MediaSource {
+@OptIn(UnstableApi::class)
+internal fun createHlsMediaSource(mediaItem: MediaItem): MediaSource {
     val dataSourceFactory =
         DefaultHttpDataSource
             .Factory()
@@ -199,8 +194,8 @@ private fun createHlsMediaSource(mediaItem: MediaItem): MediaSource {
     return HlsMediaSource.Factory(dataSourceFactory).createMediaSource(mediaItem)
 }
 
-@androidx.annotation.OptIn(UnstableApi::class)
-private fun createProgressiveMediaSource(
+@OptIn(UnstableApi::class)
+internal fun createProgressiveMediaSource(
     mediaItem: MediaItem,
     context: Context,
 ): MediaSource =
@@ -210,6 +205,3 @@ private fun createProgressiveMediaSource(
                 .getInstance(context)
                 .cacheFactory,
         ).createMediaSource(mediaItem)
-
-private const val MIN_BUFFER_MS = 5000
-private const val BUFFER_MS_FOR_PLAYBACK = 1000

@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import iosSharedUmbrella
 
 struct SelectFileView: View {
   @Binding var showVideoPicker: Bool
@@ -21,7 +22,12 @@ struct SelectFileView: View {
           .font(Constants.fileSizeFont)
           .foregroundColor(Constants.fileSizeColor)
       }
-      Button { showVideoPicker = true }
+      Button {
+        AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+          event: SelectFileClickedEventData()
+        )
+        showVideoPicker = true
+      }
       label: {
         Text(Constants.selectFileText)
           .font(Constants.selectFileFont)

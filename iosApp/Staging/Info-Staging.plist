@@ -32,8 +32,18 @@
 	</array>
 	<key>CFBundleVersion</key>
 	<string>1</string>
+	<key>FIREBASE_CLOUD_BASE_URL</key>
+	<string>https://us-central1-yral-staging.cloudfunctions.net/</string>
+	<key>FacebookAppID</key>
+	<string>4094678660808510</string>
+	<key>FacebookClientToken</key>
+	<string></string>
+	<key>FacebookDisplayName</key>
+	<string>Yral</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>MIXPANEL_TOKEN</key>
+	<string>9f7ce647e4b8548dc3cd5b16a98c9ade</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Yral requires camera access to allow to record and upload videos. Your camera will only be used when you choose to create a new video.</string>
 	<key>NSMicrophoneUsageDescription</key>
@@ -74,5 +84,7 @@
 	</array>
 	<key>UIUserInterfaceStyle</key>
 	<string>Light</string>
+	<key>YRAL_REDIRECT_URI</key>
+	<string>com.yral.iosApp.staging://oauth/callback</string>
 </dict>
 </plist>

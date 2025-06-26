@@ -13,23 +13,22 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_21)
         }
     }
-//    listOf(
-//        iosX64(),
-//        iosArm64(),
-//        iosSimulatorArm64()
-//    ).forEach {
-//        it.binaries.framework {
-//            baseName = "shared"
-//            isStatic = true
-//        }
-//    }
+    listOf(
+        iosArm64(),
+        iosSimulatorArm64()
+    ).forEach {
+        it.binaries.framework {
+            baseName = "shared_http"
+            isStatic = true
+        }
+    }
 
     sourceSets {
         androidMain.dependencies {
+            api(libs.ktor.client.okhttp)
         }
         commonMain.dependencies {
             api(libs.ktor.client.core)
-            api(libs.ktor.client.cio)
             api(libs.ktor.client.logging)
             api(libs.ktor.client.content.negotiation)
             api(libs.ktor.json)
@@ -41,6 +40,9 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+        }
+        iosMain.dependencies {
+            implementation(libs.ktor.client.darwin)
         }
     }
 }

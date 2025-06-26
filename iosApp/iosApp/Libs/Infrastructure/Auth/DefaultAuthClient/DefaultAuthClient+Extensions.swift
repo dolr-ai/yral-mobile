@@ -8,6 +8,7 @@
 import Foundation
 import Combine
 import AuthenticationServices
+import iosSharedUmbrella
 
 extension DefaultAuthClient {
   @discardableResult
@@ -62,16 +63,31 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
         let verifier = PKCE.generateCodeVerifier()
         let challenge = PKCE.codeChallenge(for: verifier)
         let redirect = Constants.redirectURI
-        let authURL = try getAuthURL(provider: provider,
-                                       redirect: redirect,
-                                       challenge: challenge,
-                                       loginHint: nil)
+        guard let data = identityData else {
+          throw NetworkError.invalidResponse("No identity data available.")
+        }
+        let loginHint = try data.withUnsafeBytes { (buffer: UnsafeRawBufferPointer) in
+          if buffer.count > 0 {
+            let uint8Buffer = buffer.bindMemory(to: UInt8.self)
+            return try yral_auth_login_hint(uint8Buffer).toString()
+          }
+          return ""
+        }
+        let authURL = try getAuthURL(
+          provider: provider,
+          redirect: redirect,
+          challenge: challenge,
+          loginHint: loginHint
+        )
 
         let callbackURL: URL = try await withCheckedThrowingContinuation { continuation in
           let session = ASWebAuthenticationSession(
             url: authURL,
             callbackURLScheme: redirect.components(separatedBy: "://")[0]
           ) { url, error in
+            AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+              event: SignupInitiatedEventData(authJourney: provider.authJourney())
+            )
             if let error = error {
               continuation.resume(throwing: error)
             } else if let url = url {
@@ -100,8 +116,25 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
           redirectURI: redirect
         )
         try storeTokens(token)
+        try firebaseService.signOut()
+        let oldPrincipal = self.userPrincipalString
         try await processDelegatedIdentity(from: token, type: .permanent)
         UserDefaultsManager.shared.set(true, for: .userDefaultsLoggedIn)
+        if oldPrincipal == self.canisterPrincipalString {
+          AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+            event: SignupSuccessEventData(
+              isReferral: false,
+              referralUserID: "",
+              authJourney: provider.authJourney()
+            )
+          )
+        } else {
+          AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+            event: LoginSuccessEventData(
+              authJourney: provider.authJourney()
+            )
+          )
+        }
         guard let canisterPrincipalString = self.canisterPrincipalString else { return }
         Task {
           do {
@@ -129,6 +162,7 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
     ) else { throw AuthError.invalidRequest("Invalid url components") }
     comps.queryItems = [
       .init(name: "provider", value: provider.rawValue),
+      .init(name: "login_hint", value: loginHint),
       .init(name: "client_id", value: Constants.clientID),
       .init(name: "response_type", value: "code"),
       .init(name: "response_mode", value: "query"),
@@ -214,16 +248,24 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
 extension DefaultAuthClient {
   enum Constants {
     static let clientID = "e1a6a7fb-8a1d-42dc-87b4-13ff94ecbe34"
-    static let redirectURI = "com.yral.iosApp://oauth/callback"
+    static var redirectURI: String {
+      guard let uri = Bundle.main.object(forInfoDictionaryKey: "YRAL_REDIRECT_URI") as? String,
+            !uri.isEmpty
+      else {
+        fatalError("YRAL_REDIRECT_URI missing from Info.plist")
+      }
+      return uri
+    }
     static let authPath = "/oauth/auth"
     static let tokenPath = "/oauth/token"
     static let keychainIdentity = "yral.delegatedIdentity"
+    static let keychainCanisterPrincipal = "yral.canisterPrincipal"
+    static let keychainUserPrincipal = "yral.userPrincipal"
     static let keychainAccessToken = "yral.accessToken"
     static let keychainIDToken = "yral.idToken"
     static let keychainRefreshToken = "yral.refreshToken"
     static let keychainTokenExpiryDateKey = "keychainTokenExpiryDate"
     static let temporaryIdentityExpirySecond: UInt64 = 3600
-    static let keychainDeletedVideosKey = "keychainDeletedVideosKey"
     static let yralMetaDataBaseURLString = "https://yral-metadata.fly.dev"
     static let sessionRegistrationPath = "/update_session_as_registered/"
   }
