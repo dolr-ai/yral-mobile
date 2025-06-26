@@ -2,7 +2,6 @@ package com.yral.android.ui.screens.feed
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,7 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -52,7 +50,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
-import coil3.compose.AsyncImage
 import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
@@ -64,6 +61,7 @@ import com.yral.android.ui.screens.game.CoinBalance
 import com.yral.android.ui.screens.game.GameResultSheet
 import com.yral.android.ui.screens.game.SmileyGame
 import com.yral.android.ui.widgets.PreloadLottieAnimation
+import com.yral.android.ui.widgets.YralAsyncImage
 import com.yral.android.ui.widgets.YralBottomSheet
 import com.yral.android.ui.widgets.YralButtonState
 import com.yral.android.ui.widgets.YralGradientButton
@@ -394,24 +392,12 @@ private fun UserBrief(
 
 @Composable
 private fun UserBriefProfileImage(profileImageUrl: Url?) {
-    val shape = RoundedCornerShape(size = 40.dp)
-    AsyncImage(
-        model = profileImageUrl.toString(),
-        contentDescription = "User picture",
-        contentScale = ContentScale.FillBounds,
-        modifier =
-            Modifier
-                .clip(shape)
-                .border(
-                    width = 2.dp,
-                    color = YralColors.Pink300,
-                    shape = shape,
-                ).width(40.dp)
-                .height(40.dp)
-                .background(
-                    color = YralColors.ProfilePicBackground,
-                    shape = shape,
-                ),
+    YralAsyncImage(
+        imageUrl = profileImageUrl.toString(),
+        size = 40.dp,
+        border = 2.dp,
+        borderColor = YralColors.Pink300,
+        backgroundColor = YralColors.ProfilePicBackground,
     )
 }
 

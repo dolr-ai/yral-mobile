@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomSheetDefaults.DragHandle
@@ -20,10 +19,10 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
 import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
+import com.yral.android.ui.widgets.YralAsyncImage
 import com.yral.android.ui.widgets.YralBottomSheet
 import com.yral.shared.features.game.domain.models.AboutGameBodyType
 import com.yral.shared.features.game.domain.models.AboutGameItem
@@ -92,13 +91,9 @@ private fun AboutGameItemTitle(rule: AboutGameItem) {
         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        AsyncImage(
-            model = rule.thumbnailUrl,
-            modifier =
-                Modifier
-                    .padding(0.75.dp)
-                    .size(36.dp),
-            contentDescription = "rule icon",
+        YralAsyncImage(
+            imageUrl = rule.thumbnailUrl,
+            size = 36.dp,
         )
         Text(
             text = rule.name,
@@ -133,12 +128,9 @@ private fun AboutGameItemRule(rule: AboutGameItem) {
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     bodyItem.imageUrls?.forEach { imageUrl ->
-                        AsyncImage(
-                            model = imageUrl,
-                            modifier =
-                                Modifier
-                                    .size(23.33.dp),
-                            contentDescription = "game icon",
+                        YralAsyncImage(
+                            imageUrl = imageUrl,
+                            size = 23.33.dp,
                         )
                     }
                 }

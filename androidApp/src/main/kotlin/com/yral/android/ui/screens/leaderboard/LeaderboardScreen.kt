@@ -31,7 +31,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -41,7 +40,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import coil3.compose.AsyncImage
 import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
@@ -49,6 +47,7 @@ import com.yral.android.ui.screens.leaderboard.LeaderboardScreenConstants.BRONZE
 import com.yral.android.ui.screens.leaderboard.LeaderboardScreenConstants.GOLDEN_TROPHY_SIZE
 import com.yral.android.ui.screens.leaderboard.LeaderboardScreenConstants.PROFILE_IMAGE_SIZE
 import com.yral.android.ui.screens.leaderboard.LeaderboardScreenConstants.SILVER_TROPHY_SIZE
+import com.yral.android.ui.widgets.YralAsyncImage
 import com.yral.android.ui.widgets.YralLoader
 import com.yral.android.ui.widgets.YralLottieAnimation
 import com.yral.android.ui.widgets.YralMaskedVectorTextV2
@@ -533,20 +532,11 @@ private fun UserBriefProfileImage(
     position: Int,
     size: Dp = PROFILE_IMAGE_SIZE.dp,
 ) {
-    val shape = RoundedCornerShape(size = size)
     Box(modifier = Modifier.wrapContentSize()) {
-        AsyncImage(
-            model = profileImageUrl,
-            contentDescription = "User picture",
-            contentScale = ContentScale.FillBounds,
-            modifier =
-                Modifier
-                    .clip(shape)
-                    .size(size)
-                    .background(
-                        color = YralColors.ProfilePicBackground,
-                        shape = shape,
-                    ),
+        YralAsyncImage(
+            imageUrl = profileImageUrl,
+            size = size,
+            backgroundColor = YralColors.ProfilePicBackground,
         )
         val profileImageRing = remember { getProfileImageRing(position) }
         if (profileImageRing > 0) {

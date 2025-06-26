@@ -12,11 +12,11 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
 import com.yral.android.R
 import com.yral.android.ui.screens.game.GameIconConstants.ANIMATION_DURATION
 import com.yral.android.ui.screens.game.GameIconConstants.ROTATION_DEGREE
 import com.yral.android.ui.screens.game.GameIconConstants.SCALING_FACTOR
+import com.yral.android.ui.widgets.YralAsyncImage
 import com.yral.shared.features.game.domain.models.GameIcon
 import com.yral.shared.features.game.domain.models.GameIconNames
 import kotlinx.coroutines.delay
@@ -85,18 +85,16 @@ fun AsyncGameIcon(
         delay(ANIMATION_DURATION)
         onAnimationComplete()
     }
-    AsyncImage(
-        model = icon.imageUrl,
+    YralAsyncImage(
+        imageUrl = icon.imageUrl,
         modifier =
             modifier
-                .size(46.dp)
                 .graphicsLayer(
                     rotationZ = rotation,
                     scaleX = scale,
                     scaleY = scale,
                 ),
-        contentDescription = "image description",
-        contentScale = ContentScale.FillBounds,
+        size = 46.dp,
         onError = { loadLocal() },
     )
 }
