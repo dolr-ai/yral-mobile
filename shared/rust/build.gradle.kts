@@ -1,3 +1,6 @@
+@file:OptIn(ExperimentalKotlinGradlePluginApi::class)
+
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -20,10 +23,10 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_21)
         }
     }
-    listOf(
-        iosArm64(),
-        iosSimulatorArm64()
-    )
+//    listOf(
+//        iosArm64(),
+//        iosSimulatorArm64()
+//    )
 
     sourceSets {
         commonMain.dependencies {
