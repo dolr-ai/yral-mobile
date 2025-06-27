@@ -1,7 +1,7 @@
 import org.gradle.api.Project
 
 object BuildConfig {
-    private const val YRAL_RUST = "1.3"
+    private const val YRAL_RUST = "1.4"
     private const val YRAL_RUST_DEBUG = "com.yral.shared:rust-android-debug"
     private const val YRAL_RUST_RELEASE = "com.yral.shared:rust-android"
     private val commonDependencies = emptyList<String>()
