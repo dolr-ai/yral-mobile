@@ -73,7 +73,10 @@ enum ToastType {
 extension ToastType {
   enum Constants {
     static let uploadSuccessTitle = "Video Uploaded"
-    static let uploadSuccessSubtitle = "Your video has been uploaded successfully. Browse and add more videos."
+    static let uploadSuccessSubtitle = """
+Your video has been uploaded successfully.
+Browse and add more videos.
+"""
     static let reportSuccessTitle = "Report Submitted!"
     static let reportSuccessSubtitle = "Thanks for letting us know! Our team will review this video soon."
     static let successSubtitleColor =  UIColor(red: 0.831, green: 0.831, blue: 0.831, alpha: 1)

@@ -9,7 +9,11 @@
 import UIKit
 
 final class ToastManager {
-  static func showToast(type: ToastType, onRetry: (() -> Void)? = nil) {
+  static func showToast(
+    type: ToastType,
+    onRetry: (() -> Void)? = nil,
+    onTap: (() -> Void)? = nil
+  ) {
     guard let windowScene = UIApplication.shared.connectedScenes
       .compactMap({ $0 as? UIWindowScene })
       .first(where: { $0.activationState == .foregroundActive }),
@@ -20,7 +24,7 @@ final class ToastManager {
     let safeAreaInsets = window.safeAreaInsets
     let toastWidth = window.bounds.width - (Constants.toastWidthDelta + safeAreaInsets.left + safeAreaInsets.right)
     let toastX = safeAreaInsets.left + (Constants.toastWidthDelta / 2)
-    let toastView = ToastView(type: type, buttonAction: onRetry)
+    let toastView = ToastView(type: type, buttonAction: onRetry, tapAction: onTap)
 
     toastView.frame = CGRect(
       x: toastX,
