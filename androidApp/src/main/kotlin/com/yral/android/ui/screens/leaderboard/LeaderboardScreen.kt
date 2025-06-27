@@ -80,7 +80,7 @@ fun LeaderboardScreen(
     Box(modifier = modifier) {
         LazyColumn(
             modifier =
-                modifier
+                Modifier
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.primaryContainer),
         ) {
@@ -150,7 +150,7 @@ private fun LeaderboardTableHeader() {
         modifier =
             Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 8.dp),
+                .padding(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -167,17 +167,14 @@ private fun LeaderboardTableHeader() {
             modifier =
                 Modifier
                     .weight(USER_DETAIL_WEIGHT)
-                    .padding(start = 8.dp),
+                    .padding(start = PROFILE_IMAGE_SIZE.dp + 8.dp),
             style = LocalAppTopography.current.regMedium,
             color = YralColors.Neutral500,
             maxLines = 1,
         )
         Text(
             text = stringResource(R.string.total_sats),
-            modifier =
-                Modifier
-                    .weight(COIN_BALANCE_WEIGHT)
-                    .padding(start = 8.dp),
+            modifier = Modifier.weight(COIN_BALANCE_WEIGHT),
             style = LocalAppTopography.current.regMedium,
             color = YralColors.Neutral500,
             maxLines = 1,
@@ -200,7 +197,7 @@ private fun TrophyGallery(leaderboard: List<LeaderboardItem>) {
             YralLottieAnimation(
                 modifier = Modifier.matchParentSize(),
                 rawRes = R.raw.leaderboard_star,
-                contentScale = ContentScale.Inside,
+                contentScale = ContentScale.FillBounds,
             )
         }
         // Header
@@ -531,6 +528,7 @@ private fun UserBriefPositionNumber(
             textStyle = LocalAppTopography.current.baseBold,
             modifier = Modifier.width(21.dp),
             textOverflow = TextOverflow.Ellipsis,
+            maxLines = 1,
         )
     } else {
         Text(
@@ -538,6 +536,7 @@ private fun UserBriefPositionNumber(
             style = LocalAppTopography.current.baseBold,
             color = YralColors.Neutral50,
             overflow = TextOverflow.Ellipsis,
+            maxLines = 1,
         )
     }
 }
@@ -610,7 +609,7 @@ private fun UserBriefProfileImage(
 }
 
 object LeaderboardScreenConstants {
-    const val POSITION_TEXT_WEIGHT = 0.1f
-    const val USER_DETAIL_WEIGHT = 0.65f
-    const val COIN_BALANCE_WEIGHT = 0.25f
+    const val POSITION_TEXT_WEIGHT = 0.17f
+    const val USER_DETAIL_WEIGHT = 0.55f
+    const val COIN_BALANCE_WEIGHT = 0.28f
 }
