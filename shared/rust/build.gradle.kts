@@ -38,16 +38,16 @@ kotlin {
             implementation(libs.kotlin.test)
         }
     }
+}
 
-    publishing {
-        repositories {
-            maven {
-                name = "GitHubPackages"
-                url = uri("https://maven.pkg.github.com/dolr-ai/yral-mobile")
-                credentials {
-                    username = System.getenv("GITHUB_USERNAME")
-                    password = System.getenv("GITHUB_TOKEN")
-                }
+publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/dolr-ai/yral-mobile")
+            credentials {
+                username = System.getenv("GITHUB_USERNAME")
+                password = System.getenv("GITHUB_TOKEN")
             }
         }
     }
