@@ -83,15 +83,12 @@ class GameViewModel(
 
     private suspend fun getGameIcons() {
         gameIconsUseCase
-            .invoke(
-                parameter =
-                    GetGameIconsUseCase.GetGameIconsParams(
-                        coinBalance = _state.value.coinBalance,
-                    ),
-            ).onSuccess { icons ->
+            .invoke(Unit)
+            .onSuccess { config ->
                 _state.update { currentState ->
                     currentState.copy(
-                        gameIcons = icons,
+                        gameIcons = config.availableSmileys,
+                        lossPenalty = config.lossPenalty,
                     )
                 }
             }.onFailure { }
@@ -275,6 +272,7 @@ class GameViewModel(
 }
 
 data class GameState(
+    val lossPenalty: Int = Int.MAX_VALUE,
     val gameIcons: List<GameIcon>,
     val gameResult: Map<String, Pair<GameIcon, VoteResult>> = emptyMap(),
     val coinBalance: Long,

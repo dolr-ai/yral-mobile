@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -25,93 +24,121 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.zIndex
-import coil3.compose.AsyncImage
 import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
-import com.yral.android.ui.screens.leaderboard.LeaderboardScreenConstants.BRONZE_TROPHY_SIZE
+import com.yral.android.ui.screens.leaderboard.LeaderboardHelpers.MAX_USERS_PRINCIPAL_LENGTH
+import com.yral.android.ui.screens.leaderboard.LeaderboardHelpers.MAX_USERS_WITH_DUPLICATE_RANK
+import com.yral.android.ui.screens.leaderboard.LeaderboardHelpers.PROFILE_IMAGE_SIZE
+import com.yral.android.ui.screens.leaderboard.LeaderboardHelpers.getProfileImageRing
+import com.yral.android.ui.screens.leaderboard.LeaderboardHelpers.getTextDecoration
+import com.yral.android.ui.screens.leaderboard.LeaderboardHelpers.getTrophyImageHeight
+import com.yral.android.ui.screens.leaderboard.LeaderboardHelpers.getTrophyImageOffset
+import com.yral.android.ui.screens.leaderboard.LeaderboardHelpers.getTrophyImageWidth
+import com.yral.android.ui.screens.leaderboard.LeaderboardHelpers.getUserBriefBorder
 import com.yral.android.ui.screens.leaderboard.LeaderboardScreenConstants.COIN_BALANCE_WEIGHT
-import com.yral.android.ui.screens.leaderboard.LeaderboardScreenConstants.GOLDEN_TROPHY_SIZE
 import com.yral.android.ui.screens.leaderboard.LeaderboardScreenConstants.POSITION_TEXT_WEIGHT
-import com.yral.android.ui.screens.leaderboard.LeaderboardScreenConstants.PROFILE_IMAGE_SIZE
-import com.yral.android.ui.screens.leaderboard.LeaderboardScreenConstants.SILVER_TROPHY_SIZE
-import com.yral.android.ui.screens.leaderboard.LeaderboardScreenConstants.TROPHY_GALLERY_SIZE
 import com.yral.android.ui.screens.leaderboard.LeaderboardScreenConstants.USER_DETAIL_WEIGHT
+import com.yral.android.ui.widgets.YralAsyncImage
 import com.yral.android.ui.widgets.YralLoader
 import com.yral.android.ui.widgets.YralLottieAnimation
 import com.yral.android.ui.widgets.YralMaskedVectorTextV2
-import com.yral.shared.features.game.domain.models.CurrentUserInfo
 import com.yral.shared.features.game.domain.models.LeaderboardItem
 import com.yral.shared.features.game.viewmodel.LeaderBoardViewModel
 
+@Suppress("LongMethod")
 @Composable
 fun LeaderboardScreen(
     modifier: Modifier = Modifier,
     viewModel: LeaderBoardViewModel,
 ) {
     val state by viewModel.state.collectAsState()
-    Column(
-        modifier =
-            modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.primaryContainer)
-                .padding(16.dp),
-    ) {
-        // Trophies
-        TrophyGallery(state.leaderboard)
-        // Table Header
-        LeaderboardTableHeader()
-        Spacer(modifier = Modifier.height(8.dp))
-        // Content
-        when {
-            state.isLoading -> {
-                Box(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .weight(1f),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    YralLoader()
-                }
+    LaunchedEffect(state.leaderboard, state.currentUser) {
+        val userWithSameBalance =
+            state
+                .leaderboard
+                .filter { it.coins == state.currentUser?.coins }
+        if (userWithSameBalance.isNotEmpty()) {
+            viewModel.updateCurrentUserRank(userWithSameBalance[0].rank)
+        }
+    }
+    Box(modifier = modifier) {
+        LazyColumn(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.primaryContainer),
+        ) {
+            // Trophies
+            item {
+                TrophyGallery(state.leaderboard)
             }
 
-            state.error != null -> {
-                Box(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .weight(1f),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = "Error: ${state.error}",
-                        color = Color.Red,
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                }
+            // Table Header
+            item {
+                Spacer(modifier = Modifier.height(16.dp))
+                LeaderboardTableHeader()
+                Spacer(modifier = Modifier.height(8.dp))
             }
 
-            else -> {
-                LeaderboardContent(
-                    leaderboard = state.leaderboard,
-                    currentUser = state.currentUser,
-                )
+            if (!state.isLoading && state.error == null) {
+                // Show current user first if available
+                state.currentUser?.let { user ->
+                    item {
+                        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                            LeaderboardRow(
+                                rank = user.rank,
+                                userPrincipalId = user.userPrincipalId,
+                                profileImageUrl = user.profileImageUrl,
+                                coins = user.coins,
+                                isCurrentUser = true,
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                        }
+                    }
+                }
+
+                // Leaderboard items
+                items(state.leaderboard) { item ->
+                    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                        LeaderboardRow(
+                            rank = item.rank,
+                            userPrincipalId = item.userPrincipalId,
+                            profileImageUrl = item.profileImage,
+                            coins = item.coins,
+                            isCurrentUser = false,
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+                }
+
+                // Bottom padding
+                item {
+                    Spacer(modifier = Modifier.height(68.dp))
+                }
+            }
+        }
+        if (state.isLoading) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+            ) {
+                YralLoader()
             }
         }
     }
@@ -132,18 +159,26 @@ private fun LeaderboardTableHeader() {
             modifier = Modifier.weight(POSITION_TEXT_WEIGHT),
             style = LocalAppTopography.current.regMedium,
             color = YralColors.Neutral500,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
         )
         Text(
             text = stringResource(R.string.player_id),
-            modifier = Modifier.weight(USER_DETAIL_WEIGHT),
+            modifier =
+                Modifier
+                    .weight(USER_DETAIL_WEIGHT)
+                    .padding(start = PROFILE_IMAGE_SIZE.dp + 8.dp),
             style = LocalAppTopography.current.regMedium,
             color = YralColors.Neutral500,
+            maxLines = 1,
         )
         Text(
             text = stringResource(R.string.total_sats),
             modifier = Modifier.weight(COIN_BALANCE_WEIGHT),
             style = LocalAppTopography.current.regMedium,
             color = YralColors.Neutral500,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }
@@ -151,21 +186,24 @@ private fun LeaderboardTableHeader() {
 @Suppress("MagicNumber")
 @Composable
 private fun TrophyGallery(leaderboard: List<LeaderboardItem>) {
-    val configuration = LocalConfiguration.current
-    val screenHeight = configuration.screenHeightDp
     Box(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .height((TROPHY_GALLERY_SIZE * screenHeight).dp),
+                .background(YralColors.Yellow400),
         contentAlignment = Alignment.TopCenter,
     ) {
-        YralLottieAnimation(
-            modifier = Modifier.fillMaxSize(),
-            rawRes = R.raw.leaderboard_star,
-        )
+        if (leaderboard.isNotEmpty()) {
+            YralLottieAnimation(
+                modifier = Modifier.matchParentSize(),
+                rawRes = R.raw.leaderboard_star,
+                contentScale = ContentScale.FillBounds,
+            )
+        }
         // Header
-        Column {
+        Column(
+            modifier = Modifier.padding(16.dp),
+        ) {
             Text(
                 text = stringResource(R.string.leaderboard),
                 style = LocalAppTopography.current.xlBold,
@@ -174,11 +212,11 @@ private fun TrophyGallery(leaderboard: List<LeaderboardItem>) {
                 modifier = Modifier.fillMaxWidth(),
             )
             if (leaderboard.size > 3) {
-                Spacer(Modifier.weight(4f))
+                Spacer(Modifier.height(28.dp))
                 TrophyImages(leaderboard)
-                Spacer(Modifier.weight(1f))
+                Spacer(Modifier.height(12.dp))
                 TrophyDetails(leaderboard)
-                Spacer(Modifier.weight(3f))
+                Spacer(Modifier.height(20.dp))
             }
         }
     }
@@ -192,150 +230,181 @@ private fun ColumnScope.TrophyImages(leaderboard: List<LeaderboardItem>) {
         verticalAlignment = Alignment.Bottom,
     ) {
         Trophy(
-            position = 1,
-            profileImageUrl = leaderboard[1].profileImage,
-            profileImageSize = SILVER_TROPHY_SIZE.dp,
+            rank = 1,
+            profileImageUrl = getProfileImageForTrophy(1, leaderboard),
             trophyResource = R.drawable.silver_trophy,
         )
         Trophy(
-            position = 0,
-            profileImageUrl = leaderboard[0].profileImage,
-            profileImageSize = GOLDEN_TROPHY_SIZE.dp,
+            rank = 0,
+            profileImageUrl = getProfileImageForTrophy(0, leaderboard),
             trophyResource = R.drawable.golden_trophy,
         )
         Trophy(
-            position = 2,
-            profileImageUrl = leaderboard[2].profileImage,
-            profileImageSize = BRONZE_TROPHY_SIZE.dp,
+            rank = 2,
+            profileImageUrl = getProfileImageForTrophy(2, leaderboard),
             trophyResource = R.drawable.bronze_trophy,
         )
     }
 }
 
-@Composable
-private fun ColumnScope.TrophyDetails(leaderboard: List<LeaderboardItem>) {
-    Row(
-        modifier = Modifier.align(Alignment.CenterHorizontally),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-        verticalAlignment = Alignment.Bottom,
-    ) {
-        TrophyDetailsItem(
-            userPrincipalId = leaderboard[1].userPrincipalId,
-            coins = leaderboard[1].coins,
-        )
-        TrophyDetailsItem(
-            userPrincipalId = leaderboard[0].userPrincipalId,
-            coins = leaderboard[0].coins,
-        )
-        TrophyDetailsItem(
-            userPrincipalId = leaderboard[2].userPrincipalId,
-            coins = leaderboard[2].coins,
-        )
+private fun getProfileImageForTrophy(
+    rank: Int,
+    leaderboard: List<LeaderboardItem>,
+): String {
+    val users = leaderboard.filter { it.rank == rank }
+    return if (users.size == 1) {
+        // users[0].profileImage
+        ""
+    } else {
+        ""
     }
 }
 
 @Composable
-private fun Trophy(
-    position: Int,
-    profileImageUrl: String,
-    profileImageSize: Dp,
-    trophyResource: Int,
-) {
-    Column {
-        Box(
-            modifier =
-                Modifier
-                    .offset(y = profileImageSize / 2 + 8.dp)
-                    .zIndex(1f)
-                    .align(Alignment.CenterHorizontally),
+private fun ColumnScope.TrophyDetails(leaderboard: List<LeaderboardItem>) {
+    Column(modifier = Modifier.align(Alignment.CenterHorizontally)) {
+        val rank0 by remember(leaderboard) { mutableStateOf(getTrophyDetailItem(0, leaderboard)) }
+        val rank1 by remember(leaderboard) { mutableStateOf(getTrophyDetailItem(1, leaderboard)) }
+        val rank2 by remember(leaderboard) { mutableStateOf(getTrophyDetailItem(2, leaderboard)) }
+        val lines =
+            if (setOf(rank0.first, rank1.first, rank2.first).any { it.contains(",") }) {
+                2
+            } else {
+                1
+            }
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.Top,
         ) {
-            UserBriefProfileImage(
-                profileImageUrl,
-                position = position,
-                size = profileImageSize,
+            TrophyDetailsItem(
+                userPrincipalId = rank1.first,
+                coins = rank1.second,
+                lines = lines,
+            )
+            TrophyDetailsItem(
+                userPrincipalId = rank0.first,
+                coins = rank0.second,
+                lines = lines,
+            )
+            TrophyDetailsItem(
+                userPrincipalId = rank2.first,
+                coins = rank2.second,
+                lines = lines,
             )
         }
+    }
+}
+
+private fun getTrophyDetailItem(
+    rank: Int,
+    leaderboard: List<LeaderboardItem>,
+): Pair<String, Long> {
+    val users = leaderboard.filter { it.rank == rank }
+    return if (users.isNotEmpty()) {
+        getTrophyDetailsUserTexts(users) to users[0].coins
+    } else {
+        "" to -1
+    }
+}
+
+private fun getTrophyDetailsUserTexts(user: List<LeaderboardItem>): String =
+    when (user.size) {
+        1 -> user[0].userPrincipalId
+        else ->
+            user
+                .take(MAX_USERS_WITH_DUPLICATE_RANK)
+                .joinToString(", ") {
+                    it.userPrincipalId.take(MAX_USERS_PRINCIPAL_LENGTH) + "..."
+                }
+    }
+
+@Composable
+private fun Trophy(
+    rank: Int,
+    profileImageUrl: String,
+    trophyResource: Int,
+) {
+    val width = getTrophyImageWidth(rank)
+    val height = getTrophyImageHeight(rank)
+    val offset =
+        getTrophyImageOffset(
+            rank = rank,
+            isProfileImageVisible = profileImageUrl.isNotEmpty(),
+        )
+    Box(
+        modifier =
+            Modifier
+                .width(width)
+                .height(height + offset),
+        contentAlignment = Alignment.TopCenter,
+    ) {
         Image(
             painter = painterResource(id = trophyResource),
             contentDescription = "image description",
             contentScale = ContentScale.Crop,
+            modifier =
+                Modifier
+                    .width(width)
+                    .height(height)
+                    .offset { IntOffset(0, offset.roundToPx()) },
         )
+        if (profileImageUrl.isNotEmpty()) {
+            UserBriefProfileImage(
+                rank = rank,
+                profileImageUrl = profileImageUrl,
+                size = width,
+            )
+        }
     }
 }
 
 @Composable
 private fun TrophyDetailsItem(
     userPrincipalId: String,
+    lines: Int,
     coins: Long,
 ) {
     Column(
-        modifier = Modifier.widthIn(max = 93.dp),
+        modifier = Modifier.width(93.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
             text = userPrincipalId,
             style = LocalAppTopography.current.baseMedium,
             color = YralColors.NeutralTextSecondary,
-            maxLines = 1,
+            minLines = lines,
+            maxLines = lines,
+            textAlign = TextAlign.Center,
             overflow = TextOverflow.Ellipsis,
         )
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.satoshi),
-                contentDescription = "image description",
-                contentScale = ContentScale.FillBounds,
-                modifier = Modifier.size(23.dp),
-            )
-            Text(
-                text = coins.toString(),
-                style = LocalAppTopography.current.baseBold,
-                color = YralColors.Neutral50,
-                textAlign = TextAlign.Center,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-    }
-}
-
-@Composable
-private fun LeaderboardContent(
-    leaderboard: List<LeaderboardItem>,
-    currentUser: CurrentUserInfo?,
-) {
-    LazyColumn(
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        // Show current user first if available
-        currentUser?.let { user ->
-            item {
-                LeaderboardRow(
-                    position = user.leaderboardPosition,
-                    userPrincipalId = user.userPrincipalId,
-                    profileImageUrl = user.profileImageUrl,
-                    coins = user.coins,
-                    isCurrentUser = true,
+        if (coins >= 0) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.satoshi),
+                    contentDescription = "image description",
+                    contentScale = ContentScale.FillBounds,
+                    modifier = Modifier.size(23.dp),
+                )
+                Text(
+                    text = coins.toString(),
+                    style = LocalAppTopography.current.baseBold,
+                    color = YralColors.Neutral50,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
-        }
-        // Show other leaderboard items
-        items(leaderboard) { item ->
-            LeaderboardRow(
-                position = leaderboard.indexOf(item),
-                userPrincipalId = item.userPrincipalId,
-                profileImageUrl = item.profileImage,
-                coins = item.coins,
-                isCurrentUser = false,
-            )
         }
     }
 }
 
 @Composable
 private fun LeaderboardRow(
-    position: Int,
+    rank: Int,
     userPrincipalId: String,
     profileImageUrl: String,
     coins: Long,
@@ -357,9 +426,9 @@ private fun LeaderboardRow(
             ),
         shape = RoundedCornerShape(8.dp),
     ) {
-        UserBriefWithBorder(position) {
+        UserBriefWithBorder(rank, isCurrentUser) {
             UserBriefContent(
-                position,
+                rank,
                 userPrincipalId,
                 profileImageUrl,
                 coins,
@@ -369,24 +438,17 @@ private fun LeaderboardRow(
     }
 }
 
-@Suppress("MagicNumber")
 @Composable
 private fun UserBriefWithBorder(
-    position: Int,
+    rank: Int,
+    isCurrentUser: Boolean,
     content: @Composable () -> Unit,
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
-        if (position == 0 || position == 1 || position == 2) {
+        val border = getUserBriefBorder(rank)
+        if (border > 0 && !isCurrentUser) {
             Image(
-                painter =
-                    painterResource(
-                        when (position) {
-                            0 -> R.drawable.golden_border
-                            1 -> R.drawable.silver_border
-                            2 -> R.drawable.bronze_border
-                            else -> 0
-                        },
-                    ),
+                painter = painterResource(border),
                 contentDescription = null,
                 modifier = Modifier.matchParentSize(),
                 contentScale = ContentScale.FillBounds,
@@ -398,7 +460,7 @@ private fun UserBriefWithBorder(
 
 @Composable
 private fun UserBriefContent(
-    position: Int,
+    rank: Int,
     userPrincipalId: String,
     profileImageUrl: String,
     coins: Long,
@@ -408,7 +470,7 @@ private fun UserBriefContent(
         modifier =
             Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start),
     ) {
@@ -417,21 +479,16 @@ private fun UserBriefContent(
             modifier = Modifier.weight(POSITION_TEXT_WEIGHT),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = "#$position",
-                style = LocalAppTopography.current.baseBold,
-                color = YralColors.Neutral50,
-                textAlign = TextAlign.Center,
-            )
+            UserBriefPositionNumber(rank, isCurrentUser)
         }
         // Player ID column with avatar
         Row(
             modifier = Modifier.weight(USER_DETAIL_WEIGHT),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            UserBriefProfileImage(profileImageUrl, position)
-            Spacer(modifier = Modifier.width(12.dp))
-            UserBriefProfileName(position, userPrincipalId, isCurrentUser)
+            UserBriefProfileImage(rank, profileImageUrl)
+            Spacer(modifier = Modifier.width(8.dp))
+            UserBriefProfileName(rank, userPrincipalId, isCurrentUser)
         }
         // Coins column
         Row(
@@ -451,8 +508,36 @@ private fun UserBriefContent(
                 style = LocalAppTopography.current.baseBold,
                 color = YralColors.Neutral50,
                 textAlign = TextAlign.Center,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
         }
+    }
+}
+
+@Composable
+private fun UserBriefPositionNumber(
+    rank: Int,
+    isCurrentUser: Boolean,
+) {
+    val decoration = getTextDecoration(rank)
+    if (decoration != 0 && !isCurrentUser) {
+        YralMaskedVectorTextV2(
+            text = "#${rank + 1}",
+            vectorRes = decoration,
+            textStyle = LocalAppTopography.current.baseBold,
+            modifier = Modifier.width(21.dp),
+            textOverflow = TextOverflow.Ellipsis,
+            maxLines = 1,
+        )
+    } else {
+        Text(
+            text = "#${rank + 1}",
+            style = LocalAppTopography.current.baseBold,
+            color = YralColors.Neutral50,
+            overflow = TextOverflow.Ellipsis,
+            maxLines = 1,
+        )
     }
 }
 
@@ -473,87 +558,48 @@ private fun UserBriefProfileName(
     }
 }
 
-@Suppress("MagicNumber")
 @Composable
 private fun UserBriefGradientProfileName(
     position: Int,
     name: String,
 ) {
-    when (position) {
-        1 -> {
-            YralMaskedVectorTextV2(
-                text = name,
-                vectorRes = R.drawable.golden_gradient,
-                textStyle = LocalAppTopography.current.baseMedium,
-                maxLines = 1,
-                textOverflow = TextOverflow.Ellipsis,
-            )
-        }
-
-        2 -> {
-            YralMaskedVectorTextV2(
-                text = name,
-                vectorRes = R.drawable.silver_gradient,
-                textStyle = LocalAppTopography.current.baseMedium,
-                maxLines = 1,
-                textOverflow = TextOverflow.Ellipsis,
-            )
-        }
-
-        3 -> {
-            YralMaskedVectorTextV2(
-                text = name,
-                vectorRes = R.drawable.bronze_gradient,
-                textStyle = LocalAppTopography.current.baseMedium,
-                maxLines = 1,
-                textOverflow = TextOverflow.Ellipsis,
-            )
-        }
-
-        else -> {
-            Text(
-                text = name,
-                style = LocalAppTopography.current.baseMedium,
-                color = YralColors.NeutralTextPrimary,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
+    val decoration = getTextDecoration(position)
+    if (decoration != 0) {
+        YralMaskedVectorTextV2(
+            text = name,
+            vectorRes = decoration,
+            textStyle = LocalAppTopography.current.baseMedium,
+            maxLines = 1,
+            textOverflow = TextOverflow.Ellipsis,
+            modifier = Modifier.wrapContentSize(),
+        )
+    } else {
+        Text(
+            text = name,
+            style = LocalAppTopography.current.baseMedium,
+            color = YralColors.NeutralTextPrimary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 
 @Composable
 private fun UserBriefProfileImage(
+    rank: Int,
     profileImageUrl: String,
-    position: Int,
     size: Dp = PROFILE_IMAGE_SIZE.dp,
 ) {
-    val shape = RoundedCornerShape(size = size)
     Box(modifier = Modifier.wrapContentSize()) {
-        AsyncImage(
-            model = profileImageUrl,
-            contentDescription = "User picture",
-            contentScale = ContentScale.FillBounds,
-            modifier =
-                Modifier
-                    .clip(shape)
-                    .size(size)
-                    .background(
-                        color = YralColors.ProfilePicBackground,
-                        shape = shape,
-                    ),
+        YralAsyncImage(
+            imageUrl = profileImageUrl,
+            size = size,
+            backgroundColor = YralColors.ProfilePicBackground,
         )
-        if (position == 0 || position == 1 || position == 2) {
+        val profileImageRing = getProfileImageRing(rank)
+        if (profileImageRing > 0) {
             Image(
-                painter =
-                    painterResource(
-                        when (position) {
-                            0 -> R.drawable.golden_ring
-                            1 -> R.drawable.silver_ring
-                            2 -> R.drawable.bronze_ring
-                            else -> 0
-                        },
-                    ),
+                painter = painterResource(profileImageRing),
                 contentDescription = null,
                 modifier = Modifier.matchParentSize(),
                 contentScale = ContentScale.FillBounds,
@@ -563,12 +609,7 @@ private fun UserBriefProfileImage(
 }
 
 object LeaderboardScreenConstants {
-    const val POSITION_TEXT_WEIGHT = 0.5f
-    const val USER_DETAIL_WEIGHT = 2f
-    const val COIN_BALANCE_WEIGHT = 1f
-    const val PROFILE_IMAGE_SIZE = 25f
-    const val TROPHY_GALLERY_SIZE = 0.45
-    const val SILVER_TROPHY_SIZE = 48
-    const val BRONZE_TROPHY_SIZE = 46
-    const val GOLDEN_TROPHY_SIZE = 64
+    const val POSITION_TEXT_WEIGHT = 0.17f
+    const val USER_DETAIL_WEIGHT = 0.55f
+    const val COIN_BALANCE_WEIGHT = 0.28f
 }

@@ -1,0 +1,100 @@
+package com.yral.android.ui.widgets
+
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
+import coil3.compose.AsyncImagePainter
+
+@Composable
+fun YralAsyncImage(
+    imageUrl: String,
+    modifier: Modifier = Modifier,
+    size: Dp,
+    loaderSize: LoaderSize = LoaderSize.Percentage(),
+    border: Dp = 0.dp,
+    borderColor: Color = Color.Transparent,
+    backgroundColor: Color = Color.Transparent,
+    contentScale: ContentScale = ContentScale.FillBounds,
+    shape: Shape = CircleShape,
+    onError: () -> Unit = {},
+) {
+    var isLoading by remember { mutableStateOf(true) }
+    Box(
+        modifier = modifier.size(size),
+        contentAlignment = Alignment.Center,
+    ) {
+        AsyncImage(
+            modifier =
+                Modifier
+                    .size(size)
+                    .clip(shape)
+                    .border(
+                        width = border,
+                        color = borderColor,
+                        shape = shape,
+                    ).background(
+                        color = backgroundColor,
+                        shape = shape,
+                    ),
+            contentScale = contentScale,
+            model = imageUrl,
+            contentDescription = "image",
+            onState = {
+                isLoading = it is AsyncImagePainter.State.Loading
+                if (it is AsyncImagePainter.State.Error) {
+                    onError()
+                }
+            },
+        )
+        AnimatedVisibility(
+            visible = isLoading,
+            enter = fadeIn(),
+            exit = fadeOut(),
+        ) { }
+        if (isLoading) {
+            val loaderSizeDp =
+                when (loaderSize) {
+                    is LoaderSize.None -> loaderSize.mSize
+                    is LoaderSize.Fixed -> loaderSize.mSize
+                    is LoaderSize.Dynamic -> loaderSize.size
+                    is LoaderSize.Percentage -> (size.value * loaderSize.percentage).dp
+                }
+            YralLoader(size = loaderSizeDp)
+        }
+    }
+}
+
+const val DEFAULT_LOADER_SIZE = 20
+const val DEFAULT_LOADER_PERCENTAGE = 0.25f
+
+sealed class LoaderSize(
+    val mSize: Dp,
+) {
+    data object None : LoaderSize(mSize = 0.dp)
+    data object Fixed : LoaderSize(mSize = DEFAULT_LOADER_SIZE.dp)
+    data class Dynamic(
+        val size: Dp,
+    ) : LoaderSize(mSize = size)
+    data class Percentage(
+        val percentage: Float = DEFAULT_LOADER_PERCENTAGE,
+    ) : LoaderSize(mSize = Dp.Unspecified)
+}

@@ -9,15 +9,13 @@ import android.graphics.drawable.Drawable
 import android.text.TextPaint
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
@@ -33,7 +31,7 @@ fun YralMaskedVectorTextV2(
     text: String,
     vectorRes: Int,
     textStyle: TextStyle,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier, // width need to specified according to useCase
     maxLines: Int = Int.MAX_VALUE,
     textOverflow: TextOverflow = TextOverflow.Clip,
 ) {
@@ -44,37 +42,59 @@ fun YralMaskedVectorTextV2(
         remember(vectorRes) {
             AppCompatResources.getDrawable(context, vectorRes)?.mutate()
         } ?: return
-    Box(
-        modifier =
-            modifier
-                .fillMaxWidth(),
-        contentAlignment = Alignment.Center,
-    ) {
-        Canvas(modifier = Modifier.matchParentSize()) {
-            val availableWidth = size.width.toInt()
-            val measured =
-                textMeasurer.measure(
-                    text,
-                    style = textStyle,
-                    maxLines = maxLines,
-                    overflow = textOverflow,
-                )
-            val textWidth = measured.size.width.coerceAtMost(availableWidth)
-            val textHeight = measured.size.height
 
-            val textBitmap =
-                createTextBitmap(
-                    text,
-                    textWidth,
-                    textHeight,
-                    textStyle,
-                    textOverflow,
-                    density,
-                )
-            val vectorBitmap = createVectorBitmap(drawable, textWidth, textHeight)
-            val resultBitmap = createMaskedBitmap(textBitmap, vectorBitmap, textWidth, textHeight)
+    Layout(
+        content = {
+            Canvas(modifier = Modifier) {
+                // The actual drawing will use the size provided by the Layout
+                val canvasWidth = size.width.toInt().coerceAtLeast(1)
+                val canvasHeight = size.height.toInt().coerceAtLeast(1)
+                val textBitmap =
+                    createTextBitmap(
+                        text,
+                        canvasWidth,
+                        canvasHeight,
+                        textStyle,
+                        textOverflow,
+                        density,
+                    )
+                val vectorBitmap = createVectorBitmap(drawable, canvasWidth, canvasHeight)
+                val resultBitmap =
+                    createMaskedBitmap(textBitmap, vectorBitmap, canvasWidth, canvasHeight)
+                drawResultBitmap(resultBitmap)
+            }
+        },
+        modifier = modifier,
+    ) { measurables, constraints ->
+        // Use the maxWidth from constraints, but at least 1
+        val availableWidth = constraints.maxWidth.coerceAtLeast(1)
+        // Measure the text with the available width
+        val measured =
+            textMeasurer.measure(
+                text,
+                style = textStyle,
+                maxLines = maxLines,
+                overflow = textOverflow,
+                constraints = constraints,
+            )
+        val textWidth = measured.size.width.coerceIn(constraints.minWidth, availableWidth)
+        val textHeight =
+            measured.size.height.coerceIn(
+                constraints.minHeight,
+                constraints.maxHeight.coerceAtLeast(1),
+            )
 
-            drawResultBitmap(resultBitmap)
+        val placeable =
+            measurables.first().measure(
+                constraints.copy(
+                    minWidth = textWidth,
+                    maxWidth = textWidth,
+                    minHeight = textHeight,
+                    maxHeight = textHeight,
+                ),
+            )
+        layout(textWidth, textHeight) {
+            placeable.place(0, 0)
         }
     }
 }
@@ -158,9 +178,7 @@ private fun middleEllipsisText(
         var endIndex = text.length
         while (startIndex < endIndex &&
             paint.measureText(
-                text.substring(0, startIndex) +
-                    ellipsis +
-                    text.substring(endIndex),
+                text.substring(0, startIndex) + ellipsis + text.substring(endIndex),
             ) < textWidth
         ) {
             startIndex++

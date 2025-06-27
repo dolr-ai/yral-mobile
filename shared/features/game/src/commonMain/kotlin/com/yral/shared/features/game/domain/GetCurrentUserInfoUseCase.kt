@@ -56,6 +56,7 @@ class GetCurrentUserInfoUseCase(
             profileImageUrl = propicFromPrincipal(userDocument.id),
             coins = userDocument.coins,
             leaderboardPosition = leaderboardPosition,
+            rank = leaderboardPosition,
         )
     }
 

@@ -142,7 +142,7 @@ private fun gameResultText(
                         iconName.name.lowercase().capitalize(Locale.current),
                     ),
                 )
-                append("\n")
+                append(" ")
             }
             withStyle(spanStyle.plus(SpanStyle(color = YralColors.Green300))) {
                 append(
@@ -157,7 +157,7 @@ private fun gameResultText(
                 append(
                     stringResource(R.string.not_most_popular_pick),
                 )
-                append("\n")
+                append(" ")
             }
             withStyle(spanStyle.plus(SpanStyle(color = YralColors.Red300))) {
                 append(

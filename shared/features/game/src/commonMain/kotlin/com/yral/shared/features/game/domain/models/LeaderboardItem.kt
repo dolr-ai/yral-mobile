@@ -7,11 +7,13 @@ data class LeaderboardItem(
     val userPrincipalId: String,
     val profileImage: String,
     val coins: Long,
+    val rank: Int,
 )
 
-fun LeaderboardItemDto.toLeaderboardItem(): LeaderboardItem =
+fun LeaderboardItemDto.toLeaderboardItem(rank: Int): LeaderboardItem =
     LeaderboardItem(
         userPrincipalId = id,
         profileImage = propicFromPrincipal(id),
         coins = coins,
+        rank = rank,
     )
