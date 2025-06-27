@@ -11,6 +11,7 @@ final class ToastView: UIView {
 
   private let type: ToastType
   private let buttonAction: (() -> Void)?
+  private let tapAction: (() -> Void)?
 
   private let iconImageView = getUIImageView()
   private let titleLabel = getUILabel()
@@ -20,9 +21,14 @@ final class ToastView: UIView {
 
   private var initialOriginY: CGFloat = 0
 
-  init(type: ToastType, buttonAction: (() -> Void)? = nil) {
+  init(
+    type: ToastType,
+    buttonAction: (() -> Void)? = nil,
+    tapAction: (() -> Void)? = nil
+  ) {
     self.type = type
     self.buttonAction = buttonAction
+    self.tapAction = tapAction
     super.init(frame: .zero)
 
     backgroundColor = type.backgroundColor
@@ -30,6 +36,7 @@ final class ToastView: UIView {
     layer.cornerRadius = Constants.cornerRadius
     setupUI()
     setupPanGesture()
+    setupTapGesture()
   }
 
   required init?(coder: NSCoder) {
@@ -151,6 +158,19 @@ final class ToastView: UIView {
     default:
       break
     }
+  }
+
+  private func setupTapGesture() {
+    let tap = UITapGestureRecognizer(
+      target: self,
+      action: #selector(handleTap)
+    )
+    addGestureRecognizer(tap)
+  }
+
+  @objc private func handleTap() {
+    tapAction?()
+    dismiss()
   }
 
   @objc private func handleActionButtonTapped() {

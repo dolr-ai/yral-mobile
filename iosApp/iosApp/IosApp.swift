@@ -57,6 +57,7 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
 
   func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
     guard let token = fcmToken else { return }
+    NotificationCenter.default.post(name: .registrationTokenUpdated, object: token)
   }
 
   func userNotificationCenter(
@@ -64,17 +65,22 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     didReceive response: UNNotificationResponse,
     withCompletionHandler completionHandler: @escaping () -> Void
   ) {
+    let content = response.notification.request.content
+    print("Sarvesh content: \(content)")
     NotificationCenter.default.post(name: .videoUploadNotificationReceived, object: nil)
+    completionHandler()
   }
 
   func userNotificationCenter(
     _ center: UNUserNotificationCenter,
     willPresent notification: UNNotification
   ) async -> UNNotificationPresentationOptions {
-    ToastManager.showToast(type: .uploadSuccess) {
-        NotificationCenter.default.post(name: .videoUploadNotificationReceived, object: nil)
+    ToastManager.showToast(type: .uploadSuccess) { }
+    onTap: {
+      NotificationCenter.default.post(name: .videoUploadNotificationReceived, object: nil)
     }
-    return [.banner, .sound, .badge]
+
+    return []
   }
 
   func application(
