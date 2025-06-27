@@ -1,8 +1,16 @@
 package com.yral.android.ui.screens.game
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -19,13 +27,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.IntOffset
@@ -42,10 +48,9 @@ import com.yral.android.ui.screens.game.CoinBagConstants.COIN_OFFSET_X_START
 import com.yral.android.ui.screens.game.CoinBagConstants.COIN_OFFSET_Y_END
 import com.yral.android.ui.screens.game.CoinBagConstants.COIN_OFFSET_Y_MID
 import com.yral.android.ui.screens.game.CoinBagConstants.COIN_OFFSET_Y_START
-import com.yral.android.ui.screens.game.CoinBalanceConstants.BALANCE_TEXT_ANIMATION_DURATION
-import com.yral.android.ui.screens.game.CoinBalanceConstants.BALANCE_TEXT_HEIGHT
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.delay
 
 private object CoinBagConstants {
     const val STATIC_BAG_SIZE = 36
@@ -77,8 +82,6 @@ fun CoinBalance(
     ) {
         Balance(
             coinBalance = coinBalance,
-            coinDelta = coinDelta,
-            animateBag = animateBag,
         )
         CoinBag(
             didWin = coinDelta > 0,
@@ -176,11 +179,7 @@ private fun CoinBag(
 }
 
 @Composable
-private fun BoxScope.Balance(
-    coinBalance: Long,
-    coinDelta: Int,
-    animateBag: Boolean,
-) {
+private fun BoxScope.Balance(coinBalance: Long) {
     Column(
         modifier =
             Modifier
@@ -201,85 +200,43 @@ private fun BoxScope.Balance(
     ) {
         BalanceText(
             coinBalance = coinBalance,
-            coinDelta = coinDelta,
-            animateBag = animateBag,
         )
     }
 }
 
 @Composable
-private fun BalanceText(
-    coinBalance: Long,
-    coinDelta: Int,
-    animateBag: Boolean,
-) {
-    var oldBalance by remember { mutableLongStateOf(coinBalance) }
-    var newBalance by remember { mutableLongStateOf(coinBalance) }
-    var isAnimating by remember { mutableStateOf(false) }
-    val newTextAnimatable = remember { Animatable(0f) }
-    LaunchedEffect(animateBag) {
-        if (animateBag) {
-            oldBalance = coinBalance - coinDelta
-            newBalance = coinBalance
-            isAnimating = true
-            newTextAnimatable.snapTo(0f)
-            newTextAnimatable.animateTo(
-                targetValue = 1f,
-                animationSpec = tween(durationMillis = BALANCE_TEXT_ANIMATION_DURATION),
-            )
-            isAnimating = false
-        } else {
-            isAnimating = false
+private fun BalanceText(coinBalance: Long) {
+    var previousBalance by remember { mutableLongStateOf(coinBalance) }
+    val delta = coinBalance - previousBalance
+    // Animate color based on delta using animateColorAsState
+    val targetColor =
+        when {
+            delta > 0 -> YralColors.Green400
+            delta < 0 -> YralColors.Red300
+            else -> YralColors.PrimaryContainer
         }
+    val animatedColor by animateColorAsState(
+        targetValue = targetColor,
+        animationSpec = tween(durationMillis = ANIMATION_DURATION),
+        label = "BalanceColor",
+    )
+    AnimatedContent(
+        targetState = coinBalance,
+        transitionSpec = {
+            (slideInVertically { it } + fadeIn(tween(ANIMATION_DURATION))) togetherWith
+                (slideOutVertically { -it } + fadeOut(tween(ANIMATION_DURATION))) using
+                SizeTransform(clip = false)
+        },
+        label = "CoinBalanceChange",
+    ) { balance ->
+        Text(
+            text = balance.toString(),
+            style = LocalAppTopography.current.feedCanisterId,
+            color = animatedColor,
+        )
     }
-    Box {
-        if (isAnimating) {
-            val progress = (1f - newTextAnimatable.value)
-            val translationY = BALANCE_TEXT_HEIGHT * (progress - 1f)
-            Text(
-                text = oldBalance.toString(),
-                style = LocalAppTopography.current.feedCanisterId,
-                color = YralColors.PrimaryContainer,
-                modifier =
-                    Modifier
-                        .graphicsLayer {
-                            this.alpha = progress
-                            this.translationY = translationY
-                        },
-            )
-            val newProgress = newTextAnimatable.value
-            val newTranslationY = BALANCE_TEXT_HEIGHT * (1f - newProgress)
-            Text(
-                text = newBalance.toString(),
-                style = LocalAppTopography.current.feedCanisterId,
-                color = getAnimatingTextColor(isAnimating, coinDelta),
-                modifier =
-                    Modifier
-                        .graphicsLayer {
-                            this.alpha = newProgress
-                            this.translationY = newTranslationY
-                        },
-            )
-        } else {
-            Text(
-                text = newBalance.toString(),
-                style = LocalAppTopography.current.feedCanisterId,
-                color = YralColors.PrimaryContainer,
-            )
-        }
+    LaunchedEffect(coinBalance) {
+        delay(ANIMATION_DURATION.toLong())
+        previousBalance = coinBalance
     }
-}
-
-private fun getAnimatingTextColor(
-    isAnimating: Boolean,
-    coinDelta: Int,
-): Color =
-    when {
-        isAnimating -> if (coinDelta < 0) YralColors.Red300 else YralColors.Green400
-        else -> YralColors.PrimaryContainer
-    }
-
-private object CoinBalanceConstants {
-    const val BALANCE_TEXT_HEIGHT = 30f
-    const val BALANCE_TEXT_ANIMATION_DURATION = 500
 }

@@ -16,10 +16,8 @@ class SessionManager {
         _state.update { state }
     }
 
-    suspend fun updateCoinBalance(newBalance: Long) {
-        if (_state.value is SessionState.SignedIn) {
-            _coinBalance.emit(newBalance)
-        }
+    fun updateCoinBalance(newBalance: Long) {
+        _coinBalance.update { newBalance }
     }
 
     fun getCanisterPrincipal(): String? =
