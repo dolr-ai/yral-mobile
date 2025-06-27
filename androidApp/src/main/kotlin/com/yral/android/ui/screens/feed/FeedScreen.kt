@@ -28,6 +28,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -98,11 +99,12 @@ fun FeedScreen(
     }
 
     // Pagination logic
-    val isNearEnd =
-        remember(state.feedDetails.size, state.currentPageOfFeed) {
+    val isNearEnd by remember {
+        derivedStateOf {
             state.feedDetails.isNotEmpty() &&
                 (state.feedDetails.size - state.currentPageOfFeed) <= PRE_FETCH_BEFORE_LAST
         }
+    }
     LaunchedEffect(isNearEnd, state.isLoadingMore, state.pendingFetchDetails) {
         if (isNearEnd && !state.isLoadingMore && state.pendingFetchDetails == 0) {
             Logger.d("FeedPagination") { "triggering pagination" }

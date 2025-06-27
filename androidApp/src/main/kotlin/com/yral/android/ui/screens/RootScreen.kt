@@ -44,15 +44,18 @@ fun RootScreen(viewModel: RootViewModel = koinViewModel()) {
     val feedViewModel by remember { mutableStateOf(koinInstance.get<FeedViewModel>()) }
     LaunchedEffect(sessionState) {
         if (sessionState != state.currentSessionState) {
-            if (sessionState is SessionState.Initial) {
-                // first app open or after logout
-                viewModel.initialize()
-            }
-            if (sessionState is SessionState.SignedIn) {
-                // initialize rust and close splash if visible
-                viewModel.initialize()
-                // cold start feed
-                feedViewModel.initialize()
+            when (sessionState) {
+                is SessionState.Initial -> {
+                    // first app open or after logout
+                    viewModel.initialize()
+                }
+                is SessionState.SignedIn -> {
+                    // initialize rust and close splash if visible
+                    viewModel.initialize()
+                    // cold start feed
+                    feedViewModel.initialize()
+                }
+                else -> { }
             }
         }
     }

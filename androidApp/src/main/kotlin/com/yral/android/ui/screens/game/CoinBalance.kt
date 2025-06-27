@@ -42,13 +42,10 @@ import com.yral.android.ui.screens.game.CoinBagConstants.COIN_OFFSET_X_START
 import com.yral.android.ui.screens.game.CoinBagConstants.COIN_OFFSET_Y_END
 import com.yral.android.ui.screens.game.CoinBagConstants.COIN_OFFSET_Y_MID
 import com.yral.android.ui.screens.game.CoinBagConstants.COIN_OFFSET_Y_START
-import com.yral.android.ui.screens.game.CoinBagConstants.animationSpec
 import com.yral.android.ui.screens.game.CoinBalanceConstants.BALANCE_TEXT_ANIMATION_DURATION
 import com.yral.android.ui.screens.game.CoinBalanceConstants.BALANCE_TEXT_HEIGHT
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 private object CoinBagConstants {
     const val STATIC_BAG_SIZE = 36
@@ -62,11 +59,6 @@ private object CoinBagConstants {
     const val ANIMATION_DURATION = 700
     const val COIN_BAG_SCALE = 1.2f
     const val COIN_BAG_ROTATION = -15f
-    val animationSpec =
-        tween<Float>(
-            durationMillis = ANIMATION_DURATION / 2,
-            easing = FastOutSlowInEasing,
-        )
 }
 
 @Composable
@@ -113,6 +105,11 @@ private fun CoinBag(
     val xEnd = if (didWin) COIN_OFFSET_X_END else COIN_OFFSET_X_START
     val yStart = if (didWin) COIN_OFFSET_Y_START else COIN_OFFSET_Y_END
     val yEnd = if (didWin) COIN_OFFSET_Y_END else COIN_OFFSET_Y_START
+    val animationSpec =
+        tween<Float>(
+            durationMillis = ANIMATION_DURATION / 2,
+            easing = FastOutSlowInEasing,
+        )
 
     LaunchedEffect(animateBag, didWin) {
         if (animateBag) {
@@ -121,25 +118,21 @@ private fun CoinBag(
             coinYOffset.snapTo(yStart)
             coinXOffset.snapTo(xStart)
             coinAlpha.snapTo(0f)
-            launch {
-                // Animate to peak
-                awaitAll(
-                    async { scale.animateTo(COIN_BAG_SCALE, animationSpec = animationSpec) },
-                    async { rotation.animateTo(COIN_BAG_ROTATION, animationSpec = animationSpec) },
-                    async { coinAlpha.animateTo(1f, animationSpec = animationSpec) },
-                    async { coinYOffset.animateTo(COIN_OFFSET_Y_MID, animationSpec = animationSpec) },
-                    async { coinXOffset.animateTo(COIN_OFFSET_X_MID, animationSpec = animationSpec) },
-                )
-                // Animate to end
-                awaitAll(
-                    async { scale.animateTo(1f, animationSpec = animationSpec) },
-                    async { rotation.animateTo(0f, animationSpec = animationSpec) },
-                    async { coinAlpha.animateTo(0f, animationSpec = animationSpec) },
-                    async { coinYOffset.animateTo(yEnd, animationSpec = animationSpec) },
-                    async { coinXOffset.animateTo(xEnd, animationSpec = animationSpec) },
-                )
-            }
-            delay(ANIMATION_DURATION.toLong())
+            awaitAll(
+                async { scale.animateTo(COIN_BAG_SCALE, animationSpec = animationSpec) },
+                async { rotation.animateTo(COIN_BAG_ROTATION, animationSpec = animationSpec) },
+                async { coinAlpha.animateTo(1f, animationSpec = animationSpec) },
+                async { coinYOffset.animateTo(COIN_OFFSET_Y_MID, animationSpec = animationSpec) },
+                async { coinXOffset.animateTo(COIN_OFFSET_X_MID, animationSpec = animationSpec) },
+            )
+            // Animate to end
+            awaitAll(
+                async { scale.animateTo(1f, animationSpec = animationSpec) },
+                async { rotation.animateTo(0f, animationSpec = animationSpec) },
+                async { coinAlpha.animateTo(0f, animationSpec = animationSpec) },
+                async { coinYOffset.animateTo(yEnd, animationSpec = animationSpec) },
+                async { coinXOffset.animateTo(xEnd, animationSpec = animationSpec) },
+            )
             setAnimate(false)
         }
     }
@@ -230,13 +223,11 @@ private fun BalanceText(
             newBalance = coinBalance
             isAnimating = true
             newTextAnimatable.snapTo(0f)
-            launch {
-                newTextAnimatable.animateTo(
-                    targetValue = 1f,
-                    animationSpec = tween(durationMillis = BALANCE_TEXT_ANIMATION_DURATION),
-                )
-                isAnimating = false
-            }
+            newTextAnimatable.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(durationMillis = BALANCE_TEXT_ANIMATION_DURATION),
+            )
+            isAnimating = false
         } else {
             isAnimating = false
         }

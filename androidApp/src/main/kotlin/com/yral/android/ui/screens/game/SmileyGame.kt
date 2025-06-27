@@ -4,7 +4,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -27,11 +27,9 @@ fun SmileyGame(
 ) {
     var animateBubbles by remember { mutableStateOf(false) }
     var iconPositions by remember { mutableStateOf(mapOf<Int, Float>()) }
-    var resultViewVisible by remember { mutableStateOf(false) }
-    LaunchedEffect(coinDelta, errorMessage, animateBubbles) {
-        val isResultAvailable = (coinDelta != 0 || errorMessage.isNotEmpty()) // && !isLoading
-        if (isResultAvailable) { // && !animateBubbles) {
-            resultViewVisible = true
+    val resultViewVisible by remember(coinDelta, errorMessage) {
+        derivedStateOf {
+            (coinDelta != 0 || errorMessage.isNotEmpty()) // && !animateBubbles
         }
     }
     Box(

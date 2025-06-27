@@ -28,10 +28,10 @@ import android.graphics.Canvas as AndroidCanvas
 
 @Composable
 fun YralMaskedVectorTextV2(
-    modifier: Modifier = Modifier, // width need to specified according to useCase
     text: String,
     vectorRes: Int,
     textStyle: TextStyle,
+    modifier: Modifier = Modifier, // width need to specified according to useCase
     maxLines: Int = Int.MAX_VALUE,
     textOverflow: TextOverflow = TextOverflow.Clip,
 ) {
