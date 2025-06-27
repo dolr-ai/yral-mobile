@@ -1,6 +1,6 @@
 package com.yral.shared.core.exceptions
 
-class YralException : Exception {
+open class YralException : Exception {
     var text: String? = null
         private set
 
