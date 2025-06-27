@@ -494,7 +494,7 @@ private fun UserBriefContent(
         Row(
             modifier = Modifier.weight(COIN_BALANCE_WEIGHT),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.End,
+            horizontalArrangement = Arrangement.Start,
         ) {
             Image(
                 painter = painterResource(id = R.drawable.satoshi),
