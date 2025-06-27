@@ -105,13 +105,13 @@ private fun CoinBag(
     val xEnd = if (didWin) COIN_OFFSET_X_END else COIN_OFFSET_X_START
     val yStart = if (didWin) COIN_OFFSET_Y_START else COIN_OFFSET_Y_END
     val yEnd = if (didWin) COIN_OFFSET_Y_END else COIN_OFFSET_Y_START
-    val animationSpec =
-        tween<Float>(
-            durationMillis = ANIMATION_DURATION / 2,
-            easing = FastOutSlowInEasing,
-        )
 
     LaunchedEffect(animateBag, didWin) {
+        val animationSpec =
+            tween<Float>(
+                durationMillis = ANIMATION_DURATION / 2,
+                easing = FastOutSlowInEasing,
+            )
         if (animateBag) {
             scale.snapTo(1f)
             rotation.snapTo(0f)

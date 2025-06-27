@@ -334,36 +334,29 @@ private fun Trophy(
             rank = rank,
             isProfileImageVisible = profileImageUrl.isNotEmpty(),
         )
-    Column {
-        Box(
+    Box(
+        modifier =
+            Modifier
+                .width(width)
+                .height(height + offset),
+        contentAlignment = Alignment.TopCenter,
+    ) {
+        Image(
+            painter = painterResource(id = trophyResource),
+            contentDescription = "image description",
+            contentScale = ContentScale.Crop,
             modifier =
                 Modifier
                     .width(width)
-                    .height(height + offset),
-            contentAlignment = Alignment.TopCenter,
-        ) {
-            Column(
-                modifier =
-                    Modifier
-                        .offset { IntOffset(0, offset.roundToPx()) },
-            ) {
-                Image(
-                    painter = painterResource(id = trophyResource),
-                    contentDescription = "image description",
-                    contentScale = ContentScale.Crop,
-                    modifier =
-                        Modifier
-                            .width(width)
-                            .height(height),
-                )
-            }
-            if (profileImageUrl.isNotEmpty()) {
-                UserBriefProfileImage(
-                    rank = rank,
-                    profileImageUrl = profileImageUrl,
-                    size = width,
-                )
-            }
+                    .height(height)
+                    .offset { IntOffset(0, offset.roundToPx()) },
+        )
+        if (profileImageUrl.isNotEmpty()) {
+            UserBriefProfileImage(
+                rank = rank,
+                profileImageUrl = profileImageUrl,
+                size = width,
+            )
         }
     }
 }
