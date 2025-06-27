@@ -172,7 +172,7 @@ struct HomeTabController: View {
     )
   }
 
-  func uploadNotificationReceived() {
+  @MainActor func uploadNotificationReceived() {
     self.selectedTab = .profile
     Task {
       await profileView.refreshVideos(shouldPurge: false)
