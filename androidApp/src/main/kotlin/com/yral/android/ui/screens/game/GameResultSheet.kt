@@ -5,8 +5,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.BottomSheetDefaults.DragHandle
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
@@ -65,27 +67,31 @@ fun GameResultSheet(
             verticalArrangement = Arrangement.spacedBy(28.dp, Alignment.Top),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text(
-                modifier =
-                    Modifier
-                        .fillMaxWidth(),
-                text =
-                    stringResource(
-                        if (coinDelta > 0) {
-                            R.string.congratulations
-                        } else {
-                            R.string.oops
-                        },
-                    ),
-                style = LocalAppTopography.current.lgBold,
-                color = Color.White,
-                textAlign = TextAlign.Center,
-            )
-            GameResultBagAnimation(coinDelta)
-            GameResultSheetMessage(
-                coinDelta = coinDelta,
-                gameIcon = gameIcon,
-            )
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth(),
+                    text =
+                        stringResource(
+                            if (coinDelta > 0) {
+                                R.string.congratulations
+                            } else {
+                                R.string.oops
+                            },
+                        ),
+                    style = LocalAppTopography.current.lgBold,
+                    color = Color.White,
+                    textAlign = TextAlign.Center,
+                )
+                GameResultBagAnimation(coinDelta)
+                GameResultSheetMessage(
+                    coinDelta = coinDelta,
+                    gameIcon = gameIcon,
+                )
+            }
             GameResultSheetButtons(
                 onDismissRequest = onDismissRequest,
                 openAboutGame = openAboutGame,
@@ -175,6 +181,10 @@ private fun GameResultBagAnimation(coinDelta: Int) {
     YralLottieAnimation(
         rawRes = bagAnimationRes,
         iterations = 1,
+        modifier =
+            Modifier
+                .width(250.dp)
+                .height(130.dp),
     )
 }
 

@@ -1,10 +1,8 @@
 package com.yral.android.ui.screens.game
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -15,7 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,14 +28,38 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
+import com.yral.android.ui.screens.game.CoinBagConstants.ANIMATION_DURATION
+import com.yral.android.ui.screens.game.CoinBagConstants.COIN_BAG_ROTATION
+import com.yral.android.ui.screens.game.CoinBagConstants.COIN_BAG_SCALE
+import com.yral.android.ui.screens.game.CoinBagConstants.COIN_OFFSET_X_END
+import com.yral.android.ui.screens.game.CoinBagConstants.COIN_OFFSET_X_MID
+import com.yral.android.ui.screens.game.CoinBagConstants.COIN_OFFSET_X_START
+import com.yral.android.ui.screens.game.CoinBagConstants.COIN_OFFSET_Y_END
+import com.yral.android.ui.screens.game.CoinBagConstants.COIN_OFFSET_Y_MID
+import com.yral.android.ui.screens.game.CoinBagConstants.COIN_OFFSET_Y_START
 import com.yral.android.ui.screens.game.CoinBalanceConstants.BALANCE_TEXT_ANIMATION_DURATION
 import com.yral.android.ui.screens.game.CoinBalanceConstants.BALANCE_TEXT_HEIGHT
-import com.yral.android.ui.widgets.YralLottieAnimation
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+
+private object CoinBagConstants {
+    const val STATIC_BAG_SIZE = 36
+    const val BAG_OFFSET_X = -22
+    const val COIN_OFFSET_X_START = -80f
+    const val COIN_OFFSET_X_MID = -40f
+    const val COIN_OFFSET_X_END = -10f
+    const val COIN_OFFSET_Y_START = 0f
+    const val COIN_OFFSET_Y_MID = -40f
+    const val COIN_OFFSET_Y_END = -26f
+    const val ANIMATION_DURATION = 700
+    const val COIN_BAG_SCALE = 1.2f
+    const val COIN_BAG_ROTATION = -15f
+}
 
 @Composable
 fun CoinBalance(
@@ -60,57 +81,97 @@ fun CoinBalance(
             animateBag = animateBag,
         )
         CoinBag(
-            coinDelta = coinDelta,
+            didWin = coinDelta > 0,
             animateBag = animateBag,
             setAnimate = setAnimate,
         )
     }
 }
 
+@Suppress("LongMethod")
 @Composable
 private fun CoinBag(
-    coinDelta: Int,
+    didWin: Boolean,
     animateBag: Boolean,
     setAnimate: (Boolean) -> Unit,
 ) {
-    if (!animateBag) {
-        Image(
-            painter = painterResource(R.drawable.coin_bag),
-            contentDescription = "coin bag",
-            modifier =
-                Modifier
-                    .size(36.dp)
-                    .offset(x = (-22).dp),
-        )
-    } else {
-        val bagAnimationRes =
-            if (coinDelta > 0) R.raw.smiley_game_win else R.raw.smiley_game_lose
-        var animate by remember { mutableStateOf(true) }
-        AnimatedVisibility(
-            visible = animate,
-            enter = fadeIn(),
-            exit = fadeOut(),
-        ) {
-            YralLottieAnimation(
+    val scale = remember { Animatable(1f) }
+    val rotation = remember { Animatable(0f) }
+    val coinYOffset = remember { Animatable(COIN_OFFSET_Y_START) }
+    val coinXOffset = remember { Animatable(COIN_OFFSET_X_START) }
+    val coinAlpha = remember { Animatable(0f) }
+
+    val xStart = if (didWin) COIN_OFFSET_X_START else COIN_OFFSET_X_END
+    val xEnd = if (didWin) COIN_OFFSET_X_END else COIN_OFFSET_X_START
+    val yStart = if (didWin) COIN_OFFSET_Y_START else COIN_OFFSET_Y_END
+    val yEnd = if (didWin) COIN_OFFSET_Y_END else COIN_OFFSET_Y_START
+
+    LaunchedEffect(animateBag, didWin) {
+        val animationSpec =
+            tween<Float>(
+                durationMillis = ANIMATION_DURATION / 2,
+                easing = FastOutSlowInEasing,
+            )
+        if (animateBag) {
+            scale.snapTo(1f)
+            rotation.snapTo(0f)
+            coinYOffset.snapTo(yStart)
+            coinXOffset.snapTo(xStart)
+            coinAlpha.snapTo(0f)
+            awaitAll(
+                async { scale.animateTo(COIN_BAG_SCALE, animationSpec = animationSpec) },
+                async { rotation.animateTo(COIN_BAG_ROTATION, animationSpec = animationSpec) },
+                async { coinAlpha.animateTo(1f, animationSpec = animationSpec) },
+                async { coinYOffset.animateTo(COIN_OFFSET_Y_MID, animationSpec = animationSpec) },
+                async { coinXOffset.animateTo(COIN_OFFSET_X_MID, animationSpec = animationSpec) },
+            )
+            // Animate to end
+            awaitAll(
+                async { scale.animateTo(1f, animationSpec = animationSpec) },
+                async { rotation.animateTo(0f, animationSpec = animationSpec) },
+                async { coinAlpha.animateTo(0f, animationSpec = animationSpec) },
+                async { coinYOffset.animateTo(yEnd, animationSpec = animationSpec) },
+                async { coinXOffset.animateTo(xEnd, animationSpec = animationSpec) },
+            )
+            setAnimate(false)
+        }
+    }
+
+    Box {
+        // Animated coins
+        if (animateBag) {
+            Image(
+                painter = painterResource(R.drawable.gold_coins),
+                contentDescription = "Animated coins",
                 modifier =
                     Modifier
-                        .height(52.dp)
-                        .width(105.dp)
-                        .offset(
-                            x = (-16).dp,
-                            y = (-12).dp,
-                        ).graphicsLayer {
-                            clip = false
-                            scaleX = 2f
-                            scaleY = 2f
+                        .size(24.dp)
+                        .align(Alignment.BottomStart)
+                        .offset {
+                            IntOffset(
+                                x = coinXOffset.value.dp.roundToPx(),
+                                y = coinYOffset.value.dp.roundToPx(),
+                            )
+                        }.graphicsLayer {
+                            alpha = coinAlpha.value
                         },
-                rawRes = bagAnimationRes,
-                iterations = 1,
-            ) {
-                setAnimate(false)
-                animate = false
-            }
+            )
         }
+        // Animated bag
+        Image(
+            painter = painterResource(R.drawable.coin_bag),
+            contentDescription = "Static coin bag",
+            modifier =
+                Modifier
+                    .size(CoinBagConstants.STATIC_BAG_SIZE.dp)
+                    .offset(x = CoinBagConstants.BAG_OFFSET_X.dp)
+                    .graphicsLayer {
+                        alpha = 1f
+                        scaleX = scale.value
+                        scaleY = scale.value
+                        rotationZ = rotation.value
+                    },
+        )
     }
 }
 
@@ -155,7 +216,6 @@ private fun BalanceText(
     var oldBalance by remember { mutableLongStateOf(coinBalance) }
     var newBalance by remember { mutableLongStateOf(coinBalance) }
     var isAnimating by remember { mutableStateOf(false) }
-    var hasAnimated by remember { mutableStateOf(false) }
     val newTextAnimatable = remember { Animatable(0f) }
     LaunchedEffect(animateBag) {
         if (animateBag) {
@@ -163,19 +223,17 @@ private fun BalanceText(
             newBalance = coinBalance
             isAnimating = true
             newTextAnimatable.snapTo(0f)
-            launch {
-                newTextAnimatable.animateTo(
-                    targetValue = 1f,
-                    animationSpec = tween(durationMillis = BALANCE_TEXT_ANIMATION_DURATION),
-                )
-                hasAnimated = true
-            }
+            newTextAnimatable.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(durationMillis = BALANCE_TEXT_ANIMATION_DURATION),
+            )
+            isAnimating = false
         } else {
             isAnimating = false
         }
     }
     Box {
-        if (!hasAnimated && (!isAnimating || (1f - newTextAnimatable.value) > 0f)) {
+        if (isAnimating) {
             val progress = (1f - newTextAnimatable.value)
             val translationY = BALANCE_TEXT_HEIGHT * (progress - 1f)
             Text(
@@ -185,14 +243,12 @@ private fun BalanceText(
                 modifier =
                     Modifier
                         .graphicsLayer {
-                            this.alpha = if (isAnimating) progress else 1f
-                            this.translationY = if (isAnimating) translationY else 0f
+                            this.alpha = progress
+                            this.translationY = translationY
                         },
             )
-        }
-        if (isAnimating || hasAnimated) {
-            val progress = newTextAnimatable.value
-            val translationY = BALANCE_TEXT_HEIGHT * (1f - progress)
+            val newProgress = newTextAnimatable.value
+            val newTranslationY = BALANCE_TEXT_HEIGHT * (1f - newProgress)
             Text(
                 text = newBalance.toString(),
                 style = LocalAppTopography.current.feedCanisterId,
@@ -200,9 +256,15 @@ private fun BalanceText(
                 modifier =
                     Modifier
                         .graphicsLayer {
-                            this.alpha = if (isAnimating) progress else 1f
-                            this.translationY = if (isAnimating) translationY else 0f
+                            this.alpha = newProgress
+                            this.translationY = newTranslationY
                         },
+            )
+        } else {
+            Text(
+                text = newBalance.toString(),
+                style = LocalAppTopography.current.feedCanisterId,
+                color = YralColors.PrimaryContainer,
             )
         }
     }

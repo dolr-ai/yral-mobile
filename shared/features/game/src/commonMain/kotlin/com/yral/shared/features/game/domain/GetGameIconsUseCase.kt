@@ -1,11 +1,10 @@
 package com.yral.shared.features.game.domain
 
-import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.getOrThrow
 import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.game.data.models.toGameConfig
-import com.yral.shared.features.game.domain.models.GameIcon
+import com.yral.shared.features.game.domain.models.GameConfig
 import com.yral.shared.firebaseStore.model.GameConfigDto
 import com.yral.shared.firebaseStore.usecase.GetFBDocumentUseCase
 import com.yral.shared.libs.useCase.SuspendUseCase
@@ -16,11 +15,11 @@ class GetGameIconsUseCase(
     appDispatchers: AppDispatchers,
     crashlyticsManager: CrashlyticsManager,
     private val getConfigUseCase: GetFBDocumentUseCase<GameConfigDto>,
-) : SuspendUseCase<GetGameIconsUseCase.GetGameIconsParams, List<GameIcon>>(
+) : SuspendUseCase<Unit, GameConfig>(
         appDispatchers.io,
         crashlyticsManager,
     ) {
-    override suspend fun execute(parameter: GetGameIconsParams): List<GameIcon> {
+    override suspend fun execute(parameter: Unit): GameConfig {
         val config =
             getConfigUseCase
                 .invoke(
@@ -31,16 +30,17 @@ class GetGameIconsUseCase(
                         ),
                 ).getOrThrow()
                 .toGameConfig()
-        if (config.lossPenalty < parameter.coinBalance) {
-            return config.availableSmileys.map { smiley ->
-                Logger.d("xxxx $smiley")
-                smiley.copy(
-                    imageUrl = getDownloadUrl(smiley.imageUrl),
-                    clickAnimation = getDownloadUrl(smiley.clickAnimation),
-                )
-            }
-        }
-        return emptyList()
+
+        return config.copy(
+            availableSmileys =
+                config.availableSmileys
+                    .map { smiley ->
+                        smiley.copy(
+                            imageUrl = getDownloadUrl(smiley.imageUrl),
+                            clickAnimation = getDownloadUrl(smiley.clickAnimation),
+                        )
+                    },
+        )
     }
 
     private suspend fun getDownloadUrl(path: String): String =
@@ -48,15 +48,9 @@ class GetGameIconsUseCase(
             path
         } else {
             runCatching {
-                Firebase.storage.reference(path).getDownloadUrl().also {
-                    Logger.d("xxxx download url: $it")
-                }
+                Firebase.storage.reference(path).getDownloadUrl()
             }.getOrElse { "" }
         }
-
-    data class GetGameIconsParams(
-        val coinBalance: Long,
-    )
 
     companion object {
         private const val GAME_CONFIG_COLLECTION = "config"

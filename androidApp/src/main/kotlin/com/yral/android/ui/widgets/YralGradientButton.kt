@@ -46,7 +46,11 @@ fun YralGradientButton(
         horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (buttonState != YralButtonState.Loading) {
+        AnimatedVisibility(
+            visible = buttonState != YralButtonState.Loading,
+            enter = fadeIn(),
+            exit = fadeOut(),
+        ) {
             YralMaskedVectorText(
                 text = text,
                 vectorRes = getButtonTextBackground(buttonType, buttonState),
@@ -60,19 +64,17 @@ fun YralGradientButton(
                             ),
                         ),
             )
-        } else {
-            // The continuous loader animation
-            AnimatedVisibility(
-                visible = true,
-                enter = fadeIn(),
-                exit = fadeOut(),
-            ) {
-                YralLottieAnimation(
-                    modifier = Modifier.size(20.dp),
-                    rawRes = getLoaderResource(buttonType),
-                    iterations = LottieConstants.IterateForever,
-                )
-            }
+        }
+        AnimatedVisibility(
+            visible = buttonState == YralButtonState.Loading,
+            enter = fadeIn(),
+            exit = fadeOut(),
+        ) {
+            YralLottieAnimation(
+                modifier = Modifier.size(20.dp),
+                rawRes = getLoaderResource(buttonType),
+                iterations = LottieConstants.IterateForever,
+            )
         }
     }
 }

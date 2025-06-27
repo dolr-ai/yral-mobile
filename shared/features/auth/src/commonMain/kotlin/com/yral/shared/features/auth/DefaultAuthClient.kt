@@ -50,6 +50,7 @@ class DefaultAuthClient(
     private val scope = CoroutineScope(SupervisorJob() + appDispatchers.io)
 
     override suspend fun initialize() {
+        sessionManager.updateState(SessionState.Loading)
         refreshAuthIfNeeded()
     }
 
@@ -307,11 +308,11 @@ class DefaultAuthClient(
             ) { code, state ->
                 scope.launch {
                     try {
-                        oAuthListener.setLoading(true)
                         handleOAuthCallback(code, state)
-                        oAuthListener.setLoading(false)
                     } catch (e: YralException) {
-                        oAuthListener.exception(e)
+                        oAuthListener.yralException(e)
+                    } catch (e: FfiException) {
+                        oAuthListener.ffiException(e)
                     }
                 }
             }
@@ -325,6 +326,7 @@ class DefaultAuthClient(
         if (state != currentState) {
             throw SecurityException("Invalid state parameter - possible CSRF attack")
         }
+        sessionManager.updateState(SessionState.Loading)
         authenticate(code)
     }
 

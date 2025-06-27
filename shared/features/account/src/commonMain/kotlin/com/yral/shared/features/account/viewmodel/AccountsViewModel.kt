@@ -14,6 +14,7 @@ import com.yral.shared.features.auth.utils.OAuthListener
 import com.yral.shared.features.auth.utils.SocialProvider
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
+import com.yral.shared.uniffi.generated.FfiException
 import com.yral.shared.uniffi.generated.propicFromPrincipal
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -67,19 +68,13 @@ class AccountsViewModel(
         }
     }
 
-    private fun getAccountInfo(): AccountInfo? {
-        val canisterPrincipal = sessionManager.getCanisterPrincipal()
-        val userPrincipal = sessionManager.getUserPrincipal()
-        canisterPrincipal?.let { principal ->
-            userPrincipal?.let { userPrincipal ->
-                return AccountInfo(
-                    profilePic = propicFromPrincipal(principal),
-                    userPrincipal = userPrincipal,
-                )
-            }
+    private fun getAccountInfo(): AccountInfo? =
+        sessionManager.getUserPrincipal()?.let { userPrincipal ->
+            return AccountInfo(
+                profilePic = propicFromPrincipal(userPrincipal),
+                userPrincipal = userPrincipal,
+            )
         }
-        return null
-    }
 
     private fun logout() {
         coroutineScope.launch {
@@ -97,16 +92,13 @@ class AccountsViewModel(
                 }.onFailure {
                     Logger.e("Failed to delete account: ${it.message}")
                     setBottomSheetType(
-                        type =
-                            AccountBottomSheet.ErrorMessage(
-                                title = "",
-                                message = it.message ?: "",
-                            ),
+                        type = AccountBottomSheet.ErrorMessage(ErrorType.DELETE_ACCOUNT_FAILED),
                     )
                 }
         }
     }
 
+    @Suppress("TooGenericExceptionCaught")
     fun signInWithGoogle() {
         coroutineScope
             .launch {
@@ -115,39 +107,32 @@ class AccountsViewModel(
                         provider = SocialProvider.GOOGLE,
                         oAuthListener =
                             object : OAuthListener {
-                                override fun setLoading(loading: Boolean) {
-                                    showLoading(loading)
+                                override fun yralException(e: YralException) {
+                                    handleSignupFailed()
                                 }
 
-                                override fun exception(e: YralException) {
-                                    showLoading(false)
-                                    setBottomSheetType(type = AccountBottomSheet.SignUpFailed)
+                                override fun ffiException(e: FfiException) {
+                                    handleSignupFailed()
                                 }
                             },
                     )
-                } catch (
-                    @Suppress("TooGenericExceptionCaught") e: Exception,
-                ) {
+                } catch (e: Exception) {
+                    crashlyticsManager.logMessage("sign in with google exception caught")
                     crashlyticsManager.recordException(e)
-                    showLoading(false)
-                    setBottomSheetType(type = AccountBottomSheet.SignUpFailed)
+                    handleSignupFailed()
                 }
             }
+    }
+
+    private fun handleSignupFailed() {
+        setBottomSheetType(
+            type = AccountBottomSheet.ErrorMessage(ErrorType.SIGNUP_FAILED),
+        )
     }
 
     private suspend fun isSocialSignInSuccessful(): Boolean =
         preferences
             .getBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name) ?: false
-
-    fun showLoading(loading: Boolean) {
-        coroutineScope.launch {
-            _state.update { currentState ->
-                currentState.copy(
-                    isLoading = loading,
-                )
-            }
-        }
-    }
 
     fun setBottomSheetType(type: AccountBottomSheet) {
         coroutineScope.launch {
@@ -245,7 +230,6 @@ data class AccountHelpLink(
 data class AccountsState(
     val accountInfo: AccountInfo?,
     val isSocialSignInSuccessful: Boolean,
-    val isLoading: Boolean = false,
     val bottomSheetType: AccountBottomSheet = AccountBottomSheet.None,
 )
 
@@ -255,13 +239,16 @@ sealed interface AccountBottomSheet {
         val linkToOpen: Pair<String, Boolean>,
     ) : AccountBottomSheet
 
-    data object SignUpFailed : AccountBottomSheet
     data object SignUp : AccountBottomSheet
     data object DeleteAccount : AccountBottomSheet
     data class ErrorMessage(
-        val title: String,
-        val message: String,
+        val errorType: ErrorType,
     ) : AccountBottomSheet
+}
+
+enum class ErrorType {
+    SIGNUP_FAILED,
+    DELETE_ACCOUNT_FAILED,
 }
 
 data class AccountInfo(
