@@ -9,7 +9,7 @@ plugins {
     alias(libs.plugins.gobleyCargo)
     alias(libs.plugins.gobleyUniffi)
     alias(libs.plugins.kotlinAtomicfu)
-    alias(libs.plugins.kotlinxSerialisartion)
+    alias(libs.plugins.kotlin.serialization)
     id("maven-publish")
 }
 
