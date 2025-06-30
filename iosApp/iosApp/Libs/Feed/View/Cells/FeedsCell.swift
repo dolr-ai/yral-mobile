@@ -239,7 +239,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     ])
     overlayView?.isHidden = true
   }
-  
+
   @objc private func handleFirstFrameReady(_ note: Notification) {
     guard let idx = note.userInfo?["index"] as? Int, idx == index else { return }
     playerLayer?.isHidden = false
@@ -258,14 +258,14 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
       .store(in: &cancellables)
   }
 
-  private func setupSmileyGameView() {
+  func setupSmileyGameView() {
     guard (sessionManager?.state.coins ?? 0) >= SmileyGameConfig.shared.config.lossPenalty else {
       return
     }
 
-    if let game = smileyGame, game.config.smileys.count > 0 {
+    if SmileyGameConfig.shared.config.smileys.count > 0 {
       let smileyGameView = SmileyGameView(
-        smileyGame: game,
+        smileyGame: SmileyGame(config: SmileyGameConfig.shared.config, state: .notPlayed),
         smileyTapped: { [weak self] smiley in
           self?.handleSmileyTap(smiley)
         },

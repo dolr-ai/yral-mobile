@@ -63,6 +63,7 @@ class FeedsViewController: UIViewController {
   var onBackButtonTap: (() -> Void)?
   private var loaderCancellables = Set<AnyCancellable>()
   private var authStateCancellables = Set<AnyCancellable>()
+  private var coinFetchingCancellables = Set<AnyCancellable>()
   var session: SessionManager
   let crashReporter: CrashReporter
 
@@ -92,9 +93,6 @@ class FeedsViewController: UIViewController {
     startLoadingBindings()
     addAuthChangeListner()
     Task { @MainActor in
-      if feedType == .otherUsers {
-        await viewModel.fetchSmileys()
-      }
       await viewModel.fetchFeeds(request: InitialFeedRequest(numResults: Constants.initialNumResults))
     }
     NotificationCenter.default.addObserver(
@@ -141,15 +139,15 @@ class FeedsViewController: UIViewController {
         case .success(let feeds):
           DispatchQueue.main.async {
             self.updateData(withFeeds: feeds)
-            if self.feedType == .currentUser {
+//            if self.feedType == .currentUser {
               self.activityIndicator.stopAnimating()
-            }
+//            }
           }
         case .failure(let errorMessage):
           self.loadMoreRequestMade = false
-          if feedType == .currentUser {
+//          if feedType == .currentUser {
             self.activityIndicator.stopAnimating()
-          }
+//          }
           print("Error: \(errorMessage)")
         }
       }
@@ -221,20 +219,14 @@ class FeedsViewController: UIViewController {
           snapshot.reloadItems([item])
           feedsDataSource.apply(snapshot, animatingDifferences: true)
           self.activityIndicator.stopAnimating()
-        case .smileysFetched:
+        case .smileysFetched(let feeds):
           self.activityIndicator.stopAnimating()
           var snapshot = feedsDataSource.snapshot()
           snapshot.reloadItems(snapshot.itemIdentifiers)
           feedsDataSource.apply(snapshot, animatingDifferences: false)
         case .feedsRefreshed:
           self.activityIndicator.startAnimating(in: self.view)
-          feedsDataSource.apply(Snapshot(), animatingDifferences: true) {
-            Task { @MainActor in
-              await self.viewModel.fetchFeeds(
-                request: InitialFeedRequest(numResults: .zero)
-              )
-            }
-          }
+          feedsDataSource.apply(Snapshot(), animatingDifferences: true)
         }
       }
       .store(in: &paginatedFeedscancellables)
@@ -344,71 +336,88 @@ class FeedsViewController: UIViewController {
   }
 
   private func startLoadingBindings() {
-    let authFinished = session.$state
-      .compactMap { state -> AuthState? in
-        switch state {
-        case .ephemeralAuthentication,
-            .permanentAuthentication:
-          return state
-        default:
-          return nil
-        }
-      }
-      .prefix(.one)
-      .eraseToAnyPublisher()
-
     let feedsFinished = viewModel.unifiedStatePublisher
-      .filter {
-        if case .success = $0 {
-          true
-        } else if case .failure = $0 {
-          true
-        } else {
-          false
-        }
+      .compactMap { state -> Void? in
+        if case .success = state { return () }
+        if case .failure = state { return () }
+        return nil
       }
-      .map { _ in () }
-      .prefix(.one)
-      .eraseToAnyPublisher()
+      .prefix(1)
 
-    Publishers.Zip(authFinished, feedsFinished)
+    let coinsReady = session.coinsReadyPublisher
+      .prefix(1)
+
+    Publishers.Zip(feedsFinished, coinsReady)
       .sink { [weak self] _, _ in
         guard let self else { return }
         Task {
           if self.feedType == .otherUsers {
             await self.viewModel.fetchSmileys()
-            await self.viewModel.addSmileyInfo()
           }
         }
       }
-      .store(in: &loaderCancellables)
+      .store(in: &coinFetchingCancellables)
   }
 
   func addAuthChangeListner() {
-    session.$state
-      .compactMap { state -> (String, String)? in
+    let loginPhase = session.$state
+      .map { state -> Bool? in
         switch state {
-        case .ephemeralAuthentication(let user, let canister, _),
-            .permanentAuthentication(let user, let canister, _):
-          return (user, canister)
-        default:
-          return nil
+        case .ephemeralAuthentication, .permanentAuthentication: return true
+        case .loggedOut, .accountDeleted: return false
+        default: return nil
         }
       }
-      .removeDuplicates { $0 == $1 }
+      .removeDuplicates()
+      .compactMap { $0 }
       .dropFirst()
+
+    loginPhase
       .sink { [weak self] _ in
         guard let self else { return }
         Task { @MainActor in
           await self.viewModel.refreshFeeds()
+        }
+      }
+      .store(in: &authStateCancellables)
+
+    session.coinsReadyPublisher
+      .dropFirst()
+      .sink { [weak self] in
+        guard let self else { return }
+        Task { @MainActor in
+          await self.viewModel.fetchFeeds(
+            request: InitialFeedRequest(
+              numResults: FeedsViewController.Constants.initialNumResults
+            )
+          )
           if self.feedType == .otherUsers {
             await self.viewModel.fetchSmileys()
-            await self.viewModel.addSmileyInfo()
           }
         }
       }
       .store(in: &authStateCancellables)
   }
+
+//  func addAuthChangeListner() {
+//    session.coinsReadyPublisher
+//      .dropFirst()
+//      .sink { [weak self] in
+//        guard let self else { return }
+//        Task { @MainActor in
+//          await self.viewModel.refreshFeeds()
+//          await self.viewModel.fetchFeeds(
+//            request: InitialFeedRequest(
+//              numResults: FeedsViewController.Constants.initialNumResults
+//            )
+//          )
+//          if self.feedType == .otherUsers {
+//            await self.viewModel.fetchSmileys()
+//          }
+//        }
+//      }
+//      .store(in: &authStateCancellables)
+//  }
 
   @objc func appDidBecomeActive() {
     if isCurrentlyVisible {

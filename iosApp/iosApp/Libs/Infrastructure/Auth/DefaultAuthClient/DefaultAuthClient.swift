@@ -264,7 +264,7 @@ final class DefaultAuthClient: NSObject, AuthClient {
           userPrincipal: userPrincipalString
         )
       }
-      await updateAuthState(for: type, withCoins: .zero)
+      await updateAuthState(for: type, withCoins: .zero, isFetchingCoins: true)
       Task { @MainActor in
         try await exchangePrincipalID(type: type)
       }
@@ -286,7 +286,7 @@ final class DefaultAuthClient: NSObject, AuthClient {
         ),
         decodeAs: SatsCoinDTO.self
       ).toDomain()
-      await updateAuthState(for: type, withCoins: UInt64(response.balance) ?? 0)
+      await updateAuthState(for: type, withCoins: UInt64(response.balance) ?? 0, isFetchingCoins: false)
       try await firebaseService.update(coins: UInt64(response.balance) ?? 0, forPrincipal: principalID)
       AnalyticsModuleKt.getAnalyticsManager().setUserProperties(
         user: User(
@@ -330,7 +330,7 @@ final class DefaultAuthClient: NSObject, AuthClient {
       do {
         try await getUserBalance(type: type)
       } catch {
-        await updateAuthState(for: type, withCoins: 0)
+        await updateAuthState(for: type, withCoins: 0, isFetchingCoins: false)
       }
     } else {
       let endpoint = Endpoint(http: "",
@@ -349,21 +349,23 @@ final class DefaultAuthClient: NSObject, AuthClient {
         try await firebaseService.signIn(withCustomToken: response.token)
         try await getUserBalance(type: type)
       } catch {
-        await updateAuthState(for: type, withCoins: 0)
+        await updateAuthState(for: type, withCoins: 0, isFetchingCoins: false)
       }
     }
   }
 
-  private func updateAuthState(for type: DelegateIdentityType, withCoins coins: UInt64) async {
+  private func updateAuthState(for type: DelegateIdentityType, withCoins coins: UInt64, isFetchingCoins: Bool) async {
     await MainActor.run {
       stateSubject.value = (type == .ephemeral) ? .ephemeralAuthentication(
         userPrincipal: userPrincipalString ?? "",
         canisterPrincipal: canisterPrincipalString ?? "",
-        coins: coins
+        coins: coins,
+        isFetchingCoins: isFetchingCoins
       ) : .permanentAuthentication(
         userPrincipal: userPrincipalString ?? "",
         canisterPrincipal: canisterPrincipalString ?? "",
-        coins: coins
+        coins: coins,
+        isFetchingCoins: isFetchingCoins
       )
     }
   }
@@ -378,7 +380,13 @@ final class DefaultAuthClient: NSObject, AuthClient {
     try? KeychainHelper.deleteItem(for: Constants.keychainRefreshToken)
     UserDefaultsManager.shared.remove(.authIdentityExpiryDateKey)
     UserDefaultsManager.shared.remove(.authRefreshTokenExpiryDateKey)
-    try await deregisterForNotifications()
+    do {
+      try await recordThrowingOperation {
+        try await deregisterForNotifications()
+      }
+    } catch {
+      print(error)
+    }
     identity = nil
     canisterPrincipal = nil
     canisterPrincipalString = nil

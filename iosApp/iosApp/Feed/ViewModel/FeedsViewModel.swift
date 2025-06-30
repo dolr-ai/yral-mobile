@@ -63,6 +63,11 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
         guard !unblockedFeeds.isEmpty else { return }
         self.feedvideoIDSet.formUnion(unblockedFeeds.map { $0.videoID })
         self.currentFeeds += unblockedFeeds
+//        let shouldApplySmiley = unblockedFeeds.map { $0.smileyGame?.config.smileys.isEmpty ?? true }.first ?? true
+//        if shouldApplySmiley {
+//          self.addSmileyInfo(for: &unblockedFeeds)
+//        }
+
         self.unifiedState = .success(feeds: unblockedFeeds)
       }
       .store(in: &cancellables)
@@ -79,14 +84,18 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
   @MainActor func fetchSmileys() async {
     do {
       let result = await SmileyGameConfig.shared.fetch()
-      if case .failure(let error) = result {
-        print(error.localizedDescription)
+      switch result {
+      case .success(let success):
+        unifiedEvent = .smileysFetched(feeds: currentFeeds)
+      case .failure(let failure):
+        print(failure.localizedDescription)
       }
     }
   }
 
   @MainActor func fetchFeeds(request: InitialFeedRequest) async {
     unifiedState = .loading
+
     do {
       let result = await initialFeedsUseCase.execute(request: request)
       isFetchingInitialFeeds = false
@@ -212,15 +221,6 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
         self.unifiedEvent = .socialSignInFailure
       }
     }
-  }
-
-  @MainActor func addSmileyInfo() async {
-    self.currentFeeds = self.currentFeeds.map {
-      var newFeed = $0
-      newFeed.smileyGame = SmileyGame(config: SmileyGameConfig.shared.config, state: .notPlayed)
-      return newFeed
-    }
-    self.unifiedEvent = .smileysFetched
   }
 
   @MainActor func refreshFeeds() async {
