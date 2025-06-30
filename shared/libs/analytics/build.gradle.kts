@@ -3,7 +3,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
-    alias(libs.plugins.kotlinxSerialisartion)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.kotlinCocoapods)
 }
 version = "1.0"
