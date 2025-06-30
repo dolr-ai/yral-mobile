@@ -22,6 +22,7 @@ struct HomeTabController: View {
   @State private var showEULA: Bool = !(
     UserDefaultsManager.shared.get(for: .eulaAccepted) as Bool? ?? false
   )
+  @State private var showNotificationsNudge = false
 
   init(
     feedsViewController: FeedsViewController,
@@ -61,13 +62,19 @@ struct HomeTabController: View {
 
         uploadView
           .onDoneAction {
+            UIView.setAnimationsEnabled(false)
             selectedTab = .home
-            let authOptions: UNAuthorizationOptions = [.alert, .badge, .sound]
-            UNUserNotificationCenter.current().requestAuthorization(
-              options: authOptions,
-              completionHandler: { _, _ in }
-            )
-            UIApplication.shared.registerForRemoteNotifications()
+            DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.animationPeriod) {
+              UNUserNotificationCenter.current().getNotificationSettings { settings in
+                switch settings.authorizationStatus {
+                case .notDetermined, .denied:
+                  DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.animationPeriod) {
+                    self.showNotificationsNudge = true
+                  }
+                default: break
+                }
+              }
+            }
           }
           .background(Color.black.edgesIgnoringSafeArea(.all))
           .tabItem { tabIcon(selected: selectedTab == .upload,
@@ -102,6 +109,15 @@ struct HomeTabController: View {
         )
       ) { _ in
         uploadNotificationReceived()
+      }
+      .fullScreenCover(isPresented: $showNotificationsNudge) {
+        ZStack(alignment: .center) {
+          NotificationsNudge {
+            showNotificationsNudge = false
+            UIView.setAnimationsEnabled(false)
+          }
+          .background( ClearBackgroundView() )
+        }
       }
       GeometryReader { geometry in
         let tabWidth = geometry.size.width / .five

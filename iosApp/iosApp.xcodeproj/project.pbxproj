@@ -299,6 +299,12 @@
 		AC6E31202D22F069001EBE6C /* SDWebImageMapKit in Frameworks */ = {isa = PBXBuildFile; productRef = AC6E311F2D22F069001EBE6C /* SDWebImageMapKit */; };
 		AC6E31222D22F08F001EBE6C /* ImageLoaderProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC6E31212D22F088001EBE6C /* ImageLoaderProtocol.swift */; };
 		AC6E31232D22F08F001EBE6C /* ImageLoaderProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC6E31212D22F088001EBE6C /* ImageLoaderProtocol.swift */; };
+		AC7D5B3E2E0EA7C6008853AF /* NotificationsNudge.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7D5B3D2E0EA7BE008853AF /* NotificationsNudge.swift */; };
+		AC7D5B3F2E0EA7C6008853AF /* NotificationsNudge.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7D5B3D2E0EA7BE008853AF /* NotificationsNudge.swift */; };
+		AC7D5BF32E102DE8008853AF /* YralToggle.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7D5BF22E102DDA008853AF /* YralToggle.swift */; };
+		AC7D5BF42E102DE8008853AF /* YralToggle.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7D5BF22E102DDA008853AF /* YralToggle.swift */; };
+		AC7D5BF62E1034E0008853AF /* NotificationsToggleViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7D5BF52E1034D5008853AF /* NotificationsToggleViewModel.swift */; };
+		AC7D5BF72E1034E0008853AF /* NotificationsToggleViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7D5BF52E1034D5008853AF /* NotificationsToggleViewModel.swift */; };
 		AC7F7EA52D771D5D00215162 /* UploadViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7F7EA42D771D2800215162 /* UploadViewModel.swift */; };
 		AC7F7EA62D771D5D00215162 /* UploadViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7F7EA42D771D2800215162 /* UploadViewModel.swift */; };
 		AC7F7EA92D771DF400215162 /* GetUploadEndpointUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7F7EA82D771DEF00215162 /* GetUploadEndpointUseCase.swift */; };
@@ -722,6 +728,9 @@
 		AC6BECBE2D09F866002E2021 /* NetworkService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkService.swift; sourceTree = "<group>"; };
 		AC6BECC12D09F917002E2021 /* HTTPService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTPService.swift; sourceTree = "<group>"; };
 		AC6E31212D22F088001EBE6C /* ImageLoaderProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageLoaderProtocol.swift; sourceTree = "<group>"; };
+		AC7D5B3D2E0EA7BE008853AF /* NotificationsNudge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsNudge.swift; sourceTree = "<group>"; };
+		AC7D5BF22E102DDA008853AF /* YralToggle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralToggle.swift; sourceTree = "<group>"; };
+		AC7D5BF52E1034D5008853AF /* NotificationsToggleViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsToggleViewModel.swift; sourceTree = "<group>"; };
 		AC7F7EA42D771D2800215162 /* UploadViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadViewModel.swift; sourceTree = "<group>"; };
 		AC7F7EA82D771DEF00215162 /* GetUploadEndpointUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GetUploadEndpointUseCase.swift; sourceTree = "<group>"; };
 		AC7F7EAC2D771EA200215162 /* UploadEndpointResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadEndpointResponse.swift; sourceTree = "<group>"; };
@@ -1494,6 +1503,7 @@
 				ACC0D43C2D8C6BEB006DCF5C /* ClearBackgroundView.swift */,
 				ACC0D4332D8BFE5B006DCF5C /* NudgePopupView.swift */,
 				AC99BB562D81F512008012C2 /* AttributedText.swift */,
+				AC7D5BF22E102DDA008853AF /* YralToggle.swift */,
 				ACEBF7DA2D6EDC7B00B594A0 /* GradientProgressViewStyle.swift */,
 				AC9294182D65F2FD003DB102 /* View+Extensions.swift */,
 			);
@@ -1516,6 +1526,7 @@
 		AC32E44D2D29661B001DDA43 /* ViewModel */ = {
 			isa = PBXGroup;
 			children = (
+				AC7D5BF52E1034D5008853AF /* NotificationsToggleViewModel.swift */,
 				AC32E44A2D29659F001DDA43 /* AccountViewModel.swift */,
 			);
 			path = ViewModel;
@@ -1799,6 +1810,7 @@
 		AC811B422DBA57390094C5F6 /* View */ = {
 			isa = PBXGroup;
 			children = (
+				AC7D5B3D2E0EA7BE008853AF /* NotificationsNudge.swift */,
 				AC811B3F2DBA56F00094C5F6 /* SignupOverlay.swift */,
 			);
 			path = View;
@@ -3055,6 +3067,7 @@
 				107C60C62DBF6109006FC467 /* SmileyGameRuleDTO.swift in Sources */,
 				10020A192DED6CED00DF269E /* LeaderboardRowView.swift in Sources */,
 				ACC0F3972D2ED5D700FA5BD0 /* LottieView.swift in Sources */,
+				AC7D5B3E2E0EA7C6008853AF /* NotificationsNudge.swift in Sources */,
 				AC2C30D22D96C51600DA9F81 /* ReportEntity.swift in Sources */,
 				ACB46A7D2D105BEB002E200C /* UIKitInitializers.swift in Sources */,
 				AC26CA562D80281D006ADA75 /* FirebaseCrashlyticsReporter.swift in Sources */,
@@ -3063,6 +3076,7 @@
 				AC42D3FC2E0D6E7E009C2D92 /* FirebaseNotifications.swift in Sources */,
 				AC32E4692D2998D6001DDA43 /* AccountDIContainer.swift in Sources */,
 				AC5A7B8C2DACF1E2009E9E42 /* VideoEventDTO.swift in Sources */,
+				AC7D5BF72E1034E0008853AF /* NotificationsToggleViewModel.swift in Sources */,
 				ACB46A362D0EC998002E200C /* FeedDIContainer.swift in Sources */,
 				ACF63A7B2DC29A3100C4BCCC /* ClientCredentialsRequest.swift in Sources */,
 				AC26CA572D80287E006ADA75 /* AuthClient.swift in Sources */,
@@ -3152,6 +3166,7 @@
 				AC99BBB12D86C563008012C2 /* ProfileView.swift in Sources */,
 				10F89A4D2E01450B00B90BD0 /* Color+Extensions.swift in Sources */,
 				AC99BB972D848667008012C2 /* YralFont.swift in Sources */,
+				AC7D5BF32E102DE8008853AF /* YralToggle.swift in Sources */,
 				ACEBF7ED2D6F845C00B594A0 /* ToastView.swift in Sources */,
 				AC1ACF9C2DB917A3001BDCFD /* SessionManager.swift in Sources */,
 				AC7F7EB22D77200000215162 /* UploadRepositoryProtocol.swift in Sources */,
@@ -3291,6 +3306,7 @@
 				107C60C52DBF6109006FC467 /* SmileyGameRuleDTO.swift in Sources */,
 				10020A182DED6CED00DF269E /* LeaderboardRowView.swift in Sources */,
 				ACC0F3982D2ED5D700FA5BD0 /* LottieView.swift in Sources */,
+				AC7D5B3F2E0EA7C6008853AF /* NotificationsNudge.swift in Sources */,
 				AC2C30D12D96C51600DA9F81 /* ReportEntity.swift in Sources */,
 				ACB46A7C2D105BEB002E200C /* UIKitInitializers.swift in Sources */,
 				AC26CA552D80281D006ADA75 /* FirebaseCrashlyticsReporter.swift in Sources */,
@@ -3299,6 +3315,7 @@
 				AC42D3FE2E0D6E7E009C2D92 /* FirebaseNotifications.swift in Sources */,
 				AC32E4682D2998D6001DDA43 /* AccountDIContainer.swift in Sources */,
 				AC5A7B8B2DACF1E2009E9E42 /* VideoEventDTO.swift in Sources */,
+				AC7D5BF62E1034E0008853AF /* NotificationsToggleViewModel.swift in Sources */,
 				ACB46A372D0EC998002E200C /* FeedDIContainer.swift in Sources */,
 				ACF63A7A2DC29A3100C4BCCC /* ClientCredentialsRequest.swift in Sources */,
 				AC26CA582D80287E006ADA75 /* AuthClient.swift in Sources */,
@@ -3388,6 +3405,7 @@
 				AC99BBB02D86C563008012C2 /* ProfileView.swift in Sources */,
 				10F89A4C2E01450B00B90BD0 /* Color+Extensions.swift in Sources */,
 				AC99BB982D848667008012C2 /* YralFont.swift in Sources */,
+				AC7D5BF42E102DE8008853AF /* YralToggle.swift in Sources */,
 				ACEBF7EC2D6F845C00B594A0 /* ToastView.swift in Sources */,
 				AC1ACF9D2DB917A3001BDCFD /* SessionManager.swift in Sources */,
 				AC7F7EB32D77200000215162 /* UploadRepositoryProtocol.swift in Sources */,

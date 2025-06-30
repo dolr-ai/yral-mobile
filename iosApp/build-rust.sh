@@ -13,7 +13,7 @@ if [[ -z "$PROJECT_DIR" ]]; then
   exit 1
 fi
 
-cd "$PROJECT_DIR"
+cd ""
 export PATH="$HOME/.cargo/bin:$PATH"
 
 # Workaround for macOS Big Sur / cargo-lipo
