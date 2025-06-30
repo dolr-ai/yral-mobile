@@ -40,18 +40,29 @@ class LeaderboardRepository: LeaderboardRepositoryProtocol {
     do {
       let (topSnap, userSnap) = try await (topTenTask, userTask)
 
+      var startingPosition = 1
+      var modifiedTopTenDTO: [LeaderboardRowDTO] = []
+
+      for index in 0 ..< topSnap.count {
+        if index > 0 && topSnap[index].coins < topSnap[index - 1].coins {
+          startingPosition += 1
+        }
+
+        modifiedTopTenDTO.append(
+          LeaderboardRowDTO(
+            id: topSnap[index].id,
+            position: startingPosition,
+            coins: topSnap[index].coins
+          )
+        )
+      }
+
       let leaderboardDTO = LeaderboardDTO(
         userRow: userSnap,
-        rows: topSnap
+        rows: modifiedTopTenDTO
       )
 
-      let userPositionQuery = Firestore.firestore()
-        .collection(Constants.usersCollectionPath)
-        .whereField(Constants.coinsField, isGreaterThan: userSnap.coins)
-      let aggregateQuery = try await userPositionQuery.count.getAggregation(source: .server)
-      let userPosition = Int(truncating: aggregateQuery.count) + .one
-
-      return .success(leaderboardDTO.toDomain(userPosition: userPosition))
+      return .success(leaderboardDTO.toDomain())
     } catch {
       return .failure(LeaderboardError.firebaseError(error))
     }
