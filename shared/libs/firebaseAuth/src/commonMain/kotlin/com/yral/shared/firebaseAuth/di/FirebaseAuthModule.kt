@@ -14,7 +14,7 @@ import org.koin.dsl.module
 
 val firebaseAuthModule =
     module {
-        factory<FBAuthRepositoryApi> { FBAuthRepository() }
+        factory<FBAuthRepositoryApi> { FBAuthRepository(get()) }
 
         factoryOf(::SignInAnonymouslyUseCase)
         factoryOf(::SignInWithTokenUseCase)

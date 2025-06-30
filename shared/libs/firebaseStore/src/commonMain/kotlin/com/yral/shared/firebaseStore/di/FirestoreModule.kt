@@ -26,7 +26,7 @@ inline fun <reified T : FirestoreDocument> getFBDocumentUseCaseFactory(qualifier
 
 val firestoreModule: Module =
     module {
-        factory<FBFirestoreRepositoryApi> { FBFirestoreRepository() }
+        factory<FBFirestoreRepositoryApi> { FBFirestoreRepository(get()) }
         factoryOf(::UpdateDocumentUseCase)
         includes(
             getFBDocumentUseCaseFactory<GameConfigDto>("GameConfig"),

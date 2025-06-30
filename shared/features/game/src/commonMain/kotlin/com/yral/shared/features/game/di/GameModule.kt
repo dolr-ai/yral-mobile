@@ -22,8 +22,8 @@ val gameModule =
     module {
         factoryOf(::CastVoteUseCase)
         factoryOf(::GetBalanceUseCase)
-        factory { GetGameIconsUseCase(get(), get(), get(named("GameConfig"))) }
-        factory { GetGameRulesUseCase(get(), get(), get(named("AboutGame"))) }
+        factory { GetGameIconsUseCase(get(), get(), get(named("GameConfig")), get()) }
+        factory { GetGameRulesUseCase(get(), get(), get(named("AboutGame")), get()) }
         factory { GetLeaderboardUseCase(get(), get(), get(named("LeaderBoard"))) }
         factory { GetCurrentUserInfoUseCase(get(), get(), get(named("LeaderBoard")), get()) }
         viewModelOf(::GameViewModel)

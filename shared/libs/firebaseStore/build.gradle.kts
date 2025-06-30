@@ -30,6 +30,7 @@ kotlin {
             implementation(projects.shared.libs.useCase)
             implementation(projects.shared.libs.crashlytics)
 
+            api(libs.gitlive.firebase.storage)
             api(libs.gitlive.firebase.store.db)
             implementation(libs.ktor.serialization.kotlinx.json)
         }
