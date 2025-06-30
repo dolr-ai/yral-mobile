@@ -12,7 +12,9 @@ import iosSharedUmbrella
 struct ProfileOptionsView: View {
   @State private var selectedOption: ProfileOptionsView.Options?
   @State private var isShowingLoader = false
+  @StateObject private var notificationVM = NotificationToggleViewModel()
   @Binding var showLogoutButton: Bool
+  @Environment(\.scenePhase) private var scenePhase
   var delegate: ProfileOptionsViewDelegate?
 
   init(showLogoutButton: Binding<Bool>, delegate: ProfileOptionsViewDelegate? = nil) {
@@ -35,6 +37,8 @@ struct ProfileOptionsView: View {
               delegate?.logout()
             } else if option.id == Constants.deleteId {
               delegate?.delete()
+            } else if option.id == Constants.alertId {
+
             } else {
               isShowingLoader = true
               selectedOption = option
@@ -52,8 +56,18 @@ struct ProfileOptionsView: View {
                 .font(Constants.font)
                 .foregroundColor(Constants.textColor)
               Spacer()
-              Image(systemName: "chevron.right")
-                .foregroundColor(.white)
+              if option.id == Constants.alertId {
+                Toggle("", isOn: Binding<Bool>(
+                  get: { notificationVM.isNotificationEnabled },
+                  set: { newValue in
+                    notificationVM.togglePermission(to: newValue)
+                  })
+                )
+                .toggleStyle(YralToggle())
+              } else {
+                Image(systemName: "chevron.right")
+                  .foregroundColor(.white)
+              }
             }
             .padding(.horizontal, Constants.hStackPadding)
           }
@@ -83,6 +97,11 @@ struct ProfileOptionsView: View {
           .frame(width: Constants.progressViewSize, height: Constants.progressViewSize, alignment: .center)
       }
     }
+    .onChange(of: scenePhase) { newPhase in
+      if newPhase == .active {
+        notificationVM.refreshStatus()
+      }
+    }
     .onAppear {
       isShowingLoader = false
     }
@@ -110,6 +129,11 @@ struct ProfileOptionsView: View {
 extension ProfileOptionsView {
   enum Constants {
     static let options = [
+      Options(
+        image: Image("option_alert"),
+        text: "Alerts",
+        redirection: Constants.alertId
+      ),
       Options(
         image: Image("option_chat"),
         text: "Talk to the Team",
@@ -146,12 +170,15 @@ extension ProfileOptionsView {
     static let progressViewSize = 16.0
     static let progressViewCornerRadius = 8.0
     static let vStackSpacing = 30.0
+    static let toggleWidth = 54.0
+    static let toggleHeight = 30.0
     static let loaderName = "Yral_Loader"
     static let telegramId = "https://t.me/+c-LTX0Cp-ENmMzI1"
     static let tncIosId = "https://yral.com/terms-ios"
     static let privacyPolicyId = "https://yral.com/privacy-policy"
     static let logoutId = "logoutId"
     static let deleteId = "deleteId"
+    static let alertId = "alertId"
   }
 }
 
