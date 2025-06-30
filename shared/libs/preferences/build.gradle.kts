@@ -3,7 +3,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
-    alias(libs.plugins.kotlinxSerialisartion)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.gobleyRust)
 }
 
@@ -28,8 +28,8 @@ kotlin {
             api(libs.androidx.security.crypto)
         }
         commonMain.dependencies {
-            api(libs.multiplatform.settings)
-            implementation(libs.ktor.json)
+            api(libs.russhwolf.multiplatformSettings.core)
+            implementation(libs.ktor.serialization.kotlinx.json)
 
             implementation(projects.shared.core)
             implementation(projects.shared.libs.koin)

@@ -3,7 +3,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
-    alias(libs.plugins.kotlinxSerialisartion)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 kotlin {
@@ -31,7 +31,7 @@ kotlin {
             implementation(projects.shared.libs.crashlytics)
 
             api(libs.gitlive.firebase.store.db)
-            implementation(libs.ktor.json)
+            implementation(libs.ktor.serialization.kotlinx.json)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
