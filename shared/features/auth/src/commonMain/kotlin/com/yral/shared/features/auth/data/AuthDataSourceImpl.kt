@@ -3,12 +3,12 @@ package com.yral.shared.features.auth.data
 import com.yral.shared.core.AppConfigurations.METADATA_BASE_URL
 import com.yral.shared.core.AppConfigurations.OAUTH_BASE_URL
 import com.yral.shared.core.AppConfigurations.OFF_CHAIN_BASE_URL
-import com.yral.shared.core.FirebaseConfigurations
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.rust.KotlinDelegatedIdentityWire
 import com.yral.shared.features.auth.data.models.DeleteAccountRequestDto
 import com.yral.shared.features.auth.data.models.ExchangePrincipalResponseDto
 import com.yral.shared.features.auth.data.models.TokenResponseDto
+import com.yral.shared.firebaseStore.cloudFunctionUrl
 import com.yral.shared.http.httpDelete
 import com.yral.shared.http.httpPost
 import com.yral.shared.http.httpPostWithStringResponse
@@ -26,7 +26,6 @@ class AuthDataSourceImpl(
     private val client: HttpClient,
     private val json: Json,
     private val preferences: Preferences,
-    private val firebaseConfigurations: FirebaseConfigurations,
 ) : AuthDataSource {
     override suspend fun obtainAnonymousIdentity(): TokenResponseDto {
         val formData =
@@ -117,7 +116,7 @@ class AuthDataSourceImpl(
             json = json,
         ) {
             url {
-                host = firebaseConfigurations.firebaseCloudFunctionUrl
+                host = cloudFunctionUrl()
                 path(EXCHANGE_PRINCIPAL_PATH)
             }
             headers.append("authorization", "Bearer $idToken")

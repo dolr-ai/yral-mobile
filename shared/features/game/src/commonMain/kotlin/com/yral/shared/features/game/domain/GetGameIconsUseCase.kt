@@ -5,16 +5,17 @@ import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.game.data.models.toGameConfig
 import com.yral.shared.features.game.domain.models.GameConfig
+import com.yral.shared.firebaseStore.getDownloadUrl
 import com.yral.shared.firebaseStore.model.GameConfigDto
 import com.yral.shared.firebaseStore.usecase.GetFBDocumentUseCase
 import com.yral.shared.libs.useCase.SuspendUseCase
-import dev.gitlive.firebase.Firebase
-import dev.gitlive.firebase.storage.storage
+import dev.gitlive.firebase.storage.FirebaseStorage
 
 class GetGameIconsUseCase(
     appDispatchers: AppDispatchers,
     crashlyticsManager: CrashlyticsManager,
     private val getConfigUseCase: GetFBDocumentUseCase<GameConfigDto>,
+    private val firebaseStorage: FirebaseStorage,
 ) : SuspendUseCase<Unit, GameConfig>(
         appDispatchers.io,
         crashlyticsManager,
@@ -36,21 +37,12 @@ class GetGameIconsUseCase(
                 config.availableSmileys
                     .map { smiley ->
                         smiley.copy(
-                            imageUrl = getDownloadUrl(smiley.imageUrl),
-                            clickAnimation = getDownloadUrl(smiley.clickAnimation),
+                            imageUrl = getDownloadUrl(smiley.imageUrl, firebaseStorage),
+                            clickAnimation = getDownloadUrl(smiley.clickAnimation, firebaseStorage),
                         )
                     },
         )
     }
-
-    private suspend fun getDownloadUrl(path: String): String =
-        if (path.isEmpty()) {
-            path
-        } else {
-            runCatching {
-                Firebase.storage.reference(path).getDownloadUrl()
-            }.getOrElse { "" }
-        }
 
     companion object {
         private const val GAME_CONFIG_COLLECTION = "config"

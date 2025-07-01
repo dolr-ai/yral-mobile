@@ -35,6 +35,7 @@ kotlin {
         androidMain.dependencies {
             implementation(projects.shared.libs.firebaseStore)
             implementation(projects.shared.libs.firebaseAuth)
+            implementation(libs.gitlive.firebase.storage)
             implementation(projects.shared.features.auth)
             implementation(projects.shared.features.feed)
             implementation(projects.shared.features.root)

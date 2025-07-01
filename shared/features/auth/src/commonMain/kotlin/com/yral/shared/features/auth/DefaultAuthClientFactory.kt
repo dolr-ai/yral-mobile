@@ -6,6 +6,7 @@ import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.domain.AuthRepository
 import com.yral.shared.features.auth.utils.OAuthUtils
 import com.yral.shared.preferences.Preferences
+import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
@@ -16,6 +17,7 @@ class DefaultAuthClientFactory(
     private val analyticsManager: AnalyticsManager,
     private val crashlyticsManager: CrashlyticsManager,
     private val preferences: Preferences,
+    private val auth: FirebaseAuth,
     private val authRepository: AuthRepository,
     private val requiredUseCases: DefaultAuthClient.RequiredUseCases,
     private val oAuthUtils: OAuthUtils,
@@ -29,6 +31,7 @@ class DefaultAuthClientFactory(
             analyticsManager = analyticsManager,
             crashlyticsManager = crashlyticsManager,
             preferences = preferences,
+            auth = auth,
             authRepository = authRepository,
             requiredUseCases = requiredUseCases,
             oAuthUtils = oAuthUtils,
