@@ -5,6 +5,17 @@ import com.yral.shared.analytics.constants.Features
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+@Serializable
+data class SplashScreenViewedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.SPLASH_SCREEN_VIEWED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.FEED.getFeatureName(),
+) : EventData {
+    public constructor() : this(
+        FeatureEvents.SPLASH_SCREEN_VIEWED.getEventName(),
+        Features.FEED.getFeatureName(),
+    )
+}
+
 // --- Auth / Signup / Login ---
 @Serializable
 data class AuthScreenViewedEventData(
@@ -21,12 +32,12 @@ data class AuthScreenViewedEventData(
 data class SignupClickedEventData(
     @SerialName("event") override val event: String = FeatureEvents.SIGNUP_CLICKED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.AUTH.getFeatureName(),
-    @SerialName("auth_journey") val authJourney: AuthJourney,
+    @SerialName("page_name") val pageName: SignupPageName,
 ) : EventData {
-    constructor(authJourney: AuthJourney) : this(
+    constructor(pageName: SignupPageName) : this(
         FeatureEvents.SIGNUP_CLICKED.getEventName(),
         Features.AUTH.getFeatureName(),
-        authJourney,
+        pageName,
     )
 }
 
@@ -594,6 +605,15 @@ enum class AuthJourney {
 
     @SerialName("apple")
     APPLE,
+}
+
+@Serializable
+enum class SignupPageName {
+    @SerialName("feed")
+    FEED,
+
+    @SerialName("menu")
+    MENU,
 }
 
 @Serializable

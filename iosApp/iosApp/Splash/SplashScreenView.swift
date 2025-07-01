@@ -6,6 +6,7 @@
 //  Copyright © 2025 orgName. All rights reserved.
 //
 import SwiftUI
+import iosSharedUmbrella
 
 struct SplashScreenView: View {
   @State var isInitialAnimationComplete = false
@@ -32,6 +33,9 @@ struct SplashScreenView: View {
                    .background(.black)
                    .edgesIgnoringSafeArea(.all)
       }
+    }
+    .onAppear {
+      AnalyticsModuleKt.getAnalyticsManager().trackEvent(event: SplashScreenViewedEventData())
     }
   }
 }

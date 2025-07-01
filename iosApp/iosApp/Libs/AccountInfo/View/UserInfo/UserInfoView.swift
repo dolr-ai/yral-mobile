@@ -50,6 +50,9 @@ struct UserInfoView: View {
         Button {
           delegate?.loginPressed()
           AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+            event: SignupClickedEventData(pageName: .menu)
+          )
+          AnalyticsModuleKt.getAnalyticsManager().trackEvent(
             event: MenuClickedEventData(ctaType: .login)
           )
         }

@@ -4,6 +4,8 @@ package com.yral.shared.analytics.constants
  * All analytic event names used across the app.
  */
 enum class FeatureEvents {
+    SPLASH_SCREEN_VIEWED,
+
     // Auth / Signup / Login
     AUTH_SCREEN_VIEWED,
     SIGNUP_CLICKED,
