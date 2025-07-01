@@ -71,7 +71,7 @@
     <string name="add_hashtags">Add another #hashtags</string>
     <string name="upload">Upload</string>
     <string name="uploading_message">Uploading may take a moment. Feel free to explore more videos on the home page while you wait!</string>
-    <string name="uploading_progress">Uploading… %d%</string>
+    <string name="uploading_progress">Uploading… %d%%</string>
     <string name="upload_completed">Upload Completed</string>
     <string name="upload_completed_message">We\'re processing your video. It\'ll be in \'Your Videos\' under My Profile soon. Happy scrolling!</string>
     <string name="your_videos">Your Videos</string>

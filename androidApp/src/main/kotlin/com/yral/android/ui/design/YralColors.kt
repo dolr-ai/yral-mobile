@@ -26,6 +26,7 @@ object YralColors {
 
     val Pink50: Color = Color(0xFFFCE6F2)
     val Pink100: Color = Color(0xFFF6B0D6)
+    val Pink200: Color = Color(0xFFEC55A7)
     val Pink300: Color = Color(0xFFE2017B)
     val Pink400: Color = Color(0xFFA00157)
 

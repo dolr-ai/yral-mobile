@@ -32,6 +32,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -42,6 +43,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Brush.Companion.linearGradient
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
@@ -64,9 +66,13 @@ import com.yral.android.ui.widgets.video.YralLocalVideoPlayer
 
 private const val TOTAL_ITEMS = 5
 
+@Suppress("MagicNumber")
 @Composable
 fun UploadVideoScreen(modifier: Modifier = Modifier) {
     val videoFilePath by remember { mutableStateOf("storage/emulated/0/Movies/default.mp4") }
+    val isUploadInProgress by remember { mutableStateOf(true) }
+    val progress by remember { mutableIntStateOf(20) }
+
     val listState = rememberLazyListState()
     val keyboardHeight by keyboardHeightAsState()
     LaunchedEffect(keyboardHeight) {
@@ -80,10 +86,23 @@ fun UploadVideoScreen(modifier: Modifier = Modifier) {
     ) {
         // Update TOTAL_ITEMS if adding any more items
         item { Header() }
-        item { UploadVideo("") }
-        item { Spacer(Modifier.height(20.dp)) }
-        item { VideoDetailsAndSubmit() }
-        item { Submit() }
+        if (isUploadInProgress) {
+            item {
+                UploadProgressView(
+                    progress = progress,
+                    videoFilePath = videoFilePath,
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(1f),
+                )
+            }
+        } else {
+            item { UploadVideo("") }
+            item { Spacer(Modifier.height(20.dp)) }
+            item { VideoDetailsAndSubmit() }
+            item { Submit() }
+        }
     }
 }
 
@@ -121,7 +140,21 @@ private fun UploadVideo(videoFilePath: String) {
                     ),
         ) {
             if (videoFilePath.isNotEmpty()) {
-                VideoView(videoFilePath)
+                Box(Modifier.fillMaxSize()) {
+                    VideoView(
+                        modifier =
+                            Modifier
+                                .fillMaxHeight()
+                                .align(Alignment.Center),
+                        videoFilePath = videoFilePath,
+                    )
+                    Image(
+                        painter = painterResource(id = R.drawable.cross),
+                        contentDescription = "image description",
+                        contentScale = ContentScale.None,
+                        modifier = Modifier.align(Alignment.TopEnd),
+                    )
+                }
             } else {
                 SelectVideoView()
             }
@@ -163,24 +196,70 @@ private fun SelectVideoView(maxSeconds: Int = 60) {
 }
 
 @Composable
-private fun VideoView(videoFilePath: String) {
-    Box(Modifier.fillMaxSize()) {
-        YralLocalVideoPlayer(
+private fun VideoView(
+    modifier: Modifier,
+    videoFilePath: String,
+) {
+    YralLocalVideoPlayer(
+        modifier = modifier,
+        localFilePath = videoFilePath,
+        autoPlay = true,
+        onError = { error ->
+            Logger.d("Video error: $error")
+        },
+    )
+}
+
+@Composable
+private fun UploadProgressView(
+    progress: Int,
+    videoFilePath: String,
+    modifier: Modifier,
+) {
+    Column(
+        modifier =
+            modifier
+                .padding(horizontal = 16.dp),
+    ) {
+        Text(
+            text = stringResource(R.string.uploading_message),
+            style = LocalAppTopography.current.regRegular,
+            color = YralColors.NeutralTextPrimary,
+        )
+        Spacer(Modifier.height(16.dp))
+        Box(
             modifier =
                 Modifier
-                    .fillMaxHeight()
-                    .align(Alignment.Center),
-            localFilePath = videoFilePath,
-            autoPlay = true,
-            onError = { error ->
-                Logger.d("Video error: $error")
-            },
+                    .fillMaxWidth()
+                    .height(10.dp)
+                    .clip(RoundedCornerShape(100.dp))
+                    .background(
+                        color = YralColors.Neutral800,
+                        shape = RoundedCornerShape(100.dp),
+                    ),
+        ) {
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxWidth(progress.toFractionOf())
+                        .height(10.dp)
+                        .clip(RoundedCornerShape(100.dp))
+                        .background(
+                            brush = linearGradient(colors = listOf(YralColors.Pink200, YralColors.Pink300)),
+                            shape = RoundedCornerShape(100.dp),
+                        ),
+            )
+        }
+        Spacer(Modifier.height(10.dp))
+        Text(
+            text = stringResource(R.string.uploading_progress, progress),
+            style = LocalAppTopography.current.regRegular,
+            color = YralColors.NeutralTextSecondary,
         )
-        Image(
-            painter = painterResource(id = R.drawable.cross),
-            contentDescription = "image description",
-            contentScale = ContentScale.None,
-            modifier = Modifier.align(Alignment.TopEnd),
+        Spacer(Modifier.height(24.dp))
+        VideoView(
+            modifier = Modifier.fillMaxSize(),
+            videoFilePath = videoFilePath,
         )
     }
 }
@@ -552,3 +631,10 @@ fun keyboardHeightAsState(): State<Int> {
 object UploadVideoScreenConstants {
     const val UPLOAD_BOX_ASPECT_RATIO = 1.18f
 }
+
+fun Int.toFractionOf(total: Int = 100): Float =
+    if (total == 0) {
+        0.0f
+    } else {
+        (this.toFloat() / total)
+    }
