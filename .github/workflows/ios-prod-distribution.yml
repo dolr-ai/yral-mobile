@@ -3,7 +3,7 @@ name: Yral-Prod (TestFlight)
 on:
   pull_request:
     branches:
-      - 'main'
+      - 'develop'
     types:
       - opened
       - ready_for_review
