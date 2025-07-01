@@ -65,6 +65,13 @@ jobs:
 
       - name: Build Rust Library
         run: |
+          # ─── quick-diagnosis ──────────────────────────────────────────────
+          echo "----------- DEBUG ------------"
+          echo "pwd          : $(pwd)"
+          echo "Tree (depth) :"
+          find . -maxdepth 2 -type f -name Cargo.toml
+          echo "--------------------------------"
+          # ─── actual build ─────────────────────────────────────────────────
           PROJECT_DIR="${PWD}/rust-agent" CONFIGURATION=Release iosApp/build-rust.sh
           # Optional: verify the build
           ls -la rust-agent/target || true
