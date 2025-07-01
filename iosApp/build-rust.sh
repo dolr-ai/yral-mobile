@@ -6,14 +6,14 @@
 
 #!/bin/bash
 
-set -e
+set -euo pipefail
 
 if [[ -z "$PROJECT_DIR" ]]; then
   echo "Must provide PROJECT_DIR environment variable set to the Xcode project directory." 1>&2
   exit 1
 fi
 
-cd ""
+MANIFEST_PATH-"${PROJECT_DIR}/Cargo.toml
 export PATH="$HOME/.cargo/bin:$PATH"
 
 # Workaround for macOS Big Sur / cargo-lipo
@@ -46,13 +46,13 @@ fi
 if [[ "$CONFIGURATION" == "Release" ]]; then
   echo "BUILDING RUST LIBRARY FOR RELEASE ($TARGETS)"
   cargo lipo --release \
-    --manifest-path ../rust-agent/Cargo.toml \
+    --manifest-path "$MANIFEST_PATH" \
     --targets "$TARGETS" \
     -p yral-mobile-swift-binding
 else
   echo "BUILDING RUST LIBRARY FOR DEBUG ($TARGETS)"
   cargo lipo \
-    --manifest-path ../rust-agent/Cargo.toml \
+    --manifest-path "$MANIFEST_PATH" \
     --targets "$TARGETS" \
     -p yral-mobile-swift-binding
 fi
