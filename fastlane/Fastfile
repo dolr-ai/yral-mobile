@@ -92,7 +92,7 @@ platform :ios do
       build_number: current_build + 1
     )
     gym(
-      project: "iosApp/iosApp.xcworkspace",
+      workspace: "iosApp/iosApp.xcworkspace",
       scheme: "iosApp",
       destination: "generic/platform=iOS",
       export_method: "app-store",
