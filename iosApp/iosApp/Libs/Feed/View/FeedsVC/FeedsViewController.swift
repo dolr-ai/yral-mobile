@@ -219,7 +219,7 @@ class FeedsViewController: UIViewController {
           snapshot.reloadItems([item])
           feedsDataSource.apply(snapshot, animatingDifferences: true)
           self.activityIndicator.stopAnimating()
-        case .smileysFetched(let feeds):
+        case .smileysFetched:
           self.activityIndicator.stopAnimating()
           var snapshot = feedsDataSource.snapshot()
           snapshot.reloadItems(snapshot.itemIdentifiers)

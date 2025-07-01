@@ -247,13 +247,25 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   }
 
   private func bindSession() {
-    cancellables.forEach( { $0.cancel() })
+    cancellables.forEach { $0.cancel() }
     cancellables.removeAll()
 
     sessionManager?.$state
       .receive(on: RunLoop.main)
-      .sink { [weak self] newState in
-        self?.profileInfoView.coinsView.coins = newState.coins
+      .compactMap { state -> (coins: UInt64, fetching: Bool)? in
+        switch state {
+        case .ephemeralAuthentication(_, _, let coins, let fetching),
+            .permanentAuthentication(_, _, let coins, let fetching):
+          return (coins, fetching)
+        default:
+          return nil
+        }
+      }
+      .filter { !$0.fetching }
+      .map(\.coins)
+      .removeDuplicates()
+      .sink { [weak self] coins in
+        self?.profileInfoView.coinsView.coins = coins
       }
       .store(in: &cancellables)
   }
@@ -265,7 +277,10 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
 
     if SmileyGameConfig.shared.config.smileys.count > 0 {
       let smileyGameView = SmileyGameView(
-        smileyGame: SmileyGame(config: SmileyGameConfig.shared.config, state: .notPlayed),
+        smileyGame: SmileyGame(
+          config: SmileyGameConfig.shared.config,
+          state: smileyGame?.state ?? .notPlayed
+        ),
         smileyTapped: { [weak self] smiley in
           self?.handleSmileyTap(smiley)
         },
@@ -330,15 +345,6 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   }
 
   private func startFlowingAnimation(for smiley: Smiley) {
-//    FirebaseLottieManager.shared.data(forPath: smiley.clickAnimation, completion: { [weak self] result in
-//      if case .success(let data) = result {
-//        DispatchQueue.main.async {
-//          self?.lottieView.animation = try? LottieAnimation.from(data: data)
-//          self?.lottieView.play()
-//        }
-//      }
-//    })
-
     let animation = LottieAnimation.named("smiley_game_\(smiley.id)")
     lottieView.animation = animation
     lottieView.play()
