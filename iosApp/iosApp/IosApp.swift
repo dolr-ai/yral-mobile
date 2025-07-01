@@ -28,6 +28,7 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
       AppCheck.appCheck().token(forcingRefresh: true) { token, error in
         if let error = error {
           print("Appcheck error: \(error)")
+          print("Samarth")
         } else {
           print("Appcheck token: \(token?.token ?? "nil")")
         }
