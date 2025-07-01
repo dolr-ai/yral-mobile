@@ -82,6 +82,9 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.coil.okhttp)
 
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.ui)
+
     implementation(projects.shared.core)
     implementation(projects.shared.libs.preferences)
     implementation(projects.shared.libs.http)

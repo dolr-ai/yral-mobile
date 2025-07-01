@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
@@ -49,17 +50,20 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import co.touchlab.kermit.Logger
 import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.uploadVideo.UploadVideoScreenConstants.UPLOAD_BOX_ASPECT_RATIO
 import com.yral.android.ui.widgets.YralButtonState
 import com.yral.android.ui.widgets.YralGradientButton
+import com.yral.android.ui.widgets.video.YralLocalVideoPlayer
 
 private const val TOTAL_ITEMS = 5
 
 @Composable
 fun UploadVideoScreen(modifier: Modifier = Modifier) {
+    val videoFilePath by remember { mutableStateOf("storage/emulated/0/Movies/default.mp4") }
     val listState = rememberLazyListState()
     val keyboardHeight by keyboardHeightAsState()
     LaunchedEffect(keyboardHeight) {
@@ -73,7 +77,7 @@ fun UploadVideoScreen(modifier: Modifier = Modifier) {
     ) {
         // Update TOTAL_ITEMS if adding any more items
         item { Header() }
-        item { UploadVideo() }
+        item { UploadVideo(videoFilePath) }
         item { Spacer(Modifier.height(20.dp)) }
         item { VideoDetailsAndSubmit() }
         item { Submit() }
@@ -96,7 +100,7 @@ private fun Header() {
 }
 
 @Composable
-private fun UploadVideo() {
+private fun UploadVideo(videoFilePath: String) {
     Row(Modifier.padding(horizontal = 16.dp)) {
         Box(
             modifier =
@@ -113,6 +117,17 @@ private fun UploadVideo() {
                         shape = RoundedCornerShape(size = 8.dp),
                     ),
         ) {
+            YralLocalVideoPlayer(
+                modifier =
+                    Modifier
+                        .fillMaxHeight()
+                        .align(Alignment.Center),
+                localFilePath = videoFilePath,
+                autoPlay = true,
+                onError = { error ->
+                    Logger.d("Video error: $error")
+                },
+            )
             Image(
                 painter = painterResource(id = R.drawable.cross),
                 contentDescription = "image description",

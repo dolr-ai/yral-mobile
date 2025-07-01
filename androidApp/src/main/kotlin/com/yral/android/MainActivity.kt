@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -22,10 +23,12 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import co.touchlab.kermit.Logger
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.design.appTypoGraphy
 import com.yral.android.ui.screens.RootScreen
+import com.yral.android.ui.widgets.video.VideoPermissionUtils
 import com.yral.shared.core.platform.AndroidPlatformResources
 import com.yral.shared.core.platform.PlatformResourcesFactory
 import com.yral.shared.features.auth.data.AuthDataSourceImpl.Companion.REDIRECT_URI_HOST
@@ -38,6 +41,17 @@ import com.yral.shared.uniffi.generated.initRustLogger
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
     private lateinit var oAuthUtils: OAuthUtils
+    private val permissionLauncher =
+        registerForActivityResult(
+            ActivityResultContracts.RequestMultiplePermissions(),
+        ) { permissions ->
+            val allGranted = permissions.values.all { it }
+            if (allGranted) {
+                Logger.d("Permissions granted - video player can access files")
+            } else {
+                Logger.d("Permissions denied - handle accordingly")
+            }
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,6 +62,9 @@ class MainActivity : ComponentActivity() {
         }
         oAuthUtils = koinInstance.get()
         handleIntent(intent)
+
+        checkAndRequestVideoPermissions()
+
         setContent {
             CompositionLocalProvider(LocalRippleConfiguration provides null) {
                 CompositionLocalProvider(LocalAppTopography provides appTypoGraphy()) {
@@ -81,6 +98,13 @@ class MainActivity : ComponentActivity() {
             if (code != null && state != null) {
                 oAuthUtils.invokeCallback(code, state)
             }
+        }
+    }
+
+    private fun checkAndRequestVideoPermissions() {
+        val permissionsToRequest = VideoPermissionUtils.getMissingVideoPermissions(this)
+        if (permissionsToRequest.isNotEmpty()) {
+            permissionLauncher.launch(permissionsToRequest.toTypedArray())
         }
     }
 }
