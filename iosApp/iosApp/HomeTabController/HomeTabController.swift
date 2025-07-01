@@ -172,8 +172,10 @@ struct HomeTabController: View {
   private func tabDidChange(to tab: Tab) {
     var categoryName = CategoryName.home
     switch tab {
-    case .home, .leaderboard:
+    case .home:
       categoryName = .home
+    case .leaderboard:
+      categoryName = .leaderboard
     case .upload:
       categoryName = .uploadVideo
     case .profile:

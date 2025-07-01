@@ -152,6 +152,7 @@ struct IosApp: App {
   private func initializeDependencies() async {
     do {
       AppDI_iosKt.doInitKoin { _ in  }
+      AnalyticsModuleKt.getAnalyticsManager().trackEvent(event: SplashScreenViewedEventData())
       feedsDIContainer = await appDIContainer.makeFeedDIContainer()
       try await appDIContainer.authClient.initialize()
       uploadDIContainer = appDIContainer.makeUploadDIContainer()

@@ -95,6 +95,10 @@ extension FeedsPlayer {
       delegate?.reachedPlaybackMilestone(.started, for: currentIndex)
     }
 
+    if duration.isFinite, seconds == CGFloat.three {
+      delegate?.playedThreeSeconds(at: currentIndex)
+    }
+
     if duration.isFinite,
        seconds / duration >= Constants.videoDurationEventMaxThreshold,
        finishLogged.insert(currentIndex).inserted {

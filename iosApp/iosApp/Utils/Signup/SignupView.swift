@@ -28,12 +28,12 @@ struct SignupView: View {
       }
       .padding(.top, Constants.signupVStackTopPadding)
       Button {
-        delegate?.signupwithGoogle()
         AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-          event: SignupClickedEventData(
-            authJourney: AuthJourney.google
+          event: SignupJourneySelected(
+            authJourney: .google
           )
         )
+        delegate?.signupwithGoogle()
       } label: {
         Group {
           if loadingProvider == .google {
@@ -61,12 +61,12 @@ struct SignupView: View {
       .padding(.top, Constants.googleButtonTopPadding)
 
       Button {
-        delegate?.signupwithApple()
         AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-          event: SignupClickedEventData(
-            authJourney: AuthJourney.apple
+          event: SignupJourneySelected(
+            authJourney: .apple
           )
         )
+        delegate?.signupwithApple()
       } label: {
         Group {
           if loadingProvider == .apple {
@@ -105,11 +105,6 @@ struct SignupView: View {
       .padding(.top, Constants.tncTopPadding)
     }
     .padding(.horizontal, Constants.horizontalPadding)
-    .task {
-      AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-        event: AuthScreenViewedEventData()
-      )
-    }
   }
 }
 

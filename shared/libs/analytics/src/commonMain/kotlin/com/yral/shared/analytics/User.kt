@@ -1,7 +1,5 @@
 package com.yral.shared.analytics
 
-import com.yral.shared.analytics.events.TokenType
-
 enum class UserType {
     NEW,
     EXISTING,
@@ -9,8 +7,8 @@ enum class UserType {
 
 public data class User(
     val userId: String,
+    val isLoggedIn: Boolean,
     val canisterId: String,
-    val userType: UserType,
-    val tokenWalletBalance: Double,
-    val tokenType: TokenType,
+    val isCreator: Boolean?,
+    val satsBalance: Double,
 )

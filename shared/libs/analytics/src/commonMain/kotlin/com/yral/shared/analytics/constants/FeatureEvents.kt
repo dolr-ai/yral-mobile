@@ -9,6 +9,7 @@ enum class FeatureEvents {
     // Auth / Signup / Login
     AUTH_SCREEN_VIEWED,
     SIGNUP_CLICKED,
+    SIGNUP_JOURNEY_SELECTED,
     SIGNUP_INITIATED,
     SIGNUP_SUCCESS,
     LOGIN_SUCCESS,
@@ -19,6 +20,7 @@ enum class FeatureEvents {
     BOTTOM_NAVIGATION_CLICKED,
 
     // Video / Feed
+    VIDEO_IMPRESSION,
     VIDEO_STARTED,
     VIDEO_VIEWED,
     VIDEO_CLICKED,
@@ -31,8 +33,8 @@ enum class FeatureEvents {
     DUPLICATE_POSTS,
 
     // Game
+    GAME_VOTED,
     GAME_PLAYED,
-    GAME_CONCLUDED,
     GAME_CONCLUDED_BOTTOMSHEET_CLICKED,
 
     // Menu

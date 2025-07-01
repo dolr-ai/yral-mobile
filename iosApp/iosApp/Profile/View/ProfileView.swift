@@ -82,10 +82,33 @@ struct ProfileView: View {
                       withAnimation(.easeInOut(duration: CGFloat.animationPeriod)) {
                         UIView.setAnimationsEnabled(false)
                         showDelete = true
+                        AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+                          event: DeleteVideoInitiatedEventData(
+                            pageName: .profile,
+                            videoId: info.videoId
+                          )
+                        )
                       }
                     },
                     onVideoTapped: { videoInfo in
                       currentIndex = videos.firstIndex(where: { $0.postID == videoInfo.postID }) ?? .zero
+                      if currentIndex < videos.count {
+                        let item = viewModel.feeds[currentIndex]
+                        AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+                          event: VideoClickedEventData(
+                            videoId: item.videoID,
+                            publisherUserId: item.principalID,
+                            likeCount: Int64(item.likeCount),
+                            shareCount: .zero,
+                            viewCount: Int64(item.viewCount),
+                            isGameEnabled: false,
+                            gameType: .smiley,
+                            isNsfw: false,
+                            ctaType: .play,
+                            pageName: .profile
+                          )
+                        )
+                      }
                       withAnimation {
                         showFeeds = true
                       }
@@ -93,6 +116,7 @@ struct ProfileView: View {
                     onLoadMore: {
                       Task { @MainActor in
                         await viewModel.getVideos()
+                        sendAnalyticsInfo()
                       }
                     }
                   )
@@ -125,6 +149,7 @@ struct ProfileView: View {
                     videoId: deleteInfo.videoId
                   )
                 )
+                sendAnalyticsInfo()
               }
             },
             onCancel: { showDelete = false }
@@ -134,7 +159,11 @@ struct ProfileView: View {
         .task {
           guard isLoadingFirstTime else {
             AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-              event: ProfilePageViewedEventData(totalVideos: Int32(self.videos.count))
+              event: ProfilePageViewedEventData(
+                totalVideos: Int32(self.videos.count),
+                isOwnProfile: true,
+                publisherUserId: accountInfo?.canisterID ?? ""
+              )
             )
             return
           }
@@ -142,8 +171,13 @@ struct ProfileView: View {
           async let fetchProfile: () = viewModel.fetchProfileInfo()
           async let fetchVideos: () = viewModel.getVideos()
           _ = await (fetchProfile, fetchVideos)
+          sendAnalyticsInfo()
           AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-            event: ProfilePageViewedEventData(totalVideos: Int32(self.videos.count))
+            event: ProfilePageViewedEventData(
+              totalVideos: Int32(self.videos.count),
+              isOwnProfile: true,
+              publisherUserId: accountInfo?.canisterID ?? ""
+            )
           )
         }
         .onAppear {
@@ -204,7 +238,33 @@ struct ProfileView: View {
   }
 
   func refreshVideos(shouldPurge: Bool) async {
-    await self.viewModel.refreshVideos(request: RefreshVideosRequest(shouldPurge: shouldPurge))
+    await self.viewModel.refreshVideos(
+      request: RefreshVideosRequest(shouldPurge: shouldPurge)
+    )
+    sendAnalyticsInfo()
+  }
+
+  func sendAnalyticsInfo() {
+    // swiftlint: disable large_tuple
+    let (userPrincipal, canisterPrincipal, coins, isLoggedIn): (String, String, UInt64, Bool) = {
+      switch session.state {
+      case .ephemeralAuthentication(let userPrincipal, let canisterPrincipal, let coins, _):
+        return (userPrincipal, canisterPrincipal, coins, false)
+      case .permanentAuthentication(let userPrincipal, let canisterPrincipal, let coins, _):
+        return (userPrincipal, canisterPrincipal, coins, true)
+      default:
+        return ("", "", .zero, false)
+      }
+    }()
+    // swiftlint: enable large_tuple
+    viewModel.setAnalyticsInfo(
+      analyticsInfo: ProfileViewModel.AnalyticsInfo(
+        userPrincipal: userPrincipal,
+        canisterPrincipal: canisterPrincipal,
+        isLoggedIn: isLoggedIn,
+        satsBalance: Double(coins)
+      )
+    )
   }
 }
 

@@ -43,11 +43,9 @@ struct ProfileOptionsView: View {
               isShowingLoader = true
               selectedOption = option
             }
-            if let selectedOption = selectedOption {
-              AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-                event: MenuClickedEventData(ctaType: selectedOption.ctaType())
-              )
-            }
+            AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+              event: MenuClickedEventData(ctaType: option.ctaType())
+            )
           } label: {
             HStack(spacing: Constants.hStackSpacing) {
               option.image

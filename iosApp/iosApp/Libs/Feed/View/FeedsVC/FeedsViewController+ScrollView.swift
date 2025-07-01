@@ -6,6 +6,7 @@
 //  Copyright © 2025 orgName. All rights reserved.
 //
 import UIKit
+import iosSharedUmbrella
 
 extension FeedsViewController: UICollectionViewDelegate {
   func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
@@ -23,6 +24,22 @@ extension FeedsViewController: UICollectionViewDelegate {
     let oldIndex = feedsPlayer.currentIndex
     let newIndex = visibleIndexPath.item
     if newIndex != oldIndex {
+      if newIndex < feedsDataSource.snapshot().numberOfItems {
+        let item = feedsDataSource.snapshot().itemIdentifiers[newIndex]
+        AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+          event: VideoImpressionEventData(
+            categoryName: self.feedType == .otherUsers ? .home : .profile,
+            videoId: item.videoID,
+            publisherUserId: item.principalID,
+            likeCount: Int64(item.likeCount),
+            shareCount: .zero,
+            viewCount: item.viewCount,
+            isGameEnabled: self.feedType == .otherUsers ? true : false,
+            gameType: .smiley,
+            isNsfw: false
+          )
+        )
+      }
       feedsPlayer.advanceToVideo(at: newIndex)
       feedsCV.reloadData()
     } else {

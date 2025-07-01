@@ -121,7 +121,7 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
         let oldPrincipal = self.userPrincipalString
         try await processDelegatedIdentity(from: token, type: .permanent)
         UserDefaultsManager.shared.set(true, for: .userDefaultsLoggedIn)
-        if oldPrincipal == self.canisterPrincipalString {
+        if oldPrincipal == self.userPrincipalString {
           AnalyticsModuleKt.getAnalyticsManager().trackEvent(
             event: SignupSuccessEventData(
               isReferral: false,

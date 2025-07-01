@@ -296,7 +296,6 @@ final class FeedsPlayer: YralPlayer {
       feedResults.firstIndex { $0.videoID == id }
     })
     delegate?.removeThumbnails(for: indicesToCancel)
-
     for id in idsToCancel {
       guard let feed = feedResults.first(where: { $0.videoID == id }) else { continue }
       await hlsDownloadManager.cancelDownload(for: feed.url)
@@ -377,6 +376,7 @@ protocol FeedsPlayerProtocol: AnyObject {
     _ milestone: PlaybackMilestone,
     for index: Int
   )
+  func playedThreeSeconds(at index: Int)
 }
 
 extension FeedsPlayer {
