@@ -28,6 +28,7 @@ import com.yral.shared.preferences.Preferences
 import com.yral.shared.uniffi.generated.CanistersWrapper
 import com.yral.shared.uniffi.generated.FfiException
 import com.yral.shared.uniffi.generated.authenticateWithNetwork
+import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
@@ -38,6 +39,7 @@ class DefaultAuthClient(
     private val analyticsManager: AnalyticsManager,
     private val crashlyticsManager: CrashlyticsManager,
     private val preferences: Preferences,
+    private val auth: FirebaseAuth,
     private val authRepository: AuthRepository,
     private val requiredUseCases: RequiredUseCases,
     private val oAuthUtils: OAuthUtils,
@@ -57,6 +59,7 @@ class DefaultAuthClient(
                 idToken = idToken,
                 accessToken = "",
                 refreshToken = "",
+                skipFirebaseAuth = auth.currentUser != null,
             )
         } ?: obtainAnonymousIdentity()
     }
@@ -118,30 +121,25 @@ class DefaultAuthClient(
         accessToken: String,
     ) {
         crashlyticsManager.logMessage("setting token to local storage")
-        preferences.putString(
-            PrefKeys.ID_TOKEN.name,
-            idToken,
-        )
+        preferences.putString(PrefKeys.ID_TOKEN.name, idToken)
         if (refreshToken.isNotEmpty()) {
-            preferences.putString(
-                PrefKeys.REFRESH_TOKEN.name,
-                refreshToken,
-            )
+            preferences.putString(PrefKeys.REFRESH_TOKEN.name, refreshToken)
         }
         if (accessToken.isNotEmpty()) {
-            preferences.putString(
-                PrefKeys.ACCESS_TOKEN.name,
-                refreshToken,
-            )
+            preferences.putString(PrefKeys.ACCESS_TOKEN.name, refreshToken)
         }
     }
 
     override suspend fun logout() {
         analyticsManager.flush()
-        preferences.remove(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name)
-        preferences.remove(PrefKeys.REFRESH_TOKEN.name)
-        preferences.remove(PrefKeys.ACCESS_TOKEN.name)
-        preferences.remove(PrefKeys.ID_TOKEN.name)
+        listOf(
+            PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name,
+            PrefKeys.REFRESH_TOKEN.name,
+            PrefKeys.ACCESS_TOKEN.name,
+            PrefKeys.ID_TOKEN.name,
+        ).forEach { key ->
+            preferences.remove(key)
+        }
         resetCachedCanisterData()
         sessionManager.updateState(SessionState.Initial)
         crashlyticsManager.setUserId("")
@@ -166,19 +164,16 @@ class DefaultAuthClient(
                         userPrincipalId = canisterWrapper.getUserPrincipal(),
                     )
             }
-            setSession(canisterData = cachedData)
             if (!skipSetMetaData) {
                 scope.launch {
                     updateYralSession(cachedData)
                 }
             }
             sessionManager.updateCoinBalance(0)
-            scope.launch {
-                if (skipFirebaseAuth) {
-                    updateBalanceAndProceed(cachedData)
-                } else {
-                    authorizeFirebase(cachedData)
-                }
+            if (skipFirebaseAuth) {
+                setSession(canisterData = cachedData)
+            } else {
+                authorizeFirebase(cachedData)
             }
         } catch (e: FfiException) {
             resetCachedCanisterData()
@@ -239,7 +234,7 @@ class DefaultAuthClient(
                 requiredUseCases.signInWithTokenUseCase
                     .invoke(exchangeResult.token)
                     .onSuccess {
-                        updateBalanceAndProceed(canisterData)
+                        setSession(canisterData = canisterData)
                     }.onFailure { throw YralAuthException("sign in with token failed - ${it.message}") }
             }.onFailure { throw YralAuthException("sign out for auth token sign in failed - ${it.message}") }
     }
@@ -276,6 +271,7 @@ class DefaultAuthClient(
                     ),
             ),
         )
+        scope.launch { updateBalanceAndProceed(canisterData) }
         analyticsManager.trackEvent(
             event = AuthSuccessfulEventData(),
         )
