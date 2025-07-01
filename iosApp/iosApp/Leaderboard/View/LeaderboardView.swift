@@ -51,8 +51,7 @@ struct LeaderboardView: View {
   // swiftlint: disable function_body_length
   @ViewBuilder
   private func buildHeader(_ response: LeaderboardResponse) -> some View {
-    let topThree = Array(response.rows.prefix(.three))
-    let modifiedTopThree = [topThree[.one], topThree[.zero], topThree[.two]]
+    let (topThreePrincipals, topThreeCoins) = topThreePositions(for: response)
 
     VStack(alignment: .leading, spacing: .zero) {
       Text(Constants.header)
@@ -65,53 +64,9 @@ struct LeaderboardView: View {
       HStack(spacing: .zero) {
         Spacer(minLength: .zero)
 
-        ZStack {
-          Image(Constants.podiumImage)
-            .resizable()
-            .frame(width: Constants.podiumSize.width, height: Constants.podiumSize.height)
-
-          ZStack {
-            Image(Constants.silverRadial)
-              .resizable()
-              .frame(width: Constants.silverBorderSize, height: Constants.silverBorderSize)
-
-            URLImage(url: viewModel.fetchImageURL(for: modifiedTopThree[.zero].principalID))
-              .frame(width: Constants.silverSize, height: Constants.silverSize)
-              .background(
-                Image(Constants.defaultImage)
-              )
-              .clipShape(Circle())
-          }
-          .offset(x: -Constants.silverOffset.x, y: -Constants.silverOffset.y)
-
-          ZStack {
-            Image(Constants.goldRadial)
-              .resizable()
-              .frame(width: Constants.goldBorderSize, height: Constants.goldBorderSize)
-
-            URLImage(url: viewModel.fetchImageURL(for: modifiedTopThree[.one].principalID))
-              .frame(width: Constants.goldSize, height: Constants.goldSize)
-              .background(
-                Image(Constants.defaultImage)
-              )
-              .clipShape(Circle())
-          }
-          .offset(x: Constants.goldOffset.x, y: -Constants.goldOffset.y)
-
-          ZStack {
-            Image(Constants.bronzeRadial)
-              .resizable()
-              .frame(width: Constants.bronzeBorderSize, height: Constants.bronzeBorderSize)
-
-            URLImage(url: viewModel.fetchImageURL(for: modifiedTopThree[.two].principalID))
-              .frame(width: Constants.bronzeSize, height: Constants.bronzeSize)
-              .background(
-                Image(Constants.defaultImage)
-              )
-              .clipShape(Circle())
-          }
-          .offset(x: Constants.bronzeOffset.x, y: -Constants.bronzeOffset.y)
-        }
+        Image(Constants.podiumImage)
+          .resizable()
+          .frame(width: Constants.podiumSize.width, height: Constants.podiumSize.height)
 
         Spacer(minLength: .zero)
       }
@@ -121,19 +76,23 @@ struct LeaderboardView: View {
         Spacer(minLength: .zero)
 
         HStack(spacing: Constants.headerBottomHStackSpacing) {
-          ForEach(modifiedTopThree, id: \.id) { leaderboardRow in
-            VStack(spacing: Constants.headerVStackSpacing) {
-              Text(leaderboardRow.principalID)
+          ForEach(topThreePrincipals.indices, id: \.self) { index in
+            VStack(spacing: .zero) {
+              Text(condensedIDString(for: topThreePrincipals[index]))
                 .font(Constants.headerIDFont)
                 .foregroundColor(Constants.headerIDColour)
-                .lineLimit(.one)
+                .multilineTextAlignment(.center)
+                .lineLimit(topThreePrincipals[index].count == .one ? .one : .two)
+                .truncationMode(.tail)
+
+              Spacer(minLength: Constants.headerBottomHStackSpacerMinLenght)
 
               HStack(spacing: .four) {
                 Image(Constants.satsImage)
                   .resizable()
                   .frame(width: Constants.satsImageSize, height: Constants.satsImageSize)
 
-                Text(leaderboardRow.coins.description)
+                Text(topThreeCoins[index].description)
                   .font(Constants.satsFont)
                   .foregroundColor(Constants.satsColour)
               }
@@ -141,6 +100,7 @@ struct LeaderboardView: View {
           }
         }
         .frame(width: Constants.headerBottomHStackWidth)
+        .frame(maxHeight: Constants.headerBottomHStackHeight)
 
         Spacer(minLength: .zero)
       }
@@ -152,7 +112,7 @@ struct LeaderboardView: View {
       LottieView(name: Constants.headerLottie,
                  loopMode: .playOnce,
                  animationSpeed: .one) {}
-        .offset(y: .zero)
+        .offset(x: .three, y: .thirteen)
     )
     .background(Constants.headerBackground)
   }
@@ -183,7 +143,6 @@ struct LeaderboardView: View {
       LeaderboardRowView(
         leaderboardRow: response.userRow,
         isCurrentUser: true,
-        userPosition: response.userPosition,
         rowWidth: rowWidth,
         imageURL: viewModel.fetchImageURL(for: response.userRow.principalID)
       )
@@ -192,9 +151,6 @@ struct LeaderboardView: View {
         LeaderboardRowView(
           leaderboardRow: leaderboardRow,
           isCurrentUser: false,
-          userPosition: (response.rows.firstIndex(where: {
-            $0.principalID == leaderboardRow.principalID
-          }) ?? -Constants.arbNumber) + .one,
           rowWidth: rowWidth,
           imageURL: viewModel.fetchImageURL(for: leaderboardRow.principalID)
         )
@@ -204,11 +160,42 @@ struct LeaderboardView: View {
     .padding(.vertical, Constants.leaderboardVertical)
     .padding(.horizontal, Constants.leaderboardHorizontal)
   }
+
+  private func topThreePositions(for response: LeaderboardResponse) -> ([[String]], [Int]) {
+
+    var grouped: [Int: (ids: [String], coins: Int)] = [:]
+
+    for row in response.rows where (.one ... .three).contains(row.position) {
+      if grouped[row.position] == nil {
+        grouped[row.position] = (ids: [], coins: row.coins)
+      }
+      grouped[row.position]!.ids.append(row.principalID)
+    }
+
+    let order: [Int] = [.two, .one, .three]
+    let idsByPosition   = order.map { grouped[$0]?.ids   ?? [] }
+    let coinsByPosition = order.map { grouped[$0]?.coins ?? .zero }
+
+    return (idsByPosition, coinsByPosition)
+  }
+
+  private func condensedIDString(for ids: [String]) -> String {
+    let firstFour = Array(ids.prefix(.four))
+    guard !firstFour.isEmpty else { return "" }
+
+    if firstFour.count == .one {
+      return firstFour[.zero]
+    } else {
+      return firstFour
+        .map { String($0.prefix(.four)) }
+        .joined(separator: "..., ")
+        .appending("...")
+    }
+  }
 }
 
 extension LeaderboardView {
   enum Constants {
-    static let defaultImage = "default_profile"
     static let background = YralColor.grey950.swiftUIColor
     static let loader = "Yral_Loader"
     static let loaderSize = 24.0
@@ -229,7 +216,6 @@ extension LeaderboardView {
     static let goldBorderSize = 65.0
     static let goldOffset = (x: 0.0, y: 65.0)
     static let silverRadial = "silver_radial"
-    static let silverSize = 44.0
     static let silverBorderSize = 50.0
     static let silverOffset = (x: 97.0, y: 25.0)
     static let bronzeRadial = "bronze_radial"
@@ -239,7 +225,6 @@ extension LeaderboardView {
 
     static let headerTopHStackTop = 28.0
     static let headerBottomHStackSpacing = 16.0
-    static let headerVStackSpacing = 8.0
     static let headerIDFont = YralFont.pt14.medium.swiftUIFont
     static let headerIDColour = YralColor.grey400.swiftUIColor
 
@@ -251,6 +236,8 @@ extension LeaderboardView {
     static let headerBottomHStackTop = 20.0
     static let headerBottomHStackBottom = 40.0
     static let headerBottomHStackWidth = 311.0
+    static let headerBottomHStackHeight = 110.0
+    static let headerBottomHStackSpacerMinLenght = 8.0
 
     static let vStackSpacing = 12.0
     static let position = "Position"

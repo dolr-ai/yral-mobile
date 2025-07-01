@@ -10,18 +10,17 @@ import SwiftUI
 struct LeaderboardRowView: View {
   let leaderboardRow: LeaderboardRowResponse
   let isCurrentUser: Bool
-  let userPosition: Int
   let rowWidth: CGFloat
   let imageURL: URL?
 
   var body: some View {
     HStack(spacing: .zero) {
-      Text("#\(userPosition)")
+      Text("#\(leaderboardRow.position)")
         .font(Constants.userPositionFont)
         .foregroundColor(foregroundColorForPosition())
         .overlay(
           buildTextGradient(
-            text: "#\(userPosition)",
+            text: "#\(leaderboardRow.position)",
             font: Constants.userPositionFont,
             endRadius: Constants.positionEndRadius
           )
@@ -74,9 +73,12 @@ struct LeaderboardRowView: View {
   }
 
   @ViewBuilder private func buildUserImage() -> some View {
-    if !isCurrentUser && (userPosition == .one || userPosition == .two || userPosition == .three) {
+    if !isCurrentUser && (leaderboardRow.position == .one ||
+                          leaderboardRow.position == .two ||
+                          leaderboardRow.position == .three
+    ) {
       ZStack {
-        gradientImageFor(userPosition)
+        gradientImageFor(leaderboardRow.position)
           .resizable()
           .frame(width: Constants.imageSize, height: Constants.imageSize)
 
@@ -92,8 +94,11 @@ struct LeaderboardRowView: View {
   }
 
   @ViewBuilder private func buildRowBackground() -> some View {
-    if !isCurrentUser && (userPosition == .one || userPosition == .two || userPosition == .three) {
-      rectangularGradientFor(userPosition)
+    if !isCurrentUser && (leaderboardRow.position == .one ||
+                          leaderboardRow.position == .two ||
+                          leaderboardRow.position == .three
+    ) {
+      rectangularGradientFor(leaderboardRow.position)
         .clipShape(RoundedRectangle(cornerRadius: Constants.rowCornerRadius))
     } else {
       EmptyView()
@@ -101,8 +106,11 @@ struct LeaderboardRowView: View {
   }
 
   @ViewBuilder private func buildTextGradient(text: String, font: Font, endRadius: CGFloat) -> some View {
-    if !isCurrentUser && (userPosition == .one || userPosition == .two || userPosition == .three) {
-      textGradientFor(userPosition, radius: endRadius)
+    if !isCurrentUser && (leaderboardRow.position == .one ||
+                          leaderboardRow.position == .two ||
+                          leaderboardRow.position == .three
+    ) {
+      textGradientFor(leaderboardRow.position, radius: endRadius)
       .mask(
         Text(text)
           .font(font)
@@ -133,7 +141,10 @@ struct LeaderboardRowView: View {
   }
 
   private func foregroundColorForPrincipal() -> Color {
-    if !isCurrentUser && (userPosition == .one || userPosition == .two || userPosition == .three) {
+    if !isCurrentUser && (leaderboardRow.position == .one ||
+                          leaderboardRow.position == .two ||
+                          leaderboardRow.position == .three
+    ) {
       Color.clear
     } else {
       Constants.userIDColour
@@ -141,7 +152,10 @@ struct LeaderboardRowView: View {
   }
 
   private func foregroundColorForPosition() -> Color {
-    if !isCurrentUser && (userPosition == .one || userPosition == .two || userPosition == .three) {
+    if !isCurrentUser && (leaderboardRow.position == .one ||
+                          leaderboardRow.position == .two ||
+                          leaderboardRow.position == .three
+    ) {
       Color.clear
     } else {
       Constants.userPositionColor
