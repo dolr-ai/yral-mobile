@@ -50,6 +50,17 @@ jobs:
         with:
           ruby-version: '3.0'
 
+      - name: Set up Java (for Gradle)
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Run KMM podInstall
+        run: |
+          # Runs the Gradle task that Android Studio launches on sync.
+          ./gradlew :iosSharedUmbrella:podInstall --stacktrace
+
       - name: Set up Rust
         uses: actions-rs/toolchain@v1
         with:
