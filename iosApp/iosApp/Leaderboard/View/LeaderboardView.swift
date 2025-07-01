@@ -82,10 +82,10 @@ struct LeaderboardView: View {
                 .font(Constants.headerIDFont)
                 .foregroundColor(Constants.headerIDColour)
                 .multilineTextAlignment(.center)
-                .lineLimit(topThreePrincipals[index].count == 1 ? .one : .two)
+                .lineLimit(topThreePrincipals[index].count == .one ? .one : .two)
                 .truncationMode(.tail)
 
-              Spacer(minLength: 8)
+              Spacer(minLength: Constants.headerBottomHStackSpacerMinLenght)
 
               HStack(spacing: .four) {
                 Image(Constants.satsImage)
@@ -100,7 +100,7 @@ struct LeaderboardView: View {
           }
         }
         .frame(width: Constants.headerBottomHStackWidth)
-        .frame(maxHeight: 110)
+        .frame(maxHeight: Constants.headerBottomHStackHeight)
 
         Spacer(minLength: .zero)
       }
@@ -236,6 +236,8 @@ extension LeaderboardView {
     static let headerBottomHStackTop = 20.0
     static let headerBottomHStackBottom = 40.0
     static let headerBottomHStackWidth = 311.0
+    static let headerBottomHStackHeight = 110.0
+    static let headerBottomHStackSpacerMinLenght = 8.0
 
     static let vStackSpacing = 12.0
     static let position = "Position"

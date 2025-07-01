@@ -22,7 +22,7 @@ struct LeaderboardDTO {
 extension LeaderboardRowDTO {
   func toDomain() -> LeaderboardRowResponse {
     return LeaderboardRowResponse(
-      position: position ?? 0,
+      position: position ?? .zero,
       principalID: id ?? UUID().uuidString,
       coins: coins
     )

@@ -18,6 +18,7 @@ class LeaderboardRepository: LeaderboardRepositoryProtocol {
     self.authClient = authClient
   }
 
+  // swiftlint: disable function_body_length
   func fetchLeaderboard() async -> Result<LeaderboardResponse, LeaderboardError> {
     guard let userPrincipalID = authClient.userPrincipalString else {
       return .failure(.unknown(Constants.principalError))
@@ -40,12 +41,13 @@ class LeaderboardRepository: LeaderboardRepositoryProtocol {
     do {
       let (topSnap, userSnap) = try await (topTenTask, userTask)
 
-      var startingPosition = 1
+      var startingPosition: Int = .one
       var modifiedTopTenDTO: [LeaderboardRowDTO] = []
+      let modifiedUserDTO: LeaderboardRowDTO
 
-      for index in 0 ..< topSnap.count {
-        if index > 0 && topSnap[index].coins < topSnap[index - 1].coins {
-          startingPosition += 1
+      for index in .zero ..< topSnap.count {
+        if index > .zero && topSnap[index].coins < topSnap[index - .one].coins {
+          startingPosition += .one
         }
 
         modifiedTopTenDTO.append(
@@ -57,8 +59,28 @@ class LeaderboardRepository: LeaderboardRepositoryProtocol {
         )
       }
 
+      if let userIndex = modifiedTopTenDTO.firstIndex(where: { $0.coins == userSnap.coins }) {
+        modifiedUserDTO = LeaderboardRowDTO(
+          id: userSnap.id,
+          position: modifiedTopTenDTO[userIndex].position,
+          coins: userSnap.coins
+        )
+      } else {
+        let userPositionQuery = Firestore.firestore()
+          .collection(Constants.usersCollectionPath)
+          .whereField(Constants.coinsField, isGreaterThan: userSnap.coins)
+        let aggregateQuery = try await userPositionQuery.count.getAggregation(source: .server)
+        let userPosition = Int(truncating: aggregateQuery.count) + .one
+
+        modifiedUserDTO = LeaderboardRowDTO(
+          id: userSnap.id,
+          position: userPosition,
+          coins: userSnap.coins
+        )
+      }
+
       let leaderboardDTO = LeaderboardDTO(
-        userRow: userSnap,
+        userRow: modifiedUserDTO,
         rows: modifiedTopTenDTO
       )
 
@@ -67,6 +89,7 @@ class LeaderboardRepository: LeaderboardRepositoryProtocol {
       return .failure(LeaderboardError.firebaseError(error))
     }
   }
+  // swiftlint: enable function_body_length
 }
 
 extension LeaderboardRepository {
