@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
@@ -48,6 +49,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
@@ -55,6 +57,7 @@ import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.uploadVideo.UploadVideoScreenConstants.UPLOAD_BOX_ASPECT_RATIO
+import com.yral.android.ui.widgets.YralButton
 import com.yral.android.ui.widgets.YralButtonState
 import com.yral.android.ui.widgets.YralGradientButton
 import com.yral.android.ui.widgets.video.YralLocalVideoPlayer
@@ -77,7 +80,7 @@ fun UploadVideoScreen(modifier: Modifier = Modifier) {
     ) {
         // Update TOTAL_ITEMS if adding any more items
         item { Header() }
-        item { UploadVideo(videoFilePath) }
+        item { UploadVideo("") }
         item { Spacer(Modifier.height(20.dp)) }
         item { VideoDetailsAndSubmit() }
         item { Submit() }
@@ -117,24 +120,68 @@ private fun UploadVideo(videoFilePath: String) {
                         shape = RoundedCornerShape(size = 8.dp),
                     ),
         ) {
-            YralLocalVideoPlayer(
-                modifier =
-                    Modifier
-                        .fillMaxHeight()
-                        .align(Alignment.Center),
-                localFilePath = videoFilePath,
-                autoPlay = true,
-                onError = { error ->
-                    Logger.d("Video error: $error")
-                },
-            )
-            Image(
-                painter = painterResource(id = R.drawable.cross),
-                contentDescription = "image description",
-                contentScale = ContentScale.None,
-                modifier = Modifier.align(Alignment.TopEnd),
-            )
+            if (videoFilePath.isNotEmpty()) {
+                VideoView(videoFilePath)
+            } else {
+                SelectVideoView()
+            }
         }
+    }
+}
+
+@Composable
+private fun SelectVideoView(maxSeconds: Int = 60) {
+    Column(
+        modifier =
+            Modifier.padding(start = 18.dp, end = 18.dp, top = 83.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            text = stringResource(R.string.upload_video_to_share_with_world),
+            style = LocalAppTopography.current.mdMedium,
+            color = YralColors.NeutralTextPrimary,
+        )
+        Text(
+            text = stringResource(R.string.video_file_max_seconds, maxSeconds),
+            style = LocalAppTopography.current.regMedium,
+            color = YralColors.NeutralTextSecondary,
+        )
+        Spacer(Modifier.height(0.dp))
+        YralButton(
+            modifier = Modifier.wrapContentSize(),
+            text = stringResource(R.string.select_file),
+            borderWidth = 1.dp,
+            borderColor = YralColors.Pink300,
+            backgroundColor = YralColors.Neutral900,
+            textStyle =
+                TextStyle(
+                    color = YralColors.Pink300,
+                ),
+        ) { }
+    }
+}
+
+@Composable
+private fun VideoView(videoFilePath: String) {
+    Box(Modifier.fillMaxSize()) {
+        YralLocalVideoPlayer(
+            modifier =
+                Modifier
+                    .fillMaxHeight()
+                    .align(Alignment.Center),
+            localFilePath = videoFilePath,
+            autoPlay = true,
+            onError = { error ->
+                Logger.d("Video error: $error")
+            },
+        )
+        Image(
+            painter = painterResource(id = R.drawable.cross),
+            contentDescription = "image description",
+            contentScale = ContentScale.None,
+            modifier = Modifier.align(Alignment.TopEnd),
+        )
     }
 }
 

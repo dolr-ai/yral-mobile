@@ -33,8 +33,8 @@ import com.yral.android.ui.design.YralColors
 
 @Composable
 fun YralButton(
-    modifier: Modifier = Modifier,
     text: String,
+    modifier: Modifier = Modifier.fillMaxWidth(),
     textStyle: TextStyle? = null,
     backgroundColor: Color = Color.White,
     borderWidth: Dp = 0.75.dp,
@@ -47,7 +47,6 @@ fun YralButton(
     Row(
         modifier =
             modifier
-                .fillMaxWidth()
                 .height(45.dp)
                 .background(
                     color = backgroundColor,
