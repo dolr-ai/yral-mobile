@@ -31,6 +31,7 @@ final class DefaultAuthClient: NSObject, AuthClient {
   let baseURL: URL
   let satsBaseURL: URL
   let firebaseBaseURL: URL
+  let notificationService: NotificationService
 
   var pendingAuthState: String!
 
@@ -39,14 +40,23 @@ final class DefaultAuthClient: NSObject, AuthClient {
        crashReporter: CrashReporter,
        baseURL: URL,
        satsBaseURL: URL,
-       firebaseBaseURL: URL) {
+       firebaseBaseURL: URL,
+       notificationService: NotificationService
+  ) {
     self.networkService = networkService
     self.firebaseService = firebaseService
     self.crashReporter = crashReporter
     self.baseURL = baseURL
     self.satsBaseURL = satsBaseURL
     self.firebaseBaseURL = firebaseBaseURL
+    self.notificationService = notificationService
     super.init()
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(notificationTokenUpdated(_:)),
+      name: .registrationTokenUpdated,
+      object: nil
+    )
   }
 
   @MainActor
@@ -368,6 +378,7 @@ final class DefaultAuthClient: NSObject, AuthClient {
     try? KeychainHelper.deleteItem(for: Constants.keychainRefreshToken)
     UserDefaultsManager.shared.remove(.authIdentityExpiryDateKey)
     UserDefaultsManager.shared.remove(.authRefreshTokenExpiryDateKey)
+    try await deregisterForNotifications()
     identity = nil
     canisterPrincipal = nil
     canisterPrincipalString = nil

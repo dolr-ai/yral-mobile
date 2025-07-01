@@ -66,6 +66,11 @@ kotlin {
             extraOpts += listOf("-compiler-option", "-fmodules")
             linkOnly = true
         }
+        pod("FirebaseMessaging") {
+            extraOpts += listOf("-compiler-option", "-fmodules")
+            version = firebaseIos
+            linkOnly = true
+        }
          pod("GoogleUtilities") {
             version = "8.1"
             extraOpts += listOf("-compiler-option", "-fmodules")

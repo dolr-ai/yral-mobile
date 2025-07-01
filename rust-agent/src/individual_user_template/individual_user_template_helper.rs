@@ -19,6 +19,8 @@ use tokio::time::Duration;
 use yral_canisters_common::Canisters;
 use yral_types::delegated_identity::DelegatedIdentityWire;
 use yral_canisters_common::utils::profile::propic_from_principal as inner_propic_from_principal;
+use yral_metadata_client::MetadataClient;
+use yral_metadata_client::DeviceRegistrationToken;
 
 pub type Secp256k1Error = k256::elliptic_curve::Error;
 
@@ -232,4 +234,28 @@ pub fn yral_auth_login_hint(data: &[u8]) -> std::result::Result<String, String> 
         Ok(signature) => Ok(signature),
         Err(error)     => Err(error.to_string()),
     }
+}
+
+pub async fn register_device(identity: DelegatedIdentity, token: String) -> std::result::Result<(), String> {    
+    let client: MetadataClient<false> = MetadataClient::default();
+        let registration_token = DeviceRegistrationToken { token };
+        client
+        .register_device(&identity, registration_token)
+        .await
+        .map(|_res| ())
+        .map_err(|e| e.to_string())
+    }
+
+    pub async fn unregister_device(
+        identity: DelegatedIdentity,
+        token: String,
+    ) -> std::result::Result<(), String> {
+    let client: MetadataClient<false> = MetadataClient::default();
+    let registration_token = DeviceRegistrationToken { token };
+
+    client
+        .unregister_device(&identity, registration_token)
+        .await
+        .map(|_| ())    
+        .map_err(|e| e.to_string())
 }
