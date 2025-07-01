@@ -65,6 +65,7 @@ struct HomeTabController: View {
             UIView.setAnimationsEnabled(false)
             selectedTab = .home
             DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.animationPeriod) {
+              UIView.setAnimationsEnabled(false)
               UNUserNotificationCenter.current().getNotificationSettings { settings in
                 switch settings.authorizationStatus {
                 case .notDetermined, .denied:
@@ -114,7 +115,6 @@ struct HomeTabController: View {
         ZStack(alignment: .center) {
           NotificationsNudge {
             showNotificationsNudge = false
-            UIView.setAnimationsEnabled(false)
           }
           .background( ClearBackgroundView() )
         }
