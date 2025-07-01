@@ -11,7 +11,7 @@ if [[ -z "$PROJECT_DIR" ]]; then
   exit 1
 fi
 
-MANIFEST_PATH="${PROJECT_DIR}/Cargo.toml
+MANIFEST_PATH="${PROJECT_DIR}/Cargo.toml"
 export PATH="$HOME/.cargo/bin:$PATH"
 
 # Workaround for macOS Big Sur / cargo-lipo
