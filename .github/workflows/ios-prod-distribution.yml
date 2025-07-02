@@ -123,7 +123,7 @@ jobs:
           cp "certs/Yral distribution.mobileprovision" ~/Library/MobileDevice/Provisioning\ Profiles/
   
       - name: Build & Upload to TestFlight
-        run: fastlane ios build_production_testflight
+        run: fastlane ios build_production_testflight --verbose
         env:
           APP_STORE_CONNECT_ISSUER_ID: ${{ vars.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_KEY_ID: ${{ vars.APP_STORE_CONNECT_KEY_ID }}
