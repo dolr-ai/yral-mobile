@@ -41,7 +41,7 @@ fun YralButton(
     borderColor: Color = YralColors.ButtonBorderColor,
     icon: Int? = null,
     buttonState: YralButtonState = YralButtonState.Enabled,
-    loader: Int = R.raw.pink_loader,
+    loader: Int = R.raw.yral_loader,
     onClick: () -> Unit,
 ) {
     Row(
@@ -81,23 +81,33 @@ fun YralButton(
                     color = YralColors.NeutralBlack,
                     textAlign = TextAlign.Center,
                 )
-        Text(
-            text = text,
-            style =
-                textStyle?.let {
-                    defaultStyle.plus(it)
-                } ?: defaultStyle,
-        )
-        AnimatedVisibility(
-            visible = buttonState == YralButtonState.Loading,
-            enter = fadeIn(),
-            exit = fadeOut(),
-        ) {
-            YralLottieAnimation(
-                modifier = Modifier.size(20.dp),
-                rawRes = loader,
-                iterations = LottieConstants.IterateForever,
+        if (text.isNotEmpty()) {
+            Text(
+                text = text,
+                style =
+                    textStyle?.let {
+                        defaultStyle.plus(it)
+                    } ?: defaultStyle,
             )
         }
+        ButtonLoader(buttonState, loader)
+    }
+}
+
+@Composable
+private fun ButtonLoader(
+    buttonState: YralButtonState,
+    loader: Int,
+) {
+    AnimatedVisibility(
+        visible = buttonState == YralButtonState.Loading,
+        enter = fadeIn(),
+        exit = fadeOut(),
+    ) {
+        YralLottieAnimation(
+            modifier = Modifier.size(20.dp),
+            rawRes = loader,
+            iterations = LottieConstants.IterateForever,
+        )
     }
 }

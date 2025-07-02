@@ -93,7 +93,7 @@ enum class YralButtonType {
 private fun getLoaderResource(buttonType: YralButtonType): Int =
     when (buttonType) {
         YralButtonType.Pink -> R.raw.white_loader
-        YralButtonType.White -> R.raw.pink_loader
+        YralButtonType.White -> R.raw.yral_loader
     }
 
 private fun getButtonTextBackground(

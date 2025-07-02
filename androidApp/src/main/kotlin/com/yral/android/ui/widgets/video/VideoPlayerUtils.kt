@@ -11,9 +11,6 @@ import java.io.IOException
 
 @Suppress("TooManyFunctions")
 object VideoPlayerUtils {
-    /**
-     * Get the absolute path for internal storage video files
-     */
     fun getInternalVideoPath(
         context: Context,
         fileName: String,
@@ -23,155 +20,119 @@ object VideoPlayerUtils {
                 if (!exists()) mkdirs()
             }.absolutePath + "/$fileName"
 
-    /**
-     * Get the absolute path for external storage video files
-     */
     fun getExternalVideoPath(fileName: String): String? =
-        try {
+        runCatching {
             val moviesDir =
                 Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES)
             if (!moviesDir.exists()) moviesDir.mkdirs()
             "${moviesDir.absolutePath}/$fileName"
-        } catch (e: SecurityException) {
-            Logger.e("Permission denied accessing external storage", e)
-            null
-        } catch (e: IllegalArgumentException) {
-            Logger.e("Invalid directory type or filename: $fileName", e)
-            null
-        }
+        }.onFailure { exception ->
+            val errorMessage =
+                when (exception) {
+                    is SecurityException -> "Permission denied accessing external storage"
+                    is IllegalArgumentException -> "Invalid directory type or filename: $fileName"
+                    else -> "Unexpected error accessing external storage for: $fileName"
+                }
+            Logger.e(errorMessage, exception)
+        }.getOrNull()
 
-    /**
-     * Check if a video file exists at the given path
-     */
     fun videoFileExists(filePath: String): Boolean =
-        try {
+        runCatching {
             val file = File(filePath)
             file.exists() && file.isFile && file.canRead()
-        } catch (e: SecurityException) {
-            Logger.e("Permission denied accessing file: $filePath", e)
-            false
-        }
+        }.onFailure { exception ->
+            Logger.e("Permission denied accessing file: $filePath", exception)
+        }.getOrDefault(false)
 
-    /**
-     * Get video file size in bytes
-     */
     fun getVideoFileSize(filePath: String): Long =
-        try {
+        runCatching {
             File(filePath).length()
-        } catch (e: SecurityException) {
-            Logger.e("Permission denied accessing file: $filePath", e)
-            0L
-        }
+        }.onFailure { exception ->
+            Logger.e("Permission denied accessing file: $filePath", exception)
+        }.getOrDefault(0L)
 
-    /**
-     * Copy video from assets to internal storage
-     * Useful for bundled demo videos or widget preview videos
-     */
     fun copyVideoFromAssets(
         context: Context,
         assetFileName: String,
         targetFileName: String,
     ): String? {
         val targetPath = getInternalVideoPath(context, targetFileName)
-        return try {
+        return runCatching {
             val targetFile = File(targetPath)
-
             // Don't copy if file already exists
             if (targetFile.exists()) {
-                return targetPath
+                return@runCatching targetPath
             }
-
             context.assets.open(assetFileName).use { inputStream ->
                 FileOutputStream(targetFile).use { outputStream ->
                     inputStream.copyTo(outputStream)
                 }
             }
-
             targetPath
-        } catch (e: FileNotFoundException) {
-            Logger.e("Asset file not found: $assetFileName", e)
-            null
-        } catch (e: IOException) {
-            Logger.e("IO error copying video from assets: $assetFileName", e)
-            null
-        } catch (e: SecurityException) {
-            Logger.e("Permission denied copying video to: $targetPath", e)
-            null
-        }
+        }.onFailure { exception ->
+            val errorMessage =
+                when (exception) {
+                    is FileNotFoundException -> "Asset file not found: $assetFileName"
+                    is IOException -> "IO error copying video from assets: $assetFileName"
+                    is SecurityException -> "Permission denied copying video to: $targetPath"
+                    else -> "Unexpected error copying video from assets: $assetFileName"
+                }
+            Logger.e(errorMessage, exception)
+        }.getOrNull()
     }
 
-    /**
-     * Copy video from URI to internal storage
-     * Useful for user-selected videos
-     */
     fun copyVideoFromUri(
         context: Context,
         sourceUri: Uri,
         targetFileName: String,
     ): String? {
         val targetPath = getInternalVideoPath(context, targetFileName)
-        return try {
+        return runCatching {
             val targetFile = File(targetPath)
-
             context.contentResolver.openInputStream(sourceUri)?.use { inputStream ->
                 FileOutputStream(targetFile).use { outputStream ->
                     inputStream.copyTo(outputStream)
                 }
             }
             targetPath
-        } catch (e: FileNotFoundException) {
-            Logger.e("Source URI not found: $sourceUri", e)
-            null
-        } catch (e: IOException) {
-            Logger.e("IO error copying video from URI: $sourceUri", e)
-            null
-        } catch (e: SecurityException) {
-            Logger.e("Permission denied accessing URI or target file: $sourceUri -> $targetPath", e)
-            null
-        }
+        }.onFailure { exception ->
+            val errorMessage =
+                when (exception) {
+                    is FileNotFoundException -> "Source URI not found: $sourceUri"
+                    is IOException -> "IO error copying video from URI: $sourceUri"
+                    is SecurityException -> "Permission denied accessing URI or target file: $sourceUri -> $targetPath"
+                    else -> "Unexpected error copying video from URI: $sourceUri"
+                }
+            Logger.e(errorMessage, exception)
+        }.getOrNull()
     }
 
-    /**
-     * Delete video file
-     */
     fun deleteVideoFile(filePath: String): Boolean =
-        try {
+        runCatching {
             File(filePath).delete()
-        } catch (e: SecurityException) {
-            Logger.e("Permission denied deleting file: $filePath", e)
-            false
-        }
+        }.onFailure { exception ->
+            Logger.e("Permission denied deleting file: $filePath", exception)
+        }.getOrDefault(false)
 
-    /**
-     * Get all video files in internal storage videos directory
-     */
     fun getInternalVideoFiles(context: Context): List<String> {
-        return try {
+        return runCatching {
             val videosDir = File(context.filesDir, "videos")
-            if (!videosDir.exists()) return emptyList()
-
+            if (!videosDir.exists()) return@runCatching emptyList()
             videosDir
                 .listFiles { file ->
                     file.isFile && isVideoFile(file.name)
                 }?.map { it.absolutePath } ?: emptyList()
-        } catch (e: SecurityException) {
-            Logger.e("Permission denied accessing videos directory", e)
-            emptyList()
-        }
+        }.onFailure { exception ->
+            Logger.e("Permission denied accessing videos directory", exception)
+        }.getOrDefault(emptyList())
     }
 
-    /**
-     * Check if file extension indicates a video file
-     */
     fun isVideoFile(fileName: String): Boolean {
         val videoExtensions = setOf("mp4", "avi", "mov", "mkv", "webm", "3gp", "m4v")
         val extension = fileName.substringAfterLast('.', "").lowercase()
         return extension in videoExtensions
     }
 
-    /**
-     * Format file size for display
-     */
     @Suppress("MagicNumber")
     fun formatFileSize(bytes: Long): String {
         val units = arrayOf("B", "KB", "MB", "GB")
@@ -186,9 +147,6 @@ object VideoPlayerUtils {
         return "%.1f %s".format(size, units[unitIndex])
     }
 
-    /**
-     * Configuration for widget video players
-     */
     data class WidgetVideoConfig(
         val autoPlay: Boolean = true,
         val loop: Boolean = true,
@@ -196,9 +154,6 @@ object VideoPlayerUtils {
         val muted: Boolean = true, // Widgets should typically be muted
     )
 
-    /**
-     * Get optimal configuration for widget video player
-     */
     fun getWidgetVideoConfig(): WidgetVideoConfig =
         WidgetVideoConfig(
             autoPlay = true,
@@ -208,9 +163,6 @@ object VideoPlayerUtils {
         )
 }
 
-/**
- * Data class for video file information
- */
 data class VideoFileInfo(
     val path: String,
     val name: String,
@@ -219,15 +171,22 @@ data class VideoFileInfo(
     val formattedSize: String = VideoPlayerUtils.formatFileSize(size),
 )
 
-/**
- * Extension function to get video file info
- */
-fun String.toVideoFileInfo(): VideoFileInfo {
-    val file = File(this)
-    return VideoFileInfo(
-        path = this,
-        name = file.name,
-        size = if (file.exists()) file.length() else 0L,
-        exists = file.exists(),
-    )
-}
+fun String.toVideoFileInfo(): VideoFileInfo =
+    runCatching {
+        val file = File(this)
+        VideoFileInfo(
+            path = this,
+            name = file.name,
+            size = if (file.exists()) file.length() else 0L,
+            exists = file.exists(),
+        )
+    }.onFailure { exception ->
+        Logger.e("Error getting video file info for: $this", exception)
+    }.getOrElse {
+        VideoFileInfo(
+            path = this,
+            name = File(this).name,
+            size = 0L,
+            exists = false,
+        )
+    }

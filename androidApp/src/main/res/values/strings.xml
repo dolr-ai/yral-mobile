@@ -82,4 +82,8 @@
     <string name="upload_video_error_reason"> due to %s reasons</string>
     <string name="try_again">Try Again</string>
     <string name="go_to_home">Go to Home</string>
+    
+    <!-- Permission Messages -->
+    <string name="permission_required_title">Permission required!</string>
+    <string name="permission_required_description">To upload videos, please allow access to your device\'s media files in Settings. You can choose \"Allow all\" or \"Allow limited access\" - both work for uploading videos.</string>
 </resources>
