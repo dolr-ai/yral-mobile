@@ -91,10 +91,16 @@ jobs:
         run: |
           gem install fastlane
 
-      - name: Clean Build Directory
+      - name: Clean DerivedData
+        run: rm -rf ~/Library/Developer/Xcode/DerivedData/*
+
+      - name: Clean Xcode workspace
         run: |
-          xcodebuild clean -project iosApp/iosApp.xcodeproj -scheme iosAppStaging
-          rm -rf ~/Library/Developer/Xcode/DerivedData/*
+          xcodebuild \
+            -workspace iosApp/iosApp.xcworkspace \
+            -scheme iosApp \
+            -configuration Release \
+            clean
 
       - name: Decrypt and import Distribution Certificate
         run: |
