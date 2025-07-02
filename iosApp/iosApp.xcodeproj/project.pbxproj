@@ -2844,7 +2844,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 			shellPath = /bin/sh;
-			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\n\"${BUILD_DIR%/Build/*}/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run\"\n";
+			shellScript = "# Upload dSYM files to Crashlytics (CocoaPods path)\n\"${PODS_ROOT}/FirebaseCrashlytics/run\"\n";
 		};
 		ACD941842CFF575C0038FCB6 /* Generate rust bindings */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -2884,7 +2884,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 			shellPath = /bin/sh;
-			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\n\"${BUILD_DIR%/Build/*}/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run\"\n";
+			shellScript = "# Upload dSYM files to Crashlytics (CocoaPods path)\n\"${PODS_ROOT}/FirebaseCrashlytics/run\"\n";
 		};
 		B139A6AB7C9D80E823C501AA /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
