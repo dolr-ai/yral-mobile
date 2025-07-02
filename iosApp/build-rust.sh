@@ -11,7 +11,8 @@ if [[ -z "$PROJECT_DIR" ]]; then
   exit 1
 fi
 
-MANIFEST_PATH="${PROJECT_DIR}/Cargo.toml"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd -P)"
+MANIFEST_PATH="${SCRIPT_DIR}/../rust-agent/Cargo.toml"
 export PATH="$HOME/.cargo/bin:$PATH"
 
 # Workaround for macOS Big Sur / cargo-lipo
@@ -36,6 +37,9 @@ else
     TARGETS="aarch64-apple-ios,x86_64-apple-ios"
   fi
 fi
+
+echo "[rust-build] manifest : $MANIFEST_PATH"
+echo "[rust-build] targets  : $TARGETS"
 
 ####################################################
 # 2) Decide debug or release based on $CONFIGURATION
