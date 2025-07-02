@@ -128,3 +128,17 @@ jobs:
           APP_STORE_CONNECT_ISSUER_ID: ${{ vars.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_KEY_ID: ${{ vars.APP_STORE_CONNECT_KEY_ID }}
           APP_STORE_CONNECT_API_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}
+
+      - name: Show rust-binding script log
+        if: failure()
+        run: |
+          DIR=$(find ~/Library/Developer/Xcode/DerivedData -type d -name "Yral.build" | head -1)
+          LOG="$DIR/Script-AC09AA1D2CDBAC9A009A39A4.sh-output.txt"
+          if [[ -f "$LOG" ]]; then
+            echo "===== BEGIN rust-binding script log ====="
+            cat "$LOG"
+            echo "=====  END  rust-binding script log ====="
+          else
+            echo "Rust-binding script log not found, listing folder:"
+            ls -R "$DIR" | head -50
+          fi
