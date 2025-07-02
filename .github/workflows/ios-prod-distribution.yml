@@ -140,3 +140,29 @@ jobs:
           DIR=$(find ~/Library/Developer/Xcode/DerivedData \
                  -type d -name "Yral.build" | head -1)
           cat "$DIR/Script-AC09AA1D2CDBAC9A009A39A4.sh" || true
+
+      - name: Show KMM run-script log
+        if: failure()
+        run: |
+          set -e
+          DIR=$(find ~/Library/Developer/Xcode/DerivedData -type d -name "Yral.build" | head -1)
+          LOG="$DIR/Script-ACB815362CF9CEF600104B7B.sh-output.txt"
+          if [ -f "$LOG" ]; then
+            echo "===== BEGIN KMM script log ====="
+            cat "$LOG"
+            echo "=====  END  KMM script log ====="
+          else
+            echo "KMM script log not found, listing folder:"
+            ls -R "$DIR" | head -50
+          fi
+
+      - name: Show KMM run-script source
+        if: failure()
+        run: |
+          DIR=$(find ~/Library/Developer/Xcode/DerivedData -type d -name "Yral.build" | head -1)
+          cat "$DIR/Script-ACB815362CF9CEF600104B7B.sh" || true
+
+      - name: Show full gym/xcodebuild log
+        if: failure()
+        run: |
+          cat ~/Library/Logs/gym/Yral-iosApp.log | tail -500 || true
