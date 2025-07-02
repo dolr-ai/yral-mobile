@@ -56,6 +56,10 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Install CocoaPods
+        run: |
+          gem install cocoapods --no-document
+
       - name: Run KMM podInstall
         run: |
           # Runs the Gradle task that Android Studio launches on sync.
@@ -68,6 +72,12 @@ jobs:
           target: aarch64-apple-ios
           override: true
 
+      - name: Add Rust iOS targets (device + both simulators)
+        run: |
+          rustup target add aarch64-apple-ios \
+                           aarch64-apple-ios-sim \
+                           x86_64-apple-ios
+
       - name: Install cargo-lipo
         run: cargo install cargo-lipo
 
@@ -76,31 +86,12 @@ jobs:
 
       - name: Build Rust Library
         run: |
-          # ─── quick-diagnosis ──────────────────────────────────────────────
-          echo "----------- DEBUG ------------"
-          echo "pwd          : $(pwd)"
-          echo "Tree (depth) :"
-          find . -maxdepth 2 -type f -name Cargo.toml
-          echo "--------------------------------"
-          # ─── actual build ─────────────────────────────────────────────────
           PROJECT_DIR="${PWD}/rust-agent" CONFIGURATION=Release iosApp/build-rust.sh
-          # Optional: verify the build
           ls -la rust-agent/target || true
 
       - name: Install Fastlane
         run: |
           gem install fastlane
-
-      - name: Clean DerivedData
-        run: rm -rf ~/Library/Developer/Xcode/DerivedData/*
-
-      - name: Clean Xcode workspace
-        run: |
-          xcodebuild \
-            -workspace iosApp/iosApp.xcworkspace \
-            -scheme iosApp \
-            -configuration Release \
-            clean
 
       - name: Decrypt and import Distribution Certificate
         run: |
@@ -142,3 +133,10 @@ jobs:
             echo "Rust-binding script log not found, listing folder:"
             ls -R "$DIR" | head -50
           fi
+
+      - name: Show rust-binding script source
+        if: failure()
+        run: |
+          DIR=$(find ~/Library/Developer/Xcode/DerivedData \
+                 -type d -name "Yral.build" | head -1)
+          cat "$DIR/Script-AC09AA1D2CDBAC9A009A39A4.sh" || true

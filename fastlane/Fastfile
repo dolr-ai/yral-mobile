@@ -94,6 +94,7 @@ platform :ios do
     gym(
       workspace: "iosApp/iosApp.xcworkspace",
       scheme: "iosApp",
+      clean: true,
       destination: "generic/platform=iOS",
       export_method: "app-store",
       export_options: {
