@@ -335,7 +335,7 @@ private fun VideoSelectionErrorDialog(
             title = stringResource(R.string.permission_required_title),
             error = stringResource(R.string.permission_required_description),
             sheetState = selectionState.errorSheetState,
-            cta = stringResource(R.string.ok),
+            cta = stringResource(R.string.go_to_settings),
             onClick = {
                 onDismissError()
                 // Open device settings
