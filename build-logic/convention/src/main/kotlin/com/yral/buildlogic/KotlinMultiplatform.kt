@@ -44,8 +44,9 @@ internal fun Project.configureKotlinAndroid(
         compileOptions {
             // Up to Java 11 APIs are available through desugaring
             // https://developer.android.com/studio/write/java11-minimal-support-table
-            sourceCompatibility = JavaVersion.VERSION_11
-            targetCompatibility = JavaVersion.VERSION_11
+            // Update: can't use Java 11 as Gitlive SDK is compiled with Java 17
+            sourceCompatibility = JavaVersion.VERSION_17
+            targetCompatibility = JavaVersion.VERSION_17
             isCoreLibraryDesugaringEnabled = true
         }
     }
@@ -53,7 +54,7 @@ internal fun Project.configureKotlinAndroid(
     configureKotlin()
 
     dependencies {
-        "coreLibraryDesugaring"(libs.findLibrary("android.desugarJdkLibs").get())
+        "coreLibraryDesugaring"(libs.findLibrary("desugar.jdk.libs").get())
     }
 }
 
@@ -64,19 +65,20 @@ internal fun Project.configureKotlinJvm() {
     extensions.configure<JavaPluginExtension> {
         // Up to Java 11 APIs are available through desugaring
         // https://developer.android.com/studio/write/java11-minimal-support-table
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     configureKotlin()
 }
 
 internal fun Project.configureKotlinMultiplatform(kotlinMultiplatformExtension: KotlinMultiplatformExtension) {
-    kotlinMultiplatformExtension.apply {
+//    Disable until all modules are multiplatform
+    /*kotlinMultiplatformExtension.apply {
         iosArm64()
         iosSimulatorArm64()
         jvm()
-    }
+    }*/
     configureKotlin()
 }
 
@@ -93,7 +95,7 @@ private fun Project.configureKotlin() {
 
     tasks.withType<KotlinCompile>().configureEach {
         compilerOptions {
-            jvmTarget = JvmTarget.JVM_11
+            jvmTarget = JvmTarget.JVM_17
             allWarningsAsErrors = warningsAsErrors
             freeCompilerArgs.add(
                 // Enable experimental coroutines APIs, including Flow
