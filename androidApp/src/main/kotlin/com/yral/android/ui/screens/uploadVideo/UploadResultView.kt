@@ -5,8 +5,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -16,12 +16,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.yral.android.R
+import com.yral.android.ui.components.AnimatedBounceIcon
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.widgets.YralButtonState
 import com.yral.android.ui.widgets.YralButtonType
 import com.yral.android.ui.widgets.YralGradientButton
-import com.yral.android.ui.widgets.YralLottieAnimation
 
 @Composable
 fun UploadVideoSuccess(onDone: () -> Unit) {
@@ -37,9 +37,9 @@ fun UploadVideoSuccess(onDone: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
-            YralLottieAnimation(
-                modifier = Modifier.size(120.dp),
-                rawRes = R.raw.yral_loader,
+            AnimatedBounceIcon(
+                modifier = Modifier.offset(y = (-8).dp),
+                imageRes = R.drawable.upload_success,
             )
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -90,9 +90,9 @@ fun UploadVideoFailure(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
-            YralLottieAnimation(
-                modifier = Modifier.size(120.dp),
-                rawRes = R.raw.yral_loader,
+            AnimatedBounceIcon(
+                modifier = Modifier.offset(y = (-8).dp),
+                imageRes = R.drawable.upload_error,
             )
             Column(
                 modifier = Modifier.fillMaxWidth(),
