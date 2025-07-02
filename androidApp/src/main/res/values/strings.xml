@@ -78,7 +78,7 @@
     <string name="my_profile">My Profile</string>
     <string name="done">Done</string>
     <string name="something_went_wrong">Something went wrong!</string>
-    <string name="upload_video_error">We couldn’t upload your video%s. Try uploading it again.</string>
+    <string name="upload_video_error">We couldn’t upload your video %s. Try uploading it again.</string>
     <string name="upload_video_error_reason"> due to %s reasons</string>
     <string name="try_again">Try Again</string>
     <string name="go_to_home">Go to Home</string>

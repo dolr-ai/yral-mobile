@@ -46,6 +46,8 @@ fun UploadVideoScreen(modifier: Modifier = Modifier) {
     var videoFilePath by remember { mutableStateOf("") }
     val isUploadInProgress by remember { mutableStateOf(false) }
     val progress by remember { mutableIntStateOf(20) }
+    var isUploadResultVisible by remember { mutableStateOf(false) }
+    val isUploadResultMessage by remember { mutableStateOf("") }
 
     val listState = rememberLazyListState()
     val keyboardHeight by keyboardHeightAsState()
@@ -54,32 +56,46 @@ fun UploadVideoScreen(modifier: Modifier = Modifier) {
             listState.animateScrollToItem(TOTAL_ITEMS - 1)
         }
     }
-    LazyColumn(
-        state = listState,
-        modifier = modifier.imePadding(),
-    ) {
-        // Update TOTAL_ITEMS if adding any more items
-        item { Header() }
-        if (isUploadInProgress) {
-            item {
-                UploadProgressView(
-                    progress = progress,
-                    videoFilePath = videoFilePath,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .aspectRatio(1f),
-                )
+    if (!isUploadResultVisible) {
+        LazyColumn(
+            state = listState,
+            modifier = modifier.imePadding(),
+        ) {
+            // Update TOTAL_ITEMS if adding any more items
+            item { Header() }
+            if (isUploadInProgress) {
+                item {
+                    UploadProgressView(
+                        progress = progress,
+                        videoFilePath = videoFilePath,
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .aspectRatio(1f),
+                    )
+                }
+            } else {
+                item {
+                    UploadVideo(videoFilePath) {
+                        videoFilePath = it
+                    }
+                }
+                item { Spacer(Modifier.height(20.dp)) }
+                item { VideoDetails() }
+                item { Submit() }
+            }
+        }
+    } else {
+        if (isUploadResultMessage.isEmpty()) {
+            UploadVideoSuccess {
+                isUploadResultVisible = false
             }
         } else {
-            item {
-                UploadVideo(videoFilePath) {
-                    videoFilePath = it
-                }
-            }
-            item { Spacer(Modifier.height(20.dp)) }
-            item { VideoDetails() }
-            item { Submit() }
+            UploadVideoFailure(
+                reason = isUploadResultMessage,
+                onTryAgain = { isUploadResultVisible = false },
+                onGotoHome = { isUploadResultVisible = false },
+            )
         }
     }
 }
