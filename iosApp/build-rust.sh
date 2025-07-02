@@ -41,6 +41,12 @@ fi
 echo "[rust-build] manifest : $MANIFEST_PATH"
 echo "[rust-build] targets  : $TARGETS"
 
+DEPLOY_VERSION="${IPHONEOS_DEPLOYMENT_TARGET:-${IPHONESIMULATOR_DEPLOYMENT_TARGET:-}}"
+if [[ -n "$DEPLOY_VERSION" ]]; then
+  export RUSTFLAGS="-C link-arg=-miphoneos-version-min=${DEPLOY_VERSION}"
+  echo "[rust-build] using RUSTFLAGS=${RUSTFLAGS}"
+fi
+
 ####################################################
 # 2) Decide debug or release based on $CONFIGURATION
 #    (set by Xcode for the active scheme)
