@@ -37,6 +37,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import com.yral.android.R
+import com.yral.android.ui.components.DeleteConfirmationSheet
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.design.YralDimens
@@ -127,6 +128,7 @@ private fun AccountScreenContent(
     }
 }
 
+@Suppress("LongMethod")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SheetContent(
@@ -178,10 +180,15 @@ private fun SheetContent(
         }
 
         is AccountBottomSheet.DeleteAccount -> {
-            DeleteAccountSheet(
+            DeleteConfirmationSheet(
                 bottomSheetState = bottomSheetState,
+                title = stringResource(R.string.delete_your_account),
+                subTitle = stringResource(R.string.delete_account_disclaimer),
+                confirmationMessage = stringResource(R.string.delete_account_question),
+                cancelButton = stringResource(R.string.no_take_me_back),
+                deleteButton = stringResource(R.string.yes_delete),
                 onDismissRequest = onDismissRequest,
-                onDeleteAccount = onDeleteAccount,
+                onDelete = onDeleteAccount,
             )
         }
 
