@@ -31,6 +31,8 @@ actual fun initKoin(appDeclaration: KoinAppDeclaration) {
             rustModule,
             firebaseAuthModule,
             firestoreModule,
+            dispatchersModule,
+            archModule
         )
         modules(
             authModule,
