@@ -6,6 +6,7 @@ import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.domain.AuthRepository
 import com.yral.shared.features.auth.utils.OAuthUtils
 import com.yral.shared.preferences.Preferences
+import com.yral.shared.rust.services.IndividualUserServiceFactory
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -20,6 +21,7 @@ class DefaultAuthClientFactory(
     private val auth: FirebaseAuth,
     private val authRepository: AuthRepository,
     private val requiredUseCases: DefaultAuthClient.RequiredUseCases,
+    private val individualUserServiceFactory: IndividualUserServiceFactory,
     private val oAuthUtils: OAuthUtils,
 ) : AuthClientFactory {
     override fun create(
@@ -34,6 +36,7 @@ class DefaultAuthClientFactory(
             auth = auth,
             authRepository = authRepository,
             requiredUseCases = requiredUseCases,
+            individualUserServiceFactory = individualUserServiceFactory,
             oAuthUtils = oAuthUtils,
             scope =
                 scope +

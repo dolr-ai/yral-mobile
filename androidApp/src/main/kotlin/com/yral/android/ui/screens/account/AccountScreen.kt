@@ -43,9 +43,9 @@ import com.yral.android.ui.screens.account.AccountScreenConstants.SOCIAL_MEDIA_L
 import com.yral.android.ui.widgets.YralAsyncImage
 import com.yral.android.ui.widgets.YralErrorMessage
 import com.yral.android.ui.widgets.YralGradientButton
+import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.features.account.viewmodel.AccountBottomSheet
 import com.yral.shared.features.account.viewmodel.AccountHelpLink
-import com.yral.shared.features.account.viewmodel.AccountInfo
 import com.yral.shared.features.account.viewmodel.AccountsState
 import com.yral.shared.features.account.viewmodel.AccountsViewModel
 import com.yral.shared.features.account.viewmodel.AccountsViewModel.Companion.DELETE_ACCOUNT_URI

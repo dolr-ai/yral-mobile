@@ -5,14 +5,15 @@ import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.core.dispatchers.AppDispatchers
+import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.AuthClientFactory
 import com.yral.shared.features.auth.domain.useCases.DeleteAccountUseCase
 import com.yral.shared.features.auth.utils.SocialProvider
+import com.yral.shared.features.auth.utils.getAccountInfo
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
-import com.yral.shared.uniffi.generated.propicFromPrincipal
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,13 +39,7 @@ class AccountsViewModel(
                 handleSignupFailed()
             }
 
-    private val _state =
-        MutableStateFlow(
-            AccountsState(
-                accountInfo = getAccountInfo(),
-                isSocialSignInSuccessful = false,
-            ),
-        )
+    private val _state = MutableStateFlow(AccountsState())
     val state: StateFlow<AccountsState> = _state.asStateFlow()
     val sessionState = sessionManager.state
 
@@ -61,7 +56,7 @@ class AccountsViewModel(
 
     fun refreshAccountInfo() {
         coroutineScope.launch {
-            val accountInfo = getAccountInfo()
+            val accountInfo = sessionManager.getAccountInfo()
             val isSignedIn = isSocialSignInSuccessful()
             _state.update { currentState ->
                 currentState.copy(
@@ -72,14 +67,6 @@ class AccountsViewModel(
             }
         }
     }
-
-    private fun getAccountInfo(): AccountInfo? =
-        sessionManager.getUserPrincipal()?.let { userPrincipal ->
-            return AccountInfo(
-                profilePic = propicFromPrincipal(userPrincipal),
-                userPrincipal = userPrincipal,
-            )
-        }
 
     private fun logout() {
         coroutineScope.launch {
@@ -221,8 +208,8 @@ data class AccountHelpLink(
 )
 
 data class AccountsState(
-    val accountInfo: AccountInfo?,
-    val isSocialSignInSuccessful: Boolean,
+    val accountInfo: AccountInfo? = null,
+    val isSocialSignInSuccessful: Boolean = false,
     val bottomSheetType: AccountBottomSheet = AccountBottomSheet.None,
 )
 
@@ -243,8 +230,3 @@ enum class ErrorType {
     SIGNUP_FAILED,
     DELETE_ACCOUNT_FAILED,
 }
-
-data class AccountInfo(
-    val userPrincipal: String,
-    val profilePic: String,
-)

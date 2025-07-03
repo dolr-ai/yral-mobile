@@ -17,16 +17,6 @@ kotlin {
 
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.androidx.lifecycle.viewmodel)
-
-            val (dependencies, shouldAddRustModule) = BuildConfig.getAndProcessDependencies(project)
-            dependencies.forEach { dependency ->
-                if (dependency.isNotEmpty()) {
-                    implementation(dependency)
-                }
-            }
-            if (shouldAddRustModule) {
-                implementation(projects.shared.rust)
-            }
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
