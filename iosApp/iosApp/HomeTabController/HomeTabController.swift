@@ -172,8 +172,10 @@ struct HomeTabController: View {
   private func tabDidChange(to tab: Tab) {
     var categoryName = CategoryName.home
     switch tab {
-    case .home, .leaderboard:
+    case .home:
       categoryName = .home
+    case .leaderboard:
+      categoryName = .leaderboard
     case .upload:
       categoryName = .uploadVideo
     case .profile:
@@ -189,9 +191,12 @@ struct HomeTabController: View {
   }
 
   @MainActor func uploadNotificationReceived() {
-    self.selectedTab = .profile
-    Task {
-      await profileView.refreshVideos(shouldPurge: false)
+    DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.animationPeriod) {
+      self.selectedTab = .profile
+      Task {
+        try? await Task.sleep(nanoseconds: 300_000_000)
+        await profileView.refreshVideosFromPushNotifications()
+      }
     }
   }
 }

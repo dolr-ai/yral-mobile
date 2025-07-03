@@ -35,6 +35,9 @@ class NotificationToggleViewModel: ObservableObject {
             .requestAuthorization(options: [.alert, .badge, .sound]) { granted, _ in
               DispatchQueue.main.async {
                 self.isNotificationEnabled = granted
+                if granted {
+                  UIApplication.shared.registerForRemoteNotifications()
+                }
               }
             }
         case .denied:
