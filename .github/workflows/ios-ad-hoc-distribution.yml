@@ -86,8 +86,6 @@ jobs:
 
       - name: Build Rust Library
         run: |
-          export CONFIGURATION=Release
-          export PLATFORM_NAME=iphoneos
           PROJECT_DIR="${PWD}/rust-agent" CONFIGURATION=Release iosApp/build-rust.sh
           ls -la rust-agent/target || true
 

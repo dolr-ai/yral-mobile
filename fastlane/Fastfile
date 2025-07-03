@@ -14,12 +14,11 @@ platform :ios do
       scheme: "iosAppStaging",
       clean: true,
       destination: "generic/platform=iOS",
+      configuration: "Release",
+      signing_style: "manual",
+      codesigning_identity: "Apple Development",
+      provisioning_profile_specifier: "Yral-Staging-Development",
       export_method: "development",
-      export_options: {
-        provisioningProfiles: {
-          "com.yral.iosApp.staging" => "Yral-Staging-Development"
-        }
-      },
       xcargs: "-allowProvisioningUpdates COMPILER_INDEX_STORE_ENABLE=NO SWIFT_STRICT_CONCURRENCY=minimal ENABLE_USER_SCRIPT_SANDBOXING=NO"
     )
 
