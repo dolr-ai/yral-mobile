@@ -12,6 +12,7 @@ import SwiftUI
 import AVFoundation
 import Lottie
 import Combine
+import iosSharedUmbrella
 
 protocol FeedsCellProtocol: AnyObject {
   func shareButtonTapped(index: Int)
@@ -465,6 +466,12 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
       setCaptionHeight(captionText: profileInfo.subtitle)
     }
     signupOverlayHost.view.isHidden = !feedInfo.showLoginOverlay
+    if feedInfo.showLoginOverlay {
+      AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+        event: AuthScreenViewedEventData()
+      )
+
+    }
   }
   // swiftlint: enable function_parameter_count
 

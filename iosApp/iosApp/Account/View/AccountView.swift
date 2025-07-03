@@ -156,6 +156,9 @@ extension AccountView: UserInfoViewProtocol {
   func loginPressed() {
     UIView.setAnimationsEnabled(false)
     showSignupSheet = true
+    AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+      event: AuthScreenViewedEventData()
+    )
   }
 }
 

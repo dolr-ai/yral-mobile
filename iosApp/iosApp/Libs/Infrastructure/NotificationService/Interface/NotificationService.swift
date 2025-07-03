@@ -7,5 +7,5 @@
 //
 
 protocol NotificationService {
-  func getRegistrationToken() async throws -> String
+  func getRegistrationToken() -> String
 }

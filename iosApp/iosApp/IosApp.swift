@@ -66,7 +66,6 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     withCompletionHandler completionHandler: @escaping () -> Void
   ) {
     let content = response.notification.request.content
-    print("Sarvesh content: \(content)")
     NotificationCenter.default.post(name: .videoUploadNotificationReceived, object: nil)
     completionHandler()
   }
@@ -152,6 +151,7 @@ struct IosApp: App {
   private func initializeDependencies() async {
     do {
       AppDI_iosKt.doInitKoin { _ in  }
+      AnalyticsModuleKt.getAnalyticsManager().trackEvent(event: SplashScreenViewedEventData())
       feedsDIContainer = await appDIContainer.makeFeedDIContainer()
       try await appDIContainer.authClient.initialize()
       uploadDIContainer = appDIContainer.makeUploadDIContainer()

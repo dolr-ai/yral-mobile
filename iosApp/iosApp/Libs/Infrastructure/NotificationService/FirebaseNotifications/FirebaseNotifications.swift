@@ -8,7 +8,7 @@
 import FirebaseMessaging
 
 class FirebaseNotifications: NotificationService {
-  func getRegistrationToken() async throws -> String {
-    try await Messaging.messaging().token()
+  func getRegistrationToken() -> String {
+    Messaging.messaging().fcmToken ?? ""
   }
 }

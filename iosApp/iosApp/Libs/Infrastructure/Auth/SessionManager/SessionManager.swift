@@ -32,10 +32,10 @@ final class SessionManager: ObservableObject {
       AnalyticsModuleKt.getAnalyticsManager().setUserProperties(
         user: User(
           userId: userPrincipal,
+          isLoggedIn: false,
           canisterId: canisterPrincipal,
-          userType: UserType.theNew,
-          tokenWalletBalance: Double(coins),
-          tokenType: TokenType.sats
+          isCreator: nil,
+          satsBalance: Double(coins)
         )
       )
     case .permanentAuthentication(let userPrincipal, let canisterPrincipal, _, _):
@@ -48,10 +48,10 @@ final class SessionManager: ObservableObject {
       AnalyticsModuleKt.getAnalyticsManager().setUserProperties(
         user: User(
           userId: userPrincipal,
+          isLoggedIn: true,
           canisterId: canisterPrincipal,
-          userType: UserType.existing,
-          tokenWalletBalance: Double(coins),
-          tokenType: TokenType.sats
+          isCreator: nil,
+          satsBalance: Double(coins)
         )
       )
     default:

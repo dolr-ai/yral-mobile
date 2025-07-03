@@ -7,6 +7,7 @@
 //
 import Foundation
 import Combine
+import iosSharedUmbrella
 
 enum ProfilePageState {
   case initialized
@@ -136,6 +137,9 @@ class ProfileViewModel: ObservableObject {
     await MainActor.run {
       switch result {
       case .success:
+        AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+          event: VideoDeletedEventData(pageName: .profile, videoId: request.videoId)
+        )
         state = .success
       case .failure(let failure):
         event = .deleteVideoFailed(failure.localizedDescription)
@@ -173,5 +177,24 @@ class ProfileViewModel: ObservableObject {
       }
       isLoading = false
     }
+  }
+
+  func setAnalyticsInfo(analyticsInfo: AnalyticsInfo) {
+    AnalyticsModuleKt.getAnalyticsManager().setUserProperties(
+      user: User(
+        userId: analyticsInfo.userPrincipal,
+        isLoggedIn: analyticsInfo.isLoggedIn,
+        canisterId: analyticsInfo.canisterPrincipal,
+        isCreator: KotlinBoolean(bool: self.feeds.count >= .one),
+        satsBalance: analyticsInfo.satsBalance
+      )
+    )
+  }
+
+  struct AnalyticsInfo {
+    let userPrincipal: String
+    let canisterPrincipal: String
+    let isLoggedIn: Bool
+    let satsBalance: Double
   }
 }
