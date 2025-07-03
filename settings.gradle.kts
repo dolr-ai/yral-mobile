@@ -41,7 +41,6 @@ check(JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
     """.trimIndent()
 }
 
-include(":composeApp")
 include(":androidApp")
 include(":shared:core")
 include(":shared:rust")

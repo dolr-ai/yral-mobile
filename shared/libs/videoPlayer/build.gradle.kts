@@ -1,18 +1,12 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
-    alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.androidLibrary)
+    alias(libs.plugins.yral.shared.library)
+    alias(libs.plugins.yral.android.library)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
 }
 
 kotlin {
-    androidTarget {
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_21)
-        }
-    }
+    androidTarget()
 //    listOf(
 //        iosX64(),
 //        iosArm64(),
@@ -45,24 +39,6 @@ kotlin {
     }
 }
 
-android {
-    namespace = "com.yral.shared.libs.videoPlayer"
-    compileSdk = libs.versions.compileSDK.get().toInt()
-    defaultConfig {
-        minSdk = libs.versions.minSDK.get().toInt()
-    }
-    packaging {
-        resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
-        }
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
-    }
-}
-
 dependencies {
     debugImplementation(compose.uiTooling)
 }
-

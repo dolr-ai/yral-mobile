@@ -2,9 +2,8 @@ import com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension
 import java.util.*
 
 plugins {
-    alias(libs.plugins.androidApplication)
-    alias(libs.plugins.kotlinAndroid)
-    alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.yral.android.application)
+    alias(libs.plugins.yral.android.application.compose)
     alias(libs.plugins.firebase.crashlytics)
     alias(libs.plugins.gms)
     alias(libs.plugins.firebase.perf)
@@ -12,11 +11,8 @@ plugins {
 
 android {
     namespace = "com.yral.android"
-    compileSdk = libs.versions.compileSDK.get().toInt()
     defaultConfig {
         applicationId = "com.yral.android"
-        minSdk = libs.versions.minSDK.get().toInt()
-        targetSdk = libs.versions.targetSDK.get().toInt()
         versionCode = 1
         versionName = "1.0.0"
         ndkVersion = "28.0.13004108"
@@ -24,9 +20,6 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
-    }
-    composeOptions {
-        kotlinCompilerExtensionVersion = libs.versions.compose.compiler.get()
     }
     packaging {
         resources {
@@ -48,7 +41,7 @@ android {
         }
     }
     buildTypes {
-        getByName("release") {
+        release {
             isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -72,14 +65,6 @@ android {
             signingConfig = signingConfigs.getByName("release")
         }
     }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
-        isCoreLibraryDesugaringEnabled = true
-    }
-    kotlinOptions {
-        jvmTarget = "21"
-    }
 }
 
 dependencies {
@@ -96,7 +81,6 @@ dependencies {
     implementation(libs.lottie)
     implementation(libs.coil.compose)
     implementation(libs.coil.okhttp)
-    coreLibraryDesugaring(libs.desugar.jdk.libs)
 
     implementation(projects.shared.core)
     implementation(projects.shared.libs.preferences)

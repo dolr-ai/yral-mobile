@@ -4,8 +4,8 @@ import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.androidLibrary)
+    alias(libs.plugins.yral.shared.library)
+    alias(libs.plugins.yral.android.library)
     alias(libs.plugins.gobleyCargo)
     alias(libs.plugins.gobleyUniffi)
     alias(libs.plugins.kotlinAtomicfu)
@@ -18,10 +18,7 @@ version = "1.0"
 
 kotlin {
     androidTarget {
-        publishLibraryVariants("release", "debug")
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_21)
-        }
+        publishAllLibraryVariants()
     }
 //    listOf(
 //        iosArm64(),
@@ -54,15 +51,8 @@ publishing {
 }
 
 android {
-    namespace = "com.yral.shared.rustLib"
-    compileSdk = libs.versions.compileSDK.get().toInt()
     defaultConfig {
-        minSdk = libs.versions.minSDK.get().toInt()
         ndkVersion = "28.0.13004108"
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
     }
     packaging {
         jniLibs.keepDebugSymbols += "**/*.so"
