@@ -53,7 +53,7 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
       .first ?? UIWindow()
   }
 
-  // swiftlint: disable function_body_length
+  // swiftlint: disable function_body_length cyclomatic_complexity
   @MainActor
   func signInWithSocial(provider: SocialProvider) async throws {
     let oldState = stateSubject.value
@@ -119,6 +119,13 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
         try storeTokens(token)
         try firebaseService.signOut()
         let oldPrincipal = self.userPrincipalString
+        do {
+          try await recordThrowingOperation {
+            try await deregisterForNotifications()
+          }
+        } catch {
+          print(error)
+        }
         try await processDelegatedIdentity(from: token, type: .permanent)
         UserDefaultsManager.shared.set(true, for: .userDefaultsLoggedIn)
         if oldPrincipal == self.userPrincipalString {
@@ -137,6 +144,13 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
           )
         }
         guard let canisterPrincipalString = self.canisterPrincipalString else { return }
+        do {
+          try await recordThrowingOperation {
+            try await registerForNotifications()
+          }
+        } catch {
+          print(error)
+        }
         Task {
           do {
             try await updateSession(canisterID: canisterPrincipalString)
@@ -150,7 +164,7 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
       throw error
     }
   }
-  // swiftlint: enable function_body_length
+  // swiftlint: enable function_body_length cyclomatic_complexity
 
   private func getAuthURL(
     provider: SocialProvider,
@@ -255,13 +269,20 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
     }
   }
 
+  func registerForNotifications() async throws {
+    let token = notificationService.getRegistrationToken()
+    let identity = try self.generateNewDelegatedIdentity()
+    try await register_device(identity, token.intoRustString())
+  }
+
   func deregisterForNotifications() async throws {
     try await recordThrowingOperation {
-      let token = try await notificationService.getRegistrationToken()
+      let token = notificationService.getRegistrationToken()
       let identity = try self.generateNewDelegatedIdentity()
       try await unregister_device(identity, token.intoRustString())
     }
   }
+
 }
 
 extension DefaultAuthClient {

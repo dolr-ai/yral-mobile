@@ -244,6 +244,14 @@ struct ProfileView: View {
     sendAnalyticsInfo()
   }
 
+  func refreshVideosFromPushNotifications() async {
+    await self.viewModel.refreshVideos(
+      request: RefreshVideosRequest(shouldPurge: false)
+    )
+  }
+}
+
+extension ProfileView {
   func sendAnalyticsInfo() {
     // swiftlint: disable large_tuple
     let (userPrincipal, canisterPrincipal, coins, isLoggedIn): (String, String, UInt64, Bool) = {

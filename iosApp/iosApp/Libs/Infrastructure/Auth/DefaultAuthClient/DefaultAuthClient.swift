@@ -419,6 +419,13 @@ final class DefaultAuthClient: NSObject, AuthClient {
     AnalyticsModuleKt.getAnalyticsManager().reset()
     stateSubject.value = .loggedOut
     try await obtainAnonymousIdentity()
+    do {
+      try await recordThrowingOperation {
+        try await registerForNotifications()
+      }
+    } catch {
+      print(error)
+    }
   }
 
   func generateNewDelegatedIdentity() throws -> DelegatedIdentity {

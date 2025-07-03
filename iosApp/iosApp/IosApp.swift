@@ -66,7 +66,6 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     withCompletionHandler completionHandler: @escaping () -> Void
   ) {
     let content = response.notification.request.content
-    print("Sarvesh content: \(content)")
     NotificationCenter.default.post(name: .videoUploadNotificationReceived, object: nil)
     completionHandler()
   }

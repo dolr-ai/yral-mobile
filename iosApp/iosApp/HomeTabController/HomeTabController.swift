@@ -191,9 +191,12 @@ struct HomeTabController: View {
   }
 
   @MainActor func uploadNotificationReceived() {
-    self.selectedTab = .profile
-    Task {
-      await profileView.refreshVideos(shouldPurge: false)
+    DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.animationPeriod) {
+      self.selectedTab = .profile
+      Task {
+        try? await Task.sleep(nanoseconds: 300_000_000)
+        await profileView.refreshVideosFromPushNotifications()
+      }
     }
   }
 }
