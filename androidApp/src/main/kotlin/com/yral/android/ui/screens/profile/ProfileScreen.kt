@@ -29,16 +29,17 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import co.touchlab.kermit.Logger
 import com.yral.android.R
 import com.yral.android.ui.components.DeleteConfirmationSheet
 import com.yral.android.ui.design.LocalAppTopography
@@ -55,12 +56,46 @@ import com.yral.shared.core.session.AccountInfo
 fun ProfileScreen(modifier: Modifier = Modifier) {
     val viewModel = remember { ProfileViewModel() }
     val state by viewModel.viewState.collectAsState()
-    var deleteConfirmation by remember { mutableStateOf("") }
+
     val bottomSheetState =
         rememberModalBottomSheetState(
             skipPartiallyExpanded = true,
         )
+    state.openVideo?.let { video ->
+        ProfileVideoPlayer(
+            modifier = modifier.fillMaxSize(),
+            video = video,
+            onBack = { viewModel.openVideo(null) },
+            onDeleteVideo = { viewModel.confirmDelete(video.videoID) },
+        )
+    } ?: MainContent(
+        modifier = modifier,
+        state = state,
+        openVideo = { video -> viewModel.openVideo(video) },
+        onDeleteVideo = { videoId -> viewModel.confirmDelete(videoId) },
+    )
 
+    state.deleteConfirmation?.let {
+        DeleteConfirmationSheet(
+            bottomSheetState = bottomSheetState,
+            title = stringResource(R.string.delete_video),
+            subTitle = "",
+            confirmationMessage = stringResource(R.string.video_will_be_deleted_permanently),
+            cancelButton = stringResource(R.string.cancel),
+            deleteButton = stringResource(R.string.delete),
+            onDismissRequest = { viewModel.confirmDelete(null) },
+            onDelete = { viewModel.deleteVideo() },
+        )
+    }
+}
+
+@Composable
+private fun MainContent(
+    modifier: Modifier,
+    state: ProfileState,
+    openVideo: (ProfileVideo) -> Unit,
+    onDeleteVideo: (String) -> Unit,
+) {
     Column(modifier = modifier.fillMaxSize()) {
         ProfileHeader()
         Spacer(modifier = Modifier.height(8.dp))
@@ -75,7 +110,8 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
             is ProfileUiState.Success -> {
                 SuccessContent(
                     videos = state.videos,
-                    onDeleteVideo = { videoId -> deleteConfirmation = videoId },
+                    openVideo = openVideo,
+                    onDeleteVideo = onDeleteVideo,
                 )
             }
 
@@ -83,21 +119,6 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
                 ErrorContent(message = state.message)
             }
         }
-    }
-    if (deleteConfirmation.isNotEmpty()) {
-        DeleteConfirmationSheet(
-            bottomSheetState = bottomSheetState,
-            title = stringResource(R.string.delete_video),
-            subTitle = "",
-            confirmationMessage = stringResource(R.string.video_will_be_deleted_permanently),
-            cancelButton = stringResource(R.string.cancel),
-            deleteButton = stringResource(R.string.delete),
-            onDismissRequest = { deleteConfirmation = "" },
-            onDelete = {
-                viewModel.deleteVideo(deleteConfirmation)
-                deleteConfirmation = ""
-            },
-        )
     }
 }
 
@@ -194,6 +215,7 @@ private fun ErrorContent(message: String) {
 @Composable
 private fun SuccessContent(
     videos: List<ProfileVideo>,
+    openVideo: (ProfileVideo) -> Unit,
     onDeleteVideo: (String) -> Unit,
 ) {
     Column(
@@ -205,6 +227,7 @@ private fun SuccessContent(
         } else {
             VideoGridContent(
                 videos = videos,
+                openVideo = openVideo,
                 onDeleteVideo = onDeleteVideo,
             )
         }
@@ -247,6 +270,7 @@ private fun EmptyStateContent() {
 @Composable
 private fun VideoGridContent(
     videos: List<ProfileVideo>,
+    openVideo: (ProfileVideo) -> Unit,
     onDeleteVideo: (String) -> Unit,
 ) {
     LazyVerticalGrid(
@@ -259,6 +283,7 @@ private fun VideoGridContent(
         items(videos) { video ->
             VideoGridItem(
                 video = video,
+                openVideo = { openVideo(video) },
                 onDeleteClick = { onDeleteVideo(video.videoID) },
             )
         }
@@ -268,6 +293,7 @@ private fun VideoGridContent(
 @Composable
 private fun VideoGridItem(
     video: ProfileVideo,
+    openVideo: () -> Unit,
     onDeleteClick: () -> Unit,
 ) {
     Box(
@@ -281,7 +307,12 @@ private fun VideoGridItem(
                     shape = RoundedCornerShape(8.dp),
                 ),
     ) {
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .clickable { openVideo() },
+        ) {
             // Video thumbnail
             YralAsyncImage(
                 imageUrl = video.thumbnail.toString(),
@@ -294,14 +325,19 @@ private fun VideoGridItem(
                 onDeleteVideo = onDeleteClick,
             )
         }
-        DeletingOverLay(video.isDeleting)
+        DeletingOverLay(video)
     }
 }
 
 @Composable
-private fun DeletingOverLay(isDeleting: Boolean) {
+fun DeletingOverLay(
+    video: ProfileVideo,
+    loaderSize: Dp = 24.dp,
+    textStyle: TextStyle = LocalAppTopography.current.baseMedium,
+) {
+    Logger.d("xxxx") { "isDeleting $video.isDeleting" }
     AnimatedVisibility(
-        visible = isDeleting,
+        visible = video.isDeleting,
         enter = fadeIn(),
         exit = fadeOut(),
     ) {
@@ -309,17 +345,18 @@ private fun DeletingOverLay(isDeleting: Boolean) {
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .background(YralColors.ScrimColor),
+                    .background(YralColors.ScrimColor)
+                    .clickable { },
             contentAlignment = Alignment.Center,
         ) {
             Column(
                 verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Bottom),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                YralLoader(size = 24.dp, R.raw.read_loader)
+                YralLoader(size = loaderSize, R.raw.read_loader)
                 Text(
                     text = stringResource(R.string.deleting),
-                    style = LocalAppTopography.current.baseMedium,
+                    style = textStyle,
                     color = YralColors.NeutralTextPrimary,
                 )
             }
