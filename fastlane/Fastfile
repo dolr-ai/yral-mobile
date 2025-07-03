@@ -22,7 +22,7 @@ platform :ios do
           "com.yral.iosApp.staging" => "Yral-Staging-Development"
         }
       },
-      xcargs: "DEVELOPMENT_TEAM=2UL556KNXC PROVISIONING_PROFILE_SPECIFIER=Yral-Staging-Development CODE_SIGN_STYLE=Automatic COMPILER_INDEX_STORE_ENABLE=NO SWIFT_STRICT_CONCURRENCY=minimal ENABLE_USER_SCRIPT_SANDBOXING=NO"
+      xcargs: "DEVELOPMENT_TEAM=2UL556KNXC CODE_SIGN_STYLE=Automatic COMPILER_INDEX_STORE_ENABLE=NO SWIFT_STRICT_CONCURRENCY=minimal ENABLE_USER_SCRIPT_SANDBOXING=NO"
     )
 
     # Distribute to Firebase
