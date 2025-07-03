@@ -15,7 +15,6 @@ platform :ios do
       clean: true,
       destination: "generic/platform=iOS",
       configuration: "Release",
-      signing_style: "manual",
       codesigning_identity: "Apple Development",
       provisioning_profile_specifier: "Yral-Staging-Development",
       export_method: "development",
