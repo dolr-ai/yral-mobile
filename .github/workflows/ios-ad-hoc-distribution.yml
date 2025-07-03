@@ -3,7 +3,7 @@ name: PR Ad-hoc Build for Yral-Staging (Firebase)
 on:
   pull_request:
     branches:
-      - 'sample'
+      - 'develop'
     types:
       - opened
       - ready_for_review
