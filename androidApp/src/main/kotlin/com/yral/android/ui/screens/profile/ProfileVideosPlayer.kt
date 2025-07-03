@@ -1,0 +1,168 @@
+package com.yral.android.ui.screens.profile
+
+import androidx.annotation.OptIn
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.ui.AspectRatioFrameLayout
+import co.touchlab.kermit.Logger
+import com.yral.android.R
+import com.yral.android.ui.design.LocalAppTopography
+import com.yral.android.ui.screens.profile.ProfilePlayerConstants.MAX_LINES_FOR_POST_DESCRIPTION
+import com.yral.android.ui.widgets.video.YralVideoPlayer
+
+@OptIn(UnstableApi::class)
+@Composable
+fun ProfileVideoPlayer(
+    modifier: Modifier,
+    video: ProfileVideo,
+    onBack: () -> Unit,
+    onDeleteVideo: () -> Unit,
+) {
+    Box(modifier = modifier) {
+        YralVideoPlayer(
+            modifier = Modifier.fillMaxSize(),
+            url = video.url,
+            autoPlay = true,
+            videoAspectRatio = AspectRatioFrameLayout.RESIZE_MODE_ZOOM,
+            onError = { },
+        )
+        Box(modifier = Modifier.fillMaxSize()) {
+            Header(
+                modifier = Modifier.align(Alignment.TopStart),
+                onBack = onBack,
+            )
+            Caption(
+                modifier = Modifier.align(Alignment.BottomStart),
+                caption = video.postDescription,
+            )
+            DeleteIcon(
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(end = 16.dp, bottom = 89.dp),
+                onDeleteVideo = onDeleteVideo,
+            )
+            Logger.d("xxxx") { "isDeleting: ${video.isDeleting}" }
+            DeletingOverLay(
+                video = video,
+                loaderSize = 54.dp,
+                textStyle = LocalAppTopography.current.lgMedium,
+            )
+        }
+    }
+}
+
+@Composable
+private fun Header(
+    modifier: Modifier,
+    onBack: () -> Unit,
+) {
+    Row(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Image(
+            modifier = Modifier.size(24.dp).clickable { onBack() },
+            painter = painterResource(id = R.drawable.arrow_left),
+            contentDescription = "back",
+        )
+        Text(
+            text = stringResource(R.string.your_videos),
+            style = LocalAppTopography.current.xlBold,
+            color = Color.White,
+        )
+    }
+}
+
+@Composable
+private fun Caption(
+    modifier: Modifier,
+    caption: String,
+) {
+    var isPostDescriptionExpanded by remember { mutableStateOf(false) }
+    Row(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, end = 61.dp, bottom = 28.dp)
+                .clickable { isPostDescriptionExpanded = !isPostDescriptionExpanded },
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (isPostDescriptionExpanded) {
+            val scrollState = rememberScrollState()
+            val maxHeight =
+                LocalAppTopography
+                    .current
+                    .feedDescription
+                    .lineHeight
+                    .value * MAX_LINES_FOR_POST_DESCRIPTION
+            Text(
+                modifier =
+                    Modifier
+                        .heightIn(max = maxHeight.dp)
+                        .verticalScroll(scrollState),
+                text = caption,
+                style = LocalAppTopography.current.feedDescription,
+                color = Color.White,
+            )
+        } else {
+            Text(
+                text = caption,
+                style = LocalAppTopography.current.feedDescription,
+                color = Color.White,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
+
+@Composable
+private fun DeleteIcon(
+    modifier: Modifier,
+    onDeleteVideo: () -> Unit,
+) {
+    Box(modifier = modifier) {
+        Image(
+            painter = painterResource(R.drawable.delete),
+            contentDescription = "delete video",
+            modifier =
+                Modifier
+                    .size(36.dp)
+                    .clickable { onDeleteVideo() },
+        )
+    }
+}
+
+object ProfilePlayerConstants {
+    const val MAX_LINES_FOR_POST_DESCRIPTION = 5
+}
