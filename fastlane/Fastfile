@@ -10,30 +10,19 @@ platform :ios do
   lane :build_staging_firebase do
     # Build with ad-hoc signing (Staging Dev)
     gym(
-      workspace:      "iosApp/iosApp.xcworkspace",
-      scheme:         "iosAppStaging",
-      clean:          true,
-      destination:    "generic/platform=iOS",
-      configuration:  "Release",
-
+      workspace: "iosApp/iosApp.xcworkspace",
+      scheme:    "iosAppStaging",
+      clean:     true,
+      destination: "generic/platform=iOS",
+      configuration: "Release",
       codesigning_identity: "Apple Development",
-      export_method:        "development",
-
+      export_method: "development",
       export_options: {
         provisioningProfiles: {
           "com.yral.iosApp.staging" => "Yral-Staging-Development"
         }
       },
-
-      xcargs: %(
-        DEVELOPMENT_TEAM=2UL556KNXC
-        PROVISIONING_PROFILE_SPECIFIER=Yral-Staging-Development
-        CODE_SIGN_STYLE=Manual
-        -allowProvisioningUpdates
-        COMPILER_INDEX_STORE_ENABLE=NO
-        SWIFT_STRICT_CONCURRENCY=minimal
-        ENABLE_USER_SCRIPT_SANDBOXING=NO
-      ).squeeze(" ")
+      xcargs: "DEVELOPMENT_TEAM=2UL556KNXC PROVISIONING_PROFILE_SPECIFIER=Yral-Staging-Development CODE_SIGN_STYLE=Automatic COMPILER_INDEX_STORE_ENABLE=NO SWIFT_STRICT_CONCURRENCY=minimal ENABLE_USER_SCRIPT_SANDBOXING=NO"
     )
 
     # Distribute to Firebase
