@@ -11,7 +11,7 @@ class SharedLibraryConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) {
         with(target) {
             apply(plugin = "org.jetbrains.kotlin.multiplatform")
-            apply(plugin = "yral.jvm.library")
+//            apply(plugin = "yral.jvm.library")
             apply(plugin = "yral.style.enforcer")
 
             extensions.configure<KotlinMultiplatformExtension> {

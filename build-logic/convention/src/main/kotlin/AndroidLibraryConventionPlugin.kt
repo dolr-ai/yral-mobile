@@ -16,7 +16,6 @@
 
 import com.android.build.api.variant.LibraryAndroidComponentsExtension
 import com.android.build.gradle.LibraryExtension
-import com.yral.buildlogic.configureFlavors
 import com.yral.buildlogic.configureKotlinAndroid
 import com.yral.buildlogic.configurePrintApksTask
 import com.yral.buildlogic.disableUnnecessaryAndroidTests
@@ -44,7 +43,7 @@ class AndroidLibraryConventionPlugin : Plugin<Project> {
                 defaultConfig.testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
                 testOptions.animationsDisabled = true
                 namespace = "com.yral" + project.path.replace(':', '.').replace('-', '.')
-                configureFlavors(this)
+//                configureFlavors(this)
                 // The resource prefix is derived from the module name,
                 // so resources inside ":core:module1" must be prefixed with "core_module1_"
                 resourcePrefix =

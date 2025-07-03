@@ -2513,7 +2513,6 @@
 				ACB815362CF9CEF600104B7B /* ShellScript */,
 				ACC0F3A72D2ED69300FA5BD0 /* Embed Frameworks */,
 				0FAFC3CAB4FE788E2CA1475F /* [CP] Embed Pods Frameworks */,
-				4EF68761DAB6FC877CC7B722 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -2529,7 +2528,6 @@
 			buildConfigurationList = AC9B77E32D58C7E300270FC9 /* Build configuration list for PBXNativeTarget "YralTests" */;
 			buildPhases = (
 				BE8F212F9D7115A0C1DBD8F9 /* [CP] Check Pods Manifest.lock */,
-				73E19354F42CF84167208956 /* [CP] Copy Pods Resources */,
 				AC9B77D92D58C7E300270FC9 /* Sources */,
 				AC9B77DA2D58C7E300270FC9 /* Frameworks */,
 				AC9B77DB2D58C7E300270FC9 /* Resources */,
@@ -2560,7 +2558,6 @@
 				ACD941B42CFF575C0038FCB6 /* ShellScript */,
 				ACC0F3AA2D2ED77200FA5BD0 /* Embed Frameworks */,
 				C626938FB2B206BAED91BD52 /* [CP] Embed Pods Frameworks */,
-				F21977D8D9347B812F73449C /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -2735,40 +2732,6 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		4EF68761DAB6FC877CC7B722 /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-resources-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Copy Pods Resources";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-resources.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		73E19354F42CF84167208956 /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-resources-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Copy Pods Resources";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-resources.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
 		8AD8414B1ECA3E101A9AFF7F /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -2931,23 +2894,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		F21977D8D9347B812F73449C /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-resources-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Copy Pods Resources";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
