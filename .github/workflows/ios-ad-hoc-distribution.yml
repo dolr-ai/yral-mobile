@@ -3,7 +3,7 @@ name: PR Ad-hoc Build for Yral-Staging (Firebase)
 on:
   pull_request:
     branches:
-      - 'sample'
+      - 'develop'
     types:
       - opened
       - ready_for_review
@@ -88,7 +88,7 @@ jobs:
         run: |
           export CONFIGURATION=Release
           export PLATFORM_NAME=iphoneos
-          PROJECT_DIR="${PWD}/rust-agent" iosApp/build-rust.sh
+          PROJECT_DIR="${PWD}/rust-agent" CONFIGURATION=Release iosApp/build-rust.sh
           ls -la rust-agent/target || true
 
       - name: Install Fastlane + Firebase plugin
