@@ -105,7 +105,7 @@ dependencies {
     implementation(projects.shared.features.game)
 
     val (deps, addRust) = BuildConfig.getAndProcessDependencies(project)
-    deps.filter { it.isNotEmpty() }.forEach { implementation(it) }
+    deps.forEach { if (it.isNotEmpty()) implementation(it) }
     if (addRust) implementation(projects.shared.rust)
 }
 
