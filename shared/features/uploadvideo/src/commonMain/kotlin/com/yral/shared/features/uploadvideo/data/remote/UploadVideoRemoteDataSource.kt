@@ -30,16 +30,20 @@ import kotlinx.serialization.json.Json
 
 internal class UploadVideoRemoteDataSource(
     private val client: HttpClient,
-    private val json: Json
+    private val json: Json,
 ) {
-    suspend fun getUploadUrl(): GetUploadUrlResponseDTO = httpGet(client, json) {
-        url {
-            host = AppConfigurations.OFF_CHAIN_BASE_URL
-            path(GET_UPLOAD_URL_PATH)
+    suspend fun getUploadUrl(): GetUploadUrlResponseDTO =
+        httpGet(client, json) {
+            url {
+                host = AppConfigurations.OFF_CHAIN_BASE_URL
+                path(GET_UPLOAD_URL_PATH)
+            }
         }
-    }
 
-    fun uploadFile(uploadUrl: String, filePath: String) = callbackFlow {
+    fun uploadFile(
+        uploadUrl: String,
+        filePath: String,
+    ) = callbackFlow {
         uploadFile(uploadUrl, filePath) { bytesSentTotal, contentLength ->
             send(FileUploadStatus.InProgress(bytesSentTotal, contentLength))
         }
@@ -62,33 +66,41 @@ internal class UploadVideoRemoteDataSource(
     private suspend fun uploadFile(
         uploadUrl: String,
         filePath: String,
-        progressListener: ProgressListener?
+        progressListener: ProgressListener?,
     ) {
         try {
             client.submitFormWithBinaryData(
-                uploadUrl, formData {
+                uploadUrl,
+                formData {
                     val path = Path(filePath)
                     append(
                         key = "file",
                         value = SystemFileSystem.source(path).buffered(),
-                        headers = Headers.build {
-                            append(
-                                HttpHeaders.ContentType,
-                                ContentType.defaultForFilePath(filePath).contentType
-                            )
-                            append(
-                                HttpHeaders.ContentDisposition,
-                                ContentDisposition.File.withParameter(
-                                    ContentDisposition.Parameters.FileName, path.name
-                                ).toString()
-                            )
-                        })
-                }) {
+                        headers =
+                            Headers.build {
+                                append(
+                                    HttpHeaders.ContentType,
+                                    ContentType.defaultForFilePath(filePath).contentType,
+                                )
+                                append(
+                                    HttpHeaders.ContentDisposition,
+                                    ContentDisposition.File
+                                        .withParameter(
+                                            ContentDisposition.Parameters.FileName,
+                                            path.name,
+                                        ).toString(),
+                                )
+                            },
+                    )
+                },
+            ) {
                 onUpload(progressListener)
             }
         } catch (e: CancellationException) {
             throw e
-        } catch (e: Exception) {
+        } catch (
+            @Suppress("TooGenericExceptionCaught") e: Exception,
+        ) {
             handleException(e) // You might still want to handle the exception globally
         }
     }

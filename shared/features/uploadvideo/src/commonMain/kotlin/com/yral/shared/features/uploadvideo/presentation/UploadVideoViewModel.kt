@@ -24,9 +24,8 @@ import kotlinx.coroutines.launch
 internal class UploadVideoViewModel(
     private val getUploadEndpoint: GetUploadEndpointUseCase,
     private val uploadVideo: UploadVideoUseCase,
-    private val updateMeta: UpdateMetaUseCase
+    private val updateMeta: UpdateMetaUseCase,
 ) : ViewModel() {
-
     private val _state = MutableStateFlow(ViewState())
     val state: StateFlow<ViewState> = _state.asStateFlow()
 
@@ -49,6 +48,7 @@ internal class UploadVideoViewModel(
         _state.update { it.copy(hashtags = hashtags) }
     }
 
+    @Suppress("ReturnCount")
     fun onUploadButtonClicked() {
         val currentState = _state.value
 
@@ -71,14 +71,14 @@ internal class UploadVideoViewModel(
         startCompleteUploadProcess(
             currentState.selectedFilePath,
             currentState.caption,
-            currentState.hashtags
+            currentState.hashtags,
         )
     }
 
     private fun startCompleteUploadProcess(
         filePath: String,
         caption: String,
-        hashtags: String
+        hashtags: String,
     ) {
         _state.update {
             it.copy(uploadUiState = UiState.InProgress(0f))
@@ -102,14 +102,18 @@ internal class UploadVideoViewModel(
                                     }
 
                                     is UploadState.InProgress -> {
-                                        val progress = if (uploadState.totalBytes != null) {
-                                            uploadState.bytesSent.toFloat() / uploadState.totalBytes.toFloat()
-                                        } else 0f
+                                        val progress =
+                                            if (uploadState.totalBytes != null) {
+                                                uploadState.bytesSent.toFloat() / uploadState.totalBytes.toFloat()
+                                            } else {
+                                                0f
+                                            }
                                         _state.update {
                                             it.copy(
-                                                uploadUiState = UiState.InProgress(
-                                                    progress
-                                                )
+                                                uploadUiState =
+                                                    UiState.InProgress(
+                                                        progress,
+                                                    ),
                                             )
                                         }
                                     }
@@ -118,12 +122,14 @@ internal class UploadVideoViewModel(
                             failure = { error ->
                                 _state.update { it.copy(uploadUiState = UiState.Failure(error)) }
                                 send(Event.ShowError.UploadFailed(error))
-                            }
+                            },
                         )
                     }
             } catch (e: CancellationException) {
                 throw e
-            } catch (e: Exception) {
+            } catch (
+                @Suppress("TooGenericExceptionCaught") e: Exception,
+            ) {
                 _state.update { it.copy(uploadUiState = UiState.Failure(e)) }
                 send(Event.ShowError.UploadFailed(e))
             }
@@ -133,28 +139,31 @@ internal class UploadVideoViewModel(
     private suspend fun updateMetadata(
         endpoint: UploadEndpoint,
         caption: String,
-        hashtags: String
+        hashtags: String,
     ) {
         try {
-            val hashtagsList = hashtags
-                .split(",")
-                .map { it.trim() }
-                .filter { it.isNotBlank() }
+            val hashtagsList =
+                hashtags
+                    .split(",")
+                    .map { it.trim() }
+                    .filter { it.isNotBlank() }
 
-            val uploadFileRequest = UploadFileRequest(
-                videoUid = endpoint.videoID,
-                caption = caption,
-                hashtags = hashtagsList
-            )
+            val uploadFileRequest =
+                UploadFileRequest(
+                    videoUid = endpoint.videoID,
+                    caption = caption,
+                    hashtags = hashtagsList,
+                )
 
             updateMeta(UpdateMetaUseCase.Param(uploadFileRequest))
 
             _state.update { it.copy(uploadUiState = UiState.Success(Unit)) }
             send(Event.UploadSuccess)
-
         } catch (e: CancellationException) {
             throw e
-        } catch (e: Exception) {
+        } catch (
+            @Suppress("TooGenericExceptionCaught") e: Exception,
+        ) {
             _state.update { it.copy(uploadUiState = UiState.Failure(e)) }
             send(Event.ShowError.UploadFailed(e))
         }
@@ -165,7 +174,9 @@ internal class UploadVideoViewModel(
             internal data object SelectFile : ShowError()
             internal data object AddCaption : ShowError()
             internal data object AddHashtags : ShowError()
-            internal data class UploadFailed(val error: Throwable) : ShowError()
+            internal data class UploadFailed(
+                val error: Throwable,
+            ) : ShowError()
         }
 
         internal data object UploadSuccess : Event()
@@ -175,9 +186,12 @@ internal class UploadVideoViewModel(
         val selectedFilePath: String? = null,
         val caption: String? = null,
         val hashtags: String? = null,
-        val uploadUiState: UiState<Unit> = UiState.Initial
+        val uploadUiState: UiState<Unit> = UiState.Initial,
     ) {
         val canUpload: Boolean =
-            selectedFilePath != null && !caption.isNullOrBlank() && !hashtags.isNullOrBlank() && (uploadUiState is UiState.Initial || uploadUiState is UiState.Failure)
+            selectedFilePath != null &&
+                !caption.isNullOrBlank() &&
+                !hashtags.isNullOrBlank() &&
+                (uploadUiState is UiState.Initial || uploadUiState is UiState.Failure)
     }
 }

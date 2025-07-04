@@ -7,6 +7,9 @@ import kotlinx.coroutines.flow.Flow
 
 internal interface UploadRepository {
     suspend fun fetchUploadUrl(): UploadEndpoint
-    fun uploadVideo(uploadUrl: String, filePath: String): Flow<UploadStatus>
+    fun uploadVideo(
+        uploadUrl: String,
+        filePath: String,
+    ): Flow<UploadStatus>
     suspend fun updateMetadata(uploadFileRequest: UploadFileRequest)
 }

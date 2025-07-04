@@ -33,7 +33,8 @@ internal data class WatermarkDto(
     val width: Double,
 )
 
-internal fun GetUploadUrlResponseDTO.toUploadEndpoint() = UploadEndpoint(
-    data.uploadURL,
-    data.uid
-)
+internal fun GetUploadUrlResponseDTO.toUploadEndpoint() =
+    UploadEndpoint(
+        data.uploadURL,
+        data.uid,
+    )

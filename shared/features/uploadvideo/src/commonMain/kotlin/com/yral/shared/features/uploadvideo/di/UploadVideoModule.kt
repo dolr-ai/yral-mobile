@@ -12,11 +12,12 @@ import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
-val uploadVideoModule = module {
-    factoryOf(::UploadVideoRemoteDataSource)
-    factoryOf(::UploadRepositoryImpl) bind UploadRepository::class
-    factoryOf(::GetUploadEndpointUseCase)
-    factoryOf(::UploadVideoUseCase)
-    factoryOf(::UpdateMetaUseCase)
-    viewModelOf(::UploadVideoViewModel)
-}
+val uploadVideoModule =
+    module {
+        factoryOf(::UploadVideoRemoteDataSource)
+        factoryOf(::UploadRepositoryImpl) bind UploadRepository::class
+        factoryOf(::GetUploadEndpointUseCase)
+        factoryOf(::UploadVideoUseCase)
+        factoryOf(::UpdateMetaUseCase)
+        viewModelOf(::UploadVideoViewModel)
+    }

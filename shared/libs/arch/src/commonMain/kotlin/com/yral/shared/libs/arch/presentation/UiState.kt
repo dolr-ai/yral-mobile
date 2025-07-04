@@ -12,7 +12,9 @@ import kotlin.contracts.contract
 sealed class UiState<out T> {
     data object Initial : UiState<Nothing>()
 
-    data class InProgress(val progress: Float = Float.NaN) : UiState<Nothing>()
+    data class InProgress(
+        val progress: Float = Float.NaN,
+    ) : UiState<Nothing>()
 
     data class Success<out T>(
         val data: T,

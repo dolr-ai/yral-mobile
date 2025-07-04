@@ -8,7 +8,7 @@ import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 internal class GetUploadEndpointUseCase(
     appDispatchers: AppDispatchers,
     failureListener: UseCaseFailureListener,
-    private val repository: UploadRepository
+    private val repository: UploadRepository,
 ) : UnitSuspendUseCase<UploadEndpoint>(appDispatchers.network, failureListener) {
     override suspend fun execute(parameter: Unit) = repository.fetchUploadUrl()
 }

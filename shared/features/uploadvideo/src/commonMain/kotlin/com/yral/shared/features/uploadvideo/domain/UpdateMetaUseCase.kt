@@ -8,13 +8,13 @@ import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 internal class UpdateMetaUseCase(
     appDispatchers: AppDispatchers,
     failureListener: UseCaseFailureListener,
-    private val repository: UploadRepository
+    private val repository: UploadRepository,
 ) : SuspendUseCase<UpdateMetaUseCase.Param, Unit>(appDispatchers.network, failureListener) {
     override suspend fun execute(parameter: Param) {
         repository.updateMetadata(parameter.uploadFileRequest)
     }
 
     data class Param(
-        val uploadFileRequest: UploadFileRequest
+        val uploadFileRequest: UploadFileRequest,
     )
 }

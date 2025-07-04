@@ -31,15 +31,17 @@ internal data class PostDetailsDto(
     val creatorConsentForInclusionInHotOrNot: Boolean,
 )
 
-internal fun UploadFileRequest.toUpdateMetaDataRequestDto(delegatedIdentityWire: KotlinDelegatedIdentityWire) = UpdateMetaDataRequestDto(
-    videoUid = videoUid,
-    delegatedIdentityWire = delegatedIdentityWire,
-    meta = emptyMap(),
-    postDetails = PostDetailsDto(
-        isNsfw = isNSFW,
-        hashtags = hashtags,
-        description = caption,
+internal fun UploadFileRequest.toUpdateMetaDataRequestDto(delegatedIdentityWire: KotlinDelegatedIdentityWire) =
+    UpdateMetaDataRequestDto(
         videoUid = videoUid,
-        creatorConsentForInclusionInHotOrNot = true
+        delegatedIdentityWire = delegatedIdentityWire,
+        meta = emptyMap(),
+        postDetails =
+            PostDetailsDto(
+                isNsfw = isNSFW,
+                hashtags = hashtags,
+                description = caption,
+                videoUid = videoUid,
+                creatorConsentForInclusionInHotOrNot = true,
+            ),
     )
-)

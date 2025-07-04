@@ -33,7 +33,7 @@ actual fun initKoin(appDeclaration: KoinAppDeclaration) {
             firebaseAuthModule,
             firestoreModule,
             dispatchersModule,
-            archModule
+            archModule,
         )
         modules(
             authModule,
@@ -41,7 +41,7 @@ actual fun initKoin(appDeclaration: KoinAppDeclaration) {
             rootModule,
             accountsModule,
             gameModule,
-            uploadVideoModule
+            uploadVideoModule,
         )
     }
 }
