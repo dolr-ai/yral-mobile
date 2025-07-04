@@ -12,7 +12,9 @@ import kotlin.contracts.contract
 sealed class UiState<out T> {
     data object Initial : UiState<Nothing>()
 
-    data object InProgress : UiState<Nothing>()
+    data class InProgress(
+        val progress: Float = Float.NaN,
+    ) : UiState<Nothing>()
 
     data class Success<out T>(
         val data: T,
@@ -41,7 +43,7 @@ public inline infix fun <T, U> UiState<T>.map(transform: (T) -> U): UiState<U> {
 
     return when (this) {
         is UiState.Failure -> this
-        UiState.InProgress -> UiState.InProgress
+        is UiState.InProgress -> UiState.InProgress(progress)
         UiState.Initial -> UiState.Initial
         is UiState.Success -> UiState.Success(transform(data))
     }
