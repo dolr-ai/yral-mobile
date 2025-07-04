@@ -59,4 +59,32 @@
     <string name="new_">New</string>
 
     <string name="scroll_to_next_video">Scroll To Next Video</string>
+
+    <string name="upload_video">Upload Video</string>
+    <string name="upload_video_to_share_with_world">Upload a video to share with the world!</string>
+    <string name="video_file_max_seconds">Video file (Max %ds)</string>
+    <string name="select_file">Select File</string>
+    <string name="caption">Caption</string>
+    <string name="enter_caption_here">Enter the caption here</string>
+    <string name="add_hashtag">Add Hashtag</string>
+    <string name="hit_enter_to_add_hashtags">Hit enter to add #hashtags</string>
+    <string name="add_hashtags">Add another #hashtags</string>
+    <string name="upload">Upload</string>
+    <string name="uploading_message">Uploading may take a moment. Feel free to explore more videos on the home page while you wait!</string>
+    <string name="uploading_progress">Uploading… %d%%</string>
+    <string name="upload_completed">Upload Completed</string>
+    <string name="upload_completed_message">We\'re processing your video. It\'ll be in \'Your Videos\' under My Profile soon. Happy scrolling!</string>
+    <string name="your_videos">Your Videos</string>
+    <string name="my_profile">My Profile</string>
+    <string name="done">Done</string>
+    <string name="something_went_wrong">Something went wrong!</string>
+    <string name="upload_video_error">We couldn’t upload your video %s. Try uploading it again.</string>
+    <string name="upload_video_error_reason"> due to %s reasons</string>
+    <string name="try_again">Try Again</string>
+    <string name="go_to_home">Go to Home</string>
+    
+    <!-- Permission Messages -->
+    <string name="permission_required_title">Permission required!</string>
+    <string name="permission_required_description">To upload videos, please allow access to your device\'s media files in Settings. You can choose \"Allow all\" or \"Allow limited access\" - both work for uploading videos.</string>
+    <string name="go_to_settings">Go to settings</string>
 </resources>

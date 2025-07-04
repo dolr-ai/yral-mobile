@@ -5,9 +5,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -30,6 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -40,6 +44,9 @@ import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.account.AccountScreen
 import com.yral.android.ui.screens.feed.FeedScreen
 import com.yral.android.ui.screens.leaderboard.LeaderboardScreen
+import com.yral.android.ui.screens.profile.ProfileScreen
+import com.yral.android.ui.screens.uploadVideo.UploadVideoScreen
+import com.yral.android.ui.screens.uploadVideo.keyboardHeightAsState
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.koin.koinInstance
 
@@ -66,33 +73,74 @@ fun HomeScreen(
             )
         },
     ) { innerPadding ->
-        when (currentTab) {
-            HomeTab.HOME.title ->
-                FeedScreen(
-                    modifier =
-                        Modifier
-                            .padding(innerPadding)
-                            .background(MaterialTheme.colorScheme.primaryContainer),
-                    viewModel = feedViewModel,
-                )
+        HomeScreenContent(innerPadding, currentTab, feedViewModel)
+    }
+}
 
-            HomeTab.ACCOUNT.title ->
-                AccountScreen(
-                    modifier =
-                        Modifier
-                            .padding(innerPadding)
-                            .background(MaterialTheme.colorScheme.primaryContainer),
-                    viewModel = koinInstance.get(),
-                )
+@Composable
+private fun HomeScreenContent(
+    innerPadding: PaddingValues,
+    currentTab: String,
+    feedViewModel: FeedViewModel,
+) {
+    when (currentTab) {
+        HomeTab.HOME.title ->
+            FeedScreen(
+                modifier =
+                    Modifier
+                        .padding(innerPadding)
+                        .background(MaterialTheme.colorScheme.primaryContainer),
+                viewModel = feedViewModel,
+            )
 
-            HomeTab.LEADER_BOARD.title ->
-                LeaderboardScreen(
-                    modifier =
-                        Modifier
-                            .padding(innerPadding)
-                            .background(MaterialTheme.colorScheme.primaryContainer),
-                    viewModel = koinInstance.get(),
+        HomeTab.ACCOUNT.title ->
+            AccountScreen(
+                modifier =
+                    Modifier
+                        .padding(innerPadding)
+                        .background(MaterialTheme.colorScheme.primaryContainer),
+                viewModel = koinInstance.get(),
+            )
+
+        HomeTab.LEADER_BOARD.title ->
+            LeaderboardScreen(
+                modifier =
+                    Modifier
+                        .padding(innerPadding)
+                        .background(MaterialTheme.colorScheme.primaryContainer),
+                viewModel = koinInstance.get(),
+            )
+
+        HomeTab.UPLOAD_VIDEO.title -> {
+            val keyboardHeight by keyboardHeightAsState()
+            val bottomPadding by remember(keyboardHeight) {
+                mutableStateOf(
+                    if (keyboardHeight > 0) {
+                        0.dp
+                    } else {
+                        innerPadding.calculateBottomPadding()
+                    },
                 )
+            }
+            UploadVideoScreen(
+                modifier =
+                    Modifier
+                        .padding(
+                            top = innerPadding.calculateTopPadding(),
+                            start = innerPadding.calculateStartPadding(LocalLayoutDirection.current),
+                            end = innerPadding.calculateEndPadding(LocalLayoutDirection.current),
+                            bottom = bottomPadding,
+                        ).background(MaterialTheme.colorScheme.primaryContainer),
+            )
+        }
+
+        HomeTab.PROFILE.title -> {
+            ProfileScreen(
+                modifier =
+                    Modifier
+                        .padding(innerPadding)
+                        .background(MaterialTheme.colorScheme.primaryContainer),
+            )
         }
     }
 }
@@ -238,6 +286,16 @@ enum class HomeTab(
         icon = R.drawable.leaderboard_nav_selected,
         unSelectedIcon = R.drawable.leaderboard_nav_unselected,
         isNew = true,
+    ),
+    UPLOAD_VIDEO(
+        title = "UploadVideo",
+        icon = R.drawable.upload_video_nav_selected,
+        unSelectedIcon = R.drawable.upload_video_nav_unselected,
+    ),
+    PROFILE(
+        title = "Profile",
+        icon = R.drawable.profile_nav_selected,
+        unSelectedIcon = R.drawable.profile_nav_unselected,
     ),
     ACCOUNT("Account", R.drawable.account_nav, R.drawable.account_nav),
 }

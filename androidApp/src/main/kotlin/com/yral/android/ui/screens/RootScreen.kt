@@ -49,13 +49,15 @@ fun RootScreen(viewModel: RootViewModel = koinViewModel()) {
                     // first app open or after logout
                     viewModel.initialize()
                 }
+
                 is SessionState.SignedIn -> {
                     // initialize rust and close splash if visible
                     viewModel.initialize()
                     // cold start feed
                     feedViewModel.initialize()
                 }
-                else -> { }
+
+                else -> {}
             }
         }
     }
@@ -123,23 +125,19 @@ private fun BlockingLoader() {
 @Composable
 private fun HandleSystemBars(show: Boolean) {
     val window = (LocalActivity.current as? ComponentActivity)?.window
-    if (show) {
-        LaunchedEffect(Unit) {
-            window?.let { w ->
-                WindowInsetsControllerCompat(
-                    w,
-                    w.decorView,
-                ).show(WindowInsetsCompat.Type.systemBars())
-            }
+    val controller =
+        window?.let { w ->
+            WindowInsetsControllerCompat(
+                w,
+                w.decorView,
+            )
         }
-    } else {
-        LaunchedEffect(Unit) {
-            window?.let { w ->
-                WindowInsetsControllerCompat(
-                    w,
-                    w.decorView,
-                ).hide(WindowInsetsCompat.Type.systemBars())
-            }
+    controller?.isAppearanceLightStatusBars = false
+    LaunchedEffect(Unit) {
+        if (show) {
+            controller?.show(WindowInsetsCompat.Type.systemBars())
+        } else {
+            controller?.hide(WindowInsetsCompat.Type.systemBars())
         }
     }
 }

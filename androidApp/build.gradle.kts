@@ -81,6 +81,10 @@ dependencies {
     implementation(libs.lottie)
     implementation(libs.coil.compose)
     implementation(libs.coil.okhttp)
+    implementation(libs.accompanist.permission)
+
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.ui)
 
     implementation(projects.shared.core)
     implementation(projects.shared.libs.preferences)
