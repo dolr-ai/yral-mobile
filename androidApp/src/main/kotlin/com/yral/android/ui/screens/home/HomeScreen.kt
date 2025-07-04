@@ -73,7 +73,12 @@ fun HomeScreen(
             )
         },
     ) { innerPadding ->
-        HomeScreenContent(innerPadding, currentTab, feedViewModel, updateCurrentTab = { updateCurrentTab(it.title) })
+        HomeScreenContent(
+            innerPadding = innerPadding,
+            currentTab = currentTab,
+            feedViewModel = feedViewModel,
+            updateCurrentTab = { updateCurrentTab(it.title) },
+        )
     }
 }
 
@@ -142,6 +147,7 @@ private fun HomeScreenContent(
                     Modifier
                         .padding(innerPadding)
                         .background(MaterialTheme.colorScheme.primaryContainer),
+                uploadVideo = { updateCurrentTab(HomeTab.UPLOAD_VIDEO) },
             )
         }
     }
