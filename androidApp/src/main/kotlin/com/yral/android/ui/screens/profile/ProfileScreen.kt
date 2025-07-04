@@ -69,6 +69,7 @@ import com.yral.shared.libs.arch.presentation.UiState
 @Composable
 fun ProfileScreen(
     modifier: Modifier = Modifier,
+    uploadVideo: () -> Unit,
     viewModel: ProfileViewModel = koinInstance.get(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -86,6 +87,7 @@ fun ProfileScreen(
     } ?: MainContent(
         modifier = modifier,
         state = state,
+        uploadVideo = uploadVideo,
         onRefresh = { viewModel.onRefresh() },
         openVideo = { video -> viewModel.openVideo(video) },
         onDeleteVideo = { videoId -> viewModel.confirmDelete(videoId) },
@@ -109,6 +111,7 @@ fun ProfileScreen(
 private fun MainContent(
     modifier: Modifier,
     state: ViewState,
+    uploadVideo: () -> Unit,
     onRefresh: () -> Unit,
     openVideo: (ProfileVideo) -> Unit,
     onDeleteVideo: (String) -> Unit,
@@ -128,6 +131,7 @@ private fun MainContent(
                 SuccessContent(
                     videos = uiState.data.videos,
                     isRefreshing = state.isRefreshing,
+                    uploadVideo = uploadVideo,
                     onRefresh = onRefresh,
                     openVideo = openVideo,
                     onDeleteVideo = onDeleteVideo,
@@ -238,6 +242,7 @@ private fun ErrorContent(message: String) {
 private fun SuccessContent(
     videos: List<ProfileVideo>,
     isRefreshing: Boolean,
+    uploadVideo: () -> Unit,
     onRefresh: () -> Unit,
     openVideo: (ProfileVideo) -> Unit,
     onDeleteVideo: (String) -> Unit,
@@ -273,7 +278,7 @@ private fun SuccessContent(
             },
         ) {
             if (videos.isEmpty()) {
-                EmptyStateContent(offset)
+                EmptyStateContent(offset, uploadVideo)
             } else {
                 VideoGridContent(
                     videos = videos,
@@ -287,7 +292,10 @@ private fun SuccessContent(
 }
 
 @Composable
-private fun EmptyStateContent(offset: Float) {
+private fun EmptyStateContent(
+    offset: Float,
+    uploadVideo: () -> Unit,
+) {
     Column(
         modifier =
             Modifier
@@ -315,8 +323,7 @@ private fun EmptyStateContent(offset: Float) {
             modifier = Modifier.fillMaxWidth(),
             text = "Upload Video",
             buttonType = YralButtonType.White,
-            onClick = {
-            },
+            onClick = uploadVideo,
         )
     }
 }
