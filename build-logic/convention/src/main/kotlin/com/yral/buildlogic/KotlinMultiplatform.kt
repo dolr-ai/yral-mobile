@@ -31,9 +31,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 /**
  * Configure base Kotlin with Android options
  */
-internal fun Project.configureKotlinAndroid(
-    commonExtension: CommonExtension<*, *, *, *, *, *>,
-) {
+internal fun Project.configureKotlinAndroid(commonExtension: CommonExtension<*, *, *, *, *, *>) {
     commonExtension.apply {
         compileSdk = 35
 
@@ -74,6 +72,7 @@ internal fun Project.configureKotlinJvm() {
 
 internal fun Project.configureKotlinMultiplatform(kotlinMultiplatformExtension: KotlinMultiplatformExtension) {
 //    Disable until all modules are multiplatform
+
     /*kotlinMultiplatformExtension.apply {
         iosArm64()
         iosSimulatorArm64()
@@ -86,12 +85,14 @@ internal fun Project.configureKotlinMultiplatform(kotlinMultiplatformExtension: 
  * Configure base Kotlin options
  */
 private fun Project.configureKotlin() {
-
     // Treat all Kotlin warnings as errors (disabled by default)
     // Override by setting warningsAsErrors=true in your ~/.gradle/gradle.properties
-    val warningsAsErrors = providers.gradleProperty("warningsAsErrors").map {
-        it.toBoolean()
-    }.orElse(false)
+    val warningsAsErrors =
+        providers
+            .gradleProperty("warningsAsErrors")
+            .map {
+                it.toBoolean()
+            }.orElse(false)
 
     tasks.withType<KotlinCompile>().configureEach {
         compilerOptions {
@@ -113,7 +114,7 @@ private fun Project.configureKotlin() {
                  * The binary signature changes. The error on the declaration is no longer reported.
                  * '-Xconsistent-data-class-copy-visibility' compiler flag and ConsistentCopyVisibility annotation are now unnecessary.
                  */
-                "-Xconsistent-data-class-copy-visibility"
+                "-Xconsistent-data-class-copy-visibility",
             )
         }
     }

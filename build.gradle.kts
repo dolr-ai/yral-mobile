@@ -34,7 +34,7 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-        //mavenLocal()
+        // mavenLocal()
         maven {
             name = "GitHubPackages"
             url = uri("https://maven.pkg.github.com/dolr-ai/yral-mobile")
@@ -44,7 +44,7 @@ allprojects {
             }
         }
         maven {
-            url  = uri("https://oss.sonatype.org/content/repositories/snapshots/")
+            url = uri("https://oss.sonatype.org/content/repositories/snapshots/")
         }
     }
 }

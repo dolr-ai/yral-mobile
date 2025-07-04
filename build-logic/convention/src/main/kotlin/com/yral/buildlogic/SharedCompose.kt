@@ -29,7 +29,7 @@ import org.jetbrains.kotlin.compose.compiler.gradle.ComposeCompilerGradlePluginE
  */
 internal fun Project.configureAndroidCompose(
     commonExtension: CommonExtension<*, *, *, *, *, *>,
-    composeDependencies: ComposePlugin.Dependencies
+    composeDependencies: ComposePlugin.Dependencies,
 ) {
     commonExtension.apply {
         buildFeatures {
@@ -55,10 +55,7 @@ internal fun Project.configureAndroidCompose(
     configureComposeCompiler()
 }
 
-internal fun Project.configureKMPCompose(
-    composeDependencies: ComposePlugin.Dependencies
-) {
-
+internal fun Project.configureKMPCompose(composeDependencies: ComposePlugin.Dependencies) {
     dependencies {
         "commonMainImplementation"(composeDependencies.runtime)
         "commonMainImplementation"(composeDependencies.foundation)
@@ -75,17 +72,22 @@ internal fun Project.configureKMPCompose(
 private fun Project.configureComposeCompiler() {
     extensions.configure<ComposeCompilerGradlePluginExtension> {
         fun Provider<String>.onlyIfTrue() = flatMap { provider { it.takeIf(String::toBoolean) } }
-        fun Provider<*>.relativeToRootProject(dir: String) = map {
-            isolated.rootProject.projectDirectory
-                .dir("build")
-                .dir(projectDir.toRelativeString(rootDir))
-        }.map { it.dir(dir) }
+        fun Provider<*>.relativeToRootProject(dir: String) =
+            map {
+                isolated.rootProject.projectDirectory
+                    .dir("build")
+                    .dir(projectDir.toRelativeString(rootDir))
+            }.map { it.dir(dir) }
 
-        project.providers.gradleProperty("enableComposeCompilerMetrics").onlyIfTrue()
+        project.providers
+            .gradleProperty("enableComposeCompilerMetrics")
+            .onlyIfTrue()
             .relativeToRootProject("compose-metrics")
             .let(metricsDestination::set)
 
-        project.providers.gradleProperty("enableComposeCompilerReports").onlyIfTrue()
+        project.providers
+            .gradleProperty("enableComposeCompilerReports")
+            .onlyIfTrue()
             .relativeToRootProject("compose-reports")
             .let(reportsDestination::set)
 

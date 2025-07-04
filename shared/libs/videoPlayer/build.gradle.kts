@@ -12,7 +12,7 @@ kotlin {
 //        iosArm64(),
 //        iosSimulatorArm64()
 //    )
-    
+
     sourceSets {
         androidMain.dependencies {
             implementation(compose.preview)

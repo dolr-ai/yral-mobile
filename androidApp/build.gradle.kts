@@ -1,5 +1,5 @@
 import com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension
-import java.util.*
+import java.util.Locale
 
 plugins {
     alias(libs.plugins.yral.android.application)
@@ -45,7 +45,7 @@ android {
             isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
             configure<CrashlyticsExtension> {
                 mappingFileUploadEnabled = true
@@ -113,15 +113,16 @@ dependencies {
 afterEvaluate {
     android.buildTypes.forEach { buildType ->
         if (buildType.name.equals("release", ignoreCase = true)) {
-            tasks.named(
-                "bundle${
-                    buildType.name.replaceFirstChar {
-                        if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
-                    }
-                }"
-            ).configure {
-                dependsOn("uploadCrashlyticsSymbolFileRelease")
-            }
+            tasks
+                .named(
+                    "bundle${
+                        buildType.name.replaceFirstChar {
+                            if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
+                        }
+                    }",
+                ).configure {
+                    dependsOn("uploadCrashlyticsSymbolFileRelease")
+                }
         }
     }
 }

@@ -31,36 +31,33 @@ abstract class FlowUseCase<in P, out R>(
 }
 
 abstract class BaseFlowUseCase<in P, out R, E>
-internal constructor(
-    private val coroutineDispatcher: CoroutineDispatcher,
-    private val failureListener: UseCaseFailureListener,
-) {
-    operator fun invoke(parameters: P): Flow<Result<R, E>> {
-        return execute(parameters)
-            .onEach { result ->
-                result.onFailure { error ->
-                    val throwable = error.toThrowable()
+    internal constructor(
+        private val coroutineDispatcher: CoroutineDispatcher,
+        private val failureListener: UseCaseFailureListener,
+    ) {
+        operator fun invoke(parameters: P): Flow<Result<R, E>> =
+            execute(parameters)
+                .onEach { result ->
+                    result.onFailure { error ->
+                        val throwable = error.toThrowable()
+                        if (throwable is CancellationException) {
+                            throw throwable
+                        }
+                        val tag = this@BaseFlowUseCase::class.simpleName
+                        failureListener.onFailure(throwable, tag = tag) { "onFailure" }
+                    }
+                }.catch { throwable ->
                     if (throwable is CancellationException) {
                         throw throwable
                     }
                     val tag = this@BaseFlowUseCase::class.simpleName
                     failureListener.onFailure(throwable, tag = tag) { "onFailure" }
-                }
-            }
-            .catch { throwable ->
-                if (throwable is CancellationException) {
-                    throw throwable
-                }
-                val tag = this@BaseFlowUseCase::class.simpleName
-                failureListener.onFailure(throwable, tag = tag) { "onFailure" }
-                emit(Err(throwable.toError()))
-            }
-            .flowOn(coroutineDispatcher)
+                    emit(Err(throwable.toError()))
+                }.flowOn(coroutineDispatcher)
+
+        protected abstract fun execute(parameters: P): Flow<Result<R, E>>
+
+        protected abstract fun Throwable.toError(): E
+
+        protected abstract fun E.toThrowable(): Throwable
     }
-
-    protected abstract fun execute(parameters: P): Flow<Result<R, E>>
-
-    protected abstract fun Throwable.toError(): E
-
-    protected abstract fun E.toThrowable(): Throwable
-}

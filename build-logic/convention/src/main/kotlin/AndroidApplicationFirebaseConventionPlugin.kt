@@ -15,8 +15,8 @@
  */
 
 import com.android.build.api.dsl.ApplicationExtension
-import com.yral.buildlogic.libs
 import com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension
+import com.yral.buildlogic.libs
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.apply
@@ -41,7 +41,7 @@ class AndroidApplicationFirebaseConventionPlugin : Plugin<Project> {
                     datastore-proto brings in protobuf dependencies. These are the source of truth
                     for Now in Android.
                     That's why the duplicate classes from below dependencies are excluded.
-                    */
+                     */
                     exclude(group = "com.google.protobuf", module = "protobuf-javalite")
                     exclude(group = "com.google.firebase", module = "protolite-well-known-types")
                 }
