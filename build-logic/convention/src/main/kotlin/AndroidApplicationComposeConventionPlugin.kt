@@ -34,5 +34,4 @@ class AndroidApplicationComposeConventionPlugin : Plugin<Project> {
             configureAndroidCompose(extension, composeDependencies)
         }
     }
-
 }

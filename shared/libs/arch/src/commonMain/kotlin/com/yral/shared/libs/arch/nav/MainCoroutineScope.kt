@@ -8,4 +8,6 @@ import kotlinx.coroutines.SupervisorJob
 
 // The scope is automatically cancelled when the component is destroyed
 fun LifecycleOwner.mainCoroutineScope(): CoroutineScope =
-    coroutineScope(Dispatchers.Main.immediate + SupervisorJob())
+    coroutineScope(
+        context = Dispatchers.Main.immediate + SupervisorJob(),
+    )

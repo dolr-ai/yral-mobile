@@ -296,7 +296,7 @@ internal class FBFirestoreRepository(
         }
 }
 
-@Suppress("TooGenericExceptionCaught", "SwallowedException")
+@Suppress("TooGenericExceptionCaught", "SwallowedException", "UNCHECKED_CAST")
 @OptIn(InternalSerializationApi::class)
 private fun <T : FirestoreDocument> DocumentSnapshot.safeData(documentType: KClass<T>): T =
     try {
@@ -305,8 +305,7 @@ private fun <T : FirestoreDocument> DocumentSnapshot.safeData(documentType: KCla
             is LeaderboardItemDto -> data.copy(id = id) as T
             is AboutGameItemDto -> data.copy(id = id) as T
             is GameConfigDto -> data.copy(id = id) as T
-            else -> data
         }
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         throw YralException("Error deserializing document")
     }

@@ -5,6 +5,5 @@ import com.github.michaelbull.result.map
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-inline fun <V, E, U> Flow<Result<V, E>>.mapResultOk(
-    crossinline transform: (V) -> U
-): Flow<Result<U, E>> = map { result -> result.map(transform) }
+inline fun <V, E, U> Flow<Result<V, E>>.mapResultOk(crossinline transform: (V) -> U): Flow<Result<U, E>> =
+    map { result -> result.map(transform) }
