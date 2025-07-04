@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -53,6 +52,7 @@ import com.yral.android.ui.widgets.YralButtonState
 import com.yral.android.ui.widgets.YralErrorMessage
 import com.yral.android.ui.widgets.video.VideoPermissionUtils
 import com.yral.android.ui.widgets.video.VideoPlayerUtils
+import com.yral.android.ui.widgets.video.YralVideoPlayer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -83,12 +83,13 @@ fun UploadVideo(
         ) {
             if (videoFilePath.isNotEmpty()) {
                 Box(Modifier.fillMaxSize()) {
-                    VideoView(
-                        modifier =
-                            Modifier
-                                .fillMaxHeight()
-                                .align(Alignment.Center),
-                        videoFilePath = videoFilePath,
+                    YralVideoPlayer(
+                        modifier = Modifier.fillMaxSize(),
+                        url = videoFilePath,
+                        autoPlay = true,
+                        onError = { error ->
+                            Logger.d("Video error: $error")
+                        },
                     )
                     Image(
                         painter = painterResource(id = R.drawable.cross),

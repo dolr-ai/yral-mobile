@@ -29,15 +29,9 @@ kotlin {
             implementation(projects.shared.libs.koin)
             implementation(projects.shared.libs.useCase)
 
-            val (dependencies, shouldAddRustModule) = BuildConfig.getAndProcessDependencies(project)
-            dependencies.forEach { dependency ->
-                if (dependency.isNotEmpty()) {
-                    implementation(dependency)
-                }
-            }
-            if (shouldAddRustModule) {
-                implementation(projects.shared.rust)
-            }
+            val (deps, addRust) = BuildConfig.getAndProcessDependencies(project)
+            deps.filter { it.isNotEmpty() }.forEach { implementation(it) }
+            if (addRust) implementation(projects.shared.rust)
         }
     }
 }

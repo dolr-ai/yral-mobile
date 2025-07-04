@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.account
+package com.yral.android.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -12,11 +12,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.widgets.YralBottomSheet
@@ -24,10 +22,15 @@ import com.yral.android.ui.widgets.YralButton
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun DeleteAccountSheet(
+fun DeleteConfirmationSheet(
     bottomSheetState: SheetState,
+    title: String,
+    subTitle: String = "",
+    confirmationMessage: String,
+    cancelButton: String,
+    deleteButton: String,
     onDismissRequest: () -> Unit,
-    onDeleteAccount: () -> Unit,
+    onDelete: () -> Unit,
 ) {
     YralBottomSheet(
         onDismissRequest = onDismissRequest,
@@ -53,29 +56,33 @@ internal fun DeleteAccountSheet(
             ) {
                 Text(
                     modifier = Modifier.fillMaxWidth(),
-                    text = stringResource(R.string.delete_your_account),
+                    text = title,
                     style = LocalAppTopography.current.lgBold,
                     textAlign = TextAlign.Center,
                     color = Color.White,
                 )
+                if (subTitle.isNotEmpty()) {
+                    Text(
+                        modifier = Modifier.fillMaxWidth(),
+                        text = subTitle,
+                        style = LocalAppTopography.current.mdMedium,
+                        textAlign = TextAlign.Center,
+                        color = Color.White,
+                    )
+                }
                 Text(
                     modifier = Modifier.fillMaxWidth(),
-                    text = stringResource(R.string.delete_account_disclaimer),
-                    style = LocalAppTopography.current.mdMedium,
-                    textAlign = TextAlign.Center,
-                    color = Color.White,
-                )
-                Text(
-                    modifier = Modifier.fillMaxWidth(),
-                    text = stringResource(R.string.delete_account_question),
+                    text = confirmationMessage,
                     style = LocalAppTopography.current.mdMedium,
                     textAlign = TextAlign.Center,
                     color = Color.White,
                 )
             }
             DeleteSheetButtons(
+                cancelButton = cancelButton,
+                deleteButton = deleteButton,
                 onDismissRequest = onDismissRequest,
-                onDeleteAccount = onDeleteAccount,
+                onDelete = onDelete,
             )
         }
     }
@@ -83,8 +90,10 @@ internal fun DeleteAccountSheet(
 
 @Composable
 private fun DeleteSheetButtons(
+    cancelButton: String,
+    deleteButton: String,
     onDismissRequest: () -> Unit,
-    onDeleteAccount: () -> Unit,
+    onDelete: () -> Unit,
 ) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.Start),
@@ -92,7 +101,7 @@ private fun DeleteSheetButtons(
     ) {
         YralButton(
             modifier = Modifier.weight(1f),
-            text = stringResource(R.string.no_take_me_back),
+            text = cancelButton,
             borderColor = YralColors.Neutral700,
             borderWidth = 1.dp,
             backgroundColor = YralColors.Neutral800,
@@ -104,7 +113,7 @@ private fun DeleteSheetButtons(
         )
         YralButton(
             modifier = Modifier.weight(1f),
-            text = stringResource(R.string.yes_delete),
+            text = deleteButton,
             borderWidth = 1.dp,
             borderColor = YralColors.Red300,
             backgroundColor = YralColors.Red300,
@@ -112,7 +121,7 @@ private fun DeleteSheetButtons(
                 TextStyle(
                     color = YralColors.NeutralTextPrimary,
                 ),
-            onClick = onDeleteAccount,
+            onClick = onDelete,
         )
     }
 }

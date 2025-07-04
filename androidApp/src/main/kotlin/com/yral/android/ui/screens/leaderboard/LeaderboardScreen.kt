@@ -593,7 +593,7 @@ private fun UserBriefProfileImage(
     Box(modifier = Modifier.wrapContentSize()) {
         YralAsyncImage(
             imageUrl = profileImageUrl,
-            size = size,
+            modifier = Modifier.size(size),
             backgroundColor = YralColors.ProfilePicBackground,
         )
         val profileImageRing = getProfileImageRing(rank)

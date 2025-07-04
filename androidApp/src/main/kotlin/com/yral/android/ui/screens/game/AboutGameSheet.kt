@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomSheetDefaults.DragHandle
@@ -93,7 +94,7 @@ private fun AboutGameItemTitle(rule: AboutGameItem) {
     ) {
         YralAsyncImage(
             imageUrl = rule.thumbnailUrl,
-            size = 36.dp,
+            modifier = Modifier.size(36.dp),
         )
         Text(
             text = rule.name,
@@ -130,7 +131,7 @@ private fun AboutGameItemRule(rule: AboutGameItem) {
                     bodyItem.imageUrls?.forEach { imageUrl ->
                         YralAsyncImage(
                             imageUrl = imageUrl,
-                            size = 23.33.dp,
+                            modifier = Modifier.size(23.33.dp),
                         )
                     }
                 }

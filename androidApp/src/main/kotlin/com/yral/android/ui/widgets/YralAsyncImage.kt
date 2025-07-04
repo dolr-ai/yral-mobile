@@ -1,12 +1,14 @@
 package com.yral.android.ui.widgets
 
+import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -23,12 +25,13 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter
+import kotlin.math.min
 
+@SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 fun YralAsyncImage(
     imageUrl: String,
     modifier: Modifier = Modifier,
-    size: Dp,
     loaderSize: LoaderSize = LoaderSize.Percentage(),
     border: Dp = 0.dp,
     borderColor: Color = Color.Transparent,
@@ -38,14 +41,15 @@ fun YralAsyncImage(
     onError: () -> Unit = {},
 ) {
     var isLoading by remember { mutableStateOf(true) }
-    Box(
-        modifier = modifier.size(size),
+    BoxWithConstraints(
+        modifier = modifier,
         contentAlignment = Alignment.Center,
     ) {
         AsyncImage(
             modifier =
                 Modifier
-                    .size(size)
+                    .width(maxWidth)
+                    .height(maxHeight)
                     .clip(shape)
                     .border(
                         width = border,
@@ -69,14 +73,14 @@ fun YralAsyncImage(
             visible = isLoading,
             enter = fadeIn(),
             exit = fadeOut(),
-        ) { }
-        if (isLoading) {
+        ) {
+            val availableSize = min(maxWidth.value, maxHeight.value)
             val loaderSizeDp =
                 when (loaderSize) {
                     is LoaderSize.None -> loaderSize.mSize
                     is LoaderSize.Fixed -> loaderSize.mSize
                     is LoaderSize.Dynamic -> loaderSize.size
-                    is LoaderSize.Percentage -> (size.value * loaderSize.percentage).dp
+                    is LoaderSize.Percentage -> (availableSize * loaderSize.percentage).dp
                 }
             YralLoader(size = loaderSizeDp)
         }

@@ -82,7 +82,13 @@
     <string name="upload_video_error_reason"> due to %s reasons</string>
     <string name="try_again">Try Again</string>
     <string name="go_to_home">Go to Home</string>
-    
+    <string name="you_have_not_uploaded_any_video_yet">You have not uploaded any videos yet.</string>
+    <string name="delete_video">Delete video?</string>
+    <string name="video_will_be_deleted_permanently">This video will be permanently deleted from your yral account.</string>
+    <string name="delete">Delete</string>
+    <string name="cancel">Cancel</string>
+    <string name="deleting">Deleting…</string>
+
     <!-- Permission Messages -->
     <string name="permission_required_title">Permission required!</string>
     <string name="permission_required_description">To upload videos, please allow access to your device\'s media files in Settings. You can choose \"Allow all\" or \"Allow limited access\" - both work for uploading videos.</string>

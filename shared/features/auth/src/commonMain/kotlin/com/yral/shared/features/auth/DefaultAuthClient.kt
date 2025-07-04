@@ -25,6 +25,7 @@ import com.yral.shared.firebaseAuth.usecase.SignOutUseCase
 import com.yral.shared.firebaseStore.usecase.UpdateDocumentUseCase
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
+import com.yral.shared.rust.services.IndividualUserServiceFactory
 import com.yral.shared.uniffi.generated.CanistersWrapper
 import com.yral.shared.uniffi.generated.FfiException
 import com.yral.shared.uniffi.generated.authenticateWithNetwork
@@ -33,7 +34,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 
-@Suppress("TooManyFunctions")
+@Suppress("TooManyFunctions", "LongParameterList")
 class DefaultAuthClient(
     private val sessionManager: SessionManager,
     private val analyticsManager: AnalyticsManager,
@@ -43,6 +44,7 @@ class DefaultAuthClient(
     private val authRepository: AuthRepository,
     private val requiredUseCases: RequiredUseCases,
     private val oAuthUtils: OAuthUtils,
+    private val individualUserServiceFactory: IndividualUserServiceFactory,
     private val scope: CoroutineScope,
 ) : AuthClient {
     private var currentState: String? = null
@@ -261,6 +263,10 @@ class DefaultAuthClient(
     }
 
     private fun setSession(canisterData: CanisterData) {
+        individualUserServiceFactory.initialize(
+            principal = canisterData.canisterId,
+            identityData = canisterData.identity,
+        )
         sessionManager.updateState(
             SessionState.SignedIn(
                 session =
