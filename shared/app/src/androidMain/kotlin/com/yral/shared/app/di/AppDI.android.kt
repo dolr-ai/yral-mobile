@@ -8,6 +8,7 @@ import com.yral.shared.features.auth.di.authModule
 import com.yral.shared.features.feed.di.feedModule
 import com.yral.shared.features.game.di.gameModule
 import com.yral.shared.features.root.di.rootModule
+import com.yral.shared.features.uploadvideo.di.uploadVideoModule
 import com.yral.shared.firebaseAuth.di.firebaseAuthModule
 import com.yral.shared.firebaseStore.di.firestoreModule
 import com.yral.shared.http.di.networkModule
@@ -31,6 +32,8 @@ actual fun initKoin(appDeclaration: KoinAppDeclaration) {
             rustModule,
             firebaseAuthModule,
             firestoreModule,
+            dispatchersModule,
+            archModule,
         )
         modules(
             authModule,
@@ -38,6 +41,7 @@ actual fun initKoin(appDeclaration: KoinAppDeclaration) {
             rootModule,
             accountsModule,
             gameModule,
+            uploadVideoModule,
         )
     }
 }
