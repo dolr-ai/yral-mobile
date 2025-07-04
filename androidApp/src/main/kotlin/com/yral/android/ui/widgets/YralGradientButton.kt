@@ -88,12 +88,14 @@ enum class YralButtonState {
 enum class YralButtonType {
     Pink,
     White,
+    Transparent,
 }
 
 private fun getLoaderResource(buttonType: YralButtonType): Int =
     when (buttonType) {
         YralButtonType.Pink -> R.raw.white_loader
-        YralButtonType.White -> R.raw.pink_loader
+        YralButtonType.White -> R.raw.yral_loader
+        YralButtonType.Transparent -> R.raw.yral_loader
     }
 
 private fun getButtonTextBackground(
@@ -109,6 +111,13 @@ private fun getButtonTextBackground(
             }
 
         YralButtonType.White ->
+            when (buttonState) {
+                YralButtonState.Enabled -> R.drawable.pink_gradient_background
+                YralButtonState.Disabled -> R.drawable.pink_gradient_background_disabled
+                YralButtonState.Loading -> R.drawable.pink_gradient_background
+            }
+
+        YralButtonType.Transparent ->
             when (buttonState) {
                 YralButtonState.Enabled -> R.drawable.pink_gradient_background
                 YralButtonState.Disabled -> R.drawable.pink_gradient_background_disabled
@@ -133,5 +142,12 @@ private fun getButtonBackground(
                 YralButtonState.Enabled -> R.drawable.white_background
                 YralButtonState.Disabled -> R.drawable.white_background_disabled
                 YralButtonState.Loading -> R.drawable.white_background
+            }
+
+        YralButtonType.Transparent ->
+            when (buttonState) {
+                YralButtonState.Enabled -> R.drawable.transparent_background
+                YralButtonState.Disabled -> R.drawable.transparent_background
+                YralButtonState.Loading -> R.drawable.transparent_background
             }
     }

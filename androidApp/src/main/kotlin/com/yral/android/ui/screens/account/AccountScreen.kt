@@ -4,7 +4,6 @@ import android.content.Intent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -70,12 +69,8 @@ fun AccountScreen(
     LaunchedEffect(sessionState) {
         viewModel.refreshAccountInfo()
     }
-    Box(
-        modifier =
-            modifier
-                .fillMaxSize(),
-        contentAlignment = Alignment.Center,
-    ) {
+    Column(modifier = modifier.fillMaxSize()) {
+        AccountsTitle()
         AccountScreenContent(
             state = state,
             viewModel = viewModel,
@@ -103,7 +98,6 @@ private fun AccountScreenContent(
         verticalArrangement = Arrangement.spacedBy(30.dp, Alignment.Top),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        AccountsTitle()
         state.accountInfo?.let {
             AccountDetail(
                 accountInfo = it,
@@ -256,12 +250,7 @@ private fun AccountsTitle() {
         modifier =
             Modifier
                 .fillMaxWidth()
-                .padding(
-                    start = 16.dp,
-                    top = YralDimens.paddingLg,
-                    end = 16.dp,
-                    bottom = YralDimens.paddingLg,
-                ),
+                .padding(16.dp),
         horizontalArrangement = Arrangement.spacedBy(91.dp, Alignment.Start),
         verticalAlignment = Alignment.CenterVertically,
     ) {

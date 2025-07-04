@@ -33,21 +33,20 @@ import com.yral.android.ui.design.YralColors
 
 @Composable
 fun YralButton(
-    modifier: Modifier = Modifier,
     text: String,
+    modifier: Modifier = Modifier.fillMaxWidth(),
     textStyle: TextStyle? = null,
     backgroundColor: Color = Color.White,
     borderWidth: Dp = 0.75.dp,
     borderColor: Color = YralColors.ButtonBorderColor,
     icon: Int? = null,
     buttonState: YralButtonState = YralButtonState.Enabled,
-    loader: Int = R.raw.pink_loader,
+    loader: Int = R.raw.yral_loader,
     onClick: () -> Unit,
 ) {
     Row(
         modifier =
             modifier
-                .fillMaxWidth()
                 .height(45.dp)
                 .background(
                     color = backgroundColor,
@@ -82,23 +81,33 @@ fun YralButton(
                     color = YralColors.NeutralBlack,
                     textAlign = TextAlign.Center,
                 )
-        Text(
-            text = text,
-            style =
-                textStyle?.let {
-                    defaultStyle.plus(it)
-                } ?: defaultStyle,
-        )
-        AnimatedVisibility(
-            visible = buttonState == YralButtonState.Loading,
-            enter = fadeIn(),
-            exit = fadeOut(),
-        ) {
-            YralLottieAnimation(
-                modifier = Modifier.size(20.dp),
-                rawRes = loader,
-                iterations = LottieConstants.IterateForever,
+        if (text.isNotEmpty()) {
+            Text(
+                text = text,
+                style =
+                    textStyle?.let {
+                        defaultStyle.plus(it)
+                    } ?: defaultStyle,
             )
         }
+        ButtonLoader(buttonState, loader)
+    }
+}
+
+@Composable
+private fun ButtonLoader(
+    buttonState: YralButtonState,
+    loader: Int,
+) {
+    AnimatedVisibility(
+        visible = buttonState == YralButtonState.Loading,
+        enter = fadeIn(),
+        exit = fadeOut(),
+    ) {
+        YralLottieAnimation(
+            modifier = Modifier.size(20.dp),
+            rawRes = loader,
+            iterations = LottieConstants.IterateForever,
+        )
     }
 }
