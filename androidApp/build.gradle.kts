@@ -7,7 +7,6 @@ plugins {
     alias(libs.plugins.firebase.crashlytics)
     alias(libs.plugins.gms)
     alias(libs.plugins.firebase.perf)
-    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -103,9 +102,11 @@ dependencies {
     implementation(projects.shared.app)
     implementation(projects.shared.libs.firebasePerf)
     implementation(projects.shared.features.game)
+    implementation(projects.shared.features.profile)
+    implementation(projects.shared.libs.arch)
 
     val (deps, addRust) = BuildConfig.getAndProcessDependencies(project)
-    deps.filter { it.isNotEmpty() }.forEach { implementation(it) }
+    deps.forEach { if (it.isNotEmpty()) implementation(it) }
     if (addRust) implementation(projects.shared.rust)
 }
 

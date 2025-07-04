@@ -33,6 +33,7 @@ import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.screens.profile.ProfilePlayerConstants.MAX_LINES_FOR_POST_DESCRIPTION
 import com.yral.android.ui.widgets.video.YralVideoPlayer
+import com.yral.shared.features.profile.viewmodel.ProfileVideo
 
 @OptIn(UnstableApi::class)
 @Composable
@@ -45,7 +46,7 @@ fun ProfileVideoPlayer(
     Box(modifier = modifier) {
         YralVideoPlayer(
             modifier = Modifier.fillMaxSize(),
-            url = video.url,
+            url = video.feedDetail.url.toString(),
             autoPlay = true,
             videoAspectRatio = AspectRatioFrameLayout.RESIZE_MODE_ZOOM,
             onError = { },
@@ -57,7 +58,7 @@ fun ProfileVideoPlayer(
             )
             Caption(
                 modifier = Modifier.align(Alignment.BottomStart),
-                caption = video.postDescription,
+                caption = video.feedDetail.postDescription,
             )
             DeleteIcon(
                 modifier =
