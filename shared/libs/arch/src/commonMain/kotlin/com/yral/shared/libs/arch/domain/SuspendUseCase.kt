@@ -34,32 +34,37 @@ abstract class ResultSuspendUseCase<in P, out R, out E>(
 }
 
 abstract class BaseSuspendUseCase<in P, out R, out E>
-internal constructor(
-    private val coroutineDispatcher: CoroutineDispatcher,
-    private val failureListener: UseCaseFailureListener,
-) {
-    suspend operator fun invoke(parameter: P): Result<R, E> {
-        return try {
-            withContext(coroutineDispatcher) {
-                executeWith(parameter).onFailure { onFailure(UseCaseException("$it")) }
+    internal constructor(
+        private val coroutineDispatcher: CoroutineDispatcher,
+        private val failureListener: UseCaseFailureListener,
+    ) {
+        suspend operator fun invoke(parameter: P): Result<R, E> =
+            try {
+                withContext(coroutineDispatcher) {
+                    executeWith(parameter).onFailure { onFailure(UseCaseException("$it")) }
+                }
+            } catch (e: CancellationException) {
+                @Suppress("RethrowCaughtException")
+                throw e
+            } catch (
+                @Suppress("TooGenericExceptionCaught") throwable: Throwable,
+            ) {
+                onFailure(throwable)
+                Err(throwable.toError())
             }
-        } catch (e: CancellationException) {
-            @Suppress("RethrowCaughtException") throw e
-        } catch (@Suppress("TooGenericExceptionCaught") throwable: Throwable) {
-            onFailure(throwable)
-            Err(throwable.toError())
+
+        private fun onFailure(throwable: Throwable) {
+            failureListener.onFailure(throwable, tag = this::class.simpleName!!) { "onFailure" }
         }
+
+        open suspend fun executeWith(parameter: P): Result<R, E> = Ok(execute(parameter))
+
+        @Throws(RuntimeException::class)
+        protected abstract suspend fun execute(parameter: P): R
+
+        protected abstract fun Throwable.toError(): E
     }
 
-    private fun onFailure(throwable: Throwable) {
-        failureListener.onFailure(throwable, tag = this::class.simpleName!!) { "onFailure" }
-    }
-
-    open suspend fun executeWith(parameter: P): Result<R, E> = Ok(execute(parameter))
-
-    @Throws(RuntimeException::class) protected abstract suspend fun execute(parameter: P): R
-
-    protected abstract fun Throwable.toError(): E
-}
-
-private class UseCaseException(message: String) : Exception(message)
+private class UseCaseException(
+    message: String,
+) : Exception(message)

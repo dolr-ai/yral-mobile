@@ -61,59 +61,104 @@ tasks {
 gradlePlugin {
     plugins {
         register("androidApplicationCompose") {
-            id = libs.plugins.yral.android.application.compose.get().pluginId
+            id =
+                libs.plugins.yral.android.application.compose
+                    .get()
+                    .pluginId
             implementationClass = "AndroidApplicationComposeConventionPlugin"
         }
         register("androidApplication") {
-            id = libs.plugins.yral.android.application.asProvider().get().pluginId
+            id =
+                libs.plugins.yral.android.application
+                    .asProvider()
+                    .get()
+                    .pluginId
             implementationClass = "AndroidApplicationConventionPlugin"
         }
         register("androidLibraryCompose") {
-            id = libs.plugins.yral.android.library.compose.get().pluginId
+            id =
+                libs.plugins.yral.android.library.compose
+                    .get()
+                    .pluginId
             implementationClass = "AndroidLibraryComposeConventionPlugin"
         }
         register("androidLibrary") {
-            id = libs.plugins.yral.android.library.asProvider().get().pluginId
+            id =
+                libs.plugins.yral.android.library
+                    .asProvider()
+                    .get()
+                    .pluginId
             implementationClass = "AndroidLibraryConventionPlugin"
         }
         register("androidFeature") {
-            id = libs.plugins.yral.android.feature.get().pluginId
+            id =
+                libs.plugins.yral.android.feature
+                    .get()
+                    .pluginId
             implementationClass = "AndroidFeatureConventionPlugin"
         }
         register("androidTest") {
-            id = libs.plugins.yral.android.test.get().pluginId
+            id =
+                libs.plugins.yral.android.test
+                    .get()
+                    .pluginId
             implementationClass = "AndroidTestConventionPlugin"
         }
         register("androidFirebase") {
-            id = libs.plugins.yral.android.application.firebase.get().pluginId
+            id =
+                libs.plugins.yral.android.application.firebase
+                    .get()
+                    .pluginId
             implementationClass = "AndroidApplicationFirebaseConventionPlugin"
         }
         register("androidFlavors") {
-            id = libs.plugins.yral.android.application.flavors.get().pluginId
+            id =
+                libs.plugins.yral.android.application.flavors
+                    .get()
+                    .pluginId
             implementationClass = "AndroidApplicationFlavorsConventionPlugin"
         }
         register("androidLint") {
-            id = libs.plugins.yral.android.lint.get().pluginId
+            id =
+                libs.plugins.yral.android.lint
+                    .get()
+                    .pluginId
             implementationClass = "AndroidLintConventionPlugin"
         }
         register("jvmLibrary") {
-            id = libs.plugins.yral.jvm.library.get().pluginId
+            id =
+                libs.plugins.yral.jvm.library
+                    .get()
+                    .pluginId
             implementationClass = "JvmLibraryConventionPlugin"
         }
         register("sharedLibrary") {
-            id = libs.plugins.yral.shared.library.asProvider().get().pluginId
+            id =
+                libs.plugins.yral.shared.library
+                    .asProvider()
+                    .get()
+                    .pluginId
             implementationClass = "SharedLibraryConventionPlugin"
         }
         register("sharedLibraryCompose") {
-            id = libs.plugins.yral.shared.library.compose.get().pluginId
+            id =
+                libs.plugins.yral.shared.library.compose
+                    .get()
+                    .pluginId
             implementationClass = "SharedLibraryComposeConventionPlugin"
         }
         register("sharedFeature") {
-            id = libs.plugins.yral.shared.feature.get().pluginId
+            id =
+                libs.plugins.yral.shared.feature
+                    .get()
+                    .pluginId
             implementationClass = "SharedFeatureConventionPlugin"
         }
         register("styleEnforcer") {
-            id = libs.plugins.yral.style.enforcer.get().pluginId
+            id =
+                libs.plugins.yral.style.enforcer
+                    .get()
+                    .pluginId
             implementationClass = "StyleEnforcerConventionPlugin"
         }
     }

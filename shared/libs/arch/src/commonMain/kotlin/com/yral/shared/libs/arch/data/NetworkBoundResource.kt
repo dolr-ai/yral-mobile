@@ -23,16 +23,15 @@ abstract class NetworkBoundResource<RequestType : Any, ResultType : Any>(
 ) {
     fun asFlow() =
         flow {
-                val dbFlow = loadFromDb()
-                val first = dbFlow.first()
-                if (shouldFetch(first)) {
-                    emitInitialDbValue(first)
-                    fetchFromNetwork(dbFlow)
-                } else {
-                    emitAllFromDb(dbFlow)
-                }
+            val dbFlow = loadFromDb()
+            val first = dbFlow.first()
+            if (shouldFetch(first)) {
+                emitInitialDbValue(first)
+                fetchFromNetwork(dbFlow)
+            } else {
+                emitAllFromDb(dbFlow)
             }
-            .distinctUntilChanged()
+        }.distinctUntilChanged()
             .flowOn(dispatchers.disk)
 
     private suspend fun ResultFlowCollector<ResultType>.emitInitialDbValue(first: ResultType?) {
@@ -41,17 +40,14 @@ abstract class NetworkBoundResource<RequestType : Any, ResultType : Any>(
         }
     }
 
-    private suspend fun ResultFlowCollector<ResultType>.fetchFromNetwork(
-        dbFlow: Flow<ResultType?>
-    ) {
+    private suspend fun ResultFlowCollector<ResultType>.fetchFromNetwork(dbFlow: Flow<ResultType?>) {
         runCatching { withContext(dispatchers.network) { loadFromNetwork() } }
             .onSuccess { apiResponse ->
                 val processedResponse =
                     withContext(dispatchers.cpu) { processResponse(apiResponse) }
                 saveCallResult(processedResponse)
                 emitAllFromDb(dbFlow)
-            }
-            .onFailure { throwable ->
+            }.onFailure { throwable ->
                 if (throwable is CancellationException) {
                     throw throwable
                 } else {
@@ -61,10 +57,10 @@ abstract class NetworkBoundResource<RequestType : Any, ResultType : Any>(
                             mapDataToResultOnNetworkFailure(
                                 it,
                                 NoDataException(
-                                    "On network failure: ${NoDataException.NO_SUCH_DATA}"
+                                    "On network failure: ${NoDataException.NO_SUCH_DATA}",
                                 ),
                             )
-                        }
+                        },
                     )
                 }
             }
@@ -74,16 +70,16 @@ abstract class NetworkBoundResource<RequestType : Any, ResultType : Any>(
         emitAll(dbFlow.map { mapDataToResult(it) })
     }
 
-    protected open fun mapDataToResult(data: ResultType?): Result<ResultType, Throwable> {
-        return data.toResultOr { NoDataException() }
-    }
+    protected open fun mapDataToResult(data: ResultType?): Result<ResultType, Throwable> =
+        data
+            .toResultOr { NoDataException() }
 
     protected open fun mapDataToResultOnNetworkFailure(
         data: ResultType?,
         throwable: Throwable,
-    ): Result<ResultType, Throwable> {
-        return data.toResultOr { throwable }
-    }
+    ): Result<ResultType, Throwable> =
+        data
+            .toResultOr { throwable }
 
     protected open fun onFetchFailed(throwable: Throwable) {
         failureListener.onFetchFailed(throwable)
@@ -108,5 +104,7 @@ abstract class NetworkBoundResource<RequestType : Any, ResultType : Any>(
 
 private typealias ResultFlowCollector<ResultType> = FlowCollector<Result<ResultType, Throwable>>
 
-suspend fun <RequestType : Any, ResultType : Any> NetworkBoundResource<RequestType, ResultType>
-    .executeAsOne() = asFlow().first().getOrElse { throw it }
+suspend fun <RequestType : Any, ResultType : Any> NetworkBoundResource<RequestType, ResultType>.executeAsOne() =
+    asFlow()
+        .first()
+        .getOrElse { throw it }

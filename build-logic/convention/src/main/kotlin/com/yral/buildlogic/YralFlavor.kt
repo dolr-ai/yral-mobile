@@ -7,18 +7,21 @@ import com.android.build.api.dsl.ProductFlavor
 
 @Suppress("EnumEntryName")
 enum class FlavorDimension {
-    contentType
+    contentType,
 }
 
 @Suppress("EnumEntryName")
-enum class YralFlavor(val dimension: FlavorDimension, val applicationIdSuffix: String? = null) {
+enum class YralFlavor(
+    val dimension: FlavorDimension,
+    val applicationIdSuffix: String? = null,
+) {
     staging(FlavorDimension.contentType, applicationIdSuffix = ".staging"),
     prod(FlavorDimension.contentType),
 }
 
 fun configureFlavors(
     commonExtension: CommonExtension<*, *, *, *, *, *>,
-    flavorConfigurationBlock: ProductFlavor.(flavor: YralFlavor) -> Unit = {}
+    flavorConfigurationBlock: ProductFlavor.(flavor: YralFlavor) -> Unit = {},
 ) {
     commonExtension.apply {
         FlavorDimension.values().forEach { flavorDimension ->

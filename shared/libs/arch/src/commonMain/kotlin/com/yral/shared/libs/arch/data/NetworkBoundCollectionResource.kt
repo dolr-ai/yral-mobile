@@ -14,7 +14,10 @@ abstract class NetworkBoundCollectionResource<RequestType : Any, ResultType : An
     override fun mapDataToResultOnNetworkFailure(
         data: Collection<ResultType>?,
         throwable: Throwable,
-    ): Result<Collection<ResultType>, Throwable> {
-        return if (!data.isNullOrEmpty()) Ok(data) else Err(throwable)
-    }
+    ): Result<Collection<ResultType>, Throwable> =
+        if (!data.isNullOrEmpty()) {
+            Ok(data)
+        } else {
+            Err(throwable)
+        }
 }
