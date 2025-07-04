@@ -226,7 +226,11 @@ private fun createExoPlayer(
     loop: Boolean,
     onError: (String) -> Unit,
 ): ExoPlayer? {
-    val processedUrl = processUrl(url, onError) ?: return null
+    val processedUrl =
+        processUrl(url) ?: run {
+            onError("Video file not found or invalid: $url")
+            return null
+        }
     val exoPlayer = ExoPlayer.Builder(context).build()
     val mediaItem = MediaItem.fromUri(processedUrl)
     exoPlayer.setMediaItem(mediaItem)
@@ -235,18 +239,8 @@ private fun createExoPlayer(
     return exoPlayer
 }
 
-private fun processUrl(
-    url: String,
-    onError: (String) -> Unit,
-): String? =
-    if (url.contains("http")) {
-        url
-    } else {
-        val file = File(url)
-        if (!file.exists()) {
-            onError("Video file not found: $url")
-            null
-        } else {
-            file.toURI().toString()
-        }
+private fun processUrl(url: String): String? =
+    when {
+        url.startsWith("http", ignoreCase = true) -> url
+        else -> File(url).takeIf { it.exists() }?.toURI()?.toString()
     }
