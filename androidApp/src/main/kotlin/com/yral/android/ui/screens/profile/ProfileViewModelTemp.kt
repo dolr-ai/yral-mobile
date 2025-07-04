@@ -29,6 +29,7 @@ sealed class ProfileUiState {
 data class ProfileState(
     val accountInfo: AccountInfo? = null,
     val deleteConfirmation: String? = null,
+    val isRefreshing: Boolean = false,
     val openVideo: ProfileVideo? = null,
     val uiState: ProfileUiState = ProfileUiState.Loading,
 )
@@ -42,14 +43,10 @@ class ProfileViewModel : ViewModel() {
     init {
         val accountInfo = sessionManager.getAccountInfo()
         _viewState.update {
-            it.copy(accountInfo = accountInfo)
-        }
-        viewModelScope.launch {
-            @Suppress("MagicNumber")
-            delay(2000)
-            _viewState.update {
-                it.copy(uiState = ProfileUiState.Success(dummyVideos(), false))
-            }
+            it.copy(
+                accountInfo = accountInfo,
+                uiState = ProfileUiState.Success(emptyList(), false),
+            )
         }
     }
 
@@ -104,6 +101,20 @@ class ProfileViewModel : ViewModel() {
                             ),
                     )
                 }
+            }
+        }
+    }
+
+    fun onRefresh() {
+        viewModelScope.launch {
+            _viewState.update { it.copy(isRefreshing = true) }
+            @Suppress("MagicNumber")
+            delay(2000)
+            _viewState.update {
+                it.copy(
+                    isRefreshing = false,
+                    uiState = ProfileUiState.Success(dummyVideos(), false),
+                )
             }
         }
     }
