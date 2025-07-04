@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import Combine
 
 enum LeaderboardViewState {
   case initialized
@@ -28,20 +29,32 @@ enum LeaderboardViewState {
   }
 }
 
+@MainActor
 class LeaderboardViewModel: ObservableObject {
-  let leaderboardUseCase: LeaderboardUseCaseProtocol
+  private let leaderboardUseCase: LeaderboardUseCaseProtocol
+  private var cancellables = Set<AnyCancellable>()
   var leaderboardResponse: LeaderboardResponse?
 
   @Published var state: LeaderboardViewState = .initialized
+  private(set) var coinsReady = false
 
-  init(leaderboardUseCase: LeaderboardUseCaseProtocol) {
+  init(leaderboardUseCase: LeaderboardUseCaseProtocol, session: SessionManager) {
     self.leaderboardUseCase = leaderboardUseCase
+
+    session.coinsReadyPublisher
+      .prefix(1)
+      .sink { [weak self] _ in
+        guard let self else { return }
+        Task { @MainActor in
+          self.coinsReady = true
+          await self.fetchLeaderboard()
+        }
+      }
+      .store(in: &cancellables)
   }
 
-  func fetchLeaderbaord() async {
-    await MainActor.run {
-      state = .loading
-    }
+  func fetchLeaderboard() async {
+    state = .loading
 
     let result = await leaderboardUseCase.execute()
     await MainActor.run {
@@ -54,6 +67,11 @@ class LeaderboardViewModel: ObservableObject {
         print("Failed to fetch leaderboard: \(failure)")
       }
     }
+  }
+
+  func refreshLeaderboardIfReady() async {
+    guard coinsReady else { return }
+    await fetchLeaderboard()
   }
 
   func fetchImageURL(for principal: String) -> URL? {
