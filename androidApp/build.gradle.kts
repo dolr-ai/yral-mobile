@@ -107,7 +107,7 @@ dependencies {
     implementation(projects.shared.libs.arch)
 
     val (deps, addRust) = BuildConfig.getAndProcessDependencies(project)
-    deps.filter { it.isNotEmpty() }.forEach { implementation(it) }
+    deps.forEach { if (it.isNotEmpty()) implementation(it) }
     if (addRust) implementation(projects.shared.rust)
 }
 
