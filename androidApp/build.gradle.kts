@@ -103,6 +103,8 @@ dependencies {
     implementation(projects.shared.app)
     implementation(projects.shared.libs.firebasePerf)
     implementation(projects.shared.features.game)
+    implementation(projects.shared.features.profile)
+    implementation(projects.shared.libs.arch)
 
     val (deps, addRust) = BuildConfig.getAndProcessDependencies(project)
     deps.forEach { if (it.isNotEmpty()) implementation(it) }
