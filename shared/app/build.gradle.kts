@@ -33,6 +33,8 @@ kotlin {
             implementation(projects.shared.features.account)
             implementation(projects.shared.features.game)
             implementation(projects.shared.features.uploadvideo)
+            implementation(projects.shared.features.profile)
+
             val (deps, addRust) = BuildConfig.getAndProcessDependencies(project)
             deps.forEach { if(it.isNotEmpty()) implementation(it) }
             if (addRust) implementation(projects.shared.rust)

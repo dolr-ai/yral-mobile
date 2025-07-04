@@ -104,6 +104,7 @@ dependencies {
     implementation(projects.shared.libs.firebasePerf)
     implementation(projects.shared.features.game)
     implementation(projects.shared.features.uploadvideo)
+    implementation(projects.shared.features.profile)
     implementation(projects.shared.libs.arch)
 
     val (deps, addRust) = BuildConfig.getAndProcessDependencies(project)

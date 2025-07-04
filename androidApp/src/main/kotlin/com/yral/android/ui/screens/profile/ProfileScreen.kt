@@ -35,7 +35,6 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -60,23 +59,29 @@ import com.yral.android.ui.widgets.YralButtonType
 import com.yral.android.ui.widgets.YralGradientButton
 import com.yral.android.ui.widgets.YralLoader
 import com.yral.shared.core.session.AccountInfo
+import com.yral.shared.features.profile.viewmodel.ProfileVideo
+import com.yral.shared.features.profile.viewmodel.ProfileViewModel
+import com.yral.shared.features.profile.viewmodel.ViewState
+import com.yral.shared.koin.koinInstance
+import com.yral.shared.libs.arch.presentation.UiState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen(modifier: Modifier = Modifier) {
-    val viewModel = remember { ProfileViewModel() }
-    val state by viewModel.viewState.collectAsState()
-
+fun ProfileScreen(
+    modifier: Modifier = Modifier,
+    viewModel: ProfileViewModel = koinInstance.get(),
+) {
+    val state by viewModel.state.collectAsState()
     val bottomSheetState =
         rememberModalBottomSheetState(
             skipPartiallyExpanded = true,
         )
-    state.openVideo?.let { video ->
+    state.openedVideo?.let { video ->
         ProfileVideoPlayer(
             modifier = modifier.fillMaxSize(),
             video = video,
             onBack = { viewModel.openVideo(null) },
-            onDeleteVideo = { viewModel.confirmDelete(video.videoID) },
+            onDeleteVideo = { viewModel.confirmDelete(video.feedDetail.videoID) },
         )
     } ?: MainContent(
         modifier = modifier,
@@ -103,7 +108,7 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
 @Composable
 private fun MainContent(
     modifier: Modifier,
-    state: ProfileState,
+    state: ViewState,
     onRefresh: () -> Unit,
     openVideo: (ProfileVideo) -> Unit,
     onDeleteVideo: (String) -> Unit,
@@ -115,13 +120,13 @@ private fun MainContent(
             AccountInfoSection(accountInfo = info)
         }
         when (val uiState = state.uiState) {
-            is ProfileUiState.Loading -> {
+            is UiState.InProgress -> {
                 LoadingContent()
             }
 
-            is ProfileUiState.Success -> {
+            is UiState.Success -> {
                 SuccessContent(
-                    videos = uiState.videos,
+                    videos = uiState.data.videos,
                     isRefreshing = state.isRefreshing,
                     onRefresh = onRefresh,
                     openVideo = openVideo,
@@ -129,9 +134,11 @@ private fun MainContent(
                 )
             }
 
-            is ProfileUiState.Error -> {
-                ErrorContent(message = uiState.message)
+            is UiState.Failure -> {
+                ErrorContent(message = uiState.error.message ?: "")
             }
+
+            UiState.Initial -> { }
         }
     }
 }
@@ -336,7 +343,7 @@ private fun VideoGridContent(
             VideoGridItem(
                 video = video,
                 openVideo = { openVideo(video) },
-                onDeleteClick = { onDeleteVideo(video.videoID) },
+                onDeleteClick = { onDeleteVideo(video.feedDetail.videoID) },
             )
         }
     }
@@ -367,13 +374,13 @@ private fun VideoGridItem(
         ) {
             // Video thumbnail
             YralAsyncImage(
-                imageUrl = video.thumbnail.toString(),
+                imageUrl = video.feedDetail.thumbnail.toString(),
                 modifier = Modifier.fillMaxSize(),
                 shape = RoundedCornerShape(8.dp),
             )
             VideoGridItemActions(
-                isLiked = video.isLiked,
-                likeCount = video.likeCount,
+                isLiked = video.feedDetail.isLiked,
+                likeCount = video.feedDetail.likeCount,
                 onDeleteVideo = onDeleteClick,
             )
         }
