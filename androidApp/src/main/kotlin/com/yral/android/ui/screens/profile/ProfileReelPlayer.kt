@@ -61,10 +61,8 @@ fun ProfileReelPlayer(
         }
 
     val videoReels =
-        remember(reelVideos.itemCount) {
-            (0 until reelVideos.itemCount).mapNotNull { index ->
-                reelVideos[index]?.toReel()
-            }
+        remember(reelVideos.itemSnapshotList) {
+            reelVideos.itemSnapshotList.items.map { video -> video.toReel() }
         }
 
     LaunchedEffect(deletedVideoId) {

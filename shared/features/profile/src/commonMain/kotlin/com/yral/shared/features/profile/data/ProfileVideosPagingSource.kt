@@ -34,14 +34,10 @@ class ProfileVideosPagingSource(
                 }
             LoadResult.Page(
                 data = profileVideos,
-                prevKey = if (startIndex > 0UL) maxOf(0UL, startIndex - pageSize) else null,
+                prevKey = if (startIndex >= pageSize) startIndex - pageSize else null,
                 nextKey = if (result.hasNextPage) result.nextStartIndex else null,
             )
         }.getOrElse { LoadResult.Error(it) }
 
-    override fun getRefreshKey(state: PagingState<ULong, FeedDetails>): ULong? =
-        state.anchorPosition?.let { anchorPosition ->
-            state.closestPageToPosition(anchorPosition)?.prevKey?.plus(1UL)
-                ?: state.closestPageToPosition(anchorPosition)?.nextKey?.minus(1UL)
-        }
+    override fun getRefreshKey(state: PagingState<ULong, FeedDetails>): ULong? = null
 }
