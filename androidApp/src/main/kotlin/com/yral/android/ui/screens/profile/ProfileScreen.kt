@@ -1,5 +1,6 @@
 package com.yral.android.ui.screens.profile
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -34,6 +35,7 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -81,6 +83,13 @@ fun ProfileScreen(
 ) {
     val profileVideos = viewModel.profileVideos.collectAsLazyPagingItems()
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val backHandlerEnabled by remember(state.openedVideo) {
+        mutableStateOf(state.openedVideo != null)
+    }
+    BackHandler(
+        enabled = backHandlerEnabled,
+        onBack = { viewModel.openVideo(null) },
+    )
 
     val deletingVideoId =
         remember(state.deleteConfirmation) {
