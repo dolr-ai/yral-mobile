@@ -36,25 +36,25 @@ class ProfileViewModel(
     private val _state = MutableStateFlow(ViewState())
     val state: StateFlow<ViewState> = _state.asStateFlow()
 
-    val profileVideos: Flow<PagingData<FeedDetails>> by lazy {
-        Pager(
-            config =
-                PagingConfig(
-                    pageSize = POSTS_PER_PAGE,
-                    prefetchDistance = POSTS_PREFETCH_DISTANCE,
-                    enablePlaceholders = false,
-                ),
-            pagingSourceFactory = {
-                ProfileVideosPagingSource(
-                    profileRepository = profileRepository,
-                    sessionManager = sessionManager,
-                )
-            },
-        ).flow.cachedIn(viewModelScope)
-    }
+    val profileVideos: Flow<PagingData<FeedDetails>>
 
     init {
         _state.update { it.copy(accountInfo = sessionManager.getAccountInfo()) }
+        profileVideos =
+            Pager(
+                config =
+                    PagingConfig(
+                        pageSize = POSTS_PER_PAGE,
+                        prefetchDistance = POSTS_PREFETCH_DISTANCE,
+                        enablePlaceholders = false,
+                    ),
+                pagingSourceFactory = {
+                    ProfileVideosPagingSource(
+                        profileRepository = profileRepository,
+                        sessionManager = sessionManager,
+                    )
+                },
+            ).flow.cachedIn(viewModelScope)
     }
 
     fun confirmDelete(

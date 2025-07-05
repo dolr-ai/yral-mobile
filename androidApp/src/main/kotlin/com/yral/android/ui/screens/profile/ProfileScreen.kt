@@ -71,7 +71,6 @@ import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.features.profile.viewmodel.DeleteConfirmationState
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.features.profile.viewmodel.VideoViewState
-import com.yral.shared.koin.koinInstance
 import com.yral.shared.rust.domain.models.FeedDetails
 
 @Suppress("LongMethod")
@@ -80,7 +79,7 @@ import com.yral.shared.rust.domain.models.FeedDetails
 fun ProfileScreen(
     modifier: Modifier = Modifier,
     uploadVideo: () -> Unit,
-    viewModel: ProfileViewModel = koinInstance.get(),
+    viewModel: ProfileViewModel,
 ) {
     val profileVideos = viewModel.profileVideos.collectAsLazyPagingItems()
     val state by viewModel.state.collectAsStateWithLifecycle()
