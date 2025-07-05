@@ -103,7 +103,7 @@ class ProfileViewModel(
                 .onSuccess {
                     _state.update { state ->
                         state.copy(
-                            openedVideo = null,
+                            videoView = VideoViewState.None,
                             deleteConfirmation = DeleteConfirmationState.None,
                         )
                     }
@@ -133,8 +133,15 @@ class ProfileViewModel(
 
     fun openVideo(video: FeedDetails?) {
         val currentState = _state.value
-        if (currentState.openedVideo != video) {
-            _state.update { it.copy(openedVideo = video) }
+        val newVideoState =
+            if (video != null) {
+                VideoViewState.Viewing(video)
+            } else {
+                VideoViewState.None
+            }
+
+        if (currentState.videoView != newVideoState) {
+            _state.update { it.copy(videoView = newVideoState) }
         }
     }
 }
@@ -142,7 +149,7 @@ class ProfileViewModel(
 data class ViewState(
     val accountInfo: AccountInfo? = null,
     val deleteConfirmation: DeleteConfirmationState = DeleteConfirmationState.None,
-    val openedVideo: FeedDetails? = null,
+    val videoView: VideoViewState = VideoViewState.None,
 )
 
 sealed class DeleteConfirmationState {
@@ -159,4 +166,11 @@ sealed class DeleteConfirmationState {
         val request: DeleteVideoRequest,
         val error: Throwable,
     ) : DeleteConfirmationState()
+}
+
+sealed class VideoViewState {
+    data object None : VideoViewState()
+    data class Viewing(
+        val video: FeedDetails,
+    ) : VideoViewState()
 }

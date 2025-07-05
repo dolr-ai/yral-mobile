@@ -70,6 +70,7 @@ import com.yral.android.ui.widgets.YralLoader
 import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.features.profile.viewmodel.DeleteConfirmationState
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
+import com.yral.shared.features.profile.viewmodel.VideoViewState
 import com.yral.shared.koin.koinInstance
 import com.yral.shared.rust.domain.models.FeedDetails
 
@@ -83,8 +84,8 @@ fun ProfileScreen(
 ) {
     val profileVideos = viewModel.profileVideos.collectAsLazyPagingItems()
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val backHandlerEnabled by remember(state.openedVideo) {
-        mutableStateOf(state.openedVideo != null)
+    val backHandlerEnabled by remember(state.videoView) {
+        mutableStateOf(state.videoView is VideoViewState.Viewing)
     }
     BackHandler(
         enabled = backHandlerEnabled,
@@ -122,19 +123,22 @@ fun ProfileScreen(
         )
 
         // Overlay video player when needed
-        state.openedVideo?.let { video ->
-            ProfileVideoPlayer(
-                modifier = Modifier.fillMaxSize(),
-                video = video,
-                isDeleting = deletingVideoId == video.videoID,
-                onBack = { viewModel.openVideo(null) },
-                onDeleteVideo = {
-                    viewModel.confirmDelete(
-                        videoId = video.videoID,
-                        postId = video.postID.toULong(),
-                    )
-                },
-            )
+        when (val videoViewState = state.videoView) {
+            is VideoViewState.Viewing -> {
+                ProfileVideoPlayer(
+                    modifier = Modifier.fillMaxSize(),
+                    video = videoViewState.video,
+                    isDeleting = deletingVideoId == videoViewState.video.videoID,
+                    onBack = { viewModel.openVideo(null) },
+                    onDeleteVideo = {
+                        viewModel.confirmDelete(
+                            videoId = videoViewState.video.videoID,
+                            postId = videoViewState.video.postID.toULong(),
+                        )
+                    },
+                )
+            }
+            VideoViewState.None -> Unit
         }
     }
 
