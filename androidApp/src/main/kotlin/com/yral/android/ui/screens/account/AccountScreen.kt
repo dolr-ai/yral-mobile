@@ -305,10 +305,22 @@ private fun AccountDetail(
             )
         }
         if (!isSocialSignIn) {
-            YralGradientButton(
-                text = stringResource(R.string.login),
-                onClick = onLoginClicked,
-            )
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.Top),
+            ) {
+                YralGradientButton(
+                    text = stringResource(R.string.login),
+                    onClick = onLoginClicked,
+                )
+                Text(
+                    text = stringResource(R.string.anonymous_account_setup),
+                    style = LocalAppTopography.current.baseRegular,
+                    color = YralColors.NeutralTextPrimary,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
         }
     }
 }

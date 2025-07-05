@@ -24,6 +24,8 @@ kotlin {
             implementation(projects.shared.libs.arch)
             implementation(projects.shared.libs.coroutinesX)
 
+            implementation(libs.androidx.paging.common)
+
             val (deps, addRust) = BuildConfig.getAndProcessDependencies(project)
             deps.forEach { if (it.isNotEmpty()) implementation(it) }
             if (addRust) implementation(projects.shared.rust)
