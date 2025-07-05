@@ -61,6 +61,7 @@ import com.yral.android.ui.screens.profile.ProfileScreenConstants.GRID_ITEM_ASPE
 import com.yral.android.ui.screens.profile.ProfileScreenConstants.PULL_TO_REFRESH_INDICATOR_SIZE
 import com.yral.android.ui.screens.profile.ProfileScreenConstants.PULL_TO_REFRESH_INDICATOR_THRESHOLD
 import com.yral.android.ui.screens.profile.ProfileScreenConstants.PULL_TO_REFRESH_OFFSET_MULTIPLIER
+import com.yral.android.ui.widgets.LoaderSize
 import com.yral.android.ui.widgets.YralAsyncImage
 import com.yral.android.ui.widgets.YralButtonState
 import com.yral.android.ui.widgets.YralButtonType
@@ -525,6 +526,7 @@ private fun VideoGridItem(
             // Video thumbnail
             YralAsyncImage(
                 imageUrl = video.thumbnail.toString(),
+                loaderSize = LoaderSize.Fixed,
                 modifier = Modifier.fillMaxSize(),
                 shape = RoundedCornerShape(8.dp),
             )
