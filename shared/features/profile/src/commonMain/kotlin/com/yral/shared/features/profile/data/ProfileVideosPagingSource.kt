@@ -34,7 +34,7 @@ class ProfileVideosPagingSource(
                 }
             LoadResult.Page(
                 data = profileVideos,
-                prevKey = if (startIndex > 0UL) startIndex - pageSize else null,
+                prevKey = if (startIndex > 0UL) maxOf(0UL, startIndex - pageSize) else null,
                 nextKey = if (result.hasNextPage) result.nextStartIndex else null,
             )
         }.getOrElse { LoadResult.Error(it) }

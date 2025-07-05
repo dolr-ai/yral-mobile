@@ -84,13 +84,12 @@ fun ProfileScreen(
     val profileVideos = viewModel.profileVideos.collectAsLazyPagingItems()
     val state by viewModel.state.collectAsStateWithLifecycle()
     val backHandlerEnabled by remember(state.videoView) {
-        mutableStateOf(state.videoView is VideoViewState.Viewing)
+        mutableStateOf(state.videoView is VideoViewState.ViewingReels)
     }
     BackHandler(
         enabled = backHandlerEnabled,
-        onBack = { viewModel.openVideo(null) },
+        onBack = { viewModel.closeVideoReel() },
     )
-
     val deletingVideoId =
         remember(state.deleteConfirmation) {
             when (val deleteConfirmation = state.deleteConfirmation) {
@@ -98,20 +97,16 @@ fun ProfileScreen(
                 else -> ""
             }
         }
-
-    val bottomSheetState =
-        rememberModalBottomSheetState(
-            skipPartiallyExpanded = true,
-        )
-
-    // Keep MainContent persistent to avoid recreating LazyVerticalGrid
+    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     Box(modifier = modifier.fillMaxSize()) {
         MainContent(
             modifier = Modifier.fillMaxSize(),
             accountInfo = state.accountInfo,
             profileVideos = profileVideos,
             uploadVideo = uploadVideo,
-            openVideo = { video -> viewModel.openVideo(video) },
+            openVideoReel = { clickedIndex ->
+                viewModel.openVideoReel(clickedIndex)
+            },
             deletingVideoId = deletingVideoId,
             onDeleteVideo = { video ->
                 viewModel.confirmDelete(
@@ -120,21 +115,23 @@ fun ProfileScreen(
                 )
             },
         )
-
-        // Overlay video player when needed
         when (val videoViewState = state.videoView) {
-            is VideoViewState.Viewing -> {
-                ProfileVideoPlayer(
-                    modifier = Modifier.fillMaxSize(),
-                    video = videoViewState.video,
-                    isDeleting = deletingVideoId == videoViewState.video.videoID,
-                    onBack = { viewModel.openVideo(null) },
-                    onDeleteVideo = {
-                        viewModel.confirmDelete(
-                            videoId = videoViewState.video.videoID,
-                            postId = videoViewState.video.postID.toULong(),
-                        )
+            is VideoViewState.ViewingReels -> {
+                ProfileReelPlayer(
+                    reelVideos = profileVideos,
+                    currentIndex = videoViewState.currentIndex,
+                    deletingVideoId = deletingVideoId,
+                    deletedVideoId = videoViewState.deletedVideoId,
+                    onPageChanged = { page -> viewModel.onReelPageChanged(page) },
+                    onBack = { viewModel.closeVideoReel() },
+                    onDeleteVideo = { videoId, postId ->
+                        viewModel.confirmDelete(videoId = videoId, postId = postId)
                     },
+                    onVideoDeleted = { newIndex, shouldClose ->
+                        viewModel.handleReelVideoDeleted(newIndex, shouldClose)
+                    },
+                    onClearDeletedVideoId = { viewModel.clearDeletedVideoId() },
+                    modifier = Modifier.fillMaxSize(),
                 )
             }
             VideoViewState.None -> Unit
@@ -143,7 +140,6 @@ fun ProfileScreen(
 
     when (val deleteConfirmation = state.deleteConfirmation) {
         is DeleteConfirmationState.AwaitingConfirmation -> {
-            // Show confirmation dialog
             DeleteConfirmationSheet(
                 bottomSheetState = bottomSheetState,
                 title = stringResource(R.string.delete_video),
@@ -155,7 +151,6 @@ fun ProfileScreen(
                 onDelete = { viewModel.deleteVideo() },
             )
         }
-
         is DeleteConfirmationState.Error -> {
             YralErrorMessage(
                 title = stringResource(R.string.oops),
@@ -166,7 +161,6 @@ fun ProfileScreen(
                 sheetState = bottomSheetState,
             )
         }
-
         DeleteConfirmationState.None, is DeleteConfirmationState.InProgress -> Unit
     }
 }
@@ -174,11 +168,11 @@ fun ProfileScreen(
 @Composable
 private fun MainContent(
     modifier: Modifier,
-    accountInfo: AccountInfo?, // Only pass accountInfo instead of full state
+    accountInfo: AccountInfo?,
     profileVideos: LazyPagingItems<FeedDetails>,
     deletingVideoId: String,
     uploadVideo: () -> Unit,
-    openVideo: (FeedDetails) -> Unit,
+    openVideoReel: (Int) -> Unit,
     onDeleteVideo: (FeedDetails) -> Unit,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
@@ -187,22 +181,19 @@ private fun MainContent(
         accountInfo?.let { info ->
             AccountInfoSection(accountInfo = info)
         }
-
         when (val loadState = profileVideos.loadState.refresh) {
             is LoadState.Loading -> {
                 LoadingContent()
             }
-
             is LoadState.Error -> {
                 ErrorContent(message = stringResource(R.string.error_loading_videos))
             }
-
             is LoadState.NotLoading -> {
                 SuccessContent(
                     profileVideos = profileVideos,
                     deletingVideoId = deletingVideoId,
                     uploadVideo = uploadVideo,
-                    openVideo = openVideo,
+                    openVideoReel = openVideoReel,
                     onDeleteVideo = onDeleteVideo,
                 )
             }
@@ -213,10 +204,7 @@ private fun MainContent(
 @Composable
 private fun ProfileHeader() {
     Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+        modifier = Modifier.fillMaxWidth().padding(16.dp),
         horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -231,16 +219,10 @@ private fun ProfileHeader() {
 @Composable
 private fun AccountInfoSection(accountInfo: AccountInfo) {
     Column(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
     ) {
         Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 20.dp),
+            modifier = Modifier.fillMaxWidth().padding(bottom = 20.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.Start),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -277,10 +259,7 @@ private fun LoadingContent() {
 @Composable
 private fun ErrorContent(message: String) {
     Column(
-        modifier =
-            Modifier
-                .fillMaxSize()
-                .padding(16.dp),
+        modifier = Modifier.fillMaxSize().padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
@@ -306,12 +285,10 @@ private fun SuccessContent(
     profileVideos: LazyPagingItems<FeedDetails>,
     deletingVideoId: String,
     uploadVideo: () -> Unit,
-    openVideo: (FeedDetails) -> Unit,
+    openVideoReel: (Int) -> Unit,
     onDeleteVideo: (FeedDetails) -> Unit,
 ) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-    ) {
+    Column(modifier = Modifier.fillMaxSize()) {
         Spacer(modifier = Modifier.height(20.dp))
         val pullRefreshState = rememberPullToRefreshState()
         val offset =
@@ -349,7 +326,7 @@ private fun SuccessContent(
                     profileVideos = profileVideos,
                     offset = offset,
                     deletingVideoId = deletingVideoId,
-                    openVideo = openVideo,
+                    openVideoReel = openVideoReel,
                     onDeleteVideo = onDeleteVideo,
                 )
             }
@@ -400,7 +377,7 @@ private fun VideoGridContent(
     profileVideos: LazyPagingItems<FeedDetails>,
     offset: Float,
     deletingVideoId: String,
-    openVideo: (FeedDetails) -> Unit,
+    openVideoReel: (Int) -> Unit,
     onDeleteVideo: (FeedDetails) -> Unit,
 ) {
     LazyVerticalGrid(
@@ -423,7 +400,7 @@ private fun VideoGridContent(
                 VideoGridItem(
                     video = video,
                     isDeleting = deletingVideoId == video.videoID,
-                    openVideo = { openVideo(video) },
+                    openVideoReel = { openVideoReel(index) },
                     onDeleteClick = { onDeleteVideo(video) },
                 )
             }
@@ -525,7 +502,7 @@ private fun PagingErrorIndicator(
 private fun VideoGridItem(
     video: FeedDetails,
     isDeleting: Boolean,
-    openVideo: () -> Unit,
+    openVideoReel: () -> Unit,
     onDeleteClick: () -> Unit,
 ) {
     Box(
@@ -543,7 +520,7 @@ private fun VideoGridItem(
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .clickable { openVideo() },
+                    .clickable { openVideoReel() },
         ) {
             // Video thumbnail
             YralAsyncImage(
@@ -655,4 +632,5 @@ object ProfileScreenConstants {
     const val PULL_TO_REFRESH_INDICATOR_SIZE = 34f
     const val PULL_TO_REFRESH_INDICATOR_THRESHOLD = 36f
     const val PULL_TO_REFRESH_OFFSET_MULTIPLIER = 1.5f
+    const val MAX_LINES_FOR_POST_DESCRIPTION = 5
 }
