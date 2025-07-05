@@ -6,6 +6,7 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import androidx.paging.filter
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.core.session.AccountInfo
@@ -20,6 +21,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -36,11 +39,17 @@ class ProfileViewModel(
     private val _state = MutableStateFlow(ViewState())
     val state: StateFlow<ViewState> = _state.asStateFlow()
 
+    // Track locally deleted videos to filter them out
+    private val deletedVideoIds = MutableStateFlow<Set<String>>(emptySet())
+
+    private val basePagingData: Flow<PagingData<FeedDetails>>
+
     val profileVideos: Flow<PagingData<FeedDetails>>
 
     init {
         _state.update { it.copy(accountInfo = sessionManager.getAccountInfo()) }
-        profileVideos =
+
+        basePagingData =
             Pager(
                 config =
                     PagingConfig(
@@ -55,6 +64,14 @@ class ProfileViewModel(
                     )
                 },
             ).flow.cachedIn(viewModelScope)
+
+        profileVideos =
+            basePagingData
+                .combine(deletedVideoIds) { pagingData, deletedIds ->
+                    pagingData.filter { video ->
+                        video.videoID !in deletedIds
+                    }
+                }.distinctUntilChanged() // Keep this - PagingData filtering might produce same results
     }
 
     fun confirmDelete(
@@ -107,7 +124,10 @@ class ProfileViewModel(
                             deleteConfirmation = DeleteConfirmationState.None,
                         )
                     }
-                    // Note: Paging will automatically refresh when the underlying data changes
+                    // Remove video locally by adding it to deleted set
+                    deletedVideoIds.update { currentDeletedIds ->
+                        currentDeletedIds + deleteRequest.videoId
+                    }
                 }.onFailure { error ->
                     _state.update { state ->
                         state.copy(
