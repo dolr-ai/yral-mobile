@@ -82,6 +82,7 @@ fun HomeScreen(
     }
 }
 
+@Suppress("LongMethod")
 @Composable
 private fun HomeScreenContent(
     innerPadding: PaddingValues,
@@ -148,6 +149,7 @@ private fun HomeScreenContent(
                         .padding(innerPadding)
                         .background(MaterialTheme.colorScheme.primaryContainer),
                 uploadVideo = { updateCurrentTab(HomeTab.UPLOAD_VIDEO) },
+                viewModel = koinInstance.get(),
             )
         }
     }
