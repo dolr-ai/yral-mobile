@@ -48,6 +48,7 @@ class ProfileViewModel(
                 config =
                     PagingConfig(
                         pageSize = POSTS_PER_PAGE,
+                        initialLoadSize = POSTS_PER_PAGE,
                         prefetchDistance = POSTS_PREFETCH_DISTANCE,
                         enablePlaceholders = false,
                     ),
