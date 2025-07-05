@@ -2,62 +2,46 @@ package com.yral.shared.features.profile.data
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import com.github.michaelbull.result.getOrElse
 import com.yral.shared.core.session.SessionManager
-import com.yral.shared.features.profile.domain.GetProfileVideosUseCase
-import com.yral.shared.features.profile.viewmodel.ProfileVideo
+import com.yral.shared.features.profile.domain.repository.ProfileRepository
 import com.yral.shared.rust.data.models.toFeedDetails
+import com.yral.shared.rust.domain.models.FeedDetails
 
 class ProfileVideosPagingSource(
-    private val getProfileVideosUseCase: GetProfileVideosUseCase,
+    private val profileRepository: ProfileRepository,
     private val sessionManager: SessionManager,
-    private val pageSize: Int = 20,
-) : PagingSource<ULong, ProfileVideo>() {
-    override suspend fun load(params: LoadParams<ULong>): LoadResult<ULong, ProfileVideo> =
+) : PagingSource<ULong, FeedDetails>() {
+    override suspend fun load(params: LoadParams<ULong>): LoadResult<ULong, FeedDetails> =
         runCatching {
             val startIndex = params.key ?: 0UL
-            val loadSize = params.loadSize.coerceAtLeast(pageSize)
-
+            val pageSize = params.loadSize.toULong()
             val result =
-                getProfileVideosUseCase(
-                    GetProfileVideosUseCase.Params(
+                profileRepository
+                    .getProfileVideos(
                         startIndex = startIndex,
-                        pageSize = loadSize.toULong(),
-                    ),
-                ).getOrElse { error ->
-                    return LoadResult.Error(error)
-                }
-
+                        pageSize = pageSize,
+                    )
             val canisterId = sessionManager.getCanisterPrincipal() ?: ""
             val profileVideos =
                 result.posts.mapNotNull { post ->
                     runCatching {
-                        val feedDetails =
-                            post.toFeedDetails(
-                                postId = post.id.toLong(),
-                                canisterId = canisterId,
-                                nsfwProbability = 0.0, // Default value, can be updated if needed
-                            )
-                        ProfileVideo(
-                            feedDetail = feedDetails,
-                            isDeleting = false,
+                        post.toFeedDetails(
+                            postId = post.id.toLong(),
+                            canisterId = canisterId,
+                            nsfwProbability = 0.0, // Default value, can be updated if needed
                         )
                     }.getOrNull() // Return null for failed conversions, skip the post
                 }
-
             LoadResult.Page(
                 data = profileVideos,
-                prevKey = if (startIndex == 0UL) null else maxOf(0UL, startIndex - pageSize.toULong()),
+                prevKey = if (startIndex > 0UL) startIndex - pageSize else null,
                 nextKey = if (result.hasNextPage) result.nextStartIndex else null,
             )
-        }.fold(
-            onSuccess = { it },
-            onFailure = { exception -> LoadResult.Error(exception) },
-        )
+        }.getOrElse { LoadResult.Error(it) }
 
-    override fun getRefreshKey(state: PagingState<ULong, ProfileVideo>): ULong? =
+    override fun getRefreshKey(state: PagingState<ULong, FeedDetails>): ULong? =
         state.anchorPosition?.let { anchorPosition ->
-            state.closestPageToPosition(anchorPosition)?.prevKey?.plus(pageSize.toULong())
-                ?: state.closestPageToPosition(anchorPosition)?.nextKey?.minus(pageSize.toULong())
+            state.closestPageToPosition(anchorPosition)?.prevKey?.plus(1UL)
+                ?: state.closestPageToPosition(anchorPosition)?.nextKey?.minus(1UL)
         }
 }

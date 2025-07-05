@@ -28,25 +28,25 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.AspectRatioFrameLayout
-import co.touchlab.kermit.Logger
 import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.screens.profile.ProfilePlayerConstants.MAX_LINES_FOR_POST_DESCRIPTION
 import com.yral.android.ui.widgets.video.YralVideoPlayer
-import com.yral.shared.features.profile.viewmodel.ProfileVideo
+import com.yral.shared.rust.domain.models.FeedDetails
 
 @OptIn(UnstableApi::class)
 @Composable
 fun ProfileVideoPlayer(
     modifier: Modifier,
-    video: ProfileVideo,
+    video: FeedDetails,
+    isDeleting: Boolean,
     onBack: () -> Unit,
     onDeleteVideo: () -> Unit,
 ) {
     Box(modifier = modifier) {
         YralVideoPlayer(
             modifier = Modifier.fillMaxSize(),
-            url = video.feedDetail.url.toString(),
+            url = video.url.toString(),
             autoPlay = true,
             videoAspectRatio = AspectRatioFrameLayout.RESIZE_MODE_ZOOM,
             onError = { },
@@ -58,7 +58,7 @@ fun ProfileVideoPlayer(
             )
             Caption(
                 modifier = Modifier.align(Alignment.BottomStart),
-                caption = video.feedDetail.postDescription,
+                caption = video.postDescription,
             )
             DeleteIcon(
                 modifier =
@@ -67,9 +67,8 @@ fun ProfileVideoPlayer(
                         .padding(end = 16.dp, bottom = 89.dp),
                 onDeleteVideo = onDeleteVideo,
             )
-            Logger.d("xxxx") { "isDeleting: ${video.isDeleting}" }
             DeletingOverLay(
-                video = video,
+                isDeleting = isDeleting,
                 loaderSize = 54.dp,
                 textStyle = LocalAppTopography.current.lgMedium,
             )
