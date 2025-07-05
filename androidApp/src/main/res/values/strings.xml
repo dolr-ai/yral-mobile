@@ -91,6 +91,7 @@
     <string name="deleting">Deleting…</string>
     <string name="error_loading_more_videos">Error loading more videos</string>
     <string name="error_loading_videos">Error loading videos</string>
+    <string name="failed_to_delete_video">Failed to delete video</string>
 
     <!-- Permission Messages -->
     <string name="permission_required_title">Permission required!</string>

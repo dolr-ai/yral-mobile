@@ -158,8 +158,8 @@ fun ProfileScreen(
 
         is DeleteConfirmationState.Error -> {
             YralErrorMessage(
-                title = "",
-                error = deleteConfirmation.error.message ?: "",
+                title = stringResource(R.string.oops),
+                error = stringResource(R.string.failed_to_delete_video),
                 cta = stringResource(R.string.try_again),
                 onDismiss = { viewModel.dismissDeleteError() },
                 onClick = { viewModel.deleteVideo() },
