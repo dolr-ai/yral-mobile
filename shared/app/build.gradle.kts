@@ -36,7 +36,7 @@ kotlin {
             implementation(projects.shared.features.profile)
 
             val (deps, addRust) = BuildConfig.getAndProcessDependencies(project)
-            deps.forEach { if(it.isNotEmpty()) implementation(it) }
+            deps.forEach { if (it.isNotEmpty()) implementation(it) }
             if (addRust) implementation(projects.shared.rust)
         }
 

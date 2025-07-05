@@ -2,26 +2,47 @@ package com.yral.shared.features.profile.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
 import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.features.auth.utils.getAccountInfo
-import com.yral.shared.libs.arch.presentation.UiState
+import com.yral.shared.features.profile.data.ProfileVideosPagingSource
+import com.yral.shared.features.profile.domain.GetProfileVideosUseCase
 import com.yral.shared.rust.domain.models.FeedDetails
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 
 class ProfileViewModel(
-    sessionManager: SessionManager,
+    private val sessionManager: SessionManager,
+    private val getProfileVideosUseCase: GetProfileVideosUseCase,
 ) : ViewModel() {
     private val _state = MutableStateFlow(ViewState())
     val state: StateFlow<ViewState> = _state.asStateFlow()
 
+    val profileVideos: Flow<PagingData<ProfileVideo>> =
+        Pager(
+            config =
+                PagingConfig(
+                    pageSize = 20,
+                    prefetchDistance = 5,
+                    enablePlaceholders = false,
+                ),
+            pagingSourceFactory = {
+                ProfileVideosPagingSource(
+                    getProfileVideosUseCase = getProfileVideosUseCase,
+                    sessionManager = sessionManager,
+                )
+            },
+        ).flow.cachedIn(viewModelScope)
+
     init {
         _state.update { it.copy(accountInfo = sessionManager.getAccountInfo()) }
-        loadVideos()
     }
 
     fun confirmDelete(videoID: String?) {
@@ -34,28 +55,16 @@ class ProfileViewModel(
 
     private fun updateDeleting(videoID: String?) {
         _state.update { currentState ->
-            val updatedVideos =
-                (currentState.uiState as? UiState.Success)?.data?.videos?.map { video ->
-                    if (video.feedDetail.videoID == videoID) {
-                        video.copy(isDeleting = true)
-                    } else {
-                        video
-                    }
-                }
-
-            val updatedUiState =
-                when (val ui = currentState.uiState) {
-                    is UiState.Success ->
-                        ui.copy(
-                            data = ui.data.copy(videos = updatedVideos ?: ui.data.videos),
-                        )
-                    else -> ui
-                }
-
             currentState.copy(
                 deleteConfirmation = null,
-                openedVideo = currentState.openedVideo?.copy(isDeleting = true),
-                uiState = updatedUiState,
+                openedVideo =
+                    currentState.openedVideo?.let { video ->
+                        if (video.feedDetail.videoID == videoID) {
+                            video.copy(isDeleting = true)
+                        } else {
+                            video
+                        }
+                    },
             )
         }
     }
@@ -63,41 +72,12 @@ class ProfileViewModel(
     fun openVideo(video: ProfileVideo?) {
         _state.update { it.copy(openedVideo = video) }
     }
-
-    fun loadVideos() {
-        _state.update {
-            it.copy(
-                isRefreshing = false,
-                uiState =
-                    UiState.Success(
-                        ProfileVideos(
-                            videos = listOf(),
-                            hasMorePages = false,
-                        ),
-                    ),
-            )
-        }
-    }
-
-    fun onRefresh() {
-        _state.update { it.copy(isRefreshing = true) }
-        viewModelScope.launch {
-            loadVideos()
-        }
-    }
 }
 
 data class ViewState(
     val accountInfo: AccountInfo? = null,
     val deleteConfirmation: String? = null,
     val openedVideo: ProfileVideo? = null,
-    val isRefreshing: Boolean = false,
-    val uiState: UiState<ProfileVideos> = UiState.Initial,
-)
-
-data class ProfileVideos(
-    val videos: List<ProfileVideo>,
-    val hasMorePages: Boolean,
 )
 
 data class ProfileVideo(
