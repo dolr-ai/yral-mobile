@@ -12,7 +12,10 @@ import com.airbnb.lottie.compose.LottieConstants
 import com.yral.android.R
 
 @Composable
-fun YralLoader(size: Dp = 40.dp) {
+fun YralLoader(
+    size: Dp = 40.dp,
+    resource: Int = R.raw.yral_loader,
+) {
     Box(
         modifier =
             Modifier
@@ -23,7 +26,7 @@ fun YralLoader(size: Dp = 40.dp) {
             modifier =
                 Modifier
                     .size(size),
-            rawRes = R.raw.yral_loader,
+            rawRes = resource,
             iterations = LottieConstants.IterateForever,
         )
     }

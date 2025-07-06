@@ -36,11 +36,12 @@ import java.io.File
 
 @OptIn(UnstableApi::class)
 @Composable
-fun YralLocalVideoPlayer(
+fun YralVideoPlayer(
     modifier: Modifier = Modifier,
-    localFilePath: String,
+    url: String,
     autoPlay: Boolean = false,
     loop: Boolean = false,
+    videoAspectRatio: Int = AspectRatioFrameLayout.RESIZE_MODE_FIT,
     onError: (String) -> Unit = {},
 ) {
     val context = LocalContext.current
@@ -50,7 +51,7 @@ fun YralLocalVideoPlayer(
 
     val exoPlayer =
         remember {
-            createExoPlayer(context, localFilePath, loop) { error ->
+            createExoPlayer(context, url, loop) { error ->
                 hasError = true
                 onError(error)
             }
@@ -70,11 +71,11 @@ fun YralLocalVideoPlayer(
                     }
                 },
             )
-        exoPlayer.addListener(listener)
+        exoPlayer?.addListener(listener)
     }
 
     LaunchedEffect(autoPlay) {
-        exoPlayer.playWhenReady = autoPlay
+        exoPlayer?.playWhenReady = autoPlay
     }
 
     Box(modifier = modifier) {
@@ -88,7 +89,7 @@ fun YralLocalVideoPlayer(
                         hideController()
                     }
                     player = exoPlayer
-                    resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
+                    resizeMode = videoAspectRatio
                 }
             },
             modifier = Modifier.fillMaxSize(),
@@ -99,7 +100,7 @@ fun YralLocalVideoPlayer(
     // Cleanup
     DisposableEffect(exoPlayer) {
         onDispose {
-            exoPlayer.release()
+            exoPlayer?.release()
         }
     }
 }
@@ -109,16 +110,16 @@ private fun PlayerOverlay(
     hasError: Boolean,
     isLoading: Boolean,
     isPlaying: Boolean,
-    exoPlayer: ExoPlayer,
+    exoPlayer: ExoPlayer?,
 ) {
     Box(Modifier.fillMaxSize()) {
         // Custom Play/Pause Control Overlay
         if (!hasError) {
             PlayPauseControl(isPlaying, isLoading) {
                 if (isPlaying) {
-                    exoPlayer.pause()
+                    exoPlayer?.pause()
                 } else {
-                    exoPlayer.play()
+                    exoPlayer?.play()
                 }
             }
         }
@@ -221,21 +222,25 @@ private fun createListener(
 
 private fun createExoPlayer(
     context: Context,
-    localFilePath: String,
+    url: String,
     loop: Boolean,
     onError: (String) -> Unit,
-): ExoPlayer {
-    val file = File(localFilePath)
-    if (!file.exists()) {
-        onError("Video file not found: $localFilePath")
-    }
-
+): ExoPlayer? {
+    val processedUrl =
+        processUrl(url) ?: run {
+            onError("Video file not found or invalid: $url")
+            return null
+        }
     val exoPlayer = ExoPlayer.Builder(context).build()
-
-    val mediaItem = MediaItem.fromUri(file.toURI().toString())
+    val mediaItem = MediaItem.fromUri(processedUrl)
     exoPlayer.setMediaItem(mediaItem)
     exoPlayer.repeatMode = if (loop) Player.REPEAT_MODE_ONE else Player.REPEAT_MODE_OFF
     exoPlayer.prepare()
-
     return exoPlayer
 }
+
+private fun processUrl(url: String): String? =
+    when {
+        url.startsWith("http", ignoreCase = true) -> url
+        else -> File(url).takeIf { it.exists() }?.toURI()?.toString()
+    }

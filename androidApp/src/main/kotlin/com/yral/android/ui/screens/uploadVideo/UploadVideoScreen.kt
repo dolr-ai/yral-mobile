@@ -30,11 +30,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import co.touchlab.kermit.Logger
 import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.widgets.YralButtonState
 import com.yral.android.ui.widgets.YralGradientButton
+import com.yral.android.ui.widgets.video.YralVideoPlayer
 import com.yral.shared.features.uploadvideo.presentation.UploadVideoViewModel
 import com.yral.shared.libs.arch.presentation.UiState
 import kotlinx.coroutines.flow.collectLatest
@@ -214,9 +216,13 @@ private fun UploadProgressView(
             color = YralColors.NeutralTextSecondary,
         )
         Spacer(Modifier.height(24.dp))
-        VideoView(
+        YralVideoPlayer(
             modifier = Modifier.fillMaxSize(),
-            videoFilePath = videoFilePath,
+            url = videoFilePath,
+            autoPlay = true,
+            onError = { error ->
+                Logger.d("Video error: $error")
+            },
         )
     }
 }

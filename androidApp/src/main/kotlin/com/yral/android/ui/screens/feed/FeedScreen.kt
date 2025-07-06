@@ -488,7 +488,7 @@ private fun UserBrief(
 private fun UserBriefProfileImage(profileImageUrl: Url?) {
     YralAsyncImage(
         imageUrl = profileImageUrl.toString(),
-        size = 40.dp,
+        modifier = Modifier.size(40.dp),
         border = 2.dp,
         borderColor = YralColors.Pink300,
         backgroundColor = YralColors.ProfilePicBackground,

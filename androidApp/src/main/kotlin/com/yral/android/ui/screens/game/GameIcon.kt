@@ -89,12 +89,12 @@ fun AsyncGameIcon(
         imageUrl = icon.imageUrl,
         modifier =
             modifier
+                .size(46.dp)
                 .graphicsLayer(
                     rotationZ = rotation,
                     scaleX = scale,
                     scaleY = scale,
                 ),
-        size = 46.dp,
         onError = { loadLocal() },
     )
 }
