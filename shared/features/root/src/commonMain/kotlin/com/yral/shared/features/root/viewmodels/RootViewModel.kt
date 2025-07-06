@@ -9,7 +9,6 @@ import com.yral.shared.core.session.SessionState
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.AuthClientFactory
 import com.yral.shared.features.auth.YralAuthException
-import com.yral.shared.rust.services.IndividualUserServiceFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -31,7 +30,6 @@ class RootViewModel(
     appDispatchers: AppDispatchers,
     authClientFactory: AuthClientFactory,
     private val sessionManager: SessionManager,
-    private val individualUserServiceFactory: IndividualUserServiceFactory,
     private val crashlyticsManager: CrashlyticsManager,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.io)
@@ -87,14 +85,8 @@ class RootViewModel(
 
     private suspend fun checkLoginAndInitialize() {
         delay(initialDelayForSetup)
-        sessionManager.getCanisterPrincipal()?.let { principal ->
-            sessionManager.getIdentity()?.let { identity ->
-                individualUserServiceFactory.initialize(
-                    principal = principal,
-                    identityData = identity,
-                )
-                _state.update { it.copy(showSplash = false) }
-            } ?: authClient.initialize()
+        sessionManager.getIdentity()?.let {
+            _state.update { it.copy(showSplash = false) }
         } ?: authClient.initialize()
     }
 

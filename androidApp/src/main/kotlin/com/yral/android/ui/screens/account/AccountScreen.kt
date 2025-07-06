@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -36,6 +37,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import com.yral.android.R
+import com.yral.android.ui.components.DeleteConfirmationSheet
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.design.YralDimens
@@ -43,9 +45,9 @@ import com.yral.android.ui.screens.account.AccountScreenConstants.SOCIAL_MEDIA_L
 import com.yral.android.ui.widgets.YralAsyncImage
 import com.yral.android.ui.widgets.YralErrorMessage
 import com.yral.android.ui.widgets.YralGradientButton
+import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.features.account.viewmodel.AccountBottomSheet
 import com.yral.shared.features.account.viewmodel.AccountHelpLink
-import com.yral.shared.features.account.viewmodel.AccountInfo
 import com.yral.shared.features.account.viewmodel.AccountsState
 import com.yral.shared.features.account.viewmodel.AccountsViewModel
 import com.yral.shared.features.account.viewmodel.AccountsViewModel.Companion.DELETE_ACCOUNT_URI
@@ -126,6 +128,7 @@ private fun AccountScreenContent(
     }
 }
 
+@Suppress("LongMethod")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SheetContent(
@@ -177,10 +180,15 @@ private fun SheetContent(
         }
 
         is AccountBottomSheet.DeleteAccount -> {
-            DeleteAccountSheet(
+            DeleteConfirmationSheet(
                 bottomSheetState = bottomSheetState,
+                title = stringResource(R.string.delete_your_account),
+                subTitle = stringResource(R.string.delete_account_disclaimer),
+                confirmationMessage = stringResource(R.string.delete_account_question),
+                cancelButton = stringResource(R.string.no_take_me_back),
+                deleteButton = stringResource(R.string.yes_delete),
                 onDismissRequest = onDismissRequest,
-                onDeleteAccount = onDeleteAccount,
+                onDelete = onDeleteAccount,
             )
         }
 
@@ -288,7 +296,7 @@ private fun AccountDetail(
         ) {
             YralAsyncImage(
                 imageUrl = accountInfo.profilePic,
-                size = 60.dp,
+                modifier = Modifier.size(60.dp),
             )
             Text(
                 text = accountInfo.userPrincipal,
