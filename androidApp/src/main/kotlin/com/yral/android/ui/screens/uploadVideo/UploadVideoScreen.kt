@@ -80,7 +80,6 @@ fun UploadVideoScreen(
         is UiState.Failure -> {
             @Suppress("ForbiddenComment")
             UploadVideoFailure(
-                reason = stringResource(R.string.something_went_wrong), // TODO: fix the message
                 onTryAgain = viewModel::onRetryClicked,
                 onGotoHome = viewModel::onGoToHomeClicked,
             )
