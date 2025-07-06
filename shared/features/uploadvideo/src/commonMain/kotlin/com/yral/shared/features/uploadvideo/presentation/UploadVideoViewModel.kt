@@ -11,6 +11,7 @@ import com.yral.shared.features.uploadvideo.domain.models.UploadEndpoint
 import com.yral.shared.features.uploadvideo.domain.models.UploadFileRequest
 import com.yral.shared.features.uploadvideo.domain.models.UploadState
 import com.yral.shared.libs.arch.presentation.UiState
+import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -20,11 +21,15 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.io.files.Path
+import kotlinx.io.files.SystemFileSystem
 
-internal class UploadVideoViewModel(
+class UploadVideoViewModel internal constructor(
     private val getUploadEndpoint: GetUploadEndpointUseCase,
     private val uploadVideo: UploadVideoUseCase,
     private val updateMeta: UpdateMetaUseCase,
+    private val appDispatchers: AppDispatchers,
 ) : ViewModel() {
     private val _state = MutableStateFlow(ViewState())
     val state: StateFlow<ViewState> = _state.asStateFlow()
@@ -44,27 +49,50 @@ internal class UploadVideoViewModel(
         _state.update { it.copy(caption = caption) }
     }
 
-    fun onHashtagsChanged(hashtags: String) {
+    fun onHashtagsChanged(hashtags: List<String>) {
         _state.update { it.copy(hashtags = hashtags) }
     }
 
-    @Suppress("ReturnCount")
     fun onUploadButtonClicked() {
+        validateAndUpload()
+    }
+
+    fun onUploadDoneClicked() {
+        if (state.value.uploadUiState is UiState.Success) {
+            resetState()
+        }
+    }
+
+    fun onRetryClicked() {
+        validateAndUpload()
+    }
+
+    fun onGoToHomeClicked() {
+        resetState()
+        send(Event.GoToHome)
+    }
+
+    @Suppress("ReturnCount")
+    private fun validateAndUpload() {
         val currentState = _state.value
 
         // Validate inputs
-        if (currentState.selectedFilePath == null) {
-            send(Event.ShowError.SelectFile)
+        if (currentState.selectedFilePath.isNullOrBlank()) {
+            send(Event.ShowInputError.SelectFile)
             return
         }
 
-        if (currentState.caption.isNullOrBlank()) {
-            send(Event.ShowError.AddCaption)
+        if (currentState.caption.isBlank()) {
+            send(Event.ShowInputError.AddCaption)
             return
         }
 
-        if (currentState.hashtags.isNullOrBlank()) {
-            send(Event.ShowError.AddHashtags)
+        if (currentState.hashtags.isEmpty()) {
+            send(Event.ShowInputError.AddHashtags)
+            return
+        }
+
+        if (currentState.uploadUiState is UiState.InProgress) {
             return
         }
 
@@ -75,10 +103,25 @@ internal class UploadVideoViewModel(
         )
     }
 
+    private fun resetState() {
+        deleteSelectedFile()
+        _state.value = ViewState()
+    }
+
+    private fun deleteSelectedFile() {
+        state.value.selectedFilePath?.let {
+            viewModelScope.launch {
+                withContext(appDispatchers.disk) {
+                    SystemFileSystem.delete(Path(it), mustExist = false)
+                }
+            }
+        }
+    }
+
     private fun startCompleteUploadProcess(
         filePath: String,
         caption: String,
-        hashtags: String,
+        hashtags: List<String>,
     ) {
         _state.update {
             it.copy(uploadUiState = UiState.InProgress(0f))
@@ -121,7 +164,7 @@ internal class UploadVideoViewModel(
                             },
                             failure = { error ->
                                 _state.update { it.copy(uploadUiState = UiState.Failure(error)) }
-                                send(Event.ShowError.UploadFailed(error))
+                                send(Event.UploadFailed(error))
                             },
                         )
                     }
@@ -131,7 +174,7 @@ internal class UploadVideoViewModel(
                 @Suppress("TooGenericExceptionCaught") e: Exception,
             ) {
                 _state.update { it.copy(uploadUiState = UiState.Failure(e)) }
-                send(Event.ShowError.UploadFailed(e))
+                send(Event.UploadFailed(e))
             }
         }
     }
@@ -139,12 +182,11 @@ internal class UploadVideoViewModel(
     private suspend fun updateMetadata(
         endpoint: UploadEndpoint,
         caption: String,
-        hashtags: String,
+        hashtags: List<String>,
     ) {
         try {
             val hashtagsList =
                 hashtags
-                    .split(",")
                     .map { it.trim() }
                     .filter { it.isNotBlank() }
 
@@ -159,39 +201,42 @@ internal class UploadVideoViewModel(
 
             _state.update { it.copy(uploadUiState = UiState.Success(Unit)) }
             send(Event.UploadSuccess)
+            deleteSelectedFile()
         } catch (e: CancellationException) {
             throw e
         } catch (
             @Suppress("TooGenericExceptionCaught") e: Exception,
         ) {
             _state.update { it.copy(uploadUiState = UiState.Failure(e)) }
-            send(Event.ShowError.UploadFailed(e))
+            send(Event.UploadFailed(e))
         }
     }
 
-    internal sealed class Event {
-        internal sealed class ShowError : Event() {
-            internal data object SelectFile : ShowError()
-            internal data object AddCaption : ShowError()
-            internal data object AddHashtags : ShowError()
-            internal data class UploadFailed(
-                val error: Throwable,
-            ) : ShowError()
+    sealed class Event {
+        sealed class ShowInputError : Event() {
+            data object SelectFile : ShowInputError()
+            data object AddCaption : ShowInputError()
+            data object AddHashtags : ShowInputError()
         }
 
-        internal data object UploadSuccess : Event()
+        data object UploadSuccess : Event()
+        data class UploadFailed(
+            val error: Throwable,
+        ) : Event()
+
+        data object GoToHome : Event()
     }
 
-    internal data class ViewState(
+    data class ViewState(
         val selectedFilePath: String? = null,
-        val caption: String? = null,
-        val hashtags: String? = null,
+        val caption: String = "",
+        val hashtags: List<String> = emptyList(),
         val uploadUiState: UiState<Unit> = UiState.Initial,
     ) {
         val canUpload: Boolean =
-            selectedFilePath != null &&
-                !caption.isNullOrBlank() &&
-                !hashtags.isNullOrBlank() &&
-                (uploadUiState is UiState.Initial || uploadUiState is UiState.Failure)
+            !selectedFilePath.isNullOrBlank() &&
+                caption.isNotBlank() &&
+                !hashtags.isEmpty() &&
+                uploadUiState !is UiState.InProgress
     }
 }

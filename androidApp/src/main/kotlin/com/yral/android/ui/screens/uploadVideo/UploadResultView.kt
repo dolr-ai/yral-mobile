@@ -74,7 +74,6 @@ fun UploadVideoSuccess(onDone: () -> Unit) {
 @Suppress("LongMethod")
 @Composable
 fun UploadVideoFailure(
-    reason: String,
     onTryAgain: () -> Unit,
     onGotoHome: () -> Unit,
 ) {
@@ -110,10 +109,6 @@ fun UploadVideoFailure(
                     text =
                         stringResource(
                             R.string.upload_video_error,
-                            stringResource(
-                                R.string.upload_video_error_reason,
-                                reason,
-                            ),
                         ),
                     style = LocalAppTopography.current.mdRegular,
                     color = YralColors.Neutral300,
