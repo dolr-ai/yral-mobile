@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -21,10 +22,6 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,22 +29,35 @@ import androidx.compose.ui.graphics.Brush.Companion.linearGradient
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.widgets.YralButtonState
 import com.yral.android.ui.widgets.YralGradientButton
+import com.yral.shared.features.uploadvideo.presentation.UploadVideoViewModel
+import com.yral.shared.libs.arch.presentation.UiState
+import kotlinx.coroutines.flow.collectLatest
+import org.koin.compose.viewmodel.koinViewModel
 
 private const val TOTAL_ITEMS = 5
 
 @Suppress("MagicNumber")
 @Composable
-fun UploadVideoScreen(modifier: Modifier = Modifier) {
-    var videoFilePath by remember { mutableStateOf("") }
-    val isUploadInProgress by remember { mutableStateOf(false) }
-    val progress by remember { mutableIntStateOf(20) }
-    var isUploadResultVisible by remember { mutableStateOf(false) }
-    val isUploadResultMessage by remember { mutableStateOf("") }
+fun UploadVideoScreen(
+    modifier: Modifier = Modifier,
+    viewModel: UploadVideoViewModel = koinViewModel(),
+    goToHome: () -> Unit,
+) {
+    val viewState by viewModel.state.collectAsStateWithLifecycle()
+    LaunchedEffect(key1 = Unit) {
+        viewModel.eventsFlow.collectLatest { value ->
+            when (value) {
+                UploadVideoViewModel.Event.GoToHome -> goToHome()
+                else -> {}
+            }
+        }
+    }
 
     val listState = rememberLazyListState()
     val keyboardHeight by keyboardHeightAsState()
@@ -56,45 +66,80 @@ fun UploadVideoScreen(modifier: Modifier = Modifier) {
             listState.animateScrollToItem(TOTAL_ITEMS - 1)
         }
     }
-    if (!isUploadResultVisible) {
-        LazyColumn(
-            state = listState,
-            modifier = modifier.imePadding(),
-        ) {
-            // Update TOTAL_ITEMS if adding any more items
-            item { Header() }
-            if (isUploadInProgress) {
-                item {
-                    UploadProgressView(
-                        progress = progress,
-                        videoFilePath = videoFilePath,
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .aspectRatio(1f),
-                    )
-                }
-            } else {
-                item {
-                    UploadVideo(videoFilePath) {
-                        videoFilePath = it
-                    }
-                }
-                item { Spacer(Modifier.height(20.dp)) }
-                item { VideoDetails() }
-                item { Submit() }
-            }
+
+    when (val uploadUiState = viewState.uploadUiState) {
+        UiState.Initial -> {
+            UploadVideoIdle(listState, modifier, viewState, viewModel)
         }
-    } else {
-        if (isUploadResultMessage.isEmpty()) {
-            UploadVideoSuccess {
-                isUploadResultVisible = false
-            }
-        } else {
+        is UiState.InProgress -> {
+            UploadVideoProgress(listState, modifier, uploadUiState, viewState)
+        }
+        is UiState.Success<*> -> {
+            UploadVideoSuccess(onDone = viewModel::onUploadDoneClicked)
+        }
+        is UiState.Failure -> {
+            @Suppress("ForbiddenComment")
             UploadVideoFailure(
-                reason = isUploadResultMessage,
-                onTryAgain = { isUploadResultVisible = false },
-                onGotoHome = { isUploadResultVisible = false },
+                onTryAgain = viewModel::onRetryClicked,
+                onGotoHome = viewModel::onGoToHomeClicked,
+            )
+        }
+    }
+}
+
+@Composable
+private fun UploadVideoIdle(
+    listState: LazyListState,
+    modifier: Modifier,
+    viewState: UploadVideoViewModel.ViewState,
+    viewModel: UploadVideoViewModel,
+) {
+    LazyColumn(
+        state = listState,
+        modifier = modifier.imePadding(),
+    ) {
+        // Update TOTAL_ITEMS if adding any more items
+        item { Header() }
+        item {
+            UploadVideo(
+                viewState.selectedFilePath ?: "",
+                onVideoSelected = viewModel::onFileSelected,
+            )
+        }
+        item { Spacer(Modifier.height(20.dp)) }
+        item {
+            VideoDetails(
+                viewState.caption,
+                viewState.hashtags,
+                onCaptionChanged = viewModel::onCaptionChanged,
+                onHashtagsChanged = viewModel::onHashtagsChanged,
+            )
+        }
+        item { Submit(enabled = viewState.canUpload, onClick = viewModel::onUploadButtonClicked) }
+    }
+}
+
+@Composable
+private fun UploadVideoProgress(
+    listState: LazyListState,
+    modifier: Modifier,
+    uploadUiState: UiState.InProgress,
+    viewState: UploadVideoViewModel.ViewState,
+) {
+    LazyColumn(
+        state = listState,
+        modifier = modifier.imePadding(),
+    ) {
+        // Update TOTAL_ITEMS if adding any more items
+        item { Header() }
+        item {
+            UploadProgressView(
+                progress = (uploadUiState.progress * 100).toInt(),
+                videoFilePath = checkNotNull(viewState.selectedFilePath),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(1f),
             )
         }
     }
@@ -177,9 +222,12 @@ private fun UploadProgressView(
 }
 
 @Composable
-private fun VideoDetails() {
-    var text by remember { mutableStateOf("") }
-    var hashtags by remember { mutableStateOf(emptyList<String>()) }
+private fun VideoDetails(
+    caption: String,
+    hashtags: List<String>,
+    onCaptionChanged: (caption: String) -> Unit,
+    onHashtagsChanged: (hashtags: List<String>) -> Unit,
+) {
     Column(
         modifier = Modifier.padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp, Alignment.Top),
@@ -194,7 +242,7 @@ private fun VideoDetails() {
                 style = LocalAppTopography.current.baseMedium,
                 color = YralColors.Neutral300,
             )
-            CaptionInput(text) { text = it }
+            CaptionInput(caption, onCaptionChanged)
         }
         Column(
             verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top),
@@ -205,13 +253,16 @@ private fun VideoDetails() {
                 style = LocalAppTopography.current.baseMedium,
                 color = YralColors.Neutral300,
             )
-            HashtagInput(hashtags) { hashtags = it }
+            HashtagInput(hashtags, onHashtagsChanged)
         }
     }
 }
 
 @Composable
-fun Submit() {
+fun Submit(
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
     Column(
         modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp, Alignment.Top),
@@ -219,9 +270,9 @@ fun Submit() {
     ) {
         YralGradientButton(
             text = stringResource(R.string.upload),
-            buttonState = YralButtonState.Disabled,
-        ) {
-        }
+            buttonState = if (enabled) YralButtonState.Enabled else YralButtonState.Disabled,
+            onClick = onClick,
+        )
     }
 }
 

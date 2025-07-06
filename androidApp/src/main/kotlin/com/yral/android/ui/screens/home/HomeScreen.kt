@@ -73,7 +73,7 @@ fun HomeScreen(
             )
         },
     ) { innerPadding ->
-        HomeScreenContent(innerPadding, currentTab, feedViewModel)
+        HomeScreenContent(innerPadding, currentTab, feedViewModel, updateCurrentTab = { updateCurrentTab(it.title) })
     }
 }
 
@@ -82,6 +82,7 @@ private fun HomeScreenContent(
     innerPadding: PaddingValues,
     currentTab: String,
     feedViewModel: FeedViewModel,
+    updateCurrentTab: (tab: HomeTab) -> Unit,
 ) {
     when (currentTab) {
         HomeTab.HOME.title ->
@@ -131,6 +132,7 @@ private fun HomeScreenContent(
                             end = innerPadding.calculateEndPadding(LocalLayoutDirection.current),
                             bottom = bottomPadding,
                         ).background(MaterialTheme.colorScheme.primaryContainer),
+                goToHome = { updateCurrentTab(HomeTab.HOME) },
             )
         }
 

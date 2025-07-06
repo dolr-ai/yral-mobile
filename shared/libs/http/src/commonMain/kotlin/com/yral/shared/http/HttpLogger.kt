@@ -10,5 +10,5 @@ class HttpLogger(
     override fun log(message: String) {
         logger.d("HTTP Client $message")
     }
-    val logLevel = LogLevel.BODY
+    val logLevel = LogLevel.BODY // todo set log level based on debug/release flag
 }
