@@ -10,10 +10,11 @@ platform :ios do
   lane :build_staging_firebase do
     # Build with ad-hoc signing (Staging Dev)
     gym(
-      project: "iosApp/iosApp.xcodeproj",
+      workspace: "iosApp/iosApp.xcworkspace",
       scheme: "iosAppStaging",
+      clean: true,
       destination: "generic/platform=iOS",
-      export_method: "development",
+      export_method: "ad-hoc",
       export_options: {
         provisioningProfiles: {
           "com.yral.iosApp.staging" => "Yral-Staging-Development"
