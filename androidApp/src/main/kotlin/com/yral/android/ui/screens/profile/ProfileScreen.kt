@@ -60,6 +60,7 @@ import com.yral.android.ui.components.DeleteConfirmationSheet
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.profile.ProfileScreenConstants.GRID_ITEM_ASPECT_RATIO
+import com.yral.android.ui.screens.profile.ProfileScreenConstants.PADDING_BOTTOM_ACCOUNT_INFO
 import com.yral.android.ui.screens.profile.ProfileScreenConstants.PULL_TO_REFRESH_INDICATOR_SIZE
 import com.yral.android.ui.screens.profile.ProfileScreenConstants.PULL_TO_REFRESH_INDICATOR_THRESHOLD
 import com.yral.android.ui.screens.profile.ProfileScreenConstants.PULL_TO_REFRESH_OFFSET_MULTIPLIER
@@ -295,7 +296,12 @@ private fun SuccessContent(
     openVideoReel: (Int) -> Unit,
     onDeleteVideo: (FeedDetails) -> Unit,
 ) {
-    Column(modifier = Modifier.fillMaxSize().padding(top = 20.dp)) {
+    Column(
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .padding(top = PADDING_BOTTOM_ACCOUNT_INFO.dp),
+    ) {
         val pullRefreshState = rememberPullToRefreshState()
         val offset =
             pullRefreshState.distanceFraction *
@@ -351,8 +357,8 @@ private fun EmptyStateContent(
         modifier =
             Modifier
                 .fillMaxSize()
-                .padding(16.dp)
-                .offset(y = offset.dp)
+                .padding(horizontal = 16.dp)
+                .offset(y = (offset - PADDING_BOTTOM_ACCOUNT_INFO).dp)
                 .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
@@ -644,4 +650,5 @@ object ProfileScreenConstants {
     const val PULL_TO_REFRESH_INDICATOR_THRESHOLD = 36f
     const val PULL_TO_REFRESH_OFFSET_MULTIPLIER = 1.5f
     const val MAX_LINES_FOR_POST_DESCRIPTION = 5
+    const val PADDING_BOTTOM_ACCOUNT_INFO = 20
 }
