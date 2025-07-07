@@ -255,10 +255,10 @@ private fun AccountInfoSection(accountInfo: AccountInfo) {
 @Composable
 private fun LoadingContent() {
     Box(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
         contentAlignment = Alignment.Center,
     ) {
-        YralLoader(size = 40.dp)
+        YralLoader(size = PULL_TO_REFRESH_INDICATOR_SIZE.dp)
     }
 }
 
@@ -295,8 +295,7 @@ private fun SuccessContent(
     openVideoReel: (Int) -> Unit,
     onDeleteVideo: (FeedDetails) -> Unit,
 ) {
-    Column(modifier = Modifier.fillMaxSize()) {
-        Spacer(modifier = Modifier.height(20.dp))
+    Column(modifier = Modifier.fillMaxSize().padding(top = 20.dp)) {
         val pullRefreshState = rememberPullToRefreshState()
         val offset =
             pullRefreshState.distanceFraction *
