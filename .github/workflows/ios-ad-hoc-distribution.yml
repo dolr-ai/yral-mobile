@@ -92,8 +92,8 @@ jobs:
       - name: Decrypt and import Dev Certificate
         run: |
           mkdir -p certs
-          echo "${{ secrets.YRAL_STAGING_DEV_CERT_P12_BASE64 }}" | base64 --decode > certs/Yral-Staging-Development.p12
-          echo "${{ secrets.YRAL_STAGING_DEV_PROF_BASE64 }}" | base64 --decode > certs/Yral-Staging-Development.mobileprovision
+          echo "${{ secrets.YRAL_DIST_CERT_P12_BASE64 }}" | base64 --decode > certs/Yral-Dist.p12
+          echo "${{ secrets.YRAL_ADHOC_DIST_PROF_BASE64 }}" | base64 --decode > certs/Yral-Staging-Adhoc.mobileprovision
           
           # Create and configure keychain
           security create-keychain -p "" build.keychain
@@ -102,12 +102,12 @@ jobs:
           security set-keychain-settings -t 3600 -l ~/Library/Keychains/build.keychain
           
           # Import certificate
-          security import certs/Yral-Staging-Development.p12 -k build.keychain -P "${{ secrets.IOS_CERTIFICATE_PASSWORD }}" -A
+          security import certs/Yral-Dist.p12 -k build.keychain -P "${{ secrets.IOS_CERTIFICATE_PASSWORD }}" -A
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "" build.keychain
           
           # Install provisioning profile
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp certs/Yral-Staging-Development.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
+          cp certs/Yral-Staging-Adhoc.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
       - name: Build & Distribute via Firebase
         run: fastlane ios build_staging_firebase
         env:
