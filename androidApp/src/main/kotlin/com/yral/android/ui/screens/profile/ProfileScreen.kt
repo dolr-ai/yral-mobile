@@ -372,7 +372,7 @@ private fun EmptyStateContent(
         Spacer(modifier = Modifier.height(36.dp))
         YralGradientButton(
             modifier = Modifier.fillMaxWidth(),
-            text = "Upload Video",
+            text = stringResource(R.string.upload_video),
             buttonType = YralButtonType.White,
             onClick = uploadVideo,
         )
