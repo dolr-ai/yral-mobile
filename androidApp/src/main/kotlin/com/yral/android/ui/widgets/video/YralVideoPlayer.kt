@@ -42,7 +42,7 @@ fun YralVideoPlayer(
     modifier: Modifier = Modifier,
     url: String,
     autoPlay: Boolean = false,
-    loop: Boolean = false,
+    loop: Boolean = true,
     videoAspectRatio: Int = AspectRatioFrameLayout.RESIZE_MODE_FIT,
     onError: (String) -> Unit = {},
 ) {
