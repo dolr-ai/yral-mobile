@@ -23,7 +23,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -99,23 +101,8 @@ fun ProfileScreen(
             }
         }
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val gridState = rememberLazyGridState()
     Box(modifier = modifier.fillMaxSize()) {
-        MainContent(
-            modifier = Modifier.fillMaxSize(),
-            accountInfo = state.accountInfo,
-            profileVideos = profileVideos,
-            uploadVideo = uploadVideo,
-            openVideoReel = { clickedIndex ->
-                viewModel.openVideoReel(clickedIndex)
-            },
-            deletingVideoId = deletingVideoId,
-            onDeleteVideo = { video ->
-                viewModel.confirmDelete(
-                    videoId = video.videoID,
-                    postId = video.postID.toULong(),
-                )
-            },
-        )
         when (val videoViewState = state.videoView) {
             is VideoViewState.ViewingReels -> {
                 ProfileReelPlayer(
@@ -135,7 +122,25 @@ fun ProfileScreen(
                     modifier = Modifier.fillMaxSize(),
                 )
             }
-            VideoViewState.None -> Unit
+            VideoViewState.None -> {
+                MainContent(
+                    modifier = Modifier.fillMaxSize(),
+                    accountInfo = state.accountInfo,
+                    gridState = gridState,
+                    profileVideos = profileVideos,
+                    uploadVideo = uploadVideo,
+                    openVideoReel = { clickedIndex ->
+                        viewModel.openVideoReel(clickedIndex)
+                    },
+                    deletingVideoId = deletingVideoId,
+                    onDeleteVideo = { video ->
+                        viewModel.confirmDelete(
+                            videoId = video.videoID,
+                            postId = video.postID.toULong(),
+                        )
+                    },
+                )
+            }
         }
     }
 
@@ -170,6 +175,7 @@ fun ProfileScreen(
 private fun MainContent(
     modifier: Modifier,
     accountInfo: AccountInfo?,
+    gridState: LazyGridState,
     profileVideos: LazyPagingItems<FeedDetails>,
     deletingVideoId: String,
     uploadVideo: () -> Unit,
@@ -191,6 +197,7 @@ private fun MainContent(
             }
             is LoadState.NotLoading -> {
                 SuccessContent(
+                    gridState = gridState,
                     profileVideos = profileVideos,
                     deletingVideoId = deletingVideoId,
                     uploadVideo = uploadVideo,
@@ -283,6 +290,7 @@ private fun ErrorContent(message: String) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SuccessContent(
+    gridState: LazyGridState,
     profileVideos: LazyPagingItems<FeedDetails>,
     deletingVideoId: String,
     uploadVideo: () -> Unit,
@@ -324,6 +332,7 @@ private fun SuccessContent(
                 EmptyStateContent(offset, uploadVideo)
             } else {
                 VideoGridContent(
+                    gridState = gridState,
                     profileVideos = profileVideos,
                     offset = offset,
                     deletingVideoId = deletingVideoId,
@@ -375,6 +384,7 @@ private fun EmptyStateContent(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun VideoGridContent(
+    gridState: LazyGridState,
     profileVideos: LazyPagingItems<FeedDetails>,
     offset: Float,
     deletingVideoId: String,
@@ -382,6 +392,7 @@ private fun VideoGridContent(
     onDeleteVideo: (FeedDetails) -> Unit,
 ) {
     LazyVerticalGrid(
+        state = gridState,
         columns = GridCells.Fixed(2),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
