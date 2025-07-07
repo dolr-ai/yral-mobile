@@ -105,22 +105,20 @@ fun ProfileScreen(
     Box(modifier = modifier.fillMaxSize()) {
         when (val videoViewState = state.videoView) {
             is VideoViewState.ViewingReels -> {
-                ProfileReelPlayer(
-                    reelVideos = profileVideos,
-                    currentIndex = videoViewState.currentIndex,
-                    deletingVideoId = deletingVideoId,
-                    deletedVideoId = videoViewState.deletedVideoId,
-                    onPageChanged = { page -> viewModel.onReelPageChanged(page) },
-                    onBack = { viewModel.closeVideoReel() },
-                    onDeleteVideo = { videoId, postId ->
-                        viewModel.confirmDelete(videoId = videoId, postId = postId)
-                    },
-                    onVideoDeleted = { newIndex, shouldClose ->
-                        viewModel.handleReelVideoDeleted(newIndex, shouldClose)
-                    },
-                    onClearDeletedVideoId = { viewModel.clearDeletedVideoId() },
-                    modifier = Modifier.fillMaxSize(),
-                )
+                if (profileVideos.itemCount > 0) {
+                    ProfileReelPlayer(
+                        reelVideos = profileVideos,
+                        initialPage = videoViewState.initialPage,
+                        deletingVideoId = deletingVideoId,
+                        onBack = { viewModel.closeVideoReel() },
+                        onDeleteVideo = { videoId, postId ->
+                            viewModel.confirmDelete(videoId = videoId, postId = postId)
+                        },
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                } else {
+                    viewModel.closeVideoReel()
+                }
             }
             VideoViewState.None -> {
                 MainContent(
@@ -153,7 +151,7 @@ fun ProfileScreen(
                 confirmationMessage = stringResource(R.string.video_will_be_deleted_permanently),
                 cancelButton = stringResource(R.string.cancel),
                 deleteButton = stringResource(R.string.delete),
-                onDismissRequest = { viewModel.confirmDelete(null, null) },
+                onDismissRequest = { viewModel.clearDeleteConfirmationState() },
                 onDelete = { viewModel.deleteVideo() },
             )
         }
@@ -162,7 +160,7 @@ fun ProfileScreen(
                 title = stringResource(R.string.oops),
                 error = stringResource(R.string.failed_to_delete_video),
                 cta = stringResource(R.string.try_again),
-                onDismiss = { viewModel.dismissDeleteError() },
+                onDismiss = { viewModel.clearDeleteConfirmationState() },
                 onClick = { viewModel.deleteVideo() },
                 sheetState = bottomSheetState,
             )

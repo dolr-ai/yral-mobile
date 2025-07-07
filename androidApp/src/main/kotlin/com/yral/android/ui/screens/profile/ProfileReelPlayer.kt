@@ -17,7 +17,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,44 +44,25 @@ import com.yral.shared.rust.domain.models.FeedDetails
 @Composable
 fun ProfileReelPlayer(
     reelVideos: LazyPagingItems<FeedDetails>,
-    currentIndex: Int,
+    initialPage: Int,
     deletingVideoId: String,
-    deletedVideoId: String,
-    onPageChanged: (Int) -> Unit,
     onBack: () -> Unit,
     onDeleteVideo: (String, ULong) -> Unit,
-    onVideoDeleted: (newIndex: Int?, shouldClose: Boolean) -> Unit,
-    onClearDeletedVideoId: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val initialPage =
-        remember(currentIndex, reelVideos.itemCount) {
-            minOf(currentIndex, reelVideos.itemCount - 1).coerceAtLeast(0)
-        }
-
     val videoReels =
         remember(reelVideos.itemSnapshotList) {
-            reelVideos.itemSnapshotList.items.map { video -> video.toReel() }
+            reelVideos.itemSnapshotList.items
+                .filter { it.videoID.isNotBlank() }
+                .distinctBy { it.videoID }
+                .map { it.toReel() }
         }
-
-    LaunchedEffect(deletedVideoId) {
-        if (deletedVideoId.isNotEmpty()) {
-            when {
-                reelVideos.itemCount == 0 -> onVideoDeleted(null, true)
-                currentIndex < reelVideos.itemCount -> onVideoDeleted(currentIndex, false)
-                currentIndex > 0 -> onVideoDeleted(currentIndex - 1, false)
-                else -> onVideoDeleted(null, true)
-            }
-            onClearDeletedVideoId()
-        }
-    }
-
     if (videoReels.isNotEmpty()) {
         YRALReelPlayer(
             modifier = modifier.fillMaxSize(),
             reels = videoReels,
             initialPage = initialPage,
-            onPageLoaded = { page -> onPageChanged(page) },
+            onPageLoaded = { },
             recordTime = { _, _ -> },
             didVideoEnd = { },
             getPrefetchListener = { reel -> PrefetchVideoListenerImpl(reel) },

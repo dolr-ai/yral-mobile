@@ -38,52 +38,48 @@ class ProfileViewModel(
 
     private val _state = MutableStateFlow(ViewState())
     val state: StateFlow<ViewState> = _state.asStateFlow()
+
     private val deletedVideoIds = MutableStateFlow<Set<String>>(emptySet())
-    private val basePagingData: Flow<PagingData<FeedDetails>>
-    val profileVideos: Flow<PagingData<FeedDetails>>
+    val profileVideos: Flow<PagingData<FeedDetails>> =
+        Pager(
+            config =
+                PagingConfig(
+                    pageSize = POSTS_PER_PAGE,
+                    initialLoadSize = POSTS_PER_PAGE,
+                    prefetchDistance = POSTS_PREFETCH_DISTANCE,
+                    enablePlaceholders = false,
+                ),
+            pagingSourceFactory = {
+                ProfileVideosPagingSource(
+                    profileRepository = profileRepository,
+                    sessionManager = sessionManager,
+                )
+            },
+        ).flow
+            .cachedIn(viewModelScope)
+            .combine(deletedVideoIds) { pagingData, deletedIds ->
+                pagingData
+                    .filter { video -> video.videoID !in deletedIds }
+            }.distinctUntilChanged()
+
     init {
         _state.update { it.copy(accountInfo = sessionManager.getAccountInfo()) }
-        basePagingData =
-            Pager(
-                config =
-                    PagingConfig(
-                        pageSize = POSTS_PER_PAGE,
-                        initialLoadSize = POSTS_PER_PAGE,
-                        prefetchDistance = POSTS_PREFETCH_DISTANCE,
-                        enablePlaceholders = false,
-                    ),
-                pagingSourceFactory = {
-                    ProfileVideosPagingSource(
-                        profileRepository = profileRepository,
-                        sessionManager = sessionManager,
-                    )
-                },
-            ).flow.cachedIn(viewModelScope)
-        profileVideos =
-            basePagingData
-                .combine(deletedVideoIds) { pagingData, deletedIds ->
-                    pagingData.filter { video -> video.videoID !in deletedIds }
-                }.distinctUntilChanged()
     }
 
     fun confirmDelete(
-        videoId: String?,
-        postId: ULong?,
+        videoId: String,
+        postId: ULong,
     ) {
-        val newDeleteState =
-            when {
-                videoId != null && postId != null -> {
-                    DeleteConfirmationState.AwaitingConfirmation(
-                        request =
-                            DeleteVideoRequest(
-                                postId = postId,
-                                videoId = videoId,
-                            ),
-                    )
-                }
-                else -> DeleteConfirmationState.None
-            }
-        updateDeleteConfirmationIfDifferent(newDeleteState)
+        if (_state.value.deleteConfirmation !is DeleteConfirmationState.None) return
+        updateDeleteConfirmationIfDifferent(
+            DeleteConfirmationState.AwaitingConfirmation(
+                request =
+                    DeleteVideoRequest(
+                        postId = postId,
+                        videoId = videoId,
+                    ),
+            ),
+        )
     }
 
     fun deleteVideo() {
@@ -101,77 +97,26 @@ class ProfileViewModel(
             deleteVideoUseCase
                 .invoke(deleteRequest)
                 .onSuccess {
-                    deletedVideoIds.update { currentDeletedIds ->
-                        currentDeletedIds + deleteRequest.videoId
-                    }
-                    _state.update { currentState ->
-                        val reelState = currentState.videoView as? VideoViewState.ViewingReels
-                        if (reelState != null) {
-                            currentState.copy(
-                                deleteConfirmation = DeleteConfirmationState.None,
-                                videoView = reelState.copy(deletedVideoId = deleteRequest.videoId),
-                            )
-                        } else {
-                            currentState.copy(deleteConfirmation = DeleteConfirmationState.None)
-                        }
-                    }
+                    deletedVideoIds.update { it + deleteRequest.videoId }
+                    _state.update { it.copy(deleteConfirmation = DeleteConfirmationState.None) }
                 }.onFailure { error ->
-                    _state.update { state ->
-                        state.copy(deleteConfirmation = DeleteConfirmationState.Error(deleteRequest, error))
+                    _state.update {
+                        it.copy(deleteConfirmation = DeleteConfirmationState.Error(deleteRequest, error))
                     }
                 }
         }
     }
 
-    fun dismissDeleteError() {
+    fun clearDeleteConfirmationState() {
         updateDeleteConfirmationIfDifferent(DeleteConfirmationState.None)
     }
 
     fun openVideoReel(clickedIndex: Int) {
-        val newVideoState =
-            VideoViewState.ViewingReels(
-                currentIndex = clickedIndex,
-                deletedVideoId = "",
-            )
-        updateVideoViewIfDifferent(newVideoState)
+        updateVideoViewIfDifferent(VideoViewState.ViewingReels(clickedIndex))
     }
 
     fun closeVideoReel() {
         updateVideoViewIfDifferent(VideoViewState.None)
-    }
-
-    fun onReelPageChanged(newIndex: Int) {
-        val currentState = _state.value
-        val reelState = currentState.videoView as? VideoViewState.ViewingReels ?: return
-        if (reelState.currentIndex != newIndex) {
-            updateVideoViewIfDifferent(reelState.copy(currentIndex = newIndex))
-        }
-    }
-
-    fun clearDeletedVideoId() {
-        val currentState = _state.value
-        val reelState = currentState.videoView as? VideoViewState.ViewingReels ?: return
-        if (reelState.deletedVideoId.isNotEmpty()) {
-            updateVideoViewIfDifferent(reelState.copy(deletedVideoId = ""))
-        }
-    }
-
-    fun handleReelVideoDeleted(
-        newIndex: Int?,
-        shouldClose: Boolean,
-    ) {
-        if (shouldClose) {
-            closeVideoReel()
-        } else if (newIndex != null) {
-            val currentState = _state.value
-            val reelState = currentState.videoView as? VideoViewState.ViewingReels ?: return
-            updateVideoViewIfDifferent(
-                reelState.copy(
-                    currentIndex = newIndex,
-                    deletedVideoId = "",
-                ),
-            )
-        }
     }
 
     private fun updateDeleteConfirmationIfDifferent(newState: DeleteConfirmationState) {
@@ -216,7 +161,6 @@ sealed class DeleteConfirmationState {
 sealed class VideoViewState {
     data object None : VideoViewState()
     data class ViewingReels(
-        val currentIndex: Int = 0,
-        val deletedVideoId: String = "",
+        val initialPage: Int = 0,
     ) : VideoViewState()
 }
