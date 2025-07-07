@@ -77,7 +77,7 @@ fun UploadVideoScreen(
             UploadVideoProgress(listState, modifier, uploadUiState, viewState)
         }
         is UiState.Success<*> -> {
-            UploadVideoSuccess(onDone = viewModel::onUploadDoneClicked)
+            UploadVideoSuccess(onDone = viewModel::onGoToHomeClicked)
         }
         is UiState.Failure -> {
             @Suppress("ForbiddenComment")
