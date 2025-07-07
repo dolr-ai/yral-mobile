@@ -318,6 +318,7 @@ private fun SuccessContent(
                                 isRefreshing = isRefreshing,
                                 containerColor = Color.Transparent,
                                 threshold = PULL_TO_REFRESH_INDICATOR_THRESHOLD.dp,
+                                elevation = 0.dp,
                             ),
                     contentAlignment = Alignment.Center,
                 ) {
