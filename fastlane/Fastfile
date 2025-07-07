@@ -18,10 +18,10 @@ platform :ios do
       export_options: {
         signingStyle: "manual",
         provisioningProfiles: {
-          "com.yral.iosApp.staging" => "Yral-Staging-Adhoc"
+          "com.yral.iosApp.staging" => "Yral-Staging ad hock"
         }
       },
-      xcargs: "CODE_SIGN_STYLE=Manual PROVISIONING_PROFILE_SPECIFIER='Yral-Staging-Adhoc' -allowProvisioningUpdates COMPILER_INDEX_STORE_ENABLE=NO SWIFT_STRICT_CONCURRENCY=minimal ENABLE_USER_SCRIPT_SANDBOXING=NO"
+      xcargs: "CODE_SIGN_STYLE=Manual PROVISIONING_PROFILE_SPECIFIER=\"Yral-Staging ad hock\" -allowProvisioningUpdates COMPILER_INDEX_STORE_ENABLE=NO SWIFT_STRICT_CONCURRENCY=minimal ENABLE_USER_SCRIPT_SANDBOXING=NO"
     )
 
     # Distribute to Firebase

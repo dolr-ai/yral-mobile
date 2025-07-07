@@ -93,7 +93,7 @@ jobs:
         run: |
           mkdir -p certs
           echo "${{ secrets.YRAL_DIST_CERT_P12_BASE64 }}" | base64 --decode > certs/Yral-Dist.p12
-          echo "${{ secrets.YRAL_ADHOC_DIST_PROF_BASE64 }}" | base64 --decode > certs/Yral-Staging-Adhoc.mobileprovision
+          echo "${{ secrets.YRAL_ADHOC_DIST_PROF_BASE64 }}" | base64 --decode > "certs/Yral-Staging ad hock.mobileprovision"
           
           # Create and configure keychain
           security create-keychain -p "" build.keychain
@@ -107,8 +107,7 @@ jobs:
           
           # Install provisioning profile
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp certs/Yral-Staging-Adhoc.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
-          ls -l ~/Library/MobileDevice/Provisioning\ Profiles | grep Adhoc
+          cp "certs/Yral-Staging ad hock.mobileprovision" ~/Library/MobileDevice/Provisioning\ Profiles/
 
       - name: Verify ad-hoc profile name
         run: |
