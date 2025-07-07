@@ -108,6 +108,14 @@ jobs:
           # Install provisioning profile
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp certs/Yral-Staging-Adhoc.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
+          ls -l ~/Library/MobileDevice/Provisioning\ Profiles | grep Adhoc
+
+      - name: Verify ad-hoc profile name
+        run: |
+          security cms -D -i ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision \
+          | plutil -extract Name xml1 -o - - \
+          | head -n 20
+
       - name: Build & Distribute via Firebase
         run: fastlane ios build_staging_firebase
         env:
