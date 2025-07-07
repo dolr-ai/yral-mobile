@@ -144,7 +144,7 @@ fun ProfileScreen(
         }
     }
 
-    when (val deleteConfirmation = state.deleteConfirmation) {
+    when (state.deleteConfirmation) {
         is DeleteConfirmationState.AwaitingConfirmation -> {
             DeleteConfirmationSheet(
                 bottomSheetState = bottomSheetState,
@@ -188,7 +188,7 @@ private fun MainContent(
         accountInfo?.let { info ->
             AccountInfoSection(accountInfo = info)
         }
-        when (val loadState = profileVideos.loadState.refresh) {
+        when (profileVideos.loadState.refresh) {
             is LoadState.Loading -> {
                 LoadingContent()
             }
