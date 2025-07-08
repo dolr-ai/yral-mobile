@@ -109,7 +109,11 @@ fun ProfileScreen(
                 if (profileVideos.itemCount > 0) {
                     ProfileReelPlayer(
                         reelVideos = profileVideos,
-                        initialPage = videoViewState.initialPage,
+                        initialPage =
+                            minOf(
+                                videoViewState.initialPage,
+                                profileVideos.itemCount - 1,
+                            ).coerceAtLeast(0),
                         deletingVideoId = deletingVideoId,
                         onBack = { viewModel.closeVideoReel() },
                         onDeleteVideo = { videoId, postId ->
