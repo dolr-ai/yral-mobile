@@ -8,6 +8,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
@@ -36,6 +37,7 @@ import com.yral.android.R
 import kotlinx.coroutines.delay
 import java.io.File
 
+@Suppress("LongMethod")
 @OptIn(UnstableApi::class)
 @Composable
 fun YralVideoPlayer(
@@ -43,7 +45,7 @@ fun YralVideoPlayer(
     url: String,
     autoPlay: Boolean = false,
     loop: Boolean = true,
-    videoAspectRatio: Int = AspectRatioFrameLayout.RESIZE_MODE_FIT,
+    videoResizeMode: Int = AspectRatioFrameLayout.RESIZE_MODE_FIT,
     onError: (String) -> Unit = {},
 ) {
     val context = LocalContext.current
@@ -91,12 +93,21 @@ fun YralVideoPlayer(
                         hideController()
                     }
                     player = exoPlayer
-                    resizeMode = videoAspectRatio
+                    resizeMode = videoResizeMode
                 }
             },
-            modifier = Modifier.fillMaxSize(),
+            modifier =
+                Modifier
+                    .wrapContentSize()
+                    .align(Alignment.Center),
         )
-        PlayerOverlay(hasError, isLoading, isPlaying, exoPlayer)
+        PlayerOverlay(
+            modifier = Modifier.align(Alignment.Center),
+            hasError = hasError,
+            isLoading = isLoading,
+            isPlaying = isPlaying,
+            exoPlayer = exoPlayer,
+        )
     }
 
     // Cleanup
@@ -109,12 +120,13 @@ fun YralVideoPlayer(
 
 @Composable
 private fun PlayerOverlay(
+    modifier: Modifier,
     hasError: Boolean,
     isLoading: Boolean,
     isPlaying: Boolean,
     exoPlayer: ExoPlayer?,
 ) {
-    Box(Modifier.fillMaxSize()) {
+    Box(modifier.fillMaxSize()) {
         // Custom Play/Pause Control Overlay
         if (!hasError) {
             PlayPauseControl(isPlaying, isLoading) {
