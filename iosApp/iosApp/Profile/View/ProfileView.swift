@@ -22,7 +22,9 @@ struct ProfileView: View {
   @State private var showDeleteIndicator: Bool = false
   @State private var showFeeds = false
   @State private var currentIndex: Int = .zero
+  @State private var isPushNotificationFlow: Bool = false
   @EnvironmentObject var session: SessionManager
+  @EnvironmentObject private var deepLinkRouter: DeepLinkRouter
   var uploadVideoPressed: (() -> Void) = {}
 
   @StateObject var viewModel: ProfileViewModel
@@ -231,6 +233,10 @@ struct ProfileView: View {
           self.videos = refreshVideos
         }
         showEmptyState = self.videos.isEmpty
+        if isPushNotificationFlow {
+          showFeeds = true
+          isPushNotificationFlow = false
+        }
         if !isLoadingFirstTime {
           sendAnalyticsInfo()
           AnalyticsModuleKt.getAnalyticsManager().trackEvent(
@@ -260,6 +266,11 @@ struct ProfileView: View {
       default: break
       }
     }
+    .onReceive(deepLinkRouter.$pendingDestination.compactMap { $0 }) { dest in
+      guard dest == .profileAfterUpload else { return }
+      isPushNotificationFlow = true
+      Task { await refreshVideos(shouldPurge: false) }
+    }
   }
 
   func onUploadAction(_ action: @escaping () -> Void) -> ProfileView {
@@ -271,12 +282,6 @@ struct ProfileView: View {
   func refreshVideos(shouldPurge: Bool) async {
     await self.viewModel.refreshVideos(
       request: RefreshVideosRequest(shouldPurge: shouldPurge)
-    )
-  }
-
-  func refreshVideosFromPushNotifications() async {
-    await self.viewModel.refreshVideos(
-      request: RefreshVideosRequest(shouldPurge: false)
     )
   }
 }
