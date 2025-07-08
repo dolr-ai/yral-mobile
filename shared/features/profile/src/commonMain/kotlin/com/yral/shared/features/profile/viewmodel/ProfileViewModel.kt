@@ -58,8 +58,13 @@ class ProfileViewModel(
         ).flow
             .cachedIn(viewModelScope)
             .combine(deletedVideoIds) { pagingData, deletedIds ->
+                val videoIds = mutableSetOf<String>()
                 pagingData
-                    .filter { video -> video.videoID !in deletedIds }
+                    .filter { video ->
+                        video.videoID.isNotEmpty() &&
+                            videoIds.add(video.videoID) &&
+                            video.videoID !in deletedIds
+                    }
             }.distinctUntilChanged()
 
     init {
@@ -101,7 +106,9 @@ class ProfileViewModel(
                     _state.update { it.copy(deleteConfirmation = DeleteConfirmationState.None) }
                 }.onFailure { error ->
                     _state.update {
-                        it.copy(deleteConfirmation = DeleteConfirmationState.Error(deleteRequest, error))
+                        it.copy(
+                            deleteConfirmation = DeleteConfirmationState.Error(deleteRequest, error),
+                        )
                     }
                 }
         }
@@ -128,6 +135,7 @@ class ProfileViewModel(
             }
         }
     }
+
     private fun updateVideoViewIfDifferent(newState: VideoViewState) {
         _state.update { currentState ->
             if (currentState.videoView != newState) {
@@ -150,14 +158,17 @@ sealed class DeleteConfirmationState {
     data class AwaitingConfirmation(
         val request: DeleteVideoRequest,
     ) : DeleteConfirmationState()
+
     data class InProgress(
         val request: DeleteVideoRequest,
     ) : DeleteConfirmationState()
+
     data class Error(
         val request: DeleteVideoRequest,
         val error: Throwable,
     ) : DeleteConfirmationState()
 }
+
 sealed class VideoViewState {
     data object None : VideoViewState()
     data class ViewingReels(

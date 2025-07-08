@@ -52,10 +52,7 @@ fun ProfileReelPlayer(
 ) {
     val videoReels =
         remember(reelVideos.itemSnapshotList) {
-            reelVideos.itemSnapshotList.items
-                .filter { it.videoID.isNotBlank() }
-                .distinctBy { it.videoID }
-                .map { it.toReel() }
+            reelVideos.itemSnapshotList.items.map { it.toReel() }
         }
     if (videoReels.isNotEmpty()) {
         YRALReelPlayer(
