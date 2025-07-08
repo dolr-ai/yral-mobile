@@ -14,16 +14,17 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation(libs.ktor.serialization.kotlinx.json)
-
             implementation(projects.shared.core)
+            implementation(projects.shared.features.auth)
             implementation(projects.shared.libs.koin)
-            implementation(projects.shared.libs.useCase)
             implementation(projects.shared.libs.crashlytics)
             implementation(projects.shared.libs.preferences)
-            implementation(projects.shared.libs.firebaseStore)
-            implementation(projects.shared.libs.firebaseAuth)
             implementation(projects.shared.libs.http)
+            implementation(projects.shared.libs.useCase)
+            implementation(projects.shared.libs.arch)
+            implementation(projects.shared.libs.coroutinesX)
+
+            implementation(libs.androidx.paging.common)
 
             val (deps, addRust) = BuildConfig.getAndProcessDependencies(project)
             deps.forEach { if (it.isNotEmpty()) implementation(it) }

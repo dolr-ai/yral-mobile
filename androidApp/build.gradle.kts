@@ -7,7 +7,6 @@ plugins {
     alias(libs.plugins.firebase.crashlytics)
     alias(libs.plugins.gms)
     alias(libs.plugins.firebase.perf)
-    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -73,6 +72,8 @@ dependencies {
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.compose.material3)
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.androidx.paging.compose)
     debugImplementation(libs.compose.ui.tooling)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
@@ -104,10 +105,11 @@ dependencies {
     implementation(projects.shared.libs.firebasePerf)
     implementation(projects.shared.features.game)
     implementation(projects.shared.features.uploadvideo)
+    implementation(projects.shared.features.profile)
     implementation(projects.shared.libs.arch)
 
     val (deps, addRust) = BuildConfig.getAndProcessDependencies(project)
-    deps.filter { it.isNotEmpty() }.forEach { implementation(it) }
+    deps.forEach { if (it.isNotEmpty()) implementation(it) }
     if (addRust) implementation(projects.shared.rust)
 }
 

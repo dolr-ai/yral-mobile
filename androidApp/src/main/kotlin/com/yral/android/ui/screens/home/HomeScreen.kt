@@ -47,14 +47,19 @@ import com.yral.android.ui.screens.leaderboard.LeaderboardScreen
 import com.yral.android.ui.screens.profile.ProfileScreen
 import com.yral.android.ui.screens.uploadVideo.UploadVideoScreen
 import com.yral.android.ui.screens.uploadVideo.keyboardHeightAsState
+import com.yral.shared.core.session.SessionState
+import com.yral.shared.core.session.getKey
+import com.yral.shared.features.account.viewmodel.AccountsViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
+import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.koin.koinInstance
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun HomeScreen(
-    feedViewModel: FeedViewModel,
     currentTab: String,
     updateCurrentTab: (tab: String) -> Unit,
+    sessionState: SessionState,
 ) {
     val backHandlerEnabled by remember(currentTab) {
         mutableStateOf(currentTab != HomeTab.HOME.title)
@@ -73,42 +78,46 @@ fun HomeScreen(
             )
         },
     ) { innerPadding ->
-        HomeScreenContent(innerPadding, currentTab, feedViewModel, updateCurrentTab = { updateCurrentTab(it.title) })
+        HomeScreenContent(
+            modifier =
+                Modifier
+                    .padding(innerPadding)
+                    .background(MaterialTheme.colorScheme.primaryContainer),
+            innerPadding = innerPadding,
+            sessionKey = sessionState.getKey(),
+            currentTab = currentTab,
+            updateCurrentTab = { updateCurrentTab(it.title) },
+        )
     }
 }
 
 @Composable
 private fun HomeScreenContent(
+    modifier: Modifier,
     innerPadding: PaddingValues,
+    sessionKey: String,
     currentTab: String,
-    feedViewModel: FeedViewModel,
     updateCurrentTab: (tab: HomeTab) -> Unit,
 ) {
+    val feedViewModel = koinViewModel<FeedViewModel>(key = "feed-$sessionKey")
+    val profileViewModel = koinViewModel<ProfileViewModel>(key = "profile-$sessionKey")
+    val accountViewModel = koinViewModel<AccountsViewModel>(key = "account-$sessionKey")
     when (currentTab) {
         HomeTab.HOME.title ->
             FeedScreen(
-                modifier =
-                    Modifier
-                        .padding(innerPadding)
-                        .background(MaterialTheme.colorScheme.primaryContainer),
+                modifier = modifier,
                 viewModel = feedViewModel,
             )
 
         HomeTab.ACCOUNT.title ->
             AccountScreen(
-                modifier =
-                    Modifier
-                        .padding(innerPadding)
-                        .background(MaterialTheme.colorScheme.primaryContainer),
-                viewModel = koinInstance.get(),
+                modifier = modifier,
+                viewModel = accountViewModel,
             )
 
         HomeTab.LEADER_BOARD.title ->
             LeaderboardScreen(
-                modifier =
-                    Modifier
-                        .padding(innerPadding)
-                        .background(MaterialTheme.colorScheme.primaryContainer),
+                modifier = modifier,
                 viewModel = koinInstance.get(),
             )
 
@@ -138,10 +147,9 @@ private fun HomeScreenContent(
 
         HomeTab.PROFILE.title -> {
             ProfileScreen(
-                modifier =
-                    Modifier
-                        .padding(innerPadding)
-                        .background(MaterialTheme.colorScheme.primaryContainer),
+                modifier = modifier,
+                uploadVideo = { updateCurrentTab(HomeTab.UPLOAD_VIDEO) },
+                viewModel = profileViewModel,
             )
         }
     }

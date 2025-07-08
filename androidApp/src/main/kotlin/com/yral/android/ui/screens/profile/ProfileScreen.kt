@@ -1,5 +1,6 @@
 package com.yral.android.ui.screens.profile
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -21,8 +22,10 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -33,8 +36,8 @@ import androidx.compose.material3.pulltorefresh.pullToRefreshIndicator
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,91 +49,163 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import co.touchlab.kermit.Logger
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.LoadState
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemContentType
+import androidx.paging.compose.itemKey
 import com.yral.android.R
 import com.yral.android.ui.components.DeleteConfirmationSheet
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.profile.ProfileScreenConstants.GRID_ITEM_ASPECT_RATIO
+import com.yral.android.ui.screens.profile.ProfileScreenConstants.PADDING_BOTTOM_ACCOUNT_INFO
 import com.yral.android.ui.screens.profile.ProfileScreenConstants.PULL_TO_REFRESH_INDICATOR_SIZE
 import com.yral.android.ui.screens.profile.ProfileScreenConstants.PULL_TO_REFRESH_INDICATOR_THRESHOLD
 import com.yral.android.ui.screens.profile.ProfileScreenConstants.PULL_TO_REFRESH_OFFSET_MULTIPLIER
+import com.yral.android.ui.widgets.LoaderSize
 import com.yral.android.ui.widgets.YralAsyncImage
+import com.yral.android.ui.widgets.YralButtonState
 import com.yral.android.ui.widgets.YralButtonType
+import com.yral.android.ui.widgets.YralErrorMessage
 import com.yral.android.ui.widgets.YralGradientButton
 import com.yral.android.ui.widgets.YralLoader
 import com.yral.shared.core.session.AccountInfo
+import com.yral.shared.features.profile.viewmodel.DeleteConfirmationState
+import com.yral.shared.features.profile.viewmodel.ProfileViewModel
+import com.yral.shared.features.profile.viewmodel.VideoViewState
+import com.yral.shared.rust.domain.models.FeedDetails
+import kotlin.ranges.coerceAtMost
 
+@Suppress("LongMethod")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen(modifier: Modifier = Modifier) {
-    val viewModel = remember { ProfileViewModel() }
-    val state by viewModel.viewState.collectAsState()
-
-    val bottomSheetState =
-        rememberModalBottomSheetState(
-            skipPartiallyExpanded = true,
-        )
-    state.openVideo?.let { video ->
-        ProfileVideoPlayer(
-            modifier = modifier.fillMaxSize(),
-            video = video,
-            onBack = { viewModel.openVideo(null) },
-            onDeleteVideo = { viewModel.confirmDelete(video.videoID) },
-        )
-    } ?: MainContent(
-        modifier = modifier,
-        state = state,
-        onRefresh = { viewModel.onRefresh() },
-        openVideo = { video -> viewModel.openVideo(video) },
-        onDeleteVideo = { videoId -> viewModel.confirmDelete(videoId) },
+fun ProfileScreen(
+    modifier: Modifier = Modifier,
+    uploadVideo: () -> Unit,
+    viewModel: ProfileViewModel,
+) {
+    val profileVideos = viewModel.profileVideos.collectAsLazyPagingItems()
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val backHandlerEnabled by remember(state.videoView) {
+        mutableStateOf(state.videoView is VideoViewState.ViewingReels)
+    }
+    BackHandler(
+        enabled = backHandlerEnabled,
+        onBack = { viewModel.closeVideoReel() },
     )
+    val deletingVideoId =
+        remember(state.deleteConfirmation) {
+            when (val deleteConfirmation = state.deleteConfirmation) {
+                is DeleteConfirmationState.InProgress -> deleteConfirmation.request.videoId
+                else -> ""
+            }
+        }
+    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val gridState = rememberLazyGridState()
+    Box(modifier = modifier.fillMaxSize()) {
+        when (val videoViewState = state.videoView) {
+            is VideoViewState.ViewingReels -> {
+                if (profileVideos.itemCount > 0) {
+                    ProfileReelPlayer(
+                        reelVideos = profileVideos,
+                        initialPage =
+                            videoViewState.initialPage
+                                .coerceAtMost(profileVideos.itemCount - 1),
+                        deletingVideoId = deletingVideoId,
+                        onBack = { viewModel.closeVideoReel() },
+                        onDeleteVideo = { videoId, postId ->
+                            viewModel.confirmDelete(videoId = videoId, postId = postId)
+                        },
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                } else {
+                    viewModel.closeVideoReel()
+                }
+            }
+            VideoViewState.None -> {
+                MainContent(
+                    modifier = Modifier.fillMaxSize(),
+                    accountInfo = state.accountInfo,
+                    gridState = gridState,
+                    profileVideos = profileVideos,
+                    uploadVideo = uploadVideo,
+                    openVideoReel = { clickedIndex ->
+                        viewModel.openVideoReel(clickedIndex)
+                    },
+                    deletingVideoId = deletingVideoId,
+                    onDeleteVideo = { video ->
+                        viewModel.confirmDelete(
+                            videoId = video.videoID,
+                            postId = video.postID.toULong(),
+                        )
+                    },
+                )
+            }
+        }
+    }
 
-    state.deleteConfirmation?.let {
-        DeleteConfirmationSheet(
-            bottomSheetState = bottomSheetState,
-            title = stringResource(R.string.delete_video),
-            subTitle = "",
-            confirmationMessage = stringResource(R.string.video_will_be_deleted_permanently),
-            cancelButton = stringResource(R.string.cancel),
-            deleteButton = stringResource(R.string.delete),
-            onDismissRequest = { viewModel.confirmDelete(null) },
-            onDelete = { viewModel.deleteVideo() },
-        )
+    when (state.deleteConfirmation) {
+        is DeleteConfirmationState.AwaitingConfirmation -> {
+            DeleteConfirmationSheet(
+                bottomSheetState = bottomSheetState,
+                title = stringResource(R.string.delete_video),
+                subTitle = "",
+                confirmationMessage = stringResource(R.string.video_will_be_deleted_permanently),
+                cancelButton = stringResource(R.string.cancel),
+                deleteButton = stringResource(R.string.delete),
+                onDismissRequest = { viewModel.clearDeleteConfirmationState() },
+                onDelete = { viewModel.deleteVideo() },
+            )
+        }
+        is DeleteConfirmationState.Error -> {
+            YralErrorMessage(
+                title = stringResource(R.string.oops),
+                error = stringResource(R.string.failed_to_delete_video),
+                cta = stringResource(R.string.try_again),
+                onDismiss = { viewModel.clearDeleteConfirmationState() },
+                onClick = { viewModel.deleteVideo() },
+                sheetState = bottomSheetState,
+            )
+        }
+        DeleteConfirmationState.None, is DeleteConfirmationState.InProgress -> Unit
     }
 }
 
 @Composable
 private fun MainContent(
     modifier: Modifier,
-    state: ProfileState,
-    onRefresh: () -> Unit,
-    openVideo: (ProfileVideo) -> Unit,
-    onDeleteVideo: (String) -> Unit,
+    accountInfo: AccountInfo?,
+    gridState: LazyGridState,
+    profileVideos: LazyPagingItems<FeedDetails>,
+    deletingVideoId: String,
+    uploadVideo: () -> Unit,
+    openVideoReel: (Int) -> Unit,
+    onDeleteVideo: (FeedDetails) -> Unit,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         ProfileHeader()
         Spacer(modifier = Modifier.height(8.dp))
-        state.accountInfo?.let { info ->
+        accountInfo?.let { info ->
             AccountInfoSection(accountInfo = info)
         }
-        when (val uiState = state.uiState) {
-            is ProfileUiState.Loading -> {
+        when (profileVideos.loadState.refresh) {
+            is LoadState.Loading -> {
                 LoadingContent()
             }
-
-            is ProfileUiState.Success -> {
+            is LoadState.Error -> {
+                ErrorContent(message = stringResource(R.string.error_loading_videos))
+            }
+            is LoadState.NotLoading -> {
                 SuccessContent(
-                    videos = uiState.videos,
-                    isRefreshing = state.isRefreshing,
-                    onRefresh = onRefresh,
-                    openVideo = openVideo,
+                    gridState = gridState,
+                    profileVideos = profileVideos,
+                    deletingVideoId = deletingVideoId,
+                    uploadVideo = uploadVideo,
+                    openVideoReel = openVideoReel,
                     onDeleteVideo = onDeleteVideo,
                 )
-            }
-
-            is ProfileUiState.Error -> {
-                ErrorContent(message = uiState.message)
             }
         }
     }
@@ -139,10 +214,7 @@ private fun MainContent(
 @Composable
 private fun ProfileHeader() {
     Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+        modifier = Modifier.fillMaxWidth().padding(16.dp),
         horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -157,16 +229,10 @@ private fun ProfileHeader() {
 @Composable
 private fun AccountInfoSection(accountInfo: AccountInfo) {
     Column(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
     ) {
         Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 20.dp),
+            modifier = Modifier.fillMaxWidth().padding(bottom = 20.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.Start),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -193,20 +259,17 @@ private fun AccountInfoSection(accountInfo: AccountInfo) {
 @Composable
 private fun LoadingContent() {
     Box(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
         contentAlignment = Alignment.Center,
     ) {
-        YralLoader(size = 40.dp)
+        YralLoader(size = PULL_TO_REFRESH_INDICATOR_SIZE.dp)
     }
 }
 
 @Composable
 private fun ErrorContent(message: String) {
     Column(
-        modifier =
-            Modifier
-                .fillMaxSize()
-                .padding(16.dp),
+        modifier = Modifier.fillMaxSize().padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
@@ -229,24 +292,30 @@ private fun ErrorContent(message: String) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SuccessContent(
-    videos: List<ProfileVideo>,
-    isRefreshing: Boolean,
-    onRefresh: () -> Unit,
-    openVideo: (ProfileVideo) -> Unit,
-    onDeleteVideo: (String) -> Unit,
+    gridState: LazyGridState,
+    profileVideos: LazyPagingItems<FeedDetails>,
+    deletingVideoId: String,
+    uploadVideo: () -> Unit,
+    openVideoReel: (Int) -> Unit,
+    onDeleteVideo: (FeedDetails) -> Unit,
 ) {
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .padding(top = PADDING_BOTTOM_ACCOUNT_INFO.dp),
     ) {
-        Spacer(modifier = Modifier.height(20.dp))
         val pullRefreshState = rememberPullToRefreshState()
         val offset =
             pullRefreshState.distanceFraction *
                 PULL_TO_REFRESH_INDICATOR_SIZE *
                 PULL_TO_REFRESH_OFFSET_MULTIPLIER
+
+        val isRefreshing = profileVideos.loadState.refresh is LoadState.Loading
+
         PullToRefreshBox(
             isRefreshing = isRefreshing,
-            onRefresh = onRefresh,
+            onRefresh = { profileVideos.refresh() },
             state = pullRefreshState,
             indicator = {
                 Box(
@@ -258,6 +327,7 @@ private fun SuccessContent(
                                 isRefreshing = isRefreshing,
                                 containerColor = Color.Transparent,
                                 threshold = PULL_TO_REFRESH_INDICATOR_THRESHOLD.dp,
+                                elevation = 0.dp,
                             ),
                     contentAlignment = Alignment.Center,
                 ) {
@@ -265,13 +335,15 @@ private fun SuccessContent(
                 }
             },
         ) {
-            if (videos.isEmpty()) {
-                EmptyStateContent(offset)
+            if (profileVideos.itemCount == 0 && profileVideos.loadState.refresh is LoadState.NotLoading) {
+                EmptyStateContent(offset, uploadVideo)
             } else {
                 VideoGridContent(
-                    videos = videos,
+                    gridState = gridState,
+                    profileVideos = profileVideos,
                     offset = offset,
-                    openVideo = openVideo,
+                    deletingVideoId = deletingVideoId,
+                    openVideoReel = openVideoReel,
                     onDeleteVideo = onDeleteVideo,
                 )
             }
@@ -280,13 +352,16 @@ private fun SuccessContent(
 }
 
 @Composable
-private fun EmptyStateContent(offset: Float) {
+private fun EmptyStateContent(
+    offset: Float,
+    uploadVideo: () -> Unit,
+) {
     Column(
         modifier =
             Modifier
                 .fillMaxSize()
-                .padding(16.dp)
-                .offset(y = offset.dp)
+                .padding(horizontal = 16.dp)
+                .offset(y = (offset - PADDING_BOTTOM_ACCOUNT_INFO).dp)
                 .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
@@ -306,10 +381,9 @@ private fun EmptyStateContent(offset: Float) {
         Spacer(modifier = Modifier.height(36.dp))
         YralGradientButton(
             modifier = Modifier.fillMaxWidth(),
-            text = "Upload Video",
+            text = stringResource(R.string.upload_video),
             buttonType = YralButtonType.White,
-            onClick = {
-            },
+            onClick = uploadVideo,
         )
     }
 }
@@ -317,12 +391,15 @@ private fun EmptyStateContent(offset: Float) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun VideoGridContent(
-    videos: List<ProfileVideo>,
+    gridState: LazyGridState,
+    profileVideos: LazyPagingItems<FeedDetails>,
     offset: Float,
-    openVideo: (ProfileVideo) -> Unit,
-    onDeleteVideo: (String) -> Unit,
+    deletingVideoId: String,
+    openVideoReel: (Int) -> Unit,
+    onDeleteVideo: (FeedDetails) -> Unit,
 ) {
     LazyVerticalGrid(
+        state = gridState,
         columns = GridCells.Fixed(2),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -332,11 +409,109 @@ private fun VideoGridContent(
                 .fillMaxSize()
                 .offset(y = offset.dp),
     ) {
-        items(videos) { video ->
-            VideoGridItem(
-                video = video,
-                openVideo = { openVideo(video) },
-                onDeleteClick = { onDeleteVideo(video.videoID) },
+        items(
+            count = profileVideos.itemCount,
+            key = profileVideos.itemKey { it.videoID },
+            contentType = profileVideos.itemContentType { "ProfileVideo" },
+        ) { index ->
+            val video = profileVideos[index]
+            if (video != null) {
+                VideoGridItem(
+                    video = video,
+                    isDeleting = deletingVideoId == video.videoID,
+                    openVideoReel = { openVideoReel(index) },
+                    onDeleteClick = { onDeleteVideo(video) },
+                )
+            }
+        }
+
+        // Handle pagination append state
+        item(
+            span = { GridItemSpan(maxLineSpan) }, // Full width for indicators
+        ) {
+            PagingAppendIndicator(
+                loadState = profileVideos.loadState.append,
+                onRetry = { profileVideos.retry() },
+            )
+        }
+    }
+}
+
+@Composable
+private fun PagingAppendIndicator(
+    loadState: LoadState,
+    modifier: Modifier = Modifier,
+    onRetry: (() -> Unit)? = null,
+) {
+    when (loadState) {
+        is LoadState.Loading -> {
+            PagingLoadingIndicator(modifier = modifier)
+        }
+
+        is LoadState.Error -> {
+            PagingErrorIndicator(
+                modifier = modifier,
+                onRetry = onRetry,
+            )
+        }
+
+        is LoadState.NotLoading -> {
+            // No indicator needed for successful load completion
+        }
+    }
+}
+
+@Composable
+private fun PagingLoadingIndicator(modifier: Modifier = Modifier) {
+    Box(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        YralLoader(size = 24.dp)
+    }
+}
+
+@Composable
+private fun PagingErrorIndicator(
+    modifier: Modifier = Modifier,
+    onRetry: (() -> Unit)? = null,
+) {
+    Box(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (onRetry != null) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(0.dp),
+            ) {
+                Text(
+                    text = stringResource(R.string.error_loading_more_videos),
+                    style = LocalAppTopography.current.xsBold,
+                    color = YralColors.NeutralTextSecondary,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                YralGradientButton(
+                    text = stringResource(R.string.try_again),
+                    onClick = onRetry,
+                    modifier = Modifier.fillMaxWidth(),
+                    buttonState = YralButtonState.Enabled,
+                    buttonType = YralButtonType.Transparent,
+                )
+            }
+        } else {
+            Text(
+                text = stringResource(R.string.error_loading_more_videos),
+                style = LocalAppTopography.current.baseMedium,
+                color = YralColors.NeutralTextSecondary,
+                textAlign = TextAlign.Center,
             )
         }
     }
@@ -344,8 +519,9 @@ private fun VideoGridContent(
 
 @Composable
 private fun VideoGridItem(
-    video: ProfileVideo,
-    openVideo: () -> Unit,
+    video: FeedDetails,
+    isDeleting: Boolean,
+    openVideoReel: () -> Unit,
     onDeleteClick: () -> Unit,
 ) {
     Box(
@@ -363,11 +539,12 @@ private fun VideoGridItem(
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .clickable { openVideo() },
+                    .clickable { openVideoReel() },
         ) {
             // Video thumbnail
             YralAsyncImage(
                 imageUrl = video.thumbnail.toString(),
+                loaderSize = LoaderSize.Fixed,
                 modifier = Modifier.fillMaxSize(),
                 shape = RoundedCornerShape(8.dp),
             )
@@ -377,19 +554,20 @@ private fun VideoGridItem(
                 onDeleteVideo = onDeleteClick,
             )
         }
-        DeletingOverLay(video)
+        DeletingOverLay(
+            isDeleting = isDeleting,
+        )
     }
 }
 
 @Composable
 fun DeletingOverLay(
-    video: ProfileVideo,
+    isDeleting: Boolean,
     loaderSize: Dp = 24.dp,
     textStyle: TextStyle = LocalAppTopography.current.baseMedium,
 ) {
-    Logger.d("xxxx") { "isDeleting $video.isDeleting" }
     AnimatedVisibility(
-        visible = video.isDeleting,
+        visible = isDeleting,
         enter = fadeIn(),
         exit = fadeOut(),
     ) {
@@ -474,4 +652,6 @@ object ProfileScreenConstants {
     const val PULL_TO_REFRESH_INDICATOR_SIZE = 34f
     const val PULL_TO_REFRESH_INDICATOR_THRESHOLD = 36f
     const val PULL_TO_REFRESH_OFFSET_MULTIPLIER = 1.5f
+    const val MAX_LINES_FOR_POST_DESCRIPTION = 5
+    const val PADDING_BOTTOM_ACCOUNT_INFO = 20
 }

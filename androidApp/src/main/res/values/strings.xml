@@ -8,6 +8,7 @@
     <string name="follow_us_on">Follow us on</string>
     <string name="login">Login</string>
     <string name="logout">Logout</string>
+    <string name="anonymous_account_setup">Your Yral account has been setup. Login to not lose progress.</string>
     <string name="continue_to_sign_up_for_free">Continue to sign up for free</string>
     <string name="sign_up_disclaimer">If you already have an account, we’ll log you in</string>
     <string name="signup_consent">By signing up, you agree to our Terms of Service</string>
@@ -88,6 +89,9 @@
     <string name="delete">Delete</string>
     <string name="cancel">Cancel</string>
     <string name="deleting">Deleting…</string>
+    <string name="error_loading_more_videos">Error loading more videos</string>
+    <string name="error_loading_videos">Error loading videos</string>
+    <string name="failed_to_delete_video">Failed to delete video</string>
 
     <!-- Permission Messages -->
     <string name="permission_required_title">Permission required!</string>
