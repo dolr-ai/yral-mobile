@@ -17,6 +17,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -31,6 +32,7 @@ import com.yral.android.ui.widgets.YralLoader
 import com.yral.android.ui.widgets.YralLottieAnimation
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
+import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.features.root.viewmodels.RootError
 import com.yral.shared.features.root.viewmodels.RootViewModel
 import com.yral.shared.koin.koinInstance
@@ -41,7 +43,8 @@ import org.koin.compose.viewmodel.koinViewModel
 fun RootScreen(viewModel: RootViewModel = koinViewModel()) {
     val state by viewModel.state.collectAsState()
     val sessionState by viewModel.sessionManagerState.collectAsState()
-    val feedViewModel by remember { mutableStateOf(koinInstance.get<FeedViewModel>()) }
+    var feedViewModel by remember { mutableStateOf(koinInstance.get<FeedViewModel>()) }
+    var profileViewModel by remember { mutableStateOf(koinInstance.get<ProfileViewModel>()) }
     LaunchedEffect(sessionState) {
         if (sessionState != state.currentSessionState) {
             when (sessionState) {
@@ -53,8 +56,8 @@ fun RootScreen(viewModel: RootViewModel = koinViewModel()) {
                 is SessionState.SignedIn -> {
                     // initialize rust and close splash if visible
                     viewModel.initialize()
-                    // cold start feed
-                    feedViewModel.initialize()
+                    feedViewModel = koinInstance.get()
+                    profileViewModel = koinInstance.get()
                 }
 
                 else -> {}
@@ -75,15 +78,13 @@ fun RootScreen(viewModel: RootViewModel = koinViewModel()) {
             HandleSystemBars(show = true)
             HomeScreen(
                 feedViewModel = feedViewModel,
+                profileViewModel = profileViewModel,
                 currentTab = state.currentHomePageTab,
                 updateCurrentTab = { viewModel.updateCurrentTab(it) },
             )
         }
         // shows login error for both splash and account screen
-        val sheetState =
-            rememberModalBottomSheetState(
-                skipPartiallyExpanded = true,
-            )
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         LaunchedEffect(state.error) {
             if (state.error == null) {
                 sheetState.hide()

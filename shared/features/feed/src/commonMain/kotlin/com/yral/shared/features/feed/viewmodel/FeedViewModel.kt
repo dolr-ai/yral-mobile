@@ -9,7 +9,6 @@ import com.yral.shared.analytics.events.DuplicatePostsEvent
 import com.yral.shared.analytics.events.EmptyColdStartFeedEvent
 import com.yral.shared.analytics.events.VideoDurationWatchedEventData
 import com.yral.shared.core.dispatchers.AppDispatchers
-import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.utils.filterFirstNSuspendFlow
 import com.yral.shared.crashlytics.core.CrashlyticsManager
@@ -43,7 +42,7 @@ class FeedViewModel(
     private val analyticsManager: AnalyticsManager,
     private val crashlyticsManager: CrashlyticsManager,
     private val preferences: Preferences,
-    private val authClientFactory: AuthClientFactory,
+    authClientFactory: AuthClientFactory,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.io)
 
@@ -68,13 +67,17 @@ class FeedViewModel(
     private val _state = MutableStateFlow(FeedState())
     val state: StateFlow<FeedState> = _state.asStateFlow()
 
-    fun initialize() {
+    init {
         coroutineScope.launch {
-            val isSocialSignInSuccessful =
-                preferences.getBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name) ?: false
-            _state.update { FeedState(showSignupNudge = !isSocialSignInSuccessful) }
+            updateSocialSignIn()
             initialFeedData()
         }
+    }
+
+    private suspend fun updateSocialSignIn() {
+        val isSocialSignInSuccessful =
+            preferences.getBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name) ?: false
+        _state.update { FeedState(showSignupNudge = !isSocialSignInSuccessful) }
     }
 
     private suspend fun initialFeedData() {
@@ -108,9 +111,7 @@ class FeedViewModel(
                     setLoadingMore(false)
                     loadMoreFeed()
                 }
-        } ?: crashlyticsManager.recordException(
-            YralException("Principal is null while fetching initial feed"),
-        )
+        }
     }
 
     private suspend fun filterVotedAndFetchDetails(posts: List<Post>): Int {

@@ -48,11 +48,13 @@ import com.yral.android.ui.screens.profile.ProfileScreen
 import com.yral.android.ui.screens.uploadVideo.UploadVideoScreen
 import com.yral.android.ui.screens.uploadVideo.keyboardHeightAsState
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
+import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.koin.koinInstance
 
 @Composable
 fun HomeScreen(
     feedViewModel: FeedViewModel,
+    profileViewModel: ProfileViewModel,
     currentTab: String,
     updateCurrentTab: (tab: String) -> Unit,
 ) {
@@ -77,6 +79,7 @@ fun HomeScreen(
             innerPadding = innerPadding,
             currentTab = currentTab,
             feedViewModel = feedViewModel,
+            profileViewModel = profileViewModel,
             updateCurrentTab = { updateCurrentTab(it.title) },
         )
     }
@@ -88,6 +91,7 @@ private fun HomeScreenContent(
     innerPadding: PaddingValues,
     currentTab: String,
     feedViewModel: FeedViewModel,
+    profileViewModel: ProfileViewModel,
     updateCurrentTab: (tab: HomeTab) -> Unit,
 ) {
     when (currentTab) {
@@ -149,7 +153,7 @@ private fun HomeScreenContent(
                         .padding(innerPadding)
                         .background(MaterialTheme.colorScheme.primaryContainer),
                 uploadVideo = { updateCurrentTab(HomeTab.UPLOAD_VIDEO) },
-                viewModel = koinInstance.get(),
+                viewModel = profileViewModel,
             )
         }
     }
