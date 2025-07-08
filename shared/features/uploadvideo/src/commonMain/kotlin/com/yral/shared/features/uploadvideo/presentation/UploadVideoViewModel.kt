@@ -13,11 +13,15 @@ import com.yral.shared.features.uploadvideo.domain.models.UploadState
 import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -37,12 +41,16 @@ class UploadVideoViewModel internal constructor(
     private val eventChannel = Channel<Event>(Channel.BUFFERED)
     val eventsFlow: Flow<Event> = eventChannel.receiveAsFlow()
 
+    private var backgroundUploadJob: Job? = null
+    private var currentUploadEndpoint: UploadEndpoint? = null
+
     private fun send(event: Event) {
         viewModelScope.launch { eventChannel.send(event) }
     }
 
     fun onFileSelected(filePath: String) {
         _state.update { it.copy(selectedFilePath = filePath) }
+        startBackgroundUpload(filePath)
     }
 
     fun onCaptionChanged(caption: String) {
@@ -54,17 +62,17 @@ class UploadVideoViewModel internal constructor(
     }
 
     fun onUploadButtonClicked() {
-        validateAndUpload()
+        validateAndPublish()
     }
 
     fun onUploadDoneClicked() {
-        if (state.value.uploadUiState is UiState.Success) {
+        if (state.value.completeProcessUiState is UiState.Success) {
             resetState()
         }
     }
 
     fun onRetryClicked() {
-        validateAndUpload()
+        validateAndPublish()
     }
 
     fun onGoToHomeClicked() {
@@ -72,8 +80,72 @@ class UploadVideoViewModel internal constructor(
         send(Event.GoToHome)
     }
 
+    private fun startBackgroundUpload(filePath: String) {
+        // Cancel any existing upload
+        backgroundUploadJob?.cancel()
+        currentUploadEndpoint = null
+        
+        _state.update {
+            it.copy(
+                fileUploadUiState = UiState.InProgress(0f),
+                completeProcessUiState = UiState.Initial
+            )
+        }
+
+        backgroundUploadJob = viewModelScope.launch {
+            performBackgroundUpload(filePath)
+        }
+    }
+
+    private suspend fun performBackgroundUpload(filePath: String) {
+        try {
+            // Ensure we have upload endpoint
+            ensureUploadEndpoint()
+            val endpoint = currentUploadEndpoint!!
+
+            // Start video upload
+            uploadVideo(UploadVideoUseCase.Params(endpoint.url, filePath))
+                .collect { result ->
+                    result.fold(
+                        success = { uploadState ->
+                            when (uploadState) {
+                                is UploadState.Uploaded -> {
+                                    _state.update {
+                                        it.copy(fileUploadUiState = UiState.Success(Unit))
+                                    }
+                                }
+
+                                is UploadState.InProgress -> {
+                                    val progress =
+                                        if (uploadState.totalBytes != null) {
+                                            uploadState.bytesSent.toFloat() / uploadState.totalBytes.toFloat()
+                                        } else {
+                                            0f
+                                        }
+                                    _state.update {
+                                        it.copy(
+                                            fileUploadUiState = UiState.InProgress(progress)
+                                        )
+                                    }
+                                }
+                            }
+                        },
+                        failure = { error ->
+                            _state.update { it.copy(fileUploadUiState = UiState.Failure(error)) }
+                        }
+                    )
+                }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+            _state.update { it.copy(fileUploadUiState = UiState.Failure(e)) }
+        }
+    }
+
+
+
     @Suppress("ReturnCount")
-    private fun validateAndUpload() {
+    private fun validateAndPublish() {
         val currentState = _state.value
 
         // Validate inputs
@@ -92,91 +164,91 @@ class UploadVideoViewModel internal constructor(
             return
         }
 
-        if (currentState.uploadUiState is UiState.InProgress) {
+        if (currentState.completeProcessUiState is UiState.InProgress) {
             return
         }
 
-        startCompleteUploadProcess(
+        startCompletePublishProcess(
             currentState.selectedFilePath,
             currentState.caption,
             currentState.hashtags,
         )
     }
 
-    private fun resetState() {
-        deleteSelectedFile()
-        _state.value = ViewState()
-    }
-
-    private fun deleteSelectedFile() {
-        state.value.selectedFilePath?.let {
-            viewModelScope.launch {
-                withContext(appDispatchers.disk) {
-                    SystemFileSystem.delete(Path(it), mustExist = false)
-                }
-            }
-        }
-    }
-
-    private fun startCompleteUploadProcess(
+    private fun startCompletePublishProcess(
         filePath: String,
         caption: String,
         hashtags: List<String>,
     ) {
         _state.update {
-            it.copy(uploadUiState = UiState.InProgress(0f))
+            it.copy(completeProcessUiState = UiState.InProgress(0f))
         }
 
         viewModelScope.launch {
             try {
-                // Step 1: Get upload endpoint
-                val endpointResult = getUploadEndpoint()
-                val endpoint = endpointResult.getOrThrow()
-
-                // Step 2: Start video upload
-                uploadVideo(UploadVideoUseCase.Params(endpoint.url, filePath))
-                    .collect { result ->
-                        result.fold(
-                            success = { uploadState ->
-                                when (uploadState) {
-                                    is UploadState.Uploaded -> {
-                                        // Step 3: Update metadata
-                                        updateMetadata(endpoint, caption, hashtags)
-                                    }
-
-                                    is UploadState.InProgress -> {
-                                        val progress =
-                                            if (uploadState.totalBytes != null) {
-                                                uploadState.bytesSent.toFloat() / uploadState.totalBytes.toFloat()
-                                            } else {
-                                                0f
-                                            }
-                                        _state.update {
-                                            it.copy(
-                                                uploadUiState =
-                                                    UiState.InProgress(
-                                                        progress,
-                                                    ),
-                                            )
-                                        }
-                                    }
-                                }
-                            },
-                            failure = { error ->
-                                _state.update { it.copy(uploadUiState = UiState.Failure(error)) }
-                                send(Event.UploadFailed(error))
-                            },
-                        )
+                when (val fileUploadState = state.value.fileUploadUiState) {
+                    is UiState.Failure -> {
+                        // File upload failed, retry upload first
+                        performBackgroundUpload(filePath)
                     }
+                    
+                    UiState.Initial -> {
+                        // No upload started, start fresh
+                        ensureUploadEndpoint()
+                        performBackgroundUpload(filePath)
+                    }
+                    
+                    is UiState.Success, is UiState.InProgress -> {
+                        // File upload completed or in progress, proceed
+                    }
+                }
+                
+                // Wait for upload completion and update metadata
+                waitForUploadCompletionAndUpdateMetadata(caption, hashtags)
+                
             } catch (e: CancellationException) {
                 throw e
-            } catch (
-                @Suppress("TooGenericExceptionCaught") e: Exception,
-            ) {
-                _state.update { it.copy(uploadUiState = UiState.Failure(e)) }
+            } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+                _state.update { it.copy(completeProcessUiState = UiState.Failure(e)) }
                 send(Event.UploadFailed(e))
             }
         }
+    }
+
+    private suspend fun ensureUploadEndpoint() {
+        if (currentUploadEndpoint == null) {
+            val endpointResult = getUploadEndpoint()
+            currentUploadEndpoint = endpointResult.getOrThrow()
+        }
+    }
+
+    private suspend fun waitForUploadCompletionAndUpdateMetadata(
+        caption: String,
+        hashtags: List<String>
+    ) {
+        // Monitor file upload state until completion using Flow collection
+        state.map { it.fileUploadUiState }
+            .distinctUntilChanged()
+            .collect { fileUploadState ->
+                when (fileUploadState) {
+                    is UiState.Success -> {
+                        currentUploadEndpoint?.let { endpoint ->
+                            updateMetadata(endpoint, caption, hashtags)
+                        } ?: run {
+                            throw IllegalStateException("Upload endpoint not available")
+                        }
+                        return@collect
+                    }
+                    
+                    is UiState.Failure -> {
+                        throw fileUploadState.error
+                    }
+                    
+                    is UiState.InProgress, UiState.Initial -> {
+                        // Continue waiting for completion
+                    }
+                }
+            }
     }
 
     private suspend fun updateMetadata(
@@ -199,16 +271,31 @@ class UploadVideoViewModel internal constructor(
 
             updateMeta(UpdateMetaUseCase.Param(uploadFileRequest))
 
-            _state.update { it.copy(uploadUiState = UiState.Success(Unit)) }
+            _state.update { it.copy(completeProcessUiState = UiState.Success(Unit)) }
             send(Event.UploadSuccess)
             deleteSelectedFile()
         } catch (e: CancellationException) {
             throw e
-        } catch (
-            @Suppress("TooGenericExceptionCaught") e: Exception,
-        ) {
-            _state.update { it.copy(uploadUiState = UiState.Failure(e)) }
+        } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+            _state.update { it.copy(completeProcessUiState = UiState.Failure(e)) }
             send(Event.UploadFailed(e))
+        }
+    }
+
+    private fun resetState() {
+        backgroundUploadJob?.cancel()
+        deleteSelectedFile()
+        currentUploadEndpoint = null
+        _state.value = ViewState()
+    }
+
+    private fun deleteSelectedFile() {
+        state.value.selectedFilePath?.let {
+            viewModelScope.launch {
+                withContext(appDispatchers.disk) {
+                    SystemFileSystem.delete(Path(it), mustExist = false)
+                }
+            }
         }
     }
 
@@ -231,12 +318,18 @@ class UploadVideoViewModel internal constructor(
         val selectedFilePath: String? = null,
         val caption: String = "",
         val hashtags: List<String> = emptyList(),
-        val uploadUiState: UiState<Unit> = UiState.Initial,
+        val fileUploadUiState: UiState<Unit> = UiState.Initial,
+        val completeProcessUiState: UiState<Unit> = UiState.Initial,
     ) {
         val canUpload: Boolean =
             !selectedFilePath.isNullOrBlank() &&
                 caption.isNotBlank() &&
-                !hashtags.isEmpty() &&
-                uploadUiState !is UiState.InProgress
+                hashtags.isNotEmpty() &&
+                completeProcessUiState !is UiState.InProgress
+
+        // Legacy property for backward compatibility
+        val uploadUiState: UiState<Unit> get() = completeProcessUiState
     }
+
+
 }
