@@ -1,6 +1,8 @@
 package com.yral.android.ui.screens.uploadVideo
 
+import android.R.attr.textStyle
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,9 +24,13 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush.Companion.linearGradient
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
@@ -32,6 +38,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import co.touchlab.kermit.Logger
 import com.yral.android.R
+import com.yral.android.ui.components.hashtagInput.HashtagInput
+import com.yral.android.ui.components.hashtagInput.keyboardHeightAsState
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.widgets.YralButtonState
@@ -287,12 +295,19 @@ private fun CaptionInput(
     text: String,
     onValueChange: (String) -> Unit,
 ) {
+    var isFocused by remember { mutableStateOf(false) }
     TextField(
         modifier =
             Modifier
                 .fillMaxWidth()
                 .height(100.dp)
-                .clip(RoundedCornerShape(8.dp)),
+                .onFocusChanged {
+                    isFocused = it.isFocused
+                }.border(
+                    width = 1.dp,
+                    color = if (isFocused) YralColors.Neutral500 else Color.Transparent,
+                    shape = RoundedCornerShape(8.dp),
+                ).clip(RoundedCornerShape(8.dp)),
         value = text,
         onValueChange = onValueChange,
         colors =
@@ -300,9 +315,9 @@ private fun CaptionInput(
                 focusedTextColor = YralColors.Neutral300,
                 unfocusedTextColor = YralColors.Neutral300,
                 disabledTextColor = YralColors.Neutral600,
-                focusedContainerColor = YralColors.Neutral800,
-                unfocusedContainerColor = YralColors.Neutral800,
-                disabledContainerColor = YralColors.Neutral800,
+                focusedContainerColor = YralColors.Neutral900,
+                unfocusedContainerColor = YralColors.Neutral900,
+                disabledContainerColor = YralColors.Neutral900,
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent,
                 disabledIndicatorColor = Color.Transparent,
