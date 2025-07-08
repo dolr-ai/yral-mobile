@@ -49,3 +49,9 @@ sealed interface SessionState {
         val session: Session,
     ) : SessionState
 }
+
+fun SessionState.getKey(): String =
+    when (this) {
+        is SessionState.SignedIn -> "signed-${this.session.userPrincipal}"
+        else -> "anon"
+    }

@@ -60,12 +60,13 @@ import com.yral.android.ui.widgets.YralLottieAnimation
 import com.yral.android.ui.widgets.YralMaskedVectorTextV2
 import com.yral.shared.features.game.domain.models.LeaderboardItem
 import com.yral.shared.features.game.viewmodel.LeaderBoardViewModel
+import org.koin.compose.viewmodel.koinViewModel
 
 @Suppress("LongMethod")
 @Composable
 fun LeaderboardScreen(
     modifier: Modifier = Modifier,
-    viewModel: LeaderBoardViewModel,
+    viewModel: LeaderBoardViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
     LaunchedEffect(state.leaderboard, state.currentUser) {
