@@ -15,8 +15,9 @@ struct FeedsViewControllerWrapper: UIViewControllerRepresentable {
   @EnvironmentObject var session: SessionManager
 
   func makeUIViewController(context: Context) -> UINavigationController {
-    feedsViewController.onBackButtonTap = {
-      self.showFeeds = false
+    feedsViewController.onBackButtonTap = { [weak feedsViewController] in
+      $showFeeds.wrappedValue = false
+      feedsViewController?.onBackButtonTap = nil
     }
     let navigationController = UINavigationController(rootViewController: feedsViewController)
     navigationController.view.backgroundColor = .clear

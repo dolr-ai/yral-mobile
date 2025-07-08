@@ -85,6 +85,11 @@ struct AccountView: View {
           loadingProvider = nil
           showSignupSheet = false
         case .socialSignInFailure:
+          if let authJourney = loadingProvider?.authJourney() {
+            AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+              event: AuthFailedEventData(authJourney: authJourney)
+            )
+          }
           loadingProvider = nil
           showSignupSheet = false
           showSignupFailureSheet = true

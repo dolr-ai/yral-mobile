@@ -3,6 +3,7 @@ import iosSharedUmbrella
 
 struct HomeTabController: View {
   @EnvironmentObject var session: SessionManager
+  @State private var suppressAnalytics = false
   let feedsViewController: FeedsViewController
   let accountView: AccountView
   let uploadView: UploadView
@@ -63,6 +64,7 @@ struct HomeTabController: View {
         uploadView
           .onDoneAction {
             UIView.setAnimationsEnabled(false)
+            suppressAnalytics = true
             selectedTab = .home
             DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.animationPeriod) {
               UIView.setAnimationsEnabled(false)
@@ -84,7 +86,10 @@ struct HomeTabController: View {
           .tag(Tab.upload)
 
         profileView
-          .onUploadAction { selectedTab = .upload }
+          .onUploadAction {
+            suppressAnalytics = true
+            selectedTab = .upload
+          }
           .background(Color.black.edgesIgnoringSafeArea(.all))
           .tabItem { tabIcon(selected: selectedTab == .profile,
                              selectedName: Constants.profileIconImageNameSelected,
@@ -102,6 +107,10 @@ struct HomeTabController: View {
           .tag(Tab.account)
       }
       .onChange(of: selectedTab) { tab in
+        guard !suppressAnalytics else {
+          suppressAnalytics = false
+          return
+        }
         tabDidChange(to: tab)
       }
       .onReceive(
