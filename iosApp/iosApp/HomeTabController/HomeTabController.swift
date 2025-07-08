@@ -3,6 +3,7 @@ import iosSharedUmbrella
 
 struct HomeTabController: View {
   @EnvironmentObject var session: SessionManager
+  @EnvironmentObject var deepLinkRouter: DeepLinkRouter
   @State private var suppressAnalytics = false
   let feedsViewController: FeedsViewController
   let accountView: AccountView
@@ -113,12 +114,12 @@ struct HomeTabController: View {
         }
         tabDidChange(to: tab)
       }
-      .onReceive(
-        NotificationCenter.default.publisher(
-          for: .videoUploadNotificationReceived
-        )
-      ) { _ in
-        uploadNotificationReceived()
+      .onReceive(deepLinkRouter.$pendingDestination.compactMap { $0 }) { dest in
+        switch dest {
+        case .profileAfterUpload:
+          selectedTab = .profile
+        }
+        deepLinkRouter.pendingDestination = nil
       }
       .fullScreenCover(isPresented: $showNotificationsNudge) {
         ZStack(alignment: .center) {
@@ -197,16 +198,6 @@ struct HomeTabController: View {
         categoryName: categoryName
       )
     )
-  }
-
-  @MainActor func uploadNotificationReceived() {
-    DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.animationPeriod) {
-      self.selectedTab = .profile
-      Task {
-        try? await Task.sleep(nanoseconds: 300_000_000)
-        await profileView.refreshVideosFromPushNotifications()
-      }
-    }
   }
 }
 

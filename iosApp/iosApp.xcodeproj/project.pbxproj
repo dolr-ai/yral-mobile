@@ -492,6 +492,8 @@
 		ACD2E8252D6746E900E750FE /* UploadingProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD2E8232D6746E400E750FE /* UploadingProgressView.swift */; };
 		ACD7C16E2E1D38DF00075148 /* DefaultAuthClient+Firebase.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD7C16D2E1D38D400075148 /* DefaultAuthClient+Firebase.swift */; };
 		ACD7C16F2E1D38DF00075148 /* DefaultAuthClient+Firebase.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD7C16D2E1D38D400075148 /* DefaultAuthClient+Firebase.swift */; };
+		ACD7C1722E1D837500075148 /* DeepLinkRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD7C1712E1D837200075148 /* DeepLinkRouter.swift */; };
+		ACD7C1732E1D837500075148 /* DeepLinkRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD7C1712E1D837200075148 /* DeepLinkRouter.swift */; };
 		ACD941872CFF575C0038FCB6 /* IosApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* IosApp.swift */; };
 		ACD941882CFF575C0038FCB6 /* yral-mobile-swift-binding.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC09A9AD2CDB775C009A39A4 /* yral-mobile-swift-binding.swift */; };
 		ACD941892CFF575C0038FCB6 /* SwiftBridgeCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC09A9B02CDB775C009A39A4 /* SwiftBridgeCore.swift */; };
@@ -827,6 +829,7 @@
 		ACCB98772D94420D002B9675 /* UILabel+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UILabel+Extensions.swift"; sourceTree = "<group>"; };
 		ACD2E8232D6746E400E750FE /* UploadingProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadingProgressView.swift; sourceTree = "<group>"; };
 		ACD7C16D2E1D38D400075148 /* DefaultAuthClient+Firebase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DefaultAuthClient+Firebase.swift"; sourceTree = "<group>"; };
+		ACD7C1712E1D837200075148 /* DeepLinkRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeepLinkRouter.swift; sourceTree = "<group>"; };
 		ACD941B82CFF575C0038FCB6 /* Yral-Staging.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Yral-Staging.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACD941B92CFF575C0038FCB6 /* Info-Staging.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "Info-Staging.plist"; path = "/Users/sarveshsharma/Desktop/yral-mobile/iosApp/Staging/Info-Staging.plist"; sourceTree = "<absolute>"; };
 		ACD941BE2CFF58B10038FCB6 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -1219,6 +1222,7 @@
 		7555FF7D242A565900829871 /* iosApp */ = {
 			isa = PBXGroup;
 			children = (
+				ACD7C1702E1D836400075148 /* DeepLinkRouter */,
 				100209A92DE6E2E700DF269E /* Leaderboard */,
 				107C60922DB7AA86006FC467 /* SmileyGame */,
 				2152FB032600AC8F00CF470E /* IosApp.swift */,
@@ -2319,6 +2323,14 @@
 			path = Loader;
 			sourceTree = "<group>";
 		};
+		ACD7C1702E1D836400075148 /* DeepLinkRouter */ = {
+			isa = PBXGroup;
+			children = (
+				ACD7C1712E1D837200075148 /* DeepLinkRouter.swift */,
+			);
+			path = DeepLinkRouter;
+			sourceTree = "<group>";
+		};
 		ACD941BC2CFF57A90038FCB6 /* Prod */ = {
 			isa = PBXGroup;
 			children = (
@@ -3139,6 +3151,7 @@
 				107C60912DB7809A006FC467 /* UIView+Extensions.swift in Sources */,
 				ACDD23E42D8B19FF00AB0DAF /* MyVideosUseCase.swift in Sources */,
 				ACF63A742DC26C9500C4BCCC /* TokenClaimsDTO.swift in Sources */,
+				ACD7C1732E1D837500075148 /* DeepLinkRouter.swift in Sources */,
 				ACC0D4342D8BFE67006DCF5C /* NudgePopupView.swift in Sources */,
 				AC92940F2D64CBFB003DB102 /* SelectFileView.swift in Sources */,
 				AC1ACFA02DB964AB001BDCFD /* SwiftUI+Extensions.swift in Sources */,
@@ -3379,6 +3392,7 @@
 				107C60902DB7809A006FC467 /* UIView+Extensions.swift in Sources */,
 				ACDD23E52D8B19FF00AB0DAF /* MyVideosUseCase.swift in Sources */,
 				ACF63A752DC26C9500C4BCCC /* TokenClaimsDTO.swift in Sources */,
+				ACD7C1722E1D837500075148 /* DeepLinkRouter.swift in Sources */,
 				ACC0D4352D8BFE67006DCF5C /* NudgePopupView.swift in Sources */,
 				AC92940E2D64CBFB003DB102 /* SelectFileView.swift in Sources */,
 				AC1ACF9F2DB964AB001BDCFD /* SwiftUI+Extensions.swift in Sources */,
