@@ -8,6 +8,7 @@
 
 import SwiftUI
 import iosSharedUmbrella
+import Combine
 
 // swiftlint: disable type_body_length
 struct ProfileView: View {
@@ -247,11 +248,11 @@ struct ProfileView: View {
       }
       viewModel.event = nil
     }
-    .onChange(of: session.state) { state in
-      switch state {
+    .onReceive(session.phasePublisher) { phase in
+      switch phase {
       case .loggedOut,
-          .ephemeralAuthentication,
-          .permanentAuthentication:
+          .ephemeral,
+          .permanent:
         Task {
           await viewModel.fetchProfileInfo()
           await refreshVideos(shouldPurge: true)
