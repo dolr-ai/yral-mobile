@@ -52,6 +52,7 @@ import com.yral.shared.core.session.getKey
 import com.yral.shared.features.account.viewmodel.AccountsViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
+import com.yral.shared.koin.koinInstance
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -115,7 +116,10 @@ private fun HomeScreenContent(
             )
 
         HomeTab.LEADER_BOARD.title ->
-            LeaderboardScreen(modifier)
+            LeaderboardScreen(
+                modifier = modifier,
+                viewModel = koinInstance.get(),
+            )
 
         HomeTab.UPLOAD_VIDEO.title -> {
             val keyboardHeight by keyboardHeightAsState()
