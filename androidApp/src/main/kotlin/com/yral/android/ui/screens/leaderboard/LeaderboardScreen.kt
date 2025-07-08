@@ -52,6 +52,7 @@ import com.yral.android.ui.screens.leaderboard.LeaderboardHelpers.getTrophyImage
 import com.yral.android.ui.screens.leaderboard.LeaderboardHelpers.getTrophyImageWidth
 import com.yral.android.ui.screens.leaderboard.LeaderboardHelpers.getUserBriefBorder
 import com.yral.android.ui.screens.leaderboard.LeaderboardScreenConstants.COIN_BALANCE_WEIGHT
+import com.yral.android.ui.screens.leaderboard.LeaderboardScreenConstants.MAX_CHAR_OF_NAME
 import com.yral.android.ui.screens.leaderboard.LeaderboardScreenConstants.POSITION_TEXT_WEIGHT
 import com.yral.android.ui.screens.leaderboard.LeaderboardScreenConstants.USER_DETAIL_WEIGHT
 import com.yral.android.ui.widgets.YralAsyncImage
@@ -198,6 +199,7 @@ private fun TrophyGallery(leaderboard: List<LeaderboardItem>) {
             YralLottieAnimation(
                 modifier = Modifier.matchParentSize(),
                 rawRes = R.raw.leaderboard_star,
+                iterations = 1,
                 contentScale = ContentScale.FillBounds,
             )
         }
@@ -555,7 +557,13 @@ private fun UserBriefProfileName(
             color = YralColors.NeutralTextPrimary,
         )
     } else {
-        UserBriefGradientProfileName(position, name)
+        UserBriefGradientProfileName(
+            position = position,
+            name =
+                name
+                    .take(MAX_CHAR_OF_NAME)
+                    .plus("..."),
+        )
     }
 }
 
@@ -613,4 +621,5 @@ object LeaderboardScreenConstants {
     const val POSITION_TEXT_WEIGHT = 0.17f
     const val USER_DETAIL_WEIGHT = 0.55f
     const val COIN_BALANCE_WEIGHT = 0.28f
+    const val MAX_CHAR_OF_NAME = 12
 }
