@@ -490,6 +490,8 @@
 		ACCB98792D944213002B9675 /* UILabel+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACCB98772D94420D002B9675 /* UILabel+Extensions.swift */; };
 		ACD2E8242D6746E900E750FE /* UploadingProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD2E8232D6746E400E750FE /* UploadingProgressView.swift */; };
 		ACD2E8252D6746E900E750FE /* UploadingProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD2E8232D6746E400E750FE /* UploadingProgressView.swift */; };
+		ACD7C16E2E1D38DF00075148 /* DefaultAuthClient+Firebase.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD7C16D2E1D38D400075148 /* DefaultAuthClient+Firebase.swift */; };
+		ACD7C16F2E1D38DF00075148 /* DefaultAuthClient+Firebase.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD7C16D2E1D38D400075148 /* DefaultAuthClient+Firebase.swift */; };
 		ACD941872CFF575C0038FCB6 /* IosApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* IosApp.swift */; };
 		ACD941882CFF575C0038FCB6 /* yral-mobile-swift-binding.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC09A9AD2CDB775C009A39A4 /* yral-mobile-swift-binding.swift */; };
 		ACD941892CFF575C0038FCB6 /* SwiftBridgeCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC09A9B02CDB775C009A39A4 /* SwiftBridgeCore.swift */; };
@@ -824,6 +826,7 @@
 		ACCA778D2DE4C19E005BC0FA /* EventBuffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventBuffer.swift; sourceTree = "<group>"; };
 		ACCB98772D94420D002B9675 /* UILabel+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UILabel+Extensions.swift"; sourceTree = "<group>"; };
 		ACD2E8232D6746E400E750FE /* UploadingProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadingProgressView.swift; sourceTree = "<group>"; };
+		ACD7C16D2E1D38D400075148 /* DefaultAuthClient+Firebase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DefaultAuthClient+Firebase.swift"; sourceTree = "<group>"; };
 		ACD941B82CFF575C0038FCB6 /* Yral-Staging.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Yral-Staging.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACD941B92CFF575C0038FCB6 /* Info-Staging.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "Info-Staging.plist"; path = "/Users/sarveshsharma/Desktop/yral-mobile/iosApp/Staging/Info-Staging.plist"; sourceTree = "<absolute>"; };
 		ACD941BE2CFF58B10038FCB6 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -855,8 +858,6 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		AC9B77DE2D58C7E300270FC9 /* YralTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = YralTests;
 			sourceTree = "<group>";
 		};
@@ -1326,6 +1327,7 @@
 			children = (
 				ACF639DB2DC24D2700C4BCCC /* SocialProvider.swift */,
 				ACB46A5F2D0EF947002E200C /* DefaultAuthClient.swift */,
+				ACD7C16D2E1D38D400075148 /* DefaultAuthClient+Firebase.swift */,
 				ACF63A762DC271F300C4BCCC /* DefaultAuthClient+Extensions.swift */,
 				AC1F93972DC14A9000F322E1 /* DTO */,
 			);
@@ -2709,9 +2711,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -2726,9 +2732,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -2743,9 +2753,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -2760,9 +2774,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -2924,9 +2942,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -2941,9 +2963,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3087,6 +3113,7 @@
 				AC09A9B32CDB775C009A39A4 /* SwiftBridgeCore.swift in Sources */,
 				ACC1C3942D9AF854005A7539 /* LottieLoaderView.swift in Sources */,
 				AC99BBC12D86FF81008012C2 /* ProfileEmptyState.swift in Sources */,
+				ACD7C16E2E1D38DF00075148 /* DefaultAuthClient+Firebase.swift in Sources */,
 				ACEBF7F72D70A8D700B594A0 /* AnimatedCheckbox.swift in Sources */,
 				AC7F7EA52D771D5D00215162 /* UploadViewModel.swift in Sources */,
 				10512A532DA795A800114BAA /* YralQueuePlayer.swift in Sources */,
@@ -3326,6 +3353,7 @@
 				ACD941892CFF575C0038FCB6 /* SwiftBridgeCore.swift in Sources */,
 				ACC1C3952D9AF854005A7539 /* LottieLoaderView.swift in Sources */,
 				AC99BBC22D86FF81008012C2 /* ProfileEmptyState.swift in Sources */,
+				ACD7C16F2E1D38DF00075148 /* DefaultAuthClient+Firebase.swift in Sources */,
 				ACEBF7F62D70A8D700B594A0 /* AnimatedCheckbox.swift in Sources */,
 				AC7F7EA62D771D5D00215162 /* UploadViewModel.swift in Sources */,
 				10512A522DA795A800114BAA /* YralQueuePlayer.swift in Sources */,

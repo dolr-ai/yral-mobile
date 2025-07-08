@@ -20,6 +20,7 @@ class FeedsViewController: UIViewController {
   var feedType: FeedType = .otherUsers
   var initalFeedscancellables: Set<AnyCancellable> = []
   var paginatedFeedscancellables: Set<AnyCancellable> = []
+  var trackedVideoIDs: Set<String> = []
 
   lazy var feedsPlayer: YralPlayer = { [unowned self] in
     let monitor = DefaultNetworkMonitor()

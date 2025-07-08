@@ -303,7 +303,6 @@ extension FeedsViewController: FeedsPlayerProtocol {
 
   func playedThreeSeconds(at index: Int) {
     if index < self.feedsDataSource.snapshot().numberOfItems {
-      print("Sarvesh here")
       let item = self.feedsDataSource.snapshot().itemIdentifiers[index]
       AnalyticsModuleKt.getAnalyticsManager().trackEvent(
         event: VideoViewedEventData(
