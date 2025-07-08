@@ -54,7 +54,7 @@ class FeedViewModel(
             }
 
     companion object {
-        const val PRE_FETCH_BEFORE_LAST = 1
+        const val PRE_FETCH_BEFORE_LAST = 5
         private const val FIRST_SECOND_WATCHED_THRESHOLD_MS = 1000L
         private const val FULL_VIDEO_WATCHED_THRESHOLD = 95.0
         const val NSFW_PROBABILITY = 0.4
