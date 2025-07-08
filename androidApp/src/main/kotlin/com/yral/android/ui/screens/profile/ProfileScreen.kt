@@ -76,6 +76,7 @@ import com.yral.shared.features.profile.viewmodel.DeleteConfirmationState
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.features.profile.viewmodel.VideoViewState
 import com.yral.shared.rust.domain.models.FeedDetails
+import kotlin.ranges.coerceAtMost
 
 @Suppress("LongMethod")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -110,10 +111,8 @@ fun ProfileScreen(
                     ProfileReelPlayer(
                         reelVideos = profileVideos,
                         initialPage =
-                            minOf(
-                                videoViewState.initialPage,
-                                profileVideos.itemCount - 1,
-                            ).coerceAtLeast(0),
+                            videoViewState.initialPage
+                                .coerceAtMost(profileVideos.itemCount - 1),
                         deletingVideoId = deletingVideoId,
                         onBack = { viewModel.closeVideoReel() },
                         onDeleteVideo = { videoId, postId ->
