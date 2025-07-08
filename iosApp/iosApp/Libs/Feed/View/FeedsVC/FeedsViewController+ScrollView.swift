@@ -56,6 +56,9 @@ extension FeedsViewController: UICollectionViewDelegate {
     willDisplay cell: UICollectionViewCell,
     forItemAt indexPath: IndexPath
   ) {
+    guard let feedsCell = cell as? FeedsCell else { return }
+    feedsCell.startListeningForFirstFrame()
+
     let feedsCount = feedsDataSource.snapshot().numberOfItems
     if indexPath.item >= feedsCount - Constants.thresholdForLoadingMoreResults, !loadMoreRequestMade {
       Task {
@@ -70,5 +73,13 @@ extension FeedsViewController: UICollectionViewDelegate {
         self.feedsDataSource.apply(snapshot, animatingDifferences: false)
       }
     }
+  }
+
+  func collectionView(
+    _ collectionView: UICollectionView,
+    didEndDisplaying cell: UICollectionViewCell,
+    forItemAt indexPath: IndexPath
+  ) {
+    (cell as? FeedsCell)?.stopListeningForFirstFrame()
   }
 }

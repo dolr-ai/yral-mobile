@@ -53,7 +53,7 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
       .first ?? UIWindow()
   }
 
-  // swiftlint: disable function_body_length cyclomatic_complexity
+  // swiftlint: disable function_body_length
   @MainActor
   func signInWithSocial(provider: SocialProvider) async throws {
     let oldState = stateSubject.value
@@ -128,21 +128,8 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
         }
         try await processDelegatedIdentity(from: token, type: .permanent)
         UserDefaultsManager.shared.set(true, for: .userDefaultsLoggedIn)
-        if oldPrincipal == self.userPrincipalString {
-          AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-            event: SignupSuccessEventData(
-              isReferral: false,
-              referralUserID: "",
-              authJourney: provider.authJourney()
-            )
-          )
-        } else {
-          AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-            event: LoginSuccessEventData(
-              authJourney: provider.authJourney()
-            )
-          )
-        }
+        isNewUser = oldPrincipal == self.userPrincipalString
+        self.provider = provider
         guard let canisterPrincipalString = self.canisterPrincipalString else { return }
         do {
           try await recordThrowingOperation {
@@ -164,7 +151,7 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
       throw error
     }
   }
-  // swiftlint: enable function_body_length cyclomatic_complexity
+  // swiftlint: enable function_body_length
 
   private func getAuthURL(
     provider: SocialProvider,
@@ -283,6 +270,68 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
     }
   }
 
+  // swiftlint: disable function_body_length large_tuple
+  func setAnalyticsUserProperties() async {
+    do {
+      try await recordThrowingOperation {
+        let identity = try self.generateNewDelegatedIdentity()
+        let principal = try get_principal(self.canisterPrincipalString ?? "")
+        let service = try Service(principal, identity)
+        var isCreator = false
+        do {
+          let result = try await service.get_posts_of_this_user_profile_with_pagination_cursor(
+            UInt64(CGFloat.zero),
+            UInt64(CGFloat.two)
+          )
+          if result.is_ok() {
+            guard let postResult = result.ok_value() else { return }
+            isCreator = postResult.count > .zero
+          }
+        } catch {
+          print(error)
+        }
+        let (userPrincipal, canisterPrincipal, coins, isLoggedIn): (String, String, UInt64, Bool) = {
+          switch stateSubject.value {
+          case .ephemeralAuthentication(let userPrincipal, let canisterPrincipal, let coins, _):
+            return (userPrincipal, canisterPrincipal, coins, false)
+          case .permanentAuthentication(let userPrincipal, let canisterPrincipal, let coins, _):
+            return (userPrincipal, canisterPrincipal, coins, true)
+          default:
+            return ("", "", .zero, false)
+          }
+        }()
+        AnalyticsModuleKt.getAnalyticsManager().setUserProperties(
+          user: User(
+            userId: userPrincipal,
+            isLoggedIn: isLoggedIn,
+            canisterId: canisterPrincipal,
+            isCreator: KotlinBoolean(bool: isCreator),
+            satsBalance: Double(coins)
+          )
+        )
+        guard provider != nil else { return }
+        if isNewUser {
+          AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+            event: SignupSuccessEventData(
+              isReferral: false,
+              referralUserID: "",
+              authJourney: provider!.authJourney()
+            )
+          )
+        } else {
+          AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+            event: LoginSuccessEventData(
+              authJourney: provider!.authJourney()
+            )
+          )
+        }
+        provider = nil
+      }
+    } catch {
+      print(error)
+    }
+  }
+  // swiftlint: enable function_body_length large_tuple
 }
 
 extension DefaultAuthClient {

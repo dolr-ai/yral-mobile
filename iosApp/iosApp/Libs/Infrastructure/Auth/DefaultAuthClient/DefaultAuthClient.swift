@@ -20,6 +20,8 @@ final class DefaultAuthClient: NSObject, AuthClient {
   private(set) var userPrincipal: Principal?
   private(set) var userPrincipalString: String?
   private(set) var identityData: Data?
+  var isNewUser = false
+  var provider: SocialProvider?
   var stateSubject = CurrentValueSubject<AuthState, Never>(.uninitialized)
   var authStatePublisher: AnyPublisher<AuthState, Never> {
     stateSubject.eraseToAnyPublisher()
@@ -82,6 +84,7 @@ final class DefaultAuthClient: NSObject, AuthClient {
 
   fileprivate func setupSession(_ data: Data, type: DelegateIdentityType) async throws {
     try await recordThrowingOperation {
+      provider = nil
       if let canisterPrincipalString = try KeychainHelper.retrieveString(
         for: Constants.keychainCanisterPrincipal
       ),
@@ -271,7 +274,6 @@ final class DefaultAuthClient: NSObject, AuthClient {
     }
   }
 
-  // swiftlint: disable function_body_length
   func getUserBalance(type: DelegateIdentityType) async throws {
     guard let principalID = userPrincipalString else {
       throw SatsCoinError.unknown("Failed to fetch princiapl ID")
@@ -289,35 +291,6 @@ final class DefaultAuthClient: NSObject, AuthClient {
       ).toDomain()
       await updateAuthState(for: type, withCoins: UInt64(response.balance) ?? 0, isFetchingCoins: false)
       try await firebaseService.update(coins: UInt64(response.balance) ?? 0, forPrincipal: principalID)
-      let isLoggedIn = {
-        if case .permanentAuthentication = self.stateSubject.value {
-          return true
-        }
-        return false
-      }()
-      Task {
-        let identity = try self.generateNewDelegatedIdentity()
-        let principal = try get_principal(self.userPrincipalString ?? "")
-        let service = try Service(principal, identity)
-        let result = try await service.get_posts_of_this_user_profile_with_pagination_cursor(
-          UInt64(CGFloat.zero),
-          UInt64(CGFloat.two)
-        )
-        var isCreator = false
-        if result.is_ok() {
-          guard let postResult = result.ok_value() else { return }
-          isCreator = postResult.count > .zero
-        }
-        AnalyticsModuleKt.getAnalyticsManager().setUserProperties(
-          user: User(
-            userId: self.userPrincipalString ?? "",
-            isLoggedIn: isLoggedIn,
-            canisterId: self.canisterPrincipalString ?? "",
-            isCreator: KotlinBoolean(bool: isCreator),
-            satsBalance: Double(response.balance) ?? .zero
-          )
-        )
-      }
     } catch {
       switch error {
       case let error as NetworkError:
@@ -327,7 +300,6 @@ final class DefaultAuthClient: NSObject, AuthClient {
       }
     }
   }
-  // swiftlint: enable function_body_length
 
   private func exchangePrincipalID(type: DelegateIdentityType) async throws {
     let newSignIn = try? await firebaseService.signInAnonymously()
@@ -374,6 +346,10 @@ final class DefaultAuthClient: NSObject, AuthClient {
         await updateAuthState(for: type, withCoins: 0, isFetchingCoins: false)
       }
     }
+    Task { [weak self] in
+      guard let self = self else { return }
+      await self.setAnalyticsUserProperties()
+    }
   }
 
   private func updateAuthState(for type: DelegateIdentityType, withCoins coins: UInt64, isFetchingCoins: Bool) async {
@@ -418,6 +394,7 @@ final class DefaultAuthClient: NSObject, AuthClient {
     UserDefaultsManager.shared.set(false, for: DefaultsKey.userDefaultsLoggedIn)
     AnalyticsModuleKt.getAnalyticsManager().reset()
     stateSubject.value = .loggedOut
+    provider = nil
     try await obtainAnonymousIdentity()
     do {
       try await recordThrowingOperation {

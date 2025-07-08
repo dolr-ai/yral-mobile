@@ -30,7 +30,7 @@ extension FeedsViewController: FeedsCellProtocol {
         stakeAmount: Int32(feed.smileyGame?.config.lossPenalty ?? .zero),
         stakeType: .sats,
         gameResult: result,
-        wonLossAmount: Int32(coinDelta),
+        wonLossAmount: Int32(abs(coinDelta)),
         ctaType: sheetCtaType
       )
     )
@@ -180,9 +180,9 @@ extension FeedsViewController: FeedsCellProtocol {
     )
   }
 
-  func videoStarted(index: Int) {
+  func videoStarted(index: Int, videoId: String) {
     let snapshot = feedsDataSource.snapshot()
-    guard index < snapshot.itemIdentifiers.count else { return }
+    guard index < snapshot.itemIdentifiers.count, videoId == snapshot.itemIdentifiers[index].videoID else { return }
     let feedItem = snapshot.itemIdentifiers[index]
     AnalyticsModuleKt.getAnalyticsManager().trackEvent(
       event: VideoStartedEventData(
@@ -303,6 +303,7 @@ extension FeedsViewController: FeedsPlayerProtocol {
 
   func playedThreeSeconds(at index: Int) {
     if index < self.feedsDataSource.snapshot().numberOfItems {
+      print("Sarvesh here")
       let item = self.feedsDataSource.snapshot().itemIdentifiers[index]
       AnalyticsModuleKt.getAnalyticsManager().trackEvent(
         event: VideoViewedEventData(
