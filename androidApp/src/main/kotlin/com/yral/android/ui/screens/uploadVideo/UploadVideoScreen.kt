@@ -1,13 +1,13 @@
 package com.yral.android.ui.screens.uploadVideo
 
+import androidx.annotation.OptIn
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
@@ -15,23 +15,33 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush.Companion.linearGradient
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.ui.AspectRatioFrameLayout
 import co.touchlab.kermit.Logger
 import com.yral.android.R
+import com.yral.android.ui.components.hashtagInput.HashtagInput
+import com.yral.android.ui.components.hashtagInput.keyboardHeightAsState
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.widgets.YralButtonState
@@ -73,12 +83,15 @@ fun UploadVideoScreen(
         UiState.Initial -> {
             UploadVideoIdle(listState, modifier, viewState, viewModel)
         }
+
         is UiState.InProgress -> {
-            UploadVideoProgress(listState, modifier, uploadUiState, viewState)
+            UploadVideoProgress(modifier, uploadUiState, viewState)
         }
+
         is UiState.Success<*> -> {
-            UploadVideoSuccess(onDone = viewModel::onUploadDoneClicked)
+            UploadVideoSuccess(onDone = viewModel::onGoToHomeClicked)
         }
+
         is UiState.Failure -> {
             @Suppress("ForbiddenComment")
             UploadVideoFailure(
@@ -121,29 +134,25 @@ private fun UploadVideoIdle(
     }
 }
 
+@OptIn(UnstableApi::class)
 @Composable
 private fun UploadVideoProgress(
-    listState: LazyListState,
     modifier: Modifier,
     uploadUiState: UiState.InProgress,
     viewState: UploadVideoViewModel.ViewState,
 ) {
-    LazyColumn(
-        state = listState,
-        modifier = modifier.imePadding(),
-    ) {
-        // Update TOTAL_ITEMS if adding any more items
-        item { Header() }
-        item {
-            UploadProgressView(
-                progress = (uploadUiState.progress * 100).toInt(),
-                videoFilePath = checkNotNull(viewState.selectedFilePath),
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(1f),
-            )
-        }
+    Column(modifier.verticalScroll(rememberScrollState())) {
+        Header()
+        UploadProgressView(uploadUiState.progress)
+        YralVideoPlayer(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+            url = checkNotNull(viewState.selectedFilePath),
+            autoPlay = true,
+            videoResizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIXED_WIDTH,
+            onError = { error ->
+                Logger.d("Video error: $error")
+            },
+        )
     }
 }
 
@@ -162,67 +171,57 @@ private fun Header() {
     }
 }
 
+@Suppress("MagicNumber")
 @Composable
-private fun UploadProgressView(
-    progress: Int,
-    videoFilePath: String,
-    modifier: Modifier,
-) {
-    Column(
-        modifier =
-            modifier
-                .padding(horizontal = 16.dp),
-    ) {
+private fun UploadProgressView(progress: Float) {
+    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
         Text(
             text = stringResource(R.string.uploading_message),
             style = LocalAppTopography.current.regRegular,
             color = YralColors.NeutralTextPrimary,
         )
         Spacer(Modifier.height(16.dp))
-        Box(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .height(10.dp)
-                    .clip(RoundedCornerShape(100.dp))
-                    .background(
-                        color = YralColors.Neutral800,
-                        shape = RoundedCornerShape(100.dp),
-                    ),
-        ) {
-            Box(
-                modifier =
-                    Modifier
-                        .fillMaxWidth(progress.toFractionOf())
-                        .height(10.dp)
-                        .clip(RoundedCornerShape(100.dp))
-                        .background(
-                            brush =
-                                linearGradient(
-                                    colors =
-                                        listOf(
-                                            YralColors.Pink200,
-                                            YralColors.Pink300,
-                                        ),
-                                ),
-                            shape = RoundedCornerShape(100.dp),
-                        ),
-            )
-        }
+        UploadProgressBar(progress)
         Spacer(Modifier.height(10.dp))
         Text(
-            text = stringResource(R.string.uploading_progress, progress),
+            text = stringResource(R.string.uploading_progress, (progress * 100).toInt()),
             style = LocalAppTopography.current.regRegular,
             color = YralColors.NeutralTextSecondary,
         )
         Spacer(Modifier.height(24.dp))
-        YralVideoPlayer(
-            modifier = Modifier.fillMaxSize(),
-            url = videoFilePath,
-            autoPlay = true,
-            onError = { error ->
-                Logger.d("Video error: $error")
-            },
+    }
+}
+
+@Composable
+private fun UploadProgressBar(progress: Float) {
+    Box(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .height(10.dp)
+                .clip(RoundedCornerShape(100.dp))
+                .background(
+                    color = YralColors.Neutral800,
+                    shape = RoundedCornerShape(100.dp),
+                ),
+    ) {
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxWidth(progress)
+                    .height(10.dp)
+                    .clip(RoundedCornerShape(100.dp))
+                    .background(
+                        brush =
+                            linearGradient(
+                                colors =
+                                    listOf(
+                                        YralColors.Pink200,
+                                        YralColors.Pink300,
+                                    ),
+                            ),
+                        shape = RoundedCornerShape(100.dp),
+                    ),
         )
     }
 }
@@ -287,12 +286,19 @@ private fun CaptionInput(
     text: String,
     onValueChange: (String) -> Unit,
 ) {
+    var isFocused by remember { mutableStateOf(false) }
     TextField(
         modifier =
             Modifier
                 .fillMaxWidth()
                 .height(100.dp)
-                .clip(RoundedCornerShape(8.dp)),
+                .onFocusChanged {
+                    isFocused = it.isFocused
+                }.border(
+                    width = 1.dp,
+                    color = if (isFocused) YralColors.Neutral500 else Color.Transparent,
+                    shape = RoundedCornerShape(8.dp),
+                ).clip(RoundedCornerShape(8.dp)),
         value = text,
         onValueChange = onValueChange,
         colors =
@@ -300,9 +306,9 @@ private fun CaptionInput(
                 focusedTextColor = YralColors.Neutral300,
                 unfocusedTextColor = YralColors.Neutral300,
                 disabledTextColor = YralColors.Neutral600,
-                focusedContainerColor = YralColors.Neutral800,
-                unfocusedContainerColor = YralColors.Neutral800,
-                disabledContainerColor = YralColors.Neutral800,
+                focusedContainerColor = YralColors.Neutral900,
+                unfocusedContainerColor = YralColors.Neutral900,
+                disabledContainerColor = YralColors.Neutral900,
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent,
                 disabledIndicatorColor = Color.Transparent,
@@ -317,10 +323,3 @@ private fun CaptionInput(
         },
     )
 }
-
-fun Int.toFractionOf(total: Int = 100): Float =
-    if (total == 0) {
-        0.0f
-    } else {
-        (this.toFloat() / total)
-    }
