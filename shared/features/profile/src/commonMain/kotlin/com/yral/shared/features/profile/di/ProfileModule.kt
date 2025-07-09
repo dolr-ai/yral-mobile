@@ -3,6 +3,7 @@ package com.yral.shared.features.profile.di
 import com.yral.shared.features.profile.data.ProfileDataSource
 import com.yral.shared.features.profile.data.ProfileDataSourceImpl
 import com.yral.shared.features.profile.data.ProfileRepositoryImpl
+import com.yral.shared.features.profile.domain.CheckProfileRefreshNeededUseCase
 import com.yral.shared.features.profile.domain.DeleteVideoUseCase
 import com.yral.shared.features.profile.domain.repository.ProfileRepository
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
@@ -16,5 +17,6 @@ val profileModule =
         factoryOf(::ProfileDataSourceImpl).bind<ProfileDataSource>()
         factoryOf(::ProfileRepositoryImpl).bind<ProfileRepository>()
         factoryOf(::DeleteVideoUseCase)
+        factoryOf(::CheckProfileRefreshNeededUseCase)
         viewModelOf(::ProfileViewModel)
     }

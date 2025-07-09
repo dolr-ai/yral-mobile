@@ -7,12 +7,14 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import androidx.paging.filter
+import com.github.michaelbull.result.getOrElse
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.features.auth.utils.getAccountInfo
 import com.yral.shared.features.profile.data.ProfileVideosPagingSource
+import com.yral.shared.features.profile.domain.CheckProfileRefreshNeededUseCase
 import com.yral.shared.features.profile.domain.DeleteVideoUseCase
 import com.yral.shared.features.profile.domain.models.DeleteVideoRequest
 import com.yral.shared.features.profile.domain.repository.ProfileRepository
@@ -25,15 +27,19 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
 
 class ProfileViewModel(
     private val sessionManager: SessionManager,
     private val profileRepository: ProfileRepository,
     private val deleteVideoUseCase: DeleteVideoUseCase,
+    private val checkProfileRefreshNeededUseCase: CheckProfileRefreshNeededUseCase,
 ) : ViewModel() {
     companion object {
         private const val POSTS_PER_PAGE = 20
         private const val POSTS_PREFETCH_DISTANCE = 5
+
+        private const val MIN_DURATION_FOR_AUTO_REFRESH = 0.5 * 60 * 1000 // half minute
     }
 
     private val _state = MutableStateFlow(ViewState())
@@ -69,6 +75,46 @@ class ProfileViewModel(
 
     init {
         _state.update { it.copy(accountInfo = sessionManager.getAccountInfo()) }
+    }
+
+    suspend fun checkShouldRefresh(): Boolean =
+        checkProfileRefreshNeededUseCase
+            .invoke(
+                CheckProfileRefreshNeededUseCase.Params(
+                    currentFirstVideoId = _state.value.firstVideoId,
+                    pageSize = POSTS_PER_PAGE.toULong(),
+                ),
+            ).getOrElse { false }
+
+    fun refreshIfNeeded() {
+        viewModelScope.launch {
+            val currentTime = Clock.System.now().toEpochMilliseconds()
+            val lastRefreshTime = _state.value.lastRefreshTime
+            if (currentTime - lastRefreshTime > MIN_DURATION_FOR_AUTO_REFRESH) {
+                _state.update { it.copy(lastRefreshTime = currentTime) }
+                if (checkShouldRefresh()) {
+                    _state.update {
+                        it.copy(
+                            firstVideoId = null, // Clear the first video ID since we're refreshing
+                            shouldRefresh = true, // Set refresh needed flag so UI can trigger refresh
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    fun onRefreshTriggered() {
+        _state.update { it.copy(shouldRefresh = false) }
+    }
+
+    fun updateFirstVideoId(videoId: String?) {
+        _state.update {
+            it.copy(
+                firstVideoId = videoId,
+                lastRefreshTime = Clock.System.now().toEpochMilliseconds(),
+            )
+        }
     }
 
     fun confirmDelete(
@@ -107,7 +153,11 @@ class ProfileViewModel(
                 }.onFailure { error ->
                     _state.update {
                         it.copy(
-                            deleteConfirmation = DeleteConfirmationState.Error(deleteRequest, error),
+                            deleteConfirmation =
+                                DeleteConfirmationState.Error(
+                                    request = deleteRequest,
+                                    error = error,
+                                ),
                         )
                     }
                 }
@@ -151,6 +201,9 @@ data class ViewState(
     val accountInfo: AccountInfo? = null,
     val deleteConfirmation: DeleteConfirmationState = DeleteConfirmationState.None,
     val videoView: VideoViewState = VideoViewState.None,
+    val firstVideoId: String? = null,
+    val shouldRefresh: Boolean = false,
+    val lastRefreshTime: Long = 0L,
 )
 
 sealed class DeleteConfirmationState {
