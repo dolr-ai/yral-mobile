@@ -9,12 +9,16 @@ import com.yral.shared.firebaseAuth.usecase.ObserveAuthStateUseCase
 import com.yral.shared.firebaseAuth.usecase.SignInAnonymouslyUseCase
 import com.yral.shared.firebaseAuth.usecase.SignInWithTokenUseCase
 import com.yral.shared.firebaseAuth.usecase.SignOutUseCase
+import dev.gitlive.firebase.Firebase
+import dev.gitlive.firebase.app
+import dev.gitlive.firebase.auth.auth
 import org.koin.core.module.dsl.factoryOf
 import org.koin.dsl.module
 
 val firebaseAuthModule =
     module {
-        factory<FBAuthRepositoryApi> { FBAuthRepository() }
+        factory { Firebase.auth(Firebase.app) }
+        factory<FBAuthRepositoryApi> { FBAuthRepository(get()) }
 
         factoryOf(::SignInAnonymouslyUseCase)
         factoryOf(::SignInWithTokenUseCase)

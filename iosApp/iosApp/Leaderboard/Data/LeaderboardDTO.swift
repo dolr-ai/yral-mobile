@@ -10,6 +10,7 @@ import FirebaseFirestore
 
 struct LeaderboardRowDTO: Decodable {
   @DocumentID var id: String?
+  var position: Int?
   let coins: Int
 }
 
@@ -21,6 +22,7 @@ struct LeaderboardDTO {
 extension LeaderboardRowDTO {
   func toDomain() -> LeaderboardRowResponse {
     return LeaderboardRowResponse(
+      position: position ?? .zero,
       principalID: id ?? UUID().uuidString,
       coins: coins
     )
@@ -28,9 +30,8 @@ extension LeaderboardRowDTO {
 }
 
 extension LeaderboardDTO {
-  func toDomain(userPosition: Int) -> LeaderboardResponse {
+  func toDomain() -> LeaderboardResponse {
     return LeaderboardResponse(
-      userPosition: userPosition,
       userRow: userRow.toDomain(),
       rows: rows.map { $0.toDomain() }
     )

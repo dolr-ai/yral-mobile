@@ -4,8 +4,6 @@ import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.analytics.AnalyticsManager
 import com.yral.shared.analytics.events.AuthSuccessfulEventData
-import com.yral.shared.core.dispatchers.AppDispatchers
-import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.Session
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
@@ -17,7 +15,6 @@ import com.yral.shared.features.auth.domain.useCases.ExchangePrincipalIdUseCase
 import com.yral.shared.features.auth.domain.useCases.ObtainAnonymousIdentityUseCase
 import com.yral.shared.features.auth.domain.useCases.RefreshTokenUseCase
 import com.yral.shared.features.auth.domain.useCases.UpdateSessionAsRegisteredUseCase
-import com.yral.shared.features.auth.utils.OAuthListener
 import com.yral.shared.features.auth.utils.OAuthUtils
 import com.yral.shared.features.auth.utils.SocialProvider
 import com.yral.shared.features.game.domain.GetBalanceUseCase
@@ -28,28 +25,32 @@ import com.yral.shared.firebaseAuth.usecase.SignOutUseCase
 import com.yral.shared.firebaseStore.usecase.UpdateDocumentUseCase
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
+import com.yral.shared.rust.services.IndividualUserServiceFactory
 import com.yral.shared.uniffi.generated.CanistersWrapper
 import com.yral.shared.uniffi.generated.FfiException
 import com.yral.shared.uniffi.generated.authenticateWithNetwork
+import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 
+@Suppress("TooManyFunctions", "LongParameterList")
 class DefaultAuthClient(
     private val sessionManager: SessionManager,
     private val analyticsManager: AnalyticsManager,
     private val crashlyticsManager: CrashlyticsManager,
     private val preferences: Preferences,
+    private val auth: FirebaseAuth,
     private val authRepository: AuthRepository,
     private val requiredUseCases: RequiredUseCases,
     private val oAuthUtils: OAuthUtils,
-    appDispatchers: AppDispatchers,
+    private val individualUserServiceFactory: IndividualUserServiceFactory,
+    private val scope: CoroutineScope,
 ) : AuthClient {
     private var currentState: String? = null
-    private val scope = CoroutineScope(SupervisorJob() + appDispatchers.io)
 
     override suspend fun initialize() {
+        sessionManager.updateState(SessionState.Loading)
         refreshAuthIfNeeded()
     }
 
@@ -60,7 +61,7 @@ class DefaultAuthClient(
                 idToken = idToken,
                 accessToken = "",
                 refreshToken = "",
-                shouldRefreshToken = true,
+                skipFirebaseAuth = auth.currentUser != null,
             )
         } ?: obtainAnonymousIdentity()
     }
@@ -79,29 +80,33 @@ class DefaultAuthClient(
                             idToken = tokenResponse.idToken,
                             accessToken = tokenResponse.accessToken,
                             refreshToken = tokenResponse.refreshToken,
-                            shouldRefreshToken = true,
+                            resetCanister = true,
+                            skipFirebaseAuth = false,
                         )
-                    }.onFailure { throw YralException("obtaining anonymous token failed") }
-            }.onFailure { throw YralException("sign out of firebase failed") }
+                    }.onFailure { throw YralAuthException("obtaining anonymous token failed - ${it.message}") }
+            }.onFailure { throw YralAuthException("sign out of firebase failed - ${it.message}") }
     }
 
     private suspend fun handleToken(
         idToken: String,
         accessToken: String,
         refreshToken: String,
-        shouldRefreshToken: Boolean,
-        shouldSetMetadata: Boolean = false,
+        resetCanister: Boolean = false,
+        skipSetMetaData: Boolean = true,
+        skipFirebaseAuth: Boolean = true,
     ) {
         crashlyticsManager.logMessage("parsing token")
         saveTokens(idToken, refreshToken, accessToken)
         val tokenClaim = oAuthUtils.parseOAuthToken(idToken)
         if (tokenClaim.isValid(Clock.System.now().epochSeconds)) {
             tokenClaim.delegatedIdentity?.let {
-                handleExtractIdentityResponse(it, shouldSetMetadata)
+                if (resetCanister) {
+                    resetCachedCanisterData()
+                }
+                handleExtractIdentityResponse(it, skipSetMetaData, skipFirebaseAuth)
             }
-        } else if (shouldRefreshToken) {
-            val rToken = preferences.getString(PrefKeys.REFRESH_TOKEN.name)
-            rToken?.let {
+        } else {
+            refreshToken.takeIf { it.isNotEmpty() }?.let {
                 val rTokenClaim = oAuthUtils.parseOAuthToken(it)
                 if (rTokenClaim.isValid(Clock.System.now().epochSeconds)) {
                     refreshAccessToken()
@@ -118,30 +123,26 @@ class DefaultAuthClient(
         accessToken: String,
     ) {
         crashlyticsManager.logMessage("setting token to local storage")
-        preferences.putString(
-            PrefKeys.ID_TOKEN.name,
-            idToken,
-        )
+        preferences.putString(PrefKeys.ID_TOKEN.name, idToken)
         if (refreshToken.isNotEmpty()) {
-            preferences.putString(
-                PrefKeys.REFRESH_TOKEN.name,
-                refreshToken,
-            )
+            preferences.putString(PrefKeys.REFRESH_TOKEN.name, refreshToken)
         }
         if (accessToken.isNotEmpty()) {
-            preferences.putString(
-                PrefKeys.ACCESS_TOKEN.name,
-                refreshToken,
-            )
+            preferences.putString(PrefKeys.ACCESS_TOKEN.name, refreshToken)
         }
     }
 
     override suspend fun logout() {
-        preferences.remove(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name)
-        preferences.remove(PrefKeys.REFRESH_TOKEN.name)
-        preferences.remove(PrefKeys.ACCESS_TOKEN.name)
-        preferences.remove(PrefKeys.ID_TOKEN.name)
-        preferences.remove(PrefKeys.IDENTITY.name)
+        analyticsManager.flush()
+        listOf(
+            PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name,
+            PrefKeys.REFRESH_TOKEN.name,
+            PrefKeys.ACCESS_TOKEN.name,
+            PrefKeys.ID_TOKEN.name,
+        ).forEach { key ->
+            preferences.remove(key)
+        }
+        resetCachedCanisterData()
         sessionManager.updateState(SessionState.Initial)
         crashlyticsManager.setUserId("")
         requiredUseCases.signOutUseCase.invoke(Unit)
@@ -149,35 +150,50 @@ class DefaultAuthClient(
 
     private suspend fun handleExtractIdentityResponse(
         data: ByteArray,
-        shouldSetMetaData: Boolean,
+        skipSetMetaData: Boolean,
+        skipFirebaseAuth: Boolean,
     ) {
         crashlyticsManager.logMessage("extracting identity")
         try {
-            val canisterWrapper = authenticateWithNetwork(data, null)
-            preferences.putBytes(PrefKeys.IDENTITY.name, data)
-            if (shouldSetMetaData) {
-                updateYralSession(canisterWrapper)
+            var cachedData = getCachedCanisterData()
+            if (cachedData == null) {
+                val canisterWrapper = authenticateWithNetwork(data, null)
+                cacheCanisterData(data, canisterWrapper)
+                cachedData =
+                    CanisterData(
+                        identity = data,
+                        canisterId = canisterWrapper.getCanisterPrincipal(),
+                        userPrincipalId = canisterWrapper.getUserPrincipal(),
+                    )
             }
-            authorizeFirebase(data, canisterWrapper)
+            if (!skipSetMetaData) {
+                scope.launch {
+                    updateYralSession(cachedData)
+                }
+            }
+            sessionManager.updateCoinBalance(0)
+            if (skipFirebaseAuth) {
+                setSession(canisterData = cachedData)
+            } else {
+                authorizeFirebase(cachedData)
+            }
         } catch (e: FfiException) {
+            resetCachedCanisterData()
             crashlyticsManager.recordException(e)
-            throw e
+            throw YralAuthException(e)
         }
     }
 
-    private suspend fun updateYralSession(canisterWrapper: CanistersWrapper) {
+    private suspend fun updateYralSession(canisterData: CanisterData) {
         preferences.getString(PrefKeys.ID_TOKEN.name)?.let { idToken ->
             updateSessionAsRegistered(
                 idToken = idToken,
-                canisterId = canisterWrapper.getCanisterPrincipal(),
+                canisterId = canisterData.canisterId,
             )
         }
     }
 
-    private suspend fun authorizeFirebase(
-        data: ByteArray,
-        canisterWrapper: CanistersWrapper,
-    ) {
+    private suspend fun authorizeFirebase(canisterData: CanisterData) {
         crashlyticsManager.logMessage("authorizing firebase")
         requiredUseCases
             .signInAnonymouslyUseCase
@@ -187,31 +203,29 @@ class DefaultAuthClient(
                     .getIdTokenUseCase
                     .invoke(GetIdTokenUseCase.DEFAULT)
                     .onSuccess { idToken ->
-                        exchangePrincipalId(idToken, data, canisterWrapper)
-                    }.onFailure { throw YralException("firebase idToken not found") }
-            }.onFailure { throw YralException("firebase anonymous sign in failed") }
+                        exchangePrincipalId(canisterData, idToken)
+                    }.onFailure { throw YralAuthException("firebase idToken not found - ${it.message}") }
+            }.onFailure { throw YralAuthException("firebase anonymous sign in failed - ${it.message}") }
     }
 
     private suspend fun exchangePrincipalId(
+        canisterData: CanisterData,
         idToken: String,
-        data: ByteArray,
-        canisterWrapper: CanistersWrapper,
     ) {
         crashlyticsManager.logMessage("exchanging principal id")
         requiredUseCases.exchangePrincipalIdUseCase
             .invoke(
                 ExchangePrincipalIdUseCase.Params(
                     idToken = idToken,
-                    userPrincipal = canisterWrapper.getUserPrincipal(),
+                    userPrincipal = canisterData.userPrincipalId,
                 ),
             ).onSuccess {
-                signInWithToken(data, canisterWrapper, it)
-            }.onFailure { throw YralException("exchanging principal failed") }
+                signInWithToken(canisterData, it)
+            }.onFailure { throw YralAuthException("exchanging principal failed - ${it.message}") }
     }
 
     private suspend fun signInWithToken(
-        data: ByteArray,
-        canisterWrapper: CanistersWrapper,
+        canisterData: CanisterData,
         exchangeResult: ExchangePrincipalResponse,
     ) {
         crashlyticsManager.logMessage("signing with token")
@@ -222,18 +236,15 @@ class DefaultAuthClient(
                 requiredUseCases.signInWithTokenUseCase
                     .invoke(exchangeResult.token)
                     .onSuccess {
-                        updateBalanceAndProceed(data, canisterWrapper)
-                    }.onFailure { throw YralException("sign in with token failed") }
-            }.onFailure { throw YralException("sign out for auth token sign in failed") }
+                        setSession(canisterData = canisterData)
+                    }.onFailure { throw YralAuthException("sign in with token failed - ${it.message}") }
+            }.onFailure { throw YralAuthException("sign out for auth token sign in failed - ${it.message}") }
     }
 
-    private suspend fun updateBalanceAndProceed(
-        data: ByteArray,
-        canisterWrapper: CanistersWrapper,
-    ) {
+    private suspend fun updateBalanceAndProceed(canisterData: CanisterData) {
         crashlyticsManager.logMessage("getting balance")
         requiredUseCases.getBalanceUseCase
-            .invoke(canisterWrapper.getUserPrincipal())
+            .invoke(canisterData.userPrincipalId)
             .onSuccess { coinBalance ->
                 crashlyticsManager.logMessage("updating user coins")
                 requiredUseCases
@@ -242,31 +253,31 @@ class DefaultAuthClient(
                         parameter =
                             UpdateDocumentUseCase.Params(
                                 collectionName = "users",
-                                documentId = canisterWrapper.getUserPrincipal(),
+                                documentId = canisterData.userPrincipalId,
                                 fieldAndValue = Pair("coins", coinBalance),
                             ),
                     ).onSuccess {
-                        setSession(data, canisterWrapper, coinBalance)
-                    }.onFailure { throw YralException("update coin balance failed") }
-            }.onFailure { throw YralException("get balance failed") }
+                        sessionManager.updateCoinBalance(coinBalance)
+                    }.onFailure { throw YralAuthException("update coin balance failed ${it.message}") }
+            }.onFailure { throw YralAuthException("get balance failed ${it.message}") }
     }
 
-    private suspend fun setSession(
-        data: ByteArray,
-        canisterWrapper: CanistersWrapper,
-        initialCoinBalance: Long,
-    ) {
+    private fun setSession(canisterData: CanisterData) {
+        individualUserServiceFactory.initialize(
+            principal = canisterData.canisterId,
+            identityData = canisterData.identity,
+        )
         sessionManager.updateState(
             SessionState.SignedIn(
                 session =
                     Session(
-                        identity = data,
-                        canisterPrincipal = canisterWrapper.getCanisterPrincipal(),
-                        userPrincipal = canisterWrapper.getUserPrincipal(),
+                        identity = canisterData.identity,
+                        canisterPrincipal = canisterData.canisterId,
+                        userPrincipal = canisterData.userPrincipalId,
                     ),
             ),
         )
-        sessionManager.updateCoinBalance(initialCoinBalance)
+        scope.launch { updateBalanceAndProceed(canisterData) }
         analyticsManager.trackEvent(
             event = AuthSuccessfulEventData(),
         )
@@ -282,23 +293,16 @@ class DefaultAuthClient(
                         idToken = tokenResponse.idToken,
                         accessToken = tokenResponse.accessToken,
                         refreshToken = tokenResponse.refreshToken,
-                        shouldRefreshToken = true,
                     )
                 }.onFailure { logout() }
         } ?: obtainAnonymousIdentity()
     }
 
-    override suspend fun signInWithSocial(
-        provider: SocialProvider,
-        oAuthListener: OAuthListener,
-    ) {
-        initiateOAuthFlow(provider, oAuthListener)
+    override suspend fun signInWithSocial(provider: SocialProvider) {
+        initiateOAuthFlow(provider)
     }
 
-    private suspend fun initiateOAuthFlow(
-        provider: SocialProvider,
-        oAuthListener: OAuthListener,
-    ) {
+    private suspend fun initiateOAuthFlow(provider: SocialProvider) {
         sessionManager.getIdentity()?.let { identity ->
             val authUrl = authRepository.getOAuthUrl(provider, identity)
             currentState = authUrl.second
@@ -306,13 +310,7 @@ class DefaultAuthClient(
                 authUrl = authUrl.first,
             ) { code, state ->
                 scope.launch {
-                    try {
-                        oAuthListener.setLoading(true)
-                        handleOAuthCallback(code, state)
-                        oAuthListener.setLoading(false)
-                    } catch (e: YralException) {
-                        oAuthListener.exception(e)
-                    }
+                    handleOAuthCallback(code, state)
                 }
             }
         }
@@ -325,6 +323,8 @@ class DefaultAuthClient(
         if (state != currentState) {
             throw SecurityException("Invalid state parameter - possible CSRF attack")
         }
+        analyticsManager.flush()
+        sessionManager.updateState(SessionState.Loading)
         authenticate(code)
     }
 
@@ -336,11 +336,12 @@ class DefaultAuthClient(
                     idToken = tokenResponse.idToken,
                     accessToken = tokenResponse.accessToken,
                     refreshToken = tokenResponse.refreshToken,
-                    shouldRefreshToken = true,
-                    shouldSetMetadata = true,
+                    resetCanister = true,
+                    skipSetMetaData = false,
+                    skipFirebaseAuth = false,
                 )
                 preferences.putBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name, true)
-            }.onFailure { throw YralException("authenticate social sign in failed") }
+            }.onFailure { throw YralAuthException("authenticate social sign in failed - ${it.message}") }
     }
 
     private suspend fun updateSessionAsRegistered(
@@ -369,4 +370,36 @@ class DefaultAuthClient(
         val updateDocumentUseCase: UpdateDocumentUseCase,
         val getIdTokenUseCase: GetIdTokenUseCase,
     )
+
+    private suspend fun getCachedCanisterData(): CanisterData? {
+        val identity = preferences.getBytes(PrefKeys.IDENTITY.name)
+        val canister = preferences.getString(PrefKeys.CANISTER_ID.name)
+        val userPrincipal = preferences.getString(PrefKeys.USER_PRINCIPAL.name)
+        return if (identity != null && canister != null && userPrincipal != null) {
+            CanisterData(identity, canister, userPrincipal)
+        } else {
+            null
+        }
+    }
+
+    private suspend fun cacheCanisterData(
+        identity: ByteArray,
+        canisterWrapper: CanistersWrapper,
+    ) {
+        preferences.putBytes(PrefKeys.IDENTITY.name, identity)
+        preferences.putString(PrefKeys.CANISTER_ID.name, canisterWrapper.getCanisterPrincipal())
+        preferences.putString(PrefKeys.USER_PRINCIPAL.name, canisterWrapper.getUserPrincipal())
+    }
+
+    private suspend fun resetCachedCanisterData() {
+        preferences.remove(PrefKeys.IDENTITY.name)
+        preferences.remove(PrefKeys.CANISTER_ID.name)
+        preferences.remove(PrefKeys.USER_PRINCIPAL.name)
+    }
 }
+
+data class CanisterData(
+    val identity: ByteArray,
+    val canisterId: String,
+    val userPrincipalId: String,
+)

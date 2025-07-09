@@ -16,10 +16,8 @@ class SessionManager {
         _state.update { state }
     }
 
-    suspend fun updateCoinBalance(newBalance: Long) {
-        if (_state.value is SessionState.SignedIn) {
-            _coinBalance.emit(newBalance)
-        }
+    fun updateCoinBalance(newBalance: Long) {
+        _coinBalance.update { newBalance }
     }
 
     fun getCanisterPrincipal(): String? =
@@ -46,7 +44,14 @@ class SessionManager {
 
 sealed interface SessionState {
     data object Initial : SessionState
+    data object Loading : SessionState
     data class SignedIn(
         val session: Session,
     ) : SessionState
 }
+
+fun SessionState.getKey(): String =
+    when (this) {
+        is SessionState.SignedIn -> "signed-${this.session.userPrincipal}"
+        else -> "anon"
+    }

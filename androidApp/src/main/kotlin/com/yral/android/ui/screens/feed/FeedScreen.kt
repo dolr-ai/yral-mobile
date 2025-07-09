@@ -2,20 +2,17 @@ package com.yral.android.ui.screens.feed
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -31,33 +28,35 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
+import co.touchlab.kermit.Logger
 import com.yral.android.R
+import com.yral.android.ui.components.SignupView
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
+import com.yral.android.ui.screens.account.WebViewBottomSheet
 import com.yral.android.ui.screens.feed.FeedScreenConstants.MAX_LINES_FOR_POST_DESCRIPTION
-import com.yral.android.ui.screens.feed.FeedScreenConstants.VIDEO_REPORT_SHEET_MAX_HEIGHT
 import com.yral.android.ui.screens.feed.performance.PrefetchVideoListenerImpl
 import com.yral.android.ui.screens.feed.performance.VideoListenerImpl
 import com.yral.android.ui.screens.game.AboutGameSheet
@@ -65,14 +64,18 @@ import com.yral.android.ui.screens.game.CoinBalance
 import com.yral.android.ui.screens.game.GameResultSheet
 import com.yral.android.ui.screens.game.SmileyGame
 import com.yral.android.ui.widgets.PreloadLottieAnimation
+import com.yral.android.ui.widgets.YralAsyncImage
 import com.yral.android.ui.widgets.YralBottomSheet
 import com.yral.android.ui.widgets.YralButtonState
-import com.yral.android.ui.widgets.YralButtonType
+import com.yral.android.ui.widgets.YralErrorMessage
 import com.yral.android.ui.widgets.YralGradientButton
 import com.yral.android.ui.widgets.YralLoader
+import com.yral.android.ui.widgets.YralLottieAnimation
+import com.yral.shared.features.account.viewmodel.AccountsViewModel.Companion.TERMS_OF_SERVICE_URL
 import com.yral.shared.features.feed.viewmodel.FeedState
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.PRE_FETCH_BEFORE_LAST
+import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.SIGN_UP_PAGE
 import com.yral.shared.features.feed.viewmodel.ReportSheetState
 import com.yral.shared.features.feed.viewmodel.VideoReportReason
 import com.yral.shared.features.game.viewmodel.GameState
@@ -81,7 +84,6 @@ import com.yral.shared.libs.videoPlayer.YRALReelPlayer
 import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.rust.domain.models.FeedDetails
 import io.ktor.http.Url
-import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -94,13 +96,6 @@ fun FeedScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val gameState by gameViewModel.state.collectAsState()
-    val coroutineScope = rememberCoroutineScope()
-    // Keep track of the last feed size to detect when new items are loaded
-    var lastFeedSize by remember { mutableIntStateOf(0) }
-    // Track when a load was triggered to prevent multiple calls
-    var loadTriggered by remember { mutableStateOf(false) }
-    // Track if new items have been loaded since loading started
-    var newItemsAddedSinceLoading by remember { mutableStateOf(false) }
 
     // Set initial video ID when feed loads
     LaunchedEffect(state.feedDetails.isNotEmpty()) {
@@ -109,57 +104,25 @@ fun FeedScreen(
         }
     }
 
-    // Function to determine if we should load more content
-    val shouldLoadMore =
-        remember(
-            state.currentPageOfFeed,
-            state.feedDetails.size,
-            state.isLoadingMore,
-            loadTriggered,
-        ) {
-            val isValidPage = state.currentPageOfFeed >= 0
-            val isCloseToEnd =
-                state.feedDetails.isNotEmpty() &&
-                    (state.feedDetails.size - state.currentPageOfFeed) <= PRE_FETCH_BEFORE_LAST
-            isValidPage && isCloseToEnd && !state.isLoadingMore && !loadTriggered
-        }
-
-    // Reset load triggered when feed size changes (meaning new data arrived)
-    LaunchedEffect(state.feedDetails.size) {
-        if (state.feedDetails.size > lastFeedSize) {
-            // New items have been added
-            loadTriggered = false
-            lastFeedSize = state.feedDetails.size
-            // Mark that we've received new items since loading started
-            if (state.isLoadingMore) {
-                newItemsAddedSinceLoading = true
-            }
+    // Pagination logic
+    val isNearEnd by remember {
+        derivedStateOf {
+            state.feedDetails.isNotEmpty() &&
+                (state.feedDetails.size - state.currentPageOfFeed) <= PRE_FETCH_BEFORE_LAST
         }
     }
-
-    // Reset states when loading state changes
-    LaunchedEffect(state.isLoadingMore) {
-        if (state.isLoadingMore) {
-            // Reset flag when loading starts
-            newItemsAddedSinceLoading = false
-        } else {
-            // Reset load triggered when loading completes
-            loadTriggered = false
-        }
-    }
-
-    // Handle loading more when currentPage changes
-    LaunchedEffect(shouldLoadMore) {
-        if (shouldLoadMore) {
-            loadTriggered = true
-            coroutineScope.launch {
-                viewModel.loadMoreFeed()
-            }
+    LaunchedEffect(isNearEnd, state.isLoadingMore, state.pendingFetchDetails) {
+        if (isNearEnd && !state.isLoadingMore && state.pendingFetchDetails == 0) {
+            Logger.d("FeedPagination") { "triggering pagination" }
+            viewModel.loadMoreFeed()
         }
     }
 
     // Determine if we should show the loader
-    val showLoader = state.isLoadingMore && !newItemsAddedSinceLoading
+    val showLoader =
+        isNearEnd &&
+            (state.isLoadingMore || state.pendingFetchDetails > 0) &&
+            state.currentPageOfFeed == state.feedDetails.size - 1
 
     Column(modifier = modifier) {
         if (state.feedDetails.isNotEmpty()) {
@@ -215,7 +178,7 @@ fun FeedScreen(
                             .padding(vertical = 8.dp),
                     contentAlignment = Alignment.Center,
                 ) {
-                    YralLoader(size = 32.dp)
+                    YralLoader(size = 20.dp)
                 }
             }
         }
@@ -259,6 +222,19 @@ fun FeedScreen(
             },
         )
     }
+    if (state.showSignupFailedSheet) {
+        YralErrorMessage(
+            title = stringResource(R.string.could_not_login),
+            error = stringResource(R.string.could_not_login_desc),
+            sheetState =
+                rememberModalBottomSheetState(
+                    skipPartiallyExpanded = true,
+                ),
+            cta = stringResource(R.string.ok),
+            onClick = { viewModel.toggleSignupFailed(false) },
+            onDismiss = { viewModel.toggleSignupFailed(false) },
+        )
+    }
 }
 
 private fun getReels(state: FeedState): List<Reels> =
@@ -298,11 +274,11 @@ private fun FeedOverlay(
             modifier =
                 Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(end = 16.dp, bottom = 89.dp),
+                    .padding(end = 16.dp, bottom = 100.dp),
         ) {
             feedViewModel.toggleReportSheet(true, pageNo)
         }
-        if (gameState.gameIcons.isNotEmpty()) {
+        if (gameState.gameIcons.isNotEmpty() && gameState.lossPenalty <= gameState.coinBalance) {
             SmileyGame(
                 gameIcons = gameState.gameIcons,
                 clickedIcon = gameState.gameResult[state.feedDetails[pageNo].videoID]?.first,
@@ -332,7 +308,80 @@ private fun FeedOverlay(
                 lottieCached = true
             }
         }
+        if (state.showSignupNudge && pageNo != 0 && (pageNo % SIGN_UP_PAGE) == 0) {
+            SignupNudge {
+                feedViewModel.signInWithGoogle()
+            }
+        }
     }
+}
+
+@Composable
+private fun SignupNudge(onSignupClicked: () -> Unit) {
+    var link by remember { mutableStateOf("") }
+    Column(
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(YralColors.ScrimColor)
+                .padding(top = 16.dp, start = 16.dp, end = 16.dp)
+                .clickable { },
+        verticalArrangement = Arrangement.spacedBy(20.dp, Alignment.Top),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Column(
+            modifier = Modifier.padding(top = 58.dp),
+            verticalArrangement = Arrangement.Top,
+        ) {
+            SignupView(
+                termsLink = TERMS_OF_SERVICE_URL,
+                openTerms = { link = TERMS_OF_SERVICE_URL },
+                onSignupClicked = onSignupClicked,
+            )
+        }
+        Column(
+            Modifier.weight(1f).padding(bottom = 40.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Bottom,
+        ) {
+            Text(
+                text = stringResource(R.string.scroll_to_next_video),
+                style = LocalAppTopography.current.mdBold,
+                color = YralColors.NeutralIconsActive,
+            )
+            YralLottieAnimation(
+                modifier = Modifier.size(36.dp),
+                R.raw.signup_scroll,
+            )
+        }
+    }
+    if (link.isNotEmpty()) {
+        LinkSheet(
+            link = link,
+            onDismissRequest = { link = "" },
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LinkSheet(
+    link: String,
+    onDismissRequest: () -> Unit,
+) {
+    val extraSheetState = rememberModalBottomSheetState()
+    LaunchedEffect(link) {
+        if (link.isEmpty()) {
+            extraSheetState.hide()
+        } else {
+            extraSheetState.show()
+        }
+    }
+    WebViewBottomSheet(
+        link = link,
+        bottomSheetState = extraSheetState,
+        onDismissRequest = onDismissRequest,
+    )
 }
 
 @Composable
@@ -348,8 +397,7 @@ private fun TopView(
     ) {
         var paddingEnd by remember { mutableFloatStateOf(0f) }
         val density = LocalDensity.current
-        val configuration = LocalConfiguration.current
-        val screenWidthPx = with(density) { (configuration.screenWidthDp.dp).toPx() }
+        val screenWidthPx = LocalWindowInfo.current.containerSize.width
         UserBrief(
             principalId = state.feedDetails[pageNo].principalID,
             profileImageUrl = state.feedDetails[pageNo].profileImageURL,
@@ -395,14 +443,26 @@ private fun UserBrief(
                     top = 22.dp,
                     start = 16.dp,
                     bottom = 22.dp,
+                ).background(
+                    brush =
+                        Brush.horizontalGradient(
+                            colors =
+                                listOf(
+                                    Color.Black.copy(alpha = 0.66f),
+                                    Color.Transparent,
+                                ),
+                            startX = 0f,
+                            endX = Float.POSITIVE_INFINITY,
+                        ),
+                    shape =
+                        RoundedCornerShape(
+                            topStart = 28.dp,
+                            topEnd = 0.dp,
+                            bottomStart = 28.dp,
+                            bottomEnd = 0.dp,
+                        ),
                 ),
     ) {
-        Image(
-            modifier = Modifier.fillMaxWidth(),
-            painter = painterResource(id = R.drawable.user_brief),
-            contentDescription = "image description",
-            contentScale = ContentScale.FillBounds,
-        )
         Row(
             modifier =
                 Modifier
@@ -412,7 +472,7 @@ private fun UserBrief(
                         bottom = 8.dp,
                         start = 8.dp,
                     ),
-            verticalAlignment = Alignment.Top,
+            verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             UserBriefProfileImage(profileImageUrl)
@@ -429,24 +489,12 @@ private fun UserBrief(
 
 @Composable
 private fun UserBriefProfileImage(profileImageUrl: Url?) {
-    val shape = RoundedCornerShape(size = 40.dp)
-    AsyncImage(
-        model = profileImageUrl.toString(),
-        contentDescription = "User picture",
-        contentScale = ContentScale.FillBounds,
-        modifier =
-            Modifier
-                .clip(shape)
-                .border(
-                    width = 2.dp,
-                    color = YralColors.Pink300,
-                    shape = shape,
-                ).width(40.dp)
-                .height(40.dp)
-                .background(
-                    color = YralColors.ProfilePicBackground,
-                    shape = shape,
-                ),
+    YralAsyncImage(
+        imageUrl = profileImageUrl.toString(),
+        modifier = Modifier.size(40.dp),
+        border = 2.dp,
+        borderColor = YralColors.Pink300,
+        backgroundColor = YralColors.ProfilePicBackground,
     )
 }
 
@@ -462,9 +510,10 @@ private fun UserBriefDetails(
         modifier =
             modifier
                 .clickable {
-                    setPostDescriptionExpanded(!isPostDescriptionExpanded)
+                    // setPostDescriptionExpanded(!isPostDescriptionExpanded)
+                    setPostDescriptionExpanded(false)
                 },
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically),
         horizontalAlignment = Alignment.Start,
     ) {
         Text(
@@ -474,31 +523,33 @@ private fun UserBriefDetails(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
-        if (isPostDescriptionExpanded) {
-            val scrollState = rememberScrollState()
-            val maxHeight =
-                LocalAppTopography
-                    .current
-                    .feedDescription
-                    .lineHeight
-                    .value * MAX_LINES_FOR_POST_DESCRIPTION
-            Text(
-                modifier =
-                    Modifier
-                        .heightIn(max = maxHeight.dp)
-                        .verticalScroll(scrollState),
-                text = postDescription,
-                style = LocalAppTopography.current.feedDescription,
-                color = Color.White,
-            )
-        } else {
-            Text(
-                text = postDescription,
-                style = LocalAppTopography.current.feedDescription,
-                color = Color.White,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+        if (postDescription.trim().isNotEmpty()) {
+            if (isPostDescriptionExpanded) {
+                val scrollState = rememberScrollState()
+                val maxHeight =
+                    LocalAppTopography
+                        .current
+                        .feedDescription
+                        .lineHeight
+                        .value * MAX_LINES_FOR_POST_DESCRIPTION
+                Text(
+                    modifier =
+                        Modifier
+                            .heightIn(max = maxHeight.dp)
+                            .verticalScroll(scrollState),
+                    text = postDescription,
+                    style = LocalAppTopography.current.feedDescription,
+                    color = Color.White,
+                )
+            } else {
+                Text(
+                    text = postDescription,
+                    style = LocalAppTopography.current.feedDescription,
+                    color = Color.White,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
     }
 }
@@ -547,19 +598,18 @@ private fun ReportVideoSheet(
         Column(
             modifier =
                 Modifier
-                    .fillMaxHeight(VIDEO_REPORT_SHEET_MAX_HEIGHT)
                     .padding(
                         start = 16.dp,
                         top = 28.dp,
                         end = 16.dp,
                         bottom = 36.dp,
                     ),
-            verticalArrangement = Arrangement.spacedBy(28.dp, Alignment.CenterVertically),
+            verticalArrangement = Arrangement.spacedBy(28.dp, Alignment.Bottom),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             VideoReportSheetTitle()
             VideoReportReasons(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f, fill = false),
                 reasons = reasons,
                 selectedReason = selectedReason,
                 onSelected = { selectedReason = it },
@@ -568,7 +618,6 @@ private fun ReportVideoSheet(
             )
             YralGradientButton(
                 text = stringResource(R.string.submit),
-                buttonType = YralButtonType.White,
                 buttonState = buttonState,
             ) {
                 selectedReason?.let {
@@ -612,9 +661,16 @@ private fun VideoReportReasons(
     onTextUpdate: (String) -> Unit,
 ) {
     val listState = rememberLazyListState()
+    var inputHeight by remember { mutableIntStateOf(0) }
     LaunchedEffect(selectedReason) {
         if (selectedReason == VideoReportReason.OTHERS) {
-            listState.animateScrollToItem(reasons.size)
+            listState.animateScrollToItem(reasons.size, inputHeight)
+        }
+    }
+    LaunchedEffect(text) {
+        // automatically scroll to end of column as text grows
+        if (selectedReason == VideoReportReason.OTHERS) {
+            listState.scrollToItem(reasons.size, inputHeight)
         }
     }
     LazyColumn(
@@ -637,6 +693,7 @@ private fun VideoReportReasons(
                 ReasonDetailsInput(
                     text = text,
                     onValueChange = onTextUpdate,
+                    onHeightChange = { inputHeight = it },
                 )
             }
         }
@@ -647,8 +704,13 @@ private fun VideoReportReasons(
 private fun ReasonDetailsInput(
     text: String,
     onValueChange: (text: String) -> Unit,
+    onHeightChange: (height: Int) -> Unit,
 ) {
     Column(
+        modifier =
+            Modifier.onGloballyPositioned {
+                onHeightChange(it.size.height)
+            },
         verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top),
         horizontalAlignment = Alignment.Start,
     ) {
@@ -667,8 +729,8 @@ private fun ReasonDetailsInput(
             onValueChange = onValueChange,
             colors =
                 TextFieldDefaults.colors().copy(
-                    focusedTextColor = YralColors.Neutral600,
-                    unfocusedTextColor = YralColors.Neutral600,
+                    focusedTextColor = YralColors.Neutral300,
+                    unfocusedTextColor = YralColors.Neutral300,
                     disabledTextColor = YralColors.Neutral600,
                     focusedContainerColor = YralColors.Neutral800,
                     unfocusedContainerColor = YralColors.Neutral800,
@@ -740,5 +802,4 @@ private fun VideoReportReason.displayText(): String =
 
 object FeedScreenConstants {
     const val MAX_LINES_FOR_POST_DESCRIPTION = 5
-    const val VIDEO_REPORT_SHEET_MAX_HEIGHT = 0.8f
 }

@@ -21,6 +21,7 @@ fun YralBottomSheet(
         modifier = Modifier.safeDrawingPadding(),
         onDismissRequest = onDismissRequest,
         sheetState = bottomSheetState,
+        scrimColor = YralColors.ScrimColor,
         containerColor = YralColors.Neutral900,
         dragHandle = dragHandle,
         content = content,

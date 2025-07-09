@@ -37,7 +37,8 @@ import GRPC
       crashReporter: crashReporter,
       baseURL: URL(string: appConfiguration.authBaseURLString) ?? URL(fileURLWithPath: ""),
       satsBaseURL: URL(string: appConfiguration.satsBalanceBaseURLString) ?? URL(fileURLWithPath: ""),
-      firebaseBaseURL: URL(string: appConfiguration.firebaseBaseURLString) ?? URL(fileURLWithPath: "")
+      firebaseBaseURL: URL(string: appConfiguration.firebaseBaseURLString) ?? URL(fileURLWithPath: ""),
+      notificationService: FirebaseNotifications()
     )
     return client
   }()

@@ -1,6 +1,8 @@
 package com.yral.shared.features.game.viewmodel
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.core.dispatchers.AppDispatchers
@@ -58,8 +60,11 @@ class GameViewModel(
                 async { getGameRules() },
                 async { getGameIcons() },
             ).awaitAll()
+        }
+        viewModelScope.launch {
             // Observe coin balance changes
             sessionManager.coinBalance.collect { balance ->
+                Logger.d("xxxx coin balance collected $balance")
                 _state.update { currentState ->
                     currentState.copy(
                         coinBalance = balance,
@@ -83,15 +88,12 @@ class GameViewModel(
 
     private suspend fun getGameIcons() {
         gameIconsUseCase
-            .invoke(
-                parameter =
-                    GetGameIconsUseCase.GetGameIconsParams(
-                        coinBalance = _state.value.coinBalance,
-                    ),
-            ).onSuccess { icons ->
+            .invoke(Unit)
+            .onSuccess { config ->
                 _state.update { currentState ->
                     currentState.copy(
-                        gameIcons = icons,
+                        gameIcons = config.availableSmileys,
+                        lossPenalty = config.lossPenalty,
                     )
                 }
             }.onFailure { }
@@ -275,6 +277,7 @@ class GameViewModel(
 }
 
 data class GameState(
+    val lossPenalty: Int = Int.MAX_VALUE,
     val gameIcons: List<GameIcon>,
     val gameResult: Map<String, Pair<GameIcon, VoteResult>> = emptyMap(),
     val coinBalance: Long,

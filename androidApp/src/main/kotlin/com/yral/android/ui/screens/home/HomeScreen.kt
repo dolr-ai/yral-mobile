@@ -5,9 +5,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -30,24 +33,33 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.yral.android.R
+import com.yral.android.ui.components.hashtagInput.keyboardHeightAsState
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.account.AccountScreen
 import com.yral.android.ui.screens.feed.FeedScreen
 import com.yral.android.ui.screens.leaderboard.LeaderboardScreen
+import com.yral.android.ui.screens.profile.ProfileScreen
+import com.yral.android.ui.screens.uploadVideo.UploadVideoScreen
+import com.yral.shared.core.session.SessionState
+import com.yral.shared.core.session.getKey
+import com.yral.shared.features.account.viewmodel.AccountsViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
+import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.koin.koinInstance
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun HomeScreen(
-    feedViewModel: FeedViewModel,
     currentTab: String,
     updateCurrentTab: (tab: String) -> Unit,
+    sessionState: SessionState,
 ) {
     val backHandlerEnabled by remember(currentTab) {
         mutableStateOf(currentTab != HomeTab.HOME.title)
@@ -66,32 +78,79 @@ fun HomeScreen(
             )
         },
     ) { innerPadding ->
-        when (currentTab) {
-            HomeTab.HOME.title ->
-                FeedScreen(
-                    modifier =
-                        Modifier
-                            .padding(innerPadding)
-                            .background(MaterialTheme.colorScheme.primaryContainer),
-                    viewModel = feedViewModel,
-                )
+        HomeScreenContent(
+            modifier =
+                Modifier
+                    .padding(innerPadding)
+                    .background(MaterialTheme.colorScheme.primaryContainer),
+            innerPadding = innerPadding,
+            sessionKey = sessionState.getKey(),
+            currentTab = currentTab,
+            updateCurrentTab = { updateCurrentTab(it.title) },
+        )
+    }
+}
 
-            HomeTab.ACCOUNT.title ->
-                AccountScreen(
-                    modifier =
-                        Modifier
-                            .padding(innerPadding)
-                            .background(MaterialTheme.colorScheme.primaryContainer),
-                    viewModel = koinInstance.get(),
+@Composable
+private fun HomeScreenContent(
+    modifier: Modifier,
+    innerPadding: PaddingValues,
+    sessionKey: String,
+    currentTab: String,
+    updateCurrentTab: (tab: HomeTab) -> Unit,
+) {
+    val feedViewModel = koinViewModel<FeedViewModel>(key = "feed-$sessionKey")
+    val profileViewModel = koinViewModel<ProfileViewModel>(key = "profile-$sessionKey")
+    val accountViewModel = koinViewModel<AccountsViewModel>(key = "account-$sessionKey")
+    when (currentTab) {
+        HomeTab.HOME.title ->
+            FeedScreen(
+                modifier = modifier,
+                viewModel = feedViewModel,
+            )
+
+        HomeTab.ACCOUNT.title ->
+            AccountScreen(
+                modifier = modifier,
+                viewModel = accountViewModel,
+            )
+
+        HomeTab.LEADER_BOARD.title ->
+            LeaderboardScreen(
+                modifier = modifier,
+                viewModel = koinInstance.get(),
+            )
+
+        HomeTab.UPLOAD_VIDEO.title -> {
+            val keyboardHeight by keyboardHeightAsState()
+            val bottomPadding by remember(keyboardHeight) {
+                mutableStateOf(
+                    if (keyboardHeight > 0) {
+                        0.dp
+                    } else {
+                        innerPadding.calculateBottomPadding()
+                    },
                 )
-            HomeTab.LEADER_BOARD.title ->
-                LeaderboardScreen(
-                    modifier =
-                        Modifier
-                            .padding(innerPadding)
-                            .background(MaterialTheme.colorScheme.primaryContainer),
-                    viewModel = koinInstance.get(),
-                )
+            }
+            UploadVideoScreen(
+                modifier =
+                    Modifier
+                        .padding(
+                            top = innerPadding.calculateTopPadding(),
+                            start = innerPadding.calculateStartPadding(LocalLayoutDirection.current),
+                            end = innerPadding.calculateEndPadding(LocalLayoutDirection.current),
+                            bottom = bottomPadding,
+                        ).background(MaterialTheme.colorScheme.primaryContainer),
+                goToHome = { updateCurrentTab(HomeTab.HOME) },
+            )
+        }
+
+        HomeTab.PROFILE.title -> {
+            ProfileScreen(
+                modifier = modifier,
+                uploadVideo = { updateCurrentTab(HomeTab.UPLOAD_VIDEO) },
+                viewModel = profileViewModel,
+            )
         }
     }
 }
@@ -106,42 +165,42 @@ private fun HomeNavigationBar(
         modifier =
             Modifier
                 .navigationBarsPadding()
+                .fillMaxWidth()
                 .height(67.dp)
-                .padding(start = 36.dp, end = 36.dp),
+                .padding(start = 16.dp, end = 16.dp),
         windowInsets = WindowInsets(0, 0, 0, 0),
     ) {
-        HomeTab.entries.forEach { tab ->
-            if (tab.isGhost) {
-                // Create invisible spacer item
-                NavigationBarItem(
-                    selected = false,
-                    onClick = { /* No-op */ },
-                    icon = { Box {} },
-                    colors =
-                        NavigationBarItemDefaults.colors(
-                            selectedIconColor = Color.Transparent,
-                            unselectedIconColor = Color.Transparent,
-                            indicatorColor = Color.Transparent,
-                        ),
-                )
-            } else {
-                NavigationBarItem(
-                    selected = currentTab == tab.title,
-                    onClick = { updateCurrentTab(tab.title) },
-                    icon = {
+        HomeTab.entries.forEachIndexed { index, tab ->
+            val alignment =
+                remember {
+                    when (index) {
+                        0 -> Alignment.CenterStart
+                        HomeTab.entries.size - 1 -> Alignment.CenterEnd
+                        else -> Alignment.Center
+                    }
+                }
+            NavigationBarItem(
+                modifier = Modifier.weight(1f),
+                selected = currentTab == tab.title,
+                onClick = { updateCurrentTab(tab.title) },
+                icon = {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = alignment,
+                    ) {
                         NavBarIcon(
                             isSelected = currentTab == tab.title,
                             tab = tab,
                         )
-                    },
-                    colors =
-                        NavigationBarItemDefaults.colors(
-                            selectedIconColor = Color.White,
-                            unselectedIconColor = Color.White,
-                            indicatorColor = Color.Transparent,
-                        ),
-                )
-            }
+                    }
+                },
+                colors =
+                    NavigationBarItemDefaults.colors(
+                        selectedIconColor = Color.White,
+                        unselectedIconColor = Color.White,
+                        indicatorColor = Color.Transparent,
+                    ),
+            )
         }
     }
 }
@@ -153,10 +212,7 @@ private fun NavBarIcon(
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .height(67.dp),
+        modifier = Modifier.height(67.dp),
     ) {
         // Show indicator line on top when selected
         Box(
@@ -209,10 +265,10 @@ private fun NewTaggedColumn(
                     textAlign = TextAlign.Center,
                 )
             }
+        } else {
+            // Use weight to push icon to center of the available space
+            Spacer(modifier = Modifier.weight(1f))
         }
-
-        // Use weight to push icon to center of the available space
-        Spacer(modifier = Modifier.weight(1f))
 
         Icon(
             modifier = Modifier.size(32.dp),
@@ -232,7 +288,6 @@ enum class HomeTab(
     val title: String,
     val icon: Int,
     val unSelectedIcon: Int,
-    val isGhost: Boolean = false,
     val isNew: Boolean = false,
 ) {
     HOME("Home", R.drawable.home_nav_selected, R.drawable.home_nav_unselected),
@@ -242,6 +297,15 @@ enum class HomeTab(
         unSelectedIcon = R.drawable.leaderboard_nav_unselected,
         isNew = true,
     ),
-    GHOST_2("", 0, 0, true),
+    UPLOAD_VIDEO(
+        title = "UploadVideo",
+        icon = R.drawable.upload_video_nav_selected,
+        unSelectedIcon = R.drawable.upload_video_nav_unselected,
+    ),
+    PROFILE(
+        title = "Profile",
+        icon = R.drawable.profile_nav_selected,
+        unSelectedIcon = R.drawable.profile_nav_unselected,
+    ),
     ACCOUNT("Account", R.drawable.account_nav, R.drawable.account_nav),
 }

@@ -492,4 +492,9 @@ mod ffi {
         fn propic_from_principal(principal: Principal) -> String;
         fn yral_auth_login_hint(data: &[u8]) -> Result<String, String>;
     }
+
+    extern "Rust" {
+        async fn register_device(identity: DelegatedIdentity, token: String) -> Result<(), String>;
+        async fn unregister_device(identity: DelegatedIdentity, token: String) -> Result<(), String>;
+    }
 }

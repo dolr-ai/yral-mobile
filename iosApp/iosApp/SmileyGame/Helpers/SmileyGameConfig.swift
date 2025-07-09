@@ -20,6 +20,9 @@ class SmileyGameConfig {
   private init() {}
 
   func fetch() async -> Result<SmileyConfig, SmileyConfigError> {
+    guard config.smileys.isEmpty else {
+      return .success(config)
+    }
     do {
       let response = try await firebaseService.fetchDocument(
         path: Constants.documentPath,

@@ -1,18 +1,29 @@
 plugins {
-    alias(libs.plugins.androidApplication).apply(false)
-    alias(libs.plugins.androidLibrary).apply(false)
-    alias(libs.plugins.kotlinAndroid).apply(false)
-    alias(libs.plugins.kotlinMultiplatform).apply(false)
+    // this is necessary to avoid the plugins to be loaded multiple times
+    // in each subproject's classloader
+    alias(libs.plugins.androidApplication) apply false
+    alias(libs.plugins.androidLibrary) apply false
+    alias(libs.plugins.android.lint) apply false
+    alias(libs.plugins.android.test) apply false
+    alias(libs.plugins.composeHotReload) apply false
+    alias(libs.plugins.composeMultiplatform) apply false
+    alias(libs.plugins.composeCompiler) apply false
+    alias(libs.plugins.kotlinMultiplatform) apply false
+    alias(libs.plugins.kotlinCocoapods) apply false
+    alias(libs.plugins.kotlin.jvm) apply false
+    alias(libs.plugins.kotlin.serialization) apply false
     alias(libs.plugins.ktlint)
+    alias(libs.plugins.spotless) apply false
     alias(libs.plugins.detekt)
+    alias(libs.plugins.gms) apply false
+    alias(libs.plugins.firebase.crashlytics) apply false
+    alias(libs.plugins.firebase.perf) apply false
+    alias(libs.plugins.kotlinAndroid).apply(false)
     alias(libs.plugins.gobleyCargo).apply(false)
     alias(libs.plugins.gobleyUniffi).apply(false)
     alias(libs.plugins.gobleyRust).apply(false)
     alias(libs.plugins.kotlinAtomicfu).apply(false)
-    alias(libs.plugins.kotlinxSerialisartion).apply(false)
-    alias(libs.plugins.crashlytics).apply(false)
-    alias(libs.plugins.play.services).apply(false)
-    alias(libs.plugins.firebase.performance).apply(false)
+    alias(libs.plugins.android.kotlin.multiplatform.library) apply false
 }
 
 val reportMerge by tasks.registering(io.gitlab.arturbosch.detekt.report.ReportMergeTask::class) {
@@ -23,7 +34,7 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-        //mavenLocal()
+        // mavenLocal()
         maven {
             name = "GitHubPackages"
             url = uri("https://maven.pkg.github.com/dolr-ai/yral-mobile")
@@ -33,7 +44,7 @@ allprojects {
             }
         }
         maven {
-            url  = uri("https://oss.sonatype.org/content/repositories/snapshots/")
+            url = uri("https://oss.sonatype.org/content/repositories/snapshots/")
         }
     }
 }

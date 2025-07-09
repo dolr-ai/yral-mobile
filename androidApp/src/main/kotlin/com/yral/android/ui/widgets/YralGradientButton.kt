@@ -46,7 +46,11 @@ fun YralGradientButton(
         horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (buttonState != YralButtonState.Loading) {
+        AnimatedVisibility(
+            visible = buttonState != YralButtonState.Loading,
+            enter = fadeIn(),
+            exit = fadeOut(),
+        ) {
             YralMaskedVectorText(
                 text = text,
                 vectorRes = getButtonTextBackground(buttonType, buttonState),
@@ -60,19 +64,17 @@ fun YralGradientButton(
                             ),
                         ),
             )
-        } else {
-            // The continuous loader animation
-            AnimatedVisibility(
-                visible = true,
-                enter = fadeIn(),
-                exit = fadeOut(),
-            ) {
-                YralLottieAnimation(
-                    modifier = Modifier.size(20.dp),
-                    rawRes = getLoaderResource(buttonType),
-                    iterations = LottieConstants.IterateForever,
-                )
-            }
+        }
+        AnimatedVisibility(
+            visible = buttonState == YralButtonState.Loading,
+            enter = fadeIn(),
+            exit = fadeOut(),
+        ) {
+            YralLottieAnimation(
+                modifier = Modifier.size(20.dp),
+                rawRes = getLoaderResource(buttonType),
+                iterations = LottieConstants.IterateForever,
+            )
         }
     }
 }
@@ -86,12 +88,14 @@ enum class YralButtonState {
 enum class YralButtonType {
     Pink,
     White,
+    Transparent,
 }
 
 private fun getLoaderResource(buttonType: YralButtonType): Int =
     when (buttonType) {
         YralButtonType.Pink -> R.raw.white_loader
-        YralButtonType.White -> R.raw.pink_loader
+        YralButtonType.White -> R.raw.yral_loader
+        YralButtonType.Transparent -> R.raw.yral_loader
     }
 
 private fun getButtonTextBackground(
@@ -107,6 +111,13 @@ private fun getButtonTextBackground(
             }
 
         YralButtonType.White ->
+            when (buttonState) {
+                YralButtonState.Enabled -> R.drawable.pink_gradient_background
+                YralButtonState.Disabled -> R.drawable.pink_gradient_background_disabled
+                YralButtonState.Loading -> R.drawable.pink_gradient_background
+            }
+
+        YralButtonType.Transparent ->
             when (buttonState) {
                 YralButtonState.Enabled -> R.drawable.pink_gradient_background
                 YralButtonState.Disabled -> R.drawable.pink_gradient_background_disabled
@@ -131,5 +142,12 @@ private fun getButtonBackground(
                 YralButtonState.Enabled -> R.drawable.white_background
                 YralButtonState.Disabled -> R.drawable.white_background_disabled
                 YralButtonState.Loading -> R.drawable.white_background
+            }
+
+        YralButtonType.Transparent ->
+            when (buttonState) {
+                YralButtonState.Enabled -> R.drawable.transparent_background
+                YralButtonState.Disabled -> R.drawable.transparent_background
+                YralButtonState.Loading -> R.drawable.transparent_background
             }
     }

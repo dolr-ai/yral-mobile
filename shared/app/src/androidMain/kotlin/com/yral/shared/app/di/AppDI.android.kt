@@ -1,15 +1,15 @@
 package com.yral.shared.app.di
 
 import com.yral.shared.analytics.di.analyticsModule
-import com.yral.shared.app.BuildConfig
-import com.yral.shared.core.FirebaseConfigurations
 import com.yral.shared.core.di.coreModule
 import com.yral.shared.crashlytics.di.crashlyticsModule
 import com.yral.shared.features.account.di.accountsModule
 import com.yral.shared.features.auth.di.authModule
 import com.yral.shared.features.feed.di.feedModule
 import com.yral.shared.features.game.di.gameModule
+import com.yral.shared.features.profile.di.profileModule
 import com.yral.shared.features.root.di.rootModule
+import com.yral.shared.features.uploadvideo.di.uploadVideoModule
 import com.yral.shared.firebaseAuth.di.firebaseAuthModule
 import com.yral.shared.firebaseStore.di.firestoreModule
 import com.yral.shared.http.di.networkModule
@@ -17,7 +17,6 @@ import com.yral.shared.preferences.di.preferencesModule
 import com.yral.shared.rust.di.rustModule
 import org.koin.core.context.startKoin
 import org.koin.dsl.KoinAppDeclaration
-import org.koin.dsl.module
 
 actual fun initKoin(appDeclaration: KoinAppDeclaration) {
     startKoin {
@@ -34,9 +33,8 @@ actual fun initKoin(appDeclaration: KoinAppDeclaration) {
             rustModule,
             firebaseAuthModule,
             firestoreModule,
-            module {
-                single<FirebaseConfigurations> { getFirebaseEnv() }
-            },
+            dispatchersModule,
+            archModule,
         )
         modules(
             authModule,
@@ -44,22 +42,8 @@ actual fun initKoin(appDeclaration: KoinAppDeclaration) {
             rootModule,
             accountsModule,
             gameModule,
+            uploadVideoModule,
+            profileModule,
         )
     }
 }
-
-private fun getFirebaseEnv(): FirebaseConfigurations =
-    when (BuildConfig.FLAVOR) {
-        "staging" ->
-            FirebaseConfigurations(
-                firebaseCloudFunctionUrl = "us-central1-yral-staging.cloudfunctions.net",
-            )
-        "prod" ->
-            FirebaseConfigurations(
-                firebaseCloudFunctionUrl = "us-central1-yral-mobile.cloudfunctions.net",
-            )
-        else -> // default would be prod
-            FirebaseConfigurations(
-                firebaseCloudFunctionUrl = "us-central1-yral-mobile.cloudfunctions.net",
-            )
-    }

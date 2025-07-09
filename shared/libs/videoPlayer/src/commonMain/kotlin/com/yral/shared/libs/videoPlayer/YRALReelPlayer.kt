@@ -181,6 +181,7 @@ internal fun YRALReelsPlayerView(
             state = pagerState,
             userScrollEnabled = true, // Ensure user scrolling is enabled
             beyondViewportPageCount = 0,
+            key = { page -> reels.getOrNull(page)?.videoId ?: page },
         ) { page ->
             // Create a side effect to detect when this page is shown
             LaunchedEffect(page, pagerState.currentPage) {

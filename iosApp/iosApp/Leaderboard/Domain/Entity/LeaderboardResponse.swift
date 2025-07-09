@@ -10,12 +10,12 @@ import Foundation
 
 struct LeaderboardRowResponse: Identifiable {
   let id = UUID().uuidString
+  let position: Int
   let principalID: String
   let coins: Int
 }
 
 struct LeaderboardResponse {
-  let userPosition: Int
   let userRow: LeaderboardRowResponse
   let rows: [LeaderboardRowResponse]
 }

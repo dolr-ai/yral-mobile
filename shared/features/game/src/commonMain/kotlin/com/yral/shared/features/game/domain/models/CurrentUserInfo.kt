@@ -5,4 +5,5 @@ data class CurrentUserInfo(
     val profileImageUrl: String,
     val coins: Long,
     val leaderboardPosition: Int,
+    val rank: Int,
 )

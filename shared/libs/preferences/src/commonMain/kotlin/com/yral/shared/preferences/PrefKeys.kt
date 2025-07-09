@@ -7,4 +7,6 @@ enum class PrefKeys {
     REFRESH_TOKEN,
     IDENTITY,
     IS_RESULT_SHEET_SHOWN,
+    CANISTER_ID,
+    USER_PRINCIPAL,
 }

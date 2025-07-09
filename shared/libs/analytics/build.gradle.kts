@@ -1,30 +1,20 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
-    alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.androidLibrary)
-    alias(libs.plugins.kotlinxSerialisartion)
+    alias(libs.plugins.yral.shared.library)
+    alias(libs.plugins.yral.android.library)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.kotlinCocoapods)
 }
-version = "1.0"
 
 kotlin {
-    androidTarget {
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_21)
-        }
-    }
+
+    androidTarget()
     listOf(
         iosArm64(),
-        iosSimulatorArm64()
-    ).forEach {
-        it.binaries.framework {
-            baseName = "analytics"
-            isStatic = true
-        }
-    }
+        iosSimulatorArm64(),
+    )
 
     cocoapods {
+        version = "1.0"
         summary = "Analytics module with Firebase and Mixpanel"
         homepage = "https://github.com/dolr-ai/yral-mobile"
         ios.deploymentTarget = "15.6"
@@ -33,11 +23,6 @@ kotlin {
         pod("Mixpanel") {
             extraOpts += listOf("-compiler-option", "-fmodules")
             version = "5.0.8"
-        }
-        framework {
-            baseName = "analytics"
-            isStatic = true
-            transitiveExport = true
         }
         pod("FBSDKCoreKit") {
             version = "18.0.0"
@@ -52,29 +37,12 @@ kotlin {
             implementation(projects.shared.libs.koin)
             implementation(projects.shared.libs.crashlytics)
             api(libs.gitlive.firebase.kotlin.anlaytics)
-
+            implementation(projects.shared.libs.preferences)
         }
         androidMain.dependencies {
-            implementation(projects.shared.libs.preferences)
             val (deps, addRust) = BuildConfig.getAndProcessDependencies(project)
-            deps.forEach { implementation(it) }
+            deps.forEach { if (it.isNotEmpty()) implementation(it) }
             if (addRust) implementation(projects.shared.rust)
         }
-
-        commonTest.dependencies {
-            implementation(libs.kotlin.test)
-        }
-    }
-}
-
-android {
-    namespace = "com.yral.shared.analytics"
-    compileSdk = libs.versions.compileSDK.get().toInt()
-    defaultConfig {
-        minSdk = libs.versions.minSDK.get().toInt()
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
     }
 }

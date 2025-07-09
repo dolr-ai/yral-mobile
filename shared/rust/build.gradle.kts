@@ -1,12 +1,14 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+@file:OptIn(ExperimentalKotlinGradlePluginApi::class)
+
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 
 plugins {
-    alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.androidLibrary)
+    alias(libs.plugins.yral.shared.library)
+    alias(libs.plugins.yral.android.library)
     alias(libs.plugins.gobleyCargo)
     alias(libs.plugins.gobleyUniffi)
     alias(libs.plugins.kotlinAtomicfu)
-    alias(libs.plugins.kotlinxSerialisartion)
+    alias(libs.plugins.kotlin.serialization)
     id("maven-publish")
 }
 
@@ -15,15 +17,12 @@ version = "1.0"
 
 kotlin {
     androidTarget {
-        publishLibraryVariants("release", "debug")
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_21)
-        }
+        publishAllLibraryVariants()
     }
-    listOf(
-        iosArm64(),
-        iosSimulatorArm64()
-    )
+//    listOf(
+//        iosArm64(),
+//        iosSimulatorArm64()
+//    )
 
     sourceSets {
         commonMain.dependencies {
@@ -35,31 +34,24 @@ kotlin {
             implementation(libs.kotlin.test)
         }
     }
+}
 
-    publishing {
-        repositories {
-            maven {
-                name = "GitHubPackages"
-                url = uri("https://maven.pkg.github.com/dolr-ai/yral-mobile")
-                credentials {
-                    username = System.getenv("GITHUB_USERNAME")
-                    password = System.getenv("GITHUB_TOKEN")
-                }
+publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/dolr-ai/yral-mobile")
+            credentials {
+                username = System.getenv("GITHUB_USERNAME")
+                password = System.getenv("GITHUB_TOKEN")
             }
         }
     }
 }
 
 android {
-    namespace = "com.yral.shared.rustLib"
-    compileSdk = libs.versions.compileSDK.get().toInt()
     defaultConfig {
-        minSdk = libs.versions.minSDK.get().toInt()
         ndkVersion = "28.0.13004108"
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
     }
     packaging {
         jniLibs.keepDebugSymbols += "**/*.so"
