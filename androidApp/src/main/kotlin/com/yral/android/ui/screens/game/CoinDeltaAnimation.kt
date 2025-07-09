@@ -1,5 +1,6 @@
 package com.yral.android.ui.screens.game
 
+import android.annotation.SuppressLint
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.LinearEasing
@@ -8,85 +9,97 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.offset
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 import com.yral.android.ui.design.YralTypoGraphy
-import com.yral.android.ui.screens.game.CoinAnimationConstants.FONT_SIZE
-import com.yral.android.ui.screens.game.CoinAnimationConstants.FONT_WIGHT
+import com.yral.android.ui.screens.game.CoinAnimationConstants.ANIMATION_DURATION
+import com.yral.android.ui.screens.game.CoinAnimationConstants.HORIZONTAL_PADDING
+import com.yral.android.ui.screens.game.CoinAnimationConstants.MAX_ALPHA
+import com.yral.android.ui.screens.game.CoinAnimationConstants.MIN_ALPHA
+import com.yral.android.ui.screens.game.CoinAnimationConstants.NUM_OF_TEXTS
 import kotlinx.coroutines.delay
 import java.util.UUID
 import kotlin.random.Random
 
 private object CoinAnimationConstants {
     const val NUM_OF_TEXTS = 1
-    const val ANIMATION_DURATION = 2000
     const val MIN_ALPHA = 0.6f
     const val MAX_ALPHA = 1.0f
-    const val TEXT_START_DELAY = 300
-    const val TILT_ANGLE = 10f
     const val HORIZONTAL_PADDING = 16
-    const val FONT_SIZE = 64
-    val FONT_WIGHT = FontWeight.Black
+
+    const val ANIMATION_DURATION = 2000
 }
 
+@SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 fun CoinDeltaAnimation(
     text: String,
     textColor: Color = Color.White,
+    modifier: Modifier = Modifier,
     onAnimationEnd: () -> Unit,
 ) {
-    val configuration = LocalConfiguration.current
-    val density = LocalDensity.current
-    val screenHeightPx = with(density) { configuration.screenHeightDp.dp.toPx() }
-    val screenWidthPx =
-        with(density) {
-            (configuration.screenWidthDp.dp - CoinAnimationConstants.HORIZONTAL_PADDING.dp * 2).toPx()
-        }
+    BoxWithConstraints(modifier = modifier) {
+        val containerWidthPx = constraints.maxWidth - HORIZONTAL_PADDING * 2
+        // Use the real height of the container (constraints are in px)
+        val containerHeightPx = constraints.maxHeight
+        if (containerWidthPx == 0 || containerHeightPx == 0) return@BoxWithConstraints
 
-    // Calculate center of screen width
-    val centerX = screenWidthPx / 2
+        // Shared infinite alpha animation used by every floating text
+        val infiniteTransition = rememberInfiniteTransition()
+        val sharedAlpha by infiniteTransition.animateFloat(
+            initialValue = MIN_ALPHA,
+            targetValue = MAX_ALPHA,
+            animationSpec =
+                infiniteRepeatable(
+                    animation =
+                        tween(
+                            durationMillis = ANIMATION_DURATION,
+                            easing = LinearEasing,
+                        ),
+                ),
+        )
 
-    // Use mutableStateListOf for recomposition on change
-    val animatedTexts =
-        remember {
-            mutableStateListOf<AnimatedText>().apply {
-                repeat(CoinAnimationConstants.NUM_OF_TEXTS) {
-                    add(AnimatedText.create(screenHeightPx, centerX, text))
+        // Use mutableStateListOf for recomposition on change
+        val animatedTexts =
+            remember(containerHeightPx) {
+                mutableStateListOf<AnimatedText>().apply {
+                    repeat(NUM_OF_TEXTS) {
+                        add(AnimatedText.create(containerHeightPx, text, textColor))
+                    }
                 }
             }
-        }
 
-    Box(
-        modifier =
-            Modifier.fillMaxSize(),
-    ) {
-        animatedTexts.forEach { animatedText ->
-            key(animatedText.id) {
-                SingleAnimatedText(
-                    text = animatedText.text,
-                    textColor = textColor,
-                    screenHeightPx = screenHeightPx,
-                    animatedText = animatedText,
-                ) {
-                    animatedTexts.remove(animatedText)
-                    if (animatedTexts.isEmpty()) {
-                        onAnimationEnd()
+        Box(modifier = Modifier.fillMaxSize()) {
+            animatedTexts.forEach { animatedText ->
+                key(animatedText.id) {
+                    SingleAnimatedText(
+                        containerHeightPx = containerHeightPx,
+                        containerWidthPx = containerWidthPx,
+                        animatedText = animatedText,
+                        animatedAlpha = sharedAlpha,
+                    ) {
+                        animatedTexts.remove(animatedText)
+                        if (animatedTexts.isEmpty()) {
+                            onAnimationEnd()
+                        }
                     }
                 }
             }
@@ -96,79 +109,74 @@ fun CoinDeltaAnimation(
 
 @Composable
 fun SingleAnimatedText(
-    text: String,
-    textColor: Color,
-    screenHeightPx: Float,
+    containerHeightPx: Int,
+    containerWidthPx: Int,
     animatedText: AnimatedText,
+    animatedAlpha: Float,
     onAnimationEnd: () -> Unit,
 ) {
-    val anim = remember { Animatable(animatedText.startY) }
+    val anim = remember { Animatable(animatedText.startY.toFloat()) }
+    val latestOnAnimationEnd by rememberUpdatedState(onAnimationEnd)
     LaunchedEffect(Unit) {
         delay(animatedText.delay.toLong())
         anim.animateTo(
-            targetValue = animatedText.endY,
+            targetValue = animatedText.endY.toFloat(),
             animationSpec =
                 tween(
                     durationMillis = animatedText.duration,
                     easing = FastOutLinearInEasing,
                 ),
         )
-        onAnimationEnd()
+        latestOnAnimationEnd()
     }
-    val alphaAnim = rememberInfiniteTransition()
-    val alpha by alphaAnim.animateFloat(
-        initialValue = CoinAnimationConstants.MIN_ALPHA,
-        targetValue = CoinAnimationConstants.MAX_ALPHA,
-        animationSpec =
-            infiniteRepeatable(
-                animation =
-                    tween(
-                        durationMillis = animatedText.duration,
-                        easing = LinearEasing,
-                    ),
-            ),
-    )
+    var textWidth by remember { mutableIntStateOf(0) }
     Text(
-        text = text,
-        fontFamily = YralTypoGraphy.KumbhSans,
-        fontSize = FONT_SIZE.sp,
-        fontWeight = FONT_WIGHT,
-        color = textColor,
+        text = animatedText.text,
+        fontFamily = animatedText.fontFamily,
+        fontSize = animatedText.fontSize,
+        fontWeight = animatedText.fontWeight,
+        color = animatedText.textColor,
         modifier =
             Modifier
-                .offset {
-                    IntOffset(
-                        x = animatedText.xPosition.toInt(),
-                        y = (screenHeightPx - anim.value).toInt(),
-                    )
-                }.graphicsLayer(
-                    rotationZ = animatedText.rotationDegrees,
-                    alpha = alpha,
-                ),
+                .onSizeChanged {
+                    textWidth = it.width
+                }.graphicsLayer {
+                    translationX = ((containerWidthPx - textWidth) / 2f)
+                    translationY = (containerHeightPx.toFloat() - anim.value)
+                    rotationZ = animatedText.rotationDegrees
+                    alpha = animatedAlpha
+                },
     )
 }
 
-@Suppress("MagicNumber")
 data class AnimatedText(
     val id: String = UUID.randomUUID().toString(),
     val text: String,
-    val xPosition: Float,
-    val startY: Float,
-    val endY: Float,
-    val rotationDegrees: Float = (Random.nextFloat() - 0.5f) * CoinAnimationConstants.TILT_ANGLE,
-    val duration: Int = CoinAnimationConstants.ANIMATION_DURATION,
-    val delay: Int = Random.nextInt(0, CoinAnimationConstants.TEXT_START_DELAY),
+    val textColor: Color,
+    val fontFamily: FontFamily = YralTypoGraphy.KumbhSans,
+    val fontSize: TextUnit = FONT_SIZE.sp,
+    val fontWeight: FontWeight = FONT_WEIGHT,
+    val rotationDegrees: Float = TILT_ANGLE,
+    val duration: Int = ANIMATION_DURATION,
+    val delay: Int = Random.nextInt(from = 0, until = TEXT_START_MAX_DELAY),
+    val startY: Int,
+    val endY: Int,
 ) {
     companion object {
+        private const val TILT_ANGLE = 5f
+        private const val TEXT_START_MAX_DELAY = 300
+        private const val FONT_SIZE = 64
+        private val FONT_WEIGHT = FontWeight.Black
+
         fun create(
-            screenHeight: Float,
-            centerX: Float,
+            screenHeight: Int,
             text: String,
+            textColor: Color,
         ): AnimatedText =
             AnimatedText(
                 text = text,
-                xPosition = centerX,
-                startY = 0f,
+                textColor = textColor,
+                startY = 0,
                 endY = screenHeight,
             )
     }

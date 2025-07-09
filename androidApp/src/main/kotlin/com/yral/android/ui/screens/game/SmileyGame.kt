@@ -97,6 +97,7 @@ private fun BoxScope.SmileyGameResult(
                     YralColors.Red300.copy(alpha = 0.3f)
                 },
             onAnimationEnd = onAnimationComplete,
+            modifier = Modifier.fillMaxSize(),
         )
     }
 }

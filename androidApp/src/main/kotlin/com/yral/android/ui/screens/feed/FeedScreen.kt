@@ -119,7 +119,10 @@ fun FeedScreen(
     }
 
     // Determine if we should show the loader
-    val showLoader = isNearEnd && (state.isLoadingMore || state.pendingFetchDetails > 0)
+    val showLoader =
+        isNearEnd &&
+            (state.isLoadingMore || state.pendingFetchDetails > 0) &&
+            state.currentPageOfFeed == state.feedDetails.size - 1
 
     Column(modifier = modifier) {
         if (state.feedDetails.isNotEmpty()) {
@@ -175,7 +178,7 @@ fun FeedScreen(
                             .padding(vertical = 8.dp),
                     contentAlignment = Alignment.Center,
                 ) {
-                    YralLoader(size = 32.dp)
+                    YralLoader(size = 20.dp)
                 }
             }
         }

@@ -172,7 +172,9 @@ private fun PlayPauseControl(
     var isPlayPauseVisible by remember { mutableStateOf(true) }
     LaunchedEffect(isPlayPauseVisible) {
         delay(PLAY_PAUSE_BUTTON_TIMEOUT)
-        isPlayPauseVisible = !isPlayPauseVisible
+        if (isPlayPauseVisible) {
+            isPlayPauseVisible = false
+        }
     }
     Box(
         modifier =
