@@ -9,6 +9,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 
+@Deprecated("use SuspendUseCase from arch module")
 abstract class SuspendUseCase<in P, out R>(
     coroutineDispatcher: CoroutineDispatcher,
     crashlyticsManager: CrashlyticsManager,
@@ -16,6 +17,7 @@ abstract class SuspendUseCase<in P, out R>(
     final override fun Throwable.toError() = this
 }
 
+@Deprecated("use ResultSuspendUseCase from arch module")
 abstract class ResultSuspendUseCase<in P, out R, out E>(
     coroutineDispatcher: CoroutineDispatcher,
     crashlyticsManager: CrashlyticsManager,
@@ -26,6 +28,7 @@ abstract class ResultSuspendUseCase<in P, out R, out E>(
     override suspend fun execute(parameter: P): R = throw IllegalStateException("This should not be called")
 }
 
+@Deprecated("use BaseSuspendUseCase from arch module")
 abstract class BaseSuspendUseCase<in P, out R, out E> internal constructor(
     private val coroutineDispatcher: CoroutineDispatcher,
     private val crashlyticsManager: CrashlyticsManager,

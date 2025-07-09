@@ -9,6 +9,10 @@ import com.yral.shared.firebaseStore.repository.FBFirestoreRepositoryApi
 import com.yral.shared.firebaseStore.usecase.GetCollectionUseCase
 import com.yral.shared.firebaseStore.usecase.GetFBDocumentUseCase
 import com.yral.shared.firebaseStore.usecase.UpdateDocumentUseCase
+import dev.gitlive.firebase.Firebase
+import dev.gitlive.firebase.app
+import dev.gitlive.firebase.firestore.firestore
+import dev.gitlive.firebase.storage.storage
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.qualifier.named
@@ -26,7 +30,9 @@ inline fun <reified T : FirestoreDocument> getFBDocumentUseCaseFactory(qualifier
 
 val firestoreModule: Module =
     module {
-        factory<FBFirestoreRepositoryApi> { FBFirestoreRepository() }
+        factory { Firebase.firestore(Firebase.app) }
+        factory { Firebase.storage(Firebase.app) }
+        factory<FBFirestoreRepositoryApi> { FBFirestoreRepository(get()) }
         factoryOf(::UpdateDocumentUseCase)
         includes(
             getFBDocumentUseCaseFactory<GameConfigDto>("GameConfig"),

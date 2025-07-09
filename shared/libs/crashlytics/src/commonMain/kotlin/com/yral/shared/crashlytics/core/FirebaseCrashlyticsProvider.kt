@@ -1,21 +1,22 @@
 package com.yral.shared.crashlytics.core
 
-import dev.gitlive.firebase.Firebase
-import dev.gitlive.firebase.crashlytics.crashlytics
+import dev.gitlive.firebase.crashlytics.FirebaseCrashlytics
 
-internal class FirebaseCrashlyticsProvider : CrashlyticsProvider {
+internal class FirebaseCrashlyticsProvider(
+    private val crashlytics: FirebaseCrashlytics,
+) : CrashlyticsProvider {
     override val name: String
         get() = "firebase"
 
     override fun recordException(exception: Exception) {
-        Firebase.crashlytics.recordException(exception)
+        crashlytics.recordException(exception)
     }
 
     override fun logMessage(message: String) {
-        Firebase.crashlytics.log(message)
+        crashlytics.log(message)
     }
 
     override fun setUserId(id: String) {
-        Firebase.crashlytics.setUserId(id)
+        crashlytics.setUserId(id)
     }
 }

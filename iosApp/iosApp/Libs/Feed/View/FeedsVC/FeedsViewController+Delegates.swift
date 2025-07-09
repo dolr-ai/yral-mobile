@@ -28,9 +28,9 @@ extension FeedsViewController: FeedsCellProtocol {
     AnalyticsModuleKt.getAnalyticsManager().trackEvent(
       event: GameConcludedBottomsheetClickedEventData(
         stakeAmount: Int32(feed.smileyGame?.config.lossPenalty ?? .zero),
-        tokenType: .sats,
+        stakeType: .sats,
         gameResult: result,
-        wonAmount: Int32(coinDelta),
+        wonLossAmount: Int32(coinDelta),
         ctaType: sheetCtaType
       )
     )
@@ -95,7 +95,7 @@ extension FeedsViewController: FeedsCellProtocol {
       await self.viewModel.castVote(request: CastVoteQuery(videoID: videoID, smileyID: smileyID))
     }
     AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-      event: GamePlayedEventData(
+      event: GameVotedEventData(
         videoId: videoID,
         publisherUserId: item.principalID,
         likeCount: Int64(item.likeCount),
@@ -104,7 +104,7 @@ extension FeedsViewController: FeedsCellProtocol {
         gameType: .smiley,
         isNsfw: false,
         stakeAmount: Int32(item.smileyGame?.config.lossPenalty ?? Int.zero),
-        tokenType: TokenType.sats,
+        stakeType: StakeType.sats,
         optionChosen: smileyID
       )
     )
@@ -125,7 +125,8 @@ extension FeedsViewController: FeedsCellProtocol {
         isGameEnabled: true,
         gameType: .smiley,
         isNsfw: false,
-        ctaType: .delete_
+        ctaType: .delete_,
+        pageName: self.feedType == .otherUsers ? .home : .profile
       )
     )
   }
@@ -173,7 +174,8 @@ extension FeedsViewController: FeedsCellProtocol {
         isGameEnabled: true,
         gameType: .smiley,
         isNsfw: false,
-        ctaType: .report
+        ctaType: .report,
+        pageName: self.feedType == .otherUsers ? .home : .profile
       )
     )
   }
@@ -294,6 +296,24 @@ extension FeedsViewController: FeedsPlayerProtocol {
           videoID: feed.videoID,
           viewCount: feed.viewCount,
           event: VideoEventType.durationWatched.rawValue
+        )
+      )
+    }
+  }
+
+  func playedThreeSeconds(at index: Int) {
+    if index < self.feedsDataSource.snapshot().numberOfItems {
+      let item = self.feedsDataSource.snapshot().itemIdentifiers[index]
+      AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+        event: VideoViewedEventData(
+          videoId: item.videoID,
+          publisherUserId: item.principalID,
+          likeCount: Int64(item.likeCount),
+          shareCount: .zero,
+          viewCount: item.viewCount,
+          isGameEnabled: feedType == .otherUsers ? true : false,
+          gameType: .smiley,
+          isNsfw: false
         )
       )
     }

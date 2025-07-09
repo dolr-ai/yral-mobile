@@ -5,16 +5,15 @@ import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.core.dispatchers.AppDispatchers
-import com.yral.shared.core.exceptions.YralException
+import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.crashlytics.core.CrashlyticsManager
-import com.yral.shared.features.auth.AuthClient
+import com.yral.shared.features.auth.AuthClientFactory
 import com.yral.shared.features.auth.domain.useCases.DeleteAccountUseCase
-import com.yral.shared.features.auth.utils.OAuthListener
 import com.yral.shared.features.auth.utils.SocialProvider
+import com.yral.shared.features.auth.utils.getAccountInfo
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
-import com.yral.shared.uniffi.generated.propicFromPrincipal
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,20 +24,22 @@ import kotlinx.coroutines.launch
 
 class AccountsViewModel(
     appDispatchers: AppDispatchers,
+    authClientFactory: AuthClientFactory,
     private val sessionManager: SessionManager,
     private val preferences: Preferences,
-    private val authClient: AuthClient,
     private val deleteAccountUseCase: DeleteAccountUseCase,
     private val crashlyticsManager: CrashlyticsManager,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.io)
-    private val _state =
-        MutableStateFlow(
-            AccountsState(
-                accountInfo = getAccountInfo(),
-                isSocialSignInSuccessful = false,
-            ),
-        )
+
+    private val authClient =
+        authClientFactory
+            .create(coroutineScope) { e ->
+                Logger.e("Auth error - $e")
+                handleSignupFailed()
+            }
+
+    private val _state = MutableStateFlow(AccountsState())
     val state: StateFlow<AccountsState> = _state.asStateFlow()
     val sessionState = sessionManager.state
 
@@ -55,7 +56,7 @@ class AccountsViewModel(
 
     fun refreshAccountInfo() {
         coroutineScope.launch {
-            val accountInfo = getAccountInfo()
+            val accountInfo = sessionManager.getAccountInfo()
             val isSignedIn = isSocialSignInSuccessful()
             _state.update { currentState ->
                 currentState.copy(
@@ -65,20 +66,6 @@ class AccountsViewModel(
                 )
             }
         }
-    }
-
-    private fun getAccountInfo(): AccountInfo? {
-        val canisterPrincipal = sessionManager.getCanisterPrincipal()
-        val userPrincipal = sessionManager.getUserPrincipal()
-        canisterPrincipal?.let { principal ->
-            userPrincipal?.let { userPrincipal ->
-                return AccountInfo(
-                    profilePic = propicFromPrincipal(principal),
-                    userPrincipal = userPrincipal,
-                )
-            }
-        }
-        return null
     }
 
     private fun logout() {
@@ -97,57 +84,35 @@ class AccountsViewModel(
                 }.onFailure {
                     Logger.e("Failed to delete account: ${it.message}")
                     setBottomSheetType(
-                        type =
-                            AccountBottomSheet.ErrorMessage(
-                                title = "",
-                                message = it.message ?: "",
-                            ),
+                        type = AccountBottomSheet.ErrorMessage(ErrorType.DELETE_ACCOUNT_FAILED),
                     )
                 }
         }
     }
 
+    @Suppress("TooGenericExceptionCaught")
     fun signInWithGoogle() {
         coroutineScope
             .launch {
                 try {
-                    authClient.signInWithSocial(
-                        provider = SocialProvider.GOOGLE,
-                        oAuthListener =
-                            object : OAuthListener {
-                                override fun setLoading(loading: Boolean) {
-                                    showLoading(loading)
-                                }
-
-                                override fun exception(e: YralException) {
-                                    showLoading(false)
-                                    setBottomSheetType(type = AccountBottomSheet.SignUpFailed)
-                                }
-                            },
-                    )
-                } catch (
-                    @Suppress("TooGenericExceptionCaught") e: Exception,
-                ) {
+                    authClient.signInWithSocial(SocialProvider.GOOGLE)
+                } catch (e: Exception) {
+                    crashlyticsManager.logMessage("sign in with google exception caught")
                     crashlyticsManager.recordException(e)
-                    showLoading(false)
-                    setBottomSheetType(type = AccountBottomSheet.SignUpFailed)
+                    handleSignupFailed()
                 }
             }
+    }
+
+    private fun handleSignupFailed() {
+        setBottomSheetType(
+            type = AccountBottomSheet.ErrorMessage(ErrorType.SIGNUP_FAILED),
+        )
     }
 
     private suspend fun isSocialSignInSuccessful(): Boolean =
         preferences
             .getBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name) ?: false
-
-    fun showLoading(loading: Boolean) {
-        coroutineScope.launch {
-            _state.update { currentState ->
-                currentState.copy(
-                    isLoading = loading,
-                )
-            }
-        }
-    }
 
     fun setBottomSheetType(type: AccountBottomSheet) {
         coroutineScope.launch {
@@ -243,9 +208,8 @@ data class AccountHelpLink(
 )
 
 data class AccountsState(
-    val accountInfo: AccountInfo?,
-    val isSocialSignInSuccessful: Boolean,
-    val isLoading: Boolean = false,
+    val accountInfo: AccountInfo? = null,
+    val isSocialSignInSuccessful: Boolean = false,
     val bottomSheetType: AccountBottomSheet = AccountBottomSheet.None,
 )
 
@@ -255,16 +219,14 @@ sealed interface AccountBottomSheet {
         val linkToOpen: Pair<String, Boolean>,
     ) : AccountBottomSheet
 
-    data object SignUpFailed : AccountBottomSheet
     data object SignUp : AccountBottomSheet
     data object DeleteAccount : AccountBottomSheet
     data class ErrorMessage(
-        val title: String,
-        val message: String,
+        val errorType: ErrorType,
     ) : AccountBottomSheet
 }
 
-data class AccountInfo(
-    val userPrincipal: String,
-    val profilePic: String,
-)
+enum class ErrorType {
+    SIGNUP_FAILED,
+    DELETE_ACCOUNT_FAILED,
+}

@@ -121,7 +121,7 @@ class MyVideosFeedViewModel: FeedViewModelProtocol, ObservableObject {
   func deleteVideo(request: DeleteVideoRequest) async {
     AnalyticsModuleKt.getAnalyticsManager().trackEvent(
       event: DeleteVideoInitiatedEventData(
-        pageName: "home",
+        pageName: .home,
         videoId: request.videoId
       )
     )
@@ -133,7 +133,7 @@ class MyVideosFeedViewModel: FeedViewModelProtocol, ObservableObject {
       switch result {
       case .success:
         AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-          event: VideoDeletedEventData(pageName: "profile", videoId: request.videoId)
+          event: VideoDeletedEventData(pageName: .home, videoId: request.videoId)
         )
       case .failure(let failure):
         unifiedEvent = .deleteVideoFailed(errorMessage: failure.localizedDescription)

@@ -7,9 +7,8 @@ import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.crashlytics.core.CrashlyticsManager
-import com.yral.shared.features.auth.AuthClient
-import com.yral.shared.rust.services.IndividualUserServiceFactory
-import com.yral.shared.uniffi.generated.FfiException
+import com.yral.shared.features.auth.AuthClientFactory
+import com.yral.shared.features.auth.YralAuthException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -29,12 +28,21 @@ enum class RootError {
 @Suppress("TooGenericExceptionCaught")
 class RootViewModel(
     appDispatchers: AppDispatchers,
-    private val authClient: AuthClient,
+    authClientFactory: AuthClientFactory,
     private val sessionManager: SessionManager,
-    private val individualUserServiceFactory: IndividualUserServiceFactory,
     private val crashlyticsManager: CrashlyticsManager,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.io)
+
+    private val authClient =
+        authClientFactory
+            .create(coroutineScope) { e ->
+                // for async calls after setSession
+                // updateSessionAsRegistered, FirebaseAuth/Coin balance update
+                _state.update { it.copy(error = RootError.TIMEOUT) }
+                Logger.e("Auth error - $e")
+                crashlyticsManager.recordException(e)
+            }
 
     internal var splashScreenTimeout: Long = SPLASH_SCREEN_TIMEOUT
     internal var initialDelayForSetup: Long = INITIAL_DELAY_FOR_SETUP
@@ -54,14 +62,7 @@ class RootViewModel(
         initialisationJob?.cancel()
         initialisationJob =
             coroutineScope.launch {
-                _state.update {
-                    RootState(
-                        currentSessionState = sessionManager.state.value,
-                        currentHomePageTab = it.currentHomePageTab,
-                        initialAnimationComplete = it.initialAnimationComplete,
-                        error = null,
-                    )
-                }
+                _state.update { it.copy(error = null) }
                 try {
                     withTimeout(splashScreenTimeout) {
                         checkLoginAndInitialize()
@@ -73,32 +74,19 @@ class RootViewModel(
                         YralException("Splash screen timeout - initialization took too long"),
                     )
                     throw e
-                } catch (e: YralException) {
+                } catch (e: YralAuthException) {
+                    // for async calls before setSession
                     _state.update { it.copy(error = RootError.TIMEOUT) }
-                    Logger.e("Splash screen error - ${e.message}")
-                    crashlyticsManager.recordException(
-                        YralException("Splash screen error - ${e.message}"),
-                    )
-                } catch (e: FfiException) {
-                    _state.update { it.copy(error = RootError.TIMEOUT) }
-                    Logger.e("Splash screen on chain error - ${e.message}")
-                    crashlyticsManager.recordException(
-                        YralException("Splash screen on chain error - ${e.message}"),
-                    )
+                    Logger.e("Auth error - $e")
+                    crashlyticsManager.recordException(e)
                 }
             }
     }
 
     private suspend fun checkLoginAndInitialize() {
         delay(initialDelayForSetup)
-        sessionManager.getCanisterPrincipal()?.let { principal ->
-            sessionManager.getIdentity()?.let { identity ->
-                individualUserServiceFactory.initialize(
-                    principal = principal,
-                    identityData = identity,
-                )
-                _state.update { it.copy(showSplash = false) }
-            } ?: authClient.initialize()
+        sessionManager.getIdentity()?.let {
+            _state.update { it.copy(showSplash = false) }
         } ?: authClient.initialize()
     }
 

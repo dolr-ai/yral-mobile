@@ -80,6 +80,14 @@ class LeaderBoardViewModel(
                 }
             }
     }
+
+    fun updateCurrentUserRank(newRank: Int) {
+        _state.update { currentState ->
+            currentState.copy(
+                currentUser = currentState.currentUser?.copy(rank = newRank),
+            )
+        }
+    }
 }
 
 data class LeaderBoardState(

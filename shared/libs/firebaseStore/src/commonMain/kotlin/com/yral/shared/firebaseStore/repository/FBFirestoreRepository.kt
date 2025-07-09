@@ -6,14 +6,12 @@ import com.yral.shared.firebaseStore.model.FirestoreDocument
 import com.yral.shared.firebaseStore.model.GameConfigDto
 import com.yral.shared.firebaseStore.model.LeaderboardItemDto
 import com.yral.shared.firebaseStore.model.QueryOptions
-import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.firestore.CollectionReference
 import dev.gitlive.firebase.firestore.Direction
 import dev.gitlive.firebase.firestore.DocumentSnapshot
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.FirebaseFirestoreException
 import dev.gitlive.firebase.firestore.Query
-import dev.gitlive.firebase.firestore.firestore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
@@ -23,7 +21,7 @@ import kotlin.reflect.KClass
 
 @Suppress("TooGenericExceptionCaught")
 internal class FBFirestoreRepository(
-    private val firestore: FirebaseFirestore = Firebase.firestore,
+    private val firestore: FirebaseFirestore,
 ) : FBFirestoreRepositoryApi {
     override suspend fun <T : FirestoreDocument> getDocument(
         collectionPath: String,
@@ -298,7 +296,7 @@ internal class FBFirestoreRepository(
         }
 }
 
-@Suppress("TooGenericExceptionCaught", "SwallowedException")
+@Suppress("TooGenericExceptionCaught", "SwallowedException", "UNCHECKED_CAST")
 @OptIn(InternalSerializationApi::class)
 private fun <T : FirestoreDocument> DocumentSnapshot.safeData(documentType: KClass<T>): T =
     try {
@@ -307,8 +305,7 @@ private fun <T : FirestoreDocument> DocumentSnapshot.safeData(documentType: KCla
             is LeaderboardItemDto -> data.copy(id = id) as T
             is AboutGameItemDto -> data.copy(id = id) as T
             is GameConfigDto -> data.copy(id = id) as T
-            else -> data
         }
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         throw YralException("Error deserializing document")
     }

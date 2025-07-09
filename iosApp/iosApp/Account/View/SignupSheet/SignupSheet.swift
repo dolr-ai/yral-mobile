@@ -58,7 +58,11 @@ struct SignupSheet: View {
             .transition(.move(edge: .bottom))
           }
         }
-        .onAppear { withAnimation(Constants.appearAnimation) { showCard = true } }
+        .onAppear {
+          withAnimation(Constants.appearAnimation) {
+            showCard = true
+          }
+        }
         .onDisappear { UIView.setAnimationsEnabled(true) }
 //        if isSigningUp {
 //          ZStack {

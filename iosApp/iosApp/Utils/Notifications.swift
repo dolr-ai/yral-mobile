@@ -11,4 +11,6 @@ extension Notification.Name {
   static let eulaAcceptedChanged = Notification.Name("yral.eulaAcceptedChanged")
   static let feedItemReady = Notification.Name("yral.feedItemReady")
   static let appAuthenticated = Notification.Name("yral.appAuthenticated")
+  static let registrationTokenUpdated = Notification.Name("yral.registrationTokenUpdated")
+  static let videoUploadNotificationReceived = Notification.Name("yral.videoUploadNotificationReceived")
 }

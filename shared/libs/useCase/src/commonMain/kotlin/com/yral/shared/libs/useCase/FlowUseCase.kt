@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.onEach
 
+@Deprecated("use FlowUseCase from arch module")
 abstract class FlowUseCase<in P, out R>(
     coroutineDispatcher: CoroutineDispatcher,
     crashlyticsManager: CrashlyticsManager,
@@ -18,6 +19,7 @@ abstract class FlowUseCase<in P, out R>(
     final override fun Throwable.toThrowable(): Throwable = this
 }
 
+@Deprecated("use BaseFlowUseCase from arch module")
 abstract class BaseFlowUseCase<in P, out R, E> internal constructor(
     private val coroutineDispatcher: CoroutineDispatcher,
     private val crashlyticsManager: CrashlyticsManager,

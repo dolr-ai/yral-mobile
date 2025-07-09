@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <bool name="firebase_performance_logcat">true</bool>
+    <bool name="firebase_performance_logcat">false</bool>
 </resources>

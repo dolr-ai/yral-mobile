@@ -1,22 +1,18 @@
 import com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension
-import java.util.*
+import java.util.Locale
 
 plugins {
-    alias(libs.plugins.androidApplication)
-    alias(libs.plugins.kotlinAndroid)
-    alias(libs.plugins.composeCompiler)
-    alias(libs.plugins.crashlytics)
-    alias(libs.plugins.play.services)
-    alias(libs.plugins.firebase.performance)
+    alias(libs.plugins.yral.android.application)
+    alias(libs.plugins.yral.android.application.compose)
+    alias(libs.plugins.firebase.crashlytics)
+    alias(libs.plugins.gms)
+    alias(libs.plugins.firebase.perf)
 }
 
 android {
     namespace = "com.yral.android"
-    compileSdk = libs.versions.compileSDK.get().toInt()
     defaultConfig {
         applicationId = "com.yral.android"
-        minSdk = libs.versions.minSDK.get().toInt()
-        targetSdk = libs.versions.targetSDK.get().toInt()
         versionCode = 1
         versionName = "1.0.0"
         ndkVersion = "28.0.13004108"
@@ -24,9 +20,6 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
-    }
-    composeOptions {
-        kotlinCompilerExtensionVersion = libs.versions.compose.compiler.get()
     }
     packaging {
         resources {
@@ -48,11 +41,11 @@ android {
         }
     }
     buildTypes {
-        getByName("release") {
+        release {
             isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
             configure<CrashlyticsExtension> {
                 mappingFileUploadEnabled = true
@@ -72,14 +65,6 @@ android {
             signingConfig = signingConfigs.getByName("release")
         }
     }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
-        isCoreLibraryDesugaringEnabled = true
-    }
-    kotlinOptions {
-        jvmTarget = "21"
-    }
 }
 
 dependencies {
@@ -87,14 +72,21 @@ dependencies {
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.compose.material3)
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.androidx.paging.compose)
     debugImplementation(libs.compose.ui.tooling)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.performance)
+    implementation(libs.firebase.appcheck.playintegrity)
+    implementation(libs.firebase.appcheck.debug)
     implementation(libs.lottie)
     implementation(libs.coil.compose)
     implementation(libs.coil.okhttp)
-    coreLibraryDesugaring(libs.desugar.jdk.libs)
+    implementation(libs.accompanist.permission)
+
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.ui)
 
     implementation(projects.shared.core)
     implementation(projects.shared.libs.preferences)
@@ -112,30 +104,28 @@ dependencies {
     implementation(projects.shared.app)
     implementation(projects.shared.libs.firebasePerf)
     implementation(projects.shared.features.game)
+    implementation(projects.shared.features.uploadvideo)
+    implementation(projects.shared.features.profile)
+    implementation(projects.shared.libs.arch)
 
-    val (dependencies, shouldAddRustModule) = BuildConfig.getAndProcessDependencies(project)
-    dependencies.forEach { dependency ->
-        if (dependency.isNotEmpty()) {
-            implementation(dependency)
-        }
-    }
-    if (shouldAddRustModule) {
-        implementation(projects.shared.rust)
-    }
+    val (deps, addRust) = BuildConfig.getAndProcessDependencies(project)
+    deps.forEach { if (it.isNotEmpty()) implementation(it) }
+    if (addRust) implementation(projects.shared.rust)
 }
 
 afterEvaluate {
     android.buildTypes.forEach { buildType ->
         if (buildType.name.equals("release", ignoreCase = true)) {
-            tasks.named(
-                "bundle${
-                    buildType.name.replaceFirstChar {
-                        if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
-                    }
-                }"
-            ).configure {
-                dependsOn("uploadCrashlyticsSymbolFileRelease")
-            }
+            tasks
+                .named(
+                    "bundle${
+                        buildType.name.replaceFirstChar {
+                            if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
+                        }
+                    }",
+                ).configure {
+                    dependsOn("uploadCrashlyticsSymbolFileRelease")
+                }
         }
     }
 }

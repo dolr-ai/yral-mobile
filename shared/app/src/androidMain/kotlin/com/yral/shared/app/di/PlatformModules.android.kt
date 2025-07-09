@@ -20,5 +20,5 @@ actual val platformModule =
                 ) != 0
             YralLogger(if (isDebug) platformLogWriter() else null)
         }
-        single<String>(MIXPANEL_TOKEN) { TODO() }
+        single<String>(MIXPANEL_TOKEN) { "" }
     }

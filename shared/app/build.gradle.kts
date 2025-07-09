@@ -1,26 +1,15 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
-    alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.androidLibrary)
+    alias(libs.plugins.yral.shared.library)
+    alias(libs.plugins.yral.android.library)
 }
 
 version = "1.0"
 kotlin {
-    androidTarget {
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_21)
-        }
-    }
+    androidTarget()
     listOf(
         iosArm64(),
-        iosSimulatorArm64()
-    ).forEach {
-        it.binaries.framework {
-            baseName = "app"
-            isStatic = true
-        }
-    }
+        iosSimulatorArm64(),
+    )
 
     sourceSets {
         commonMain.dependencies {
@@ -30,47 +19,29 @@ kotlin {
             implementation(projects.shared.libs.analytics)
             implementation(projects.shared.libs.crashlytics)
             implementation(projects.shared.libs.koin)
+            implementation(projects.shared.libs.arch)
+            implementation(projects.shared.libs.coroutinesX)
         }
 
         androidMain.dependencies {
             implementation(projects.shared.libs.firebaseStore)
             implementation(projects.shared.libs.firebaseAuth)
+            implementation(libs.gitlive.firebase.storage)
             implementation(projects.shared.features.auth)
             implementation(projects.shared.features.feed)
             implementation(projects.shared.features.root)
             implementation(projects.shared.features.account)
             implementation(projects.shared.features.game)
+            implementation(projects.shared.features.uploadvideo)
+            implementation(projects.shared.features.profile)
+
             val (deps, addRust) = BuildConfig.getAndProcessDependencies(project)
-            deps.forEach { implementation(it) }
+            deps.forEach { if (it.isNotEmpty()) implementation(it) }
             if (addRust) implementation(projects.shared.rust)
         }
 
         commonTest.dependencies {
             implementation(libs.kotlin.test)
         }
-    }
-}
-
-android {
-    namespace = "com.yral.shared.app"
-    compileSdk = libs.versions.compileSDK.get().toInt()
-    defaultConfig {
-        minSdk = libs.versions.minSDK.get().toInt()
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
-    }
-    flavorDimensions += "version"
-    productFlavors {
-        create("staging") {
-            dimension = "version"
-        }
-        create("prod") {
-            dimension = "version"
-        }
-    }
-    buildFeatures {
-        buildConfig = true
     }
 }

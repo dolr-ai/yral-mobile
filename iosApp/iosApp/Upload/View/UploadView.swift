@@ -171,15 +171,17 @@ struct UploadView: View {
           .background(Color.black.edgesIgnoringSafeArea(.all))
           .hideKeyboardOnTap()
           .fullScreenCover(isPresented: $showVideoPicker) {
-            if #available(iOS 16.4, *) {
-              VideoPickerViewControllerRepresentable(viewModel: viewModel)
-                .presentationDetents([])
-                .presentationDragIndicator(.hidden)
-                .presentationBackground(.clear)
-            } else {
-              VideoPickerViewControllerRepresentable(viewModel: viewModel)
-
-            }
+            VideoPickerViewControllerRepresentable(viewModel: viewModel)
+              .background( ClearBackgroundView() )
+//            if #available(iOS 16.4, *) {
+//              VideoPickerViewControllerRepresentable(viewModel: viewModel)
+//                .presentationDetents([])
+//                .presentationDragIndicator(.hidden)
+//                .presentationBackground(.clear)
+//            } else {
+//              VideoPickerViewControllerRepresentable(viewModel: viewModel)
+//
+//            }
           }
         }
       }

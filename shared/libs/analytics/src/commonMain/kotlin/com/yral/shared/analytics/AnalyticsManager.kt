@@ -58,4 +58,9 @@ class AnalyticsManager(
         providers.forEach { it.setUserProperties(user) }
         coreService?.setUserProperties(user)
     }
+
+    fun reset() {
+        providers.forEach { it.reset() }
+        coreService?.reset()
+    }
 }

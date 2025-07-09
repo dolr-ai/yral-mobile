@@ -35,7 +35,7 @@ fun GameStripBackground(
                         shape = RoundedCornerShape(size = 49.dp),
                     ).padding(
                         horizontal = 12.dp,
-                        vertical = 4.dp,
+                        vertical = 9.dp,
                     ),
             horizontalArrangement = horizontalArrangement,
             verticalAlignment = Alignment.CenterVertically,

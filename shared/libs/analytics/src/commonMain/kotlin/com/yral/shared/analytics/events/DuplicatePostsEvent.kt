@@ -10,4 +10,5 @@ data class DuplicatePostsEvent(
     override val event: String = FeatureEvents.DUPLICATE_POSTS.getEventName(),
     override val featureName: String = Features.FEED.getFeatureName(),
     @SerialName("duplicate_posts") val duplicatePosts: Int,
+    @SerialName("total_fetched") val totalPosts: Int,
 ) : EventData

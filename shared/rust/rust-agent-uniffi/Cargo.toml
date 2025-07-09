@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [lib]
-crate-type = ["cdylib", "staticlib"]
+crate-type = ["cdylib"]
 name = "yral_mobile_uniffi"
 
 [dependencies]
@@ -36,9 +36,9 @@ uniffi = { version = "0.28.3", features = ["build"] }
 [profile.dev]
 opt-level = 3
 lto = true
-panic = "abort"
+panic = "unwind"
 
 [profile.release]
 opt-level = 3
 lto = true
-panic = "abort"
+panic = "unwind"

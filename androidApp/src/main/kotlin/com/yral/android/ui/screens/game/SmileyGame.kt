@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -27,13 +26,7 @@ fun SmileyGame(
 ) {
     var animateBubbles by remember { mutableStateOf(false) }
     var iconPositions by remember { mutableStateOf(mapOf<Int, Float>()) }
-    var resultViewVisible by remember { mutableStateOf(false) }
-    LaunchedEffect(coinDelta, errorMessage, animateBubbles) {
-        val isResultAvailable = (coinDelta != 0 || errorMessage.isNotEmpty()) && !isLoading
-        if (isResultAvailable && !animateBubbles) {
-            resultViewVisible = true
-        }
-    }
+    val resultViewVisible = (coinDelta != 0 || errorMessage.isNotEmpty()) // && !animateBubbles
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.BottomCenter,
@@ -64,12 +57,12 @@ fun SmileyGame(
                         iconPositions = iconPositions.plus(id to xPos)
                     },
                 )
-                if (animateBubbles) {
-                    clickedIcon?.let {
-                        GameIconBubbles(clickedIcon) {
-                            animateBubbles = false
-                        }
-                    }
+            }
+        }
+        if (animateBubbles) {
+            clickedIcon?.let {
+                GameIconBubbles(clickedIcon) {
+                    animateBubbles = false
                 }
             }
         }
@@ -104,6 +97,7 @@ private fun BoxScope.SmileyGameResult(
                     YralColors.Red300.copy(alpha = 0.3f)
                 },
             onAnimationEnd = onAnimationComplete,
+            modifier = Modifier.fillMaxSize(),
         )
     }
 }

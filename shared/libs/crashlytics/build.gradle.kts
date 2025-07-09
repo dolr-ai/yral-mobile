@@ -1,26 +1,15 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
-    alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.androidLibrary)
-    alias(libs.plugins.kotlinxSerialisartion)
+    alias(libs.plugins.yral.shared.library)
+    alias(libs.plugins.yral.android.library)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 kotlin {
-    androidTarget {
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_21)
-        }
-    }
+    androidTarget()
     listOf(
         iosArm64(),
-        iosSimulatorArm64()
-    ).forEach {
-        it.binaries.framework {
-            baseName = "shared_crashlytics"
-            isStatic = true
-        }
-    }
+        iosSimulatorArm64(),
+    )
 
     sourceSets {
         commonMain.dependencies {
@@ -28,20 +17,5 @@ kotlin {
 
             api(libs.gitlive.firebase.kotlin.crashlytics)
         }
-        commonTest.dependencies {
-            implementation(libs.kotlin.test)
-        }
-    }
-}
-
-android {
-    namespace = "com.yral.shared.crashlytics"
-    compileSdk = libs.versions.compileSDK.get().toInt()
-    defaultConfig {
-        minSdk = libs.versions.minSDK.get().toInt()
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
     }
 }

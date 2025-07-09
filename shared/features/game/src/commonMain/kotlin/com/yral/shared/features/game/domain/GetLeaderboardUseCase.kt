@@ -33,7 +33,18 @@ class GetLeaderboardUseCase(
                                 ),
                         ),
                 ).getOrThrow()
-        return leaderboard.map { it.toLeaderboardItem() }
+//                .map { it.copy(coins = setOf<Long>(2000, 3000, 4000, 7000).random()) }
+//                .sortedByDescending { it.coins }
+        // Calculate ranks: same coins = same rank
+        var currentRank = 0
+        var previousCoins: Long? = null
+        return leaderboard.map { dto ->
+            if (previousCoins != null && dto.coins != previousCoins) {
+                currentRank++
+            }
+            previousCoins = dto.coins
+            dto.toLeaderboardItem(currentRank)
+        }
     }
 
     companion object {

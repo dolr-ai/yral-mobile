@@ -12,6 +12,7 @@ object YralColors {
     val NeutralTextSecondary: Color = Color(0xFFA3A3A3)
 
     val NeutralBackgroundCardBackground: Color = Color(0xFF171717)
+    val NeutralIconsActive: Color = Color(0xFFFAFAFA)
 
     val Neutral50: Color = Color(0xFFFAFAFA)
     val Neutral300: Color = Color(0xFFD4D4D4)
@@ -20,10 +21,12 @@ object YralColors {
     val Neutral700: Color = Color(0xFF404040)
     val Neutral800: Color = Color(0xFF212121)
     val Neutral900: Color = Color(0xFF171717)
+    val Neutral950: Color = Color(0xFF0A0A0A)
     val NeutralBlack: Color = Color(0xFF1D1C2B)
 
     val Pink50: Color = Color(0xFFFCE6F2)
     val Pink100: Color = Color(0xFFF6B0D6)
+    val Pink200: Color = Color(0xFFEC55A7)
     val Pink300: Color = Color(0xFFE2017B)
     val Pink400: Color = Color(0xFFA00157)
 
@@ -31,6 +34,7 @@ object YralColors {
 
     val ShadowSpotColor: Color = Color(0x1C8377C6)
     val ShadowAmbientColor: Color = Color(0x1C8377C6)
+    val ScrimColor: Color = Color(0xE5000000)
 
     val ButtonBorderColor: Color = Color(0xFFE0E0E9)
 
@@ -43,6 +47,8 @@ object YralColors {
     val Green400: Color = Color(0xFF158F5C)
 
     val Grey50: Color = Neutral50
+
+    val Yellow400: Color = Color(0xFF2C2310)
 
     val CoinBalanceBGStart = Color(0xFFFFCC00)
     val CoinBalanceBGEnd = Color(0xFFDA8100)

@@ -31,6 +31,7 @@ final class DefaultAuthClient: NSObject, AuthClient {
   let baseURL: URL
   let satsBaseURL: URL
   let firebaseBaseURL: URL
+  let notificationService: NotificationService
 
   var pendingAuthState: String!
 
@@ -39,14 +40,23 @@ final class DefaultAuthClient: NSObject, AuthClient {
        crashReporter: CrashReporter,
        baseURL: URL,
        satsBaseURL: URL,
-       firebaseBaseURL: URL) {
+       firebaseBaseURL: URL,
+       notificationService: NotificationService
+  ) {
     self.networkService = networkService
     self.firebaseService = firebaseService
     self.crashReporter = crashReporter
     self.baseURL = baseURL
     self.satsBaseURL = satsBaseURL
     self.firebaseBaseURL = firebaseBaseURL
+    self.notificationService = notificationService
     super.init()
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(notificationTokenUpdated(_:)),
+      name: .registrationTokenUpdated,
+      object: nil
+    )
   }
 
   @MainActor
@@ -254,13 +264,14 @@ final class DefaultAuthClient: NSObject, AuthClient {
           userPrincipal: userPrincipalString
         )
       }
-      await updateAuthState(for: type, withCoins: .zero)
+      await updateAuthState(for: type, withCoins: .zero, isFetchingCoins: true)
       Task { @MainActor in
         try await exchangePrincipalID(type: type)
       }
     }
   }
 
+  // swiftlint: disable function_body_length
   func getUserBalance(type: DelegateIdentityType) async throws {
     guard let principalID = userPrincipalString else {
       throw SatsCoinError.unknown("Failed to fetch princiapl ID")
@@ -276,17 +287,37 @@ final class DefaultAuthClient: NSObject, AuthClient {
         ),
         decodeAs: SatsCoinDTO.self
       ).toDomain()
-      await updateAuthState(for: type, withCoins: UInt64(response.balance) ?? 0)
+      await updateAuthState(for: type, withCoins: UInt64(response.balance) ?? 0, isFetchingCoins: false)
       try await firebaseService.update(coins: UInt64(response.balance) ?? 0, forPrincipal: principalID)
-      AnalyticsModuleKt.getAnalyticsManager().setUserProperties(
-        user: User(
-          userId: self.userPrincipalString ?? "",
-          canisterId: self.canisterPrincipalString ?? "",
-          userType: type.userType(),
-          tokenWalletBalance: Double(response.balance) ?? .zero,
-          tokenType: TokenType.sats
+      let isLoggedIn = {
+        if case .permanentAuthentication = self.stateSubject.value {
+          return true
+        }
+        return false
+      }()
+      Task {
+        let identity = try self.generateNewDelegatedIdentity()
+        let principal = try get_principal(self.userPrincipalString ?? "")
+        let service = try Service(principal, identity)
+        let result = try await service.get_posts_of_this_user_profile_with_pagination_cursor(
+          UInt64(CGFloat.zero),
+          UInt64(CGFloat.two)
         )
-      )
+        var isCreator = false
+        if result.is_ok() {
+          guard let postResult = result.ok_value() else { return }
+          isCreator = postResult.count > .zero
+        }
+        AnalyticsModuleKt.getAnalyticsManager().setUserProperties(
+          user: User(
+            userId: self.userPrincipalString ?? "",
+            isLoggedIn: isLoggedIn,
+            canisterId: self.canisterPrincipalString ?? "",
+            isCreator: KotlinBoolean(bool: isCreator),
+            satsBalance: Double(response.balance) ?? .zero
+          )
+        )
+      }
     } catch {
       switch error {
       case let error as NetworkError:
@@ -296,6 +327,7 @@ final class DefaultAuthClient: NSObject, AuthClient {
       }
     }
   }
+  // swiftlint: enable function_body_length
 
   private func exchangePrincipalID(type: DelegateIdentityType) async throws {
     let newSignIn = try? await firebaseService.signInAnonymously()
@@ -320,7 +352,7 @@ final class DefaultAuthClient: NSObject, AuthClient {
       do {
         try await getUserBalance(type: type)
       } catch {
-        await updateAuthState(for: type, withCoins: 0)
+        await updateAuthState(for: type, withCoins: 0, isFetchingCoins: false)
       }
     } else {
       let endpoint = Endpoint(http: "",
@@ -339,21 +371,23 @@ final class DefaultAuthClient: NSObject, AuthClient {
         try await firebaseService.signIn(withCustomToken: response.token)
         try await getUserBalance(type: type)
       } catch {
-        await updateAuthState(for: type, withCoins: 0)
+        await updateAuthState(for: type, withCoins: 0, isFetchingCoins: false)
       }
     }
   }
 
-  private func updateAuthState(for type: DelegateIdentityType, withCoins coins: UInt64) async {
+  private func updateAuthState(for type: DelegateIdentityType, withCoins coins: UInt64, isFetchingCoins: Bool) async {
     await MainActor.run {
       stateSubject.value = (type == .ephemeral) ? .ephemeralAuthentication(
         userPrincipal: userPrincipalString ?? "",
         canisterPrincipal: canisterPrincipalString ?? "",
-        coins: coins
+        coins: coins,
+        isFetchingCoins: isFetchingCoins
       ) : .permanentAuthentication(
         userPrincipal: userPrincipalString ?? "",
         canisterPrincipal: canisterPrincipalString ?? "",
-        coins: coins
+        coins: coins,
+        isFetchingCoins: isFetchingCoins
       )
     }
   }
@@ -368,6 +402,13 @@ final class DefaultAuthClient: NSObject, AuthClient {
     try? KeychainHelper.deleteItem(for: Constants.keychainRefreshToken)
     UserDefaultsManager.shared.remove(.authIdentityExpiryDateKey)
     UserDefaultsManager.shared.remove(.authRefreshTokenExpiryDateKey)
+    do {
+      try await recordThrowingOperation {
+        try await deregisterForNotifications()
+      }
+    } catch {
+      print(error)
+    }
     identity = nil
     canisterPrincipal = nil
     canisterPrincipalString = nil
@@ -375,8 +416,16 @@ final class DefaultAuthClient: NSObject, AuthClient {
     userPrincipalString = nil
     identityData = nil
     UserDefaultsManager.shared.set(false, for: DefaultsKey.userDefaultsLoggedIn)
+    AnalyticsModuleKt.getAnalyticsManager().reset()
     stateSubject.value = .loggedOut
     try await obtainAnonymousIdentity()
+    do {
+      try await recordThrowingOperation {
+        try await registerForNotifications()
+      }
+    } catch {
+      print(error)
+    }
   }
 
   func generateNewDelegatedIdentity() throws -> DelegatedIdentity {

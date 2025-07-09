@@ -7,8 +7,10 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.cookies.HttpCookies
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.logging.Logging
+import io.ktor.client.plugins.logging.LoggingFormat
 import io.ktor.http.ContentType
 import io.ktor.http.URLProtocol
+import io.ktor.http.content.OutgoingContent
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
@@ -26,8 +28,12 @@ fun createClient(
             socketTimeoutMillis = TIME_OUT
         }
         install(Logging) {
+            format = LoggingFormat.OkHttp
             logger = httpLogger
             level = httpLogger.logLevel
+            filter {
+                it.body !is OutgoingContent
+            }
         }
         install(ContentNegotiation) {
             json(json)

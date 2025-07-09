@@ -2,17 +2,15 @@ package com.yral.shared.firebaseAuth.repository
 
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.firebaseAuth.model.AuthState
-import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseAuthException
-import dev.gitlive.firebase.auth.auth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 @Suppress("TooGenericExceptionCaught")
 internal class FBAuthRepository(
-    private val auth: FirebaseAuth = Firebase.auth,
+    private val auth: FirebaseAuth,
 ) : FBAuthRepositoryApi {
     private val authState = MutableStateFlow<AuthState>(AuthState.NotAuthenticated)
 

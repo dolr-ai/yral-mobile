@@ -22,6 +22,7 @@ struct HomeTabController: View {
   @State private var showEULA: Bool = !(
     UserDefaultsManager.shared.get(for: .eulaAccepted) as Bool? ?? false
   )
+  @State private var showNotificationsNudge = false
 
   init(
     feedsViewController: FeedsViewController,
@@ -60,7 +61,22 @@ struct HomeTabController: View {
           .tag(Tab.leaderboard)
 
         uploadView
-          .onDoneAction { selectedTab = .home }
+          .onDoneAction {
+            UIView.setAnimationsEnabled(false)
+            selectedTab = .home
+            DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.animationPeriod) {
+              UIView.setAnimationsEnabled(false)
+              UNUserNotificationCenter.current().getNotificationSettings { settings in
+                switch settings.authorizationStatus {
+                case .notDetermined, .denied:
+                  DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.animationPeriod) {
+                    self.showNotificationsNudge = true
+                  }
+                default: break
+                }
+              }
+            }
+          }
           .background(Color.black.edgesIgnoringSafeArea(.all))
           .tabItem { tabIcon(selected: selectedTab == .upload,
                              selectedName: Constants.uploadIconImageNameSelected,
@@ -87,6 +103,21 @@ struct HomeTabController: View {
       }
       .onChange(of: selectedTab) { tab in
         tabDidChange(to: tab)
+      }
+      .onReceive(
+        NotificationCenter.default.publisher(
+          for: .videoUploadNotificationReceived
+        )
+      ) { _ in
+        uploadNotificationReceived()
+      }
+      .fullScreenCover(isPresented: $showNotificationsNudge) {
+        ZStack(alignment: .center) {
+          NotificationsNudge {
+            showNotificationsNudge = false
+          }
+          .background( ClearBackgroundView() )
+        }
       }
       GeometryReader { geometry in
         let tabWidth = geometry.size.width / .five
@@ -141,8 +172,10 @@ struct HomeTabController: View {
   private func tabDidChange(to tab: Tab) {
     var categoryName = CategoryName.home
     switch tab {
-    case .home, .leaderboard:
+    case .home:
       categoryName = .home
+    case .leaderboard:
+      categoryName = .leaderboard
     case .upload:
       categoryName = .uploadVideo
     case .profile:
@@ -155,6 +188,16 @@ struct HomeTabController: View {
         categoryName: categoryName
       )
     )
+  }
+
+  @MainActor func uploadNotificationReceived() {
+    DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.animationPeriod) {
+      self.selectedTab = .profile
+      Task {
+        try? await Task.sleep(nanoseconds: 300_000_000)
+        await profileView.refreshVideosFromPushNotifications()
+      }
+    }
   }
 }
 

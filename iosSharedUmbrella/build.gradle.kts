@@ -66,10 +66,15 @@ kotlin {
             extraOpts += listOf("-compiler-option", "-fmodules")
             linkOnly = true
         }
-         pod("GoogleUtilities") {
+        pod("FirebaseMessaging") {
+            extraOpts += listOf("-compiler-option", "-fmodules")
+            version = firebaseIos
+            linkOnly = true
+        }
+        pod("GoogleUtilities") {
             version = "8.1"
             extraOpts += listOf("-compiler-option", "-fmodules")
-             linkOnly = true
+            linkOnly = true
         }
         pod("nanopb") {
             version = "3.30910.0"
@@ -90,7 +95,6 @@ kotlin {
             baseName = "iosSharedUmbrella"
             @OptIn(ExperimentalKotlinGradlePluginApi::class)
             transitiveExport = true
-            isStatic = true
             export(projects.shared.libs.analytics)
             export(projects.shared.libs.crashlytics)
             export(projects.shared.app)

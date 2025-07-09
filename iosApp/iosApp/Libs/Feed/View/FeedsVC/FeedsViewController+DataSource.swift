@@ -156,7 +156,7 @@ extension FeedsViewController {
     let item = items[index]
     let result = response.outcome == Constants.winResult ? GameResult.win : GameResult.loss
     AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-      event: GameConcludedEventData(
+      event: GamePlayedEventData(
         videoId: item.videoID,
         publisherUserId: item.principalID,
         likeCount: Int64(item.likeCount),
@@ -165,9 +165,10 @@ extension FeedsViewController {
         gameType: .smiley,
         isNsfw: false,
         stakeAmount: Int32(item.smileyGame?.config.lossPenalty ?? .zero),
-        tokenType: .sats,
+        stakeType: .sats,
         optionChosen: response.smiley.id,
-        gameResult: result
+        gameResult: result,
+        wonLossAmount: Int32(response.coinDelta)
       )
     )
   }

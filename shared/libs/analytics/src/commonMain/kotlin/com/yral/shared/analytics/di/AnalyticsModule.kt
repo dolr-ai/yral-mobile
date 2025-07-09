@@ -10,6 +10,9 @@ import com.yral.shared.analytics.providers.yral.AnalyticsApiService
 import com.yral.shared.analytics.providers.yral.CoreService
 import com.yral.shared.core.utils.toMap
 import com.yral.shared.koin.koinInstance
+import dev.gitlive.firebase.Firebase
+import dev.gitlive.firebase.analytics.analytics
+import dev.gitlive.firebase.app
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToJsonElement
 import org.koin.core.module.dsl.singleOf
@@ -25,8 +28,10 @@ val analyticsModule =
                 eventFilter = { it.shouldSendToYralBE() },
             )
         }
+        factory { Firebase.analytics(Firebase.app) }
         single {
             FirebaseAnalyticsProvider(
+                firebaseAnalytics = get(),
                 eventFilter = { !it.shouldSendToYralBE() },
                 mapConverter = { event ->
                     val json: Json = get()
