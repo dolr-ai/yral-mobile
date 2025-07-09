@@ -54,9 +54,7 @@ fun HashtagInput(
                             value = state.inputText,
                             onValueChange = { newValue ->
                                 // Save previous text BEFORE handling the change
-                                val previousText = state.inputText
-                                state.handleEditChipValueChange(newValue, index, previousText)
-                                state.updatePreviousInputText(newValue)
+                                state.handleEditChipValueChange(newValue, index)
                             },
                             onDone = {
                                 state.handleEditChipDone(state.editingIndex ?: index)
@@ -92,7 +90,6 @@ fun HashtagInput(
                 setFocus = { isFocused = it },
                 onValueChange = { newValue ->
                     state.handleInputFieldValueChange(newValue)
-                    state.updatePreviousInputText(newValue)
                 },
                 onDone = {
                     state.handleInputFieldDone()

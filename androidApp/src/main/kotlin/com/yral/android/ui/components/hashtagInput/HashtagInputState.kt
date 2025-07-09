@@ -18,18 +18,11 @@ class HashtagInputState(
     var inputText by mutableStateOf("")
         private set
 
-    var previousInputText by mutableStateOf("")
-        private set
-
     var editingIndex by mutableStateOf<Int?>(null)
         private set
 
     fun updateInputText(text: String) {
         inputText = text
-    }
-
-    fun updatePreviousInputText(text: String) {
-        previousInputText = text
     }
 
     fun updateEditingIndex(index: Int?) {
@@ -41,7 +34,6 @@ class HashtagInputState(
             onHashtagsChange(hashtags + tag)
         }
         inputText = ""
-        previousInputText = ""
     }
 
     fun updateHashtagAtIndex(
@@ -125,7 +117,6 @@ class HashtagInputState(
     fun handleEditChipValueChange(
         newValue: String,
         index: Int,
-        previousText: String,
     ) {
         when {
             // Handle space or enter - split into hashtags
@@ -135,8 +126,8 @@ class HashtagInputState(
 
             newValue.isEmpty() -> {
                 when {
-                    previousText.isEmpty() -> handleBackspaceOnEmpty(index)
-                    previousText.isNotEmpty() -> {
+                    inputText.isEmpty() -> handleBackspaceOnEmpty(index)
+                    inputText.isNotEmpty() -> {
                         updateHashtagAtIndex(index, "")
                         exitEditMode()
                     }
@@ -153,7 +144,7 @@ class HashtagInputState(
     fun handleInputFieldValueChange(newValue: String) {
         when {
             // Handle backspace on empty input - edit last chip
-            previousInputText.isEmpty() && newValue.isEmpty() && hashtags.isNotEmpty() -> {
+            inputText.isEmpty() && newValue.isEmpty() && hashtags.isNotEmpty() -> {
                 val lastIndex = hashtags.size - 1
                 inputText = hashtags[lastIndex]
                 editingIndex = lastIndex
