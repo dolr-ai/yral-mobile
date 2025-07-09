@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -30,7 +31,14 @@ fun HashtagInput(
 ) {
     val state = rememberHashtagInputState(hashtags, onHashtagsChange)
     val scrollState = rememberScrollState()
-    var isFocused by remember { mutableStateOf(false) }
+    var isChipFocused by remember { mutableStateOf(false) }
+    var isInputFocused by remember { mutableStateOf(false) }
+
+    LaunchedEffect(isInputFocused, state) {
+        if (isInputFocused) {
+            scrollState.scrollTo(scrollState.maxValue)
+        }
+    }
 
     Row(
         modifier =
@@ -39,7 +47,7 @@ fun HashtagInput(
                 .clip(RoundedCornerShape(8.dp))
                 .border(
                     width = 1.dp,
-                    color = if (isFocused) YralColors.Neutral500 else Color.Transparent,
+                    color = if (isChipFocused || isInputFocused) YralColors.Neutral500 else Color.Transparent,
                     shape = RoundedCornerShape(8.dp),
                 ).background(YralColors.Neutral900)
                 .padding(vertical = 12.dp)
@@ -58,9 +66,9 @@ fun HashtagInput(
                             },
                             onDone = {
                                 state.handleEditChipDone(state.editingIndex ?: index)
-                                isFocused = false
+                                isChipFocused = false
                             },
-                            setFocus = { isFocused = true },
+                            setFocus = { isChipFocused = true },
                         )
                     } else {
                         HashtagChip(
@@ -87,7 +95,7 @@ fun HashtagInput(
                 updateShouldFocusInputField = { shouldFocus ->
                     state.updateShouldFocusInputField(shouldFocus)
                 },
-                setFocus = { isFocused = it },
+                setFocus = { isInputFocused = it },
                 onValueChange = { newValue ->
                     state.handleInputFieldValueChange(newValue)
                 },
