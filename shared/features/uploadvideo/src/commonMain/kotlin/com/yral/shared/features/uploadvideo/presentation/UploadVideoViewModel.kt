@@ -41,7 +41,6 @@ class UploadVideoViewModel internal constructor(
     val eventsFlow: Flow<Event> = eventChannel.receiveAsFlow()
 
     private var backgroundUploadJob: Job? = null
-    private var currentUploadEndpoint: UploadEndpoint? = null
 
     private fun send(event: Event) {
         viewModelScope.launch { eventChannel.send(event) }
@@ -97,9 +96,9 @@ class UploadVideoViewModel internal constructor(
 
     private suspend fun performBackgroundUpload(filePath: String) {
         try {
-            // Ensure we have upload endpoint
-            ensureUploadEndpoint()
-            val endpoint = currentUploadEndpoint!!
+            // Get upload endpoint
+            val endpointResult = getUploadEndpoint()
+            val endpoint = endpointResult.getOrThrow()
 
             // Start video upload
             uploadVideo(UploadVideoUseCase.Params(endpoint.url, filePath))
@@ -108,7 +107,7 @@ class UploadVideoViewModel internal constructor(
                         result.fold(
                             success = { uploadState ->
                                 when (uploadState) {
-                                    is UploadState.Uploaded -> UiState.Success(Unit)
+                                    is UploadState.Uploaded -> UiState.Success(endpoint)
                                     is UploadState.InProgress -> {
                                         val progress =
                                             if (uploadState.totalBytes != null) {
@@ -204,13 +203,6 @@ class UploadVideoViewModel internal constructor(
         }
     }
 
-    private suspend fun ensureUploadEndpoint() {
-        if (currentUploadEndpoint == null) {
-            val endpointResult = getUploadEndpoint()
-            currentUploadEndpoint = endpointResult.getOrThrow()
-        }
-    }
-
     private suspend fun waitForUploadCompletionAndUpdateMetadata(
         caption: String,
         hashtags: List<String>,
@@ -222,11 +214,7 @@ class UploadVideoViewModel internal constructor(
             .collect { fileUploadState ->
                 when (fileUploadState) {
                     is UiState.Success -> {
-                        currentUploadEndpoint?.let { endpoint ->
-                            updateMetadata(endpoint, caption, hashtags)
-                        } ?: run {
-                            throw IllegalStateException("Upload endpoint not available")
-                        }
+                        updateMetadata(fileUploadState.data, caption, hashtags)
                         return@collect
                     }
 
@@ -291,7 +279,6 @@ class UploadVideoViewModel internal constructor(
     private fun cancelUpload() {
         backgroundUploadJob?.cancel()
         backgroundUploadJob = null
-        currentUploadEndpoint = null
     }
 
     private fun deleteSelectedFile() {
@@ -323,7 +310,7 @@ class UploadVideoViewModel internal constructor(
         val selectedFilePath: String? = null,
         val caption: String = "",
         val hashtags: List<String> = emptyList(),
-        val fileUploadUiState: UiState<Unit> = UiState.Initial,
+        val fileUploadUiState: UiState<UploadEndpoint> = UiState.Initial,
         val completeProcessUiState: UiState<Unit> = UiState.Initial,
     ) {
         val canUpload: Boolean =
