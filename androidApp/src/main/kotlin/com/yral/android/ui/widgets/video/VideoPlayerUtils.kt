@@ -1,6 +1,7 @@
 package com.yral.android.ui.widgets.video
 
 import android.content.Context
+import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.Environment
 import co.touchlab.kermit.Logger
@@ -11,6 +12,10 @@ import java.io.IOException
 
 @Suppress("TooManyFunctions")
 object VideoPlayerUtils {
+    // Video validation constants (matching iOS implementation)
+    const val VIDEO_MAX_DURATION_SECONDS = 60.0
+    const val VIDEO_MAX_FILE_SIZE_BYTES = 200L * 1024L * 1024L // 200 MB
+
     fun getInternalVideoPath(
         context: Context,
         fileName: String,
@@ -50,6 +55,98 @@ object VideoPlayerUtils {
         }.onFailure { exception ->
             Logger.e("Permission denied accessing file: $filePath", exception)
         }.getOrDefault(0L)
+
+    /**
+     * Get video duration in seconds from a file path
+     */
+    fun getVideoDuration(filePath: String): Double? =
+        runCatching {
+            val retriever = MediaMetadataRetriever()
+            retriever.setDataSource(filePath)
+            val durationStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+            retriever.release()
+            durationStr?.toDoubleOrNull()?.div(1000.0) // Convert milliseconds to seconds
+        }.onFailure { exception ->
+            Logger.e("Error getting video duration for: $filePath", exception)
+        }.getOrNull()
+
+    /**
+     * Get video duration in seconds from a URI
+     */
+    fun getVideoDuration(context: Context, uri: Uri): Double? =
+        runCatching {
+            val retriever = MediaMetadataRetriever()
+            retriever.setDataSource(context, uri)
+            val durationStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+            retriever.release()
+            durationStr?.toDoubleOrNull()?.div(1000.0) // Convert milliseconds to seconds
+        }.onFailure { exception ->
+            Logger.e("Error getting video duration for URI: $uri", exception)
+        }.getOrNull()
+
+    /**
+     * Get video file size from a URI
+     */
+    fun getVideoFileSize(context: Context, uri: Uri): Long? =
+        runCatching {
+            context.contentResolver.openFileDescriptor(uri, "r")?.use { fileDescriptor ->
+                fileDescriptor.statSize
+            }
+        }.onFailure { exception ->
+            Logger.e("Error getting video file size for URI: $uri", exception)
+        }.getOrNull()
+
+    /**
+     * Validate video from URI before copying
+     * Returns ValidationResult with success/failure status and error message
+     */
+    fun validateVideoFromUri(context: Context, uri: Uri): ValidationResult {
+        // Check duration
+        val duration = getVideoDuration(context, uri)
+        if (duration == null) {
+            return ValidationResult.Failure("Unable to read video duration")
+        }
+        
+        if (duration > VIDEO_MAX_DURATION_SECONDS) {
+            return ValidationResult.Failure("Selected video exceeds 60 seconds")
+        }
+
+        // Check file size
+        val fileSize = getVideoFileSize(context, uri)
+        if (fileSize == null) {
+            return ValidationResult.Failure("Unable to read video file size")
+        }
+        
+        if (fileSize > VIDEO_MAX_FILE_SIZE_BYTES) {
+            return ValidationResult.Failure("Selected video exceeds 200 MB")
+        }
+
+        return ValidationResult.Success(duration, fileSize)
+    }
+
+    /**
+     * Validate video from file path
+     * Returns ValidationResult with success/failure status and error message
+     */
+    fun validateVideoFromPath(filePath: String): ValidationResult {
+        // Check duration
+        val duration = getVideoDuration(filePath)
+        if (duration == null) {
+            return ValidationResult.Failure("Unable to read video duration")
+        }
+        
+        if (duration > VIDEO_MAX_DURATION_SECONDS) {
+            return ValidationResult.Failure("Selected video exceeds 60 seconds")
+        }
+
+        // Check file size
+        val fileSize = getVideoFileSize(filePath)
+        if (fileSize > VIDEO_MAX_FILE_SIZE_BYTES) {
+            return ValidationResult.Failure("Selected video exceeds 200 MB")
+        }
+
+        return ValidationResult.Success(duration, fileSize)
+    }
 
     fun copyVideoFromAssets(
         context: Context,
@@ -161,6 +258,11 @@ object VideoPlayerUtils {
             showControls = false,
             muted = true,
         )
+
+    sealed class ValidationResult {
+        data class Success(val duration: Double, val fileSize: Long) : ValidationResult()
+        data class Failure(val errorMessage: String) : ValidationResult()
+    }
 }
 
 data class VideoFileInfo(

@@ -132,6 +132,8 @@ private fun SelectVideoView(
         VideoPermissionUtils.rememberVideoPermissionsState { hasRequestedPermissions = true }
 
     var showPermissionError by remember { mutableStateOf(false) }
+    var showValidationError by remember { mutableStateOf(false) }
+    var validationErrorMessage by remember { mutableStateOf("") }
     var isProcessingVideo by remember { mutableStateOf(false) }
     val errorSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
@@ -140,6 +142,7 @@ private fun SelectVideoView(
             shouldLaunchPicker = shouldLaunchPicker,
             hasRequestedPermissions = hasRequestedPermissions,
             showPermissionError = showPermissionError,
+            showValidationError = showValidationError,
             isProcessingVideo = isProcessingVideo,
             errorSheetState = errorSheetState,
         )
@@ -148,6 +151,10 @@ private fun SelectVideoView(
         rememberVideoPickerLauncher(
             onVideoSelected = onVideoSelected,
             onProcessingStateChange = { isProcessingVideo = it },
+            onValidationError = { errorMessage ->
+                validationErrorMessage = errorMessage
+                showValidationError = true
+            },
         )
 
     VideoSelectionPermissionHandler(
@@ -172,7 +179,11 @@ private fun SelectVideoView(
 
     VideoSelectionErrorDialog(
         selectionState = selectionState,
-        onDismissError = { showPermissionError = false },
+        validationErrorMessage = validationErrorMessage,
+        onDismissError = { 
+            showPermissionError = false 
+            showValidationError = false
+        },
     )
 }
 
@@ -180,6 +191,7 @@ private fun SelectVideoView(
 private fun rememberVideoPickerLauncher(
     onVideoSelected: (String) -> Unit,
     onProcessingStateChange: (Boolean) -> Unit,
+    onValidationError: (String) -> Unit,
 ): ActivityResultLauncher<String> {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -190,23 +202,39 @@ private fun rememberVideoPickerLauncher(
         uri?.let { contentUri ->
             onProcessingStateChange(true)
             coroutineScope.launch {
-                val fileName = "selected_video_${System.currentTimeMillis()}.mp4"
-                val result =
-                    withContext(Dispatchers.IO) {
-                        runCatching {
-                            VideoPlayerUtils.copyVideoFromUri(context, contentUri, fileName)
-                        }
+                // Validate video before copying
+                val validationResult = withContext(Dispatchers.IO) {
+                    VideoPlayerUtils.validateVideoFromUri(context, contentUri)
+                }
+                
+                when (validationResult) {
+                    is VideoPlayerUtils.ValidationResult.Success -> {
+                        // Video is valid, proceed with copying
+                        val fileName = "selected_video_${System.currentTimeMillis()}.mp4"
+                        val result =
+                            withContext(Dispatchers.IO) {
+                                runCatching {
+                                    VideoPlayerUtils.copyVideoFromUri(context, contentUri, fileName)
+                                }
+                            }
+                        result
+                            .onSuccess { filePath ->
+                                if (filePath != null) {
+                                    onVideoSelected(filePath)
+                                } else {
+                                    Logger.e("Failed to copy video from URI: $contentUri")
+                                    onValidationError("Failed to process video")
+                                }
+                            }.onFailure { exception ->
+                                Logger.e("Error processing video", exception)
+                                onValidationError("Failed to process video")
+                            }
                     }
-                result
-                    .onSuccess { filePath ->
-                        if (filePath != null) {
-                            onVideoSelected(filePath)
-                        } else {
-                            Logger.e("Failed to copy video from URI: $contentUri")
-                        }
-                    }.onFailure { exception ->
-                        Logger.e("Error processing video", exception)
+                    is VideoPlayerUtils.ValidationResult.Failure -> {
+                        // Video validation failed, show error
+                        onValidationError(validationResult.errorMessage)
                     }
+                }
                 onProcessingStateChange(false)
             }
         }
@@ -346,6 +374,7 @@ private fun VideoSelectionButton(
 @Composable
 private fun VideoSelectionErrorDialog(
     selectionState: VideoSelectionState,
+    validationErrorMessage: String,
     onDismissError: () -> Unit,
 ) {
     if (selectionState.showPermissionError) {
@@ -367,6 +396,17 @@ private fun VideoSelectionErrorDialog(
             onDismiss = onDismissError,
         )
     }
+    
+    if (selectionState.showValidationError) {
+        YralErrorMessage(
+            title = stringResource(R.string.error),
+            error = validationErrorMessage,
+            sheetState = selectionState.errorSheetState,
+            cta = stringResource(R.string.ok),
+            onClick = onDismissError,
+            onDismiss = onDismissError,
+        )
+    }
 }
 
 /**
@@ -377,6 +417,7 @@ data class VideoSelectionState(
     val shouldLaunchPicker: Boolean = false,
     val hasRequestedPermissions: Boolean = false,
     val showPermissionError: Boolean = false,
+    val showValidationError: Boolean = false,
     val isProcessingVideo: Boolean = false,
     val errorSheetState: SheetState,
 )
