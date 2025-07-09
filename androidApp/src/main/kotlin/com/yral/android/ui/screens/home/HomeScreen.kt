@@ -39,6 +39,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.yral.android.R
+import com.yral.android.ui.components.hashtagInput.keyboardHeightAsState
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.account.AccountScreen
@@ -46,7 +47,6 @@ import com.yral.android.ui.screens.feed.FeedScreen
 import com.yral.android.ui.screens.leaderboard.LeaderboardScreen
 import com.yral.android.ui.screens.profile.ProfileScreen
 import com.yral.android.ui.screens.uploadVideo.UploadVideoScreen
-import com.yral.android.ui.screens.uploadVideo.keyboardHeightAsState
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.session.getKey
 import com.yral.shared.features.account.viewmodel.AccountsViewModel

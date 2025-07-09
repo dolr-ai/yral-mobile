@@ -28,6 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,6 +45,8 @@ import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.MultiplePermissionsState
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.shouldShowRationale
 import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
@@ -122,10 +125,12 @@ private fun SelectVideoView(
     maxSeconds: Int = 60,
     onVideoSelected: (String) -> Unit,
 ) {
-    val permissionState = VideoPermissionUtils.rememberVideoPermissionsState()
-
     var shouldLaunchPicker by remember { mutableStateOf(false) }
     var hasRequestedPermissions by remember { mutableStateOf(false) }
+
+    val permissionState =
+        VideoPermissionUtils.rememberVideoPermissionsState { hasRequestedPermissions = true }
+
     var showPermissionError by remember { mutableStateOf(false) }
     var isProcessingVideo by remember { mutableStateOf(false) }
     val errorSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -161,7 +166,6 @@ private fun SelectVideoView(
         onLaunchVideoPicker = { videoPickerLauncher.launch("video/*") },
         onRequestPermissions = {
             shouldLaunchPicker = true
-            hasRequestedPermissions = true
             permissionState.launchMultiplePermissionRequest()
         },
     )
@@ -230,20 +234,34 @@ private fun VideoSelectionPermissionHandler(
         }
     }
 
-    // Check for permission denial after user has requested permissions
+    val grantedCount =
+        remember {
+            derivedStateOf {
+                permissionState.permissions.count {
+                    it.status.isGranted
+                }
+            }
+        }
+    val noRationaleDeniedCount =
+        remember {
+            derivedStateOf {
+                permissionState.permissions.count {
+                    !it.status.isGranted && !it.status.shouldShowRationale
+                }
+            }
+        }
     LaunchedEffect(
-        VideoPermissionUtils.hasSufficientVideoPermissions(permissionState),
         selectionState.hasRequestedPermissions,
+        grantedCount.value,
+        noRationaleDeniedCount.value,
     ) {
         if (selectionState.hasRequestedPermissions &&
-            !VideoPermissionUtils.hasSufficientVideoPermissions(permissionState)
+            !VideoPermissionUtils.hasSufficientVideoPermissions(permissionState) &&
+            VideoPermissionUtils.arePermissionsPermanentlyDenied(permissionState)
         ) {
-            // Check if permissions are permanently denied (not including limited access)
-            if (VideoPermissionUtils.arePermissionsPermanentlyDenied(permissionState)) {
-                onShouldLaunchPickerChange(false)
-                onHasRequestedPermissionsChange(false)
-                onShowPermissionErrorChange(true)
-            }
+            onShouldLaunchPickerChange(false)
+            onHasRequestedPermissionsChange(false)
+            onShowPermissionErrorChange(true)
         }
     }
 

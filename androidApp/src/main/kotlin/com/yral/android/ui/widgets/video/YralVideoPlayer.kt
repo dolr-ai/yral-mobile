@@ -2,12 +2,13 @@ package com.yral.android.ui.widgets.video
 
 import android.content.Context
 import androidx.annotation.OptIn
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
@@ -19,6 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -32,16 +34,18 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import com.yral.android.R
+import kotlinx.coroutines.delay
 import java.io.File
 
+@Suppress("LongMethod")
 @OptIn(UnstableApi::class)
 @Composable
 fun YralVideoPlayer(
     modifier: Modifier = Modifier,
     url: String,
     autoPlay: Boolean = false,
-    loop: Boolean = false,
-    videoAspectRatio: Int = AspectRatioFrameLayout.RESIZE_MODE_FIT,
+    loop: Boolean = true,
+    videoResizeMode: Int = AspectRatioFrameLayout.RESIZE_MODE_FIT,
     onError: (String) -> Unit = {},
 ) {
     val context = LocalContext.current
@@ -89,12 +93,21 @@ fun YralVideoPlayer(
                         hideController()
                     }
                     player = exoPlayer
-                    resizeMode = videoAspectRatio
+                    resizeMode = videoResizeMode
                 }
             },
-            modifier = Modifier.fillMaxSize(),
+            modifier =
+                Modifier
+                    .wrapContentSize()
+                    .align(Alignment.Center),
         )
-        PlayerOverlay(hasError, isLoading, isPlaying, exoPlayer)
+        PlayerOverlay(
+            modifier = Modifier.align(Alignment.Center),
+            hasError = hasError,
+            isLoading = isLoading,
+            isPlaying = isPlaying,
+            exoPlayer = exoPlayer,
+        )
     }
 
     // Cleanup
@@ -107,12 +120,13 @@ fun YralVideoPlayer(
 
 @Composable
 private fun PlayerOverlay(
+    modifier: Modifier,
     hasError: Boolean,
     isLoading: Boolean,
     isPlaying: Boolean,
     exoPlayer: ExoPlayer?,
 ) {
-    Box(Modifier.fillMaxSize()) {
+    Box(modifier.fillMaxSize()) {
         // Custom Play/Pause Control Overlay
         if (!hasError) {
             PlayPauseControl(isPlaying, isLoading) {
@@ -155,28 +169,30 @@ private fun PlayPauseControl(
     isLoading: Boolean,
     togglePlayPause: () -> Unit,
 ) {
+    var isPlayPauseVisible by remember { mutableStateOf(true) }
+    LaunchedEffect(isPlayPauseVisible) {
+        delay(PLAY_PAUSE_BUTTON_TIMEOUT)
+        isPlayPauseVisible = !isPlayPauseVisible
+    }
     Box(
         modifier =
             Modifier
                 .fillMaxSize()
-                .clickable { togglePlayPause() },
+                .clickable { isPlayPauseVisible = !isPlayPauseVisible },
         contentAlignment = Alignment.Center,
     ) {
-        if (!isLoading) {
-            Icon(
+        if (!isLoading && isPlayPauseVisible) {
+            Image(
                 painter =
                     painterResource(
                         if (isPlaying) R.drawable.pause else R.drawable.play,
                     ),
                 contentDescription = if (isPlaying) "Pause" else "Play",
-                tint = Color.White,
                 modifier =
                     Modifier
-                        .size(64.dp)
-                        .background(
-                            Color.Black.copy(alpha = 0.5f),
-                            CircleShape,
-                        ).padding(16.dp),
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .clickable { togglePlayPause() },
             )
         }
     }
@@ -244,3 +260,5 @@ private fun processUrl(url: String): String? =
         url.startsWith("http", ignoreCase = true) -> url
         else -> File(url).takeIf { it.exists() }?.toURI()?.toString()
     }
+
+private const val PLAY_PAUSE_BUTTON_TIMEOUT = 2000L

@@ -23,9 +23,12 @@ object VideoPermissionUtils {
 
     @OptIn(ExperimentalPermissionsApi::class)
     @Composable
-    fun rememberVideoPermissionsState(): MultiplePermissionsState {
+    fun rememberVideoPermissionsState(onPermissionsResult: (Map<String, Boolean>) -> Unit): MultiplePermissionsState {
         val permissions = getRequiredVideoPermissions()
-        return rememberMultiplePermissionsState(permissions)
+        return rememberMultiplePermissionsState(
+            permissions = permissions,
+            onPermissionsResult = onPermissionsResult,
+        )
     }
 
     /**
@@ -60,7 +63,8 @@ object VideoPermissionUtils {
     fun arePermissionsPermanentlyDenied(permissionState: MultiplePermissionsState): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             // For Android 14+, only consider it permanently denied if BOTH permissions are denied without rationale
-            val videoPermission = permissionState.permissions.find { it.permission == READ_MEDIA_VIDEO }
+            val videoPermission =
+                permissionState.permissions.find { it.permission == READ_MEDIA_VIDEO }
             val limitedPermission =
                 permissionState.permissions.find { it.permission == READ_MEDIA_VISUAL_USER_SELECTED }
 
