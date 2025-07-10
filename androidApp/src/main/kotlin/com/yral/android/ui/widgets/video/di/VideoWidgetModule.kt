@@ -7,9 +7,10 @@ import com.yral.android.ui.widgets.video.VideoValidator
 import org.koin.core.module.dsl.factoryOf
 import org.koin.dsl.module
 
-val videoWidgetModule = module {
-    factoryOf(::VideoMetadataExtractor)
-    factoryOf(::VideoFileManager)
-    factoryOf(::VideoValidator)
-    factoryOf(::VideoPlayerUtils)
-}
+val videoWidgetModule =
+    module {
+        factoryOf(::VideoMetadataExtractor)
+        factoryOf(::VideoFileManager)
+        factoryOf(::VideoValidator)
+        factoryOf(::VideoPlayerUtils)
+    }
