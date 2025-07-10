@@ -18,6 +18,7 @@ kotlin {
             implementation(projects.shared.core)
             implementation(projects.shared.libs.useCase)
             implementation(projects.shared.libs.crashlytics)
+            implementation(projects.shared.libs.analytics)
 
             api(libs.gitlive.firebase.auth)
         }

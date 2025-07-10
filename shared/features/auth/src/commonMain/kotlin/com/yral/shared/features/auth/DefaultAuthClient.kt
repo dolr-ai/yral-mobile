@@ -3,6 +3,7 @@ package com.yral.shared.features.auth
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.analytics.AnalyticsManager
+import com.yral.shared.analytics.User
 import com.yral.shared.core.session.Session
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
@@ -257,6 +258,7 @@ class DefaultAuthClient(
                             ),
                     ).onSuccess {
                         sessionManager.updateCoinBalance(coinBalance)
+                        setUserProperties()
                     }.onFailure { throw YralAuthException("update coin balance failed ${it.message}") }
             }.onFailure { throw YralAuthException("get balance failed ${it.message}") }
     }
@@ -337,6 +339,7 @@ class DefaultAuthClient(
                     skipFirebaseAuth = false,
                 )
                 preferences.putBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name, true)
+                setUserProperties()
             }.onFailure { throw YralAuthException("authenticate social sign in failed - ${it.message}") }
     }
 
@@ -352,6 +355,27 @@ class DefaultAuthClient(
                 ),
         )
     }
+
+    private suspend fun setUserProperties() {
+        sessionManager.getUserPrincipal()?.let { userPrincipalId ->
+            sessionManager.getCanisterPrincipal()?.let { canisterId ->
+                analyticsManager.setUserProperties(
+                    user =
+                        User(
+                            userId = userPrincipalId,
+                            isLoggedIn = isSocialSignIn(),
+                            canisterId = canisterId,
+                            isCreator = false,
+                            satsBalance = sessionManager.coinBalance.value.toDouble(),
+                        ),
+                )
+            }
+        }
+    }
+
+    private suspend fun isSocialSignIn(): Boolean =
+        preferences
+            .getBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name) ?: false
 
     data class RequiredUseCases(
         val authenticateTokenUseCase: AuthenticateTokenUseCase,
