@@ -3,6 +3,8 @@ import iosSharedUmbrella
 
 struct HomeTabController: View {
   @EnvironmentObject var session: SessionManager
+  @EnvironmentObject var deepLinkRouter: DeepLinkRouter
+  @State private var suppressAnalytics = false
   let feedsViewController: FeedsViewController
   let accountView: AccountView
   let uploadView: UploadView
@@ -63,6 +65,7 @@ struct HomeTabController: View {
         uploadView
           .onDoneAction {
             UIView.setAnimationsEnabled(false)
+            suppressAnalytics = true
             selectedTab = .home
             DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.animationPeriod) {
               UIView.setAnimationsEnabled(false)
@@ -84,7 +87,10 @@ struct HomeTabController: View {
           .tag(Tab.upload)
 
         profileView
-          .onUploadAction { selectedTab = .upload }
+          .onUploadAction {
+            suppressAnalytics = true
+            selectedTab = .upload
+          }
           .background(Color.black.edgesIgnoringSafeArea(.all))
           .tabItem { tabIcon(selected: selectedTab == .profile,
                              selectedName: Constants.profileIconImageNameSelected,
@@ -102,14 +108,18 @@ struct HomeTabController: View {
           .tag(Tab.account)
       }
       .onChange(of: selectedTab) { tab in
+        guard !suppressAnalytics else {
+          suppressAnalytics = false
+          return
+        }
         tabDidChange(to: tab)
       }
-      .onReceive(
-        NotificationCenter.default.publisher(
-          for: .videoUploadNotificationReceived
-        )
-      ) { _ in
-        uploadNotificationReceived()
+      .onReceive(deepLinkRouter.$pendingDestination.compactMap { $0 }) { dest in
+        switch dest {
+        case .profileAfterUpload:
+          selectedTab = .profile
+        }
+        deepLinkRouter.pendingDestination = nil
       }
       .fullScreenCover(isPresented: $showNotificationsNudge) {
         ZStack(alignment: .center) {
@@ -188,16 +198,6 @@ struct HomeTabController: View {
         categoryName: categoryName
       )
     )
-  }
-
-  @MainActor func uploadNotificationReceived() {
-    DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.animationPeriod) {
-      self.selectedTab = .profile
-      Task {
-        try? await Task.sleep(nanoseconds: 300_000_000)
-        await profileView.refreshVideosFromPushNotifications()
-      }
-    }
   }
 }
 

@@ -20,6 +20,7 @@ class FeedsViewController: UIViewController {
   var feedType: FeedType = .otherUsers
   var initalFeedscancellables: Set<AnyCancellable> = []
   var paginatedFeedscancellables: Set<AnyCancellable> = []
+  var trackedVideoIDs: Set<String> = []
 
   lazy var feedsPlayer: YralPlayer = { [unowned self] in
     let monitor = DefaultNetworkMonitor()
@@ -92,7 +93,8 @@ class FeedsViewController: UIViewController {
     setupUI()
     startLoadingBindings()
     addAuthChangeListner()
-    Task { @MainActor in
+    Task { @MainActor [weak self] in
+      guard let self = self else { return }
       await viewModel.fetchFeeds(request: InitialFeedRequest(numResults: Constants.initialNumResults))
     }
     NotificationCenter.default.addObserver(
@@ -120,9 +122,11 @@ class FeedsViewController: UIViewController {
 
   override func viewDidAppear(_ animated: Bool) {
     super.viewDidAppear(animated)
-    AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-      event: HomePageViewedEventData()
-    )
+    if self.feedType == .otherUsers {
+      AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+        event: HomePageViewedEventData()
+      )
+    }
   }
 
   func bindViewModel() {
@@ -315,7 +319,8 @@ class FeedsViewController: UIViewController {
   }
 
   private func createLayout() -> UICollectionViewCompositionalLayout {
-    return UICollectionViewCompositionalLayout { (_, _) -> NSCollectionLayoutSection? in
+    return UICollectionViewCompositionalLayout { [weak self] (_, _) -> NSCollectionLayoutSection? in
+      guard let self = self else { return nil }
       let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(.one),
                                             heightDimension: .fractionalHeight(.one))
       let item = NSCollectionLayoutItem(layoutSize: itemSize)
@@ -337,7 +342,8 @@ class FeedsViewController: UIViewController {
 
   private func startLoadingBindings() {
     let feedsFinished = viewModel.unifiedStatePublisher
-      .compactMap { state -> Void? in
+      .compactMap { [weak self] state -> Void? in
+        guard let self = self else { return nil }
         if case .success = state { return () }
         if case .failure = state { return () }
         return nil
@@ -361,7 +367,8 @@ class FeedsViewController: UIViewController {
 
   func addAuthChangeListner() {
     let loginPhase = session.$state
-      .map { state -> Bool? in
+      .map { [weak self] state -> Bool? in
+        guard let self = self else { return nil }
         switch state {
         case .ephemeralAuthentication, .permanentAuthentication: return true
         case .loggedOut, .accountDeleted: return false
@@ -398,26 +405,6 @@ class FeedsViewController: UIViewController {
       }
       .store(in: &authStateCancellables)
   }
-
-//  func addAuthChangeListner() {
-//    session.coinsReadyPublisher
-//      .dropFirst()
-//      .sink { [weak self] in
-//        guard let self else { return }
-//        Task { @MainActor in
-//          await self.viewModel.refreshFeeds()
-//          await self.viewModel.fetchFeeds(
-//            request: InitialFeedRequest(
-//              numResults: FeedsViewController.Constants.initialNumResults
-//            )
-//          )
-//          if self.feedType == .otherUsers {
-//            await self.viewModel.fetchSmileys()
-//          }
-//        }
-//      }
-//      .store(in: &authStateCancellables)
-//  }
 
   @objc func appDidBecomeActive() {
     if isCurrentlyVisible {
