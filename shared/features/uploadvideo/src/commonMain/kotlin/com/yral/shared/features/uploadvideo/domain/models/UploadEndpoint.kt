@@ -1,6 +1,6 @@
 package com.yral.shared.features.uploadvideo.domain.models
 
-internal data class UploadEndpoint(
+data class UploadEndpoint internal constructor(
     val url: String,
     val videoID: String,
 )
