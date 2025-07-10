@@ -43,6 +43,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
+import com.github.michaelbull.result.onFailure
+import com.github.michaelbull.result.onSuccess
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.MultiplePermissionsState
 import com.google.accompanist.permissions.isGranted
@@ -133,7 +135,7 @@ private fun SelectVideoView(
 
     var showPermissionError by remember { mutableStateOf(false) }
     var showValidationError by remember { mutableStateOf(false) }
-    var validationErrorMessage by remember { mutableStateOf("") }
+    var pickerError by remember { mutableStateOf<VideoPickerError?>(null) }
     var isProcessingVideo by remember { mutableStateOf(false) }
     val errorSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
@@ -151,8 +153,8 @@ private fun SelectVideoView(
         rememberVideoPickerLauncher(
             onVideoSelected = onVideoSelected,
             onProcessingStateChange = { isProcessingVideo = it },
-            onValidationError = { errorMessage ->
-                validationErrorMessage = errorMessage
+            onError = { error ->
+                pickerError = error
                 showValidationError = true
             },
         )
@@ -179,7 +181,7 @@ private fun SelectVideoView(
 
     VideoSelectionErrorDialog(
         selectionState = selectionState,
-        validationErrorMessage = validationErrorMessage,
+        pickerError = pickerError,
         onDismissError = { 
             showPermissionError = false 
             showValidationError = false
@@ -187,11 +189,16 @@ private fun SelectVideoView(
     )
 }
 
+sealed class VideoPickerError {
+    data class Validation(val error: VideoPlayerUtils.ValidationError) : VideoPickerError()
+    object ProcessingFailed : VideoPickerError()
+}
+
 @Composable
 private fun rememberVideoPickerLauncher(
     onVideoSelected: (String) -> Unit,
     onProcessingStateChange: (Boolean) -> Unit,
-    onValidationError: (String) -> Unit,
+    onError: (VideoPickerError) -> Unit,
 ): ActivityResultLauncher<String> {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -206,34 +213,31 @@ private fun rememberVideoPickerLauncher(
                 val validationResult = withContext(Dispatchers.IO) {
                     VideoPlayerUtils.validateVideoFromUri(context, contentUri)
                 }
-                
-                when (validationResult) {
-                    is VideoPlayerUtils.ValidationResult.Success -> {
-                        // Video is valid, proceed with copying
-                        val fileName = "selected_video_${System.currentTimeMillis()}.mp4"
-                        val result =
-                            withContext(Dispatchers.IO) {
-                                runCatching {
-                                    VideoPlayerUtils.copyVideoFromUri(context, contentUri, fileName)
-                                }
+
+                validationResult.onSuccess { validationSuccess ->
+                    // Video is valid, proceed with copying
+                    val fileName = "selected_video_${System.currentTimeMillis()}.mp4"
+                    val result =
+                        withContext(Dispatchers.IO) {
+                            runCatching {
+                                VideoPlayerUtils.copyVideoFromUri(context, contentUri, fileName)
                             }
-                        result
-                            .onSuccess { filePath ->
-                                if (filePath != null) {
-                                    onVideoSelected(filePath)
-                                } else {
-                                    Logger.e("Failed to copy video from URI: $contentUri")
-                                    onValidationError("Failed to process video")
-                                }
-                            }.onFailure { exception ->
-                                Logger.e("Error processing video", exception)
-                                onValidationError("Failed to process video")
+                        }
+                    result
+                        .onSuccess { filePath ->
+                            if (filePath != null) {
+                                onVideoSelected(filePath)
+                            } else {
+                                Logger.e("Failed to copy video from URI: $contentUri")
+                                onError(VideoPickerError.ProcessingFailed)
                             }
-                    }
-                    is VideoPlayerUtils.ValidationResult.Failure -> {
-                        // Video validation failed, show error
-                        onValidationError(validationResult.errorMessage)
-                    }
+                        }.onFailure { exception ->
+                            Logger.e("Error processing video", exception)
+                            onError(VideoPickerError.ProcessingFailed)
+                        }
+                }.onFailure { validationError ->
+                    // Video validation failed, show error
+                    onError(VideoPickerError.Validation(validationError))
                 }
                 onProcessingStateChange(false)
             }
@@ -374,7 +378,7 @@ private fun VideoSelectionButton(
 @Composable
 private fun VideoSelectionErrorDialog(
     selectionState: VideoSelectionState,
-    validationErrorMessage: String,
+    pickerError: VideoPickerError?,
     onDismissError: () -> Unit,
 ) {
     if (selectionState.showPermissionError) {
@@ -397,16 +401,34 @@ private fun VideoSelectionErrorDialog(
         )
     }
     
-    if (selectionState.showValidationError) {
+    if (selectionState.showValidationError && pickerError != null) {
         YralErrorMessage(
             title = stringResource(R.string.error),
-            error = validationErrorMessage,
+            error = pickerError.toErrorMessage(),
             sheetState = selectionState.errorSheetState,
             cta = stringResource(R.string.ok),
             onClick = onDismissError,
             onDismiss = onDismissError,
         )
     }
+}
+
+@Composable
+private fun VideoPickerError.toErrorMessage(): String = when (this) {
+    is VideoPickerError.Validation -> when (val error = this.error) {
+        is VideoPlayerUtils.ValidationError.UnableToReadDuration -> stringResource(R.string.video_validation_unable_to_read_duration)
+        is VideoPlayerUtils.ValidationError.UnableToReadFileSize -> stringResource(R.string.video_validation_unable_to_read_file_size)
+        is VideoPlayerUtils.ValidationError.DurationExceedsLimit -> stringResource(
+            R.string.video_validation_duration_exceeds_limit_with_data,
+            "%.0f".format(error.limit)
+        )
+        is VideoPlayerUtils.ValidationError.FileSizeExceedsLimit -> stringResource(
+            R.string.video_validation_file_size_exceeds_limit_with_data,
+            VideoPlayerUtils.formatFileSize(error.limit, precision = 0)
+        )
+    }
+
+    is VideoPickerError.ProcessingFailed -> stringResource(R.string.video_validation_processing_failed)
 }
 
 /**
