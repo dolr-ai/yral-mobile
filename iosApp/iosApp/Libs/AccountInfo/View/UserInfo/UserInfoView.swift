@@ -52,9 +52,6 @@ struct UserInfoView: View {
           AnalyticsModuleKt.getAnalyticsManager().trackEvent(
             event: SignupClickedEventData(pageName: .menu)
           )
-          AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-            event: MenuClickedEventData(ctaType: .login)
-          )
         }
         label: {
           Text(Constants.loginButtonTitle)

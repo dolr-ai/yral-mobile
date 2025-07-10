@@ -66,15 +66,14 @@ struct AccountView: View {
         }
         .padding([.top], Constants.vStackPadding)
       }
-      .onReceive(session.$state) { state in
-        switch state {
-        case .loggedOut,
-            .ephemeralAuthentication,
-            .permanentAuthentication:
-          self.showLoginButton = !state.isLoggedIn
-          Task {
-            await viewModel.fetchProfileInfo()
-          }
+      .onReceive(session.phasePublisher) { phase in
+        switch phase {
+        case .loggedOut, .ephemeral:
+          self.showLoginButton = true
+          Task { await viewModel.fetchProfileInfo() }
+        case .permanent:
+          self.showLoginButton = false
+          Task { await viewModel.fetchProfileInfo() }
         default: break
         }
       }
@@ -85,6 +84,11 @@ struct AccountView: View {
           loadingProvider = nil
           showSignupSheet = false
         case .socialSignInFailure:
+          if let authJourney = loadingProvider?.authJourney() {
+            AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+              event: AuthFailedEventData(authJourney: authJourney)
+            )
+          }
           loadingProvider = nil
           showSignupSheet = false
           showSignupFailureSheet = true

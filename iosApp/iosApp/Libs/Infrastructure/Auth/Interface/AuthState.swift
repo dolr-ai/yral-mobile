@@ -29,3 +29,24 @@ public enum AuthState: Equatable {
     }
   }
 }
+
+extension AuthState {
+  enum Phase: Equatable {
+    case uninitialized, authenticating
+    case ephemeral, permanent
+    case loggedOut, accountDeleted
+    case error
+  }
+
+  var phase: Phase {
+    switch self {
+    case .uninitialized: return .uninitialized
+    case .authenticating: return .authenticating
+    case .ephemeralAuthentication: return .ephemeral
+    case .permanentAuthentication: return .permanent
+    case .loggedOut: return .loggedOut
+    case .accountDeleted: return .accountDeleted
+    case .error: return .error
+    }
+  }
+}

@@ -7,7 +7,7 @@
 import UIKit
 import AVFoundation
 
-// swiftlint: disable type_body_length
+// swiftlint: disable type_body_length file_length
 @MainActor
 final class FeedsPlayer: YralPlayer {
   var feedResults: [FeedResult] = []
@@ -38,6 +38,7 @@ final class FeedsPlayer: YralPlayer {
   var timeObserver: Any?
   var startLogged = Set<Int>()
   var finishLogged = Set<Int>()
+  var lastLoopProgress: Double = 0
 
   // MARK: Performance monitor
   var firstFrameMonitor: PerformanceMonitor?
@@ -112,7 +113,11 @@ final class FeedsPlayer: YralPlayer {
   }
 
   func advanceToVideo(at index: Int) {
-    guard index >= 0 && index < feedResults.count && currentIndex < feedResults.count else { return }
+    guard index >= 0
+            && index < feedResults.count
+            && currentIndex < feedResults.count,
+          currentIndex != index else { return }
+    lastLoopProgress = 0
     if let currentTime = player.currentItem?.currentTime() {
       let currentVideoID = feedResults[currentIndex].videoID
       lastPlayedTimes[currentVideoID] = currentTime
@@ -178,6 +183,7 @@ final class FeedsPlayer: YralPlayer {
 
   private func startLooping(with item: AVPlayerItem) async throws {
     finishFirstFrameTrace(success: false)
+    lastLoopProgress = .zero
     if let videoID = feedResults[safe: currentIndex]?.videoID {
       firstFrameMonitor = FirebasePerformanceMonitor(traceName: Constants.firstFrameTrace)
       firstFrameMonitor?.setMetadata(key: Constants.videoIDKey, value: videoID)
@@ -205,16 +211,16 @@ final class FeedsPlayer: YralPlayer {
       do {
         try await queueItem.waitUntilReady()
 //        try await player.prerollVideo(atRate: 0)
+        guard currentIndex < feedResults.count else { return }
         NotificationCenter.default.post(
           name: .feedItemReady,
           object: self,
-          userInfo: ["index": currentIndex]
+          userInfo: ["index": currentIndex, "videoId": feedResults[currentIndex].videoID]
         )
       } catch {
         crashReporter.recordException(error)
         print("Item failed to become ready: \(error)")
       }
-      guard currentIndex < feedResults.count else { return }
       let currentVideoID = feedResults[currentIndex].videoID
       if let lastTime = lastPlayedTimes[currentVideoID] {
         player.seek(to: lastTime, toleranceBefore: .zero, toleranceAfter: .zero) { [weak self] _ in
@@ -329,7 +335,6 @@ final class FeedsPlayer: YralPlayer {
         throw error
       }
     }
-
     let remoteAsset = AVURLAsset(url: feed.url)
     do {
       try await remoteAsset.loadPlayableAsync()
@@ -397,4 +402,4 @@ extension FeedsPlayer {
     static let rebufferCountMetric = "rebuffer_count"
   }
 }
-// swiftlint: enable type_body_length
+// swiftlint: enable type_body_length file_length

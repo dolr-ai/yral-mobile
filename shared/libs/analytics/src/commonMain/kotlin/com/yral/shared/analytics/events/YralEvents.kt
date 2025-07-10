@@ -9,7 +9,8 @@ import kotlinx.serialization.Serializable
 data class SplashScreenViewedEventData(
     @SerialName("event") override val event: String = FeatureEvents.SPLASH_SCREEN_VIEWED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.FEED.getFeatureName(),
-) : EventData {
+) : BaseEventData(),
+    EventData {
     public constructor() : this(
         FeatureEvents.SPLASH_SCREEN_VIEWED.getEventName(),
         Features.FEED.getFeatureName(),
@@ -21,7 +22,8 @@ data class SplashScreenViewedEventData(
 data class AuthScreenViewedEventData(
     @SerialName("event") override val event: String = FeatureEvents.AUTH_SCREEN_VIEWED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.AUTH.getFeatureName(),
-) : EventData {
+) : BaseEventData(),
+    EventData {
     public constructor() : this(
         FeatureEvents.AUTH_SCREEN_VIEWED.getEventName(),
         Features.AUTH.getFeatureName(),
@@ -33,7 +35,8 @@ data class SignupClickedEventData(
     @SerialName("event") override val event: String = FeatureEvents.SIGNUP_CLICKED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.AUTH.getFeatureName(),
     @SerialName("page_name") val pageName: SignupPageName,
-) : EventData {
+) : BaseEventData(),
+    EventData {
     constructor(pageName: SignupPageName) : this(
         FeatureEvents.SIGNUP_CLICKED.getEventName(),
         Features.AUTH.getFeatureName(),
@@ -46,7 +49,8 @@ data class SignupJourneySelected(
     @SerialName("event") override val event: String = FeatureEvents.SIGNUP_JOURNEY_SELECTED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.AUTH.getFeatureName(),
     @SerialName("auth_journey") val authJourney: AuthJourney,
-) : EventData {
+) : BaseEventData(),
+    EventData {
     constructor(authJourney: AuthJourney) : this(
         FeatureEvents.SIGNUP_JOURNEY_SELECTED.getEventName(),
         Features.AUTH.getFeatureName(),
@@ -59,7 +63,8 @@ data class SignupInitiatedEventData(
     @SerialName("event") override val event: String = FeatureEvents.SIGNUP_INITIATED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.AUTH.getFeatureName(),
     @SerialName("auth_journey") val authJourney: AuthJourney,
-) : EventData {
+) : BaseEventData(),
+    EventData {
     constructor(authJourney: AuthJourney) : this(
         FeatureEvents.SIGNUP_INITIATED.getEventName(),
         Features.AUTH.getFeatureName(),
@@ -74,7 +79,8 @@ data class SignupSuccessEventData(
     @SerialName("is_referral") val isReferral: Boolean,
     @SerialName("referrer_user_id") val referralUserID: String,
     @SerialName("auth_journey") val authJourney: AuthJourney,
-) : EventData {
+) : BaseEventData(),
+    EventData {
     constructor(isReferral: Boolean, referralUserID: String, authJourney: AuthJourney) : this(
         FeatureEvents.SIGNUP_SUCCESS.getEventName(),
         Features.AUTH.getFeatureName(),
@@ -89,9 +95,24 @@ data class LoginSuccessEventData(
     @SerialName("event") override val event: String = FeatureEvents.LOGIN_SUCCESS.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.AUTH.getFeatureName(),
     @SerialName("auth_journey") val authJourney: AuthJourney,
-) : EventData {
+) : BaseEventData(),
+    EventData {
     constructor(authJourney: AuthJourney) : this(
         FeatureEvents.LOGIN_SUCCESS.getEventName(),
+        Features.AUTH.getFeatureName(),
+        authJourney,
+    )
+}
+
+@Serializable
+data class AuthFailedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.AUTH_FAILED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.AUTH.getFeatureName(),
+    @SerialName("auth_journey") val authJourney: AuthJourney,
+) : BaseEventData(),
+    EventData {
+    constructor(authJourney: AuthJourney) : this(
+        FeatureEvents.AUTH_FAILED.getEventName(),
         Features.AUTH.getFeatureName(),
         authJourney,
     )
@@ -102,7 +123,8 @@ data class LoginSuccessEventData(
 data class HomePageViewedEventData(
     @SerialName("event") override val event: String = FeatureEvents.HOME_PAGE_VIEWED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.FEED.getFeatureName(),
-) : EventData {
+) : BaseEventData(),
+    EventData {
     constructor() : this(
         FeatureEvents.HOME_PAGE_VIEWED.getEventName(),
         Features.AUTH.getFeatureName(),
@@ -114,7 +136,8 @@ data class BottomNavigationClickedEventData(
     @SerialName("event") override val event: String = FeatureEvents.BOTTOM_NAVIGATION_CLICKED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.FEED.getFeatureName(),
     @SerialName("category_name") val categoryName: CategoryName,
-) : EventData {
+) : BaseEventData(),
+    EventData {
     constructor(categoryName: CategoryName) : this(
         FeatureEvents.BOTTOM_NAVIGATION_CLICKED.getEventName(),
         Features.AUTH.getFeatureName(),
@@ -136,7 +159,8 @@ data class VideoStartedEventData(
     @SerialName("is_game_enabled") val isGameEnabled: Boolean,
     @SerialName("game_type") val gameType: GameType,
     @SerialName("is_nsfw") val isNsfw: Boolean,
-) : EventData {
+) : BaseEventData(),
+    EventData {
     constructor(
         videoId: String,
         publisherUserId: String,
@@ -173,7 +197,8 @@ data class VideoImpressionEventData(
     @SerialName("is_game_enabled") val isGameEnabled: Boolean,
     @SerialName("game_type") val gameType: GameType,
     @SerialName("is_nsfw") val isNsfw: Boolean,
-) : EventData {
+) : BaseEventData(),
+    EventData {
     constructor(
         categoryName: CategoryName,
         videoId: String,
@@ -185,8 +210,8 @@ data class VideoImpressionEventData(
         gameType: GameType,
         isNsfw: Boolean,
     ) : this(
-        FeatureEvents.VIDEO_VIEWED.getEventName(),
-        Features.AUTH.getFeatureName(),
+        FeatureEvents.VIDEO_IMPRESSION.getEventName(),
+        Features.FEED.getFeatureName(),
         categoryName,
         videoId,
         publisherUserId,
@@ -211,7 +236,8 @@ data class VideoViewedEventData(
     @SerialName("is_game_enabled") val isGameEnabled: Boolean,
     @SerialName("game_type") val gameType: GameType,
     @SerialName("is_nsfw") val isNsfw: Boolean,
-) : EventData {
+) : BaseEventData(),
+    EventData {
     constructor(
         videoId: String,
         publisherUserId: String,
@@ -249,7 +275,8 @@ data class VideoClickedEventData(
     @SerialName("is_nsfw") val isNsfw: Boolean,
     @SerialName("cta_type") val ctaType: CtaType,
     @SerialName("page_name") val pageName: CategoryName,
-) : EventData {
+) : BaseEventData(),
+    EventData {
     constructor(
         videoId: String,
         publisherUserId: String,
@@ -282,7 +309,8 @@ data class NsfwEnabledEventData(
     @SerialName("event") override val event: String = FeatureEvents.NSFW_ENABLED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.FEED.getFeatureName(),
     @SerialName("page_name") val pageName: String,
-) : EventData {
+) : BaseEventData(),
+    EventData {
     constructor(pageName: String) : this(
         FeatureEvents.NSFW_ENABLED.getEventName(),
         Features.AUTH.getFeatureName(),
@@ -300,7 +328,8 @@ data class VideoReportedEventData(
     @SerialName("game_type") val gameType: GameType,
     @SerialName("is_nsfw") val isNsfw: Boolean,
     @SerialName("report_reason") val reason: String,
-) : EventData {
+) : BaseEventData(),
+    EventData {
     constructor(
         videoId: String,
         publisherUserId: String,
@@ -326,7 +355,8 @@ data class DeleteVideoInitiatedEventData(
     @SerialName("feature_name") override val featureName: String = Features.FEED.getFeatureName(),
     @SerialName("page_name") val pageName: CategoryName,
     @SerialName("video_id") val videoId: String,
-) : EventData {
+) : BaseEventData(),
+    EventData {
     constructor(pageName: CategoryName, videoId: String) : this(
         FeatureEvents.DELETE_VIDEO_INITIATED.getEventName(),
         Features.AUTH.getFeatureName(),
@@ -341,12 +371,15 @@ data class VideoDeletedEventData(
     @SerialName("feature_name") override val featureName: String = Features.FEED.getFeatureName(),
     @SerialName("page_name") val pageName: CategoryName,
     @SerialName("video_id") val videoId: String,
-) : EventData {
-    constructor(pageName: CategoryName, videoId: String) : this(
+    @SerialName(value = "cta_type") val ctaType: VideoDeleteCTA,
+) : BaseEventData(),
+    EventData {
+    constructor(pageName: CategoryName, videoId: String, ctaType: VideoDeleteCTA) : this(
         FeatureEvents.VIDEO_DELETED.getEventName(),
         Features.AUTH.getFeatureName(),
         pageName,
         videoId,
+        ctaType,
     )
 }
 
@@ -365,7 +398,8 @@ data class GameVotedEventData(
     @SerialName("stake_amount") val stakeAmount: Int,
     @SerialName("stake_type") val stakeType: StakeType,
     @SerialName("option_chosen") val optionChosen: String,
-) : EventData {
+) : BaseEventData(),
+    EventData {
     constructor(
         videoId: String,
         publisherUserId: String,
@@ -409,7 +443,8 @@ data class GamePlayedEventData(
     @SerialName("option_chosen") val optionChosen: String,
     @SerialName("conclusion") val gameResult: GameResult,
     @SerialName("won_loss_amount") val wonLossAmount: Int,
-) : EventData {
+) : BaseEventData(),
+    EventData {
     constructor(
         videoId: String,
         publisherUserId: String,
@@ -450,7 +485,8 @@ data class GameConcludedBottomsheetClickedEventData(
     @SerialName("conclusion") val gameResult: GameResult,
     @SerialName("won_loss_amount") val wonLossAmount: Int,
     @SerialName("cta_type") val ctaType: GameConcludedCtaType,
-) : EventData {
+) : BaseEventData(),
+    EventData {
     constructor(
         stakeAmount: Int,
         stakeType: StakeType,
@@ -473,7 +509,8 @@ data class GameConcludedBottomsheetClickedEventData(
 data class MenuPageViewedEventData(
     @SerialName("event") override val event: String = FeatureEvents.MENU_PAGE_VIEWED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.MENU.getFeatureName(),
-) : EventData {
+) : BaseEventData(),
+    EventData {
     constructor() : this(
         FeatureEvents.MENU_PAGE_VIEWED.getEventName(),
         Features.AUTH.getFeatureName(),
@@ -485,7 +522,8 @@ data class MenuClickedEventData(
     @SerialName("event") override val event: String = FeatureEvents.MENU_CLICKED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.MENU.getFeatureName(),
     @SerialName("cta_type") val ctaType: MenuCtaType,
-) : EventData {
+) : BaseEventData(),
+    EventData {
     constructor(ctaType: MenuCtaType) : this(
         FeatureEvents.MENU_CLICKED.getEventName(),
         Features.AUTH.getFeatureName(),
@@ -498,7 +536,8 @@ data class MenuClickedEventData(
 data class UploadVideoPageViewedEventData(
     @SerialName("event") override val event: String = FeatureEvents.UPLOAD_VIDEO_PAGE_VIEWED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.UPLOAD.getFeatureName(),
-) : EventData {
+) : BaseEventData(),
+    EventData {
     constructor() : this(
         FeatureEvents.UPLOAD_VIDEO_PAGE_VIEWED.getEventName(),
         Features.AUTH.getFeatureName(),
@@ -509,7 +548,8 @@ data class UploadVideoPageViewedEventData(
 data class SelectFileClickedEventData(
     @SerialName("event") override val event: String = FeatureEvents.SELECT_FILE_CLICKED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.UPLOAD.getFeatureName(),
-) : EventData {
+) : BaseEventData(),
+    EventData {
     constructor() : this(
         FeatureEvents.SELECT_FILE_CLICKED.getEventName(),
         Features.AUTH.getFeatureName(),
@@ -521,7 +561,8 @@ data class FileSelectionSuccessEventData(
     @SerialName("event") override val event: String = FeatureEvents.FILE_SELECTION_SUCCESS.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.UPLOAD.getFeatureName(),
     @SerialName("file_type") val fileType: String,
-) : EventData {
+) : BaseEventData(),
+    EventData {
     constructor(fileType: String) : this(
         FeatureEvents.FILE_SELECTION_SUCCESS.getEventName(),
         Features.AUTH.getFeatureName(),
@@ -535,7 +576,8 @@ data class VideoUploadInitiatedEventData(
     @SerialName("feature_name") override val featureName: String = Features.UPLOAD.getFeatureName(),
     @SerialName("caption_added") val captionAdded: Boolean,
     @SerialName("hashtags_added") val hashtagsAdded: Boolean,
-) : EventData {
+) : BaseEventData(),
+    EventData {
     constructor(captionAdded: Boolean, hashtagsAdded: Boolean) : this(
         FeatureEvents.VIDEO_UPLOAD_INITIATED.getEventName(),
         Features.AUTH.getFeatureName(),
@@ -553,7 +595,8 @@ data class VideoUploadSuccessEventData(
     @SerialName("is_game_enabled") val isGameEnabled: Boolean,
     @SerialName("game_type") val gameType: GameType,
     @SerialName("is_nsfw") val isNsfw: Boolean,
-) : EventData {
+) : BaseEventData(),
+    EventData {
     constructor(
         videoId: String,
         publisherUserId: String,
@@ -576,7 +619,8 @@ data class VideoUploadErrorShownEventData(
     @SerialName("event") override val event: String = FeatureEvents.VIDEO_UPLOAD_ERROR_SHOWN.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.UPLOAD.getFeatureName(),
     @SerialName("reason") val reason: String,
-) : EventData {
+) : BaseEventData(),
+    EventData {
     constructor(reason: String) : this(
         FeatureEvents.VIDEO_UPLOAD_ERROR_SHOWN.getEventName(),
         Features.AUTH.getFeatureName(),
@@ -592,7 +636,8 @@ data class ProfilePageViewedEventData(
     @SerialName("total_videos") val totalVideos: Int,
     @SerialName("is_own_profile") val isOwnProfile: Boolean,
     @SerialName("publisher_user_id") val publisherUserId: String,
-) : EventData {
+) : BaseEventData(),
+    EventData {
     constructor(totalVideos: Int, isOwnProfile: Boolean, publisherUserId: String) : this(
         FeatureEvents.PROFILE_PAGE_VIEWED.getEventName(),
         Features.AUTH.getFeatureName(),
@@ -607,7 +652,8 @@ data class UploadVideoClickedEventData(
     @SerialName("event") override val event: String = FeatureEvents.UPLOAD_VIDEO_CLICKED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.PROFILE.getFeatureName(),
     @SerialName("page_name") val pageName: String = "profile",
-) : EventData {
+) : BaseEventData(),
+    EventData {
     constructor(pageName: String) : this(
         FeatureEvents.UPLOAD_VIDEO_CLICKED.getEventName(),
         Features.AUTH.getFeatureName(),
@@ -802,4 +848,13 @@ enum class MenuCtaType {
 
     @SerialName("follow_on")
     FOLLOW_ON,
+}
+
+@Serializable
+enum class VideoDeleteCTA {
+    @SerialName("profile_thumbnail")
+    PROFILE_THUMBNAIL,
+
+    @SerialName("video_fullscreen")
+    VIDEO_FULLSCREEN,
 }

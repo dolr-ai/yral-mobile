@@ -133,7 +133,11 @@ class MyVideosFeedViewModel: FeedViewModelProtocol, ObservableObject {
       switch result {
       case .success:
         AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-          event: VideoDeletedEventData(pageName: .home, videoId: request.videoId)
+          event: VideoDeletedEventData(
+            pageName: .profile,
+            videoId: request.videoId,
+            ctaType: .videoFullscreen
+          )
         )
       case .failure(let failure):
         unifiedEvent = .deleteVideoFailed(errorMessage: failure.localizedDescription)
