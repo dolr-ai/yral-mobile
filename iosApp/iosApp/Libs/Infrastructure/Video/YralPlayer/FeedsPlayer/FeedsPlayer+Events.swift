@@ -94,10 +94,13 @@ extension FeedsPlayer {
     if seconds >= CGFloat.pointOne, startLogged.insert(currentIndex).inserted {
       delegate?.reachedPlaybackMilestone(.started, for: currentIndex)
     }
+    guard duration.isFinite, duration > 0 else { return }
 
-    if duration.isFinite, seconds == CGFloat.three {
+    let elapsedInLoop = time.seconds.truncatingRemainder(dividingBy: duration)
+    if lastLoopProgress < CGFloat.three, elapsedInLoop >= CGFloat.three {
       delegate?.playedThreeSeconds(at: currentIndex)
     }
+    lastLoopProgress = elapsedInLoop
 
     if duration.isFinite,
        seconds / duration >= Constants.videoDurationEventMaxThreshold,

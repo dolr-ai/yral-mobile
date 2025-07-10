@@ -9,9 +9,12 @@
 import SwiftUI
 
 struct LeaderboardView: View {
-  @ObservedObject var viewModel: LeaderboardViewModel
+  @EnvironmentObject var session: SessionManager
+
+  @StateObject var viewModel: LeaderboardViewModel
+
   @State private var showLeaderboard: Bool = false
-  @State private var showLoader: Bool = false
+  @State private var showLoader: Bool = true
 
   let rowWidth = UIScreen.main.bounds.width - 32
 
@@ -43,8 +46,11 @@ struct LeaderboardView: View {
           showLeaderboard = false
         }
       })
-      .task {
-        await viewModel.fetchLeaderbaord()
+      .onAppear {
+        showLoader = true
+        Task {
+          await viewModel.refreshLeaderboardIfReady()
+        }
       }
   }
 

@@ -10,16 +10,18 @@ platform :ios do
   lane :build_staging_firebase do
     # Build with ad-hoc signing (Staging Dev)
     gym(
-      project: "iosApp/iosApp.xcodeproj",
+      workspace: "iosApp/iosApp.xcworkspace",
       scheme: "iosAppStaging",
+      clean: true,
       destination: "generic/platform=iOS",
-      export_method: "development",
+      export_method: "ad-hoc",
       export_options: {
+        signingStyle: "manual",
         provisioningProfiles: {
-          "com.yral.iosApp.staging" => "Yral-Staging-Development"
+          "com.yral.iosApp.staging" => "Yral-Staging ad hock"
         }
       },
-      xcargs: "-allowProvisioningUpdates COMPILER_INDEX_STORE_ENABLE=NO SWIFT_STRICT_CONCURRENCY=minimal ENABLE_USER_SCRIPT_SANDBOXING=NO"
+      xcargs: "CODE_SIGN_STYLE=Manual PROVISIONING_PROFILE_SPECIFIER=\"Yral-Staging ad hock\" -allowProvisioningUpdates COMPILER_INDEX_STORE_ENABLE=NO SWIFT_STRICT_CONCURRENCY=minimal ENABLE_USER_SCRIPT_SANDBOXING=NO"
     )
 
     # Distribute to Firebase
@@ -51,8 +53,9 @@ platform :ios do
         build_number: current_build + 1
       )
       gym(
-      project: "iosApp/iosApp.xcodeproj",
+      workspace: "iosApp/iosApp.xcworkspace",
       scheme: "iosAppStaging",
+      clean: true,
       destination: "generic/platform=iOS",
       export_method: "app-store",
       export_options: {
@@ -63,7 +66,8 @@ platform :ios do
       xcargs: "-allowProvisioningUpdates COMPILER_INDEX_STORE_ENABLE=NO SWIFT_STRICT_CONCURRENCY=minimal ENABLE_USER_SCRIPT_SANDBOXING=NO"
     )
     pilot(
-      skip_waiting_for_build_processing: true,
+      skip_waiting_for_build_processing: false,
+      uses_non_exempt_encryption: false,
       api_key: app_store_connect_api_key(
         key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
         issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
@@ -92,8 +96,9 @@ platform :ios do
       build_number: current_build + 1
     )
     gym(
-      project: "iosApp/iosApp.xcodeproj",
+      workspace: "iosApp/iosApp.xcworkspace",
       scheme: "iosApp",
+      clean: true,
       destination: "generic/platform=iOS",
       export_method: "app-store",
       export_options: {
@@ -104,7 +109,8 @@ platform :ios do
       xcargs: "-allowProvisioningUpdates COMPILER_INDEX_STORE_ENABLE=NO SWIFT_STRICT_CONCURRENCY=minimal ENABLE_USER_SCRIPT_SANDBOXING=NO"
     )
     pilot(
-      skip_waiting_for_build_processing: true,
+      skip_waiting_for_build_processing: false,
+      uses_non_exempt_encryption: false,
       api_key: app_store_connect_api_key(
         key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
         issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],

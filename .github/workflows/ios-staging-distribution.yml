@@ -47,12 +47,33 @@ jobs:
         with:
           ruby-version: '3.0'
 
+      - name: Set up Java (for Gradle)
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install CocoaPods
+        run: |
+          gem install cocoapods --no-document
+
+      - name: Run KMM podInstall
+        run: |
+          # Runs the Gradle task that Android Studio launches on sync.
+          ./gradlew :iosSharedUmbrella:podInstall --stacktrace
+
       - name: Set up Rust
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           target: aarch64-apple-ios
           override: true
+
+      - name: Add Rust iOS targets (device + both simulators)
+        run: |
+          rustup target add aarch64-apple-ios \
+                           aarch64-apple-ios-sim \
+                           x86_64-apple-ios
 
       - name: Install cargo-lipo
         run: cargo install cargo-lipo
@@ -63,17 +84,11 @@ jobs:
       - name: Build Rust Library
         run: |
           PROJECT_DIR="${PWD}/rust-agent" CONFIGURATION=Release iosApp/build-rust.sh
-          # Optional: verify the build
           ls -la rust-agent/target || true
 
       - name: Install Fastlane
         run: |
           gem install fastlane
-
-      - name: Clean Build Directory
-        run: |
-          xcodebuild clean -project iosApp/iosApp.xcodeproj -scheme iosAppStaging
-          rm -rf ~/Library/Developer/Xcode/DerivedData/*
 
       - name: Decrypt and import Distribution Certificate
         run: |

@@ -2,6 +2,7 @@ package com.yral.shared.analytics.events
 
 import com.yral.shared.analytics.constants.FeatureEvents
 import kotlinx.datetime.Clock
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -11,6 +12,11 @@ sealed interface EventData {
     val timestamp: Long
         get() = Clock.System.now().toEpochMilliseconds()
 }
+
+@Serializable
+abstract class BaseEventData(
+    @SerialName("device") val device: String = "app",
+) : EventData
 
 fun EventData.shouldSendToYralBE(): Boolean =
     when (event) {
