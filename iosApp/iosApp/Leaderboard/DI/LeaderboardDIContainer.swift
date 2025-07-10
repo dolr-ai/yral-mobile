@@ -11,6 +11,7 @@ final class LeaderboardDIContainer {
     let firebaseService: FirebaseService
     let crashReporter: CrashReporter
     let authClient: AuthClient
+    let session: SessionManager
   }
 
   private let dependencies: Dependencies
@@ -26,17 +27,17 @@ final class LeaderboardDIContainer {
     )
   }
 
-  func makeLeaderboardViewModel() -> LeaderboardViewModel {
+  @MainActor func makeLeaderboardViewModel() -> LeaderboardViewModel {
     let leaderboardRepository = makeLeaderboardRepositry()
     return LeaderboardViewModel(
       leaderboardUseCase: LeaderboardUseCase(
         respository: leaderboardRepository,
         crashReporter: dependencies.crashReporter
-      )
+      ), session: dependencies.session
     )
   }
 
-  func makeLeaderboardView() -> LeaderboardView {
-    LeaderboardView(viewModel: makeLeaderboardViewModel())
+  @MainActor func makeLeaderboardView() -> LeaderboardView {
+    LeaderboardView(viewModel: self.makeLeaderboardViewModel())
   }
 }
