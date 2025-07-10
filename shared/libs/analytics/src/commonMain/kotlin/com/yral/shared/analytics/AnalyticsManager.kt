@@ -1,6 +1,5 @@
 package com.yral.shared.analytics
 
-import co.touchlab.stately.concurrency.AtomicBoolean
 import com.yral.shared.analytics.events.EventData
 import com.yral.shared.analytics.providers.yral.CoreService
 import kotlinx.coroutines.CoroutineScope
@@ -11,7 +10,10 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlin.concurrent.atomics.AtomicBoolean
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
+@OptIn(ExperimentalAtomicApi::class)
 class AnalyticsManager(
     private val providers: List<AnalyticsProvider> = emptyList(),
     private val coreService: CoreService? = null,
@@ -45,7 +47,7 @@ class AnalyticsManager(
         )
 
     fun trackEvent(event: EventData) {
-        if (isReady.value) {
+        if (isReady.load()) {
             eventBus.publish(event)
         } else {
             scope.launch { mutex.withLock { pendingEvents += event } }
@@ -83,6 +85,6 @@ class AnalyticsManager(
         providers.forEach { it.reset() }
         coreService?.reset()
         scope.launch { mutex.withLock { pendingEvents.clear() } }
-        isReady.value = false
+        isReady.store(false)
     }
 }
