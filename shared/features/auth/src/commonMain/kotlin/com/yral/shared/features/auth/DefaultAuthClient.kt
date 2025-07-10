@@ -3,7 +3,6 @@ package com.yral.shared.features.auth
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.analytics.AnalyticsManager
-import com.yral.shared.analytics.events.AuthSuccessfulEventData
 import com.yral.shared.core.session.Session
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
@@ -278,9 +277,6 @@ class DefaultAuthClient(
             ),
         )
         scope.launch { updateBalanceAndProceed(canisterData) }
-        analyticsManager.trackEvent(
-            event = AuthSuccessfulEventData(),
-        )
     }
 
     private suspend fun refreshAccessToken() {

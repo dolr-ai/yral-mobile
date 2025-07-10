@@ -14,7 +14,6 @@ import com.yral.shared.koin.koinInstance
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.analytics.analytics
 import dev.gitlive.firebase.app
-import kotlinx.coroutines.NonCancellable.get
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.boolean

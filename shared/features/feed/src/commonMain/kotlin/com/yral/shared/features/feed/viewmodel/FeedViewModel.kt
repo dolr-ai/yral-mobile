@@ -5,8 +5,6 @@ import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.analytics.AnalyticsManager
-import com.yral.shared.analytics.events.DuplicatePostsEvent
-import com.yral.shared.analytics.events.EmptyColdStartFeedEvent
 import com.yral.shared.analytics.events.VideoDurationWatchedEventData
 import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.core.session.SessionManager
@@ -94,7 +92,6 @@ class FeedViewModel(
                     val posts = result.posts
                     Logger.d("FeedPagination") { "posts in initialFeed ${posts.size}" }
                     if (posts.isEmpty()) {
-                        analyticsManager.trackEvent(EmptyColdStartFeedEvent())
                         setLoadingMore(false)
                         loadMoreFeed()
                     } else {
@@ -119,16 +116,7 @@ class FeedViewModel(
         val newPosts = posts.filter { post -> post.videoID !in fetchedIds }
         _state.update { it.copy(posts = it.posts + newPosts) }
 
-        val duplicates = posts.size - newPosts.size
-        Logger.d("FeedPagination") { "no of duplicate posts $duplicates" }
-        if (duplicates > 0) {
-            analyticsManager.trackEvent(
-                DuplicatePostsEvent(
-                    duplicatePosts = duplicates,
-                    totalPosts = posts.size,
-                ),
-            )
-        }
+        Logger.d("FeedPagination") { "no of duplicate posts ${posts.size - newPosts.size}" }
 
         var count = 0
         newPosts
