@@ -107,8 +107,8 @@ struct SmileyGameView: View {
       .foregroundColor(YralColor.green50.swiftUIColor)
 
       Text(result.outcome == "WIN" ?
-           "You win \(abs(result.coinDelta)) Points!" :
-            "You lose \(abs(result.coinDelta)) Points")
+           "You win \(abs(result.coinDelta)) \(abs(result.coinDelta) == 1 ? "Point!" : "Points!")" :
+            "You lose \(abs(result.coinDelta)) \(abs(result.coinDelta) == 1 ? "Point!" : "Points!")")
       .font(YralFont.pt16.bold.swiftUIFont)
       .lineLimit(Constants.textLineLimit)
       .minimumScaleFactor(Constants.textMinScale)
