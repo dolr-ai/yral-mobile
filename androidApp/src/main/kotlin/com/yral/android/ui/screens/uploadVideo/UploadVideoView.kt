@@ -55,12 +55,15 @@ import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.widgets.YralButton
 import com.yral.android.ui.widgets.YralButtonState
 import com.yral.android.ui.widgets.YralErrorMessage
+import com.yral.android.ui.widgets.video.VideoFileManager
+import com.yral.android.ui.widgets.video.VideoMetadataExtractor
 import com.yral.android.ui.widgets.video.VideoPermissionUtils
-import com.yral.android.ui.widgets.video.VideoPlayerUtils
+import com.yral.android.ui.widgets.video.VideoValidator
 import com.yral.android.ui.widgets.video.YralVideoPlayer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.koin.compose.koinInject
 
 const val UPLOAD_BOX_ASPECT_RATIO = 1.18f
 
@@ -69,6 +72,7 @@ fun UploadVideo(
     videoFilePath: String,
     onVideoSelected: (String) -> Unit,
 ) {
+    val videoFileManager: VideoFileManager = koinInject()
     val coroutineScope = rememberCoroutineScope()
     Row(Modifier.padding(horizontal = 16.dp)) {
         Box(
@@ -107,7 +111,7 @@ fun UploadVideo(
                                     // Clean up the copied video file on IO thread
                                     if (videoFilePath.isNotEmpty()) {
                                         coroutineScope.launch(Dispatchers.IO) {
-                                            VideoPlayerUtils.deleteVideoFile(videoFilePath)
+                                            videoFileManager.deleteVideoFile(videoFilePath)
                                         }
                                     }
                                     onVideoSelected("")
@@ -190,7 +194,7 @@ private fun SelectVideoView(
 }
 
 sealed class VideoPickerError {
-    data class Validation(val error: VideoPlayerUtils.ValidationError) : VideoPickerError()
+    data class Validation(val error: VideoValidator.ValidationError) : VideoPickerError()
     object ProcessingFailed : VideoPickerError()
 }
 
@@ -201,6 +205,8 @@ private fun rememberVideoPickerLauncher(
     onError: (VideoPickerError) -> Unit,
 ): ActivityResultLauncher<String> {
     val context = LocalContext.current
+    val videoValidator: VideoValidator = koinInject()
+    val videoFileManager: VideoFileManager = koinInject()
     val coroutineScope = rememberCoroutineScope()
 
     return rememberLauncherForActivityResult(
@@ -211,7 +217,7 @@ private fun rememberVideoPickerLauncher(
             coroutineScope.launch {
                 // Validate video before copying
                 val validationResult = withContext(Dispatchers.IO) {
-                    VideoPlayerUtils.validateVideoFromUri(context, contentUri)
+                    videoValidator.validateVideoFromUri(context, contentUri)
                 }
 
                 validationResult.onSuccess { validationSuccess ->
@@ -220,7 +226,7 @@ private fun rememberVideoPickerLauncher(
                     val result =
                         withContext(Dispatchers.IO) {
                             runCatching {
-                                VideoPlayerUtils.copyVideoFromUri(context, contentUri, fileName)
+                                videoFileManager.copyVideoFromUri(context, contentUri, fileName)
                             }
                         }
                     result
@@ -414,21 +420,25 @@ private fun VideoSelectionErrorDialog(
 }
 
 @Composable
-private fun VideoPickerError.toErrorMessage(): String = when (this) {
-    is VideoPickerError.Validation -> when (val error = this.error) {
-        is VideoPlayerUtils.ValidationError.UnableToReadDuration -> stringResource(R.string.video_validation_unable_to_read_duration)
-        is VideoPlayerUtils.ValidationError.UnableToReadFileSize -> stringResource(R.string.video_validation_unable_to_read_file_size)
-        is VideoPlayerUtils.ValidationError.DurationExceedsLimit -> stringResource(
-            R.string.video_validation_duration_exceeds_limit_with_data,
-            "%.0f".format(error.limit)
-        )
-        is VideoPlayerUtils.ValidationError.FileSizeExceedsLimit -> stringResource(
-            R.string.video_validation_file_size_exceeds_limit_with_data,
-            VideoPlayerUtils.formatFileSize(error.limit, precision = 0)
-        )
-    }
+private fun VideoPickerError.toErrorMessage(): String {
+    val videoMetadataExtractor: VideoMetadataExtractor = koinInject()
+    
+    return when (this) {
+        is VideoPickerError.Validation -> when (val error = this.error) {
+            is VideoValidator.ValidationError.UnableToReadDuration -> stringResource(R.string.video_validation_unable_to_read_duration)
+            is VideoValidator.ValidationError.UnableToReadFileSize -> stringResource(R.string.video_validation_unable_to_read_file_size)
+            is VideoValidator.ValidationError.DurationExceedsLimit -> stringResource(
+                R.string.video_validation_duration_exceeds_limit_with_data,
+                "%.0f".format(error.limit)
+            )
+            is VideoValidator.ValidationError.FileSizeExceedsLimit -> stringResource(
+                R.string.video_validation_file_size_exceeds_limit_with_data,
+                videoMetadataExtractor.formatFileSize(error.limit, precision = 0)
+            )
+        }
 
-    is VideoPickerError.ProcessingFailed -> stringResource(R.string.video_validation_processing_failed)
+        is VideoPickerError.ProcessingFailed -> stringResource(R.string.video_validation_processing_failed)
+    }
 }
 
 /**
