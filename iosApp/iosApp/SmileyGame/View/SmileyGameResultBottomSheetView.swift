@@ -207,7 +207,8 @@ extension SmileyGameResultResponse {
   }
 
   var bottomSheetSubheading: String {
-    outcome == "WIN" ? "You Won \(abs(coinDelta)) Points" : "You Lost \(abs(coinDelta)) Points"
+    outcome == "WIN" ? "You Won \(abs(coinDelta)) \(abs(coinDelta) == 1 ? "Point" : "Points")"
+    : "You Lost \(abs(coinDelta)) \(abs(coinDelta) == 1 ? "Point" : "Points")"
   }
 
   var bottomSheetSubheadingColor: Color {
