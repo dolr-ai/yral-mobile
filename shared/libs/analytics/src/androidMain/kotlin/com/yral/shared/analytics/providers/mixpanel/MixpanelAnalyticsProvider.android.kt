@@ -2,12 +2,13 @@ package com.yral.shared.analytics.providers.mixpanel
 
 import co.touchlab.kermit.Logger
 import com.yral.shared.analytics.AnalyticsProvider
+import com.yral.shared.analytics.EventToMapConverter
 import com.yral.shared.analytics.User
 import com.yral.shared.analytics.events.EventData
 
 actual class MixpanelAnalyticsProvider actual constructor(
     eventFilter: (EventData) -> Boolean,
-    mapConverter: (EventData) -> Map<String, Any>,
+    mapConverter: EventToMapConverter,
     token: String,
 ) : AnalyticsProvider {
     override val name: String = "mixpanel"
