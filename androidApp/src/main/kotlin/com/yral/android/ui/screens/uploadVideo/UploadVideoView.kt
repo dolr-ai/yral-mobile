@@ -186,15 +186,17 @@ private fun SelectVideoView(
     VideoSelectionErrorDialog(
         selectionState = selectionState,
         pickerError = pickerError,
-        onDismissError = { 
-            showPermissionError = false 
+        onDismissError = {
+            showPermissionError = false
             showValidationError = false
         },
     )
 }
 
 sealed class VideoPickerError {
-    data class Validation(val error: VideoValidator.ValidationError) : VideoPickerError()
+    data class Validation(
+        val error: VideoValidator.ValidationError,
+    ) : VideoPickerError()
     object ProcessingFailed : VideoPickerError()
 }
 
@@ -216,35 +218,37 @@ private fun rememberVideoPickerLauncher(
             onProcessingStateChange(true)
             coroutineScope.launch {
                 // Validate video before copying
-                val validationResult = withContext(Dispatchers.IO) {
-                    videoValidator.validateVideoFromUri(context, contentUri)
-                }
+                val validationResult =
+                    withContext(Dispatchers.IO) {
+                        videoValidator.validateVideoFromUri(context, contentUri)
+                    }
 
-                validationResult.onSuccess { validationSuccess ->
-                    // Video is valid, proceed with copying
-                    val fileName = "selected_video_${System.currentTimeMillis()}.mp4"
-                    val result =
-                        withContext(Dispatchers.IO) {
-                            runCatching {
-                                videoFileManager.copyVideoFromUri(context, contentUri, fileName)
+                validationResult
+                    .onSuccess { validationSuccess ->
+                        // Video is valid, proceed with copying
+                        val fileName = "selected_video_${System.currentTimeMillis()}.mp4"
+                        val result =
+                            withContext(Dispatchers.IO) {
+                                runCatching {
+                                    videoFileManager.copyVideoFromUri(context, contentUri, fileName)
+                                }
                             }
-                        }
-                    result
-                        .onSuccess { filePath ->
-                            if (filePath != null) {
-                                onVideoSelected(filePath)
-                            } else {
-                                Logger.e("Failed to copy video from URI: $contentUri")
+                        result
+                            .onSuccess { filePath ->
+                                if (filePath != null) {
+                                    onVideoSelected(filePath)
+                                } else {
+                                    Logger.e("Failed to copy video from URI: $contentUri")
+                                    onError(VideoPickerError.ProcessingFailed)
+                                }
+                            }.onFailure { exception ->
+                                Logger.e("Error processing video", exception)
                                 onError(VideoPickerError.ProcessingFailed)
                             }
-                        }.onFailure { exception ->
-                            Logger.e("Error processing video", exception)
-                            onError(VideoPickerError.ProcessingFailed)
-                        }
-                }.onFailure { validationError ->
-                    // Video validation failed, show error
-                    onError(VideoPickerError.Validation(validationError))
-                }
+                    }.onFailure { validationError ->
+                        // Video validation failed, show error
+                        onError(VideoPickerError.Validation(validationError))
+                    }
                 onProcessingStateChange(false)
             }
         }
@@ -406,7 +410,7 @@ private fun VideoSelectionErrorDialog(
             onDismiss = onDismissError,
         )
     }
-    
+
     if (selectionState.showValidationError && pickerError != null) {
         YralErrorMessage(
             title = stringResource(R.string.error),
@@ -422,20 +426,25 @@ private fun VideoSelectionErrorDialog(
 @Composable
 private fun VideoPickerError.toErrorMessage(): String {
     val videoMetadataExtractor: VideoMetadataExtractor = koinInject()
-    
+
     return when (this) {
-        is VideoPickerError.Validation -> when (val error = this.error) {
-            is VideoValidator.ValidationError.UnableToReadDuration -> stringResource(R.string.video_validation_unable_to_read_duration)
-            is VideoValidator.ValidationError.UnableToReadFileSize -> stringResource(R.string.video_validation_unable_to_read_file_size)
-            is VideoValidator.ValidationError.DurationExceedsLimit -> stringResource(
-                R.string.video_validation_duration_exceeds_limit_with_data,
-                "%.0f".format(error.limit)
-            )
-            is VideoValidator.ValidationError.FileSizeExceedsLimit -> stringResource(
-                R.string.video_validation_file_size_exceeds_limit_with_data,
-                videoMetadataExtractor.formatFileSize(error.limit, precision = 0)
-            )
-        }
+        is VideoPickerError.Validation ->
+            when (val error = this.error) {
+                is VideoValidator.ValidationError.UnableToReadDuration ->
+                    stringResource(R.string.video_validation_unable_to_read_duration)
+                is VideoValidator.ValidationError.UnableToReadFileSize ->
+                    stringResource(R.string.video_validation_unable_to_read_file_size)
+                is VideoValidator.ValidationError.DurationExceedsLimit ->
+                    stringResource(
+                        R.string.video_validation_duration_exceeds_limit_with_data,
+                        "%.0f".format(error.limit),
+                    )
+                is VideoValidator.ValidationError.FileSizeExceedsLimit ->
+                    stringResource(
+                        R.string.video_validation_file_size_exceeds_limit_with_data,
+                        videoMetadataExtractor.formatFileSize(error.limit, precision = 0),
+                    )
+            }
 
         is VideoPickerError.ProcessingFailed -> stringResource(R.string.video_validation_processing_failed)
     }

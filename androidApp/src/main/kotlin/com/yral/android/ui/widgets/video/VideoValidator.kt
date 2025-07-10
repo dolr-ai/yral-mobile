@@ -7,7 +7,7 @@ import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
 
 class VideoValidator(
-    private val videoMetadataExtractor: VideoMetadataExtractor
+    private val videoMetadataExtractor: VideoMetadataExtractor,
 ) {
     // Video validation constants (matching iOS implementation)
     companion object {
@@ -15,21 +15,25 @@ class VideoValidator(
         const val VIDEO_MAX_FILE_SIZE_BYTES = 200L * 1024L * 1024L // 200 MB
     }
 
-    fun validateVideoFromUri(context: Context, uri: Uri): Result<ValidationSuccess, ValidationError> =
+    fun validateVideoFromUri(
+        context: Context,
+        uri: Uri,
+    ): Result<ValidationSuccess, ValidationError> =
         validateVideo(
             getDuration = { videoMetadataExtractor.getVideoDuration(context, uri) },
-            getFileSize = { videoMetadataExtractor.getVideoFileSize(context, uri) }
+            getFileSize = { videoMetadataExtractor.getVideoFileSize(context, uri) },
         )
 
     fun validateVideoFromPath(filePath: String): Result<ValidationSuccess, ValidationError> =
         validateVideo(
             getDuration = { videoMetadataExtractor.getVideoDuration(filePath) },
-            getFileSize = { videoMetadataExtractor.getVideoFileSize(filePath) }
+            getFileSize = { videoMetadataExtractor.getVideoFileSize(filePath) },
         )
 
+    @Suppress("ReturnCount")
     private fun validateVideo(
         getDuration: () -> Double?,
-        getFileSize: () -> Long?
+        getFileSize: () -> Long?,
     ): Result<ValidationSuccess, ValidationError> {
         val duration = getDuration()
         if (duration == null) {
@@ -53,12 +57,18 @@ class VideoValidator(
     sealed class ValidationError {
         object UnableToReadDuration : ValidationError()
         object UnableToReadFileSize : ValidationError()
-        data class DurationExceedsLimit(val actual: Double, val limit: Double) : ValidationError()
-        data class FileSizeExceedsLimit(val actual: Long, val limit: Long) : ValidationError()
+        data class DurationExceedsLimit(
+            val actual: Double,
+            val limit: Double,
+        ) : ValidationError()
+        data class FileSizeExceedsLimit(
+            val actual: Long,
+            val limit: Long,
+        ) : ValidationError()
     }
 
     data class ValidationSuccess(
         val duration: Double,
-        val fileSize: Long
+        val fileSize: Long,
     )
-} 
+}

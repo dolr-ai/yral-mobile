@@ -10,7 +10,6 @@ import java.io.FileOutputStream
 import java.io.IOException
 
 class VideoFileManager {
-    
     fun getInternalVideoPath(
         context: Context,
         fileName: String,
@@ -125,4 +124,4 @@ class VideoFileManager {
         val extension = fileName.substringAfterLast('.', "").lowercase()
         return extension in videoExtensions
     }
-} 
+}

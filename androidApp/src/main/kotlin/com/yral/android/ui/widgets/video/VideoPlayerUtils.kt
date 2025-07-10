@@ -4,7 +4,6 @@ import co.touchlab.kermit.Logger
 import java.io.File
 
 class VideoPlayerUtils {
-    
     data class WidgetVideoConfig(
         val autoPlay: Boolean = true,
         val loop: Boolean = true,
