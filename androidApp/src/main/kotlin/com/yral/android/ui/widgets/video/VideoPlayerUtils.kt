@@ -5,6 +5,9 @@ import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.Environment
 import co.touchlab.kermit.Logger
+import com.github.michaelbull.result.Err
+import com.github.michaelbull.result.Ok
+import com.github.michaelbull.result.Result
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
@@ -96,57 +99,52 @@ object VideoPlayerUtils {
             Logger.e("Error getting video file size for URI: $uri", exception)
         }.getOrNull()
 
-    /**
-     * Validate video from URI before copying
-     * Returns ValidationResult with success/failure status and error message
-     */
-    fun validateVideoFromUri(context: Context, uri: Uri): ValidationResult {
-        // Check duration
-        val duration = getVideoDuration(context, uri)
+    fun validateVideoFromUri(context: Context, uri: Uri): Result<ValidationSuccess, ValidationError> =
+        validateVideo(
+            getDuration = { getVideoDuration(context, uri) },
+            getFileSize = { getVideoFileSize(context, uri) }
+        )
+
+    fun validateVideoFromPath(filePath: String): Result<ValidationSuccess, ValidationError> =
+        validateVideo(
+            getDuration = { getVideoDuration(filePath) },
+            getFileSize = { getVideoFileSize(filePath) }
+        )
+
+    private fun validateVideo(
+        getDuration: () -> Double?,
+        getFileSize: () -> Long?
+    ): Result<ValidationSuccess, ValidationError> {
+        val duration = getDuration()
         if (duration == null) {
-            return ValidationResult.Failure("Unable to read video duration")
+            return Err(ValidationError.UnableToReadDuration)
         }
-        
         if (duration > VIDEO_MAX_DURATION_SECONDS) {
-            return ValidationResult.Failure("Selected video exceeds 60 seconds")
+            return Err(ValidationError.DurationExceedsLimit(duration, VIDEO_MAX_DURATION_SECONDS))
         }
 
-        // Check file size
-        val fileSize = getVideoFileSize(context, uri)
+        val fileSize = getFileSize()
         if (fileSize == null) {
-            return ValidationResult.Failure("Unable to read video file size")
+            return Err(ValidationError.UnableToReadFileSize)
         }
-        
         if (fileSize > VIDEO_MAX_FILE_SIZE_BYTES) {
-            return ValidationResult.Failure("Selected video exceeds 200 MB")
+            return Err(ValidationError.FileSizeExceedsLimit(fileSize, VIDEO_MAX_FILE_SIZE_BYTES))
         }
 
-        return ValidationResult.Success(duration, fileSize)
+        return Ok(ValidationSuccess(duration, fileSize))
     }
 
-    /**
-     * Validate video from file path
-     * Returns ValidationResult with success/failure status and error message
-     */
-    fun validateVideoFromPath(filePath: String): ValidationResult {
-        // Check duration
-        val duration = getVideoDuration(filePath)
-        if (duration == null) {
-            return ValidationResult.Failure("Unable to read video duration")
-        }
-        
-        if (duration > VIDEO_MAX_DURATION_SECONDS) {
-            return ValidationResult.Failure("Selected video exceeds 60 seconds")
-        }
-
-        // Check file size
-        val fileSize = getVideoFileSize(filePath)
-        if (fileSize > VIDEO_MAX_FILE_SIZE_BYTES) {
-            return ValidationResult.Failure("Selected video exceeds 200 MB")
-        }
-
-        return ValidationResult.Success(duration, fileSize)
+    sealed class ValidationError {
+        object UnableToReadDuration : ValidationError()
+        object UnableToReadFileSize : ValidationError()
+        data class DurationExceedsLimit(val actual: Double, val limit: Double) : ValidationError()
+        data class FileSizeExceedsLimit(val actual: Long, val limit: Long) : ValidationError()
     }
+
+    data class ValidationSuccess(
+        val duration: Double,
+        val fileSize: Long
+    )
 
     fun copyVideoFromAssets(
         context: Context,
@@ -231,7 +229,7 @@ object VideoPlayerUtils {
     }
 
     @Suppress("MagicNumber")
-    fun formatFileSize(bytes: Long): String {
+    fun formatFileSize(bytes: Long, precision: Int = 1): String {
         val units = arrayOf("B", "KB", "MB", "GB")
         var size = bytes.toFloat()
         var unitIndex = 0
@@ -241,7 +239,7 @@ object VideoPlayerUtils {
             unitIndex++
         }
 
-        return "%.1f %s".format(size, units[unitIndex])
+        return "%.${precision}f %s".format(size, units[unitIndex])
     }
 
     data class WidgetVideoConfig(
@@ -258,11 +256,6 @@ object VideoPlayerUtils {
             showControls = false,
             muted = true,
         )
-
-    sealed class ValidationResult {
-        data class Success(val duration: Double, val fileSize: Long) : ValidationResult()
-        data class Failure(val errorMessage: String) : ValidationResult()
-    }
 }
 
 data class VideoFileInfo(
