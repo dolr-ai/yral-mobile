@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
+import com.yral.shared.analytics.events.MenuCtaType
 import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.core.session.SessionManager
@@ -132,14 +133,17 @@ class AccountsViewModel(
                 AccountHelpLink(
                     link = TALK_TO_TEAM_URL,
                     openInExternalBrowser = false,
+                    menuCtaType = MenuCtaType.TALK_TO_THE_TEAM,
                 ),
                 AccountHelpLink(
                     link = TERMS_OF_SERVICE_URL,
                     openInExternalBrowser = false,
+                    menuCtaType = MenuCtaType.TERMS_OF_SERVICE,
                 ),
                 AccountHelpLink(
                     link = PRIVACY_POLICY_URL,
                     openInExternalBrowser = false,
+                    menuCtaType = MenuCtaType.PRIVACY_POLICY,
                 ),
             )
         val isSocialSignIn = _state.value.isSocialSignInSuccessful
@@ -148,12 +152,14 @@ class AccountsViewModel(
                 AccountHelpLink(
                     link = LOGOUT_URI,
                     openInExternalBrowser = true,
+                    menuCtaType = MenuCtaType.LOG_OUT,
                 ),
             )
             links.add(
                 AccountHelpLink(
                     link = DELETE_ACCOUNT_URI,
                     openInExternalBrowser = true,
+                    menuCtaType = MenuCtaType.DELETE_ACCOUNT,
                 ),
             )
         }
@@ -165,28 +171,29 @@ class AccountsViewModel(
             AccountHelpLink(
                 link = TELEGRAM_LINK,
                 openInExternalBrowser = true,
+                menuCtaType = MenuCtaType.FOLLOW_ON,
             ),
             AccountHelpLink(
                 link = DISCORD_LINK,
                 openInExternalBrowser = true,
+                menuCtaType = MenuCtaType.FOLLOW_ON,
             ),
             AccountHelpLink(
                 link = TWITTER_LINK,
                 openInExternalBrowser = true,
+                menuCtaType = MenuCtaType.FOLLOW_ON,
             ),
         )
 
-    fun handleHelpLink(
-        link: String,
-        shouldOpenOutside: Boolean,
-    ) {
-        when (link) {
+    fun handleHelpLink(link: AccountHelpLink) {
+        accountsTelemetry.onMenuClicked(link.menuCtaType)
+        when (link.link) {
             LOGOUT_URI -> logout()
             DELETE_ACCOUNT_URI -> setBottomSheetType(AccountBottomSheet.DeleteAccount)
             else ->
                 setBottomSheetType(
                     AccountBottomSheet.ShowWebView(
-                        linkToOpen = Pair(link, shouldOpenOutside),
+                        linkToOpen = link,
                     ),
                 )
         }
@@ -207,6 +214,7 @@ class AccountsViewModel(
 data class AccountHelpLink(
     val link: String,
     val openInExternalBrowser: Boolean,
+    val menuCtaType: MenuCtaType,
 )
 
 data class AccountsState(
@@ -218,7 +226,7 @@ data class AccountsState(
 sealed interface AccountBottomSheet {
     data object None : AccountBottomSheet
     data class ShowWebView(
-        val linkToOpen: Pair<String, Boolean>,
+        val linkToOpen: AccountHelpLink,
     ) : AccountBottomSheet
 
     data object SignUp : AccountBottomSheet
