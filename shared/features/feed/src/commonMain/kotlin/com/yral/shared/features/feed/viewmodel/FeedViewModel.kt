@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
+import com.yral.shared.analytics.events.CtaType
 import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.utils.filterFirstNSuspendFlow
@@ -52,6 +53,8 @@ class FeedViewModel(
     companion object {
         const val PRE_FETCH_BEFORE_LAST = 5
         private const val FIRST_SECOND_WATCHED_THRESHOLD_MS = 1000L
+        private val ANALYTICS_VIDEO_STARTED_RANGE = 0L..1000L
+        private val ANALYTICS_VIDEO_VIEWED_RANGE = 3000L..4000L
         private const val FULL_VIDEO_WATCHED_THRESHOLD = 95.0
         const val NSFW_PROBABILITY = 0.4
         private const val MAX_PAGE_SIZE = 100
@@ -253,6 +256,9 @@ class FeedViewModel(
                     videoData = VideoData(), // Reset all video data for new page
                 )
             }
+            feedTelemetry.trackVideoImpression(
+                feedDetails = _state.value.feedDetails[_state.value.currentPageOfFeed],
+            )
         }
     }
 
@@ -311,6 +317,14 @@ class FeedViewModel(
                             didLogFullVideoWatched = true,
                         ),
                 )
+            }
+
+            // Get current feed details
+            // is here because we do not want to track events for video being played in loop
+            val currentFeedDetails = _state.value.feedDetails[_state.value.currentPageOfFeed]
+            when (currentTime) {
+                in ANALYTICS_VIDEO_STARTED_RANGE -> feedTelemetry.trackVideoStarted(currentFeedDetails)
+                in ANALYTICS_VIDEO_VIEWED_RANGE -> feedTelemetry.trackVideoViewed(currentFeedDetails)
             }
         }
     }
@@ -376,6 +390,7 @@ class FeedViewModel(
                             ),
                     ).onSuccess {
                         setLoading(false)
+                        feedTelemetry.videoReportedSuccessfully(currentFeed, reason)
                         toggleReportSheet(false, pageNo)
                         _state.update { currentState ->
                             val updatedFeedDetails = currentState.feedDetails.toMutableList()
@@ -413,6 +428,10 @@ class FeedViewModel(
                 currentState.copy(
                     reportSheetState =
                         if (isOpen) {
+                            feedTelemetry.videoClicked(
+                                feedDetails = _state.value.feedDetails[_state.value.currentPageOfFeed],
+                                ctaType = CtaType.REPORT,
+                            )
                             ReportSheetState.Open(pageNo)
                         } else {
                             ReportSheetState.Closed
