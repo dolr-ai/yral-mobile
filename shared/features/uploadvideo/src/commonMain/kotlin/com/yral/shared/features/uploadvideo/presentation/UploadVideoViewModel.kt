@@ -64,6 +64,7 @@ class UploadVideoViewModel internal constructor(
             _state.update { it.copy(selectedFilePath = null) }
         } else {
             _state.update { it.copy(selectedFilePath = filePath) }
+            uploadVideoTelemetry.fileSelected()
             startBackgroundUpload(filePath)
         }
     }
@@ -78,6 +79,7 @@ class UploadVideoViewModel internal constructor(
 
     fun onUploadButtonClicked() {
         validateAndPublish()
+        uploadVideoTelemetry.uploadInitiated()
     }
 
     fun onRetryClicked() {
@@ -247,10 +249,12 @@ class UploadVideoViewModel internal constructor(
                     is UiState.Success -> {
                         // File upload completed, now start metadata update
                         updateMetadata(fileUploadState.data, caption, hashtags)
+                        uploadVideoTelemetry.uploadSuccess(fileUploadState.data.videoID)
                         return@collect
                     }
 
                     is UiState.Failure -> {
+                        uploadVideoTelemetry.uploadFailed(fileUploadState.error.message ?: "")
                         throw fileUploadState.error
                     }
 

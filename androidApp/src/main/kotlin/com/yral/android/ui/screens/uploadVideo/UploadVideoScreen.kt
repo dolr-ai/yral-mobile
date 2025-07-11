@@ -120,6 +120,7 @@ private fun UploadVideoIdle(
             UploadVideo(
                 viewState.selectedFilePath ?: "",
                 onVideoSelected = viewModel::onFileSelected,
+                onCTAClicked = { viewModel.uploadVideoTelemetry.selectFile() },
             )
         }
         item { Spacer(Modifier.height(20.dp)) }
