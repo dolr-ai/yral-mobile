@@ -6,6 +6,7 @@ import com.google.firebase.appcheck.appCheck
 import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory
 import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
 import com.google.firebase.initialize
+import com.yral.android.ui.widgets.video.di.videoWidgetModule
 import com.yral.shared.app.di.initKoin
 import com.yral.shared.koin.koinInstance
 import dev.gitlive.firebase.crashlytics.FirebaseCrashlytics
@@ -17,6 +18,7 @@ class YralApp : Application() {
         setupFirebase()
         initKoin {
             androidContext(this@YralApp)
+            modules(videoWidgetModule)
         }
         koinInstance.get<FirebaseCrashlytics>().setCrashlyticsCollectionEnabled(!BuildConfig.DEBUG)
     }
