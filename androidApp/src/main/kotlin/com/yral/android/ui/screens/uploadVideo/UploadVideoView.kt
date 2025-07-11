@@ -138,7 +138,6 @@ private fun SelectVideoView(
         VideoPermissionUtils.rememberVideoPermissionsState { hasRequestedPermissions = true }
 
     var showPermissionError by remember { mutableStateOf(false) }
-    var showValidationError by remember { mutableStateOf(false) }
     var pickerError by remember { mutableStateOf<VideoPickerError?>(null) }
     var isProcessingVideo by remember { mutableStateOf(false) }
     val errorSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -148,7 +147,6 @@ private fun SelectVideoView(
             shouldLaunchPicker = shouldLaunchPicker,
             hasRequestedPermissions = hasRequestedPermissions,
             showPermissionError = showPermissionError,
-            showValidationError = showValidationError,
             isProcessingVideo = isProcessingVideo,
             errorSheetState = errorSheetState,
         )
@@ -157,10 +155,7 @@ private fun SelectVideoView(
         rememberVideoPickerLauncher(
             onVideoSelected = onVideoSelected,
             onProcessingStateChange = { isProcessingVideo = it },
-            onError = { error ->
-                pickerError = error
-                showValidationError = true
-            },
+            onError = { error -> pickerError = error },
         )
 
     VideoSelectionPermissionHandler(
@@ -188,7 +183,7 @@ private fun SelectVideoView(
         pickerError = pickerError,
         onDismissError = {
             showPermissionError = false
-            showValidationError = false
+            pickerError = null
         },
     )
 }
@@ -411,7 +406,7 @@ private fun VideoSelectionErrorDialog(
         )
     }
 
-    if (selectionState.showValidationError && pickerError != null) {
+    if (pickerError != null) {
         YralErrorMessage(
             title = stringResource(R.string.error),
             error = pickerError.toErrorMessage(),
@@ -458,7 +453,6 @@ data class VideoSelectionState(
     val shouldLaunchPicker: Boolean = false,
     val hasRequestedPermissions: Boolean = false,
     val showPermissionError: Boolean = false,
-    val showValidationError: Boolean = false,
     val isProcessingVideo: Boolean = false,
     val errorSheetState: SheetState,
 )
