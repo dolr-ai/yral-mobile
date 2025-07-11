@@ -3,6 +3,7 @@ package com.yral.shared.features.auth
 import com.yral.shared.analytics.AnalyticsManager
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.crashlytics.core.CrashlyticsManager
+import com.yral.shared.features.auth.analytics.AuthTelemetry
 import com.yral.shared.features.auth.domain.AuthRepository
 import com.yral.shared.features.auth.utils.OAuthUtils
 import com.yral.shared.preferences.Preferences
@@ -13,6 +14,7 @@ import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.plus
 
+@Suppress("LongParameterList")
 class DefaultAuthClientFactory(
     private val sessionManager: SessionManager,
     private val analyticsManager: AnalyticsManager,
@@ -23,6 +25,7 @@ class DefaultAuthClientFactory(
     private val requiredUseCases: DefaultAuthClient.RequiredUseCases,
     private val individualUserServiceFactory: IndividualUserServiceFactory,
     private val oAuthUtils: OAuthUtils,
+    private val authTelemetry: AuthTelemetry,
 ) : AuthClientFactory {
     override fun create(
         scope: CoroutineScope,
@@ -38,6 +41,7 @@ class DefaultAuthClientFactory(
             requiredUseCases = requiredUseCases,
             individualUserServiceFactory = individualUserServiceFactory,
             oAuthUtils = oAuthUtils,
+            authTelemetry = authTelemetry,
             scope =
                 scope +
                     CoroutineExceptionHandler { _, throwable ->

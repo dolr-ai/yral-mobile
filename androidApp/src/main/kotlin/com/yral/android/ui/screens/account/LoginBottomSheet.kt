@@ -1,5 +1,6 @@
 package com.yral.android.ui.screens.account
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -12,10 +13,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.yral.android.ui.components.SignupView
+import com.yral.android.ui.components.singup.SignupView
 import com.yral.android.ui.screens.account.LoginBottomSheetConstants.BOTTOM_SHEET_SPACER_PERCENT_TO_SCREEN
 import com.yral.android.ui.widgets.YralBottomSheet
 
+@SuppressLint("UnusedBoxWithConstraintsScope")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun LoginBottomSheet(

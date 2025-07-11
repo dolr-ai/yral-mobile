@@ -8,6 +8,7 @@ import com.yral.shared.core.session.Session
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.crashlytics.core.CrashlyticsManager
+import com.yral.shared.features.auth.analytics.AuthTelemetry
 import com.yral.shared.features.auth.domain.AuthRepository
 import com.yral.shared.features.auth.domain.models.ExchangePrincipalResponse
 import com.yral.shared.features.auth.domain.useCases.AuthenticateTokenUseCase
@@ -46,6 +47,7 @@ class DefaultAuthClient(
     private val oAuthUtils: OAuthUtils,
     private val individualUserServiceFactory: IndividualUserServiceFactory,
     private val scope: CoroutineScope,
+    private val authTelemetry: AuthTelemetry,
 ) : AuthClient {
     private var currentState: String? = null
 
@@ -327,6 +329,7 @@ class DefaultAuthClient(
     }
 
     private suspend fun authenticate(code: String) {
+        val currentUser = sessionManager.getUserPrincipal()
         requiredUseCases.authenticateTokenUseCase
             .invoke(code)
             .onSuccess { tokenResponse ->
@@ -340,7 +343,13 @@ class DefaultAuthClient(
                 )
                 preferences.putBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name, true)
                 setUserProperties()
-            }.onFailure { throw YralAuthException("authenticate social sign in failed - ${it.message}") }
+                authTelemetry.onAuthSuccess(
+                    isNewUser = currentUser == sessionManager.getUserPrincipal(),
+                )
+            }.onFailure {
+                authTelemetry.authFailed()
+                throw YralAuthException("authenticate social sign in failed - ${it.message}")
+            }
     }
 
     private suspend fun updateSessionAsRegistered(

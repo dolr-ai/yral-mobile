@@ -52,7 +52,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
 import com.yral.android.R
-import com.yral.android.ui.components.SignupView
+import com.yral.android.ui.components.singup.SignupView
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.account.WebViewBottomSheet

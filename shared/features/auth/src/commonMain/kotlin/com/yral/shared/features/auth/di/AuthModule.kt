@@ -3,6 +3,7 @@ package com.yral.shared.features.auth.di
 import com.yral.shared.features.auth.AuthClientFactory
 import com.yral.shared.features.auth.DefaultAuthClient.RequiredUseCases
 import com.yral.shared.features.auth.DefaultAuthClientFactory
+import com.yral.shared.features.auth.analytics.AuthTelemetry
 import com.yral.shared.features.auth.data.AuthDataSource
 import com.yral.shared.features.auth.data.AuthDataSourceImpl
 import com.yral.shared.features.auth.data.AuthRepositoryImpl
@@ -30,6 +31,7 @@ val authModule =
         factoryOf(::ExchangePrincipalIdUseCase)
         factoryOf(::DeleteAccountUseCase)
         factoryOf(::RequiredUseCases)
+        factoryOf(::AuthTelemetry)
 
         // Required single
         // Reason: Verified in Repo, Callback in Repo required once app resumes
