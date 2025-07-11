@@ -60,6 +60,9 @@ enum class FeatureEvents {
     REFER_AND_EARN_PAGE_VIEWED,
     REFERRAL_HISTORY_VIEWED,
     SHARE_INVITES_CLICKED,
+
+    // Leaderboard
+    LEADERBOARD_PAGE_VIEWED,
     ;
 
     fun getEventName(): String =

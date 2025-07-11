@@ -732,6 +732,18 @@ data class VideoDurationWatchedEventData(
     @SerialName("video_duration") val videoDuration: Double = 0.0,
 ) : EventData
 
+@Serializable
+data class LeaderBoardPageViewedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.LEADERBOARD_PAGE_VIEWED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.LEADERBOARD.getFeatureName(),
+) : BaseEventData(),
+    EventData {
+    constructor() : this(
+        FeatureEvents.LEADERBOARD_PAGE_VIEWED.getEventName(),
+        Features.AUTH.getFeatureName(),
+    )
+}
+
 // Helper enums
 @Serializable
 enum class AuthJourney {

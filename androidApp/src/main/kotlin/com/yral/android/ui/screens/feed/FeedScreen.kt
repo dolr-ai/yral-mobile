@@ -97,6 +97,8 @@ fun FeedScreen(
     val state by viewModel.state.collectAsState()
     val gameState by gameViewModel.state.collectAsState()
 
+    LaunchedEffect(Unit) { viewModel.feedTelemetry.onFeedPageViewed() }
+
     // Set initial video ID when feed loads
     LaunchedEffect(state.feedDetails.isNotEmpty()) {
         if (state.currentPageOfFeed < state.feedDetails.size) {

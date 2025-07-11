@@ -68,6 +68,7 @@ fun AccountScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val sessionState by viewModel.sessionState.collectAsState()
+    LaunchedEffect(Unit) { viewModel.accountsTelemetry.onMenuScreenViewed() }
     LaunchedEffect(sessionState) {
         viewModel.refreshAccountInfo()
     }

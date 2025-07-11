@@ -8,6 +8,7 @@ import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.crashlytics.core.CrashlyticsManager
+import com.yral.shared.features.account.analytics.AccountsTelemetry
 import com.yral.shared.features.auth.AuthClientFactory
 import com.yral.shared.features.auth.domain.useCases.DeleteAccountUseCase
 import com.yral.shared.features.auth.utils.SocialProvider
@@ -29,6 +30,7 @@ class AccountsViewModel(
     private val preferences: Preferences,
     private val deleteAccountUseCase: DeleteAccountUseCase,
     private val crashlyticsManager: CrashlyticsManager,
+    val accountsTelemetry: AccountsTelemetry,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.io)
 

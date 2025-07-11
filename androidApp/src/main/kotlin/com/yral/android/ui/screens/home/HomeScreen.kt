@@ -38,6 +38,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.paging.compose.collectAsLazyPagingItems
 import com.yral.android.R
 import com.yral.android.ui.components.hashtagInput.keyboardHeightAsState
 import com.yral.android.ui.design.LocalAppTopography
@@ -47,6 +48,7 @@ import com.yral.android.ui.screens.feed.FeedScreen
 import com.yral.android.ui.screens.leaderboard.LeaderboardScreen
 import com.yral.android.ui.screens.profile.ProfileScreen
 import com.yral.android.ui.screens.uploadVideo.UploadVideoScreen
+import com.yral.shared.analytics.events.CategoryName
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.session.getKey
 import com.yral.shared.features.account.viewmodel.AccountsViewModel
@@ -59,6 +61,7 @@ import org.koin.compose.viewmodel.koinViewModel
 fun HomeScreen(
     currentTab: String,
     updateCurrentTab: (tab: String) -> Unit,
+    bottomNavigationAnalytics: (categoryName: CategoryName) -> Unit,
     sessionState: SessionState,
 ) {
     val backHandlerEnabled by remember(currentTab) {
@@ -75,6 +78,7 @@ fun HomeScreen(
             HomeNavigationBar(
                 currentTab = currentTab,
                 updateCurrentTab = updateCurrentTab,
+                bottomNavigationClicked = bottomNavigationAnalytics,
             )
         },
     ) { innerPadding ->
@@ -101,6 +105,7 @@ private fun HomeScreenContent(
 ) {
     val feedViewModel = koinViewModel<FeedViewModel>(key = "feed-$sessionKey")
     val profileViewModel = koinViewModel<ProfileViewModel>(key = "profile-$sessionKey")
+    val profileVideos = profileViewModel.profileVideos.collectAsLazyPagingItems()
     val accountViewModel = koinViewModel<AccountsViewModel>(key = "account-$sessionKey")
     when (currentTab) {
         HomeTab.HOME.title ->
@@ -150,6 +155,7 @@ private fun HomeScreenContent(
                 modifier = modifier,
                 uploadVideo = { updateCurrentTab(HomeTab.UPLOAD_VIDEO) },
                 viewModel = profileViewModel,
+                profileVideos = profileVideos,
             )
         }
     }
@@ -159,6 +165,7 @@ private fun HomeScreenContent(
 private fun HomeNavigationBar(
     currentTab: String,
     updateCurrentTab: (tab: String) -> Unit,
+    bottomNavigationClicked: (categoryName: CategoryName) -> Unit,
 ) {
     NavigationBar(
         containerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -182,7 +189,10 @@ private fun HomeNavigationBar(
             NavigationBarItem(
                 modifier = Modifier.weight(1f),
                 selected = currentTab == tab.title,
-                onClick = { updateCurrentTab(tab.title) },
+                onClick = {
+                    updateCurrentTab(tab.title)
+                    bottomNavigationClicked(tab.categoryName)
+                },
                 icon = {
                     Box(
                         modifier = Modifier.fillMaxSize(),
@@ -286,26 +296,40 @@ private fun NewTaggedColumn(
 
 enum class HomeTab(
     val title: String,
+    val categoryName: CategoryName,
     val icon: Int,
     val unSelectedIcon: Int,
     val isNew: Boolean = false,
 ) {
-    HOME("Home", R.drawable.home_nav_selected, R.drawable.home_nav_unselected),
+    HOME(
+        title = "Home",
+        categoryName = CategoryName.HOME,
+        icon = R.drawable.home_nav_selected,
+        unSelectedIcon = R.drawable.home_nav_unselected,
+    ),
     LEADER_BOARD(
         title = "LeaderBoard",
+        categoryName = CategoryName.LEADERBOARD,
         icon = R.drawable.leaderboard_nav_selected,
         unSelectedIcon = R.drawable.leaderboard_nav_unselected,
         isNew = true,
     ),
     UPLOAD_VIDEO(
         title = "UploadVideo",
+        categoryName = CategoryName.UPLOAD_VIDEO,
         icon = R.drawable.upload_video_nav_selected,
         unSelectedIcon = R.drawable.upload_video_nav_unselected,
     ),
     PROFILE(
         title = "Profile",
+        categoryName = CategoryName.PROFILE,
         icon = R.drawable.profile_nav_selected,
         unSelectedIcon = R.drawable.profile_nav_unselected,
     ),
-    ACCOUNT("Account", R.drawable.account_nav, R.drawable.account_nav),
+    ACCOUNT(
+        title = "Account",
+        categoryName = CategoryName.MENU,
+        icon = R.drawable.account_nav,
+        unSelectedIcon = R.drawable.account_nav,
+    ),
 }

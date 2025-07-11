@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.github.michaelbull.result.fold
 import com.github.michaelbull.result.getOrThrow
 import com.yral.shared.core.logging.YralLogger
+import com.yral.shared.features.uploadvideo.analytics.UploadVideoTelemetry
 import com.yral.shared.features.uploadvideo.domain.GetUploadEndpointUseCase
 import com.yral.shared.features.uploadvideo.domain.UpdateMetaUseCase
 import com.yral.shared.features.uploadvideo.domain.UploadVideoUseCase
@@ -37,6 +38,7 @@ class UploadVideoViewModel internal constructor(
     private val uploadVideo: UploadVideoUseCase,
     private val updateMeta: UpdateMetaUseCase,
     private val appDispatchers: AppDispatchers,
+    val uploadVideoTelemetry: UploadVideoTelemetry,
     logger: YralLogger,
 ) : ViewModel() {
     private val logger = logger.withTag(UploadVideoViewModel::class.simpleName ?: "")

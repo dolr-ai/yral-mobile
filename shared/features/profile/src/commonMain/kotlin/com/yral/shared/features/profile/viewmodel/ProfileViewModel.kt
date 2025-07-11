@@ -12,6 +12,7 @@ import com.github.michaelbull.result.onSuccess
 import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.features.auth.utils.getAccountInfo
+import com.yral.shared.features.profile.analytics.ProfileTelemetry
 import com.yral.shared.features.profile.data.ProfileVideosPagingSource
 import com.yral.shared.features.profile.domain.DeleteVideoUseCase
 import com.yral.shared.features.profile.domain.models.DeleteVideoRequest
@@ -30,6 +31,7 @@ class ProfileViewModel(
     private val sessionManager: SessionManager,
     private val profileRepository: ProfileRepository,
     private val deleteVideoUseCase: DeleteVideoUseCase,
+    private val profileTelemetry: ProfileTelemetry,
 ) : ViewModel() {
     companion object {
         private const val POSTS_PER_PAGE = 20
@@ -144,6 +146,13 @@ class ProfileViewModel(
                 currentState
             }
         }
+    }
+
+    fun pushScreenView(totalVideos: Int) {
+        profileTelemetry.onProfileScreenViewed(
+            totalVideos = totalVideos,
+            publisherUserId = state.value.accountInfo?.userPrincipal ?: "",
+        )
     }
 }
 

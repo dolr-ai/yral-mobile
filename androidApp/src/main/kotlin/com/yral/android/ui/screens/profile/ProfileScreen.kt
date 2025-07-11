@@ -36,6 +36,7 @@ import androidx.compose.material3.pulltorefresh.pullToRefreshIndicator
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,7 +53,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
-import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
 import com.yral.android.R
@@ -76,7 +76,6 @@ import com.yral.shared.features.profile.viewmodel.DeleteConfirmationState
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.features.profile.viewmodel.VideoViewState
 import com.yral.shared.rust.domain.models.FeedDetails
-import kotlin.ranges.coerceAtMost
 
 @Suppress("LongMethod")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -85,12 +84,13 @@ fun ProfileScreen(
     modifier: Modifier = Modifier,
     uploadVideo: () -> Unit,
     viewModel: ProfileViewModel,
+    profileVideos: LazyPagingItems<FeedDetails>,
 ) {
-    val profileVideos = viewModel.profileVideos.collectAsLazyPagingItems()
     val state by viewModel.state.collectAsStateWithLifecycle()
     val backHandlerEnabled by remember(state.videoView) {
         mutableStateOf(state.videoView is VideoViewState.ViewingReels)
     }
+    LaunchedEffect(Unit) { viewModel.pushScreenView(profileVideos.itemCount) }
     BackHandler(
         enabled = backHandlerEnabled,
         onBack = { viewModel.closeVideoReel() },

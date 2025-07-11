@@ -55,6 +55,7 @@ fun RootScreen(viewModel: RootViewModel = koinViewModel()) {
                 modifier = Modifier.fillMaxSize(),
                 initialAnimationComplete = state.initialAnimationComplete,
                 onAnimationComplete = { viewModel.onSplashAnimationComplete() },
+                onScreenViewed = { viewModel.rootTelemetry.onSplashScreenViewed() },
             )
         } else {
             // Reset system bars to normal
@@ -63,6 +64,7 @@ fun RootScreen(viewModel: RootViewModel = koinViewModel()) {
                 sessionState = sessionState,
                 currentTab = state.currentHomePageTab,
                 updateCurrentTab = { viewModel.updateCurrentTab(it) },
+                bottomNavigationAnalytics = { viewModel.rootTelemetry.bottomNavigationClicked(it) },
             )
         }
         // shows login error for both splash and account screen
@@ -130,7 +132,9 @@ private fun Splash(
     modifier: Modifier,
     initialAnimationComplete: Boolean,
     onAnimationComplete: () -> Unit = {},
+    onScreenViewed: () -> Unit,
 ) {
+    LaunchedEffect(Unit) { onScreenViewed() }
     Box(
         modifier = modifier.background(Color.Black),
     ) {

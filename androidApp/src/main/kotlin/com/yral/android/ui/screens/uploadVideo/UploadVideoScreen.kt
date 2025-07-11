@@ -62,6 +62,7 @@ fun UploadVideoScreen(
     goToHome: () -> Unit,
 ) {
     val viewState by viewModel.state.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) { viewModel.uploadVideoTelemetry.uploadVideoScreenViewed() }
     LaunchedEffect(key1 = Unit) {
         viewModel.eventsFlow.collectLatest { value ->
             when (value) {

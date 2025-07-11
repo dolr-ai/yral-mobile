@@ -5,6 +5,7 @@ import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.core.session.SessionManager
+import com.yral.shared.features.game.analytics.LeaderBoardTelemetry
 import com.yral.shared.features.game.domain.GetCurrentUserInfoUseCase
 import com.yral.shared.features.game.domain.GetLeaderboardUseCase
 import com.yral.shared.features.game.domain.models.CurrentUserInfo
@@ -24,6 +25,7 @@ class LeaderBoardViewModel(
     private val getLeaderboardUseCase: GetLeaderboardUseCase,
     private val getCurrentUserInfoUseCase: GetCurrentUserInfoUseCase,
     private val sessionManager: SessionManager,
+    val leaderBoardTelemetry: LeaderBoardTelemetry,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.io)
 

@@ -4,15 +4,13 @@ import androidx.lifecycle.ViewModel
 import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
-import com.yral.shared.analytics.AnalyticsManager
-import com.yral.shared.analytics.events.VideoDurationWatchedEventData
 import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.utils.filterFirstNSuspendFlow
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.AuthClientFactory
 import com.yral.shared.features.auth.utils.SocialProvider
-import com.yral.shared.features.feed.data.models.toVideoEventData
+import com.yral.shared.features.feed.analytics.FeedTelemetry
 import com.yral.shared.features.feed.useCases.CheckVideoVoteUseCase
 import com.yral.shared.features.feed.useCases.FetchFeedDetailsUseCase
 import com.yral.shared.features.feed.useCases.FetchMoreFeedUseCase
@@ -37,9 +35,9 @@ class FeedViewModel(
     appDispatchers: AppDispatchers,
     private val sessionManager: SessionManager,
     private val requiredUseCases: RequiredUseCases,
-    private val analyticsManager: AnalyticsManager,
     private val crashlyticsManager: CrashlyticsManager,
     private val preferences: Preferences,
+    val feedTelemetry: FeedTelemetry,
     authClientFactory: AuthClientFactory,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.io)
@@ -317,33 +315,12 @@ class FeedViewModel(
         }
     }
 
-    private suspend fun getVideoEvent(
-        currentTime: Int,
-        totalTime: Int,
-        percentageWatched: Double,
-    ): VideoDurationWatchedEventData {
-        val currentFeed = _state.value.feedDetails[_state.value.currentPageOfFeed]
-        return currentFeed.toVideoEventData().copy(
-            canisterId = sessionManager.getCanisterPrincipal() ?: "",
-            userID = sessionManager.getUserPrincipal() ?: "",
-            isLoggedIn = preferences.getBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name) ?: false,
-            absoluteWatched = currentTime.toDouble(),
-            percentageWatched = percentageWatched,
-            videoDuration = totalTime.toDouble(),
-        )
-    }
-
     private suspend fun recordEvent(videoData: VideoData) {
-        val videoEvent =
-            getVideoEvent(
-                currentTime = videoData.lastKnownCurrentTime,
-                totalTime = videoData.lastKnownTotalTime,
-                percentageWatched =
-                    videoData.lastKnownCurrentTime
-                        .percentageOf(videoData.lastKnownTotalTime),
-            )
-        analyticsManager.trackEvent(
-            event = videoEvent,
+        val currentFeed = _state.value.feedDetails[_state.value.currentPageOfFeed]
+        feedTelemetry.onVideoDurationWatched(
+            feedDetails = currentFeed,
+            currentTime = videoData.lastKnownCurrentTime,
+            totalTime = videoData.lastKnownTotalTime,
         )
         _state.update { currentState ->
             currentState.copy(
@@ -552,12 +529,8 @@ enum class VideoReportReason(
     OTHERS("Others"),
 }
 
-/**
- * Extension function to calculate percentage of a value relative to total
- * @return Percentage value (0-100)
- */
 @Suppress("MagicNumber")
-private fun Int.percentageOf(total: Int): Double =
+internal fun Int.percentageOf(total: Int): Double =
     if (total > 0) {
         (this.toDouble() / total.toDouble()) * 100.0
     } else {

@@ -9,6 +9,7 @@ import com.yral.shared.core.session.SessionState
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.AuthClientFactory
 import com.yral.shared.features.auth.YralAuthException
+import com.yral.shared.features.root.analytics.RootTelemetry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -31,6 +32,7 @@ class RootViewModel(
     authClientFactory: AuthClientFactory,
     private val sessionManager: SessionManager,
     private val crashlyticsManager: CrashlyticsManager,
+    val rootTelemetry: RootTelemetry,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.io)
 
