@@ -56,21 +56,21 @@ jobs:
           link-to-sdk: true
           local-cache: true
 
-      - name: Bump version (ephemeral, no commit)
-        run: |
-          # Example approach: Use the GitHub run number as a unique versionCode
-          # This ensures each build has a unique versionCode.
-          # You can customize this logic however you'd like (e.g., add offsets, parse existing version, etc.)
-            
-          echo "GITHUB_RUN_NUMBER is $GITHUB_RUN_NUMBER"
-          sed -i 's/versionCode[[:space:]]*=[[:space:]]*[0-9][0-9]*/versionCode = '"$GITHUB_RUN_NUMBER"'/' ./androidApp/build.gradle.kts
-          
-          # Optionally, update versionName if you like
-          # newVersionName="1.0.$GITHUB_RUN_NUMBER"
-          # sed -i "s/versionName \".*\"/versionName \"$newVersionName\"/" app/build.gradle
-          
-          # NOTE: We do NOT commit or push – these changes only exist on the CI runner
-          cat ./androidApp/build.gradle.kts | grep versionCode  
+#      - name: Bump version (ephemeral, no commit)
+#        run: |
+#          # Example approach: Use the GitHub run number as a unique versionCode
+#          # This ensures each build has a unique versionCode.
+#          # You can customize this logic however you'd like (e.g., add offsets, parse existing version, etc.)
+#
+#          echo "GITHUB_RUN_NUMBER is $GITHUB_RUN_NUMBER"
+#          sed -i 's/versionCode[[:space:]]*=[[:space:]]*[0-9][0-9]*/versionCode = '"$GITHUB_RUN_NUMBER"'/' ./androidApp/build.gradle.kts
+#
+#          # Optionally, update versionName if you like
+#          # newVersionName="1.0.$GITHUB_RUN_NUMBER"
+#          # sed -i "s/versionName \".*\"/versionName \"$newVersionName\"/" app/build.gradle
+#
+#          # NOTE: We do NOT commit or push – these changes only exist on the CI runner
+#          cat ./androidApp/build.gradle.kts | grep versionCode
 
       - name: Setup keystore
         env:
@@ -104,7 +104,7 @@ jobs:
         uses: r0adkll/upload-google-play@v1.1.3
         with:
           serviceAccountJson: ${{ steps.auth.outputs.credentials_file_path }}
-          packageName: com.yral.android
+          packageName: com.yral.android.app
           releaseFiles: androidApp/build/outputs/bundle/prodRelease/androidApp-prod-release.aab
           track: internal
           status: draft
