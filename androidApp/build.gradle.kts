@@ -14,7 +14,7 @@ android {
     defaultConfig {
         applicationId = "com.yral.android"
         versionCode = 1
-        versionName = "1.0.0"
+        versionName = "1.0.0.alpha" // change back to 1.0.0 on release branch
         ndkVersion = "28.0.13004108"
     }
     buildFeatures {
@@ -61,6 +61,7 @@ android {
             applicationIdSuffix = ".staging"
         }
         create("prod") {
+            applicationId = "com.yral.android.app"
             dimension = "version"
             signingConfig = signingConfigs.getByName("release")
         }
