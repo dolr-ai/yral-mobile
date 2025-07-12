@@ -75,7 +75,7 @@ class ProfileViewModel: ObservableObject {
     }
     .receive(on: RunLoop.main)
     .sink { [weak self] deletedVideos in
-      guard let self = self else { return }
+      guard let self = self, !deletedVideos.isEmpty else { return }
       self.deletedVideos += deletedVideos
       self.event = .deletedVideos(deletedVideos)
     }
@@ -138,7 +138,11 @@ class ProfileViewModel: ObservableObject {
       switch result {
       case .success:
         AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-          event: VideoDeletedEventData(pageName: .profile, videoId: request.videoId)
+          event: VideoDeletedEventData(
+            pageName: .profile,
+            videoId: request.videoId,
+            ctaType: .profileThumbnail
+          )
         )
         state = .success
       case .failure(let failure):
@@ -166,9 +170,9 @@ class ProfileViewModel: ObservableObject {
         state = .success
         event = .refreshed(videos.map { $0.toProfileVideoInfo() })
       case .failure(let error):
+        event = .refreshed([])
         switch error {
         case .pageEndReached:
-          event = .pageEndReached(isEmpty: self.feeds.isEmpty)
           state = .success
           hasMorePages = false
         default:
