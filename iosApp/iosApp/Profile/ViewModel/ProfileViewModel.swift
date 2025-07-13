@@ -52,7 +52,6 @@ class ProfileViewModel: ObservableObject {
     self.deleteVideoUseCase = deleteVideoUseCase
     self.refreshVideoUseCase = refreshVideoUseCase
     myVideosUseCase.videosPublisher
-      .receive(on: RunLoop.main)
       .sink { [weak self] videos in
         guard let self = self else { return }
         self.feeds = videos
@@ -137,13 +136,6 @@ class ProfileViewModel: ObservableObject {
     await MainActor.run {
       switch result {
       case .success:
-        AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-          event: VideoDeletedEventData(
-            pageName: .profile,
-            videoId: request.videoId,
-            ctaType: .profileThumbnail
-          )
-        )
         state = .success
       case .failure(let failure):
         event = .deleteVideoFailed(failure.localizedDescription)
@@ -193,6 +185,7 @@ class ProfileViewModel: ObservableObject {
         satsBalance: analyticsInfo.satsBalance
       )
     )
+    AnalyticsModuleKt.getAnalyticsManager().flush()
   }
 
   struct AnalyticsInfo {
