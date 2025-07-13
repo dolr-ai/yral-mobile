@@ -58,7 +58,10 @@ class ProfileRepository: ProfileRepositoryProtocol {
     case .success(let newChunk):
       let newVideoIDs = Set(newChunk.map { $0.postID })
       let filteredOldVideos = videos.filter { !newVideoIDs.contains($0.postID) }
-      videos = newChunk + filteredOldVideos
+      await MainActor.run { [weak self] in
+        guard let self = self else { return }
+        videos = newChunk + filteredOldVideos
+      }
       return .success(videos)
 
     case .failure(let error):
