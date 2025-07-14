@@ -5,18 +5,22 @@ import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
+import com.yral.shared.analytics.events.GameConcludedCtaType
 import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.core.session.SessionManager
+import com.yral.shared.features.game.analytics.GameTelemetry
 import com.yral.shared.features.game.domain.CastVoteUseCase
 import com.yral.shared.features.game.domain.GetGameIconsUseCase
 import com.yral.shared.features.game.domain.GetGameRulesUseCase
 import com.yral.shared.features.game.domain.models.AboutGameItem
 import com.yral.shared.features.game.domain.models.CastVoteRequest
+import com.yral.shared.features.game.domain.models.CastVoteResponse
 import com.yral.shared.features.game.domain.models.GameIcon
 import com.yral.shared.features.game.domain.models.VoteResult
 import com.yral.shared.features.game.domain.models.toVoteResult
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
+import com.yral.shared.rust.domain.models.FeedDetails
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
@@ -34,6 +38,7 @@ class GameViewModel(
     private val gameIconsUseCase: GetGameIconsUseCase,
     private val gameRulesUseCase: GetGameRulesUseCase,
     private val castVoteUseCase: CastVoteUseCase,
+    private val gameTelemetry: GameTelemetry,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.io)
     private val _state =
@@ -101,31 +106,47 @@ class GameViewModel(
 
     fun setClickedIcon(
         icon: GameIcon,
-        videoId: String,
+        feedDetails: FeedDetails,
     ) {
         coroutineScope.launch {
             _state.update { currentState ->
                 // Create initial game result outside state update
                 val initialGameResult = Pair(icon, VoteResult(0, "", false))
                 val updatedGameResult = currentState.gameResult.toMutableMap()
-                updatedGameResult[videoId] = initialGameResult
+                updatedGameResult[feedDetails.videoID] = initialGameResult
                 currentState.copy(
                     gameResult = updatedGameResult,
                 )
             }
             setLoading(true)
             sessionManager.getUserPrincipal()?.let { principal ->
+                gameTelemetry.onGameVoted(
+                    feedDetails = feedDetails,
+                    lossPenalty = _state.value.lossPenalty,
+                    optionChosen = icon.imageName.name.lowercase(),
+                )
                 castVoteUseCase
                     .invoke(
                         parameter =
                             CastVoteRequest(
                                 principalId = principal,
-                                videoId = videoId,
+                                videoId = feedDetails.videoID,
                                 gameIconId = icon.id,
                             ),
                     ).onSuccess { result ->
+                        when (result) {
+                            is CastVoteResponse.Success -> {
+                                gameTelemetry.onGamePlayed(
+                                    feedDetails = feedDetails,
+                                    lossPenalty = _state.value.lossPenalty,
+                                    optionChosen = icon.imageName.name.lowercase(),
+                                    coinDelta = result.coinDelta,
+                                )
+                            }
+                            else -> Unit
+                        }
                         setFeedGameResult(
-                            videoId = videoId,
+                            videoId = feedDetails.videoID,
                             voteResult = result.toVoteResult(),
                         )
                     }.onFailure { setLoading(false) }
@@ -273,6 +294,17 @@ class GameViewModel(
                 )
             }
         }
+    }
+
+    fun onResultSheetButtonClicked(
+        coinDelta: Int,
+        ctaType: GameConcludedCtaType,
+    ) {
+        gameTelemetry.gameConcludedBottomSheetClicked(
+            lossPenalty = _state.value.lossPenalty,
+            coinDelta = coinDelta,
+            ctaType = ctaType,
+        )
     }
 }
 

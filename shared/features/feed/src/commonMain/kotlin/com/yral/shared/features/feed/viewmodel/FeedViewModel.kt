@@ -56,7 +56,6 @@ class FeedViewModel(
         private val ANALYTICS_VIDEO_STARTED_RANGE = 0L..1000L
         private val ANALYTICS_VIDEO_VIEWED_RANGE = 3000L..4000L
         private const val FULL_VIDEO_WATCHED_THRESHOLD = 95.0
-        const val NSFW_PROBABILITY = 0.4
         private const val MAX_PAGE_SIZE = 100
         private const val FEEDS_PAGE_SIZE = 10
         private const val SUFFICIENT_NEW_REQUIRED = 10

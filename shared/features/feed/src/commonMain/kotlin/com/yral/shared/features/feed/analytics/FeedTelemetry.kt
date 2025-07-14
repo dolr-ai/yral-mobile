@@ -11,8 +11,8 @@ import com.yral.shared.analytics.events.VideoImpressionEventData
 import com.yral.shared.analytics.events.VideoReportedEventData
 import com.yral.shared.analytics.events.VideoStartedEventData
 import com.yral.shared.analytics.events.VideoViewedEventData
+import com.yral.shared.core.AppConfigurations.NSFW_PROBABILITY
 import com.yral.shared.core.session.SessionManager
-import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.NSFW_PROBABILITY
 import com.yral.shared.features.feed.viewmodel.VideoReportReason
 import com.yral.shared.features.feed.viewmodel.percentageOf
 import com.yral.shared.preferences.PrefKeys

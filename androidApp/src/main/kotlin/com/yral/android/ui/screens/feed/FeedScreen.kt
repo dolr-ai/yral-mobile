@@ -205,14 +205,21 @@ fun FeedScreen(
     }
     if (gameState.showResultSheet && state.currentPageOfFeed < state.feedDetails.size) {
         val currentVideoId = state.feedDetails[state.currentPageOfFeed].videoID
+        val coinDelta = gameViewModel.getFeedGameResult(currentVideoId)
         GameResultSheet(
-            coinDelta = gameViewModel.getFeedGameResult(currentVideoId),
+            coinDelta = coinDelta,
             gameIcon = gameState.gameResult[currentVideoId]?.first,
             onDismissRequest = {
                 gameViewModel.toggleResultSheet(false)
             },
             openAboutGame = {
                 gameViewModel.toggleAboutGame(true)
+            },
+            onSheetButtonClicked = { ctaType ->
+                gameViewModel.onResultSheetButtonClicked(
+                    coinDelta = coinDelta,
+                    ctaType = ctaType,
+                )
             },
         )
     }
@@ -287,7 +294,7 @@ private fun FeedOverlay(
                 onIconClicked = {
                     gameViewModel.setClickedIcon(
                         icon = it,
-                        videoId = state.feedDetails[pageNo].videoID,
+                        feedDetails = state.feedDetails[pageNo],
                     )
                 },
                 coinDelta = gameViewModel.getFeedGameResult(state.feedDetails[pageNo].videoID),
