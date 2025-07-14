@@ -3,7 +3,6 @@ package com.yral.shared.features.auth
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.analytics.AnalyticsManager
-import com.yral.shared.analytics.User
 import com.yral.shared.core.session.Session
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
@@ -64,6 +63,9 @@ class DefaultAuthClient(
                 accessToken = "",
                 refreshToken = "",
                 skipFirebaseAuth = auth.currentUser != null,
+            )
+            sessionManager.updateSocialSignInStatus(
+                isSocialSignIn = preferences.getBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name) ?: false,
             )
         } ?: obtainAnonymousIdentity()
     }
@@ -135,7 +137,7 @@ class DefaultAuthClient(
     }
 
     override suspend fun logout() {
-        analyticsManager.flush()
+        // clear preferences
         listOf(
             PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name,
             PrefKeys.REFRESH_TOKEN.name,
@@ -144,10 +146,18 @@ class DefaultAuthClient(
         ).forEach { key ->
             preferences.remove(key)
         }
+        // clear cached canister data after parsing token
         resetCachedCanisterData()
-        sessionManager.updateState(SessionState.Initial)
+        // reset analytics manage: flush events and reset user properties
+        analyticsManager.reset()
+        // reset session manager for properties
+        sessionManager.resetSessionProperties()
+        // reset crashlytics
         crashlyticsManager.setUserId("")
+        // logout of firebase
         requiredUseCases.signOutUseCase.invoke(Unit)
+        // set session state to initial for re-login
+        sessionManager.updateState(SessionState.Initial)
     }
 
     private suspend fun handleExtractIdentityResponse(
@@ -260,7 +270,6 @@ class DefaultAuthClient(
                             ),
                     ).onSuccess {
                         sessionManager.updateCoinBalance(coinBalance)
-                        setUserProperties()
                     }.onFailure { throw YralAuthException("update coin balance failed ${it.message}") }
             }.onFailure { throw YralAuthException("get balance failed ${it.message}") }
     }
@@ -323,13 +332,15 @@ class DefaultAuthClient(
         if (state != currentState) {
             throw SecurityException("Invalid state parameter - possible CSRF attack")
         }
-        analyticsManager.flush()
+        val currentUser = sessionManager.getUserPrincipal()
         sessionManager.updateState(SessionState.Loading)
-        authenticate(code)
+        authenticate(code, currentUser)
     }
 
-    private suspend fun authenticate(code: String) {
-        val currentUser = sessionManager.getUserPrincipal()
+    private suspend fun authenticate(
+        code: String,
+        currentUserPrincipal: String?,
+    ) {
         requiredUseCases.authenticateTokenUseCase
             .invoke(code)
             .onSuccess { tokenResponse ->
@@ -342,9 +353,9 @@ class DefaultAuthClient(
                     skipFirebaseAuth = false,
                 )
                 preferences.putBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name, true)
-                setUserProperties()
+                sessionManager.updateSocialSignInStatus(true)
                 authTelemetry.onAuthSuccess(
-                    isNewUser = currentUser == sessionManager.getUserPrincipal(),
+                    isNewUser = currentUserPrincipal == sessionManager.getUserPrincipal(),
                 )
             }.onFailure {
                 authTelemetry.authFailed()
@@ -364,27 +375,6 @@ class DefaultAuthClient(
                 ),
         )
     }
-
-    private suspend fun setUserProperties() {
-        sessionManager.getUserPrincipal()?.let { userPrincipalId ->
-            sessionManager.getCanisterPrincipal()?.let { canisterId ->
-                analyticsManager.setUserProperties(
-                    user =
-                        User(
-                            userId = userPrincipalId,
-                            isLoggedIn = isSocialSignIn(),
-                            canisterId = canisterId,
-                            isCreator = false,
-                            satsBalance = sessionManager.coinBalance.value.toDouble(),
-                        ),
-                )
-            }
-        }
-    }
-
-    private suspend fun isSocialSignIn(): Boolean =
-        preferences
-            .getBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name) ?: false
 
     data class RequiredUseCases(
         val authenticateTokenUseCase: AuthenticateTokenUseCase,

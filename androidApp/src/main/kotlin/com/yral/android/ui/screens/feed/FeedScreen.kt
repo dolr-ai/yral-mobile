@@ -50,6 +50,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import co.touchlab.kermit.Logger
 import com.yral.android.R
 import com.yral.android.ui.components.singup.SignupView
@@ -317,7 +318,7 @@ private fun FeedOverlay(
                 lottieCached = true
             }
         }
-        if (state.showSignupNudge && pageNo != 0 && (pageNo % SIGN_UP_PAGE) == 0) {
+        if (!feedViewModel.isLoggedIn() && pageNo != 0 && (pageNo % SIGN_UP_PAGE) == 0) {
             SignupNudge {
                 feedViewModel.signInWithGoogle()
             }

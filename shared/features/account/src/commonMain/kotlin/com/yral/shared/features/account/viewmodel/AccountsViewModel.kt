@@ -14,8 +14,6 @@ import com.yral.shared.features.auth.AuthClientFactory
 import com.yral.shared.features.auth.domain.useCases.DeleteAccountUseCase
 import com.yral.shared.features.auth.utils.SocialProvider
 import com.yral.shared.features.auth.utils.getAccountInfo
-import com.yral.shared.preferences.PrefKeys
-import com.yral.shared.preferences.Preferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,7 +26,6 @@ class AccountsViewModel(
     appDispatchers: AppDispatchers,
     authClientFactory: AuthClientFactory,
     private val sessionManager: SessionManager,
-    private val preferences: Preferences,
     private val deleteAccountUseCase: DeleteAccountUseCase,
     private val crashlyticsManager: CrashlyticsManager,
     val accountsTelemetry: AccountsTelemetry,
@@ -44,31 +41,10 @@ class AccountsViewModel(
 
     private val _state = MutableStateFlow(AccountsState())
     val state: StateFlow<AccountsState> = _state.asStateFlow()
-    val sessionState = sessionManager.state
 
     init {
-        coroutineScope.launch {
-            val isSignedIn = isSocialSignInSuccessful()
-            _state.update { currentState ->
-                currentState.copy(
-                    isSocialSignInSuccessful = isSignedIn,
-                )
-            }
-        }
-    }
-
-    fun refreshAccountInfo() {
-        coroutineScope.launch {
-            val accountInfo = sessionManager.getAccountInfo()
-            val isSignedIn = isSocialSignInSuccessful()
-            _state.update { currentState ->
-                currentState.copy(
-                    accountInfo = accountInfo,
-                    isSocialSignInSuccessful = isSignedIn,
-                    bottomSheetType = AccountBottomSheet.None,
-                )
-            }
-        }
+        Logger.d("AnalyticsLogger") { "Accounts view model created" }
+        _state.update { it.copy(accountInfo = sessionManager.getAccountInfo()) }
     }
 
     private fun logout() {
@@ -113,10 +89,6 @@ class AccountsViewModel(
         )
     }
 
-    private suspend fun isSocialSignInSuccessful(): Boolean =
-        preferences
-            .getBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name) ?: false
-
     fun setBottomSheetType(type: AccountBottomSheet) {
         coroutineScope.launch {
             _state.update { currentState ->
@@ -146,7 +118,7 @@ class AccountsViewModel(
                     menuCtaType = MenuCtaType.PRIVACY_POLICY,
                 ),
             )
-        val isSocialSignIn = _state.value.isSocialSignInSuccessful
+        val isSocialSignIn = sessionManager.isSocialSignIn.value
         if (isSocialSignIn) {
             links.add(
                 AccountHelpLink(
@@ -199,6 +171,8 @@ class AccountsViewModel(
         }
     }
 
+    fun isLoggedIn(): Boolean = sessionManager.isSocialSignIn.value
+
     companion object {
         const val LOGOUT_URI = "yral://logout"
         const val DELETE_ACCOUNT_URI = "yral://deleteAccount"
@@ -219,7 +193,6 @@ data class AccountHelpLink(
 
 data class AccountsState(
     val accountInfo: AccountInfo? = null,
-    val isSocialSignInSuccessful: Boolean = false,
     val bottomSheetType: AccountBottomSheet = AccountBottomSheet.None,
 )
 

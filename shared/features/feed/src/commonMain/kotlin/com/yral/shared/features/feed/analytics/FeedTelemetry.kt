@@ -15,14 +15,11 @@ import com.yral.shared.core.AppConfigurations.NSFW_PROBABILITY
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.features.feed.viewmodel.VideoReportReason
 import com.yral.shared.features.feed.viewmodel.percentageOf
-import com.yral.shared.preferences.PrefKeys
-import com.yral.shared.preferences.Preferences
 import com.yral.shared.rust.domain.models.FeedDetails
 
 class FeedTelemetry(
     private val analyticsManager: AnalyticsManager,
     private val sessionManager: SessionManager,
-    private val preferences: Preferences,
 ) {
     private val trackedImpressions = mutableSetOf<String>()
     private val trackedStated = mutableSetOf<String>()
@@ -32,6 +29,7 @@ class FeedTelemetry(
 
     suspend fun onVideoDurationWatched(
         feedDetails: FeedDetails,
+        isLoggedIn: Boolean,
         currentTime: Int,
         totalTime: Int,
     ) {
@@ -41,9 +39,7 @@ class FeedTelemetry(
                 .copy(
                     canisterId = sessionManager.getCanisterPrincipal() ?: "",
                     userID = sessionManager.getUserPrincipal() ?: "",
-                    isLoggedIn =
-                        preferences.getBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name)
-                            ?: false,
+                    isLoggedIn = isLoggedIn,
                     absoluteWatched = currentTime.toDouble(),
                     percentageWatched = currentTime.percentageOf(totalTime),
                     videoDuration = totalTime.toDouble(),

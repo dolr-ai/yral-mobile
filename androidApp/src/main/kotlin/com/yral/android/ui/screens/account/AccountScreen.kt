@@ -69,11 +69,7 @@ fun AccountScreen(
     viewModel: AccountsViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
-    val sessionState by viewModel.sessionState.collectAsState()
     LaunchedEffect(Unit) { viewModel.accountsTelemetry.onMenuScreenViewed() }
-    LaunchedEffect(sessionState) {
-        viewModel.refreshAccountInfo()
-    }
     Column(modifier = modifier.fillMaxSize()) {
         AccountsTitle()
         AccountScreenContent(
@@ -106,7 +102,7 @@ private fun AccountScreenContent(
         state.accountInfo?.let {
             AccountDetail(
                 accountInfo = it,
-                isSocialSignIn = state.isSocialSignInSuccessful,
+                isSocialSignIn = viewModel.isLoggedIn(),
             ) {
                 viewModel.setBottomSheetType(AccountBottomSheet.SignUp)
                 viewModel.accountsTelemetry.signUpClicked(SignupPageName.MENU)

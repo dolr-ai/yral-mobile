@@ -12,12 +12,26 @@ class SessionManager {
     private val _coinBalance = MutableStateFlow<Long>(0)
     val coinBalance: StateFlow<Long> = _coinBalance.asStateFlow()
 
+    private val _isSocialSignIn = MutableStateFlow<Boolean>(false)
+    val isSocialSignIn: StateFlow<Boolean> = _isSocialSignIn.asStateFlow()
+
+    private val _profileVideosCount = MutableStateFlow<Int>(0)
+    val profileVideosCount: StateFlow<Int> = _profileVideosCount.asStateFlow()
+
     fun updateState(state: SessionState) {
         _state.update { state }
     }
 
     fun updateCoinBalance(newBalance: Long) {
         _coinBalance.update { newBalance }
+    }
+
+    fun updateSocialSignInStatus(isSocialSignIn: Boolean) {
+        _isSocialSignIn.update { isSocialSignIn }
+    }
+
+    fun updateProfileVideosCount(count: Int) {
+        _profileVideosCount.update { count }
     }
 
     fun getCanisterPrincipal(): String? =
@@ -40,6 +54,12 @@ class SessionManager {
         } else {
             null
         }
+
+    fun resetSessionProperties() {
+        _coinBalance.update { 0 }
+        _isSocialSignIn.update { false }
+        _profileVideosCount.update { 0 }
+    }
 }
 
 sealed interface SessionState {

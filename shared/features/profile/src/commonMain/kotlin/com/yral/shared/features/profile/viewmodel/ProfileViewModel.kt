@@ -7,6 +7,7 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import androidx.paging.filter
+import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.analytics.events.VideoDeleteCTA
@@ -71,6 +72,7 @@ class ProfileViewModel(
             }.distinctUntilChanged()
 
     init {
+        Logger.d("AnalyticsLogger") { "Profile view model created" }
         _state.update { it.copy(accountInfo = sessionManager.getAccountInfo()) }
     }
 
@@ -114,6 +116,12 @@ class ProfileViewModel(
                         catType = deleteRequest.ctaType,
                     )
                     deletedVideoIds.update { it + deleteRequest.feedDetails.videoID }
+
+                    // Update session manager with new video count
+                    val currentCount = sessionManager.profileVideosCount.value
+                    sessionManager.updateProfileVideosCount(
+                        count = (currentCount - 1).coerceAtLeast(0),
+                    )
                     _state.update { it.copy(deleteConfirmation = DeleteConfirmationState.None) }
                 }.onFailure { error ->
                     _state.update {

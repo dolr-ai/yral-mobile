@@ -82,6 +82,7 @@ class AnalyticsManager(
     }
 
     fun reset() {
+        providers.forEach { it.flush() }
         providers.forEach { it.reset() }
         coreService?.reset()
         scope.launch { mutex.withLock { pendingEvents.clear() } }

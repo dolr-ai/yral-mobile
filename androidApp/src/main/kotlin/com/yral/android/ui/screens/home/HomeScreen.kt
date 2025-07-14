@@ -27,6 +27,7 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -61,6 +62,7 @@ import org.koin.compose.viewmodel.koinViewModel
 fun HomeScreen(
     currentTab: String,
     updateCurrentTab: (tab: String) -> Unit,
+    updateProfileVideosCount: (count: Int) -> Unit,
     bottomNavigationAnalytics: (categoryName: CategoryName) -> Unit,
     sessionState: SessionState,
 ) {
@@ -91,6 +93,7 @@ fun HomeScreen(
             sessionKey = sessionState.getKey(),
             currentTab = currentTab,
             updateCurrentTab = { updateCurrentTab(it.title) },
+            updateProfileVideosCount = updateProfileVideosCount,
         )
     }
 }
@@ -102,11 +105,15 @@ private fun HomeScreenContent(
     sessionKey: String,
     currentTab: String,
     updateCurrentTab: (tab: HomeTab) -> Unit,
+    updateProfileVideosCount: (count: Int) -> Unit,
 ) {
     val feedViewModel = koinViewModel<FeedViewModel>(key = "feed-$sessionKey")
     val profileViewModel = koinViewModel<ProfileViewModel>(key = "profile-$sessionKey")
-    val profileVideos = profileViewModel.profileVideos.collectAsLazyPagingItems()
     val accountViewModel = koinViewModel<AccountsViewModel>(key = "account-$sessionKey")
+    val profileVideos = profileViewModel.profileVideos.collectAsLazyPagingItems()
+    LaunchedEffect(profileVideos.itemCount) {
+        updateProfileVideosCount(profileVideos.itemCount)
+    }
     when (currentTab) {
         HomeTab.HOME.title ->
             FeedScreen(

@@ -2,6 +2,8 @@ package com.yral.shared.features.root.viewmodels
 
 import androidx.lifecycle.ViewModel
 import co.touchlab.kermit.Logger
+import com.yral.shared.analytics.User
+import com.yral.shared.analytics.events.CategoryName
 import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.SessionManager
@@ -18,6 +20,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
@@ -32,7 +35,7 @@ class RootViewModel(
     authClientFactory: AuthClientFactory,
     private val sessionManager: SessionManager,
     private val crashlyticsManager: CrashlyticsManager,
-    val rootTelemetry: RootTelemetry,
+    private val rootTelemetry: RootTelemetry,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.io)
 
@@ -56,11 +59,32 @@ class RootViewModel(
 
     private val _state = MutableStateFlow(RootState())
     val state: StateFlow<RootState> = _state.asStateFlow()
+
     val sessionManagerState = sessionManager.state
+    val sessionProperties =
+        combine(
+            sessionManager.state,
+            sessionManager.coinBalance,
+            sessionManager.profileVideosCount,
+            sessionManager.isSocialSignIn,
+        ) { state, coinBalance, profileVideosCount, isSocialSignIn ->
+            sessionManager.getUserPrincipal()?.let { userPrincipal ->
+                sessionManager.getCanisterPrincipal()?.let { canisterPrincipal ->
+                    User(
+                        userId = userPrincipal,
+                        canisterId = canisterPrincipal,
+                        isLoggedIn = isSocialSignIn,
+                        isCreator = profileVideosCount > 0,
+                        satsBalance = coinBalance.toDouble(),
+                    )
+                }
+            }
+        }
 
     private var initialisationJob: Job? = null
 
     fun initialize() {
+        Logger.d("AnalyticsLogger") { "Root view model initialize" }
         initialisationJob?.cancel()
         initialisationJob =
             coroutineScope.launch {
@@ -102,6 +126,22 @@ class RootViewModel(
         coroutineScope.launch {
             _state.update { it.copy(currentHomePageTab = tab) }
         }
+    }
+
+    fun updateProfileVideosCount(count: Int) {
+        sessionManager.updateProfileVideosCount(count)
+    }
+
+    fun splashScreenViewed() {
+        rootTelemetry.onSplashScreenViewed()
+    }
+
+    fun bottomNavigationClicked(categoryName: CategoryName) {
+        rootTelemetry.bottomNavigationClicked(categoryName)
+    }
+
+    fun setUser(user: User?) {
+        rootTelemetry.setUser(user)
     }
 }
 

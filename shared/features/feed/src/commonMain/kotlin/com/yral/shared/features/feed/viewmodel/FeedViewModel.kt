@@ -18,8 +18,6 @@ import com.yral.shared.features.feed.useCases.FetchMoreFeedUseCase
 import com.yral.shared.features.feed.useCases.GetInitialFeedUseCase
 import com.yral.shared.features.feed.useCases.ReportRequestParams
 import com.yral.shared.features.feed.useCases.ReportVideoUseCase
-import com.yral.shared.preferences.PrefKeys
-import com.yral.shared.preferences.Preferences
 import com.yral.shared.rust.domain.models.FeedDetails
 import com.yral.shared.rust.domain.models.Post
 import com.yral.shared.rust.domain.models.toFilteredResult
@@ -37,7 +35,6 @@ class FeedViewModel(
     private val sessionManager: SessionManager,
     private val requiredUseCases: RequiredUseCases,
     private val crashlyticsManager: CrashlyticsManager,
-    private val preferences: Preferences,
     val feedTelemetry: FeedTelemetry,
     authClientFactory: AuthClientFactory,
 ) : ViewModel() {
@@ -66,16 +63,8 @@ class FeedViewModel(
     val state: StateFlow<FeedState> = _state.asStateFlow()
 
     init {
-        coroutineScope.launch {
-            updateSocialSignIn()
-            initialFeedData()
-        }
-    }
-
-    private suspend fun updateSocialSignIn() {
-        val isSocialSignInSuccessful =
-            preferences.getBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name) ?: false
-        _state.update { FeedState(showSignupNudge = !isSocialSignInSuccessful) }
+        Logger.d("AnalyticsLogger") { "FeedViewModel created" }
+        coroutineScope.launch { initialFeedData() }
     }
 
     private suspend fun initialFeedData() {
@@ -332,6 +321,7 @@ class FeedViewModel(
         val currentFeed = _state.value.feedDetails[_state.value.currentPageOfFeed]
         feedTelemetry.onVideoDurationWatched(
             feedDetails = currentFeed,
+            isLoggedIn = sessionManager.isSocialSignIn.value,
             currentTime = videoData.lastKnownCurrentTime,
             totalTime = videoData.lastKnownTotalTime,
         )
@@ -490,6 +480,8 @@ class FeedViewModel(
         }
     }
 
+    fun isLoggedIn(): Boolean = sessionManager.isSocialSignIn.value
+
     data class RequiredUseCases(
         val getInitialFeedUseCase: GetInitialFeedUseCase,
         val fetchMoreFeedUseCase: FetchMoreFeedUseCase,
@@ -511,7 +503,6 @@ data class FeedState(
     val isLoading: Boolean = false,
     val reportSheetState: ReportSheetState = ReportSheetState.Closed,
     val showSignupFailedSheet: Boolean = false,
-    val showSignupNudge: Boolean = false,
 )
 
 data class VideoData(
