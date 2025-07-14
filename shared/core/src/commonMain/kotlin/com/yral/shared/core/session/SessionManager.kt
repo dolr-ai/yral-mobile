@@ -9,29 +9,30 @@ class SessionManager {
     private val _state = MutableStateFlow<SessionState>(SessionState.Initial)
     val state = _state.asStateFlow()
 
-    private val _coinBalance = MutableStateFlow<Long>(0)
-    val coinBalance: StateFlow<Long> = _coinBalance.asStateFlow()
-
-    private val _isSocialSignIn = MutableStateFlow<Boolean>(false)
-    val isSocialSignIn: StateFlow<Boolean> = _isSocialSignIn.asStateFlow()
-
-    private val _profileVideosCount = MutableStateFlow<Int>(0)
-    val profileVideosCount: StateFlow<Int> = _profileVideosCount.asStateFlow()
+    private val sessionProperties =
+        MutableStateFlow(
+            value =
+                SessionProperties(
+                    coinBalance = 0,
+                    profileVideosCount = 0,
+                    isSocialSignIn = false,
+                ),
+        )
 
     fun updateState(state: SessionState) {
         _state.update { state }
     }
 
     fun updateCoinBalance(newBalance: Long) {
-        _coinBalance.update { newBalance }
+        sessionProperties.update { it.copy(coinBalance = newBalance) }
     }
 
     fun updateSocialSignInStatus(isSocialSignIn: Boolean) {
-        _isSocialSignIn.update { isSocialSignIn }
+        sessionProperties.update { it.copy(isSocialSignIn = isSocialSignIn) }
     }
 
     fun updateProfileVideosCount(count: Int) {
-        _profileVideosCount.update { count }
+        sessionProperties.update { it.copy(profileVideosCount = count) }
     }
 
     fun getCanisterPrincipal(): String? =
@@ -55,11 +56,21 @@ class SessionManager {
             null
         }
 
+    fun observeSessionProperties(): StateFlow<SessionProperties> = sessionProperties.asStateFlow()
+
     fun resetSessionProperties() {
-        _coinBalance.update { 0 }
-        _isSocialSignIn.update { false }
-        _profileVideosCount.update { 0 }
+        sessionProperties.update {
+            SessionProperties(
+                coinBalance = 0,
+                profileVideosCount = 0,
+                isSocialSignIn = false,
+            )
+        }
     }
+
+    fun isSocialSignIn(): Boolean = sessionProperties.value.isSocialSignIn
+
+    fun profileVideosCount(): Int = sessionProperties.value.profileVideosCount
 }
 
 sealed interface SessionState {

@@ -38,9 +38,9 @@ fun RootScreen(viewModel: RootViewModel = koinViewModel()) {
     val state by viewModel.state.collectAsState()
     val sessionState by viewModel.sessionManagerState.collectAsState()
 
-    val sessionProperties = viewModel.sessionProperties.collectAsState(null)
-    LaunchedEffect(sessionProperties.value) {
-        viewModel.setUser(sessionProperties.value)
+    val analyticsUser = viewModel.analyticsUser.collectAsState(null)
+    LaunchedEffect(analyticsUser.value) {
+        viewModel.setUser(analyticsUser.value)
     }
 
     LaunchedEffect(sessionState) {

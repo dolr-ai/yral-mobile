@@ -43,7 +43,6 @@ class AccountsViewModel(
     val state: StateFlow<AccountsState> = _state.asStateFlow()
 
     init {
-        Logger.d("AnalyticsLogger") { "Accounts view model created" }
         _state.update { it.copy(accountInfo = sessionManager.getAccountInfo()) }
     }
 
@@ -118,7 +117,7 @@ class AccountsViewModel(
                     menuCtaType = MenuCtaType.PRIVACY_POLICY,
                 ),
             )
-        val isSocialSignIn = sessionManager.isSocialSignIn.value
+        val isSocialSignIn = isLoggedIn()
         if (isSocialSignIn) {
             links.add(
                 AccountHelpLink(
@@ -171,7 +170,7 @@ class AccountsViewModel(
         }
     }
 
-    fun isLoggedIn(): Boolean = sessionManager.isSocialSignIn.value
+    fun isLoggedIn(): Boolean = sessionManager.isSocialSignIn()
 
     companion object {
         const val LOGOUT_URI = "yral://logout"

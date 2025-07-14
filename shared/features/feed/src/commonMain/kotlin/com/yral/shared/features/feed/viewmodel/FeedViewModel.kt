@@ -63,7 +63,6 @@ class FeedViewModel(
     val state: StateFlow<FeedState> = _state.asStateFlow()
 
     init {
-        Logger.d("AnalyticsLogger") { "FeedViewModel created" }
         coroutineScope.launch { initialFeedData() }
     }
 
@@ -321,7 +320,7 @@ class FeedViewModel(
         val currentFeed = _state.value.feedDetails[_state.value.currentPageOfFeed]
         feedTelemetry.onVideoDurationWatched(
             feedDetails = currentFeed,
-            isLoggedIn = sessionManager.isSocialSignIn.value,
+            isLoggedIn = isLoggedIn(),
             currentTime = videoData.lastKnownCurrentTime,
             totalTime = videoData.lastKnownTotalTime,
         )
@@ -480,7 +479,7 @@ class FeedViewModel(
         }
     }
 
-    fun isLoggedIn(): Boolean = sessionManager.isSocialSignIn.value
+    fun isLoggedIn(): Boolean = sessionManager.isSocialSignIn()
 
     data class RequiredUseCases(
         val getInitialFeedUseCase: GetInitialFeedUseCase,

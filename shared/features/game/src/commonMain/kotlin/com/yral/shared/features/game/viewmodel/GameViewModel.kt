@@ -46,7 +46,7 @@ class GameViewModel(
             GameState(
                 gameIcons = emptyList(),
                 gameRules = emptyList(),
-                coinBalance = sessionManager.coinBalance.value,
+                coinBalance = 0,
             ),
         )
     val state: StateFlow<GameState> = _state.asStateFlow()
@@ -68,11 +68,11 @@ class GameViewModel(
         }
         viewModelScope.launch {
             // Observe coin balance changes
-            sessionManager.coinBalance.collect { balance ->
-                Logger.d("xxxx coin balance collected $balance")
+            sessionManager.observeSessionProperties().collect { properties ->
+                Logger.d("xxxx coin balance collected ${properties.coinBalance}")
                 _state.update { currentState ->
                     currentState.copy(
-                        coinBalance = balance,
+                        coinBalance = properties.coinBalance,
                     )
                 }
             }

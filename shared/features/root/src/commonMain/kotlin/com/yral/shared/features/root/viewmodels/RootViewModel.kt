@@ -61,21 +61,19 @@ class RootViewModel(
     val state: StateFlow<RootState> = _state.asStateFlow()
 
     val sessionManagerState = sessionManager.state
-    val sessionProperties =
+    val analyticsUser =
         combine(
             sessionManager.state,
-            sessionManager.coinBalance,
-            sessionManager.profileVideosCount,
-            sessionManager.isSocialSignIn,
-        ) { state, coinBalance, profileVideosCount, isSocialSignIn ->
+            sessionManager.observeSessionProperties(),
+        ) { state, properties ->
             sessionManager.getUserPrincipal()?.let { userPrincipal ->
                 sessionManager.getCanisterPrincipal()?.let { canisterPrincipal ->
                     User(
                         userId = userPrincipal,
                         canisterId = canisterPrincipal,
-                        isLoggedIn = isSocialSignIn,
-                        isCreator = profileVideosCount > 0,
-                        satsBalance = coinBalance.toDouble(),
+                        isLoggedIn = properties.isSocialSignIn,
+                        isCreator = properties.profileVideosCount > 0,
+                        satsBalance = properties.coinBalance.toDouble(),
                     )
                 }
             }
@@ -84,7 +82,6 @@ class RootViewModel(
     private var initialisationJob: Job? = null
 
     fun initialize() {
-        Logger.d("AnalyticsLogger") { "Root view model initialize" }
         initialisationJob?.cancel()
         initialisationJob =
             coroutineScope.launch {
