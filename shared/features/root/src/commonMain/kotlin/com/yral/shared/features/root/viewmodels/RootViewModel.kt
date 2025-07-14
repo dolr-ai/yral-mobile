@@ -66,11 +66,11 @@ class RootViewModel(
             sessionManager.state,
             sessionManager.observeSessionProperties(),
         ) { state, properties ->
-            sessionManager.getUserPrincipal()?.let { userPrincipal ->
-                sessionManager.getCanisterPrincipal()?.let { canisterPrincipal ->
+            sessionManager.userPrincipal?.let { userPrincipal ->
+                sessionManager.canisterID?.let { canisterID ->
                     User(
                         userId = userPrincipal,
-                        canisterId = canisterPrincipal,
+                        canisterId = canisterID,
                         isLoggedIn = properties.isSocialSignIn,
                         isCreator = properties.profileVideosCount > 0,
                         satsBalance = properties.coinBalance.toDouble(),
@@ -108,7 +108,7 @@ class RootViewModel(
 
     private suspend fun checkLoginAndInitialize() {
         delay(initialDelayForSetup)
-        sessionManager.getIdentity()?.let {
+        sessionManager.identity?.let {
             _state.update { it.copy(showSplash = false) }
         } ?: authClient.initialize()
     }

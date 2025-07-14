@@ -37,8 +37,8 @@ class FeedTelemetry(
             feedDetails
                 .toVideoEventData()
                 .copy(
-                    canisterId = sessionManager.getCanisterPrincipal() ?: "",
-                    userID = sessionManager.getUserPrincipal() ?: "",
+                    canisterId = sessionManager.canisterID ?: "",
+                    userID = sessionManager.userPrincipal ?: "",
                     isLoggedIn = isLoggedIn,
                     absoluteWatched = currentTime.toDouble(),
                     percentageWatched = currentTime.percentageOf(totalTime),

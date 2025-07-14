@@ -41,7 +41,7 @@ class UploadVideoTelemetry(
             event =
                 VideoUploadSuccessEventData(
                     videoId = videoId,
-                    publisherUserId = sessionManager.getUserPrincipal() ?: "",
+                    publisherUserId = sessionManager.userPrincipal ?: "",
                     isNsfw = false,
                     gameType = GameType.SMILEY,
                     isGameEnabled = true,

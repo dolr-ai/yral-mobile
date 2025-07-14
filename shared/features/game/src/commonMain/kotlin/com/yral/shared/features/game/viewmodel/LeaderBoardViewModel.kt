@@ -39,8 +39,7 @@ class LeaderBoardViewModel(
     private fun loadData() {
         coroutineScope.launch {
             _state.update { it.copy(isLoading = true, error = null) }
-            val userPrincipal = sessionManager.getUserPrincipal()
-            userPrincipal?.let {
+            sessionManager.userPrincipal?.let { userPrincipal ->
                 listOf(
                     async { fetchLeaderBoard() },
                     async { fetchCurrentUserInfo(userPrincipal) },

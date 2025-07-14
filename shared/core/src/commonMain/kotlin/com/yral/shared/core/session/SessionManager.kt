@@ -19,6 +19,27 @@ class SessionManager {
                 ),
         )
 
+    val canisterID: String?
+        get() =
+            when (val state = _state.value) {
+                is SessionState.SignedIn -> state.session.canisterId
+                else -> null
+            }
+
+    val userPrincipal: String?
+        get() =
+            when (val state = _state.value) {
+                is SessionState.SignedIn -> state.session.userPrincipal
+                else -> null
+            }
+
+    val identity: ByteArray?
+        get() =
+            when (val state = _state.value) {
+                is SessionState.SignedIn -> state.session.identity
+                else -> null
+            }
+
     fun updateState(state: SessionState) {
         _state.update { state }
     }
@@ -34,27 +55,6 @@ class SessionManager {
     fun updateProfileVideosCount(count: Int) {
         sessionProperties.update { it.copy(profileVideosCount = count) }
     }
-
-    fun getCanisterPrincipal(): String? =
-        if (_state.value is SessionState.SignedIn) {
-            (_state.value as SessionState.SignedIn).session.canisterPrincipal
-        } else {
-            null
-        }
-
-    fun getUserPrincipal(): String? =
-        if (_state.value is SessionState.SignedIn) {
-            (_state.value as SessionState.SignedIn).session.userPrincipal
-        } else {
-            null
-        }
-
-    fun getIdentity(): ByteArray? =
-        if (_state.value is SessionState.SignedIn) {
-            (_state.value as SessionState.SignedIn).session.identity
-        } else {
-            null
-        }
 
     fun observeSessionProperties(): StateFlow<SessionProperties> = sessionProperties.asStateFlow()
 

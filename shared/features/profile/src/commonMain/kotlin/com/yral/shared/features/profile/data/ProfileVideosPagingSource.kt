@@ -2,6 +2,7 @@ package com.yral.shared.features.profile.data
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
+import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.features.profile.domain.repository.ProfileRepository
 import com.yral.shared.rust.data.models.toFeedDetails
@@ -21,13 +22,15 @@ class ProfileVideosPagingSource(
                         startIndex = startIndex,
                         pageSize = pageSize,
                     )
-            val canisterId = sessionManager.getCanisterPrincipal() ?: ""
+            val canisterID =
+                sessionManager.canisterID
+                    ?: throw YralException("No canister principal found")
             val profileVideos =
                 result.posts.mapNotNull { post ->
                     runCatching {
                         post.toFeedDetails(
                             postId = post.id.toLong(),
-                            canisterId = canisterId,
+                            canisterId = canisterID,
                             nsfwProbability = 0.0, // Default value, can be updated if needed
                         )
                     }.getOrNull() // Return null for failed conversions, skip the post

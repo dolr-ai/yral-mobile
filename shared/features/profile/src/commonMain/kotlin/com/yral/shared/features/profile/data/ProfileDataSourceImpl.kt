@@ -28,7 +28,7 @@ class ProfileDataSourceImpl(
         pageSize: ULong,
     ): ProfileVideosPageResult {
         val canisterId =
-            sessionManager.getCanisterPrincipal()
+            sessionManager.canisterID
                 ?: throw YralException("No canister principal found")
 
         val service = individualUserServiceFactory.service(canisterId)
@@ -73,10 +73,10 @@ class ProfileDataSourceImpl(
 
     override suspend fun deleteVideo(request: DeleteVideoRequest) {
         val canisterId =
-            sessionManager.getCanisterPrincipal()
+            sessionManager.canisterID
                 ?: throw YralException("No canister principal found")
         val identity =
-            sessionManager.getIdentity()
+            sessionManager.identity
                 ?: throw YralException("No identity found")
 
         val identityWireJson = delegatedIdentityWireToJson(identity)

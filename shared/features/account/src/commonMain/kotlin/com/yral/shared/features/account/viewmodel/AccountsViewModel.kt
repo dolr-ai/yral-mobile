@@ -75,7 +75,6 @@ class AccountsViewModel(
                 try {
                     authClient.signInWithSocial(SocialProvider.GOOGLE)
                 } catch (e: Exception) {
-                    crashlyticsManager.logMessage("sign in with google exception caught")
                     crashlyticsManager.recordException(e)
                     handleSignupFailed()
                 }

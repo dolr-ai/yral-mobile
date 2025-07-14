@@ -67,13 +67,13 @@ class FeedViewModel(
     }
 
     private suspend fun initialFeedData() {
-        sessionManager.getCanisterPrincipal()?.let { principal ->
+        sessionManager.canisterID?.let { canisterID ->
             setLoadingMore(true)
             requiredUseCases.getInitialFeedUseCase
                 .invoke(
                     parameter =
                         GetInitialFeedUseCase.Params(
-                            canisterID = principal,
+                            canisterID = canisterID,
                             filterResults = emptyList(),
                         ),
                 ).onSuccess { result ->
@@ -120,13 +120,15 @@ class FeedViewModel(
     }
 
     private suspend fun isAlreadyVoted(post: Post): Boolean =
-        requiredUseCases.checkVideoVoteUseCase
-            .invoke(
-                CheckVideoVoteUseCase.Params(
-                    videoId = post.videoID,
-                    principalId = sessionManager.getUserPrincipal() ?: "",
-                ),
-            ).value
+        sessionManager.userPrincipal?.let { userPrincipal ->
+            requiredUseCases.checkVideoVoteUseCase
+                .invoke(
+                    CheckVideoVoteUseCase.Params(
+                        videoId = post.videoID,
+                        principalId = userPrincipal,
+                    ),
+                ).value
+        } ?: false
 
     private suspend fun fetchFeedDetail(post: Post) {
         // Atomically increment the counter
@@ -187,13 +189,13 @@ class FeedViewModel(
             // Optionally log or notify here
             return
         }
-        sessionManager.getCanisterPrincipal()?.let { canisterId ->
+        sessionManager.canisterID?.let { canisterID ->
             setLoadingMore(true)
             requiredUseCases.fetchMoreFeedUseCase
                 .invoke(
                     parameter =
                         FetchMoreFeedUseCase.Params(
-                            canisterID = canisterId,
+                            canisterID = canisterID,
                             filterResults =
                                 _state.value.posts.map { post ->
                                     post.toFilteredResult()
@@ -462,7 +464,6 @@ class FeedViewModel(
                 try {
                     authClient.signInWithSocial(SocialProvider.GOOGLE)
                 } catch (e: Exception) {
-                    crashlyticsManager.logMessage("sign in with google exception caught")
                     crashlyticsManager.recordException(e)
                     toggleSignupFailed(true)
                 }
