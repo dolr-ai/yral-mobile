@@ -46,7 +46,7 @@ fun ProfileReelPlayer(
     initialPage: Int,
     deletingVideoId: String,
     onBack: () -> Unit,
-    onDeleteVideo: (String, ULong) -> Unit,
+    onDeleteVideo: (FeedDetails) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val videoReels =
@@ -70,9 +70,7 @@ fun ProfileReelPlayer(
                     currentVideo = currentVideo,
                     isDeleting = deletingVideoId == currentVideo.videoID,
                     onBack = onBack,
-                    onDeleteVideo = {
-                        onDeleteVideo(currentVideo.videoID, currentVideo.postID.toULong())
-                    },
+                    onDeleteVideo = { onDeleteVideo(currentVideo) },
                 )
             }
         }

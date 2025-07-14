@@ -71,6 +71,7 @@ import com.yral.android.ui.widgets.YralButtonType
 import com.yral.android.ui.widgets.YralErrorMessage
 import com.yral.android.ui.widgets.YralGradientButton
 import com.yral.android.ui.widgets.YralLoader
+import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.features.profile.viewmodel.DeleteConfirmationState
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
@@ -98,7 +99,7 @@ fun ProfileScreen(
     val deletingVideoId =
         remember(state.deleteConfirmation) {
             when (val deleteConfirmation = state.deleteConfirmation) {
-                is DeleteConfirmationState.InProgress -> deleteConfirmation.request.videoId
+                is DeleteConfirmationState.InProgress -> deleteConfirmation.request.feedDetails.videoID
                 else -> ""
             }
         }
@@ -115,8 +116,11 @@ fun ProfileScreen(
                                 .coerceAtMost(profileVideos.itemCount - 1),
                         deletingVideoId = deletingVideoId,
                         onBack = { viewModel.closeVideoReel() },
-                        onDeleteVideo = { videoId, postId ->
-                            viewModel.confirmDelete(videoId = videoId, postId = postId)
+                        onDeleteVideo = { video ->
+                            viewModel.confirmDelete(
+                                feedDetails = video,
+                                ctaType = VideoDeleteCTA.VIDEO_FULLSCREEN,
+                            )
                         },
                         modifier = Modifier.fillMaxSize(),
                     )
@@ -130,15 +134,18 @@ fun ProfileScreen(
                     accountInfo = state.accountInfo,
                     gridState = gridState,
                     profileVideos = profileVideos,
-                    uploadVideo = uploadVideo,
+                    uploadVideo = {
+                        viewModel.uploadVideoClicked()
+                        uploadVideo()
+                    },
                     openVideoReel = { clickedIndex ->
                         viewModel.openVideoReel(clickedIndex)
                     },
                     deletingVideoId = deletingVideoId,
                     onDeleteVideo = { video ->
                         viewModel.confirmDelete(
-                            videoId = video.videoID,
-                            postId = video.postID.toULong(),
+                            feedDetails = video,
+                            ctaType = VideoDeleteCTA.PROFILE_THUMBNAIL,
                         )
                     },
                 )

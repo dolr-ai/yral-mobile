@@ -9,6 +9,7 @@ import androidx.paging.cachedIn
 import androidx.paging.filter
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
+import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.features.auth.utils.getAccountInfo
@@ -74,16 +75,17 @@ class ProfileViewModel(
     }
 
     fun confirmDelete(
-        videoId: String,
-        postId: ULong,
+        feedDetails: FeedDetails,
+        ctaType: VideoDeleteCTA,
     ) {
         if (_state.value.deleteConfirmation !is DeleteConfirmationState.None) return
+        profileTelemetry.onVideoClicked(feedDetails)
         updateDeleteConfirmationIfDifferent(
             DeleteConfirmationState.AwaitingConfirmation(
                 request =
                     DeleteVideoRequest(
-                        postId = postId,
-                        videoId = videoId,
+                        feedDetails = feedDetails,
+                        ctaType = ctaType,
                     ),
             ),
         )
@@ -98,13 +100,20 @@ class ProfileViewModel(
                 else -> return
             }
         viewModelScope.launch {
+            profileTelemetry.onDeleteInitiated(
+                feedDetails = deleteRequest.feedDetails,
+            )
             _state.update { state ->
                 state.copy(deleteConfirmation = DeleteConfirmationState.InProgress(deleteRequest))
             }
             deleteVideoUseCase
                 .invoke(deleteRequest)
                 .onSuccess {
-                    deletedVideoIds.update { it + deleteRequest.videoId }
+                    profileTelemetry.onDeleted(
+                        feedDetails = deleteRequest.feedDetails,
+                        catType = deleteRequest.ctaType,
+                    )
+                    deletedVideoIds.update { it + deleteRequest.feedDetails.videoID }
                     _state.update { it.copy(deleteConfirmation = DeleteConfirmationState.None) }
                 }.onFailure { error ->
                     _state.update {
@@ -153,6 +162,10 @@ class ProfileViewModel(
             totalVideos = totalVideos,
             publisherUserId = state.value.accountInfo?.userPrincipal ?: "",
         )
+    }
+
+    fun uploadVideoClicked() {
+        profileTelemetry.onUploadVideoClicked()
     }
 }
 
