@@ -98,7 +98,7 @@ fun FeedScreen(
     val state by viewModel.state.collectAsState()
     val gameState by gameViewModel.state.collectAsState()
 
-    LaunchedEffect(Unit) { viewModel.feedTelemetry.onFeedPageViewed() }
+    LaunchedEffect(Unit) { viewModel.pushScreenView() }
 
     // Set initial video ID when feed loads
     LaunchedEffect(state.feedDetails.isNotEmpty()) {

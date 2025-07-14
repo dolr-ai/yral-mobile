@@ -62,7 +62,7 @@ fun UploadVideoScreen(
     goToHome: () -> Unit,
 ) {
     val viewState by viewModel.state.collectAsStateWithLifecycle()
-    LaunchedEffect(Unit) { viewModel.uploadVideoTelemetry.uploadVideoScreenViewed() }
+    LaunchedEffect(Unit) { viewModel.pushScreenView() }
     LaunchedEffect(key1 = Unit) {
         viewModel.eventsFlow.collectLatest { value ->
             when (value) {
@@ -120,7 +120,7 @@ private fun UploadVideoIdle(
             UploadVideo(
                 viewState.selectedFilePath ?: "",
                 onVideoSelected = viewModel::onFileSelected,
-                onCTAClicked = { viewModel.uploadVideoTelemetry.selectFile() },
+                onCTAClicked = { viewModel.pushSelectFile() },
             )
         }
         item { Spacer(Modifier.height(20.dp)) }

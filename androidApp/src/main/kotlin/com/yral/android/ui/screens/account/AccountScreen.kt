@@ -111,7 +111,10 @@ private fun AccountScreenContent(
         Divider()
         HelpLinks(
             links = viewModel.getHelperLinks(),
-            onLinkClicked = { viewModel.handleHelpLink(it) },
+            onLinkClicked = {
+                viewModel.accountsTelemetry.onMenuClicked(it.menuCtaType)
+                viewModel.handleHelpLink(it)
+            },
         )
         Spacer(Modifier.weight(1f))
         SocialMediaHelpLinks(

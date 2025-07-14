@@ -156,7 +156,6 @@ class AccountsViewModel(
         )
 
     fun handleHelpLink(link: AccountHelpLink) {
-        accountsTelemetry.onMenuClicked(link.menuCtaType)
         when (link.link) {
             LOGOUT_URI -> logout()
             DELETE_ACCOUNT_URI -> setBottomSheetType(AccountBottomSheet.DeleteAccount)

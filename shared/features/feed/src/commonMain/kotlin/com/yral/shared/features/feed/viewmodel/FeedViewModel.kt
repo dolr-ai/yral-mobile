@@ -35,7 +35,7 @@ class FeedViewModel(
     private val sessionManager: SessionManager,
     private val requiredUseCases: RequiredUseCases,
     private val crashlyticsManager: CrashlyticsManager,
-    val feedTelemetry: FeedTelemetry,
+    private val feedTelemetry: FeedTelemetry,
     authClientFactory: AuthClientFactory,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.io)
@@ -481,6 +481,10 @@ class FeedViewModel(
     }
 
     fun isLoggedIn(): Boolean = sessionManager.isSocialSignIn()
+
+    fun pushScreenView() {
+        feedTelemetry.onFeedPageViewed()
+    }
 
     data class RequiredUseCases(
         val getInitialFeedUseCase: GetInitialFeedUseCase,

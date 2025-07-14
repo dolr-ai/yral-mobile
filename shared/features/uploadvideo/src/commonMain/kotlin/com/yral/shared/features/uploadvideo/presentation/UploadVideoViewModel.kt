@@ -38,7 +38,7 @@ class UploadVideoViewModel internal constructor(
     private val uploadVideo: UploadVideoUseCase,
     private val updateMeta: UpdateMetaUseCase,
     private val appDispatchers: AppDispatchers,
-    val uploadVideoTelemetry: UploadVideoTelemetry,
+    private val uploadVideoTelemetry: UploadVideoTelemetry,
     logger: YralLogger,
 ) : ViewModel() {
     private val logger = logger.withTag(UploadVideoViewModel::class.simpleName ?: "")
@@ -382,6 +382,14 @@ class UploadVideoViewModel internal constructor(
                 }
             }
         }
+    }
+
+    fun pushScreenView() {
+        uploadVideoTelemetry.uploadVideoScreenViewed()
+    }
+
+    fun pushSelectFile() {
+        uploadVideoTelemetry.selectFile()
     }
 
     private inline fun log(message: () -> String) {
