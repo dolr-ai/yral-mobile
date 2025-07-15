@@ -43,6 +43,7 @@ kotlin {
             val (deps, addRust) = BuildConfig.getAndProcessDependencies(project)
             deps.forEach { if (it.isNotEmpty()) implementation(it) }
             if (addRust) implementation(projects.shared.rust)
+            implementation(libs.facebook.sdk.android.core)
         }
     }
 }

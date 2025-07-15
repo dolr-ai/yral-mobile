@@ -27,6 +27,7 @@ desugar-jdk-libs = "2.1.5"
 detekt = "1.23.8"
 detektComposeRules = "0.4.22"
 essenty = "2.5.0"
+facebook-sdk-android = "18.0.3"
 firebase-bom = "33.12.0"
 firebaseCrashlyticsPlugin = "3.0.3"
 firebase-gitlive-sdk = "2.1.0"
@@ -91,6 +92,8 @@ essenty-lifecycle-coroutines = { group = "com.arkivanov.essenty", name = "lifecy
 essenty-stateKeeper = { group = "com.arkivanov.essenty", name = "state-keeper", version.ref = "essenty" }
 essenty-instanceKeeper = { group = "com.arkivanov.essenty", name = "instance-keeper", version.ref = "essenty" }
 essenty-backHandler = { group = "com.arkivanov.essenty", name = "back-handler", version.ref = "essenty" }
+
+facebook-sdk-android-core = { module = "com.facebook.android:facebook-core", version.ref = "facebook-sdk-android" }
 
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebase-bom" }
 firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics" }

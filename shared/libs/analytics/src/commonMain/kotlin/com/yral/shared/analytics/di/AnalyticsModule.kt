@@ -44,6 +44,7 @@ val analyticsModule =
         }
         single {
             FacebookAnalyticsProvider(
+                platformResources = get(),
                 eventFilter = { it.shouldSendToFacebook() },
                 mapConverter = get(),
             )
