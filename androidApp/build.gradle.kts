@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.firebase.crashlytics)
     alias(libs.plugins.gms)
     alias(libs.plugins.firebase.perf)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -90,6 +91,9 @@ dependencies {
 
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.ui)
+
+    implementation(libs.decompose.decompose)
+    implementation(libs.decompose.extensions.compose)
 
     implementation(projects.shared.core)
     implementation(projects.shared.libs.preferences)

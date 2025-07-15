@@ -119,12 +119,6 @@ class RootViewModel(
         }
     }
 
-    fun updateCurrentTab(tab: String) {
-        coroutineScope.launch {
-            _state.update { it.copy(currentHomePageTab = tab) }
-        }
-    }
-
     fun updateProfileVideosCount(count: Int) {
         sessionManager.updateProfileVideosCount(count)
     }
@@ -145,7 +139,6 @@ class RootViewModel(
 data class RootState(
     val showSplash: Boolean = true,
     val initialAnimationComplete: Boolean = false,
-    val currentHomePageTab: String = "Home",
     val currentSessionState: SessionState? = null,
     val error: RootError? = null,
 )

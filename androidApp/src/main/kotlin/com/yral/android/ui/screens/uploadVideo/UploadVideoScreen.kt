@@ -44,6 +44,7 @@ import com.yral.android.ui.components.hashtagInput.HashtagInput
 import com.yral.android.ui.components.hashtagInput.keyboardHeightAsState
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
+import com.yral.android.ui.screens.uploadVideo.nav.UploadVideoComponent
 import com.yral.android.ui.widgets.YralButtonState
 import com.yral.android.ui.widgets.YralGradientButton
 import com.yral.android.ui.widgets.video.YralVideoPlayer
@@ -57,18 +58,15 @@ private const val TOTAL_ITEMS = 5
 @Suppress("MagicNumber")
 @Composable
 fun UploadVideoScreen(
+    component: UploadVideoComponent,
     modifier: Modifier = Modifier,
     viewModel: UploadVideoViewModel = koinViewModel(),
-    goToHome: () -> Unit,
 ) {
     val viewState by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { viewModel.pushScreenView() }
     LaunchedEffect(key1 = Unit) {
         viewModel.eventsFlow.collectLatest { value ->
-            when (value) {
-                UploadVideoViewModel.Event.GoToHome -> goToHome()
-                else -> {}
-            }
+            component.processEvent(value)
         }
     }
 
