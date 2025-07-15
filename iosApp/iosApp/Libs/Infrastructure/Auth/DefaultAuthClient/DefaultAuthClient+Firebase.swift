@@ -40,6 +40,10 @@ extension DefaultAuthClient {
 
     let userIDToken = try? await firebaseService.fetchUserIDToken()
     guard let userIDToken else {
+      Task { [weak self] in
+        guard let self = self else { return }
+        await self.setAnalyticsData()
+      }
       return
     }
     var httpHeaders = [
