@@ -31,6 +31,7 @@ import com.yral.shared.uniffi.generated.FfiException
 import com.yral.shared.uniffi.generated.authenticateWithNetwork
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 
@@ -341,9 +342,13 @@ class DefaultAuthClient(
                 )
                 preferences.putBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name, true)
                 sessionManager.updateSocialSignInStatus(true)
-                authTelemetry.onAuthSuccess(
-                    isNewUser = currentUserPrincipal == sessionManager.userPrincipal,
-                )
+                scope.launch {
+                    // Minor delay for super properties to be set
+                    delay(DELAY_FOR_AUTH_SUCCESS_EVENT)
+                    authTelemetry.onAuthSuccess(
+                        isNewUser = currentUserPrincipal == sessionManager.userPrincipal,
+                    )
+                }
             }.onFailure {
                 authTelemetry.authFailed()
                 throw YralAuthException("authenticate social sign in failed - ${it.message}")
@@ -405,5 +410,9 @@ class DefaultAuthClient(
         preferences.remove(PrefKeys.IDENTITY.name)
         preferences.remove(PrefKeys.CANISTER_ID.name)
         preferences.remove(PrefKeys.USER_PRINCIPAL.name)
+    }
+
+    companion object {
+        private const val DELAY_FOR_AUTH_SUCCESS_EVENT = 500L
     }
 }
