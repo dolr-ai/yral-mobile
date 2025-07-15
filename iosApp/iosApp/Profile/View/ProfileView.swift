@@ -23,6 +23,7 @@ struct ProfileView: View {
   @State private var showFeeds = false
   @State private var currentIndex: Int = .zero
   @State private var isPushNotificationFlow: Bool = false
+  @State private var isVisible = false
   @EnvironmentObject var session: SessionManager
   @EnvironmentObject private var deepLinkRouter: DeepLinkRouter
   var uploadVideoPressed: (() -> Void) = {}
@@ -200,8 +201,12 @@ struct ProfileView: View {
           )
         }
         .onAppear {
+          isVisible = true
           UIRefreshControl.appearance().tintColor = .clear
           UIRefreshControl.appearance().addSubview(LottieRefreshSingletonView.shared)
+        }
+        .onDisappear {
+          isVisible = false
         }
       }
     }
@@ -224,6 +229,13 @@ struct ProfileView: View {
           showEmptyState = true
         }
         self.sendAnalyticsInfo()
+        AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+          event: VideoDeletedEventData(
+            pageName: .profile,
+            videoId: self.deleteInfo?.videoId ?? "",
+            ctaType: .profileThumbnail
+          )
+        )
         self.showDeleteIndicator = false
       case .deleteVideoFailed:
         self.deleteInfo = nil
@@ -237,7 +249,7 @@ struct ProfileView: View {
           showFeeds = true
           isPushNotificationFlow = false
         }
-        if !isLoadingFirstTime {
+        if !isLoadingFirstTime, isVisible {
           sendAnalyticsInfo()
           AnalyticsModuleKt.getAnalyticsManager().trackEvent(
             event: ProfilePageViewedEventData(
