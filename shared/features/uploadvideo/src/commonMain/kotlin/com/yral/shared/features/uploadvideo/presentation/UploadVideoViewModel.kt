@@ -79,7 +79,6 @@ class UploadVideoViewModel internal constructor(
 
     fun onUploadButtonClicked() {
         validateAndPublish()
-        uploadVideoTelemetry.uploadInitiated()
     }
 
     fun onRetryClicked() {
@@ -104,6 +103,7 @@ class UploadVideoViewModel internal constructor(
     private suspend fun performBackgroundUpload(filePath: String) {
         try {
             log { "performBackgroundUpload" }
+            uploadVideoTelemetry.uploadInitiated()
             _state.update {
                 it.copy(fileUploadUiState = UiState.InProgress(0f))
             }
@@ -249,12 +249,10 @@ class UploadVideoViewModel internal constructor(
                     is UiState.Success -> {
                         // File upload completed, now start metadata update
                         updateMetadata(fileUploadState.data, caption, hashtags)
-                        uploadVideoTelemetry.uploadSuccess(fileUploadState.data.videoID)
                         return@collect
                     }
 
                     is UiState.Failure -> {
-                        uploadVideoTelemetry.uploadFailed(fileUploadState.error.message ?: "")
                         throw fileUploadState.error
                     }
 
@@ -313,6 +311,7 @@ class UploadVideoViewModel internal constructor(
 
                 _state.update { it.copy(updateMetadataUiState = UiState.Success(Unit)) }
                 send(Event.UploadSuccess)
+                uploadVideoTelemetry.uploadSuccess(endpoint.videoID)
                 performPostPublishCleanup()
             }
         } catch (e: CancellationException) {
@@ -323,6 +322,7 @@ class UploadVideoViewModel internal constructor(
             log { "Error updating metadata" }
             _state.update { it.copy(updateMetadataUiState = UiState.Failure(e)) }
             send(Event.UploadFailed(e))
+            uploadVideoTelemetry.uploadFailed(e.message ?: "")
         }
     }
 
