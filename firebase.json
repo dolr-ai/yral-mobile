@@ -5,6 +5,9 @@
       "codebase": "default",
       "runtime": "python311",
       "region": "us-central1",
+      "buildConfig": {
+        "buildCommand": "python3 -m pip install -r requirements.txt"
+      },
       "ignore": [
         "venv",
         ".git",

@@ -12,12 +12,23 @@ import iosSharedUmbrella
 @MainActor
 final class SessionManager: ObservableObject {
   @Published private(set) var state: AuthState = .uninitialized
-  private var bag: AnyCancellable?
+  lazy var phasePublisher: AnyPublisher<AuthState.Phase, Never> = {
+    let subject = CurrentValueSubject<AuthState.Phase, Never>(self.state.phase)
+    return self.$state
+      .map(\.phase)
+      .removeDuplicates()
+      .multicast(subject: subject)
+      .autoconnect()
+      .eraseToAnyPublisher()
+  }()
+
+  private var bag = Set<AnyCancellable>()
 
   init(auth: AuthClient) {
-    bag = auth.authStatePublisher
+    auth.authStatePublisher
       .receive(on: RunLoop.main)
       .assign(to: \.state, on: self)
+      .store(in: &bag)
   }
 
   func update(coins: UInt64) {

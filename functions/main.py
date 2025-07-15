@@ -12,8 +12,8 @@ import random
 
 firebase_admin.initialize_app()
 
-WIN_REWARD = 30
-LOSS_PENALTY = -10
+WIN_REWARD = 3
+LOSS_PENALTY = -1
 SHARDS = 10
 
 PID_REGEX = re.compile(r'^[A-Za-z0-9_-]{6,64}$')
@@ -73,7 +73,7 @@ def error_response(status: int, code: str, message: str):
     return make_response(jsonify(payload), status)
 
 # ─────────────────────  MAIN HANDLER  ────────────────────────
-@https_fn.on_request(region="us-central1")
+@https_fn.on_request(region="us-central1", enforce_app_check=True)
 def exchange_principal_id(request: Request):
     try:
         # 1. validate & auth -------------------------------------------------
@@ -160,7 +160,7 @@ def _push_delta(token: str, principal_id: str, delta: int) -> bool:
     except requests.RequestException:
         return False
     
-@https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"])
+@https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"], enforce_app_check=True)
 def cast_vote(request: Request):
     balance_update_token = os.environ["BALANCE_UPDATE_TOKEN"]
     try:

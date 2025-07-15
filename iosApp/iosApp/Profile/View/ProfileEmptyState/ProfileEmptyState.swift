@@ -28,7 +28,7 @@ struct ProfileEmptyStateView: View {
         Button(
           action: {
             AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-              event: UploadVideoClickedEventData(pageName: "Profile")
+              event: UploadVideoClickedEventData(pageName: "profile")
             )
             uploadVideoPressed()
           },

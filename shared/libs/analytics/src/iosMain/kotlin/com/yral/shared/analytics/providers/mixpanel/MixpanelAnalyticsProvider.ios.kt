@@ -22,7 +22,6 @@ actual class MixpanelAnalyticsProvider actual constructor(
     }
 
     override fun setUserProperties(user: User) {
-        mixpanel.identify(user.userId)
         val isCreatorCurrentStatus = mixpanel.currentSuperProperties().get("is_creator") as? Boolean
         val isCreator = user.isCreator ?: isCreatorCurrentStatus
         val superProps: MutableMap<Any?, Any?> =
@@ -30,8 +29,10 @@ actual class MixpanelAnalyticsProvider actual constructor(
                 "is_creator" to (isCreator ?: false),
                 "is_logged_in" to user.isLoggedIn,
                 "sats_balance" to user.satsBalance,
+                "canister_id" to user.canisterId,
             )
         if (user.isLoggedIn) {
+            mixpanel.identify(user.userId)
             superProps["user_id"] = user.userId
             superProps["visitor_id"] = null
         } else {

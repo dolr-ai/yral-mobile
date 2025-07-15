@@ -65,8 +65,7 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     didReceive response: UNNotificationResponse,
     withCompletionHandler completionHandler: @escaping () -> Void
   ) {
-    let content = response.notification.request.content
-    NotificationCenter.default.post(name: .videoUploadNotificationReceived, object: nil)
+    DeepLinkRouter.shared.pendingDestination = DeepLinkRouter.Destination.profileAfterUpload
     completionHandler()
   }
 
@@ -76,7 +75,7 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
   ) async -> UNNotificationPresentationOptions {
     ToastManager.showToast(type: .uploadSuccess) { }
     onTap: {
-      NotificationCenter.default.post(name: .videoUploadNotificationReceived, object: nil)
+      DeepLinkRouter.shared.pendingDestination = DeepLinkRouter.Destination.profileAfterUpload
     }
 
     return []
@@ -105,6 +104,7 @@ struct IosApp: App {
   @State private var accountDIContainer: AccountDIContainer?
   @State private var initializationError: Error?
   @StateObject private var session: SessionManager
+  @StateObject private var deepLinkRouter = DeepLinkRouter.shared
   @State private var authStatus: AuthState = .uninitialized
 
   init() {
@@ -118,6 +118,7 @@ struct IosApp: App {
   var body: some Scene {
     WindowGroup {
       contentView()
+        .environmentObject(deepLinkRouter)
     }
   }
 
@@ -135,6 +136,7 @@ struct IosApp: App {
         leaderboardView: leaderboardDIContainer.makeLeaderboardView()
       )
       .environmentObject(session)
+      .environmentObject(deepLinkRouter)
     } else if let error = initializationError {
       Text("Failed to initialize: \(error.localizedDescription)")
         .foregroundColor(.red)

@@ -4,16 +4,15 @@
 # We call this from an Xcode run script.
 ##################################################
 
-#!/bin/bash
-
-set -e
+set -euo pipefail
 
 if [[ -z "$PROJECT_DIR" ]]; then
   echo "Must provide PROJECT_DIR environment variable set to the Xcode project directory." 1>&2
   exit 1
 fi
 
-cd ""
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd -P)"
+MANIFEST_PATH="${SCRIPT_DIR}/../rust-agent/Cargo.toml"
 export PATH="$HOME/.cargo/bin:$PATH"
 
 # Workaround for macOS Big Sur / cargo-lipo
@@ -39,6 +38,15 @@ else
   fi
 fi
 
+echo "[rust-build] manifest : $MANIFEST_PATH"
+echo "[rust-build] targets  : $TARGETS"
+
+DEPLOY_VERSION="${IPHONEOS_DEPLOYMENT_TARGET:-${IPHONESIMULATOR_DEPLOYMENT_TARGET:-}}"
+if [[ -n "$DEPLOY_VERSION" ]]; then
+  export RUSTFLAGS="-C link-arg=-miphoneos-version-min=${DEPLOY_VERSION}"
+  echo "[rust-build] using RUSTFLAGS=${RUSTFLAGS}"
+fi
+
 ####################################################
 # 2) Decide debug or release based on $CONFIGURATION
 #    (set by Xcode for the active scheme)
@@ -46,13 +54,13 @@ fi
 if [[ "$CONFIGURATION" == "Release" ]]; then
   echo "BUILDING RUST LIBRARY FOR RELEASE ($TARGETS)"
   cargo lipo --release \
-    --manifest-path ../rust-agent/Cargo.toml \
+    --manifest-path "$MANIFEST_PATH" \
     --targets "$TARGETS" \
     -p yral-mobile-swift-binding
 else
   echo "BUILDING RUST LIBRARY FOR DEBUG ($TARGETS)"
   cargo lipo \
-    --manifest-path ../rust-agent/Cargo.toml \
+    --manifest-path "$MANIFEST_PATH" \
     --targets "$TARGETS" \
     -p yral-mobile-swift-binding
 fi
