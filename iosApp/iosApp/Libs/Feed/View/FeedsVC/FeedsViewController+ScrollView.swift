@@ -10,6 +10,7 @@ import iosSharedUmbrella
 
 extension FeedsViewController: UICollectionViewDelegate {
   func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
+    trackedVideoIDs.removeAll()
     guard scrollView.contentOffset.y > .zero else {
       storeThumbnail()
       return
@@ -24,22 +25,6 @@ extension FeedsViewController: UICollectionViewDelegate {
     let oldIndex = feedsPlayer.currentIndex
     let newIndex = visibleIndexPath.item
     if newIndex != oldIndex {
-      if newIndex < feedsDataSource.snapshot().numberOfItems {
-        let item = feedsDataSource.snapshot().itemIdentifiers[newIndex]
-        AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-          event: VideoImpressionEventData(
-            categoryName: self.feedType == .otherUsers ? .home : .profile,
-            videoId: item.videoID,
-            publisherUserId: item.principalID,
-            likeCount: Int64(item.likeCount),
-            shareCount: .zero,
-            viewCount: item.viewCount,
-            isGameEnabled: self.feedType == .otherUsers ? true : false,
-            gameType: .smiley,
-            isNsfw: false
-          )
-        )
-      }
       feedsPlayer.advanceToVideo(at: newIndex)
       feedsCV.reloadData()
     } else {
@@ -56,6 +41,10 @@ extension FeedsViewController: UICollectionViewDelegate {
     willDisplay cell: UICollectionViewCell,
     forItemAt indexPath: IndexPath
   ) {
+    guard let feedsCell = cell as? FeedsCell else { return }
+    let item = feedsDataSource.snapshot().itemIdentifiers[indexPath.item]
+    feedsCell.startListeningForFirstFrame()
+
     let feedsCount = feedsDataSource.snapshot().numberOfItems
     if indexPath.item >= feedsCount - Constants.thresholdForLoadingMoreResults, !loadMoreRequestMade {
       Task {
@@ -70,5 +59,28 @@ extension FeedsViewController: UICollectionViewDelegate {
         self.feedsDataSource.apply(snapshot, animatingDifferences: false)
       }
     }
+    guard !trackedVideoIDs.contains(item.videoID) else { return }
+    trackedVideoIDs.insert(item.videoID)
+    AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+      event: VideoImpressionEventData(
+        categoryName: self.feedType == .otherUsers ? .home : .profile,
+        videoId: item.videoID,
+        publisherUserId: item.principalID,
+        likeCount: Int64(item.likeCount),
+        shareCount: .zero,
+        viewCount: item.viewCount,
+        isGameEnabled: self.feedType == .otherUsers ? true : false,
+        gameType: .smiley,
+        isNsfw: false
+      )
+    )
+  }
+
+  func collectionView(
+    _ collectionView: UICollectionView,
+    didEndDisplaying cell: UICollectionViewCell,
+    forItemAt indexPath: IndexPath
+  ) {
+    (cell as? FeedsCell)?.stopListeningForFirstFrame()
   }
 }

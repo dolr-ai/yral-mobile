@@ -8,7 +8,9 @@
 
 import SwiftUI
 import iosSharedUmbrella
+import Combine
 
+// swiftlint: disable type_body_length
 struct ProfileView: View {
   @State var showAccountInfo = false
   @State var showEmptyState = true
@@ -20,7 +22,10 @@ struct ProfileView: View {
   @State private var showDeleteIndicator: Bool = false
   @State private var showFeeds = false
   @State private var currentIndex: Int = .zero
+  @State private var isPushNotificationFlow: Bool = false
+  @State private var isVisible = false
   @EnvironmentObject var session: SessionManager
+  @EnvironmentObject private var deepLinkRouter: DeepLinkRouter
   var uploadVideoPressed: (() -> Void) = {}
 
   @StateObject var viewModel: ProfileViewModel
@@ -82,32 +87,44 @@ struct ProfileView: View {
                       withAnimation(.easeInOut(duration: CGFloat.animationPeriod)) {
                         UIView.setAnimationsEnabled(false)
                         showDelete = true
-                        AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-                          event: DeleteVideoInitiatedEventData(
-                            pageName: .profile,
-                            videoId: info.videoId
+                        currentIndex = videos.firstIndex(where: { $0.postID == info.postID }) ?? .zero
+                        if currentIndex < videos.count {
+                          let item = viewModel.feeds[currentIndex]
+                          AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+                            event: VideoClickedEventData(
+                              videoId: item.videoID,
+                              publisherUserId: item.principalID,
+                              likeCount: Int64(item.likeCount),
+                              shareCount: Int64(Int.zero),
+                              viewCount: item.viewCount,
+                              isGameEnabled: false,
+                              gameType: GameType.smiley,
+                              isNsfw: false,
+                              ctaType: .delete_,
+                              pageName: .profile
+                            )
                           )
-                        )
+                        }
                       }
                     },
-                    onVideoTapped: { videoInfo in
-                      currentIndex = videos.firstIndex(where: { $0.postID == videoInfo.postID }) ?? .zero
-                      if currentIndex < videos.count {
-                        let item = viewModel.feeds[currentIndex]
-                        AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-                          event: VideoClickedEventData(
-                            videoId: item.videoID,
-                            publisherUserId: item.principalID,
-                            likeCount: Int64(item.likeCount),
-                            shareCount: .zero,
-                            viewCount: Int64(item.viewCount),
-                            isGameEnabled: false,
-                            gameType: .smiley,
-                            isNsfw: false,
-                            ctaType: .play,
-                            pageName: .profile
+                      onVideoTapped: { videoInfo in
+                        currentIndex = videos.firstIndex(where: { $0.postID == videoInfo.postID }) ?? .zero
+                        if currentIndex < viewModel.feeds.count {
+                          let item = viewModel.feeds[currentIndex]
+                          AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+                            event: VideoClickedEventData(
+                              videoId: item.videoID,
+                              publisherUserId: item.principalID,
+                              likeCount: Int64(item.likeCount),
+                              shareCount: .zero,
+                              viewCount: Int64(item.viewCount),
+                              isGameEnabled: false,
+                              gameType: .smiley,
+                              isNsfw: false,
+                              ctaType: .play,
+                              pageName: .profile
+                            )
                           )
-                        )
                       }
                       withAnimation {
                         showFeeds = true
@@ -116,7 +133,6 @@ struct ProfileView: View {
                     onLoadMore: {
                       Task { @MainActor in
                         await viewModel.getVideos()
-                        sendAnalyticsInfo()
                       }
                     }
                   )
@@ -143,13 +159,18 @@ struct ProfileView: View {
               showDeleteIndicator = true
               Task { @MainActor in
                 guard let deleteInfo else { return }
+                AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+                  event: DeleteVideoInitiatedEventData(
+                    pageName: .profile,
+                    videoId: deleteInfo.videoId
+                  )
+                )
                 await self.viewModel.deleteVideo(
                   request: DeleteVideoRequest(
                     postId: UInt64(deleteInfo.postID) ?? .zero,
                     videoId: deleteInfo.videoId
                   )
                 )
-                sendAnalyticsInfo()
               }
             },
             onCancel: { showDelete = false }
@@ -171,7 +192,6 @@ struct ProfileView: View {
           async let fetchProfile: () = viewModel.fetchProfileInfo()
           async let fetchVideos: () = viewModel.getVideos()
           _ = await (fetchProfile, fetchVideos)
-          sendAnalyticsInfo()
           AnalyticsModuleKt.getAnalyticsManager().trackEvent(
             event: ProfilePageViewedEventData(
               totalVideos: Int32(self.videos.count),
@@ -181,8 +201,12 @@ struct ProfileView: View {
           )
         }
         .onAppear {
+          isVisible = true
           UIRefreshControl.appearance().tintColor = .clear
           UIRefreshControl.appearance().addSubview(LottieRefreshSingletonView.shared)
+        }
+        .onDisappear {
+          isVisible = false
         }
       }
     }
@@ -204,30 +228,60 @@ struct ProfileView: View {
         if self.videos.isEmpty {
           showEmptyState = true
         }
+        self.sendAnalyticsInfo()
+        AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+          event: VideoDeletedEventData(
+            pageName: .profile,
+            videoId: self.deleteInfo?.videoId ?? "",
+            ctaType: .profileThumbnail
+          )
+        )
         self.showDeleteIndicator = false
       case .deleteVideoFailed:
         self.deleteInfo = nil
         self.showDeleteIndicator = false
-      case .refreshed(let videos):
-        self.videos = videos
+      case .refreshed(let refreshVideos):
+        if !refreshVideos.isEmpty {
+          self.videos = refreshVideos
+        }
         showEmptyState = self.videos.isEmpty
+        if isPushNotificationFlow {
+          showFeeds = true
+          isPushNotificationFlow = false
+        }
+        if !isLoadingFirstTime, isVisible {
+          sendAnalyticsInfo()
+          AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+            event: ProfilePageViewedEventData(
+              totalVideos: Int32(self.videos.count),
+              isOwnProfile: true,
+              publisherUserId: accountInfo?.canisterID ?? ""
+            )
+          )
+        }
       case .pageEndReached(let isEmpty):
         showEmptyState = isEmpty
       default:
         break
       }
+      viewModel.event = nil
     }
-    .onChange(of: session.state) { state in
-      switch state {
+    .onReceive(session.phasePublisher) { phase in
+      switch phase {
       case .loggedOut,
-          .ephemeralAuthentication,
-          .permanentAuthentication:
+          .ephemeral,
+          .permanent:
         Task {
           await viewModel.fetchProfileInfo()
           await refreshVideos(shouldPurge: true)
         }
       default: break
       }
+    }
+    .onReceive(deepLinkRouter.$pendingDestination.compactMap { $0 }) { dest in
+      guard dest == .profileAfterUpload else { return }
+      isPushNotificationFlow = true
+      Task { await refreshVideos(shouldPurge: false) }
     }
   }
 
@@ -240,13 +294,6 @@ struct ProfileView: View {
   func refreshVideos(shouldPurge: Bool) async {
     await self.viewModel.refreshVideos(
       request: RefreshVideosRequest(shouldPurge: shouldPurge)
-    )
-    sendAnalyticsInfo()
-  }
-
-  func refreshVideosFromPushNotifications() async {
-    await self.viewModel.refreshVideos(
-      request: RefreshVideosRequest(shouldPurge: false)
     )
   }
 }
@@ -299,3 +346,4 @@ extension ProfileView {
     static let deleteButtonTitle = "Delete"
   }
 }
+// swiftlint: enable type_body_length

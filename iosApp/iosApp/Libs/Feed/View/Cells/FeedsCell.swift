@@ -21,7 +21,7 @@ protocol FeedsCellProtocol: AnyObject {
   func loginTapped(provider: SocialProvider)
   func smileyTapped(index: Int, smiley: Smiley)
   func showGameResultBottomSheet(index: Int, gameResult: SmileyGameResultResponse)
-  func videoStarted(index: Int)
+  func videoStarted(index: Int, videoId: String)
 }
 
 // swiftlint: disable type_body_length
@@ -151,12 +151,6 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   override init(frame: CGRect) {
     super.init(frame: frame)
     setupUI()
-    NotificationCenter.default.addObserver(
-      self,
-      selector: #selector(handleFirstFrameReady(_:)),
-      name: .feedItemReady,
-      object: nil
-    )
   }
 
   required init?(coder: NSCoder) {
@@ -242,9 +236,10 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   }
 
   @objc private func handleFirstFrameReady(_ note: Notification) {
-    guard let idx = note.userInfo?["index"] as? Int, idx == index else { return }
+    guard let idx = note.userInfo?["index"] as? Int, idx == index,
+          let videoId = note.userInfo?["videoId"] as? String else { return }
     playerLayer?.isHidden = false
-    delegate?.videoStarted(index: index)
+    delegate?.videoStarted(index: index, videoId: videoId)
   }
 
   private func bindSession() {
@@ -500,6 +495,23 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
 
     cancellables.forEach({ $0.cancel() })
     cancellables.removeAll()
+  }
+
+  func startListeningForFirstFrame() {
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(handleFirstFrameReady(_:)),
+      name: .feedItemReady,
+      object: nil)
+
+  }
+
+  func stopListeningForFirstFrame() {
+    NotificationCenter.default.removeObserver(
+      self,
+      name: .feedItemReady,
+      object: nil
+    )
   }
 
   struct FeedCellInfo {

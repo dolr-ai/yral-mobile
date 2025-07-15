@@ -98,7 +98,8 @@ import GRPC
       dependencies: LeaderboardDIContainer.Dependencies(
         firebaseService: FirebaseService(),
         crashReporter: crashReporter,
-        authClient: authClient
+        authClient: authClient,
+        session: session
       )
     )
   }
