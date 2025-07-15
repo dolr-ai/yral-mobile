@@ -18,6 +18,6 @@ class RootTelemetry(
     }
 
     fun setUser(user: User?) {
-        user?.let { analyticsManager.setUserProperties(user) } ?: analyticsManager.reset()
+        user?.let { analyticsManager.setUserProperties(user) }
     }
 }
