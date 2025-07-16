@@ -74,6 +74,17 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     return getActionButton(withTitle: "", image: Constants.reportButtonImage)
   }()
 
+  private var accountImageView: UIImageView = {
+    let imageView = getUIImageView()
+    imageView.widthAnchor.constraint(equalToConstant: Constants.accountImageSize).isActive = true
+    imageView.heightAnchor.constraint(equalToConstant: Constants.accountImageSize).isActive = true
+    imageView.layer.cornerRadius = Constants.accountImageSize / 2
+    imageView.clipsToBounds = true
+    imageView.layer.borderWidth = Constants.accountImageBorderWidth
+    imageView.layer.borderColor = Constants.accountImageBorderColor
+    return imageView
+  }()
+
   let captionScrollView: UIScrollView = {
     let scrollView = UIScrollView()
     scrollView.translatesAutoresizingMaskIntoConstraints = false
@@ -446,6 +457,14 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     self.smileyGame = smileyGame
     self.sessionManager = session
 
+    actionsStackView.addArrangedSubview(accountImageView)
+
+    if let imageURL = profileInfo.imageURL {
+      loadImage(with: imageURL, placeholderImage: nil, on: accountImageView)
+    } else {
+      accountImageView.image = Constants.defaultProfileImage
+    }
+
     if feedInfo.feedType == .otherUsers {
       profileInfoView.set(data: profileInfo)
       profileInfoView.isHidden = false
@@ -527,17 +546,17 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
 
 extension FeedsCell {
   enum Constants {
-    static let stackViewSpacing = 14.0
+    static let stackViewSpacing = 26.0
     static let horizontalMargin = 16.0
-    static let stackViewHeight = 51.0
+    static let stackViewHeight = 98.0
     static let stackViewBottom = 90.0
     static let stackViewBGColor = UIColor.clear
     static let actionButtonFont = YralFont.pt16.semiBold.uiFont
     static let shareButtonImage = UIImage(named: "share_feed")
     static let deleteButtonImage = UIImage(named: "delete_video_profile")
     static let reportButtonImage = UIImage(named: "report_feed")
-    static let actionButtonHeight: CGFloat = 51.0
-    static let actionButtonWidth: CGFloat = 34.0
+    static let actionButtonHeight: CGFloat = 36.0
+    static let actionButtonWidth: CGFloat = 36.0
     static let actionButtonImagePadding = 4.0
     static let actionButtonTitleColor = YralColor.grey50.uiColor
     static let profileInfoLeading = 16.0
@@ -563,5 +582,9 @@ extension FeedsCell {
     static let resultAnimationDuration = 2.5
     static let resultAnimationDurationWithBS = 0.5
     static let scoreLabelDuration = 2.0
+
+    static let accountImageSize = 36.0
+    static let accountImageBorderWidth = 2.5
+    static let accountImageBorderColor = YralColor.grey50.uiColor.cgColor
   }
 }
