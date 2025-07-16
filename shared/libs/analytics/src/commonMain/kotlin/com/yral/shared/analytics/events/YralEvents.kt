@@ -4,6 +4,7 @@ import com.yral.shared.analytics.constants.FeatureEvents
 import com.yral.shared.analytics.constants.Features
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlin.math.abs
 
 @Serializable
 data class SplashScreenViewedEventData(
@@ -471,7 +472,7 @@ data class GamePlayedEventData(
         stakeType,
         optionChosen,
         gameResult,
-        wonLossAmount,
+        abs(wonLossAmount),
     )
 }
 
@@ -498,7 +499,7 @@ data class GameConcludedBottomsheetClickedEventData(
         stakeAmount,
         stakeType,
         gameResult,
-        wonLossAmount,
+        abs(wonLossAmount),
         ctaType,
     )
 }
