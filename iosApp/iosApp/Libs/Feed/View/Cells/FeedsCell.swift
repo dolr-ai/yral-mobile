@@ -22,6 +22,7 @@ protocol FeedsCellProtocol: AnyObject {
   func smileyTapped(index: Int, smiley: Smiley)
   func showGameResultBottomSheet(index: Int, gameResult: SmileyGameResultResponse)
   func videoStarted(index: Int, videoId: String)
+  func howToPlayButtonTapped(index: Int)
 }
 
 // swiftlint: disable type_body_length
@@ -121,11 +122,44 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     return label
   }()
 
+  lazy var howToPlayButtonView: UIView = {
+    let buttonView = FeedsCell.getUIView()
+    buttonView.layer.cornerRadius = Constants.howToPlayHeight / CGFloat.two
+    buttonView.backgroundColor = Constants.howToPlayBackgroundColor
+    buttonView.isUserInteractionEnabled = true
+    let tapGesture = UITapGestureRecognizer(target: self, action: #selector(howToPlayButtonTapped))
+    buttonView.addGestureRecognizer(tapGesture)
+    return buttonView
+  }()
+
+  let howToPlayImageBackground: UIView = {
+    let view = getUIView()
+    view.backgroundColor = Constants.howToPlayImageBackground
+    view.layer.cornerRadius = Constants.howToPlayImageBackgroundSize / CGFloat.two
+    return view
+  }()
+
+  let howToPlayImageView: UIImageView = {
+    let imageView = getUIImageView()
+    imageView.image = UIImage(named: Constants.howToPlayImage)
+    imageView.layer.cornerRadius = Constants.howToPlayImageSize / CGFloat.two
+    return imageView
+  }()
+
+  let howToPlayLabel: UILabel = {
+    let label = getUILabel()
+    label.text = Constants.howToPlayText
+    label.font = Constants.howToPlayTextFont
+    label.textColor = Constants.howToPlayTextColor
+    return label
+  }()
+
   var isCaptionExpanded = false
   var collapsedCaptionHeight: CGFloat = 0
   var expandedCaptionHeight: CGFloat = 0
   var isCaptionCollapsible = false
   var captionScrollViewHeightConstraint: NSLayoutConstraint!
+  var howToPlayWidthConstraint: NSLayoutConstraint!
 
   let resultAnimationPublisher = PassthroughSubject<SmileyGameResultResponse, Never>()
   let initialStatePublisher = PassthroughSubject<SmileyGame, Never>()
@@ -175,6 +209,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     setupStackView()
     setupCaptionLabel()
     addSignupOverlay()
+    setupHowToPlayView()
 
     let cellTapGesture = UITapGestureRecognizer(target: self, action: #selector(handleCellTap))
     cellTapGesture.cancelsTouchesInView = false
@@ -275,6 +310,48 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
         self?.profileInfoView.coinsView.coins = coins
       }
       .store(in: &cancellables)
+  }
+
+  private func setupHowToPlayView() {
+    contentView.addSubview(howToPlayButtonView)
+    howToPlayButtonView.addSubview(howToPlayImageBackground)
+    howToPlayButtonView.addSubview(howToPlayLabel)
+    howToPlayImageBackground.addSubview(howToPlayImageView)
+
+    howToPlayWidthConstraint = howToPlayButtonView.widthAnchor.constraint(equalToConstant: Constants.howToPlayMinWidth)
+    howToPlayWidthConstraint.isActive = true
+    howToPlayLabel.isHidden = true
+
+    NSLayoutConstraint.activate([
+      howToPlayButtonView.leadingAnchor.constraint(
+        equalTo: contentView.leadingAnchor,
+        constant: Constants.howToPlayLeading
+      ),
+      howToPlayButtonView.heightAnchor.constraint(equalToConstant: Constants.howToPlayHeight),
+      howToPlayButtonView.bottomAnchor.constraint(
+        equalTo: contentView.bottomAnchor,
+        constant: -Constants.howToPlayBottom
+      ),
+
+      howToPlayImageBackground.leadingAnchor.constraint(
+        equalTo: howToPlayButtonView.leadingAnchor,
+        constant: .zero
+      ),
+      howToPlayImageBackground.widthAnchor.constraint(equalToConstant: Constants.howToPlayImageBackgroundSize),
+      howToPlayImageBackground.heightAnchor.constraint(equalToConstant: Constants.howToPlayImageBackgroundSize),
+      howToPlayImageBackground.centerYAnchor.constraint(equalTo: howToPlayButtonView.centerYAnchor),
+
+      howToPlayImageView.widthAnchor.constraint(equalToConstant: Constants.howToPlayImageSize),
+      howToPlayImageView.heightAnchor.constraint(equalToConstant: Constants.howToPlayImageSize),
+      howToPlayImageView.centerXAnchor.constraint(equalTo: howToPlayImageBackground.centerXAnchor),
+      howToPlayImageView.centerYAnchor.constraint(equalTo: howToPlayImageBackground.centerYAnchor),
+
+      howToPlayLabel.leadingAnchor.constraint(
+        equalTo: howToPlayImageBackground.trailingAnchor,
+        constant: Constants.howToPlayTextLeading
+      ),
+      howToPlayLabel.centerYAnchor.constraint(equalTo: howToPlayButtonView.centerYAnchor)
+    ])
   }
 
   func setupSmileyGameView() {
@@ -415,6 +492,10 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
 
   @objc func reportButtonTapped() {
     delegate?.reportButtonTapped(index: index)
+  }
+
+  @objc func howToPlayButtonTapped() {
+    delegate?.howToPlayButtonTapped(index: index)
   }
 
   // swiftlint: disable function_parameter_count
@@ -586,5 +667,20 @@ extension FeedsCell {
     static let accountImageSize = 36.0
     static let accountImageBorderWidth = 2.5
     static let accountImageBorderColor = YralColor.grey50.uiColor.cgColor
+
+    static let howToPlayHeight = 44.0
+    static let howToPlayWidth = 126.0
+    static let howToPlayMinWidth = 44.0
+    static let howToPlayLeading = 20.0
+    static let howToPlayBottom = 90.0
+    static let howToPlayBackgroundColor = UIColor.black.withAlphaComponent(0.4)
+    static let howToPlayText = "How to Play"
+    static let howToPlayTextFont = YralFont.pt12.semiBold.uiFont
+    static let howToPlayTextColor = YralColor.grey0.uiColor
+    static let howToPlayTextLeading = 2.0
+    static let howToPlayImage = "how_to_play"
+    static let howToPlayImageSize = 32.0
+    static let howToPlayImageBackground = UIColor.black.withAlphaComponent(0.2)
+    static let howToPlayImageBackgroundSize = 44.0
   }
 }

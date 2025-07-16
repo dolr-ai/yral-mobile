@@ -240,6 +240,8 @@ extension FeedsViewController: FeedsCellProtocol {
     hostingController?.view.backgroundColor = .clear
     self.present(hostingController!, animated: true, completion: nil)
   }
+
+  func howToPlayButtonTapped(index: Int) {}
 }
 
 extension FeedsViewController: FeedsPlayerProtocol {
