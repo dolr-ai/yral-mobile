@@ -94,6 +94,7 @@ fun UploadVideoScreen(
         }
 
         is UiState.Failure -> {
+            LaunchedEffect(Unit) { viewModel.pushUploadFailed(uploadUiState.error) }
             @Suppress("ForbiddenComment")
             UploadVideoFailure(
                 onTryAgain = viewModel::onRetryClicked,

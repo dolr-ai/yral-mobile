@@ -322,7 +322,6 @@ class UploadVideoViewModel internal constructor(
             log { "Error updating metadata" }
             _state.update { it.copy(updateMetadataUiState = UiState.Failure(e)) }
             send(Event.UploadFailed(e))
-            uploadVideoTelemetry.uploadFailed(e.message ?: "")
         }
     }
 
@@ -390,6 +389,10 @@ class UploadVideoViewModel internal constructor(
 
     fun pushSelectFile() {
         uploadVideoTelemetry.selectFile()
+    }
+
+    fun pushUploadFailed(e: Throwable) {
+        uploadVideoTelemetry.uploadFailed(e.message ?: "")
     }
 
     private inline fun log(message: () -> String) {
