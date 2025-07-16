@@ -23,6 +23,7 @@ protocol FeedsCellProtocol: AnyObject {
   func showGameResultBottomSheet(index: Int, gameResult: SmileyGameResultResponse)
   func videoStarted(index: Int, videoId: String)
   func howToPlayButtonTapped(index: Int)
+  func accountButtonTapped(index: Int)
 }
 
 // swiftlint: disable type_body_length
@@ -187,10 +188,11 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     return button
   }
 
-  private var profileInfoView: ProfileInfoView = {
-    let profileInfoView = ProfileInfoView()
-    profileInfoView.heightAnchor.constraint(equalToConstant: Constants.profileInfoViewHeight).isActive = true
-    return profileInfoView
+  private lazy var headerView: HeaderView = {
+    let headerView = HeaderView()
+    headerView.heightAnchor.constraint(equalToConstant: Constants.headerViewHeight).isActive = true
+    headerView.delegate = self
+    return headerView
   }()
 
   override init(frame: CGRect) {
@@ -205,7 +207,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   private func setupUI() {
     addPlayerContainerView()
     setupLottieView()
-    setupProfileInfoView()
+    setupHeaderView()
     setupStackView()
     setupCaptionLabel()
     addSignupOverlay()
@@ -227,20 +229,20 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     contentView.layoutIfNeeded()
   }
 
-  func setupProfileInfoView() {
-    contentView.addSubview(profileInfoView)
+  func setupHeaderView() {
+    contentView.addSubview(headerView)
     NSLayoutConstraint.activate([
-      profileInfoView.leadingAnchor.constraint(
+      headerView.leadingAnchor.constraint(
         equalTo: contentView.leadingAnchor,
-        constant: Constants.profileInfoLeading
+        constant: Constants.headerViewHorizontal
       ),
-      profileInfoView.trailingAnchor.constraint(
+      headerView.trailingAnchor.constraint(
         equalTo: contentView.trailingAnchor,
-        constant: -Constants.profileInfoTrailing
+        constant: -Constants.headerViewHorizontal
       ),
-      profileInfoView.topAnchor.constraint(
+      headerView.topAnchor.constraint(
         equalTo: contentView.topAnchor,
-        constant: Constants.profileInfoTop
+        constant: Constants.headerViewTop
       )
     ])
   }
@@ -307,7 +309,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
       .map(\.coins)
       .removeDuplicates()
       .sink { [weak self] coins in
-        self?.profileInfoView.coinsView.coins = coins
+        self?.headerView.coinsView.coins = coins
       }
       .store(in: &cancellables)
   }
@@ -436,7 +438,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
 
   func startSmileyGamResultAnimation(for result: SmileyGameResultResponse, completion: @escaping () -> Void) {
     AudioPlayer.shared.play(named: result.outcome == "WIN" ? Constants.winSound : Constants.lossSound)
-    profileInfoView.coinsView.updateCoins(by: result.coinDelta)
+    headerView.coinsView.updateCoins(by: result.coinDelta)
     if showResultBottomSheet {
       let existingCount = userDefaults.integer(forKey: Self.resultBottomSheetKey)
       userDefaults.set(existingCount + Int.one, forKey: Self.resultBottomSheetKey)
@@ -502,7 +504,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   func configure(
     withPlayer feedsPlayer: FeedsPlayer,
     feedInfo: FeedCellInfo,
-    profileInfo: ProfileInfoView.ProfileInfo,
+    profileInfo: HeaderView.ProfileInfo,
     smileyGame: SmileyGame?,
     session: SessionManager,
     index: Int
@@ -547,8 +549,8 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     }
 
     if feedInfo.feedType == .otherUsers {
-      profileInfoView.set(data: profileInfo)
-      profileInfoView.isHidden = false
+      headerView.set(coins: profileInfo.coins)
+      headerView.isHidden = false
       captionScrollView.isHidden = true
       actionsStackView.addArrangedSubview(reportButton)
       deleteButton.removeFromSuperview()
@@ -556,7 +558,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     } else {
       reportButton.removeFromSuperview()
       actionsStackView.addArrangedSubview(deleteButton)
-      profileInfoView.isHidden = true
+      headerView.isHidden = true
       captionScrollView.isHidden = false
       setCaptionHeight(captionText: profileInfo.subtitle)
     }
@@ -583,7 +585,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     playerContainerView.sd_cancelCurrentImageLoad()
     playerContainerView.image = nil
 
-    profileInfoView.coinsView.resetUIState()
+    headerView.coinsView.resetUIState()
     lottieView.stop()
     smileyGameScoreLabel.transform = .identity
     smileyGameScoreLabel.isHidden = true
@@ -625,6 +627,12 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
 }
 // swiftlint: enable type_body_length
 
+extension FeedsCell: HeaderViewDelegate {
+  func didTapAccountButton() {
+    delegate?.accountButtonTapped(index: index)
+  }
+}
+
 extension FeedsCell {
   enum Constants {
     static let stackViewSpacing = 26.0
@@ -640,10 +648,9 @@ extension FeedsCell {
     static let actionButtonWidth: CGFloat = 36.0
     static let actionButtonImagePadding = 4.0
     static let actionButtonTitleColor = YralColor.grey50.uiColor
-    static let profileInfoLeading = 16.0
-    static let profileInfoTop = 8.0
-    static let profileInfoTrailing = 24.0
-    static let profileInfoViewHeight = 56.0
+    static let headerViewHorizontal = 26.0
+    static let headerViewTop = 8.0
+    static let headerViewHeight = 50.0
     static let defaultProfileImage = UIImage(named: "default_profile")
     static let playerPlaceHolderImage = UIImage(named: "player_placeholder")
     static let captionTitleFont = YralFont.pt14.regular.uiFont

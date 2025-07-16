@@ -18,9 +18,12 @@ final class FeedDIContainer {
     let socialSignInUseCase: SocialSignInUseCaseProtocol
     let session: SessionManager
     let castVoteUseCase: CastVoteUseCaseProtocol
+    let accountUseCase: AccountUseCaseProtocol
+    let accountRepository: AccountRepositoryProtocol
   }
 
   private let dependencies: Dependencies
+  private lazy var router = FeedRouter(feedDI: self)
 
   init(dependencies: Dependencies) {
     self.dependencies = dependencies
@@ -31,7 +34,8 @@ final class FeedDIContainer {
       feedsViewController: FeedsViewController(
         viewModel: makeFeedsViewModel(),
         session: dependencies.session,
-        crashReporter: dependencies.crashReporter
+        crashReporter: dependencies.crashReporter,
+        router: router
       ),
       showFeeds: showFeeds
     )
@@ -41,7 +45,8 @@ final class FeedDIContainer {
     FeedsViewController(
       viewModel: makeFeedsViewModel(),
       session: dependencies.session,
-      crashReporter: dependencies.crashReporter
+      crashReporter: dependencies.crashReporter,
+      router: router
     )
   }
 
@@ -72,5 +77,24 @@ final class FeedDIContainer {
       socialSignInUseCase: dependencies.socialSignInUseCase,
       castVoteUseCase: dependencies.castVoteUseCase
     )
+  }
+
+  func makeAccountViewModel() -> AccountViewModel {
+    AccountViewModel(
+      accountUseCase: dependencies.accountUseCase,
+      socialSignInUseCase: dependencies.socialSignInUseCase,
+      logoutUseCase: LogoutUseCase(
+        accountRepository: dependencies.accountRepository,
+        crashReporter: dependencies.crashReporter
+      ),
+      deleteUseCase: DeleteUseCase(
+        accountRepository: dependencies.accountRepository,
+        crashReporter: dependencies.crashReporter
+      )
+    )
+  }
+
+  func makeAccountView() -> AccountView {
+    AccountView(viewModel: makeAccountViewModel())
   }
 }

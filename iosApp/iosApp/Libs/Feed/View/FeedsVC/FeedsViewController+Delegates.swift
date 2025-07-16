@@ -242,6 +242,19 @@ extension FeedsViewController: FeedsCellProtocol {
   }
 
   func howToPlayButtonTapped(index: Int) {}
+
+  func accountButtonTapped(index: Int) {
+    guard let router = router else {
+      return
+    }
+
+    let accountView = router.getAccountView()
+    let hostingController = UIHostingController(rootView: accountView)
+    hostingController.view.backgroundColor = .clear
+    hostingController.extendedLayoutIncludesOpaqueBars = true
+    self.navigationController?.pushViewController(hostingController, animated: true)
+
+  }
 }
 
 extension FeedsViewController: FeedsPlayerProtocol {

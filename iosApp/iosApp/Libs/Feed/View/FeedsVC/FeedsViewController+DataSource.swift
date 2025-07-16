@@ -33,9 +33,8 @@ extension FeedsViewController {
               indexPath.item % Constants.overlayIndex == .zero
             ) && !session.state.isLoggedIn
           ),
-          profileInfo: ProfileInfoView.ProfileInfo(
+          profileInfo: HeaderView.ProfileInfo(
             imageURL: feed.profileImageURL,
-            title: feed.principalID,
             subtitle: feed.postDescription,
             coins: session.state.coins
           ),
@@ -57,9 +56,8 @@ extension FeedsViewController {
               indexPath.item % Constants.overlayIndex == .zero
             ) && !session.state.isLoggedIn
           ),
-          profileInfo: ProfileInfoView.ProfileInfo(
+          profileInfo: HeaderView.ProfileInfo(
             imageURL: feed.profileImageURL,
-            title: feed.principalID,
             subtitle: feed.postDescription,
             coins: session.state.coins
           ),
