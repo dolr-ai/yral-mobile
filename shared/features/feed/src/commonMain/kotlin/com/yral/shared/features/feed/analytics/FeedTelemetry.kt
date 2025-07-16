@@ -71,7 +71,6 @@ class FeedTelemetry(
         analyticsManager.trackEvent(
             event =
                 VideoImpressionEventData(
-                    categoryName = CategoryName.HOME,
                     videoId = feedDetails.videoID,
                     publisherUserId = feedDetails.principalID,
                     likeCount = feedDetails.likeCount.toLong(),

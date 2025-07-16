@@ -190,7 +190,6 @@ data class VideoStartedEventData(
 data class VideoImpressionEventData(
     @SerialName("event") override val event: String = FeatureEvents.VIDEO_IMPRESSION.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.FEED.getFeatureName(),
-    @SerialName("category_name") val categoryName: CategoryName,
     @SerialName("video_id") val videoId: String,
     @SerialName("publisher_user_id") val publisherUserId: String,
     @SerialName("like_count") val likeCount: Long,
@@ -202,7 +201,6 @@ data class VideoImpressionEventData(
 ) : BaseEventData(),
     EventData {
     constructor(
-        categoryName: CategoryName,
         videoId: String,
         publisherUserId: String,
         likeCount: Long,
@@ -214,7 +212,6 @@ data class VideoImpressionEventData(
     ) : this(
         FeatureEvents.VIDEO_IMPRESSION.getEventName(),
         Features.FEED.getFeatureName(),
-        categoryName,
         videoId,
         publisherUserId,
         likeCount,
