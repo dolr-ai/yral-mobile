@@ -1,4 +1,4 @@
-package com.yral.android.ui.components.singup
+package com.yral.android.ui.components.signup
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -30,7 +30,7 @@ import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.widgets.YralButton
 import com.yral.shared.features.auth.analytics.AuthTelemetry
-import com.yral.shared.koin.koinInstance
+import org.koin.compose.koinInject
 
 @Suppress("LongMethod")
 @Composable
@@ -38,7 +38,7 @@ fun SignupView(
     termsLink: String,
     onSignupClicked: () -> Unit,
     openTerms: () -> Unit,
-    authTelemetry: AuthTelemetry = koinInstance.get(),
+    authTelemetry: AuthTelemetry = koinInject(),
 ) {
     LaunchedEffect(Unit) { authTelemetry.onSignupViewed() }
     Column(

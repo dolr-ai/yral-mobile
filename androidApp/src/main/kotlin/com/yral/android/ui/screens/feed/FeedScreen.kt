@@ -50,10 +50,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import co.touchlab.kermit.Logger
 import com.yral.android.R
-import com.yral.android.ui.components.singup.SignupView
+import com.yral.android.ui.components.signup.SignupView
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.account.WebViewBottomSheet
