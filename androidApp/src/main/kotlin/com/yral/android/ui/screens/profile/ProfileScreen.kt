@@ -36,6 +36,7 @@ import androidx.compose.material3.pulltorefresh.pullToRefreshIndicator
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -88,6 +89,30 @@ fun ProfileScreen(
 ) {
     val profileVideos = viewModel.profileVideos.collectAsLazyPagingItems()
     val state by viewModel.state.collectAsStateWithLifecycle()
+
+    // Check if refresh is needed when screen is first shown
+    LaunchedEffect(Unit) {
+        viewModel.refreshIfNeeded()
+    }
+
+    // Trigger refresh when shouldRefresh is true
+    LaunchedEffect(state.shouldRefresh) {
+        if (state.shouldRefresh) {
+            profileVideos.refresh()
+            viewModel.onRefreshTriggered()
+        }
+    }
+
+    // Update first video ID when we have data
+    LaunchedEffect(profileVideos.itemCount) {
+        if (profileVideos.itemCount > 0 && state.firstVideoId == null) {
+            val firstVideo = profileVideos[0]
+            if (firstVideo != null) {
+                viewModel.updateFirstVideoId(firstVideo.videoID)
+            }
+        }
+    }
+
     val backHandlerEnabled by remember(state.videoView) {
         mutableStateOf(state.videoView is VideoViewState.ViewingReels)
     }
@@ -124,6 +149,7 @@ fun ProfileScreen(
                     viewModel.closeVideoReel()
                 }
             }
+
             VideoViewState.None -> {
                 MainContent(
                     modifier = Modifier.fillMaxSize(),
@@ -141,6 +167,7 @@ fun ProfileScreen(
                             postId = video.postID.toULong(),
                         )
                     },
+                    updateFirstVideoId = { viewModel.updateFirstVideoId(it) },
                 )
             }
         }
@@ -159,6 +186,7 @@ fun ProfileScreen(
                 onDelete = { viewModel.deleteVideo() },
             )
         }
+
         is DeleteConfirmationState.Error -> {
             YralErrorMessage(
                 title = stringResource(R.string.oops),
@@ -169,6 +197,7 @@ fun ProfileScreen(
                 sheetState = bottomSheetState,
             )
         }
+
         DeleteConfirmationState.None, is DeleteConfirmationState.InProgress -> Unit
     }
 }
@@ -183,6 +212,7 @@ private fun MainContent(
     uploadVideo: () -> Unit,
     openVideoReel: (Int) -> Unit,
     onDeleteVideo: (FeedDetails) -> Unit,
+    updateFirstVideoId: (videoId: String?) -> Unit,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         ProfileHeader()
@@ -194,9 +224,11 @@ private fun MainContent(
             is LoadState.Loading -> {
                 LoadingContent()
             }
+
             is LoadState.Error -> {
                 ErrorContent(message = stringResource(R.string.error_loading_videos))
             }
+
             is LoadState.NotLoading -> {
                 SuccessContent(
                     gridState = gridState,
@@ -205,6 +237,7 @@ private fun MainContent(
                     uploadVideo = uploadVideo,
                     openVideoReel = openVideoReel,
                     onDeleteVideo = onDeleteVideo,
+                    updateFirstVideoId = updateFirstVideoId,
                 )
             }
         }
@@ -298,6 +331,7 @@ private fun SuccessContent(
     uploadVideo: () -> Unit,
     openVideoReel: (Int) -> Unit,
     onDeleteVideo: (FeedDetails) -> Unit,
+    updateFirstVideoId: (videoId: String?) -> Unit,
 ) {
     Column(
         modifier =
@@ -315,7 +349,9 @@ private fun SuccessContent(
 
         PullToRefreshBox(
             isRefreshing = isRefreshing,
-            onRefresh = { profileVideos.refresh() },
+            onRefresh = {
+                profileVideos.refresh().also { updateFirstVideoId(null) }
+            },
             state = pullRefreshState,
             indicator = {
                 Box(
