@@ -86,7 +86,7 @@ class FeedTelemetry(
 
     fun trackVideoStarted(feedDetails: FeedDetails) {
         if (trackedStated.contains(feedDetails.videoID)) return
-        trackedStated += feedDetails.videoID
+        // trackedStated += feedDetails.videoID
         analyticsManager.trackEvent(
             event =
                 VideoStartedEventData(
