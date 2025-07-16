@@ -71,6 +71,7 @@ import com.yral.android.ui.widgets.YralErrorMessage
 import com.yral.android.ui.widgets.YralGradientButton
 import com.yral.android.ui.widgets.YralLoader
 import com.yral.android.ui.widgets.YralLottieAnimation
+import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.features.account.viewmodel.AccountsViewModel.Companion.TERMS_OF_SERVICE_URL
 import com.yral.shared.features.feed.viewmodel.FeedState
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
@@ -343,6 +344,7 @@ private fun SignupNudge(onSignupClicked: () -> Unit) {
             verticalArrangement = Arrangement.Top,
         ) {
             SignupView(
+                pageName = SignupPageName.FEED,
                 termsLink = TERMS_OF_SERVICE_URL,
                 openTerms = { link = TERMS_OF_SERVICE_URL },
                 onSignupClicked = onSignupClicked,

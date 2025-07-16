@@ -29,18 +29,20 @@ import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.widgets.YralButton
+import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.features.auth.analytics.AuthTelemetry
 import org.koin.compose.koinInject
 
 @Suppress("LongMethod")
 @Composable
 fun SignupView(
+    pageName: SignupPageName,
     termsLink: String,
     onSignupClicked: () -> Unit,
     openTerms: () -> Unit,
     authTelemetry: AuthTelemetry = koinInject(),
 ) {
-    LaunchedEffect(Unit) { authTelemetry.onSignupViewed() }
+    LaunchedEffect(Unit) { authTelemetry.onSignupViewed(pageName) }
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(46.dp, Alignment.Top),

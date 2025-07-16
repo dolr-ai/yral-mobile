@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import com.yral.android.ui.components.signup.SignupView
 import com.yral.android.ui.screens.account.LoginBottomSheetConstants.BOTTOM_SHEET_SPACER_PERCENT_TO_SCREEN
 import com.yral.android.ui.widgets.YralBottomSheet
+import com.yral.shared.analytics.events.SignupPageName
 
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -47,6 +48,7 @@ internal fun LoginBottomSheet(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 SignupView(
+                    pageName = SignupPageName.MENU,
                     onSignupClicked = onSignupClicked,
                     termsLink = termsLink,
                     openTerms = openTerms,

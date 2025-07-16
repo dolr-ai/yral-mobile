@@ -22,11 +22,13 @@ data class SplashScreenViewedEventData(
 data class AuthScreenViewedEventData(
     @SerialName("event") override val event: String = FeatureEvents.AUTH_SCREEN_VIEWED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.AUTH.getFeatureName(),
+    @SerialName("page_name") val pageName: SignupPageName,
 ) : BaseEventData(),
     EventData {
-    public constructor() : this(
+    public constructor(pageName: SignupPageName) : this(
         FeatureEvents.AUTH_SCREEN_VIEWED.getEventName(),
         Features.AUTH.getFeatureName(),
+        pageName,
     )
 }
 

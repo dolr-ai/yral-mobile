@@ -13,8 +13,8 @@ import com.yral.shared.analytics.events.SignupSuccessEventData
 class AuthTelemetry(
     private val analyticsManager: AnalyticsManager,
 ) {
-    fun onSignupViewed() {
-        analyticsManager.trackEvent(AuthScreenViewedEventData())
+    fun onSignupViewed(pageName: SignupPageName) {
+        analyticsManager.trackEvent(AuthScreenViewedEventData(pageName = pageName))
     }
 
     fun onSignupJourneySelected() {
