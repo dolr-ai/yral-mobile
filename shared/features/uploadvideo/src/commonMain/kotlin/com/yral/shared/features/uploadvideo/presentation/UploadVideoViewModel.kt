@@ -78,6 +78,7 @@ class UploadVideoViewModel internal constructor(
     }
 
     fun onUploadButtonClicked() {
+        uploadVideoTelemetry.uploadInitiated()
         validateAndPublish()
     }
 
@@ -103,7 +104,6 @@ class UploadVideoViewModel internal constructor(
     private suspend fun performBackgroundUpload(filePath: String) {
         try {
             log { "performBackgroundUpload" }
-            uploadVideoTelemetry.uploadInitiated()
             _state.update {
                 it.copy(fileUploadUiState = UiState.InProgress(0f))
             }
