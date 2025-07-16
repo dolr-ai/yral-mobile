@@ -13,7 +13,7 @@ android {
     namespace = "com.yral.android"
     defaultConfig {
         applicationId = "com.yral.android"
-        versionCode = 1
+        versionCode = 2
         versionName = "1.0.0"
         ndkVersion = "28.0.13004108"
     }
@@ -61,6 +61,7 @@ android {
             applicationIdSuffix = ".staging"
         }
         create("prod") {
+            applicationId = "com.yral.android.app"
             dimension = "version"
             signingConfig = signingConfigs.getByName("release")
         }
