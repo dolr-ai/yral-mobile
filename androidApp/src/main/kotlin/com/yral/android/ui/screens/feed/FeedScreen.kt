@@ -437,6 +437,7 @@ private fun BottomView(
                     .paint(
                         painter = painterResource(R.drawable.shadow_bottom),
                         contentScale = ContentScale.FillBounds,
+                        alpha = 0.3f,
                     ),
         ) { }
         ReportVideo(
