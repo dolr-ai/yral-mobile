@@ -54,6 +54,22 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     }
   )
 
+  private let topGradientImage: UIImageView = {
+    let imageView = getUIImageView()
+    imageView.image = Constants.topGradientImage
+    imageView.contentMode = .scaleToFill
+    imageView.clipsToBounds = true
+    return imageView
+  }()
+
+  private let bottomGradientImage: UIImageView = {
+    let imageView = getUIImageView()
+    imageView.image = Constants.bottomGradientImage
+    imageView.contentMode = .scaleToFill
+    imageView.clipsToBounds = true
+    return imageView
+  }()
+
   var actionsStackView: UIStackView = {
     let stackView = getUIStackView()
     stackView.axis = .vertical
@@ -207,6 +223,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   private func setupUI() {
     addPlayerContainerView()
     setupLottieView()
+    setupGradientImages()
     setupHeaderView()
     setupStackView()
     setupCaptionLabel()
@@ -227,6 +244,23 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
       playerContainerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor)
     ])
     contentView.layoutIfNeeded()
+  }
+
+  private func setupGradientImages() {
+    contentView.addSubview(topGradientImage)
+    contentView.addSubview(bottomGradientImage)
+
+    NSLayoutConstraint.activate([
+      topGradientImage.leadingAnchor.constraint(equalTo: leadingAnchor),
+      topGradientImage.trailingAnchor.constraint(equalTo: trailingAnchor),
+      topGradientImage.topAnchor.constraint(equalTo: topAnchor),
+      topGradientImage.heightAnchor.constraint(equalToConstant: Constants.topGradientImageHeight),
+
+      bottomGradientImage.leadingAnchor.constraint(equalTo: leadingAnchor),
+      bottomGradientImage.trailingAnchor.constraint(equalTo: trailingAnchor),
+      bottomGradientImage.bottomAnchor.constraint(equalTo: bottomAnchor),
+      bottomGradientImage.heightAnchor.constraint(equalToConstant: Constants.bottomGradientImageHeight)
+    ])
   }
 
   func setupHeaderView() {
@@ -689,5 +723,10 @@ extension FeedsCell {
     static let howToPlayImageSize = 32.0
     static let howToPlayImageBackground = UIColor.black.withAlphaComponent(0.2)
     static let howToPlayImageBackgroundSize = 44.0
+
+    static let topGradientImage = UIImage(named: "feed_top_gradient")
+    static let bottomGradientImage = UIImage(named: "feed_bottom_gradient")
+    static let topGradientImageHeight = 150.0
+    static let bottomGradientImageHeight = 300.0
   }
 }
