@@ -266,12 +266,13 @@ class FeedViewModel(
         totalTime: Int,
     ) {
         coroutineScope.launch {
-            // Get current feed details
-            // is here because we do not want to track events for video being played in loop
             val currentFeedDetails = _state.value.feedDetails[_state.value.currentPageOfFeed]
             when (currentTime) {
                 in ANALYTICS_VIDEO_STARTED_RANGE -> feedTelemetry.trackVideoStarted(currentFeedDetails)
-                in ANALYTICS_VIDEO_VIEWED_RANGE -> feedTelemetry.trackVideoViewed(currentFeedDetails)
+                in ANALYTICS_VIDEO_VIEWED_RANGE -> {
+                    feedTelemetry.trackVideoViewed(currentFeedDetails)
+                    feedTelemetry.resetVideoStarted(currentFeedDetails.videoID)
+                }
             }
 
             // If we've already logged full video watched, no need to continue processing

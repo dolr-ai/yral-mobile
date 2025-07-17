@@ -85,7 +85,7 @@ class FeedTelemetry(
 
     fun trackVideoStarted(feedDetails: FeedDetails) {
         if (trackedStated.contains(feedDetails.videoID)) return
-        // trackedStated += feedDetails.videoID
+        trackedStated += feedDetails.videoID
         analyticsManager.trackEvent(
             event =
                 VideoStartedEventData(
@@ -99,6 +99,10 @@ class FeedTelemetry(
                     gameType = GameType.SMILEY,
                 ),
         )
+    }
+
+    fun resetVideoStarted(videoID: String) {
+        trackedStated -= videoID
     }
 
     fun trackVideoViewed(feedDetails: FeedDetails) {
