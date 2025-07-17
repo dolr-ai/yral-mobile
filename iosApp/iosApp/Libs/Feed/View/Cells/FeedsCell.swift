@@ -408,7 +408,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
 
   // swiftlint: disable function_parameter_count
   func configure(
-    withPlayer feedsPlayer: FeedsPlayer,
+    withPlayer feedsPlayer: FeedsPlayer?,
     feedInfo: FeedCellInfo,
     profileInfo: ProfileInfoView.ProfileInfo,
     smileyGame: SmileyGame?,
@@ -427,19 +427,20 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     playerLayer?.removeFromSuperlayer()
     playerLayer?.player = nil
     playerLayer = nil
-    guard let player = feedsPlayer.player as? AVQueuePlayer else { return }
-    let layer = AVPlayerLayer(player: player)
-    layer.videoGravity = .resizeAspectFill
 
-    let isCurrentReel = index == feedsPlayer.currentIndex
-    let itemReady = player.currentItem?.status == .readyToPlay
-    let alreadyPlaying = player.timeControlStatus == .playing
+    if let player = feedsPlayer?.player as? AVQueuePlayer {
+      let layer = AVPlayerLayer(player: player)
+      layer.videoGravity = .resizeAspectFill
 
-    layer.isHidden = !(isCurrentReel && alreadyPlaying && itemReady)
+      let isCurrentReel = index == feedsPlayer?.currentIndex
+      let itemReady = player.currentItem?.status == .readyToPlay
+      let alreadyPlaying = player.timeControlStatus == .playing
 
-    playerContainerView.layer.addSublayer(layer)
-    playerLayer = layer
-    playerLayer?.frame = contentView.bounds
+      layer.isHidden = !(isCurrentReel && alreadyPlaying && itemReady)
+      playerContainerView.layer.addSublayer(layer)
+      playerLayer = layer
+      playerLayer?.frame = contentView.bounds
+    }
 
     self.index = index
     self.feedType = feedInfo.feedType

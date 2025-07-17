@@ -9,7 +9,6 @@ import UIKit
 import iosSharedUmbrella
 
 extension FeedsViewController: UICollectionViewDelegate {
-
   func scrollViewDidScroll(_ scrollView: UIScrollView) {
     let offsetY = scrollView.contentOffset.y
     defer { lastContentOffsetY = offsetY }
@@ -30,9 +29,16 @@ extension FeedsViewController: UICollectionViewDelegate {
     let ratio = intersection.height / attrs.frame.height
 
     if ratio >= .half, candidate != current {
-      print("Sarvesh switch: current=\(current) -> candidate=\(candidate) ratio=\(ratio)")
+      let previous = current
       storeThumbnail()
       feedsPlayer.advanceToVideo(at: candidate)
+      var snapshot = feedsDataSource.snapshot()
+      let ids = snapshot.itemIdentifiers
+      guard previous < ids.count, candidate < ids.count else { return }
+      snapshot.reloadItems([ids[previous], ids[candidate]])
+      feedsDataSource.apply(snapshot, animatingDifferences: false)
+    } else {
+      feedsPlayer.play()
     }
   }
 
@@ -40,6 +46,14 @@ extension FeedsViewController: UICollectionViewDelegate {
     trackedVideoIDs.removeAll()
     storeThumbnail()
     feedsPlayer.pause()
+  }
+
+  func scrollViewWillEndDragging(
+    _ scrollView: UIScrollView,
+    withVelocity velocity: CGPoint,
+    targetContentOffset: UnsafeMutablePointer<CGPoint>
+  ) {
+    feedsPlayer.play()
   }
 
   func scrollViewShouldScrollToTop(_ scrollView: UIScrollView) -> Bool {
