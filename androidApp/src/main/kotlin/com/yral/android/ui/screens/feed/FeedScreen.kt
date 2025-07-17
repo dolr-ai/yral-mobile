@@ -344,7 +344,7 @@ private fun SignupNudge(onSignupClicked: () -> Unit) {
             verticalArrangement = Arrangement.Top,
         ) {
             SignupView(
-                pageName = SignupPageName.FEED,
+                pageName = SignupPageName.HOME,
                 termsLink = TERMS_OF_SERVICE_URL,
                 openTerms = { link = TERMS_OF_SERVICE_URL },
                 onSignupClicked = onSignupClicked,

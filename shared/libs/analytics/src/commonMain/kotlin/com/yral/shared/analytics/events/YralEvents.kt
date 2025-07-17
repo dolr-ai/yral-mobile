@@ -756,8 +756,8 @@ enum class AuthJourney {
 
 @Serializable
 enum class SignupPageName {
-    @SerialName("feed")
-    FEED,
+    @SerialName("home")
+    HOME,
 
     @SerialName("menu")
     MENU,
