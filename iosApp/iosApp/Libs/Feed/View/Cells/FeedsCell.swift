@@ -429,7 +429,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     playerLayer = nil
     guard let player = feedsPlayer.player as? AVQueuePlayer else { return }
     let layer = AVPlayerLayer(player: player)
-    layer.videoGravity = .resize
+    layer.videoGravity = .resizeAspectFill
 
     let isCurrentReel = index == feedsPlayer.currentIndex
     let itemReady = player.currentItem?.status == .readyToPlay
