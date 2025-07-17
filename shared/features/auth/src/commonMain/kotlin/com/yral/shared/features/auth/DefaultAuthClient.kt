@@ -3,6 +3,7 @@ package com.yral.shared.features.auth
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.analytics.AnalyticsManager
+import com.yral.shared.core.session.DELAY_FOR_SESSION_PROPERTIES
 import com.yral.shared.core.session.Session
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
@@ -85,6 +86,7 @@ class DefaultAuthClient(
                             resetCanister = true,
                             skipFirebaseAuth = false,
                         )
+                        sessionManager.updateSocialSignInStatus(false)
                     }.onFailure { throw YralAuthException("obtaining anonymous token failed - ${it.message}") }
             }.onFailure { throw YralAuthException("sign out of firebase failed - ${it.message}") }
     }
@@ -344,7 +346,7 @@ class DefaultAuthClient(
                 sessionManager.updateSocialSignInStatus(true)
                 scope.launch {
                     // Minor delay for super properties to be set
-                    delay(DELAY_FOR_AUTH_SUCCESS_EVENT)
+                    delay(DELAY_FOR_SESSION_PROPERTIES)
                     authTelemetry.onAuthSuccess(
                         isNewUser = currentUserPrincipal == sessionManager.userPrincipal,
                     )
@@ -410,9 +412,5 @@ class DefaultAuthClient(
         preferences.remove(PrefKeys.IDENTITY.name)
         preferences.remove(PrefKeys.CANISTER_ID.name)
         preferences.remove(PrefKeys.USER_PRINCIPAL.name)
-    }
-
-    companion object {
-        private const val DELAY_FOR_AUTH_SUCCESS_EVENT = 500L
     }
 }

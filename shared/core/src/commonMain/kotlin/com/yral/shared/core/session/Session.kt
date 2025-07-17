@@ -7,7 +7,7 @@ data class Session(
 )
 
 data class SessionProperties(
-    val coinBalance: Long,
-    val isSocialSignIn: Boolean,
-    val profileVideosCount: Int,
+    val coinBalance: Long? = null,
+    val isSocialSignIn: Boolean? = null,
+    val profileVideosCount: Int? = null,
 )

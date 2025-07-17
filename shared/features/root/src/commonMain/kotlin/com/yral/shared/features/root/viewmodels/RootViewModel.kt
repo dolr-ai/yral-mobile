@@ -72,8 +72,8 @@ class RootViewModel(
                         userId = userPrincipal,
                         canisterId = canisterID,
                         isLoggedIn = properties.isSocialSignIn,
-                        isCreator = properties.profileVideosCount > 0,
-                        satsBalance = properties.coinBalance.toDouble(),
+                        isCreator = properties.profileVideosCount?.let { it > 0 },
+                        satsBalance = properties.coinBalance?.toDouble(),
                     )
                 }
             }

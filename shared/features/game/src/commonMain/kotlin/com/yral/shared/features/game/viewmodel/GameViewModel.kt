@@ -7,6 +7,7 @@ import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.analytics.events.GameConcludedCtaType
 import com.yral.shared.core.dispatchers.AppDispatchers
+import com.yral.shared.core.session.DELAY_FOR_SESSION_PROPERTIES
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.features.game.analytics.GameTelemetry
 import com.yral.shared.features.game.domain.CastVoteUseCase
@@ -14,7 +15,6 @@ import com.yral.shared.features.game.domain.GetGameIconsUseCase
 import com.yral.shared.features.game.domain.GetGameRulesUseCase
 import com.yral.shared.features.game.domain.models.AboutGameItem
 import com.yral.shared.features.game.domain.models.CastVoteRequest
-import com.yral.shared.features.game.domain.models.CastVoteResponse
 import com.yral.shared.features.game.domain.models.GameIcon
 import com.yral.shared.features.game.domain.models.VoteResult
 import com.yral.shared.features.game.domain.models.toVoteResult
@@ -25,6 +25,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -70,10 +71,8 @@ class GameViewModel(
             // Observe coin balance changes
             sessionManager.observeSessionProperties().collect { properties ->
                 Logger.d("xxxx coin balance collected ${properties.coinBalance}")
-                _state.update { currentState ->
-                    currentState.copy(
-                        coinBalance = properties.coinBalance,
-                    )
+                properties.coinBalance?.let { balance ->
+                    _state.update { it.copy(coinBalance = balance) }
                 }
             }
         }
@@ -134,20 +133,11 @@ class GameViewModel(
                                 gameIconId = icon.id,
                             ),
                     ).onSuccess { result ->
-                        when (result) {
-                            is CastVoteResponse.Success -> {
-                                gameTelemetry.onGamePlayed(
-                                    feedDetails = feedDetails,
-                                    lossPenalty = _state.value.lossPenalty,
-                                    optionChosen = icon.imageName.name.lowercase(),
-                                    coinDelta = result.coinDelta,
-                                )
-                            }
-                            else -> Unit
-                        }
                         setFeedGameResult(
                             videoId = feedDetails.videoID,
                             voteResult = result.toVoteResult(),
+                            feedDetails = feedDetails,
+                            icon = icon,
                         )
                     }.onFailure { setLoading(false) }
             }
@@ -204,6 +194,8 @@ class GameViewModel(
     private fun setFeedGameResult(
         videoId: String,
         voteResult: VoteResult,
+        feedDetails: FeedDetails,
+        icon: GameIcon,
     ) {
         coroutineScope.launch {
             // Get current state once to avoid multiple reads
@@ -243,6 +235,14 @@ class GameViewModel(
 
             // Update session after state update is complete
             sessionManager.updateCoinBalance(newCoinBalance)
+            // Minor delay for super properties to be set
+            delay(DELAY_FOR_SESSION_PROPERTIES)
+            gameTelemetry.onGamePlayed(
+                feedDetails = feedDetails,
+                lossPenalty = _state.value.lossPenalty,
+                optionChosen = icon.imageName.name.lowercase(),
+                coinDelta = voteResult.coinDelta,
+            )
         }
     }
 

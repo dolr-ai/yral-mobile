@@ -34,7 +34,7 @@ actual class MixpanelAnalyticsProvider actual constructor(
                 "sats_balance" to user.satsBalance,
                 "canister_id" to user.canisterId,
             )
-        if (user.isLoggedIn) {
+        if (user.isLoggedIn == true) {
             mixpanel.identify(user.userId)
             superProps["user_id"] = user.userId
             superProps["visitor_id"] = null

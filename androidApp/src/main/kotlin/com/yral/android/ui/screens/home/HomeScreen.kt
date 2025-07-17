@@ -39,6 +39,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.paging.LoadState
+import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.yral.android.R
 import com.yral.android.ui.components.hashtagInput.keyboardHeightAsState
@@ -50,12 +52,14 @@ import com.yral.android.ui.screens.leaderboard.LeaderboardScreen
 import com.yral.android.ui.screens.profile.ProfileScreen
 import com.yral.android.ui.screens.uploadVideo.UploadVideoScreen
 import com.yral.shared.analytics.events.CategoryName
+import com.yral.shared.core.session.SessionKey
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.session.getKey
 import com.yral.shared.features.account.viewmodel.AccountsViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.koin.koinInstance
+import com.yral.shared.rust.domain.models.FeedDetails
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -110,10 +114,7 @@ private fun HomeScreenContent(
     val feedViewModel = koinViewModel<FeedViewModel>(key = "feed-$sessionKey")
     val profileViewModel = koinViewModel<ProfileViewModel>(key = "profile-$sessionKey")
     val accountViewModel = koinViewModel<AccountsViewModel>(key = "account-$sessionKey")
-    val profileVideos = profileViewModel.profileVideos.collectAsLazyPagingItems()
-    LaunchedEffect(profileVideos.itemCount) {
-        updateProfileVideosCount(profileVideos.itemCount)
-    }
+    val profileVideos = getProfileVideos(profileViewModel, sessionKey, updateProfileVideosCount)
     when (currentTab) {
         HomeTab.HOME.title ->
             FeedScreen(
@@ -158,13 +159,37 @@ private fun HomeScreenContent(
         }
 
         HomeTab.PROFILE.title -> {
-            ProfileScreen(
-                modifier = modifier,
-                uploadVideo = { updateCurrentTab(HomeTab.UPLOAD_VIDEO) },
-                viewModel = profileViewModel,
-                profileVideos = profileVideos,
-            )
+            profileVideos?.let {
+                ProfileScreen(
+                    modifier = modifier,
+                    uploadVideo = { updateCurrentTab(HomeTab.UPLOAD_VIDEO) },
+                    viewModel = profileViewModel,
+                    profileVideos = profileVideos,
+                )
+            }
         }
+    }
+}
+
+@Composable
+private fun getProfileVideos(
+    profileViewModel: ProfileViewModel,
+    sessionKey: String,
+    updateProfileVideosCount: (count: Int) -> Unit,
+): LazyPagingItems<FeedDetails>? {
+    if (sessionKey != SessionKey.INITIAL.name) {
+        val profileVideos =
+            profileViewModel
+                .profileVideos
+                .collectAsLazyPagingItems()
+        LaunchedEffect(profileVideos.loadState, profileVideos.itemCount) {
+            if (profileVideos.loadState.refresh is LoadState.NotLoading) {
+                updateProfileVideosCount(profileVideos.itemCount)
+            }
+        }
+        return profileVideos
+    } else {
+        return null
     }
 }
 
