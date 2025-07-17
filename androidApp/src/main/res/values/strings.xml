@@ -103,4 +103,10 @@
     <string name="permission_required_title">Permission required!</string>
     <string name="permission_required_description">To upload videos, please allow access to your device\'s media files in Settings. You can choose \"Allow all\" or \"Allow limited access\" - both work for uploading videos.</string>
     <string name="go_to_settings">Go to settings</string>
+
+    <!-- Facebook SDK Configuration -->
+    <string name="facebook_app_id">4094678660808510</string>
+    <string name="facebook_client_token">12e001a6a4b9c84c8e617275f274a1a1</string>
+    <!-- MixPanel SDK Configuration -->
+    <string name="mixpanel_token">609abef3172b5fc64554f5ac6c77414d</string>
 </resources>

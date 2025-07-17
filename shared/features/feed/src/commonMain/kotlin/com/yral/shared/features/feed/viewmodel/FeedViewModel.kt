@@ -4,25 +4,20 @@ import androidx.lifecycle.ViewModel
 import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
-import com.yral.shared.analytics.AnalyticsManager
-import com.yral.shared.analytics.events.DuplicatePostsEvent
-import com.yral.shared.analytics.events.EmptyColdStartFeedEvent
-import com.yral.shared.analytics.events.VideoDurationWatchedEventData
+import com.yral.shared.analytics.events.CtaType
 import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.utils.filterFirstNSuspendFlow
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.AuthClientFactory
 import com.yral.shared.features.auth.utils.SocialProvider
-import com.yral.shared.features.feed.data.models.toVideoEventData
+import com.yral.shared.features.feed.analytics.FeedTelemetry
 import com.yral.shared.features.feed.useCases.CheckVideoVoteUseCase
 import com.yral.shared.features.feed.useCases.FetchFeedDetailsUseCase
 import com.yral.shared.features.feed.useCases.FetchMoreFeedUseCase
 import com.yral.shared.features.feed.useCases.GetInitialFeedUseCase
 import com.yral.shared.features.feed.useCases.ReportRequestParams
 import com.yral.shared.features.feed.useCases.ReportVideoUseCase
-import com.yral.shared.preferences.PrefKeys
-import com.yral.shared.preferences.Preferences
 import com.yral.shared.rust.domain.models.FeedDetails
 import com.yral.shared.rust.domain.models.Post
 import com.yral.shared.rust.domain.models.toFilteredResult
@@ -39,9 +34,8 @@ class FeedViewModel(
     appDispatchers: AppDispatchers,
     private val sessionManager: SessionManager,
     private val requiredUseCases: RequiredUseCases,
-    private val analyticsManager: AnalyticsManager,
     private val crashlyticsManager: CrashlyticsManager,
-    private val preferences: Preferences,
+    private val feedTelemetry: FeedTelemetry,
     authClientFactory: AuthClientFactory,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.io)
@@ -56,8 +50,9 @@ class FeedViewModel(
     companion object {
         const val PRE_FETCH_BEFORE_LAST = 5
         private const val FIRST_SECOND_WATCHED_THRESHOLD_MS = 1000L
+        private val ANALYTICS_VIDEO_STARTED_RANGE = 0L..1000L
+        private val ANALYTICS_VIDEO_VIEWED_RANGE = 3000L..4000L
         private const val FULL_VIDEO_WATCHED_THRESHOLD = 95.0
-        const val NSFW_PROBABILITY = 0.4
         private const val MAX_PAGE_SIZE = 100
         private const val FEEDS_PAGE_SIZE = 10
         private const val SUFFICIENT_NEW_REQUIRED = 10
@@ -68,33 +63,23 @@ class FeedViewModel(
     val state: StateFlow<FeedState> = _state.asStateFlow()
 
     init {
-        coroutineScope.launch {
-            updateSocialSignIn()
-            initialFeedData()
-        }
-    }
-
-    private suspend fun updateSocialSignIn() {
-        val isSocialSignInSuccessful =
-            preferences.getBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name) ?: false
-        _state.update { FeedState(showSignupNudge = !isSocialSignInSuccessful) }
+        coroutineScope.launch { initialFeedData() }
     }
 
     private suspend fun initialFeedData() {
-        sessionManager.getCanisterPrincipal()?.let { principal ->
+        sessionManager.canisterID?.let { canisterID ->
             setLoadingMore(true)
             requiredUseCases.getInitialFeedUseCase
                 .invoke(
                     parameter =
                         GetInitialFeedUseCase.Params(
-                            canisterID = principal,
+                            canisterID = canisterID,
                             filterResults = emptyList(),
                         ),
                 ).onSuccess { result ->
                     val posts = result.posts
                     Logger.d("FeedPagination") { "posts in initialFeed ${posts.size}" }
                     if (posts.isEmpty()) {
-                        analyticsManager.trackEvent(EmptyColdStartFeedEvent())
                         setLoadingMore(false)
                         loadMoreFeed()
                     } else {
@@ -119,16 +104,7 @@ class FeedViewModel(
         val newPosts = posts.filter { post -> post.videoID !in fetchedIds }
         _state.update { it.copy(posts = it.posts + newPosts) }
 
-        val duplicates = posts.size - newPosts.size
-        Logger.d("FeedPagination") { "no of duplicate posts $duplicates" }
-        if (duplicates > 0) {
-            analyticsManager.trackEvent(
-                DuplicatePostsEvent(
-                    duplicatePosts = duplicates,
-                    totalPosts = posts.size,
-                ),
-            )
-        }
+        Logger.d("FeedPagination") { "no of duplicate posts ${posts.size - newPosts.size}" }
 
         var count = 0
         newPosts
@@ -144,13 +120,15 @@ class FeedViewModel(
     }
 
     private suspend fun isAlreadyVoted(post: Post): Boolean =
-        requiredUseCases.checkVideoVoteUseCase
-            .invoke(
-                CheckVideoVoteUseCase.Params(
-                    videoId = post.videoID,
-                    principalId = sessionManager.getUserPrincipal() ?: "",
-                ),
-            ).value
+        sessionManager.userPrincipal?.let { userPrincipal ->
+            requiredUseCases.checkVideoVoteUseCase
+                .invoke(
+                    CheckVideoVoteUseCase.Params(
+                        videoId = post.videoID,
+                        principalId = userPrincipal,
+                    ),
+                ).value
+        } ?: false
 
     private suspend fun fetchFeedDetail(post: Post) {
         // Atomically increment the counter
@@ -211,13 +189,13 @@ class FeedViewModel(
             // Optionally log or notify here
             return
         }
-        sessionManager.getCanisterPrincipal()?.let { canisterId ->
+        sessionManager.canisterID?.let { canisterID ->
             setLoadingMore(true)
             requiredUseCases.fetchMoreFeedUseCase
                 .invoke(
                     parameter =
                         FetchMoreFeedUseCase.Params(
-                            canisterID = canisterId,
+                            canisterID = canisterID,
                             filterResults =
                                 _state.value.posts.map { post ->
                                     post.toFilteredResult()
@@ -267,6 +245,9 @@ class FeedViewModel(
                     videoData = VideoData(), // Reset all video data for new page
                 )
             }
+            feedTelemetry.trackVideoImpression(
+                feedDetails = _state.value.feedDetails[_state.value.currentPageOfFeed],
+            )
         }
     }
 
@@ -285,6 +266,15 @@ class FeedViewModel(
         totalTime: Int,
     ) {
         coroutineScope.launch {
+            val currentFeedDetails = _state.value.feedDetails[_state.value.currentPageOfFeed]
+            when (currentTime) {
+                in ANALYTICS_VIDEO_STARTED_RANGE -> feedTelemetry.trackVideoStarted(currentFeedDetails)
+                in ANALYTICS_VIDEO_VIEWED_RANGE -> {
+                    feedTelemetry.trackVideoViewed(currentFeedDetails)
+                    feedTelemetry.resetVideoStarted(currentFeedDetails.videoID)
+                }
+            }
+
             // If we've already logged full video watched, no need to continue processing
             if (_state.value.videoData.didLogFullVideoWatched) {
                 return@launch
@@ -329,33 +319,13 @@ class FeedViewModel(
         }
     }
 
-    private suspend fun getVideoEvent(
-        currentTime: Int,
-        totalTime: Int,
-        percentageWatched: Double,
-    ): VideoDurationWatchedEventData {
-        val currentFeed = _state.value.feedDetails[_state.value.currentPageOfFeed]
-        return currentFeed.toVideoEventData().copy(
-            canisterId = sessionManager.getCanisterPrincipal() ?: "",
-            userID = sessionManager.getUserPrincipal() ?: "",
-            isLoggedIn = preferences.getBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name) ?: false,
-            absoluteWatched = currentTime.toDouble(),
-            percentageWatched = percentageWatched,
-            videoDuration = totalTime.toDouble(),
-        )
-    }
-
     private suspend fun recordEvent(videoData: VideoData) {
-        val videoEvent =
-            getVideoEvent(
-                currentTime = videoData.lastKnownCurrentTime,
-                totalTime = videoData.lastKnownTotalTime,
-                percentageWatched =
-                    videoData.lastKnownCurrentTime
-                        .percentageOf(videoData.lastKnownTotalTime),
-            )
-        analyticsManager.trackEvent(
-            event = videoEvent,
+        val currentFeed = _state.value.feedDetails[_state.value.currentPageOfFeed]
+        feedTelemetry.onVideoDurationWatched(
+            feedDetails = currentFeed,
+            isLoggedIn = isLoggedIn(),
+            currentTime = videoData.lastKnownCurrentTime,
+            totalTime = videoData.lastKnownTotalTime,
         )
         _state.update { currentState ->
             currentState.copy(
@@ -411,6 +381,7 @@ class FeedViewModel(
                             ),
                     ).onSuccess {
                         setLoading(false)
+                        feedTelemetry.videoReportedSuccessfully(currentFeed, reason)
                         toggleReportSheet(false, pageNo)
                         _state.update { currentState ->
                             val updatedFeedDetails = currentState.feedDetails.toMutableList()
@@ -448,6 +419,10 @@ class FeedViewModel(
                 currentState.copy(
                     reportSheetState =
                         if (isOpen) {
+                            feedTelemetry.videoClicked(
+                                feedDetails = _state.value.feedDetails[_state.value.currentPageOfFeed],
+                                ctaType = CtaType.REPORT,
+                            )
                             ReportSheetState.Open(pageNo)
                         } else {
                             ReportSheetState.Closed
@@ -490,7 +465,6 @@ class FeedViewModel(
                 try {
                     authClient.signInWithSocial(SocialProvider.GOOGLE)
                 } catch (e: Exception) {
-                    crashlyticsManager.logMessage("sign in with google exception caught")
                     crashlyticsManager.recordException(e)
                     toggleSignupFailed(true)
                 }
@@ -505,6 +479,12 @@ class FeedViewModel(
                 )
             }
         }
+    }
+
+    fun isLoggedIn(): Boolean = sessionManager.isSocialSignIn()
+
+    fun pushScreenView() {
+        feedTelemetry.onFeedPageViewed()
     }
 
     data class RequiredUseCases(
@@ -528,7 +508,6 @@ data class FeedState(
     val isLoading: Boolean = false,
     val reportSheetState: ReportSheetState = ReportSheetState.Closed,
     val showSignupFailedSheet: Boolean = false,
-    val showSignupNudge: Boolean = false,
 )
 
 data class VideoData(
@@ -564,12 +543,8 @@ enum class VideoReportReason(
     OTHERS("Others"),
 }
 
-/**
- * Extension function to calculate percentage of a value relative to total
- * @return Percentage value (0-100)
- */
 @Suppress("MagicNumber")
-private fun Int.percentageOf(total: Int): Double =
+internal fun Int.percentageOf(total: Int): Double =
     if (total > 0) {
         (this.toDouble() / total.toDouble()) * 100.0
     } else {

@@ -52,7 +52,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
 import com.yral.android.R
-import com.yral.android.ui.components.SignupView
+import com.yral.android.ui.components.signup.SignupView
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.account.WebViewBottomSheet
@@ -71,6 +71,7 @@ import com.yral.android.ui.widgets.YralErrorMessage
 import com.yral.android.ui.widgets.YralGradientButton
 import com.yral.android.ui.widgets.YralLoader
 import com.yral.android.ui.widgets.YralLottieAnimation
+import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.features.account.viewmodel.AccountsViewModel.Companion.TERMS_OF_SERVICE_URL
 import com.yral.shared.features.feed.viewmodel.FeedState
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
@@ -96,6 +97,8 @@ fun FeedScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val gameState by gameViewModel.state.collectAsState()
+
+    LaunchedEffect(Unit) { viewModel.pushScreenView() }
 
     // Set initial video ID when feed loads
     LaunchedEffect(state.feedDetails.isNotEmpty()) {
@@ -203,14 +206,21 @@ fun FeedScreen(
     }
     if (gameState.showResultSheet && state.currentPageOfFeed < state.feedDetails.size) {
         val currentVideoId = state.feedDetails[state.currentPageOfFeed].videoID
+        val coinDelta = gameViewModel.getFeedGameResult(currentVideoId)
         GameResultSheet(
-            coinDelta = gameViewModel.getFeedGameResult(currentVideoId),
+            coinDelta = coinDelta,
             gameIcon = gameState.gameResult[currentVideoId]?.first,
             onDismissRequest = {
                 gameViewModel.toggleResultSheet(false)
             },
             openAboutGame = {
                 gameViewModel.toggleAboutGame(true)
+            },
+            onSheetButtonClicked = { ctaType ->
+                gameViewModel.onResultSheetButtonClicked(
+                    coinDelta = coinDelta,
+                    ctaType = ctaType,
+                )
             },
         )
     }
@@ -285,7 +295,7 @@ private fun FeedOverlay(
                 onIconClicked = {
                     gameViewModel.setClickedIcon(
                         icon = it,
-                        videoId = state.feedDetails[pageNo].videoID,
+                        feedDetails = state.feedDetails[pageNo],
                     )
                 },
                 coinDelta = gameViewModel.getFeedGameResult(state.feedDetails[pageNo].videoID),
@@ -308,7 +318,7 @@ private fun FeedOverlay(
                 lottieCached = true
             }
         }
-        if (state.showSignupNudge && pageNo != 0 && (pageNo % SIGN_UP_PAGE) == 0) {
+        if (!feedViewModel.isLoggedIn() && pageNo != 0 && (pageNo % SIGN_UP_PAGE) == 0) {
             SignupNudge {
                 feedViewModel.signInWithGoogle()
             }
@@ -334,6 +344,7 @@ private fun SignupNudge(onSignupClicked: () -> Unit) {
             verticalArrangement = Arrangement.Top,
         ) {
             SignupView(
+                pageName = SignupPageName.HOME,
                 termsLink = TERMS_OF_SERVICE_URL,
                 openTerms = { link = TERMS_OF_SERVICE_URL },
                 onSignupClicked = onSignupClicked,

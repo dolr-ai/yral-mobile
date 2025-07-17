@@ -70,6 +70,7 @@ fun LeaderboardScreen(
     viewModel: LeaderBoardViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
+    LaunchedEffect(Unit) { viewModel.leaderBoardTelemetry.leaderboardPageViewed() }
     LaunchedEffect(state.leaderboard, state.currentUser) {
         val userWithSameBalance =
             state

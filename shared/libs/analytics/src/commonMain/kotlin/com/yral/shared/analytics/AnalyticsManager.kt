@@ -70,18 +70,29 @@ class AnalyticsManager(
     fun setUserProperties(user: User) {
         providers.forEach { it.setUserProperties(user) }
         coreService?.setUserProperties(user)
-        if (isReady.compareAndSet(false, true)) {
-            scope.launch {
-                val toSend =
-                    mutex.withLock {
-                        pendingEvents.toList().also { pendingEvents.clear() }
-                    }
-                toSend.forEach { eventBus.publish(it) }
-            }
+        isReady.store(isUsePropertiesComplete(user = user))
+        if (isReady.load()) {
+            flushOnReady()
         }
     }
 
+    private fun flushOnReady() {
+        scope.launch {
+            val toSend =
+                mutex.withLock {
+                    pendingEvents.toList().also { pendingEvents.clear() }
+                }
+            toSend.forEach { eventBus.publish(it) }
+        }
+    }
+
+    private fun isUsePropertiesComplete(user: User): Boolean =
+        user.isLoggedIn != null &&
+            user.isCreator != null &&
+            user.satsBalance != null
+
     fun reset() {
+        providers.forEach { it.flush() }
         providers.forEach { it.reset() }
         coreService?.reset()
         scope.launch { mutex.withLock { pendingEvents.clear() } }

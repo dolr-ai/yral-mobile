@@ -20,5 +20,15 @@ actual val platformModule =
                 ) != 0
             YralLogger(if (isDebug) platformLogWriter() else null)
         }
-        single<String>(MIXPANEL_TOKEN) { "" }
+        single<String>(MIXPANEL_TOKEN) {
+            androidContext().let {
+                it.getString(
+                    it.resources.getIdentifier(
+                        "mixpanel_token",
+                        "string",
+                        it.packageName,
+                    ),
+                )
+            }
+        }
     }
