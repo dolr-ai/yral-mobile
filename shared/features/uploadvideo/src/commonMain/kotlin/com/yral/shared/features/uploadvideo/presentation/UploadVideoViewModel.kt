@@ -83,6 +83,7 @@ class UploadVideoViewModel internal constructor(
     }
 
     fun onRetryClicked() {
+        _state.update { it.copy(errorAnalyticsPushed = false) }
         validateAndPublish()
     }
 
@@ -392,7 +393,10 @@ class UploadVideoViewModel internal constructor(
     }
 
     fun pushUploadFailed(e: Throwable) {
-        uploadVideoTelemetry.uploadFailed(e.message ?: "")
+        if (!_state.value.errorAnalyticsPushed) {
+            uploadVideoTelemetry.uploadFailed(e.message ?: "")
+            _state.update { it.copy(errorAnalyticsPushed = true) }
+        }
     }
 
     private inline fun log(message: () -> String) {
@@ -420,6 +424,7 @@ class UploadVideoViewModel internal constructor(
         val selectedFilePath: String? = null,
         val caption: String = "",
         val hashtags: List<String> = emptyList(),
+        val errorAnalyticsPushed: Boolean = false,
         val fileUploadUiState: UiState<UploadEndpoint> = UiState.Initial,
         val updateMetadataUiState: UiState<Unit> = UiState.Initial,
     ) {
