@@ -9,27 +9,37 @@ import UIKit
 import iosSharedUmbrella
 
 extension FeedsViewController: UICollectionViewDelegate {
-  func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
-    trackedVideoIDs.removeAll()
-    guard scrollView.contentOffset.y > .zero else {
+
+  func scrollViewDidScroll(_ scrollView: UIScrollView) {
+    let offsetY = scrollView.contentOffset.y
+    defer { lastContentOffsetY = offsetY }
+    guard self.feedsDataSource.snapshot().numberOfItems > .zero else { return }
+    let itemCount = feedsCV.numberOfItems(inSection: .zero)
+    guard itemCount > .zero else { return }
+
+    let goingDown = offsetY > lastContentOffsetY
+    let current = feedsPlayer.currentIndex
+
+    let candidate = goingDown ? current + .one : current - .one
+    guard candidate >= .zero, candidate < itemCount else { return }
+
+    guard let attrs = feedsCV.layoutAttributesForItem(at: IndexPath(item: candidate, section: .zero)) else { return }
+    let visibleRect = CGRect(origin: scrollView.contentOffset, size: scrollView.bounds.size)
+    let intersection = visibleRect.intersection(attrs.frame)
+    guard !intersection.isNull else { return }
+    let ratio = intersection.height / attrs.frame.height
+
+    if ratio >= .half, candidate != current {
+      print("Sarvesh switch: current=\(current) -> candidate=\(candidate) ratio=\(ratio)")
       storeThumbnail()
-      return
+      feedsPlayer.advanceToVideo(at: candidate)
     }
-    feedsPlayer.pause()
-    storeThumbnail()
   }
 
-  func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
-    feedsCV.layoutIfNeeded()
-    guard let visibleIndexPath = feedsCV.indexPathsForVisibleItems.sorted().first else { return }
-    let oldIndex = feedsPlayer.currentIndex
-    let newIndex = visibleIndexPath.item
-    if newIndex != oldIndex {
-      feedsPlayer.advanceToVideo(at: newIndex)
-      feedsCV.reloadData()
-    } else {
-      feedsPlayer.play()
-    }
+  func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
+    trackedVideoIDs.removeAll()
+    storeThumbnail()
+    feedsPlayer.pause()
   }
 
   func scrollViewShouldScrollToTop(_ scrollView: UIScrollView) -> Bool {
