@@ -10,5 +10,7 @@ class SignOutUseCase(
     crashlyticsManager: CrashlyticsManager,
     private val repository: FBAuthRepositoryApi,
 ) : SuspendUseCase<Unit, Unit>(appDispatchers.io, crashlyticsManager) {
-    override suspend fun execute(parameter: Unit) = repository.signOut()
+    override suspend fun execute(parameter: Unit) =
+        repository
+            .signOut()
 }

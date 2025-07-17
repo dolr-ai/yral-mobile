@@ -8,6 +8,7 @@ enum class Features {
     MENU,
     WALLET,
     REFERRAL,
+    LEADERBOARD,
     ;
 
     fun getFeatureName(): String = name.lowercase()

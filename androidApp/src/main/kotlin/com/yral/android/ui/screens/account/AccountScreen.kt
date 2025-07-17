@@ -45,6 +45,8 @@ import com.yral.android.ui.screens.account.AccountScreenConstants.SOCIAL_MEDIA_L
 import com.yral.android.ui.widgets.YralAsyncImage
 import com.yral.android.ui.widgets.YralErrorMessage
 import com.yral.android.ui.widgets.YralGradientButton
+import com.yral.shared.analytics.events.MenuCtaType
+import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.features.account.viewmodel.AccountBottomSheet
 import com.yral.shared.features.account.viewmodel.AccountHelpLink
@@ -67,10 +69,7 @@ fun AccountScreen(
     viewModel: AccountsViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
-    val sessionState by viewModel.sessionState.collectAsState()
-    LaunchedEffect(sessionState) {
-        viewModel.refreshAccountInfo()
-    }
+    LaunchedEffect(Unit) { viewModel.accountsTelemetry.onMenuScreenViewed() }
     Column(modifier = modifier.fillMaxSize()) {
         AccountsTitle()
         AccountScreenContent(
@@ -103,24 +102,28 @@ private fun AccountScreenContent(
         state.accountInfo?.let {
             AccountDetail(
                 accountInfo = it,
-                isSocialSignIn = state.isSocialSignInSuccessful,
+                isSocialSignIn = viewModel.isLoggedIn(),
             ) {
                 viewModel.setBottomSheetType(AccountBottomSheet.SignUp)
+                viewModel.accountsTelemetry.signUpClicked(SignupPageName.MENU)
             }
         }
         Divider()
         HelpLinks(
             links = viewModel.getHelperLinks(),
-        ) { link, shouldOpenOutside ->
-            viewModel.handleHelpLink(link, shouldOpenOutside)
-        }
+            onLinkClicked = {
+                viewModel.accountsTelemetry.onMenuClicked(it.menuCtaType)
+                viewModel.handleHelpLink(it)
+            },
+        )
         Spacer(Modifier.weight(1f))
         SocialMediaHelpLinks(
             links = viewModel.getSocialLinks(),
-        ) { link, shouldOpenOutside ->
+        ) { link ->
+            viewModel.accountsTelemetry.onMenuClicked(MenuCtaType.FOLLOW_ON)
             viewModel.setBottomSheetType(
                 AccountBottomSheet.ShowWebView(
-                    Pair(link, shouldOpenOutside),
+                    linkToOpen = link,
                 ),
             )
         }
@@ -157,14 +160,14 @@ private fun SheetContent(
 
         is AccountBottomSheet.ShowWebView -> {
             val linkToOpen = bottomSheetType.linkToOpen
-            if (linkToOpen.second) {
+            if (linkToOpen.openInExternalBrowser) {
                 val context = LocalContext.current
-                val intent = Intent(Intent.ACTION_VIEW, linkToOpen.first.toUri())
+                val intent = Intent(Intent.ACTION_VIEW, linkToOpen.link.toUri())
                 context.startActivity(intent)
                 onDismissRequest()
             } else {
                 WebViewBottomSheet(
-                    link = linkToOpen.first,
+                    link = linkToOpen.link,
                     bottomSheetState = bottomSheetState,
                     onDismissRequest = onDismissRequest,
                 )
@@ -340,7 +343,7 @@ private fun Divider() {
 @Composable
 private fun HelpLinks(
     links: List<AccountHelpLink>,
-    onLinkClicked: (link: String, shouldOpenOutside: Boolean) -> Unit,
+    onLinkClicked: (link: AccountHelpLink) -> Unit,
 ) {
     Column(
         modifier =
@@ -367,14 +370,14 @@ private fun HelpLinks(
 @Composable
 private fun HelpLinkItem(
     item: AccountHelpLink,
-    onLinkClicked: (link: String, shouldOpenOutside: Boolean) -> Unit,
+    onLinkClicked: (link: AccountHelpLink) -> Unit,
 ) {
     Row(
         modifier =
             Modifier
                 .height(26.dp)
                 .padding(top = 2.dp, bottom = 2.dp)
-                .clickable { onLinkClicked(item.link, item.openInExternalBrowser) },
+                .clickable { onLinkClicked(item) },
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -409,7 +412,7 @@ private fun HelpLinkItem(
 @Composable
 private fun SocialMediaHelpLinks(
     links: List<AccountHelpLink>,
-    onLinkClicked: (link: String, shouldOpenOutside: Boolean) -> Unit,
+    onLinkClicked: (link: AccountHelpLink) -> Unit,
 ) {
     Column(
         modifier =
@@ -447,7 +450,7 @@ private fun SocialMediaHelpLinks(
 @Composable
 private fun SocialMediaHelpLinkItem(
     item: AccountHelpLink,
-    onLinkClicked: (link: String, shouldOpenOutside: Boolean) -> Unit,
+    onLinkClicked: (link: AccountHelpLink) -> Unit,
 ) {
     item.getSocialIcon()?.let {
         Image(
@@ -455,7 +458,7 @@ private fun SocialMediaHelpLinkItem(
                 Modifier
                     .width(45.dp)
                     .height(45.dp)
-                    .clickable { onLinkClicked(item.link, item.openInExternalBrowser) },
+                    .clickable { onLinkClicked(item) },
             painter = painterResource(id = it),
             contentDescription = "social account icon",
             contentScale = ContentScale.None,

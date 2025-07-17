@@ -27,7 +27,7 @@ internal class UploadRepositoryImpl(
 
     override suspend fun updateMetadata(uploadFileRequest: UploadFileRequest) {
         val identity =
-            sessionManager.getIdentity()
+            sessionManager.identity
                 ?: throw YralException("Session not found while finalising video upload")
         val identityWireJson = delegatedIdentityWireToJson(identity)
         val delegatedIdentityWire =

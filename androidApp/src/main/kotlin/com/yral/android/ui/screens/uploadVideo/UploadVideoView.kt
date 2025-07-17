@@ -71,6 +71,7 @@ const val UPLOAD_BOX_ASPECT_RATIO = 1.18f
 fun UploadVideo(
     videoFilePath: String,
     onVideoSelected: (String) -> Unit,
+    onCTAClicked: () -> Unit,
 ) {
     val videoFileManager: VideoFileManager = koinInject()
     val coroutineScope = rememberCoroutineScope()
@@ -119,7 +120,10 @@ fun UploadVideo(
                     )
                 }
             } else {
-                SelectVideoView(onVideoSelected = onVideoSelected)
+                SelectVideoView(
+                    onVideoSelected = onVideoSelected,
+                    onCTAClicked = onCTAClicked,
+                )
             }
         }
     }
@@ -130,6 +134,7 @@ fun UploadVideo(
 private fun SelectVideoView(
     maxSeconds: Int = 60,
     onVideoSelected: (String) -> Unit,
+    onCTAClicked: () -> Unit,
 ) {
     var shouldLaunchPicker by remember { mutableStateOf(false) }
     var hasRequestedPermissions by remember { mutableStateOf(false) }
@@ -171,8 +176,12 @@ private fun SelectVideoView(
         maxSeconds = maxSeconds,
         permissionState = permissionState,
         selectionState = selectionState,
-        onLaunchVideoPicker = { videoPickerLauncher.launch("video/*") },
+        onLaunchVideoPicker = {
+            onCTAClicked()
+            videoPickerLauncher.launch("video/*")
+        },
         onRequestPermissions = {
+            onCTAClicked()
             shouldLaunchPicker = true
             permissionState.launchMultiplePermissionRequest()
         },

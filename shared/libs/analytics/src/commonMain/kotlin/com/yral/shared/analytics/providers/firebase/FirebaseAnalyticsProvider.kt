@@ -1,6 +1,7 @@
 package com.yral.shared.analytics.providers.firebase
 
 import com.yral.shared.analytics.AnalyticsProvider
+import com.yral.shared.analytics.EventToMapConverter
 import com.yral.shared.analytics.User
 import com.yral.shared.analytics.events.EventData
 import dev.gitlive.firebase.analytics.FirebaseAnalytics
@@ -8,7 +9,7 @@ import dev.gitlive.firebase.analytics.FirebaseAnalytics
 class FirebaseAnalyticsProvider(
     private val firebaseAnalytics: FirebaseAnalytics,
     private val eventFilter: (EventData) -> Boolean = { true },
-    private val mapConverter: (EventData) -> Map<String, Any>,
+    private val mapConverter: EventToMapConverter,
 ) : AnalyticsProvider {
     override val name: String = "firebase"
 
@@ -17,7 +18,7 @@ class FirebaseAnalyticsProvider(
     override fun trackEvent(event: EventData) {
         firebaseAnalytics.logEvent(
             name = toValidKeyName(event.event),
-            parameters = mapConverter(event),
+            parameters = mapConverter.toMap(event),
         )
     }
 

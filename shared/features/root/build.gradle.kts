@@ -13,6 +13,7 @@ kotlin {
             implementation(projects.shared.libs.koin)
             implementation(projects.shared.features.auth)
             implementation(projects.shared.libs.crashlytics)
+            implementation(projects.shared.libs.analytics)
             implementation(projects.shared.libs.useCase)
 
             implementation(libs.kotlinx.coroutines.core)

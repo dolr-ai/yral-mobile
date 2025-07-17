@@ -36,6 +36,7 @@ import androidx.compose.material3.pulltorefresh.pullToRefreshIndicator
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,7 +53,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
-import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
 import com.yral.android.R
@@ -71,12 +71,12 @@ import com.yral.android.ui.widgets.YralButtonType
 import com.yral.android.ui.widgets.YralErrorMessage
 import com.yral.android.ui.widgets.YralGradientButton
 import com.yral.android.ui.widgets.YralLoader
+import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.features.profile.viewmodel.DeleteConfirmationState
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.features.profile.viewmodel.VideoViewState
 import com.yral.shared.rust.domain.models.FeedDetails
-import kotlin.ranges.coerceAtMost
 
 @Suppress("LongMethod")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -85,12 +85,13 @@ fun ProfileScreen(
     modifier: Modifier = Modifier,
     uploadVideo: () -> Unit,
     viewModel: ProfileViewModel,
+    profileVideos: LazyPagingItems<FeedDetails>,
 ) {
-    val profileVideos = viewModel.profileVideos.collectAsLazyPagingItems()
     val state by viewModel.state.collectAsStateWithLifecycle()
     val backHandlerEnabled by remember(state.videoView) {
         mutableStateOf(state.videoView is VideoViewState.ViewingReels)
     }
+    LaunchedEffect(Unit) { viewModel.pushScreenView(profileVideos.itemCount) }
     BackHandler(
         enabled = backHandlerEnabled,
         onBack = { viewModel.closeVideoReel() },
@@ -98,7 +99,7 @@ fun ProfileScreen(
     val deletingVideoId =
         remember(state.deleteConfirmation) {
             when (val deleteConfirmation = state.deleteConfirmation) {
-                is DeleteConfirmationState.InProgress -> deleteConfirmation.request.videoId
+                is DeleteConfirmationState.InProgress -> deleteConfirmation.request.feedDetails.videoID
                 else -> ""
             }
         }
@@ -115,8 +116,11 @@ fun ProfileScreen(
                                 .coerceAtMost(profileVideos.itemCount - 1),
                         deletingVideoId = deletingVideoId,
                         onBack = { viewModel.closeVideoReel() },
-                        onDeleteVideo = { videoId, postId ->
-                            viewModel.confirmDelete(videoId = videoId, postId = postId)
+                        onDeleteVideo = { video ->
+                            viewModel.confirmDelete(
+                                feedDetails = video,
+                                ctaType = VideoDeleteCTA.VIDEO_FULLSCREEN,
+                            )
                         },
                         modifier = Modifier.fillMaxSize(),
                     )
@@ -130,17 +134,21 @@ fun ProfileScreen(
                     accountInfo = state.accountInfo,
                     gridState = gridState,
                     profileVideos = profileVideos,
-                    uploadVideo = uploadVideo,
-                    openVideoReel = { clickedIndex ->
-                        viewModel.openVideoReel(clickedIndex)
+                    manualRefreshTriggered = state.manualRefreshTriggered,
+                    uploadVideo = {
+                        viewModel.uploadVideoClicked()
+                        uploadVideo()
                     },
+                    openVideoReel = { clickedIndex -> viewModel.openVideoReel(clickedIndex) },
                     deletingVideoId = deletingVideoId,
                     onDeleteVideo = { video ->
                         viewModel.confirmDelete(
-                            videoId = video.videoID,
-                            postId = video.postID.toULong(),
+                            feedDetails = video,
+                            ctaType = VideoDeleteCTA.PROFILE_THUMBNAIL,
                         )
                     },
+                    onManualRefreshTriggered = { viewModel.setManualRefreshTriggered(it) },
+                    pushScreenView = { viewModel.pushScreenView(it) },
                 )
             }
         }
@@ -180,9 +188,12 @@ private fun MainContent(
     gridState: LazyGridState,
     profileVideos: LazyPagingItems<FeedDetails>,
     deletingVideoId: String,
+    manualRefreshTriggered: Boolean,
     uploadVideo: () -> Unit,
     openVideoReel: (Int) -> Unit,
     onDeleteVideo: (FeedDetails) -> Unit,
+    onManualRefreshTriggered: (Boolean) -> Unit,
+    pushScreenView: (Int) -> Unit,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         ProfileHeader()
@@ -195,9 +206,14 @@ private fun MainContent(
                 LoadingContent()
             }
             is LoadState.Error -> {
+                if (manualRefreshTriggered) onManualRefreshTriggered(false)
                 ErrorContent(message = stringResource(R.string.error_loading_videos))
             }
             is LoadState.NotLoading -> {
+                if (manualRefreshTriggered) {
+                    pushScreenView(profileVideos.itemCount)
+                    onManualRefreshTriggered(false)
+                }
                 SuccessContent(
                     gridState = gridState,
                     profileVideos = profileVideos,
@@ -205,6 +221,7 @@ private fun MainContent(
                     uploadVideo = uploadVideo,
                     openVideoReel = openVideoReel,
                     onDeleteVideo = onDeleteVideo,
+                    onManualRefreshTriggered = onManualRefreshTriggered,
                 )
             }
         }
@@ -298,6 +315,7 @@ private fun SuccessContent(
     uploadVideo: () -> Unit,
     openVideoReel: (Int) -> Unit,
     onDeleteVideo: (FeedDetails) -> Unit,
+    onManualRefreshTriggered: (Boolean) -> Unit,
 ) {
     Column(
         modifier =
@@ -315,7 +333,10 @@ private fun SuccessContent(
 
         PullToRefreshBox(
             isRefreshing = isRefreshing,
-            onRefresh = { profileVideos.refresh() },
+            onRefresh = {
+                onManualRefreshTriggered(true)
+                profileVideos.refresh()
+            },
             state = pullRefreshState,
             indicator = {
                 Box(

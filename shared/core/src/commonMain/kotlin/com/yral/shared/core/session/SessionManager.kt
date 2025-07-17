@@ -9,37 +9,62 @@ class SessionManager {
     private val _state = MutableStateFlow<SessionState>(SessionState.Initial)
     val state = _state.asStateFlow()
 
-    private val _coinBalance = MutableStateFlow<Long>(0)
-    val coinBalance: StateFlow<Long> = _coinBalance.asStateFlow()
+    private val _sessionProperties = MutableStateFlow(SessionProperties())
+    val sessionProperties = _sessionProperties.asStateFlow()
+
+    val canisterID: String?
+        get() =
+            when (val state = _state.value) {
+                is SessionState.SignedIn -> state.session.canisterId
+                else -> null
+            }
+
+    val userPrincipal: String?
+        get() =
+            when (val state = _state.value) {
+                is SessionState.SignedIn -> state.session.userPrincipal
+                else -> null
+            }
+
+    val identity: ByteArray?
+        get() =
+            when (val state = _state.value) {
+                is SessionState.SignedIn -> state.session.identity
+                else -> null
+            }
 
     fun updateState(state: SessionState) {
         _state.update { state }
+        _sessionProperties.update { SessionProperties() }
     }
 
     fun updateCoinBalance(newBalance: Long) {
-        _coinBalance.update { newBalance }
+        _sessionProperties.update { it.copy(coinBalance = newBalance) }
     }
 
-    fun getCanisterPrincipal(): String? =
-        if (_state.value is SessionState.SignedIn) {
-            (_state.value as SessionState.SignedIn).session.canisterPrincipal
-        } else {
-            null
-        }
+    fun updateSocialSignInStatus(isSocialSignIn: Boolean) {
+        _sessionProperties.update { it.copy(isSocialSignIn = isSocialSignIn) }
+    }
 
-    fun getUserPrincipal(): String? =
-        if (_state.value is SessionState.SignedIn) {
-            (_state.value as SessionState.SignedIn).session.userPrincipal
-        } else {
-            null
-        }
+    fun updateProfileVideosCount(count: Int?) {
+        _sessionProperties.update { it.copy(profileVideosCount = count) }
+    }
 
-    fun getIdentity(): ByteArray? =
-        if (_state.value is SessionState.SignedIn) {
-            (_state.value as SessionState.SignedIn).session.identity
-        } else {
-            null
+    fun observeSessionProperties(): StateFlow<SessionProperties> = sessionProperties
+
+    fun resetSessionProperties() {
+        _sessionProperties.update {
+            SessionProperties(
+                coinBalance = 0,
+                profileVideosCount = 0,
+                isSocialSignIn = false,
+            )
         }
+    }
+
+    fun isSocialSignIn(): Boolean = sessionProperties.value.isSocialSignIn ?: false
+
+    fun profileVideosCount(): Int = sessionProperties.value.profileVideosCount ?: 0
 }
 
 sealed interface SessionState {
@@ -52,6 +77,13 @@ sealed interface SessionState {
 
 fun SessionState.getKey(): String =
     when (this) {
-        is SessionState.SignedIn -> "signed-${this.session.userPrincipal}"
-        else -> "anon"
+        is SessionState.SignedIn -> "${SessionKey.SIGNED_IN.name}-${this.session.userPrincipal}"
+        else -> SessionKey.INITIAL.name
     }
+
+enum class SessionKey {
+    SIGNED_IN,
+    INITIAL,
+}
+
+const val DELAY_FOR_SESSION_PROPERTIES = 500L

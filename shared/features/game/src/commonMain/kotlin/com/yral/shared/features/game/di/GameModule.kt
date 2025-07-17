@@ -1,5 +1,7 @@
 package com.yral.shared.features.game.di
 
+import com.yral.shared.features.game.analytics.GameTelemetry
+import com.yral.shared.features.game.analytics.LeaderBoardTelemetry
 import com.yral.shared.features.game.data.GameRemoteDataSource
 import com.yral.shared.features.game.data.GameRepository
 import com.yral.shared.features.game.data.IGameRemoteDataSource
@@ -30,4 +32,6 @@ val gameModule =
         viewModelOf(::LeaderBoardViewModel)
         factoryOf(::GameRepository) { bind<IGameRepository>() }
         factoryOf(::GameRemoteDataSource) { bind<IGameRemoteDataSource>() }
+        factoryOf(::LeaderBoardTelemetry)
+        factoryOf(::GameTelemetry)
     }
