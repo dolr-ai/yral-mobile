@@ -173,12 +173,20 @@ class ProfileViewModel(
     fun uploadVideoClicked() {
         profileTelemetry.onUploadVideoClicked()
     }
+
+    fun setManualRefreshTriggered(isTriggered: Boolean) {
+        _state.update { it.copy(manualRefreshTriggered = isTriggered) }
+        if (isTriggered) {
+            sessionManager.updateProfileVideosCount(null)
+        }
+    }
 }
 
 data class ViewState(
     val accountInfo: AccountInfo? = null,
     val deleteConfirmation: DeleteConfirmationState = DeleteConfirmationState.None,
     val videoView: VideoViewState = VideoViewState.None,
+    val manualRefreshTriggered: Boolean = false,
 )
 
 sealed class DeleteConfirmationState {

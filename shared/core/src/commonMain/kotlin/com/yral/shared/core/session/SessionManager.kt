@@ -46,7 +46,7 @@ class SessionManager {
         _sessionProperties.update { it.copy(isSocialSignIn = isSocialSignIn) }
     }
 
-    fun updateProfileVideosCount(count: Int) {
+    fun updateProfileVideosCount(count: Int?) {
         _sessionProperties.update { it.copy(profileVideosCount = count) }
     }
 

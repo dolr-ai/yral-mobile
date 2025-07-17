@@ -134,13 +134,12 @@ fun ProfileScreen(
                     accountInfo = state.accountInfo,
                     gridState = gridState,
                     profileVideos = profileVideos,
+                    manualRefreshTriggered = state.manualRefreshTriggered,
                     uploadVideo = {
                         viewModel.uploadVideoClicked()
                         uploadVideo()
                     },
-                    openVideoReel = { clickedIndex ->
-                        viewModel.openVideoReel(clickedIndex)
-                    },
+                    openVideoReel = { clickedIndex -> viewModel.openVideoReel(clickedIndex) },
                     deletingVideoId = deletingVideoId,
                     onDeleteVideo = { video ->
                         viewModel.confirmDelete(
@@ -148,6 +147,8 @@ fun ProfileScreen(
                             ctaType = VideoDeleteCTA.PROFILE_THUMBNAIL,
                         )
                     },
+                    onManualRefreshTriggered = { viewModel.setManualRefreshTriggered(it) },
+                    pushScreenView = { viewModel.pushScreenView(it) },
                 )
             }
         }
@@ -187,9 +188,12 @@ private fun MainContent(
     gridState: LazyGridState,
     profileVideos: LazyPagingItems<FeedDetails>,
     deletingVideoId: String,
+    manualRefreshTriggered: Boolean,
     uploadVideo: () -> Unit,
     openVideoReel: (Int) -> Unit,
     onDeleteVideo: (FeedDetails) -> Unit,
+    onManualRefreshTriggered: (Boolean) -> Unit,
+    pushScreenView: (Int) -> Unit,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         ProfileHeader()
@@ -202,9 +206,14 @@ private fun MainContent(
                 LoadingContent()
             }
             is LoadState.Error -> {
+                if (manualRefreshTriggered) onManualRefreshTriggered(false)
                 ErrorContent(message = stringResource(R.string.error_loading_videos))
             }
             is LoadState.NotLoading -> {
+                if (manualRefreshTriggered) {
+                    pushScreenView(profileVideos.itemCount)
+                    onManualRefreshTriggered(false)
+                }
                 SuccessContent(
                     gridState = gridState,
                     profileVideos = profileVideos,
@@ -212,6 +221,7 @@ private fun MainContent(
                     uploadVideo = uploadVideo,
                     openVideoReel = openVideoReel,
                     onDeleteVideo = onDeleteVideo,
+                    onManualRefreshTriggered = onManualRefreshTriggered,
                 )
             }
         }
@@ -305,6 +315,7 @@ private fun SuccessContent(
     uploadVideo: () -> Unit,
     openVideoReel: (Int) -> Unit,
     onDeleteVideo: (FeedDetails) -> Unit,
+    onManualRefreshTriggered: (Boolean) -> Unit,
 ) {
     Column(
         modifier =
@@ -322,7 +333,10 @@ private fun SuccessContent(
 
         PullToRefreshBox(
             isRefreshing = isRefreshing,
-            onRefresh = { profileVideos.refresh() },
+            onRefresh = {
+                onManualRefreshTriggered(true)
+                profileVideos.refresh()
+            },
             state = pullRefreshState,
             indicator = {
                 Box(
