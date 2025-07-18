@@ -1,11 +1,14 @@
 package com.yral.android
 
 import android.app.Application
+import com.facebook.FacebookSdk
+import com.facebook.LoggingBehavior
 import com.google.firebase.Firebase
 import com.google.firebase.appcheck.appCheck
 import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory
 import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
 import com.google.firebase.initialize
+import com.yral.android.ui.widgets.video.di.videoWidgetModule
 import com.yral.shared.app.di.initKoin
 import com.yral.shared.koin.koinInstance
 import dev.gitlive.firebase.crashlytics.FirebaseCrashlytics
@@ -15,8 +18,10 @@ class YralApp : Application() {
     override fun onCreate() {
         super.onCreate()
         setupFirebase()
+        setupFacebook()
         initKoin {
             androidContext(this@YralApp)
+            modules(videoWidgetModule)
         }
         koinInstance.get<FirebaseCrashlytics>().setCrashlyticsCollectionEnabled(!BuildConfig.DEBUG)
     }
@@ -38,5 +43,15 @@ class YralApp : Application() {
                     }
                 }
         }
+    }
+
+    private fun setupFacebook() {
+        if (BuildConfig.DEBUG) {
+            FacebookSdk.setIsDebugEnabled(true)
+            FacebookSdk.addLoggingBehavior(LoggingBehavior.APP_EVENTS)
+        }
+        // Enable Facebook SDK crashlytics enabled
+        FacebookSdk.setAutoLogAppEventsEnabled(true)
+        FacebookSdk.setAutoInitEnabled(true)
     }
 }

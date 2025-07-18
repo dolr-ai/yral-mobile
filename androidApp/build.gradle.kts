@@ -13,8 +13,8 @@ android {
     namespace = "com.yral.android"
     defaultConfig {
         applicationId = "com.yral.android"
-        versionCode = 2
-        versionName = "1.0.0"
+        versionCode = 3
+        versionName = "1.1.0"
         ndkVersion = "28.0.13004108"
     }
     buildFeatures {
@@ -85,6 +85,8 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.coil.okhttp)
     implementation(libs.accompanist.permission)
+    implementation(libs.facebook.sdk.android.core)
+    implementation(libs.mixpanel.android)
 
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.ui)

@@ -17,6 +17,12 @@
     <string name="could_not_login">Couldn’t Log In</string>
     <string name="could_not_login_desc">The operation couldn’t be completed. Please try again</string>
     <string name="ok">OK</string>
+    <string name="error">Error</string>
+    <string name="video_validation_unable_to_read_duration">Unable to read video duration</string>
+    <string name="video_validation_unable_to_read_file_size">Unable to read video file size</string>
+    <string name="video_validation_duration_exceeds_limit_with_data">Selected video exceeds %1$s seconds</string>
+    <string name="video_validation_file_size_exceeds_limit_with_data">Selected video exceeds %1$s</string>
+    <string name="video_validation_processing_failed">Failed to process video</string>
     <string name="reason_nudity">Nudity / Porn</string>
     <string name="reason_violence">Violence / Gore</string>
     <string name="reason_offensive">Offensive</string>
@@ -97,4 +103,10 @@
     <string name="permission_required_title">Permission required!</string>
     <string name="permission_required_description">To upload videos, please allow access to your device\'s media files in Settings. You can choose \"Allow all\" or \"Allow limited access\" - both work for uploading videos.</string>
     <string name="go_to_settings">Go to settings</string>
+
+    <!-- Facebook SDK Configuration -->
+    <string name="facebook_app_id">4094678660808510</string>
+    <string name="facebook_client_token">12e001a6a4b9c84c8e617275f274a1a1</string>
+    <!-- MixPanel SDK Configuration -->
+    <string name="mixpanel_token">609abef3172b5fc64554f5ac6c77414d</string>
 </resources>

@@ -35,7 +35,6 @@ import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.feed.performance.PrefetchVideoListenerImpl
-import com.yral.android.ui.screens.feed.performance.VideoListenerImpl
 import com.yral.android.ui.widgets.YralLoader
 import com.yral.shared.libs.videoPlayer.YRALReelPlayer
 import com.yral.shared.libs.videoPlayer.model.Reels
@@ -47,7 +46,7 @@ fun ProfileReelPlayer(
     initialPage: Int,
     deletingVideoId: String,
     onBack: () -> Unit,
-    onDeleteVideo: (String, ULong) -> Unit,
+    onDeleteVideo: (FeedDetails) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val videoReels =
@@ -63,13 +62,7 @@ fun ProfileReelPlayer(
             recordTime = { _, _ -> },
             didVideoEnd = { },
             getPrefetchListener = { reel -> PrefetchVideoListenerImpl(reel) },
-            getVideoListener = { reel ->
-                VideoListenerImpl(
-                    reel = reel,
-                    registerTrace = { _, _ -> },
-                    isTraced = { _, _ -> false },
-                )
-            },
+            getVideoListener = { null },
         ) { pageNo ->
             val currentVideo = reelVideos[pageNo]
             if (currentVideo != null) {
@@ -77,9 +70,7 @@ fun ProfileReelPlayer(
                     currentVideo = currentVideo,
                     isDeleting = deletingVideoId == currentVideo.videoID,
                     onBack = onBack,
-                    onDeleteVideo = {
-                        onDeleteVideo(currentVideo.videoID, currentVideo.postID.toULong())
-                    },
+                    onDeleteVideo = { onDeleteVideo(currentVideo) },
                 )
             }
         }

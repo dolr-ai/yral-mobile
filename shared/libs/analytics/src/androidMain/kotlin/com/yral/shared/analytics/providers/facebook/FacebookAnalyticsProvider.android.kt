@@ -1,29 +1,38 @@
 package com.yral.shared.analytics.providers.facebook
 
-import co.touchlab.kermit.Logger
+import com.facebook.appevents.AppEventsLogger
 import com.yral.shared.analytics.AnalyticsProvider
+import com.yral.shared.analytics.EventToMapConverter
 import com.yral.shared.analytics.User
 import com.yral.shared.analytics.events.EventData
+import com.yral.shared.analytics.toBundle
+import com.yral.shared.core.platform.PlatformResources
 
 actual class FacebookAnalyticsProvider actual constructor(
-    eventFilter: (EventData) -> Boolean,
-    mapConverter: (EventData) -> Map<String, Any>,
+    private val platformResources: PlatformResources,
+    private val eventFilter: (EventData) -> Boolean,
+    private val mapConverter: EventToMapConverter,
 ) : AnalyticsProvider {
-    override val name: String
-        get() = "facebook"
+    override val name: String = "facebook"
 
-    override fun shouldTrackEvent(event: EventData): Boolean = false
+    override fun shouldTrackEvent(event: EventData): Boolean = eventFilter(event)
 
     override fun trackEvent(event: EventData) {
-        Logger.d("Facebook not integrated")
+        val logger = AppEventsLogger.newLogger(platformResources.applicationContext)
+        val map = mapConverter.toMap(event)
+        val parameters = toBundle(map)
+        logger.logEvent(
+            eventName = toValidKeyName(event.event),
+            parameters = parameters,
+        )
     }
 
     override fun setUserProperties(user: User) {
-        Logger.d("Facebook not integrated")
+        AppEventsLogger.setUserID(user.userId)
     }
 
     override fun reset() {
-        Logger.d("Facebook not integrated")
+        AppEventsLogger.clearUserID()
     }
 
     override fun toValidKeyName(key: String): String = key

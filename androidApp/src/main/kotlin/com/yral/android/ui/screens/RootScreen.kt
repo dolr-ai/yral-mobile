@@ -38,6 +38,11 @@ fun RootScreen(viewModel: RootViewModel = koinViewModel()) {
     val state by viewModel.state.collectAsState()
     val sessionState by viewModel.sessionManagerState.collectAsState()
 
+    val analyticsUser = viewModel.analyticsUser.collectAsState(null)
+    LaunchedEffect(analyticsUser.value) {
+        viewModel.setUser(analyticsUser.value)
+    }
+
     LaunchedEffect(sessionState) {
         if (sessionState != state.currentSessionState) {
             when (sessionState) {
@@ -55,6 +60,7 @@ fun RootScreen(viewModel: RootViewModel = koinViewModel()) {
                 modifier = Modifier.fillMaxSize(),
                 initialAnimationComplete = state.initialAnimationComplete,
                 onAnimationComplete = { viewModel.onSplashAnimationComplete() },
+                onScreenViewed = { viewModel.splashScreenViewed() },
             )
         } else {
             // Reset system bars to normal
@@ -63,6 +69,8 @@ fun RootScreen(viewModel: RootViewModel = koinViewModel()) {
                 sessionState = sessionState,
                 currentTab = state.currentHomePageTab,
                 updateCurrentTab = { viewModel.updateCurrentTab(it) },
+                bottomNavigationAnalytics = { viewModel.bottomNavigationClicked(it) },
+                updateProfileVideosCount = { viewModel.updateProfileVideosCount(it) },
             )
         }
         // shows login error for both splash and account screen
@@ -130,7 +138,9 @@ private fun Splash(
     modifier: Modifier,
     initialAnimationComplete: Boolean,
     onAnimationComplete: () -> Unit = {},
+    onScreenViewed: () -> Unit,
 ) {
+    LaunchedEffect(Unit) { onScreenViewed() }
     Box(
         modifier = modifier.background(Color.Black),
     ) {

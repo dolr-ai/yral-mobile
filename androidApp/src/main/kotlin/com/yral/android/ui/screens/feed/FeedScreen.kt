@@ -38,7 +38,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.paint
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -52,7 +52,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
 import com.yral.android.R
-import com.yral.android.ui.components.SignupView
+import com.yral.android.ui.components.signup.SignupView
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.account.WebViewBottomSheet
@@ -63,7 +63,6 @@ import com.yral.android.ui.screens.game.AboutGameSheet
 import com.yral.android.ui.screens.game.CoinBalance
 import com.yral.android.ui.screens.game.GameResultSheet
 import com.yral.android.ui.screens.game.SmileyGame
-import com.yral.android.ui.widgets.PreloadLottieAnimation
 import com.yral.android.ui.widgets.YralAsyncImage
 import com.yral.android.ui.widgets.YralBottomSheet
 import com.yral.android.ui.widgets.YralButtonState
@@ -71,6 +70,7 @@ import com.yral.android.ui.widgets.YralErrorMessage
 import com.yral.android.ui.widgets.YralGradientButton
 import com.yral.android.ui.widgets.YralLoader
 import com.yral.android.ui.widgets.YralLottieAnimation
+import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.features.account.viewmodel.AccountsViewModel.Companion.TERMS_OF_SERVICE_URL
 import com.yral.shared.features.feed.viewmodel.FeedState
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
@@ -96,6 +96,8 @@ fun FeedScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val gameState by gameViewModel.state.collectAsState()
+
+    LaunchedEffect(Unit) { viewModel.pushScreenView() }
 
     // Set initial video ID when feed loads
     LaunchedEffect(state.feedDetails.isNotEmpty()) {
@@ -203,14 +205,21 @@ fun FeedScreen(
     }
     if (gameState.showResultSheet && state.currentPageOfFeed < state.feedDetails.size) {
         val currentVideoId = state.feedDetails[state.currentPageOfFeed].videoID
+        val coinDelta = gameViewModel.getFeedGameResult(currentVideoId)
         GameResultSheet(
-            coinDelta = gameViewModel.getFeedGameResult(currentVideoId),
+            coinDelta = coinDelta,
             gameIcon = gameState.gameResult[currentVideoId]?.first,
             onDismissRequest = {
                 gameViewModel.toggleResultSheet(false)
             },
             openAboutGame = {
                 gameViewModel.toggleAboutGame(true)
+            },
+            onSheetButtonClicked = { ctaType ->
+                gameViewModel.onResultSheetButtonClicked(
+                    coinDelta = coinDelta,
+                    ctaType = ctaType,
+                )
             },
         )
     }
@@ -270,45 +279,21 @@ private fun FeedOverlay(
             gameState = gameState,
             gameViewModel = gameViewModel,
         )
-        ReportVideo(
-            modifier =
-                Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(end = 16.dp, bottom = 100.dp),
-        ) {
-            feedViewModel.toggleReportSheet(true, pageNo)
-        }
-        if (gameState.gameIcons.isNotEmpty() && gameState.lossPenalty <= gameState.coinBalance) {
-            SmileyGame(
-                gameIcons = gameState.gameIcons,
-                clickedIcon = gameState.gameResult[state.feedDetails[pageNo].videoID]?.first,
-                onIconClicked = {
-                    gameViewModel.setClickedIcon(
-                        icon = it,
-                        videoId = state.feedDetails[pageNo].videoID,
-                    )
-                },
-                coinDelta = gameViewModel.getFeedGameResult(state.feedDetails[pageNo].videoID),
-                errorMessage = gameViewModel.getFeedGameResultError(state.feedDetails[pageNo].videoID),
-                isLoading = gameState.isLoading,
-                hasShownCoinDeltaAnimation =
-                    gameViewModel.hasShownCoinDeltaAnimation(
-                        state.feedDetails[pageNo].videoID,
-                    ),
-                onDeltaAnimationComplete = {
-                    gameViewModel.markCoinDeltaAnimationShown(
-                        state.feedDetails[pageNo].videoID,
-                    )
-                },
-            )
-            if (!lottieCached) {
-                gameState.gameIcons.forEach { icon ->
-                    PreloadLottieAnimation(icon.clickAnimation)
-                }
-                lottieCached = true
+        BottomView(
+            state = state,
+            pageNo = pageNo,
+            feedViewModel = feedViewModel,
+            gameState = gameState,
+            gameViewModel = gameViewModel,
+        )
+        if (!lottieCached) {
+            gameState.gameIcons.forEach { icon ->
+                // Enable if want to use remote lottie
+                // PreloadLottieAnimation(icon.clickAnimation)
             }
+            lottieCached = true
         }
-        if (state.showSignupNudge && pageNo != 0 && (pageNo % SIGN_UP_PAGE) == 0) {
+        if (!feedViewModel.isLoggedIn() && pageNo != 0 && (pageNo % SIGN_UP_PAGE) == 0) {
             SignupNudge {
                 feedViewModel.signInWithGoogle()
             }
@@ -334,6 +319,7 @@ private fun SignupNudge(onSignupClicked: () -> Unit) {
             verticalArrangement = Arrangement.Top,
         ) {
             SignupView(
+                pageName = SignupPageName.HOME,
                 termsLink = TERMS_OF_SERVICE_URL,
                 openTerms = { link = TERMS_OF_SERVICE_URL },
                 onSignupClicked = onSignupClicked,
@@ -393,7 +379,13 @@ private fun TopView(
     gameViewModel: GameViewModel,
 ) {
     Box(
-        modifier = Modifier.fillMaxWidth(),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .paint(
+                    painter = painterResource(R.drawable.shadow),
+                    contentScale = ContentScale.FillBounds,
+                ),
     ) {
         var paddingEnd by remember { mutableFloatStateOf(0f) }
         val density = LocalDensity.current
@@ -428,6 +420,62 @@ private fun TopView(
 }
 
 @Composable
+private fun BottomView(
+    state: FeedState,
+    pageNo: Int,
+    feedViewModel: FeedViewModel,
+    gameState: GameState,
+    gameViewModel: GameViewModel,
+) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        Box(
+            modifier =
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .height(300.dp)
+                    .paint(
+                        painter = painterResource(R.drawable.shadow_bottom),
+                        contentScale = ContentScale.FillBounds,
+                        alpha = 0.3f,
+                    ),
+        ) { }
+        ReportVideo(
+            modifier =
+                Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 16.dp, bottom = 100.dp),
+        ) {
+            feedViewModel.toggleReportSheet(true, pageNo)
+        }
+        if (gameState.gameIcons.isNotEmpty() && gameState.lossPenalty <= gameState.coinBalance) {
+            SmileyGame(
+                gameIcons = gameState.gameIcons,
+                clickedIcon = gameState.gameResult[state.feedDetails[pageNo].videoID]?.first,
+                onIconClicked = {
+                    gameViewModel.setClickedIcon(
+                        icon = it,
+                        feedDetails = state.feedDetails[pageNo],
+                    )
+                },
+                coinDelta = gameViewModel.getFeedGameResult(state.feedDetails[pageNo].videoID),
+                errorMessage = gameViewModel.getFeedGameResultError(state.feedDetails[pageNo].videoID),
+                isLoading = gameState.isLoading,
+                hasShownCoinDeltaAnimation =
+                    gameViewModel.hasShownCoinDeltaAnimation(
+                        state.feedDetails[pageNo].videoID,
+                    ),
+                onDeltaAnimationComplete = {
+                    gameViewModel.markCoinDeltaAnimationShown(
+                        state.feedDetails[pageNo].videoID,
+                    )
+                },
+            )
+        }
+    }
+}
+
+@Composable
 private fun UserBrief(
     profileImageUrl: Url?,
     principalId: String,
@@ -439,29 +487,7 @@ private fun UserBrief(
     Box(
         modifier =
             modifier
-                .padding(
-                    top = 22.dp,
-                    start = 16.dp,
-                    bottom = 22.dp,
-                ).background(
-                    brush =
-                        Brush.horizontalGradient(
-                            colors =
-                                listOf(
-                                    Color.Black.copy(alpha = 0.66f),
-                                    Color.Transparent,
-                                ),
-                            startX = 0f,
-                            endX = Float.POSITIVE_INFINITY,
-                        ),
-                    shape =
-                        RoundedCornerShape(
-                            topStart = 28.dp,
-                            topEnd = 0.dp,
-                            bottomStart = 28.dp,
-                            bottomEnd = 0.dp,
-                        ),
-                ),
+                .padding(top = 22.dp, start = 16.dp, bottom = 22.dp),
     ) {
         Row(
             modifier =

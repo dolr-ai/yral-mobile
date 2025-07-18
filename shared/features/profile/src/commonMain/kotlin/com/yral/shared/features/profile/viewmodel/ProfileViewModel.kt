@@ -9,9 +9,11 @@ import androidx.paging.cachedIn
 import androidx.paging.filter
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
+import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.features.auth.utils.getAccountInfo
+import com.yral.shared.features.profile.analytics.ProfileTelemetry
 import com.yral.shared.features.profile.data.ProfileVideosPagingSource
 import com.yral.shared.features.profile.domain.DeleteVideoUseCase
 import com.yral.shared.features.profile.domain.models.DeleteVideoRequest
@@ -30,6 +32,7 @@ class ProfileViewModel(
     private val sessionManager: SessionManager,
     private val profileRepository: ProfileRepository,
     private val deleteVideoUseCase: DeleteVideoUseCase,
+    private val profileTelemetry: ProfileTelemetry,
 ) : ViewModel() {
     companion object {
         private const val POSTS_PER_PAGE = 20
@@ -72,16 +75,17 @@ class ProfileViewModel(
     }
 
     fun confirmDelete(
-        videoId: String,
-        postId: ULong,
+        feedDetails: FeedDetails,
+        ctaType: VideoDeleteCTA,
     ) {
         if (_state.value.deleteConfirmation !is DeleteConfirmationState.None) return
+        profileTelemetry.onVideoClicked(feedDetails)
         updateDeleteConfirmationIfDifferent(
             DeleteConfirmationState.AwaitingConfirmation(
                 request =
                     DeleteVideoRequest(
-                        postId = postId,
-                        videoId = videoId,
+                        feedDetails = feedDetails,
+                        ctaType = ctaType,
                     ),
             ),
         )
@@ -96,13 +100,26 @@ class ProfileViewModel(
                 else -> return
             }
         viewModelScope.launch {
+            profileTelemetry.onDeleteInitiated(
+                feedDetails = deleteRequest.feedDetails,
+            )
             _state.update { state ->
                 state.copy(deleteConfirmation = DeleteConfirmationState.InProgress(deleteRequest))
             }
             deleteVideoUseCase
                 .invoke(deleteRequest)
                 .onSuccess {
-                    deletedVideoIds.update { it + deleteRequest.videoId }
+                    profileTelemetry.onDeleted(
+                        feedDetails = deleteRequest.feedDetails,
+                        catType = deleteRequest.ctaType,
+                    )
+                    deletedVideoIds.update { it + deleteRequest.feedDetails.videoID }
+
+                    // Update session manager with new video count
+                    val currentCount = sessionManager.profileVideosCount()
+                    sessionManager.updateProfileVideosCount(
+                        count = (currentCount - 1).coerceAtLeast(0),
+                    )
                     _state.update { it.copy(deleteConfirmation = DeleteConfirmationState.None) }
                 }.onFailure { error ->
                     _state.update {
@@ -145,12 +162,31 @@ class ProfileViewModel(
             }
         }
     }
+
+    fun pushScreenView(totalVideos: Int) {
+        profileTelemetry.onProfileScreenViewed(
+            totalVideos = totalVideos,
+            publisherUserId = state.value.accountInfo?.userPrincipal ?: "",
+        )
+    }
+
+    fun uploadVideoClicked() {
+        profileTelemetry.onUploadVideoClicked()
+    }
+
+    fun setManualRefreshTriggered(isTriggered: Boolean) {
+        _state.update { it.copy(manualRefreshTriggered = isTriggered) }
+        if (isTriggered) {
+            sessionManager.updateProfileVideosCount(null)
+        }
+    }
 }
 
 data class ViewState(
     val accountInfo: AccountInfo? = null,
     val deleteConfirmation: DeleteConfirmationState = DeleteConfirmationState.None,
     val videoView: VideoViewState = VideoViewState.None,
+    val manualRefreshTriggered: Boolean = false,
 )
 
 sealed class DeleteConfirmationState {
