@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.yral.android.library)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.kotlinCocoapods)
+    alias(libs.plugins.yral.shared.rust.lib)
 }
 
 kotlin {
@@ -40,9 +41,6 @@ kotlin {
             implementation(projects.shared.libs.preferences)
         }
         androidMain.dependencies {
-            val (deps, addRust) = BuildConfig.getAndProcessDependencies(project)
-            deps.forEach { if (it.isNotEmpty()) implementation(it) }
-            if (addRust) implementation(projects.shared.rust)
             implementation(libs.facebook.sdk.android.core)
             implementation(libs.mixpanel.android)
         }

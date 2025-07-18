@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.gms)
     alias(libs.plugins.firebase.perf)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.yral.shared.rust.lib)
 }
 
 android {
@@ -114,10 +115,6 @@ dependencies {
     implementation(projects.shared.features.uploadvideo)
     implementation(projects.shared.features.profile)
     implementation(projects.shared.libs.arch)
-
-    val (deps, addRust) = BuildConfig.getAndProcessDependencies(project)
-    deps.forEach { if (it.isNotEmpty()) implementation(it) }
-    if (addRust) implementation(projects.shared.rust)
 }
 
 afterEvaluate {

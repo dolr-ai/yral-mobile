@@ -209,3 +209,4 @@ yral-shared-library = { id = "yral.shared.library" }
 yral-shared-library-compose = { id = "yral.shared.library.compose" }
 yral-shared-feature = { id = "yral.shared.feature" }
 yral-style-enforcer = { id = "yral.style.enforcer" }
+yral-shared-rust-lib = { id = "yral.shared.rust.lib" }
