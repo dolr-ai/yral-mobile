@@ -97,6 +97,10 @@ dependencies {
     implementation(libs.decompose.decompose)
     implementation(libs.decompose.extensions.compose)
 
+    implementation(libs.moko.permissions)
+    implementation(libs.moko.permissions.compose)
+    implementation(libs.moko.permissions.notifications)
+
     implementation(projects.shared.core)
     implementation(projects.shared.libs.preferences)
     implementation(projects.shared.libs.http)
