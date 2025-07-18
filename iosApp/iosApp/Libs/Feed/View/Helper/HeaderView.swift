@@ -7,9 +7,11 @@
 //
 
 import UIKit
+import SwiftUI
 
 protocol HeaderViewDelegate: AnyObject {
   func didTapAccountButton()
+  func didTapGameToggle(index: Int)
 }
 
 class HeaderView: UIView {
@@ -21,6 +23,7 @@ class HeaderView: UIView {
   }()
 
   let coinsView = CoinsView()
+  var gameToggleController: UIHostingController<GameToggleView>?
 
   weak var delegate: HeaderViewDelegate?
 
@@ -46,6 +49,26 @@ class HeaderView: UIView {
       accountButton.widthAnchor.constraint(equalToConstant: Constants.accountImageSize),
       accountButton.heightAnchor.constraint(equalToConstant: Constants.accountImageSize),
       accountButton.centerYAnchor.constraint(equalTo: centerYAnchor)
+    ])
+  }
+
+  func addGameToggleView(with index: Int) {
+    gameToggleController = UIHostingController(
+      rootView: GameToggleView(
+        selectedIndex: index,
+        toggleTapped: { [weak self] newIndex in
+          self?.delegate?.didTapGameToggle(index: newIndex)
+        }))
+
+    gameToggleController!.view.backgroundColor = .clear
+    gameToggleController!.view.translatesAutoresizingMaskIntoConstraints = false
+
+    addSubview(gameToggleController!.view)
+    NSLayoutConstraint.activate([
+      gameToggleController!.view.widthAnchor.constraint(equalToConstant: Constants.gameToggleWidth),
+      gameToggleController!.view.heightAnchor.constraint(equalToConstant: Constants.gameToggleHeight),
+      gameToggleController!.view.centerXAnchor.constraint(equalTo: centerXAnchor),
+      gameToggleController!.view.centerYAnchor.constraint(equalTo: centerYAnchor)
     ])
   }
 
@@ -80,5 +103,8 @@ extension HeaderView {
   enum Constants {
     static let accountImage = UIImage(named: "account")
     static let accountImageSize = 32.0
+
+    static let gameToggleWidth = 106.0
+    static let gameToggleHeight = 51.0
   }
 }

@@ -171,7 +171,8 @@ class FeedsRepository: FeedRepositoryProtocol {
       likeCount: Int(result.like_count()),
       isLiked: result.liked_by_me(),
       nsfwProbability: feed.nsfwProbability,
-      smileyGame: SmileyGame(config: SmileyGameConfig.shared.config, state: .notPlayed)
+      smileyGame: SmileyGame(config: SmileyGameConfig.shared.config, state: .notPlayed),
+      honGame: HonGame(name: "Hot or Not")
     )
   }
 

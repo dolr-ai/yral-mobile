@@ -255,6 +255,10 @@ extension FeedsViewController: FeedsCellProtocol {
     self.navigationController?.pushViewController(hostingController, animated: true)
 
   }
+
+  func gameToggleTapped(index: Int, gameIndex: Int) {
+    activeGame = gameIndex == .zero ? .hon : .smiley
+  }
 }
 
 extension FeedsViewController: FeedsPlayerProtocol {

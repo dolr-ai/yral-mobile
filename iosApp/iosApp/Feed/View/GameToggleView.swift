@@ -9,46 +9,50 @@
 import SwiftUI
 
 struct GameToggleView: View {
-  @State private var activeIndex: Int = .zero
+  @State var selectedIndex: Int
 
-    var body: some View {
-      HStack(spacing: Constants.hStackSpacing) {
-        ZStack {
-          RoundedRectangle(cornerRadius: Constants.roundedCornerRadius)
-            .fill(Constants.roundedBackgroundColor)
-            .frame(width: Constants.roundedWidth, height: Constants.roundedHeight)
-            .opacity(activeIndex == .zero ? Constants.roundedVisibleOpacity : Constants.roundedHiddenOpacity)
+  let toggleTapped: (Int) -> Void
 
-          Image(.toggleHon)
-            .resizable()
-            .frame(width: Constants.imageSize, height: Constants.imageSize)
-        }
-        .onTapGesture {
-          withAnimation {
-            activeIndex = .zero
-          }
-        }
+  var body: some View {
+    HStack(spacing: Constants.hStackSpacing) {
+      ZStack {
+        RoundedRectangle(cornerRadius: Constants.roundedCornerRadius)
+          .fill(Constants.roundedBackgroundColor)
+          .frame(width: Constants.roundedWidth, height: Constants.roundedHeight)
+          .opacity(selectedIndex == .zero ? Constants.roundedVisibleOpacity : Constants.roundedHiddenOpacity)
 
-        ZStack {
-          RoundedRectangle(cornerRadius: Constants.roundedCornerRadius)
-            .fill(Constants.roundedBackgroundColor)
-            .frame(width: Constants.roundedWidth, height: Constants.roundedHeight)
-            .opacity(activeIndex == .one ? Constants.roundedVisibleOpacity : Constants.roundedHiddenOpacity)
-
-          Image(.toggleSmiley)
-            .resizable()
-            .frame(width: Constants.imageSize, height: Constants.imageSize)
-        }
-        .onTapGesture {
-          withAnimation {
-            activeIndex = .one
-          }
+        Image(.toggleHon)
+          .resizable()
+          .frame(width: Constants.imageSize, height: Constants.imageSize)
+      }
+      .onTapGesture {
+        withAnimation {
+          selectedIndex = .zero
+          toggleTapped(selectedIndex)
         }
       }
-      .frame(width: Constants.hStackWidth, height: Constants.hStackHeight)
-      .background(Constants.hStackBackground)
-      .clipShape(RoundedRectangle(cornerRadius: Constants.hStackCornerRadius))
+
+      ZStack {
+        RoundedRectangle(cornerRadius: Constants.roundedCornerRadius)
+          .fill(Constants.roundedBackgroundColor)
+          .frame(width: Constants.roundedWidth, height: Constants.roundedHeight)
+          .opacity(selectedIndex == .one ? Constants.roundedVisibleOpacity : Constants.roundedHiddenOpacity)
+
+        Image(.toggleSmiley)
+          .resizable()
+          .frame(width: Constants.imageSize, height: Constants.imageSize)
+      }
+      .onTapGesture {
+        withAnimation {
+          selectedIndex = .one
+          toggleTapped(selectedIndex)
+        }
+      }
     }
+    .frame(width: Constants.hStackWidth, height: Constants.hStackHeight)
+    .background(Constants.hStackBackground)
+    .clipShape(RoundedRectangle(cornerRadius: Constants.hStackCornerRadius))
+  }
 }
 
 extension GameToggleView {
@@ -68,8 +72,4 @@ extension GameToggleView {
 
     static let imageSize = 28.0
   }
-}
-
-#Preview {
-    GameToggleView()
 }

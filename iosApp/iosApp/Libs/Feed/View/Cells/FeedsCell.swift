@@ -24,6 +24,7 @@ protocol FeedsCellProtocol: AnyObject {
   func videoStarted(index: Int, videoId: String)
   func howToPlayButtonTapped(index: Int)
   func accountButtonTapped(index: Int)
+  func gameToggleTapped(index: Int, gameIndex: Int)
 }
 
 // swiftlint: disable type_body_length
@@ -37,6 +38,8 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   private static let resultBottomSheetKey = "ResultBottomSheetKey"
   private var cancellables = Set<AnyCancellable>()
   private var smileyGame: SmileyGame?
+  private var honGame: HonGame?
+  private var activeGame: FeedGame?
   private var sessionManager: SessionManager? {
     didSet {
       bindSession()
@@ -390,7 +393,24 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     ])
   }
 
-  func setupSmileyGameView() {
+  func setupGameView() {
+    switch activeGame {
+    case .smiley:
+      if let smileyGame = smileyGame {
+        setupSmileyGameView(smileyGame: smileyGame)
+        headerView.addGameToggleView(with: .one)
+      }
+    case .hon:
+      if let honGame = honGame {
+        setupHONGameView(honGame: honGame)
+        headerView.addGameToggleView(with: .zero)
+      }
+    default:
+      break
+    }
+  }
+
+  func setupSmileyGameView(smileyGame: SmileyGame) {
     guard (sessionManager?.state.coins ?? 0) >= SmileyGameConfig.shared.config.lossPenalty else {
       return
     }
@@ -399,7 +419,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
       let smileyGameView = SmileyGameView(
         smileyGame: SmileyGame(
           config: SmileyGameConfig.shared.config,
-          state: smileyGame?.state ?? .notPlayed
+          state: smileyGame.state
         ),
         smileyTapped: { [weak self] smiley in
           self?.handleSmileyTap(smiley)
@@ -439,6 +459,10 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
 
       smileyGameHostController = controller
     }
+  }
+
+  func setupHONGameView(honGame: HonGame) {
+
   }
 
   private func setupLottieView() {
@@ -535,11 +559,14 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   }
 
   // swiftlint: disable function_parameter_count
+  // swiftlint: disable function_body_length
   func configure(
     withPlayer feedsPlayer: FeedsPlayer,
     feedInfo: FeedCellInfo,
     profileInfo: HeaderView.ProfileInfo,
     smileyGame: SmileyGame?,
+    honGame: HonGame?,
+    activeGame: FeedGame?,
     session: SessionManager,
     index: Int
   ) {
@@ -572,6 +599,8 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     self.index = index
     self.feedType = feedInfo.feedType
     self.smileyGame = smileyGame
+    self.honGame = honGame
+    self.activeGame = activeGame
     self.sessionManager = session
 
     actionsStackView.addArrangedSubview(accountImageView)
@@ -588,7 +617,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
       captionScrollView.isHidden = true
       actionsStackView.addArrangedSubview(reportButton)
       deleteButton.removeFromSuperview()
-      setupSmileyGameView()
+      setupGameView()
     } else {
       reportButton.removeFromSuperview()
       actionsStackView.addArrangedSubview(deleteButton)
@@ -604,6 +633,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
 
     }
   }
+  // swiftlint: enable function_body_length
   // swiftlint: enable function_parameter_count
 
   override func layoutSubviews() {
@@ -623,11 +653,16 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     lottieView.stop()
     smileyGameScoreLabel.transform = .identity
     smileyGameScoreLabel.isHidden = true
-    if let game = smileyGame {
-      initialStatePublisher.send(game)
+
+    if let smileyGame = smileyGame {
+      initialStatePublisher.send(smileyGame)
     }
+
     smileyGameHostController?.view.removeFromSuperview()
     smileyGameHostController = nil
+
+    headerView.gameToggleController?.view.removeFromSuperview()
+    headerView.gameToggleController = nil
 
     cancellables.forEach({ $0.cancel() })
     cancellables.removeAll()
@@ -665,6 +700,22 @@ extension FeedsCell: HeaderViewDelegate {
   func didTapAccountButton() {
     delegate?.accountButtonTapped(index: index)
   }
+
+  func didTapGameToggle(index: Int) {
+    delegate?.gameToggleTapped(index: self.index, gameIndex: index)
+
+    if index == .zero {
+      activeGame = .hon
+      smileyGameHostController?.view.removeFromSuperview()
+      smileyGameHostController = nil
+    } else if index == .one {
+      activeGame = .smiley
+    }
+
+    headerView.gameToggleController?.view.removeFromSuperview()
+    headerView.gameToggleController = nil
+    setupGameView()
+  }
 }
 
 extension FeedsCell {
@@ -683,7 +734,7 @@ extension FeedsCell {
     static let actionButtonImagePadding = 4.0
     static let actionButtonTitleColor = YralColor.grey50.uiColor
     static let headerViewHorizontal = 26.0
-    static let headerViewTop = 8.0
+    static let headerViewTop = 12.0
     static let headerViewHeight = 50.0
     static let defaultProfileImage = UIImage(named: "default_profile")
     static let playerPlaceHolderImage = UIImage(named: "player_placeholder")
