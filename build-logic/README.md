@@ -56,3 +56,6 @@ Current list of convention plugins:
 
 **Code Quality Plugin:**
 - [`yral.style.enforcer`](convention/src/main/kotlin/StyleEnforcerConventionPlugin.kt): Configures code style enforcement (includes Spotless and Detekt setup)
+
+**Rust Library Plugin:**
+- [`yral.shared.rust.lib`](convention/src/main/kotlin/SharedRustLibraryConventionPlugin.kt): Configures rust dependency based on build type
