@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Yral-α</string>
+    <string name="mixpanel_token">9f7ce647e4b8548dc3cd5b16a98c9ade</string>
 </resources>

@@ -62,6 +62,7 @@ fun UploadVideoScreen(
     goToHome: () -> Unit,
 ) {
     val viewState by viewModel.state.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) { viewModel.pushScreenView() }
     LaunchedEffect(key1 = Unit) {
         viewModel.eventsFlow.collectLatest { value ->
             when (value) {
@@ -93,6 +94,7 @@ fun UploadVideoScreen(
         }
 
         is UiState.Failure -> {
+            LaunchedEffect(Unit) { viewModel.pushUploadFailed(uploadUiState.error) }
             @Suppress("ForbiddenComment")
             UploadVideoFailure(
                 onTryAgain = viewModel::onRetryClicked,
@@ -119,6 +121,7 @@ private fun UploadVideoIdle(
             UploadVideo(
                 viewState.selectedFilePath ?: "",
                 onVideoSelected = viewModel::onFileSelected,
+                onCTAClicked = { viewModel.pushSelectFile() },
             )
         }
         item { Spacer(Modifier.height(20.dp)) }

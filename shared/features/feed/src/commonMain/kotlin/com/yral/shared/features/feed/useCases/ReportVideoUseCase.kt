@@ -22,9 +22,9 @@ class ReportVideoUseCase(
         crashlyticsManager,
     ) {
     override suspend fun execute(parameter: ReportRequestParams): String {
-        val userCanister = sessionManager.getCanisterPrincipal()
-        val userPrincipal = sessionManager.getUserPrincipal()
-        val identity = sessionManager.getIdentity()
+        val userCanister = sessionManager.canisterID
+        val userPrincipal = sessionManager.userPrincipal
+        val identity = sessionManager.identity
         if (identity != null && userCanister != null && userPrincipal != null) {
             val identityWireJson = delegatedIdentityWireToJson(identity)
             val delegatedIdentityWire =

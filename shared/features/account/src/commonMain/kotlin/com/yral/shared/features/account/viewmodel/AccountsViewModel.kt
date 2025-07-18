@@ -4,16 +4,16 @@ import androidx.lifecycle.ViewModel
 import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
+import com.yral.shared.analytics.events.MenuCtaType
 import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.crashlytics.core.CrashlyticsManager
+import com.yral.shared.features.account.analytics.AccountsTelemetry
 import com.yral.shared.features.auth.AuthClientFactory
 import com.yral.shared.features.auth.domain.useCases.DeleteAccountUseCase
 import com.yral.shared.features.auth.utils.SocialProvider
 import com.yral.shared.features.auth.utils.getAccountInfo
-import com.yral.shared.preferences.PrefKeys
-import com.yral.shared.preferences.Preferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,9 +26,9 @@ class AccountsViewModel(
     appDispatchers: AppDispatchers,
     authClientFactory: AuthClientFactory,
     private val sessionManager: SessionManager,
-    private val preferences: Preferences,
     private val deleteAccountUseCase: DeleteAccountUseCase,
     private val crashlyticsManager: CrashlyticsManager,
+    val accountsTelemetry: AccountsTelemetry,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.io)
 
@@ -41,31 +41,9 @@ class AccountsViewModel(
 
     private val _state = MutableStateFlow(AccountsState())
     val state: StateFlow<AccountsState> = _state.asStateFlow()
-    val sessionState = sessionManager.state
 
     init {
-        coroutineScope.launch {
-            val isSignedIn = isSocialSignInSuccessful()
-            _state.update { currentState ->
-                currentState.copy(
-                    isSocialSignInSuccessful = isSignedIn,
-                )
-            }
-        }
-    }
-
-    fun refreshAccountInfo() {
-        coroutineScope.launch {
-            val accountInfo = sessionManager.getAccountInfo()
-            val isSignedIn = isSocialSignInSuccessful()
-            _state.update { currentState ->
-                currentState.copy(
-                    accountInfo = accountInfo,
-                    isSocialSignInSuccessful = isSignedIn,
-                    bottomSheetType = AccountBottomSheet.None,
-                )
-            }
-        }
+        _state.update { it.copy(accountInfo = sessionManager.getAccountInfo()) }
     }
 
     private fun logout() {
@@ -97,7 +75,6 @@ class AccountsViewModel(
                 try {
                     authClient.signInWithSocial(SocialProvider.GOOGLE)
                 } catch (e: Exception) {
-                    crashlyticsManager.logMessage("sign in with google exception caught")
                     crashlyticsManager.recordException(e)
                     handleSignupFailed()
                 }
@@ -109,10 +86,6 @@ class AccountsViewModel(
             type = AccountBottomSheet.ErrorMessage(ErrorType.SIGNUP_FAILED),
         )
     }
-
-    private suspend fun isSocialSignInSuccessful(): Boolean =
-        preferences
-            .getBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name) ?: false
 
     fun setBottomSheetType(type: AccountBottomSheet) {
         coroutineScope.launch {
@@ -130,28 +103,33 @@ class AccountsViewModel(
                 AccountHelpLink(
                     link = TALK_TO_TEAM_URL,
                     openInExternalBrowser = false,
+                    menuCtaType = MenuCtaType.TALK_TO_THE_TEAM,
                 ),
                 AccountHelpLink(
                     link = TERMS_OF_SERVICE_URL,
                     openInExternalBrowser = false,
+                    menuCtaType = MenuCtaType.TERMS_OF_SERVICE,
                 ),
                 AccountHelpLink(
                     link = PRIVACY_POLICY_URL,
                     openInExternalBrowser = false,
+                    menuCtaType = MenuCtaType.PRIVACY_POLICY,
                 ),
             )
-        val isSocialSignIn = _state.value.isSocialSignInSuccessful
+        val isSocialSignIn = isLoggedIn()
         if (isSocialSignIn) {
             links.add(
                 AccountHelpLink(
                     link = LOGOUT_URI,
                     openInExternalBrowser = true,
+                    menuCtaType = MenuCtaType.LOG_OUT,
                 ),
             )
             links.add(
                 AccountHelpLink(
                     link = DELETE_ACCOUNT_URI,
                     openInExternalBrowser = true,
+                    menuCtaType = MenuCtaType.DELETE_ACCOUNT,
                 ),
             )
         }
@@ -163,32 +141,34 @@ class AccountsViewModel(
             AccountHelpLink(
                 link = TELEGRAM_LINK,
                 openInExternalBrowser = true,
+                menuCtaType = MenuCtaType.FOLLOW_ON,
             ),
             AccountHelpLink(
                 link = DISCORD_LINK,
                 openInExternalBrowser = true,
+                menuCtaType = MenuCtaType.FOLLOW_ON,
             ),
             AccountHelpLink(
                 link = TWITTER_LINK,
                 openInExternalBrowser = true,
+                menuCtaType = MenuCtaType.FOLLOW_ON,
             ),
         )
 
-    fun handleHelpLink(
-        link: String,
-        shouldOpenOutside: Boolean,
-    ) {
-        when (link) {
+    fun handleHelpLink(link: AccountHelpLink) {
+        when (link.link) {
             LOGOUT_URI -> logout()
             DELETE_ACCOUNT_URI -> setBottomSheetType(AccountBottomSheet.DeleteAccount)
             else ->
                 setBottomSheetType(
                     AccountBottomSheet.ShowWebView(
-                        linkToOpen = Pair(link, shouldOpenOutside),
+                        linkToOpen = link,
                     ),
                 )
         }
     }
+
+    fun isLoggedIn(): Boolean = sessionManager.isSocialSignIn()
 
     companion object {
         const val LOGOUT_URI = "yral://logout"
@@ -205,18 +185,18 @@ class AccountsViewModel(
 data class AccountHelpLink(
     val link: String,
     val openInExternalBrowser: Boolean,
+    val menuCtaType: MenuCtaType,
 )
 
 data class AccountsState(
     val accountInfo: AccountInfo? = null,
-    val isSocialSignInSuccessful: Boolean = false,
     val bottomSheetType: AccountBottomSheet = AccountBottomSheet.None,
 )
 
 sealed interface AccountBottomSheet {
     data object None : AccountBottomSheet
     data class ShowWebView(
-        val linkToOpen: Pair<String, Boolean>,
+        val linkToOpen: AccountHelpLink,
     ) : AccountBottomSheet
 
     data object SignUp : AccountBottomSheet

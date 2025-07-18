@@ -13,7 +13,6 @@ enum class FeatureEvents {
     SIGNUP_INITIATED,
     SIGNUP_SUCCESS,
     LOGIN_SUCCESS,
-    AUTH_SUCCESSFUL,
     AUTH_FAILED,
 
     // Home
@@ -30,8 +29,6 @@ enum class FeatureEvents {
     DELETE_VIDEO_INITIATED,
     VIDEO_DELETED,
     VIDEO_DURATION_WATCHED,
-    EMPTY_COLD_START_FEED,
-    DUPLICATE_POSTS,
 
     // Game
     GAME_VOTED,
@@ -63,6 +60,9 @@ enum class FeatureEvents {
     REFER_AND_EARN_PAGE_VIEWED,
     REFERRAL_HISTORY_VIEWED,
     SHARE_INVITES_CLICKED,
+
+    // Leaderboard
+    LEADERBOARD_PAGE_VIEWED,
     ;
 
     fun getEventName(): String =

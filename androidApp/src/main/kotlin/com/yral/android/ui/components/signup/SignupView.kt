@@ -1,4 +1,4 @@
-package com.yral.android.ui.components
+package com.yral.android.ui.components.signup
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -28,14 +29,20 @@ import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.widgets.YralButton
+import com.yral.shared.analytics.events.SignupPageName
+import com.yral.shared.features.auth.analytics.AuthTelemetry
+import org.koin.compose.koinInject
 
 @Suppress("LongMethod")
 @Composable
 fun SignupView(
+    pageName: SignupPageName,
     termsLink: String,
     onSignupClicked: () -> Unit,
     openTerms: () -> Unit,
+    authTelemetry: AuthTelemetry = koinInject(),
 ) {
+    LaunchedEffect(Unit) { authTelemetry.onSignupViewed(pageName) }
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(46.dp, Alignment.Top),
@@ -84,6 +91,7 @@ fun SignupView(
                     text = stringResource(R.string.signup_with_google),
                     icon = R.drawable.google,
                 ) {
+                    authTelemetry.onSignupJourneySelected()
                     onSignupClicked()
                 }
                 Text(

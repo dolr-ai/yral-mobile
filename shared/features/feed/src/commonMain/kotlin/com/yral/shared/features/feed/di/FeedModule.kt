@@ -1,5 +1,6 @@
 package com.yral.shared.features.feed.di
 
+import com.yral.shared.features.feed.analytics.FeedTelemetry
 import com.yral.shared.features.feed.data.FeedRemoteDataSource
 import com.yral.shared.features.feed.data.FeedRepository
 import com.yral.shared.features.feed.data.IFeedRemoteDataSource
@@ -28,4 +29,5 @@ val feedModule =
         factoryOf(::FeedRepository) { bind<IFeedRepository>() }
         factoryOf(::FeedRemoteDataSource) { bind<IFeedRemoteDataSource>() }
         factoryOf(::RequiredUseCases)
+        factoryOf(::FeedTelemetry)
     }

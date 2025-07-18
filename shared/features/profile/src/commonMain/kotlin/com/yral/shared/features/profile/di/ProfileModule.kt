@@ -1,5 +1,6 @@
 package com.yral.shared.features.profile.di
 
+import com.yral.shared.features.profile.analytics.ProfileTelemetry
 import com.yral.shared.features.profile.data.ProfileDataSource
 import com.yral.shared.features.profile.data.ProfileDataSourceImpl
 import com.yral.shared.features.profile.data.ProfileRepositoryImpl
@@ -16,5 +17,6 @@ val profileModule =
         factoryOf(::ProfileDataSourceImpl).bind<ProfileDataSource>()
         factoryOf(::ProfileRepositoryImpl).bind<ProfileRepository>()
         factoryOf(::DeleteVideoUseCase)
+        factoryOf(::ProfileTelemetry)
         viewModelOf(::ProfileViewModel)
     }

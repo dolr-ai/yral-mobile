@@ -28,10 +28,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
@@ -50,21 +52,25 @@ import com.yral.android.ui.screens.game.CoinBagConstants.COIN_OFFSET_X_START
 import com.yral.android.ui.screens.game.CoinBagConstants.COIN_OFFSET_Y_END
 import com.yral.android.ui.screens.game.CoinBagConstants.COIN_OFFSET_Y_MID
 import com.yral.android.ui.screens.game.CoinBagConstants.COIN_OFFSET_Y_START
+import com.yral.android.ui.screens.game.CoinBagConstants.COIN_SCALE
+import com.yral.android.ui.screens.game.CoinBagConstants.COIN_SCALE_MID
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
 
 private object CoinBagConstants {
     const val STATIC_BAG_SIZE = 36
-    const val BAG_OFFSET_X = -22
-    const val COIN_OFFSET_X_START = -80f
-    const val COIN_OFFSET_X_MID = -40f
+    const val BAG_OFFSET_X = -18
+    const val COIN_OFFSET_X_START = -50f
+    const val COIN_OFFSET_X_MID = -25f
     const val COIN_OFFSET_X_END = -10f
     const val COIN_OFFSET_Y_START = 0f
-    const val COIN_OFFSET_Y_MID = -40f
+    const val COIN_OFFSET_Y_MID = -28f
     const val COIN_OFFSET_Y_END = -26f
     const val ANIMATION_DURATION = 700
     const val COIN_BAG_SCALE = 1.2f
+    const val COIN_SCALE = 1.8f
+    const val COIN_SCALE_MID = 1.4f
     const val COIN_BAG_ROTATION = -15f
 }
 
@@ -101,6 +107,7 @@ private fun CoinBag(
     setAnimate: (Boolean) -> Unit,
 ) {
     val scale = remember { Animatable(1f) }
+    val coinScale = remember { Animatable(1f) }
     val rotation = remember { Animatable(0f) }
     val coinYOffset = remember { Animatable(COIN_OFFSET_Y_START) }
     val coinXOffset = remember { Animatable(COIN_OFFSET_X_START) }
@@ -110,6 +117,10 @@ private fun CoinBag(
     val xEnd = if (didWin) COIN_OFFSET_X_END else COIN_OFFSET_X_START
     val yStart = if (didWin) COIN_OFFSET_Y_START else COIN_OFFSET_Y_END
     val yEnd = if (didWin) COIN_OFFSET_Y_END else COIN_OFFSET_Y_START
+    val coinStart = if (didWin) COIN_SCALE else 1f
+    val coinEnd = if (didWin) 1f else COIN_SCALE
+
+    var coinVisible by remember { mutableStateOf(false) }
 
     LaunchedEffect(animateBag, didWin) {
         val animationSpec =
@@ -123,12 +134,15 @@ private fun CoinBag(
             coinYOffset.snapTo(yStart)
             coinXOffset.snapTo(xStart)
             coinAlpha.snapTo(0f)
+            coinScale.snapTo(coinStart)
+            coinVisible = true
             awaitAll(
                 async { scale.animateTo(COIN_BAG_SCALE, animationSpec = animationSpec) },
                 async { rotation.animateTo(COIN_BAG_ROTATION, animationSpec = animationSpec) },
                 async { coinAlpha.animateTo(1f, animationSpec = animationSpec) },
                 async { coinYOffset.animateTo(COIN_OFFSET_Y_MID, animationSpec = animationSpec) },
                 async { coinXOffset.animateTo(COIN_OFFSET_X_MID, animationSpec = animationSpec) },
+                async { coinScale.animateTo(COIN_SCALE_MID, animationSpec = animationSpec) },
             )
             // Animate to end
             awaitAll(
@@ -137,31 +151,14 @@ private fun CoinBag(
                 async { coinAlpha.animateTo(0f, animationSpec = animationSpec) },
                 async { coinYOffset.animateTo(yEnd, animationSpec = animationSpec) },
                 async { coinXOffset.animateTo(xEnd, animationSpec = animationSpec) },
+                async { coinScale.animateTo(coinEnd, animationSpec = animationSpec) },
             )
             setAnimate(false)
+            coinVisible = false
         }
     }
 
     Box {
-        // Animated coins
-        if (animateBag) {
-            Image(
-                painter = painterResource(R.drawable.gold_coins),
-                contentDescription = "Animated coins",
-                modifier =
-                    Modifier
-                        .size(24.dp)
-                        .align(Alignment.BottomStart)
-                        .offset {
-                            IntOffset(
-                                x = coinXOffset.value.dp.roundToPx(),
-                                y = coinYOffset.value.dp.roundToPx(),
-                            )
-                        }.graphicsLayer {
-                            alpha = coinAlpha.value
-                        },
-            )
-        }
         // Animated bag
         Image(
             painter = painterResource(R.drawable.coin_bag),
@@ -177,6 +174,26 @@ private fun CoinBag(
                         rotationZ = rotation.value
                     },
         )
+        // Animated coins
+        if (coinVisible) {
+            Image(
+                painter = painterResource(R.drawable.gold_coins),
+                contentDescription = "Animated coins",
+                modifier =
+                    Modifier
+                        .size(24.dp)
+                        .align(Alignment.BottomStart)
+                        .offset {
+                            IntOffset(
+                                x = coinXOffset.value.dp.roundToPx(),
+                                y = coinYOffset.value.dp.roundToPx(),
+                            )
+                        }.scale(coinScale.value)
+                        .graphicsLayer {
+                            // alpha = coinAlpha.value
+                        },
+            )
+        }
     }
 }
 

@@ -30,6 +30,7 @@ import com.yral.android.ui.widgets.YralBottomSheet
 import com.yral.android.ui.widgets.YralButton
 import com.yral.android.ui.widgets.YralGradientButton
 import com.yral.android.ui.widgets.YralLottieAnimation
+import com.yral.shared.analytics.events.GameConcludedCtaType
 import com.yral.shared.features.game.domain.models.GameIcon
 import kotlin.math.abs
 
@@ -40,6 +41,7 @@ fun GameResultSheet(
     coinDelta: Int,
     onDismissRequest: () -> Unit,
     openAboutGame: () -> Unit,
+    onSheetButtonClicked: (GameConcludedCtaType) -> Unit,
 ) {
     val bottomSheetState =
         rememberModalBottomSheetState(
@@ -58,12 +60,7 @@ fun GameResultSheet(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(
-                        start = 16.dp,
-                        top = 12.dp,
-                        end = 16.dp,
-                        bottom = 36.dp,
-                    ),
+                    .padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 36.dp),
             verticalArrangement = Arrangement.spacedBy(28.dp, Alignment.Top),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
@@ -95,6 +92,7 @@ fun GameResultSheet(
             GameResultSheetButtons(
                 onDismissRequest = onDismissRequest,
                 openAboutGame = openAboutGame,
+                onSheetButtonClicked = onSheetButtonClicked,
             )
         }
     }
@@ -192,6 +190,7 @@ private fun GameResultBagAnimation(coinDelta: Int) {
 private fun GameResultSheetButtons(
     onDismissRequest: () -> Unit,
     openAboutGame: () -> Unit,
+    onSheetButtonClicked: (GameConcludedCtaType) -> Unit,
 ) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.Start),
@@ -200,7 +199,10 @@ private fun GameResultSheetButtons(
         YralGradientButton(
             modifier = Modifier.weight(1f),
             text = stringResource(R.string.keep_playing),
-        ) { onDismissRequest() }
+        ) {
+            onSheetButtonClicked(GameConcludedCtaType.KEEP_PLAYING)
+            onDismissRequest()
+        }
         YralButton(
             modifier = Modifier.weight(1f),
             text = stringResource(R.string.learn_more),
@@ -211,6 +213,9 @@ private fun GameResultSheetButtons(
                 TextStyle(
                     color = YralColors.Pink300,
                 ),
-        ) { openAboutGame() }
+        ) {
+            onSheetButtonClicked(GameConcludedCtaType.LEARN_MORE)
+            openAboutGame()
+        }
     }
 }

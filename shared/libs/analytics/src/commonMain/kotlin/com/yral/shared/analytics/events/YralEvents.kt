@@ -4,6 +4,7 @@ import com.yral.shared.analytics.constants.FeatureEvents
 import com.yral.shared.analytics.constants.Features
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlin.math.abs
 
 @Serializable
 data class SplashScreenViewedEventData(
@@ -22,11 +23,13 @@ data class SplashScreenViewedEventData(
 data class AuthScreenViewedEventData(
     @SerialName("event") override val event: String = FeatureEvents.AUTH_SCREEN_VIEWED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.AUTH.getFeatureName(),
+    @SerialName("page_name") val pageName: SignupPageName,
 ) : BaseEventData(),
     EventData {
-    public constructor() : this(
+    public constructor(pageName: SignupPageName) : this(
         FeatureEvents.AUTH_SCREEN_VIEWED.getEventName(),
         Features.AUTH.getFeatureName(),
+        pageName,
     )
 }
 
@@ -188,7 +191,6 @@ data class VideoStartedEventData(
 data class VideoImpressionEventData(
     @SerialName("event") override val event: String = FeatureEvents.VIDEO_IMPRESSION.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.FEED.getFeatureName(),
-    @SerialName("category_name") val categoryName: CategoryName,
     @SerialName("video_id") val videoId: String,
     @SerialName("publisher_user_id") val publisherUserId: String,
     @SerialName("like_count") val likeCount: Long,
@@ -200,7 +202,6 @@ data class VideoImpressionEventData(
 ) : BaseEventData(),
     EventData {
     constructor(
-        categoryName: CategoryName,
         videoId: String,
         publisherUserId: String,
         likeCount: Long,
@@ -212,7 +213,6 @@ data class VideoImpressionEventData(
     ) : this(
         FeatureEvents.VIDEO_IMPRESSION.getEventName(),
         Features.FEED.getFeatureName(),
-        categoryName,
         videoId,
         publisherUserId,
         likeCount,
@@ -472,7 +472,7 @@ data class GamePlayedEventData(
         stakeType,
         optionChosen,
         gameResult,
-        wonLossAmount,
+        abs(wonLossAmount),
     )
 }
 
@@ -499,7 +499,7 @@ data class GameConcludedBottomsheetClickedEventData(
         stakeAmount,
         stakeType,
         gameResult,
-        wonLossAmount,
+        abs(wonLossAmount),
         ctaType,
     )
 }
@@ -705,6 +705,45 @@ data class ShareInvitesClickedEventData(
     @SerialName("referral_bonus") val referralBonus: Double,
 ) : EventData
 
+@Serializable
+data class VideoDurationWatchedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.VIDEO_DURATION_WATCHED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.FEED.getFeatureName(),
+    @SerialName("canister_id") val canisterId: String,
+    @SerialName("creator_category") val creatorCategory: String = "",
+    @SerialName("display_name") val displayName: String,
+    @SerialName("feed_type") val feedType: String = "Clean",
+    @SerialName("hashtag_count") val hashtagCount: Int,
+    @SerialName("is_hot_or_not") val isHotOrNot: Boolean,
+    @SerialName("is_logged_in") val isLoggedIn: Boolean,
+    @SerialName("is_nsfw") val isNsfw: Boolean,
+    @SerialName("like_count") val likeCount: Long,
+    @SerialName("post_id") val postID: Long,
+    @SerialName("publisher_canister_id") val publisherCanisterId: String,
+    @SerialName("publisher_user_id") val publisherUserId: String,
+    @SerialName("share_count") val shareCount: Long = 0,
+    @SerialName("user_id") val userID: String,
+    @SerialName("video_category") val videoCategory: String = "",
+    @SerialName("video_id") val videoID: String,
+    @SerialName("view_count") val viewCount: Long,
+    @SerialName("nsfw_probability") val nsfwProbability: Double? = null,
+    @SerialName("absolute_watched") val absoluteWatched: Double = 0.0,
+    @SerialName("percentage_watched") val percentageWatched: Double = 0.0,
+    @SerialName("video_duration") val videoDuration: Double = 0.0,
+) : EventData
+
+@Serializable
+data class LeaderBoardPageViewedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.LEADERBOARD_PAGE_VIEWED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.LEADERBOARD.getFeatureName(),
+) : BaseEventData(),
+    EventData {
+    constructor() : this(
+        FeatureEvents.LEADERBOARD_PAGE_VIEWED.getEventName(),
+        Features.AUTH.getFeatureName(),
+    )
+}
+
 // Helper enums
 @Serializable
 enum class AuthJourney {
@@ -717,8 +756,8 @@ enum class AuthJourney {
 
 @Serializable
 enum class SignupPageName {
-    @SerialName("feed")
-    FEED,
+    @SerialName("home")
+    HOME,
 
     @SerialName("menu")
     MENU,
