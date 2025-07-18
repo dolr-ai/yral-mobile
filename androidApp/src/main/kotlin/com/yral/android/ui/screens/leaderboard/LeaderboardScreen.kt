@@ -55,6 +55,7 @@ import com.yral.android.ui.screens.leaderboard.LeaderboardScreenConstants.COIN_B
 import com.yral.android.ui.screens.leaderboard.LeaderboardScreenConstants.MAX_CHAR_OF_NAME
 import com.yral.android.ui.screens.leaderboard.LeaderboardScreenConstants.POSITION_TEXT_WEIGHT
 import com.yral.android.ui.screens.leaderboard.LeaderboardScreenConstants.USER_DETAIL_WEIGHT
+import com.yral.android.ui.screens.leaderboard.nav.LeaderboardComponent
 import com.yral.android.ui.widgets.YralAsyncImage
 import com.yral.android.ui.widgets.YralLoader
 import com.yral.android.ui.widgets.YralLottieAnimation
@@ -63,9 +64,10 @@ import com.yral.shared.features.game.domain.models.LeaderboardItem
 import com.yral.shared.features.game.viewmodel.LeaderBoardViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
-@Suppress("LongMethod")
+@Suppress("LongMethod", "UnusedParameter")
 @Composable
 fun LeaderboardScreen(
+    component: LeaderboardComponent,
     modifier: Modifier = Modifier,
     viewModel: LeaderBoardViewModel = koinViewModel(),
 ) {

@@ -64,6 +64,7 @@ import com.yral.android.ui.screens.profile.ProfileScreenConstants.PADDING_BOTTOM
 import com.yral.android.ui.screens.profile.ProfileScreenConstants.PULL_TO_REFRESH_INDICATOR_SIZE
 import com.yral.android.ui.screens.profile.ProfileScreenConstants.PULL_TO_REFRESH_INDICATOR_THRESHOLD
 import com.yral.android.ui.screens.profile.ProfileScreenConstants.PULL_TO_REFRESH_OFFSET_MULTIPLIER
+import com.yral.android.ui.screens.profile.nav.ProfileComponent
 import com.yral.android.ui.widgets.LoaderSize
 import com.yral.android.ui.widgets.YralAsyncImage
 import com.yral.android.ui.widgets.YralButtonState
@@ -82,8 +83,8 @@ import com.yral.shared.rust.domain.models.FeedDetails
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
+    component: ProfileComponent,
     modifier: Modifier = Modifier,
-    uploadVideo: () -> Unit,
     viewModel: ProfileViewModel,
     profileVideos: LazyPagingItems<FeedDetails>,
 ) {
@@ -137,7 +138,7 @@ fun ProfileScreen(
                     manualRefreshTriggered = state.manualRefreshTriggered,
                     uploadVideo = {
                         viewModel.uploadVideoClicked()
-                        uploadVideo()
+                        component.onUploadVideoClick()
                     },
                     openVideoReel = { clickedIndex -> viewModel.openVideoReel(clickedIndex) },
                     deletingVideoId = deletingVideoId,

@@ -22,9 +22,11 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.arkivanov.decompose.defaultComponentContext
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.design.appTypoGraphy
+import com.yral.android.ui.nav.DefaultRootComponent
 import com.yral.android.ui.screens.RootScreen
 import com.yral.shared.core.platform.AndroidPlatformResources
 import com.yral.shared.core.platform.PlatformResourcesFactory
@@ -48,11 +50,13 @@ class MainActivity : ComponentActivity() {
         }
         oAuthUtils = koinInstance.get()
         handleIntent(intent)
+        // Always create the root component outside Compose on the main thread
+        val root = DefaultRootComponent(componentContext = defaultComponentContext())
         setContent {
             CompositionLocalProvider(LocalRippleConfiguration provides null) {
                 CompositionLocalProvider(LocalAppTopography provides appTypoGraphy()) {
                     MyApplicationTheme {
-                        RootScreen()
+                        RootScreen(root)
                     }
                 }
             }
