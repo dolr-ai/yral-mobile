@@ -161,5 +161,12 @@ gradlePlugin {
                     .pluginId
             implementationClass = "StyleEnforcerConventionPlugin"
         }
+        register("rustLib") {
+            id =
+                libs.plugins.yral.shared.rust.lib
+                    .get()
+                    .pluginId
+            implementationClass = "SharedRustLibraryConventionPlugin"
+        }
     }
 }

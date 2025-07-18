@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.yral.shared.feature)
     alias(libs.plugins.yral.android.feature)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.yral.shared.rust.lib)
 }
 
 kotlin {
@@ -25,10 +26,6 @@ kotlin {
             implementation(projects.shared.libs.firebaseStore)
             implementation(projects.shared.libs.firebaseAuth)
             implementation(projects.shared.libs.http)
-
-            val (deps, addRust) = BuildConfig.getAndProcessDependencies(project)
-            deps.forEach { if (it.isNotEmpty()) implementation(it) }
-            if (addRust) implementation(projects.shared.rust)
         }
     }
 }
