@@ -17,9 +17,11 @@ use k256::Secp256k1;
 use serde_bytes::ByteBuf;
 use std::time::UNIX_EPOCH;
 use tokio::time::Duration;
-use yral_canisters_common::Canisters;
-use yral_types::delegated_identity::DelegatedIdentityWire;
 use yral_canisters_common::utils::profile::propic_from_principal as inner_propic_from_principal;
+use yral_canisters_common::Canisters;
+use yral_metadata_client::DeviceRegistrationToken;
+use yral_metadata_client::MetadataClient;
+use yral_types::delegated_identity::DelegatedIdentityWire;
 
 pub type Secp256k1Error = k256::elliptic_curve::Error;
 
@@ -65,7 +67,7 @@ pub fn delegated_identity_from_bytes(
         wire.from_key,
         Box::new(to_identity),
         wire.delegation_chain,
-    );
+    ).unwrap();
     Ok(delegated_identity)
 }
 
@@ -190,7 +192,7 @@ impl Result12 {
             Result12::Err(_) => None,
         }
     }
-    
+
     pub fn err_value(self) -> Option<GetPostsOfUserProfileError> {
         match self {
             Result12::Ok(_) => None,
@@ -220,10 +222,51 @@ fn propic_from_principal(principal: Principal) -> String {
 
 #[uniffi::export]
 fn yral_auth_login_hint(data: &[u8]) -> std::result::Result<String, FFIError> {
-     let identity = delegated_identity_from_bytes(data)
+    let identity = delegated_identity_from_bytes(data)
         .map_err(|e| FFIError::UnknownError(format!("Failed to parse identity: {:?}", e)))?;
-     match yral_canisters_common::yral_auth_login_hint(&identity) {
-         Ok(signature) => Ok(signature),
-         Err(error) => Err(FFIError::UnknownError(format!("Failed to create login hint: {:?}", error))),
-     }
- }
+    match yral_canisters_common::yral_auth_login_hint(&identity) {
+        Ok(signature) => Ok(signature),
+        Err(error) => Err(FFIError::UnknownError(format!(
+            "Failed to create login hint: {:?}",
+            error
+        ))),
+    }
+}
+
+#[uniffi::export]
+pub async fn register_device(
+    data: Vec<u8>,
+    token: String,
+) -> std::result::Result<(), FFIError> {
+    RUNTIME.spawn(async move {
+        let identity = delegated_identity_from_bytes(&data)
+            .map_err(|e| FFIError::UnknownError(format!("Failed to parse identity: {:?}", e)))?;
+        let client: MetadataClient<false> = MetadataClient::default();
+        let registration_token = DeviceRegistrationToken { token };
+        let res  = 
+            client
+                .register_device(&identity, registration_token)
+                .await
+                .map_err(|e| FFIError::AgentError(format!("Api Error: {:?}", e)))?;    
+        Ok(res)
+    }).await.map_err(|e| FFIError::AgentError(format!("{:?}", e)))?
+}
+
+#[uniffi::export]
+pub async fn unregister_device(
+    data: Vec<u8>,
+    token: String,
+) -> std::result::Result<(), FFIError> {
+    RUNTIME.spawn(async move {
+        let identity = delegated_identity_from_bytes(&data)
+            .map_err(|e| FFIError::UnknownError(format!("Failed to parse identity: {:?}", e)))?;
+        let client: MetadataClient<false> = MetadataClient::default();
+        let registration_token = DeviceRegistrationToken { token };
+        let res  = 
+            client
+                .unregister_device(&identity, registration_token)
+                .await
+                .map_err(|e| FFIError::AgentError(format!("Api Error: {:?}", e)))?;    
+        Ok(res)
+    }).await.map_err(|e| FFIError::AgentError(format!("{:?}", e)))?
+}
