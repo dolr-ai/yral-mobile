@@ -26,7 +26,7 @@ fi
 #    - CI => only aarch64-apple-ios
 #    - Local => depends on PLATFORM_NAME (sim vs device).
 ####################################################
-if [[ "$CI" == "true" ]]; then
+if [[ "${CI:-false}" == "true" ]]; then
   # For CI, build only device arch
   TARGETS="aarch64-apple-ios"
 else

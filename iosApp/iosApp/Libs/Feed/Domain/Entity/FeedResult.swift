@@ -7,6 +7,11 @@
 //
 import Foundation
 
+enum FeedGame: Equatable {
+  case smiley
+  case hon
+}
+
 struct FeedResult: Hashable {
   let postID: String
   let videoID: String
@@ -23,6 +28,7 @@ struct FeedResult: Hashable {
   var isLiked: Bool
   var nsfwProbability: Double
   var smileyGame: SmileyGame?
+  var honGame: HonGame?
 
   func hash(into hasher: inout Hasher) {
     hasher.combine(videoID)
@@ -31,4 +37,8 @@ struct FeedResult: Hashable {
   static func == (lhs: FeedResult, rhs: FeedResult) -> Bool {
     return lhs.videoID == rhs.videoID
   }
+}
+
+struct HonGame: Hashable {
+  let name: String
 }

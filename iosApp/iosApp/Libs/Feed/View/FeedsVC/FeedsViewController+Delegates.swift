@@ -240,6 +240,25 @@ extension FeedsViewController: FeedsCellProtocol {
     hostingController?.view.backgroundColor = .clear
     self.present(hostingController!, animated: true, completion: nil)
   }
+
+  func howToPlayButtonTapped(index: Int) {}
+
+  func accountButtonTapped(index: Int) {
+    guard let router = router else {
+      return
+    }
+
+    let accountView = router.getAccountView()
+    let hostingController = UIHostingController(rootView: accountView)
+    hostingController.view.backgroundColor = .clear
+    hostingController.extendedLayoutIncludesOpaqueBars = true
+    self.navigationController?.pushViewController(hostingController, animated: true)
+
+  }
+
+  func gameToggleTapped(index: Int, gameIndex: Int) {
+    activeGame = gameIndex == .zero ? .hon : .smiley
+  }
 }
 
 extension FeedsViewController: FeedsPlayerProtocol {

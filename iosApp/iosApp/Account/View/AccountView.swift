@@ -109,6 +109,7 @@ struct AccountView: View {
         }
       }
     }
+    .background(Color.black)
     .task {
       AnalyticsModuleKt.getAnalyticsManager().trackEvent(
         event: MenuPageViewedEventData()

@@ -22,6 +22,9 @@ protocol FeedsCellProtocol: AnyObject {
   func smileyTapped(index: Int, smiley: Smiley)
   func showGameResultBottomSheet(index: Int, gameResult: SmileyGameResultResponse)
   func videoStarted(index: Int, videoId: String)
+  func howToPlayButtonTapped(index: Int)
+  func accountButtonTapped(index: Int)
+  func gameToggleTapped(index: Int, gameIndex: Int)
 }
 
 // swiftlint: disable type_body_length
@@ -35,6 +38,8 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   private static let resultBottomSheetKey = "ResultBottomSheetKey"
   private var cancellables = Set<AnyCancellable>()
   private var smileyGame: SmileyGame?
+  private var honGame: HonGame?
+  private var activeGame: FeedGame?
   private var sessionManager: SessionManager? {
     didSet {
       bindSession()
@@ -51,6 +56,22 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
       self.delegate?.loginTapped(provider: provider)
     }
   )
+
+  private let topGradientImage: UIImageView = {
+    let imageView = getUIImageView()
+    imageView.image = Constants.topGradientImage
+    imageView.contentMode = .scaleToFill
+    imageView.clipsToBounds = true
+    return imageView
+  }()
+
+  private let bottomGradientImage: UIImageView = {
+    let imageView = getUIImageView()
+    imageView.image = Constants.bottomGradientImage
+    imageView.contentMode = .scaleToFill
+    imageView.clipsToBounds = true
+    return imageView
+  }()
 
   var actionsStackView: UIStackView = {
     let stackView = getUIStackView()
@@ -72,6 +93,17 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
 
   private var reportButton: UIButton = {
     return getActionButton(withTitle: "", image: Constants.reportButtonImage)
+  }()
+
+  private var accountImageView: UIImageView = {
+    let imageView = getUIImageView()
+    imageView.widthAnchor.constraint(equalToConstant: Constants.accountImageSize).isActive = true
+    imageView.heightAnchor.constraint(equalToConstant: Constants.accountImageSize).isActive = true
+    imageView.layer.cornerRadius = Constants.accountImageSize / 2
+    imageView.clipsToBounds = true
+    imageView.layer.borderWidth = Constants.accountImageBorderWidth
+    imageView.layer.borderColor = Constants.accountImageBorderColor
+    return imageView
   }()
 
   let captionScrollView: UIScrollView = {
@@ -110,11 +142,44 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     return label
   }()
 
+  lazy var howToPlayButtonView: UIView = {
+    let buttonView = FeedsCell.getUIView()
+    buttonView.layer.cornerRadius = Constants.howToPlayHeight / CGFloat.two
+    buttonView.backgroundColor = Constants.howToPlayBackgroundColor
+    buttonView.isUserInteractionEnabled = true
+    let tapGesture = UITapGestureRecognizer(target: self, action: #selector(howToPlayButtonTapped))
+    buttonView.addGestureRecognizer(tapGesture)
+    return buttonView
+  }()
+
+  let howToPlayImageBackground: UIView = {
+    let view = getUIView()
+    view.backgroundColor = Constants.howToPlayImageBackground
+    view.layer.cornerRadius = Constants.howToPlayImageBackgroundSize / CGFloat.two
+    return view
+  }()
+
+  let howToPlayImageView: UIImageView = {
+    let imageView = getUIImageView()
+    imageView.image = UIImage(named: Constants.howToPlayImage)
+    imageView.layer.cornerRadius = Constants.howToPlayImageSize / CGFloat.two
+    return imageView
+  }()
+
+  let howToPlayLabel: UILabel = {
+    let label = getUILabel()
+    label.text = Constants.howToPlayText
+    label.font = Constants.howToPlayTextFont
+    label.textColor = Constants.howToPlayTextColor
+    return label
+  }()
+
   var isCaptionExpanded = false
   var collapsedCaptionHeight: CGFloat = 0
   var expandedCaptionHeight: CGFloat = 0
   var isCaptionCollapsible = false
   var captionScrollViewHeightConstraint: NSLayoutConstraint!
+  var howToPlayWidthConstraint: NSLayoutConstraint!
 
   let resultAnimationPublisher = PassthroughSubject<SmileyGameResultResponse, Never>()
   let initialStatePublisher = PassthroughSubject<SmileyGame, Never>()
@@ -142,10 +207,11 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     return button
   }
 
-  private var profileInfoView: ProfileInfoView = {
-    let profileInfoView = ProfileInfoView()
-    profileInfoView.heightAnchor.constraint(equalToConstant: Constants.profileInfoViewHeight).isActive = true
-    return profileInfoView
+  private lazy var headerView: HeaderView = {
+    let headerView = HeaderView()
+    headerView.heightAnchor.constraint(equalToConstant: Constants.headerViewHeight).isActive = true
+    headerView.delegate = self
+    return headerView
   }()
 
   override init(frame: CGRect) {
@@ -160,10 +226,12 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   private func setupUI() {
     addPlayerContainerView()
     setupLottieView()
-    setupProfileInfoView()
+    setupGradientImages()
+    setupHeaderView()
     setupStackView()
     setupCaptionLabel()
     addSignupOverlay()
+    setupHowToPlayView()
 
     let cellTapGesture = UITapGestureRecognizer(target: self, action: #selector(handleCellTap))
     cellTapGesture.cancelsTouchesInView = false
@@ -181,20 +249,37 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     contentView.layoutIfNeeded()
   }
 
-  func setupProfileInfoView() {
-    contentView.addSubview(profileInfoView)
+  private func setupGradientImages() {
+    contentView.addSubview(topGradientImage)
+    contentView.addSubview(bottomGradientImage)
+
     NSLayoutConstraint.activate([
-      profileInfoView.leadingAnchor.constraint(
+      topGradientImage.leadingAnchor.constraint(equalTo: leadingAnchor),
+      topGradientImage.trailingAnchor.constraint(equalTo: trailingAnchor),
+      topGradientImage.topAnchor.constraint(equalTo: topAnchor),
+      topGradientImage.heightAnchor.constraint(equalToConstant: Constants.topGradientImageHeight),
+
+      bottomGradientImage.leadingAnchor.constraint(equalTo: leadingAnchor),
+      bottomGradientImage.trailingAnchor.constraint(equalTo: trailingAnchor),
+      bottomGradientImage.bottomAnchor.constraint(equalTo: bottomAnchor),
+      bottomGradientImage.heightAnchor.constraint(equalToConstant: Constants.bottomGradientImageHeight)
+    ])
+  }
+
+  func setupHeaderView() {
+    contentView.addSubview(headerView)
+    NSLayoutConstraint.activate([
+      headerView.leadingAnchor.constraint(
         equalTo: contentView.leadingAnchor,
-        constant: Constants.profileInfoLeading
+        constant: Constants.headerViewHorizontal
       ),
-      profileInfoView.trailingAnchor.constraint(
+      headerView.trailingAnchor.constraint(
         equalTo: contentView.trailingAnchor,
-        constant: -Constants.profileInfoTrailing
+        constant: -Constants.headerViewHorizontal
       ),
-      profileInfoView.topAnchor.constraint(
+      headerView.topAnchor.constraint(
         equalTo: contentView.topAnchor,
-        constant: Constants.profileInfoTop
+        constant: Constants.headerViewTop
       )
     ])
   }
@@ -261,12 +346,71 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
       .map(\.coins)
       .removeDuplicates()
       .sink { [weak self] coins in
-        self?.profileInfoView.coinsView.coins = coins
+        self?.headerView.coinsView.coins = coins
       }
       .store(in: &cancellables)
   }
 
-  func setupSmileyGameView() {
+  private func setupHowToPlayView() {
+    contentView.addSubview(howToPlayButtonView)
+    howToPlayButtonView.addSubview(howToPlayImageBackground)
+    howToPlayButtonView.addSubview(howToPlayLabel)
+    howToPlayImageBackground.addSubview(howToPlayImageView)
+
+    howToPlayWidthConstraint = howToPlayButtonView.widthAnchor.constraint(equalToConstant: Constants.howToPlayMinWidth)
+    howToPlayWidthConstraint.isActive = true
+    howToPlayLabel.isHidden = true
+
+    NSLayoutConstraint.activate([
+      howToPlayButtonView.leadingAnchor.constraint(
+        equalTo: contentView.leadingAnchor,
+        constant: Constants.howToPlayLeading
+      ),
+      howToPlayButtonView.heightAnchor.constraint(equalToConstant: Constants.howToPlayHeight),
+      howToPlayButtonView.bottomAnchor.constraint(
+        equalTo: contentView.bottomAnchor,
+        constant: -Constants.howToPlayBottom
+      ),
+
+      howToPlayImageBackground.leadingAnchor.constraint(
+        equalTo: howToPlayButtonView.leadingAnchor,
+        constant: .zero
+      ),
+      howToPlayImageBackground.widthAnchor.constraint(equalToConstant: Constants.howToPlayImageBackgroundSize),
+      howToPlayImageBackground.heightAnchor.constraint(equalToConstant: Constants.howToPlayImageBackgroundSize),
+      howToPlayImageBackground.centerYAnchor.constraint(equalTo: howToPlayButtonView.centerYAnchor),
+
+      howToPlayImageView.widthAnchor.constraint(equalToConstant: Constants.howToPlayImageSize),
+      howToPlayImageView.heightAnchor.constraint(equalToConstant: Constants.howToPlayImageSize),
+      howToPlayImageView.centerXAnchor.constraint(equalTo: howToPlayImageBackground.centerXAnchor),
+      howToPlayImageView.centerYAnchor.constraint(equalTo: howToPlayImageBackground.centerYAnchor),
+
+      howToPlayLabel.leadingAnchor.constraint(
+        equalTo: howToPlayImageBackground.trailingAnchor,
+        constant: Constants.howToPlayTextLeading
+      ),
+      howToPlayLabel.centerYAnchor.constraint(equalTo: howToPlayButtonView.centerYAnchor)
+    ])
+  }
+
+  func setupGameView() {
+    switch activeGame {
+    case .smiley:
+      if let smileyGame = smileyGame {
+        setupSmileyGameView(smileyGame: smileyGame)
+        headerView.addGameToggleView(with: .one)
+      }
+    case .hon:
+      if let honGame = honGame {
+        setupHONGameView(honGame: honGame)
+        headerView.addGameToggleView(with: .zero)
+      }
+    default:
+      break
+    }
+  }
+
+  func setupSmileyGameView(smileyGame: SmileyGame) {
     guard (sessionManager?.state.coins ?? 0) >= SmileyGameConfig.shared.config.lossPenalty else {
       return
     }
@@ -275,7 +419,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
       let smileyGameView = SmileyGameView(
         smileyGame: SmileyGame(
           config: SmileyGameConfig.shared.config,
-          state: smileyGame?.state ?? .notPlayed
+          state: smileyGame.state
         ),
         smileyTapped: { [weak self] smiley in
           self?.handleSmileyTap(smiley)
@@ -317,6 +461,10 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     }
   }
 
+  func setupHONGameView(honGame: HonGame) {
+
+  }
+
   private func setupLottieView() {
     contentView.addSubview(lottieView)
     contentView.addSubview(smileyGameScoreLabel)
@@ -348,7 +496,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
 
   func startSmileyGamResultAnimation(for result: SmileyGameResultResponse, completion: @escaping () -> Void) {
     AudioPlayer.shared.play(named: result.outcome == "WIN" ? Constants.winSound : Constants.lossSound)
-    profileInfoView.coinsView.updateCoins(by: result.coinDelta)
+    headerView.coinsView.updateCoins(by: result.coinDelta)
     if showResultBottomSheet {
       let existingCount = userDefaults.integer(forKey: Self.resultBottomSheetKey)
       userDefaults.set(existingCount + Int.one, forKey: Self.resultBottomSheetKey)
@@ -406,12 +554,19 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     delegate?.reportButtonTapped(index: index)
   }
 
+  @objc func howToPlayButtonTapped() {
+    delegate?.howToPlayButtonTapped(index: index)
+  }
+
   // swiftlint: disable function_parameter_count
+  // swiftlint: disable function_body_length
   func configure(
     withPlayer feedsPlayer: FeedsPlayer,
     feedInfo: FeedCellInfo,
-    profileInfo: ProfileInfoView.ProfileInfo,
+    profileInfo: HeaderView.ProfileInfo,
     smileyGame: SmileyGame?,
+    honGame: HonGame?,
+    activeGame: FeedGame?,
     session: SessionManager,
     index: Int
   ) {
@@ -444,19 +599,29 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     self.index = index
     self.feedType = feedInfo.feedType
     self.smileyGame = smileyGame
+    self.honGame = honGame
+    self.activeGame = activeGame
     self.sessionManager = session
 
+    actionsStackView.addArrangedSubview(accountImageView)
+
+    if let imageURL = profileInfo.imageURL {
+      loadImage(with: imageURL, placeholderImage: nil, on: accountImageView)
+    } else {
+      accountImageView.image = Constants.defaultProfileImage
+    }
+
     if feedInfo.feedType == .otherUsers {
-      profileInfoView.set(data: profileInfo)
-      profileInfoView.isHidden = false
+      headerView.set(coins: profileInfo.coins)
+      headerView.isHidden = false
       captionScrollView.isHidden = true
       actionsStackView.addArrangedSubview(reportButton)
       deleteButton.removeFromSuperview()
-      setupSmileyGameView()
+      setupGameView()
     } else {
       reportButton.removeFromSuperview()
       actionsStackView.addArrangedSubview(deleteButton)
-      profileInfoView.isHidden = true
+      headerView.isHidden = true
       captionScrollView.isHidden = false
       setCaptionHeight(captionText: profileInfo.subtitle)
     }
@@ -468,6 +633,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
 
     }
   }
+  // swiftlint: enable function_body_length
   // swiftlint: enable function_parameter_count
 
   override func layoutSubviews() {
@@ -483,15 +649,20 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     playerContainerView.sd_cancelCurrentImageLoad()
     playerContainerView.image = nil
 
-    profileInfoView.coinsView.resetUIState()
+    headerView.coinsView.resetUIState()
     lottieView.stop()
     smileyGameScoreLabel.transform = .identity
     smileyGameScoreLabel.isHidden = true
-    if let game = smileyGame {
-      initialStatePublisher.send(game)
+
+    if let smileyGame = smileyGame {
+      initialStatePublisher.send(smileyGame)
     }
+
     smileyGameHostController?.view.removeFromSuperview()
     smileyGameHostController = nil
+
+    headerView.gameToggleController?.view.removeFromSuperview()
+    headerView.gameToggleController = nil
 
     cancellables.forEach({ $0.cancel() })
     cancellables.removeAll()
@@ -525,25 +696,46 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
 }
 // swiftlint: enable type_body_length
 
+extension FeedsCell: HeaderViewDelegate {
+  func didTapAccountButton() {
+    delegate?.accountButtonTapped(index: index)
+  }
+
+  func didTapGameToggle(index: Int) {
+    delegate?.gameToggleTapped(index: self.index, gameIndex: index)
+
+    if index == .zero {
+      activeGame = .hon
+      smileyGameHostController?.view.removeFromSuperview()
+      smileyGameHostController = nil
+    } else if index == .one {
+      activeGame = .smiley
+    }
+
+    headerView.gameToggleController?.view.removeFromSuperview()
+    headerView.gameToggleController = nil
+    setupGameView()
+  }
+}
+
 extension FeedsCell {
   enum Constants {
-    static let stackViewSpacing = 14.0
+    static let stackViewSpacing = 26.0
     static let horizontalMargin = 16.0
-    static let stackViewHeight = 51.0
+    static let stackViewHeight = 98.0
     static let stackViewBottom = 90.0
     static let stackViewBGColor = UIColor.clear
     static let actionButtonFont = YralFont.pt16.semiBold.uiFont
     static let shareButtonImage = UIImage(named: "share_feed")
     static let deleteButtonImage = UIImage(named: "delete_video_profile")
     static let reportButtonImage = UIImage(named: "report_feed")
-    static let actionButtonHeight: CGFloat = 51.0
-    static let actionButtonWidth: CGFloat = 34.0
+    static let actionButtonHeight: CGFloat = 36.0
+    static let actionButtonWidth: CGFloat = 36.0
     static let actionButtonImagePadding = 4.0
     static let actionButtonTitleColor = YralColor.grey50.uiColor
-    static let profileInfoLeading = 16.0
-    static let profileInfoTop = 8.0
-    static let profileInfoTrailing = 24.0
-    static let profileInfoViewHeight = 56.0
+    static let headerViewHorizontal = 26.0
+    static let headerViewTop = 12.0
+    static let headerViewHeight = 50.0
     static let defaultProfileImage = UIImage(named: "default_profile")
     static let playerPlaceHolderImage = UIImage(named: "player_placeholder")
     static let captionTitleFont = YralFont.pt14.regular.uiFont
@@ -563,5 +755,29 @@ extension FeedsCell {
     static let resultAnimationDuration = 2.5
     static let resultAnimationDurationWithBS = 0.5
     static let scoreLabelDuration = 2.0
+
+    static let accountImageSize = 36.0
+    static let accountImageBorderWidth = 2.5
+    static let accountImageBorderColor = YralColor.grey50.uiColor.cgColor
+
+    static let howToPlayHeight = 44.0
+    static let howToPlayWidth = 126.0
+    static let howToPlayMinWidth = 44.0
+    static let howToPlayLeading = 20.0
+    static let howToPlayBottom = 90.0
+    static let howToPlayBackgroundColor = UIColor.black.withAlphaComponent(0.4)
+    static let howToPlayText = "How to Play"
+    static let howToPlayTextFont = YralFont.pt12.semiBold.uiFont
+    static let howToPlayTextColor = YralColor.grey0.uiColor
+    static let howToPlayTextLeading = 2.0
+    static let howToPlayImage = "how_to_play"
+    static let howToPlayImageSize = 32.0
+    static let howToPlayImageBackground = UIColor.black.withAlphaComponent(0.2)
+    static let howToPlayImageBackgroundSize = 44.0
+
+    static let topGradientImage = UIImage(named: "feed_top_gradient")
+    static let bottomGradientImage = UIImage(named: "feed_bottom_gradient")
+    static let topGradientImageHeight = 150.0
+    static let bottomGradientImageHeight = 300.0
   }
 }
