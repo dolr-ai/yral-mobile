@@ -35,8 +35,10 @@ internal class DefaultRootComponent(
             is Config.Home -> RootComponent.Child.Home(homeComponent(componentContext))
         }
 
-    @Suppress("MaxLineLength")
-    private fun splashComponent(componentContext: ComponentContext): SplashComponent = SplashComponent(componentContext = componentContext)
+    private fun splashComponent(componentContext: ComponentContext): SplashComponent =
+        SplashComponent(
+            componentContext = componentContext,
+        )
 
     private fun homeComponent(componentContext: ComponentContext): HomeComponent =
         HomeComponent.Companion(componentContext = componentContext)

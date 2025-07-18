@@ -4,7 +4,9 @@ import com.arkivanov.decompose.ComponentContext
 
 interface AccountComponent {
     companion object Companion {
-        @Suppress("MaxLineLength")
-        operator fun invoke(componentContext: ComponentContext): AccountComponent = DefaultAccountComponent(componentContext)
+        operator fun invoke(componentContext: ComponentContext): AccountComponent =
+            DefaultAccountComponent(
+                componentContext,
+            )
     }
 }

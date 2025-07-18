@@ -4,7 +4,9 @@ import com.arkivanov.decompose.ComponentContext
 
 interface LeaderboardComponent {
     companion object Companion {
-        @Suppress("MaxLineLength")
-        operator fun invoke(componentContext: ComponentContext): LeaderboardComponent = DefaultLeaderboardComponent(componentContext)
+        operator fun invoke(componentContext: ComponentContext): LeaderboardComponent =
+            DefaultLeaderboardComponent(
+                componentContext,
+            )
     }
 }

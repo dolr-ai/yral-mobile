@@ -114,6 +114,7 @@ fun HomeScreen(
     }
 }
 
+@Suppress("LongMethod")
 @Composable
 private fun HomeScreenContent(
     component: HomeComponent,
@@ -169,8 +170,7 @@ private fun HomeScreenContent(
                                 start = innerPadding.calculateStartPadding(LocalLayoutDirection.current),
                                 end = innerPadding.calculateEndPadding(LocalLayoutDirection.current),
                                 bottom = bottomPadding,
-                            )
-                            .background(MaterialTheme.colorScheme.primaryContainer),
+                            ).background(MaterialTheme.colorScheme.primaryContainer),
                 )
             }
 
@@ -312,8 +312,7 @@ private fun NewTaggedColumn(
                         .background(
                             color = YralColors.Pink300,
                             shape = RoundedCornerShape(size = 12.dp),
-                        )
-                        .padding(start = 4.dp, end = 4.dp),
+                        ).padding(start = 4.dp, end = 4.dp),
                 horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
