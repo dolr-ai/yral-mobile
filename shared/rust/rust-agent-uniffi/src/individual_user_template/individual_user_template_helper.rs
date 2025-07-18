@@ -67,7 +67,7 @@ pub fn delegated_identity_from_bytes(
         wire.from_key,
         Box::new(to_identity),
         wire.delegation_chain,
-    ).unwrap();
+    ).map_err(|e| format!("Failed to create delegated identity: {:?}", e))?;
     Ok(delegated_identity)
 }
 
