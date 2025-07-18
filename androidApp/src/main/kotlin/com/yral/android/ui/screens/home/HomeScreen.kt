@@ -48,8 +48,10 @@ import com.yral.android.ui.components.hashtagInput.keyboardHeightAsState
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.account.AccountScreen
+import com.yral.android.ui.screens.alertsrequest.AlertsRequestBottomSheet
 import com.yral.android.ui.screens.feed.FeedScreen
 import com.yral.android.ui.screens.home.nav.HomeComponent
+import com.yral.android.ui.screens.home.nav.HomeComponent.SlotChild
 import com.yral.android.ui.screens.leaderboard.LeaderboardScreen
 import com.yral.android.ui.screens.profile.ProfileScreen
 import com.yral.android.ui.screens.uploadVideo.UploadVideoScreen
@@ -111,6 +113,20 @@ fun HomeScreen(
             sessionKey = sessionState.getKey(),
             updateProfileVideosCount = updateProfileVideosCount,
         )
+        SlotContent(component)
+    }
+}
+
+@Composable
+private fun SlotContent(component: HomeComponent) {
+    val slot by component.slot.subscribeAsState()
+    slot.child?.instance?.also { slotChild ->
+        when (slotChild) {
+            is SlotChild.AlertsRequestBottomSheet ->
+                AlertsRequestBottomSheet(
+                    onDismissRequest = slotChild.component::onDismissClicked,
+                )
+        }
     }
 }
 
