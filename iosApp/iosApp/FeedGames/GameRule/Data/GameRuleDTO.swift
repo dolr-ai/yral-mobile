@@ -52,6 +52,7 @@ enum BodyElement: Decodable {
 extension GameRuleDTO {
   func toDomain() -> GameRuleResponse {
     return GameRuleResponse(
+      id: id,
       name: name,
       imageURL: imageURL,
       body: body)

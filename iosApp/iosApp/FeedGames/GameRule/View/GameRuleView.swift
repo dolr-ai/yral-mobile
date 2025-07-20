@@ -33,7 +33,7 @@ struct GameRuleView: View {
         .padding(.bottom, Constants.hStackBottomPadding)
 
         ScrollView {
-          ForEach(gameRules, id: \.name) { rule in
+          ForEach(gameRules, id: \.id) { rule in
             GameRuleRowView(rule: rule)
               .padding(.horizontal, Constants.ruleHorizontalPadding)
               .padding(.bottom, Constants.ruleBottomPadding)
