@@ -1,5 +1,5 @@
 //
-//  SmileyGameRuleRepository.swift
+//  GameRuleRepository.swift
 //  iosApp
 //
 //  Created by Samarth Paboowal on 28/04/25.
@@ -8,32 +8,33 @@
 
 import Foundation
 
-class SmileyGameRuleRepository: SmileyGameRuleRepositoryProtocol {
+class GameRuleRepository: GameRuleRepositoryProtocol {
   private let firebaseService: FirebaseServiceProtocol
 
   init(firebaseService: FirebaseServiceProtocol) {
     self.firebaseService = firebaseService
   }
 
-  func fetchSmileyGameRules() async -> Result<[SmileyGameRuleResponse], SmileyGameRuleError> {
+  func fetchRules(for game: FeedGame) async -> Result<[GameRuleResponse], GameRuleError> {
     do {
       let response = try await firebaseService.fetchCollection(
-        from: Constants.collectionPath,
+        from: game == .hon ? Constants.honRulesCollectionPath : Constants.smileyRulesCollectionPath,
         orderBy: ["__name__"],
         descending: false,
         limit: nil,
-        decodeAs: SmileyGameRuleDTO.self
+        decodeAs: GameRuleDTO.self
       )
 
       return .success(response.map({ $0.toDomain() }))
     } catch {
-      return .failure(SmileyGameRuleError.firebaseError(error))
+      return .failure(GameRuleError.firebaseError(error))
     }
   }
 }
 
-extension SmileyGameRuleRepository {
+extension GameRuleRepository {
   enum Constants {
-    static let collectionPath = "smiley_game_rules"
+    static let smileyRulesCollectionPath = "smiley_game_rules"
+    static let honRulesCollectionPath = "hon_game_rules"
   }
 }

@@ -1,5 +1,5 @@
 //
-//  GameRuleView.swift
+//  GameRuleRowView.swift
 //  iosApp
 //
 //  Created by Samarth Paboowal on 28/04/25.
@@ -8,8 +8,8 @@
 
 import SwiftUI
 
-struct GameRuleView: View {
-  let rule: SmileyGameRuleResponse
+struct GameRuleRowView: View {
+  let rule: GameRuleResponse
 
   var body: some View {
     VStack(alignment: .leading, spacing: Constants.vstackSpacing) {
@@ -64,7 +64,7 @@ struct GameRuleView: View {
   }
 }
 
-extension GameRuleView {
+extension GameRuleRowView {
   enum Constants {
     static let vstackSpacing = 0.0
     static let hstackSpacing = 8.0

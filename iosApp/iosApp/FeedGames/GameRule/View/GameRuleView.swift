@@ -1,5 +1,5 @@
 //
-//  SmileyGameRuleView.swift
+//  GameRuleView.swift
 //  iosApp
 //
 //  Created by Samarth Paboowal on 22/04/25.
@@ -8,15 +8,15 @@
 
 import SwiftUI
 
-struct SmileyGameRuleView: View {
-  @ObservedObject var viewModel: SmileyGameRuleViewModel
+struct GameRuleView: View {
+  @ObservedObject var viewModel: GameRuleViewModel
   @State private var showRules: Bool = false
 
   let onDismiss: () -> Void
 
   var body: some View {
     VStack(alignment: .leading, spacing: .zero) {
-      if let gameRules = viewModel.smileyGameRuleResponse, showRules {
+      if let gameRules = viewModel.gameRuleResponse, showRules {
         HStack(alignment: .center, spacing: Constants.hStackSpacing) {
           Image(Constants.backImage)
             .resizable()
@@ -34,7 +34,7 @@ struct SmileyGameRuleView: View {
 
         ScrollView {
           ForEach(gameRules, id: \.name) { rule in
-            GameRuleView(rule: rule)
+            GameRuleRowView(rule: rule)
               .padding(.horizontal, Constants.ruleHorizontalPadding)
               .padding(.bottom, Constants.ruleBottomPadding)
           }
@@ -55,12 +55,12 @@ struct SmileyGameRuleView: View {
     .padding(.top, Constants.pageTopPadding)
     .background(Constants.backgroundColor)
     .task {
-      await viewModel.fetchSmileyGameRules()
+      await viewModel.fetchGameRules()
     }
   }
 }
 
-extension SmileyGameRuleView {
+extension GameRuleView {
   enum Constants {
     static let hStackSpacing = 12.0
     static let hStackBottomPadding = 24.0

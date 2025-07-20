@@ -1,5 +1,5 @@
 //
-//  SmileyGameRuleViewModel.swift
+//  GameRuleViewModel.swift
 //  iosApp
 //
 //  Created by Samarth Paboowal on 28/04/25.
@@ -8,13 +8,13 @@
 
 import Foundation
 
-enum SmileyGameRuleViewState {
+enum GameRuleViewState {
   case initialized
   case loading
   case success
   case failure(Error)
 
-  static func == (lhs: SmileyGameRuleViewState, rhs: SmileyGameRuleViewState) -> Bool {
+  static func == (lhs: GameRuleViewState, rhs: GameRuleViewState) -> Bool {
     switch (lhs, rhs) {
     case (.initialized, .initialized),
       (.loading, .loading),
@@ -28,22 +28,24 @@ enum SmileyGameRuleViewState {
   }
 }
 
-class SmileyGameRuleViewModel: ObservableObject {
-  let smileyGameRuleUseCase: SmileyGameRuleUseCaseProtocol
-  var smileyGameRuleResponse: [SmileyGameRuleResponse]?
+class GameRuleViewModel: ObservableObject {
+  let gameRuleUseCase: GameRuleUseCaseProtocol
+  var gameRuleResponse: [GameRuleResponse]?
+  let feedGame: FeedGame
 
-  @Published var state: SmileyGameRuleViewState = .initialized
+  @Published var state: GameRuleViewState = .initialized
 
-  init(smileyGameRuleUseCase: SmileyGameRuleUseCaseProtocol) {
-    self.smileyGameRuleUseCase = smileyGameRuleUseCase
+  init(gameRuleUseCase: GameRuleUseCaseProtocol, feedGame: FeedGame) {
+    self.gameRuleUseCase = gameRuleUseCase
+    self.feedGame = feedGame
   }
 
-  func fetchSmileyGameRules() async {
-    let result = await smileyGameRuleUseCase.execute()
+  func fetchGameRules() async {
+    let result = await gameRuleUseCase.execute(request: feedGame)
     await MainActor.run {
       switch result {
       case .success(let success):
-        self.smileyGameRuleResponse = success
+        self.gameRuleResponse = success
         self.state = .success
       case .failure(let failure):
         self.state = .failure(failure)

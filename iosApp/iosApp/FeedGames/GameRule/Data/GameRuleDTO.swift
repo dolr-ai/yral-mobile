@@ -1,5 +1,5 @@
 //
-//  SmileyGameRuleDTO.swift
+//  GameRuleDTO.swift
 //  iosApp
 //
 //  Created by Samarth Paboowal on 28/04/25.
@@ -8,7 +8,7 @@
 
 import FirebaseFirestore
 
-struct SmileyGameRuleDTO: Decodable {
+struct GameRuleDTO: Decodable {
   @DocumentID var id: String?
   let name: String
   let imageURL: String
@@ -48,9 +48,9 @@ enum BodyElement: Decodable {
   }
 }
 
-extension SmileyGameRuleDTO {
-  func toDomain() -> SmileyGameRuleResponse {
-    return SmileyGameRuleResponse(
+extension GameRuleDTO {
+  func toDomain() -> GameRuleResponse {
+    return GameRuleResponse(
       name: name,
       imageURL: imageURL,
       body: body)

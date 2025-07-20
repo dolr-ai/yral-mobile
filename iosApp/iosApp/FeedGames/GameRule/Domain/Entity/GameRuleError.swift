@@ -1,5 +1,5 @@
 //
-//  SmileyGameRuleError.swift
+//  GameRuleError.swift
 //  iosApp
 //
 //  Created by Samarth Paboowal on 29/04/25.
@@ -8,12 +8,12 @@
 
 import Foundation
 
-enum SmileyGameRuleError: Error {
+enum GameRuleError: Error {
   case firebaseError(Error)
   case unknown(String)
 }
 
-extension SmileyGameRuleError: LocalizedError {
+extension GameRuleError: LocalizedError {
   public var errorDescription: String? {
     switch self {
     case .firebaseError(let firebaseError):

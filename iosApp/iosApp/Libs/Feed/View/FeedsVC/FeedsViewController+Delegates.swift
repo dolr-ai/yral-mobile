@@ -10,11 +10,12 @@ import SwiftUI
 import iosSharedUmbrella
 
 extension FeedsViewController: FeedsCellProtocol {
-  func makeSmileyGameRulesDIContainer() -> SmileyGameRuleDIContainer {
-    return SmileyGameRuleDIContainer(
-      dependencies: SmileyGameRuleDIContainer.Dependencies(
+  func makeGameRulesDIContainer(for game: FeedGame) -> GameRuleDIContainer {
+    return GameRuleDIContainer(
+      dependencies: GameRuleDIContainer.Dependencies(
         firebaseService: FirebaseService(),
-        crashReporter: CompositeCrashReporter(reporters: [FirebaseCrashlyticsReporter()])
+        crashReporter: CompositeCrashReporter(reporters: [FirebaseCrashlyticsReporter()]),
+        feedGame: game
       )
     )
   }
@@ -52,12 +53,12 @@ extension FeedsViewController: FeedsCellProtocol {
         let result = gameResult.outcome == Constants.winResult ? GameResult.win : GameResult.loss
         self.smileyGameSheetEvent(feed, result, sheetCtaType, coinDelta: gameResult.coinDelta)
         hostingController?.dismiss(animated: true) {
-          let smileyGameRuleView = self.makeSmileyGameRulesDIContainer().makeSmileyGameRuleView {
+          let gameRuleView = self.makeGameRulesDIContainer(for: .smiley).makeGameRuleView {
             self.navigationController?.popViewController(animated: true)
           }
-          let smileyGameRuleVC = UIHostingController(rootView: smileyGameRuleView)
-          smileyGameRuleVC.extendedLayoutIncludesOpaqueBars = true
-          self.navigationController?.pushViewController(smileyGameRuleVC, animated: true)
+          let gameRuleVC = UIHostingController(rootView: gameRuleView)
+          gameRuleVC.extendedLayoutIncludesOpaqueBars = true
+          self.navigationController?.pushViewController(gameRuleVC, animated: true)
         }
       }
 
@@ -241,7 +242,14 @@ extension FeedsViewController: FeedsCellProtocol {
     self.present(hostingController!, animated: true, completion: nil)
   }
 
-  func howToPlayButtonTapped(index: Int) {}
+  func howToPlayButtonTapped() {
+    let gameRuleView = self.makeGameRulesDIContainer(for: activeGame).makeGameRuleView {
+      self.navigationController?.popViewController(animated: true)
+    }
+    let gameRuleVC = UIHostingController(rootView: gameRuleView)
+    gameRuleVC.extendedLayoutIncludesOpaqueBars = true
+    self.navigationController?.pushViewController(gameRuleVC, animated: true)
+  }
 
   func accountButtonTapped(index: Int) {
     guard let router = router else {

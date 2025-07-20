@@ -22,7 +22,7 @@ protocol FeedsCellProtocol: AnyObject {
   func smileyTapped(index: Int, smiley: Smiley)
   func showGameResultBottomSheet(index: Int, gameResult: SmileyGameResultResponse)
   func videoStarted(index: Int, videoId: String)
-  func howToPlayButtonTapped(index: Int)
+  func howToPlayButtonTapped()
   func accountButtonTapped(index: Int)
   func gameToggleTapped(index: Int, gameIndex: Int)
 }
@@ -555,7 +555,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   }
 
   @objc func howToPlayButtonTapped() {
-    delegate?.howToPlayButtonTapped(index: index)
+    delegate?.howToPlayButtonTapped()
   }
 
   // swiftlint: disable function_parameter_count

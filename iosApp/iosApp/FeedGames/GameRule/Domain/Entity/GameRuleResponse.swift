@@ -1,5 +1,5 @@
 //
-//  SmileyGameRule.swift
+//  GameRule.swift
 //  iosApp
 //
 //  Created by Samarth Paboowal on 28/04/25.
@@ -8,7 +8,7 @@
 
 import Foundation
 
-struct SmileyGameRuleResponse: Identifiable {
+struct GameRuleResponse: Identifiable {
   var id: String?
   let name: String
   let imageURL: String
