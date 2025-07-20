@@ -82,7 +82,9 @@ final class FeedDIContainer {
     )
   }
 
-  func makeAccountView() -> AccountView {
-    AccountView(viewModel: makeAccountViewModel())
+  func makeAccountView(onDismiss: @escaping () -> Void) -> AccountView {
+    AccountView(viewModel: makeAccountViewModel()) {
+      onDismiss()
+    }
   }
 }

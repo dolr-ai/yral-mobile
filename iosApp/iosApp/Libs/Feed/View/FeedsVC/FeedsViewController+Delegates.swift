@@ -248,7 +248,9 @@ extension FeedsViewController: FeedsCellProtocol {
       return
     }
 
-    let accountView = router.getAccountView()
+    let accountView = router.getAccountView {
+      self.navigationController?.popViewController(animated: true)
+    }
     let hostingController = UIHostingController(rootView: accountView)
     hostingController.view.backgroundColor = .clear
     hostingController.extendedLayoutIncludesOpaqueBars = true

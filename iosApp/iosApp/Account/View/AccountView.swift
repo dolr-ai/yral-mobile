@@ -22,19 +22,31 @@ struct AccountView: View {
   @State private var isDeleting = false
   @EnvironmentObject var session: SessionManager
 
-  init(viewModel: AccountViewModel) {
+  let onDismiss: () -> Void
+
+  init(viewModel: AccountViewModel, onDismiss: @escaping () -> Void) {
     _viewModel = StateObject(wrappedValue: viewModel)
+    self.onDismiss = onDismiss
   }
 
   var body: some View {
     ZStack {
       ScrollView {
         VStack(spacing: Constants.vStackSpacing) {
-          Text(Constants.navigationTitle)
-            .font(Constants.navigationTitleFont)
-            .foregroundColor(Constants.navigationTitleTextColor)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(Constants.navigationTitlePadding)
+          HStack(alignment: .center, spacing: Constants.navigationHStackSpacing) {
+            Constants.backImage
+              .resizable()
+              .frame(width: Constants.backImageSize, height: Constants.backImageSize)
+              .onTapGesture {
+                onDismiss()
+              }
+
+            Text(Constants.navigationTitle)
+              .font(Constants.navigationTitleFont)
+              .foregroundColor(Constants.navigationTitleTextColor)
+          }
+          .frame(maxWidth: .infinity, alignment: .leading)
+          .padding(Constants.navigationTitlePadding)
           switch viewModel.state {
           case .successfullyFetched(let info):
             UserInfoView(
@@ -212,6 +224,10 @@ extension AccountView {
       bottom: 8.0,
       trailing: 0.0
     )
+
+    static let navigationHStackSpacing = 12.0
+    static let backImage = Image(.chevronLeft)
+    static let backImageSize = 24.0
 
     static let vStackSpacing = 30.0
     static let vStackPadding = 30.0

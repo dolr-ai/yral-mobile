@@ -9,7 +9,7 @@
 import Foundation
 
 protocol FeedRouterProtocol {
-  func getAccountView() -> AccountView
+  func getAccountView(onDismiss: @escaping () -> Void) -> AccountView
 }
 
 final class FeedRouter: FeedRouterProtocol {
@@ -19,7 +19,9 @@ final class FeedRouter: FeedRouterProtocol {
     self.feedDI = feedDI
   }
 
-  func getAccountView() -> AccountView {
-    feedDI.makeAccountView()
+  func getAccountView(onDismiss: @escaping () -> Void) -> AccountView {
+    feedDI.makeAccountView {
+      onDismiss()
+    }
   }
 }
