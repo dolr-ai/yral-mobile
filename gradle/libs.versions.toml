@@ -111,6 +111,7 @@ gitlive-firebase-kotlin-perf = { module = "dev.gitlive:firebase-perf", version.r
 gitlive-firebase-storage = { module = "dev.gitlive:firebase-storage", version.ref = "firebase-gitlive-sdk" }
 gitlive-firebase-auth = { module = "dev.gitlive:firebase-auth", version.ref = "firebase-gitlive-sdk" }
 gitlive-firebase-store-db = { module = "dev.gitlive:firebase-firestore", version.ref = "firebase-gitlive-sdk" }
+gitlive-firebase-messaging = { module = "dev.gitlive:firebase-messaging", version.ref = "firebase-gitlive-sdk" }
 
 koin-bom = { group = "io.insert-koin", name = "koin-bom", version.ref = "koinBom" }
 koin-core = { group = "io.insert-koin", name = "koin-core" }
