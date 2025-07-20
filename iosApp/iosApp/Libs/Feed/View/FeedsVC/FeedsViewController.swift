@@ -92,6 +92,9 @@ class FeedsViewController: UIViewController {
 
   override func viewDidLoad() {
     super.viewDidLoad()
+    if let userPreferredGame = (UserDefaultsManager.shared.get(for: DefaultsKey.preferredFeedGame) ?? "hon") {
+      activeGame = FeedGame(rawValue: userPreferredGame) ?? .hon
+    }
     bindViewModel()
     handleEvents()
     setupNavigationBar()

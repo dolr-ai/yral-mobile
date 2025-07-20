@@ -258,6 +258,7 @@ extension FeedsViewController: FeedsCellProtocol {
 
   func gameToggleTapped(index: Int, gameIndex: Int) {
     activeGame = gameIndex == .zero ? .hon : .smiley
+    UserDefaultsManager.shared.set(activeGame.rawValue, for: DefaultsKey.preferredFeedGame)
     onGameToggleTrigger?(activeGame)
   }
 }

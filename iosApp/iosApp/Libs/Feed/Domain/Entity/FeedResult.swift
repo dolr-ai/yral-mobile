@@ -7,7 +7,7 @@
 //
 import Foundation
 
-enum FeedGame: Equatable {
+enum FeedGame: String, Equatable {
   case smiley
   case hon
 }

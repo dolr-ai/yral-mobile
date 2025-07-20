@@ -704,17 +704,19 @@ extension FeedsCell: HeaderViewDelegate {
   func didTapGameToggle(index: Int) {
     delegate?.gameToggleTapped(index: self.index, gameIndex: index)
 
-    if index == .zero {
-      activeGame = .hon
-      smileyGameHostController?.view.removeFromSuperview()
-      smileyGameHostController = nil
-    } else if index == .one {
-      activeGame = .smiley
-    }
+    DispatchQueue.main.asyncAfter(deadline: .now() + Constants.gameToggleTransitionDuration) {
+      if index == .zero {
+        self.activeGame = .hon
+        self.smileyGameHostController?.view.removeFromSuperview()
+        self.smileyGameHostController = nil
+      } else if index == .one {
+        self.activeGame = .smiley
+      }
 
-    headerView.gameToggleController?.view.removeFromSuperview()
-    headerView.gameToggleController = nil
-    setupGameView()
+      self.headerView.gameToggleController?.view.removeFromSuperview()
+      self.headerView.gameToggleController = nil
+      self.setupGameView()
+    }
   }
 }
 
@@ -779,5 +781,7 @@ extension FeedsCell {
     static let bottomGradientImage = UIImage(named: "feed_bottom_gradient")
     static let topGradientImageHeight = 150.0
     static let bottomGradientImageHeight = 300.0
+
+    static let gameToggleTransitionDuration = 1.5
   }
 }
