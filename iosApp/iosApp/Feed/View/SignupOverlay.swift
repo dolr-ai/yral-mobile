@@ -33,7 +33,8 @@ struct SignupOverlay: View {
           LottieView(
             name: Constants.signupLottie,
             loopMode: .loop,
-            animationSpeed: .one) {
+            animationSpeed: .one,
+            contentMode: .scaleAspectFill) {
 
             }
             .frame(width: Constants.lottieWidth, height: Constants.lottieHeight)

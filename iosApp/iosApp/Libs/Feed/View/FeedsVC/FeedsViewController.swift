@@ -23,6 +23,7 @@ class FeedsViewController: UIViewController {
   var paginatedFeedscancellables: Set<AnyCancellable> = []
   var trackedVideoIDs: Set<String> = []
   var activeGame: FeedGame = .hon
+  var onGameToggleTrigger: ((FeedGame) -> Void)?
 
   lazy var feedsPlayer: YralPlayer = { [unowned self] in
     let monitor = DefaultNetworkMonitor()

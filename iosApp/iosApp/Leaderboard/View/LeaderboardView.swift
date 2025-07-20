@@ -117,7 +117,8 @@ struct LeaderboardView: View {
     .background(
       LottieView(name: Constants.headerLottie,
                  loopMode: .playOnce,
-                 animationSpeed: .one) {}
+                 animationSpeed: .one,
+                 contentMode: .scaleAspectFill) {}
         .offset(x: .three, y: .thirteen)
     )
     .background(Constants.headerBackground)

@@ -88,7 +88,8 @@ final class ProfileDIContainer {
         crashReporter: dependencies.crashReporter,
         router: nil
       ),
-      showFeeds: showFeeds
+      showFeeds: showFeeds,
+      onGameToggle: nil
     )
   }
 }

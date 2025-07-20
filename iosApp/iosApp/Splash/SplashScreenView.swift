@@ -15,7 +15,8 @@ struct SplashScreenView: View {
       if isInitialAnimationComplete {
         LottieView(name: Constants.lightningAnimation,
                    loopMode: .loop,
-                   animationSpeed: .one) {
+                   animationSpeed: .one,
+                   contentMode: .scaleAspectFill) {
         }
                    .ignoresSafeArea()
                    .background(.black)
@@ -23,7 +24,8 @@ struct SplashScreenView: View {
       } else {
         LottieView(name: Constants.splashAnimation,
                    loopMode: .playOnce,
-                   animationSpeed: .one) {
+                   animationSpeed: .one,
+                   contentMode: .scaleAspectFill) {
           DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.one) {
             isInitialAnimationComplete = true
           }

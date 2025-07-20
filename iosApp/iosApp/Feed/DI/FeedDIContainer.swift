@@ -29,18 +29,6 @@ final class FeedDIContainer {
     self.dependencies = dependencies
   }
 
-  func makeFeedsViewControllerWrapper(showFeeds: Binding<Bool>) -> FeedsViewControllerWrapper {
-    FeedsViewControllerWrapper(
-      feedsViewController: FeedsViewController(
-        viewModel: makeFeedsViewModel(),
-        session: dependencies.session,
-        crashReporter: dependencies.crashReporter,
-        router: router
-      ),
-      showFeeds: showFeeds
-    )
-  }
-
   func makeFeedsViewController() -> FeedsViewController {
     FeedsViewController(
       viewModel: makeFeedsViewModel(),

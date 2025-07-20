@@ -91,6 +91,8 @@
 		10512A442DA666AD00114BAA /* YralPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10512A422DA666A900114BAA /* YralPlayer.swift */; };
 		10512A522DA795A800114BAA /* YralQueuePlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10512A512DA7959D00114BAA /* YralQueuePlayer.swift */; };
 		10512A532DA795A800114BAA /* YralQueuePlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10512A512DA7959D00114BAA /* YralQueuePlayer.swift */; };
+		105A154C2E2CEC3B002BD247 /* GameToggleAnimationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105A154B2E2CEC3B002BD247 /* GameToggleAnimationView.swift */; };
+		105A154D2E2CEC3B002BD247 /* GameToggleAnimationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105A154B2E2CEC3B002BD247 /* GameToggleAnimationView.swift */; };
 		107C60902DB7809A006FC467 /* UIView+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C608F2DB78093006FC467 /* UIView+Extensions.swift */; };
 		107C60912DB7809A006FC467 /* UIView+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C608F2DB78093006FC467 /* UIView+Extensions.swift */; };
 		107C60982DB8BCB1006FC467 /* SmileyGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C60972DB8BCB1006FC467 /* SmileyGameView.swift */; };
@@ -628,6 +630,7 @@
 		105037672DDC5DB000571B4E /* SmileyGameConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameConfig.swift; sourceTree = "<group>"; };
 		10512A422DA666A900114BAA /* YralPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralPlayer.swift; sourceTree = "<group>"; };
 		10512A512DA7959D00114BAA /* YralQueuePlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralQueuePlayer.swift; sourceTree = "<group>"; };
+		105A154B2E2CEC3B002BD247 /* GameToggleAnimationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameToggleAnimationView.swift; sourceTree = "<group>"; };
 		107C608F2DB78093006FC467 /* UIView+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIView+Extensions.swift"; sourceTree = "<group>"; };
 		107C60972DB8BCB1006FC467 /* SmileyGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameView.swift; sourceTree = "<group>"; };
 		107C609A2DB90B22006FC467 /* SmileyGameResultBottomSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameResultBottomSheetView.swift; sourceTree = "<group>"; };
@@ -1439,6 +1442,7 @@
 				AC61D3B32DB28AB000A7EA92 /* EULA */,
 				AC811B462DBA66A70094C5F6 /* Signup */,
 				ACEBF7E72D6F844100B594A0 /* Toast */,
+				105A154B2E2CEC3B002BD247 /* GameToggleAnimationView.swift */,
 			);
 			path = Utils;
 			sourceTree = "<group>";
@@ -3078,6 +3082,7 @@
 				AC99BBC12D86FF81008012C2 /* ProfileEmptyState.swift in Sources */,
 				ACD7C16E2E1D38DF00075148 /* DefaultAuthClient+Firebase.swift in Sources */,
 				ACEBF7F72D70A8D700B594A0 /* AnimatedCheckbox.swift in Sources */,
+				105A154C2E2CEC3B002BD247 /* GameToggleAnimationView.swift in Sources */,
 				AC7F7EA52D771D5D00215162 /* UploadViewModel.swift in Sources */,
 				10512A532DA795A800114BAA /* YralQueuePlayer.swift in Sources */,
 				AC811B452DBA66A30094C5F6 /* SignupView.swift in Sources */,
@@ -3320,6 +3325,7 @@
 				AC99BBC22D86FF81008012C2 /* ProfileEmptyState.swift in Sources */,
 				ACD7C16F2E1D38DF00075148 /* DefaultAuthClient+Firebase.swift in Sources */,
 				ACEBF7F62D70A8D700B594A0 /* AnimatedCheckbox.swift in Sources */,
+				105A154D2E2CEC3B002BD247 /* GameToggleAnimationView.swift in Sources */,
 				AC7F7EA62D771D5D00215162 /* UploadViewModel.swift in Sources */,
 				10512A522DA795A800114BAA /* YralQueuePlayer.swift in Sources */,
 				AC811B442DBA66A30094C5F6 /* SignupView.swift in Sources */,

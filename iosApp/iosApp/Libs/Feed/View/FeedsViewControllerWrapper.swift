@@ -13,12 +13,18 @@ struct FeedsViewControllerWrapper: UIViewControllerRepresentable {
   let feedsViewController: FeedsViewController
   @Binding var showFeeds: Bool
   @EnvironmentObject var session: SessionManager
+  let onGameToggle: ((FeedGame) -> Void)?
 
   func makeUIViewController(context: Context) -> UINavigationController {
     feedsViewController.onBackButtonTap = { [weak feedsViewController] in
       $showFeeds.wrappedValue = false
       feedsViewController?.onBackButtonTap = nil
     }
+
+    feedsViewController.onGameToggleTrigger = { feedGame in
+      onGameToggle?(feedGame)
+    }
+
     let navigationController = UINavigationController(rootViewController: feedsViewController)
     navigationController.view.backgroundColor = .clear
     navigationController.edgesForExtendedLayout = .all

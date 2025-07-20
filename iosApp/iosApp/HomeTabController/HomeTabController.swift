@@ -13,8 +13,10 @@ struct HomeTabController: View {
   private var feedsViewControllerWrapper: FeedsViewControllerWrapper {
     FeedsViewControllerWrapper(
       feedsViewController: feedsViewController,
-      showFeeds: $showFeeds
-    )
+      showFeeds: $showFeeds) { feedGame in
+        self.currentGame = feedGame
+        showGameToggleAnimation = true
+      }
   }
 
   @State private var selectedTab: Tab = .home
@@ -24,6 +26,8 @@ struct HomeTabController: View {
     UserDefaultsManager.shared.get(for: .eulaAccepted) as Bool? ?? false
   )
   @State private var showNotificationsNudge = false
+  @State private var showGameToggleAnimation = false
+  @State private var currentGame: FeedGame?
 
   init(
     feedsViewController: FeedsViewController,
@@ -116,6 +120,7 @@ struct HomeTabController: View {
           .background( ClearBackgroundView() )
         }
       }
+
       GeometryReader { geometry in
         let tabWidth = geometry.size.width / .four
         let indicatorXPosition = CGFloat(selectedTab.intValue) * tabWidth + (tabWidth - Constants.indicatorWidth) / .two
@@ -135,6 +140,11 @@ struct HomeTabController: View {
             Spacer()
           }
         }
+      }
+
+      if showGameToggleAnimation {
+        GameToggleAnimationView(animationVisible: $showGameToggleAnimation, gameType: currentGame ?? .hon)
+          .frame(width: Constants.gameToggleWidth, height: Constants.gameToggleHeight)
       }
     }
     .fullScreenCover(isPresented: $showEULA) {
@@ -191,6 +201,8 @@ extension HomeTabController {
     static let tabIndicatorHeight: CGFloat = 2.0
     static let indicatorWidth = 30.0
     static let indicatorColor = YralColor.primary300.swiftUIColor
+    static let gameToggleWidth = UIScreen.main.bounds.width
+    static let gameToggleHeight = UIScreen.main.bounds.height
   }
 }
 
