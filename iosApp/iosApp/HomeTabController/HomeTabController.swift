@@ -6,7 +6,6 @@ struct HomeTabController: View {
   @EnvironmentObject var deepLinkRouter: DeepLinkRouter
   @State private var suppressAnalytics = false
   let feedsViewController: FeedsViewController
-  let accountView: AccountView
   let uploadView: UploadView
   let profileView: ProfileView
   let leaderboardView: LeaderboardView
@@ -14,8 +13,10 @@ struct HomeTabController: View {
   private var feedsViewControllerWrapper: FeedsViewControllerWrapper {
     FeedsViewControllerWrapper(
       feedsViewController: feedsViewController,
-      showFeeds: $showFeeds
-    )
+      showFeeds: $showFeeds) { feedGame in
+        self.currentGame = feedGame
+        showGameToggleAnimation = true
+      }
   }
 
   @State private var selectedTab: Tab = .home
@@ -25,18 +26,18 @@ struct HomeTabController: View {
     UserDefaultsManager.shared.get(for: .eulaAccepted) as Bool? ?? false
   )
   @State private var showNotificationsNudge = false
+  @State private var showGameToggleAnimation = false
+  @State private var currentGame: FeedGame?
 
   init(
     feedsViewController: FeedsViewController,
     uploadView: UploadView,
     profileView: ProfileView,
-    accountView: AccountView,
     leaderboardView: LeaderboardView
   ) {
     self.feedsViewController = feedsViewController
     self.uploadView = uploadView
     self.profileView = profileView
-    self.accountView = accountView
     self.leaderboardView = leaderboardView
     UITabBar.appearance().backgroundColor = .black
     UITabBar.appearance().barTintColor = .black
@@ -96,16 +97,6 @@ struct HomeTabController: View {
                              selectedName: Constants.profileIconImageNameSelected,
                              unselectedName: Constants.profileIconImageNameUnSelected) }
           .tag(Tab.profile)
-
-        accountView
-          .background(Color.black.edgesIgnoringSafeArea(.all))
-          .tabItem {
-            Image(
-              ImageResource(name: Constants.accountIconImageName, bundle: .main)
-            )
-            .renderingMode(.original)
-          }
-          .tag(Tab.account)
       }
       .onChange(of: selectedTab) { tab in
         guard !suppressAnalytics else {
@@ -129,8 +120,9 @@ struct HomeTabController: View {
           .background( ClearBackgroundView() )
         }
       }
+
       GeometryReader { geometry in
-        let tabWidth = geometry.size.width / .five
+        let tabWidth = geometry.size.width / .four
         let indicatorXPosition = CGFloat(selectedTab.intValue) * tabWidth + (tabWidth - Constants.indicatorWidth) / .two
         VStack {
           Spacer().frame(height: geometry.size.height)
@@ -147,15 +139,12 @@ struct HomeTabController: View {
               .animation(.easeInOut, value: selectedTab)
             Spacer()
           }
-
-          //          Text("New")
-          //            .font(YralFont.pt8.bold.swiftUIFont)
-          //            .foregroundColor(YralColor.grey0.swiftUIColor)
-          //            .padding(.horizontal, 4)
-          //            .background(YralColor.primary300.swiftUIColor)
-          //            .clipShape(RoundedRectangle(cornerRadius: 12))
-          //            .offset(x: -tabWidth, y: -self.tabBarHeight - 2.5)
         }
+      }
+
+      if showGameToggleAnimation {
+        GameToggleAnimationView(animationVisible: $showGameToggleAnimation, gameType: currentGame ?? .hon)
+          .frame(width: Constants.gameToggleWidth, height: Constants.gameToggleHeight)
       }
     }
     .fullScreenCover(isPresented: $showEULA) {
@@ -190,8 +179,6 @@ struct HomeTabController: View {
       categoryName = .uploadVideo
     case .profile:
       categoryName = .profile
-    case .account:
-      categoryName = .menu
     }
     AnalyticsModuleKt.getAnalyticsManager().trackEvent(
       event: BottomNavigationClickedEventData(
@@ -211,15 +198,16 @@ extension HomeTabController {
     static let uploadIconImageNameSelected = "upload_tab_selected"
     static let profileIconImageNameUnSelected = "profile_tab_unselected"
     static let profileIconImageNameSelected = "profile_tab_selected"
-    static let accountIconImageName = "account_tab"
     static let tabIndicatorHeight: CGFloat = 2.0
     static let indicatorWidth = 30.0
     static let indicatorColor = YralColor.primary300.swiftUIColor
+    static let gameToggleWidth = UIScreen.main.bounds.width
+    static let gameToggleHeight = UIScreen.main.bounds.height
   }
 }
 
 enum Tab: Hashable {
-  case home, leaderboard, upload, profile, account
+  case home, leaderboard, upload, profile
 
   var intValue: Int {
     switch self {
@@ -231,8 +219,6 @@ enum Tab: Hashable {
       return .two
     case .profile:
       return .three
-    case .account:
-      return .four
     }
   }
 }

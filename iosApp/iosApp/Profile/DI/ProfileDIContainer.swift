@@ -85,9 +85,11 @@ final class ProfileDIContainer {
         ),
         feedType: .currentUser,
         session: dependencies.session,
-        crashReporter: dependencies.crashReporter
+        crashReporter: dependencies.crashReporter,
+        router: nil
       ),
-      showFeeds: showFeeds
+      showFeeds: showFeeds,
+      onGameToggle: nil
     )
   }
 }

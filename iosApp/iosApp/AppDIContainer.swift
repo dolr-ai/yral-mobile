@@ -88,7 +88,9 @@ import GRPC
             authClient: authClient
           ),
           crashReporter: crashReporter
-        )
+        ),
+        accountUseCase: accountUseCase,
+        accountRepository: accountsRepository
       )
     )
   }
@@ -100,19 +102,6 @@ import GRPC
         crashReporter: crashReporter,
         authClient: authClient,
         session: session
-      )
-    )
-  }
-
-  func makeAccountDIContainer() -> AccountDIContainer {
-    return AccountDIContainer(
-      dependencies: AccountDIContainer.Dependencies(
-        httpService: HTTPService(baseURLString: appConfiguration.offchainBaseURLString),
-        authClient: authClient,
-        crashReporter: crashReporter,
-        accountUseCase: accountUseCase,
-        accountRepository: accountsRepository,
-        socialSignInUseCase: socialSignInUseCase
       )
     )
   }

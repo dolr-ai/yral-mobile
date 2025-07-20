@@ -18,9 +18,12 @@ class FeedsViewController: UIViewController {
 
   let viewModel: any FeedViewModelProtocol
   var feedType: FeedType = .otherUsers
+  let router: FeedRouterProtocol?
   var initalFeedscancellables: Set<AnyCancellable> = []
   var paginatedFeedscancellables: Set<AnyCancellable> = []
   var trackedVideoIDs: Set<String> = []
+  var activeGame: FeedGame = .hon
+  var onGameToggleTrigger: ((FeedGame) -> Void)?
 
   lazy var feedsPlayer: YralPlayer = { [unowned self] in
     let monitor = DefaultNetworkMonitor()
@@ -72,12 +75,14 @@ class FeedsViewController: UIViewController {
     viewModel: any FeedViewModelProtocol,
     feedType: FeedType = .otherUsers,
     session: SessionManager,
-    crashReporter: CrashReporter
+    crashReporter: CrashReporter,
+    router: FeedRouterProtocol?
   ) {
     self.viewModel = viewModel
     self.feedType = feedType
     self.session = session
     self.crashReporter = crashReporter
+    self.router = router
     super.init(nibName: nil, bundle: nil)
   }
 
@@ -87,6 +92,9 @@ class FeedsViewController: UIViewController {
 
   override func viewDidLoad() {
     super.viewDidLoad()
+    if let userPreferredGame = (UserDefaultsManager.shared.get(for: DefaultsKey.preferredFeedGame) ?? "hon") {
+      activeGame = FeedGame(rawValue: userPreferredGame) ?? .hon
+    }
     bindViewModel()
     handleEvents()
     setupNavigationBar()

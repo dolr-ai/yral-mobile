@@ -33,13 +33,14 @@ extension FeedsViewController {
               indexPath.item % Constants.overlayIndex == .zero
             ) && !session.state.isLoggedIn
           ),
-          profileInfo: ProfileInfoView.ProfileInfo(
+          profileInfo: HeaderView.ProfileInfo(
             imageURL: feed.profileImageURL,
-            title: feed.principalID,
             subtitle: feed.postDescription,
             coins: session.state.coins
           ),
           smileyGame: feed.smileyGame,
+          honGame: feed.honGame,
+          activeGame: activeGame,
           session: session,
           index: indexPath.item
         )
@@ -57,13 +58,14 @@ extension FeedsViewController {
               indexPath.item % Constants.overlayIndex == .zero
             ) && !session.state.isLoggedIn
           ),
-          profileInfo: ProfileInfoView.ProfileInfo(
+          profileInfo: HeaderView.ProfileInfo(
             imageURL: feed.profileImageURL,
-            title: feed.principalID,
             subtitle: feed.postDescription,
             coins: session.state.coins
           ),
           smileyGame: feed.smileyGame,
+          honGame: feed.honGame,
+          activeGame: activeGame,
           session: session,
           index: indexPath.item
         )

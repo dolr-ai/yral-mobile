@@ -18,6 +18,7 @@ struct LottieLoaderView: View {
     LottieView(name: animationName,
                loopMode: loopMode,
                animationSpeed: animationSpeed,
+               contentMode: .scaleAspectFill,
                animationCompleted: {
     })
     .frame(maxWidth: .infinity, maxHeight: .infinity)
