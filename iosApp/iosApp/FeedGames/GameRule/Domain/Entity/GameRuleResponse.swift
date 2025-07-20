@@ -10,7 +10,7 @@ import Foundation
 
 struct GameRuleResponse: Identifiable {
   var id: String?
-  let name: String
-  let imageURL: String
+  let name: String?
+  let imageURL: String?
   let body: [BodyElement]
 }

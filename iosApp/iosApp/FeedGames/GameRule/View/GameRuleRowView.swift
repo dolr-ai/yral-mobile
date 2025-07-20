@@ -14,22 +14,28 @@ struct GameRuleRowView: View {
   var body: some View {
     VStack(alignment: .leading, spacing: Constants.vstackSpacing) {
       HStack(spacing: Constants.hstackSpacing) {
-        FirebaseImageView(path: rule.imageURL)
-          .frame(width: Constants.thumbnailSize, height: Constants.thumbnailSize)
-          .clipShape(Circle())
+        if let imageURL = rule.imageURL {
+          FirebaseImageView(path: imageURL)
+            .frame(width: Constants.thumbnailSize, height: Constants.thumbnailSize)
+            .clipShape(Circle())
+        }
 
-        Text(rule.name)
-          .font(Constants.titleFont)
-          .foregroundColor(Constants.titleColor)
+        if let name = rule.name {
+          Text(name)
+            .font(Constants.titleFont)
+            .foregroundColor(Constants.titleColor)
+        }
       }
-      .padding(.bottom, Constants.hstackBottomPadding)
+      .padding(.bottom, (rule.name == nil && rule.imageURL == nil) ? .zero : Constants.hstackBottomPadding)
 
       buildBodyBlocks(rule.body)
     }
     .frame(maxWidth: .infinity, alignment: .leading)
     .padding(Constants.ruleBottomPadding)
-    .background(Constants.backgroundColor)
-    .clipShape(RoundedRectangle(cornerRadius: Constants.ruleCornerRadius))
+    .overlay(
+      RoundedRectangle(cornerRadius: Constants.ruleCornerRadius)
+        .stroke(Constants.borderColor, lineWidth: .one)
+    )
   }
 
   @ViewBuilder
@@ -45,18 +51,19 @@ struct GameRuleRowView: View {
           }
         }
         .padding(.vertical, Constants.imagesVerticalPadding)
-      case .text(let texts, let textColors):
-        Text(getAttributedString(texts: texts, textColors: textColors))
+      case .text(let texts, let textColors, let bolds):
+        Text(getAttributedString(texts: texts, textColors: textColors, bolds: bolds))
       }
     }
   }
 
-  private func getAttributedString(texts: [String], textColors: [String]) -> AttributedString {
+  private func getAttributedString(texts: [String], textColors: [String], bolds: [Bool]) -> AttributedString {
     var attributedString = AttributedString()
 
     for (index, text) in texts.enumerated() {
       var attrString = AttributedString(text)
       attrString.foregroundColor = Color(hex: textColors[index])
+      attrString.font = bolds[index] ? Constants.subTextBoldFont : Constants.subTextFont
       attributedString += attrString
     }
 
@@ -77,6 +84,8 @@ extension GameRuleRowView {
     static let imageSize = 24.0
     static let titleFont = YralFont.pt18.bold.swiftUIFont
     static let titleColor = YralColor.grey50.swiftUIColor
-    static let backgroundColor = YralColor.grey900.swiftUIColor
+    static let subTextFont = YralFont.pt14.swiftUIFont
+    static let subTextBoldFont = YralFont.pt14.bold.swiftUIFont
+    static let borderColor = YralColor.grey700.swiftUIColor
   }
 }

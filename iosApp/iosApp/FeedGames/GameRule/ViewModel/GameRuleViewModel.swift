@@ -49,7 +49,7 @@ class GameRuleViewModel: ObservableObject {
         self.state = .success
       case .failure(let failure):
         self.state = .failure(failure)
-        print("Failed to fetch smiley game rules: \(failure)")
+        print("Failed to fetch \(feedGame) game rules: \(failure)")
       }
     }
   }

@@ -10,8 +10,8 @@ import FirebaseFirestore
 
 struct GameRuleDTO: Decodable {
   @DocumentID var id: String?
-  let name: String
-  let imageURL: String
+  let name: String?
+  let imageURL: String?
   let body: [BodyElement]
 
   private enum CodingKeys: String, CodingKey {
@@ -21,11 +21,11 @@ struct GameRuleDTO: Decodable {
 }
 
 enum BodyElement: Decodable {
-  case text(content: [String], colors: [String])
+  case text(content: [String], colors: [String], bolds: [Bool])
   case images(urls: [String])
 
   private enum CodingKeys: String, CodingKey {
-    case type, content, colors
+    case type, content, colors, bolds
     case urls = "image_urls"
   }
 
@@ -36,7 +36,8 @@ enum BodyElement: Decodable {
     case "text":
       let content = try container.decode([String].self, forKey: .content)
       let colors = try container.decode([String].self, forKey: .colors)
-      self = .text(content: content, colors: colors)
+      let bolds = try container.decode([Bool].self, forKey: .bolds)
+      self = .text(content: content, colors: colors, bolds: bolds)
     case "images":
       let urls = try container.decode([String].self, forKey: .urls)
       self = .images(urls: urls)

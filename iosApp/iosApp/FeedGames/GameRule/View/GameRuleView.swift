@@ -26,7 +26,7 @@ struct GameRuleView: View {
               onDismiss()
             }
 
-          Text(Constants.screenTitle)
+          Text(viewModel.feedGame == .hon ? Constants.screenTitleHonGame : Constants.screenTitleSmileyGame)
             .font(Constants.screenFont)
             .foregroundColor(Constants.screenTextColor)
         }
@@ -67,11 +67,12 @@ extension GameRuleView {
     static let backImage = "chevron-left"
     static let backImageSize = 24.0
     static let backImageLeadingPadding = 12.0
-    static let screenTitle = "How to play?"
+    static let screenTitleSmileyGame = "How to play Smily Game"
+    static let screenTitleHonGame = "How to play Hot or Not"
     static let screenFont = YralFont.pt20.bold.swiftUIFont
     static let screenTextColor = YralColor.grey0.swiftUIColor
     static let ruleHorizontalPadding = 16.0
-    static let ruleBottomPadding = 20.0
+    static let ruleBottomPadding = 12.0
     static let pageTopPadding = 12.0
     static let backgroundColor = YralColor.grey950.swiftUIColor
   }
