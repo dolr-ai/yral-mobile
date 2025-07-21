@@ -57,11 +57,10 @@ class GameViewModel(
         coroutineScope.launch {
             // Get result sheet shown preference outside state update
             preferences.getBoolean(PrefKeys.IS_RESULT_SHEET_SHOWN.name)?.let { shown ->
-                _state.update { currentState ->
-                    currentState.copy(
-                        isResultSheetShown = shown,
-                    )
-                }
+                _state.update { it.copy(isResultSheetShown = shown) }
+            }
+            preferences.getBoolean(PrefKeys.HOW_TO_PLAY_SHOWN.name)?.let { shown ->
+                _state.update { it.copy(showHowToPlay = !shown) }
             }
             listOf(
                 async { getGameRules() },
@@ -310,6 +309,29 @@ class GameViewModel(
 
     fun updateGameType(gameType: GameType) {
         _state.update { it.copy(gameType = gameType) }
+        // if we require to toggle value on game type change
+        // setHowToPlayShown(false)
+    }
+
+    fun shouldExpandHowToPlay(): Boolean {
+        val shouldShow = _state.value.pageChangeCount < SHOW_HOW_TO_PLAY_PAGE && _state.value.showHowToPlay
+        if (!shouldShow) setHowToPlayShown(true)
+        return shouldShow
+    }
+
+    fun onPageChanged() {
+        _state.update { it.copy(pageChangeCount = it.pageChangeCount + 1) }
+    }
+
+    fun setHowToPlayShown(isShown: Boolean) {
+        coroutineScope.launch {
+            _state.update { it.copy(showHowToPlay = !isShown, pageChangeCount = 0) }
+            preferences.putBoolean(PrefKeys.HOW_TO_PLAY_SHOWN.name, isShown)
+        }
+    }
+
+    companion object {
+        const val SHOW_HOW_TO_PLAY_PAGE = 3
     }
 }
 
@@ -327,4 +349,6 @@ data class GameState(
     val currentVideoId: String = "",
     val lastBalanceDifference: Int = 0,
     val gameType: GameType = GameType.SMILEY,
+    val showHowToPlay: Boolean = true,
+    val pageChangeCount: Int = 0,
 )
