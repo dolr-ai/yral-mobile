@@ -1,11 +1,15 @@
 package com.yral.android.ui.screens.feed
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -13,7 +17,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -21,10 +24,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.paint
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInParent
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -33,10 +32,10 @@ import com.yral.android.R
 import com.yral.android.ui.screens.feed.nav.FeedComponent
 import com.yral.android.ui.screens.feed.performance.PrefetchVideoListenerImpl
 import com.yral.android.ui.screens.feed.performance.VideoListenerImpl
+import com.yral.android.ui.screens.feed.uiComponets.GameToggle
 import com.yral.android.ui.screens.feed.uiComponets.ReportVideo
 import com.yral.android.ui.screens.feed.uiComponets.ReportVideoSheet
 import com.yral.android.ui.screens.feed.uiComponets.SignupNudge
-import com.yral.android.ui.screens.feed.uiComponets.UserBrief
 import com.yral.android.ui.screens.game.AboutGameSheet
 import com.yral.android.ui.screens.game.CoinBalance
 import com.yral.android.ui.screens.game.GameResultSheet
@@ -243,9 +242,6 @@ private fun FeedOverlay(
         contentAlignment = Alignment.TopStart,
     ) {
         TopView(
-            state = state,
-            pageNo = pageNo,
-            feedViewModel = feedViewModel,
             gameState = gameState,
             gameViewModel = gameViewModel,
         )
@@ -273,9 +269,6 @@ private fun FeedOverlay(
 
 @Composable
 private fun TopView(
-    state: FeedState,
-    pageNo: Int,
-    feedViewModel: FeedViewModel,
     gameState: GameState,
     gameViewModel: GameViewModel,
 ) {
@@ -287,36 +280,36 @@ private fun TopView(
                     painter = painterResource(R.drawable.shadow),
                     contentScale = ContentScale.FillBounds,
                 ),
+        contentAlignment = Alignment.TopStart,
     ) {
-        var paddingEnd by remember { mutableFloatStateOf(0f) }
-        val density = LocalDensity.current
-        val screenWidthPx = LocalWindowInfo.current.containerSize.width
-        UserBrief(
-            principalId = state.feedDetails[pageNo].principalID,
-            profileImageUrl = state.feedDetails[pageNo].profileImageURL,
-            postDescription = state.feedDetails[pageNo].postDescription,
-            isPostDescriptionExpanded = state.isPostDescriptionExpanded,
-            setPostDescriptionExpanded = { feedViewModel.setPostDescriptionExpanded(it) },
+        GameToggle(
+            gameType = gameState.gameType,
             modifier =
                 Modifier
-                    .fillMaxWidth()
-                    .padding(end = with(density) { paddingEnd.toDp() + 46.dp }),
-        )
-        CoinBalance(
-            coinBalance = gameState.coinBalance,
-            coinDelta = gameState.lastBalanceDifference,
-            animateBag = gameState.animateCoinBalance,
-            setAnimate = { gameViewModel.setAnimateCoinBalance(it) },
+                    .align(Alignment.TopCenter)
+                    .padding(top = 22.dp),
+        ) { gameViewModel.updateGameType(it) }
+        Row(
             modifier =
                 Modifier
-                    .align(Alignment.CenterEnd)
-                    .onGloballyPositioned { coordinates ->
-                        if (!gameState.animateCoinBalance) {
-                            val x = coordinates.positionInParent().x
-                            paddingEnd = screenWidthPx - x
-                        }
-                    },
-        )
+                    .padding(start = 26.dp, end = 26.dp, top = 11.dp)
+                    .align(Alignment.TopStart),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.ic_menu),
+                contentDescription = "image description",
+                contentScale = ContentScale.None,
+                modifier = Modifier.size(32.dp),
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            CoinBalance(
+                coinBalance = gameState.coinBalance,
+                coinDelta = gameState.lastBalanceDifference,
+                animateBag = gameState.animateCoinBalance,
+                setAnimate = { gameViewModel.setAnimateCoinBalance(it) },
+            )
+        }
     }
 }
 
