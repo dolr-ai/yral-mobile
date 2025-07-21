@@ -35,6 +35,7 @@ import com.yral.android.ui.screens.feed.nav.FeedComponent
 import com.yral.android.ui.screens.feed.performance.PrefetchVideoListenerImpl
 import com.yral.android.ui.screens.feed.performance.VideoListenerImpl
 import com.yral.android.ui.screens.feed.uiComponets.GameToggle
+import com.yral.android.ui.screens.feed.uiComponets.HowToPlay
 import com.yral.android.ui.screens.feed.uiComponets.ReportVideo
 import com.yral.android.ui.screens.feed.uiComponets.ReportVideoSheet
 import com.yral.android.ui.screens.feed.uiComponets.SignupNudge
@@ -115,6 +116,7 @@ fun FeedScreen(
                     if (page < state.feedDetails.size) {
                         gameViewModel.setCurrentVideoId(state.feedDetails[page].videoID)
                     }
+                    gameViewModel.onPageChanged()
                     viewModel.onCurrentPageChange(page)
                     viewModel.setPostDescriptionExpanded(false)
                 },
@@ -326,11 +328,19 @@ private fun BottomView(
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         Shadow(Modifier.align(Alignment.BottomCenter))
+        HowToPlay(
+            modifier =
+                Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(start = 16.dp, bottom = 150.dp),
+            shouldExpand = gameViewModel.shouldExpandHowToPlay(),
+            pageNo = pageNo,
+        )
         ActionsRight(
             modifier =
                 Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(end = 16.dp, bottom = 140.dp),
+                    .padding(end = 16.dp, bottom = 145.dp),
             pageNo = pageNo,
             state = state,
             feedViewModel = feedViewModel,
