@@ -1,13 +1,13 @@
 package com.yral.android.ui.screens.feed
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -23,12 +23,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.paint
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
 import com.yral.android.R
+import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.feed.nav.FeedComponent
 import com.yral.android.ui.screens.feed.performance.PrefetchVideoListenerImpl
 import com.yral.android.ui.screens.feed.performance.VideoListenerImpl
@@ -40,6 +42,7 @@ import com.yral.android.ui.screens.game.AboutGameSheet
 import com.yral.android.ui.screens.game.CoinBalance
 import com.yral.android.ui.screens.game.GameResultSheet
 import com.yral.android.ui.screens.game.SmileyGame
+import com.yral.android.ui.widgets.YralAsyncImage
 import com.yral.android.ui.widgets.YralErrorMessage
 import com.yral.android.ui.widgets.YralLoader
 import com.yral.shared.features.feed.viewmodel.FeedState
@@ -322,49 +325,91 @@ private fun BottomView(
     gameViewModel: GameViewModel,
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
-        Box(
-            modifier =
-                Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .height(300.dp)
-                    .paint(
-                        painter = painterResource(R.drawable.shadow_bottom),
-                        contentScale = ContentScale.FillBounds,
-                        alpha = 0.3f,
-                    ),
-        ) { }
-        ReportVideo(
+        Shadow(Modifier.align(Alignment.BottomCenter))
+        ActionsRight(
             modifier =
                 Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(end = 16.dp, bottom = 100.dp),
-        ) {
-            feedViewModel.toggleReportSheet(true, pageNo)
-        }
-        if (gameState.gameIcons.isNotEmpty() && gameState.lossPenalty <= gameState.coinBalance) {
-            SmileyGame(
-                gameIcons = gameState.gameIcons,
-                clickedIcon = gameState.gameResult[state.feedDetails[pageNo].videoID]?.first,
-                onIconClicked = {
-                    gameViewModel.setClickedIcon(
-                        icon = it,
-                        feedDetails = state.feedDetails[pageNo],
-                    )
-                },
-                coinDelta = gameViewModel.getFeedGameResult(state.feedDetails[pageNo].videoID),
-                errorMessage = gameViewModel.getFeedGameResultError(state.feedDetails[pageNo].videoID),
-                isLoading = gameState.isLoading,
-                hasShownCoinDeltaAnimation =
-                    gameViewModel.hasShownCoinDeltaAnimation(
-                        state.feedDetails[pageNo].videoID,
-                    ),
-                onDeltaAnimationComplete = {
-                    gameViewModel.markCoinDeltaAnimationShown(
-                        state.feedDetails[pageNo].videoID,
-                    )
-                },
+                    .padding(end = 16.dp, bottom = 140.dp),
+            pageNo = pageNo,
+            state = state,
+            feedViewModel = feedViewModel,
+        )
+        Game(state, pageNo, gameState, gameViewModel)
+    }
+}
+
+@Composable
+private fun Shadow(modifier: Modifier) {
+    Box(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .paint(
+                    painter = painterResource(R.drawable.shadow_bottom),
+                    contentScale = ContentScale.FillBounds,
+                    alpha = 0.3f,
+                ),
+        content = { },
+    )
+}
+
+@Composable
+private fun ActionsRight(
+    modifier: Modifier,
+    pageNo: Int,
+    state: FeedState,
+    feedViewModel: FeedViewModel,
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(26.dp, Alignment.CenterVertically),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        state.feedDetails[pageNo].profileImageURL?.let { profileImage ->
+            YralAsyncImage(
+                imageUrl = profileImage.toString(),
+                modifier = Modifier.size(36.dp),
+                border = 2.dp,
+                borderColor = Color.White,
+                backgroundColor = YralColors.ProfilePicBackground,
             )
         }
+        ReportVideo(
+            onReportClicked = { feedViewModel.toggleReportSheet(true, pageNo) },
+        )
+    }
+}
+
+@Composable
+private fun Game(
+    state: FeedState,
+    pageNo: Int,
+    gameState: GameState,
+    gameViewModel: GameViewModel,
+) {
+    if (gameState.gameIcons.isNotEmpty() && gameState.lossPenalty <= gameState.coinBalance) {
+        SmileyGame(
+            gameIcons = gameState.gameIcons,
+            clickedIcon = gameState.gameResult[state.feedDetails[pageNo].videoID]?.first,
+            onIconClicked = {
+                gameViewModel.setClickedIcon(
+                    icon = it,
+                    feedDetails = state.feedDetails[pageNo],
+                )
+            },
+            coinDelta = gameViewModel.getFeedGameResult(state.feedDetails[pageNo].videoID),
+            errorMessage = gameViewModel.getFeedGameResultError(state.feedDetails[pageNo].videoID),
+            isLoading = gameState.isLoading,
+            hasShownCoinDeltaAnimation =
+                gameViewModel.hasShownCoinDeltaAnimation(
+                    state.feedDetails[pageNo].videoID,
+                ),
+            onDeltaAnimationComplete = {
+                gameViewModel.markCoinDeltaAnimationShown(
+                    state.feedDetails[pageNo].videoID,
+                )
+            },
+        )
     }
 }
