@@ -27,11 +27,11 @@ data class ToastMessage
     )
 
 /**
- * ToastManager to manage toast messages throughout the app
+ * ToastManager to manage toast messages throughout the app with queue support
  */
 object ToastManager {
-    private val _currentToast = MutableStateFlow<ToastMessage?>(null)
-    val currentToast: StateFlow<ToastMessage?> = _currentToast.asStateFlow()
+    private val _toastQueue = MutableStateFlow<List<ToastMessage>>(emptyList())
+    val toastQueue: StateFlow<List<ToastMessage>> = _toastQueue.asStateFlow()
 
     fun showSuccess(
         type: ToastType,
@@ -78,29 +78,44 @@ object ToastManager {
                 cta = cta,
                 duration = duration,
             )
-        _currentToast.value = toast
+
+        // Add toast to the end of the queue
+        _toastQueue.value = _toastQueue.value + toast
     }
 
-    fun dismiss() {
-        _currentToast.value = null
+    fun dismissCurrent() {
+        val currentQueue = _toastQueue.value
+        if (currentQueue.isNotEmpty()) {
+            _toastQueue.value = currentQueue.drop(1)
+        }
+    }
+
+    fun dismissToast(toastId: String) {
+        _toastQueue.value = _toastQueue.value.filter { it.id != toastId }
     }
 
     fun clear() {
-        dismiss()
+        _toastQueue.value = emptyList()
     }
+
+    fun getQueueSize(): Int = _toastQueue.value.size
+
+    fun isEmpty(): Boolean = _toastQueue.value.isEmpty()
 }
 
 /**
- * Composable that handles displaying toasts from ToastManager
+ * Composable that handles displaying toasts from ToastManager with queue support
  * This should be placed at the top level of your screen hierarchy
  */
 @Composable
 fun ToastHost(modifier: Modifier = Modifier) {
-    val currentToast by ToastManager.currentToast.collectAsState()
+    val toastQueue by ToastManager.toastQueue.collectAsState()
+    val currentToast = toastQueue.firstOrNull()
     val visibleState = remember { MutableTransitionState(false) }
 
     // Handle toast appearance/disappearance
-    LaunchedEffect(currentToast) {
+    LaunchedEffect(currentToast?.id) {
+        // React to toast ID changes
         if (currentToast != null) {
             visibleState.targetState = true
         } else {
@@ -117,10 +132,6 @@ fun ToastHost(modifier: Modifier = Modifier) {
             cta = toast.cta,
             onDismiss = {
                 visibleState.targetState = false
-                // Clear the toast after animation completes
-                if (!visibleState.targetState && !visibleState.currentState) {
-                    ToastManager.dismiss()
-                }
             },
             modifier = modifier,
         )
@@ -128,13 +139,19 @@ fun ToastHost(modifier: Modifier = Modifier) {
         // Auto-dismiss after duration
         LaunchedEffect(toast.id) {
             kotlinx.coroutines.delay(toast.duration)
-            visibleState.targetState = false
+            // Check the actual current state of the queue, not the captured value
+            if (ToastManager.toastQueue.value
+                    .firstOrNull()
+                    ?.id == toast.id
+            ) {
+                visibleState.targetState = false
+            }
         }
 
-        // Clear toast from state after exit animation completes
+        // Remove toast from queue after exit animation completes
         LaunchedEffect(visibleState.targetState, visibleState.isIdle) {
             if (!visibleState.targetState && visibleState.isIdle && !visibleState.currentState) {
-                ToastManager.dismiss()
+                ToastManager.dismissCurrent()
             }
         }
     }
