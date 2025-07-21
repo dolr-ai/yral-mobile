@@ -42,11 +42,7 @@ fun UserBrief(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(
-                        top = 8.dp,
-                        bottom = 8.dp,
-                        start = 8.dp,
-                    ),
+                    .padding(top = 8.dp, bottom = 8.dp, start = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {

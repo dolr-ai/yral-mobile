@@ -17,6 +17,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -25,6 +26,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.paint
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -39,6 +44,7 @@ import com.yral.android.ui.screens.feed.uiComponets.HowToPlay
 import com.yral.android.ui.screens.feed.uiComponets.ReportVideo
 import com.yral.android.ui.screens.feed.uiComponets.ReportVideoSheet
 import com.yral.android.ui.screens.feed.uiComponets.SignupNudge
+import com.yral.android.ui.screens.feed.uiComponets.UserBrief
 import com.yral.android.ui.screens.game.AboutGameSheet
 import com.yral.android.ui.screens.game.CoinBalance
 import com.yral.android.ui.screens.game.GameResultSheet
@@ -50,6 +56,7 @@ import com.yral.shared.features.feed.viewmodel.FeedState
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.PRE_FETCH_BEFORE_LAST
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.SIGN_UP_PAGE
+import com.yral.shared.features.feed.viewmodel.OverlayType
 import com.yral.shared.features.feed.viewmodel.ReportSheetState
 import com.yral.shared.features.game.viewmodel.GameState
 import com.yral.shared.features.game.viewmodel.GameViewModel
@@ -246,10 +253,23 @@ private fun FeedOverlay(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.TopStart,
     ) {
-        TopView(
-            gameState = gameState,
-            gameViewModel = gameViewModel,
-        )
+        when (state.overlayType) {
+            OverlayType.DEFAULT -> {
+                TopView(
+                    state = state,
+                    pageNo = pageNo,
+                    feedViewModel = feedViewModel,
+                    gameState = gameState,
+                    gameViewModel = gameViewModel,
+                )
+            }
+            OverlayType.GAME_TOGGLE -> {
+                TopViewWithGameToggle(
+                    gameState = gameState,
+                    gameViewModel = gameViewModel,
+                )
+            }
+        }
         BottomView(
             state = state,
             pageNo = pageNo,
@@ -273,7 +293,7 @@ private fun FeedOverlay(
 }
 
 @Composable
-private fun TopView(
+private fun TopViewWithGameToggle(
     gameState: GameState,
     gameViewModel: GameViewModel,
 ) {
@@ -313,8 +333,59 @@ private fun TopView(
                 coinDelta = gameState.lastBalanceDifference,
                 animateBag = gameState.animateCoinBalance,
                 setAnimate = { gameViewModel.setAnimateCoinBalance(it) },
+                modifier = Modifier.padding(vertical = 22.dp),
             )
         }
+    }
+}
+
+@Composable
+private fun TopView(
+    state: FeedState,
+    pageNo: Int,
+    feedViewModel: FeedViewModel,
+    gameState: GameState,
+    gameViewModel: GameViewModel,
+) {
+    Box(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .paint(
+                    painter = painterResource(R.drawable.shadow),
+                    contentScale = ContentScale.FillBounds,
+                ).padding(end = 26.dp),
+    ) {
+        var paddingEnd by remember { mutableFloatStateOf(0f) }
+        val density = LocalDensity.current
+        val screenWidthPx = LocalWindowInfo.current.containerSize.width
+        UserBrief(
+            principalId = state.feedDetails[pageNo].principalID,
+            profileImageUrl = state.feedDetails[pageNo].profileImageURL,
+            postDescription = state.feedDetails[pageNo].postDescription,
+            isPostDescriptionExpanded = state.isPostDescriptionExpanded,
+            setPostDescriptionExpanded = { feedViewModel.setPostDescriptionExpanded(it) },
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(end = with(density) { paddingEnd.toDp() + 46.dp }),
+        )
+        CoinBalance(
+            coinBalance = gameState.coinBalance,
+            coinDelta = gameState.lastBalanceDifference,
+            animateBag = gameState.animateCoinBalance,
+            setAnimate = { gameViewModel.setAnimateCoinBalance(it) },
+            modifier =
+                Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(vertical = 32.dp)
+                    .onGloballyPositioned { coordinates ->
+                        if (!gameState.animateCoinBalance) {
+                            val x = coordinates.positionInParent().x
+                            paddingEnd = screenWidthPx - x
+                        }
+                    },
+        )
     }
 }
 
@@ -342,7 +413,7 @@ private fun BottomView(
             modifier =
                 Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(end = 16.dp, bottom = 145.dp),
+                    .padding(end = 16.dp, bottom = 156.dp),
             pageNo = pageNo,
             state = state,
             feedViewModel = feedViewModel,
@@ -378,14 +449,16 @@ private fun ActionsRight(
         verticalArrangement = Arrangement.spacedBy(26.dp, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        state.feedDetails[pageNo].profileImageURL?.let { profileImage ->
-            YralAsyncImage(
-                imageUrl = profileImage.toString(),
-                modifier = Modifier.size(36.dp),
-                border = 2.dp,
-                borderColor = Color.White,
-                backgroundColor = YralColors.ProfilePicBackground,
-            )
+        if (state.overlayType == OverlayType.GAME_TOGGLE) {
+            state.feedDetails[pageNo].profileImageURL?.let { profileImage ->
+                YralAsyncImage(
+                    imageUrl = profileImage.toString(),
+                    modifier = Modifier.size(36.dp),
+                    border = 2.dp,
+                    borderColor = Color.White,
+                    backgroundColor = YralColors.ProfilePicBackground,
+                )
+            }
         }
         ReportVideo(
             onReportClicked = { feedViewModel.toggleReportSheet(true, pageNo) },
