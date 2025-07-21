@@ -1,6 +1,7 @@
 package com.yral.android.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -73,7 +74,7 @@ private const val ANIMATION_DURATION_MS = 300
 
 @Composable
 fun Toast(
-    visible: Boolean,
+    visibleState: MutableTransitionState<Boolean>,
     type: ToastType,
     modifier: Modifier = Modifier,
     status: ToastStatus = ToastStatus.Info,
@@ -81,7 +82,7 @@ fun Toast(
     onDismiss: () -> Unit = {},
 ) {
     AnimatedVisibility(
-        visible = visible,
+        visibleState = visibleState,
         enter =
             slideInVertically(
                 initialOffsetY = { -it },
@@ -314,7 +315,7 @@ private fun ToastPreview(
                 .padding(16.dp),
     ) {
         Toast(
-            visible = true,
+            visibleState = MutableTransitionState(true),
             type = parameter.type,
             status = parameter.status,
             cta = parameter.cta,

@@ -1,9 +1,11 @@
 package com.yral.android.ui.components
 
+import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,7 +24,6 @@ data class ToastMessage
         val status: ToastStatus = ToastStatus.Info,
         val cta: ToastCTA? = null,
         val duration: Long = 5000L, // Duration in milliseconds
-        val visible: Boolean = true,
     )
 
 /**
@@ -96,21 +97,45 @@ object ToastManager {
 @Composable
 fun ToastHost(modifier: Modifier = Modifier) {
     val currentToast by ToastManager.currentToast.collectAsState()
+    val visibleState = remember { MutableTransitionState(false) }
 
+    // Handle toast appearance/disappearance
+    LaunchedEffect(currentToast) {
+        if (currentToast != null) {
+            visibleState.targetState = true
+        } else {
+            visibleState.targetState = false
+        }
+    }
+
+    // Show toast if there is one
     currentToast?.let { toast ->
         Toast(
-            visible = toast.visible,
+            visibleState = visibleState,
             type = toast.type,
             status = toast.status,
             cta = toast.cta,
-            onDismiss = { ToastManager.dismiss() },
+            onDismiss = {
+                visibleState.targetState = false
+                // Clear the toast after animation completes
+                if (!visibleState.targetState && !visibleState.currentState) {
+                    ToastManager.dismiss()
+                }
+            },
             modifier = modifier,
         )
 
         // Auto-dismiss after duration
         LaunchedEffect(toast.id) {
             kotlinx.coroutines.delay(toast.duration)
-            ToastManager.dismiss()
+            visibleState.targetState = false
+        }
+
+        // Clear toast from state after exit animation completes
+        LaunchedEffect(visibleState.targetState, visibleState.isIdle) {
+            if (!visibleState.targetState && visibleState.isIdle && !visibleState.currentState) {
+                ToastManager.dismiss()
+            }
         }
     }
 }
