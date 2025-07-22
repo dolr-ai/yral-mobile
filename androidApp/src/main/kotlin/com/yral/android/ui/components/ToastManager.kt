@@ -7,6 +7,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -14,8 +15,16 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 /**
- * Data class representing a toast message with its properties
+ * match Android Toast duration
  */
+@Suppress("MagicNumber")
+enum class ToastDuration(
+    val durationMs: Long,
+) {
+    SHORT(2000L),
+    LONG(3500L),
+}
+
 data class ToastMessage
     @OptIn(ExperimentalUuidApi::class)
     constructor(
@@ -23,7 +32,7 @@ data class ToastMessage
         val type: ToastType,
         val status: ToastStatus = ToastStatus.Info,
         val cta: ToastCTA? = null,
-        val duration: Long = 5000L, // Duration in milliseconds
+        val duration: ToastDuration = ToastDuration.LONG,
     )
 
 /**
@@ -33,43 +42,11 @@ object ToastManager {
     private val _toastQueue = MutableStateFlow<List<ToastMessage>>(emptyList())
     val toastQueue: StateFlow<List<ToastMessage>> = _toastQueue.asStateFlow()
 
-    fun showSuccess(
-        type: ToastType,
-        cta: ToastCTA? = null,
-        duration: Long = 5000L,
-    ) {
-        showToast(type, ToastStatus.Success, cta, duration)
-    }
-
-    fun showWarning(
-        type: ToastType,
-        cta: ToastCTA? = null,
-        duration: Long = 5000L,
-    ) {
-        showToast(type, ToastStatus.Warning, cta, duration)
-    }
-
-    fun showError(
-        type: ToastType,
-        cta: ToastCTA? = null,
-        duration: Long = 5000L,
-    ) {
-        showToast(type, ToastStatus.Error, cta, duration)
-    }
-
-    fun showInfo(
-        type: ToastType,
-        cta: ToastCTA? = null,
-        duration: Long = 5000L,
-    ) {
-        showToast(type, ToastStatus.Info, cta, duration)
-    }
-
     fun showToast(
         type: ToastType,
         status: ToastStatus = ToastStatus.Info,
         cta: ToastCTA? = null,
-        duration: Long = 5000L,
+        duration: ToastDuration = defaultDuration(type),
     ) {
         val toast =
             ToastMessage(
@@ -82,6 +59,12 @@ object ToastManager {
         // Add toast to the end of the queue
         _toastQueue.value = _toastQueue.value + toast
     }
+
+    internal fun defaultDuration(type: ToastType): ToastDuration =
+        when (type) {
+            is ToastType.Big -> ToastDuration.LONG
+            is ToastType.Small -> ToastDuration.SHORT
+        }
 
     fun dismissCurrent() {
         val currentQueue = _toastQueue.value
@@ -101,6 +84,38 @@ object ToastManager {
     fun getQueueSize(): Int = _toastQueue.value.size
 
     fun isEmpty(): Boolean = _toastQueue.value.isEmpty()
+}
+
+fun ToastManager.showSuccess(
+    type: ToastType,
+    cta: ToastCTA? = null,
+    duration: ToastDuration = defaultDuration(type),
+) {
+    showToast(type, ToastStatus.Success, cta, duration)
+}
+
+fun ToastManager.showWarning(
+    type: ToastType,
+    cta: ToastCTA? = null,
+    duration: ToastDuration = defaultDuration(type),
+) {
+    showToast(type, ToastStatus.Warning, cta, duration)
+}
+
+fun ToastManager.showError(
+    type: ToastType,
+    cta: ToastCTA? = null,
+    duration: ToastDuration = defaultDuration(type),
+) {
+    showToast(type, ToastStatus.Error, cta, duration)
+}
+
+fun ToastManager.showInfo(
+    type: ToastType,
+    cta: ToastCTA? = null,
+    duration: ToastDuration = defaultDuration(type),
+) {
+    showToast(type, ToastStatus.Info, cta, duration)
 }
 
 /**
@@ -138,7 +153,7 @@ fun ToastHost(modifier: Modifier = Modifier) {
 
         // Auto-dismiss after duration
         LaunchedEffect(toast.id) {
-            kotlinx.coroutines.delay(toast.duration)
+            delay(toast.duration.durationMs)
             // Check the actual current state of the queue, not the captured value
             if (ToastManager.toastQueue.value
                     .firstOrNull()
