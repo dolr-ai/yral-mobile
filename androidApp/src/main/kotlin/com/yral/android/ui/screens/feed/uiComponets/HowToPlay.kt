@@ -10,6 +10,7 @@ import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
@@ -42,6 +43,7 @@ fun HowToPlay(
     modifier: Modifier,
     shouldExpand: Boolean,
     pageNo: Int,
+    onClick: () -> Unit,
 ) {
     var isExpanded by remember { mutableStateOf(false) }
     LaunchedEffect(shouldExpand) {
@@ -60,7 +62,8 @@ fun HowToPlay(
                 .background(
                     color = YralColors.HowToPlayBackground,
                     shape = RoundedCornerShape(49.dp),
-                ).padding(4.dp),
+                ).padding(4.dp)
+                .clickable { onClick() },
         horizontalArrangement = Arrangement.spacedBy(0.dp, Alignment.Start),
         verticalAlignment = Alignment.CenterVertically,
     ) {
