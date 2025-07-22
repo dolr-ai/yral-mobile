@@ -62,14 +62,14 @@ jobs:
 
       - name: Setup keystore
         env:
-          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_CONTENTS_BASE_64 }}
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_ALPHA_KEYSTORE_CONTENTS_BASE_64 }}
         run: |
-          echo "$KEYSTORE_BASE64" | base64 -d > ./androidApp/my-release-key.keystore
+          echo "$KEYSTORE_BASE64" | base64 -d > ./androidApp/my-alpha-release-key.keystore
 
       - name: Setup environment variables
         run: |
-          echo "KEYSTORE_PASSWORD=${{ secrets.ANDROID_SIGNING_SECRET_PASSWORD }}" >> $GITHUB_ENV
-          echo "KEY_PASSWORD=${{ secrets.ANDROID_SIGNING_SECRET_PASSWORD }}" >> $GITHUB_ENV
+          echo "KEYSTORE_PASSWORD=${{ secrets.ANDROID_ALPHA_SIGNING_SECRET_PASSWORD }}" >> $GITHUB_ENV
+          echo "KEY_PASSWORD=${{ secrets.ANDROID_ALPHA_SIGNING_SECRET_PASSWORD }}" >> $GITHUB_ENV
 
       - name: Clean project
         run: ./gradlew clean
