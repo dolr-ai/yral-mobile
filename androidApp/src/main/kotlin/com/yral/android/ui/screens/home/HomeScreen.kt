@@ -30,6 +30,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -55,6 +56,7 @@ import com.yral.android.ui.screens.home.nav.HomeComponent.SlotChild
 import com.yral.android.ui.screens.leaderboard.LeaderboardScreen
 import com.yral.android.ui.screens.profile.ProfileScreen
 import com.yral.android.ui.screens.uploadVideo.UploadVideoScreen
+import com.yral.android.ui.widgets.YralPlaySound
 import com.yral.shared.analytics.events.CategoryName
 import com.yral.shared.core.session.SessionKey
 import com.yral.shared.core.session.SessionState
@@ -231,6 +233,7 @@ private fun HomeNavigationBar(
     updateCurrentTab: (tab: HomeTab) -> Unit,
     bottomNavigationClicked: (categoryName: CategoryName) -> Unit,
 ) {
+    var playSound by remember { mutableStateOf(false) }
     NavigationBar(
         containerColor = MaterialTheme.colorScheme.primaryContainer,
         modifier =
@@ -254,6 +257,7 @@ private fun HomeNavigationBar(
                 modifier = Modifier.weight(1f),
                 selected = currentTab == tab,
                 onClick = {
+                    playSound = true
                     updateCurrentTab(tab)
                     bottomNavigationClicked(tab.categoryName)
                 },
@@ -277,6 +281,11 @@ private fun HomeNavigationBar(
             )
         }
     }
+    YralPlaySound(
+        shouldPlay = playSound,
+        sound = R.raw.pop_pressed,
+        onSoundComplete = { playSound = false },
+    )
 }
 
 @Composable
