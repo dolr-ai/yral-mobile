@@ -40,7 +40,7 @@ def _tx_id() -> str:
 
 # ─────────────────────  COIN HELPER  ────────────────────────
 def tx_coin_change(principal_id: str, video_id: str | None, delta: int, reason: str) -> int:
-    user_ref = _db.document(f"users/{principal_id}")
+    user_ref = db().document(f"users/{principal_id}")
     ledger_ref = user_ref.collection("transactions").document(_tx_id())
 
     @firestore.transactional
@@ -55,7 +55,7 @@ def tx_coin_change(principal_id: str, video_id: str | None, delta: int, reason: 
                 "video_id": video_id,
                 "at": firestore.SERVER_TIMESTAMP})
 
-    _commit(_db.transaction())
+    _commit(db().transaction())
     return int(user_ref.get().get("coins") or 0)
 
 # ─────────────────────  SMILEY CONFIG HELPER  ────────────────────────
