@@ -13,8 +13,9 @@ struct MoreFeedsRequest {
 }
 
 struct FilteredPosts {
-  let postID: String
   let canisterID: String
+  let isNsfw: Bool
+  let postID: String
+  let publisherUserID: String
   let videoID: String
-  let nsfwProbability: Double
 }

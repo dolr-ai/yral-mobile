@@ -161,7 +161,7 @@ extension AccountView: UserInfoViewProtocol {
     UIView.setAnimationsEnabled(false)
     showSignupSheet = true
     AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-      event: AuthScreenViewedEventData()
+      event: AuthScreenViewedEventData(pageName: .menu)
     )
   }
 }

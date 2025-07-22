@@ -21,9 +21,10 @@ actual class MixpanelAnalyticsProvider actual constructor(
     override fun shouldTrackEvent(event: EventData): Boolean = eventFilter(event)
 
     override fun trackEvent(event: EventData) {
+        val props: Map<String, Any> = mapConverter.toMap(event)
         mixpanel.track(
             event = toValidKeyName(event.event),
-            properties = mapConverter.toMap(event).mapKeys { it as Any? },
+            properties = props.mapValues { it.value as Any? },
         )
     }
 
@@ -37,7 +38,7 @@ actual class MixpanelAnalyticsProvider actual constructor(
                 "sats_balance" to user.satsBalance,
                 "canister_id" to user.canisterId,
             )
-        if (user.isLoggedIn) {
+        if (user.isLoggedIn ?: false) {
             mixpanel.identify(user.userId)
             superProps["user_id"] = user.userId
             superProps["visitor_id"] = null
