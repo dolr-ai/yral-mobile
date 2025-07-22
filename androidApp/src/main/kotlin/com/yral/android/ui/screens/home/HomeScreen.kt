@@ -56,7 +56,7 @@ import com.yral.android.ui.screens.home.nav.HomeComponent.SlotChild
 import com.yral.android.ui.screens.leaderboard.LeaderboardScreen
 import com.yral.android.ui.screens.profile.ProfileScreen
 import com.yral.android.ui.screens.uploadVideo.UploadVideoScreen
-import com.yral.android.ui.widgets.YralPlaySound
+import com.yral.android.ui.widgets.YralFeedback
 import com.yral.shared.analytics.events.CategoryName
 import com.yral.shared.core.session.SessionKey
 import com.yral.shared.core.session.SessionState
@@ -282,7 +282,10 @@ private fun HomeNavigationBar(
         }
     }
     if (playSound) {
-        YralPlaySound(sound = R.raw.pop_pressed) { playSound = false }
+        YralFeedback(
+            sound = R.raw.pop_pressed,
+            withHapticFeedback = true,
+        ) { playSound = false }
     }
 }
 
