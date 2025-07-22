@@ -10,7 +10,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.yral.android.R
 import com.yral.android.ui.design.YralColors
+import com.yral.android.ui.widgets.YralPlaySound
 import com.yral.shared.features.game.domain.models.GameIcon
 
 @Composable
@@ -67,6 +69,10 @@ fun SmileyGame(
             }
         }
     }
+    YralPlaySound(
+        shouldPlay = resultViewVisible && !hasShownCoinDeltaAnimation,
+        sound = if (coinDelta > 0) R.raw.spilled_coin else R.raw.coin_loss,
+    )
 }
 
 @Composable
