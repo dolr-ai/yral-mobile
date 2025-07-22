@@ -67,13 +67,13 @@ class FeedViewModel(
     }
 
     private suspend fun initialFeedData() {
-        sessionManager.canisterID?.let { canisterID ->
+        sessionManager.userPrincipal?.let { userId ->
             setLoadingMore(true)
             requiredUseCases.getInitialFeedUseCase
                 .invoke(
                     parameter =
                         GetInitialFeedUseCase.Params(
-                            canisterID = canisterID,
+                            userId = userId,
                             filterResults = emptyList(),
                         ),
                 ).onSuccess { result ->
@@ -189,13 +189,13 @@ class FeedViewModel(
             // Optionally log or notify here
             return
         }
-        sessionManager.canisterID?.let { canisterID ->
+        sessionManager.userPrincipal?.let { userId ->
             setLoadingMore(true)
             requiredUseCases.fetchMoreFeedUseCase
                 .invoke(
                     parameter =
                         FetchMoreFeedUseCase.Params(
-                            canisterID = canisterID,
+                            userId = userId,
                             filterResults =
                                 _state.value.posts.map { post ->
                                     post.toFilteredResult()

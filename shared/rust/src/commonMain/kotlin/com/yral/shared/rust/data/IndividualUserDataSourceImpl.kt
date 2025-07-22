@@ -50,8 +50,8 @@ class IndividualUserDataSourceImpl(
     }
 
     companion object {
-        private const val CACHED_FEED_PATH = "/api/v1/feed/coldstart/clean"
-        private const val ML_FEED_PATH = "/api/v1/feed/clean"
+        private const val CACHED_FEED_PATH = "/api/v3/feed/coldstart/clean"
+        private const val ML_FEED_PATH = "/api/v3/feed/clean"
         const val CLOUD_FLARE_PREFIX = "https://customer-2p3jflss4r4hmpnz.cloudflarestream.com/"
         const val CLOUD_FLARE_SUFFIX = "/manifest/video.m3u8"
         const val CLOUD_FLARE_SUFFIX_MP4 = "/downloads/default.mp4"

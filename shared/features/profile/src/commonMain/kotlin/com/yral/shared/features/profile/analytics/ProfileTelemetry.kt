@@ -10,7 +10,6 @@ import com.yral.shared.analytics.events.UploadVideoClickedEventData
 import com.yral.shared.analytics.events.VideoClickedEventData
 import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.analytics.events.VideoDeletedEventData
-import com.yral.shared.core.AppConfigurations.NSFW_PROBABILITY
 import com.yral.shared.rust.domain.models.FeedDetails
 
 class ProfileTelemetry(
@@ -42,7 +41,7 @@ class ProfileTelemetry(
                     publisherUserId = feedDetails.principalID,
                     likeCount = feedDetails.likeCount.toLong(),
                     viewCount = feedDetails.viewCount.toLong(),
-                    isNsfw = feedDetails.nsfwProbability > NSFW_PROBABILITY,
+                    isNsfw = feedDetails.isNSFW(),
                     ctaType = CtaType.DELETE,
                     shareCount = 0,
                     isGameEnabled = true,
