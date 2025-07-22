@@ -9,6 +9,8 @@ interface RootComponent {
 
     fun onBackClicked()
 
+    fun isSplashActive(): Boolean
+
     fun setSplashActive(active: Boolean)
 
     // Defines all possible child components
