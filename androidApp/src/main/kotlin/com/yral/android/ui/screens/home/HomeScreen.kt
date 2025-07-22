@@ -44,7 +44,6 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.yral.android.R
-import com.yral.android.ui.components.ToastHost
 import com.yral.android.ui.components.hashtagInput.keyboardHeightAsState
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
@@ -102,24 +101,16 @@ fun HomeScreen(
             )
         },
     ) { innerPadding ->
-        Box(
-            Modifier
-                .padding(innerPadding),
-        ) {
-            HomeScreenContent(
-                component = component,
-                modifier = Modifier.background(MaterialTheme.colorScheme.primaryContainer),
-                innerPadding = innerPadding,
-                sessionKey = sessionState.getKey(),
-                updateProfileVideosCount = updateProfileVideosCount,
-            )
-            ToastHost(
-                modifier =
-                    Modifier
-                        .padding(horizontal = 16.dp)
-                        .padding(top = 12.dp),
-            )
-        }
+        HomeScreenContent(
+            component = component,
+            modifier =
+                Modifier
+                    .padding(innerPadding)
+                    .background(MaterialTheme.colorScheme.primaryContainer),
+            innerPadding = innerPadding,
+            sessionKey = sessionState.getKey(),
+            updateProfileVideosCount = updateProfileVideosCount,
+        )
     }
 }
 
