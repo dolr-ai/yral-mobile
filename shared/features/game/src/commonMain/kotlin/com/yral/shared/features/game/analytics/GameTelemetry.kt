@@ -8,7 +8,6 @@ import com.yral.shared.analytics.events.GameResult
 import com.yral.shared.analytics.events.GameType
 import com.yral.shared.analytics.events.GameVotedEventData
 import com.yral.shared.analytics.events.StakeType
-import com.yral.shared.core.AppConfigurations.NSFW_PROBABILITY
 import com.yral.shared.rust.domain.models.FeedDetails
 
 class GameTelemetry(
@@ -26,7 +25,7 @@ class GameTelemetry(
                     publisherUserId = feedDetails.principalID,
                     likeCount = feedDetails.likeCount.toLong(),
                     viewCount = feedDetails.viewCount.toLong(),
-                    isNsfw = feedDetails.nsfwProbability > NSFW_PROBABILITY,
+                    isNsfw = feedDetails.isNSFW(),
                     shareCount = 0,
                     gameType = GameType.SMILEY,
                     stakeType = StakeType.SATS,
@@ -49,7 +48,7 @@ class GameTelemetry(
                     publisherUserId = feedDetails.principalID,
                     likeCount = feedDetails.likeCount.toLong(),
                     viewCount = feedDetails.viewCount.toLong(),
-                    isNsfw = feedDetails.nsfwProbability > NSFW_PROBABILITY,
+                    isNsfw = feedDetails.isNSFW(),
                     shareCount = 0,
                     gameType = GameType.SMILEY,
                     stakeType = StakeType.SATS,

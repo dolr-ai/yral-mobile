@@ -11,7 +11,6 @@ import com.yral.shared.analytics.events.VideoImpressionEventData
 import com.yral.shared.analytics.events.VideoReportedEventData
 import com.yral.shared.analytics.events.VideoStartedEventData
 import com.yral.shared.analytics.events.VideoViewedEventData
-import com.yral.shared.core.AppConfigurations.NSFW_PROBABILITY
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.features.feed.viewmodel.VideoReportReason
 import com.yral.shared.features.feed.viewmodel.percentageOf
@@ -51,7 +50,7 @@ class FeedTelemetry(
         VideoDurationWatchedEventData(
             displayName = displayName,
             hashtagCount = hashtags.size,
-            isHotOrNot = nsfwProbability > NSFW_PROBABILITY,
+            isHotOrNot = isNSFW(),
             isNsfw = false,
             likeCount = likeCount.toLong(),
             postID = postID,
@@ -59,7 +58,7 @@ class FeedTelemetry(
             publisherUserId = principalID,
             videoID = videoID,
             viewCount = viewCount.toLong(),
-            nsfwProbability = nsfwProbability,
+            nsfwProbability = nsfwProbability ?: 0.0,
             isLoggedIn = false,
             canisterId = "",
             userID = "",
@@ -75,7 +74,7 @@ class FeedTelemetry(
                     publisherUserId = feedDetails.principalID,
                     likeCount = feedDetails.likeCount.toLong(),
                     viewCount = feedDetails.viewCount.toLong(),
-                    isNsfw = feedDetails.nsfwProbability > NSFW_PROBABILITY,
+                    isNsfw = feedDetails.isNSFW(),
                     shareCount = 0,
                     isGameEnabled = true,
                     gameType = GameType.SMILEY,
@@ -93,7 +92,7 @@ class FeedTelemetry(
                     publisherUserId = feedDetails.principalID,
                     likeCount = feedDetails.likeCount.toLong(),
                     viewCount = feedDetails.viewCount.toLong(),
-                    isNsfw = feedDetails.nsfwProbability > NSFW_PROBABILITY,
+                    isNsfw = feedDetails.isNSFW(),
                     shareCount = 0,
                     isGameEnabled = true,
                     gameType = GameType.SMILEY,
@@ -113,7 +112,7 @@ class FeedTelemetry(
                     publisherUserId = feedDetails.principalID,
                     likeCount = feedDetails.likeCount.toLong(),
                     viewCount = feedDetails.viewCount.toLong(),
-                    isNsfw = feedDetails.nsfwProbability > NSFW_PROBABILITY,
+                    isNsfw = feedDetails.isNSFW(),
                     shareCount = 0,
                     isGameEnabled = true,
                     gameType = GameType.SMILEY,
@@ -132,7 +131,7 @@ class FeedTelemetry(
                     publisherUserId = feedDetails.principalID,
                     likeCount = feedDetails.likeCount.toLong(),
                     viewCount = feedDetails.viewCount.toLong(),
-                    isNsfw = feedDetails.nsfwProbability > NSFW_PROBABILITY,
+                    isNsfw = feedDetails.isNSFW(),
                     ctaType = ctaType,
                     shareCount = 0,
                     isGameEnabled = true,
@@ -151,7 +150,7 @@ class FeedTelemetry(
                 VideoReportedEventData(
                     videoId = feedDetails.videoID,
                     publisherUserId = feedDetails.principalID,
-                    isNsfw = feedDetails.nsfwProbability > NSFW_PROBABILITY,
+                    isNsfw = feedDetails.isNSFW(),
                     isGameEnabled = true,
                     gameType = GameType.SMILEY,
                     reason = reason.reason,
