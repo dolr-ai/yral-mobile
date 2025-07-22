@@ -30,10 +30,10 @@ android {
     }
     signingConfigs {
         create("staging") {
-            storeFile = file("my-debug-key.keystore")
-            storePassword = System.getenv("DEBUG_KEYSTORE_PASSWORD")
+            storeFile = file("my-alpha-release-key.keystore")
+            storePassword = System.getenv("KEYSTORE_PASSWORD")
             keyAlias = "android"
-            keyPassword = System.getenv("DEBUG_KEY_PASSWORD")
+            keyPassword = System.getenv("KEYSTORE_PASSWORD")
         }
         create("release") {
             storeFile = file("my-release-key.keystore")
@@ -60,7 +60,6 @@ android {
         create("staging") {
             dimension = "version"
             signingConfig = signingConfigs.getByName("staging")
-            applicationIdSuffix = ".staging"
         }
         create("prod") {
             applicationId = "com.yral.android.app"

@@ -7,6 +7,25 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:240456866818:android:f95c915c7973f624791b1b",
+        "android_client_info": {
+          "package_name": "com.yral.android"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAVtDceAxpI2oId9FOqPlHuyJfH1AyZj8w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:240456866818:android:5621a6008a888533791b1b",
         "android_client_info": {
           "package_name": "com.yral.android.staging"
