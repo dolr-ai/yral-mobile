@@ -83,6 +83,7 @@ dependencies {
     implementation(libs.firebase.performance)
     implementation(libs.firebase.appcheck.playintegrity)
     implementation(libs.firebase.appcheck.debug)
+    implementation(libs.firebase.messaging)
     implementation(libs.lottie)
     implementation(libs.coil.compose)
     implementation(libs.coil.okhttp)
@@ -95,6 +96,10 @@ dependencies {
 
     implementation(libs.decompose.decompose)
     implementation(libs.decompose.extensions.compose)
+
+    implementation(libs.moko.permissions)
+    implementation(libs.moko.permissions.compose)
+    implementation(libs.moko.permissions.notifications)
 
     implementation(projects.shared.core)
     implementation(projects.shared.libs.preferences)

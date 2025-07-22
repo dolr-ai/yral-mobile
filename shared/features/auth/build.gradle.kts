@@ -29,6 +29,10 @@ kotlin {
             implementation(projects.shared.libs.firebaseStore)
             implementation(projects.shared.libs.koin)
             implementation(projects.shared.libs.useCase)
+            implementation(projects.shared.libs.arch)
+            implementation(projects.shared.libs.coroutinesX)
+
+            implementation(libs.gitlive.firebase.messaging)
         }
     }
 }
