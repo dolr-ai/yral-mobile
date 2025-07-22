@@ -13,7 +13,7 @@ final class FeedsPlayer: YralPlayer {
   var feedResults: [FeedResult] = []
   var currentIndex: Int = .zero
   var player: YralQueuePlayer
-  var mp4DownloadManager: MP4DownloadManaging
+  var hlsDownloadManager: HLSDownloadManaging
   var playerItems: [String: AVPlayerItem] = [:] {
     didSet {
       onPlayerItemsChanged?(playerItems.keys.filter { oldValue[$0] == nil }.first, playerItems.count)
@@ -49,12 +49,12 @@ final class FeedsPlayer: YralPlayer {
   // MARK: Method implementations
   init(
     player: YralQueuePlayer = AVQueuePlayer(),
-    mp4DownloadManager: MP4DownloadManaging,
+    hlsDownloadManager: HLSDownloadManaging,
     networkMonitor: NetworkMonitorProtocol,
     crashReporter: CrashReporter
   ) {
     self.player = player
-    self.mp4DownloadManager = mp4DownloadManager
+    self.hlsDownloadManager = hlsDownloadManager
     self.networkMonitor = networkMonitor
     self.crashReporter = crashReporter
     NotificationCenter.default.addObserver(
@@ -78,7 +78,7 @@ final class FeedsPlayer: YralPlayer {
     configureAudioSession()
     currentIndex = .zero
     Task {
-      await mp4DownloadManager.setDelegate(self)
+      await hlsDownloadManager.setDelegate(self)
       await prepareCurrentVideo()
     }
   }
@@ -132,7 +132,7 @@ final class FeedsPlayer: YralPlayer {
     currentIndex = index
     Task {
       let feed = feedResults[index]
-      await self.mp4DownloadManager.elevatePriority(for: feed.url)
+      await self.hlsDownloadManager.elevatePriority(for: feed.url)
       let currentVideoID = feedResults[index].videoID
       if let preloadedItem = playerItems[currentVideoID] {
         do {
@@ -274,12 +274,12 @@ final class FeedsPlayer: YralPlayer {
 
     Task { [weak self] in
       guard let self = self else { return }
-      await mp4DownloadManager.prefetch(url: feed.url, assetTitle: assetTitle)
+      await hlsDownloadManager.prefetch(url: feed.url, assetTitle: assetTitle)
       Task.detached { [weak self] in
         guard let self = self else { return }
         do {
-          _ = try await self.mp4DownloadManager.startDownloadAsync(
-            mp4URL: feed.url,
+          _ = try await self.hlsDownloadManager.startDownloadAsync(
+            hlsURL: feed.url,
             assetTitle: assetTitle
           )
         } catch {
@@ -318,8 +318,8 @@ final class FeedsPlayer: YralPlayer {
     delegate?.removeThumbnails(for: indicesToCancel)
     for id in idsToCancel {
       guard let feed = feedResults.first(where: { $0.videoID == id }) else { continue }
-      await mp4DownloadManager.cancelDownload(for: feed.url)
-      await mp4DownloadManager.clearMappingsAndCache(for: feed.url, assetTitle: id)
+      await hlsDownloadManager.cancelDownload(for: feed.url)
+      await hlsDownloadManager.clearMappingsAndCache(for: feed.url, assetTitle: id)
       currentlyDownloadingIDs.remove(id)
     }
   }
@@ -333,7 +333,7 @@ final class FeedsPlayer: YralPlayer {
     startupMonitor.setMetadata(key: Constants.videoIDKey, value: videoID)
     startupMonitor.start()
 
-    if let asset = await mp4DownloadManager.localOrInflightAsset(for: feed.url) {
+    if let asset = await hlsDownloadManager.localOrInflightAsset(for: feed.url) {
       do {
         try await asset.loadPlayableAsync()
         let item = AVPlayerItem(asset: asset)
@@ -376,7 +376,7 @@ final class FeedsPlayer: YralPlayer {
   }
 }
 
-extension FeedsPlayer: MP4DownloadManagerProtocol {
+extension FeedsPlayer: HLSDownloadManagerProtocol {
   nonisolated func clearedCache(for assetTitle: String) {
     Task { @MainActor [weak self] in
       guard let self else { return }
@@ -388,7 +388,38 @@ extension FeedsPlayer: MP4DownloadManagerProtocol {
   }
 
   nonisolated func downloadManager(
-    _ manager: any MP4DownloadManaging,
+    _ manager: any HLSDownloadManaging,
+    didBeginAssetFor remoteURL: URL,
+    tempDirURL: URL,
+    assetTitle: String
+  ) {
+    Task { @MainActor [weak self] in
+      guard let self else { return }
+
+      let tempAsset = AVURLAsset(url: tempDirURL)
+
+      do {
+        try await tempAsset.loadPlayableAsync()
+      } catch {
+        crashReporter.recordException(error)
+        return
+      }
+
+      let item = AVPlayerItem(asset: tempAsset)
+      item.preferredForwardBufferDuration = CGFloat.half
+      item.canUseNetworkResourcesForLiveStreamingWhilePaused = true
+
+      playerItems[assetTitle] = item
+
+      if let idx = feedResults.firstIndex(where: { $0.videoID == assetTitle }),
+         idx == currentIndex {
+        try? await startLooping(with: item)
+      }
+    }
+  }
+
+  nonisolated func downloadManager(
+    _ manager: any HLSDownloadManaging,
     didFinishAssetFor remoteURL: URL,
     localFileURL: URL,
     assetTitle: String

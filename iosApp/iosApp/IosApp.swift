@@ -143,7 +143,7 @@ struct IosApp: App {
     } else {
       SplashScreenView()
         .task {
-          await MP4DownloadManager().removeAllBookmarkedAssetsOnLaunch()
+          await HLSDownloadManager().removeAllBookmarkedAssetsOnLaunch()
           await initializeDependencies()
         }
     }

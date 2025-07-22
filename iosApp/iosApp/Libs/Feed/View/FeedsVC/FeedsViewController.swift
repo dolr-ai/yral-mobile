@@ -25,13 +25,13 @@ class FeedsViewController: UIViewController {
 
   lazy var feedsPlayer: YralPlayer = { [unowned self] in
     let monitor = DefaultNetworkMonitor()
-    let downloadManager = MP4DownloadManager(
+    let downloadManager = HLSDownloadManager(
       networkMonitor: monitor,
-      fileManager: FileManager.default,
+      fileManager: .default,
       crashReporter: self.crashReporter
     )
     let player = FeedsPlayer(
-      mp4DownloadManager: downloadManager,
+      hlsDownloadManager: downloadManager,
       networkMonitor: monitor,
       crashReporter: self.crashReporter
     )

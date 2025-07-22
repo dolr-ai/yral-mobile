@@ -9,6 +9,19 @@ import AVFoundation
 
 protocol HLSDownloadManagerProtocol: AnyObject {
   func clearedCache(for assetTitle: String)
+  func downloadManager(
+    _ manager: any HLSDownloadManaging,
+    didFinishAssetFor remoteURL: URL,
+    localFileURL: URL,
+    assetTitle: String
+  )
+  func downloadManager(
+    _ manager: any HLSDownloadManaging,
+    didBeginAssetFor remoteURL: URL,
+    tempDirURL: URL,
+    assetTitle: String
+  )
+
 }
 
 protocol AVAssetDownloadTaskProtocol: AnyObject {
