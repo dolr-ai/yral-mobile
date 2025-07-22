@@ -170,7 +170,7 @@ def update_balance(request: Request):
         body = request.get_json(silent=True) or {}
         pid  = str(body.get("principal_id", "")).strip()
         delta = int(body.get("delta", 0))
-        is_airdropped = bool(body.get("is_airdropped", false))
+        is_airdropped = bool(body.get("is_airdropped", False))
 
         auth_header = request.headers.get("Authorization", "")
         if not auth_header.startswith("Bearer "):
