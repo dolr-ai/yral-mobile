@@ -9,6 +9,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -20,12 +22,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.stack.animation.fade
 import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
 import com.yral.android.R
+import com.yral.android.ui.components.ToastHost
 import com.yral.android.ui.nav.RootComponent
 import com.yral.android.ui.nav.RootComponent.Child
 import com.yral.android.ui.screens.home.HomeScreen
@@ -112,6 +116,16 @@ fun RootScreen(
         // 3. after delete account during anonymous sign in
         if (!state.showSplash && sessionState is SessionState.Loading) {
             BlockingLoader()
+        }
+
+        if (!rootComponent.isSplashActive()) {
+            ToastHost(
+                modifier =
+                    Modifier
+                        .padding(horizontal = 16.dp)
+                        .statusBarsPadding()
+                        .padding(top = 12.dp),
+            )
         }
     }
 }

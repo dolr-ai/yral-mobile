@@ -53,7 +53,7 @@ internal class DefaultRootComponent(
         navigation.replaceAll(config)
     }
 
-    private fun isSplashActive(): Boolean = stack.active.instance is RootComponent.Child.Splash
+    override fun isSplashActive(): Boolean = stack.active.instance is RootComponent.Child.Splash
 
     @Serializable
     private sealed interface Config {
