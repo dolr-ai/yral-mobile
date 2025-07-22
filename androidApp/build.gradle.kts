@@ -29,6 +29,7 @@ android {
         }
     }
     signingConfigs {
+        // staging : Not used since we switched to Managed app
         create("staging") {
             storeFile = file("my-debug-key.keystore")
             storePassword = System.getenv("DEBUG_KEYSTORE_PASSWORD")
@@ -59,8 +60,7 @@ android {
     productFlavors {
         create("staging") {
             dimension = "version"
-            signingConfig = signingConfigs.getByName("staging")
-            applicationIdSuffix = ".staging"
+            signingConfig = signingConfigs.getByName("release")
         }
         create("prod") {
             applicationId = "com.yral.android.app"
