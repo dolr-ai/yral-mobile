@@ -281,11 +281,9 @@ private fun HomeNavigationBar(
             )
         }
     }
-    YralPlaySound(
-        shouldPlay = playSound,
-        sound = R.raw.pop_pressed,
-        onSoundComplete = { playSound = false },
-    )
+    if (playSound) {
+        YralPlaySound(sound = R.raw.pop_pressed) { playSound = false }
+    }
 }
 
 @Composable
