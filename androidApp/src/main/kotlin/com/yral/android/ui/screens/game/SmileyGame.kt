@@ -69,10 +69,11 @@ fun SmileyGame(
             }
         }
     }
-    YralPlaySound(
-        shouldPlay = resultViewVisible && !hasShownCoinDeltaAnimation,
-        sound = if (coinDelta > 0) R.raw.spilled_coin else R.raw.coin_loss,
-    )
+    if (resultViewVisible && !hasShownCoinDeltaAnimation) {
+        YralPlaySound(
+            sound = if (coinDelta > 0) R.raw.spilled_coin else R.raw.coin_loss,
+        )
+    }
 }
 
 @Composable
