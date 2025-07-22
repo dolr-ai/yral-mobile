@@ -335,7 +335,9 @@ private fun BottomView(
                     .padding(start = 16.dp, bottom = 150.dp),
             shouldExpand = gameViewModel.shouldExpandHowToPlay(),
             pageNo = pageNo,
-        )
+        ) {
+            gameViewModel.toggleAboutGame(true)
+        }
         ActionsRight(
             modifier =
                 Modifier
