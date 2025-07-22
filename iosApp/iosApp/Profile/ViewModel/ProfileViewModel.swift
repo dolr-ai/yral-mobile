@@ -179,10 +179,10 @@ class ProfileViewModel: ObservableObject {
     AnalyticsModuleKt.getAnalyticsManager().setUserProperties(
       user: User(
         userId: analyticsInfo.userPrincipal,
-        isLoggedIn: analyticsInfo.isLoggedIn,
         canisterId: analyticsInfo.canisterPrincipal,
+        isLoggedIn: KotlinBoolean(bool: analyticsInfo.isLoggedIn),
         isCreator: KotlinBoolean(bool: self.feeds.count >= .one),
-        satsBalance: analyticsInfo.satsBalance
+        satsBalance: KotlinDouble(double: analyticsInfo.satsBalance)
       )
     )
     AnalyticsModuleKt.getAnalyticsManager().flush()

@@ -40,7 +40,7 @@ class FeedsRepository: FeedRepositoryProtocol {
       cacheResponse = try await httpService.performRequest(
         for: CacheEndPoints.getGlobalCache(
           request: FeedRequestDTO(
-          canisterID: principal,
+          userID: principal,
           filterResults: [],
           numResults: Constants.initialNumResults
         )),
@@ -91,7 +91,7 @@ class FeedsRepository: FeedRepositoryProtocol {
       feedResponse = try await httpService.performRequest(
         for: CacheEndPoints.getMLFeed(
           request: FeedRequestDTO(
-          canisterID: principal,
+          userID: principal,
           filterResults: filteredPosts,
           numResults: Constants.mlNumResults
         )),
@@ -170,7 +170,7 @@ class FeedsRepository: FeedRepositoryProtocol {
       profileImageURL: profileImageURL,
       likeCount: Int(result.like_count()),
       isLiked: result.liked_by_me(),
-      nsfwProbability: feed.nsfwProbability,
+      isNsfw: feed.isNsfw,
       smileyGame: SmileyGame(config: SmileyGameConfig.shared.config, state: .notPlayed)
     )
   }
@@ -331,7 +331,7 @@ class CacheEndPoints {
 protocol FeedMapping {
   var postID: UInt32 { get }
   var canisterID: String { get }
-  var nsfwProbability: Double { get }
+  var isNsfw: Bool { get }
 }
 
 extension FeedsRepository {
@@ -340,8 +340,8 @@ extension FeedsRepository {
     static let cloudflareSuffix = "/manifest/video.m3u8"
     static let thumbnailSuffix = "/thumbnails/thumbnail.jpg"
     static let feedsBaseURL = "https://yral-ml-feed-server.fly.dev"
-    static let cacheSuffix = "/api/v1/feed/coldstart/clean"
-    static let mlFeedSuffix = "/api/v1/feed/clean"
+    static let cacheSuffix = "/api/v3/feed/coldstart/clean"
+    static let mlFeedSuffix = "/api/v3/feed/clean"
     static let reportVideoPath = "/api/v1/posts/report_v2"
     static let videoEventPath = "/api/v1/events/bulk"
     static let initialNumResults: Int64 = 20
