@@ -9,6 +9,7 @@ import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.Value
 import com.yral.android.ui.screens.home.nav.HomeComponent
+import com.yral.android.ui.screens.profile.nav.ProfileComponent
 import kotlinx.serialization.Serializable
 
 internal class DefaultRootComponent(
@@ -16,6 +17,8 @@ internal class DefaultRootComponent(
 ) : RootComponent,
     ComponentContext by componentContext {
     private val navigation = StackNavigation<Config>()
+    private var homeComponent: HomeComponent? = null
+    private var pendingNavigation: String? = null
 
     override val stack: Value<ChildStack<*, RootComponent.Child>> =
         childStack(
@@ -24,7 +27,16 @@ internal class DefaultRootComponent(
             initialConfiguration = Config.Splash,
             handleBackButton = true,
             childFactory = ::child,
-        )
+        ).also { stackValue ->
+            // Observe stack changes to handle pending navigation
+            stackValue.subscribe { stack ->
+                val navigation = pendingNavigation
+                if (navigation != null && stack.active.instance is RootComponent.Child.Home) {
+                    pendingNavigation = null
+                    homeComponent?.handleNavigation(navigation)
+                }
+            }
+        }
 
     private fun child(
         config: Config,
@@ -40,8 +52,11 @@ internal class DefaultRootComponent(
             componentContext = componentContext,
         )
 
-    private fun homeComponent(componentContext: ComponentContext): HomeComponent =
-        HomeComponent.Companion(componentContext = componentContext)
+    private fun homeComponent(componentContext: ComponentContext): HomeComponent {
+        val component = HomeComponent.Companion(componentContext = componentContext)
+        homeComponent = component
+        return component
+    }
 
     override fun onBackClicked() {
         navigation.pop()
@@ -54,6 +69,18 @@ internal class DefaultRootComponent(
     }
 
     override fun isSplashActive(): Boolean = stack.active.instance is RootComponent.Child.Splash
+
+    override fun handleNavigation(destination: String) {
+        when {
+            destination.startsWith(ProfileComponent.DEEPLINK) -> {
+                if (isSplashActive()) {
+                    pendingNavigation = destination
+                } else {
+                    homeComponent?.handleNavigation(destination)
+                }
+            }
+        }
+    }
 
     @Serializable
     private sealed interface Config {

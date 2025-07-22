@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import co.touchlab.kermit.Logger
 import com.arkivanov.decompose.defaultComponentContext
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
@@ -40,6 +41,7 @@ import com.yral.shared.uniffi.generated.initRustLogger
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
     private lateinit var oAuthUtils: OAuthUtils
+    private lateinit var rootComponent: DefaultRootComponent
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,14 +51,14 @@ class MainActivity : ComponentActivity() {
             initRustLogger()
         }
         oAuthUtils = koinInstance.get()
-        handleIntent(intent)
         // Always create the root component outside Compose on the main thread
-        val root = DefaultRootComponent(componentContext = defaultComponentContext())
+        rootComponent = DefaultRootComponent(componentContext = defaultComponentContext())
+        handleIntent(intent)
         setContent {
             CompositionLocalProvider(LocalRippleConfiguration provides null) {
                 CompositionLocalProvider(LocalAppTopography provides appTypoGraphy()) {
                     MyApplicationTheme {
-                        RootScreen(root)
+                        RootScreen(rootComponent)
                     }
                 }
             }
@@ -75,6 +77,9 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun handleIntent(intent: Intent?) {
+        Logger.d("onNewIntent: ${intent?.data}")
+
+        // Handle OAuth redirect URIs
         val uri = intent?.data
         if (uri?.scheme == REDIRECT_URI_SCHEME &&
             uri.host == REDIRECT_URI_HOST &&
@@ -85,6 +90,24 @@ class MainActivity : ComponentActivity() {
             if (code != null && state != null) {
                 oAuthUtils.invokeCallback(code, state)
             }
+        }
+
+        // Handle notification deep links
+        val dest = intent?.getStringExtra("dest")
+        if (dest != null) {
+            Logger.d("MainActivity") { "Handling notification deep link: $dest" }
+            handleNotificationDeepLink(dest)
+        }
+    }
+
+    private fun handleNotificationDeepLink(dest: String) {
+        try {
+            Logger.d("MainActivity") { "Handling deep link: $dest" }
+            rootComponent.handleNavigation(dest)
+        } catch (
+            @Suppress("TooGenericExceptionCaught") e: Exception,
+        ) {
+            Logger.e("MainActivity", e) { "Error handling deep link: $dest" }
         }
     }
 }
