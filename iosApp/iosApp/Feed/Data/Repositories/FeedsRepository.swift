@@ -337,7 +337,7 @@ protocol FeedMapping {
 extension FeedsRepository {
   enum Constants {
     static let cloudfarePrefix = "https://customer-2p3jflss4r4hmpnz.cloudflarestream.com/"
-    static let cloudflareSuffix = "/manifest/video.m3u8"
+    static let cloudflareSuffix = "/downloads/default.mp4"
     static let thumbnailSuffix = "/thumbnails/thumbnail.jpg"
     static let feedsBaseURL = "https://yral-ml-feed-server.fly.dev"
     static let cacheSuffix = "/api/v1/feed/coldstart/clean"

@@ -98,7 +98,6 @@ actor HLSDownloadManager: NSObject, HLSDownloadManaging {
     guard let downloadTask = downloadSession.makeAssetDownloadTask(downloadConfiguration: downloadConfig) else {
       throw URLError(.badURL)
     }
-    downloadTask.underlyingTask?.priority = URLSessionTask.lowPriority
     activeDownloads[hlsURL] = downloadTask
     assetTitleForURL[hlsURL] = assetTitle
 
