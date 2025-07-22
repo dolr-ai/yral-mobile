@@ -87,7 +87,6 @@ extension FeedsViewController: UICollectionViewDelegate {
     trackedVideoIDs.insert(item.videoID)
     AnalyticsModuleKt.getAnalyticsManager().trackEvent(
       event: VideoImpressionEventData(
-        categoryName: self.feedType == .otherUsers ? .home : .profile,
         videoId: item.videoID,
         publisherUserId: item.principalID,
         likeCount: Int64(item.likeCount),

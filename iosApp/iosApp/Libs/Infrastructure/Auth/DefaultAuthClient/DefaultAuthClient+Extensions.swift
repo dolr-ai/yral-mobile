@@ -299,10 +299,10 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
     AnalyticsModuleKt.getAnalyticsManager().setUserProperties(
       user: User(
         userId: userPrincipal,
-        isLoggedIn: isLoggedIn,
         canisterId: canisterPrincipal,
+        isLoggedIn: KotlinBoolean(bool: isLoggedIn),
         isCreator: KotlinBoolean(bool: isCreator),
-        satsBalance: Double(coins)
+        satsBalance: KotlinDouble(value: Double(coins))
       )
     )
   }
@@ -364,13 +364,4 @@ extension DefaultAuthClient {
 enum DelegateIdentityType {
   case ephemeral
   case permanent
-
-  func userType() -> UserType {
-    switch self {
-    case .ephemeral:
-      return .theNew
-    case .permanent:
-      return .existing
-    }
-  }
 }
