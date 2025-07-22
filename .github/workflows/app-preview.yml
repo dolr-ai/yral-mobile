@@ -60,10 +60,16 @@ jobs:
           sed -i 's/versionCode[[:space:]]*=[[:space:]]*[0-9][0-9]*/versionCode = '"$GITHUB_RUN_NUMBER"'/' ./androidApp/build.gradle.kts
           cat ./androidApp/build.gradle.kts | grep versionCode
 
+      - name: Setup keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_ALPHA_KEYSTORE_CONTENTS_BASE_64 }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 -d > ./androidApp/my-alpha-release-key.keystore
+
       - name: Setup environment variables
         run: |
-          echo "DEBUG_KEYSTORE_PASSWORD=${{ secrets.ANDROID_DEBUG_SIGNING_SECRET_PASSWORD }}" >> $GITHUB_ENV
-          echo "DEBUG_KEY_PASSWORD=${{ secrets.ANDROID_DEBUG_SIGNING_SECRET_PASSWORD }}" >> $GITHUB_ENV
+          echo "KEYSTORE_PASSWORD=${{ secrets.ANDROID_ALPHA_SIGNING_SECRET_PASSWORD }}" >> $GITHUB_ENV
+          echo "KEY_PASSWORD=${{ secrets.ANDROID_ALPHA_SIGNING_SECRET_PASSWORD }}" >> $GITHUB_ENV
 
       - name: Clean project
         run: ./gradlew clean
@@ -87,7 +93,7 @@ jobs:
         uses: r0adkll/upload-google-play@v1.1.3
         with:
           serviceAccountJson: ${{ steps.auth.outputs.credentials_file_path }}
-          packageName: com.yral.android.staging
+          packageName: com.yral.android
           releaseFiles: androidApp/build/outputs/bundle/stagingRelease/androidApp-staging-release.aab
           track: internal
           status: draft
