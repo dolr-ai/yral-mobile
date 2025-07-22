@@ -161,6 +161,47 @@ def _push_delta(token: str, principal_id: str, delta: int) -> bool:
         return False
     
 @https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"], enforce_app_check=True)
+def update_balance(request: Request):
+    balance_update_token = os.environ["BALANCE_UPDATE_TOKEN"]
+    try:
+        if request.method != "POST":
+            return error_response(405, "METHOD_NOW_ALLOWED", "POST required")
+
+        body = request.get_json(silent=True) or {}
+        pid  = str(body.get("principal_id", "")).strip()
+        delta = int(body.get("delta", 0))
+        is_airdropped = bool(body.get("is_airdropped", false))
+
+        auth_header = request.headers.get("Authorization", "")
+        if not auth_header.startswith("Bearer "):
+            return error_response(401, "MISSING_ID_TOKEN", "Authorization token missing")
+        auth.verify_id_token(auth_header.split(" ", 1)[1])
+
+        actok = request.headers.get("X-Firebase-AppCheck")
+        if actok:
+            try:
+                app_check.verify_token(actok)
+            except Exception:
+                return error_response(401, "APPCHECK_INVALID", "App Check invalid")
+
+        push_delta = _push_delta(balance_update_token, pid, delta)
+
+        if not push_delta:
+            return error_response(502, "UPSTREAM_FAILED", "We couldn't update the balance, please try again after some time.")
+
+        coins = tx_coin_change(pid, None, delta, "AIRDROP")
+
+        return jsonify({"coins": coins}), 200
+
+    except auth.InvalidIdTokenError:
+        return error_response(401, "ID_TOKEN_INVALID", "ID token invalid or expired")
+    except GoogleAPICallError as e:
+        return error_response(500, "FIRESTORE_ERROR", str(e))
+    except Exception as e:                                 # fallback
+        print("Unhandled error:", e, file=sys.stderr)
+        return error_response(500, "INTERNAL", "Internal server error")
+
+@https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"], enforce_app_check=True)
 def cast_vote(request: Request):
     balance_update_token = os.environ["BALANCE_UPDATE_TOKEN"]
     try:
