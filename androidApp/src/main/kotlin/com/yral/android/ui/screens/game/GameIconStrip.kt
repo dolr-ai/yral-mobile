@@ -12,7 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
 import com.yral.android.R
-import com.yral.android.ui.widgets.YralPlaySound
+import com.yral.android.ui.widgets.YralFeedback
 import com.yral.shared.features.game.domain.models.GameIcon
 
 @Composable
@@ -76,6 +76,9 @@ fun GameIconStrip(
         }
     }
     if (playSound) {
-        YralPlaySound(sound = R.raw.pop_pressed) { playSound = false }
+        YralFeedback(
+            sound = R.raw.pop_pressed,
+            withHapticFeedback = true,
+        ) { playSound = false }
     }
 }
