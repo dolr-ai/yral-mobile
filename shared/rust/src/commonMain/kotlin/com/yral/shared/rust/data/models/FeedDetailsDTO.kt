@@ -13,7 +13,8 @@ import io.ktor.http.Url
 fun PostDetailsForFrontend.toFeedDetails(
     postId: Long,
     canisterId: String,
-    nsfwProbability: Double,
+    nsfwProbability: Double?,
+    isNsfw: Boolean?,
 ): FeedDetails {
     if (status == PostStatus.BANNED_DUE_TO_USER_REPORTING) {
         throw YralException("Post is banned $postId")
@@ -36,5 +37,6 @@ fun PostDetailsForFrontend.toFeedDetails(
         likeCount = likeCount,
         isLiked = likedByMe,
         nsfwProbability = nsfwProbability,
+        isNsfw = isNsfw,
     )
 }

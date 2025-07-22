@@ -11,6 +11,4 @@ object AppConfigurations {
     const val FIREBASE_APP_NAME = "yral"
     const val FIREBASE_COULD_URL = "cloudfunctions.net"
     const val FIREBASE_COULD_FUN_REGION = "us-central1"
-
-    const val NSFW_PROBABILITY = 0.4
 }
