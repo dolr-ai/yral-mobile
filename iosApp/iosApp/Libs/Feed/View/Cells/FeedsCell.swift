@@ -465,7 +465,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     signupOverlayHost.view.isHidden = !feedInfo.showLoginOverlay
     if feedInfo.showLoginOverlay {
       AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-        event: AuthScreenViewedEventData()
+        event: AuthScreenViewedEventData(pageName: .home)
       )
 
     }
