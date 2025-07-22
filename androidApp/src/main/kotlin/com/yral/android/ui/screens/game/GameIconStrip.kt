@@ -11,6 +11,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
+import com.yral.android.R
+import com.yral.android.ui.widgets.YralPlaySound
 import com.yral.shared.features.game.domain.models.GameIcon
 
 @Composable
@@ -23,6 +25,7 @@ fun GameIconStrip(
     coinDelta: Int = 0,
     onIconPositioned: (Int, Float) -> Unit = { _, _ -> },
 ) {
+    var playSound by remember { mutableStateOf(false) }
     var animateIcon by remember { mutableStateOf(false) }
     GameStripBackground(modifier) {
         gameIcons.forEachIndexed { index, icon ->
@@ -45,6 +48,7 @@ fun GameIconStrip(
                             Modifier.clickable {
                                 if (coinDelta == 0 && !isLoading) {
                                     animateIcon = true
+                                    playSound = true
                                     onIconClicked(icon)
                                 }
                             },
@@ -58,6 +62,7 @@ fun GameIconStrip(
                             Modifier.clickable {
                                 if (coinDelta == 0 && !isLoading) {
                                     animateIcon = true
+                                    playSound = true
                                     onIconClicked(icon)
                                 }
                             },
@@ -70,4 +75,9 @@ fun GameIconStrip(
             }
         }
     }
+    YralPlaySound(
+        shouldPlay = playSound,
+        sound = R.raw.pop_pressed,
+        onSoundComplete = { playSound = false },
+    )
 }
