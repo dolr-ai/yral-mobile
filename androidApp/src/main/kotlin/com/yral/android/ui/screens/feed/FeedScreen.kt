@@ -1,6 +1,7 @@
 package com.yral.android.ui.screens.feed
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -143,6 +144,7 @@ fun FeedScreen(
                     feedViewModel = viewModel,
                     gameState = gameState,
                     gameViewModel = gameViewModel,
+                    navigateToAccount = { component.onAccountClicked() },
                 )
             }
             // Show loader at the bottom when loading more content AND no new items have been added yet
@@ -240,6 +242,7 @@ private fun FeedOverlay(
     feedViewModel: FeedViewModel,
     gameState: GameState,
     gameViewModel: GameViewModel,
+    navigateToAccount: () -> Unit,
 ) {
     var lottieCached by remember { mutableStateOf(false) }
     Box(
@@ -249,6 +252,7 @@ private fun FeedOverlay(
         TopView(
             gameState = gameState,
             gameViewModel = gameViewModel,
+            navigateToAccount = navigateToAccount,
         )
         BottomView(
             state = state,
@@ -276,6 +280,7 @@ private fun FeedOverlay(
 private fun TopView(
     gameState: GameState,
     gameViewModel: GameViewModel,
+    navigateToAccount: () -> Unit,
 ) {
     Box(
         modifier =
@@ -303,9 +308,9 @@ private fun TopView(
         ) {
             Image(
                 painter = painterResource(id = R.drawable.ic_menu),
-                contentDescription = "image description",
+                contentDescription = "account",
                 contentScale = ContentScale.None,
-                modifier = Modifier.size(32.dp),
+                modifier = Modifier.size(32.dp).clickable { navigateToAccount() },
             )
             Spacer(modifier = Modifier.weight(1f))
             CoinBalance(

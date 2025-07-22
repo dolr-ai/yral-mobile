@@ -22,6 +22,7 @@ import kotlinx.serialization.Serializable
 
 internal class DefaultHomeComponent(
     componentContext: ComponentContext,
+    private val navigateToAccount: () -> Unit,
 ) : HomeComponent(),
     ComponentContext by componentContext {
     private val navigation = StackNavigation<Config>()
@@ -85,7 +86,10 @@ internal class DefaultHomeComponent(
         }
 
     private fun feedComponent(componentContext: ComponentContext): FeedComponent =
-        FeedComponent.Companion(componentContext = componentContext)
+        FeedComponent.Companion(
+            componentContext = componentContext,
+            navigateToAccount = navigateToAccount,
+        )
 
     private fun leaderboardComponent(componentContext: ComponentContext): LeaderboardComponent =
         LeaderboardComponent.Companion(componentContext = componentContext)

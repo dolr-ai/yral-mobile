@@ -1,13 +1,16 @@
 package com.yral.android.ui.nav
 
 import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.decompose.DelicateDecomposeApi
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.active
 import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.pop
+import com.arkivanov.decompose.router.stack.push
 import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.Value
+import com.yral.android.ui.screens.account.nav.AccountComponent
 import com.yral.android.ui.screens.home.nav.HomeComponent
 import kotlinx.serialization.Serializable
 
@@ -33,6 +36,7 @@ internal class DefaultRootComponent(
         when (config) {
             is Config.Splash -> RootComponent.Child.Splash(splashComponent(componentContext))
             is Config.Home -> RootComponent.Child.Home(homeComponent(componentContext))
+            is Config.Account -> RootComponent.Child.Account(accountComponent(componentContext))
         }
 
     private fun splashComponent(componentContext: ComponentContext): SplashComponent =
@@ -41,7 +45,13 @@ internal class DefaultRootComponent(
         )
 
     private fun homeComponent(componentContext: ComponentContext): HomeComponent =
-        HomeComponent.Companion(componentContext = componentContext)
+        HomeComponent.Companion(
+            componentContext = componentContext,
+            navigateToAccount = { navigateToAccount() },
+        )
+
+    private fun accountComponent(componentContext: ComponentContext): AccountComponent =
+        AccountComponent.Companion(componentContext = componentContext)
 
     override fun onBackClicked() {
         navigation.pop()
@@ -55,6 +65,11 @@ internal class DefaultRootComponent(
 
     override fun isSplashActive(): Boolean = stack.active.instance is RootComponent.Child.Splash
 
+    @OptIn(DelicateDecomposeApi::class)
+    private fun navigateToAccount() {
+        navigation.push(Config.Account)
+    }
+
     @Serializable
     private sealed interface Config {
         @Serializable
@@ -62,5 +77,8 @@ internal class DefaultRootComponent(
 
         @Serializable
         data object Home : Config
+
+        @Serializable
+        data object Account : Config
     }
 }

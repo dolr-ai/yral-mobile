@@ -2,6 +2,7 @@ package com.yral.android.ui.nav
 
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.value.Value
+import com.yral.android.ui.screens.account.nav.AccountComponent
 import com.yral.android.ui.screens.home.nav.HomeComponent
 
 interface RootComponent {
@@ -20,6 +21,10 @@ interface RootComponent {
         ) : Child()
         class Home(
             val component: HomeComponent,
+        ) : Child()
+
+        class Account(
+            val component: AccountComponent,
         ) : Child()
     }
 }

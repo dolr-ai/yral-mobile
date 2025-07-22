@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -32,11 +34,15 @@ import com.yral.android.R
 import com.yral.android.ui.components.ToastHost
 import com.yral.android.ui.nav.RootComponent
 import com.yral.android.ui.nav.RootComponent.Child
+import com.yral.android.ui.screens.account.AccountScreen
+import com.yral.android.ui.screens.account.nav.AccountComponent
 import com.yral.android.ui.screens.home.HomeScreen
 import com.yral.android.ui.widgets.YralErrorMessage
 import com.yral.android.ui.widgets.YralLoader
 import com.yral.android.ui.widgets.YralLottieAnimation
 import com.yral.shared.core.session.SessionState
+import com.yral.shared.core.session.getKey
+import com.yral.shared.features.account.viewmodel.AccountsViewModel
 import com.yral.shared.features.root.viewmodels.RootError
 import com.yral.shared.features.root.viewmodels.RootViewModel
 import org.koin.compose.viewmodel.koinViewModel
@@ -69,6 +75,7 @@ fun RootScreen(
     rootComponent.setSplashActive(state.showSplash)
 
     Box(modifier = Modifier.fillMaxSize()) {
+        val accountViewModel = koinViewModel<AccountsViewModel>(key = "account-${sessionState.getKey()}")
         Children(stack = rootComponent.stack, modifier = Modifier.fillMaxSize(), animation = stackAnimation(fade())) {
             when (val child = it.instance) {
                 is Child.Splash -> {
@@ -88,6 +95,12 @@ fun RootScreen(
                         sessionState = sessionState,
                         bottomNavigationAnalytics = { viewModel.bottomNavigationClicked(it) },
                         updateProfileVideosCount = { viewModel.updateProfileVideosCount(it) },
+                    )
+                }
+                is Child.Account -> {
+                    Account(
+                        component = child.component,
+                        viewModel = accountViewModel,
                     )
                 }
             }
@@ -199,6 +212,29 @@ private fun Splash(
                 modifier = Modifier.fillMaxSize(),
                 rawRes = R.raw.lightning_lottie,
                 contentScale = ContentScale.Crop,
+            )
+        }
+    }
+}
+
+@Composable
+private fun Account(
+    component: AccountComponent,
+    viewModel: AccountsViewModel,
+) {
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.primaryContainer,
+        modifier = Modifier.fillMaxSize(),
+    ) { innerPadding ->
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+        ) {
+            AccountScreen(
+                component = component,
+                viewModel = viewModel,
             )
         }
     }
