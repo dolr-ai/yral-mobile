@@ -1,6 +1,11 @@
 package com.yral.android.ui.screens.home.nav
 
 import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.decompose.router.slot.ChildSlot
+import com.arkivanov.decompose.router.slot.SlotNavigation
+import com.arkivanov.decompose.router.slot.activate
+import com.arkivanov.decompose.router.slot.childSlot
+import com.arkivanov.decompose.router.slot.dismiss
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.StackNavigator
@@ -8,6 +13,7 @@ import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.Value
 import com.yral.android.ui.screens.account.nav.AccountComponent
+import com.yral.android.ui.screens.alertsrequest.nav.AlertsRequestComponent
 import com.yral.android.ui.screens.feed.nav.FeedComponent
 import com.yral.android.ui.screens.leaderboard.nav.LeaderboardComponent
 import com.yral.android.ui.screens.profile.nav.ProfileComponent
@@ -27,6 +33,16 @@ internal class DefaultHomeComponent(
             initialConfiguration = Config.Feed,
             handleBackButton = true,
             childFactory = ::child,
+        )
+
+    private val slotNavigation = SlotNavigation<SlotConfig>()
+
+    override val slot: Value<ChildSlot<*, SlotChild>> =
+        childSlot(
+            source = slotNavigation,
+            serializer = SlotConfig.serializer(),
+            handleBackButton = true,
+            childFactory = ::slotChild,
         )
 
     override fun onFeedTabClick() {
@@ -77,7 +93,10 @@ internal class DefaultHomeComponent(
     private fun uploadVideoComponent(componentContext: ComponentContext): UploadVideoComponent =
         UploadVideoComponent.Companion(
             componentContext = componentContext,
-            goToHome = { onFeedTabClick() },
+            goToHome = {
+                onFeedTabClick()
+                showSlot(SlotConfig.AlertsRequestBottomSheet)
+            },
         )
 
     private fun profileComponent(componentContext: ComponentContext): ProfileComponent =
@@ -88,6 +107,27 @@ internal class DefaultHomeComponent(
 
     private fun accountComponent(componentContext: ComponentContext): AccountComponent =
         AccountComponent.Companion(componentContext = componentContext)
+
+    private fun slotChild(
+        config: SlotConfig,
+        componentContext: ComponentContext,
+    ): SlotChild =
+        when (config) {
+            SlotConfig.AlertsRequestBottomSheet ->
+                SlotChild.AlertsRequestBottomSheet(
+                    alertsRequestComponent(componentContext),
+                )
+        }
+
+    private fun alertsRequestComponent(componentContext: ComponentContext): AlertsRequestComponent =
+        AlertsRequestComponent(
+            componentContext = componentContext,
+            onDismissed = slotNavigation::dismiss,
+        )
+
+    private fun showSlot(slotConfig: SlotConfig) {
+        slotNavigation.activate(slotConfig)
+    }
 
     @Serializable
     private sealed interface Config {
@@ -105,5 +145,11 @@ internal class DefaultHomeComponent(
 
         @Serializable
         data object Account : Config
+    }
+
+    @Serializable
+    private sealed interface SlotConfig {
+        @Serializable
+        data object AlertsRequestBottomSheet : SlotConfig
     }
 }

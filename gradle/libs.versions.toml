@@ -52,6 +52,7 @@ mockk = "1.14.2"
 turbine = "1.2.0"
 truth = "1.4.4"
 accompanist-permission = "0.37.3"
+moko-permissions="0.19.1"
 
 [libraries]
 
@@ -102,6 +103,7 @@ firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
 firebase-performance = { module = "com.google.firebase:firebase-perf" }
 firebase-appcheck-playintegrity = { module = "com.google.firebase:firebase-appcheck-playintegrity" }
 firebase-appcheck-debug = { module = "com.google.firebase:firebase-appcheck-debug" }
+firebase-messaging = { module = "com.google.firebase:firebase-messaging" }
 
 gitlive-firebase-kotlin-crashlytics = { module = "dev.gitlive:firebase-crashlytics", version.ref = "firebase-gitlive-sdk" }
 gitlive-firebase-kotlin-anlaytics = { module = "dev.gitlive:firebase-analytics", version.ref = "firebase-gitlive-sdk" }
@@ -109,6 +111,7 @@ gitlive-firebase-kotlin-perf = { module = "dev.gitlive:firebase-perf", version.r
 gitlive-firebase-storage = { module = "dev.gitlive:firebase-storage", version.ref = "firebase-gitlive-sdk" }
 gitlive-firebase-auth = { module = "dev.gitlive:firebase-auth", version.ref = "firebase-gitlive-sdk" }
 gitlive-firebase-store-db = { module = "dev.gitlive:firebase-firestore", version.ref = "firebase-gitlive-sdk" }
+gitlive-firebase-messaging = { module = "dev.gitlive:firebase-messaging", version.ref = "firebase-gitlive-sdk" }
 
 koin-bom = { group = "io.insert-koin", name = "koin-bom", version.ref = "koinBom" }
 koin-core = { group = "io.insert-koin", name = "koin-core" }
@@ -137,6 +140,19 @@ ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx
 lottie = { module = "com.airbnb.android:lottie-compose", version.ref = "lottie" }
 
 mixpanel-android = { module = "com.mixpanel.android:mixpanel-android", version.ref = "mixpanel" }
+
+moko-permissions = { group = "dev.icerock.moko", name = "permissions", version.ref = "moko-permissions" }
+moko-permissions-bluetooth = { group = "dev.icerock.moko", name = "permissions-bluetooth", version.ref = "moko-permissions" }
+moko-permissions-camera = { group = "dev.icerock.moko", name = "permissions-camera", version.ref = "moko-permissions" }
+moko-permissions-contacts = { group = "dev.icerock.moko", name = "permissions-contacts", version.ref = "moko-permissions" }
+moko-permissions-gallery = { group = "dev.icerock.moko", name = "permissions-gallery", version.ref = "moko-permissions" }
+moko-permissions-location = { group = "dev.icerock.moko", name = "permissions-location", version.ref = "moko-permissions" }
+moko-permissions-microphone = { group = "dev.icerock.moko", name = "permissions-microphone", version.ref = "moko-permissions" }
+moko-permissions-motion = { group = "dev.icerock.moko", name = "permissions-motion", version.ref = "moko-permissions" }
+moko-permissions-notifications = { group = "dev.icerock.moko", name = "permissions-notifications", version.ref = "moko-permissions" }
+moko-permissions-storage = { group = "dev.icerock.moko", name = "permissions-storage", version.ref = "moko-permissions" }
+moko-permissions-compose = { group = "dev.icerock.moko", name = "permissions-compose", version.ref = "moko-permissions" }
+moko-permissions-test = { group = "dev.icerock.moko", name = "permissions-test", version.ref = "moko-permissions" }
 
 nimbus-jose-jwt = { module = "com.nimbusds:nimbus-jose-jwt", version.ref = "nimbus-jose-jwt" }
 

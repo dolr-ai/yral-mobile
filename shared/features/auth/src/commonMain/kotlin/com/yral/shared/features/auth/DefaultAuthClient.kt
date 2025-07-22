@@ -1,5 +1,6 @@
 package com.yral.shared.features.auth
 
+import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.analytics.AnalyticsManager
@@ -12,9 +13,11 @@ import com.yral.shared.features.auth.analytics.AuthTelemetry
 import com.yral.shared.features.auth.domain.AuthRepository
 import com.yral.shared.features.auth.domain.models.ExchangePrincipalResponse
 import com.yral.shared.features.auth.domain.useCases.AuthenticateTokenUseCase
+import com.yral.shared.features.auth.domain.useCases.DeregisterNotificationTokenUseCase
 import com.yral.shared.features.auth.domain.useCases.ExchangePrincipalIdUseCase
 import com.yral.shared.features.auth.domain.useCases.ObtainAnonymousIdentityUseCase
 import com.yral.shared.features.auth.domain.useCases.RefreshTokenUseCase
+import com.yral.shared.features.auth.domain.useCases.RegisterNotificationTokenUseCase
 import com.yral.shared.features.auth.domain.useCases.UpdateSessionAsRegisteredUseCase
 import com.yral.shared.features.auth.utils.OAuthUtils
 import com.yral.shared.features.auth.utils.SocialProvider
@@ -30,7 +33,9 @@ import com.yral.shared.rust.services.IndividualUserServiceFactory
 import com.yral.shared.uniffi.generated.CanistersWrapper
 import com.yral.shared.uniffi.generated.FfiException
 import com.yral.shared.uniffi.generated.authenticateWithNetwork
+import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.FirebaseAuth
+import dev.gitlive.firebase.messaging.messaging
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -144,6 +149,11 @@ class DefaultAuthClient(
         ).forEach { key ->
             preferences.remove(key)
         }
+        requiredUseCases.deregisterNotificationTokenUseCase(
+            DeregisterNotificationTokenUseCase.Parameter(
+                token = Firebase.messaging.getToken(),
+            ),
+        )
         // clear cached canister data after parsing token
         resetCachedCanisterData()
         // reset analytics manage: flush events and reset user properties
@@ -280,6 +290,15 @@ class DefaultAuthClient(
         }
         sessionManager.updateState(SessionState.SignedIn(session = session))
         scope.launch { updateBalanceAndProceed(session) }
+        scope.launch {
+            val result =
+                requiredUseCases.registerNotificationTokenUseCase(
+                    RegisterNotificationTokenUseCase.Parameter(
+                        token = Firebase.messaging.getToken(),
+                    ),
+                )
+            Logger.d(DefaultAuthClient::class.simpleName!!) { "Notification token registered: $result" }
+        }
     }
 
     private suspend fun refreshAccessToken() {
@@ -382,6 +401,8 @@ class DefaultAuthClient(
         val getBalanceUseCase: GetBalanceUseCase,
         val updateDocumentUseCase: UpdateDocumentUseCase,
         val getIdTokenUseCase: GetIdTokenUseCase,
+        val registerNotificationTokenUseCase: RegisterNotificationTokenUseCase,
+        val deregisterNotificationTokenUseCase: DeregisterNotificationTokenUseCase,
     )
 
     private suspend fun getCachedSession(): Session? {
