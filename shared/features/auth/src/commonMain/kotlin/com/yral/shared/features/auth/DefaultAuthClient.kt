@@ -172,6 +172,7 @@ class DefaultAuthClient(
                         userPrincipal = canisterWrapper.getUserPrincipal(),
                     )
             }
+            cachedSession.userPrincipal?.let { crashlyticsManager.setUserId(it) }
             sessionManager.updateCoinBalance(0)
             if (auth.currentUser?.uid == cachedSession.userPrincipal) {
                 setSession(session = cachedSession)
