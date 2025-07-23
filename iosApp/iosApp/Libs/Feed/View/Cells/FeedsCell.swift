@@ -441,6 +441,8 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
       playerContainerView.layer.addSublayer(layer)
       playerLayer = layer
       playerLayer?.frame = contentView.bounds
+    } else {
+
     }
 
     self.index = index
