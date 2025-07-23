@@ -245,9 +245,11 @@ class FeedViewModel(
                     videoData = VideoData(), // Reset all video data for new page
                 )
             }
-            feedTelemetry.trackVideoImpression(
-                feedDetails = _state.value.feedDetails[_state.value.currentPageOfFeed],
-            )
+            if (_state.value.currentPageOfFeed < _state.value.feedDetails.size) {
+                feedTelemetry.trackVideoImpression(
+                    feedDetails = _state.value.feedDetails[_state.value.currentPageOfFeed],
+                )
+            }
         }
     }
 
