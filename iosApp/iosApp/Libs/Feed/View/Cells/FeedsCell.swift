@@ -348,6 +348,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   }
 
   func startSmileyGamResultAnimation(for result: SmileyGameResultResponse, completion: @escaping () -> Void) {
+    HapticGenerator.performFeedback(.impact(weight: .medium))
     AudioPlayer.shared.play(named: result.outcome == "WIN" ? Constants.winSound : Constants.lossSound)
     profileInfoView.coinsView.updateCoins(by: result.coinDelta)
     if showResultBottomSheet {
