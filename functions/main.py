@@ -252,13 +252,20 @@ def cast_vote(request: Request):
 
             vid_exists  = vid_ref.get(transaction=tx).exists
             if not vid_exists:
-                seed_winner = random.choice([s["id"] for s in smileys])
+                HEART_ID = "heart"
+                all_ids = [s["id"] for s in smileys]
+                seed_a = HEART_ID if HEART_ID in all_ids else random.choice(all_ids)
+                
+                pool = [smid for smid in all_ids if smid != seed_a]
+                seed_b = random.choice(pool)
+
                 tx.set(vid_ref, {
                     "created_at": firestore.SERVER_TIMESTAMP
                 })
 
                 zero = {s["id"]: 0 for s in smileys}
-                zero[seed_winner] = 1
+                zero[seed_a] = 1
+                zero[seed_b] = 1
                 tx.set(shard_ref(0), zero, merge=True)
 
                 for k in range(1, SHARDS):
