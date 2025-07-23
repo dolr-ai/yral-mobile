@@ -10,6 +10,7 @@ abstract class ProfileComponent {
 
     companion object Companion {
         const val DEEPLINK = "yralm://profile"
+        const val DEEPLINK_VIDEO_PREFIX = "$DEEPLINK/videos"
         operator fun invoke(
             componentContext: ComponentContext,
             onUploadVideoClicked: () -> Unit,

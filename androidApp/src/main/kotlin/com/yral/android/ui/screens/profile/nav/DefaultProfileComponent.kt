@@ -23,8 +23,8 @@ internal class DefaultProfileComponent(
     override fun handleNavigation(destination: String) {
         Logger.d("DefaultProfileComponent") { "handleNavigation: $destination" }
         when {
-            destination.startsWith("$DEEPLINK/posts/") -> {
-                val videoId = destination.substringAfterLast("/posts/")
+            destination.startsWith(DEEPLINK_VIDEO_PREFIX) -> {
+                val videoId = destination.substringAfterLast("/videos/")
                 val channelResult = _pendingVideoNavigation.trySend(videoId)
                 Logger.d("DefaultProfileComponent") { "handleNavigation: channelResult: $channelResult" }
             }

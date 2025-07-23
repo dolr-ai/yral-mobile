@@ -29,6 +29,7 @@ import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.design.appTypoGraphy
 import com.yral.android.ui.nav.DefaultRootComponent
 import com.yral.android.ui.screens.RootScreen
+import com.yral.android.ui.screens.profile.nav.ProfileComponent
 import com.yral.shared.core.platform.AndroidPlatformResources
 import com.yral.shared.core.platform.PlatformResourcesFactory
 import com.yral.shared.features.auth.data.AuthDataSourceImpl.Companion.REDIRECT_URI_HOST
@@ -37,6 +38,9 @@ import com.yral.shared.features.auth.data.AuthDataSourceImpl.Companion.REDIRECT_
 import com.yral.shared.features.auth.utils.OAuthUtils
 import com.yral.shared.koin.koinInstance
 import com.yral.shared.uniffi.generated.initRustLogger
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonPrimitive
 
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
@@ -92,13 +96,45 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        // Handle notification deep links
-        val dest = intent?.getStringExtra("dest")
-        if (dest != null) {
-            Logger.d("MainActivity") { "Handling notification deep link: $dest" }
-            handleNotificationDeepLink(dest)
+        // Handle notification deep links with payload format
+        val payload = intent?.getStringExtra("payload")
+        if (payload != null) {
+            Logger.d("MainActivity") { "Handling notification payload: $payload" }
+            val destination = mapPayloadToDestination(payload)
+            if (destination != null) {
+                handleNotificationDeepLink(destination)
+            }
         }
     }
+
+    private fun mapPayloadToDestination(payload: String): String? =
+        try {
+            val jsonObject = Json.decodeFromString(JsonObject.serializer(), payload)
+            val type = jsonObject["type"]?.jsonPrimitive?.content
+
+            when (type) {
+                "VideoUploadSuccessful" -> {
+                    // For video upload success, navigate to specific post
+                    val videoId = jsonObject["video_id"]?.jsonPrimitive?.content
+
+                    if (!videoId.isNullOrEmpty()) {
+                        "${ProfileComponent.DEEPLINK_VIDEO_PREFIX}/$videoId"
+                    } else {
+                        ProfileComponent.DEEPLINK
+                    }
+                }
+                // Add more notification types here as needed
+                else -> {
+                    Logger.w("MainActivity") { "Unknown notification type: $type" }
+                    null
+                }
+            }
+        } catch (
+            @Suppress("TooGenericExceptionCaught") e: Exception,
+        ) {
+            Logger.e("MainActivity", e) { "Error parsing notification payload: $payload" }
+            null
+        }
 
     private fun handleNotificationDeepLink(dest: String) {
         try {
