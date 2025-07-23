@@ -1,5 +1,7 @@
 package com.yral.android.ui.widgets
 
+import android.content.ActivityNotFoundException
+import android.content.Intent
 import android.view.ViewGroup
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
@@ -17,8 +19,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.net.toUri
+import co.touchlab.kermit.Logger
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.koin.koinInstance
@@ -33,7 +39,8 @@ fun YralWebView(
     retryDelayMillis: Long = 1000,
 ) {
     var isLoading by remember { mutableStateOf(true) }
-    var scope = rememberCoroutineScope()
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     Box(
         modifier = modifier,
         contentAlignment = Alignment.Center,
@@ -51,6 +58,34 @@ fun YralWebView(
                         object : WebViewClient() {
                             private var retryCount = 0
                             private val crashlytics = koinInstance.get<CrashlyticsManager>()
+
+                            override fun shouldOverrideUrlLoading(
+                                view: WebView?,
+                                request: WebResourceRequest?,
+                            ): Boolean {
+                                val url = request?.url.toString()
+                                return handleUrl(url)
+                            }
+
+                            override fun shouldOverrideUrlLoading(
+                                view: WebView,
+                                url: String,
+                            ): Boolean = handleUrl(url)
+
+                            private fun handleUrl(url: String): Boolean =
+                                if (url.startsWith("http://") || url.startsWith("https://")) {
+                                    false
+                                } else {
+                                    try {
+                                        val intent = Intent(Intent.ACTION_VIEW, url.toUri())
+                                        context.startActivity(intent)
+                                    } catch (e: ActivityNotFoundException) {
+                                        Logger.d("No activity found to open url: $url")
+                                        crashlytics.recordException(e)
+                                    }
+                                    true
+                                }
+
                             override fun onPageFinished(
                                 view: WebView?,
                                 url: String?,
@@ -112,4 +147,10 @@ fun YralWebView(
             }
         }
     }
+}
+
+@Composable
+fun OpenInExternalBrowser(linkToOpen: String) {
+    val uriHandler = LocalUriHandler.current
+    uriHandler.openUri(linkToOpen)
 }
