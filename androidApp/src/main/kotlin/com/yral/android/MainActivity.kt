@@ -32,6 +32,7 @@ import com.yral.android.ui.screens.RootScreen
 import com.yral.android.ui.screens.profile.nav.ProfileComponent
 import com.yral.shared.core.platform.AndroidPlatformResources
 import com.yral.shared.core.platform.PlatformResourcesFactory
+import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.data.AuthDataSourceImpl.Companion.REDIRECT_URI_HOST
 import com.yral.shared.features.auth.data.AuthDataSourceImpl.Companion.REDIRECT_URI_PATH
 import com.yral.shared.features.auth.data.AuthDataSourceImpl.Companion.REDIRECT_URI_SCHEME
@@ -41,11 +42,13 @@ import com.yral.shared.uniffi.generated.initRustLogger
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import org.koin.android.ext.android.inject
 
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
     private lateinit var oAuthUtils: OAuthUtils
     private lateinit var rootComponent: DefaultRootComponent
+    private val crashlyticsManager: CrashlyticsManager by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -133,6 +136,7 @@ class MainActivity : ComponentActivity() {
             @Suppress("TooGenericExceptionCaught") e: Exception,
         ) {
             Logger.e("MainActivity", e) { "Error parsing notification payload: $payload" }
+            crashlyticsManager.recordException(e)
             null
         }
 
@@ -144,6 +148,7 @@ class MainActivity : ComponentActivity() {
             @Suppress("TooGenericExceptionCaught") e: Exception,
         ) {
             Logger.e("MainActivity", e) { "Error handling deep link: $dest" }
+            crashlyticsManager.recordException(e)
         }
     }
 }
