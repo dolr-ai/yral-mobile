@@ -5,6 +5,8 @@
 ##################################################
 
 set -euo pipefail
+: "${CI:=false}"
+: "${PLATFORM_NAME:=}"
 
 if [[ -z "$PROJECT_DIR" ]]; then
   echo "Must provide PROJECT_DIR environment variable set to the Xcode project directory." 1>&2

@@ -182,6 +182,7 @@ final class FeedsPlayer: YralPlayer {
   }
 
   private func startLooping(with item: AVPlayerItem) async throws {
+    (player as? AVQueuePlayer)?.replaceCurrentItem(with: nil)
     finishFirstFrameTrace(success: false)
     lastLoopProgress = .zero
     if let videoID = feedResults[safe: currentIndex]?.videoID {
