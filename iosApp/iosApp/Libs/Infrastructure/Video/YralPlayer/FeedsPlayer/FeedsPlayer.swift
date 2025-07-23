@@ -19,7 +19,6 @@ final class FeedsPlayer: YralPlayer {
       onPlayerItemsChanged?(playerItems.keys.filter { oldValue[$0] == nil }.first, playerItems.count)
     }
   }
-  private var lastPlayedTimes: [String: CMTime] = [:]
   private var currentlyDownloadingIDs: Set<String> = []
   private var playerLooper: AVPlayerLooper?
 
@@ -120,7 +119,6 @@ final class FeedsPlayer: YralPlayer {
     lastLoopProgress = 0
     if let currentTime = player.currentItem?.currentTime() {
       let currentVideoID = feedResults[currentIndex].videoID
-      lastPlayedTimes[currentVideoID] = currentTime
     }
     Task {
       await cancelPreloadOutsideRange(center: index, radius: preloadRadius)
@@ -156,7 +154,6 @@ final class FeedsPlayer: YralPlayer {
     feedResults.removeAll(where: { removedVideoIDs.contains($0.videoID) })
     removedVideoIDs.forEach {
       playerItems.removeValue(forKey: $0)
-      lastPlayedTimes.removeValue(forKey: $0)
     }
 
     if let currentFeedID = currentFeedID,
@@ -223,15 +220,7 @@ final class FeedsPlayer: YralPlayer {
         print("Item failed to become ready: \(error)")
       }
       let currentVideoID = feedResults[currentIndex].videoID
-      if let lastTime = lastPlayedTimes[currentVideoID] {
-        player.seek(to: lastTime, toleranceBefore: .zero, toleranceAfter: .zero) { [weak self] _ in
-          Task { @MainActor [weak self] in
-            self?.play()
-          }
-        }
-      } else {
-        play()
-      }
+      play()
     }
 
     Task {
@@ -382,7 +371,6 @@ extension FeedsPlayer: HLSDownloadManagerProtocol {
     Task { @MainActor [weak self] in
       guard let self else { return }
       self.playerItems.removeValue(forKey: assetTitle)
-      self.lastPlayedTimes.removeValue(forKey: assetTitle)
       guard let index = feedResults.firstIndex(where: { $0.videoID == assetTitle }) else { return }
       self.delegate?.cacheCleared(atc: index)
     }
