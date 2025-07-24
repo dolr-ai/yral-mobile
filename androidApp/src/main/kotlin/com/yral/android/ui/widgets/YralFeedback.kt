@@ -7,6 +7,9 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import co.touchlab.kermit.Logger
+import kotlinx.coroutines.delay
+
+private const val HAPTIC_FEEDBACK_DELAY = 30L
 
 @Composable
 fun YralFeedback(
@@ -19,8 +22,13 @@ fun YralFeedback(
     val haptic = LocalHapticFeedback.current
     LaunchedEffect(Unit) {
         Logger.d("SoundAndHaptics") { "Playing $sound" }
+        val hapticDuration = hapticFeedbackType.extendedHapticDuration()
         if (withHapticFeedback) {
-            haptic.performHapticFeedback(hapticFeedbackType)
+            val startTime = System.currentTimeMillis()
+            while (System.currentTimeMillis() - startTime < hapticDuration) {
+                haptic.performHapticFeedback(hapticFeedbackType)
+                delay(HAPTIC_FEEDBACK_DELAY)
+            }
         }
         val soundRes = sound
         val mediaPlayer = MediaPlayer.create(context, soundRes)
@@ -31,3 +39,10 @@ fun YralFeedback(
         }
     }
 }
+
+@Suppress("MagicNumber")
+private fun HapticFeedbackType.extendedHapticDuration(): Long =
+    when (this) {
+        HapticFeedbackType.LongPress -> 500L
+        else -> HAPTIC_FEEDBACK_DELAY // only 1 loop
+    }
