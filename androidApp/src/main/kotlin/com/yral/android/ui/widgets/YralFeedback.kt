@@ -2,6 +2,7 @@ package com.yral.android.ui.widgets
 
 import android.media.MediaPlayer
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
@@ -20,8 +21,17 @@ fun YralFeedback(
 ) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
-    LaunchedEffect(Unit) {
+    DisposableEffect(Unit) {
         Logger.d("SoundAndHaptics") { "Playing $sound" }
+        val mediaPlayer = MediaPlayer.create(context, sound)
+        mediaPlayer.start()
+        mediaPlayer.setOnCompletionListener { onPlayed() }
+        onDispose {
+            mediaPlayer.release()
+        }
+    }
+    LaunchedEffect(Unit) {
+        Logger.d("SoundAndHaptics") { "Playing $hapticFeedbackType" }
         val hapticDuration = hapticFeedbackType.extendedHapticDuration()
         if (withHapticFeedback) {
             val startTime = System.currentTimeMillis()
@@ -29,13 +39,6 @@ fun YralFeedback(
                 haptic.performHapticFeedback(hapticFeedbackType)
                 delay(HAPTIC_FEEDBACK_DELAY)
             }
-        }
-        val soundRes = sound
-        val mediaPlayer = MediaPlayer.create(context, soundRes)
-        mediaPlayer.start()
-        mediaPlayer.setOnCompletionListener {
-            it.release()
-            onPlayed()
         }
     }
 }
