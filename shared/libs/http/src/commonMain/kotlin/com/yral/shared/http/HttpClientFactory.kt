@@ -16,6 +16,7 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
 private const val TIME_OUT = 30000L
+const val UPLOAD_FILE_TIME_OUT = 5 * 60 * 1000L // 5 min
 
 fun createClient(
     preferences: Preferences,

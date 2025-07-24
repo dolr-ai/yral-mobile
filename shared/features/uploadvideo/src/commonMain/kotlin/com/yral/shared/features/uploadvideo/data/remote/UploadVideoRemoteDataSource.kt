@@ -4,12 +4,14 @@ import com.yral.shared.core.AppConfigurations
 import com.yral.shared.features.uploadvideo.data.remote.models.FileUploadStatus
 import com.yral.shared.features.uploadvideo.data.remote.models.GetUploadUrlResponseDTO
 import com.yral.shared.features.uploadvideo.data.remote.models.UpdateMetaDataRequestDto
+import com.yral.shared.http.UPLOAD_FILE_TIME_OUT
 import com.yral.shared.http.handleException
 import com.yral.shared.http.httpGet
 import com.yral.shared.http.httpPostWithStringResponse
 import io.ktor.client.HttpClient
 import io.ktor.client.content.ProgressListener
 import io.ktor.client.plugins.onUpload
+import io.ktor.client.plugins.timeout
 import io.ktor.client.request.forms.InputProvider
 import io.ktor.client.request.forms.formData
 import io.ktor.client.request.forms.submitFormWithBinaryData
@@ -91,6 +93,9 @@ internal class UploadVideoRemoteDataSource(
                     )
                 },
             ) {
+                timeout {
+                    requestTimeoutMillis = UPLOAD_FILE_TIME_OUT
+                }
                 headers.append(HttpHeaders.AcceptEncoding, "gzip")
                 onUpload(progressListener)
             }

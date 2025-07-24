@@ -4,7 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.michaelbull.result.fold
 import com.github.michaelbull.result.getOrThrow
+import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.logging.YralLogger
+import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.uploadvideo.analytics.UploadVideoTelemetry
 import com.yral.shared.features.uploadvideo.domain.GetUploadEndpointUseCase
 import com.yral.shared.features.uploadvideo.domain.UpdateMetaUseCase
@@ -39,6 +41,7 @@ class UploadVideoViewModel internal constructor(
     private val updateMeta: UpdateMetaUseCase,
     private val appDispatchers: AppDispatchers,
     private val uploadVideoTelemetry: UploadVideoTelemetry,
+    private val crashlyticsManager: CrashlyticsManager,
     logger: YralLogger,
 ) : ViewModel() {
     private val logger = logger.withTag(UploadVideoViewModel::class.simpleName ?: "")
@@ -377,8 +380,16 @@ class UploadVideoViewModel internal constructor(
     private fun deleteSelectedFile() {
         state.value.selectedFilePath?.let {
             viewModelScope.launch {
-                withContext(appDispatchers.disk) {
-                    SystemFileSystem.delete(Path(it), mustExist = false)
+                runCatching {
+                    withContext(appDispatchers.disk) {
+                        SystemFileSystem.delete(Path(it), mustExist = false)
+                    }
+                }.onFailure { error ->
+                    if (error is CancellationException) {
+                        throw error
+                    } else {
+                        crashlyticsManager.recordException(YralException(error))
+                    }
                 }
             }
         }

@@ -68,7 +68,6 @@ class DefaultAuthClient(
                 idToken = idToken,
                 accessToken = "",
                 refreshToken = "",
-                skipFirebaseAuth = auth.currentUser != null,
             )
             sessionManager.updateSocialSignInStatus(
                 isSocialSignIn = preferences.getBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name) ?: false,
@@ -77,23 +76,17 @@ class DefaultAuthClient(
     }
 
     private suspend fun obtainAnonymousIdentity() {
-        requiredUseCases
-            .signOutUseCase
+        requiredUseCases.obtainAnonymousIdentityUseCase
             .invoke(Unit)
-            .onSuccess {
-                requiredUseCases.obtainAnonymousIdentityUseCase
-                    .invoke(Unit)
-                    .onSuccess { tokenResponse ->
-                        handleToken(
-                            idToken = tokenResponse.idToken,
-                            accessToken = tokenResponse.accessToken,
-                            refreshToken = tokenResponse.refreshToken,
-                            resetCanister = true,
-                            skipFirebaseAuth = false,
-                        )
-                        sessionManager.updateSocialSignInStatus(false)
-                    }.onFailure { throw YralAuthException("obtaining anonymous token failed - ${it.message}") }
-            }.onFailure { throw YralAuthException("sign out of firebase failed - ${it.message}") }
+            .onSuccess { tokenResponse ->
+                handleToken(
+                    idToken = tokenResponse.idToken,
+                    accessToken = tokenResponse.accessToken,
+                    refreshToken = tokenResponse.refreshToken,
+                    resetCanister = true,
+                )
+                sessionManager.updateSocialSignInStatus(false)
+            }.onFailure { throw YralAuthException("obtaining anonymous token failed - ${it.message}") }
     }
 
     private suspend fun handleToken(
@@ -101,8 +94,6 @@ class DefaultAuthClient(
         accessToken: String,
         refreshToken: String,
         resetCanister: Boolean = false,
-        skipSetMetaData: Boolean = true,
-        skipFirebaseAuth: Boolean = true,
     ) {
         saveTokens(idToken, refreshToken, accessToken)
         val tokenClaim = oAuthUtils.parseOAuthToken(idToken)
@@ -111,7 +102,7 @@ class DefaultAuthClient(
                 if (resetCanister) {
                     resetCachedCanisterData()
                 }
-                handleExtractIdentityResponse(it, skipSetMetaData, skipFirebaseAuth)
+                handleExtractIdentityResponse(it)
             }
         } else {
             refreshToken.takeIf { it.isNotEmpty() }?.let {
@@ -168,11 +159,7 @@ class DefaultAuthClient(
         sessionManager.updateState(SessionState.Initial)
     }
 
-    private suspend fun handleExtractIdentityResponse(
-        data: ByteArray,
-        skipSetMetaData: Boolean,
-        skipFirebaseAuth: Boolean,
-    ) {
+    private suspend fun handleExtractIdentityResponse(data: ByteArray) {
         try {
             var cachedSession = getCachedSession()
             if (cachedSession == null) {
@@ -185,13 +172,9 @@ class DefaultAuthClient(
                         userPrincipal = canisterWrapper.getUserPrincipal(),
                     )
             }
-            if (!skipSetMetaData) {
-                scope.launch {
-                    updateYralSession(cachedSession)
-                }
-            }
+            cachedSession.userPrincipal?.let { crashlyticsManager.setUserId(it) }
             sessionManager.updateCoinBalance(0)
-            if (skipFirebaseAuth) {
+            if (auth.currentUser?.uid == cachedSession.userPrincipal) {
                 setSession(session = cachedSession)
             } else {
                 authorizeFirebase(cachedSession)
@@ -216,15 +199,23 @@ class DefaultAuthClient(
 
     private suspend fun authorizeFirebase(session: Session) {
         requiredUseCases
-            .signInAnonymouslyUseCase
+            .signOutUseCase
             .invoke(Unit)
             .onSuccess {
                 requiredUseCases
-                    .getIdTokenUseCase
-                    .invoke(GetIdTokenUseCase.DEFAULT)
-                    .onSuccess { idToken -> exchangePrincipalId(session, idToken) }
-                    .onFailure { throw YralAuthException("firebase idToken not found - ${it.message}") }
-            }.onFailure { throw YralAuthException("firebase anonymous sign in failed - ${it.message}") }
+                    .signInAnonymouslyUseCase
+                    .invoke(Unit)
+                    .onSuccess { getIdTokenAndProceed(session) }
+                    .onFailure { throw YralAuthException("firebase anonymous sign in failed - ${it.message}") }
+            }.onFailure { throw YralAuthException("sign out for anonymous sign in failed - ${it.message}") }
+    }
+
+    private suspend fun getIdTokenAndProceed(session: Session) {
+        requiredUseCases
+            .getIdTokenUseCase
+            .invoke(GetIdTokenUseCase.DEFAULT)
+            .onSuccess { idToken -> exchangePrincipalId(session, idToken) }
+            .onFailure { throw YralAuthException("firebase idToken not found - ${it.message}") }
     }
 
     private suspend fun exchangePrincipalId(
@@ -358,11 +349,10 @@ class DefaultAuthClient(
                     accessToken = tokenResponse.accessToken,
                     refreshToken = tokenResponse.refreshToken,
                     resetCanister = true,
-                    skipSetMetaData = false,
-                    skipFirebaseAuth = false,
                 )
                 preferences.putBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name, true)
                 sessionManager.updateSocialSignInStatus(true)
+                scope.launch { getCachedSession()?.let { updateYralSession(it) } }
                 scope.launch {
                     // Minor delay for super properties to be set
                     delay(DELAY_FOR_SESSION_PROPERTIES)
