@@ -33,7 +33,7 @@ abstract class BaseFlowUseCase<in P, out R, E> internal constructor(
             }.catch { throwable ->
                 /* Catch block is not executed for kotlinx.coroutines.CancellationException and it
                 is desired to not record it, hence we can simply log the caught exception.*/
-                crashlyticsManager.recordException(Exception(throwable))
+                crashlyticsManager.recordException(Exception("${this@BaseFlowUseCase::class.simpleName}", throwable))
                 emit(Err(throwable.toError()))
             }.flowOn(coroutineDispatcher)
 
