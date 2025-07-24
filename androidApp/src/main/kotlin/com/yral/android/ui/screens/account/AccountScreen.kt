@@ -29,6 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -40,7 +41,6 @@ import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.design.YralDimens
 import com.yral.android.ui.screens.account.AccountScreenConstants.SOCIAL_MEDIA_LINK_BOTTOM_SPACER_WEIGHT
 import com.yral.android.ui.screens.account.nav.AccountComponent
-import com.yral.android.ui.widgets.OpenInExternalBrowser
 import com.yral.android.ui.widgets.YralAsyncImage
 import com.yral.android.ui.widgets.YralErrorMessage
 import com.yral.android.ui.widgets.YralGradientButton
@@ -162,7 +162,8 @@ private fun SheetContent(
         is AccountBottomSheet.ShowWebView -> {
             val linkToOpen = bottomSheetType.linkToOpen
             if (linkToOpen.openInExternalBrowser) {
-                OpenInExternalBrowser(linkToOpen.link)
+                val uriHandler = LocalUriHandler.current
+                uriHandler.openUri(linkToOpen.link)
                 onDismissRequest()
             } else {
                 WebViewBottomSheet(

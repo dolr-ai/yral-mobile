@@ -384,7 +384,13 @@ class UploadVideoViewModel internal constructor(
                     withContext(appDispatchers.disk) {
                         SystemFileSystem.delete(Path(it), mustExist = false)
                     }
-                }.onFailure { error -> crashlyticsManager.recordException(YralException(error)) }
+                }.onFailure { error ->
+                    if (error is CancellationException) {
+                        throw error
+                    } else {
+                        crashlyticsManager.recordException(YralException(error))
+                    }
+                }
             }
         }
     }

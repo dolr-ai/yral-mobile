@@ -245,9 +245,10 @@ class FeedViewModel(
                     videoData = VideoData(), // Reset all video data for new page
                 )
             }
-            if (_state.value.currentPageOfFeed < _state.value.feedDetails.size) {
+            val currentState = _state.value
+            if (currentState.currentPageOfFeed < currentState.feedDetails.size) {
                 feedTelemetry.trackVideoImpression(
-                    feedDetails = _state.value.feedDetails[_state.value.currentPageOfFeed],
+                    feedDetails = currentState.feedDetails[currentState.currentPageOfFeed],
                 )
             }
         }
