@@ -1,5 +1,6 @@
 package com.yral.android.ui.screens.home.nav
 
+import co.touchlab.kermit.Logger
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.slot.ChildSlot
 import com.arkivanov.decompose.router.slot.SlotNavigation
@@ -59,6 +60,17 @@ internal class DefaultHomeComponent(
 
     override fun onProfileTabClick() {
         navigation.replaceKeepingFeed(Config.Profile)
+    }
+
+    override fun handleNavigation(destination: String) {
+        Logger.d("DefaultHomeComponent") { "handleNavigation: $destination" }
+        when {
+            destination.startsWith(ProfileComponent.DEEPLINK) -> {
+                navigation.replaceKeepingFeed(Config.Profile) {
+                    (stack.value.active.instance as? Child.Profile)?.component?.handleNavigation(destination)
+                }
+            }
+        }
     }
 
     override fun onAccountTabClick() {

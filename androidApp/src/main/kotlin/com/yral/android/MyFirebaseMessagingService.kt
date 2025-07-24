@@ -22,7 +22,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
     override fun onMessageReceived(message: RemoteMessage) {
         Logger.d("MyFirebaseMessagingService") {
-            "onMessageReceived: ${message.notification?.clickAction}"
+            "onMessageReceived: ${message.data}"
         }
 
         if (message.notification != null) {

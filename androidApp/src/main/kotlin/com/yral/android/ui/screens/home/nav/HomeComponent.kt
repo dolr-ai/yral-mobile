@@ -20,6 +20,8 @@ abstract class HomeComponent {
     abstract fun onProfileTabClick()
     abstract fun onAccountTabClick()
 
+    abstract fun handleNavigation(destination: String)
+
     sealed class Child {
         class Feed(
             val component: FeedComponent,
