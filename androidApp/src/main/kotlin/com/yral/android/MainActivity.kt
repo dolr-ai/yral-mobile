@@ -22,24 +22,33 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import co.touchlab.kermit.Logger
 import com.arkivanov.decompose.defaultComponentContext
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.design.appTypoGraphy
 import com.yral.android.ui.nav.DefaultRootComponent
 import com.yral.android.ui.screens.RootScreen
+import com.yral.android.ui.screens.profile.nav.ProfileComponent
 import com.yral.shared.core.platform.AndroidPlatformResources
 import com.yral.shared.core.platform.PlatformResourcesFactory
+import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.data.AuthDataSourceImpl.Companion.REDIRECT_URI_HOST
 import com.yral.shared.features.auth.data.AuthDataSourceImpl.Companion.REDIRECT_URI_PATH
 import com.yral.shared.features.auth.data.AuthDataSourceImpl.Companion.REDIRECT_URI_SCHEME
 import com.yral.shared.features.auth.utils.OAuthUtils
 import com.yral.shared.koin.koinInstance
 import com.yral.shared.uniffi.generated.initRustLogger
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import org.koin.android.ext.android.inject
 
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
     private lateinit var oAuthUtils: OAuthUtils
+    private lateinit var rootComponent: DefaultRootComponent
+    private val crashlyticsManager: CrashlyticsManager by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,14 +58,14 @@ class MainActivity : ComponentActivity() {
             initRustLogger()
         }
         oAuthUtils = koinInstance.get()
-        handleIntent(intent)
         // Always create the root component outside Compose on the main thread
-        val root = DefaultRootComponent(componentContext = defaultComponentContext())
+        rootComponent = DefaultRootComponent(componentContext = defaultComponentContext())
+        handleIntent(intent)
         setContent {
             CompositionLocalProvider(LocalRippleConfiguration provides null) {
                 CompositionLocalProvider(LocalAppTopography provides appTypoGraphy()) {
                     MyApplicationTheme {
-                        RootScreen(root)
+                        RootScreen(rootComponent)
                     }
                 }
             }
@@ -75,6 +84,9 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun handleIntent(intent: Intent?) {
+        Logger.d("onNewIntent: ${intent?.data}")
+
+        // Handle OAuth redirect URIs
         val uri = intent?.data
         if (uri?.scheme == REDIRECT_URI_SCHEME &&
             uri.host == REDIRECT_URI_HOST &&
@@ -85,6 +97,58 @@ class MainActivity : ComponentActivity() {
             if (code != null && state != null) {
                 oAuthUtils.invokeCallback(code, state)
             }
+        }
+
+        // Handle notification deep links with payload format
+        val payload = intent?.getStringExtra("payload")
+        if (payload != null) {
+            Logger.d("MainActivity") { "Handling notification payload: $payload" }
+            val destination = mapPayloadToDestination(payload)
+            if (destination != null) {
+                handleNotificationDeepLink(destination)
+            }
+        }
+    }
+
+    private fun mapPayloadToDestination(payload: String): String? =
+        try {
+            val jsonObject = Json.decodeFromString(JsonObject.serializer(), payload)
+            val type = jsonObject["type"]?.jsonPrimitive?.content
+
+            when (type) {
+                "VideoUploadSuccessful" -> {
+                    // For video upload success, navigate to specific post
+                    val videoId = jsonObject["video_id"]?.jsonPrimitive?.content
+
+                    if (!videoId.isNullOrEmpty()) {
+                        "${ProfileComponent.DEEPLINK_VIDEO_PREFIX}/$videoId"
+                    } else {
+                        ProfileComponent.DEEPLINK
+                    }
+                }
+                // Add more notification types here as needed
+                else -> {
+                    Logger.w("MainActivity") { "Unknown notification type: $type" }
+                    null
+                }
+            }
+        } catch (
+            @Suppress("TooGenericExceptionCaught") e: Exception,
+        ) {
+            Logger.e("MainActivity", e) { "Error parsing notification payload: $payload" }
+            crashlyticsManager.recordException(e)
+            null
+        }
+
+    private fun handleNotificationDeepLink(dest: String) {
+        try {
+            Logger.d("MainActivity") { "Handling deep link: $dest" }
+            rootComponent.handleNavigation(dest)
+        } catch (
+            @Suppress("TooGenericExceptionCaught") e: Exception,
+        ) {
+            Logger.e("MainActivity", e) { "Error handling deep link: $dest" }
+            crashlyticsManager.recordException(e)
         }
     }
 }

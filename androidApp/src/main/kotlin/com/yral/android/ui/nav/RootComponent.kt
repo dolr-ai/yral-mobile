@@ -13,6 +13,8 @@ interface RootComponent {
 
     fun setSplashActive(active: Boolean)
 
+    fun handleNavigation(destination: String)
+
     // Defines all possible child components
     sealed class Child {
         class Splash(
