@@ -11,6 +11,6 @@ internal class AppUseCaseFailureListener(
         tag: String?,
         message: () -> String,
     ) {
-        crashlyticsManager.recordException(Exception(throwable))
+        crashlyticsManager.recordException(Exception("$tag: ${message()}", throwable))
     }
 }
