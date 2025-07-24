@@ -108,15 +108,7 @@ fun UploadVideo(
                         modifier =
                             Modifier
                                 .align(Alignment.TopEnd)
-                                .clickable {
-                                    // Clean up the copied video file on IO thread
-                                    if (videoFilePath.isNotEmpty()) {
-                                        coroutineScope.launch(Dispatchers.IO) {
-                                            videoFileManager.deleteVideoFile(videoFilePath)
-                                        }
-                                    }
-                                    onVideoSelected("")
-                                },
+                                .clickable { onVideoSelected("") },
                     )
                 }
             } else {
