@@ -78,3 +78,55 @@ fun <T> Iterable<T>.filterFirstNSuspendFlow(
         }
     }
 }
+
+fun <P, R> Iterable<P>.processFirstNSuspendFlow(
+    n: Int,
+    maxConcurrency: Int = MAX_CONCURRENCY, // Optional cap to prevent excessive parallelism
+    process: suspend (P) -> R,
+): Flow<R> {
+    if (n <= 0) {
+        return emptyFlow()
+    }
+
+    return channelFlow {
+        val items = this@processFirstNSuspendFlow.toList()
+
+        // Handle edge case where input is empty
+        if (items.isEmpty()) {
+            return@channelFlow
+        }
+
+        val semaphore = Semaphore(maxConcurrency)
+        val resultChannel = Channel<R>(Channel.UNLIMITED)
+        val completedJobsMutex = Mutex()
+        var completedJobs = 0
+        val totalJobs = items.size
+        val jobs =
+            items.map { item ->
+                launch {
+                    semaphore.withPermit {
+                        resultChannel.send(process(item))
+                    }
+                    // Track completion
+                    completedJobsMutex.withLock {
+                        completedJobs++
+                        if (completedJobs == totalJobs) {
+                            resultChannel.close()
+                        }
+                    }
+                }
+            }
+        launch {
+            var count = 0
+            for (item in resultChannel) {
+                send(item)
+                count++
+                if (count >= n) {
+                    jobs.forEach { it.cancel() }
+                    resultChannel.close()
+                    break
+                }
+            }
+        }
+    }
+}
