@@ -21,6 +21,7 @@ class FeedsViewController: UIViewController {
   var initalFeedscancellables: Set<AnyCancellable> = []
   var paginatedFeedscancellables: Set<AnyCancellable> = []
   var trackedVideoIDs: Set<String> = []
+  var lastContentOffsetY: CGFloat = 0
 
   lazy var feedsPlayer: YralPlayer = { [unowned self] in
     let monitor = DefaultNetworkMonitor()
@@ -143,15 +144,11 @@ class FeedsViewController: UIViewController {
         case .success(let feeds):
           DispatchQueue.main.async {
             self.updateData(withFeeds: feeds)
-//            if self.feedType == .currentUser {
-              self.activityIndicator.stopAnimating()
-//            }
+            self.activityIndicator.stopAnimating()
           }
         case .failure(let errorMessage):
           self.loadMoreRequestMade = false
-//          if feedType == .currentUser {
-            self.activityIndicator.stopAnimating()
-//          }
+          self.activityIndicator.stopAnimating()
           print("Error: \(errorMessage)")
         }
       }

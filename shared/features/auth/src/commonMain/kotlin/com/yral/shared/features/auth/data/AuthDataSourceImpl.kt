@@ -1,5 +1,6 @@
 package com.yral.shared.features.auth.data
 
+import co.touchlab.kermit.Logger
 import com.yral.shared.core.AppConfigurations.METADATA_BASE_URL
 import com.yral.shared.core.AppConfigurations.OAUTH_BASE_URL
 import com.yral.shared.core.AppConfigurations.OFF_CHAIN_BASE_URL
@@ -15,6 +16,8 @@ import com.yral.shared.http.httpPostWithStringResponse
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import com.yral.shared.uniffi.generated.delegatedIdentityWireToJson
+import com.yral.shared.uniffi.generated.registerDevice
+import com.yral.shared.uniffi.generated.unregisterDevice
 import io.ktor.client.HttpClient
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
@@ -141,6 +144,21 @@ class AuthDataSourceImpl(
                 setBody(params)
             }
         } ?: throw YralException("Identity not found while deleting account")
+    }
+
+    override suspend fun registerForNotifications(token: String) {
+        val identityWire = preferences.getBytes(PrefKeys.IDENTITY.name)
+        identityWire?.let { identity ->
+            Logger.d("AuthDataSource") { "registerForNotifications: token $token" }
+            registerDevice(identity, token)
+        } ?: throw YralException("Identity not found while registering for notifications")
+    }
+
+    override suspend fun deregisterForNotifications(token: String) {
+        val identityWire = preferences.getBytes(PrefKeys.IDENTITY.name)
+        identityWire?.let { identity ->
+            unregisterDevice(identity, token)
+        } ?: throw YralException("Identity not found while deregistering for notifications")
     }
 
     companion object {

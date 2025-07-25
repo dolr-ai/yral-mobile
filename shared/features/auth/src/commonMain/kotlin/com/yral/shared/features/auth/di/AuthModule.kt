@@ -10,9 +10,11 @@ import com.yral.shared.features.auth.data.AuthRepositoryImpl
 import com.yral.shared.features.auth.domain.AuthRepository
 import com.yral.shared.features.auth.domain.useCases.AuthenticateTokenUseCase
 import com.yral.shared.features.auth.domain.useCases.DeleteAccountUseCase
+import com.yral.shared.features.auth.domain.useCases.DeregisterNotificationTokenUseCase
 import com.yral.shared.features.auth.domain.useCases.ExchangePrincipalIdUseCase
 import com.yral.shared.features.auth.domain.useCases.ObtainAnonymousIdentityUseCase
 import com.yral.shared.features.auth.domain.useCases.RefreshTokenUseCase
+import com.yral.shared.features.auth.domain.useCases.RegisterNotificationTokenUseCase
 import com.yral.shared.features.auth.domain.useCases.UpdateSessionAsRegisteredUseCase
 import com.yral.shared.features.auth.utils.OAuthUtils
 import org.koin.core.module.dsl.bind
@@ -32,6 +34,8 @@ val authModule =
         factoryOf(::DeleteAccountUseCase)
         factoryOf(::RequiredUseCases)
         factoryOf(::AuthTelemetry)
+        factoryOf(::RegisterNotificationTokenUseCase)
+        factoryOf(::DeregisterNotificationTokenUseCase)
 
         // Required single
         // Reason: Verified in Repo, Callback in Repo required once app resumes

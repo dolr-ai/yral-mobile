@@ -726,7 +726,7 @@ data class VideoDurationWatchedEventData(
     @SerialName("video_category") val videoCategory: String = "",
     @SerialName("video_id") val videoID: String,
     @SerialName("view_count") val viewCount: Long,
-    @SerialName("nsfw_probability") val nsfwProbability: Double? = null,
+    @SerialName("nsfw_probability") val nsfwProbability: Double,
     @SerialName("absolute_watched") val absoluteWatched: Double = 0.0,
     @SerialName("percentage_watched") val percentageWatched: Double = 0.0,
     @SerialName("video_duration") val videoDuration: Double = 0.0,

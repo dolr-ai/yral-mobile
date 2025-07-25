@@ -1,6 +1,5 @@
 package com.yral.android.ui.screens.account
 
-import android.content.Intent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -30,18 +29,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
 import com.yral.android.R
 import com.yral.android.ui.components.DeleteConfirmationSheet
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.design.YralDimens
 import com.yral.android.ui.screens.account.AccountScreenConstants.SOCIAL_MEDIA_LINK_BOTTOM_SPACER_WEIGHT
+import com.yral.android.ui.screens.account.nav.AccountComponent
 import com.yral.android.ui.widgets.YralAsyncImage
 import com.yral.android.ui.widgets.YralErrorMessage
 import com.yral.android.ui.widgets.YralGradientButton
@@ -65,6 +64,8 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun AccountScreen(
+    @Suppress("UnusedParameter")
+    component: AccountComponent,
     modifier: Modifier = Modifier,
     viewModel: AccountsViewModel = koinViewModel(),
 ) {
@@ -161,9 +162,8 @@ private fun SheetContent(
         is AccountBottomSheet.ShowWebView -> {
             val linkToOpen = bottomSheetType.linkToOpen
             if (linkToOpen.openInExternalBrowser) {
-                val context = LocalContext.current
-                val intent = Intent(Intent.ACTION_VIEW, linkToOpen.link.toUri())
-                context.startActivity(intent)
+                val uriHandler = LocalUriHandler.current
+                uriHandler.openUri(linkToOpen.link)
                 onDismissRequest()
             } else {
                 WebViewBottomSheet(

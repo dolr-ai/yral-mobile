@@ -40,6 +40,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -64,6 +65,7 @@ import com.yral.android.ui.screens.profile.ProfileScreenConstants.PADDING_BOTTOM
 import com.yral.android.ui.screens.profile.ProfileScreenConstants.PULL_TO_REFRESH_INDICATOR_SIZE
 import com.yral.android.ui.screens.profile.ProfileScreenConstants.PULL_TO_REFRESH_INDICATOR_THRESHOLD
 import com.yral.android.ui.screens.profile.ProfileScreenConstants.PULL_TO_REFRESH_OFFSET_MULTIPLIER
+import com.yral.android.ui.screens.profile.nav.ProfileComponent
 import com.yral.android.ui.widgets.LoaderSize
 import com.yral.android.ui.widgets.YralAsyncImage
 import com.yral.android.ui.widgets.YralButtonState
@@ -77,13 +79,14 @@ import com.yral.shared.features.profile.viewmodel.DeleteConfirmationState
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.features.profile.viewmodel.VideoViewState
 import com.yral.shared.rust.domain.models.FeedDetails
+import kotlinx.coroutines.flow.collectLatest
 
 @Suppress("LongMethod")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
+    component: ProfileComponent,
     modifier: Modifier = Modifier,
-    uploadVideo: () -> Unit,
     viewModel: ProfileViewModel,
     profileVideos: LazyPagingItems<FeedDetails>,
 ) {
@@ -92,6 +95,40 @@ fun ProfileScreen(
         mutableStateOf(state.videoView is VideoViewState.ViewingReels)
     }
     LaunchedEffect(Unit) { viewModel.pushScreenView(profileVideos.itemCount) }
+
+    // State for handling deep link navigation
+    var pendingVideoIdState by remember { mutableStateOf<String?>(null) }
+
+    // Observe deep link navigation reactively - works even if screen is already open
+    LaunchedEffect(Unit) {
+        component.pendingVideoNavigation.collectLatest {
+            if (it != null) {
+                pendingVideoIdState = it
+                // Always refresh when coming from deep link
+                profileVideos.refresh()
+            }
+        }
+    }
+
+    // Handle opening specific video after refresh completes
+    LaunchedEffect(profileVideos.loadState.refresh, pendingVideoIdState) {
+        if (profileVideos.loadState.refresh is LoadState.NotLoading) {
+            val pendingVideoId = pendingVideoIdState
+            if (pendingVideoId != null) {
+                pendingVideoIdState = null // consume once
+                // Find the video index by ID
+                val itemCount = profileVideos.itemCount
+                if (itemCount > 0) {
+                    val videoIndex =
+                        (0 until itemCount).indexOfFirst { index ->
+                            profileVideos[index]?.videoID == pendingVideoId
+                        }
+                    viewModel.openVideoReel(videoIndex.coerceAtLeast(0))
+                }
+            }
+        }
+    }
+
     BackHandler(
         enabled = backHandlerEnabled,
         onBack = { viewModel.closeVideoReel() },
@@ -137,7 +174,7 @@ fun ProfileScreen(
                     manualRefreshTriggered = state.manualRefreshTriggered,
                     uploadVideo = {
                         viewModel.uploadVideoClicked()
-                        uploadVideo()
+                        component.onUploadVideoClick()
                     },
                     openVideoReel = { clickedIndex -> viewModel.openVideoReel(clickedIndex) },
                     deletingVideoId = deletingVideoId,

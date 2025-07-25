@@ -9,6 +9,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -20,9 +22,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import com.arkivanov.decompose.extensions.compose.stack.Children
+import com.arkivanov.decompose.extensions.compose.stack.animation.fade
+import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
 import com.yral.android.R
+import com.yral.android.ui.components.ToastHost
+import com.yral.android.ui.nav.RootComponent
+import com.yral.android.ui.nav.RootComponent.Child
 import com.yral.android.ui.screens.home.HomeScreen
 import com.yral.android.ui.widgets.YralErrorMessage
 import com.yral.android.ui.widgets.YralLoader
@@ -32,9 +41,13 @@ import com.yral.shared.features.root.viewmodels.RootError
 import com.yral.shared.features.root.viewmodels.RootViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
+@Suppress("LongMethod")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RootScreen(viewModel: RootViewModel = koinViewModel()) {
+fun RootScreen(
+    rootComponent: RootComponent,
+    viewModel: RootViewModel = koinViewModel(),
+) {
     val state by viewModel.state.collectAsState()
     val sessionState by viewModel.sessionManagerState.collectAsState()
 
@@ -53,26 +66,33 @@ fun RootScreen(viewModel: RootViewModel = koinViewModel()) {
         }
     }
 
+    rootComponent.setSplashActive(state.showSplash)
+
     Box(modifier = Modifier.fillMaxSize()) {
-        if (state.showSplash) {
-            HandleSystemBars(show = false)
-            Splash(
-                modifier = Modifier.fillMaxSize(),
-                initialAnimationComplete = state.initialAnimationComplete,
-                onAnimationComplete = { viewModel.onSplashAnimationComplete() },
-                onScreenViewed = { viewModel.splashScreenViewed() },
-            )
-        } else {
-            // Reset system bars to normal
-            HandleSystemBars(show = true)
-            HomeScreen(
-                sessionState = sessionState,
-                currentTab = state.currentHomePageTab,
-                updateCurrentTab = { viewModel.updateCurrentTab(it) },
-                bottomNavigationAnalytics = { viewModel.bottomNavigationClicked(it) },
-                updateProfileVideosCount = { viewModel.updateProfileVideosCount(it) },
-            )
+        Children(stack = rootComponent.stack, modifier = Modifier.fillMaxSize(), animation = stackAnimation(fade())) {
+            when (val child = it.instance) {
+                is Child.Splash -> {
+                    HandleSystemBars(show = false)
+                    Splash(
+                        modifier = Modifier.fillMaxSize(),
+                        initialAnimationComplete = state.initialAnimationComplete,
+                        onAnimationComplete = { viewModel.onSplashAnimationComplete() },
+                        onScreenViewed = { viewModel.splashScreenViewed() },
+                    )
+                }
+                is Child.Home -> {
+                    // Reset system bars to normal
+                    HandleSystemBars(show = true)
+                    HomeScreen(
+                        component = child.component,
+                        sessionState = sessionState,
+                        bottomNavigationAnalytics = { viewModel.bottomNavigationClicked(it) },
+                        updateProfileVideosCount = { viewModel.updateProfileVideosCount(it) },
+                    )
+                }
+            }
         }
+
         // shows login error for both splash and account screen
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         LaunchedEffect(state.error) {
@@ -96,6 +116,16 @@ fun RootScreen(viewModel: RootViewModel = koinViewModel()) {
         // 3. after delete account during anonymous sign in
         if (!state.showSplash && sessionState is SessionState.Loading) {
             BlockingLoader()
+        }
+
+        if (!rootComponent.isSplashActive()) {
+            ToastHost(
+                modifier =
+                    Modifier
+                        .padding(horizontal = 16.dp)
+                        .statusBarsPadding()
+                        .padding(top = 12.dp),
+            )
         }
     }
 }

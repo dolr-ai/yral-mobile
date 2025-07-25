@@ -56,19 +56,15 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
       .receive(on: DispatchQueue.main)
       .sink { [weak self] updatedFeed in
         guard let self = self else { return }
-        self.filteredFeeds = updatedFeed.filter {
-          !self.feedvideoIDSet.contains($0.videoID)
-        }
-        let unblockedFeeds = self.filteredFeeds.filter { !self.blockedPrincipalIDSet.contains($0.principalID) }
-        guard !unblockedFeeds.isEmpty else { return }
-        self.feedvideoIDSet.formUnion(unblockedFeeds.map { $0.videoID })
-        self.currentFeeds += unblockedFeeds
-//        let shouldApplySmiley = unblockedFeeds.map { $0.smileyGame?.config.smileys.isEmpty ?? true }.first ?? true
-//        if shouldApplySmiley {
-//          self.addSmileyInfo(for: &unblockedFeeds)
-//        }
+        let unseen = updatedFeed.filter { !self.feedvideoIDSet.contains($0.videoID) }
+        guard !unseen.isEmpty else { return }
+        self.feedvideoIDSet.formUnion(unseen.map(\.videoID))
+        self.filteredFeeds.append(contentsOf: unseen)
+        let newUnblocked = unseen.filter { !self.blockedPrincipalIDSet.contains($0.principalID) }
+        guard !newUnblocked.isEmpty else { return }
+        self.currentFeeds.append(contentsOf: newUnblocked)
+        self.unifiedState = .success(feeds: newUnblocked)
 
-        self.unifiedState = .success(feeds: unblockedFeeds)
       }
       .store(in: &cancellables)
   }
@@ -117,10 +113,11 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
     do {
       let filteredPosts = filteredFeeds.map {
         FilteredPosts(
-          postID: $0.postID,
           canisterID: $0.canisterID,
-          videoID: $0.videoID,
-          nsfwProbability: $0.nsfwProbability
+          isNsfw: $0.isNsfw,
+          postID: $0.postID,
+          publisherUserID: $0.principalID,
+          videoID: $0.videoID
         )
       }
       let request = MoreFeedsRequest(

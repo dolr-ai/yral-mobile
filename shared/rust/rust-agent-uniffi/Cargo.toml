@@ -10,7 +10,7 @@ name = "yral_mobile_uniffi"
 [dependencies]
 uniffi = { version = "0.28.3", features = [ "cli" ] }
 tokio = { version = "1.28", features = ["macros", "rt-multi-thread"] }
-ic-agent = "0.38.2"
+ic-agent = "0.41.0"
 lazy_static = "1.4"
 candid = "0.10.10"
 serde = "1.0.213"
@@ -20,9 +20,12 @@ k256 = { version = "0.13.4", default-features = false, features = [
     "std",
     "jwk",
 ] }
-yral-types = { git = "https://github.com/yral-dapp/yral-common.git", rev = "18b20f6bc2caccbdb8af0d16f8e80d1806ea4a79" }
-yral-canisters-common = { git = "https://github.com/yral-dapp/yral-common.git", rev = "18b20f6bc2caccbdb8af0d16f8e80d1806ea4a79" }
-yral-canisters-client = { git = "https://github.com/yral-dapp/yral-common.git", rev = "18b20f6bc2caccbdb8af0d16f8e80d1806ea4a79" }
+openssl = { version = "0.10", features = ["vendored"] }
+yral-types = { git = "https://github.com/yral-dapp/yral-common.git", rev = "c21b591e0950be0ecb7df8c2988f21193d2f177d" }
+yral-canisters-common = { git = "https://github.com/yral-dapp/yral-common.git", rev = "c21b591e0950be0ecb7df8c2988f21193d2f177d" }
+yral-canisters-client = { git = "https://github.com/yral-dapp/yral-common.git", rev = "c21b591e0950be0ecb7df8c2988f21193d2f177d" }
+yral-metadata-types = { git = "https://github.com/yral-dapp/yral-metadata.git", rev = "51b7d980bc15e11eac3603289212633a77a35415" }
+yral-metadata-client = { git = "https://github.com/yral-dapp/yral-metadata.git", rev = "51b7d980bc15e11eac3603289212633a77a35415" }
 
 log = "0.4.27"
 cfg-if = "1.0"

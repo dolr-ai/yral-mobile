@@ -41,14 +41,20 @@ object YralColors {
     val ProfilePicBackground: Color = Color(0xFFC4C4C4)
 
     val Red300: Color = Color(0xFFF14331)
+    val Red400: Color = Color(0xFFAB3023)
+    val ErrorRed: Color = Color(0xFFEF4444)
 
     val Green50: Color = Color(0xFFE9FAF2)
+    val Green200: Color = Color(0xFF68DBAB)
     val Green300: Color = Color(0xFF1EC981)
     val Green400: Color = Color(0xFF158F5C)
+    val SuccessGreen: Color = Color(0xFF10B981)
 
     val Grey50: Color = Neutral50
 
     val Yellow400: Color = Color(0xFF2C2310)
+    val Yellow100: Color = Color(0xFFFFDC8D)
+    val PrimaryYellow: Color = Color(0xFFF9EA0E)
 
     val CoinBalanceBGStart = Color(0xFFFFCC00)
     val CoinBalanceBGEnd = Color(0xFFDA8100)

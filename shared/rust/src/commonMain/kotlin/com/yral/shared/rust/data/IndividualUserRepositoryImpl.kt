@@ -25,5 +25,6 @@ class IndividualUserRepositoryImpl(
                 postId = post.postID,
                 canisterId = post.canisterID,
                 nsfwProbability = post.nsfwProbability,
+                isNsfw = post.isNSFW,
             )
 }

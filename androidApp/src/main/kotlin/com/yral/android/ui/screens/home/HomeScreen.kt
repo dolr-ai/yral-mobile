@@ -1,6 +1,5 @@
 package com.yral.android.ui.screens.home
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -31,6 +30,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -42,15 +42,21 @@ import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.arkivanov.decompose.extensions.compose.stack.Children
+import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.yral.android.R
 import com.yral.android.ui.components.hashtagInput.keyboardHeightAsState
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.account.AccountScreen
+import com.yral.android.ui.screens.alertsrequest.AlertsRequestBottomSheet
 import com.yral.android.ui.screens.feed.FeedScreen
+import com.yral.android.ui.screens.home.nav.HomeComponent
+import com.yral.android.ui.screens.home.nav.HomeComponent.SlotChild
 import com.yral.android.ui.screens.leaderboard.LeaderboardScreen
 import com.yral.android.ui.screens.profile.ProfileScreen
 import com.yral.android.ui.screens.uploadVideo.UploadVideoScreen
+import com.yral.android.ui.widgets.YralFeedback
 import com.yral.shared.analytics.events.CategoryName
 import com.yral.shared.core.session.SessionKey
 import com.yral.shared.core.session.SessionState
@@ -64,23 +70,34 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun HomeScreen(
-    currentTab: String,
-    updateCurrentTab: (tab: String) -> Unit,
+    component: HomeComponent,
     updateProfileVideosCount: (count: Int) -> Unit,
     bottomNavigationAnalytics: (categoryName: CategoryName) -> Unit,
     sessionState: SessionState,
 ) {
-    val backHandlerEnabled by remember(currentTab) {
-        mutableStateOf(currentTab != HomeTab.HOME.title)
-    }
-    BackHandler(
-        enabled = backHandlerEnabled,
-        onBack = { updateCurrentTab(HomeTab.HOME.title) },
-    )
     Scaffold(
         containerColor = MaterialTheme.colorScheme.primaryContainer,
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
+            val stack by component.stack.subscribeAsState()
+            val activeComponent = stack.active.instance
+            val currentTab =
+                when (activeComponent) {
+                    is HomeComponent.Child.Account -> HomeTab.ACCOUNT
+                    is HomeComponent.Child.Feed -> HomeTab.HOME
+                    is HomeComponent.Child.Leaderboard -> HomeTab.LEADER_BOARD
+                    is HomeComponent.Child.Profile -> HomeTab.PROFILE
+                    is HomeComponent.Child.UploadVideo -> HomeTab.UPLOAD_VIDEO
+                }
+            val updateCurrentTab: (tab: HomeTab) -> Unit = { tab ->
+                when (tab) {
+                    HomeTab.ACCOUNT -> component.onAccountTabClick()
+                    HomeTab.HOME -> component.onFeedTabClick()
+                    HomeTab.LEADER_BOARD -> component.onLeaderboardTabClick()
+                    HomeTab.PROFILE -> component.onProfileTabClick()
+                    HomeTab.UPLOAD_VIDEO -> component.onUploadVideoTabClick()
+                }
+            }
             HomeNavigationBar(
                 currentTab = currentTab,
                 updateCurrentTab = updateCurrentTab,
@@ -89,83 +106,100 @@ fun HomeScreen(
         },
     ) { innerPadding ->
         HomeScreenContent(
+            component = component,
             modifier =
                 Modifier
                     .padding(innerPadding)
                     .background(MaterialTheme.colorScheme.primaryContainer),
             innerPadding = innerPadding,
             sessionKey = sessionState.getKey(),
-            currentTab = currentTab,
-            updateCurrentTab = { updateCurrentTab(it.title) },
             updateProfileVideosCount = updateProfileVideosCount,
         )
+        SlotContent(component)
     }
 }
 
 @Composable
+private fun SlotContent(component: HomeComponent) {
+    val slot by component.slot.subscribeAsState()
+    slot.child?.instance?.also { slotChild ->
+        when (slotChild) {
+            is SlotChild.AlertsRequestBottomSheet ->
+                AlertsRequestBottomSheet(
+                    onDismissRequest = slotChild.component::onDismissClicked,
+                )
+        }
+    }
+}
+
+@Suppress("LongMethod")
+@Composable
 private fun HomeScreenContent(
+    component: HomeComponent,
     modifier: Modifier,
     innerPadding: PaddingValues,
     sessionKey: String,
-    currentTab: String,
-    updateCurrentTab: (tab: HomeTab) -> Unit,
     updateProfileVideosCount: (count: Int) -> Unit,
 ) {
     val feedViewModel = koinViewModel<FeedViewModel>(key = "feed-$sessionKey")
     val profileViewModel = koinViewModel<ProfileViewModel>(key = "profile-$sessionKey")
     val accountViewModel = koinViewModel<AccountsViewModel>(key = "account-$sessionKey")
     val profileVideos = getProfileVideos(profileViewModel, sessionKey, updateProfileVideosCount)
-    when (currentTab) {
-        HomeTab.HOME.title ->
-            FeedScreen(
-                modifier = modifier,
-                viewModel = feedViewModel,
-            )
+    Children(
+        stack = component.stack,
+        modifier = modifier,
+    ) {
+        when (val child = it.instance) {
+            is HomeComponent.Child.Feed ->
+                FeedScreen(
+                    component = child.component,
+                    viewModel = feedViewModel,
+                )
 
-        HomeTab.ACCOUNT.title ->
-            AccountScreen(
-                modifier = modifier,
-                viewModel = accountViewModel,
-            )
+            is HomeComponent.Child.Account ->
+                AccountScreen(
+                    component = child.component,
+                    viewModel = accountViewModel,
+                )
 
-        HomeTab.LEADER_BOARD.title ->
-            LeaderboardScreen(
-                modifier = modifier,
-                viewModel = koinInstance.get(),
-            )
+            is HomeComponent.Child.Leaderboard ->
+                LeaderboardScreen(
+                    component = child.component,
+                    viewModel = koinInstance.get(),
+                )
 
-        HomeTab.UPLOAD_VIDEO.title -> {
-            val keyboardHeight by keyboardHeightAsState()
-            val bottomPadding by remember(keyboardHeight) {
-                mutableStateOf(
-                    if (keyboardHeight > 0) {
-                        0.dp
-                    } else {
-                        innerPadding.calculateBottomPadding()
-                    },
+            is HomeComponent.Child.UploadVideo -> {
+                val keyboardHeight by keyboardHeightAsState()
+                val bottomPadding by remember(keyboardHeight) {
+                    mutableStateOf(
+                        if (keyboardHeight > 0) {
+                            0.dp
+                        } else {
+                            innerPadding.calculateBottomPadding()
+                        },
+                    )
+                }
+                UploadVideoScreen(
+                    component = child.component,
+                    modifier =
+                        Modifier
+                            .padding(
+                                top = innerPadding.calculateTopPadding(),
+                                start = innerPadding.calculateStartPadding(LocalLayoutDirection.current),
+                                end = innerPadding.calculateEndPadding(LocalLayoutDirection.current),
+                                bottom = bottomPadding,
+                            ).background(MaterialTheme.colorScheme.primaryContainer),
                 )
             }
-            UploadVideoScreen(
-                modifier =
-                    Modifier
-                        .padding(
-                            top = innerPadding.calculateTopPadding(),
-                            start = innerPadding.calculateStartPadding(LocalLayoutDirection.current),
-                            end = innerPadding.calculateEndPadding(LocalLayoutDirection.current),
-                            bottom = bottomPadding,
-                        ).background(MaterialTheme.colorScheme.primaryContainer),
-                goToHome = { updateCurrentTab(HomeTab.HOME) },
-            )
-        }
 
-        HomeTab.PROFILE.title -> {
-            profileVideos?.let {
-                ProfileScreen(
-                    modifier = modifier,
-                    uploadVideo = { updateCurrentTab(HomeTab.UPLOAD_VIDEO) },
-                    viewModel = profileViewModel,
-                    profileVideos = profileVideos,
-                )
+            is HomeComponent.Child.Profile -> {
+                profileVideos?.let {
+                    ProfileScreen(
+                        component = child.component,
+                        viewModel = profileViewModel,
+                        profileVideos = profileVideos,
+                    )
+                }
             }
         }
     }
@@ -195,10 +229,11 @@ private fun getProfileVideos(
 
 @Composable
 private fun HomeNavigationBar(
-    currentTab: String,
-    updateCurrentTab: (tab: String) -> Unit,
+    currentTab: HomeTab,
+    updateCurrentTab: (tab: HomeTab) -> Unit,
     bottomNavigationClicked: (categoryName: CategoryName) -> Unit,
 ) {
+    var playSound by remember { mutableStateOf(false) }
     NavigationBar(
         containerColor = MaterialTheme.colorScheme.primaryContainer,
         modifier =
@@ -220,9 +255,10 @@ private fun HomeNavigationBar(
                 }
             NavigationBarItem(
                 modifier = Modifier.weight(1f),
-                selected = currentTab == tab.title,
+                selected = currentTab == tab,
                 onClick = {
-                    updateCurrentTab(tab.title)
+                    playSound = true
+                    updateCurrentTab(tab)
                     bottomNavigationClicked(tab.categoryName)
                 },
                 icon = {
@@ -231,7 +267,7 @@ private fun HomeNavigationBar(
                         contentAlignment = alignment,
                     ) {
                         NavBarIcon(
-                            isSelected = currentTab == tab.title,
+                            isSelected = currentTab == tab,
                             tab = tab,
                         )
                     }
@@ -244,6 +280,12 @@ private fun HomeNavigationBar(
                     ),
             )
         }
+    }
+    if (playSound) {
+        YralFeedback(
+            sound = R.raw.pop_pressed,
+            withHapticFeedback = true,
+        ) { playSound = false }
     }
 }
 
@@ -326,7 +368,7 @@ private fun NewTaggedColumn(
     }
 }
 
-enum class HomeTab(
+private enum class HomeTab(
     val title: String,
     val categoryName: CategoryName,
     val icon: Int,

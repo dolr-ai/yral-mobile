@@ -17,14 +17,14 @@ class FetchMoreFeedUseCase(
         individualUserRepository.fetchMoreFeeds(
             feedRequest =
                 FeedRequest(
-                    canisterID = parameter.canisterID,
+                    userId = parameter.userId,
                     filterResults = parameter.filterResults,
                     numResults = parameter.batchSize.toLong(),
                 ),
         )
 
     data class Params(
-        val canisterID: String,
+        val userId: String,
         val filterResults: List<FilteredResult>,
         val batchSize: Int,
     )

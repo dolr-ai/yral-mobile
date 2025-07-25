@@ -82,4 +82,12 @@ class AuthRepositoryImpl(
     override suspend fun deleteAccount(): String =
         dataSource
             .deleteAccount()
+
+    override suspend fun registerForNotifications(token: String) {
+        dataSource.registerForNotifications(token)
+    }
+
+    override suspend fun deregisterForNotifications(token: String) {
+        dataSource.deregisterForNotifications(token)
+    }
 }
