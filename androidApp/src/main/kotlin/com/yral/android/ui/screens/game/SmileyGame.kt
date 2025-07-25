@@ -97,7 +97,7 @@ private fun BoxScope.SmileyGameResult(
             originalPos = originalPos,
         )
     }
-    if (!hasShownCoinDeltaAnimation) {
+    if (!hasShownCoinDeltaAnimation && errorMessage.isEmpty()) {
         CoinDeltaAnimation(
             text = coinDelta.toSignedString(),
             textColor =
