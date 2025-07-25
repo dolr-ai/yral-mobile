@@ -49,7 +49,7 @@ abstract class BaseSuspendUseCase<in P, out R, out E> internal constructor(
         }
 
     private fun onFailure(throwable: Throwable) {
-        crashlyticsManager.recordException(Exception("${this@BaseSuspendUseCase::class.simpleName}", throwable))
+        crashlyticsManager.recordException(Exception(throwable))
     }
 
     open suspend fun executeWith(parameter: P): Result<R, E> = Ok(execute(parameter))
