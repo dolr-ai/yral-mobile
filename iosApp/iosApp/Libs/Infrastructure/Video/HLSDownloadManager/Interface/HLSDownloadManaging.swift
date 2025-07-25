@@ -16,6 +16,7 @@ protocol HLSDownloadManaging: Actor {
   func startDownloadAsync(hlsURL: URL, assetTitle: String) async throws -> URL
   func cancelDownload(for hls: URL)
   func clearMappingsAndCache(for hls: URL, assetTitle: String)
+  func prefetch(url: URL, assetTitle: String) async
   func createLocalAssetIfAvailable(for hlsURL: URL) -> AVURLAsset?
   func localOrInflightAsset(for hlsURL: URL) -> AVURLAsset?
   func elevatePriority(for url: URL)

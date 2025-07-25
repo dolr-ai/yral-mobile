@@ -113,6 +113,12 @@ actor HLSDownloadManager: NSObject, HLSDownloadManaging {
     }
   }
 
+  func prefetch(url: URL, assetTitle: String) async {
+    guard assetTitleForURL[url] == nil else { return }
+    assetTitleForURL[url] = assetTitle
+    inflightAssetForURL[url] = AVURLAsset(url: url)
+  }
+
   func createLocalAssetIfAvailable(for hlsURL: URL) -> AVURLAsset? {
     guard
       let assetTitle = assetTitleForURL[hlsURL]
@@ -201,6 +207,14 @@ actor HLSDownloadManager: NSObject, HLSDownloadManaging {
     }
     guard let (feedURL, _) = matchingEntry else { return }
 
+    if let assetTitle = assetTitleForURL[feedURL] {
+      delegate?.downloadManager(
+        self,
+        didBeginAssetFor: feedURL,
+        tempDirURL: location,
+        assetTitle: assetTitle
+      )
+    }
     print("Started writing to location: \(location)")
   }
 
@@ -219,8 +233,14 @@ actor HLSDownloadManager: NSObject, HLSDownloadManaging {
 
     if let assetTitle = assetTitleForURL[feedURL] {
       storeBookmark(for: assetTitle, localFileURL: location)
+      downloadedAssetsLRU[assetTitle] = Date()
+      delegate?.downloadManager(
+        self,
+        didFinishAssetFor: feedURL,
+        localFileURL: location,
+        assetTitle: assetTitle
+      )
     }
-
     if let continuation = self.downloadContinuations.removeValue(forKey: feedURL) {
       continuation.resume(returning: location)
     }

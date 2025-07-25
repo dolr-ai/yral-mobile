@@ -239,6 +239,10 @@
 		AC391EE72DCE476400A8DFA9 /* Signup_scroll_lottie.json in Resources */ = {isa = PBXBuildFile; fileRef = AC391EE52DCE476400A8DFA9 /* Signup_scroll_lottie.json */; };
 		AC391EE92DCE4DE600A8DFA9 /* DeleteUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC391EE82DCE4DE100A8DFA9 /* DeleteUseCase.swift */; };
 		AC391EEA2DCE4DE600A8DFA9 /* DeleteUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC391EE82DCE4DE100A8DFA9 /* DeleteUseCase.swift */; };
+		AC3FBE132E2BAA0F00CE3EC1 /* MP4DownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC3FBE112E2BAA0F00CE3EC1 /* MP4DownloadManager.swift */; };
+		AC3FBE142E2BAA0F00CE3EC1 /* MP4DownloadManaging.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC3FBE0F2E2BAA0F00CE3EC1 /* MP4DownloadManaging.swift */; };
+		AC3FBE152E2BAA0F00CE3EC1 /* MP4DownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC3FBE112E2BAA0F00CE3EC1 /* MP4DownloadManager.swift */; };
+		AC3FBE162E2BAA0F00CE3EC1 /* MP4DownloadManaging.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC3FBE0F2E2BAA0F00CE3EC1 /* MP4DownloadManaging.swift */; };
 		AC42D3672E0BFDCB009C2D92 /* DeleteAccountDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC42D3662E0BFDC6009C2D92 /* DeleteAccountDTO.swift */; };
 		AC42D3682E0BFDCB009C2D92 /* DeleteAccountDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC42D3662E0BFDC6009C2D92 /* DeleteAccountDTO.swift */; };
 		AC42D3FB2E0D6E7E009C2D92 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC42D3F82E0D6E7E009C2D92 /* NotificationService.swift */; };
@@ -707,6 +711,8 @@
 		AC32E4782D2AF594001DDA43 /* CacheDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CacheDTO.swift; sourceTree = "<group>"; };
 		AC391EE52DCE476400A8DFA9 /* Signup_scroll_lottie.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Signup_scroll_lottie.json; sourceTree = "<group>"; };
 		AC391EE82DCE4DE100A8DFA9 /* DeleteUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeleteUseCase.swift; sourceTree = "<group>"; };
+		AC3FBE0F2E2BAA0F00CE3EC1 /* MP4DownloadManaging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MP4DownloadManaging.swift; sourceTree = "<group>"; };
+		AC3FBE112E2BAA0F00CE3EC1 /* MP4DownloadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MP4DownloadManager.swift; sourceTree = "<group>"; };
 		AC42D3662E0BFDC6009C2D92 /* DeleteAccountDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeleteAccountDTO.swift; sourceTree = "<group>"; };
 		AC42D3F62E0D6E7E009C2D92 /* FirebaseNotifications.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseNotifications.swift; sourceTree = "<group>"; };
 		AC42D3F82E0D6E7E009C2D92 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
@@ -861,6 +867,8 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		AC9B77DE2D58C7E300270FC9 /* YralTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = YralTests;
 			sourceTree = "<group>";
 		};
@@ -1629,6 +1637,23 @@
 			path = HTTP;
 			sourceTree = "<group>";
 		};
+		AC3FBE102E2BAA0F00CE3EC1 /* Interface */ = {
+			isa = PBXGroup;
+			children = (
+				AC3FBE0F2E2BAA0F00CE3EC1 /* MP4DownloadManaging.swift */,
+			);
+			path = Interface;
+			sourceTree = "<group>";
+		};
+		AC3FBE122E2BAA0F00CE3EC1 /* MP4DownloadManager */ = {
+			isa = PBXGroup;
+			children = (
+				AC3FBE102E2BAA0F00CE3EC1 /* Interface */,
+				AC3FBE112E2BAA0F00CE3EC1 /* MP4DownloadManager.swift */,
+			);
+			path = MP4DownloadManager;
+			sourceTree = "<group>";
+		};
 		AC42D3652E0BFDC2009C2D92 /* DTO */ = {
 			isa = PBXGroup;
 			children = (
@@ -2059,6 +2084,7 @@
 			isa = PBXGroup;
 			children = (
 				10BA2E7E2DA63D8600B6BE97 /* YralPlayer */,
+				AC3FBE122E2BAA0F00CE3EC1 /* MP4DownloadManager */,
 				AC9B77D82D58C2FA00270FC9 /* HLSDownloadManager */,
 			);
 			path = Video;
@@ -2720,13 +2746,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -2741,13 +2763,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -2909,13 +2927,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -2952,6 +2966,8 @@
 				AC32E4572D29665B001DDA43 /* AccountInfo.swift in Sources */,
 				AC26CA5C2D802BB0006ADA75 /* BaseResultUseCase.swift in Sources */,
 				AC32E4462D2961CA001DDA43 /* URLImage.swift in Sources */,
+				AC3FBE152E2BAA0F00CE3EC1 /* MP4DownloadManager.swift in Sources */,
+				AC3FBE162E2BAA0F00CE3EC1 /* MP4DownloadManaging.swift in Sources */,
 				10512A442DA666AD00114BAA /* YralPlayer.swift in Sources */,
 				105036F62DDB289D00571B4E /* ExchangePrincipalResponse.swift in Sources */,
 				ACB46A732D105AF4002E200C /* CollectionView+Extensions.swift in Sources */,
@@ -3193,6 +3209,8 @@
 				AC32E4582D29665B001DDA43 /* AccountInfo.swift in Sources */,
 				AC26CA5B2D802BB0006ADA75 /* BaseResultUseCase.swift in Sources */,
 				AC32E4472D2961CA001DDA43 /* URLImage.swift in Sources */,
+				AC3FBE132E2BAA0F00CE3EC1 /* MP4DownloadManager.swift in Sources */,
+				AC3FBE142E2BAA0F00CE3EC1 /* MP4DownloadManaging.swift in Sources */,
 				10512A432DA666AD00114BAA /* YralPlayer.swift in Sources */,
 				105036F82DDB289D00571B4E /* ExchangePrincipalResponse.swift in Sources */,
 				ACB46A742D105AF4002E200C /* CollectionView+Extensions.swift in Sources */,

@@ -9,27 +9,51 @@ import UIKit
 import iosSharedUmbrella
 
 extension FeedsViewController: UICollectionViewDelegate {
-  func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
-    trackedVideoIDs.removeAll()
-    guard scrollView.contentOffset.y > .zero else {
-      storeThumbnail()
-      return
-    }
-    feedsPlayer.pause()
-    storeThumbnail()
-  }
+  func scrollViewDidScroll(_ scrollView: UIScrollView) {
+    let offsetY = scrollView.contentOffset.y
+    defer { lastContentOffsetY = offsetY }
+    guard self.feedsDataSource.snapshot().numberOfItems > .zero else { return }
+    let itemCount = feedsCV.numberOfItems(inSection: .zero)
+    guard itemCount > .zero else { return }
 
-  func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
-    feedsCV.layoutIfNeeded()
-    guard let visibleIndexPath = feedsCV.indexPathsForVisibleItems.sorted().first else { return }
-    let oldIndex = feedsPlayer.currentIndex
-    let newIndex = visibleIndexPath.item
-    if newIndex != oldIndex {
-      feedsPlayer.advanceToVideo(at: newIndex)
-      feedsCV.reloadData()
+    let goingDown = offsetY > lastContentOffsetY
+    let current = feedsPlayer.currentIndex
+
+    let candidate = goingDown ? current + .one : current - .one
+    guard candidate >= .zero, candidate < itemCount else { return }
+
+    guard let attrs = feedsCV.layoutAttributesForItem(at: IndexPath(item: candidate, section: .zero)) else { return }
+    let visibleRect = CGRect(origin: scrollView.contentOffset, size: scrollView.bounds.size)
+    let intersection = visibleRect.intersection(attrs.frame)
+    guard !intersection.isNull else { return }
+    let ratio = intersection.height / attrs.frame.height
+
+    if ratio >= .half, candidate != current {
+      let previous = current
+      storeThumbnail()
+      feedsPlayer.advanceToVideo(at: candidate)
+      var snapshot = feedsDataSource.snapshot()
+      let ids = snapshot.itemIdentifiers
+      guard previous < ids.count, candidate < ids.count else { return }
+      snapshot.reloadItems([ids[previous], ids[candidate]])
+      feedsDataSource.apply(snapshot, animatingDifferences: false)
     } else {
       feedsPlayer.play()
     }
+  }
+
+  func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
+    trackedVideoIDs.removeAll()
+    storeThumbnail()
+    feedsPlayer.pause()
+  }
+
+  func scrollViewWillEndDragging(
+    _ scrollView: UIScrollView,
+    withVelocity velocity: CGPoint,
+    targetContentOffset: UnsafeMutablePointer<CGPoint>
+  ) {
+    feedsPlayer.play()
   }
 
   func scrollViewShouldScrollToTop(_ scrollView: UIScrollView) -> Bool {
@@ -63,7 +87,6 @@ extension FeedsViewController: UICollectionViewDelegate {
     trackedVideoIDs.insert(item.videoID)
     AnalyticsModuleKt.getAnalyticsManager().trackEvent(
       event: VideoImpressionEventData(
-        categoryName: self.feedType == .otherUsers ? .home : .profile,
         videoId: item.videoID,
         publisherUserId: item.principalID,
         likeCount: Int64(item.likeCount),

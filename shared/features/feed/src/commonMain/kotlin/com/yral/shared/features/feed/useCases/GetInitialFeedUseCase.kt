@@ -17,7 +17,7 @@ class GetInitialFeedUseCase(
         individualUserRepository.getInitialFeeds(
             feedRequest =
                 FeedRequest(
-                    canisterID = parameter.canisterID,
+                    userId = parameter.userId,
                     filterResults = parameter.filterResults,
                     numResults = INITIAL_REQUEST,
                 ),
@@ -28,7 +28,7 @@ class GetInitialFeedUseCase(
     }
 
     data class Params(
-        val canisterID: String,
+        val userId: String,
         val filterResults: List<FilteredResult>,
     )
 }

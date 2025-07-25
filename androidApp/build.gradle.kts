@@ -7,14 +7,16 @@ plugins {
     alias(libs.plugins.firebase.crashlytics)
     alias(libs.plugins.gms)
     alias(libs.plugins.firebase.perf)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.yral.shared.rust.lib)
 }
 
 android {
     namespace = "com.yral.android"
     defaultConfig {
         applicationId = "com.yral.android"
-        versionCode = 3
-        versionName = "1.1.0"
+        versionCode = 5
+        versionName = "1.2.0"
         ndkVersion = "28.0.13004108"
     }
     buildFeatures {
@@ -28,10 +30,10 @@ android {
     }
     signingConfigs {
         create("staging") {
-            storeFile = file("my-debug-key.keystore")
-            storePassword = System.getenv("DEBUG_KEYSTORE_PASSWORD")
+            storeFile = file("my-alpha-release-key.keystore")
+            storePassword = System.getenv("KEYSTORE_PASSWORD")
             keyAlias = "android"
-            keyPassword = System.getenv("DEBUG_KEY_PASSWORD")
+            keyPassword = System.getenv("KEYSTORE_PASSWORD")
         }
         create("release") {
             storeFile = file("my-release-key.keystore")
@@ -58,7 +60,6 @@ android {
         create("staging") {
             dimension = "version"
             signingConfig = signingConfigs.getByName("staging")
-            applicationIdSuffix = ".staging"
         }
         create("prod") {
             applicationId = "com.yral.android.app"
@@ -81,6 +82,7 @@ dependencies {
     implementation(libs.firebase.performance)
     implementation(libs.firebase.appcheck.playintegrity)
     implementation(libs.firebase.appcheck.debug)
+    implementation(libs.firebase.messaging)
     implementation(libs.lottie)
     implementation(libs.coil.compose)
     implementation(libs.coil.okhttp)
@@ -90,6 +92,13 @@ dependencies {
 
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.ui)
+
+    implementation(libs.decompose.decompose)
+    implementation(libs.decompose.extensions.compose)
+
+    implementation(libs.moko.permissions)
+    implementation(libs.moko.permissions.compose)
+    implementation(libs.moko.permissions.notifications)
 
     implementation(projects.shared.core)
     implementation(projects.shared.libs.preferences)
@@ -110,10 +119,6 @@ dependencies {
     implementation(projects.shared.features.uploadvideo)
     implementation(projects.shared.features.profile)
     implementation(projects.shared.libs.arch)
-
-    val (deps, addRust) = BuildConfig.getAndProcessDependencies(project)
-    deps.forEach { if (it.isNotEmpty()) implementation(it) }
-    if (addRust) implementation(projects.shared.rust)
 }
 
 afterEvaluate {

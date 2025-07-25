@@ -57,6 +57,7 @@ import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.account.WebViewBottomSheet
 import com.yral.android.ui.screens.feed.FeedScreenConstants.MAX_LINES_FOR_POST_DESCRIPTION
+import com.yral.android.ui.screens.feed.nav.FeedComponent
 import com.yral.android.ui.screens.feed.performance.PrefetchVideoListenerImpl
 import com.yral.android.ui.screens.feed.performance.VideoListenerImpl
 import com.yral.android.ui.screens.game.AboutGameSheet
@@ -87,9 +88,10 @@ import io.ktor.http.Url
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Suppress("LongMethod", "CyclomaticComplexMethod")
+@Suppress("LongMethod", "CyclomaticComplexMethod", "UnusedParameter")
 @Composable
 fun FeedScreen(
+    component: FeedComponent,
     modifier: Modifier = Modifier,
     viewModel: FeedViewModel = koinViewModel(),
     gameViewModel: GameViewModel = koinViewModel(),

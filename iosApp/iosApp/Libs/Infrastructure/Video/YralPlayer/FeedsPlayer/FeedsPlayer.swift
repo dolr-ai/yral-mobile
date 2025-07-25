@@ -70,7 +70,7 @@ final class FeedsPlayer: YralPlayer {
       object: nil
     )
     networkMonitor.startMonitoring()
-//    (player as? AVQueuePlayer)?.automaticallyWaitsToMinimizeStalling = false
+    //    (player as? AVQueuePlayer)?.automaticallyWaitsToMinimizeStalling = false
   }
 
   func loadInitialVideos(_ feeds: [FeedResult]) {
@@ -210,7 +210,7 @@ final class FeedsPlayer: YralPlayer {
       let queueItem = await player.waitForFirstItem()
       do {
         try await queueItem.waitUntilReady()
-//        try await player.prerollVideo(atRate: 0)
+        //        try await player.prerollVideo(atRate: 0)
         guard currentIndex < feedResults.count else { return }
         NotificationCenter.default.post(
           name: .feedItemReady,
@@ -260,37 +260,51 @@ final class FeedsPlayer: YralPlayer {
       let videoID = feed.videoID
       guard playerItems[videoID] == nil else { continue }
       guard !currentlyDownloadingIDs.contains(videoID) else { continue }
-      await downloadVideo(at: index)
+      downloadVideo(at: index)
     }
   }
 
-  private func downloadVideo(at index: Int) async {
+  private func downloadVideo(at index: Int) {
     guard index < feedResults.count else { return }
     let feed = feedResults[index]
     let videoID = feed.videoID
     let assetTitle = videoID
 
     currentlyDownloadingIDs.insert(videoID)
-    defer {
-      currentlyDownloadingIDs.remove(videoID)
-    }
 
-    do {
-      _ = try await hlsDownloadManager.startDownloadAsync(
-        hlsURL: feed.url,
-        assetTitle: assetTitle
-      )
-      if let item = try await loadVideo(at: index) {
-        if !playerItems.keys.contains(videoID) {
-          playerItems[videoID] = item
+    Task { [weak self] in
+      guard let self = self else { return }
+      await hlsDownloadManager.prefetch(url: feed.url, assetTitle: assetTitle)
+      Task.detached { [weak self] in
+        guard let self = self else { return }
+        do {
+          _ = try await self.hlsDownloadManager.startDownloadAsync(
+            hlsURL: feed.url,
+            assetTitle: assetTitle
+          )
+        } catch {
+          await crashReporter.recordException(error)
         }
+        await self.removeCurrentlyDownloadingIds(videoID: videoID)
       }
-    } catch is CancellationError {
-      print("Preload canceled for index \(index).")
-    } catch {
-      crashReporter.recordException(error)
-      print("Preload failed for index \(index): \(error)")
+
+      await Task.yield()
+
+      do {
+        if let item = try await loadVideo(at: index) {
+          if !playerItems.keys.contains(videoID) {
+            playerItems[videoID] = item
+          }
+        }
+      } catch {
+        crashReporter.recordException(error)
+        print("Failed to create player item for index \(index): \(error)")
+      }
     }
+  }
+
+  private func removeCurrentlyDownloadingIds(videoID: String) {
+    currentlyDownloadingIDs.remove(videoID)
   }
 
   private func cancelPreloadOutsideRange(center: Int, radius: Int) async {
@@ -370,6 +384,59 @@ extension FeedsPlayer: HLSDownloadManagerProtocol {
       self.lastPlayedTimes.removeValue(forKey: assetTitle)
       guard let index = feedResults.firstIndex(where: { $0.videoID == assetTitle }) else { return }
       self.delegate?.cacheCleared(atc: index)
+    }
+  }
+
+  nonisolated func downloadManager(
+    _ manager: any HLSDownloadManaging,
+    didBeginAssetFor remoteURL: URL,
+    tempDirURL: URL,
+    assetTitle: String
+  ) {
+    Task { @MainActor [weak self] in
+      guard let self else { return }
+
+      let tempAsset = AVURLAsset(url: tempDirURL)
+
+      do {
+        try await tempAsset.loadPlayableAsync()
+      } catch {
+        crashReporter.recordException(error)
+        return
+      }
+
+      let item = AVPlayerItem(asset: tempAsset)
+      item.preferredForwardBufferDuration = CGFloat.half
+      item.canUseNetworkResourcesForLiveStreamingWhilePaused = true
+
+      playerItems[assetTitle] = item
+
+      if let idx = feedResults.firstIndex(where: { $0.videoID == assetTitle }),
+         idx == currentIndex {
+        try? await startLooping(with: item)
+      }
+    }
+  }
+
+  nonisolated func downloadManager(
+    _ manager: any HLSDownloadManaging,
+    didFinishAssetFor remoteURL: URL,
+    localFileURL: URL,
+    assetTitle: String
+  ) {
+    Task { @MainActor [weak self] in
+      guard let self else { return }
+
+      let localAsset = AVURLAsset(url: localFileURL)
+      do { try await localAsset.loadPlayableAsync() } catch {
+        crashReporter.recordException(error)
+        return
+      }
+
+      let newItem = AVPlayerItem(asset: localAsset)
+      newItem.preferredForwardBufferDuration = CGFloat.half
+      newItem.canUseNetworkResourcesForLiveStreamingWhilePaused = true
+      playerItems[assetTitle] = newItem
     }
   }
 }

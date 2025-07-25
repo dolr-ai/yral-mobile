@@ -9,12 +9,12 @@
 import Foundation
 
 struct FeedRequestDTO: Codable {
-  let canisterID: String
+  let userID: String
   let filterResults: [FilteredResultDTO]
   let numResults: Int64
 
   enum CodingKeys: String, CodingKey {
-    case canisterID = "canister_id"
+    case userID = "user_id"
     case filterResults = "filter_results"
     case numResults = "num_results"
   }
@@ -22,15 +22,17 @@ struct FeedRequestDTO: Codable {
 
 struct FilteredResultDTO: Codable {
   let canisterID: String
+  let isNsfw: Bool
   let postID: Int64
+  let publisherUserID: String
   let videoID: String
-  let nsfwProbability: Double
 
   enum CodingKeys: String, CodingKey {
     case canisterID = "canister_id"
+    case isNsfw = "is_nsfw"
     case postID = "post_id"
+    case publisherUserID = "publisher_user_id"
     case videoID = "video_id"
-    case nsfwProbability = "nsfw_probability"
   }
 }
 
@@ -38,9 +40,10 @@ extension FilteredPosts {
   func asFilteredResultDTO() -> FilteredResultDTO {
     FilteredResultDTO(
       canisterID: canisterID,
+      isNsfw: self.isNsfw,
       postID: Int64(postID) ?? .zero,
-      videoID: videoID,
-      nsfwProbability: self.nsfwProbability
+      publisherUserID: self.publisherUserID,
+      videoID: videoID
     )
   }
 }

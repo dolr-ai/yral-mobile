@@ -14,12 +14,16 @@ data class PostResponseDTO(
 data class PostDTO(
     @SerialName("canister_id")
     val canisterID: String,
+    @SerialName("publisher_user_id")
+    val publisherUserId: String,
     @SerialName("post_id")
     val postID: Long,
     @SerialName("video_id")
     val videoID: String,
     @SerialName("nsfw_probability")
-    val nsfwProbability: Double,
+    val nsfwProbability: Double? = null,
+    @SerialName("is_nsfw")
+    val isNSFW: Boolean?,
 )
 
 fun PostResponseDTO.toPostResponse(): PostResponse =
@@ -28,9 +32,11 @@ fun PostResponseDTO.toPostResponse(): PostResponse =
             posts.map {
                 Post(
                     canisterID = it.canisterID,
+                    publisherUserId = it.publisherUserId,
                     postID = it.postID,
                     videoID = it.videoID,
                     nsfwProbability = it.nsfwProbability,
+                    isNSFW = it.isNSFW,
                 )
             },
     )

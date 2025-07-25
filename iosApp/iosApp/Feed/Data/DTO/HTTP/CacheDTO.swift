@@ -13,13 +13,15 @@ struct CacheDTO: Codable {
   let postID: UInt32
   let canisterID: String
   let videoID: String
-  let nsfwProbability: Double
+  let isNsfw: Bool
+  let publisherUserID: String
 
   enum CodingKeys: String, CodingKey {
     case postID = "post_id"
     case canisterID = "canister_id"
     case videoID = "video_id"
-    case nsfwProbability = "nsfw_probability"
+    case isNsfw = "is_nsfw"
+    case publisherUserID = "publisher_user_id"
   }
 }
 
