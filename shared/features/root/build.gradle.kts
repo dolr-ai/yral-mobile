@@ -1,3 +1,5 @@
+import org.gradle.kotlin.dsl.implementation
+
 plugins {
     alias(libs.plugins.yral.shared.feature)
     alias(libs.plugins.yral.android.feature)
@@ -14,7 +16,7 @@ kotlin {
             implementation(projects.shared.features.auth)
             implementation(projects.shared.libs.crashlytics)
             implementation(projects.shared.libs.analytics)
-            implementation(projects.shared.libs.useCase)
+            implementation(projects.shared.libs.coroutinesX)
 
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.androidx.lifecycle.viewmodel)

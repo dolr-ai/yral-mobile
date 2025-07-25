@@ -6,7 +6,6 @@ import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.analytics.events.GameConcludedCtaType
-import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.core.session.DELAY_FOR_SESSION_PROPERTIES
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.features.game.analytics.GameTelemetry
@@ -21,8 +20,6 @@ import com.yral.shared.features.game.domain.models.toVoteResult
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import com.yral.shared.rust.domain.models.FeedDetails
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
@@ -33,7 +30,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class GameViewModel(
-    appDispatchers: AppDispatchers,
     private val preferences: Preferences,
     private val sessionManager: SessionManager,
     private val gameIconsUseCase: GetGameIconsUseCase,
@@ -41,7 +37,6 @@ class GameViewModel(
     private val castVoteUseCase: CastVoteUseCase,
     private val gameTelemetry: GameTelemetry,
 ) : ViewModel() {
-    private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.io)
     private val _state =
         MutableStateFlow(
             GameState(
@@ -53,7 +48,7 @@ class GameViewModel(
     val state: StateFlow<GameState> = _state.asStateFlow()
 
     init {
-        coroutineScope.launch {
+        viewModelScope.launch {
             // Get result sheet shown preference outside state update
             preferences.getBoolean(PrefKeys.IS_RESULT_SHEET_SHOWN.name)?.let { shown ->
                 _state.update { currentState ->
@@ -107,7 +102,7 @@ class GameViewModel(
         icon: GameIcon,
         feedDetails: FeedDetails,
     ) {
-        coroutineScope.launch {
+        viewModelScope.launch {
             _state.update { currentState ->
                 // Create initial game result outside state update
                 val initialGameResult = Pair(icon, VoteResult(0, "", false))
@@ -168,17 +163,14 @@ class GameViewModel(
     fun markCoinDeltaAnimationShown(videoId: String) {
         val gameResultPair = _state.value.gameResult[videoId] ?: return
         if (gameResultPair.second.coinDelta == 0 && gameResultPair.second.errorMessage.isEmpty()) return
-
-        coroutineScope.launch {
-            _state.update { currentState ->
-                val updatedGameResult =
-                    currentState.gameResult.toMutableMap().apply {
-                        this[videoId] = this[videoId]?.let {
-                            it.copy(second = it.second.copy(hasShownAnimation = true))
-                        } ?: gameResultPair
-                    }
-                currentState.copy(gameResult = updatedGameResult)
-            }
+        _state.update { currentState ->
+            val updatedGameResult =
+                currentState.gameResult.toMutableMap().apply {
+                    this[videoId] = this[videoId]?.let {
+                        it.copy(second = it.second.copy(hasShownAnimation = true))
+                    } ?: gameResultPair
+                }
+            currentState.copy(gameResult = updatedGameResult)
         }
     }
 
@@ -188,7 +180,7 @@ class GameViewModel(
         feedDetails: FeedDetails,
         icon: GameIcon,
     ) {
-        coroutineScope.launch {
+        viewModelScope.launch {
             // Get current state once to avoid multiple reads
             val currentState = _state.value
             // Calculate all updates outside state update
@@ -238,53 +230,23 @@ class GameViewModel(
     }
 
     fun setAnimateCoinBalance(shouldAnimate: Boolean) {
-        coroutineScope.launch {
-            _state.update { currentState ->
-                currentState.copy(
-                    animateCoinBalance = shouldAnimate,
-                )
-            }
-        }
+        _state.update { it.copy(animateCoinBalance = shouldAnimate) }
     }
 
     private fun setLoading(isLoading: Boolean) {
-        coroutineScope.launch {
-            _state.update { currentState ->
-                currentState.copy(
-                    isLoading = isLoading,
-                )
-            }
-        }
+        _state.update { it.copy(isLoading = isLoading) }
     }
 
     fun toggleResultSheet(isVisible: Boolean) {
-        coroutineScope.launch {
-            _state.update { currentState ->
-                currentState.copy(
-                    showResultSheet = isVisible,
-                )
-            }
-        }
+        _state.update { it.copy(showResultSheet = isVisible) }
     }
 
     fun toggleAboutGame(isVisible: Boolean) {
-        coroutineScope.launch {
-            _state.update { currentState ->
-                currentState.copy(
-                    showAboutGame = isVisible,
-                )
-            }
-        }
+        _state.update { it.copy(showAboutGame = isVisible) }
     }
 
     fun setCurrentVideoId(videoId: String) {
-        coroutineScope.launch {
-            _state.update { currentState ->
-                currentState.copy(
-                    currentVideoId = videoId,
-                )
-            }
-        }
+        _state.update { it.copy(currentVideoId = videoId) }
     }
 
     fun onResultSheetButtonClicked(

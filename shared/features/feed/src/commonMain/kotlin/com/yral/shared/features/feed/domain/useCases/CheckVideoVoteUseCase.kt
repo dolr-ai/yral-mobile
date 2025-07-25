@@ -1,15 +1,15 @@
-package com.yral.shared.features.feed.useCases
+package com.yral.shared.features.feed.domain.useCases
 
-import com.yral.shared.core.dispatchers.AppDispatchers
-import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.firebaseStore.repository.FBFirestoreRepositoryApi
-import com.yral.shared.libs.useCase.SuspendUseCase
+import com.yral.shared.libs.arch.domain.SuspendUseCase
+import com.yral.shared.libs.arch.domain.UseCaseFailureListener
+import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 
 class CheckVideoVoteUseCase(
     private val repository: FBFirestoreRepositoryApi,
     dispatchers: AppDispatchers,
-    crashlyticsManager: CrashlyticsManager,
-) : SuspendUseCase<CheckVideoVoteUseCase.Params, Boolean>(dispatchers.io, crashlyticsManager) {
+    useCaseFailureListener: UseCaseFailureListener,
+) : SuspendUseCase<CheckVideoVoteUseCase.Params, Boolean>(dispatchers.network, useCaseFailureListener) {
     override suspend fun execute(parameter: Params): Boolean =
         try {
             repository
