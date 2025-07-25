@@ -166,27 +166,20 @@ class GameViewModel(
             ?.hasShownAnimation ?: false
 
     fun markCoinDeltaAnimationShown(videoId: String) {
-        if (_state.value.gameResult[videoId]
-                ?.second
-                ?.coinDelta == 0
-        ) {
-            return
-        }
+        val gameResultPair = _state.value.gameResult[videoId] ?: return
+        if (gameResultPair.second.coinDelta == 0 && gameResultPair.second.errorMessage.isEmpty()) return
+
         coroutineScope.launch {
             _state.update { currentState ->
-                val updatedGameResult = currentState.gameResult.toMutableMap()
-                updatedGameResult[videoId]?.let { currentPair ->
-                    updatedGameResult[videoId] =
-                        currentPair.copy(
+                val updatedGameResult =
+                    currentState.gameResult.toMutableMap().apply {
+                        this[videoId] = this[videoId]?.copy(
                             second =
-                                currentPair.second.copy(
-                                    hasShownAnimation = true,
-                                ),
-                        )
-                }
-                currentState.copy(
-                    gameResult = updatedGameResult,
-                )
+                                this[videoId]?.second?.copy(hasShownAnimation = true)
+                                    ?: gameResultPair.second,
+                        ) ?: gameResultPair
+                    }
+                currentState.copy(gameResult = updatedGameResult)
             }
         }
     }
