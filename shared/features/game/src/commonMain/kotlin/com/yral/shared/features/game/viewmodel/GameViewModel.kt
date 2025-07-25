@@ -173,11 +173,9 @@ class GameViewModel(
             _state.update { currentState ->
                 val updatedGameResult =
                     currentState.gameResult.toMutableMap().apply {
-                        this[videoId] = this[videoId]?.copy(
-                            second =
-                                this[videoId]?.second?.copy(hasShownAnimation = true)
-                                    ?: gameResultPair.second,
-                        ) ?: gameResultPair
+                        this[videoId] = this[videoId]?.let {
+                            it.copy(second = it.second.copy(hasShownAnimation = true))
+                        } ?: gameResultPair
                     }
                 currentState.copy(gameResult = updatedGameResult)
             }
