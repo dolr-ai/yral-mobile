@@ -1,4 +1,4 @@
-package com.yral.shared.features.profile.data
+package com.yral.shared.features.profile.domain
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
