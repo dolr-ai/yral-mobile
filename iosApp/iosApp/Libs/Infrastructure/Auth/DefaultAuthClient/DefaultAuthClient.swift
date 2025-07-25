@@ -110,6 +110,13 @@ final class DefaultAuthClient: NSObject, AuthClient {
       } else {
         try await handleExtractIdentityResponse(from: data, type: .permanent)
       }
+      do {
+        try await recordThrowingOperation {
+          try await registerForNotifications()
+        }
+      } catch {
+        print(error)
+      }
     }
   }
 
