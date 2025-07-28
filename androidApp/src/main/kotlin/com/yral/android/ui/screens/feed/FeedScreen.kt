@@ -1,5 +1,8 @@
 package com.yral.android.ui.screens.feed
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -51,6 +54,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.LottieConstants
+import com.airbnb.lottie.compose.rememberLottieComposition
 import com.yral.android.R
 import com.yral.android.ui.components.signup.SignupView
 import com.yral.android.ui.design.LocalAppTopography
@@ -81,6 +87,7 @@ import com.yral.shared.features.feed.viewmodel.ReportSheetState
 import com.yral.shared.features.feed.viewmodel.VideoReportReason
 import com.yral.shared.features.game.viewmodel.GameState
 import com.yral.shared.features.game.viewmodel.GameViewModel
+import com.yral.shared.features.game.viewmodel.RefreshBalanceState
 import com.yral.shared.libs.videoPlayer.YRALReelPlayer
 import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.rust.domain.models.FeedDetails
@@ -450,7 +457,7 @@ private fun BottomView(
         ) {
             feedViewModel.toggleReportSheet(true, pageNo)
         }
-        if (gameState.gameIcons.isNotEmpty() && gameState.lossPenalty <= gameState.coinBalance) {
+        if (gameState.gameIcons.isNotEmpty()) {
             SmileyGame(
                 gameIcons = gameState.gameIcons,
                 clickedIcon = gameState.gameResult[state.feedDetails[pageNo].videoID]?.first,
@@ -474,6 +481,10 @@ private fun BottomView(
                 },
             )
         }
+        RefreshBalanceAnimation(
+            refreshBalanceState = gameState.refreshBalanceState,
+            onAnimationComplete = { gameViewModel.hideRefreshBalanceAnimation() },
+        )
     }
 }
 
@@ -827,6 +838,67 @@ private fun VideoReportReason.displayText(): String =
         VideoReportReason.SPAM -> stringResource(R.string.reason_spam)
         VideoReportReason.OTHERS -> stringResource(R.string.reason_others)
     }
+
+@Composable
+private fun RefreshBalanceAnimation(
+    refreshBalanceState: RefreshBalanceState,
+    onAnimationComplete: () -> Unit,
+) {
+    AnimatedVisibility(
+        visible = refreshBalanceState != RefreshBalanceState.HIDDEN,
+        modifier = Modifier.fillMaxSize(),
+        enter = fadeIn(),
+        exit = fadeOut(),
+    ) {
+        // Preload result animations to prevent flicker
+        val successComposition by rememberLottieComposition(
+            LottieCompositionSpec.RawRes(R.raw.claim_successful_wo_loading),
+        )
+        val failureComposition by rememberLottieComposition(
+            LottieCompositionSpec.RawRes(R.raw.claim_unsucessful_wo_loading),
+        )
+
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .background(YralColors.ScrimColor)
+                    .clickable {},
+        ) {
+            when (refreshBalanceState) {
+                RefreshBalanceState.LOADING -> {
+                    YralLottieAnimation(
+                        rawRes = R.raw.common_loading,
+                        iterations = LottieConstants.IterateForever,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
+
+                RefreshBalanceState.SUCCESS -> {
+                    YralLottieAnimation(
+                        composition = successComposition,
+                        iterations = 1,
+                        modifier = Modifier.fillMaxSize(),
+                        onAnimationComplete = onAnimationComplete,
+                    )
+                }
+
+                RefreshBalanceState.FAILURE -> {
+                    YralLottieAnimation(
+                        composition = failureComposition,
+                        iterations = 1,
+                        modifier = Modifier.fillMaxSize(),
+                        onAnimationComplete = onAnimationComplete,
+                    )
+                }
+
+                RefreshBalanceState.HIDDEN -> {
+                    // This case is handled by the early return
+                }
+            }
+        }
+    }
+}
 
 object FeedScreenConstants {
     const val MAX_LINES_FOR_POST_DESCRIPTION = 5

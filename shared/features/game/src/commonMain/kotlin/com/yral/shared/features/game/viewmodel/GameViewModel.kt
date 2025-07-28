@@ -10,10 +10,12 @@ import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.core.session.DELAY_FOR_SESSION_PROPERTIES
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.features.game.analytics.GameTelemetry
+import com.yral.shared.features.game.domain.AutoRechargeBalanceUseCase
 import com.yral.shared.features.game.domain.CastVoteUseCase
 import com.yral.shared.features.game.domain.GetGameIconsUseCase
 import com.yral.shared.features.game.domain.GetGameRulesUseCase
 import com.yral.shared.features.game.domain.models.AboutGameItem
+import com.yral.shared.features.game.domain.models.AutoRechargeBalanceRequest
 import com.yral.shared.features.game.domain.models.CastVoteRequest
 import com.yral.shared.features.game.domain.models.GameIcon
 import com.yral.shared.features.game.domain.models.VoteResult
@@ -32,6 +34,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+enum class RefreshBalanceState {
+    HIDDEN,
+    LOADING,
+    SUCCESS,
+    FAILURE,
+}
+
 class GameViewModel(
     appDispatchers: AppDispatchers,
     private val preferences: Preferences,
@@ -40,6 +49,7 @@ class GameViewModel(
     private val gameRulesUseCase: GetGameRulesUseCase,
     private val castVoteUseCase: CastVoteUseCase,
     private val gameTelemetry: GameTelemetry,
+    private val autoRechargeBalanceUseCase: AutoRechargeBalanceUseCase,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.io)
     private val _state =
@@ -107,40 +117,78 @@ class GameViewModel(
         icon: GameIcon,
         feedDetails: FeedDetails,
     ) {
+        val gameState = _state.value
+        if (gameState.isLoading) return
         coroutineScope.launch {
-            _state.update { currentState ->
-                // Create initial game result outside state update
-                val initialGameResult = Pair(icon, VoteResult(0, "", false))
-                val updatedGameResult = currentState.gameResult.toMutableMap()
-                updatedGameResult[feedDetails.videoID] = initialGameResult
-                currentState.copy(
-                    gameResult = updatedGameResult,
-                )
+            if (gameState.coinBalance >= gameState.lossPenalty) {
+                castVote(icon, feedDetails)
+            } else {
+                refreshBalance()
             }
+        }
+    }
+
+    private suspend fun refreshBalance() {
+        sessionManager.userPrincipal?.let { principal ->
             setLoading(true)
-            sessionManager.userPrincipal?.let { principal ->
-                gameTelemetry.onGameVoted(
-                    feedDetails = feedDetails,
-                    lossPenalty = _state.value.lossPenalty,
-                    optionChosen = icon.imageName.name.lowercase(),
-                )
-                castVoteUseCase
-                    .invoke(
-                        parameter =
-                            CastVoteRequest(
-                                principalId = principal,
-                                videoId = feedDetails.videoID,
-                                gameIconId = icon.id,
-                            ),
-                    ).onSuccess { result ->
-                        setFeedGameResult(
-                            videoId = feedDetails.videoID,
-                            voteResult = result.toVoteResult(),
-                            feedDetails = feedDetails,
-                            icon = icon,
+            _state.update { it.copy(refreshBalanceState = RefreshBalanceState.LOADING) }
+
+            autoRechargeBalanceUseCase
+                .invoke(parameter = AutoRechargeBalanceRequest(principalId = principal))
+                .onSuccess { result ->
+                    setLoading(false)
+                    _state.update {
+                        it.copy(
+                            coinBalance = result.coins,
+                            refreshBalanceState = RefreshBalanceState.SUCCESS,
                         )
-                    }.onFailure { setLoading(false) }
-            }
+                    }
+                    sessionManager.updateCoinBalance(result.coins)
+                }.onFailure {
+                    setLoading(false)
+                    _state.update {
+                        it.copy(refreshBalanceState = RefreshBalanceState.FAILURE)
+                    }
+                }
+        }
+    }
+
+    private suspend fun castVote(
+        icon: GameIcon,
+        feedDetails: FeedDetails,
+    ) {
+        _state.update { currentState ->
+            // Create initial game result outside state update
+            val initialGameResult = Pair(icon, VoteResult(0, "", false))
+            val updatedGameResult = currentState.gameResult.toMutableMap()
+            updatedGameResult[feedDetails.videoID] = initialGameResult
+            currentState.copy(
+                gameResult = updatedGameResult,
+            )
+        }
+        setLoading(true)
+        sessionManager.userPrincipal?.let { principal ->
+            gameTelemetry.onGameVoted(
+                feedDetails = feedDetails,
+                lossPenalty = _state.value.lossPenalty,
+                optionChosen = icon.imageName.name.lowercase(),
+            )
+            castVoteUseCase
+                .invoke(
+                    parameter =
+                        CastVoteRequest(
+                            principalId = principal,
+                            videoId = feedDetails.videoID,
+                            gameIconId = icon.id,
+                        ),
+                ).onSuccess { result ->
+                    setFeedGameResult(
+                        videoId = feedDetails.videoID,
+                        voteResult = result.toVoteResult(),
+                        feedDetails = feedDetails,
+                        icon = icon,
+                    )
+                }.onFailure { setLoading(false) }
         }
     }
 
@@ -207,7 +255,8 @@ class GameViewModel(
                     }
                 }
             val newCoinBalance = currentState.coinBalance + voteResult.coinDelta
-            val shouldShowResultSheet = !currentState.isResultSheetShown && newCoinBalance != currentState.coinBalance
+            val shouldShowResultSheet =
+                !currentState.isResultSheetShown && newCoinBalance != currentState.coinBalance
             // Single atomic state update for all game result changes
             _state.update {
                 it.copy(
@@ -297,6 +346,19 @@ class GameViewModel(
             ctaType = ctaType,
         )
     }
+
+    fun hideRefreshBalanceAnimation() {
+        coroutineScope.launch {
+            delay(REFRESH_BALANCE_ANIM_DISMISS_DELAY_MS)
+            _state.update {
+                it.copy(refreshBalanceState = RefreshBalanceState.HIDDEN)
+            }
+        }
+    }
+
+    companion object {
+        private const val REFRESH_BALANCE_ANIM_DISMISS_DELAY_MS = 2000L
+    }
 }
 
 data class GameState(
@@ -312,4 +374,5 @@ data class GameState(
     val isResultSheetShown: Boolean = false,
     val currentVideoId: String = "",
     val lastBalanceDifference: Int = 0,
+    val refreshBalanceState: RefreshBalanceState = RefreshBalanceState.HIDDEN,
 )
