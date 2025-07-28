@@ -41,6 +41,7 @@ import com.yral.android.ui.screens.feed.performance.PrefetchVideoListenerImpl
 import com.yral.android.ui.screens.feed.performance.VideoListenerImpl
 import com.yral.android.ui.screens.feed.uiComponets.GameToggle
 import com.yral.android.ui.screens.feed.uiComponets.HowToPlay
+import com.yral.android.ui.screens.feed.uiComponets.RefreshBalanceAnimation
 import com.yral.android.ui.screens.feed.uiComponets.ReportVideo
 import com.yral.android.ui.screens.feed.uiComponets.ReportVideoSheet
 import com.yral.android.ui.screens.feed.uiComponets.SignupNudge
@@ -473,7 +474,7 @@ private fun Game(
     gameState: GameState,
     gameViewModel: GameViewModel,
 ) {
-    if (gameState.gameIcons.isNotEmpty() && gameState.lossPenalty <= gameState.coinBalance) {
+    if (gameState.gameIcons.isNotEmpty()) {
         SmileyGame(
             gameIcons = gameState.gameIcons,
             clickedIcon = gameState.gameResult[state.feedDetails[pageNo].videoID]?.first,
@@ -499,4 +500,8 @@ private fun Game(
             setNudgeShown = { gameViewModel.setSmileyGameNudgeShown() },
         )
     }
+    RefreshBalanceAnimation(
+        refreshBalanceState = gameState.refreshBalanceState,
+        onAnimationComplete = { gameViewModel.hideRefreshBalanceAnimation() },
+    )
 }
