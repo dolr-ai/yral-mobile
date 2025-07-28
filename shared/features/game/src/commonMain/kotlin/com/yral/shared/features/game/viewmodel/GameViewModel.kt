@@ -60,7 +60,7 @@ class GameViewModel(
                 _state.update { it.copy(isResultSheetShown = shown) }
             }
             preferences.getBoolean(PrefKeys.HOW_TO_PLAY_SHOWN.name)?.let { shown ->
-                _state.update { it.copy(showHowToPlay = !shown) }
+                _state.update { it.copy(isHowToPlayShown = shown) }
             }
             listOf(
                 async { getGameRules() },
@@ -304,25 +304,11 @@ class GameViewModel(
         // setHowToPlayShown(false)
     }
 
-    fun shouldExpandHowToPlay(): Boolean {
-        val shouldShow = _state.value.pageChangeCount < SHOW_HOW_TO_PLAY_PAGE && _state.value.showHowToPlay
-        if (!shouldShow) setHowToPlayShown(true)
-        return shouldShow
-    }
-
-    fun onPageChanged() {
-        _state.update { it.copy(pageChangeCount = it.pageChangeCount + 1) }
-    }
-
-    fun setHowToPlayShown(isShown: Boolean) {
+    fun setHowToPlayShown() {
+        _state.update { it.copy(isHowToPlayShown = true) }
         coroutineScope.launch {
-            _state.update { it.copy(showHowToPlay = !isShown, pageChangeCount = 0) }
-            preferences.putBoolean(PrefKeys.HOW_TO_PLAY_SHOWN.name, isShown)
+            preferences.putBoolean(PrefKeys.HOW_TO_PLAY_SHOWN.name, true)
         }
-    }
-
-    companion object {
-        const val SHOW_HOW_TO_PLAY_PAGE = 3
     }
 }
 
@@ -340,6 +326,5 @@ data class GameState(
     val currentVideoId: String = "",
     val lastBalanceDifference: Int = 0,
     val gameType: GameType = GameType.SMILEY,
-    val showHowToPlay: Boolean = true,
-    val pageChangeCount: Int = 0,
+    val isHowToPlayShown: Boolean = false,
 )

@@ -63,6 +63,7 @@ import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.session.getKey
 import com.yral.shared.features.account.viewmodel.AccountsViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
+import com.yral.shared.features.game.viewmodel.GameViewModel
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.koin.koinInstance
 import com.yral.shared.rust.domain.models.FeedDetails
@@ -142,6 +143,7 @@ private fun HomeScreenContent(
     updateProfileVideosCount: (count: Int) -> Unit,
 ) {
     val feedViewModel = koinViewModel<FeedViewModel>(key = "feed-$sessionKey")
+    val gameViewModel = koinViewModel<GameViewModel>(key = "game-$sessionKey")
     val profileViewModel = koinViewModel<ProfileViewModel>(key = "profile-$sessionKey")
     val accountViewModel = koinViewModel<AccountsViewModel>(key = "account-$sessionKey")
     val profileVideos = getProfileVideos(profileViewModel, sessionKey, updateProfileVideosCount)
@@ -154,6 +156,7 @@ private fun HomeScreenContent(
                 FeedScreen(
                     component = child.component,
                     viewModel = feedViewModel,
+                    gameViewModel = gameViewModel,
                 )
 
             is HomeComponent.Child.Account ->

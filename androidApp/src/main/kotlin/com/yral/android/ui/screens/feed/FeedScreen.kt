@@ -123,7 +123,6 @@ fun FeedScreen(
                     if (page < state.feedDetails.size) {
                         gameViewModel.setCurrentVideoId(state.feedDetails[page].videoID)
                     }
-                    gameViewModel.onPageChanged()
                     viewModel.onCurrentPageChange(page)
                     viewModel.setPostDescriptionExpanded(false)
                 },
@@ -404,11 +403,11 @@ private fun BottomView(
                 Modifier
                     .align(Alignment.BottomStart)
                     .padding(start = 16.dp, bottom = 150.dp),
-            shouldExpand = gameViewModel.shouldExpandHowToPlay(),
+            shouldExpand = !gameState.isHowToPlayShown,
             pageNo = pageNo,
-        ) {
-            gameViewModel.toggleAboutGame(true)
-        }
+            onClick = { gameViewModel.toggleAboutGame(true) },
+            maxPageReached = { gameViewModel.setHowToPlayShown() },
+        )
         ActionsRight(
             modifier =
                 Modifier
