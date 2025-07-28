@@ -36,24 +36,30 @@ import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.feed.uiComponets.HowToPlayConstants.ANIMATION_DURATION
 import com.yral.android.ui.screens.feed.uiComponets.HowToPlayConstants.AUTO_CLOSE_DELAY
+import com.yral.android.ui.screens.feed.uiComponets.HowToPlayConstants.SHOW_HOW_TO_PLAY_MAX_PAGE
 import kotlinx.coroutines.delay
 
 @Composable
 fun HowToPlay(
     modifier: Modifier,
-    shouldExpand: Boolean,
     pageNo: Int,
+    shouldExpand: Boolean,
     onClick: () -> Unit,
+    maxPageReached: () -> Unit,
 ) {
-    var isExpanded by remember { mutableStateOf(false) }
-    LaunchedEffect(shouldExpand) {
-        isExpanded = shouldExpand
+    var isExpanded by remember(pageNo, shouldExpand) {
+        mutableStateOf(shouldExpand && pageNo < SHOW_HOW_TO_PLAY_MAX_PAGE)
     }
     // Start auto-close timer when page number changes and component is expanded
-    LaunchedEffect(pageNo, shouldExpand) {
-        if (shouldExpand && isExpanded) {
+    LaunchedEffect(isExpanded) {
+        if (isExpanded) {
             delay(AUTO_CLOSE_DELAY)
             isExpanded = false
+        }
+    }
+    LaunchedEffect(pageNo) {
+        if (pageNo >= SHOW_HOW_TO_PLAY_MAX_PAGE) {
+            maxPageReached()
         }
     }
     Row(
@@ -97,4 +103,5 @@ fun HowToPlay(
 object HowToPlayConstants {
     const val ANIMATION_DURATION = 700
     const val AUTO_CLOSE_DELAY = 3000L
+    const val SHOW_HOW_TO_PLAY_MAX_PAGE = 3
 }
