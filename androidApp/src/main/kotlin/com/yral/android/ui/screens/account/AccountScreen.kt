@@ -162,10 +162,10 @@ private fun SheetContent(
         is AccountBottomSheet.ShowWebView -> {
             val linkToOpen = bottomSheetType.linkToOpen
             if (linkToOpen.openInExternalBrowser) {
+                onDismissRequest()
                 runCatching {
                     val uriHandler = LocalUriHandler.current
                     uriHandler.openUri(linkToOpen.link)
-                    onDismissRequest()
                 }
             } else {
                 WebViewBottomSheet(
