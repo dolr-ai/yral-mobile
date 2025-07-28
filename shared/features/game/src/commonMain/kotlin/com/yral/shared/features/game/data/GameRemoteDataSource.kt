@@ -8,6 +8,7 @@ import com.yral.shared.features.game.data.models.GetBalanceResponseDto
 import com.yral.shared.firebaseStore.cloudFunctionUrl
 import com.yral.shared.http.httpGet
 import io.ktor.client.HttpClient
+import io.ktor.client.plugins.expectSuccess
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
@@ -28,6 +29,7 @@ class GameRemoteDataSource(
         try {
             val response: HttpResponse =
                 httpClient.post {
+                    expectSuccess = false
                     url {
                         host = cloudFunctionUrl()
                         path(CAST_VOTE_PATH)

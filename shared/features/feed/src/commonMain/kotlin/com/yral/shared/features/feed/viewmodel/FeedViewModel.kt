@@ -7,7 +7,7 @@ import com.github.michaelbull.result.onSuccess
 import com.yral.shared.analytics.events.CtaType
 import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.core.session.SessionManager
-import com.yral.shared.core.utils.filterFirstNSuspendFlow
+import com.yral.shared.core.utils.processFirstNSuspendFlow
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.AuthClientFactory
 import com.yral.shared.features.auth.utils.SocialProvider
@@ -103,68 +103,63 @@ class FeedViewModel(
         val fetchedIds = _state.value.posts.mapTo(HashSet()) { it.videoID }
         val newPosts = posts.filter { post -> post.videoID !in fetchedIds }
         _state.update { it.copy(posts = it.posts + newPosts) }
-
         Logger.d("FeedPagination") { "no of duplicate posts ${posts.size - newPosts.size}" }
-
-        var count = 0
+        val count = MutableStateFlow(0)
         newPosts
-            .filterFirstNSuspendFlow(newPosts.size, false) {
-                !isAlreadyVoted(it)
-            }.collect { newPost ->
-                count++
-                coroutineScope.launch {
-                    fetchFeedDetail(newPost)
-                }
+            .processFirstNSuspendFlow(
+                n = newPosts.size,
+                process = { post ->
+                    _state.update { it.copy(pendingFetchDetails = it.pendingFetchDetails + 1) }
+                    requiredUseCases.fetchFeedDetailsUseCase.invoke(post)
+                },
+            ).collect { detail ->
+                detail
+                    .onSuccess { detail ->
+                        val existingDetailIds =
+                            _state.value.feedDetails.mapTo(HashSet()) { it.videoID }
+                        if (detail.videoID !in existingDetailIds) {
+                            val isVoted = isAlreadyVoted(detail)
+                            Logger.d("FeedPagination") { "isVoted $isVoted video Id: ${detail.videoID}" }
+                            if (!isVoted) {
+                                count.update { it + 1 }
+                                _state.update { currentState ->
+                                    // Check if this feedDetail already exists to prevent duplicates
+                                    val existingDetailIds =
+                                        currentState.feedDetails.mapTo(HashSet()) { it.videoID }
+                                    val updatedFeedDetails =
+                                        if (detail.videoID !in existingDetailIds) {
+                                            currentState.feedDetails + detail
+                                        } else {
+                                            currentState.feedDetails
+                                        }
+                                    currentState.copy(
+                                        feedDetails = updatedFeedDetails,
+                                        pendingFetchDetails = currentState.pendingFetchDetails - 1,
+                                    )
+                                }
+                            } else {
+                                _state.update { it.copy(pendingFetchDetails = it.pendingFetchDetails - 1) }
+                            }
+                        } else {
+                            _state.update { it.copy(pendingFetchDetails = it.pendingFetchDetails - 1) }
+                        }
+                    }.onFailure {
+                        _state.update { it.copy(pendingFetchDetails = it.pendingFetchDetails - 1) }
+                    }
             }
-        return count
+        return count.value
     }
 
-    private suspend fun isAlreadyVoted(post: Post): Boolean =
+    private suspend fun isAlreadyVoted(detail: FeedDetails): Boolean =
         sessionManager.userPrincipal?.let { userPrincipal ->
             requiredUseCases.checkVideoVoteUseCase
                 .invoke(
                     CheckVideoVoteUseCase.Params(
-                        videoId = post.videoID,
+                        videoId = detail.videoID,
                         principalId = userPrincipal,
                     ),
                 ).value
         } ?: false
-
-    private suspend fun fetchFeedDetail(post: Post) {
-        // Atomically increment the counter
-        _state.update { currentState ->
-            currentState.copy(pendingFetchDetails = currentState.pendingFetchDetails + 1)
-        }
-        requiredUseCases.fetchFeedDetailsUseCase
-            .invoke(post)
-            .onSuccess { detail ->
-                _state.update { currentState ->
-                    // Check if this feedDetail already exists to prevent duplicates
-                    val existingDetailIds = currentState.feedDetails.mapTo(HashSet()) { it.videoID }
-                    val updatedFeedDetails =
-                        if (detail.videoID !in existingDetailIds) {
-                            currentState.feedDetails + detail
-                        } else {
-                            // Log duplicate attempt for debugging
-                            Logger.d("FeedDuplicate") {
-                                "Duplicate feedDetail attempted for videoID: ${detail.videoID}"
-                            }
-                            currentState.feedDetails
-                        }
-                    currentState.copy(
-                        feedDetails = updatedFeedDetails,
-                        pendingFetchDetails = currentState.pendingFetchDetails - 1,
-                    )
-                }
-            }.onFailure {
-                // Atomically decrement the counter
-                _state.update { currentState ->
-                    currentState.copy(pendingFetchDetails = currentState.pendingFetchDetails - 1)
-                }
-                // No need to throw error, BaseUseCase reports to CrashlyticsManager
-                // error("Error loading initial posts: $error")
-            }
-    }
 
     fun loadMoreFeed() {
         if (_state.value.isLoadingMore) return
