@@ -49,9 +49,8 @@ fun GameIconBubbles(
             rawRes = animationRes,
             iterations = 1,
             contentScale = ContentScale.Inside,
-        ) {
-            onAnimationComplete()
-        }
+            onAnimationComplete = onAnimationComplete,
+        )
     }
 }
 
