@@ -53,6 +53,8 @@ turbine = "1.2.0"
 truth = "1.4.4"
 accompanist-permission = "0.37.3"
 moko-permissions="0.19.1"
+branch="5.19.0"
+play-services-ads-identifier="18.0.1"
 
 [libraries]
 
@@ -163,6 +165,9 @@ russhwolf-multiplatformSettings-datastore = { group = "com.russhwolf", name = "m
 russhwolf-multiplatformSettings-test = { group = "com.russhwolf", name = "multiplatform-settings-test", version.ref = "multiplatform-settings" }
 
 touchlab-logger = { module = "co.touchlab:kermit", version.ref = "touchlab-logger" }
+
+branch = { module = "io.branch.sdk.android:library", version.ref = "branch"}
+play-services-ads-identifier = { module = "com.google.android.gms:play-services-ads-identifier", version.ref = "play-services-ads-identifier" }
 
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }

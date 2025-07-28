@@ -9,6 +9,8 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
 
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>
+
     <application
             android:name=".YralApp"
             android:allowBackup="false"
@@ -30,6 +32,31 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="yral" android:host="oauth" android:path="/callback" />
+            </intent-filter>
+
+            <!-- Branch URI Scheme -->
+            <intent-filter>
+                <data android:scheme="yral" android:host="open" />
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+            </intent-filter>
+            <!-- Branch App Links - Live App -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <!-- REPLACE `android:host` with your `app.link` domain -->
+                <data android:scheme="https" android:host="f6ur9.app.link" />
+                <data android:scheme="https" android:host="f6ur9-alternate.app.link" />
+            </intent-filter>
+            <!-- Branch App Links - Alpha App -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="f6ur9.test-app.link" />
+                <data android:scheme="https" android:host="f6ur9-alternate.test-app.link" />
             </intent-filter>
         </activity>
         <meta-data
@@ -60,5 +87,8 @@
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
             android:resource="@drawable/ic_stat_ic_notification" />
+
+        <meta-data android:name="io.branch.sdk.TestMode" android:value="@bool/branch_test_mode" />
+
     </application>
 </manifest> 
