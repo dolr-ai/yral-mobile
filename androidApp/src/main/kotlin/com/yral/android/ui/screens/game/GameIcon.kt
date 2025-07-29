@@ -14,6 +14,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.yral.android.R
 import com.yral.android.ui.screens.game.GameIconConstants.ANIMATION_DURATION
+import com.yral.android.ui.screens.game.GameIconConstants.NUDGE_ANIMATION_DURATION
 import com.yral.android.ui.screens.game.GameIconConstants.ROTATION_DEGREE
 import com.yral.android.ui.screens.game.GameIconConstants.SCALING_FACTOR
 import com.yral.android.ui.widgets.YralAsyncImage
@@ -25,27 +26,30 @@ private object GameIconConstants {
     const val ROTATION_DEGREE = -15f
     const val SCALING_FACTOR = 1.17f
     const val ANIMATION_DURATION = 200L
+    const val NUDGE_ANIMATION_DURATION = 360L
 }
 
 @Composable
 fun LocalGameIcon(
     modifier: Modifier,
     icon: GameIcon,
+    currentIcon: Int? = null,
     animate: Boolean = false,
     onAnimationComplete: () -> Unit,
 ) {
+    val animationDuration = currentIcon?.let { ANIMATION_DURATION } ?: NUDGE_ANIMATION_DURATION
     val rotation by animateFloatAsState(
         targetValue = if (animate) ROTATION_DEGREE else 0f,
-        animationSpec = tween(durationMillis = ANIMATION_DURATION.toInt()),
+        animationSpec = tween(durationMillis = animationDuration.toInt()),
         label = "rotation",
     )
     val scale by animateFloatAsState(
         targetValue = if (animate) SCALING_FACTOR else 1f,
-        animationSpec = tween(durationMillis = ANIMATION_DURATION.toInt()),
+        animationSpec = tween(durationMillis = animationDuration.toInt()),
         label = "scale",
     )
     LaunchedEffect(animate) {
-        delay(ANIMATION_DURATION)
+        delay(animationDuration)
         onAnimationComplete()
     }
     Image(
@@ -67,22 +71,24 @@ fun LocalGameIcon(
 fun AsyncGameIcon(
     modifier: Modifier,
     icon: GameIcon,
+    currentIcon: Int? = null,
     animate: Boolean = false,
     onAnimationComplete: () -> Unit,
     loadLocal: () -> Unit,
 ) {
+    val animationDuration = currentIcon?.let { ANIMATION_DURATION } ?: NUDGE_ANIMATION_DURATION
     val rotation by animateFloatAsState(
         targetValue = if (animate) ROTATION_DEGREE else 0f,
-        animationSpec = tween(durationMillis = ANIMATION_DURATION.toInt()),
+        animationSpec = tween(durationMillis = animationDuration.toInt()),
         label = "rotation",
     )
     val scale by animateFloatAsState(
         targetValue = if (animate) SCALING_FACTOR else 1f,
-        animationSpec = tween(durationMillis = ANIMATION_DURATION.toInt()),
+        animationSpec = tween(durationMillis = animationDuration.toInt()),
         label = "scale",
     )
     LaunchedEffect(animate) {
-        delay(ANIMATION_DURATION)
+        delay(animationDuration)
         onAnimationComplete()
     }
     YralAsyncImage(
