@@ -35,13 +35,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-enum class RefreshBalanceState {
-    HIDDEN,
-    LOADING,
-    SUCCESS,
-    FAILURE,
-}
-
 @Suppress("TooManyFunctions")
 class GameViewModel(
     appDispatchers: AppDispatchers,
@@ -407,3 +400,10 @@ data class GameState(
     val isSmileyGameNudgeShown: Boolean = false,
     val refreshBalanceState: RefreshBalanceState = RefreshBalanceState.HIDDEN,
 )
+
+enum class RefreshBalanceState {
+    HIDDEN,
+    LOADING,
+    SUCCESS,
+    FAILURE,
+}
