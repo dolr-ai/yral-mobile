@@ -70,7 +70,11 @@ final class FeedDIContainer {
         crashReporter: dependencies.crashReporter
       ),
       socialSignInUseCase: dependencies.socialSignInUseCase,
-      castVoteUseCase: dependencies.castVoteUseCase
+      castVoteUseCase: dependencies.castVoteUseCase,
+      rechargeWalletUseCase: RechargeUseCase(
+        feedRepository: repository,
+        crashReporter: dependencies.crashReporter
+      )
     )
   }
 }

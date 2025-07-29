@@ -228,6 +228,16 @@ class FeedsViewController: UIViewController {
         case .feedsRefreshed:
           self.activityIndicator.startAnimating(in: self.view)
           feedsDataSource.apply(Snapshot(), animatingDifferences: true)
+        case .walletRechargeSuccess(let coins):
+          if let indexPath = feedsCV.indexPathsForVisibleItems.first,
+             let cell = feedsCV.cellForItem(at: indexPath) as? FeedsCell {
+            cell.applyRechargeResult(.success, coins: coins)
+          }
+        case .walletRechargeFailure:
+          if let indexPath = feedsCV.indexPathsForVisibleItems.first,
+             let cell = feedsCV.cellForItem(at: indexPath) as? FeedsCell {
+            cell.applyRechargeResult(.failure, coins: .zero)
+          }
         }
       }
       .store(in: &paginatedFeedscancellables)

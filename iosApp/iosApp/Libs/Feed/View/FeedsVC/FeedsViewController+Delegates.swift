@@ -240,6 +240,23 @@ extension FeedsViewController: FeedsCellProtocol {
     hostingController?.view.backgroundColor = .clear
     self.present(hostingController!, animated: true, completion: nil)
   }
+
+  func rechargeWallet() {
+    Task { @MainActor in
+      await self.viewModel.rechargeWallet()
+    }
+  }
+
+  func walletAnimationStarted() {
+    feedsCV.isScrollEnabled = false
+  }
+
+  func walletAnimationEnded(success: Bool, coins: Int64) {
+    if success {
+      self.session.update(coins: UInt64(coins))
+    }
+    feedsCV.isScrollEnabled = true
+  }
 }
 
 extension FeedsViewController: FeedsPlayerProtocol {
@@ -268,10 +285,10 @@ extension FeedsViewController: FeedsPlayerProtocol {
     let percentageWatched: Double
     switch milestone {
     case .started:
-      absoluteWatched   = min(duration, 0.1)
+      absoluteWatched = min(duration, 0.1)
       percentageWatched = absoluteWatched / duration * 100
     case .almostFinished:
-      absoluteWatched   = duration * 0.95
+      absoluteWatched = duration * 0.95
       percentageWatched = 95
     }
     guard index < feedsDataSource.snapshot().itemIdentifiers.count else { return }

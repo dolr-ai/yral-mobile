@@ -20,8 +20,11 @@ protocol FeedsCellProtocol: AnyObject {
   func reportButtonTapped(index: Int)
   func loginTapped(provider: SocialProvider)
   func smileyTapped(index: Int, smiley: Smiley)
+  func rechargeWallet()
   func showGameResultBottomSheet(index: Int, gameResult: SmileyGameResultResponse)
   func videoStarted(index: Int, videoId: String)
+  func walletAnimationStarted()
+  func walletAnimationEnded(success: Bool, coins: Int64)
 }
 
 // swiftlint: disable type_body_length
@@ -34,7 +37,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   private let userDefaults = UserDefaults.standard
   private static let resultBottomSheetKey = "ResultBottomSheetKey"
   private var cancellables = Set<AnyCancellable>()
-  private var smileyGame: SmileyGame?
+  var smileyGame: SmileyGame?
   private var sessionManager: SessionManager? {
     didSet {
       bindSession()
@@ -142,11 +145,15 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     return button
   }
 
-  private var profileInfoView: ProfileInfoView = {
+  var profileInfoView: ProfileInfoView = {
     let profileInfoView = ProfileInfoView()
     profileInfoView.heightAnchor.constraint(equalToConstant: Constants.profileInfoViewHeight).isActive = true
     return profileInfoView
   }()
+
+  enum RechargeResult { case success, failure }
+  var isWalletLoading = false
+  var pendingRechargeResult: RechargeResult?
 
   override init(frame: CGRect) {
     super.init(frame: frame)
@@ -268,10 +275,6 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   }
 
   func setupSmileyGameView() {
-    guard (sessionManager?.state.coins ?? 0) >= SmileyGameConfig.shared.config.lossPenalty else {
-      return
-    }
-
     if SmileyGameConfig.shared.config.smileys.count > 0 {
       let smileyGameView = SmileyGameView(
         smileyGame: SmileyGame(
@@ -335,15 +338,22 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   }
 
   private func handleSmileyTap(_ smiley: Smiley) {
-    delegate?.smileyTapped(index: index, smiley: smiley)
-    DispatchQueue.main.asyncAfter(deadline: .now() + Constants.smileyTapDuration) {
-      self.startFlowingAnimation(for: smiley)
+    if sessionManager?.state.coins ?? UInt64(.zero) >= SmileyGameConfig.shared.config.lossPenalty {
+      delegate?.smileyTapped(index: index, smiley: smiley)
+      DispatchQueue.main.asyncAfter(deadline: .now() + Constants.smileyTapDuration) {
+        self.startFlowingAnimation(for: smiley)
+      }
+    } else {
+      delegate?.rechargeWallet()
+      beginWalletRechargeLoading()
     }
   }
 
   private func startFlowingAnimation(for smiley: Smiley) {
     let animation = LottieAnimation.named("smiley_game_\(smiley.id)")
+    lottieView.isHidden = false
     lottieView.animation = animation
+    lottieView.backgroundColor = .clear
     lottieView.play()
   }
 
@@ -498,6 +508,9 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     smileyGameHostController?.view.removeFromSuperview()
     smileyGameHostController = nil
 
+    isWalletLoading = false
+    pendingRechargeResult = nil
+
     cancellables.forEach({ $0.cancel() })
     cancellables.removeAll()
   }
@@ -568,5 +581,9 @@ extension FeedsCell {
     static let resultAnimationDuration = 2.5
     static let resultAnimationDurationWithBS = 0.5
     static let scoreLabelDuration = 2.0
+    static let rechargeLoadingLottie = "sats_claim_loading"
+    static let rechargeSuccessLottie = "sats_claim_success"
+    static let rechargeFailureLottie = "sats_claim_failure"
+    static let lottieBGOpacity = 0.8
   }
 }
