@@ -130,6 +130,8 @@
 		107C61772DC35ED6006FC467 /* CoinsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C61762DC35ED3006FC467 /* CoinsView.swift */; };
 		107C61782DC35ED6006FC467 /* CoinsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C61762DC35ED3006FC467 /* CoinsView.swift */; };
 		10BA2E872DA6507E00B6BE97 /* FeedsPlayerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10BA2E842DA6507E00B6BE97 /* FeedsPlayerTests.swift */; };
+		10DF70C32E379C59009AD12B /* MixpanelSessionReplay in Frameworks */ = {isa = PBXBuildFile; productRef = 10DF70C22E379C59009AD12B /* MixpanelSessionReplay */; };
+		10DF70C52E379C6F009AD12B /* MixpanelSessionReplay in Frameworks */ = {isa = PBXBuildFile; productRef = 10DF70C42E379C6F009AD12B /* MixpanelSessionReplay */; };
 		10F89A4C2E01450B00B90BD0 /* Color+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10F89A4B2E0144FF00B90BD0 /* Color+Extensions.swift */; };
 		10F89A4D2E01450B00B90BD0 /* Color+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10F89A4B2E0144FF00B90BD0 /* Color+Extensions.swift */; };
 		2152FB042600AC8F00CF470E /* IosApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* IosApp.swift */; };
@@ -867,8 +869,6 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		AC9B77DE2D58C7E300270FC9 /* YralTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = YralTests;
 			sourceTree = "<group>";
 		};
@@ -883,6 +883,7 @@
 				AC6CBA802CE46CA6002454F8 /* libyral_mobile_swift_binding.a in Frameworks */,
 				AC6E311C2D22F050001EBE6C /* SDWebImageMapKit in Frameworks */,
 				AC6BECAC2D09D52B002E2021 /* GRPC in Frameworks */,
+				10DF70C32E379C59009AD12B /* MixpanelSessionReplay in Frameworks */,
 				ACC0F3A32D2ED69200FA5BD0 /* Lottie in Frameworks */,
 				ACC255172DF5DF2D001EA774 /* libsecp256k1 in Frameworks */,
 				AC6BECAA2D09D52B002E2021 /* CGRPCZlib in Frameworks */,
@@ -909,6 +910,7 @@
 				ACC0F39F2D2ED68500FA5BD0 /* Lottie in Frameworks */,
 				AC6BECB42D09D541002E2021 /* GRPC in Frameworks */,
 				ACD941D92CFF63D90038FCB6 /* libyral_mobile_swift_binding.a in Frameworks */,
+				10DF70C52E379C6F009AD12B /* MixpanelSessionReplay in Frameworks */,
 				AC6BECB62D09D541002E2021 /* GRPCReflectionService in Frameworks */,
 				AC1233752DF5E14100DAFCF4 /* libsecp256k1 in Frameworks */,
 				AC6BECB82D09D55B002E2021 /* protoc-gen-grpc-swift in Frameworks */,
@@ -2640,6 +2642,7 @@
 				AC6E31182D22F050001EBE6C /* XCRemoteSwiftPackageReference "SDWebImage" */,
 				ACC0F39D2D2ED68500FA5BD0 /* XCRemoteSwiftPackageReference "lottie-ios" */,
 				AC1233712DF5E0AC00DAFCF4 /* XCRemoteSwiftPackageReference "swift-secp256k1" */,
+				10DF70C12E379C59009AD12B /* XCRemoteSwiftPackageReference "mixpanel-ios-session-replay-package" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 7555FF7C242A565900829871 /* Products */;
@@ -2746,9 +2749,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -2763,9 +2770,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -2927,9 +2938,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3800,6 +3815,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		10DF70C12E379C59009AD12B /* XCRemoteSwiftPackageReference "mixpanel-ios-session-replay-package" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/mixpanel/mixpanel-ios-session-replay-package";
+			requirement = {
+				kind = exactVersion;
+				version = 1.1.0;
+			};
+		};
 		AC1233712DF5E0AC00DAFCF4 /* XCRemoteSwiftPackageReference "swift-secp256k1" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/21-DOT-DEV/swift-secp256k1";
@@ -3843,6 +3866,16 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		10DF70C22E379C59009AD12B /* MixpanelSessionReplay */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 10DF70C12E379C59009AD12B /* XCRemoteSwiftPackageReference "mixpanel-ios-session-replay-package" */;
+			productName = MixpanelSessionReplay;
+		};
+		10DF70C42E379C6F009AD12B /* MixpanelSessionReplay */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 10DF70C12E379C59009AD12B /* XCRemoteSwiftPackageReference "mixpanel-ios-session-replay-package" */;
+			productName = MixpanelSessionReplay;
+		};
 		AC04D3042E05A1E50055C4AA /* P256K */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = AC1233712DF5E0AC00DAFCF4 /* XCRemoteSwiftPackageReference "swift-secp256k1" */;
