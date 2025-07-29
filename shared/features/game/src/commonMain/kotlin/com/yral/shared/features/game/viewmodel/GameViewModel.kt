@@ -34,13 +34,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-enum class RefreshBalanceState {
-    HIDDEN,
-    LOADING,
-    SUCCESS,
-    FAILURE,
-}
-
 class GameViewModel(
     appDispatchers: AppDispatchers,
     private val preferences: Preferences,
@@ -376,3 +369,10 @@ data class GameState(
     val lastBalanceDifference: Int = 0,
     val refreshBalanceState: RefreshBalanceState = RefreshBalanceState.HIDDEN,
 )
+
+enum class RefreshBalanceState {
+    HIDDEN,
+    LOADING,
+    SUCCESS,
+    FAILURE,
+}
