@@ -49,6 +49,7 @@ import com.yral.android.ui.screens.game.AboutGameSheet
 import com.yral.android.ui.screens.game.CoinBalance
 import com.yral.android.ui.screens.game.GameResultSheet
 import com.yral.android.ui.screens.game.SmileyGame
+import com.yral.android.ui.screens.game.SmileyGameConstants.NUDGE_PAGE
 import com.yral.android.ui.widgets.YralAsyncImage
 import com.yral.android.ui.widgets.YralErrorMessage
 import com.yral.android.ui.widgets.YralLoader
@@ -494,6 +495,8 @@ private fun Game(
                     state.feedDetails[pageNo].videoID,
                 )
             },
+            showNudge = !gameState.isSmileyGameNudgeShown && pageNo >= NUDGE_PAGE,
+            setNudgeShown = { gameViewModel.setSmileyGameNudgeShown() },
         )
     }
 }

@@ -55,13 +55,7 @@ class GameViewModel(
 
     init {
         coroutineScope.launch {
-            // Get result sheet shown preference outside state update
-            preferences.getBoolean(PrefKeys.IS_RESULT_SHEET_SHOWN.name)?.let { shown ->
-                _state.update { it.copy(isResultSheetShown = shown) }
-            }
-            preferences.getBoolean(PrefKeys.HOW_TO_PLAY_SHOWN.name)?.let { shown ->
-                _state.update { it.copy(isHowToPlayShown = shown) }
-            }
+            restoreDataFromPrefs()
             listOf(
                 async { getGameRules() },
                 async { getGameIcons() },
@@ -75,6 +69,19 @@ class GameViewModel(
                     _state.update { it.copy(coinBalance = balance) }
                 }
             }
+        }
+    }
+
+    private suspend fun restoreDataFromPrefs() {
+        val resultShown = preferences.getBoolean(PrefKeys.IS_RESULT_SHEET_SHOWN.name) ?: false
+        val howToPlayShown = preferences.getBoolean(PrefKeys.HOW_TO_PLAY_SHOWN.name) ?: false
+        val smileyGameNudgeShown = preferences.getBoolean(PrefKeys.SMILEY_GAME_NUDGE_SHOWN.name) ?: false
+        _state.update {
+            it.copy(
+                isResultSheetShown = resultShown,
+                isHowToPlayShown = howToPlayShown,
+                isSmileyGameNudgeShown = smileyGameNudgeShown,
+            )
         }
     }
 
@@ -310,6 +317,13 @@ class GameViewModel(
             preferences.putBoolean(PrefKeys.HOW_TO_PLAY_SHOWN.name, true)
         }
     }
+
+    fun setSmileyGameNudgeShown() {
+        _state.update { it.copy(isSmileyGameNudgeShown = true) }
+        coroutineScope.launch {
+            preferences.putBoolean(PrefKeys.SMILEY_GAME_NUDGE_SHOWN.name, true)
+        }
+    }
 }
 
 data class GameState(
@@ -322,9 +336,10 @@ data class GameState(
     val showResultSheet: Boolean = false,
     val showAboutGame: Boolean = false,
     val gameRules: List<AboutGameItem>,
-    val isResultSheetShown: Boolean = false,
     val currentVideoId: String = "",
     val lastBalanceDifference: Int = 0,
     val gameType: GameType = GameType.SMILEY,
+    val isResultSheetShown: Boolean = false,
     val isHowToPlayShown: Boolean = false,
+    val isSmileyGameNudgeShown: Boolean = false,
 )
