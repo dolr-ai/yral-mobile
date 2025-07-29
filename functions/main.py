@@ -40,7 +40,7 @@ def _tx_id() -> str:
 
 # ─────────────────────  COIN HELPER  ────────────────────────
 def tx_coin_change(principal_id: str, video_id: str | None, delta: int, reason: str) -> int:
-    user_ref = _db.document(f"users/{principal_id}")
+    user_ref = db().document(f"users/{principal_id}")
     ledger_ref = user_ref.collection("transactions").document(_tx_id())
 
     @firestore.transactional
@@ -55,7 +55,7 @@ def tx_coin_change(principal_id: str, video_id: str | None, delta: int, reason: 
                 "video_id": video_id,
                 "at": firestore.SERVER_TIMESTAMP})
 
-    _commit(_db.transaction())
+    _commit(db().transaction())
     return int(user_ref.get().get("coins") or 0)
 
 # ─────────────────────  SMILEY CONFIG HELPER  ────────────────────────
@@ -161,6 +161,104 @@ def _push_delta(token: str, principal_id: str, delta: int) -> bool:
         return False
     
 @https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"], enforce_app_check=True)
+def update_balance(request: Request):
+    balance_update_token = os.environ["BALANCE_UPDATE_TOKEN"]
+    try:
+        if request.method != "POST":
+            return error_response(405, "METHOD_NOW_ALLOWED", "POST required")
+
+        body = request.get_json(silent=True) or {}
+        pid  = str(body.get("principal_id", "")).strip()
+        delta = int(body.get("delta", 0))
+        is_airdropped = bool(body.get("is_airdropped", False))
+
+        auth_header = request.headers.get("Authorization", "")
+        if not auth_header.startswith("Bearer "):
+            return error_response(401, "MISSING_ID_TOKEN", "Authorization token missing")
+        auth.verify_id_token(auth_header.split(" ", 1)[1])
+
+        actok = request.headers.get("X-Firebase-AppCheck")
+        if actok:
+            try:
+                app_check.verify_token(actok)
+            except Exception:
+                return error_response(401, "APPCHECK_INVALID", "App Check invalid")
+
+        push_delta = _push_delta(balance_update_token, pid, delta)
+
+        if not push_delta:
+            return error_response(502, "UPSTREAM_FAILED", "We couldn't update the balance, please try again after some time.")
+
+        coins = tx_coin_change(pid, None, delta, "AIRDROP")
+
+        return jsonify({"coins": coins}), 200
+
+    except auth.InvalidIdTokenError:
+        return error_response(401, "ID_TOKEN_INVALID", "ID token invalid or expired")
+    except GoogleAPICallError as e:
+        return error_response(500, "FIRESTORE_ERROR", str(e))
+    except Exception as e:                                 # fallback
+        print("Unhandled error:", e, file=sys.stderr)
+        return error_response(500, "INTERNAL", "Internal server error")
+
+@https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"], enforce_app_check=True)
+def tap_to_recharge(request: Request):
+    try:
+        # 1️⃣ POST check
+        if request.method != "POST":
+            return error_response(405, "METHOD_NOT_ALLOWED", "POST required")
+
+        # 2️⃣ Parse body
+        body = request.get_json(silent=True) or {}
+        pid  = str(body.get("principal_id", "")).strip()
+        if not pid:
+            return error_response(400, "MISSING_PID", "principal_id required")
+
+        # 3️⃣ Verify ID token
+        auth_header = request.headers.get("Authorization", "")
+        if not auth_header.startswith("Bearer "):
+            return error_response(401, "MISSING_ID_TOKEN", "Authorization token missing")
+        auth.verify_id_token(auth_header.split(" ", 1)[1])
+
+        # 4️⃣ App Check
+        ac_token = request.headers.get("X-Firebase-AppCheck")
+        if ac_token:
+            try:
+                app_check.verify_token(ac_token)
+            except Exception:
+                return error_response(401, "APPCHECK_INVALID", "App Check invalid")
+
+        # 5️⃣ Ensure balance is zero
+        user_ref = db().document(f"users/{pid}")
+        current  = user_ref.get().get("coins") or 0
+        if current > 0:
+            return error_response(
+                409, "NON_ZERO_BALANCE",
+                f"Balance is already {current}. Recharge works only at 0.")
+
+        # 6️⃣ Push to wallet first
+        DELTA = 100
+        if not _push_delta(os.environ["BALANCE_UPDATE_TOKEN"], pid, DELTA):
+            return error_response(
+                502, "UPSTREAM_FAILED",
+                "Wallet update failed, try again later.")
+
+        # 7️⃣ Book it in Firestore (reason TAP_RECHARGE)
+        coins = tx_coin_change(pid, None, DELTA, "TAP_RECHARGE")
+
+        # 8️⃣ Success → return new total only
+        return jsonify({"coins": coins}), 200
+
+    # ── standard error wrappers ───────────────────────────────────────
+    except auth.InvalidIdTokenError:
+        return error_response(401, "ID_TOKEN_INVALID", "ID token invalid or expired")
+    except GoogleAPICallError as e:
+        return error_response(500, "FIRESTORE_ERROR", str(e))
+    except Exception as e:
+        print("Unhandled error:", e, file=sys.stderr)
+        return error_response(500, "INTERNAL", "Internal server error")
+
+@https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"], enforce_app_check=True)
 def cast_vote(request: Request):
     balance_update_token = os.environ["BALANCE_UPDATE_TOKEN"]
     try:
@@ -211,13 +309,19 @@ def cast_vote(request: Request):
 
             vid_exists  = vid_ref.get(transaction=tx).exists
             if not vid_exists:
-                seed_winner = random.choice([s["id"] for s in smileys])
+                all_ids = [s["id"] for s in smileys]
+                seed_a = random.choice(all_ids)
+                
+                pool = [smid for smid in all_ids if smid != seed_a]
+                seed_b = random.choice(pool)
+
                 tx.set(vid_ref, {
                     "created_at": firestore.SERVER_TIMESTAMP
                 })
 
                 zero = {s["id"]: 0 for s in smileys}
-                zero[seed_winner] = 1
+                zero[seed_a] = 1
+                zero[seed_b] = 1
                 tx.set(shard_ref(0), zero, merge=True)
 
                 for k in range(1, SHARDS):
