@@ -20,6 +20,7 @@ class AutoRechargeBalanceUseCase(
         appDispatchers.io,
         crashlyticsManager,
     ) {
+    @Suppress("MaxLineLength")
     override suspend fun executeWith(parameter: AutoRechargeBalanceRequest): Result<UpdatedBalance, AutoRechargeBalanceError> {
         val idToken = getIdTokenUseCase.invoke(GetIdTokenUseCase.DEFAULT).getOrThrow()
         return gameRepository
