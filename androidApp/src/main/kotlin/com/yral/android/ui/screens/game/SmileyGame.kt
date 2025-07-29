@@ -30,9 +30,12 @@ import androidx.compose.ui.unit.dp
 import com.yral.android.R
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.game.SmileyGameConstants.NUDGE_ANIMATION_DURATION
+import com.yral.android.ui.screens.game.SmileyGameConstants.NUDGE_DURATION
 import com.yral.android.ui.widgets.YralFeedback
 import com.yral.shared.features.game.domain.models.GameIcon
+import kotlinx.coroutines.delay
 
+@Suppress("LongMethod")
 @Composable
 fun SmileyGame(
     gameIcons: List<GameIcon>,
@@ -43,7 +46,8 @@ fun SmileyGame(
     onIconClicked: (emoji: GameIcon) -> Unit,
     hasShownCoinDeltaAnimation: Boolean,
     onDeltaAnimationComplete: () -> Unit,
-    showNudge: Boolean = false,
+    showNudge: Boolean,
+    setNudgeShown: () -> Unit,
 ) {
     var animateBubbles by remember { mutableStateOf(false) }
     var iconPositions by remember { mutableStateOf(mapOf<Int, Float>()) }
@@ -65,7 +69,16 @@ fun SmileyGame(
             }
             else -> {
                 var currentIcon by remember { mutableStateOf<Int?>(null) }
-                LaunchedEffect(showNudge) { if (showNudge) currentIcon = 0 else null }
+                LaunchedEffect(showNudge) {
+                    if (showNudge) {
+                        currentIcon = 0
+                        delay(NUDGE_DURATION)
+                        currentIcon = null
+                        setNudgeShown()
+                    } else {
+                        null
+                    }
+                }
                 if (showNudge) SmileyGameNudge()
                 GameIconStrip(
                     modifier = Modifier.align(Alignment.BottomCenter),
@@ -83,6 +96,10 @@ fun SmileyGame(
                     currentIcon = currentIcon,
                     onStripAnimationComplete = {
                         currentIcon = currentIcon?.let { if (it < gameIcons.size) it + 1 else 0 }
+                    },
+                    setNudgeShown = {
+                        currentIcon = null
+                        setNudgeShown()
                     },
                 )
             }
@@ -197,4 +214,6 @@ private fun Int.toSignedString(): String =
 
 object SmileyGameConstants {
     const val NUDGE_ANIMATION_DURATION = 600L
+    const val NUDGE_DURATION = 3000L
+    const val NUDGE_PAGE = 3
 }
