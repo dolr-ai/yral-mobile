@@ -26,6 +26,7 @@ fun GameIconStrip(
     onIconPositioned: (Int, Float) -> Unit = { _, _ -> },
     currentIcon: Int? = null,
     onStripAnimationComplete: () -> Unit = {},
+    setNudgeShown: () -> Unit = {},
 ) {
     var playSound by remember { mutableStateOf(false) }
     var animatingIcon by remember(clickedIcon) { mutableStateOf(clickedIcon) }
@@ -44,11 +45,12 @@ fun GameIconStrip(
 
             val clickableModifier =
                 Modifier.clickable(
-                    enabled = coinDelta == 0 && !isLoading && currentIcon == null,
+                    enabled = coinDelta == 0 && !isLoading,
                     onClick = {
                         if (coinDelta == 0 && !isLoading) {
                             playSound = true
                             onIconClicked(icon)
+                            setNudgeShown()
                         }
                     },
                 )
