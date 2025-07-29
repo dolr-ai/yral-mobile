@@ -121,6 +121,7 @@ struct HomeTabController: View {
         }
         deepLinkRouter.pendingDestination = nil
       }
+      .hapticFeedback(.impact(weight: .light), trigger: selectedTab)
       .fullScreenCover(isPresented: $showNotificationsNudge) {
         ZStack(alignment: .center) {
           NotificationsNudge {
