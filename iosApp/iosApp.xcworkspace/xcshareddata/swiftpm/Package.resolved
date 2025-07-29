@@ -1,5 +1,5 @@
 {
-  "originHash" : "60d76b86379d177d413ecafdecd47745801c8dfbb9e1d0fcb1042466ee889b91",
+  "originHash" : "806d899593cba6301aea67a3000e28a6908f8a3b1d12864504a3d2895b538238",
   "pins" : [
     {
       "identity" : "grpc-swift",
@@ -17,15 +17,6 @@
       "state" : {
         "revision" : "a004050748dc197c56256a14dca49a035d74726c",
         "version" : "4.5.2"
-      }
-    },
-    {
-      "identity" : "mixpanel-ios-session-replay-package",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/mixpanel/mixpanel-ios-session-replay-package",
-      "state" : {
-        "revision" : "807230e28e6e57f5515d75dc17172b5ad9a1a345",
-        "version" : "1.1.0"
       }
     },
     {
