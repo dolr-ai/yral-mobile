@@ -11,5 +11,7 @@ import com.yral.shared.features.game.domain.models.UpdatedBalance
 interface IGameRepository {
     suspend fun castVote(request: CastVoteRequest): CastVoteResponse
     suspend fun getBalance(userPrincipal: String): GetBalanceResponse
+
+    @Suppress("MaxLineLength")
     suspend fun autoRechargeBalance(request: AutoRechargeBalanceRequest): Result<UpdatedBalance, AutoRechargeBalanceError>
 }
