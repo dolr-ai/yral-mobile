@@ -402,7 +402,7 @@ private fun BottomView(
             modifier =
                 Modifier
                     .align(Alignment.BottomStart)
-                    .padding(start = 16.dp, bottom = 150.dp),
+                    .padding(start = 16.dp, bottom = 105.dp),
             shouldExpand = !gameState.isHowToPlayShown,
             pageNo = pageNo,
             onClick = { gameViewModel.toggleAboutGame(true) },
@@ -412,7 +412,7 @@ private fun BottomView(
             modifier =
                 Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(end = 16.dp, bottom = 156.dp),
+                    .padding(end = 16.dp, bottom = 105.dp),
             pageNo = pageNo,
             state = state,
             feedViewModel = feedViewModel,
