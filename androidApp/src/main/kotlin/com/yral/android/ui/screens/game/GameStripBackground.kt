@@ -22,7 +22,7 @@ fun GameStripBackground(
         modifier =
             modifier
                 .padding(
-                    horizontal = 20.dp,
+                    horizontal = 18.dp,
                     vertical = 16.dp,
                 ),
     ) {
