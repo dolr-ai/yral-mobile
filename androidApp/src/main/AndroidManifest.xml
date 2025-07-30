@@ -48,6 +48,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <!-- REPLACE `android:host` with your `app.link` domain -->
                 <data android:scheme="https" android:host="f6ur9.app.link" />
+                <data android:scheme="https" android:host="link.yral.com" />
                 <data android:scheme="https" android:host="f6ur9-alternate.app.link" />
             </intent-filter>
             <!-- Branch App Links - Alpha App -->
@@ -56,6 +57,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https" android:host="f6ur9.test-app.link" />
+                <data android:scheme="https" android:host="test-link.yral.com" />
                 <data android:scheme="https" android:host="f6ur9-alternate.test-app.link" />
             </intent-filter>
         </activity>
