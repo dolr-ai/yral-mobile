@@ -2,6 +2,7 @@ package com.yral.android.ui.screens.feed.uiComponets
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
@@ -22,6 +23,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,6 +38,7 @@ import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.feed.uiComponets.HowToPlayConstants.ANIMATION_DURATION
 import com.yral.android.ui.screens.feed.uiComponets.HowToPlayConstants.AUTO_CLOSE_DELAY
+import com.yral.android.ui.screens.feed.uiComponets.HowToPlayConstants.PAGE_SET_DELAY
 import com.yral.android.ui.screens.feed.uiComponets.HowToPlayConstants.SHOW_HOW_TO_PLAY_MAX_PAGE
 import kotlinx.coroutines.delay
 
@@ -47,28 +50,33 @@ fun HowToPlay(
     onClick: () -> Unit,
     maxPageReached: () -> Unit,
 ) {
-    var isExpanded by remember(pageNo, shouldExpand) {
-        mutableStateOf(shouldExpand && pageNo < SHOW_HOW_TO_PLAY_MAX_PAGE)
-    }
-    // Start auto-close timer when page number changes and component is expanded
-    LaunchedEffect(isExpanded) {
-        if (isExpanded) {
+    var backgroundVisible by remember { mutableStateOf(false) }
+    var isExpanded by remember { mutableStateOf(false) }
+
+    val expandKey = rememberUpdatedState(shouldExpand && pageNo < SHOW_HOW_TO_PLAY_MAX_PAGE)
+    LaunchedEffect(expandKey.value) {
+        delay(PAGE_SET_DELAY)
+        if (expandKey.value) {
+            backgroundVisible = true
+            isExpanded = true
             delay(AUTO_CLOSE_DELAY)
             isExpanded = false
+            delay(ANIMATION_DURATION.toLong() / 2)
+            backgroundVisible = false
         }
     }
-    LaunchedEffect(pageNo) {
-        if (pageNo >= SHOW_HOW_TO_PLAY_MAX_PAGE) {
-            maxPageReached()
-        }
-    }
+    val animatingPadding by animateFloatAsState(
+        targetValue = if (isExpanded) 4f else 0f,
+        animationSpec = tween(ANIMATION_DURATION),
+        label = "AnimatedPadding",
+    )
+
+    LaunchedEffect(pageNo) { if (pageNo >= SHOW_HOW_TO_PLAY_MAX_PAGE) maxPageReached() }
     Row(
         modifier =
             modifier
-                .background(
-                    color = YralColors.HowToPlayBackground,
-                    shape = RoundedCornerShape(49.dp),
-                ).padding(4.dp)
+                .applyBackground(backgroundVisible)
+                .padding(animatingPadding.dp)
                 .clickable { onClick() },
         horizontalArrangement = Arrangement.spacedBy(0.dp, Alignment.Start),
         verticalAlignment = Alignment.CenterVertically,
@@ -82,7 +90,7 @@ fun HowToPlay(
         AnimatedContent(
             targetState = isExpanded,
             transitionSpec = {
-                (expandHorizontally { it } + fadeIn(tween(ANIMATION_DURATION))) togetherWith
+                (expandHorizontally { 0 } + fadeIn(tween(ANIMATION_DURATION))) togetherWith
                     (shrinkHorizontally { -it } + fadeOut(tween(ANIMATION_DURATION))) using
                     SizeTransform(clip = false)
             },
@@ -100,7 +108,18 @@ fun HowToPlay(
     }
 }
 
+private fun Modifier.applyBackground(backgroundVisible: Boolean) =
+    if (backgroundVisible) {
+        this.background(
+            color = YralColors.HowToPlayBackground,
+            shape = RoundedCornerShape(49.dp),
+        )
+    } else {
+        this
+    }
+
 object HowToPlayConstants {
+    const val PAGE_SET_DELAY = 700L
     const val ANIMATION_DURATION = 700
     const val AUTO_CLOSE_DELAY = 3000L
     const val SHOW_HOW_TO_PLAY_MAX_PAGE = 3
