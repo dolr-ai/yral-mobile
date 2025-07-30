@@ -25,6 +25,7 @@ fun AboutGameItemBodyDto.toAboutGameItemBody(): AboutGameItemBody =
                 else -> AboutGameBodyType.UNKNOWN
             },
         content = content,
+        bolds = bolds,
         colors = colors,
         imageUrls = imageUrls,
     )
