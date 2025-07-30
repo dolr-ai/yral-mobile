@@ -1,6 +1,9 @@
 package com.yral.shared.analytics.providers.mixpanel
 
 import com.mixpanel.android.mpmetrics.MixpanelAPI
+import com.mixpanel.android.sessionreplay.MPSessionReplay
+import com.mixpanel.android.sessionreplay.models.MPSessionReplayConfig
+import com.mixpanel.android.sessionreplay.sensitive_views.AutoMaskedView
 import com.yral.shared.analytics.AnalyticsProvider
 import com.yral.shared.analytics.EventToMapConverter
 import com.yral.shared.analytics.User
@@ -19,6 +22,21 @@ actual class MixpanelAnalyticsProvider actual constructor(
     private val mixpanel: MixpanelAPI =
         MixpanelAPI.getInstance(platformResources.activityContext, token, true)
 
+    init {
+        MPSessionReplay.initialize(
+            appContext = platformResources.activityContext,
+            token = token,
+            distinctId = mixpanel.distinctId,
+            config =
+                MPSessionReplayConfig(
+                    wifiOnly = false,
+                    recordingSessionsPercent = 100.0,
+                    autoMaskedViews = setOf(AutoMaskedView.Web),
+                    enableLogging = true,
+                ),
+        )
+    }
+
     override fun shouldTrackEvent(event: EventData): Boolean = eventFilter(event)
 
     override fun trackEvent(event: EventData) {
@@ -36,6 +54,7 @@ actual class MixpanelAnalyticsProvider actual constructor(
             )
         if (user.isLoggedIn == true) {
             mixpanel.identify(user.userId)
+            MPSessionReplay.getInstance()?.identify(user.userId)
             superProps["user_id"] = user.userId
             superProps["visitor_id"] = null
         } else {
@@ -47,6 +66,7 @@ actual class MixpanelAnalyticsProvider actual constructor(
 
     override fun reset() {
         mixpanel.reset()
+        MPSessionReplay.getInstance()?.identify(mixpanel.distinctId)
     }
 
     override fun toValidKeyName(key: String): String = key
