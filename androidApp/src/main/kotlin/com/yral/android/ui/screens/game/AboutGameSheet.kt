@@ -1,9 +1,12 @@
 package com.yral.android.ui.screens.game
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -35,32 +38,24 @@ fun AboutGameSheet(
     gameRules: List<AboutGameItem>,
     onDismissRequest: () -> Unit,
 ) {
-    val bottomSheetState =
-        rememberModalBottomSheetState(
-            skipPartiallyExpanded = true,
-        )
+    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     YralBottomSheet(
         onDismissRequest = onDismissRequest,
         bottomSheetState = bottomSheetState,
-        dragHandle = {
-            DragHandle(
-                color = YralColors.Neutral500,
-            )
-        },
+        dragHandle = { DragHandle(color = YralColors.Neutral500) },
     ) {
         Column(
-            modifier =
-                Modifier
-                    .padding(
-                        horizontal = 16.dp,
-                        vertical = 28.dp,
-                    ),
+            modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 28.dp),
         ) {
             Text(
+                modifier = Modifier.padding(vertical = 12.dp),
                 text = stringResource(id = R.string.about_game),
                 style = LocalAppTopography.current.lgBold,
             )
-            LazyColumn {
+            Spacer(Modifier.height(12.dp))
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
                 items(gameRules.size) { index ->
                     AboutGameItem(gameRules[index])
                 }
@@ -74,6 +69,7 @@ private fun AboutGameItem(rule: AboutGameItem) {
     Column(
         modifier =
             Modifier
+                .border(width = 1.dp, color = YralColors.Neutral700, shape = RoundedCornerShape(size = 8.dp))
                 .background(
                     color = YralColors.NeutralBackgroundCardBackground,
                     shape = RoundedCornerShape(size = 8.dp),
