@@ -152,8 +152,6 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   }()
 
   enum RechargeResult { case success, failure }
-  var isWalletLoading = false
-  var pendingRechargeResult: RechargeResult?
 
   override init(frame: CGRect) {
     super.init(frame: frame)
@@ -508,9 +506,6 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     smileyGameHostController?.view.removeFromSuperview()
     smileyGameHostController = nil
 
-    isWalletLoading = false
-    pendingRechargeResult = nil
-
     cancellables.forEach({ $0.cancel() })
     cancellables.removeAll()
   }
@@ -581,9 +576,5 @@ extension FeedsCell {
     static let resultAnimationDuration = 2.5
     static let resultAnimationDurationWithBS = 0.5
     static let scoreLabelDuration = 2.0
-    static let rechargeLoadingLottie = "sats_claim_loading"
-    static let rechargeSuccessLottie = "sats_claim_success"
-    static let rechargeFailureLottie = "sats_claim_failure"
-    static let lottieBGOpacity = 0.8
   }
 }

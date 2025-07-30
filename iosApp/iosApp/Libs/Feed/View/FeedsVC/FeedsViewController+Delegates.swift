@@ -249,13 +249,17 @@ extension FeedsViewController: FeedsCellProtocol {
 
   func walletAnimationStarted() {
     feedsCV.isScrollEnabled = false
+    self.walletAnimationDelegate?.walletAnimationStarted()
   }
 
   func walletAnimationEnded(success: Bool, coins: Int64) {
     if success {
-      self.session.update(coins: UInt64(coins))
+      DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.one) {
+        self.session.update(coins: UInt64(coins))
+      }
     }
     feedsCV.isScrollEnabled = true
+    self.walletAnimationDelegate?.walletAnimationEnded(success: success, coins: coins)
   }
 }
 
@@ -341,4 +345,9 @@ extension FeedsViewController: FeedsPlayerProtocol {
       await self.viewModel.socialSignIn(request: provider)
     }
   }
+}
+
+protocol FeedsViewControllerRechargeDelegate: AnyObject {
+  func walletAnimationStarted()
+  func walletAnimationEnded(success: Bool, coins: Int64)
 }

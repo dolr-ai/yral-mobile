@@ -284,7 +284,9 @@ class FeedsRepository: FeedRepositoryProtocol {
     guard let userPrincipalString = authClient.userPrincipalString else {
       return .failure(FeedError.authError(AuthError.authenticationFailed("No user principal")))
     }
-    let rechargeRequest = RechargeWalletRequestDTO(principalID: userPrincipalString)
+    let rechargeRequest = RechargeWalletRequestDTO(
+      data: PrincipalDTO(principalID: userPrincipalString)
+    )
     guard let baseURL = URL(string: Constants.firebaseBaseURLString) else {
       return .failure(FeedError.networkError(NetworkError.invalidRequest))
     }

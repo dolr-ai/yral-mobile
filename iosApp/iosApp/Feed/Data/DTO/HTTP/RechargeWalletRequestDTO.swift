@@ -7,6 +7,10 @@
 //
 
 struct RechargeWalletRequestDTO: Codable {
+  let data: PrincipalDTO
+}
+
+struct PrincipalDTO: Codable {
   let principalID: String
 
   enum CodingKeys: String, CodingKey {
