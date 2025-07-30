@@ -113,6 +113,7 @@ class GameViewModel(
     fun setClickedIcon(
         icon: GameIcon,
         feedDetails: FeedDetails,
+        isTutorialVote: Boolean,
     ) {
         coroutineScope.launch {
             _state.update { currentState ->
@@ -130,6 +131,7 @@ class GameViewModel(
                     feedDetails = feedDetails,
                     lossPenalty = _state.value.lossPenalty,
                     optionChosen = icon.imageName.name.lowercase(),
+                    isTutorialVote = isTutorialVote,
                 )
                 castVoteUseCase
                     .invoke(
@@ -145,6 +147,7 @@ class GameViewModel(
                             voteResult = result.toVoteResult(),
                             feedDetails = feedDetails,
                             icon = icon,
+                            isTutorialVote = isTutorialVote,
                         )
                     }.onFailure { setLoading(false) }
             }
@@ -194,6 +197,7 @@ class GameViewModel(
         voteResult: VoteResult,
         feedDetails: FeedDetails,
         icon: GameIcon,
+        isTutorialVote: Boolean,
     ) {
         coroutineScope.launch {
             // Get current state once to avoid multiple reads
@@ -240,6 +244,7 @@ class GameViewModel(
                 lossPenalty = _state.value.lossPenalty,
                 optionChosen = icon.imageName.name.lowercase(),
                 coinDelta = voteResult.coinDelta,
+                isTutorialVote = isTutorialVote,
             )
         }
     }
@@ -322,6 +327,12 @@ class GameViewModel(
         _state.update { it.copy(isSmileyGameNudgeShown = true) }
         coroutineScope.launch {
             preferences.putBoolean(PrefKeys.SMILEY_GAME_NUDGE_SHOWN.name, true)
+        }
+    }
+
+    fun trackSmileyGameNudgeShown(feedDetails: FeedDetails) {
+        coroutineScope.launch {
+            gameTelemetry.onGameTutorialShown(feedDetails)
         }
     }
 }

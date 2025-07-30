@@ -477,10 +477,11 @@ private fun Game(
         SmileyGame(
             gameIcons = gameState.gameIcons,
             clickedIcon = gameState.gameResult[state.feedDetails[pageNo].videoID]?.first,
-            onIconClicked = {
+            onIconClicked = { icon, isTutorialVote ->
                 gameViewModel.setClickedIcon(
-                    icon = it,
+                    icon = icon,
                     feedDetails = state.feedDetails[pageNo],
+                    isTutorialVote = isTutorialVote,
                 )
             },
             coinDelta = gameViewModel.getFeedGameResult(state.feedDetails[pageNo].videoID),
@@ -498,5 +499,10 @@ private fun Game(
             showNudge = !gameState.isSmileyGameNudgeShown && pageNo >= NUDGE_PAGE,
             setNudgeShown = { gameViewModel.setSmileyGameNudgeShown() },
         )
+        LaunchedEffect(gameState.isSmileyGameNudgeShown, pageNo) {
+            if (!gameState.isSmileyGameNudgeShown && pageNo >= NUDGE_PAGE) {
+                gameViewModel.trackSmileyGameNudgeShown(state.feedDetails[pageNo])
+            }
+        }
     }
 }

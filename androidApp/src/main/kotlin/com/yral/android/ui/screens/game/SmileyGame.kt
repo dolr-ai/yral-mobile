@@ -43,7 +43,7 @@ fun SmileyGame(
     isLoading: Boolean,
     coinDelta: Int = 0,
     errorMessage: String = "",
-    onIconClicked: (emoji: GameIcon) -> Unit,
+    onIconClicked: (emoji: GameIcon, isTutorialVote: Boolean) -> Unit,
     hasShownCoinDeltaAnimation: Boolean,
     onDeltaAnimationComplete: () -> Unit,
     showNudge: Boolean,
@@ -68,12 +68,12 @@ fun SmileyGame(
                 )
             }
             else -> {
-                var currentIcon by remember { mutableStateOf<Int?>(null) }
+                var animatingNudgeIconPosition by remember { mutableStateOf<Int?>(null) }
                 LaunchedEffect(showNudge) {
                     if (showNudge) {
-                        currentIcon = 0
+                        animatingNudgeIconPosition = 0
                         delay(NUDGE_DURATION)
-                        currentIcon = null
+                        animatingNudgeIconPosition = null
                         setNudgeShown()
                     } else {
                         null
@@ -86,19 +86,21 @@ fun SmileyGame(
                     clickedIcon = clickedIcon,
                     onIconClicked = {
                         animateBubbles = true
-                        onIconClicked(it)
+                        onIconClicked(it, animatingNudgeIconPosition != null)
                     },
                     isLoading = isLoading,
                     coinDelta = coinDelta,
                     onIconPositioned = { id, xPos ->
                         iconPositions = iconPositions.plus(id to xPos)
                     },
-                    currentIcon = currentIcon,
+                    animatingNudgeIconPosition = animatingNudgeIconPosition,
                     onStripAnimationComplete = {
-                        currentIcon = currentIcon?.let { if (it < gameIcons.size) it + 1 else 0 }
+                        animatingNudgeIconPosition =
+                            animatingNudgeIconPosition
+                                ?.let { if (it < gameIcons.size) it + 1 else 0 }
                     },
                     setNudgeShown = {
-                        currentIcon = null
+                        animatingNudgeIconPosition = null
                         setNudgeShown()
                     },
                 )

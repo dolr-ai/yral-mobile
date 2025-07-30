@@ -33,11 +33,11 @@ private object GameIconConstants {
 fun LocalGameIcon(
     modifier: Modifier,
     icon: GameIcon,
-    currentIcon: Int? = null,
+    animatingNudgeIconPosition: Int? = null,
     animate: Boolean = false,
     onAnimationComplete: () -> Unit,
 ) {
-    val animationDuration = currentIcon?.let { ANIMATION_DURATION } ?: NUDGE_ANIMATION_DURATION
+    val animationDuration = animatingNudgeIconPosition?.let { ANIMATION_DURATION } ?: NUDGE_ANIMATION_DURATION
     val rotation by animateFloatAsState(
         targetValue = if (animate) ROTATION_DEGREE else 0f,
         animationSpec = tween(durationMillis = animationDuration.toInt()),
@@ -71,12 +71,12 @@ fun LocalGameIcon(
 fun AsyncGameIcon(
     modifier: Modifier,
     icon: GameIcon,
-    currentIcon: Int? = null,
+    animatingNudgeIconPosition: Int? = null,
     animate: Boolean = false,
     onAnimationComplete: () -> Unit,
     loadLocal: () -> Unit,
 ) {
-    val animationDuration = currentIcon?.let { ANIMATION_DURATION } ?: NUDGE_ANIMATION_DURATION
+    val animationDuration = animatingNudgeIconPosition?.let { ANIMATION_DURATION } ?: NUDGE_ANIMATION_DURATION
     val rotation by animateFloatAsState(
         targetValue = if (animate) ROTATION_DEGREE else 0f,
         animationSpec = tween(durationMillis = animationDuration.toInt()),
