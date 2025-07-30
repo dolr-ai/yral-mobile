@@ -114,7 +114,7 @@ def exchange_principal_id(request: Request):
         def _ensure_profile(tx: firestore.Transaction):
             if not new_ref.get(transaction=tx).exists:
                 tx.set(new_ref,
-                       {"created_at": firestore.SERVER_TIMESTAMP})
+                       {"created_at": firestore.SERVER_TIMESTAMP, "smiley_game_wins": 0, "smiley_game_losses": 0})
 
             if old_ref:
                 tx.delete(old_ref)                 # discard temp profile
@@ -373,6 +373,11 @@ def cast_vote(request: Request):
             "outcome": outcome,
             "coin_delta": delta
         })
+
+        if outcome == "WIN":
+            user_ref.update({"smiley_game_wins": firestore.Increment(1)})
+        else:
+            user_ref.update({"smiley_game_losses": firestore.Increment(1)})
 
         # 6. success payload (voted smiley) ──────────────────────────────
         voted = smiley_map[sid]
