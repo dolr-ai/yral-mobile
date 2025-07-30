@@ -24,18 +24,18 @@ fun GameIconStrip(
     isLoading: Boolean,
     coinDelta: Int = 0,
     onIconPositioned: (Int, Float) -> Unit = { _, _ -> },
-    currentIcon: Int? = null,
+    animatingNudgeIconPosition: Int? = null,
     onStripAnimationComplete: () -> Unit = {},
     setNudgeShown: () -> Unit = {},
 ) {
     var playSound by remember { mutableStateOf(false) }
     var animatingIcon by remember(clickedIcon) { mutableStateOf(clickedIcon) }
-    LaunchedEffect(currentIcon) {
-        currentIcon?.takeIf { it in gameIcons.indices }?.let { index ->
+    LaunchedEffect(animatingNudgeIconPosition) {
+        animatingNudgeIconPosition?.takeIf { it in gameIcons.indices }?.let { index ->
             animatingIcon = gameIcons[index]
         }
     }
-    GameStripBackground(modifier, currentIcon != null) {
+    GameStripBackground(modifier, animatingNudgeIconPosition != null) {
         gameIcons.forEachIndexed { index, icon ->
             val shouldAnimate = animatingIcon?.id == icon.id
             var loadLocal by remember(icon.imageUrl) { mutableStateOf(false) }

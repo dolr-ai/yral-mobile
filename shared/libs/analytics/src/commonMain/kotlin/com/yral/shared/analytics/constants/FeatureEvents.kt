@@ -33,6 +33,7 @@ enum class FeatureEvents {
     // Game
     GAME_VOTED,
     GAME_PLAYED,
+    GAME_TUTORIAL_SHOWN,
     GAME_CONCLUDED_BOTTOMSHEET_CLICKED,
 
     // Menu
