@@ -51,7 +51,7 @@ fun AboutGameSheet(
             Text(
                 modifier = Modifier.padding(vertical = 12.dp),
                 text = stringResource(id = R.string.about_game),
-                style = LocalAppTopography.current.lgBold,
+                style = LocalAppTopography.current.xlBold,
             )
             Spacer(Modifier.height(12.dp))
             LazyColumn(
@@ -74,7 +74,7 @@ private fun AboutGameItem(rule: AboutGameItem) {
                 .background(
                     color = YralColors.NeutralBackgroundCardBackground,
                     shape = RoundedCornerShape(size = 8.dp),
-                ).padding(start = 12.dp, top = 12.dp, end = 12.dp, bottom = 12.dp),
+                ),
         verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
         horizontalAlignment = Alignment.Start,
     ) {
@@ -86,6 +86,7 @@ private fun AboutGameItem(rule: AboutGameItem) {
 @Composable
 private fun AboutGameItemTitle(rule: AboutGameItem) {
     Row(
+        modifier = Modifier.padding(start = 12.dp, top = 12.dp, end = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -95,7 +96,7 @@ private fun AboutGameItemTitle(rule: AboutGameItem) {
         )
         Text(
             text = rule.name,
-            style = LocalAppTopography.current.mdMedium,
+            style = LocalAppTopography.current.lgBold,
         )
     }
 }
@@ -103,12 +104,7 @@ private fun AboutGameItemTitle(rule: AboutGameItem) {
 @Composable
 private fun AboutGameItemRule(rule: AboutGameItem) {
     Column(
-        modifier =
-            Modifier
-                .background(
-                    color = YralColors.NeutralBackgroundCardBackground,
-                    shape = RoundedCornerShape(size = 8.dp),
-                ).padding(start = 12.dp, top = 12.dp, end = 12.dp, bottom = 12.dp),
+        modifier = Modifier.padding(start = 12.dp, bottom = 12.dp),
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.Start,
     ) {
@@ -122,7 +118,7 @@ private fun AboutGameItemRule(rule: AboutGameItem) {
                     modifier =
                         Modifier
                             .padding(start = 6.dp, top = 2.dp, end = 6.dp, bottom = 2.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     bodyItem.imageUrls?.forEach { imageUrl ->
@@ -140,7 +136,7 @@ private fun AboutGameItemRule(rule: AboutGameItem) {
 @Composable
 private fun getAnnotatedString(body: AboutGameItemBody) =
     buildAnnotatedString {
-        val textStyle = LocalAppTopography.current.baseMedium
+        val textStyle = LocalAppTopography.current.baseRegular
         val spanStyle =
             SpanStyle(
                 fontSize = textStyle.fontSize,
