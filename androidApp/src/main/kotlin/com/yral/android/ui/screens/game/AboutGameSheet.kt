@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.yral.android.R
@@ -151,8 +152,13 @@ private fun getAnnotatedString(body: AboutGameItemBody) =
                 body.colors?.get(index)?.let {
                     YralColors.getColorFromHex(it)
                 } ?: YralColors.Grey50
+            val bold = body.bolds?.get(index) ?: false
             withStyle(
-                style = spanStyle.copy(color = color),
+                style =
+                    spanStyle.copy(
+                        color = color,
+                        fontWeight = if (bold) FontWeight.Bold else spanStyle.fontWeight,
+                    ),
             ) {
                 append(text)
             }
