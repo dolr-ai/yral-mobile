@@ -141,14 +141,6 @@ private fun UploadVideoIdle(
             )
         }
         item { Spacer(Modifier.height(20.dp)) }
-        item {
-            VideoDetails(
-                viewState.caption,
-                viewState.hashtags,
-                onCaptionChanged = viewModel::onCaptionChanged,
-                onHashtagsChanged = viewModel::onHashtagsChanged,
-            )
-        }
         item { Submit(enabled = viewState.canUpload, onClick = viewModel::onUploadButtonClicked) }
     }
 }
@@ -245,6 +237,7 @@ private fun UploadProgressBar(progress: Float) {
     }
 }
 
+@Suppress("UnusedPrivateMember")
 @Composable
 private fun VideoDetails(
     caption: String,
