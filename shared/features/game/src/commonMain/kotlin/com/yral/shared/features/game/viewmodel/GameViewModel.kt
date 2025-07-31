@@ -36,6 +36,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+@Suppress("TooManyFunctions")
 class GameViewModel(
     appDispatchers: AppDispatchers,
     private val preferences: Preferences,
@@ -158,7 +159,7 @@ class GameViewModel(
     private suspend fun castVote(
         icon: GameIcon,
         feedDetails: FeedDetails,
-        isTutorialVote: Boolean
+        isTutorialVote: Boolean,
     ) {
         _state.update { currentState ->
             // Create initial game result outside state update

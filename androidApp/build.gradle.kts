@@ -19,12 +19,12 @@ android {
         versionName = "1.2.1"
         ndkVersion = "28.0.13004108"
         buildConfigField(
-            type ="String",
+            type = "String",
             name = "BRANCH_KEY_TEST",
             value = "\"${System.getenv("YRAL_BRANCH_KEY_TEST")} \"",
         )
         buildConfigField(
-            type ="String",
+            type = "String",
             name = "BRANCH_KEY",
             value = "\"${System.getenv("YRAL_BRANCH_KEY")} \"",
         )
