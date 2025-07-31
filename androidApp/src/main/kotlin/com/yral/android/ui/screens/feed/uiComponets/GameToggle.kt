@@ -35,8 +35,6 @@ fun GameToggle(
         verticalAlignment = Alignment.CenterVertically,
         modifier =
             modifier
-                .width(105.75.dp)
-                .height(50.625.dp)
                 .background(color = YralColors.GameToggleBackground, shape = RoundedCornerShape(size = 24.75.dp))
                 .padding(start = 4.5.dp, top = 4.5.dp, end = 4.5.dp, bottom = 4.5.dp),
     ) {
@@ -93,7 +91,7 @@ private fun GameIcon(
 }
 
 object GameToggleConstants {
-    val IMAGE_SIZE = 28.125.dp
-    val ICON_WIDTH = 46.125.dp
-    val ICON_HEIGHT = 41.625.dp
+    val IMAGE_SIZE = 28.dp
+    val ICON_WIDTH = 46.dp
+    val ICON_HEIGHT = 42.dp
 }
