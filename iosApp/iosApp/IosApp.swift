@@ -65,7 +65,9 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     didReceive response: UNNotificationResponse,
     withCompletionHandler completionHandler: @escaping () -> Void
   ) {
-    DeepLinkRouter.shared.pendingDestination = DeepLinkRouter.Destination.profileAfterUpload
+    if isUploadNotification(userInfo: response.notification.request.content.userInfo) {
+      DeepLinkRouter.shared.pendingDestination = DeepLinkRouter.Destination.profileAfterUpload
+    }
     completionHandler()
   }
 
@@ -73,11 +75,12 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     _ center: UNUserNotificationCenter,
     willPresent notification: UNNotification
   ) async -> UNNotificationPresentationOptions {
-    ToastManager.showToast(type: .uploadSuccess) { }
-    onTap: {
-      DeepLinkRouter.shared.pendingDestination = DeepLinkRouter.Destination.profileAfterUpload
+    if isUploadNotification(userInfo: notification.request.content.userInfo) {
+      ToastManager.showToast(type: .uploadSuccess) { }
+      onTap: {
+        DeepLinkRouter.shared.pendingDestination = .profileAfterUpload
+      }
     }
-
     return []
   }
 
@@ -90,6 +93,18 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
 
   func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: any Error) {
     print(error)
+  }
+
+  private func isUploadNotification(userInfo: [AnyHashable: Any]) -> Bool {
+    if let payloadString = userInfo[Constants.payloadString] as? String,
+       let data = payloadString.data(using: .utf8),
+       let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+       let type = json[Constants.typeString] as? String {
+      if type == Constants.videoUploadSuccessType {
+        return true
+      }
+    }
+    return false
   }
 }
 
@@ -163,5 +178,13 @@ struct IosApp: App {
     } catch {
       initializationError = error
     }
+  }
+}
+
+extension AppDelegate {
+  public enum Constants {
+    static let payloadString = "payload"
+    static let typeString = "type"
+    static let videoUploadSuccessType = "VideoUploadSuccessful"
   }
 }
