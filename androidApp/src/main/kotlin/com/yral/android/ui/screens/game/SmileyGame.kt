@@ -48,6 +48,7 @@ fun SmileyGame(
     onDeltaAnimationComplete: () -> Unit,
     showNudge: Boolean,
     setNudgeShown: () -> Unit,
+    trackSmileyGameNudgeShown: () -> Unit,
 ) {
     var animateBubbles by remember { mutableStateOf(false) }
     var iconPositions by remember { mutableStateOf(mapOf<Int, Float>()) }
@@ -79,7 +80,7 @@ fun SmileyGame(
                         null
                     }
                 }
-                if (showNudge) SmileyGameNudge()
+                if (showNudge) SmileyGameNudge(trackSmileyGameNudgeShown)
                 GameIconStrip(
                     modifier = Modifier.align(Alignment.BottomCenter),
                     gameIcons = gameIcons,
@@ -157,7 +158,7 @@ private fun BoxScope.SmileyGameResult(
 }
 
 @Composable
-private fun BoxScope.SmileyGameNudge() {
+private fun BoxScope.SmileyGameNudge(trackSmileyGameNudgeShown: () -> Unit) {
     val infiniteTransition = rememberInfiniteTransition()
     val tweenSpec =
         tween<Float>(
@@ -174,6 +175,10 @@ private fun BoxScope.SmileyGameNudge() {
         targetValue = 0f,
         animationSpec = infiniteRepeatable(tweenSpec, RepeatMode.Reverse),
     )
+    LaunchedEffect(Unit) {
+        delay(NUDGE_ANIMATION_DURATION)
+        trackSmileyGameNudgeShown()
+    }
 
     Box(
         modifier =
