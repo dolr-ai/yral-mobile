@@ -2,7 +2,6 @@ package com.yral.android.ui.screens.feed.uiComponets
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
@@ -65,18 +64,12 @@ fun HowToPlay(
             backgroundVisible = false
         }
     }
-    val animatingPadding by animateFloatAsState(
-        targetValue = if (isExpanded) 4f else 0f,
-        animationSpec = tween(ANIMATION_DURATION),
-        label = "AnimatedPadding",
-    )
-
     LaunchedEffect(pageNo) { if (pageNo >= SHOW_HOW_TO_PLAY_MAX_PAGE) maxPageReached() }
     Row(
         modifier =
             modifier
                 .applyBackground(backgroundVisible)
-                .padding(animatingPadding.dp)
+                .padding(horizontal = 2.dp, vertical = 2.dp)
                 .clickable { onClick() },
         horizontalArrangement = Arrangement.spacedBy(0.dp, Alignment.Start),
         verticalAlignment = Alignment.CenterVertically,
