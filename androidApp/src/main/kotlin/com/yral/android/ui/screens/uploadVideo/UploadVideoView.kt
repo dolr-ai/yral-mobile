@@ -65,7 +65,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.compose.koinInject
 
-const val UPLOAD_BOX_ASPECT_RATIO = 1.18f
+const val UPLOAD_BOX_ASPECT_RATIO = 0.75f
 
 @Composable
 fun UploadVideo(
@@ -323,8 +323,8 @@ private fun VideoSelectionContent(
     onRequestPermissions: () -> Unit,
 ) {
     Column(
-        modifier = Modifier.padding(start = 18.dp, end = 18.dp, top = 83.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+        modifier = Modifier.fillMaxSize().padding(start = 18.dp, end = 18.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
