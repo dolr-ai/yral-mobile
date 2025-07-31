@@ -81,7 +81,8 @@ def exchange_principal_id(request: Request):
             return error_response(405, "METHOD_NOT_ALLOWED", "POST required")
 
         body = request.get_json(silent=True) or {}
-        principal_id = body.get("principal_id", "").strip()
+        data = body.get("data", {})
+        principal_id  = str(body.get("principal_id") or data.get("principal_id") or "").strip()
         if not PID_REGEX.fullmatch(principal_id):
             return error_response(400, "INVALID_PRINCIPAL_ID",
                                   "principal_id must be 6–64 chars A-Z a-z 0-9 _-")
@@ -167,21 +168,31 @@ def update_balance(request: Request):
             return error_response(405, "METHOD_NOW_ALLOWED", "POST required")
 
         body = request.get_json(silent=True) or {}
-        pid  = str(body.get("principal_id", "")).strip()
-        delta = int(body.get("delta", 0))
-        is_airdropped = bool(body.get("is_airdropped", False))
+        data = body.get("data", {})
+        pid = str(data.get("principal_id", "")).strip()
+        delta = int(data.get("delta", 0))
+        is_airdropped = bool(data.get("is_airdropped", False))
 
         auth_header = request.headers.get("Authorization", "")
         if not auth_header.startswith("Bearer "):
             return error_response(401, "MISSING_ID_TOKEN", "Authorization token missing")
         auth.verify_id_token(auth_header.split(" ", 1)[1])
 
+        # ───────── App Check enforcement ─────────
         actok = request.headers.get("X-Firebase-AppCheck")
-        if actok:
-            try:
-                app_check.verify_token(actok)
-            except Exception:
-                return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
+        if not actok:
+            return error_response(
+                401, "APPCHECK_MISSING",
+                "App Check token required"
+            )
+
+        try:
+            app_check.verify_token(actok)
+        except Exception:
+            return error_response(
+                401, "APPCHECK_INVALID",
+                "App Check token invalid"
+            )
 
         push_delta = _push_delta(balance_update_token, pid, delta)
 
@@ -209,7 +220,8 @@ def tap_to_recharge(request: Request):
 
         # 2️⃣ Parse body
         body = request.get_json(silent=True) or {}
-        pid  = str(body.get("principal_id", "")).strip()
+        data = body.get("data", {})
+        pid = str(data.get("principal_id", "")).strip()
         if not pid:
             return error_response(400, "MISSING_PID", "principal_id required")
 
@@ -219,12 +231,21 @@ def tap_to_recharge(request: Request):
             return error_response(401, "MISSING_ID_TOKEN", "Authorization token missing")
         auth.verify_id_token(auth_header.split(" ", 1)[1])
 
+        # ───────── App Check enforcement ─────────
         actok = request.headers.get("X-Firebase-AppCheck")
-        if actok:
-            try:
-                app_check.verify_token(actok)
-            except Exception:
-                return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
+        if not actok:
+            return error_response(
+                401, "APPCHECK_MISSING",
+                "App Check token required"
+            )
+
+        try:
+            app_check.verify_token(actok)
+        except Exception:
+            return error_response(
+                401, "APPCHECK_INVALID",
+                "App Check token invalid"
+            )
 
         # 5️⃣ Ensure balance is zero
         user_ref = db().document(f"users/{pid}")
@@ -265,9 +286,10 @@ def cast_vote(request: Request):
             return error_response(405, "METHOD_NOT_ALLOWED", "POST required")
 
         body = request.get_json(silent=True) or {}
-        pid  = str(body.get("principal_id", "")).strip()
-        vid  = str(body.get("video_id", "")).strip()
-        sid  = str(body.get("smiley_id", "")).strip()
+        data = body.get("data", {})
+        pid  = str(body.get("principal_id") or data.get("principal_id") or "").strip()
+        vid  = str(body.get("video_id") or data.get("video_id") or "").strip()
+        sid  = str(body.get("smiley_id") or data.get("smiley_id") or "").strip()
 
         auth_header = request.headers.get("Authorization", "")
         if not auth_header.startswith("Bearer "):
@@ -414,7 +436,8 @@ def leaderboard(request: Request):
             return error_response(405, "METHOD_NOT_ALLOWED", "POST required")
 
         body = request.get_json(silent=True) or {}
-        pid = str(body.get("principal_id", "")).strip()
+        data = body.get("data", {})
+        pid = str(data.get("principal_id", "")).strip()
         if not pid:
             return error_response(400, "MISSING_PID", "principal_id required")
 
@@ -423,12 +446,21 @@ def leaderboard(request: Request):
             return error_response(401, "MISSING_ID_TOKEN", "Authorization missing")
         auth.verify_id_token(auth_header.split(" ", 1)[1])
 
+        # ───────── App Check enforcement ─────────
         actok = request.headers.get("X-Firebase-AppCheck")
-        if actok:
-            try:
-                app_check.verify_token(actok)
-            except Exception:
-                return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
+        if not actok:
+            return error_response(
+                401, "APPCHECK_MISSING",
+                "App Check token required"
+            )
+
+        try:
+            app_check.verify_token(actok)
+        except Exception:
+            return error_response(
+                401, "APPCHECK_INVALID",
+                "App Check token invalid"
+            )
 
         users = db().collection("users")
         user_ref = users.document(pid)
