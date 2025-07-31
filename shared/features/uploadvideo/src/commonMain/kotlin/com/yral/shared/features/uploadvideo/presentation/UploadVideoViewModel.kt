@@ -164,12 +164,14 @@ class UploadVideoViewModel internal constructor(
             return
         }
 
-        if (currentState.caption.isBlank()) {
+        @Suppress("SimplifyBooleanWithConstants")
+        if (IS_CAPTION_REQUIRED && currentState.caption.isBlank()) {
             send(Event.ShowInputError.AddCaption)
             return
         }
 
-        if (currentState.hashtags.isEmpty()) {
+        @Suppress("SimplifyBooleanWithConstants")
+        if (IS_HASHTAGS_REQUIRED && currentState.hashtags.isEmpty()) {
             send(Event.ShowInputError.AddHashtags)
             return
         }
@@ -303,11 +305,14 @@ class UploadVideoViewModel internal constructor(
                     }
 
                 // Perform the actual metadata update
-                updateMeta(UpdateMetaUseCase.Param(uploadFileRequest))
+                val result = updateMeta(UpdateMetaUseCase.Param(uploadFileRequest))
                 log { "Metadata updated" }
 
                 // Cancel the progress animation and set to 100%
                 progressJob.cancel()
+
+                result.getOrThrow()
+
                 _state.update { it.copy(updateMetadataUiState = UiState.InProgress(1.0f)) }
 
                 // Small delay to show 100% progress before transitioning to success
@@ -441,9 +446,13 @@ class UploadVideoViewModel internal constructor(
     ) {
         val canUpload: Boolean =
             !selectedFilePath.isNullOrBlank() &&
-                caption.isNotBlank() &&
-                hashtags.isNotEmpty() &&
+                isCaptionValid() &&
+                isHashtagsValid() &&
                 updateMetadataUiState !is UiState.InProgress
+
+        private fun isCaptionValid() = if (IS_CAPTION_REQUIRED) caption.isNotBlank() else true
+
+        private fun isHashtagsValid() = if (IS_HASHTAGS_REQUIRED) hashtags.isNotEmpty() else true
 
         // Unified upload state that shows the complete flow progress to the user
         // updateMetadataUiState is given priority over fileUploadUiState as uploadUiState should be
@@ -485,5 +494,7 @@ class UploadVideoViewModel internal constructor(
         private const val FAKE_PROGRESS_ANIMATION_DURATION_MS = 2000L // 2 seconds total animation
         private const val FAKE_PROGRESS_STEPS = 40
         private const val SUCCESS_TRANSITION_DELAY_MS = 200L // 200 ms delay after success
+        private const val IS_CAPTION_REQUIRED = false
+        private const val IS_HASHTAGS_REQUIRED = false
     }
 }
