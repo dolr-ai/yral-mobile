@@ -46,9 +46,8 @@ fun SmileyGame(
     onIconClicked: (emoji: GameIcon, isTutorialVote: Boolean) -> Unit,
     hasShownCoinDeltaAnimation: Boolean,
     onDeltaAnimationComplete: () -> Unit,
-    showNudge: Boolean,
-    setNudgeShown: () -> Unit,
-    trackSmileyGameNudgeShown: () -> Unit,
+    shouldShowNudge: Boolean,
+    onNudgeAnimationComplete: () -> Unit,
 ) {
     var animateBubbles by remember { mutableStateOf(false) }
     var iconPositions by remember { mutableStateOf(mapOf<Int, Float>()) }
@@ -70,17 +69,17 @@ fun SmileyGame(
             }
             else -> {
                 var animatingNudgeIconPosition by remember { mutableStateOf<Int?>(null) }
-                LaunchedEffect(showNudge) {
-                    if (showNudge) {
+                LaunchedEffect(shouldShowNudge) {
+                    if (shouldShowNudge) {
                         animatingNudgeIconPosition = 0
                         delay(NUDGE_DURATION)
                         animatingNudgeIconPosition = null
-                        setNudgeShown()
+                        onNudgeAnimationComplete()
                     } else {
                         null
                     }
                 }
-                if (showNudge) SmileyGameNudge(trackSmileyGameNudgeShown)
+                if (animatingNudgeIconPosition != null) SmileyGameNudge()
                 GameIconStrip(
                     modifier = Modifier.align(Alignment.BottomCenter),
                     gameIcons = gameIcons,
@@ -102,7 +101,7 @@ fun SmileyGame(
                     },
                     setNudgeShown = {
                         animatingNudgeIconPosition = null
-                        setNudgeShown()
+                        onNudgeAnimationComplete()
                     },
                 )
             }
@@ -158,7 +157,7 @@ private fun BoxScope.SmileyGameResult(
 }
 
 @Composable
-private fun BoxScope.SmileyGameNudge(trackSmileyGameNudgeShown: () -> Unit) {
+private fun BoxScope.SmileyGameNudge() {
     val infiniteTransition = rememberInfiniteTransition()
     val tweenSpec =
         tween<Float>(
@@ -175,11 +174,6 @@ private fun BoxScope.SmileyGameNudge(trackSmileyGameNudgeShown: () -> Unit) {
         targetValue = 0f,
         animationSpec = infiniteRepeatable(tweenSpec, RepeatMode.Reverse),
     )
-    LaunchedEffect(Unit) {
-        delay(NUDGE_ANIMATION_DURATION)
-        trackSmileyGameNudgeShown()
-    }
-
     Box(
         modifier =
             Modifier
@@ -222,5 +216,4 @@ private fun Int.toSignedString(): String =
 object SmileyGameConstants {
     const val NUDGE_ANIMATION_DURATION = 600L
     const val NUDGE_DURATION = 3000L
-    const val NUDGE_PAGE = 3
 }
