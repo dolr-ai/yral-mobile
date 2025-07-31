@@ -398,6 +398,7 @@ data class GameVotedEventData(
     @SerialName("stake_amount") val stakeAmount: Int,
     @SerialName("stake_type") val stakeType: StakeType,
     @SerialName("option_chosen") val optionChosen: String,
+    @SerialName("is_tutorial_vote") val isTutorialVote: Boolean,
 ) : BaseEventData(),
     EventData {
     constructor(
@@ -411,6 +412,7 @@ data class GameVotedEventData(
         stakeAmount: Int,
         stakeType: StakeType,
         optionChosen: String,
+        isTutorialVote: Boolean,
     ) : this(
         FeatureEvents.GAME_VOTED.getEventName(),
         Features.AUTH.getFeatureName(),
@@ -424,6 +426,7 @@ data class GameVotedEventData(
         stakeAmount,
         stakeType,
         optionChosen,
+        isTutorialVote,
     )
 }
 
@@ -443,6 +446,7 @@ data class GamePlayedEventData(
     @SerialName("option_chosen") val optionChosen: String,
     @SerialName("conclusion") val gameResult: GameResult,
     @SerialName("won_loss_amount") val wonLossAmount: Int,
+    @SerialName("is_tutorial_vote") val isTutorialVote: Boolean,
 ) : BaseEventData(),
     EventData {
     constructor(
@@ -458,6 +462,7 @@ data class GamePlayedEventData(
         optionChosen: String,
         gameResult: GameResult,
         wonLossAmount: Int,
+        isTutorialVote: Boolean,
     ) : this(
         FeatureEvents.GAME_PLAYED.getEventName(),
         Features.AUTH.getFeatureName(),
@@ -473,6 +478,7 @@ data class GamePlayedEventData(
         optionChosen,
         gameResult,
         abs(wonLossAmount),
+        isTutorialVote,
     )
 }
 
@@ -501,6 +507,40 @@ data class GameConcludedBottomsheetClickedEventData(
         gameResult,
         abs(wonLossAmount),
         ctaType,
+    )
+}
+
+@Serializable
+data class GameTutorialShownEventData(
+    @SerialName("event") override val event: String = FeatureEvents.GAME_TUTORIAL_SHOWN.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.FEED.getFeatureName(),
+    @SerialName("video_id") val videoId: String,
+    @SerialName("publisher_user_id") val publisherUserId: String,
+    @SerialName("like_count") val likeCount: Long,
+    @SerialName("share_count") val shareCount: Long,
+    @SerialName("view_count") val viewCount: Long,
+    @SerialName("game_type") val gameType: GameType,
+    @SerialName("is_nsfw") val isNsfw: Boolean,
+) : BaseEventData(),
+    EventData {
+    constructor(
+        videoId: String,
+        publisherUserId: String,
+        likeCount: Long,
+        shareCount: Long,
+        viewCount: Long,
+        gameType: GameType,
+        isNsfw: Boolean,
+    ) : this(
+        FeatureEvents.GAME_TUTORIAL_SHOWN.getEventName(),
+        Features.FEED.getFeatureName(),
+        videoId,
+        publisherUserId,
+        likeCount,
+        shareCount,
+        viewCount,
+        gameType,
+        isNsfw,
     )
 }
 

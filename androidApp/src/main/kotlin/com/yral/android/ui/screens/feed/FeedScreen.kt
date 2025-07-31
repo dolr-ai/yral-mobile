@@ -60,6 +60,7 @@ import com.yral.shared.features.feed.viewmodel.OverlayType
 import com.yral.shared.features.feed.viewmodel.ReportSheetState
 import com.yral.shared.features.game.viewmodel.GameState
 import com.yral.shared.features.game.viewmodel.GameViewModel
+import com.yral.shared.features.game.viewmodel.GameViewModel.Companion.NUDGE_PAGE
 import com.yral.shared.libs.videoPlayer.YRALReelPlayer
 import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.rust.domain.models.FeedDetails
@@ -403,10 +404,12 @@ private fun BottomView(
                 Modifier
                     .align(Alignment.BottomStart)
                     .padding(start = 16.dp, bottom = 105.dp),
-            shouldExpand = !gameState.isHowToPlayShown,
-            pageNo = pageNo,
+            shouldExpand =
+                pageNo < gameState.isHowToPlayShown.size &&
+                    !gameState.isHowToPlayShown[pageNo] &&
+                    pageNo == state.currentPageOfFeed,
             onClick = { gameViewModel.toggleAboutGame(true) },
-            maxPageReached = { gameViewModel.setHowToPlayShown() },
+            onAnimationComplete = { gameViewModel.setHowToPlayShown(pageNo, state.currentPageOfFeed) },
         )
         ActionsRight(
             modifier =
@@ -476,10 +479,11 @@ private fun Game(
         SmileyGame(
             gameIcons = gameState.gameIcons,
             clickedIcon = gameState.gameResult[state.feedDetails[pageNo].videoID]?.first,
-            onIconClicked = {
+            onIconClicked = { icon, isTutorialVote ->
                 gameViewModel.setClickedIcon(
-                    icon = it,
+                    icon = icon,
                     feedDetails = state.feedDetails[pageNo],
+                    isTutorialVote = isTutorialVote,
                 )
             },
             coinDelta = gameViewModel.getFeedGameResult(state.feedDetails[pageNo].videoID),
@@ -487,12 +491,19 @@ private fun Game(
             isLoading = gameState.isLoading,
             hasShownCoinDeltaAnimation =
                 gameViewModel.hasShownCoinDeltaAnimation(
-                    state.feedDetails[pageNo].videoID,
+                    videoId = state.feedDetails[pageNo].videoID,
                 ),
             onDeltaAnimationComplete = {
                 gameViewModel.markCoinDeltaAnimationShown(
-                    state.feedDetails[pageNo].videoID,
+                    videoId = state.feedDetails[pageNo].videoID,
                 )
+            },
+            shouldShowNudge =
+                !gameState.isSmileyGameNudgeShown &&
+                    pageNo >= NUDGE_PAGE &&
+                    pageNo == state.currentPageOfFeed,
+            onNudgeAnimationComplete = {
+                gameViewModel.setSmileyGameNudgeShown(state.feedDetails[pageNo])
             },
         )
     }

@@ -19,6 +19,7 @@ import com.yral.shared.features.game.domain.models.CastVoteRequest
 import com.yral.shared.features.game.domain.models.GameIcon
 import com.yral.shared.features.game.domain.models.VoteResult
 import com.yral.shared.features.game.domain.models.toVoteResult
+import com.yral.shared.features.game.viewmodel.GameViewModel.Companion.SHOW_HOW_TO_PLAY_MAX_PAGE
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import com.yral.shared.rust.domain.models.FeedDetails
@@ -55,13 +56,7 @@ class GameViewModel(
 
     init {
         coroutineScope.launch {
-            // Get result sheet shown preference outside state update
-            preferences.getBoolean(PrefKeys.IS_RESULT_SHEET_SHOWN.name)?.let { shown ->
-                _state.update { it.copy(isResultSheetShown = shown) }
-            }
-            preferences.getBoolean(PrefKeys.HOW_TO_PLAY_SHOWN.name)?.let { shown ->
-                _state.update { it.copy(isHowToPlayShown = shown) }
-            }
+            restoreDataFromPrefs()
             listOf(
                 async { getGameRules() },
                 async { getGameIcons() },
@@ -70,11 +65,24 @@ class GameViewModel(
         viewModelScope.launch {
             // Observe coin balance changes
             sessionManager.observeSessionProperties().collect { properties ->
-                Logger.d("xxxx coin balance collected ${properties.coinBalance}")
+                Logger.d("coinBalance") { "coin balance collected ${properties.coinBalance}" }
                 properties.coinBalance?.let { balance ->
                     _state.update { it.copy(coinBalance = balance) }
                 }
             }
+        }
+    }
+
+    private suspend fun restoreDataFromPrefs() {
+        val resultShown = preferences.getBoolean(PrefKeys.IS_RESULT_SHEET_SHOWN.name) ?: false
+        val howToPlayShown = preferences.getBoolean(PrefKeys.HOW_TO_PLAY_SHOWN.name) ?: false
+        val smileyGameNudgeShown = preferences.getBoolean(PrefKeys.SMILEY_GAME_NUDGE_SHOWN.name) ?: false
+        _state.update {
+            it.copy(
+                isResultSheetShown = resultShown,
+                isHowToPlayShown = if (howToPlayShown) it.isHowToPlayShown.map { true } else it.isHowToPlayShown,
+                isSmileyGameNudgeShown = smileyGameNudgeShown,
+            )
         }
     }
 
@@ -106,6 +114,7 @@ class GameViewModel(
     fun setClickedIcon(
         icon: GameIcon,
         feedDetails: FeedDetails,
+        isTutorialVote: Boolean,
     ) {
         coroutineScope.launch {
             _state.update { currentState ->
@@ -123,6 +132,7 @@ class GameViewModel(
                     feedDetails = feedDetails,
                     lossPenalty = _state.value.lossPenalty,
                     optionChosen = icon.imageName.name.lowercase(),
+                    isTutorialVote = isTutorialVote,
                 )
                 castVoteUseCase
                     .invoke(
@@ -138,6 +148,7 @@ class GameViewModel(
                             voteResult = result.toVoteResult(),
                             feedDetails = feedDetails,
                             icon = icon,
+                            isTutorialVote = isTutorialVote,
                         )
                     }.onFailure { setLoading(false) }
             }
@@ -187,6 +198,7 @@ class GameViewModel(
         voteResult: VoteResult,
         feedDetails: FeedDetails,
         icon: GameIcon,
+        isTutorialVote: Boolean,
     ) {
         coroutineScope.launch {
             // Get current state once to avoid multiple reads
@@ -233,6 +245,7 @@ class GameViewModel(
                 lossPenalty = _state.value.lossPenalty,
                 optionChosen = icon.imageName.name.lowercase(),
                 coinDelta = voteResult.coinDelta,
+                isTutorialVote = isTutorialVote,
             )
         }
     }
@@ -304,11 +317,43 @@ class GameViewModel(
         // setHowToPlayShown(false)
     }
 
-    fun setHowToPlayShown() {
-        _state.update { it.copy(isHowToPlayShown = true) }
-        coroutineScope.launch {
-            preferences.putBoolean(PrefKeys.HOW_TO_PLAY_SHOWN.name, true)
+    fun setHowToPlayShown(
+        pageNo: Int,
+        currentPage: Int,
+    ) {
+        if (pageNo > SHOW_HOW_TO_PLAY_MAX_PAGE || pageNo != currentPage) {
+            Logger.d("xxxx") { "Skipping 'how to play' update for page $pageNo" }
+            return
         }
+        Logger.d("xxxx") { "Setting 'how to play' shown for page $pageNo" }
+        _state.update { state ->
+            val updatedList =
+                state.isHowToPlayShown.toMutableList().apply {
+                    if (pageNo in indices) this[pageNo] = true
+                }
+            state.copy(isHowToPlayShown = updatedList)
+        }
+        if (_state.value.isHowToPlayShown.all { it }) {
+            Logger.d("xxxx") { "All 'how to play' pages shown. Marking as shown in preferences." }
+            coroutineScope.launch {
+                preferences.putBoolean(PrefKeys.HOW_TO_PLAY_SHOWN.name, true)
+            }
+        }
+    }
+
+    fun setSmileyGameNudgeShown(feedDetails: FeedDetails) {
+        Logger.d("xxxx") { "setSmileyGameNudgeShown ${feedDetails.videoID}" }
+        _state.update { it.copy(isSmileyGameNudgeShown = true) }
+        coroutineScope.launch {
+            Logger.d("xxxx") { "marking smiley game shown" }
+            preferences.putBoolean(PrefKeys.SMILEY_GAME_NUDGE_SHOWN.name, true)
+            gameTelemetry.onGameTutorialShown(feedDetails)
+        }
+    }
+
+    companion object {
+        const val SHOW_HOW_TO_PLAY_MAX_PAGE = 3
+        const val NUDGE_PAGE = 3
     }
 }
 
@@ -322,9 +367,10 @@ data class GameState(
     val showResultSheet: Boolean = false,
     val showAboutGame: Boolean = false,
     val gameRules: List<AboutGameItem>,
-    val isResultSheetShown: Boolean = false,
     val currentVideoId: String = "",
     val lastBalanceDifference: Int = 0,
     val gameType: GameType = GameType.SMILEY,
-    val isHowToPlayShown: Boolean = false,
+    val isResultSheetShown: Boolean = false,
+    val isHowToPlayShown: List<Boolean> = List(SHOW_HOW_TO_PLAY_MAX_PAGE) { false },
+    val isSmileyGameNudgeShown: Boolean = false,
 )
