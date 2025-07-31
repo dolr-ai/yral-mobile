@@ -32,7 +32,6 @@ actual class MixpanelAnalyticsProvider actual constructor(
                     wifiOnly = false,
                     recordingSessionsPercent = 100.0,
                     autoMaskedViews = setOf(AutoMaskedView.Web),
-                    enableLogging = true,
                 ),
         )
     }
