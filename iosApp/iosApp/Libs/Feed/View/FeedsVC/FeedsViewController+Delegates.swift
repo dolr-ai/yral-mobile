@@ -105,7 +105,8 @@ extension FeedsViewController: FeedsCellProtocol {
         isNsfw: false,
         stakeAmount: Int32(item.smileyGame?.config.lossPenalty ?? Int.zero),
         stakeType: StakeType.sats,
-        optionChosen: smileyID
+        optionChosen: smileyID,
+        isTutorialVote: false
       )
     )
   }
