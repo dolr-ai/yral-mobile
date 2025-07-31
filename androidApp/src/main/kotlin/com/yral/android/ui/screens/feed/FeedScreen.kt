@@ -49,7 +49,6 @@ import com.yral.android.ui.screens.game.AboutGameSheet
 import com.yral.android.ui.screens.game.CoinBalance
 import com.yral.android.ui.screens.game.GameResultSheet
 import com.yral.android.ui.screens.game.SmileyGame
-import com.yral.android.ui.screens.game.SmileyGameConstants.NUDGE_PAGE
 import com.yral.android.ui.widgets.YralAsyncImage
 import com.yral.android.ui.widgets.YralErrorMessage
 import com.yral.android.ui.widgets.YralLoader
@@ -61,6 +60,7 @@ import com.yral.shared.features.feed.viewmodel.OverlayType
 import com.yral.shared.features.feed.viewmodel.ReportSheetState
 import com.yral.shared.features.game.viewmodel.GameState
 import com.yral.shared.features.game.viewmodel.GameViewModel
+import com.yral.shared.features.game.viewmodel.GameViewModel.Companion.NUDGE_PAGE
 import com.yral.shared.libs.videoPlayer.YRALReelPlayer
 import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.rust.domain.models.FeedDetails
@@ -404,10 +404,12 @@ private fun BottomView(
                 Modifier
                     .align(Alignment.BottomStart)
                     .padding(start = 16.dp, bottom = 105.dp),
-            shouldExpand = !gameState.isHowToPlayShown,
-            pageNo = pageNo,
+            shouldExpand =
+                pageNo < gameState.isHowToPlayShown.size &&
+                    !gameState.isHowToPlayShown[pageNo] &&
+                    pageNo == state.currentPageOfFeed,
             onClick = { gameViewModel.toggleAboutGame(true) },
-            maxPageReached = { gameViewModel.setHowToPlayShown() },
+            onAnimationComplete = { gameViewModel.setHowToPlayShown(pageNo, state.currentPageOfFeed) },
         )
         ActionsRight(
             modifier =
@@ -496,10 +498,12 @@ private fun Game(
                     videoId = state.feedDetails[pageNo].videoID,
                 )
             },
-            showNudge = !gameState.isSmileyGameNudgeShown && pageNo >= NUDGE_PAGE,
-            setNudgeShown = { gameViewModel.setSmileyGameNudgeShown() },
-            trackSmileyGameNudgeShown = {
-                gameViewModel.trackSmileyGameNudgeShown(state.feedDetails[pageNo])
+            shouldShowNudge =
+                !gameState.isSmileyGameNudgeShown &&
+                    pageNo >= NUDGE_PAGE &&
+                    pageNo == state.currentPageOfFeed,
+            onNudgeAnimationComplete = {
+                gameViewModel.setSmileyGameNudgeShown(state.feedDetails[pageNo])
             },
         )
     }

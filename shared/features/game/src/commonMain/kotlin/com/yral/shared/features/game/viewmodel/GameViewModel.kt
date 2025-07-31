@@ -19,6 +19,7 @@ import com.yral.shared.features.game.domain.models.CastVoteRequest
 import com.yral.shared.features.game.domain.models.GameIcon
 import com.yral.shared.features.game.domain.models.VoteResult
 import com.yral.shared.features.game.domain.models.toVoteResult
+import com.yral.shared.features.game.viewmodel.GameViewModel.Companion.SHOW_HOW_TO_PLAY_MAX_PAGE
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import com.yral.shared.rust.domain.models.FeedDetails
@@ -64,7 +65,7 @@ class GameViewModel(
         viewModelScope.launch {
             // Observe coin balance changes
             sessionManager.observeSessionProperties().collect { properties ->
-                Logger.d("xxxx coin balance collected ${properties.coinBalance}")
+                Logger.d("coinBalance") { "coin balance collected ${properties.coinBalance}" }
                 properties.coinBalance?.let { balance ->
                     _state.update { it.copy(coinBalance = balance) }
                 }
@@ -79,7 +80,7 @@ class GameViewModel(
         _state.update {
             it.copy(
                 isResultSheetShown = resultShown,
-                isHowToPlayShown = howToPlayShown,
+                isHowToPlayShown = if (howToPlayShown) it.isHowToPlayShown.map { true } else it.isHowToPlayShown,
                 isSmileyGameNudgeShown = smileyGameNudgeShown,
             )
         }
@@ -316,24 +317,45 @@ class GameViewModel(
         // setHowToPlayShown(false)
     }
 
-    fun setHowToPlayShown() {
-        _state.update { it.copy(isHowToPlayShown = true) }
-        coroutineScope.launch {
-            preferences.putBoolean(PrefKeys.HOW_TO_PLAY_SHOWN.name, true)
+    fun setHowToPlayShown(
+        pageNo: Int,
+        currentPage: Int,
+    ) {
+        Logger.d("xxxx") { "setting how to play shown for $pageNo" }
+        if (pageNo > SHOW_HOW_TO_PLAY_MAX_PAGE || pageNo != currentPage) return
+        _state.update {
+            it.copy(
+                isHowToPlayShown =
+                    it.isHowToPlayShown
+                        .toMutableList()
+                        .also { list ->
+                            if (pageNo in list.indices) {
+                                list[pageNo] = true
+                            }
+                        },
+            )
+        }
+        if (!_state.value.isHowToPlayShown.contains(false)) {
+            Logger.d("xxxx") { "marking how to play shown" }
+            coroutineScope.launch {
+                preferences.putBoolean(PrefKeys.HOW_TO_PLAY_SHOWN.name, true)
+            }
         }
     }
 
-    fun setSmileyGameNudgeShown() {
+    fun setSmileyGameNudgeShown(feedDetails: FeedDetails) {
+        Logger.d("xxxx") { "setSmileyGameNudgeShown ${feedDetails.videoID}" }
         _state.update { it.copy(isSmileyGameNudgeShown = true) }
         coroutineScope.launch {
+            Logger.d("xxxx") { "marking smiley game shown" }
             preferences.putBoolean(PrefKeys.SMILEY_GAME_NUDGE_SHOWN.name, true)
+            gameTelemetry.onGameTutorialShown(feedDetails)
         }
     }
 
-    fun trackSmileyGameNudgeShown(feedDetails: FeedDetails) {
-        coroutineScope.launch {
-            gameTelemetry.onGameTutorialShown(feedDetails)
-        }
+    companion object {
+        const val SHOW_HOW_TO_PLAY_MAX_PAGE = 3
+        const val NUDGE_PAGE = 3
     }
 }
 
@@ -351,6 +373,6 @@ data class GameState(
     val lastBalanceDifference: Int = 0,
     val gameType: GameType = GameType.SMILEY,
     val isResultSheetShown: Boolean = false,
-    val isHowToPlayShown: Boolean = false,
+    val isHowToPlayShown: List<Boolean> = List(SHOW_HOW_TO_PLAY_MAX_PAGE) { false },
     val isSmileyGameNudgeShown: Boolean = false,
 )
