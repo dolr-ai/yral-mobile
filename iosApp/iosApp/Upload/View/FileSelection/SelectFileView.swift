@@ -40,9 +40,8 @@ struct SelectFileView: View {
           )
       }
     }
-    .frame(maxWidth: .infinity)
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
     .background(Color.black.edgesIgnoringSafeArea(.all))
-    .frame(height: Constants.selectFileViewHeight)
     .overlay {
       RoundedRectangle(cornerRadius: Constants.outerVStackRadius)
         .stroke(Constants.outerVStackStrokeColor, lineWidth: .one)
