@@ -2,6 +2,7 @@ import re, random, string, datetime as _dt, sys
 import firebase_admin
 from firebase_admin import auth, app_check, firestore, functions
 from firebase_functions import https_fn
+from firebase_functions.https_fn import HttpsError, CallableRequest
 from flask import Request, jsonify, make_response
 from google.api_core.exceptions import AlreadyExists, GoogleAPICallError
 from typing import List, Dict, Any
@@ -514,3 +515,78 @@ def leaderboard(request: Request):
     except Exception as e:
         print("Leaderboard error:", e, file=sys.stderr)
         return error_response(500, "INTERNAL", "Internal server error")
+
+@https_fn.on_call(region="us-central1", enforce_app_check=True)
+def leaderboard_call(req: CallableRequest):
+    """
+    Returns
+    {
+      "user_row": { principal_id, wins, position },
+      "top_rows": [ … max 10 rows … ]
+    }
+    """
+
+    data = req.data or {}
+    context = req.context
+
+    # ── 1. Auth / App Check are already verified by decorators ─────────
+    if not context.auth:
+        raise HttpsError("unauthenticated", "Login required")
+
+    pid = str(data.get("principal_id") or context.auth.uid).strip()
+    if not pid:
+        raise HttpsError("invalid-argument", "principal_id required")
+
+    try:
+        users = db().collection("users")
+        user_ref = users.document(pid)
+
+        # current user stats ------------------------------------------------
+        user_snap = user_ref.get()
+        user_wins = int(user_snap.get("smiley_game_wins") or 0)
+
+        rank_q = (
+            users.where("smiley_game_wins", ">", user_wins)
+                 .count()
+                 .get()
+        )
+        user_position = int(rank_q[0][0].value) + 1
+
+        # top-10 ------------------------------------------------------------
+        top_snaps = (
+            users.order_by("smiley_game_wins", direction=firestore.Query.DESCENDING)
+                 .limit(10)
+                 .stream()
+        )
+
+        top_rows  = []
+        current_rank, last_wins = 0, None
+
+        for snap in top_snaps:
+            wins = int(snap.get("smiley_game_wins") or 0)
+            if wins != last_wins:
+                current_rank += 1         # dense ranking
+                last_wins = wins
+            top_rows.append({
+                "principal_id": snap.id,
+                "wins": wins,
+                "position": current_rank
+            })
+
+        # caller row
+        user_row = {
+            "principal_id": pid,
+            "wins": user_wins,
+            "position": user_position
+        }
+
+        return {
+            "user_row": user_row,
+            "top_rows": top_rows
+        }
+
+    except GoogleAPICallError as e:
+        raise HttpsError("internal", f"Firestore error: {e.message}")
+    except Exception as e:
+        print("Leaderboard error:", e, file=sys.stderr)
+        raise HttpsError("internal", "Internal server error")
