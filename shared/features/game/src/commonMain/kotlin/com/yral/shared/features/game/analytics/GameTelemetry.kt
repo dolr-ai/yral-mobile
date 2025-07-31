@@ -5,6 +5,7 @@ import com.yral.shared.analytics.events.GameConcludedBottomsheetClickedEventData
 import com.yral.shared.analytics.events.GameConcludedCtaType
 import com.yral.shared.analytics.events.GamePlayedEventData
 import com.yral.shared.analytics.events.GameResult
+import com.yral.shared.analytics.events.GameTutorialShownEventData
 import com.yral.shared.analytics.events.GameType
 import com.yral.shared.analytics.events.GameVotedEventData
 import com.yral.shared.analytics.events.StakeType
@@ -17,6 +18,7 @@ class GameTelemetry(
         feedDetails: FeedDetails,
         lossPenalty: Int,
         optionChosen: String,
+        isTutorialVote: Boolean,
     ) {
         analyticsManager.trackEvent(
             event =
@@ -31,6 +33,7 @@ class GameTelemetry(
                     stakeType = StakeType.SATS,
                     stakeAmount = lossPenalty,
                     optionChosen = optionChosen,
+                    isTutorialVote = isTutorialVote,
                 ),
         )
     }
@@ -40,6 +43,7 @@ class GameTelemetry(
         lossPenalty: Int,
         optionChosen: String,
         coinDelta: Int,
+        isTutorialVote: Boolean,
     ) {
         analyticsManager.trackEvent(
             event =
@@ -56,6 +60,7 @@ class GameTelemetry(
                     optionChosen = optionChosen,
                     gameResult = if (coinDelta > 0) GameResult.WIN else GameResult.LOSS,
                     wonLossAmount = coinDelta,
+                    isTutorialVote = isTutorialVote,
                 ),
         )
     }
@@ -73,6 +78,21 @@ class GameTelemetry(
                     gameResult = if (coinDelta > 0) GameResult.WIN else GameResult.LOSS,
                     wonLossAmount = coinDelta,
                     ctaType = ctaType,
+                ),
+        )
+    }
+
+    fun onGameTutorialShown(feedDetails: FeedDetails) {
+        analyticsManager.trackEvent(
+            event =
+                GameTutorialShownEventData(
+                    videoId = feedDetails.videoID,
+                    publisherUserId = feedDetails.principalID,
+                    likeCount = feedDetails.likeCount.toLong(),
+                    viewCount = feedDetails.viewCount.toLong(),
+                    isNsfw = feedDetails.isNSFW(),
+                    shareCount = 0,
+                    gameType = GameType.SMILEY,
                 ),
         )
     }

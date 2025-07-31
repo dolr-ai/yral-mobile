@@ -10,4 +10,5 @@ enum class PrefKeys {
     CANISTER_ID,
     USER_PRINCIPAL,
     HOW_TO_PLAY_SHOWN,
+    SMILEY_GAME_NUDGE_SHOWN,
 }

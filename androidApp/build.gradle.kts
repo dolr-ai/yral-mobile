@@ -1,4 +1,3 @@
-import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
 import com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension
 import java.util.Locale
 

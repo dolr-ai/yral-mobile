@@ -22,7 +22,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,33 +37,29 @@ import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.feed.uiComponets.HowToPlayConstants.ANIMATION_DURATION
 import com.yral.android.ui.screens.feed.uiComponets.HowToPlayConstants.AUTO_CLOSE_DELAY
 import com.yral.android.ui.screens.feed.uiComponets.HowToPlayConstants.PAGE_SET_DELAY
-import com.yral.android.ui.screens.feed.uiComponets.HowToPlayConstants.SHOW_HOW_TO_PLAY_MAX_PAGE
 import kotlinx.coroutines.delay
 
 @Composable
 fun HowToPlay(
     modifier: Modifier,
-    pageNo: Int,
     shouldExpand: Boolean,
     onClick: () -> Unit,
-    maxPageReached: () -> Unit,
+    onAnimationComplete: () -> Unit = {},
 ) {
     var backgroundVisible by remember { mutableStateOf(false) }
     var isExpanded by remember { mutableStateOf(false) }
-
-    val expandKey = rememberUpdatedState(shouldExpand && pageNo < SHOW_HOW_TO_PLAY_MAX_PAGE)
-    LaunchedEffect(expandKey.value) {
+    LaunchedEffect(shouldExpand) {
         delay(PAGE_SET_DELAY)
-        if (expandKey.value) {
+        if (shouldExpand) {
             backgroundVisible = true
             isExpanded = true
             delay(AUTO_CLOSE_DELAY)
             isExpanded = false
             delay(ANIMATION_DURATION.toLong() / 2)
             backgroundVisible = false
+            onAnimationComplete()
         }
     }
-    LaunchedEffect(pageNo) { if (pageNo >= SHOW_HOW_TO_PLAY_MAX_PAGE) maxPageReached() }
     Row(
         modifier =
             modifier
@@ -115,5 +110,4 @@ object HowToPlayConstants {
     const val PAGE_SET_DELAY = 700L
     const val ANIMATION_DURATION = 700
     const val AUTO_CLOSE_DELAY = 3000L
-    const val SHOW_HOW_TO_PLAY_MAX_PAGE = 3
 }
