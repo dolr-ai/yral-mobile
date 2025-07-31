@@ -1,22 +1,22 @@
 package com.yral.shared.features.game.domain
 
 import com.github.michaelbull.result.getOrThrow
-import com.yral.shared.core.dispatchers.AppDispatchers
-import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.game.data.models.toAboutGameItem
 import com.yral.shared.features.game.domain.models.AboutGameItem
 import com.yral.shared.firebaseStore.getDownloadUrl
 import com.yral.shared.firebaseStore.model.AboutGameItemDto
 import com.yral.shared.firebaseStore.usecase.GetCollectionUseCase
-import com.yral.shared.libs.useCase.SuspendUseCase
+import com.yral.shared.libs.arch.domain.SuspendUseCase
+import com.yral.shared.libs.arch.domain.UseCaseFailureListener
+import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import dev.gitlive.firebase.storage.FirebaseStorage
 
 class GetGameRulesUseCase(
     appDispatchers: AppDispatchers,
-    crashlyticsManager: CrashlyticsManager,
+    useCaseFailureListener: UseCaseFailureListener,
     private val getAboutUseCase: GetCollectionUseCase<AboutGameItemDto>,
     private val firebaseStorage: FirebaseStorage,
-) : SuspendUseCase<Unit, List<AboutGameItem>>(appDispatchers.io, crashlyticsManager) {
+) : SuspendUseCase<Unit, List<AboutGameItem>>(appDispatchers.network, useCaseFailureListener) {
     override suspend fun execute(parameter: Unit): List<AboutGameItem> {
         val rules =
             getAboutUseCase

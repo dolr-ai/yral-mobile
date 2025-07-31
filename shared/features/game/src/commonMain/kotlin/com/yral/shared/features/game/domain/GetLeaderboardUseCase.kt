@@ -1,20 +1,20 @@
 package com.yral.shared.features.game.domain
 
 import com.github.michaelbull.result.getOrThrow
-import com.yral.shared.core.dispatchers.AppDispatchers
-import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.game.domain.models.LeaderboardItem
 import com.yral.shared.features.game.domain.models.toLeaderboardItem
 import com.yral.shared.firebaseStore.model.LeaderboardItemDto
 import com.yral.shared.firebaseStore.model.QueryOptions
 import com.yral.shared.firebaseStore.usecase.GetCollectionUseCase
-import com.yral.shared.libs.useCase.SuspendUseCase
+import com.yral.shared.libs.arch.domain.SuspendUseCase
+import com.yral.shared.libs.arch.domain.UseCaseFailureListener
+import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 
 class GetLeaderboardUseCase(
     appDispatchers: AppDispatchers,
-    crashlyticsManager: CrashlyticsManager,
+    useCaseFailureListener: UseCaseFailureListener,
     private val getLeaderboard: GetCollectionUseCase<LeaderboardItemDto>,
-) : SuspendUseCase<Unit, List<LeaderboardItem>>(appDispatchers.io, crashlyticsManager) {
+) : SuspendUseCase<Unit, List<LeaderboardItem>>(appDispatchers.network, useCaseFailureListener) {
     override suspend fun execute(parameter: Unit): List<LeaderboardItem> {
         val leaderboard =
             getLeaderboard

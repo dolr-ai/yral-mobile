@@ -5,11 +5,11 @@ import com.yral.shared.features.feed.data.FeedRemoteDataSource
 import com.yral.shared.features.feed.data.FeedRepository
 import com.yral.shared.features.feed.data.IFeedRemoteDataSource
 import com.yral.shared.features.feed.domain.IFeedRepository
-import com.yral.shared.features.feed.useCases.CheckVideoVoteUseCase
-import com.yral.shared.features.feed.useCases.FetchFeedDetailsUseCase
-import com.yral.shared.features.feed.useCases.FetchMoreFeedUseCase
-import com.yral.shared.features.feed.useCases.GetInitialFeedUseCase
-import com.yral.shared.features.feed.useCases.ReportVideoUseCase
+import com.yral.shared.features.feed.domain.useCases.CheckVideoVoteUseCase
+import com.yral.shared.features.feed.domain.useCases.FetchFeedDetailsUseCase
+import com.yral.shared.features.feed.domain.useCases.FetchMoreFeedUseCase
+import com.yral.shared.features.feed.domain.useCases.GetInitialFeedUseCase
+import com.yral.shared.features.feed.domain.useCases.ReportVideoUseCase
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.RequiredUseCases
 import org.koin.core.module.dsl.bind

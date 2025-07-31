@@ -1,17 +1,15 @@
 package com.yral.shared.features.game.viewmodel
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
-import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.features.game.analytics.LeaderBoardTelemetry
 import com.yral.shared.features.game.domain.GetCurrentUserInfoUseCase
 import com.yral.shared.features.game.domain.GetLeaderboardUseCase
 import com.yral.shared.features.game.domain.models.CurrentUserInfo
 import com.yral.shared.features.game.domain.models.LeaderboardItem
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,14 +19,11 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class LeaderBoardViewModel(
-    appDispatchers: AppDispatchers,
     private val getLeaderboardUseCase: GetLeaderboardUseCase,
     private val getCurrentUserInfoUseCase: GetCurrentUserInfoUseCase,
     private val sessionManager: SessionManager,
     val leaderBoardTelemetry: LeaderBoardTelemetry,
 ) : ViewModel() {
-    private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.io)
-
     private val _state = MutableStateFlow(LeaderBoardState())
     val state: StateFlow<LeaderBoardState> = _state.asStateFlow()
 
@@ -37,7 +32,7 @@ class LeaderBoardViewModel(
     }
 
     private fun loadData() {
-        coroutineScope.launch {
+        viewModelScope.launch {
             _state.update { it.copy(isLoading = true, error = null) }
             sessionManager.userPrincipal?.let { userPrincipal ->
                 listOf(
@@ -50,9 +45,6 @@ class LeaderBoardViewModel(
     }
 
     fun refreshData() {
-        _state.update { currentState ->
-            currentState.copy(error = null)
-        }
         loadData()
     }
 
@@ -60,9 +52,7 @@ class LeaderBoardViewModel(
         getLeaderboardUseCase
             .invoke(Unit)
             .onSuccess { leaderboard ->
-                _state.update { currentState ->
-                    currentState.copy(leaderboard = leaderboard)
-                }
+                _state.update { it.copy(leaderboard = leaderboard) }
             }.onFailure { error ->
                 _state.update { it.copy(error = "Failed to load leaderboard: ${error.message}") }
             }
@@ -72,22 +62,14 @@ class LeaderBoardViewModel(
         getCurrentUserInfoUseCase
             .invoke(GetCurrentUserInfoUseCase.Params(userPrincipalId))
             .onSuccess { userInfo ->
-                _state.update { currentState ->
-                    currentState.copy(currentUser = userInfo)
-                }
+                _state.update { it.copy(currentUser = userInfo) }
             }.onFailure { error ->
-                _state.update {
-                    it.copy(error = "Failed to load current user info: ${error.message}")
-                }
+                _state.update { it.copy(error = "Failed to load current user info: ${error.message}") }
             }
     }
 
     fun updateCurrentUserRank(newRank: Int) {
-        _state.update { currentState ->
-            currentState.copy(
-                currentUser = currentState.currentUser?.copy(rank = newRank),
-            )
-        }
+        _state.update { it.copy(currentUser = it.currentUser?.copy(rank = newRank)) }
     }
 }
 

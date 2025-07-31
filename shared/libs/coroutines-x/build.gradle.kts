@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.yral.shared.library)
     alias(libs.plugins.yral.android.library)
+    alias(libs.plugins.gobleyRust)
 }
 
 kotlin {
