@@ -9,6 +9,7 @@
 final class LeaderboardDIContainer {
   struct Dependencies {
     let firebaseService: FirebaseService
+    let httpService: HTTPService
     let crashReporter: CrashReporter
     let authClient: AuthClient
     let session: SessionManager
@@ -23,6 +24,7 @@ final class LeaderboardDIContainer {
   func makeLeaderboardRepositry() -> LeaderboardRepository {
     LeaderboardRepository(
       firebaseService: dependencies.firebaseService,
+      httpService: dependencies.httpService,
       authClient: dependencies.authClient
     )
   }

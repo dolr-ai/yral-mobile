@@ -2,6 +2,7 @@ import re, random, string, datetime as _dt, sys
 import firebase_admin
 from firebase_admin import auth, app_check, firestore, functions
 from firebase_functions import https_fn
+from firebase_functions.https_fn import HttpsError, CallableRequest
 from flask import Request, jsonify, make_response
 from google.api_core.exceptions import AlreadyExists, GoogleAPICallError
 from typing import List, Dict, Any
@@ -81,7 +82,8 @@ def exchange_principal_id(request: Request):
             return error_response(405, "METHOD_NOT_ALLOWED", "POST required")
 
         body = request.get_json(silent=True) or {}
-        principal_id = body.get("principal_id", "").strip()
+        data = body.get("data", {})
+        principal_id  = str(body.get("principal_id") or data.get("principal_id") or "").strip()
         if not PID_REGEX.fullmatch(principal_id):
             return error_response(400, "INVALID_PRINCIPAL_ID",
                                   "principal_id must be 6–64 chars A-Z a-z 0-9 _-")
@@ -92,7 +94,6 @@ def exchange_principal_id(request: Request):
         caller_token = auth.verify_id_token(auth_header.split(" ", 1)[1])
         old_uid = caller_token["uid"]                      # could equal principal_id
 
-        # optional App Check
         actok = request.headers.get("X-Firebase-AppCheck")
         if actok:
             try:
@@ -114,7 +115,7 @@ def exchange_principal_id(request: Request):
         def _ensure_profile(tx: firestore.Transaction):
             if not new_ref.get(transaction=tx).exists:
                 tx.set(new_ref,
-                       {"created_at": firestore.SERVER_TIMESTAMP})
+                       {"created_at": firestore.SERVER_TIMESTAMP, "smiley_game_wins": 0, "smiley_game_losses": 0})
 
             if old_ref:
                 tx.delete(old_ref)                 # discard temp profile
@@ -168,21 +169,31 @@ def update_balance(request: Request):
             return error_response(405, "METHOD_NOW_ALLOWED", "POST required")
 
         body = request.get_json(silent=True) or {}
-        pid  = str(body.get("principal_id", "")).strip()
-        delta = int(body.get("delta", 0))
-        is_airdropped = bool(body.get("is_airdropped", False))
+        data = body.get("data", {})
+        pid = str(data.get("principal_id", "")).strip()
+        delta = int(data.get("delta", 0))
+        is_airdropped = bool(data.get("is_airdropped", False))
 
         auth_header = request.headers.get("Authorization", "")
         if not auth_header.startswith("Bearer "):
             return error_response(401, "MISSING_ID_TOKEN", "Authorization token missing")
         auth.verify_id_token(auth_header.split(" ", 1)[1])
 
+        # ───────── App Check enforcement ─────────
         actok = request.headers.get("X-Firebase-AppCheck")
-        if actok:
-            try:
-                app_check.verify_token(actok)
-            except Exception:
-                return error_response(401, "APPCHECK_INVALID", "App Check invalid")
+        if not actok:
+            return error_response(
+                401, "APPCHECK_MISSING",
+                "App Check token required"
+            )
+
+        try:
+            app_check.verify_token(actok)
+        except Exception:
+            return error_response(
+                401, "APPCHECK_INVALID",
+                "App Check token invalid"
+            )
 
         push_delta = _push_delta(balance_update_token, pid, delta)
 
@@ -210,7 +221,8 @@ def tap_to_recharge(request: Request):
 
         # 2️⃣ Parse body
         body = request.get_json(silent=True) or {}
-        pid  = str(body.get("principal_id", "")).strip()
+        data = body.get("data", {})
+        pid = str(data.get("principal_id", "")).strip()
         if not pid:
             return error_response(400, "MISSING_PID", "principal_id required")
 
@@ -220,13 +232,21 @@ def tap_to_recharge(request: Request):
             return error_response(401, "MISSING_ID_TOKEN", "Authorization token missing")
         auth.verify_id_token(auth_header.split(" ", 1)[1])
 
-        # 4️⃣ App Check
-        ac_token = request.headers.get("X-Firebase-AppCheck")
-        if ac_token:
-            try:
-                app_check.verify_token(ac_token)
-            except Exception:
-                return error_response(401, "APPCHECK_INVALID", "App Check invalid")
+        # ───────── App Check enforcement ─────────
+        actok = request.headers.get("X-Firebase-AppCheck")
+        if not actok:
+            return error_response(
+                401, "APPCHECK_MISSING",
+                "App Check token required"
+            )
+
+        try:
+            app_check.verify_token(actok)
+        except Exception:
+            return error_response(
+                401, "APPCHECK_INVALID",
+                "App Check token invalid"
+            )
 
         # 5️⃣ Ensure balance is zero
         user_ref = db().document(f"users/{pid}")
@@ -267,9 +287,10 @@ def cast_vote(request: Request):
             return error_response(405, "METHOD_NOT_ALLOWED", "POST required")
 
         body = request.get_json(silent=True) or {}
-        pid  = str(body.get("principal_id", "")).strip()
-        vid  = str(body.get("video_id", "")).strip()
-        sid  = str(body.get("smiley_id", "")).strip()
+        data = body.get("data", {})
+        pid  = str(body.get("principal_id") or data.get("principal_id") or "").strip()
+        vid  = str(body.get("video_id") or data.get("video_id") or "").strip()
+        sid  = str(body.get("smiley_id") or data.get("smiley_id") or "").strip()
 
         auth_header = request.headers.get("Authorization", "")
         if not auth_header.startswith("Bearer "):
@@ -281,7 +302,7 @@ def cast_vote(request: Request):
             try:
                 app_check.verify_token(actok)
             except Exception:
-                return error_response(401, "APPCHECK_INVALID", "App Check invalid")
+                return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
 
         # load the global smiley list once per cold-start
         smileys     = get_smileys()                          # [{id, image_name, …}, …]
@@ -374,6 +395,11 @@ def cast_vote(request: Request):
             "coin_delta": delta
         })
 
+        if outcome == "WIN":
+            user_ref.update({"smiley_game_wins": firestore.Increment(1)})
+        else:
+            user_ref.update({"smiley_game_losses": firestore.Increment(1)})
+
         # 6. success payload (voted smiley) ──────────────────────────────
         voted = smiley_map[sid]
         return jsonify({
@@ -396,3 +422,171 @@ def cast_vote(request: Request):
     except Exception as e:                                 # fallback
         print("Unhandled error:", e, file=sys.stderr)
         return error_response(500, "INTERNAL", "Internal server error")
+
+@https_fn.on_request(region="us-central1", enforce_app_check=True)
+def leaderboard(request: Request):
+    """
+    Response
+    {
+      "user_row": { principal_id, wins, position },
+      "top_rows": [ … max 10 rows … ]
+    }
+    """
+    try:
+        if request.method != "POST":
+            return error_response(405, "METHOD_NOT_ALLOWED", "POST required")
+
+        body = request.get_json(silent=True) or {}
+        data = body.get("data", {})
+        pid = str(data.get("principal_id", "")).strip()
+        if not pid:
+            return error_response(400, "MISSING_PID", "principal_id required")
+
+        auth_header = request.headers.get("Authorization", "")
+        if not auth_header.startswith("Bearer "):
+            return error_response(401, "MISSING_ID_TOKEN", "Authorization missing")
+        auth.verify_id_token(auth_header.split(" ", 1)[1])
+
+        # ───────── App Check enforcement ─────────
+        actok = request.headers.get("X-Firebase-AppCheck")
+        if not actok:
+            return error_response(
+                401, "APPCHECK_MISSING",
+                "App Check token required"
+            )
+
+        try:
+            app_check.verify_token(actok)
+        except Exception:
+            return error_response(
+                401, "APPCHECK_INVALID",
+                "App Check token invalid"
+            )
+
+        users = db().collection("users")
+        user_ref = users.document(pid)
+
+        user_snap  = user_ref.get()
+        user_wins  = int(user_snap.get("smiley_game_wins") or 0)
+
+        rank_q = (
+            users.where("smiley_game_wins", ">", user_wins)
+                 .count()
+                 .get()
+        )
+        user_position = int(rank_q[0][0].value) + 1
+
+        top_snaps = (
+            users.order_by("smiley_game_wins", direction=firestore.Query.DESCENDING)
+                 .limit(10)
+                 .stream()
+        )
+
+        top_rows  = []
+        current_rank, last_wins = 0, None
+
+        for snap in top_snaps:
+            wins = int(snap.get("smiley_game_wins") or 0)
+            if wins != last_wins:
+                current_rank += 1
+                last_wins = wins
+            row = {
+                "principal_id": snap.id,
+                "wins": wins,
+                "position": current_rank
+            }
+            top_rows.append(row)
+
+        user_row = {
+            "principal_id": pid,
+            "wins": user_wins,
+            "position": user_position
+        }
+
+        return jsonify({
+            "user_row": user_row,
+            "top_rows": top_rows
+        }), 200
+
+    except auth.InvalidIdTokenError:
+        return error_response(401, "ID_TOKEN_INVALID", "ID token invalid or expired")
+    except GoogleAPICallError as e:
+        return error_response(500, "FIRESTORE_ERROR", str(e))
+    except Exception as e:
+        print("Leaderboard error:", e, file=sys.stderr)
+        return error_response(500, "INTERNAL", "Internal server error")
+
+@https_fn.on_call(region="us-central1", enforce_app_check=True)
+def leaderboard_call(req: CallableRequest):
+    """
+    Returns
+    {
+      "user_row": { principal_id, wins, position },
+      "top_rows": [ … max 10 rows … ]
+    }
+    """
+
+    data = req.data or {}
+    context = req.context
+
+    # ── 1. Auth / App Check are already verified by decorators ─────────
+    if not context.auth:
+        raise HttpsError("unauthenticated", "Login required")
+
+    pid = str(data.get("principal_id") or context.auth.uid).strip()
+    if not pid:
+        raise HttpsError("invalid-argument", "principal_id required")
+
+    try:
+        users = db().collection("users")
+        user_ref = users.document(pid)
+
+        # current user stats ------------------------------------------------
+        user_snap = user_ref.get()
+        user_wins = int(user_snap.get("smiley_game_wins") or 0)
+
+        rank_q = (
+            users.where("smiley_game_wins", ">", user_wins)
+                 .count()
+                 .get()
+        )
+        user_position = int(rank_q[0][0].value) + 1
+
+        # top-10 ------------------------------------------------------------
+        top_snaps = (
+            users.order_by("smiley_game_wins", direction=firestore.Query.DESCENDING)
+                 .limit(10)
+                 .stream()
+        )
+
+        top_rows  = []
+        current_rank, last_wins = 0, None
+
+        for snap in top_snaps:
+            wins = int(snap.get("smiley_game_wins") or 0)
+            if wins != last_wins:
+                current_rank += 1         # dense ranking
+                last_wins = wins
+            top_rows.append({
+                "principal_id": snap.id,
+                "wins": wins,
+                "position": current_rank
+            })
+
+        # caller row
+        user_row = {
+            "principal_id": pid,
+            "wins": user_wins,
+            "position": user_position
+        }
+
+        return {
+            "user_row": user_row,
+            "top_rows": top_rows
+        }
+
+    except GoogleAPICallError as e:
+        raise HttpsError("internal", f"Firestore error: {e.message}")
+    except Exception as e:
+        print("Leaderboard error:", e, file=sys.stderr)
+        raise HttpsError("internal", "Internal server error")
