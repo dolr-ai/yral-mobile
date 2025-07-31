@@ -506,7 +506,13 @@ data class FeedState(
     val isLoading: Boolean = false,
     val reportSheetState: ReportSheetState = ReportSheetState.Closed,
     val showSignupFailedSheet: Boolean = false,
+    val overlayType: OverlayType = OverlayType.DEFAULT,
 )
+
+enum class OverlayType {
+    DEFAULT,
+    GAME_TOGGLE,
+}
 
 data class VideoData(
     val didLogFirstSecondWatched: Boolean = false,
