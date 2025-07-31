@@ -26,9 +26,11 @@ class GameRepository(
             .getBalance(userPrincipal)
             .toGetBalanceResponse()
 
-    @Suppress("MaxLineLength")
-    override suspend fun autoRechargeBalance(request: AutoRechargeBalanceRequest): Result<UpdatedBalance, AutoRechargeBalanceError> =
+    override suspend fun autoRechargeBalance(
+        idToken: String,
+        request: AutoRechargeBalanceRequest,
+    ): Result<UpdatedBalance, AutoRechargeBalanceError> =
         gamRemoteDataSource
-            .autoRechargeBalance(request.idToken, request.toDto())
+            .autoRechargeBalance(idToken, request.toDto())
             .toAutoRechargeBalanceResponse()
 }

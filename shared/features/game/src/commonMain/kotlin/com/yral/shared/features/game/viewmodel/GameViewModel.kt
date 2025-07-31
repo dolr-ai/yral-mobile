@@ -170,8 +170,8 @@ class GameViewModel(
                 gameResult = updatedGameResult,
             )
         }
-        setLoading(true)
         sessionManager.userPrincipal?.let { principal ->
+            setLoading(true)
             gameTelemetry.onGameVoted(
                 feedDetails = feedDetails,
                 lossPenalty = _state.value.lossPenalty,

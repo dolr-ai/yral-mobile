@@ -12,6 +12,8 @@ interface IGameRepository {
     suspend fun castVote(request: CastVoteRequest): CastVoteResponse
     suspend fun getBalance(userPrincipal: String): GetBalanceResponse
 
-    @Suppress("MaxLineLength")
-    suspend fun autoRechargeBalance(request: AutoRechargeBalanceRequest): Result<UpdatedBalance, AutoRechargeBalanceError>
+    suspend fun autoRechargeBalance(
+        idToken: String,
+        request: AutoRechargeBalanceRequest,
+    ): Result<UpdatedBalance, AutoRechargeBalanceError>
 }
