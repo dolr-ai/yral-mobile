@@ -14,6 +14,7 @@ enum FeedError: Error {
   case unknown(String)
   case aggregated(AggregatedError, [FeedResult]?)
   case firebaseError(String)
+  case rechargeError(String)
 }
 
 extension FeedError: LocalizedError {
@@ -31,6 +32,8 @@ extension FeedError: LocalizedError {
       return "Aggregated Error: \(aggregated.localizedDescription)"
     case .firebaseError(let message):
       return "Firebase Error: \(message)"
+    case .rechargeError(let error):
+      return "Tap to recharge error: \(error)"
     }
   }
 }

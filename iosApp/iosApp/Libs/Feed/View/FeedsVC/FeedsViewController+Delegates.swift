@@ -105,7 +105,8 @@ extension FeedsViewController: FeedsCellProtocol {
         isNsfw: false,
         stakeAmount: Int32(item.smileyGame?.config.lossPenalty ?? Int.zero),
         stakeType: StakeType.sats,
-        optionChosen: smileyID
+        optionChosen: smileyID,
+        isTutorialVote: false
       )
     )
   }
@@ -240,6 +241,27 @@ extension FeedsViewController: FeedsCellProtocol {
     hostingController?.view.backgroundColor = .clear
     self.present(hostingController!, animated: true, completion: nil)
   }
+
+  func rechargeWallet() {
+    Task { @MainActor in
+      await self.viewModel.rechargeWallet()
+    }
+  }
+
+  func walletAnimationStarted() {
+    feedsCV.isScrollEnabled = false
+    self.walletAnimationDelegate?.walletAnimationStarted()
+  }
+
+  func walletAnimationEnded(success: Bool, coins: Int64) {
+    if success {
+      DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.one) {
+        self.session.update(coins: UInt64(coins))
+      }
+    }
+    feedsCV.isScrollEnabled = true
+    self.walletAnimationDelegate?.walletAnimationEnded(success: success, coins: coins)
+  }
 }
 
 extension FeedsViewController: FeedsPlayerProtocol {
@@ -268,10 +290,10 @@ extension FeedsViewController: FeedsPlayerProtocol {
     let percentageWatched: Double
     switch milestone {
     case .started:
-      absoluteWatched   = min(duration, 0.1)
+      absoluteWatched = min(duration, 0.1)
       percentageWatched = absoluteWatched / duration * 100
     case .almostFinished:
-      absoluteWatched   = duration * 0.95
+      absoluteWatched = duration * 0.95
       percentageWatched = 95
     }
     guard index < feedsDataSource.snapshot().itemIdentifiers.count else { return }
@@ -324,4 +346,9 @@ extension FeedsViewController: FeedsPlayerProtocol {
       await self.viewModel.socialSignIn(request: provider)
     }
   }
+}
+
+protocol FeedsViewControllerRechargeDelegate: AnyObject {
+  func walletAnimationStarted()
+  func walletAnimationEnded(success: Bool, coins: Int64)
 }

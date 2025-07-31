@@ -168,7 +168,8 @@ extension FeedsViewController {
         stakeType: .sats,
         optionChosen: response.smiley.id,
         gameResult: result,
-        wonLossAmount: Int32(abs(response.coinDelta))
+        wonLossAmount: Int32(abs(response.coinDelta)),
+        isTutorialVote: false
       )
     )
   }

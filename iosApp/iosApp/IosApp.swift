@@ -22,26 +22,6 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
       application,
       didFinishLaunchingWithOptions: launchOptions
     )
-
-#if DEBUG
-    DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.two) {
-      AppCheck.appCheck().token(forcingRefresh: true) { token, error in
-        if let error = error {
-          print("Appcheck error: \(error)")
-        } else {
-          print("Appcheck token: \(token?.token ?? "nil")")
-        }
-      }
-    }
-    Task {
-      do {
-        let token = try await AppCheck.appCheck().limitedUseToken()
-        print("Appcheck token limited use: \(token)")
-      } catch {
-        print("Appcheck error limited use: \(error)")
-      }
-    }
-#endif
     Messaging.messaging().delegate = self
     UNUserNotificationCenter.current().delegate = self
     return true
