@@ -1,3 +1,4 @@
+import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
 import com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension
 import java.util.Locale
 
@@ -18,6 +19,16 @@ android {
         versionCode = 6
         versionName = "1.2.1"
         ndkVersion = "28.0.13004108"
+        buildConfigField(
+            type ="String",
+            name = "BRANCH_KEY_TEST",
+            value = "\"${System.getenv("YRAL_BRANCH_KEY_TEST")} \"",
+        )
+        buildConfigField(
+            type ="String",
+            name = "BRANCH_KEY",
+            value = "\"${System.getenv("YRAL_BRANCH_KEY")} \"",
+        )
     }
     buildFeatures {
         compose = true
@@ -99,6 +110,9 @@ dependencies {
     implementation(libs.moko.permissions)
     implementation(libs.moko.permissions.compose)
     implementation(libs.moko.permissions.notifications)
+
+    implementation(libs.branch)
+    implementation(libs.play.services.ads.identifier)
 
     implementation(projects.shared.core)
     implementation(projects.shared.libs.preferences)
