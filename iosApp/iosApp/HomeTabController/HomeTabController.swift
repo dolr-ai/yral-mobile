@@ -14,7 +14,10 @@ struct HomeTabController: View {
   private var feedsViewControllerWrapper: FeedsViewControllerWrapper {
     FeedsViewControllerWrapper(
       feedsViewController: feedsViewController,
-      showFeeds: $showFeeds
+      showFeeds: $showFeeds,
+      walletPhase: $walletPhase,
+      walletOutcome: $walletOutcome
+
     )
   }
 
@@ -25,6 +28,8 @@ struct HomeTabController: View {
     UserDefaultsManager.shared.get(for: .eulaAccepted) as Bool? ?? false
   )
   @State private var showNotificationsNudge = false
+  @State private var walletPhase: WalletPhase = .none
+  @State private var walletOutcome: WalletPhase = .none
 
   init(
     feedsViewController: FeedsViewController,
@@ -130,6 +135,22 @@ struct HomeTabController: View {
           .background( ClearBackgroundView() )
         }
       }
+
+      if walletPhase != .none {
+        WalletOverlayView(
+          phase: $walletPhase,
+          outcome: $walletOutcome
+        ) {
+          withAnimation(.easeInOut(duration: CGFloat.animationPeriod)) {
+            walletPhase = .none
+          }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .ignoresSafeArea()
+        .background(Color.black.opacity(Constants.walletOpacity))
+        .transition(.opacity)
+      }
+
       GeometryReader { geometry in
         let tabWidth = geometry.size.width / .five
         let indicatorXPosition = CGFloat(selectedTab.intValue) * tabWidth + (tabWidth - Constants.indicatorWidth) / .two
@@ -148,14 +169,6 @@ struct HomeTabController: View {
               .animation(.easeInOut, value: selectedTab)
             Spacer()
           }
-
-          //          Text("New")
-          //            .font(YralFont.pt8.bold.swiftUIFont)
-          //            .foregroundColor(YralColor.grey0.swiftUIColor)
-          //            .padding(.horizontal, 4)
-          //            .background(YralColor.primary300.swiftUIColor)
-          //            .clipShape(RoundedRectangle(cornerRadius: 12))
-          //            .offset(x: -tabWidth, y: -self.tabBarHeight - 2.5)
         }
       }
     }
@@ -216,6 +229,7 @@ extension HomeTabController {
     static let tabIndicatorHeight: CGFloat = 2.0
     static let indicatorWidth = 30.0
     static let indicatorColor = YralColor.primary300.swiftUIColor
+    static let walletOpacity = 0.8
   }
 }
 

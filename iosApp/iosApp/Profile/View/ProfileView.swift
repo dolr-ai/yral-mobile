@@ -24,6 +24,8 @@ struct ProfileView: View {
   @State private var currentIndex: Int = .zero
   @State private var isPushNotificationFlow: Bool = false
   @State private var isVisible = false
+  @State private var walletPhase: WalletPhase = .none
+  @State private var walletOutcome: WalletPhase = .none
   @EnvironmentObject var session: SessionManager
   @EnvironmentObject private var deepLinkRouter: DeepLinkRouter
   var uploadVideoPressed: (() -> Void) = {}
@@ -45,7 +47,9 @@ struct ProfileView: View {
             startIndex: viewModel.startIndex,
             currentIndex: currentIndex
           ),
-          showFeeds: $showFeeds
+          showFeeds: $showFeeds,
+          walletPhase: $walletPhase,
+          walletOutcome: $walletOutcome
         )
         .edgesIgnoringSafeArea(.all)
       } else {

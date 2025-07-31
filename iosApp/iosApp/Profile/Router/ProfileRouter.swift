@@ -13,7 +13,9 @@ protocol ProfileRouterProtocol {
   func displayUserVideoFeed(
     existingFeeds: [FeedResult],
     info: MyVideosFeedInfo,
-    showFeeds: Binding<Bool>
+    showFeeds: Binding<Bool>,
+    walletPhase: Binding<WalletPhase>,
+    walletOutcome: Binding<WalletPhase>
   ) -> FeedsViewControllerWrapper
 }
 
@@ -27,8 +29,16 @@ final class ProfileRouter: ProfileRouterProtocol {
   func displayUserVideoFeed(
     existingFeeds: [FeedResult],
     info: MyVideosFeedInfo,
-    showFeeds: Binding<Bool>
+    showFeeds: Binding<Bool>,
+    walletPhase: Binding<WalletPhase>,
+    walletOutcome: Binding<WalletPhase>
   ) -> FeedsViewControllerWrapper {
-    return profileDI.makeMyVideosView(existingFeeds: existingFeeds, info: info, showFeeds: showFeeds)
+    return profileDI.makeMyVideosView(
+      existingFeeds: existingFeeds,
+      info: info,
+      showFeeds: showFeeds,
+      walletPhase: walletPhase,
+      walletOutcome: walletOutcome
+    )
   }
 }

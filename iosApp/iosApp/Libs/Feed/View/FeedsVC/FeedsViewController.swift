@@ -63,6 +63,7 @@ class FeedsViewController: UIViewController {
   var shouldShowFooterLoader: Bool = false
   var pageEndReached: Bool = false
   var onBackButtonTap: (() -> Void)?
+  weak var walletAnimationDelegate: FeedsViewControllerRechargeDelegate?
   private var loaderCancellables = Set<AnyCancellable>()
   private var authStateCancellables = Set<AnyCancellable>()
   private var coinFetchingCancellables = Set<AnyCancellable>()
@@ -228,6 +229,16 @@ class FeedsViewController: UIViewController {
         case .feedsRefreshed:
           self.activityIndicator.startAnimating(in: self.view)
           feedsDataSource.apply(Snapshot(), animatingDifferences: true)
+        case .walletRechargeSuccess(let coins):
+          if let indexPath = feedsCV.indexPathsForVisibleItems.first,
+             let cell = feedsCV.cellForItem(at: indexPath) as? FeedsCell {
+            cell.applyRechargeResult(.success, coins: coins)
+          }
+        case .walletRechargeFailure:
+          if let indexPath = feedsCV.indexPathsForVisibleItems.first,
+             let cell = feedsCV.cellForItem(at: indexPath) as? FeedsCell {
+            cell.applyRechargeResult(.failure, coins: .zero)
+          }
         }
       }
       .store(in: &paginatedFeedscancellables)
