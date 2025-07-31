@@ -321,22 +321,20 @@ class GameViewModel(
         pageNo: Int,
         currentPage: Int,
     ) {
-        Logger.d("xxxx") { "setting how to play shown for $pageNo" }
-        if (pageNo > SHOW_HOW_TO_PLAY_MAX_PAGE || pageNo != currentPage) return
-        _state.update {
-            it.copy(
-                isHowToPlayShown =
-                    it.isHowToPlayShown
-                        .toMutableList()
-                        .also { list ->
-                            if (pageNo in list.indices) {
-                                list[pageNo] = true
-                            }
-                        },
-            )
+        if (pageNo > SHOW_HOW_TO_PLAY_MAX_PAGE || pageNo != currentPage) {
+            Logger.d("xxxx") { "Skipping 'how to play' update for page $pageNo" }
+            return
         }
-        if (!_state.value.isHowToPlayShown.contains(false)) {
-            Logger.d("xxxx") { "marking how to play shown" }
+        Logger.d("xxxx") { "Setting 'how to play' shown for page $pageNo" }
+        _state.update { state ->
+            val updatedList =
+                state.isHowToPlayShown.toMutableList().apply {
+                    if (pageNo in indices) this[pageNo] = true
+                }
+            state.copy(isHowToPlayShown = updatedList)
+        }
+        if (_state.value.isHowToPlayShown.all { it }) {
+            Logger.d("xxxx") { "All 'how to play' pages shown. Marking as shown in preferences." }
             coroutineScope.launch {
                 preferences.putBoolean(PrefKeys.HOW_TO_PLAY_SHOWN.name, true)
             }
