@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -34,7 +32,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -45,7 +42,6 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.yral.android.R
-import com.yral.android.ui.components.hashtagInput.keyboardHeightAsState
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.account.AccountScreen
@@ -169,26 +165,9 @@ private fun HomeScreenContent(
                 )
 
             is HomeComponent.Child.UploadVideo -> {
-                val keyboardHeight by keyboardHeightAsState()
-                val bottomPadding by remember(keyboardHeight) {
-                    mutableStateOf(
-                        if (keyboardHeight > 0) {
-                            0.dp
-                        } else {
-                            innerPadding.calculateBottomPadding()
-                        },
-                    )
-                }
                 UploadVideoScreen(
                     component = child.component,
-                    modifier =
-                        Modifier
-                            .padding(
-                                top = innerPadding.calculateTopPadding(),
-                                start = innerPadding.calculateStartPadding(LocalLayoutDirection.current),
-                                end = innerPadding.calculateEndPadding(LocalLayoutDirection.current),
-                                bottom = bottomPadding,
-                            ).background(MaterialTheme.colorScheme.primaryContainer),
+                    bottomPadding = innerPadding.calculateBottomPadding(),
                 )
             }
 
