@@ -489,20 +489,18 @@ private fun Game(
             isLoading = gameState.isLoading,
             hasShownCoinDeltaAnimation =
                 gameViewModel.hasShownCoinDeltaAnimation(
-                    state.feedDetails[pageNo].videoID,
+                    videoId = state.feedDetails[pageNo].videoID,
                 ),
             onDeltaAnimationComplete = {
                 gameViewModel.markCoinDeltaAnimationShown(
-                    state.feedDetails[pageNo].videoID,
+                    videoId = state.feedDetails[pageNo].videoID,
                 )
             },
             showNudge = !gameState.isSmileyGameNudgeShown && pageNo >= NUDGE_PAGE,
             setNudgeShown = { gameViewModel.setSmileyGameNudgeShown() },
-        )
-        LaunchedEffect(gameState.isSmileyGameNudgeShown, pageNo) {
-            if (!gameState.isSmileyGameNudgeShown && pageNo >= NUDGE_PAGE) {
+            trackSmileyGameNudgeShown = {
                 gameViewModel.trackSmileyGameNudgeShown(state.feedDetails[pageNo])
-            }
-        }
+            },
+        )
     }
 }
