@@ -59,6 +59,8 @@ object YralColors {
     val CoinBalanceBGStart = Color(0xFFFFCC00)
     val CoinBalanceBGEnd = Color(0xFFDA8100)
     val SmileyGameCardBackground = Color(0x66000000)
+    val GameToggleBackground = Color(0x66212121)
+    val HowToPlayBackground = Color(0x80000000)
 
     fun getColorByName(name: String): Color =
         try {

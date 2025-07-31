@@ -6,6 +6,7 @@ import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.analytics.events.GameConcludedCtaType
+import com.yral.shared.analytics.events.GameType
 import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.core.session.DELAY_FOR_SESSION_PROPERTIES
 import com.yral.shared.core.session.SessionManager
@@ -56,11 +57,10 @@ class GameViewModel(
         coroutineScope.launch {
             // Get result sheet shown preference outside state update
             preferences.getBoolean(PrefKeys.IS_RESULT_SHEET_SHOWN.name)?.let { shown ->
-                _state.update { currentState ->
-                    currentState.copy(
-                        isResultSheetShown = shown,
-                    )
-                }
+                _state.update { it.copy(isResultSheetShown = shown) }
+            }
+            preferences.getBoolean(PrefKeys.HOW_TO_PLAY_SHOWN.name)?.let { shown ->
+                _state.update { it.copy(isHowToPlayShown = shown) }
             }
             listOf(
                 async { getGameRules() },
@@ -297,6 +297,19 @@ class GameViewModel(
             ctaType = ctaType,
         )
     }
+
+    fun updateGameType(gameType: GameType) {
+        _state.update { it.copy(gameType = gameType) }
+        // if we require to toggle value on game type change
+        // setHowToPlayShown(false)
+    }
+
+    fun setHowToPlayShown() {
+        _state.update { it.copy(isHowToPlayShown = true) }
+        coroutineScope.launch {
+            preferences.putBoolean(PrefKeys.HOW_TO_PLAY_SHOWN.name, true)
+        }
+    }
 }
 
 data class GameState(
@@ -312,4 +325,6 @@ data class GameState(
     val isResultSheetShown: Boolean = false,
     val currentVideoId: String = "",
     val lastBalanceDifference: Int = 0,
+    val gameType: GameType = GameType.SMILEY,
+    val isHowToPlayShown: Boolean = false,
 )

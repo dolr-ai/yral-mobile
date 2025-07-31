@@ -137,6 +137,7 @@ class DefaultAuthClient(
             PrefKeys.REFRESH_TOKEN.name,
             PrefKeys.ACCESS_TOKEN.name,
             PrefKeys.ID_TOKEN.name,
+            PrefKeys.HOW_TO_PLAY_SHOWN.name,
         ).forEach { key ->
             preferences.remove(key)
         }
