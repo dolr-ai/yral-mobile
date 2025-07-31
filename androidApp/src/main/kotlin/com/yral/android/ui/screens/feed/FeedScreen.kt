@@ -1,11 +1,6 @@
 package com.yral.android.ui.screens.feed
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -39,9 +34,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
-import com.airbnb.lottie.compose.LottieCompositionSpec
-import com.airbnb.lottie.compose.LottieConstants
-import com.airbnb.lottie.compose.rememberLottieComposition
 import com.yral.android.R
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.feed.nav.FeedComponent
@@ -49,6 +41,7 @@ import com.yral.android.ui.screens.feed.performance.PrefetchVideoListenerImpl
 import com.yral.android.ui.screens.feed.performance.VideoListenerImpl
 import com.yral.android.ui.screens.feed.uiComponets.GameToggle
 import com.yral.android.ui.screens.feed.uiComponets.HowToPlay
+import com.yral.android.ui.screens.feed.uiComponets.RefreshBalanceAnimation
 import com.yral.android.ui.screens.feed.uiComponets.ReportVideo
 import com.yral.android.ui.screens.feed.uiComponets.ReportVideoSheet
 import com.yral.android.ui.screens.feed.uiComponets.SignupNudge
@@ -60,7 +53,6 @@ import com.yral.android.ui.screens.game.SmileyGame
 import com.yral.android.ui.widgets.YralAsyncImage
 import com.yral.android.ui.widgets.YralErrorMessage
 import com.yral.android.ui.widgets.YralLoader
-import com.yral.android.ui.widgets.YralLottieAnimation
 import com.yral.shared.features.feed.viewmodel.FeedState
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.PRE_FETCH_BEFORE_LAST
@@ -70,7 +62,6 @@ import com.yral.shared.features.feed.viewmodel.ReportSheetState
 import com.yral.shared.features.game.viewmodel.GameState
 import com.yral.shared.features.game.viewmodel.GameViewModel
 import com.yral.shared.features.game.viewmodel.GameViewModel.Companion.NUDGE_PAGE
-import com.yral.shared.features.game.viewmodel.RefreshBalanceState
 import com.yral.shared.libs.videoPlayer.YRALReelPlayer
 import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.rust.domain.models.FeedDetails
@@ -520,66 +511,5 @@ private fun Game(
                 gameViewModel.setSmileyGameNudgeShown(state.feedDetails[pageNo])
             },
         )
-    }
-}
-
-@Composable
-private fun RefreshBalanceAnimation(
-    refreshBalanceState: RefreshBalanceState,
-    onAnimationComplete: () -> Unit,
-) {
-    AnimatedVisibility(
-        visible = refreshBalanceState != RefreshBalanceState.HIDDEN,
-        modifier = Modifier.fillMaxSize(),
-        enter = fadeIn(),
-        exit = fadeOut(),
-    ) {
-        // Preload result animations to prevent flicker
-        val successComposition by rememberLottieComposition(
-            LottieCompositionSpec.RawRes(R.raw.claim_successful_wo_loading),
-        )
-        val failureComposition by rememberLottieComposition(
-            LottieCompositionSpec.RawRes(R.raw.claim_unsucessful_wo_loading),
-        )
-
-        Box(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .background(YralColors.ScrimColor)
-                    .clickable {},
-        ) {
-            when (refreshBalanceState) {
-                RefreshBalanceState.LOADING -> {
-                    YralLottieAnimation(
-                        rawRes = R.raw.common_loading,
-                        iterations = LottieConstants.IterateForever,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                }
-
-                RefreshBalanceState.SUCCESS -> {
-                    YralLottieAnimation(
-                        composition = successComposition,
-                        iterations = 1,
-                        modifier = Modifier.fillMaxSize(),
-                        onAnimationComplete = onAnimationComplete,
-                    )
-                }
-
-                RefreshBalanceState.FAILURE -> {
-                    YralLottieAnimation(
-                        composition = failureComposition,
-                        iterations = 1,
-                        modifier = Modifier.fillMaxSize(),
-                        onAnimationComplete = onAnimationComplete,
-                    )
-                }
-
-                RefreshBalanceState.HIDDEN -> {
-                    // This case is handled by the early return
-                }
-            }
-        }
     }
 }
