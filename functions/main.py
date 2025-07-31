@@ -92,13 +92,21 @@ def exchange_principal_id(request: Request):
         caller_token = auth.verify_id_token(auth_header.split(" ", 1)[1])
         old_uid = caller_token["uid"]                      # could equal principal_id
 
-        # optional App Check
+        # ───────── App Check enforcement ─────────
         actok = request.headers.get("X-Firebase-AppCheck")
-        if actok:
-            try:
-                app_check.verify_token(actok)
-            except Exception:
-                return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
+        if not actok:
+            return error_response(
+                401, "APPCHECK_MISSING",
+                "App Check token required"
+            )
+
+        try:
+            app_check.verify_token(actok)
+        except Exception:
+            return error_response(
+                401, "APPCHECK_INVALID",
+                "App Check token invalid"
+            )
 
         # 2. ensure Auth user for principal_id ------------------------------
         try:
@@ -177,12 +185,21 @@ def update_balance(request: Request):
             return error_response(401, "MISSING_ID_TOKEN", "Authorization token missing")
         auth.verify_id_token(auth_header.split(" ", 1)[1])
 
+        # ───────── App Check enforcement ─────────
         actok = request.headers.get("X-Firebase-AppCheck")
-        if actok:
-            try:
-                app_check.verify_token(actok)
-            except Exception:
-                return error_response(401, "APPCHECK_INVALID", "App Check invalid")
+        if not actok:
+            return error_response(
+                401, "APPCHECK_MISSING",
+                "App Check token required"
+            )
+
+        try:
+            app_check.verify_token(actok)
+        except Exception:
+            return error_response(
+                401, "APPCHECK_INVALID",
+                "App Check token invalid"
+            )
 
         push_delta = _push_delta(balance_update_token, pid, delta)
 
@@ -220,13 +237,21 @@ def tap_to_recharge(request: Request):
             return error_response(401, "MISSING_ID_TOKEN", "Authorization token missing")
         auth.verify_id_token(auth_header.split(" ", 1)[1])
 
-        # 4️⃣ App Check
-        ac_token = request.headers.get("X-Firebase-AppCheck")
-        if ac_token:
-            try:
-                app_check.verify_token(ac_token)
-            except Exception:
-                return error_response(401, "APPCHECK_INVALID", "App Check invalid")
+        # ───────── App Check enforcement ─────────
+        actok = request.headers.get("X-Firebase-AppCheck")
+        if not actok:
+            return error_response(
+                401, "APPCHECK_MISSING",
+                "App Check token required"
+            )
+
+        try:
+            app_check.verify_token(actok)
+        except Exception:
+            return error_response(
+                401, "APPCHECK_INVALID",
+                "App Check token invalid"
+            )
 
         # 5️⃣ Ensure balance is zero
         user_ref = db().document(f"users/{pid}")
@@ -276,12 +301,21 @@ def cast_vote(request: Request):
             return error_response(401, "MISSING_ID_TOKEN", "Authorization missing")
         auth.verify_id_token(auth_header.split(" ", 1)[1])
 
+        # ───────── App Check enforcement ─────────
         actok = request.headers.get("X-Firebase-AppCheck")
-        if actok:
-            try:
-                app_check.verify_token(actok)
-            except Exception:
-                return error_response(401, "APPCHECK_INVALID", "App Check invalid")
+        if not actok:
+            return error_response(
+                401, "APPCHECK_MISSING",
+                "App Check token required"
+            )
+
+        try:
+            app_check.verify_token(actok)
+        except Exception:
+            return error_response(
+                401, "APPCHECK_INVALID",
+                "App Check token invalid"
+            )
 
         # load the global smiley list once per cold-start
         smileys     = get_smileys()                          # [{id, image_name, …}, …]
