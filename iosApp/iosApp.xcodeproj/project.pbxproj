@@ -138,6 +138,8 @@
 		10CEBB862E3104060022803A /* HapticGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CEBB842E3104000022803A /* HapticGenerator.swift */; };
 		10CEBB882E3104220022803A /* Presets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CEBB872E31041E0022803A /* Presets.swift */; };
 		10CEBB892E3104220022803A /* Presets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CEBB872E31041E0022803A /* Presets.swift */; };
+		10DF733E2E38DFFC009AD12B /* MixpanelSessionReplay in Frameworks */ = {isa = PBXBuildFile; productRef = 10DF733D2E38DFFC009AD12B /* MixpanelSessionReplay */; };
+		10DF73402E38E00D009AD12B /* MixpanelSessionReplay in Frameworks */ = {isa = PBXBuildFile; productRef = 10DF733F2E38E00D009AD12B /* MixpanelSessionReplay */; };
 		10F89A4C2E01450B00B90BD0 /* Color+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10F89A4B2E0144FF00B90BD0 /* Color+Extensions.swift */; };
 		10F89A4D2E01450B00B90BD0 /* Color+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10F89A4B2E0144FF00B90BD0 /* Color+Extensions.swift */; };
 		2152FB042600AC8F00CF470E /* IosApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* IosApp.swift */; };
@@ -920,6 +922,7 @@
 				AC6CBA802CE46CA6002454F8 /* libyral_mobile_swift_binding.a in Frameworks */,
 				AC6E311C2D22F050001EBE6C /* SDWebImageMapKit in Frameworks */,
 				AC6BECAC2D09D52B002E2021 /* GRPC in Frameworks */,
+				10DF733E2E38DFFC009AD12B /* MixpanelSessionReplay in Frameworks */,
 				ACC0F3A32D2ED69200FA5BD0 /* Lottie in Frameworks */,
 				ACC255172DF5DF2D001EA774 /* libsecp256k1 in Frameworks */,
 				AC6BECAA2D09D52B002E2021 /* CGRPCZlib in Frameworks */,
@@ -946,6 +949,7 @@
 				ACC0F39F2D2ED68500FA5BD0 /* Lottie in Frameworks */,
 				AC6BECB42D09D541002E2021 /* GRPC in Frameworks */,
 				ACD941D92CFF63D90038FCB6 /* libyral_mobile_swift_binding.a in Frameworks */,
+				10DF73402E38E00D009AD12B /* MixpanelSessionReplay in Frameworks */,
 				AC6BECB62D09D541002E2021 /* GRPCReflectionService in Frameworks */,
 				AC1233752DF5E14100DAFCF4 /* libsecp256k1 in Frameworks */,
 				AC6BECB82D09D55B002E2021 /* protoc-gen-grpc-swift in Frameworks */,
@@ -2698,6 +2702,7 @@
 				AC6E31182D22F050001EBE6C /* XCRemoteSwiftPackageReference "SDWebImage" */,
 				ACC0F39D2D2ED68500FA5BD0 /* XCRemoteSwiftPackageReference "lottie-ios" */,
 				AC1233712DF5E0AC00DAFCF4 /* XCRemoteSwiftPackageReference "swift-secp256k1" */,
+				10DF733C2E38DFFC009AD12B /* XCRemoteSwiftPackageReference "mixpanel-ios-session-replay-package" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 7555FF7C242A565900829871 /* Products */;
@@ -3896,6 +3901,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		10DF733C2E38DFFC009AD12B /* XCRemoteSwiftPackageReference "mixpanel-ios-session-replay-package" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/mixpanel/mixpanel-ios-session-replay-package";
+			requirement = {
+				kind = exactVersion;
+				version = 1.1.0;
+			};
+		};
 		AC1233712DF5E0AC00DAFCF4 /* XCRemoteSwiftPackageReference "swift-secp256k1" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/21-DOT-DEV/swift-secp256k1";
@@ -3939,6 +3952,16 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		10DF733D2E38DFFC009AD12B /* MixpanelSessionReplay */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 10DF733C2E38DFFC009AD12B /* XCRemoteSwiftPackageReference "mixpanel-ios-session-replay-package" */;
+			productName = MixpanelSessionReplay;
+		};
+		10DF733F2E38E00D009AD12B /* MixpanelSessionReplay */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 10DF733C2E38DFFC009AD12B /* XCRemoteSwiftPackageReference "mixpanel-ios-session-replay-package" */;
+			productName = MixpanelSessionReplay;
+		};
 		AC04D3042E05A1E50055C4AA /* P256K */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = AC1233712DF5E0AC00DAFCF4 /* XCRemoteSwiftPackageReference "swift-secp256k1" */;
