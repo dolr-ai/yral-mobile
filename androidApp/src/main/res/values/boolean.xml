@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <bool name="firebase_performance_logcat">false</bool>
+    <bool name="branch_test_mode">false</bool>
 </resources>
