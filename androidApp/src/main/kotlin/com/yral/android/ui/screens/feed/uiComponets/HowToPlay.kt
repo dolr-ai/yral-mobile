@@ -51,13 +51,18 @@ fun HowToPlay(
     LaunchedEffect(shouldExpand) {
         delay(PAGE_SET_DELAY)
         if (shouldExpand) {
-            backgroundVisible = true
-            isExpanded = true
-            delay(AUTO_CLOSE_DELAY)
-            isExpanded = false
-            delay(ANIMATION_DURATION.toLong() / 2)
-            backgroundVisible = false
-            onAnimationComplete()
+            runCatching {
+                backgroundVisible = true
+                isExpanded = true
+                delay(AUTO_CLOSE_DELAY)
+                isExpanded = false
+                delay(ANIMATION_DURATION.toLong() / 2)
+                backgroundVisible = false
+                onAnimationComplete()
+            }.onFailure {
+                isExpanded = false
+                backgroundVisible = false
+            }
         } else {
             isExpanded = false
             backgroundVisible = false

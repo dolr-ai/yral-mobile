@@ -71,10 +71,12 @@ fun SmileyGame(
                 var animatingNudgeIconPosition by remember { mutableStateOf<Int?>(null) }
                 LaunchedEffect(shouldShowNudge) {
                     if (shouldShowNudge) {
-                        animatingNudgeIconPosition = 0
-                        delay(NUDGE_DURATION)
-                        animatingNudgeIconPosition = null
-                        onNudgeAnimationComplete()
+                        runCatching {
+                            animatingNudgeIconPosition = 0
+                            delay(NUDGE_DURATION)
+                            animatingNudgeIconPosition = null
+                            onNudgeAnimationComplete()
+                        }.onFailure { animatingNudgeIconPosition = null }
                     } else {
                         animatingNudgeIconPosition = null
                     }
