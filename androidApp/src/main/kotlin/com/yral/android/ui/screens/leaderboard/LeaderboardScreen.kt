@@ -29,22 +29,29 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.leaderboard.LeaderboardHelpers.MAX_USERS_PRINCIPAL_LENGTH
 import com.yral.android.ui.screens.leaderboard.LeaderboardHelpers.MAX_USERS_WITH_DUPLICATE_RANK
+import com.yral.android.ui.screens.leaderboard.LeaderboardHelpers.POS_BRONZE
+import com.yral.android.ui.screens.leaderboard.LeaderboardHelpers.POS_GOLD
+import com.yral.android.ui.screens.leaderboard.LeaderboardHelpers.POS_SILVER
 import com.yral.android.ui.screens.leaderboard.LeaderboardHelpers.PROFILE_IMAGE_SIZE
+import com.yral.android.ui.screens.leaderboard.LeaderboardHelpers.getBrush
 import com.yral.android.ui.screens.leaderboard.LeaderboardHelpers.getProfileImageRing
 import com.yral.android.ui.screens.leaderboard.LeaderboardHelpers.getTextDecoration
 import com.yral.android.ui.screens.leaderboard.LeaderboardHelpers.getTrophyImageHeight
@@ -73,15 +80,6 @@ fun LeaderboardScreen(
 ) {
     val state by viewModel.state.collectAsState()
     LaunchedEffect(Unit) { viewModel.leaderBoardTelemetry.leaderboardPageViewed() }
-    LaunchedEffect(state.leaderboard, state.currentUser) {
-        val userWithSameBalance =
-            state
-                .leaderboard
-                .filter { it.coins == state.currentUser?.coins }
-        if (userWithSameBalance.isNotEmpty()) {
-            viewModel.updateCurrentUserRank(userWithSameBalance[0].rank)
-        }
-    }
     Box(modifier = modifier) {
         LazyColumn(
             modifier =
@@ -93,7 +91,6 @@ fun LeaderboardScreen(
             item {
                 TrophyGallery(state.leaderboard)
             }
-
             // Table Header
             item {
                 Spacer(modifier = Modifier.height(16.dp))
@@ -107,10 +104,10 @@ fun LeaderboardScreen(
                     item {
                         Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                             LeaderboardRow(
-                                rank = user.rank,
+                                position = user.leaderboardPosition,
                                 userPrincipalId = user.userPrincipalId,
                                 profileImageUrl = user.profileImageUrl,
-                                coins = user.coins,
+                                wins = user.wins,
                                 isCurrentUser = true,
                             )
                             Spacer(modifier = Modifier.height(12.dp))
@@ -122,10 +119,10 @@ fun LeaderboardScreen(
                 items(state.leaderboard) { item ->
                     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                         LeaderboardRow(
-                            rank = item.rank,
+                            position = item.position,
                             userPrincipalId = item.userPrincipalId,
                             profileImageUrl = item.profileImage,
-                            coins = item.coins,
+                            wins = item.wins,
                             isCurrentUser = false,
                         )
                         Spacer(modifier = Modifier.height(12.dp))
@@ -178,10 +175,11 @@ private fun LeaderboardTableHeader() {
             maxLines = 1,
         )
         Text(
-            text = stringResource(R.string.total_sats),
+            text = stringResource(R.string.games_won),
             modifier = Modifier.weight(COIN_BALANCE_WEIGHT),
             style = LocalAppTopography.current.regMedium,
             color = YralColors.Neutral500,
+            textAlign = TextAlign.End,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
@@ -236,17 +234,17 @@ private fun ColumnScope.TrophyImages(leaderboard: List<LeaderboardItem>) {
         verticalAlignment = Alignment.Bottom,
     ) {
         Trophy(
-            rank = 1,
+            position = POS_SILVER,
             profileImageUrl = getProfileImageForTrophy(1, leaderboard),
             trophyResource = R.drawable.silver_trophy,
         )
         Trophy(
-            rank = 0,
+            position = POS_GOLD,
             profileImageUrl = getProfileImageForTrophy(0, leaderboard),
             trophyResource = R.drawable.golden_trophy,
         )
         Trophy(
-            rank = 2,
+            position = POS_BRONZE,
             profileImageUrl = getProfileImageForTrophy(2, leaderboard),
             trophyResource = R.drawable.bronze_trophy,
         )
@@ -254,10 +252,10 @@ private fun ColumnScope.TrophyImages(leaderboard: List<LeaderboardItem>) {
 }
 
 private fun getProfileImageForTrophy(
-    rank: Int,
+    position: Int,
     leaderboard: List<LeaderboardItem>,
 ): String {
-    val users = leaderboard.filter { it.rank == rank }
+    val users = leaderboard.filter { it.position == position }
     return if (users.size == 1) {
         // users[0].profileImage
         ""
@@ -269,11 +267,11 @@ private fun getProfileImageForTrophy(
 @Composable
 private fun ColumnScope.TrophyDetails(leaderboard: List<LeaderboardItem>) {
     Column(modifier = Modifier.align(Alignment.CenterHorizontally)) {
-        val rank0 by remember(leaderboard) { mutableStateOf(getTrophyDetailItem(0, leaderboard)) }
-        val rank1 by remember(leaderboard) { mutableStateOf(getTrophyDetailItem(1, leaderboard)) }
-        val rank2 by remember(leaderboard) { mutableStateOf(getTrophyDetailItem(2, leaderboard)) }
+        val posGold by remember(leaderboard) { mutableStateOf(getTrophyDetailItem(POS_GOLD, leaderboard)) }
+        val posSilver by remember(leaderboard) { mutableStateOf(getTrophyDetailItem(POS_SILVER, leaderboard)) }
+        val posBronze by remember(leaderboard) { mutableStateOf(getTrophyDetailItem(POS_BRONZE, leaderboard)) }
         val lines =
-            if (setOf(rank0.first, rank1.first, rank2.first).any { it.contains(",") }) {
+            if (setOf(posGold.first, posSilver.first, posBronze.first).any { it.contains(",") }) {
                 2
             } else {
                 1
@@ -283,18 +281,21 @@ private fun ColumnScope.TrophyDetails(leaderboard: List<LeaderboardItem>) {
             verticalAlignment = Alignment.Top,
         ) {
             TrophyDetailsItem(
-                userPrincipalId = rank1.first,
-                coins = rank1.second,
+                position = POS_SILVER,
+                userPrincipalId = posSilver.first,
+                gamesWon = posSilver.second,
                 lines = lines,
             )
             TrophyDetailsItem(
-                userPrincipalId = rank0.first,
-                coins = rank0.second,
+                position = POS_GOLD,
+                userPrincipalId = posGold.first,
+                gamesWon = posGold.second,
                 lines = lines,
             )
             TrophyDetailsItem(
-                userPrincipalId = rank2.first,
-                coins = rank2.second,
+                position = POS_BRONZE,
+                userPrincipalId = posBronze.first,
+                gamesWon = posBronze.second,
                 lines = lines,
             )
         }
@@ -302,12 +303,12 @@ private fun ColumnScope.TrophyDetails(leaderboard: List<LeaderboardItem>) {
 }
 
 private fun getTrophyDetailItem(
-    rank: Int,
+    position: Int,
     leaderboard: List<LeaderboardItem>,
 ): Pair<String, Long> {
-    val users = leaderboard.filter { it.rank == rank }
+    val users = leaderboard.filter { it.position == position }
     return if (users.isNotEmpty()) {
-        getTrophyDetailsUserTexts(users) to users[0].coins
+        getTrophyDetailsUserTexts(users) to users[0].wins
     } else {
         "" to -1
     }
@@ -326,15 +327,15 @@ private fun getTrophyDetailsUserTexts(user: List<LeaderboardItem>): String =
 
 @Composable
 private fun Trophy(
-    rank: Int,
+    position: Int,
     profileImageUrl: String,
     trophyResource: Int,
 ) {
-    val width = getTrophyImageWidth(rank)
-    val height = getTrophyImageHeight(rank)
+    val width = getTrophyImageWidth(position)
+    val height = getTrophyImageHeight(position)
     val offset =
         getTrophyImageOffset(
-            rank = rank,
+            position = position,
             isProfileImageVisible = profileImageUrl.isNotEmpty(),
         )
     Box(
@@ -356,7 +357,7 @@ private fun Trophy(
         )
         if (profileImageUrl.isNotEmpty()) {
             UserBriefProfileImage(
-                rank = rank,
+                position = position,
                 profileImageUrl = profileImageUrl,
                 size = width,
             )
@@ -366,13 +367,13 @@ private fun Trophy(
 
 @Composable
 private fun TrophyDetailsItem(
+    position: Int,
     userPrincipalId: String,
     lines: Int,
-    coins: Long,
+    gamesWon: Long,
 ) {
     Column(
         modifier = Modifier.width(93.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
@@ -384,36 +385,53 @@ private fun TrophyDetailsItem(
             textAlign = TextAlign.Center,
             overflow = TextOverflow.Ellipsis,
         )
-        if (coins >= 0) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.satoshi),
-                    contentDescription = "image description",
-                    contentScale = ContentScale.FillBounds,
-                    modifier = Modifier.size(23.dp),
-                )
-                Text(
-                    text = coins.toString(),
-                    style = LocalAppTopography.current.baseBold,
-                    color = YralColors.Neutral50,
-                    textAlign = TextAlign.Center,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
+        if (gamesWon >= 0) {
+            Spacer(Modifier.height(8.dp))
+            var textSize1 by remember { mutableStateOf(IntSize.Zero) }
+            val brush1 =
+                remember(position, textSize1) {
+                    getBrush(position, textSize1)
+                }
+
+            Text(
+                text = gamesWon.toString(),
+                style =
+                    LocalAppTopography.current.baseBold.copy(
+                        brush = brush1,
+                    ),
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.onSizeChanged { textSize1 = it },
+            )
+
+            var textSize2 by remember { mutableStateOf(IntSize.Zero) }
+            val brush2 =
+                remember(position, textSize2) {
+                    getBrush(position, textSize2)
+                }
+            Text(
+                text = stringResource(R.string.games_won),
+                style =
+                    LocalAppTopography.current.baseBold.copy(
+                        brush = brush2,
+                    ),
+                color = YralColors.Neutral50,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.onSizeChanged { textSize2 = it / 2 },
+            )
         }
     }
 }
 
 @Composable
 private fun LeaderboardRow(
-    rank: Int,
+    position: Int,
     userPrincipalId: String,
     profileImageUrl: String,
-    coins: Long,
+    wins: Long,
     isCurrentUser: Boolean,
 ) {
     Card(
@@ -432,12 +450,12 @@ private fun LeaderboardRow(
             ),
         shape = RoundedCornerShape(8.dp),
     ) {
-        UserBriefWithBorder(rank, isCurrentUser) {
+        UserBriefWithBorder(position, isCurrentUser) {
             UserBriefContent(
-                rank,
+                position,
                 userPrincipalId,
                 profileImageUrl,
-                coins,
+                wins,
                 isCurrentUser,
             )
         }
@@ -446,12 +464,12 @@ private fun LeaderboardRow(
 
 @Composable
 private fun UserBriefWithBorder(
-    rank: Int,
+    position: Int,
     isCurrentUser: Boolean,
     content: @Composable () -> Unit,
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
-        val border = getUserBriefBorder(rank)
+        val border = getUserBriefBorder(position)
         if (border > 0 && !isCurrentUser) {
             Image(
                 painter = painterResource(border),
@@ -466,10 +484,10 @@ private fun UserBriefWithBorder(
 
 @Composable
 private fun UserBriefContent(
-    rank: Int,
+    position: Int,
     userPrincipalId: String,
     profileImageUrl: String,
-    coins: Long,
+    wins: Long,
     isCurrentUser: Boolean,
 ) {
     Row(
@@ -485,32 +503,24 @@ private fun UserBriefContent(
             modifier = Modifier.weight(POSITION_TEXT_WEIGHT),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            UserBriefPositionNumber(rank, isCurrentUser)
+            UserBriefPositionNumber(position, isCurrentUser)
         }
         // Player ID column with avatar
         Row(
             modifier = Modifier.weight(USER_DETAIL_WEIGHT),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            UserBriefProfileImage(rank, profileImageUrl)
+            UserBriefProfileImage(position, profileImageUrl)
             Spacer(modifier = Modifier.width(8.dp))
-            UserBriefProfileName(rank, userPrincipalId, isCurrentUser)
+            UserBriefProfileName(position, userPrincipalId, isCurrentUser)
         }
-        // Coins column
-        Row(
+        // Games won
+        Box(
             modifier = Modifier.weight(COIN_BALANCE_WEIGHT),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Start,
+            contentAlignment = Alignment.CenterEnd,
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.satoshi),
-                contentDescription = "image description",
-                contentScale = ContentScale.FillBounds,
-                modifier = Modifier.size(23.dp),
-            )
-            Spacer(modifier = Modifier.width(4.dp))
             Text(
-                text = coins.toString(),
+                text = wins.toString(),
                 style = LocalAppTopography.current.baseBold,
                 color = YralColors.Neutral50,
                 textAlign = TextAlign.Center,
@@ -523,13 +533,13 @@ private fun UserBriefContent(
 
 @Composable
 private fun UserBriefPositionNumber(
-    rank: Int,
+    position: Int,
     isCurrentUser: Boolean,
 ) {
-    val decoration = getTextDecoration(rank)
+    val decoration = getTextDecoration(position)
     if (decoration != 0 && !isCurrentUser) {
         YralMaskedVectorTextV2(
-            text = "#${rank + 1}",
+            text = "#$position",
             vectorRes = decoration,
             textStyle = LocalAppTopography.current.baseBold,
             modifier = Modifier.width(21.dp),
@@ -538,7 +548,7 @@ private fun UserBriefPositionNumber(
         )
     } else {
         Text(
-            text = "#${rank + 1}",
+            text = "#$position",
             style = LocalAppTopography.current.baseBold,
             color = YralColors.Neutral50,
             overflow = TextOverflow.Ellipsis,
@@ -598,7 +608,7 @@ private fun UserBriefGradientProfileName(
 
 @Composable
 private fun UserBriefProfileImage(
-    rank: Int,
+    position: Int,
     profileImageUrl: String,
     size: Dp = PROFILE_IMAGE_SIZE.dp,
 ) {
@@ -608,7 +618,7 @@ private fun UserBriefProfileImage(
             modifier = Modifier.size(size),
             backgroundColor = YralColors.ProfilePicBackground,
         )
-        val profileImageRing = getProfileImageRing(rank)
+        val profileImageRing = getProfileImageRing(position)
         if (profileImageRing > 0) {
             Image(
                 painter = painterResource(profileImageRing),
