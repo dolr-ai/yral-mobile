@@ -60,6 +60,7 @@
 
     <string name="leaderboard">Leaderboard</string>
     <string name="position">Position</string>
+    <string name="games_won">Games Won</string>
     <string name="player_id">Player ID</string>
     <string name="total_sats">Total SATS</string>
     <string name="you">You</string>
