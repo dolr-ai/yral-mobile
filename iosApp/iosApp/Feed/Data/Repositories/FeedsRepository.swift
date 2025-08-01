@@ -40,10 +40,10 @@ class FeedsRepository: FeedRepositoryProtocol {
       cacheResponse = try await httpService.performRequest(
         for: CacheEndPoints.getGlobalCache(
           request: FeedRequestDTO(
-          userID: principal,
-          filterResults: [],
-          numResults: Constants.initialNumResults
-        )),
+            userID: principal,
+            filterResults: [],
+            numResults: Constants.initialNumResults
+          )),
         decodeAs: PostsResponse.self
       ).posts
     } catch {
@@ -91,10 +91,10 @@ class FeedsRepository: FeedRepositoryProtocol {
       feedResponse = try await httpService.performRequest(
         for: CacheEndPoints.getMLFeed(
           request: FeedRequestDTO(
-          userID: principal,
-          filterResults: filteredPosts,
-          numResults: Constants.mlNumResults
-        )),
+            userID: principal,
+            filterResults: filteredPosts,
+            numResults: Constants.mlNumResults
+          )),
         decodeAs: PostsResponse.self
       ).posts
     } catch {
@@ -280,6 +280,51 @@ class FeedsRepository: FeedRepositoryProtocol {
     }
   }
 
+  func rechargeWallet() async -> Result<Int64, FeedError> {
+    guard let userPrincipalString = authClient.userPrincipalString else {
+      return .failure(FeedError.authError(AuthError.authenticationFailed("No user principal")))
+    }
+    let rechargeRequest = RechargeWalletRequestDTO(
+      data: PrincipalDTO(principalID: userPrincipalString)
+    )
+    guard let baseURL = URL(string: Constants.firebaseBaseURLString) else {
+      return .failure(FeedError.networkError(NetworkError.invalidRequest))
+    }
+    do {
+      var httpHeaders = [String: String]()
+      guard let userIDToken = try await firebaseService.fetchUserIDToken() else {
+        return .failure(.firebaseError("Failed to fetch user ID token"))
+      }
+      httpHeaders = [
+        "Content-Type": "application/json",
+        "Authorization": "Bearer \(userIDToken)"
+      ]
+      if let appcheckToken = await firebaseService.fetchAppCheckToken() {
+        httpHeaders["X-Firebase-AppCheck"] = appcheckToken
+      }
+      let endpoint = Endpoint(
+        http: "",
+        baseURL: baseURL,
+        path: Constants.rechargePath,
+        method: .post,
+        headers: httpHeaders,
+        body: try JSONEncoder().encode(rechargeRequest)
+      )
+      let data = try await httpService.performRequest(for: endpoint)
+      let response = try JSONDecoder().decode(RechargeWalletResponseDTO.self, from: data)
+      return .success(Int64(response.coins))
+    } catch {
+      switch error {
+      case let netErr as NetworkError:
+        return .failure(FeedError.rechargeError(netErr.localizedDescription))
+      case let authErr as AuthError:
+        return .failure(FeedError.authError(authErr))
+      default:
+        return .failure(.unknown(error.localizedDescription))
+      }
+    }
+  }
+
   private func swiftDelegatedIdentityWire(from rustWire: DelegatedIdentityWire) throws -> SwiftDelegatedIdentityWire {
     let wireJsonString = delegated_identity_wire_to_json(rustWire).toString()
     guard let data = wireJsonString.data(using: .utf8) else {
@@ -332,19 +377,4 @@ protocol FeedMapping {
   var postID: UInt32 { get }
   var canisterID: String { get }
   var isNsfw: Bool { get }
-}
-
-extension FeedsRepository {
-  enum Constants {
-    static let cloudfarePrefix = "https://customer-2p3jflss4r4hmpnz.cloudflarestream.com/"
-    static let cloudflareSuffix = "/manifest/video.m3u8"
-    static let thumbnailSuffix = "/thumbnails/thumbnail.jpg"
-    static let feedsBaseURL = "https://yral-ml-feed-server.fly.dev"
-    static let cacheSuffix = "/api/v3/feed/coldstart/clean"
-    static let mlFeedSuffix = "/api/v3/feed/clean"
-    static let reportVideoPath = "/api/v1/posts/report_v2"
-    static let videoEventPath = "/api/v1/events/bulk"
-    static let initialNumResults: Int64 = 20
-    static let mlNumResults: Int64 = 10
-  }
 }

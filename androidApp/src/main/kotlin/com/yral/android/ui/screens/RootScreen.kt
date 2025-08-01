@@ -185,9 +185,8 @@ private fun Splash(
                 rawRes = R.raw.splash_lottie,
                 iterations = 1,
                 contentScale = ContentScale.Crop,
-            ) {
-                onAnimationComplete()
-            }
+                onAnimationComplete = onAnimationComplete,
+            )
         }
 
         AnimatedVisibility(

@@ -9,6 +9,7 @@ data class AboutGameItem(
 data class AboutGameItemBody(
     val type: AboutGameBodyType,
     val content: List<String>?,
+    val bolds: List<Boolean>?,
     val colors: List<String>?,
     val imageUrls: List<String>?,
 )

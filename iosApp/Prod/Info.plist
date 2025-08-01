@@ -81,6 +81,8 @@
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 	</array>
+	<key>UIUserInterfaceStyle</key>
+	<string>Dark</string>
 	<key>YRAL_REDIRECT_URI</key>
 	<string>com.yral.iosApp://oauth/callback</string>
 </dict>

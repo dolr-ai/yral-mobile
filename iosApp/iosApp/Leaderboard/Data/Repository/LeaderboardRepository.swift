@@ -11,92 +11,83 @@ import FirebaseFirestore
 
 class LeaderboardRepository: LeaderboardRepositoryProtocol {
   private let firebaseService: FirebaseServiceProtocol
+  private let httpService: HTTPService
   private let authClient: AuthClient
 
-  init(firebaseService: FirebaseServiceProtocol, authClient: AuthClient) {
+  init(
+    firebaseService: FirebaseServiceProtocol,
+    httpService: HTTPService,
+    authClient: AuthClient
+  ) {
     self.firebaseService = firebaseService
+    self.httpService = httpService
     self.authClient = authClient
   }
 
-  // swiftlint: disable function_body_length
   func fetchLeaderboard() async -> Result<LeaderboardResponse, LeaderboardError> {
-    guard let userPrincipalID = authClient.userPrincipalString else {
-      return .failure(.unknown(Constants.principalError))
+    guard let baseURL = httpService.baseURL else {
+      return .failure(.network(.invalidRequest))
     }
 
-    async let topTenTask = firebaseService.fetchCollection(
-      from: Constants.usersCollectionPath,
-      orderBy: [Constants.coinsField],
-      descending: true,
-      limit: Constants.leaderboardLimit,
-      decodeAs: LeaderboardRowDTO.self
-    )
-
-    async let userTask = firebaseService.fetchDocument(
-      path: "\(Constants.usersCollectionPath)/\(userPrincipalID)",
-      checkCache: false,
-      decodeAs: LeaderboardRowDTO.self
-    )
+    var httpHeaders = [String: String]()
 
     do {
-      let (topSnap, userSnap) = try await (topTenTask, userTask)
-
-      var startingPosition: Int = .one
-      var modifiedTopTenDTO: [LeaderboardRowDTO] = []
-      let modifiedUserDTO: LeaderboardRowDTO
-
-      for index in .zero ..< topSnap.count {
-        if index > .zero && topSnap[index].coins < topSnap[index - .one].coins {
-          startingPosition += .one
-        }
-
-        modifiedTopTenDTO.append(
-          LeaderboardRowDTO(
-            id: topSnap[index].id,
-            position: startingPosition,
-            coins: topSnap[index].coins
-          )
-        )
+      guard let userIDToken = try await firebaseService.fetchUserIDToken() else {
+        return .failure(.unknown(Constants.firebaseUserIDError))
       }
 
-      if let userIndex = modifiedTopTenDTO.firstIndex(where: { $0.coins == userSnap.coins }) {
-        modifiedUserDTO = LeaderboardRowDTO(
-          id: userSnap.id,
-          position: modifiedTopTenDTO[userIndex].position,
-          coins: userSnap.coins
-        )
-      } else {
-        let userPositionQuery = Firestore.firestore()
-          .collection(Constants.usersCollectionPath)
-          .whereField(Constants.coinsField, isGreaterThan: userSnap.coins)
-        let aggregateQuery = try await userPositionQuery.count.getAggregation(source: .server)
-        let userPosition = Int(truncating: aggregateQuery.count) + .one
+      httpHeaders = [
+        "Content-Type": "application/json",
+        "Authorization": "Bearer \(userIDToken)"
+      ]
 
-        modifiedUserDTO = LeaderboardRowDTO(
-          id: userSnap.id,
-          position: userPosition,
-          coins: userSnap.coins
-        )
+      if let appcheckToken = await firebaseService.fetchAppCheckToken() {
+        httpHeaders["X-Firebase-AppCheck"] = appcheckToken
       }
+    } catch {
+      return .failure(.firebaseError(error))
+    }
 
-      let leaderboardDTO = LeaderboardDTO(
-        userRow: modifiedUserDTO,
-        rows: modifiedTopTenDTO
+    guard let principalID = authClient.userPrincipalString else {
+      return .failure(.unknown(Constants.principalIDError))
+    }
+
+    do {
+      let httpBody = [
+        "data": [
+          "principal_id": principalID
+        ]
+      ]
+
+      let response = try await httpService.performRequest(
+        for: Endpoint(
+          http: "",
+          baseURL: baseURL,
+          path: "leaderboard",
+          method: .post,
+          headers: httpHeaders,
+          body: try? JSONEncoder().encode(httpBody)
+        ),
+        decodeAs: LeaderboardDTO.self
       )
 
-      return .success(leaderboardDTO.toDomain())
+      return .success(response.toDomain())
     } catch {
-      return .failure(LeaderboardError.firebaseError(error))
+      switch error {
+      case let error as NetworkError:
+        return .failure(.network(error))
+      case let error as CloudFunctionError:
+        return .failure(.cloudFunctionError(error))
+      default:
+        return .failure(.firebaseError(error))
+      }
     }
   }
-  // swiftlint: enable function_body_length
 }
 
 extension LeaderboardRepository {
   enum Constants {
-    static let usersCollectionPath = "users"
-    static let coinsField = "coins"
-    static let leaderboardLimit: Int = 10
-    static let principalError = "Could not find user principal ID"
+    static let firebaseUserIDError = "Failed to fetch user ID token"
+    static let principalIDError = "Failed to fetch princiapl ID"
   }
 }

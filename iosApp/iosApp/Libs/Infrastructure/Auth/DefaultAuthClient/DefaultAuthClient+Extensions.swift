@@ -10,6 +10,8 @@ import Combine
 import AuthenticationServices
 import iosSharedUmbrella
 import FirebaseMessaging
+import Mixpanel
+import MixpanelSessionReplay
 
 extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
   func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
@@ -305,6 +307,7 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
         satsBalance: KotlinDouble(value: Double(coins))
       )
     )
+    MPSessionReplay.getInstance()?.identify(distinctId: Mixpanel.sharedInstance()?.distinctId ?? "")
   }
   // swiftlint: enable large_tuple
 }

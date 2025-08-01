@@ -12,6 +12,7 @@ import com.yral.android.ui.widgets.video.di.videoWidgetModule
 import com.yral.shared.app.di.initKoin
 import com.yral.shared.koin.koinInstance
 import dev.gitlive.firebase.crashlytics.FirebaseCrashlytics
+import io.branch.referral.Branch
 import org.koin.android.ext.koin.androidContext
 
 class YralApp : Application() {
@@ -19,6 +20,7 @@ class YralApp : Application() {
         super.onCreate()
         setupFirebase()
         setupFacebook()
+        setupBranch()
         initKoin {
             androidContext(this@YralApp)
             modules(videoWidgetModule)
@@ -53,5 +55,19 @@ class YralApp : Application() {
         // Enable Facebook SDK crashlytics enabled
         FacebookSdk.setAutoLogAppEventsEnabled(true)
         FacebookSdk.setAutoInitEnabled(true)
+    }
+
+    private fun setupBranch() {
+        Branch.enableLogging()
+        when (BuildConfig.FLAVOR) {
+            "staging" -> {
+                Branch.enableTestMode()
+                Branch.getAutoInstance(this, BuildConfig.BRANCH_KEY_TEST)
+            }
+            "prod" -> {
+                Branch.disableTestMode()
+                Branch.getAutoInstance(this, BuildConfig.BRANCH_KEY)
+            }
+        }
     }
 }

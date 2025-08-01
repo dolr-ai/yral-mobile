@@ -15,9 +15,19 @@ android {
     namespace = "com.yral.android"
     defaultConfig {
         applicationId = "com.yral.android"
-        versionCode = 6
-        versionName = "1.2.1"
+        versionCode = 7
+        versionName = "1.3.0"
         ndkVersion = "28.0.13004108"
+        buildConfigField(
+            type = "String",
+            name = "BRANCH_KEY_TEST",
+            value = "\"${System.getenv("YRAL_BRANCH_KEY_TEST")} \"",
+        )
+        buildConfigField(
+            type = "String",
+            name = "BRANCH_KEY",
+            value = "\"${System.getenv("YRAL_BRANCH_KEY")} \"",
+        )
     }
     buildFeatures {
         compose = true
@@ -89,6 +99,7 @@ dependencies {
     implementation(libs.accompanist.permission)
     implementation(libs.facebook.sdk.android.core)
     implementation(libs.mixpanel.android)
+    implementation(libs.mixpanel.session.replay.android)
 
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.ui)
@@ -99,6 +110,9 @@ dependencies {
     implementation(libs.moko.permissions)
     implementation(libs.moko.permissions.compose)
     implementation(libs.moko.permissions.notifications)
+
+    implementation(libs.branch)
+    implementation(libs.play.services.ads.identifier)
 
     implementation(projects.shared.core)
     implementation(projects.shared.libs.preferences)

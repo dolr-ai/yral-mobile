@@ -57,7 +57,7 @@ struct LeaderboardView: View {
   // swiftlint: disable function_body_length
   @ViewBuilder
   private func buildHeader(_ response: LeaderboardResponse) -> some View {
-    let (topThreePrincipals, topThreeCoins) = topThreePositions(for: response)
+    let (topThreePrincipals, topThreeWins) = topThreePositions(for: response)
 
     VStack(alignment: .leading, spacing: .zero) {
       Text(Constants.header)
@@ -93,14 +93,28 @@ struct LeaderboardView: View {
 
               Spacer(minLength: Constants.headerBottomHStackSpacerMinLenght)
 
-              HStack(spacing: .four) {
-                Image(Constants.satsImage)
-                  .resizable()
-                  .frame(width: Constants.satsImageSize, height: Constants.satsImageSize)
-
-                Text(topThreeCoins[index].description)
+              VStack(spacing: .zero) {
+                Text(topThreeWins[index].description)
                   .font(Constants.satsFont)
                   .foregroundColor(Constants.satsColour)
+                  .overlay(
+                    textGradientFor(index, radius: Constants.winsEndRadius)
+                      .mask(
+                        Text(topThreeWins[index].description)
+                          .font(Constants.satsFont)
+                      )
+                  )
+
+                Text(Constants.totalSats)
+                  .font(Constants.gamesWonFont)
+                  .foregroundColor(Constants.gamesWonColour)
+                  .overlay(
+                    textGradientFor(index, radius: Constants.gameWinsEndRadius)
+                      .mask(
+                        Text(Constants.totalSats)
+                          .font(Constants.gamesWonFont)
+                      )
+                  )
               }
             }
           }
@@ -143,7 +157,7 @@ struct LeaderboardView: View {
           .font(Constants.totalSatsFont)
           .foregroundColor(Constants.totalSatsColour)
           .padding(.leading, Constants.totalSatsLeading)
-          .frame(width: rowWidth * Constants.totalSatsFactor, alignment: .leading)
+          .frame(width: rowWidth * Constants.totalSatsFactor, alignment: .trailing)
       }
 
       LeaderboardRowView(
@@ -153,7 +167,7 @@ struct LeaderboardView: View {
         imageURL: viewModel.fetchImageURL(for: response.userRow.principalID)
       )
 
-      ForEach(response.rows, id: \.id) { leaderboardRow in
+      ForEach(response.topRows, id: \.id) { leaderboardRow in
         LeaderboardRowView(
           leaderboardRow: leaderboardRow,
           isCurrentUser: false,
@@ -169,20 +183,20 @@ struct LeaderboardView: View {
 
   private func topThreePositions(for response: LeaderboardResponse) -> ([[String]], [Int]) {
 
-    var grouped: [Int: (ids: [String], coins: Int)] = [:]
+    var grouped: [Int: (ids: [String], wins: Int)] = [:]
 
-    for row in response.rows where (.one ... .three).contains(row.position) {
+    for row in response.topRows where (.one ... .three).contains(row.position) {
       if grouped[row.position] == nil {
-        grouped[row.position] = (ids: [], coins: row.coins)
+        grouped[row.position] = (ids: [], wins: row.wins)
       }
       grouped[row.position]!.ids.append(row.principalID)
     }
 
     let order: [Int] = [.two, .one, .three]
     let idsByPosition   = order.map { grouped[$0]?.ids   ?? [] }
-    let coinsByPosition = order.map { grouped[$0]?.coins ?? .zero }
+    let winsByPosition = order.map { grouped[$0]?.wins ?? .zero }
 
-    return (idsByPosition, coinsByPosition)
+    return (idsByPosition, winsByPosition)
   }
 
   private func condensedIDString(for ids: [String]) -> String {
@@ -196,6 +210,16 @@ struct LeaderboardView: View {
         .map { String($0.prefix(.four)) }
         .joined(separator: "..., ")
         .appending("...")
+    }
+  }
+
+  private func textGradientFor(_ index: Int, radius: CGFloat) -> RadialGradient {
+    if index == .one {
+      Constants.goldGradient(endRadius: radius)
+    } else if index == .zero {
+      Constants.silverGradient(endRadius: radius)
+    } else {
+      Constants.bronzeGradient(endRadius: radius)
     }
   }
 }
@@ -238,6 +262,8 @@ extension LeaderboardView {
     static let satsImageSize = 16.0
     static let satsFont = YralFont.pt14.bold.swiftUIFont
     static let satsColour = YralColor.grey50.swiftUIColor
+    static let gamesWonFont = YralFont.pt14.medium.swiftUIFont
+    static let gamesWonColour = YralColor.grey50.swiftUIColor
 
     static let headerBottomHStackTop = 20.0
     static let headerBottomHStackBottom = 40.0
@@ -255,7 +281,7 @@ extension LeaderboardView {
     static let idColour = YralColor.grey600.swiftUIColor
     static let idFactor = 0.45
     static let idLeading = 28.0
-    static let totalSats = "Player SATS"
+    static let totalSats = "Games Won"
     static let totalSatsFont = YralFont.pt12.medium.swiftUIFont
     static let totalSatsColour = YralColor.grey600.swiftUIColor
     static let totalSatsFactor = 0.38
@@ -264,6 +290,46 @@ extension LeaderboardView {
     static let leaderboardVertical = 22.0
     static let leaderboardHorizontal = 16.0
 
-    static let arbNumber = 999
+    static let winsEndRadius = 30.0
+    static let gameWinsEndRadius = 80.0
+
+    static func goldGradient(endRadius: CGFloat) -> RadialGradient {
+      RadialGradient(
+        stops: [
+          .init(color: Color(red: 191/255, green: 118/255, blue: 11/255), location: 0.0),
+          .init(color: Color(red: 255/255, green: 232/255, blue: 159/255), location: 0.507),
+          .init(color: Color(red: 195/255, green: 143/255, blue: 0/255), location: 1.0)
+        ],
+        center: UnitPoint(x: 0.0914, y: 0.0),
+        startRadius: 0,
+        endRadius: endRadius
+      )
+    }
+
+    static func silverGradient(endRadius: CGFloat) -> RadialGradient {
+      RadialGradient(
+        stops: [
+          .init(color: Color(red: 47/255, green: 47/255, blue: 48/255), location: 0.0),
+          .init(color: Color(red: 255/255, green: 255/255, blue: 255/255), location: 0.5),
+          .init(color: Color(red: 75/255, green: 75/255, blue: 75/255), location: 1.0)
+        ],
+        center: UnitPoint(x: 0.8443, y: 0.0),
+        startRadius: 0,
+        endRadius: endRadius
+      )
+    }
+
+    static func bronzeGradient(endRadius: CGFloat) -> RadialGradient {
+      RadialGradient(
+        stops: [
+          .init(color: Color(red: 109/255, green: 76/255, blue: 53/255), location: 0.0),
+          .init(color: Color(red: 219/255, green: 163/255, blue: 116/255), location: 0.5),
+          .init(color: Color(red: 159/255, green: 119/255, blue: 83/255), location: 1.0)
+        ],
+        center: UnitPoint(x: 0.1129, y: 0.3226),
+        startRadius: 0,
+        endRadius: endRadius
+      )
+    }
   }
 }

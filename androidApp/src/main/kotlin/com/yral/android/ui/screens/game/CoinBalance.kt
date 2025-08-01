@@ -83,9 +83,7 @@ fun CoinBalance(
     modifier: Modifier = Modifier,
 ) {
     Box(
-        modifier =
-            modifier
-                .padding(top = 22.dp, bottom = 22.dp, start = 24.dp, end = 24.dp),
+        modifier = modifier,
         contentAlignment = Alignment.CenterStart,
     ) {
         Balance(

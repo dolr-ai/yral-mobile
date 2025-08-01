@@ -11,8 +11,6 @@ import AVKit
 import iosSharedUmbrella
 
 struct UploadView: View {
-  @State private var caption: String = ""
-  @State private var hashtags = [HashtagItem]()
   @State private var showVideoPicker = false
   @State private var videoURL: URL?
   @State private var player: AVPlayer?
@@ -27,10 +25,8 @@ struct UploadView: View {
 
   var doneAction: () -> Void = {}
   var isUploadEnabled: Bool {
-    let isCaptionEmpty = caption.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-    let areHashtagsEmpty = hashtags.isEmpty
     let isVideoURLValid = (videoURL != nil) && (videoURL?.absoluteString.isEmpty == false)
-    return !isCaptionEmpty && !areHashtagsEmpty && isVideoURLValid
+    return isVideoURLValid
   }
 
   init(viewModel: UploadViewModel) {
@@ -92,97 +88,66 @@ struct UploadView: View {
         .background(Color.black.edgesIgnoringSafeArea(.all))
         .transition(.opacity)
       } else {
-        ScrollViewReader { proxy in
-          ScrollView {
-            VStack(spacing: Constants.verticalSpacing) {
-              Text(Constants.navigationTitle)
-                .font(Constants.navigationTitleFont)
-                .foregroundColor(Constants.navigationTitleTextColor)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(Constants.navigationTitlePadding)
-
-              if let url = videoURL {
-                ZStack {
-                  VideoPlayerView(
-                    player: $player,
-                    isPlaying: $isPlaying,
-                    showControls: $showControls,
-                    url: url
-                  )
-                  .frame(height: Constants.videoPlayerHeight)
-
-                  if showControls {
-                    Button {
-                      togglePlayback()
-                    } label: {
-                      Image(isPlaying ? Constants.pauseImageName : Constants.playImageName)
-                        .resizable()
-                        .frame(width: Constants.playPauseButtonSize, height: Constants.playPauseButtonSize)
-                        .foregroundColor(.white)
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                  }
+        VStack(spacing: Constants.verticalSpacing) {
+          Text(Constants.navigationTitle)
+            .font(Constants.navigationTitleFont)
+            .foregroundColor(Constants.navigationTitleTextColor)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(Constants.navigationTitlePadding)
+          if let url = videoURL {
+            ZStack {
+              VideoPlayerView(
+                player: $player,
+                isPlaying: $isPlaying,
+                showControls: $showControls,
+                url: url
+              )
+              .frame(maxWidth: .infinity, maxHeight: .infinity)
+              if showControls {
+                Button {
+                  togglePlayback()
+                } label: {
+                  Image(isPlaying ? Constants.pauseImageName : Constants.playImageName)
+                    .resizable()
+                    .frame(width: Constants.playPauseButtonSize, height: Constants.playPauseButtonSize)
+                    .foregroundColor(.white)
                 }
-                .overlay(
-                  Button {
-                    viewModel.cancelUpload()
-                  } label: {
-                    Image(Constants.uploadPlayerCloseImageName)
-                  }
-                    .padding(Constants.closeButtonPadding),
-                  alignment: .topTrailing
-                )
-              } else {
-                SelectFileView(showVideoPicker: $showVideoPicker)
+                .buttonStyle(PlainButtonStyle())
               }
-
-              CaptionsView(caption: $caption, onFocus: {
-                withAnimation {
-                  proxy.scrollTo(Constants.captionsViewId, anchor: .center)
-                }
-              })
-              .id(Constants.captionsViewId)
-
-              HashtagView(hashtags: $hashtags) {
-                withAnimation {
-                  proxy.scrollTo(Constants.hashtagsViewId, anchor: .center)
-                }
-              }
-              .id(Constants.hashtagsViewId)
-
-              Button {
-                viewModel.event = .uploadPressed
-              } label: {
-                Text(Constants.uploadButtonTitle)
-                  .foregroundColor(Constants.uploadButtonTextColor)
-                  .font(Constants.uploadButtonFont)
-                  .frame(maxWidth: .infinity, minHeight: Constants.uploadButtonHeight)
-                  .background(
-                    isUploadEnabled
-                    ? Constants.uploadButtonEnabledGradient
-                    : Constants.uploadButtonDisabledGradient
-                  )
-                  .cornerRadius(Constants.uploadButtonRadius)
-              }
-              .disabled(!isUploadEnabled)
             }
-            .padding(.horizontal, Constants.horizontalPadding)
+            .overlay(
+              Button {
+                viewModel.cancelUpload()
+              } label: {
+                Image(Constants.uploadPlayerCloseImageName)
+              }
+                .padding(Constants.closeButtonPadding),
+              alignment: .topTrailing
+            )
+          } else {
+            SelectFileView(showVideoPicker: $showVideoPicker)
           }
-          .background(Color.black.edgesIgnoringSafeArea(.all))
-          .hideKeyboardOnTap()
-          .fullScreenCover(isPresented: $showVideoPicker) {
-            VideoPickerViewControllerRepresentable(viewModel: viewModel)
-              .background( ClearBackgroundView() )
-//            if #available(iOS 16.4, *) {
-//              VideoPickerViewControllerRepresentable(viewModel: viewModel)
-//                .presentationDetents([])
-//                .presentationDragIndicator(.hidden)
-//                .presentationBackground(.clear)
-//            } else {
-//              VideoPickerViewControllerRepresentable(viewModel: viewModel)
-//
-//            }
+          Button {
+            viewModel.event = .uploadPressed
+          } label: {
+            Text(Constants.uploadButtonTitle)
+              .foregroundColor(Constants.uploadButtonTextColor)
+              .font(Constants.uploadButtonFont)
+              .frame(maxWidth: .infinity, minHeight: Constants.uploadButtonHeight)
+              .background(
+                isUploadEnabled
+                ? Constants.uploadButtonEnabledGradient
+                : Constants.uploadButtonDisabledGradient
+              )
+              .cornerRadius(Constants.uploadButtonRadius)
           }
+          .disabled(!isUploadEnabled)
+          .padding(.bottom, Constants.uploadButtonBottomPadding)
+        }
+        .padding(.horizontal, Constants.horizontalPadding)
+        .fullScreenCover(isPresented: $showVideoPicker) {
+          VideoPickerViewControllerRepresentable(viewModel: viewModel)
+            .background( ClearBackgroundView() )
         }
       }
     }
@@ -198,7 +163,7 @@ struct UploadView: View {
         showUploadProgressView = true
         guard let url = videoURL else { return }
         Task {
-          await viewModel.finishUpload(fileURL: url, caption: caption, hashtags: hashtags.map { $0.text })
+          await viewModel.finishUpload(fileURL: url, caption: "", hashtags: [""])
         }
         AnalyticsModuleKt.getAnalyticsManager().trackEvent(
           event: VideoUploadInitiatedEventData(captionAdded: true, hashtagsAdded: true)
@@ -206,7 +171,7 @@ struct UploadView: View {
 
       case .videoSelected(let url):
         videoURL = url
-        viewModel.startUpload(fileURL: url, caption: caption, hashtags: hashtags.map { $0.text })
+        viewModel.startUpload(fileURL: url, caption: "", hashtags: [""])
         AnalyticsModuleKt.getAnalyticsManager().trackEvent(
           event: FileSelectionSuccessEventData(fileType: "video")
         )
@@ -294,9 +259,6 @@ extension UploadView {
     isPlaying = false
     showControls = true
 
-    caption = ""
-    hashtags = []
-
     currentProgress = .zero
     viewModel.state = .initialized
   }
@@ -317,6 +279,7 @@ extension UploadView {
     static let navigationTitlePadding = EdgeInsets(top: 24.0, leading: 0, bottom: 0, trailing: 0)
     static let verticalSpacing = 20.0
     static let horizontalPadding = 16.0
+    static let uploadButtonBottomPadding = 16.0
 
     static let uploadButtonEnabledGradient = LinearGradient(
       stops: [
