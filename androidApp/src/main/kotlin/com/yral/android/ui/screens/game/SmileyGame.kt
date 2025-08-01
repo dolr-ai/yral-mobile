@@ -217,5 +217,5 @@ private fun Int.toSignedString(): String =
 
 object SmileyGameConstants {
     const val NUDGE_ANIMATION_DURATION = 600L
-    const val NUDGE_DURATION = 3000L
+    const val NUDGE_DURATION = 5000L
 }
