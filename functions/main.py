@@ -145,7 +145,7 @@ def exchange_principal_id(request: Request):
         print("Unhandled error:", e, file=sys.stderr)
         return error_response(500, "INTERNAL", "Internal server error")
 
-def _push_delta(token: str, principal_id: str, delta: int) -> bool:
+def _push_delta(token: str, principal_id: str, delta: int) -> tuple[bool, str | None]:
     url = f"{BALANCE_URL}{principal_id}"
     headers = {
         "Authorization": token,
@@ -157,9 +157,11 @@ def _push_delta(token: str, principal_id: str, delta: int) -> bool:
     }
     try:
         resp = requests.post(url, json=body, timeout=5, headers=headers)
-        return resp.status_code == 200
-    except requests.RequestException:
-        return False
+        if resp.status_code == 200:
+            return True, None
+        return False, f"Status: {resp.status_code}, Body: {resp.text}"
+    except requests.RequestException as e:
+        return False, str(e)
     
 @https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"], enforce_app_check=True)
 def update_balance(request: Request):
@@ -195,10 +197,10 @@ def update_balance(request: Request):
                 "App Check token invalid"
             )
 
-        push_delta = _push_delta(balance_update_token, pid, delta)
+        success, error_msg = _push_delta(balance_update_token, pid, delta)
 
-        if not push_delta:
-            return error_response(502, "UPSTREAM_FAILED", "We couldn't update the balance, please try again after some time.")
+        if not success:
+            return error_response(502, "UPSTREAM_FAILED", f"Balance update failed: {error_msg}")
 
         coins = tx_coin_change(pid, None, delta, "AIRDROP")
 
