@@ -71,12 +71,14 @@ fun SmileyGame(
                 var animatingNudgeIconPosition by remember { mutableStateOf<Int?>(null) }
                 LaunchedEffect(shouldShowNudge) {
                     if (shouldShowNudge) {
-                        animatingNudgeIconPosition = 0
-                        delay(NUDGE_DURATION)
-                        animatingNudgeIconPosition = null
-                        onNudgeAnimationComplete()
+                        runCatching {
+                            animatingNudgeIconPosition = 0
+                            delay(NUDGE_DURATION)
+                            animatingNudgeIconPosition = null
+                            onNudgeAnimationComplete()
+                        }.onFailure { animatingNudgeIconPosition = null }
                     } else {
-                        null
+                        animatingNudgeIconPosition = null
                     }
                 }
                 if (animatingNudgeIconPosition != null) SmileyGameNudge()
@@ -215,5 +217,5 @@ private fun Int.toSignedString(): String =
 
 object SmileyGameConstants {
     const val NUDGE_ANIMATION_DURATION = 600L
-    const val NUDGE_DURATION = 3000L
+    const val NUDGE_DURATION = 5000L
 }
