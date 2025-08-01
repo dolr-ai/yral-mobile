@@ -58,6 +58,9 @@ fun HowToPlay(
             delay(ANIMATION_DURATION.toLong() / 2)
             backgroundVisible = false
             onAnimationComplete()
+        } else {
+            isExpanded = false
+            backgroundVisible = false
         }
     }
     Row(

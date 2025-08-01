@@ -76,7 +76,7 @@ fun SmileyGame(
                         animatingNudgeIconPosition = null
                         onNudgeAnimationComplete()
                     } else {
-                        null
+                        animatingNudgeIconPosition = null
                     }
                 }
                 if (animatingNudgeIconPosition != null) SmileyGameNudge()
