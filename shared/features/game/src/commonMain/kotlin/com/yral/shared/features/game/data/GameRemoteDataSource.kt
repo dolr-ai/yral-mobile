@@ -42,8 +42,16 @@ class GameRemoteDataSource(
                         host = cloudFunctionUrl()
                         path(CAST_VOTE_PATH)
                     }
-                    headers.append("authorization", "Bearer $idToken")
-                    setBody(request)
+                    val appCheckToken =
+                        Firebase.appCheck
+                            .getToken(false)
+                            .await()
+                            .token
+                    headers {
+                        append(HttpHeaders.Authorization, "Bearer $idToken")
+                        append(HEADER_X_FIREBASE_APPCHECK, appCheckToken)
+                    }
+                    setBody(FirebaseFunctionRequest(request))
                 }
             val apiResponseString = response.bodyAsText()
             val responseDto =
