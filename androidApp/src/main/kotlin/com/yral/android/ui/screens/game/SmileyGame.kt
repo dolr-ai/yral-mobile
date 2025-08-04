@@ -34,6 +34,7 @@ import com.yral.android.ui.screens.game.SmileyGameConstants.NUDGE_DURATION
 import com.yral.android.ui.widgets.YralFeedback
 import com.yral.shared.features.game.domain.models.GameIcon
 import kotlinx.coroutines.delay
+import kotlin.coroutines.cancellation.CancellationException
 
 @Suppress("LongMethod")
 @Composable
@@ -47,6 +48,7 @@ fun SmileyGame(
     hasShownCoinDeltaAnimation: Boolean,
     onDeltaAnimationComplete: () -> Unit,
     shouldShowNudge: Boolean,
+    pageNo: Int,
     onNudgeAnimationComplete: () -> Unit,
 ) {
     var animateBubbles by remember { mutableStateOf(false) }
@@ -69,19 +71,14 @@ fun SmileyGame(
             }
             else -> {
                 var animatingNudgeIconPosition by remember { mutableStateOf<Int?>(null) }
-                LaunchedEffect(shouldShowNudge) {
-                    if (shouldShowNudge) {
-                        runCatching {
-                            animatingNudgeIconPosition = 0
-                            delay(NUDGE_DURATION)
-                            animatingNudgeIconPosition = null
-                            onNudgeAnimationComplete()
-                        }.onFailure { animatingNudgeIconPosition = null }
-                    } else {
-                        animatingNudgeIconPosition = null
-                    }
-                }
-                if (animatingNudgeIconPosition != null) SmileyGameNudge()
+                SmileyGameNudge(
+                    pageNo = pageNo,
+                    shouldShowNudge = shouldShowNudge,
+                    gameIcons = gameIcons,
+                    animatingNudgeIconPosition = animatingNudgeIconPosition,
+                    setAnimatingNudgeIconPosition = { animatingNudgeIconPosition = it },
+                    onNudgeAnimationComplete = onNudgeAnimationComplete,
+                )
                 GameIconStrip(
                     modifier = Modifier.align(Alignment.BottomCenter),
                     gameIcons = gameIcons,
@@ -159,8 +156,35 @@ private fun BoxScope.SmileyGameResult(
 }
 
 @Composable
-private fun BoxScope.SmileyGameNudge() {
-    val infiniteTransition = rememberInfiniteTransition()
+private fun BoxScope.SmileyGameNudge(
+    pageNo: Int,
+    shouldShowNudge: Boolean,
+    gameIcons: List<GameIcon>,
+    animatingNudgeIconPosition: Int?,
+    setAnimatingNudgeIconPosition: (Int?) -> Unit,
+    onNudgeAnimationComplete: () -> Unit,
+) {
+    LaunchedEffect(shouldShowNudge) {
+        try {
+            if (shouldShowNudge) {
+                for (index in gameIcons.indices) {
+                    setAnimatingNudgeIconPosition(index)
+                    delay(NUDGE_DURATION)
+                }
+                setAnimatingNudgeIconPosition(null)
+                onNudgeAnimationComplete()
+            } else {
+                setAnimatingNudgeIconPosition(null)
+            }
+        } catch (e: CancellationException) {
+            // Reset state safely on coroutine cancellation
+            setAnimatingNudgeIconPosition(null)
+            throw e
+        } catch (_: Exception) {
+            setAnimatingNudgeIconPosition(null)
+        }
+    }
+    val infiniteTransition = rememberInfiniteTransition(label = "nudge $pageNo")
     val tweenSpec =
         tween<Float>(
             durationMillis = NUDGE_ANIMATION_DURATION.toInt(),
@@ -176,11 +200,25 @@ private fun BoxScope.SmileyGameNudge() {
         targetValue = 0f,
         animationSpec = infiniteRepeatable(tweenSpec, RepeatMode.Reverse),
     )
+    animatingNudgeIconPosition?.let {
+        SmileyGameNudgeContent(
+            modifier = Modifier.align(Alignment.BottomCenter),
+            alpha = alpha,
+            offsetY = offsetY,
+        )
+    }
+}
+
+@Composable
+private fun SmileyGameNudgeContent(
+    modifier: Modifier,
+    alpha: Float,
+    offsetY: Float,
+) {
     Box(
         modifier =
-            Modifier
+            modifier
                 .fillMaxSize()
-                .align(Alignment.BottomCenter)
                 .background(YralColors.ScrimColorLight)
                 .padding(horizontal = 16.dp),
         contentAlignment = Alignment.BottomStart,

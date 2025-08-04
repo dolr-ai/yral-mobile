@@ -409,6 +409,7 @@ private fun BottomView(
                 pageNo < gameState.isHowToPlayShown.size &&
                     !gameState.isHowToPlayShown[pageNo] &&
                     pageNo == state.currentPageOfFeed,
+            pageNo = pageNo,
             onClick = { gameViewModel.toggleAboutGame(true) },
             onAnimationComplete = { gameViewModel.setHowToPlayShown(pageNo, state.currentPageOfFeed) },
         )
@@ -507,6 +508,7 @@ private fun Game(
                 !gameState.isSmileyGameNudgeShown &&
                     pageNo >= NUDGE_PAGE &&
                     pageNo == state.currentPageOfFeed,
+            pageNo = pageNo,
             onNudgeAnimationComplete = {
                 gameViewModel.setSmileyGameNudgeShown(state.feedDetails[pageNo])
             },
