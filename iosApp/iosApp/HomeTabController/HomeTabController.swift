@@ -17,7 +17,6 @@ struct HomeTabController: View {
       showFeeds: $showFeeds,
       walletPhase: $walletPhase,
       walletOutcome: $walletOutcome
-
     )
   }
 
