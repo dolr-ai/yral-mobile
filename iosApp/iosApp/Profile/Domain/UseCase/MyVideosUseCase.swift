@@ -10,13 +10,13 @@ import Foundation
 import Combine
 
 protocol MyVideosUseCaseProtocol {
-  func execute(request: ProfileVideoRequest) async -> Result<[FeedResult], AccountError>
+  func execute(request: ProfileVideoRequest) async -> Result<[FeedResult], ProfileError>
   var videosPublisher: AnyPublisher<[FeedResult], Never> { get }
   var newVideosPublisher: AnyPublisher<[FeedResult], Never> { get }
 }
 
 class MyVideosUseCase:
-  BaseResultUseCase<ProfileVideoRequest, [FeedResult], AccountError>,
+  BaseResultUseCase<ProfileVideoRequest, [FeedResult], ProfileError>,
   MyVideosUseCaseProtocol {
   let profileRepository: ProfileRepositoryProtocol
   var videosPublisher: AnyPublisher<[FeedResult], Never> {
@@ -32,7 +32,7 @@ class MyVideosUseCase:
     super.init(crashReporter: crashReporter)
   }
 
-  override func runImplementation(_ request: ProfileVideoRequest) async -> Result<[FeedResult], AccountError> {
+  override func runImplementation(_ request: ProfileVideoRequest) async -> Result<[FeedResult], ProfileError> {
     await profileRepository.fetchVideos(request: request)
   }
 }
