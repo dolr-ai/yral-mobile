@@ -33,7 +33,7 @@ class ProfileRepository: ProfileRepositoryProtocol {
     self.authClient = authClient
   }
 
-  func fetchVideos(request: ProfileVideoRequest) async -> Result<[FeedResult], AccountError> {
+  func fetchVideos(request: ProfileVideoRequest) async -> Result<[FeedResult], ProfileError> {
     let result = await getUserVideos(with: request.startIndex, offset: request.offset)
     switch result {
     case .success(let newVideos):
@@ -48,7 +48,7 @@ class ProfileRepository: ProfileRepositoryProtocol {
     }
   }
 
-  func refreshVideos(shouldPurge: Bool) async -> Result<[FeedResult], AccountError> {
+  func refreshVideos(shouldPurge: Bool) async -> Result<[FeedResult], ProfileError> {
     if shouldPurge {
       self.deletedVideoSubject.send(videos)
       self.videos.removeAll()
@@ -69,9 +69,9 @@ class ProfileRepository: ProfileRepositoryProtocol {
     }
   }
 
-  func deleteVideo(request: DeleteVideoRequest) async -> Result<Void, AccountError> {
+  func deleteVideo(request: DeleteVideoRequest) async -> Result<Void, ProfileError> {
     guard let principalString = authClient.canisterPrincipalString else {
-      return .failure(AccountError.authError(AuthError.invalidRequest("No canister principal")))
+      return .failure(ProfileError.authError(AuthError.invalidRequest("No user principal")))
     }
     guard let baseURL = httpService.baseURL else { return .failure(.invalidInfo("No base URL found")) }
     do {
@@ -100,9 +100,9 @@ class ProfileRepository: ProfileRepositoryProtocol {
     } catch {
       switch error {
       case let netErr as NetworkError:
-        return .failure(AccountError.networkError(netErr.localizedDescription))
+        return .failure(ProfileError.networkError(netErr.localizedDescription))
       case let authErr as AuthError:
-        return .failure(AccountError.authError(authErr))
+        return .failure(ProfileError.authError(authErr))
       default:
         return .failure(.unknown(error.localizedDescription))
       }
@@ -113,9 +113,9 @@ class ProfileRepository: ProfileRepositoryProtocol {
   private func getUserVideos(
     with startIndex: UInt64,
     offset: UInt64
-  ) async -> Result<[FeedResult], AccountError> {
+  ) async -> Result<[FeedResult], ProfileError> {
     guard let principalString = authClient.canisterPrincipalString else {
-      return .failure(AccountError.authError(AuthError.invalidRequest("No canister principal")))
+      return .failure(ProfileError.authError(AuthError.invalidRequest("No user principal")))
     }
     do {
       let identity = try self.authClient.generateNewDelegatedIdentity()
@@ -158,19 +158,19 @@ class ProfileRepository: ProfileRepositoryProtocol {
         }
         return .success(feedResult)
       } else {
-        guard let error = result.err_value() else { return .failure(AccountError.unknown("Invalid state")) }
+        guard let error = result.err_value() else { return .failure(ProfileError.unknown("Invalid state")) }
         if error.is_exceeded_max_number_of_items_allowed_in_one_request() {
-          return .failure(AccountError.invalidVideoRequest("Exceeded max number of items allowed in one request"))
+          return .failure(ProfileError.invalidVideoRequest("Exceeded max number of items allowed in one request"))
         } else if error.is_invalid_bounds_passed() {
-          return .failure(AccountError.invalidVideoRequest("Invalid bounds passed"))
+          return .failure(ProfileError.invalidVideoRequest("Invalid bounds passed"))
         } else if error.is_reached_end_of_items_list() {
-          return .failure(AccountError.pageEndReached)
+          return .failure(ProfileError.pageEndReached)
         } else {
-          return .failure(AccountError.unknown("Invalid state"))
+          return .failure(ProfileError.unknown("Invalid state"))
         }
       }
     } catch {
-      return .failure(AccountError.rustError(RustError.unknown(error.localizedDescription)))
+      return .failure(ProfileError.rustError(RustError.unknown(error.localizedDescription)))
     }
   }
   // swiftlint: enable function_body_length
