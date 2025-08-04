@@ -357,7 +357,6 @@ extension DefaultAuthClient {
     static let keychainAccessToken = "yral.accessToken"
     static let keychainIDToken = "yral.idToken"
     static let keychainRefreshToken = "yral.refreshToken"
-    static let keychainTokenExpiryDateKey = "keychainTokenExpiryDate"
     static let temporaryIdentityExpirySecond: UInt64 = 3600
     static let yralMetaDataBaseURLString = "https://yral-metadata.fly.dev"
     static let sessionRegistrationPath = "/update_session_as_registered/"
