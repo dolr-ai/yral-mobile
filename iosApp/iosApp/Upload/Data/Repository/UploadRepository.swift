@@ -113,13 +113,14 @@ class UploadRepository: UploadRepositoryProtocol {
           publisherUserId: self.authClient.userPrincipalString ?? "",
           isGameEnabled: true,
           gameType: .smiley,
-          isNsfw: false
+          isNsfw: false,
+          type: .uploadVideo
         )
       )
       return .success(())
     } catch {
       AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-        event: VideoUploadErrorShownEventData(reason: error.localizedDescription)
+        event: VideoUploadErrorShownEventData(reason: error.localizedDescription, type: .uploadVideo)
       )
       switch error {
       case let netErr as NetworkError:

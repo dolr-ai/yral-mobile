@@ -30,7 +30,6 @@ extension FeedsViewController: UICollectionViewDelegate {
 
     if ratio >= .half, candidate != current {
       let previous = current
-      storeThumbnail()
       feedsPlayer.advanceToVideo(at: candidate)
       var snapshot = feedsDataSource.snapshot()
       let ids = snapshot.itemIdentifiers
@@ -44,7 +43,6 @@ extension FeedsViewController: UICollectionViewDelegate {
 
   func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
     trackedVideoIDs.removeAll()
-    storeThumbnail()
     feedsPlayer.pause()
 
     guard playToScroll else { return }

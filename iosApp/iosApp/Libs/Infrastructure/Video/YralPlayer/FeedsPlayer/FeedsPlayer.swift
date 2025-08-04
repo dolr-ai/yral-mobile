@@ -7,7 +7,7 @@
 import UIKit
 import AVFoundation
 
-// swiftlint: disable type_body_length file_length
+// swiftlint: disable type_body_length
 @MainActor
 final class FeedsPlayer: YralPlayer {
   var feedResults: [FeedResult] = []
@@ -27,7 +27,7 @@ final class FeedsPlayer: YralPlayer {
   var onPlayerItemsChanged: ((String?, Int) -> Void)?
   weak var delegate: FeedsPlayerProtocol?
   private let networkMonitor: NetworkMonitorProtocol
-  private let crashReporter: CrashReporter
+  let crashReporter: CrashReporter
 
   private var preloadRadius: Int {
     networkMonitor.isGoodForPrefetch ? Constants.radiusGoodNetwork : Constants.radiusbadNetwork
@@ -95,11 +95,6 @@ final class FeedsPlayer: YralPlayer {
 
   func addFeedResults(_ feeds: [FeedResult]) {
     self.feedResults += feeds
-    if self.feedResults.count <= preloadRadius {
-      Task {
-        await preloadFeeds()
-      }
-    }
   }
 
   @objc private func handleEULAAccepted(_ note: Notification) {
@@ -117,17 +112,14 @@ final class FeedsPlayer: YralPlayer {
             && currentIndex < feedResults.count,
           currentIndex != index else { return }
     lastLoopProgress = 0
-    if let currentTime = player.currentItem?.currentTime() {
-      let currentVideoID = feedResults[currentIndex].videoID
-    }
-    Task {
-      await cancelPreloadOutsideRange(center: index, radius: preloadRadius)
-    }
 
     startLogged.remove(index)
     finishLogged.remove(index)
 
     currentIndex = index
+    Task {
+      await cancelPreloadOutsideRange(center: index, radius: preloadRadius)
+    }
     Task {
       let feed = feedResults[index]
       await self.hlsDownloadManager.elevatePriority(for: feed.url)
@@ -178,7 +170,7 @@ final class FeedsPlayer: YralPlayer {
     }
   }
 
-  private func startLooping(with item: AVPlayerItem) async throws {
+  func startLooping(with item: AVPlayerItem) async throws {
     (player as? AVQueuePlayer)?.replaceCurrentItem(with: nil)
     finishFirstFrameTrace(success: false)
     lastLoopProgress = .zero
@@ -219,7 +211,6 @@ final class FeedsPlayer: YralPlayer {
         crashReporter.recordException(error)
         print("Item failed to become ready: \(error)")
       }
-      let currentVideoID = feedResults[currentIndex].videoID
       play()
     }
 
@@ -375,59 +366,6 @@ extension FeedsPlayer: HLSDownloadManagerProtocol {
       self.delegate?.cacheCleared(atc: index)
     }
   }
-
-  nonisolated func downloadManager(
-    _ manager: any HLSDownloadManaging,
-    didBeginAssetFor remoteURL: URL,
-    tempDirURL: URL,
-    assetTitle: String
-  ) {
-    Task { @MainActor [weak self] in
-      guard let self else { return }
-
-      let tempAsset = AVURLAsset(url: tempDirURL)
-
-      do {
-        try await tempAsset.loadPlayableAsync()
-      } catch {
-        crashReporter.recordException(error)
-        return
-      }
-
-      let item = AVPlayerItem(asset: tempAsset)
-      item.preferredForwardBufferDuration = CGFloat.half
-      item.canUseNetworkResourcesForLiveStreamingWhilePaused = true
-
-      playerItems[assetTitle] = item
-
-      if let idx = feedResults.firstIndex(where: { $0.videoID == assetTitle }),
-         idx == currentIndex {
-        try? await startLooping(with: item)
-      }
-    }
-  }
-
-  nonisolated func downloadManager(
-    _ manager: any HLSDownloadManaging,
-    didFinishAssetFor remoteURL: URL,
-    localFileURL: URL,
-    assetTitle: String
-  ) {
-    Task { @MainActor [weak self] in
-      guard let self else { return }
-
-      let localAsset = AVURLAsset(url: localFileURL)
-      do { try await localAsset.loadPlayableAsync() } catch {
-        crashReporter.recordException(error)
-        return
-      }
-
-      let newItem = AVPlayerItem(asset: localAsset)
-      newItem.preferredForwardBufferDuration = CGFloat.half
-      newItem.canUseNetworkResourcesForLiveStreamingWhilePaused = true
-      playerItems[assetTitle] = newItem
-    }
-  }
 }
 
 protocol FeedsPlayerProtocol: AnyObject {
@@ -439,23 +377,4 @@ protocol FeedsPlayerProtocol: AnyObject {
   )
   func playedThreeSeconds(at index: Int)
 }
-
-extension FeedsPlayer {
-  enum Constants {
-    static let videoDurationEventMinThreshold = 0.05
-    static let videoDurationEventMaxThreshold = 0.95
-    static let timescaleEventSampling = 600.0
-    static let radiusGoodNetwork = 5
-    static let radiusbadNetwork = 3
-    static let videoStartTrace = "VideoStartup"
-    static let firstFrameTrace = "FirstFrame"
-    static let videoPlaybackTrace = "VideoPlayback"
-    static let videoIDKey = "video_id"
-    static let performanceResultKey = "result"
-    static let performanceErrorKey = "error"
-    static let performanceSuccessKey = "success"
-    static let rebufferTimeMetric = "rebuffer_time_ms"
-    static let rebufferCountMetric = "rebuffer_count"
-  }
-}
-// swiftlint: enable type_body_length file_length
+// swiftlint: enable type_body_length
