@@ -26,7 +26,7 @@ class SmileyGameConfig {
     do {
       let response = try await firebaseService.fetchDocument(
         path: Constants.documentPath,
-        checkCache: true,
+        checkCache: false,
         decodeAs: SmileyConfigDTO.self
       )
 
