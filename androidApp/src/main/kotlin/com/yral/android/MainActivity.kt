@@ -30,8 +30,6 @@ import com.yral.android.ui.design.appTypoGraphy
 import com.yral.android.ui.nav.DefaultRootComponent
 import com.yral.android.ui.screens.RootScreen
 import com.yral.android.ui.screens.profile.nav.ProfileComponent
-import com.yral.shared.core.platform.AndroidPlatformResources
-import com.yral.shared.core.platform.PlatformResourcesFactory
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.data.AuthDataSourceImpl.Companion.REDIRECT_URI_HOST
 import com.yral.shared.features.auth.data.AuthDataSourceImpl.Companion.REDIRECT_URI_PATH
@@ -54,7 +52,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        initPlatformResources()
         if (BuildConfig.DEBUG) {
             initRustLogger()
         }
@@ -71,12 +68,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-    }
-
-    private fun initPlatformResources() {
-        koinInstance
-            .get<PlatformResourcesFactory>()
-            .initialize(AndroidPlatformResources(this))
     }
 
     override fun onNewIntent(intent: Intent) {

@@ -1,5 +1,6 @@
 package com.yral.shared.analytics.providers.mixpanel
 
+import android.content.Context
 import com.mixpanel.android.mpmetrics.MixpanelAPI
 import com.mixpanel.android.sessionreplay.MPSessionReplay
 import com.mixpanel.android.sessionreplay.models.MPSessionReplayConfig
@@ -8,23 +9,25 @@ import com.yral.shared.analytics.AnalyticsProvider
 import com.yral.shared.analytics.EventToMapConverter
 import com.yral.shared.analytics.User
 import com.yral.shared.analytics.events.EventData
-import com.yral.shared.core.platform.PlatformResources
 import org.json.JSONObject
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
 actual class MixpanelAnalyticsProvider actual constructor(
-    platformResources: PlatformResources,
     private val eventFilter: (EventData) -> Boolean,
     private val mapConverter: EventToMapConverter,
     token: String,
-) : AnalyticsProvider {
+) : AnalyticsProvider,
+    KoinComponent {
+    private val context: Context by inject()
     override val name: String = "mixpanel"
 
     private val mixpanel: MixpanelAPI =
-        MixpanelAPI.getInstance(platformResources.activityContext, token, true)
+        MixpanelAPI.getInstance(context, token, true)
 
     init {
         MPSessionReplay.initialize(
-            appContext = platformResources.activityContext,
+            appContext = context,
             token = token,
             distinctId = mixpanel.distinctId,
             config =
