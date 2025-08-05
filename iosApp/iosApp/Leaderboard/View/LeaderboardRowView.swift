@@ -46,18 +46,15 @@ struct LeaderboardRowView: View {
       .frame(width: rowWidth * Constants.hStackWidthFactor, alignment: .leading)
 
       HStack(spacing: Constants.hStackSpacing / .two) {
-        Image(Constants.satsImage)
-          .resizable()
-          .frame(width: Constants.satsImageSize, height: Constants.satsImageSize)
-
-        Text(leaderboardRow.coins.description)
+        Text(leaderboardRow.wins.description)
           .font(Constants.coinsFont)
           .foregroundColor(Constants.coinsColour)
           .lineLimit(.one)
+          .multilineTextAlignment(.trailing)
       }
       .padding(.trailing, Constants.bottomHStackTrailing)
       .padding(.leading, Constants.bottomHStackLeading)
-      .frame(width: rowWidth * Constants.bottomHStackWidthFactor, alignment: .leading)
+      .frame(width: rowWidth * Constants.bottomHStackWidthFactor, alignment: .trailing)
     }
     .frame(maxWidth: .infinity, alignment: .leading)
     .frame(height: Constants.rowHeight)

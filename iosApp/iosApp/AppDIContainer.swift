@@ -97,6 +97,7 @@ import GRPC
     return LeaderboardDIContainer(
       dependencies: LeaderboardDIContainer.Dependencies(
         firebaseService: FirebaseService(),
+        httpService: HTTPService(baseURLString: appConfiguration.firebaseBaseURLString),
         crashReporter: crashReporter,
         authClient: authClient,
         session: session

@@ -9,22 +9,32 @@
 import FirebaseFirestore
 
 struct LeaderboardRowDTO: Decodable {
-  @DocumentID var id: String?
-  var position: Int?
-  let coins: Int
+  let principalID: String
+  var position: Int
+  let wins: Int
+
+  enum CodingKeys: String, CodingKey {
+    case principalID = "principal_id"
+    case position, wins
+  }
 }
 
-struct LeaderboardDTO {
+struct LeaderboardDTO: Decodable {
   let userRow: LeaderboardRowDTO
-  let rows: [LeaderboardRowDTO]
+  let topRows: [LeaderboardRowDTO]
+
+  enum CodingKeys: String, CodingKey {
+    case userRow = "user_row"
+    case topRows = "top_rows"
+  }
 }
 
 extension LeaderboardRowDTO {
   func toDomain() -> LeaderboardRowResponse {
     return LeaderboardRowResponse(
-      position: position ?? .zero,
-      principalID: id ?? UUID().uuidString,
-      coins: coins
+      position: position,
+      principalID: principalID,
+      wins: wins
     )
   }
 }
@@ -33,7 +43,7 @@ extension LeaderboardDTO {
   func toDomain() -> LeaderboardResponse {
     return LeaderboardResponse(
       userRow: userRow.toDomain(),
-      rows: rows.map { $0.toDomain() }
+      topRows: topRows.map { $0.toDomain() }
     )
   }
 }

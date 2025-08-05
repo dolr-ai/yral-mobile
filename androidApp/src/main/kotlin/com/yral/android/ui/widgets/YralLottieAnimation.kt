@@ -7,6 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import com.airbnb.lottie.LottieComposition
 import com.airbnb.lottie.LottieCompositionFactory
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
@@ -22,10 +23,28 @@ fun YralLottieAnimation(
     contentScale: ContentScale = ContentScale.FillBounds,
     onAnimationComplete: () -> Unit = {},
 ) {
-    val context = LocalContext.current
     val composition by rememberLottieComposition(
         LottieCompositionSpec.RawRes(rawRes),
     )
+    YralLottieAnimation(
+        composition,
+        modifier,
+        iterations,
+        contentScale,
+        onAnimationComplete,
+    )
+}
+
+@Composable
+fun YralLottieAnimation(
+    composition: LottieComposition?,
+    modifier: Modifier = Modifier,
+    iterations: Int = LottieConstants.IterateForever,
+    contentScale: ContentScale = ContentScale.FillBounds,
+    onAnimationComplete: () -> Unit = {},
+) {
+    val context = LocalContext.current
+
     val progress by animateLottieCompositionAsState(
         composition = composition,
         iterations = iterations,
@@ -44,7 +63,7 @@ fun YralLottieAnimation(
         contentScale = contentScale,
     )
 
-    LaunchedEffect(progress) {
+    LaunchedEffect(composition, progress, iterations) {
         if (progress == 1f && iterations == 1) {
             onAnimationComplete()
         }

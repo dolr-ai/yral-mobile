@@ -4,3 +4,6 @@
 -dontwarn java.awt.*
 -keep class com.sun.jna.** { *; }
 -keep class * implements com.sun.jna.** { *; }
+
+# https://help.branch.io/developers-hub/docs/android-basic-integration#7-configure-proguard
+-keep class com.google.android.gms.** { *; }

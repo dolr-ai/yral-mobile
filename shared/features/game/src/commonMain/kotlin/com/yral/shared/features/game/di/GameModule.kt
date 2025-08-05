@@ -5,6 +5,7 @@ import com.yral.shared.features.game.analytics.LeaderBoardTelemetry
 import com.yral.shared.features.game.data.GameRemoteDataSource
 import com.yral.shared.features.game.data.GameRepository
 import com.yral.shared.features.game.data.IGameRemoteDataSource
+import com.yral.shared.features.game.domain.AutoRechargeBalanceUseCase
 import com.yral.shared.features.game.domain.CastVoteUseCase
 import com.yral.shared.features.game.domain.GetBalanceUseCase
 import com.yral.shared.features.game.domain.GetCurrentUserInfoUseCase
@@ -24,6 +25,7 @@ val gameModule =
     module {
         factoryOf(::CastVoteUseCase)
         factoryOf(::GetBalanceUseCase)
+        factoryOf(::AutoRechargeBalanceUseCase)
         factory { GetGameIconsUseCase(get(), get(), get(named("GameConfig")), get()) }
         factory { GetGameRulesUseCase(get(), get(), get(named("AboutGame")), get()) }
         factory { GetLeaderboardUseCase(get(), get(), get(named("LeaderBoard"))) }

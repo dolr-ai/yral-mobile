@@ -34,6 +34,9 @@ class AnalyticsManager(
             }.launchIn(scope)
     }
 
+    @Suppress("EmptyFunctionBlock")
+    fun initialise() {}
+
     internal fun addProvider(provider: AnalyticsProvider) =
         AnalyticsManager(
             providers = providers + provider,

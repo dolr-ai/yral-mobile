@@ -39,6 +39,7 @@ import com.yral.shared.features.auth.data.AuthDataSourceImpl.Companion.REDIRECT_
 import com.yral.shared.features.auth.utils.OAuthUtils
 import com.yral.shared.koin.koinInstance
 import com.yral.shared.uniffi.generated.initRustLogger
+import io.branch.referral.Branch
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -81,6 +82,21 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         handleIntent(intent)
+        handleIntentForBranch()
+    }
+
+    private fun handleIntentForBranch() {
+        if (intent.hasExtra("branch_force_new_session") && intent.getBooleanExtra("branch_force_new_session", false)) {
+            Branch
+                .sessionBuilder(this)
+                .withCallback { referringParams, error ->
+                    if (error != null) {
+                        Logger.e("BranchSDK") { "${error.message}" }
+                    } else if (referringParams != null) {
+                        Logger.d("BranchSDK") { "$referringParams" }
+                    }
+                }.reInit()
+        }
     }
 
     private fun handleIntent(intent: Intent?) {
@@ -150,6 +166,33 @@ class MainActivity : ComponentActivity() {
             Logger.e("MainActivity", e) { "Error handling deep link: $dest" }
             crashlyticsManager.recordException(e)
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        initialiseBranch()
+    }
+
+    private fun initialiseBranch() {
+        Branch
+            .sessionBuilder(this)
+            .withCallback { branchUniversalObject, linkProperties, error ->
+                if (error != null) {
+                    Logger.d("BranchSDK") { "branch init failed. Caused by -" + error.message }
+                } else {
+                    Logger.d("BranchSDK") { "branch init complete!" }
+                    if (branchUniversalObject != null) {
+                        Logger.d("BranchSDK") { "title " + branchUniversalObject.title }
+                        Logger.d("BranchSDK") { "CanonicalIdentifier " + branchUniversalObject.canonicalIdentifier }
+                        Logger.d("BranchSDK") { "metadata " + branchUniversalObject.contentMetadata.convertToJson() }
+                    }
+                    if (linkProperties != null) {
+                        Logger.d("BranchSDK") { "Channel " + linkProperties.channel }
+                        Logger.d("BranchSDK") { "control params " + linkProperties.controlParams }
+                    }
+                }
+            }.withData(this.intent.data)
+            .init()
     }
 }
 
