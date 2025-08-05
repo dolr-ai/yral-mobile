@@ -6,6 +6,7 @@ import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.analytics.AuthTelemetry
 import com.yral.shared.features.auth.domain.AuthRepository
 import com.yral.shared.features.auth.utils.OAuthUtils
+import com.yral.shared.features.auth.utils.OAuthUtilsHelper
 import com.yral.shared.preferences.Preferences
 import com.yral.shared.rust.services.IndividualUserServiceFactory
 import dev.gitlive.firebase.auth.FirebaseAuth
@@ -25,6 +26,7 @@ class DefaultAuthClientFactory(
     private val requiredUseCases: DefaultAuthClient.RequiredUseCases,
     private val individualUserServiceFactory: IndividualUserServiceFactory,
     private val oAuthUtils: OAuthUtils,
+    private val oAuthUtilsHelper: OAuthUtilsHelper,
     private val authTelemetry: AuthTelemetry,
 ) : AuthClientFactory {
     override fun create(
@@ -41,6 +43,7 @@ class DefaultAuthClientFactory(
             requiredUseCases = requiredUseCases,
             individualUserServiceFactory = individualUserServiceFactory,
             oAuthUtils = oAuthUtils,
+            oAuthUtilsHelper = oAuthUtilsHelper,
             authTelemetry = authTelemetry,
             scope =
                 scope +
