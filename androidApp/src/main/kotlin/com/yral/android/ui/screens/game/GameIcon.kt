@@ -112,4 +112,5 @@ fun GameIcon.getResource(): Int =
         GameIconNames.FIRE -> R.drawable.fire
         GameIconNames.SURPRISE -> R.drawable.surprise
         GameIconNames.ROCKET -> R.drawable.rocket
+        GameIconNames.PUKE -> R.drawable.puke
     }
