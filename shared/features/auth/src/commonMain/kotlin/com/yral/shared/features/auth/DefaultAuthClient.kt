@@ -309,16 +309,23 @@ class DefaultAuthClient(
         } ?: obtainAnonymousIdentity()
     }
 
-    override suspend fun signInWithSocial(provider: SocialProvider) {
-        initiateOAuthFlow(provider)
+    override suspend fun signInWithSocial(
+        context: Any,
+        provider: SocialProvider,
+    ) {
+        initiateOAuthFlow(context, provider)
     }
 
-    private suspend fun initiateOAuthFlow(provider: SocialProvider) {
+    private suspend fun initiateOAuthFlow(
+        context: Any,
+        provider: SocialProvider,
+    ) {
         sessionManager.identity?.let { identity ->
             val authUrl = authRepository.getOAuthUrl(provider, identity)
             currentState = authUrl.second
             oAuthUtils.openOAuth(
                 authUrl = authUrl.first,
+                context = context,
             ) { code, state ->
                 scope.launch {
                     handleOAuthCallback(code, state)

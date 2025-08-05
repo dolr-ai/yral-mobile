@@ -1,6 +1,5 @@
 package com.yral.shared.app.di
 
-import android.content.Context
 import android.content.pm.ApplicationInfo
 import co.touchlab.kermit.platformLogWriter
 import com.yral.shared.analytics.di.MIXPANEL_TOKEN
@@ -10,7 +9,6 @@ import org.koin.dsl.module
 
 actual val platformModule =
     module {
-        single<Context> { androidContext() }
         single {
             val isDebug =
                 (

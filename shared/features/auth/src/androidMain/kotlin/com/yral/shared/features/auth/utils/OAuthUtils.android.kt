@@ -1,13 +1,12 @@
 package com.yral.shared.features.auth.utils
 
-import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.util.Base64
 import androidx.browser.customtabs.CustomTabsIntent
 import com.nimbusds.jose.shaded.gson.Gson
 import com.nimbusds.jwt.JWTParser
-import com.yral.shared.core.platform.PlatformResourcesFactory
 import com.yral.shared.features.auth.domain.models.TokenClaims
 import io.ktor.http.Url
 import io.ktor.http.toURI
@@ -15,30 +14,29 @@ import java.security.MessageDigest
 import java.security.SecureRandom
 import java.util.Date
 
-@SuppressLint("UseKtx")
-actual class OAuthUtils actual constructor(
-    private val platformResourcesFactory: PlatformResourcesFactory,
-) {
+actual class OAuthUtils {
     private var callBack: ((code: String, state: String) -> Unit)? = null
 
     actual fun openOAuth(
+        context: Any,
         authUrl: Url,
         callBack: (code: String, state: String) -> Unit,
     ) {
-        this.callBack = callBack
-        val activity = platformResourcesFactory.resources().activityContext
-        val customTabsIntent =
-            CustomTabsIntent
-                .Builder()
-                .setShowTitle(true)
-                .setUrlBarHidingEnabled(false)
-                .build()
-        // Add flags to keep the app in the foreground
-        customTabsIntent.intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        customTabsIntent.intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-        // Set the data URI
-        val uri = Uri.parse(authUrl.toURI().toString())
-        customTabsIntent.launchUrl(activity, uri)
+        if (context is Activity) {
+            this.callBack = callBack
+            val customTabsIntent =
+                CustomTabsIntent
+                    .Builder()
+                    .setShowTitle(true)
+                    .setUrlBarHidingEnabled(false)
+                    .build()
+            // Add flags to keep the app in the foreground
+            customTabsIntent.intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            customTabsIntent.intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            // Set the data URI
+            val uri = Uri.parse(authUrl.toURI().toString())
+            customTabsIntent.launchUrl(context, uri)
+        }
     }
 
     actual fun invokeCallback(

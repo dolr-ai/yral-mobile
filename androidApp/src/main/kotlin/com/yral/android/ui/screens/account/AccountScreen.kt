@@ -29,6 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -69,6 +70,7 @@ fun AccountScreen(
     modifier: Modifier = Modifier,
     viewModel: AccountsViewModel = koinViewModel(),
 ) {
+    val context = LocalContext.current
     val state by viewModel.state.collectAsState()
     LaunchedEffect(Unit) { viewModel.accountsTelemetry.onMenuScreenViewed() }
     Column(modifier = modifier.fillMaxSize()) {
@@ -80,7 +82,7 @@ fun AccountScreen(
         SheetContent(
             bottomSheetType = state.bottomSheetType,
             onDismissRequest = { viewModel.setBottomSheetType(AccountBottomSheet.None) },
-            signInWithGoogle = { viewModel.signInWithGoogle() },
+            signInWithGoogle = { viewModel.signInWithGoogle(context) },
             onDeleteAccount = { viewModel.deleteAccount() },
         )
     }
