@@ -10,6 +10,7 @@ import requests
 from requests.exceptions import RequestException
 import os
 import random
+import collections
 
 firebase_admin.initialize_app()
 
@@ -369,10 +370,12 @@ def cast_vote(request: Request):
             return error_response(402, "INSUFFICIENT_COINS", f"Balance {tx_out['coins']} < {abs(LOSS_PENALTY)} required")
 
         # 4. read tallies after commit ───────────────────────────────────
-        counts = {s["id"]: 0 for s in smileys}
+        raw_counts = collections.Counter()
         for k in range(SHARDS):
-            for sm, n in (shard_ref(k).get().to_dict() or {}).items():
-                counts[sm] += n
+            shard = shard_ref(k).get().to_dict() or {}
+            raw_counts.update(shard)
+
+        counts = {sid: raw_counts.get(sid, 0) for sid in smiley_map.keys()}
 
         max_votes = max(counts.values())
         leaders = [sm for sm, v in counts.items() if v == max_votes]
