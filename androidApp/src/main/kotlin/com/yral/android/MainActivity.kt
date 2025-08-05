@@ -184,6 +184,11 @@ class MainActivity : ComponentActivity() {
             }.withData(this.intent.data)
             .init()
     }
+
+    override fun onDestroy() {
+        oAuthUtils.cleanup()
+        super.onDestroy()
+    }
 }
 
 @Suppress("MagicNumber")

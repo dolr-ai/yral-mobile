@@ -1,7 +1,6 @@
 package com.yral.shared.features.auth.utils
 
 import android.app.Activity
-import android.content.Intent
 import android.util.Base64
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.net.toUri
@@ -41,9 +40,7 @@ class AndroidOAuthUtils(
                     .setShowTitle(true)
                     .setUrlBarHidingEnabled(false)
                     .build()
-            // Add flags to keep the app in the foreground
-            customTabsIntent.intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            customTabsIntent.intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            // Don't add activity flags that might destroy the calling activity
             // Set the data URI
             val uri = authUrl.toURI().toString().toUri()
             customTabsIntent.launchUrl(context, uri)
