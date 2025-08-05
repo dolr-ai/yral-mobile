@@ -43,8 +43,8 @@
 		100F63D42DCB4630000BC17E /* SmileyGameRuleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100F63D22DCB4630000BC17E /* SmileyGameRuleView.swift */; };
 		100F64EE2DCC96C9000BC17E /* YralCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100F64ED2DCC96C5000BC17E /* YralCache.swift */; };
 		100F64EF2DCC96C9000BC17E /* YralCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100F64ED2DCC96C5000BC17E /* YralCache.swift */; };
-		1023FFC82E40B2D700E6936E /* smiley_game_puke.json in Resources */ = {isa = PBXBuildFile; fileRef = 1023FFC72E40B2D700E6936E /* smiley_game_puke.json */; };
-		1023FFC92E40B2D700E6936E /* smiley_game_puke.json in Resources */ = {isa = PBXBuildFile; fileRef = 1023FFC72E40B2D700E6936E /* smiley_game_puke.json */; };
+		1023FFEE2E41DD3E00E6936E /* smiley_game_puke.json in Resources */ = {isa = PBXBuildFile; fileRef = 1023FFED2E41DD3E00E6936E /* smiley_game_puke.json */; };
+		1023FFEF2E41DD3E00E6936E /* smiley_game_puke.json in Resources */ = {isa = PBXBuildFile; fileRef = 1023FFED2E41DD3E00E6936E /* smiley_game_puke.json */; };
 		103BBB042DACE23A00C0BFD0 /* HLSDownloadManaging.swift in Sources */ = {isa = PBXBuildFile; fileRef = 103BBB032DACE21D00C0BFD0 /* HLSDownloadManaging.swift */; };
 		103BBB052DACE23A00C0BFD0 /* HLSDownloadManaging.swift in Sources */ = {isa = PBXBuildFile; fileRef = 103BBB032DACE21D00C0BFD0 /* HLSDownloadManaging.swift */; };
 		1050341A2DD4955C00571B4E /* smiley_game_surprise.json in Resources */ = {isa = PBXBuildFile; fileRef = 105034192DD4955C00571B4E /* smiley_game_surprise.json */; };
@@ -632,7 +632,7 @@
 		10020AAF2DF7FE2400DF269E /* SatsCoinError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SatsCoinError.swift; sourceTree = "<group>"; };
 		100F63D22DCB4630000BC17E /* SmileyGameRuleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameRuleView.swift; sourceTree = "<group>"; };
 		100F64ED2DCC96C5000BC17E /* YralCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralCache.swift; sourceTree = "<group>"; };
-		1023FFC72E40B2D700E6936E /* smiley_game_puke.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = smiley_game_puke.json; sourceTree = "<group>"; };
+		1023FFED2E41DD3E00E6936E /* smiley_game_puke.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = smiley_game_puke.json; sourceTree = "<group>"; };
 		103BBB032DACE21D00C0BFD0 /* HLSDownloadManaging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HLSDownloadManaging.swift; sourceTree = "<group>"; };
 		105034152DD4955C00571B4E /* smiley_game_fire.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = smiley_game_fire.json; sourceTree = "<group>"; };
 		105034162DD4955C00571B4E /* smiley_game_heart.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = smiley_game_heart.json; sourceTree = "<group>"; };
@@ -911,8 +911,6 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		AC9B77DE2D58C7E300270FC9 /* YralTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = YralTests;
 			sourceTree = "<group>";
 		};
@@ -2519,7 +2517,7 @@
 				105034152DD4955C00571B4E /* smiley_game_fire.json */,
 				105034162DD4955C00571B4E /* smiley_game_heart.json */,
 				105034172DD4955C00571B4E /* smiley_game_laugh.json */,
-				1023FFC72E40B2D700E6936E /* smiley_game_puke.json */,
+				1023FFED2E41DD3E00E6936E /* smiley_game_puke.json */,
 				105034182DD4955C00571B4E /* smiley_game_rocket.json */,
 				105034192DD4955C00571B4E /* smiley_game_surprise.json */,
 				107C609D2DB9FDA0006FC467 /* smiley_game_lose.json */,
@@ -2728,7 +2726,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				058557D9273AAEEB004C7B11 /* Preview Assets.xcassets in Resources */,
-				1023FFC82E40B2D700E6936E /* smiley_game_puke.json in Resources */,
 				AC32E4122D270097001DDA43 /* README.txt in Resources */,
 				AC32E4132D270097001DDA43 /* KumbhSans-ExtraBold.ttf in Resources */,
 				AC391EE62DCE476400A8DFA9 /* Signup_scroll_lottie.json in Resources */,
@@ -2742,6 +2739,7 @@
 				AC20A0AE2E3A4BA8003306C1 /* sats_claim_loading.json in Resources */,
 				AC32E4162D270097001DDA43 /* KumbhSans-ExtraLight.ttf in Resources */,
 				AC32E4172D270097001DDA43 /* KumbhSans-Regular.ttf in Resources */,
+				1023FFEF2E41DD3E00E6936E /* smiley_game_puke.json in Resources */,
 				AC32E4182D270097001DDA43 /* KumbhSans-Medium.ttf in Resources */,
 				AC4714EA2D38120800A64E29 /* GoogleService-Info.plist in Resources */,
 				AC32E4192D270097001DDA43 /* OFL.txt in Resources */,
@@ -2776,7 +2774,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				AC233D362D314CA3007040F1 /* Splash_Lottie.json in Resources */,
-				1023FFC92E40B2D700E6936E /* smiley_game_puke.json in Resources */,
 				ACD941B12CFF575C0038FCB6 /* Preview Assets.xcassets in Resources */,
 				AC32E4062D270097001DDA43 /* README.txt in Resources */,
 				AC391EE72DCE476400A8DFA9 /* Signup_scroll_lottie.json in Resources */,
@@ -2790,6 +2787,7 @@
 				AC20A0AD2E3A4BA8003306C1 /* sats_claim_loading.json in Resources */,
 				AC32E40A2D270097001DDA43 /* KumbhSans-ExtraLight.ttf in Resources */,
 				AC32E40B2D270097001DDA43 /* KumbhSans-Regular.ttf in Resources */,
+				1023FFEE2E41DD3E00E6936E /* smiley_game_puke.json in Resources */,
 				AC32E40C2D270097001DDA43 /* KumbhSans-Medium.ttf in Resources */,
 				AC12B9D22D3809B7004E9EA9 /* GoogleService-Info.plist in Resources */,
 				AC32E40D2D270097001DDA43 /* OFL.txt in Resources */,
@@ -2823,9 +2821,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -2840,9 +2842,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3004,9 +3010,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
