@@ -6,14 +6,12 @@ import com.github.michaelbull.result.onSuccess
 import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.features.game.analytics.LeaderBoardTelemetry
-import com.yral.shared.features.game.domain.GetCurrentUserInfoUseCase
 import com.yral.shared.features.game.domain.GetLeaderboardUseCase
 import com.yral.shared.features.game.domain.models.CurrentUserInfo
+import com.yral.shared.features.game.domain.models.GetLeaderboardRequest
 import com.yral.shared.features.game.domain.models.LeaderboardItem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,7 +21,6 @@ import kotlinx.coroutines.launch
 class LeaderBoardViewModel(
     appDispatchers: AppDispatchers,
     private val getLeaderboardUseCase: GetLeaderboardUseCase,
-    private val getCurrentUserInfoUseCase: GetCurrentUserInfoUseCase,
     private val sessionManager: SessionManager,
     val leaderBoardTelemetry: LeaderBoardTelemetry,
 ) : ViewModel() {
@@ -40,12 +37,25 @@ class LeaderBoardViewModel(
         coroutineScope.launch {
             _state.update { it.copy(isLoading = true, error = null) }
             sessionManager.userPrincipal?.let { userPrincipal ->
-                listOf(
-                    async { fetchLeaderBoard() },
-                    async { fetchCurrentUserInfo(userPrincipal) },
-                ).awaitAll()
+                getLeaderboardUseCase
+                    .invoke(GetLeaderboardRequest(userPrincipal))
+                    .onSuccess { data ->
+                        _state.update {
+                            it.copy(
+                                leaderboard = data.topRows,
+                                currentUser = data.userRow.toCurrentUserInfo(),
+                                isLoading = false,
+                            )
+                        }
+                    }.onFailure { error ->
+                        _state.update {
+                            it.copy(
+                                error = "Failed to load leaderboard: ${error.message}",
+                                isLoading = false,
+                            )
+                        }
+                    }
             }
-            _state.update { it.copy(isLoading = false) }
         }
     }
 
@@ -55,41 +65,15 @@ class LeaderBoardViewModel(
         }
         loadData()
     }
-
-    private suspend fun fetchLeaderBoard() {
-        getLeaderboardUseCase
-            .invoke(Unit)
-            .onSuccess { leaderboard ->
-                _state.update { currentState ->
-                    currentState.copy(leaderboard = leaderboard)
-                }
-            }.onFailure { error ->
-                _state.update { it.copy(error = "Failed to load leaderboard: ${error.message}") }
-            }
-    }
-
-    private suspend fun fetchCurrentUserInfo(userPrincipalId: String) {
-        getCurrentUserInfoUseCase
-            .invoke(GetCurrentUserInfoUseCase.Params(userPrincipalId))
-            .onSuccess { userInfo ->
-                _state.update { currentState ->
-                    currentState.copy(currentUser = userInfo)
-                }
-            }.onFailure { error ->
-                _state.update {
-                    it.copy(error = "Failed to load current user info: ${error.message}")
-                }
-            }
-    }
-
-    fun updateCurrentUserRank(newRank: Int) {
-        _state.update { currentState ->
-            currentState.copy(
-                currentUser = currentState.currentUser?.copy(rank = newRank),
-            )
-        }
-    }
 }
+
+fun LeaderboardItem.toCurrentUserInfo(): CurrentUserInfo =
+    CurrentUserInfo(
+        userPrincipalId = userPrincipalId,
+        profileImageUrl = profileImage,
+        wins = wins,
+        leaderboardPosition = position,
+    )
 
 data class LeaderBoardState(
     val leaderboard: List<LeaderboardItem> = emptyList(),
