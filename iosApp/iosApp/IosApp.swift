@@ -4,6 +4,8 @@ import FirebaseAppCheck
 import iosSharedUmbrella
 import FBSDKCoreKit
 import FirebaseMessaging
+import Mixpanel
+import MixpanelSessionReplay
 
 class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate, MessagingDelegate {
   func application(
@@ -22,26 +24,6 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
       application,
       didFinishLaunchingWithOptions: launchOptions
     )
-
-#if DEBUG
-    DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.two) {
-      AppCheck.appCheck().token(forcingRefresh: true) { token, error in
-        if let error = error {
-          print("Appcheck error: \(error)")
-        } else {
-          print("Appcheck token: \(token?.token ?? "nil")")
-        }
-      }
-    }
-    Task {
-      do {
-        let token = try await AppCheck.appCheck().limitedUseToken()
-        print("Appcheck token limited use: \(token)")
-      } catch {
-        print("Appcheck error limited use: \(error)")
-      }
-    }
-#endif
     Messaging.messaging().delegate = self
     UNUserNotificationCenter.current().delegate = self
     return true
@@ -112,6 +94,7 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
 struct IosApp: App {
   @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
   private let appDIContainer: AppDIContainer
+  private let mixpanelToken = "MIXPANEL_TOKEN"
   @State private var feedsDIContainer: FeedDIContainer?
   @State private var leaderboardDIContainer: LeaderboardDIContainer?
   @State private var profileDIContainer: ProfileDIContainer?
@@ -168,6 +151,15 @@ struct IosApp: App {
   private func initializeDependencies() async {
     do {
       AppDI_iosKt.doInitKoin { _ in  }
+      AnalyticsModuleKt.getAnalyticsManager().initialise()
+      if let mixpanelToken = Bundle.main.infoDictionary?[mixpanelToken] as? String {
+        let config = MPSessionReplayConfig(wifiOnly: false, autoMaskedViews: [.web])
+        MPSessionReplay.initialize(
+          token: mixpanelToken,
+          distinctId: Mixpanel.sharedInstance()?.distinctId ?? "",
+          config: config
+        )
+      }
       AnalyticsModuleKt.getAnalyticsManager().trackEvent(event: SplashScreenViewedEventData())
       feedsDIContainer = await appDIContainer.makeFeedDIContainer()
       try await appDIContainer.authClient.initialize()

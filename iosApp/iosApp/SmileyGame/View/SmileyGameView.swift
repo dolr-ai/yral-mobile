@@ -48,6 +48,7 @@ struct SmileyGameView: View {
             .animation(.easeOut(duration: Constants.durationPointThree), value: showWinnerOnly)
             .onTapGesture {
               if selectedID == nil {
+                HapticGenerator.performFeedback(.impact(weight: .light))
                 AudioPlayer.shared.play(named: Constants.smileyTapAudio)
                 smileyTapped(smiley)
                 selectedID = smiley.id

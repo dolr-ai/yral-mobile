@@ -16,6 +16,7 @@ data class AboutGameItemDto(
 data class AboutGameItemBodyDto(
     val type: String,
     val content: List<String>? = null,
+    val bolds: List<Boolean>? = null,
     val colors: List<String>? = null,
     @SerialName("image_urls")
     val imageUrls: List<String>? = null,

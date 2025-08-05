@@ -6,11 +6,14 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -33,7 +36,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush.Companion.linearGradient
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
@@ -59,6 +64,7 @@ private const val TOTAL_ITEMS = 5
 @Composable
 fun UploadVideoScreen(
     component: UploadVideoComponent,
+    bottomPadding: Dp,
     modifier: Modifier = Modifier,
     viewModel: UploadVideoViewModel = koinViewModel(),
 ) {
@@ -80,7 +86,13 @@ fun UploadVideoScreen(
 
     when (val uploadUiState = viewState.uploadUiState) {
         UiState.Initial -> {
-            UploadVideoIdle(listState, modifier, viewState, viewModel)
+            UploadVideoIdle(
+                listState = listState,
+                bottomPadding = bottomPadding,
+                modifier = modifier,
+                viewState = viewState,
+                viewModel = viewModel,
+            )
         }
 
         is UiState.InProgress -> {
@@ -105,13 +117,19 @@ fun UploadVideoScreen(
 @Composable
 private fun UploadVideoIdle(
     listState: LazyListState,
+    bottomPadding: Dp,
     modifier: Modifier,
     viewState: UploadVideoViewModel.ViewState,
     viewModel: UploadVideoViewModel,
 ) {
+    val density = LocalDensity.current
+    val imeBottomDp = with(density) { WindowInsets.ime.getBottom(this).toDp() }
+    val keyboardAwareBottomPadding = (imeBottomDp - bottomPadding).coerceAtLeast(0.dp)
+
     LazyColumn(
         state = listState,
-        modifier = modifier.imePadding(),
+        modifier = modifier.fillMaxSize(),
+        contentPadding = PaddingValues(bottom = keyboardAwareBottomPadding),
     ) {
         // Update TOTAL_ITEMS if adding any more items
         item { Header() }
@@ -123,14 +141,6 @@ private fun UploadVideoIdle(
             )
         }
         item { Spacer(Modifier.height(20.dp)) }
-        item {
-            VideoDetails(
-                viewState.caption,
-                viewState.hashtags,
-                onCaptionChanged = viewModel::onCaptionChanged,
-                onHashtagsChanged = viewModel::onHashtagsChanged,
-            )
-        }
         item { Submit(enabled = viewState.canUpload, onClick = viewModel::onUploadButtonClicked) }
     }
 }
@@ -227,6 +237,7 @@ private fun UploadProgressBar(progress: Float) {
     }
 }
 
+@Suppress("UnusedPrivateMember")
 @Composable
 private fun VideoDetails(
     caption: String,

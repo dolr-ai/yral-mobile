@@ -26,14 +26,20 @@ final class FeedDIContainer {
     self.dependencies = dependencies
   }
 
-  func makeFeedsViewControllerWrapper(showFeeds: Binding<Bool>) -> FeedsViewControllerWrapper {
+  func makeFeedsViewControllerWrapper(
+    showFeeds: Binding<Bool>,
+    walletPhase: Binding<WalletPhase>,
+    walletOutcome: Binding<WalletPhase>
+  ) -> FeedsViewControllerWrapper {
     FeedsViewControllerWrapper(
       feedsViewController: FeedsViewController(
         viewModel: makeFeedsViewModel(),
         session: dependencies.session,
         crashReporter: dependencies.crashReporter
       ),
-      showFeeds: showFeeds
+      showFeeds: showFeeds,
+      walletPhase: walletPhase,
+      walletOutcome: walletOutcome
     )
   }
 
@@ -70,7 +76,11 @@ final class FeedDIContainer {
         crashReporter: dependencies.crashReporter
       ),
       socialSignInUseCase: dependencies.socialSignInUseCase,
-      castVoteUseCase: dependencies.castVoteUseCase
+      castVoteUseCase: dependencies.castVoteUseCase,
+      rechargeWalletUseCase: RechargeUseCase(
+        feedRepository: repository,
+        crashReporter: dependencies.crashReporter
+      )
     )
   }
 }

@@ -1,6 +1,8 @@
 package com.yral.shared.features.auth.data
 
 import co.touchlab.kermit.Logger
+import com.google.firebase.appcheck.ktx.appCheck
+import com.google.firebase.ktx.Firebase
 import com.yral.shared.core.AppConfigurations.METADATA_BASE_URL
 import com.yral.shared.core.AppConfigurations.OAUTH_BASE_URL
 import com.yral.shared.core.AppConfigurations.OFF_CHAIN_BASE_URL
@@ -19,10 +21,13 @@ import com.yral.shared.uniffi.generated.delegatedIdentityWireToJson
 import com.yral.shared.uniffi.generated.registerDevice
 import com.yral.shared.uniffi.generated.unregisterDevice
 import io.ktor.client.HttpClient
+import io.ktor.client.request.headers
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import io.ktor.http.path
+import kotlinx.coroutines.tasks.await
 import kotlinx.serialization.json.Json
 
 class AuthDataSourceImpl(
@@ -122,8 +127,23 @@ class AuthDataSourceImpl(
                 host = cloudFunctionUrl()
                 path(EXCHANGE_PRINCIPAL_PATH)
             }
-            headers.append("authorization", "Bearer $idToken")
-            setBody(mapOf("principal_id" to principalId))
+            val appCheckToken =
+                Firebase.appCheck
+                    .getToken(false)
+                    .await()
+                    .token
+            headers {
+                append(HttpHeaders.Authorization, "Bearer $idToken")
+                append(HEADER_X_FIREBASE_APPCHECK, appCheckToken)
+            }
+            setBody(
+                mapOf(
+                    "data" to
+                        mapOf(
+                            "principal_id" to principalId,
+                        ),
+                ),
+            )
         }
 
     override suspend fun deleteAccount(): String {
@@ -173,6 +193,7 @@ class AuthDataSourceImpl(
         private const val GRANT_TYPE_REFRESH_TOKEN = "refresh_token"
         private const val UPDATE_SESSION_AS_REGISTERED = "update_session_as_registered"
         private const val EXCHANGE_PRINCIPAL_PATH = "exchange_principal_id"
+        private const val HEADER_X_FIREBASE_APPCHECK = "X-Firebase-AppCheck"
         private const val DELETE_ACCOUNT = "api/v1/user"
     }
 }

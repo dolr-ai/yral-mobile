@@ -16,6 +16,7 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
   let logEventUseCase: LogUploadEventUseCaseProtocol
   let socialSignInUseCase: SocialSignInUseCaseProtocol
   let castVoteUseCase: CastVoteUseCaseProtocol
+  let rechargeUseCase: RechargeUseCaseProtocol
   private var currentFeeds = [FeedResult]()
   private var filteredFeeds = [FeedResult]()
   private var feedvideoIDSet = Set<String>()
@@ -41,7 +42,8 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
     reportUseCase: ReportFeedsUseCaseProtocol,
     logEventUseCase: LogUploadEventUseCaseProtocol,
     socialSignInUseCase: SocialSignInUseCaseProtocol,
-    castVoteUseCase: CastVoteUseCaseProtocol
+    castVoteUseCase: CastVoteUseCaseProtocol,
+    rechargeWalletUseCase: RechargeUseCaseProtocol
   ) {
     self.initialFeedsUseCase = fetchFeedsUseCase
     self.moreFeedsUseCase = moreFeedsUseCase
@@ -49,6 +51,7 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
     self.logEventUseCase = logEventUseCase
     self.socialSignInUseCase = socialSignInUseCase
     self.castVoteUseCase = castVoteUseCase
+    self.rechargeUseCase = rechargeWalletUseCase
     self.unifiedEvent = .fetchingInitialFeeds
     isFetchingInitialFeeds = true
 
@@ -231,6 +234,17 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
       print(error)
     }
     self.unifiedEvent = .feedsRefreshed
+  }
+
+  @MainActor func rechargeWallet() async {
+    let result = await self.rechargeUseCase.execute(request: ())
+    switch result {
+    case .success(let coins):
+      unifiedEvent = .walletRechargeSuccess(coins: coins)
+    case .failure(let failure):
+      unifiedEvent = .walletRechargeFailure
+      print(failure.localizedDescription)
+    }
   }
 }
 

@@ -75,7 +75,9 @@ final class ProfileDIContainer {
   func makeMyVideosView(
     existingFeeds: [FeedResult],
     info: MyVideosFeedInfo,
-    showFeeds: Binding<Bool>
+    showFeeds: Binding<Bool>,
+    walletPhase: Binding<WalletPhase>,
+    walletOutcome: Binding<WalletPhase>
   ) -> FeedsViewControllerWrapper {
     return FeedsViewControllerWrapper(
       feedsViewController: FeedsViewController(
@@ -87,7 +89,9 @@ final class ProfileDIContainer {
         session: dependencies.session,
         crashReporter: dependencies.crashReporter
       ),
-      showFeeds: showFeeds
+      showFeeds: showFeeds,
+      walletPhase: walletPhase,
+      walletOutcome: walletOutcome
     )
   }
 }

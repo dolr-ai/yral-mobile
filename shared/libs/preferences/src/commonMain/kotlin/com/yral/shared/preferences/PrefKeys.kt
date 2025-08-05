@@ -9,4 +9,6 @@ enum class PrefKeys {
     IS_RESULT_SHEET_SHOWN,
     CANISTER_ID,
     USER_PRINCIPAL,
+    HOW_TO_PLAY_SHOWN,
+    SMILEY_GAME_NUDGE_SHOWN,
 }
