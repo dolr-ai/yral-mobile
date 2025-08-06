@@ -30,6 +30,22 @@ final class FirebaseLottieManager {
       }
     }
   }
+
+  func downloadAndSaveToCache(forPath path: String) {
+    guard YralCache.shared.data(forPath: path) == nil else {
+      return
+    }
+
+    let ref = Storage.storage().reference(withPath: path)
+    ref.getData(maxSize: Constants.maxBytes) { result in
+      switch result {
+      case .success(let data):
+        YralCache.shared.store(data, forPath: path)
+      case .failure(let error):
+        print("Failed to download lottie: \(error.localizedDescription)")
+      }
+    }
+  }
 }
 
 extension FirebaseLottieManager {
