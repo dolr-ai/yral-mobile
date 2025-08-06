@@ -2,6 +2,7 @@ package com.yral.shared.analytics.events
 
 import com.yral.shared.analytics.constants.FeatureEvents
 import com.yral.shared.analytics.constants.Features
+import com.yral.shared.analytics.events.LeaderBoardPageViewedEventData
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlin.math.abs
@@ -698,6 +699,30 @@ data class UploadVideoClickedEventData(
         FeatureEvents.UPLOAD_VIDEO_CLICKED.getEventName(),
         Features.AUTH.getFeatureName(),
         pageName,
+    )
+}
+
+data class AirdropClaimedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.AIRDROP_CLAIMED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.FEED.getFeatureName(),
+    @SerialName("token_type") val tokenType: TokenType,
+    @SerialName("is_success") val isSuccess: Boolean,
+    @SerialName("claimed_amount") val claimedAmount: Int,
+    @SerialName("is_auto_credited") val isAutoCredited: Boolean,
+) : BaseEventData(),
+    EventData {
+    constructor(
+        tokenType: TokenType,
+        isSuccess: Boolean,
+        claimedAmount: Int,
+        isAutoCredited: Boolean,
+    ) : this(
+        FeatureEvents.AIRDROP_CLAIMED.getEventName(),
+        Features.FEED.getFeatureName(),
+        tokenType,
+        isSuccess,
+        claimedAmount,
+        isAutoCredited,
     )
 }
 

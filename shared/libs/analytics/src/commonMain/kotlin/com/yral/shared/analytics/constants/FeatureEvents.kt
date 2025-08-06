@@ -64,6 +64,9 @@ enum class FeatureEvents {
 
     // Leaderboard
     LEADERBOARD_PAGE_VIEWED,
+
+    // Recharge
+    AIRDROP_CLAIMED,
     ;
 
     fun getEventName(): String =
