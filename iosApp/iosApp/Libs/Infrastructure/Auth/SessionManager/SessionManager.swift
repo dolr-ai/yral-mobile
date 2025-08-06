@@ -46,7 +46,8 @@ final class SessionManager: ObservableObject {
           canisterId: canisterPrincipal,
           isLoggedIn: false,
           isCreator: nil,
-          satsBalance: KotlinDouble(value: Double(coins))
+          walletBalance: KotlinDouble(value: Double(coins)),
+          tokenType: .yral
         )
       )
     case .permanentAuthentication(let userPrincipal, let canisterPrincipal, _, _):
@@ -62,7 +63,8 @@ final class SessionManager: ObservableObject {
           canisterId: canisterPrincipal,
           isLoggedIn: true,
           isCreator: nil,
-          satsBalance: KotlinDouble(value: Double(coins))
+          walletBalance: KotlinDouble(value: Double(coins)),
+          tokenType: .yral
         )
       )
     default:
