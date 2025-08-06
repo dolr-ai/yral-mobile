@@ -20,7 +20,7 @@ protocol FeedsCellProtocol: AnyObject {
   func reportButtonTapped(index: Int)
   func loginTapped(provider: SocialProvider)
   func smileyTapped(index: Int, smiley: Smiley)
-  func rechargeWallet()
+  func rechargeWallet(index: Int, smiley: Smiley)
   func showGameResultBottomSheet(index: Int, gameResult: SmileyGameResultResponse)
   func videoStarted(index: Int, videoId: String)
   func walletAnimationStarted()
@@ -342,7 +342,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
         self.startFlowingAnimation(for: smiley)
       }
     } else {
-      delegate?.rechargeWallet()
+      delegate?.rechargeWallet(index: index, smiley: smiley)
       beginWalletRechargeLoading()
     }
   }

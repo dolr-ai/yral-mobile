@@ -242,7 +242,26 @@ extension FeedsViewController: FeedsCellProtocol {
     self.present(hostingController!, animated: true, completion: nil)
   }
 
-  func rechargeWallet() {
+  func rechargeWallet(index: Int, smiley: Smiley) {
+    let item = feedsDataSource.snapshot().itemIdentifiers[index]
+    let videoID = item.videoID
+    let smileyID = smiley.id
+
+    AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+      event: GameVotedEventData(
+        videoId: videoID,
+        publisherUserId: item.principalID,
+        likeCount: Int64(item.likeCount),
+        shareCount: Int64(.zero),
+        viewCount: Int64(item.viewCount),
+        gameType: .smiley,
+        isNsfw: false,
+        stakeAmount: Int32(item.smileyGame?.config.lossPenalty ?? Int.zero),
+        stakeType: TokenType.yral,
+        optionChosen: smileyID,
+        isTutorialVote: false
+      )
+    )
     Task { @MainActor in
       await self.viewModel.rechargeWallet()
     }
