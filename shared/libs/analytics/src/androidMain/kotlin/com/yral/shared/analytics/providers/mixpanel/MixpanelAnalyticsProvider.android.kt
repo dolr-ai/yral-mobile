@@ -51,7 +51,8 @@ actual class MixpanelAnalyticsProvider actual constructor(
             mutableMapOf(
                 "is_creator" to (user.isCreator ?: false),
                 "is_logged_in" to user.isLoggedIn,
-                "sats_balance" to user.satsBalance,
+                "wallet_balance" to user.walletBalance,
+                "token_type" to user.tokenType,
                 "canister_id" to user.canisterId,
             )
         if (user.isLoggedIn == true) {
