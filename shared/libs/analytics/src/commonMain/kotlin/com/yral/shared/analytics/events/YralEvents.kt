@@ -396,7 +396,7 @@ data class GameVotedEventData(
     @SerialName("game_type") val gameType: GameType,
     @SerialName("is_nsfw") val isNsfw: Boolean,
     @SerialName("stake_amount") val stakeAmount: Int,
-    @SerialName("stake_type") val stakeType: StakeType,
+    @SerialName("stake_type") val stakeType: TokenType,
     @SerialName("option_chosen") val optionChosen: String,
     @SerialName("is_tutorial_vote") val isTutorialVote: Boolean,
 ) : BaseEventData(),
@@ -410,7 +410,7 @@ data class GameVotedEventData(
         gameType: GameType,
         isNsfw: Boolean,
         stakeAmount: Int,
-        stakeType: StakeType,
+        stakeType: TokenType,
         optionChosen: String,
         isTutorialVote: Boolean,
     ) : this(
@@ -442,7 +442,7 @@ data class GamePlayedEventData(
     @SerialName("game_type") val gameType: GameType,
     @SerialName("is_nsfw") val isNsfw: Boolean,
     @SerialName("stake_amount") val stakeAmount: Int,
-    @SerialName("stake_type") val stakeType: StakeType,
+    @SerialName("stake_type") val stakeType: TokenType,
     @SerialName("option_chosen") val optionChosen: String,
     @SerialName("conclusion") val gameResult: GameResult,
     @SerialName("won_loss_amount") val wonLossAmount: Int,
@@ -458,7 +458,7 @@ data class GamePlayedEventData(
         gameType: GameType,
         isNsfw: Boolean,
         stakeAmount: Int,
-        stakeType: StakeType,
+        stakeType: TokenType,
         optionChosen: String,
         gameResult: GameResult,
         wonLossAmount: Int,
@@ -487,7 +487,7 @@ data class GameConcludedBottomsheetClickedEventData(
     @SerialName("event") override val event: String = FeatureEvents.GAME_CONCLUDED_BOTTOMSHEET_CLICKED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.FEED.getFeatureName(),
     @SerialName("stake_amount") val stakeAmount: Int,
-    @SerialName("stake_type") val stakeType: StakeType,
+    @SerialName("stake_type") val stakeType: TokenType,
     @SerialName("conclusion") val gameResult: GameResult,
     @SerialName("won_loss_amount") val wonLossAmount: Int,
     @SerialName("cta_type") val ctaType: GameConcludedCtaType,
@@ -495,7 +495,7 @@ data class GameConcludedBottomsheetClickedEventData(
     EventData {
     constructor(
         stakeAmount: Int,
-        stakeType: StakeType,
+        stakeType: TokenType,
         gameResult: GameResult,
         wonLossAmount: Int,
         ctaType: GameConcludedCtaType,
@@ -870,12 +870,15 @@ enum class CtaType {
 }
 
 @Serializable
-enum class StakeType {
+enum class TokenType {
     @SerialName("cents")
     CENTS,
 
     @SerialName("sats")
     SATS,
+
+    @SerialName("yral")
+    YRAL,
 }
 
 @Serializable
