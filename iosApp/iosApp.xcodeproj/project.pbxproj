@@ -175,8 +175,6 @@
 		AC1F93932DC1494800F322E1 /* TokenRequestDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1F93912DC1494500F322E1 /* TokenRequestDTO.swift */; };
 		AC1F93952DC1495400F322E1 /* TokenResponseDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1F93942DC1495100F322E1 /* TokenResponseDTO.swift */; };
 		AC1F93962DC1495400F322E1 /* TokenResponseDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1F93942DC1495100F322E1 /* TokenResponseDTO.swift */; };
-		AC20A0AD2E3A4BA8003306C1 /* sats_claim_loading.json in Resources */ = {isa = PBXBuildFile; fileRef = AC20A0AC2E3A4BA8003306C1 /* sats_claim_loading.json */; };
-		AC20A0AE2E3A4BA8003306C1 /* sats_claim_loading.json in Resources */ = {isa = PBXBuildFile; fileRef = AC20A0AC2E3A4BA8003306C1 /* sats_claim_loading.json */; };
 		AC20A11A2E3A7F90003306C1 /* WalletOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC20A1192E3A7F89003306C1 /* WalletOverlayView.swift */; };
 		AC20A11B2E3A7F90003306C1 /* WalletOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC20A1192E3A7F89003306C1 /* WalletOverlayView.swift */; };
 		AC20A1402E3B7723003306C1 /* FeedsCell+Wallet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC20A13F2E3B7723003306C1 /* FeedsCell+Wallet.swift */; };
@@ -514,10 +512,6 @@
 		ACCA778F2DE4C1A2005BC0FA /* EventBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACCA778D2DE4C19E005BC0FA /* EventBuffer.swift */; };
 		ACCB98782D944213002B9675 /* UILabel+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACCB98772D94420D002B9675 /* UILabel+Extensions.swift */; };
 		ACCB98792D944213002B9675 /* UILabel+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACCB98772D94420D002B9675 /* UILabel+Extensions.swift */; };
-		ACCEAD0C2E392CE800D9F03F /* sats_claim_failure.json in Resources */ = {isa = PBXBuildFile; fileRef = ACCEAD0B2E392CE800D9F03F /* sats_claim_failure.json */; };
-		ACCEAD0D2E392CE800D9F03F /* sats_claim_failure.json in Resources */ = {isa = PBXBuildFile; fileRef = ACCEAD0B2E392CE800D9F03F /* sats_claim_failure.json */; };
-		ACCEAD0F2E393A5400D9F03F /* sats_claim_success.json in Resources */ = {isa = PBXBuildFile; fileRef = ACCEAD0E2E393A5400D9F03F /* sats_claim_success.json */; };
-		ACCEAD102E393A5400D9F03F /* sats_claim_success.json in Resources */ = {isa = PBXBuildFile; fileRef = ACCEAD0E2E393A5400D9F03F /* sats_claim_success.json */; };
 		ACCEAD352E393EAA00D9F03F /* FeedsRepository+Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACCEAD342E393EA400D9F03F /* FeedsRepository+Constants.swift */; };
 		ACCEAD362E393EAA00D9F03F /* FeedsRepository+Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACCEAD342E393EA400D9F03F /* FeedsRepository+Constants.swift */; };
 		ACD2E8242D6746E900E750FE /* UploadingProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD2E8232D6746E400E750FE /* UploadingProgressView.swift */; };
@@ -541,6 +535,12 @@
 		ACDD23E82D8B1B5F00AB0DAF /* ProfileVideoRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACDD23E62D8B1B5400AB0DAF /* ProfileVideoRequest.swift */; };
 		ACDD23F32D8B3D4700AB0DAF /* ProfileVideoInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACDD23F22D8B3D4100AB0DAF /* ProfileVideoInfo.swift */; };
 		ACDD23F42D8B3D4700AB0DAF /* ProfileVideoInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACDD23F22D8B3D4100AB0DAF /* ProfileVideoInfo.swift */; };
+		ACE794002E3CE4D000A2FB2D /* sats_claim_loading.json in Resources */ = {isa = PBXBuildFile; fileRef = ACE793FE2E3CE4CF00A2FB2D /* sats_claim_loading.json */; };
+		ACE794012E3CE4D000A2FB2D /* sats_claim_success.json in Resources */ = {isa = PBXBuildFile; fileRef = ACE793FF2E3CE4CF00A2FB2D /* sats_claim_success.json */; };
+		ACE794022E3CE4D000A2FB2D /* sats_claim_failure.json in Resources */ = {isa = PBXBuildFile; fileRef = ACE793FD2E3CE4CF00A2FB2D /* sats_claim_failure.json */; };
+		ACE794032E3CE4D000A2FB2D /* sats_claim_loading.json in Resources */ = {isa = PBXBuildFile; fileRef = ACE793FE2E3CE4CF00A2FB2D /* sats_claim_loading.json */; };
+		ACE794042E3CE4D000A2FB2D /* sats_claim_success.json in Resources */ = {isa = PBXBuildFile; fileRef = ACE793FF2E3CE4CF00A2FB2D /* sats_claim_success.json */; };
+		ACE794052E3CE4D000A2FB2D /* sats_claim_failure.json in Resources */ = {isa = PBXBuildFile; fileRef = ACE793FD2E3CE4CF00A2FB2D /* sats_claim_failure.json */; };
 		ACEBF7DB2D6EDC8500B594A0 /* GradientProgressViewStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACEBF7DA2D6EDC7B00B594A0 /* GradientProgressViewStyle.swift */; };
 		ACEBF7DC2D6EDC8500B594A0 /* GradientProgressViewStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACEBF7DA2D6EDC7B00B594A0 /* GradientProgressViewStyle.swift */; };
 		ACEBF7DE2D6F215800B594A0 /* VideoPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACEBF7DD2D6F215400B594A0 /* VideoPlayerView.swift */; };
@@ -706,7 +706,6 @@
 		AC1F938B2DC112E800F322E1 /* SocialSignInUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialSignInUseCase.swift; sourceTree = "<group>"; };
 		AC1F93912DC1494500F322E1 /* TokenRequestDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenRequestDTO.swift; sourceTree = "<group>"; };
 		AC1F93942DC1495100F322E1 /* TokenResponseDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenResponseDTO.swift; sourceTree = "<group>"; };
-		AC20A0AC2E3A4BA8003306C1 /* sats_claim_loading.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = sats_claim_loading.json; sourceTree = "<group>"; };
 		AC20A1192E3A7F89003306C1 /* WalletOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletOverlayView.swift; sourceTree = "<group>"; };
 		AC20A13F2E3B7723003306C1 /* FeedsCell+Wallet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FeedsCell+Wallet.swift"; sourceTree = "<group>"; };
 		AC233D342D314CA3007040F1 /* Splash_Lottie.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Splash_Lottie.json; sourceTree = "<group>"; };
@@ -871,8 +870,6 @@
 		ACC1C39D2D9B046F005A7539 /* LottieRefreshSingletonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LottieRefreshSingletonView.swift; sourceTree = "<group>"; };
 		ACCA778D2DE4C19E005BC0FA /* EventBuffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventBuffer.swift; sourceTree = "<group>"; };
 		ACCB98772D94420D002B9675 /* UILabel+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UILabel+Extensions.swift"; sourceTree = "<group>"; };
-		ACCEAD0B2E392CE800D9F03F /* sats_claim_failure.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = sats_claim_failure.json; sourceTree = "<group>"; };
-		ACCEAD0E2E393A5400D9F03F /* sats_claim_success.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = sats_claim_success.json; sourceTree = "<group>"; };
 		ACCEAD342E393EA400D9F03F /* FeedsRepository+Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FeedsRepository+Constants.swift"; sourceTree = "<group>"; };
 		ACD2E8232D6746E400E750FE /* UploadingProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadingProgressView.swift; sourceTree = "<group>"; };
 		ACD7C16D2E1D38D400075148 /* DefaultAuthClient+Firebase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DefaultAuthClient+Firebase.swift"; sourceTree = "<group>"; };
@@ -883,6 +880,9 @@
 		ACDD23E32D8B19FB00AB0DAF /* MyVideosUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyVideosUseCase.swift; sourceTree = "<group>"; };
 		ACDD23E62D8B1B5400AB0DAF /* ProfileVideoRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileVideoRequest.swift; sourceTree = "<group>"; };
 		ACDD23F22D8B3D4100AB0DAF /* ProfileVideoInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileVideoInfo.swift; sourceTree = "<group>"; };
+		ACE793FD2E3CE4CF00A2FB2D /* sats_claim_failure.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = sats_claim_failure.json; sourceTree = "<group>"; };
+		ACE793FE2E3CE4CF00A2FB2D /* sats_claim_loading.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = sats_claim_loading.json; sourceTree = "<group>"; };
+		ACE793FF2E3CE4CF00A2FB2D /* sats_claim_success.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = sats_claim_success.json; sourceTree = "<group>"; };
 		ACEBF7DA2D6EDC7B00B594A0 /* GradientProgressViewStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GradientProgressViewStyle.swift; sourceTree = "<group>"; };
 		ACEBF7DD2D6F215400B594A0 /* VideoPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlayerView.swift; sourceTree = "<group>"; };
 		ACEBF7E02D6F505300B594A0 /* UploadCompletedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadCompletedView.swift; sourceTree = "<group>"; };
@@ -2507,9 +2507,9 @@
 		ACEBF7E62D6F56F400B594A0 /* Lottie */ = {
 			isa = PBXGroup;
 			children = (
-				AC20A0AC2E3A4BA8003306C1 /* sats_claim_loading.json */,
-				ACCEAD0E2E393A5400D9F03F /* sats_claim_success.json */,
-				ACCEAD0B2E392CE800D9F03F /* sats_claim_failure.json */,
+				ACE793FD2E3CE4CF00A2FB2D /* sats_claim_failure.json */,
+				ACE793FE2E3CE4CF00A2FB2D /* sats_claim_loading.json */,
+				ACE793FF2E3CE4CF00A2FB2D /* sats_claim_success.json */,
 				100209F42DE71F0E00DF269E /* leaderboard.json */,
 				105034152DD4955C00571B4E /* smiley_game_fire.json */,
 				105034162DD4955C00571B4E /* smiley_game_heart.json */,
@@ -2721,18 +2721,19 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				ACE794032E3CE4D000A2FB2D /* sats_claim_loading.json in Resources */,
+				ACE794042E3CE4D000A2FB2D /* sats_claim_success.json in Resources */,
+				ACE794052E3CE4D000A2FB2D /* sats_claim_failure.json in Resources */,
 				058557D9273AAEEB004C7B11 /* Preview Assets.xcassets in Resources */,
 				AC32E4122D270097001DDA43 /* README.txt in Resources */,
 				AC32E4132D270097001DDA43 /* KumbhSans-ExtraBold.ttf in Resources */,
 				AC391EE62DCE476400A8DFA9 /* Signup_scroll_lottie.json in Resources */,
 				AC32E4142D270097001DDA43 /* KumbhSans-SemiBold.ttf in Resources */,
-				ACCEAD102E393A5400D9F03F /* sats_claim_success.json in Resources */,
 				AC32E4152D270097001DDA43 /* KumbhSans-Black.ttf in Resources */,
 				105034992DD4C9B600571B4E /* smiley_tap.caf in Resources */,
 				1050349A2DD4C9B600571B4E /* smiley_game_win.caf in Resources */,
 				AC233D352D314CA3007040F1 /* Splash_Lottie.json in Resources */,
 				100209F52DE71F0E00DF269E /* leaderboard.json in Resources */,
-				AC20A0AE2E3A4BA8003306C1 /* sats_claim_loading.json in Resources */,
 				AC32E4162D270097001DDA43 /* KumbhSans-ExtraLight.ttf in Resources */,
 				AC32E4172D270097001DDA43 /* KumbhSans-Regular.ttf in Resources */,
 				AC32E4182D270097001DDA43 /* KumbhSans-Medium.ttf in Resources */,
@@ -2743,7 +2744,6 @@
 				1050341F2DD4955C00571B4E /* smiley_game_surprise.json in Resources */,
 				105034202DD4955C00571B4E /* smiley_game_heart.json in Resources */,
 				105034212DD4955C00571B4E /* smiley_game_fire.json in Resources */,
-				ACCEAD0C2E392CE800D9F03F /* sats_claim_failure.json in Resources */,
 				105037642DDC5C4700571B4E /* smiley_game_loss.caf in Resources */,
 				105034222DD4955C00571B4E /* smiley_game_laugh.json in Resources */,
 				105034232DD4955C00571B4E /* smiley_game_rocket.json in Resources */,
@@ -2768,18 +2768,19 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				ACE794002E3CE4D000A2FB2D /* sats_claim_loading.json in Resources */,
+				ACE794012E3CE4D000A2FB2D /* sats_claim_success.json in Resources */,
+				ACE794022E3CE4D000A2FB2D /* sats_claim_failure.json in Resources */,
 				AC233D362D314CA3007040F1 /* Splash_Lottie.json in Resources */,
 				ACD941B12CFF575C0038FCB6 /* Preview Assets.xcassets in Resources */,
 				AC32E4062D270097001DDA43 /* README.txt in Resources */,
 				AC391EE72DCE476400A8DFA9 /* Signup_scroll_lottie.json in Resources */,
 				AC32E4072D270097001DDA43 /* KumbhSans-ExtraBold.ttf in Resources */,
-				ACCEAD0F2E393A5400D9F03F /* sats_claim_success.json in Resources */,
 				AC32E4082D270097001DDA43 /* KumbhSans-SemiBold.ttf in Resources */,
 				1050349B2DD4C9B600571B4E /* smiley_tap.caf in Resources */,
 				1050349C2DD4C9B600571B4E /* smiley_game_win.caf in Resources */,
 				AC32E4092D270097001DDA43 /* KumbhSans-Black.ttf in Resources */,
 				100209F62DE71F0E00DF269E /* leaderboard.json in Resources */,
-				AC20A0AD2E3A4BA8003306C1 /* sats_claim_loading.json in Resources */,
 				AC32E40A2D270097001DDA43 /* KumbhSans-ExtraLight.ttf in Resources */,
 				AC32E40B2D270097001DDA43 /* KumbhSans-Regular.ttf in Resources */,
 				AC32E40C2D270097001DDA43 /* KumbhSans-Medium.ttf in Resources */,
@@ -2790,7 +2791,6 @@
 				1050341A2DD4955C00571B4E /* smiley_game_surprise.json in Resources */,
 				1050341B2DD4955C00571B4E /* smiley_game_heart.json in Resources */,
 				1050341C2DD4955C00571B4E /* smiley_game_fire.json in Resources */,
-				ACCEAD0D2E392CE800D9F03F /* sats_claim_failure.json in Resources */,
 				105037652DDC5C4700571B4E /* smiley_game_loss.caf in Resources */,
 				1050341D2DD4955C00571B4E /* smiley_game_laugh.json in Resources */,
 				1050341E2DD4955C00571B4E /* smiley_game_rocket.json in Resources */,
@@ -3669,7 +3669,7 @@
 					"@executable_path/Frameworks",
 				);
 				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/../rust-agent/target/universal/debug";
-				MARKETING_VERSION = 2.2.0;
+				MARKETING_VERSION = 2.3.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -3710,7 +3710,7 @@
 					"@executable_path/Frameworks",
 				);
 				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/../rust-agent/target/universal/release";
-				MARKETING_VERSION = 2.2.0;
+				MARKETING_VERSION = 2.3.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
