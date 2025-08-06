@@ -28,7 +28,7 @@ extension FeedsViewController: FeedsCellProtocol {
     AnalyticsModuleKt.getAnalyticsManager().trackEvent(
       event: GameConcludedBottomsheetClickedEventData(
         stakeAmount: Int32(feed.smileyGame?.config.lossPenalty ?? .zero),
-        stakeType: .sats,
+        stakeType: .yral,
         gameResult: result,
         wonLossAmount: Int32(abs(coinDelta)),
         ctaType: sheetCtaType
@@ -104,7 +104,7 @@ extension FeedsViewController: FeedsCellProtocol {
         gameType: .smiley,
         isNsfw: false,
         stakeAmount: Int32(item.smileyGame?.config.lossPenalty ?? Int.zero),
-        stakeType: StakeType.sats,
+        stakeType: TokenType.yral,
         optionChosen: smileyID,
         isTutorialVote: false
       )

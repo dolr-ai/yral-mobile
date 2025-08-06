@@ -36,57 +36,55 @@ extension DefaultAuthClient {
   }
 
   func exchangePrincipalID(type: DelegateIdentityType) async throws {
-    let newSignIn = try? await firebaseService.signInAnonymously()
+    do {
+      try await recordThrowingOperation {
+        let newSignIn = try? await firebaseService.signInAnonymously()
 
-    let userIDToken = try? await firebaseService.fetchUserIDToken()
-    guard let userIDToken else {
-      Task { [weak self] in
-        guard let self = self else { return }
-        await self.setAnalyticsData()
+        let userIDToken = try? await firebaseService.fetchUserIDToken()
+        guard let userIDToken else {
+          Task { [weak self] in
+            guard let self = self else { return }
+            await self.setAnalyticsData()
+          }
+          return
+        }
+        var httpHeaders = [
+          "Content-Type": "application/json",
+          "Authorization": "Bearer \(userIDToken)"
+        ]
+        if let appcheckToken = await firebaseService.fetchAppCheckToken() {
+          httpHeaders["X-Firebase-AppCheck"] = appcheckToken
+        }
+
+        let httpBody: [String: String] = [
+          "principal_id": userPrincipalString ?? ""
+        ]
+
+        if userPrincipalString != nil, !(newSignIn ?? true) {
+          try await getUserBalance(type: type)
+        } else {
+          let endpoint = Endpoint(http: "",
+                                  baseURL: firebaseBaseURL,
+                                  path: "exchange_principal_id",
+                                  method: .post,
+                                  headers: httpHeaders,
+                                  body: try? JSONSerialization.data(withJSONObject: httpBody)
+          )
+          let response = try await networkService.performRequest(
+            for: endpoint,
+            decodeAs: ExchangePrincipalDTO.self
+          ).toDomain()
+          try await firebaseService.signIn(withCustomToken: response.token)
+          try await getUserBalance(type: type)
+        }
+        Task { [weak self] in
+          guard let self = self else { return }
+          await self.setAnalyticsData()
+        }
       }
-      return
-    }
-    var httpHeaders = [
-      "Content-Type": "application/json",
-      "Authorization": "Bearer \(userIDToken)"
-    ]
-    if let appcheckToken = await firebaseService.fetchAppCheckToken() {
-      httpHeaders["X-Firebase-AppCheck"] = appcheckToken
-    }
-
-    let httpBody: [String: String] = [
-      "principal_id": userPrincipalString ?? ""
-    ]
-
-    if userPrincipalString != nil, !(newSignIn ?? true) {
-      do {
-        try await getUserBalance(type: type)
-      } catch {
-        await updateAuthState(for: type, withCoins: 0, isFetchingCoins: false)
-      }
-    } else {
-      let endpoint = Endpoint(http: "",
-                              baseURL: firebaseBaseURL,
-                              path: "exchange_principal_id",
-                              method: .post,
-                              headers: httpHeaders,
-                              body: try? JSONSerialization.data(withJSONObject: httpBody)
-      )
-
-      do {
-        let response = try await networkService.performRequest(
-          for: endpoint,
-          decodeAs: ExchangePrincipalDTO.self
-        ).toDomain()
-        try await firebaseService.signIn(withCustomToken: response.token)
-        try await getUserBalance(type: type)
-      } catch {
-        await updateAuthState(for: type, withCoins: 0, isFetchingCoins: false)
-      }
-    }
-    Task { [weak self] in
-      guard let self = self else { return }
-      await self.setAnalyticsData()
+    } catch {
+      await updateAuthState(for: type, withCoins: 0, isFetchingCoins: false)
+      print(error)
     }
   }
 
