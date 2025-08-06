@@ -84,7 +84,10 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
     do {
       let result = await SmileyGameConfig.shared.fetch()
       switch result {
-      case .success(let success):
+      case .success(let smileyConfig):
+        smileyConfig.smileys.forEach { smiley in
+          FirebaseLottieManager.shared.downloadAndSaveToCache(forPath: smiley.clickAnimation)
+        }
         unifiedEvent = .smileysFetched(feeds: currentFeeds)
       case .failure(let failure):
         print(failure.localizedDescription)
