@@ -394,19 +394,21 @@ private fun BottomView(
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         Shadow(Modifier.align(Alignment.BottomCenter))
-        HowToPlay(
-            modifier =
-                Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(start = 16.dp, bottom = 105.dp),
-            shouldExpand =
-                pageNo < gameState.isHowToPlayShown.size &&
-                    !gameState.isHowToPlayShown[pageNo] &&
-                    pageNo == state.currentPageOfFeed,
-            pageNo = pageNo,
-            onClick = { gameViewModel.toggleAboutGame(true) },
-            onAnimationComplete = { gameViewModel.setHowToPlayShown(pageNo, state.currentPageOfFeed) },
-        )
+        if (gameState.gameIcons.isNotEmpty()) {
+            HowToPlay(
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(start = 16.dp, bottom = 105.dp),
+                shouldExpand =
+                    pageNo < gameState.isHowToPlayShown.size &&
+                        !gameState.isHowToPlayShown[pageNo] &&
+                        pageNo == state.currentPageOfFeed,
+                pageNo = pageNo,
+                onClick = { gameViewModel.toggleAboutGame(true) },
+                onAnimationComplete = { gameViewModel.setHowToPlayShown(pageNo, state.currentPageOfFeed) },
+            )
+        }
         ActionsRight(
             modifier =
                 Modifier
