@@ -8,33 +8,6 @@
 import Foundation
 
 extension DefaultAuthClient {
-  func getUserBalance(type: DelegateIdentityType) async throws {
-    guard let principalID = userPrincipalString else {
-      throw SatsCoinError.unknown("Failed to fetch princiapl ID")
-    }
-
-    do {
-      let response = try await networkService.performRequest(
-        for: Endpoint(
-          http: "",
-          baseURL: satsBaseURL,
-          path: "v2/balance/\(principalID)",
-          method: .get
-        ),
-        decodeAs: SatsCoinDTO.self
-      ).toDomain()
-      await updateAuthState(for: type, withCoins: UInt64(response.balance) ?? 0, isFetchingCoins: false)
-      try await firebaseService.update(coins: UInt64(response.balance) ?? 0, forPrincipal: principalID)
-    } catch {
-      switch error {
-      case let error as NetworkError:
-        throw SatsCoinError.network(error)
-      default:
-        throw SatsCoinError.unknown(error.localizedDescription)
-      }
-    }
-  }
-
   func exchangePrincipalID(type: DelegateIdentityType) async throws {
     do {
       try await recordThrowingOperation {
@@ -63,19 +36,7 @@ extension DefaultAuthClient {
         if userPrincipalString != nil, !(newSignIn ?? true) {
           try await getUserBalance(type: type)
         } else {
-          let endpoint = Endpoint(http: "",
-                                  baseURL: firebaseBaseURL,
-                                  path: "exchange_principal_id",
-                                  method: .post,
-                                  headers: httpHeaders,
-                                  body: try? JSONSerialization.data(withJSONObject: httpBody)
-          )
-          let response = try await networkService.performRequest(
-            for: endpoint,
-            decodeAs: ExchangePrincipalDTO.self
-          ).toDomain()
-          try await firebaseService.signIn(withCustomToken: response.token)
-          try await getUserBalance(type: type)
+          try await firstTimeSignIn(type: type, httpHeaders: httpHeaders, httpBody: httpBody)
         }
         Task { [weak self] in
           guard let self = self else { return }
@@ -86,6 +47,68 @@ extension DefaultAuthClient {
       await updateAuthState(for: type, withCoins: 0, isFetchingCoins: false)
       print(error)
     }
+  }
+
+  func getUserBalance(type: DelegateIdentityType) async throws {
+    guard let principalID = userPrincipalString else {
+      throw SatsCoinError.unknown("Failed to fetch princiapl ID")
+    }
+
+    do {
+      let response = try await networkService.performRequest(
+        for: Endpoint(
+          http: "",
+          baseURL: satsBaseURL,
+          path: "v2/balance/\(principalID)",
+          method: .get
+        ),
+        decodeAs: SatsCoinDTO.self
+      ).toDomain()
+      await updateAuthState(for: type, withCoins: UInt64(response.balance) ?? 0, isFetchingCoins: false)
+      try await firebaseService.update(coins: UInt64(response.balance) ?? 0, forPrincipal: principalID)
+    } catch {
+      switch error {
+      case let error as NetworkError:
+        throw SatsCoinError.network(error)
+      default:
+        throw SatsCoinError.unknown(error.localizedDescription)
+      }
+    }
+  }
+
+  private func firstTimeSignIn(
+    type: DelegateIdentityType,
+    httpHeaders: [String: String],
+    httpBody: [String: String]
+  ) async throws {
+    let endpoint = Endpoint(
+      http: "",
+      baseURL: firebaseBaseURL,
+      path: "exchange_principal_id",
+      method: .post,
+      headers: httpHeaders,
+      body: try? JSONSerialization.data(withJSONObject: httpBody)
+    )
+    let response = try await networkService.performRequest(
+      for: endpoint,
+      decodeAs: ExchangePrincipalDTO.self
+    ).toDomain()
+
+    var retryCount = Int.three
+    while retryCount > .zero {
+      do {
+        try await recordThrowingOperation {
+          try await firebaseService.signIn(withCustomToken: response.token)
+          retryCount = .zero
+        }
+      } catch {
+        retryCount -= 1
+        if retryCount == .zero {
+          try await firebaseService.resetSession()
+        }
+      }
+    }
+    try await getUserBalance(type: type)
   }
 
   func updateAuthState(for type: DelegateIdentityType, withCoins coins: UInt64, isFetchingCoins: Bool) async {
