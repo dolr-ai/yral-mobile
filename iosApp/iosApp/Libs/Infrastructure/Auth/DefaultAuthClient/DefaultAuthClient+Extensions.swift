@@ -304,7 +304,8 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
         canisterId: canisterPrincipal,
         isLoggedIn: KotlinBoolean(bool: isLoggedIn),
         isCreator: KotlinBoolean(bool: isCreator),
-        satsBalance: KotlinDouble(value: Double(coins))
+        walletBalance: KotlinDouble(value: Double(coins)),
+        tokenType: .yral
       )
     )
     MPSessionReplay.getInstance()?.identify(distinctId: Mixpanel.sharedInstance()?.distinctId ?? "")
