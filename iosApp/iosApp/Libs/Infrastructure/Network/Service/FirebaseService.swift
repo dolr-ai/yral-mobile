@@ -28,6 +28,10 @@ class FirebaseService: FirebaseServiceProtocol {
     return false
   }
 
+  func resetSession() async throws {
+    UserDefaultsManager.shared.set(false, for: DefaultsKey.hasLaunchedAppBefore)
+  }
+
   func signIn(withCustomToken token: String) async throws {
     try await Auth.auth().signIn(withCustomToken: token)
   }
