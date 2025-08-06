@@ -50,7 +50,7 @@ class CastVoteRepository: CastVoteRepositoryProtocol {
         for: Endpoint(
           http: "",
           baseURL: baseURL,
-          path: "cast_vote",
+          path: "cast_vote_v2",
           method: .post,
           headers: httpHeaders,
           body: try? JSONEncoder().encode(httpBody)

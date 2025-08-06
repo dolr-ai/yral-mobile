@@ -19,7 +19,7 @@ LOSS_PENALTY = -1
 SHARDS = 10
 
 PID_REGEX = re.compile(r'^[A-Za-z0-9_-]{6,64}$')
-SMILEY_GAME_CONFIG_PATH = "config/smiley_game_v1"
+SMILEY_GAME_CONFIG_PATH = "config/smiley_game_v2"
 VIDEO_COLL = "videos"
 
 BALANCE_URL = "https://yral-hot-or-not.go-bazzinga.workers.dev/update_balance/"
@@ -63,10 +63,64 @@ def tx_coin_change(principal_id: str, video_id: str | None, delta: int, reason: 
 # ─────────────────────  SMILEY CONFIG HELPER  ────────────────────────
 _SMILEYS: List[Dict[str, str]] | None = None
 def get_smileys() -> List[Dict[str, str]]:
+    # global _SMILEYS
+    # if _SMILEYS is None:
+    #     snap = db().document(SMILEY_GAME_CONFIG_PATH).get()
+    #     _SMILEYS = snap.get("available_smileys") or []
+    # return _SMILEYS
+
     global _SMILEYS
     if _SMILEYS is None:
-        snap = db().document(SMILEY_GAME_CONFIG_PATH).get()
-        _SMILEYS = snap.get("available_smileys") or []
+        _SMILEYS = [
+            {
+                "click_animation": "smiley_game/animations/smiley_game_laugh.json",
+                "id": "laugh",
+                "image_name": "laugh",
+                "image_url": "smiley_game/game/laugh.png",
+                "is_active": True,
+                "unicode": "U+1F602"
+            },
+            {
+                "click_animation": "smiley_game/animations/smiley_game_heart.json",
+                "id": "heart",
+                "image_name": "heart",
+                "image_url": "smiley_game/game/heart.png",
+                "is_active": True,
+                "unicode": "U+2764"
+            },
+            {
+                "click_animation": "smiley_game/animations/smiley_game_fire.json",
+                "id": "fire",
+                "image_name": "fire",
+                "image_url": "smiley_game/game/fire.png",
+                "is_active": True,
+                "unicode": "U+1F525"
+            },
+            {
+                "click_animation": "smiley_game/animations/smiley_game_surprise.json",
+                "id": "surprise",
+                "image_name": "surprise",
+                "image_url": "smiley_game/game/surprise.png",
+                "is_active": True,
+                "unicode": "U+1F632"
+            },
+            {
+                "click_animation": "smiley_game/animations/smiley_game_rocket.json",
+                "id": "rocket",
+                "image_name": "rocket",
+                "image_url": "smiley_game/game/rocket.png",
+                "is_active": True,
+                "unicode": "U+1F680"
+            },
+            {
+                "click_animation": "smiley_game/animations/smiley_game_puke.json",
+                "id": "puke",
+                "image_name": "puke",
+                "image_url": "smiley_game/game/puke.png",
+                "is_active": True,
+                "unicode": "U+1F92E"
+            }
+        ]
     return _SMILEYS
 
 # ─────────────────────  ERROR HELPER  ────────────────────────
@@ -310,6 +364,159 @@ def cast_vote(request: Request):
         # load the global smiley list once per cold-start
         smileys     = get_smileys()                          # [{id, image_name, …}, …]
         smiley_map  = {s["id"]: s for s in smileys}
+        
+        smiley_map.pop("puke", None)
+
+        if sid not in smiley_map:
+            return error_response(400, "SMILEY_NOT_ALLOWED", "smiley_id not in config")
+
+        # 2. references ───────────────────────────────────────────────────
+        vid_ref   = db().collection(VIDEO_COLL).document(vid)
+        vote_ref  = vid_ref.collection("votes").document(pid)
+        user_ref = db().document(f"users/{pid}")
+        shard_ref = lambda k: vid_ref.collection("tallies").document(f"shard_{k}")
+
+        # 3. transaction: READS first, WRITES after ──────────────────────
+        @firestore.transactional
+        def _vote_tx(tx: firestore.Transaction) -> dict:
+            user_snapshot = user_ref.get(transaction=tx)
+            balance = user_snapshot.get("coins") or 0
+            if balance < abs(LOSS_PENALTY):
+                return {"result": "INSUFFICIENT", "coins": balance}
+
+            already_voted = vote_ref.get(transaction=tx).exists
+            if already_voted:
+                return {"result": "DUP"}
+
+            vid_exists  = vid_ref.get(transaction=tx).exists
+            if not vid_exists:
+                all_ids = [s["id"] for s in smileys]
+                seed_a = random.choice(all_ids)
+                
+                pool = [smid for smid in all_ids if smid != seed_a]
+                seed_b = random.choice(pool)
+
+                tx.set(vid_ref, {
+                    "created_at": firestore.SERVER_TIMESTAMP
+                })
+
+                zero = {s["id"]: 0 for s in smileys}
+                zero[seed_a] = 1
+                zero[seed_b] = 1
+                tx.set(shard_ref(0), zero, merge=True)
+
+                for k in range(1, SHARDS):
+                    tx.set(shard_ref(k), {s["id"]: 0 for s in smileys}, merge=True)
+
+            # write vote + counter
+            tx.set(vote_ref, {
+                "smiley_id": sid,
+                "at": firestore.SERVER_TIMESTAMP
+            })
+            tx.update(
+                shard_ref(random.randrange(SHARDS)),
+                {sid: firestore.Increment(1)}
+            )
+            return {"result": "OK"}
+
+        tx_out = _vote_tx(db().transaction())
+        if tx_out["result"] == "DUP":
+            return error_response(409, "DUPLICATE_VOTE", "You have already voted on this video. Scroll to Next Video to keep Voting.")
+
+        if tx_out["result"] == "INSUFFICIENT":
+            return error_response(402, "INSUFFICIENT_COINS", f"Balance {tx_out['coins']} < {abs(LOSS_PENALTY)} required")
+
+        # 4. read tallies after commit ───────────────────────────────────
+        raw_counts = collections.Counter()
+        for k in range(SHARDS):
+            shard = shard_ref(k).get().to_dict() or {}
+            raw_counts.update(shard)
+
+        counts = {sid: raw_counts.get(sid, 0) for sid in smiley_map.keys()}
+
+        max_votes = max(counts.values())
+        leaders = [sm for sm, v in counts.items() if v == max_votes]
+
+        if len(leaders) == 1:
+            winner_id = leaders[0]
+            outcome = "WIN" if sid == winner_id else "LOSS"
+        else:
+            winner_id = None
+            outcome = "LOSS"
+
+        # 5. coin mutation ───────────────────────────────────────────────
+        delta  = WIN_REWARD if outcome == "WIN" else LOSS_PENALTY
+        coins  = tx_coin_change(pid, vid, delta, outcome)
+
+        if not _push_delta(balance_update_token, pid, delta):
+            _ = tx_coin_change(pid, vid, -delta, "ROLLBACK")
+            return error_response(502, "UPSTREAM_FAILED", "We couldn’t record your vote. Please try voting again after sometime.")
+
+        vote_ref.update({
+            "outcome": outcome,
+            "coin_delta": delta
+        })
+
+        if outcome == "WIN":
+            user_ref.update({"smiley_game_wins": firestore.Increment(1)})
+        else:
+            user_ref.update({"smiley_game_losses": firestore.Increment(1)})
+
+        # 6. success payload (voted smiley) ──────────────────────────────
+        voted = smiley_map[sid]
+        return jsonify({
+            "outcome":    outcome,
+            "smiley": {
+                "id":         voted["id"],
+                "image_url": voted["image_url"],
+                "is_active":  voted["is_active"],
+                "click_animation": voted["click_animation"]
+            },
+            "coins":       coins,
+            "coin_delta":  delta
+        }), 200
+
+    # known error wrappers ───────────────────────────────────────────────
+    except auth.InvalidIdTokenError:
+        return error_response(401, "ID_TOKEN_INVALID", "ID token invalid or expired")
+    except GoogleAPICallError as e:
+        return error_response(500, "FIRESTORE_ERROR", str(e))
+    except Exception as e:                                 # fallback
+        print("Unhandled error:", e, file=sys.stderr)
+        return error_response(500, "INTERNAL", "Internal server error")
+
+@https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"], enforce_app_check=True)
+def cast_vote_v2(request: Request):
+    balance_update_token = os.environ["BALANCE_UPDATE_TOKEN"]
+    try:
+        # 1. validation & auth ────────────────────────────────────────────
+        if request.method != "POST":
+            return error_response(405, "METHOD_NOT_ALLOWED", "POST required")
+
+        body = request.get_json(silent=True) or {}
+        data = body.get("data", {})
+        pid  = str(body.get("principal_id") or data.get("principal_id") or "").strip()
+        vid  = str(body.get("video_id") or data.get("video_id") or "").strip()
+        sid  = str(body.get("smiley_id") or data.get("smiley_id") or "").strip()
+
+        auth_header = request.headers.get("Authorization", "")
+        if not auth_header.startswith("Bearer "):
+            return error_response(401, "MISSING_ID_TOKEN", "Authorization missing")
+        auth.verify_id_token(auth_header.split(" ", 1)[1])
+
+        actok = request.headers.get("X-Firebase-AppCheck")
+        if actok:
+            try:
+                app_check.verify_token(actok)
+            except Exception:
+                return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
+
+        # load the global smiley list once per cold-start
+        smileys     = get_smileys()                          # [{id, image_name, …}, …]
+        smiley_map  = {s["id"]: s for s in smileys}
+        
+        smiley_map.pop("heart", None)
+
         if sid not in smiley_map:
             return error_response(400, "SMILEY_NOT_ALLOWED", "smiley_id not in config")
 
