@@ -107,9 +107,11 @@ struct SmileyGameView: View {
       .allowsTightening(true)
       .foregroundColor(YralColor.green50.swiftUIColor)
 
+      // swiftlint: disable line_length
       Text(result.outcome == "WIN" ?
-           "You win \(abs(result.coinDelta)) \(abs(result.coinDelta) == 1 ? "Point!" : "Points!")" :
-            "You lose \(abs(result.coinDelta)) \(abs(result.coinDelta) == 1 ? "Point!" : "Points!")")
+           "You win \(abs(result.coinDelta)) \(abs(result.coinDelta) == 1 ? Constants.yralTokenString : Constants.yralTokensString)" :
+            "You lose \(abs(result.coinDelta)) \(abs(result.coinDelta) == 1 ? Constants.yralTokenString : Constants.yralTokensString)")
+      // swiftlint: enable line_length
       .font(YralFont.pt16.bold.swiftUIFont)
       .lineLimit(Constants.textLineLimit)
       .minimumScaleFactor(Constants.textMinScale)
@@ -191,5 +193,8 @@ extension SmileyGameView {
     static let viewHorizontalPadding = 12.0
     static let viewBackground = YralColor.grey950.swiftUIColor
     static let viewOpacity = 0.4
+
+    static let yralTokenString = "YRAL token!"
+    static let yralTokensString = "YRAL tokens!"
   }
 }
