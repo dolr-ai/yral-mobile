@@ -165,7 +165,7 @@ extension FeedsViewController {
         gameType: .smiley,
         isNsfw: false,
         stakeAmount: Int32(item.smileyGame?.config.lossPenalty ?? .zero),
-        stakeType: .sats,
+        stakeType: .yral,
         optionChosen: response.smiley.id,
         gameResult: result,
         wonLossAmount: Int32(abs(response.coinDelta)),

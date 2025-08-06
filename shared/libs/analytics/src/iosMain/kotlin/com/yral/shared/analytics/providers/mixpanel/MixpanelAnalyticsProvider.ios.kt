@@ -5,6 +5,7 @@ import com.yral.shared.analytics.AnalyticsProvider
 import com.yral.shared.analytics.EventToMapConverter
 import com.yral.shared.analytics.User
 import com.yral.shared.analytics.events.EventData
+import com.yral.shared.analytics.events.TokenType
 import kotlinx.cinterop.ExperimentalForeignApi
 
 @OptIn(ExperimentalForeignApi::class)
@@ -34,7 +35,7 @@ actual class MixpanelAnalyticsProvider actual constructor(
                 "is_creator" to (isCreator ?: false),
                 "is_logged_in" to user.isLoggedIn,
                 "wallet_balance" to user.walletBalance,
-                "token_type" to user.tokenType,
+                "token_type" to (user.tokenType?.serialName ?: ""),
                 "canister_id" to user.canisterId,
             )
         if (user.isLoggedIn ?: false) {
@@ -53,4 +54,12 @@ actual class MixpanelAnalyticsProvider actual constructor(
     }
 
     override fun toValidKeyName(key: String) = key
+
+    val TokenType.serialName: String
+        get() =
+            when (this) {
+                TokenType.CENTS -> "cents"
+                TokenType.SATS -> "sats"
+                TokenType.YRAL -> "yral"
+            }
 }
