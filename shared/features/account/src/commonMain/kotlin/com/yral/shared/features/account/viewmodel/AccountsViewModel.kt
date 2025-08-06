@@ -69,11 +69,11 @@ class AccountsViewModel(
     }
 
     @Suppress("TooGenericExceptionCaught")
-    fun signInWithGoogle() {
+    fun signInWithGoogle(context: Any) {
         coroutineScope
             .launch {
                 try {
-                    authClient.signInWithSocial(SocialProvider.GOOGLE)
+                    authClient.signInWithSocial(context, SocialProvider.GOOGLE)
                 } catch (e: Exception) {
                     crashlyticsManager.recordException(e)
                     handleSignupFailed()
