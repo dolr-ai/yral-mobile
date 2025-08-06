@@ -28,6 +28,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
@@ -286,8 +287,9 @@ private fun FeedOverlay(
             lottieCached = true
         }
         if (!feedViewModel.isLoggedIn() && pageNo != 0 && (pageNo % SIGN_UP_PAGE) == 0) {
+            val context = LocalContext.current
             SignupNudge {
-                feedViewModel.signInWithGoogle()
+                feedViewModel.signInWithGoogle(context)
             }
         }
     }

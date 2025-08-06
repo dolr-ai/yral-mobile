@@ -16,7 +16,6 @@ import com.yral.shared.features.auth.domain.useCases.ObtainAnonymousIdentityUseC
 import com.yral.shared.features.auth.domain.useCases.RefreshTokenUseCase
 import com.yral.shared.features.auth.domain.useCases.RegisterNotificationTokenUseCase
 import com.yral.shared.features.auth.domain.useCases.UpdateSessionAsRegisteredUseCase
-import com.yral.shared.features.auth.utils.OAuthUtils
 import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
@@ -26,6 +25,7 @@ val authModule =
     module {
         factoryOf(::DefaultAuthClientFactory) { bind<AuthClientFactory>() }
         factoryOf(::AuthDataSourceImpl) { bind<AuthDataSource>() }
+        singleOf(::AuthRepositoryImpl) { bind<AuthRepository>() }
         factoryOf(::AuthenticateTokenUseCase)
         factoryOf(::ObtainAnonymousIdentityUseCase)
         factoryOf(::RefreshTokenUseCase)
@@ -36,9 +36,4 @@ val authModule =
         factoryOf(::AuthTelemetry)
         factoryOf(::RegisterNotificationTokenUseCase)
         factoryOf(::DeregisterNotificationTokenUseCase)
-
-        // Required single
-        // Reason: Verified in Repo, Callback in Repo required once app resumes
-        singleOf(::OAuthUtils)
-        singleOf(::AuthRepositoryImpl) { bind<AuthRepository>() }
     }

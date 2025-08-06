@@ -8,7 +8,7 @@ import com.yral.shared.features.auth.data.models.toTokenResponse
 import com.yral.shared.features.auth.domain.AuthRepository
 import com.yral.shared.features.auth.domain.models.ExchangePrincipalResponse
 import com.yral.shared.features.auth.domain.models.TokenResponse
-import com.yral.shared.features.auth.utils.OAuthUtils
+import com.yral.shared.features.auth.utils.OAuthUtilsHelper
 import com.yral.shared.features.auth.utils.SocialProvider
 import com.yral.shared.uniffi.generated.yralAuthLoginHint
 import io.ktor.http.Parameters
@@ -18,7 +18,7 @@ import io.ktor.http.Url
 
 class AuthRepositoryImpl(
     private val dataSource: AuthDataSource,
-    private val oAuthUtils: OAuthUtils,
+    private val oAuthUtilsHelper: OAuthUtilsHelper,
 ) : AuthRepository {
     private var verifier: String = ""
 
@@ -26,8 +26,8 @@ class AuthRepositoryImpl(
         provider: SocialProvider,
         identity: ByteArray,
     ): Pair<Url, String> {
-        verifier = oAuthUtils.generateCodeVerifier()
-        val codeChallenge = oAuthUtils.generateCodeChallenge(verifier)
+        verifier = oAuthUtilsHelper.generateCodeVerifier()
+        val codeChallenge = oAuthUtilsHelper.generateCodeChallenge(verifier)
         val authUrl =
             URLBuilder(
                 protocol = URLProtocol.HTTPS,
