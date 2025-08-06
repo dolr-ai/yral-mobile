@@ -25,7 +25,7 @@ fun GameIconStrip(
     coinDelta: Int = 0,
     onIconPositioned: (Int, Float) -> Unit = { _, _ -> },
     animatingNudgeIconPosition: Int? = null,
-    onStripAnimationComplete: () -> Unit = {},
+    onIconAnimationComplete: () -> Unit = {},
     setNudgeShown: () -> Unit = {},
 ) {
     var playSound by remember { mutableStateOf(false) }
@@ -68,7 +68,7 @@ fun GameIconStrip(
                         animate = shouldAnimate,
                         onAnimationComplete = {
                             animatingIcon = null
-                            onStripAnimationComplete()
+                            onIconAnimationComplete()
                         },
                     )
                 } else {
@@ -79,7 +79,7 @@ fun GameIconStrip(
                         loadLocal = { loadLocal = true },
                         onAnimationComplete = {
                             animatingIcon = null
-                            onStripAnimationComplete()
+                            onIconAnimationComplete()
                         },
                     )
                 }

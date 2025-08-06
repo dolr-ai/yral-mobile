@@ -49,8 +49,10 @@ fun LocalGameIcon(
         label = "scale",
     )
     LaunchedEffect(animate) {
-        delay(animationDuration)
-        onAnimationComplete()
+        if (animate) {
+            delay(animationDuration)
+            onAnimationComplete()
+        }
     }
     Image(
         modifier =
@@ -88,8 +90,10 @@ fun AsyncGameIcon(
         label = "scale",
     )
     LaunchedEffect(animate) {
-        delay(animationDuration)
-        onAnimationComplete()
+        if (animate) {
+            delay(animationDuration)
+            onAnimationComplete()
+        }
     }
     YralAsyncImage(
         imageUrl = icon.imageUrl,

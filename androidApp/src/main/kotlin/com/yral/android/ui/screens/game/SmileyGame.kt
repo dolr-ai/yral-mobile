@@ -30,12 +30,12 @@ import androidx.compose.ui.unit.dp
 import com.yral.android.R
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.game.SmileyGameConstants.NUDGE_ANIMATION_DURATION
-import com.yral.android.ui.screens.game.SmileyGameConstants.NUDGE_DURATION
+import com.yral.android.ui.screens.game.SmileyGameConstants.NUDGE_ANIMATION_ICON_ITERATIONS
 import com.yral.android.ui.widgets.YralFeedback
 import com.yral.shared.features.game.domain.models.GameIcon
-import kotlinx.coroutines.delay
+import kotlin.coroutines.cancellation.CancellationException
 
-@Suppress("LongMethod")
+@Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
 fun SmileyGame(
     gameIcons: List<GameIcon>,
@@ -47,6 +47,7 @@ fun SmileyGame(
     hasShownCoinDeltaAnimation: Boolean,
     onDeltaAnimationComplete: () -> Unit,
     shouldShowNudge: Boolean,
+    pageNo: Int,
     onNudgeAnimationComplete: () -> Unit,
 ) {
     var animateBubbles by remember { mutableStateOf(false) }
@@ -69,19 +70,20 @@ fun SmileyGame(
             }
             else -> {
                 var animatingNudgeIconPosition by remember { mutableStateOf<Int?>(null) }
-                LaunchedEffect(shouldShowNudge) {
-                    if (shouldShowNudge) {
-                        runCatching {
-                            animatingNudgeIconPosition = 0
-                            delay(NUDGE_DURATION)
-                            animatingNudgeIconPosition = null
-                            onNudgeAnimationComplete()
-                        }.onFailure { animatingNudgeIconPosition = null }
-                    } else {
+                var nudgeIterationCount by remember { mutableStateOf(0) }
+                SmileyGameNudge(
+                    pageNo = pageNo,
+                    shouldShowNudge = shouldShowNudge,
+                    animatingNudgeIconPosition = animatingNudgeIconPosition,
+                    startNudgeAnimation = {
+                        animatingNudgeIconPosition = 0
+                        nudgeIterationCount = 0
+                    },
+                    dismissNudgeAnimation = {
                         animatingNudgeIconPosition = null
-                    }
-                }
-                if (animatingNudgeIconPosition != null) SmileyGameNudge()
+                        nudgeIterationCount = 0
+                    },
+                )
                 GameIconStrip(
                     modifier = Modifier.align(Alignment.BottomCenter),
                     gameIcons = gameIcons,
@@ -96,13 +98,24 @@ fun SmileyGame(
                         iconPositions = iconPositions.plus(id to xPos)
                     },
                     animatingNudgeIconPosition = animatingNudgeIconPosition,
-                    onStripAnimationComplete = {
+                    onIconAnimationComplete = {
                         animatingNudgeIconPosition =
-                            animatingNudgeIconPosition
-                                ?.let { if (it < gameIcons.size) it + 1 else 0 }
+                            animatingNudgeIconPosition?.let { currentIndex ->
+                                when {
+                                    currentIndex + 1 < gameIcons.size -> currentIndex + 1
+                                    ++nudgeIterationCount >= NUDGE_ANIMATION_ICON_ITERATIONS ->
+                                        run {
+                                            nudgeIterationCount = 0
+                                            onNudgeAnimationComplete()
+                                            null
+                                        }
+                                    else -> 0
+                                }
+                            }
                     },
                     setNudgeShown = {
                         animatingNudgeIconPosition = null
+                        nudgeIterationCount = 0
                         onNudgeAnimationComplete()
                     },
                 )
@@ -159,8 +172,29 @@ private fun BoxScope.SmileyGameResult(
 }
 
 @Composable
-private fun BoxScope.SmileyGameNudge() {
-    val infiniteTransition = rememberInfiniteTransition()
+private fun BoxScope.SmileyGameNudge(
+    pageNo: Int,
+    shouldShowNudge: Boolean,
+    animatingNudgeIconPosition: Int?,
+    startNudgeAnimation: () -> Unit,
+    dismissNudgeAnimation: () -> Unit,
+) {
+    LaunchedEffect(shouldShowNudge) {
+        try {
+            if (shouldShowNudge) {
+                startNudgeAnimation()
+            } else {
+                dismissNudgeAnimation()
+            }
+        } catch (e: CancellationException) {
+            // Reset state safely on coroutine cancellation
+            dismissNudgeAnimation()
+            throw e
+        } catch (_: Exception) {
+            dismissNudgeAnimation()
+        }
+    }
+    val infiniteTransition = rememberInfiniteTransition(label = "nudge $pageNo")
     val tweenSpec =
         tween<Float>(
             durationMillis = NUDGE_ANIMATION_DURATION.toInt(),
@@ -176,11 +210,25 @@ private fun BoxScope.SmileyGameNudge() {
         targetValue = 0f,
         animationSpec = infiniteRepeatable(tweenSpec, RepeatMode.Reverse),
     )
+    animatingNudgeIconPosition?.let {
+        SmileyGameNudgeContent(
+            modifier = Modifier.align(Alignment.BottomCenter),
+            alpha = alpha,
+            offsetY = offsetY,
+        )
+    }
+}
+
+@Composable
+private fun SmileyGameNudgeContent(
+    modifier: Modifier,
+    alpha: Float,
+    offsetY: Float,
+) {
     Box(
         modifier =
-            Modifier
+            modifier
                 .fillMaxSize()
-                .align(Alignment.BottomCenter)
                 .background(YralColors.ScrimColorLight)
                 .padding(horizontal = 16.dp),
         contentAlignment = Alignment.BottomStart,
@@ -217,5 +265,5 @@ private fun Int.toSignedString(): String =
 
 object SmileyGameConstants {
     const val NUDGE_ANIMATION_DURATION = 600L
-    const val NUDGE_DURATION = 5000L
+    const val NUDGE_ANIMATION_ICON_ITERATIONS = 3
 }
