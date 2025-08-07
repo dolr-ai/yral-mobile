@@ -102,7 +102,7 @@ class AccountsViewModel(
             mutableListOf(
                 AccountHelpLink(
                     link = TALK_TO_TEAM_URL,
-                    openInExternalBrowser = false,
+                    openInExternalBrowser = true,
                     menuCtaType = MenuCtaType.TALK_TO_THE_TEAM,
                 ),
                 AccountHelpLink(
@@ -173,7 +173,7 @@ class AccountsViewModel(
     companion object {
         const val LOGOUT_URI = "yral://logout"
         const val DELETE_ACCOUNT_URI = "yral://deleteAccount"
-        const val TALK_TO_TEAM_URL = "https://t.me/+c-LTX0Cp-ENmMzI1"
+        const val TALK_TO_TEAM_URL = "https://chat.whatsapp.com/C8FN7ISnvJP1DPcbgZ2vF9?mode=ac_t"
         const val TERMS_OF_SERVICE_URL = "https://yral.com/terms-android"
         const val PRIVACY_POLICY_URL = "https://yral.com/privacy-policy"
         const val TELEGRAM_LINK = "https://t.me/+c-LTX0Cp-ENmMzI1"
