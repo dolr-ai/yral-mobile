@@ -10,13 +10,18 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -25,9 +30,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.yral.android.R
+import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.game.SmileyGameConstants.NUDGE_ANIMATION_DURATION
 import com.yral.android.ui.screens.game.SmileyGameConstants.NUDGE_ANIMATION_ICON_ITERATIONS
@@ -231,28 +244,55 @@ private fun SmileyGameNudgeContent(
                 .fillMaxSize()
                 .background(YralColors.ScrimColorLight)
                 .padding(horizontal = 16.dp),
-        contentAlignment = Alignment.BottomStart,
+        contentAlignment = Alignment.BottomCenter,
     ) {
+        val density = LocalDensity.current
+        var textWidth by remember { mutableIntStateOf(0) }
         Image(
             painter = painterResource(id = R.drawable.smiley_game_nudge_stars),
             contentDescription = null,
             modifier =
                 Modifier
-                    .padding(bottom = 256.dp)
-                    .fillMaxWidth()
+                    .padding(bottom = 226.dp)
+                    .width(with(density) { textWidth.toDp() + 16.dp })
+                    .height(130.dp)
                     .alpha(alpha),
-            contentScale = ContentScale.Fit,
+            contentScale = ContentScale.FillBounds,
         )
-        Image(
-            painter = painterResource(id = R.drawable.smiley_game_nudge),
-            contentDescription = null,
+        Column(
             modifier =
                 Modifier
-                    .padding(bottom = 100.dp)
                     .fillMaxWidth()
+                    .padding(bottom = 100.dp, start = 36.dp, end = 36.dp)
                     .offset(y = offsetY.dp),
-            contentScale = ContentScale.Fit,
-        )
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(
+                text =
+                    buildAnnotatedString {
+                        val textStyle = LocalAppTopography.current.xlBold
+                        val spanStyle =
+                            SpanStyle(
+                                fontSize = textStyle.fontSize,
+                                fontFamily = textStyle.fontFamily,
+                                fontWeight = textStyle.fontWeight,
+                                color = YralColors.Neutral50,
+                            )
+                        withStyle(spanStyle) { append(stringResource(R.string.smiley_game_nudge_1)) }
+                        withStyle(spanStyle) { append("\n") }
+                        withStyle(style = spanStyle.copy(color = YralColors.Yellow200)) {
+                            append(stringResource(R.string.smiley_game_nudge_2))
+                        }
+                    },
+                textAlign = TextAlign.Center,
+                modifier = Modifier.onGloballyPositioned { textWidth = it.size.width },
+            )
+            Image(
+                painter = painterResource(id = R.drawable.smiley_game_nudge_arrow),
+                contentDescription = "arrow",
+                modifier = Modifier,
+            )
+        }
     }
 }
 
