@@ -109,6 +109,12 @@ fun FeedScreen(
             (state.isLoadingMore || state.pendingFetchDetails > 0) &&
             state.currentPageOfFeed == state.feedDetails.size - 1
 
+    if (gameState.gameIcons.isNotEmpty()) {
+        PreloadLottieAnimations(
+            urls = gameState.gameIcons.map { it.clickAnimation },
+        )
+    }
+
     Column(modifier = modifier) {
         if (state.feedDetails.isNotEmpty()) {
             YRALReelPlayer(
@@ -509,15 +515,5 @@ private fun Game(
                 gameViewModel.setSmileyGameNudgeShown(state.feedDetails[pageNo])
             },
         )
-        if (!gameState.isLottieCached) {
-            PreloadLottieAnimations(
-                urls = gameState.gameIcons.map { it.clickAnimation },
-                onAllSuccess = { gameViewModel.setLottieCached(true) },
-                onAnyError = { errors ->
-                    // Still mark as cached to prevent retry loops
-                    gameViewModel.setLottieCached(true)
-                },
-            )
-        }
     }
 }

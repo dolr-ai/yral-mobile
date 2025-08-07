@@ -406,10 +406,6 @@ class GameViewModel(
         }
     }
 
-    fun setLottieCached(isCached: Boolean) {
-        _state.update { it.copy(isLottieCached = isCached) }
-    }
-
     companion object {
         const val SHOW_HOW_TO_PLAY_MAX_PAGE = 3
         const val NUDGE_PAGE = 3
@@ -434,7 +430,6 @@ data class GameState(
     val isHowToPlayShown: List<Boolean> = List(SHOW_HOW_TO_PLAY_MAX_PAGE) { false },
     val isSmileyGameNudgeShown: Boolean = false,
     val refreshBalanceState: RefreshBalanceState = RefreshBalanceState.HIDDEN,
-    val isLottieCached: Boolean = false,
 )
 
 enum class RefreshBalanceState {
