@@ -29,7 +29,7 @@ final class FeedsPlayer: YralPlayer {
   private let networkMonitor: NetworkMonitorProtocol
   let crashReporter: CrashReporter
 
-  private var preloadRadius: Int {
+  var preloadRadius: Int {
     networkMonitor.isGoodForPrefetch ? Constants.radiusGoodNetwork : Constants.radiusbadNetwork
   }
 
@@ -95,11 +95,6 @@ final class FeedsPlayer: YralPlayer {
 
   func addFeedResults(_ feeds: [FeedResult]) {
     self.feedResults += feeds
-    if self.feedResults.count <= preloadRadius {
-      Task {
-        await preloadFeeds()
-      }
-    }
   }
 
   @objc private func handleEULAAccepted(_ note: Notification) {
@@ -117,9 +112,6 @@ final class FeedsPlayer: YralPlayer {
             && currentIndex < feedResults.count,
           currentIndex != index else { return }
     lastLoopProgress = 0
-    Task {
-      await cancelPreloadOutsideRange(center: index, radius: preloadRadius)
-    }
 
     startLogged.remove(index)
     finishLogged.remove(index)
@@ -192,7 +184,7 @@ final class FeedsPlayer: YralPlayer {
     guard let player = player as? AVQueuePlayer else {
       player.play()
       Task {
-        await preloadFeeds()
+        await preloadFeeds(for: [])
       }
       return
     }
@@ -218,10 +210,6 @@ final class FeedsPlayer: YralPlayer {
       }
       play()
     }
-
-    Task {
-      await preloadFeeds()
-    }
   }
 
   func play() {
@@ -237,10 +225,11 @@ final class FeedsPlayer: YralPlayer {
     }
   }
 
-  private func preloadFeeds() async {
-    guard !feedResults.isEmpty, currentIndex + .one < feedResults.count else { return }
-    let endIndex = min(feedResults.count, currentIndex + preloadRadius)
-    for index in currentIndex + .one..<endIndex {
+  func preloadFeeds(for indices: [Int]) async {
+    guard !feedResults.isEmpty,
+          indices.first ?? Int.max < feedResults.count,
+          indices.last  ?? Int.max < feedResults.count else { return }
+    for index in indices.first! ... indices.last! {
       guard feedResults.indices.contains(index) else { continue }
       let feed = feedResults[index]
       let videoID = feed.videoID
@@ -293,15 +282,11 @@ final class FeedsPlayer: YralPlayer {
     currentlyDownloadingIDs.remove(videoID)
   }
 
-  private func cancelPreloadOutsideRange(center: Int, radius: Int) async {
-    let validIDs = Set((max(center - radius, 0)...min(center + radius, feedResults.count - 1))
-      .map { feedResults[$0].videoID })
-
-    let idsToCancel = currentlyDownloadingIDs.subtracting(validIDs)
-    let indicesToCancel = Set(idsToCancel.compactMap { id in
-      feedResults.firstIndex { $0.videoID == id }
-    })
-    delegate?.removeThumbnails(for: indicesToCancel)
+  func cancelPreloadOutsideRange(for indices: [Int]) async {
+    var idsToCancel = [String]()
+    for index in indices {
+      idsToCancel.append(feedResults[index].videoID)
+    }
     for id in idsToCancel {
       guard let feed = feedResults.first(where: { $0.videoID == id }) else { continue }
       await hlsDownloadManager.cancelDownload(for: feed.url)

@@ -435,15 +435,9 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     session: SessionManager,
     index: Int
   ) {
-    playerContainerView.sd_cancelCurrentImageLoad()
-    playerContainerView.image = Constants.playerPlaceHolderImage
-
-    if let lastThumbnailImage = feedInfo.lastThumbnailImage {
-      playerContainerView.image = lastThumbnailImage
-    } else if let thumbnailURL = feedInfo.thumbnailURL {
+    if let thumbnailURL = feedInfo.thumbnailURL {
       loadImage(with: thumbnailURL, placeholderImage: Constants.playerPlaceHolderImage, on: playerContainerView)
     }
-
     playerLayer?.removeFromSuperlayer()
     playerLayer?.player = nil
     playerLayer = nil
@@ -460,8 +454,6 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
       playerContainerView.layer.addSublayer(layer)
       playerLayer = layer
       playerLayer?.frame = contentView.bounds
-    } else {
-
     }
 
     self.index = index
@@ -503,7 +495,6 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     playerLayer?.player = nil
     playerLayer?.removeFromSuperlayer()
     playerLayer = nil
-    playerContainerView.sd_cancelCurrentImageLoad()
     playerContainerView.image = nil
 
     profileInfoView.coinsView.resetUIState()
@@ -541,7 +532,6 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     let thumbnailURL: URL?
     let likeCount: Int
     let isLiked: Bool
-    let lastThumbnailImage: UIImage?
     let feedType: FeedType
     let showLoginOverlay: Bool
   }

@@ -8,7 +8,7 @@
 import UIKit
 import iosSharedUmbrella
 
-extension FeedsViewController: UICollectionViewDelegate {
+extension FeedsViewController: UICollectionViewDelegate, UICollectionViewDataSourcePrefetching {
   func scrollViewDidScroll(_ scrollView: UIScrollView) {
     let offsetY = scrollView.contentOffset.y
     defer { lastContentOffsetY = offsetY }
@@ -30,7 +30,6 @@ extension FeedsViewController: UICollectionViewDelegate {
 
     if ratio >= .half, candidate != current {
       let previous = current
-      storeThumbnail()
       feedsPlayer.advanceToVideo(at: candidate)
       var snapshot = feedsDataSource.snapshot()
       let ids = snapshot.itemIdentifiers
@@ -44,7 +43,6 @@ extension FeedsViewController: UICollectionViewDelegate {
 
   func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
     trackedVideoIDs.removeAll()
-    storeThumbnail()
     feedsPlayer.pause()
   }
 
@@ -105,5 +103,23 @@ extension FeedsViewController: UICollectionViewDelegate {
     forItemAt indexPath: IndexPath
   ) {
     (cell as? FeedsCell)?.stopListeningForFirstFrame()
+  }
+
+  func collectionView(_ collectionView: UICollectionView, prefetchItemsAt indexPaths: [IndexPath]) {
+    print("Sarvesh reached 1: \(indexPaths.map { $0.item })")
+    var items = indexPaths.map { $0.item }
+    if items.count < feedsPlayer.preloadRadius, let last = items.last {
+
+    }
+    Task {
+      await self.feedsPlayer.preloadFeeds(for: indexPaths.map { $0.item })
+    }
+  }
+
+  func collectionView(_ collectionView: UICollectionView, cancelPrefetchingForItemsAt indexPaths: [IndexPath]) {
+    print("Sarvesh reached 2: \(indexPaths.map { $0.item })")
+    Task {
+      await self.feedsPlayer.cancelPreloadOutsideRange(for: indexPaths.map { $0.item })
+    }
   }
 }

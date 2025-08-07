@@ -17,7 +17,6 @@ extension FeedsViewController {
       guard let self = self else { return UICollectionViewCell() }
       let cell = collectionView.dequeueReusableCell(FeedsCell.self, for: indexPath)
       cell.delegate = self
-      let lastDisplayedThumbnailPath = self.lastDisplayedThumbnailPath[feed.videoID] ?? ""
       // swiftlint: disable force_cast
       if indexPath.row == self.feedsPlayer.currentIndex {
         cell.configure(
@@ -26,7 +25,6 @@ extension FeedsViewController {
             thumbnailURL: feed.thumbnail,
             likeCount: feed.likeCount,
             isLiked: feed.isLiked,
-            lastThumbnailImage: SDImageCache.shared.imageFromCache(forKey: lastDisplayedThumbnailPath),
             feedType: self.feedType,
             showLoginOverlay: (
               indexPath.item != .zero &&
@@ -50,7 +48,6 @@ extension FeedsViewController {
             thumbnailURL: feed.thumbnail,
             likeCount: feed.likeCount,
             isLiked: feed.isLiked,
-            lastThumbnailImage: SDImageCache.shared.imageFromCache(forKey: lastDisplayedThumbnailPath),
             feedType: self.feedType,
             showLoginOverlay: (
               indexPath.item != .zero &&
@@ -212,9 +209,6 @@ extension FeedsViewController {
   }
 
   func removeFeeds(with feeds: [FeedResult], isReport: Bool = false, animated: Bool = false) {
-    for feed in feeds {
-      lastDisplayedThumbnailPath.removeValue(forKey: feed.videoID)
-    }
     var snapshot = feedsDataSource.snapshot()
     snapshot.deleteItems(feeds)
     feedsDataSource.apply(snapshot, animatingDifferences: animated) { [weak self] in
