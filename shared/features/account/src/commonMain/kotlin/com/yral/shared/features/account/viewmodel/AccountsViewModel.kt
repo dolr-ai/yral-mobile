@@ -102,7 +102,7 @@ class AccountsViewModel(
             mutableListOf(
                 AccountHelpLink(
                     link = TALK_TO_TEAM_URL,
-                    openInExternalBrowser = false,
+                    openInExternalBrowser = true,
                     menuCtaType = MenuCtaType.TALK_TO_THE_TEAM,
                 ),
                 AccountHelpLink(
