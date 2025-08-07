@@ -46,6 +46,6 @@ class GetGameIconsUseCase(
 
     companion object {
         private const val GAME_CONFIG_COLLECTION = "config"
-        private const val GAME_CONFIG_DOCUMENT = "smiley_game_v1"
+        private const val GAME_CONFIG_DOCUMENT = "smiley_game_v2"
     }
 }

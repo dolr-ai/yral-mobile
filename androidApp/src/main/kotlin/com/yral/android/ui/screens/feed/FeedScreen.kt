@@ -18,7 +18,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -51,6 +50,7 @@ import com.yral.android.ui.screens.game.AboutGameSheet
 import com.yral.android.ui.screens.game.CoinBalance
 import com.yral.android.ui.screens.game.GameResultSheet
 import com.yral.android.ui.screens.game.SmileyGame
+import com.yral.android.ui.widgets.PreloadLottieAnimations
 import com.yral.android.ui.widgets.YralAsyncImage
 import com.yral.android.ui.widgets.YralErrorMessage
 import com.yral.android.ui.widgets.YralLoader
@@ -108,6 +108,12 @@ fun FeedScreen(
         isNearEnd &&
             (state.isLoadingMore || state.pendingFetchDetails > 0) &&
             state.currentPageOfFeed == state.feedDetails.size - 1
+
+    if (gameState.gameIcons.isNotEmpty()) {
+        PreloadLottieAnimations(
+            urls = gameState.gameIcons.map { it.clickAnimation },
+        )
+    }
 
     Column(modifier = modifier) {
         if (state.feedDetails.isNotEmpty()) {
@@ -250,7 +256,6 @@ private fun FeedOverlay(
     gameState: GameState,
     gameViewModel: GameViewModel,
 ) {
-    var lottieCached by remember { mutableStateOf(false) }
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.TopStart,
@@ -279,13 +284,6 @@ private fun FeedOverlay(
             gameState = gameState,
             gameViewModel = gameViewModel,
         )
-        if (!lottieCached) {
-            gameState.gameIcons.forEach { icon ->
-                // Enable if want to use remote lottie
-                // PreloadLottieAnimation(icon.clickAnimation)
-            }
-            lottieCached = true
-        }
         if (!feedViewModel.isLoggedIn() && pageNo != 0 && (pageNo % SIGN_UP_PAGE) == 0) {
             val context = LocalContext.current
             SignupNudge {
@@ -402,19 +400,21 @@ private fun BottomView(
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         Shadow(Modifier.align(Alignment.BottomCenter))
-        HowToPlay(
-            modifier =
-                Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(start = 16.dp, bottom = 105.dp),
-            shouldExpand =
-                pageNo < gameState.isHowToPlayShown.size &&
-                    !gameState.isHowToPlayShown[pageNo] &&
-                    pageNo == state.currentPageOfFeed,
-            pageNo = pageNo,
-            onClick = { gameViewModel.toggleAboutGame(true) },
-            onAnimationComplete = { gameViewModel.setHowToPlayShown(pageNo, state.currentPageOfFeed) },
-        )
+        if (gameState.gameIcons.isNotEmpty()) {
+            HowToPlay(
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(start = 16.dp, bottom = 105.dp),
+                shouldExpand =
+                    pageNo < gameState.isHowToPlayShown.size &&
+                        !gameState.isHowToPlayShown[pageNo] &&
+                        pageNo == state.currentPageOfFeed,
+                pageNo = pageNo,
+                onClick = { gameViewModel.toggleAboutGame(true) },
+                onAnimationComplete = { gameViewModel.setHowToPlayShown(pageNo, state.currentPageOfFeed) },
+            )
+        }
         ActionsRight(
             modifier =
                 Modifier
