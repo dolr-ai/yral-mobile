@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -104,7 +105,10 @@ private fun AboutGameItemTitle(rule: AboutGameItem) {
 @Composable
 private fun AboutGameItemRule(rule: AboutGameItem) {
     Column(
-        modifier = Modifier.padding(start = 12.dp, bottom = 12.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(start = 12.dp, bottom = 12.dp, end = 6.dp),
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.Start,
     ) {
