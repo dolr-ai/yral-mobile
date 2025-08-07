@@ -194,6 +194,9 @@ extension SmileyGameResultBottomSheetView {
     static let bottomSheetDismissValue = 100.0
     static let bottomSheetDismissTime = 0.1
     static let bottomSheetAppearTime = 0.3
+
+    static let yralTokenString = "YRAL token!"
+    static let yralTokensString = "YRAL tokens!"
   }
 }
 
@@ -206,10 +209,12 @@ extension SmileyGameResultResponse {
     outcome == "WIN" ? "Since most people voted on" : "Since most people didn't vote on"
   }
 
+  // swiftlint: disable line_length
   var bottomSheetSubheading: String {
-    outcome == "WIN" ? "You Won \(abs(coinDelta)) \(abs(coinDelta) == 1 ? "Point" : "Points")"
-    : "You Lost \(abs(coinDelta)) \(abs(coinDelta) == 1 ? "Point" : "Points")"
+    outcome == "WIN" ? "You Won \(abs(coinDelta)) \(abs(coinDelta) == 1 ? SmileyGameResultBottomSheetView.Constants.yralTokenString : SmileyGameResultBottomSheetView.Constants.yralTokensString)"
+    : "You Lost \(abs(coinDelta)) \(abs(coinDelta) == 1 ? SmileyGameResultBottomSheetView.Constants.yralTokenString : SmileyGameResultBottomSheetView.Constants.yralTokensString)"
   }
+  // swiftlint: enable line_length
 
   var bottomSheetSubheadingColor: Color {
     outcome == "WIN" ? YralColor.green300.swiftUIColor : YralColor.red300.swiftUIColor

@@ -244,8 +244,24 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
     switch result {
     case .success(let coins):
       unifiedEvent = .walletRechargeSuccess(coins: coins)
+      AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+        event: AirdropClaimedEventData(
+          tokenType: .yral,
+          isSuccess: true,
+          claimedAmount: Int32(coins),
+          isAutoCredited: true
+        )
+      )
     case .failure(let failure):
       unifiedEvent = .walletRechargeFailure
+      AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+        event: AirdropClaimedEventData(
+          tokenType: .yral,
+          isSuccess: false,
+          claimedAmount: .zero,
+          isAutoCredited: false
+        )
+      )
       print(failure.localizedDescription)
     }
   }
