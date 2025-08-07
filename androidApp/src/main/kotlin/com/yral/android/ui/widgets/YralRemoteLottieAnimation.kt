@@ -1,112 +1,97 @@
 package com.yral.android.ui.widgets
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import com.airbnb.lottie.LottieCompositionFactory
+import co.touchlab.kermit.Logger
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
+import com.yral.shared.core.exceptions.YralException
+import com.yral.shared.crashlytics.core.CrashlyticsManager
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withTimeoutOrNull
+import org.koin.compose.koinInject
 
-@Suppress("LongMethod")
+@Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
 fun YralRemoteLottieAnimation(
     modifier: Modifier = Modifier,
     url: String,
     iterations: Int = LottieConstants.IterateForever,
     contentScale: ContentScale = ContentScale.FillBounds,
-    enableCache: Boolean = true,
     onAnimationComplete: () -> Unit = {},
     onError: (Throwable) -> Unit = {},
     onLoading: () -> Unit = {},
     placeholder: @Composable (() -> Unit)? = null,
+    errorContent: @Composable ((Throwable) -> Unit)? = null,
+    crashlyticsManager: CrashlyticsManager = koinInject(),
 ) {
-    val context = LocalContext.current
-    var isLoading by remember(url) { mutableStateOf(true) }
-    var error by remember(url) { mutableStateOf<Throwable?>(null) }
+    val logger = yralLottieLogger()
 
-    // Create composition spec with or without caching
-    val compositionSpec =
-        remember(url, enableCache) {
-            if (enableCache) {
-                LottieCompositionSpec.Url(url)
-            } else {
-                // For non-cached loading, you might need to handle this differently
-                // depending on your specific requirements
-                LottieCompositionSpec.Url(url)
-            }
-        }
-
-    val composition by rememberLottieComposition(
-        spec = compositionSpec,
-        onRetry = { _, _ ->
-            error = null
-            isLoading = true
-            false
-        },
-    )
+    val compositionResult =
+        rememberLottieComposition(
+            spec = LottieCompositionSpec.Url(url),
+            onRetry = { _, exception ->
+                handleLottieError(exception, url, crashlyticsManager, logger, onError)
+                false // Let our timeout handle retries
+            },
+        )
 
     val progress by animateLottieCompositionAsState(
-        composition = composition,
+        composition = compositionResult.value,
         iterations = iterations,
-        isPlaying = composition != null && error == null,
+        isPlaying = compositionResult.value != null && !compositionResult.isLoading && compositionResult.error == null,
     )
 
-    // Handle loading state changes
-    LaunchedEffect(composition, isLoading) {
-        when {
-            composition != null -> {
-                isLoading = false
-                error = null
-            }
-
-            isLoading -> {
-                onLoading()
-            }
-        }
-    }
-
-    // Cache management
-    DisposableEffect(url, enableCache) {
-        onDispose {
-            if (!enableCache) {
-                // Clear cache for this specific animation if caching is disabled
-                LottieCompositionFactory.clearCache(context, false)
+    LaunchedEffect(compositionResult.isLoading) {
+        if (compositionResult.isLoading) {
+            logger.d { "Loading Lottie animation: $url" }
+            onLoading()
+            withTimeoutOrNull(YralRemoteLottieAnimationConstants.TIME_OUT_MILLIS) {
+                while (compositionResult.isLoading && compositionResult.error == null) {
+                    delay(YralRemoteLottieAnimationConstants.TIMEOUT_CHECK_DELAY)
+                }
+            } ?: run {
+                if (compositionResult.isLoading) {
+                    val timeoutError = YralException("Timeout loading Lottie animation: $url")
+                    handleLottieError(timeoutError, url, crashlyticsManager, logger, onError)
+                }
             }
         }
     }
 
-    // Handle animation completion
-    LaunchedEffect(progress) {
-        if (progress == 1f && iterations == 1) {
+    LaunchedEffect(compositionResult.error) {
+        compositionResult.error?.let { error ->
+            handleLottieError(error, url, crashlyticsManager, logger, onError)
+        }
+    }
+
+    // Animation completion
+    LaunchedEffect(progress, iterations) {
+        if (progress == 1f && iterations != LottieConstants.IterateForever) {
+            logger.d { "Lottie animation completed: $url" }
             onAnimationComplete()
         }
     }
 
-    // Render based on state
+    // Render UI based on LottieCompositionResult state
     when {
-        isLoading && placeholder != null -> {
-            placeholder()
+        compositionResult.isLoading -> {
+            placeholder?.invoke()
         }
 
-        error != null -> {
-            LaunchedEffect(error) {
-                error?.let { onError(it) }
-            }
+        compositionResult.error != null -> {
+            errorContent?.invoke(compositionResult.error!!)
         }
 
-        composition != null -> {
+        compositionResult.value != null -> {
             LottieAnimation(
-                composition = composition,
+                composition = compositionResult.value!!,
                 progress = { progress },
                 modifier = modifier,
                 contentScale = contentScale,
@@ -115,8 +100,20 @@ fun YralRemoteLottieAnimation(
     }
 }
 
-@Composable
-fun PreloadLottieAnimation(url: String) {
-    val context = LocalContext.current
-    LottieCompositionFactory.fromUrl(context, url)
+private inline fun handleLottieError(
+    exception: Throwable?,
+    url: String,
+    crashlyticsManager: CrashlyticsManager,
+    logger: Logger,
+    onError: (Throwable) -> Unit,
+) {
+    val error = exception ?: YralException("Unknown error loading Lottie animation: $url")
+    logger.e(error) { "Failed to load Lottie animation: $url" }
+    crashlyticsManager.recordException(error as Exception)
+    onError(error)
+}
+
+private object YralRemoteLottieAnimationConstants {
+    const val TIME_OUT_MILLIS: Long = 30_000L
+    const val TIMEOUT_CHECK_DELAY: Long = 100L
 }

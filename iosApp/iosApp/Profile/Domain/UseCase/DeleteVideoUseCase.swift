@@ -10,12 +10,12 @@ import Foundation
 import Combine
 
 protocol DeleteVideoUseCaseProtocol {
-  func execute(request: DeleteVideoRequest) async -> Result<Void, AccountError>
+  func execute(request: DeleteVideoRequest) async -> Result<Void, ProfileError>
   var deletedVideoPublisher: AnyPublisher<[FeedResult], Never> { get }
 }
 
 class DeleteVideoUseCase:
-  BaseResultUseCase<DeleteVideoRequest, Void, AccountError>,
+  BaseResultUseCase<DeleteVideoRequest, Void, ProfileError>,
   DeleteVideoUseCaseProtocol {
   let profileRepository: ProfileRepositoryProtocol
   var deletedVideoPublisher: AnyPublisher<[FeedResult], Never> {
@@ -27,7 +27,7 @@ class DeleteVideoUseCase:
     super.init(crashReporter: crashReporter)
   }
 
-  override func runImplementation(_ request: DeleteVideoRequest) async -> Result<Void, AccountError> {
+  override func runImplementation(_ request: DeleteVideoRequest) async -> Result<Void, ProfileError> {
     await profileRepository.deleteVideo(request: request)
   }
 }

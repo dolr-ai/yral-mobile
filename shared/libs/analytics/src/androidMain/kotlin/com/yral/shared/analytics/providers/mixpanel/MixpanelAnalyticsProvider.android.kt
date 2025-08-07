@@ -1,5 +1,6 @@
 package com.yral.shared.analytics.providers.mixpanel
 
+import android.content.Context
 import com.mixpanel.android.mpmetrics.MixpanelAPI
 import com.mixpanel.android.sessionreplay.MPSessionReplay
 import com.mixpanel.android.sessionreplay.models.MPSessionReplayConfig
@@ -8,23 +9,29 @@ import com.yral.shared.analytics.AnalyticsProvider
 import com.yral.shared.analytics.EventToMapConverter
 import com.yral.shared.analytics.User
 import com.yral.shared.analytics.events.EventData
-import com.yral.shared.core.platform.PlatformResources
 import org.json.JSONObject
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
 actual class MixpanelAnalyticsProvider actual constructor(
-    platformResources: PlatformResources,
     private val eventFilter: (EventData) -> Boolean,
     private val mapConverter: EventToMapConverter,
     token: String,
-) : AnalyticsProvider {
+) : AnalyticsProvider,
+    KoinComponent {
+    private val context: Context by inject()
     override val name: String = "mixpanel"
 
     private val mixpanel: MixpanelAPI =
-        MixpanelAPI.getInstance(platformResources.activityContext, token, true)
+        MixpanelAPI.getInstance(context, token, true)
 
     init {
+        // initSessionReplay(token)
+    }
+
+    fun initSessionReplay(token: String) {
         MPSessionReplay.initialize(
-            appContext = platformResources.activityContext,
+            appContext = context,
             token = token,
             distinctId = mixpanel.distinctId,
             config =
@@ -48,7 +55,8 @@ actual class MixpanelAnalyticsProvider actual constructor(
             mutableMapOf(
                 "is_creator" to (user.isCreator ?: false),
                 "is_logged_in" to user.isLoggedIn,
-                "sats_balance" to user.satsBalance,
+                "wallet_balance" to user.walletBalance,
+                "token_type" to user.tokenType,
                 "canister_id" to user.canisterId,
             )
         if (user.isLoggedIn == true) {

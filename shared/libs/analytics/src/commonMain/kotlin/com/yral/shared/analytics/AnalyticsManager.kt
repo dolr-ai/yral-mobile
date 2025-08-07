@@ -92,7 +92,7 @@ class AnalyticsManager(
     private fun isUsePropertiesComplete(user: User): Boolean =
         user.isLoggedIn != null &&
             user.isCreator != null &&
-            user.satsBalance != null
+            user.walletBalance != null
 
     fun reset() {
         providers.forEach { it.flush() }
