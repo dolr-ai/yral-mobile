@@ -8,7 +8,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import co.touchlab.kermit.Logger
 import com.yral.android.R
 import com.yral.android.ui.widgets.YralLottieAnimation
 import com.yral.android.ui.widgets.YralRemoteLottieAnimation
@@ -21,8 +20,8 @@ fun GameIconBubbles(
     onAnimationComplete: () -> Unit,
 ) {
     var playLocalAnimation by remember {
-        // mutableStateOf(icon.clickAnimation.isEmpty())
-        mutableStateOf(true)
+        mutableStateOf(icon.clickAnimation.isEmpty())
+        // mutableStateOf(true)
     }
     if (!playLocalAnimation) {
         YralRemoteLottieAnimation(
@@ -30,17 +29,8 @@ fun GameIconBubbles(
             url = icon.clickAnimation,
             contentScale = ContentScale.Inside,
             iterations = 1,
-            onAnimationComplete = {
-                onAnimationComplete()
-                Logger.d("xxxx Lottie Animation completed")
-            },
-            onError = { error ->
-                playLocalAnimation = true
-                Logger.e("xxxx Lottie Error loading animation", error)
-            },
-            onLoading = {
-                Logger.d("xxxx Lottie Loading animation...")
-            },
+            onAnimationComplete = onAnimationComplete,
+            onError = { error -> playLocalAnimation = true },
         )
     } else {
         val animationRes = icon.getBubbleResource()

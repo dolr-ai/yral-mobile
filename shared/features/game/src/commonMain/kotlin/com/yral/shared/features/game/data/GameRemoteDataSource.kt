@@ -154,7 +154,7 @@ class GameRemoteDataSource(
     }
 
     companion object {
-        private const val CAST_VOTE_PATH = "cast_vote"
+        private const val CAST_VOTE_PATH = "cast_vote_v2"
         private const val GET_BALANCE_PATH = "v2/balance"
         private const val AUTO_RECHARGE_BALANCE_PATH = "tap_to_recharge"
         private const val LEADERBOARD_PATH = "leaderboard"
