@@ -1,15 +1,11 @@
 package com.yral.android.ui.widgets
 
-import android.content.Context
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import co.touchlab.kermit.Logger
-import com.airbnb.lottie.LottieCompositionFactory
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
@@ -28,7 +24,6 @@ fun YralRemoteLottieAnimation(
     url: String,
     iterations: Int = LottieConstants.IterateForever,
     contentScale: ContentScale = ContentScale.FillBounds,
-    enableCache: Boolean = true,
     onAnimationComplete: () -> Unit = {},
     onError: (Throwable) -> Unit = {},
     onLoading: () -> Unit = {},
@@ -36,7 +31,6 @@ fun YralRemoteLottieAnimation(
     errorContent: @Composable ((Throwable) -> Unit)? = null,
     crashlyticsManager: CrashlyticsManager = koinInject(),
 ) {
-    val context = LocalContext.current
     val logger = yralLottieLogger()
 
     val compositionResult =
@@ -85,15 +79,6 @@ fun YralRemoteLottieAnimation(
         }
     }
 
-    // Cache cleanup
-    DisposableEffect(url, enableCache) {
-        onDispose {
-            if (!enableCache) {
-                clearLottieCache(context, logger)
-            }
-        }
-    }
-
     // Render UI based on LottieCompositionResult state
     when {
         compositionResult.isLoading -> {
@@ -127,14 +112,6 @@ private inline fun handleLottieError(
     crashlyticsManager.recordException(error as Exception)
     onError(error)
 }
-
-private fun clearLottieCache(
-    context: Context,
-    logger: Logger,
-) = runCatching {
-    LottieCompositionFactory.clearCache(context, false)
-    logger.d { "Lottie cache cleared successfully" }
-}.onFailure { e -> logger.e(e) { "Failed to clear Lottie cache" } }
 
 private object YralRemoteLottieAnimationConstants {
     const val TIME_OUT_MILLIS: Long = 30_000L
