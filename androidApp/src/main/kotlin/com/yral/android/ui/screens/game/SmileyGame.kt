@@ -1,5 +1,6 @@
 package com.yral.android.ui.screens.game
 
+import android.R.attr.textStyle
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -42,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
+import com.yral.android.ui.screens.game.SmileyGameConstants.MANDATORY_NUDGE_ANIMATION_ICON_ITERATIONS
 import com.yral.android.ui.screens.game.SmileyGameConstants.NUDGE_ANIMATION_DURATION
 import com.yral.android.ui.screens.game.SmileyGameConstants.NUDGE_ANIMATION_ICON_ITERATIONS
 import com.yral.android.ui.widgets.YralFeedback
@@ -60,6 +62,7 @@ fun SmileyGame(
     hasShownCoinDeltaAnimation: Boolean,
     onDeltaAnimationComplete: () -> Unit,
     shouldShowNudge: Boolean,
+    shouldShowMandatoryNudge: Boolean,
     pageNo: Int,
     onNudgeAnimationComplete: () -> Unit,
 ) {
@@ -83,10 +86,11 @@ fun SmileyGame(
             }
             else -> {
                 var animatingNudgeIconPosition by remember { mutableStateOf<Int?>(null) }
-                var nudgeIterationCount by remember { mutableStateOf(0) }
+                var nudgeIterationCount by remember { mutableIntStateOf(0) }
                 SmileyGameNudge(
                     pageNo = pageNo,
-                    shouldShowNudge = shouldShowNudge,
+                    shouldShowNudge = shouldShowNudge || shouldShowMandatoryNudge,
+                    isNudgeMandatory = shouldShowMandatoryNudge,
                     animatingNudgeIconPosition = animatingNudgeIconPosition,
                     startNudgeAnimation = {
                         animatingNudgeIconPosition = 0
@@ -116,7 +120,7 @@ fun SmileyGame(
                             animatingNudgeIconPosition?.let { currentIndex ->
                                 when {
                                     currentIndex + 1 < gameIcons.size -> currentIndex + 1
-                                    ++nudgeIterationCount >= NUDGE_ANIMATION_ICON_ITERATIONS ->
+                                    !isNudgeIterationValid(++nudgeIterationCount, shouldShowMandatoryNudge) ->
                                         run {
                                             nudgeIterationCount = 0
                                             onNudgeAnimationComplete()
@@ -149,6 +153,14 @@ fun SmileyGame(
             hapticFeedbackType = HapticFeedbackType.LongPress,
         )
     }
+}
+
+private fun isNudgeIterationValid(
+    nudgeIteration: Int,
+    isMandatory: Boolean,
+) = when (isMandatory) {
+    false -> nudgeIteration < NUDGE_ANIMATION_ICON_ITERATIONS
+    true -> nudgeIteration < MANDATORY_NUDGE_ANIMATION_ICON_ITERATIONS
 }
 
 @Composable
@@ -188,6 +200,7 @@ private fun BoxScope.SmileyGameResult(
 private fun BoxScope.SmileyGameNudge(
     pageNo: Int,
     shouldShowNudge: Boolean,
+    isNudgeMandatory: Boolean,
     animatingNudgeIconPosition: Int?,
     startNudgeAnimation: () -> Unit,
     dismissNudgeAnimation: () -> Unit,
@@ -228,15 +241,18 @@ private fun BoxScope.SmileyGameNudge(
             modifier = Modifier.align(Alignment.BottomCenter),
             alpha = alpha,
             offsetY = offsetY,
+            isNudgeMandatory = isNudgeMandatory,
         )
     }
 }
 
+@Suppress("LongMethod")
 @Composable
 private fun SmileyGameNudgeContent(
     modifier: Modifier,
     alpha: Float,
     offsetY: Float,
+    isNudgeMandatory: Boolean,
 ) {
     Box(
         modifier =
@@ -248,17 +264,19 @@ private fun SmileyGameNudgeContent(
     ) {
         val density = LocalDensity.current
         var textWidth by remember { mutableIntStateOf(0) }
-        Image(
-            painter = painterResource(id = R.drawable.smiley_game_nudge_stars),
-            contentDescription = null,
-            modifier =
-                Modifier
-                    .padding(bottom = 226.dp)
-                    .width(with(density) { textWidth.toDp() + 16.dp })
-                    .height(130.dp)
-                    .alpha(alpha),
-            contentScale = ContentScale.FillBounds,
-        )
+        if (!isNudgeMandatory) {
+            Image(
+                painter = painterResource(id = R.drawable.smiley_game_nudge_stars),
+                contentDescription = null,
+                modifier =
+                    Modifier
+                        .padding(bottom = 226.dp)
+                        .width(with(density) { textWidth.toDp() + 16.dp })
+                        .height(130.dp)
+                        .alpha(alpha),
+                contentScale = ContentScale.FillBounds,
+            )
+        }
         Column(
             modifier =
                 Modifier
@@ -267,21 +285,27 @@ private fun SmileyGameNudgeContent(
                     .offset(y = offsetY.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+            val textStyle = LocalAppTopography.current.xlBold
+            val spanStyle =
+                SpanStyle(
+                    fontSize = textStyle.fontSize,
+                    fontFamily = textStyle.fontFamily,
+                    fontWeight = textStyle.fontWeight,
+                    color = YralColors.Neutral50,
+                )
             Text(
                 text =
-                    buildAnnotatedString {
-                        val textStyle = LocalAppTopography.current.xlBold
-                        val spanStyle =
-                            SpanStyle(
-                                fontSize = textStyle.fontSize,
-                                fontFamily = textStyle.fontFamily,
-                                fontWeight = textStyle.fontWeight,
-                                color = YralColors.Neutral50,
-                            )
-                        withStyle(spanStyle) { append(stringResource(R.string.smiley_game_nudge_1)) }
-                        withStyle(spanStyle) { append("\n") }
-                        withStyle(style = spanStyle.copy(color = YralColors.Yellow200)) {
-                            append(stringResource(R.string.smiley_game_nudge_2))
+                    if (isNudgeMandatory) {
+                        buildAnnotatedString {
+                            withStyle(spanStyle) { append(stringResource(R.string.smiley_game_nudge_mandatory)) }
+                        }
+                    } else {
+                        buildAnnotatedString {
+                            withStyle(spanStyle) { append(stringResource(R.string.smiley_game_nudge_1)) }
+                            withStyle(spanStyle) { append("\n") }
+                            withStyle(style = spanStyle.copy(color = YralColors.Yellow200)) {
+                                append(stringResource(R.string.smiley_game_nudge_2))
+                            }
                         }
                     },
                 textAlign = TextAlign.Center,
@@ -306,4 +330,5 @@ private fun Int.toSignedString(): String =
 object SmileyGameConstants {
     const val NUDGE_ANIMATION_DURATION = 600L
     const val NUDGE_ANIMATION_ICON_ITERATIONS = 3
+    const val MANDATORY_NUDGE_ANIMATION_ICON_ITERATIONS = 2
 }

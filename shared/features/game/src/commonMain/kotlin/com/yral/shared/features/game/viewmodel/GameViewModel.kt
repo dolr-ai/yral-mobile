@@ -272,6 +272,7 @@ class GameViewModel(
                     showResultSheet = shouldShowResultSheet,
                     isLoading = false,
                     lastBalanceDifference = voteResult.coinDelta,
+                    lastVotedCount = it.lastVotedCount + 1,
                 )
             }
             if (shouldShowResultSheet) {
@@ -430,6 +431,7 @@ data class GameState(
     val isHowToPlayShown: List<Boolean> = List(SHOW_HOW_TO_PLAY_MAX_PAGE) { false },
     val isSmileyGameNudgeShown: Boolean = false,
     val refreshBalanceState: RefreshBalanceState = RefreshBalanceState.HIDDEN,
+    val lastVotedCount: Int = 1,
 )
 
 enum class RefreshBalanceState {

@@ -38,6 +38,7 @@ import com.yral.android.R
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.feed.nav.FeedComponent
 import com.yral.android.ui.screens.feed.performance.PrefetchVideoListenerImpl
+import com.yral.android.ui.screens.feed.performance.TraceType
 import com.yral.android.ui.screens.feed.performance.VideoListenerImpl
 import com.yral.android.ui.screens.feed.uiComponets.GameToggle
 import com.yral.android.ui.screens.feed.uiComponets.HowToPlay
@@ -120,6 +121,7 @@ fun FeedScreen(
             YRALReelPlayer(
                 modifier = Modifier.weight(1f),
                 reels = getReels(state),
+                maxReelsInPager = gameState.lastVotedCount,
                 initialPage = state.currentPageOfFeed,
                 onPageLoaded = { page ->
                     // Mark animation as shown for the previous page when changing pages
@@ -424,7 +426,7 @@ private fun BottomView(
             state = state,
             feedViewModel = feedViewModel,
         )
-        Game(state, pageNo, gameState, gameViewModel)
+        Game(state, pageNo, gameState, gameViewModel, feedViewModel)
         RefreshBalanceAnimation(
             refreshBalanceState = gameState.refreshBalanceState,
             onAnimationComplete = { gameViewModel.hideRefreshBalanceAnimation() },
@@ -482,6 +484,7 @@ private fun Game(
     pageNo: Int,
     gameState: GameState,
     gameViewModel: GameViewModel,
+    feedViewModel: FeedViewModel,
 ) {
     if (gameState.gameIcons.isNotEmpty()) {
         SmileyGame(
@@ -510,6 +513,9 @@ private fun Game(
                 !gameState.isSmileyGameNudgeShown &&
                     pageNo >= NUDGE_PAGE &&
                     pageNo == state.currentPageOfFeed,
+            shouldShowMandatoryNudge =
+                feedViewModel.isAlreadyTraced(state.feedDetails[pageNo].videoID, TraceType.PLAYBACK_TRACE.name) &&
+                    state.feedDetails.size != gameState.lastVotedCount,
             pageNo = pageNo,
             onNudgeAnimationComplete = {
                 gameViewModel.setSmileyGameNudgeShown(state.feedDetails[pageNo])

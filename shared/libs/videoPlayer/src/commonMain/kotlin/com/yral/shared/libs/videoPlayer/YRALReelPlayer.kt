@@ -36,6 +36,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 fun YRALReelPlayer(
     modifier: Modifier = Modifier,
     reels: List<Reels>,
+    maxReelsInPager: Int,
     initialPage: Int,
     onPageLoaded: (currentPage: Int) -> Unit,
     recordTime: (Int, Int) -> Unit,
@@ -47,6 +48,7 @@ fun YRALReelPlayer(
     YRALReelsPlayerView(
         modifier = modifier.fillMaxSize(),
         reels = reels,
+        maxReelsInPager = maxReelsInPager,
         initialPage = initialPage,
         onPageLoaded = onPageLoaded,
         recordTime = recordTime,
@@ -76,6 +78,7 @@ fun YRALReelPlayer(
 internal fun YRALReelsPlayerView(
     modifier: Modifier = Modifier, // Modifier for the composable
     reels: List<Reels>, // List of video URLs
+    maxReelsInPager: Int,
     initialPage: Int,
     onPageLoaded: (currentPage: Int) -> Unit,
     recordTime: (Int, Int) -> Unit,
@@ -88,7 +91,7 @@ internal fun YRALReelsPlayerView(
     val pagerState =
         rememberPagerState(
             pageCount = {
-                reels.size // Set the page count based on the number of URLs
+                reels.take(maxReelsInPager).size // Set the page count based on the number of URLs
             },
             initialPage = initialPage,
         )
