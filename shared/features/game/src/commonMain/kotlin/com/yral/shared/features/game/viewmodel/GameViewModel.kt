@@ -80,7 +80,7 @@ class GameViewModel(
             it.copy(
                 isResultSheetShown = resultShown,
                 isHowToPlayShown = if (howToPlayShown) it.isHowToPlayShown.map { true } else it.isHowToPlayShown,
-                isSmileyGameNudgeShown = smileyGameNudgeShown,
+                isSmileyGameIntroNudgeShown = smileyGameNudgeShown,
             )
         }
     }
@@ -266,6 +266,7 @@ class GameViewModel(
                     showResultSheet = shouldShowResultSheet,
                     isLoading = false,
                     lastBalanceDifference = voteResult.coinDelta,
+                    lastVotedCount = it.lastVotedCount + 1,
                 )
             }
             if (shouldShowResultSheet) {
@@ -329,10 +330,10 @@ class GameViewModel(
         currentPage: Int,
     ) {
         if (pageNo > SHOW_HOW_TO_PLAY_MAX_PAGE || pageNo != currentPage) {
-            Logger.d("xxxx") { "Skipping 'how to play' update for page $pageNo" }
+            Logger.d("HowToPlay") { "Skipping 'how to play' update for page $pageNo" }
             return
         }
-        Logger.d("xxxx") { "Setting 'how to play' shown for page $pageNo" }
+        Logger.d("HowToPlay") { "Setting 'how to play' shown for page $pageNo" }
         _state.update { state ->
             val updatedList =
                 state.isHowToPlayShown.toMutableList().apply {
@@ -341,22 +342,9 @@ class GameViewModel(
             state.copy(isHowToPlayShown = updatedList)
         }
         if (_state.value.isHowToPlayShown.all { it }) {
-            Logger.d("xxxx") { "All 'how to play' pages shown. Marking as shown in preferences." }
+            Logger.d("HowToPlay") { "All 'how to play' pages shown. Marking as shown in preferences." }
             viewModelScope.launch {
                 preferences.putBoolean(PrefKeys.HOW_TO_PLAY_SHOWN.name, true)
-            }
-        }
-    }
-
-    fun setSmileyGameNudgeShown(feedDetails: FeedDetails) {
-        Logger.d("xxxx") { "setSmileyGameNudgeShown ${feedDetails.videoID}" }
-        val currentState = _state.value.isSmileyGameNudgeShown
-        _state.update { it.copy(isSmileyGameNudgeShown = true) }
-        if (!currentState) {
-            viewModelScope.launch {
-                Logger.d("xxxx") { "marking smiley game shown" }
-                preferences.putBoolean(PrefKeys.SMILEY_GAME_NUDGE_SHOWN.name, true)
-                gameTelemetry.onGameTutorialShown(feedDetails)
             }
         }
     }
@@ -364,15 +352,58 @@ class GameViewModel(
     fun hideRefreshBalanceAnimation() {
         viewModelScope.launch {
             delay(REFRESH_BALANCE_ANIM_DISMISS_DELAY_MS)
-            _state.update {
-                it.copy(refreshBalanceState = RefreshBalanceState.HIDDEN)
+            _state.update { it.copy(refreshBalanceState = RefreshBalanceState.HIDDEN) }
+        }
+    }
+
+    fun setSmileyGameNudgeShown(feedDetails: FeedDetails) {
+        when (_state.value.nudgeType) {
+            NudgeType.MANDATORY -> {
+                Logger.d("Nudge") { "setSmileyGameManNudgeShown ${feedDetails.videoID}" }
+                _state.update { it.copy(nudgeType = null) }
+            }
+            NudgeType.INTRO -> {
+                Logger.d("Nudge") { "setSmileyGameIntroNudgeShown ${feedDetails.videoID}" }
+                _state.update { it.copy(nudgeType = null) }
+                if (!_state.value.isSmileyGameIntroNudgeShown) {
+                    _state.update { it.copy(isSmileyGameIntroNudgeShown = true) }
+                    viewModelScope.launch {
+                        Logger.d("Nudge") { "marking smiley game shown" }
+                        preferences.putBoolean(PrefKeys.SMILEY_GAME_NUDGE_SHOWN.name, true)
+                        gameTelemetry.onGameTutorialShown(feedDetails)
+                    }
+                }
+            }
+            null -> Unit
+        }
+    }
+
+    fun showNudge(
+        nudgeIntention: NudgeType,
+        pageNo: Int,
+        feedDetailsSize: Int,
+    ) {
+        val currentState = _state.value
+        if (currentState.isLoading) return
+        when (nudgeIntention) {
+            NudgeType.MANDATORY -> {
+                if (currentState.nudgeType == null && feedDetailsSize != currentState.lastVotedCount) {
+                    Logger.d("Nudge") { "Showing mandatory nudge" }
+                    _state.update { it.copy(nudgeType = NudgeType.MANDATORY) }
+                }
+            }
+            NudgeType.INTRO -> {
+                if (!currentState.isSmileyGameIntroNudgeShown && pageNo >= NUDGE_PAGE) {
+                    Logger.d("Nudge") { "Showing intro nudge" }
+                    _state.update { it.copy(nudgeType = NudgeType.INTRO) }
+                }
             }
         }
     }
 
     companion object {
         const val SHOW_HOW_TO_PLAY_MAX_PAGE = 3
-        const val NUDGE_PAGE = 3
+        private const val NUDGE_PAGE = 3
         private const val REFRESH_BALANCE_ANIM_DISMISS_DELAY_MS = 2000L
     }
 }
@@ -392,9 +423,16 @@ data class GameState(
     val gameType: GameType = GameType.SMILEY,
     val isResultSheetShown: Boolean = false,
     val isHowToPlayShown: List<Boolean> = List(SHOW_HOW_TO_PLAY_MAX_PAGE) { false },
-    val isSmileyGameNudgeShown: Boolean = false,
+    val isSmileyGameIntroNudgeShown: Boolean = false,
+    val nudgeType: NudgeType? = null,
     val refreshBalanceState: RefreshBalanceState = RefreshBalanceState.HIDDEN,
+    val lastVotedCount: Int = 1,
 )
+
+enum class NudgeType {
+    MANDATORY,
+    INTRO,
+}
 
 enum class RefreshBalanceState {
     HIDDEN,

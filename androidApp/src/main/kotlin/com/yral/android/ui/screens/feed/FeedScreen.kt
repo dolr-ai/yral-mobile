@@ -62,9 +62,10 @@ import com.yral.shared.features.feed.viewmodel.OverlayType
 import com.yral.shared.features.feed.viewmodel.ReportSheetState
 import com.yral.shared.features.game.viewmodel.GameState
 import com.yral.shared.features.game.viewmodel.GameViewModel
-import com.yral.shared.features.game.viewmodel.GameViewModel.Companion.NUDGE_PAGE
+import com.yral.shared.features.game.viewmodel.NudgeType
 import com.yral.shared.libs.videoPlayer.YRALReelPlayer
 import com.yral.shared.libs.videoPlayer.model.Reels
+import com.yral.shared.libs.videoPlayer.util.ScrollDirection
 import com.yral.shared.rust.domain.models.FeedDetails
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -120,6 +121,7 @@ fun FeedScreen(
             YRALReelPlayer(
                 modifier = Modifier.weight(1f),
                 reels = getReels(state),
+                maxReelsInPager = gameState.lastVotedCount,
                 initialPage = state.currentPageOfFeed,
                 onPageLoaded = { page ->
                     // Mark animation as shown for the previous page when changing pages
@@ -134,6 +136,11 @@ fun FeedScreen(
                     }
                     viewModel.onCurrentPageChange(page)
                     viewModel.setPostDescriptionExpanded(false)
+                    gameViewModel.showNudge(
+                        nudgeIntention = NudgeType.INTRO,
+                        pageNo = page,
+                        feedDetailsSize = state.feedDetails.size,
+                    )
                 },
                 recordTime = { currentTime, totalTime ->
                     viewModel.recordTime(currentTime, totalTime)
@@ -150,6 +157,15 @@ fun FeedScreen(
                             viewModel.isAlreadyTraced(id, traceType.name)
                         },
                     )
+                },
+                onEdgeScrollAttempt = { page, atFirst, direction ->
+                    if (!atFirst && direction == ScrollDirection.Up) {
+                        gameViewModel.showNudge(
+                            nudgeIntention = NudgeType.MANDATORY,
+                            pageNo = page,
+                            feedDetailsSize = state.feedDetails.size,
+                        )
+                    }
                 },
             ) { pageNo ->
                 FeedOverlay(
@@ -506,10 +522,8 @@ private fun Game(
                     videoId = state.feedDetails[pageNo].videoID,
                 )
             },
-            shouldShowNudge =
-                !gameState.isSmileyGameNudgeShown &&
-                    pageNo >= NUDGE_PAGE &&
-                    pageNo == state.currentPageOfFeed,
+            shouldShowNudge = gameState.nudgeType == NudgeType.INTRO,
+            shouldShowMandatoryNudge = gameState.nudgeType == NudgeType.MANDATORY,
             pageNo = pageNo,
             onNudgeAnimationComplete = {
                 gameViewModel.setSmileyGameNudgeShown(state.feedDetails[pageNo])
