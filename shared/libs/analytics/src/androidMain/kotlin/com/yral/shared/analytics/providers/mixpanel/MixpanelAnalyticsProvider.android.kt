@@ -26,6 +26,10 @@ actual class MixpanelAnalyticsProvider actual constructor(
         MixpanelAPI.getInstance(context, token, true)
 
     init {
+        // initSessionReplay(token)
+    }
+
+    fun initSessionReplay(token: String) {
         MPSessionReplay.initialize(
             appContext = context,
             token = token,
