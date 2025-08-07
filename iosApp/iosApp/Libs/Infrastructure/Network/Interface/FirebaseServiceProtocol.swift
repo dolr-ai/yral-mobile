@@ -10,6 +10,7 @@ import Foundation
 
 protocol FirebaseServiceProtocol {
   func signInAnonymously() async throws -> Bool
+  func resetSession() async throws
   func signIn(withCustomToken token: String) async throws
   func signOut() throws
   func fetchUserIDToken() async throws -> String?

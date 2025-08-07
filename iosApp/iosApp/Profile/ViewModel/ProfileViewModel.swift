@@ -182,7 +182,8 @@ class ProfileViewModel: ObservableObject {
         canisterId: analyticsInfo.canisterPrincipal,
         isLoggedIn: KotlinBoolean(bool: analyticsInfo.isLoggedIn),
         isCreator: KotlinBoolean(bool: self.feeds.count >= .one),
-        satsBalance: KotlinDouble(double: analyticsInfo.satsBalance)
+        walletBalance: KotlinDouble(double: analyticsInfo.walletBalance),
+        tokenType: TokenType.yral
       )
     )
     AnalyticsModuleKt.getAnalyticsManager().flush()
@@ -192,6 +193,6 @@ class ProfileViewModel: ObservableObject {
     let userPrincipal: String
     let canisterPrincipal: String
     let isLoggedIn: Bool
-    let satsBalance: Double
+    let walletBalance: Double
   }
 }
