@@ -5,9 +5,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -24,7 +21,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeoutOrNull
 import org.koin.compose.koinInject
 
-@Suppress("LongMethod")
+@Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
 fun YralRemoteLottieAnimation(
     modifier: Modifier = Modifier,
@@ -41,46 +38,42 @@ fun YralRemoteLottieAnimation(
 ) {
     val context = LocalContext.current
     val logger = yralLottieLogger()
-    var loadingState by remember(url) { mutableStateOf<LottieLoadingState>(LottieLoadingState.Loading) }
 
-    val composition by rememberLottieComposition(
-        spec = LottieCompositionSpec.Url(url),
-        onRetry = { _, exception ->
-            handleLottieError(exception, url, crashlyticsManager, logger, onError) { error ->
-                loadingState = LottieLoadingState.Error(error)
-            }
-            false // Let our timeout handle retries
-        },
-    )
+    val compositionResult =
+        rememberLottieComposition(
+            spec = LottieCompositionSpec.Url(url),
+            onRetry = { _, exception ->
+                handleLottieError(exception, url, crashlyticsManager, logger, onError)
+                false // Let our timeout handle retries
+            },
+        )
 
     val progress by animateLottieCompositionAsState(
-        composition = composition,
+        composition = compositionResult.value,
         iterations = iterations,
-        isPlaying = composition != null && loadingState is LottieLoadingState.Success,
+        isPlaying = compositionResult.value != null && !compositionResult.isLoading && compositionResult.error == null,
     )
 
-    LaunchedEffect(url) {
-        logger.d { "Loading Lottie animation: $url" }
-        loadingState = LottieLoadingState.Loading
-        onLoading()
-        withTimeoutOrNull(YralRemoteLottieAnimationConstants.TIME_OUT_MILLIS) {
-            while (composition == null) {
-                delay(YralRemoteLottieAnimationConstants.TIMEOUT_CHECK_DELAY)
-            }
-        } ?: run {
-            if (loadingState is LottieLoadingState.Loading) {
-                val timeoutError = YralException("Timeout loading Lottie animation: $url")
-                handleLottieError(timeoutError, url, crashlyticsManager, logger, onError) { error ->
-                    loadingState = LottieLoadingState.Error(error)
+    LaunchedEffect(compositionResult.isLoading) {
+        if (compositionResult.isLoading) {
+            logger.d { "Loading Lottie animation: $url" }
+            onLoading()
+            withTimeoutOrNull(YralRemoteLottieAnimationConstants.TIME_OUT_MILLIS) {
+                while (compositionResult.isLoading && compositionResult.error == null) {
+                    delay(YralRemoteLottieAnimationConstants.TIMEOUT_CHECK_DELAY)
+                }
+            } ?: run {
+                if (compositionResult.isLoading) {
+                    val timeoutError = YralException("Timeout loading Lottie animation: $url")
+                    handleLottieError(timeoutError, url, crashlyticsManager, logger, onError)
                 }
             }
         }
     }
 
-    // Update state when composition loads
-    LaunchedEffect(composition) {
-        if (composition != null) {
-            loadingState = LottieLoadingState.Success
+    LaunchedEffect(compositionResult.error) {
+        compositionResult.error?.let { error ->
+            handleLottieError(error, url, crashlyticsManager, logger, onError)
         }
     }
 
@@ -101,26 +94,23 @@ fun YralRemoteLottieAnimation(
         }
     }
 
-    // Render UI
-    val currentState = loadingState
-    when (currentState) {
-        is LottieLoadingState.Loading -> {
+    // Render UI based on LottieCompositionResult state
+    when {
+        compositionResult.isLoading -> {
             placeholder?.invoke()
         }
 
-        is LottieLoadingState.Success -> {
-            composition?.let {
-                LottieAnimation(
-                    composition = it,
-                    progress = { progress },
-                    modifier = modifier,
-                    contentScale = contentScale,
-                )
-            }
+        compositionResult.error != null -> {
+            errorContent?.invoke(compositionResult.error!!)
         }
 
-        is LottieLoadingState.Error -> {
-            errorContent?.invoke(currentState.throwable)
+        compositionResult.value != null -> {
+            LottieAnimation(
+                composition = compositionResult.value!!,
+                progress = { progress },
+                modifier = modifier,
+                contentScale = contentScale,
+            )
         }
     }
 }
@@ -131,13 +121,11 @@ private inline fun handleLottieError(
     crashlyticsManager: CrashlyticsManager,
     logger: Logger,
     onError: (Throwable) -> Unit,
-    onStateUpdate: (Throwable) -> Unit,
 ) {
     val error = exception ?: YralException("Unknown error loading Lottie animation: $url")
     logger.e(error) { "Failed to load Lottie animation: $url" }
     crashlyticsManager.recordException(error as Exception)
     onError(error)
-    onStateUpdate(error)
 }
 
 private fun clearLottieCache(
@@ -147,14 +135,6 @@ private fun clearLottieCache(
     LottieCompositionFactory.clearCache(context, false)
     logger.d { "Lottie cache cleared successfully" }
 }.onFailure { e -> logger.e(e) { "Failed to clear Lottie cache" } }
-
-private sealed class LottieLoadingState {
-    data object Loading : LottieLoadingState()
-    data object Success : LottieLoadingState()
-    data class Error(
-        val throwable: Throwable,
-    ) : LottieLoadingState()
-}
 
 private object YralRemoteLottieAnimationConstants {
     const val TIME_OUT_MILLIS: Long = 30_000L
