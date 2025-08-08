@@ -10,6 +10,7 @@ data class GameIcon(
     val imageName: GameIconNames,
     val imageUrl: String,
     val clickAnimation: String,
+    val unicode: String,
 )
 
 enum class GameIconNames {
@@ -19,4 +20,9 @@ enum class GameIconNames {
     SURPRISE,
     ROCKET,
     PUKE,
+    UNKNOWN, ;
+
+    companion object {
+        fun fromString(value: String?): GameIconNames = entries.find { it.name == value } ?: UNKNOWN
+    }
 }
