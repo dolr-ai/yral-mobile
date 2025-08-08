@@ -65,7 +65,9 @@ fun SmileyGame(
 ) {
     var animateBubbles by remember { mutableStateOf(false) }
     var iconPositions by remember { mutableStateOf(mapOf<Int, Float>()) }
-    val resultViewVisible = (coinDelta != 0 || errorMessage.isNotEmpty()) && !animateBubbles
+    val bubbleAnimationComplete =
+        !animateBubbles || (clickedIcon?.getBubbleResource() == 0 && clickedIcon.clickAnimation.isEmpty())
+    val resultViewVisible = (coinDelta != 0 || errorMessage.isNotEmpty()) && bubbleAnimationComplete
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.BottomCenter,
