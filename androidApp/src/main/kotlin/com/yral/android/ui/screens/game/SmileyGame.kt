@@ -68,6 +68,8 @@ fun SmileyGame(
     val bubbleAnimationComplete =
         !animateBubbles || (clickedIcon?.getBubbleResource() == 0 && clickedIcon.clickAnimation.isEmpty())
     val resultViewVisible = (coinDelta != 0 || errorMessage.isNotEmpty()) && bubbleAnimationComplete
+    var animatingNudgeIconPosition by remember { mutableStateOf<Int?>(null) }
+    var nudgeIterationCount by remember { mutableIntStateOf(0) }
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.BottomCenter,
@@ -84,8 +86,6 @@ fun SmileyGame(
                 )
             }
             else -> {
-                var animatingNudgeIconPosition by remember { mutableStateOf<Int?>(null) }
-                var nudgeIterationCount by remember { mutableStateOf(0) }
                 SmileyGameNudge(
                     pageNo = pageNo,
                     shouldShowNudge = shouldShowNudge,
