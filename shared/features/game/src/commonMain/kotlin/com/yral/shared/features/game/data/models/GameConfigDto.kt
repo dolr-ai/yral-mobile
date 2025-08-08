@@ -21,4 +21,5 @@ fun GameIconDto.toGameIcon(): GameIcon =
         imageName = GameIconNames.fromString(imageName.uppercase()),
         imageUrl = imageUrl,
         clickAnimation = clickAnimation,
+        unicode = unicode,
     )
