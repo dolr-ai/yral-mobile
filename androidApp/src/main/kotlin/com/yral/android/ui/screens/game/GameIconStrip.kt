@@ -1,7 +1,10 @@
 package com.yral.android.ui.screens.game
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -9,12 +12,20 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.unit.dp
 import com.yral.android.R
+import com.yral.android.ui.screens.game.GameIconStrip.GAME_ICON_ANIMATION_DURATION
+import com.yral.android.ui.screens.game.GameIconStrip.GAME_ICON_NUDGE_ANIMATION_DURATION
+import com.yral.android.ui.screens.game.GameIconStrip.GAME_ICON_ROTATION_DEGREE
+import com.yral.android.ui.screens.game.GameIconStrip.GAME_ICON_SCALING_FACTOR
 import com.yral.android.ui.widgets.YralFeedback
 import com.yral.shared.features.game.domain.models.GameIcon
+import kotlinx.coroutines.delay
 
+@Suppress("LongMethod")
 @Composable
 fun GameIconStrip(
     modifier: Modifier,
@@ -38,11 +49,6 @@ fun GameIconStrip(
     GameStripBackground(modifier, animatingNudgeIconPosition != null) {
         gameIcons.forEachIndexed { index, icon ->
             val shouldAnimate = animatingIcon?.id == icon.id
-            var loadLocal by remember(icon.imageUrl) { mutableStateOf(false) }
-            LaunchedEffect(icon.imageUrl) {
-                if (icon.imageUrl.isEmpty() && !loadLocal) loadLocal = true
-            }
-
             val clickableModifier =
                 Modifier.clickable(
                     enabled = coinDelta == 0 && !isLoading,
@@ -61,28 +67,37 @@ fun GameIconStrip(
                         onIconPositioned(index, coordinates.positionInParent().x)
                     },
             ) {
-                if (loadLocal) {
-                    LocalGameIcon(
-                        modifier = clickableModifier,
-                        icon = icon,
-                        animate = shouldAnimate,
-                        onAnimationComplete = {
-                            animatingIcon = null
-                            onIconAnimationComplete()
-                        },
-                    )
-                } else {
-                    AsyncGameIcon(
-                        modifier = clickableModifier,
-                        icon = icon,
-                        animate = shouldAnimate,
-                        loadLocal = { loadLocal = true },
-                        onAnimationComplete = {
-                            animatingIcon = null
-                            onIconAnimationComplete()
-                        },
-                    )
+                val animationDuration =
+                    animatingNudgeIconPosition?.let { GAME_ICON_ANIMATION_DURATION }
+                        ?: GAME_ICON_NUDGE_ANIMATION_DURATION
+                val rotation by animateFloatAsState(
+                    targetValue = if (shouldAnimate) GAME_ICON_ROTATION_DEGREE else 0f,
+                    animationSpec = tween(durationMillis = animationDuration.toInt()),
+                    label = "rotation",
+                )
+                val scale by animateFloatAsState(
+                    targetValue = if (shouldAnimate) GAME_ICON_SCALING_FACTOR else 1f,
+                    animationSpec = tween(durationMillis = animationDuration.toInt()),
+                    label = "scale",
+                )
+                LaunchedEffect(shouldAnimate) {
+                    if (shouldAnimate) {
+                        delay(animationDuration)
+                        animatingIcon = null
+                        onIconAnimationComplete()
+                    }
                 }
+                GameIcon(
+                    modifier =
+                        clickableModifier
+                            .size(46.dp)
+                            .graphicsLayer(
+                                rotationZ = rotation,
+                                scaleX = scale,
+                                scaleY = scale,
+                            ),
+                    icon = icon,
+                )
             }
         }
     }
@@ -101,4 +116,11 @@ private fun Feedback(
             onPlayed = { setPlaySound(false) },
         )
     }
+}
+
+private object GameIconStrip {
+    const val GAME_ICON_ROTATION_DEGREE = -15f
+    const val GAME_ICON_SCALING_FACTOR = 1.17f
+    const val GAME_ICON_ANIMATION_DURATION = 200L
+    const val GAME_ICON_NUDGE_ANIMATION_DURATION = 360L
 }

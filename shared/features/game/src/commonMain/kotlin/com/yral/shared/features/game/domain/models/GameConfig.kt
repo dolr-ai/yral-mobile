@@ -19,4 +19,9 @@ enum class GameIconNames {
     SURPRISE,
     ROCKET,
     PUKE,
+    UNKNOWN, ;
+
+    companion object {
+        fun fromString(value: String?): GameIconNames = entries.find { it.name == value } ?: UNKNOWN
+    }
 }
