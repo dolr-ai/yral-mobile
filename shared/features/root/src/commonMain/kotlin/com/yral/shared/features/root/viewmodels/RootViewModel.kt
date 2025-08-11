@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import co.touchlab.kermit.Logger
 import com.yral.shared.analytics.User
 import com.yral.shared.analytics.events.CategoryName
+import com.yral.shared.analytics.events.TokenType
 import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.SessionManager
@@ -73,7 +74,8 @@ class RootViewModel(
                         canisterId = canisterID,
                         isLoggedIn = properties.isSocialSignIn,
                         isCreator = properties.profileVideosCount?.let { it > 0 },
-                        satsBalance = properties.coinBalance?.toDouble(),
+                        walletBalance = properties.coinBalance?.toDouble(),
+                        tokenType = TokenType.YRAL,
                     )
                 }
             }

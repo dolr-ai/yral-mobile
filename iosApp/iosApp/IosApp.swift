@@ -12,6 +12,19 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
+    if UIApplication.shared.isProtectedDataAvailable {
+      migrateKeychain()
+    }
+
+    NotificationCenter.default.addObserver(
+      forName: UIApplication.protectedDataDidBecomeAvailableNotification,
+      object: nil,
+      queue: .main
+    ) { [weak self] _ in
+      guard let self = self else { return }
+      self.migrateKeychain()
+    }
+
 #if DEBUG
     AppCheck.setAppCheckProviderFactory(AppCheckDebugProviderFactory())
 #else
@@ -87,6 +100,29 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
       }
     }
     return false
+  }
+
+  private func migrateKeychain() {
+    typealias AuthConstants = DefaultAuthClient.Constants
+    let keychainMigrationDone: Bool? = UserDefaultsManager.shared.get(for: .keychainMigrationDone) as Bool? ?? false
+    guard !(keychainMigrationDone ?? true) else { return }
+
+    let keys = [
+      AuthConstants.keychainIdentity,
+      AuthConstants.keychainUserPrincipal,
+      AuthConstants.keychainCanisterPrincipal,
+      AuthConstants.keychainAccessToken,
+      AuthConstants.keychainIDToken,
+      AuthConstants.keychainRefreshToken
+    ]
+
+    for key in keys {
+      if let data = try? KeychainHelper.retrieveData(for: key) {
+        try? KeychainHelper.store(data: data, for: key)
+      }
+    }
+
+    UserDefaultsManager.shared.set(true, for: .keychainMigrationDone)
   }
 }
 

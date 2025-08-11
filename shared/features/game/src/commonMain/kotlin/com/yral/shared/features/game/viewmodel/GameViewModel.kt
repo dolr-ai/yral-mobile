@@ -386,11 +386,14 @@ class GameViewModel(
 
     fun setSmileyGameNudgeShown(feedDetails: FeedDetails) {
         Logger.d("xxxx") { "setSmileyGameNudgeShown ${feedDetails.videoID}" }
+        val currentState = _state.value.isSmileyGameNudgeShown
         _state.update { it.copy(isSmileyGameNudgeShown = true) }
-        coroutineScope.launch {
-            Logger.d("xxxx") { "marking smiley game shown" }
-            preferences.putBoolean(PrefKeys.SMILEY_GAME_NUDGE_SHOWN.name, true)
-            gameTelemetry.onGameTutorialShown(feedDetails)
+        if (!currentState) {
+            coroutineScope.launch {
+                Logger.d("xxxx") { "marking smiley game shown" }
+                preferences.putBoolean(PrefKeys.SMILEY_GAME_NUDGE_SHOWN.name, true)
+                gameTelemetry.onGameTutorialShown(feedDetails)
+            }
         }
     }
 

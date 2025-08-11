@@ -14,7 +14,7 @@ struct KeychainHelper {
 
   static func store(data: Data, for key: String) throws {
     return try keychainQueue.sync {
-      let query: [CFString: Any] = [
+      var query: [CFString: Any] = [
         kSecClass: kSecClassGenericPassword,
         kSecAttrAccount: key,
         kSecAttrService: Bundle.main.bundleIdentifier ?? "com.yral.ios",
@@ -23,7 +23,22 @@ struct KeychainHelper {
 
       SecItemDelete(query as CFDictionary)
 
-      let status = SecItemAdd(query as CFDictionary, nil)
+      query.updateValue(kSecAttrAccessibleAfterFirstUnlock, forKey: kSecAttrAccessible)
+      var status = SecItemAdd(query as CFDictionary, nil)
+      if status == errSecDuplicateItem {
+        let updateAttrs: [CFString: Any] = [
+          kSecValueData: data
+        ]
+        status = SecItemUpdate(
+          [
+            kSecClass: kSecClassGenericPassword,
+            kSecAttrAccount: key,
+            kSecAttrService: Bundle.main.bundleIdentifier ?? "com.yral.ios"
+          ] as CFDictionary,
+          updateAttrs as CFDictionary
+        )
+      }
+
       guard status == errSecSuccess else {
         throw KeychainError.unhandledError(status: status)
       }

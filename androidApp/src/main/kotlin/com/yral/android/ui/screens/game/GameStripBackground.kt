@@ -81,8 +81,8 @@ private fun BoxScope.NudgeBorder(
             easing = FastOutLinearInEasing,
         )
     val borderWidth by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 5f,
+        initialValue = 8f,
+        targetValue = 0f,
         animationSpec = infiniteRepeatable(tweenSpec, RepeatMode.Reverse),
         label = "border",
     )

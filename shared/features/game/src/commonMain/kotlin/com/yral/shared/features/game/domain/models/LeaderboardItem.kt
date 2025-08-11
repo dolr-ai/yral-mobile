@@ -1,19 +1,19 @@
 package com.yral.shared.features.game.domain.models
 
-import com.yral.shared.firebaseStore.model.LeaderboardItemDto
+import com.yral.shared.features.game.data.models.LeaderboardRowDto
 import com.yral.shared.uniffi.generated.propicFromPrincipal
 
 data class LeaderboardItem(
     val userPrincipalId: String,
     val profileImage: String,
-    val coins: Long,
-    val rank: Int,
+    val wins: Long,
+    val position: Int,
 )
 
-fun LeaderboardItemDto.toLeaderboardItem(rank: Int): LeaderboardItem =
+fun LeaderboardRowDto.toLeaderboardItem(): LeaderboardItem =
     LeaderboardItem(
-        userPrincipalId = id,
-        profileImage = propicFromPrincipal(id),
-        coins = coins,
-        rank = rank,
+        userPrincipalId = principalId,
+        profileImage = propicFromPrincipal(principalId),
+        wins = wins,
+        position = position,
     )

@@ -38,36 +38,17 @@ import com.yral.android.ui.screens.feed.uiComponets.HowToPlayConstants.ANIMATION
 import com.yral.android.ui.screens.feed.uiComponets.HowToPlayConstants.AUTO_CLOSE_DELAY
 import com.yral.android.ui.screens.feed.uiComponets.HowToPlayConstants.PAGE_SET_DELAY
 import kotlinx.coroutines.delay
+import kotlin.coroutines.cancellation.CancellationException
 
 @Composable
 fun HowToPlay(
     modifier: Modifier,
     shouldExpand: Boolean,
+    pageNo: Int,
     onClick: () -> Unit,
     onAnimationComplete: () -> Unit = {},
 ) {
     var backgroundVisible by remember { mutableStateOf(false) }
-    var isExpanded by remember { mutableStateOf(false) }
-    LaunchedEffect(shouldExpand) {
-        delay(PAGE_SET_DELAY)
-        if (shouldExpand) {
-            runCatching {
-                backgroundVisible = true
-                isExpanded = true
-                delay(AUTO_CLOSE_DELAY)
-                isExpanded = false
-                delay(ANIMATION_DURATION.toLong() / 2)
-                backgroundVisible = false
-                onAnimationComplete()
-            }.onFailure {
-                isExpanded = false
-                backgroundVisible = false
-            }
-        } else {
-            isExpanded = false
-            backgroundVisible = false
-        }
-    }
     Row(
         modifier =
             modifier
@@ -83,23 +64,66 @@ fun HowToPlay(
             contentScale = ContentScale.None,
             modifier = Modifier.size(32.dp),
         )
-        AnimatedContent(
-            targetState = isExpanded,
-            transitionSpec = {
-                (expandHorizontally { 0 } + fadeIn(tween(ANIMATION_DURATION))) togetherWith
-                    (shrinkHorizontally { -it } + fadeOut(tween(ANIMATION_DURATION))) using
-                    SizeTransform(clip = false)
-            },
-        ) { isExpanded ->
-            if (isExpanded) {
-                Text(
-                    text = stringResource(R.string.how_to_play),
-                    style = LocalAppTopography.current.regMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color.White,
-                    modifier = Modifier.padding(start = 6.dp, end = 8.dp),
-                )
+        AnimatedBackground(
+            pageNo = pageNo,
+            shouldExpand = shouldExpand,
+            setBackGroundVisible = { backgroundVisible = it },
+            onAnimationComplete = onAnimationComplete,
+        )
+    }
+}
+
+@Composable
+private fun AnimatedBackground(
+    pageNo: Int,
+    shouldExpand: Boolean,
+    setBackGroundVisible: (Boolean) -> Unit,
+    onAnimationComplete: () -> Unit,
+) {
+    var isExpanded by remember { mutableStateOf(false) }
+    LaunchedEffect(shouldExpand) {
+        try {
+            if (shouldExpand) {
+                delay(PAGE_SET_DELAY)
+                setBackGroundVisible(true)
+                isExpanded = true
+                delay(AUTO_CLOSE_DELAY)
+                isExpanded = false
+                delay(ANIMATION_DURATION.toLong() / 2)
+                setBackGroundVisible(false)
+                onAnimationComplete()
+            } else {
+                // Instantly collapse and hide background
+                isExpanded = false
+                setBackGroundVisible(false)
             }
+        } catch (e: CancellationException) {
+            // Reset state for safety on coroutine cancel
+            isExpanded = false
+            setBackGroundVisible(false)
+            throw e
+        } catch (_: Exception) {
+            isExpanded = false
+            setBackGroundVisible(false)
+        }
+    }
+    AnimatedContent(
+        label = "HowToPlay $pageNo",
+        targetState = isExpanded,
+        transitionSpec = {
+            (expandHorizontally { 0 } + fadeIn(tween(ANIMATION_DURATION))) togetherWith
+                (shrinkHorizontally { -it } + fadeOut(tween(ANIMATION_DURATION))) using
+                SizeTransform(clip = false)
+        },
+    ) { isExpanded ->
+        if (isExpanded) {
+            Text(
+                text = stringResource(R.string.how_to_play),
+                style = LocalAppTopography.current.regMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = Color.White,
+                modifier = Modifier.padding(start = 6.dp, end = 8.dp),
+            )
         }
     }
 }

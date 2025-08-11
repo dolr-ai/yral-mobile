@@ -18,4 +18,5 @@ enum class GameIconNames {
     FIRE,
     SURPRISE,
     ROCKET,
+    PUKE,
 }
