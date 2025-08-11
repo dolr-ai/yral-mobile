@@ -21,6 +21,7 @@ import com.yral.shared.uniffi.generated.delegatedIdentityWireToJson
 import com.yral.shared.uniffi.generated.registerDevice
 import com.yral.shared.uniffi.generated.unregisterDevice
 import io.ktor.client.HttpClient
+import io.ktor.client.plugins.expectSuccess
 import io.ktor.client.request.headers
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
@@ -107,6 +108,7 @@ class AuthDataSourceImpl(
         canisterId: String,
     ) {
         httpPostWithStringResponse(client) {
+            expectSuccess = false
             url {
                 host = METADATA_BASE_URL
                 path(UPDATE_SESSION_AS_REGISTERED, canisterId)

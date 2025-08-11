@@ -19,7 +19,9 @@ import com.yral.shared.features.auth.domain.useCases.ObtainAnonymousIdentityUseC
 import com.yral.shared.features.auth.domain.useCases.RefreshTokenUseCase
 import com.yral.shared.features.auth.domain.useCases.RegisterNotificationTokenUseCase
 import com.yral.shared.features.auth.domain.useCases.UpdateSessionAsRegisteredUseCase
+import com.yral.shared.features.auth.utils.OAuthResult
 import com.yral.shared.features.auth.utils.OAuthUtils
+import com.yral.shared.features.auth.utils.OAuthUtilsHelper
 import com.yral.shared.features.auth.utils.SocialProvider
 import com.yral.shared.features.game.domain.GetBalanceUseCase
 import com.yral.shared.firebaseAuth.usecase.GetIdTokenUseCase
@@ -51,6 +53,7 @@ class DefaultAuthClient(
     private val authRepository: AuthRepository,
     private val requiredUseCases: RequiredUseCases,
     private val oAuthUtils: OAuthUtils,
+    private val oAuthUtilsHelper: OAuthUtilsHelper,
     private val individualUserServiceFactory: IndividualUserServiceFactory,
     private val scope: CoroutineScope,
     private val authTelemetry: AuthTelemetry,
@@ -96,7 +99,7 @@ class DefaultAuthClient(
         resetCanister: Boolean = false,
     ) {
         saveTokens(idToken, refreshToken, accessToken)
-        val tokenClaim = oAuthUtils.parseOAuthToken(idToken)
+        val tokenClaim = oAuthUtilsHelper.parseOAuthToken(idToken)
         if (tokenClaim.isValid(Clock.System.now().epochSeconds)) {
             tokenClaim.delegatedIdentity?.let {
                 if (resetCanister) {
@@ -106,7 +109,7 @@ class DefaultAuthClient(
             }
         } else {
             refreshToken.takeIf { it.isNotEmpty() }?.let {
-                val rTokenClaim = oAuthUtils.parseOAuthToken(it)
+                val rTokenClaim = oAuthUtilsHelper.parseOAuthToken(it)
                 if (rTokenClaim.isValid(Clock.System.now().epochSeconds)) {
                     refreshAccessToken()
                 } else {
@@ -309,34 +312,52 @@ class DefaultAuthClient(
         } ?: obtainAnonymousIdentity()
     }
 
-    override suspend fun signInWithSocial(provider: SocialProvider) {
-        initiateOAuthFlow(provider)
+    override suspend fun signInWithSocial(
+        context: Any,
+        provider: SocialProvider,
+    ) {
+        initiateOAuthFlow(context, provider)
     }
 
-    private suspend fun initiateOAuthFlow(provider: SocialProvider) {
+    private suspend fun initiateOAuthFlow(
+        context: Any,
+        provider: SocialProvider,
+    ) {
         sessionManager.identity?.let { identity ->
             val authUrl = authRepository.getOAuthUrl(provider, identity)
             currentState = authUrl.second
             oAuthUtils.openOAuth(
                 authUrl = authUrl.first,
-            ) { code, state ->
-                scope.launch {
-                    handleOAuthCallback(code, state)
-                }
-            }
+                context = context,
+            ) { result -> scope.launch { handleOAuthCallback(result) } }
         }
     }
 
-    private suspend fun handleOAuthCallback(
-        code: String,
-        state: String,
-    ) {
-        if (state != currentState) {
-            throw SecurityException("Invalid state parameter - possible CSRF attack")
+    private suspend fun handleOAuthCallback(result: OAuthResult) {
+        lateinit var error: String
+        when (result) {
+            is OAuthResult.Success -> {
+                if (result.state != currentState) {
+                    authTelemetry.authFailed()
+                    throw SecurityException("Invalid state parameter - possible CSRF attack")
+                }
+                val currentUser = sessionManager.userPrincipal
+                sessionManager.updateState(SessionState.Loading)
+                authenticate(result.code, currentUser)
+                return
+            }
+            is OAuthResult.Error -> {
+                error = result.errorDescription?.let { "${result.error}: $it" } ?: result.error
+            }
+            is OAuthResult.Cancelled -> {
+                error = "OAuth authentication was cancelled by user"
+            }
+            is OAuthResult.TimedOut -> {
+                error = "OAuth authentication timed out - please try again"
+            }
         }
-        val currentUser = sessionManager.userPrincipal
-        sessionManager.updateState(SessionState.Loading)
-        authenticate(code, currentUser)
+        authTelemetry.authFailed()
+        throw YralAuthException("OAuth authentication failed - $error")
     }
 
     private suspend fun authenticate(

@@ -43,6 +43,8 @@
 		100F63D42DCB4630000BC17E /* SmileyGameRuleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100F63D22DCB4630000BC17E /* SmileyGameRuleView.swift */; };
 		100F64EE2DCC96C9000BC17E /* YralCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100F64ED2DCC96C5000BC17E /* YralCache.swift */; };
 		100F64EF2DCC96C9000BC17E /* YralCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100F64ED2DCC96C5000BC17E /* YralCache.swift */; };
+		1023FFEE2E41DD3E00E6936E /* smiley_game_puke.json in Resources */ = {isa = PBXBuildFile; fileRef = 1023FFED2E41DD3E00E6936E /* smiley_game_puke.json */; };
+		1023FFEF2E41DD3E00E6936E /* smiley_game_puke.json in Resources */ = {isa = PBXBuildFile; fileRef = 1023FFED2E41DD3E00E6936E /* smiley_game_puke.json */; };
 		103BBB042DACE23A00C0BFD0 /* HLSDownloadManaging.swift in Sources */ = {isa = PBXBuildFile; fileRef = 103BBB032DACE21D00C0BFD0 /* HLSDownloadManaging.swift */; };
 		103BBB052DACE23A00C0BFD0 /* HLSDownloadManaging.swift in Sources */ = {isa = PBXBuildFile; fileRef = 103BBB032DACE21D00C0BFD0 /* HLSDownloadManaging.swift */; };
 		1050341A2DD4955C00571B4E /* smiley_game_surprise.json in Resources */ = {isa = PBXBuildFile; fileRef = 105034192DD4955C00571B4E /* smiley_game_surprise.json */; };
@@ -477,6 +479,8 @@
 		ACB46A7D2D105BEB002E200C /* UIKitInitializers.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A7B2D105BE0002E200C /* UIKitInitializers.swift */; };
 		ACB46A802D106034002E200C /* FeedsCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A7F2D106031002E200C /* FeedsCell.swift */; };
 		ACB46A812D106034002E200C /* FeedsCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB46A7F2D106031002E200C /* FeedsCell.swift */; };
+		ACBBF84E2E40CA1E00002188 /* ProfileError.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACBBF84D2E40CA1A00002188 /* ProfileError.swift */; };
+		ACBBF84F2E40CA1E00002188 /* ProfileError.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACBBF84D2E40CA1A00002188 /* ProfileError.swift */; };
 		ACC0D4342D8BFE67006DCF5C /* NudgePopupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC0D4332D8BFE5B006DCF5C /* NudgePopupView.swift */; };
 		ACC0D4352D8BFE67006DCF5C /* NudgePopupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC0D4332D8BFE5B006DCF5C /* NudgePopupView.swift */; };
 		ACC0D43D2D8C6BF3006DCF5C /* ClearBackgroundView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC0D43C2D8C6BEB006DCF5C /* ClearBackgroundView.swift */; };
@@ -630,6 +634,7 @@
 		10020AAF2DF7FE2400DF269E /* SatsCoinError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SatsCoinError.swift; sourceTree = "<group>"; };
 		100F63D22DCB4630000BC17E /* SmileyGameRuleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameRuleView.swift; sourceTree = "<group>"; };
 		100F64ED2DCC96C5000BC17E /* YralCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralCache.swift; sourceTree = "<group>"; };
+		1023FFED2E41DD3E00E6936E /* smiley_game_puke.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = smiley_game_puke.json; sourceTree = "<group>"; };
 		103BBB032DACE21D00C0BFD0 /* HLSDownloadManaging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HLSDownloadManaging.swift; sourceTree = "<group>"; };
 		105034152DD4955C00571B4E /* smiley_game_fire.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = smiley_game_fire.json; sourceTree = "<group>"; };
 		105034162DD4955C00571B4E /* smiley_game_heart.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = smiley_game_heart.json; sourceTree = "<group>"; };
@@ -854,6 +859,7 @@
 		ACB46A782D105B30002E200C /* NibLoadableVIew.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NibLoadableVIew.swift; sourceTree = "<group>"; };
 		ACB46A7B2D105BE0002E200C /* UIKitInitializers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIKitInitializers.swift; sourceTree = "<group>"; };
 		ACB46A7F2D106031002E200C /* FeedsCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedsCell.swift; sourceTree = "<group>"; };
+		ACBBF84D2E40CA1A00002188 /* ProfileError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileError.swift; sourceTree = "<group>"; };
 		ACC0D4332D8BFE5B006DCF5C /* NudgePopupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NudgePopupView.swift; sourceTree = "<group>"; };
 		ACC0D43C2D8C6BEB006DCF5C /* ClearBackgroundView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClearBackgroundView.swift; sourceTree = "<group>"; };
 		ACC0D4472D8DA202006DCF5C /* RefreshVideosUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RefreshVideosUseCase.swift; sourceTree = "<group>"; };
@@ -2479,6 +2485,7 @@
 		ACDD23ED2D8B270C00AB0DAF /* Entity */ = {
 			isa = PBXGroup;
 			children = (
+				ACBBF84D2E40CA1A00002188 /* ProfileError.swift */,
 				ACDD23E62D8B1B5400AB0DAF /* ProfileVideoRequest.swift */,
 			);
 			path = Entity;
@@ -2514,6 +2521,7 @@
 				105034152DD4955C00571B4E /* smiley_game_fire.json */,
 				105034162DD4955C00571B4E /* smiley_game_heart.json */,
 				105034172DD4955C00571B4E /* smiley_game_laugh.json */,
+				1023FFED2E41DD3E00E6936E /* smiley_game_puke.json */,
 				105034182DD4955C00571B4E /* smiley_game_rocket.json */,
 				105034192DD4955C00571B4E /* smiley_game_surprise.json */,
 				107C609D2DB9FDA0006FC467 /* smiley_game_lose.json */,
@@ -2736,6 +2744,7 @@
 				100209F52DE71F0E00DF269E /* leaderboard.json in Resources */,
 				AC32E4162D270097001DDA43 /* KumbhSans-ExtraLight.ttf in Resources */,
 				AC32E4172D270097001DDA43 /* KumbhSans-Regular.ttf in Resources */,
+				1023FFEF2E41DD3E00E6936E /* smiley_game_puke.json in Resources */,
 				AC32E4182D270097001DDA43 /* KumbhSans-Medium.ttf in Resources */,
 				AC4714EA2D38120800A64E29 /* GoogleService-Info.plist in Resources */,
 				AC32E4192D270097001DDA43 /* OFL.txt in Resources */,
@@ -2783,6 +2792,7 @@
 				100209F62DE71F0E00DF269E /* leaderboard.json in Resources */,
 				AC32E40A2D270097001DDA43 /* KumbhSans-ExtraLight.ttf in Resources */,
 				AC32E40B2D270097001DDA43 /* KumbhSans-Regular.ttf in Resources */,
+				1023FFEE2E41DD3E00E6936E /* smiley_game_puke.json in Resources */,
 				AC32E40C2D270097001DDA43 /* KumbhSans-Medium.ttf in Resources */,
 				AC12B9D22D3809B7004E9EA9 /* GoogleService-Info.plist in Resources */,
 				AC32E40D2D270097001DDA43 /* OFL.txt in Resources */,
@@ -3246,6 +3256,7 @@
 				ACB46A292D0EC76A002E200C /* AppConfiguration.swift in Sources */,
 				ACEBF7DF2D6F215800B594A0 /* VideoPlayerView.swift in Sources */,
 				ACB46A342D0EC8FF002E200C /* Numbers+Extensions.swift in Sources */,
+				ACBBF84E2E40CA1E00002188 /* ProfileError.swift in Sources */,
 				105034BF2DD636CC00571B4E /* CastVoteUseCase.swift in Sources */,
 				AC7F7EC52D7741C900215162 /* UploadResponseDTO.swift in Sources */,
 				AC32E4612D298E0A001DDA43 /* ProfileOptionsView.swift in Sources */,
@@ -3499,6 +3510,7 @@
 				ACB46A2A2D0EC76A002E200C /* AppConfiguration.swift in Sources */,
 				ACEBF7DE2D6F215800B594A0 /* VideoPlayerView.swift in Sources */,
 				ACB46A332D0EC8FF002E200C /* Numbers+Extensions.swift in Sources */,
+				ACBBF84F2E40CA1E00002188 /* ProfileError.swift in Sources */,
 				105034C02DD636CC00571B4E /* CastVoteUseCase.swift in Sources */,
 				AC7F7EC42D7741C900215162 /* UploadResponseDTO.swift in Sources */,
 				AC32E4622D298E0A001DDA43 /* ProfileOptionsView.swift in Sources */,

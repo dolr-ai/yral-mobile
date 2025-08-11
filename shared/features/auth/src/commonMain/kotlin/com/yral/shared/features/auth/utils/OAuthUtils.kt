@@ -1,6 +1,5 @@
 package com.yral.shared.features.auth.utils
 
-import com.yral.shared.core.platform.PlatformResourcesFactory
 import com.yral.shared.features.auth.domain.models.TokenClaims
 import io.ktor.http.Url
 
@@ -14,21 +13,22 @@ internal const val KEY_NONCE = "nonce" // Optionally set if client set a nonce d
 internal const val KEY_IS_ANONYMOUS = "ext_is_anonymous" // Whether this identity anonymous or not
 internal const val KEY_DELEGATED_IDENTITY = "ext_delegated_identity" // DelegatedIdentityWire
 
-expect class OAuthUtils(
-    platformResourcesFactory: PlatformResourcesFactory,
-) {
+interface OAuthUtils {
+    var callBack: ((result: OAuthResult) -> Unit)?
+    var callbackExpiry: Long
     fun openOAuth(
+        context: Any,
         authUrl: Url,
-        callBack: (code: String, state: String) -> Unit,
+        callBack: (result: OAuthResult) -> Unit,
     )
+    fun invokeCallback(result: OAuthResult)
+    fun cleanup()
+}
 
-    fun invokeCallback(
-        code: String,
-        state: String,
-    )
-
-    internal fun generateCodeVerifier(): String
-    internal fun generateCodeChallenge(codeVerifier: String): String
-    internal fun generateState(): String
-    internal fun parseOAuthToken(token: String): TokenClaims
+interface OAuthUtilsHelper {
+    fun generateCodeVerifier(): String
+    fun generateCodeChallenge(codeVerifier: String): String
+    fun generateState(): String
+    fun parseOAuthToken(token: String): TokenClaims
+    fun mapUriToOAuthResult(uri: String): OAuthResult?
 }

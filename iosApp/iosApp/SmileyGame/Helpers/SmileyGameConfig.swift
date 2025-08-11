@@ -26,7 +26,7 @@ class SmileyGameConfig {
     do {
       let response = try await firebaseService.fetchDocument(
         path: Constants.documentPath,
-        checkCache: true,
+        checkCache: false,
         decodeAs: SmileyConfigDTO.self
       )
 
@@ -41,6 +41,6 @@ class SmileyGameConfig {
 
 extension SmileyGameConfig {
   enum Constants {
-    static let documentPath = "config/smiley_game_v1"
+    static let documentPath = "config/smiley_game_v2"
   }
 }

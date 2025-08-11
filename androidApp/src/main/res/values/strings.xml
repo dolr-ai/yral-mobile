@@ -40,9 +40,9 @@
     <string name="no_take_me_back">No, take me back</string>
     <string name="yes_delete">Yes, Delete</string>
     <string name="was_most_people_choice">%s was the most popular choice.</string>
-    <string name="you_win_x_coins">You win %d Sats!</string>
+    <string name="you_win_x_coins">You win %d YRAL tokens!</string>
     <string name="not_most_popular_pick">Not the most popular pick!</string>
-    <string name="you_lost_x_coins">You lost %d Sats!</string>
+    <string name="you_lost_x_coins">You lost %d YRAL tokens!</string>
     <string name="oops">OOPS!!!</string>
     <string name="since_most_people_not_voted_on">Since most people didn’t vote on</string>
     <string name="congratulations">Congratulations!</string>
@@ -60,8 +60,8 @@
 
     <string name="leaderboard">Leaderboard</string>
     <string name="position">Position</string>
+    <string name="games_won">Games Won</string>
     <string name="player_id">Player ID</string>
-    <string name="total_sats">Total SATS</string>
     <string name="you">You</string>
     <string name="new_">New</string>
 
@@ -116,4 +116,9 @@
     <string name="enable_notification_message">The action moves fast.\nDon’t fall behind, enable notifications and be the first to know when something’s happening.</string>
     <string name="turn_on_alerts">Turn on Alerts</string>
     <string name="not_now">Not Now</string>
+
+    <!-- Nudges -->
+    <string name="smiley_game_nudge_1">Match the vibe, win the coin</string>
+    <string name="smiley_game_nudge_2">Choose the top emojis &amp; get YRAL (Bitcoin)”</string>
+    <string name="smiley_game_nudge_mandatory">React to this video to unlock the next one!</string>
 </resources>

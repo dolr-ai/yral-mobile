@@ -30,13 +30,10 @@ import com.yral.android.ui.design.appTypoGraphy
 import com.yral.android.ui.nav.DefaultRootComponent
 import com.yral.android.ui.screens.RootScreen
 import com.yral.android.ui.screens.profile.nav.ProfileComponent
-import com.yral.shared.core.platform.AndroidPlatformResources
-import com.yral.shared.core.platform.PlatformResourcesFactory
 import com.yral.shared.crashlytics.core.CrashlyticsManager
-import com.yral.shared.features.auth.data.AuthDataSourceImpl.Companion.REDIRECT_URI_HOST
-import com.yral.shared.features.auth.data.AuthDataSourceImpl.Companion.REDIRECT_URI_PATH
-import com.yral.shared.features.auth.data.AuthDataSourceImpl.Companion.REDIRECT_URI_SCHEME
+import com.yral.shared.features.auth.utils.OAuthResult
 import com.yral.shared.features.auth.utils.OAuthUtils
+import com.yral.shared.features.auth.utils.OAuthUtilsHelper
 import com.yral.shared.koin.koinInstance
 import com.yral.shared.uniffi.generated.initRustLogger
 import io.branch.referral.Branch
@@ -48,17 +45,18 @@ import org.koin.android.ext.android.inject
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
     private lateinit var oAuthUtils: OAuthUtils
+    private lateinit var oAuthUtilsHelper: OAuthUtilsHelper
     private lateinit var rootComponent: DefaultRootComponent
     private val crashlyticsManager: CrashlyticsManager by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        initPlatformResources()
         if (BuildConfig.DEBUG) {
             initRustLogger()
         }
         oAuthUtils = koinInstance.get()
+        oAuthUtilsHelper = koinInstance.get()
         // Always create the root component outside Compose on the main thread
         rootComponent = DefaultRootComponent(componentContext = defaultComponentContext())
         handleIntent(intent)
@@ -71,12 +69,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-    }
-
-    private fun initPlatformResources() {
-        koinInstance
-            .get<PlatformResourcesFactory>()
-            .initialize(AndroidPlatformResources(this))
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -103,16 +95,9 @@ class MainActivity : ComponentActivity() {
         Logger.d("onNewIntent: ${intent?.data}")
 
         // Handle OAuth redirect URIs
-        val uri = intent?.data
-        if (uri?.scheme == REDIRECT_URI_SCHEME &&
-            uri.host == REDIRECT_URI_HOST &&
-            uri.path == REDIRECT_URI_PATH
-        ) {
-            val code = uri.getQueryParameter("code")
-            val state = uri.getQueryParameter("state")
-            if (code != null && state != null) {
-                oAuthUtils.invokeCallback(code, state)
-            }
+        handleOAuthIntent(intent)?.let {
+            oAuthUtils.invokeCallback(it)
+            return
         }
 
         // Handle notification deep links with payload format
@@ -125,6 +110,11 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    private fun handleOAuthIntent(intent: Intent?): OAuthResult? =
+        intent
+            ?.data
+            ?.let { oAuthUtilsHelper.mapUriToOAuthResult(it.toString()) }
 
     private fun mapPayloadToDestination(payload: String): String? =
         try {
@@ -193,6 +183,11 @@ class MainActivity : ComponentActivity() {
                 }
             }.withData(this.intent.data)
             .init()
+    }
+
+    override fun onDestroy() {
+        oAuthUtils.cleanup()
+        super.onDestroy()
     }
 }
 

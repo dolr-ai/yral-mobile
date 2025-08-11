@@ -37,7 +37,6 @@ val analyticsModule =
         }
         single {
             MixpanelAnalyticsProvider(
-                platformResources = get(),
                 eventFilter = { !it.shouldSendToYralBE() },
                 mapConverter = get(),
                 token = get<String>(MIXPANEL_TOKEN),
@@ -45,7 +44,6 @@ val analyticsModule =
         }
         single {
             FacebookAnalyticsProvider(
-                platformResources = get(),
                 eventFilter = { it.shouldSendToFacebook() },
                 mapConverter = get(),
             )

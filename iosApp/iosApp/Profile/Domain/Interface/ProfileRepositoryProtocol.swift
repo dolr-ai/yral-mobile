@@ -8,9 +8,9 @@
 import Combine
 
 protocol ProfileRepositoryProtocol {
-  func fetchVideos(request: ProfileVideoRequest) async -> Result<[FeedResult], AccountError>
-  func refreshVideos(shouldPurge: Bool) async -> Result<[FeedResult], AccountError>
-  func deleteVideo(request: DeleteVideoRequest) async -> Result<Void, AccountError>
+  func fetchVideos(request: ProfileVideoRequest) async -> Result<[FeedResult], ProfileError>
+  func refreshVideos(shouldPurge: Bool) async -> Result<[FeedResult], ProfileError>
+  func deleteVideo(request: DeleteVideoRequest) async -> Result<Void, ProfileError>
 
   var videosPublisher: AnyPublisher<[FeedResult], Never> { get }
   var newVideosPublisher: AnyPublisher<[FeedResult], Never> { get }
