@@ -21,6 +21,8 @@ data class GameIconDto(
     val imageUrl: String,
     @SerialName("click_animation")
     val clickAnimation: String,
+    @SerialName("unicode_android")
+    val unicode: String,
     @SerialName("is_active")
     val isActive: Boolean,
 )

@@ -1,6 +1,9 @@
 package com.yral.android
 
 import android.app.Application
+import androidx.core.provider.FontRequest
+import androidx.emoji2.text.EmojiCompat
+import androidx.emoji2.text.FontRequestEmojiCompatConfig
 import com.facebook.FacebookSdk
 import com.facebook.LoggingBehavior
 import com.google.firebase.Firebase
@@ -21,6 +24,7 @@ class YralApp : Application() {
         setupFirebase()
         setupFacebook()
         setupBranch()
+        setupEmoji()
         initKoin {
             androidContext(this@YralApp)
             modules(videoWidgetModule)
@@ -69,5 +73,24 @@ class YralApp : Application() {
                 Branch.getAutoInstance(this, BuildConfig.BRANCH_KEY)
             }
         }
+    }
+
+    private fun setupEmoji() {
+        // Use Google Play Services downloadable emoji font to avoid APK size increase
+        val request =
+            FontRequest(
+                // providerAuthority =
+                "com.google.android.gms.fonts",
+                // providerPackage =
+                "com.google.android.gms",
+                // query =
+                "Noto Color Emoji Compat",
+                // certificates =
+                R.array.com_google_android_gms_fonts_certs,
+            )
+        val config =
+            FontRequestEmojiCompatConfig(this, request)
+                .setReplaceAll(true)
+        EmojiCompat.init(config)
     }
 }
