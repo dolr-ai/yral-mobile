@@ -1,5 +1,6 @@
 package com.yral.shared.features.uploadvideo.domain
 
+import com.yral.shared.features.uploadvideo.domain.models.Provider
 import com.yral.shared.features.uploadvideo.domain.models.UploadEndpoint
 import com.yral.shared.features.uploadvideo.domain.models.UploadFileRequest
 import com.yral.shared.features.uploadvideo.domain.models.UploadStatus
@@ -12,4 +13,5 @@ internal interface UploadRepository {
         filePath: String,
     ): Flow<UploadStatus>
     suspend fun updateMetadata(uploadFileRequest: UploadFileRequest)
+    suspend fun fetchProviders(): List<Provider>
 }
