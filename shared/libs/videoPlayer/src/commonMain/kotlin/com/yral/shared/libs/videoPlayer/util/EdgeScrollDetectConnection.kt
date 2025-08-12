@@ -7,9 +7,9 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.unit.Velocity
 import com.yral.shared.libs.videoPlayer.model.PlayerConfig
 
-enum class ScrollDirection {
-    Up,
-    Down,
+enum class ReelScrollDirection {
+    Up, // Forward
+    Down, // Backward
     Left,
     Right,
 }
@@ -18,7 +18,7 @@ class EdgeScrollDetectConnection(
     private val pageCount: Int,
     private val pagerState: PagerState,
     private val playerConfig: PlayerConfig,
-    private val onEdgeScrollAttempt: (pageNo: Int, atStart: Boolean, direction: ScrollDirection) -> Unit,
+    private val onEdgeScrollAttempt: (pageNo: Int, atStart: Boolean, direction: ReelScrollDirection) -> Unit,
 ) : NestedScrollConnection {
     override fun onPreScroll(
         available: Offset,
@@ -47,14 +47,14 @@ class EdgeScrollDetectConnection(
             delta < 0f && isAtLastPage() -> {
                 // Forward scrolling beyond last page
                 val dir =
-                    if (playerConfig.reelVerticalScrolling) ScrollDirection.Up else ScrollDirection.Left
+                    if (playerConfig.reelVerticalScrolling) ReelScrollDirection.Up else ReelScrollDirection.Left
                 onEdgeScrollAttempt(pagerState.currentPage, false, dir)
             }
 
             delta > 0f && isAtFirstPage() -> {
                 // Backward scrolling beyond first page
                 val dir =
-                    if (playerConfig.reelVerticalScrolling) ScrollDirection.Down else ScrollDirection.Right
+                    if (playerConfig.reelVerticalScrolling) ReelScrollDirection.Down else ReelScrollDirection.Right
                 onEdgeScrollAttempt(pagerState.currentPage, true, dir)
             }
         }

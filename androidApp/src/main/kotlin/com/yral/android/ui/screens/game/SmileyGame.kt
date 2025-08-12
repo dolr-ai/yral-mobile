@@ -1,6 +1,5 @@
 package com.yral.android.ui.screens.game
 
-import android.R.attr.textStyle
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat

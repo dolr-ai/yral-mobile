@@ -65,7 +65,7 @@ import com.yral.shared.features.game.viewmodel.GameViewModel
 import com.yral.shared.features.game.viewmodel.NudgeType
 import com.yral.shared.libs.videoPlayer.YRALReelPlayer
 import com.yral.shared.libs.videoPlayer.model.Reels
-import com.yral.shared.libs.videoPlayer.util.ScrollDirection
+import com.yral.shared.libs.videoPlayer.util.ReelScrollDirection
 import com.yral.shared.rust.domain.models.FeedDetails
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -159,7 +159,7 @@ fun FeedScreen(
                     )
                 },
                 onEdgeScrollAttempt = { page, atFirst, direction ->
-                    if (!atFirst && direction == ScrollDirection.Up) {
+                    if (!atFirst && direction == ReelScrollDirection.Up) {
                         gameViewModel.showNudge(
                             nudgeIntention = NudgeType.MANDATORY,
                             pageNo = page,

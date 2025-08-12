@@ -384,10 +384,10 @@ class GameViewModel(
         feedDetailsSize: Int,
     ) {
         val currentState = _state.value
-        if (currentState.isLoading) return
+        if (currentState.isLoading || currentState.nudgeType != null) return
         when (nudgeIntention) {
             NudgeType.MANDATORY -> {
-                if (currentState.nudgeType == null && feedDetailsSize != currentState.lastVotedCount) {
+                if (feedDetailsSize != currentState.lastVotedCount) {
                     Logger.d("Nudge") { "Showing mandatory nudge" }
                     _state.update { it.copy(nudgeType = NudgeType.MANDATORY) }
                 }

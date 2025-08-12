@@ -29,7 +29,7 @@ import com.yral.shared.libs.videoPlayer.pool.rememberPlayerPool
 import com.yral.shared.libs.videoPlayer.util.EdgeScrollDetectConnection
 import com.yral.shared.libs.videoPlayer.util.PrefetchVideo
 import com.yral.shared.libs.videoPlayer.util.PrefetchVideoListener
-import com.yral.shared.libs.videoPlayer.util.ScrollDirection
+import com.yral.shared.libs.videoPlayer.util.ReelScrollDirection
 import com.yral.shared.libs.videoPlayer.util.nextN
 import com.yral.shared.libs.videoPlayer.util.rememberPrefetchPlayerWithLifecycle
 import kotlinx.coroutines.delay
@@ -44,7 +44,7 @@ fun YRALReelPlayer(
     onPageLoaded: (currentPage: Int) -> Unit,
     recordTime: (Int, Int) -> Unit,
     didVideoEnd: () -> Unit,
-    onEdgeScrollAttempt: (pageNo: Int, atStart: Boolean, direction: ScrollDirection) -> Unit = { _, _, _ -> },
+    onEdgeScrollAttempt: (pageNo: Int, atStart: Boolean, direction: ReelScrollDirection) -> Unit = { _, _, _ -> },
     getPrefetchListener: (reel: Reels) -> PrefetchVideoListener,
     getVideoListener: (reel: Reels) -> VideoListener?,
     overlayContent: @Composable (pageNo: Int) -> Unit,
@@ -88,16 +88,20 @@ internal fun YRALReelsPlayerView(
     onPageLoaded: (currentPage: Int) -> Unit,
     recordTime: (Int, Int) -> Unit,
     playerConfig: PlayerConfig = PlayerConfig(), // Configuration for the player,
-    onEdgeScrollAttempt: (pageNo: Int, atStart: Boolean, direction: ScrollDirection) -> Unit = { _, _, _ -> },
+    onEdgeScrollAttempt: (pageNo: Int, atStart: Boolean, direction: ReelScrollDirection) -> Unit = { _, _, _ -> },
     getPrefetchListener: (reel: Reels) -> PrefetchVideoListener,
     getVideoListener: (reel: Reels) -> VideoListener?,
     overlayContent: @Composable (pageNo: Int) -> Unit,
 ) {
     val pageCount by remember(reels, maxReelsInPager) {
-        derivedStateOf { reels.take(maxReelsInPager).size }
+        derivedStateOf { minOf(reels.size, maxReelsInPager) }
     }
     // Remember the state of the pager
-    val pagerState = rememberPagerState(pageCount = { pageCount }, initialPage = initialPage)
+    val pagerState =
+        rememberPagerState(
+            pageCount = { pageCount },
+            initialPage = initialPage.coerceAtMost(pageCount - 1),
+        )
 
     // Create multiplatform player pool for efficient resource management
     val playerPool = rememberPlayerPool(maxPoolSize = 3)
