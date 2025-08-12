@@ -23,12 +23,14 @@ struct SmileyDTO: Decodable {
   let imageURL: String
   let isActive: Bool
   let clickAnimation: String
+  let fallbackImage: String
 
   enum CodingKeys: String, CodingKey {
     case id
     case imageURL = "image_url"
     case isActive = "is_active"
     case clickAnimation = "click_animation"
+    case fallbackImage = "image_fallback"
   }
 }
 
@@ -43,6 +45,7 @@ extension SmileyDTO {
     return Smiley(id: id,
                   imageURL: imageURL,
                   isActive: isActive,
-                  clickAnimation: clickAnimation)
+                  clickAnimation: clickAnimation,
+                  fallbackImage: fallbackImage)
   }
 }

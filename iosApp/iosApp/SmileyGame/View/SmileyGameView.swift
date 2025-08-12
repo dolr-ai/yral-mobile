@@ -27,7 +27,7 @@ struct SmileyGameView: View {
       switch smileyGame.state {
       case .notPlayed:
         ForEach(smileyGame.config.smileys, id: \.id) { smiley in
-          FirebaseImageView(path: smiley.imageURL)
+          FirebaseImageView(path: smiley.imageURL, fallbackImage: smiley.fallbackImage)
             .frame(width: Constants.smileySize, height: Constants.smileySize)
             .opacity(
               (!isFocused || smiley.id == selectedID) ? Constants.one : Constants.zero
@@ -91,7 +91,7 @@ struct SmileyGameView: View {
   }
 
   @ViewBuilder func resultView(for result: SmileyGameResultResponse) -> some View {
-    FirebaseImageView(path: result.smiley.imageURL)
+    FirebaseImageView(path: result.smiley.imageURL, fallbackImage: result.smiley.fallbackImage)
       .frame(width: Constants.smileySize, height: Constants.smileySize)
       .clipShape(Circle())
       .padding(.vertical, Constants.smileyVerticalPadding)
