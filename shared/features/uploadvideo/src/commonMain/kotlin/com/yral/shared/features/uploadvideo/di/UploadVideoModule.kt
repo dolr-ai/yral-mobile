@@ -6,6 +6,7 @@ import com.yral.shared.features.uploadvideo.data.remote.UploadVideoRemoteDataSou
 import com.yral.shared.features.uploadvideo.domain.GenerateVideoUseCase
 import com.yral.shared.features.uploadvideo.domain.GetProvidersUseCase
 import com.yral.shared.features.uploadvideo.domain.GetUploadEndpointUseCase
+import com.yral.shared.features.uploadvideo.domain.PollGenerationStatusUseCase
 import com.yral.shared.features.uploadvideo.domain.UpdateMetaUseCase
 import com.yral.shared.features.uploadvideo.domain.UploadRepository
 import com.yral.shared.features.uploadvideo.domain.UploadVideoUseCase
@@ -24,6 +25,7 @@ val uploadVideoModule =
         factoryOf(::UpdateMetaUseCase)
         factoryOf(::GetProvidersUseCase)
         factoryOf(::GenerateVideoUseCase)
+        factoryOf(::PollGenerationStatusUseCase)
         factoryOf(::UploadVideoTelemetry)
         viewModelOf(::UploadVideoViewModel)
     }

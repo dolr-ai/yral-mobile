@@ -8,6 +8,8 @@ import com.yral.shared.rust.domain.models.FeedRequest
 import com.yral.shared.rust.domain.models.Post
 import com.yral.shared.rust.domain.models.PostResponse
 import com.yral.shared.rust.domain.models.toDTO
+import com.yral.shared.uniffi.generated.VideoGenRequestKey
+import com.yral.shared.uniffi.generated.VideoGenRequestStatus
 
 class IndividualUserRepositoryImpl(
     private val dataSource: IndividualUserDataSource,
@@ -27,4 +29,8 @@ class IndividualUserRepositoryImpl(
                 nsfwProbability = post.nsfwProbability,
                 isNsfw = post.isNSFW,
             )
+
+    override suspend fun fetchVideoGenerationStatus(requestKey: VideoGenRequestKey): VideoGenRequestStatus =
+        dataSource
+            .fetchVideoGenerationStatus(requestKey)
 }

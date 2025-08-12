@@ -17,6 +17,7 @@ use crate::commons::*;
 use crate::individual_user_template::individual_user_template_helper::*;
 use crate::RUNTIME;
 use crate::uni_ffi_helpers::*;
+use serde_json::Value as JsonValue;
 
 type Result<T> = std::result::Result<T, FFIError>;
 
@@ -739,6 +740,20 @@ pub struct IndividualUserService {
     pub agent: Arc<Agent>,
 }
 
+// ───────────── VideoGen polling types ─────────────
+#[derive(CandidType, Deserialize, Record)]
+pub struct VideoGenRequestKey {
+    pub principal: Principal,
+    pub counter: u64,
+}
+#[derive(CandidType, Deserialize, Enum)]
+pub enum VideoGenRequestStatus {
+    Pending,
+    Processing,
+    Complete(String),
+    Failed(String),
+}
+
 #[uniffi::export]
 impl IndividualUserService {
     #[uniffi::constructor]
@@ -1375,5 +1390,14 @@ impl IndividualUserService {
         let args = Encode!(&arg0, &arg1)?;
         let bytes = self.update_canister("write_multiple_key_value_pairs", args).await?;
         Ok(Decode!(&bytes, Result6)?)
+    }
+    #[uniffi::method]
+    pub async fn poll_video_generation_status(
+        &self,
+        key: VideoGenRequestKey,
+    ) -> Result<VideoGenRequestStatus> {
+        let args = Encode!(&key)?;
+        let bytes = self.query_canister("poll_video_generation_status", args).await?;
+        Ok(Decode!(&bytes, VideoGenRequestStatus)?)
     }
 }
