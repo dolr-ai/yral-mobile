@@ -95,6 +95,12 @@
 		10512A442DA666AD00114BAA /* YralPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10512A422DA666A900114BAA /* YralPlayer.swift */; };
 		10512A522DA795A800114BAA /* YralQueuePlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10512A512DA7959D00114BAA /* YralQueuePlayer.swift */; };
 		10512A532DA795A800114BAA /* YralQueuePlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10512A512DA7959D00114BAA /* YralQueuePlayer.swift */; };
+		1064B7EB2E4B40630036C10B /* UploadOptionsScreenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B7EA2E4B40630036C10B /* UploadOptionsScreenView.swift */; };
+		1064B7EC2E4B40630036C10B /* UploadOptionsScreenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B7EA2E4B40630036C10B /* UploadOptionsScreenView.swift */; };
+		1064B7EE2E4B439A0036C10B /* UploadOptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B7ED2E4B439A0036C10B /* UploadOptionView.swift */; };
+		1064B7EF2E4B439A0036C10B /* UploadOptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B7ED2E4B439A0036C10B /* UploadOptionView.swift */; };
+		1064B7F32E4B50890036C10B /* UploadOption.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B7F22E4B50850036C10B /* UploadOption.swift */; };
+		1064B7F42E4B50890036C10B /* UploadOption.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B7F22E4B50850036C10B /* UploadOption.swift */; };
 		107C60902DB7809A006FC467 /* UIView+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C608F2DB78093006FC467 /* UIView+Extensions.swift */; };
 		107C60912DB7809A006FC467 /* UIView+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C608F2DB78093006FC467 /* UIView+Extensions.swift */; };
 		107C60982DB8BCB1006FC467 /* SmileyGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C60972DB8BCB1006FC467 /* SmileyGameView.swift */; };
@@ -662,6 +668,9 @@
 		105037672DDC5DB000571B4E /* SmileyGameConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameConfig.swift; sourceTree = "<group>"; };
 		10512A422DA666A900114BAA /* YralPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralPlayer.swift; sourceTree = "<group>"; };
 		10512A512DA7959D00114BAA /* YralQueuePlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralQueuePlayer.swift; sourceTree = "<group>"; };
+		1064B7EA2E4B40630036C10B /* UploadOptionsScreenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadOptionsScreenView.swift; sourceTree = "<group>"; };
+		1064B7ED2E4B439A0036C10B /* UploadOptionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadOptionView.swift; sourceTree = "<group>"; };
+		1064B7F22E4B50850036C10B /* UploadOption.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadOption.swift; sourceTree = "<group>"; };
 		107C608F2DB78093006FC467 /* UIView+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIView+Extensions.swift"; sourceTree = "<group>"; };
 		107C60972DB8BCB1006FC467 /* SmileyGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameView.swift; sourceTree = "<group>"; };
 		107C609A2DB90B22006FC467 /* SmileyGameResultBottomSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameResultBottomSheetView.swift; sourceTree = "<group>"; };
@@ -1115,6 +1124,40 @@
 			path = FeedsPlayer;
 			sourceTree = "<group>";
 		};
+		1064B7E82E4B3FC00036C10B /* AIVideo */ = {
+			isa = PBXGroup;
+			children = (
+				1064B7F02E4B50790036C10B /* Domain */,
+				1064B7E92E4B3FE20036C10B /* View */,
+			);
+			path = AIVideo;
+			sourceTree = "<group>";
+		};
+		1064B7E92E4B3FE20036C10B /* View */ = {
+			isa = PBXGroup;
+			children = (
+				1064B7EA2E4B40630036C10B /* UploadOptionsScreenView.swift */,
+				1064B7ED2E4B439A0036C10B /* UploadOptionView.swift */,
+			);
+			path = View;
+			sourceTree = "<group>";
+		};
+		1064B7F02E4B50790036C10B /* Domain */ = {
+			isa = PBXGroup;
+			children = (
+				1064B7F12E4B507E0036C10B /* Entity */,
+			);
+			path = Domain;
+			sourceTree = "<group>";
+		};
+		1064B7F12E4B507E0036C10B /* Entity */ = {
+			isa = PBXGroup;
+			children = (
+				1064B7F22E4B50850036C10B /* UploadOption.swift */,
+			);
+			path = Entity;
+			sourceTree = "<group>";
+		};
 		107C60922DB7AA86006FC467 /* SmileyGame */ = {
 			isa = PBXGroup;
 			children = (
@@ -1294,6 +1337,7 @@
 		7555FF7D242A565900829871 /* iosApp */ = {
 			isa = PBXGroup;
 			children = (
+				1064B7E82E4B3FC00036C10B /* AIVideo */,
 				10CEBB7D2E3103580022803A /* HapticFeedback */,
 				ACD7C1702E1D836400075148 /* DeepLinkRouter */,
 				100209A92DE6E2E700DF269E /* Leaderboard */,
@@ -3069,6 +3113,7 @@
 				10512A442DA666AD00114BAA /* YralPlayer.swift in Sources */,
 				105036F62DDB289D00571B4E /* ExchangePrincipalResponse.swift in Sources */,
 				ACB46A732D105AF4002E200C /* CollectionView+Extensions.swift in Sources */,
+				1064B7EB2E4B40630036C10B /* UploadOptionsScreenView.swift in Sources */,
 				10CEBB892E3104220022803A /* Presets.swift in Sources */,
 				107C60C32DBF4CE2006FC467 /* FirebaseService.swift in Sources */,
 				10020AB02DF7FE2A00DF269E /* SatsCoinError.swift in Sources */,
@@ -3120,6 +3165,7 @@
 				ACDD23E72D8B1B5F00AB0DAF /* ProfileVideoRequest.swift in Sources */,
 				ACC0D44E2D8DDB21006DCF5C /* ProfileRepository.swift in Sources */,
 				ACEBF7E22D6F505A00B594A0 /* UploadCompletedView.swift in Sources */,
+				1064B7EE2E4B439A0036C10B /* UploadOptionView.swift in Sources */,
 				AC7F7EAE2D771EB300215162 /* UploadEndpointResponse.swift in Sources */,
 				ACF639DC2DC24D2B00C4BCCC /* SocialProvider.swift in Sources */,
 				AC99BBBB2D86C8B1008012C2 /* ProfileViewModel.swift in Sources */,
@@ -3130,6 +3176,7 @@
 				AC32E3F72D26FEB9001DDA43 /* UIColor+Extensions.swift in Sources */,
 				AC7F7EBD2D77335900215162 /* AuthErrors.swift in Sources */,
 				AC99BBB82D86C645008012C2 /* ProfileDIContainer.swift in Sources */,
+				1064B7F42E4B50890036C10B /* UploadOption.swift in Sources */,
 				107C60C62DBF6109006FC467 /* SmileyGameRuleDTO.swift in Sources */,
 				10020A192DED6CED00DF269E /* LeaderboardRowView.swift in Sources */,
 				ACC0F3972D2ED5D700FA5BD0 /* LottieView.swift in Sources */,
@@ -3323,6 +3370,7 @@
 				10512A432DA666AD00114BAA /* YralPlayer.swift in Sources */,
 				105036F82DDB289D00571B4E /* ExchangePrincipalResponse.swift in Sources */,
 				ACB46A742D105AF4002E200C /* CollectionView+Extensions.swift in Sources */,
+				1064B7EC2E4B40630036C10B /* UploadOptionsScreenView.swift in Sources */,
 				10CEBB882E3104220022803A /* Presets.swift in Sources */,
 				107C60C22DBF4CE2006FC467 /* FirebaseService.swift in Sources */,
 				10020AB12DF7FE2A00DF269E /* SatsCoinError.swift in Sources */,
@@ -3374,6 +3422,7 @@
 				ACDD23E82D8B1B5F00AB0DAF /* ProfileVideoRequest.swift in Sources */,
 				ACC0D44F2D8DDB21006DCF5C /* ProfileRepository.swift in Sources */,
 				ACEBF7E12D6F505A00B594A0 /* UploadCompletedView.swift in Sources */,
+				1064B7EF2E4B439A0036C10B /* UploadOptionView.swift in Sources */,
 				AC7F7EAD2D771EB300215162 /* UploadEndpointResponse.swift in Sources */,
 				ACF639DD2DC24D2B00C4BCCC /* SocialProvider.swift in Sources */,
 				AC99BBBA2D86C8B1008012C2 /* ProfileViewModel.swift in Sources */,
@@ -3384,6 +3433,7 @@
 				AC32E3F62D26FEB9001DDA43 /* UIColor+Extensions.swift in Sources */,
 				AC7F7EBC2D77335900215162 /* AuthErrors.swift in Sources */,
 				AC99BBB72D86C645008012C2 /* ProfileDIContainer.swift in Sources */,
+				1064B7F32E4B50890036C10B /* UploadOption.swift in Sources */,
 				107C60C52DBF6109006FC467 /* SmileyGameRuleDTO.swift in Sources */,
 				10020A182DED6CED00DF269E /* LeaderboardRowView.swift in Sources */,
 				ACC0F3982D2ED5D700FA5BD0 /* LottieView.swift in Sources */,
