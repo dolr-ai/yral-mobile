@@ -4,13 +4,17 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.michaelbull.result.fold
 import com.github.michaelbull.result.getOrThrow
+import com.github.michaelbull.result.onFailure
+import com.github.michaelbull.result.onSuccess
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.logging.YralLogger
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.uploadvideo.analytics.UploadVideoTelemetry
+import com.yral.shared.features.uploadvideo.domain.GetProvidersUseCase
 import com.yral.shared.features.uploadvideo.domain.GetUploadEndpointUseCase
 import com.yral.shared.features.uploadvideo.domain.UpdateMetaUseCase
 import com.yral.shared.features.uploadvideo.domain.UploadVideoUseCase
+import com.yral.shared.features.uploadvideo.domain.models.Provider
 import com.yral.shared.features.uploadvideo.domain.models.UploadEndpoint
 import com.yral.shared.features.uploadvideo.domain.models.UploadFileRequest
 import com.yral.shared.features.uploadvideo.domain.models.UploadState
@@ -39,6 +43,7 @@ class UploadVideoViewModel internal constructor(
     private val getUploadEndpoint: GetUploadEndpointUseCase,
     private val uploadVideo: UploadVideoUseCase,
     private val updateMeta: UpdateMetaUseCase,
+    private val getProviders: GetProvidersUseCase,
     private val appDispatchers: AppDispatchers,
     private val uploadVideoTelemetry: UploadVideoTelemetry,
     private val crashlyticsManager: CrashlyticsManager,
@@ -415,6 +420,14 @@ class UploadVideoViewModel internal constructor(
         }
     }
 
+    fun loadProviders() {
+        viewModelScope.launch {
+            getProviders()
+                .onSuccess { list -> _state.update { it.copy(providers = list) } }
+                .onFailure { /* ignore for now; optional UI */ }
+        }
+    }
+
     private inline fun log(message: () -> String) {
         @Suppress("KotlinConstantConditions")
         if (!LOG_ENABLED) return
@@ -442,6 +455,7 @@ class UploadVideoViewModel internal constructor(
         val hashtags: List<String> = emptyList(),
         val errorAnalyticsPushed: Boolean = false,
         val fileUploadUiState: UiState<UploadEndpoint> = UiState.Initial,
+        val providers: List<Provider> = emptyList(),
         val updateMetadataUiState: UiState<Unit> = UiState.Initial,
     ) {
         val canUpload: Boolean =

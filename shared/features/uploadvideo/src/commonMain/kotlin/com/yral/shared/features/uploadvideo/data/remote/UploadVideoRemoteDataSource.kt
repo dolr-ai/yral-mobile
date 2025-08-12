@@ -3,6 +3,7 @@ package com.yral.shared.features.uploadvideo.data.remote
 import com.yral.shared.core.AppConfigurations
 import com.yral.shared.features.uploadvideo.data.remote.models.FileUploadStatus
 import com.yral.shared.features.uploadvideo.data.remote.models.GetUploadUrlResponseDTO
+import com.yral.shared.features.uploadvideo.data.remote.models.ProvidersResponseDto
 import com.yral.shared.features.uploadvideo.data.remote.models.UpdateMetaDataRequestDto
 import com.yral.shared.http.UPLOAD_FILE_TIME_OUT
 import com.yral.shared.http.handleException
@@ -40,6 +41,14 @@ internal class UploadVideoRemoteDataSource(
             url {
                 host = AppConfigurations.UPLOAD_BASE_URL
                 path(GET_UPLOAD_URL_PATH)
+            }
+        }
+
+    suspend fun getProviders(): ProvidersResponseDto =
+        httpGet(client, json) {
+            url {
+                host = AppConfigurations.OFF_CHAIN_BASE_URL
+                path(GET_PROVIDERS_PATH)
             }
         }
 
@@ -108,8 +117,11 @@ internal class UploadVideoRemoteDataSource(
         }
     }
 
+    @Suppress("UnusedPrivateProperty")
     companion object {
         private const val GET_UPLOAD_URL_PATH = "get_upload_url"
         private const val UPDATE_METADATA_PATH = "update_metadata"
+        private const val GET_PROVIDERS_PATH = "/api/v2/videogen/providers"
+        private const val GET_ALL_PROVIDERS_PATH = "/api/v2/videogen/providers-all" // Use for internal builds
     }
 }
