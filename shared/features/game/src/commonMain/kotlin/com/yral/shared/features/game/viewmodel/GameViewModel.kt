@@ -147,11 +147,13 @@ class GameViewModel(
                         )
                     }
                     sessionManager.updateCoinBalance(result.coins)
+                    gameTelemetry.onAirdropClaimSuccess(result.coins.toInt())
                 }.onFailure {
                     setLoading(false)
                     _state.update {
                         it.copy(refreshBalanceState = RefreshBalanceState.FAILURE)
                     }
+                    gameTelemetry.onAirdropClaimFailure()
                 }
         }
     }
