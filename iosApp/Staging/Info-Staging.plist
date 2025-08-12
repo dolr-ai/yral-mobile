@@ -28,7 +28,12 @@
 				<string>com.yral.iosApp.staging</string>
 			</array>
 		</dict>
-		<dict/>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array/>
+		</dict>
 	</array>
 	<key>CFBundleVersion</key>
 	<string>1</string>
@@ -86,5 +91,17 @@
 	<string>Dark</string>
 	<key>YRAL_REDIRECT_URI</key>
 	<string>com.yral.iosApp.staging://oauth/callback</string>
+	<key>branch_key</key>
+	<dict>
+		<key>live</key>
+		<string>key_test_cuuos6m3G17sHqacdUgoYbpbFBkSpEFs</string>
+		<key>test</key>
+		<string>key_test_cuuos6m3G17sHqacdUgoYbpbFBkSpEFs</string>
+	</dict>
+	<key>branch_universal_link_domains</key>
+	<array>
+		<string>test-link.yral.com</string>
+		<string>f6ur9-alternate.test-app.link</string>
+	</array>
 </dict>
 </plist>
