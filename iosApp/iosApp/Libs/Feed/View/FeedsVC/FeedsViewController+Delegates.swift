@@ -281,6 +281,15 @@ extension FeedsViewController: FeedsCellProtocol {
     feedsCV.isScrollEnabled = true
     self.walletAnimationDelegate?.walletAnimationEnded(success: success, coins: coins)
   }
+
+  func howToPlayTapped() {
+    let smileyGameRuleView = self.makeSmileyGameRulesDIContainer().makeSmileyGameRuleView {
+      self.navigationController?.popViewController(animated: true)
+    }
+    let smileyGameRuleVC = UIHostingController(rootView: smileyGameRuleView)
+    smileyGameRuleVC.extendedLayoutIncludesOpaqueBars = true
+    self.navigationController?.pushViewController(smileyGameRuleVC, animated: true)
+  }
 }
 
 extension FeedsViewController: FeedsPlayerProtocol {

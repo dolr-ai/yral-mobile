@@ -44,8 +44,10 @@ extension FeedsCell {
       self.onboardingOverlayView.alpha = .one
     }
     DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.five) {
-      self.cleanupOnOnboardingCompletion(smileyView: smileyView)
-      UserDefaultsManager.shared.set(true, for: .onboardingCompleted)
+      if self.contains(self.onboardingOverlayView) {
+        self.cleanupOnOnboardingCompletion(smileyView: smileyView)
+        UserDefaultsManager.shared.set(true, for: .onboardingCompleted)
+      }
     }
   }
 
@@ -91,6 +93,62 @@ extension FeedsCell {
     onboardingInfoView.layer.add(translateAnimation, forKey: "onboardingBob")
   }
 
+  func addHowToPlay() {
+    if howToPlayButton.superview == nil {
+      contentView.addSubview(howToPlayButton)
+      howToPlayWidthAnchor = howToPlayButton.widthAnchor.constraint(equalToConstant: Constants.howToPlayCollapsedWidth)
+      NSLayoutConstraint.activate([
+        howToPlayButton.leadingAnchor.constraint(
+          equalTo: contentView.leadingAnchor,
+          constant: Constants.smileyGameHorizontal
+        ),
+        howToPlayButton.heightAnchor.constraint(equalToConstant: Constants.howToPlayHeight),
+        howToPlayWidthAnchor!,
+        howToPlayButton.centerYAnchor.constraint(equalTo: actionsStackView.centerYAnchor)
+      ])
+      howToPlayButton.addTarget(self, action: #selector(howToPlayTapped), for: .touchUpInside)
+    } else {
+      howToPlayWidthAnchor?.constant = Constants.howToPlayCollapsedWidth
+    }
+    UIView.performWithoutAnimation { self.contentView.layoutIfNeeded() }
+    if self.index < Int.three {
+      DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.one) {
+        UIView.animate(
+          withDuration: CGFloat.pointSevenFive,
+          delay: CGFloat.zero,
+          usingSpringWithDamping: CGFloat.one,
+          initialSpringVelocity: CGFloat.half,
+          options: [.curveEaseInOut, .allowUserInteraction, .beginFromCurrentState]
+        ) { [weak self] in
+          guard let self = self else { return }
+          self.howToPlayButton.setImage(UIImage(named: Constants.howToPlayImageExpanded), for: .normal)
+          self.howToPlayWidthAnchor?.constant = Constants.howToPlayExpandedWidth
+          self.contentView.layoutIfNeeded()
+        } completion: { [weak self] _ in
+          guard let self = self else { return }
+          DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.two) {
+            UIView.animate(
+              withDuration: CGFloat.one,
+              delay: CGFloat.zero,
+              usingSpringWithDamping: CGFloat.one,
+              initialSpringVelocity: CGFloat.pointOne,
+              options: [.curveEaseInOut, .allowUserInteraction, .beginFromCurrentState]
+            ) { [weak self] in
+              guard let self = self else { return }
+              self.howToPlayButton.setImage(UIImage(named: Constants.howToPlayImageCollapsed), for: .normal)
+              self.howToPlayWidthAnchor?.constant = Constants.howToPlayCollapsedWidth
+              self.contentView.layoutIfNeeded()
+            }
+          }
+        }
+      }
+    }
+  }
+
+  @objc func howToPlayTapped() {
+    self.delegate?.howToPlayTapped()
+  }
+
   func cleanupOnOnboardingCompletion(smileyView: UIView) {
     self.onboardingOverlayView.removeFromSuperview()
     smileyView.layer.shadowOpacity = .zero
@@ -99,5 +157,10 @@ extension FeedsCell {
     smileyView.backgroundColor = .clear
     self.onboardingInfoView.removeFromSuperview()
     self.animationCompletionPublisher.send()
+    howToPlayWidthAnchor?.isActive = false
+    howToPlayWidthAnchor = nil
+    howToPlayButton.removeFromSuperview()
+    howToPlayButton.setImage(UIImage(named: Constants.howToPlayImageCollapsed), for: .normal)
+    contentView.layoutIfNeeded()
   }
 }

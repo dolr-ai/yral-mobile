@@ -33,7 +33,7 @@ extension FeedsViewController {
               indexPath.item % Constants.overlayIndex == .zero
             ) && !session.state.isLoggedIn,
             showOnboarding: !(UserDefaultsManager.shared.get(for: DefaultsKey.onboardingCompleted) ?? false)
-            && indexPath.item == .four
+            && indexPath.item >= .three
           ),
           profileInfo: ProfileInfoView.ProfileInfo(
             imageURL: feed.profileImageURL,

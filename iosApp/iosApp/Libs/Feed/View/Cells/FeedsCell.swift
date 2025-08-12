@@ -25,6 +25,7 @@ protocol FeedsCellProtocol: AnyObject {
   func videoStarted(index: Int, videoId: String)
   func walletAnimationStarted()
   func walletAnimationEnded(success: Bool, coins: Int64)
+  func howToPlayTapped()
 }
 
 // swiftlint: disable type_body_length
@@ -155,6 +156,19 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   }()
   var onboardingOverlayView = getUIView()
   var onboardingInfoView = OnboardingInfoView()
+  var howToPlayButton: UIButton = {
+    let button = getUIButton()
+    button.backgroundColor = .clear
+    button.setImage(UIImage(named: Constants.howToPlayImageCollapsed), for: .normal)
+    button.contentHorizontalAlignment = .left
+    button.imageView?.contentMode = .left
+    button.contentEdgeInsets = .zero
+    button.imageEdgeInsets = .zero
+    button.setContentHuggingPriority(.required, for: .horizontal)
+    button.setContentCompressionResistancePriority(.required, for: .horizontal)
+    return button
+  }()
+  var howToPlayWidthAnchor: NSLayoutConstraint!
 
   enum RechargeResult { case success, failure }
 
@@ -323,6 +337,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
       ])
 
       smileyGameHostController = controller
+//      addHowToPlay()
     }
   }
 
@@ -483,11 +498,9 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
       actionsStackView.addArrangedSubview(reportButton)
       deleteButton.removeFromSuperview()
       setupSmileyGameView()
-//      if feedInfo.showOnboarding {
-      if feedsPlayer != nil {
+      if feedInfo.showOnboarding, feedsPlayer != nil {
         showOnboardingFlow()
       }
-//      }
     } else {
       reportButton.removeFromSuperview()
       actionsStackView.addArrangedSubview(deleteButton)
@@ -524,13 +537,13 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     if let game = smileyGame {
       initialStatePublisher.send(game)
     }
+    guard let smileyView = smileyGameHostController?.view else { return }
+    cleanupOnOnboardingCompletion(smileyView: smileyView)
     smileyGameHostController?.view.removeFromSuperview()
     smileyGameHostController = nil
 
     cancellables.forEach({ $0.cancel() })
     cancellables.removeAll()
-    guard let smileyView = smileyGameHostController?.view else { return }
-    cleanupOnOnboardingCompletion(smileyView: smileyView)
   }
 
   func startListeningForFirstFrame() {
@@ -607,5 +620,10 @@ extension FeedsCell {
     static let onbaordingInfoViewBottom: CGFloat = 8.0
     static let onbaordingInfoViewHorizontalSpacing: CGFloat = 24.0
     static let onboardingInfoAnimationTranslation: CGFloat = 10.0
+    static let howToPlayImageCollapsed = "howtoplay_collapsed"
+    static let howToPlayImageExpanded = "howtoplay_expanded"
+    static let howToPlayHeight = 42.0
+    static let howToPlayCollapsedWidth = 32.0
+    static let howToPlayExpandedWidth = 122.0
   }
 }
