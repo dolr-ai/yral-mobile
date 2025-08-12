@@ -321,7 +321,7 @@ extension ProfileView {
         userPrincipal: userPrincipal,
         canisterPrincipal: canisterPrincipal,
         isLoggedIn: isLoggedIn,
-        satsBalance: Double(coins)
+        walletBalance: Double(coins)
       )
     )
   }
