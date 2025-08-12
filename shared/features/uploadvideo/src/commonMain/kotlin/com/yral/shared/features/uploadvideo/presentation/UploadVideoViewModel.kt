@@ -2,6 +2,7 @@ package com.yral.shared.features.uploadvideo.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.fold
 import com.github.michaelbull.result.getOrThrow
 import com.github.michaelbull.result.onFailure
@@ -10,8 +11,11 @@ import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.logging.YralLogger
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.uploadvideo.analytics.UploadVideoTelemetry
+import com.yral.shared.features.uploadvideo.domain.GenerateVideoUseCase
+import com.yral.shared.features.uploadvideo.domain.GetFreeCreditsStatusUseCase
 import com.yral.shared.features.uploadvideo.domain.GetProvidersUseCase
 import com.yral.shared.features.uploadvideo.domain.GetUploadEndpointUseCase
+import com.yral.shared.features.uploadvideo.domain.PollGenerationStatusUseCase
 import com.yral.shared.features.uploadvideo.domain.UpdateMetaUseCase
 import com.yral.shared.features.uploadvideo.domain.UploadVideoUseCase
 import com.yral.shared.features.uploadvideo.domain.models.Provider
@@ -40,10 +44,7 @@ import kotlinx.io.files.SystemFileSystem
 
 @Suppress("TooManyFunctions")
 class UploadVideoViewModel internal constructor(
-    private val getUploadEndpoint: GetUploadEndpointUseCase,
-    private val uploadVideo: UploadVideoUseCase,
-    private val updateMeta: UpdateMetaUseCase,
-    private val getProviders: GetProvidersUseCase,
+    private val requiredUseCases: RequiredUseCases,
     private val appDispatchers: AppDispatchers,
     private val uploadVideoTelemetry: UploadVideoTelemetry,
     private val crashlyticsManager: CrashlyticsManager,
@@ -59,6 +60,11 @@ class UploadVideoViewModel internal constructor(
 
     private var backgroundUploadJob: Job? = null
     private var completeProcessJob: Job? = null
+
+    init {
+        loadProviders()
+        getFreeCreditsStatus()
+    }
 
     private fun send(event: Event) {
         viewModelScope.launch { eventChannel.send(event) }
@@ -117,13 +123,14 @@ class UploadVideoViewModel internal constructor(
                 it.copy(fileUploadUiState = UiState.InProgress(0f))
             }
             // Get upload endpoint
-            val endpointResult = getUploadEndpoint()
+            val endpointResult = requiredUseCases.getUploadEndpoint()
             val endpoint = endpointResult.getOrThrow()
 
             log { "performBackgroundUpload endpoint: $endpoint" }
 
             // Start video upload
-            uploadVideo(UploadVideoUseCase.Params(endpoint.url, filePath))
+            requiredUseCases
+                .uploadVideo(UploadVideoUseCase.Params(endpoint.url, filePath))
                 .collect { result ->
                     val fileUploadUiState =
                         result.fold(
@@ -310,7 +317,7 @@ class UploadVideoViewModel internal constructor(
                     }
 
                 // Perform the actual metadata update
-                val result = updateMeta(UpdateMetaUseCase.Param(uploadFileRequest))
+                val result = requiredUseCases.updateMeta(UpdateMetaUseCase.Param(uploadFileRequest))
                 log { "Metadata updated" }
 
                 // Cancel the progress animation and set to 100%
@@ -422,9 +429,23 @@ class UploadVideoViewModel internal constructor(
 
     fun loadProviders() {
         viewModelScope.launch {
-            getProviders()
-                .onSuccess { list -> _state.update { it.copy(providers = list) } }
-                .onFailure { /* ignore for now; optional UI */ }
+            requiredUseCases
+                .getProviders()
+                .onSuccess { list ->
+                    _state.update { it.copy(providers = list) }
+                    Logger.d("VideoGen") { "Providers: $list" }
+                }.onFailure { Logger.e("VideoGen", it) { "Error fetching providers" } }
+        }
+    }
+
+    fun getFreeCreditsStatus() {
+        viewModelScope.launch {
+            requiredUseCases
+                .getFreeCreditsStatus()
+                .onSuccess { status ->
+                    _state.update { it.copy(availableCredits = if (status.isLimited) 0 else 1) }
+                    Logger.d("VideoGen") { "AvailableCredit: ${status.isLimited}" }
+                }.onFailure { Logger.e("VideoGen", it) { "Error fetching free credits" } }
         }
     }
 
@@ -456,6 +477,7 @@ class UploadVideoViewModel internal constructor(
         val errorAnalyticsPushed: Boolean = false,
         val fileUploadUiState: UiState<UploadEndpoint> = UiState.Initial,
         val providers: List<Provider> = emptyList(),
+        val availableCredits: Int = 0,
         val updateMetadataUiState: UiState<Unit> = UiState.Initial,
     ) {
         val canUpload: Boolean =
@@ -511,4 +533,14 @@ class UploadVideoViewModel internal constructor(
         private const val IS_CAPTION_REQUIRED = false
         private const val IS_HASHTAGS_REQUIRED = false
     }
+
+    internal data class RequiredUseCases(
+        val getUploadEndpoint: GetUploadEndpointUseCase,
+        val uploadVideo: UploadVideoUseCase,
+        val updateMeta: UpdateMetaUseCase,
+        val getProviders: GetProvidersUseCase,
+        val getFreeCreditsStatus: GetFreeCreditsStatusUseCase,
+        val generateVideo: GenerateVideoUseCase,
+        val pollGenerationStatusUseCase: PollGenerationStatusUseCase,
+    )
 }
