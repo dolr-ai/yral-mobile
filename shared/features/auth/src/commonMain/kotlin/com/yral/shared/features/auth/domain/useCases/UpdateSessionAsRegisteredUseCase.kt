@@ -1,15 +1,15 @@
 package com.yral.shared.features.auth.domain.useCases
 
-import com.yral.shared.core.dispatchers.AppDispatchers
-import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.domain.AuthRepository
-import com.yral.shared.libs.useCase.SuspendUseCase
+import com.yral.shared.libs.arch.domain.SuspendUseCase
+import com.yral.shared.libs.arch.domain.UseCaseFailureListener
+import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 
 class UpdateSessionAsRegisteredUseCase(
     appDispatchers: AppDispatchers,
-    crashlyticsManager: CrashlyticsManager,
+    useCaseFailureListener: UseCaseFailureListener,
     private val authRepository: AuthRepository,
-) : SuspendUseCase<UpdateSessionAsRegisteredUseCase.Params, Unit>(appDispatchers.io, crashlyticsManager) {
+) : SuspendUseCase<UpdateSessionAsRegisteredUseCase.Params, Unit>(appDispatchers.network, useCaseFailureListener) {
     override suspend fun execute(parameter: Params): Unit =
         authRepository
             .updateSessionAsRegistered(

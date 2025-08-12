@@ -1,14 +1,14 @@
 package com.yral.shared.features.auth.domain.useCases
 
-import com.yral.shared.core.dispatchers.AppDispatchers
-import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.domain.AuthRepository
-import com.yral.shared.libs.useCase.SuspendUseCase
+import com.yral.shared.libs.arch.domain.SuspendUseCase
+import com.yral.shared.libs.arch.domain.UseCaseFailureListener
+import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 
 class DeleteAccountUseCase(
     private val repository: AuthRepository,
     dispatchers: AppDispatchers,
-    crashlyticsManager: CrashlyticsManager,
-) : SuspendUseCase<Unit, String>(dispatchers.io, crashlyticsManager) {
+    useCaseFailureListener: UseCaseFailureListener,
+) : SuspendUseCase<Unit, String>(dispatchers.network, useCaseFailureListener) {
     override suspend fun execute(parameter: Unit): String = repository.deleteAccount()
 }

@@ -21,6 +21,7 @@ kotlin {
             implementation(libs.ktor.serialization.kotlinx.json)
 
             implementation(projects.shared.core)
+            implementation(projects.shared.libs.coroutinesX)
             implementation(projects.shared.libs.koin)
         }
     }

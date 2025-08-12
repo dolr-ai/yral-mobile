@@ -1,13 +1,13 @@
-package com.yral.shared.features.feed.useCases
+package com.yral.shared.features.feed.domain.useCases
 
-import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.rust.KotlinDelegatedIdentityWire
 import com.yral.shared.core.session.SessionManager
-import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.feed.domain.IFeedRepository
 import com.yral.shared.features.feed.domain.ReportRequest
-import com.yral.shared.libs.useCase.SuspendUseCase
+import com.yral.shared.libs.arch.domain.SuspendUseCase
+import com.yral.shared.libs.arch.domain.UseCaseFailureListener
+import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.uniffi.generated.delegatedIdentityWireToJson
 import kotlinx.serialization.json.Json
 
@@ -16,11 +16,8 @@ class ReportVideoUseCase(
     private val sessionManager: SessionManager,
     private val json: Json,
     appDispatchers: AppDispatchers,
-    crashlyticsManager: CrashlyticsManager,
-) : SuspendUseCase<ReportRequestParams, String>(
-        appDispatchers.io,
-        crashlyticsManager,
-    ) {
+    useCaseFailureListener: UseCaseFailureListener,
+) : SuspendUseCase<ReportRequestParams, String>(appDispatchers.network, useCaseFailureListener) {
     override suspend fun execute(parameter: ReportRequestParams): String {
         val userCanister = sessionManager.canisterID
         val userPrincipal = sessionManager.userPrincipal

@@ -1,18 +1,18 @@
 package com.yral.shared.features.auth.domain.useCases
 
-import com.yral.shared.core.dispatchers.AppDispatchers
-import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.domain.AuthRepository
 import com.yral.shared.features.auth.domain.models.ExchangePrincipalResponse
-import com.yral.shared.libs.useCase.SuspendUseCase
+import com.yral.shared.libs.arch.domain.SuspendUseCase
+import com.yral.shared.libs.arch.domain.UseCaseFailureListener
+import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 
 class ExchangePrincipalIdUseCase(
     appDispatchers: AppDispatchers,
-    crashlyticsManager: CrashlyticsManager,
+    useCaseFailureListener: UseCaseFailureListener,
     private val authRepository: AuthRepository,
 ) : SuspendUseCase<ExchangePrincipalIdUseCase.Params, ExchangePrincipalResponse>(
-        appDispatchers.io,
-        crashlyticsManager,
+        coroutineDispatcher = appDispatchers.network,
+        failureListener = useCaseFailureListener,
     ) {
     override suspend fun execute(parameter: Params): ExchangePrincipalResponse =
         authRepository.exchangePrincipalId(
