@@ -110,7 +110,7 @@ fun SmileyGame(
                     clickedIcon = clickedIcon,
                     onIconClicked = {
                         animateBubbles = true
-                        onIconClicked(it, animatingNudgeIconPosition != null)
+                        onIconClicked(it, !shouldShowMandatoryNudge && animatingNudgeIconPosition != null)
                     },
                     isLoading = isLoading,
                     coinDelta = coinDelta,
