@@ -2,9 +2,8 @@ package com.yral.android.ui.screens.game
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.Text
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -13,14 +12,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.EmojiSupportMatch
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 import com.yral.android.R
 import com.yral.android.ui.widgets.YralAsyncImage
@@ -64,79 +60,24 @@ fun LocalGameIcon(
             contentScale = ContentScale.FillBounds,
         )
     } else {
-        CenteredAutoResizeText(
-            text = icon.unicode,
-            textStyle =
-                TextStyle(
-                    platformStyle =
-                        PlatformTextStyle(
-                            emojiSupportMatch = EmojiSupportMatch.Default,
-                        ),
-                ),
+        Box(
             modifier = modifier,
-        )
+            contentAlignment = Alignment.Center,
+        ) {
+            BasicText(
+                text = icon.unicode,
+                maxLines = 1,
+                autoSize = TextAutoSize.StepBased(12.sp, 25.sp),
+                style =
+                    TextStyle(
+                        platformStyle =
+                            PlatformTextStyle(
+                                emojiSupportMatch = EmojiSupportMatch.Default,
+                            ),
+                    ),
+            )
+        }
     }
-}
-
-@Composable
-private fun CenteredAutoResizeText(
-    text: String,
-    modifier: Modifier = Modifier,
-    minFontSize: TextUnit = 12.sp,
-    maxFontSize: TextUnit = 25.sp,
-    stepSize: TextUnit = 1.sp,
-    maxLines: Int = 1,
-    textStyle: TextStyle = LocalTextStyle.current,
-) {
-    Box(
-        modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center,
-    ) {
-        AutoResizeText(
-            text = text,
-            minFontSize = minFontSize,
-            maxFontSize = maxFontSize,
-            stepSize = stepSize,
-            maxLines = maxLines,
-            textAlign = TextAlign.Center,
-            textStyle = textStyle,
-        )
-    }
-}
-
-@Composable
-private fun AutoResizeText(
-    text: String,
-    modifier: Modifier = Modifier,
-    minFontSize: TextUnit = 12.sp,
-    maxFontSize: TextUnit = 25.sp,
-    stepSize: TextUnit = 1.sp,
-    maxLines: Int = 1,
-    textAlign: TextAlign? = null,
-    textStyle: TextStyle = LocalTextStyle.current,
-) {
-    var fontSize by remember { mutableStateOf(maxFontSize) }
-    var readyToDraw by remember { mutableStateOf(false) }
-    Text(
-        text = text,
-        maxLines = maxLines,
-        fontSize = fontSize,
-        textAlign = textAlign,
-        modifier =
-            modifier.drawWithContent {
-                if (readyToDraw) drawContent()
-            },
-        onTextLayout = { textLayoutResult ->
-            if (textLayoutResult.didOverflowWidth || textLayoutResult.didOverflowHeight) {
-                if (fontSize > minFontSize) {
-                    fontSize = (fontSize.value - stepSize.value).sp // decrease font size and recompose
-                }
-            } else {
-                readyToDraw = true // text fits, allow drawing
-            }
-        },
-        style = textStyle.copy(fontSize = fontSize), // use passed style with dynamic fontSize
-    )
 }
 
 @Composable
