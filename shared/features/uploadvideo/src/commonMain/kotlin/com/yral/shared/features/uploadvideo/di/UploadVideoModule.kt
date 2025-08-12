@@ -12,6 +12,7 @@ import com.yral.shared.features.uploadvideo.domain.UpdateMetaUseCase
 import com.yral.shared.features.uploadvideo.domain.UploadRepository
 import com.yral.shared.features.uploadvideo.domain.UploadVideoUseCase
 import com.yral.shared.features.uploadvideo.presentation.UploadVideoViewModel
+import com.yral.shared.features.uploadvideo.presentation.UploadVideoViewModel.RequiredUseCases
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.bind
@@ -29,5 +30,6 @@ val uploadVideoModule =
         factoryOf(::PollGenerationStatusUseCase)
         factoryOf(::GetFreeCreditsStatusUseCase)
         factoryOf(::UploadVideoTelemetry)
+        factoryOf(::RequiredUseCases)
         viewModelOf(::UploadVideoViewModel)
     }
