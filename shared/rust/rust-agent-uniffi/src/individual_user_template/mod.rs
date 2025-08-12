@@ -753,6 +753,13 @@ pub enum VideoGenRequestStatus {
     Complete(String),
     Failed(String),
 }
+#[derive(CandidType, Deserialize, Record)]
+pub struct RateLimitStatus {
+    pub principal: Principal,
+    pub request_count: u64,
+    pub window_start: u64,
+    pub is_limited: bool,
+}
 
 #[uniffi::export]
 impl IndividualUserService {
@@ -1399,5 +1406,18 @@ impl IndividualUserService {
         let args = Encode!(&key)?;
         let bytes = self.query_canister("poll_video_generation_status", args).await?;
         Ok(Decode!(&bytes, VideoGenRequestStatus)?)
+    }
+    #[uniffi::method]
+    pub async fn get_rate_limit_status(
+        &self,
+        principal_text: String,
+        property: String,
+        is_registered: bool,
+    ) -> Result<RateLimitStatus> {
+        let principal = Principal::from_text(principal_text)
+            .map_err(|e| FFIError::PrincipalError(format!("Invalid principal: {:?}", e)))?;
+        let args = Encode!(&principal, &property, &is_registered)?;
+        let bytes = self.query_canister("get_rate_limit_status", args).await?;
+        Ok(Decode!(&bytes, RateLimitStatus)?)
     }
 }
