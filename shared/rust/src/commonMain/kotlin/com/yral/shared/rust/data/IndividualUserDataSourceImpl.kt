@@ -7,6 +7,7 @@ import com.yral.shared.rust.data.models.PostDTO
 import com.yral.shared.rust.data.models.PostResponseDTO
 import com.yral.shared.rust.services.IndividualUserServiceFactory
 import com.yral.shared.uniffi.generated.PostDetailsForFrontend
+import com.yral.shared.uniffi.generated.RateLimitStatus
 import com.yral.shared.uniffi.generated.VideoGenRequestKey
 import com.yral.shared.uniffi.generated.VideoGenRequestStatus
 import io.ktor.client.HttpClient
@@ -52,6 +53,14 @@ class IndividualUserDataSourceImpl(
         individualUserServiceFactory
             .service(principal = RATE_LIMIT_CANISTER)
             .pollVideoGenerationStatus(requestKey)
+
+    override suspend fun getFreeCreditsStatus(
+        canisterId: String,
+        isRegistered: Boolean,
+    ): RateLimitStatus =
+        individualUserServiceFactory
+            .service(principal = RATE_LIMIT_CANISTER)
+            .getRateLimitStatus(canisterId, "Free", isRegistered)
 
     companion object {
         private const val CACHED_FEED_PATH = "/api/v3/feed/coldstart/clean"
