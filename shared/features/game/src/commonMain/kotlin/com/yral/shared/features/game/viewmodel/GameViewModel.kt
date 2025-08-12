@@ -7,7 +7,6 @@ import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.analytics.events.GameConcludedCtaType
 import com.yral.shared.analytics.events.GameType
-import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.core.session.DELAY_FOR_SESSION_PROPERTIES
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.features.game.analytics.GameTelemetry
@@ -25,8 +24,6 @@ import com.yral.shared.features.game.viewmodel.GameViewModel.Companion.SHOW_HOW_
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import com.yral.shared.rust.domain.models.FeedDetails
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
@@ -38,7 +35,6 @@ import kotlinx.coroutines.launch
 
 @Suppress("TooManyFunctions")
 class GameViewModel(
-    appDispatchers: AppDispatchers,
     private val preferences: Preferences,
     private val sessionManager: SessionManager,
     private val gameIconsUseCase: GetGameIconsUseCase,
@@ -47,7 +43,6 @@ class GameViewModel(
     private val gameTelemetry: GameTelemetry,
     private val autoRechargeBalanceUseCase: AutoRechargeBalanceUseCase,
 ) : ViewModel() {
-    private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.io)
     private val _state =
         MutableStateFlow(
             GameState(
@@ -59,7 +54,7 @@ class GameViewModel(
     val state: StateFlow<GameState> = _state.asStateFlow()
 
     init {
-        coroutineScope.launch {
+        viewModelScope.launch {
             restoreDataFromPrefs()
             listOf(
                 async { getGameRules() },
@@ -122,7 +117,7 @@ class GameViewModel(
     ) {
         val gameState = _state.value
         if (gameState.isLoading) return
-        coroutineScope.launch {
+        viewModelScope.launch {
             if (gameState.coinBalance >= gameState.lossPenalty) {
                 castVote(icon, feedDetails, isTutorialVote)
             } else {
@@ -224,17 +219,14 @@ class GameViewModel(
     fun markCoinDeltaAnimationShown(videoId: String) {
         val gameResultPair = _state.value.gameResult[videoId] ?: return
         if (gameResultPair.second.coinDelta == 0 && gameResultPair.second.errorMessage.isEmpty()) return
-
-        coroutineScope.launch {
-            _state.update { currentState ->
-                val updatedGameResult =
-                    currentState.gameResult.toMutableMap().apply {
-                        this[videoId] = this[videoId]?.let {
-                            it.copy(second = it.second.copy(hasShownAnimation = true))
-                        } ?: gameResultPair
-                    }
-                currentState.copy(gameResult = updatedGameResult)
-            }
+        _state.update { currentState ->
+            val updatedGameResult =
+                currentState.gameResult.toMutableMap().apply {
+                    this[videoId] = this[videoId]?.let {
+                        it.copy(second = it.second.copy(hasShownAnimation = true))
+                    } ?: gameResultPair
+                }
+            currentState.copy(gameResult = updatedGameResult)
         }
     }
 
@@ -245,7 +237,7 @@ class GameViewModel(
         icon: GameIcon,
         isTutorialVote: Boolean,
     ) {
-        coroutineScope.launch {
+        viewModelScope.launch {
             // Get current state once to avoid multiple reads
             val currentState = _state.value
             // Calculate all updates outside state update
@@ -296,53 +288,23 @@ class GameViewModel(
     }
 
     fun setAnimateCoinBalance(shouldAnimate: Boolean) {
-        coroutineScope.launch {
-            _state.update { currentState ->
-                currentState.copy(
-                    animateCoinBalance = shouldAnimate,
-                )
-            }
-        }
+        _state.update { it.copy(animateCoinBalance = shouldAnimate) }
     }
 
     private fun setLoading(isLoading: Boolean) {
-        coroutineScope.launch {
-            _state.update { currentState ->
-                currentState.copy(
-                    isLoading = isLoading,
-                )
-            }
-        }
+        _state.update { it.copy(isLoading = isLoading) }
     }
 
     fun toggleResultSheet(isVisible: Boolean) {
-        coroutineScope.launch {
-            _state.update { currentState ->
-                currentState.copy(
-                    showResultSheet = isVisible,
-                )
-            }
-        }
+        _state.update { it.copy(showResultSheet = isVisible) }
     }
 
     fun toggleAboutGame(isVisible: Boolean) {
-        coroutineScope.launch {
-            _state.update { currentState ->
-                currentState.copy(
-                    showAboutGame = isVisible,
-                )
-            }
-        }
+        _state.update { it.copy(showAboutGame = isVisible) }
     }
 
     fun setCurrentVideoId(videoId: String) {
-        coroutineScope.launch {
-            _state.update { currentState ->
-                currentState.copy(
-                    currentVideoId = videoId,
-                )
-            }
-        }
+        _state.update { it.copy(currentVideoId = videoId) }
     }
 
     fun onResultSheetButtonClicked(
@@ -380,7 +342,7 @@ class GameViewModel(
         }
         if (_state.value.isHowToPlayShown.all { it }) {
             Logger.d("xxxx") { "All 'how to play' pages shown. Marking as shown in preferences." }
-            coroutineScope.launch {
+            viewModelScope.launch {
                 preferences.putBoolean(PrefKeys.HOW_TO_PLAY_SHOWN.name, true)
             }
         }
@@ -391,7 +353,7 @@ class GameViewModel(
         val currentState = _state.value.isSmileyGameNudgeShown
         _state.update { it.copy(isSmileyGameNudgeShown = true) }
         if (!currentState) {
-            coroutineScope.launch {
+            viewModelScope.launch {
                 Logger.d("xxxx") { "marking smiley game shown" }
                 preferences.putBoolean(PrefKeys.SMILEY_GAME_NUDGE_SHOWN.name, true)
                 gameTelemetry.onGameTutorialShown(feedDetails)
@@ -400,7 +362,7 @@ class GameViewModel(
     }
 
     fun hideRefreshBalanceAnimation() {
-        coroutineScope.launch {
+        viewModelScope.launch {
             delay(REFRESH_BALANCE_ANIM_DISMISS_DELAY_MS)
             _state.update {
                 it.copy(refreshBalanceState = RefreshBalanceState.HIDDEN)

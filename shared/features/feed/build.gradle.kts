@@ -20,7 +20,8 @@ kotlin {
             implementation(projects.shared.libs.koin)
             implementation(projects.shared.libs.crashlytics)
             implementation(projects.shared.libs.analytics)
-            implementation(projects.shared.libs.useCase)
+            implementation(projects.shared.libs.arch)
+            implementation(projects.shared.libs.coroutinesX)
             implementation(projects.shared.libs.http)
             implementation(projects.shared.libs.firebaseStore)
         }

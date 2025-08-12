@@ -5,7 +5,6 @@ import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.analytics.events.MenuCtaType
-import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.crashlytics.core.CrashlyticsManager
@@ -14,6 +13,7 @@ import com.yral.shared.features.auth.AuthClientFactory
 import com.yral.shared.features.auth.domain.useCases.DeleteAccountUseCase
 import com.yral.shared.features.auth.utils.SocialProvider
 import com.yral.shared.features.auth.utils.getAccountInfo
+import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,7 +30,7 @@ class AccountsViewModel(
     private val crashlyticsManager: CrashlyticsManager,
     val accountsTelemetry: AccountsTelemetry,
 ) : ViewModel() {
-    private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.io)
+    private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.disk)
 
     private val authClient =
         authClientFactory
@@ -70,15 +70,14 @@ class AccountsViewModel(
 
     @Suppress("TooGenericExceptionCaught")
     fun signInWithGoogle(context: Any) {
-        coroutineScope
-            .launch {
-                try {
-                    authClient.signInWithSocial(context, SocialProvider.GOOGLE)
-                } catch (e: Exception) {
-                    crashlyticsManager.recordException(e)
-                    handleSignupFailed()
-                }
+        coroutineScope.launch {
+            try {
+                authClient.signInWithSocial(context, SocialProvider.GOOGLE)
+            } catch (e: Exception) {
+                crashlyticsManager.recordException(e)
+                handleSignupFailed()
             }
+        }
     }
 
     private fun handleSignupFailed() {
@@ -88,13 +87,7 @@ class AccountsViewModel(
     }
 
     fun setBottomSheetType(type: AccountBottomSheet) {
-        coroutineScope.launch {
-            _state.update { currentState ->
-                currentState.copy(
-                    bottomSheetType = type,
-                )
-            }
-        }
+        _state.update { it.copy(bottomSheetType = type) }
     }
 
     fun getHelperLinks(): List<AccountHelpLink> {

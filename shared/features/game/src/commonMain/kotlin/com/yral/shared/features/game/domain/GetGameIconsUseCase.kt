@@ -1,25 +1,22 @@
 package com.yral.shared.features.game.domain
 
 import com.github.michaelbull.result.getOrThrow
-import com.yral.shared.core.dispatchers.AppDispatchers
-import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.game.data.models.toGameConfig
 import com.yral.shared.features.game.domain.models.GameConfig
 import com.yral.shared.firebaseStore.getDownloadUrl
 import com.yral.shared.firebaseStore.model.GameConfigDto
 import com.yral.shared.firebaseStore.usecase.GetFBDocumentUseCase
-import com.yral.shared.libs.useCase.SuspendUseCase
+import com.yral.shared.libs.arch.domain.SuspendUseCase
+import com.yral.shared.libs.arch.domain.UseCaseFailureListener
+import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import dev.gitlive.firebase.storage.FirebaseStorage
 
 class GetGameIconsUseCase(
     appDispatchers: AppDispatchers,
-    crashlyticsManager: CrashlyticsManager,
+    useCaseFailureListener: UseCaseFailureListener,
     private val getConfigUseCase: GetFBDocumentUseCase<GameConfigDto>,
     private val firebaseStorage: FirebaseStorage,
-) : SuspendUseCase<Unit, GameConfig>(
-        appDispatchers.io,
-        crashlyticsManager,
-    ) {
+) : SuspendUseCase<Unit, GameConfig>(appDispatchers.network, useCaseFailureListener) {
     override suspend fun execute(parameter: Unit): GameConfig {
         val config =
             getConfigUseCase
