@@ -78,7 +78,7 @@ def get_smileys() -> List[Dict[str, str]]:
                 "image_name": "laugh",
                 "image_url": "smiley_game/game/laugh.png",
                 "is_active": True,
-                "unicode": "U+1F602"
+                "image_fallback": "😂"
             },
             {
                 "click_animation": "smiley_game/animations/smiley_game_heart.json",
@@ -86,7 +86,7 @@ def get_smileys() -> List[Dict[str, str]]:
                 "image_name": "heart",
                 "image_url": "smiley_game/game/heart.png",
                 "is_active": True,
-                "unicode": "U+2764"
+                "image_fallback": "❤️"
             },
             {
                 "click_animation": "smiley_game/animations/smiley_game_fire.json",
@@ -94,7 +94,7 @@ def get_smileys() -> List[Dict[str, str]]:
                 "image_name": "fire",
                 "image_url": "smiley_game/game/fire.png",
                 "is_active": True,
-                "unicode": "U+1F525"
+                "image_fallback": "🔥"
             },
             {
                 "click_animation": "smiley_game/animations/smiley_game_surprise.json",
@@ -102,7 +102,7 @@ def get_smileys() -> List[Dict[str, str]]:
                 "image_name": "surprise",
                 "image_url": "smiley_game/game/surprise.png",
                 "is_active": True,
-                "unicode": "U+1F632"
+                "image_fallback": "😲"
             },
             {
                 "click_animation": "smiley_game/animations/smiley_game_rocket.json",
@@ -110,7 +110,7 @@ def get_smileys() -> List[Dict[str, str]]:
                 "image_name": "rocket",
                 "image_url": "smiley_game/game/rocket.png",
                 "is_active": True,
-                "unicode": "U+1F680"
+                "image_fallback": "🚀"
             },
             {
                 "click_animation": "smiley_game/animations/smiley_game_puke.json",
@@ -118,7 +118,7 @@ def get_smileys() -> List[Dict[str, str]]:
                 "image_name": "puke",
                 "image_url": "smiley_game/game/puke.png",
                 "is_active": True,
-                "unicode": "U+1F92E"
+                "image_fallback": "🤮"
             }
         ]
     return _SMILEYS
@@ -620,7 +620,8 @@ def cast_vote_v2(request: Request):
                 "id":         voted["id"],
                 "image_url": voted["image_url"],
                 "is_active":  voted["is_active"],
-                "click_animation": voted["click_animation"]
+                "click_animation": voted["click_animation"],
+                "image_fallback": voted["image_fallback"]
             },
             "coins":       coins,
             "coin_delta":  delta
