@@ -1,17 +1,20 @@
 package com.yral.shared.firebaseAuth.usecase
 
-import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.core.exceptions.YralException
-import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.firebaseAuth.model.UserAuthData
 import com.yral.shared.firebaseAuth.repository.FBAuthRepositoryApi
-import com.yral.shared.libs.useCase.SuspendUseCase
+import com.yral.shared.libs.arch.domain.SuspendUseCase
+import com.yral.shared.libs.arch.domain.UseCaseFailureListener
+import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 
 class GetUserAuthDataUseCase(
     appDispatchers: AppDispatchers,
-    crashlyticsManager: CrashlyticsManager,
+    useCaseFailureListener: UseCaseFailureListener,
     private val repository: FBAuthRepositoryApi,
-) : SuspendUseCase<GetUserAuthDataUseCase.Parameters, UserAuthData>(appDispatchers.io, crashlyticsManager) {
+) : SuspendUseCase<GetUserAuthDataUseCase.Parameters, UserAuthData>(
+        coroutineDispatcher = appDispatchers.network,
+        failureListener = useCaseFailureListener,
+    ) {
     override suspend fun execute(parameter: Parameters): UserAuthData {
         val userId =
             repository

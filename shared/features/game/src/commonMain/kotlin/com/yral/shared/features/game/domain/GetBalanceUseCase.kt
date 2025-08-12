@@ -1,14 +1,14 @@
 package com.yral.shared.features.game.domain
 
-import com.yral.shared.core.dispatchers.AppDispatchers
-import com.yral.shared.crashlytics.core.CrashlyticsManager
-import com.yral.shared.libs.useCase.SuspendUseCase
+import com.yral.shared.libs.arch.domain.SuspendUseCase
+import com.yral.shared.libs.arch.domain.UseCaseFailureListener
+import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 
 class GetBalanceUseCase(
     appDispatchers: AppDispatchers,
-    crashlyticsManager: CrashlyticsManager,
+    useCaseFailureListener: UseCaseFailureListener,
     private val gameRepository: IGameRepository,
-) : SuspendUseCase<String, Long>(appDispatchers.io, crashlyticsManager) {
+) : SuspendUseCase<String, Long>(appDispatchers.network, useCaseFailureListener) {
     override suspend fun execute(parameter: String): Long =
         gameRepository
             .getBalance(parameter)

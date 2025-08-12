@@ -1,16 +1,19 @@
 package com.yral.shared.firebaseAuth.usecase
 
-import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.core.exceptions.YralException
-import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.firebaseAuth.repository.FBAuthRepositoryApi
-import com.yral.shared.libs.useCase.SuspendUseCase
+import com.yral.shared.libs.arch.domain.SuspendUseCase
+import com.yral.shared.libs.arch.domain.UseCaseFailureListener
+import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 
 class GetIdTokenUseCase(
     appDispatchers: AppDispatchers,
-    crashlyticsManager: CrashlyticsManager,
+    useCaseFailureListener: UseCaseFailureListener,
     private val repository: FBAuthRepositoryApi,
-) : SuspendUseCase<GetIdTokenUseCase.Parameters, String>(appDispatchers.io, crashlyticsManager) {
+) : SuspendUseCase<GetIdTokenUseCase.Parameters, String>(
+        coroutineDispatcher = appDispatchers.network,
+        failureListener = useCaseFailureListener,
+    ) {
     override suspend fun execute(parameter: Parameters): String =
         if (parameter.forceRefresh) {
             repository.refreshIdToken().getOrThrow()
