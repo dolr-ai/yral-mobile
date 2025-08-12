@@ -115,6 +115,7 @@ gitlive-firebase-storage = { module = "dev.gitlive:firebase-storage", version.re
 gitlive-firebase-auth = { module = "dev.gitlive:firebase-auth", version.ref = "firebase-gitlive-sdk" }
 gitlive-firebase-store-db = { module = "dev.gitlive:firebase-firestore", version.ref = "firebase-gitlive-sdk" }
 gitlive-firebase-messaging = { module = "dev.gitlive:firebase-messaging", version.ref = "firebase-gitlive-sdk" }
+gitlive-firebase-config = { module = "dev.gitlive:firebase-config", version.ref = "firebase-gitlive-sdk" }
 
 koin-bom = { group = "io.insert-koin", name = "koin-bom", version.ref = "koinBom" }
 koin-core = { group = "io.insert-koin", name = "koin-core" }
