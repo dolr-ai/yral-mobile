@@ -38,6 +38,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   private static let resultBottomSheetKey = "ResultBottomSheetKey"
   private var cancellables = Set<AnyCancellable>()
   var smileyGame: SmileyGame?
+  var smileyGameView: SmileyGameView?
   private var sessionManager: SessionManager? {
     didSet {
       bindSession()
@@ -122,6 +123,8 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   let resultAnimationPublisher = PassthroughSubject<SmileyGameResultResponse, Never>()
   let initialStatePublisher = PassthroughSubject<SmileyGame, Never>()
   let smileyGameErrorPublisher = PassthroughSubject<String, Never>()
+  let animatePublisher = PassthroughSubject<SmileyConfig, Never>()
+  let animationCompletionPublisher = PassthroughSubject<Void, Never>()
 
   private static func getActionButton(withTitle title: String, image: UIImage?) -> UIButton {
     var configuration = UIButton.Configuration.plain()
@@ -150,6 +153,8 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     profileInfoView.heightAnchor.constraint(equalToConstant: Constants.profileInfoViewHeight).isActive = true
     return profileInfoView
   }()
+  var onboardingOverlayView = getUIView()
+  var onboardingInfoView = OnboardingInfoView()
 
   enum RechargeResult { case success, failure }
 
@@ -274,7 +279,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
 
   func setupSmileyGameView() {
     if SmileyGameConfig.shared.config.smileys.count > 0 {
-      let smileyGameView = SmileyGameView(
+      smileyGameView = SmileyGameView(
         smileyGame: SmileyGame(
           config: SmileyGameConfig.shared.config,
           state: smileyGame?.state ?? .notPlayed
@@ -284,10 +289,12 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
         },
         resultAnimationSubscriber: resultAnimationPublisher,
         initialStateSubscriber: initialStatePublisher,
-        errorSubscriber: smileyGameErrorPublisher
+        errorSubscriber: smileyGameErrorPublisher,
+        animateSubscriber: animatePublisher,
+        animationCompletionSubscriber: animationCompletionPublisher
       )
 
-      let controller = UIHostingController(rootView: smileyGameView)
+      let controller = UIHostingController(rootView: smileyGameView!)
       controller.view.backgroundColor = .clear
       controller.view.translatesAutoresizingMaskIntoConstraints = false
 
@@ -476,6 +483,11 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
       actionsStackView.addArrangedSubview(reportButton)
       deleteButton.removeFromSuperview()
       setupSmileyGameView()
+//      if feedInfo.showOnboarding {
+      if feedsPlayer != nil {
+        showOnboardingFlow()
+      }
+//      }
     } else {
       reportButton.removeFromSuperview()
       actionsStackView.addArrangedSubview(deleteButton)
@@ -488,7 +500,6 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
       AnalyticsModuleKt.getAnalyticsManager().trackEvent(
         event: AuthScreenViewedEventData(pageName: .home)
       )
-
     }
   }
   // swiftlint: enable function_parameter_count
@@ -518,6 +529,8 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
 
     cancellables.forEach({ $0.cancel() })
     cancellables.removeAll()
+    guard let smileyView = smileyGameHostController?.view else { return }
+    cleanupOnOnboardingCompletion(smileyView: smileyView)
   }
 
   func startListeningForFirstFrame() {
@@ -544,6 +557,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     let lastThumbnailImage: UIImage?
     let feedType: FeedType
     let showLoginOverlay: Bool
+    let showOnboarding: Bool
   }
 }
 // swiftlint: enable type_body_length
@@ -586,5 +600,12 @@ extension FeedsCell {
     static let resultAnimationDuration = 2.5
     static let resultAnimationDurationWithBS = 0.5
     static let scoreLabelDuration = 2.0
+    static let onboardingBGColor = UIColor.black.withAlphaComponent(0.8)
+    static let smileyGameShadowColor = YralColor.grey0.uiColor.withAlphaComponent(0.6).cgColor
+    static let smileyShadowMaxRadius = 21.5
+    static let onbaordingInfoViewHeight: CGFloat = 260.0
+    static let onbaordingInfoViewBottom: CGFloat = 8.0
+    static let onbaordingInfoViewHorizontalSpacing: CGFloat = 24.0
+    static let onboardingInfoAnimationTranslation: CGFloat = 10.0
   }
 }
