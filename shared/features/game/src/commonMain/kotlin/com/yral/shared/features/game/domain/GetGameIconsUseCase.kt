@@ -36,10 +36,20 @@ class GetGameIconsUseCase(
                         smiley.copy(
                             imageUrl = getDownloadUrl(smiley.imageUrl, firebaseStorage),
                             clickAnimation = getDownloadUrl(smiley.clickAnimation, firebaseStorage),
+                            unicode = unescapeUnicode(smiley.unicode),
                         )
                     },
         )
     }
+
+    @Suppress("MagicNumber")
+    private fun unescapeUnicode(input: String): String =
+        Regex("""\\u([0-9A-Fa-f]{4})""")
+            .replace(input) { matchResult ->
+                val hexValue = matchResult.groupValues[1]
+                val intValue = hexValue.toInt(16)
+                intValue.toChar().toString()
+            }
 
     companion object {
         private const val GAME_CONFIG_COLLECTION = "config"
