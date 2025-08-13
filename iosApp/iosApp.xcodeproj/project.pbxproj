@@ -101,6 +101,8 @@
 		1064B7EF2E4B439A0036C10B /* UploadOptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B7ED2E4B439A0036C10B /* UploadOptionView.swift */; };
 		1064B7F32E4B50890036C10B /* UploadOption.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B7F22E4B50850036C10B /* UploadOption.swift */; };
 		1064B7F42E4B50890036C10B /* UploadOption.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B7F22E4B50850036C10B /* UploadOption.swift */; };
+		1064B7FA2E4C6D590036C10B /* UploadOptionsDIContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B7F92E4C6D520036C10B /* UploadOptionsDIContainer.swift */; };
+		1064B7FB2E4C6D590036C10B /* UploadOptionsDIContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B7F92E4C6D520036C10B /* UploadOptionsDIContainer.swift */; };
 		107C60902DB7809A006FC467 /* UIView+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C608F2DB78093006FC467 /* UIView+Extensions.swift */; };
 		107C60912DB7809A006FC467 /* UIView+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C608F2DB78093006FC467 /* UIView+Extensions.swift */; };
 		107C60982DB8BCB1006FC467 /* SmileyGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C60972DB8BCB1006FC467 /* SmileyGameView.swift */; };
@@ -671,6 +673,7 @@
 		1064B7EA2E4B40630036C10B /* UploadOptionsScreenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadOptionsScreenView.swift; sourceTree = "<group>"; };
 		1064B7ED2E4B439A0036C10B /* UploadOptionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadOptionView.swift; sourceTree = "<group>"; };
 		1064B7F22E4B50850036C10B /* UploadOption.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadOption.swift; sourceTree = "<group>"; };
+		1064B7F92E4C6D520036C10B /* UploadOptionsDIContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadOptionsDIContainer.swift; sourceTree = "<group>"; };
 		107C608F2DB78093006FC467 /* UIView+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIView+Extensions.swift"; sourceTree = "<group>"; };
 		107C60972DB8BCB1006FC467 /* SmileyGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameView.swift; sourceTree = "<group>"; };
 		107C609A2DB90B22006FC467 /* SmileyGameResultBottomSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameResultBottomSheetView.swift; sourceTree = "<group>"; };
@@ -1127,6 +1130,7 @@
 		1064B7E82E4B3FC00036C10B /* AIVideo */ = {
 			isa = PBXGroup;
 			children = (
+				1064B7F52E4C6CE20036C10B /* DI */,
 				1064B7F02E4B50790036C10B /* Domain */,
 				1064B7E92E4B3FE20036C10B /* View */,
 			);
@@ -1156,6 +1160,14 @@
 				1064B7F22E4B50850036C10B /* UploadOption.swift */,
 			);
 			path = Entity;
+			sourceTree = "<group>";
+		};
+		1064B7F52E4C6CE20036C10B /* DI */ = {
+			isa = PBXGroup;
+			children = (
+				1064B7F92E4C6D520036C10B /* UploadOptionsDIContainer.swift */,
+			);
+			path = DI;
 			sourceTree = "<group>";
 		};
 		107C60922DB7AA86006FC467 /* SmileyGame */ = {
@@ -3201,6 +3213,7 @@
 				AC811BDC2DBA95760094C5F6 /* SignupFailureSheet.swift in Sources */,
 				AC09A9B22CDB775C009A39A4 /* yral-mobile-swift-binding.swift in Sources */,
 				AC0084862E31DE400041302A /* RechargeWalletRequestDTO.swift in Sources */,
+				1064B7FB2E4C6D590036C10B /* UploadOptionsDIContainer.swift in Sources */,
 				AC1F93962DC1495400F322E1 /* TokenResponseDTO.swift in Sources */,
 				AC26CA5E2D8052E2006ADA75 /* BaseStreamingUseCase.swift in Sources */,
 				ACB09FD52D92D66400EE3239 /* FeedsViewModelProtocol.swift in Sources */,
@@ -3458,6 +3471,7 @@
 				AC811BDD2DBA95760094C5F6 /* SignupFailureSheet.swift in Sources */,
 				ACD941882CFF575C0038FCB6 /* yral-mobile-swift-binding.swift in Sources */,
 				AC0084852E31DE400041302A /* RechargeWalletRequestDTO.swift in Sources */,
+				1064B7FA2E4C6D590036C10B /* UploadOptionsDIContainer.swift in Sources */,
 				AC1F93952DC1495400F322E1 /* TokenResponseDTO.swift in Sources */,
 				AC26CA5F2D8052E2006ADA75 /* BaseStreamingUseCase.swift in Sources */,
 				ACB09FD62D92D66400EE3239 /* FeedsViewModelProtocol.swift in Sources */,

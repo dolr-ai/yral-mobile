@@ -153,7 +153,7 @@ struct IosApp: App {
   @State private var feedsDIContainer: FeedDIContainer?
   @State private var leaderboardDIContainer: LeaderboardDIContainer?
   @State private var profileDIContainer: ProfileDIContainer?
-  @State private var uploadDIContainer: UploadDIContainer?
+  @State private var uploadOptionsDIContainer: UploadOptionsDIContainer?
   @State private var accountDIContainer: AccountDIContainer?
   @State private var initializationError: Error?
   @StateObject private var session: SessionManager
@@ -178,12 +178,12 @@ struct IosApp: App {
   @ViewBuilder private func contentView() -> some View {
     if let feedsDIContainer = feedsDIContainer,
        let leaderboardDIContainer = leaderboardDIContainer,
+       let uploadOptionsDIContainer = uploadOptionsDIContainer,
        let accountDIContainer = accountDIContainer,
-       let uploadDIContainer = uploadDIContainer,
        let profileDIContainer = profileDIContainer {
       HomeTabController(
         feedsViewController: feedsDIContainer.makeFeedsViewController(),
-        uploadView: uploadDIContainer.makeUploadView(),
+        uploadOptionsScreenView: uploadOptionsDIContainer.makeUploadOptionsView(),
         profileView: profileDIContainer.makeProfileView(),
         accountView: accountDIContainer.makeAccountView(),
         leaderboardView: leaderboardDIContainer.makeLeaderboardView()
@@ -218,7 +218,7 @@ struct IosApp: App {
       AnalyticsModuleKt.getAnalyticsManager().trackEvent(event: SplashScreenViewedEventData())
       feedsDIContainer = await appDIContainer.makeFeedDIContainer()
       try await appDIContainer.authClient.initialize()
-      uploadDIContainer = appDIContainer.makeUploadDIContainer()
+      uploadOptionsDIContainer = appDIContainer.makeUploadOptionsDIContainer()
       profileDIContainer = appDIContainer.makeProfileDIContainer()
       accountDIContainer = appDIContainer.makeAccountDIContainer()
       leaderboardDIContainer = appDIContainer.makeLeaderboardDIContainer()
