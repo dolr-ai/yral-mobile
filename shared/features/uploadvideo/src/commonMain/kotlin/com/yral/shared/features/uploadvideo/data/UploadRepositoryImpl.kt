@@ -43,7 +43,7 @@ internal class UploadRepositoryImpl(
 
     override suspend fun fetchProviders() =
         remoteDataSource
-            .getProviders()
+            .fetchProviders()
             .toDomain()
 
     override suspend fun generateVideo(params: GenerateVideoParams): GenerateVideoResult {
