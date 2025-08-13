@@ -1,15 +1,15 @@
 package com.yral.shared.rust.services
 
 import com.yral.shared.core.exceptions.YralException
-import com.yral.shared.uniffi.generated.IndividualUserService
 import com.yral.shared.uniffi.generated.Principal
+import com.yral.shared.uniffi.generated.RateLimitService
 
-class IndividualUserServiceFactory {
+class RateLimitServiceFactory {
     private var identityData: ByteArray? = null
 
-    fun service(principal: Principal): IndividualUserService =
+    fun service(principal: Principal): RateLimitService =
         identityData?.let {
-            IndividualUserService(
+            RateLimitService(
                 principalText = principal,
                 identityData = it,
             )

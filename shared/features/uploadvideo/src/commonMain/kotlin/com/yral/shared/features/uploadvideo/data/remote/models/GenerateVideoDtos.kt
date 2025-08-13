@@ -3,7 +3,7 @@ package com.yral.shared.features.uploadvideo.data.remote.models
 import com.yral.shared.core.rust.KotlinDelegatedIdentityWire
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoParams
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoResult
-import com.yral.shared.features.uploadvideo.domain.models.RequestKey
+import com.yral.shared.uniffi.generated.VideoGenRequestKey
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.isSuccess
@@ -21,17 +21,17 @@ internal data class GenerateVideoRequestDto(
 
 @Serializable
 internal data class RequestBodyDto(
-    @SerialName("aspect_ratio") val aspectRatio: String? = null,
-    @SerialName("duration_seconds") val durationSeconds: Int? = null,
-    @SerialName("extra_params") val extraParams: Map<String, String>? = null,
-    @SerialName("generate_audio") val generateAudio: Boolean? = null,
-    @SerialName("image") val image: String? = null,
+    @SerialName("aspect_ratio") val aspectRatio: String?,
+    @SerialName("duration_seconds") val durationSeconds: Int?,
+    // @SerialName("extra_params") val extraParams: Map<String, String>?,
+    @SerialName("generate_audio") val generateAudio: Boolean?,
+    @SerialName("image") val image: String?,
     @SerialName("model_id") val modelId: String,
-    @SerialName("negative_prompt") val negativePrompt: String? = null,
+    @SerialName("negative_prompt") val negativePrompt: String?,
     @SerialName("prompt") val prompt: String,
-    @SerialName("resolution") val resolution: String? = null,
+    @SerialName("resolution") val resolution: String?,
     @SerialName("seed") val seed: Long? = null,
-    @SerialName("token_type") val tokenType: String? = null,
+    @SerialName("token_type") val tokenType: String?,
     @SerialName("user_id") val userId: String,
 )
 
@@ -61,7 +61,7 @@ internal fun GenerateVideoParams.toRequestDto(delegatedIdentityWire: KotlinDeleg
             RequestBodyDto(
                 aspectRatio = aspectRatio,
                 durationSeconds = durationSeconds,
-                extraParams = extraParams,
+                // extraParams = extraParams,
                 generateAudio = generateAudio,
                 image = image,
                 modelId = providerId,
@@ -81,7 +81,11 @@ internal suspend fun HttpResponse.parseGenerateVideoResponse(json: Json): Genera
         GenerateVideoResult(
             operationId = dto.operationId,
             provider = dto.provider,
-            requestKey = RequestKey(dto.requestKey.counter, dto.requestKey.principal),
+            requestKey =
+                VideoGenRequestKey(
+                    counter = dto.requestKey.counter.toULong(),
+                    principal = dto.requestKey.principal,
+                ),
             providerError = null,
         )
     } else {

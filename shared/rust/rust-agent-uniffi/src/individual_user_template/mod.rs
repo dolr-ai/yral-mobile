@@ -1,5 +1,5 @@
 #![allow(dead_code, unused_imports)]
-mod individual_user_template_helper;
+pub mod individual_user_template_helper;
 
 use candid::{self, CandidType, Decode, Deserialize, Encode, Nat, Principal};
 use ic_agent::identity::Secp256k1Identity;
@@ -17,7 +17,6 @@ use crate::commons::*;
 use crate::individual_user_template::individual_user_template_helper::*;
 use crate::RUNTIME;
 use crate::uni_ffi_helpers::*;
-use serde_json::Value as JsonValue;
 
 type Result<T> = std::result::Result<T, FFIError>;
 
@@ -740,27 +739,6 @@ pub struct IndividualUserService {
     pub agent: Arc<Agent>,
 }
 
-// ───────────── VideoGen polling types ─────────────
-#[derive(CandidType, Deserialize, Record)]
-pub struct VideoGenRequestKey {
-    pub principal: Principal,
-    pub counter: u64,
-}
-#[derive(CandidType, Deserialize, Enum)]
-pub enum VideoGenRequestStatus {
-    Pending,
-    Processing,
-    Complete(String),
-    Failed(String),
-}
-#[derive(CandidType, Deserialize, Record)]
-pub struct RateLimitStatus {
-    pub principal: Principal,
-    pub request_count: u64,
-    pub window_start: u64,
-    pub is_limited: bool,
-}
-
 #[uniffi::export]
 impl IndividualUserService {
     #[uniffi::constructor]
@@ -1397,27 +1375,5 @@ impl IndividualUserService {
         let args = Encode!(&arg0, &arg1)?;
         let bytes = self.update_canister("write_multiple_key_value_pairs", args).await?;
         Ok(Decode!(&bytes, Result6)?)
-    }
-    #[uniffi::method]
-    pub async fn poll_video_generation_status(
-        &self,
-        key: VideoGenRequestKey,
-    ) -> Result<VideoGenRequestStatus> {
-        let args = Encode!(&key)?;
-        let bytes = self.query_canister("poll_video_generation_status", args).await?;
-        Ok(Decode!(&bytes, VideoGenRequestStatus)?)
-    }
-    #[uniffi::method]
-    pub async fn get_rate_limit_status(
-        &self,
-        principal_text: String,
-        property: String,
-        is_registered: bool,
-    ) -> Result<RateLimitStatus> {
-        let principal = Principal::from_text(principal_text)
-            .map_err(|e| FFIError::PrincipalError(format!("Invalid principal: {:?}", e)))?;
-        let args = Encode!(&principal, &property, &is_registered)?;
-        let bytes = self.query_canister("get_rate_limit_status", args).await?;
-        Ok(Decode!(&bytes, RateLimitStatus)?)
     }
 }

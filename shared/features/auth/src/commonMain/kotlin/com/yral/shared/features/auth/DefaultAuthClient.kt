@@ -31,7 +31,6 @@ import com.yral.shared.firebaseAuth.usecase.SignOutUseCase
 import com.yral.shared.firebaseStore.usecase.UpdateDocumentUseCase
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
-import com.yral.shared.rust.services.IndividualUserServiceFactory
 import com.yral.shared.uniffi.generated.CanistersWrapper
 import com.yral.shared.uniffi.generated.FfiException
 import com.yral.shared.uniffi.generated.authenticateWithNetwork
@@ -54,9 +53,9 @@ class DefaultAuthClient(
     private val requiredUseCases: RequiredUseCases,
     private val oAuthUtils: OAuthUtils,
     private val oAuthUtilsHelper: OAuthUtilsHelper,
-    private val individualUserServiceFactory: IndividualUserServiceFactory,
     private val scope: CoroutineScope,
     private val authTelemetry: AuthTelemetry,
+    private val initRustFactories: (identity: ByteArray) -> Unit,
 ) : AuthClient {
     private var currentState: String? = null
 
@@ -276,14 +275,7 @@ class DefaultAuthClient(
     }
 
     private fun setSession(session: Session) {
-        session.canisterId?.let { canisterId ->
-            session.identity?.let { identity ->
-                individualUserServiceFactory.initialize(
-                    principal = canisterId,
-                    identityData = identity,
-                )
-            }
-        }
+        session.identity?.let { identity -> initRustFactories(identity) }
         sessionManager.updateState(SessionState.SignedIn(session = session))
         scope.launch { updateBalanceAndProceed(session) }
         scope.launch {
