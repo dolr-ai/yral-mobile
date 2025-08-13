@@ -9,6 +9,7 @@ import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.logging.YralLogger
+import com.yral.shared.core.session.SessionManager
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.uploadvideo.analytics.UploadVideoTelemetry
 import com.yral.shared.features.uploadvideo.domain.GenerateVideoUseCase
@@ -18,12 +19,14 @@ import com.yral.shared.features.uploadvideo.domain.GetUploadEndpointUseCase
 import com.yral.shared.features.uploadvideo.domain.PollGenerationStatusUseCase
 import com.yral.shared.features.uploadvideo.domain.UpdateMetaUseCase
 import com.yral.shared.features.uploadvideo.domain.UploadVideoUseCase
+import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoParams
 import com.yral.shared.features.uploadvideo.domain.models.Provider
 import com.yral.shared.features.uploadvideo.domain.models.UploadEndpoint
 import com.yral.shared.features.uploadvideo.domain.models.UploadFileRequest
 import com.yral.shared.features.uploadvideo.domain.models.UploadState
 import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
+import com.yral.shared.uniffi.generated.VideoGenRequestKey
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -47,6 +50,7 @@ class UploadVideoViewModel internal constructor(
     private val requiredUseCases: RequiredUseCases,
     private val appDispatchers: AppDispatchers,
     private val uploadVideoTelemetry: UploadVideoTelemetry,
+    private val sessionManager: SessionManager,
     private val crashlyticsManager: CrashlyticsManager,
     logger: YralLogger,
 ) : ViewModel() {
@@ -433,8 +437,10 @@ class UploadVideoViewModel internal constructor(
                 .getProviders()
                 .onSuccess { list ->
                     _state.update { it.copy(providers = list) }
-                    Logger.d("VideoGen") { "Providers: $list" }
-                }.onFailure { Logger.e("VideoGen", it) { "Error fetching providers" } }
+                }.onFailure { error ->
+                    Logger.e("VideoGen", error) { "Error fetching providers" }
+                    _state.update { it.copy(providers = emptyList()) }
+                }
         }
     }
 
@@ -443,9 +449,63 @@ class UploadVideoViewModel internal constructor(
             requiredUseCases
                 .getFreeCreditsStatus()
                 .onSuccess { status ->
-                    _state.update { it.copy(availableCredits = if (status.isLimited) 0 else 1) }
                     Logger.d("VideoGen") { "AvailableCredit: ${status.isLimited}" }
-                }.onFailure { Logger.e("VideoGen", it) { "Error fetching free credits" } }
+                    _state.update { it.copy(availableCredits = if (status.isLimited) 0 else 1) }
+                    if (!status.isLimited) {
+                        generateAiVideo()
+                    }
+                }.onFailure { error ->
+                    Logger.e("VideoGen", error) { "Error fetching free credits" }
+                    _state.update { it.copy(availableCredits = 0) }
+                }
+        }
+    }
+
+    fun generateAiVideo() {
+        viewModelScope.launch {
+            sessionManager.userPrincipal?.let { userId ->
+                requiredUseCases
+                    .generateVideo(
+                        parameter =
+                            GenerateVideoUseCase.Param(
+                                params =
+                                    GenerateVideoParams(
+                                        providerId = "veo3",
+                                        prompt = "Testing AI Video gen api",
+                                        aspectRatio = "16:9",
+                                        durationSeconds = 8,
+                                        generateAudio = true,
+                                        tokenType = "Free",
+                                        userId = userId,
+                                    ),
+                            ),
+                    ).onSuccess { result ->
+                        Logger.d("VideoGen") { "Video generated: $result" }
+                        result.requestKey?.let { pollGeneration(it) }
+                    }.onFailure {
+                        Logger.e("VideoGen", it) { "Error generating video" }
+                    }
+            }
+        }
+    }
+
+    suspend fun pollGeneration(requestKey: VideoGenRequestKey) {
+        try {
+            requiredUseCases
+                .pollGenerationStatusUseCase
+                .invoke(
+                    parameters =
+                        PollGenerationStatusUseCase.Params(requestKey = requestKey),
+                ).collect {
+                    Logger.d("VideoGen") { "Video generation status: ${it.value}" }
+                }
+        } catch (e: CancellationException) {
+            Logger.e("VideoGen", e) { "Error polling generation status" }
+            throw e
+        } catch (
+            @Suppress("TooGenericExceptionCaught") e: Exception,
+        ) {
+            Logger.e("VideoGen", e) { "Error polling generation status" }
         }
     }
 

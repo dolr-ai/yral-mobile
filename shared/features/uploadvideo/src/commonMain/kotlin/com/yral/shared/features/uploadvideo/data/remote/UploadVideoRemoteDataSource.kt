@@ -50,39 +50,6 @@ internal class UploadVideoRemoteDataSource(
             }
         }
 
-    suspend fun generateVideo(dto: GenerateVideoRequestDto): GenerateVideoResult =
-        try {
-            val response: HttpResponse =
-                client.post {
-                    url {
-                        host = AppConfigurations.OFF_CHAIN_BASE_URL
-                        path(GENERATE_WITH_IDENTITY_V2_PATH)
-                    }
-                    contentType(ContentType.Application.Json)
-                    setBody(dto)
-                }
-            response.parseGenerateVideoResponse(json)
-        } catch (e: ClientRequestException) {
-            e.response.parseGenerateVideoResponse(json)
-        } catch (e: ServerResponseException) {
-            e.response.parseGenerateVideoResponse(json)
-        } catch (_: Exception) {
-            GenerateVideoResult(
-                operationId = null,
-                provider = null,
-                requestKey = null,
-                providerError = "Something went wrong!",
-            )
-        }
-
-    suspend fun getProviders(): ProvidersResponseDto =
-        httpGet(client, json) {
-            url {
-                host = AppConfigurations.OFF_CHAIN_BASE_URL
-                path(GET_PROVIDERS_PATH)
-            }
-        }
-
     fun uploadFile(
         uploadUrl: String,
         filePath: String,
@@ -147,6 +114,39 @@ internal class UploadVideoRemoteDataSource(
             handleException(e)
         }
     }
+
+    suspend fun generateVideo(dto: GenerateVideoRequestDto): GenerateVideoResult =
+        try {
+            val response: HttpResponse =
+                client.post {
+                    url {
+                        host = AppConfigurations.OFF_CHAIN_BASE_URL
+                        path(GENERATE_WITH_IDENTITY_V2_PATH)
+                    }
+                    contentType(ContentType.Application.Json)
+                    setBody(dto)
+                }
+            response.parseGenerateVideoResponse(json)
+        } catch (e: ClientRequestException) {
+            e.response.parseGenerateVideoResponse(json)
+        } catch (e: ServerResponseException) {
+            e.response.parseGenerateVideoResponse(json)
+        } catch (_: Exception) {
+            GenerateVideoResult(
+                operationId = null,
+                provider = null,
+                requestKey = null,
+                providerError = "Something went wrong!",
+            )
+        }
+
+    suspend fun fetchProviders(): ProvidersResponseDto =
+        httpGet(client, json) {
+            url {
+                host = AppConfigurations.OFF_CHAIN_BASE_URL
+                path(GET_PROVIDERS_PATH)
+            }
+        }
 
     @Suppress("UnusedPrivateProperty")
     companion object {
