@@ -11,14 +11,13 @@ extension FeedsCell {
   func showOnboardingFlow() {
     guard let smileyView = smileyGameHostController?.view else { return }
     addOnboardingOverlayView()
-    addOnboardingInfoView(smileyView)
 
     smileyView.layer.masksToBounds = false
     smileyView.layer.cornerRadius = Constants.smileyGameHeight / CGFloat.two
     smileyView.layer.shadowColor = Constants.smileyGameShadowColor
     smileyView.layer.shadowOffset = .zero
     smileyView.layer.shadowRadius = Constants.smileyShadowMaxRadius
-    smileyView.layer.shadowOpacity = 0
+    smileyView.layer.shadowOpacity = 1.0
     smileyView.layoutIfNeeded()
     smileyView.backgroundColor = .black
     smileyView.layer.shadowPath = UIBezierPath(
@@ -37,14 +36,15 @@ extension FeedsCell {
 
     onboardingOverlayView.alpha = .zero
 
-    self.animatePublisher.send(SmileyGameConfig.shared.config)
-
     UIView.animate(withDuration: CGFloat.animationPeriod) { [weak self] in
       guard let self = self else { return }
       self.onboardingOverlayView.alpha = .one
-    }
-    DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.five) {
-      if self.contains(self.onboardingOverlayView) {
+      self.layoutIfNeeded()
+    } completion: { [weak self] _ in
+      guard let self = self else { return }
+      self.addOnboardingInfoView(smileyView)
+      self.animatePublisher.send(SmileyGameConfig.shared.config)
+      DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.five) {
         self.cleanupOnOnboardingCompletion(smileyView: smileyView)
         UserDefaultsManager.shared.set(true, for: .onboardingCompleted)
       }
@@ -57,22 +57,24 @@ extension FeedsCell {
     guard let smileyView = smileyGameHostController?.view else { return }
     contentView.bringSubviewToFront(smileyView)
     NSLayoutConstraint.activate([
-      onboardingOverlayView.leadingAnchor.constraint(equalTo: leadingAnchor),
-      onboardingOverlayView.trailingAnchor.constraint(equalTo: trailingAnchor),
-      onboardingOverlayView.topAnchor.constraint(equalTo: topAnchor),
-      onboardingOverlayView.bottomAnchor.constraint(equalTo: bottomAnchor)
+      onboardingOverlayView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+      onboardingOverlayView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+      onboardingOverlayView.topAnchor.constraint(equalTo: contentView.topAnchor),
+      onboardingOverlayView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
     ])
+    let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissOnboardingOnTap))
+    onboardingOverlayView.addGestureRecognizer(tapGesture)
   }
 
   private func addOnboardingInfoView(_ smileyView: UIView) {
-    addSubview(onboardingInfoView)
+    contentView.addSubview(onboardingInfoView)
     NSLayoutConstraint.activate([
       onboardingInfoView.leadingAnchor.constraint(
-        equalTo: leadingAnchor,
+        equalTo: contentView.leadingAnchor,
         constant: Constants.onbaordingInfoViewHorizontalSpacing
       ),
       onboardingInfoView.trailingAnchor.constraint(
-        equalTo: trailingAnchor,
+        equalTo: contentView.trailingAnchor,
         constant: -Constants.onbaordingInfoViewHorizontalSpacing
       ),
       onboardingInfoView.bottomAnchor.constraint(
@@ -81,6 +83,13 @@ extension FeedsCell {
       ),
       onboardingInfoView.heightAnchor.constraint(equalToConstant: Constants.onbaordingInfoViewHeight)
     ])
+    addStarts()
+    contentView.bringSubviewToFront(onboardingInfoView)
+    if let overlayView = signupOverlayHost.view {
+      contentView.bringSubviewToFront(overlayView)
+    }
+    let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissOnboardingOnTap))
+    onboardingInfoView.addGestureRecognizer(tapGesture)
 
     let translateAnimation = CABasicAnimation(keyPath: "transform.translation.y")
     translateAnimation.fromValue = -Constants.onboardingInfoAnimationTranslation
@@ -91,6 +100,31 @@ extension FeedsCell {
     translateAnimation.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
 
     onboardingInfoView.layer.add(translateAnimation, forKey: "onboardingBob")
+
+    let opacityAnimation = CABasicAnimation(keyPath: "opacity")
+    opacityAnimation.fromValue = CGFloat.one
+    opacityAnimation.toValue = CGFloat.zero
+    opacityAnimation.duration = translateAnimation.duration
+    opacityAnimation.autoreverses = true
+    opacityAnimation.repeatCount = translateAnimation.repeatCount
+    opacityAnimation.timingFunction = translateAnimation.timingFunction
+    starsView.layer.add(opacityAnimation, forKey: "starsAppearDisappear")
+  }
+
+  private func addStarts() {
+    contentView.addSubview(starsView)
+    NSLayoutConstraint.activate([
+      starsView.topAnchor.constraint(equalTo: onboardingInfoView.topAnchor, constant: -Constants.starsImageTop),
+      starsView.heightAnchor.constraint(equalToConstant: Constants.starsImageViewHeight),
+      starsView.leadingAnchor.constraint(
+        equalTo: onboardingInfoView.leadingAnchor,
+        constant: OnboardingInfoView.Constants.horizontalSpacing
+      ),
+      starsView.trailingAnchor.constraint(
+        equalTo: onboardingInfoView.trailingAnchor,
+        constant: -OnboardingInfoView.Constants.horizontalSpacing
+      )
+    ])
   }
 
   func addHowToPlay() {
@@ -128,7 +162,7 @@ extension FeedsCell {
           guard let self = self else { return }
           DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.two) {
             UIView.animate(
-              withDuration: CGFloat.one,
+              withDuration: CGFloat.two,
               delay: CGFloat.zero,
               usingSpringWithDamping: CGFloat.one,
               initialSpringVelocity: CGFloat.pointOne,
@@ -145,18 +179,26 @@ extension FeedsCell {
     }
   }
 
+  @objc func dismissOnboardingOnTap() {
+    guard let smileyView = smileyGameHostController?.view else { return }
+    self.cleanupOnOnboardingCompletion(smileyView: smileyView)
+    UserDefaultsManager.shared.set(true, for: .onboardingCompleted)
+  }
+
   @objc func howToPlayTapped() {
     self.delegate?.howToPlayTapped()
   }
 
   func cleanupOnOnboardingCompletion(smileyView: UIView) {
-    self.onboardingOverlayView.removeFromSuperview()
+    self.animationCompletionPublisher.send()
     smileyView.layer.shadowOpacity = .zero
+    smileyView.backgroundColor = .clear
     smileyView.layer.removeAnimation(forKey: "smileyShadowPulse")
     self.onboardingInfoView.layer.removeAnimation(forKey: "onboardingBob")
-    smileyView.backgroundColor = .clear
+    self.starsView.layer.removeAnimation(forKey: "starsAppearDisappear")
+    self.onboardingOverlayView.removeFromSuperview()
+    self.starsView.removeFromSuperview()
     self.onboardingInfoView.removeFromSuperview()
-    self.animationCompletionPublisher.send()
     howToPlayWidthAnchor?.isActive = false
     howToPlayWidthAnchor = nil
     howToPlayButton.removeFromSuperview()

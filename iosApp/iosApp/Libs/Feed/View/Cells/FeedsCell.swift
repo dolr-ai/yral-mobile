@@ -51,7 +51,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   }
 
   private let playerContainerView = getUIImageView()
-  private lazy var signupOverlayHost = UIHostingController(
+  lazy var signupOverlayHost = UIHostingController(
     rootView: SignupOverlay { provider in
       self.delegate?.loginTapped(provider: provider)
     }
@@ -169,6 +169,12 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     return button
   }()
   var howToPlayWidthAnchor: NSLayoutConstraint!
+  var starsView: UIImageView = {
+    let imageView = getUIImageView()
+    imageView.image = UIImage(named: Constants.starsImageName)
+    imageView.contentMode = .scaleToFill
+    return imageView
+  }()
 
   enum RechargeResult { case success, failure }
 
@@ -314,10 +320,6 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
 
       contentView.addSubview(controller.view)
 
-      if let overlayView = signupOverlayHost.view {
-        contentView.bringSubviewToFront(overlayView)
-      }
-
       NSLayoutConstraint.activate([
         controller.view.leadingAnchor.constraint(
           equalTo: contentView.leadingAnchor,
@@ -337,7 +339,10 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
       ])
 
       smileyGameHostController = controller
-//      addHowToPlay()
+      addHowToPlay()
+      if let overlayView = signupOverlayHost.view {
+        contentView.bringSubviewToFront(overlayView)
+      }
     }
   }
 
@@ -625,5 +630,8 @@ extension FeedsCell {
     static let howToPlayHeight = 42.0
     static let howToPlayCollapsedWidth = 32.0
     static let howToPlayExpandedWidth = 122.0
+    static let starsImageName = "stars_onboarding_bg"
+    static let starsImageViewHeight = 130.0
+    static let starsImageTop = 44.0
   }
 }

@@ -59,7 +59,6 @@ extension FeedsViewController {
               indexPath.item % Constants.overlayIndex == .zero
             ) && !session.state.isLoggedIn,
             showOnboarding: false
-            && indexPath.item == .four
           ),
           profileInfo: ProfileInfoView.ProfileInfo(
             imageURL: feed.profileImageURL,
