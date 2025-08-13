@@ -56,7 +56,7 @@ class PollGenerationStatusUseCase(
     )
 
     companion object {
-        private const val DEFAULT_INTERVAL_MS = 15000L // 15 seconds
-        private const val DEFAULT_MAX_POLLING_MS = 45000L // 45 seconds
+        private const val DEFAULT_INTERVAL_MS = 15 * 1000L // 15 seconds
+        private const val DEFAULT_MAX_POLLING_MS = 5 * 60 * 1000L // 5 Mins
     }
 }
