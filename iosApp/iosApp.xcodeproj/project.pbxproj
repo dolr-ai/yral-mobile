@@ -103,6 +103,14 @@
 		1064B7F42E4B50890036C10B /* UploadOption.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B7F22E4B50850036C10B /* UploadOption.swift */; };
 		1064B7FA2E4C6D590036C10B /* UploadOptionsDIContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B7F92E4C6D520036C10B /* UploadOptionsDIContainer.swift */; };
 		1064B7FB2E4C6D590036C10B /* UploadOptionsDIContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B7F92E4C6D520036C10B /* UploadOptionsDIContainer.swift */; };
+		1064B7FD2E4C8CD30036C10B /* CreateAIVideoScreenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B7FC2E4C8CD30036C10B /* CreateAIVideoScreenView.swift */; };
+		1064B7FE2E4C8CD30036C10B /* CreateAIVideoScreenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B7FC2E4C8CD30036C10B /* CreateAIVideoScreenView.swift */; };
+		1064B8002E4CA4110036C10B /* ModelOption.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B7FF2E4CA40D0036C10B /* ModelOption.swift */; };
+		1064B8012E4CA4110036C10B /* ModelOption.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B7FF2E4CA40D0036C10B /* ModelOption.swift */; };
+		1064B8032E4CB1840036C10B /* ModelOptionsBottomSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B8022E4CB1840036C10B /* ModelOptionsBottomSheetView.swift */; };
+		1064B8042E4CB1840036C10B /* ModelOptionsBottomSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B8022E4CB1840036C10B /* ModelOptionsBottomSheetView.swift */; };
+		1064B8062E4CB34E0036C10B /* PromptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B8052E4CB3460036C10B /* PromptView.swift */; };
+		1064B8072E4CB34E0036C10B /* PromptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B8052E4CB3460036C10B /* PromptView.swift */; };
 		107C60902DB7809A006FC467 /* UIView+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C608F2DB78093006FC467 /* UIView+Extensions.swift */; };
 		107C60912DB7809A006FC467 /* UIView+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C608F2DB78093006FC467 /* UIView+Extensions.swift */; };
 		107C60982DB8BCB1006FC467 /* SmileyGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C60972DB8BCB1006FC467 /* SmileyGameView.swift */; };
@@ -686,6 +694,10 @@
 		1064B7ED2E4B439A0036C10B /* UploadOptionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadOptionView.swift; sourceTree = "<group>"; };
 		1064B7F22E4B50850036C10B /* UploadOption.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadOption.swift; sourceTree = "<group>"; };
 		1064B7F92E4C6D520036C10B /* UploadOptionsDIContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadOptionsDIContainer.swift; sourceTree = "<group>"; };
+		1064B7FC2E4C8CD30036C10B /* CreateAIVideoScreenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateAIVideoScreenView.swift; sourceTree = "<group>"; };
+		1064B7FF2E4CA40D0036C10B /* ModelOption.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelOption.swift; sourceTree = "<group>"; };
+		1064B8022E4CB1840036C10B /* ModelOptionsBottomSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelOptionsBottomSheetView.swift; sourceTree = "<group>"; };
+		1064B8052E4CB3460036C10B /* PromptView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptView.swift; sourceTree = "<group>"; };
 		107C608F2DB78093006FC467 /* UIView+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIView+Extensions.swift"; sourceTree = "<group>"; };
 		107C60972DB8BCB1006FC467 /* SmileyGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameView.swift; sourceTree = "<group>"; };
 		107C609A2DB90B22006FC467 /* SmileyGameResultBottomSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameResultBottomSheetView.swift; sourceTree = "<group>"; };
@@ -1161,8 +1173,11 @@
 		1064B7E92E4B3FE20036C10B /* View */ = {
 			isa = PBXGroup;
 			children = (
+				1064B8052E4CB3460036C10B /* PromptView.swift */,
 				1064B7EA2E4B40630036C10B /* UploadOptionsScreenView.swift */,
 				1064B7ED2E4B439A0036C10B /* UploadOptionView.swift */,
+				1064B7FC2E4C8CD30036C10B /* CreateAIVideoScreenView.swift */,
+				1064B8022E4CB1840036C10B /* ModelOptionsBottomSheetView.swift */,
 			);
 			path = View;
 			sourceTree = "<group>";
@@ -1178,6 +1193,7 @@
 		1064B7F12E4B507E0036C10B /* Entity */ = {
 			isa = PBXGroup;
 			children = (
+				1064B7FF2E4CA40D0036C10B /* ModelOption.swift */,
 				1064B7F22E4B50850036C10B /* UploadOption.swift */,
 			);
 			path = Entity;
@@ -3137,6 +3153,7 @@
 				AC3FBE152E2BAA0F00CE3EC1 /* MP4DownloadManager.swift in Sources */,
 				AC3FBE162E2BAA0F00CE3EC1 /* MP4DownloadManaging.swift in Sources */,
 				10512A442DA666AD00114BAA /* YralPlayer.swift in Sources */,
+				1064B8032E4CB1840036C10B /* ModelOptionsBottomSheetView.swift in Sources */,
 				105036F62DDB289D00571B4E /* ExchangePrincipalResponse.swift in Sources */,
 				ACB46A732D105AF4002E200C /* CollectionView+Extensions.swift in Sources */,
 				ACAA536B2E4A538E008D3025 /* OnboardingInfoView.swift in Sources */,
@@ -3155,6 +3172,7 @@
 				ACD2E8252D6746E900E750FE /* UploadingProgressView.swift in Sources */,
 				AC32E4702D299E74001DDA43 /* ICPBrandingView.swift in Sources */,
 				10020AAB2DF7FBE800DF269E /* SatsCoinDTO.swift in Sources */,
+				1064B7FD2E4C8CD30036C10B /* CreateAIVideoScreenView.swift in Sources */,
 				ACC0D4612D917908006DCF5C /* DeleteVideoRequestDTO.swift in Sources */,
 				AC26CA4A2D8026B4006ADA75 /* CrashReporter.swift in Sources */,
 				AC4960652D2D693B008D59D9 /* Foundation+Extensions.swift in Sources */,
@@ -3174,6 +3192,7 @@
 				AC462F482D95B7F8004957B3 /* ReportView.swift in Sources */,
 				AC61D3B12DB28AAB00A7EA92 /* EULAPopUpView.swift in Sources */,
 				AC92941D2D6622EE003DB102 /* VideoPickerViewControllerRepresentable.swift in Sources */,
+				1064B8062E4CB34E0036C10B /* PromptView.swift in Sources */,
 				100209FA2DE83F7900DF269E /* LeaderboardDTO.swift in Sources */,
 				ACCB98782D944213002B9675 /* UILabel+Extensions.swift in Sources */,
 				AC2C30D52D96C68700DA9F81 /* ReportRequestDTO.swift in Sources */,
@@ -3329,6 +3348,7 @@
 				AC9294112D6599A1003DB102 /* CaptionsView.swift in Sources */,
 				AC638BF62D2309C000481E94 /* KeychainHelper.swift in Sources */,
 				AC99BB9A2D84913C008012C2 /* YralColor.swift in Sources */,
+				1064B8012E4CA4110036C10B /* ModelOption.swift in Sources */,
 				107C60C92DBF7A2D006FC467 /* SmileyGameRuleDIContainer.swift in Sources */,
 				AC6E31232D22F08F001EBE6C /* ImageLoaderProtocol.swift in Sources */,
 				105034A22DD5E3D500571B4E /* SmileyConfigDTO.swift in Sources */,
@@ -3401,6 +3421,7 @@
 				AC3FBE132E2BAA0F00CE3EC1 /* MP4DownloadManager.swift in Sources */,
 				AC3FBE142E2BAA0F00CE3EC1 /* MP4DownloadManaging.swift in Sources */,
 				10512A432DA666AD00114BAA /* YralPlayer.swift in Sources */,
+				1064B8042E4CB1840036C10B /* ModelOptionsBottomSheetView.swift in Sources */,
 				105036F82DDB289D00571B4E /* ExchangePrincipalResponse.swift in Sources */,
 				ACB46A742D105AF4002E200C /* CollectionView+Extensions.swift in Sources */,
 				ACAA536C2E4A538E008D3025 /* OnboardingInfoView.swift in Sources */,
@@ -3419,6 +3440,7 @@
 				ACD2E8242D6746E900E750FE /* UploadingProgressView.swift in Sources */,
 				AC32E46F2D299E74001DDA43 /* ICPBrandingView.swift in Sources */,
 				10020AAA2DF7FBE800DF269E /* SatsCoinDTO.swift in Sources */,
+				1064B7FE2E4C8CD30036C10B /* CreateAIVideoScreenView.swift in Sources */,
 				ACC0D4622D917908006DCF5C /* DeleteVideoRequestDTO.swift in Sources */,
 				AC26CA492D8026B4006ADA75 /* CrashReporter.swift in Sources */,
 				AC4960642D2D693B008D59D9 /* Foundation+Extensions.swift in Sources */,
@@ -3438,6 +3460,7 @@
 				AC462F472D95B7F8004957B3 /* ReportView.swift in Sources */,
 				AC61D3B22DB28AAB00A7EA92 /* EULAPopUpView.swift in Sources */,
 				AC92941C2D6622EE003DB102 /* VideoPickerViewControllerRepresentable.swift in Sources */,
+				1064B8072E4CB34E0036C10B /* PromptView.swift in Sources */,
 				100209F92DE83F7900DF269E /* LeaderboardDTO.swift in Sources */,
 				ACCB98792D944213002B9675 /* UILabel+Extensions.swift in Sources */,
 				AC2C30D42D96C68700DA9F81 /* ReportRequestDTO.swift in Sources */,
@@ -3593,6 +3616,7 @@
 				AC9294122D6599A1003DB102 /* CaptionsView.swift in Sources */,
 				AC638BF52D2309C000481E94 /* KeychainHelper.swift in Sources */,
 				AC99BB9B2D84913C008012C2 /* YralColor.swift in Sources */,
+				1064B8002E4CA4110036C10B /* ModelOption.swift in Sources */,
 				107C60C82DBF7A2D006FC467 /* SmileyGameRuleDIContainer.swift in Sources */,
 				AC6E31222D22F08F001EBE6C /* ImageLoaderProtocol.swift in Sources */,
 				105034A12DD5E3D500571B4E /* SmileyConfigDTO.swift in Sources */,
