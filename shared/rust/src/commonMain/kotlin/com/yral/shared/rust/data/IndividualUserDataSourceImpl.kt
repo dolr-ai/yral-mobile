@@ -7,9 +7,6 @@ import com.yral.shared.rust.data.models.PostDTO
 import com.yral.shared.rust.data.models.PostResponseDTO
 import com.yral.shared.rust.services.IndividualUserServiceFactory
 import com.yral.shared.uniffi.generated.PostDetailsForFrontend
-import com.yral.shared.uniffi.generated.RateLimitStatus
-import com.yral.shared.uniffi.generated.VideoGenRequestKey
-import com.yral.shared.uniffi.generated.VideoGenRequestStatus
 import io.ktor.client.HttpClient
 import io.ktor.client.request.setBody
 import io.ktor.http.path
@@ -49,19 +46,6 @@ class IndividualUserDataSourceImpl(
             .service(principal = post.canisterID)
             .getIndividualPostDetailsById(post.postID.toULong())
 
-    override suspend fun fetchVideoGenerationStatus(requestKey: VideoGenRequestKey): VideoGenRequestStatus =
-        individualUserServiceFactory
-            .service(principal = RATE_LIMIT_CANISTER)
-            .pollVideoGenerationStatus(requestKey)
-
-    override suspend fun getFreeCreditsStatus(
-        canisterId: String,
-        isRegistered: Boolean,
-    ): RateLimitStatus =
-        individualUserServiceFactory
-            .service(principal = RATE_LIMIT_CANISTER)
-            .getRateLimitStatus(canisterId, "Free", isRegistered)
-
     companion object {
         private const val CACHED_FEED_PATH = "/api/v3/feed/coldstart/clean"
         private const val ML_FEED_PATH = "/api/v3/feed/clean"
@@ -69,6 +53,5 @@ class IndividualUserDataSourceImpl(
         const val CLOUD_FLARE_SUFFIX = "/manifest/video.m3u8"
         const val CLOUD_FLARE_SUFFIX_MP4 = "/downloads/default.mp4"
         const val THUMBNAIL_SUFFIX = "/thumbnails/thumbnail.jpg"
-        private const val RATE_LIMIT_CANISTER = "h2jgv-ayaaa-aaaas-qbh4a-cai"
     }
 }
