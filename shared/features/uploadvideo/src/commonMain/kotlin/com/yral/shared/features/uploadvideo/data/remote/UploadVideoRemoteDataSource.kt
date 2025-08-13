@@ -6,6 +6,7 @@ import com.yral.shared.features.uploadvideo.data.remote.models.GenerateVideoRequ
 import com.yral.shared.features.uploadvideo.data.remote.models.GetUploadUrlResponseDTO
 import com.yral.shared.features.uploadvideo.data.remote.models.ProvidersResponseDto
 import com.yral.shared.features.uploadvideo.data.remote.models.UpdateMetaDataRequestDto
+import com.yral.shared.features.uploadvideo.data.remote.models.UploadAiVideoFromUrlRequestDto
 import com.yral.shared.features.uploadvideo.data.remote.models.parseGenerateVideoResponse
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoResult
 import com.yral.shared.http.UPLOAD_FILE_TIME_OUT
@@ -148,10 +149,22 @@ internal class UploadVideoRemoteDataSource(
             }
         }
 
+    suspend fun uploadAiVideoFromUrl(dto: UploadAiVideoFromUrlRequestDto) {
+        httpPostWithStringResponse(client) {
+            url {
+                host = AppConfigurations.ANONYMOUS_IDENTITY_BASE_URL
+                path(UPLOAD_AI_VIDEO_FROM_URL_PATH)
+            }
+            contentType(ContentType.Application.Json)
+            setBody(dto)
+        }
+    }
+
     @Suppress("UnusedPrivateProperty")
     companion object {
         private const val GET_UPLOAD_URL_PATH = "get_upload_url"
         private const val UPDATE_METADATA_PATH = "update_metadata"
+        private const val UPLOAD_AI_VIDEO_FROM_URL_PATH = "/api/upload_ai_video_from_url"
         private const val GET_PROVIDERS_PATH = "/api/v2/videogen/providers"
         private const val GET_ALL_PROVIDERS_PATH = "/api/v2/videogen/providers-all" // Use for internal builds
         private const val GENERATE_WITH_IDENTITY_V2_PATH = "/api/v2/videogen/generate"
