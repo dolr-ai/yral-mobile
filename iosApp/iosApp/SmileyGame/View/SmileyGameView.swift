@@ -52,6 +52,7 @@ struct SmileyGameView: View {
             .animation(.easeOut(duration: Constants.durationPointOne), value: isFocused)
             .animation(.easeOut(duration: Constants.durationPointThree), value: showWinnerOnly)
             .onTapGesture {
+              stopOnboardingLoop()
               if selectedID == nil {
                 HapticGenerator.performFeedback(.impact(weight: .light))
                 AudioPlayer.shared.play(named: Constants.smileyTapAudio)
@@ -156,6 +157,9 @@ struct SmileyGameView: View {
 
   @MainActor
   func stopOnboardingLoop() {
+    if isLooping == true {
+      selectedID = nil
+    }
     isLooping = false
   }
 

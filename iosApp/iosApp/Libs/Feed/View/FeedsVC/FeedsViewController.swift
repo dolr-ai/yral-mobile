@@ -22,6 +22,8 @@ class FeedsViewController: UIViewController {
   var paginatedFeedscancellables: Set<AnyCancellable> = []
   var trackedVideoIDs: Set<String> = []
   var lastContentOffsetY: CGFloat = 0
+  let playToScroll: Bool
+  var isShowingPlayToScroll = false
 
   lazy var feedsPlayer: YralPlayer = { [unowned self] in
     let monitor = DefaultNetworkMonitor()
@@ -72,11 +74,13 @@ class FeedsViewController: UIViewController {
 
   init(
     viewModel: any FeedViewModelProtocol,
+    playToScroll: Bool,
     feedType: FeedType = .otherUsers,
     session: SessionManager,
     crashReporter: CrashReporter
   ) {
     self.viewModel = viewModel
+    self.playToScroll = playToScroll
     self.feedType = feedType
     self.session = session
     self.crashReporter = crashReporter

@@ -35,7 +35,7 @@ struct HomeTabController: View {
     uploadView: UploadView,
     profileView: ProfileView,
     accountView: AccountView,
-    leaderboardView: LeaderboardView
+    leaderboardView: LeaderboardView,
   ) {
     self.feedsViewController = feedsViewController
     self.uploadView = uploadView

@@ -46,6 +46,26 @@ extension FeedsViewController: UICollectionViewDelegate {
     trackedVideoIDs.removeAll()
     storeThumbnail()
     feedsPlayer.pause()
+
+    guard playToScroll else { return }
+
+    let velocityY = scrollView.panGestureRecognizer.velocity(in: scrollView).y
+    let feedItemIndex = feedsCV.indexPathsForVisibleItems.first?.item ?? 0
+    guard feedItemIndex < feedsDataSource.snapshot().itemIdentifiers.count else { return }
+    let smileyGameState = feedsDataSource.snapshot().itemIdentifiers[feedItemIndex].smileyGame?.state
+    if velocityY < .zero, !isShowingPlayToScroll, case .notPlayed = smileyGameState {
+      isShowingPlayToScroll = true
+
+      let lockOffset = CGPoint(x: scrollView.contentOffset.x, y: lastContentOffsetY)
+      scrollView.setContentOffset(lockOffset, animated: false)
+
+      scrollView.panGestureRecognizer.isEnabled = false
+      scrollView.panGestureRecognizer.isEnabled = true
+
+      if let cell = feedsCV.visibleCells.first as? FeedsCell {
+        cell.showPlayToScroll()
+      }
+    }
   }
 
   func scrollViewWillEndDragging(
@@ -105,5 +125,6 @@ extension FeedsViewController: UICollectionViewDelegate {
     forItemAt indexPath: IndexPath
   ) {
     (cell as? FeedsCell)?.stopListeningForFirstFrame()
+    isShowingPlayToScroll = false
   }
 }

@@ -429,6 +429,10 @@
 		ACAA4DBC2DDE08D6001092A6 /* HLSDownloadManager+Mockers.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAA4DBA2DDE08CB001092A6 /* HLSDownloadManager+Mockers.swift */; };
 		ACAA536B2E4A538E008D3025 /* OnboardingInfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAA536A2E4A537D008D3025 /* OnboardingInfoView.swift */; };
 		ACAA536C2E4A538E008D3025 /* OnboardingInfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAA536A2E4A537D008D3025 /* OnboardingInfoView.swift */; };
+		ACAA53912E4CB156008D3025 /* PlayToScrollInfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAA53902E4CB14D008D3025 /* PlayToScrollInfoView.swift */; };
+		ACAA53922E4CB156008D3025 /* PlayToScrollInfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAA53902E4CB14D008D3025 /* PlayToScrollInfoView.swift */; };
+		ACAA53942E4CB292008D3025 /* FeedsCell+PlayToScroll.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAA53932E4CB28C008D3025 /* FeedsCell+PlayToScroll.swift */; };
+		ACAA53952E4CB292008D3025 /* FeedsCell+PlayToScroll.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAA53932E4CB28C008D3025 /* FeedsCell+PlayToScroll.swift */; };
 		ACB09FC92D92CB6400EE3239 /* ProfileRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB09FC82D92CB6000EE3239 /* ProfileRouter.swift */; };
 		ACB09FCA2D92CB6400EE3239 /* ProfileRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB09FC82D92CB6000EE3239 /* ProfileRouter.swift */; };
 		ACB09FD52D92D66400EE3239 /* FeedsViewModelProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB09FD42D92D65E00EE3239 /* FeedsViewModelProtocol.swift */; };
@@ -840,6 +844,8 @@
 		ACAA4D712DDCF85E001092A6 /* FeedsPlayer+Events.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FeedsPlayer+Events.swift"; sourceTree = "<group>"; };
 		ACAA4DBA2DDE08CB001092A6 /* HLSDownloadManager+Mockers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HLSDownloadManager+Mockers.swift"; sourceTree = "<group>"; };
 		ACAA536A2E4A537D008D3025 /* OnboardingInfoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingInfoView.swift; sourceTree = "<group>"; };
+		ACAA53902E4CB14D008D3025 /* PlayToScrollInfoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayToScrollInfoView.swift; sourceTree = "<group>"; };
+		ACAA53932E4CB28C008D3025 /* FeedsCell+PlayToScroll.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FeedsCell+PlayToScroll.swift"; sourceTree = "<group>"; };
 		ACB09FC82D92CB6000EE3239 /* ProfileRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileRouter.swift; sourceTree = "<group>"; };
 		ACB09FD42D92D65E00EE3239 /* FeedsViewModelProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedsViewModelProtocol.swift; sourceTree = "<group>"; };
 		ACB09FD92D92D6E400EE3239 /* MoreFeedsRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoreFeedsRequest.swift; sourceTree = "<group>"; };
@@ -923,6 +929,8 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		AC9B77DE2D58C7E300270FC9 /* YralTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = YralTests;
 			sourceTree = "<group>";
 		};
@@ -1559,6 +1567,7 @@
 		AC32E4222D2712E9001DDA43 /* Helper */ = {
 			isa = PBXGroup;
 			children = (
+				ACAA53902E4CB14D008D3025 /* PlayToScrollInfoView.swift */,
 				ACAA536A2E4A537D008D3025 /* OnboardingInfoView.swift */,
 				AC4DECA82D3E06A6008EC8F5 /* FooterLoaderView.swift */,
 				AC32E4232D2712EE001DDA43 /* ProfileInfoView.swift */,
@@ -2279,6 +2288,7 @@
 				ACB46A7F2D106031002E200C /* FeedsCell.swift */,
 				AC462F492D95BB61004957B3 /* FeedsCell+Captions.swift */,
 				ACC198CC2E460E250007DD8D /* FeedsCell+Onboarding.swift */,
+				ACAA53932E4CB28C008D3025 /* FeedsCell+PlayToScroll.swift */,
 				AC20A13F2E3B7723003306C1 /* FeedsCell+Wallet.swift */,
 			);
 			path = Cells;
@@ -2840,13 +2850,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -2861,13 +2867,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3029,13 +3031,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3179,6 +3177,7 @@
 				AC4DECA92D3E06AC008EC8F5 /* FooterLoaderView.swift in Sources */,
 				AC51C0522DC4E0D200D5BA34 /* RefreshVideosRequest.swift in Sources */,
 				100F64EF2DCC96C9000BC17E /* YralCache.swift in Sources */,
+				ACAA53942E4CB292008D3025 /* FeedsCell+PlayToScroll.swift in Sources */,
 				ACC1C3982D9AF8BD005A7539 /* LottieLoaderContainerView.swift in Sources */,
 				AC4E99692D884BDB000B47B3 /* ProfileVideoGridsView.swift in Sources */,
 				ACC0D4522D8DDB97006DCF5C /* ProfileRepositoryProtocol.swift in Sources */,
@@ -3245,6 +3244,7 @@
 				AC7F7ECE2D78707200215162 /* UploadVideoRequest.swift in Sources */,
 				AC6BECC22D09F91C002E2021 /* HTTPService.swift in Sources */,
 				AC2C30CD2D96C49800DA9F81 /* ReportUseCase.swift in Sources */,
+				ACAA53922E4CB156008D3025 /* PlayToScrollInfoView.swift in Sources */,
 				107C60992DB8BCB1006FC467 /* SmileyGameView.swift in Sources */,
 				AC1F93932DC1494800F322E1 /* TokenRequestDTO.swift in Sources */,
 				ACC0F3942D2ED5B700FA5BD0 /* SplashScreenView.swift in Sources */,
@@ -3435,6 +3435,7 @@
 				AC4DECAA2D3E06AC008EC8F5 /* FooterLoaderView.swift in Sources */,
 				100F64EE2DCC96C9000BC17E /* YralCache.swift in Sources */,
 				AC51C0532DC4E0D200D5BA34 /* RefreshVideosRequest.swift in Sources */,
+				ACAA53952E4CB292008D3025 /* FeedsCell+PlayToScroll.swift in Sources */,
 				ACC1C3992D9AF8BD005A7539 /* LottieLoaderContainerView.swift in Sources */,
 				AC4E99682D884BDB000B47B3 /* ProfileVideoGridsView.swift in Sources */,
 				ACC0D4532D8DDB97006DCF5C /* ProfileRepositoryProtocol.swift in Sources */,
@@ -3501,6 +3502,7 @@
 				AC7F7ECD2D78707200215162 /* UploadVideoRequest.swift in Sources */,
 				AC6BECC32D09F91C002E2021 /* HTTPService.swift in Sources */,
 				AC2C30CE2D96C49800DA9F81 /* ReportUseCase.swift in Sources */,
+				ACAA53912E4CB156008D3025 /* PlayToScrollInfoView.swift in Sources */,
 				AC1F93922DC1494800F322E1 /* TokenRequestDTO.swift in Sources */,
 				107C60982DB8BCB1006FC467 /* SmileyGameView.swift in Sources */,
 				ACC0F3952D2ED5B700FA5BD0 /* SplashScreenView.swift in Sources */,

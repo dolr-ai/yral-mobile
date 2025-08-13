@@ -26,6 +26,7 @@ protocol FeedsCellProtocol: AnyObject {
   func walletAnimationStarted()
   func walletAnimationEnded(success: Bool, coins: Int64)
   func howToPlayTapped()
+  func howToPlayShown()
 }
 
 // swiftlint: disable type_body_length
@@ -154,8 +155,9 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     profileInfoView.heightAnchor.constraint(equalToConstant: Constants.profileInfoViewHeight).isActive = true
     return profileInfoView
   }()
-  var onboardingOverlayView = getUIView()
+  var gameInfoOverlayView = getUIView()
   var onboardingInfoView = OnboardingInfoView()
+  var playToScrollInfoView = PlayToScrollInfoView()
   var howToPlayButton: UIButton = {
     let button = getUIButton()
     button.backgroundColor = .clear
@@ -363,6 +365,9 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   }
 
   private func handleSmileyTap(_ smiley: Smiley) {
+    if let smileyView = smileyGameHostController?.view {
+      cleanupOnOnboardingCompletion(smileyView: smileyView)
+    }
     if sessionManager?.state.coins ?? UInt64(.zero) >= SmileyGameConfig.shared.config.lossPenalty {
       delegate?.smileyTapped(index: index, smiley: smiley)
       DispatchQueue.main.asyncAfter(deadline: .now() + Constants.smileyTapDuration) {
@@ -393,6 +398,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   }
 
   func startSmileyGamResultAnimation(for result: SmileyGameResultResponse, completion: @escaping () -> Void) {
+    self.smileyGame?.state = .played(result)
     HapticGenerator.performFeedback(.impact(weight: .medium))
     AudioPlayer.shared.play(named: result.outcome == "WIN" ? Constants.winSound : Constants.lossSound)
     profileInfoView.coinsView.updateCoins(by: result.coinDelta)
@@ -622,7 +628,7 @@ extension FeedsCell {
     static let smileyGameShadowColor = YralColor.grey0.uiColor.withAlphaComponent(0.6).cgColor
     static let smileyShadowMaxRadius = 21.5
     static let onbaordingInfoViewHeight: CGFloat = 260.0
-    static let onbaordingInfoViewBottom: CGFloat = 8.0
+    static let onbaordingInfoViewBottom: CGFloat = -36.0
     static let onbaordingInfoViewHorizontalSpacing: CGFloat = 24.0
     static let onboardingInfoAnimationTranslation: CGFloat = 10.0
     static let howToPlayImageCollapsed = "howtoplay_collapsed"
@@ -633,5 +639,6 @@ extension FeedsCell {
     static let starsImageName = "stars_onboarding_bg"
     static let starsImageViewHeight = 130.0
     static let starsImageTop = 44.0
+    static let howToPlayInfoViewHeight: CGFloat = 214.0
   }
 }

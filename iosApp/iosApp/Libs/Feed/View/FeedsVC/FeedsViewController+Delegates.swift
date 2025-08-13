@@ -290,6 +290,10 @@ extension FeedsViewController: FeedsCellProtocol {
     smileyGameRuleVC.extendedLayoutIncludesOpaqueBars = true
     self.navigationController?.pushViewController(smileyGameRuleVC, animated: true)
   }
+
+  func howToPlayShown() {
+    self.isShowingPlayToScroll = false
+  }
 }
 
 extension FeedsViewController: FeedsPlayerProtocol {

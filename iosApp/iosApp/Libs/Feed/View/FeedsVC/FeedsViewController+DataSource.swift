@@ -20,6 +20,8 @@ extension FeedsViewController {
       let lastDisplayedThumbnailPath = self.lastDisplayedThumbnailPath[feed.videoID] ?? ""
       // swiftlint: disable force_cast
       if indexPath.row == self.feedsPlayer.currentIndex {
+        let showOnboarding = !(UserDefaultsManager.shared.get(for: DefaultsKey.onboardingCompleted) ?? false)
+        && indexPath.item >= .three && !playToScroll && self.feedType == .otherUsers
         cell.configure(
           withPlayer: feedsPlayer as! FeedsPlayer,
           feedInfo: FeedsCell.FeedCellInfo(
@@ -32,8 +34,7 @@ extension FeedsViewController {
               indexPath.item != .zero &&
               indexPath.item % Constants.overlayIndex == .zero
             ) && !session.state.isLoggedIn,
-            showOnboarding: !(UserDefaultsManager.shared.get(for: DefaultsKey.onboardingCompleted) ?? false)
-            && indexPath.item >= .three
+            showOnboarding: showOnboarding
           ),
           profileInfo: ProfileInfoView.ProfileInfo(
             imageURL: feed.profileImageURL,
