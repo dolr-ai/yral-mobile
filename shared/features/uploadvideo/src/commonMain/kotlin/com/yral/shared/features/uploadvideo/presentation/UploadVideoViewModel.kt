@@ -495,7 +495,10 @@ class UploadVideoViewModel internal constructor(
                 .pollGenerationStatusUseCase
                 .invoke(
                     parameters =
-                        PollGenerationStatusUseCase.Params(requestKey = requestKey),
+                        PollGenerationStatusUseCase.Params(
+                            requestKey = requestKey,
+                            isFastInitially = false,
+                        ),
                 ).collect {
                     Logger.d("VideoGen") { "Video generation status: ${it.value}" }
                 }
