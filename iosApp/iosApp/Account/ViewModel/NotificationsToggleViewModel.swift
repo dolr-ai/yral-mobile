@@ -9,6 +9,7 @@
 import Foundation
 import UserNotifications
 import UIKit
+import iosSharedUmbrella
 
 @MainActor
 class NotificationToggleViewModel: ObservableObject {
@@ -34,6 +35,9 @@ class NotificationToggleViewModel: ObservableObject {
           UNUserNotificationCenter.current()
             .requestAuthorization(options: [.alert, .badge, .sound]) { granted, _ in
               DispatchQueue.main.async {
+                AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+                  event: PushNotificationsEnabledEventData()
+                )
                 self.isNotificationEnabled = granted
                 if granted {
                   UIApplication.shared.registerForRemoteNotifications()

@@ -130,6 +130,7 @@ struct HomeTabController: View {
         ZStack(alignment: .center) {
           NotificationsNudge {
             showNotificationsNudge = false
+            AnalyticsModuleKt.getAnalyticsManager().trackEvent(event: PushNotificationsPopupEventData())
           }
           .background( ClearBackgroundView() )
         }

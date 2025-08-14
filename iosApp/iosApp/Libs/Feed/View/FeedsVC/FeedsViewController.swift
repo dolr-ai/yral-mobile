@@ -65,6 +65,7 @@ class FeedsViewController: UIViewController {
   var shouldShowFooterLoader: Bool = false
   var pageEndReached: Bool = false
   var onBackButtonTap: (() -> Void)?
+  var isTutorialVote = false
   weak var walletAnimationDelegate: FeedsViewControllerRechargeDelegate?
   private var loaderCancellables = Set<AnyCancellable>()
   private var authStateCancellables = Set<AnyCancellable>()
