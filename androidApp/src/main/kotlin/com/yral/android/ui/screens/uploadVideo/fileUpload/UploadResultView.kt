@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.uploadVideo
+package com.yral.android.ui.screens.uploadVideo.fileUpload
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box

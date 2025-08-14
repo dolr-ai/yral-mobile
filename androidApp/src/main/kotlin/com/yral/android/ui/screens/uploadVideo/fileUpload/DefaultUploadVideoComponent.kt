@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.uploadVideo.nav
+package com.yral.android.ui.screens.uploadVideo.fileUpload
 
 import com.arkivanov.decompose.ComponentContext
 import com.yral.shared.features.uploadvideo.presentation.UploadVideoViewModel

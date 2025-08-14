@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.uploadVideo
+package com.yral.android.ui.screens.uploadVideo.fileUpload
 
 import android.content.Intent
 import android.net.Uri
