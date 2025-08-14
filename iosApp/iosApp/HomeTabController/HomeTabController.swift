@@ -35,7 +35,7 @@ struct HomeTabController: View {
     uploadView: UploadView,
     profileView: ProfileView,
     accountView: AccountView,
-    leaderboardView: LeaderboardView
+    leaderboardView: LeaderboardView,
   ) {
     self.feedsViewController = feedsViewController
     self.uploadView = uploadView
@@ -130,6 +130,7 @@ struct HomeTabController: View {
         ZStack(alignment: .center) {
           NotificationsNudge {
             showNotificationsNudge = false
+            AnalyticsModuleKt.getAnalyticsManager().trackEvent(event: PushNotificationsPopupEventData())
           }
           .background( ClearBackgroundView() )
         }
