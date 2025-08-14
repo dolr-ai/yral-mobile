@@ -20,6 +20,22 @@ extension FeedsViewController {
       let lastDisplayedThumbnailPath = self.lastDisplayedThumbnailPath[feed.videoID] ?? ""
       // swiftlint: disable force_cast
       if indexPath.row == self.feedsPlayer.currentIndex {
+        let showOnboarding = !(UserDefaultsManager.shared.get(for: DefaultsKey.onboardingCompleted) ?? false)
+        && indexPath.item >= .three && !playToScroll && self.feedType == .otherUsers
+        self.isTutorialVote = showOnboarding
+        if showOnboarding {
+          AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+            event: GameTutorialShownEventData(
+              videoId: feed.videoID,
+              publisherUserId: feed.principalID,
+              likeCount: Int64(feed.likeCount),
+              shareCount: .zero,
+              viewCount: feed.viewCount,
+              gameType: .smiley,
+              isNsfw: false
+            )
+          )
+        }
         cell.configure(
           withPlayer: feedsPlayer as! FeedsPlayer,
           feedInfo: FeedsCell.FeedCellInfo(
@@ -31,7 +47,8 @@ extension FeedsViewController {
             showLoginOverlay: (
               indexPath.item != .zero &&
               indexPath.item % Constants.overlayIndex == .zero
-            ) && !session.state.isLoggedIn
+            ) && !session.state.isLoggedIn,
+            showOnboarding: showOnboarding
           ),
           profileInfo: ProfileInfoView.ProfileInfo(
             imageURL: feed.profileImageURL,
@@ -55,7 +72,8 @@ extension FeedsViewController {
             showLoginOverlay: (
               indexPath.item != .zero &&
               indexPath.item % Constants.overlayIndex == .zero
-            ) && !session.state.isLoggedIn
+            ) && !session.state.isLoggedIn,
+            showOnboarding: false
           ),
           profileInfo: ProfileInfoView.ProfileInfo(
             imageURL: feed.profileImageURL,
@@ -155,6 +173,7 @@ extension FeedsViewController {
     }
     let item = items[index]
     let result = response.outcome == Constants.winResult ? GameResult.win : GameResult.loss
+
     AnalyticsModuleKt.getAnalyticsManager().trackEvent(
       event: GamePlayedEventData(
         videoId: item.videoID,
@@ -169,7 +188,7 @@ extension FeedsViewController {
         optionChosen: response.smiley.id,
         gameResult: result,
         wonLossAmount: Int32(abs(response.coinDelta)),
-        isTutorialVote: false
+        isTutorialVote: isTutorialVote
       )
     )
   }
