@@ -26,6 +26,8 @@ internal class DefaultHomeComponent(
 ) : HomeComponent(),
     ComponentContext by componentContext {
     private val navigation = StackNavigation<Config>()
+    private var uploadVideoSnapshot: UploadVideoRootComponent.Snapshot? = null
+    private var lastUploadComponent: UploadVideoRootComponent? = null
 
     override val stack: Value<ChildStack<*, Child>> =
         childStack(
@@ -34,7 +36,22 @@ internal class DefaultHomeComponent(
             initialConfiguration = Config.Feed,
             handleBackButton = true,
             childFactory = ::child,
-        )
+        ).also { stackValue ->
+            stackValue.subscribe { current ->
+                when (val active = current.active.instance) {
+                    is Child.UploadVideo -> {
+                        lastUploadComponent = active.component
+                    }
+                    else -> {
+                        // Leaving Upload tab: snapshot if we have an instance
+                        lastUploadComponent?.let { component ->
+                            uploadVideoSnapshot = component.createSnapshot()
+                        }
+                        lastUploadComponent = null
+                    }
+                }
+            }
+        }
 
     private val slotNavigation = SlotNavigation<SlotConfig>()
 
@@ -110,6 +127,7 @@ internal class DefaultHomeComponent(
                 showSlot(SlotConfig.AlertsRequestBottomSheet)
             },
             openAlertsRequestBottomSheet = { showSlot(SlotConfig.AlertsRequestBottomSheet) },
+            snapshot = uploadVideoSnapshot,
         )
 
     private fun profileComponent(componentContext: ComponentContext): ProfileComponent =
