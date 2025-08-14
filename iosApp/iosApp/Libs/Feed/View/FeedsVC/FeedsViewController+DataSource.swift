@@ -31,7 +31,9 @@ extension FeedsViewController {
             showLoginOverlay: (
               indexPath.item != .zero &&
               indexPath.item % Constants.overlayIndex == .zero
-            ) && !session.state.isLoggedIn
+            ) && !session.state.isLoggedIn,
+            showOnboarding: !(UserDefaultsManager.shared.get(for: DefaultsKey.onboardingCompleted) ?? false)
+            && indexPath.item >= .three
           ),
           profileInfo: ProfileInfoView.ProfileInfo(
             imageURL: feed.profileImageURL,
@@ -55,7 +57,8 @@ extension FeedsViewController {
             showLoginOverlay: (
               indexPath.item != .zero &&
               indexPath.item % Constants.overlayIndex == .zero
-            ) && !session.state.isLoggedIn
+            ) && !session.state.isLoggedIn,
+            showOnboarding: false
           ),
           profileInfo: ProfileInfoView.ProfileInfo(
             imageURL: feed.profileImageURL,
