@@ -522,8 +522,7 @@ private fun Game(
                     videoId = state.feedDetails[pageNo].videoID,
                 )
             },
-            shouldShowNudge = gameState.nudgeType == NudgeType.INTRO,
-            shouldShowMandatoryNudge = gameState.nudgeType == NudgeType.MANDATORY,
+            nudgeType = gameState.nudgeType,
             pageNo = pageNo,
             onNudgeAnimationComplete = {
                 gameViewModel.setSmileyGameNudgeShown(state.feedDetails[pageNo])

@@ -48,6 +48,7 @@ import com.yral.android.ui.screens.game.SmileyGameConstants.NUDGE_ANIMATION_DURA
 import com.yral.android.ui.screens.game.SmileyGameConstants.NUDGE_ANIMATION_ICON_ITERATIONS
 import com.yral.android.ui.widgets.YralFeedback
 import com.yral.shared.features.game.domain.models.GameIcon
+import com.yral.shared.features.game.viewmodel.NudgeType
 import kotlin.coroutines.cancellation.CancellationException
 
 @Suppress("LongMethod", "CyclomaticComplexMethod")
@@ -61,8 +62,7 @@ fun SmileyGame(
     onIconClicked: (emoji: GameIcon, isTutorialVote: Boolean) -> Unit,
     hasShownCoinDeltaAnimation: Boolean,
     onDeltaAnimationComplete: () -> Unit,
-    shouldShowNudge: Boolean,
-    shouldShowMandatoryNudge: Boolean,
+    nudgeType: NudgeType?,
     pageNo: Int,
     onNudgeAnimationComplete: () -> Unit,
 ) {
@@ -92,8 +92,7 @@ fun SmileyGame(
                 SmileyGameNudge(
                     modifier = Modifier.align(Alignment.BottomCenter).clickable { onNudgeAnimationComplete() },
                     pageNo = pageNo,
-                    shouldShowNudge = shouldShowNudge || shouldShowMandatoryNudge,
-                    isNudgeMandatory = shouldShowMandatoryNudge,
+                    nudgeType = nudgeType,
                     animatingNudgeIconPosition = animatingNudgeIconPosition,
                     startNudgeAnimation = {
                         animatingNudgeIconPosition = 0
@@ -110,7 +109,7 @@ fun SmileyGame(
                     clickedIcon = clickedIcon,
                     onIconClicked = {
                         animateBubbles = true
-                        onIconClicked(it, !shouldShowMandatoryNudge && animatingNudgeIconPosition != null)
+                        onIconClicked(it, nudgeType == NudgeType.INTRO && animatingNudgeIconPosition != null)
                     },
                     isLoading = isLoading,
                     coinDelta = coinDelta,
@@ -123,7 +122,10 @@ fun SmileyGame(
                             animatingNudgeIconPosition?.let { currentIndex ->
                                 when {
                                     currentIndex + 1 < gameIcons.size -> currentIndex + 1
-                                    !isNudgeIterationValid(++nudgeIterationCount, shouldShowMandatoryNudge) ->
+                                    !isNudgeIterationValid(
+                                        nudgeIteration = ++nudgeIterationCount,
+                                        isMandatory = nudgeType == NudgeType.MANDATORY,
+                                    ) ->
                                         run {
                                             nudgeIterationCount = 0
                                             onNudgeAnimationComplete()
@@ -203,15 +205,14 @@ private fun BoxScope.SmileyGameResult(
 private fun SmileyGameNudge(
     modifier: Modifier = Modifier,
     pageNo: Int,
-    shouldShowNudge: Boolean,
-    isNudgeMandatory: Boolean,
+    nudgeType: NudgeType?,
     animatingNudgeIconPosition: Int?,
     startNudgeAnimation: () -> Unit,
     dismissNudgeAnimation: () -> Unit,
 ) {
-    LaunchedEffect(shouldShowNudge) {
+    LaunchedEffect(nudgeType) {
         try {
-            if (shouldShowNudge) {
+            if (nudgeType != null) {
                 startNudgeAnimation()
             } else {
                 dismissNudgeAnimation()
@@ -245,7 +246,7 @@ private fun SmileyGameNudge(
             modifier = modifier,
             alpha = alpha,
             offsetY = offsetY,
-            isNudgeMandatory = isNudgeMandatory,
+            isNudgeMandatory = nudgeType == NudgeType.MANDATORY,
         )
     }
 }
