@@ -2,19 +2,27 @@ package com.yral.shared.features.uploadvideo.data.remote
 
 import com.yral.shared.core.AppConfigurations
 import com.yral.shared.features.uploadvideo.data.remote.models.FileUploadStatus
+import com.yral.shared.features.uploadvideo.data.remote.models.GenerateVideoRequestDto
 import com.yral.shared.features.uploadvideo.data.remote.models.GetUploadUrlResponseDTO
+import com.yral.shared.features.uploadvideo.data.remote.models.ProvidersResponseDto
 import com.yral.shared.features.uploadvideo.data.remote.models.UpdateMetaDataRequestDto
+import com.yral.shared.features.uploadvideo.data.remote.models.UploadAiVideoFromUrlRequestDto
+import com.yral.shared.features.uploadvideo.data.remote.models.parseGenerateVideoResponse
+import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoResult
 import com.yral.shared.http.UPLOAD_FILE_TIME_OUT
 import com.yral.shared.http.handleException
 import com.yral.shared.http.httpGet
 import com.yral.shared.http.httpPostWithStringResponse
 import io.ktor.client.HttpClient
 import io.ktor.client.content.ProgressListener
+import io.ktor.client.plugins.ClientRequestException
+import io.ktor.client.plugins.ServerResponseException
 import io.ktor.client.plugins.onUpload
 import io.ktor.client.plugins.timeout
 import io.ktor.client.request.forms.InputProvider
 import io.ktor.client.request.forms.formData
 import io.ktor.client.request.forms.submitFormWithBinaryData
+import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
@@ -108,8 +116,57 @@ internal class UploadVideoRemoteDataSource(
         }
     }
 
+    suspend fun generateVideo(dto: GenerateVideoRequestDto): GenerateVideoResult =
+        try {
+            val response: HttpResponse =
+                client.post {
+                    url {
+                        host = AppConfigurations.OFF_CHAIN_BASE_URL
+                        path(GENERATE_WITH_IDENTITY_V2_PATH)
+                    }
+                    contentType(ContentType.Application.Json)
+                    setBody(dto)
+                }
+            response.parseGenerateVideoResponse(json)
+        } catch (e: ClientRequestException) {
+            e.response.parseGenerateVideoResponse(json)
+        } catch (e: ServerResponseException) {
+            e.response.parseGenerateVideoResponse(json)
+        } catch (_: Exception) {
+            GenerateVideoResult(
+                operationId = null,
+                provider = null,
+                requestKey = null,
+                providerError = "Something went wrong!",
+            )
+        }
+
+    suspend fun fetchProviders(): ProvidersResponseDto =
+        httpGet(client, json) {
+            url {
+                host = AppConfigurations.OFF_CHAIN_BASE_URL
+                path(GET_PROVIDERS_PATH)
+            }
+        }
+
+    suspend fun uploadAiVideoFromUrl(dto: UploadAiVideoFromUrlRequestDto) {
+        httpPostWithStringResponse(client) {
+            url {
+                host = AppConfigurations.ANONYMOUS_IDENTITY_BASE_URL
+                path(UPLOAD_AI_VIDEO_FROM_URL_PATH)
+            }
+            contentType(ContentType.Application.Json)
+            setBody(dto)
+        }
+    }
+
+    @Suppress("UnusedPrivateProperty")
     companion object {
         private const val GET_UPLOAD_URL_PATH = "get_upload_url"
         private const val UPDATE_METADATA_PATH = "update_metadata"
+        private const val UPLOAD_AI_VIDEO_FROM_URL_PATH = "/api/upload_ai_video_from_url"
+        private const val GET_PROVIDERS_PATH = "/api/v2/videogen/providers"
+        private const val GET_ALL_PROVIDERS_PATH = "/api/v2/videogen/providers-all" // Use for internal builds
+        private const val GENERATE_WITH_IDENTITY_V2_PATH = "/api/v2/videogen/generate"
     }
 }

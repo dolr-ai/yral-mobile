@@ -36,9 +36,7 @@ import kotlinx.io.files.SystemFileSystem
 
 @Suppress("TooManyFunctions")
 class UploadVideoViewModel internal constructor(
-    private val getUploadEndpoint: GetUploadEndpointUseCase,
-    private val uploadVideo: UploadVideoUseCase,
-    private val updateMeta: UpdateMetaUseCase,
+    private val requiredUseCases: RequiredUseCases,
     private val appDispatchers: AppDispatchers,
     private val uploadVideoTelemetry: UploadVideoTelemetry,
     private val crashlyticsManager: CrashlyticsManager,
@@ -112,13 +110,14 @@ class UploadVideoViewModel internal constructor(
                 it.copy(fileUploadUiState = UiState.InProgress(0f))
             }
             // Get upload endpoint
-            val endpointResult = getUploadEndpoint()
+            val endpointResult = requiredUseCases.getUploadEndpoint()
             val endpoint = endpointResult.getOrThrow()
 
             log { "performBackgroundUpload endpoint: $endpoint" }
 
             // Start video upload
-            uploadVideo(UploadVideoUseCase.Params(endpoint.url, filePath))
+            requiredUseCases
+                .uploadVideo(UploadVideoUseCase.Params(endpoint.url, filePath))
                 .collect { result ->
                     val fileUploadUiState =
                         result.fold(
@@ -305,7 +304,7 @@ class UploadVideoViewModel internal constructor(
                     }
 
                 // Perform the actual metadata update
-                val result = updateMeta(UpdateMetaUseCase.Param(uploadFileRequest))
+                val result = requiredUseCases.updateMeta(UpdateMetaUseCase.Param(uploadFileRequest))
                 log { "Metadata updated" }
 
                 // Cancel the progress animation and set to 100%
@@ -497,4 +496,10 @@ class UploadVideoViewModel internal constructor(
         private const val IS_CAPTION_REQUIRED = false
         private const val IS_HASHTAGS_REQUIRED = false
     }
+
+    internal data class RequiredUseCases(
+        val getUploadEndpoint: GetUploadEndpointUseCase,
+        val uploadVideo: UploadVideoUseCase,
+        val updateMeta: UpdateMetaUseCase,
+    )
 }
