@@ -18,7 +18,7 @@ import com.yral.android.ui.screens.alertsrequest.nav.AlertsRequestComponent
 import com.yral.android.ui.screens.feed.nav.FeedComponent
 import com.yral.android.ui.screens.leaderboard.nav.LeaderboardComponent
 import com.yral.android.ui.screens.profile.nav.ProfileComponent
-import com.yral.android.ui.screens.uploadVideo.nav.UploadVideoComponent
+import com.yral.android.ui.screens.uploadVideo.UploadVideoRootComponent
 import kotlinx.serialization.Serializable
 
 internal class DefaultHomeComponent(
@@ -102,13 +102,14 @@ internal class DefaultHomeComponent(
     private fun leaderboardComponent(componentContext: ComponentContext): LeaderboardComponent =
         LeaderboardComponent.Companion(componentContext = componentContext)
 
-    private fun uploadVideoComponent(componentContext: ComponentContext): UploadVideoComponent =
-        UploadVideoComponent.Companion(
+    private fun uploadVideoComponent(componentContext: ComponentContext): UploadVideoRootComponent =
+        UploadVideoRootComponent.Companion(
             componentContext = componentContext,
             goToHome = {
                 onFeedTabClick()
                 showSlot(SlotConfig.AlertsRequestBottomSheet)
             },
+            openAlertsRequestBottomSheet = { showSlot(SlotConfig.AlertsRequestBottomSheet) },
         )
 
     private fun profileComponent(componentContext: ComponentContext): ProfileComponent =
