@@ -164,5 +164,5 @@ open class FlagGroup internal constructor(
             StringMapCodec(),
         ).also { _allFlags.add(it) }
 
-    private fun fullKey(suffix: String) = if (suffix.isEmpty()) keyPrefix else "$keyPrefix.$suffix"
+    private fun fullKey(suffix: String) = if (suffix.isEmpty()) keyPrefix else "${keyPrefix}_$suffix"
 }

@@ -54,18 +54,30 @@ class JsonCodec<T>(
     private val serializer: KSerializer<T>,
 ) : FlagCodec<T> {
     override fun encode(value: T): String = FeatureFlagsJson.encodeToString(serializer, value)
-    override fun decode(raw: String): T? = runCatching { FeatureFlagsJson.decodeFromString(serializer, raw) }.getOrNull()
+    override fun decode(raw: String): T? =
+        runCatching {
+            FeatureFlagsJson.decodeFromString(serializer, raw)
+        }.getOrNull()
 }
 
 class StringListCodec : FlagCodec<List<String>> {
     private val delimiter = ","
     override fun encode(value: List<String>): String = value.joinToString(delimiter)
-    override fun decode(raw: String): List<String> = if (raw.isEmpty()) emptyList() else raw.split(delimiter).map { it.trim() }
+    override fun decode(raw: String): List<String> =
+        if (raw.isEmpty()) {
+            emptyList()
+        } else {
+            raw.split(delimiter).map { it.trim() }
+        }
 }
 
 class StringMapCodec : FlagCodec<Map<String, String>> {
     // JSON encoding for robustness
     private val serializer = MapSerializer(String.serializer(), String.serializer())
     override fun encode(value: Map<String, String>): String = FeatureFlagsJson.encodeToString(serializer, value)
-    override fun decode(raw: String): Map<String, String>? = runCatching { FeatureFlagsJson.decodeFromString(serializer, raw) }.getOrNull()
+
+    override fun decode(raw: String): Map<String, String>? =
+        runCatching {
+            FeatureFlagsJson.decodeFromString(serializer, raw)
+        }.getOrNull()
 }

@@ -6,10 +6,12 @@ import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.remoteconfig.FirebaseRemoteConfig
 import dev.gitlive.firebase.remoteconfig.ValueSource
 import dev.gitlive.firebase.remoteconfig.remoteConfig
+import kotlin.time.Duration.Companion.minutes
 
 class FirebaseRemoteConfigProvider(
     override val id: String = ID,
     override val name: String = NAME,
+    private val isDevMode: Boolean = false,
 ) : FeatureFlagProvider {
     private val remoteConfig: FirebaseRemoteConfig = Firebase.remoteConfig
     override val isRemote: Boolean = true
@@ -24,7 +26,12 @@ class FirebaseRemoteConfigProvider(
     }
 
     override suspend fun fetchAndActivate() {
-        remoteConfig.fetchAndActivate()
+        if (isDevMode) {
+            remoteConfig.fetch(1.minutes)
+            remoteConfig.activate()
+        } else {
+            remoteConfig.fetchAndActivate()
+        }
     }
 
     companion object {

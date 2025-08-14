@@ -10,6 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.time.Duration
 
@@ -25,11 +26,11 @@ class FeatureFlagManager(
 
     private val remoteFetchReady = CompletableDeferred<Unit>()
 
-    internal val localProvider
-        get() = providersInPriority.firstOrNull { it.id == localProviderId }
+    internal val localProvider = providersInPriority.firstOrNull { it.id == localProviderId }
 
     init {
         recomputeActiveProviders()
+        hydrateAndFetchRemotesAsync()
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -63,6 +64,11 @@ class FeatureFlagManager(
         if (!remoteFetchReady.isCompleted) remoteFetchReady.complete(Unit)
         // Clear caches so subsequent reads re-resolve with fresh remote values
         clearResolvedCaches()
+    }
+
+    /** Fire-and-forget hydration in background. Pair with awaitRemoteFetch(timeout) if you need to wait. */
+    fun hydrateAndFetchRemotesAsync() {
+        scope.launch { hydrateAndFetchRemotes() }
     }
 
     suspend fun awaitRemoteFetch(timeout: Duration): Boolean {
@@ -112,14 +118,13 @@ class FeatureFlagManager(
     private fun isProviderToggle(flag: FeatureFlag<*>): Boolean = providerControls.values.any { it.key == flag.key }
 
     private fun recomputeActiveProviders() {
-        val local = providersInPriority.first { it.id == localProviderId }
         val enabledById: Map<String, Boolean> =
             providersInPriority.associate { provider ->
                 val toggle = providerControls[provider.id]
                 if (toggle == null) {
                     provider.id to true
                 } else {
-                    val res = local.getRaw(toggle.key)
+                    val res = localProvider?.getRaw(toggle.key)
                     val value =
                         if (res is FlagResult.Sourced) {
                             toggle.codec.decode(res.value)
