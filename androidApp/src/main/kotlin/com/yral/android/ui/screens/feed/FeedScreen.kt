@@ -121,7 +121,12 @@ fun FeedScreen(
             YRALReelPlayer(
                 modifier = Modifier.weight(1f),
                 reels = getReels(state),
-                maxReelsInPager = gameState.lastVotedCount,
+                maxReelsInPager =
+                    if (gameState.isStopAndVote) {
+                        gameState.lastVotedCount
+                    } else {
+                        state.feedDetails.size
+                    },
                 initialPage = state.currentPageOfFeed,
                 onPageLoaded = { page ->
                     // Mark animation as shown for the previous page when changing pages

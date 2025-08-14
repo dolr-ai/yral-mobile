@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
+import com.yral.featureflag.FeatureFlagManager
+import com.yral.featureflag.FeedFeatureFlags
 import com.yral.shared.analytics.events.GameConcludedCtaType
 import com.yral.shared.analytics.events.GameType
 import com.yral.shared.core.session.DELAY_FOR_SESSION_PROPERTIES
@@ -42,6 +44,7 @@ class GameViewModel(
     private val castVoteUseCase: CastVoteUseCase,
     private val gameTelemetry: GameTelemetry,
     private val autoRechargeBalanceUseCase: AutoRechargeBalanceUseCase,
+    flagManager: FeatureFlagManager,
 ) : ViewModel() {
     private val _state =
         MutableStateFlow(
@@ -49,6 +52,7 @@ class GameViewModel(
                 gameIcons = emptyList(),
                 gameRules = emptyList(),
                 coinBalance = 0,
+                isStopAndVote = flagManager.isEnabled(FeedFeatureFlags.SmileyGame.StopAndVoteNudge),
             ),
         )
     val state: StateFlow<GameState> = _state.asStateFlow()
@@ -387,13 +391,13 @@ class GameViewModel(
         if (currentState.isLoading || currentState.nudgeType != null) return
         when (nudgeIntention) {
             NudgeType.MANDATORY -> {
-                if (feedDetailsSize != currentState.lastVotedCount) {
+                if (feedDetailsSize != currentState.lastVotedCount && currentState.isStopAndVote) {
                     Logger.d("Nudge") { "Showing mandatory nudge" }
                     _state.update { it.copy(nudgeType = NudgeType.MANDATORY) }
                 }
             }
             NudgeType.INTRO -> {
-                if (!currentState.isSmileyGameIntroNudgeShown && pageNo >= NUDGE_PAGE) {
+                if (!currentState.isSmileyGameIntroNudgeShown && pageNo >= NUDGE_PAGE && !currentState.isStopAndVote) {
                     Logger.d("Nudge") { "Showing intro nudge" }
                     _state.update { it.copy(nudgeType = NudgeType.INTRO) }
                 }
@@ -427,6 +431,7 @@ data class GameState(
     val nudgeType: NudgeType? = null,
     val refreshBalanceState: RefreshBalanceState = RefreshBalanceState.HIDDEN,
     val lastVotedCount: Int = 1,
+    val isStopAndVote: Boolean = false,
 )
 
 enum class NudgeType {
