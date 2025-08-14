@@ -134,6 +134,7 @@ dependencies {
     implementation(projects.shared.features.uploadvideo)
     implementation(projects.shared.features.profile)
     implementation(projects.shared.libs.arch)
+    implementation(projects.shared.libs.featureFlag)
 }
 
 afterEvaluate {

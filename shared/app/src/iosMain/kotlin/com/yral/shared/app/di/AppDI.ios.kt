@@ -20,6 +20,7 @@ actual fun initKoin(appDeclaration: KoinAppDeclaration) {
             analyticsModule,
             crashlyticsModule,
             networkModule,
+            featureFlagModule,
         )
     }
 }
