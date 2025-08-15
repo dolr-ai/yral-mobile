@@ -47,7 +47,7 @@ internal class DefaultUploadVideoRootComponent(
         }
     }
 
-    override fun createSnapshot(): Snapshot =
+    override fun createHomeSnapshot(): Snapshot =
         Snapshot(
             routes =
                 stack.value.items.map { item ->
