@@ -26,8 +26,9 @@ internal class DefaultHomeComponent(
 ) : HomeComponent(),
     ComponentContext by componentContext {
     private val navigation = StackNavigation<Config>()
-    private var uploadVideoSnapshot: UploadVideoRootComponent.Snapshot? = null
-    private var lastUploadComponent: UploadVideoRootComponent? = null
+    private val childSnapshots: MutableMap<Config, Any> = LinkedHashMap()
+    private var lastActiveConfig: Config? = null
+    private var lastActiveProvider: HomeChildSnapshotProvider? = null
 
     override val stack: Value<ChildStack<*, Child>> =
         childStack(
@@ -38,17 +39,16 @@ internal class DefaultHomeComponent(
             childFactory = ::child,
         ).also { stackValue ->
             stackValue.subscribe { current ->
-                when (val active = current.active.instance) {
-                    is Child.UploadVideo -> {
-                        lastUploadComponent = active.component
-                    }
-                    else -> {
-                        // Leaving Upload tab: snapshot if we have an instance
-                        lastUploadComponent?.let { component ->
-                            uploadVideoSnapshot = component.createSnapshot()
+                val activeChild = current.active.instance
+                val (newConfig, newProvider) = mapActiveChild(activeChild)
+                if (lastActiveConfig != newConfig) {
+                    lastActiveProvider?.let { provider ->
+                        lastActiveConfig?.let { prevConfig ->
+                            childSnapshots[prevConfig] = provider.createHomeSnapshot()
                         }
-                        lastUploadComponent = null
                     }
+                    lastActiveConfig = newConfig
+                    lastActiveProvider = newProvider
                 }
             }
         }
@@ -113,6 +113,15 @@ internal class DefaultHomeComponent(
             is Config.Account -> Child.Account(accountComponent(componentContext))
         }
 
+    private fun mapActiveChild(child: Child): Pair<Config, HomeChildSnapshotProvider?> =
+        when (child) {
+            is Child.Feed -> Config.Feed to (child.component as? HomeChildSnapshotProvider)
+            is Child.Leaderboard -> Config.Leaderboard to (child.component as? HomeChildSnapshotProvider)
+            is Child.UploadVideo -> Config.UploadVideo to child.component
+            is Child.Profile -> Config.Profile to (child.component as? HomeChildSnapshotProvider)
+            is Child.Account -> Config.Account to (child.component as? HomeChildSnapshotProvider)
+        }
+
     private fun feedComponent(componentContext: ComponentContext): FeedComponent =
         FeedComponent.Companion(componentContext = componentContext)
 
@@ -127,7 +136,7 @@ internal class DefaultHomeComponent(
                 showSlot(SlotConfig.AlertsRequestBottomSheet)
             },
             openAlertsRequestBottomSheet = { showSlot(SlotConfig.AlertsRequestBottomSheet) },
-            snapshot = uploadVideoSnapshot,
+            snapshot = childSnapshots[Config.UploadVideo] as? UploadVideoRootComponent.Snapshot,
         )
 
     private fun profileComponent(componentContext: ComponentContext): ProfileComponent =
