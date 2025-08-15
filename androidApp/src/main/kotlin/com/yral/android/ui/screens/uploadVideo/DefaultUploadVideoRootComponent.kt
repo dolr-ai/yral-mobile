@@ -7,6 +7,7 @@ import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.router.stack.push
+import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.Value
 import com.yral.android.ui.screens.uploadVideo.aiVideoGen.AiVideoGenComponent
 import com.yral.android.ui.screens.uploadVideo.fileUpload.UploadVideoComponent
@@ -91,7 +92,14 @@ internal class DefaultUploadVideoRootComponent(
         )
 
     private fun uploadVideoComponent(componentContext: ComponentContext): UploadVideoComponent =
-        UploadVideoComponent.Companion(componentContext = componentContext, goToHome = goToHome)
+        UploadVideoComponent.Companion(
+            componentContext = componentContext,
+            goToHome =
+                {
+                    navigation.replaceAll(Config.FlowSelection)
+                    goToHome.invoke()
+                },
+        )
 
     @Serializable
     private sealed interface Config {
