@@ -32,7 +32,7 @@ fun UploadVideoRootScreen(
             is UploadVideoRootComponent.Child.AiVideoGen -> {
                 AiVideoGenScreen(component = instance.component)
             }
-            is UploadVideoRootComponent.Child.ClassicUpload -> {
+            is UploadVideoRootComponent.Child.FileUpload -> {
                 UploadVideoScreen(component = instance.component, bottomPadding = bottomPadding)
             }
         }

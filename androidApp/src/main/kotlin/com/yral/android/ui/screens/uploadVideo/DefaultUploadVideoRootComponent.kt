@@ -53,7 +53,7 @@ internal class DefaultUploadVideoRootComponent(
                     when (item.configuration) {
                         is Config.FlowSelection -> Snapshot.Route.FlowSelection
                         is Config.AiVideoGen -> Snapshot.Route.AiVideoGen
-                        is Config.ClassicUpload -> Snapshot.Route.ClassicUpload
+                        is Config.FileUpload -> Snapshot.Route.FileUpload
                         else -> Snapshot.Route.FlowSelection
                     }
                 },
@@ -63,7 +63,7 @@ internal class DefaultUploadVideoRootComponent(
         when (this) {
             Snapshot.Route.FlowSelection -> Config.FlowSelection
             Snapshot.Route.AiVideoGen -> Config.AiVideoGen
-            Snapshot.Route.ClassicUpload -> Config.ClassicUpload
+            Snapshot.Route.FileUpload -> Config.FileUpload
         }
 
     private fun child(
@@ -73,14 +73,14 @@ internal class DefaultUploadVideoRootComponent(
         when (config) {
             Config.FlowSelection -> Child.FlowSelection(flowSelectionComponent(componentContext))
             Config.AiVideoGen -> Child.AiVideoGen(aiVideoGenComponent(componentContext))
-            Config.ClassicUpload -> Child.ClassicUpload(uploadVideoComponent(componentContext))
+            Config.FileUpload -> Child.FileUpload(uploadVideoComponent(componentContext))
         }
 
     @OptIn(DelicateDecomposeApi::class)
     private fun flowSelectionComponent(componentContext: ComponentContext): FlowSelectionComponent =
         FlowSelectionComponent.Companion(
             componentContext = componentContext,
-            onUploadVideoClicked = { navigation.push(Config.ClassicUpload) },
+            onUploadVideoClicked = { navigation.push(Config.FileUpload) },
             onAiVideoGenClicked = { navigation.push(Config.AiVideoGen) },
         )
 
@@ -102,6 +102,6 @@ internal class DefaultUploadVideoRootComponent(
         data object AiVideoGen : Config
 
         @Serializable
-        data object ClassicUpload : Config
+        data object FileUpload : Config
     }
 }
