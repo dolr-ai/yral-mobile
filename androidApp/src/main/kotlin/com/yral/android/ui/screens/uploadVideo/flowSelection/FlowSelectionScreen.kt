@@ -25,7 +25,7 @@ fun FlowSelectionScreen(component: FlowSelectionComponent) {
             style = LocalAppTopography.current.xlBold,
             color = YralColors.NeutralTextPrimary,
         )
-        YralButton(text = "Classic Upload", onClick = component::onUploadVideoClicked)
+        YralButton(text = "File Upload", onClick = component::onUploadVideoClicked)
         YralButton(text = "AI Video Gen", onClick = component::onAiVideoGenClicked)
     }
 }

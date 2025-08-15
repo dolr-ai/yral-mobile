@@ -24,7 +24,7 @@ abstract class UploadVideoRootComponent {
         class AiVideoGen(
             val component: AiVideoGenComponent,
         ) : Child()
-        class ClassicUpload(
+        class FileUpload(
             val component: UploadVideoComponent,
         ) : Child()
     }
@@ -34,7 +34,7 @@ abstract class UploadVideoRootComponent {
         val routes: List<Route>,
     ) {
         @Serializable
-        enum class Route { FlowSelection, AiVideoGen, ClassicUpload }
+        enum class Route { FlowSelection, AiVideoGen, FileUpload }
     }
 
     companion object Companion {
