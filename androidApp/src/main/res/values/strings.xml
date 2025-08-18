@@ -121,4 +121,8 @@
     <string name="smiley_game_nudge_1">Match the vibe, win the coin</string>
     <string name="smiley_game_nudge_2">Choose the top emojis &amp; get YRAL (Bitcoin)”</string>
     <string name="smiley_game_nudge_mandatory">React to this video to unlock the next one!</string>
+
+    <!--In App Purchases-->
+    <string name="flexible_downloaded_message">A new version is ready to install</string>
+    <string name="flexible_downloaded_cta">RESTART</string>
 </resources>
