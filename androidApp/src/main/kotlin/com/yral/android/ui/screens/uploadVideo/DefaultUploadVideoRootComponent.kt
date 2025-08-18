@@ -18,12 +18,16 @@ import org.koin.core.component.KoinComponent
 internal class DefaultUploadVideoRootComponent(
     componentContext: ComponentContext,
     private val goToHome: () -> Unit,
-    private val openAlertsRequestBottomSheet: () -> Unit,
     private val snapshot: Snapshot?,
 ) : UploadVideoRootComponent(),
     ComponentContext by componentContext,
     KoinComponent {
     private val navigation = StackNavigation<Config>()
+    private val iGoToHome =
+        {
+            navigation.replaceAll(Config.FlowSelection)
+            goToHome.invoke()
+        }
 
     override val stack: Value<ChildStack<*, Child>> =
         childStack(
@@ -88,18 +92,14 @@ internal class DefaultUploadVideoRootComponent(
     private fun aiVideoGenComponent(componentContext: ComponentContext): AiVideoGenComponent =
         AiVideoGenComponent.Companion(
             componentContext = componentContext,
-            onOpenAlertsRequest = openAlertsRequestBottomSheet,
             onBack = { navigation.pop() },
+            goToHome = iGoToHome,
         )
 
     private fun uploadVideoComponent(componentContext: ComponentContext): UploadVideoComponent =
         UploadVideoComponent.Companion(
             componentContext = componentContext,
-            goToHome =
-                {
-                    navigation.replaceAll(Config.FlowSelection)
-                    goToHome.invoke()
-                },
+            goToHome = iGoToHome,
             onBack = { navigation.pop() },
         )
 

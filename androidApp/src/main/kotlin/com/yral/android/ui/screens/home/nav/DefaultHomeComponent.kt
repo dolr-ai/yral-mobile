@@ -135,7 +135,6 @@ internal class DefaultHomeComponent(
                 onFeedTabClick()
                 showSlot(SlotConfig.AlertsRequestBottomSheet)
             },
-            openAlertsRequestBottomSheet = { showSlot(SlotConfig.AlertsRequestBottomSheet) },
             snapshot = childSnapshots[Config.UploadVideo] as? UploadVideoRootComponent.Snapshot,
         )
 

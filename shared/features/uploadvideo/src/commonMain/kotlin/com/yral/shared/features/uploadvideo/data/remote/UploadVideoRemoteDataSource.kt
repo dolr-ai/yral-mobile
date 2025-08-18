@@ -1,6 +1,7 @@
 package com.yral.shared.features.uploadvideo.data.remote
 
 import com.yral.shared.core.AppConfigurations
+import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.features.uploadvideo.data.remote.models.FileUploadStatus
 import com.yral.shared.features.uploadvideo.data.remote.models.GenerateVideoRequestDto
 import com.yral.shared.features.uploadvideo.data.remote.models.GetUploadUrlResponseDTO
@@ -17,6 +18,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.content.ProgressListener
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.ServerResponseException
+import io.ktor.client.plugins.expectSuccess
 import io.ktor.client.plugins.onUpload
 import io.ktor.client.plugins.timeout
 import io.ktor.client.request.forms.InputProvider
@@ -126,6 +128,7 @@ internal class UploadVideoRemoteDataSource(
                     }
                     contentType(ContentType.Application.Json)
                     setBody(dto)
+                    expectSuccess = false
                 }
             response.parseGenerateVideoResponse(json)
         } catch (e: ClientRequestException) {
@@ -133,12 +136,7 @@ internal class UploadVideoRemoteDataSource(
         } catch (e: ServerResponseException) {
             e.response.parseGenerateVideoResponse(json)
         } catch (_: Exception) {
-            GenerateVideoResult(
-                operationId = null,
-                provider = null,
-                requestKey = null,
-                providerError = "Something went wrong!",
-            )
+            throw YralException("Error generating video")
         }
 
     suspend fun fetchProviders(): ProvidersResponseDto =

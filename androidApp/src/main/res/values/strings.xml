@@ -137,5 +137,8 @@
     <string name="prompt">Prompt</string>
     <string name="enter_prompt_here">Enter the Prompt here…</string>
     <string name="generate_video">Generate Video</string>
+    <string name="generating_video">Generating Video…</string>
+    <string name="this_may_take_few_minutes">This may take few minutes</string>
+    <string name="upload_successful">Upload Successful</string>
 
 </resources>
