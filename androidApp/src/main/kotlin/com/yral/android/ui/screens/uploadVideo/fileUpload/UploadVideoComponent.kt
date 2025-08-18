@@ -5,11 +5,13 @@ import com.yral.shared.features.uploadvideo.presentation.UploadVideoViewModel
 
 abstract class UploadVideoComponent {
     abstract fun processEvent(value: UploadVideoViewModel.Event)
+    abstract fun onBack()
 
     companion object Companion {
         operator fun invoke(
             componentContext: ComponentContext,
             goToHome: () -> Unit,
-        ): UploadVideoComponent = DefaultUploadVideoComponent(componentContext, goToHome)
+            onBack: () -> Unit,
+        ): UploadVideoComponent = DefaultUploadVideoComponent(componentContext, goToHome, onBack)
     }
 }

@@ -99,6 +99,7 @@ internal class DefaultUploadVideoRootComponent(
                     navigation.replaceAll(Config.FlowSelection)
                     goToHome.invoke()
                 },
+            onBack = { navigation.pop() },
         )
 
     @Serializable

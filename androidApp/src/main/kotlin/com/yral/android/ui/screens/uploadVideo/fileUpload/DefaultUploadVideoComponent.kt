@@ -7,6 +7,7 @@ import org.koin.core.component.KoinComponent
 internal class DefaultUploadVideoComponent(
     componentContext: ComponentContext,
     private val goToHome: () -> Unit,
+    private val onBack: () -> Unit,
 ) : UploadVideoComponent(),
     ComponentContext by componentContext,
     KoinComponent {
@@ -15,5 +16,9 @@ internal class DefaultUploadVideoComponent(
             UploadVideoViewModel.Event.GoToHome -> goToHome()
             else -> {}
         }
+    }
+
+    override fun onBack() {
+        onBack.invoke()
     }
 }
