@@ -89,6 +89,7 @@ internal class DefaultUploadVideoRootComponent(
         AiVideoGenComponent.Companion(
             componentContext = componentContext,
             onOpenAlertsRequest = openAlertsRequestBottomSheet,
+            onBack = { navigation.pop() },
         )
 
     private fun uploadVideoComponent(componentContext: ComponentContext): UploadVideoComponent =
