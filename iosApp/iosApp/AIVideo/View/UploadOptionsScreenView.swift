@@ -9,26 +9,54 @@
 import SwiftUI
 
 struct UploadOptionsScreenView: View {
+  @State private var navigateToAIVideoScreen = false
+  @State private var navigateToUploadVideoScreen = false
+
   var body: some View {
-    VStack(alignment: .leading, spacing: Constants.vstackSpacing) {
-      Text(Constants.screenTitle)
-        .font(Constants.screenTitleFont)
-        .foregroundColor(Constants.screenTitleColor)
-        .padding(.bottom, Constants.screenTitleBottom)
+    NavigationView {
+      VStack(alignment: .leading, spacing: Constants.vstackSpacing) {
+        Text(Constants.screenTitle)
+          .font(Constants.screenTitleFont)
+          .foregroundColor(Constants.screenTitleColor)
+          .padding(.bottom, Constants.screenTitleBottom)
 
-      UploadOptionView(option: Constants.uploadOptionAI) {
+        UploadOptionView(option: Constants.uploadOptionAI) {
+          navigateToAIVideoScreen = true
+        }
+        .background(
+          NavigationLink("", destination: makeCreateAIVideoDIContainer().makeCreateAIVideoSreenView {
+            navigateToAIVideoScreen = false
+          }, isActive: $navigateToAIVideoScreen)
+            .hidden()
+        )
 
+        UploadOptionView(option: Constants.uploadOptionDevice) {
+          navigateToUploadVideoScreen = true
+        }
+        .background(
+          NavigationLink("", destination: makeCreateAIVideoDIContainer().makeCreateAIVideoSreenView {
+            navigateToUploadVideoScreen = false
+          }, isActive: $navigateToUploadVideoScreen)
+            .hidden()
+        )
+
+        Spacer(minLength: .zero)
       }
-
-      UploadOptionView(option: Constants.uploadOptionDevice) {
-
-      }
-
-      Spacer(minLength: .zero)
+      .padding(.vertical, Constants.vstackVertical)
+      .padding(.horizontal, Constants.vstackHorizontal)
+      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
-    .padding(.vertical, Constants.vstackVertical)
-    .padding(.horizontal, Constants.vstackHorizontal)
-    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+  }
+}
+
+extension UploadOptionsScreenView {
+  private func makeCreateAIVideoDIContainer() -> CreateAIVideoDIContainer {
+    return CreateAIVideoDIContainer(
+      dependencies: CreateAIVideoDIContainer.Dependencies(
+        httpService: HTTPService(baseURLString: AppConfiguration().offchainBaseURLString),
+        crashReporter: CompositeCrashReporter(reporters: [FirebaseCrashlyticsReporter()])
+      )
+    )
   }
 }
 
