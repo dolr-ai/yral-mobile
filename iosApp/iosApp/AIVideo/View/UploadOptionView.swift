@@ -104,6 +104,6 @@ extension UploadOptionView {
     static let ctaCornerRadius = 8.0
     static let ctaBorderWidth = 1.0
 
-    static let disableSelectionTime = 2.0
+    static let disableSelectionTime = 1.0
   }
 }

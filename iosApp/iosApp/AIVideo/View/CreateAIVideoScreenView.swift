@@ -9,92 +9,134 @@
 import SwiftUI
 
 struct CreateAIVideoScreenView: View {
+  @ObservedObject var viewModel: CreateAIVideoViewModel
+
   let onDismiss: () -> Void
   var isButtonEnabled: Bool {
     !creditsUsed && !promptText.isEmpty
   }
 
+  @State private var showLoader = true
   @State private var promptText = ""
   @State private var creditsUsed = false
   @State private var showModelBottomSheet = false
-  @State private var selectedModel = ModelOption(
-    id: "veo3",
-    name: "Veo 3",
-    description: "Google's advanced video generation model",
-    isActive: true,
-    iconURL: "https://yral.com/img/ai-models/veo3.svg"
-  )
+  @State private var selectedProvider: AIVideoProviderResponse?
 
   var body: some View {
     VStack(alignment: .leading, spacing: Constants.vstackSpacing) {
-      HStack(alignment: .center, spacing: Constants.navHstackSpacing) {
-        Image(Constants.backImage)
-          .resizable()
-          .frame(width: Constants.backImageSize, height: Constants.backImageSize)
-          .onTapGesture {
-            onDismiss()
-          }
+      if let providers = viewModel.providers {
+        HStack(alignment: .center, spacing: Constants.navHstackSpacing) {
+          Image(Constants.backImage)
+            .resizable()
+            .frame(width: Constants.backImageSize, height: Constants.backImageSize)
+            .onTapGesture {
+              onDismiss()
+            }
 
-        Text(Constants.screenTitle)
-          .font(Constants.screenTitleFont)
-          .foregroundColor(Constants.screenTitleColor)
+          Text(Constants.screenTitle)
+            .font(Constants.screenTitleFont)
+            .foregroundColor(Constants.screenTitleColor)
+        }
+        .padding(.bottom, Constants.navHstackBottom)
+        .padding(.leading, -Constants.navHstackLeading)
+
+        if let selectedProvider = selectedProvider {
+          buildSelectedModelView(with: selectedProvider)
+            .frame(maxWidth: .infinity)
+        }
+
+        PromptView(prompt: $promptText)
+          .padding(.top, Constants.promptTop)
+
+        Button {
+
+        } label: {
+          Text(Constants.generateButtonTitle)
+            .foregroundColor(Constants.generateButtonTextColor)
+            .font(Constants.generateButtonFont)
+            .frame(maxWidth: .infinity)
+            .frame(height: Constants.generateButtonHeight)
+            .background(
+              isButtonEnabled
+              ? Constants.generateButtonEnabledGradient
+              : Constants.generateButtonDisabledGradient
+            )
+            .cornerRadius(Constants.generateButtonCornerRadius)
+        }
+        .disabled(!isButtonEnabled)
+        .padding(.top, Constants.generateButtonTop)
       }
-      .padding(.bottom, Constants.navHstackBottom)
-      .padding(.leading, -Constants.navHstackLeading)
-
-      buildSelectedModelView()
-
-      PromptView(prompt: $promptText)
-        .padding(.top, Constants.promptTop)
-
-      Button {
-
-      } label: {
-        Text(Constants.generateButtonTitle)
-          .foregroundColor(Constants.generateButtonTextColor)
-          .font(Constants.generateButtonFont)
-          .frame(maxWidth: .infinity)
-          .frame(height: Constants.generateButtonHeight)
-          .background(
-            isButtonEnabled
-            ? Constants.generateButtonEnabledGradient
-            : Constants.generateButtonDisabledGradient
-          )
-          .cornerRadius(Constants.generateButtonCornerRadius)
-      }
-      .disabled(!isButtonEnabled)
-      .padding(.top, Constants.generateButtonTop)
     }
+    .navigationBarHidden(true)
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     .padding(.horizontal, Constants.vstackHorizontal)
-    .fullScreenCover(isPresented: $showModelBottomSheet) {}
+    .overlay(alignment: .center, content: {
+      if showLoader {
+        LottieLoaderView(animationName: Constants.loader)
+          .frame(width: Constants.loaderSize, height: Constants.loaderSize)
+      }
+    })
+    .fullScreenCover(isPresented: $showModelBottomSheet) {
+      if let providers = viewModel.providers {
+        ProviderOptionsBottomSheetView(
+          providers: providers) { newSelectedProvider in
+            viewModel.updateSelectedProvider(newSelectedProvider)
+          } onDismiss: {
+            showModelBottomSheet = false
+          }
+          .background(ClearBackgroundView())
+      }
+    }
+    .onReceive(viewModel.$state, perform: { state in
+      switch state {
+      case .loading:
+        showLoader = true
+      case .success(let provider):
+        showLoader = false
+        selectedProvider = provider
+      default:
+        showLoader = false
+      }
+    })
+    .onReceive(viewModel.$event, perform: { event in
+      switch event {
+      case .updateSelectedProvider(let provider):
+        selectedProvider = provider
+      default:
+        break
+      }
+    })
+    .onAppear {
+      showLoader = true
+      Task {
+        await viewModel.getAIVideoProviders()
+      }
+    }
   }
 }
 
 extension CreateAIVideoScreenView {
   @ViewBuilder
-  func buildSelectedModelView() -> some View {
+  func buildSelectedModelView(with provider: AIVideoProviderResponse) -> some View {
     VStack(alignment: .leading, spacing: Constants.vstackSpacing) {
       Text(Constants.modelTitle)
         .font(Constants.modelFont)
         .foregroundColor(Constants.modelColor)
 
       HStack {
-        Spacer(minLength: Constants.modelNameLeading)
-
-        URLImage(url: URL(string: selectedModel.iconURL))
+        URLImage(url: URL(string: provider.iconURL))
           .frame(width: Constants.modelImageSize, height: Constants.modelImageSize)
-
-        Spacer(minLength: Constants.modelNameLeading)
+          .padding(.horizontal, Constants.modelNameLeading)
 
         VStack(alignment: .leading) {
-          Text(selectedModel.name)
+          Text(provider.name)
             .font(Constants.modelNameFont)
             .foregroundColor(Constants.modelNameColor)
 
-          Text(selectedModel.description)
+          Text(provider.description)
             .font(Constants.modelDescriptionFont)
             .foregroundColor(Constants.modelDescriptionColor)
+            .lineLimit(.one)
         }
 
         Spacer(minLength: Constants.chevronLeading)
@@ -102,8 +144,7 @@ extension CreateAIVideoScreenView {
         Image(Constants.chevronDown)
           .resizable()
           .frame(width: Constants.chevronSize, height: Constants.chevronSize)
-
-        Spacer(minLength: Constants.chevronTrailing)
+          .padding(.trailing, Constants.chevronTrailing)
       }
       .frame(maxWidth: .infinity)
       .frame(height: Constants.modelHstackHeight)
@@ -126,6 +167,9 @@ extension CreateAIVideoScreenView {
 
 extension CreateAIVideoScreenView {
   enum Constants {
+    static let loader = "Yral_Loader"
+    static let loaderSize = 24.0
+
     static let vstackSpacing = 8.0
     static let vstackHorizontal = 16.0
 
@@ -191,8 +235,4 @@ extension CreateAIVideoScreenView {
     )
 
   }
-}
-
-#Preview {
-  CreateAIVideoScreenView {}
 }

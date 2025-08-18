@@ -105,12 +105,26 @@
 		1064B7FB2E4C6D590036C10B /* UploadOptionsDIContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B7F92E4C6D520036C10B /* UploadOptionsDIContainer.swift */; };
 		1064B7FD2E4C8CD30036C10B /* CreateAIVideoScreenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B7FC2E4C8CD30036C10B /* CreateAIVideoScreenView.swift */; };
 		1064B7FE2E4C8CD30036C10B /* CreateAIVideoScreenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B7FC2E4C8CD30036C10B /* CreateAIVideoScreenView.swift */; };
-		1064B8002E4CA4110036C10B /* ModelOption.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B7FF2E4CA40D0036C10B /* ModelOption.swift */; };
-		1064B8012E4CA4110036C10B /* ModelOption.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B7FF2E4CA40D0036C10B /* ModelOption.swift */; };
-		1064B8032E4CB1840036C10B /* ModelOptionsBottomSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B8022E4CB1840036C10B /* ModelOptionsBottomSheetView.swift */; };
-		1064B8042E4CB1840036C10B /* ModelOptionsBottomSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B8022E4CB1840036C10B /* ModelOptionsBottomSheetView.swift */; };
+		1064B8002E4CA4110036C10B /* AIVideoProviderResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B7FF2E4CA40D0036C10B /* AIVideoProviderResponse.swift */; };
+		1064B8012E4CA4110036C10B /* AIVideoProviderResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B7FF2E4CA40D0036C10B /* AIVideoProviderResponse.swift */; };
+		1064B8032E4CB1840036C10B /* ProviderOptionsBottomSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B8022E4CB1840036C10B /* ProviderOptionsBottomSheetView.swift */; };
+		1064B8042E4CB1840036C10B /* ProviderOptionsBottomSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B8022E4CB1840036C10B /* ProviderOptionsBottomSheetView.swift */; };
 		1064B8062E4CB34E0036C10B /* PromptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B8052E4CB3460036C10B /* PromptView.swift */; };
 		1064B8072E4CB34E0036C10B /* PromptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B8052E4CB3460036C10B /* PromptView.swift */; };
+		106986032E53019F005BE0D4 /* CreateAIVideoDIContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 106986022E530195005BE0D4 /* CreateAIVideoDIContainer.swift */; };
+		106986042E53019F005BE0D4 /* CreateAIVideoDIContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 106986022E530195005BE0D4 /* CreateAIVideoDIContainer.swift */; };
+		106986072E530291005BE0D4 /* AIVideoProviderDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 106986062E530281005BE0D4 /* AIVideoProviderDTO.swift */; };
+		106986082E530291005BE0D4 /* AIVideoProviderDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 106986062E530281005BE0D4 /* AIVideoProviderDTO.swift */; };
+		1069860B2E5303A7005BE0D4 /* AIVideoRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1069860A2E5303A2005BE0D4 /* AIVideoRepository.swift */; };
+		1069860C2E5303A7005BE0D4 /* AIVideoRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1069860A2E5303A2005BE0D4 /* AIVideoRepository.swift */; };
+		1069860F2E5304D4005BE0D4 /* AIVideoRepositoryProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1069860E2E5304CB005BE0D4 /* AIVideoRepositoryProtocol.swift */; };
+		106986102E5304D4005BE0D4 /* AIVideoRepositoryProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1069860E2E5304CB005BE0D4 /* AIVideoRepositoryProtocol.swift */; };
+		106986122E530550005BE0D4 /* AIVideoProviderError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 106986112E530548005BE0D4 /* AIVideoProviderError.swift */; };
+		106986132E530550005BE0D4 /* AIVideoProviderError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 106986112E530548005BE0D4 /* AIVideoProviderError.swift */; };
+		106986162E5308DC005BE0D4 /* AIVideoProviderUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 106986152E5308D1005BE0D4 /* AIVideoProviderUseCase.swift */; };
+		106986172E5308DC005BE0D4 /* AIVideoProviderUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 106986152E5308D1005BE0D4 /* AIVideoProviderUseCase.swift */; };
+		1069861A2E530A01005BE0D4 /* CreateAIVideoViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 106986192E5309FB005BE0D4 /* CreateAIVideoViewModel.swift */; };
+		1069861B2E530A01005BE0D4 /* CreateAIVideoViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 106986192E5309FB005BE0D4 /* CreateAIVideoViewModel.swift */; };
 		107C60902DB7809A006FC467 /* UIView+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C608F2DB78093006FC467 /* UIView+Extensions.swift */; };
 		107C60912DB7809A006FC467 /* UIView+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C608F2DB78093006FC467 /* UIView+Extensions.swift */; };
 		107C60982DB8BCB1006FC467 /* SmileyGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C60972DB8BCB1006FC467 /* SmileyGameView.swift */; };
@@ -695,9 +709,16 @@
 		1064B7F22E4B50850036C10B /* UploadOption.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadOption.swift; sourceTree = "<group>"; };
 		1064B7F92E4C6D520036C10B /* UploadOptionsDIContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadOptionsDIContainer.swift; sourceTree = "<group>"; };
 		1064B7FC2E4C8CD30036C10B /* CreateAIVideoScreenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateAIVideoScreenView.swift; sourceTree = "<group>"; };
-		1064B7FF2E4CA40D0036C10B /* ModelOption.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelOption.swift; sourceTree = "<group>"; };
-		1064B8022E4CB1840036C10B /* ModelOptionsBottomSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelOptionsBottomSheetView.swift; sourceTree = "<group>"; };
+		1064B7FF2E4CA40D0036C10B /* AIVideoProviderResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIVideoProviderResponse.swift; sourceTree = "<group>"; };
+		1064B8022E4CB1840036C10B /* ProviderOptionsBottomSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderOptionsBottomSheetView.swift; sourceTree = "<group>"; };
 		1064B8052E4CB3460036C10B /* PromptView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptView.swift; sourceTree = "<group>"; };
+		106986022E530195005BE0D4 /* CreateAIVideoDIContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateAIVideoDIContainer.swift; sourceTree = "<group>"; };
+		106986062E530281005BE0D4 /* AIVideoProviderDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIVideoProviderDTO.swift; sourceTree = "<group>"; };
+		1069860A2E5303A2005BE0D4 /* AIVideoRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIVideoRepository.swift; sourceTree = "<group>"; };
+		1069860E2E5304CB005BE0D4 /* AIVideoRepositoryProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIVideoRepositoryProtocol.swift; sourceTree = "<group>"; };
+		106986112E530548005BE0D4 /* AIVideoProviderError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIVideoProviderError.swift; sourceTree = "<group>"; };
+		106986152E5308D1005BE0D4 /* AIVideoProviderUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIVideoProviderUseCase.swift; sourceTree = "<group>"; };
+		106986192E5309FB005BE0D4 /* CreateAIVideoViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateAIVideoViewModel.swift; sourceTree = "<group>"; };
 		107C608F2DB78093006FC467 /* UIView+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIView+Extensions.swift"; sourceTree = "<group>"; };
 		107C60972DB8BCB1006FC467 /* SmileyGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameView.swift; sourceTree = "<group>"; };
 		107C609A2DB90B22006FC467 /* SmileyGameResultBottomSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameResultBottomSheetView.swift; sourceTree = "<group>"; };
@@ -1163,6 +1184,8 @@
 		1064B7E82E4B3FC00036C10B /* AIVideo */ = {
 			isa = PBXGroup;
 			children = (
+				106986182E5309E2005BE0D4 /* ViewModel */,
+				106986052E530269005BE0D4 /* Data */,
 				1064B7F52E4C6CE20036C10B /* DI */,
 				1064B7F02E4B50790036C10B /* Domain */,
 				1064B7E92E4B3FE20036C10B /* View */,
@@ -1177,7 +1200,7 @@
 				1064B7EA2E4B40630036C10B /* UploadOptionsScreenView.swift */,
 				1064B7ED2E4B439A0036C10B /* UploadOptionView.swift */,
 				1064B7FC2E4C8CD30036C10B /* CreateAIVideoScreenView.swift */,
-				1064B8022E4CB1840036C10B /* ModelOptionsBottomSheetView.swift */,
+				1064B8022E4CB1840036C10B /* ProviderOptionsBottomSheetView.swift */,
 			);
 			path = View;
 			sourceTree = "<group>";
@@ -1185,6 +1208,8 @@
 		1064B7F02E4B50790036C10B /* Domain */ = {
 			isa = PBXGroup;
 			children = (
+				106986142E5308C6005BE0D4 /* UseCase */,
+				1069860D2E5304B9005BE0D4 /* Interface */,
 				1064B7F12E4B507E0036C10B /* Entity */,
 			);
 			path = Domain;
@@ -1193,7 +1218,8 @@
 		1064B7F12E4B507E0036C10B /* Entity */ = {
 			isa = PBXGroup;
 			children = (
-				1064B7FF2E4CA40D0036C10B /* ModelOption.swift */,
+				106986112E530548005BE0D4 /* AIVideoProviderError.swift */,
+				1064B7FF2E4CA40D0036C10B /* AIVideoProviderResponse.swift */,
 				1064B7F22E4B50850036C10B /* UploadOption.swift */,
 			);
 			path = Entity;
@@ -1202,9 +1228,51 @@
 		1064B7F52E4C6CE20036C10B /* DI */ = {
 			isa = PBXGroup;
 			children = (
+				106986022E530195005BE0D4 /* CreateAIVideoDIContainer.swift */,
 				1064B7F92E4C6D520036C10B /* UploadOptionsDIContainer.swift */,
 			);
 			path = DI;
+			sourceTree = "<group>";
+		};
+		106986052E530269005BE0D4 /* Data */ = {
+			isa = PBXGroup;
+			children = (
+				106986092E530396005BE0D4 /* Repository */,
+				106986062E530281005BE0D4 /* AIVideoProviderDTO.swift */,
+			);
+			path = Data;
+			sourceTree = "<group>";
+		};
+		106986092E530396005BE0D4 /* Repository */ = {
+			isa = PBXGroup;
+			children = (
+				1069860A2E5303A2005BE0D4 /* AIVideoRepository.swift */,
+			);
+			path = Repository;
+			sourceTree = "<group>";
+		};
+		1069860D2E5304B9005BE0D4 /* Interface */ = {
+			isa = PBXGroup;
+			children = (
+				1069860E2E5304CB005BE0D4 /* AIVideoRepositoryProtocol.swift */,
+			);
+			path = Interface;
+			sourceTree = "<group>";
+		};
+		106986142E5308C6005BE0D4 /* UseCase */ = {
+			isa = PBXGroup;
+			children = (
+				106986152E5308D1005BE0D4 /* AIVideoProviderUseCase.swift */,
+			);
+			path = UseCase;
+			sourceTree = "<group>";
+		};
+		106986182E5309E2005BE0D4 /* ViewModel */ = {
+			isa = PBXGroup;
+			children = (
+				106986192E5309FB005BE0D4 /* CreateAIVideoViewModel.swift */,
+			);
+			path = ViewModel;
 			sourceTree = "<group>";
 		};
 		107C60922DB7AA86006FC467 /* SmileyGame */ = {
@@ -3142,8 +3210,10 @@
 				ACB46A612D0EF94B002E200C /* DefaultAuthClient.swift in Sources */,
 				AC462F4A2D95BB61004957B3 /* FeedsCell+Captions.swift in Sources */,
 				107C60BC2DBF4A6F006FC467 /* SmileyGameRuleRepository.swift in Sources */,
+				106986132E530550005BE0D4 /* AIVideoProviderError.swift in Sources */,
 				AC51C04C2DC392B500D5BA34 /* LogoutUseCase.swift in Sources */,
 				AC26CA642D805E58006ADA75 /* FeedError.swift in Sources */,
+				106986072E530291005BE0D4 /* AIVideoProviderDTO.swift in Sources */,
 				AC638BFA2D230DCD00481E94 /* HomeTabController.swift in Sources */,
 				AC51C0462DC3905700D5BA34 /* RefreshTokenRequest.swift in Sources */,
 				AC9293FD2D620B6C003DB102 /* MediaPicker.swift in Sources */,
@@ -3153,13 +3223,14 @@
 				AC3FBE152E2BAA0F00CE3EC1 /* MP4DownloadManager.swift in Sources */,
 				AC3FBE162E2BAA0F00CE3EC1 /* MP4DownloadManaging.swift in Sources */,
 				10512A442DA666AD00114BAA /* YralPlayer.swift in Sources */,
-				1064B8032E4CB1840036C10B /* ModelOptionsBottomSheetView.swift in Sources */,
+				1064B8032E4CB1840036C10B /* ProviderOptionsBottomSheetView.swift in Sources */,
 				105036F62DDB289D00571B4E /* ExchangePrincipalResponse.swift in Sources */,
 				ACB46A732D105AF4002E200C /* CollectionView+Extensions.swift in Sources */,
 				ACAA536B2E4A538E008D3025 /* OnboardingInfoView.swift in Sources */,
 				1064B7EB2E4B40630036C10B /* UploadOptionsScreenView.swift in Sources */,
 				10CEBB892E3104220022803A /* Presets.swift in Sources */,
 				107C60C32DBF4CE2006FC467 /* FirebaseService.swift in Sources */,
+				106986172E5308DC005BE0D4 /* AIVideoProviderUseCase.swift in Sources */,
 				10020AB02DF7FE2A00DF269E /* SatsCoinError.swift in Sources */,
 				105037682DDC5DB500571B4E /* SmileyGameConfig.swift in Sources */,
 				ACB46A432D0ECBB3002E200C /* ml_feed.grpc.swift in Sources */,
@@ -3175,6 +3246,7 @@
 				1064B7FD2E4C8CD30036C10B /* CreateAIVideoScreenView.swift in Sources */,
 				ACC0D4612D917908006DCF5C /* DeleteVideoRequestDTO.swift in Sources */,
 				AC26CA4A2D8026B4006ADA75 /* CrashReporter.swift in Sources */,
+				106986102E5304D4005BE0D4 /* AIVideoRepositoryProtocol.swift in Sources */,
 				AC4960652D2D693B008D59D9 /* Foundation+Extensions.swift in Sources */,
 				ACEBF7EA2D6F844E00B594A0 /* ToastType.swift in Sources */,
 				105034BD2DD6353800571B4E /* SmileyGameResultResponse.swift in Sources */,
@@ -3209,6 +3281,7 @@
 				ACCA778F2DE4C1A2005BC0FA /* EventBuffer.swift in Sources */,
 				ACEBF7EF2D6F847300B594A0 /* ToastManager.swift in Sources */,
 				ACAA4D6D2DDCB257001092A6 /* FirebasePerformanceMonitor.swift in Sources */,
+				1069861B2E530A01005BE0D4 /* CreateAIVideoViewModel.swift in Sources */,
 				ACDD23E72D8B1B5F00AB0DAF /* ProfileVideoRequest.swift in Sources */,
 				ACC0D44E2D8DDB21006DCF5C /* ProfileRepository.swift in Sources */,
 				ACEBF7E22D6F505A00B594A0 /* UploadCompletedView.swift in Sources */,
@@ -3307,6 +3380,7 @@
 				ACC0D4342D8BFE67006DCF5C /* NudgePopupView.swift in Sources */,
 				AC92940F2D64CBFB003DB102 /* SelectFileView.swift in Sources */,
 				AC1ACFA02DB964AB001BDCFD /* SwiftUI+Extensions.swift in Sources */,
+				106986032E53019F005BE0D4 /* CreateAIVideoDIContainer.swift in Sources */,
 				ACAA4D722DDCF866001092A6 /* FeedsPlayer+Events.swift in Sources */,
 				AC32E44C2D2965A3001DDA43 /* AccountViewModel.swift in Sources */,
 				AC09AA742CDD210D009A39A4 /* Data+Extensions.swift in Sources */,
@@ -3348,7 +3422,8 @@
 				AC9294112D6599A1003DB102 /* CaptionsView.swift in Sources */,
 				AC638BF62D2309C000481E94 /* KeychainHelper.swift in Sources */,
 				AC99BB9A2D84913C008012C2 /* YralColor.swift in Sources */,
-				1064B8012E4CA4110036C10B /* ModelOption.swift in Sources */,
+				1064B8012E4CA4110036C10B /* AIVideoProviderResponse.swift in Sources */,
+				1069860C2E5303A7005BE0D4 /* AIVideoRepository.swift in Sources */,
 				107C60C92DBF7A2D006FC467 /* SmileyGameRuleDIContainer.swift in Sources */,
 				AC6E31232D22F08F001EBE6C /* ImageLoaderProtocol.swift in Sources */,
 				105034A22DD5E3D500571B4E /* SmileyConfigDTO.swift in Sources */,
@@ -3410,8 +3485,10 @@
 				ACB46A602D0EF94B002E200C /* DefaultAuthClient.swift in Sources */,
 				AC462F4B2D95BB61004957B3 /* FeedsCell+Captions.swift in Sources */,
 				107C60BD2DBF4A6F006FC467 /* SmileyGameRuleRepository.swift in Sources */,
+				106986122E530550005BE0D4 /* AIVideoProviderError.swift in Sources */,
 				AC51C04B2DC392B500D5BA34 /* LogoutUseCase.swift in Sources */,
 				AC26CA652D805E58006ADA75 /* FeedError.swift in Sources */,
+				106986082E530291005BE0D4 /* AIVideoProviderDTO.swift in Sources */,
 				AC638BF92D230DCD00481E94 /* HomeTabController.swift in Sources */,
 				AC51C0472DC3905700D5BA34 /* RefreshTokenRequest.swift in Sources */,
 				AC9293FF2D620B6C003DB102 /* MediaPicker.swift in Sources */,
@@ -3421,13 +3498,14 @@
 				AC3FBE132E2BAA0F00CE3EC1 /* MP4DownloadManager.swift in Sources */,
 				AC3FBE142E2BAA0F00CE3EC1 /* MP4DownloadManaging.swift in Sources */,
 				10512A432DA666AD00114BAA /* YralPlayer.swift in Sources */,
-				1064B8042E4CB1840036C10B /* ModelOptionsBottomSheetView.swift in Sources */,
+				1064B8042E4CB1840036C10B /* ProviderOptionsBottomSheetView.swift in Sources */,
 				105036F82DDB289D00571B4E /* ExchangePrincipalResponse.swift in Sources */,
 				ACB46A742D105AF4002E200C /* CollectionView+Extensions.swift in Sources */,
 				ACAA536C2E4A538E008D3025 /* OnboardingInfoView.swift in Sources */,
 				1064B7EC2E4B40630036C10B /* UploadOptionsScreenView.swift in Sources */,
 				10CEBB882E3104220022803A /* Presets.swift in Sources */,
 				107C60C22DBF4CE2006FC467 /* FirebaseService.swift in Sources */,
+				106986162E5308DC005BE0D4 /* AIVideoProviderUseCase.swift in Sources */,
 				10020AB12DF7FE2A00DF269E /* SatsCoinError.swift in Sources */,
 				105037692DDC5DB500571B4E /* SmileyGameConfig.swift in Sources */,
 				ACB46A402D0ECBB3002E200C /* ml_feed.grpc.swift in Sources */,
@@ -3443,6 +3521,7 @@
 				1064B7FE2E4C8CD30036C10B /* CreateAIVideoScreenView.swift in Sources */,
 				ACC0D4622D917908006DCF5C /* DeleteVideoRequestDTO.swift in Sources */,
 				AC26CA492D8026B4006ADA75 /* CrashReporter.swift in Sources */,
+				1069860F2E5304D4005BE0D4 /* AIVideoRepositoryProtocol.swift in Sources */,
 				AC4960642D2D693B008D59D9 /* Foundation+Extensions.swift in Sources */,
 				ACEBF7E92D6F844E00B594A0 /* ToastType.swift in Sources */,
 				105034BC2DD6353800571B4E /* SmileyGameResultResponse.swift in Sources */,
@@ -3477,6 +3556,7 @@
 				ACCA778E2DE4C1A2005BC0FA /* EventBuffer.swift in Sources */,
 				ACEBF7F02D6F847300B594A0 /* ToastManager.swift in Sources */,
 				ACAA4D6C2DDCB257001092A6 /* FirebasePerformanceMonitor.swift in Sources */,
+				1069861A2E530A01005BE0D4 /* CreateAIVideoViewModel.swift in Sources */,
 				ACDD23E82D8B1B5F00AB0DAF /* ProfileVideoRequest.swift in Sources */,
 				ACC0D44F2D8DDB21006DCF5C /* ProfileRepository.swift in Sources */,
 				ACEBF7E12D6F505A00B594A0 /* UploadCompletedView.swift in Sources */,
@@ -3575,6 +3655,7 @@
 				ACC0D4352D8BFE67006DCF5C /* NudgePopupView.swift in Sources */,
 				AC92940E2D64CBFB003DB102 /* SelectFileView.swift in Sources */,
 				AC1ACF9F2DB964AB001BDCFD /* SwiftUI+Extensions.swift in Sources */,
+				106986042E53019F005BE0D4 /* CreateAIVideoDIContainer.swift in Sources */,
 				ACAA4D732DDCF866001092A6 /* FeedsPlayer+Events.swift in Sources */,
 				AC32E44B2D2965A3001DDA43 /* AccountViewModel.swift in Sources */,
 				ACD9418A2CFF575C0038FCB6 /* Data+Extensions.swift in Sources */,
@@ -3616,7 +3697,8 @@
 				AC9294122D6599A1003DB102 /* CaptionsView.swift in Sources */,
 				AC638BF52D2309C000481E94 /* KeychainHelper.swift in Sources */,
 				AC99BB9B2D84913C008012C2 /* YralColor.swift in Sources */,
-				1064B8002E4CA4110036C10B /* ModelOption.swift in Sources */,
+				1064B8002E4CA4110036C10B /* AIVideoProviderResponse.swift in Sources */,
+				1069860B2E5303A7005BE0D4 /* AIVideoRepository.swift in Sources */,
 				107C60C82DBF7A2D006FC467 /* SmileyGameRuleDIContainer.swift in Sources */,
 				AC6E31222D22F08F001EBE6C /* ImageLoaderProtocol.swift in Sources */,
 				105034A12DD5E3D500571B4E /* SmileyConfigDTO.swift in Sources */,
