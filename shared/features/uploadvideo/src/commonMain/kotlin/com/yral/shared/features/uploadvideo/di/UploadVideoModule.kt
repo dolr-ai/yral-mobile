@@ -15,6 +15,7 @@ import com.yral.shared.features.uploadvideo.domain.UploadAiVideoFromUrlUseCase
 import com.yral.shared.features.uploadvideo.domain.UploadRepository
 import com.yral.shared.features.uploadvideo.domain.UploadVideoUseCase
 import com.yral.shared.features.uploadvideo.presentation.AiVideoGenViewModel
+import com.yral.shared.features.uploadvideo.presentation.FlowSelectionViewModel
 import com.yral.shared.features.uploadvideo.presentation.UploadVideoViewModel
 import com.yral.shared.features.uploadvideo.presentation.UploadVideoViewModel.RequiredUseCases
 import org.koin.core.module.dsl.factoryOf
@@ -45,4 +46,7 @@ val uploadVideoModule =
         factoryOf(::GetFreeCreditsStatusUseCase)
         factoryOf(::AiRequiredUseCases)
         viewModelOf(::AiVideoGenViewModel)
+
+        // Flow selection
+        viewModelOf(::FlowSelectionViewModel)
     }

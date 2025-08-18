@@ -125,4 +125,17 @@
     <!--In App Purchases-->
     <string name="flexible_downloaded_message">A new version is ready to install</string>
     <string name="flexible_downloaded_cta">RESTART</string>
+
+    <!-- Video Gen/Upload -->
+    <string name="add_video">Add Video</string>
+    <string name="create_ai_video">Create AI Video</string>
+    <string name="generate_video_by_giving_a_prompt_to_ai">Generate a video by giving a prompt to AI.</string>
+    <string name="create_with_ai">Create with AI</string>
+    <string name="add_video_from_device">Add a video from your device.</string>
+    <string name="model">Model</string>
+    <string name="credits_used">%1d of %2d credits used</string>
+    <string name="prompt">Prompt</string>
+    <string name="enter_prompt_here">Enter the Prompt here…</string>
+    <string name="generate_video">Generate Video</string>
+
 </resources>
