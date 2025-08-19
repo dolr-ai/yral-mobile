@@ -23,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -38,6 +39,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import co.touchlab.kermit.Logger
 import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
@@ -69,7 +71,11 @@ fun AiVideoGenScreen(
     viewModel: AiVideoGenViewModel = koinViewModel(),
 ) {
     val viewState by viewModel.state.collectAsStateWithLifecycle()
-    LaunchedEffect(Unit) { viewModel.initialize() }
+    val shouldRefresh = viewModel.sessionObserver.collectAsState(null)
+    LaunchedEffect(shouldRefresh.value) {
+        Logger.d("VideoGen") { "shouldRefresh: $shouldRefresh" }
+        shouldRefresh.value?.first?.let { viewModel.refresh(it) }
+    }
     Column(modifier.fillMaxSize().padding(top = 20.dp)) {
         Header {
             viewModel.cleanup()

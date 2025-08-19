@@ -22,6 +22,7 @@ import com.yral.shared.uniffi.generated.RateLimitStatus
 import com.yral.shared.uniffi.generated.VideoGenRequestKey
 import com.yral.shared.uniffi.generated.VideoGenRequestStatus
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -48,45 +49,54 @@ class AiVideoGenViewModel internal constructor(
 
     private val _state = MutableStateFlow(ViewState())
     val state: StateFlow<ViewState> = _state.asStateFlow()
+    val sessionObserver =
+        combine(
+            sessionManager.state,
+            sessionManager.observeSessionProperties(),
+        ) { state, properties ->
+            // required to dismiss sheet since viewModel is not be recreated
+            if (_state.value.bottomSheetType is BottomSheetType.Signup) {
+                _state.update { it.copy(bottomSheetType = BottomSheetType.None) }
+            }
+            when (state) {
+                is SessionState.SignedIn -> state.session.canisterId to properties.isSocialSignIn
+                else -> null
+            }
+        }.distinctUntilChanged()
 
     private var currentRequestKey: VideoGenRequestKey? = null
     private var currentVideoUrl: String? = null
+    private var pollingJob: Job? = null
 
-    init {
-        viewModelScope.launch {
-            combine(
-                sessionManager.state,
-                sessionManager.observeSessionProperties(),
-            ) { state, properties ->
-                when (state) {
-                    is SessionState.SignedIn -> state.session.canisterId to properties.isSocialSignIn
-                    else -> {
-                        if (_state.value.uiState is UiState.InProgress) {
-                            // should cancel existing polling and upload video
-                        }
-                        "" to false
-                    }
-                }
-            }.distinctUntilChanged().collect { (canisterId, isSocialSignIn) ->
-                // required to dismiss sheet since viewModel is not be recreated
-                if (_state.value.bottomSheetType is BottomSheetType.Signup) {
-                    _state.update { it.copy(bottomSheetType = BottomSheetType.None) }
-                }
-                canisterId?.let {
-                    isSocialSignIn?.let {
-                        if (_state.value.uiState is UiState.Initial) {
-                            getFreeCreditsStatus()
-                        }
-                    }
+    fun refresh(canisterId: String) {
+        val currentCanister = _state.value.currentCanister
+        var isCanisterChanged = false
+        if (currentCanister == null) {
+            logger.d { "Null: Setting current canister to $canisterId" }
+            _state.update { it.copy(currentCanister = canisterId) }
+        } else if (currentCanister != canisterId) {
+            logger.d { "Mismatch: Setting current canister to $canisterId" }
+            _state.update { it.copy(currentCanister = canisterId) }
+            isCanisterChanged = true
+        } else {
+            logger.d { "Same canister" }
+        }
+        when (_state.value.uiState) {
+            is UiState.Initial -> {
+                loadProviders()
+                getFreeCreditsStatus()
+            }
+            is UiState.InProgress -> {
+                if (isCanisterChanged) {
+                    logger.d { "Canister changed, cancelling polling" }
+                    cleanup()
+                    loadProviders()
+                    getFreeCreditsStatus()
+                } else {
+                    logger.d { "Canister unchanged, reusing polling" }
                 }
             }
-        }
-    }
-
-    fun initialize() {
-        if (_state.value.uiState is UiState.Initial) {
-            getFreeCreditsStatus()
-            loadProviders()
+            else -> Unit
         }
     }
 
@@ -185,46 +195,52 @@ class AiVideoGenViewModel internal constructor(
         }
     }
 
-    private suspend fun pollGeneration(requestKey: VideoGenRequestKey) {
-        try {
-            requiredUseCases
-                .pollGenerationStatusUseCase
-                .invoke(
-                    parameters =
-                        PollGenerationStatusUseCase.Params(
-                            requestKey = requestKey,
-                            isFastInitially = false,
-                        ),
-                ).collect { collectedStatus ->
-                    logger.d { "Video generation status: ${collectedStatus.value}" }
-                    when (val status = collectedStatus.value) {
-                        is VideoGenRequestStatus.Complete -> {
-                            currentVideoUrl = status.v1
-                            uploadAiVideoFromUrl(status.v1)
-                        }
-                        VideoGenRequestStatus.Pending,
-                        VideoGenRequestStatus.Processing,
-                        -> {
-                            _state.update { it.copy(uiState = UiState.InProgress(0f)) }
-                        }
-                        is VideoGenRequestStatus.Failed -> {
-                            _state.update {
-                                it.copy(bottomSheetType = BottomSheetType.Error(status.v1))
+    private fun pollGeneration(requestKey: VideoGenRequestKey) {
+        pollingJob?.cancel()
+        pollingJob =
+            viewModelScope.launch {
+                try {
+                    requiredUseCases
+                        .pollGenerationStatusUseCase
+                        .invoke(
+                            parameters =
+                                PollGenerationStatusUseCase.Params(
+                                    requestKey = requestKey,
+                                    isFastInitially = false,
+                                ),
+                        ).collect { collectedStatus ->
+                            logger.d { "Video generation status: ${collectedStatus.value}" }
+                            when (val status = collectedStatus.value) {
+                                is VideoGenRequestStatus.Complete -> {
+                                    currentVideoUrl = status.v1
+                                    uploadAiVideoFromUrl(status.v1)
+                                }
+
+                                VideoGenRequestStatus.Pending,
+                                VideoGenRequestStatus.Processing,
+                                -> {
+                                    _state.update { it.copy(uiState = UiState.InProgress(0f)) }
+                                }
+
+                                is VideoGenRequestStatus.Failed -> {
+                                    _state.update {
+                                        it.copy(bottomSheetType = BottomSheetType.Error(status.v1))
+                                    }
+                                }
                             }
                         }
+                } catch (e: CancellationException) {
+                    logger.e(e) { "Error polling generation status" }
+                    throw e
+                } catch (
+                    @Suppress("TooGenericExceptionCaught") e: Exception,
+                ) {
+                    logger.e(e) { "Error polling generation status" }
+                    _state.update {
+                        it.copy(bottomSheetType = BottomSheetType.Error("", false))
                     }
                 }
-        } catch (e: CancellationException) {
-            logger.e(e) { "Error polling generation status" }
-            throw e
-        } catch (
-            @Suppress("TooGenericExceptionCaught") e: Exception,
-        ) {
-            logger.e(e) { "Error polling generation status" }
-            _state.update {
-                it.copy(bottomSheetType = BottomSheetType.Error("", false))
             }
-        }
     }
 
     private suspend fun uploadAiVideoFromUrl(videoUrl: String) {
@@ -298,6 +314,7 @@ class AiVideoGenViewModel internal constructor(
         _state.update { ViewState() }
         currentRequestKey = null
         currentVideoUrl = null
+        pollingJob?.cancel()
     }
 
     @Suppress("TooGenericExceptionCaught")
@@ -324,6 +341,7 @@ class AiVideoGenViewModel internal constructor(
         val prompt: String = "",
         val uiState: UiState<String> = UiState.Initial,
         val bottomSheetType: BottomSheetType = BottomSheetType.None,
+        val currentCanister: String? = null,
     )
 
     sealed class BottomSheetType {
