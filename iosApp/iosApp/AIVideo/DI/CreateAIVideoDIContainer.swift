@@ -20,7 +20,10 @@ final class CreateAIVideoDIContainer {
   }
 
   func makeAIVideoRepository() -> AIVideoRepository {
-    AIVideoRepository(httpService: dependencies.httpService)
+    AIVideoRepository(
+      httpService: dependencies.httpService,
+      authClient: dependencies.authClient
+    )
   }
 
   func makeAccountRepository() -> AccountRepository {
@@ -41,6 +44,10 @@ final class CreateAIVideoDIContainer {
       ),
       socialSigninUseCase: SocialSignInUseCase(
         accountRepository: accountRepository,
+        crashReporter: dependencies.crashReporter
+      ),
+      generateVideoUseCase: GenerateVideoUseCase(
+        aiVideoRepository: aiVideoRepository,
         crashReporter: dependencies.crashReporter
       )
     )
