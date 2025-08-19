@@ -11,7 +11,7 @@ import Foundation
 enum CreateAIVideoScreenState {
   case initialized
   case loading
-  case success(AIVideoProviderResponse)
+  case success
   case failure(Error)
 
   static func == (lhs: CreateAIVideoScreenState, rhs: CreateAIVideoScreenState) -> Bool {
@@ -37,6 +37,7 @@ enum CreateAIVideoScreenEvent {
 class CreateAIVideoViewModel: ObservableObject {
   let aiVideoProviderUseCase: AIVideoProviderUseCaseProtocol
   let socialSignInUseCase: SocialSignInUseCaseProtocol
+  let generateVideoUseCase: GenerateVideoUseCaseProtocol
 
   @Published var event: CreateAIVideoScreenEvent?
   @Published var state: CreateAIVideoScreenState = .initialized
@@ -46,10 +47,12 @@ class CreateAIVideoViewModel: ObservableObject {
 
   init(
     aiVideoProviderUseCase: AIVideoProviderUseCaseProtocol,
-    socialSigninUseCase: SocialSignInUseCaseProtocol
+    socialSigninUseCase: SocialSignInUseCaseProtocol,
+    generateVideoUseCase: GenerateVideoUseCase
   ) {
     self.aiVideoProviderUseCase = aiVideoProviderUseCase
     self.socialSignInUseCase = socialSigninUseCase
+    self.generateVideoUseCase = generateVideoUseCase
   }
 
   @MainActor
@@ -62,7 +65,8 @@ class CreateAIVideoViewModel: ObservableObject {
         self.providers = response.providers
         if let selectedProvider = response.providers.first {
           self.selectedProvider = selectedProvider
-          state = .success(selectedProvider)
+          state = .success
+          event = .updateSelectedProvider(selectedProvider)
         }
       case .failure(let error):
         state = .failure(error)
@@ -78,6 +82,37 @@ class CreateAIVideoViewModel: ObservableObject {
         self.event = .socialSignInSuccess
       case .failure:
         self.event = .socialSignInFailure
+      }
+    }
+  }
+
+  @MainActor
+  func generateVideo(for prompt: String, withProvider provider: AIVideoProviderResponse) async {
+    state = .loading
+
+    let generateVideoRequest = GenerateVideoMetaRequest(
+      request: GenerateVideoRequest(
+        aspectRatio: "16:9",
+        durationSeconds: provider.defaultDuration,
+        generateAudio: true,
+        image: nil,
+        modelID: provider.id,
+        negativePrompt: nil,
+        prompt: prompt,
+        resolution: nil,
+        seed: nil,
+        tokenType: "Free",
+        userID: nil
+      )
+    )
+
+    do {
+      let result = await generateVideoUseCase.execute(request: generateVideoRequest)
+      switch result {
+      case .success(let response):
+        state = .success
+      case .failure(let error):
+        state = .failure(error)
       }
     }
   }
