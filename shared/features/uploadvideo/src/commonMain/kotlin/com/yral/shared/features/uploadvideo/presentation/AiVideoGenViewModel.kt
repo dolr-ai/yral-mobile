@@ -37,19 +37,17 @@ class AiVideoGenViewModel internal constructor(
     private var currentVideoUrl: String? = null
 
     fun initialize() {
-        val currentState = _state.value
-        if (currentState.providers.isEmpty()) {
-            loadProviders()
-        }
-        if (currentState.uiState is UiState.Initial) {
+        if (_state.value.uiState is UiState.Initial) {
             _state.update { it.copy(usedCredits = null) }
             getFreeCreditsStatus()
+            loadProviders()
         }
     }
 
     private fun loadProviders() {
         viewModelScope.launch {
-            _state.update { it.copy(providers = emptyList()) }
+            val currentSelected = _state.value.selectedProvider
+            _state.update { it.copy(providers = emptyList(), selectedProvider = null) }
             requiredUseCases
                 .getProviders()
                 .onSuccess { list ->
@@ -57,7 +55,10 @@ class AiVideoGenViewModel internal constructor(
                         _state.update {
                             it.copy(
                                 providers = list,
-                                selectedProvider = list.first(),
+                                selectedProvider =
+                                    currentSelected?.let { selected ->
+                                        list.find { provider -> provider.id == selected.id }
+                                    } ?: list.first(),
                             )
                         }
                     }
