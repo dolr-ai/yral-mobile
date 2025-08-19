@@ -183,11 +183,17 @@ class AiVideoGenViewModel internal constructor(
                             result.requestKey?.let { requestKey ->
                                 currentRequestKey = requestKey
                                 pollGeneration(requestKey)
+                                return@onSuccess
+                            }
+                            result.providerError?.let { error ->
+                                _state.update {
+                                    it.copy(bottomSheetType = BottomSheetType.Error(error, true))
+                                }
                             }
                         }.onFailure { error ->
                             logger.e(error) { "Error generating video" }
                             _state.update {
-                                it.copy(bottomSheetType = BottomSheetType.Error(error.message ?: ""))
+                                it.copy(bottomSheetType = BottomSheetType.Error("", true))
                             }
                         }
                 }
@@ -236,9 +242,7 @@ class AiVideoGenViewModel internal constructor(
                     @Suppress("TooGenericExceptionCaught") e: Exception,
                 ) {
                     logger.e(e) { "Error polling generation status" }
-                    _state.update {
-                        it.copy(bottomSheetType = BottomSheetType.Error("", false))
-                    }
+                    _state.update { it.copy(bottomSheetType = BottomSheetType.Error("")) }
                 }
             }
     }
@@ -265,9 +269,7 @@ class AiVideoGenViewModel internal constructor(
             @Suppress("TooGenericExceptionCaught") e: Exception,
         ) {
             logger.e(e) { "Error calling upload_ai_video_from_url" }
-            _state.update {
-                it.copy(bottomSheetType = BottomSheetType.Error("", false))
-            }
+            _state.update { it.copy(bottomSheetType = BottomSheetType.Error("")) }
         }
     }
 

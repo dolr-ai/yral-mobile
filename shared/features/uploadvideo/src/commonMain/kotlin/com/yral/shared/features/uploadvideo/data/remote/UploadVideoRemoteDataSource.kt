@@ -18,7 +18,6 @@ import io.ktor.client.HttpClient
 import io.ktor.client.content.ProgressListener
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.ServerResponseException
-import io.ktor.client.plugins.expectSuccess
 import io.ktor.client.plugins.onUpload
 import io.ktor.client.plugins.timeout
 import io.ktor.client.request.forms.InputProvider
@@ -128,7 +127,6 @@ internal class UploadVideoRemoteDataSource(
                     }
                     contentType(ContentType.Application.Json)
                     setBody(dto)
-                    expectSuccess = false
                 }
             response.parseGenerateVideoResponse(json)
         } catch (e: ClientRequestException) {
