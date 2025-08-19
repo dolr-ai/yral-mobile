@@ -18,6 +18,17 @@ struct CreateAIVideoScreenView: View {
     return !creditsUsed && !trimmed.isEmpty
   }
 
+  var isErrorPresented: Binding<Bool> {
+    Binding(
+      get: { errorMessage != nil },
+      set: { newValue in
+        if newValue == false {
+          errorMessage = nil
+        }
+      }
+    )
+  }
+
   @State private var showLoader = true
   @State private var promptText = ""
   @State private var creditsUsed = false
@@ -27,6 +38,7 @@ struct CreateAIVideoScreenView: View {
   @State private var isUserLoggedIn = false
   @State private var loadingProvider: SocialProvider?
   @State private var selectedProvider: AIVideoProviderResponse?
+  @State private var errorMessage: String?
 
   var body: some View {
     VStack(alignment: .leading, spacing: Constants.vstackSpacing) {
@@ -118,6 +130,12 @@ struct CreateAIVideoScreenView: View {
       })
       .background( ClearBackgroundView() )
     }
+    .fullScreenCover(isPresented: isErrorPresented) {
+      CreateAIVideoErrorBottomSheet(text: errorMessage ?? "") {
+        errorMessage = nil
+      }
+      .background( ClearBackgroundView() )
+    }
     .onReceive(session.phasePublisher, perform: { phase in
       if case .permanent = phase {
         isUserLoggedIn = true
@@ -144,6 +162,10 @@ struct CreateAIVideoScreenView: View {
         loadingProvider = nil
         showSignupSheet = false
         showSignupFailureSheet = true
+      case .generateVideoSuccess(let response):
+        break
+      case .generateVideoFailure(let errMessage):
+        errorMessage = errMessage
       default:
         break
       }
