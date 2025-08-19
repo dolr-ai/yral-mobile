@@ -86,6 +86,7 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.paging.compose)
+    implementation(libs.androidx.emoji2)
     debugImplementation(libs.compose.ui.tooling)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
@@ -133,6 +134,7 @@ dependencies {
     implementation(projects.shared.features.uploadvideo)
     implementation(projects.shared.features.profile)
     implementation(projects.shared.libs.arch)
+    implementation(projects.shared.libs.featureFlag)
 }
 
 afterEvaluate {

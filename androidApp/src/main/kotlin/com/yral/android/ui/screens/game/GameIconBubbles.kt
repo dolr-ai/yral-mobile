@@ -34,17 +34,19 @@ fun GameIconBubbles(
         )
     } else {
         val animationRes = icon.getBubbleResource()
-        YralLottieAnimation(
-            modifier = Modifier.fillMaxSize(),
-            rawRes = animationRes,
-            iterations = 1,
-            contentScale = ContentScale.Inside,
-            onAnimationComplete = onAnimationComplete,
-        )
+        if (animationRes != 0) {
+            YralLottieAnimation(
+                modifier = Modifier.fillMaxSize(),
+                rawRes = animationRes,
+                iterations = 1,
+                contentScale = ContentScale.Inside,
+                onAnimationComplete = onAnimationComplete,
+            )
+        }
     }
 }
 
-private fun GameIcon.getBubbleResource(): Int =
+fun GameIcon.getBubbleResource(): Int =
     when (imageName) {
         GameIconNames.LAUGH -> R.raw.smiley_game_laugh
         GameIconNames.HEART -> R.raw.smiley_game_heart
@@ -52,4 +54,5 @@ private fun GameIcon.getBubbleResource(): Int =
         GameIconNames.SURPRISE -> R.raw.smiley_game_surprise
         GameIconNames.ROCKET -> R.raw.smiley_game_rocket
         GameIconNames.PUKE -> R.raw.smiley_game_puke
+        GameIconNames.UNKNOWN -> 0
     }

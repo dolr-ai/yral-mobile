@@ -14,12 +14,14 @@ actual fun initKoin(appDeclaration: KoinAppDeclaration) {
         allowOverride(false)
         appDeclaration()
         modules(
+            dispatchersModule,
             platformModule,
             coreModule,
             preferencesModule,
             analyticsModule,
             crashlyticsModule,
             networkModule,
+            featureFlagModule,
         )
     }
 }

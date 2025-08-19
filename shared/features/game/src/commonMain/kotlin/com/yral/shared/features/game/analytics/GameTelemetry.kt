@@ -1,6 +1,7 @@
 package com.yral.shared.features.game.analytics
 
 import com.yral.shared.analytics.AnalyticsManager
+import com.yral.shared.analytics.events.AirdropClaimedEventData
 import com.yral.shared.analytics.events.GameConcludedBottomsheetClickedEventData
 import com.yral.shared.analytics.events.GameConcludedCtaType
 import com.yral.shared.analytics.events.GamePlayedEventData
@@ -94,6 +95,28 @@ class GameTelemetry(
                     shareCount = 0,
                     gameType = GameType.SMILEY,
                 ),
+        )
+    }
+
+    fun onAirdropClaimSuccess(claimedAmount: Int) {
+        analyticsManager.trackEvent(
+            AirdropClaimedEventData(
+                tokenType = TokenType.YRAL,
+                isSuccess = true,
+                claimedAmount = claimedAmount,
+                isAutoCredited = true,
+            ),
+        )
+    }
+
+    fun onAirdropClaimFailure() {
+        analyticsManager.trackEvent(
+            AirdropClaimedEventData(
+                tokenType = TokenType.YRAL,
+                isSuccess = false,
+                claimedAmount = 0,
+                isAutoCredited = false,
+            ),
         )
     }
 }

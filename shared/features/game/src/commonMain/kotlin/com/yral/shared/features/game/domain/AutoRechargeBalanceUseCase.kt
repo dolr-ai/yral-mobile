@@ -2,23 +2,23 @@ package com.yral.shared.features.game.domain
 
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.getOrThrow
-import com.yral.shared.core.dispatchers.AppDispatchers
-import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.game.domain.models.AutoRechargeBalanceError
 import com.yral.shared.features.game.domain.models.AutoRechargeBalanceErrorCodes
 import com.yral.shared.features.game.domain.models.AutoRechargeBalanceRequest
 import com.yral.shared.features.game.domain.models.UpdatedBalance
 import com.yral.shared.firebaseAuth.usecase.GetIdTokenUseCase
-import com.yral.shared.libs.useCase.ResultSuspendUseCase
+import com.yral.shared.libs.arch.domain.ResultSuspendUseCase
+import com.yral.shared.libs.arch.domain.UseCaseFailureListener
+import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 
 class AutoRechargeBalanceUseCase(
     appDispatchers: AppDispatchers,
-    crashlyticsManager: CrashlyticsManager,
+    useCaseFailureListener: UseCaseFailureListener,
     private val getIdTokenUseCase: GetIdTokenUseCase,
     private val gameRepository: IGameRepository,
 ) : ResultSuspendUseCase<AutoRechargeBalanceRequest, UpdatedBalance, AutoRechargeBalanceError>(
-        appDispatchers.io,
-        crashlyticsManager,
+        coroutineDispatcher = appDispatchers.network,
+        failureListener = useCaseFailureListener,
     ) {
     @Suppress("MaxLineLength")
     override suspend fun executeWith(parameter: AutoRechargeBalanceRequest): Result<UpdatedBalance, AutoRechargeBalanceError> {

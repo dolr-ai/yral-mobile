@@ -12,6 +12,7 @@ extension CGFloat {
   static let pointOne: CGFloat = 0.1
   static let animationPeriod: CGFloat = 0.3
   static let half: CGFloat = 0.5
+  static let pointSevenFive: CGFloat = 0.5
   static let one: CGFloat = 1
   static let two: CGFloat = 2
   static let three: CGFloat = 3

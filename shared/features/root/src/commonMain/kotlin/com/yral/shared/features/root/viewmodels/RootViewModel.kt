@@ -5,7 +5,6 @@ import co.touchlab.kermit.Logger
 import com.yral.shared.analytics.User
 import com.yral.shared.analytics.events.CategoryName
 import com.yral.shared.analytics.events.TokenType
-import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
@@ -13,6 +12,7 @@ import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.AuthClientFactory
 import com.yral.shared.features.auth.YralAuthException
 import com.yral.shared.features.root.analytics.RootTelemetry
+import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -38,7 +38,7 @@ class RootViewModel(
     private val crashlyticsManager: CrashlyticsManager,
     private val rootTelemetry: RootTelemetry,
 ) : ViewModel() {
-    private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.io)
+    private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.disk)
 
     private val authClient =
         authClientFactory
@@ -116,9 +116,7 @@ class RootViewModel(
     }
 
     fun onSplashAnimationComplete() {
-        coroutineScope.launch {
-            _state.update { it.copy(initialAnimationComplete = true) }
-        }
+        _state.update { it.copy(initialAnimationComplete = true) }
     }
 
     fun updateProfileVideosCount(count: Int) {

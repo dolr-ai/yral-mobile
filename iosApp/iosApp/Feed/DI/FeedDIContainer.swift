@@ -29,11 +29,13 @@ final class FeedDIContainer {
   func makeFeedsViewControllerWrapper(
     showFeeds: Binding<Bool>,
     walletPhase: Binding<WalletPhase>,
-    walletOutcome: Binding<WalletPhase>
+    walletOutcome: Binding<WalletPhase>,
+    playToScroll: Bool
   ) -> FeedsViewControllerWrapper {
     FeedsViewControllerWrapper(
       feedsViewController: FeedsViewController(
         viewModel: makeFeedsViewModel(),
+        playToScroll: playToScroll,
         session: dependencies.session,
         crashReporter: dependencies.crashReporter
       ),
@@ -43,9 +45,10 @@ final class FeedDIContainer {
     )
   }
 
-  func makeFeedsViewController() -> FeedsViewController {
+  func makeFeedsViewController(playToScroll: Bool) -> FeedsViewController {
     FeedsViewController(
       viewModel: makeFeedsViewModel(),
+      playToScroll: playToScroll,
       session: dependencies.session,
       crashReporter: dependencies.crashReporter
     )

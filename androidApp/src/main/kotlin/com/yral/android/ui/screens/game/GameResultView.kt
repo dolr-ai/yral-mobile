@@ -5,13 +5,11 @@ import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
@@ -78,39 +76,13 @@ private fun GameResultViewIcon(
                 ),
         )
     }
-    var loadLocalIcon by remember { mutableStateOf(false) }
-    var loadLocal by remember { mutableStateOf(false) }
-    LaunchedEffect(icon.imageUrl) {
-        if (icon.imageUrl.isEmpty() && !loadLocal) {
-            loadLocal = true
-        }
-    }
-    if (loadLocalIcon) {
-        LocalGameIcon(
-            modifier =
-                Modifier
-                    .graphicsLayer {
-                        translationX = iconOffsetX.value
-                    },
-            icon = icon,
-            animate = false,
-            onAnimationComplete = { },
-        )
-    } else {
-        AsyncGameIcon(
-            modifier =
-                Modifier
-                    .graphicsLayer {
-                        translationX = iconOffsetX.value
-                    },
-            icon = icon,
-            animate = false,
-            onAnimationComplete = { },
-            loadLocal = {
-                loadLocalIcon = true
-            },
-        )
-    }
+    GameIcon(
+        modifier =
+            Modifier
+                .size(46.dp)
+                .graphicsLayer { translationX = iconOffsetX.value },
+        icon = icon,
+    )
 }
 
 @Composable

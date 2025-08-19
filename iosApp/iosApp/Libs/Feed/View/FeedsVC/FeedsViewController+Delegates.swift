@@ -106,7 +106,7 @@ extension FeedsViewController: FeedsCellProtocol {
         stakeAmount: Int32(item.smileyGame?.config.lossPenalty ?? Int.zero),
         stakeType: TokenType.yral,
         optionChosen: smileyID,
-        isTutorialVote: false
+        isTutorialVote: self.isTutorialVote
       )
     )
   }
@@ -259,7 +259,7 @@ extension FeedsViewController: FeedsCellProtocol {
         stakeAmount: Int32(item.smileyGame?.config.lossPenalty ?? Int.zero),
         stakeType: TokenType.yral,
         optionChosen: smileyID,
-        isTutorialVote: false
+        isTutorialVote: self.isTutorialVote
       )
     )
     Task { @MainActor in
@@ -280,6 +280,19 @@ extension FeedsViewController: FeedsCellProtocol {
     }
     feedsCV.isScrollEnabled = true
     self.walletAnimationDelegate?.walletAnimationEnded(success: success, coins: coins)
+  }
+
+  func howToPlayTapped() {
+    let smileyGameRuleView = self.makeSmileyGameRulesDIContainer().makeSmileyGameRuleView {
+      self.navigationController?.popViewController(animated: true)
+    }
+    let smileyGameRuleVC = UIHostingController(rootView: smileyGameRuleView)
+    smileyGameRuleVC.extendedLayoutIncludesOpaqueBars = true
+    self.navigationController?.pushViewController(smileyGameRuleVC, animated: true)
+  }
+
+  func howToPlayShown() {
+    self.isShowingPlayToScroll = false
   }
 }
 

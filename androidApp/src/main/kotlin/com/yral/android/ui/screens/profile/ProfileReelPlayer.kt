@@ -57,6 +57,7 @@ fun ProfileReelPlayer(
         YRALReelPlayer(
             modifier = modifier.fillMaxSize(),
             reels = videoReels,
+            maxReelsInPager = videoReels.size,
             initialPage = initialPage,
             onPageLoaded = { },
             recordTime = { _, _ -> },
