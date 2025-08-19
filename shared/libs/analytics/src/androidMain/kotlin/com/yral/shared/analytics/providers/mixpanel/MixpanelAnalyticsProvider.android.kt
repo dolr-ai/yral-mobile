@@ -9,6 +9,7 @@ import com.yral.shared.analytics.AnalyticsProvider
 import com.yral.shared.analytics.EventToMapConverter
 import com.yral.shared.analytics.User
 import com.yral.shared.analytics.events.EventData
+import com.yral.shared.analytics.events.TokenType
 import org.json.JSONObject
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -56,7 +57,7 @@ actual class MixpanelAnalyticsProvider actual constructor(
                 "is_creator" to (user.isCreator ?: false),
                 "is_logged_in" to user.isLoggedIn,
                 "wallet_balance" to user.walletBalance,
-                "token_type" to user.tokenType,
+                "token_type" to (user.tokenType?.serialName ?: ""),
                 "canister_id" to user.canisterId,
             )
         if (user.isLoggedIn == true) {
@@ -77,4 +78,12 @@ actual class MixpanelAnalyticsProvider actual constructor(
     }
 
     override fun toValidKeyName(key: String): String = key
+
+    val TokenType.serialName: String
+        get() =
+            when (this) {
+                TokenType.CENTS -> "cents"
+                TokenType.SATS -> "sats"
+                TokenType.YRAL -> "yral"
+            }
 }
