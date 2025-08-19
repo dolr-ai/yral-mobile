@@ -10,9 +10,26 @@ import SwiftUI
 
 struct PromptView: View {
   var onFocus: (() -> Void)?
+  private let maxCharacters = 500
 
   @Binding var prompt: String
   @FocusState private var isPromptFocused: Bool
+
+  private var limitedPrompt: Binding<String> {
+    Binding(
+      get: { prompt },
+      set: { newValue in
+        if newValue.count <= maxCharacters {
+          prompt = newValue
+        } else {
+          let limitedText = String(newValue.prefix(maxCharacters))
+          DispatchQueue.main.async {
+            self.prompt = limitedText
+          }
+        }
+      }
+    )
+  }
 
   var body: some View {
     VStack(alignment: .leading, spacing: Constants.vStackSpacing) {
@@ -23,7 +40,7 @@ struct PromptView: View {
 
       ZStack(alignment: .topLeading) {
         if #available(iOS 16.0, *) {
-          TextEditor(text: $prompt)
+          TextEditor(text: limitedPrompt)
             .focused($isPromptFocused)
             .scrollContentBackground(.hidden)
             .padding(Constants.cursorPadding)
@@ -45,7 +62,7 @@ struct PromptView: View {
               onFocus?()
             }
         } else {
-          TextEditor(text: $prompt)
+          TextEditor(text: limitedPrompt)
             .focused($isPromptFocused)
             .padding(Constants.cursorPadding)
             .foregroundColor(Constants.promptColor)
@@ -66,11 +83,20 @@ struct PromptView: View {
               onFocus?()
             }
         }
-        if prompt.isEmpty {
+        if prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
           Text(Constants.textFieldPlaceholder)
             .foregroundColor(Constants.placeholderTextColor)
             .font(Constants.captionTextFieldFont)
             .padding(Constants.placeholderPadding)
+        }
+      }
+      .overlay(alignment: .bottomTrailing) {
+        if !prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+          Text("\(prompt.count)/\(maxCharacters)")
+            .font(Constants.charsCountFont)
+            .foregroundColor(Constants.charsCountColor)
+            .padding(.trailing, Constants.charsCountTrailing)
+            .padding(.bottom, Constants.charsCountBottom)
         }
       }
       .frame(height: Constants.textFieldHeight)
@@ -101,5 +127,10 @@ extension PromptView {
     static let cursorPadding = EdgeInsets(top: 4.0, leading: 8.0, bottom: .zero, trailing: .zero)
     static let textPadding = 12.0
     static let tintColor: UIColor =  YralColor.primary300.uiColor
+
+    static let charsCountFont = YralFont.pt12.regular.swiftUIFont
+    static let charsCountColor = YralColor.grey600.swiftUIColor
+    static let charsCountTrailing = 12.0
+    static let charsCountBottom = 12.0
   }
 }
