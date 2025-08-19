@@ -6,6 +6,10 @@ import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.core.logging.YralLogger
 import com.yral.shared.core.session.SessionManager
+import com.yral.shared.core.session.SessionState
+import com.yral.shared.crashlytics.core.CrashlyticsManager
+import com.yral.shared.features.auth.AuthClientFactory
+import com.yral.shared.features.auth.utils.SocialProvider
 import com.yral.shared.features.uploadvideo.domain.GenerateVideoUseCase
 import com.yral.shared.features.uploadvideo.domain.GetFreeCreditsStatusUseCase
 import com.yral.shared.features.uploadvideo.domain.GetProvidersUseCase
@@ -14,21 +18,33 @@ import com.yral.shared.features.uploadvideo.domain.UploadAiVideoFromUrlUseCase
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoParams
 import com.yral.shared.features.uploadvideo.domain.models.Provider
 import com.yral.shared.libs.arch.presentation.UiState
+import com.yral.shared.uniffi.generated.RateLimitStatus
 import com.yral.shared.uniffi.generated.VideoGenRequestKey
 import com.yral.shared.uniffi.generated.VideoGenRequestStatus
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class AiVideoGenViewModel internal constructor(
+    authClientFactory: AuthClientFactory,
     private val requiredUseCases: RequiredUseCases,
     private val sessionManager: SessionManager,
+    private val crashlyticsManager: CrashlyticsManager,
     logger: YralLogger,
 ) : ViewModel() {
     private val logger = logger.withTag(AiVideoGenViewModel::class.simpleName ?: "")
+
+    private val authClient =
+        authClientFactory
+            .create(viewModelScope) { e ->
+                logger.e(e) { "Auth error" }
+                handleSignupFailed()
+            }
 
     private val _state = MutableStateFlow(ViewState())
     val state: StateFlow<ViewState> = _state.asStateFlow()
@@ -36,9 +52,39 @@ class AiVideoGenViewModel internal constructor(
     private var currentRequestKey: VideoGenRequestKey? = null
     private var currentVideoUrl: String? = null
 
+    init {
+        viewModelScope.launch {
+            combine(
+                sessionManager.state,
+                sessionManager.observeSessionProperties(),
+            ) { state, properties ->
+                when (state) {
+                    is SessionState.SignedIn -> state.session.canisterId to properties.isSocialSignIn
+                    else -> {
+                        if (_state.value.uiState is UiState.InProgress) {
+                            // should cancel existing polling and upload video
+                        }
+                        "" to false
+                    }
+                }
+            }.distinctUntilChanged().collect { (canisterId, isSocialSignIn) ->
+                // required to dismiss sheet since viewModel is not be recreated
+                if (_state.value.bottomSheetType is BottomSheetType.Signup) {
+                    _state.update { it.copy(bottomSheetType = BottomSheetType.None) }
+                }
+                canisterId?.let {
+                    isSocialSignIn?.let {
+                        if (_state.value.uiState is UiState.Initial) {
+                            getFreeCreditsStatus()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     fun initialize() {
         if (_state.value.uiState is UiState.Initial) {
-            _state.update { it.copy(usedCredits = null) }
             getFreeCreditsStatus()
             loadProviders()
         }
@@ -68,19 +114,38 @@ class AiVideoGenViewModel internal constructor(
 
     private fun getFreeCreditsStatus() {
         viewModelScope.launch {
-            requiredUseCases
-                .getFreeCreditsStatus()
-                .onSuccess { status ->
-                    _state.update { it.copy(usedCredits = if (status.isLimited) 1 else 0) }
-                    logger.d { "Used credits ${_state.value.usedCredits} $status" }
-                }.onFailure { error ->
-                    logger.e(error) { "Error fetching free credits" }
-                    _state.update { it.copy(usedCredits = null) }
-                }
+            _state.update { it.copy(usedCredits = null) }
+            sessionManager.canisterID?.let { canisterId ->
+                requiredUseCases
+                    .getFreeCreditsStatus(
+                        parameter =
+                            GetFreeCreditsStatusUseCase.Params(
+                                canisterId = canisterId,
+                                isRegistered = sessionManager.isSocialSignIn(),
+                            ),
+                    ).onSuccess { status ->
+                        _state.update { it.copy(usedCredits = status.usedCredits()) }
+                        logger.d { "Used credits ${_state.value.usedCredits} $status" }
+                    }.onFailure { error ->
+                        logger.e(error) { "Error fetching free credits" }
+                        _state.update { it.copy(usedCredits = null) }
+                    }
+            }
         }
     }
 
+    private fun RateLimitStatus.usedCredits() =
+        if (sessionManager.isSocialSignIn()) {
+            if (isLimited) 1 else 0
+        } else {
+            0
+        }
+
     fun generateAiVideo() {
+        if (!sessionManager.isSocialSignIn()) {
+            setBottomSheetType(type = BottomSheetType.Signup)
+            return
+        }
         viewModelScope.launch {
             val currentState = _state.value
             currentState.selectedProvider?.let { selectedProvider ->
@@ -235,6 +300,22 @@ class AiVideoGenViewModel internal constructor(
         currentVideoUrl = null
     }
 
+    @Suppress("TooGenericExceptionCaught")
+    fun signInWithGoogle(context: Any) {
+        viewModelScope.launch {
+            try {
+                authClient.signInWithSocial(context, SocialProvider.GOOGLE)
+            } catch (e: Exception) {
+                crashlyticsManager.recordException(e)
+                handleSignupFailed()
+            }
+        }
+    }
+
+    private fun handleSignupFailed() {
+        setBottomSheetType(type = BottomSheetType.SignupFailed)
+    }
+
     data class ViewState(
         val selectedProvider: Provider? = null,
         val providers: List<Provider> = emptyList(),
@@ -252,6 +333,11 @@ class AiVideoGenViewModel internal constructor(
             val message: String,
             val endFlow: Boolean = false,
         ) : BottomSheetType()
+        data object Signup : BottomSheetType()
+        data class Link(
+            val url: String,
+        ) : BottomSheetType()
+        data object SignupFailed : BottomSheetType()
     }
 
     internal data class RequiredUseCases(

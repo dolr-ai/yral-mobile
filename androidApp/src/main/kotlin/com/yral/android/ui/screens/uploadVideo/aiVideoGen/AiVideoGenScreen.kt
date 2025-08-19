@@ -32,15 +32,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
+import com.yral.android.ui.screens.account.ErrorMessageSheet
+import com.yral.android.ui.screens.account.LoginBottomSheet
+import com.yral.android.ui.screens.account.WebViewBottomSheet
 import com.yral.android.ui.screens.uploadVideo.aiVideoGen.AiVideoGenScreenConstants.LOADING_MESSAGE_DELAY
 import com.yral.android.ui.widgets.YralAsyncImage
 import com.yral.android.ui.widgets.YralBottomSheet
@@ -49,6 +52,8 @@ import com.yral.android.ui.widgets.YralGradientButton
 import com.yral.android.ui.widgets.YralLoader
 import com.yral.android.ui.widgets.getSVGImageModel
 import com.yral.android.ui.widgets.video.YralVideoPlayer
+import com.yral.shared.features.account.viewmodel.AccountsViewModel.Companion.TERMS_OF_SERVICE_URL
+import com.yral.shared.features.account.viewmodel.ErrorType
 import com.yral.shared.features.uploadvideo.domain.models.Provider
 import com.yral.shared.features.uploadvideo.presentation.AiVideoGenViewModel
 import com.yral.shared.features.uploadvideo.presentation.AiVideoGenViewModel.BottomSheetType
@@ -64,7 +69,6 @@ fun AiVideoGenScreen(
     viewModel: AiVideoGenViewModel = koinViewModel(),
 ) {
     val viewState by viewModel.state.collectAsStateWithLifecycle()
-    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     LaunchedEffect(Unit) { viewModel.initialize() }
     Column(modifier.fillMaxSize().padding(top = 20.dp)) {
         Header {
@@ -99,17 +103,20 @@ fun AiVideoGenScreen(
             is UiState.Failure -> Unit // No op since failure is shown in a bottomSheet
         }
     }
-    AiVideoGenScreenPrompts(component, viewState, viewModel, bottomSheetState)
+    AiVideoGenScreenPrompts(component, viewState, viewModel)
 }
 
+@Suppress("LongMethod")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AiVideoGenScreenPrompts(
     component: AiVideoGenComponent,
     viewState: AiVideoGenViewModel.ViewState,
     viewModel: AiVideoGenViewModel,
-    bottomSheetState: SheetState,
 ) {
+    val context = LocalContext.current
+    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val extraSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     when (val sheetType = viewState.bottomSheetType) {
         is BottomSheetType.ModelSelection -> {
             ModelSelection(
@@ -133,6 +140,39 @@ private fun AiVideoGenScreenPrompts(
                         viewModel.tryAgain()
                     }
                 },
+            )
+        }
+        is BottomSheetType.Signup -> {
+            // reusing from account to be refactored in independent components
+            LoginBottomSheet(
+                bottomSheetState = bottomSheetState,
+                onDismissRequest = { viewModel.setBottomSheetType(BottomSheetType.None) },
+                onSignupClicked = { viewModel.signInWithGoogle(context) },
+                termsLink = TERMS_OF_SERVICE_URL,
+                openTerms = { viewModel.setBottomSheetType(BottomSheetType.Link(TERMS_OF_SERVICE_URL)) },
+            )
+        }
+        is BottomSheetType.Link -> {
+            // reusing from account to be refactored in independent components
+            LaunchedEffect(sheetType.url) {
+                if (sheetType.url.isEmpty()) {
+                    extraSheetState.hide()
+                } else {
+                    extraSheetState.show()
+                }
+            }
+            WebViewBottomSheet(
+                link = sheetType.url,
+                bottomSheetState = extraSheetState,
+                onDismissRequest = { viewModel.setBottomSheetType(BottomSheetType.Signup) },
+            )
+        }
+        is BottomSheetType.SignupFailed -> {
+            // reusing from account to be refactored in independent components
+            ErrorMessageSheet(
+                errorType = ErrorType.SIGNUP_FAILED,
+                onDismissRequest = { viewModel.setBottomSheetType(BottomSheetType.None) },
+                bottomSheetState = bottomSheetState,
             )
         }
         is BottomSheetType.None -> Unit

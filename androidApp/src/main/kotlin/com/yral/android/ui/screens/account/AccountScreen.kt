@@ -211,7 +211,7 @@ private fun SheetContent(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ErrorMessageSheet(
+fun ErrorMessageSheet(
     errorType: ErrorType,
     bottomSheetState: SheetState,
     onDismissRequest: () -> Unit,
