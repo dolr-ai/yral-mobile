@@ -171,6 +171,7 @@ extension CreateAIVideoScreenView {
 
       HStack {
         URLImage(url: URL(string: provider.iconURL))
+          .id(provider.id)
           .frame(width: Constants.modelImageSize, height: Constants.modelImageSize)
           .padding(.horizontal, Constants.modelNameLeading)
 
