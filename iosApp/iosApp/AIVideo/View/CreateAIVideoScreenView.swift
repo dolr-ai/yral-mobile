@@ -52,7 +52,11 @@ struct CreateAIVideoScreenView: View {
           .padding(.top, Constants.promptTop)
 
         Button {
-
+          if let provider = selectedProvider, !promptText.isEmpty {
+            Task {
+              await viewModel.generateVideo(for: promptText, withProvider: provider)
+            }
+          }
         } label: {
           Text(Constants.generateButtonTitle)
             .foregroundColor(Constants.generateButtonTextColor)
@@ -111,9 +115,8 @@ struct CreateAIVideoScreenView: View {
       switch state {
       case .loading:
         showLoader = true
-      case .success(let provider):
+      case .success:
         showLoader = false
-        selectedProvider = provider
       default:
         showLoader = false
       }
