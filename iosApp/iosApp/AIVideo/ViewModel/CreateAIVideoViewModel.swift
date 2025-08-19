@@ -32,6 +32,8 @@ enum CreateAIVideoScreenEvent {
   case updateSelectedProvider(AIVideoProviderResponse)
   case socialSignInSuccess
   case socialSignInFailure
+  case generateVideoSuccess(GenerateVideoResponse)
+  case generateVideoFailure(String)
 }
 
 class CreateAIVideoViewModel: ObservableObject {
@@ -111,8 +113,10 @@ class CreateAIVideoViewModel: ObservableObject {
       switch result {
       case .success(let response):
         state = .success
+        event = .generateVideoSuccess(response)
       case .failure(let error):
         state = .failure(error)
+        event = .generateVideoFailure(error.localizedDescription)
       }
     }
   }
