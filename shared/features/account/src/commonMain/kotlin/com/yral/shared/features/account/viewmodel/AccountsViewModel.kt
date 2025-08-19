@@ -166,7 +166,7 @@ class AccountsViewModel(
     companion object {
         const val LOGOUT_URI = "yral://logout"
         const val DELETE_ACCOUNT_URI = "yral://deleteAccount"
-        const val TALK_TO_TEAM_URL = "https://chat.whatsapp.com/C8FN7ISnvJP1DPcbgZ2vF9?mode=ac_t"
+        const val TALK_TO_TEAM_URL = "https://chat.whatsapp.com/EeRnZQJNEOlEykLzbHS6zV?mode=ems_copy_c"
         const val TERMS_OF_SERVICE_URL = "https://yral.com/terms-android"
         const val PRIVACY_POLICY_URL = "https://yral.com/privacy-policy"
         const val TELEGRAM_LINK = "https://t.me/+c-LTX0Cp-ENmMzI1"
