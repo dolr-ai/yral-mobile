@@ -14,6 +14,7 @@ use k256::elliptic_curve::sec1::ToEncodedPoint;
 use k256::elliptic_curve::JwkEcKey;
 use k256::Secp256k1;
 use serde_bytes::ByteBuf;
+use yral_canisters_client::ic::RATE_LIMITS_ID;
 use std::time::UNIX_EPOCH;
 use tokio::time::Duration;
 use yral_canisters_common::Canisters;
@@ -21,6 +22,9 @@ use yral_types::delegated_identity::DelegatedIdentityWire;
 use yral_canisters_common::utils::profile::propic_from_principal as inner_propic_from_principal;
 use yral_metadata_client::MetadataClient;
 use yral_metadata_client::DeviceRegistrationToken;
+use yral_canisters_client::rate_limits;
+use yral_canisters_client::rate_limits::RateLimitStatus;
+use yral_canisters_client::rate_limits::RateLimits;
 
 pub type Secp256k1Error = k256::elliptic_curve::Error;
 
@@ -67,7 +71,7 @@ pub fn delegated_identity_from_bytes(
         Box::new(to_identity),
         wire.delegation_chain,
     );
-    Ok(delegated_identity)
+    delegated_identity.map_err(|e| e.to_string())
 }
 
 pub fn delegate_identity_with_max_age_public(
@@ -257,5 +261,38 @@ pub async fn register_device(identity: DelegatedIdentity, token: String) -> std:
         .unregister_device(&identity, registration_token)
         .await
         .map(|_| ())    
+        .map_err(|e| e.to_string())
+}
+
+pub async fn get_rate_limit_status_core(
+    principal: Principal,
+    property: String,
+    is_registered: bool,
+    identity: Arc<dyn Identity + Send + Sync>,
+) -> Result<Option<RateLimitStatus>, AgentError> {
+    let agent = Agent::builder()
+        .with_url("https://ic0.app")
+        .with_identity(identity)
+        .build()?;                // AgentError
+
+    // For local replica, uncomment:
+    // agent.fetch_root_key().await?;
+
+    let canister = RateLimits(RATE_LIMITS_ID, &agent);
+
+    canister
+        .get_rate_limit_status(principal, property, is_registered)
+        .await                    // AgentError
+}
+
+/// Optional wrapper: only use where String errors are required.
+pub async fn get_rate_limit_status(
+    principal: Principal,
+    property: String,
+    is_registered: bool,
+    identity: Arc<dyn Identity + Send + Sync>,
+) -> Result<Option<RateLimitStatus>, String> {
+    get_rate_limit_status_core(principal, property, is_registered, identity)
+        .await
         .map_err(|e| e.to_string())
 }
