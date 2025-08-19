@@ -230,7 +230,7 @@ class AiVideoGenViewModel internal constructor(
 
                                 is VideoGenRequestStatus.Failed -> {
                                     _state.update {
-                                        it.copy(bottomSheetType = BottomSheetType.Error(status.v1))
+                                        it.copy(bottomSheetType = BottomSheetType.Error(status.v1, true))
                                     }
                                 }
                             }
