@@ -268,31 +268,15 @@ pub async fn get_rate_limit_status_core(
     principal: Principal,
     property: String,
     is_registered: bool,
-    identity: Arc<dyn Identity + Send + Sync>,
-) -> Result<Option<RateLimitStatus>, AgentError> {
+    identity: DelegatedIdentity,
+) -> std::result::Result<Option<RateLimitStatus>, AgentError> {
     let agent = Agent::builder()
-        .with_url("https://ic0.app")
-        .with_identity(identity)
-        .build()?;                // AgentError
-
-    // For local replica, uncomment:
-    // agent.fetch_root_key().await?;
+    .with_url("https://ic0.app/")
+    .with_identity(identity)
+    .build()?; // propagate build error
 
     let canister = RateLimits(RATE_LIMITS_ID, &agent);
-
     canister
         .get_rate_limit_status(principal, property, is_registered)
-        .await                    // AgentError
-}
-
-/// Optional wrapper: only use where String errors are required.
-pub async fn get_rate_limit_status(
-    principal: Principal,
-    property: String,
-    is_registered: bool,
-    identity: Arc<dyn Identity + Send + Sync>,
-) -> Result<Option<RateLimitStatus>, String> {
-    get_rate_limit_status_core(principal, property, is_registered, identity)
         .await
-        .map_err(|e| e.to_string())
 }
