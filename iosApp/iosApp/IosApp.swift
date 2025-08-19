@@ -172,6 +172,7 @@ struct IosApp: App {
     WindowGroup {
       contentView()
         .environmentObject(deepLinkRouter)
+        .environment(\.appDIContainer, appDIContainer)
     }
   }
 

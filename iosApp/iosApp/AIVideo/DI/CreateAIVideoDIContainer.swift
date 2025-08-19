@@ -9,6 +9,7 @@
 final class CreateAIVideoDIContainer {
   struct Dependencies {
     let httpService: HTTPService
+    let authClient: AuthClient
     let crashReporter: CrashReporter
   }
 
@@ -22,11 +23,24 @@ final class CreateAIVideoDIContainer {
     AIVideoRepository(httpService: dependencies.httpService)
   }
 
+  func makeAccountRepository() -> AccountRepository {
+    AccountRepository(
+      httpService: dependencies.httpService,
+      authClient: dependencies.authClient
+    )
+  }
+
   func makeAIVideoViewModel() -> CreateAIVideoViewModel {
     let aiVideoRepository = makeAIVideoRepository()
+    let accountRepository = makeAccountRepository()
+
     return CreateAIVideoViewModel(
       aiVideoProviderUseCase: AIVideoProviderUseCase(
         aiVideoRepository: aiVideoRepository,
+        crashReporter: dependencies.crashReporter
+      ),
+      socialSigninUseCase: SocialSignInUseCase(
+        accountRepository: accountRepository,
         crashReporter: dependencies.crashReporter
       )
     )
