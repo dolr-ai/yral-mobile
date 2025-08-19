@@ -9,6 +9,8 @@
 import SwiftUI
 
 struct UploadOptionsScreenView: View {
+  @Environment(\.appDIContainer) private var appDIContainer
+
   @State private var navigateToAIVideoScreen = false
   @State private var navigateToUploadVideoScreen = false
 
@@ -24,7 +26,7 @@ struct UploadOptionsScreenView: View {
           navigateToAIVideoScreen = true
         }
         .background(
-          NavigationLink("", destination: makeCreateAIVideoDIContainer().makeCreateAIVideoSreenView {
+          NavigationLink("", destination: makeCreateAIVideoDIContainer()?.makeCreateAIVideoSreenView {
             navigateToAIVideoScreen = false
           }, isActive: $navigateToAIVideoScreen)
             .hidden()
@@ -34,10 +36,10 @@ struct UploadOptionsScreenView: View {
           navigateToUploadVideoScreen = true
         }
         .background(
-          NavigationLink("", destination: makeCreateAIVideoDIContainer().makeCreateAIVideoSreenView {
-            navigateToUploadVideoScreen = false
-          }, isActive: $navigateToUploadVideoScreen)
-            .hidden()
+//          NavigationLink("", destination: makeCreateAIVideoDIContainer().makeCreateAIVideoSreenView {
+//            navigateToUploadVideoScreen = false
+//          }, isActive: $navigateToUploadVideoScreen)
+//            .hidden()
         )
 
         Spacer(minLength: .zero)
@@ -50,11 +52,18 @@ struct UploadOptionsScreenView: View {
 }
 
 extension UploadOptionsScreenView {
-  private func makeCreateAIVideoDIContainer() -> CreateAIVideoDIContainer {
+  private func makeCreateAIVideoDIContainer() -> CreateAIVideoDIContainer? {
+    guard let authClient = appDIContainer?.authClient else {
+      return nil
+    }
+
+    let crashReporter = CompositeCrashReporter(reporters: [FirebaseCrashlyticsReporter()])
+
     return CreateAIVideoDIContainer(
       dependencies: CreateAIVideoDIContainer.Dependencies(
         httpService: HTTPService(baseURLString: AppConfiguration().offchainBaseURLString),
-        crashReporter: CompositeCrashReporter(reporters: [FirebaseCrashlyticsReporter()])
+        authClient: authClient,
+        crashReporter: crashReporter
       )
     )
   }

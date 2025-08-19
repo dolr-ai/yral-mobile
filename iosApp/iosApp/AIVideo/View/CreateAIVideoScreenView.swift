@@ -19,7 +19,10 @@ struct CreateAIVideoScreenView: View {
   @State private var showLoader = true
   @State private var promptText = ""
   @State private var creditsUsed = false
-  @State private var showModelBottomSheet = false
+  @State private var showProviderBottomSheet = false
+  @State private var showSignupSheet = false
+  @State private var showSignupFailureSheet = false
+  @State private var loadingProvider: SocialProvider?
   @State private var selectedProvider: AIVideoProviderResponse?
 
   var body: some View {
@@ -76,16 +79,33 @@ struct CreateAIVideoScreenView: View {
           .frame(width: Constants.loaderSize, height: Constants.loaderSize)
       }
     })
-    .fullScreenCover(isPresented: $showModelBottomSheet) {
+    .fullScreenCover(isPresented: $showProviderBottomSheet) {
       if let providers = viewModel.providers {
         ProviderOptionsBottomSheetView(
           providers: providers) { newSelectedProvider in
             viewModel.updateSelectedProvider(newSelectedProvider)
           } onDismiss: {
-            showModelBottomSheet = false
+            showProviderBottomSheet = false
           }
           .background(ClearBackgroundView())
       }
+    }
+    .fullScreenCover(isPresented: $showSignupSheet) {
+      ZStack(alignment: .center) {
+        SignupSheet(
+          onComplete: { showSignupSheet = false },
+          loadingProvider: $loadingProvider,
+          delegate: self
+        )
+        .background( ClearBackgroundView() )
+      }
+    }
+    .fullScreenCover(isPresented: $showSignupFailureSheet) {
+      SignupFailureSheet(onComplete: {
+        showSignupSheet = false
+        showSignupFailureSheet = false
+      })
+      .background( ClearBackgroundView() )
     }
     .onReceive(viewModel.$state, perform: { state in
       switch state {
@@ -102,8 +122,19 @@ struct CreateAIVideoScreenView: View {
       switch event {
       case .updateSelectedProvider(let provider):
         selectedProvider = provider
+      case .socialSignInSuccess:
+        loadingProvider = nil
+        showSignupSheet = false
+      case .socialSignInFailure:
+        loadingProvider = nil
+        showSignupSheet = false
+        showSignupFailureSheet = true
       default:
         break
+      }
+
+      DispatchQueue.main.async {
+        viewModel.event = nil
       }
     })
     .onAppear {
@@ -155,12 +186,28 @@ extension CreateAIVideoScreenView {
           .stroke(Constants.modelHstackBorderColor, lineWidth: .one)
       )
       .onTapGesture {
-        showModelBottomSheet = true
+        showProviderBottomSheet = true
       }
 
       Text(Constants.creditsUsed)
         .font(Constants.creditsUsedFont)
         .foregroundColor(creditsUsed ? Constants.creditsUsedRedColor : Constants.creditsUsedGreenColor)
+    }
+  }
+}
+
+extension CreateAIVideoScreenView: SignupSheetProtocol {
+  func signupwithGoogle() {
+    loadingProvider = .google
+    Task {
+      await viewModel.socialSignIn(request: .google)
+    }
+  }
+
+  func signupwithApple() {
+    loadingProvider = .apple
+    Task {
+      await viewModel.socialSignIn(request: .apple)
     }
   }
 }
