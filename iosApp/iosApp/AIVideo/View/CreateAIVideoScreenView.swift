@@ -9,11 +9,13 @@
 import SwiftUI
 
 struct CreateAIVideoScreenView: View {
+  @EnvironmentObject var session: SessionManager
   @ObservedObject var viewModel: CreateAIVideoViewModel
 
   let onDismiss: () -> Void
   var isButtonEnabled: Bool {
-    !creditsUsed && !promptText.isEmpty
+    let trimmed = promptText.trimmingCharacters(in: .whitespacesAndNewlines)
+    return !creditsUsed && !trimmed.isEmpty
   }
 
   @State private var showLoader = true
@@ -22,6 +24,7 @@ struct CreateAIVideoScreenView: View {
   @State private var showProviderBottomSheet = false
   @State private var showSignupSheet = false
   @State private var showSignupFailureSheet = false
+  @State private var isUserLoggedIn = false
   @State private var loadingProvider: SocialProvider?
   @State private var selectedProvider: AIVideoProviderResponse?
 
@@ -52,10 +55,14 @@ struct CreateAIVideoScreenView: View {
           .padding(.top, Constants.promptTop)
 
         Button {
-          if let provider = selectedProvider, !promptText.isEmpty {
-            Task {
-              await viewModel.generateVideo(for: promptText, withProvider: provider)
+          if isUserLoggedIn {
+            if let provider = selectedProvider, !promptText.isEmpty {
+              Task {
+                await viewModel.generateVideo(for: promptText, withProvider: provider)
+              }
             }
+          } else {
+            showSignupSheet = true
           }
         } label: {
           Text(Constants.generateButtonTitle)
@@ -111,6 +118,11 @@ struct CreateAIVideoScreenView: View {
       })
       .background( ClearBackgroundView() )
     }
+    .onReceive(session.phasePublisher, perform: { phase in
+      if case .permanent = phase {
+        isUserLoggedIn = true
+      }
+    })
     .onReceive(viewModel.$state, perform: { state in
       switch state {
       case .loading:
