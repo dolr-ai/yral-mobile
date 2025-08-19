@@ -2,7 +2,6 @@ package com.yral.shared.firebaseAuth.di
 
 import com.yral.shared.firebaseAuth.repository.FBAuthRepository
 import com.yral.shared.firebaseAuth.repository.FBAuthRepositoryApi
-import com.yral.shared.firebaseAuth.usecase.GetCurrentUserIdUseCase
 import com.yral.shared.firebaseAuth.usecase.GetIdTokenUseCase
 import com.yral.shared.firebaseAuth.usecase.GetUserAuthDataUseCase
 import com.yral.shared.firebaseAuth.usecase.ObserveAuthStateUseCase
@@ -24,7 +23,6 @@ val firebaseAuthModule =
         factoryOf(::SignInWithTokenUseCase)
         factoryOf(::SignOutUseCase)
         factoryOf(::ObserveAuthStateUseCase)
-        factoryOf(::GetCurrentUserIdUseCase)
         factoryOf(::GetIdTokenUseCase)
         factoryOf(::GetUserAuthDataUseCase)
     }

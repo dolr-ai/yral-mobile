@@ -43,6 +43,8 @@
 		100F63D42DCB4630000BC17E /* SmileyGameRuleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100F63D22DCB4630000BC17E /* SmileyGameRuleView.swift */; };
 		100F64EE2DCC96C9000BC17E /* YralCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100F64ED2DCC96C5000BC17E /* YralCache.swift */; };
 		100F64EF2DCC96C9000BC17E /* YralCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100F64ED2DCC96C5000BC17E /* YralCache.swift */; };
+		102300392E44D48F00E6936E /* BranchSDK in Frameworks */ = {isa = PBXBuildFile; productRef = 102300382E44D48F00E6936E /* BranchSDK */; };
+		1023003B2E44D4E200E6936E /* BranchSDK in Frameworks */ = {isa = PBXBuildFile; productRef = 1023003A2E44D4E200E6936E /* BranchSDK */; };
 		1023FFEE2E41DD3E00E6936E /* smiley_game_puke.json in Resources */ = {isa = PBXBuildFile; fileRef = 1023FFED2E41DD3E00E6936E /* smiley_game_puke.json */; };
 		1023FFEF2E41DD3E00E6936E /* smiley_game_puke.json in Resources */ = {isa = PBXBuildFile; fileRef = 1023FFED2E41DD3E00E6936E /* smiley_game_puke.json */; };
 		103BBB042DACE23A00C0BFD0 /* HLSDownloadManaging.swift in Sources */ = {isa = PBXBuildFile; fileRef = 103BBB032DACE21D00C0BFD0 /* HLSDownloadManaging.swift */; };
@@ -425,6 +427,12 @@
 		ACAA4D732DDCF866001092A6 /* FeedsPlayer+Events.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAA4D712DDCF85E001092A6 /* FeedsPlayer+Events.swift */; };
 		ACAA4DBB2DDE08D6001092A6 /* HLSDownloadManager+Mockers.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAA4DBA2DDE08CB001092A6 /* HLSDownloadManager+Mockers.swift */; };
 		ACAA4DBC2DDE08D6001092A6 /* HLSDownloadManager+Mockers.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAA4DBA2DDE08CB001092A6 /* HLSDownloadManager+Mockers.swift */; };
+		ACAA536B2E4A538E008D3025 /* OnboardingInfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAA536A2E4A537D008D3025 /* OnboardingInfoView.swift */; };
+		ACAA536C2E4A538E008D3025 /* OnboardingInfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAA536A2E4A537D008D3025 /* OnboardingInfoView.swift */; };
+		ACAA53912E4CB156008D3025 /* PlayToScrollInfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAA53902E4CB14D008D3025 /* PlayToScrollInfoView.swift */; };
+		ACAA53922E4CB156008D3025 /* PlayToScrollInfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAA53902E4CB14D008D3025 /* PlayToScrollInfoView.swift */; };
+		ACAA53942E4CB292008D3025 /* FeedsCell+PlayToScroll.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAA53932E4CB28C008D3025 /* FeedsCell+PlayToScroll.swift */; };
+		ACAA53952E4CB292008D3025 /* FeedsCell+PlayToScroll.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAA53932E4CB28C008D3025 /* FeedsCell+PlayToScroll.swift */; };
 		ACB09FC92D92CB6400EE3239 /* ProfileRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB09FC82D92CB6000EE3239 /* ProfileRouter.swift */; };
 		ACB09FCA2D92CB6400EE3239 /* ProfileRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB09FC82D92CB6000EE3239 /* ProfileRouter.swift */; };
 		ACB09FD52D92D66400EE3239 /* FeedsViewModelProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB09FD42D92D65E00EE3239 /* FeedsViewModelProtocol.swift */; };
@@ -511,6 +519,8 @@
 		ACC0F3982D2ED5D700FA5BD0 /* LottieView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC0F3962D2ED5D700FA5BD0 /* LottieView.swift */; };
 		ACC0F39F2D2ED68500FA5BD0 /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = ACC0F39E2D2ED68500FA5BD0 /* Lottie */; };
 		ACC0F3A32D2ED69200FA5BD0 /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = ACC0F3A22D2ED69200FA5BD0 /* Lottie */; };
+		ACC198CD2E460E2B0007DD8D /* FeedsCell+Onboarding.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC198CC2E460E250007DD8D /* FeedsCell+Onboarding.swift */; };
+		ACC198CE2E460E2B0007DD8D /* FeedsCell+Onboarding.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC198CC2E460E250007DD8D /* FeedsCell+Onboarding.swift */; };
 		ACC1C3942D9AF854005A7539 /* LottieLoaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC1C3932D9AF84B005A7539 /* LottieLoaderView.swift */; };
 		ACC1C3952D9AF854005A7539 /* LottieLoaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC1C3932D9AF84B005A7539 /* LottieLoaderView.swift */; };
 		ACC1C3982D9AF8BD005A7539 /* LottieLoaderContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC1C3972D9AF8B3005A7539 /* LottieLoaderContainerView.swift */; };
@@ -634,6 +644,7 @@
 		10020AAF2DF7FE2400DF269E /* SatsCoinError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SatsCoinError.swift; sourceTree = "<group>"; };
 		100F63D22DCB4630000BC17E /* SmileyGameRuleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameRuleView.swift; sourceTree = "<group>"; };
 		100F64ED2DCC96C5000BC17E /* YralCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralCache.swift; sourceTree = "<group>"; };
+		102300362E44D00200E6936E /* Yral-Staging.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "Yral-Staging.entitlements"; sourceTree = "<group>"; };
 		1023FFED2E41DD3E00E6936E /* smiley_game_puke.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = smiley_game_puke.json; sourceTree = "<group>"; };
 		103BBB032DACE21D00C0BFD0 /* HLSDownloadManaging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HLSDownloadManaging.swift; sourceTree = "<group>"; };
 		105034152DD4955C00571B4E /* smiley_game_fire.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = smiley_game_fire.json; sourceTree = "<group>"; };
@@ -832,6 +843,9 @@
 		ACAA4D6E2DDCD522001092A6 /* NetworkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; };
 		ACAA4D712DDCF85E001092A6 /* FeedsPlayer+Events.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FeedsPlayer+Events.swift"; sourceTree = "<group>"; };
 		ACAA4DBA2DDE08CB001092A6 /* HLSDownloadManager+Mockers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HLSDownloadManager+Mockers.swift"; sourceTree = "<group>"; };
+		ACAA536A2E4A537D008D3025 /* OnboardingInfoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingInfoView.swift; sourceTree = "<group>"; };
+		ACAA53902E4CB14D008D3025 /* PlayToScrollInfoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayToScrollInfoView.swift; sourceTree = "<group>"; };
+		ACAA53932E4CB28C008D3025 /* FeedsCell+PlayToScroll.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FeedsCell+PlayToScroll.swift"; sourceTree = "<group>"; };
 		ACB09FC82D92CB6000EE3239 /* ProfileRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileRouter.swift; sourceTree = "<group>"; };
 		ACB09FD42D92D65E00EE3239 /* FeedsViewModelProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedsViewModelProtocol.swift; sourceTree = "<group>"; };
 		ACB09FD92D92D6E400EE3239 /* MoreFeedsRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoreFeedsRequest.swift; sourceTree = "<group>"; };
@@ -874,6 +888,7 @@
 		ACC0D4632D9179BB006DCF5C /* DeleteVideoUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeleteVideoUseCase.swift; sourceTree = "<group>"; };
 		ACC0F3922D2ED5B700FA5BD0 /* SplashScreenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashScreenView.swift; sourceTree = "<group>"; };
 		ACC0F3962D2ED5D700FA5BD0 /* LottieView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LottieView.swift; sourceTree = "<group>"; };
+		ACC198CC2E460E250007DD8D /* FeedsCell+Onboarding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FeedsCell+Onboarding.swift"; sourceTree = "<group>"; };
 		ACC1C3932D9AF84B005A7539 /* LottieLoaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LottieLoaderView.swift; sourceTree = "<group>"; };
 		ACC1C3972D9AF8B3005A7539 /* LottieLoaderContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LottieLoaderContainerView.swift; sourceTree = "<group>"; };
 		ACC1C39D2D9B046F005A7539 /* LottieRefreshSingletonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LottieRefreshSingletonView.swift; sourceTree = "<group>"; };
@@ -929,6 +944,7 @@
 				AC04D3052E05A1E50055C4AA /* P256K in Frameworks */,
 				AC6CBA802CE46CA6002454F8 /* libyral_mobile_swift_binding.a in Frameworks */,
 				AC6E311C2D22F050001EBE6C /* SDWebImageMapKit in Frameworks */,
+				102300392E44D48F00E6936E /* BranchSDK in Frameworks */,
 				AC6BECAC2D09D52B002E2021 /* GRPC in Frameworks */,
 				10DF733E2E38DFFC009AD12B /* MixpanelSessionReplay in Frameworks */,
 				ACC0F3A32D2ED69200FA5BD0 /* Lottie in Frameworks */,
@@ -956,6 +972,7 @@
 				AC1233772DF5E16000DAFCF4 /* P256K in Frameworks */,
 				ACC0F39F2D2ED68500FA5BD0 /* Lottie in Frameworks */,
 				AC6BECB42D09D541002E2021 /* GRPC in Frameworks */,
+				1023003B2E44D4E200E6936E /* BranchSDK in Frameworks */,
 				ACD941D92CFF63D90038FCB6 /* libyral_mobile_swift_binding.a in Frameworks */,
 				10DF73402E38E00D009AD12B /* MixpanelSessionReplay in Frameworks */,
 				AC6BECB62D09D541002E2021 /* GRPCReflectionService in Frameworks */,
@@ -1263,6 +1280,7 @@
 		7555FF72242A565900829871 = {
 			isa = PBXGroup;
 			children = (
+				102300362E44D00200E6936E /* Yral-Staging.entitlements */,
 				AC42D4682E0D8EF7009C2D92 /* YralRelease.entitlements */,
 				AC04D3002E059E3A0055C4AA /* Yral.entitlements */,
 				ACD941BD2CFF57BC0038FCB6 /* Staging */,
@@ -1549,6 +1567,8 @@
 		AC32E4222D2712E9001DDA43 /* Helper */ = {
 			isa = PBXGroup;
 			children = (
+				ACAA53902E4CB14D008D3025 /* PlayToScrollInfoView.swift */,
+				ACAA536A2E4A537D008D3025 /* OnboardingInfoView.swift */,
 				AC4DECA82D3E06A6008EC8F5 /* FooterLoaderView.swift */,
 				AC32E4232D2712EE001DDA43 /* ProfileInfoView.swift */,
 			);
@@ -2267,6 +2287,8 @@
 			children = (
 				ACB46A7F2D106031002E200C /* FeedsCell.swift */,
 				AC462F492D95BB61004957B3 /* FeedsCell+Captions.swift */,
+				ACC198CC2E460E250007DD8D /* FeedsCell+Onboarding.swift */,
+				ACAA53932E4CB28C008D3025 /* FeedsCell+PlayToScroll.swift */,
 				AC20A13F2E3B7723003306C1 /* FeedsCell+Wallet.swift */,
 			);
 			path = Cells;
@@ -2713,6 +2735,7 @@
 				ACC0F39D2D2ED68500FA5BD0 /* XCRemoteSwiftPackageReference "lottie-ios" */,
 				AC1233712DF5E0AC00DAFCF4 /* XCRemoteSwiftPackageReference "swift-secp256k1" */,
 				10DF733C2E38DFFC009AD12B /* XCRemoteSwiftPackageReference "mixpanel-ios-session-replay-package" */,
+				102300372E44D48F00E6936E /* XCRemoteSwiftPackageReference "ios-branch-sdk-spm" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 7555FF7C242A565900829871 /* Products */;
@@ -3052,6 +3075,7 @@
 				10512A442DA666AD00114BAA /* YralPlayer.swift in Sources */,
 				105036F62DDB289D00571B4E /* ExchangePrincipalResponse.swift in Sources */,
 				ACB46A732D105AF4002E200C /* CollectionView+Extensions.swift in Sources */,
+				ACAA536B2E4A538E008D3025 /* OnboardingInfoView.swift in Sources */,
 				10CEBB892E3104220022803A /* Presets.swift in Sources */,
 				107C60C32DBF4CE2006FC467 /* FirebaseService.swift in Sources */,
 				10020AB02DF7FE2A00DF269E /* SatsCoinError.swift in Sources */,
@@ -3060,6 +3084,7 @@
 				100208902DE4840000DF269E /* FirebaseLottieManager.swift in Sources */,
 				107C60CB2DBF7B19006FC467 /* SmileyGameRuleViewModel.swift in Sources */,
 				AC49605B2D2C4BF7008D59D9 /* FetchMoreFeedsUseCase.swift in Sources */,
+				ACC198CD2E460E2B0007DD8D /* FeedsCell+Onboarding.swift in Sources */,
 				ACB46A7A2D105B35002E200C /* NibLoadableVIew.swift in Sources */,
 				ACB09FE82D93289000EE3239 /* MyVideosFeedInfo.swift in Sources */,
 				ACD2E8252D6746E900E750FE /* UploadingProgressView.swift in Sources */,
@@ -3152,6 +3177,7 @@
 				AC4DECA92D3E06AC008EC8F5 /* FooterLoaderView.swift in Sources */,
 				AC51C0522DC4E0D200D5BA34 /* RefreshVideosRequest.swift in Sources */,
 				100F64EF2DCC96C9000BC17E /* YralCache.swift in Sources */,
+				ACAA53942E4CB292008D3025 /* FeedsCell+PlayToScroll.swift in Sources */,
 				ACC1C3982D9AF8BD005A7539 /* LottieLoaderContainerView.swift in Sources */,
 				AC4E99692D884BDB000B47B3 /* ProfileVideoGridsView.swift in Sources */,
 				ACC0D4522D8DDB97006DCF5C /* ProfileRepositoryProtocol.swift in Sources */,
@@ -3218,6 +3244,7 @@
 				AC7F7ECE2D78707200215162 /* UploadVideoRequest.swift in Sources */,
 				AC6BECC22D09F91C002E2021 /* HTTPService.swift in Sources */,
 				AC2C30CD2D96C49800DA9F81 /* ReportUseCase.swift in Sources */,
+				ACAA53922E4CB156008D3025 /* PlayToScrollInfoView.swift in Sources */,
 				107C60992DB8BCB1006FC467 /* SmileyGameView.swift in Sources */,
 				AC1F93932DC1494800F322E1 /* TokenRequestDTO.swift in Sources */,
 				ACC0F3942D2ED5B700FA5BD0 /* SplashScreenView.swift in Sources */,
@@ -3306,6 +3333,7 @@
 				10512A432DA666AD00114BAA /* YralPlayer.swift in Sources */,
 				105036F82DDB289D00571B4E /* ExchangePrincipalResponse.swift in Sources */,
 				ACB46A742D105AF4002E200C /* CollectionView+Extensions.swift in Sources */,
+				ACAA536C2E4A538E008D3025 /* OnboardingInfoView.swift in Sources */,
 				10CEBB882E3104220022803A /* Presets.swift in Sources */,
 				107C60C22DBF4CE2006FC467 /* FirebaseService.swift in Sources */,
 				10020AB12DF7FE2A00DF269E /* SatsCoinError.swift in Sources */,
@@ -3314,6 +3342,7 @@
 				1002088F2DE4840000DF269E /* FirebaseLottieManager.swift in Sources */,
 				107C60CC2DBF7B19006FC467 /* SmileyGameRuleViewModel.swift in Sources */,
 				AC49605C2D2C4BF7008D59D9 /* FetchMoreFeedsUseCase.swift in Sources */,
+				ACC198CE2E460E2B0007DD8D /* FeedsCell+Onboarding.swift in Sources */,
 				ACB46A792D105B35002E200C /* NibLoadableVIew.swift in Sources */,
 				ACB09FE72D93289000EE3239 /* MyVideosFeedInfo.swift in Sources */,
 				ACD2E8242D6746E900E750FE /* UploadingProgressView.swift in Sources */,
@@ -3406,6 +3435,7 @@
 				AC4DECAA2D3E06AC008EC8F5 /* FooterLoaderView.swift in Sources */,
 				100F64EE2DCC96C9000BC17E /* YralCache.swift in Sources */,
 				AC51C0532DC4E0D200D5BA34 /* RefreshVideosRequest.swift in Sources */,
+				ACAA53952E4CB292008D3025 /* FeedsCell+PlayToScroll.swift in Sources */,
 				ACC1C3992D9AF8BD005A7539 /* LottieLoaderContainerView.swift in Sources */,
 				AC4E99682D884BDB000B47B3 /* ProfileVideoGridsView.swift in Sources */,
 				ACC0D4532D8DDB97006DCF5C /* ProfileRepositoryProtocol.swift in Sources */,
@@ -3472,6 +3502,7 @@
 				AC7F7ECD2D78707200215162 /* UploadVideoRequest.swift in Sources */,
 				AC6BECC32D09F91C002E2021 /* HTTPService.swift in Sources */,
 				AC2C30CE2D96C49800DA9F81 /* ReportUseCase.swift in Sources */,
+				ACAA53912E4CB156008D3025 /* PlayToScrollInfoView.swift in Sources */,
 				AC1F93922DC1494800F322E1 /* TokenRequestDTO.swift in Sources */,
 				107C60982DB8BCB1006FC467 /* SmileyGameView.swift in Sources */,
 				ACC0F3952D2ED5B700FA5BD0 /* SplashScreenView.swift in Sources */,
@@ -3679,7 +3710,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.yral.iosApp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "Yral-development";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "Yral-Prod";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
@@ -3720,7 +3751,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.yral.iosApp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "Yral distribution";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "Yral-Prod-Distribution";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
@@ -3788,6 +3819,7 @@
 			baseConfigurationReference = C1EFC53F73444FA7E1D4850D /* Pods-Yral-Staging.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = "Yral-Staging.entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CODE_SIGN_STYLE = Manual;
@@ -3812,7 +3844,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.yral.iosApp.staging;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "Yral-Staging-Development";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "Yral-Staging";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
@@ -3827,6 +3859,7 @@
 			baseConfigurationReference = C12441A304DC62C53211645F /* Pods-Yral-Staging.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = "Yral-Staging.entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				CODE_SIGN_STYLE = Manual;
@@ -3851,7 +3884,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.yral.iosApp.staging;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "Yral-Staging distribution";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "Yral-Staging-Distribution";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
@@ -3903,6 +3936,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		102300372E44D48F00E6936E /* XCRemoteSwiftPackageReference "ios-branch-sdk-spm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/BranchMetrics/ios-branch-sdk-spm";
+			requirement = {
+				kind = exactVersion;
+				version = 3.12.1;
+			};
+		};
 		10DF733C2E38DFFC009AD12B /* XCRemoteSwiftPackageReference "mixpanel-ios-session-replay-package" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/mixpanel/mixpanel-ios-session-replay-package";
@@ -3954,6 +3995,16 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		102300382E44D48F00E6936E /* BranchSDK */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 102300372E44D48F00E6936E /* XCRemoteSwiftPackageReference "ios-branch-sdk-spm" */;
+			productName = BranchSDK;
+		};
+		1023003A2E44D4E200E6936E /* BranchSDK */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 102300372E44D48F00E6936E /* XCRemoteSwiftPackageReference "ios-branch-sdk-spm" */;
+			productName = BranchSDK;
+		};
 		10DF733D2E38DFFC009AD12B /* MixpanelSessionReplay */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 10DF733C2E38DFFC009AD12B /* XCRemoteSwiftPackageReference "mixpanel-ios-session-replay-package" */;

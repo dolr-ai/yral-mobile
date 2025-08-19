@@ -15,6 +15,7 @@ enum DefaultsKey: String {
   case authIdentityExpiryDateKey
   case authRefreshTokenExpiryDateKey
   case keychainMigrationDone
+  case onboardingCompleted
 }
 
 final class UserDefaultsManager {

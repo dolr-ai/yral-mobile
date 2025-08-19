@@ -6,6 +6,7 @@ import FBSDKCoreKit
 import FirebaseMessaging
 import Mixpanel
 import MixpanelSessionReplay
+import BranchSDK
 
 class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate, MessagingDelegate {
   func application(
@@ -14,6 +15,14 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
   ) -> Bool {
     if UIApplication.shared.isProtectedDataAvailable {
       migrateKeychain()
+    }
+
+    Branch.getInstance().initSession(launchOptions: launchOptions) { (params, error) in
+      if let params {
+        print("\(Constants.branchParameters) \(params)")
+      } else if let error {
+        print("\(Constants.branchError) \(error.localizedDescription)")
+      }
     }
 
     NotificationCenter.default.addObserver(
@@ -43,11 +52,21 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
   }
 
   func application(
+    _ application: UIApplication,
+    continue userActivity: NSUserActivity,
+    restorationHandler: @escaping ([any UIUserActivityRestoring]?) -> Void
+  ) -> Bool {
+    Branch.getInstance().continue(userActivity)
+    return true
+  }
+
+  func application(
     _ app: UIApplication,
     open url: URL,
     options: [UIApplication.OpenURLOptionsKey: Any] = [:]
   ) -> Bool {
-    return ApplicationDelegate.shared.application(app, open: url, options: options)
+    Branch.getInstance().application(app, open: url, options: options)
+    return true
   }
 
   func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
@@ -163,7 +182,7 @@ struct IosApp: App {
        let uploadDIContainer = uploadDIContainer,
        let profileDIContainer = profileDIContainer {
       HomeTabController(
-        feedsViewController: feedsDIContainer.makeFeedsViewController(),
+        feedsViewController: feedsDIContainer.makeFeedsViewController(playToScroll: false),
         uploadView: uploadDIContainer.makeUploadView(),
         profileView: profileDIContainer.makeProfileView(),
         accountView: accountDIContainer.makeAccountView(),
@@ -214,5 +233,7 @@ extension AppDelegate {
     static let payloadString = "payload"
     static let typeString = "type"
     static let videoUploadSuccessType = "VideoUploadSuccessful"
+    static let branchParameters = "Branch parameters:"
+    static let branchError = "Branch error:"
   }
 }

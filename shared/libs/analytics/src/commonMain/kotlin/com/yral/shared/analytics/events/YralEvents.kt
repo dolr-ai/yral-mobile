@@ -702,6 +702,30 @@ data class UploadVideoClickedEventData(
     )
 }
 
+@Serializable
+data class PushNotificationsPopupEventData(
+    @SerialName("event") override val event: String = FeatureEvents.ENABLE_PUSH_NOTIFICATION_POPUP_SHOWN.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.FEED.getFeatureName(),
+) : BaseEventData(),
+    EventData {
+    constructor() : this(
+        FeatureEvents.ENABLE_PUSH_NOTIFICATION_POPUP_SHOWN.getEventName(),
+        Features.FEED.getFeatureName(),
+    )
+}
+
+@Serializable
+data class PushNotificationsEnabledEventData(
+    @SerialName("event") override val event: String = FeatureEvents.NOTIFICATIONS_ENABLED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.FEED.getFeatureName(),
+) : BaseEventData(),
+    EventData {
+    constructor() : this(
+        FeatureEvents.NOTIFICATIONS_ENABLED.getEventName(),
+        Features.FEED.getFeatureName(),
+    )
+}
+
 data class AirdropClaimedEventData(
     @SerialName("event") override val event: String = FeatureEvents.AIRDROP_CLAIMED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.FEED.getFeatureName(),

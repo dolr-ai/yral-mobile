@@ -5,9 +5,10 @@ import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
+import com.yral.featureflag.FeatureFlagManager
+import com.yral.featureflag.FeedFeatureFlags
 import com.yral.shared.analytics.events.GameConcludedCtaType
 import com.yral.shared.analytics.events.GameType
-import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.core.session.DELAY_FOR_SESSION_PROPERTIES
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.features.game.analytics.GameTelemetry
@@ -25,8 +26,6 @@ import com.yral.shared.features.game.viewmodel.GameViewModel.Companion.SHOW_HOW_
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import com.yral.shared.rust.domain.models.FeedDetails
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
@@ -38,7 +37,6 @@ import kotlinx.coroutines.launch
 
 @Suppress("TooManyFunctions")
 class GameViewModel(
-    appDispatchers: AppDispatchers,
     private val preferences: Preferences,
     private val sessionManager: SessionManager,
     private val gameIconsUseCase: GetGameIconsUseCase,
@@ -46,20 +44,21 @@ class GameViewModel(
     private val castVoteUseCase: CastVoteUseCase,
     private val gameTelemetry: GameTelemetry,
     private val autoRechargeBalanceUseCase: AutoRechargeBalanceUseCase,
+    flagManager: FeatureFlagManager,
 ) : ViewModel() {
-    private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.io)
     private val _state =
         MutableStateFlow(
             GameState(
                 gameIcons = emptyList(),
                 gameRules = emptyList(),
                 coinBalance = 0,
+                isStopAndVote = flagManager.isEnabled(FeedFeatureFlags.SmileyGame.StopAndVoteNudge),
             ),
         )
     val state: StateFlow<GameState> = _state.asStateFlow()
 
     init {
-        coroutineScope.launch {
+        viewModelScope.launch {
             restoreDataFromPrefs()
             listOf(
                 async { getGameRules() },
@@ -85,7 +84,7 @@ class GameViewModel(
             it.copy(
                 isResultSheetShown = resultShown,
                 isHowToPlayShown = if (howToPlayShown) it.isHowToPlayShown.map { true } else it.isHowToPlayShown,
-                isSmileyGameNudgeShown = smileyGameNudgeShown,
+                isSmileyGameIntroNudgeShown = smileyGameNudgeShown,
             )
         }
     }
@@ -122,7 +121,7 @@ class GameViewModel(
     ) {
         val gameState = _state.value
         if (gameState.isLoading) return
-        coroutineScope.launch {
+        viewModelScope.launch {
             if (gameState.coinBalance >= gameState.lossPenalty) {
                 castVote(icon, feedDetails, isTutorialVote)
             } else {
@@ -147,11 +146,13 @@ class GameViewModel(
                         )
                     }
                     sessionManager.updateCoinBalance(result.coins)
+                    gameTelemetry.onAirdropClaimSuccess(result.coins.toInt())
                 }.onFailure {
                     setLoading(false)
                     _state.update {
                         it.copy(refreshBalanceState = RefreshBalanceState.FAILURE)
                     }
+                    gameTelemetry.onAirdropClaimFailure()
                 }
         }
     }
@@ -222,17 +223,14 @@ class GameViewModel(
     fun markCoinDeltaAnimationShown(videoId: String) {
         val gameResultPair = _state.value.gameResult[videoId] ?: return
         if (gameResultPair.second.coinDelta == 0 && gameResultPair.second.errorMessage.isEmpty()) return
-
-        coroutineScope.launch {
-            _state.update { currentState ->
-                val updatedGameResult =
-                    currentState.gameResult.toMutableMap().apply {
-                        this[videoId] = this[videoId]?.let {
-                            it.copy(second = it.second.copy(hasShownAnimation = true))
-                        } ?: gameResultPair
-                    }
-                currentState.copy(gameResult = updatedGameResult)
-            }
+        _state.update { currentState ->
+            val updatedGameResult =
+                currentState.gameResult.toMutableMap().apply {
+                    this[videoId] = this[videoId]?.let {
+                        it.copy(second = it.second.copy(hasShownAnimation = true))
+                    } ?: gameResultPair
+                }
+            currentState.copy(gameResult = updatedGameResult)
         }
     }
 
@@ -243,7 +241,7 @@ class GameViewModel(
         icon: GameIcon,
         isTutorialVote: Boolean,
     ) {
-        coroutineScope.launch {
+        viewModelScope.launch {
             // Get current state once to avoid multiple reads
             val currentState = _state.value
             // Calculate all updates outside state update
@@ -272,6 +270,7 @@ class GameViewModel(
                     showResultSheet = shouldShowResultSheet,
                     isLoading = false,
                     lastBalanceDifference = voteResult.coinDelta,
+                    lastVotedCount = it.lastVotedCount + 1,
                 )
             }
             if (shouldShowResultSheet) {
@@ -294,53 +293,23 @@ class GameViewModel(
     }
 
     fun setAnimateCoinBalance(shouldAnimate: Boolean) {
-        coroutineScope.launch {
-            _state.update { currentState ->
-                currentState.copy(
-                    animateCoinBalance = shouldAnimate,
-                )
-            }
-        }
+        _state.update { it.copy(animateCoinBalance = shouldAnimate) }
     }
 
     private fun setLoading(isLoading: Boolean) {
-        coroutineScope.launch {
-            _state.update { currentState ->
-                currentState.copy(
-                    isLoading = isLoading,
-                )
-            }
-        }
+        _state.update { it.copy(isLoading = isLoading) }
     }
 
     fun toggleResultSheet(isVisible: Boolean) {
-        coroutineScope.launch {
-            _state.update { currentState ->
-                currentState.copy(
-                    showResultSheet = isVisible,
-                )
-            }
-        }
+        _state.update { it.copy(showResultSheet = isVisible) }
     }
 
     fun toggleAboutGame(isVisible: Boolean) {
-        coroutineScope.launch {
-            _state.update { currentState ->
-                currentState.copy(
-                    showAboutGame = isVisible,
-                )
-            }
-        }
+        _state.update { it.copy(showAboutGame = isVisible) }
     }
 
     fun setCurrentVideoId(videoId: String) {
-        coroutineScope.launch {
-            _state.update { currentState ->
-                currentState.copy(
-                    currentVideoId = videoId,
-                )
-            }
-        }
+        _state.update { it.copy(currentVideoId = videoId) }
     }
 
     fun onResultSheetButtonClicked(
@@ -365,10 +334,10 @@ class GameViewModel(
         currentPage: Int,
     ) {
         if (pageNo > SHOW_HOW_TO_PLAY_MAX_PAGE || pageNo != currentPage) {
-            Logger.d("xxxx") { "Skipping 'how to play' update for page $pageNo" }
+            Logger.d("HowToPlay") { "Skipping 'how to play' update for page $pageNo" }
             return
         }
-        Logger.d("xxxx") { "Setting 'how to play' shown for page $pageNo" }
+        Logger.d("HowToPlay") { "Setting 'how to play' shown for page $pageNo" }
         _state.update { state ->
             val updatedList =
                 state.isHowToPlayShown.toMutableList().apply {
@@ -377,38 +346,68 @@ class GameViewModel(
             state.copy(isHowToPlayShown = updatedList)
         }
         if (_state.value.isHowToPlayShown.all { it }) {
-            Logger.d("xxxx") { "All 'how to play' pages shown. Marking as shown in preferences." }
-            coroutineScope.launch {
+            Logger.d("HowToPlay") { "All 'how to play' pages shown. Marking as shown in preferences." }
+            viewModelScope.launch {
                 preferences.putBoolean(PrefKeys.HOW_TO_PLAY_SHOWN.name, true)
             }
         }
     }
 
-    fun setSmileyGameNudgeShown(feedDetails: FeedDetails) {
-        Logger.d("xxxx") { "setSmileyGameNudgeShown ${feedDetails.videoID}" }
-        val currentState = _state.value.isSmileyGameNudgeShown
-        _state.update { it.copy(isSmileyGameNudgeShown = true) }
-        if (!currentState) {
-            coroutineScope.launch {
-                Logger.d("xxxx") { "marking smiley game shown" }
-                preferences.putBoolean(PrefKeys.SMILEY_GAME_NUDGE_SHOWN.name, true)
-                gameTelemetry.onGameTutorialShown(feedDetails)
-            }
+    fun hideRefreshBalanceAnimation() {
+        viewModelScope.launch {
+            delay(REFRESH_BALANCE_ANIM_DISMISS_DELAY_MS)
+            _state.update { it.copy(refreshBalanceState = RefreshBalanceState.HIDDEN) }
         }
     }
 
-    fun hideRefreshBalanceAnimation() {
-        coroutineScope.launch {
-            delay(REFRESH_BALANCE_ANIM_DISMISS_DELAY_MS)
-            _state.update {
-                it.copy(refreshBalanceState = RefreshBalanceState.HIDDEN)
+    fun setSmileyGameNudgeShown(feedDetails: FeedDetails) {
+        when (_state.value.nudgeType) {
+            NudgeType.MANDATORY -> {
+                Logger.d("Nudge") { "setSmileyGameManNudgeShown ${feedDetails.videoID}" }
+                _state.update { it.copy(nudgeType = null) }
+            }
+            NudgeType.INTRO -> {
+                Logger.d("Nudge") { "setSmileyGameIntroNudgeShown ${feedDetails.videoID}" }
+                _state.update { it.copy(nudgeType = null) }
+                if (!_state.value.isSmileyGameIntroNudgeShown) {
+                    _state.update { it.copy(isSmileyGameIntroNudgeShown = true) }
+                    viewModelScope.launch {
+                        Logger.d("Nudge") { "marking smiley game shown" }
+                        preferences.putBoolean(PrefKeys.SMILEY_GAME_NUDGE_SHOWN.name, true)
+                        gameTelemetry.onGameTutorialShown(feedDetails)
+                    }
+                }
+            }
+            null -> Unit
+        }
+    }
+
+    fun showNudge(
+        nudgeIntention: NudgeType,
+        pageNo: Int,
+        feedDetailsSize: Int,
+    ) {
+        val currentState = _state.value
+        if (currentState.isLoading || currentState.nudgeType != null) return
+        when (nudgeIntention) {
+            NudgeType.MANDATORY -> {
+                if (feedDetailsSize != currentState.lastVotedCount && currentState.isStopAndVote) {
+                    Logger.d("Nudge") { "Showing mandatory nudge" }
+                    _state.update { it.copy(nudgeType = NudgeType.MANDATORY) }
+                }
+            }
+            NudgeType.INTRO -> {
+                if (!currentState.isSmileyGameIntroNudgeShown && pageNo >= NUDGE_PAGE && !currentState.isStopAndVote) {
+                    Logger.d("Nudge") { "Showing intro nudge" }
+                    _state.update { it.copy(nudgeType = NudgeType.INTRO) }
+                }
             }
         }
     }
 
     companion object {
         const val SHOW_HOW_TO_PLAY_MAX_PAGE = 3
-        const val NUDGE_PAGE = 3
+        private const val NUDGE_PAGE = 3
         private const val REFRESH_BALANCE_ANIM_DISMISS_DELAY_MS = 2000L
     }
 }
@@ -428,9 +427,17 @@ data class GameState(
     val gameType: GameType = GameType.SMILEY,
     val isResultSheetShown: Boolean = false,
     val isHowToPlayShown: List<Boolean> = List(SHOW_HOW_TO_PLAY_MAX_PAGE) { false },
-    val isSmileyGameNudgeShown: Boolean = false,
+    val isSmileyGameIntroNudgeShown: Boolean = false,
+    val nudgeType: NudgeType? = null,
     val refreshBalanceState: RefreshBalanceState = RefreshBalanceState.HIDDEN,
+    val lastVotedCount: Int = 1,
+    val isStopAndVote: Boolean = false,
 )
+
+enum class NudgeType {
+    MANDATORY,
+    INTRO,
+}
 
 enum class RefreshBalanceState {
     HIDDEN,
