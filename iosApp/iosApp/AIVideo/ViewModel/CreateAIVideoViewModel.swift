@@ -30,10 +30,13 @@ enum CreateAIVideoScreenState {
 
 enum CreateAIVideoScreenEvent {
   case updateSelectedProvider(AIVideoProviderResponse)
+  case socialSignInSuccess
+  case socialSignInFailure
 }
 
 class CreateAIVideoViewModel: ObservableObject {
   let aiVideoProviderUseCase: AIVideoProviderUseCaseProtocol
+  let socialSignInUseCase: SocialSignInUseCaseProtocol
 
   @Published var event: CreateAIVideoScreenEvent?
   @Published var state: CreateAIVideoScreenState = .initialized
@@ -41,8 +44,12 @@ class CreateAIVideoViewModel: ObservableObject {
   var providers: [AIVideoProviderResponse]?
   var selectedProvider: AIVideoProviderResponse?
 
-  init(aiVideoProviderUseCase: AIVideoProviderUseCaseProtocol) {
+  init(
+    aiVideoProviderUseCase: AIVideoProviderUseCaseProtocol,
+    socialSigninUseCase: SocialSignInUseCaseProtocol
+  ) {
     self.aiVideoProviderUseCase = aiVideoProviderUseCase
+    self.socialSignInUseCase = socialSigninUseCase
   }
 
   @MainActor
@@ -59,6 +66,18 @@ class CreateAIVideoViewModel: ObservableObject {
         }
       case .failure(let error):
         state = .failure(error)
+      }
+    }
+  }
+
+  func socialSignIn(request: SocialProvider) async {
+    let result = await self.socialSignInUseCase.execute(request: request)
+    await MainActor.run {
+      switch result {
+      case .success:
+        self.event = .socialSignInSuccess
+      case .failure:
+        self.event = .socialSignInFailure
       }
     }
   }
