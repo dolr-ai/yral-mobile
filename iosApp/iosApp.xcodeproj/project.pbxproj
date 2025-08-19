@@ -166,6 +166,16 @@
 		10BA2E872DA6507E00B6BE97 /* FeedsPlayerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10BA2E842DA6507E00B6BE97 /* FeedsPlayerTests.swift */; };
 		10C1B38B2E5375D500CFC41B /* AppDIContainerKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B38A2E5375D000CFC41B /* AppDIContainerKey.swift */; };
 		10C1B38C2E5375D500CFC41B /* AppDIContainerKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B38A2E5375D000CFC41B /* AppDIContainerKey.swift */; };
+		10C1B38E2E544BC900CFC41B /* GenerateVideoDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B38D2E544BC200CFC41B /* GenerateVideoDTO.swift */; };
+		10C1B38F2E544BC900CFC41B /* GenerateVideoDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B38D2E544BC200CFC41B /* GenerateVideoDTO.swift */; };
+		10C1B3912E544D1300CFC41B /* GenerateVideoResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3902E544D0B00CFC41B /* GenerateVideoResponse.swift */; };
+		10C1B3922E544D1300CFC41B /* GenerateVideoResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3902E544D0B00CFC41B /* GenerateVideoResponse.swift */; };
+		10C1B3942E544E1400CFC41B /* GenerateVideoError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3932E544E0E00CFC41B /* GenerateVideoError.swift */; };
+		10C1B3952E544E1400CFC41B /* GenerateVideoError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3932E544E0E00CFC41B /* GenerateVideoError.swift */; };
+		10C1B3972E54515200CFC41B /* GenerateVideoUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3962E54514E00CFC41B /* GenerateVideoUseCase.swift */; };
+		10C1B3982E54515200CFC41B /* GenerateVideoUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3962E54514E00CFC41B /* GenerateVideoUseCase.swift */; };
+		10C1B39A2E545A0C00CFC41B /* GenerateVideoRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3992E545A0400CFC41B /* GenerateVideoRequest.swift */; };
+		10C1B39B2E545A0C00CFC41B /* GenerateVideoRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3992E545A0400CFC41B /* GenerateVideoRequest.swift */; };
 		10CEBB7F2E3103670022803A /* HapticFeedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CEBB7E2E3103630022803A /* HapticFeedback.swift */; };
 		10CEBB802E3103670022803A /* HapticFeedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CEBB7E2E3103630022803A /* HapticFeedback.swift */; };
 		10CEBB822E3103CD0022803A /* HapticFeedback+SwiftUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CEBB812E3103C50022803A /* HapticFeedback+SwiftUI.swift */; };
@@ -731,6 +741,11 @@
 		10BA2E822DA64E6A00B6BE97 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Platforms/iPhoneOS.platform/Developer/Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		10BA2E842DA6507E00B6BE97 /* FeedsPlayerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedsPlayerTests.swift; sourceTree = "<group>"; };
 		10C1B38A2E5375D000CFC41B /* AppDIContainerKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDIContainerKey.swift; sourceTree = "<group>"; };
+		10C1B38D2E544BC200CFC41B /* GenerateVideoDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenerateVideoDTO.swift; sourceTree = "<group>"; };
+		10C1B3902E544D0B00CFC41B /* GenerateVideoResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenerateVideoResponse.swift; sourceTree = "<group>"; };
+		10C1B3932E544E0E00CFC41B /* GenerateVideoError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenerateVideoError.swift; sourceTree = "<group>"; };
+		10C1B3962E54514E00CFC41B /* GenerateVideoUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenerateVideoUseCase.swift; sourceTree = "<group>"; };
+		10C1B3992E545A0400CFC41B /* GenerateVideoRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenerateVideoRequest.swift; sourceTree = "<group>"; };
 		10CEBB7E2E3103630022803A /* HapticFeedback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticFeedback.swift; sourceTree = "<group>"; };
 		10CEBB812E3103C50022803A /* HapticFeedback+SwiftUI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HapticFeedback+SwiftUI.swift"; sourceTree = "<group>"; };
 		10CEBB842E3104000022803A /* HapticGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticGenerator.swift; sourceTree = "<group>"; };
@@ -1200,6 +1215,8 @@
 		1064B7F12E4B507E0036C10B /* Entity */ = {
 			isa = PBXGroup;
 			children = (
+				10C1B3932E544E0E00CFC41B /* GenerateVideoError.swift */,
+				10C1B3902E544D0B00CFC41B /* GenerateVideoResponse.swift */,
 				106986112E530548005BE0D4 /* AIVideoProviderError.swift */,
 				1064B7FF2E4CA40D0036C10B /* AIVideoProviderResponse.swift */,
 				1064B7F22E4B50850036C10B /* UploadOption.swift */,
@@ -1221,6 +1238,8 @@
 			children = (
 				106986092E530396005BE0D4 /* Repository */,
 				106986062E530281005BE0D4 /* AIVideoProviderDTO.swift */,
+				10C1B38D2E544BC200CFC41B /* GenerateVideoDTO.swift */,
+				10C1B3992E545A0400CFC41B /* GenerateVideoRequest.swift */,
 			);
 			path = Data;
 			sourceTree = "<group>";
@@ -1244,6 +1263,7 @@
 		106986142E5308C6005BE0D4 /* UseCase */ = {
 			isa = PBXGroup;
 			children = (
+				10C1B3962E54514E00CFC41B /* GenerateVideoUseCase.swift */,
 				106986152E5308D1005BE0D4 /* AIVideoProviderUseCase.swift */,
 			);
 			path = UseCase;
@@ -3301,6 +3321,7 @@
 				AC7D5BF72E1034E0008853AF /* NotificationsToggleViewModel.swift in Sources */,
 				ACB46A362D0EC998002E200C /* FeedDIContainer.swift in Sources */,
 				ACF63A7B2DC29A3100C4BCCC /* ClientCredentialsRequest.swift in Sources */,
+				10C1B39B2E545A0C00CFC41B /* GenerateVideoRequest.swift in Sources */,
 				AC26CA572D80287E006ADA75 /* AuthClient.swift in Sources */,
 				105034B32DD630DB00571B4E /* CastVoteRepositoryProtocol.swift in Sources */,
 				2152FB042600AC8F00CF470E /* IosApp.swift in Sources */,
@@ -3333,6 +3354,7 @@
 				AC09A9B32CDB775C009A39A4 /* SwiftBridgeCore.swift in Sources */,
 				ACC1C3942D9AF854005A7539 /* LottieLoaderView.swift in Sources */,
 				AC99BBC12D86FF81008012C2 /* ProfileEmptyState.swift in Sources */,
+				10C1B3912E544D1300CFC41B /* GenerateVideoResponse.swift in Sources */,
 				ACD7C16E2E1D38DF00075148 /* DefaultAuthClient+Firebase.swift in Sources */,
 				10CEBB852E3104060022803A /* HapticGenerator.swift in Sources */,
 				ACEBF7F72D70A8D700B594A0 /* AnimatedCheckbox.swift in Sources */,
@@ -3343,6 +3365,7 @@
 				AC7F7EC82D78696200215162 /* UploadDelegate.swift in Sources */,
 				AC5A7B8F2DACF5B2009E9E42 /* VideoEventRequest.swift in Sources */,
 				107C60A52DBA01F0006FC467 /* RoundedCorner.swift in Sources */,
+				10C1B3952E544E1400CFC41B /* GenerateVideoError.swift in Sources */,
 				AC32E4252D2712F1001DDA43 /* ProfileInfoView.swift in Sources */,
 				AC7F7EB72D7732AC00215162 /* VideoUploadError.swift in Sources */,
 				ACC0D4482D8DA208006DCF5C /* RefreshVideosUseCase.swift in Sources */,
@@ -3391,6 +3414,7 @@
 				ACB46A812D106034002E200C /* FeedsCell.swift in Sources */,
 				100F63D42DCB4630000BC17E /* SmileyGameRuleView.swift in Sources */,
 				AC7F7ECE2D78707200215162 /* UploadVideoRequest.swift in Sources */,
+				10C1B38E2E544BC900CFC41B /* GenerateVideoDTO.swift in Sources */,
 				AC6BECC22D09F91C002E2021 /* HTTPService.swift in Sources */,
 				AC2C30CD2D96C49800DA9F81 /* ReportUseCase.swift in Sources */,
 				107C60992DB8BCB1006FC467 /* SmileyGameView.swift in Sources */,
@@ -3420,6 +3444,7 @@
 				ACF63A782DC271F900C4BCCC /* DefaultAuthClient+Extensions.swift in Sources */,
 				107C60D62DBFA7C0006FC467 /* FirebaseImageView.swift in Sources */,
 				107C60B42DBF4857006FC467 /* SmileyGameRuleUseCase.swift in Sources */,
+				10C1B3972E54515200CFC41B /* GenerateVideoUseCase.swift in Sources */,
 				ACB46A292D0EC76A002E200C /* AppConfiguration.swift in Sources */,
 				ACEBF7DF2D6F215800B594A0 /* VideoPlayerView.swift in Sources */,
 				ACB46A342D0EC8FF002E200C /* Numbers+Extensions.swift in Sources */,
@@ -3571,6 +3596,7 @@
 				AC7D5BF62E1034E0008853AF /* NotificationsToggleViewModel.swift in Sources */,
 				ACB46A372D0EC998002E200C /* FeedDIContainer.swift in Sources */,
 				ACF63A7A2DC29A3100C4BCCC /* ClientCredentialsRequest.swift in Sources */,
+				10C1B39A2E545A0C00CFC41B /* GenerateVideoRequest.swift in Sources */,
 				AC26CA582D80287E006ADA75 /* AuthClient.swift in Sources */,
 				105034B42DD630DB00571B4E /* CastVoteRepositoryProtocol.swift in Sources */,
 				ACD941872CFF575C0038FCB6 /* IosApp.swift in Sources */,
@@ -3603,6 +3629,7 @@
 				ACD941892CFF575C0038FCB6 /* SwiftBridgeCore.swift in Sources */,
 				ACC1C3952D9AF854005A7539 /* LottieLoaderView.swift in Sources */,
 				AC99BBC22D86FF81008012C2 /* ProfileEmptyState.swift in Sources */,
+				10C1B3922E544D1300CFC41B /* GenerateVideoResponse.swift in Sources */,
 				ACD7C16F2E1D38DF00075148 /* DefaultAuthClient+Firebase.swift in Sources */,
 				10CEBB862E3104060022803A /* HapticGenerator.swift in Sources */,
 				ACEBF7F62D70A8D700B594A0 /* AnimatedCheckbox.swift in Sources */,
@@ -3613,6 +3640,7 @@
 				AC7F7EC72D78696200215162 /* UploadDelegate.swift in Sources */,
 				AC5A7B8E2DACF5B2009E9E42 /* VideoEventRequest.swift in Sources */,
 				107C60A42DBA01F0006FC467 /* RoundedCorner.swift in Sources */,
+				10C1B3942E544E1400CFC41B /* GenerateVideoError.swift in Sources */,
 				AC32E4242D2712F1001DDA43 /* ProfileInfoView.swift in Sources */,
 				AC7F7EB62D7732AC00215162 /* VideoUploadError.swift in Sources */,
 				ACC0D4492D8DA208006DCF5C /* RefreshVideosUseCase.swift in Sources */,
@@ -3661,6 +3689,7 @@
 				ACB46A802D106034002E200C /* FeedsCell.swift in Sources */,
 				100F63D32DCB4630000BC17E /* SmileyGameRuleView.swift in Sources */,
 				AC7F7ECD2D78707200215162 /* UploadVideoRequest.swift in Sources */,
+				10C1B38F2E544BC900CFC41B /* GenerateVideoDTO.swift in Sources */,
 				AC6BECC32D09F91C002E2021 /* HTTPService.swift in Sources */,
 				AC2C30CE2D96C49800DA9F81 /* ReportUseCase.swift in Sources */,
 				AC1F93922DC1494800F322E1 /* TokenRequestDTO.swift in Sources */,
@@ -3690,6 +3719,7 @@
 				105034B72DD6316B00571B4E /* CastVoteRepository.swift in Sources */,
 				107C60D72DBFA7C0006FC467 /* FirebaseImageView.swift in Sources */,
 				107C60B52DBF4857006FC467 /* SmileyGameRuleUseCase.swift in Sources */,
+				10C1B3982E54515200CFC41B /* GenerateVideoUseCase.swift in Sources */,
 				ACB46A2A2D0EC76A002E200C /* AppConfiguration.swift in Sources */,
 				ACEBF7DE2D6F215800B594A0 /* VideoPlayerView.swift in Sources */,
 				ACB46A332D0EC8FF002E200C /* Numbers+Extensions.swift in Sources */,
