@@ -289,19 +289,16 @@ private fun GenerationInProgressScreen(
                 )
             }
         }
-        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-            val widthToHeightRatio = provider.getAspectRatio()
-            val boxHeight =
-                (maxWidth * widthToHeightRatio)
-                    .coerceAtMost(maxHeight - 83.dp)
+        BoxWithConstraints(modifier = Modifier.weight(1f).padding(bottom = 83.dp)) {
+            val widthToHeightRatio = 1f / provider.toDefaultAspectRatio()
+            val boxHeight = (maxWidth * widthToHeightRatio).coerceAtMost(maxHeight)
             Box(
                 modifier =
                     Modifier
                         .height(boxHeight)
                         .fillMaxWidth()
                         .background(YralColors.Neutral800, RoundedCornerShape(8.dp))
-                        .clip(RoundedCornerShape(8.dp))
-                        .padding(bottom = 83.dp),
+                        .clip(RoundedCornerShape(8.dp)),
                 contentAlignment = Alignment.Center,
             ) {
                 Column(
