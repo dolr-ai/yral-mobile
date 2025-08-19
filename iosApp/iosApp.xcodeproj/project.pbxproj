@@ -176,6 +176,8 @@
 		10C1B3982E54515200CFC41B /* GenerateVideoUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3962E54514E00CFC41B /* GenerateVideoUseCase.swift */; };
 		10C1B39A2E545A0C00CFC41B /* GenerateVideoRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3992E545A0400CFC41B /* GenerateVideoRequest.swift */; };
 		10C1B39B2E545A0C00CFC41B /* GenerateVideoRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3992E545A0400CFC41B /* GenerateVideoRequest.swift */; };
+		10C1B39D2E54BD0F00CFC41B /* CreateAIVideoErrorBottomSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B39C2E54BD0F00CFC41B /* CreateAIVideoErrorBottomSheet.swift */; };
+		10C1B39E2E54BD0F00CFC41B /* CreateAIVideoErrorBottomSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B39C2E54BD0F00CFC41B /* CreateAIVideoErrorBottomSheet.swift */; };
 		10CEBB7F2E3103670022803A /* HapticFeedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CEBB7E2E3103630022803A /* HapticFeedback.swift */; };
 		10CEBB802E3103670022803A /* HapticFeedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CEBB7E2E3103630022803A /* HapticFeedback.swift */; };
 		10CEBB822E3103CD0022803A /* HapticFeedback+SwiftUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CEBB812E3103C50022803A /* HapticFeedback+SwiftUI.swift */; };
@@ -758,6 +760,7 @@
 		10C1B3932E544E0E00CFC41B /* GenerateVideoError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenerateVideoError.swift; sourceTree = "<group>"; };
 		10C1B3962E54514E00CFC41B /* GenerateVideoUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenerateVideoUseCase.swift; sourceTree = "<group>"; };
 		10C1B3992E545A0400CFC41B /* GenerateVideoRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenerateVideoRequest.swift; sourceTree = "<group>"; };
+		10C1B39C2E54BD0F00CFC41B /* CreateAIVideoErrorBottomSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateAIVideoErrorBottomSheet.swift; sourceTree = "<group>"; };
 		10CEBB7E2E3103630022803A /* HapticFeedback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticFeedback.swift; sourceTree = "<group>"; };
 		10CEBB812E3103C50022803A /* HapticFeedback+SwiftUI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HapticFeedback+SwiftUI.swift"; sourceTree = "<group>"; };
 		10CEBB842E3104000022803A /* HapticGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticGenerator.swift; sourceTree = "<group>"; };
@@ -1219,6 +1222,7 @@
 				1064B7ED2E4B439A0036C10B /* UploadOptionView.swift */,
 				1064B7FC2E4C8CD30036C10B /* CreateAIVideoScreenView.swift */,
 				1064B8022E4CB1840036C10B /* ProviderOptionsBottomSheetView.swift */,
+				10C1B39C2E54BD0F00CFC41B /* CreateAIVideoErrorBottomSheet.swift */,
 			);
 			path = View;
 			sourceTree = "<group>";
@@ -3323,6 +3327,7 @@
 				1064B7F42E4B50890036C10B /* UploadOption.swift in Sources */,
 				107C60C62DBF6109006FC467 /* SmileyGameRuleDTO.swift in Sources */,
 				ACBBF8BD2E41176100002188 /* HLSDownloadManager+Bookmarks.swift in Sources */,
+				10C1B39D2E54BD0F00CFC41B /* CreateAIVideoErrorBottomSheet.swift in Sources */,
 				10020A192DED6CED00DF269E /* LeaderboardRowView.swift in Sources */,
 				ACC0F3972D2ED5D700FA5BD0 /* LottieView.swift in Sources */,
 				AC7D5B3E2E0EA7C6008853AF /* NotificationsNudge.swift in Sources */,
@@ -3604,6 +3609,7 @@
 				1064B7F32E4B50890036C10B /* UploadOption.swift in Sources */,
 				107C60C52DBF6109006FC467 /* SmileyGameRuleDTO.swift in Sources */,
 				ACBBF8BE2E41176100002188 /* HLSDownloadManager+Bookmarks.swift in Sources */,
+				10C1B39E2E54BD0F00CFC41B /* CreateAIVideoErrorBottomSheet.swift in Sources */,
 				10020A182DED6CED00DF269E /* LeaderboardRowView.swift in Sources */,
 				ACC0F3982D2ED5D700FA5BD0 /* LottieView.swift in Sources */,
 				AC7D5B3F2E0EA7C6008853AF /* NotificationsNudge.swift in Sources */,
