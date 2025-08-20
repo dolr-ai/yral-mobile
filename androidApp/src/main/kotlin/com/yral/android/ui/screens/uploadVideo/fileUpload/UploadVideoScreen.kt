@@ -1,5 +1,6 @@
 package com.yral.android.ui.screens.uploadVideo.fileUpload
 
+import androidx.activity.compose.BackHandler
 import androidx.annotation.OptIn
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -88,6 +89,7 @@ fun UploadVideoScreen(
         }
     }
 
+    BackHandler(enabled = viewState.uploadUiState !is UiState.Initial, onBack = { })
     when (val uploadUiState = viewState.uploadUiState) {
         UiState.Initial -> {
             UploadVideoIdle(
@@ -101,7 +103,7 @@ fun UploadVideoScreen(
         }
 
         is UiState.InProgress -> {
-            UploadVideoProgress(modifier, uploadUiState, viewState) { component.onBack() }
+            UploadVideoProgress(modifier, uploadUiState, viewState)
         }
 
         is UiState.Success<*> -> {
@@ -157,10 +159,9 @@ private fun UploadVideoProgress(
     modifier: Modifier,
     uploadUiState: UiState.InProgress,
     viewState: UploadVideoViewModel.ViewState,
-    onBack: () -> Unit,
 ) {
     Column(modifier.verticalScroll(rememberScrollState())) {
-        Header(onBack)
+        Header()
         UploadProgressView(uploadUiState.progress)
         YralVideoPlayer(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
@@ -175,18 +176,20 @@ private fun UploadVideoProgress(
 }
 
 @Composable
-private fun Header(onBack: () -> Unit) {
+private fun Header(onBack: (() -> Unit)? = null) {
     Row(
         modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.Start),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Image(
-            painter = painterResource(id = R.drawable.arrow_left),
-            contentDescription = "back button",
-            contentScale = ContentScale.None,
-            modifier = Modifier.size(24.dp).clickable { onBack() },
-        )
+        onBack?.let {
+            Image(
+                painter = painterResource(id = R.drawable.arrow_left),
+                contentDescription = "back button",
+                contentScale = ContentScale.None,
+                modifier = Modifier.size(24.dp).clickable { onBack() },
+            )
+        }
         Text(
             text = stringResource(R.string.upload_video),
             style = LocalAppTopography.current.xlBold,
