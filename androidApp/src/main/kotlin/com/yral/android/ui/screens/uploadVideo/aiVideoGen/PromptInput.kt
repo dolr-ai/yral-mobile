@@ -57,7 +57,7 @@ fun PromptInput(
                     .background(YralColors.Neutral800, RoundedCornerShape(8.dp))
                     .border(
                         width = 1.dp,
-                        color = YralColors.Neutral700,
+                        color = if (isFocused) YralColors.Neutral500 else Color.Transparent,
                         shape = RoundedCornerShape(size = 8.dp),
                     ).clip(RoundedCornerShape(8.dp)),
             verticalArrangement = Arrangement.spacedBy(0.dp, Alignment.Top),

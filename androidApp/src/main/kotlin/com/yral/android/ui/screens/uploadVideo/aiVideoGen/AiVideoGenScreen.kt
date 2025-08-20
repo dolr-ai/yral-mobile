@@ -1,6 +1,7 @@
 package com.yral.android.ui.screens.uploadVideo.aiVideoGen
 
 import android.annotation.SuppressLint
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -77,23 +79,11 @@ fun AiVideoGenScreen(
         Logger.d("VideoGen") { "shouldRefresh: $shouldRefresh" }
         shouldRefresh.value?.first?.let { viewModel.refresh(it) }
     }
+    BackHandler(enabled = viewState.uiState is UiState.Success, onBack = { })
     Column(modifier.fillMaxSize().padding(top = 20.dp)) {
-        Header {
-            when (viewState.uiState) {
-                is UiState.InProgress -> {
-                    viewModel.setBottomSheetType(BottomSheetType.BackConfirmation)
-                }
-                is UiState.Initial,
-                is UiState.Success<*>,
-                -> {
-                    viewModel.cleanup()
-                    component.onBack()
-                }
-                else -> Unit
-            }
-        }
         when (viewState.uiState) {
             is UiState.InProgress -> {
+                Header { viewModel.setBottomSheetType(BottomSheetType.BackConfirmation) }
                 viewState.selectedProvider?.let { provider ->
                     GenerationInProgressScreen(
                         promptText = viewState.prompt,
@@ -102,6 +92,10 @@ fun AiVideoGenScreen(
                 }
             }
             UiState.Initial -> {
+                Header {
+                    viewModel.cleanup()
+                    component.onBack()
+                }
                 PromptScreen(
                     viewState = viewState,
                     viewModel = viewModel,
@@ -419,6 +413,7 @@ private fun GenerationSuccessScreen(
                         .height(268.dp),
                 autoPlay = true,
             )
+            Spacer(Modifier.height(24.dp))
             Text(
                 modifier = Modifier.fillMaxWidth(),
                 text = stringResource(R.string.upload_successful),
@@ -430,7 +425,7 @@ private fun GenerationSuccessScreen(
                 modifier = Modifier.fillMaxWidth(),
                 text = stringResource(R.string.upload_completed_message),
                 style = LocalAppTopography.current.mdRegular,
-                color = YralColors.Neutral300,
+                color = YralColors.NeutralTextPrimary,
                 textAlign = TextAlign.Center,
             )
         }
