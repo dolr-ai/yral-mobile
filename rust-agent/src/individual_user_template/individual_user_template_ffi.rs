@@ -12,6 +12,7 @@ use std::clone::Clone;
 use std::str::FromStr;
 use yral_canisters_common::Canisters;
 use yral_types::delegated_identity::DelegatedIdentityWire;
+use yral_canisters_client::rate_limits::RateLimitStatus;
 
 #[swift_bridge::bridge]
 mod ffi {
@@ -496,5 +497,26 @@ mod ffi {
     extern "Rust" {
         async fn register_device(identity: DelegatedIdentity, token: String) -> Result<(), String>;
         async fn unregister_device(identity: DelegatedIdentity, token: String) -> Result<(), String>;
+    }
+
+    extern "Rust" {
+        type RateLimitStatus;
+        #[swift_bridge(get(principal))]
+        fn principal(&self) -> Principal;
+        #[swift_bridge(get(request_count))]
+        fn request_count(&self) -> u64;
+        #[swift_bridge(get(window_start))]
+        fn window_start(&self) -> u64;
+        #[swift_bridge(get(is_limited))]
+        fn is_limited(&self) -> bool;
+    }
+
+    extern "Rust" {
+        async fn get_rate_limit_status_core(
+            principal: Principal,
+            property: String,
+            is_registered: bool,
+            identity: DelegatedIdentity,
+        ) -> Result<RateLimitStatus, String>;
     }
 }
