@@ -42,6 +42,10 @@ final class CreateAIVideoDIContainer {
         aiVideoRepository: aiVideoRepository,
         crashReporter: dependencies.crashReporter
       ),
+      rateLimitStatusUseCase: RateLimitStatusUseCase(
+        aiVideoRepository: aiVideoRepository,
+        crashReporter: dependencies.crashReporter
+      ),
       socialSigninUseCase: SocialSignInUseCase(
         accountRepository: accountRepository,
         crashReporter: dependencies.crashReporter

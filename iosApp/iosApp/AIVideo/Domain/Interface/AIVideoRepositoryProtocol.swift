@@ -10,5 +10,6 @@ import Foundation
 
 protocol AIVideoRepositoryProtocol {
   func getProviders() async -> Result<AIVideoProviderMetaResponse, AIVideoProviderError>
+  func getRateLimitStatus() async -> Result<RateLimitStatus, NetworkError>
   func generateVideo(for request: GenerateVideoMetaRequest) async -> Result<GenerateVideoResponse, GenerateVideoError>
 }
