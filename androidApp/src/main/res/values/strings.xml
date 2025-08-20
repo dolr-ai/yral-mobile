@@ -140,5 +140,9 @@
     <string name="generating_video">Generating Video…</string>
     <string name="this_may_take_few_minutes">This may take few minutes</string>
     <string name="upload_successful">Upload Successful</string>
+    <string name="you_will_loose_ai_credits">You will loose AI Credits</string>
+    <string name="you_will_loose_credits_desc">Leaving now will use up today’s AI credit. You can return tomorrow for a fresh credit.</string>
+    <string name="yes_take_me_back">Yes, Take me back</string>
+    <string name="stay_here">Stay Here</string>
 
 </resources>

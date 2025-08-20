@@ -358,6 +358,7 @@ class AiVideoGenViewModel internal constructor(
             val url: String,
         ) : BottomSheetType()
         data object SignupFailed : BottomSheetType()
+        data object BackConfirmation : BottomSheetType()
     }
 
     internal data class RequiredUseCases(

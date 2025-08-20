@@ -50,6 +50,7 @@ import com.yral.android.ui.screens.uploadVideo.aiVideoGen.AiVideoGenScreenConsta
 import com.yral.android.ui.widgets.YralAsyncImage
 import com.yral.android.ui.widgets.YralBottomSheet
 import com.yral.android.ui.widgets.YralButtonState
+import com.yral.android.ui.widgets.YralConfirmationMessage
 import com.yral.android.ui.widgets.YralGradientButton
 import com.yral.android.ui.widgets.YralLoader
 import com.yral.android.ui.widgets.getSVGImageModel
@@ -78,8 +79,18 @@ fun AiVideoGenScreen(
     }
     Column(modifier.fillMaxSize().padding(top = 20.dp)) {
         Header {
-            viewModel.cleanup()
-            component.onBack()
+            when (viewState.uiState) {
+                is UiState.InProgress -> {
+                    viewModel.setBottomSheetType(BottomSheetType.BackConfirmation)
+                }
+                is UiState.Initial,
+                is UiState.Success<*>,
+                -> {
+                    viewModel.cleanup()
+                    component.onBack()
+                }
+                else -> Unit
+            }
         }
         when (viewState.uiState) {
             is UiState.InProgress -> {
@@ -179,6 +190,20 @@ private fun AiVideoGenScreenPrompts(
                 errorType = ErrorType.SIGNUP_FAILED,
                 onDismissRequest = { viewModel.setBottomSheetType(BottomSheetType.None) },
                 bottomSheetState = bottomSheetState,
+            )
+        }
+        is BottomSheetType.BackConfirmation -> {
+            YralConfirmationMessage(
+                title = stringResource(R.string.you_will_loose_ai_credits),
+                subTitle = stringResource(R.string.you_will_loose_credits_desc),
+                sheetState = bottomSheetState,
+                cancel = stringResource(R.string.yes_take_me_back),
+                done = stringResource(R.string.stay_here),
+                onDone = { viewModel.setBottomSheetType(BottomSheetType.None) },
+                onCancel = {
+                    viewModel.cleanup()
+                    component.onBack()
+                },
             )
         }
         is BottomSheetType.None -> Unit
