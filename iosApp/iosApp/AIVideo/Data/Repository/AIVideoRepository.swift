@@ -42,6 +42,27 @@ class AIVideoRepository: AIVideoRepositoryProtocol {
     }
   }
 
+  func getRateLimitStatus() async -> Result<RateLimitStatus, NetworkError> {
+    guard let userPrincipalString = authClient.userPrincipalString else {
+      return .failure(.invalidRequest)
+    }
+
+    do {
+      let userPrincipal = try get_principal(userPrincipalString.intoRustString())
+      let delegatedIdentity = try authClient.generateNewDelegatedIdentity()
+      let status = try await get_rate_limit_status_core(
+        userPrincipal,
+        "VIDEOGEN",
+        true,
+        delegatedIdentity
+      )
+
+      return .success(status)
+    } catch {
+      return .failure(.invalidResponse("Failed to fetch rate limit status"))
+    }
+  }
+
   func generateVideo(for request: GenerateVideoMetaRequest) async -> Result<GenerateVideoResponse, GenerateVideoError> {
     guard let baseURL = httpService.baseURL else {
       return .failure(.network(.invalidRequest))
