@@ -9,16 +9,22 @@ import UIKit
 
 extension FeedsCell {
   func showOnboardingFlow() {
-    guard let smileyView = smileyGameHostController?.view else { return }
+    guard !isOnboardingVisible, let smileyView = smileyGameHostController?.view else { return }
+    isOnboardingVisible = true
     addGameInfoOverlayView()
     let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissOnboardingOnTap))
     gameInfoOverlayView.addGestureRecognizer(tapGesture)
     animateGameInfoOverlayView(smileyView: smileyView) { [weak self] in
       guard let self = self else { return }
       self.addOnboardingInfoView(smileyView)
-      DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.five) {
-        self.cleanupOnOnboardingCompletion(smileyView: smileyView)
+
+      self.onboardingDismissWorkItem?.cancel()
+      let work = DispatchWorkItem { [weak self] in
+        guard let self = self, let view = self.smileyGameHostController?.view else { return }
+        self.cleanupOnOnboardingCompletion(smileyView: view)
       }
+      self.onboardingDismissWorkItem = work
+      DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(.five), execute: work)
     }
   }
 
@@ -51,7 +57,6 @@ extension FeedsCell {
       highlightSmileyView(smileyView)
       self.contentView.layoutIfNeeded()
     } completion: { _ in
-
       self.animatePublisher.send(SmileyGameConfig.shared.config)
       completion()
     }
@@ -188,6 +193,8 @@ extension FeedsCell {
   }
 
   @objc func dismissOnboardingOnTap() {
+    onboardingDismissWorkItem?.cancel()
+    onboardingDismissWorkItem = nil
     guard let smileyView = smileyGameHostController?.view else { return }
     self.cleanupOnOnboardingCompletion(smileyView: smileyView)
   }
@@ -212,6 +219,7 @@ extension FeedsCell {
     howToPlayWidthAnchor = nil
     howToPlayButton.removeFromSuperview()
     howToPlayButton.setImage(UIImage(named: Constants.howToPlayImageCollapsed), for: .normal)
+    isOnboardingVisible = false
     contentView.layoutIfNeeded()
   }
 }

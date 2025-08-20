@@ -127,6 +127,8 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   let smileyGameErrorPublisher = PassthroughSubject<String, Never>()
   let animatePublisher = PassthroughSubject<SmileyConfig, Never>()
   let animationCompletionPublisher = PassthroughSubject<Void, Never>()
+  var onboardingDismissWorkItem: DispatchWorkItem?
+  var isOnboardingVisible = false
 
   private static func getActionButton(withTitle title: String, image: UIImage?) -> UIButton {
     var configuration = UIButton.Configuration.plain()
@@ -549,6 +551,9 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     if let game = smileyGame {
       initialStatePublisher.send(game)
     }
+    onboardingDismissWorkItem?.cancel()
+    onboardingDismissWorkItem = nil
+    isOnboardingVisible = false
     guard let smileyView = smileyGameHostController?.view else { return }
     cleanupOnOnboardingCompletion(smileyView: smileyView)
     smileyGameHostController?.view.removeFromSuperview()
