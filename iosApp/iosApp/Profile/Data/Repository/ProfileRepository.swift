@@ -157,7 +157,7 @@ class ProfileRepository: ProfileRepositoryProtocol {
             postDescription: postDetail.description().toString(),
             likeCount: Int(postDetail.like_count()),
             isLiked: postDetail.liked_by_me(),
-            isNsfw: false
+            nsfwProbability: postDetail.is_nsfw() ? CGFloat.one : CGFloat.zero
           )
         }
         return .success(feedResult)
