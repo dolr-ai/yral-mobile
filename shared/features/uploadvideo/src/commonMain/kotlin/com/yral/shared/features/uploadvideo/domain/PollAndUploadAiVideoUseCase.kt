@@ -2,7 +2,11 @@ package com.yral.shared.features.uploadvideo.domain
 
 import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
-import com.yral.shared.features.uploadvideo.domain.models.UploadAiVideoFromUrlRequest
+import com.github.michaelbull.result.onFailure
+import com.github.michaelbull.result.onSuccess
+import com.yral.shared.analytics.events.AiVideoGenFailureType
+import com.yral.shared.analytics.events.VideoCreationType
+import com.yral.shared.features.uploadvideo.analytics.UploadVideoTelemetry
 import com.yral.shared.libs.arch.domain.FlowUseCase
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
@@ -21,14 +25,16 @@ import kotlin.math.min
 
 internal class PollAndUploadAiVideoUseCase(
     private val rateLimitRepository: RateLimitRepository,
-    private val uploadRepository: UploadRepository,
+    private val uploadAiVideoFromUrlUseCase: UploadAiVideoFromUrlUseCase,
     private val config: PollingConfigProvider,
+    private val uploadVideoTelemetry: UploadVideoTelemetry,
     appDispatchers: AppDispatchers,
     failureListener: UseCaseFailureListener,
 ) : FlowUseCase<PollAndUploadAiVideoUseCase.Params, PollAndUploadAiVideoUseCase.PollAndUploadResult>(
         coroutineDispatcher = appDispatchers.network,
         failureListener = failureListener,
     ) {
+    @Suppress("LongMethod")
     override fun execute(parameters: Params): Flow<Result<PollAndUploadResult, Throwable>> =
         flow {
             var pollCount = 0
@@ -42,6 +48,7 @@ internal class PollAndUploadAiVideoUseCase(
                             rateLimitRepository.fetchVideoGenerationStatus(parameters.requestKey)
                         when (status) {
                             is PollResult2.Err -> {
+                                pushGenerationFailed(parameters.modelName, status.v1)
                                 emit(Ok(PollAndUploadResult.Failed(status.v1)))
                                 return@withTimeout
                             }
@@ -49,22 +56,36 @@ internal class PollAndUploadAiVideoUseCase(
                             is PollResult2.Ok -> {
                                 when (val videoStatus = status.v1) {
                                     is VideoGenRequestStatus.Complete -> {
+                                        pushGenerationSuccessful(parameters.modelName)
+                                        uploadVideoTelemetry.uploadInitiated(VideoCreationType.AI_VIDEO)
                                         // Upload the video when generation is complete
-                                        uploadRepository.uploadAiVideoFromUrl(
-                                            request =
-                                                UploadAiVideoFromUrlRequest(
-                                                    videoUrl = videoStatus.v1,
-                                                    hashtags = parameters.hashtags,
-                                                    description = parameters.description,
-                                                    isNsfw = parameters.isNsfw,
-                                                    enableHotOrNot = parameters.enableHotOrNot,
-                                                ),
-                                        )
-                                        emit(Ok(PollAndUploadResult.Success(videoStatus.v1)))
-                                        return@withTimeout
+                                        uploadAiVideoFromUrlUseCase
+                                            .invoke(
+                                                parameter =
+                                                    UploadAiVideoFromUrlUseCase.Params(
+                                                        videoUrl = videoStatus.v1,
+                                                        hashtags = parameters.hashtags,
+                                                        description = parameters.description,
+                                                        isNsfw = parameters.isNsfw,
+                                                        enableHotOrNot = parameters.enableHotOrNot,
+                                                    ),
+                                            ).onSuccess {
+                                                uploadVideoTelemetry.uploadSuccess(
+                                                    videoId = videoStatus.v1,
+                                                    type = VideoCreationType.UPLOAD_VIDEO,
+                                                )
+                                                emit(Ok(PollAndUploadResult.Success(videoStatus.v1)))
+                                                return@withTimeout
+                                            }.onFailure {
+                                                uploadVideoTelemetry.uploadFailed(
+                                                    reason = it.message ?: "",
+                                                    type = VideoCreationType.AI_VIDEO,
+                                                )
+                                            }
                                     }
 
                                     is VideoGenRequestStatus.Failed -> {
+                                        pushGenerationFailed(parameters.modelName, videoStatus.v1)
                                         emit(Ok(PollAndUploadResult.Failed(videoStatus.v1)))
                                         return@withTimeout
                                     }
@@ -82,6 +103,7 @@ internal class PollAndUploadAiVideoUseCase(
                     }
                 }
             } catch (e: TimeoutCancellationException) {
+                pushGenerationFailed(parameters.modelName, "Timeout")
                 throw VideoGenerationTimeoutException.fromTimeoutCancellation(
                     timeoutException = e,
                     requestKey = parameters.requestKey.toString(),
@@ -90,6 +112,27 @@ internal class PollAndUploadAiVideoUseCase(
                 )
             }
         }
+
+    private fun pushGenerationSuccessful(model: String) {
+        uploadVideoTelemetry.aiVideoGenerated(
+            model = model,
+            isSuccess = true,
+            reason = null,
+            reasonType = null,
+        )
+    }
+
+    private fun pushGenerationFailed(
+        model: String,
+        reason: String,
+    ) {
+        uploadVideoTelemetry.aiVideoGenerated(
+            model = model,
+            isSuccess = false,
+            reason = reason,
+            reasonType = AiVideoGenFailureType.GENERATION_FAILED,
+        )
+    }
 
     private fun initialIntervalMs(parameters: Params): Long =
         if (parameters.isFastInitially) {
@@ -138,6 +181,7 @@ internal class PollAndUploadAiVideoUseCase(
         }
 
     data class Params(
+        val modelName: String,
         val requestKey: VideoGenRequestKey,
         val isFastInitially: Boolean = false,
         val maxPollingTimeMs: Long = DEFAULT_MAX_POLLING_MS,
@@ -151,9 +195,11 @@ internal class PollAndUploadAiVideoUseCase(
         data class InProgress(
             val pollCount: Int,
         ) : PollAndUploadResult()
+
         data class Success(
             val videoUrl: String,
         ) : PollAndUploadResult()
+
         data class Failed(
             val errorMessage: String,
         ) : PollAndUploadResult()

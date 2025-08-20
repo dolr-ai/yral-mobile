@@ -4,12 +4,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
+import com.yral.shared.analytics.events.AiVideoGenFailureType
+import com.yral.shared.analytics.events.VideoCreationType
 import com.yral.shared.core.logging.YralLogger
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.AuthClientFactory
 import com.yral.shared.features.auth.utils.SocialProvider
+import com.yral.shared.features.uploadvideo.analytics.UploadVideoTelemetry
 import com.yral.shared.features.uploadvideo.domain.GenerateVideoUseCase
 import com.yral.shared.features.uploadvideo.domain.GetFreeCreditsStatusUseCase
 import com.yral.shared.features.uploadvideo.domain.GetProvidersUseCase
@@ -35,6 +38,7 @@ class AiVideoGenViewModel internal constructor(
     private val requiredUseCases: RequiredUseCases,
     private val sessionManager: SessionManager,
     private val crashlyticsManager: CrashlyticsManager,
+    private val uploadVideoTelemetry: UploadVideoTelemetry,
     logger: YralLogger,
 ) : ViewModel() {
     private val logger = logger.withTag(AiVideoGenViewModel::class.simpleName ?: "")
@@ -179,16 +183,18 @@ class AiVideoGenViewModel internal constructor(
                             logger.d { "Video generated: $result" }
                             result.requestKey?.let { requestKey ->
                                 currentRequestKey = requestKey
-                                pollAndUploadVideo(requestKey)
+                                pollAndUploadVideo(selectedProvider.name, requestKey)
                                 return@onSuccess
                             }
                             result.providerError?.let { error ->
+                                pushTriggerFailed(selectedProvider.name, error)
                                 _state.update {
                                     it.copy(bottomSheetType = BottomSheetType.Error(error, true))
                                 }
                             }
                         }.onFailure { error ->
                             logger.e(error) { "Error generating video" }
+                            pushTriggerFailed(selectedProvider.name, error.message ?: "")
                             _state.update {
                                 it.copy(bottomSheetType = BottomSheetType.Error("", true))
                             }
@@ -198,7 +204,22 @@ class AiVideoGenViewModel internal constructor(
         }
     }
 
-    private fun pollAndUploadVideo(requestKey: VideoGenRequestKey) {
+    private fun pushTriggerFailed(
+        model: String,
+        reason: String,
+    ) {
+        uploadVideoTelemetry.aiVideoGenerated(
+            model = model,
+            isSuccess = false,
+            reason = reason,
+            reasonType = AiVideoGenFailureType.TRIGGER_FAILED,
+        )
+    }
+
+    private fun pollAndUploadVideo(
+        modelName: String,
+        requestKey: VideoGenRequestKey,
+    ) {
         pollingJob?.cancel()
         pollingJob =
             viewModelScope.launch {
@@ -208,6 +229,7 @@ class AiVideoGenViewModel internal constructor(
                         .invoke(
                             parameters =
                                 PollAndUploadAiVideoUseCase.Params(
+                                    modelName = modelName,
                                     requestKey = requestKey,
                                     isFastInitially = false,
                                     hashtags = emptyList(),
@@ -252,7 +274,10 @@ class AiVideoGenViewModel internal constructor(
             when {
                 // If we have a request key, retry polling and uploading
                 currentRequestKey != null -> {
-                    pollAndUploadVideo(currentRequestKey!!)
+                    pollAndUploadVideo(
+                        modelName = _state.value.selectedProvider?.name ?: "",
+                        requestKey = currentRequestKey!!,
+                    )
                 }
                 // Otherwise, retry from the beginning (generate video)
                 else -> {
@@ -268,6 +293,7 @@ class AiVideoGenViewModel internal constructor(
 
     fun selectProvider(provider: Provider) {
         _state.update { it.copy(selectedProvider = provider) }
+        uploadVideoTelemetry.videoGenerationModelSelected(provider.name)
     }
 
     fun setBottomSheetType(type: BottomSheetType) {
@@ -301,6 +327,16 @@ class AiVideoGenViewModel internal constructor(
 
     private fun handleSignupFailed() {
         setBottomSheetType(type = BottomSheetType.SignupFailed)
+    }
+
+    fun pushScreenView() {
+        uploadVideoTelemetry.videoCreationPageViewed(VideoCreationType.AI_VIDEO)
+    }
+
+    fun createAiVideoClicked() {
+        _state.value.selectedProvider
+            ?.name
+            ?.let { uploadVideoTelemetry.createAiVideoClicked(it) }
     }
 
     data class ViewState(

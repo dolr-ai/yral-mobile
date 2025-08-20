@@ -586,6 +586,20 @@ data class UploadVideoPageViewedEventData(
 }
 
 @Serializable
+data class VideoCreationPageViewedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.UPLOAD_VIDEO_PAGE_VIEWED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.UPLOAD.getFeatureName(),
+    @SerialName("type") val type: VideoCreationType,
+) : BaseEventData(),
+    EventData {
+    constructor(type: VideoCreationType) : this(
+        FeatureEvents.VIDEO_CREATION_PAGE_VIEWED.getEventName(),
+        Features.AUTH.getFeatureName(),
+        type,
+    )
+}
+
+@Serializable
 data class SelectFileClickedEventData(
     @SerialName("event") override val event: String = FeatureEvents.SELECT_FILE_CLICKED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.UPLOAD.getFeatureName(),
@@ -617,13 +631,15 @@ data class VideoUploadInitiatedEventData(
     @SerialName("feature_name") override val featureName: String = Features.UPLOAD.getFeatureName(),
     @SerialName("caption_added") val captionAdded: Boolean,
     @SerialName("hashtags_added") val hashtagsAdded: Boolean,
+    @SerialName("type") val type: VideoCreationType,
 ) : BaseEventData(),
     EventData {
-    constructor(captionAdded: Boolean, hashtagsAdded: Boolean) : this(
+    constructor(captionAdded: Boolean, hashtagsAdded: Boolean, type: VideoCreationType) : this(
         FeatureEvents.VIDEO_UPLOAD_INITIATED.getEventName(),
         Features.AUTH.getFeatureName(),
         captionAdded,
         hashtagsAdded,
+        type,
     )
 }
 
@@ -636,6 +652,7 @@ data class VideoUploadSuccessEventData(
     @SerialName("is_game_enabled") val isGameEnabled: Boolean,
     @SerialName("game_type") val gameType: GameType,
     @SerialName("is_nsfw") val isNsfw: Boolean,
+    @SerialName("type") val type: VideoCreationType,
 ) : BaseEventData(),
     EventData {
     constructor(
@@ -644,6 +661,7 @@ data class VideoUploadSuccessEventData(
         isGameEnabled: Boolean,
         gameType: GameType,
         isNsfw: Boolean,
+        type: VideoCreationType,
     ) : this(
         FeatureEvents.VIDEO_UPLOAD_SUCCESS.getEventName(),
         Features.AUTH.getFeatureName(),
@@ -652,6 +670,7 @@ data class VideoUploadSuccessEventData(
         isGameEnabled,
         gameType,
         isNsfw,
+        type,
     )
 }
 
@@ -660,12 +679,81 @@ data class VideoUploadErrorShownEventData(
     @SerialName("event") override val event: String = FeatureEvents.VIDEO_UPLOAD_ERROR_SHOWN.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.UPLOAD.getFeatureName(),
     @SerialName("reason") val reason: String,
+    @SerialName("type") val type: VideoCreationType,
 ) : BaseEventData(),
     EventData {
-    constructor(reason: String) : this(
+    constructor(reason: String, type: VideoCreationType) : this(
         FeatureEvents.VIDEO_UPLOAD_ERROR_SHOWN.getEventName(),
         Features.AUTH.getFeatureName(),
         reason,
+        type,
+    )
+}
+
+@Serializable
+data class VideoUploadTypeSelectedData(
+    @SerialName("event") override val event: String = FeatureEvents.VIDEO_UPLOAD_ERROR_SHOWN.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.UPLOAD.getFeatureName(),
+    @SerialName("type") val type: VideoCreationType,
+) : BaseEventData(),
+    EventData {
+    constructor(type: VideoCreationType) : this(
+        FeatureEvents.VIDEO_UPLOAD_TYPE_SELECTED.getEventName(),
+        Features.AUTH.getFeatureName(),
+        type,
+    )
+}
+
+@Serializable
+data class VideoGenerationModelSelectedData(
+    @SerialName("event") override val event: String = FeatureEvents.VIDEO_UPLOAD_ERROR_SHOWN.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.UPLOAD.getFeatureName(),
+    @SerialName("model") val model: String,
+) : BaseEventData(),
+    EventData {
+    constructor(model: String) : this(
+        FeatureEvents.VIDEO_GENERATION_MODEL_SELECTED.getEventName(),
+        Features.AUTH.getFeatureName(),
+        model,
+    )
+}
+
+@Serializable
+data class CreateAIVideoClickedData(
+    @SerialName("event") override val event: String = FeatureEvents.VIDEO_UPLOAD_ERROR_SHOWN.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.UPLOAD.getFeatureName(),
+    @SerialName("model") val model: String,
+) : BaseEventData(),
+    EventData {
+    constructor(model: String) : this(
+        FeatureEvents.CREAT_AI_VIDEO_CLICKED.getEventName(),
+        Features.AUTH.getFeatureName(),
+        model,
+    )
+}
+
+@Serializable
+data class AiVideoGeneratedData(
+    @SerialName("event") override val event: String = FeatureEvents.VIDEO_UPLOAD_ERROR_SHOWN.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.UPLOAD.getFeatureName(),
+    @SerialName("model") val model: String,
+    @SerialName("is_success") val isSuccess: Boolean,
+    @SerialName("reason") val reason: String?,
+    @SerialName("reason_type") val reasonType: AiVideoGenFailureType?,
+) : BaseEventData(),
+    EventData {
+    constructor(
+        model: String,
+        isSuccess: Boolean,
+        reason: String?,
+        reasonType: AiVideoGenFailureType?,
+    ) : this(
+        FeatureEvents.AI_VIDEO_GENERATED.getEventName(),
+        Features.AUTH.getFeatureName(),
+        model,
+        isSuccess,
+        reason,
+        reasonType,
     )
 }
 
@@ -850,6 +938,9 @@ enum class SignupPageName {
 
     @SerialName("menu")
     MENU,
+
+    @SerialName("video_creation")
+    VIDEO_CREATION,
 }
 
 @Serializable
@@ -988,4 +1079,22 @@ enum class VideoDeleteCTA {
 
     @SerialName("video_fullscreen")
     VIDEO_FULLSCREEN,
+}
+
+@Serializable
+enum class VideoCreationType {
+    @SerialName("ai_video")
+    AI_VIDEO,
+
+    @SerialName("upload_video")
+    UPLOAD_VIDEO,
+}
+
+@Serializable
+enum class AiVideoGenFailureType {
+    @SerialName("trigger_failed")
+    TRIGGER_FAILED,
+
+    @SerialName("generation_failed")
+    GENERATION_FAILED,
 }

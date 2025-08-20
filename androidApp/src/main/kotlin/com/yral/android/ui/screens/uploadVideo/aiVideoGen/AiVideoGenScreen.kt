@@ -62,6 +62,7 @@ import com.yral.android.ui.widgets.YralGradientButton
 import com.yral.android.ui.widgets.YralLoader
 import com.yral.android.ui.widgets.getSVGImageModel
 import com.yral.android.ui.widgets.video.YralVideoPlayer
+import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.features.account.viewmodel.AccountsViewModel.Companion.TERMS_OF_SERVICE_URL
 import com.yral.shared.features.account.viewmodel.ErrorType
 import com.yral.shared.features.uploadvideo.domain.models.Provider
@@ -80,6 +81,7 @@ fun AiVideoGenScreen(
 ) {
     val viewState by viewModel.state.collectAsStateWithLifecycle()
     val shouldRefresh = viewModel.sessionObserver.collectAsState(null)
+    LaunchedEffect(Unit) { viewModel.pushScreenView() }
     LaunchedEffect(shouldRefresh.value) {
         Logger.d("VideoGen") { "shouldRefresh: $shouldRefresh" }
         shouldRefresh.value?.first?.let { viewModel.refresh(it) }
@@ -167,6 +169,7 @@ private fun AiVideoGenScreenPrompts(
         is BottomSheetType.Signup -> {
             // reusing from account to be refactored in independent components
             LoginBottomSheet(
+                pageName = SignupPageName.VIDEO_CREATION,
                 bottomSheetState = bottomSheetState,
                 onDismissRequest = { viewModel.setBottomSheetType(BottomSheetType.None) },
                 onSignupClicked = { viewModel.signInWithGoogle(context) },
@@ -250,7 +253,10 @@ private fun PromptScreen(
             YralGradientButton(
                 text = stringResource(R.string.generate_video),
                 buttonState = buttonState,
-                onClick = { viewModel.generateAiVideo() },
+                onClick = {
+                    viewModel.createAiVideoClicked()
+                    viewModel.generateAiVideo()
+                },
             )
         }
     }
