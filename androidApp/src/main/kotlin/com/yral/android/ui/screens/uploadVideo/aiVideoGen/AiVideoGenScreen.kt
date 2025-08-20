@@ -85,15 +85,17 @@ fun AiVideoGenScreen(
         shouldRefresh.value?.first?.let { viewModel.refresh(it) }
     }
     BackHandler(enabled = viewState.uiState is UiState.Success, onBack = { })
-    Column(modifier.fillMaxSize().padding(top = 20.dp)) {
+    Column(modifier.fillMaxSize()) {
         when (viewState.uiState) {
             is UiState.InProgress -> {
                 Header { viewModel.setBottomSheetType(BottomSheetType.BackConfirmation) }
                 viewState.selectedProvider?.let { provider ->
-                    GenerationInProgressScreen(
-                        promptText = viewState.prompt,
-                        provider = provider,
-                    )
+                    Column(modifier = Modifier.padding(top = 20.dp)) {
+                        GenerationInProgressScreen(
+                            promptText = viewState.prompt,
+                            provider = provider,
+                        )
+                    }
                 }
             }
             UiState.Initial -> {
@@ -101,20 +103,24 @@ fun AiVideoGenScreen(
                     viewModel.cleanup()
                     component.onBack()
                 }
-                PromptScreen(
-                    viewState = viewState,
-                    viewModel = viewModel,
-                    showProvidersSheet = { viewModel.setBottomSheetType(BottomSheetType.ModelSelection) },
-                )
+                Column(modifier = Modifier.padding(top = 20.dp)) {
+                    PromptScreen(
+                        viewState = viewState,
+                        viewModel = viewModel,
+                        showProvidersSheet = { viewModel.setBottomSheetType(BottomSheetType.ModelSelection) },
+                    )
+                }
             }
             is UiState.Success<*> -> {
-                GenerationSuccessScreen(
-                    videoUrl = (viewState.uiState as UiState.Success<String>).data,
-                    goToHome = {
-                        viewModel.cleanup()
-                        component.goToHome()
-                    },
-                )
+                Column(modifier = Modifier.padding(top = 20.dp)) {
+                    GenerationSuccessScreen(
+                        videoUrl = (viewState.uiState as UiState.Success<String>).data,
+                        goToHome = {
+                            viewModel.cleanup()
+                            component.goToHome()
+                        },
+                    )
+                }
             }
             is UiState.Failure -> Unit // No op since failure is shown in a bottomSheet
         }
