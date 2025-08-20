@@ -590,12 +590,20 @@ data class VideoCreationPageViewedEventData(
     @SerialName("event") override val event: String = FeatureEvents.UPLOAD_VIDEO_PAGE_VIEWED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.UPLOAD.getFeatureName(),
     @SerialName("type_ext") val type: VideoCreationType,
+    @SerialName("credits_fetched") val creditsFetched: Boolean?,
+    @SerialName("credits_available") val creditsAvailable: Int?,
 ) : BaseEventData(),
     EventData {
-    constructor(type: VideoCreationType) : this(
+    constructor(
+        type: VideoCreationType,
+        creditsFetched: Boolean? = null,
+        creditsAvailable: Int? = null,
+    ) : this(
         FeatureEvents.VIDEO_CREATION_PAGE_VIEWED.getEventName(),
         Features.AUTH.getFeatureName(),
         type,
+        creditsFetched,
+        creditsAvailable,
     )
 }
 

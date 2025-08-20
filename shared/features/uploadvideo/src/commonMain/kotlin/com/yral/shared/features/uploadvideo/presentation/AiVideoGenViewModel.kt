@@ -136,9 +136,18 @@ class AiVideoGenViewModel internal constructor(
                                 isRegistered = sessionManager.isSocialSignIn(),
                             ),
                     ).onSuccess { status ->
+                        uploadVideoTelemetry.videoCreationPageViewed(
+                            type = VideoCreationType.AI_VIDEO,
+                            creditsFetched = true,
+                            creditsAvailable = 1 - status.usedCredits(),
+                        )
                         _state.update { it.copy(usedCredits = status.usedCredits()) }
                         logger.d { "Used credits ${_state.value.usedCredits} $status" }
                     }.onFailure { error ->
+                        uploadVideoTelemetry.videoCreationPageViewed(
+                            type = VideoCreationType.AI_VIDEO,
+                            creditsFetched = false,
+                        )
                         logger.e(error) { "Error fetching free credits" }
                         _state.update { it.copy(usedCredits = null) }
                     }
@@ -327,10 +336,6 @@ class AiVideoGenViewModel internal constructor(
 
     private fun handleSignupFailed() {
         setBottomSheetType(type = BottomSheetType.SignupFailed)
-    }
-
-    fun pushScreenView() {
-        uploadVideoTelemetry.videoCreationPageViewed(VideoCreationType.AI_VIDEO)
     }
 
     fun createAiVideoClicked() {

@@ -25,8 +25,19 @@ class UploadVideoTelemetry(
         analyticsManager.trackEvent(UploadVideoPageViewedEventData())
     }
 
-    fun videoCreationPageViewed(type: VideoCreationType) {
-        analyticsManager.trackEvent(VideoCreationPageViewedEventData(type))
+    fun videoCreationPageViewed(
+        type: VideoCreationType,
+        creditsFetched: Boolean? = null,
+        creditsAvailable: Int? = null,
+    ) {
+        analyticsManager.trackEvent(
+            event =
+                VideoCreationPageViewedEventData(
+                    type = type,
+                    creditsFetched = creditsFetched,
+                    creditsAvailable = creditsAvailable,
+                ),
+        )
     }
 
     fun selectFile() {

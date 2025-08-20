@@ -81,7 +81,6 @@ fun AiVideoGenScreen(
 ) {
     val viewState by viewModel.state.collectAsStateWithLifecycle()
     val shouldRefresh = viewModel.sessionObserver.collectAsState(null)
-    LaunchedEffect(Unit) { viewModel.pushScreenView() }
     LaunchedEffect(shouldRefresh.value) {
         Logger.d("VideoGen") { "shouldRefresh: $shouldRefresh" }
         shouldRefresh.value?.first?.let { viewModel.refresh(it) }
