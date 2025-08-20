@@ -131,8 +131,12 @@ class ProfileRepository: ProfileRepositoryProtocol {
           !$0.status().is_banned_due_to_user_reporting() &&
           !$0.is_nsfw()
         }
+        var seen = Set<String>()
+        let uniqueByVideoUID = result.filter {
+          seen.insert($0.video_uid().toString()).inserted
+        }
 
-        let feedResult = result.map { postDetail in
+        let feedResult = uniqueByVideoUID.map { postDetail in
           let videoURL = URL(
             string: "\(Constants.cloudfarePrefix)\(postDetail.video_uid().toString())\(Constants.cloudflareSuffix)"
           ) ?? URL(fileURLWithPath: "")
