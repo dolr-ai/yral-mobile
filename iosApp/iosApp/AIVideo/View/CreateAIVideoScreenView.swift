@@ -57,8 +57,9 @@ struct CreateAIVideoScreenView: View {
   @State private var selectedProvider: AIVideoProviderResponse?
   @State private var errorMessage: String?
 
-  @State private var generatingVideo = false
+  @State private var generatingVideo = true
   @State private var generatingVideoTextCurrentIndex: Int = .zero
+  @State private var showDisableBackBottomSheet = false
 
   var body: some View {
     VStack(alignment: .leading, spacing: Constants.vstackSpacing) {
@@ -67,7 +68,11 @@ struct CreateAIVideoScreenView: View {
           .resizable()
           .frame(width: Constants.backImageSize, height: Constants.backImageSize)
           .onTapGesture {
-            onDismiss()
+            if generatingVideo {
+              showDisableBackBottomSheet = true
+            } else {
+              onDismiss()
+            }
           }
 
         Text(Constants.screenTitle)
@@ -201,6 +206,15 @@ struct CreateAIVideoScreenView: View {
     .fullScreenCover(isPresented: isErrorPresented) {
       CreateAIVideoErrorBottomSheet(text: errorMessage ?? "") {
         errorMessage = nil
+      }
+      .background( ClearBackgroundView() )
+    }
+    .fullScreenCover(isPresented: $showDisableBackBottomSheet) {
+      DisableBackBottomSheet {
+        showDisableBackBottomSheet = false
+        onDismiss()
+      } onStayHere: {
+        showDisableBackBottomSheet = false
       }
       .background( ClearBackgroundView() )
     }
