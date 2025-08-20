@@ -13,14 +13,13 @@ import com.yral.shared.features.auth.utils.SocialProvider
 import com.yral.shared.features.uploadvideo.domain.GenerateVideoUseCase
 import com.yral.shared.features.uploadvideo.domain.GetFreeCreditsStatusUseCase
 import com.yral.shared.features.uploadvideo.domain.GetProvidersUseCase
-import com.yral.shared.features.uploadvideo.domain.PollGenerationStatusUseCase
-import com.yral.shared.features.uploadvideo.domain.UploadAiVideoFromUrlUseCase
+import com.yral.shared.features.uploadvideo.domain.PollAndUploadAiVideoUseCase
+import com.yral.shared.features.uploadvideo.domain.VideoGenerationTimeoutException
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoParams
 import com.yral.shared.features.uploadvideo.domain.models.Provider
 import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.uniffi.generated.RateLimitStatus
 import com.yral.shared.uniffi.generated.VideoGenRequestKey
-import com.yral.shared.uniffi.generated.VideoGenRequestStatus
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -65,7 +64,6 @@ class AiVideoGenViewModel internal constructor(
         }.distinctUntilChanged()
 
     private var currentRequestKey: VideoGenRequestKey? = null
-    private var currentVideoUrl: String? = null
     private var pollingJob: Job? = null
 
     fun refresh(canisterId: String) {
@@ -162,7 +160,6 @@ class AiVideoGenViewModel internal constructor(
                 sessionManager.userPrincipal?.let { userId ->
                     _state.update { it.copy(uiState = UiState.InProgress(0f)) }
                     currentRequestKey = null
-                    currentVideoUrl = null
                     requiredUseCases
                         .generateVideo(
                             parameter =
@@ -182,7 +179,7 @@ class AiVideoGenViewModel internal constructor(
                             logger.d { "Video generated: $result" }
                             result.requestKey?.let { requestKey ->
                                 currentRequestKey = requestKey
-                                pollGeneration(requestKey)
+                                pollAndUploadVideo(requestKey)
                                 return@onSuccess
                             }
                             result.providerError?.let { error ->
@@ -201,89 +198,61 @@ class AiVideoGenViewModel internal constructor(
         }
     }
 
-    private fun pollGeneration(requestKey: VideoGenRequestKey) {
+    private fun pollAndUploadVideo(requestKey: VideoGenRequestKey) {
         pollingJob?.cancel()
         pollingJob =
             viewModelScope.launch {
                 try {
                     requiredUseCases
-                        .pollGenerationStatusUseCase
+                        .pollAndUploadAiVideo
                         .invoke(
                             parameters =
-                                PollGenerationStatusUseCase.Params(
+                                PollAndUploadAiVideoUseCase.Params(
                                     requestKey = requestKey,
                                     isFastInitially = false,
+                                    hashtags = emptyList(),
+                                    description = "",
+                                    isNsfw = false,
+                                    enableHotOrNot = false,
                                 ),
-                        ).collect { collectedStatus ->
-                            logger.d { "Video generation status: ${collectedStatus.value}" }
-                            when (val status = collectedStatus.value) {
-                                is VideoGenRequestStatus.Complete -> {
-                                    currentVideoUrl = status.v1
-                                    uploadAiVideoFromUrl(status.v1)
-                                }
-
-                                VideoGenRequestStatus.Pending,
-                                VideoGenRequestStatus.Processing,
-                                -> {
+                        ).collect { result ->
+                            when (val pollResult = result.value) {
+                                is PollAndUploadAiVideoUseCase.PollAndUploadResult.InProgress -> {
                                     _state.update { it.copy(uiState = UiState.InProgress(0f)) }
                                 }
-
-                                is VideoGenRequestStatus.Failed -> {
+                                is PollAndUploadAiVideoUseCase.PollAndUploadResult.Success -> {
+                                    logger.d { "Generated video uploaded successfully" }
+                                    _state.update { it.copy(uiState = UiState.Success(pollResult.videoUrl)) }
+                                }
+                                is PollAndUploadAiVideoUseCase.PollAndUploadResult.Failed -> {
                                     _state.update {
-                                        it.copy(bottomSheetType = BottomSheetType.Error(status.v1, true))
+                                        it.copy(bottomSheetType = BottomSheetType.Error(pollResult.errorMessage, true))
                                     }
                                 }
                             }
                         }
+                } catch (e: VideoGenerationTimeoutException) {
+                    logger.e { e.message }
+                    _state.update { it.copy(bottomSheetType = BottomSheetType.Error("")) }
                 } catch (e: CancellationException) {
-                    logger.e(e) { "Error polling generation status" }
+                    logger.e(e) { "Error polling and uploading video" }
                     throw e
                 } catch (
                     @Suppress("TooGenericExceptionCaught") e: Exception,
                 ) {
-                    logger.e(e) { "Error polling generation status" }
+                    logger.e(e) { "Error polling and uploading video" }
                     _state.update { it.copy(bottomSheetType = BottomSheetType.Error("")) }
                 }
             }
-    }
-
-    private suspend fun uploadAiVideoFromUrl(videoUrl: String) {
-        try {
-            logger.d { "Triggered upload_ai_video_from_url for $videoUrl" }
-            requiredUseCases.uploadAiVideoFromUrl.invoke(
-                parameter =
-                    UploadAiVideoFromUrlUseCase.Params(
-                        videoUrl = videoUrl,
-                        hashtags = emptyList(),
-                        description = "",
-                        isNsfw = false,
-                        enableHotOrNot = false,
-                    ),
-            )
-            logger.d { "Generated video uploaded successfully" }
-            _state.update { it.copy(uiState = UiState.Success(videoUrl)) }
-        } catch (e: CancellationException) {
-            logger.e(e) { "Error updating metadata for video" }
-            throw e
-        } catch (
-            @Suppress("TooGenericExceptionCaught") e: Exception,
-        ) {
-            logger.e(e) { "Error calling upload_ai_video_from_url" }
-            _state.update { it.copy(bottomSheetType = BottomSheetType.Error("")) }
-        }
     }
 
     fun tryAgain() {
         viewModelScope.launch {
             _state.update { it.copy(bottomSheetType = BottomSheetType.None) }
             when {
-                // If we have a video URL, retry upload
-                currentVideoUrl != null -> {
-                    uploadAiVideoFromUrl(currentVideoUrl!!)
-                }
-                // If we have a request key, retry polling
+                // If we have a request key, retry polling and uploading
                 currentRequestKey != null -> {
-                    pollGeneration(currentRequestKey!!)
+                    pollAndUploadVideo(currentRequestKey!!)
                 }
                 // Otherwise, retry from the beginning (generate video)
                 else -> {
@@ -315,7 +284,6 @@ class AiVideoGenViewModel internal constructor(
     fun cleanup() {
         _state.update { ViewState() }
         currentRequestKey = null
-        currentVideoUrl = null
         pollingJob?.cancel()
     }
 
@@ -365,7 +333,6 @@ class AiVideoGenViewModel internal constructor(
         val getProviders: GetProvidersUseCase,
         val getFreeCreditsStatus: GetFreeCreditsStatusUseCase,
         val generateVideo: GenerateVideoUseCase,
-        val pollGenerationStatusUseCase: PollGenerationStatusUseCase,
-        val uploadAiVideoFromUrl: UploadAiVideoFromUrlUseCase,
+        val pollAndUploadAiVideo: PollAndUploadAiVideoUseCase,
     )
 }

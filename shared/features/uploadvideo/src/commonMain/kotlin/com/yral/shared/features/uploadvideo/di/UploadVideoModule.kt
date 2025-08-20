@@ -8,6 +8,7 @@ import com.yral.shared.features.uploadvideo.domain.GenerateVideoUseCase
 import com.yral.shared.features.uploadvideo.domain.GetFreeCreditsStatusUseCase
 import com.yral.shared.features.uploadvideo.domain.GetProvidersUseCase
 import com.yral.shared.features.uploadvideo.domain.GetUploadEndpointUseCase
+import com.yral.shared.features.uploadvideo.domain.PollAndUploadAiVideoUseCase
 import com.yral.shared.features.uploadvideo.domain.PollGenerationStatusUseCase
 import com.yral.shared.features.uploadvideo.domain.PollingConfigProvider
 import com.yral.shared.features.uploadvideo.domain.UpdateMetaUseCase
@@ -43,6 +44,7 @@ val uploadVideoModule =
         factoryOf(::DefaultPollingConfigProvider) bind PollingConfigProvider::class
         factoryOf(::PollGenerationStatusUseCase)
         factoryOf(::UploadAiVideoFromUrlUseCase)
+        factoryOf(::PollAndUploadAiVideoUseCase)
         factoryOf(::GetFreeCreditsStatusUseCase)
         factoryOf(::AiRequiredUseCases)
         viewModelOf(::AiVideoGenViewModel)
