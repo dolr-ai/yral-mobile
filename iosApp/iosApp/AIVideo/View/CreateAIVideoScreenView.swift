@@ -8,6 +8,20 @@
 
 import SwiftUI
 
+struct CreateAIVideoHost: View {
+  private let onDismiss: () -> Void
+  @StateObject private var viewModel: CreateAIVideoViewModel
+
+  init(createAIVideoDI: CreateAIVideoDIContainer, onDismiss: @escaping () -> Void) {
+    self.onDismiss = onDismiss
+    _viewModel = StateObject(wrappedValue: createAIVideoDI.makeAIVideoViewModel())
+  }
+
+  var body: some View {
+    CreateAIVideoScreenView(viewModel: viewModel, onDismiss: onDismiss)
+  }
+}
+
 struct CreateAIVideoScreenView: View {
   @EnvironmentObject var session: SessionManager
   @ObservedObject var viewModel: CreateAIVideoViewModel
@@ -155,9 +169,10 @@ struct CreateAIVideoScreenView: View {
       switch event {
       case .updateSelectedProvider(let provider):
         selectedProvider = provider
-      case .socialSignInSuccess:
+      case .socialSignInSuccess(let creditsAvailable):
         loadingProvider = nil
         showSignupSheet = false
+        creditsUsed = !creditsAvailable
       case .socialSignInFailure:
         loadingProvider = nil
         showSignupSheet = false
@@ -169,15 +184,21 @@ struct CreateAIVideoScreenView: View {
       default:
         break
       }
-
-      DispatchQueue.main.async {
-        viewModel.event = nil
-      }
     })
     .onAppear {
       showLoader = true
       Task {
         await viewModel.getAIVideoProviders()
+        if isUserLoggedIn {
+          let availableCredits = await viewModel.creditsAvailable()
+          await MainActor.run {
+            creditsUsed = !availableCredits
+          }
+        } else {
+          await MainActor.run {
+            creditsUsed = false
+          }
+        }
       }
     }
   }
