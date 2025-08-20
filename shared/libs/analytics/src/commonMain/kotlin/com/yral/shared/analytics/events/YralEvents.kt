@@ -589,7 +589,7 @@ data class UploadVideoPageViewedEventData(
 data class VideoCreationPageViewedEventData(
     @SerialName("event") override val event: String = FeatureEvents.UPLOAD_VIDEO_PAGE_VIEWED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.UPLOAD.getFeatureName(),
-    @SerialName("type") val type: VideoCreationType,
+    @SerialName("type_ext") val type: VideoCreationType,
 ) : BaseEventData(),
     EventData {
     constructor(type: VideoCreationType) : this(
@@ -631,7 +631,7 @@ data class VideoUploadInitiatedEventData(
     @SerialName("feature_name") override val featureName: String = Features.UPLOAD.getFeatureName(),
     @SerialName("caption_added") val captionAdded: Boolean,
     @SerialName("hashtags_added") val hashtagsAdded: Boolean,
-    @SerialName("type") val type: VideoCreationType,
+    @SerialName("type_ext") val type: VideoCreationType,
 ) : BaseEventData(),
     EventData {
     constructor(captionAdded: Boolean, hashtagsAdded: Boolean, type: VideoCreationType) : this(
@@ -652,7 +652,7 @@ data class VideoUploadSuccessEventData(
     @SerialName("is_game_enabled") val isGameEnabled: Boolean,
     @SerialName("game_type") val gameType: GameType,
     @SerialName("is_nsfw") val isNsfw: Boolean,
-    @SerialName("type") val type: VideoCreationType,
+    @SerialName("type_ext") val type: VideoCreationType,
 ) : BaseEventData(),
     EventData {
     constructor(
@@ -679,7 +679,7 @@ data class VideoUploadErrorShownEventData(
     @SerialName("event") override val event: String = FeatureEvents.VIDEO_UPLOAD_ERROR_SHOWN.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.UPLOAD.getFeatureName(),
     @SerialName("reason") val reason: String,
-    @SerialName("type") val type: VideoCreationType,
+    @SerialName("type_ext") val type: VideoCreationType,
 ) : BaseEventData(),
     EventData {
     constructor(reason: String, type: VideoCreationType) : this(
@@ -694,7 +694,7 @@ data class VideoUploadErrorShownEventData(
 data class VideoUploadTypeSelectedData(
     @SerialName("event") override val event: String = FeatureEvents.VIDEO_UPLOAD_ERROR_SHOWN.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.UPLOAD.getFeatureName(),
-    @SerialName("type") val type: VideoCreationType,
+    @SerialName("type_ext") val type: VideoCreationType,
 ) : BaseEventData(),
     EventData {
     constructor(type: VideoCreationType) : this(
