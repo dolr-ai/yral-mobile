@@ -21,7 +21,7 @@ extension FeedsViewController {
       // swiftlint: disable force_cast
       if indexPath.row == self.feedsPlayer.currentIndex {
         let showOnboarding = !(UserDefaultsManager.shared.get(for: DefaultsKey.onboardingCompleted) ?? false)
-        && indexPath.item >= .three && !playToScroll && self.feedType == .otherUsers
+        && indexPath.item >= .three && indexPath.item % .three == .zero && !playToScroll && self.feedType == .otherUsers
         self.isTutorialVote = showOnboarding
         if showOnboarding {
           AnalyticsModuleKt.getAnalyticsManager().trackEvent(
