@@ -38,7 +38,12 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import co.touchlab.kermit.Logger
@@ -423,7 +428,7 @@ private fun GenerationSuccessScreen(
             )
             Text(
                 modifier = Modifier.fillMaxWidth(),
-                text = stringResource(R.string.upload_completed_message),
+                text = buildUploadCompletedMessage(),
                 style = LocalAppTopography.current.mdRegular,
                 color = YralColors.NeutralTextPrimary,
                 textAlign = TextAlign.Center,
@@ -462,4 +467,25 @@ object AiVideoGenScreenConstants {
     const val ARROW_ROTATION = -90f
     const val PROMPT_MAX_CHAR = 500
     const val LOADING_MESSAGE_DELAY = 10000L // 10 sec
+}
+
+@Composable
+private fun buildUploadCompletedMessage(): AnnotatedString {
+    val fullMessage = stringResource(R.string.upload_completed_message)
+    val yourVideos = stringResource(R.string.your_videos)
+    val myProfile = stringResource(R.string.my_profile)
+    val firstPart = fullMessage.substringBefore(yourVideos)
+    val middlePart = fullMessage.substringAfter(yourVideos).substringBefore(myProfile)
+    val endPart = fullMessage.substringAfter(myProfile)
+    return buildAnnotatedString {
+        append(firstPart)
+        withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+            append(stringResource(R.string.your_videos))
+        }
+        append(middlePart)
+        withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+            append(stringResource(R.string.my_profile))
+        }
+        append(endPart)
+    }
 }
