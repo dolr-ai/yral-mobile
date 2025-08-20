@@ -41,9 +41,9 @@ class FeedsRepository: FeedRepositoryProtocol {
         for: CacheEndPoints.getGlobalCache(
           request: FeedRequestDTO(
             userID: principal,
-            filterResults: [],
-            numResults: Constants.initialNumResults
-          )),
+            numResults: Constants.initialNumResults,
+          )
+        ),
         decodeAs: PostsResponse.self
       ).posts
     } catch {
@@ -87,12 +87,10 @@ class FeedsRepository: FeedRepositoryProtocol {
     }
     var feedResponse: [CacheDTO]
     do {
-      let filteredPosts = request.filteredPosts.map { $0.asFilteredResultDTO() }
       feedResponse = try await httpService.performRequest(
         for: CacheEndPoints.getMLFeed(
           request: FeedRequestDTO(
             userID: principal,
-            filterResults: filteredPosts,
             numResults: Constants.mlNumResults
           )),
         decodeAs: PostsResponse.self
@@ -170,7 +168,7 @@ class FeedsRepository: FeedRepositoryProtocol {
       profileImageURL: profileImageURL,
       likeCount: Int(result.like_count()),
       isLiked: result.liked_by_me(),
-      isNsfw: feed.isNsfw,
+      nsfwProbability: feed.nsfwProbability,
       smileyGame: SmileyGame(config: SmileyGameConfig.shared.config, state: .notPlayed)
     )
   }
@@ -376,5 +374,5 @@ class CacheEndPoints {
 protocol FeedMapping {
   var postID: UInt32 { get }
   var canisterID: String { get }
-  var isNsfw: Bool { get }
+  var nsfwProbability: Double { get }
 }

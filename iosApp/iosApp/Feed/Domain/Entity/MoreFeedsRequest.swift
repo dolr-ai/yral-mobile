@@ -7,7 +7,6 @@
 //
 
 struct MoreFeedsRequest {
-  let filteredPosts: [FilteredPosts]
   let numResults: Int
   let feedType: FeedType
 }
