@@ -18,7 +18,6 @@ extension FeedsCell {
       self.addOnboardingInfoView(smileyView)
       DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.five) {
         self.cleanupOnOnboardingCompletion(smileyView: smileyView)
-        UserDefaultsManager.shared.set(true, for: .onboardingCompleted)
       }
     }
   }
@@ -191,7 +190,6 @@ extension FeedsCell {
   @objc func dismissOnboardingOnTap() {
     guard let smileyView = smileyGameHostController?.view else { return }
     self.cleanupOnOnboardingCompletion(smileyView: smileyView)
-    UserDefaultsManager.shared.set(true, for: .onboardingCompleted)
   }
 
   @objc func howToPlayTapped() {

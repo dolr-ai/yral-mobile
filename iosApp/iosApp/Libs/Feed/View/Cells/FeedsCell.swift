@@ -377,6 +377,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
       delegate?.rechargeWallet(index: index, smiley: smiley)
       beginWalletRechargeLoading()
     }
+    UserDefaultsManager.shared.set(true, for: .onboardingCompleted)
   }
 
   private func startFlowingAnimation(for smiley: Smiley) {
