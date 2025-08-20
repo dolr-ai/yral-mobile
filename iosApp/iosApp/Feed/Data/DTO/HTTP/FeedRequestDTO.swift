@@ -10,40 +10,18 @@ import Foundation
 
 struct FeedRequestDTO: Codable {
   let userID: String
-  let filterResults: [FilteredResultDTO]
+  let isNSFW: Bool = false
   let numResults: Int64
+  let excludeWatchedItems: [String] = []
+  let excludedReportedItems: [String] = []
+  let excludedItems: [String] = []
 
   enum CodingKeys: String, CodingKey {
     case userID = "user_id"
-    case filterResults = "filter_results"
+    case isNSFW = "nsfw_label"
     case numResults = "num_results"
-  }
-}
-
-struct FilteredResultDTO: Codable {
-  let canisterID: String
-  let isNsfw: Bool
-  let postID: Int64
-  let publisherUserID: String
-  let videoID: String
-
-  enum CodingKeys: String, CodingKey {
-    case canisterID = "canister_id"
-    case isNsfw = "is_nsfw"
-    case postID = "post_id"
-    case publisherUserID = "publisher_user_id"
-    case videoID = "video_id"
-  }
-}
-
-extension FilteredPosts {
-  func asFilteredResultDTO() -> FilteredResultDTO {
-    FilteredResultDTO(
-      canisterID: canisterID,
-      isNsfw: self.isNsfw,
-      postID: Int64(postID) ?? .zero,
-      publisherUserID: self.publisherUserID,
-      videoID: videoID
-    )
+    case excludeWatchedItems = "exclude_watched_items"
+    case excludedReportedItems = "exclude_reported_items"
+    case excludedItems = "exclude_items"
   }
 }
