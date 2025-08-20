@@ -116,6 +116,34 @@ class CbWrapper$unregister_device {
         self.cb = cb
     }
 }
+public func get_rate_limit_status_core<GenericIntoRustString: IntoRustString>(_ principal: Principal, _ property: GenericIntoRustString, _ is_registered: Bool, _ identity: DelegatedIdentity) async throws -> RateLimitStatus {
+    func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
+        let wrapper = Unmanaged<CbWrapper$get_rate_limit_status_core>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+        if rustFnRetVal.is_ok {
+            wrapper.cb(.success(RateLimitStatus(ptr: rustFnRetVal.ok_or_err!)))
+        } else {
+            wrapper.cb(.failure(RustString(ptr: rustFnRetVal.ok_or_err!)))
+        }
+    }
+
+    return try await withCheckedThrowingContinuation({ (continuation: CheckedContinuation<RateLimitStatus, Error>) in
+        let callback = { rustFnRetVal in
+            continuation.resume(with: rustFnRetVal)
+        }
+
+        let wrapper = CbWrapper$get_rate_limit_status_core(cb: callback)
+        let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
+
+        __swift_bridge__$get_rate_limit_status_core(wrapperPtr, onComplete, {principal.isOwned = false; return principal.ptr;}(), { let rustString = property.intoRustString(); rustString.isOwned = false; return rustString.ptr }(), is_registered, {identity.isOwned = false; return identity.ptr;}())
+    })
+}
+class CbWrapper$get_rate_limit_status_core {
+    var cb: (Result<RateLimitStatus, Error>) -> ()
+
+    public init(cb: @escaping (Result<RateLimitStatus, Error>) -> ()) {
+        self.cb = cb
+    }
+}
 
 public class KeyValuePair: KeyValuePairRefMut {
     var isOwned: Bool = true
@@ -11859,6 +11887,98 @@ extension Result12: Vectorizable {
 }
 
 
+public class RateLimitStatus: RateLimitStatusRefMut {
+    var isOwned: Bool = true
+
+    public override init(ptr: UnsafeMutableRawPointer) {
+        super.init(ptr: ptr)
+    }
+
+    deinit {
+        if isOwned {
+            __swift_bridge__$RateLimitStatus$_free(ptr)
+        }
+    }
+}
+public class RateLimitStatusRefMut: RateLimitStatusRef {
+    public override init(ptr: UnsafeMutableRawPointer) {
+        super.init(ptr: ptr)
+    }
+}
+public class RateLimitStatusRef {
+    var ptr: UnsafeMutableRawPointer
+
+    public init(ptr: UnsafeMutableRawPointer) {
+        self.ptr = ptr
+    }
+}
+extension RateLimitStatusRef {
+    public func principal() -> Principal {
+        Principal(ptr: __swift_bridge__$RateLimitStatus$principal(ptr))
+    }
+
+    public func request_count() -> UInt64 {
+        __swift_bridge__$RateLimitStatus$request_count(ptr)
+    }
+
+    public func window_start() -> UInt64 {
+        __swift_bridge__$RateLimitStatus$window_start(ptr)
+    }
+
+    public func is_limited() -> Bool {
+        __swift_bridge__$RateLimitStatus$is_limited(ptr)
+    }
+}
+extension RateLimitStatus: Vectorizable {
+    public static func vecOfSelfNew() -> UnsafeMutableRawPointer {
+        __swift_bridge__$Vec_RateLimitStatus$new()
+    }
+
+    public static func vecOfSelfFree(vecPtr: UnsafeMutableRawPointer) {
+        __swift_bridge__$Vec_RateLimitStatus$drop(vecPtr)
+    }
+
+    public static func vecOfSelfPush(vecPtr: UnsafeMutableRawPointer, value: RateLimitStatus) {
+        __swift_bridge__$Vec_RateLimitStatus$push(vecPtr, {value.isOwned = false; return value.ptr;}())
+    }
+
+    public static func vecOfSelfPop(vecPtr: UnsafeMutableRawPointer) -> Optional<Self> {
+        let pointer = __swift_bridge__$Vec_RateLimitStatus$pop(vecPtr)
+        if pointer == nil {
+            return nil
+        } else {
+            return (RateLimitStatus(ptr: pointer!) as! Self)
+        }
+    }
+
+    public static func vecOfSelfGet(vecPtr: UnsafeMutableRawPointer, index: UInt) -> Optional<RateLimitStatusRef> {
+        let pointer = __swift_bridge__$Vec_RateLimitStatus$get(vecPtr, index)
+        if pointer == nil {
+            return nil
+        } else {
+            return RateLimitStatusRef(ptr: pointer!)
+        }
+    }
+
+    public static func vecOfSelfGetMut(vecPtr: UnsafeMutableRawPointer, index: UInt) -> Optional<RateLimitStatusRefMut> {
+        let pointer = __swift_bridge__$Vec_RateLimitStatus$get_mut(vecPtr, index)
+        if pointer == nil {
+            return nil
+        } else {
+            return RateLimitStatusRefMut(ptr: pointer!)
+        }
+    }
+
+    public static func vecOfSelfAsPtr(vecPtr: UnsafeMutableRawPointer) -> UnsafePointer<RateLimitStatusRef> {
+        UnsafePointer<RateLimitStatusRef>(OpaquePointer(__swift_bridge__$Vec_RateLimitStatus$as_ptr(vecPtr)))
+    }
+
+    public static func vecOfSelfLen(vecPtr: UnsafeMutableRawPointer) -> UInt {
+        __swift_bridge__$Vec_RateLimitStatus$len(vecPtr)
+    }
+}
+
+
 
 
 
@@ -22085,6 +22205,102 @@ extension ServiceRef {
     }
 }
 
+
+
+
+
+
+
+
+extension ServiceRef {
+    public func get_account_transactions(_ arg0: GetAccountTransactionsArgs) async throws -> GetTransactionsResult {
+        func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
+            let wrapper = Unmanaged<CbWrapper$Service$get_account_transactions>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            if rustFnRetVal.is_ok {
+                wrapper.cb(.success(GetTransactionsResult(ptr: rustFnRetVal.ok_or_err!)))
+            } else {
+                wrapper.cb(.failure(AgentError(ptr: rustFnRetVal.ok_or_err!)))
+            }
+        }
+
+        return try await withCheckedThrowingContinuation({ (continuation: CheckedContinuation<GetTransactionsResult, Error>) in
+            let callback = { rustFnRetVal in
+                continuation.resume(with: rustFnRetVal)
+            }
+
+            let wrapper = CbWrapper$Service$get_account_transactions(cb: callback)
+            let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
+
+            __swift_bridge__$Service$get_account_transactions(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}())
+        })
+    }
+    class CbWrapper$Service$get_account_transactions {
+        var cb: (Result<GetTransactionsResult, Error>) -> ()
+    
+        public init(cb: @escaping (Result<GetTransactionsResult, Error>) -> ()) {
+            self.cb = cb
+        }
+    }
+
+    public func ledger_id() async throws -> Principal {
+        func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
+            let wrapper = Unmanaged<CbWrapper$Service$ledger_id>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            if rustFnRetVal.is_ok {
+                wrapper.cb(.success(Principal(ptr: rustFnRetVal.ok_or_err!)))
+            } else {
+                wrapper.cb(.failure(AgentError(ptr: rustFnRetVal.ok_or_err!)))
+            }
+        }
+
+        return try await withCheckedThrowingContinuation({ (continuation: CheckedContinuation<Principal, Error>) in
+            let callback = { rustFnRetVal in
+                continuation.resume(with: rustFnRetVal)
+            }
+
+            let wrapper = CbWrapper$Service$ledger_id(cb: callback)
+            let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
+
+            __swift_bridge__$Service$ledger_id(wrapperPtr, onComplete, ptr)
+        })
+    }
+    class CbWrapper$Service$ledger_id {
+        var cb: (Result<Principal, Error>) -> ()
+    
+        public init(cb: @escaping (Result<Principal, Error>) -> ()) {
+            self.cb = cb
+        }
+    }
+
+    public func list_subaccounts(_ arg0: ListSubaccountsArgs) async throws -> RustVec<SubAccount> {
+        func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
+            let wrapper = Unmanaged<CbWrapper$Service$list_subaccounts>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            if rustFnRetVal.is_ok {
+                wrapper.cb(.success(RustVec<SubAccount>(ptr: rustFnRetVal.ok_or_err!)))
+            } else {
+                wrapper.cb(.failure(AgentError(ptr: rustFnRetVal.ok_or_err!)))
+            }
+        }
+
+        return try await withCheckedThrowingContinuation({ (continuation: CheckedContinuation<RustVec<SubAccount>, Error>) in
+            let callback = { rustFnRetVal in
+                continuation.resume(with: rustFnRetVal)
+            }
+
+            let wrapper = CbWrapper$Service$list_subaccounts(cb: callback)
+            let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
+
+            __swift_bridge__$Service$list_subaccounts(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}())
+        })
+    }
+    class CbWrapper$Service$list_subaccounts {
+        var cb: (Result<RustVec<SubAccount>, Error>) -> ()
+    
+        public init(cb: @escaping (Result<RustVec<SubAccount>, Error>) -> ()) {
+            self.cb = cb
+        }
+    }
+}
+
 public class ListSubaccountsArgs: ListSubaccountsArgsRefMut {
     var isOwned: Bool = true
 
@@ -23135,100 +23351,6 @@ extension InitArgs: Vectorizable {
         __swift_bridge__$Vec_InitArgs$len(vecPtr)
     }
 }
-
-
-
-extension ServiceRef {
-    public func get_account_transactions(_ arg0: GetAccountTransactionsArgs) async throws -> GetTransactionsResult {
-        func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service$get_account_transactions>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
-            if rustFnRetVal.is_ok {
-                wrapper.cb(.success(GetTransactionsResult(ptr: rustFnRetVal.ok_or_err!)))
-            } else {
-                wrapper.cb(.failure(AgentError(ptr: rustFnRetVal.ok_or_err!)))
-            }
-        }
-
-        return try await withCheckedThrowingContinuation({ (continuation: CheckedContinuation<GetTransactionsResult, Error>) in
-            let callback = { rustFnRetVal in
-                continuation.resume(with: rustFnRetVal)
-            }
-
-            let wrapper = CbWrapper$Service$get_account_transactions(cb: callback)
-            let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
-
-            __swift_bridge__$Service$get_account_transactions(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}())
-        })
-    }
-    class CbWrapper$Service$get_account_transactions {
-        var cb: (Result<GetTransactionsResult, Error>) -> ()
-    
-        public init(cb: @escaping (Result<GetTransactionsResult, Error>) -> ()) {
-            self.cb = cb
-        }
-    }
-
-    public func ledger_id() async throws -> Principal {
-        func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service$ledger_id>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
-            if rustFnRetVal.is_ok {
-                wrapper.cb(.success(Principal(ptr: rustFnRetVal.ok_or_err!)))
-            } else {
-                wrapper.cb(.failure(AgentError(ptr: rustFnRetVal.ok_or_err!)))
-            }
-        }
-
-        return try await withCheckedThrowingContinuation({ (continuation: CheckedContinuation<Principal, Error>) in
-            let callback = { rustFnRetVal in
-                continuation.resume(with: rustFnRetVal)
-            }
-
-            let wrapper = CbWrapper$Service$ledger_id(cb: callback)
-            let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
-
-            __swift_bridge__$Service$ledger_id(wrapperPtr, onComplete, ptr)
-        })
-    }
-    class CbWrapper$Service$ledger_id {
-        var cb: (Result<Principal, Error>) -> ()
-    
-        public init(cb: @escaping (Result<Principal, Error>) -> ()) {
-            self.cb = cb
-        }
-    }
-
-    public func list_subaccounts(_ arg0: ListSubaccountsArgs) async throws -> RustVec<SubAccount> {
-        func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service$list_subaccounts>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
-            if rustFnRetVal.is_ok {
-                wrapper.cb(.success(RustVec<SubAccount>(ptr: rustFnRetVal.ok_or_err!)))
-            } else {
-                wrapper.cb(.failure(AgentError(ptr: rustFnRetVal.ok_or_err!)))
-            }
-        }
-
-        return try await withCheckedThrowingContinuation({ (continuation: CheckedContinuation<RustVec<SubAccount>, Error>) in
-            let callback = { rustFnRetVal in
-                continuation.resume(with: rustFnRetVal)
-            }
-
-            let wrapper = CbWrapper$Service$list_subaccounts(cb: callback)
-            let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
-
-            __swift_bridge__$Service$list_subaccounts(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}())
-        })
-    }
-    class CbWrapper$Service$list_subaccounts {
-        var cb: (Result<RustVec<SubAccount>, Error>) -> ()
-    
-        public init(cb: @escaping (Result<RustVec<SubAccount>, Error>) -> ()) {
-            self.cb = cb
-        }
-    }
-}
-
-
-
 public class Icrc3DataCertificateResult: Icrc3DataCertificateResultRefMut {
     var isOwned: Bool = true
 
@@ -34716,6 +34838,4 @@ extension ServiceRef {
         }
     }
 }
-// swiftlint: disable all
-
-
+// swiftlint: enable all

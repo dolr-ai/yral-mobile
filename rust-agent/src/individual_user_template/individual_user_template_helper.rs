@@ -269,14 +269,20 @@ pub async fn get_rate_limit_status_core(
     property: String,
     is_registered: bool,
     identity: DelegatedIdentity,
-) -> std::result::Result<Option<RateLimitStatus>, AgentError> {
+) -> std::result::Result<RateLimitStatus, String> {
     let agent = Agent::builder()
-    .with_url("https://ic0.app/")
-    .with_identity(identity)
-    .build()?; // propagate build error
+        .with_url("https://ic0.app/")
+        .with_identity(identity)
+        .build()
+        .map_err(|e| e.to_string())?;
 
     let canister = RateLimits(RATE_LIMITS_ID, &agent);
-    canister
+
+    let status = canister
         .get_rate_limit_status(principal, property, is_registered)
         .await
+        .map_err(|e| e.to_string())?  
+        .ok_or_else(|| "not found".to_string())?;
+
+    Ok(status)
 }
