@@ -180,6 +180,8 @@
 		10C1B39E2E54BD0F00CFC41B /* CreateAIVideoErrorBottomSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B39C2E54BD0F00CFC41B /* CreateAIVideoErrorBottomSheet.swift */; };
 		10C1B3E62E55A73300CFC41B /* RateLimitStatusUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3E52E55A72900CFC41B /* RateLimitStatusUseCase.swift */; };
 		10C1B3E72E55A73300CFC41B /* RateLimitStatusUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3E52E55A72900CFC41B /* RateLimitStatusUseCase.swift */; };
+		10C1B3E92E55EE2D00CFC41B /* DisableBackBottomSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3E82E55EE2D00CFC41B /* DisableBackBottomSheet.swift */; };
+		10C1B3EA2E55EE2D00CFC41B /* DisableBackBottomSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3E82E55EE2D00CFC41B /* DisableBackBottomSheet.swift */; };
 		10CEBB7F2E3103670022803A /* HapticFeedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CEBB7E2E3103630022803A /* HapticFeedback.swift */; };
 		10CEBB802E3103670022803A /* HapticFeedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CEBB7E2E3103630022803A /* HapticFeedback.swift */; };
 		10CEBB822E3103CD0022803A /* HapticFeedback+SwiftUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CEBB812E3103C50022803A /* HapticFeedback+SwiftUI.swift */; };
@@ -764,6 +766,7 @@
 		10C1B3992E545A0400CFC41B /* GenerateVideoRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenerateVideoRequest.swift; sourceTree = "<group>"; };
 		10C1B39C2E54BD0F00CFC41B /* CreateAIVideoErrorBottomSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateAIVideoErrorBottomSheet.swift; sourceTree = "<group>"; };
 		10C1B3E52E55A72900CFC41B /* RateLimitStatusUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RateLimitStatusUseCase.swift; sourceTree = "<group>"; };
+		10C1B3E82E55EE2D00CFC41B /* DisableBackBottomSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisableBackBottomSheet.swift; sourceTree = "<group>"; };
 		10CEBB7E2E3103630022803A /* HapticFeedback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticFeedback.swift; sourceTree = "<group>"; };
 		10CEBB812E3103C50022803A /* HapticFeedback+SwiftUI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HapticFeedback+SwiftUI.swift"; sourceTree = "<group>"; };
 		10CEBB842E3104000022803A /* HapticGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticGenerator.swift; sourceTree = "<group>"; };
@@ -1226,6 +1229,7 @@
 				1064B7FC2E4C8CD30036C10B /* CreateAIVideoScreenView.swift */,
 				1064B8022E4CB1840036C10B /* ProviderOptionsBottomSheetView.swift */,
 				10C1B39C2E54BD0F00CFC41B /* CreateAIVideoErrorBottomSheet.swift */,
+				10C1B3E82E55EE2D00CFC41B /* DisableBackBottomSheet.swift */,
 			);
 			path = View;
 			sourceTree = "<group>";
@@ -3464,6 +3468,7 @@
 				1064B8012E4CA4110036C10B /* AIVideoProviderResponse.swift in Sources */,
 				1069860C2E5303A7005BE0D4 /* AIVideoRepository.swift in Sources */,
 				107C60C92DBF7A2D006FC467 /* SmileyGameRuleDIContainer.swift in Sources */,
+				10C1B3E92E55EE2D00CFC41B /* DisableBackBottomSheet.swift in Sources */,
 				AC6E31232D22F08F001EBE6C /* ImageLoaderProtocol.swift in Sources */,
 				105034A22DD5E3D500571B4E /* SmileyConfigDTO.swift in Sources */,
 				AC462F422D95A4AD004957B3 /* OffsetableScrollView.swift in Sources */,
@@ -3747,6 +3752,7 @@
 				1064B8002E4CA4110036C10B /* AIVideoProviderResponse.swift in Sources */,
 				1069860B2E5303A7005BE0D4 /* AIVideoRepository.swift in Sources */,
 				107C60C82DBF7A2D006FC467 /* SmileyGameRuleDIContainer.swift in Sources */,
+				10C1B3EA2E55EE2D00CFC41B /* DisableBackBottomSheet.swift in Sources */,
 				AC6E31222D22F08F001EBE6C /* ImageLoaderProtocol.swift in Sources */,
 				105034A12DD5E3D500571B4E /* SmileyConfigDTO.swift in Sources */,
 				AC462F432D95A4AD004957B3 /* OffsetableScrollView.swift in Sources */,
