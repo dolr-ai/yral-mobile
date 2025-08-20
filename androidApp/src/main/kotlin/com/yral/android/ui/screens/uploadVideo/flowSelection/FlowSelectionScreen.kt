@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -31,9 +32,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
+import com.yral.android.ui.screens.uploadVideo.flowSelection.FlowSelectionScreenConstants.DELAY_TO_SHOW_CLICK
 import com.yral.android.ui.widgets.YralButton
 import com.yral.shared.features.uploadvideo.presentation.FlowSelectionViewModel
 import com.yral.shared.features.uploadvideo.presentation.FlowType
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -43,6 +47,7 @@ fun FlowSelectionScreen(
     viewModel: FlowSelectionViewModel = koinViewModel(),
 ) {
     val viewState by viewModel.state.collectAsStateWithLifecycle()
+    val coroutineScope = rememberCoroutineScope()
     Column(modifier.fillMaxSize()) {
         Header()
         Column(
@@ -56,7 +61,14 @@ fun FlowSelectionScreen(
                 subTitle = stringResource(R.string.generate_video_by_giving_a_prompt_to_ai),
                 button = stringResource(R.string.create_with_ai),
                 isSelected = viewState.flowType == FlowType.AI_VIDEO_GEN,
-                onClick = { viewModel.setFlowType(FlowType.AI_VIDEO_GEN) },
+                onClick = {
+                    coroutineScope.launch {
+                        viewModel.setFlowType(FlowType.AI_VIDEO_GEN)
+                        delay(DELAY_TO_SHOW_CLICK)
+                        viewModel.setFlowType(FlowType.AI_VIDEO_GEN)
+                        component.onAiVideoGenClicked()
+                    }
+                },
                 onButtonClick = { component.onAiVideoGenClicked() },
             )
             FlowItem(
@@ -65,7 +77,14 @@ fun FlowSelectionScreen(
                 subTitle = stringResource(R.string.add_video_from_device),
                 button = stringResource(R.string.upload_video),
                 isSelected = viewState.flowType == FlowType.UPLOAD_VIDEO,
-                onClick = { viewModel.setFlowType(FlowType.UPLOAD_VIDEO) },
+                onClick = {
+                    coroutineScope.launch {
+                        viewModel.setFlowType(FlowType.UPLOAD_VIDEO)
+                        delay(DELAY_TO_SHOW_CLICK)
+                        viewModel.setFlowType(FlowType.UPLOAD_VIDEO)
+                        component.onUploadVideoClicked()
+                    }
+                },
                 onButtonClick = { component.onUploadVideoClicked() },
             )
         }
@@ -109,11 +128,11 @@ private fun FlowItem(
         verticalAlignment = Alignment.CenterVertically,
         modifier =
             Modifier
-                .border(width = 1.dp, color = borderColor, shape = shape)
                 .fillMaxWidth()
+                .border(width = 1.dp, color = borderColor, shape = shape)
                 .background(color = background, shape = shape)
-                .padding(horizontal = 41.dp, vertical = 31.dp)
-                .clickable { onClick() },
+                .clickable { onClick() }
+                .padding(horizontal = 41.dp, vertical = 31.dp),
     ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(20.dp, Alignment.Top),
@@ -159,4 +178,8 @@ private fun FlowItem(
             )
         }
     }
+}
+
+private object FlowSelectionScreenConstants {
+    const val DELAY_TO_SHOW_CLICK = 100L
 }
