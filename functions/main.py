@@ -540,7 +540,7 @@ def cast_vote_v2(request: Request):
 
             vid_exists  = vid_ref.get(transaction=tx).exists
             if not vid_exists:
-                all_ids = [s["id"] for s in smileys if s["id"] not in ["heart", "fire"]]
+                all_ids = [s["id"] for s in smileys if s["id"] not in ["heart"]]
                 seed_a, seed_b = random.sample(all_ids, 2)
 
                 tx.set(vid_ref, {
