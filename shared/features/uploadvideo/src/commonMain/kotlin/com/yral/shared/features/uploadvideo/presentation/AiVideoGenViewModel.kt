@@ -170,7 +170,7 @@ class AiVideoGenViewModel internal constructor(
                                     params =
                                         GenerateVideoParams(
                                             providerId = selectedProvider.id,
-                                            prompt = currentState.prompt,
+                                            prompt = currentState.prompt.trim(),
                                             aspectRatio = selectedProvider.defaultAspectRatio,
                                             durationSeconds = selectedProvider.defaultDuration,
                                             generateAudio = true,
@@ -307,7 +307,7 @@ class AiVideoGenViewModel internal constructor(
 
     fun shouldEnableButton(): Boolean {
         val currentState = _state.value
-        return currentState.prompt.isNotEmpty() &&
+        return currentState.prompt.trim().isNotEmpty() &&
             currentState.usedCredits != null &&
             currentState.usedCredits < currentState.totalCredits
     }
