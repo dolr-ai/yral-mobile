@@ -23,12 +23,13 @@ struct FeedResult: Hashable {
   var isLiked: Bool
   var nsfwProbability: Double
   var smileyGame: SmileyGame?
+  private var identity: String { "\(canisterID)#\(postID)" }
 
   func hash(into hasher: inout Hasher) {
-    hasher.combine(videoID)
+    hasher.combine(identity)
   }
 
   static func == (lhs: FeedResult, rhs: FeedResult) -> Bool {
-    return lhs.videoID == rhs.videoID
+    lhs.identity == rhs.identity
   }
 }
