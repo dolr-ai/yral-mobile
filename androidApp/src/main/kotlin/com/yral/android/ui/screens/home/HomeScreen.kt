@@ -123,7 +123,7 @@ private fun SlotContent(component: HomeComponent) {
         when (slotChild) {
             is SlotChild.AlertsRequestBottomSheet ->
                 AlertsRequestBottomSheet(
-                    onDismissRequest = slotChild.component::onDismissClicked,
+                    component = slotChild.component,
                 )
         }
     }

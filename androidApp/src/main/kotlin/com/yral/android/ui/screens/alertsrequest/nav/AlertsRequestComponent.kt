@@ -1,9 +1,12 @@
 package com.yral.android.ui.screens.alertsrequest.nav
 
 import com.arkivanov.decompose.ComponentContext
+import kotlinx.coroutines.flow.StateFlow
 
 interface AlertsRequestComponent {
+    val showSheet: StateFlow<Boolean>
     fun onDismissClicked()
+    fun onPermissionChanged(isGranted: Boolean)
 
     companion object Companion {
         operator fun invoke(
