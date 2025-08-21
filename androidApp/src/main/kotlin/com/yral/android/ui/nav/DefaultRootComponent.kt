@@ -7,9 +7,11 @@ import com.arkivanov.decompose.router.stack.active
 import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.router.stack.replaceAll
+import com.arkivanov.decompose.value.MutableValue
 import com.arkivanov.decompose.value.Value
 import com.yral.android.ui.screens.home.nav.HomeComponent
 import com.yral.android.ui.screens.profile.nav.ProfileComponent
+import com.yral.android.update.UpdateState
 import kotlinx.serialization.Serializable
 
 internal class DefaultRootComponent(
@@ -19,6 +21,11 @@ internal class DefaultRootComponent(
     private val navigation = StackNavigation<Config>()
     private var homeComponent: HomeComponent? = null
     private var pendingNavigation: String? = null
+
+    private val _updateState = MutableValue<UpdateState>(UpdateState.Idle)
+    override val updateState: Value<UpdateState> = _updateState
+
+    private var onCompleteUpdateCallback: (() -> Unit)? = null
 
     override val stack: Value<ChildStack<*, RootComponent.Child>> =
         childStack(
@@ -80,6 +87,18 @@ internal class DefaultRootComponent(
                 }
             }
         }
+    }
+
+    override fun onUpdateStateChanged(state: UpdateState) {
+        _updateState.value = state
+    }
+
+    override fun onCompleteUpdateClicked() {
+        onCompleteUpdateCallback?.invoke()
+    }
+
+    fun setOnCompleteUpdateCallback(callback: () -> Unit) {
+        onCompleteUpdateCallback = callback
     }
 
     @Serializable

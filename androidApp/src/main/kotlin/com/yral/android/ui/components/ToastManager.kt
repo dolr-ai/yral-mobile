@@ -23,6 +23,7 @@ enum class ToastDuration(
 ) {
     SHORT(2000L),
     LONG(3500L),
+    INDEFINITE(Long.MAX_VALUE),
 }
 
 data class ToastMessage
