@@ -181,7 +181,7 @@ extension ProfileOptionsView {
     static let toggleWidth = 54.0
     static let toggleHeight = 30.0
     static let loaderName = "Yral_Loader"
-    static let whatsappId = "https://chat.whatsapp.com/C8FN7ISnvJP1DPcbgZ2vF9?mode=ac_t"
+    static let whatsappId = "https://chat.whatsapp.com/EeRnZQJNEOlEykLzbHS6zV"
     static let tncIosId = "https://yral.com/terms-ios"
     static let privacyPolicyId = "https://yral.com/privacy-policy"
     static let logoutId = "logoutId"
