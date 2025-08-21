@@ -85,7 +85,13 @@ fun AiVideoGenScreen(
         Logger.d("VideoGen") { "shouldRefresh: $shouldRefresh" }
         shouldRefresh.value?.let { viewModel.refresh(it) }
     }
-    BackHandler(enabled = viewState.uiState is UiState.Success, onBack = { })
+    BackHandler(
+        enabled = viewState.uiState is UiState.Success,
+        onBack = {
+            viewModel.cleanup()
+            component.goToHome()
+        },
+    )
     Column(modifier.fillMaxSize()) {
         when (viewState.uiState) {
             is UiState.InProgress -> {
