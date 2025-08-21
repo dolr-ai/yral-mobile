@@ -22,6 +22,7 @@ import com.yral.shared.analytics.events.SignupPageName
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginBottomSheet(
+    pageName: SignupPageName = SignupPageName.MENU,
     termsLink: String,
     bottomSheetState: SheetState,
     onDismissRequest: () -> Unit,
@@ -48,7 +49,7 @@ fun LoginBottomSheet(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 SignupView(
-                    pageName = SignupPageName.MENU,
+                    pageName = pageName,
                     onSignupClicked = onSignupClicked,
                     termsLink = termsLink,
                     openTerms = openTerms,

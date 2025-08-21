@@ -22,6 +22,8 @@ class EventToMapConverter(
             .encodeToJsonElement(event)
             .toMap()
             .filterKeys { it != "type" }
+            .mapKeys { (key, _) -> if (key == "type_ext") "type" else key }
+            .filterKeys { it != "type_ext" }
             .mapValues { (_, value) ->
                 when (value) {
                     is JsonPrimitive ->

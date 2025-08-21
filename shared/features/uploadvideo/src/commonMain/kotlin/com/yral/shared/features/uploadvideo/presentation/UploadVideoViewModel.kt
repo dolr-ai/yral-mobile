@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.michaelbull.result.fold
 import com.github.michaelbull.result.getOrThrow
+import com.yral.shared.analytics.events.VideoCreationType
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.logging.YralLogger
 import com.yral.shared.crashlytics.core.CrashlyticsManager
@@ -79,7 +80,7 @@ class UploadVideoViewModel internal constructor(
     }
 
     fun onUploadButtonClicked() {
-        uploadVideoTelemetry.uploadInitiated()
+        uploadVideoTelemetry.uploadInitiated(VideoCreationType.UPLOAD_VIDEO)
         validateAndPublish()
     }
 
@@ -319,7 +320,7 @@ class UploadVideoViewModel internal constructor(
 
                 _state.update { it.copy(updateMetadataUiState = UiState.Success(Unit)) }
                 send(Event.UploadSuccess)
-                uploadVideoTelemetry.uploadSuccess(endpoint.videoID)
+                uploadVideoTelemetry.uploadSuccess(endpoint.videoID, VideoCreationType.UPLOAD_VIDEO)
                 performPostPublishCleanup()
             }
         } catch (e: CancellationException) {
@@ -400,7 +401,7 @@ class UploadVideoViewModel internal constructor(
     }
 
     fun pushScreenView() {
-        uploadVideoTelemetry.uploadVideoScreenViewed()
+        uploadVideoTelemetry.videoCreationPageViewed(VideoCreationType.UPLOAD_VIDEO)
     }
 
     fun pushSelectFile() {
@@ -409,7 +410,7 @@ class UploadVideoViewModel internal constructor(
 
     fun pushUploadFailed(e: Throwable) {
         if (!_state.value.errorAnalyticsPushed) {
-            uploadVideoTelemetry.uploadFailed(e.message ?: "")
+            uploadVideoTelemetry.uploadFailed(e.message ?: "", VideoCreationType.UPLOAD_VIDEO)
             _state.update { it.copy(errorAnalyticsPushed = true) }
         }
     }
