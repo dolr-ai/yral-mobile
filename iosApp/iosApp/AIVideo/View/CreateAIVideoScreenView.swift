@@ -57,9 +57,10 @@ struct CreateAIVideoScreenView: View {
   @State private var selectedProvider: AIVideoProviderResponse?
   @State private var errorMessage: String?
 
-  @State private var generatingVideo = true
+  @State private var generatingVideo = false
   @State private var generatingVideoTextCurrentIndex: Int = .zero
   @State private var showDisableBackBottomSheet = false
+  @State private var showAIVideoCompletedView = false
 
   var body: some View {
     VStack(alignment: .leading, spacing: Constants.vstackSpacing) {
@@ -218,6 +219,13 @@ struct CreateAIVideoScreenView: View {
       }
       .background( ClearBackgroundView() )
     }
+    .fullScreenCover(isPresented: $showAIVideoCompletedView) {
+//      AIVideoCompletedView(
+//        videoURL: <#T##URL#>,
+//        videoAspectRatio: <#T##CGFloat#>) {
+//          showAIVideoCompletedView = false
+//        }
+    }
     .onReceive(session.phasePublisher, perform: { phase in
       if case .permanent = phase {
         isUserLoggedIn = true
@@ -255,14 +263,14 @@ struct CreateAIVideoScreenView: View {
     })
     .onAppear {
       if generatingVideo {
-        selectedProvider = AIVideoProviderResponse(
-          id: "veo3",
-          name: "Veo 3",
-          description: "",
-          isActive: true,
-          iconURL: "",
-          defaultDuration: 8
-        )
+//        selectedProvider = AIVideoProviderResponse(
+//          id: "veo3",
+//          name: "Veo 3",
+//          description: "",
+//          isActive: true,
+//          iconURL: "",
+//          defaultDuration: 8
+//        )
       } else {
         showLoader = true
         Task {
