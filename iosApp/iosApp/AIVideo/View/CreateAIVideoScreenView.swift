@@ -82,6 +82,7 @@ struct CreateAIVideoScreenView: View {
       }
       .padding(.bottom, Constants.navHstackBottom)
       .padding(.leading, -Constants.navHstackLeading)
+      .padding(.top, Constants.navHstackTop)
 
       if let provider = selectedProvider, generatingVideo {
         Text(promptText)
@@ -367,6 +368,7 @@ extension CreateAIVideoScreenView {
     static let vstackHorizontal = 16.0
 
     static let navHstackSpacing = 12.0
+    static let navHstackTop = 20.0
     static let navHstackBottom = 24.0
     static let navHstackLeading = 4.0
     static let backImage = "chevron-left"
