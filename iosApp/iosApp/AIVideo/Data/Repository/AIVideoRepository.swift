@@ -10,9 +10,11 @@ import Foundation
 
 class AIVideoRepository: AIVideoRepositoryProtocol {
   private let httpService: HTTPService
+  private let authClient: AuthClient
 
-  init(httpService: HTTPService) {
+  init(httpService: HTTPService, authClient: AuthClient) {
     self.httpService = httpService
+    self.authClient = authClient
   }
 
   func getProviders() async -> Result<AIVideoProviderMetaResponse, AIVideoProviderError> {
@@ -39,10 +41,83 @@ class AIVideoRepository: AIVideoRepositoryProtocol {
       }
     }
   }
+
+  func getRateLimitStatus() async -> Result<RateLimitStatus, NetworkError> {
+    guard let userPrincipalString = authClient.userPrincipalString else {
+      return .failure(.invalidRequest)
+    }
+
+    do {
+      let userPrincipal = try get_principal(userPrincipalString.intoRustString())
+      let delegatedIdentity = try authClient.generateNewDelegatedIdentity()
+      let status = try await get_rate_limit_status_core(
+        userPrincipal,
+        "VIDEOGEN",
+        true,
+        delegatedIdentity
+      )
+
+      return .success(status)
+    } catch {
+      return .failure(.invalidResponse("Failed to fetch rate limit status"))
+    }
+  }
+
+  func generateVideo(for request: GenerateVideoMetaRequest) async -> Result<GenerateVideoResponse, GenerateVideoError> {
+    guard let baseURL = httpService.baseURL else {
+      return .failure(.network(.invalidRequest))
+    }
+
+    guard let userPrincipal = authClient.userPrincipalString else {
+      return .failure(.auth(.authenticationFailed("No user principal found")))
+    }
+
+    let httpBody = request.addingPrincipal(userPrincipal)
+
+    do {
+      let delegatedWire = try authClient.generateNewDelegatedIdentityWireOneHour()
+      let swiftWire = try swiftDelegatedIdentityWire(from: delegatedWire)
+      let modifiedHttpBody = httpBody.addingDelegatedIdentity(swiftWire)
+
+      let response = try await httpService.performRequest(
+        for: Endpoint(
+          http: "",
+          baseURL: baseURL,
+          path: Constants.generateVideoPath,
+          method: .post,
+          headers: ["Content-Type": "application/json"],
+          body: try? JSONEncoder().encode(modifiedHttpBody)
+        ),
+        decodeAs: GenerateVideoDTO.self
+      )
+
+      return .success(response.toDomain())
+    } catch {
+      switch error {
+      case let error as NetworkError:
+        return .failure(.network(error))
+      case let error as AuthError:
+        return .failure(.auth(error))
+      default:
+        return .failure(.unknown(error))
+      }
+    }
+  }
+}
+
+extension AIVideoRepository {
+  private func swiftDelegatedIdentityWire(from rustWire: DelegatedIdentityWire) throws -> SwiftDelegatedIdentityWire {
+    let wireJsonString = delegated_identity_wire_to_json(rustWire).toString()
+    guard let data = wireJsonString.data(using: .utf8) else {
+      throw AuthError.authenticationFailed("Failed to convert wire JSON string to Data")
+    }
+    return try JSONDecoder().decode(SwiftDelegatedIdentityWire.self, from: data)
+  }
 }
 
 extension AIVideoRepository {
   enum Constants {
     static let getProvidersPath = "/api/v2/videogen/providers"
+    static let generateVideoPath = "/api/v2/videogen/generate"
   }
 }

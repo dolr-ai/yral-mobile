@@ -11,7 +11,7 @@ import Foundation
 enum CreateAIVideoScreenState {
   case initialized
   case loading
-  case success(AIVideoProviderResponse)
+  case success
   case failure(Error)
 
   static func == (lhs: CreateAIVideoScreenState, rhs: CreateAIVideoScreenState) -> Bool {
@@ -30,13 +30,17 @@ enum CreateAIVideoScreenState {
 
 enum CreateAIVideoScreenEvent {
   case updateSelectedProvider(AIVideoProviderResponse)
-  case socialSignInSuccess
+  case socialSignInSuccess(creditsAvailable: Bool)
   case socialSignInFailure
+  case generateVideoSuccess(GenerateVideoResponse)
+  case generateVideoFailure(String)
 }
 
 class CreateAIVideoViewModel: ObservableObject {
   let aiVideoProviderUseCase: AIVideoProviderUseCaseProtocol
+  let rateLimitStatusUseCase: RateLimitStatusUseCaseProtocol
   let socialSignInUseCase: SocialSignInUseCaseProtocol
+  let generateVideoUseCase: GenerateVideoUseCaseProtocol
 
   @Published var event: CreateAIVideoScreenEvent?
   @Published var state: CreateAIVideoScreenState = .initialized
@@ -46,10 +50,14 @@ class CreateAIVideoViewModel: ObservableObject {
 
   init(
     aiVideoProviderUseCase: AIVideoProviderUseCaseProtocol,
-    socialSigninUseCase: SocialSignInUseCaseProtocol
+    rateLimitStatusUseCase: RateLimitStatusUseCaseProtocol,
+    socialSigninUseCase: SocialSignInUseCaseProtocol,
+    generateVideoUseCase: GenerateVideoUseCase
   ) {
     self.aiVideoProviderUseCase = aiVideoProviderUseCase
+    self.rateLimitStatusUseCase = rateLimitStatusUseCase
     self.socialSignInUseCase = socialSigninUseCase
+    self.generateVideoUseCase = generateVideoUseCase
   }
 
   @MainActor
@@ -62,7 +70,8 @@ class CreateAIVideoViewModel: ObservableObject {
         self.providers = response.providers
         if let selectedProvider = response.providers.first {
           self.selectedProvider = selectedProvider
-          state = .success(selectedProvider)
+          state = .success
+          event = .updateSelectedProvider(selectedProvider)
         }
       case .failure(let error):
         state = .failure(error)
@@ -72,12 +81,60 @@ class CreateAIVideoViewModel: ObservableObject {
 
   func socialSignIn(request: SocialProvider) async {
     let result = await self.socialSignInUseCase.execute(request: request)
-    await MainActor.run {
-      switch result {
-      case .success:
-        self.event = .socialSignInSuccess
-      case .failure:
+    switch result {
+    case .success:
+      let creditsAvailable = await creditsAvailable()
+      await MainActor.run {
+        self.event = .socialSignInSuccess(creditsAvailable: creditsAvailable)
+      }
+    case .failure:
+      await MainActor.run {
         self.event = .socialSignInFailure
+      }
+    }
+  }
+
+  func creditsAvailable() async -> Bool {
+    do {
+      let result = await rateLimitStatusUseCase.execute()
+      switch result {
+      case .success(let status):
+        return !status.is_limited()
+      case .failure:
+        return false
+      }
+    }
+  }
+
+  @MainActor
+  func generateVideo(for prompt: String, withProvider provider: AIVideoProviderResponse) async {
+    state = .loading
+
+    let generateVideoRequest = GenerateVideoMetaRequest(
+      request: GenerateVideoRequest(
+        aspectRatio: "16:9",
+        durationSeconds: provider.defaultDuration,
+        generateAudio: true,
+        image: nil,
+        modelID: provider.id,
+        negativePrompt: nil,
+        prompt: prompt,
+        resolution: nil,
+        seed: nil,
+        tokenType: "Free",
+        userID: nil
+      )
+    )
+
+    do {
+      let result = await generateVideoUseCase.execute(request: generateVideoRequest)
+      switch result {
+      case .success(let response):
+        state = .success
+        event = .generateVideoSuccess(response)
+      case .failure(let error):
+        state = .failure(error)
+        event = .generateVideoFailure(error.localizedDescription)
       }
     }
   }

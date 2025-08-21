@@ -11,6 +11,7 @@ import SwiftUI
 struct UploadOptionsScreenView: View {
   @Environment(\.appDIContainer) private var appDIContainer
 
+  @State private var aiVideoScreenID = UUID()
   @State private var navigateToAIVideoScreen = false
   @State private var navigateToUploadVideoScreen = false
 
@@ -23,24 +24,29 @@ struct UploadOptionsScreenView: View {
           .padding(.bottom, Constants.screenTitleBottom)
 
         UploadOptionView(option: Constants.uploadOptionAI) {
+          aiVideoScreenID = UUID()
           navigateToAIVideoScreen = true
         }
         .background(
-          NavigationLink("", destination: makeCreateAIVideoDIContainer()?.makeCreateAIVideoSreenView {
-            navigateToAIVideoScreen = false
-          }, isActive: $navigateToAIVideoScreen)
-            .hidden()
+          NavigationLink(isActive: $navigateToAIVideoScreen) {
+            if let createAIVideoDI = makeCreateAIVideoDIContainer() {
+              CreateAIVideoHost(
+                createAIVideoDI: createAIVideoDI,
+                onDismiss: { navigateToAIVideoScreen = false }
+              )
+              .id(aiVideoScreenID)
+            } else {
+              EmptyView()
+            }
+          } label: {
+            EmptyView()
+          }
+          .hidden()
         )
 
         UploadOptionView(option: Constants.uploadOptionDevice) {
           navigateToUploadVideoScreen = true
         }
-        .background(
-//          NavigationLink("", destination: makeCreateAIVideoDIContainer().makeCreateAIVideoSreenView {
-//            navigateToUploadVideoScreen = false
-//          }, isActive: $navigateToUploadVideoScreen)
-//            .hidden()
-        )
 
         Spacer(minLength: .zero)
       }
@@ -72,7 +78,7 @@ extension UploadOptionsScreenView {
 extension UploadOptionsScreenView {
   enum Constants {
     static let vstackSpacing = 20.0
-    static let vstackVertical = 8.0
+    static let vstackVertical = 20.0
     static let vstackHorizontal = 16.0
 
     static let screenTitleBottom = 8.0

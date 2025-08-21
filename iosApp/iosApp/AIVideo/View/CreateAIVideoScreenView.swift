@@ -8,13 +8,43 @@
 
 import SwiftUI
 
+// swiftlint: disable file_length
+struct CreateAIVideoHost: View {
+  private let onDismiss: () -> Void
+  @StateObject private var viewModel: CreateAIVideoViewModel
+
+  init(createAIVideoDI: CreateAIVideoDIContainer, onDismiss: @escaping () -> Void) {
+    self.onDismiss = onDismiss
+    _viewModel = StateObject(wrappedValue: createAIVideoDI.makeAIVideoViewModel())
+  }
+
+  var body: some View {
+    CreateAIVideoScreenView(viewModel: viewModel, onDismiss: onDismiss)
+  }
+}
+
 struct CreateAIVideoScreenView: View {
+  @EnvironmentObject var session: SessionManager
   @ObservedObject var viewModel: CreateAIVideoViewModel
 
   let onDismiss: () -> Void
   var isButtonEnabled: Bool {
-    !creditsUsed && !promptText.isEmpty
+    let trimmed = promptText.trimmingCharacters(in: .whitespacesAndNewlines)
+    return !creditsUsed && !trimmed.isEmpty
   }
+
+  var isErrorPresented: Binding<Bool> {
+    Binding(
+      get: { errorMessage != nil },
+      set: { newValue in
+        if newValue == false {
+          errorMessage = nil
+        }
+      }
+    )
+  }
+
+  private let timer = Timer.publish(every: Constants.loadingMessageTime, on: .main, in: .common).autoconnect()
 
   @State private var showLoader = true
   @State private var promptText = ""
@@ -22,52 +52,120 @@ struct CreateAIVideoScreenView: View {
   @State private var showProviderBottomSheet = false
   @State private var showSignupSheet = false
   @State private var showSignupFailureSheet = false
+  @State private var isUserLoggedIn = false
   @State private var loadingProvider: SocialProvider?
   @State private var selectedProvider: AIVideoProviderResponse?
+  @State private var errorMessage: String?
+
+  @State private var generatingVideo = false
+  @State private var generatingVideoTextCurrentIndex: Int = .zero
+  @State private var showDisableBackBottomSheet = false
+  @State private var showAIVideoCompletedView = false
 
   var body: some View {
     VStack(alignment: .leading, spacing: Constants.vstackSpacing) {
-      if let providers = viewModel.providers {
-        HStack(alignment: .center, spacing: Constants.navHstackSpacing) {
-          Image(Constants.backImage)
-            .resizable()
-            .frame(width: Constants.backImageSize, height: Constants.backImageSize)
-            .onTapGesture {
+      HStack(alignment: .center, spacing: Constants.navHstackSpacing) {
+        Image(Constants.backImage)
+          .resizable()
+          .frame(width: Constants.backImageSize, height: Constants.backImageSize)
+          .onTapGesture {
+            if generatingVideo {
+              showDisableBackBottomSheet = true
+            } else {
               onDismiss()
             }
+          }
 
-          Text(Constants.screenTitle)
-            .font(Constants.screenTitleFont)
-            .foregroundColor(Constants.screenTitleColor)
+        Text(Constants.screenTitle)
+          .font(Constants.screenTitleFont)
+          .foregroundColor(Constants.screenTitleColor)
+      }
+      .padding(.bottom, Constants.navHstackBottom)
+      .padding(.leading, -Constants.navHstackLeading)
+      .padding(.top, Constants.navHstackTop)
+
+      if let provider = selectedProvider, generatingVideo {
+        Text(promptText)
+          .font(Constants.genPromptFont)
+          .foregroundColor(Constants.genPromptColor)
+          .frame(maxWidth: .infinity, alignment: .leading)
+          .padding(.vertical, Constants.genPromptVertical)
+          .padding(.horizontal, Constants.genPromptHorizontal)
+          .background(Constants.genPromptBackground)
+          .cornerRadius(Constants.genPromptCornerRadius)
+          .overlay(
+            RoundedRectangle(cornerRadius: Constants.genPromptCornerRadius)
+              .stroke(Constants.genPromptBorderColor, lineWidth: .one)
+          )
+
+        HStack(spacing: Constants.genHstackSpacing) {
+          URLImage(url: URL(string: provider.iconURL))
+            .id(provider.id)
+            .frame(width: Constants.genImageSize, height: Constants.genImageSize)
+
+          Text(provider.name)
+            .font(Constants.genNameFont)
+            .foregroundColor(Constants.genNameColor)
         }
-        .padding(.bottom, Constants.navHstackBottom)
-        .padding(.leading, -Constants.navHstackLeading)
 
-        if let selectedProvider = selectedProvider {
-          buildSelectedModelView(with: selectedProvider)
-            .frame(maxWidth: .infinity)
+        RoundedRectangle(cornerRadius: Constants.genViewCornerRadius)
+          .fill(Constants.genViewBackground)
+          .frame(maxWidth: .infinity, maxHeight: .infinity)
+          .padding(.bottom, Constants.genViewBottom)
+          .overlay(alignment: .center) {
+            VStack(spacing: Constants.genViewVstackSpacing) {
+              LottieLoaderView(animationName: Constants.loader)
+                .frame(width: Constants.loaderSize, height: Constants.loaderSize)
+
+              Text(Constants.loadingMessages[generatingVideoTextCurrentIndex])
+                .font(Constants.genViewTextFont)
+                .foregroundColor(Constants.genViewTextColor)
+            }
+            .offset(y: -Constants.genViewBottom/2)
+          }
+          .onReceive(timer) { _ in
+            withAnimation(.easeInOut) {
+              generatingVideoTextCurrentIndex = (
+                generatingVideoTextCurrentIndex + .one
+              ) % Constants.loadingMessages.count
+            }
+          }
+      } else {
+        if let providers = viewModel.providers {
+          if let selectedProvider = selectedProvider {
+            buildSelectedModelView(with: selectedProvider)
+              .frame(maxWidth: .infinity)
+          }
+
+          PromptView(prompt: $promptText)
+            .padding(.top, Constants.promptTop)
+
+          Button {
+            if isUserLoggedIn {
+              if let provider = selectedProvider, !promptText.isEmpty {
+                Task {
+                  await viewModel.generateVideo(for: promptText, withProvider: provider)
+                }
+              }
+            } else {
+              showSignupSheet = true
+            }
+          } label: {
+            Text(Constants.generateButtonTitle)
+              .foregroundColor(Constants.generateButtonTextColor)
+              .font(Constants.generateButtonFont)
+              .frame(maxWidth: .infinity)
+              .frame(height: Constants.generateButtonHeight)
+              .background(
+                isButtonEnabled
+                ? Constants.generateButtonEnabledGradient
+                : Constants.generateButtonDisabledGradient
+              )
+              .cornerRadius(Constants.generateButtonCornerRadius)
+          }
+          .disabled(!isButtonEnabled)
+          .padding(.top, Constants.generateButtonTop)
         }
-
-        PromptView(prompt: $promptText)
-          .padding(.top, Constants.promptTop)
-
-        Button {
-
-        } label: {
-          Text(Constants.generateButtonTitle)
-            .foregroundColor(Constants.generateButtonTextColor)
-            .font(Constants.generateButtonFont)
-            .frame(maxWidth: .infinity)
-            .frame(height: Constants.generateButtonHeight)
-            .background(
-              isButtonEnabled
-              ? Constants.generateButtonEnabledGradient
-              : Constants.generateButtonDisabledGradient
-            )
-            .cornerRadius(Constants.generateButtonCornerRadius)
-        }
-        .disabled(!isButtonEnabled)
-        .padding(.top, Constants.generateButtonTop)
       }
     }
     .navigationBarHidden(true)
@@ -107,13 +205,39 @@ struct CreateAIVideoScreenView: View {
       })
       .background( ClearBackgroundView() )
     }
+    .fullScreenCover(isPresented: isErrorPresented) {
+      CreateAIVideoErrorBottomSheet(text: errorMessage ?? "") {
+        errorMessage = nil
+      }
+      .background( ClearBackgroundView() )
+    }
+    .fullScreenCover(isPresented: $showDisableBackBottomSheet) {
+      DisableBackBottomSheet {
+        showDisableBackBottomSheet = false
+        onDismiss()
+      } onStayHere: {
+        showDisableBackBottomSheet = false
+      }
+      .background( ClearBackgroundView() )
+    }
+    .fullScreenCover(isPresented: $showAIVideoCompletedView) {
+//      AIVideoCompletedView(
+//        videoURL: <#T##URL#>,
+//        videoAspectRatio: <#T##CGFloat#>) {
+//          showAIVideoCompletedView = false
+//        }
+    }
+    .onReceive(session.phasePublisher, perform: { phase in
+      if case .permanent = phase {
+        isUserLoggedIn = true
+      }
+    })
     .onReceive(viewModel.$state, perform: { state in
       switch state {
       case .loading:
         showLoader = true
-      case .success(let provider):
+      case .success:
         showLoader = false
-        selectedProvider = provider
       default:
         showLoader = false
       }
@@ -122,25 +246,47 @@ struct CreateAIVideoScreenView: View {
       switch event {
       case .updateSelectedProvider(let provider):
         selectedProvider = provider
-      case .socialSignInSuccess:
+      case .socialSignInSuccess(let creditsAvailable):
         loadingProvider = nil
         showSignupSheet = false
+        creditsUsed = !creditsAvailable
       case .socialSignInFailure:
         loadingProvider = nil
         showSignupSheet = false
         showSignupFailureSheet = true
+      case .generateVideoSuccess(let response):
+        break
+      case .generateVideoFailure(let errMessage):
+        errorMessage = errMessage
       default:
         break
       }
-
-      DispatchQueue.main.async {
-        viewModel.event = nil
-      }
     })
     .onAppear {
-      showLoader = true
-      Task {
-        await viewModel.getAIVideoProviders()
+      if generatingVideo {
+//        selectedProvider = AIVideoProviderResponse(
+//          id: "veo3",
+//          name: "Veo 3",
+//          description: "",
+//          isActive: true,
+//          iconURL: "",
+//          defaultDuration: 8
+//        )
+      } else {
+        showLoader = true
+        Task {
+          await viewModel.getAIVideoProviders()
+          if isUserLoggedIn {
+            let availableCredits = await viewModel.creditsAvailable()
+            await MainActor.run {
+              creditsUsed = !availableCredits
+            }
+          } else {
+            await MainActor.run {
+              creditsUsed = false
+            }
+          }
+        }
       }
     }
   }
@@ -156,6 +302,7 @@ extension CreateAIVideoScreenView {
 
       HStack {
         URLImage(url: URL(string: provider.iconURL))
+          .id(provider.id)
           .frame(width: Constants.modelImageSize, height: Constants.modelImageSize)
           .padding(.horizontal, Constants.modelNameLeading)
 
@@ -221,6 +368,7 @@ extension CreateAIVideoScreenView {
     static let vstackHorizontal = 16.0
 
     static let navHstackSpacing = 12.0
+    static let navHstackTop = 20.0
     static let navHstackBottom = 24.0
     static let navHstackLeading = 4.0
     static let backImage = "chevron-left"
@@ -281,5 +429,32 @@ extension CreateAIVideoScreenView {
       endPoint: UnitPoint(x: 0.03, y: 1)
     )
 
+    static let loadingMessages = [
+      "Generating Video...",
+      "This may take few minutes"
+    ]
+    static let loadingMessageTime = 5.0
+
+    static let genPromptFont = YralFont.pt14.regular.swiftUIFont
+    static let genPromptColor = YralColor.grey50.swiftUIColor
+    static let genPromptBackground = YralColor.grey900.swiftUIColor
+    static let genPromptBorderColor = YralColor.grey700.swiftUIColor
+    static let genPromptVertical = 10.0
+    static let genPromptHorizontal = 12.0
+    static let genPromptCornerRadius = 8.0
+
+    static let genHstackSpacing = 12.0
+    static let genImageSize = 20.0
+    static let genNameFont = YralFont.pt12.regular.swiftUIFont
+    static let genNameColor = YralColor.grey50.swiftUIColor
+
+    static let genViewBackground = YralColor.grey900.swiftUIColor
+    static let genViewCornerRadius = 8.0
+    static let genViewBottom = 80.0
+    static let genViewVstackSpacing = 12.0
+    static let genViewTextFont = YralFont.pt14.regular.swiftUIFont
+    static let genViewTextColor = YralColor.grey50.swiftUIColor
   }
 }
+
+// swiftlint: enable file_length

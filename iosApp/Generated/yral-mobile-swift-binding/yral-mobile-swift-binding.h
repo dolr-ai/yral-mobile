@@ -1501,6 +1501,18 @@ void* __swift_bridge__$Vec_Result12$get_mut(void* vec_ptr, uintptr_t index);
 uintptr_t __swift_bridge__$Vec_Result12$len(void* vec_ptr);
 void* __swift_bridge__$Vec_Result12$as_ptr(void* vec_ptr);
 
+typedef struct RateLimitStatus RateLimitStatus;
+void __swift_bridge__$RateLimitStatus$_free(void* self);
+
+void* __swift_bridge__$Vec_RateLimitStatus$new(void);
+void __swift_bridge__$Vec_RateLimitStatus$drop(void* vec_ptr);
+void __swift_bridge__$Vec_RateLimitStatus$push(void* vec_ptr, void* item_ptr);
+void* __swift_bridge__$Vec_RateLimitStatus$pop(void* vec_ptr);
+void* __swift_bridge__$Vec_RateLimitStatus$get(void* vec_ptr, uintptr_t index);
+void* __swift_bridge__$Vec_RateLimitStatus$get_mut(void* vec_ptr, uintptr_t index);
+uintptr_t __swift_bridge__$Vec_RateLimitStatus$len(void* vec_ptr);
+void* __swift_bridge__$Vec_RateLimitStatus$as_ptr(void* vec_ptr);
+
 uint64_t __swift_bridge__$PostDetailsForFrontend$id(void* self);
 bool __swift_bridge__$PostDetailsForFrontend$is_nsfw(void* self);
 struct RustStr __swift_bridge__$PostDetailsForFrontend$video_uid(void* self);
@@ -1623,6 +1635,11 @@ void* __swift_bridge__$propic_from_principal(void* principal);
 struct __private__ResultPtrAndPtr __swift_bridge__$yral_auth_login_hint(struct __private__FfiSlice data);
 void __swift_bridge__$register_device(void* callback_wrapper, void __swift_bridge__$register_device$async(void* callback_wrapper, void* ret), void* identity, void* token);
 void __swift_bridge__$unregister_device(void* callback_wrapper, void __swift_bridge__$unregister_device$async(void* callback_wrapper, void* ret), void* identity, void* token);
+void* __swift_bridge__$RateLimitStatus$principal(void* self);
+uint64_t __swift_bridge__$RateLimitStatus$request_count(void* self);
+uint64_t __swift_bridge__$RateLimitStatus$window_start(void* self);
+bool __swift_bridge__$RateLimitStatus$is_limited(void* self);
+void __swift_bridge__$get_rate_limit_status_core(void* callback_wrapper, void __swift_bridge__$get_rate_limit_status_core$async(void* callback_wrapper, struct __private__ResultPtrAndPtr ret), void* principal, void* property, bool is_registered, void* identity);
 typedef enum __swift_bridge__$ResultU32AndAgentError$Tag {__swift_bridge__$ResultU32AndAgentError$ResultOk, __swift_bridge__$ResultU32AndAgentError$ResultErr} __swift_bridge__$ResultU32AndAgentError$Tag;
 union __swift_bridge__$ResultU32AndAgentError$Fields {uint32_t ok; void* err;};
 typedef struct __swift_bridge__$ResultU32AndAgentError{__swift_bridge__$ResultU32AndAgentError$Tag tag; union __swift_bridge__$ResultU32AndAgentError$Fields payload;} __swift_bridge__$ResultU32AndAgentError;
