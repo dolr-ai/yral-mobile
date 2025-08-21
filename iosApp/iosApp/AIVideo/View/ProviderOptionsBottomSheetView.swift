@@ -37,6 +37,11 @@ struct ProviderOptionsBottomSheetView: View {
           ForEach(providers) { provider in
             buildProviderView(provider: provider)
               .frame(maxWidth: .infinity, alignment: .leading)
+              .background(
+                provider.id == selectedProviderID ?
+                Constants.selectedBackground.cornerRadius(Constants.selectedBackgroundCornerRadius) :
+                nil
+              )
               .padding(.horizontal, Constants.hstackHorizontal)
               .padding(.bottom, Constants.hstackBottom)
               .onTapGesture {
@@ -149,6 +154,8 @@ extension ProviderOptionsBottomSheetView {
     static let selectedImage = "provider_selected"
     static let unselectedImage = "provider_unselected"
     static let selectorImageSize = 18.0
+    static let selectedBackground = YralColor.grey800.swiftUIColor
+    static let selectedBackgroundCornerRadius = 6.0
 
     static let vstackSpacing = 10.0
 
