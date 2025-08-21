@@ -1,5 +1,5 @@
 #![allow(dead_code, unused_imports)]
-mod individual_user_template_helper;
+pub mod individual_user_template_helper;
 
 use candid::{self, CandidType, Decode, Deserialize, Encode, Nat, Principal};
 use ic_agent::identity::Secp256k1Identity;

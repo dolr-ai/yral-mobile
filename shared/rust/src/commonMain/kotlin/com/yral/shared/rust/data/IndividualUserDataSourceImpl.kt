@@ -41,13 +41,10 @@ class IndividualUserDataSourceImpl(
             setBody(feedRequestDTO)
         }
 
-    override suspend fun fetchFeedDetails(post: PostDTO): PostDetailsForFrontend {
-        val service =
-            individualUserServiceFactory.service(
-                principal = post.canisterID,
-            )
-        return service.getIndividualPostDetailsById(post.postID.toULong())
-    }
+    override suspend fun fetchFeedDetails(post: PostDTO): PostDetailsForFrontend =
+        individualUserServiceFactory
+            .service(principal = post.canisterID)
+            .getIndividualPostDetailsById(post.postID.toULong())
 
     companion object {
         private const val CACHED_FEED_PATH = "/api/v3/feed/coldstart/clean"
