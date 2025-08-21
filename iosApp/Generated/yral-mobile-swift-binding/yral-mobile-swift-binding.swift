@@ -144,6 +144,190 @@ class CbWrapper$get_rate_limit_status_core {
         self.cb = cb
     }
 }
+public func poll_video_generation_status(_ identity: DelegatedIdentity, _ key: VideoGenRequestKey) async throws -> RateLimitsResult2 {
+    func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
+        let wrapper = Unmanaged<CbWrapper$poll_video_generation_status>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+        if rustFnRetVal.is_ok {
+            wrapper.cb(.success(RateLimitsResult2(ptr: rustFnRetVal.ok_or_err!)))
+        } else {
+            wrapper.cb(.failure(RustString(ptr: rustFnRetVal.ok_or_err!)))
+        }
+    }
+
+    return try await withCheckedThrowingContinuation({ (continuation: CheckedContinuation<RateLimitsResult2, Error>) in
+        let callback = { rustFnRetVal in
+            continuation.resume(with: rustFnRetVal)
+        }
+
+        let wrapper = CbWrapper$poll_video_generation_status(cb: callback)
+        let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
+
+        __swift_bridge__$poll_video_generation_status(wrapperPtr, onComplete, {identity.isOwned = false; return identity.ptr;}(), {key.isOwned = false; return key.ptr;}())
+    })
+}
+class CbWrapper$poll_video_generation_status {
+    var cb: (Result<RateLimitsResult2, Error>) -> ()
+
+    public init(cb: @escaping (Result<RateLimitsResult2, Error>) -> ()) {
+        self.cb = cb
+    }
+}
+public func get_polling_result_status(_ result: RateLimitsResult2) -> Optional<VideoGenRequestStatus> {
+    { let val = __swift_bridge__$get_polling_result_status({result.isOwned = false; return result.ptr;}()); if val != nil { return VideoGenRequestStatus(ptr: val!) } else { return nil } }()
+}
+public func get_status_value(_ status: VideoGenRequestStatus) -> RustString {
+    RustString(ptr: __swift_bridge__$get_status_value({status.isOwned = false; return status.ptr;}()))
+}
+
+public class VideoGenRequestStatus: VideoGenRequestStatusRefMut {
+    var isOwned: Bool = true
+
+    public override init(ptr: UnsafeMutableRawPointer) {
+        super.init(ptr: ptr)
+    }
+
+    deinit {
+        if isOwned {
+            __swift_bridge__$VideoGenRequestStatus$_free(ptr)
+        }
+    }
+}
+public class VideoGenRequestStatusRefMut: VideoGenRequestStatusRef {
+    public override init(ptr: UnsafeMutableRawPointer) {
+        super.init(ptr: ptr)
+    }
+}
+public class VideoGenRequestStatusRef {
+    var ptr: UnsafeMutableRawPointer
+
+    public init(ptr: UnsafeMutableRawPointer) {
+        self.ptr = ptr
+    }
+}
+extension VideoGenRequestStatus: Vectorizable {
+    public static func vecOfSelfNew() -> UnsafeMutableRawPointer {
+        __swift_bridge__$Vec_VideoGenRequestStatus$new()
+    }
+
+    public static func vecOfSelfFree(vecPtr: UnsafeMutableRawPointer) {
+        __swift_bridge__$Vec_VideoGenRequestStatus$drop(vecPtr)
+    }
+
+    public static func vecOfSelfPush(vecPtr: UnsafeMutableRawPointer, value: VideoGenRequestStatus) {
+        __swift_bridge__$Vec_VideoGenRequestStatus$push(vecPtr, {value.isOwned = false; return value.ptr;}())
+    }
+
+    public static func vecOfSelfPop(vecPtr: UnsafeMutableRawPointer) -> Optional<Self> {
+        let pointer = __swift_bridge__$Vec_VideoGenRequestStatus$pop(vecPtr)
+        if pointer == nil {
+            return nil
+        } else {
+            return (VideoGenRequestStatus(ptr: pointer!) as! Self)
+        }
+    }
+
+    public static func vecOfSelfGet(vecPtr: UnsafeMutableRawPointer, index: UInt) -> Optional<VideoGenRequestStatusRef> {
+        let pointer = __swift_bridge__$Vec_VideoGenRequestStatus$get(vecPtr, index)
+        if pointer == nil {
+            return nil
+        } else {
+            return VideoGenRequestStatusRef(ptr: pointer!)
+        }
+    }
+
+    public static func vecOfSelfGetMut(vecPtr: UnsafeMutableRawPointer, index: UInt) -> Optional<VideoGenRequestStatusRefMut> {
+        let pointer = __swift_bridge__$Vec_VideoGenRequestStatus$get_mut(vecPtr, index)
+        if pointer == nil {
+            return nil
+        } else {
+            return VideoGenRequestStatusRefMut(ptr: pointer!)
+        }
+    }
+
+    public static func vecOfSelfAsPtr(vecPtr: UnsafeMutableRawPointer) -> UnsafePointer<VideoGenRequestStatusRef> {
+        UnsafePointer<VideoGenRequestStatusRef>(OpaquePointer(__swift_bridge__$Vec_VideoGenRequestStatus$as_ptr(vecPtr)))
+    }
+
+    public static func vecOfSelfLen(vecPtr: UnsafeMutableRawPointer) -> UInt {
+        __swift_bridge__$Vec_VideoGenRequestStatus$len(vecPtr)
+    }
+}
+
+
+public class RateLimitsResult2: RateLimitsResult2RefMut {
+    var isOwned: Bool = true
+
+    public override init(ptr: UnsafeMutableRawPointer) {
+        super.init(ptr: ptr)
+    }
+
+    deinit {
+        if isOwned {
+            __swift_bridge__$RateLimitsResult2$_free(ptr)
+        }
+    }
+}
+public class RateLimitsResult2RefMut: RateLimitsResult2Ref {
+    public override init(ptr: UnsafeMutableRawPointer) {
+        super.init(ptr: ptr)
+    }
+}
+public class RateLimitsResult2Ref {
+    var ptr: UnsafeMutableRawPointer
+
+    public init(ptr: UnsafeMutableRawPointer) {
+        self.ptr = ptr
+    }
+}
+extension RateLimitsResult2: Vectorizable {
+    public static func vecOfSelfNew() -> UnsafeMutableRawPointer {
+        __swift_bridge__$Vec_RateLimitsResult2$new()
+    }
+
+    public static func vecOfSelfFree(vecPtr: UnsafeMutableRawPointer) {
+        __swift_bridge__$Vec_RateLimitsResult2$drop(vecPtr)
+    }
+
+    public static func vecOfSelfPush(vecPtr: UnsafeMutableRawPointer, value: RateLimitsResult2) {
+        __swift_bridge__$Vec_RateLimitsResult2$push(vecPtr, {value.isOwned = false; return value.ptr;}())
+    }
+
+    public static func vecOfSelfPop(vecPtr: UnsafeMutableRawPointer) -> Optional<Self> {
+        let pointer = __swift_bridge__$Vec_RateLimitsResult2$pop(vecPtr)
+        if pointer == nil {
+            return nil
+        } else {
+            return (RateLimitsResult2(ptr: pointer!) as! Self)
+        }
+    }
+
+    public static func vecOfSelfGet(vecPtr: UnsafeMutableRawPointer, index: UInt) -> Optional<RateLimitsResult2Ref> {
+        let pointer = __swift_bridge__$Vec_RateLimitsResult2$get(vecPtr, index)
+        if pointer == nil {
+            return nil
+        } else {
+            return RateLimitsResult2Ref(ptr: pointer!)
+        }
+    }
+
+    public static func vecOfSelfGetMut(vecPtr: UnsafeMutableRawPointer, index: UInt) -> Optional<RateLimitsResult2RefMut> {
+        let pointer = __swift_bridge__$Vec_RateLimitsResult2$get_mut(vecPtr, index)
+        if pointer == nil {
+            return nil
+        } else {
+            return RateLimitsResult2RefMut(ptr: pointer!)
+        }
+    }
+
+    public static func vecOfSelfAsPtr(vecPtr: UnsafeMutableRawPointer) -> UnsafePointer<RateLimitsResult2Ref> {
+        UnsafePointer<RateLimitsResult2Ref>(OpaquePointer(__swift_bridge__$Vec_RateLimitsResult2$as_ptr(vecPtr)))
+    }
+
+    public static func vecOfSelfLen(vecPtr: UnsafeMutableRawPointer) -> UInt {
+        __swift_bridge__$Vec_RateLimitsResult2$len(vecPtr)
+    }
+}
+
 
 public class KeyValuePair: KeyValuePairRefMut {
     var isOwned: Bool = true
@@ -11975,6 +12159,90 @@ extension RateLimitStatus: Vectorizable {
 
     public static func vecOfSelfLen(vecPtr: UnsafeMutableRawPointer) -> UInt {
         __swift_bridge__$Vec_RateLimitStatus$len(vecPtr)
+    }
+}
+
+
+public class VideoGenRequestKey: VideoGenRequestKeyRefMut {
+    var isOwned: Bool = true
+
+    public override init(ptr: UnsafeMutableRawPointer) {
+        super.init(ptr: ptr)
+    }
+
+    deinit {
+        if isOwned {
+            __swift_bridge__$VideoGenRequestKey$_free(ptr)
+        }
+    }
+}
+public class VideoGenRequestKeyRefMut: VideoGenRequestKeyRef {
+    public override init(ptr: UnsafeMutableRawPointer) {
+        super.init(ptr: ptr)
+    }
+}
+public class VideoGenRequestKeyRef {
+    var ptr: UnsafeMutableRawPointer
+
+    public init(ptr: UnsafeMutableRawPointer) {
+        self.ptr = ptr
+    }
+}
+extension VideoGenRequestKeyRef {
+    public func principal() -> Principal {
+        Principal(ptr: __swift_bridge__$VideoGenRequestKey$principal(ptr))
+    }
+
+    public func counter() -> UInt64 {
+        __swift_bridge__$VideoGenRequestKey$counter(ptr)
+    }
+}
+extension VideoGenRequestKey: Vectorizable {
+    public static func vecOfSelfNew() -> UnsafeMutableRawPointer {
+        __swift_bridge__$Vec_VideoGenRequestKey$new()
+    }
+
+    public static func vecOfSelfFree(vecPtr: UnsafeMutableRawPointer) {
+        __swift_bridge__$Vec_VideoGenRequestKey$drop(vecPtr)
+    }
+
+    public static func vecOfSelfPush(vecPtr: UnsafeMutableRawPointer, value: VideoGenRequestKey) {
+        __swift_bridge__$Vec_VideoGenRequestKey$push(vecPtr, {value.isOwned = false; return value.ptr;}())
+    }
+
+    public static func vecOfSelfPop(vecPtr: UnsafeMutableRawPointer) -> Optional<Self> {
+        let pointer = __swift_bridge__$Vec_VideoGenRequestKey$pop(vecPtr)
+        if pointer == nil {
+            return nil
+        } else {
+            return (VideoGenRequestKey(ptr: pointer!) as! Self)
+        }
+    }
+
+    public static func vecOfSelfGet(vecPtr: UnsafeMutableRawPointer, index: UInt) -> Optional<VideoGenRequestKeyRef> {
+        let pointer = __swift_bridge__$Vec_VideoGenRequestKey$get(vecPtr, index)
+        if pointer == nil {
+            return nil
+        } else {
+            return VideoGenRequestKeyRef(ptr: pointer!)
+        }
+    }
+
+    public static func vecOfSelfGetMut(vecPtr: UnsafeMutableRawPointer, index: UInt) -> Optional<VideoGenRequestKeyRefMut> {
+        let pointer = __swift_bridge__$Vec_VideoGenRequestKey$get_mut(vecPtr, index)
+        if pointer == nil {
+            return nil
+        } else {
+            return VideoGenRequestKeyRefMut(ptr: pointer!)
+        }
+    }
+
+    public static func vecOfSelfAsPtr(vecPtr: UnsafeMutableRawPointer) -> UnsafePointer<VideoGenRequestKeyRef> {
+        UnsafePointer<VideoGenRequestKeyRef>(OpaquePointer(__swift_bridge__$Vec_VideoGenRequestKey$as_ptr(vecPtr)))
+    }
+
+    public static func vecOfSelfLen(vecPtr: UnsafeMutableRawPointer) -> UInt {
+        __swift_bridge__$Vec_VideoGenRequestKey$len(vecPtr)
     }
 }
 
