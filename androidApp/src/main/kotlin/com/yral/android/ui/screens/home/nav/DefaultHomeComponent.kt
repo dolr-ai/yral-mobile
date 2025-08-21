@@ -18,7 +18,7 @@ import com.yral.android.ui.screens.alertsrequest.nav.AlertsRequestComponent
 import com.yral.android.ui.screens.feed.nav.FeedComponent
 import com.yral.android.ui.screens.leaderboard.nav.LeaderboardComponent
 import com.yral.android.ui.screens.profile.nav.ProfileComponent
-import com.yral.android.ui.screens.uploadVideo.nav.UploadVideoComponent
+import com.yral.android.ui.screens.uploadVideo.UploadVideoRootComponent
 import kotlinx.serialization.Serializable
 
 internal class DefaultHomeComponent(
@@ -26,6 +26,9 @@ internal class DefaultHomeComponent(
 ) : HomeComponent(),
     ComponentContext by componentContext {
     private val navigation = StackNavigation<Config>()
+    private val childSnapshots: MutableMap<Config, Any> = LinkedHashMap()
+    private var lastActiveConfig: Config? = null
+    private var lastActiveProvider: HomeChildSnapshotProvider? = null
 
     override val stack: Value<ChildStack<*, Child>> =
         childStack(
@@ -34,7 +37,21 @@ internal class DefaultHomeComponent(
             initialConfiguration = Config.Feed,
             handleBackButton = true,
             childFactory = ::child,
-        )
+        ).also { stackValue ->
+            stackValue.subscribe { current ->
+                val activeChild = current.active.instance
+                val (newConfig, newProvider) = mapActiveChild(activeChild)
+                if (lastActiveConfig != newConfig) {
+                    lastActiveProvider?.let { provider ->
+                        lastActiveConfig?.let { prevConfig ->
+                            childSnapshots[prevConfig] = provider.createHomeSnapshot()
+                        }
+                    }
+                    lastActiveConfig = newConfig
+                    lastActiveProvider = newProvider
+                }
+            }
+        }
 
     private val slotNavigation = SlotNavigation<SlotConfig>()
 
@@ -96,19 +113,30 @@ internal class DefaultHomeComponent(
             is Config.Account -> Child.Account(accountComponent(componentContext))
         }
 
+    private fun mapActiveChild(child: Child): Pair<Config, HomeChildSnapshotProvider?> =
+        when (child) {
+            is Child.Feed -> Config.Feed to (child.component as? HomeChildSnapshotProvider)
+            is Child.Leaderboard -> Config.Leaderboard to (child.component as? HomeChildSnapshotProvider)
+            is Child.UploadVideo -> Config.UploadVideo to child.component
+            is Child.Profile -> Config.Profile to (child.component as? HomeChildSnapshotProvider)
+            is Child.Account -> Config.Account to (child.component as? HomeChildSnapshotProvider)
+        }
+
     private fun feedComponent(componentContext: ComponentContext): FeedComponent =
         FeedComponent.Companion(componentContext = componentContext)
 
     private fun leaderboardComponent(componentContext: ComponentContext): LeaderboardComponent =
         LeaderboardComponent.Companion(componentContext = componentContext)
 
-    private fun uploadVideoComponent(componentContext: ComponentContext): UploadVideoComponent =
-        UploadVideoComponent.Companion(
+    private fun uploadVideoComponent(componentContext: ComponentContext): UploadVideoRootComponent =
+        UploadVideoRootComponent.Companion(
             componentContext = componentContext,
             goToHome = {
                 onFeedTabClick()
                 showSlot(SlotConfig.AlertsRequestBottomSheet)
             },
+            openAlertsRequestBottomSheet = { showSlot(SlotConfig.AlertsRequestBottomSheet) },
+            snapshot = childSnapshots[Config.UploadVideo] as? UploadVideoRootComponent.Snapshot,
         )
 
     private fun profileComponent(componentContext: ComponentContext): ProfileComponent =
