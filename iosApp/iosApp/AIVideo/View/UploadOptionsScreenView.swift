@@ -78,7 +78,7 @@ extension UploadOptionsScreenView {
 extension UploadOptionsScreenView {
   enum Constants {
     static let vstackSpacing = 20.0
-    static let vstackVertical = 8.0
+    static let vstackVertical = 20.0
     static let vstackHorizontal = 16.0
 
     static let screenTitleBottom = 8.0
