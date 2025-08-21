@@ -10,7 +10,7 @@ import SwiftUI
 
 struct AIVideoCompletedView: View {
   let videoURL: URL
-  let videoAspectRatio: CGFloat
+  let videoAspectRatio: String
   let onDone: () -> Void
 
   private var processingAttributedText: NSAttributedString {
@@ -48,7 +48,7 @@ struct AIVideoCompletedView: View {
     VStack(spacing: .zero) {
       ResizableVideoView(
         url: videoURL,
-        aspectRatio: videoAspectRatio
+        aspectRatio: aspectRatio(from: videoAspectRatio) ?? 9/16
       )
       .frame(
         width: videoAspectRatio == Constants.verticalVideoAspectRatio
@@ -85,6 +85,17 @@ struct AIVideoCompletedView: View {
     .padding(.vertical, Constants.vstackVertical)
     .background(Constants.vstackBackground)
   }
+
+  func aspectRatio(from string: String) -> CGFloat? {
+    let parts = string.split(separator: ":").map { String($0) }
+    guard parts.count == 2,
+          let width = Double(parts[0]),
+          let height = Double(parts[1]),
+          height != 0 else {
+      return nil
+    }
+    return CGFloat(width / height)
+  }
 }
 
 extension AIVideoCompletedView {
@@ -95,7 +106,7 @@ extension AIVideoCompletedView {
 
     static let verticalVideoWidth = 150.0
     static let horizontalVideoWidth = 300.0
-    static let verticalVideoAspectRatio: CGFloat = 9/16
+    static let verticalVideoAspectRatio = "9:16"
 
     static let title = "Upload Successful"
     static let titleFont = YralFont.pt18.bold.swiftUIFont

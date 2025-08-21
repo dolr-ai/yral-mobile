@@ -10,5 +10,4 @@ import Combine
 
 final class EventBus: ObservableObject {
   let finishUploadingVideo = PassthroughSubject<Void, Never>()
-  let finishUploadingAIVideo = PassthroughSubject<Void, Never>()
 }

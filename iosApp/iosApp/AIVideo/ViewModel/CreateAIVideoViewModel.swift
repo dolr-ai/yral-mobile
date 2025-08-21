@@ -35,6 +35,8 @@ enum CreateAIVideoScreenEvent {
   case generateVideoSuccess
   case generateVideoFailure(String)
   case generateVideoStatusFailure(String)
+  case uploadAIVideoSuccess(String)
+  case uploadAIVideoFailure(String)
 }
 
 class CreateAIVideoViewModel: ObservableObject {
@@ -43,6 +45,7 @@ class CreateAIVideoViewModel: ObservableObject {
   let socialSignInUseCase: SocialSignInUseCaseProtocol
   let generateVideoUseCase: GenerateVideoUseCaseProtocol
   let generateVideoStatusUseCase: GenerateVideoStatusUseCaseProtocol
+  let uploadAIVideoUseCase: UploadAIVideoUseCaseProtocol
 
   @Published var event: CreateAIVideoScreenEvent?
   @Published var state: CreateAIVideoScreenState = .initialized
@@ -50,6 +53,7 @@ class CreateAIVideoViewModel: ObservableObject {
   var providers: [AIVideoProviderResponse]?
   var selectedProvider: AIVideoProviderResponse?
   var pollingRequestKey: GenerateVideoRequestKeyResponse?
+  var videoURLString: String?
 
   private var pollingTask: Task<Void, Never>?
 
@@ -58,13 +62,15 @@ class CreateAIVideoViewModel: ObservableObject {
     rateLimitStatusUseCase: RateLimitStatusUseCaseProtocol,
     socialSigninUseCase: SocialSignInUseCaseProtocol,
     generateVideoUseCase: GenerateVideoUseCaseProtocol,
-    generateVideoStatusUseCase: GenerateVideoStatusUseCaseProtocol
+    generateVideoStatusUseCase: GenerateVideoStatusUseCaseProtocol,
+    uploadAIVideoUseCase: UploadAIVideoUseCaseProtocol
   ) {
     self.aiVideoProviderUseCase = aiVideoProviderUseCase
     self.rateLimitStatusUseCase = rateLimitStatusUseCase
     self.socialSignInUseCase = socialSigninUseCase
     self.generateVideoUseCase = generateVideoUseCase
     self.generateVideoStatusUseCase = generateVideoStatusUseCase
+    self.uploadAIVideoUseCase = uploadAIVideoUseCase
   }
 
   @MainActor
@@ -155,7 +161,10 @@ class CreateAIVideoViewModel: ObservableObject {
         case .success(let status):
           if status.contains("Complete: ") {
             stopPolling()
-            print("Samarth: \(status.replacingOccurrences(of: "Complete: ", with: ""))")
+            videoURLString = status.replacingOccurrences(of: "Complete: ", with: "")
+            Task {
+              await uploadAIVideo()
+            }
           } else if status.contains("Failed: ") {
             event = .generateVideoStatusFailure(status.replacingOccurrences(of: "Failed: ", with: ""))
             stopPolling()
@@ -164,6 +173,26 @@ class CreateAIVideoViewModel: ObservableObject {
           stopPolling()
           state = .failure(error)
           event = .generateVideoStatusFailure(error.localizedDescription)
+        }
+      }
+    }
+  }
+
+  func uploadAIVideo() async {
+    guard let videoURL = videoURLString else {
+      event = .uploadAIVideoFailure("No URL was found to upload the video")
+      return
+    }
+
+    do {
+      let result = await uploadAIVideoUseCase.execute(request: videoURL)
+      await MainActor.run {
+        switch result {
+        case .success:
+          event = .uploadAIVideoSuccess(videoURL)
+        case .failure(let error):
+          state = .failure(error)
+          event = .uploadAIVideoFailure(error.localizedDescription)
         }
       }
     }

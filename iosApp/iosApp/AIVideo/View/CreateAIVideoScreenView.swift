@@ -26,6 +26,7 @@ struct CreateAIVideoHost: View {
 // swiftlint: disable type_body_length
 struct CreateAIVideoScreenView: View {
   @EnvironmentObject var session: SessionManager
+  @EnvironmentObject var eventBus: EventBus
   @ObservedObject var viewModel: CreateAIVideoViewModel
 
   let onDismiss: () -> Void
@@ -40,6 +41,17 @@ struct CreateAIVideoScreenView: View {
       set: { newValue in
         if newValue == false {
           errorMessage = nil
+        }
+      }
+    )
+  }
+
+  var isCompletionViewPresented: Binding<Bool> {
+    Binding(
+      get: { videoURL != nil },
+      set: { newValue in
+        if newValue == false {
+          videoURL = nil
         }
       }
     )
@@ -61,7 +73,7 @@ struct CreateAIVideoScreenView: View {
   @State private var generatingVideo = false
   @State private var generatingVideoTextCurrentIndex: Int = .zero
   @State private var showDisableBackBottomSheet = false
-  @State private var showAIVideoCompletedView = false
+  @State private var videoURL: URL?
 
   var body: some View {
     VStack(alignment: .leading, spacing: Constants.vstackSpacing) {
@@ -225,12 +237,18 @@ struct CreateAIVideoScreenView: View {
       }
       .background( ClearBackgroundView() )
     }
-    .fullScreenCover(isPresented: $showAIVideoCompletedView) {
-//      AIVideoCompletedView(
-//        videoURL: <#T##URL#>,
-//        videoAspectRatio: <#T##CGFloat#>) {
-//          showAIVideoCompletedView = false
-//        }
+    .fullScreenCover(isPresented: isCompletionViewPresented) {
+      if let url = videoURL {
+        AIVideoCompletedView(
+          videoURL: url,
+          videoAspectRatio: selectedProvider?.defaultAspectRatio ?? ""
+        ) {
+          videoURL = nil
+          generatingVideo = false
+          onDismiss()
+          eventBus.finishUploadingVideo.send(())
+        }
+      }
     }
     .onReceive(session.phasePublisher, perform: { phase in
       if case .permanent = phase {
@@ -265,6 +283,10 @@ struct CreateAIVideoScreenView: View {
       case .generateVideoFailure(let errMessage):
         errorMessage = errMessage
       case .generateVideoStatusFailure(let errMessage):
+        errorMessage = errMessage
+      case .uploadAIVideoSuccess(let videoURLString):
+        videoURL = URL(string: videoURLString)
+      case .uploadAIVideoFailure(let errMessage):
         errorMessage = errMessage
       default:
         break
@@ -346,7 +368,7 @@ extension CreateAIVideoScreenView {
         showProviderBottomSheet = true
       }
 
-      Text(Constants.creditsUsed)
+      Text(creditsUsed ? Constants.creditsUsed : Constants.creditsNotUsed)
         .font(Constants.creditsUsedFont)
         .foregroundColor(creditsUsed ? Constants.creditsUsedRedColor : Constants.creditsUsedGreenColor)
     }
@@ -405,7 +427,8 @@ extension CreateAIVideoScreenView {
     static let chevronLeading = 28.0
     static let chevronSize = 24.0
     static let chevronTrailing = 12.0
-    static let creditsUsed = "0 of 1 credits used"
+    static let creditsNotUsed = "0 of 1 credits used"
+    static let creditsUsed = "1 of 1 credits used"
     static let creditsUsedFont = YralFont.pt14.semiBold.swiftUIFont
     static let creditsUsedRedColor = YralColor.red300.swiftUIColor
     static let creditsUsedGreenColor = YralColor.green300.swiftUIColor

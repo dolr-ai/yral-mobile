@@ -9,10 +9,12 @@
 import Foundation
 
 protocol RateLimitStatusUseCaseProtocol {
-  func execute() async -> Result<RateLimitStatus, NetworkError>
+  func execute() async -> Result<RateLimitStatus, RateLimitStatusError>
 }
 
-class RateLimitStatusUseCase: BaseResultUseCase<Void, RateLimitStatus, NetworkError>, RateLimitStatusUseCaseProtocol {
+class RateLimitStatusUseCase: BaseResultUseCase<
+Void, RateLimitStatus, RateLimitStatusError>,
+RateLimitStatusUseCaseProtocol {
   private let aiVideoRepository: AIVideoRepositoryProtocol
 
   init(
@@ -23,7 +25,7 @@ class RateLimitStatusUseCase: BaseResultUseCase<Void, RateLimitStatus, NetworkEr
     super.init(crashReporter: crashReporter)
   }
 
-  func execute() async -> Result<RateLimitStatus, NetworkError> {
+  func execute() async -> Result<RateLimitStatus, RateLimitStatusError> {
     await aiVideoRepository.getRateLimitStatus()
   }
 }
