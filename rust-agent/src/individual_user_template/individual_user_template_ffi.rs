@@ -13,6 +13,9 @@ use std::str::FromStr;
 use yral_canisters_common::Canisters;
 use yral_types::delegated_identity::DelegatedIdentityWire;
 use yral_canisters_client::rate_limits::RateLimitStatus;
+use yral_canisters_client::rate_limits::VideoGenRequestKey;
+use yral_canisters_client::rate_limits::VideoGenRequestStatus;
+pub type RateLimitsResult2 = yral_canisters_client::rate_limits::Result2;
 
 #[swift_bridge::bridge]
 mod ffi {
@@ -134,6 +137,8 @@ mod ffi {
         type PrincipalResult;
         type U64Wrapper;
         type KeyValuePair;
+        type RateLimitsResult2;
+        type VideoGenRequestStatus;
     }
 
     extern "Rust" {
@@ -518,5 +523,21 @@ mod ffi {
             is_registered: bool,
             identity: DelegatedIdentity,
         ) -> Result<RateLimitStatus, String>;
+
+        async fn poll_video_generation_status(
+            identity: DelegatedIdentity,
+             key: VideoGenRequestKey) -> Result<RateLimitsResult2, String>;
+
+        fn get_polling_result_status(result: RateLimitsResult2) -> Option<VideoGenRequestStatus>;
+
+        fn get_status_value(status: VideoGenRequestStatus) -> String;
+    }
+
+    extern "Rust" {
+        type VideoGenRequestKey;
+        #[swift_bridge(get(principal))]
+        fn principal(&self) -> Principal;
+        #[swift_bridge(get(counter))]
+        fn counter(&self) -> u64;
     }
 }

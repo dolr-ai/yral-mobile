@@ -25,6 +25,8 @@ use yral_metadata_client::DeviceRegistrationToken;
 use yral_canisters_client::rate_limits;
 use yral_canisters_client::rate_limits::RateLimitStatus;
 use yral_canisters_client::rate_limits::RateLimits;
+use yral_canisters_client::rate_limits::VideoGenRequestKey;
+use yral_canisters_client::rate_limits::VideoGenRequestStatus;
 
 pub type Secp256k1Error = k256::elliptic_curve::Error;
 
@@ -285,4 +287,37 @@ pub async fn get_rate_limit_status_core(
         .ok_or_else(|| "not found".to_string())?;
 
     Ok(status)
+}
+
+
+pub async fn poll_video_generation_status(
+    identity: DelegatedIdentity,
+     key: VideoGenRequestKey) -> std::result::Result<yral_canisters_client::rate_limits::Result2, String> {
+    let agent = Agent::builder()
+        .with_url("https://ic0.app/")
+        .with_identity(identity)
+        .build()
+        .map_err(|e| e.to_string())?;
+
+    let canister = RateLimits(RATE_LIMITS_ID, &agent);
+    return canister.poll_video_generation_status(key)
+    .await
+    .map_err(|e| e.to_string());
+}
+
+use yral_canisters_client::rate_limits::Result2;
+pub fn get_polling_result_status(result: Result2) -> Option<VideoGenRequestStatus> {
+    match result {
+        Result2::Ok(status) => Some(status),
+        Result2::Err(_) => None,
+    }
+}
+
+pub fn get_status_value(status: VideoGenRequestStatus) -> String {
+    match status {
+        VideoGenRequestStatus::Failed(msg) => format!("Failed: {}", msg),
+        VideoGenRequestStatus::Complete(val) => format!("Complete: {}", val),
+        VideoGenRequestStatus::Processing => "Processing".to_string(),
+        VideoGenRequestStatus::Pending => "Pending".to_string(),
+    }
 }
