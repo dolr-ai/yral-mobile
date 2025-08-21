@@ -352,6 +352,12 @@ class AiVideoGenViewModel internal constructor(
             ?.let { uploadVideoTelemetry.createAiVideoClicked(it) }
     }
 
+    fun resetUi() {
+        val canister = _state.value.currentCanister
+        cleanup()
+        canister?.let { refresh(canister) }
+    }
+
     data class ViewState(
         val selectedProvider: Provider? = null,
         val providers: List<Provider> = emptyList(),

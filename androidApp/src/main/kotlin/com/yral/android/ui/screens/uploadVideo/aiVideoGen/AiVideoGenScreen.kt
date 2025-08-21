@@ -151,18 +151,20 @@ private fun AiVideoGenScreenPrompts(
             )
         }
         is BottomSheetType.Error -> {
+            val handleSheetAction: (action: () -> Unit) -> Unit = { action ->
+                viewModel.setBottomSheetType(BottomSheetType.None)
+                if (sheetType.endFlow) {
+                    viewModel.cleanup()
+                    component.onBack()
+                } else {
+                    action()
+                }
+            }
             GenerationErrorPrompt(
                 message = sheetType.message,
                 bottomSheetState = bottomSheetState,
-                dismissSheet = { viewModel.setBottomSheetType(BottomSheetType.None) },
-                tryAgain = {
-                    if (sheetType.endFlow) {
-                        viewModel.cleanup()
-                        component.onBack()
-                    } else {
-                        viewModel.tryAgain()
-                    }
-                },
+                dismissSheet = { handleSheetAction { viewModel.resetUi() } },
+                tryAgain = { handleSheetAction { viewModel.tryAgain() } },
             )
         }
         is BottomSheetType.Signup -> {
