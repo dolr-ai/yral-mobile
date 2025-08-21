@@ -9,10 +9,12 @@
 import Foundation
 
 protocol GenerateVideoStatusUseCaseProtocol {
-  func execute(request: UInt64) async -> Result<String, NetworkError>
+  func execute(request: UInt64) async -> Result<String, GenerateVideoStatusError>
 }
 
-class GenerateVideoStatusUseCase: BaseResultUseCase<UInt64, String, NetworkError>, GenerateVideoStatusUseCaseProtocol {
+class GenerateVideoStatusUseCase: BaseResultUseCase<
+UInt64, String, GenerateVideoStatusError>,
+GenerateVideoStatusUseCaseProtocol {
   private let aiVideoRepository: AIVideoRepositoryProtocol
 
   init(
@@ -23,7 +25,7 @@ class GenerateVideoStatusUseCase: BaseResultUseCase<UInt64, String, NetworkError
     super.init(crashReporter: crashReporter)
   }
 
-  override func execute(request: UInt64) async -> Result<String, NetworkError> {
+  override func execute(request: UInt64) async -> Result<String, GenerateVideoStatusError> {
     await aiVideoRepository.getGenerateVideoStatus(for: request)
   }
 }

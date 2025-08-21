@@ -57,6 +57,10 @@ final class CreateAIVideoDIContainer {
       generateVideoStatusUseCase: GenerateVideoStatusUseCase(
         aiVideoRepository: aiVideoRepository,
         crashReporter: dependencies.crashReporter
+      ),
+      uploadAIVideoUseCase: UploadAIVideoUseCase(
+        aiVideoRepository: aiVideoRepository,
+        crashReporter: dependencies.crashReporter
       )
     )
   }
