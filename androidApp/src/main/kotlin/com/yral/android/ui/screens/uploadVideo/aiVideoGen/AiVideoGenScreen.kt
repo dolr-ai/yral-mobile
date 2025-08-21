@@ -83,7 +83,7 @@ fun AiVideoGenScreen(
     val shouldRefresh = viewModel.sessionObserver.collectAsState(null)
     LaunchedEffect(shouldRefresh.value) {
         Logger.d("VideoGen") { "shouldRefresh: $shouldRefresh" }
-        shouldRefresh.value?.first?.let { viewModel.refresh(it) }
+        shouldRefresh.value?.let { viewModel.refresh(it) }
     }
     BackHandler(enabled = viewState.uiState is UiState.Success, onBack = { })
     Column(modifier.fillMaxSize()) {

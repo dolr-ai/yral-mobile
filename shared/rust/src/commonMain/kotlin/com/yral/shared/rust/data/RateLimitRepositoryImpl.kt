@@ -16,9 +16,9 @@ class RateLimitRepositoryImpl(
             .fetchVideoGenerationStatus(canisterID, requestKey)
 
     override suspend fun getVideoGenFreeCreditsStatus(
-        canisterID: String,
+        userPrincipal: String,
         isRegistered: Boolean,
     ): RateLimitStatusWrapper? =
         dataSource
-            .getVideoGenFreeCreditsStatus(canisterID, isRegistered)
+            .getVideoGenFreeCreditsStatus(userPrincipal, isRegistered)
 }

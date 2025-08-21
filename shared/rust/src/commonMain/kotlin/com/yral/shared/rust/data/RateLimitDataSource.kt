@@ -10,7 +10,7 @@ interface RateLimitDataSource {
         requestKey: VideoGenRequestKeyWrapper,
     ): Result2Wrapper
     suspend fun getVideoGenFreeCreditsStatus(
-        canisterID: String,
+        userPrincipal: String,
         isRegistered: Boolean,
     ): RateLimitStatusWrapper?
 }

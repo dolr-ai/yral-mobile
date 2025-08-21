@@ -17,11 +17,11 @@ class RateLimitDataSourceImpl(
             .pollVideoGenerationStatus(requestKey)
 
     override suspend fun getVideoGenFreeCreditsStatus(
-        canisterID: String,
+        userPrincipal: String,
         isRegistered: Boolean,
     ): RateLimitStatusWrapper? =
         rateLimitServiceFactory
-            .service(principal = canisterID)
+            .service(principal = userPrincipal)
             .getRateLimitStatus(VIDEO_GEN_RATE_LIMIT_PROPERTY, isRegistered)
 
     companion object {

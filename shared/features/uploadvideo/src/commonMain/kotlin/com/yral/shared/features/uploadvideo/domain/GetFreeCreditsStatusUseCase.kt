@@ -18,12 +18,12 @@ internal class GetFreeCreditsStatusUseCase(
     override suspend fun execute(parameter: Params): RateLimitStatusWrapper =
         repository
             .getVideoGenFreeCreditsStatus(
-                canisterID = parameter.canisterId,
+                userPrincipal = parameter.userPrincipal,
                 isRegistered = parameter.isRegistered,
             ) ?: throw YralException("Rate limit status not found")
 
     data class Params(
-        val canisterId: String,
+        val userPrincipal: String,
         val isRegistered: Boolean,
     )
 }

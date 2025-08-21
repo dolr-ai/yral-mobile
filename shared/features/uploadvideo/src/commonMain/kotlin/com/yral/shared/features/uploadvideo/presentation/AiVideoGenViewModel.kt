@@ -62,7 +62,7 @@ class AiVideoGenViewModel internal constructor(
                 _state.update { it.copy(bottomSheetType = BottomSheetType.None) }
             }
             when (state) {
-                is SessionState.SignedIn -> state.session.canisterId to properties.isSocialSignIn
+                is SessionState.SignedIn -> state.session.canisterId
                 else -> null
             }
         }.distinctUntilChanged()
@@ -85,8 +85,10 @@ class AiVideoGenViewModel internal constructor(
         }
         when (_state.value.uiState) {
             is UiState.Initial -> {
-                loadProviders()
-                getFreeCreditsStatus()
+                if (isCanisterChanged) {
+                    loadProviders()
+                    getFreeCreditsStatus()
+                }
             }
             is UiState.InProgress -> {
                 if (isCanisterChanged) {
@@ -127,12 +129,12 @@ class AiVideoGenViewModel internal constructor(
     private fun getFreeCreditsStatus() {
         viewModelScope.launch {
             _state.update { it.copy(usedCredits = null) }
-            sessionManager.canisterID?.let { canisterId ->
+            sessionManager.userPrincipal?.let { userPrincipal ->
                 requiredUseCases
                     .getFreeCreditsStatus(
                         parameter =
                             GetFreeCreditsStatusUseCase.Params(
-                                canisterId = canisterId,
+                                userPrincipal = userPrincipal,
                                 isRegistered = sessionManager.isSocialSignIn(),
                             ),
                     ).onSuccess { status ->
