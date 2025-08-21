@@ -9,7 +9,7 @@ import com.yral.android.ui.screens.alertsrequest.nav.AlertsRequestComponent
 import com.yral.android.ui.screens.feed.nav.FeedComponent
 import com.yral.android.ui.screens.leaderboard.nav.LeaderboardComponent
 import com.yral.android.ui.screens.profile.nav.ProfileComponent
-import com.yral.android.ui.screens.uploadVideo.nav.UploadVideoComponent
+import com.yral.android.ui.screens.uploadVideo.UploadVideoRootComponent
 
 abstract class HomeComponent {
     abstract val stack: Value<ChildStack<*, Child>>
@@ -30,7 +30,7 @@ abstract class HomeComponent {
             val component: LeaderboardComponent,
         ) : Child()
         class UploadVideo(
-            val component: UploadVideoComponent,
+            val component: UploadVideoRootComponent,
         ) : Child()
         class Profile(
             val component: ProfileComponent,

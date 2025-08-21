@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.uploadVideo
+package com.yral.android.ui.screens.uploadVideo.fileUpload
 
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
@@ -49,7 +49,6 @@ import com.yral.android.ui.components.hashtagInput.HashtagInput
 import com.yral.android.ui.components.hashtagInput.keyboardHeightAsState
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
-import com.yral.android.ui.screens.uploadVideo.nav.UploadVideoComponent
 import com.yral.android.ui.widgets.YralButtonState
 import com.yral.android.ui.widgets.YralGradientButton
 import com.yral.android.ui.widgets.video.YralVideoPlayer
