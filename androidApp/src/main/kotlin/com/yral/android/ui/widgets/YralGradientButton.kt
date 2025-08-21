@@ -51,7 +51,7 @@ fun YralGradientButton(
             enter = fadeIn(),
             exit = fadeOut(),
         ) {
-            YralMaskedVectorText(
+            YralMaskedVectorTextV2(
                 text = text,
                 vectorRes = getButtonTextBackground(buttonType, buttonState),
                 textStyle =

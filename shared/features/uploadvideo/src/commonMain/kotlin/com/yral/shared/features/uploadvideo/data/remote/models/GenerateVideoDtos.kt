@@ -95,7 +95,7 @@ internal suspend fun HttpResponse.parseGenerateVideoResponse(json: Json): Genera
             operationId = null,
             provider = null,
             requestKey = null,
-            providerError = error.providerError.ifBlank { "Something went wrong!" },
+            providerError = error.providerError,
         )
     }
 }

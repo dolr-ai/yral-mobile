@@ -21,7 +21,22 @@ data class Provider(
     val isInternal: Boolean,
     val modelIcon: String?,
     val extraInfo: JsonObject?,
-)
+) {
+    fun toDefaultAspectRatio(): Float {
+        var ratio = defaultAspectRatio
+        if (ratio == null && allowedAspectRatios.isNotEmpty()) {
+            ratio = allowedAspectRatios[0]
+        }
+        return ratio
+            ?.split(":")
+            ?.let { parts -> parts[0].toFloat() / parts[1].toFloat() }
+            ?: DEFAULT_ASPECT_RATIO_FLOAT
+    }
+
+    companion object {
+        private const val DEFAULT_ASPECT_RATIO_FLOAT = 1.78f // 16:9
+    }
+}
 
 data class ProviderCost(
     val usdCents: Int?,

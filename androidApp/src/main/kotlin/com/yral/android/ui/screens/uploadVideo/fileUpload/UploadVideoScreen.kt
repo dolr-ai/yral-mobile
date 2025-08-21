@@ -1,8 +1,11 @@
 package com.yral.android.ui.screens.uploadVideo.fileUpload
 
+import androidx.activity.compose.BackHandler
 import androidx.annotation.OptIn
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -36,7 +40,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush.Companion.linearGradient
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -83,6 +89,7 @@ fun UploadVideoScreen(
         }
     }
 
+    BackHandler(enabled = viewState.uploadUiState !is UiState.Initial, onBack = { })
     when (val uploadUiState = viewState.uploadUiState) {
         UiState.Initial -> {
             UploadVideoIdle(
@@ -91,6 +98,7 @@ fun UploadVideoScreen(
                 modifier = modifier,
                 viewState = viewState,
                 viewModel = viewModel,
+                onBack = { component.onBack() },
             )
         }
 
@@ -120,6 +128,7 @@ private fun UploadVideoIdle(
     modifier: Modifier,
     viewState: UploadVideoViewModel.ViewState,
     viewModel: UploadVideoViewModel,
+    onBack: () -> Unit,
 ) {
     val density = LocalDensity.current
     val imeBottomDp = with(density) { WindowInsets.ime.getBottom(this).toDp() }
@@ -131,7 +140,7 @@ private fun UploadVideoIdle(
         contentPadding = PaddingValues(bottom = keyboardAwareBottomPadding),
     ) {
         // Update TOTAL_ITEMS if adding any more items
-        item { Header() }
+        item { Header(onBack) }
         item {
             UploadVideo(
                 viewState.selectedFilePath ?: "",
@@ -167,12 +176,20 @@ private fun UploadVideoProgress(
 }
 
 @Composable
-private fun Header() {
+private fun Header(onBack: (() -> Unit)? = null) {
     Row(
         modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
-        horizontalArrangement = Arrangement.Start,
+        horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.Start),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        onBack?.let {
+            Image(
+                painter = painterResource(id = R.drawable.arrow_left),
+                contentDescription = "back button",
+                contentScale = ContentScale.None,
+                modifier = Modifier.size(24.dp).clickable { onBack() },
+            )
+        }
         Text(
             text = stringResource(R.string.upload_video),
             style = LocalAppTopography.current.xlBold,
