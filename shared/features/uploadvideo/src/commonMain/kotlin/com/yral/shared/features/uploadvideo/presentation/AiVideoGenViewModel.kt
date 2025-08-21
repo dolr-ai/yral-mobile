@@ -72,20 +72,21 @@ class AiVideoGenViewModel internal constructor(
 
     fun refresh(canisterId: String) {
         val currentCanister = _state.value.currentCanister
-        var isCanisterChanged = false
-        if (currentCanister == null) {
-            logger.d { "Null: Setting current canister to $canisterId" }
-            _state.update { it.copy(currentCanister = canisterId) }
-        } else if (currentCanister != canisterId) {
-            logger.d { "Mismatch: Setting current canister to $canisterId" }
-            _state.update { it.copy(currentCanister = canisterId) }
-            isCanisterChanged = true
-        } else {
-            logger.d { "Same canister" }
+        val isCanisterChanged = currentCanister != null && currentCanister != canisterId
+        when {
+            currentCanister == null -> {
+                logger.d { "Null: Setting current canister to $canisterId" }
+                _state.update { it.copy(currentCanister = canisterId) }
+            }
+            isCanisterChanged -> {
+                logger.d { "Mismatch: Setting current canister to $canisterId" }
+                _state.update { it.copy(currentCanister = canisterId) }
+            }
+            else -> logger.d { "Same canister" }
         }
         when (_state.value.uiState) {
             is UiState.Initial -> {
-                if (isCanisterChanged) {
+                _state.value.currentCanister?.let {
                     loadProviders()
                     getFreeCreditsStatus()
                 }
