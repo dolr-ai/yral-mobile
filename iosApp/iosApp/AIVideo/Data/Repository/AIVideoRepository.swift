@@ -42,9 +42,9 @@ class AIVideoRepository: AIVideoRepositoryProtocol {
     }
   }
 
-  func getRateLimitStatus() async -> Result<RateLimitStatus, NetworkError> {
+  func getRateLimitStatus() async -> Result<RateLimitStatus, RateLimitStatusError> {
     guard let userPrincipalString = authClient.userPrincipalString else {
-      return .failure(.invalidRequest)
+      return .failure(.auth(.authenticationFailed("No user principal found")))
     }
 
     do {
@@ -59,7 +59,14 @@ class AIVideoRepository: AIVideoRepositoryProtocol {
 
       return .success(status)
     } catch {
-      return .failure(.invalidResponse("Failed to fetch rate limit status"))
+      switch error {
+      case let error as NetworkError:
+        return .failure(.network(error))
+      case let error as AuthError:
+        return .failure(.auth(error))
+      default:
+        return .failure(.unknown(error))
+      }
     }
   }
 
@@ -104,9 +111,9 @@ class AIVideoRepository: AIVideoRepositoryProtocol {
     }
   }
 
-  func getGenerateVideoStatus(for counter: UInt64) async -> Result<String, NetworkError> {
+  func getGenerateVideoStatus(for counter: UInt64) async -> Result<String, GenerateVideoStatusError> {
     guard let userPrincipalString = authClient.userPrincipalString else {
-      return .failure(.invalidRequest)
+      return .failure(.auth(.authenticationFailed("No user principal found")))
     }
 
     do {
@@ -118,10 +125,59 @@ class AIVideoRepository: AIVideoRepositoryProtocol {
         let resultString = get_status_value(resultStatus)
         return .success(resultString.toString())
       } else {
-        return .failure(.invalidResponse("Failed to fetch status for video generation"))
+        return .failure(.network(.invalidRequest))
       }
     } catch {
-      return .failure(.invalidResponse("Failed to fetch status for video generation"))
+      switch error {
+      case let error as NetworkError:
+        return .failure(.network(error))
+      case let error as AuthError:
+        return .failure(.auth(error))
+      default:
+        return .failure(.unknown(error))
+      }
+    }
+  }
+
+  func uploadVideo(with url: String) async -> Result<Void, UploadAIVideoError> {
+    guard let baseURL = URL(string: AppConfiguration().anonIdentityBaseURLString) else {
+      return .failure(.network(.invalidRequest))
+    }
+
+    do {
+      let delegatedWire = try authClient.generateNewDelegatedIdentityWireOneHour()
+      let swiftWire = try swiftDelegatedIdentityWire(from: delegatedWire)
+
+      let httpBody = UploadAIVideoRequest(
+        videoURL: url,
+        hashtags: [],
+        description: "",
+        isNSFW: false,
+        enableHotOrNot: false,
+        delegatedIdentityWire: swiftWire
+      )
+
+      let result = try await httpService.performRequest(
+        for: Endpoint(
+          http: "",
+          baseURL: baseURL,
+          path: Constants.uploadVideoPath,
+          method: .post,
+          headers: ["Content-Type": "application/json"],
+          body: try? JSONEncoder().encode(httpBody)
+        )
+      )
+
+      return .success(())
+    } catch {
+      switch error {
+      case let error as NetworkError:
+        return .failure(.network(error))
+      case let error as AuthError:
+        return .failure(.auth(error))
+      default:
+        return .failure(.unknown(error))
+      }
     }
   }
 }
@@ -140,5 +196,6 @@ extension AIVideoRepository {
   enum Constants {
     static let getProvidersPath = "/api/v2/videogen/providers"
     static let generateVideoPath = "/api/v2/videogen/generate"
+    static let uploadVideoPath = "/api/upload_ai_video_from_url"
   }
 }
