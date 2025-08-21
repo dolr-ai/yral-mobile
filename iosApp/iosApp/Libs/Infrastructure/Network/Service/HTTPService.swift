@@ -48,6 +48,8 @@ class HTTPService: NetworkService {
         case .unknown:
           throw CloudFunctionError.unknown(errorResponse.error.code, errorResponse.error.message)
         }
+      } else if let errorResponse = try? JSONDecoder().decode(GenerateVideoErrorDTO.self, from: data) {
+        throw NetworkError.providerError(errorResponse.providerError)
       } else {
         throw NetworkError.invalidResponse(httpResponse.description)
       }

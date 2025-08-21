@@ -10,6 +10,20 @@ import SwiftUI
 import AVKit
 import iosSharedUmbrella
 
+struct UploadViewHost: View {
+  private let onDismiss: () -> Void
+  @StateObject private var viewModel: UploadViewModel
+
+  init(uploadViewDI: UploadDIContainer, onDismiss: @escaping () -> Void) {
+    self.onDismiss = onDismiss
+    _viewModel = StateObject(wrappedValue: uploadViewDI.makeUploadViewModel())
+  }
+
+  var body: some View {
+    UploadView(viewModel: viewModel, onDismiss: onDismiss)
+  }
+}
+
 struct UploadView: View {
   @State private var showVideoPicker = false
   @State private var videoURL: URL?
@@ -22,15 +36,17 @@ struct UploadView: View {
   @State private var showUploadFailedView = false
   @ObservedObject var viewModel: UploadViewModel
   @EnvironmentObject var session: SessionManager
+  @EnvironmentObject var eventBus: EventBus
 
-  var doneAction: () -> Void = {}
+  let onDismiss: () -> Void
   var isUploadEnabled: Bool {
     let isVideoURLValid = (videoURL != nil) && (videoURL?.absoluteString.isEmpty == false)
     return isVideoURLValid
   }
 
-  init(viewModel: UploadViewModel) {
+  init(viewModel: UploadViewModel, onDismiss: @escaping () -> Void) {
     self.viewModel = viewModel
+    self.onDismiss = onDismiss
     // swiftlint: disable unavailable_condition
     if #available(iOS 16.0, *) {
       // No extra setup needed
@@ -44,11 +60,20 @@ struct UploadView: View {
     ZStack {
       if showUploadProgressView, let url = videoURL {
         VStack(spacing: .zero) {
-          Text(Constants.navigationTitle)
-            .font(Constants.navigationTitleFont)
-            .foregroundColor(Constants.navigationTitleTextColor)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(Constants.navigationTitlePadding)
+          HStack(alignment: .center, spacing: Constants.navHstackSpacing) {
+            Image(Constants.backImage)
+              .resizable()
+              .frame(width: Constants.backImageSize, height: Constants.backImageSize)
+              .onTapGesture {
+                onDismiss()
+              }
+
+            Text(Constants.navigationTitle)
+              .font(Constants.navigationTitleFont)
+              .foregroundColor(Constants.navigationTitleTextColor)
+              .frame(maxWidth: .infinity, alignment: .leading)
+          }
+          .padding(Constants.navigationTitlePadding)
 
           VStack(spacing: Constants.uploadProgessVStackSpacing) {
             UploadProgressView(progressValue: $currentProgress, videoURL: url)
@@ -89,11 +114,20 @@ struct UploadView: View {
         .transition(.opacity)
       } else {
         VStack(spacing: Constants.verticalSpacing) {
-          Text(Constants.navigationTitle)
-            .font(Constants.navigationTitleFont)
-            .foregroundColor(Constants.navigationTitleTextColor)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(Constants.navigationTitlePadding)
+          HStack(alignment: .center, spacing: Constants.navHstackSpacing) {
+            Image(Constants.backImage)
+              .resizable()
+              .frame(width: Constants.backImageSize, height: Constants.backImageSize)
+              .onTapGesture {
+                onDismiss()
+              }
+
+            Text(Constants.navigationTitle)
+              .font(Constants.navigationTitleFont)
+              .foregroundColor(Constants.navigationTitleTextColor)
+              .frame(maxWidth: .infinity, alignment: .leading)
+          }
+          .padding(Constants.navigationTitlePadding)
           if let url = videoURL {
             ZStack {
               VideoPlayerView(
@@ -151,6 +185,7 @@ struct UploadView: View {
         }
       }
     }
+    .navigationBarHidden(true)
     .animation(.easeInOut, value: showUploadCompletedView)
     .animation(.easeInOut, value: showUploadFailedView)
     .onReceive(viewModel.$event) { event in
@@ -201,7 +236,8 @@ struct UploadView: View {
       UploadCompletedView(
         doneAction: {
           resetUploadScreen()
-          doneAction()
+          onDismiss()
+          eventBus.finishUploadingVideo.send(())
         },
         showUploadCompletedView: $showUploadCompletedView
       )
@@ -220,7 +256,8 @@ struct UploadView: View {
         },
         goHomeAction: {
           resetUploadScreen()
-          doneAction()
+          onDismiss()
+          eventBus.finishUploadingVideo.send(())
         }
       )
       .transition(.opacity)
@@ -262,16 +299,13 @@ extension UploadView {
     currentProgress = .zero
     viewModel.state = .initialized
   }
-
-  func onDoneAction(_ action: @escaping () -> Void) -> UploadView {
-    var copy = self
-    copy.doneAction = action
-    return copy
-  }
 }
 
 extension UploadView {
   enum Constants {
+    static let navHstackSpacing = 12.0
+    static let backImage = "chevron-left"
+    static let backImageSize = 24.0
     static let uploadProgessVStackSpacing: CGFloat = 30.0
     static let navigationTitle = "Upload Video"
     static let navigationTitleFont = YralFont.pt20.bold.swiftUIFont
