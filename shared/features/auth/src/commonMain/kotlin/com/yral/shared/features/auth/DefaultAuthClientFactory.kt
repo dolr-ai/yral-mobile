@@ -9,6 +9,7 @@ import com.yral.shared.features.auth.utils.OAuthUtils
 import com.yral.shared.features.auth.utils.OAuthUtilsHelper
 import com.yral.shared.preferences.Preferences
 import com.yral.shared.rust.services.IndividualUserServiceFactory
+import com.yral.shared.rust.services.RateLimitServiceFactory
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -25,6 +26,7 @@ class DefaultAuthClientFactory(
     private val authRepository: AuthRepository,
     private val requiredUseCases: DefaultAuthClient.RequiredUseCases,
     private val individualUserServiceFactory: IndividualUserServiceFactory,
+    private val rateLimitServiceFactory: RateLimitServiceFactory,
     private val oAuthUtils: OAuthUtils,
     private val oAuthUtilsHelper: OAuthUtilsHelper,
     private val authTelemetry: AuthTelemetry,
@@ -41,7 +43,6 @@ class DefaultAuthClientFactory(
             auth = auth,
             authRepository = authRepository,
             requiredUseCases = requiredUseCases,
-            individualUserServiceFactory = individualUserServiceFactory,
             oAuthUtils = oAuthUtils,
             oAuthUtilsHelper = oAuthUtilsHelper,
             authTelemetry = authTelemetry,
@@ -62,5 +63,9 @@ class DefaultAuthClientFactory(
                             }
                         }
                     },
+            initRustFactories = { identity ->
+                individualUserServiceFactory.initialize(identity)
+                rateLimitServiceFactory.initialize(identity)
+            },
         )
 }
