@@ -40,7 +40,7 @@ final class UploadDIContainer {
     )
   }
 
-  func makeUploadView() -> UploadView {
-    UploadView(viewModel: makeUploadViewModel())
+  func makeUploadView(onDismiss: @escaping () -> Void) -> UploadView {
+    UploadView(viewModel: makeUploadViewModel(), onDismiss: onDismiss)
   }
 }
