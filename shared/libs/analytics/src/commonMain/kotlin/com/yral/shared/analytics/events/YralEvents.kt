@@ -2,7 +2,6 @@ package com.yral.shared.analytics.events
 
 import com.yral.shared.analytics.constants.FeatureEvents
 import com.yral.shared.analytics.constants.Features
-import com.yral.shared.analytics.events.LeaderBoardPageViewedEventData
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlin.math.abs
@@ -734,7 +733,7 @@ data class CreateAIVideoClickedData(
 ) : BaseEventData(),
     EventData {
     constructor(model: String) : this(
-        FeatureEvents.CREAT_AI_VIDEO_CLICKED.getEventName(),
+        FeatureEvents.CREATE_AI_VIDEO_CLICKED.getEventName(),
         Features.AUTH.getFeatureName(),
         model,
     )

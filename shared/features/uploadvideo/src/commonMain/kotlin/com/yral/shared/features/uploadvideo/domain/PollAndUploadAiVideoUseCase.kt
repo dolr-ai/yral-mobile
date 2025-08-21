@@ -72,7 +72,7 @@ internal class PollAndUploadAiVideoUseCase(
                                             ).onSuccess {
                                                 uploadVideoTelemetry.uploadSuccess(
                                                     videoId = videoStatus.v1,
-                                                    type = VideoCreationType.UPLOAD_VIDEO,
+                                                    type = VideoCreationType.AI_VIDEO,
                                                 )
                                                 emit(Ok(PollAndUploadResult.Success(videoStatus.v1)))
                                                 return@withTimeout
