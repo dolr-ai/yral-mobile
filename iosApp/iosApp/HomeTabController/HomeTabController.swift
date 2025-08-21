@@ -30,6 +30,8 @@ struct HomeTabController: View {
   @State private var walletPhase: WalletPhase = .none
   @State private var walletOutcome: WalletPhase = .none
 
+  @EnvironmentObject var eventBus: EventBus
+
   init(
     feedsViewController: FeedsViewController,
     uploadOptionsScreenView: UploadOptionsScreenView,
@@ -75,30 +77,6 @@ struct HomeTabController: View {
           }
           .tag(Tab.upload)
 
-//        uploadView
-//          .onDoneAction {
-//            UIView.setAnimationsEnabled(false)
-//            suppressAnalytics = true
-//            selectedTab = .home
-//            DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.animationPeriod) {
-//              UIView.setAnimationsEnabled(false)
-//              UNUserNotificationCenter.current().getNotificationSettings { settings in
-//                switch settings.authorizationStatus {
-//                case .notDetermined, .denied:
-//                  DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.animationPeriod) {
-//                    self.showNotificationsNudge = true
-//                  }
-//                default: break
-//                }
-//              }
-//            }
-//          }
-//          .background(Color.black.edgesIgnoringSafeArea(.all))
-//          .tabItem { tabIcon(selected: selectedTab == .upload,
-//                             selectedName: Constants.uploadIconImageNameSelected,
-//                             unselectedName: Constants.uploadIconImageNameUnselected) }
-//          .tag(Tab.upload)
-
         profileView
           .onUploadAction {
             suppressAnalytics = true
@@ -133,6 +111,23 @@ struct HomeTabController: View {
           selectedTab = .profile
         }
         deepLinkRouter.pendingDestination = nil
+      }
+      .onReceive(eventBus.finishUploadingVideo) {
+        UIView.setAnimationsEnabled(false)
+        suppressAnalytics = true
+        selectedTab = .home
+        DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.animationPeriod) {
+          UIView.setAnimationsEnabled(false)
+          UNUserNotificationCenter.current().getNotificationSettings { settings in
+            switch settings.authorizationStatus {
+            case .notDetermined, .denied:
+              DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.animationPeriod) {
+                self.showNotificationsNudge = true
+              }
+            default: break
+            }
+          }
+        }
       }
       .hapticFeedback(.impact(weight: .light), trigger: selectedTab)
       .fullScreenCover(isPresented: $showNotificationsNudge) {

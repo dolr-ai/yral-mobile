@@ -13,6 +13,7 @@ struct UploadOptionsScreenView: View {
 
   @State private var aiVideoScreenID = UUID()
   @State private var navigateToAIVideoScreen = false
+  @State private var uploadViewID = UUID()
   @State private var navigateToUploadVideoScreen = false
 
   var body: some View {
@@ -47,6 +48,22 @@ struct UploadOptionsScreenView: View {
         UploadOptionView(option: Constants.uploadOptionDevice) {
           navigateToUploadVideoScreen = true
         }
+        .background(
+          NavigationLink(isActive: $navigateToUploadVideoScreen) {
+            if let uploadViewDI = makeUploadViewDIContainer() {
+              UploadViewHost(
+                uploadViewDI: uploadViewDI,
+                onDismiss: { navigateToUploadVideoScreen = false }
+              )
+              .id(uploadViewID)
+            } else {
+              EmptyView()
+            }
+          } label: {
+            EmptyView()
+          }
+          .hidden()
+        )
 
         Spacer(minLength: .zero)
       }
@@ -72,6 +89,10 @@ extension UploadOptionsScreenView {
         crashReporter: crashReporter
       )
     )
+  }
+
+  private func makeUploadViewDIContainer() -> UploadDIContainer? {
+    return appDIContainer?.makeUploadDIContainer()
   }
 }
 

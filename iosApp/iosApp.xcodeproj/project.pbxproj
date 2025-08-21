@@ -186,6 +186,8 @@
 		10C1B3ED2E56E72A00CFC41B /* AIVideoCompletedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3EB2E56E72A00CFC41B /* AIVideoCompletedView.swift */; };
 		10C1B3EF2E56F62500CFC41B /* ResizableVideoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3EE2E56F62500CFC41B /* ResizableVideoView.swift */; };
 		10C1B3F02E56F62500CFC41B /* ResizableVideoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3EE2E56F62500CFC41B /* ResizableVideoView.swift */; };
+		10C1B3F22E57117900CFC41B /* EventBus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3F12E57117500CFC41B /* EventBus.swift */; };
+		10C1B3F32E57117900CFC41B /* EventBus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3F12E57117500CFC41B /* EventBus.swift */; };
 		10CEBB7F2E3103670022803A /* HapticFeedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CEBB7E2E3103630022803A /* HapticFeedback.swift */; };
 		10CEBB802E3103670022803A /* HapticFeedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CEBB7E2E3103630022803A /* HapticFeedback.swift */; };
 		10CEBB822E3103CD0022803A /* HapticFeedback+SwiftUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CEBB812E3103C50022803A /* HapticFeedback+SwiftUI.swift */; };
@@ -761,6 +763,7 @@
 		10C1B3E82E55EE2D00CFC41B /* DisableBackBottomSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisableBackBottomSheet.swift; sourceTree = "<group>"; };
 		10C1B3EB2E56E72A00CFC41B /* AIVideoCompletedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIVideoCompletedView.swift; sourceTree = "<group>"; };
 		10C1B3EE2E56F62500CFC41B /* ResizableVideoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResizableVideoView.swift; sourceTree = "<group>"; };
+		10C1B3F12E57117500CFC41B /* EventBus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventBus.swift; sourceTree = "<group>"; };
 		10CEBB7E2E3103630022803A /* HapticFeedback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticFeedback.swift; sourceTree = "<group>"; };
 		10CEBB812E3103C50022803A /* HapticFeedback+SwiftUI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HapticFeedback+SwiftUI.swift"; sourceTree = "<group>"; };
 		10CEBB842E3104000022803A /* HapticGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticGenerator.swift; sourceTree = "<group>"; };
@@ -1676,6 +1679,7 @@
 		AC26CA662D806501006ADA75 /* Utils */ = {
 			isa = PBXGroup;
 			children = (
+				10C1B3F12E57117500CFC41B /* EventBus.swift */,
 				AC04D3012E059E990055C4AA /* AppCheckProviderFactory.swift */,
 				10020A142DE9841F00DF269E /* UIApplication+Extensions.swift */,
 				1002088E2DE483EC00DF269E /* FirebaseLottieManager.swift */,
@@ -3358,6 +3362,7 @@
 				ACB09FD52D92D66400EE3239 /* FeedsViewModelProtocol.swift in Sources */,
 				ACF639DF2DC25BA600C4BCCC /* UserDefaultsManager.swift in Sources */,
 				AC8FC76B2D9BE09A006F29BC /* FeedRequestDTO.swift in Sources */,
+				10C1B3F32E57117900CFC41B /* EventBus.swift in Sources */,
 				AC7F7EAA2D771DF400215162 /* GetUploadEndpointUseCase.swift in Sources */,
 				1050348F2DD4B6AA00571B4E /* AudioPlayer.swift in Sources */,
 				105034A72DD5E50D00571B4E /* SmileyConfigError.swift in Sources */,
@@ -3638,6 +3643,7 @@
 				ACB09FD62D92D66400EE3239 /* FeedsViewModelProtocol.swift in Sources */,
 				ACF639E02DC25BA600C4BCCC /* UserDefaultsManager.swift in Sources */,
 				AC8FC76A2D9BE09A006F29BC /* FeedRequestDTO.swift in Sources */,
+				10C1B3F22E57117900CFC41B /* EventBus.swift in Sources */,
 				AC7F7EA92D771DF400215162 /* GetUploadEndpointUseCase.swift in Sources */,
 				1050348E2DD4B6AA00571B4E /* AudioPlayer.swift in Sources */,
 				105034A82DD5E50D00571B4E /* SmileyConfigError.swift in Sources */,
