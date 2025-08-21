@@ -18,6 +18,7 @@ import com.google.android.play.core.install.model.InstallStatus
 import com.google.android.play.core.install.model.UpdateAvailability
 import com.russhwolf.settings.Settings
 import com.yral.shared.crashlytics.core.CrashlyticsManager
+import com.yral.shared.preferences.PrefKeys
 
 /**
  * Manages in-app updates using Google Play Core library with lifecycle awareness.
@@ -49,7 +50,6 @@ class InAppUpdateManager(
 
 //        private const val UPDATE_CHECK_INTERVAL_MS = 3 * 60 * 60 * 1000L // 3 hours
         private const val UPDATE_CHECK_INTERVAL_MS = 1 * 60 * 1000L // 1 minute
-        private const val PREF_KEY_LAST_UPDATE_CHECK = "last_update_check_time"
         private const val REQUEST_CODE_FLEXIBLE_UPDATE = 1001
         private const val PRIORITY_IMMEDIATE = 4
         private const val STALENESS_DAYS_IMMEDIATE = 30
@@ -249,7 +249,7 @@ class InAppUpdateManager(
     }
 
     private fun markUpdateChecked() {
-        settings.putLong(PREF_KEY_LAST_UPDATE_CHECK, System.currentTimeMillis())
+        settings.putLong(PrefKeys.IAP_LAST_UPDATE_CHECK_TIME.name, System.currentTimeMillis())
     }
 
     /**
@@ -257,7 +257,7 @@ class InAppUpdateManager(
      * @return true if the check should be skipped, false otherwise
      */
     private fun shouldSkipFlexibleUpdateCheck(): Boolean {
-        val lastCheckTime = settings.getLong(PREF_KEY_LAST_UPDATE_CHECK, 0)
+        val lastCheckTime = settings.getLong(PrefKeys.IAP_LAST_UPDATE_CHECK_TIME.name, 0)
         return System.currentTimeMillis() - lastCheckTime < UPDATE_CHECK_INTERVAL_MS
     }
 
