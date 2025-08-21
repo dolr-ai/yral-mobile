@@ -1,13 +1,16 @@
 package com.yral.shared.rust.domain
 
-import com.yral.shared.uniffi.generated.PollResult2
-import com.yral.shared.uniffi.generated.RateLimitStatus
-import com.yral.shared.uniffi.generated.VideoGenRequestKey
+import com.yral.shared.uniffi.generated.RateLimitStatusWrapper
+import com.yral.shared.uniffi.generated.Result2Wrapper
+import com.yral.shared.uniffi.generated.VideoGenRequestKeyWrapper
 
 interface RateLimitRepository {
-    suspend fun fetchVideoGenerationStatus(requestKey: VideoGenRequestKey): PollResult2
+    suspend fun fetchVideoGenerationStatus(
+        canisterID: String,
+        requestKey: VideoGenRequestKeyWrapper,
+    ): Result2Wrapper
     suspend fun getVideoGenFreeCreditsStatus(
-        canisterId: String,
+        canisterID: String,
         isRegistered: Boolean,
-    ): RateLimitStatus?
+    ): RateLimitStatusWrapper?
 }

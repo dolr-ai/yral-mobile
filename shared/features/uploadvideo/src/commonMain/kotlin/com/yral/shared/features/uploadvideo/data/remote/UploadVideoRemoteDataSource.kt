@@ -145,7 +145,7 @@ internal class UploadVideoRemoteDataSource(
             }
         }
 
-    suspend fun uploadAiVideoFromUrl(dto: UploadAiVideoFromUrlRequestDto) {
+    suspend fun uploadAiVideoFromUrl(dto: UploadAiVideoFromUrlRequestDto): String =
         httpPostWithStringResponse(client) {
             url {
                 host = AppConfigurations.ANONYMOUS_IDENTITY_BASE_URL
@@ -154,7 +154,6 @@ internal class UploadVideoRemoteDataSource(
             contentType(ContentType.Application.Json)
             setBody(dto)
         }
-    }
 
     @Suppress("UnusedPrivateProperty")
     companion object {

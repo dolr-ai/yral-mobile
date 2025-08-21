@@ -21,8 +21,8 @@ import com.yral.shared.features.uploadvideo.domain.VideoGenerationTimeoutExcepti
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoParams
 import com.yral.shared.features.uploadvideo.domain.models.Provider
 import com.yral.shared.libs.arch.presentation.UiState
-import com.yral.shared.uniffi.generated.RateLimitStatus
-import com.yral.shared.uniffi.generated.VideoGenRequestKey
+import com.yral.shared.uniffi.generated.RateLimitStatusWrapper
+import com.yral.shared.uniffi.generated.VideoGenRequestKeyWrapper
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -67,7 +67,7 @@ class AiVideoGenViewModel internal constructor(
             }
         }.distinctUntilChanged()
 
-    private var currentRequestKey: VideoGenRequestKey? = null
+    private var currentRequestKey: VideoGenRequestKeyWrapper? = null
     private var pollingJob: Job? = null
 
     fun refresh(canisterId: String) {
@@ -155,7 +155,7 @@ class AiVideoGenViewModel internal constructor(
         }
     }
 
-    private fun RateLimitStatus.usedCredits() =
+    private fun RateLimitStatusWrapper.usedCredits() =
         if (sessionManager.isSocialSignIn()) {
             if (isLimited) 1 else 0
         } else {
@@ -192,7 +192,10 @@ class AiVideoGenViewModel internal constructor(
                             logger.d { "Video generated: $result" }
                             result.requestKey?.let { requestKey ->
                                 currentRequestKey = requestKey
-                                pollAndUploadVideo(selectedProvider.name, requestKey)
+                                pollAndUploadVideo(
+                                    modelName = selectedProvider.name,
+                                    requestKey = requestKey,
+                                )
                                 return@onSuccess
                             }
                             result.providerError?.let { error ->
@@ -227,17 +230,19 @@ class AiVideoGenViewModel internal constructor(
 
     private fun pollAndUploadVideo(
         modelName: String,
-        requestKey: VideoGenRequestKey,
+        requestKey: VideoGenRequestKeyWrapper,
     ) {
         pollingJob?.cancel()
         pollingJob =
             viewModelScope.launch {
+                val canisterID = sessionManager.canisterID ?: return@launch
                 try {
                     requiredUseCases
                         .pollAndUploadAiVideo
                         .invoke(
                             parameters =
                                 PollAndUploadAiVideoUseCase.Params(
+                                    canisterID = canisterID,
                                     modelName = modelName,
                                     requestKey = requestKey,
                                     isFastInitially = false,
