@@ -182,6 +182,10 @@
 		10C1B3E72E55A73300CFC41B /* RateLimitStatusUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3E52E55A72900CFC41B /* RateLimitStatusUseCase.swift */; };
 		10C1B3E92E55EE2D00CFC41B /* DisableBackBottomSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3E82E55EE2D00CFC41B /* DisableBackBottomSheet.swift */; };
 		10C1B3EA2E55EE2D00CFC41B /* DisableBackBottomSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3E82E55EE2D00CFC41B /* DisableBackBottomSheet.swift */; };
+		10C1B3EC2E56E72A00CFC41B /* AIVideoCompletedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3EB2E56E72A00CFC41B /* AIVideoCompletedView.swift */; };
+		10C1B3ED2E56E72A00CFC41B /* AIVideoCompletedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3EB2E56E72A00CFC41B /* AIVideoCompletedView.swift */; };
+		10C1B3EF2E56F62500CFC41B /* ResizableVideoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3EE2E56F62500CFC41B /* ResizableVideoView.swift */; };
+		10C1B3F02E56F62500CFC41B /* ResizableVideoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3EE2E56F62500CFC41B /* ResizableVideoView.swift */; };
 		10CEBB7F2E3103670022803A /* HapticFeedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CEBB7E2E3103630022803A /* HapticFeedback.swift */; };
 		10CEBB802E3103670022803A /* HapticFeedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CEBB7E2E3103630022803A /* HapticFeedback.swift */; };
 		10CEBB822E3103CD0022803A /* HapticFeedback+SwiftUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CEBB812E3103C50022803A /* HapticFeedback+SwiftUI.swift */; };
@@ -767,6 +771,8 @@
 		10C1B39C2E54BD0F00CFC41B /* CreateAIVideoErrorBottomSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateAIVideoErrorBottomSheet.swift; sourceTree = "<group>"; };
 		10C1B3E52E55A72900CFC41B /* RateLimitStatusUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RateLimitStatusUseCase.swift; sourceTree = "<group>"; };
 		10C1B3E82E55EE2D00CFC41B /* DisableBackBottomSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisableBackBottomSheet.swift; sourceTree = "<group>"; };
+		10C1B3EB2E56E72A00CFC41B /* AIVideoCompletedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIVideoCompletedView.swift; sourceTree = "<group>"; };
+		10C1B3EE2E56F62500CFC41B /* ResizableVideoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResizableVideoView.swift; sourceTree = "<group>"; };
 		10CEBB7E2E3103630022803A /* HapticFeedback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticFeedback.swift; sourceTree = "<group>"; };
 		10CEBB812E3103C50022803A /* HapticFeedback+SwiftUI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HapticFeedback+SwiftUI.swift"; sourceTree = "<group>"; };
 		10CEBB842E3104000022803A /* HapticGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticGenerator.swift; sourceTree = "<group>"; };
@@ -1230,6 +1236,8 @@
 				1064B8022E4CB1840036C10B /* ProviderOptionsBottomSheetView.swift */,
 				10C1B39C2E54BD0F00CFC41B /* CreateAIVideoErrorBottomSheet.swift */,
 				10C1B3E82E55EE2D00CFC41B /* DisableBackBottomSheet.swift */,
+				10C1B3EB2E56E72A00CFC41B /* AIVideoCompletedView.swift */,
+				10C1B3EE2E56F62500CFC41B /* ResizableVideoView.swift */,
 			);
 			path = View;
 			sourceTree = "<group>";
@@ -3346,6 +3354,7 @@
 				AC42D3FB2E0D6E7E009C2D92 /* NotificationService.swift in Sources */,
 				AC42D3FC2E0D6E7E009C2D92 /* FirebaseNotifications.swift in Sources */,
 				AC32E4692D2998D6001DDA43 /* AccountDIContainer.swift in Sources */,
+				10C1B3EF2E56F62500CFC41B /* ResizableVideoView.swift in Sources */,
 				AC0084882E31DEA30041302A /* RechargeWalletResponseDTO.swift in Sources */,
 				AC5A7B8C2DACF1E2009E9E42 /* VideoEventDTO.swift in Sources */,
 				AC7D5BF72E1034E0008853AF /* NotificationsToggleViewModel.swift in Sources */,
@@ -3436,6 +3445,7 @@
 				AC32E4542D296637001DDA43 /* AccountRepository.swift in Sources */,
 				105036EA2DDB287700571B4E /* ExchangePrincipal.swift in Sources */,
 				AC9294092D630266003DB102 /* UploadView.swift in Sources */,
+				10C1B3ED2E56E72A00CFC41B /* AIVideoCompletedView.swift in Sources */,
 				AC20A1412E3B7723003306C1 /* FeedsCell+Wallet.swift in Sources */,
 				AC7F7EBF2D7734BB00215162 /* UploadRepository.swift in Sources */,
 				107C61242DC0F2C8006FC467 /* SmileyGameRuleError.swift in Sources */,
@@ -3630,6 +3640,7 @@
 				AC42D3FD2E0D6E7E009C2D92 /* NotificationService.swift in Sources */,
 				AC42D3FE2E0D6E7E009C2D92 /* FirebaseNotifications.swift in Sources */,
 				AC32E4682D2998D6001DDA43 /* AccountDIContainer.swift in Sources */,
+				10C1B3F02E56F62500CFC41B /* ResizableVideoView.swift in Sources */,
 				AC0084892E31DEA30041302A /* RechargeWalletResponseDTO.swift in Sources */,
 				AC5A7B8B2DACF1E2009E9E42 /* VideoEventDTO.swift in Sources */,
 				AC7D5BF62E1034E0008853AF /* NotificationsToggleViewModel.swift in Sources */,
@@ -3720,6 +3731,7 @@
 				AC32E4532D296637001DDA43 /* AccountRepository.swift in Sources */,
 				105036E92DDB287700571B4E /* ExchangePrincipal.swift in Sources */,
 				AC9294082D630266003DB102 /* UploadView.swift in Sources */,
+				10C1B3EC2E56E72A00CFC41B /* AIVideoCompletedView.swift in Sources */,
 				AC20A1402E3B7723003306C1 /* FeedsCell+Wallet.swift in Sources */,
 				AC7F7EC02D7734BB00215162 /* UploadRepository.swift in Sources */,
 				107C61232DC0F2C8006FC467 /* SmileyGameRuleError.swift in Sources */,
