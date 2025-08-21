@@ -13,7 +13,7 @@ import com.yral.android.ui.widgets.YralWebView
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun WebViewBottomSheet(
+fun WebViewBottomSheet(
     link: String,
     bottomSheetState: SheetState,
     onDismissRequest: () -> Unit,

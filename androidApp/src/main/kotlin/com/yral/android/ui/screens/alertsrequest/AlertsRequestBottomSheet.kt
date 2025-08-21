@@ -52,6 +52,7 @@ import org.koin.compose.koinInject
 @Composable
 fun AlertsRequestBottomSheet(
     component: AlertsRequestComponent,
+    isNotNowEnabled: Boolean = false,
     analyticsManager: AnalyticsManager = koinInject(),
 ) {
     val factory: PermissionsControllerFactory = rememberPermissionsControllerFactory()
@@ -73,6 +74,7 @@ fun AlertsRequestBottomSheet(
         val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         AlertSheet(
             bottomSheetState = bottomSheetState,
+            isNotNowEnabled = isNotNowEnabled,
             onDismissRequest = component::onDismissClicked,
             onTurnOnAlertsClicked = {
                 coroutineScope.launch {
@@ -91,6 +93,7 @@ fun AlertsRequestBottomSheet(
 @OptIn(ExperimentalMaterial3Api::class)
 private fun AlertSheet(
     bottomSheetState: SheetState,
+    isNotNowEnabled: Boolean,
     onDismissRequest: () -> Unit,
     onTurnOnAlertsClicked: () -> Unit,
     onNotNowClicked: () -> Unit,
@@ -127,15 +130,17 @@ private fun AlertSheet(
                 text = stringResource(R.string.turn_on_alerts),
                 onClick = onTurnOnAlertsClicked,
             )
-            Spacer(Modifier.height(12.dp))
-            YralButton(
-                text = stringResource(R.string.not_now),
-                borderColor = YralColors.Neutral700,
-                borderWidth = 1.dp,
-                backgroundColor = YralColors.Neutral800,
-                textStyle = TextStyle(color = YralColors.NeutralTextPrimary),
-                onClick = onNotNowClicked,
-            )
+            if (isNotNowEnabled) {
+                Spacer(Modifier.height(12.dp))
+                YralButton(
+                    text = stringResource(R.string.not_now),
+                    borderColor = YralColors.Neutral700,
+                    borderWidth = 1.dp,
+                    backgroundColor = YralColors.Neutral800,
+                    textStyle = TextStyle(color = YralColors.NeutralTextPrimary),
+                    onClick = onNotNowClicked,
+                )
+            }
         }
     }
 }

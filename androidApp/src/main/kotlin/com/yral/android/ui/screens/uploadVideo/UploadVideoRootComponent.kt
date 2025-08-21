@@ -39,13 +39,11 @@ abstract class UploadVideoRootComponent : HomeChildSnapshotProvider {
         operator fun invoke(
             componentContext: ComponentContext,
             goToHome: () -> Unit,
-            openAlertsRequestBottomSheet: () -> Unit,
             snapshot: Snapshot?,
         ): UploadVideoRootComponent =
             DefaultUploadVideoRootComponent(
                 componentContext = componentContext,
                 goToHome = goToHome,
-                openAlertsRequestBottomSheet = openAlertsRequestBottomSheet,
                 snapshot = snapshot,
             )
     }

@@ -97,6 +97,7 @@ dependencies {
     implementation(libs.lottie)
     implementation(libs.coil.compose)
     implementation(libs.coil.okhttp)
+    implementation(libs.coil.svg)
     implementation(libs.accompanist.permission)
     implementation(libs.facebook.sdk.android.core)
     implementation(libs.mixpanel.android)

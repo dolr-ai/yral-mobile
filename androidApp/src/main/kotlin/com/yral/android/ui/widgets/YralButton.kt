@@ -1,5 +1,8 @@
 package com.yral.android.ui.widgets
 
+import android.R.attr.onClick
+import android.R.attr.text
+import android.R.attr.textStyle
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -8,6 +11,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -42,6 +46,7 @@ fun YralButton(
     icon: Int? = null,
     buttonState: YralButtonState = YralButtonState.Enabled,
     loader: Int = R.raw.yral_loader,
+    paddingValues: PaddingValues = PaddingValues(all = 10.dp),
     onClick: () -> Unit,
 ) {
     Row(
@@ -59,10 +64,8 @@ fun YralButton(
                     width = borderWidth,
                     color = borderColor,
                     shape = RoundedCornerShape(size = 8.dp),
-                ).padding(all = 10.dp)
-                .clickable {
-                    onClick()
-                },
+                ).padding(paddingValues)
+                .clickable { onClick() },
         horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
     ) {

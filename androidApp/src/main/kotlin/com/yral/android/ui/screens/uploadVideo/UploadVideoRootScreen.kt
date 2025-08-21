@@ -6,6 +6,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import com.arkivanov.decompose.extensions.compose.stack.Children
+import com.arkivanov.decompose.extensions.compose.stack.animation.slide
+import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
 import com.yral.android.ui.screens.uploadVideo.aiVideoGen.AiVideoGenScreen
 import com.yral.android.ui.screens.uploadVideo.fileUpload.UploadVideoScreen
 import com.yral.android.ui.screens.uploadVideo.flowSelection.FlowSelectionScreen
@@ -18,6 +20,7 @@ fun UploadVideoRootScreen(
     Children(
         stack = component.stack,
         modifier = Modifier.background(MaterialTheme.colorScheme.primaryContainer),
+        animation = stackAnimation(slide()),
     ) { child ->
         when (val instance = child.instance) {
             is UploadVideoRootComponent.Child.FlowSelection -> {

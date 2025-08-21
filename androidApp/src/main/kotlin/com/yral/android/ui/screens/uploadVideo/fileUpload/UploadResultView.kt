@@ -13,7 +13,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.yral.android.R
 import com.yral.android.ui.components.AnimatedBounceIcon
@@ -54,7 +59,7 @@ fun UploadVideoSuccess(onDone: () -> Unit) {
                 )
                 Text(
                     modifier = Modifier.fillMaxWidth(),
-                    text = stringResource(R.string.upload_completed_message),
+                    text = buildUploadCompletedMessage(),
                     style = LocalAppTopography.current.mdRegular,
                     color = YralColors.Neutral300,
                     textAlign = TextAlign.Center,
@@ -68,6 +73,27 @@ fun UploadVideoSuccess(onDone: () -> Unit) {
                 onClick = onDone,
             )
         }
+    }
+}
+
+@Composable
+private fun buildUploadCompletedMessage(): AnnotatedString {
+    val fullMessage = stringResource(R.string.upload_completed_message)
+    val yourVideos = stringResource(R.string.your_videos)
+    val myProfile = stringResource(R.string.my_profile)
+    val firstPart = fullMessage.substringBefore(yourVideos)
+    val middlePart = fullMessage.substringAfter(yourVideos).substringBefore(myProfile)
+    val endPart = fullMessage.substringAfter(myProfile)
+    return buildAnnotatedString {
+        append(firstPart)
+        withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+            append(stringResource(R.string.your_videos))
+        }
+        append(middlePart)
+        withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+            append(stringResource(R.string.my_profile))
+        }
+        append(endPart)
     }
 }
 

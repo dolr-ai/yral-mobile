@@ -21,7 +21,7 @@ import com.yral.shared.analytics.events.SignupPageName
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun LoginBottomSheet(
+fun LoginBottomSheet(
     termsLink: String,
     bottomSheetState: SheetState,
     onDismissRequest: () -> Unit,

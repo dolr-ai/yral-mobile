@@ -1,6 +1,7 @@
 package com.yral.shared.features.uploadvideo.data.remote
 
 import com.yral.shared.core.AppConfigurations
+import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.features.uploadvideo.data.remote.models.FileUploadStatus
 import com.yral.shared.features.uploadvideo.data.remote.models.GenerateVideoRequestDto
 import com.yral.shared.features.uploadvideo.data.remote.models.GetUploadUrlResponseDTO
@@ -133,12 +134,7 @@ internal class UploadVideoRemoteDataSource(
         } catch (e: ServerResponseException) {
             e.response.parseGenerateVideoResponse(json)
         } catch (_: Exception) {
-            GenerateVideoResult(
-                operationId = null,
-                provider = null,
-                requestKey = null,
-                providerError = "Something went wrong!",
-            )
+            throw YralException("Error generating video")
         }
 
     suspend fun fetchProviders(): ProvidersResponseDto =
