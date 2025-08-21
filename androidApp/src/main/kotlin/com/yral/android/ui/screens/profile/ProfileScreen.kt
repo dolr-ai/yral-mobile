@@ -45,6 +45,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -78,6 +79,7 @@ import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.features.profile.viewmodel.DeleteConfirmationState
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.features.profile.viewmodel.VideoViewState
+import com.yral.shared.libs.videoPlayer.YralBlurredThumbnail
 import com.yral.shared.rust.domain.models.FeedDetails
 import kotlinx.coroutines.flow.collectLatest
 
@@ -600,11 +602,13 @@ private fun VideoGridItem(
                     .clickable { openVideoReel() },
         ) {
             // Video thumbnail
+            YralBlurredThumbnail(video.thumbnail.toString())
             YralAsyncImage(
                 imageUrl = video.thumbnail.toString(),
                 loaderSize = LoaderSize.Fixed,
                 modifier = Modifier.fillMaxSize(),
                 shape = RoundedCornerShape(8.dp),
+                contentScale = ContentScale.Fit,
             )
             VideoGridItemActions(
                 isLiked = video.isLiked,

@@ -33,6 +33,7 @@ firebaseCrashlyticsPlugin = "3.0.3"
 firebase-gitlive-sdk = "2.1.0"
 firebasePerfPlugin = "1.4.2"
 gobley = "0.2.0"
+haze = "1.6.10"
 inAppUpdate = "2.1.0"
 koinBom = "4.1.0"
 kotlinResult = "2.0.1"
@@ -123,6 +124,9 @@ gitlive-firebase-messaging = { module = "dev.gitlive:firebase-messaging", versio
 gitlive-firebase-config = { module = "dev.gitlive:firebase-config", version.ref = "firebase-gitlive-sdk" }
 
 googlePlay-inAppUpdate = { group = "com.google.android.play", name = "app-update-ktx", version.ref = "inAppUpdate"}
+
+haze = { module = "dev.chrisbanes.haze:haze", version.ref = "haze" }
+haze-materials = { module = "dev.chrisbanes.haze:haze-materials", version.ref = "haze" }
 
 koin-bom = { group = "io.insert-koin", name = "koin-bom", version.ref = "koinBom" }
 koin-core = { group = "io.insert-koin", name = "koin-core" }

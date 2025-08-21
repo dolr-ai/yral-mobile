@@ -27,6 +27,7 @@ import androidx.media3.ui.PlayerView
 import coil3.ImageLoader
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
+import com.yral.shared.libs.videoPlayer.YralBlurredThumbnail
 import com.yral.shared.libs.videoPlayer.model.PlayerData
 import com.yral.shared.libs.videoPlayer.model.PlayerSpeed
 import com.yral.shared.libs.videoPlayer.model.ScreenResize
@@ -89,6 +90,7 @@ actual fun CMPPlayer(
     }
 
     Box(modifier) {
+        YralBlurredThumbnail(playerData.thumbnailUrl)
         playerView?.let {
             AndroidView(
                 factory = { playerView },
@@ -111,7 +113,7 @@ actual fun CMPPlayer(
             AsyncImage(
                 model = playerData.thumbnailUrl,
                 contentDescription = "Thumbnail",
-                contentScale = ContentScale.Crop,
+                contentScale = ContentScale.Fit,
                 modifier =
                     Modifier
                         .fillMaxSize()

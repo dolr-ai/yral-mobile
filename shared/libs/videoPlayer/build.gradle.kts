@@ -35,6 +35,9 @@ kotlin {
             implementation(projects.shared.core)
 
             implementation(libs.coil.compose)
+
+            implementation(libs.haze)
+            implementation(libs.haze.materials)
         }
     }
 }
