@@ -30,6 +30,7 @@ import com.arkivanov.decompose.extensions.compose.stack.animation.fade
 import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
 import com.yral.android.R
 import com.yral.android.ui.components.ToastHost
+import com.yral.android.ui.components.UpdateNotificationHost
 import com.yral.android.ui.nav.RootComponent
 import com.yral.android.ui.nav.RootComponent.Child
 import com.yral.android.ui.screens.home.HomeScreen
@@ -127,6 +128,11 @@ fun RootScreen(
                         .padding(top = 12.dp),
             )
         }
+
+        // Show update notifications (Snackbar) for flexible updates
+        UpdateNotificationHost(
+            rootComponent = rootComponent,
+        )
     }
 }
 

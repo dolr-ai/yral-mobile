@@ -190,7 +190,14 @@ private fun ToastContentBig(
             )
             if (cta != null) {
                 Spacer(modifier = Modifier.height(10.dp))
-                CtaText(cta, status)
+                CtaText(
+                    text = cta.text,
+                    status = status,
+                    onClick = {
+                        cta.onClick()
+                        onDismiss()
+                    },
+                )
             }
         }
     }
@@ -226,7 +233,14 @@ private fun ToastContentSmall(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             if (cta != null) {
-                CtaText(cta, status)
+                CtaText(
+                    text = cta.text,
+                    status = status,
+                    onClick = {
+                        cta.onClick()
+                        onDismiss()
+                    },
+                )
             }
             CrossIcon(onDismiss)
         }
@@ -252,15 +266,16 @@ private fun StatusIcon(
 
 @Composable
 private fun CtaText(
-    cta: ToastCTA,
+    text: String,
     status: ToastStatus,
+    onClick: () -> Unit,
 ) {
     Text(
-        text = cta.text,
+        text = text,
         style = LocalAppTopography.current.baseRegular,
         color = ctaColor(status),
         maxLines = 1,
-        modifier = Modifier.clickable { cta.onClick() },
+        modifier = Modifier.clickable { onClick() },
     )
 }
 

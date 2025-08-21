@@ -115,6 +115,8 @@ dependencies {
     implementation(libs.branch)
     implementation(libs.play.services.ads.identifier)
 
+    implementation(libs.googlePlay.inAppUpdate)
+
     implementation(projects.shared.core)
     implementation(projects.shared.libs.preferences)
     implementation(projects.shared.libs.http)
