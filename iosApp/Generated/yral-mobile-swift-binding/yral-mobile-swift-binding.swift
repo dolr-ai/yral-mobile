@@ -178,6 +178,9 @@ public func get_polling_result_status(_ result: RateLimitsResult2) -> Optional<V
 public func get_status_value(_ status: VideoGenRequestStatus) -> RustString {
     RustString(ptr: __swift_bridge__$get_status_value({status.isOwned = false; return status.ptr;}()))
 }
+public func make_videogen_request_key(_ principal: Principal, _ counter: UInt64) -> VideoGenRequestKey {
+    VideoGenRequestKey(ptr: __swift_bridge__$make_videogen_request_key({principal.isOwned = false; return principal.ptr;}(), counter))
+}
 
 public class VideoGenRequestStatus: VideoGenRequestStatusRefMut {
     var isOwned: Bool = true

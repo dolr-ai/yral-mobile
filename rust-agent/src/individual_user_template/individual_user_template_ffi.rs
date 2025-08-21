@@ -531,6 +531,8 @@ mod ffi {
         fn get_polling_result_status(result: RateLimitsResult2) -> Option<VideoGenRequestStatus>;
 
         fn get_status_value(status: VideoGenRequestStatus) -> String;
+
+        fn make_videogen_request_key(principal: Principal, counter: u64) -> VideoGenRequestKey;
     }
 
     extern "Rust" {
