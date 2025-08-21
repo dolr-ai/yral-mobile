@@ -32,8 +32,9 @@ enum CreateAIVideoScreenEvent {
   case updateSelectedProvider(AIVideoProviderResponse)
   case socialSignInSuccess(creditsAvailable: Bool)
   case socialSignInFailure
-  case generateVideoSuccess(GenerateVideoResponse)
+  case generateVideoSuccess
   case generateVideoFailure(String)
+  case generateVideoStatusFailure(String)
 }
 
 class CreateAIVideoViewModel: ObservableObject {
@@ -41,23 +42,29 @@ class CreateAIVideoViewModel: ObservableObject {
   let rateLimitStatusUseCase: RateLimitStatusUseCaseProtocol
   let socialSignInUseCase: SocialSignInUseCaseProtocol
   let generateVideoUseCase: GenerateVideoUseCaseProtocol
+  let generateVideoStatusUseCase: GenerateVideoStatusUseCaseProtocol
 
   @Published var event: CreateAIVideoScreenEvent?
   @Published var state: CreateAIVideoScreenState = .initialized
 
   var providers: [AIVideoProviderResponse]?
   var selectedProvider: AIVideoProviderResponse?
+  var pollingRequestKey: GenerateVideoRequestKeyResponse?
+
+  private var pollingTask: Task<Void, Never>?
 
   init(
     aiVideoProviderUseCase: AIVideoProviderUseCaseProtocol,
     rateLimitStatusUseCase: RateLimitStatusUseCaseProtocol,
     socialSigninUseCase: SocialSignInUseCaseProtocol,
-    generateVideoUseCase: GenerateVideoUseCase
+    generateVideoUseCase: GenerateVideoUseCaseProtocol,
+    generateVideoStatusUseCase: GenerateVideoStatusUseCaseProtocol
   ) {
     self.aiVideoProviderUseCase = aiVideoProviderUseCase
     self.rateLimitStatusUseCase = rateLimitStatusUseCase
     self.socialSignInUseCase = socialSigninUseCase
     self.generateVideoUseCase = generateVideoUseCase
+    self.generateVideoStatusUseCase = generateVideoStatusUseCase
   }
 
   @MainActor
@@ -112,7 +119,7 @@ class CreateAIVideoViewModel: ObservableObject {
 
     let generateVideoRequest = GenerateVideoMetaRequest(
       request: GenerateVideoRequest(
-        aspectRatio: "16:9",
+        aspectRatio: provider.defaultAspectRatio,
         durationSeconds: provider.defaultDuration,
         generateAudio: true,
         image: nil,
@@ -130,13 +137,56 @@ class CreateAIVideoViewModel: ObservableObject {
       let result = await generateVideoUseCase.execute(request: generateVideoRequest)
       switch result {
       case .success(let response):
+        pollingRequestKey = response.requestKey
         state = .success
-        event = .generateVideoSuccess(response)
+        event = .generateVideoSuccess
       case .failure(let error):
         state = .failure(error)
         event = .generateVideoFailure(error.localizedDescription)
       }
     }
+  }
+
+  func getGenerateVideoStatus(for request: GenerateVideoRequestKeyResponse) async {
+    do {
+      let result = await generateVideoStatusUseCase.execute(request: UInt64(request.counter))
+      await MainActor.run {
+        switch result {
+        case .success(let status):
+          if status.contains("Complete: ") {
+            stopPolling()
+            print("Samarth: \(status.replacingOccurrences(of: "Complete: ", with: ""))")
+          } else if status.contains("Failed: ") {
+            event = .generateVideoStatusFailure(status.replacingOccurrences(of: "Failed: ", with: ""))
+            stopPolling()
+          }
+        case .failure(let error):
+          stopPolling()
+          state = .failure(error)
+          event = .generateVideoStatusFailure(error.localizedDescription)
+        }
+      }
+    }
+  }
+
+  func startPolling() {
+    guard let request = pollingRequestKey else {
+      event = .generateVideoStatusFailure("No request key was found to generate video")
+      return
+    }
+
+    pollingTask = Task {
+      while !Task.isCancelled {
+        await self.getGenerateVideoStatus(for: request)
+        try? await Task.sleep(nanoseconds: 5 * 1_000_000_000)
+      }
+    }
+  }
+
+  func stopPolling(removeKey: Bool = true) {
+    pollingTask?.cancel()
+    pollingTask = nil
+    pollingRequestKey = nil
   }
 
   func updateSelectedProvider(_ provider: AIVideoProviderResponse) {

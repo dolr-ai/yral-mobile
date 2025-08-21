@@ -103,6 +103,27 @@ class AIVideoRepository: AIVideoRepositoryProtocol {
       }
     }
   }
+
+  func getGenerateVideoStatus(for counter: UInt64) async -> Result<String, NetworkError> {
+    guard let userPrincipalString = authClient.userPrincipalString else {
+      return .failure(.invalidRequest)
+    }
+
+    do {
+      let userPrincipal = try get_principal(userPrincipalString.intoRustString())
+      let delegatedIdentity = try authClient.generateNewDelegatedIdentity()
+      let videoGenRequestKey = make_videogen_request_key(userPrincipal, counter)
+      let rateLimitResult2 = try await poll_video_generation_status(delegatedIdentity, videoGenRequestKey)
+      if let resultStatus = get_polling_result_status(rateLimitResult2) {
+        let resultString = get_status_value(resultStatus)
+        return .success(resultString.toString())
+      } else {
+        return .failure(.invalidResponse("Failed to fetch status for video generation"))
+      }
+    } catch {
+      return .failure(.invalidResponse("Failed to fetch status for video generation"))
+    }
+  }
 }
 
 extension AIVideoRepository {

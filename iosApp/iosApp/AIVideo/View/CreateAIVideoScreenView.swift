@@ -23,6 +23,7 @@ struct CreateAIVideoHost: View {
   }
 }
 
+// swiftlint: disable type_body_length
 struct CreateAIVideoScreenView: View {
   @EnvironmentObject var session: SessionManager
   @ObservedObject var viewModel: CreateAIVideoViewModel
@@ -208,12 +209,16 @@ struct CreateAIVideoScreenView: View {
     .fullScreenCover(isPresented: isErrorPresented) {
       CreateAIVideoErrorBottomSheet(text: errorMessage ?? "") {
         errorMessage = nil
+        if generatingVideo {
+          onDismiss()
+        }
       }
       .background( ClearBackgroundView() )
     }
     .fullScreenCover(isPresented: $showDisableBackBottomSheet) {
       DisableBackBottomSheet {
         showDisableBackBottomSheet = false
+        viewModel.stopPolling()
         onDismiss()
       } onStayHere: {
         showDisableBackBottomSheet = false
@@ -254,25 +259,19 @@ struct CreateAIVideoScreenView: View {
         loadingProvider = nil
         showSignupSheet = false
         showSignupFailureSheet = true
-      case .generateVideoSuccess(let response):
-        break
+      case .generateVideoSuccess:
+        generatingVideo = true
+        viewModel.startPolling()
       case .generateVideoFailure(let errMessage):
+        errorMessage = errMessage
+      case .generateVideoStatusFailure(let errMessage):
         errorMessage = errMessage
       default:
         break
       }
     })
     .onAppear {
-      if generatingVideo {
-//        selectedProvider = AIVideoProviderResponse(
-//          id: "veo3",
-//          name: "Veo 3",
-//          description: "",
-//          isActive: true,
-//          iconURL: "",
-//          defaultDuration: 8
-//        )
-      } else {
+      if !generatingVideo {
         showLoader = true
         Task {
           await viewModel.getAIVideoProviders()
@@ -289,8 +288,19 @@ struct CreateAIVideoScreenView: View {
         }
       }
     }
+    .onReceive(NotificationCenter.default.publisher(for: UIApplication.didEnterBackgroundNotification)) { _ in
+      if generatingVideo {
+        viewModel.stopPolling(removeKey: false)
+      }
+    }
+    .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+      if generatingVideo {
+        viewModel.startPolling()
+      }
+    }
   }
 }
+// swiftlint: enable type_body_length
 
 extension CreateAIVideoScreenView {
   @ViewBuilder

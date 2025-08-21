@@ -19,4 +19,5 @@ struct AIVideoProviderResponse: Identifiable {
   let isActive: Bool
   let iconURL: String
   let defaultDuration: Int
+  let defaultAspectRatio: String
 }

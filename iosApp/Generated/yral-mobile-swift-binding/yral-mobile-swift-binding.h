@@ -1679,6 +1679,7 @@ void __swift_bridge__$get_rate_limit_status_core(void* callback_wrapper, void __
 void __swift_bridge__$poll_video_generation_status(void* callback_wrapper, void __swift_bridge__$poll_video_generation_status$async(void* callback_wrapper, struct __private__ResultPtrAndPtr ret), void* identity, void* key);
 void* __swift_bridge__$get_polling_result_status(void* result);
 void* __swift_bridge__$get_status_value(void* status);
+void* __swift_bridge__$make_videogen_request_key(void* principal, uint64_t counter);
 void* __swift_bridge__$VideoGenRequestKey$principal(void* self);
 uint64_t __swift_bridge__$VideoGenRequestKey$counter(void* self);
 typedef enum __swift_bridge__$ResultU32AndAgentError$Tag {__swift_bridge__$ResultU32AndAgentError$ResultOk, __swift_bridge__$ResultU32AndAgentError$ResultErr} __swift_bridge__$ResultU32AndAgentError$Tag;

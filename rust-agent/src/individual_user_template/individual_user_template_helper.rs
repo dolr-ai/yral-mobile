@@ -321,3 +321,7 @@ pub fn get_status_value(status: VideoGenRequestStatus) -> String {
         VideoGenRequestStatus::Pending => "Pending".to_string(),
     }
 }
+
+pub fn make_videogen_request_key(principal: Principal, counter: u64) -> VideoGenRequestKey {
+    VideoGenRequestKey { principal, counter }
+}
