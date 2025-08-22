@@ -91,8 +91,16 @@ extension FeedsPlayer {
 
     let seconds  = time.seconds
     let duration = item.duration.seconds
-    if seconds >= CGFloat.pointOne, startLogged.insert(currentIndex).inserted {
+    guard let currentVideoID = feedResults[safe: currentIndex]?.videoID else { return }
+    if seconds >= CGFloat.pointOne, startLogged.insert(currentVideoID).inserted {
       delegate?.reachedPlaybackMilestone(.started, for: currentIndex)
+      if currentIndex < feedResults.count {
+        NotificationCenter.default.post(
+          name: .feedItemReady,
+          object: self,
+          userInfo: ["index": currentIndex, "videoId": currentVideoID]
+        )
+      }
     }
     guard duration.isFinite, duration > 0 else { return }
 
@@ -104,7 +112,7 @@ extension FeedsPlayer {
 
     if duration.isFinite,
        seconds / duration >= Constants.videoDurationEventMaxThreshold,
-       finishLogged.insert(currentIndex).inserted {
+       finishLogged.insert(currentVideoID).inserted {
       delegate?.reachedPlaybackMilestone(.almostFinished, for: currentIndex)
     }
   }

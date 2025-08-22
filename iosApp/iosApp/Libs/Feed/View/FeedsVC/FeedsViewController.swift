@@ -41,7 +41,6 @@ class FeedsViewController: UIViewController {
     return player
   }()
   var isCurrentlyVisible = true
-  var lastDisplayedThumbnailPath: [String: String] = [:]
 
   var feedsCV: UICollectionView = {
     let collectionView = getUICollectionView()
@@ -423,27 +422,6 @@ class FeedsViewController: UIViewController {
     if isCurrentlyVisible {
       guard !feedsDataSource.snapshot().itemIdentifiers.isEmpty else { return }
       feedsPlayer.play()
-    }
-  }
-
-  func storeThumbnail() {
-    let currentTimeSec = feedsPlayer.player.currentTime().seconds
-    let roundedTime = String(format: "%.2f", currentTimeSec)
-    guard let visibleIndexPath = feedsCV.indexPathsForVisibleItems.sorted().first else { return }
-    let videoID = feedsDataSource.itemIdentifier(for: visibleIndexPath)?.videoID ?? ""
-    let baseString = FeedsRepository.Constants.cloudfarePrefix + videoID +
-    FeedsRepository.Constants.thumbnailSuffix + "?time=\(roundedTime)s"
-    guard let url = URL(string: baseString) else { return }
-    lastDisplayedThumbnailPath[videoID] = baseString
-    SDWebImageManager.shared.loadImage(
-      with: url,
-      options: .highPriority,
-      progress: nil
-    ) { [weak self] image, _, error, _, _, _ in
-      guard let image = image, error == nil else {
-        return
-      }
-      SDImageCache.shared.store(image, forKey: baseString, completion: nil)
     }
   }
 
