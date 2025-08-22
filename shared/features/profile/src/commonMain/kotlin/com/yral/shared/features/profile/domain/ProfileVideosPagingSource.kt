@@ -32,7 +32,6 @@ class ProfileVideosPagingSource(
                             postId = post.id.toLong(),
                             canisterId = canisterID,
                             nsfwProbability = 0.0, // Default value, can be updated if needed
-                            isNsfw = post.isNsfw,
                         )
                     }.getOrNull() // Return null for failed conversions, skip the post
                 }

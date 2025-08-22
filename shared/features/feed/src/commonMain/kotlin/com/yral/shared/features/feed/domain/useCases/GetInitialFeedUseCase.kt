@@ -5,7 +5,6 @@ import com.yral.shared.libs.arch.domain.UseCaseFailureListener
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.rust.domain.IndividualUserRepository
 import com.yral.shared.rust.domain.models.FeedRequest
-import com.yral.shared.rust.domain.models.FilteredResult
 import com.yral.shared.rust.domain.models.PostResponse
 
 class GetInitialFeedUseCase(
@@ -18,7 +17,6 @@ class GetInitialFeedUseCase(
             feedRequest =
                 FeedRequest(
                     userId = parameter.userId,
-                    filterResults = parameter.filterResults,
                     numResults = INITIAL_REQUEST,
                 ),
         )
@@ -29,6 +27,5 @@ class GetInitialFeedUseCase(
 
     data class Params(
         val userId: String,
-        val filterResults: List<FilteredResult>,
     )
 }

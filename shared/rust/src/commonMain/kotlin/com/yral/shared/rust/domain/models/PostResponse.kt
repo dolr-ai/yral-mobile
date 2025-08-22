@@ -12,7 +12,6 @@ data class Post(
     val postID: Long,
     val videoID: String,
     val nsfwProbability: Double?,
-    val isNSFW: Boolean?,
 )
 
 fun Post.toFilteredResult(): FilteredResult =
@@ -22,7 +21,6 @@ fun Post.toFilteredResult(): FilteredResult =
         postID = postID,
         videoID = videoID,
         nsfwProbability = nsfwProbability,
-        isNSFW = isNSFW,
     )
 
 fun Post.toDTO(): PostDTO =
@@ -32,5 +30,4 @@ fun Post.toDTO(): PostDTO =
         postID = postID,
         videoID = videoID,
         nsfwProbability = nsfwProbability,
-        isNSFW = isNSFW,
     )
