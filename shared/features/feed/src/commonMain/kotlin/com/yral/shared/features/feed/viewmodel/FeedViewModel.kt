@@ -20,7 +20,6 @@ import com.yral.shared.features.feed.domain.useCases.ReportVideoUseCase
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.rust.domain.models.FeedDetails
 import com.yral.shared.rust.domain.models.Post
-import com.yral.shared.rust.domain.models.toFilteredResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -71,13 +70,8 @@ class FeedViewModel(
             sessionManager.userPrincipal?.let { userId ->
                 setLoadingMore(true)
                 requiredUseCases.getInitialFeedUseCase
-                    .invoke(
-                        parameter =
-                            GetInitialFeedUseCase.Params(
-                                userId = userId,
-                                filterResults = emptyList(),
-                            ),
-                    ).onSuccess { result ->
+                    .invoke(GetInitialFeedUseCase.Params(userId = userId))
+                    .onSuccess { result ->
                         val posts = result.posts
                         Logger.d("FeedPagination") { "posts in initialFeed ${posts.size}" }
                         if (posts.isEmpty()) {
@@ -193,10 +187,6 @@ class FeedViewModel(
                     parameter =
                         FetchMoreFeedUseCase.Params(
                             userId = userId,
-                            filterResults =
-                                _state.value.posts.map { post ->
-                                    post.toFilteredResult()
-                                },
                             batchSize = currentBatchSize.coerceAtMost(MAX_PAGE_SIZE),
                         ),
                 ).onSuccess { moreFeed ->
