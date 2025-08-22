@@ -128,11 +128,10 @@ private fun Header(
         modifier =
             modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 16.dp)
                 .paint(
                     painter = painterResource(R.drawable.shadow),
                     contentScale = ContentScale.FillBounds,
-                ),
+                ).padding(horizontal = 12.dp, vertical = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.Top,
     ) {
