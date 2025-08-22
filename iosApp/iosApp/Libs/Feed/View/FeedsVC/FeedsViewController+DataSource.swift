@@ -60,7 +60,7 @@ extension FeedsViewController {
         )
       } else {
         cell.configure(
-          withPlayer: nil,
+          withPlayer: feedsPlayer as! FeedsPlayer,
           feedInfo: FeedsCell.FeedCellInfo(
             thumbnailURL: feed.thumbnail,
             likeCount: feed.likeCount,

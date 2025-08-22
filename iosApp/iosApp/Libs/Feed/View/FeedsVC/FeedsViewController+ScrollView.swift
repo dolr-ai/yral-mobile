@@ -30,12 +30,14 @@ extension FeedsViewController: UICollectionViewDelegate {
 
     if ratio >= .half, candidate != current {
       let previous = current
-      feedsPlayer.advanceToVideo(at: candidate)
       var snapshot = feedsDataSource.snapshot()
       let ids = snapshot.itemIdentifiers
       guard previous < ids.count, candidate < ids.count else { return }
       snapshot.reloadItems([ids[previous], ids[candidate]])
-      feedsDataSource.apply(snapshot, animatingDifferences: false)
+      feedsDataSource.apply(snapshot, animatingDifferences: false) { [weak self] in
+        guard let self = self else { return }
+        feedsPlayer.advanceToVideo(at: candidate)
+      }
     } else {
       feedsPlayer.play()
     }

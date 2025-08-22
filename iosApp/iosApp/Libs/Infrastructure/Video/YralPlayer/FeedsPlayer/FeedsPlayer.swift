@@ -35,8 +35,8 @@ final class FeedsPlayer: YralPlayer {
 
   // MARK: Video duration event loggers
   var timeObserver: Any?
-  var startLogged = Set<Int>()
-  var finishLogged = Set<Int>()
+  var startLogged = Set<String>()
+  var finishLogged = Set<String>()
   var lastLoopProgress: Double = 0
 
   // MARK: Performance monitor
@@ -112,9 +112,11 @@ final class FeedsPlayer: YralPlayer {
             && currentIndex < feedResults.count,
           currentIndex != index else { return }
     lastLoopProgress = 0
-
-    startLogged.remove(index)
-    finishLogged.remove(index)
+    (player as? AVQueuePlayer)?.replaceCurrentItem(with: nil)
+    if let videoID = feedResults[safe: index]?.videoID {
+      startLogged.remove(videoID)
+      finishLogged.remove(videoID)
+    }
 
     currentIndex = index
     Task {
@@ -171,7 +173,6 @@ final class FeedsPlayer: YralPlayer {
   }
 
   func startLooping(with item: AVPlayerItem) async throws {
-    (player as? AVQueuePlayer)?.replaceCurrentItem(with: nil)
     finishFirstFrameTrace(success: false)
     lastLoopProgress = .zero
     if let videoID = feedResults[safe: currentIndex]?.videoID {
@@ -202,11 +203,6 @@ final class FeedsPlayer: YralPlayer {
         try await queueItem.waitUntilReady()
         //        try await player.prerollVideo(atRate: 0)
         guard currentIndex < feedResults.count else { return }
-        NotificationCenter.default.post(
-          name: .feedItemReady,
-          object: self,
-          userInfo: ["index": currentIndex, "videoId": feedResults[currentIndex].videoID]
-        )
       } catch {
         crashReporter.recordException(error)
         print("Item failed to become ready: \(error)")
