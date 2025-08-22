@@ -1,30 +1,30 @@
 package com.yral.shared.rust.data
 
 import com.yral.shared.rust.services.RateLimitServiceFactory
-import com.yral.shared.uniffi.generated.PollResult2
-import com.yral.shared.uniffi.generated.RateLimitStatus
-import com.yral.shared.uniffi.generated.VideoGenRequestKey
+import com.yral.shared.uniffi.generated.RateLimitStatusWrapper
+import com.yral.shared.uniffi.generated.Result2Wrapper
+import com.yral.shared.uniffi.generated.VideoGenRequestKeyWrapper
 
 class RateLimitDataSourceImpl(
     private val rateLimitServiceFactory: RateLimitServiceFactory,
 ) : RateLimitDataSource {
-    override suspend fun fetchVideoGenerationStatus(requestKey: VideoGenRequestKey): PollResult2 =
+    override suspend fun fetchVideoGenerationStatus(
+        canisterID: String,
+        requestKey: VideoGenRequestKeyWrapper,
+    ): Result2Wrapper =
         rateLimitServiceFactory
-            .service(principal = RATE_LIMIT_CANISTER)
+            .service(principal = canisterID)
             .pollVideoGenerationStatus(requestKey)
 
     override suspend fun getVideoGenFreeCreditsStatus(
-        canisterId: String,
+        userPrincipal: String,
         isRegistered: Boolean,
-    ): RateLimitStatus? =
+    ): RateLimitStatusWrapper? =
         rateLimitServiceFactory
-            .service(principal = RATE_LIMIT_CANISTER)
-            .getRateLimitStatus(canisterId, VIDEO_GEN_RATE_LIMIT_PROPERTY, isRegistered)
+            .service(principal = userPrincipal)
+            .getRateLimitStatus(VIDEO_GEN_RATE_LIMIT_PROPERTY, isRegistered)
 
     companion object {
         private const val VIDEO_GEN_RATE_LIMIT_PROPERTY = "VIDEOGEN"
-
-        // hardcoded for now, we can bring this from firebase config
-        private const val RATE_LIMIT_CANISTER = "h2jgv-ayaaa-aaaas-qbh4a-cai"
     }
 }

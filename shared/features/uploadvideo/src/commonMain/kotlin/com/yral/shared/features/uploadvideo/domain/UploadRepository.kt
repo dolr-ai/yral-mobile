@@ -18,5 +18,5 @@ internal interface UploadRepository {
     suspend fun updateMetadata(uploadFileRequest: UploadFileRequest)
     suspend fun fetchProviders(): List<Provider>
     suspend fun generateVideo(params: GenerateVideoParams): GenerateVideoResult
-    suspend fun uploadAiVideoFromUrl(request: UploadAiVideoFromUrlRequest)
+    suspend fun uploadAiVideoFromUrl(request: UploadAiVideoFromUrlRequest): String
 }

@@ -41,7 +41,7 @@ class SharedRustLibraryConventionPlugin : Plugin<Project> {
             ?.toBoolean() ?: true
 
     companion object {
-        private const val YRAL_RUST = "1.7"
+        private const val YRAL_RUST = "1.8"
         private const val YRAL_RUST_DEBUG = "com.yral.shared:rust-android-debug"
         private const val YRAL_RUST_RELEASE = "com.yral.shared:rust-android"
     }

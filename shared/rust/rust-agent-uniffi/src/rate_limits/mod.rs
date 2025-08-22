@@ -1,82 +1,89 @@
-use candid::{self, CandidType, Deserialize, Principal, Encode, Decode};
-use uniffi::Enum;
-use uniffi::Record;
+use candid::{Principal, CandidType, Deserialize};
 use ic_agent::Agent;
 use std::sync::Arc;
+use uniffi::Record;
+use uniffi::Enum;
 use crate::individual_user_template::individual_user_template_helper::*;
 use crate::uni_ffi_helpers::*;
 use crate::RUNTIME;
 
+use yral_canisters_client::ic::RATE_LIMITS_ID;
+use yral_canisters_client::rate_limits::VideoGenRequestKey;
+use yral_canisters_client::rate_limits::Result2;
+use yral_canisters_client::rate_limits::VideoGenRequestStatus;
+use yral_canisters_client::rate_limits::RateLimitStatus;
+use yral_canisters_client::rate_limits::RateLimits;
+
 type Result<T> = std::result::Result<T, FFIError>;
 
-#[derive(CandidType, Deserialize, Record)]
-pub struct RateLimitsInitArgs { pub version: String }
-
-#[derive(CandidType, Deserialize, Enum)]
-pub enum RateLimitResult { 
-    Ok(String), 
-    Err(String) 
-}
 
 #[derive(CandidType, Deserialize, Record)]
-pub struct VideoGenRequestKey { 
-    pub principal: Principal, 
-    pub counter: u64 
-}
-
-#[derive(CandidType, Deserialize, Record)]
-pub struct GlobalRateLimitConfig {
-  pub window_duration_seconds: u64,
-  pub max_requests_per_window_registered: u64,
-  pub max_requests_per_window_unregistered: u64,
-}
-
-#[derive(CandidType, Deserialize, Record)]
-pub struct RateLimitConfig {
-  pub window_duration_seconds: u64,
-  pub max_requests_per_window: u64,
-}
-
-#[derive(CandidType, Deserialize, Record)]
-pub struct PropertyRateLimitConfig {
-  pub property_rate_limit_window_duration_seconds: Option<u64>,
-  pub window_duration_seconds: u64,
-  pub max_requests_per_window_registered: u64,
-  pub max_requests_per_property_all_users: Option<u64>,
-  pub property: String,
-  pub max_requests_per_window_unregistered: u64,
-}
-
-#[derive(CandidType, Deserialize, Record)]
-pub struct RateLimitStatus {
+pub struct RateLimitStatusWrapper {
   pub principal: Principal,
   pub window_start: u64,
   pub is_limited: bool,
   pub request_count: u64,
 }
 
-#[derive(CandidType, Deserialize, Enum)]
-pub enum VideoGenRequestStatus {
-  Failed(String),
-  Complete(String),
-  Processing,
-  Pending,
+impl From<RateLimitStatus> for RateLimitStatusWrapper {
+    fn from(value: RateLimitStatus) -> Self {
+        Self {
+            principal: value.principal,
+            window_start: value.window_start,
+            is_limited: value.is_limited,
+            request_count: value.request_count,
+        }
+    }
 }
+
 
 #[derive(CandidType, Deserialize, Record)]
-pub struct VideoGenRequest {
-  pub status: VideoGenRequestStatus,
-  pub updated_at: u64,
-  pub payment_amount: Option<String>,
-  pub model_name: String,
-  pub created_at: u64,
-  pub prompt: String,
+pub struct VideoGenRequestKeyWrapper {
+    pub principal: Principal,
+    pub counter: u64,
+}
+
+impl From<VideoGenRequestKeyWrapper> for VideoGenRequestKey {
+    fn from(value: VideoGenRequestKeyWrapper) -> Self {
+        Self {
+            principal: value.principal,
+            counter: value.counter,
+        }
+    }
 }
 
 #[derive(CandidType, Deserialize, Enum)]
-pub enum PollResult2 { 
-    Ok(VideoGenRequestStatus),
-    Err(String) 
+pub enum Result2Wrapper {
+    Ok(VideoGenRequestStatusWrapper),
+    Err(String),
+}
+
+impl From<Result2> for Result2Wrapper {
+    fn from(value: Result2) -> Self {
+        match value {
+            Result2::Ok(status) => Result2Wrapper::Ok(VideoGenRequestStatusWrapper::from(status)),
+            Result2::Err(err) => Result2Wrapper::Err(err),
+        }
+    }
+}
+
+#[derive(CandidType, Deserialize, Enum)]
+pub enum VideoGenRequestStatusWrapper {
+    Failed(String),
+    Complete(String),
+    Processing,
+    Pending,
+}
+
+impl From<VideoGenRequestStatus> for VideoGenRequestStatusWrapper {
+    fn from(value: VideoGenRequestStatus) -> Self {
+        match value {
+            VideoGenRequestStatus::Failed(s) => Self::Failed(s),
+            VideoGenRequestStatus::Complete(s) => Self::Complete(s),
+            VideoGenRequestStatus::Processing => Self::Processing,
+            VideoGenRequestStatus::Pending => Self::Pending,
+        }
+    }
 }
 
 #[derive(uniffi::Object)]
@@ -108,56 +115,39 @@ impl RateLimitService {
         })
     }
 
-    async fn query_canister(&self, method: &str, args: Vec<u8>) -> Result<Vec<u8>> {
-        let agent = Arc::clone(&self.agent);
-        let principal = self.principal;
-        let method = method.to_string();
-        RUNTIME.spawn(async move {
-            agent
-                .query(&principal, &method)
-                .with_arg(args)
-                .call()
-                .await
-                .map_err(|e| FFIError::AgentError(format!("{:?}", e)))
-        })
-            .await.map_err(|e| FFIError::AgentError(format!("{:?}", e)))?
-    }
-
-    async fn update_canister(&self, method: &str, args: Vec<u8>) -> Result<Vec<u8>> {
-        let agent = Arc::clone(&self.agent);
-        let principal = self.principal;
-        let method = method.to_string();
-        RUNTIME.spawn(async move {
-            agent
-                .update(&principal, &method)
-                .with_arg(args)
-                .call_and_wait()
-                .await
-                .map_err(|e| FFIError::AgentError(format!("{:?}", e)))
-        })
-            .await.map_err(|e| FFIError::AgentError(format!("{:?}", e)))?
-    }
-
     #[uniffi::method]
     pub async fn poll_video_generation_status(
         &self,
-        arg0: VideoGenRequestKey,
-    ) -> Result<PollResult2> {
-        let args = Encode!(&arg0)?;
-        let bytes = self.query_canister("poll_video_generation_status", args).await?;
-        Ok(Decode!(&bytes, PollResult2)?)
+        arg0: VideoGenRequestKeyWrapper,
+    ) -> Result<Result2Wrapper> {
+        let agent = Arc::clone(&self.agent);
+        RUNTIME.spawn(async move {
+            let canister = RateLimits(RATE_LIMITS_ID, &agent);
+            let video_request_key = VideoGenRequestKey::from(arg0);
+            let result = canister
+                .poll_video_generation_status(video_request_key)
+                .await
+                .map_err(|e| FFIError::AgentError(format!("Error calling canister: {:?}", e)))?;
+            Ok(Result2Wrapper::from(result))
+        }).await.map_err(|e| FFIError::AgentError(format!("{:?}", e)))?
     }
+
+    
     #[uniffi::method]
     pub async fn get_rate_limit_status(
         &self,
-        arg0: String, 
         arg1: String, 
         arg2: bool,
-    ) -> Result<Option<RateLimitStatus>> {
-        let principal = Principal::from_text(&arg0)
-            .map_err(|e| FFIError::PrincipalError(format!("Invalid principal: {:?}", e)))?;
-        let args = Encode!(&principal, &arg1, &arg2)?;
-        let bytes = self.update_canister("get_rate_limit_status", args).await?;
-        Ok(Decode!(&bytes, Option<RateLimitStatus>)?)
+    ) -> Result<Option<RateLimitStatusWrapper>> {
+        let agent = Arc::clone(&self.agent);
+        let principal = self.principal;
+        RUNTIME.spawn(async move {
+            let canister = RateLimits(RATE_LIMITS_ID, &agent);
+            let status_opt = canister
+                .get_rate_limit_status(principal, arg1, arg2)
+                .await
+                .map_err(|e| FFIError::AgentError(format!("Error calling canister: {:?}", e)))?;
+            Ok(status_opt.map(RateLimitStatusWrapper::from))
+        }).await.map_err(|e| FFIError::AgentError(format!("{:?}", e)))?
     }
 }

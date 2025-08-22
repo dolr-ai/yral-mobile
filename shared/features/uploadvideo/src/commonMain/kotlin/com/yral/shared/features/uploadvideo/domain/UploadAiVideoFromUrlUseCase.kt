@@ -9,11 +9,11 @@ internal class UploadAiVideoFromUrlUseCase(
     appDispatchers: AppDispatchers,
     failureListener: UseCaseFailureListener,
     private val repository: UploadRepository,
-) : SuspendUseCase<UploadAiVideoFromUrlUseCase.Params, Unit>(
+) : SuspendUseCase<UploadAiVideoFromUrlUseCase.Params, String>(
         coroutineDispatcher = appDispatchers.network,
         failureListener = failureListener,
     ) {
-    override suspend fun execute(parameter: Params) {
+    override suspend fun execute(parameter: Params): String =
         repository.uploadAiVideoFromUrl(
             request =
                 UploadAiVideoFromUrlRequest(
@@ -24,7 +24,6 @@ internal class UploadAiVideoFromUrlUseCase(
                     enableHotOrNot = parameter.enableHotOrNot,
                 ),
         )
-    }
 
     data class Params(
         val videoUrl: String,
