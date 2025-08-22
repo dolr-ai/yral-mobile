@@ -4,7 +4,7 @@
 # We call this from an Xcode run script.
 ##################################################
 
-set -euo pipefail
+set -eo pipefail
 : "${CI:=false}"
 : "${PLATFORM_NAME:=}"
 

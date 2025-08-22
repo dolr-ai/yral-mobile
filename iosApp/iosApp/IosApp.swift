@@ -184,8 +184,11 @@ struct IosApp: App {
        let uploadOptionsDIContainer = uploadOptionsDIContainer,
        let accountDIContainer = accountDIContainer,
        let profileDIContainer = profileDIContainer {
+      let flagManager = AppDIHelper().getFeatureFlagManager()
       HomeTabController(
-        feedsViewController: feedsDIContainer.makeFeedsViewController(playToScroll: false),
+        feedsViewController: feedsDIContainer.makeFeedsViewController(
+          playToScroll: flagManager.isEnabled(flag: FeedFeatureFlags.SmileyGame.shared.StopAndVoteNudge)
+        ),
         uploadOptionsScreenView: uploadOptionsDIContainer.makeUploadOptionsView(),
         profileView: profileDIContainer.makeProfileView(),
         accountView: accountDIContainer.makeAccountView(),
