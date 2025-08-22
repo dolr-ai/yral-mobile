@@ -36,8 +36,8 @@ kotlin {
 
             implementation(libs.coil.compose)
 
-            implementation(libs.haze)
-            implementation(libs.haze.materials)
+            // implementation(libs.haze)
+            // implementation(libs.haze.materials)
         }
     }
 }

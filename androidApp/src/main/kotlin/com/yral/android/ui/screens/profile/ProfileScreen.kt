@@ -79,7 +79,6 @@ import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.features.profile.viewmodel.DeleteConfirmationState
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.features.profile.viewmodel.VideoViewState
-import com.yral.shared.libs.videoPlayer.YralBlurredThumbnail
 import com.yral.shared.rust.domain.models.FeedDetails
 import kotlinx.coroutines.flow.collectLatest
 
@@ -602,7 +601,7 @@ private fun VideoGridItem(
                     .clickable { openVideoReel() },
         ) {
             // Video thumbnail
-            YralBlurredThumbnail(video.thumbnail.toString())
+            // YralBlurredThumbnail(video.thumbnail.toString())
             YralAsyncImage(
                 imageUrl = video.thumbnail.toString(),
                 loaderSize = LoaderSize.Fixed,

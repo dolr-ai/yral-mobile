@@ -7,17 +7,13 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
-import dev.chrisbanes.haze.ExperimentalHazeApi
-import dev.chrisbanes.haze.HazeInputScale
-import dev.chrisbanes.haze.hazeEffect
-import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
 
 private const val RENDER_PIXELS = 100
-private const val HAZE_INPUT_SCALE = 0.5f
+// private const val HAZE_INPUT_SCALE = 0.5f
 
-@OptIn(ExperimentalHazeMaterialsApi::class, ExperimentalHazeApi::class)
 @Composable
 fun YralBlurredThumbnail(url: String) {
+    // Enable haze effect to some other blur logic when want to use
     AsyncImage(
         model =
             ImageRequest
@@ -27,7 +23,7 @@ fun YralBlurredThumbnail(url: String) {
                 .build(),
         modifier =
             Modifier
-                .hazeEffect { inputScale = HazeInputScale.Fixed(HAZE_INPUT_SCALE) }
+                // .hazeEffect { inputScale = HazeInputScale.Fixed(HAZE_INPUT_SCALE) }
                 .fillMaxSize(),
         contentScale = ContentScale.Crop,
         contentDescription = "",
