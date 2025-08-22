@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import iosSharedUmbrella
 
 struct UploadOptionsScreenView: View {
   @Environment(\.appDIContainer) private var appDIContainer
@@ -70,6 +71,11 @@ struct UploadOptionsScreenView: View {
       .padding(.vertical, Constants.vstackVertical)
       .padding(.horizontal, Constants.vstackHorizontal)
       .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+      .task {
+        AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+          event: UploadVideoPageViewedEventData()
+        )
+      }
     }
   }
 }
@@ -82,6 +88,10 @@ extension UploadOptionsScreenView {
 
     let crashReporter = CompositeCrashReporter(reporters: [FirebaseCrashlyticsReporter()])
 
+    AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+      event: VideoUploadTypeSelectedData(type: .aiVideo)
+    )
+
     return CreateAIVideoDIContainer(
       dependencies: CreateAIVideoDIContainer.Dependencies(
         httpService: HTTPService(baseURLString: AppConfiguration().offchainBaseURLString),
@@ -92,6 +102,9 @@ extension UploadOptionsScreenView {
   }
 
   private func makeUploadViewDIContainer() -> UploadDIContainer? {
+    AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+      event: VideoUploadTypeSelectedData(type: .uploadVideo)
+    )
     return appDIContainer?.makeUploadDIContainer()
   }
 }

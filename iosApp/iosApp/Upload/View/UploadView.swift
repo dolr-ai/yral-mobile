@@ -201,7 +201,7 @@ struct UploadView: View {
           await viewModel.finishUpload(fileURL: url, caption: "", hashtags: [""])
         }
         AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-          event: VideoUploadInitiatedEventData(captionAdded: true, hashtagsAdded: true, type: .uploadVideo)
+          event: VideoUploadInitiatedEventData(captionAdded: false, hashtagsAdded: false, type: .uploadVideo)
         )
 
       case .videoSelected(let url):
@@ -264,7 +264,11 @@ struct UploadView: View {
     }
     .task {
       AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-        event: UploadVideoPageViewedEventData()
+        event: VideoCreationPageViewedEventData(
+          type: .uploadVideo,
+          creditsFetched: nil,
+          creditsAvailable: nil
+        )
       )
     }
   }

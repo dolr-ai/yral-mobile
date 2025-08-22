@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import iosSharedUmbrella
 
 // swiftlint: disable file_length
 struct CreateAIVideoHost: View {
@@ -154,6 +155,9 @@ struct CreateAIVideoScreenView: View {
             .padding(.top, Constants.promptTop)
 
           Button {
+            AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+              event: CreateAIVideoClickedData(model: selectedProvider?.name ?? "")
+            )
             if isUserLoggedIn {
               if let provider = selectedProvider, !promptText.isEmpty {
                 Task {
@@ -161,6 +165,9 @@ struct CreateAIVideoScreenView: View {
                 }
               }
             } else {
+              AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+                event: AuthScreenViewedEventData(pageName: .videoCreation)
+              )
               showSignupSheet = true
             }
           } label: {
@@ -273,7 +280,19 @@ struct CreateAIVideoScreenView: View {
         loadingProvider = nil
         showSignupSheet = false
         creditsUsed = !creditsAvailable
+        AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+          event: VideoCreationPageViewedEventData(
+            type: .aiVideo,
+            creditsFetched: true,
+            creditsAvailable: creditsAvailable ? 1 : 0
+          )
+        )
       case .socialSignInFailure:
+        if let authJourney = loadingProvider?.authJourney() {
+          AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+            event: AuthFailedEventData(authJourney: authJourney)
+          )
+        }
         loadingProvider = nil
         showSignupSheet = false
         showSignupFailureSheet = true
@@ -299,10 +318,24 @@ struct CreateAIVideoScreenView: View {
           await viewModel.getAIVideoProviders()
           if isUserLoggedIn {
             let availableCredits = await viewModel.creditsAvailable()
+            AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+              event: VideoCreationPageViewedEventData(
+                type: .aiVideo,
+                creditsFetched: true,
+                creditsAvailable: availableCredits ? 1 : 0
+              )
+            )
             await MainActor.run {
               creditsUsed = !availableCredits
             }
           } else {
+            AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+              event: VideoCreationPageViewedEventData(
+                type: .aiVideo,
+                creditsFetched: false,
+                creditsAvailable: true
+              )
+            )
             await MainActor.run {
               creditsUsed = false
             }
