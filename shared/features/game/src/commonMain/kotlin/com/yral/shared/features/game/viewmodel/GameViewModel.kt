@@ -271,8 +271,10 @@ class GameViewModel(
                     isLoading = false,
                     lastBalanceDifference = voteResult.coinDelta,
                     lastVotedCount = it.lastVotedCount + 1,
+                    isSmileyGameIntroNudgeShown = true,
                 )
             }
+            preferences.putBoolean(PrefKeys.SMILEY_GAME_NUDGE_SHOWN.name, true)
             if (shouldShowResultSheet) {
                 preferences.putBoolean(PrefKeys.IS_RESULT_SHEET_SHOWN.name, true)
                 _state.update { it.copy(isResultSheetShown = true) }
