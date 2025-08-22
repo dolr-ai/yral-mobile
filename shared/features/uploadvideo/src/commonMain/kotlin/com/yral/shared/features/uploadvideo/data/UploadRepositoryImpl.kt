@@ -59,13 +59,13 @@ internal class UploadRepositoryImpl(
         return remoteDataSource.generateVideo(dto)
     }
 
-    override suspend fun uploadAiVideoFromUrl(request: UploadAiVideoFromUrlRequest) {
+    override suspend fun uploadAiVideoFromUrl(request: UploadAiVideoFromUrlRequest): String {
         val identity =
             sessionManager.identity
                 ?: throw YralException("Session not found while uploading AI video from url")
         val identityWireJson = delegatedIdentityWireToJson(identity)
         val delegatedIdentityWire =
             json.decodeFromString<KotlinDelegatedIdentityWire>(identityWireJson)
-        remoteDataSource.uploadAiVideoFromUrl(request.toDto(delegatedIdentityWire))
+        return remoteDataSource.uploadAiVideoFromUrl(request.toDto(delegatedIdentityWire))
     }
 }

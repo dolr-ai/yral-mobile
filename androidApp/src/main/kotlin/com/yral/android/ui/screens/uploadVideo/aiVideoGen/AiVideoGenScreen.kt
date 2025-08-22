@@ -83,9 +83,15 @@ fun AiVideoGenScreen(
     val shouldRefresh = viewModel.sessionObserver.collectAsState(null)
     LaunchedEffect(shouldRefresh.value) {
         Logger.d("VideoGen") { "shouldRefresh: $shouldRefresh" }
-        shouldRefresh.value?.first?.let { viewModel.refresh(it) }
+        shouldRefresh.value?.let { viewModel.refresh(it) }
     }
-    BackHandler(enabled = viewState.uiState is UiState.Success, onBack = { })
+    BackHandler(
+        enabled = viewState.uiState is UiState.Success,
+        onBack = {
+            viewModel.cleanup()
+            component.goToHome()
+        },
+    )
     Column(modifier.fillMaxSize()) {
         when (viewState.uiState) {
             is UiState.InProgress -> {
@@ -151,18 +157,20 @@ private fun AiVideoGenScreenPrompts(
             )
         }
         is BottomSheetType.Error -> {
+            val handleSheetAction: (action: () -> Unit) -> Unit = { action ->
+                viewModel.setBottomSheetType(BottomSheetType.None)
+                if (sheetType.endFlow) {
+                    viewModel.cleanup()
+                    component.onBack()
+                } else {
+                    action()
+                }
+            }
             GenerationErrorPrompt(
                 message = sheetType.message,
                 bottomSheetState = bottomSheetState,
-                dismissSheet = { viewModel.setBottomSheetType(BottomSheetType.None) },
-                tryAgain = {
-                    if (sheetType.endFlow) {
-                        viewModel.cleanup()
-                        component.onBack()
-                    } else {
-                        viewModel.tryAgain()
-                    }
-                },
+                dismissSheet = { handleSheetAction { viewModel.resetUi() } },
+                tryAgain = { handleSheetAction { viewModel.tryAgain() } },
             )
         }
         is BottomSheetType.Signup -> {

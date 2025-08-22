@@ -7,9 +7,9 @@ import com.yral.shared.libs.arch.domain.FlowUseCase
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.rust.domain.RateLimitRepository
-import com.yral.shared.uniffi.generated.PollResult2
-import com.yral.shared.uniffi.generated.VideoGenRequestKey
-import com.yral.shared.uniffi.generated.VideoGenRequestStatus
+import com.yral.shared.uniffi.generated.Result2Wrapper
+import com.yral.shared.uniffi.generated.VideoGenRequestKeyWrapper
+import com.yral.shared.uniffi.generated.VideoGenRequestStatusWrapper
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -23,11 +23,11 @@ class PollGenerationStatusUseCase(
     private val config: PollingConfigProvider,
     appDispatchers: AppDispatchers,
     failureListener: UseCaseFailureListener,
-) : FlowUseCase<PollGenerationStatusUseCase.Params, VideoGenRequestStatus>(
+) : FlowUseCase<PollGenerationStatusUseCase.Params, VideoGenRequestStatusWrapper>(
         coroutineDispatcher = appDispatchers.network,
         failureListener = failureListener,
     ) {
-    override fun execute(parameters: Params): Flow<Result<VideoGenRequestStatus, Throwable>> =
+    override fun execute(parameters: Params): Flow<Result<VideoGenRequestStatusWrapper, Throwable>> =
         flow {
             val completed: Boolean =
                 withTimeoutOrNull(parameters.maxPollingTimeMs) {
@@ -36,16 +36,20 @@ class PollGenerationStatusUseCase(
                     while (currentCoroutineContext().isActive) {
                         val delayMs = computeDelayMs(parameters, pollCount, currentIntervalMs)
                         delay(delayMs.coerceAtLeast(0L))
-                        val status = repository.fetchVideoGenerationStatus(parameters.requestKey)
+                        val status =
+                            repository.fetchVideoGenerationStatus(
+                                canisterID = parameters.canisterID,
+                                requestKey = parameters.requestKey,
+                            )
                         when (status) {
-                            is PollResult2.Err -> {
+                            is Result2Wrapper.Err -> {
                                 throw YralException(status.v1)
                             }
 
-                            is PollResult2.Ok -> {
+                            is Result2Wrapper.Ok -> {
                                 emit(Ok(status.v1))
-                                if (status.v1 is VideoGenRequestStatus.Complete ||
-                                    status.v1 is VideoGenRequestStatus.Failed
+                                if (status.v1 is VideoGenRequestStatusWrapper.Complete ||
+                                    status.v1 is VideoGenRequestStatusWrapper.Failed
                                 ) {
                                     return@withTimeoutOrNull true
                                 }
@@ -108,7 +112,8 @@ class PollGenerationStatusUseCase(
         }
 
     data class Params(
-        val requestKey: VideoGenRequestKey,
+        val canisterID: String,
+        val requestKey: VideoGenRequestKeyWrapper,
         val isFastInitially: Boolean = false,
         val maxPollingTimeMs: Long = DEFAULT_MAX_POLLING_MS,
     )

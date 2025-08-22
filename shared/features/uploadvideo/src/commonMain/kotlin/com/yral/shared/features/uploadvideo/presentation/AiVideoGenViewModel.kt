@@ -21,8 +21,8 @@ import com.yral.shared.features.uploadvideo.domain.VideoGenerationTimeoutExcepti
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoParams
 import com.yral.shared.features.uploadvideo.domain.models.Provider
 import com.yral.shared.libs.arch.presentation.UiState
-import com.yral.shared.uniffi.generated.RateLimitStatus
-import com.yral.shared.uniffi.generated.VideoGenRequestKey
+import com.yral.shared.uniffi.generated.RateLimitStatusWrapper
+import com.yral.shared.uniffi.generated.VideoGenRequestKeyWrapper
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -62,31 +62,34 @@ class AiVideoGenViewModel internal constructor(
                 _state.update { it.copy(bottomSheetType = BottomSheetType.None) }
             }
             when (state) {
-                is SessionState.SignedIn -> state.session.canisterId to properties.isSocialSignIn
+                is SessionState.SignedIn -> state.session.canisterId
                 else -> null
             }
         }.distinctUntilChanged()
 
-    private var currentRequestKey: VideoGenRequestKey? = null
+    private var currentRequestKey: VideoGenRequestKeyWrapper? = null
     private var pollingJob: Job? = null
 
     fun refresh(canisterId: String) {
         val currentCanister = _state.value.currentCanister
-        var isCanisterChanged = false
-        if (currentCanister == null) {
-            logger.d { "Null: Setting current canister to $canisterId" }
-            _state.update { it.copy(currentCanister = canisterId) }
-        } else if (currentCanister != canisterId) {
-            logger.d { "Mismatch: Setting current canister to $canisterId" }
-            _state.update { it.copy(currentCanister = canisterId) }
-            isCanisterChanged = true
-        } else {
-            logger.d { "Same canister" }
+        val isCanisterChanged = currentCanister != null && currentCanister != canisterId
+        when {
+            currentCanister == null -> {
+                logger.d { "Null: Setting current canister to $canisterId" }
+                _state.update { it.copy(currentCanister = canisterId) }
+            }
+            isCanisterChanged -> {
+                logger.d { "Mismatch: Setting current canister to $canisterId" }
+                _state.update { it.copy(currentCanister = canisterId) }
+            }
+            else -> logger.d { "Same canister" }
         }
         when (_state.value.uiState) {
             is UiState.Initial -> {
-                loadProviders()
-                getFreeCreditsStatus()
+                _state.value.currentCanister?.let {
+                    loadProviders()
+                    getFreeCreditsStatus()
+                }
             }
             is UiState.InProgress -> {
                 if (isCanisterChanged) {
@@ -127,12 +130,12 @@ class AiVideoGenViewModel internal constructor(
     private fun getFreeCreditsStatus() {
         viewModelScope.launch {
             _state.update { it.copy(usedCredits = null) }
-            sessionManager.canisterID?.let { canisterId ->
+            sessionManager.userPrincipal?.let { userPrincipal ->
                 requiredUseCases
                     .getFreeCreditsStatus(
                         parameter =
                             GetFreeCreditsStatusUseCase.Params(
-                                canisterId = canisterId,
+                                userPrincipal = userPrincipal,
                                 isRegistered = sessionManager.isSocialSignIn(),
                             ),
                     ).onSuccess { status ->
@@ -155,7 +158,7 @@ class AiVideoGenViewModel internal constructor(
         }
     }
 
-    private fun RateLimitStatus.usedCredits() =
+    private fun RateLimitStatusWrapper.usedCredits() =
         if (sessionManager.isSocialSignIn()) {
             if (isLimited) 1 else 0
         } else {
@@ -192,7 +195,10 @@ class AiVideoGenViewModel internal constructor(
                             logger.d { "Video generated: $result" }
                             result.requestKey?.let { requestKey ->
                                 currentRequestKey = requestKey
-                                pollAndUploadVideo(selectedProvider.name, requestKey)
+                                pollAndUploadVideo(
+                                    modelName = selectedProvider.name,
+                                    requestKey = requestKey,
+                                )
                                 return@onSuccess
                             }
                             result.providerError?.let { error ->
@@ -227,17 +233,19 @@ class AiVideoGenViewModel internal constructor(
 
     private fun pollAndUploadVideo(
         modelName: String,
-        requestKey: VideoGenRequestKey,
+        requestKey: VideoGenRequestKeyWrapper,
     ) {
         pollingJob?.cancel()
         pollingJob =
             viewModelScope.launch {
+                val canisterID = sessionManager.canisterID ?: return@launch
                 try {
                     requiredUseCases
                         .pollAndUploadAiVideo
                         .invoke(
                             parameters =
                                 PollAndUploadAiVideoUseCase.Params(
+                                    canisterID = canisterID,
                                     modelName = modelName,
                                     requestKey = requestKey,
                                     isFastInitially = false,
@@ -342,6 +350,12 @@ class AiVideoGenViewModel internal constructor(
         _state.value.selectedProvider
             ?.name
             ?.let { uploadVideoTelemetry.createAiVideoClicked(it) }
+    }
+
+    fun resetUi() {
+        val canister = _state.value.currentCanister
+        cleanup()
+        canister?.let { refresh(canister) }
     }
 
     data class ViewState(
