@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import iosSharedUmbrella
 
 enum CreateAIVideoScreenState {
   case initialized
@@ -147,6 +148,15 @@ class CreateAIVideoViewModel: ObservableObject {
         state = .success
         event = .generateVideoSuccess
       case .failure(let error):
+        AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+          event: AiVideoGeneratedData(
+            model: selectedProvider?.name ?? "",
+            isSuccess: false,
+            reason: error.localizedDescription,
+            reasonType: .triggerFailed
+          )
+        )
+
         state = .failure(error)
         event = .generateVideoFailure(error.localizedDescription)
       }
@@ -162,14 +172,42 @@ class CreateAIVideoViewModel: ObservableObject {
           if status.contains("Complete: ") {
             stopPolling()
             videoURLString = status.replacingOccurrences(of: "Complete: ", with: "")
+
+            AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+              event: AiVideoGeneratedData(
+                model: selectedProvider?.name ?? "",
+                isSuccess: true,
+                reason: nil,
+                reasonType: nil
+              )
+            )
+
             Task {
               await uploadAIVideo()
             }
           } else if status.contains("Failed: ") {
+            AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+              event: AiVideoGeneratedData(
+                model: selectedProvider?.name ?? "",
+                isSuccess: false,
+                reason: "Video generation failed",
+                reasonType: .generationFailed
+              )
+            )
+
             event = .generateVideoStatusFailure(status.replacingOccurrences(of: "Failed: ", with: ""))
             stopPolling()
           }
         case .failure(let error):
+          AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+            event: AiVideoGeneratedData(
+              model: selectedProvider?.name ?? "",
+              isSuccess: false,
+              reason: error.localizedDescription,
+              reasonType: .generationFailed
+            )
+          )
+
           stopPolling()
           state = .failure(error)
           event = .generateVideoStatusFailure(error.localizedDescription)
@@ -184,6 +222,10 @@ class CreateAIVideoViewModel: ObservableObject {
       return
     }
 
+    AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+      event: VideoUploadInitiatedEventData(captionAdded: false, hashtagsAdded: false, type: .aiVideo)
+    )
+
     do {
       let result = await uploadAIVideoUseCase.execute(request: videoURL)
       await MainActor.run {
@@ -191,6 +233,15 @@ class CreateAIVideoViewModel: ObservableObject {
         case .success:
           event = .uploadAIVideoSuccess(videoURL)
         case .failure(let error):
+          AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+            event: AiVideoGeneratedData(
+              model: selectedProvider?.name ?? "",
+              isSuccess: false,
+              reason: error.localizedDescription,
+              reasonType: .generationFailed
+            )
+          )
+
           state = .failure(error)
           event = .uploadAIVideoFailure(error.localizedDescription)
         }
@@ -219,6 +270,10 @@ class CreateAIVideoViewModel: ObservableObject {
   }
 
   func updateSelectedProvider(_ provider: AIVideoProviderResponse) {
+    AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+      event: VideoGenerationModelSelectedData(model: provider.name)
+    )
+
     self.selectedProvider = provider
     self.event = .updateSelectedProvider(provider)
   }

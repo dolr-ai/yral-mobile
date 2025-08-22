@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import iosSharedUmbrella
 
 class AIVideoRepository: AIVideoRepositoryProtocol {
   private let httpService: HTTPService
@@ -157,7 +158,7 @@ class AIVideoRepository: AIVideoRepositoryProtocol {
         delegatedIdentityWire: swiftWire
       )
 
-      let result = try await httpService.performRequest(
+      let videoID = try await httpService.performRequest(
         for: Endpoint(
           http: "",
           baseURL: baseURL,
@@ -165,11 +166,27 @@ class AIVideoRepository: AIVideoRepositoryProtocol {
           method: .post,
           headers: ["Content-Type": "application/json"],
           body: try? JSONEncoder().encode(httpBody)
+        ),
+        decodeAs: String.self
+      )
+
+      AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+        event: VideoUploadSuccessEventData(
+          videoId: videoID,
+          publisherUserId: authClient.userPrincipalString ?? "",
+          isGameEnabled: true,
+          gameType: .smiley,
+          isNsfw: false,
+          type: .aiVideo
         )
       )
 
       return .success(())
     } catch {
+      AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+        event: VideoUploadErrorShownEventData(reason: error.localizedDescription, type: .aiVideo)
+      )
+
       switch error {
       case let error as NetworkError:
         return .failure(.network(error))
