@@ -89,6 +89,7 @@ actual fun CMPPlayer(
     }
 
     Box(modifier) {
+        // YralBlurredThumbnail(playerData.thumbnailUrl)
         playerView?.let {
             AndroidView(
                 factory = { playerView },
@@ -111,7 +112,7 @@ actual fun CMPPlayer(
             AsyncImage(
                 model = playerData.thumbnailUrl,
                 contentDescription = "Thumbnail",
-                contentScale = ContentScale.Crop,
+                contentScale = ContentScale.Fit,
                 modifier =
                     Modifier
                         .fillMaxSize()
