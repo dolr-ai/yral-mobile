@@ -23,7 +23,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.paint
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -90,14 +92,25 @@ private fun ProfileReelOverlay(
             modifier = Modifier.align(Alignment.TopStart),
             onBack = onBack,
         )
-        Caption(
-            modifier = Modifier.align(Alignment.BottomStart),
-            caption = currentVideo.postDescription,
-        )
-        DeleteIcon(
-            modifier = Modifier.align(Alignment.BottomEnd).padding(end = 16.dp, bottom = 89.dp),
-            onDeleteVideo = onDeleteVideo,
-        )
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.BottomCenter)
+                    .paint(
+                        painter = painterResource(R.drawable.shadow_bottom),
+                        contentScale = ContentScale.FillBounds,
+                    ),
+        ) {
+            Caption(
+                modifier = Modifier.align(Alignment.BottomStart),
+                caption = currentVideo.postDescription,
+            )
+            DeleteIcon(
+                modifier = Modifier.align(Alignment.BottomEnd).padding(end = 16.dp, bottom = 89.dp),
+                onDeleteVideo = onDeleteVideo,
+            )
+        }
         DeletingOverlay(
             isDeleting = isDeleting,
             loaderSize = 54.dp,
@@ -112,9 +125,15 @@ private fun Header(
     onBack: () -> Unit,
 ) {
     Row(
-        modifier = modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 16.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .paint(
+                    painter = painterResource(R.drawable.shadow),
+                    contentScale = ContentScale.FillBounds,
+                ).padding(horizontal = 12.dp, vertical = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalAlignment = Alignment.Top,
     ) {
         Image(
             modifier = Modifier.size(24.dp).clickable { onBack() },
