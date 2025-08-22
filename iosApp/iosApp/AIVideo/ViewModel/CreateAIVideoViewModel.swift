@@ -233,15 +233,6 @@ class CreateAIVideoViewModel: ObservableObject {
         case .success:
           event = .uploadAIVideoSuccess(videoURL)
         case .failure(let error):
-          AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-            event: AiVideoGeneratedData(
-              model: selectedProvider?.name ?? "",
-              isSuccess: false,
-              reason: error.localizedDescription,
-              reasonType: .generationFailed
-            )
-          )
-
           state = .failure(error)
           event = .uploadAIVideoFailure(error.localizedDescription)
         }
