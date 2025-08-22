@@ -140,7 +140,7 @@ class DefaultAuthClient(
             PrefKeys.ACCESS_TOKEN.name,
             PrefKeys.ID_TOKEN.name,
             PrefKeys.HOW_TO_PLAY_SHOWN.name,
-            PrefKeys.SMILEY_GAME_NUDGE_SHOWN.name,
+            // PrefKeys.SMILEY_GAME_NUDGE_SHOWN.name,
         ).forEach { key ->
             preferences.remove(key)
         }
