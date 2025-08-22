@@ -607,7 +607,7 @@ private fun VideoGridItem(
                 loaderSize = LoaderSize.Fixed,
                 modifier = Modifier.fillMaxSize(),
                 shape = RoundedCornerShape(8.dp),
-                contentScale = ContentScale.Fit,
+                contentScale = ContentScale.Crop,
             )
             VideoGridItemActions(
                 isLiked = video.isLiked,
