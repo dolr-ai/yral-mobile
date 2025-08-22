@@ -190,6 +190,11 @@ struct CreateAIVideoScreenView: View {
     }
     .navigationBarHidden(true)
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    .background(
+      Color.clear
+        .contentShape(Rectangle())
+        .hideKeyboardOnTap()
+    )
     .padding(.horizontal, Constants.vstackHorizontal)
     .overlay(alignment: .center, content: {
       if showLoader {
