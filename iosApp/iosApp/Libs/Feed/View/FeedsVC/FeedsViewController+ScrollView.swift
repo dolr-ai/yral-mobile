@@ -33,9 +33,11 @@ extension FeedsViewController: UICollectionViewDelegate {
       var snapshot = feedsDataSource.snapshot()
       let ids = snapshot.itemIdentifiers
       guard previous < ids.count, candidate < ids.count else { return }
+      feedsPlayer.incrementIndex()
       snapshot.reloadItems([ids[previous], ids[candidate]])
       feedsDataSource.apply(snapshot, animatingDifferences: false) { [weak self] in
         guard let self = self else { return }
+        feedsPlayer.decrementIndex()
         feedsPlayer.advanceToVideo(at: candidate)
       }
     } else {
