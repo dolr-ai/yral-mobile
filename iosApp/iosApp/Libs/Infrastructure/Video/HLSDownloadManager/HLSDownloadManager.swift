@@ -19,12 +19,25 @@ actor HLSDownloadManager: NSObject, HLSDownloadManaging {
   }
 
   private let networkMonitor: NetworkMonitorProtocol
-  private let fileManager: FileManager
-  private let crashReporter: CrashReporter
+  let fileManager: FileManager
+  let crashReporter: CrashReporter
 
   private var _downloadSession: AVAssetDownloadURLSessionProtocol!
   private var downloadSession: AVAssetDownloadURLSessionProtocol {
     _downloadSession
+  }
+
+  private var urgentSession: AVAssetDownloadURLSessionProtocol {
+    let configuration = URLSessionConfiguration.default
+    configuration.networkServiceType = .responsiveData
+    configuration.allowsCellularAccess = true
+    configuration.waitsForConnectivity = false
+    let session = AVAssetDownloadURLSession(
+      configuration: configuration,
+      assetDownloadDelegate: self,
+      delegateQueue: .main
+    )
+    return DefaultAssetDownloadURLSession(session: session)
   }
 
   var activeDownloads: [URL: AVAssetDownloadTaskProtocol] = [:]
@@ -34,11 +47,11 @@ actor HLSDownloadManager: NSObject, HLSDownloadManaging {
   var inflightAssetForURL: [URL: AVURLAsset] = [:]
   private var downloadMonitors: [URL: PerformanceMonitor] = [:]
 
-  private let userDefaults = UserDefaults.standard
-  private static let bookmarksKey = "HLSBookmarks"
+  let userDefaults = UserDefaults.standard
+  static let bookmarksKey = "HLSBookmarks"
   private static let traceKey = "HLSDownload"
 
-  private lazy var storedBookmarks: [String: Data] = {
+  lazy var storedBookmarks: [String: Data] = {
     return (userDefaults.dictionary(forKey: Self.bookmarksKey) as? [String: Data]) ?? [:]
   }()
 
@@ -158,9 +171,20 @@ actor HLSDownloadManager: NSObject, HLSDownloadManaging {
   }
 
   func elevatePriority(for url: URL) {
-    if let task = activeDownloads[url] {
-      task.underlyingTask?.priority = URLSessionTask.defaultPriority
-    }
+    guard let oldTask = activeDownloads[url] as? AVAssetDownloadTask,
+            let title = assetTitleForURL[url] else { return }
+
+    oldTask.cancel()
+    activeDownloads.removeValue(forKey: url)
+
+    let bundleURL = resolveBookmarkIfPresent(for: title) ?? url
+    let asset = AVURLAsset(url: bundleURL)
+
+    let cfg = AVAssetDownloadConfiguration(asset: asset, title: title)
+    let task = urgentSession.makeAssetDownloadTask(downloadConfiguration: cfg)
+
+    activeDownloads[url] = task
+    task?.resume()
   }
 
   func clearMappingsAndCache(for hlsURL: URL, assetTitle: String) {
@@ -205,9 +229,11 @@ actor HLSDownloadManager: NSObject, HLSDownloadManaging {
     let matchingEntry = self.activeDownloads.first {
       $0.value.underlyingTask === assetDownloadTask
     }
+
     guard let (feedURL, _) = matchingEntry else { return }
 
     if let assetTitle = assetTitleForURL[feedURL] {
+      storeBookmark(for: assetTitle, localFileURL: location)
       delegate?.downloadManager(
         self,
         didBeginAssetFor: feedURL,
@@ -241,6 +267,7 @@ actor HLSDownloadManager: NSObject, HLSDownloadManaging {
         assetTitle: assetTitle
       )
     }
+
     if let continuation = self.downloadContinuations.removeValue(forKey: feedURL) {
       continuation.resume(returning: location)
     }
@@ -311,62 +338,6 @@ extension HLSDownloadManager: AVAssetDownloadDelegate {
       else { return }
       await handleDownloadError(url, error: error)
     }
-  }
-}
-
-extension HLSDownloadManager {
-  private func storeBookmark(for assetTitle: String, localFileURL: URL) {
-    do {
-      let bookmarkData = try localFileURL.bookmarkData()
-      storedBookmarks[assetTitle] = bookmarkData
-      userDefaults.set(storedBookmarks, forKey: Self.bookmarksKey)
-      userDefaults.synchronize()
-    } catch {
-      crashReporter.recordException(error)
-      print("Failed to create bookmark for \(assetTitle): \(error)")
-    }
-  }
-
-  private func removeBookmark(for assetTitle: String) {
-    storedBookmarks.removeValue(forKey: assetTitle)
-    userDefaults.set(storedBookmarks, forKey: Self.bookmarksKey)
-    userDefaults.synchronize()
-  }
-
-  private func resolveBookmarkIfPresent(for assetTitle: String) -> URL? {
-    guard let bookmarkData = storedBookmarks[assetTitle] else { return nil }
-    var isStale = false
-    do {
-      let resolvedURL = try URL(resolvingBookmarkData: bookmarkData,
-                                bookmarkDataIsStale: &isStale)
-      if isStale {
-        print("Bookmark data was stale for \(assetTitle)")
-      }
-      return resolvedURL
-    } catch {
-      crashReporter.recordException(error)
-      print("Failed to resolve bookmark for \(assetTitle): \(error)")
-      return nil
-    }
-  }
-
-  func removeAllBookmarkedAssetsOnLaunch() {
-    for (assetTitle, bookmarkData) in storedBookmarks {
-      do {
-        var stale = false
-        let url = try URL(resolvingBookmarkData: bookmarkData, bookmarkDataIsStale: &stale)
-        if fileManager.fileExists(atPath: url.path) {
-          try fileManager.removeItem(at: url)
-          print("Removed leftover HLS file: \(url.lastPathComponent)")
-        }
-      } catch {
-        crashReporter.recordException(error)
-        print("Error removing leftover asset for \(assetTitle): \(error)")
-      }
-      storedBookmarks.removeValue(forKey: assetTitle)
-    }
-    userDefaults.set(storedBookmarks, forKey: Self.bookmarksKey)
-    userDefaults.synchronize()
   }
 }
 

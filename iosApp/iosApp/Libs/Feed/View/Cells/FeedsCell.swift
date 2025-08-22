@@ -177,6 +177,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     imageView.contentMode = .scaleToFill
     return imageView
   }()
+  var expectedVideoID: String?
 
   enum RechargeResult { case success, failure }
 
@@ -271,6 +272,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
   @objc private func handleFirstFrameReady(_ note: Notification) {
     guard let idx = note.userInfo?["index"] as? Int, idx == index,
           let videoId = note.userInfo?["videoId"] as? String else { return }
+    guard idx == index, videoId == expectedVideoID else { return }
     playerLayer?.isHidden = false
     delegate?.videoStarted(index: index, videoId: videoId)
   }
@@ -469,33 +471,19 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     session: SessionManager,
     index: Int
   ) {
-    playerContainerView.sd_cancelCurrentImageLoad()
-    playerContainerView.image = Constants.playerPlaceHolderImage
-
-    if let lastThumbnailImage = feedInfo.lastThumbnailImage {
-      playerContainerView.image = lastThumbnailImage
-    } else if let thumbnailURL = feedInfo.thumbnailURL {
+    if let thumbnailURL = feedInfo.thumbnailURL {
       loadImage(with: thumbnailURL, placeholderImage: Constants.playerPlaceHolderImage, on: playerContainerView)
     }
-
-    playerLayer?.removeFromSuperlayer()
-    playerLayer?.player = nil
-    playerLayer = nil
+    self.expectedVideoID = feedsPlayer?.feedResults[safe: index]?.videoID
 
     if let player = feedsPlayer?.player as? AVQueuePlayer {
       let layer = AVPlayerLayer(player: player)
       layer.videoGravity = .resizeAspectFill
 
-      let isCurrentReel = index == feedsPlayer?.currentIndex
-      let itemReady = player.currentItem?.status == .readyToPlay
-      let alreadyPlaying = player.timeControlStatus == .playing
-
-      layer.isHidden = !(isCurrentReel && alreadyPlaying && itemReady)
+      layer.isHidden = true
       playerContainerView.layer.addSublayer(layer)
       playerLayer = layer
       playerLayer?.frame = contentView.bounds
-    } else {
-
     }
 
     self.index = index
@@ -536,10 +524,10 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
 
   override func prepareForReuse() {
     super.prepareForReuse()
+    playerLayer?.isHidden = true
     playerLayer?.player = nil
     playerLayer?.removeFromSuperlayer()
     playerLayer = nil
-    playerContainerView.sd_cancelCurrentImageLoad()
     playerContainerView.image = nil
 
     profileInfoView.coinsView.resetUIState()
@@ -579,7 +567,6 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     let thumbnailURL: URL?
     let likeCount: Int
     let isLiked: Bool
-    let lastThumbnailImage: UIImage?
     let feedType: FeedType
     let showLoginOverlay: Bool
     let showOnboarding: Bool

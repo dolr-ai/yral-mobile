@@ -11,30 +11,30 @@ import AVFoundation
 
 @MainActor
 protocol YralPlayer {
-    /// Checks/Sets player visibility
-    var isPlayerVisible: Bool { get set }
+  /// Checks/Sets player visibility
+  var isPlayerVisible: Bool { get set }
 
-    /// Gets the current index of video
-    var currentIndex: Int { get }
+  /// Gets the current index of video
+  var currentIndex: Int { get }
 
-    /// Gets the instance of player
-    var player: YralQueuePlayer { get }
+  /// Gets the instance of player
+  var player: YralQueuePlayer { get }
 
-    /// Plays the video
-    func play()
+  /// Plays the video
+  func play()
 
-    /// Pauses the video
-    func pause()
+  /// Pauses the video
+  func pause()
 
-    /// Loads initial videos to the player
-    func loadInitialVideos(_ feeds: [FeedResult])
+  /// Loads initial videos to the player
+  func loadInitialVideos(_ feeds: [FeedResult])
 
-    /// Adds more videos to the player
-    func addFeedResults(_ feeds: [FeedResult])
+  /// Adds more videos to the player
+  func addFeedResults(_ feeds: [FeedResult])
 
-    /// Advances to any video on the basis of passed index
-    func advanceToVideo(at index: Int)
+  /// Advances to any video on the basis of passed index
+  func advanceToVideo(at index: Int)
 
-    /// Removes videos from the player
-    func removeFeeds(_ feeds: [FeedResult])
+  /// Removes videos from the player
+  func removeFeeds(_ feeds: [FeedResult])
 }
