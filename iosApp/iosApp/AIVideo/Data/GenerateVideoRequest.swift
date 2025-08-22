@@ -35,7 +35,7 @@ extension GenerateVideoMetaRequest {
 struct GenerateVideoRequest: Encodable {
   let aspectRatio: String
   let durationSeconds: Int
-  let generateAudio: Bool
+  let generateAudio: Bool?
   let image: Bool?
   let modelID: String
   let negativePrompt: String?

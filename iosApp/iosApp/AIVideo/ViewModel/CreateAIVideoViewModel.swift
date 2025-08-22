@@ -127,7 +127,7 @@ class CreateAIVideoViewModel: ObservableObject {
       request: GenerateVideoRequest(
         aspectRatio: provider.defaultAspectRatio,
         durationSeconds: provider.defaultDuration,
-        generateAudio: true,
+        generateAudio: provider.supportsAudio ? true : nil,
         image: nil,
         modelID: provider.id,
         negativePrompt: nil,
