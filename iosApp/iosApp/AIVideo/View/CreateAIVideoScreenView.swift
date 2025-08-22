@@ -338,7 +338,7 @@ struct CreateAIVideoScreenView: View {
               event: VideoCreationPageViewedEventData(
                 type: .aiVideo,
                 creditsFetched: false,
-                creditsAvailable: true
+                creditsAvailable: 1
               )
             )
             await MainActor.run {
