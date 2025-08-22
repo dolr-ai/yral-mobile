@@ -18,6 +18,7 @@ struct AIVideoProviderResponse: Identifiable {
   let description: String
   let isActive: Bool
   let iconURL: String
+  let supportsAudio: Bool
   let defaultDuration: Int
   let defaultAspectRatio: String
 }

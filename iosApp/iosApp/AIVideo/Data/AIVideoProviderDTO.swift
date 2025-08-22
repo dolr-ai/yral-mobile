@@ -30,13 +30,15 @@ struct AIVideoProviderDTO: Decodable {
   let description: String
   let isAvailable: Bool
   let modelIcon: String
+  let supportsAudio: Bool
   let defaultDuration: Int
   let defaultAspectRatio: String
 
   enum CodingKeys: String, CodingKey {
     case id, name, description
     case isAvailable = "is_available"
-    case modelIcon = "model_icon"
+    case modelIcon = "ios_model_icon"
+    case supportsAudio = "supports_audio"
     case defaultDuration = "default_duration"
     case defaultAspectRatio = "default_aspect_ratio"
   }
@@ -50,6 +52,7 @@ extension AIVideoProviderDTO {
       description: description,
       isActive: isAvailable,
       iconURL: modelIcon,
+      supportsAudio: supportsAudio,
       defaultDuration: defaultDuration,
       defaultAspectRatio: defaultAspectRatio
     )
