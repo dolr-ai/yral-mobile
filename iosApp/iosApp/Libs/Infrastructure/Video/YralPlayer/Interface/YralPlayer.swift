@@ -37,4 +37,8 @@ protocol YralPlayer {
 
   /// Removes videos from the player
   func removeFeeds(_ feeds: [FeedResult])
+
+  func incrementIndex()
+
+  func decrementIndex()
 }

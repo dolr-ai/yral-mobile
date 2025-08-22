@@ -228,6 +228,18 @@ final class FeedsPlayer: YralPlayer {
     }
   }
 
+  func incrementIndex() {
+    currentIndex += 1
+  }
+
+  func decrementIndex() {
+    guard currentIndex > 0 else {
+      return
+    }
+
+    currentIndex -= 1
+  }
+
   private func preloadFeeds() async {
     guard !feedResults.isEmpty, currentIndex + .one < feedResults.count else { return }
     let endIndex = min(feedResults.count, currentIndex + preloadRadius)
