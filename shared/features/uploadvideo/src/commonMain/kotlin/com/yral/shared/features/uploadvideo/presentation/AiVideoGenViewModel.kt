@@ -186,7 +186,7 @@ class AiVideoGenViewModel internal constructor(
                                             prompt = currentState.prompt.trim(),
                                             aspectRatio = selectedProvider.defaultAspectRatio,
                                             durationSeconds = selectedProvider.defaultDuration,
-                                            generateAudio = true,
+                                            generateAudio = if (selectedProvider.supportsAudio == true) true else null,
                                             tokenType = "Free",
                                             userId = userId,
                                         ),
