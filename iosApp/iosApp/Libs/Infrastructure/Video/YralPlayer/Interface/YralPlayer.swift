@@ -32,13 +32,18 @@ protocol YralPlayer {
   /// Adds more videos to the player
   func addFeedResults(_ feeds: [FeedResult])
 
+  /// Increase index
+  func incrementIndex()
+
+  /// Decrement index
+  func decrementIndex()
+
   /// Advances to any video on the basis of passed index
   func advanceToVideo(at index: Int)
 
   /// Removes videos from the player
   func removeFeeds(_ feeds: [FeedResult])
 
-  func incrementIndex()
-
-  func decrementIndex()
+  /// Cancels irrelevant preloading on scrolling too fast
+  func cancelPreloadOutsideRange(center: Int) async
 }

@@ -11,14 +11,12 @@ import AVFoundation
 import iosSharedUmbrella
 
 extension FeedsViewController {
-  // swiftlint: disable function_body_length
   func getConfiguredDataSource() -> DataSource {
     let dataSource = DataSource(collectionView: feedsCV) { [weak self] collectionView, indexPath, feed in
       guard let self = self else { return UICollectionViewCell() }
       let cell = collectionView.dequeueReusableCell(FeedsCell.self, for: indexPath)
       cell.delegate = self
       // swiftlint: disable force_cast
-      if indexPath.row == self.feedsPlayer.currentIndex {
         let showOnboarding = !(UserDefaultsManager.shared.get(for: DefaultsKey.onboardingCompleted) ?? false)
         && indexPath.item >= .three && indexPath.item % .three == .zero && !playToScroll && self.feedType == .otherUsers
         self.isTutorialVote = showOnboarding
@@ -58,37 +56,12 @@ extension FeedsViewController {
           session: session,
           index: indexPath.item
         )
-      } else {
-        cell.configure(
-          withPlayer: feedsPlayer as! FeedsPlayer,
-          feedInfo: FeedsCell.FeedCellInfo(
-            thumbnailURL: feed.thumbnail,
-            likeCount: feed.likeCount,
-            isLiked: feed.isLiked,
-            feedType: self.feedType,
-            showLoginOverlay: (
-              indexPath.item != .zero &&
-              indexPath.item % Constants.overlayIndex == .zero
-            ) && !session.state.isLoggedIn,
-            showOnboarding: false
-          ),
-          profileInfo: ProfileInfoView.ProfileInfo(
-            imageURL: feed.profileImageURL,
-            title: feed.principalID,
-            subtitle: feed.postDescription,
-            coins: session.state.coins
-          ),
-          smileyGame: feed.smileyGame,
-          session: session,
-          index: indexPath.item
-        )
-      }
+
       // swiftlint: enable force_cast
       return cell
     }
     return dataSource
   }
-  // swiftlint: enable function_body_length
 
   func updateData(withFeeds feeds: [FeedResult], animated: Bool = false) {
     guard self.feedsDataSource.snapshot().itemIdentifiers.isEmpty else {
