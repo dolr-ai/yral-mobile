@@ -51,7 +51,7 @@ class HTTPService: NetworkService {
       } else if let errorResponse = try? JSONDecoder().decode(GenerateVideoErrorDTO.self, from: data) {
         throw NetworkError.providerError(errorResponse.providerError)
       } else {
-        throw NetworkError.invalidResponse(httpResponse.description)
+        throw NetworkError.invalidResponse("")
       }
     }
     return data
