@@ -17,6 +17,7 @@ kotlin {
             implementation(libs.kotlinx.serialization.json)
             api(libs.russhwolf.multiplatformSettings.core)
             implementation(libs.gitlive.firebase.config)
+            implementation(libs.touchlab.logger)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
