@@ -297,6 +297,7 @@ final class FeedsPlayer: YralPlayer {
   }
 
   func cancelPreloadOutsideRange(center: Int) async {
+    guard feedResults.count > preloadRadius else { return }
     let validIDs = Set((max(center - preloadRadius, 0)...min(center + preloadRadius, feedResults.count - 1))
       .map { feedResults[$0].videoID })
 
