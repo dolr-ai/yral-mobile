@@ -21,13 +21,18 @@ struct SmileyGameView: View {
   let resultAnimationSubscriber: PassthroughSubject<SmileyGameResultResponse, Never>
   let initialStateSubscriber: PassthroughSubject<SmileyGame, Never>
   let errorSubscriber: PassthroughSubject<String, Never>
+  let animateSubscriber: PassthroughSubject<SmileyConfig, Never>
+  let animationCompletionSubscriber: PassthroughSubject<Void, Never>
+  @State private var isLooping = false
+  @State private var onboardingComplete = false
+  @State private var currentAnimatingSmileyIndex: Int = .zero
 
   var body: some View {
     HStack(spacing: Constants.zero) {
       switch smileyGame.state {
       case .notPlayed:
         ForEach(smileyGame.config.smileys, id: \.id) { smiley in
-          FirebaseImageView(path: smiley.imageURL)
+          FirebaseImageView(path: smiley.imageURL, fallbackImage: smiley.fallbackImage)
             .frame(width: Constants.smileySize, height: Constants.smileySize)
             .opacity(
               (!isFocused || smiley.id == selectedID) ? Constants.one : Constants.zero
@@ -47,6 +52,7 @@ struct SmileyGameView: View {
             .animation(.easeOut(duration: Constants.durationPointOne), value: isFocused)
             .animation(.easeOut(duration: Constants.durationPointThree), value: showWinnerOnly)
             .onTapGesture {
+              stopOnboardingLoop()
               if selectedID == nil {
                 HapticGenerator.performFeedback(.impact(weight: .light))
                 AudioPlayer.shared.play(named: Constants.smileyTapAudio)
@@ -81,6 +87,16 @@ struct SmileyGameView: View {
     .onReceive(errorSubscriber) { errorMessage in
       smileyGame.state = .error(errorMessage)
     }
+    .onReceive(animateSubscriber) { config in
+      startOnboardingLoop(using: config)
+    }
+    .onReceive(animationCompletionSubscriber) { _ in
+      onboardingComplete = true
+      stopOnboardingLoop()
+    }
+    .onDisappear {
+      stopOnboardingLoop()
+    }
     .frame(height: Constants.viewHeight)
     .frame(maxWidth: .infinity, alignment: .leading)
     .padding(.horizontal, Constants.viewHorizontalPadding)
@@ -91,7 +107,7 @@ struct SmileyGameView: View {
   }
 
   @ViewBuilder func resultView(for result: SmileyGameResultResponse) -> some View {
-    FirebaseImageView(path: result.smiley.imageURL)
+    FirebaseImageView(path: result.smiley.imageURL, fallbackImage: result.smiley.fallbackImage)
       .frame(width: Constants.smileySize, height: Constants.smileySize)
       .clipShape(Circle())
       .padding(.vertical, Constants.smileyVerticalPadding)
@@ -132,6 +148,54 @@ struct SmileyGameView: View {
     smileyGame = game
   }
 
+  @MainActor
+  func startOnboardingLoop(using config: SmileyConfig) {
+    guard !isLooping, !config.smileys.isEmpty else { return }
+    isLooping = true
+    step(using: config)
+  }
+
+  @MainActor
+  func stopOnboardingLoop() {
+    if isLooping == true {
+      selectedID = nil
+    }
+    isLooping = false
+  }
+
+  @MainActor
+  private func step(using config: SmileyConfig) {
+    guard isLooping, !onboardingComplete, !config.smileys.isEmpty else {
+      isLooping = false
+      return
+    }
+
+    let count = config.smileys.count
+    let index = currentAnimatingSmileyIndex % count
+    let smiley = config.smileys[index]
+
+    selectedID = smiley.id
+    isPopped = true
+
+    let popUp = Constants.durationPointSix
+    let popDown = Constants.durationPointTwo
+
+    DispatchQueue.main.asyncAfter(deadline: .now() + popUp) {
+      withAnimation(.easeOut(duration: popDown)) {
+        self.isPopped = false
+      }
+
+      DispatchQueue.main.asyncAfter(deadline: .now() + popDown) {
+        self.selectedID = nil
+        self.currentAnimatingSmileyIndex = (index + .one) % count
+
+        DispatchQueue.main.async {
+          self.step(using: config)
+        }
+      }
+    }
+  }
+
   private func startPopAnimation(for smiley: Smiley) {
     isPopped = true
 
@@ -147,8 +211,7 @@ struct SmileyGameView: View {
 
     DispatchQueue.main.asyncAfter(deadline: .now() + Constants.durationPointOne) {
       guard let id = selectedID,
-            let index = smileyGame.config.smileys.firstIndex(where: { $0.id == id })
-      else {
+            let index = smileyGame.config.smileys.firstIndex(where: { $0.id == id }) else {
         return
       }
 

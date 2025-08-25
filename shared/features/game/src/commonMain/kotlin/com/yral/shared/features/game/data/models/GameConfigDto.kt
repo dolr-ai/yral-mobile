@@ -18,10 +18,8 @@ fun GameConfigDto.toGameConfig(): GameConfig =
 fun GameIconDto.toGameIcon(): GameIcon =
     GameIcon(
         id = id,
-        imageName =
-            GameIconNames.valueOf(
-                imageName.uppercase(),
-            ),
+        imageName = GameIconNames.fromString(imageName.uppercase()),
         imageUrl = imageUrl,
         clickAnimation = clickAnimation,
+        unicode = unicode,
     )

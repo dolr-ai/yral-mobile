@@ -6,6 +6,7 @@ pub mod sns_index;
 pub mod sns_governance;
 pub mod post_cache;
 pub mod platform_orchestrator;
+pub mod rate_limits;
 mod uni_ffi_helpers;
 mod commons;
 

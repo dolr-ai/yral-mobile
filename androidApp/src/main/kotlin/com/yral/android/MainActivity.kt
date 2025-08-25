@@ -5,6 +5,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -24,12 +27,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import co.touchlab.kermit.Logger
 import com.arkivanov.decompose.defaultComponentContext
+import com.russhwolf.settings.Settings
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.design.appTypoGraphy
 import com.yral.android.ui.nav.DefaultRootComponent
 import com.yral.android.ui.screens.RootScreen
 import com.yral.android.ui.screens.profile.nav.ProfileComponent
+import com.yral.android.update.InAppUpdateManager
+import com.yral.android.update.UpdateState
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.utils.OAuthResult
 import com.yral.shared.features.auth.utils.OAuthUtils
@@ -47,7 +53,14 @@ class MainActivity : ComponentActivity() {
     private lateinit var oAuthUtils: OAuthUtils
     private lateinit var oAuthUtilsHelper: OAuthUtilsHelper
     private lateinit var rootComponent: DefaultRootComponent
+    private lateinit var inAppUpdateManager: InAppUpdateManager
     private val crashlyticsManager: CrashlyticsManager by inject()
+    private val settings: Settings by inject()
+
+    private val updateResultLauncher: ActivityResultLauncher<IntentSenderRequest> =
+        registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
+            inAppUpdateManager.handleImmediateUpdateResult(result.resultCode)
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,6 +72,24 @@ class MainActivity : ComponentActivity() {
         oAuthUtilsHelper = koinInstance.get()
         // Always create the root component outside Compose on the main thread
         rootComponent = DefaultRootComponent(componentContext = defaultComponentContext())
+
+        // Initialize in-app update manager
+        inAppUpdateManager =
+            InAppUpdateManager(
+                context = this,
+                settings = settings,
+                crashlyticsManager = crashlyticsManager,
+                onStateChanged = {
+                    rootComponent.onUpdateStateChanged(it)
+                    if (it is UpdateState.ImmediateUpdateCancelled || it is UpdateState.ImmediateStarted) {
+                        finish()
+                    }
+                },
+            )
+        inAppUpdateManager.setUpdateResultLauncher(updateResultLauncher)
+        rootComponent.setOnCompleteUpdateCallback { inAppUpdateManager.completeUpdate() }
+        lifecycle.addObserver(inAppUpdateManager)
+
         handleIntent(intent)
         setContent {
             CompositionLocalProvider(LocalRippleConfiguration provides null) {

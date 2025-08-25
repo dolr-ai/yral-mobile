@@ -18,6 +18,7 @@ struct Smiley: Identifiable, Hashable {
   let imageURL: String
   let isActive: Bool
   let clickAnimation: String
+  let fallbackImage: String
 }
 
 enum SmileyGameState: Hashable {

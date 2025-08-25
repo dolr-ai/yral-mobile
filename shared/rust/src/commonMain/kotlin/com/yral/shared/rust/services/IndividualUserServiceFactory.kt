@@ -5,7 +5,6 @@ import com.yral.shared.uniffi.generated.IndividualUserService
 import com.yral.shared.uniffi.generated.Principal
 
 class IndividualUserServiceFactory {
-    private var principal: Principal? = null
     private var identityData: ByteArray? = null
 
     fun service(principal: Principal): IndividualUserService =
@@ -16,11 +15,7 @@ class IndividualUserServiceFactory {
             )
         } ?: throw YralException("Identity data not available")
 
-    fun initialize(
-        principal: Principal,
-        identityData: ByteArray,
-    ) {
-        this.principal = principal
+    fun initialize(identityData: ByteArray) {
         this.identityData = identityData
     }
 }

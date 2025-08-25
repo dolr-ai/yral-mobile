@@ -35,6 +35,7 @@ actual fun initKoin(appDeclaration: KoinAppDeclaration) {
             firestoreModule,
             dispatchersModule,
             archModule,
+            featureFlagModule,
         )
         modules(
             authModule,

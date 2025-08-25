@@ -1,15 +1,18 @@
 package com.yral.shared.firebaseAuth.usecase
 
-import com.yral.shared.core.dispatchers.AppDispatchers
-import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.firebaseAuth.repository.FBAuthRepositoryApi
-import com.yral.shared.libs.useCase.SuspendUseCase
+import com.yral.shared.libs.arch.domain.SuspendUseCase
+import com.yral.shared.libs.arch.domain.UseCaseFailureListener
+import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 
 class SignInWithTokenUseCase(
     appDispatchers: AppDispatchers,
-    crashlyticsManager: CrashlyticsManager,
+    useCaseFailureListener: UseCaseFailureListener,
     private val repository: FBAuthRepositoryApi,
-) : SuspendUseCase<String, String>(appDispatchers.io, crashlyticsManager) {
+) : SuspendUseCase<String, String>(
+        coroutineDispatcher = appDispatchers.network,
+        failureListener = useCaseFailureListener,
+    ) {
     override suspend fun execute(parameter: String): String =
         repository
             .signInWithToken(token = parameter)

@@ -7,24 +7,17 @@ import kotlinx.serialization.Serializable
 data class FeedRequestDTO(
     @SerialName("user_id")
     val userId: String,
-    @SerialName("filter_results")
-    val filterResults: List<FilteredResultDTO>,
+    @SerialName("nsfw_label")
+    val isNSFW: Boolean = false,
     @SerialName("num_results")
     val numResults: Long,
-)
-
-@Serializable
-data class FilteredResultDTO(
-    @SerialName("canister_id")
-    val canisterID: String,
-    @SerialName("publisher_user_id")
-    val userId: String,
-    @SerialName("post_id")
-    val postID: Long,
-    @SerialName("video_id")
-    val videoID: String,
-    @SerialName("nsfw_probability")
-    val nsfwProbability: Double?,
-    @SerialName("is_nsfw")
-    val isNSFW: Boolean?,
+    // excludeWatchedItems and excludeReportedItems are to be kept empty as it filtering of
+    // watched items and reported items are now being handled internally:
+    @SerialName("exclude_watched_items")
+    val excludeWatchedItems: List<String> = emptyList(),
+    @SerialName("exclude_reported_items")
+    val excludeReportedItems: List<String> = emptyList(),
+    // This parameter is used to filter out some videos on the go, and can be used if needed.
+    @SerialName("exclude_items")
+    val excludeItems: List<String> = emptyList(),
 )

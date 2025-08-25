@@ -1,5 +1,5 @@
 {
-  "originHash" : "806d899593cba6301aea67a3000e28a6908f8a3b1d12864504a3d2895b538238",
+  "originHash" : "46674033af90211428aa7524fe43e28a3bc76f12453ebff50a3caf4a04ceab03",
   "pins" : [
     {
       "identity" : "grpc-swift",
@@ -11,12 +11,30 @@
       }
     },
     {
+      "identity" : "ios-branch-sdk-spm",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/BranchMetrics/ios-branch-sdk-spm",
+      "state" : {
+        "revision" : "26d4a43d7b8bda3ecb2a88eabc0d7c09d4baa8b7",
+        "version" : "3.12.1"
+      }
+    },
+    {
       "identity" : "lottie-ios",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/airbnb/lottie-ios.git",
       "state" : {
         "revision" : "047aa81b77adcbf583a966dfef620d17650cc656",
         "version" : "4.5.1"
+      }
+    },
+    {
+      "identity" : "mixpanel-ios-session-replay-package",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/mixpanel/mixpanel-ios-session-replay-package",
+      "state" : {
+        "revision" : "807230e28e6e57f5515d75dc17172b5ad9a1a345",
+        "version" : "1.1.0"
       }
     },
     {

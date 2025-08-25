@@ -30,13 +30,14 @@ extension FeedsViewController: UICollectionViewDelegate {
 
     if ratio >= .half, candidate != current {
       let previous = current
-      storeThumbnail()
-      feedsPlayer.advanceToVideo(at: candidate)
       var snapshot = feedsDataSource.snapshot()
       let ids = snapshot.itemIdentifiers
       guard previous < ids.count, candidate < ids.count else { return }
       snapshot.reloadItems([ids[previous], ids[candidate]])
-      feedsDataSource.apply(snapshot, animatingDifferences: false)
+      feedsDataSource.apply(snapshot, animatingDifferences: false) { [weak self] in
+        guard let self = self else { return }
+        feedsPlayer.advanceToVideo(at: candidate)
+      }
     } else {
       feedsPlayer.play()
     }
@@ -44,8 +45,27 @@ extension FeedsViewController: UICollectionViewDelegate {
 
   func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
     trackedVideoIDs.removeAll()
-    storeThumbnail()
     feedsPlayer.pause()
+
+    guard playToScroll else { return }
+
+    let velocityY = scrollView.panGestureRecognizer.velocity(in: scrollView).y
+    let feedItemIndex = feedsCV.indexPathsForVisibleItems.first?.item ?? 0
+    guard feedItemIndex < feedsDataSource.snapshot().itemIdentifiers.count else { return }
+    let smileyGameState = feedsDataSource.snapshot().itemIdentifiers[feedItemIndex].smileyGame?.state
+    if velocityY < .zero, !isShowingPlayToScroll, case .notPlayed = smileyGameState {
+      isShowingPlayToScroll = true
+
+      let lockOffset = CGPoint(x: scrollView.contentOffset.x, y: lastContentOffsetY)
+      scrollView.setContentOffset(lockOffset, animated: false)
+
+      scrollView.panGestureRecognizer.isEnabled = false
+      scrollView.panGestureRecognizer.isEnabled = true
+
+      if let cell = feedsCV.visibleCells.first as? FeedsCell {
+        cell.showPlayToScroll()
+      }
+    }
   }
 
   func scrollViewWillEndDragging(
@@ -105,5 +125,6 @@ extension FeedsViewController: UICollectionViewDelegate {
     forItemAt indexPath: IndexPath
   ) {
     (cell as? FeedsCell)?.stopListeningForFirstFrame()
+    isShowingPlayToScroll = false
   }
 }

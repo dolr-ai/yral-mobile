@@ -117,17 +117,7 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
     unifiedEvent = .loadingMoreFeeds
     unifiedState = .loading
     do {
-      let filteredPosts = filteredFeeds.map {
-        FilteredPosts(
-          canisterID: $0.canisterID,
-          isNsfw: $0.isNsfw,
-          postID: $0.postID,
-          publisherUserID: $0.principalID,
-          videoID: $0.videoID
-        )
-      }
       let request = MoreFeedsRequest(
-        filteredPosts: filteredPosts,
         numResults: feedsBatchSize,
         feedType: .currentUser
       )
