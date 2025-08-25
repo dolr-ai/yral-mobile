@@ -12,34 +12,45 @@ extension FeedsViewController: UICollectionViewDelegate {
   func scrollViewDidScroll(_ scrollView: UIScrollView) {
     let offsetY = scrollView.contentOffset.y
     defer { lastContentOffsetY = offsetY }
-    guard self.feedsDataSource.snapshot().numberOfItems > .zero else { return }
-    let itemCount = feedsCV.numberOfItems(inSection: .zero)
-    guard itemCount > .zero else { return }
 
-    let goingDown = offsetY > lastContentOffsetY
-    let current = feedsPlayer.currentIndex
+    guard feedsDataSource.snapshot().numberOfItems > 0 else { return }
+    let itemCount = feedsCV.numberOfItems(inSection: 0)
+    guard itemCount > 0 else { return }
 
-    let candidate = goingDown ? current + .one : current - .one
-    guard candidate >= .zero, candidate < itemCount else { return }
-
-    guard let attrs = feedsCV.layoutAttributesForItem(at: IndexPath(item: candidate, section: .zero)) else { return }
     let visibleRect = CGRect(origin: scrollView.contentOffset, size: scrollView.bounds.size)
-    let intersection = visibleRect.intersection(attrs.frame)
-    guard !intersection.isNull else { return }
-    let ratio = intersection.height / attrs.frame.height
+    guard
+      let attrsInRect = feedsCV.collectionViewLayout
+        .layoutAttributesForElements(in: visibleRect),
+      !attrsInRect.isEmpty
+    else { return }
 
-    if ratio >= .half, candidate != current {
-      let previous = current
-      var snapshot = feedsDataSource.snapshot()
-      let ids = snapshot.itemIdentifiers
-      guard previous < ids.count, candidate < ids.count else { return }
-      snapshot.reloadItems([ids[previous], ids[candidate]])
-      feedsDataSource.apply(snapshot, animatingDifferences: false) { [weak self] in
-        guard let self = self else { return }
-        feedsPlayer.advanceToVideo(at: candidate)
+    let bestPair: (IndexPath, CGFloat)? = attrsInRect
+      .map { attributes -> (IndexPath, CGFloat) in
+        let intersection = visibleRect.intersection(attributes.frame)
+        let ratio = intersection.isNull ? 0 : (intersection.height / attributes.frame.height)
+        return (attributes.indexPath, ratio)
       }
-    } else {
+      .max(by: { $0.1 < $1.1 })
+
+    guard let (bestIP, bestRatio) = bestPair else { return }
+    let candidate = bestIP.item
+    guard candidate >= 0 && candidate < itemCount else { return }
+
+    let playing = feedsPlayer.currentIndex
+    guard candidate != playing, bestRatio >= .half else {
       feedsPlayer.play()
+      return
+    }
+
+    var snapshot = feedsDataSource.snapshot()
+    let ids = snapshot.itemIdentifiers
+    guard playing < ids.count, candidate < ids.count else { return }
+    self.feedsPlayer.incrementIndex()
+    snapshot.reloadItems([ids[playing], ids[candidate]])
+    feedsDataSource.apply(snapshot, animatingDifferences: false) { [weak self] in
+      guard self != nil else { return }
+      self?.feedsPlayer.decrementIndex()
+      self?.feedsPlayer.advanceToVideo(at: candidate)
     }
   }
 
@@ -74,6 +85,12 @@ extension FeedsViewController: UICollectionViewDelegate {
     targetContentOffset: UnsafeMutablePointer<CGPoint>
   ) {
     feedsPlayer.play()
+  }
+
+  func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+    Task.detached {
+      await self.feedsPlayer.cancelPreloadOutsideRange(center: self.feedsPlayer.currentIndex)
+    }
   }
 
   func scrollViewShouldScrollToTop(_ scrollView: UIScrollView) -> Bool {

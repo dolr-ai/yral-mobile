@@ -11,7 +11,7 @@ extension DefaultAuthClient {
   func exchangePrincipalID(type: DelegateIdentityType) async throws {
     do {
       try await recordThrowingOperation {
-        let newSignIn = try? await firebaseService.signInAnonymously()
+        let newSignIn = try? await firebaseService.signInAnonymously(with: userPrincipalString ?? "")
 
         let userIDToken = try? await firebaseService.fetchUserIDToken()
         guard let userIDToken else {
