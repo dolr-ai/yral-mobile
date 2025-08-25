@@ -43,7 +43,7 @@ check(JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
 
 include(":androidApp")
 include(":shared:core")
-include(":shared:rust")
+//include(":shared:rust")
 include(":shared:libs:preferences")
 include(":shared:libs:http")
 include(":shared:features:auth")

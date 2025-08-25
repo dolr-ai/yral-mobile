@@ -116,6 +116,221 @@ class CbWrapper$unregister_device {
         self.cb = cb
     }
 }
+public func get_rate_limit_status_core<GenericIntoRustString: IntoRustString>(_ principal: Principal, _ property: GenericIntoRustString, _ is_registered: Bool, _ identity: DelegatedIdentity) async throws -> RateLimitStatus {
+    func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
+        let wrapper = Unmanaged<CbWrapper$get_rate_limit_status_core>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+        if rustFnRetVal.is_ok {
+            wrapper.cb(.success(RateLimitStatus(ptr: rustFnRetVal.ok_or_err!)))
+        } else {
+            wrapper.cb(.failure(RustString(ptr: rustFnRetVal.ok_or_err!)))
+        }
+    }
+
+    return try await withCheckedThrowingContinuation({ (continuation: CheckedContinuation<RateLimitStatus, Error>) in
+        let callback = { rustFnRetVal in
+            continuation.resume(with: rustFnRetVal)
+        }
+
+        let wrapper = CbWrapper$get_rate_limit_status_core(cb: callback)
+        let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
+
+        __swift_bridge__$get_rate_limit_status_core(wrapperPtr, onComplete, {principal.isOwned = false; return principal.ptr;}(), { let rustString = property.intoRustString(); rustString.isOwned = false; return rustString.ptr }(), is_registered, {identity.isOwned = false; return identity.ptr;}())
+    })
+}
+class CbWrapper$get_rate_limit_status_core {
+    var cb: (Result<RateLimitStatus, Error>) -> ()
+
+    public init(cb: @escaping (Result<RateLimitStatus, Error>) -> ()) {
+        self.cb = cb
+    }
+}
+public func poll_video_generation_status(_ identity: DelegatedIdentity, _ key: VideoGenRequestKey) async throws -> RateLimitsResult2 {
+    func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
+        let wrapper = Unmanaged<CbWrapper$poll_video_generation_status>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+        if rustFnRetVal.is_ok {
+            wrapper.cb(.success(RateLimitsResult2(ptr: rustFnRetVal.ok_or_err!)))
+        } else {
+            wrapper.cb(.failure(RustString(ptr: rustFnRetVal.ok_or_err!)))
+        }
+    }
+
+    return try await withCheckedThrowingContinuation({ (continuation: CheckedContinuation<RateLimitsResult2, Error>) in
+        let callback = { rustFnRetVal in
+            continuation.resume(with: rustFnRetVal)
+        }
+
+        let wrapper = CbWrapper$poll_video_generation_status(cb: callback)
+        let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
+
+        __swift_bridge__$poll_video_generation_status(wrapperPtr, onComplete, {identity.isOwned = false; return identity.ptr;}(), {key.isOwned = false; return key.ptr;}())
+    })
+}
+class CbWrapper$poll_video_generation_status {
+    var cb: (Result<RateLimitsResult2, Error>) -> ()
+
+    public init(cb: @escaping (Result<RateLimitsResult2, Error>) -> ()) {
+        self.cb = cb
+    }
+}
+public func get_polling_result_status(_ result: RateLimitsResult2) -> Optional<VideoGenRequestStatus> {
+    { let val = __swift_bridge__$get_polling_result_status({result.isOwned = false; return result.ptr;}()); if val != nil { return VideoGenRequestStatus(ptr: val!) } else { return nil } }()
+}
+public func get_status_value(_ status: VideoGenRequestStatus) -> RustString {
+    RustString(ptr: __swift_bridge__$get_status_value({status.isOwned = false; return status.ptr;}()))
+}
+public func make_videogen_request_key(_ principal: Principal, _ counter: UInt64) -> VideoGenRequestKey {
+    VideoGenRequestKey(ptr: __swift_bridge__$make_videogen_request_key({principal.isOwned = false; return principal.ptr;}(), counter))
+}
+
+public class VideoGenRequestStatus: VideoGenRequestStatusRefMut {
+    var isOwned: Bool = true
+
+    public override init(ptr: UnsafeMutableRawPointer) {
+        super.init(ptr: ptr)
+    }
+
+    deinit {
+        if isOwned {
+            __swift_bridge__$VideoGenRequestStatus$_free(ptr)
+        }
+    }
+}
+public class VideoGenRequestStatusRefMut: VideoGenRequestStatusRef {
+    public override init(ptr: UnsafeMutableRawPointer) {
+        super.init(ptr: ptr)
+    }
+}
+public class VideoGenRequestStatusRef {
+    var ptr: UnsafeMutableRawPointer
+
+    public init(ptr: UnsafeMutableRawPointer) {
+        self.ptr = ptr
+    }
+}
+extension VideoGenRequestStatus: Vectorizable {
+    public static func vecOfSelfNew() -> UnsafeMutableRawPointer {
+        __swift_bridge__$Vec_VideoGenRequestStatus$new()
+    }
+
+    public static func vecOfSelfFree(vecPtr: UnsafeMutableRawPointer) {
+        __swift_bridge__$Vec_VideoGenRequestStatus$drop(vecPtr)
+    }
+
+    public static func vecOfSelfPush(vecPtr: UnsafeMutableRawPointer, value: VideoGenRequestStatus) {
+        __swift_bridge__$Vec_VideoGenRequestStatus$push(vecPtr, {value.isOwned = false; return value.ptr;}())
+    }
+
+    public static func vecOfSelfPop(vecPtr: UnsafeMutableRawPointer) -> Optional<Self> {
+        let pointer = __swift_bridge__$Vec_VideoGenRequestStatus$pop(vecPtr)
+        if pointer == nil {
+            return nil
+        } else {
+            return (VideoGenRequestStatus(ptr: pointer!) as! Self)
+        }
+    }
+
+    public static func vecOfSelfGet(vecPtr: UnsafeMutableRawPointer, index: UInt) -> Optional<VideoGenRequestStatusRef> {
+        let pointer = __swift_bridge__$Vec_VideoGenRequestStatus$get(vecPtr, index)
+        if pointer == nil {
+            return nil
+        } else {
+            return VideoGenRequestStatusRef(ptr: pointer!)
+        }
+    }
+
+    public static func vecOfSelfGetMut(vecPtr: UnsafeMutableRawPointer, index: UInt) -> Optional<VideoGenRequestStatusRefMut> {
+        let pointer = __swift_bridge__$Vec_VideoGenRequestStatus$get_mut(vecPtr, index)
+        if pointer == nil {
+            return nil
+        } else {
+            return VideoGenRequestStatusRefMut(ptr: pointer!)
+        }
+    }
+
+    public static func vecOfSelfAsPtr(vecPtr: UnsafeMutableRawPointer) -> UnsafePointer<VideoGenRequestStatusRef> {
+        UnsafePointer<VideoGenRequestStatusRef>(OpaquePointer(__swift_bridge__$Vec_VideoGenRequestStatus$as_ptr(vecPtr)))
+    }
+
+    public static func vecOfSelfLen(vecPtr: UnsafeMutableRawPointer) -> UInt {
+        __swift_bridge__$Vec_VideoGenRequestStatus$len(vecPtr)
+    }
+}
+
+
+public class RateLimitsResult2: RateLimitsResult2RefMut {
+    var isOwned: Bool = true
+
+    public override init(ptr: UnsafeMutableRawPointer) {
+        super.init(ptr: ptr)
+    }
+
+    deinit {
+        if isOwned {
+            __swift_bridge__$RateLimitsResult2$_free(ptr)
+        }
+    }
+}
+public class RateLimitsResult2RefMut: RateLimitsResult2Ref {
+    public override init(ptr: UnsafeMutableRawPointer) {
+        super.init(ptr: ptr)
+    }
+}
+public class RateLimitsResult2Ref {
+    var ptr: UnsafeMutableRawPointer
+
+    public init(ptr: UnsafeMutableRawPointer) {
+        self.ptr = ptr
+    }
+}
+extension RateLimitsResult2: Vectorizable {
+    public static func vecOfSelfNew() -> UnsafeMutableRawPointer {
+        __swift_bridge__$Vec_RateLimitsResult2$new()
+    }
+
+    public static func vecOfSelfFree(vecPtr: UnsafeMutableRawPointer) {
+        __swift_bridge__$Vec_RateLimitsResult2$drop(vecPtr)
+    }
+
+    public static func vecOfSelfPush(vecPtr: UnsafeMutableRawPointer, value: RateLimitsResult2) {
+        __swift_bridge__$Vec_RateLimitsResult2$push(vecPtr, {value.isOwned = false; return value.ptr;}())
+    }
+
+    public static func vecOfSelfPop(vecPtr: UnsafeMutableRawPointer) -> Optional<Self> {
+        let pointer = __swift_bridge__$Vec_RateLimitsResult2$pop(vecPtr)
+        if pointer == nil {
+            return nil
+        } else {
+            return (RateLimitsResult2(ptr: pointer!) as! Self)
+        }
+    }
+
+    public static func vecOfSelfGet(vecPtr: UnsafeMutableRawPointer, index: UInt) -> Optional<RateLimitsResult2Ref> {
+        let pointer = __swift_bridge__$Vec_RateLimitsResult2$get(vecPtr, index)
+        if pointer == nil {
+            return nil
+        } else {
+            return RateLimitsResult2Ref(ptr: pointer!)
+        }
+    }
+
+    public static func vecOfSelfGetMut(vecPtr: UnsafeMutableRawPointer, index: UInt) -> Optional<RateLimitsResult2RefMut> {
+        let pointer = __swift_bridge__$Vec_RateLimitsResult2$get_mut(vecPtr, index)
+        if pointer == nil {
+            return nil
+        } else {
+            return RateLimitsResult2RefMut(ptr: pointer!)
+        }
+    }
+
+    public static func vecOfSelfAsPtr(vecPtr: UnsafeMutableRawPointer) -> UnsafePointer<RateLimitsResult2Ref> {
+        UnsafePointer<RateLimitsResult2Ref>(OpaquePointer(__swift_bridge__$Vec_RateLimitsResult2$as_ptr(vecPtr)))
+    }
+
+    public static func vecOfSelfLen(vecPtr: UnsafeMutableRawPointer) -> UInt {
+        __swift_bridge__$Vec_RateLimitsResult2$len(vecPtr)
+    }
+}
+
 
 public class KeyValuePair: KeyValuePairRefMut {
     var isOwned: Bool = true
@@ -11859,6 +12074,182 @@ extension Result12: Vectorizable {
 }
 
 
+public class RateLimitStatus: RateLimitStatusRefMut {
+    var isOwned: Bool = true
+
+    public override init(ptr: UnsafeMutableRawPointer) {
+        super.init(ptr: ptr)
+    }
+
+    deinit {
+        if isOwned {
+            __swift_bridge__$RateLimitStatus$_free(ptr)
+        }
+    }
+}
+public class RateLimitStatusRefMut: RateLimitStatusRef {
+    public override init(ptr: UnsafeMutableRawPointer) {
+        super.init(ptr: ptr)
+    }
+}
+public class RateLimitStatusRef {
+    var ptr: UnsafeMutableRawPointer
+
+    public init(ptr: UnsafeMutableRawPointer) {
+        self.ptr = ptr
+    }
+}
+extension RateLimitStatusRef {
+    public func principal() -> Principal {
+        Principal(ptr: __swift_bridge__$RateLimitStatus$principal(ptr))
+    }
+
+    public func request_count() -> UInt64 {
+        __swift_bridge__$RateLimitStatus$request_count(ptr)
+    }
+
+    public func window_start() -> UInt64 {
+        __swift_bridge__$RateLimitStatus$window_start(ptr)
+    }
+
+    public func is_limited() -> Bool {
+        __swift_bridge__$RateLimitStatus$is_limited(ptr)
+    }
+}
+extension RateLimitStatus: Vectorizable {
+    public static func vecOfSelfNew() -> UnsafeMutableRawPointer {
+        __swift_bridge__$Vec_RateLimitStatus$new()
+    }
+
+    public static func vecOfSelfFree(vecPtr: UnsafeMutableRawPointer) {
+        __swift_bridge__$Vec_RateLimitStatus$drop(vecPtr)
+    }
+
+    public static func vecOfSelfPush(vecPtr: UnsafeMutableRawPointer, value: RateLimitStatus) {
+        __swift_bridge__$Vec_RateLimitStatus$push(vecPtr, {value.isOwned = false; return value.ptr;}())
+    }
+
+    public static func vecOfSelfPop(vecPtr: UnsafeMutableRawPointer) -> Optional<Self> {
+        let pointer = __swift_bridge__$Vec_RateLimitStatus$pop(vecPtr)
+        if pointer == nil {
+            return nil
+        } else {
+            return (RateLimitStatus(ptr: pointer!) as! Self)
+        }
+    }
+
+    public static func vecOfSelfGet(vecPtr: UnsafeMutableRawPointer, index: UInt) -> Optional<RateLimitStatusRef> {
+        let pointer = __swift_bridge__$Vec_RateLimitStatus$get(vecPtr, index)
+        if pointer == nil {
+            return nil
+        } else {
+            return RateLimitStatusRef(ptr: pointer!)
+        }
+    }
+
+    public static func vecOfSelfGetMut(vecPtr: UnsafeMutableRawPointer, index: UInt) -> Optional<RateLimitStatusRefMut> {
+        let pointer = __swift_bridge__$Vec_RateLimitStatus$get_mut(vecPtr, index)
+        if pointer == nil {
+            return nil
+        } else {
+            return RateLimitStatusRefMut(ptr: pointer!)
+        }
+    }
+
+    public static func vecOfSelfAsPtr(vecPtr: UnsafeMutableRawPointer) -> UnsafePointer<RateLimitStatusRef> {
+        UnsafePointer<RateLimitStatusRef>(OpaquePointer(__swift_bridge__$Vec_RateLimitStatus$as_ptr(vecPtr)))
+    }
+
+    public static func vecOfSelfLen(vecPtr: UnsafeMutableRawPointer) -> UInt {
+        __swift_bridge__$Vec_RateLimitStatus$len(vecPtr)
+    }
+}
+
+
+public class VideoGenRequestKey: VideoGenRequestKeyRefMut {
+    var isOwned: Bool = true
+
+    public override init(ptr: UnsafeMutableRawPointer) {
+        super.init(ptr: ptr)
+    }
+
+    deinit {
+        if isOwned {
+            __swift_bridge__$VideoGenRequestKey$_free(ptr)
+        }
+    }
+}
+public class VideoGenRequestKeyRefMut: VideoGenRequestKeyRef {
+    public override init(ptr: UnsafeMutableRawPointer) {
+        super.init(ptr: ptr)
+    }
+}
+public class VideoGenRequestKeyRef {
+    var ptr: UnsafeMutableRawPointer
+
+    public init(ptr: UnsafeMutableRawPointer) {
+        self.ptr = ptr
+    }
+}
+extension VideoGenRequestKeyRef {
+    public func principal() -> Principal {
+        Principal(ptr: __swift_bridge__$VideoGenRequestKey$principal(ptr))
+    }
+
+    public func counter() -> UInt64 {
+        __swift_bridge__$VideoGenRequestKey$counter(ptr)
+    }
+}
+extension VideoGenRequestKey: Vectorizable {
+    public static func vecOfSelfNew() -> UnsafeMutableRawPointer {
+        __swift_bridge__$Vec_VideoGenRequestKey$new()
+    }
+
+    public static func vecOfSelfFree(vecPtr: UnsafeMutableRawPointer) {
+        __swift_bridge__$Vec_VideoGenRequestKey$drop(vecPtr)
+    }
+
+    public static func vecOfSelfPush(vecPtr: UnsafeMutableRawPointer, value: VideoGenRequestKey) {
+        __swift_bridge__$Vec_VideoGenRequestKey$push(vecPtr, {value.isOwned = false; return value.ptr;}())
+    }
+
+    public static func vecOfSelfPop(vecPtr: UnsafeMutableRawPointer) -> Optional<Self> {
+        let pointer = __swift_bridge__$Vec_VideoGenRequestKey$pop(vecPtr)
+        if pointer == nil {
+            return nil
+        } else {
+            return (VideoGenRequestKey(ptr: pointer!) as! Self)
+        }
+    }
+
+    public static func vecOfSelfGet(vecPtr: UnsafeMutableRawPointer, index: UInt) -> Optional<VideoGenRequestKeyRef> {
+        let pointer = __swift_bridge__$Vec_VideoGenRequestKey$get(vecPtr, index)
+        if pointer == nil {
+            return nil
+        } else {
+            return VideoGenRequestKeyRef(ptr: pointer!)
+        }
+    }
+
+    public static func vecOfSelfGetMut(vecPtr: UnsafeMutableRawPointer, index: UInt) -> Optional<VideoGenRequestKeyRefMut> {
+        let pointer = __swift_bridge__$Vec_VideoGenRequestKey$get_mut(vecPtr, index)
+        if pointer == nil {
+            return nil
+        } else {
+            return VideoGenRequestKeyRefMut(ptr: pointer!)
+        }
+    }
+
+    public static func vecOfSelfAsPtr(vecPtr: UnsafeMutableRawPointer) -> UnsafePointer<VideoGenRequestKeyRef> {
+        UnsafePointer<VideoGenRequestKeyRef>(OpaquePointer(__swift_bridge__$Vec_VideoGenRequestKey$as_ptr(vecPtr)))
+    }
+
+    public static func vecOfSelfLen(vecPtr: UnsafeMutableRawPointer) -> UInt {
+        __swift_bridge__$Vec_VideoGenRequestKey$len(vecPtr)
+    }
+}
+
+
 
 
 
@@ -22085,6 +22476,102 @@ extension ServiceRef {
     }
 }
 
+
+
+
+
+
+
+
+extension ServiceRef {
+    public func get_account_transactions(_ arg0: GetAccountTransactionsArgs) async throws -> GetTransactionsResult {
+        func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
+            let wrapper = Unmanaged<CbWrapper$Service$get_account_transactions>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            if rustFnRetVal.is_ok {
+                wrapper.cb(.success(GetTransactionsResult(ptr: rustFnRetVal.ok_or_err!)))
+            } else {
+                wrapper.cb(.failure(AgentError(ptr: rustFnRetVal.ok_or_err!)))
+            }
+        }
+
+        return try await withCheckedThrowingContinuation({ (continuation: CheckedContinuation<GetTransactionsResult, Error>) in
+            let callback = { rustFnRetVal in
+                continuation.resume(with: rustFnRetVal)
+            }
+
+            let wrapper = CbWrapper$Service$get_account_transactions(cb: callback)
+            let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
+
+            __swift_bridge__$Service$get_account_transactions(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}())
+        })
+    }
+    class CbWrapper$Service$get_account_transactions {
+        var cb: (Result<GetTransactionsResult, Error>) -> ()
+    
+        public init(cb: @escaping (Result<GetTransactionsResult, Error>) -> ()) {
+            self.cb = cb
+        }
+    }
+
+    public func ledger_id() async throws -> Principal {
+        func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
+            let wrapper = Unmanaged<CbWrapper$Service$ledger_id>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            if rustFnRetVal.is_ok {
+                wrapper.cb(.success(Principal(ptr: rustFnRetVal.ok_or_err!)))
+            } else {
+                wrapper.cb(.failure(AgentError(ptr: rustFnRetVal.ok_or_err!)))
+            }
+        }
+
+        return try await withCheckedThrowingContinuation({ (continuation: CheckedContinuation<Principal, Error>) in
+            let callback = { rustFnRetVal in
+                continuation.resume(with: rustFnRetVal)
+            }
+
+            let wrapper = CbWrapper$Service$ledger_id(cb: callback)
+            let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
+
+            __swift_bridge__$Service$ledger_id(wrapperPtr, onComplete, ptr)
+        })
+    }
+    class CbWrapper$Service$ledger_id {
+        var cb: (Result<Principal, Error>) -> ()
+    
+        public init(cb: @escaping (Result<Principal, Error>) -> ()) {
+            self.cb = cb
+        }
+    }
+
+    public func list_subaccounts(_ arg0: ListSubaccountsArgs) async throws -> RustVec<SubAccount> {
+        func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
+            let wrapper = Unmanaged<CbWrapper$Service$list_subaccounts>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            if rustFnRetVal.is_ok {
+                wrapper.cb(.success(RustVec<SubAccount>(ptr: rustFnRetVal.ok_or_err!)))
+            } else {
+                wrapper.cb(.failure(AgentError(ptr: rustFnRetVal.ok_or_err!)))
+            }
+        }
+
+        return try await withCheckedThrowingContinuation({ (continuation: CheckedContinuation<RustVec<SubAccount>, Error>) in
+            let callback = { rustFnRetVal in
+                continuation.resume(with: rustFnRetVal)
+            }
+
+            let wrapper = CbWrapper$Service$list_subaccounts(cb: callback)
+            let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
+
+            __swift_bridge__$Service$list_subaccounts(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}())
+        })
+    }
+    class CbWrapper$Service$list_subaccounts {
+        var cb: (Result<RustVec<SubAccount>, Error>) -> ()
+    
+        public init(cb: @escaping (Result<RustVec<SubAccount>, Error>) -> ()) {
+            self.cb = cb
+        }
+    }
+}
+
 public class ListSubaccountsArgs: ListSubaccountsArgsRefMut {
     var isOwned: Bool = true
 
@@ -23135,100 +23622,6 @@ extension InitArgs: Vectorizable {
         __swift_bridge__$Vec_InitArgs$len(vecPtr)
     }
 }
-
-
-
-extension ServiceRef {
-    public func get_account_transactions(_ arg0: GetAccountTransactionsArgs) async throws -> GetTransactionsResult {
-        func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service$get_account_transactions>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
-            if rustFnRetVal.is_ok {
-                wrapper.cb(.success(GetTransactionsResult(ptr: rustFnRetVal.ok_or_err!)))
-            } else {
-                wrapper.cb(.failure(AgentError(ptr: rustFnRetVal.ok_or_err!)))
-            }
-        }
-
-        return try await withCheckedThrowingContinuation({ (continuation: CheckedContinuation<GetTransactionsResult, Error>) in
-            let callback = { rustFnRetVal in
-                continuation.resume(with: rustFnRetVal)
-            }
-
-            let wrapper = CbWrapper$Service$get_account_transactions(cb: callback)
-            let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
-
-            __swift_bridge__$Service$get_account_transactions(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}())
-        })
-    }
-    class CbWrapper$Service$get_account_transactions {
-        var cb: (Result<GetTransactionsResult, Error>) -> ()
-    
-        public init(cb: @escaping (Result<GetTransactionsResult, Error>) -> ()) {
-            self.cb = cb
-        }
-    }
-
-    public func ledger_id() async throws -> Principal {
-        func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service$ledger_id>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
-            if rustFnRetVal.is_ok {
-                wrapper.cb(.success(Principal(ptr: rustFnRetVal.ok_or_err!)))
-            } else {
-                wrapper.cb(.failure(AgentError(ptr: rustFnRetVal.ok_or_err!)))
-            }
-        }
-
-        return try await withCheckedThrowingContinuation({ (continuation: CheckedContinuation<Principal, Error>) in
-            let callback = { rustFnRetVal in
-                continuation.resume(with: rustFnRetVal)
-            }
-
-            let wrapper = CbWrapper$Service$ledger_id(cb: callback)
-            let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
-
-            __swift_bridge__$Service$ledger_id(wrapperPtr, onComplete, ptr)
-        })
-    }
-    class CbWrapper$Service$ledger_id {
-        var cb: (Result<Principal, Error>) -> ()
-    
-        public init(cb: @escaping (Result<Principal, Error>) -> ()) {
-            self.cb = cb
-        }
-    }
-
-    public func list_subaccounts(_ arg0: ListSubaccountsArgs) async throws -> RustVec<SubAccount> {
-        func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
-            let wrapper = Unmanaged<CbWrapper$Service$list_subaccounts>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
-            if rustFnRetVal.is_ok {
-                wrapper.cb(.success(RustVec<SubAccount>(ptr: rustFnRetVal.ok_or_err!)))
-            } else {
-                wrapper.cb(.failure(AgentError(ptr: rustFnRetVal.ok_or_err!)))
-            }
-        }
-
-        return try await withCheckedThrowingContinuation({ (continuation: CheckedContinuation<RustVec<SubAccount>, Error>) in
-            let callback = { rustFnRetVal in
-                continuation.resume(with: rustFnRetVal)
-            }
-
-            let wrapper = CbWrapper$Service$list_subaccounts(cb: callback)
-            let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
-
-            __swift_bridge__$Service$list_subaccounts(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}())
-        })
-    }
-    class CbWrapper$Service$list_subaccounts {
-        var cb: (Result<RustVec<SubAccount>, Error>) -> ()
-    
-        public init(cb: @escaping (Result<RustVec<SubAccount>, Error>) -> ()) {
-            self.cb = cb
-        }
-    }
-}
-
-
-
 public class Icrc3DataCertificateResult: Icrc3DataCertificateResultRefMut {
     var isOwned: Bool = true
 

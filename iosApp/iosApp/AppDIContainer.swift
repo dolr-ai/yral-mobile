@@ -118,6 +118,10 @@ import GRPC
     )
   }
 
+  func makeUploadOptionsDIContainer() -> UploadOptionsDIContainer {
+    return UploadOptionsDIContainer()
+  }
+
   func makeUploadDIContainer() -> UploadDIContainer {
     return UploadDIContainer(
       dependencies: UploadDIContainer.Dependencies(

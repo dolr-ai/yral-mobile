@@ -20,7 +20,7 @@ final class FeedsPlayer: YralPlayer {
     }
   }
   private var currentlyDownloadingIDs: Set<String> = []
-  private var playerLooper: AVPlayerLooper?
+  private var didEndToken: NSObjectProtocol?
 
   var isPlayerVisible: Bool = true
   var didEmptyFeeds: (() -> Void)?
@@ -120,9 +120,6 @@ final class FeedsPlayer: YralPlayer {
 
     currentIndex = index
     Task {
-      await cancelPreloadOutsideRange(center: index, radius: preloadRadius)
-    }
-    Task {
       let feed = feedResults[index]
       await self.hlsDownloadManager.elevatePriority(for: feed.url)
       let currentVideoID = feedResults[index].videoID
@@ -181,9 +178,6 @@ final class FeedsPlayer: YralPlayer {
       firstFrameMonitor?.start()
     }
     stopPlaybackMonitor()
-    playerLooper?.disableLooping()
-    playerLooper = nil
-    player.removeAllItems()
 
     guard let player = player as? AVQueuePlayer else {
       player.play()
@@ -193,26 +187,36 @@ final class FeedsPlayer: YralPlayer {
       return
     }
 
-    playerLooper = AVPlayerLooper(player: player, templateItem: item)
+    player.removeAllItems()
+    player.actionAtItemEnd = .none
+    if let token = didEndToken {
+      NotificationCenter.default.removeObserver(token)
+      didEndToken = nil
+    }
+
+    didEndToken = NotificationCenter.default.addObserver(
+      forName: .AVPlayerItemDidPlayToEndTime,
+      object: item,
+      queue: .main
+    ) { [weak item] _ in
+      item?.seek(to: .zero, completionHandler: nil)
+    }
+
+    player.replaceCurrentItem(with: item)
+    item.seek(to: .zero, completionHandler: nil)
+    player.automaticallyWaitsToMinimizeStalling = true
     attachTimeObserver()
     startTimeControlObservations(player)
 
-    Task { @MainActor in
-      let queueItem = await player.waitForFirstItem()
-      do {
-        try await queueItem.waitUntilReady()
-        //        try await player.prerollVideo(atRate: 0)
-        guard currentIndex < feedResults.count else { return }
-      } catch {
-        crashReporter.recordException(error)
-        print("Item failed to become ready: \(error)")
-      }
-      play()
+    do {
+      try await item.waitUntilReady()
+      try await player.prerollVideo(atRate: 1.0)
+    } catch {
+      crashReporter.recordException(error)
     }
 
-    Task {
-      await preloadFeeds()
-    }
+    play()
+    Task { await preloadFeeds() }
   }
 
   func play() {
@@ -226,6 +230,14 @@ final class FeedsPlayer: YralPlayer {
     if (player as? AVQueuePlayer)?.timeControlStatus != .playing {
       finishFirstFrameTrace(success: false)
     }
+  }
+
+  func incrementIndex() {
+    self.currentIndex += 1
+  }
+
+  func decrementIndex() {
+    self.currentIndex -= 1
   }
 
   private func preloadFeeds() async {
@@ -284,8 +296,9 @@ final class FeedsPlayer: YralPlayer {
     currentlyDownloadingIDs.remove(videoID)
   }
 
-  private func cancelPreloadOutsideRange(center: Int, radius: Int) async {
-    let validIDs = Set((max(center - radius, 0)...min(center + radius, feedResults.count - 1))
+  func cancelPreloadOutsideRange(center: Int) async {
+    guard feedResults.count > preloadRadius else { return }
+    let validIDs = Set((max(center - preloadRadius, 0)...min(center + preloadRadius, feedResults.count - 1))
       .map { feedResults[$0].videoID })
 
     let idsToCancel = currentlyDownloadingIDs.subtracting(validIDs)
@@ -293,6 +306,8 @@ final class FeedsPlayer: YralPlayer {
       feedResults.firstIndex { $0.videoID == id }
     })
     delegate?.removeThumbnails(for: indicesToCancel)
+    if idsToCancel.count > .zero {
+    }
     for id in idsToCancel {
       guard let feed = feedResults.first(where: { $0.videoID == id }) else { continue }
       await hlsDownloadManager.cancelDownload(for: feed.url)
