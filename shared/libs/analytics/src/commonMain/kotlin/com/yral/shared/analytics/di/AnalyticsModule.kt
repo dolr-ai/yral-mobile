@@ -61,6 +61,7 @@ val analyticsModule =
                 eventFilter = { !it.shouldSendToYralBE() },
                 extraFieldsProvider = { buildJsonObject { } },
                 dryRun = isDebug,
+                log = { },
             )
         }
         single {
