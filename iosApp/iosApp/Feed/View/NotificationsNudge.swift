@@ -81,7 +81,7 @@ struct NotificationsNudge: View {
         .multilineTextAlignment(.center)
         .padding(.top, Constants.subtitlePadding)
 
-      VStack(alignment: .center, spacing: Constants.vStackSpacing) {
+      VStack(alignment: .center) {
         Button {
           notificationVM.togglePermission(to: true)
           dismiss()
@@ -92,21 +92,6 @@ struct NotificationsNudge: View {
             .frame(maxWidth: .infinity, minHeight: Constants.buttonHeight)
             .background(Constants.turnOnButtonGradient)
             .cornerRadius(Constants.buttonCornerRadius)
-        }
-        Button {
-          dismiss()
-        } label: {
-          Text(Constants.notNowButtonText)
-            .font(Constants.notNowButtonFont)
-            .foregroundStyle(Constants.notNowButtonTextColor)
-            .frame(maxWidth: .infinity, minHeight: Constants.buttonHeight)
-            .background(Constants.notNowButtonBackgoundColor)
-            .cornerRadius(Constants.buttonCornerRadius)
-            .overlay(
-              RoundedRectangle(cornerRadius: Constants.buttonCornerRadius)
-                .inset(by: .half)
-                .stroke(Constants.notNowButtonBorderColor, lineWidth: .one)
-            )
         }
       }
       .padding(.top, Constants.vStackPadding)
@@ -134,7 +119,6 @@ extension NotificationsNudge {
     static let imageSize = 134.0
     static let subtitlePadding = 46.0
     static let vStackPadding = 28.0
-    static let vStackSpacing = 12.0
     static let containerOffset: CGFloat = 15.0
 
     static let cardCornerRadius: CGFloat = 20
@@ -148,13 +132,12 @@ extension NotificationsNudge {
     static let buttonHeight = 45.0
     static let buttonCornerRadius = 8.0
 
-    static let titleText = "A little nudge!"
+    static let titleText = "Stay in the loop!"
     static let subtitltText = """
-The action moves fast.
-    Don’t fall behind, enable notifications and be the first to know when something’s happening.
+Your video is processing in the background.
+ Enable notifications so you don’t miss a beat. Feel free to explore the app while we handle the uploaad!
 """
     static let turnonButtonText = "Turn on Alerts"
-    static let notNowButtonText = "Not Now"
 
     static let imageName = "notification_nudge"
     static let titleFont = YralFont.pt20.semiBold.swiftUIFont
@@ -163,10 +146,6 @@ The action moves fast.
     static let subtitleTextColor = YralColor.grey50.swiftUIColor
     static let turnOnButtonFont = YralFont.pt16.bold.swiftUIFont
     static let turnOnButtonTextColor = YralColor.grey50.swiftUIColor
-    static let notNowButtonFont = YralFont.pt14.medium.swiftUIFont
-    static let notNowButtonTextColor = YralColor.grey50.swiftUIColor
-    static let notNowButtonBackgoundColor = YralColor.grey800.swiftUIColor
-    static let notNowButtonBorderColor = YralColor.grey700.swiftUIColor
     static let turnOnButtonGradient = LinearGradient(
       stops: [
         Gradient.Stop(color: Color(red: 1, green: 0.47, blue: 0.76), location: 0.00),
