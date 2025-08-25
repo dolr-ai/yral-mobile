@@ -51,7 +51,7 @@ import com.yral.android.ui.screens.home.nav.HomeComponent
 import com.yral.android.ui.screens.home.nav.HomeComponent.SlotChild
 import com.yral.android.ui.screens.leaderboard.LeaderboardScreen
 import com.yral.android.ui.screens.profile.ProfileScreen
-import com.yral.android.ui.screens.uploadVideo.UploadVideoScreen
+import com.yral.android.ui.screens.uploadVideo.UploadVideoRootScreen
 import com.yral.android.ui.widgets.YralFeedback
 import com.yral.shared.analytics.events.CategoryName
 import com.yral.shared.core.session.SessionKey
@@ -123,7 +123,7 @@ private fun SlotContent(component: HomeComponent) {
         when (slotChild) {
             is SlotChild.AlertsRequestBottomSheet ->
                 AlertsRequestBottomSheet(
-                    onDismissRequest = slotChild.component::onDismissClicked,
+                    component = slotChild.component,
                 )
         }
     }
@@ -168,7 +168,7 @@ private fun HomeScreenContent(
                 )
 
             is HomeComponent.Child.UploadVideo -> {
-                UploadVideoScreen(
+                UploadVideoRootScreen(
                     component = child.component,
                     bottomPadding = innerPadding.calculateBottomPadding(),
                 )

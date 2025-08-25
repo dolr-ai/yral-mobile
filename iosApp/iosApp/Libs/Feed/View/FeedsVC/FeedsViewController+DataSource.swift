@@ -17,21 +17,36 @@ extension FeedsViewController {
       guard let self = self else { return UICollectionViewCell() }
       let cell = collectionView.dequeueReusableCell(FeedsCell.self, for: indexPath)
       cell.delegate = self
-      let lastDisplayedThumbnailPath = self.lastDisplayedThumbnailPath[feed.videoID] ?? ""
       // swiftlint: disable force_cast
       if indexPath.row == self.feedsPlayer.currentIndex {
+        let showOnboarding = !(UserDefaultsManager.shared.get(for: DefaultsKey.onboardingCompleted) ?? false)
+        && indexPath.item >= .three && indexPath.item % .three == .zero && !playToScroll && self.feedType == .otherUsers
+        self.isTutorialVote = showOnboarding
+        if showOnboarding {
+          AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+            event: GameTutorialShownEventData(
+              videoId: feed.videoID,
+              publisherUserId: feed.principalID,
+              likeCount: Int64(feed.likeCount),
+              shareCount: .zero,
+              viewCount: feed.viewCount,
+              gameType: .smiley,
+              isNsfw: false
+            )
+          )
+        }
         cell.configure(
           withPlayer: feedsPlayer as! FeedsPlayer,
           feedInfo: FeedsCell.FeedCellInfo(
             thumbnailURL: feed.thumbnail,
             likeCount: feed.likeCount,
             isLiked: feed.isLiked,
-            lastThumbnailImage: SDImageCache.shared.imageFromCache(forKey: lastDisplayedThumbnailPath),
             feedType: self.feedType,
             showLoginOverlay: (
               indexPath.item != .zero &&
               indexPath.item % Constants.overlayIndex == .zero
-            ) && !session.state.isLoggedIn
+            ) && !session.state.isLoggedIn,
+            showOnboarding: showOnboarding
           ),
           profileInfo: ProfileInfoView.ProfileInfo(
             imageURL: feed.profileImageURL,
@@ -45,17 +60,17 @@ extension FeedsViewController {
         )
       } else {
         cell.configure(
-          withPlayer: nil,
+          withPlayer: feedsPlayer as! FeedsPlayer,
           feedInfo: FeedsCell.FeedCellInfo(
             thumbnailURL: feed.thumbnail,
             likeCount: feed.likeCount,
             isLiked: feed.isLiked,
-            lastThumbnailImage: SDImageCache.shared.imageFromCache(forKey: lastDisplayedThumbnailPath),
             feedType: self.feedType,
             showLoginOverlay: (
               indexPath.item != .zero &&
               indexPath.item % Constants.overlayIndex == .zero
-            ) && !session.state.isLoggedIn
+            ) && !session.state.isLoggedIn,
+            showOnboarding: false
           ),
           profileInfo: ProfileInfoView.ProfileInfo(
             imageURL: feed.profileImageURL,
@@ -155,6 +170,7 @@ extension FeedsViewController {
     }
     let item = items[index]
     let result = response.outcome == Constants.winResult ? GameResult.win : GameResult.loss
+
     AnalyticsModuleKt.getAnalyticsManager().trackEvent(
       event: GamePlayedEventData(
         videoId: item.videoID,
@@ -169,7 +185,7 @@ extension FeedsViewController {
         optionChosen: response.smiley.id,
         gameResult: result,
         wonLossAmount: Int32(abs(response.coinDelta)),
-        isTutorialVote: false
+        isTutorialVote: isTutorialVote
       )
     )
   }
@@ -212,9 +228,6 @@ extension FeedsViewController {
   }
 
   func removeFeeds(with feeds: [FeedResult], isReport: Bool = false, animated: Bool = false) {
-    for feed in feeds {
-      lastDisplayedThumbnailPath.removeValue(forKey: feed.videoID)
-    }
     var snapshot = feedsDataSource.snapshot()
     snapshot.deleteItems(feeds)
     feedsDataSource.apply(snapshot, animatingDifferences: animated) { [weak self] in

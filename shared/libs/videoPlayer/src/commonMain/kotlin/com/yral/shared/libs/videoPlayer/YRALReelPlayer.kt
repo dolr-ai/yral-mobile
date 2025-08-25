@@ -18,6 +18,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import com.yral.shared.libs.videoPlayer.model.PREFETCH_NEXT_N_VIDEOS
 import com.yral.shared.libs.videoPlayer.model.PlayerConfig
 import com.yral.shared.libs.videoPlayer.model.PlayerControls
@@ -25,8 +26,10 @@ import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.libs.videoPlayer.model.toPlayerData
 import com.yral.shared.libs.videoPlayer.pool.VideoListener
 import com.yral.shared.libs.videoPlayer.pool.rememberPlayerPool
+import com.yral.shared.libs.videoPlayer.util.EdgeScrollDetectConnection
 import com.yral.shared.libs.videoPlayer.util.PrefetchVideo
 import com.yral.shared.libs.videoPlayer.util.PrefetchVideoListener
+import com.yral.shared.libs.videoPlayer.util.ReelScrollDirection
 import com.yral.shared.libs.videoPlayer.util.nextN
 import com.yral.shared.libs.videoPlayer.util.rememberPrefetchPlayerWithLifecycle
 import kotlinx.coroutines.delay
@@ -36,10 +39,12 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 fun YRALReelPlayer(
     modifier: Modifier = Modifier,
     reels: List<Reels>,
+    maxReelsInPager: Int,
     initialPage: Int,
     onPageLoaded: (currentPage: Int) -> Unit,
     recordTime: (Int, Int) -> Unit,
     didVideoEnd: () -> Unit,
+    onEdgeScrollAttempt: (pageNo: Int, atStart: Boolean, direction: ReelScrollDirection) -> Unit = { _, _, _ -> },
     getPrefetchListener: (reel: Reels) -> PrefetchVideoListener,
     getVideoListener: (reel: Reels) -> VideoListener?,
     overlayContent: @Composable (pageNo: Int) -> Unit,
@@ -47,6 +52,7 @@ fun YRALReelPlayer(
     YRALReelsPlayerView(
         modifier = modifier.fillMaxSize(),
         reels = reels,
+        maxReelsInPager = maxReelsInPager,
         initialPage = initialPage,
         onPageLoaded = onPageLoaded,
         recordTime = recordTime,
@@ -65,6 +71,7 @@ fun YRALReelPlayer(
                 loaderView = {},
                 didEndVideo = didVideoEnd,
             ),
+        onEdgeScrollAttempt = onEdgeScrollAttempt,
         getPrefetchListener = getPrefetchListener,
         getVideoListener = { getVideoListener(it) },
         overlayContent = overlayContent,
@@ -76,31 +83,31 @@ fun YRALReelPlayer(
 internal fun YRALReelsPlayerView(
     modifier: Modifier = Modifier, // Modifier for the composable
     reels: List<Reels>, // List of video URLs
+    maxReelsInPager: Int,
     initialPage: Int,
     onPageLoaded: (currentPage: Int) -> Unit,
     recordTime: (Int, Int) -> Unit,
     playerConfig: PlayerConfig = PlayerConfig(), // Configuration for the player,
+    onEdgeScrollAttempt: (pageNo: Int, atStart: Boolean, direction: ReelScrollDirection) -> Unit = { _, _, _ -> },
     getPrefetchListener: (reel: Reels) -> PrefetchVideoListener,
     getVideoListener: (reel: Reels) -> VideoListener?,
     overlayContent: @Composable (pageNo: Int) -> Unit,
 ) {
+    val pageCount by remember(reels, maxReelsInPager) {
+        derivedStateOf { minOf(reels.size, maxReelsInPager) }
+    }
     // Remember the state of the pager
     val pagerState =
         rememberPagerState(
-            pageCount = {
-                reels.size // Set the page count based on the number of URLs
-            },
-            initialPage = initialPage,
+            pageCount = { pageCount },
+            initialPage = initialPage.coerceAtMost(pageCount - 1),
         )
 
     // Create multiplatform player pool for efficient resource management
     val playerPool = rememberPlayerPool(maxPoolSize = 3)
     // Clean up player pool when composable is disposed
-    DisposableEffect(playerPool) {
-        onDispose {
-            playerPool.dispose()
-        }
-    }
+    DisposableEffect(playerPool) { onDispose { playerPool.dispose() } }
+
     // Prefetch state management
     val prefetchQueue = remember { mutableStateSetOf<Reels>() }
     val prefetchedReels = remember { mutableStateSetOf<String>() }
@@ -119,10 +126,7 @@ internal fun YRALReelsPlayerView(
             }
     }
     val prefetch by remember { derivedStateOf { prefetchQueue.firstOrNull() } }
-    val prefetchVideoListener =
-        remember(prefetch) {
-            prefetch?.let { reel -> getPrefetchListener(reel) }
-        }
+    val prefetchVideoListener = remember(prefetch) { prefetch?.let { reel -> getPrefetchListener(reel) } }
     prefetch?.let { reel ->
         PrefetchVideos(
             url = reel.videoUrl,
@@ -135,17 +139,13 @@ internal fun YRALReelsPlayerView(
     }
 
     // Report initial pager state
-    LaunchedEffect(Unit) {
-        // Call the callback with the initial page to make sure it's registered
-        onPageLoaded(pagerState.currentPage)
-    }
+    LaunchedEffect(Unit) { onPageLoaded(pagerState.currentPage) }
+
     // Animate scrolling to the current page when it changes
     LaunchedEffect(key1 = pagerState) {
         snapshotFlow { pagerState.currentPage }
             .distinctUntilChanged()
-            .collect { page ->
-                pagerState.animateScrollToPage(page)
-            }
+            .collect { page -> pagerState.animateScrollToPage(page) }
     }
 
     // Page change to start/stop play back time trace
@@ -174,10 +174,21 @@ internal fun YRALReelsPlayerView(
 
     var isPause by remember { mutableStateOf(false) } // State for pausing/resuming video
 
+    // Detect user attempts to scroll beyond available pages (start or end)
+    val edgeDetectConnection =
+        remember(pageCount, pagerState.currentPage, playerConfig.reelVerticalScrolling) {
+            EdgeScrollDetectConnection(
+                pageCount = pageCount,
+                pagerState = pagerState,
+                playerConfig = playerConfig,
+                onEdgeScrollAttempt = onEdgeScrollAttempt,
+            )
+        }
+
     // Render vertical pager if enabled, otherwise render horizontal pager
     if (playerConfig.reelVerticalScrolling) {
         VerticalPager(
-            modifier = modifier,
+            modifier = modifier.nestedScroll(edgeDetectConnection),
             state = pagerState,
             userScrollEnabled = true, // Ensure user scrolling is enabled
             beyondViewportPageCount = 0,
@@ -218,7 +229,7 @@ internal fun YRALReelsPlayerView(
         }
     } else {
         HorizontalPager(
-            modifier = modifier,
+            modifier = modifier.nestedScroll(edgeDetectConnection),
             state = pagerState,
             userScrollEnabled = true, // Ensure user scrolling is enabled
             beyondViewportPageCount = 0,

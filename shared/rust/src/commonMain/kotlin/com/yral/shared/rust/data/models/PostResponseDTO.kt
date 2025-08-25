@@ -8,6 +8,10 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class PostResponseDTO(
     val posts: List<PostDTO>,
+    @SerialName("processing_time_ms")
+    val processingTimeMs: Double? = null,
+//    not adding error for now as type is unknown
+//    val error: String? = null,
 )
 
 @Serializable
@@ -22,8 +26,6 @@ data class PostDTO(
     val videoID: String,
     @SerialName("nsfw_probability")
     val nsfwProbability: Double? = null,
-    @SerialName("is_nsfw")
-    val isNSFW: Boolean?,
 )
 
 fun PostResponseDTO.toPostResponse(): PostResponse =
@@ -36,7 +38,6 @@ fun PostResponseDTO.toPostResponse(): PostResponse =
                     postID = it.postID,
                     videoID = it.videoID,
                     nsfwProbability = it.nsfwProbability,
-                    isNSFW = it.isNSFW,
                 )
             },
     )

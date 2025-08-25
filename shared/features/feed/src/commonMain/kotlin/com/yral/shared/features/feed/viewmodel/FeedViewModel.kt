@@ -5,22 +5,21 @@ import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.analytics.events.CtaType
-import com.yral.shared.core.dispatchers.AppDispatchers
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.utils.processFirstNSuspendFlow
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.AuthClientFactory
 import com.yral.shared.features.auth.utils.SocialProvider
 import com.yral.shared.features.feed.analytics.FeedTelemetry
-import com.yral.shared.features.feed.useCases.CheckVideoVoteUseCase
-import com.yral.shared.features.feed.useCases.FetchFeedDetailsUseCase
-import com.yral.shared.features.feed.useCases.FetchMoreFeedUseCase
-import com.yral.shared.features.feed.useCases.GetInitialFeedUseCase
-import com.yral.shared.features.feed.useCases.ReportRequestParams
-import com.yral.shared.features.feed.useCases.ReportVideoUseCase
+import com.yral.shared.features.feed.domain.useCases.CheckVideoVoteUseCase
+import com.yral.shared.features.feed.domain.useCases.FetchFeedDetailsUseCase
+import com.yral.shared.features.feed.domain.useCases.FetchMoreFeedUseCase
+import com.yral.shared.features.feed.domain.useCases.GetInitialFeedUseCase
+import com.yral.shared.features.feed.domain.useCases.ReportRequestParams
+import com.yral.shared.features.feed.domain.useCases.ReportVideoUseCase
+import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.rust.domain.models.FeedDetails
 import com.yral.shared.rust.domain.models.Post
-import com.yral.shared.rust.domain.models.toFilteredResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,7 +37,7 @@ class FeedViewModel(
     private val feedTelemetry: FeedTelemetry,
     authClientFactory: AuthClientFactory,
 ) : ViewModel() {
-    private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.io)
+    private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.disk)
 
     private val authClient =
         authClientFactory
@@ -63,39 +62,36 @@ class FeedViewModel(
     val state: StateFlow<FeedState> = _state.asStateFlow()
 
     init {
-        coroutineScope.launch { initialFeedData() }
+        initialFeedData()
     }
 
-    private suspend fun initialFeedData() {
-        sessionManager.userPrincipal?.let { userId ->
-            setLoadingMore(true)
-            requiredUseCases.getInitialFeedUseCase
-                .invoke(
-                    parameter =
-                        GetInitialFeedUseCase.Params(
-                            userId = userId,
-                            filterResults = emptyList(),
-                        ),
-                ).onSuccess { result ->
-                    val posts = result.posts
-                    Logger.d("FeedPagination") { "posts in initialFeed ${posts.size}" }
-                    if (posts.isEmpty()) {
-                        setLoadingMore(false)
-                        loadMoreFeed()
-                    } else {
-                        val notVotedCount = filterVotedAndFetchDetails(posts)
-                        Logger.d("FeedPagination") { "notVotedCount in initialFeed $notVotedCount" }
-                        if (notVotedCount < SUFFICIENT_NEW_REQUIRED) {
+    private fun initialFeedData() {
+        coroutineScope.launch {
+            sessionManager.userPrincipal?.let { userId ->
+                setLoadingMore(true)
+                requiredUseCases.getInitialFeedUseCase
+                    .invoke(GetInitialFeedUseCase.Params(userId = userId))
+                    .onSuccess { result ->
+                        val posts = result.posts
+                        Logger.d("FeedPagination") { "posts in initialFeed ${posts.size}" }
+                        if (posts.isEmpty()) {
                             setLoadingMore(false)
                             loadMoreFeed()
                         } else {
-                            setLoadingMore(false)
+                            val notVotedCount = filterVotedAndFetchDetails(posts)
+                            Logger.d("FeedPagination") { "notVotedCount in initialFeed $notVotedCount" }
+                            if (notVotedCount < SUFFICIENT_NEW_REQUIRED) {
+                                setLoadingMore(false)
+                                loadMoreFeed()
+                            } else {
+                                setLoadingMore(false)
+                            }
                         }
+                    }.onFailure {
+                        setLoadingMore(false)
+                        loadMoreFeed()
                     }
-                }.onFailure {
-                    setLoadingMore(false)
-                    loadMoreFeed()
-                }
+            }
         }
     }
 
@@ -191,10 +187,6 @@ class FeedViewModel(
                     parameter =
                         FetchMoreFeedUseCase.Params(
                             userId = userId,
-                            filterResults =
-                                _state.value.posts.map { post ->
-                                    post.toFilteredResult()
-                                },
                             batchSize = currentBatchSize.coerceAtMost(MAX_PAGE_SIZE),
                         ),
                 ).onSuccess { moreFeed ->
@@ -233,30 +225,22 @@ class FeedViewModel(
     }
 
     fun onCurrentPageChange(pageNo: Int) {
-        coroutineScope.launch {
-            _state.update { currentState ->
-                currentState.copy(
-                    currentPageOfFeed = pageNo,
-                    videoData = VideoData(), // Reset all video data for new page
-                )
-            }
-            val currentState = _state.value
-            if (currentState.currentPageOfFeed < currentState.feedDetails.size) {
-                feedTelemetry.trackVideoImpression(
-                    feedDetails = currentState.feedDetails[currentState.currentPageOfFeed],
-                )
-            }
+        _state.update { currentState ->
+            currentState.copy(
+                currentPageOfFeed = pageNo,
+                videoData = VideoData(), // Reset all video data for new page
+            )
+        }
+        val currentState = _state.value
+        if (currentState.currentPageOfFeed < currentState.feedDetails.size) {
+            feedTelemetry.trackVideoImpression(
+                feedDetails = currentState.feedDetails[currentState.currentPageOfFeed],
+            )
         }
     }
 
     fun setPostDescriptionExpanded(isExpanded: Boolean) {
-        coroutineScope.launch {
-            _state.update { currentState ->
-                currentState.copy(
-                    isPostDescriptionExpanded = isExpanded,
-                )
-            }
-        }
+        _state.update { it.copy(isPostDescriptionExpanded = isExpanded) }
     }
 
     fun recordTime(
@@ -267,6 +251,7 @@ class FeedViewModel(
             val currentFeedDetails = _state.value.feedDetails[_state.value.currentPageOfFeed]
             when (currentTime) {
                 in ANALYTICS_VIDEO_STARTED_RANGE -> feedTelemetry.trackVideoStarted(currentFeedDetails)
+
                 in ANALYTICS_VIDEO_VIEWED_RANGE -> {
                     feedTelemetry.trackVideoViewed(currentFeedDetails)
                     feedTelemetry.resetVideoStarted(currentFeedDetails.videoID)
@@ -325,11 +310,7 @@ class FeedViewModel(
             currentTime = videoData.lastKnownCurrentTime,
             totalTime = videoData.lastKnownTotalTime,
         )
-        _state.update { currentState ->
-            currentState.copy(
-                videoData = videoData,
-            )
-        }
+        _state.update { it.copy(videoData = videoData) }
     }
 
     fun didCurrentVideoEnd() {
@@ -349,13 +330,7 @@ class FeedViewModel(
     }
 
     private fun setLoading(isLoading: Boolean) {
-        coroutineScope.launch {
-            _state.update { currentState ->
-                currentState.copy(
-                    isLoading = isLoading,
-                )
-            }
-        }
+        _state.update { it.copy(isLoading = isLoading) }
     }
 
     fun reportVideo(
@@ -363,84 +338,71 @@ class FeedViewModel(
         reason: VideoReportReason,
         text: String,
     ) {
-        coroutineScope
-            .launch {
-                val currentFeed = _state.value.feedDetails[pageNo]
-                setLoading(true)
-                requiredUseCases.reportVideoUseCase
-                    .invoke(
-                        parameter =
-                            ReportRequestParams(
-                                postId = currentFeed.postID,
-                                videoId = currentFeed.videoID,
-                                reason = text.ifEmpty { reason.reason },
-                                canisterID = currentFeed.canisterID,
-                                principal = currentFeed.principalID,
-                            ),
-                    ).onSuccess {
-                        setLoading(false)
-                        feedTelemetry.videoReportedSuccessfully(currentFeed, reason)
-                        toggleReportSheet(false, pageNo)
-                        _state.update { currentState ->
-                            val updatedFeedDetails = currentState.feedDetails.toMutableList()
+        coroutineScope.launch {
+            val currentFeed = _state.value.feedDetails[pageNo]
+            setLoading(true)
+            requiredUseCases.reportVideoUseCase
+                .invoke(
+                    parameter =
+                        ReportRequestParams(
+                            postId = currentFeed.postID,
+                            videoId = currentFeed.videoID,
+                            reason = text.ifEmpty { reason.reason },
+                            canisterID = currentFeed.canisterID,
+                            principal = currentFeed.principalID,
+                        ),
+                ).onSuccess {
+                    setLoading(false)
+                    feedTelemetry.videoReportedSuccessfully(currentFeed, reason)
+                    toggleReportSheet(false, pageNo)
+                    _state.update { currentState ->
+                        val updatedFeedDetails = currentState.feedDetails.toMutableList()
 
-                            // Find and remove the feed detail with matching videoID
-                            val feedDetailIndex =
-                                updatedFeedDetails.indexOfFirst { it.videoID == currentFeed.videoID }
-                            if (feedDetailIndex != -1) {
-                                updatedFeedDetails.removeAt(feedDetailIndex)
-                            }
-
-                            currentState.copy(
-                                feedDetails = updatedFeedDetails,
-                                // Adjust current page if necessary to prevent out of bounds
-                                currentPageOfFeed =
-                                    minOf(
-                                        pageNo,
-                                        updatedFeedDetails.size - 1,
-                                    ).coerceAtLeast(0),
-                            )
+                        // Find and remove the feed detail with matching videoID
+                        val feedDetailIndex =
+                            updatedFeedDetails.indexOfFirst { it.videoID == currentFeed.videoID }
+                        if (feedDetailIndex != -1) {
+                            updatedFeedDetails.removeAt(feedDetailIndex)
                         }
-                    }.onFailure {
-                        setLoading(false)
-                        toggleReportSheet(true, pageNo)
+
+                        currentState.copy(
+                            feedDetails = updatedFeedDetails,
+                            // Adjust current page if necessary to prevent out of bounds
+                            currentPageOfFeed =
+                                minOf(
+                                    pageNo,
+                                    updatedFeedDetails.size - 1,
+                                ).coerceAtLeast(0),
+                        )
                     }
-            }
+                }.onFailure {
+                    setLoading(false)
+                    toggleReportSheet(true, pageNo)
+                }
+        }
     }
 
     fun toggleReportSheet(
         isOpen: Boolean,
         pageNo: Int,
     ) {
-        coroutineScope.launch {
-            _state.update { currentState ->
-                currentState.copy(
-                    reportSheetState =
-                        if (isOpen) {
-                            feedTelemetry.videoClicked(
-                                feedDetails = _state.value.feedDetails[_state.value.currentPageOfFeed],
-                                ctaType = CtaType.REPORT,
-                            )
-                            ReportSheetState.Open(pageNo)
-                        } else {
-                            ReportSheetState.Closed
-                        },
-                )
-            }
+        val currentDetail = _state.value.feedDetails[_state.value.currentPageOfFeed]
+        var sheetState: ReportSheetState = ReportSheetState.Closed
+        if (isOpen) {
+            feedTelemetry.videoClicked(
+                feedDetails = currentDetail,
+                ctaType = CtaType.REPORT,
+            )
+            sheetState = ReportSheetState.Open(pageNo)
         }
+        _state.update { it.copy(reportSheetState = sheetState) }
     }
 
     fun registerTrace(
         videoID: String,
         traceType: String,
     ) {
-        coroutineScope.launch {
-            _state.update {
-                it.copy(
-                    videoTracing = it.videoTracing + (videoID to traceType),
-                )
-            }
-        }
+        _state.update { it.copy(videoTracing = it.videoTracing + (videoID to traceType)) }
     }
 
     fun isAlreadyTraced(
@@ -458,25 +420,18 @@ class FeedViewModel(
 
     @Suppress("TooGenericExceptionCaught")
     fun signInWithGoogle(context: Any) {
-        coroutineScope
-            .launch {
-                try {
-                    authClient.signInWithSocial(context, SocialProvider.GOOGLE)
-                } catch (e: Exception) {
-                    crashlyticsManager.recordException(e)
-                    toggleSignupFailed(true)
-                }
+        coroutineScope.launch {
+            try {
+                authClient.signInWithSocial(context, SocialProvider.GOOGLE)
+            } catch (e: Exception) {
+                crashlyticsManager.recordException(e)
+                toggleSignupFailed(true)
             }
+        }
     }
 
     fun toggleSignupFailed(shouldShow: Boolean) {
-        coroutineScope.launch {
-            _state.update { currentState ->
-                currentState.copy(
-                    showSignupFailedSheet = shouldShow,
-                )
-            }
-        }
+        _state.update { it.copy(showSignupFailedSheet = shouldShow) }
     }
 
     fun isLoggedIn(): Boolean = sessionManager.isSocialSignIn()

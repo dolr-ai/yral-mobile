@@ -106,7 +106,7 @@ extension FeedsViewController: FeedsCellProtocol {
         stakeAmount: Int32(item.smileyGame?.config.lossPenalty ?? Int.zero),
         stakeType: TokenType.yral,
         optionChosen: smileyID,
-        isTutorialVote: false
+        isTutorialVote: self.isTutorialVote
       )
     )
   }
@@ -259,7 +259,7 @@ extension FeedsViewController: FeedsCellProtocol {
         stakeAmount: Int32(item.smileyGame?.config.lossPenalty ?? Int.zero),
         stakeType: TokenType.yral,
         optionChosen: smileyID,
-        isTutorialVote: false
+        isTutorialVote: self.isTutorialVote
       )
     )
     Task { @MainActor in
@@ -281,23 +281,26 @@ extension FeedsViewController: FeedsCellProtocol {
     feedsCV.isScrollEnabled = true
     self.walletAnimationDelegate?.walletAnimationEnded(success: success, coins: coins)
   }
+
+  func howToPlayTapped() {
+    let smileyGameRuleView = self.makeSmileyGameRulesDIContainer().makeSmileyGameRuleView {
+      self.navigationController?.popViewController(animated: true)
+    }
+    let smileyGameRuleVC = UIHostingController(rootView: smileyGameRuleView)
+    smileyGameRuleVC.extendedLayoutIncludesOpaqueBars = true
+    self.navigationController?.pushViewController(smileyGameRuleVC, animated: true)
+  }
+
+  func howToPlayShown() {
+    self.isShowingPlayToScroll = false
+  }
 }
 
 extension FeedsViewController: FeedsPlayerProtocol {
   func cacheCleared(atc index: Int) {
-    guard index < feedsDataSource.snapshot().itemIdentifiers.count else { return }
-    lastDisplayedThumbnailPath.removeValue(
-      forKey: feedsDataSource.snapshot().itemIdentifiers[index].videoID
-    )
   }
 
   func removeThumbnails(for set: Set<Int>) {
-    for index in set {
-      guard index < feedsDataSource.snapshot().itemIdentifiers.count else { continue }
-      lastDisplayedThumbnailPath.removeValue(
-        forKey: feedsDataSource.snapshot().itemIdentifiers[index].videoID
-      )
-    }
   }
 
   func reachedPlaybackMilestone(_ milestone: PlaybackMilestone, for index: Int) {
@@ -325,9 +328,9 @@ extension FeedsViewController: FeedsPlayerProtocol {
           hashtagCount: Int32(feed.hashtags.count),
           isHotOrNot: false,
           isLoggedIn: session.state.isLoggedIn,
-          isNsfw: feed.isNsfw,
+          isNsfw: false,
           likeCount: Int32(feed.likeCount),
-          nsfwProbability: feed.isNsfw ? CGFloat.one : CGFloat.zero,
+          nsfwProbability: feed.nsfwProbability,
           percentageWatched: percentageWatched,
           postID: Int32(feed.postID) ?? .zero,
           publisherCanisterID: feed.canisterID,

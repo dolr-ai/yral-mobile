@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.michaelbull.result.fold
 import com.github.michaelbull.result.getOrThrow
+import com.yral.shared.analytics.events.VideoCreationType
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.logging.YralLogger
 import com.yral.shared.crashlytics.core.CrashlyticsManager
@@ -36,9 +37,7 @@ import kotlinx.io.files.SystemFileSystem
 
 @Suppress("TooManyFunctions")
 class UploadVideoViewModel internal constructor(
-    private val getUploadEndpoint: GetUploadEndpointUseCase,
-    private val uploadVideo: UploadVideoUseCase,
-    private val updateMeta: UpdateMetaUseCase,
+    private val requiredUseCases: RequiredUseCases,
     private val appDispatchers: AppDispatchers,
     private val uploadVideoTelemetry: UploadVideoTelemetry,
     private val crashlyticsManager: CrashlyticsManager,
@@ -81,7 +80,7 @@ class UploadVideoViewModel internal constructor(
     }
 
     fun onUploadButtonClicked() {
-        uploadVideoTelemetry.uploadInitiated()
+        uploadVideoTelemetry.uploadInitiated(VideoCreationType.UPLOAD_VIDEO)
         validateAndPublish()
     }
 
@@ -112,13 +111,14 @@ class UploadVideoViewModel internal constructor(
                 it.copy(fileUploadUiState = UiState.InProgress(0f))
             }
             // Get upload endpoint
-            val endpointResult = getUploadEndpoint()
+            val endpointResult = requiredUseCases.getUploadEndpoint()
             val endpoint = endpointResult.getOrThrow()
 
             log { "performBackgroundUpload endpoint: $endpoint" }
 
             // Start video upload
-            uploadVideo(UploadVideoUseCase.Params(endpoint.url, filePath))
+            requiredUseCases
+                .uploadVideo(UploadVideoUseCase.Params(endpoint.url, filePath))
                 .collect { result ->
                     val fileUploadUiState =
                         result.fold(
@@ -305,7 +305,7 @@ class UploadVideoViewModel internal constructor(
                     }
 
                 // Perform the actual metadata update
-                val result = updateMeta(UpdateMetaUseCase.Param(uploadFileRequest))
+                val result = requiredUseCases.updateMeta(UpdateMetaUseCase.Param(uploadFileRequest))
                 log { "Metadata updated" }
 
                 // Cancel the progress animation and set to 100%
@@ -320,7 +320,7 @@ class UploadVideoViewModel internal constructor(
 
                 _state.update { it.copy(updateMetadataUiState = UiState.Success(Unit)) }
                 send(Event.UploadSuccess)
-                uploadVideoTelemetry.uploadSuccess(endpoint.videoID)
+                uploadVideoTelemetry.uploadSuccess(endpoint.videoID, VideoCreationType.UPLOAD_VIDEO)
                 performPostPublishCleanup()
             }
         } catch (e: CancellationException) {
@@ -401,7 +401,7 @@ class UploadVideoViewModel internal constructor(
     }
 
     fun pushScreenView() {
-        uploadVideoTelemetry.uploadVideoScreenViewed()
+        uploadVideoTelemetry.videoCreationPageViewed(VideoCreationType.UPLOAD_VIDEO)
     }
 
     fun pushSelectFile() {
@@ -410,7 +410,7 @@ class UploadVideoViewModel internal constructor(
 
     fun pushUploadFailed(e: Throwable) {
         if (!_state.value.errorAnalyticsPushed) {
-            uploadVideoTelemetry.uploadFailed(e.message ?: "")
+            uploadVideoTelemetry.uploadFailed(e.message ?: "", VideoCreationType.UPLOAD_VIDEO)
             _state.update { it.copy(errorAnalyticsPushed = true) }
         }
     }
@@ -497,4 +497,10 @@ class UploadVideoViewModel internal constructor(
         private const val IS_CAPTION_REQUIRED = false
         private const val IS_HASHTAGS_REQUIRED = false
     }
+
+    internal data class RequiredUseCases(
+        val getUploadEndpoint: GetUploadEndpointUseCase,
+        val uploadVideo: UploadVideoUseCase,
+        val updateMeta: UpdateMetaUseCase,
+    )
 }

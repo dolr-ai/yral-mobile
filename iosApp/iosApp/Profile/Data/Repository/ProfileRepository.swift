@@ -131,7 +131,6 @@ class ProfileRepository: ProfileRepositoryProtocol {
           !$0.status().is_banned_due_to_user_reporting() &&
           !$0.is_nsfw()
         }
-
         let feedResult = result.map { postDetail in
           let videoURL = URL(
             string: "\(Constants.cloudfarePrefix)\(postDetail.video_uid().toString())\(Constants.cloudflareSuffix)"
@@ -153,7 +152,7 @@ class ProfileRepository: ProfileRepositoryProtocol {
             postDescription: postDetail.description().toString(),
             likeCount: Int(postDetail.like_count()),
             isLiked: postDetail.liked_by_me(),
-            isNsfw: false
+            nsfwProbability: postDetail.is_nsfw() ? CGFloat.one : CGFloat.zero
           )
         }
         return .success(feedResult)

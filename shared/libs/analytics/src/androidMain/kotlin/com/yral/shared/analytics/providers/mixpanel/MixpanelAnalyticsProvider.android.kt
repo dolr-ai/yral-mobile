@@ -57,7 +57,7 @@ actual class MixpanelAnalyticsProvider actual constructor(
                 "is_creator" to (user.isCreator ?: false),
                 "is_logged_in" to user.isLoggedIn,
                 "wallet_balance" to user.walletBalance,
-                "token_type" to (user.tokenType?.serialName ?: ""),
+                "wallet_token_type" to (user.tokenType?.serialName ?: ""),
                 "canister_id" to user.canisterId,
             )
         if (user.isLoggedIn == true) {

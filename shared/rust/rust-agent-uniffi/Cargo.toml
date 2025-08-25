@@ -21,11 +21,18 @@ k256 = { version = "0.13.4", default-features = false, features = [
     "jwk",
 ] }
 openssl = { version = "0.10", features = ["vendored"] }
-yral-types = { git = "https://github.com/yral-dapp/yral-common.git", rev = "c21b591e0950be0ecb7df8c2988f21193d2f177d" }
-yral-canisters-common = { git = "https://github.com/yral-dapp/yral-common.git", rev = "c21b591e0950be0ecb7df8c2988f21193d2f177d" }
-yral-canisters-client = { git = "https://github.com/yral-dapp/yral-common.git", rev = "c21b591e0950be0ecb7df8c2988f21193d2f177d" }
-yral-metadata-types = { git = "https://github.com/yral-dapp/yral-metadata.git", rev = "51b7d980bc15e11eac3603289212633a77a35415" }
-yral-metadata-client = { git = "https://github.com/yral-dapp/yral-metadata.git", rev = "51b7d980bc15e11eac3603289212633a77a35415" }
+
+yral-types = { git = "https://github.com/dolr-ai/yral-common.git", branch="master" }
+yral-canisters-client = { git = "https://github.com/dolr-ai/yral-common.git", branch="master", features = [
+    "full",
+] }
+yral-canisters-common = { git = "https://github.com/dolr-ai/yral-common.git", branch="master" }
+yral-metadata-client = { git = "https://github.com/yral-dapp/yral-metadata", branch = "master", default-features = false }
+yral-metadata-types = { git = "https://github.com/yral-dapp/yral-metadata", branch = "master" }
+yral-identity = { git = "https://github.com/dolr-ai/yral-common.git", branch="master", default-features = false, features = [
+    "ic-git",
+    "wasm-bindgen",
+] }
 
 log = "0.4.27"
 cfg-if = "1.0"

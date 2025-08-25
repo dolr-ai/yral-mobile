@@ -21,7 +21,8 @@ import com.yral.shared.analytics.events.SignupPageName
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun LoginBottomSheet(
+fun LoginBottomSheet(
+    pageName: SignupPageName = SignupPageName.MENU,
     termsLink: String,
     bottomSheetState: SheetState,
     onDismissRequest: () -> Unit,
@@ -48,7 +49,7 @@ internal fun LoginBottomSheet(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 SignupView(
-                    pageName = SignupPageName.MENU,
+                    pageName = pageName,
                     onSignupClicked = onSignupClicked,
                     termsLink = termsLink,
                     openTerms = openTerms,

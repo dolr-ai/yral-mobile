@@ -33,6 +33,8 @@ firebaseCrashlyticsPlugin = "3.0.3"
 firebase-gitlive-sdk = "2.1.0"
 firebasePerfPlugin = "1.4.2"
 gobley = "0.2.0"
+haze = "1.6.10"
+inAppUpdate = "2.1.0"
 koinBom = "4.1.0"
 kotlinResult = "2.0.1"
 kotlinxCoroutines = "1.10.2"
@@ -56,6 +58,7 @@ accompanist-permission = "0.37.3"
 moko-permissions="0.19.1"
 branch="5.19.0"
 play-services-ads-identifier="18.0.1"
+emoji2 = "1.5.0"
 
 [libraries]
 
@@ -81,8 +84,11 @@ androidx-media3-ui = { module = "androidx.media3:media3-ui", version.ref = "medi
 
 androidx-security-crypto = { module = "androidx.security:security-crypto", version.ref = "androidx-security-crypto" }
 
+androidx-emoji2 = { module = "androidx.emoji2:emoji2", version.ref = "emoji2" }
+
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 coil-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil" }
+coil-svg = { module = "io.coil-kt.coil3:coil-svg", version.ref = "coil" }
 
 compose-ui = { module = "androidx.compose.ui:ui", version.ref = "compose" }
 compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = "compose" }
@@ -115,6 +121,12 @@ gitlive-firebase-storage = { module = "dev.gitlive:firebase-storage", version.re
 gitlive-firebase-auth = { module = "dev.gitlive:firebase-auth", version.ref = "firebase-gitlive-sdk" }
 gitlive-firebase-store-db = { module = "dev.gitlive:firebase-firestore", version.ref = "firebase-gitlive-sdk" }
 gitlive-firebase-messaging = { module = "dev.gitlive:firebase-messaging", version.ref = "firebase-gitlive-sdk" }
+gitlive-firebase-config = { module = "dev.gitlive:firebase-config", version.ref = "firebase-gitlive-sdk" }
+
+googlePlay-inAppUpdate = { group = "com.google.android.play", name = "app-update-ktx", version.ref = "inAppUpdate"}
+
+haze = { module = "dev.chrisbanes.haze:haze", version.ref = "haze" }
+haze-materials = { module = "dev.chrisbanes.haze:haze-materials", version.ref = "haze" }
 
 koin-bom = { group = "io.insert-koin", name = "koin-bom", version.ref = "koinBom" }
 koin-core = { group = "io.insert-koin", name = "koin-core" }

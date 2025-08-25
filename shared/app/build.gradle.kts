@@ -22,6 +22,7 @@ kotlin {
             implementation(projects.shared.libs.koin)
             implementation(projects.shared.libs.arch)
             implementation(projects.shared.libs.coroutinesX)
+            implementation(projects.shared.libs.featureFlag)
         }
 
         androidMain.dependencies {

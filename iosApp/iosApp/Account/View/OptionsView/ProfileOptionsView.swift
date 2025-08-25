@@ -15,6 +15,7 @@ struct ProfileOptionsView: View {
   @StateObject private var notificationVM = NotificationToggleViewModel()
   @Binding var showLogoutButton: Bool
   @Environment(\.scenePhase) private var scenePhase
+  @Environment(\.openURL) private var openURL
   var delegate: ProfileOptionsViewDelegate?
 
   init(showLogoutButton: Binding<Bool>, delegate: ProfileOptionsViewDelegate? = nil) {
@@ -33,6 +34,15 @@ struct ProfileOptionsView: View {
           }
         ) { option in
           Button {
+            if option.id == Constants.whatsappId {
+              if let url = URL(string: option.id) {
+                openURL(url)
+              }
+              AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+                event: MenuClickedEventData(ctaType: option.ctaType())
+              )
+              return
+            }
             if option.id == Constants.logoutId {
               delegate?.logout()
             } else if option.id == Constants.deleteId {
@@ -113,7 +123,7 @@ struct ProfileOptionsView: View {
 
     func ctaType() -> MenuCtaType {
       switch id {
-      case Constants.telegramId: return .talkToTheTeam
+      case Constants.whatsappId: return .talkToTheTeam
       case Constants.tncIosId: return .termsOfService
       case Constants.privacyPolicyId: return .privacyPolicy
       case Constants.logoutId: return .logOut
@@ -135,7 +145,7 @@ extension ProfileOptionsView {
       Options(
         image: Image("option_chat"),
         text: "Talk to the Team",
-        redirection: Constants.telegramId
+        redirection: Constants.whatsappId
       ),
       Options(
         image: Image("option_tnc"),
@@ -171,7 +181,7 @@ extension ProfileOptionsView {
     static let toggleWidth = 54.0
     static let toggleHeight = 30.0
     static let loaderName = "Yral_Loader"
-    static let telegramId = "https://t.me/+c-LTX0Cp-ENmMzI1"
+    static let whatsappId = "https://chat.whatsapp.com/C8FN7ISnvJP1DPcbgZ2vF9?mode=ac_t"
     static let tncIosId = "https://yral.com/terms-ios"
     static let privacyPolicyId = "https://yral.com/privacy-policy"
     static let logoutId = "logoutId"

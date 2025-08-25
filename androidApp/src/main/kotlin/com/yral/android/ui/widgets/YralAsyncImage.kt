@@ -21,16 +21,19 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter
+import coil3.request.ImageRequest
+import coil3.svg.SvgDecoder
 import kotlin.math.min
 
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 fun YralAsyncImage(
-    imageUrl: String,
+    imageUrl: Any,
     modifier: Modifier = Modifier,
     loaderSize: LoaderSize = LoaderSize.Percentage(),
     border: Dp = 0.dp,
@@ -86,6 +89,14 @@ fun YralAsyncImage(
         }
     }
 }
+
+@Composable
+fun getSVGImageModel(url: String) =
+    ImageRequest
+        .Builder(LocalContext.current)
+        .data(url)
+        .decoderFactory(SvgDecoder.Factory())
+        .build()
 
 const val DEFAULT_LOADER_SIZE = 20
 const val DEFAULT_LOADER_PERCENTAGE = 0.25f

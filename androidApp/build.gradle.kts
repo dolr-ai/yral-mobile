@@ -15,8 +15,8 @@ android {
     namespace = "com.yral.android"
     defaultConfig {
         applicationId = "com.yral.android"
-        versionCode = 9
-        versionName = "1.4.1"
+        versionCode = 10
+        versionName = "1.5.0"
         ndkVersion = "28.0.13004108"
         buildConfigField(
             type = "String",
@@ -86,6 +86,7 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.paging.compose)
+    implementation(libs.androidx.emoji2)
     debugImplementation(libs.compose.ui.tooling)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
@@ -96,6 +97,7 @@ dependencies {
     implementation(libs.lottie)
     implementation(libs.coil.compose)
     implementation(libs.coil.okhttp)
+    implementation(libs.coil.svg)
     implementation(libs.accompanist.permission)
     implementation(libs.facebook.sdk.android.core)
     implementation(libs.mixpanel.android)
@@ -113,6 +115,8 @@ dependencies {
 
     implementation(libs.branch)
     implementation(libs.play.services.ads.identifier)
+
+    implementation(libs.googlePlay.inAppUpdate)
 
     implementation(projects.shared.core)
     implementation(projects.shared.libs.preferences)
@@ -133,6 +137,7 @@ dependencies {
     implementation(projects.shared.features.uploadvideo)
     implementation(projects.shared.features.profile)
     implementation(projects.shared.libs.arch)
+    implementation(projects.shared.libs.featureFlag)
 }
 
 afterEvaluate {

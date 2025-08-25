@@ -22,6 +22,8 @@ class FeedsViewController: UIViewController {
   var paginatedFeedscancellables: Set<AnyCancellable> = []
   var trackedVideoIDs: Set<String> = []
   var lastContentOffsetY: CGFloat = 0
+  let playToScroll: Bool
+  var isShowingPlayToScroll = false
 
   lazy var feedsPlayer: YralPlayer = { [unowned self] in
     let monitor = DefaultNetworkMonitor()
@@ -39,7 +41,6 @@ class FeedsViewController: UIViewController {
     return player
   }()
   var isCurrentlyVisible = true
-  var lastDisplayedThumbnailPath: [String: String] = [:]
 
   var feedsCV: UICollectionView = {
     let collectionView = getUICollectionView()
@@ -63,6 +64,7 @@ class FeedsViewController: UIViewController {
   var shouldShowFooterLoader: Bool = false
   var pageEndReached: Bool = false
   var onBackButtonTap: (() -> Void)?
+  var isTutorialVote = false
   weak var walletAnimationDelegate: FeedsViewControllerRechargeDelegate?
   private var loaderCancellables = Set<AnyCancellable>()
   private var authStateCancellables = Set<AnyCancellable>()
@@ -72,11 +74,13 @@ class FeedsViewController: UIViewController {
 
   init(
     viewModel: any FeedViewModelProtocol,
+    playToScroll: Bool,
     feedType: FeedType = .otherUsers,
     session: SessionManager,
     crashReporter: CrashReporter
   ) {
     self.viewModel = viewModel
+    self.playToScroll = playToScroll
     self.feedType = feedType
     self.session = session
     self.crashReporter = crashReporter
@@ -418,27 +422,6 @@ class FeedsViewController: UIViewController {
     if isCurrentlyVisible {
       guard !feedsDataSource.snapshot().itemIdentifiers.isEmpty else { return }
       feedsPlayer.play()
-    }
-  }
-
-  func storeThumbnail() {
-    let currentTimeSec = feedsPlayer.player.currentTime().seconds
-    let roundedTime = String(format: "%.2f", currentTimeSec)
-    guard let visibleIndexPath = feedsCV.indexPathsForVisibleItems.sorted().first else { return }
-    let videoID = feedsDataSource.itemIdentifier(for: visibleIndexPath)?.videoID ?? ""
-    let baseString = FeedsRepository.Constants.cloudfarePrefix + videoID +
-    FeedsRepository.Constants.thumbnailSuffix + "?time=\(roundedTime)s"
-    guard let url = URL(string: baseString) else { return }
-    lastDisplayedThumbnailPath[videoID] = baseString
-    SDWebImageManager.shared.loadImage(
-      with: url,
-      options: .highPriority,
-      progress: nil
-    ) { [weak self] image, _, error, _, _, _ in
-      guard let image = image, error == nil else {
-        return
-      }
-      SDImageCache.shared.store(image, forKey: baseString, completion: nil)
     }
   }
 
