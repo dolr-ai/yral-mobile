@@ -1,6 +1,5 @@
 package com.yral.featureflag
 
-import co.touchlab.kermit.Logger
 import com.yral.featureflag.core.FeatureFlag
 import com.yral.featureflag.core.FeatureFlagProvider
 import com.yral.featureflag.core.FlagResult
@@ -20,7 +19,7 @@ class FeatureFlagManager(
     private val providersInPriority: List<FeatureFlagProvider>,
     private val localProviderId: String,
     private val providerControls: Map<String, FeatureFlag<Boolean>> = emptyMap(),
-    private val logger: Logger,
+    private val listener: Listener,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -68,8 +67,10 @@ class FeatureFlagManager(
                             provider.fetchAndActivate()
                         } catch (e: CancellationException) {
                             throw e
-                        } catch (@Suppress("TooGenericExceptionCaught") e: Throwable) {
-                            logger.w(e) { "Failed to fetch and activate remote flags provider ${provider.name}" }
+                        } catch (
+                            @Suppress("TooGenericExceptionCaught") e: Throwable,
+                        ) {
+                            listener.onRemoteFetchFailed(provider.name, e)
                         }
                     }
                 }
@@ -152,5 +153,12 @@ class FeatureFlagManager(
             providersInPriority.filter { provider ->
                 provider.id == localProviderId || (enabledById[provider.id] ?: true)
             }
+    }
+
+    interface Listener {
+        fun onRemoteFetchFailed(
+            provider: String,
+            throwable: Throwable,
+        )
     }
 }
