@@ -16,6 +16,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(projects.shared.core)
+            implementation(projects.shared.data)
             implementation(projects.shared.features.auth)
             implementation(projects.shared.libs.koin)
             implementation(projects.shared.libs.analytics)

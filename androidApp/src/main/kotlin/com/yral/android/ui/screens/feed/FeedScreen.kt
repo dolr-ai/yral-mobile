@@ -54,6 +54,7 @@ import com.yral.android.ui.widgets.PreloadLottieAnimations
 import com.yral.android.ui.widgets.YralAsyncImage
 import com.yral.android.ui.widgets.YralErrorMessage
 import com.yral.android.ui.widgets.YralLoader
+import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.features.feed.viewmodel.FeedState
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.PRE_FETCH_BEFORE_LAST
@@ -66,7 +67,6 @@ import com.yral.shared.features.game.viewmodel.NudgeType
 import com.yral.shared.libs.videoPlayer.YRALReelPlayer
 import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.libs.videoPlayer.util.ReelScrollDirection
-import com.yral.shared.rust.domain.models.FeedDetails
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -264,8 +264,8 @@ private fun getReels(state: FeedState): List<Reels> =
 
 private fun FeedDetails.toReel() =
     Reels(
-        videoUrl = url.toString(),
-        thumbnailUrl = thumbnail.toString(),
+        videoUrl = url,
+        thumbnailUrl = thumbnail,
         videoId = videoID,
     )
 

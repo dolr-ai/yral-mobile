@@ -8,6 +8,8 @@ import com.yral.shared.analytics.events.CtaType
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.utils.processFirstNSuspendFlow
 import com.yral.shared.crashlytics.core.CrashlyticsManager
+import com.yral.shared.data.feed.domain.FeedDetails
+import com.yral.shared.data.feed.domain.Post
 import com.yral.shared.features.auth.AuthClientFactory
 import com.yral.shared.features.auth.utils.SocialProvider
 import com.yral.shared.features.feed.analytics.FeedTelemetry
@@ -18,8 +20,6 @@ import com.yral.shared.features.feed.domain.useCases.GetInitialFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.ReportRequestParams
 import com.yral.shared.features.feed.domain.useCases.ReportVideoUseCase
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
-import com.yral.shared.rust.domain.models.FeedDetails
-import com.yral.shared.rust.domain.models.Post
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow

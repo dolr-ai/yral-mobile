@@ -1,5 +1,3 @@
-import org.gradle.kotlin.dsl.implementation
-
 plugins {
     alias(libs.plugins.yral.shared.feature)
     alias(libs.plugins.yral.android.feature)
@@ -20,6 +18,7 @@ kotlin {
             implementation(libs.ktor.serialization.kotlinx.json)
 
             implementation(projects.shared.core)
+            implementation(projects.shared.data)
             implementation(projects.shared.libs.koin)
             implementation(projects.shared.libs.arch)
             implementation(projects.shared.libs.coroutinesX)
