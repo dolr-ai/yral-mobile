@@ -21,24 +21,38 @@ class UrlBuilder<R : AppRoute>(
      */
     @Suppress("TooGenericExceptionCaught", "SwallowedException")
     fun build(route: AppRoute): String? {
-        // Find the matching route definition
-        val routeDefinition = findRouteDefinition(route) ?: return null
-
-        return buildUrlFromRoute(routeDefinition, route)
+        return buildUrlFromRoute(route)
     }
 
-    @Suppress(
-        "UNCHECKED_CAST",
-        "TooGenericExceptionCaught",
-        "SwallowedException",
-    )
-    private fun buildUrlFromRoute(
-        routeDefinition: RouteDefinition<R>,
+    /**
+     * Build a URL from a route using type-safe serialization.
+     */
+    @Suppress("TooGenericExceptionCaught", "SwallowedException")
+    private fun buildUrlFromRoute(route: AppRoute): String? {
+        val matchingDefinition = findRouteDefinition(route) ?: return null
+        
+        return try {
+            buildUrlWithDefinition(matchingDefinition, route)
+        } catch (e: Exception) {
+            null
+        }
+    }
+    
+    /**
+     * Build URL with a specific route definition and route instance.
+     */
+    @Suppress("TooGenericExceptionCaught", "SwallowedException")
+    private fun <T : R> buildUrlWithDefinition(
+        routeDefinition: RouteDefinition<T>,
         route: AppRoute,
     ): String? {
         return try {
-            // Use serialization to automatically extract route properties.
-            val params = extractRouteParams(routeDefinition, route)
+            // Safe cast - findRouteDefinition ensures the types match
+            @Suppress("UNCHECKED_CAST")
+            val typedRoute = route as T
+            
+            // Use serialization to automatically extract route properties
+            val params = extractRouteParams(routeDefinition, typedRoute)
 
             // Build the URL path from the pattern
             val (path, queryParams) = buildPathAndQuery(routeDefinition.pattern, params)
@@ -97,16 +111,21 @@ class UrlBuilder<R : AppRoute>(
      * Extract parameters from an AppRoute instance using serialization.
      */
     @Suppress("UNCHECKED_CAST")
-    private fun extractRouteParams(
-        routeDefinition: RouteDefinition<R>,
-        route: AppRoute,
+    private fun <T : R> extractRouteParams(
+        routeDefinition: RouteDefinition<T>,
+        route: T,
     ): Map<String, String> {
-        val serializer = routeDefinition.serializer as kotlinx.serialization.KSerializer<AppRoute>
-        val jsonElement = Json.encodeToJsonElement(serializer, route)
-        if (jsonElement !is JsonObject) return emptyMap()
+        return try {
+            // Safe cast to handle generic variance
+            val serializer = routeDefinition.serializer as kotlinx.serialization.KSerializer<T>
+            val jsonElement = Json.encodeToJsonElement(serializer, route)
+            if (jsonElement !is JsonObject) return emptyMap()
 
-        return jsonElement.entries.associate { (key, value) ->
-            key to value.jsonPrimitive.content
+            jsonElement.entries.associate { (key, value) ->
+                key to value.jsonPrimitive.content
+            }
+        } catch (e: Exception) {
+            emptyMap()
         }
     }
 }

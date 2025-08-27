@@ -11,10 +11,25 @@ import kotlinx.serialization.json.JsonPrimitive
 /**
  * The central engine for parsing URLs. It is initialized with a pre-built
  * routing table created by the configuration DSL.
+ * 
+ * All operations use proper generic constraints for type safety and 
+ * compile-time error checking.
  */
 class DeepLinkParser<R : AppRoute>(
     private val routingTable: List<RouteDefinition<R>>,
 ) {
+    
+    /**
+     * Type constraint helper to ensure route definitions are valid.
+     */
+    init {
+        require(routingTable.isNotEmpty()) { "Routing table cannot be empty" }
+        // Verify all route IDs are unique
+        val routeIds = routingTable.map { it.routeId }
+        require(routeIds.size == routeIds.distinct().size) { 
+            "Route IDs must be unique. Duplicates: ${routeIds.groupBy { it }.filter { it.value.size > 1 }.keys}" 
+        }
+    }
     /**
      * Parse a URL string into a type-safe AppRoute object.
      * Returns AppRoute.Unknown if the URL cannot be parsed or if the resulting
@@ -53,9 +68,9 @@ class DeepLinkParser<R : AppRoute>(
         for (routeDefinition in routingTable) {
             val extractedParams = extractParameters(routeDefinition.pattern, pathSegments, queryParams)
             if (extractedParams != null) {
-                val route = deserializeRoute(routeDefinition, extractedParams)
-                if (route != null && isExternallyExposed(route)) {
-                    return route
+                val result = parseWithRouteDefinition(routeDefinition, extractedParams)
+                if (result !is Unknown) {
+                    return result
                 }
             }
         }
@@ -92,6 +107,21 @@ class DeepLinkParser<R : AppRoute>(
         val routeDefinition = routingTable.find { it.routeId == routeId } ?: return Unknown
 
         return try {
+            parseWithRouteDefinition(routeDefinition, params)
+        } catch (e: Exception) {
+            Unknown
+        }
+    }
+    
+    /**
+     * Parse parameters with a specific route definition.
+     */
+    @Suppress("TooGenericExceptionCaught", "SwallowedException")
+    private fun <T : R> parseWithRouteDefinition(
+        routeDefinition: RouteDefinition<T>,
+        params: Map<String, String>,
+    ): AppRoute {
+        return try {
             val route = deserializeRoute(routeDefinition, params)
             if (route != null && isExternallyExposed(route)) {
                 route
@@ -110,9 +140,9 @@ class DeepLinkParser<R : AppRoute>(
     private fun parseWithFallback(params: Map<String, String>): AppRoute {
         for (routeDefinition in routingTable) {
             try {
-                val route = deserializeRoute(routeDefinition, params)
-                if (route != null && isExternallyExposed(route)) {
-                    return route
+                val result = parseWithRouteDefinition(routeDefinition, params)
+                if (result !is Unknown) {
+                    return result
                 }
             } catch (e: Exception) {
                 // Continue to next route definition
@@ -171,10 +201,10 @@ class DeepLinkParser<R : AppRoute>(
      * Deserialize parameters into an AppRoute object using the route's serializer.
      */
     @Suppress("TooGenericExceptionCaught", "SwallowedException")
-    private fun deserializeRoute(
-        routeDefinition: RouteDefinition<R>,
+    private fun <T : R> deserializeRoute(
+        routeDefinition: RouteDefinition<T>,
         params: Map<String, String>,
-    ): AppRoute? {
+    ): T? {
         return try {
             // Filter out route_id from params for serialization
             val filteredParams = params.filter { it.key != "route_id" }
@@ -183,7 +213,8 @@ class DeepLinkParser<R : AppRoute>(
             val jsonParams = filteredParams.mapValues { JsonPrimitive(it.value) }
             val jsonObject = JsonObject(jsonParams)
 
-            Json.decodeFromJsonElement(routeDefinition.serializer, jsonObject) as AppRoute
+            // No cast needed - serializer returns T directly
+            Json.decodeFromJsonElement(routeDefinition.serializer, jsonObject)
         } catch (e: Exception) {
             null
         }
