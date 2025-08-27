@@ -1,3 +1,6 @@
+package com.yral.shared.libs.routing.deeplink.engine
+
+import com.yral.shared.libs.routing.routes.api.AppRoute
 import kotlinx.serialization.KSerializer
 import kotlin.reflect.KClass
 

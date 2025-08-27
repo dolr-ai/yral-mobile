@@ -1,3 +1,5 @@
+package com.yral.shared.libs.routing.routes.api
+
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
@@ -45,13 +47,13 @@ data class TestUserRoute(
 ) : AppRouteWithMetadata, ExternallyExposedRoute
 
 @Serializable
-object TestHomeRoute : AppRoute
+object TestHomeRoute : AppRoute, ExternallyExposedRoute
 
 @Serializable
 data class TestInternalRoute(
     val internalId: String,
     @Transient override val metadata: Map<String, Any> = emptyMap(),
-) : AppRouteWithMetadata // Note: does NOT implement ExternallyExposedRoute
+) : AppRouteWithMetadata // Note: does NOT implement com.yral.shared.libs.routing.routes.api.ExternallyExposedRoute
 
 @Serializable
 object TestUnknownRoute : AppRoute

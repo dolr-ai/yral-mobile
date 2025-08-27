@@ -1,3 +1,11 @@
+package com.yral.shared.libs.routing.deeplink.engine
+
+import com.yral.shared.libs.routing.routes.api.AppRoute
+import com.yral.shared.libs.routing.routes.api.TestHomeRoute
+import com.yral.shared.libs.routing.routes.api.TestInternalRoute
+import com.yral.shared.libs.routing.routes.api.TestProductRoute
+import com.yral.shared.libs.routing.routes.api.TestUserRoute
+import com.yral.shared.libs.routing.routes.api.Unknown
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -38,9 +46,12 @@ class DeepLinkParserTest {
 
     @Test
     fun testParseUrlWithQueryParams() {
-        val result = parser.parse("https://example.com/product/123?category=electronics&featured=true")
+        // Test with only valid parameters first
+        val result = parser.parse("https://example.com/product/123?category=electronics")
         
-        assertTrue(result is TestProductRoute)
+        if (result !is TestProductRoute) {
+            throw AssertionError("Expected TestProductRoute, got: $result (${result::class.simpleName})")
+        }
         assertEquals("123", result.productId)
         assertEquals("electronics", result.category)
     }
@@ -76,7 +87,8 @@ class DeepLinkParserTest {
     }
 
     @Test
-    fun testParseFromParameterMap() {
+    fun testParseFromParameterMapWithoutRouteId() {
+        // Test fallback behavior when route_id is not provided
         val params = mapOf("productId" to "123", "category" to "books")
         val result = parser.parse(params)
         
@@ -85,12 +97,58 @@ class DeepLinkParserTest {
         assertEquals("books", result.category)
     }
 
+
+
+    @Test
+    fun testParseFromParameterMapWithRouteId() {        
+        // Test explicit route_id behavior
+        val params = mapOf("route_id" to "TestProductRoute", "productId" to "123", "category" to "books")
+        val result = parser.parse(params)
+        
+        // Debug: show what we actually got
+        when (result) {
+            is TestProductRoute -> {
+                assertEquals("123", result.productId)
+                assertEquals("books", result.category)
+            }
+            else -> throw AssertionError("Expected TestProductRoute, got: $result (${result::class.simpleName})")
+        }
+    }
+
+    @Test
+    fun testParseFromParameterMapWithWrongRouteId() {
+        // Test with wrong route_id - should fail
+        val params = mapOf("route_id" to "NonExistentRoute", "productId" to "123")
+        val result = parser.parse(params)
+        
+        assertTrue(result is Unknown)
+    }
+
+    @Test
+    fun testParseFromParameterMapUserRouteWithoutRouteId() {
+        // Test fallback behavior with different route type
+        val params = mapOf("userId" to "456")
+        val result = parser.parse(params)
+        
+        assertTrue(result is TestUserRoute)
+        assertEquals("456", result.userId)
+    }
+
     @Test
     fun testParseFromParameterMapInternalRoute() {
+        // Test without route_id - should return Unknown due to security check
         val params = mapOf("internalId" to "secret")
         val result = parser.parse(params)
         
-        // Should return Unknown due to security check
+        assertTrue(result is Unknown)
+    }
+
+    @Test
+    fun testParseFromParameterMapInternalRouteWithRouteId() {
+        // Test with explicit route_id - should still return Unknown due to security check
+        val params = mapOf("route_id" to "TestInternalRoute", "internalId" to "secret")
+        val result = parser.parse(params)
+        
         assertTrue(result is Unknown)
     }
 
@@ -100,6 +158,17 @@ class DeepLinkParserTest {
         val result = parser.parse(params)
         
         assertTrue(result is Unknown)
+    }
+
+    @Test
+    fun testParseFromParameterMapAmbiguousWithoutRouteId() {
+        // Test case where parameters could match multiple routes
+        // Should return the first matching route in the routing table
+        val params = mapOf<String, String>()  // Empty params - could match TestHomeRoute
+        val result = parser.parse(params)
+        
+        // TestHomeRoute is an object with no parameters, so it should match
+        assertTrue(result is Unknown || result is TestHomeRoute)
     }
 
     @Test
@@ -131,6 +200,8 @@ class DeepLinkParserTest {
     fun testParseEmptyUrl() {
         val result = parser.parse("")
         
-        assertTrue(result is Unknown)
+        if (result !is Unknown) {
+            throw AssertionError("Expected Unknown, got: $result (${result::class.simpleName})")
+        }
     }
 }

@@ -1,3 +1,9 @@
+package com.yral.shared.libs.routing.deeplink.engine
+
+import com.yral.shared.libs.routing.routes.api.AppRoute
+import com.yral.shared.libs.routing.routes.api.TestHomeRoute
+import com.yral.shared.libs.routing.routes.api.TestProductRoute
+import com.yral.shared.libs.routing.routes.api.TestUserRoute
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue

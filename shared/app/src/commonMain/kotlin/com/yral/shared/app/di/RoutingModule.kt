@@ -1,14 +1,14 @@
 package com.yral.shared.app.di
 
-import AppRoute
-import DeepLinkParser
-import Home
-import RoutingService
-import TestProductRoute
-import TestUserRoute
-import Unknown
-import UrlBuilder
-import buildRouting
+import com.yral.shared.libs.routing.routes.api.AppRoute
+import com.yral.shared.libs.routing.deeplink.engine.DeepLinkParser
+import com.yral.shared.libs.routing.routes.api.Home
+import com.yral.shared.libs.routing.deeplink.engine.RoutingService
+import com.yral.shared.libs.routing.routes.api.TestProductRoute
+import com.yral.shared.libs.routing.routes.api.TestUserRoute
+import com.yral.shared.libs.routing.routes.api.Unknown
+import com.yral.shared.libs.routing.deeplink.engine.UrlBuilder
+import com.yral.shared.libs.routing.deeplink.engine.buildRouting
 import org.koin.dsl.module
 
 private val appRoutingTable = buildRouting<AppRoute> {

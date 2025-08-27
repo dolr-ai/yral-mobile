@@ -1,7 +1,9 @@
+package com.yral.shared.libs.routing.deeplink.engine
+
+import com.yral.shared.libs.routing.routes.api.AppRoute
 import io.ktor.http.URLBuilder
 import io.ktor.http.URLProtocol
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
@@ -94,11 +96,13 @@ class UrlBuilder<R : AppRoute>(
     /**
      * Extract parameters from an AppRoute instance using serialization.
      */
+    @Suppress("UNCHECKED_CAST")
     private fun extractRouteParams(
         routeDefinition: RouteDefinition<R>,
         route: AppRoute,
     ): Map<String, String> {
-        val jsonElement = Json.encodeToJsonElement(routeDefinition.serializer, route)
+        val serializer = routeDefinition.serializer as kotlinx.serialization.KSerializer<AppRoute>
+        val jsonElement = Json.encodeToJsonElement(serializer, route)
         if (jsonElement !is JsonObject) return emptyMap()
 
         return jsonElement.entries.associate { (key, value) ->

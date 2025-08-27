@@ -1,4 +1,6 @@
-import AppRoute
+package com.yral.shared.libs.routing.deeplink.engine
+
+import com.yral.shared.libs.routing.routes.api.AppRoute
 
 /**
  * A high-level service interface for all routing operations.
