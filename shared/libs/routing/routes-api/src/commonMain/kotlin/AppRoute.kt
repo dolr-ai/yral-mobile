@@ -3,9 +3,14 @@ import kotlinx.serialization.Transient
 
 /**
  * Represents every possible navigation destination in the app.
- * Also carries optional, non-navigational metadata for analytics.
  */
-sealed interface AppRoute {
+sealed interface AppRoute
+
+/**
+ * A sub-interface for AppRoutes that can carry additional, non-navigational
+ * metadata for analytics or other purposes.
+ */
+interface AppRouteWithMetadata : AppRoute {
     @Transient
     val metadata: Map<String, Any>
 }
@@ -16,17 +21,13 @@ sealed interface AppRoute {
 data class ProductDetails(
     val productId: String,
     @Transient override val metadata: Map<String, Any> = emptyMap(),
-) : AppRoute, ExternallyExposedRoute
+) : AppRouteWithMetadata, ExternallyExposedRoute
 
 @Serializable
-object Home : AppRoute {
-    @Transient override val metadata: Map<String, Any> = emptyMap()
-}
+object Home : AppRoute
 
 @Serializable
-object Unknown : AppRoute {
-    @Transient override val metadata: Map<String, Any> = emptyMap()
-}
+object Unknown : AppRoute
 
 // --- Test Route Definitions for Testing ---
 
@@ -35,26 +36,22 @@ data class TestProductRoute(
     val productId: String,
     val category: String? = null,
     @Transient override val metadata: Map<String, Any> = emptyMap(),
-) : AppRoute, ExternallyExposedRoute
+) : AppRouteWithMetadata, ExternallyExposedRoute
 
 @Serializable
 data class TestUserRoute(
     val userId: String,
     @Transient override val metadata: Map<String, Any> = emptyMap(),
-) : AppRoute, ExternallyExposedRoute
+) : AppRouteWithMetadata, ExternallyExposedRoute
 
 @Serializable
-object TestHomeRoute : AppRoute {
-    @Transient override val metadata: Map<String, Any> = emptyMap()
-}
+object TestHomeRoute : AppRoute
 
 @Serializable
 data class TestInternalRoute(
     val internalId: String,
     @Transient override val metadata: Map<String, Any> = emptyMap(),
-) : AppRoute // Note: does NOT implement ExternallyExposedRoute
+) : AppRouteWithMetadata // Note: does NOT implement ExternallyExposedRoute
 
 @Serializable
-object TestUnknownRoute : AppRoute {
-    @Transient override val metadata: Map<String, Any> = emptyMap()
-}
+object TestUnknownRoute : AppRoute

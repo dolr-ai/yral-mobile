@@ -1,5 +1,9 @@
 import io.ktor.http.URLBuilder
 import io.ktor.http.URLProtocol
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonPrimitive
 
 /**
  * The engine for generating URL strings from type-safe AppRoute objects.
@@ -31,12 +35,11 @@ class UrlBuilder<R : AppRoute>(
         route: AppRoute,
     ): String? {
         return try {
-            // For now, we'll use reflection-like approach to extract route properties
-            // In a real implementation, this would be more sophisticated
-            val params = extractRouteParams(route)
+            // Use serialization to automatically extract route properties.
+            val params = extractRouteParams(routeDefinition, route)
 
             // Build the URL path from the pattern
-            val path = buildPathFromPattern(routeDefinition.pattern, params)
+            val (path, queryParams) = buildPathAndQuery(routeDefinition.pattern, params)
 
             // Build the complete URL
             val urlBuilder =
@@ -45,6 +48,10 @@ class UrlBuilder<R : AppRoute>(
                     host = host,
                     pathSegments = path.split("/").filter { it.isNotEmpty() },
                 )
+            // Add query parameters
+            queryParams.forEach { (key, value) ->
+                urlBuilder.parameters.append(key, value)
+            }
             urlBuilder.buildString()
         } catch (e: Exception) {
             null
@@ -63,34 +70,39 @@ class UrlBuilder<R : AppRoute>(
     /**
      * Build the URL path from the pattern by substituting parameter placeholders.
      */
-    private fun buildPathFromPattern(
+    private fun buildPathAndQuery(
         pattern: String,
         params: Map<String, String>,
-    ): String {
+    ): Pair<String, Map<String, String>> {
         var path = pattern
+        val queryParams = mutableMapOf<String, String>()
 
         // Replace parameter placeholders with actual values
         params.forEach { (key, value) ->
             val placeholder = "{$key}"
             if (path.contains(placeholder)) {
                 path = path.replace(placeholder, value)
+            } else {
+                // If the parameter is not in the path, it's a query parameter
+                queryParams[key] = value
             }
         }
 
-        return path
+        return Pair(path, queryParams)
     }
 
     /**
-     * Extract parameters from an AppRoute instance.
-     * This is a simplified implementation for Phase 2.
+     * Extract parameters from an AppRoute instance using serialization.
      */
-    private fun extractRouteParams(route: AppRoute): Map<String, String> {
-        return when (route) {
-            is ProductDetails -> mapOf("productId" to route.productId)
-            is TestProductRoute -> mapOf("productId" to route.productId)
-            is TestUserRoute -> mapOf("userId" to route.userId)
-            is TestInternalRoute -> mapOf("internalId" to route.internalId)
-            else -> emptyMap()
+    private fun extractRouteParams(
+        routeDefinition: RouteDefinition<R>,
+        route: AppRoute,
+    ): Map<String, String> {
+        val jsonElement = Json.encodeToJsonElement(routeDefinition.serializer, route)
+        if (jsonElement !is JsonObject) return emptyMap()
+
+        return jsonElement.entries.associate { (key, value) ->
+            key to value.jsonPrimitive.content
         }
     }
 }

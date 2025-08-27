@@ -54,25 +54,28 @@ class DeepLinkParser<R : AppRoute>(
 
     /**
      * Parse a map of parameters into a type-safe AppRoute object.
+     * This method requires a special "route_id" parameter in the map to specify
+     * which route to deserialize into, preventing ambiguity.
+     *
      * Returns AppRoute.Unknown if the parameters cannot be parsed or if the resulting
      * route does not implement ExternallyExposedRoute.
      */
     @Suppress("TooGenericExceptionCaught", "SwallowedException")
     fun parse(params: Map<String, String>): AppRoute {
-        // Try to match against each route definition
-        for (routeDefinition in routingTable) {
-            try {
-                val route = deserializeRoute(routeDefinition, params)
-                if (route != null && isExternallyExposed(route)) {
-                    return route
-                }
-            } catch (e: Exception) {
-                // Continue to next route definition
-                continue
-            }
-        }
+        // Extract the route_id to find the correct definition
+        val routeId = params["route_id"] ?: return Unknown
+        val routeDefinition = routingTable.find { it.routeId == routeId } ?: return Unknown
 
-        return Unknown
+        return try {
+            val route = deserializeRoute(routeDefinition, params)
+            if (route != null && isExternallyExposed(route)) {
+                route
+            } else {
+                Unknown
+            }
+        } catch (e: Exception) {
+            Unknown
+        }
     }
 
     /**
