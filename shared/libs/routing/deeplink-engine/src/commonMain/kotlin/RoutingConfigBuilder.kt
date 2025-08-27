@@ -1,4 +1,5 @@
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.serializer
 import kotlin.reflect.KClass
 
 /**
@@ -16,6 +17,20 @@ class RoutingConfigBuilder<R : AppRoute> {
         serializer: KSerializer<T>,
     ) {
         routes.add(RouteDefinition(routeClass, pattern, serializer))
+    }
+
+    /**
+     * Register a route with its pattern using reified type parameter for better ergonomics.
+     */
+    inline fun <reified T : R> route(pattern: String) {
+        route(T::class, pattern, serializer())
+    }
+
+    /**
+     * Register a route with its pattern and explicit serializer using reified type parameter.
+     */
+    inline fun <reified T : R> route(pattern: String, serializer: KSerializer<T>) {
+        route(T::class, pattern, serializer)
     }
 
     /**

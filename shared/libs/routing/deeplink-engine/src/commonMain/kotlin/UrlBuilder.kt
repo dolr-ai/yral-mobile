@@ -87,6 +87,9 @@ class UrlBuilder<R : AppRoute>(
     private fun extractRouteParams(route: AppRoute): Map<String, String> {
         return when (route) {
             is ProductDetails -> mapOf("productId" to route.productId)
+            is TestProductRoute -> mapOf("productId" to route.productId)
+            is TestUserRoute -> mapOf("userId" to route.userId)
+            is TestInternalRoute -> mapOf("internalId" to route.internalId)
             else -> emptyMap()
         }
     }

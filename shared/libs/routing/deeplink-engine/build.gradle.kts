@@ -17,5 +17,8 @@ kotlin {
             implementation(libs.ktor.http)
             implementation(libs.kotlinx.serialization.json)
         }
+        commonTest.dependencies {
+            implementation(libs.kotlin.test)
+        }
     }
 }
