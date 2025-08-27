@@ -48,7 +48,7 @@ The string pattern defines the URL structure. Path parameters are enclosed in `{
 ```kotlin
 // In RoutingModule.kt
 
-val appRoutingTable = buildRouting<AppRoute> {
+val appRoutingTable = buildRouting {
     route<ProductDetails>("/product/{productId}")
     route<Home>("/home")
     
@@ -75,7 +75,7 @@ Inject `DeepLinkParser` in the Activity or platform-specific class responsible f
 // In an Android Activity that receives the deep link
 class DeepLinkActivity : AppCompatActivity(), KoinComponent {
 
-    private val deepLinkParser: DeepLinkParser<AppRoute> by inject()
+    private val deepLinkParser: DeepLinkParser by inject()
     private val analytics: Analytics by inject() // Your analytics service
 
     private fun handleIntent(intent: Intent?) {
@@ -102,7 +102,7 @@ Inject `UrlBuilder` into any ViewModel or class that needs to generate a shareab
 ```kotlin
 // In a feature's ViewModel
 class ProfileViewModel(
-    private val urlBuilder: UrlBuilder<AppRoute> // Injected by Koin
+    private val urlBuilder: UrlBuilder // Injected by Koin
 ) : ViewModel() {
 
     fun onShareProfile(userId: String) {

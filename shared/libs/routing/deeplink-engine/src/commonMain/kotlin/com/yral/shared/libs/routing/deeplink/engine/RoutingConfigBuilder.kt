@@ -8,13 +8,13 @@ import kotlin.reflect.KClass
 /**
  * A builder class for creating routing configuration using a type-safe DSL.
  */
-class RoutingConfigBuilder<R : AppRoute> {
-    private val routes = mutableListOf<RouteDefinition<R>>()
+class RoutingConfigBuilder {
+    private val routes = mutableListOf<RouteDefinition<out AppRoute>>()
 
     /**
      * Register a route with its pattern and serializer.
      */
-    fun <T : R> route(
+    fun <T : AppRoute> route(
         routeClass: KClass<T>,
         pattern: String,
         serializer: KSerializer<T>,
@@ -25,28 +25,28 @@ class RoutingConfigBuilder<R : AppRoute> {
     /**
      * Register a route with its pattern using reified type parameter for better ergonomics.
      */
-    inline fun <reified T : R> route(pattern: String) {
+    inline fun <reified T : AppRoute> route(pattern: String) {
         route(T::class, pattern, serializer())
     }
 
     /**
      * Register a route with its pattern and explicit serializer using reified type parameter.
      */
-    inline fun <reified T : R> route(pattern: String, serializer: KSerializer<T>) {
+    inline fun <reified T : AppRoute> route(pattern: String, serializer: KSerializer<T>) {
         route(T::class, pattern, serializer)
     }
 
     /**
      * Build the routing table from the configured routes.
      */
-    fun build(): List<RouteDefinition<R>> = routes.toList()
+    fun build(): List<RouteDefinition<out AppRoute>> = routes.toList()
 }
 
 /**
  * Top-level function to create a routing configuration using DSL.
  */
-fun <R : AppRoute> buildRouting(block: RoutingConfigBuilder<R>.() -> Unit): List<RouteDefinition<R>> {
-    val builder = RoutingConfigBuilder<R>()
+fun buildRouting(block: RoutingConfigBuilder.() -> Unit): List<RouteDefinition<out AppRoute>> {
+    val builder = RoutingConfigBuilder()
     builder.block()
     return builder.build()
 }

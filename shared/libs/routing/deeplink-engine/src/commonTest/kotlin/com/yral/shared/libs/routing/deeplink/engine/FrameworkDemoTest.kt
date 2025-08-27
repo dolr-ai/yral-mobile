@@ -18,7 +18,7 @@ class FrameworkDemoTest {
     @Test
     fun testPhase3CompleteFunctionality() {
         // Demonstrate enhanced DSL with reified types
-        val routingTable = buildRouting<AppRoute> {
+        val routingTable = buildRouting {
             route<TestProductRoute>("/product/{productId}")
             route<TestUserRoute>("/user/{userId}")
         }
@@ -50,17 +50,17 @@ class FrameworkDemoTest {
     @Test
     fun testDslUsabilityImprovements() {
         // Test the reified DSL approach
-        val routingTable1 = buildRouting<AppRoute> {
+        val routingTable1 = buildRouting {
             route<TestProductRoute>("/product/{productId}")
         }
 
         // Test the explicit serializer approach still works
-        val routingTable2 = buildRouting<AppRoute> {
+        val routingTable2 = buildRouting {
             route(TestUserRoute::class, "/user/{userId}", TestUserRoute.serializer())
         }
 
         // Test mixed approach
-        val routingTable3 = buildRouting<AppRoute> {
+        val routingTable3 = buildRouting {
             route<TestProductRoute>("/product/{productId}")
             route(TestUserRoute::class, "/user/{userId}", TestUserRoute.serializer())
         }
@@ -73,7 +73,7 @@ class FrameworkDemoTest {
 
     @Test
     fun testComprehensiveSecurityModel() {
-        val routingTable = buildRouting<AppRoute> {
+        val routingTable = buildRouting {
             route<TestProductRoute>("/product/{productId}")
             route<TestUserRoute>("/user/{userId}")
             route<TestInternalRoute>("/internal/{internalId}")

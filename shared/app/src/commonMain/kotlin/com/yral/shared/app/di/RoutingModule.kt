@@ -11,7 +11,7 @@ import com.yral.shared.libs.routing.deeplink.engine.UrlBuilder
 import com.yral.shared.libs.routing.deeplink.engine.buildRouting
 import org.koin.dsl.module
 
-private val appRoutingTable = buildRouting<AppRoute> {
+private val appRoutingTable = buildRouting {
     // Core app routes
     route<Home>("/")
     route<Unknown>("/unknown")

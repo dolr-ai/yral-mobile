@@ -12,7 +12,7 @@ import kotlin.test.assertTrue
 
 class RoutingIntegrationTest {
 
-    private val routingTable = buildRouting<AppRoute> {
+    private val routingTable = buildRouting {
         route<TestProductRoute>("/product/{productId}")
         route<TestUserRoute>("/user/{userId}")
         route<TestHomeRoute>("/")
@@ -127,7 +127,7 @@ class RoutingIntegrationTest {
 
     @Test
     fun testSecurityModelIntegration() {
-        val routingTableWithInternal = buildRouting<AppRoute> {
+        val routingTableWithInternal = buildRouting {
             route<TestProductRoute>("/product/{productId}")
             route<TestInternalRoute>("/internal/{internalId}")
         }

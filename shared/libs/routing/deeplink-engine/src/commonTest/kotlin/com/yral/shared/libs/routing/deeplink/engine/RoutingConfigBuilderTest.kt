@@ -12,7 +12,7 @@ class RoutingConfigBuilderTest {
 
     @Test
     fun testBuildRoutingWithExplicitSerializers() {
-        val routingTable = buildRouting<AppRoute> {
+        val routingTable = buildRouting {
             route(TestProductRoute::class, "/product/{productId}", TestProductRoute.serializer())
             route(TestUserRoute::class, "/user/{userId}", TestUserRoute.serializer())
             route(TestHomeRoute::class, "/", TestHomeRoute.serializer())
@@ -31,7 +31,7 @@ class RoutingConfigBuilderTest {
 
     @Test
     fun testBuildRoutingWithReifiedTypes() {
-        val routingTable = buildRouting<AppRoute> {
+        val routingTable = buildRouting {
             route<TestProductRoute>("/product/{productId}")
             route<TestUserRoute>("/user/{userId}")
             route<TestHomeRoute>("/")
@@ -50,7 +50,7 @@ class RoutingConfigBuilderTest {
 
     @Test
     fun testBuildRoutingWithMixedApproaches() {
-        val routingTable = buildRouting<AppRoute> {
+        val routingTable = buildRouting {
             route<TestProductRoute>("/product/{productId}")
             route(TestUserRoute::class, "/user/{userId}", TestUserRoute.serializer())
             route<TestHomeRoute>("/")
@@ -62,7 +62,7 @@ class RoutingConfigBuilderTest {
 
     @Test
     fun testEmptyRoutingTable() {
-        val routingTable = buildRouting<AppRoute> {
+        val routingTable = buildRouting {
             // Empty configuration
         }
 
@@ -71,7 +71,7 @@ class RoutingConfigBuilderTest {
 
     @Test
     fun testRoutingTableImmutable() {
-        val routingTable = buildRouting<AppRoute> {
+        val routingTable = buildRouting {
             route<TestProductRoute>("/product/{productId}")
         }
 
@@ -81,7 +81,7 @@ class RoutingConfigBuilderTest {
         val originalSize = routingTable.size
         // We can't directly test immutability without trying to modify,
         // but we can verify the builder produces consistent results
-        val secondTable = buildRouting<AppRoute> {
+        val secondTable = buildRouting {
             route<TestProductRoute>("/product/{productId}")
         }
 

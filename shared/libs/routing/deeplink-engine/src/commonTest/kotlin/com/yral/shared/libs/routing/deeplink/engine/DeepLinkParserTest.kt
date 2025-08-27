@@ -12,7 +12,7 @@ import kotlin.test.assertTrue
 
 class DeepLinkParserTest {
 
-    private val routingTable = buildRouting<AppRoute> {
+    private val routingTable = buildRouting {
         route<TestProductRoute>("/product/{productId}")
         route<TestUserRoute>("/user/{userId}")
         route<TestHomeRoute>("/")
