@@ -7,6 +7,7 @@ import io.ktor.http.Url
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.properties.Properties
 
 /**
  * The central engine for parsing URLs. It is initialized with a pre-built
@@ -184,13 +185,9 @@ class DeepLinkParser(
         return try {
             // Filter out route_id from params for serialization
             val filteredParams = params.filter { it.key != "route_id" }
-            
-            // Convert parameters to JSON for serialization
-            val jsonParams = filteredParams.mapValues { JsonPrimitive(it.value) }
-            val jsonObject = JsonObject(jsonParams)
 
-            // No cast needed - serializer returns T directly
-            Json.decodeFromJsonElement(routeDefinition.serializer, jsonObject)
+            // Use Properties format for direct deserialization from map
+            Properties.decodeFromMap(routeDefinition.serializer, filteredParams)
         } catch (e: Exception) {
             null
         }

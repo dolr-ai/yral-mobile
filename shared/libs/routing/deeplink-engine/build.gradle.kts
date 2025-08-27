@@ -15,7 +15,7 @@ kotlin {
         commonMain.dependencies {
             api(projects.shared.libs.routing.routesApi)
             implementation(libs.ktor.http)
-            implementation(libs.kotlinx.serialization.json)
+            implementation(libs.kotlinx.serialization.properties)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

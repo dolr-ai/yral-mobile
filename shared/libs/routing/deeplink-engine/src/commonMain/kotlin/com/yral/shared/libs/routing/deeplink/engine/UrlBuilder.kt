@@ -3,9 +3,7 @@ package com.yral.shared.libs.routing.deeplink.engine
 import com.yral.shared.libs.routing.routes.api.AppRoute
 import io.ktor.http.URLBuilder
 import io.ktor.http.URLProtocol
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.properties.Properties
 
 /**
  * The engine for generating URL strings from type-safe AppRoute objects.
@@ -126,24 +124,14 @@ class UrlBuilder(
         return try {
             // Safe cast to handle generic variance
             val serializer = routeDefinition.serializer as kotlinx.serialization.KSerializer<T>
-            val jsonElement = Json.encodeToJsonElement(serializer, route)
-            if (jsonElement !is JsonObject) return emptyMap()
+            val map = Properties.encodeToMap(serializer, route)
 
-            jsonElement.entries.mapNotNull { (key, value) ->
-                // Skip metadata fields and null values  
-                if (key == "metadata") return@mapNotNull null
-                
-                val primitiveValue = value.jsonPrimitive
-                if (primitiveValue.isString) {
-                    val content = primitiveValue.content
-                    if (content != "null") {
-                        // Include empty strings for path parameters
-                        key to content
-                    } else {
-                        null
-                    }
+            // Convert map values to strings, excluding metadata and nulls
+            map.mapNotNull { (key, value) ->
+                if (key == "metadata" || value == null) {
+                    null
                 } else {
-                    key to primitiveValue.content
+                    key to value.toString()
                 }
             }.toMap()
         } catch (e: Exception) {
