@@ -79,24 +79,18 @@ class DeepLinkParser(
 
     /**
      * Parse a map of parameters into a type-safe AppRoute object.
-     * If a "route_id" parameter is provided in the map, it will be used to specify
-     * which route to deserialize into, preventing ambiguity.
-     * If no "route_id" is provided, it will try all route definitions until one matches.
+     * A "route_id" parameter must be provided in the map to specify
+     * which route to deserialize into.
      *
-     * Returns AppRoute.Unknown if the parameters cannot be parsed or if the resulting
-     * route does not implement ExternallyExposedRoute.
+     * Returns AppRoute.Unknown if the parameters cannot be parsed, if "route_id" is missing,
+     * or if the resulting route does not implement ExternallyExposedRoute.
      */
     @Suppress("TooGenericExceptionCaught", "SwallowedException")
     fun parse(params: Map<String, String>): AppRoute {
-        val routeId = params["route_id"]
-        
-        return if (routeId != null) {
-            // Use route_id for direct lookup
-            parseWithRouteId(params, routeId)
-        } else {
-            // Fallback: try all route definitions
-            parseWithFallback(params)
-        }
+        val routeId = params["route_id"] ?: return Unknown
+
+        // Use route_id for direct lookup
+        return parseWithRouteId(params, routeId)
     }
 
     /**
@@ -131,24 +125,6 @@ class DeepLinkParser(
         } catch (e: Exception) {
             Unknown
         }
-    }
-
-    /**
-     * Parse parameters by trying all route definitions until one matches.
-     */
-    @Suppress("TooGenericExceptionCaught", "SwallowedException")
-    private fun parseWithFallback(params: Map<String, String>): AppRoute {
-        for (routeDefinition in routingTable) {
-            try {
-                val result = parseWithRouteDefinition(routeDefinition, params)
-                if (result !is Unknown) {
-                    return result
-                }
-            } catch (e: Exception) {
-                // Continue to next route definition
-            }
-        }
-        return Unknown
     }
 
     /**

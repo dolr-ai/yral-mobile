@@ -91,10 +91,9 @@ class DeepLinkParserTest {
         // Test fallback behavior when route_id is not provided
         val params = mapOf("productId" to "123", "category" to "books")
         val result = parser.parse(params)
-        
-        assertTrue(result is TestProductRoute)
-        assertEquals("123", result.productId)
-        assertEquals("books", result.category)
+
+        // Should now return Unknown because route_id is missing
+        assertTrue(result is Unknown)
     }
 
 
@@ -129,9 +128,9 @@ class DeepLinkParserTest {
         // Test fallback behavior with different route type
         val params = mapOf("userId" to "456")
         val result = parser.parse(params)
-        
-        assertTrue(result is TestUserRoute)
-        assertEquals("456", result.userId)
+
+        // Should now return Unknown because route_id is missing
+        assertTrue(result is Unknown)
     }
 
     @Test
@@ -163,12 +162,12 @@ class DeepLinkParserTest {
     @Test
     fun testParseFromParameterMapAmbiguousWithoutRouteId() {
         // Test case where parameters could match multiple routes
-        // Should return the first matching route in the routing table
-        val params = mapOf<String, String>()  // Empty params - could match TestHomeRoute
+        // Should return Unknown because route_id is missing
+        val params = mapOf<String, String>() // Empty params - could match TestHomeRoute
         val result = parser.parse(params)
         
-        // TestHomeRoute is an object with no parameters, so it should match
-        assertTrue(result is Unknown || result is TestHomeRoute)
+        // Should now be Unknown
+        assertTrue(result is Unknown)
     }
 
     @Test
