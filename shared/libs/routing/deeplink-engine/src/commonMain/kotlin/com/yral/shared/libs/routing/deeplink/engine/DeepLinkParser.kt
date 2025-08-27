@@ -15,8 +15,8 @@ import kotlinx.serialization.json.JsonPrimitive
  * All operations use proper generic constraints for type safety and 
  * compile-time error checking.
  */
-class DeepLinkParser<R : AppRoute>(
-    private val routingTable: List<RouteDefinition<R>>,
+class DeepLinkParser(
+    private val routingTable: List<RouteDefinition<out AppRoute>>,
 ) {
     
     /**
@@ -117,7 +117,7 @@ class DeepLinkParser<R : AppRoute>(
      * Parse parameters with a specific route definition.
      */
     @Suppress("TooGenericExceptionCaught", "SwallowedException")
-    private fun <T : R> parseWithRouteDefinition(
+    private fun <T : AppRoute> parseWithRouteDefinition(
         routeDefinition: RouteDefinition<T>,
         params: Map<String, String>,
     ): AppRoute {
@@ -201,7 +201,7 @@ class DeepLinkParser<R : AppRoute>(
      * Deserialize parameters into an AppRoute object using the route's serializer.
      */
     @Suppress("TooGenericExceptionCaught", "SwallowedException")
-    private fun <T : R> deserializeRoute(
+    private fun <T : AppRoute> deserializeRoute(
         routeDefinition: RouteDefinition<T>,
         params: Map<String, String>,
     ): T? {

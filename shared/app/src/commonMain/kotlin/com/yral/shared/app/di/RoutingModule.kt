@@ -23,13 +23,13 @@ private val appRoutingTable = buildRouting<AppRoute> {
 
 val routingModule = module {
 
-    single<DeepLinkParser<AppRoute>> {
+    single<DeepLinkParser> {
         DeepLinkParser(
             routingTable = appRoutingTable
         )
     }
 
-    single<UrlBuilder<AppRoute>> {
+    single<UrlBuilder> {
         UrlBuilder(
             routingTable = appRoutingTable,
             scheme = "https",
@@ -43,8 +43,8 @@ val routingModule = module {
 }
 
 class AppRoutingServiceImpl(
-    private val deepLinkParser: DeepLinkParser<AppRoute>,
-    private val urlBuilder: UrlBuilder<AppRoute>
+    private val deepLinkParser: DeepLinkParser,
+    private val urlBuilder: UrlBuilder
 ) : RoutingService {
 
     override fun parseUrl(url: String): AppRoute {

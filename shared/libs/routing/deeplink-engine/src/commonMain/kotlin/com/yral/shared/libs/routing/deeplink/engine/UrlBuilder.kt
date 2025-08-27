@@ -10,8 +10,8 @@ import kotlinx.serialization.json.jsonPrimitive
 /**
  * The engine for generating URL strings from type-safe AppRoute objects.
  */
-class UrlBuilder<R : AppRoute>(
-    private val routingTable: List<RouteDefinition<R>>,
+class UrlBuilder(
+    private val routingTable: List<RouteDefinition<out AppRoute>>,
     private val scheme: String,
     private val host: String,
 ) {
@@ -30,19 +30,14 @@ class UrlBuilder<R : AppRoute>(
     @Suppress("TooGenericExceptionCaught", "SwallowedException")
     private fun buildUrlFromRoute(route: AppRoute): String? {
         val matchingDefinition = findRouteDefinition(route) ?: return null
-        
-        return try {
-            buildUrlWithDefinition(matchingDefinition, route)
-        } catch (e: Exception) {
-            null
-        }
+        return buildUrlWithDefinition(matchingDefinition, route)
     }
     
     /**
      * Build URL with a specific route definition and route instance.
      */
     @Suppress("TooGenericExceptionCaught", "SwallowedException")
-    private fun <T : R> buildUrlWithDefinition(
+    private fun <T : AppRoute> buildUrlWithDefinition(
         routeDefinition: RouteDefinition<T>,
         route: AppRoute,
     ): String? {
@@ -89,7 +84,7 @@ class UrlBuilder<R : AppRoute>(
     /**
      * Find the route definition that matches the given AppRoute instance.
      */
-    private fun findRouteDefinition(route: AppRoute): RouteDefinition<R>? {
+    private fun findRouteDefinition(route: AppRoute): RouteDefinition<out AppRoute>? {
         return routingTable.find { definition ->
             definition.routeClass == route::class
         }
@@ -126,7 +121,7 @@ class UrlBuilder<R : AppRoute>(
      * Excludes null values and metadata fields.
      */
     @Suppress("UNCHECKED_CAST")
-    private fun <T : R> extractRouteParams(
+    private fun <T : AppRoute> extractRouteParams(
         routeDefinition: RouteDefinition<T>,
         route: T,
     ): Map<String, String> {
