@@ -31,13 +31,13 @@ class RoutingIntegrationTest {
         
         // Build URL from route
         val url = urlBuilder.build(originalRoute)
-        assertEquals("https://example.com/product/123", url)
+        assertEquals("https://example.com/product/123?category=electronics", url)
         
         // Parse URL back to route
         val parsedRoute = parser.parse(url!!)
         assertTrue(parsedRoute is TestProductRoute)
         assertEquals("123", parsedRoute.productId)
-        // Note: category is not preserved in URL pattern, so it won't be in parsed route
+        assertEquals("electronics", parsedRoute.category) // Now category should be preserved
     }
 
     @Test
@@ -60,7 +60,7 @@ class RoutingIntegrationTest {
         
         // Build URL from route
         val url = urlBuilder.build(originalRoute)
-        assertEquals("https://example.com/", url)
+        assertEquals("https://example.com", url)
         
         // Parse URL back to route
         val parsedRoute = parser.parse(url!!)
@@ -91,7 +91,7 @@ class RoutingIntegrationTest {
         
         assertEquals("https://example.com/product/product123", productUrl)
         assertEquals("https://example.com/user/user456", userUrl)
-        assertEquals("https://example.com/", homeUrl)
+        assertEquals("https://example.com", homeUrl)
         
         // Parse URLs back
         val parsedProduct = parser.parse(productUrl!!)

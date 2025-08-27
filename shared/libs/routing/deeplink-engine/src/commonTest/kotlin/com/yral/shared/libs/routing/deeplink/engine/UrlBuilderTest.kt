@@ -46,7 +46,7 @@ class UrlBuilderTest {
         val route = TestHomeRoute
         val url = urlBuilder.build(route)
         
-        assertEquals("https://example.com/", url)
+        assertEquals("https://example.com", url)
     }
 
     @Test
@@ -86,9 +86,8 @@ class UrlBuilderTest {
         val route = TestProductRoute("123", "electronics")
         val url = urlBuilder.build(route)
         
-        // Note: Current implementation only extracts productId
-        // Category is not part of the URL pattern, so it won't be included
-        assertEquals("https://example.com/product/123", url)
+        // Category should be included as query parameter since it's not in the path pattern
+        assertEquals("https://example.com/product/123?category=electronics", url)
     }
 
     @Test
@@ -96,7 +95,7 @@ class UrlBuilderTest {
         val route = TestProductRoute("")
         val url = urlBuilder.build(route)
         
-        assertEquals("https://example.com/product/", url)
+        assertEquals("https://example.com/product", url)
     }
 
     @Test

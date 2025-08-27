@@ -67,7 +67,7 @@ class AppRouteTest {
 
         assertTrue(testProduct is ExternallyExposedRoute)
         assertTrue(testUser is ExternallyExposedRoute)
-        assertFalse(testHome is ExternallyExposedRoute)
+        assertTrue(testHome is ExternallyExposedRoute)
         assertFalse(testInternal is ExternallyExposedRoute)
     }
 

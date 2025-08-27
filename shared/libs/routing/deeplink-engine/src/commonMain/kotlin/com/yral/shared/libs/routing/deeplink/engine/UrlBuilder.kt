@@ -58,11 +58,23 @@ class UrlBuilder<R : AppRoute>(
             val (path, queryParams) = buildPathAndQuery(routeDefinition.pattern, params)
 
             // Build the complete URL
+            val pathSegments = when {
+                path == "/" -> {
+                    // Special case for root path - no path segments for clean URLs
+                    emptyList()
+                }
+                else -> {
+                    // For all other paths, simply split and filter empty segments
+                    // This handles both normal paths and paths with empty parameters
+                    path.split("/").filter { it.isNotEmpty() }
+                }
+            }
+            
             val urlBuilder =
                 URLBuilder(
                     protocol = URLProtocol.createOrDefault(scheme),
                     host = host,
-                    pathSegments = path.split("/").filter { it.isNotEmpty() },
+                    pathSegments = pathSegments,
                 )
             // Add query parameters
             queryParams.forEach { (key, value) ->
@@ -85,6 +97,7 @@ class UrlBuilder<R : AppRoute>(
 
     /**
      * Build the URL path from the pattern by substituting parameter placeholders.
+     * Parameters not in the path are added as query parameters.
      */
     private fun buildPathAndQuery(
         pattern: String,
@@ -97,9 +110,10 @@ class UrlBuilder<R : AppRoute>(
         params.forEach { (key, value) ->
             val placeholder = "{$key}"
             if (path.contains(placeholder)) {
+                // Replace placeholder with value, even if empty
                 path = path.replace(placeholder, value)
-            } else {
-                // If the parameter is not in the path, it's a query parameter
+            } else if (key != "metadata" && value.isNotEmpty()) {
+                // Add non-path parameters as query parameters (except metadata and empty values)
                 queryParams[key] = value
             }
         }
@@ -109,6 +123,7 @@ class UrlBuilder<R : AppRoute>(
 
     /**
      * Extract parameters from an AppRoute instance using serialization.
+     * Excludes null values and metadata fields.
      */
     @Suppress("UNCHECKED_CAST")
     private fun <T : R> extractRouteParams(
@@ -121,9 +136,23 @@ class UrlBuilder<R : AppRoute>(
             val jsonElement = Json.encodeToJsonElement(serializer, route)
             if (jsonElement !is JsonObject) return emptyMap()
 
-            jsonElement.entries.associate { (key, value) ->
-                key to value.jsonPrimitive.content
-            }
+            jsonElement.entries.mapNotNull { (key, value) ->
+                // Skip metadata fields and null values  
+                if (key == "metadata") return@mapNotNull null
+                
+                val primitiveValue = value.jsonPrimitive
+                if (primitiveValue.isString) {
+                    val content = primitiveValue.content
+                    if (content != "null") {
+                        // Include empty strings for path parameters
+                        key to content
+                    } else {
+                        null
+                    }
+                } else {
+                    key to primitiveValue.content
+                }
+            }.toMap()
         } catch (e: Exception) {
             emptyMap()
         }
