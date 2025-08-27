@@ -11,7 +11,7 @@ import kotlinx.serialization.json.jsonPrimitive
  * The engine for generating URL strings from type-safe AppRoute objects.
  */
 class UrlBuilder(
-    private val routingTable: List<RouteDefinition<out AppRoute>>,
+    private val routingTable: RoutingTable,
     private val scheme: String,
     private val host: String,
 ) {
@@ -85,9 +85,7 @@ class UrlBuilder(
      * Find the route definition that matches the given AppRoute instance.
      */
     private fun findRouteDefinition(route: AppRoute): RouteDefinition<out AppRoute>? {
-        return routingTable.find { definition ->
-            definition.routeClass == route::class
-        }
+        return routingTable.findByClass(route::class)
     }
 
     /**

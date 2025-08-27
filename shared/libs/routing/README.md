@@ -65,24 +65,24 @@ That's it. The `DeepLinkParser` will now be able to parse `/user/123` into a `Us
 
 ## How to Use the Framework
 
-The `DeepLinkParser` and `UrlBuilder` are provided as singletons by Koin. You can inject them anywhere in your application.
+The `RoutingService` is provided as a singleton by Koin. You can inject it anywhere in your application to handle all routing-related tasks.
 
-### Using the `DeepLinkParser`
+### Using the `RoutingService` to Parse URLs
 
-Inject `DeepLinkParser` in the Activity or platform-specific class responsible for receiving incoming links.
+Inject `RoutingService` in the Activity or platform-specific class responsible for receiving incoming links.
 
 ```kotlin
 // In an Android Activity that receives the deep link
 class DeepLinkActivity : AppCompatActivity(), KoinComponent {
 
-    private val deepLinkParser: DeepLinkParser by inject()
+    private val routingService: RoutingService by inject()
     private val analytics: Analytics by inject() // Your analytics service
 
     private fun handleIntent(intent: Intent?) {
         val url = intent?.data?.toString() ?: return
         
-        // Use the injected parser
-        val route = deepLinkParser.parse(url)
+        // Use the injected service to parse the URL
+        val route = routingService.parseUrl(url)
 
         // It is critical to log parsing failures
         if (route is Unknown) {
@@ -95,22 +95,22 @@ class DeepLinkActivity : AppCompatActivity(), KoinComponent {
 }
 ```
 
-### Using the `UrlBuilder`
+### Using the `RoutingService` to Build URLs
 
-Inject `UrlBuilder` into any ViewModel or class that needs to generate a shareable link.
+Inject `RoutingService` into any ViewModel or class that needs to generate a shareable link.
 
 ```kotlin
 // In a feature's ViewModel
 class ProfileViewModel(
-    private val urlBuilder: UrlBuilder // Injected by Koin
+    private val routingService: RoutingService // Injected by Koin
 ) : ViewModel() {
 
     fun onShareProfile(userId: String) {
         // Create a type-safe route object
         val route = UserProfile(userId = userId)
         
-        // Use the injected builder to generate the URL
-        val urlToShare = urlBuilder.build(route)
+        // Use the injected service to generate the URL
+        val urlToShare = routingService.buildUrl(route)
         
         // ... now trigger a share action with this URL
     }

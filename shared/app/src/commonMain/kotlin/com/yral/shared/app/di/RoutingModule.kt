@@ -9,53 +9,40 @@ import com.yral.shared.libs.routing.routes.api.TestUserRoute
 import com.yral.shared.libs.routing.routes.api.Unknown
 import com.yral.shared.libs.routing.deeplink.engine.UrlBuilder
 import com.yral.shared.libs.routing.deeplink.engine.buildRouting
+import com.yral.shared.libs.routing.deeplink.engine.DefaultRoutingService
+import com.yral.shared.libs.routing.deeplink.engine.RoutingTable
+import com.yral.shared.libs.routing.deeplink.engine.buildRoutingTable
 import org.koin.dsl.module
-
-private val appRoutingTable = buildRouting {
-    // Core app routes
-    route<Home>("/")
-    route<Unknown>("/unknown")
-
-    // Test routes (for development/testing)
-    route<TestProductRoute>("/test/product/{productId}")
-    route<TestUserRoute>("/test/user/{userId}")
-}
 
 val routingModule = module {
 
+    single<RoutingTable> {
+        buildRoutingTable {
+            // Core app routes
+            route<Home>("/")
+            route<Unknown>("/unknown")
+
+            // Test routes (for development/testing)
+            route<TestProductRoute>("/test/product/{productId}")
+            route<TestUserRoute>("/test/user/{userId}")
+        }
+    }
+
     single<DeepLinkParser> {
         DeepLinkParser(
-            routingTable = appRoutingTable
+            routingTable = get()
         )
     }
 
     single<UrlBuilder> {
         UrlBuilder(
-            routingTable = appRoutingTable,
+            routingTable = get(),
             scheme = "https",
             host = "yral.app"
         )
     }
 
     single<RoutingService> {
-        AppRoutingServiceImpl(get(), get())
-    }
-}
-
-class AppRoutingServiceImpl(
-    private val deepLinkParser: DeepLinkParser,
-    private val urlBuilder: UrlBuilder
-) : RoutingService {
-
-    override fun parseUrl(url: String): AppRoute {
-        return deepLinkParser.parse(url)
-    }
-
-    override fun parseParameters(params: Map<String, String>): AppRoute {
-        return deepLinkParser.parse(params)
-    }
-
-    override fun buildUrl(route: AppRoute): String? {
-        return urlBuilder.build(route)
+        DefaultRoutingService(get(), get())
     }
 }

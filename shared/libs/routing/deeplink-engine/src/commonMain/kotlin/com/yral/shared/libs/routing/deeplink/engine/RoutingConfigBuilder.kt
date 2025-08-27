@@ -50,3 +50,11 @@ fun buildRouting(block: RoutingConfigBuilder.() -> Unit): List<RouteDefinition<o
     builder.block()
     return builder.build()
 }
+
+/**
+ * A convenience function that builds a [RoutingTable] directly from the DSL.
+ * This is the recommended way to create a routing table for tests and DI.
+ */
+fun buildRoutingTable(block: RoutingConfigBuilder.() -> Unit): RoutingTable {
+    return RoutingTable(buildRouting(block))
+}

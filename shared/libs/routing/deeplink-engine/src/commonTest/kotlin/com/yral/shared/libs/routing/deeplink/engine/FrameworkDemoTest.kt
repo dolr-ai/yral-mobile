@@ -1,5 +1,6 @@
 package com.yral.shared.libs.routing.deeplink.engine
 
+import com.yral.shared.libs.routing.deeplink.engine.buildRoutingTable
 import com.yral.shared.libs.routing.routes.api.AppRoute
 import com.yral.shared.libs.routing.routes.api.TestInternalRoute
 import com.yral.shared.libs.routing.routes.api.TestProductRoute
@@ -18,13 +19,13 @@ class FrameworkDemoTest {
     @Test
     fun testPhase3CompleteFunctionality() {
         // Demonstrate enhanced DSL with reified types
-        val routingTable = buildRouting {
+        val routingTable = buildRoutingTable {
             route<TestProductRoute>("/product/{productId}")
             route<TestUserRoute>("/user/{userId}")
         }
 
         // Verify DSL worked correctly
-        assertEquals(2, routingTable.size)
+        assertEquals(2, routingTable.all.size)
 
         // Create URL builder (the working part)
         val urlBuilder = UrlBuilder(
@@ -40,8 +41,8 @@ class FrameworkDemoTest {
         assertEquals("https://example.com/product/456", builtUrl)
 
         // Test that routing table contains expected routes
-        val productRouteDefinition = routingTable.find { it.routeClass == TestProductRoute::class }
-        val userRouteDefinition = routingTable.find { it.routeClass == TestUserRoute::class }
+        val productRouteDefinition = routingTable.all.find { it.routeClass == TestProductRoute::class }
+        val userRouteDefinition = routingTable.all.find { it.routeClass == TestUserRoute::class }
         
         assertEquals("/product/{productId}", productRouteDefinition?.pattern)
         assertEquals("/user/{userId}", userRouteDefinition?.pattern)
@@ -50,30 +51,30 @@ class FrameworkDemoTest {
     @Test
     fun testDslUsabilityImprovements() {
         // Test the reified DSL approach
-        val routingTable1 = buildRouting {
+        val routingTable1 = buildRoutingTable {
             route<TestProductRoute>("/product/{productId}")
         }
 
         // Test the explicit serializer approach still works
-        val routingTable2 = buildRouting {
+        val routingTable2 = buildRoutingTable {
             route(TestUserRoute::class, "/user/{userId}", TestUserRoute.serializer())
         }
 
         // Test mixed approach
-        val routingTable3 = buildRouting {
+        val routingTable3 = buildRoutingTable {
             route<TestProductRoute>("/product/{productId}")
             route(TestUserRoute::class, "/user/{userId}", TestUserRoute.serializer())
         }
 
         // All should work correctly
-        assertEquals(1, routingTable1.size)
-        assertEquals(1, routingTable2.size)
-        assertEquals(2, routingTable3.size)
+        assertEquals(1, routingTable1.all.size)
+        assertEquals(1, routingTable2.all.size)
+        assertEquals(2, routingTable3.all.size)
     }
 
     @Test
     fun testComprehensiveSecurityModel() {
-        val routingTable = buildRouting {
+        val routingTable = buildRoutingTable {
             route<TestProductRoute>("/product/{productId}")
             route<TestUserRoute>("/user/{userId}")
             route<TestInternalRoute>("/internal/{internalId}")

@@ -16,16 +16,16 @@ import kotlinx.serialization.json.JsonPrimitive
  * compile-time error checking.
  */
 class DeepLinkParser(
-    private val routingTable: List<RouteDefinition<out AppRoute>>,
+    private val routingTable: RoutingTable,
 ) {
     
     /**
      * Type constraint helper to ensure route definitions are valid.
      */
     init {
-        require(routingTable.isNotEmpty()) { "Routing table cannot be empty" }
+        require(routingTable.all.isNotEmpty()) { "Routing table cannot be empty" }
         // Verify all route IDs are unique
-        val routeIds = routingTable.map { it.routeId }
+        val routeIds = routingTable.all.map { it.routeId }
         require(routeIds.size == routeIds.distinct().size) { 
             "Route IDs must be unique. Duplicates: ${routeIds.groupBy { it }.filter { it.value.size > 1 }.keys}" 
         }
@@ -65,7 +65,7 @@ class DeepLinkParser(
         pathSegments: List<String>,
         queryParams: Map<String, List<String>>,
     ): AppRoute? {
-        for (routeDefinition in routingTable) {
+        for (routeDefinition in routingTable.all) {
             val extractedParams = extractParameters(routeDefinition.pattern, pathSegments, queryParams)
             if (extractedParams != null) {
                 val result = parseWithRouteDefinition(routeDefinition, extractedParams)
@@ -98,7 +98,7 @@ class DeepLinkParser(
      */
     @Suppress("TooGenericExceptionCaught", "SwallowedException")
     private fun parseWithRouteId(params: Map<String, String>, routeId: String): AppRoute {
-        val routeDefinition = routingTable.find { it.routeId == routeId } ?: return Unknown
+        val routeDefinition = routingTable.findById(routeId) ?: return Unknown
 
         return try {
             parseWithRouteDefinition(routeDefinition, params)

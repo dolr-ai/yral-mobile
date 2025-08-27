@@ -1,5 +1,6 @@
 package com.yral.shared.libs.routing.deeplink.engine
 
+import com.yral.shared.libs.routing.deeplink.engine.buildRoutingTable
 import com.yral.shared.libs.routing.routes.api.AppRoute
 import com.yral.shared.libs.routing.routes.api.TestHomeRoute
 import com.yral.shared.libs.routing.routes.api.TestInternalRoute
@@ -12,7 +13,7 @@ import kotlin.test.assertTrue
 
 class DeepLinkParserTest {
 
-    private val routingTable = buildRouting {
+    private val routingTable = buildRoutingTable {
         route<TestProductRoute>("/product/{productId}")
         route<TestUserRoute>("/user/{userId}")
         route<TestHomeRoute>("/")
