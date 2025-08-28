@@ -27,10 +27,14 @@ data class ProductDetails(
     ExternallyExposedRoute
 
 @Serializable
-object Home : AppRoute
+object Home : AppRoute {
+    const val PATH = "/"
+}
 
 @Serializable
-object Unknown : AppRoute
+object Unknown : AppRoute {
+    const val PATH = "/unknown"
+}
 
 // --- Test Route Definitions for Testing ---
 
@@ -40,17 +44,27 @@ data class TestProductRoute(
     val category: String? = null,
     @Transient override val metadata: Map<String, Any> = emptyMap(),
 ) : AppRouteWithMetadata,
-    ExternallyExposedRoute
+    ExternallyExposedRoute {
+    companion object {
+        const val PATH = "/test/product/{productId}"
+    }
+}
 
 @Serializable
 data class TestUserRoute(
     val userId: String,
     @Transient override val metadata: Map<String, Any> = emptyMap(),
 ) : AppRouteWithMetadata,
-    ExternallyExposedRoute
+    ExternallyExposedRoute {
+    companion object {
+        const val PATH = "/test/user/{userId}"
+    }
+}
 
 @Serializable
-object TestHomeRoute : AppRoute, ExternallyExposedRoute
+object TestHomeRoute : AppRoute, ExternallyExposedRoute {
+    const val PATH = "/"
+}
 
 @Serializable
 data class TestInternalRoute(

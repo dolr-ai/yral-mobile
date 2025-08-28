@@ -12,9 +12,9 @@ import kotlin.test.assertTrue
 class RoutingIntegrationTest {
     private val routingTable =
         buildRoutingTable {
-            route<TestProductRoute>("/product/{productId}")
-            route<TestUserRoute>("/user/{userId}")
-            route<TestHomeRoute>("/")
+            route<TestProductRoute>(TestProductRoute.PATH)
+            route<TestUserRoute>(TestUserRoute.PATH)
+            route<TestHomeRoute>(TestHomeRoute.PATH)
         }
 
     private val parser = DeepLinkParser(routingTable)
@@ -31,7 +31,13 @@ class RoutingIntegrationTest {
 
         // Build URL from route
         val url = urlBuilder.build(originalRoute)
-        assertEquals("https://example.com/product/123?category=electronics", url)
+        assertEquals(
+            "https://example.com${TestProductRoute.PATH.replace(
+                "{productId}",
+                "123",
+            )}?category=electronics",
+            url,
+        )
 
         // Parse URL back to route
         val parsedRoute = parser.parse(url!!)
@@ -46,7 +52,7 @@ class RoutingIntegrationTest {
 
         // Build URL from route
         val url = urlBuilder.build(originalRoute)
-        assertEquals("https://example.com/user/user456", url)
+        assertEquals("https://example.com${TestUserRoute.PATH.replace("{userId}", "user456")}", url)
 
         // Parse URL back to route
         val parsedRoute = parser.parse(url!!)
@@ -70,7 +76,7 @@ class RoutingIntegrationTest {
     @Test
     fun testParseUrlWithQueryParameters() {
         // Test URL with query parameters that should be mapped to route properties
-        val url = "https://example.com/product/789?category=books"
+        val url = "https://example.com/test/product/789?category=books"
         val parsedRoute = parser.parse(url)
 
         assertTrue(parsedRoute is TestProductRoute)
@@ -89,8 +95,8 @@ class RoutingIntegrationTest {
         val userUrl = urlBuilder.build(userRoute)
         val homeUrl = urlBuilder.build(homeRoute)
 
-        assertEquals("https://example.com/product/product123", productUrl)
-        assertEquals("https://example.com/user/user456", userUrl)
+        assertEquals("https://example.com/test/product/product123", productUrl)
+        assertEquals("https://example.com/test/user/user456", userUrl)
         assertEquals("https://example.com", homeUrl)
 
         // Parse URLs back
@@ -118,7 +124,7 @@ class RoutingIntegrationTest {
         val route = TestProductRoute("custom123")
         val url = customUrlBuilder.build(route)
 
-        assertEquals("myapp://deeplinks/product/custom123", url)
+        assertEquals("myapp://deeplinks/test/product/custom123", url)
 
         // Parser should work regardless of scheme/host
         val parsedRoute = parser.parse(url!!)

@@ -18,12 +18,12 @@ val routingModule =
         single<RoutingTable> {
             buildRoutingTable {
                 // Core app routes
-                route<Home>("/")
-                route<Unknown>("/unknown")
+                route<Home>(Home.PATH)
+                route<Unknown>(Unknown.PATH)
 
                 // Test routes (for development/testing)
-                route<TestProductRoute>("/test/product/{productId}")
-                route<TestUserRoute>("/test/user/{userId}")
+                route<TestProductRoute>(TestProductRoute.PATH)
+                route<TestUserRoute>(TestUserRoute.PATH)
             }
         }
 
