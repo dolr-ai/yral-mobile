@@ -1,4 +1,4 @@
-package com.yral.shared.rust.services
+package com.yral.shared.rust.service.services
 
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.uniffi.generated.IndividualUserService

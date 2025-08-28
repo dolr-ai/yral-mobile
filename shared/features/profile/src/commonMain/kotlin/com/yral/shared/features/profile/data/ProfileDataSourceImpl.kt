@@ -8,7 +8,7 @@ import com.yral.shared.features.profile.data.models.DeleteVideoRequestBody
 import com.yral.shared.features.profile.domain.models.DeleteVideoRequest
 import com.yral.shared.features.profile.domain.models.ProfileVideosPageResult
 import com.yral.shared.http.httpDelete
-import com.yral.shared.rust.services.IndividualUserServiceFactory
+import com.yral.shared.rust.service.services.IndividualUserServiceFactory
 import com.yral.shared.uniffi.generated.GetPostsOfUserProfileError
 import com.yral.shared.uniffi.generated.Result12
 import com.yral.shared.uniffi.generated.delegatedIdentityWireToJson

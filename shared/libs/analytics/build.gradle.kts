@@ -3,7 +3,6 @@ plugins {
     alias(libs.plugins.yral.android.library)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.kotlinCocoapods)
-    alias(libs.plugins.yral.shared.rust.lib)
 }
 
 kotlin {
@@ -44,6 +43,7 @@ kotlin {
             implementation(libs.facebook.sdk.android.core)
             implementation(libs.mixpanel.android)
             implementation(libs.mixpanel.session.replay.android)
+            implementation(projects.shared.rust.service)
         }
     }
 }

@@ -6,7 +6,7 @@ import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.features.profile.domain.repository.ProfileRepository
-import com.yral.shared.rust.data.models.toFeedDetails
+import com.yral.shared.rust.service.data.models.toFeedDetails
 
 class ProfileVideosPagingSource(
     private val profileRepository: ProfileRepository,

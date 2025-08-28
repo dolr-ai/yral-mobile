@@ -25,14 +25,7 @@ kotlin {
 //    )
 
     sourceSets {
-        commonMain.dependencies {
-            implementation(projects.shared.libs.koin)
-            implementation(projects.shared.core)
-            implementation(projects.shared.data)
-        }
-        commonTest.dependencies {
-            implementation(libs.kotlin.test)
-        }
+        commonMain.dependencies { }
     }
 }
 

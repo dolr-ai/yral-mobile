@@ -1,9 +1,8 @@
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.internal.impldep.org.testng.remote.RemoteTestNG.isDebug
 import org.gradle.kotlin.dsl.dependencies
 
-class SharedRustLibraryConventionPlugin : Plugin<Project> {
+class SharedRustAgentConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) {
         with(target) {
             val isDebug = isDebug(this@with)
@@ -11,16 +10,16 @@ class SharedRustLibraryConventionPlugin : Plugin<Project> {
             dependencies {
                 val dependencyNotation =
                     when {
-                        isLocalRust -> project(":shared:rust")
+                        isLocalRust -> project(":shared:rust:agent")
                         isDebug -> "$YRAL_RUST_DEBUG:$YRAL_RUST"
                         else -> "$YRAL_RUST_RELEASE:$YRAL_RUST"
                     }
 
                 val configuration =
                     if (this@with.plugins.hasPlugin("libs.plugins.yral.shared.library")) {
-                        "androidMainImplementation"
+                        "androidMainApi"
                     } else {
-                        "implementation"
+                        "api"
                     }
 
                 configuration(dependencyNotation)

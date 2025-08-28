@@ -1,6 +1,6 @@
-package com.yral.shared.rust.data
+package com.yral.shared.rust.service.data
 
-import com.yral.shared.rust.services.RateLimitServiceFactory
+import com.yral.shared.rust.service.services.RateLimitServiceFactory
 import com.yral.shared.uniffi.generated.RateLimitStatusWrapper
 import com.yral.shared.uniffi.generated.Result2Wrapper
 import com.yral.shared.uniffi.generated.VideoGenRequestKeyWrapper

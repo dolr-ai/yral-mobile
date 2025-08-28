@@ -1,7 +1,7 @@
-package com.yral.shared.rust.data
+package com.yral.shared.rust.service.data
 
 import com.yral.shared.data.feed.data.PostDTO
-import com.yral.shared.rust.services.IndividualUserServiceFactory
+import com.yral.shared.rust.service.services.IndividualUserServiceFactory
 import com.yral.shared.uniffi.generated.PostDetailsForFrontend
 
 class IndividualUserDataSourceImpl(

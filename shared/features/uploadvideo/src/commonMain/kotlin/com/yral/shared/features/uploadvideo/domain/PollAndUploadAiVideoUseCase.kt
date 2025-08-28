@@ -10,7 +10,7 @@ import com.yral.shared.features.uploadvideo.analytics.UploadVideoTelemetry
 import com.yral.shared.libs.arch.domain.FlowUseCase
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
-import com.yral.shared.rust.domain.RateLimitRepository
+import com.yral.shared.rust.service.domain.RateLimitRepository
 import com.yral.shared.uniffi.generated.Result2Wrapper
 import com.yral.shared.uniffi.generated.VideoGenRequestKeyWrapper
 import com.yral.shared.uniffi.generated.VideoGenRequestStatusWrapper

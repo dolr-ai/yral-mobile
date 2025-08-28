@@ -1,7 +1,6 @@
 plugins {
     alias(libs.plugins.yral.shared.library)
     alias(libs.plugins.yral.android.library)
-    alias(libs.plugins.yral.shared.rust.lib)
 }
 
 version = "1.0"
@@ -36,6 +35,7 @@ kotlin {
             implementation(projects.shared.features.game)
             implementation(projects.shared.features.uploadvideo)
             implementation(projects.shared.features.profile)
+            implementation(projects.shared.rust.service)
         }
 
         commonTest.dependencies {

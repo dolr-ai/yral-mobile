@@ -1,4 +1,4 @@
-package com.yral.shared.rust.data
+package com.yral.shared.rust.service.data
 
 import com.yral.shared.uniffi.generated.RateLimitStatusWrapper
 import com.yral.shared.uniffi.generated.Result2Wrapper

@@ -1,4 +1,4 @@
-package com.yral.shared.rust.domain
+package com.yral.shared.rust.service.domain
 
 import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.data.feed.domain.Post
