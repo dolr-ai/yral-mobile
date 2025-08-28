@@ -40,7 +40,7 @@ class SharedRustAgentConventionPlugin : Plugin<Project> {
             ?.toBoolean() ?: true
 
     companion object {
-        private const val YRAL_RUST = "1.10"
+        private const val YRAL_RUST = "1.11"
         private const val YRAL_RUST_DEBUG = "com.yral.shared:rust-agent-android-debug"
         private const val YRAL_RUST_RELEASE = "com.yral.shared:rust-agent-android"
     }
