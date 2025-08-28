@@ -72,9 +72,9 @@ class ProfileDataSourceImpl(
     }
 
     override suspend fun deleteVideo(request: DeleteVideoRequest) {
-        val canisterId =
-            sessionManager.canisterID
-                ?: throw YralException("No canister principal found")
+        val userPrincipal =
+            sessionManager.userPrincipal
+                ?: throw YralException("No user principal found")
         val identity =
             sessionManager.identity
                 ?: throw YralException("No identity found")
@@ -85,7 +85,7 @@ class ProfileDataSourceImpl(
 
         val deleteRequest =
             DeleteVideoRequestBody(
-                canisterId = canisterId,
+                principal = userPrincipal,
                 postId = request.feedDetails.postID.toULong(),
                 videoId = request.feedDetails.videoID,
                 delegatedIdentityWire = delegatedIdentityWire,
@@ -101,6 +101,6 @@ class ProfileDataSourceImpl(
     }
 
     companion object {
-        private const val DELETE_VIDEO_ENDPOINT = "/api/v1/posts"
+        private const val DELETE_VIDEO_ENDPOINT = "/api/v2/posts"
     }
 }
