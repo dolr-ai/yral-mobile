@@ -12,13 +12,13 @@ import com.github.michaelbull.result.onSuccess
 import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.core.session.SessionManager
+import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.features.auth.utils.getAccountInfo
 import com.yral.shared.features.profile.analytics.ProfileTelemetry
 import com.yral.shared.features.profile.domain.DeleteVideoUseCase
 import com.yral.shared.features.profile.domain.ProfileVideosPagingSource
 import com.yral.shared.features.profile.domain.models.DeleteVideoRequest
 import com.yral.shared.features.profile.domain.repository.ProfileRepository
-import com.yral.shared.rust.domain.models.FeedDetails
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
