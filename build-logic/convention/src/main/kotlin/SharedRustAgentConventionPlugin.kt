@@ -10,7 +10,7 @@ class SharedRustAgentConventionPlugin : Plugin<Project> {
             dependencies {
                 val dependencyNotation =
                     when {
-                        isLocalRust -> project(":shared:rust:agent")
+                        isLocalRust -> project(":shared:rust:rust-agent")
                         isDebug -> "$YRAL_RUST_DEBUG:$YRAL_RUST"
                         else -> "$YRAL_RUST_RELEASE:$YRAL_RUST"
                     }
@@ -41,7 +41,7 @@ class SharedRustAgentConventionPlugin : Plugin<Project> {
 
     companion object {
         private const val YRAL_RUST = "1.10"
-        private const val YRAL_RUST_DEBUG = "com.yral.shared:rust-android-debug"
-        private const val YRAL_RUST_RELEASE = "com.yral.shared:rust-android"
+        private const val YRAL_RUST_DEBUG = "com.yral.shared:rust-agent-android-debug"
+        private const val YRAL_RUST_RELEASE = "com.yral.shared:rust-agent-android"
     }
 }
