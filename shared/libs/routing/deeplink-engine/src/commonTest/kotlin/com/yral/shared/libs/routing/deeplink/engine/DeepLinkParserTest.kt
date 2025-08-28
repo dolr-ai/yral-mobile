@@ -98,8 +98,9 @@ class DeepLinkParserTest {
     @Test
     fun testParseFromParameterMapWithRouteId() {
         // Test explicit route_id behavior
+        val productRouteId = TestProductRoute.serializer().descriptor.serialName
         val params =
-            mapOf("route_id" to "TestProductRoute", "productId" to "123", "category" to "books")
+            mapOf("route_id" to productRouteId, "productId" to "123", "category" to "books")
         val result = parser.parse(params)
 
         // Debug: show what we actually got
@@ -144,7 +145,8 @@ class DeepLinkParserTest {
     @Test
     fun testParseFromParameterMapInternalRouteWithRouteId() {
         // Test with explicit route_id - should still return Unknown due to security check
-        val params = mapOf("route_id" to "TestInternalRoute", "internalId" to "secret")
+        val internalRouteId = TestInternalRoute.serializer().descriptor.serialName
+        val params = mapOf("route_id" to internalRouteId, "internalId" to "secret")
         val result = parser.parse(params)
 
         assertTrue(result is Unknown)

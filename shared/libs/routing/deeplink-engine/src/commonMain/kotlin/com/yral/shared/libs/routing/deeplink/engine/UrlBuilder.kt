@@ -3,6 +3,7 @@ package com.yral.shared.libs.routing.deeplink.engine
 import com.yral.shared.libs.routing.routes.api.AppRoute
 import io.ktor.http.URLBuilder
 import io.ktor.http.URLProtocol
+import io.ktor.http.parameters
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.properties.Properties
 
@@ -46,30 +47,23 @@ class UrlBuilder(
             val params = extractRouteParams(routeDefinition, typedRoute)
 
             // Build the URL path from the pattern
-            val (path, usedParams) = routeDefinition.pattern.buildPath(params)
+            val (pathSegments, usedParams) = routeDefinition.pattern.buildPathSegments(params)
             val queryParams = params.filterKeys { it !in usedParams && it != "metadata" }
+            println("pathSegments: $pathSegments")
 
             // Build the complete URL
-            val pathSegments =
-                when {
-                    path == "/" -> emptyList()
-                    else -> {
-                        // For all other paths, simply split and filter empty segments
-                        // This handles both normal paths and paths with empty parameters
-                        path.split("/").filter { it.isNotEmpty() }
-                    }
-                }
-
             val urlBuilder =
                 URLBuilder(
                     protocol = URLProtocol.createOrDefault(scheme),
                     host = host,
                     pathSegments = pathSegments,
+                    parameters =
+                        parameters {
+                            queryParams.forEach { (key, value) ->
+                                append(key, value)
+                            }
+                        },
                 )
-            // Add query parameters
-            queryParams.forEach { (key, value) ->
-                urlBuilder.parameters.append(key, value)
-            }
             urlBuilder.buildString()
         } catch (
             @Suppress("TooGenericExceptionCaught", "SwallowedException") _: Exception,

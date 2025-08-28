@@ -13,8 +13,9 @@ data class RouteDefinition<out R : AppRoute>(
     val serializer: KSerializer<out R>,
 ) {
     /**
-     * A unique identifier for the route, typically the simple name of the class.
-     * Used for disambiguating map-based parsing.
+     * A stable, unique identifier for the route derived from the serializer descriptor's serial name.
+     * This value is stable across obfuscation and platforms and is used for disambiguating
+     * map-based parsing.
      */
-    val routeId: String = routeClass.simpleName ?: ""
+    val routeId: String = serializer.descriptor.serialName
 }

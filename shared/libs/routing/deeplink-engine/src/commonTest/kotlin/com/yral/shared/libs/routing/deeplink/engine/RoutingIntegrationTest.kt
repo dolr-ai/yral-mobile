@@ -133,6 +133,28 @@ class RoutingIntegrationTest {
     }
 
     @Test
+    fun testSpecialCharactersRoundTrip() {
+        // Test with special characters that need URL encoding
+        val originalRoute = TestProductRoute("a/b c?d=e", "special&chars")
+
+        // Build URL from route - URLBuilder should handle encoding
+        val url = urlBuilder.build(originalRoute)
+
+        // Verify URL was built (don't assert exact encoding format)
+        assertTrue(url != null, "URL should be built successfully")
+        assertTrue(url!!.contains("example.com"), "URL should contain host")
+        assertTrue(url.contains("test/product"), "URL should contain product path")
+
+        // Parse URL back to route - this is the critical round-trip test
+        val parsedRoute = parser.parse(url)
+
+        // Verify the route was parsed correctly
+        assertTrue(parsedRoute is TestProductRoute, "Should parse back to TestProductRoute")
+        assertEquals("a/b c?d=e", parsedRoute.productId, "Product ID should be preserved exactly")
+        assertEquals("special&chars", parsedRoute.category, "Category should be preserved exactly")
+    }
+
+    @Test
     fun testSecurityModelIntegration() {
         val routingTableWithInternal =
             buildRoutingTable {

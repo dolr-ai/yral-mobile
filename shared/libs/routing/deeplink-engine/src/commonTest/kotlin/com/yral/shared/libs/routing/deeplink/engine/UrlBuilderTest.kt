@@ -101,10 +101,10 @@ class UrlBuilderTest {
 
     @Test
     fun testBuildUrlWithSpecialCharacters() {
-        val route = TestProductRoute("product-with-dashes_and_underscores")
+        val route = TestProductRoute("a/b c?d=e")
         val url = urlBuilder.build(route)
 
-        assertEquals("https://example.com/product/product-with-dashes_and_underscores", url)
+        assertEquals("https://example.com/product/a%2Fb%20c%3Fd=e", url)
     }
 
     @Test

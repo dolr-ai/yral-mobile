@@ -13,11 +13,6 @@ class RoutePattern(
     private val pattern: String,
 ) {
     private val segments = pattern.split("/").filter { it.isNotEmpty() }
-    private val pathParamKeys =
-        segments
-            .filter { it.startsWith("{") && it.endsWith("}") }
-            .map { it.removeSurrounding("{", "}") }
-            .toSet()
 
     @Suppress("ReturnCount")
     fun extractParameters(pathSegments: List<String>): Map<String, String>? {
@@ -41,28 +36,46 @@ class RoutePattern(
     }
 
     /**
-     * Builds a path string by substituting parameters into the pattern.
+     * Builds a list of path segments by substituting parameters into the pattern.
+     * This avoids constructing an intermediate path string and then splitting,
+     * which can be unsafe when parameter values contain '/'. The returned
+     * segments are raw (unencoded). Callers should pass them to a URL builder
+     * that performs proper percent-encoding per segment.
      *
      * @param params A map of all available parameters for the route.
-     * @return A pair containing the constructed path string and a set of the
-     *         parameter keys that were used in the path.
+     * @return A [BuiltPath] containing the constructed list of path segments and
+     *         the parameter keys that were used in the path.
      */
-    fun buildPath(params: Map<String, String>): Pair<String, Set<String>> {
-        var path = pattern
+    fun buildPathSegments(params: Map<String, String>): BuiltPath {
         val usedKeys = mutableSetOf<String>()
+        val builtSegments = mutableListOf<String>()
 
-        pathParamKeys.forEach { key ->
-            val value = params[key] ?: ""
-            path = path.replace("{$key}", value)
-            usedKeys.add(key)
+        segments.forEach { segment ->
+            if (segment.startsWith("{") && segment.endsWith("}")) {
+                val key = segment.removeSurrounding("{", "}")
+                usedKeys.add(key)
+                val value = params[key].orEmpty()
+                if (value.isNotEmpty()) {
+                    builtSegments.add(value)
+                }
+            } else {
+                builtSegments.add(segment)
+            }
         }
 
-        // Clean up path for cases where optional params are empty
-        // e.g., "/product/{id}/" becomes "/product/" if id is empty
-        val finalPath = path.split("/").filter { it.isNotEmpty() }.joinToString(separator = "/", prefix = "/")
-
-        return finalPath to usedKeys
+        return BuiltPath(segments = builtSegments, usedKeys = usedKeys)
     }
 
     override fun toString(): String = pattern
 }
+
+/**
+ * Represents a built path from a route pattern and parameter map.
+ *
+ * @property segments The raw, unencoded path segments to use in the URL.
+ * @property usedKeys The parameter keys that were consumed in building the path.
+ */
+data class BuiltPath(
+    val segments: List<String>,
+    val usedKeys: Set<String>,
+)
