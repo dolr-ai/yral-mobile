@@ -67,9 +67,17 @@ class DeepLinkParser(
         queryParams: Map<String, List<String>>,
     ): AppRoute? {
         for (routeDefinition in routingTable.all) {
-            val extractedParams = extractParameters(routeDefinition.pattern, pathSegments, queryParams)
-            if (extractedParams != null) {
-                val result = parseWithRouteDefinition(routeDefinition, extractedParams)
+            val pathParams = routeDefinition.pattern.extractParameters(pathSegments)
+            if (pathParams != null) {
+                val allParams = pathParams.toMutableMap()
+                // Add query parameters, giving precedence to path parameters
+                queryParams.forEach { (key, values) ->
+                    if (!allParams.containsKey(key) && values.isNotEmpty()) {
+                        allParams[key] = values.first()
+                    }
+                }
+
+                val result = parseWithRouteDefinition(routeDefinition, allParams)
                 if (result !is Unknown) {
                     return result
                 }
@@ -126,52 +134,6 @@ class DeepLinkParser(
         } catch (e: Exception) {
             Unknown
         }
-    }
-
-    /**
-     * Extract parameters from URL path and query based on the route pattern.
-     * Returns null if the pattern doesn't match.
-     */
-    @Suppress("ReturnCount")
-    private fun extractParameters(
-        pattern: String,
-        pathSegments: List<String>,
-        queryParams: Map<String, List<String>>,
-    ): Map<String, String>? {
-        val patternSegments = pattern.split("/").filter { it.isNotEmpty() }
-
-        if (pathSegments.size != patternSegments.size) {
-            return null
-        }
-
-        val extractedParams = mutableMapOf<String, String>()
-
-        // Extract path parameters
-        for (i in patternSegments.indices) {
-            val patternSegment = patternSegments[i]
-            val pathSegment = pathSegments[i]
-
-            when {
-                patternSegment.startsWith("{") && patternSegment.endsWith("}") -> {
-                    // This is a parameter placeholder
-                    val paramName = patternSegment.substring(1, patternSegment.length - 1)
-                    extractedParams[paramName] = pathSegment
-                }
-                patternSegment != pathSegment -> {
-                    // Static segment doesn't match
-                    return null
-                }
-            }
-        }
-
-        // Add query parameters
-        queryParams.forEach { (key, values) ->
-            if (values.isNotEmpty()) {
-                extractedParams[key] = values.first()
-            }
-        }
-
-        return extractedParams
     }
 
     /**

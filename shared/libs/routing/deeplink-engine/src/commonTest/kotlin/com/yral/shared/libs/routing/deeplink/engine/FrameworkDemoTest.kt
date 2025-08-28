@@ -44,8 +44,8 @@ class FrameworkDemoTest {
         val productRouteDefinition = routingTable.all.find { it.routeClass == TestProductRoute::class }
         val userRouteDefinition = routingTable.all.find { it.routeClass == TestUserRoute::class }
         
-        assertEquals("/product/{productId}", productRouteDefinition?.pattern)
-        assertEquals("/user/{userId}", userRouteDefinition?.pattern)
+        assertEquals("/product/{productId}", productRouteDefinition?.pattern.toString())
+        assertEquals("/user/{userId}", userRouteDefinition?.pattern.toString())
     }
 
     @Test

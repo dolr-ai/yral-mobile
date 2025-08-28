@@ -19,7 +19,7 @@ class RoutingConfigBuilder {
         pattern: String,
         serializer: KSerializer<T>,
     ) {
-        routes.add(RouteDefinition(routeClass, pattern, serializer))
+        routes.add(RouteDefinition(routeClass, RoutePattern(pattern), serializer))
     }
 
     /**

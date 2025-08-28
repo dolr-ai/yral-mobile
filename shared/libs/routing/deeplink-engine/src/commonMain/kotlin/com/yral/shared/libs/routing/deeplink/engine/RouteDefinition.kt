@@ -9,7 +9,7 @@ import kotlin.reflect.KClass
  */
 data class RouteDefinition<out R : AppRoute>(
     val routeClass: KClass<out R>,
-    val pattern: String,
+    val pattern: RoutePattern,
     val serializer: KSerializer<out R>,
 ) {
     /**

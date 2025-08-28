@@ -24,9 +24,9 @@ class RoutingConfigBuilderTest {
         val userRoute = routingTable.find { it.routeClass == TestUserRoute::class }
         val homeRoute = routingTable.find { it.routeClass == TestHomeRoute::class }
 
-        assertEquals("/product/{productId}", productRoute?.pattern)
-        assertEquals("/user/{userId}", userRoute?.pattern)
-        assertEquals("/", homeRoute?.pattern)
+        assertEquals("/product/{productId}", productRoute?.pattern.toString())
+        assertEquals("/user/{userId}", userRoute?.pattern.toString())
+        assertEquals("/", homeRoute?.pattern.toString())
     }
 
     @Test
@@ -43,9 +43,9 @@ class RoutingConfigBuilderTest {
         val userRoute = routingTable.find { it.routeClass == TestUserRoute::class }
         val homeRoute = routingTable.find { it.routeClass == TestHomeRoute::class }
 
-        assertEquals("/product/{productId}", productRoute?.pattern)
-        assertEquals("/user/{userId}", userRoute?.pattern)
-        assertEquals("/", homeRoute?.pattern)
+        assertEquals("/product/{productId}", productRoute?.pattern.toString())
+        assertEquals("/user/{userId}", userRoute?.pattern.toString())
+        assertEquals("/", homeRoute?.pattern.toString())
     }
 
     @Test
@@ -57,7 +57,7 @@ class RoutingConfigBuilderTest {
         }
 
         assertEquals(3, routingTable.size)
-        assertTrue(routingTable.all { it.pattern.isNotEmpty() })
+        assertTrue(routingTable.all { it.pattern.toString().isNotEmpty() })
     }
 
     @Test

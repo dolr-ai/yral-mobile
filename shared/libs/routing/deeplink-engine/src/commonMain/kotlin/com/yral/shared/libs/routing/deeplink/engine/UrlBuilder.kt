@@ -48,14 +48,12 @@ class UrlBuilder(
             val params = extractRouteParams(routeDefinition, typedRoute)
 
             // Build the URL path from the pattern
-            val (path, queryParams) = buildPathAndQuery(routeDefinition.pattern, params)
+            val (path, usedParams) = routeDefinition.pattern.buildPath(params)
+            val queryParams = params.filterKeys { it !in usedParams && it != "metadata" }
 
             // Build the complete URL
             val pathSegments = when {
-                path == "/" -> {
-                    // Special case for root path - no path segments for clean URLs
-                    emptyList()
-                }
+                path == "/" -> emptyList()
                 else -> {
                     // For all other paths, simply split and filter empty segments
                     // This handles both normal paths and paths with empty parameters
@@ -84,32 +82,6 @@ class UrlBuilder(
      */
     private fun findRouteDefinition(route: AppRoute): RouteDefinition<out AppRoute>? {
         return routingTable.findByClass(route::class)
-    }
-
-    /**
-     * Build the URL path from the pattern by substituting parameter placeholders.
-     * Parameters not in the path are added as query parameters.
-     */
-    private fun buildPathAndQuery(
-        pattern: String,
-        params: Map<String, String>,
-    ): Pair<String, Map<String, String>> {
-        var path = pattern
-        val queryParams = mutableMapOf<String, String>()
-
-        // Replace parameter placeholders with actual values
-        params.forEach { (key, value) ->
-            val placeholder = "{$key}"
-            if (path.contains(placeholder)) {
-                // Replace placeholder with value, even if empty
-                path = path.replace(placeholder, value)
-            } else if (key != "metadata" && value.isNotEmpty()) {
-                // Add non-path parameters as query parameters (except metadata and empty values)
-                queryParams[key] = value
-            }
-        }
-
-        return Pair(path, queryParams)
     }
 
     /**
