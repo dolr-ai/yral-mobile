@@ -9,14 +9,17 @@ package com.yral.shared.libs.routing.deeplink.engine
  *
  * @param pattern The raw URL pattern string (e.g., "/product/{productId}").
  */
-class RoutePattern(private val pattern: String) {
-
+class RoutePattern(
+    private val pattern: String,
+) {
     private val segments = pattern.split("/").filter { it.isNotEmpty() }
-    private val pathParamKeys = segments
-        .filter { it.startsWith("{") && it.endsWith("}") }
-        .map { it.removeSurrounding("{", "}") }
-        .toSet()
+    private val pathParamKeys =
+        segments
+            .filter { it.startsWith("{") && it.endsWith("}") }
+            .map { it.removeSurrounding("{", "}") }
+            .toSet()
 
+    @Suppress("ReturnCount")
     fun extractParameters(pathSegments: List<String>): Map<String, String>? {
         if (pathSegments.size != segments.size) {
             return null
@@ -57,11 +60,9 @@ class RoutePattern(private val pattern: String) {
         // Clean up path for cases where optional params are empty
         // e.g., "/product/{id}/" becomes "/product/" if id is empty
         val finalPath = path.split("/").filter { it.isNotEmpty() }.joinToString(separator = "/", prefix = "/")
-        
+
         return finalPath to usedKeys
     }
 
-    override fun toString(): String {
-        return pattern
-    }
+    override fun toString(): String = pattern
 }

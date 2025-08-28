@@ -23,7 +23,8 @@ interface AppRouteWithMetadata : AppRoute {
 data class ProductDetails(
     val productId: String,
     @Transient override val metadata: Map<String, Any> = emptyMap(),
-) : AppRouteWithMetadata, ExternallyExposedRoute
+) : AppRouteWithMetadata,
+    ExternallyExposedRoute
 
 @Serializable
 object Home : AppRoute
@@ -38,13 +39,15 @@ data class TestProductRoute(
     val productId: String,
     val category: String? = null,
     @Transient override val metadata: Map<String, Any> = emptyMap(),
-) : AppRouteWithMetadata, ExternallyExposedRoute
+) : AppRouteWithMetadata,
+    ExternallyExposedRoute
 
 @Serializable
 data class TestUserRoute(
     val userId: String,
     @Transient override val metadata: Map<String, Any> = emptyMap(),
-) : AppRouteWithMetadata, ExternallyExposedRoute
+) : AppRouteWithMetadata,
+    ExternallyExposedRoute
 
 @Serializable
 object TestHomeRoute : AppRoute, ExternallyExposedRoute

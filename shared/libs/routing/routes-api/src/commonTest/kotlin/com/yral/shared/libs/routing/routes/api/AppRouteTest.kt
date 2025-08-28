@@ -7,7 +7,6 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class AppRouteTest {
-
     @Test
     fun testProductDetailsSerializable() {
         val product = ProductDetails("123")
