@@ -1,6 +1,6 @@
-package com.yral.shared.rust.domain.models
+package com.yral.shared.features.feed.domain.models
 
-import com.yral.shared.rust.data.models.FeedRequestDTO
+import com.yral.shared.features.feed.data.models.FeedRequestDTO
 
 data class FeedRequest(
     val userId: String,

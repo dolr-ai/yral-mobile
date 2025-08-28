@@ -38,9 +38,9 @@ import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.feed.performance.PrefetchVideoListenerImpl
 import com.yral.android.ui.widgets.YralLoader
+import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.libs.videoPlayer.YRALReelPlayer
 import com.yral.shared.libs.videoPlayer.model.Reels
-import com.yral.shared.rust.domain.models.FeedDetails
 
 @Composable
 fun ProfileReelPlayer(

@@ -1,19 +1,17 @@
-package com.yral.shared.rust.domain.models
-
-import io.ktor.http.Url
+package com.yral.shared.data.feed.domain
 
 data class FeedDetails(
     val postID: Long,
     val videoID: String,
     val canisterID: String,
     val principalID: String,
-    val url: Url,
+    val url: String,
     val hashtags: List<String>,
-    val thumbnail: Url,
+    val thumbnail: String,
     val viewCount: ULong,
     val displayName: String,
     val postDescription: String,
-    var profileImageURL: Url?,
+    var profileImageURL: String?,
     var likeCount: ULong,
     var isLiked: Boolean,
     var nsfwProbability: Double?,

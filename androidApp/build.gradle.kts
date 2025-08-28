@@ -119,6 +119,7 @@ dependencies {
     implementation(libs.googlePlay.inAppUpdate)
 
     implementation(projects.shared.core)
+    implementation(projects.shared.data)
     implementation(projects.shared.libs.preferences)
     implementation(projects.shared.libs.http)
     implementation(projects.shared.features.auth)

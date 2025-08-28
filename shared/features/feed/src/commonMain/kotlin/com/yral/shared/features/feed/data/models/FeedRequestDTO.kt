@@ -1,4 +1,4 @@
-package com.yral.shared.rust.data.models
+package com.yral.shared.features.feed.data.models
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

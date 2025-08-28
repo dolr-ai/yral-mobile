@@ -1,7 +1,8 @@
-package com.yral.shared.rust.data.models
+package com.yral.shared.features.feed.data.models
 
-import com.yral.shared.rust.domain.models.Post
-import com.yral.shared.rust.domain.models.PostResponse
+import com.yral.shared.data.feed.data.PostDTO
+import com.yral.shared.data.feed.domain.Post
+import com.yral.shared.features.feed.domain.models.PostResponse
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -12,20 +13,6 @@ data class PostResponseDTO(
     val processingTimeMs: Double? = null,
 //    not adding error for now as type is unknown
 //    val error: String? = null,
-)
-
-@Serializable
-data class PostDTO(
-    @SerialName("canister_id")
-    val canisterID: String,
-    @SerialName("publisher_user_id")
-    val publisherUserId: String,
-    @SerialName("post_id")
-    val postID: Long,
-    @SerialName("video_id")
-    val videoID: String,
-    @SerialName("nsfw_probability")
-    val nsfwProbability: Double? = null,
 )
 
 fun PostResponseDTO.toPostResponse(): PostResponse =
