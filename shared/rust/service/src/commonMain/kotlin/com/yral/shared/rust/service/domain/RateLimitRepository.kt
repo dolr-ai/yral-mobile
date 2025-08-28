@@ -1,0 +1,13 @@
+package com.yral.shared.rust.service.domain
+
+import com.yral.shared.uniffi.generated.RateLimitStatusWrapper
+import com.yral.shared.uniffi.generated.Result2Wrapper
+import com.yral.shared.uniffi.generated.VideoGenRequestKeyWrapper
+
+interface RateLimitRepository {
+    suspend fun fetchVideoGenerationStatus(requestKey: VideoGenRequestKeyWrapper): Result2Wrapper
+    suspend fun getVideoGenFreeCreditsStatus(
+        userPrincipal: String,
+        isRegistered: Boolean,
+    ): RateLimitStatusWrapper?
+}

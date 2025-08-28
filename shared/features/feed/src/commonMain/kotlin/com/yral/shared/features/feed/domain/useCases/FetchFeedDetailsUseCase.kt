@@ -5,8 +5,8 @@ import com.yral.shared.data.feed.domain.Post
 import com.yral.shared.libs.arch.domain.SuspendUseCase
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
-import com.yral.shared.rust.domain.IndividualUserRepository
-import com.yral.shared.uniffi.generated.ServiceCanistersDetails
+import com.yral.shared.rust.service.domain.IndividualUserRepository
+import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
 
 class FetchFeedDetailsUseCase(
     private val individualUserRepository: IndividualUserRepository,
@@ -14,7 +14,7 @@ class FetchFeedDetailsUseCase(
     useCaseFailureListener: UseCaseFailureListener,
 ) : SuspendUseCase<Post, FeedDetails>(appDispatchers.network, useCaseFailureListener) {
     override suspend fun execute(parameter: Post): FeedDetails {
-        val isFromServiceCanister = ServiceCanistersDetails().getUserInfoServiceCanisterId() == parameter.canisterID
+        val isFromServiceCanister = getUserInfoServiceCanister() == parameter.canisterID
         return individualUserRepository
             .fetchFeedDetails(parameter, isFromServiceCanister)
     }

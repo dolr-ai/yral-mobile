@@ -2,7 +2,7 @@ plugins {
     alias(libs.plugins.yral.shared.feature)
     alias(libs.plugins.yral.android.feature)
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.yral.shared.rust.lib)
+    alias(libs.plugins.yral.shared.rust.agent)
 }
 
 kotlin {
@@ -24,6 +24,7 @@ kotlin {
             implementation(projects.shared.libs.http)
             implementation(projects.shared.libs.arch)
             implementation(projects.shared.libs.coroutinesX)
+            implementation(projects.shared.rust.service)
         }
     }
 }

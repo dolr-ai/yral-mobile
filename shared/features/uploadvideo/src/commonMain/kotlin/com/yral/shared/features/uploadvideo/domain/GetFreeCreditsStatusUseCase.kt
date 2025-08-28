@@ -4,7 +4,7 @@ import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.libs.arch.domain.SuspendUseCase
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
-import com.yral.shared.rust.domain.RateLimitRepository
+import com.yral.shared.rust.service.domain.RateLimitRepository
 import com.yral.shared.uniffi.generated.RateLimitStatusWrapper
 
 internal class GetFreeCreditsStatusUseCase(
