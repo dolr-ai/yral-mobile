@@ -9,9 +9,9 @@ import com.yral.shared.features.profile.domain.models.DeleteVideoRequest
 import com.yral.shared.features.profile.domain.models.ProfileVideosPageResult
 import com.yral.shared.http.httpDelete
 import com.yral.shared.rust.service.services.IndividualUserServiceFactory
+import com.yral.shared.rust.service.utils.delegatedIdentityWireToJson
 import com.yral.shared.uniffi.generated.GetPostsOfUserProfileError
 import com.yral.shared.uniffi.generated.Result12
-import com.yral.shared.uniffi.generated.delegatedIdentityWireToJson
 import io.ktor.client.HttpClient
 import io.ktor.client.request.setBody
 import io.ktor.http.path

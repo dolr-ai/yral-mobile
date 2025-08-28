@@ -17,9 +17,9 @@ class SharedRustAgentConventionPlugin : Plugin<Project> {
 
                 val configuration =
                     if (this@with.plugins.hasPlugin("libs.plugins.yral.shared.library")) {
-                        "androidMainApi"
+                        "androidMainImplementation"
                     } else {
-                        "api"
+                        "implementation"
                     }
 
                 configuration(dependencyNotation)

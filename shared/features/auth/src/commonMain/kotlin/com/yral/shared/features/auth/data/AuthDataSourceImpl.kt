@@ -17,9 +17,9 @@ import com.yral.shared.http.httpPost
 import com.yral.shared.http.httpPostWithStringResponse
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
-import com.yral.shared.uniffi.generated.delegatedIdentityWireToJson
-import com.yral.shared.uniffi.generated.registerDevice
-import com.yral.shared.uniffi.generated.unregisterDevice
+import com.yral.shared.rust.service.services.HelperService.registerDevice
+import com.yral.shared.rust.service.services.HelperService.unregisterDevice
+import com.yral.shared.rust.service.utils.delegatedIdentityWireToJson
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.expectSuccess
 import io.ktor.client.request.headers

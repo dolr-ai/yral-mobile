@@ -38,12 +38,12 @@ kotlin {
             implementation(projects.shared.libs.crashlytics)
             api(libs.gitlive.firebase.kotlin.anlaytics)
             implementation(projects.shared.libs.preferences)
+            implementation(projects.shared.rust.service)
         }
         androidMain.dependencies {
             implementation(libs.facebook.sdk.android.core)
             implementation(libs.mixpanel.android)
             implementation(libs.mixpanel.session.replay.android)
-            implementation(projects.shared.rust.service)
         }
     }
 }
