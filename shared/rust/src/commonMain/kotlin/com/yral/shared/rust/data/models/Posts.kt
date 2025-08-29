@@ -32,13 +32,11 @@ fun Result12.toPosts(canisterId: String): Posts =
         is Result12.Ok ->
             Posts.Ok(
                 v1.map {
-                    runCatching {
-                        it.toFeedDetails(
-                            postId = it.id.toLong(),
-                            canisterId = canisterId,
-                            nsfwProbability = 0.0,
-                        )
-                    }.getOrNull()
+                    it.toFeedDetails(
+                        postId = it.id.toString(),
+                        canisterId = canisterId,
+                        nsfwProbability = 0.0,
+                    )
                 },
             )
 

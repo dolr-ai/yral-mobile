@@ -9,14 +9,6 @@ data class FeedRequest(
     val excludeItems: List<String> = emptyList(),
 )
 
-data class FilteredResult(
-    val canisterID: String,
-    val publisherUserId: String,
-    val postID: Long,
-    val videoID: String,
-    val nsfwProbability: Double?,
-)
-
 fun FeedRequest.toDTO(): FeedRequestDTO =
     FeedRequestDTO(
         userId = userId,

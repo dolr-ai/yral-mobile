@@ -19,7 +19,7 @@ class IndividualUserDataSourceImpl(
     override suspend fun fetchSCFeedDetails(post: PostDTO): ScPostDetailsForFrontend =
         userPostServiceFactory
             .service(principal = post.canisterID)
-            .getIndividualPostDetailsById(post.postID.toString())
+            .getIndividualPostDetailsById(post.postID)
 
     override suspend fun getPostsOfThisUserProfileWithPaginationCursor(
         principalId: String,

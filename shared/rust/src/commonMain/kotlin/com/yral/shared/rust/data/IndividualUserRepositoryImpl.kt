@@ -61,13 +61,11 @@ class IndividualUserRepositoryImpl(
                     Posts.Ok(
                         v1 =
                             posts.map {
-                                runCatching {
-                                    it.toFeedDetails(
-                                        postId = it.id.toLong(),
-                                        canisterId = principalId,
-                                        nsfwProbability = 0.0,
-                                    )
-                                }.getOrNull()
+                                it.toFeedDetails(
+                                    postId = it.id,
+                                    canisterId = principalId,
+                                    nsfwProbability = 0.0,
+                                )
                             },
                     )
                 }

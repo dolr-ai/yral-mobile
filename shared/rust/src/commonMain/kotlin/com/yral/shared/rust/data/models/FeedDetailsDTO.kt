@@ -12,7 +12,7 @@ import com.yral.shared.uniffi.generated.ScPostStatus
 import com.yral.shared.uniffi.generated.propicFromPrincipal
 
 fun PostDetailsForFrontend.toFeedDetails(
-    postId: Long,
+    postId: String,
     canisterId: String,
     nsfwProbability: Double?,
 ): FeedDetails {
@@ -41,7 +41,7 @@ fun PostDetailsForFrontend.toFeedDetails(
 }
 
 fun ScPostDetailsForFrontend.toFeedDetails(
-    postId: Long,
+    postId: String,
     canisterId: String,
     nsfwProbability: Double?,
 ): FeedDetails {
