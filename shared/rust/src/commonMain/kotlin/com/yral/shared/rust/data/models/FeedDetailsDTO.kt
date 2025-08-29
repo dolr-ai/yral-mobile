@@ -8,6 +8,7 @@ import com.yral.shared.rust.data.IndividualUserDataSourceImpl.Companion.THUMBNAI
 import com.yral.shared.uniffi.generated.PostDetailsForFrontend
 import com.yral.shared.uniffi.generated.PostStatus
 import com.yral.shared.uniffi.generated.ScPostDetailsForFrontend
+import com.yral.shared.uniffi.generated.ScPostStatus
 import com.yral.shared.uniffi.generated.propicFromPrincipal
 
 fun PostDetailsForFrontend.toFeedDetails(
@@ -44,6 +45,9 @@ fun ScPostDetailsForFrontend.toFeedDetails(
     canisterId: String,
     nsfwProbability: Double?,
 ): FeedDetails {
+    if (status == ScPostStatus.BANNED_DUE_TO_USER_REPORTING) {
+        throw YralException("Post is banned $postId")
+    }
     val videoUrl = "$CLOUD_FLARE_PREFIX$videoUid$CLOUD_FLARE_SUFFIX_MP4"
     val thumbnailUrl = "$CLOUD_FLARE_PREFIX$videoUid$THUMBNAIL_SUFFIX"
     val profileImageUrl = propicFromPrincipal(createdByUserPrincipalId)

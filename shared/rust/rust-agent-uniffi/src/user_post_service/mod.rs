@@ -2,6 +2,7 @@ use candid::{Principal, CandidType, Deserialize};
 use ic_agent::Agent;
 use std::sync::Arc;
 use uniffi::Record;
+use uniffi::Enum;
 use crate::individual_user_template::individual_user_template_helper::*;
 use crate::uni_ffi_helpers::*;
 use crate::RUNTIME;
@@ -9,12 +10,14 @@ use crate::commons::SystemTime;
 
 use yral_canisters_client::user_post_service::Result1;
 use yral_canisters_client::user_post_service::Post;
+use yral_canisters_client::user_post_service::PostStatus;
 
 type Result<T> = std::result::Result<T, FFIError>;
 
 #[derive(CandidType, Deserialize, Record)]
 pub struct SCPostDetailsForFrontend{
     pub id: String,
+    pub status: SCPostStatus,
     pub hashtags: Vec<String>,
     pub like_count: u64,
     pub description: String,
@@ -30,6 +33,7 @@ impl SCPostDetailsForFrontend {
     pub fn from_post(post: Post, current_user: &Principal) -> Self {
         Self {
             id: post.id,
+            status: SCPostStatus::from(post.status),
             hashtags: post.hashtags,
             like_count: post.likes.len() as u64,
             description: post.description,
@@ -39,6 +43,31 @@ impl SCPostDetailsForFrontend {
             created_by_user_principal_id: post.creator_principal.clone(),
             creator_principal: post.creator_principal,
             liked_by_me: post.likes.contains(current_user),
+        }
+    }
+}
+
+#[derive(CandidType, Deserialize, Enum)]
+pub enum SCPostStatus {
+    BannedForExplicitness,
+    BannedDueToUserReporting,
+    Uploaded,
+    CheckingExplicitness,
+    ReadyToView,
+    Transcoding,
+    Deleted,
+}
+
+impl From<PostStatus> for SCPostStatus {
+    fn from(status: PostStatus) -> Self {
+        match status {
+            PostStatus::BannedForExplicitness => SCPostStatus::BannedForExplicitness,
+            PostStatus::BannedDueToUserReporting => SCPostStatus::BannedDueToUserReporting,
+            PostStatus::Uploaded => SCPostStatus::Uploaded,
+            PostStatus::CheckingExplicitness => SCPostStatus::CheckingExplicitness,
+            PostStatus::ReadyToView => SCPostStatus::ReadyToView,
+            PostStatus::Transcoding => SCPostStatus::Transcoding,
+            PostStatus::Deleted => SCPostStatus::Deleted,
         }
     }
 }
