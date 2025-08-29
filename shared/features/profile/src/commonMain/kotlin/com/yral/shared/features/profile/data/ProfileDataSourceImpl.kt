@@ -27,15 +27,19 @@ class ProfileDataSourceImpl(
         startIndex: ULong,
         pageSize: ULong,
     ): ProfileVideosPageResult {
+        val canisterId =
+            sessionManager.canisterID
+                ?: throw YralException("No canister found")
         val userPrincipal =
             sessionManager.userPrincipal
                 ?: throw YralException("No user principal found")
         val isFromServiceCanister =
             sessionManager.isCreatedFromServiceCanister
                 ?: throw YralException("UserType not found")
+        val principalId = if (isFromServiceCanister) userPrincipal else canisterId
         val result =
             individualUserRepository.getPostsOfThisUserProfileWithPaginationCursor(
-                principalId = userPrincipal,
+                principalId = principalId,
                 startIndex = startIndex,
                 pageSize = pageSize,
                 shouldFetchFromServiceCanisters = isFromServiceCanister,

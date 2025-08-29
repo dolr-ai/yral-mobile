@@ -175,6 +175,7 @@ class DefaultAuthClient(
                         canisterId = canisterWrapper.getCanisterPrincipal(),
                         userPrincipal = canisterWrapper.getUserPrincipal(),
                         profilePic = canisterWrapper.getProfilePic(),
+                        isCreatedFromServiceCanister = canisterWrapper.isCreatedFromServiceCanister(),
                     )
             }
             cachedSession.userPrincipal?.let { crashlyticsManager.setUserId(it) }
