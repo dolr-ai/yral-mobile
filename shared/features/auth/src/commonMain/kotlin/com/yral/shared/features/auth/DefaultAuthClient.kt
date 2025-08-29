@@ -416,27 +416,35 @@ class DefaultAuthClient(
         val canisterId = preferences.getString(PrefKeys.CANISTER_ID.name)
         val userPrincipal = preferences.getString(PrefKeys.USER_PRINCIPAL.name)
         val profilePic = preferences.getString(PrefKeys.PROFILE_PIC.name)
-        @Suppress("ComplexCondition")
-        return if (identity != null && canisterId != null && userPrincipal != null && profilePic != null) {
-            Session(
-                identity = identity,
-                canisterId = canisterId,
-                userPrincipal = userPrincipal,
-                profilePic = profilePic,
-            )
-        } else {
-            null
-        }
+        val isCreatedFromServiceCanister = preferences.getBoolean(PrefKeys.IS_CREATED_FROM_SERVICE_CANISTER.name)
+        return listOf(identity, canisterId, userPrincipal, profilePic, isCreatedFromServiceCanister)
+            .all { it != null }
+            .let { allPresent ->
+                if (allPresent) {
+                    Session(
+                        identity = identity!!,
+                        canisterId = canisterId!!,
+                        userPrincipal = userPrincipal!!,
+                        profilePic = profilePic!!,
+                        isCreatedFromServiceCanister = isCreatedFromServiceCanister!!,
+                    )
+                } else {
+                    null
+                }
+            }
     }
 
     private suspend fun cacheSession(
         identity: ByteArray,
         canisterWrapper: CanistersWrapper,
     ) {
-        preferences.putBytes(PrefKeys.IDENTITY.name, identity)
-        preferences.putString(PrefKeys.CANISTER_ID.name, canisterWrapper.getCanisterPrincipal())
-        preferences.putString(PrefKeys.USER_PRINCIPAL.name, canisterWrapper.getUserPrincipal())
-        preferences.putString(PrefKeys.PROFILE_PIC.name, canisterWrapper.getProfilePic())
+        with(canisterWrapper) {
+            preferences.putBytes(PrefKeys.IDENTITY.name, identity)
+            preferences.putString(PrefKeys.CANISTER_ID.name, getCanisterPrincipal())
+            preferences.putString(PrefKeys.USER_PRINCIPAL.name, getUserPrincipal())
+            preferences.putString(PrefKeys.PROFILE_PIC.name, getProfilePic())
+            preferences.putBoolean(PrefKeys.IS_CREATED_FROM_SERVICE_CANISTER.name, isCreatedFromServiceCanister())
+        }
     }
 
     private suspend fun resetCachedCanisterData() {
@@ -444,5 +452,6 @@ class DefaultAuthClient(
         preferences.remove(PrefKeys.CANISTER_ID.name)
         preferences.remove(PrefKeys.USER_PRINCIPAL.name)
         preferences.remove(PrefKeys.PROFILE_PIC.name)
+        preferences.remove(PrefKeys.IS_CREATED_FROM_SERVICE_CANISTER.name)
     }
 }

@@ -5,6 +5,7 @@ data class Session(
     val canisterId: String? = null,
     val userPrincipal: String? = null,
     val profilePic: String? = null,
+    val isCreatedFromServiceCanister: Boolean = false,
 )
 
 data class SessionProperties(

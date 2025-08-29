@@ -129,7 +129,7 @@ pub struct CanistersWrapper {
     canister_principal: Principal,
     user_principal: Principal,
     profile_pic: String,
-    is_new_user: bool,
+    is_created_from_service_canister: bool,
 }
 
 #[uniffi::export]
@@ -153,6 +153,10 @@ impl CanistersWrapper {
     pub fn get_profile_pic(&self) -> String {
         self.profile_pic.to_string()
     }
+
+    pub fn is_created_from_service_canister(&self) -> bool {
+        self.is_created_from_service_canister
+    }
 }
 
 #[uniffi::export]
@@ -170,7 +174,7 @@ pub async fn authenticate_with_network(auth_data: Vec<u8>) -> std::result::Resul
             Ok(
                 CanistersWrapper { 
                     inner: canisters, 
-                    is_new_user: true,
+                    is_created_from_service_canister: true,
                     canister_principal: profile_details.principal,
                     user_principal: profile_details.user_canister,
                     profile_pic: profile_details.profile_pic_or_random()
@@ -180,7 +184,7 @@ pub async fn authenticate_with_network(auth_data: Vec<u8>) -> std::result::Resul
             Ok(
                 CanistersWrapper { 
                     inner: canisters, 
-                    is_new_user: false,
+                    is_created_from_service_canister: false,
                     canister_principal: canister_principal,
                     user_principal: user_principal,
                     profile_pic: propic_from_principal(user_principal)
