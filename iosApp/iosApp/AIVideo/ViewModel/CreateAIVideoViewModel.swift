@@ -35,6 +35,7 @@ enum CreateAIVideoScreenEvent {
   case socialSignInFailure
   case generateVideoSuccess
   case generateVideoFailure(String)
+  case generateVideoStatusSuccess(deductBalance: Int)
   case generateVideoStatusFailure(String)
   case uploadAIVideoSuccess(String)
   case uploadAIVideoFailure(String)
@@ -181,6 +182,10 @@ class CreateAIVideoViewModel: ObservableObject {
                 reasonType: nil
               )
             )
+
+            if let provider = selectedProvider {
+              event = .generateVideoStatusSuccess(deductBalance: provider.cost.sats)
+            }
 
             Task {
               await uploadAIVideo()
