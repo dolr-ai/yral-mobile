@@ -10,6 +10,20 @@ import SwiftUI
 import iosSharedUmbrella
 
 // swiftlint: disable file_length
+struct CreateAIVideoHost: View {
+  private let onDismiss: () -> Void
+  @StateObject private var viewModel: CreateAIVideoViewModel
+
+  init(createAIVideoDI: CreateAIVideoDIContainer, onDismiss: @escaping () -> Void) {
+    self.onDismiss = onDismiss
+    _viewModel = StateObject(wrappedValue: createAIVideoDI.makeAIVideoViewModel())
+  }
+
+  var body: some View {
+    CreateAIVideoScreenView(viewModel: viewModel, onDismiss: onDismiss)
+  }
+}
+
 // swiftlint: disable type_body_length
 struct CreateAIVideoScreenView: View {
   @EnvironmentObject var session: SessionManager
@@ -120,7 +134,7 @@ struct CreateAIVideoScreenView: View {
           .padding(.bottom, Constants.genViewBottom)
           .overlay(alignment: .center) {
             VStack(spacing: Constants.genViewVstackSpacing) {
-              LottieLoaderView(animationName: Constants.loader, resetProgess: false)
+              LottieLoaderView(animationName: Constants.loader)
                 .frame(width: Constants.loaderSize, height: Constants.loaderSize)
 
               Text(Constants.loadingMessages[generatingVideoTextCurrentIndex])
@@ -138,95 +152,83 @@ struct CreateAIVideoScreenView: View {
           }
       } else {
         if let providers = viewModel.providers {
-          ScrollView {
-            VStack(alignment: .leading, spacing: Constants.vstackSpacing) {
-              PromptView(prompt: $promptText)
-                .padding(.bottom, Constants.promptBottom)
+          PromptView(prompt: $promptText)
+            .padding(.bottom, Constants.promptBottom)
 
-              if let selectedProvider = selectedProvider {
-                buildSelectedModelView(with: selectedProvider)
-                  .frame(maxWidth: .infinity)
+          if let selectedProvider = selectedProvider {
+            buildSelectedModelView(with: selectedProvider)
+              .frame(maxWidth: .infinity)
 
-                buildBalanceView(with: selectedProvider)
-                  .frame(maxWidth: .infinity)
-                  .padding(.top, Constants.balanceTop)
-              }
+            buildBalanceView(with: selectedProvider)
+              .frame(maxWidth: .infinity)
+              .padding(.top, Constants.balanceTop)
+          }
 
-              Button {
-                AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-                  event: CreateAIVideoClickedData(
-                    model: selectedProvider?.name ?? "",
-                    prompt: promptText
+          Button {
+            AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+              event: CreateAIVideoClickedData(model: selectedProvider?.name ?? "")
+            )
+            if isUserLoggedIn {
+              if let provider = selectedProvider, !promptText.isEmpty {
+                Task {
+                  await viewModel.generateVideo(
+                    for: promptText,
+                    withProvider: provider,
+                    usingCredits: !creditsUsed
                   )
-                )
-                if isUserLoggedIn {
-                  if let provider = selectedProvider, !promptText.isEmpty {
-                    Task {
-                      await viewModel.generateVideo(
-                        for: promptText,
-                        withProvider: provider,
-                        usingCredits: !creditsUsed
-                      )
-                    }
-                  }
-                } else {
-                  AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-                    event: AuthScreenViewedEventData(pageName: .videoCreation)
-                  )
-                  showSignupSheet = true
                 }
-              } label: {
-                Text(Constants.generateButtonTitle)
-                  .foregroundColor(Constants.generateButtonTextColor)
-                  .font(Constants.generateButtonFont)
-                  .frame(maxWidth: .infinity)
-                  .frame(height: Constants.generateButtonHeight)
-                  .background(
-                    isButtonEnabled
-                    ? Constants.generateButtonEnabledGradient
-                    : Constants.generateButtonDisabledGradient
-                  )
-                  .cornerRadius(Constants.generateButtonCornerRadius)
               }
-              .disabled(!isButtonEnabled)
-              .padding(.top, Constants.generateButtonTop)
+            } else {
+              AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+                event: AuthScreenViewedEventData(pageName: .videoCreation)
+              )
+              showSignupSheet = true
+            }
+          } label: {
+            Text(Constants.generateButtonTitle)
+              .foregroundColor(Constants.generateButtonTextColor)
+              .font(Constants.generateButtonFont)
+              .frame(maxWidth: .infinity)
+              .frame(height: Constants.generateButtonHeight)
+              .background(
+                isButtonEnabled
+                ? Constants.generateButtonEnabledGradient
+                : Constants.generateButtonDisabledGradient
+              )
+              .cornerRadius(Constants.generateButtonCornerRadius)
+          }
+          .disabled(!isButtonEnabled)
+          .padding(.top, Constants.generateButtonTop)
 
-              HStack(spacing: .zero) {
-                Spacer()
+          HStack(spacing: .zero) {
+            Spacer()
 
+            Text(Constants.playGamesText)
+              .font(Constants.playGamesTextFont)
+              .overlay(
+                Constants.playGamesTextColor
+              )
+              .mask(
                 Text(Constants.playGamesText)
                   .font(Constants.playGamesTextFont)
-                  .overlay(
-                    Constants.playGamesTextColor
-                  )
-                  .mask(
-                    Text(Constants.playGamesText)
-                      .font(Constants.playGamesTextFont)
-                  )
+              )
 
-                Text(Constants.earnMoreText)
-                  .font(Constants.earnMoreTextFont)
-                  .foregroundColor(Constants.earnMoreTextColor)
+            Text(Constants.earnMoreText)
+              .font(Constants.earnMoreTextFont)
+              .foregroundColor(Constants.earnMoreTextColor)
 
-                Spacer()
-              }
-              .padding(.vertical, Constants.playGamesHstackVertical)
-              .onTapGesture {
-                eventBus.playGamesToEarnMoreTapped.send(())
-              }
-              .padding(.top, Constants.playGamesHstackTop)
-            }
-            .background(
-              Color.clear
-                .contentShape(Rectangle())
-                .hideKeyboardOnTap()
-            )
+            Spacer()
           }
+          .padding(.vertical, Constants.playGamesHstackVertical)
+          .onTapGesture {
+            eventBus.playGamesToEarnMoreTapped.send(())
+          }
+          .padding(.top, Constants.playGamesHstackTop)
         }
       }
     }
-    .frame(maxWidth: .infinity, alignment: .leading)
-    .frame(maxHeight: .infinity, alignment: .top)
+    .navigationBarHidden(true)
+    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     .background(
       Color.clear
         .contentShape(Rectangle())
@@ -235,15 +237,8 @@ struct CreateAIVideoScreenView: View {
     .padding(.horizontal, Constants.vstackHorizontal)
     .overlay(alignment: .center, content: {
       if showLoader {
-        LottieLoaderView(animationName: Constants.loader, resetProgess: false)
+        LottieLoaderView(animationName: Constants.loader)
           .frame(width: Constants.loaderSize, height: Constants.loaderSize)
-      }
-    })
-    .overlay(alignment: .center, content: {
-      if showProviderBottomSheet {
-        Color.black.opacity(Constants.providerBackgroundOpacity)
-          .ignoresSafeArea()
-          .transition(.opacity)
       }
     })
     .fullScreenCover(isPresented: $showProviderBottomSheet) {
@@ -309,8 +304,6 @@ struct CreateAIVideoScreenView: View {
     .onReceive(session.phasePublisher, perform: { phase in
       if case .permanent = phase {
         isUserLoggedIn = true
-      } else {
-        isUserLoggedIn = false
       }
     })
     .onReceive(viewModel.$state, perform: { state in
@@ -347,24 +340,12 @@ struct CreateAIVideoScreenView: View {
         loadingProvider = nil
         showSignupSheet = false
         showSignupFailureSheet = true
-      case .generateVideoSuccess(let deductBalance):
-        if creditsUsed {
-          let oldBalance = session.state.coins
-          let newBalance = oldBalance - UInt64(deductBalance)
-          if newBalance >= 0 {
-            session.update(coins: newBalance)
-          }
-        }
+      case .generateVideoSuccess:
         generatingVideo = true
         viewModel.startPolling()
       case .generateVideoFailure(let errMessage):
         errorMessage = errMessage
-      case .generateVideoStatusFailure(let errMessage, let addBalance):
-        if creditsUsed {
-          let oldBalance = session.state.coins
-          let newBalance = oldBalance + UInt64(addBalance)
-          session.update(coins: newBalance)
-        }
+      case .generateVideoStatusFailure(let errMessage):
         errorMessage = errMessage
       case .uploadAIVideoSuccess(let videoURLString):
         videoURL = URL(string: videoURLString)
@@ -405,6 +386,16 @@ struct CreateAIVideoScreenView: View {
 
           await viewModel.getAIVideoProviders()
         }
+      }
+    }
+    .onReceive(NotificationCenter.default.publisher(for: UIApplication.didEnterBackgroundNotification)) { _ in
+      if generatingVideo {
+        viewModel.stopPolling(removeKey: false)
+      }
+    }
+    .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+      if generatingVideo {
+        viewModel.startPolling()
       }
     }
   }
@@ -516,20 +507,20 @@ extension CreateAIVideoScreenView {
           .foregroundColor(
             (session.state.coins >= provider.cost.sats) ?
             Constants.creditsUsedGreyColor :
-              Constants.creditsUsedRedColor
+            Constants.creditsUsedRedColor
           )
 
         Text(
           (session.state.coins >= provider.cost.sats) ?
           Constants.currentBalanceText(amount: session.state.coins) :
-            Constants.lowBalanceText(amount: session.state.coins)
+          Constants.lowBalanceText(amount: session.state.coins)
         )
-        .font(Constants.currentBalanceFont)
-        .foregroundColor(
-          (session.state.coins >= provider.cost.sats) ?
-          Constants.currentBalanceGreyColor :
+          .font(Constants.currentBalanceFont)
+          .foregroundColor(
+            (session.state.coins >= provider.cost.sats) ?
+            Constants.currentBalanceGreyColor :
             Constants.currentBalanceRedColor
-        )
+          )
       } else {
         Text(Constants.creditsNotUsed)
           .font(Constants.creditsUsedFont)
@@ -540,7 +531,7 @@ extension CreateAIVideoScreenView {
           .foregroundColor(
             session.state.coins == .zero ?
             Constants.currentBalanceRedColor :
-              Constants.currentBalanceGreyColor
+            Constants.currentBalanceGreyColor
           )
       }
     }
@@ -581,7 +572,6 @@ extension CreateAIVideoScreenView {
     static let screenTitleFont = YralFont.pt20.bold.swiftUIFont
     static let screenTitleColor = YralColor.grey0.swiftUIColor
 
-    static let providerBackgroundOpacity = 0.8
     static let modelTitle = "Model"
     static let modelFont = YralFont.pt14.medium.swiftUIFont
     static let modelColor = YralColor.grey300.swiftUIColor
