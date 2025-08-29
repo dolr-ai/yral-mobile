@@ -12,4 +12,5 @@ enum class PrefKeys {
     HOW_TO_PLAY_SHOWN,
     SMILEY_GAME_NUDGE_SHOWN,
     IAP_LAST_UPDATE_CHECK_TIME,
+    PROFILE_PIC,
 }

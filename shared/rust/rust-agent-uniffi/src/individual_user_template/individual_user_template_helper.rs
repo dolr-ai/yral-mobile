@@ -126,39 +126,67 @@ pub fn delegated_identity_wire_to_json(data: &[u8]) -> String {
 #[derive(uniffi::Object)]
 pub struct CanistersWrapper {
     inner: Canisters<true>,
+    canister_principal: Principal,
+    user_principal: Principal,
+    profile_pic: String,
+    is_new_user: bool,
 }
 
 #[uniffi::export]
 impl CanistersWrapper {
     pub fn get_canister_principal(&self) -> Principal {
-        self.inner.user_canister()
+        self.canister_principal
     }
 
     pub fn get_canister_principal_string(&self) -> String {
-        self.inner.user_canister().to_string()
+        self.canister_principal.to_string()
     }
 
     pub fn get_user_principal(&self) -> Principal {
-        self.inner.user_principal()
+        self.user_principal
     }
 
     pub fn get_user_principal_string(&self) -> String {
-        self.inner.user_principal().to_string()
+        self.user_principal.to_string()
+    }
+
+    pub fn get_profile_pic(&self) -> String {
+        self.profile_pic.to_string()
     }
 }
 
 #[uniffi::export]
-pub async fn authenticate_with_network(
-    auth_data: Vec<u8>,
-    referrer: Option<Principal>,
-) -> std::result::Result<CanistersWrapper, FFIError> {
+pub async fn authenticate_with_network(auth_data: Vec<u8>) -> std::result::Result<CanistersWrapper, FFIError> {
     RUNTIME.spawn(async move {
         let auth = delegated_identity_wire_from_bytes(&auth_data)
             .map_err(|e| FFIError::UnknownError(format!("Invalid: {:?}", e)))?;
-        let canisters: Canisters<true> = Canisters::<true>::authenticate_with_network(auth, referrer)
+        let canisters: Canisters<true> = Canisters::<true>::authenticate_with_network(auth)
             .await
             .map_err(|e| FFIError::AgentError(format!("Invalid: {:?}", e)))?;
-        Ok(CanistersWrapper { inner: canisters })
+        let canister_principal = canisters.user_canister();
+        let user_principal = canisters.user_principal();
+        let profile_details = canisters.profile_details();
+        if canister_principal == yral_canisters_client::ic::USER_INFO_SERVICE_ID {
+            Ok(
+                CanistersWrapper { 
+                    inner: canisters, 
+                    is_new_user: true,
+                    canister_principal: profile_details.principal,
+                    user_principal: profile_details.user_canister,
+                    profile_pic: profile_details.profile_pic_or_random()
+                }
+            )
+        } else {
+            Ok(
+                CanistersWrapper { 
+                    inner: canisters, 
+                    is_new_user: false,
+                    canister_principal: canister_principal,
+                    user_principal: user_principal,
+                    profile_pic: propic_from_principal(user_principal)
+                }
+            )
+        }
     }).await.map_err(|e| FFIError::AgentError(format!("{:?}", e)))?
 }
 

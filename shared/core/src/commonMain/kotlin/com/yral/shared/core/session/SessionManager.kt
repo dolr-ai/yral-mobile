@@ -33,6 +33,13 @@ class SessionManager {
                 else -> null
             }
 
+    val profilePic: String?
+        get() =
+            when (val state = _state.value) {
+                is SessionState.SignedIn -> state.session.profilePic
+                else -> null
+            }
+
     fun updateState(state: SessionState) {
         _state.update { state }
         _sessionProperties.update { SessionProperties() }
