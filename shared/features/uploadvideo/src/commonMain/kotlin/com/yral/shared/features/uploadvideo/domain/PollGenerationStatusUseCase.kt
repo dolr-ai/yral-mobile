@@ -36,11 +36,7 @@ class PollGenerationStatusUseCase(
                     while (currentCoroutineContext().isActive) {
                         val delayMs = computeDelayMs(parameters, pollCount, currentIntervalMs)
                         delay(delayMs.coerceAtLeast(0L))
-                        val status =
-                            repository.fetchVideoGenerationStatus(
-                                canisterID = parameters.canisterID,
-                                requestKey = parameters.requestKey,
-                            )
+                        val status = repository.fetchVideoGenerationStatus(parameters.requestKey)
                         when (status) {
                             is Result2Wrapper.Err -> {
                                 throw YralException(status.v1)
@@ -112,7 +108,6 @@ class PollGenerationStatusUseCase(
         }
 
     data class Params(
-        val canisterID: String,
         val requestKey: VideoGenRequestKeyWrapper,
         val isFastInitially: Boolean = false,
         val maxPollingTimeMs: Long = DEFAULT_MAX_POLLING_MS,

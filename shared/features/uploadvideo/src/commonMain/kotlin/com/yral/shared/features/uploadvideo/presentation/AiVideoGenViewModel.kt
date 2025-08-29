@@ -238,14 +238,12 @@ class AiVideoGenViewModel internal constructor(
         pollingJob?.cancel()
         pollingJob =
             viewModelScope.launch {
-                val canisterID = sessionManager.canisterID ?: return@launch
                 try {
                     requiredUseCases
                         .pollAndUploadAiVideo
                         .invoke(
                             parameters =
                                 PollAndUploadAiVideoUseCase.Params(
-                                    canisterID = canisterID,
                                     modelName = modelName,
                                     requestKey = requestKey,
                                     isFastInitially = false,
