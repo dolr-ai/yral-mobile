@@ -140,6 +140,7 @@ class FeedViewModel(
                             _state.update { it.copy(pendingFetchDetails = it.pendingFetchDetails - 1) }
                         }
                     }.onFailure {
+                        Logger.e(it) { "Failed to fetch details" }
                         _state.update { it.copy(pendingFetchDetails = it.pendingFetchDetails - 1) }
                     }
             }
