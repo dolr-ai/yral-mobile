@@ -19,13 +19,11 @@ class UrlBuilder(
      * Build a URL string from a type-safe AppRoute object.
      * Returns null if the route cannot be built into a URL.
      */
-    @Suppress("TooGenericExceptionCaught", "SwallowedException")
     fun build(route: AppRoute): String? = buildUrlFromRoute(route)
 
     /**
      * Build a URL from a route using type-safe serialization.
      */
-    @Suppress("TooGenericExceptionCaught", "SwallowedException")
     private fun buildUrlFromRoute(route: AppRoute): String? {
         val matchingDefinition = findRouteDefinition(route) ?: return null
         return buildUrlWithDefinition(matchingDefinition, route)

@@ -34,7 +34,6 @@ class DeepLinkParser(
      * Returns AppRoute.Unknown if the URL cannot be parsed or if the resulting
      * route does not implement ExternallyExposedRoute.
      */
-    @Suppress("TooGenericExceptionCaught", "SwallowedException")
     fun parse(url: String): AppRoute = parseUrlInternal(url)
 
     @Suppress("TooGenericExceptionCaught", "SwallowedException")
@@ -91,7 +90,6 @@ class DeepLinkParser(
      * Returns AppRoute.Unknown if the parameters cannot be parsed, if "route_id" is missing,
      * or if the resulting route does not implement ExternallyExposedRoute.
      */
-    @Suppress("TooGenericExceptionCaught", "SwallowedException")
     fun parse(params: Map<String, String>): AppRoute {
         val routeId = params["route_id"] ?: return Unknown
 
