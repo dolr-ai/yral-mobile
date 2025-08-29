@@ -14,6 +14,33 @@ use yral_canisters_client::user_post_service::PostStatus;
 
 type Result<T> = std::result::Result<T, FFIError>;
 
+#[derive(uniffi::Object)]
+pub struct ServiceCanistersDetails {
+    pub user_post_cansiter_id: Principal,
+    pub user_info_canister_id: Principal,
+}
+
+#[uniffi::export]
+impl ServiceCanistersDetails {
+    #[uniffi::constructor]
+    pub fn new() -> ServiceCanistersDetails {
+        ServiceCanistersDetails {
+            user_post_cansiter_id: yral_canisters_client::ic::USER_POST_SERVICE_ID,
+            user_info_canister_id: yral_canisters_client::ic::USER_INFO_SERVICE_ID,
+        }
+    }
+
+    #[uniffi::method]
+    pub fn get_user_post_service_canister_id(&self) -> Principal {
+        self.user_post_cansiter_id
+    }
+
+    #[uniffi::method]
+    pub fn get_user_info_service_canister_id(&self) -> Principal {
+        self.user_info_canister_id
+    }
+}
+
 #[derive(CandidType, Deserialize, Record)]
 pub struct SCPostDetailsForFrontend{
     pub id: String,
