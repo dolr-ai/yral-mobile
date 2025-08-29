@@ -138,18 +138,31 @@ struct CreateAIVideoScreenView: View {
           }
       } else {
         if let providers = viewModel.providers {
-          ScrollView {
-            VStack(alignment: .leading, spacing: Constants.vstackSpacing) {
-              PromptView(prompt: $promptText)
-                .padding(.bottom, Constants.promptBottom)
+          PromptView(prompt: $promptText)
+            .padding(.bottom, Constants.promptBottom)
 
-              if let selectedProvider = selectedProvider {
-                buildSelectedModelView(with: selectedProvider)
-                  .frame(maxWidth: .infinity)
+          if let selectedProvider = selectedProvider {
+            buildSelectedModelView(with: selectedProvider)
+              .frame(maxWidth: .infinity)
 
-                buildBalanceView(with: selectedProvider)
-                  .frame(maxWidth: .infinity)
-                  .padding(.top, Constants.balanceTop)
+            buildBalanceView(with: selectedProvider)
+              .frame(maxWidth: .infinity)
+              .padding(.top, Constants.balanceTop)
+          }
+
+          Button {
+            AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+              event: CreateAIVideoClickedData(model: selectedProvider?.name ?? "")
+            )
+            if isUserLoggedIn {
+              if let provider = selectedProvider, !promptText.isEmpty {
+                Task {
+                  await viewModel.generateVideo(
+                    for: promptText,
+                    withProvider: provider,
+                    usingCredits: !creditsUsed
+                  )
+                }
               }
 
               Button {
@@ -222,6 +235,33 @@ struct CreateAIVideoScreenView: View {
                 .hideKeyboardOnTap()
             )
           }
+          .disabled(!isButtonEnabled)
+          .padding(.top, Constants.generateButtonTop)
+
+          HStack(spacing: .zero) {
+            Spacer()
+
+            Text(Constants.playGamesText)
+              .font(Constants.playGamesTextFont)
+              .overlay(
+                Constants.playGamesTextColor
+              )
+              .mask(
+                Text(Constants.playGamesText)
+                  .font(Constants.playGamesTextFont)
+              )
+
+            Text(Constants.earnMoreText)
+              .font(Constants.earnMoreTextFont)
+              .foregroundColor(Constants.earnMoreTextColor)
+
+            Spacer()
+          }
+          .padding(.vertical, Constants.playGamesHstackVertical)
+          .onTapGesture {
+            eventBus.playGamesToEarnMoreTapped.send(())
+          }
+          .padding(.top, Constants.playGamesHstackTop)
         }
       }
     }
@@ -516,20 +556,20 @@ extension CreateAIVideoScreenView {
           .foregroundColor(
             (session.state.coins >= provider.cost.sats) ?
             Constants.creditsUsedGreyColor :
-              Constants.creditsUsedRedColor
+            Constants.creditsUsedRedColor
           )
 
         Text(
           (session.state.coins >= provider.cost.sats) ?
           Constants.currentBalanceText(amount: session.state.coins) :
-            Constants.lowBalanceText(amount: session.state.coins)
+          Constants.lowBalanceText(amount: session.state.coins)
         )
-        .font(Constants.currentBalanceFont)
-        .foregroundColor(
-          (session.state.coins >= provider.cost.sats) ?
-          Constants.currentBalanceGreyColor :
+          .font(Constants.currentBalanceFont)
+          .foregroundColor(
+            (session.state.coins >= provider.cost.sats) ?
+            Constants.currentBalanceGreyColor :
             Constants.currentBalanceRedColor
-        )
+          )
       } else {
         Text(Constants.creditsNotUsed)
           .font(Constants.creditsUsedFont)
@@ -540,7 +580,7 @@ extension CreateAIVideoScreenView {
           .foregroundColor(
             session.state.coins == .zero ?
             Constants.currentBalanceRedColor :
-              Constants.currentBalanceGreyColor
+            Constants.currentBalanceGreyColor
           )
       }
     }
