@@ -175,7 +175,7 @@ pub async fn authenticate_with_network(auth_data: Vec<u8>) -> std::result::Resul
                 CanistersWrapper { 
                     inner: canisters, 
                     is_created_from_service_canister: true,
-                    canister_principal: profile_details.principal,
+                    canister_principal: canister_principal,
                     user_principal: profile_details.user_canister,
                     profile_pic: profile_details.profile_pic_or_random()
                 }
