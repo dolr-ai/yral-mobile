@@ -22,6 +22,7 @@ Adding a new, fully functional route is a simple, two-step process.
 Open `shared/libs/routing/routes-api/src/commonMain/kotlin/AppRoute.kt` and add your new data class as an implementation of the `AppRoute` sealed interface.
 
 -   It **must** be annotated with `@Serializable`.
+-   **Best Practice:** Define the URL path pattern as a `const val PATH` inside a companion object. This co-locates the route's structure with its path, preventing magic strings and improving maintainability.
 -   If it can be triggered from an external link, it **must** implement `ExternallyExposedRoute`.
 -   If it needs to carry analytics metadata, it **must** implement `AppRouteWithMetadata`.
 
@@ -34,26 +35,30 @@ Open `shared/libs/routing/routes-api/src/commonMain/kotlin/AppRoute.kt` and add 
 data class UserProfile(
     val userId: String,
     @Transient override val metadata: Map<String, Any> = emptyMap()
-) : AppRouteWithMetadata, ExternallyExposedRoute
+) : AppRouteWithMetadata, ExternallyExposedRoute {
+    companion object {
+        const val PATH = "/user/{userId}"
+    }
+}
 ```
 
 ### Step 2: Register the Route in `:app`
 
-Open the `routingModule` in the `:app` module (e.g., `app/src/main/java/.../di/RoutingModule.kt`) and add a new entry to the routing table using the type-safe DSL.
+Open the `routingModule` in the `:app` module (e.g., `app/src/main/java/.../di/RoutingModule.kt`) and add a new entry to the routing table, referencing the `PATH` constant from your route class.
 
-The string pattern defines the URL structure. Path parameters are enclosed in `{}`. Any properties of the data class not found in the path are automatically treated as query parameters.
+Path parameters in the pattern are enclosed in `{}`. Any properties of the data class not found in the path are automatically treated as query parameters.
 
 **Example:** Registering the new `UserProfile` route.
 
 ```kotlin
 // In RoutingModule.kt
 
-val appRoutingTable = buildRouting {
-    route<ProductDetails>("/product/{productId}")
-    route<Home>("/home")
+buildRoutingTable {
+    route<ProductDetails>(ProductDetails.PATH)
+    route<Home>(Home.PATH)
     
     // Add the new route here
-    route<UserProfile>("/user/{userId}")
+    route<UserProfile>(UserProfile.PATH)
 
     // ... other routes
 }
