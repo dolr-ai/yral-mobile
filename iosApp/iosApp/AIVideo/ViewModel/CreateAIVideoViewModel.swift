@@ -121,7 +121,7 @@ class CreateAIVideoViewModel: ObservableObject {
   }
 
   @MainActor
-  func generateVideo(for prompt: String, withProvider provider: AIVideoProviderResponse) async {
+  func generateVideo(for prompt: String, withProvider provider: AIVideoProviderResponse, usingCredits: Bool) async {
     state = .loading
 
     let generateVideoRequest = GenerateVideoMetaRequest(
@@ -135,7 +135,7 @@ class CreateAIVideoViewModel: ObservableObject {
         prompt: prompt,
         resolution: nil,
         seed: nil,
-        tokenType: "Free",
+        tokenType: usingCredits ? "Free" : "Sats",
         userID: nil
       )
     )

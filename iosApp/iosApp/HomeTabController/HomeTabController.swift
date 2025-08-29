@@ -129,6 +129,9 @@ struct HomeTabController: View {
           }
         }
       }
+      .onReceive(eventBus.playGamesToEarnMoreTapped) {
+        selectedTab = .home
+      }
       .hapticFeedback(.impact(weight: .light), trigger: selectedTab)
       .fullScreenCover(isPresented: $showNotificationsNudge) {
         ZStack(alignment: .center) {
