@@ -10,6 +10,7 @@ import com.yral.shared.rust.domain.IndividualUserRepository
 import com.yral.shared.rust.domain.RateLimitRepository
 import com.yral.shared.rust.services.IndividualUserServiceFactory
 import com.yral.shared.rust.services.RateLimitServiceFactory
+import com.yral.shared.rust.services.UserPostServiceFactory
 import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.factoryOf
 import org.koin.dsl.module
@@ -22,4 +23,5 @@ val rustModule =
         factoryOf(::RateLimitDataSourceImpl) { bind<RateLimitDataSource>() }
         single { IndividualUserServiceFactory() }
         single { RateLimitServiceFactory() }
+        single { UserPostServiceFactory() }
     }

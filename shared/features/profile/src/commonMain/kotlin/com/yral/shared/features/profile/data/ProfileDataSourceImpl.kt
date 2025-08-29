@@ -8,9 +8,9 @@ import com.yral.shared.features.profile.data.models.DeleteVideoRequestBody
 import com.yral.shared.features.profile.domain.models.DeleteVideoRequest
 import com.yral.shared.features.profile.domain.models.ProfileVideosPageResult
 import com.yral.shared.http.httpDelete
+import com.yral.shared.rust.data.models.Posts
+import com.yral.shared.rust.data.models.PostsOfUserProfileError
 import com.yral.shared.rust.domain.IndividualUserRepository
-import com.yral.shared.uniffi.generated.GetPostsOfUserProfileError
-import com.yral.shared.uniffi.generated.Result12
 import com.yral.shared.uniffi.generated.delegatedIdentityWireToJson
 import io.ktor.client.HttpClient
 import io.ktor.client.request.setBody
@@ -27,28 +27,32 @@ class ProfileDataSourceImpl(
         startIndex: ULong,
         pageSize: ULong,
     ): ProfileVideosPageResult {
-        val canisterId =
-            sessionManager.canisterID
-                ?: throw YralException("No canister principal found")
+        val userPrincipal =
+            sessionManager.userPrincipal
+                ?: throw YralException("No user principal found")
+        val isFromServiceCanister =
+            sessionManager.isCreatedFromServiceCanister
+                ?: throw YralException("UserType not found")
         val result =
             individualUserRepository.getPostsOfThisUserProfileWithPaginationCursor(
-                principalId = canisterId,
+                principalId = userPrincipal,
                 startIndex = startIndex,
                 pageSize = pageSize,
+                shouldFetchFromServiceCanisters = isFromServiceCanister,
             )
         return when (result) {
-            is Result12.Ok -> {
+            is Posts.Ok -> {
                 val posts = result.v1
                 ProfileVideosPageResult(
-                    posts = posts,
+                    posts = posts.filterNotNull(),
                     hasNextPage = posts.size == pageSize.toInt(),
                     nextStartIndex = startIndex + pageSize,
                 )
             }
 
-            is Result12.Err -> {
+            is Posts.Err -> {
                 when (result.v1) {
-                    GetPostsOfUserProfileError.REACHED_END_OF_ITEMS_LIST -> {
+                    PostsOfUserProfileError.REACHED_END_OF_ITEMS_LIST -> {
                         ProfileVideosPageResult(
                             posts = emptyList(),
                             hasNextPage = false,
@@ -56,11 +60,11 @@ class ProfileDataSourceImpl(
                         )
                     }
 
-                    GetPostsOfUserProfileError.INVALID_BOUNDS_PASSED -> {
+                    PostsOfUserProfileError.INVALID_BOUNDS_PASSED -> {
                         throw YralException("Invalid bounds passed for pagination")
                     }
 
-                    GetPostsOfUserProfileError.EXCEEDED_MAX_NUMBER_OF_ITEMS_ALLOWED_IN_ONE_REQUEST -> {
+                    PostsOfUserProfileError.EXCEEDED_MAX_NUMBER_OF_ITEMS_ALLOWED_IN_ONE_REQUEST -> {
                         throw YralException("Exceeded max number of items allowed in one request")
                     }
                 }

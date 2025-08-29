@@ -7,6 +7,7 @@ import com.yral.shared.rust.data.IndividualUserDataSourceImpl.Companion.CLOUD_FL
 import com.yral.shared.rust.data.IndividualUserDataSourceImpl.Companion.THUMBNAIL_SUFFIX
 import com.yral.shared.uniffi.generated.PostDetailsForFrontend
 import com.yral.shared.uniffi.generated.PostStatus
+import com.yral.shared.uniffi.generated.ScPostDetailsForFrontend
 import com.yral.shared.uniffi.generated.propicFromPrincipal
 
 fun PostDetailsForFrontend.toFeedDetails(
@@ -30,6 +31,32 @@ fun PostDetailsForFrontend.toFeedDetails(
         thumbnail = thumbnailUrl,
         viewCount = totalViewCount,
         displayName = createdByDisplayName ?: "",
+        postDescription = description,
+        profileImageURL = profileImageUrl,
+        likeCount = likeCount,
+        isLiked = likedByMe,
+        nsfwProbability = nsfwProbability,
+    )
+}
+
+fun ScPostDetailsForFrontend.toFeedDetails(
+    postId: Long,
+    canisterId: String,
+    nsfwProbability: Double?,
+): FeedDetails {
+    val videoUrl = "$CLOUD_FLARE_PREFIX$videoUid$CLOUD_FLARE_SUFFIX_MP4"
+    val thumbnailUrl = "$CLOUD_FLARE_PREFIX$videoUid$THUMBNAIL_SUFFIX"
+    val profileImageUrl = propicFromPrincipal(createdByUserPrincipalId)
+    return FeedDetails(
+        postID = postId,
+        videoID = videoUid,
+        canisterID = canisterId,
+        principalID = createdByUserPrincipalId,
+        url = videoUrl,
+        hashtags = hashtags,
+        thumbnail = thumbnailUrl,
+        viewCount = totalViewCount,
+        displayName = "",
         postDescription = description,
         profileImageURL = profileImageUrl,
         likeCount = likeCount,
