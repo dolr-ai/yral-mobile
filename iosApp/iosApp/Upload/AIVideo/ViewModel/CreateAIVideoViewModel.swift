@@ -36,6 +36,7 @@ enum CreateAIVideoScreenEvent {
   case generateVideoSuccess(deductBalance: Int)
   case generateVideoFailure(String)
   case generateVideoStatusFailure(error: String, addBalance: Int)
+  case generateVideoStatusSuccess(deductBalance: Int)
   case uploadAIVideoSuccess(String)
   case uploadAIVideoFailure(String)
 }
@@ -184,7 +185,14 @@ class CreateAIVideoViewModel: ObservableObject {
                 reasonType: nil
               )
             )
-            Task { await uploadAIVideo() }
+
+            if let provider = selectedProvider {
+              event = .generateVideoStatusSuccess(deductBalance: provider.cost.sats)
+            }
+
+            Task {
+              await uploadAIVideo()
+            }
           } else if status.contains("Failed: ") {
             stopPolling()
             AnalyticsModuleKt.getAnalyticsManager().trackEvent(
