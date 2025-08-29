@@ -336,6 +336,8 @@ class DefaultAuthClient(
                     throw SecurityException("Invalid state parameter - possible CSRF attack")
                 }
                 val currentUser = sessionManager.userPrincipal
+                // reset analytics manage: flush events and reset user properties
+                analyticsManager.reset()
                 sessionManager.updateState(SessionState.Loading)
                 authenticate(result.code, currentUser)
                 return
