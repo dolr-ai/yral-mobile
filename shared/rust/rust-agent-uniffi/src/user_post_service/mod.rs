@@ -90,7 +90,7 @@ impl UserPostService {
         let principal = self.principal;
         RUNTIME.spawn(async move {
             let service = yral_canisters_client::user_post_service::UserPostService(
-                yral_canisters_client::ic::USER_INFO_SERVICE_ID,
+                yral_canisters_client::ic::USER_POST_SERVICE_ID,
                 &agent,
             );
             let details = service
@@ -116,7 +116,7 @@ impl UserPostService {
             .map_err(|e| FFIError::PrincipalError(format!("Invalid principal: {:?}", e)))?;
         RUNTIME.spawn(async move {
             let service = yral_canisters_client::user_post_service::UserPostService(
-                yral_canisters_client::ic::USER_INFO_SERVICE_ID,
+                yral_canisters_client::ic::USER_POST_SERVICE_ID,
                 &agent,
             );
             let details = service
