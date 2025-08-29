@@ -8,7 +8,7 @@ import com.yral.shared.features.profile.data.models.DeleteVideoRequestBody
 import com.yral.shared.features.profile.domain.models.DeleteVideoRequest
 import com.yral.shared.features.profile.domain.models.ProfileVideosPageResult
 import com.yral.shared.http.httpDelete
-import com.yral.shared.rust.services.IndividualUserServiceFactory
+import com.yral.shared.rust.domain.IndividualUserRepository
 import com.yral.shared.uniffi.generated.GetPostsOfUserProfileError
 import com.yral.shared.uniffi.generated.Result12
 import com.yral.shared.uniffi.generated.delegatedIdentityWireToJson
@@ -19,7 +19,7 @@ import kotlinx.serialization.json.Json
 
 class ProfileDataSourceImpl(
     private val sessionManager: SessionManager,
-    private val individualUserServiceFactory: IndividualUserServiceFactory,
+    private val individualUserRepository: IndividualUserRepository,
     private val httpClient: HttpClient,
     private val json: Json,
 ) : ProfileDataSource {
@@ -30,15 +30,12 @@ class ProfileDataSourceImpl(
         val canisterId =
             sessionManager.canisterID
                 ?: throw YralException("No canister principal found")
-
-        val service = individualUserServiceFactory.service(canisterId)
-
         val result =
-            service.getPostsOfThisUserProfileWithPaginationCursor(
-                startIndex,
-                pageSize,
+            individualUserRepository.getPostsOfThisUserProfileWithPaginationCursor(
+                principalId = canisterId,
+                startIndex = startIndex,
+                pageSize = pageSize,
             )
-
         return when (result) {
             is Result12.Ok -> {
                 val posts = result.v1
