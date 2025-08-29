@@ -28,6 +28,10 @@ struct UploadOptionsScreenView: View {
         UploadOptionView(option: Constants.uploadOptionAI) {
           aiVideoScreenID = UUID()
           navigateToAIVideoScreen = true
+
+          AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+            event: VideoUploadTypeSelectedData(type: .aiVideo)
+          )
         }
         .background(
           NavigationLink(isActive: $navigateToAIVideoScreen) {
@@ -47,7 +51,12 @@ struct UploadOptionsScreenView: View {
         )
 
         UploadOptionView(option: Constants.uploadOptionDevice) {
+          uploadViewID = UUID()
           navigateToUploadVideoScreen = true
+
+          AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+            event: VideoUploadTypeSelectedData(type: .uploadVideo)
+          )
         }
         .background(
           NavigationLink(isActive: $navigateToUploadVideoScreen) {
@@ -88,10 +97,6 @@ extension UploadOptionsScreenView {
 
     let crashReporter = CompositeCrashReporter(reporters: [FirebaseCrashlyticsReporter()])
 
-    AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-      event: VideoUploadTypeSelectedData(type: .aiVideo)
-    )
-
     return CreateAIVideoDIContainer(
       dependencies: CreateAIVideoDIContainer.Dependencies(
         httpService: HTTPService(baseURLString: AppConfiguration().offchainBaseURLString),
@@ -102,9 +107,6 @@ extension UploadOptionsScreenView {
   }
 
   private func makeUploadViewDIContainer() -> UploadDIContainer? {
-    AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-      event: VideoUploadTypeSelectedData(type: .uploadVideo)
-    )
     return appDIContainer?.makeUploadDIContainer()
   }
 }
