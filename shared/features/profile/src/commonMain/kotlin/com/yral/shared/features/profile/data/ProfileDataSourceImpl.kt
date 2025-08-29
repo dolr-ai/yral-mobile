@@ -91,7 +91,7 @@ class ProfileDataSourceImpl(
         val deleteRequest =
             DeleteVideoRequestBody(
                 principal = userPrincipal,
-                postId = request.feedDetails.postID.toString(),
+                postId = request.feedDetails.postID,
                 videoId = request.feedDetails.videoID,
                 delegatedIdentityWire = delegatedIdentityWire,
             )
