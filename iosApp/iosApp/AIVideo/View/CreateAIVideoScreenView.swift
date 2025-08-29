@@ -32,8 +32,14 @@ struct CreateAIVideoScreenView: View {
 
   let onDismiss: () -> Void
   var isButtonEnabled: Bool {
+    guard let provider = selectedProvider else {
+      return false
+    }
     let trimmed = promptText.trimmingCharacters(in: .whitespacesAndNewlines)
-    return !creditsUsed && !trimmed.isEmpty
+    let providerCost = provider.cost.sats
+    let userBalance = session.state.coins
+
+    return !trimmed.isEmpty && (!creditsUsed || userBalance >= providerCost)
   }
 
   var isErrorPresented: Binding<Bool> {
@@ -146,13 +152,17 @@ struct CreateAIVideoScreenView: View {
           }
       } else {
         if let providers = viewModel.providers {
+          PromptView(prompt: $promptText)
+            .padding(.bottom, Constants.promptBottom)
+
           if let selectedProvider = selectedProvider {
             buildSelectedModelView(with: selectedProvider)
               .frame(maxWidth: .infinity)
-          }
 
-          PromptView(prompt: $promptText)
-            .padding(.top, Constants.promptTop)
+            buildBalanceView(with: selectedProvider)
+              .frame(maxWidth: .infinity)
+              .padding(.top, Constants.balanceTop)
+          }
 
           Button {
             AnalyticsModuleKt.getAnalyticsManager().trackEvent(
@@ -161,7 +171,11 @@ struct CreateAIVideoScreenView: View {
             if isUserLoggedIn {
               if let provider = selectedProvider, !promptText.isEmpty {
                 Task {
-                  await viewModel.generateVideo(for: promptText, withProvider: provider)
+                  await viewModel.generateVideo(
+                    for: promptText,
+                    withProvider: provider,
+                    usingCredits: !creditsUsed
+                  )
                 }
               }
             } else {
@@ -185,6 +199,31 @@ struct CreateAIVideoScreenView: View {
           }
           .disabled(!isButtonEnabled)
           .padding(.top, Constants.generateButtonTop)
+
+          HStack(spacing: .zero) {
+            Spacer()
+
+            Text(Constants.playGamesText)
+              .font(Constants.playGamesTextFont)
+              .overlay(
+                Constants.playGamesTextColor
+              )
+              .mask(
+                Text(Constants.playGamesText)
+                  .font(Constants.playGamesTextFont)
+              )
+
+            Text(Constants.earnMoreText)
+              .font(Constants.earnMoreTextFont)
+              .foregroundColor(Constants.earnMoreTextColor)
+
+            Spacer()
+          }
+          .padding(.vertical, Constants.playGamesHstackVertical)
+          .onTapGesture {
+            eventBus.playGamesToEarnMoreTapped.send(())
+          }
+          .padding(.top, Constants.playGamesHstackTop)
         }
       }
     }
@@ -320,7 +359,6 @@ struct CreateAIVideoScreenView: View {
       if !generatingVideo {
         showLoader = true
         Task {
-          await viewModel.getAIVideoProviders()
           if isUserLoggedIn {
             let availableCredits = await viewModel.creditsAvailable()
             AnalyticsModuleKt.getAnalyticsManager().trackEvent(
@@ -345,6 +383,8 @@ struct CreateAIVideoScreenView: View {
               creditsUsed = false
             }
           }
+
+          await viewModel.getAIVideoProviders()
         }
       }
     }
@@ -405,10 +445,95 @@ extension CreateAIVideoScreenView {
       .onTapGesture {
         showProviderBottomSheet = true
       }
+    }
+  }
 
-      Text(creditsUsed ? Constants.creditsUsed : Constants.creditsNotUsed)
-        .font(Constants.creditsUsedFont)
-        .foregroundColor(creditsUsed ? Constants.creditsUsedRedColor : Constants.creditsUsedGreenColor)
+  @ViewBuilder
+  func buildBalanceView(with provider: AIVideoProviderResponse) -> some View {
+    VStack(alignment: .leading, spacing: Constants.vstackSpacing) {
+      Text(Constants.creditsRequired)
+        .font(Constants.creditsRequiredFont)
+        .foregroundColor(Constants.creditsRequiredColor)
+
+      HStack(spacing: .zero) {
+        Text(creditsUsed ? "\(provider.cost.sats)" : "0")
+          .font(Constants.requiredBalanceFont)
+          .foregroundColor(Constants.requiredBalanceColor)
+          .padding(.leading, Constants.requiredBalanceLeading)
+
+        if !creditsUsed {
+          Text("\(provider.cost.sats)")
+            .font(Constants.strikedRequiredBalanceFont)
+            .strikethrough()
+            .foregroundColor(Constants.strikedRequiredBalanceColor)
+            .padding(.leading, Constants.strikeRequiredBalanceLeading)
+        }
+
+        Spacer(minLength: .zero)
+
+        HStack(spacing: Constants.tokenHstackSpacing) {
+          Image(Constants.tokenImage)
+            .resizable()
+            .frame(width: Constants.tokenImageSize, height: Constants.tokenImageSize)
+
+          Text(Constants.tokenText)
+            .font(Constants.tokenTextFont)
+            .foregroundColor(Constants.tokenTextColor)
+        }
+        .padding(.all, Constants.tokenHstackVertical)
+        .frame(height: Constants.tokenHstackHeight)
+        .background(Constants.tokenHstackBackground)
+        .cornerRadius(Constants.tokenHstackCornerRadius)
+        .padding(.all, Constants.tokenHstackVertical)
+      }
+      .frame(maxWidth: .infinity)
+      .background(Constants.balanceHstackBackground)
+      .cornerRadius(Constants.balanceHstackCornerRadius)
+      .overlay(
+        RoundedRectangle(cornerRadius: Constants.balanceHstackCornerRadius)
+          .stroke(Constants.balanceHstackBorderColor, lineWidth: .one)
+      )
+
+      buildBalanceTextView(with: provider)
+    }
+  }
+
+  @ViewBuilder
+  func buildBalanceTextView(with provider: AIVideoProviderResponse) -> some View {
+    VStack(alignment: .leading, spacing: 4.0) {
+      if creditsUsed {
+        Text((session.state.coins >= provider.cost.sats) ? Constants.creditsUsedTokenAvailable : Constants.creditsUsed)
+          .font(Constants.creditsUsedFont)
+          .foregroundColor(
+            (session.state.coins >= provider.cost.sats) ?
+            Constants.creditsUsedGreyColor :
+            Constants.creditsUsedRedColor
+          )
+
+        Text(
+          (session.state.coins >= provider.cost.sats) ?
+          Constants.currentBalanceText(amount: session.state.coins) :
+          Constants.lowBalanceText(amount: session.state.coins)
+        )
+          .font(Constants.currentBalanceFont)
+          .foregroundColor(
+            (session.state.coins >= provider.cost.sats) ?
+            Constants.currentBalanceGreyColor :
+            Constants.currentBalanceRedColor
+          )
+      } else {
+        Text(Constants.creditsNotUsed)
+          .font(Constants.creditsUsedFont)
+          .foregroundColor(Constants.creditsUsedGreenColor)
+
+        Text(Constants.currentBalanceText(amount: session.state.coins))
+          .font(Constants.currentBalanceFont)
+          .foregroundColor(
+            session.state.coins == .zero ?
+            Constants.currentBalanceRedColor :
+            Constants.currentBalanceGreyColor
+          )
+      }
     }
   }
 }
@@ -467,12 +592,49 @@ extension CreateAIVideoScreenView {
     static let chevronTrailing = 12.0
     static let creditsNotUsed = "0 of 1 credits used"
     static let creditsUsed = "1 of 1 credits used"
+    static let creditsUsedTokenAvailable = "1 of 1 credits used. You can create videos with YRAL"
     static let creditsUsedFont = YralFont.pt14.semiBold.swiftUIFont
     static let creditsUsedRedColor = YralColor.red300.swiftUIColor
     static let creditsUsedGreenColor = YralColor.green300.swiftUIColor
+    static let creditsUsedGreyColor = YralColor.grey400.swiftUIColor
 
-    static let promptTop = 12.0
+    static let promptBottom = 16.0
     static let promptHeight = 150.0
+
+    static let balanceTop = 16.0
+    static let creditsRequired = "Credits Required"
+    static let creditsRequiredFont = YralFont.pt14.medium.swiftUIFont
+    static let creditsRequiredColor = YralColor.grey300.swiftUIColor
+    static let balanceHstackBackground = YralColor.grey900.swiftUIColor
+    static let balanceHstackCornerRadius = 8.0
+    static let balanceHstackBorderColor = YralColor.grey700.swiftUIColor
+    static let requiredBalanceFont = YralFont.pt16.semiBold.swiftUIFont
+    static let requiredBalanceColor = YralColor.grey300.swiftUIColor
+    static let requiredBalanceLeading = 10.0
+    static let strikedRequiredBalanceFont = YralFont.pt14.medium.swiftUIFont
+    static let strikedRequiredBalanceColor = YralColor.grey600.swiftUIColor
+    static let strikeRequiredBalanceLeading = 8.0
+    static let tokenHstackSpacing = 8.0
+    static let tokenHstackHeight = 40.0
+    static let tokenHstackBackground = YralColor.grey700.swiftUIColor
+    static let tokenHstackCornerRadius = 8.0
+    static let tokenHstackVertical = 8.0
+    static let tokenImage = "yral_token"
+    static let tokenImageSize = 24.0
+    static let tokenText = "YRAL"
+    static let tokenTextFont = YralFont.pt14.bold.swiftUIFont
+    static let tokenTextColor = YralColor.grey50.swiftUIColor
+    static let currentBalanceFont = YralFont.pt12.regular.swiftUIFont
+    static let currentBalanceRedColor = YralColor.red300.swiftUIColor
+    static let currentBalanceGreyColor = YralColor.grey400.swiftUIColor
+
+    static func lowBalanceText(amount: UInt64) -> String {
+      "Low Balance : \(amount) YRAL"
+    }
+
+    static func currentBalanceText(amount: UInt64) -> String {
+      "Current Balance : \(amount) YRAL"
+    }
 
     static let generateButtonTitle = "Generate video"
     static let generateButtonTextColor = YralColor.grey50.swiftUIColor
@@ -499,6 +661,23 @@ extension CreateAIVideoScreenView {
       startPoint: UnitPoint(x: 1, y: 0.51),
       endPoint: UnitPoint(x: 0.03, y: 1)
     )
+
+    static let playGamesHstackTop = 12.0
+    static let playGamesHstackVertical = 8.0
+    static let playGamesText = "Play Games "
+    static let playGamesTextFont = YralFont.pt16.bold.swiftUIFont
+    static let playGamesTextColor = LinearGradient(
+      stops: [
+        Gradient.Stop(color: Color(red: 1, green: 0.47, blue: 0.76), location: 0.00),
+        Gradient.Stop(color: Color(red: 0.89, green: 0, blue: 0.48), location: 0.51),
+        Gradient.Stop(color: Color(red: 0.68, green: 0, blue: 0.37), location: 1.00)
+      ],
+      startPoint: UnitPoint(x: 0.94, y: 0.13),
+      endPoint: UnitPoint(x: 0.35, y: 0.89)
+    )
+    static let earnMoreText = "to earn YRAL!"
+    static let earnMoreTextFont = YralFont.pt16.regular.swiftUIFont
+    static let earnMoreTextColor = YralColor.grey50.swiftUIColor
 
     static let loadingMessages = [
       "Generating Video...",

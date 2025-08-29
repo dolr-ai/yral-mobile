@@ -27,6 +27,7 @@ extension AIVideoProviderMetaDTO {
 struct AIVideoProviderDTO: Decodable {
   let id: String
   let name: String
+  let cost: AIVideoProviderCostDTO
   let description: String
   let isAvailable: Bool
   let modelIcon: String
@@ -35,7 +36,7 @@ struct AIVideoProviderDTO: Decodable {
   let defaultAspectRatio: String
 
   enum CodingKeys: String, CodingKey {
-    case id, name, description
+    case id, name, cost, description
     case isAvailable = "is_available"
     case modelIcon = "ios_model_icon"
     case supportsAudio = "supports_audio"
@@ -49,12 +50,29 @@ extension AIVideoProviderDTO {
     return AIVideoProviderResponse(
       id: id,
       name: name,
+      cost: cost.toDomain(),
       description: description,
       isActive: isAvailable,
       iconURL: modelIcon,
       supportsAudio: supportsAudio,
       defaultDuration: defaultDuration,
       defaultAspectRatio: defaultAspectRatio
+    )
+  }
+}
+
+struct AIVideoProviderCostDTO: Decodable {
+  let sats: Int
+
+  enum CodingKeys: String, CodingKey {
+    case sats
+  }
+}
+
+extension AIVideoProviderCostDTO {
+  func toDomain() -> AIVideoProviderCostResponse {
+    return AIVideoProviderCostResponse(
+      sats: sats
     )
   }
 }
