@@ -9,7 +9,7 @@ data class DeleteVideoRequestBody(
     @SerialName("publisher_user_id")
     val principal: String,
     @SerialName("post_id")
-    val postId: ULong,
+    val postId: String,
     @SerialName("video_id")
     val videoId: String,
     @SerialName("delegated_identity_wire")
