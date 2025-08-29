@@ -418,7 +418,7 @@ class DefaultAuthClient(
         val userPrincipal = preferences.getString(PrefKeys.USER_PRINCIPAL.name)
         val profilePic = preferences.getString(PrefKeys.PROFILE_PIC.name)
         val isCreatedFromServiceCanister = preferences.getBoolean(PrefKeys.IS_CREATED_FROM_SERVICE_CANISTER.name)
-        return listOf(identity, canisterId, userPrincipal, profilePic, isCreatedFromServiceCanister)
+        return listOf(identity, canisterId, userPrincipal, profilePic)
             .all { it != null }
             .let { allPresent ->
                 if (allPresent) {
@@ -427,7 +427,8 @@ class DefaultAuthClient(
                         canisterId = canisterId!!,
                         userPrincipal = userPrincipal!!,
                         profilePic = profilePic!!,
-                        isCreatedFromServiceCanister = isCreatedFromServiceCanister!!,
+                        // default false for backward compatibility
+                        isCreatedFromServiceCanister = isCreatedFromServiceCanister ?: false,
                     )
                 } else {
                     null
