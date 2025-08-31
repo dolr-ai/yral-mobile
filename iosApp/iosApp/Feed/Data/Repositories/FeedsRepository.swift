@@ -9,7 +9,7 @@
 import Foundation
 import Combine
 
-// swiftlint: disable type_body_length
+// swiftlint: disable type_body_length file_length
 class FeedsRepository: FeedRepositoryProtocol {
   private let httpService: HTTPService
   private let firebaseService: FirebaseServiceProtocol
@@ -138,9 +138,67 @@ class FeedsRepository: FeedRepositoryProtocol {
 
   private func mapToFeedResults<T: FeedMapping>(feed: T) async throws -> FeedResult {
     let principal = try get_principal(feed.canisterID)
+    return is_created_from_service_canister(principal) ?
+    try await getServiceCanisterResult(feed: feed) :
+    try await getIndividualCanisterResult(feed: feed)
+  }
+
+  private func getServiceCanisterResult(feed: FeedMapping) async throws -> FeedResult {
+    let principal = try get_principal(feed.canisterID)
+    let identity = try self.authClient.generateNewDelegatedIdentity()
+    let service = try UserPostService(principal, identity)
+    let result = try await service.get_individual_post_details_by_id(feed.postID)
+    guard let resultValue = post_service_result_ok_value(result) else {
+      let result = try await service.get_individual_post_details_by_id(feed.postID)
+      throw FeedError.rustError(RustError.unknown(post_service_result_err_value(result).toString()))
+    }
+    let voteExistsForSmileyGame = (try? await fetchSmileyGamePlayedStatus(for: resultValue.video_uid().toString()))
+        ?? false
+    // swiftlint: disable force_cast
+    guard !is_banned_due_to_user_reporting(resultValue.status() as! PostServicePostStatus) else {
+      throw FeedError.rustError(RustError.unknown("Post is banned"))
+    }
+    // swiftlint: enable force_cast
+    guard !voteExistsForSmileyGame else {
+      throw FeedError.firebaseError("User has already voted for this video")
+    }
+    let videoURL = URL(
+      string: "\(Constants.cloudfarePrefix)\(resultValue.video_uid().toString())\(Constants.cloudflareSuffix)"
+    ) ?? URL(fileURLWithPath: "")
+
+    let thumbnailURL = URL(
+      string: "\(Constants.cloudfarePrefix)\(resultValue.video_uid().toString())\(Constants.thumbnailSuffix)"
+    ) ?? URL(fileURLWithPath: "")
+
+    var profileImageURL: URL?
+    if let userPrincipal = try? get_principal(resultValue.creator_principal()) {
+      profileImageURL = URL(string: propic_from_principal(userPrincipal).toString())
+    }
+
+    return FeedResult(
+      postID: String(feed.postID),
+      videoID: resultValue.video_uid().toString(),
+      canisterID: feed.canisterID,
+      principalID: resultValue.creator_principal().toString(),
+      url: videoURL,
+      hashtags: resultValue.hashtags().map { $0.as_str().toString() },
+      thumbnail: thumbnailURL,
+      viewCount: Int64(resultValue.view_stats().total_view_count()),
+      displayName: "",
+      postDescription: resultValue.description().toString(),
+      profileImageURL: profileImageURL,
+      likeCount: Int(resultValue.likes().count),
+      isLiked: false,
+      nsfwProbability: feed.nsfwProbability,
+      smileyGame: SmileyGame(config: SmileyGameConfig.shared.config, state: .notPlayed)
+    )
+  }
+
+  private func getIndividualCanisterResult(feed: FeedMapping) async throws -> FeedResult {
+    let principal = try get_principal(feed.canisterID)
     let identity = try self.authClient.generateNewDelegatedIdentity()
     let service = try Service(principal, identity)
-    let result = try await service.get_individual_post_details_by_id(UInt64(feed.postID))
+    let result = try await service.get_individual_post_details_by_id(UInt64(feed.postID) ?? 0)
     let voteExistsForSmileyGame = (try? await fetchSmileyGamePlayedStatus(for: result.video_uid().toString())) ?? false
 
     guard result.status().is_banned_due_to_user_reporting() == false else {
@@ -382,10 +440,11 @@ class CacheEndPoints {
 }
 
 protocol FeedMapping {
-  var postID: UInt32 { get }
+  var postID: String { get }
   var canisterID: String { get }
   var nsfwProbability: Double { get }
 }
+// swiftlint: enable file_length
 
 extension DeepLinkFeedRequest: FeedMapping {
   var nsfwProbability: Double {

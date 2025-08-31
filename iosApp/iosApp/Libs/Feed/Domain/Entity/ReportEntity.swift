@@ -9,7 +9,7 @@
 import Foundation
 
 struct ReportRequest: Codable {
-  let postId: UInt64
+  let postId: String
   let videoId: String
   let reason: String
   let canisterID: String

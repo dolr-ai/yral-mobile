@@ -1,5 +1,6 @@
 use std::str::FromStr;
 
+use crate::individual_user_template::individual_user_template_ffi::{PostServicePostStatus, PostServiceResult1, PostServicePost, PostServicePostError};
 use crate::{individual_user_template::*, Err};
 use candid::Nat;
 use candid::{self, ser, CandidType, Decode, Deserialize, Encode, Principal};
@@ -27,6 +28,7 @@ use yral_canisters_client::rate_limits::RateLimitStatus;
 use yral_canisters_client::rate_limits::RateLimits;
 use yral_canisters_client::rate_limits::VideoGenRequestKey;
 use yral_canisters_client::rate_limits::VideoGenRequestStatus;
+use yral_canisters_client::user_post_service::UserPostServiceError;
 
 pub type Secp256k1Error = k256::elliptic_curve::Error;
 
@@ -127,23 +129,35 @@ pub fn delegated_identity_wire_to_json(wire: &DelegatedIdentityWire) -> String {
 }
 pub struct CanistersWrapper {
     inner: Canisters<true>,
+    canister_principal: Principal,
+    user_principal: Principal,
+    profile_pic: String,
+    is_created_from_service_canister: bool
 }
 
 impl CanistersWrapper {
     pub fn get_canister_principal(&self) -> Principal {
-        return self.inner.user_canister();
+        return self.canister_principal;
     }
 
     pub fn get_canister_principal_string(&self) -> String {
-        return self.inner.user_canister().to_string();
+        return self.canister_principal.to_string();
     }
 
     pub fn get_user_principal(&self) -> Principal {
-        return self.inner.user_principal();
+        return self.user_principal;
     }
 
     pub fn get_user_principal_string(&self) -> String {
-        return self.inner.user_principal().to_string();
+        return self.user_principal.to_string();
+    }
+
+    pub fn get_profile_pic(&self) -> String {
+        self.profile_pic.to_string()
+    }
+
+    pub fn is_created_from_service_canister(&self) -> bool {
+        return self.is_created_from_service_canister;
     }
 
     pub fn expiry_ns(&self) -> u64 {
@@ -153,12 +167,35 @@ impl CanistersWrapper {
 
 pub async fn authenticate_with_network(
     auth: DelegatedIdentityWire,
-    referrer: Option<Principal>,
 ) -> std::result::Result<CanistersWrapper, String> {
+
     let canisters: Canisters<true> = Canisters::<true>::authenticate_with_network(auth)
         .await
         .map_err(|error| error.to_string())?;
-    Ok(CanistersWrapper { inner: canisters })
+    let canister_principal = canisters.user_canister();
+    let user_principal = canisters.user_principal();
+    let profile_details = canisters.profile_details();
+    if canister_principal == yral_canisters_client::ic::USER_INFO_SERVICE_ID {
+        Ok(
+            CanistersWrapper {
+                inner: canisters,
+                is_created_from_service_canister: true,
+                canister_principal: canister_principal,
+                user_principal: profile_details.user_canister,
+                profile_pic: profile_details.profile_pic_or_random()
+            }
+        )
+    } else {
+        Ok(
+            CanistersWrapper {
+                inner: canisters,
+                is_created_from_service_canister: false,
+                canister_principal: canister_principal,
+                user_principal: user_principal,
+                profile_pic: propic_from_principal(user_principal)
+            }
+        )
+    }
 }
 
 pub fn extract_time_as_double(result: Result11) -> Option<u64> {
@@ -222,6 +259,7 @@ impl PostStatus {
         matches!(self, PostStatus::BannedDueToUserReporting)
     }
 }
+
 
 pub fn get_principal_from_identity(identity: DelegatedIdentity) -> String {
     match identity.sender() {
@@ -324,4 +362,37 @@ pub fn get_status_value(status: VideoGenRequestStatus) -> String {
 
 pub fn make_videogen_request_key(principal: Principal, counter: u64) -> VideoGenRequestKey {
     VideoGenRequestKey { principal, counter }
+}
+
+pub fn is_banned_due_to_user_reporting(status: PostServicePostStatus) -> bool {
+    matches!(status, PostServicePostStatus::BannedDueToUserReporting)
+}
+
+pub fn is_post_service_result_ok(result: PostServiceResult1) -> bool {
+    matches!(result, PostServiceResult1::Ok(result))
+}
+
+pub fn post_service_result_ok_value(result: PostServiceResult1) -> Option<PostServicePost> {
+    match result {
+        PostServiceResult1::Ok(val) => Some(val),
+        PostServiceResult1::Err(_) => None,
+    }
+}
+
+pub fn post_service_result_err_value(result: PostServiceResult1) -> String {
+    match result {
+        PostServiceResult1::Ok(_) => String::new(),
+        PostServiceResult1::Err(err) => match err {
+            UserPostServiceError::DuplicatePostId => "DuplicatePostId".to_string(),
+            UserPostServiceError::Unauthorized => "Unauthorized".to_string(),
+            UserPostServiceError::CallError(code, msg) => {
+                format!("CallError({}, {})", code as u8, msg)
+            }
+            UserPostServiceError::PostNotFound => "PostNotFound".to_string(),
+        },
+    }
+}
+
+pub fn is_created_from_service_canister(canister_principal: Principal) -> bool {
+    canister_principal == yral_canisters_client::ic::USER_INFO_SERVICE_ID
 }
