@@ -27,7 +27,7 @@ struct UploadOptionsScreenView: View {
 
         UploadOptionView(option: Constants.uploadOptionAI) {
           aiVideoScreenID = UUID()
-          navigateToAIVideoScreen = true
+//          navigateToAIVideoScreen = true
 
           AnalyticsModuleKt.getAnalyticsManager().trackEvent(
             event: VideoUploadTypeSelectedData(type: .aiVideo)
@@ -52,7 +52,7 @@ struct UploadOptionsScreenView: View {
 
         UploadOptionView(option: Constants.uploadOptionDevice) {
           uploadViewID = UUID()
-          navigateToUploadVideoScreen = true
+//          navigateToUploadVideoScreen = true
 
           AnalyticsModuleKt.getAnalyticsManager().trackEvent(
             event: VideoUploadTypeSelectedData(type: .uploadVideo)

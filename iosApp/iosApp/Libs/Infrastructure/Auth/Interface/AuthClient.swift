@@ -13,4 +13,5 @@ protocol AuthClient {
   func signInWithSocial(provider: SocialProvider) async throws
   func logout() async throws
   var authStatePublisher: AnyPublisher<AuthState, Never> { get }
+  var isServiceCanister: Bool { get }
 }

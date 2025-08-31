@@ -36,6 +36,7 @@ final class DefaultAuthClient: NSObject, AuthClient {
   let notificationService: NotificationService
 
   var pendingAuthState: String!
+  var isServiceCanister: Bool = false
 
   init(networkService: NetworkService,
        firebaseService: FirebaseService,
@@ -104,6 +105,7 @@ final class DefaultAuthClient: NSObject, AuthClient {
         self.userPrincipalString = userPrincipalString
         self.canisterPrincipal = try get_principal(canisterPrincipalString.intoRustString())
         self.userPrincipal = try get_principal(userPrincipalString.intoRustString())
+        self.isServiceCanister = UserDefaultsManager.shared.get(for: .isServiceCanisterUser) as Bool? ?? false
         Task { @MainActor in
           try await exchangePrincipalID(type: type)
         }
@@ -218,12 +220,18 @@ final class DefaultAuthClient: NSObject, AuthClient {
     UserDefaultsManager.shared.set(refreshClaims.exp, for: .authRefreshTokenExpiryDateKey)
   }
 
-  func storeSessionData(identity: Data, canisterPrincipal: String, userPrincipal: String) {
+  func storeSessionData(
+    identity: Data,
+    canisterPrincipal: String,
+    userPrincipal: String,
+    isServiceCanister: Bool
+  ) {
     do {
       try recordThrowingOperation {
         try KeychainHelper.store(data: identity, for: Constants.keychainIdentity)
         try KeychainHelper.store(userPrincipal, for: Constants.keychainUserPrincipal)
         try KeychainHelper.store(canisterPrincipal, for: Constants.keychainCanisterPrincipal)
+        UserDefaultsManager.shared.set(isServiceCanister, for: .isServiceCanisterUser)
       }
     } catch {
       print(error)
@@ -255,7 +263,7 @@ final class DefaultAuthClient: NSObject, AuthClient {
 
       let principal = get_principal_from_identity(identity).toString()
       crashReporter.log("Principal id before authenticate_with_network: \(principal)")
-      let canistersWrapper = try await authenticate_with_network(wire, nil)
+      let canistersWrapper = try await authenticate_with_network(wire)
 
       let canisterPrincipal = canistersWrapper.get_canister_principal()
       let canisterPrincipalString = canistersWrapper.get_canister_principal_string().toString()
@@ -268,10 +276,12 @@ final class DefaultAuthClient: NSObject, AuthClient {
         self.canisterPrincipalString = canisterPrincipalString
         self.userPrincipal = userPrincipal
         self.userPrincipalString = userPrincipalString
+        self.isServiceCanister = canistersWrapper.is_created_from_service_canister()
         self.storeSessionData(
           identity: data,
           canisterPrincipal: canisterPrincipalString,
-          userPrincipal: userPrincipalString
+          userPrincipal: userPrincipalString,
+          isServiceCanister: self.isServiceCanister
         )
       }
       await updateAuthState(for: type, withCoins: .zero, isFetchingCoins: true)

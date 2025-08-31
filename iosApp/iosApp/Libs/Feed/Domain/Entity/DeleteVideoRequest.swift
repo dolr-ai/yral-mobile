@@ -9,6 +9,6 @@
 import Foundation
 
 struct DeleteVideoRequest {
-  let postId: UInt64
+  let postId: String
   let videoId: String
 }

@@ -146,7 +146,7 @@ extension FeedsViewController: FeedsCellProtocol {
         Task { @MainActor in
           let reportReason = othersText.isEmpty ? reason : othersText
           await self.viewModel.report(request: ReportRequest(
-            postId: UInt64(feedItem.postID) ?? .zero,
+            postId: feedItem.postID,
             videoId: feedItem.videoID,
             reason: reportReason,
             canisterID: feedItem.canisterID,
@@ -221,7 +221,7 @@ extension FeedsViewController: FeedsCellProtocol {
           if isDelete {
             await self.viewModel.deleteVideo(
               request: DeleteVideoRequest(
-                postId: UInt64(feedItem.postID) ?? .zero,
+                postId: feedItem.postID,
                 videoId: feedItem.videoID
               )
             )
@@ -332,7 +332,7 @@ extension FeedsViewController: FeedsPlayerProtocol {
           likeCount: Int32(feed.likeCount),
           nsfwProbability: feed.nsfwProbability,
           percentageWatched: percentageWatched,
-          postID: Int32(feed.postID) ?? .zero,
+          postID: feed.postID,
           publisherCanisterID: feed.canisterID,
           publisherUserID: feed.principalID,
           videoDuration: duration,
