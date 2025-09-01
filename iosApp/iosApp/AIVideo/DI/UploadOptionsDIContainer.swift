@@ -7,9 +7,21 @@
 //
 
 import Foundation
+import SwiftUI
 
 final class UploadOptionsDIContainer {
-  func makeUploadOptionsView() -> UploadOptionsScreenView {
-    UploadOptionsScreenView()
+  func makeUploadOptionsView() -> UINavigationController {
+    let rootView = UploadOptionsScreenView().environment(\.uploadNavController, nil)
+    let host = UIHostingController(rootView: rootView)
+    let navigationController = UINavigationController(rootViewController: host)
+    host.rootView = UploadOptionsScreenView().environment(\.uploadNavController, navigationController)
+
+    navigationController.setNavigationBarHidden(true, animated: false)
+    navigationController.view.backgroundColor = .clear
+    navigationController.edgesForExtendedLayout = .all
+    host.edgesForExtendedLayout = .all
+    host.extendedLayoutIncludesOpaqueBars = true
+
+    return navigationController
   }
 }
