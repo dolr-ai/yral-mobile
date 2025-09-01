@@ -64,7 +64,7 @@ class AiVideoGenViewModel internal constructor(
             when (state) {
                 is SessionState.SignedIn -> state.session.canisterId
                 else -> null
-            }
+            } to properties.coinBalance
         }.distinctUntilChanged()
 
     private var currentRequestKey: VideoGenRequestKey? = null
@@ -356,6 +356,10 @@ class AiVideoGenViewModel internal constructor(
         canister?.let { refresh(canister) }
     }
 
+    fun updateBalance(balance: Long) {
+        _state.update { it.copy(currentBalance = balance) }
+    }
+
     data class ViewState(
         val selectedProvider: Provider? = null,
         val providers: List<Provider> = emptyList(),
@@ -365,7 +369,12 @@ class AiVideoGenViewModel internal constructor(
         val uiState: UiState<String> = UiState.Initial,
         val bottomSheetType: BottomSheetType = BottomSheetType.None,
         val currentCanister: String? = null,
-    )
+        val currentBalance: Long? = null,
+    ) {
+        fun isBalanceLow() = (selectedProvider?.cost?.sats ?: 0) > (currentBalance ?: -1)
+
+        fun isCreditsAvailable() = (usedCredits ?: 1) < totalCredits
+    }
 
     sealed class BottomSheetType {
         data object None : BottomSheetType()
