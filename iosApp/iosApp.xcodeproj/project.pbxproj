@@ -95,6 +95,36 @@
 		10512A442DA666AD00114BAA /* YralPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10512A422DA666A900114BAA /* YralPlayer.swift */; };
 		10512A522DA795A800114BAA /* YralQueuePlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10512A512DA7959D00114BAA /* YralQueuePlayer.swift */; };
 		10512A532DA795A800114BAA /* YralQueuePlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10512A512DA7959D00114BAA /* YralQueuePlayer.swift */; };
+		1064B7EB2E4B40630036C10B /* UploadOptionsScreenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B7EA2E4B40630036C10B /* UploadOptionsScreenView.swift */; };
+		1064B7EC2E4B40630036C10B /* UploadOptionsScreenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B7EA2E4B40630036C10B /* UploadOptionsScreenView.swift */; };
+		1064B7EE2E4B439A0036C10B /* UploadOptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B7ED2E4B439A0036C10B /* UploadOptionView.swift */; };
+		1064B7EF2E4B439A0036C10B /* UploadOptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B7ED2E4B439A0036C10B /* UploadOptionView.swift */; };
+		1064B7F32E4B50890036C10B /* UploadOption.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B7F22E4B50850036C10B /* UploadOption.swift */; };
+		1064B7F42E4B50890036C10B /* UploadOption.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B7F22E4B50850036C10B /* UploadOption.swift */; };
+		1064B7FA2E4C6D590036C10B /* UploadOptionsDIContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B7F92E4C6D520036C10B /* UploadOptionsDIContainer.swift */; };
+		1064B7FB2E4C6D590036C10B /* UploadOptionsDIContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B7F92E4C6D520036C10B /* UploadOptionsDIContainer.swift */; };
+		1064B7FD2E4C8CD30036C10B /* CreateAIVideoScreenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B7FC2E4C8CD30036C10B /* CreateAIVideoScreenView.swift */; };
+		1064B7FE2E4C8CD30036C10B /* CreateAIVideoScreenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B7FC2E4C8CD30036C10B /* CreateAIVideoScreenView.swift */; };
+		1064B8002E4CA4110036C10B /* AIVideoProviderResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B7FF2E4CA40D0036C10B /* AIVideoProviderResponse.swift */; };
+		1064B8012E4CA4110036C10B /* AIVideoProviderResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B7FF2E4CA40D0036C10B /* AIVideoProviderResponse.swift */; };
+		1064B8032E4CB1840036C10B /* ProviderOptionsBottomSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B8022E4CB1840036C10B /* ProviderOptionsBottomSheetView.swift */; };
+		1064B8042E4CB1840036C10B /* ProviderOptionsBottomSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B8022E4CB1840036C10B /* ProviderOptionsBottomSheetView.swift */; };
+		1064B8062E4CB34E0036C10B /* PromptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B8052E4CB3460036C10B /* PromptView.swift */; };
+		1064B8072E4CB34E0036C10B /* PromptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064B8052E4CB3460036C10B /* PromptView.swift */; };
+		106986032E53019F005BE0D4 /* CreateAIVideoDIContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 106986022E530195005BE0D4 /* CreateAIVideoDIContainer.swift */; };
+		106986042E53019F005BE0D4 /* CreateAIVideoDIContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 106986022E530195005BE0D4 /* CreateAIVideoDIContainer.swift */; };
+		106986072E530291005BE0D4 /* AIVideoProviderDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 106986062E530281005BE0D4 /* AIVideoProviderDTO.swift */; };
+		106986082E530291005BE0D4 /* AIVideoProviderDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 106986062E530281005BE0D4 /* AIVideoProviderDTO.swift */; };
+		1069860B2E5303A7005BE0D4 /* AIVideoRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1069860A2E5303A2005BE0D4 /* AIVideoRepository.swift */; };
+		1069860C2E5303A7005BE0D4 /* AIVideoRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1069860A2E5303A2005BE0D4 /* AIVideoRepository.swift */; };
+		1069860F2E5304D4005BE0D4 /* AIVideoRepositoryProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1069860E2E5304CB005BE0D4 /* AIVideoRepositoryProtocol.swift */; };
+		106986102E5304D4005BE0D4 /* AIVideoRepositoryProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1069860E2E5304CB005BE0D4 /* AIVideoRepositoryProtocol.swift */; };
+		106986122E530550005BE0D4 /* AIVideoProviderError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 106986112E530548005BE0D4 /* AIVideoProviderError.swift */; };
+		106986132E530550005BE0D4 /* AIVideoProviderError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 106986112E530548005BE0D4 /* AIVideoProviderError.swift */; };
+		106986162E5308DC005BE0D4 /* AIVideoProviderUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 106986152E5308D1005BE0D4 /* AIVideoProviderUseCase.swift */; };
+		106986172E5308DC005BE0D4 /* AIVideoProviderUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 106986152E5308D1005BE0D4 /* AIVideoProviderUseCase.swift */; };
+		1069861A2E530A01005BE0D4 /* CreateAIVideoViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 106986192E5309FB005BE0D4 /* CreateAIVideoViewModel.swift */; };
+		1069861B2E530A01005BE0D4 /* CreateAIVideoViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 106986192E5309FB005BE0D4 /* CreateAIVideoViewModel.swift */; };
 		107C60902DB7809A006FC467 /* UIView+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C608F2DB78093006FC467 /* UIView+Extensions.swift */; };
 		107C60912DB7809A006FC467 /* UIView+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C608F2DB78093006FC467 /* UIView+Extensions.swift */; };
 		107C60982DB8BCB1006FC467 /* SmileyGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C60972DB8BCB1006FC467 /* SmileyGameView.swift */; };
@@ -134,6 +164,42 @@
 		107C61772DC35ED6006FC467 /* CoinsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C61762DC35ED3006FC467 /* CoinsView.swift */; };
 		107C61782DC35ED6006FC467 /* CoinsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C61762DC35ED3006FC467 /* CoinsView.swift */; };
 		10BA2E872DA6507E00B6BE97 /* FeedsPlayerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10BA2E842DA6507E00B6BE97 /* FeedsPlayerTests.swift */; };
+		10C1B38B2E5375D500CFC41B /* AppDIContainerKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B38A2E5375D000CFC41B /* AppDIContainerKey.swift */; };
+		10C1B38C2E5375D500CFC41B /* AppDIContainerKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B38A2E5375D000CFC41B /* AppDIContainerKey.swift */; };
+		10C1B38E2E544BC900CFC41B /* GenerateVideoDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B38D2E544BC200CFC41B /* GenerateVideoDTO.swift */; };
+		10C1B38F2E544BC900CFC41B /* GenerateVideoDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B38D2E544BC200CFC41B /* GenerateVideoDTO.swift */; };
+		10C1B3912E544D1300CFC41B /* GenerateVideoResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3902E544D0B00CFC41B /* GenerateVideoResponse.swift */; };
+		10C1B3922E544D1300CFC41B /* GenerateVideoResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3902E544D0B00CFC41B /* GenerateVideoResponse.swift */; };
+		10C1B3942E544E1400CFC41B /* GenerateVideoError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3932E544E0E00CFC41B /* GenerateVideoError.swift */; };
+		10C1B3952E544E1400CFC41B /* GenerateVideoError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3932E544E0E00CFC41B /* GenerateVideoError.swift */; };
+		10C1B3972E54515200CFC41B /* GenerateVideoUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3962E54514E00CFC41B /* GenerateVideoUseCase.swift */; };
+		10C1B3982E54515200CFC41B /* GenerateVideoUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3962E54514E00CFC41B /* GenerateVideoUseCase.swift */; };
+		10C1B39A2E545A0C00CFC41B /* GenerateVideoRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3992E545A0400CFC41B /* GenerateVideoRequest.swift */; };
+		10C1B39B2E545A0C00CFC41B /* GenerateVideoRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3992E545A0400CFC41B /* GenerateVideoRequest.swift */; };
+		10C1B39D2E54BD0F00CFC41B /* CreateAIVideoErrorBottomSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B39C2E54BD0F00CFC41B /* CreateAIVideoErrorBottomSheet.swift */; };
+		10C1B39E2E54BD0F00CFC41B /* CreateAIVideoErrorBottomSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B39C2E54BD0F00CFC41B /* CreateAIVideoErrorBottomSheet.swift */; };
+		10C1B3E62E55A73300CFC41B /* RateLimitStatusUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3E52E55A72900CFC41B /* RateLimitStatusUseCase.swift */; };
+		10C1B3E72E55A73300CFC41B /* RateLimitStatusUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3E52E55A72900CFC41B /* RateLimitStatusUseCase.swift */; };
+		10C1B3E92E55EE2D00CFC41B /* DisableBackBottomSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3E82E55EE2D00CFC41B /* DisableBackBottomSheet.swift */; };
+		10C1B3EA2E55EE2D00CFC41B /* DisableBackBottomSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3E82E55EE2D00CFC41B /* DisableBackBottomSheet.swift */; };
+		10C1B3EC2E56E72A00CFC41B /* AIVideoCompletedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3EB2E56E72A00CFC41B /* AIVideoCompletedView.swift */; };
+		10C1B3ED2E56E72A00CFC41B /* AIVideoCompletedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3EB2E56E72A00CFC41B /* AIVideoCompletedView.swift */; };
+		10C1B3EF2E56F62500CFC41B /* ResizableVideoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3EE2E56F62500CFC41B /* ResizableVideoView.swift */; };
+		10C1B3F02E56F62500CFC41B /* ResizableVideoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3EE2E56F62500CFC41B /* ResizableVideoView.swift */; };
+		10C1B3F22E57117900CFC41B /* EventBus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3F12E57117500CFC41B /* EventBus.swift */; };
+		10C1B3F32E57117900CFC41B /* EventBus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3F12E57117500CFC41B /* EventBus.swift */; };
+		10C1B3F52E573B1E00CFC41B /* GenerateVideoStatusUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3F42E573B1300CFC41B /* GenerateVideoStatusUseCase.swift */; };
+		10C1B3F62E573B1E00CFC41B /* GenerateVideoStatusUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3F42E573B1300CFC41B /* GenerateVideoStatusUseCase.swift */; };
+		10C1B3F82E5754DA00CFC41B /* UploadAIVideoRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3F72E5754D400CFC41B /* UploadAIVideoRequest.swift */; };
+		10C1B3F92E5754DA00CFC41B /* UploadAIVideoRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3F72E5754D400CFC41B /* UploadAIVideoRequest.swift */; };
+		10C1B3FB2E57565A00CFC41B /* UploadAIVideoError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3FA2E57565300CFC41B /* UploadAIVideoError.swift */; };
+		10C1B3FC2E57565A00CFC41B /* UploadAIVideoError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3FA2E57565300CFC41B /* UploadAIVideoError.swift */; };
+		10C1B3FE2E57571E00CFC41B /* RateLimitStatusError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3FD2E57571600CFC41B /* RateLimitStatusError.swift */; };
+		10C1B3FF2E57571E00CFC41B /* RateLimitStatusError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B3FD2E57571600CFC41B /* RateLimitStatusError.swift */; };
+		10C1B4012E57574D00CFC41B /* GenerateVideoStatusError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B4002E57574800CFC41B /* GenerateVideoStatusError.swift */; };
+		10C1B4022E57574D00CFC41B /* GenerateVideoStatusError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B4002E57574800CFC41B /* GenerateVideoStatusError.swift */; };
+		10C1B4042E57589200CFC41B /* UploadAIVideoUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B4032E57588C00CFC41B /* UploadAIVideoUseCase.swift */; };
+		10C1B4052E57589200CFC41B /* UploadAIVideoUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B4032E57588C00CFC41B /* UploadAIVideoUseCase.swift */; };
 		10CEBB7F2E3103670022803A /* HapticFeedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CEBB7E2E3103630022803A /* HapticFeedback.swift */; };
 		10CEBB802E3103670022803A /* HapticFeedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CEBB7E2E3103630022803A /* HapticFeedback.swift */; };
 		10CEBB822E3103CD0022803A /* HapticFeedback+SwiftUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CEBB812E3103C50022803A /* HapticFeedback+SwiftUI.swift */; };
@@ -674,6 +740,21 @@
 		105037672DDC5DB000571B4E /* SmileyGameConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameConfig.swift; sourceTree = "<group>"; };
 		10512A422DA666A900114BAA /* YralPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralPlayer.swift; sourceTree = "<group>"; };
 		10512A512DA7959D00114BAA /* YralQueuePlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralQueuePlayer.swift; sourceTree = "<group>"; };
+		1064B7EA2E4B40630036C10B /* UploadOptionsScreenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadOptionsScreenView.swift; sourceTree = "<group>"; };
+		1064B7ED2E4B439A0036C10B /* UploadOptionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadOptionView.swift; sourceTree = "<group>"; };
+		1064B7F22E4B50850036C10B /* UploadOption.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadOption.swift; sourceTree = "<group>"; };
+		1064B7F92E4C6D520036C10B /* UploadOptionsDIContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadOptionsDIContainer.swift; sourceTree = "<group>"; };
+		1064B7FC2E4C8CD30036C10B /* CreateAIVideoScreenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateAIVideoScreenView.swift; sourceTree = "<group>"; };
+		1064B7FF2E4CA40D0036C10B /* AIVideoProviderResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIVideoProviderResponse.swift; sourceTree = "<group>"; };
+		1064B8022E4CB1840036C10B /* ProviderOptionsBottomSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderOptionsBottomSheetView.swift; sourceTree = "<group>"; };
+		1064B8052E4CB3460036C10B /* PromptView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptView.swift; sourceTree = "<group>"; };
+		106986022E530195005BE0D4 /* CreateAIVideoDIContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateAIVideoDIContainer.swift; sourceTree = "<group>"; };
+		106986062E530281005BE0D4 /* AIVideoProviderDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIVideoProviderDTO.swift; sourceTree = "<group>"; };
+		1069860A2E5303A2005BE0D4 /* AIVideoRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIVideoRepository.swift; sourceTree = "<group>"; };
+		1069860E2E5304CB005BE0D4 /* AIVideoRepositoryProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIVideoRepositoryProtocol.swift; sourceTree = "<group>"; };
+		106986112E530548005BE0D4 /* AIVideoProviderError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIVideoProviderError.swift; sourceTree = "<group>"; };
+		106986152E5308D1005BE0D4 /* AIVideoProviderUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIVideoProviderUseCase.swift; sourceTree = "<group>"; };
+		106986192E5309FB005BE0D4 /* CreateAIVideoViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateAIVideoViewModel.swift; sourceTree = "<group>"; };
 		107C608F2DB78093006FC467 /* UIView+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIView+Extensions.swift"; sourceTree = "<group>"; };
 		107C60972DB8BCB1006FC467 /* SmileyGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameView.swift; sourceTree = "<group>"; };
 		107C609A2DB90B22006FC467 /* SmileyGameResultBottomSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameResultBottomSheetView.swift; sourceTree = "<group>"; };
@@ -695,6 +776,24 @@
 		107C61762DC35ED3006FC467 /* CoinsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoinsView.swift; sourceTree = "<group>"; };
 		10BA2E822DA64E6A00B6BE97 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Platforms/iPhoneOS.platform/Developer/Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		10BA2E842DA6507E00B6BE97 /* FeedsPlayerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedsPlayerTests.swift; sourceTree = "<group>"; };
+		10C1B38A2E5375D000CFC41B /* AppDIContainerKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDIContainerKey.swift; sourceTree = "<group>"; };
+		10C1B38D2E544BC200CFC41B /* GenerateVideoDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenerateVideoDTO.swift; sourceTree = "<group>"; };
+		10C1B3902E544D0B00CFC41B /* GenerateVideoResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenerateVideoResponse.swift; sourceTree = "<group>"; };
+		10C1B3932E544E0E00CFC41B /* GenerateVideoError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenerateVideoError.swift; sourceTree = "<group>"; };
+		10C1B3962E54514E00CFC41B /* GenerateVideoUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenerateVideoUseCase.swift; sourceTree = "<group>"; };
+		10C1B3992E545A0400CFC41B /* GenerateVideoRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenerateVideoRequest.swift; sourceTree = "<group>"; };
+		10C1B39C2E54BD0F00CFC41B /* CreateAIVideoErrorBottomSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateAIVideoErrorBottomSheet.swift; sourceTree = "<group>"; };
+		10C1B3E52E55A72900CFC41B /* RateLimitStatusUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RateLimitStatusUseCase.swift; sourceTree = "<group>"; };
+		10C1B3E82E55EE2D00CFC41B /* DisableBackBottomSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisableBackBottomSheet.swift; sourceTree = "<group>"; };
+		10C1B3EB2E56E72A00CFC41B /* AIVideoCompletedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIVideoCompletedView.swift; sourceTree = "<group>"; };
+		10C1B3EE2E56F62500CFC41B /* ResizableVideoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResizableVideoView.swift; sourceTree = "<group>"; };
+		10C1B3F12E57117500CFC41B /* EventBus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventBus.swift; sourceTree = "<group>"; };
+		10C1B3F42E573B1300CFC41B /* GenerateVideoStatusUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenerateVideoStatusUseCase.swift; sourceTree = "<group>"; };
+		10C1B3F72E5754D400CFC41B /* UploadAIVideoRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadAIVideoRequest.swift; sourceTree = "<group>"; };
+		10C1B3FA2E57565300CFC41B /* UploadAIVideoError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadAIVideoError.swift; sourceTree = "<group>"; };
+		10C1B3FD2E57571600CFC41B /* RateLimitStatusError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RateLimitStatusError.swift; sourceTree = "<group>"; };
+		10C1B4002E57574800CFC41B /* GenerateVideoStatusError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenerateVideoStatusError.swift; sourceTree = "<group>"; };
+		10C1B4032E57588C00CFC41B /* UploadAIVideoUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadAIVideoUseCase.swift; sourceTree = "<group>"; };
 		10CEBB7E2E3103630022803A /* HapticFeedback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticFeedback.swift; sourceTree = "<group>"; };
 		10CEBB812E3103C50022803A /* HapticFeedback+SwiftUI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HapticFeedback+SwiftUI.swift"; sourceTree = "<group>"; };
 		10CEBB842E3104000022803A /* HapticGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticGenerator.swift; sourceTree = "<group>"; };
@@ -935,8 +1034,6 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		AC9B77DE2D58C7E300270FC9 /* YralTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = YralTests;
 			sourceTree = "<group>";
 		};
@@ -1136,6 +1233,116 @@
 			path = FeedsPlayer;
 			sourceTree = "<group>";
 		};
+		1064B7E82E4B3FC00036C10B /* AIVideo */ = {
+			isa = PBXGroup;
+			children = (
+				106986182E5309E2005BE0D4 /* ViewModel */,
+				106986052E530269005BE0D4 /* Data */,
+				1064B7F52E4C6CE20036C10B /* DI */,
+				1064B7F02E4B50790036C10B /* Domain */,
+				1064B7E92E4B3FE20036C10B /* View */,
+			);
+			path = AIVideo;
+			sourceTree = "<group>";
+		};
+		1064B7E92E4B3FE20036C10B /* View */ = {
+			isa = PBXGroup;
+			children = (
+				1064B8052E4CB3460036C10B /* PromptView.swift */,
+				1064B7EA2E4B40630036C10B /* UploadOptionsScreenView.swift */,
+				1064B7ED2E4B439A0036C10B /* UploadOptionView.swift */,
+				1064B7FC2E4C8CD30036C10B /* CreateAIVideoScreenView.swift */,
+				1064B8022E4CB1840036C10B /* ProviderOptionsBottomSheetView.swift */,
+				10C1B39C2E54BD0F00CFC41B /* CreateAIVideoErrorBottomSheet.swift */,
+				10C1B3E82E55EE2D00CFC41B /* DisableBackBottomSheet.swift */,
+				10C1B3EB2E56E72A00CFC41B /* AIVideoCompletedView.swift */,
+				10C1B3EE2E56F62500CFC41B /* ResizableVideoView.swift */,
+			);
+			path = View;
+			sourceTree = "<group>";
+		};
+		1064B7F02E4B50790036C10B /* Domain */ = {
+			isa = PBXGroup;
+			children = (
+				106986142E5308C6005BE0D4 /* UseCase */,
+				1069860D2E5304B9005BE0D4 /* Interface */,
+				1064B7F12E4B507E0036C10B /* Entity */,
+			);
+			path = Domain;
+			sourceTree = "<group>";
+		};
+		1064B7F12E4B507E0036C10B /* Entity */ = {
+			isa = PBXGroup;
+			children = (
+				10C1B4002E57574800CFC41B /* GenerateVideoStatusError.swift */,
+				10C1B3FD2E57571600CFC41B /* RateLimitStatusError.swift */,
+				10C1B3FA2E57565300CFC41B /* UploadAIVideoError.swift */,
+				10C1B3932E544E0E00CFC41B /* GenerateVideoError.swift */,
+				10C1B3902E544D0B00CFC41B /* GenerateVideoResponse.swift */,
+				106986112E530548005BE0D4 /* AIVideoProviderError.swift */,
+				1064B7FF2E4CA40D0036C10B /* AIVideoProviderResponse.swift */,
+				1064B7F22E4B50850036C10B /* UploadOption.swift */,
+			);
+			path = Entity;
+			sourceTree = "<group>";
+		};
+		1064B7F52E4C6CE20036C10B /* DI */ = {
+			isa = PBXGroup;
+			children = (
+				106986022E530195005BE0D4 /* CreateAIVideoDIContainer.swift */,
+				1064B7F92E4C6D520036C10B /* UploadOptionsDIContainer.swift */,
+			);
+			path = DI;
+			sourceTree = "<group>";
+		};
+		106986052E530269005BE0D4 /* Data */ = {
+			isa = PBXGroup;
+			children = (
+				106986092E530396005BE0D4 /* Repository */,
+				106986062E530281005BE0D4 /* AIVideoProviderDTO.swift */,
+				10C1B38D2E544BC200CFC41B /* GenerateVideoDTO.swift */,
+				10C1B3992E545A0400CFC41B /* GenerateVideoRequest.swift */,
+				10C1B3F72E5754D400CFC41B /* UploadAIVideoRequest.swift */,
+			);
+			path = Data;
+			sourceTree = "<group>";
+		};
+		106986092E530396005BE0D4 /* Repository */ = {
+			isa = PBXGroup;
+			children = (
+				1069860A2E5303A2005BE0D4 /* AIVideoRepository.swift */,
+			);
+			path = Repository;
+			sourceTree = "<group>";
+		};
+		1069860D2E5304B9005BE0D4 /* Interface */ = {
+			isa = PBXGroup;
+			children = (
+				1069860E2E5304CB005BE0D4 /* AIVideoRepositoryProtocol.swift */,
+			);
+			path = Interface;
+			sourceTree = "<group>";
+		};
+		106986142E5308C6005BE0D4 /* UseCase */ = {
+			isa = PBXGroup;
+			children = (
+				10C1B4032E57588C00CFC41B /* UploadAIVideoUseCase.swift */,
+				10C1B3F42E573B1300CFC41B /* GenerateVideoStatusUseCase.swift */,
+				10C1B3E52E55A72900CFC41B /* RateLimitStatusUseCase.swift */,
+				10C1B3962E54514E00CFC41B /* GenerateVideoUseCase.swift */,
+				106986152E5308D1005BE0D4 /* AIVideoProviderUseCase.swift */,
+			);
+			path = UseCase;
+			sourceTree = "<group>";
+		};
+		106986182E5309E2005BE0D4 /* ViewModel */ = {
+			isa = PBXGroup;
+			children = (
+				106986192E5309FB005BE0D4 /* CreateAIVideoViewModel.swift */,
+			);
+			path = ViewModel;
+			sourceTree = "<group>";
+		};
 		107C60922DB7AA86006FC467 /* SmileyGame */ = {
 			isa = PBXGroup;
 			children = (
@@ -1315,12 +1522,14 @@
 		7555FF7D242A565900829871 /* iosApp */ = {
 			isa = PBXGroup;
 			children = (
+				1064B7E82E4B3FC00036C10B /* AIVideo */,
 				10CEBB7D2E3103580022803A /* HapticFeedback */,
 				ACD7C1702E1D836400075148 /* DeepLinkRouter */,
 				100209A92DE6E2E700DF269E /* Leaderboard */,
 				107C60922DB7AA86006FC467 /* SmileyGame */,
 				2152FB032600AC8F00CF470E /* IosApp.swift */,
 				ACB46A2B2D0EC82F002E200C /* AppDIContainer.swift */,
+				10C1B38A2E5375D000CFC41B /* AppDIContainerKey.swift */,
 				ACB46A712D105AC0002E200C /* DesignSystem */,
 				ACC0F3932D2ED5B700FA5BD0 /* Splash */,
 				AC638BF72D230DA900481E94 /* HomeTabController */,
@@ -1513,6 +1722,7 @@
 		AC26CA662D806501006ADA75 /* Utils */ = {
 			isa = PBXGroup;
 			children = (
+				10C1B3F12E57117500CFC41B /* EventBus.swift */,
 				AC04D3012E059E990055C4AA /* AppCheckProviderFactory.swift */,
 				10020A142DE9841F00DF269E /* UIApplication+Extensions.swift */,
 				1002088E2DE483EC00DF269E /* FirebaseLottieManager.swift */,
@@ -2858,9 +3068,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -2875,9 +3089,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3039,9 +3257,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3070,8 +3292,10 @@
 				ACB46A612D0EF94B002E200C /* DefaultAuthClient.swift in Sources */,
 				AC462F4A2D95BB61004957B3 /* FeedsCell+Captions.swift in Sources */,
 				107C60BC2DBF4A6F006FC467 /* SmileyGameRuleRepository.swift in Sources */,
+				106986132E530550005BE0D4 /* AIVideoProviderError.swift in Sources */,
 				AC51C04C2DC392B500D5BA34 /* LogoutUseCase.swift in Sources */,
 				AC26CA642D805E58006ADA75 /* FeedError.swift in Sources */,
+				106986072E530291005BE0D4 /* AIVideoProviderDTO.swift in Sources */,
 				AC638BFA2D230DCD00481E94 /* HomeTabController.swift in Sources */,
 				AC51C0462DC3905700D5BA34 /* RefreshTokenRequest.swift in Sources */,
 				AC9293FD2D620B6C003DB102 /* MediaPicker.swift in Sources */,
@@ -3081,11 +3305,14 @@
 				AC3FBE152E2BAA0F00CE3EC1 /* MP4DownloadManager.swift in Sources */,
 				AC3FBE162E2BAA0F00CE3EC1 /* MP4DownloadManaging.swift in Sources */,
 				10512A442DA666AD00114BAA /* YralPlayer.swift in Sources */,
+				1064B8032E4CB1840036C10B /* ProviderOptionsBottomSheetView.swift in Sources */,
 				105036F62DDB289D00571B4E /* ExchangePrincipalResponse.swift in Sources */,
 				ACB46A732D105AF4002E200C /* CollectionView+Extensions.swift in Sources */,
 				ACAA536B2E4A538E008D3025 /* OnboardingInfoView.swift in Sources */,
+				1064B7EB2E4B40630036C10B /* UploadOptionsScreenView.swift in Sources */,
 				10CEBB892E3104220022803A /* Presets.swift in Sources */,
 				107C60C32DBF4CE2006FC467 /* FirebaseService.swift in Sources */,
+				106986172E5308DC005BE0D4 /* AIVideoProviderUseCase.swift in Sources */,
 				10020AB02DF7FE2A00DF269E /* SatsCoinError.swift in Sources */,
 				105037682DDC5DB500571B4E /* SmileyGameConfig.swift in Sources */,
 				ACB46A432D0ECBB3002E200C /* ml_feed.grpc.swift in Sources */,
@@ -3098,8 +3325,10 @@
 				ACD2E8252D6746E900E750FE /* UploadingProgressView.swift in Sources */,
 				AC32E4702D299E74001DDA43 /* ICPBrandingView.swift in Sources */,
 				10020AAB2DF7FBE800DF269E /* SatsCoinDTO.swift in Sources */,
+				1064B7FD2E4C8CD30036C10B /* CreateAIVideoScreenView.swift in Sources */,
 				ACC0D4612D917908006DCF5C /* DeleteVideoRequestDTO.swift in Sources */,
 				AC26CA4A2D8026B4006ADA75 /* CrashReporter.swift in Sources */,
+				106986102E5304D4005BE0D4 /* AIVideoRepositoryProtocol.swift in Sources */,
 				AC4960652D2D693B008D59D9 /* Foundation+Extensions.swift in Sources */,
 				ACEBF7EA2D6F844E00B594A0 /* ToastType.swift in Sources */,
 				105034BD2DD6353800571B4E /* SmileyGameResultResponse.swift in Sources */,
@@ -3117,6 +3346,8 @@
 				AC462F482D95B7F8004957B3 /* ReportView.swift in Sources */,
 				AC61D3B12DB28AAB00A7EA92 /* EULAPopUpView.swift in Sources */,
 				AC92941D2D6622EE003DB102 /* VideoPickerViewControllerRepresentable.swift in Sources */,
+				10C1B4012E57574D00CFC41B /* GenerateVideoStatusError.swift in Sources */,
+				1064B8062E4CB34E0036C10B /* PromptView.swift in Sources */,
 				100209FA2DE83F7900DF269E /* LeaderboardDTO.swift in Sources */,
 				ACCB98782D944213002B9675 /* UILabel+Extensions.swift in Sources */,
 				AC2C30D52D96C68700DA9F81 /* ReportRequestDTO.swift in Sources */,
@@ -3133,9 +3364,12 @@
 				ACCA778F2DE4C1A2005BC0FA /* EventBuffer.swift in Sources */,
 				ACEBF7EF2D6F847300B594A0 /* ToastManager.swift in Sources */,
 				ACAA4D6D2DDCB257001092A6 /* FirebasePerformanceMonitor.swift in Sources */,
+				1069861B2E530A01005BE0D4 /* CreateAIVideoViewModel.swift in Sources */,
 				ACDD23E72D8B1B5F00AB0DAF /* ProfileVideoRequest.swift in Sources */,
+				10C1B3FE2E57571E00CFC41B /* RateLimitStatusError.swift in Sources */,
 				ACC0D44E2D8DDB21006DCF5C /* ProfileRepository.swift in Sources */,
 				ACEBF7E22D6F505A00B594A0 /* UploadCompletedView.swift in Sources */,
+				1064B7EE2E4B439A0036C10B /* UploadOptionView.swift in Sources */,
 				AC7F7EAE2D771EB300215162 /* UploadEndpointResponse.swift in Sources */,
 				ACF639DC2DC24D2B00C4BCCC /* SocialProvider.swift in Sources */,
 				AC99BBBB2D86C8B1008012C2 /* ProfileViewModel.swift in Sources */,
@@ -3146,8 +3380,10 @@
 				AC32E3F72D26FEB9001DDA43 /* UIColor+Extensions.swift in Sources */,
 				AC7F7EBD2D77335900215162 /* AuthErrors.swift in Sources */,
 				AC99BBB82D86C645008012C2 /* ProfileDIContainer.swift in Sources */,
+				1064B7F42E4B50890036C10B /* UploadOption.swift in Sources */,
 				107C60C62DBF6109006FC467 /* SmileyGameRuleDTO.swift in Sources */,
 				ACBBF8BD2E41176100002188 /* HLSDownloadManager+Bookmarks.swift in Sources */,
+				10C1B39D2E54BD0F00CFC41B /* CreateAIVideoErrorBottomSheet.swift in Sources */,
 				10020A192DED6CED00DF269E /* LeaderboardRowView.swift in Sources */,
 				ACC0F3972D2ED5D700FA5BD0 /* LottieView.swift in Sources */,
 				AC7D5B3E2E0EA7C6008853AF /* NotificationsNudge.swift in Sources */,
@@ -3158,11 +3394,14 @@
 				AC42D3FB2E0D6E7E009C2D92 /* NotificationService.swift in Sources */,
 				AC42D3FC2E0D6E7E009C2D92 /* FirebaseNotifications.swift in Sources */,
 				AC32E4692D2998D6001DDA43 /* AccountDIContainer.swift in Sources */,
+				10C1B3EF2E56F62500CFC41B /* ResizableVideoView.swift in Sources */,
+				10C1B3F62E573B1E00CFC41B /* GenerateVideoStatusUseCase.swift in Sources */,
 				AC0084882E31DEA30041302A /* RechargeWalletResponseDTO.swift in Sources */,
 				AC5A7B8C2DACF1E2009E9E42 /* VideoEventDTO.swift in Sources */,
 				AC7D5BF72E1034E0008853AF /* NotificationsToggleViewModel.swift in Sources */,
 				ACB46A362D0EC998002E200C /* FeedDIContainer.swift in Sources */,
 				ACF63A7B2DC29A3100C4BCCC /* ClientCredentialsRequest.swift in Sources */,
+				10C1B39B2E545A0C00CFC41B /* GenerateVideoRequest.swift in Sources */,
 				AC26CA572D80287E006ADA75 /* AuthClient.swift in Sources */,
 				105034B32DD630DB00571B4E /* CastVoteRepositoryProtocol.swift in Sources */,
 				2152FB042600AC8F00CF470E /* IosApp.swift in Sources */,
@@ -3171,11 +3410,14 @@
 				AC811BDC2DBA95760094C5F6 /* SignupFailureSheet.swift in Sources */,
 				AC09A9B22CDB775C009A39A4 /* yral-mobile-swift-binding.swift in Sources */,
 				AC0084862E31DE400041302A /* RechargeWalletRequestDTO.swift in Sources */,
+				10C1B3FB2E57565A00CFC41B /* UploadAIVideoError.swift in Sources */,
+				1064B7FB2E4C6D590036C10B /* UploadOptionsDIContainer.swift in Sources */,
 				AC1F93962DC1495400F322E1 /* TokenResponseDTO.swift in Sources */,
 				AC26CA5E2D8052E2006ADA75 /* BaseStreamingUseCase.swift in Sources */,
 				ACB09FD52D92D66400EE3239 /* FeedsViewModelProtocol.swift in Sources */,
 				ACF639DF2DC25BA600C4BCCC /* UserDefaultsManager.swift in Sources */,
 				AC8FC76B2D9BE09A006F29BC /* FeedRequestDTO.swift in Sources */,
+				10C1B3F32E57117900CFC41B /* EventBus.swift in Sources */,
 				AC7F7EAA2D771DF400215162 /* GetUploadEndpointUseCase.swift in Sources */,
 				1050348F2DD4B6AA00571B4E /* AudioPlayer.swift in Sources */,
 				105034A72DD5E50D00571B4E /* SmileyConfigError.swift in Sources */,
@@ -3184,6 +3426,7 @@
 				AC32E4652D2991AD001DDA43 /* AccountView.swift in Sources */,
 				ACC0D43E2D8C6BF3006DCF5C /* ClearBackgroundView.swift in Sources */,
 				AC4DECA92D3E06AC008EC8F5 /* FooterLoaderView.swift in Sources */,
+				10C1B4042E57589200CFC41B /* UploadAIVideoUseCase.swift in Sources */,
 				AC51C0522DC4E0D200D5BA34 /* RefreshVideosRequest.swift in Sources */,
 				100F64EF2DCC96C9000BC17E /* YralCache.swift in Sources */,
 				ACAA53942E4CB292008D3025 /* FeedsCell+PlayToScroll.swift in Sources */,
@@ -3195,6 +3438,7 @@
 				AC09A9B32CDB775C009A39A4 /* SwiftBridgeCore.swift in Sources */,
 				ACC1C3942D9AF854005A7539 /* LottieLoaderView.swift in Sources */,
 				AC99BBC12D86FF81008012C2 /* ProfileEmptyState.swift in Sources */,
+				10C1B3912E544D1300CFC41B /* GenerateVideoResponse.swift in Sources */,
 				ACD7C16E2E1D38DF00075148 /* DefaultAuthClient+Firebase.swift in Sources */,
 				10CEBB852E3104060022803A /* HapticGenerator.swift in Sources */,
 				ACEBF7F72D70A8D700B594A0 /* AnimatedCheckbox.swift in Sources */,
@@ -3205,6 +3449,7 @@
 				AC7F7EC82D78696200215162 /* UploadDelegate.swift in Sources */,
 				AC5A7B8F2DACF5B2009E9E42 /* VideoEventRequest.swift in Sources */,
 				107C60A52DBA01F0006FC467 /* RoundedCorner.swift in Sources */,
+				10C1B3952E544E1400CFC41B /* GenerateVideoError.swift in Sources */,
 				AC32E4252D2712F1001DDA43 /* ProfileInfoView.swift in Sources */,
 				AC7F7EB72D7732AC00215162 /* VideoUploadError.swift in Sources */,
 				ACC0D4482D8DA208006DCF5C /* RefreshVideosUseCase.swift in Sources */,
@@ -3227,7 +3472,9 @@
 				ACD7C1732E1D837500075148 /* DeepLinkRouter.swift in Sources */,
 				ACC0D4342D8BFE67006DCF5C /* NudgePopupView.swift in Sources */,
 				AC92940F2D64CBFB003DB102 /* SelectFileView.swift in Sources */,
+				10C1B3E72E55A73300CFC41B /* RateLimitStatusUseCase.swift in Sources */,
 				AC1ACFA02DB964AB001BDCFD /* SwiftUI+Extensions.swift in Sources */,
+				106986032E53019F005BE0D4 /* CreateAIVideoDIContainer.swift in Sources */,
 				ACAA4D722DDCF866001092A6 /* FeedsPlayer+Events.swift in Sources */,
 				AC32E44C2D2965A3001DDA43 /* AccountViewModel.swift in Sources */,
 				AC09AA742CDD210D009A39A4 /* Data+Extensions.swift in Sources */,
@@ -3242,15 +3489,18 @@
 				AC32E4542D296637001DDA43 /* AccountRepository.swift in Sources */,
 				105036EA2DDB287700571B4E /* ExchangePrincipal.swift in Sources */,
 				AC9294092D630266003DB102 /* UploadView.swift in Sources */,
+				10C1B3ED2E56E72A00CFC41B /* AIVideoCompletedView.swift in Sources */,
 				AC20A1412E3B7723003306C1 /* FeedsCell+Wallet.swift in Sources */,
 				AC7F7EBF2D7734BB00215162 /* UploadRepository.swift in Sources */,
 				107C61242DC0F2C8006FC467 /* SmileyGameRuleError.swift in Sources */,
+				10C1B38B2E5375D500CFC41B /* AppDIContainerKey.swift in Sources */,
 				ACC0D45D2D91785B006DCF5C /* SwiftDelegatedIdentityWire.swift in Sources */,
 				ACB09FC92D92CB6400EE3239 /* ProfileRouter.swift in Sources */,
 				ACAA4D602DDC75CB001092A6 /* Notifications.swift in Sources */,
 				ACB46A812D106034002E200C /* FeedsCell.swift in Sources */,
 				100F63D42DCB4630000BC17E /* SmileyGameRuleView.swift in Sources */,
 				AC7F7ECE2D78707200215162 /* UploadVideoRequest.swift in Sources */,
+				10C1B38E2E544BC900CFC41B /* GenerateVideoDTO.swift in Sources */,
 				AC6BECC22D09F91C002E2021 /* HTTPService.swift in Sources */,
 				AC2C30CD2D96C49800DA9F81 /* ReportUseCase.swift in Sources */,
 				ACAA53922E4CB156008D3025 /* PlayToScrollInfoView.swift in Sources */,
@@ -3269,8 +3519,12 @@
 				AC9294112D6599A1003DB102 /* CaptionsView.swift in Sources */,
 				AC638BF62D2309C000481E94 /* KeychainHelper.swift in Sources */,
 				AC99BB9A2D84913C008012C2 /* YralColor.swift in Sources */,
+				1064B8012E4CA4110036C10B /* AIVideoProviderResponse.swift in Sources */,
+				1069860C2E5303A7005BE0D4 /* AIVideoRepository.swift in Sources */,
 				107C60C92DBF7A2D006FC467 /* SmileyGameRuleDIContainer.swift in Sources */,
+				10C1B3E92E55EE2D00CFC41B /* DisableBackBottomSheet.swift in Sources */,
 				AC6E31232D22F08F001EBE6C /* ImageLoaderProtocol.swift in Sources */,
+				10C1B3F82E5754DA00CFC41B /* UploadAIVideoRequest.swift in Sources */,
 				105034A22DD5E3D500571B4E /* SmileyConfigDTO.swift in Sources */,
 				AC462F422D95A4AD004957B3 /* OffsetableScrollView.swift in Sources */,
 				AC04D3022E059EA50055C4AA /* AppCheckProviderFactory.swift in Sources */,
@@ -3279,6 +3533,7 @@
 				ACF63A782DC271F900C4BCCC /* DefaultAuthClient+Extensions.swift in Sources */,
 				107C60D62DBFA7C0006FC467 /* FirebaseImageView.swift in Sources */,
 				107C60B42DBF4857006FC467 /* SmileyGameRuleUseCase.swift in Sources */,
+				10C1B3972E54515200CFC41B /* GenerateVideoUseCase.swift in Sources */,
 				ACB46A292D0EC76A002E200C /* AppConfiguration.swift in Sources */,
 				ACEBF7DF2D6F215800B594A0 /* VideoPlayerView.swift in Sources */,
 				ACB46A342D0EC8FF002E200C /* Numbers+Extensions.swift in Sources */,
@@ -3330,8 +3585,10 @@
 				ACB46A602D0EF94B002E200C /* DefaultAuthClient.swift in Sources */,
 				AC462F4B2D95BB61004957B3 /* FeedsCell+Captions.swift in Sources */,
 				107C60BD2DBF4A6F006FC467 /* SmileyGameRuleRepository.swift in Sources */,
+				106986122E530550005BE0D4 /* AIVideoProviderError.swift in Sources */,
 				AC51C04B2DC392B500D5BA34 /* LogoutUseCase.swift in Sources */,
 				AC26CA652D805E58006ADA75 /* FeedError.swift in Sources */,
+				106986082E530291005BE0D4 /* AIVideoProviderDTO.swift in Sources */,
 				AC638BF92D230DCD00481E94 /* HomeTabController.swift in Sources */,
 				AC51C0472DC3905700D5BA34 /* RefreshTokenRequest.swift in Sources */,
 				AC9293FF2D620B6C003DB102 /* MediaPicker.swift in Sources */,
@@ -3341,11 +3598,14 @@
 				AC3FBE132E2BAA0F00CE3EC1 /* MP4DownloadManager.swift in Sources */,
 				AC3FBE142E2BAA0F00CE3EC1 /* MP4DownloadManaging.swift in Sources */,
 				10512A432DA666AD00114BAA /* YralPlayer.swift in Sources */,
+				1064B8042E4CB1840036C10B /* ProviderOptionsBottomSheetView.swift in Sources */,
 				105036F82DDB289D00571B4E /* ExchangePrincipalResponse.swift in Sources */,
 				ACB46A742D105AF4002E200C /* CollectionView+Extensions.swift in Sources */,
 				ACAA536C2E4A538E008D3025 /* OnboardingInfoView.swift in Sources */,
+				1064B7EC2E4B40630036C10B /* UploadOptionsScreenView.swift in Sources */,
 				10CEBB882E3104220022803A /* Presets.swift in Sources */,
 				107C60C22DBF4CE2006FC467 /* FirebaseService.swift in Sources */,
+				106986162E5308DC005BE0D4 /* AIVideoProviderUseCase.swift in Sources */,
 				10020AB12DF7FE2A00DF269E /* SatsCoinError.swift in Sources */,
 				105037692DDC5DB500571B4E /* SmileyGameConfig.swift in Sources */,
 				ACB46A402D0ECBB3002E200C /* ml_feed.grpc.swift in Sources */,
@@ -3358,8 +3618,10 @@
 				ACD2E8242D6746E900E750FE /* UploadingProgressView.swift in Sources */,
 				AC32E46F2D299E74001DDA43 /* ICPBrandingView.swift in Sources */,
 				10020AAA2DF7FBE800DF269E /* SatsCoinDTO.swift in Sources */,
+				1064B7FE2E4C8CD30036C10B /* CreateAIVideoScreenView.swift in Sources */,
 				ACC0D4622D917908006DCF5C /* DeleteVideoRequestDTO.swift in Sources */,
 				AC26CA492D8026B4006ADA75 /* CrashReporter.swift in Sources */,
+				1069860F2E5304D4005BE0D4 /* AIVideoRepositoryProtocol.swift in Sources */,
 				AC4960642D2D693B008D59D9 /* Foundation+Extensions.swift in Sources */,
 				ACEBF7E92D6F844E00B594A0 /* ToastType.swift in Sources */,
 				105034BC2DD6353800571B4E /* SmileyGameResultResponse.swift in Sources */,
@@ -3377,6 +3639,8 @@
 				AC462F472D95B7F8004957B3 /* ReportView.swift in Sources */,
 				AC61D3B22DB28AAB00A7EA92 /* EULAPopUpView.swift in Sources */,
 				AC92941C2D6622EE003DB102 /* VideoPickerViewControllerRepresentable.swift in Sources */,
+				10C1B4022E57574D00CFC41B /* GenerateVideoStatusError.swift in Sources */,
+				1064B8072E4CB34E0036C10B /* PromptView.swift in Sources */,
 				100209F92DE83F7900DF269E /* LeaderboardDTO.swift in Sources */,
 				ACCB98792D944213002B9675 /* UILabel+Extensions.swift in Sources */,
 				AC2C30D42D96C68700DA9F81 /* ReportRequestDTO.swift in Sources */,
@@ -3393,9 +3657,12 @@
 				ACCA778E2DE4C1A2005BC0FA /* EventBuffer.swift in Sources */,
 				ACEBF7F02D6F847300B594A0 /* ToastManager.swift in Sources */,
 				ACAA4D6C2DDCB257001092A6 /* FirebasePerformanceMonitor.swift in Sources */,
+				1069861A2E530A01005BE0D4 /* CreateAIVideoViewModel.swift in Sources */,
 				ACDD23E82D8B1B5F00AB0DAF /* ProfileVideoRequest.swift in Sources */,
+				10C1B3FF2E57571E00CFC41B /* RateLimitStatusError.swift in Sources */,
 				ACC0D44F2D8DDB21006DCF5C /* ProfileRepository.swift in Sources */,
 				ACEBF7E12D6F505A00B594A0 /* UploadCompletedView.swift in Sources */,
+				1064B7EF2E4B439A0036C10B /* UploadOptionView.swift in Sources */,
 				AC7F7EAD2D771EB300215162 /* UploadEndpointResponse.swift in Sources */,
 				ACF639DD2DC24D2B00C4BCCC /* SocialProvider.swift in Sources */,
 				AC99BBBA2D86C8B1008012C2 /* ProfileViewModel.swift in Sources */,
@@ -3406,8 +3673,10 @@
 				AC32E3F62D26FEB9001DDA43 /* UIColor+Extensions.swift in Sources */,
 				AC7F7EBC2D77335900215162 /* AuthErrors.swift in Sources */,
 				AC99BBB72D86C645008012C2 /* ProfileDIContainer.swift in Sources */,
+				1064B7F32E4B50890036C10B /* UploadOption.swift in Sources */,
 				107C60C52DBF6109006FC467 /* SmileyGameRuleDTO.swift in Sources */,
 				ACBBF8BE2E41176100002188 /* HLSDownloadManager+Bookmarks.swift in Sources */,
+				10C1B39E2E54BD0F00CFC41B /* CreateAIVideoErrorBottomSheet.swift in Sources */,
 				10020A182DED6CED00DF269E /* LeaderboardRowView.swift in Sources */,
 				ACC0F3982D2ED5D700FA5BD0 /* LottieView.swift in Sources */,
 				AC7D5B3F2E0EA7C6008853AF /* NotificationsNudge.swift in Sources */,
@@ -3418,11 +3687,14 @@
 				AC42D3FD2E0D6E7E009C2D92 /* NotificationService.swift in Sources */,
 				AC42D3FE2E0D6E7E009C2D92 /* FirebaseNotifications.swift in Sources */,
 				AC32E4682D2998D6001DDA43 /* AccountDIContainer.swift in Sources */,
+				10C1B3F02E56F62500CFC41B /* ResizableVideoView.swift in Sources */,
+				10C1B3F52E573B1E00CFC41B /* GenerateVideoStatusUseCase.swift in Sources */,
 				AC0084892E31DEA30041302A /* RechargeWalletResponseDTO.swift in Sources */,
 				AC5A7B8B2DACF1E2009E9E42 /* VideoEventDTO.swift in Sources */,
 				AC7D5BF62E1034E0008853AF /* NotificationsToggleViewModel.swift in Sources */,
 				ACB46A372D0EC998002E200C /* FeedDIContainer.swift in Sources */,
 				ACF63A7A2DC29A3100C4BCCC /* ClientCredentialsRequest.swift in Sources */,
+				10C1B39A2E545A0C00CFC41B /* GenerateVideoRequest.swift in Sources */,
 				AC26CA582D80287E006ADA75 /* AuthClient.swift in Sources */,
 				105034B42DD630DB00571B4E /* CastVoteRepositoryProtocol.swift in Sources */,
 				ACD941872CFF575C0038FCB6 /* IosApp.swift in Sources */,
@@ -3431,11 +3703,14 @@
 				AC811BDD2DBA95760094C5F6 /* SignupFailureSheet.swift in Sources */,
 				ACD941882CFF575C0038FCB6 /* yral-mobile-swift-binding.swift in Sources */,
 				AC0084852E31DE400041302A /* RechargeWalletRequestDTO.swift in Sources */,
+				10C1B3FC2E57565A00CFC41B /* UploadAIVideoError.swift in Sources */,
+				1064B7FA2E4C6D590036C10B /* UploadOptionsDIContainer.swift in Sources */,
 				AC1F93952DC1495400F322E1 /* TokenResponseDTO.swift in Sources */,
 				AC26CA5F2D8052E2006ADA75 /* BaseStreamingUseCase.swift in Sources */,
 				ACB09FD62D92D66400EE3239 /* FeedsViewModelProtocol.swift in Sources */,
 				ACF639E02DC25BA600C4BCCC /* UserDefaultsManager.swift in Sources */,
 				AC8FC76A2D9BE09A006F29BC /* FeedRequestDTO.swift in Sources */,
+				10C1B3F22E57117900CFC41B /* EventBus.swift in Sources */,
 				AC7F7EA92D771DF400215162 /* GetUploadEndpointUseCase.swift in Sources */,
 				1050348E2DD4B6AA00571B4E /* AudioPlayer.swift in Sources */,
 				105034A82DD5E50D00571B4E /* SmileyConfigError.swift in Sources */,
@@ -3444,6 +3719,7 @@
 				AC32E4662D2991AD001DDA43 /* AccountView.swift in Sources */,
 				ACC0D43D2D8C6BF3006DCF5C /* ClearBackgroundView.swift in Sources */,
 				AC4DECAA2D3E06AC008EC8F5 /* FooterLoaderView.swift in Sources */,
+				10C1B4052E57589200CFC41B /* UploadAIVideoUseCase.swift in Sources */,
 				100F64EE2DCC96C9000BC17E /* YralCache.swift in Sources */,
 				AC51C0532DC4E0D200D5BA34 /* RefreshVideosRequest.swift in Sources */,
 				ACAA53952E4CB292008D3025 /* FeedsCell+PlayToScroll.swift in Sources */,
@@ -3455,6 +3731,7 @@
 				ACD941892CFF575C0038FCB6 /* SwiftBridgeCore.swift in Sources */,
 				ACC1C3952D9AF854005A7539 /* LottieLoaderView.swift in Sources */,
 				AC99BBC22D86FF81008012C2 /* ProfileEmptyState.swift in Sources */,
+				10C1B3922E544D1300CFC41B /* GenerateVideoResponse.swift in Sources */,
 				ACD7C16F2E1D38DF00075148 /* DefaultAuthClient+Firebase.swift in Sources */,
 				10CEBB862E3104060022803A /* HapticGenerator.swift in Sources */,
 				ACEBF7F62D70A8D700B594A0 /* AnimatedCheckbox.swift in Sources */,
@@ -3465,6 +3742,7 @@
 				AC7F7EC72D78696200215162 /* UploadDelegate.swift in Sources */,
 				AC5A7B8E2DACF5B2009E9E42 /* VideoEventRequest.swift in Sources */,
 				107C60A42DBA01F0006FC467 /* RoundedCorner.swift in Sources */,
+				10C1B3942E544E1400CFC41B /* GenerateVideoError.swift in Sources */,
 				AC32E4242D2712F1001DDA43 /* ProfileInfoView.swift in Sources */,
 				AC7F7EB62D7732AC00215162 /* VideoUploadError.swift in Sources */,
 				ACC0D4492D8DA208006DCF5C /* RefreshVideosUseCase.swift in Sources */,
@@ -3487,7 +3765,9 @@
 				ACD7C1722E1D837500075148 /* DeepLinkRouter.swift in Sources */,
 				ACC0D4352D8BFE67006DCF5C /* NudgePopupView.swift in Sources */,
 				AC92940E2D64CBFB003DB102 /* SelectFileView.swift in Sources */,
+				10C1B3E62E55A73300CFC41B /* RateLimitStatusUseCase.swift in Sources */,
 				AC1ACF9F2DB964AB001BDCFD /* SwiftUI+Extensions.swift in Sources */,
+				106986042E53019F005BE0D4 /* CreateAIVideoDIContainer.swift in Sources */,
 				ACAA4D732DDCF866001092A6 /* FeedsPlayer+Events.swift in Sources */,
 				AC32E44B2D2965A3001DDA43 /* AccountViewModel.swift in Sources */,
 				ACD9418A2CFF575C0038FCB6 /* Data+Extensions.swift in Sources */,
@@ -3502,15 +3782,18 @@
 				AC32E4532D296637001DDA43 /* AccountRepository.swift in Sources */,
 				105036E92DDB287700571B4E /* ExchangePrincipal.swift in Sources */,
 				AC9294082D630266003DB102 /* UploadView.swift in Sources */,
+				10C1B3EC2E56E72A00CFC41B /* AIVideoCompletedView.swift in Sources */,
 				AC20A1402E3B7723003306C1 /* FeedsCell+Wallet.swift in Sources */,
 				AC7F7EC02D7734BB00215162 /* UploadRepository.swift in Sources */,
 				107C61232DC0F2C8006FC467 /* SmileyGameRuleError.swift in Sources */,
+				10C1B38C2E5375D500CFC41B /* AppDIContainerKey.swift in Sources */,
 				ACC0D45E2D91785B006DCF5C /* SwiftDelegatedIdentityWire.swift in Sources */,
 				ACB09FCA2D92CB6400EE3239 /* ProfileRouter.swift in Sources */,
 				ACAA4D5F2DDC75CB001092A6 /* Notifications.swift in Sources */,
 				ACB46A802D106034002E200C /* FeedsCell.swift in Sources */,
 				100F63D32DCB4630000BC17E /* SmileyGameRuleView.swift in Sources */,
 				AC7F7ECD2D78707200215162 /* UploadVideoRequest.swift in Sources */,
+				10C1B38F2E544BC900CFC41B /* GenerateVideoDTO.swift in Sources */,
 				AC6BECC32D09F91C002E2021 /* HTTPService.swift in Sources */,
 				AC2C30CE2D96C49800DA9F81 /* ReportUseCase.swift in Sources */,
 				ACAA53912E4CB156008D3025 /* PlayToScrollInfoView.swift in Sources */,
@@ -3529,8 +3812,12 @@
 				AC9294122D6599A1003DB102 /* CaptionsView.swift in Sources */,
 				AC638BF52D2309C000481E94 /* KeychainHelper.swift in Sources */,
 				AC99BB9B2D84913C008012C2 /* YralColor.swift in Sources */,
+				1064B8002E4CA4110036C10B /* AIVideoProviderResponse.swift in Sources */,
+				1069860B2E5303A7005BE0D4 /* AIVideoRepository.swift in Sources */,
 				107C60C82DBF7A2D006FC467 /* SmileyGameRuleDIContainer.swift in Sources */,
+				10C1B3EA2E55EE2D00CFC41B /* DisableBackBottomSheet.swift in Sources */,
 				AC6E31222D22F08F001EBE6C /* ImageLoaderProtocol.swift in Sources */,
+				10C1B3F92E5754DA00CFC41B /* UploadAIVideoRequest.swift in Sources */,
 				105034A12DD5E3D500571B4E /* SmileyConfigDTO.swift in Sources */,
 				AC462F432D95A4AD004957B3 /* OffsetableScrollView.swift in Sources */,
 				AC04D3032E059EA50055C4AA /* AppCheckProviderFactory.swift in Sources */,
@@ -3539,6 +3826,7 @@
 				105034B72DD6316B00571B4E /* CastVoteRepository.swift in Sources */,
 				107C60D72DBFA7C0006FC467 /* FirebaseImageView.swift in Sources */,
 				107C60B52DBF4857006FC467 /* SmileyGameRuleUseCase.swift in Sources */,
+				10C1B3982E54515200CFC41B /* GenerateVideoUseCase.swift in Sources */,
 				ACB46A2A2D0EC76A002E200C /* AppConfiguration.swift in Sources */,
 				ACEBF7DE2D6F215800B594A0 /* VideoPlayerView.swift in Sources */,
 				ACB46A332D0EC8FF002E200C /* Numbers+Extensions.swift in Sources */,
@@ -3714,7 +4002,7 @@
 					"@executable_path/Frameworks",
 				);
 				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/../rust-agent/target/universal/debug";
-				MARKETING_VERSION = 2.3.1;
+				MARKETING_VERSION = 2.4.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -3755,7 +4043,7 @@
 					"@executable_path/Frameworks",
 				);
 				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/../rust-agent/target/universal/release";
-				MARKETING_VERSION = 2.3.1;
+				MARKETING_VERSION = 2.4.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",

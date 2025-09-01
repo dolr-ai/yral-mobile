@@ -2,6 +2,7 @@ package com.yral.shared.app.di
 
 import android.content.pm.ApplicationInfo
 import co.touchlab.kermit.platformLogWriter
+import com.yral.shared.analytics.di.IS_DEBUG
 import com.yral.shared.analytics.di.MIXPANEL_TOKEN
 import com.yral.shared.core.logging.YralLogger
 import com.yral.shared.features.auth.utils.AndroidOAuthUtils
@@ -13,14 +14,7 @@ import org.koin.dsl.module
 
 actual val platformModule =
     module {
-        single {
-            val isDebug =
-                (
-                    androidContext().applicationInfo.flags and
-                        ApplicationInfo.FLAG_DEBUGGABLE
-                ) != 0
-            YralLogger(if (isDebug) platformLogWriter() else null)
-        }
+        single { YralLogger(if (get(IS_DEBUG)) platformLogWriter() else null) }
         single<String>(MIXPANEL_TOKEN) {
             androidContext().let {
                 it.getString(
@@ -31,6 +25,9 @@ actual val platformModule =
                     ),
                 )
             }
+        }
+        single<Boolean>(IS_DEBUG) {
+            (androidContext().applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
         }
         // Required single
         // Reason: Verified in Repo, Callback in Repo required once app resumes
