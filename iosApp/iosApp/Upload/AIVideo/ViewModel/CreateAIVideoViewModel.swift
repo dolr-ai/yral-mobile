@@ -258,10 +258,7 @@ class CreateAIVideoViewModel: ObservableObject {
     }
 
     guard let request = pollingRequestKey else {
-      event = .generateVideoStatusFailure(
-        error: "No request key was found to generate video",
-        addBalance: selectedProvider?.cost.sats ?? .zero
-      )
+      event = .generateVideoStatusFailure("No request key was found to generate video")
       return
     }
 
@@ -277,7 +274,9 @@ class CreateAIVideoViewModel: ObservableObject {
   func stopPolling() {
     pollingTask?.cancel()
     pollingTask = nil
-    pollingRequestKey = nil
+    if removeKey {
+      pollingRequestKey = nil
+    }
   }
 
   func updateSelectedProvider(_ provider: AIVideoProviderResponse) {
