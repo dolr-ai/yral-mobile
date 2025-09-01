@@ -13,6 +13,7 @@ import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.AuthClientFactory
 import com.yral.shared.features.auth.utils.SocialProvider
 import com.yral.shared.features.uploadvideo.analytics.UploadVideoTelemetry
+import com.yral.shared.features.uploadvideo.data.remote.models.TokenType
 import com.yral.shared.features.uploadvideo.domain.GenerateVideoUseCase
 import com.yral.shared.features.uploadvideo.domain.GetFreeCreditsStatusUseCase
 import com.yral.shared.features.uploadvideo.domain.GetProvidersUseCase
@@ -187,7 +188,12 @@ class AiVideoGenViewModel internal constructor(
                                             aspectRatio = selectedProvider.defaultAspectRatio,
                                             durationSeconds = selectedProvider.defaultDuration,
                                             generateAudio = if (selectedProvider.supportsAudio == true) true else null,
-                                            tokenType = "Free",
+                                            tokenType =
+                                                if (currentState.isCreditsAvailable()) {
+                                                    TokenType.FREE
+                                                } else {
+                                                    TokenType.SATS
+                                                },
                                             userId = userId,
                                         ),
                                 ),
