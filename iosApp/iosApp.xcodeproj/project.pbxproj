@@ -43,6 +43,10 @@
 		100F63D42DCB4630000BC17E /* SmileyGameRuleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100F63D22DCB4630000BC17E /* SmileyGameRuleView.swift */; };
 		100F64EE2DCC96C9000BC17E /* YralCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100F64ED2DCC96C5000BC17E /* YralCache.swift */; };
 		100F64EF2DCC96C9000BC17E /* YralCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100F64ED2DCC96C5000BC17E /* YralCache.swift */; };
+		100FCD6F2E659CE400E9A02D /* ViewControllerWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100FCD6E2E659CDE00E9A02D /* ViewControllerWrapper.swift */; };
+		100FCD702E659CE400E9A02D /* ViewControllerWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100FCD6E2E659CDE00E9A02D /* ViewControllerWrapper.swift */; };
+		100FCD722E65A8E700E9A02D /* UploadNavControllerKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100FCD712E65A8D900E9A02D /* UploadNavControllerKey.swift */; };
+		100FCD732E65A8E700E9A02D /* UploadNavControllerKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100FCD712E65A8D900E9A02D /* UploadNavControllerKey.swift */; };
 		102300392E44D48F00E6936E /* BranchSDK in Frameworks */ = {isa = PBXBuildFile; productRef = 102300382E44D48F00E6936E /* BranchSDK */; };
 		1023003B2E44D4E200E6936E /* BranchSDK in Frameworks */ = {isa = PBXBuildFile; productRef = 1023003A2E44D4E200E6936E /* BranchSDK */; };
 		1023FFEE2E41DD3E00E6936E /* smiley_game_puke.json in Resources */ = {isa = PBXBuildFile; fileRef = 1023FFED2E41DD3E00E6936E /* smiley_game_puke.json */; };
@@ -714,6 +718,8 @@
 		10020AAF2DF7FE2400DF269E /* SatsCoinError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SatsCoinError.swift; sourceTree = "<group>"; };
 		100F63D22DCB4630000BC17E /* SmileyGameRuleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameRuleView.swift; sourceTree = "<group>"; };
 		100F64ED2DCC96C5000BC17E /* YralCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralCache.swift; sourceTree = "<group>"; };
+		100FCD6E2E659CDE00E9A02D /* ViewControllerWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewControllerWrapper.swift; sourceTree = "<group>"; };
+		100FCD712E65A8D900E9A02D /* UploadNavControllerKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadNavControllerKey.swift; sourceTree = "<group>"; };
 		102300362E44D00200E6936E /* Yral-Staging.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "Yral-Staging.entitlements"; sourceTree = "<group>"; };
 		1023FFED2E41DD3E00E6936E /* smiley_game_puke.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = smiley_game_puke.json; sourceTree = "<group>"; };
 		103BBB032DACE21D00C0BFD0 /* HLSDownloadManaging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HLSDownloadManaging.swift; sourceTree = "<group>"; };
@@ -1291,6 +1297,7 @@
 		1064B7F52E4C6CE20036C10B /* DI */ = {
 			isa = PBXGroup;
 			children = (
+				100FCD712E65A8D900E9A02D /* UploadNavControllerKey.swift */,
 				106986022E530195005BE0D4 /* CreateAIVideoDIContainer.swift */,
 				1064B7F92E4C6D520036C10B /* UploadOptionsDIContainer.swift */,
 			);
@@ -1724,6 +1731,7 @@
 		AC26CA662D806501006ADA75 /* Utils */ = {
 			isa = PBXGroup;
 			children = (
+				100FCD6E2E659CDE00E9A02D /* ViewControllerWrapper.swift */,
 				10C1B3F12E57117500CFC41B /* EventBus.swift */,
 				AC04D3012E059E990055C4AA /* AppCheckProviderFactory.swift */,
 				10020A142DE9841F00DF269E /* UIApplication+Extensions.swift */,
@@ -3349,6 +3357,7 @@
 				ACEBF7DB2D6EDC8500B594A0 /* GradientProgressViewStyle.swift in Sources */,
 				ACC0D4582D9177C2006DCF5C /* DeleteVideoRequest.swift in Sources */,
 				ACB46A502D0ED195002E200C /* FeedResult.swift in Sources */,
+				100FCD702E659CE400E9A02D /* ViewControllerWrapper.swift in Sources */,
 				ACB46A532D0ED22B002E200C /* FeedQuery.swift in Sources */,
 				AC32E4502D296628001DDA43 /* AccountUseCase.swift in Sources */,
 				ACCA778F2DE4C1A2005BC0FA /* EventBuffer.swift in Sources */,
@@ -3384,6 +3393,7 @@
 				AC42D3FB2E0D6E7E009C2D92 /* NotificationService.swift in Sources */,
 				AC42D3FC2E0D6E7E009C2D92 /* FirebaseNotifications.swift in Sources */,
 				AC32E4692D2998D6001DDA43 /* AccountDIContainer.swift in Sources */,
+				100FCD732E65A8E700E9A02D /* UploadNavControllerKey.swift in Sources */,
 				10C1B3EF2E56F62500CFC41B /* ResizableVideoView.swift in Sources */,
 				10C1B3F62E573B1E00CFC41B /* GenerateVideoStatusUseCase.swift in Sources */,
 				AC0084882E31DEA30041302A /* RechargeWalletResponseDTO.swift in Sources */,
@@ -3642,6 +3652,7 @@
 				ACEBF7DC2D6EDC8500B594A0 /* GradientProgressViewStyle.swift in Sources */,
 				ACC0D4572D9177C2006DCF5C /* DeleteVideoRequest.swift in Sources */,
 				ACB46A512D0ED195002E200C /* FeedResult.swift in Sources */,
+				100FCD6F2E659CE400E9A02D /* ViewControllerWrapper.swift in Sources */,
 				ACB46A542D0ED22B002E200C /* FeedQuery.swift in Sources */,
 				AC32E44F2D296628001DDA43 /* AccountUseCase.swift in Sources */,
 				ACCA778E2DE4C1A2005BC0FA /* EventBuffer.swift in Sources */,
@@ -3677,6 +3688,7 @@
 				AC42D3FD2E0D6E7E009C2D92 /* NotificationService.swift in Sources */,
 				AC42D3FE2E0D6E7E009C2D92 /* FirebaseNotifications.swift in Sources */,
 				AC32E4682D2998D6001DDA43 /* AccountDIContainer.swift in Sources */,
+				100FCD722E65A8E700E9A02D /* UploadNavControllerKey.swift in Sources */,
 				10C1B3F02E56F62500CFC41B /* ResizableVideoView.swift in Sources */,
 				10C1B3F52E573B1E00CFC41B /* GenerateVideoStatusUseCase.swift in Sources */,
 				AC0084892E31DEA30041302A /* RechargeWalletResponseDTO.swift in Sources */,

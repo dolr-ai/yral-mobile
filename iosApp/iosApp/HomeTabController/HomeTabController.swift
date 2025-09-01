@@ -7,7 +7,7 @@ struct HomeTabController: View {
   @State private var suppressAnalytics = false
   let feedsViewController: FeedsViewController
   let accountView: AccountView
-  let uploadOptionsScreenView: UploadOptionsScreenView
+  let uploadOptionsScreenView: UINavigationController
   let profileView: ProfileView
   let leaderboardView: LeaderboardView
 
@@ -34,7 +34,7 @@ struct HomeTabController: View {
 
   init(
     feedsViewController: FeedsViewController,
-    uploadOptionsScreenView: UploadOptionsScreenView,
+    uploadOptionsScreenView: UINavigationController,
     profileView: ProfileView,
     accountView: AccountView,
     leaderboardView: LeaderboardView,
@@ -68,7 +68,7 @@ struct HomeTabController: View {
           }
           .tag(Tab.leaderboard)
 
-        uploadOptionsScreenView
+        ViewControllerWrapper(controller: uploadOptionsScreenView)
           .background(Color.black.edgesIgnoringSafeArea(.all))
           .tabItem {
             tabIcon(selected: selectedTab == .upload,
