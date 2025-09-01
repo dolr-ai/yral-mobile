@@ -153,11 +153,12 @@ struct IosApp: App {
   @State private var feedsDIContainer: FeedDIContainer?
   @State private var leaderboardDIContainer: LeaderboardDIContainer?
   @State private var profileDIContainer: ProfileDIContainer?
-  @State private var uploadDIContainer: UploadDIContainer?
+  @State private var uploadOptionsDIContainer: UploadOptionsDIContainer?
   @State private var accountDIContainer: AccountDIContainer?
   @State private var initializationError: Error?
   @StateObject private var session: SessionManager
   @StateObject private var deepLinkRouter = DeepLinkRouter.shared
+  @StateObject private var eventBus = EventBus()
   @State private var authStatus: AuthState = .uninitialized
 
   init() {
@@ -172,18 +173,23 @@ struct IosApp: App {
     WindowGroup {
       contentView()
         .environmentObject(deepLinkRouter)
+        .environmentObject(eventBus)
+        .environment(\.appDIContainer, appDIContainer)
     }
   }
 
   @ViewBuilder private func contentView() -> some View {
     if let feedsDIContainer = feedsDIContainer,
        let leaderboardDIContainer = leaderboardDIContainer,
+       let uploadOptionsDIContainer = uploadOptionsDIContainer,
        let accountDIContainer = accountDIContainer,
-       let uploadDIContainer = uploadDIContainer,
        let profileDIContainer = profileDIContainer {
+      let flagManager = AppDIHelper().getFeatureFlagManager()
       HomeTabController(
-        feedsViewController: feedsDIContainer.makeFeedsViewController(playToScroll: false),
-        uploadView: uploadDIContainer.makeUploadView(),
+        feedsViewController: feedsDIContainer.makeFeedsViewController(
+          playToScroll: flagManager.isEnabled(flag: FeedFeatureFlags.SmileyGame.shared.StopAndVoteNudge)
+        ),
+        uploadOptionsScreenView: uploadOptionsDIContainer.makeUploadOptionsView(),
         profileView: profileDIContainer.makeProfileView(),
         accountView: accountDIContainer.makeAccountView(),
         leaderboardView: leaderboardDIContainer.makeLeaderboardView()
@@ -218,7 +224,7 @@ struct IosApp: App {
       AnalyticsModuleKt.getAnalyticsManager().trackEvent(event: SplashScreenViewedEventData())
       feedsDIContainer = await appDIContainer.makeFeedDIContainer()
       try await appDIContainer.authClient.initialize()
-      uploadDIContainer = appDIContainer.makeUploadDIContainer()
+      uploadOptionsDIContainer = appDIContainer.makeUploadOptionsDIContainer()
       profileDIContainer = appDIContainer.makeProfileDIContainer()
       accountDIContainer = appDIContainer.makeAccountDIContainer()
       leaderboardDIContainer = appDIContainer.makeLeaderboardDIContainer()

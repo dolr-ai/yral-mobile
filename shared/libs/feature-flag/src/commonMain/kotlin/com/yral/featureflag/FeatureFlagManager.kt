@@ -4,6 +4,7 @@ import com.yral.featureflag.core.FeatureFlag
 import com.yral.featureflag.core.FeatureFlagProvider
 import com.yral.featureflag.core.FlagResult
 import com.yral.featureflag.core.MutableFeatureFlagProvider
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -18,6 +19,7 @@ class FeatureFlagManager(
     private val providersInPriority: List<FeatureFlagProvider>,
     private val localProviderId: String,
     private val providerControls: Map<String, FeatureFlag<Boolean>> = emptyMap(),
+    private val listener: Listener,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -59,7 +61,19 @@ class FeatureFlagManager(
         val jobs =
             activeProviders
                 .filter { it.id != localProviderId && it.isRemote }
-                .map { provider -> scope.async { provider.fetchAndActivate() } }
+                .map { provider ->
+                    scope.async {
+                        try {
+                            provider.fetchAndActivate()
+                        } catch (e: CancellationException) {
+                            throw e
+                        } catch (
+                            @Suppress("TooGenericExceptionCaught") e: Throwable,
+                        ) {
+                            listener.onRemoteFetchFailed(provider.name, e)
+                        }
+                    }
+                }
         jobs.awaitAll()
         if (!remoteFetchReady.isCompleted) remoteFetchReady.complete(Unit)
         // Clear caches so subsequent reads re-resolve with fresh remote values
@@ -139,5 +153,12 @@ class FeatureFlagManager(
             providersInPriority.filter { provider ->
                 provider.id == localProviderId || (enabledById[provider.id] ?: true)
             }
+    }
+
+    interface Listener {
+        fun onRemoteFetchFailed(
+            provider: String,
+            throwable: Throwable,
+        )
     }
 }

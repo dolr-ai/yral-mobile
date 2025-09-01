@@ -25,6 +25,7 @@ enum NetworkError: Error {
   case transportError(String)
   case grpc(String)
   case cloudFunctionError(CloudFunctionError)
+  case providerError(String)
 }
 
 extension NetworkError: LocalizedError {
@@ -42,6 +43,8 @@ extension NetworkError: LocalizedError {
       return "gRPC Error: \(message)"
     case .cloudFunctionError(let error):
       return "Cloud Function Error: \(error.localizedDescription)"
+    case .providerError(let message):
+      return "Provider Error: \(message)"
     }
   }
 }

@@ -13,14 +13,14 @@ import FirebaseAppCheck
 class FirebaseService: FirebaseServiceProtocol {
   private let database = Firestore.firestore()
 
-  func signInAnonymously() async throws -> Bool {
+  func signInAnonymously(with principal: String) async throws -> Bool {
     if let hasLaunchedAppBefore = (UserDefaultsManager.shared.get(for: DefaultsKey.hasLaunchedAppBefore) ?? false),
        !hasLaunchedAppBefore {
       try signOut()
       UserDefaultsManager.shared.set(true, for: DefaultsKey.hasLaunchedAppBefore)
     }
 
-    if Auth.auth().currentUser == nil {
+    if Auth.auth().currentUser?.uid != principal {
       try await Auth.auth().signInAnonymously()
       return true
     }
@@ -66,8 +66,12 @@ class FirebaseService: FirebaseServiceProtocol {
 
   func update(coins: UInt64, forPrincipal principal: String) async throws {
     let document = database.document("users/\(principal)")
-    _ = try await database.runTransaction { transaction, _ in
-      transaction.updateData(["coins": coins], forDocument: document)
+    do {
+      _ = try await database.runTransaction { transaction, _ in
+        transaction.updateData(["coins": coins], forDocument: document)
+      }
+    } catch {
+      print("sarvesh error: \(error)")
     }
   }
 

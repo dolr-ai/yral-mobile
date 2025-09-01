@@ -7,7 +7,7 @@ struct HomeTabController: View {
   @State private var suppressAnalytics = false
   let feedsViewController: FeedsViewController
   let accountView: AccountView
-  let uploadView: UploadView
+  let uploadOptionsScreenView: UploadOptionsScreenView
   let profileView: ProfileView
   let leaderboardView: LeaderboardView
 
@@ -30,15 +30,17 @@ struct HomeTabController: View {
   @State private var walletPhase: WalletPhase = .none
   @State private var walletOutcome: WalletPhase = .none
 
+  @EnvironmentObject var eventBus: EventBus
+
   init(
     feedsViewController: FeedsViewController,
-    uploadView: UploadView,
+    uploadOptionsScreenView: UploadOptionsScreenView,
     profileView: ProfileView,
     accountView: AccountView,
     leaderboardView: LeaderboardView,
   ) {
     self.feedsViewController = feedsViewController
-    self.uploadView = uploadView
+    self.uploadOptionsScreenView = uploadOptionsScreenView
     self.profileView = profileView
     self.accountView = accountView
     self.leaderboardView = leaderboardView
@@ -66,28 +68,13 @@ struct HomeTabController: View {
           }
           .tag(Tab.leaderboard)
 
-        uploadView
-          .onDoneAction {
-            UIView.setAnimationsEnabled(false)
-            suppressAnalytics = true
-            selectedTab = .home
-            DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.animationPeriod) {
-              UIView.setAnimationsEnabled(false)
-              UNUserNotificationCenter.current().getNotificationSettings { settings in
-                switch settings.authorizationStatus {
-                case .notDetermined, .denied:
-                  DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.animationPeriod) {
-                    self.showNotificationsNudge = true
-                  }
-                default: break
-                }
-              }
-            }
-          }
+        uploadOptionsScreenView
           .background(Color.black.edgesIgnoringSafeArea(.all))
-          .tabItem { tabIcon(selected: selectedTab == .upload,
-                             selectedName: Constants.uploadIconImageNameSelected,
-                             unselectedName: Constants.uploadIconImageNameUnselected) }
+          .tabItem {
+            tabIcon(selected: selectedTab == .upload,
+                    selectedName: Constants.uploadIconImageNameSelected,
+                    unselectedName: Constants.uploadIconImageNameUnselected)
+          }
           .tag(Tab.upload)
 
         profileView
@@ -124,6 +111,23 @@ struct HomeTabController: View {
           selectedTab = .profile
         }
         deepLinkRouter.pendingDestination = nil
+      }
+      .onReceive(eventBus.finishUploadingVideo) {
+        UIView.setAnimationsEnabled(false)
+        suppressAnalytics = true
+        selectedTab = .home
+        DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.animationPeriod) {
+          UIView.setAnimationsEnabled(false)
+          UNUserNotificationCenter.current().getNotificationSettings { settings in
+            switch settings.authorizationStatus {
+            case .notDetermined, .denied:
+              DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.animationPeriod) {
+                self.showNotificationsNudge = true
+              }
+            default: break
+            }
+          }
+        }
       }
       .hapticFeedback(.impact(weight: .light), trigger: selectedTab)
       .fullScreenCover(isPresented: $showNotificationsNudge) {

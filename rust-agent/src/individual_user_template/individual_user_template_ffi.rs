@@ -12,6 +12,10 @@ use std::clone::Clone;
 use std::str::FromStr;
 use yral_canisters_common::Canisters;
 use yral_types::delegated_identity::DelegatedIdentityWire;
+use yral_canisters_client::rate_limits::RateLimitStatus;
+use yral_canisters_client::rate_limits::VideoGenRequestKey;
+use yral_canisters_client::rate_limits::VideoGenRequestStatus;
+pub type RateLimitsResult2 = yral_canisters_client::rate_limits::Result2;
 
 #[swift_bridge::bridge]
 mod ffi {
@@ -133,6 +137,8 @@ mod ffi {
         type PrincipalResult;
         type U64Wrapper;
         type KeyValuePair;
+        type RateLimitsResult2;
+        type VideoGenRequestStatus;
     }
 
     extern "Rust" {
@@ -496,5 +502,44 @@ mod ffi {
     extern "Rust" {
         async fn register_device(identity: DelegatedIdentity, token: String) -> Result<(), String>;
         async fn unregister_device(identity: DelegatedIdentity, token: String) -> Result<(), String>;
+    }
+
+    extern "Rust" {
+        type RateLimitStatus;
+        #[swift_bridge(get(principal))]
+        fn principal(&self) -> Principal;
+        #[swift_bridge(get(request_count))]
+        fn request_count(&self) -> u64;
+        #[swift_bridge(get(window_start))]
+        fn window_start(&self) -> u64;
+        #[swift_bridge(get(is_limited))]
+        fn is_limited(&self) -> bool;
+    }
+
+    extern "Rust" {
+        async fn get_rate_limit_status_core(
+            principal: Principal,
+            property: String,
+            is_registered: bool,
+            identity: DelegatedIdentity,
+        ) -> Result<RateLimitStatus, String>;
+
+        async fn poll_video_generation_status(
+            identity: DelegatedIdentity,
+             key: VideoGenRequestKey) -> Result<RateLimitsResult2, String>;
+
+        fn get_polling_result_status(result: RateLimitsResult2) -> Option<VideoGenRequestStatus>;
+
+        fn get_status_value(status: VideoGenRequestStatus) -> String;
+
+        fn make_videogen_request_key(principal: Principal, counter: u64) -> VideoGenRequestKey;
+    }
+
+    extern "Rust" {
+        type VideoGenRequestKey;
+        #[swift_bridge(get(principal))]
+        fn principal(&self) -> Principal;
+        #[swift_bridge(get(counter))]
+        fn counter(&self) -> u64;
     }
 }

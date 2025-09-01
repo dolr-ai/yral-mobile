@@ -14,6 +14,7 @@ use k256::elliptic_curve::sec1::ToEncodedPoint;
 use k256::elliptic_curve::JwkEcKey;
 use k256::Secp256k1;
 use serde_bytes::ByteBuf;
+use yral_canisters_client::ic::RATE_LIMITS_ID;
 use std::time::UNIX_EPOCH;
 use tokio::time::Duration;
 use yral_canisters_common::Canisters;
@@ -21,6 +22,11 @@ use yral_types::delegated_identity::DelegatedIdentityWire;
 use yral_canisters_common::utils::profile::propic_from_principal as inner_propic_from_principal;
 use yral_metadata_client::MetadataClient;
 use yral_metadata_client::DeviceRegistrationToken;
+use yral_canisters_client::rate_limits;
+use yral_canisters_client::rate_limits::RateLimitStatus;
+use yral_canisters_client::rate_limits::RateLimits;
+use yral_canisters_client::rate_limits::VideoGenRequestKey;
+use yral_canisters_client::rate_limits::VideoGenRequestStatus;
 
 pub type Secp256k1Error = k256::elliptic_curve::Error;
 
@@ -67,7 +73,7 @@ pub fn delegated_identity_from_bytes(
         Box::new(to_identity),
         wire.delegation_chain,
     );
-    Ok(delegated_identity)
+    delegated_identity.map_err(|e| e.to_string())
 }
 
 pub fn delegate_identity_with_max_age_public(
@@ -258,4 +264,64 @@ pub async fn register_device(identity: DelegatedIdentity, token: String) -> std:
         .await
         .map(|_| ())    
         .map_err(|e| e.to_string())
+}
+
+pub async fn get_rate_limit_status_core(
+    principal: Principal,
+    property: String,
+    is_registered: bool,
+    identity: DelegatedIdentity,
+) -> std::result::Result<RateLimitStatus, String> {
+    let agent = Agent::builder()
+        .with_url("https://ic0.app/")
+        .with_identity(identity)
+        .build()
+        .map_err(|e| e.to_string())?;
+
+    let canister = RateLimits(RATE_LIMITS_ID, &agent);
+
+    let status = canister
+        .get_rate_limit_status(principal, property, is_registered)
+        .await
+        .map_err(|e| e.to_string())?  
+        .ok_or_else(|| "not found".to_string())?;
+
+    Ok(status)
+}
+
+
+pub async fn poll_video_generation_status(
+    identity: DelegatedIdentity,
+     key: VideoGenRequestKey) -> std::result::Result<yral_canisters_client::rate_limits::Result2, String> {
+    let agent = Agent::builder()
+        .with_url("https://ic0.app/")
+        .with_identity(identity)
+        .build()
+        .map_err(|e| e.to_string())?;
+
+    let canister = RateLimits(RATE_LIMITS_ID, &agent);
+    return canister.poll_video_generation_status(key)
+    .await
+    .map_err(|e| e.to_string());
+}
+
+use yral_canisters_client::rate_limits::Result2;
+pub fn get_polling_result_status(result: Result2) -> Option<VideoGenRequestStatus> {
+    match result {
+        Result2::Ok(status) => Some(status),
+        Result2::Err(_) => None,
+    }
+}
+
+pub fn get_status_value(status: VideoGenRequestStatus) -> String {
+    match status {
+        VideoGenRequestStatus::Failed(msg) => format!("Failed: {}", msg),
+        VideoGenRequestStatus::Complete(val) => format!("Complete: {}", val),
+        VideoGenRequestStatus::Processing => "Processing".to_string(),
+        VideoGenRequestStatus::Pending => "Pending".to_string(),
+    }
+}
+
+pub fn make_videogen_request_key(principal: Principal, counter: u64) -> VideoGenRequestKey {
+    VideoGenRequestKey { principal, counter }
 }
