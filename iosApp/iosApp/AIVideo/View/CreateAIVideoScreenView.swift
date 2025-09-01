@@ -69,158 +69,160 @@ struct CreateAIVideoScreenView: View {
   @State private var videoURL: URL?
 
   var body: some View {
-    VStack(alignment: .leading, spacing: Constants.vstackSpacing) {
-      HStack(alignment: .center, spacing: Constants.navHstackSpacing) {
-        Image(Constants.backImage)
-          .resizable()
-          .frame(width: Constants.backImageSize, height: Constants.backImageSize)
-          .onTapGesture {
-            if generatingVideo {
-              showDisableBackBottomSheet = true
-            } else {
-              onDismiss()
-            }
-          }
-
-        Text(Constants.screenTitle)
-          .font(Constants.screenTitleFont)
-          .foregroundColor(Constants.screenTitleColor)
-      }
-      .padding(.bottom, Constants.navHstackBottom)
-      .padding(.leading, -Constants.navHstackLeading)
-      .padding(.top, Constants.navHstackTop)
-
-      if let provider = selectedProvider, generatingVideo {
-        Text(promptText)
-          .font(Constants.genPromptFont)
-          .foregroundColor(Constants.genPromptColor)
-          .frame(maxWidth: .infinity, alignment: .leading)
-          .padding(.vertical, Constants.genPromptVertical)
-          .padding(.horizontal, Constants.genPromptHorizontal)
-          .background(Constants.genPromptBackground)
-          .cornerRadius(Constants.genPromptCornerRadius)
-          .overlay(
-            RoundedRectangle(cornerRadius: Constants.genPromptCornerRadius)
-              .stroke(Constants.genPromptBorderColor, lineWidth: .one)
-          )
-
-        HStack(spacing: Constants.genHstackSpacing) {
-          URLImage(url: URL(string: provider.iconURL))
-            .id(provider.id)
-            .frame(width: Constants.genImageSize, height: Constants.genImageSize)
-
-          Text(provider.name)
-            .font(Constants.genNameFont)
-            .foregroundColor(Constants.genNameColor)
-        }
-
-        RoundedRectangle(cornerRadius: Constants.genViewCornerRadius)
-          .fill(Constants.genViewBackground)
-          .frame(maxWidth: .infinity, maxHeight: .infinity)
-          .padding(.bottom, Constants.genViewBottom)
-          .overlay(alignment: .center) {
-            VStack(spacing: Constants.genViewVstackSpacing) {
-              LottieLoaderView(animationName: Constants.loader)
-                .frame(width: Constants.loaderSize, height: Constants.loaderSize)
-
-              Text(Constants.loadingMessages[generatingVideoTextCurrentIndex])
-                .font(Constants.genViewTextFont)
-                .foregroundColor(Constants.genViewTextColor)
-            }
-            .offset(y: -Constants.genViewBottom/2)
-          }
-          .onReceive(timer) { _ in
-            withAnimation(.easeInOut) {
-              generatingVideoTextCurrentIndex = (
-                generatingVideoTextCurrentIndex + .one
-              ) % Constants.loadingMessages.count
-            }
-          }
-      } else {
-        if let providers = viewModel.providers {
-          PromptView(prompt: $promptText)
-            .padding(.bottom, Constants.promptBottom)
-
-          if let selectedProvider = selectedProvider {
-            buildSelectedModelView(with: selectedProvider)
-              .frame(maxWidth: .infinity)
-
-            buildBalanceView(with: selectedProvider)
-              .frame(maxWidth: .infinity)
-              .padding(.top, Constants.balanceTop)
-          }
-
-          Button {
-            AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-              event: CreateAIVideoClickedData(model: selectedProvider?.name ?? "", prompt: "")
-            )
-            if isUserLoggedIn {
-              if let provider = selectedProvider, !promptText.isEmpty {
-                Task {
-                  await viewModel.generateVideo(
-                    for: promptText,
-                    withProvider: provider,
-                    usingCredits: !creditsUsed
-                  )
-                }
+    ScrollView {
+      VStack(alignment: .leading, spacing: Constants.vstackSpacing) {
+        HStack(alignment: .center, spacing: Constants.navHstackSpacing) {
+          Image(Constants.backImage)
+            .resizable()
+            .frame(width: Constants.backImageSize, height: Constants.backImageSize)
+            .onTapGesture {
+              if generatingVideo {
+                showDisableBackBottomSheet = true
+              } else {
+                onDismiss()
               }
-            } else {
-              AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-                event: AuthScreenViewedEventData(pageName: .videoCreation)
-              )
-              showSignupSheet = true
             }
-          } label: {
-            Text(Constants.generateButtonTitle)
-              .foregroundColor(Constants.generateButtonTextColor)
-              .font(Constants.generateButtonFont)
-              .frame(maxWidth: .infinity)
-              .frame(height: Constants.generateButtonHeight)
-              .background(
-                isButtonEnabled
-                ? Constants.generateButtonEnabledGradient
-                : Constants.generateButtonDisabledGradient
-              )
-              .cornerRadius(Constants.generateButtonCornerRadius)
+
+          Text(Constants.screenTitle)
+            .font(Constants.screenTitleFont)
+            .foregroundColor(Constants.screenTitleColor)
+        }
+        .padding(.bottom, Constants.navHstackBottom)
+        .padding(.leading, -Constants.navHstackLeading)
+        .padding(.top, Constants.navHstackTop)
+
+        if let provider = selectedProvider, generatingVideo {
+          Text(promptText)
+            .font(Constants.genPromptFont)
+            .foregroundColor(Constants.genPromptColor)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.vertical, Constants.genPromptVertical)
+            .padding(.horizontal, Constants.genPromptHorizontal)
+            .background(Constants.genPromptBackground)
+            .cornerRadius(Constants.genPromptCornerRadius)
+            .overlay(
+              RoundedRectangle(cornerRadius: Constants.genPromptCornerRadius)
+                .stroke(Constants.genPromptBorderColor, lineWidth: .one)
+            )
+
+          HStack(spacing: Constants.genHstackSpacing) {
+            URLImage(url: URL(string: provider.iconURL))
+              .id(provider.id)
+              .frame(width: Constants.genImageSize, height: Constants.genImageSize)
+
+            Text(provider.name)
+              .font(Constants.genNameFont)
+              .foregroundColor(Constants.genNameColor)
           }
-          .disabled(!isButtonEnabled)
-          .padding(.top, Constants.generateButtonTop)
 
-          HStack(spacing: .zero) {
-            Spacer()
+          RoundedRectangle(cornerRadius: Constants.genViewCornerRadius)
+            .fill(Constants.genViewBackground)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding(.bottom, Constants.genViewBottom)
+            .overlay(alignment: .center) {
+              VStack(spacing: Constants.genViewVstackSpacing) {
+                LottieLoaderView(animationName: Constants.loader)
+                  .frame(width: Constants.loaderSize, height: Constants.loaderSize)
 
-            Text(Constants.playGamesText)
-              .font(Constants.playGamesTextFont)
-              .overlay(
-                Constants.playGamesTextColor
+                Text(Constants.loadingMessages[generatingVideoTextCurrentIndex])
+                  .font(Constants.genViewTextFont)
+                  .foregroundColor(Constants.genViewTextColor)
+              }
+              .offset(y: -Constants.genViewBottom/2)
+            }
+            .onReceive(timer) { _ in
+              withAnimation(.easeInOut) {
+                generatingVideoTextCurrentIndex = (
+                  generatingVideoTextCurrentIndex + .one
+                ) % Constants.loadingMessages.count
+              }
+            }
+        } else {
+          if let providers = viewModel.providers {
+            PromptView(prompt: $promptText)
+              .padding(.bottom, Constants.promptBottom)
+
+            if let selectedProvider = selectedProvider {
+              buildSelectedModelView(with: selectedProvider)
+                .frame(maxWidth: .infinity)
+
+              buildBalanceView(with: selectedProvider)
+                .frame(maxWidth: .infinity)
+                .padding(.top, Constants.balanceTop)
+            }
+
+            Button {
+              AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+                event: CreateAIVideoClickedData(model: selectedProvider?.name ?? "", prompt: "")
               )
-              .mask(
-                Text(Constants.playGamesText)
-                  .font(Constants.playGamesTextFont)
-              )
+              if isUserLoggedIn {
+                if let provider = selectedProvider, !promptText.isEmpty {
+                  Task {
+                    await viewModel.generateVideo(
+                      for: promptText,
+                      withProvider: provider,
+                      usingCredits: !creditsUsed
+                    )
+                  }
+                }
+              } else {
+                AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+                  event: AuthScreenViewedEventData(pageName: .videoCreation)
+                )
+                showSignupSheet = true
+              }
+            } label: {
+              Text(Constants.generateButtonTitle)
+                .foregroundColor(Constants.generateButtonTextColor)
+                .font(Constants.generateButtonFont)
+                .frame(maxWidth: .infinity)
+                .frame(height: Constants.generateButtonHeight)
+                .background(
+                  isButtonEnabled
+                  ? Constants.generateButtonEnabledGradient
+                  : Constants.generateButtonDisabledGradient
+                )
+                .cornerRadius(Constants.generateButtonCornerRadius)
+            }
+            .disabled(!isButtonEnabled)
+            .padding(.top, Constants.generateButtonTop)
 
-            Text(Constants.earnMoreText)
-              .font(Constants.earnMoreTextFont)
-              .foregroundColor(Constants.earnMoreTextColor)
+            HStack(spacing: .zero) {
+              Spacer()
 
-            Spacer()
+              Text(Constants.playGamesText)
+                .font(Constants.playGamesTextFont)
+                .overlay(
+                  Constants.playGamesTextColor
+                )
+                .mask(
+                  Text(Constants.playGamesText)
+                    .font(Constants.playGamesTextFont)
+                )
+
+              Text(Constants.earnMoreText)
+                .font(Constants.earnMoreTextFont)
+                .foregroundColor(Constants.earnMoreTextColor)
+
+              Spacer()
+            }
+            .padding(.vertical, Constants.playGamesHstackVertical)
+            .onTapGesture {
+              eventBus.playGamesToEarnMoreTapped.send(())
+            }
+            .padding(.top, Constants.playGamesHstackTop)
           }
-          .padding(.vertical, Constants.playGamesHstackVertical)
-          .onTapGesture {
-            eventBus.playGamesToEarnMoreTapped.send(())
-          }
-          .padding(.top, Constants.playGamesHstackTop)
         }
       }
+      .frame(maxWidth: .infinity, alignment: .leading)
+      .frame(maxHeight: .infinity, alignment: .top)
+      .background(
+        Color.clear
+          .contentShape(Rectangle())
+          .hideKeyboardOnTap()
+      )
+      .padding(.horizontal, Constants.vstackHorizontal)
     }
-    .frame(maxWidth: .infinity, alignment: .leading)
-    .frame(maxHeight: .infinity, alignment: .top)
-    .background(
-      Color.clear
-        .contentShape(Rectangle())
-        .hideKeyboardOnTap()
-    )
-    .padding(.horizontal, Constants.vstackHorizontal)
     .overlay(alignment: .center, content: {
       if showLoader {
         LottieLoaderView(animationName: Constants.loader)
