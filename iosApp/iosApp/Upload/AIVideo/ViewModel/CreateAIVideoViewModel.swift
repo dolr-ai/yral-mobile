@@ -75,6 +75,10 @@ class CreateAIVideoViewModel: ObservableObject {
     self.uploadAIVideoUseCase = uploadAIVideoUseCase
   }
 
+  deinit {
+    stopPolling()
+  }
+
   @MainActor
   func getAIVideoProviders() async {
     state = .loading
@@ -246,13 +250,18 @@ class CreateAIVideoViewModel: ObservableObject {
   }
 
   func startPolling() {
+    if let task = pollingTask, !task.isCancelled {
+      return
+    }
+
     guard let request = pollingRequestKey else {
       event = .generateVideoStatusFailure("No request key was found to generate video")
       return
     }
 
-    pollingTask = Task {
+    pollingTask = Task { [weak self] in
       while !Task.isCancelled {
+        guard let self else { return }
         await self.getGenerateVideoStatus(for: request)
         try? await Task.sleep(nanoseconds: 5 * 1_000_000_000)
       }
@@ -262,7 +271,9 @@ class CreateAIVideoViewModel: ObservableObject {
   func stopPolling(removeKey: Bool = true) {
     pollingTask?.cancel()
     pollingTask = nil
-    pollingRequestKey = nil
+    if removeKey {
+      pollingRequestKey = nil
+    }
   }
 
   func updateSelectedProvider(_ provider: AIVideoProviderResponse) {
