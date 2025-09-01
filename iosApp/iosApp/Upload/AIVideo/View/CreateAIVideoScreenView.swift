@@ -10,20 +10,6 @@ import SwiftUI
 import iosSharedUmbrella
 
 // swiftlint: disable file_length
-struct CreateAIVideoHost: View {
-  private let onDismiss: () -> Void
-  @StateObject private var viewModel: CreateAIVideoViewModel
-
-  init(createAIVideoDI: CreateAIVideoDIContainer, onDismiss: @escaping () -> Void) {
-    self.onDismiss = onDismiss
-    _viewModel = StateObject(wrappedValue: createAIVideoDI.makeAIVideoViewModel())
-  }
-
-  var body: some View {
-    CreateAIVideoScreenView(viewModel: viewModel, onDismiss: onDismiss)
-  }
-}
-
 // swiftlint: disable type_body_length
 struct CreateAIVideoScreenView: View {
   @EnvironmentObject var session: SessionManager
@@ -227,8 +213,8 @@ struct CreateAIVideoScreenView: View {
         }
       }
     }
-    .navigationBarHidden(true)
-    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .frame(maxHeight: .infinity, alignment: .top)
     .background(
       Color.clear
         .contentShape(Rectangle())
