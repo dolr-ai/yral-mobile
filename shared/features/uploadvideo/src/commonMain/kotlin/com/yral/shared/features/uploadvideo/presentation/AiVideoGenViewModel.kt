@@ -315,12 +315,10 @@ class AiVideoGenViewModel internal constructor(
         _state.update { it.copy(bottomSheetType = type) }
     }
 
-    fun shouldEnableButton(): Boolean {
-        val currentState = _state.value
-        return currentState.prompt.trim().isNotEmpty() &&
-            currentState.usedCredits != null &&
-            currentState.usedCredits < currentState.totalCredits
-    }
+    fun shouldEnableButton(): Boolean =
+        with(_state.value) {
+            prompt.trim().isNotEmpty() && usedCredits != null && (isCreditsAvailable() || !isBalanceLow())
+        }
 
     fun cleanup() {
         _state.update { ViewState() }
