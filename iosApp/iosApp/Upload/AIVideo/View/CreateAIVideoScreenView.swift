@@ -222,44 +222,115 @@ struct CreateAIVideoScreenView: View {
                 .hideKeyboardOnTap()
             )
           }
-          .disabled(!isButtonEnabled)
-          .padding(.top, Constants.generateButtonTop)
 
-          HStack(spacing: .zero) {
-            Spacer()
+          RoundedRectangle(cornerRadius: Constants.genViewCornerRadius)
+            .fill(Constants.genViewBackground)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding(.bottom, Constants.genViewBottom)
+            .overlay(alignment: .center) {
+              VStack(spacing: Constants.genViewVstackSpacing) {
+                LottieLoaderView(animationName: Constants.loader)
+                  .frame(width: Constants.loaderSize, height: Constants.loaderSize)
 
-            Text(Constants.playGamesText)
-              .font(Constants.playGamesTextFont)
-              .overlay(
-                Constants.playGamesTextColor
+                Text(Constants.loadingMessages[generatingVideoTextCurrentIndex])
+                  .font(Constants.genViewTextFont)
+                  .foregroundColor(Constants.genViewTextColor)
+              }
+              .offset(y: -Constants.genViewBottom/2)
+            }
+            .onReceive(timer) { _ in
+              withAnimation(.easeInOut) {
+                generatingVideoTextCurrentIndex = (
+                  generatingVideoTextCurrentIndex + .one
+                ) % Constants.loadingMessages.count
+              }
+            }
+        } else {
+          if let providers = viewModel.providers {
+            PromptView(prompt: $promptText)
+              .padding(.bottom, Constants.promptBottom)
+
+            if let selectedProvider = selectedProvider {
+              buildSelectedModelView(with: selectedProvider)
+                .frame(maxWidth: .infinity)
+
+              buildBalanceView(with: selectedProvider)
+                .frame(maxWidth: .infinity)
+                .padding(.top, Constants.balanceTop)
+            }
+
+            Button {
+              AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+                event: CreateAIVideoClickedData(model: selectedProvider?.name ?? "")
               )
-              .mask(
-                Text(Constants.playGamesText)
-                  .font(Constants.playGamesTextFont)
-              )
+              if isUserLoggedIn {
+                if let provider = selectedProvider, !promptText.isEmpty {
+                  Task {
+                    await viewModel.generateVideo(
+                      for: promptText,
+                      withProvider: provider,
+                      usingCredits: !creditsUsed
+                    )
+                  }
+                }
+              } else {
+                AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+                  event: AuthScreenViewedEventData(pageName: .videoCreation)
+                )
+                showSignupSheet = true
+              }
+            } label: {
+              Text(Constants.generateButtonTitle)
+                .foregroundColor(Constants.generateButtonTextColor)
+                .font(Constants.generateButtonFont)
+                .frame(maxWidth: .infinity)
+                .frame(height: Constants.generateButtonHeight)
+                .background(
+                  isButtonEnabled
+                  ? Constants.generateButtonEnabledGradient
+                  : Constants.generateButtonDisabledGradient
+                )
+                .cornerRadius(Constants.generateButtonCornerRadius)
+            }
+            .disabled(!isButtonEnabled)
+            .padding(.top, Constants.generateButtonTop)
 
-            Text(Constants.earnMoreText)
-              .font(Constants.earnMoreTextFont)
-              .foregroundColor(Constants.earnMoreTextColor)
+            HStack(spacing: .zero) {
+              Spacer()
 
-            Spacer()
+              Text(Constants.playGamesText)
+                .font(Constants.playGamesTextFont)
+                .overlay(
+                  Constants.playGamesTextColor
+                )
+                .mask(
+                  Text(Constants.playGamesText)
+                    .font(Constants.playGamesTextFont)
+                )
+
+              Text(Constants.earnMoreText)
+                .font(Constants.earnMoreTextFont)
+                .foregroundColor(Constants.earnMoreTextColor)
+
+              Spacer()
+            }
+            .padding(.vertical, Constants.playGamesHstackVertical)
+            .onTapGesture {
+              eventBus.playGamesToEarnMoreTapped.send(())
+            }
+            .padding(.top, Constants.playGamesHstackTop)
           }
-          .padding(.vertical, Constants.playGamesHstackVertical)
-          .onTapGesture {
-            eventBus.playGamesToEarnMoreTapped.send(())
-          }
-          .padding(.top, Constants.playGamesHstackTop)
         }
       }
+      .frame(maxWidth: .infinity, alignment: .leading)
+      .frame(maxHeight: .infinity, alignment: .top)
+      .background(
+        Color.clear
+          .contentShape(Rectangle())
+          .hideKeyboardOnTap()
+      )
+      .padding(.horizontal, Constants.vstackHorizontal)
     }
-    .frame(maxWidth: .infinity, alignment: .leading)
-    .frame(maxHeight: .infinity, alignment: .top)
-    .background(
-      Color.clear
-        .contentShape(Rectangle())
-        .hideKeyboardOnTap()
-    )
-    .padding(.horizontal, Constants.vstackHorizontal)
     .overlay(alignment: .center, content: {
       if showLoader {
         LottieLoaderView(animationName: Constants.loader, resetProgess: false)
