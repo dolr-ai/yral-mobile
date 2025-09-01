@@ -21,12 +21,12 @@ android {
         buildConfigField(
             type = "String",
             name = "BRANCH_KEY_TEST",
-            value = "\"${System.getenv("YRAL_BRANCH_KEY_TEST")} \"",
+            value = "\"${System.getenv("YRAL_BRANCH_KEY_TEST")}\"",
         )
         buildConfigField(
             type = "String",
             name = "BRANCH_KEY",
-            value = "\"${System.getenv("YRAL_BRANCH_KEY")} \"",
+            value = "\"${System.getenv("YRAL_BRANCH_KEY")}\"",
         )
     }
     buildFeatures {
