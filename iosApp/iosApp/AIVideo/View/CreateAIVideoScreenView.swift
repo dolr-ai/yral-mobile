@@ -306,6 +306,8 @@ struct CreateAIVideoScreenView: View {
     .onReceive(session.phasePublisher, perform: { phase in
       if case .permanent = phase {
         isUserLoggedIn = true
+      } else {
+        isUserLoggedIn = false
       }
     })
     .onReceive(viewModel.$state, perform: { state in
