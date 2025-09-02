@@ -349,15 +349,12 @@ struct CreateAIVideoScreenView: View {
         viewModel.startPolling()
       case .generateVideoFailure(let errMessage):
         errorMessage = errMessage
-      case .generateVideoStatusSuccess(let deductBalance):
+      case .generateVideoStatusFailure(let errMessage, let addBalance):
         if creditsUsed {
           let oldBalance = session.state.coins
-          let newBalance = oldBalance - UInt64(deductBalance)
-          if newBalance >= 0 {
-            session.update(coins: newBalance)
-          }
+          let newBalance = oldBalance + UInt64(addBalance)
+          session.update(coins: newBalance)
         }
-      case .generateVideoStatusFailure(let errMessage):
         errorMessage = errMessage
       case .uploadAIVideoSuccess(let videoURLString):
         videoURL = URL(string: videoURLString)
