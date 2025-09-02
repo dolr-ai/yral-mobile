@@ -185,14 +185,7 @@ class CreateAIVideoViewModel: ObservableObject {
                 reasonType: nil
               )
             )
-
-            if let provider = selectedProvider {
-              event = .generateVideoStatusSuccess(deductBalance: provider.cost.sats)
-            }
-
-            Task {
-              await uploadAIVideo()
-            }
+            Task { await uploadAIVideo() }
           } else if status.contains("Failed: ") {
             stopPolling()
             AnalyticsModuleKt.getAnalyticsManager().trackEvent(
