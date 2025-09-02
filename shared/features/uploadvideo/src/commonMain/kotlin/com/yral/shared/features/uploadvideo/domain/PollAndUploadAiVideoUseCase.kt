@@ -80,6 +80,7 @@ internal class PollAndUploadAiVideoUseCase(
                                                     reason = it.message ?: "",
                                                     type = VideoCreationType.AI_VIDEO,
                                                 )
+                                                emit(Ok(PollAndUploadResult.UploadFailed(it.message ?: "")))
                                             }
                                     }
 
@@ -200,6 +201,10 @@ internal class PollAndUploadAiVideoUseCase(
         ) : PollAndUploadResult()
 
         data class Failed(
+            val errorMessage: String,
+        ) : PollAndUploadResult()
+
+        data class UploadFailed(
             val errorMessage: String,
         ) : PollAndUploadResult()
     }

@@ -2,6 +2,7 @@ package com.yral.shared.features.uploadvideo.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.github.michaelbull.result.fold
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.analytics.events.AiVideoGenFailureType
@@ -18,13 +19,11 @@ import com.yral.shared.features.uploadvideo.domain.GenerateVideoUseCase
 import com.yral.shared.features.uploadvideo.domain.GetFreeCreditsStatusUseCase
 import com.yral.shared.features.uploadvideo.domain.GetProvidersUseCase
 import com.yral.shared.features.uploadvideo.domain.PollAndUploadAiVideoUseCase
-import com.yral.shared.features.uploadvideo.domain.VideoGenerationTimeoutException
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoParams
 import com.yral.shared.features.uploadvideo.domain.models.Provider
 import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.rust.service.domain.models.RateLimitStatus
 import com.yral.shared.rust.service.domain.models.VideoGenRequestKey
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -34,6 +33,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+@Suppress("TooManyFunctions")
 class AiVideoGenViewModel internal constructor(
     authClientFactory: AuthClientFactory,
     private val requiredUseCases: RequiredUseCases,
@@ -79,10 +79,12 @@ class AiVideoGenViewModel internal constructor(
                 logger.d { "Null: Setting current canister to $canisterId" }
                 _state.update { it.copy(currentCanister = canisterId) }
             }
+
             isCanisterChanged -> {
                 logger.d { "Mismatch: Setting current canister to $canisterId" }
                 _state.update { it.copy(currentCanister = canisterId) }
             }
+
             else -> logger.d { "Same canister" }
         }
         when (_state.value.uiState) {
@@ -92,6 +94,7 @@ class AiVideoGenViewModel internal constructor(
                     getFreeCreditsStatus()
                 }
             }
+
             is UiState.InProgress -> {
                 if (isCanisterChanged) {
                     logger.d { "Canister changed, cancelling polling" }
@@ -102,6 +105,7 @@ class AiVideoGenViewModel internal constructor(
                     logger.d { "Canister unchanged, reusing polling" }
                 }
             }
+
             else -> Unit
         }
     }
@@ -201,6 +205,7 @@ class AiVideoGenViewModel internal constructor(
                             logger.d { "Video generated: $result" }
                             result.requestKey?.let { requestKey ->
                                 currentRequestKey = requestKey
+                                reserveBalance()
                                 pollAndUploadVideo(
                                     modelName = selectedProvider.name,
                                     requestKey = requestKey,
@@ -225,6 +230,29 @@ class AiVideoGenViewModel internal constructor(
         }
     }
 
+    private fun reserveBalance() {
+        _state.value.selectedProvider?.let { selectedProvider ->
+            val reservedBalance = selectedProvider.cost?.sats
+            reservedBalance?.let { cost ->
+                _state.update { it.copy(reservedBalance = cost) }
+                sessionManager.sessionProperties.value.coinBalance?.let { balance ->
+                    sessionManager.updateCoinBalance(balance.minus(cost))
+                }
+            }
+        }
+    }
+
+    private fun returnBalance() {
+        with(_state.value) {
+            reservedBalance?.let { reserved ->
+                _state.update { it.copy(reservedBalance = null) }
+                sessionManager.sessionProperties.value.coinBalance?.let { balance ->
+                    sessionManager.updateCoinBalance(balance.plus(reserved))
+                }
+            }
+        }
+    }
+
     private fun pushTriggerFailed(
         model: String,
         reason: String,
@@ -237,6 +265,7 @@ class AiVideoGenViewModel internal constructor(
         )
     }
 
+    @Suppress("LongMethod")
     private fun pollAndUploadVideo(
         modelName: String,
         requestKey: VideoGenRequestKey,
@@ -244,48 +273,65 @@ class AiVideoGenViewModel internal constructor(
         pollingJob?.cancel()
         pollingJob =
             viewModelScope.launch {
-                try {
-                    requiredUseCases
-                        .pollAndUploadAiVideo
-                        .invoke(
-                            parameters =
-                                PollAndUploadAiVideoUseCase.Params(
-                                    modelName = modelName,
-                                    requestKey = requestKey,
-                                    isFastInitially = false,
-                                    hashtags = emptyList(),
-                                    description = "",
-                                    isNsfw = false,
-                                    enableHotOrNot = false,
-                                ),
-                        ).collect { result ->
-                            when (val pollResult = result.value) {
-                                is PollAndUploadAiVideoUseCase.PollAndUploadResult.InProgress -> {
-                                    _state.update { it.copy(uiState = UiState.InProgress(0f)) }
-                                }
-                                is PollAndUploadAiVideoUseCase.PollAndUploadResult.Success -> {
-                                    logger.d { "Generated video uploaded successfully" }
-                                    _state.update { it.copy(uiState = UiState.Success(pollResult.videoUrl)) }
-                                }
-                                is PollAndUploadAiVideoUseCase.PollAndUploadResult.Failed -> {
-                                    _state.update {
-                                        it.copy(bottomSheetType = BottomSheetType.Error(pollResult.errorMessage, true))
+                requiredUseCases
+                    .pollAndUploadAiVideo
+                    .invoke(
+                        parameters =
+                            PollAndUploadAiVideoUseCase.Params(
+                                modelName = modelName,
+                                requestKey = requestKey,
+                                isFastInitially = false,
+                                hashtags = emptyList(),
+                                description = "",
+                                isNsfw = false,
+                                enableHotOrNot = false,
+                            ),
+                    ).collect { result ->
+                        result.fold(
+                            success = { pollResult ->
+                                when (pollResult) {
+                                    is PollAndUploadAiVideoUseCase.PollAndUploadResult.InProgress -> {
+                                        _state.update { it.copy(uiState = UiState.InProgress(0f)) }
+                                    }
+
+                                    is PollAndUploadAiVideoUseCase.PollAndUploadResult.Success -> {
+                                        logger.d { "Generated video uploaded successfully" }
+                                        _state.update {
+                                            it.copy(
+                                                uiState = UiState.Success(pollResult.videoUrl),
+                                                reservedBalance = null,
+                                            )
+                                        }
+                                    }
+
+                                    is PollAndUploadAiVideoUseCase.PollAndUploadResult.Failed -> {
+                                        _state.update {
+                                            it.copy(
+                                                bottomSheetType = BottomSheetType.Error(
+                                                    pollResult.errorMessage,
+                                                    true
+                                                ),
+                                            )
+                                        }
+                                        // if endFlow true then only return balance
+                                        returnBalance()
+                                    }
+
+                                    is PollAndUploadAiVideoUseCase.PollAndUploadResult.UploadFailed -> {
+                                        _state.update {
+                                            it.copy(
+                                                bottomSheetType = BottomSheetType.Error(""),
+                                                reservedBalance = null,
+                                            )
+                                        }
                                     }
                                 }
-                            }
-                        }
-                } catch (e: VideoGenerationTimeoutException) {
-                    logger.e { e.message }
-                    _state.update { it.copy(bottomSheetType = BottomSheetType.Error("")) }
-                } catch (e: CancellationException) {
-                    logger.e(e) { "Error polling and uploading video" }
-                    throw e
-                } catch (
-                    @Suppress("TooGenericExceptionCaught") e: Exception,
-                ) {
-                    logger.e(e) { "Error polling and uploading video" }
-                    _state.update { it.copy(bottomSheetType = BottomSheetType.Error("")) }
-                }
+                            },
+                            failure = {
+                                _state.update { it.copy(bottomSheetType = BottomSheetType.Error("")) }
+                            },
+                        )
+                    }
             }
     }
 
@@ -294,7 +340,7 @@ class AiVideoGenViewModel internal constructor(
             _state.update { it.copy(bottomSheetType = BottomSheetType.None) }
             when {
                 // If we have a request key, retry polling and uploading
-                currentRequestKey != null -> {
+                currentRequestKey != null && _state.value.reservedBalance != null -> {
                     pollAndUploadVideo(
                         modelName = _state.value.selectedProvider?.name ?: "",
                         requestKey = currentRequestKey!!,
@@ -323,7 +369,8 @@ class AiVideoGenViewModel internal constructor(
 
     fun shouldEnableButton(): Boolean =
         with(_state.value) {
-            prompt.trim().isNotEmpty() && usedCredits != null && (isCreditsAvailable() || !isBalanceLow())
+            prompt.trim()
+                .isNotEmpty() && usedCredits != null && (isCreditsAvailable() || !isBalanceLow())
         }
 
     fun cleanup() {
@@ -376,6 +423,7 @@ class AiVideoGenViewModel internal constructor(
         val bottomSheetType: BottomSheetType = BottomSheetType.None,
         val currentCanister: String? = null,
         val currentBalance: Long? = null,
+        val reservedBalance: Long? = null,
     ) {
         fun isBalanceLow() = (selectedProvider?.cost?.sats ?: 0) > (currentBalance ?: -1)
 
@@ -389,10 +437,12 @@ class AiVideoGenViewModel internal constructor(
             val message: String,
             val endFlow: Boolean = false,
         ) : BottomSheetType()
+
         data object Signup : BottomSheetType()
         data class Link(
             val url: String,
         ) : BottomSheetType()
+
         data object SignupFailed : BottomSheetType()
         data object BackConfirmation : BottomSheetType()
     }
