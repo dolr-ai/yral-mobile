@@ -139,78 +139,85 @@ struct CreateAIVideoScreenView: View {
       } else {
         if let providers = viewModel.providers {
           ScrollView {
-            PromptView(prompt: $promptText)
-              .padding(.bottom, Constants.promptBottom)
+            VStack(alignment: .leading, spacing: Constants.vstackSpacing) {
+              PromptView(prompt: $promptText)
+                .padding(.bottom, Constants.promptBottom)
 
-            if let selectedProvider = selectedProvider {
-              buildSelectedModelView(with: selectedProvider)
-                .frame(maxWidth: .infinity)
+              if let selectedProvider = selectedProvider {
+                buildSelectedModelView(with: selectedProvider)
+                  .frame(maxWidth: .infinity)
 
-              buildBalanceView(with: selectedProvider)
-                .frame(maxWidth: .infinity)
-                .padding(.top, Constants.balanceTop)
-            }
-
-            Button {
-              AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-                event: CreateAIVideoClickedData(model: selectedProvider?.name ?? "", prompt: "")
-              )
-              if isUserLoggedIn {
-                if let provider = selectedProvider, !promptText.isEmpty {
-                  Task {
-                    await viewModel.generateVideo(
-                      for: promptText,
-                      withProvider: provider,
-                      usingCredits: !creditsUsed
-                    )
-                  }
-                }
-              } else {
-                AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-                  event: AuthScreenViewedEventData(pageName: .videoCreation)
-                )
-                showSignupSheet = true
+                buildBalanceView(with: selectedProvider)
+                  .frame(maxWidth: .infinity)
+                  .padding(.top, Constants.balanceTop)
               }
-            } label: {
-              Text(Constants.generateButtonTitle)
-                .foregroundColor(Constants.generateButtonTextColor)
-                .font(Constants.generateButtonFont)
-                .frame(maxWidth: .infinity)
-                .frame(height: Constants.generateButtonHeight)
-                .background(
-                  isButtonEnabled
-                  ? Constants.generateButtonEnabledGradient
-                  : Constants.generateButtonDisabledGradient
+
+              Button {
+                AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+                  event: CreateAIVideoClickedData(model: selectedProvider?.name ?? "", prompt: "")
                 )
-                .cornerRadius(Constants.generateButtonCornerRadius)
+                if isUserLoggedIn {
+                  if let provider = selectedProvider, !promptText.isEmpty {
+                    Task {
+                      await viewModel.generateVideo(
+                        for: promptText,
+                        withProvider: provider,
+                        usingCredits: !creditsUsed
+                      )
+                    }
+                  }
+                } else {
+                  AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+                    event: AuthScreenViewedEventData(pageName: .videoCreation)
+                  )
+                  showSignupSheet = true
+                }
+              } label: {
+                Text(Constants.generateButtonTitle)
+                  .foregroundColor(Constants.generateButtonTextColor)
+                  .font(Constants.generateButtonFont)
+                  .frame(maxWidth: .infinity)
+                  .frame(height: Constants.generateButtonHeight)
+                  .background(
+                    isButtonEnabled
+                    ? Constants.generateButtonEnabledGradient
+                    : Constants.generateButtonDisabledGradient
+                  )
+                  .cornerRadius(Constants.generateButtonCornerRadius)
+              }
+              .disabled(!isButtonEnabled)
+              .padding(.top, Constants.generateButtonTop)
+
+              HStack(spacing: .zero) {
+                Spacer()
+
+                Text(Constants.playGamesText)
+                  .font(Constants.playGamesTextFont)
+                  .overlay(
+                    Constants.playGamesTextColor
+                  )
+                  .mask(
+                    Text(Constants.playGamesText)
+                      .font(Constants.playGamesTextFont)
+                  )
+
+                Text(Constants.earnMoreText)
+                  .font(Constants.earnMoreTextFont)
+                  .foregroundColor(Constants.earnMoreTextColor)
+
+                Spacer()
+              }
+              .padding(.vertical, Constants.playGamesHstackVertical)
+              .onTapGesture {
+                eventBus.playGamesToEarnMoreTapped.send(())
+              }
+              .padding(.top, Constants.playGamesHstackTop)
             }
-            .disabled(!isButtonEnabled)
-            .padding(.top, Constants.generateButtonTop)
-
-            HStack(spacing: .zero) {
-              Spacer()
-
-              Text(Constants.playGamesText)
-                .font(Constants.playGamesTextFont)
-                .overlay(
-                  Constants.playGamesTextColor
-                )
-                .mask(
-                  Text(Constants.playGamesText)
-                    .font(Constants.playGamesTextFont)
-                )
-
-              Text(Constants.earnMoreText)
-                .font(Constants.earnMoreTextFont)
-                .foregroundColor(Constants.earnMoreTextColor)
-
-              Spacer()
-            }
-            .padding(.vertical, Constants.playGamesHstackVertical)
-            .onTapGesture {
-              eventBus.playGamesToEarnMoreTapped.send(())
-            }
-            .padding(.top, Constants.playGamesHstackTop)
+            .background(
+              Color.clear
+                .contentShape(Rectangle())
+                .hideKeyboardOnTap()
+            )
           }
         }
       }
