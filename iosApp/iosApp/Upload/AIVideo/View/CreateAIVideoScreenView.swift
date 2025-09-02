@@ -229,6 +229,13 @@ struct CreateAIVideoScreenView: View {
           .frame(width: Constants.loaderSize, height: Constants.loaderSize)
       }
     })
+    .overlay(alignment: .center, content: {
+      if showProviderBottomSheet {
+        Color.black.opacity(Constants.providerBackgroundOpacity)
+          .ignoresSafeArea()
+          .transition(.opacity)
+      }
+    })
     .fullScreenCover(isPresented: $showProviderBottomSheet) {
       if let providers = viewModel.providers {
         ProviderOptionsBottomSheetView(
@@ -562,6 +569,7 @@ extension CreateAIVideoScreenView {
     static let screenTitleFont = YralFont.pt20.bold.swiftUIFont
     static let screenTitleColor = YralColor.grey0.swiftUIColor
 
+    static let providerBackgroundOpacity = 0.8
     static let modelTitle = "Model"
     static let modelFont = YralFont.pt14.medium.swiftUIFont
     static let modelColor = YralColor.grey300.swiftUIColor
