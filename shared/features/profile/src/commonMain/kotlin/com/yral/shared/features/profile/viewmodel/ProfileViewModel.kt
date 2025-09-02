@@ -55,7 +55,6 @@ class ProfileViewModel(
             pagingSourceFactory = {
                 ProfileVideosPagingSource(
                     profileRepository = profileRepository,
-                    sessionManager = sessionManager,
                 )
             },
         ).flow

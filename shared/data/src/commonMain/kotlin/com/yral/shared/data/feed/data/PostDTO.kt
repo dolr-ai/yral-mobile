@@ -10,7 +10,7 @@ data class PostDTO(
     @SerialName("publisher_user_id")
     val publisherUserId: String,
     @SerialName("post_id")
-    val postID: Long,
+    val postID: String,
     @SerialName("video_id")
     val videoID: String,
     @SerialName("nsfw_probability")

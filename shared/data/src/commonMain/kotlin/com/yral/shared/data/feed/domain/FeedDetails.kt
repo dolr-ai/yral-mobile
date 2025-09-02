@@ -1,7 +1,7 @@
 package com.yral.shared.data.feed.domain
 
 data class FeedDetails(
-    val postID: Long,
+    val postID: String,
     val videoID: String,
     val canisterID: String,
     val principalID: String,

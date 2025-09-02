@@ -5,7 +5,7 @@ import com.yral.shared.data.feed.data.PostDTO
 data class Post(
     val canisterID: String,
     val publisherUserId: String,
-    val postID: Long,
+    val postID: String,
     val videoID: String,
     val nsfwProbability: Double?,
 )

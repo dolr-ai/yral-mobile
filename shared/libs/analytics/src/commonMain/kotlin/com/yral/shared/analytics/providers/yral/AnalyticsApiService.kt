@@ -43,7 +43,7 @@ class AnalyticsApiService(
     }
 
     companion object {
-        private const val BULK_EVENTS_END_POINT = "/api/v1/events/bulk"
+        private const val BULK_EVENTS_END_POINT = "/api/v2/events/bulk"
     }
 
     @Serializable

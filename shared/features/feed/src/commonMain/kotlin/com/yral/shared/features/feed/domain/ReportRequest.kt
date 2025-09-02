@@ -4,7 +4,7 @@ import com.yral.shared.core.rust.KotlinDelegatedIdentityWire
 import com.yral.shared.features.feed.data.models.ReportRequestDto
 
 data class ReportRequest(
-    val postId: Long,
+    val postId: String,
     val videoId: String,
     val reason: String,
     val canisterID: String,

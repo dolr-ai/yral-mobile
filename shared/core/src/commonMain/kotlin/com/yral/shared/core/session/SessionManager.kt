@@ -33,6 +33,20 @@ class SessionManager {
                 else -> null
             }
 
+    val profilePic: String?
+        get() =
+            when (val state = _state.value) {
+                is SessionState.SignedIn -> state.session.profilePic
+                else -> null
+            }
+
+    val isCreatedFromServiceCanister: Boolean?
+        get() =
+            when (val state = _state.value) {
+                is SessionState.SignedIn -> state.session.isCreatedFromServiceCanister
+                else -> null
+            }
+
     fun updateState(state: SessionState) {
         _state.update { state }
         _sessionProperties.update { SessionProperties() }
