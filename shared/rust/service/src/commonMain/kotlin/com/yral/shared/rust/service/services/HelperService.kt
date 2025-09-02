@@ -14,6 +14,8 @@ expect object HelperService {
         identityData: ByteArray,
         token: String,
     ): Result<Unit, DeviceRegistrationError>
+
+    fun initRustLogger()
 }
 
 sealed class DeviceRegistrationError : Exception() {

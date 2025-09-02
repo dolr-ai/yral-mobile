@@ -8,7 +8,6 @@ plugins {
     alias(libs.plugins.gms)
     alias(libs.plugins.firebase.perf)
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.yral.shared.rust.agent)
 }
 
 android {

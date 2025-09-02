@@ -58,4 +58,9 @@ actual object HelperService {
             logger.e(e) { "Unexpected error during device unregistration" }
             Err(DeviceRegistrationError.UnknownError(e.message ?: "Unexpected error occurred"))
         }
+
+    actual fun initRustLogger() {
+        com.yral.shared.uniffi.generated
+            .initRustLogger()
+    }
 }
