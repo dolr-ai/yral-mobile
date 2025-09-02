@@ -1,6 +1,6 @@
 package com.yral.shared.features.uploadvideo.domain.models
 
-import com.yral.shared.uniffi.generated.VideoGenRequestKeyWrapper
+import com.yral.shared.rust.service.domain.models.VideoGenRequestKey
 
 data class GenerateVideoParams(
     val providerId: String,
@@ -21,6 +21,6 @@ data class GenerateVideoParams(
 data class GenerateVideoResult(
     val operationId: String?,
     val provider: String?,
-    val requestKey: VideoGenRequestKeyWrapper?,
+    val requestKey: VideoGenRequestKey?,
     val providerError: String?,
 )

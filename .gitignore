@@ -124,7 +124,7 @@ rust-analyzer.json
 .kotlin
 
 # Rust generated
-shared/rust/rust-agent-uniffi/target
+shared/rust/rust-agent/rust-agent-uniffi/target
 
 # CocoaPods
 iosApp/Pods/

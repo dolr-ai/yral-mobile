@@ -31,9 +31,9 @@ import com.yral.shared.firebaseAuth.usecase.SignOutUseCase
 import com.yral.shared.firebaseStore.usecase.UpdateDocumentUseCase
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
-import com.yral.shared.uniffi.generated.CanistersWrapper
-import com.yral.shared.uniffi.generated.FfiException
-import com.yral.shared.uniffi.generated.authenticateWithNetwork
+import com.yral.shared.rust.service.utils.CanisterData
+import com.yral.shared.rust.service.utils.YralFfiException
+import com.yral.shared.rust.service.utils.authenticateWithNetwork
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.messaging.messaging
@@ -172,10 +172,10 @@ class DefaultAuthClient(
                 cachedSession =
                     Session(
                         identity = data,
-                        canisterId = canisterWrapper.getCanisterPrincipal(),
-                        userPrincipal = canisterWrapper.getUserPrincipal(),
-                        profilePic = canisterWrapper.getProfilePic(),
-                        isCreatedFromServiceCanister = canisterWrapper.isCreatedFromServiceCanister(),
+                        canisterId = canisterWrapper.canisterId,
+                        userPrincipal = canisterWrapper.userPrincipalId,
+                        profilePic = canisterWrapper.profilePic,
+                        isCreatedFromServiceCanister = canisterWrapper.isCreatedFromServiceCanister,
                     )
             }
             cachedSession.userPrincipal?.let { crashlyticsManager.setUserId(it) }
@@ -185,7 +185,7 @@ class DefaultAuthClient(
             } else {
                 authorizeFirebase(cachedSession)
             }
-        } catch (e: FfiException) {
+        } catch (e: YralFfiException) {
             resetCachedCanisterData()
             crashlyticsManager.recordException(e)
             throw YralAuthException(e)
@@ -440,14 +440,14 @@ class DefaultAuthClient(
 
     private suspend fun cacheSession(
         identity: ByteArray,
-        canisterWrapper: CanistersWrapper,
+        canisterWrapper: CanisterData,
     ) {
         with(canisterWrapper) {
             preferences.putBytes(PrefKeys.IDENTITY.name, identity)
-            preferences.putString(PrefKeys.CANISTER_ID.name, getCanisterPrincipal())
-            preferences.putString(PrefKeys.USER_PRINCIPAL.name, getUserPrincipal())
-            preferences.putString(PrefKeys.PROFILE_PIC.name, getProfilePic())
-            preferences.putBoolean(PrefKeys.IS_CREATED_FROM_SERVICE_CANISTER.name, isCreatedFromServiceCanister())
+            preferences.putString(PrefKeys.CANISTER_ID.name, canisterId)
+            preferences.putString(PrefKeys.USER_PRINCIPAL.name, userPrincipalId)
+            preferences.putString(PrefKeys.PROFILE_PIC.name, profilePic)
+            preferences.putBoolean(PrefKeys.IS_CREATED_FROM_SERVICE_CANISTER.name, isCreatedFromServiceCanister)
         }
     }
 

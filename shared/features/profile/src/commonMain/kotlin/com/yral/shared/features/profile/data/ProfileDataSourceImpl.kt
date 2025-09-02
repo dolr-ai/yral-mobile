@@ -8,10 +8,10 @@ import com.yral.shared.features.profile.data.models.DeleteVideoRequestBody
 import com.yral.shared.features.profile.domain.models.DeleteVideoRequest
 import com.yral.shared.features.profile.domain.models.ProfileVideosPageResult
 import com.yral.shared.http.httpDelete
-import com.yral.shared.rust.data.models.Posts
-import com.yral.shared.rust.data.models.PostsOfUserProfileError
-import com.yral.shared.rust.domain.IndividualUserRepository
-import com.yral.shared.uniffi.generated.delegatedIdentityWireToJson
+import com.yral.shared.rust.service.domain.IndividualUserRepository
+import com.yral.shared.rust.service.domain.models.Posts
+import com.yral.shared.rust.service.domain.models.PostsOfUserProfileError
+import com.yral.shared.rust.service.utils.delegatedIdentityWireToJson
 import io.ktor.client.HttpClient
 import io.ktor.client.request.setBody
 import io.ktor.http.path
