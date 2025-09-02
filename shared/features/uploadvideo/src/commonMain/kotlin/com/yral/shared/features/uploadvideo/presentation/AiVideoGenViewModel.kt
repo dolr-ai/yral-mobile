@@ -307,10 +307,11 @@ class AiVideoGenViewModel internal constructor(
                                     is PollAndUploadAiVideoUseCase.PollAndUploadResult.Failed -> {
                                         _state.update {
                                             it.copy(
-                                                bottomSheetType = BottomSheetType.Error(
-                                                    pollResult.errorMessage,
-                                                    true
-                                                ),
+                                                bottomSheetType =
+                                                    BottomSheetType.Error(
+                                                        pollResult.errorMessage,
+                                                        true,
+                                                    ),
                                             )
                                         }
                                         // if endFlow true then only return balance
@@ -369,8 +370,11 @@ class AiVideoGenViewModel internal constructor(
 
     fun shouldEnableButton(): Boolean =
         with(_state.value) {
-            prompt.trim()
-                .isNotEmpty() && usedCredits != null && (isCreditsAvailable() || !isBalanceLow())
+            prompt
+                .trim()
+                .isNotEmpty() &&
+                usedCredits != null &&
+                (isCreditsAvailable() || !isBalanceLow())
         }
 
     fun cleanup() {
