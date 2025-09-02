@@ -223,30 +223,63 @@ struct CreateAIVideoScreenView: View {
             )
           }
 
-          RoundedRectangle(cornerRadius: Constants.genViewCornerRadius)
-            .fill(Constants.genViewBackground)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .padding(.bottom, Constants.genViewBottom)
-            .overlay(alignment: .center) {
-              VStack(spacing: Constants.genViewVstackSpacing) {
-                LottieLoaderView(animationName: Constants.loader)
-                  .frame(width: Constants.loaderSize, height: Constants.loaderSize)
+        Text(Constants.screenTitle)
+          .font(Constants.screenTitleFont)
+          .foregroundColor(Constants.screenTitleColor)
+      }
+      .padding(.bottom, Constants.navHstackBottom)
+      .padding(.leading, -Constants.navHstackLeading)
+      .padding(.top, Constants.navHstackTop)
 
-                Text(Constants.loadingMessages[generatingVideoTextCurrentIndex])
-                  .font(Constants.genViewTextFont)
-                  .foregroundColor(Constants.genViewTextColor)
-              }
-              .offset(y: -Constants.genViewBottom/2)
+      if let provider = selectedProvider, generatingVideo {
+        Text(promptText)
+          .font(Constants.genPromptFont)
+          .foregroundColor(Constants.genPromptColor)
+          .frame(maxWidth: .infinity, alignment: .leading)
+          .padding(.vertical, Constants.genPromptVertical)
+          .padding(.horizontal, Constants.genPromptHorizontal)
+          .background(Constants.genPromptBackground)
+          .cornerRadius(Constants.genPromptCornerRadius)
+          .overlay(
+            RoundedRectangle(cornerRadius: Constants.genPromptCornerRadius)
+              .stroke(Constants.genPromptBorderColor, lineWidth: .one)
+          )
+
+        HStack(spacing: Constants.genHstackSpacing) {
+          URLImage(url: URL(string: provider.iconURL))
+            .id(provider.id)
+            .frame(width: Constants.genImageSize, height: Constants.genImageSize)
+
+          Text(provider.name)
+            .font(Constants.genNameFont)
+            .foregroundColor(Constants.genNameColor)
+        }
+
+        RoundedRectangle(cornerRadius: Constants.genViewCornerRadius)
+          .fill(Constants.genViewBackground)
+          .frame(maxWidth: .infinity, maxHeight: .infinity)
+          .padding(.bottom, Constants.genViewBottom)
+          .overlay(alignment: .center) {
+            VStack(spacing: Constants.genViewVstackSpacing) {
+              LottieLoaderView(animationName: Constants.loader)
+                .frame(width: Constants.loaderSize, height: Constants.loaderSize)
+
+              Text(Constants.loadingMessages[generatingVideoTextCurrentIndex])
+                .font(Constants.genViewTextFont)
+                .foregroundColor(Constants.genViewTextColor)
             }
-            .onReceive(timer) { _ in
-              withAnimation(.easeInOut) {
-                generatingVideoTextCurrentIndex = (
-                  generatingVideoTextCurrentIndex + .one
-                ) % Constants.loadingMessages.count
-              }
+            .offset(y: -Constants.genViewBottom/2)
+          }
+          .onReceive(timer) { _ in
+            withAnimation(.easeInOut) {
+              generatingVideoTextCurrentIndex = (
+                generatingVideoTextCurrentIndex + .one
+              ) % Constants.loadingMessages.count
             }
-        } else {
-          if let providers = viewModel.providers {
+          }
+      } else {
+        if let providers = viewModel.providers {
+          ScrollView {
             PromptView(prompt: $promptText)
               .padding(.bottom, Constants.promptBottom)
 
@@ -322,15 +355,15 @@ struct CreateAIVideoScreenView: View {
           }
         }
       }
-      .frame(maxWidth: .infinity, alignment: .leading)
-      .frame(maxHeight: .infinity, alignment: .top)
-      .background(
-        Color.clear
-          .contentShape(Rectangle())
-          .hideKeyboardOnTap()
-      )
-      .padding(.horizontal, Constants.vstackHorizontal)
     }
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .frame(maxHeight: .infinity, alignment: .top)
+    .background(
+      Color.clear
+        .contentShape(Rectangle())
+        .hideKeyboardOnTap()
+    )
+    .padding(.horizontal, Constants.vstackHorizontal)
     .overlay(alignment: .center, content: {
       if showLoader {
         LottieLoaderView(animationName: Constants.loader, resetProgess: false)
@@ -622,20 +655,20 @@ extension CreateAIVideoScreenView {
           .foregroundColor(
             (session.state.coins >= provider.cost.sats) ?
             Constants.creditsUsedGreyColor :
-            Constants.creditsUsedRedColor
+              Constants.creditsUsedRedColor
           )
 
         Text(
           (session.state.coins >= provider.cost.sats) ?
           Constants.currentBalanceText(amount: session.state.coins) :
-          Constants.lowBalanceText(amount: session.state.coins)
+            Constants.lowBalanceText(amount: session.state.coins)
         )
-          .font(Constants.currentBalanceFont)
-          .foregroundColor(
-            (session.state.coins >= provider.cost.sats) ?
-            Constants.currentBalanceGreyColor :
+        .font(Constants.currentBalanceFont)
+        .foregroundColor(
+          (session.state.coins >= provider.cost.sats) ?
+          Constants.currentBalanceGreyColor :
             Constants.currentBalanceRedColor
-          )
+        )
       } else {
         Text(Constants.creditsNotUsed)
           .font(Constants.creditsUsedFont)
@@ -646,7 +679,7 @@ extension CreateAIVideoScreenView {
           .foregroundColor(
             session.state.coins == .zero ?
             Constants.currentBalanceRedColor :
-            Constants.currentBalanceGreyColor
+              Constants.currentBalanceGreyColor
           )
       }
     }
