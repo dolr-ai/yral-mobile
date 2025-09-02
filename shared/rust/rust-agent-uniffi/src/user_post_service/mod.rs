@@ -41,6 +41,42 @@ impl ServiceCanistersDetails {
     }
 }
 
+#[derive(CandidType, Deserialize, Enum)]
+pub enum SCResult3 {
+    Ok(Vec<SCPostDetailsForFrontend>),
+    Err(SCGetPostsOfUserProfileError),
+}
+
+impl From<yral_canisters_client::user_post_service::Result3> for SCResult3 {
+    fn from(result: yral_canisters_client::user_post_service::Result3) -> Self {
+        match result {
+            yral_canisters_client::user_post_service::Result3::Ok(posts) => {
+                SCResult3::Ok(posts.into_iter().map(|post| SCPostDetailsForFrontend::from_post(post, &Principal::anonymous())).collect())
+            }
+            yral_canisters_client::user_post_service::Result3::Err(err) => {
+                SCResult3::Err(err.into())
+            }
+        }
+    }
+}
+
+#[derive(CandidType, Deserialize, Enum)]
+pub enum SCGetPostsOfUserProfileError {
+    ReachedEndOfItemsList,
+    InvalidBoundsPassed,
+    ExceededMaxNumberOfItemsAllowedInOneRequest,
+}
+
+impl From<yral_canisters_client::user_post_service::GetPostsOfUserProfileError> for SCGetPostsOfUserProfileError {
+    fn from(error: yral_canisters_client::user_post_service::GetPostsOfUserProfileError) -> Self {
+        match error {
+            yral_canisters_client::user_post_service::GetPostsOfUserProfileError::ReachedEndOfItemsList => SCGetPostsOfUserProfileError::ReachedEndOfItemsList,
+            yral_canisters_client::user_post_service::GetPostsOfUserProfileError::InvalidBoundsPassed => SCGetPostsOfUserProfileError::InvalidBoundsPassed,
+            yral_canisters_client::user_post_service::GetPostsOfUserProfileError::ExceededMaxNumberOfItemsAllowedInOneRequest => SCGetPostsOfUserProfileError::ExceededMaxNumberOfItemsAllowedInOneRequest,
+        }
+    }
+}
+
 #[derive(CandidType, Deserialize, Record)]
 pub struct SCPostDetailsForFrontend{
     pub id: String,
@@ -166,7 +202,7 @@ impl UserPostService {
         arg0: String,
         arg1: u64,
         arg2: u64,
-    ) -> Result<Vec<SCPostDetailsForFrontend>> {
+    ) -> Result<SCResult3> {
         let agent = Arc::clone(&self.agent);
         let principal = Principal::from_text(arg0)
             .map_err(|e| FFIError::PrincipalError(format!("Invalid principal: {:?}", e)))?;
@@ -176,10 +212,10 @@ impl UserPostService {
                 &agent,
             );
             let details = service
-                .get_posts_of_this_user_profile_with_pagination_cursor(principal, arg1, arg2)
+                .get_posts_of_this_user_profile_with_pagination(principal, arg1, arg2)
                 .await
                 .map_err(|e| FFIError::AgentError(format!("{:?}", e)))?;
-            Ok(details.into_iter().map(|post| SCPostDetailsForFrontend::from_post(post, &principal)).collect())
+            Ok(SCResult3::from(details))
         }).await.map_err(|e| FFIError::AgentError(format!("{:?}", e)))?
     }
 }

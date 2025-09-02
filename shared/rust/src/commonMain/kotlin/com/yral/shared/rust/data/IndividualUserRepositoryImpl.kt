@@ -4,7 +4,6 @@ import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.data.feed.domain.Post
 import com.yral.shared.data.feed.domain.toDTO
 import com.yral.shared.rust.data.models.Posts
-import com.yral.shared.rust.data.models.PostsOfUserProfileError
 import com.yral.shared.rust.data.models.toFeedDetails
 import com.yral.shared.rust.data.models.toPosts
 import com.yral.shared.rust.domain.IndividualUserRepository
@@ -39,8 +38,8 @@ class IndividualUserRepositoryImpl(
         startIndex: ULong,
         pageSize: ULong,
         shouldFetchFromServiceCanisters: Boolean,
-    ): Posts {
-        return if (!shouldFetchFromServiceCanisters) {
+    ): Posts =
+        if (!shouldFetchFromServiceCanisters) {
             dataSource
                 .getPostsOfThisUserProfileWithPaginationCursor(
                     principalId = principalId,
@@ -48,28 +47,11 @@ class IndividualUserRepositoryImpl(
                     pageSize = pageSize,
                 ).toPosts(principalId)
         } else {
-            val posts =
-                dataSource
-                    .getSCPostsOfThisUserProfileWithPaginationCursor(
-                        principalId = principalId,
-                        startIndex = startIndex,
-                        pageSize = pageSize,
-                    )
-            when (posts.isEmpty()) {
-                true -> return Posts.Err(PostsOfUserProfileError.REACHED_END_OF_ITEMS_LIST)
-                false -> {
-                    Posts.Ok(
-                        v1 =
-                            posts.map {
-                                it.toFeedDetails(
-                                    postId = it.id,
-                                    canisterId = principalId,
-                                    nsfwProbability = 0.0,
-                                )
-                            },
-                    )
-                }
-            }
+            dataSource
+                .getSCPostsOfThisUserProfileWithPaginationCursor(
+                    principalId = principalId,
+                    startIndex = startIndex,
+                    pageSize = pageSize,
+                ).toPosts(principalId)
         }
-    }
 }

@@ -6,6 +6,7 @@ import com.yral.shared.rust.services.UserPostServiceFactory
 import com.yral.shared.uniffi.generated.PostDetailsForFrontend
 import com.yral.shared.uniffi.generated.Result12
 import com.yral.shared.uniffi.generated.ScPostDetailsForFrontend
+import com.yral.shared.uniffi.generated.ScResult3
 
 class IndividualUserDataSourceImpl(
     private val individualUserServiceFactory: IndividualUserServiceFactory,
@@ -34,7 +35,7 @@ class IndividualUserDataSourceImpl(
         principalId: String,
         startIndex: ULong,
         pageSize: ULong,
-    ): List<ScPostDetailsForFrontend> =
+    ): ScResult3 =
         userPostServiceFactory
             .service(principalId)
             .getPostsOfThisUserProfileWithPaginationCursor(principalId, startIndex, pageSize)
