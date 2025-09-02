@@ -270,9 +270,7 @@ class CreateAIVideoViewModel: ObservableObject {
   func stopPolling() {
     pollingTask?.cancel()
     pollingTask = nil
-    if removeKey {
-      pollingRequestKey = nil
-    }
+    pollingRequestKey = nil
   }
 
   func updateSelectedProvider(_ provider: AIVideoProviderResponse) {
