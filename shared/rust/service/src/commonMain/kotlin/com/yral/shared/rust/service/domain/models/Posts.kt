@@ -1,4 +1,4 @@
-package com.yral.shared.rust.service.data.models
+package com.yral.shared.rust.service.domain.models
 
 import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.uniffi.generated.GetPostsOfUserProfileError

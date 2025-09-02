@@ -1,15 +1,15 @@
-package com.yral.shared.rust.service.data.models
+package com.yral.shared.rust.service.domain.models
 
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.rust.service.data.IndividualUserDataSourceImpl.Companion.CLOUD_FLARE_PREFIX
 import com.yral.shared.rust.service.data.IndividualUserDataSourceImpl.Companion.CLOUD_FLARE_SUFFIX_MP4
 import com.yral.shared.rust.service.data.IndividualUserDataSourceImpl.Companion.THUMBNAIL_SUFFIX
+import com.yral.shared.rust.service.utils.propicFromPrincipal
 import com.yral.shared.uniffi.generated.PostDetailsForFrontend
 import com.yral.shared.uniffi.generated.PostStatus
 import com.yral.shared.uniffi.generated.ScPostDetailsForFrontend
 import com.yral.shared.uniffi.generated.ScPostStatus
-import com.yral.shared.uniffi.generated.propicFromPrincipal
 
 fun PostDetailsForFrontend.toFeedDetails(
     postId: String,
