@@ -5,17 +5,17 @@ import com.yral.shared.libs.arch.domain.SuspendUseCase
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.rust.service.domain.RateLimitRepository
-import com.yral.shared.uniffi.generated.RateLimitStatusWrapper
+import com.yral.shared.rust.service.domain.models.RateLimitStatus
 
 internal class GetFreeCreditsStatusUseCase(
     appDispatchers: AppDispatchers,
     failureListener: UseCaseFailureListener,
     private val repository: RateLimitRepository,
-) : SuspendUseCase<GetFreeCreditsStatusUseCase.Params, RateLimitStatusWrapper>(
+) : SuspendUseCase<GetFreeCreditsStatusUseCase.Params, RateLimitStatus>(
         appDispatchers.network,
         failureListener,
     ) {
-    override suspend fun execute(parameter: Params): RateLimitStatusWrapper =
+    override suspend fun execute(parameter: Params): RateLimitStatus =
         repository
             .getVideoGenFreeCreditsStatus(
                 userPrincipal = parameter.userPrincipal,
