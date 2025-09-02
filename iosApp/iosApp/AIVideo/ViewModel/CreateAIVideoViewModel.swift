@@ -33,10 +33,9 @@ enum CreateAIVideoScreenEvent {
   case updateSelectedProvider(AIVideoProviderResponse)
   case socialSignInSuccess(creditsAvailable: Bool)
   case socialSignInFailure
-  case generateVideoSuccess
+  case generateVideoSuccess(deductBalance: Int)
   case generateVideoFailure(String)
-  case generateVideoStatusSuccess(deductBalance: Int)
-  case generateVideoStatusFailure(String)
+  case generateVideoStatusFailure(error: String, addBalance: Int)
   case uploadAIVideoSuccess(String)
   case uploadAIVideoFailure(String)
 }
@@ -151,7 +150,7 @@ class CreateAIVideoViewModel: ObservableObject {
       case .success(let response):
         pollingRequestKey = response.requestKey
         state = .success
-        event = .generateVideoSuccess
+        event = .generateVideoSuccess(deductBalance: provider.cost.sats)
       case .failure(let error):
         AnalyticsModuleKt.getAnalyticsManager().trackEvent(
           event: AiVideoGeneratedData(
@@ -177,7 +176,6 @@ class CreateAIVideoViewModel: ObservableObject {
           if status.contains("Complete: ") {
             stopPolling()
             videoURLString = status.replacingOccurrences(of: "Complete: ", with: "")
-
             AnalyticsModuleKt.getAnalyticsManager().trackEvent(
               event: AiVideoGeneratedData(
                 model: selectedProvider?.name ?? "",
@@ -186,15 +184,9 @@ class CreateAIVideoViewModel: ObservableObject {
                 reasonType: nil
               )
             )
-
-            if let provider = selectedProvider {
-              event = .generateVideoStatusSuccess(deductBalance: provider.cost.sats)
-            }
-
-            Task {
-              await uploadAIVideo()
-            }
+            Task { await uploadAIVideo() }
           } else if status.contains("Failed: ") {
+            stopPolling()
             AnalyticsModuleKt.getAnalyticsManager().trackEvent(
               event: AiVideoGeneratedData(
                 model: selectedProvider?.name ?? "",
@@ -203,11 +195,13 @@ class CreateAIVideoViewModel: ObservableObject {
                 reasonType: .generationFailed
               )
             )
-
-            event = .generateVideoStatusFailure(status.replacingOccurrences(of: "Failed: ", with: ""))
-            stopPolling()
+            event = .generateVideoStatusFailure(
+              error: status.replacingOccurrences(of: "Failed: ", with: ""),
+              addBalance: selectedProvider?.cost.sats ?? .zero
+            )
           }
         case .failure(let error):
+          stopPolling()
           AnalyticsModuleKt.getAnalyticsManager().trackEvent(
             event: AiVideoGeneratedData(
               model: selectedProvider?.name ?? "",
@@ -216,10 +210,11 @@ class CreateAIVideoViewModel: ObservableObject {
               reasonType: .generationFailed
             )
           )
-
-          stopPolling()
           state = .failure(error)
-          event = .generateVideoStatusFailure(error.localizedDescription)
+          event = .generateVideoStatusFailure(
+            error: error.localizedDescription,
+            addBalance: selectedProvider?.cost.sats ?? .zero
+          )
         }
       }
     }
@@ -255,7 +250,10 @@ class CreateAIVideoViewModel: ObservableObject {
     }
 
     guard let request = pollingRequestKey else {
-      event = .generateVideoStatusFailure("No request key was found to generate video")
+      event = .generateVideoStatusFailure(
+        error: "No request key was found to generate video",
+        addBalance: selectedProvider?.cost.sats ?? .zero
+      )
       return
     }
 
