@@ -349,9 +349,11 @@ class AiVideoGenViewModel internal constructor(
     }
 
     fun createAiVideoClicked() {
-        _state.value.selectedProvider
-            ?.name
-            ?.let { uploadVideoTelemetry.createAiVideoClicked(it) }
+        with(_state.value) {
+            selectedProvider?.name?.let {
+                uploadVideoTelemetry.createAiVideoClicked(it, prompt)
+            }
+        }
     }
 
     fun resetUi() {
