@@ -273,11 +273,13 @@ class AiVideoGenViewModel internal constructor(
         pollingJob?.cancel()
         pollingJob =
             viewModelScope.launch {
+                val userPrincipal = sessionManager.userPrincipal ?: return@launch
                 requiredUseCases
                     .pollAndUploadAiVideo
                     .invoke(
                         parameters =
                             PollAndUploadAiVideoUseCase.Params(
+                                userPrincipal = userPrincipal,
                                 modelName = modelName,
                                 requestKey = requestKey,
                                 isFastInitially = false,
@@ -328,7 +330,13 @@ class AiVideoGenViewModel internal constructor(
                                     }
                                 }
                             },
-                            failure = {
+                            failure = { error ->
+                                uploadVideoTelemetry.aiVideoGenerated(
+                                    model = _state.value.selectedProvider?.name ?: "",
+                                    isSuccess = false,
+                                    reason = error.message,
+                                    reasonType = AiVideoGenFailureType.GENERATION_FAILED,
+                                )
                                 _state.update { it.copy(bottomSheetType = BottomSheetType.Error("")) }
                             },
                         )
