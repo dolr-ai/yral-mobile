@@ -8,7 +8,7 @@ import com.yral.shared.features.feed.domain.ReportRequest
 import com.yral.shared.libs.arch.domain.SuspendUseCase
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
-import com.yral.shared.uniffi.generated.delegatedIdentityWireToJson
+import com.yral.shared.rust.service.utils.delegatedIdentityWireToJson
 import kotlinx.serialization.json.Json
 
 class ReportVideoUseCase(

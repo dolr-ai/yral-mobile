@@ -221,7 +221,6 @@ firebase-perf = { id = "com.google.firebase.firebase-perf", version.ref = "fireb
 gms = { id = "com.google.gms.google-services", version.ref = "play-services" }
 gobleyCargo = { id = "dev.gobley.cargo", version.ref = "gobley" }
 gobleyUniffi = { id = "dev.gobley.uniffi", version.ref = "gobley" }
-gobleyRust = { id = "dev.gobley.rust", version.ref = "gobley" }
 kotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlinCocoapods = { id = "org.jetbrains.kotlin.native.cocoapods", version.ref = "kotlin" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
@@ -246,4 +245,4 @@ yral-shared-library = { id = "yral.shared.library" }
 yral-shared-library-compose = { id = "yral.shared.library.compose" }
 yral-shared-feature = { id = "yral.shared.feature" }
 yral-style-enforcer = { id = "yral.style.enforcer" }
-yral-shared-rust-lib = { id = "yral.shared.rust.lib" }
+yral-shared-rust-agent = { id = "yral.shared.rust.agent" }

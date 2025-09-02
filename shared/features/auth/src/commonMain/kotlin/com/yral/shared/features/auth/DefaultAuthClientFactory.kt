@@ -8,9 +8,9 @@ import com.yral.shared.features.auth.domain.AuthRepository
 import com.yral.shared.features.auth.utils.OAuthUtils
 import com.yral.shared.features.auth.utils.OAuthUtilsHelper
 import com.yral.shared.preferences.Preferences
-import com.yral.shared.rust.services.IndividualUserServiceFactory
-import com.yral.shared.rust.services.RateLimitServiceFactory
-import com.yral.shared.rust.services.UserPostServiceFactory
+import com.yral.shared.rust.service.services.IndividualUserServiceFactory
+import com.yral.shared.rust.service.services.RateLimitServiceFactory
+import com.yral.shared.rust.service.services.UserPostServiceFactory
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineExceptionHandler

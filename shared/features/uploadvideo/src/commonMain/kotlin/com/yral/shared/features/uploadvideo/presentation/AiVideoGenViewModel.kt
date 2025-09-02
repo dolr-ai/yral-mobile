@@ -21,8 +21,8 @@ import com.yral.shared.features.uploadvideo.domain.VideoGenerationTimeoutExcepti
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoParams
 import com.yral.shared.features.uploadvideo.domain.models.Provider
 import com.yral.shared.libs.arch.presentation.UiState
-import com.yral.shared.uniffi.generated.RateLimitStatusWrapper
-import com.yral.shared.uniffi.generated.VideoGenRequestKeyWrapper
+import com.yral.shared.rust.service.domain.models.RateLimitStatus
+import com.yral.shared.rust.service.domain.models.VideoGenRequestKey
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -67,7 +67,7 @@ class AiVideoGenViewModel internal constructor(
             }
         }.distinctUntilChanged()
 
-    private var currentRequestKey: VideoGenRequestKeyWrapper? = null
+    private var currentRequestKey: VideoGenRequestKey? = null
     private var pollingJob: Job? = null
 
     fun refresh(canisterId: String) {
@@ -158,7 +158,7 @@ class AiVideoGenViewModel internal constructor(
         }
     }
 
-    private fun RateLimitStatusWrapper.usedCredits() =
+    private fun RateLimitStatus.usedCredits() =
         if (sessionManager.isSocialSignIn()) {
             if (isLimited) 1 else 0
         } else {
@@ -233,7 +233,7 @@ class AiVideoGenViewModel internal constructor(
 
     private fun pollAndUploadVideo(
         modelName: String,
-        requestKey: VideoGenRequestKeyWrapper,
+        requestKey: VideoGenRequestKey,
     ) {
         pollingJob?.cancel()
         pollingJob =
