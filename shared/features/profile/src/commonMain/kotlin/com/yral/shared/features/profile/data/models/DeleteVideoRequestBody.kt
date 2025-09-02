@@ -6,10 +6,10 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class DeleteVideoRequestBody(
-    @SerialName("canister_id")
-    val canisterId: String,
+    @SerialName("publisher_user_id")
+    val principal: String,
     @SerialName("post_id")
-    val postId: ULong,
+    val postId: String,
     @SerialName("video_id")
     val videoId: String,
     @SerialName("delegated_identity_wire")

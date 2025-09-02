@@ -45,7 +45,7 @@ class ReportVideoUseCase(
 }
 
 data class ReportRequestParams(
-    val postId: Long,
+    val postId: String,
     val videoId: String,
     val reason: String,
     val canisterID: String,
