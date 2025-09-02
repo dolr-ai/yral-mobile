@@ -35,8 +35,7 @@ enum CreateAIVideoScreenEvent {
   case socialSignInFailure
   case generateVideoSuccess(deductBalance: Int)
   case generateVideoFailure(String)
-  case generateVideoStatusSuccess(deductBalance: Int)
-  case generateVideoStatusFailure(String)
+  case generateVideoStatusFailure(error: String, addBalance: Int)
   case uploadAIVideoSuccess(String)
   case uploadAIVideoFailure(String)
 }
@@ -185,14 +184,7 @@ class CreateAIVideoViewModel: ObservableObject {
                 reasonType: nil
               )
             )
-
-            if let provider = selectedProvider {
-              event = .generateVideoStatusSuccess(deductBalance: provider.cost.sats)
-            }
-
-            Task {
-              await uploadAIVideo()
-            }
+            Task { await uploadAIVideo() }
           } else if status.contains("Failed: ") {
             stopPolling()
             AnalyticsModuleKt.getAnalyticsManager().trackEvent(
@@ -258,7 +250,10 @@ class CreateAIVideoViewModel: ObservableObject {
     }
 
     guard let request = pollingRequestKey else {
-      event = .generateVideoStatusFailure("No request key was found to generate video")
+      event = .generateVideoStatusFailure(
+        error: "No request key was found to generate video",
+        addBalance: selectedProvider?.cost.sats ?? .zero
+      )
       return
     }
 
