@@ -91,8 +91,11 @@ class UploadVideoTelemetry(
         analyticsManager.trackEvent(VideoGenerationModelSelectedData(model))
     }
 
-    fun createAiVideoClicked(model: String) {
-        analyticsManager.trackEvent(CreateAIVideoClickedData(model))
+    fun createAiVideoClicked(
+        model: String,
+        prompt: String,
+    ) {
+        analyticsManager.trackEvent(CreateAIVideoClickedData(model, prompt))
     }
 
     fun aiVideoGenerated(

@@ -31,9 +31,18 @@ internal data class RequestBodyDto(
     @SerialName("prompt") val prompt: String,
     @SerialName("resolution") val resolution: String?,
     @SerialName("seed") val seed: Long? = null,
-    @SerialName("token_type") val tokenType: String?,
+    @SerialName("token_type") val tokenType: TokenType?,
     @SerialName("user_id") val userId: String,
 )
+
+@Serializable
+enum class TokenType {
+    @SerialName("Free")
+    FREE,
+
+    @SerialName("Sats")
+    SATS,
+}
 
 @Serializable
 internal data class GenerateVideoSuccessDto(

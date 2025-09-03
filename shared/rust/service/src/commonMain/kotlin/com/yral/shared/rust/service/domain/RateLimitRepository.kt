@@ -5,7 +5,10 @@ import com.yral.shared.rust.service.domain.models.Result2
 import com.yral.shared.rust.service.domain.models.VideoGenRequestKey
 
 interface RateLimitRepository {
-    suspend fun fetchVideoGenerationStatus(requestKey: VideoGenRequestKey): Result2
+    suspend fun fetchVideoGenerationStatus(
+        userPrincipal: String,
+        requestKey: VideoGenRequestKey,
+    ): Result2
     suspend fun getVideoGenFreeCreditsStatus(
         userPrincipal: String,
         isRegistered: Boolean,

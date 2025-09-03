@@ -730,12 +730,14 @@ data class CreateAIVideoClickedData(
     @SerialName("event") override val event: String = FeatureEvents.VIDEO_UPLOAD_ERROR_SHOWN.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.UPLOAD.getFeatureName(),
     @SerialName("model") val model: String,
+    @SerialName("prompt") val prompt: String,
 ) : BaseEventData(),
     EventData {
-    constructor(model: String) : this(
+    constructor(model: String, prompt: String) : this(
         FeatureEvents.CREATE_AI_VIDEO_CLICKED.getEventName(),
         Features.AUTH.getFeatureName(),
         model,
+        prompt,
     )
 }
 
