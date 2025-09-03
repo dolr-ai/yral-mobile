@@ -63,13 +63,13 @@ class AndroidShareService(
     private fun shareIntent(file: File, text: String): Intent {
         val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
         val intent = Intent(Intent.ACTION_SEND).apply {
-            type = "image/png"
+            type = "image/jpg"
             putExtra(Intent.EXTRA_STREAM, uri)
             putExtra(Intent.EXTRA_TEXT, text)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
 
-        val chooser = Intent.createChooser(intent, "Share Image").apply {
+        val chooser = Intent.createChooser(intent, "Share Via").apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         return chooser
