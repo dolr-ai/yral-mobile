@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 """
-voted_video_ids_for_principal.py
+export_voted_video_ids.py
 ─────────────────────────
 Fetch all unique video IDs for a principal based on their transactions
 with reason ∈ {"WIN","LOSS"} and write them to a CSV.
 
 USAGE
   # write to file
-  python voted_video_ids_for_principal.py <PROJECT_ID> <PRINCIPAL_ID> out.csv
+  python export_voted_video_ids.py <PROJECT_ID> <PRINCIPAL_ID> out.csv
 
   # or write to stdout (redirect yourself)
-  python voted_video_ids_for_principal.py <PROJECT_ID> <PRINCIPAL_ID>  > my_videos.csv
+  python export_voted_video_ids.py <PROJECT_ID> <PRINCIPAL_ID>  > my_videos.csv
 
 AUTH
   Uses Application Default Credentials. Either:
@@ -26,7 +26,7 @@ from firebase_admin import credentials, firestore
 
 def main():
     if len(sys.argv) < 3:
-        sys.exit("Usage: python voted_video_ids_for_principal.py <PROJECT_ID> <PRINCIPAL_ID> [out.csv]")
+        sys.exit("Usage: python export_voted_video_ids.py <PROJECT_ID> <PRINCIPAL_ID> [out.csv]")
 
     PROJECT_ID   = sys.argv[1].strip()
     PRINCIPAL_ID = sys.argv[2].strip()
