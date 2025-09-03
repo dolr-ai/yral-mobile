@@ -1,6 +1,7 @@
 package com.yral.android.ui.screens.feed
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -480,8 +481,9 @@ private fun ActionsRight(
         verticalArrangement = Arrangement.spacedBy(26.dp, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
+        val feedDetails = state.feedDetails[pageNo]
         if (state.overlayType == OverlayType.GAME_TOGGLE) {
-            state.feedDetails[pageNo].profileImageURL?.let { profileImage ->
+            feedDetails.profileImageURL?.let { profileImage ->
                 YralAsyncImage(
                     imageUrl = profileImage.toString(),
                     modifier = Modifier.size(36.dp),
@@ -491,6 +493,17 @@ private fun ActionsRight(
                 )
             }
         }
+        Image(
+            modifier =
+                Modifier
+                    .size(36.dp)
+                    .padding(1.5.dp)
+                    .clickable { feedViewModel.onShareClicked(feedDetails) },
+            painter = painterResource(id = R.drawable.ic_share),
+            contentDescription = "share video",
+            contentScale = ContentScale.None,
+        )
+
         ReportVideo(
             onReportClicked = { feedViewModel.toggleReportSheet(true, pageNo) },
         )

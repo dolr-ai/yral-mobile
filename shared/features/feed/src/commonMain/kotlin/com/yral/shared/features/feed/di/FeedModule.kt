@@ -10,6 +10,8 @@ import com.yral.shared.features.feed.domain.useCases.FetchFeedDetailsUseCase
 import com.yral.shared.features.feed.domain.useCases.FetchMoreFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.GetInitialFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.ReportVideoUseCase
+import com.yral.shared.features.feed.sharing.AndroidShareService
+import com.yral.shared.features.feed.sharing.ShareService
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.RequiredUseCases
 import org.koin.core.module.dsl.bind
@@ -30,4 +32,5 @@ val feedModule =
         factoryOf(::FeedRemoteDataSource) { bind<IFeedRemoteDataSource>() }
         factoryOf(::RequiredUseCases)
         factoryOf(::FeedTelemetry)
+        factoryOf(::AndroidShareService) { bind<ShareService>() }
     }

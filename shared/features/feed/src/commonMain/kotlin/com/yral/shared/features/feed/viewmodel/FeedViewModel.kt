@@ -1,6 +1,7 @@
 package com.yral.shared.features.feed.viewmodel
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
@@ -19,6 +20,7 @@ import com.yral.shared.features.feed.domain.useCases.FetchMoreFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.GetInitialFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.ReportRequestParams
 import com.yral.shared.features.feed.domain.useCases.ReportVideoUseCase
+import com.yral.shared.features.feed.sharing.ShareService
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -36,6 +38,7 @@ class FeedViewModel(
     private val crashlyticsManager: CrashlyticsManager,
     private val feedTelemetry: FeedTelemetry,
     authClientFactory: AuthClientFactory,
+    private val shareService: ShareService,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.disk)
 
@@ -397,6 +400,13 @@ class FeedViewModel(
             sheetState = ReportSheetState.Open(pageNo)
         }
         _state.update { it.copy(reportSheetState = sheetState) }
+    }
+
+    fun onShareClicked(feedDetails: FeedDetails) {
+        viewModelScope.launch {
+            val shareText = "Check out this video on Yral 👀 Where watching = fun + games! ⚡ Try it 👉 ${feedDetails.url}"
+            shareService.shareImageWithText(imageUrl = feedDetails.thumbnail, text = shareText)
+        }
     }
 
     fun registerTrace(
