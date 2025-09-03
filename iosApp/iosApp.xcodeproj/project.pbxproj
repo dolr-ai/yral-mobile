@@ -629,6 +629,12 @@
 		ACE2490D2E6830B5006200EB /* AppUpdateDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACE2490B2E6830B0006200EB /* AppUpdateDTO.swift */; };
 		ACE2490F2E6830E2006200EB /* AppUpdateHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACE2490E2E6830DD006200EB /* AppUpdateHandler.swift */; };
 		ACE249102E6830E2006200EB /* AppUpdateHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACE2490E2E6830DD006200EB /* AppUpdateHandler.swift */; };
+		ACE249E42E684A2F006200EB /* RecommendedUpdatePopUp.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACE249E32E684A1A006200EB /* RecommendedUpdatePopUp.swift */; };
+		ACE249E52E684A2F006200EB /* RecommendedUpdatePopUp.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACE249E32E684A1A006200EB /* RecommendedUpdatePopUp.swift */; };
+		ACE249E82E6856D0006200EB /* MandatoryUpdateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACE249E72E6856C9006200EB /* MandatoryUpdateView.swift */; };
+		ACE249E92E6856D0006200EB /* MandatoryUpdateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACE249E72E6856C9006200EB /* MandatoryUpdateView.swift */; };
+		ACE249EB2E685B5B006200EB /* app_update_animation.json in Resources */ = {isa = PBXBuildFile; fileRef = ACE249EA2E685B5B006200EB /* app_update_animation.json */; };
+		ACE249EC2E685B5B006200EB /* app_update_animation.json in Resources */ = {isa = PBXBuildFile; fileRef = ACE249EA2E685B5B006200EB /* app_update_animation.json */; };
 		ACEBF7DB2D6EDC8500B594A0 /* GradientProgressViewStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACEBF7DA2D6EDC7B00B594A0 /* GradientProgressViewStyle.swift */; };
 		ACEBF7DC2D6EDC8500B594A0 /* GradientProgressViewStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACEBF7DA2D6EDC7B00B594A0 /* GradientProgressViewStyle.swift */; };
 		ACEBF7DE2D6F215800B594A0 /* VideoPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACEBF7DD2D6F215400B594A0 /* VideoPlayerView.swift */; };
@@ -1015,6 +1021,9 @@
 		ACDD23F22D8B3D4100AB0DAF /* ProfileVideoInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileVideoInfo.swift; sourceTree = "<group>"; };
 		ACE2490B2E6830B0006200EB /* AppUpdateDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppUpdateDTO.swift; sourceTree = "<group>"; };
 		ACE2490E2E6830DD006200EB /* AppUpdateHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppUpdateHandler.swift; sourceTree = "<group>"; };
+		ACE249E32E684A1A006200EB /* RecommendedUpdatePopUp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendedUpdatePopUp.swift; sourceTree = "<group>"; };
+		ACE249E72E6856C9006200EB /* MandatoryUpdateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MandatoryUpdateView.swift; sourceTree = "<group>"; };
+		ACE249EA2E685B5B006200EB /* app_update_animation.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = app_update_animation.json; sourceTree = "<group>"; };
 		ACEBF7DA2D6EDC7B00B594A0 /* GradientProgressViewStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GradientProgressViewStyle.swift; sourceTree = "<group>"; };
 		ACEBF7DD2D6F215400B594A0 /* VideoPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlayerView.swift; sourceTree = "<group>"; };
 		ACEBF7E02D6F505300B594A0 /* UploadCompletedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadCompletedView.swift; sourceTree = "<group>"; };
@@ -1040,8 +1049,6 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		AC9B77DE2D58C7E300270FC9 /* YralTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = YralTests;
 			sourceTree = "<group>";
 		};
@@ -2753,10 +2760,20 @@
 		ACE2490A2E6830A6006200EB /* AppUpdate */ = {
 			isa = PBXGroup;
 			children = (
+				ACE249E62E6856BC006200EB /* View */,
 				ACE2490E2E6830DD006200EB /* AppUpdateHandler.swift */,
 				ACE2490B2E6830B0006200EB /* AppUpdateDTO.swift */,
 			);
 			path = AppUpdate;
+			sourceTree = "<group>";
+		};
+		ACE249E62E6856BC006200EB /* View */ = {
+			isa = PBXGroup;
+			children = (
+				ACE249E72E6856C9006200EB /* MandatoryUpdateView.swift */,
+				ACE249E32E684A1A006200EB /* RecommendedUpdatePopUp.swift */,
+			);
+			path = View;
 			sourceTree = "<group>";
 		};
 		ACEBE9962D0C4AA50056F033 /* Feed */ = {
@@ -2774,6 +2791,7 @@
 		ACEBF7E62D6F56F400B594A0 /* Lottie */ = {
 			isa = PBXGroup;
 			children = (
+				ACE249EA2E685B5B006200EB /* app_update_animation.json */,
 				ACB343972E4357A800EC74A0 /* sats_claim_failure.json */,
 				ACB343982E4357A800EC74A0 /* sats_claim_loading.json */,
 				ACB343992E4357A800EC74A0 /* sats_claim_success.json */,
@@ -3020,6 +3038,7 @@
 				ACB3439C2E4357A800EC74A0 /* sats_claim_failure.json in Resources */,
 				AC32E41C2D270097001DDA43 /* KumbhSans-Bold.ttf in Resources */,
 				AC99BB922D834387008012C2 /* Lightning_Lottie.json in Resources */,
+				ACE249EB2E685B5B006200EB /* app_update_animation.json in Resources */,
 				107C609F2DB9FDA0006FC467 /* smiley_game_lose.json in Resources */,
 				107C60A02DB9FDA0006FC467 /* smiley_game_win.json in Resources */,
 				AC32E41D2D270097001DDA43 /* KumbhSans-Light.ttf in Resources */,
@@ -3068,6 +3087,7 @@
 				ACB3439F2E4357A800EC74A0 /* sats_claim_failure.json in Resources */,
 				AC32E4102D270097001DDA43 /* KumbhSans-Bold.ttf in Resources */,
 				AC99BB932D834387008012C2 /* Lightning_Lottie.json in Resources */,
+				ACE249EC2E685B5B006200EB /* app_update_animation.json in Resources */,
 				107C60A12DB9FDA0006FC467 /* smiley_game_lose.json in Resources */,
 				107C60A22DB9FDA0006FC467 /* smiley_game_win.json in Resources */,
 				AC32E4112D270097001DDA43 /* KumbhSans-Light.ttf in Resources */,
@@ -3086,9 +3106,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3103,9 +3127,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3267,9 +3295,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3486,6 +3518,7 @@
 				ACAA4D722DDCF866001092A6 /* FeedsPlayer+Events.swift in Sources */,
 				AC32E44C2D2965A3001DDA43 /* AccountViewModel.swift in Sources */,
 				AC09AA742CDD210D009A39A4 /* Data+Extensions.swift in Sources */,
+				ACE249E42E684A2F006200EB /* RecommendedUpdatePopUp.swift in Sources */,
 				AC09A9FA2CDB7A5D009A39A4 /* SwiftBindings+Extensions.swift in Sources */,
 				ACEBF8052D7473E600B594A0 /* UploadErrorView.swift in Sources */,
 				ACC1C39E2D9B046F005A7539 /* LottieRefreshSingletonView.swift in Sources */,
@@ -3531,6 +3564,7 @@
 				1069860C2E5303A7005BE0D4 /* AIVideoRepository.swift in Sources */,
 				107C60C92DBF7A2D006FC467 /* SmileyGameRuleDIContainer.swift in Sources */,
 				10C1B3E92E55EE2D00CFC41B /* DisableBackBottomSheet.swift in Sources */,
+				ACE249E92E6856D0006200EB /* MandatoryUpdateView.swift in Sources */,
 				AC6E31232D22F08F001EBE6C /* ImageLoaderProtocol.swift in Sources */,
 				10C1B3F82E5754DA00CFC41B /* UploadAIVideoRequest.swift in Sources */,
 				105034A22DD5E3D500571B4E /* SmileyConfigDTO.swift in Sources */,
@@ -3781,6 +3815,7 @@
 				ACAA4D732DDCF866001092A6 /* FeedsPlayer+Events.swift in Sources */,
 				AC32E44B2D2965A3001DDA43 /* AccountViewModel.swift in Sources */,
 				ACD9418A2CFF575C0038FCB6 /* Data+Extensions.swift in Sources */,
+				ACE249E52E684A2F006200EB /* RecommendedUpdatePopUp.swift in Sources */,
 				ACD9418B2CFF575C0038FCB6 /* SwiftBindings+Extensions.swift in Sources */,
 				ACEBF8062D7473E600B594A0 /* UploadErrorView.swift in Sources */,
 				ACC1C39F2D9B046F005A7539 /* LottieRefreshSingletonView.swift in Sources */,
@@ -3826,6 +3861,7 @@
 				1069860B2E5303A7005BE0D4 /* AIVideoRepository.swift in Sources */,
 				107C60C82DBF7A2D006FC467 /* SmileyGameRuleDIContainer.swift in Sources */,
 				10C1B3EA2E55EE2D00CFC41B /* DisableBackBottomSheet.swift in Sources */,
+				ACE249E82E6856D0006200EB /* MandatoryUpdateView.swift in Sources */,
 				AC6E31222D22F08F001EBE6C /* ImageLoaderProtocol.swift in Sources */,
 				10C1B3F92E5754DA00CFC41B /* UploadAIVideoRequest.swift in Sources */,
 				105034A12DD5E3D500571B4E /* SmileyConfigDTO.swift in Sources */,
