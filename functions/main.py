@@ -540,11 +540,8 @@ def cast_vote_v2(request: Request):
 
             vid_exists  = vid_ref.get(transaction=tx).exists
             if not vid_exists:
-                all_ids = [s["id"] for s in smileys]
-                seed_a = random.choice(all_ids)
-                
-                pool = [smid for smid in all_ids if smid != seed_a]
-                seed_b = random.choice(pool)
+                all_ids = [s["id"] for s in smileys if s["id"] not in ["heart"]]
+                seed_a, seed_b = random.sample(all_ids, 2)
 
                 tx.set(vid_ref, {
                     "created_at": firestore.SERVER_TIMESTAMP
@@ -582,7 +579,7 @@ def cast_vote_v2(request: Request):
             shard = shard_ref(k).get().to_dict() or {}
             raw_counts.update(shard)
 
-        counts = {sid: raw_counts.get(sid, 0) for sid in smiley_map.keys()}
+        counts = {sm_id: raw_counts.get(sm_id, 0) for sm_id in smiley_map.keys()}
 
         max_votes = max(counts.values())
         leaders = [sm for sm, v in counts.items() if v == max_votes]
