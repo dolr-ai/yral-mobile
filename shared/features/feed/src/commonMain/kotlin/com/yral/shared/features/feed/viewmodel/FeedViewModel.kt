@@ -3,9 +3,11 @@ package com.yral.shared.features.feed.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
+import com.github.michaelbull.result.coroutines.runSuspendCatching
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.analytics.events.CtaType
+import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.utils.processFirstNSuspendFlow
 import com.yral.shared.crashlytics.core.CrashlyticsManager
@@ -405,7 +407,11 @@ class FeedViewModel(
     fun onShareClicked(feedDetails: FeedDetails) {
         viewModelScope.launch {
             val shareText = "Check out this video on Yral 👀 Where watching = fun + games! ⚡ Try it 👉 ${feedDetails.url}"
-            shareService.shareImageWithText(imageUrl = feedDetails.thumbnail, text = shareText)
+            runSuspendCatching {
+                shareService.shareImageWithText(imageUrl = feedDetails.thumbnail, text = shareText)
+            }.onFailure {
+                crashlyticsManager.recordException(YralException(it))
+            }
         }
     }
 
