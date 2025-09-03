@@ -11,6 +11,8 @@ from requests.exceptions import RequestException
 import os
 import random
 import collections
+from datetime import datetime, timezone, timedelta
+from zoneinfo import ZoneInfo
 
 firebase_admin.initialize_app()
 
@@ -21,8 +23,11 @@ SHARDS = 10
 PID_REGEX = re.compile(r'^[A-Za-z0-9_-]{6,64}$')
 SMILEY_GAME_CONFIG_PATH = "config/smiley_game_v2"
 VIDEO_COLL = "videos"
+DAILY_COLL = "leaderboards_daily"
 
 BALANCE_URL = "https://yral-hot-or-not.go-bazzinga.workers.dev/update_balance/"
+
+IST = timezone(timedelta(hours=5, minutes=30))
 
 # ─────────────────────  DATABASE HELPER  ────────────────────────
 _db = None
@@ -609,6 +614,11 @@ def cast_vote_v2(request: Request):
         else:
             user_ref.update({"smiley_game_losses": firestore.Increment(1)})
 
+        try:
+            _inc_daily_leaderboard(pid, outcome)
+        except Exception as e:
+            print(f"[daily-leaderboard] failed for {pid}: {e}", file=sys.stderr)
+
         # 6. success payload (voted smiley) ──────────────────────────────
         voted = smiley_map[sid]
         return jsonify({
@@ -800,3 +810,49 @@ def leaderboard_call(req: CallableRequest):
     except Exception as e:
         print("Leaderboard error:", e, file=sys.stderr)
         raise HttpsError("internal", "Internal server error")
+
+
+############################## Leaderboard ##############################
+def _bucket_bounds_ist() -> tuple[str, int, int]:
+    """
+    Returns (bucket_id, start_ms, end_ms) for today's IST day window.
+    bucket_id format: 'YYYY-MM-DD' in IST.
+    """
+    now_utc = datetime.now(timezone.utc)
+    now_ist = now_utc.astimezone(IST)
+
+    # Start of day (midnight IST)
+    start_ist = datetime(now_ist.year, now_ist.month, now_ist.day, 0, 0, 0, tzinfo=IST)
+    end_ist = start_ist + timedelta(days=1)
+
+    bucket_id = start_ist.strftime("%Y-%m-%d")
+    start_ms = int(start_ist.timestamp() * 1000)
+    end_ms   = int(end_ist.timestamp() * 1000)
+    return bucket_id, start_ms, end_ms
+
+def _inc_daily_leaderboard(pid: str, outcome: str) -> None:
+    """Increment today's IST daily leaderboard counters for this user."""
+    bucket_id, start_ms, end_ms = _bucket_bounds_ist()
+    day_ref   = db().document(f"{DAILY_COLL}/{bucket_id}")
+    entry_ref = day_ref.collection("users").document(pid)
+
+    @firestore.transactional
+    def _tx(tx: firestore.Transaction):
+        # Ensure the day doc exists & store window bounds (helpful for reads/debug)
+        tx.set(day_ref, {
+            "bucket_id": bucket_id,
+            "start_ms": start_ms,
+            "end_ms": end_ms,
+            "updated_at": firestore.SERVER_TIMESTAMP
+        }, merge=True)
+
+        # Increment the user row for today
+        updates = {
+            "principal_id": pid,
+            "wins": firestore.Increment(1 if outcome == "WIN"  else 0),
+            "losses": firestore.Increment(1 if outcome == "LOSS" else 0),
+            "updated_at": firestore.SERVER_TIMESTAMP
+        }
+        tx.set(entry_ref, updates, merge=True)
+
+    _tx(db().transaction())
