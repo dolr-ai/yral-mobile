@@ -7,7 +7,7 @@ import com.yral.shared.uniffi.generated.Principal
 actual class IndividualUserServiceFactory {
     private var identityData: ByteArray? = null
 
-    fun service(principal: Principal): IndividualUserService =
+    internal fun service(principal: Principal): IndividualUserService =
         identityData?.let {
             IndividualUserService(
                 principalText = principal,

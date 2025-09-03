@@ -7,7 +7,7 @@ import com.yral.shared.uniffi.generated.RateLimitService
 actual class RateLimitServiceFactory {
     private var identityData: ByteArray? = null
 
-    fun service(principal: Principal): RateLimitService =
+    internal fun service(principal: Principal): RateLimitService =
         identityData?.let {
             RateLimitService(
                 principalText = principal,

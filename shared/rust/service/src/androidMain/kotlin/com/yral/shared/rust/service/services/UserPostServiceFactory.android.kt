@@ -7,7 +7,7 @@ import com.yral.shared.uniffi.generated.UserPostService
 actual class UserPostServiceFactory {
     private var identityData: ByteArray? = null
 
-    fun service(principal: Principal): UserPostService =
+    internal fun service(principal: Principal): UserPostService =
         identityData?.let {
             UserPostService(
                 principalText = principal,

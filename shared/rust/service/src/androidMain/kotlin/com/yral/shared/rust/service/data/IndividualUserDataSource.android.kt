@@ -6,7 +6,7 @@ import com.yral.shared.uniffi.generated.Result12
 import com.yral.shared.uniffi.generated.ScPostDetailsForFrontend
 import com.yral.shared.uniffi.generated.ScResult3
 
-actual interface IndividualUserDataSource {
+internal actual interface IndividualUserDataSource {
     suspend fun fetchFeedDetails(post: PostDTO): PostDetailsForFrontend
     suspend fun fetchSCFeedDetails(post: PostDTO): ScPostDetailsForFrontend
     suspend fun getPostsOfThisUserProfileWithPaginationCursor(

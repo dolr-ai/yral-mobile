@@ -4,7 +4,7 @@ import com.yral.shared.uniffi.generated.RateLimitStatusWrapper
 import com.yral.shared.uniffi.generated.Result2Wrapper
 import com.yral.shared.uniffi.generated.VideoGenRequestKeyWrapper
 
-actual interface RateLimitDataSource {
+internal actual interface RateLimitDataSource {
     suspend fun fetchVideoGenerationStatus(
         userPrincipal: String,
         requestKey: VideoGenRequestKeyWrapper,

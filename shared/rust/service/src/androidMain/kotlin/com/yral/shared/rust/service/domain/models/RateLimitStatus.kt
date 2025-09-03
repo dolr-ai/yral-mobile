@@ -9,7 +9,7 @@ data class RateLimitStatus(
     val requestCount: ULong,
 )
 
-fun RateLimitStatusWrapper.toStatus() =
+internal fun RateLimitStatusWrapper.toStatus() =
     RateLimitStatus(
         principal = principal,
         windowStart = windowStart,

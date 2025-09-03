@@ -7,7 +7,7 @@ data class VideoGenRequestKey(
     val counter: ULong,
 )
 
-fun VideoGenRequestKey.toWrapper(): VideoGenRequestKeyWrapper =
+internal fun VideoGenRequestKey.toWrapper(): VideoGenRequestKeyWrapper =
     VideoGenRequestKeyWrapper(
         principal = principal,
         counter = counter,
