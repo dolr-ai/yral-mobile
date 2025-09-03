@@ -81,7 +81,7 @@ struct RecommendedUpdatePopUp: View {
 
       VStack(alignment: .center, spacing: Constants.buttonVStackSpacing) {
         Button {
-          dismiss()
+          AppUpdateHandler.redirectToAppStore()
         } label: {
           Text(Constants.updateButtonText)
             .font(Constants.updateButtonFont)

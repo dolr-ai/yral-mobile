@@ -29,6 +29,7 @@ struct MandatoryUpdateView: View {
           .padding(.top, Constants.subtitlePadding)
 
         Button {
+          AppUpdateHandler.redirectToAppStore()
         } label: {
           Text(Constants.updateButtonText)
             .font(Constants.updateButtonFont)
