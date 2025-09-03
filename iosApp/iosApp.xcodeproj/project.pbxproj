@@ -625,6 +625,10 @@
 		ACDD23E82D8B1B5F00AB0DAF /* ProfileVideoRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACDD23E62D8B1B5400AB0DAF /* ProfileVideoRequest.swift */; };
 		ACDD23F32D8B3D4700AB0DAF /* ProfileVideoInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACDD23F22D8B3D4100AB0DAF /* ProfileVideoInfo.swift */; };
 		ACDD23F42D8B3D4700AB0DAF /* ProfileVideoInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACDD23F22D8B3D4100AB0DAF /* ProfileVideoInfo.swift */; };
+		ACE2490C2E6830B5006200EB /* AppUpdateDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACE2490B2E6830B0006200EB /* AppUpdateDTO.swift */; };
+		ACE2490D2E6830B5006200EB /* AppUpdateDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACE2490B2E6830B0006200EB /* AppUpdateDTO.swift */; };
+		ACE2490F2E6830E2006200EB /* AppUpdateHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACE2490E2E6830DD006200EB /* AppUpdateHandler.swift */; };
+		ACE249102E6830E2006200EB /* AppUpdateHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACE2490E2E6830DD006200EB /* AppUpdateHandler.swift */; };
 		ACEBF7DB2D6EDC8500B594A0 /* GradientProgressViewStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACEBF7DA2D6EDC7B00B594A0 /* GradientProgressViewStyle.swift */; };
 		ACEBF7DC2D6EDC8500B594A0 /* GradientProgressViewStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACEBF7DA2D6EDC7B00B594A0 /* GradientProgressViewStyle.swift */; };
 		ACEBF7DE2D6F215800B594A0 /* VideoPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACEBF7DD2D6F215400B594A0 /* VideoPlayerView.swift */; };
@@ -1009,6 +1013,8 @@
 		ACDD23E32D8B19FB00AB0DAF /* MyVideosUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyVideosUseCase.swift; sourceTree = "<group>"; };
 		ACDD23E62D8B1B5400AB0DAF /* ProfileVideoRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileVideoRequest.swift; sourceTree = "<group>"; };
 		ACDD23F22D8B3D4100AB0DAF /* ProfileVideoInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileVideoInfo.swift; sourceTree = "<group>"; };
+		ACE2490B2E6830B0006200EB /* AppUpdateDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppUpdateDTO.swift; sourceTree = "<group>"; };
+		ACE2490E2E6830DD006200EB /* AppUpdateHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppUpdateHandler.swift; sourceTree = "<group>"; };
 		ACEBF7DA2D6EDC7B00B594A0 /* GradientProgressViewStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GradientProgressViewStyle.swift; sourceTree = "<group>"; };
 		ACEBF7DD2D6F215400B594A0 /* VideoPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlayerView.swift; sourceTree = "<group>"; };
 		ACEBF7E02D6F505300B594A0 /* UploadCompletedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadCompletedView.swift; sourceTree = "<group>"; };
@@ -1724,6 +1730,7 @@
 		AC26CA662D806501006ADA75 /* Utils */ = {
 			isa = PBXGroup;
 			children = (
+				ACE2490A2E6830A6006200EB /* AppUpdate */,
 				10C1B3F12E57117500CFC41B /* EventBus.swift */,
 				AC04D3012E059E990055C4AA /* AppCheckProviderFactory.swift */,
 				10020A142DE9841F00DF269E /* UIApplication+Extensions.swift */,
@@ -2743,6 +2750,15 @@
 			path = Data;
 			sourceTree = "<group>";
 		};
+		ACE2490A2E6830A6006200EB /* AppUpdate */ = {
+			isa = PBXGroup;
+			children = (
+				ACE2490E2E6830DD006200EB /* AppUpdateHandler.swift */,
+				ACE2490B2E6830B0006200EB /* AppUpdateDTO.swift */,
+			);
+			path = AppUpdate;
+			sourceTree = "<group>";
+		};
 		ACEBE9962D0C4AA50056F033 /* Feed */ = {
 			isa = PBXGroup;
 			children = (
@@ -3296,6 +3312,7 @@
 				AC3FBE162E2BAA0F00CE3EC1 /* MP4DownloadManaging.swift in Sources */,
 				10512A442DA666AD00114BAA /* YralPlayer.swift in Sources */,
 				1064B8032E4CB1840036C10B /* ProviderOptionsBottomSheetView.swift in Sources */,
+				ACE2490D2E6830B5006200EB /* AppUpdateDTO.swift in Sources */,
 				105036F62DDB289D00571B4E /* ExchangePrincipalResponse.swift in Sources */,
 				ACB46A732D105AF4002E200C /* CollectionView+Extensions.swift in Sources */,
 				ACAA536B2E4A538E008D3025 /* OnboardingInfoView.swift in Sources */,
@@ -3365,6 +3382,7 @@
 				AC99BBBB2D86C8B1008012C2 /* ProfileViewModel.swift in Sources */,
 				ACDD23F32D8B3D4700AB0DAF /* ProfileVideoInfo.swift in Sources */,
 				AC99BB572D81F517008012C2 /* AttributedText.swift in Sources */,
+				ACE2490F2E6830E2006200EB /* AppUpdateHandler.swift in Sources */,
 				107C60B12DBF45B4006FC467 /* SmileyGameRuleResponse.swift in Sources */,
 				ACB46A2D2D0EC833002E200C /* AppDIContainer.swift in Sources */,
 				AC32E3F72D26FEB9001DDA43 /* UIColor+Extensions.swift in Sources */,
@@ -3589,6 +3607,7 @@
 				AC3FBE142E2BAA0F00CE3EC1 /* MP4DownloadManaging.swift in Sources */,
 				10512A432DA666AD00114BAA /* YralPlayer.swift in Sources */,
 				1064B8042E4CB1840036C10B /* ProviderOptionsBottomSheetView.swift in Sources */,
+				ACE2490C2E6830B5006200EB /* AppUpdateDTO.swift in Sources */,
 				105036F82DDB289D00571B4E /* ExchangePrincipalResponse.swift in Sources */,
 				ACB46A742D105AF4002E200C /* CollectionView+Extensions.swift in Sources */,
 				ACAA536C2E4A538E008D3025 /* OnboardingInfoView.swift in Sources */,
@@ -3658,6 +3677,7 @@
 				AC99BBBA2D86C8B1008012C2 /* ProfileViewModel.swift in Sources */,
 				ACDD23F42D8B3D4700AB0DAF /* ProfileVideoInfo.swift in Sources */,
 				AC99BB582D81F517008012C2 /* AttributedText.swift in Sources */,
+				ACE249102E6830E2006200EB /* AppUpdateHandler.swift in Sources */,
 				107C60B02DBF45B4006FC467 /* SmileyGameRuleResponse.swift in Sources */,
 				ACB46A2C2D0EC833002E200C /* AppDIContainer.swift in Sources */,
 				AC32E3F62D26FEB9001DDA43 /* UIColor+Extensions.swift in Sources */,
