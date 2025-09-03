@@ -25,6 +25,7 @@ kotlin {
             implementation(projects.shared.libs.firebaseStore)
             implementation(projects.shared.data)
             implementation(projects.shared.rust.service)
+            implementation(libs.coil.compose)
         }
     }
 }

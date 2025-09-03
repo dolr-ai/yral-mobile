@@ -1,5 +1,7 @@
 package com.yral.shared.features.feed.di
 
+import coil3.ImageLoader
+import coil3.SingletonImageLoader
 import com.yral.shared.features.feed.analytics.FeedTelemetry
 import com.yral.shared.features.feed.data.FeedRemoteDataSource
 import com.yral.shared.features.feed.data.FeedRepository
@@ -32,5 +34,6 @@ val feedModule =
         factoryOf(::FeedRemoteDataSource) { bind<IFeedRemoteDataSource>() }
         factoryOf(::RequiredUseCases)
         factoryOf(::FeedTelemetry)
+        single<ImageLoader> { SingletonImageLoader.get(get()) }
         factoryOf(::AndroidShareService) { bind<ShareService>() }
     }
