@@ -65,7 +65,7 @@ def commit_updates(pending_refs):
     def _do_commit():
         batch = db.batch()
         for ref in pending_refs:
-            batch.update(ref, {"fire": 0})
+            batch.update(ref, {"surprise": 0})
         # short commit, server handles per-write retries
         batch.commit()
     with_retry(_do_commit, what=f"commit {len(pending_refs)} updates")
@@ -98,10 +98,10 @@ while True:
     for snap in page:
         processed += 1
         data = snap.to_dict() or {}
-        current = data.get("fire", 0)
+        current = data.get("surprise", 0)
         if isinstance(current, int) and current > 0:
             if DRY_RUN:
-                print(f"[DRY] would zero {snap.reference.path} (fire: {current} -> 0)")
+                print(f"[DRY] would zero {snap.reference.path} (surprise: {current} -> 0)")
             else:
                 pending_refs.append(snap.reference)
                 if len(pending_refs) >= WRITE_BATCH_MAX:
