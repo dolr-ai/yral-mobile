@@ -154,7 +154,10 @@ struct CreateAIVideoScreenView: View {
 
               Button {
                 AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-                  event: CreateAIVideoClickedData(model: selectedProvider?.name ?? "", prompt: "")
+                  event: CreateAIVideoClickedData(
+                    model: selectedProvider?.name ?? "",
+                    prompt: promptText
+                  )
                 )
                 if isUserLoggedIn {
                   if let provider = selectedProvider, !promptText.isEmpty {
