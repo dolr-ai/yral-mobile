@@ -1,3 +1,3 @@
 package com.yral.shared.rust.service.data
 
-expect interface RateLimitDataSource
+actual interface RateLimitDataSource
