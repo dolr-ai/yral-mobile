@@ -8,7 +8,7 @@ import com.yral.shared.rust.service.domain.models.Posts
 import com.yral.shared.rust.service.domain.models.toFeedDetails
 import com.yral.shared.rust.service.domain.models.toPosts
 
-class IndividualUserRepositoryImpl(
+internal class IndividualUserRepositoryImpl(
     private val dataSource: IndividualUserDataSource,
 ) : IndividualUserRepository {
     override suspend fun fetchFeedDetails(
