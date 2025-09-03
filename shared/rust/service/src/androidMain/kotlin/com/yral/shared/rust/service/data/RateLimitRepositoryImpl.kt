@@ -8,7 +8,7 @@ import com.yral.shared.rust.service.domain.models.toResult
 import com.yral.shared.rust.service.domain.models.toStatus
 import com.yral.shared.rust.service.domain.models.toWrapper
 
-class RateLimitRepositoryImpl(
+internal class RateLimitRepositoryImpl(
     private val dataSource: RateLimitDataSource,
 ) : RateLimitRepository {
     override suspend fun fetchVideoGenerationStatus(

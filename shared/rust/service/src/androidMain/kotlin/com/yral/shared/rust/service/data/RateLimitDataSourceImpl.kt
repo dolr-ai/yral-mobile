@@ -5,7 +5,7 @@ import com.yral.shared.uniffi.generated.RateLimitStatusWrapper
 import com.yral.shared.uniffi.generated.Result2Wrapper
 import com.yral.shared.uniffi.generated.VideoGenRequestKeyWrapper
 
-class RateLimitDataSourceImpl(
+internal class RateLimitDataSourceImpl(
     private val rateLimitServiceFactory: RateLimitServiceFactory,
 ) : RateLimitDataSource {
     override suspend fun fetchVideoGenerationStatus(

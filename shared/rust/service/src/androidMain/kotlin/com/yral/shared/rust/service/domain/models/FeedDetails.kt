@@ -11,7 +11,7 @@ import com.yral.shared.uniffi.generated.PostStatus
 import com.yral.shared.uniffi.generated.ScPostDetailsForFrontend
 import com.yral.shared.uniffi.generated.ScPostStatus
 
-fun PostDetailsForFrontend.toFeedDetails(
+internal fun PostDetailsForFrontend.toFeedDetails(
     postId: String,
     canisterId: String,
     nsfwProbability: Double?,
@@ -40,7 +40,7 @@ fun PostDetailsForFrontend.toFeedDetails(
     )
 }
 
-fun ScPostDetailsForFrontend.toFeedDetails(
+internal fun ScPostDetailsForFrontend.toFeedDetails(
     postId: String,
     canisterId: String,
     nsfwProbability: Double?,

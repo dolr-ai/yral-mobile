@@ -12,7 +12,7 @@ sealed class Result2 {
     ) : Result2()
 }
 
-fun Result2Wrapper.toResult() =
+internal fun Result2Wrapper.toResult() =
     when (this) {
         is Result2Wrapper.Ok -> Result2.Ok(v1.toVideoGenRequestStatus())
         is Result2Wrapper.Err -> Result2.Err(v1)
@@ -29,7 +29,7 @@ sealed class VideoGenRequestStatus {
     data object Pending : VideoGenRequestStatus()
 }
 
-fun VideoGenRequestStatusWrapper.toVideoGenRequestStatus() =
+internal fun VideoGenRequestStatusWrapper.toVideoGenRequestStatus() =
     when (this) {
         is VideoGenRequestStatusWrapper.Failed -> VideoGenRequestStatus.Failed(v1)
         is VideoGenRequestStatusWrapper.Complete -> VideoGenRequestStatus.Complete(v1)

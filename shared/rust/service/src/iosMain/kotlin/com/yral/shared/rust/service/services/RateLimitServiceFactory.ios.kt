@@ -1,3 +1,3 @@
 package com.yral.shared.rust.service.services
 
-expect class RateLimitServiceFactory
+actual class RateLimitServiceFactory

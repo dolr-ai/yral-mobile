@@ -8,7 +8,7 @@ import com.yral.shared.uniffi.generated.Result12
 import com.yral.shared.uniffi.generated.ScPostDetailsForFrontend
 import com.yral.shared.uniffi.generated.ScResult3
 
-class IndividualUserDataSourceImpl(
+internal class IndividualUserDataSourceImpl(
     private val individualUserServiceFactory: IndividualUserServiceFactory,
     private val userPostServiceFactory: UserPostServiceFactory,
 ) : IndividualUserDataSource {
@@ -40,10 +40,10 @@ class IndividualUserDataSourceImpl(
             .service(principalId)
             .getPostsOfThisUserProfileWithPaginationCursor(principalId, startIndex, pageSize)
 
-    companion object {
-        const val CLOUD_FLARE_PREFIX = "https://customer-2p3jflss4r4hmpnz.cloudflarestream.com/"
-        const val CLOUD_FLARE_SUFFIX = "/manifest/video.m3u8"
-        const val CLOUD_FLARE_SUFFIX_MP4 = "/downloads/default.mp4"
-        const val THUMBNAIL_SUFFIX = "/thumbnails/thumbnail.jpg"
+    internal companion object {
+        internal const val CLOUD_FLARE_PREFIX = "https://customer-2p3jflss4r4hmpnz.cloudflarestream.com/"
+        internal const val CLOUD_FLARE_SUFFIX = "/manifest/video.m3u8"
+        internal const val CLOUD_FLARE_SUFFIX_MP4 = "/downloads/default.mp4"
+        internal const val THUMBNAIL_SUFFIX = "/thumbnails/thumbnail.jpg"
     }
 }

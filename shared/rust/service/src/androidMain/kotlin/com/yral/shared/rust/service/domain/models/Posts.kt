@@ -21,7 +21,7 @@ enum class PostsOfUserProfileError {
     EXCEEDED_MAX_NUMBER_OF_ITEMS_ALLOWED_IN_ONE_REQUEST,
 }
 
-fun GetPostsOfUserProfileError.toPostsOfUserProfileError(): PostsOfUserProfileError =
+internal fun GetPostsOfUserProfileError.toPostsOfUserProfileError(): PostsOfUserProfileError =
     when (this) {
         GetPostsOfUserProfileError.REACHED_END_OF_ITEMS_LIST -> PostsOfUserProfileError.REACHED_END_OF_ITEMS_LIST
         GetPostsOfUserProfileError.INVALID_BOUNDS_PASSED -> PostsOfUserProfileError.INVALID_BOUNDS_PASSED
@@ -29,7 +29,7 @@ fun GetPostsOfUserProfileError.toPostsOfUserProfileError(): PostsOfUserProfileEr
             PostsOfUserProfileError.EXCEEDED_MAX_NUMBER_OF_ITEMS_ALLOWED_IN_ONE_REQUEST
     }
 
-fun Result12.toPosts(canisterId: String): Posts =
+internal fun Result12.toPosts(canisterId: String): Posts =
     when (this) {
         is Result12.Ok ->
             Posts.Ok(
@@ -45,7 +45,7 @@ fun Result12.toPosts(canisterId: String): Posts =
         is Result12.Err -> Posts.Err(v1.toPostsOfUserProfileError())
     }
 
-fun ScResult3.toPosts(canisterId: String): Posts =
+internal fun ScResult3.toPosts(canisterId: String): Posts =
     when (this) {
         is ScResult3.Ok ->
             Posts.Ok(
