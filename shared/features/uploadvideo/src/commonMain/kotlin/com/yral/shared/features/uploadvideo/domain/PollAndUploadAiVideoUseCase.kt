@@ -44,7 +44,11 @@ internal class PollAndUploadAiVideoUseCase(
                     while (currentCoroutineContext().isActive) {
                         val delayMs = computeDelayMs(parameters, pollCount, currentIntervalMs)
                         delay(delayMs.coerceAtLeast(0L))
-                        val status = rateLimitRepository.fetchVideoGenerationStatus(parameters.requestKey)
+                        val status =
+                            rateLimitRepository.fetchVideoGenerationStatus(
+                                userPrincipal = parameters.userPrincipal,
+                                requestKey = parameters.requestKey,
+                            )
                         when (status) {
                             is Result2.Err -> {
                                 pushGenerationFailed(parameters.modelName, status.v1)
@@ -80,6 +84,7 @@ internal class PollAndUploadAiVideoUseCase(
                                                     reason = it.message ?: "",
                                                     type = VideoCreationType.AI_VIDEO,
                                                 )
+                                                emit(Ok(PollAndUploadResult.UploadFailed(it.message ?: "")))
                                             }
                                     }
 
@@ -180,6 +185,7 @@ internal class PollAndUploadAiVideoUseCase(
         }
 
     data class Params(
+        val userPrincipal: String,
         val modelName: String,
         val requestKey: VideoGenRequestKey,
         val isFastInitially: Boolean = false,
@@ -200,6 +206,10 @@ internal class PollAndUploadAiVideoUseCase(
         ) : PollAndUploadResult()
 
         data class Failed(
+            val errorMessage: String,
+        ) : PollAndUploadResult()
+
+        data class UploadFailed(
             val errorMessage: String,
         ) : PollAndUploadResult()
     }

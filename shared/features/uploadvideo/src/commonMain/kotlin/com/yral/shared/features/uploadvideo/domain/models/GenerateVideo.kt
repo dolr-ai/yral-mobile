@@ -1,5 +1,6 @@
 package com.yral.shared.features.uploadvideo.domain.models
 
+import com.yral.shared.features.uploadvideo.data.remote.models.TokenType
 import com.yral.shared.rust.service.domain.models.VideoGenRequestKey
 
 data class GenerateVideoParams(
@@ -13,7 +14,7 @@ data class GenerateVideoParams(
     val durationSeconds: Int? = null,
     val generateAudio: Boolean? = null,
     val image: String? = null,
-    val tokenType: String? = null,
+    val tokenType: TokenType? = null,
     val userId: String? = null,
     val extraParams: Map<String, String>? = null,
 )

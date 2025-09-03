@@ -11,10 +11,15 @@ import com.yral.shared.rust.service.domain.models.toWrapper
 class RateLimitRepositoryImpl(
     private val dataSource: RateLimitDataSource,
 ) : RateLimitRepository {
-    override suspend fun fetchVideoGenerationStatus(requestKey: VideoGenRequestKey): Result2 =
+    override suspend fun fetchVideoGenerationStatus(
+        userPrincipal: String,
+        requestKey: VideoGenRequestKey,
+    ): Result2 =
         dataSource
-            .fetchVideoGenerationStatus(requestKey.toWrapper())
-            .toResult()
+            .fetchVideoGenerationStatus(
+                userPrincipal = userPrincipal,
+                requestKey = requestKey.toWrapper(),
+            ).toResult()
 
     override suspend fun getVideoGenFreeCreditsStatus(
         userPrincipal: String,

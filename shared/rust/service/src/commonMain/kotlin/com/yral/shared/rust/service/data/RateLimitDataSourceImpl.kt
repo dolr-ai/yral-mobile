@@ -8,9 +8,12 @@ import com.yral.shared.uniffi.generated.VideoGenRequestKeyWrapper
 class RateLimitDataSourceImpl(
     private val rateLimitServiceFactory: RateLimitServiceFactory,
 ) : RateLimitDataSource {
-    override suspend fun fetchVideoGenerationStatus(requestKey: VideoGenRequestKeyWrapper): Result2Wrapper =
+    override suspend fun fetchVideoGenerationStatus(
+        userPrincipal: String,
+        requestKey: VideoGenRequestKeyWrapper,
+    ): Result2Wrapper =
         rateLimitServiceFactory
-            .service(principal = "")
+            .service(principal = userPrincipal)
             .pollVideoGenerationStatus(requestKey)
 
     override suspend fun getVideoGenFreeCreditsStatus(
