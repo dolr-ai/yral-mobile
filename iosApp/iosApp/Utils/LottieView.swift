@@ -32,7 +32,10 @@ struct LottieView: UIViewRepresentable {
       animationView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor)
     ])
 
-    animationView.play { _ in
+    animationView.play { finished in
+      if finished && loopMode == .playOnce {
+        animationView.currentProgress = .zero
+      }
       animationCompleted()
     }
     return containerView

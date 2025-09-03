@@ -11,7 +11,7 @@ import Lottie
 
 struct LottieLoaderView: View {
   let animationName: String
-  let loopMode: LottieLoopMode = .loop
+  var loopMode: LottieLoopMode = .loop
   let animationSpeed: CGFloat = .one
 
   var body: some View {
