@@ -2,13 +2,14 @@ package com.yral.shared.features.feed.sharing
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
 import androidx.core.content.FileProvider
+import coil3.ImageLoader
+import coil3.request.CachePolicy
+import coil3.request.ImageRequest
+import coil3.request.SuccessResult
+import coil3.toBitmap
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
-import io.ktor.client.HttpClient
-import io.ktor.client.request.get
-import io.ktor.client.statement.bodyAsChannel
-import io.ktor.util.cio.writeChannel
-import io.ktor.utils.io.copyAndClose
 import kotlinx.coroutines.withContext
 import java.io.File
 
@@ -18,26 +19,45 @@ interface ShareService {
 
 class AndroidShareService(
     private val context: Context,
-    private val httpClient: HttpClient,
-    private val appDispatchers: AppDispatchers
+    private val appDispatchers: AppDispatchers,
+    private val imageLoader: ImageLoader,
 ) :
     ShareService {
     override suspend fun shareImageWithText(imageUrl: String, text: String) {
         val file = downloadImage(imageUrl)
         withContext(appDispatchers.main) {
-            val chooser = shareIntent(file, text)
-            context.startActivity(chooser)
+            file?.let {
+                val chooser = shareIntent(it, text)
+                context.startActivity(chooser)
+            }
         }
     }
 
-    private suspend fun downloadImage(imageUrl: String): File =
+    private suspend fun downloadImage(imageUrl: String): File? =
         withContext(appDispatchers.network) {
             val sharedDir = File(context.cacheDir, "shared").apply {
                 mkdirs()
             }
-            val file = File(sharedDir, "shared_image.png")
-            httpClient.get(imageUrl).bodyAsChannel().copyAndClose(file.writeChannel())
-            file
+            val targetFile = File(sharedDir, "shared_image.jpg")
+            val cachedFile = imageLoader.diskCache?.openSnapshot(imageUrl)?.use { it.data.toFile() }
+            if (cachedFile != null) {
+                cachedFile.copyTo(targetFile, overwrite = true)
+                targetFile
+            } else {
+                val request = ImageRequest.Builder(context)
+                    .data(imageUrl)
+                    .memoryCachePolicy(CachePolicy.READ_ONLY)
+                    .build()
+                val result = imageLoader.execute(request)
+                if (result is SuccessResult) {
+                    targetFile.outputStream().use { out ->
+                        result.image.toBitmap().compress(Bitmap.CompressFormat.JPEG, 75, out)
+                    }
+                    targetFile
+                } else {
+                    null
+                }
+            }
         }
 
     private fun shareIntent(file: File, text: String): Intent {
