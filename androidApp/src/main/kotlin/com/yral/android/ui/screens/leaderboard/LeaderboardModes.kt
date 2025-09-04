@@ -42,10 +42,10 @@ import androidx.compose.ui.unit.dp
 import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
-import com.yral.android.ui.screens.game.NudgeBorder
 import com.yral.android.ui.screens.leaderboard.LeaderboardScreenConstants.COUNT_DOWN_ANIMATION_DURATION
 import com.yral.android.ui.screens.leaderboard.LeaderboardScreenConstants.COUNT_DOWN_BG_ALPHA
 import com.yral.android.ui.widgets.YralMaskedVectorTextV2
+import com.yral.android.ui.widgets.YralNeonBorder
 import com.yral.shared.features.game.data.models.LeaderboardMode
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
@@ -191,7 +191,7 @@ private fun BoxScope.LeaderboardCountdownBorder() {
     val cornerRadius = 49.dp
     val paddingValues = PaddingValues(horizontal = 0.dp, vertical = 0.dp)
     val neonColor = YralColors.Pink300.copy(alpha = alpha)
-    NudgeBorder(
+    YralNeonBorder(
         paddingValues = paddingValues,
         cornerRadius = cornerRadius,
         containerColor = containerColor,
