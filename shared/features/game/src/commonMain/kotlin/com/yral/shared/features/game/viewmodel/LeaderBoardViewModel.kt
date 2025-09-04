@@ -77,6 +77,7 @@ class LeaderBoardViewModel(
                         it.copy(countDownMs = if (newTime == 0L) null else newTime)
                     }
                 }
+                refreshData()
             }
     }
 
