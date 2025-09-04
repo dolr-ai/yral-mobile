@@ -10,6 +10,7 @@ object YralColors {
 
     val NeutralTextPrimary: Color = Color(0xFFFAFAFA)
     val NeutralTextSecondary: Color = Color(0xFFA3A3A3)
+    val NeutralTextTertiary: Color = Color(0xFF525252)
 
     val NeutralBackgroundCardBackground: Color = Color(0xFF171717)
     val NeutralIconsActive: Color = Color(0xFFFAFAFA)
