@@ -1,6 +1,6 @@
 package com.yral.shared.libs.routing.deeplink.engine
 
-import com.yral.shared.libs.routing.routes.api.PostDetails
+import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
 import com.yral.shared.libs.routing.routes.api.TestHomeRoute
 import com.yral.shared.libs.routing.routes.api.TestInternalRoute
 import com.yral.shared.libs.routing.routes.api.TestProductRoute
@@ -17,7 +17,7 @@ class UrlBuilderTest {
             route<TestUserRoute>("/user/{userId}")
             route<TestHomeRoute>("/")
             route<TestInternalRoute>("/internal/{internalId}")
-            route<PostDetails>(PostDetails.PATH)
+            route<PostDetailsRoute>(PostDetailsRoute.PATH)
         }
 
     private val urlBuilder =
@@ -84,7 +84,7 @@ class UrlBuilderTest {
                 host = "",
             )
 
-        val route = PostDetails(postId = "789")
+        val route = PostDetailsRoute(postId = "789")
         val url = customBuilder.build(route)
 
         assertEquals("yralm://post/details/789", url)
@@ -177,7 +177,7 @@ class UrlBuilderTest {
                 host = "",
             )
 
-        val route = PostDetails(postId = "789", canisterId = "cid-123")
+        val route = PostDetailsRoute(postId = "789", canisterId = "cid-123")
         val url = customBuilder.build(route)
 
         assertEquals("yralm://post/details/789?canisterId=cid-123", url)
@@ -205,7 +205,7 @@ class UrlBuilderTest {
                 scheme = "yralm",
                 host = "",
             )
-        val url = customBuilder.build(PostDetails(postId = "999", canisterId = ""))
+        val url = customBuilder.build(PostDetailsRoute(postId = "999", canisterId = ""))
         // canisterId blank -> should be filtered and no query appended
         assertEquals("yralm://post/details/999", url)
     }
