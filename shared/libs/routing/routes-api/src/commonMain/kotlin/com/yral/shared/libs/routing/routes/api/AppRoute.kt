@@ -36,6 +36,18 @@ object Unknown : AppRoute {
     const val PATH = "/unknown"
 }
 
+@Serializable
+data class PostDetails(
+    val postId: String,
+    val canisterId: String? = null,
+) : AppRoute,
+    ExternallyExposedRoute {
+        companion object {
+            const val PATH = "post/details/{postId}?canisterId={canisterId}"
+        }
+    }
+
+
 // --- Test Route Definitions for Testing ---
 
 @Serializable

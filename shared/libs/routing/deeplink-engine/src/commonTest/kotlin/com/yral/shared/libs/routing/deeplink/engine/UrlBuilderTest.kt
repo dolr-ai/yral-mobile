@@ -1,5 +1,6 @@
 package com.yral.shared.libs.routing.deeplink.engine
 
+import com.yral.shared.libs.routing.routes.api.PostDetails
 import com.yral.shared.libs.routing.routes.api.TestHomeRoute
 import com.yral.shared.libs.routing.routes.api.TestInternalRoute
 import com.yral.shared.libs.routing.routes.api.TestProductRoute
@@ -16,6 +17,7 @@ class UrlBuilderTest {
             route<TestUserRoute>("/user/{userId}")
             route<TestHomeRoute>("/")
             route<TestInternalRoute>("/internal/{internalId}")
+            route<PostDetails>(PostDetails.PATH)
         }
 
     private val urlBuilder =
@@ -71,6 +73,21 @@ class UrlBuilderTest {
         val url = customBuilder.build(route)
 
         assertEquals("myapp://deeplink/product/789", url)
+    }
+
+    @Test
+    fun testBuildUrlForPostDetails() {
+        val customBuilder =
+            UrlBuilder(
+                routingTable = routingTable,
+                scheme = "yralm",
+                host = "",
+            )
+
+        val route = PostDetails(postId = "789")
+        val url = customBuilder.build(route)
+
+        assertEquals("yralm://post/details/789", url)
     }
 
     @Test
