@@ -12,10 +12,12 @@ data class GetLeaderboardRequestDto(
 )
 
 @Serializable
-enum class LeaderboardMode {
+enum class LeaderboardMode(
+    val showCountDown: Boolean,
+) {
     @SerialName("daily")
-    DAILY,
+    DAILY(true),
 
     @SerialName("all_time")
-    ALL_TIME,
+    ALL_TIME(false),
 }
