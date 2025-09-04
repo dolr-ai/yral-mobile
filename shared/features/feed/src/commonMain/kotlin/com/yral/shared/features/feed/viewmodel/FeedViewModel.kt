@@ -100,6 +100,84 @@ class FeedViewModel(
         }
     }
 
+    /**
+     * Call this when app is opened via a deeplink to a specific video.
+     * The video identified by [postId] and [canisterId] will be fetched and
+     * shown first to the user (prepended to the existing feed), followed by the normal feed.
+     * This method is idempotent per ViewModel instance.
+     */
+    fun showDeeplinkedVideoFirst(
+        postId: String,
+        canisterId: String,
+    ) {
+        coroutineScope.launch {
+            // If details already exist, move to front and return; else fetch and show.
+            if (tryShowExistingDeeplink(postId, canisterId)) return@launch
+            fetchAndShowDeeplink(postId, canisterId)
+        }
+    }
+
+    private fun tryShowExistingDeeplink(
+        postId: String,
+        canisterId: String,
+    ): Boolean {
+        val existingDetail =
+            _state.value.feedDetails.firstOrNull {
+                it.postID == postId && it.canisterID == canisterId
+            }
+        if (existingDetail != null) {
+            _state.update { currentState ->
+                val updatedFeedDetails =
+                    listOf(existingDetail) +
+                        currentState.feedDetails.filterNot { it.videoID == existingDetail.videoID }
+                currentState.copy(
+                    feedDetails = updatedFeedDetails,
+                    currentPageOfFeed = 0,
+                    videoData = VideoData(),
+                )
+            }
+            return true
+        }
+        return false
+    }
+
+    private suspend fun fetchAndShowDeeplink(
+        postId: String,
+        canisterId: String,
+    ) {
+        // We only need canisterId and postId for fetching details.
+        // Other Post fields are not used by the underlying data source for this call.
+        val post =
+            Post(
+                canisterID = canisterId,
+                publisherUserId = "",
+                postID = postId,
+                videoID = "",
+                nsfwProbability = null,
+            )
+
+        setDeeplinkFetching(true)
+        requiredUseCases.fetchFeedDetailsUseCase
+            .invoke(post)
+            .onSuccess { detail ->
+                _state.update { currentState ->
+                    val updatedFeedDetails = listOf(detail) + currentState.feedDetails.filterNot { it.videoID == detail.videoID }
+                    currentState.copy(
+                        feedDetails = updatedFeedDetails,
+                        currentPageOfFeed = 0,
+                        isDeeplinkFetching = false,
+                        videoData = VideoData(), // reset video state for the deeplinked item
+                    )
+                }
+            }
+            .onFailure { throwable ->
+                Logger.e(throwable) {
+                    "Failed to fetch deeplinked video details for postId=$postId canisterId=$canisterId"
+                }
+                setDeeplinkFetching(false)
+            }
+    }
+
     private suspend fun filterVotedAndFetchDetails(posts: List<Post>): Int {
         val fetchedIds = _state.value.posts.mapTo(HashSet()) { it.videoID }
         val newPosts = posts.filter { post -> post.videoID !in fetchedIds }
@@ -335,8 +413,12 @@ class FeedViewModel(
         }
     }
 
-    private fun setLoading(isLoading: Boolean) {
-        _state.update { it.copy(isLoading = isLoading) }
+    private fun setReporting(isReporting: Boolean) {
+        _state.update { it.copy(isReporting = isReporting) }
+    }
+
+    private fun setDeeplinkFetching(isFetching: Boolean) {
+        _state.update { it.copy(isDeeplinkFetching = isFetching) }
     }
 
     fun reportVideo(
@@ -346,7 +428,7 @@ class FeedViewModel(
     ) {
         coroutineScope.launch {
             val currentFeed = _state.value.feedDetails[pageNo]
-            setLoading(true)
+            setReporting(true)
             requiredUseCases.reportVideoUseCase
                 .invoke(
                     parameter =
@@ -358,7 +440,7 @@ class FeedViewModel(
                             principal = currentFeed.principalID,
                         ),
                 ).onSuccess {
-                    setLoading(false)
+                    setReporting(false)
                     feedTelemetry.videoReportedSuccessfully(currentFeed, reason)
                     toggleReportSheet(false, pageNo)
                     _state.update { currentState ->
@@ -382,7 +464,7 @@ class FeedViewModel(
                         )
                     }
                 }.onFailure {
-                    setLoading(false)
+                    setReporting(false)
                     toggleReportSheet(true, pageNo)
                 }
         }
@@ -475,7 +557,8 @@ data class FeedState(
     val isPostDescriptionExpanded: Boolean = false,
     val videoData: VideoData = VideoData(),
     val videoTracing: List<Pair<String, String>> = emptyList(),
-    val isLoading: Boolean = false,
+    val isReporting: Boolean = false,
+    val isDeeplinkFetching: Boolean = false,
     val reportSheetState: ReportSheetState = ReportSheetState.Closed,
     val showSignupFailedSheet: Boolean = false,
     val overlayType: OverlayType = OverlayType.DEFAULT,

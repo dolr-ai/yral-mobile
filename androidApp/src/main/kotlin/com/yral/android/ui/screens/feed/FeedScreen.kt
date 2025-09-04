@@ -117,6 +117,17 @@ fun FeedScreen(
         )
     }
 
+    // Cold-start deeplink overlay: block UI with a centered loader until deeplinked item is fetched
+    if (state.isDeeplinkFetching) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) {
+            YralLoader(size = 48.dp)
+        }
+        return
+    }
+
     Column(modifier = modifier) {
         if (state.feedDetails.isNotEmpty()) {
             YRALReelPlayer(
@@ -203,7 +214,7 @@ fun FeedScreen(
                     skipPartiallyExpanded = true,
                 ),
             onDismissRequest = { viewModel.toggleReportSheet(false, 0) },
-            isLoading = state.isLoading,
+            isLoading = state.isReporting,
             reasons = (state.reportSheetState as ReportSheetState.Open).reasons,
             onSubmit = { reason, text ->
                 viewModel.reportVideo(
