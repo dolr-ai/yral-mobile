@@ -44,34 +44,10 @@ class UrlBuilder(
             // Use serialization to automatically extract route properties
             val params = extractRouteParams(routeDefinition, typedRoute)
 
-            // Build the URL path from the pattern (strip query template via RoutePattern)
-            val (pathSegments, usedParams) = routeDefinition.pattern.buildPathSegments(params)
-
-            // Determine which query params are allowed by the pattern's query template (if any)
-            val patternStr = routeDefinition.pattern.toString()
-            val hasQueryTemplate = patternStr.contains("?")
-            val allowedQueryParamKeys: Set<String> =
-                if (hasQueryTemplate) {
-                    patternStr
-                        .substringAfter("?", "")
-                        .split("&")
-                        .mapNotNull { pair ->
-                            val key = pair.substringBefore("=", missingDelimiterValue = "")
-                            if (key.isNotBlank()) key else null
-                        }.toSet()
-                } else emptySet()
-
-            // Build query parameter map
-            val remainingParams = params.filterKeys { it !in usedParams && it != "metadata" }
-            val filteredQueryParams: Map<String, String> =
-                if (hasQueryTemplate) {
-                    // Include only keys defined by the query template
-                    remainingParams
-                        .filter { (k, v) -> k in allowedQueryParamKeys && !v.isNullOrBlank() && v != "null" }
-                } else {
-                    // No query template provided; include all remaining non-null/blank params
-                    remainingParams.filter { (_, v) -> !v.isNullOrBlank() && v != "null" }
-                }
+            // Let RoutePattern produce both path segments and query params
+            val components = routeDefinition.pattern.buildComponents(params)
+            val pathSegments = components.pathSegments
+            val filteredQueryParams = components.queryParams
 
             // For host-less deep links (custom scheme with no explicit host):
             // If host is blank and there is at least one path segment, treat the
@@ -79,12 +55,7 @@ class UrlBuilder(
             // Apply this only for non-HTTP(S) schemes.
             var finalHost = host
             var finalSegments = pathSegments
-            if (
-                finalHost.isBlank() &&
-                    finalSegments.isNotEmpty() &&
-                    !scheme.equals("http", ignoreCase = true) &&
-                    !scheme.equals("https", ignoreCase = true)
-            ) {
+            if (shouldTreatFirstSegmentAsHost(finalHost, scheme, finalSegments)) {
                 finalHost = finalSegments.first()
                 finalSegments = finalSegments.drop(1)
             }
@@ -108,6 +79,19 @@ class UrlBuilder(
         ) {
             null
         }
+
+    private fun shouldTreatFirstSegmentAsHost(
+        currentHost: String,
+        currentScheme: String,
+        segments: List<String>,
+    ): Boolean {
+        val hostBlank = currentHost.isBlank()
+        val hasSegments = segments.isNotEmpty()
+        val isHttp = currentScheme.equals("http", ignoreCase = true)
+        val isHttps = currentScheme.equals("https", ignoreCase = true)
+        val isWebScheme = isHttp || isHttps
+        return hostBlank && hasSegments && !isWebScheme
+    }
 
     /**
      * Find the route definition that matches the given AppRoute instance.
