@@ -168,6 +168,22 @@ class UrlBuilderTest {
     }
 
     @Test
+    fun testBuildUrlWithQueryTemplateIncludedWhenPresent() {
+        // PostDetails defines a query template for canisterId
+        val customBuilder =
+            UrlBuilder(
+                routingTable = routingTable,
+                scheme = "yralm",
+                host = "",
+            )
+
+        val route = PostDetails(postId = "789", canisterId = "cid-123")
+        val url = customBuilder.build(route)
+
+        assertEquals("yralm://post/details/789?canisterId=cid-123", url)
+    }
+
+    @Test
     fun testBuildUrlFiltersBlankAndNullQueryParams() {
         // When no query template is present, remaining non-blank params are included.
         // Blank ("") and literal "null" should be filtered out.
@@ -179,5 +195,18 @@ class UrlBuilderTest {
         // Literal "null"
         val literalNullCategoryUrl = urlBuilder.build(TestProductRoute(productId = "123", category = "null"))
         assertEquals("https://example.com/product/123", literalNullCategoryUrl)
+    }
+
+    @Test
+    fun testQueryTemplateFiltersBlankMappedParam() {
+        val customBuilder =
+            UrlBuilder(
+                routingTable = routingTable,
+                scheme = "yralm",
+                host = "",
+            )
+        val url = customBuilder.build(PostDetails(postId = "999", canisterId = ""))
+        // canisterId blank -> should be filtered and no query appended
+        assertEquals("yralm://post/details/999", url)
     }
 }
