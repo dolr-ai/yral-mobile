@@ -778,10 +778,7 @@ def leaderboard(request: Request):
         # ===== Daily leaderboard (IST day) =====
         bucket_id, _start_ms, end_ms = _bucket_bounds_ist()
         now_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
-        TWO_HOURS_MS = 2 * 60 * 60 * 1000
         time_left_ms = max(0, end_ms - now_ms)
-        if time_left_ms > TWO_HOURS_MS:
-            time_left_ms = None
 
         day_users = db().collection(f"{DAILY_COLL}/{bucket_id}/users")
         entry_ref = day_users.document(pid)
