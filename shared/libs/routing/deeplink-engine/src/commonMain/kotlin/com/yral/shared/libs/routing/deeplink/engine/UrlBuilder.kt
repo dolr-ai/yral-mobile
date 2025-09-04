@@ -44,20 +44,60 @@ class UrlBuilder(
             // Use serialization to automatically extract route properties
             val params = extractRouteParams(routeDefinition, typedRoute)
 
-            // Build the URL path from the pattern
+            // Build the URL path from the pattern (strip query template via RoutePattern)
             val (pathSegments, usedParams) = routeDefinition.pattern.buildPathSegments(params)
-            val queryParams = params.filterKeys { it !in usedParams && it != "metadata" }
-            println("pathSegments: $pathSegments")
+
+            // Determine which query params are allowed by the pattern's query template (if any)
+            val patternStr = routeDefinition.pattern.toString()
+            val hasQueryTemplate = patternStr.contains("?")
+            val allowedQueryParamKeys: Set<String> =
+                if (hasQueryTemplate) {
+                    patternStr
+                        .substringAfter("?", "")
+                        .split("&")
+                        .mapNotNull { pair ->
+                            val key = pair.substringBefore("=", missingDelimiterValue = "")
+                            if (key.isNotBlank()) key else null
+                        }.toSet()
+                } else emptySet()
+
+            // Build query parameter map
+            val remainingParams = params.filterKeys { it !in usedParams && it != "metadata" }
+            val filteredQueryParams: Map<String, String> =
+                if (hasQueryTemplate) {
+                    // Include only keys defined by the query template
+                    remainingParams
+                        .filter { (k, v) -> k in allowedQueryParamKeys && !v.isNullOrBlank() && v != "null" }
+                } else {
+                    // No query template provided; include all remaining non-null/blank params
+                    remainingParams.filter { (_, v) -> !v.isNullOrBlank() && v != "null" }
+                }
+
+            // For host-less deep links (custom scheme with no explicit host):
+            // If host is blank and there is at least one path segment, treat the
+            // first segment as the host (authority) and the remaining as the path.
+            // Apply this only for non-HTTP(S) schemes.
+            var finalHost = host
+            var finalSegments = pathSegments
+            if (
+                finalHost.isBlank() &&
+                    finalSegments.isNotEmpty() &&
+                    !scheme.equals("http", ignoreCase = true) &&
+                    !scheme.equals("https", ignoreCase = true)
+            ) {
+                finalHost = finalSegments.first()
+                finalSegments = finalSegments.drop(1)
+            }
 
             // Build the complete URL
             val urlBuilder =
                 URLBuilder(
                     protocol = URLProtocol.createOrDefault(scheme),
-                    host = host,
-                    pathSegments = pathSegments,
+                    host = finalHost,
+                    pathSegments = finalSegments,
                     parameters =
                         parameters {
-                            queryParams.forEach { (key, value) ->
+                            filteredQueryParams.forEach { (key, value) ->
                                 append(key, value)
                             }
                         },
@@ -91,10 +131,11 @@ class UrlBuilder(
             // Convert map values to strings, excluding metadata and nulls
             map
                 .mapNotNull { (key, value) ->
-                    if (key == "metadata") {
+                    if (key == "metadata" || value == null) {
                         null
                     } else {
-                        key to value.toString()
+                        val s = value.toString()
+                        if (s.isBlank() || s == "null") null else key to s
                     }
                 }.toMap()
         } catch (

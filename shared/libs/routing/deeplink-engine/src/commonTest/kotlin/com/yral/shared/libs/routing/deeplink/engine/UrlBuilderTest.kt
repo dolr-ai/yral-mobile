@@ -74,6 +74,23 @@ class UrlBuilderTest {
     }
 
     @Test
+    fun testBuildUrlWithLeadingSlashPatternAndEmptyHost() {
+        // Even if the pattern has a leading slash, hostless deep link should treat
+        // the first path segment as the authority when scheme is custom and host is blank
+        val customBuilder =
+            UrlBuilder(
+                routingTable = routingTable,
+                scheme = "yralm",
+                host = "",
+            )
+
+        val route = TestProductRoute("123") // pattern is "/test/product/{productId}"
+        val url = customBuilder.build(route)
+
+        assertEquals("yralm://test/product/123", url)
+    }
+
+    @Test
     fun testBuildUrlWithUnknownRoute() {
         val route = TestUnknownRoute
         val url = urlBuilder.build(route)

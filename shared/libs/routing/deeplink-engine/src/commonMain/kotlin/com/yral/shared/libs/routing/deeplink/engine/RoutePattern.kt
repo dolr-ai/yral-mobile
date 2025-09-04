@@ -12,7 +12,7 @@ package com.yral.shared.libs.routing.deeplink.engine
 class RoutePattern(
     private val pattern: String,
 ) {
-    private val segments = pattern.split("/").filter { it.isNotEmpty() }
+    private val segments = pattern.substringBefore("?").split("/").filter { it.isNotEmpty() }
 
     @Suppress("ReturnCount")
     fun extractParameters(pathSegments: List<String>): Map<String, String>? {
