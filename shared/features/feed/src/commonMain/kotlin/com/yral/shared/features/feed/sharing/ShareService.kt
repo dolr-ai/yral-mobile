@@ -2,13 +2,11 @@ package com.yral.shared.features.feed.sharing
 
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
 import androidx.core.content.FileProvider
 import coil3.ImageLoader
-import coil3.request.CachePolicy
+import coil3.annotation.ExperimentalCoilApi
+import coil3.decode.BlackholeDecoder
 import coil3.request.ImageRequest
-import coil3.request.SuccessResult
-import coil3.toBitmap
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -33,32 +31,30 @@ class AndroidShareService(
         }
     }
 
+    @OptIn(ExperimentalCoilApi::class)
     private suspend fun downloadImage(imageUrl: String): File? =
         withContext(appDispatchers.network) {
             val sharedDir = File(context.cacheDir, "shared").apply {
                 mkdirs()
             }
             val targetFile = File(sharedDir, "shared_image.jpg")
-            val cachedFile = imageLoader.diskCache?.openSnapshot(imageUrl)?.use { it.data.toFile() }
-            if (cachedFile != null) {
-                cachedFile.copyTo(targetFile, overwrite = true)
-                targetFile
-            } else {
+            val cachedFile = imageLoader.cachedImageOrNull(imageUrl)
+            if (cachedFile == null) {
                 val request = ImageRequest.Builder(context)
                     .data(imageUrl)
-                    .memoryCachePolicy(CachePolicy.READ_ONLY)
+                    .decoderFactory(BlackholeDecoder.Factory())
                     .build()
-                val result = imageLoader.execute(request)
-                if (result is SuccessResult) {
-                    targetFile.outputStream().use { out ->
-                        result.image.toBitmap().compress(Bitmap.CompressFormat.JPEG, 75, out)
-                    }
-                    targetFile
-                } else {
-                    null
-                }
+                imageLoader.execute(request)
+            }
+            imageLoader.cachedImageOrNull(imageUrl)?.let {
+                it.copyTo(targetFile, overwrite = true)
+                targetFile
             }
         }
+
+    private fun ImageLoader.cachedImageOrNull(imageUrl: String): File? {
+        return diskCache?.openSnapshot(imageUrl)?.use { it.data.toFile() }
+    }
 
     private fun shareIntent(file: File, text: String): Intent {
         val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
