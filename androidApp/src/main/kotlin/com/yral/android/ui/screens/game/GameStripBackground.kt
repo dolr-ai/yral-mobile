@@ -68,20 +68,22 @@ fun GameStripBackground(
 }
 
 @Composable
-private fun BoxScope.NudgeBorder(
+fun BoxScope.NudgeBorder(
     paddingValues: PaddingValues,
     cornerRadius: Dp,
     containerColor: Color,
+    neonColor: Color = Color.White.copy(alpha = 0.6f),
+    borderWidth: Float = 8f,
+    animationDuration: Long = NUDGE_ANIMATION_DURATION,
 ) {
-    val neonColor = Color.White.copy(alpha = 0.6f)
     val infiniteTransition = rememberInfiniteTransition(label = "infiniteBounce")
     val tweenSpec =
         tween<Float>(
-            durationMillis = NUDGE_ANIMATION_DURATION.toInt(),
+            durationMillis = animationDuration.toInt(),
             easing = FastOutLinearInEasing,
         )
     val borderWidth by infiniteTransition.animateFloat(
-        initialValue = 8f,
+        initialValue = borderWidth,
         targetValue = 0f,
         animationSpec = infiniteRepeatable(tweenSpec, RepeatMode.Reverse),
         label = "border",
