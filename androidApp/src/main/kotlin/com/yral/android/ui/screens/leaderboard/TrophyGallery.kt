@@ -51,6 +51,7 @@ import com.yral.shared.features.game.domain.models.LeaderboardItem
 fun TrophyGallery(
     leaderboard: List<LeaderboardItem>,
     countDownMs: Long?,
+    blinkCountDown: Boolean,
     selectedMode: LeaderboardMode,
     selectMode: (LeaderboardMode) -> Unit,
 ) {
@@ -97,7 +98,7 @@ fun TrophyGallery(
             if (selectedMode.showCountDown) {
                 Spacer(Modifier.height(28.dp))
                 countDownMs?.let {
-                    LeaderboardCountdown(countDownMs)
+                    LeaderboardCountdown(countDownMs, blinkCountDown)
                 }
             }
             if (leaderboard.size > 3) {
