@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -80,12 +81,14 @@ fun TrophyGallery(
                     LeaderboardMode.DAILY -> R.raw.yellow_rays
                     LeaderboardMode.ALL_TIME -> R.raw.purple_rays
                 }
-            YralLottieAnimation(
-                modifier = Modifier.matchParentSize(),
-                rawRes = lottie,
-                iterations = 1,
-                contentScale = ContentScale.FillBounds,
-            )
+            key(lottie) {
+                YralLottieAnimation(
+                    modifier = Modifier.matchParentSize(),
+                    rawRes = lottie,
+                    iterations = 1,
+                    contentScale = ContentScale.FillBounds,
+                )
+            }
         }
         Column(
             modifier = Modifier.padding(16.dp),
