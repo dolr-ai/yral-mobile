@@ -52,7 +52,7 @@ class LeaderBoardViewModel(
                                 countDownMs = data.timeLeftMs,
                             )
                         }
-                        startCountDown()
+                        data.timeLeftMs?.let { startCountDown() }
                     }.onFailure { error ->
                         _state.update {
                             it.copy(
@@ -70,12 +70,12 @@ class LeaderBoardViewModel(
         countdownJob?.cancel()
         countdownJob =
             viewModelScope.launch {
-                while ((_state.value.countDownMs ?: 0) > 0) {
+                var currentTime = _state.value.countDownMs
+                while (currentTime != null && currentTime > 0) {
                     delay(1000L)
-                    _state.update {
-                        val newTime = ((_state.value.countDownMs ?: 0) - 1000L).coerceAtLeast(0L)
-                        it.copy(countDownMs = if (newTime == 0L) null else newTime)
-                    }
+                    currentTime = (currentTime - 1000L).coerceAtLeast(0L)
+                    _state.update { it.copy(countDownMs = if (currentTime == 0L) null else currentTime) }
+                    currentTime = _state.value.countDownMs
                 }
                 refreshData()
             }
