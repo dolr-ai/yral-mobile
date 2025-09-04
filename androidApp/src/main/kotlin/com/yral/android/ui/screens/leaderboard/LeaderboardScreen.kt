@@ -75,6 +75,7 @@ fun LeaderboardScreen(
                     selectedMode = state.selectedMode,
                     selectMode = { viewModel.selectMode(it) },
                     countDownMs = state.countDownMs,
+                    blinkCountDown = state.blinkCountDown,
                 )
             }
             // Table Header

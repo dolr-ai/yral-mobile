@@ -50,6 +50,10 @@ class LeaderBoardViewModel(
                                 currentUser = data.userRow.toCurrentUserInfo(),
                                 isLoading = false,
                                 countDownMs = data.timeLeftMs,
+                                blinkCountDown =
+                                    data.timeLeftMs?.let { timeLeft ->
+                                        timeLeft < COUNT_DOWN_BLINK_THRESHOLD
+                                    } == true,
                             )
                         }
                         data.timeLeftMs?.let { startCountDown() }
@@ -74,7 +78,12 @@ class LeaderBoardViewModel(
                 while (currentTime != null && currentTime > 0) {
                     delay(1000L)
                     currentTime = (currentTime - 1000L).coerceAtLeast(0L)
-                    _state.update { it.copy(countDownMs = if (currentTime == 0L) null else currentTime) }
+                    _state.update {
+                        it.copy(
+                            countDownMs = if (currentTime == 0L) null else currentTime,
+                            blinkCountDown = currentTime < COUNT_DOWN_BLINK_THRESHOLD,
+                        )
+                    }
                     currentTime = _state.value.countDownMs
                 }
                 refreshData()
@@ -91,6 +100,10 @@ class LeaderBoardViewModel(
             _state.update { it.copy(selectedMode = mode) }
             refreshData()
         }
+    }
+
+    companion object {
+        private const val COUNT_DOWN_BLINK_THRESHOLD = 2 * 60 * 60 * 1000 // Last 2 hours
     }
 }
 
@@ -109,4 +122,5 @@ data class LeaderBoardState(
     val error: String? = null,
     val selectedMode: LeaderboardMode = LeaderboardMode.DAILY,
     val countDownMs: Long? = null,
+    val blinkCountDown: Boolean = false,
 )

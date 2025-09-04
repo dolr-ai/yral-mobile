@@ -122,16 +122,23 @@ private fun LeaderMode(
 }
 
 @Composable
-fun ColumnScope.LeaderboardCountdown(countDownMs: Long) {
-    var neon by remember { mutableStateOf(true) }
-    LaunchedEffect(Unit) {
-        while (true) {
-            neon = !neon
-            delay(COUNT_DOWN_ANIMATION_DURATION.toLong())
+fun ColumnScope.LeaderboardCountdown(
+    countDownMs: Long,
+    blinkCountDown: Boolean,
+) {
+    var neon by remember(blinkCountDown) { mutableStateOf(false) }
+    LaunchedEffect(blinkCountDown) {
+        if (blinkCountDown) {
+            while (true) {
+                delay(COUNT_DOWN_ANIMATION_DURATION.toLong())
+                neon = !neon
+            }
         }
     }
     Box(Modifier.align(Alignment.CenterHorizontally)) {
-        LeaderboardCountdownBorder()
+        if (blinkCountDown) {
+            LeaderboardCountdownBorder()
+        }
         Box {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.Start),
