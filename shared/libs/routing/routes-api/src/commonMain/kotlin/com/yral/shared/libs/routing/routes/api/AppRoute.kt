@@ -37,12 +37,12 @@ object Unknown : AppRoute {
 }
 
 @Serializable
-data class PostDetails(
+data class PostDetailsRoute(
     val postId: String,
     val canisterId: String? = null,
 ) : AppRoute,
     ExternallyExposedRoute {
-        companion object {
+        companion object Companion {
             const val PATH = "post/details/{postId}?canisterId={canisterId}"
         }
     }
