@@ -7,4 +7,15 @@ import kotlinx.serialization.Serializable
 data class GetLeaderboardRequestDto(
     @SerialName("principal_id")
     val principalId: String,
+    @SerialName("mode")
+    val mode: LeaderboardMode,
 )
+
+@Serializable
+enum class LeaderboardMode {
+    @SerialName("daily")
+    DAILY,
+
+    @SerialName("all_time")
+    ALL_TIME,
+}

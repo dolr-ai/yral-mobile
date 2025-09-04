@@ -18,6 +18,8 @@ sealed class LeaderboardResponseDto {
         val userRow: LeaderboardRowDto,
         @SerialName("top_rows")
         val topRows: List<LeaderboardRowDto>,
+        @SerialName("time_left_ms")
+        val timeLeftMs: Long?,
     ) : LeaderboardResponseDto()
 
     @Serializable
@@ -52,6 +54,7 @@ fun LeaderboardResponseDto.toLeaderboardData(): Result<LeaderboardData, Leaderbo
                 LeaderboardData(
                     userRow = userRow.toLeaderboardItem(),
                     topRows = topRows.map { it.toLeaderboardItem() },
+                    timeLeftMs = timeLeftMs,
                 ),
             )
         }

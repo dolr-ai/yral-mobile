@@ -6,6 +6,7 @@ import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.features.game.analytics.LeaderBoardTelemetry
+import com.yral.shared.features.game.data.models.LeaderboardMode
 import com.yral.shared.features.game.domain.GetLeaderboardUseCase
 import com.yral.shared.features.game.domain.models.CurrentUserInfo
 import com.yral.shared.features.game.domain.models.GetLeaderboardRequest
@@ -33,8 +34,13 @@ class LeaderBoardViewModel(
             _state.update { it.copy(isLoading = true, error = null) }
             sessionManager.userPrincipal?.let { userPrincipal ->
                 getLeaderboardUseCase
-                    .invoke(GetLeaderboardRequest(userPrincipal))
-                    .onSuccess { data ->
+                    .invoke(
+                        parameter =
+                            GetLeaderboardRequest(
+                                principalId = userPrincipal,
+                                mode = LeaderboardMode.ALL_TIME,
+                            ),
+                    ).onSuccess { data ->
                         _state.update {
                             it.copy(
                                 leaderboard = data.topRows,
