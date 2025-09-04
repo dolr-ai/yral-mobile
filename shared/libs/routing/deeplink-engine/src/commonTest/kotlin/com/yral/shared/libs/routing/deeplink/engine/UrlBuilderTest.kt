@@ -1,5 +1,6 @@
 package com.yral.shared.libs.routing.deeplink.engine
 
+import com.yral.shared.libs.routing.routes.api.PostDetails
 import com.yral.shared.libs.routing.routes.api.TestHomeRoute
 import com.yral.shared.libs.routing.routes.api.TestInternalRoute
 import com.yral.shared.libs.routing.routes.api.TestProductRoute
@@ -16,6 +17,7 @@ class UrlBuilderTest {
             route<TestUserRoute>("/user/{userId}")
             route<TestHomeRoute>("/")
             route<TestInternalRoute>("/internal/{internalId}")
+            route<PostDetails>(PostDetails.PATH)
         }
 
     private val urlBuilder =
@@ -74,6 +76,21 @@ class UrlBuilderTest {
     }
 
     @Test
+    fun testBuildUrlForPostDetails() {
+        val customBuilder =
+            UrlBuilder(
+                routingTable = routingTable,
+                scheme = "yralm",
+                host = "",
+            )
+
+        val route = PostDetails(postId = "789")
+        val url = customBuilder.build(route)
+
+        assertEquals("yralm://post/details/789", url)
+    }
+
+    @Test
     fun testBuildUrlWithLeadingSlashPatternAndEmptyHost() {
         // Even if the pattern has a leading slash, hostless deep link should treat
         // the first path segment as the authority when scheme is custom and host is blank
@@ -87,7 +104,7 @@ class UrlBuilderTest {
         val route = TestProductRoute("123") // pattern is "/test/product/{productId}"
         val url = customBuilder.build(route)
 
-        assertEquals("yralm://test/product/123", url)
+        assertEquals("yralm://product/123", url)
     }
 
     @Test

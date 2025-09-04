@@ -1,5 +1,6 @@
 package com.yral.shared.libs.routing.deeplink.engine
 
+import com.yral.shared.libs.routing.routes.api.PostDetails
 import com.yral.shared.libs.routing.routes.api.TestHomeRoute
 import com.yral.shared.libs.routing.routes.api.TestInternalRoute
 import com.yral.shared.libs.routing.routes.api.TestProductRoute
@@ -16,6 +17,7 @@ class DeepLinkParserTest {
             route<TestUserRoute>("/user/{userId}")
             route<TestHomeRoute>("/")
             route<TestInternalRoute>("/internal/{internalId}")
+            route<PostDetails>(PostDetails.PATH)
         }
 
     private val parser = DeepLinkParser(routingTable)
@@ -26,6 +28,16 @@ class DeepLinkParserTest {
 
         assertTrue(result is TestProductRoute)
         assertEquals("123", result.productId)
+    }
+
+    @Test
+    fun testParseValidPostDetailsUrl() {
+        val result = parser.parse("https://example.com/post/details/123")
+
+        println("result: $result")
+
+        assertTrue(result is PostDetails)
+        assertEquals("123", result.postId)
     }
 
     @Test
