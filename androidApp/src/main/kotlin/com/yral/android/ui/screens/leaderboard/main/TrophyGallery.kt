@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.leaderboard
+package com.yral.android.ui.screens.leaderboard.main
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -34,14 +34,14 @@ import androidx.compose.ui.unit.dp
 import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
-import com.yral.android.ui.screens.leaderboard.LeaderboardHelpers.MAX_USERS_PRINCIPAL_LENGTH
-import com.yral.android.ui.screens.leaderboard.LeaderboardHelpers.MAX_USERS_WITH_DUPLICATE_RANK
-import com.yral.android.ui.screens.leaderboard.LeaderboardHelpers.POS_BRONZE
-import com.yral.android.ui.screens.leaderboard.LeaderboardHelpers.POS_GOLD
-import com.yral.android.ui.screens.leaderboard.LeaderboardHelpers.POS_SILVER
-import com.yral.android.ui.screens.leaderboard.LeaderboardHelpers.getTrophyImageHeight
-import com.yral.android.ui.screens.leaderboard.LeaderboardHelpers.getTrophyImageOffset
-import com.yral.android.ui.screens.leaderboard.LeaderboardHelpers.getTrophyImageWidth
+import com.yral.android.ui.screens.leaderboard.main.LeaderboardHelpers.MAX_USERS_PRINCIPAL_LENGTH
+import com.yral.android.ui.screens.leaderboard.main.LeaderboardHelpers.MAX_USERS_WITH_DUPLICATE_RANK
+import com.yral.android.ui.screens.leaderboard.main.LeaderboardHelpers.POS_BRONZE
+import com.yral.android.ui.screens.leaderboard.main.LeaderboardHelpers.POS_GOLD
+import com.yral.android.ui.screens.leaderboard.main.LeaderboardHelpers.POS_SILVER
+import com.yral.android.ui.screens.leaderboard.main.LeaderboardHelpers.getTrophyImageHeight
+import com.yral.android.ui.screens.leaderboard.main.LeaderboardHelpers.getTrophyImageOffset
+import com.yral.android.ui.screens.leaderboard.main.LeaderboardHelpers.getTrophyImageWidth
 import com.yral.android.ui.widgets.YralLottieAnimation
 import com.yral.shared.features.game.data.models.LeaderboardMode
 import com.yral.shared.features.game.domain.models.LeaderboardItem
