@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.leaderboard
+package com.yral.android.ui.screens.leaderboard.main
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.FastOutLinearInEasing
@@ -42,8 +42,8 @@ import androidx.compose.ui.unit.dp
 import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
-import com.yral.android.ui.screens.leaderboard.LeaderboardScreenConstants.COUNT_DOWN_ANIMATION_DURATION
-import com.yral.android.ui.screens.leaderboard.LeaderboardScreenConstants.COUNT_DOWN_BG_ALPHA
+import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.COUNT_DOWN_ANIMATION_DURATION
+import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.COUNT_DOWN_BG_ALPHA
 import com.yral.android.ui.widgets.YralMaskedVectorTextV2
 import com.yral.android.ui.widgets.YralNeonBorder
 import com.yral.shared.features.game.data.models.LeaderboardMode
