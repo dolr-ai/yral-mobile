@@ -11,7 +11,7 @@ from requests.exceptions import RequestException
 import os
 import random
 import collections
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone, timedelta, date
 from zoneinfo import ZoneInfo
 
 firebase_admin.initialize_app()
@@ -689,6 +689,67 @@ def _inc_daily_leaderboard(pid: str, outcome: str) -> None:
 
     _tx(db().transaction())
 
+def _bucket_id_for_ist_day(d: date) -> str:
+    """Return 'YYYY-MM-DD' for a given IST date."""
+    return datetime(d.year, d.month, d.day, tzinfo=IST).strftime("%Y-%m-%d")
+
+def _ist_today_date() -> date:
+    return datetime.now(IST).date()
+
+def _friendly_date_str(d: date) -> str:
+    """e.g., 'Aug 15' (no leading zero for day)."""
+    return datetime(d.year, d.month, d.day, tzinfo=IST).strftime("%b %d").replace(" 0", " ")
+
+def _dense_top_rows_for_day(bucket_id: str) -> List[Dict]:
+    """Top 10 rows with dense ranking for a given IST bucket."""
+    coll = db().collection(f"{DAILY_COLL}/{bucket_id}/users")
+    snaps = (
+        coll.order_by("smiley_game_wins", direction=_gcf.Query.DESCENDING)
+            .limit(10)
+            .stream()
+    )
+    rows: List[Dict] = []
+    current_rank, last_wins = 0, None
+    for snap in snaps:
+        wins = int(snap.get("smiley_game_wins") or 0)
+        if wins != last_wins:
+            current_rank += 1  # dense ranking
+            last_wins = wins
+        rows.append({
+            "principal_id": snap.id,
+            "wins": wins,
+            "position": current_rank,
+        })
+    return rows
+
+def _user_row_for_day(bucket_id: str, pid: str) -> Dict:
+    """Compute user's wins and dense position within that day's collection."""
+    day_users = db().collection(f"{DAILY_COLL}/{bucket_id}/users")
+    entry = day_users.document(pid).get()
+    user_wins = int((entry.get("smiley_game_wins") if entry.exists else 0) or 0)
+
+    # Dense position: count docs with wins strictly greater than user's
+    # Firestore aggregation count() → list of results, take the first
+    rank_q = day_users.where("smiley_game_wins", ">", user_wins).count().get()
+    higher = int(rank_q[0][0].value)
+    position = higher + 1
+
+    return {
+        "principal_id": pid,
+        "wins": user_wins,
+        "position": position,
+    }
+
+def _has_any_docs_for_day(bucket_id: str) -> bool:
+    """Fast existence check: returns True if the day has at least one user doc."""
+    users_coll = db().collection(f"{DAILY_COLL}/{bucket_id}/users")
+    try:
+        return next(users_coll.limit(1).stream(), None) is not None
+    except GoogleAPICallError as e:
+        # Treat read error as "no data" per requirement to skip such a day
+        print(f"[skip] users scan error for {bucket_id}: {e}", file=sys.stderr)
+        return False
+
 @https_fn.on_request(region="us-central1", enforce_app_check=True)
 def leaderboard(request: Request):
     """
@@ -1039,4 +1100,95 @@ def leaderboard_v2(request: Request):
         return error_response(500, "FIRESTORE_ERROR", str(e))
     except Exception as e:
         print("Leaderboard error:", e, file=sys.stderr)
+        return error_response(500, "INTERNAL", "Internal server error")
+
+@https_fn.on_request(region="us-central1", enforce_app_check=True)
+def leaderboard_history(request: Request):
+    """
+    Request:
+      { "data": { "principal_id": "<pid>" } }
+
+    Response: 200 OK with an ARRAY (newest → oldest). Each item:
+      {
+        "date": "Aug 15",
+        "top_rows": [ { principal_id, wins, position } ... up to 10 ],
+        "user_row": { principal_id, wins, position } | null
+      }
+
+    Notes:
+    - If a given day has no docs (or any read error), that day is omitted entirely.
+    - Latest day returned is "yesterday" in IST.
+    """
+    try:
+        if request.method != "POST":
+            return error_response(405, "METHOD_NOT_ALLOWED", "POST required")
+
+        body = request.get_json(silent=True) or {}
+        data = body.get("data", {}) or {}
+        pid = str(data.get("principal_id", "")).strip()
+
+        if not pid:
+            return error_response(400, "MISSING_PID", "principal_id required")
+
+        # ── Auth & App Check ────────────────────────────────────────────────
+        auth_header = request.headers.get("Authorization", "")
+        if not auth_header.startswith("Bearer "):
+            return error_response(401, "MISSING_ID_TOKEN", "Authorization missing")
+        auth.verify_id_token(auth_header.split(" ", 1)[1])
+
+        actok = request.headers.get("X-Firebase-AppCheck")
+        if not actok:
+            return error_response(401, "APPCHECK_MISSING", "App Check token required")
+        try:
+            app_check.verify_token(actok)
+        except Exception:
+            return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
+
+        # ── Build last 7 IST dates EXCLUDING today (newest → oldest) ───────
+        today = _ist_today_date()
+        days = [today - timedelta(days=offset) for offset in range(1, 8)]  # 1..7 days ago
+
+        result: List[Dict] = []
+        for d in days:
+            bucket_id = _bucket_id_for_ist_day(d)
+            date_label = _friendly_date_str(d)
+
+            # Skip if the day has no docs (or read error)
+            if not _has_any_docs_for_day(bucket_id):
+                continue
+
+            # Top rows (dense)
+            try:
+                top_rows = _dense_top_rows_for_day(bucket_id)
+            except GoogleAPICallError as e:
+                # Per requirement, skip this day fully on read error
+                print(f"[skip] top rows read error for {bucket_id}: {e}", file=sys.stderr)
+                continue
+
+            # Compute user_row; null it if user appears in top_rows
+            try:
+                user_row = _user_row_for_day(bucket_id, pid)
+            except GoogleAPICallError as e:
+                # Treat as unavailable → skip day to keep array strictly "with data"
+                print(f"[skip] user_row read error for {bucket_id}, {pid}: {e}", file=sys.stderr)
+                continue
+
+            if any(r["principal_id"] == pid for r in top_rows):
+                user_row = None
+
+            result.append({
+                "date": date_label,      # 'Aug 15'
+                "top_rows": top_rows,    # up to 10, dense-ranked
+                "user_row": user_row     # or null if in top_rows
+            })
+
+        # Already newest → oldest because we iterated 1..7 days ago in order
+        return jsonify(result), 200
+
+    except auth.InvalidIdTokenError:
+        return error_response(401, "ID_TOKEN_INVALID", "ID token invalid or expired")
+    except GoogleAPICallError as e:
+        return error_response(500, "FIRESTORE_ERROR", str(e))
+    except Exception as e:
+        print("leaderboard_daily_last7_excl_today error:", e, file=sys.stderr)
         return error_response(500, "INTERNAL", "Internal server error")
