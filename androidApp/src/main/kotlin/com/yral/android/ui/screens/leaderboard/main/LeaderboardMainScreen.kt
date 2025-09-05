@@ -76,6 +76,7 @@ fun LeaderboardMainScreen(
                     selectMode = { viewModel.selectMode(it) },
                     countDownMs = state.countDownMs,
                     blinkCountDown = state.blinkCountDown,
+                    openHistory = { component.openDailyHistory() },
                 )
             }
             // Table Header

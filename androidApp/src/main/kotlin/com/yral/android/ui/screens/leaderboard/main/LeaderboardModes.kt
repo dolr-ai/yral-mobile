@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -239,6 +240,30 @@ private fun LeaderboardCountdownContent(
                 text = stringResource(R.string.end_in, time),
                 vectorRes = R.drawable.pink_gradient_background,
                 textStyle = LocalAppTopography.current.regBold,
+            )
+        }
+    }
+}
+
+@Composable
+fun LeaderboardHistoryIcon(modifier: Modifier) {
+    Box(modifier = modifier) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
+            verticalAlignment = Alignment.CenterVertically,
+            modifier =
+                Modifier
+                    .size(44.dp)
+                    .background(
+                        color = YralColors.ScrimColorIcon,
+                        shape = RoundedCornerShape(size = 73.dp),
+                    ),
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.ic_calander_week_1),
+                contentDescription = "image description",
+                contentScale = ContentScale.FillBounds,
+                modifier = Modifier.size(30.dp),
             )
         }
     }

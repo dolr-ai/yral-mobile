@@ -1,6 +1,7 @@
 package com.yral.android.ui.screens.leaderboard.main
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -46,7 +47,7 @@ import com.yral.android.ui.widgets.YralLottieAnimation
 import com.yral.shared.features.game.data.models.LeaderboardMode
 import com.yral.shared.features.game.domain.models.LeaderboardItem
 
-@Suppress("MagicNumber")
+@Suppress("MagicNumber", "LongMethod")
 @Composable
 fun TrophyGallery(
     isLoading: Boolean,
@@ -55,6 +56,7 @@ fun TrophyGallery(
     blinkCountDown: Boolean,
     selectedMode: LeaderboardMode,
     selectMode: (LeaderboardMode) -> Unit,
+    openHistory: () -> Unit,
 ) {
     val leaderboardBG =
         when (selectedMode) {
@@ -96,10 +98,27 @@ fun TrophyGallery(
             modifier = Modifier.padding(16.dp),
         ) {
             LeaderboardModeSelection(selectedMode, selectMode)
-            if (selectedMode.showCountDown) {
-                Spacer(Modifier.height(28.dp))
-                countDownMs?.let {
-                    LeaderboardCountdown(countDownMs, blinkCountDown)
+            Row {
+                if (selectedMode.showCountDown) {
+                    Column(
+                        modifier =
+                            Modifier
+                                .weight(1f)
+                                .offset(x = 28.dp)
+                                .padding(top = 28.dp),
+                    ) {
+                        countDownMs?.let { LeaderboardCountdown(countDownMs, blinkCountDown) }
+                    }
+                }
+                if (selectedMode.showHistory) {
+                    LeaderboardHistoryIcon(
+                        modifier =
+                            Modifier
+                                .padding(end = 12.dp)
+                                .offset(y = countDownMs?.let { 6.dp } ?: 16.dp)
+                                .align(Alignment.Bottom)
+                                .clickable { openHistory() },
+                    )
                 }
             }
             if (leaderboard.size > 3) {
