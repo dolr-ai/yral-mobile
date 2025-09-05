@@ -14,10 +14,11 @@ data class GetLeaderboardRequestDto(
 @Serializable
 enum class LeaderboardMode(
     val showCountDown: Boolean,
+    val showHistory: Boolean,
 ) {
     @SerialName("daily")
-    DAILY(true),
+    DAILY(true, true),
 
     @SerialName("all_time")
-    ALL_TIME(false),
+    ALL_TIME(false, false),
 }

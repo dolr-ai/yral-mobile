@@ -38,6 +38,7 @@ object YralColors {
     val ShadowAmbientColor: Color = Color(0x1C8377C6)
     val ScrimColor: Color = Color(0xE5000000)
     val ScrimColorLight: Color = Color(0xCC000000)
+    val ScrimColorIcon: Color = Color(0xCC0A0A0A)
 
     val ButtonBorderColor: Color = Color(0xFFE0E0E9)
 
