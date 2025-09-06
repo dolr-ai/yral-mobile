@@ -704,7 +704,7 @@ def _dense_top_rows_for_day(bucket_id: str) -> List[Dict]:
     """Top 10 rows with dense ranking for a given IST bucket."""
     coll = db().collection(f"{DAILY_COLL}/{bucket_id}/users")
     snaps = (
-        coll.order_by("smiley_game_wins", direction=_gcf.Query.DESCENDING)
+        coll.order_by("smiley_game_wins", direction=firestore.Query.DESCENDING)
             .limit(10)
             .stream()
     )
