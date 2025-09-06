@@ -87,6 +87,7 @@ fun LeaderboardRow(
     profileImageUrl: String,
     wins: Long,
     isCurrentUser: Boolean,
+    decorateCurrentUser: Boolean = false,
 ) {
     Card(
         modifier =
@@ -96,7 +97,7 @@ fun LeaderboardRow(
         colors =
             CardDefaults.cardColors(
                 containerColor =
-                    if (isCurrentUser) {
+                    if (isCurrentUser && decorateCurrentUser) {
                         YralColors.Pink400
                     } else {
                         YralColors.Neutral900
@@ -104,13 +105,14 @@ fun LeaderboardRow(
             ),
         shape = RoundedCornerShape(8.dp),
     ) {
-        UserBriefWithBorder(position, isCurrentUser) {
+        UserBriefWithBorder(position, decorateCurrentUser) {
             UserBriefContent(
                 position,
                 userPrincipalId,
                 profileImageUrl,
                 wins,
                 isCurrentUser,
+                decorateCurrentUser,
             )
         }
     }
@@ -119,12 +121,12 @@ fun LeaderboardRow(
 @Composable
 private fun UserBriefWithBorder(
     position: Int,
-    isCurrentUser: Boolean,
+    decorateCurrentUser: Boolean,
     content: @Composable () -> Unit,
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         val border = getUserBriefBorder(position)
-        if (border > 0 && !isCurrentUser) {
+        if (border > 0 && !decorateCurrentUser) {
             Image(
                 painter = painterResource(border),
                 contentDescription = null,
@@ -143,6 +145,7 @@ private fun UserBriefContent(
     profileImageUrl: String,
     wins: Long,
     isCurrentUser: Boolean,
+    decorateCurrentUser: Boolean,
 ) {
     Row(
         modifier =
@@ -157,7 +160,7 @@ private fun UserBriefContent(
             modifier = Modifier.weight(POSITION_TEXT_WEIGHT),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            UserBriefPositionNumber(position, isCurrentUser)
+            UserBriefPositionNumber(position, decorateCurrentUser)
         }
         // Player ID column with avatar
         Row(
@@ -166,7 +169,7 @@ private fun UserBriefContent(
         ) {
             UserBriefProfileImage(position, profileImageUrl)
             Spacer(modifier = Modifier.width(8.dp))
-            UserBriefProfileName(position, userPrincipalId, isCurrentUser)
+            UserBriefProfileName(position, userPrincipalId, isCurrentUser, decorateCurrentUser)
         }
         // Games won
         Box(
@@ -188,10 +191,10 @@ private fun UserBriefContent(
 @Composable
 fun UserBriefPositionNumber(
     position: Int,
-    isCurrentUser: Boolean,
+    decorateCurrentUser: Boolean,
 ) {
     val decoration = getTextDecoration(position)
-    if (decoration != 0 && !isCurrentUser) {
+    if (decoration != 0 && !decorateCurrentUser) {
         YralMaskedVectorTextV2(
             text = "#$position",
             vectorRes = decoration,
@@ -216,20 +219,24 @@ private fun UserBriefProfileName(
     position: Int,
     name: String,
     isCurrentUser: Boolean,
+    decorateCurrentUser: Boolean,
 ) {
-    if (isCurrentUser) {
+    val displayName =
+        if (isCurrentUser) {
+            stringResource(R.string.you)
+        } else {
+            name.take(MAX_CHAR_OF_NAME).plus("...")
+        }
+    if (decorateCurrentUser) {
         Text(
-            text = stringResource(R.string.you),
+            text = displayName,
             style = LocalAppTopography.current.baseMedium,
             color = YralColors.NeutralTextPrimary,
         )
     } else {
         UserBriefGradientProfileName(
             position = position,
-            name =
-                name
-                    .take(MAX_CHAR_OF_NAME)
-                    .plus("..."),
+            name = displayName,
         )
     }
 }

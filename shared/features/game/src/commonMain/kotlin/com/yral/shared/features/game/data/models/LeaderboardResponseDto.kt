@@ -15,7 +15,7 @@ sealed class LeaderboardResponseDto {
     @Serializable
     data class Success(
         @SerialName("user_row")
-        val userRow: LeaderboardRowDto,
+        val userRow: LeaderboardRowDto? = null,
         @SerialName("top_rows")
         val topRows: List<LeaderboardRowDto>,
         @SerialName("time_left_ms")
@@ -52,7 +52,7 @@ fun LeaderboardResponseDto.toLeaderboardData(): Result<LeaderboardData, Leaderbo
         is LeaderboardResponseDto.Success -> {
             Ok(
                 LeaderboardData(
-                    userRow = userRow.toLeaderboardItem(),
+                    userRow = userRow?.toLeaderboardItem(),
                     topRows = topRows.map { it.toLeaderboardItem() },
                     timeLeftMs = timeLeftMs,
                 ),

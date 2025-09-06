@@ -99,6 +99,7 @@ fun LeaderboardDetailsScreen(
                                     profileImageUrl = userRow.profileImage,
                                     wins = userRow.wins,
                                     isCurrentUser = true,
+                                    decorateCurrentUser = true,
                                 )
                                 Spacer(Modifier.height(12.dp))
                             }
@@ -111,7 +112,7 @@ fun LeaderboardDetailsScreen(
                                 userPrincipalId = row.userPrincipalId,
                                 profileImageUrl = row.profileImage,
                                 wins = row.wins,
-                                isCurrentUser = false,
+                                isCurrentUser = viewModel.isCurrentUser(row.userPrincipalId),
                             )
                             Spacer(modifier = Modifier.height(12.dp))
                         }
