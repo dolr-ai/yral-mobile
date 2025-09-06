@@ -44,6 +44,8 @@ class LeaderboardHistoryViewModel(
     fun select(index: Int) {
         _state.update { it.copy(selectedIndex = index) }
     }
+
+    fun isCurrentUser(principal: String) = principal == sessionManager.userPrincipal
 }
 
 data class LeaderboardHistoryState(

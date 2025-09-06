@@ -43,7 +43,7 @@ class LeaderBoardViewModel(
                         _state.update {
                             it.copy(
                                 leaderboard = data.topRows,
-                                currentUser = data.userRow.toCurrentUserInfo(),
+                                currentUser = data.userRow?.toCurrentUserInfo(),
                                 isLoading = false,
                                 countDownMs = data.timeLeftMs,
                                 blinkCountDown =
@@ -92,6 +92,8 @@ class LeaderBoardViewModel(
             refreshData()
         }
     }
+
+    fun isCurrentUser(principal: String) = principal == sessionManager.userPrincipal
 
     companion object {
         private const val COUNT_DOWN_BLINK_THRESHOLD = 2 * 60 * 60 * 1000 // Last 2 hours
