@@ -21,10 +21,6 @@ class LeaderboardHistoryViewModel(
     private val _state = MutableStateFlow(LeaderboardHistoryState())
     val state: StateFlow<LeaderboardHistoryState> = _state.asStateFlow()
 
-    init {
-        fetchHistory()
-    }
-
     fun fetchHistory() {
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, error = null) }
