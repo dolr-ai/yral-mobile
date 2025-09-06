@@ -58,12 +58,7 @@ class LeaderBoardViewModel(
                         }
                         data.timeLeftMs?.let { startCountDown() }
                     }.onFailure { error ->
-                        _state.update {
-                            it.copy(
-                                error = "Failed to load leaderboard: ${error.message}",
-                                isLoading = false,
-                            )
-                        }
+                        _state.update { it.copy(error = error.message, isLoading = false) }
                     }
             }
         }

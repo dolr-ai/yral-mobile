@@ -122,6 +122,21 @@ fun LeaderboardMainScreen(
                     Spacer(modifier = Modifier.height(68.dp))
                 }
             }
+            if (!state.isLoading && state.error != null) {
+                item {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().padding(top = 24.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = state.error ?: "",
+                            style = LocalAppTopography.current.baseMedium,
+                            color = YralColors.Neutral500,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+                }
+            }
         }
         if (state.isLoading) {
             Box(
