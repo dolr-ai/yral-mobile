@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -81,33 +82,39 @@ fun LeaderboardDetailsScreen(
                     }
                 }
             }
+            item {
+                Spacer(Modifier.height(16.dp))
+                LeaderboardTableHeader()
+                Spacer(modifier = Modifier.height(8.dp))
+            }
             if (!state.isLoading && state.error == null && state.history.isNotEmpty()) {
                 val selected = state.history.getOrNull(state.selectedIndex)
                 selected?.let { day ->
-                    item { Spacer(Modifier.height(16.dp)) }
-                    item { LeaderboardTableHeader() }
-                    item { Spacer(Modifier.height(8.dp)) }
                     day.userRow?.let { userRow ->
-                        item { Spacer(Modifier.height(8.dp)) }
                         item {
-                            LeaderboardRow(
-                                position = userRow.position,
-                                userPrincipalId = userRow.userPrincipalId,
-                                profileImageUrl = userRow.profileImage,
-                                wins = userRow.wins,
-                                isCurrentUser = true,
-                            )
+                            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                                LeaderboardRow(
+                                    position = userRow.position,
+                                    userPrincipalId = userRow.userPrincipalId,
+                                    profileImageUrl = userRow.profileImage,
+                                    wins = userRow.wins,
+                                    isCurrentUser = true,
+                                )
+                                Spacer(Modifier.height(12.dp))
+                            }
                         }
                     }
                     items(day.topRows) { row ->
-                        LeaderboardRow(
-                            position = row.position,
-                            userPrincipalId = row.userPrincipalId,
-                            profileImageUrl = row.profileImage,
-                            wins = row.wins,
-                            isCurrentUser = false,
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                            LeaderboardRow(
+                                position = row.position,
+                                userPrincipalId = row.userPrincipalId,
+                                profileImageUrl = row.profileImage,
+                                wins = row.wins,
+                                isCurrentUser = false,
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                        }
                     }
                     item { Spacer(Modifier.height(68.dp)) }
                 }
@@ -126,7 +133,7 @@ fun LeaderboardDetailsScreen(
             }
         }
         if (state.isLoading) {
-            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 YralLoader()
             }
         }
