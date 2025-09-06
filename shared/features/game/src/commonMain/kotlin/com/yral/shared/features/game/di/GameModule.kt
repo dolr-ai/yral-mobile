@@ -10,10 +10,12 @@ import com.yral.shared.features.game.domain.CastVoteUseCase
 import com.yral.shared.features.game.domain.GetBalanceUseCase
 import com.yral.shared.features.game.domain.GetGameIconsUseCase
 import com.yral.shared.features.game.domain.GetGameRulesUseCase
+import com.yral.shared.features.game.domain.GetLeaderboardHistoryUseCase
 import com.yral.shared.features.game.domain.GetLeaderboardUseCase
 import com.yral.shared.features.game.domain.IGameRepository
 import com.yral.shared.features.game.viewmodel.GameViewModel
 import com.yral.shared.features.game.viewmodel.LeaderBoardViewModel
+import com.yral.shared.features.game.viewmodel.LeaderboardHistoryViewModel
 import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.viewModelOf
@@ -28,8 +30,10 @@ val gameModule =
         factory { GetGameIconsUseCase(get(), get(), get(named("GameConfig")), get()) }
         factory { GetGameRulesUseCase(get(), get(), get(named("AboutGame")), get()) }
         factoryOf(::GetLeaderboardUseCase)
+        factoryOf(::GetLeaderboardHistoryUseCase)
         viewModelOf(::GameViewModel)
         viewModelOf(::LeaderBoardViewModel)
+        viewModelOf(::LeaderboardHistoryViewModel)
         factoryOf(::GameRepository) { bind<IGameRepository>() }
         factoryOf(::GameRemoteDataSource) { bind<IGameRemoteDataSource>() }
         factoryOf(::LeaderBoardTelemetry)
