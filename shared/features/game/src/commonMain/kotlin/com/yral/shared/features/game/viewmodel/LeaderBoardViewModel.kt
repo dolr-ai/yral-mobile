@@ -28,11 +28,7 @@ class LeaderBoardViewModel(
     val state: StateFlow<LeaderBoardState> = _state.asStateFlow()
     private var countdownJob: Job? = null
 
-    init {
-        loadData()
-    }
-
-    private fun loadData() {
+    fun loadData() {
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, error = null, countDownMs = null) }
             sessionManager.userPrincipal?.let { userPrincipal ->

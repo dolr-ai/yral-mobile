@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
+import com.yral.android.ui.screens.leaderboard.UserBriefProfileImage
 import com.yral.android.ui.screens.leaderboard.main.LeaderboardHelpers.MAX_USERS_PRINCIPAL_LENGTH
 import com.yral.android.ui.screens.leaderboard.main.LeaderboardHelpers.MAX_USERS_WITH_DUPLICATE_RANK
 import com.yral.android.ui.screens.leaderboard.main.LeaderboardHelpers.POS_BRONZE
