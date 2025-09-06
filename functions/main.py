@@ -700,7 +700,7 @@ def _friendly_date_str(d: date) -> str:
     """e.g., 'Aug 15' (no leading zero for day)."""
     return datetime(d.year, d.month, d.day, tzinfo=IST).strftime("%b %d").replace(" 0", " ")
 
-def _dense_top_rows_for_day(bucket_id: str) -> List[Dict]:
+def _dense_top_rows_for_day(bucket_id: str) -> tuple[List[Dict], int, int]:
     """Top 10 rows with dense ranking for a given IST bucket."""
     coll = db().collection(f"{DAILY_COLL}/{bucket_id}/users")
     snaps = (
@@ -720,7 +720,7 @@ def _dense_top_rows_for_day(bucket_id: str) -> List[Dict]:
             "wins": wins,
             "position": current_rank,
         })
-    return rows
+    return rows, last_wins, current_rank
 
 def _user_row_for_day(bucket_id: str, pid: str) -> Dict:
     """Compute user's wins and dense position within that day's collection."""
@@ -1152,26 +1152,78 @@ def leaderboard_history(request: Request):
         for d in days:
             bucket_id = _bucket_id_for_ist_day(d)
             date_label = _friendly_date_str(d)
+            top_rows = []
+            last_wins, current_rank = None, 0
 
             # Skip if the day has no docs (or read error)
             if not _has_any_docs_for_day(bucket_id):
-                continue
+                # Pull a pool of candidates from all-time users, then shuffle
+                need = 10
+                candidates = (
+                db().collection("users")
+                    .order_by("smiley_game_wins", direction=firestore.Query.DESCENDING)
+                    .limit(20)
+                    .stream()
+                )
+                existing_ids = {r["principal_id"] for r in top_rows}
+                cand_ids = [u.id for u in candidates if u.id not in existing_ids]
+                random.shuffle(cand_ids)
+                fill_ids = cand_ids[:need]
 
-            # Top rows (dense)
-            try:
-                top_rows = _dense_top_rows_for_day(bucket_id)
-            except GoogleAPICallError as e:
-                # Per requirement, skip this day fully on read error
-                print(f"[skip] top rows read error for {bucket_id}: {e}", file=sys.stderr)
-                continue
+                # Dense ranking: all zeros share the same position.
+                if last_wins != 0:
+                    current_rank += 1
+                    last_wins = 0
+
+                for pid_fill in fill_ids:
+                    top_rows.append({
+                        "principal_id": pid_fill,
+                        "wins": 0,
+                        "position": current_rank
+                    })
+            else:
+                # Top rows (dense)
+                try:
+                    top_rows, last_wins, current_rank = _dense_top_rows_for_day(bucket_id)
+                except GoogleAPICallError as e:
+                    # Per requirement, skip this day fully on read error
+                    print(f"[skip] top rows read error for {bucket_id}: {e}", file=sys.stderr)
+                    continue
+
+            need = 10 - len(top_rows)
+            if need > 0:
+                # Pull a pool of candidates from all-time users, then shuffle
+                candidates = (
+                db().collection("users")
+                    .order_by("smiley_game_wins", direction=firestore.Query.DESCENDING)
+                    .limit(20)
+                    .stream()
+                )
+                existing_ids = {r["principal_id"] for r in top_rows}
+                cand_ids = [u.id for u in candidates if u.id not in existing_ids]
+                random.shuffle(cand_ids)
+                fill_ids = cand_ids[:need]
+
+                # Dense ranking: all zeros share the same position.
+                if last_wins != 0:
+                    current_rank += 1
+                    last_wins = 0
+
+                for pid_fill in fill_ids:
+                    top_rows.append({
+                        "principal_id": pid_fill,
+                        "wins": 0,
+                        "position": current_rank
+                    })
+
+            # Safety: ensure exactly 10
+            top_rows = top_rows[:10]
 
             # Compute user_row; null it if user appears in top_rows
             try:
                 user_row = _user_row_for_day(bucket_id, pid)
             except GoogleAPICallError as e:
-                # Treat as unavailable → skip day to keep array strictly "with data"
-                print(f"[skip] user_row read error for {bucket_id}, {pid}: {e}", file=sys.stderr)
-                continue
+                user_row = {"principal_id": pid, "wins": 0, "position": 1}
 
             if any(r["principal_id"] == pid for r in top_rows):
                 user_row = None
