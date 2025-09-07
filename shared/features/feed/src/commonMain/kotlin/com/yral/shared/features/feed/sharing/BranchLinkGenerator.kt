@@ -16,7 +16,7 @@ class BranchLinkGenerator(
         suspendCancellableCoroutine { cont ->
             try {
                 val meta = ContentMetadata().also { cm ->
-                    // Always include internal_url for app-side routing
+                    // include internal_url for now as a duplicate of android_deeplink_path in case android_deeplink_path does not work
                     cm.addCustomMetadata("internal_url", input.internalUrl)
                     // Include any caller-provided metadata
                     input.metadata.forEach { (k, v) -> cm.addCustomMetadata(k, v) }
@@ -30,6 +30,7 @@ class BranchLinkGenerator(
                 val linkProps = LinkProperties()
                     .setChannel(input.channel ?: "")
                     .setFeature(input.feature ?: "")
+                    .addControlParameter("\$android_deeplink_path", input.internalUrl.substringAfter("://"))
 
                 input.fallbackUrl?.let { linkProps.addControlParameter("\$fallback_url", it) }
 
