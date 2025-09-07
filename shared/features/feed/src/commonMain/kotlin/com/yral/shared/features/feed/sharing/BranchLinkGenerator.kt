@@ -25,6 +25,7 @@ class BranchLinkGenerator(
                 val buo = BranchUniversalObject()
                     .setTitle(input.title ?: "")
                     .setContentDescription(input.description ?: "")
+                    .setContentImageUrl(input.contentImageUrl ?: "")
                     .setContentMetadata(meta)
 
                 val linkProps = LinkProperties()

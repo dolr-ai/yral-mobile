@@ -504,7 +504,7 @@ class FeedViewModel(
                         internalUrl = internalUrl,
                         title = "Yral Post",
                         description = "Check out this post on Yral",
-                        metadata = mapOf("internal_url" to internalUrl),
+                        contentImageUrl = feedDetails.thumbnail,
                     ),
                 )
                 val text = "$messagePrefix $link"

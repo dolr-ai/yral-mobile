@@ -20,5 +20,6 @@ data class LinkInput(
     val fallbackUrl: String? = null,
     val title: String? = null,
     val description: String? = null,
+    val contentImageUrl: String? = null,
     val metadata: Map<String, String> = emptyMap(),
 )
