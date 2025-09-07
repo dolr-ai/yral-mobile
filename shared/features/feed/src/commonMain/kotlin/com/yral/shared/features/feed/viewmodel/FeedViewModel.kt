@@ -22,7 +22,11 @@ import com.yral.shared.features.feed.domain.useCases.FetchMoreFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.GetInitialFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.ReportRequestParams
 import com.yral.shared.features.feed.domain.useCases.ReportVideoUseCase
+import com.yral.shared.features.feed.sharing.LinkGenerator
+import com.yral.shared.features.feed.sharing.LinkInput
 import com.yral.shared.features.feed.sharing.ShareService
+import com.yral.shared.libs.routing.deeplink.engine.UrlBuilder
+import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -41,6 +45,8 @@ class FeedViewModel(
     private val feedTelemetry: FeedTelemetry,
     authClientFactory: AuthClientFactory,
     private val shareService: ShareService,
+    private val urlBuilder: UrlBuilder,
+    private val linkGenerator: LinkGenerator,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.disk)
 
@@ -488,10 +494,26 @@ class FeedViewModel(
 
     fun onShareClicked(feedDetails: FeedDetails) {
         viewModelScope.launch {
-            val shareText = "Check out this video on Yral 👀 Where watching = fun + games! ⚡ Try it 👉 ${feedDetails.url}"
+            val messagePrefix = "Check out this video on Yral 👀 Where watching = fun + games! ⚡ Try it 👉"
+            // Build internal deep link using UrlBuilder and PostDetailsRoute
+            val route = PostDetailsRoute(postId = feedDetails.postID, canisterId = feedDetails.canisterID)
+            val internalUrl = urlBuilder.build(route) ?: feedDetails.url
             runSuspendCatching {
-                shareService.shareImageWithText(imageUrl = feedDetails.thumbnail, text = shareText)
+                val link = linkGenerator.generateShareLink(
+                    LinkInput(
+                        internalUrl = internalUrl,
+                        title = "Yral Post",
+                        description = "Check out this post on Yral",
+                        metadata = mapOf("internal_url" to internalUrl),
+                    ),
+                )
+                val text = "$messagePrefix $link"
+                shareService.shareImageWithText(
+                    imageUrl = feedDetails.thumbnail,
+                    text = text,
+                )
             }.onFailure {
+                Logger.e(FeedViewModel::class.simpleName!!, it) { "Failed to share post" }
                 crashlyticsManager.recordException(YralException(it))
             }
         }

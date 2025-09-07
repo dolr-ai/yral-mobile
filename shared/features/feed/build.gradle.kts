@@ -26,6 +26,14 @@ kotlin {
             implementation(projects.shared.data)
             implementation(projects.shared.rust.service)
             implementation(libs.coil.compose)
+            implementation(projects.shared.libs.routing.routesApi)
+            implementation(projects.shared.libs.routing.deeplinkEngine)
+        }
+
+        androidMain.dependencies {
+            implementation(libs.branch)
+            implementation(libs.play.services.ads.identifier)
         }
     }
 }
+
