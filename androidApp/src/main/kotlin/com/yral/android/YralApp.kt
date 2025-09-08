@@ -63,6 +63,7 @@ class YralApp : Application() {
 
     private fun setupBranch() {
         Branch.enableLogging()
+        Branch.setFBAppID(this.getString(R.string.facebook_app_id))
         when (BuildConfig.FLAVOR) {
             "staging" -> {
                 Branch.enableTestMode()
