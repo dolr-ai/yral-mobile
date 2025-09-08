@@ -42,7 +42,10 @@ import com.yral.shared.features.auth.utils.OAuthUtils
 import com.yral.shared.features.auth.utils.OAuthUtilsHelper
 import com.yral.shared.koin.koinInstance
 import com.yral.shared.uniffi.generated.initRustLogger
+import io.branch.indexing.BranchUniversalObject
 import io.branch.referral.Branch
+import io.branch.referral.BranchError
+import io.branch.referral.util.LinkProperties
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -61,6 +64,35 @@ class MainActivity : ComponentActivity() {
         registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
             inAppUpdateManager.handleImmediateUpdateResult(result.resultCode)
         }
+
+    // Shared Branch session callback for both init() and reInit()
+    private val branchSessionCallback: (BranchUniversalObject?, LinkProperties?, BranchError?) -> Unit =
+        { branchUniversalObject, linkProperties, error ->
+            if (error != null) {
+                Logger.d("BranchSDK") { "branch session error: " + error.message }
+            } else {
+                Logger.d("BranchSDK") { "branch session complete" }
+                if (branchUniversalObject != null) {
+                    Logger.d("BranchSDK") { "title " + branchUniversalObject.title }
+                    Logger.d("BranchSDK") { "CanonicalIdentifier " + branchUniversalObject.canonicalIdentifier }
+                    Logger.d("BranchSDK") { "metadata " + branchUniversalObject.contentMetadata.convertToJson() }
+                }
+                if (linkProperties != null) {
+                    Logger.d("BranchSDK") { "Channel " + linkProperties.channel }
+                    Logger.d("BranchSDK") { "control params " + linkProperties.controlParams }
+                }
+            }
+        }
+
+    private val branchLinks =
+        setOf(
+            "f6ur9.app.link",
+            "link.yral.com",
+            "f6ur9-alternate.app.link",
+            "f6ur9.test-app.link",
+            "test-link.yral.com",
+            "f6ur9-alternate.test-app.link",
+        )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -105,20 +137,27 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         handleIntent(intent)
-        handleIntentForBranch()
+        handleIntentForBranch(intent)
     }
 
-    private fun handleIntentForBranch() {
-        if (intent.hasExtra("branch_force_new_session") && intent.getBooleanExtra("branch_force_new_session", false)) {
+    private fun handleIntentForBranch(intent: Intent?) {
+        // Branch recommends re-initializing the session when the app is brought to foreground
+        // with a deep link while running in the background. This is typically indicated by the
+        // "branch_force_new_session" extra. As a fallback, also trigger reInit when there is
+        // deep link data present, since some OEMs/browsers may omit the extra.
+        val forceNewSession = intent?.getBooleanExtra("branch_force_new_session", false) == true
+        val data = intent?.data
+        val isBranchLink =
+            data?.let {
+                val scheme = it.scheme
+                val host = it.host
+                (scheme == "https" && host in branchLinks) || (scheme == "yral" && host == "open")
+            } ?: false
+        if (forceNewSession || isBranchLink) {
             Branch
                 .sessionBuilder(this)
-                .withCallback { referringParams, error ->
-                    if (error != null) {
-                        Logger.e("BranchSDK") { "${error.message}" }
-                    } else if (referringParams != null) {
-                        Logger.d("BranchSDK") { "$referringParams" }
-                    }
-                }.reInit()
+                .withCallback(branchSessionCallback)
+                .reInit()
         }
     }
 
@@ -197,22 +236,8 @@ class MainActivity : ComponentActivity() {
     private fun initialiseBranch() {
         Branch
             .sessionBuilder(this)
-            .withCallback { branchUniversalObject, linkProperties, error ->
-                if (error != null) {
-                    Logger.d("BranchSDK") { "branch init failed. Caused by -" + error.message }
-                } else {
-                    Logger.d("BranchSDK") { "branch init complete!" }
-                    if (branchUniversalObject != null) {
-                        Logger.d("BranchSDK") { "title " + branchUniversalObject.title }
-                        Logger.d("BranchSDK") { "CanonicalIdentifier " + branchUniversalObject.canonicalIdentifier }
-                        Logger.d("BranchSDK") { "metadata " + branchUniversalObject.contentMetadata.convertToJson() }
-                    }
-                    if (linkProperties != null) {
-                        Logger.d("BranchSDK") { "Channel " + linkProperties.channel }
-                        Logger.d("BranchSDK") { "control params " + linkProperties.controlParams }
-                    }
-                }
-            }.withData(this.intent.data)
+            .withCallback(branchSessionCallback)
+            .withData(this.intent.data)
             .init()
     }
 
