@@ -33,9 +33,9 @@ struct SignupOverlay: View {
           LottieView(
             name: Constants.signupLottie,
             loopMode: .loop,
-            animationSpeed: .one) {
-
-            }
+            animationSpeed: .one,
+            resetProgress: false
+          ) { }
             .frame(width: Constants.lottieWidth, height: Constants.lottieHeight)
         }
         .padding(.bottom, Constants.bottomSpacing)

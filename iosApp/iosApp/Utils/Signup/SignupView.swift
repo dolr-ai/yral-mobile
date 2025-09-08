@@ -37,7 +37,7 @@ struct SignupView: View {
       } label: {
         Group {
           if loadingProvider == .google {
-            LottieLoaderView(animationName: Constants.lottieName)
+            LottieLoaderView(animationName: Constants.lottieName, resetProgess: false)
               .frame(width: Constants.loaderSize, height: Constants.loaderSize)
           } else {
             HStack(spacing: Constants.buttonHStackSpacing) {
@@ -70,7 +70,7 @@ struct SignupView: View {
       } label: {
         Group {
           if loadingProvider == .apple {
-            LottieLoaderView(animationName: Constants.lottieName)
+            LottieLoaderView(animationName: Constants.lottieName, resetProgess: false)
               .frame(width: Constants.loaderSize, height: Constants.loaderSize)
           } else {
             HStack(spacing: Constants.buttonHStackSpacing) {

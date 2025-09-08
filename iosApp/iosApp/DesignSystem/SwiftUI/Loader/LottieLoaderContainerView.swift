@@ -6,7 +6,7 @@ class LottieLoaderContainerView: UIView {
 
   init(animationName: String) {
     super.init(frame: .zero)
-    let loaderView = LottieLoaderView(animationName: animationName)
+    let loaderView = LottieLoaderView(animationName: animationName, resetProgess: false)
     let hostingController = UIHostingController(rootView: loaderView)
     hostingController.view.backgroundColor = .clear
     self.hostingController = hostingController
