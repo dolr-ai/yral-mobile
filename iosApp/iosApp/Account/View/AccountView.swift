@@ -67,6 +67,7 @@ struct AccountView: View {
         .padding([.top], Constants.vStackPadding)
       }
       .onReceive(session.phasePublisher) { phase in
+        print("Sarvesh publisher: \(phase)")
         switch phase {
         case .loggedOut, .ephemeral:
           self.showLoginButton = true

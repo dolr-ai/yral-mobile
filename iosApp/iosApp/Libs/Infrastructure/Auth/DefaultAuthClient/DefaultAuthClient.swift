@@ -111,11 +111,10 @@ final class DefaultAuthClient: NSObject, AuthClient {
         try await handleExtractIdentityResponse(from: data, type: .permanent)
       }
       do {
-        try await recordThrowingOperation {
-          try await registerForNotifications()
-        }
+        try await registerForNotifications()
       } catch {
-        print(error)
+        crashReporter.log(error.localizedDescription)
+        crashReporter.recordException(error)
       }
     }
   }
@@ -292,11 +291,10 @@ final class DefaultAuthClient: NSObject, AuthClient {
     UserDefaultsManager.shared.remove(.authIdentityExpiryDateKey)
     UserDefaultsManager.shared.remove(.authRefreshTokenExpiryDateKey)
     do {
-      try await recordThrowingOperation {
-        try await deregisterForNotifications()
-      }
+      try await deregisterForNotifications()
     } catch {
-      print(error)
+      crashReporter.log(error.localizedDescription)
+      crashReporter.recordException(error)
     }
     identity = nil
     canisterPrincipal = nil
@@ -310,11 +308,10 @@ final class DefaultAuthClient: NSObject, AuthClient {
     provider = nil
     try await obtainAnonymousIdentity()
     do {
-      try await recordThrowingOperation {
-        try await registerForNotifications()
-      }
+      try await registerForNotifications()
     } catch {
-      print(error)
+      crashReporter.log(error.localizedDescription)
+      crashReporter.recordException(error)
     }
   }
 
