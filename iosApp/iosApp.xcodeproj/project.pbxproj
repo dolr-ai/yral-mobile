@@ -13,8 +13,6 @@
 		100208902DE4840000DF269E /* FirebaseLottieManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1002088E2DE483EC00DF269E /* FirebaseLottieManager.swift */; };
 		100209AC2DE6E30A00DF269E /* LeaderboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100209AB2DE6E30A00DF269E /* LeaderboardView.swift */; };
 		100209AD2DE6E30A00DF269E /* LeaderboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100209AB2DE6E30A00DF269E /* LeaderboardView.swift */; };
-		100209F52DE71F0E00DF269E /* leaderboard.json in Resources */ = {isa = PBXBuildFile; fileRef = 100209F42DE71F0E00DF269E /* leaderboard.json */; };
-		100209F62DE71F0E00DF269E /* leaderboard.json in Resources */ = {isa = PBXBuildFile; fileRef = 100209F42DE71F0E00DF269E /* leaderboard.json */; };
 		100209F92DE83F7900DF269E /* LeaderboardDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100209F82DE83F7100DF269E /* LeaderboardDTO.swift */; };
 		100209FA2DE83F7900DF269E /* LeaderboardDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100209F82DE83F7100DF269E /* LeaderboardDTO.swift */; };
 		100209FE2DE8402600DF269E /* LeaderboardResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100209FD2DE8401F00DF269E /* LeaderboardResponse.swift */; };
@@ -218,6 +216,12 @@
 		10F89A4D2E01450B00B90BD0 /* Color+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10F89A4B2E0144FF00B90BD0 /* Color+Extensions.swift */; };
 		10FEA88F2E6EA718000103EB /* LeaderboardNavControllerKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10FEA88E2E6EA709000103EB /* LeaderboardNavControllerKey.swift */; };
 		10FEA8902E6EA718000103EB /* LeaderboardNavControllerKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10FEA88E2E6EA709000103EB /* LeaderboardNavControllerKey.swift */; };
+		10FEA8FB2E6EC38C000103EB /* LeaderboardQuery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10FEA8FA2E6EC387000103EB /* LeaderboardQuery.swift */; };
+		10FEA8FC2E6EC38C000103EB /* LeaderboardQuery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10FEA8FA2E6EC387000103EB /* LeaderboardQuery.swift */; };
+		10FEA8FF2E6EC7AA000103EB /* leaderboard_daily.json in Resources */ = {isa = PBXBuildFile; fileRef = 10FEA8FE2E6EC7AA000103EB /* leaderboard_daily.json */; };
+		10FEA9002E6EC7AA000103EB /* leaderboard_all_time.json in Resources */ = {isa = PBXBuildFile; fileRef = 10FEA8FD2E6EC7AA000103EB /* leaderboard_all_time.json */; };
+		10FEA9012E6EC7AA000103EB /* leaderboard_daily.json in Resources */ = {isa = PBXBuildFile; fileRef = 10FEA8FE2E6EC7AA000103EB /* leaderboard_daily.json */; };
+		10FEA9022E6EC7AA000103EB /* leaderboard_all_time.json in Resources */ = {isa = PBXBuildFile; fileRef = 10FEA8FD2E6EC7AA000103EB /* leaderboard_all_time.json */; };
 		2152FB042600AC8F00CF470E /* IosApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* IosApp.swift */; };
 		63997C25DF21E5569B7BCFF5 /* Pods_Yral_Staging.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D57B68D9945A635CA2480172 /* Pods_Yral_Staging.framework */; };
 		7555FF83242A565900829871 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* ContentView.swift */; };
@@ -713,7 +717,6 @@
 		08F40604DAAC742B08F402D9 /* Pods-Yral.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Yral.release.xcconfig"; path = "Target Support Files/Pods-Yral/Pods-Yral.release.xcconfig"; sourceTree = "<group>"; };
 		1002088E2DE483EC00DF269E /* FirebaseLottieManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseLottieManager.swift; sourceTree = "<group>"; };
 		100209AB2DE6E30A00DF269E /* LeaderboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeaderboardView.swift; sourceTree = "<group>"; };
-		100209F42DE71F0E00DF269E /* leaderboard.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = leaderboard.json; sourceTree = "<group>"; };
 		100209F82DE83F7100DF269E /* LeaderboardDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeaderboardDTO.swift; sourceTree = "<group>"; };
 		100209FD2DE8401F00DF269E /* LeaderboardResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeaderboardResponse.swift; sourceTree = "<group>"; };
 		10020A012DE8415E00DF269E /* LeaderboardRepositoryProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeaderboardRepositoryProtocol.swift; sourceTree = "<group>"; };
@@ -816,6 +819,9 @@
 		10CEBB872E31041E0022803A /* Presets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Presets.swift; sourceTree = "<group>"; };
 		10F89A4B2E0144FF00B90BD0 /* Color+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Extensions.swift"; sourceTree = "<group>"; };
 		10FEA88E2E6EA709000103EB /* LeaderboardNavControllerKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeaderboardNavControllerKey.swift; sourceTree = "<group>"; };
+		10FEA8FA2E6EC387000103EB /* LeaderboardQuery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeaderboardQuery.swift; sourceTree = "<group>"; };
+		10FEA8FD2E6EC7AA000103EB /* leaderboard_all_time.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = leaderboard_all_time.json; sourceTree = "<group>"; };
+		10FEA8FE2E6EC7AA000103EB /* leaderboard_daily.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = leaderboard_daily.json; sourceTree = "<group>"; };
 		2152FB032600AC8F00CF470E /* IosApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IosApp.swift; sourceTree = "<group>"; };
 		74294ECFE2C99B0DF03151D3 /* Pods-YralTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-YralTests.debug.xcconfig"; path = "Target Support Files/Pods-YralTests/Pods-YralTests.debug.xcconfig"; sourceTree = "<group>"; };
 		7555FF7B242A565900829871 /* Yral.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Yral.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -1146,6 +1152,7 @@
 			children = (
 				10020A082DE8430200DF269E /* Repository */,
 				100209F82DE83F7100DF269E /* LeaderboardDTO.swift */,
+				10FEA8FA2E6EC387000103EB /* LeaderboardQuery.swift */,
 			);
 			path = Data;
 			sourceTree = "<group>";
@@ -2800,10 +2807,11 @@
 			isa = PBXGroup;
 			children = (
 				ACE249EA2E685B5B006200EB /* app_update_animation.json */,
+				10FEA8FD2E6EC7AA000103EB /* leaderboard_all_time.json */,
+				10FEA8FE2E6EC7AA000103EB /* leaderboard_daily.json */,
 				ACB343972E4357A800EC74A0 /* sats_claim_failure.json */,
 				ACB343982E4357A800EC74A0 /* sats_claim_loading.json */,
 				ACB343992E4357A800EC74A0 /* sats_claim_success.json */,
-				100209F42DE71F0E00DF269E /* leaderboard.json */,
 				105034152DD4955C00571B4E /* smiley_game_fire.json */,
 				105034162DD4955C00571B4E /* smiley_game_heart.json */,
 				105034172DD4955C00571B4E /* smiley_game_laugh.json */,
@@ -3023,9 +3031,10 @@
 				AC32E4142D270097001DDA43 /* KumbhSans-SemiBold.ttf in Resources */,
 				AC32E4152D270097001DDA43 /* KumbhSans-Black.ttf in Resources */,
 				105034992DD4C9B600571B4E /* smiley_tap.caf in Resources */,
+				10FEA8FF2E6EC7AA000103EB /* leaderboard_daily.json in Resources */,
+				10FEA9002E6EC7AA000103EB /* leaderboard_all_time.json in Resources */,
 				1050349A2DD4C9B600571B4E /* smiley_game_win.caf in Resources */,
 				AC233D352D314CA3007040F1 /* Splash_Lottie.json in Resources */,
-				100209F52DE71F0E00DF269E /* leaderboard.json in Resources */,
 				AC32E4162D270097001DDA43 /* KumbhSans-ExtraLight.ttf in Resources */,
 				AC32E4172D270097001DDA43 /* KumbhSans-Regular.ttf in Resources */,
 				1023FFEF2E41DD3E00E6936E /* smiley_game_puke.json in Resources */,
@@ -3072,9 +3081,10 @@
 				AC32E4072D270097001DDA43 /* KumbhSans-ExtraBold.ttf in Resources */,
 				AC32E4082D270097001DDA43 /* KumbhSans-SemiBold.ttf in Resources */,
 				1050349B2DD4C9B600571B4E /* smiley_tap.caf in Resources */,
+				10FEA9012E6EC7AA000103EB /* leaderboard_daily.json in Resources */,
+				10FEA9022E6EC7AA000103EB /* leaderboard_all_time.json in Resources */,
 				1050349C2DD4C9B600571B4E /* smiley_game_win.caf in Resources */,
 				AC32E4092D270097001DDA43 /* KumbhSans-Black.ttf in Resources */,
-				100209F62DE71F0E00DF269E /* leaderboard.json in Resources */,
 				AC32E40A2D270097001DDA43 /* KumbhSans-ExtraLight.ttf in Resources */,
 				AC32E40B2D270097001DDA43 /* KumbhSans-Regular.ttf in Resources */,
 				1023FFEE2E41DD3E00E6936E /* smiley_game_puke.json in Resources */,
@@ -3351,6 +3361,7 @@
 				AC3FBE152E2BAA0F00CE3EC1 /* MP4DownloadManager.swift in Sources */,
 				AC3FBE162E2BAA0F00CE3EC1 /* MP4DownloadManaging.swift in Sources */,
 				10512A442DA666AD00114BAA /* YralPlayer.swift in Sources */,
+				10FEA8FB2E6EC38C000103EB /* LeaderboardQuery.swift in Sources */,
 				1064B8032E4CB1840036C10B /* ProviderOptionsBottomSheetView.swift in Sources */,
 				105036F62DDB289D00571B4E /* ExchangePrincipalResponse.swift in Sources */,
 				ACB46A732D105AF4002E200C /* CollectionView+Extensions.swift in Sources */,
@@ -3650,6 +3661,7 @@
 				AC3FBE132E2BAA0F00CE3EC1 /* MP4DownloadManager.swift in Sources */,
 				AC3FBE142E2BAA0F00CE3EC1 /* MP4DownloadManaging.swift in Sources */,
 				10512A432DA666AD00114BAA /* YralPlayer.swift in Sources */,
+				10FEA8FC2E6EC38C000103EB /* LeaderboardQuery.swift in Sources */,
 				1064B8042E4CB1840036C10B /* ProviderOptionsBottomSheetView.swift in Sources */,
 				105036F82DDB289D00571B4E /* ExchangePrincipalResponse.swift in Sources */,
 				ACB46A742D105AF4002E200C /* CollectionView+Extensions.swift in Sources */,
