@@ -18,7 +18,7 @@ struct MandatoryUpdateView: View {
           .foregroundStyle(Constants.titleTextColor)
           .padding(.top, Constants.verticalPadding)
 
-        LottieLoaderView(animationName: Constants.lottieName, loopMode: .playOnce)
+        LottieLoaderView(animationName: Constants.lottieName, loopMode: .playOnce, resetProgess: true)
           .frame(width: Constants.imageSize, height: Constants.imageSize)
           .padding(.top, Constants.imagePadding)
 

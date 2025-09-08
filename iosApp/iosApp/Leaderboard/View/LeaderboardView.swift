@@ -29,7 +29,7 @@ struct LeaderboardView: View {
       .background(Constants.background).ignoresSafeArea()
       .overlay(alignment: .center, content: {
         if showLoader {
-          LottieLoaderView(animationName: Constants.loader)
+          LottieLoaderView(animationName: Constants.loader, resetProgess: false)
             .frame(width: Constants.loaderSize, height: Constants.loaderSize)
         }
       })
@@ -131,7 +131,8 @@ struct LeaderboardView: View {
     .background(
       LottieView(name: Constants.headerLottie,
                  loopMode: .playOnce,
-                 animationSpeed: .one) {}
+                 animationSpeed: .one,
+                 resetProgress: false) {}
         .offset(x: .three, y: .thirteen)
     )
     .background(Constants.headerBackground)

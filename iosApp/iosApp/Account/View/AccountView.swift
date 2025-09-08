@@ -104,7 +104,7 @@ struct AccountView: View {
           Color.black.opacity(Constants.loadingStateOpacity)
             .ignoresSafeArea()
 
-          LottieLoaderView(animationName: Constants.lottieName)
+          LottieLoaderView(animationName: Constants.lottieName, resetProgess: false)
             .frame(width: Constants.loaderSize, height: Constants.loaderSize)
         }
       }
