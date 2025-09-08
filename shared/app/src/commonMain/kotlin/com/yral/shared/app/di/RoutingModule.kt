@@ -36,8 +36,8 @@ val routingModule =
         single<UrlBuilder> {
             UrlBuilder(
                 routingTable = get(),
-                scheme = "https",
-                host = "yral.app",
+                scheme = "yralm",
+                host = "",
             )
         }
 

@@ -74,6 +74,23 @@ class UrlBuilderTest {
     }
 
     @Test
+    fun testBuildUrlWithLeadingSlashPatternAndEmptyHost() {
+        // Even if the pattern has a leading slash, hostless deep link should treat
+        // the first path segment as the authority when scheme is custom and host is blank
+        val customBuilder =
+            UrlBuilder(
+                routingTable = routingTable,
+                scheme = "yralm",
+                host = "",
+            )
+
+        val route = TestProductRoute("123") // pattern is "/test/product/{productId}"
+        val url = customBuilder.build(route)
+
+        assertEquals("yralm://product/123", url)
+    }
+
+    @Test
     fun testBuildUrlWithUnknownRoute() {
         val route = TestUnknownRoute
         val url = urlBuilder.build(route)
@@ -131,5 +148,19 @@ class UrlBuilderTest {
         assertEquals(url1, url2)
         assertEquals(url2, url3)
         assertEquals("https://example.com/product/consistency-test", url1)
+    }
+
+    @Test
+    fun testBuildUrlFiltersBlankAndNullQueryParams() {
+        // When no query template is present, remaining non-blank params are included.
+        // Blank ("") and literal "null" should be filtered out.
+
+        // Blank
+        val blankCategoryUrl = urlBuilder.build(TestProductRoute(productId = "123", category = ""))
+        assertEquals("https://example.com/product/123", blankCategoryUrl)
+
+        // Literal "null"
+        val literalNullCategoryUrl = urlBuilder.build(TestProductRoute(productId = "123", category = "null"))
+        assertEquals("https://example.com/product/123", literalNullCategoryUrl)
     }
 }

@@ -44,20 +44,31 @@ class UrlBuilder(
             // Use serialization to automatically extract route properties
             val params = extractRouteParams(routeDefinition, typedRoute)
 
-            // Build the URL path from the pattern
-            val (pathSegments, usedParams) = routeDefinition.pattern.buildPathSegments(params)
-            val queryParams = params.filterKeys { it !in usedParams && it != "metadata" }
-            println("pathSegments: $pathSegments")
+            // Let RoutePattern produce both path segments and query params
+            val components = routeDefinition.pattern.buildComponents(params)
+            val pathSegments = components.pathSegments
+            val filteredQueryParams = components.queryParams
+
+            // For host-less deep links (custom scheme with no explicit host):
+            // If host is blank and there is at least one path segment, treat the
+            // first segment as the host (authority) and the remaining as the path.
+            // Apply this only for non-HTTP(S) schemes.
+            var finalHost = host
+            var finalSegments = pathSegments
+            if (shouldTreatFirstSegmentAsHost(finalHost, scheme, finalSegments)) {
+                finalHost = finalSegments.first()
+                finalSegments = finalSegments.drop(1)
+            }
 
             // Build the complete URL
             val urlBuilder =
                 URLBuilder(
                     protocol = URLProtocol.createOrDefault(scheme),
-                    host = host,
-                    pathSegments = pathSegments,
+                    host = finalHost,
+                    pathSegments = finalSegments,
                     parameters =
                         parameters {
-                            queryParams.forEach { (key, value) ->
+                            filteredQueryParams.forEach { (key, value) ->
                                 append(key, value)
                             }
                         },
@@ -68,6 +79,19 @@ class UrlBuilder(
         ) {
             null
         }
+
+    private fun shouldTreatFirstSegmentAsHost(
+        currentHost: String,
+        currentScheme: String,
+        segments: List<String>,
+    ): Boolean {
+        val hostBlank = currentHost.isBlank()
+        val hasSegments = segments.isNotEmpty()
+        val isHttp = currentScheme.equals("http", ignoreCase = true)
+        val isHttps = currentScheme.equals("https", ignoreCase = true)
+        val isWebScheme = isHttp || isHttps
+        return hostBlank && hasSegments && !isWebScheme
+    }
 
     /**
      * Find the route definition that matches the given AppRoute instance.
@@ -91,10 +115,11 @@ class UrlBuilder(
             // Convert map values to strings, excluding metadata and nulls
             map
                 .mapNotNull { (key, value) ->
-                    if (key == "metadata") {
+                    if (key == "metadata" || value == null) {
                         null
                     } else {
-                        key to value.toString()
+                        val s = value.toString()
+                        if (s.isBlank() || s == "null") null else key to s
                     }
                 }.toMap()
         } catch (
