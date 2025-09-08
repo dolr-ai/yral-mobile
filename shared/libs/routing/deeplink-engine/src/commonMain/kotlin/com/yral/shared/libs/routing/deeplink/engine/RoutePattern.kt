@@ -12,24 +12,22 @@ package com.yral.shared.libs.routing.deeplink.engine
 class RoutePattern(
     private val pattern: String,
 ) {
-    private val segments = pattern.split("/").filter { it.isNotEmpty() }
+    private val spec: PatternSpec = RoutePatternParser.parse(pattern)
 
     @Suppress("ReturnCount")
     fun extractParameters(pathSegments: List<String>): Map<String, String>? {
-        if (pathSegments.size != segments.size) {
+        if (pathSegments.size != spec.pathTokens.size) {
             return null
         }
 
         val extractedParams = mutableMapOf<String, String>()
-        for (i in segments.indices) {
-            val patternSegment = segments[i]
+        for (i in spec.pathTokens.indices) {
+            val patternToken = spec.pathTokens[i]
             val pathSegment = pathSegments[i]
 
-            if (patternSegment.startsWith("{") && patternSegment.endsWith("}")) {
-                val paramName = patternSegment.substring(1, patternSegment.length - 1)
-                extractedParams[paramName] = pathSegment
-            } else if (patternSegment != pathSegment) {
-                return null // Static segment doesn't match
+            when (patternToken) {
+                is PathToken.Param -> extractedParams[patternToken.name] = pathSegment
+                is PathToken.Static -> if (patternToken.value != pathSegment) return null
             }
         }
         return extractedParams
@@ -50,21 +48,62 @@ class RoutePattern(
         val usedKeys = mutableSetOf<String>()
         val builtSegments = mutableListOf<String>()
 
-        segments.forEach { segment ->
-            if (segment.startsWith("{") && segment.endsWith("}")) {
-                val key = segment.removeSurrounding("{", "}")
-                usedKeys.add(key)
-                val value = params[key].orEmpty()
-                if (value.isNotEmpty()) {
-                    builtSegments.add(value)
+        spec.pathTokens.forEach { token ->
+            when (token) {
+                is PathToken.Param -> {
+                    val key = token.name
+                    usedKeys.add(key)
+                    val value = params[key].orEmpty()
+                    if (value.isNotEmpty()) {
+                        builtSegments.add(value)
+                    }
                 }
-            } else {
-                builtSegments.add(segment)
+                is PathToken.Static -> builtSegments.add(token.value)
             }
         }
 
         return BuiltPath(segments = builtSegments, usedKeys = usedKeys)
     }
+
+    /**
+     * Build both path segments and query parameters from the given params
+     * according to this pattern's path and optional query template.
+     *
+     * - Path placeholders are substituted from [params]. Missing values are
+     *   treated as empty and omitted from the resulting segments.
+     * - Query parameters:
+     *   - If the pattern defines a query template, only keys present in the
+     *     template are included. If the template maps a key to a different
+     *     param name (e.g., key={foo}), that name is used to source the value.
+     *   - If no template is present, include all remaining non-blank params
+     *     excluding metadata and those used in the path.
+     * - Blank strings and the literal string "null" are filtered out.
+     */
+    fun buildComponents(params: Map<String, String>): BuiltComponents {
+        val builtPath = buildPathSegments(params)
+        val usedPathKeys = builtPath.usedKeys
+
+        val qp: Map<String, String> =
+            spec.queryTemplate?.let { qt ->
+                qt.keys
+                    .associateWith { key ->
+                        val source = qt.mappings[key] ?: key
+                        params[source].orEmpty()
+                    }.filterValues { v -> v.isNotBlank() && v != "null" }
+            } ?: run {
+                params
+                    .filterKeys { k -> k !in usedPathKeys && k != "metadata" }
+                    .filterValues { v -> v.isNotBlank() && v != "null" }
+            }
+
+        return BuiltComponents(pathSegments = builtPath.segments, queryParams = qp)
+    }
+
+    /** Returns true if this pattern contains a query template part. */
+    fun hasQueryTemplate(): Boolean = spec.queryTemplate != null
+
+    /** Returns allowed query parameter keys if a template exists, else empty. */
+    fun queryTemplateKeys(): Set<String> = spec.queryTemplate?.keys ?: emptySet()
 
     override fun toString(): String = pattern
 }
@@ -78,4 +117,12 @@ class RoutePattern(
 data class BuiltPath(
     val segments: List<String>,
     val usedKeys: Set<String>,
+)
+
+/**
+ * Represents path and query components built from a pattern and params.
+ */
+data class BuiltComponents(
+    val pathSegments: List<String>,
+    val queryParams: Map<String, String>,
 )
