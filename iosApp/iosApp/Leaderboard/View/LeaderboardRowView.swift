@@ -8,8 +8,6 @@
 import SwiftUI
 
 struct LeaderboardRowView: View {
-  @Environment(\.appDIContainer) var appDIContainer
-
   let leaderboardRow: LeaderboardRowResponse
   let isCurrentUser: Bool
   let rowWidth: CGFloat
@@ -18,7 +16,7 @@ struct LeaderboardRowView: View {
   var body: some View {
     HStack(spacing: .zero) {
       Text("#\(leaderboardRow.position)")
-        .lineLimit(.one)
+        .lineLimit(1)
         .font(Constants.userPositionFont)
         .foregroundColor(foregroundColorForPosition())
         .overlay(
@@ -34,17 +32,17 @@ struct LeaderboardRowView: View {
       HStack(spacing: Constants.hStackSpacing) {
         buildUserImage()
 
-        Text(isCurrentUser ? Constants.you : leaderboardRow.principalID)
-        .font(Constants.userIDFont)
-        .foregroundColor(foregroundColorForPrincipal())
-        .lineLimit(.one)
-        .overlay(
-          buildTextGradient(
-            text: leaderboardRow.principalID,
-            font: Constants.userIDFont,
-            endRadius: Constants.principalEndRadius
+        Text(isCurrentUser ? "You" : leaderboardRow.principalID)
+          .font(Constants.userIDFont)
+          .foregroundColor(foregroundColorForPrincipal())
+          .lineLimit(.one)
+          .overlay(
+            buildTextGradient(
+              text: leaderboardRow.principalID,
+              font: Constants.userIDFont,
+              endRadius: Constants.principalEndRadius
+            )
           )
-        )
       }
       .frame(width: rowWidth * Constants.hStackWidthFactor, alignment: .leading)
 
@@ -96,7 +94,6 @@ struct LeaderboardRowView: View {
                           leaderboardRow.position == .three
     ) {
       rectangularGradientFor(leaderboardRow.position)
-        .resizable()
         .clipShape(RoundedRectangle(cornerRadius: Constants.rowCornerRadius))
     } else {
       EmptyView()
@@ -109,10 +106,10 @@ struct LeaderboardRowView: View {
                           leaderboardRow.position == .three
     ) {
       textGradientFor(leaderboardRow.position, radius: endRadius)
-        .mask(
-          Text(text)
-            .font(font)
-        )
+      .mask(
+        Text(text)
+          .font(font)
+      )
     } else {
       EmptyView()
     }
@@ -173,7 +170,6 @@ struct LeaderboardRowView: View {
 
 extension LeaderboardRowView {
   enum Constants {
-    static let you = "You"
     static let userPositionColor = YralColor.grey50.swiftUIColor
     static let userPositionFont = YralFont.pt14.bold.swiftUIFont
     static let userPositionHorizontalPadding = 8.0

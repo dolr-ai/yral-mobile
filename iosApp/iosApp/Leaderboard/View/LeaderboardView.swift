@@ -15,43 +15,44 @@ struct LeaderboardView: View {
 
   @State private var showLeaderboard: Bool = false
   @State private var showLoader: Bool = true
+  @State private var mode: LeaderboardMode = .daily
 
   let rowWidth = UIScreen.main.bounds.width - 32
 
   var body: some View {
-      ScrollView {
-        if let leaderboard = viewModel.leaderboardResponse, showLeaderboard {
-          buildHeader(leaderboard)
-          buildLeaderboard(leaderboard)
-        }
+    ZStack {
+      if let leaderboard = viewModel.leaderboardResponse, showLeaderboard {
+        buildHeader(leaderboard)
       }
-      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-      .background(Constants.background).ignoresSafeArea()
-      .overlay(alignment: .center, content: {
-        if showLoader {
-          LottieLoaderView(animationName: Constants.loader, resetProgess: false)
-            .frame(width: Constants.loaderSize, height: Constants.loaderSize)
-        }
-      })
-      .onReceive(viewModel.$state, perform: { state in
-        switch state {
-        case .loading:
-          showLoader = true
-          showLeaderboard = false
-        case .success:
-          showLoader = false
-          showLeaderboard = true
-        default:
-          showLoader = false
-          showLeaderboard = false
-        }
-      })
-      .onAppear {
+    }
+    .frame(maxWidth: .infinity)
+    .frame(maxHeight: .infinity)
+    .background(Constants.background).ignoresSafeArea()
+    .overlay(alignment: .center, content: {
+      if showLoader {
+        LottieLoaderView(animationName: Constants.loader)
+          .frame(width: Constants.loaderSize, height: Constants.loaderSize)
+      }
+    })
+    .onReceive(viewModel.$state, perform: { state in
+      switch state {
+      case .loading:
         showLoader = true
-        Task {
-          await viewModel.refreshLeaderboardIfReady()
-        }
+        showLeaderboard = false
+      case .success:
+        showLoader = false
+        showLeaderboard = true
+      default:
+        showLoader = false
+        showLeaderboard = false
       }
+    })
+    .onAppear {
+      showLoader = true
+      Task {
+        viewModel.refreshLeaderboardIfReady(for: mode)
+      }
+    }
   }
 
   // swiftlint: disable function_body_length
@@ -59,83 +60,118 @@ struct LeaderboardView: View {
   private func buildHeader(_ response: LeaderboardResponse) -> some View {
     let (topThreePrincipals, topThreeWins) = topThreePositions(for: response)
 
-    VStack(alignment: .leading, spacing: .zero) {
-      Text(Constants.header)
-        .font(Constants.headerFont)
-        .foregroundColor(Constants.headerColour)
-        .padding(.leading, Constants.headerLeading)
-        .padding(.top, Constants.headerTop)
-        .padding(.bottom, Constants.headerBottom)
-
-      HStack(spacing: .zero) {
-        Spacer(minLength: .zero)
-
-        Image(Constants.podiumImage)
-          .resizable()
-          .frame(width: Constants.podiumSize.width, height: Constants.podiumSize.height)
-
-        Spacer(minLength: .zero)
-      }
-      .padding(.top, Constants.headerTopHStackTop)
-
-      HStack(spacing: .zero) {
-        Spacer(minLength: .zero)
-
-        HStack(spacing: Constants.headerBottomHStackSpacing) {
-          ForEach(topThreePrincipals.indices, id: \.self) { index in
-            VStack(spacing: .zero) {
-              Text(condensedIDString(for: topThreePrincipals[index]))
-                .font(Constants.headerIDFont)
-                .foregroundColor(Constants.headerIDColour)
-                .multilineTextAlignment(.center)
-                .lineLimit(topThreePrincipals[index].count == .one ? .one : .two)
-                .truncationMode(.tail)
-
-              Spacer(minLength: Constants.headerBottomHStackSpacerMinLenght)
-
-              VStack(spacing: .zero) {
-                Text(topThreeWins[index].description)
-                  .font(Constants.satsFont)
-                  .foregroundColor(Constants.satsColour)
-                  .overlay(
-                    textGradientFor(index, radius: Constants.winsEndRadius)
-                      .mask(
-                        Text(topThreeWins[index].description)
-                          .font(Constants.satsFont)
-                      )
-                  )
-
-                Text(Constants.totalSats)
-                  .font(Constants.gamesWonFont)
-                  .foregroundColor(Constants.gamesWonColour)
-                  .overlay(
-                    textGradientFor(index, radius: Constants.gameWinsEndRadius)
-                      .mask(
-                        Text(Constants.totalSats)
-                          .font(Constants.gamesWonFont)
-                      )
-                  )
-              }
+    VStack(alignment: .center, spacing: .zero) {
+      HStack(spacing: 8) {
+        Text("Daily Wins")
+          .font(YralFont.pt20.bold.swiftUIFont)
+          .foregroundColor(mode == .daily ? YralColor.grey950.swiftUIColor : YralColor.grey600.swiftUIColor)
+          .frame(maxWidth: .infinity)
+          .frame(maxHeight: .infinity)
+          .background(
+            RoundedRectangle(cornerRadius: 18)
+              .fill(mode == .daily ? YralColor.grey0.swiftUIColor : Color.clear)
+          )
+          .padding(.vertical, 4)
+          .padding(.horizontal, 4)
+          .onTapGesture {
+            mode = .daily
+            Task {
+              viewModel.refreshLeaderboardIfReady(for: mode)
             }
           }
-        }
-        .frame(width: Constants.headerBottomHStackWidth)
-        .frame(maxHeight: Constants.headerBottomHStackHeight)
 
-        Spacer(minLength: .zero)
+        Text("All Wins")
+          .font(YralFont.pt20.bold.swiftUIFont)
+          .foregroundColor(mode == .allTime ? YralColor.grey950.swiftUIColor : YralColor.grey600.swiftUIColor)
+          .frame(maxWidth: .infinity)
+          .frame(maxHeight: .infinity)
+          .background(
+            RoundedRectangle(cornerRadius: 18)
+              .fill(mode == .allTime ? YralColor.grey0.swiftUIColor : Color.clear)
+          )
+          .padding(.vertical, 4)
+          .padding(.horizontal, 4)
+          .onTapGesture {
+            mode = .allTime
+            Task {
+              viewModel.refreshLeaderboardIfReady(for: mode)
+            }
+          }
       }
-      .padding(.top, Constants.headerBottomHStackTop)
-      .padding(.bottom, Constants.headerBottomHStackBottom)
+      .frame(maxWidth: .infinity)
+      .frame(height: 44)
+      .background(YralColor.grey950.swiftUIColor)
+      .cornerRadius(22)
+      .padding(.horizontal, 16)
+      .padding(.top, 20)
+
+      if let timeLeftInMs = response.timeLeftInMs {
+        HStack(spacing: 4) {
+          Image("leaderboard_clock")
+            .resizable()
+            .frame(width: 18, height: 18)
+
+          Text("Ends \(timeLeftInMs)")
+            .font(YralFont.pt12.bold.swiftUIFont)
+            .foregroundColor(YralColor.grey50.swiftUIColor)
+        }
+        .padding(.vertical, 4)
+        .padding(.leading, 4)
+        .padding(.trailing, 12)
+        .background(
+          RoundedRectangle(cornerRadius: 12)
+            .fill(YralColor.grey950.swiftUIColor.opacity(0.8))
+        )
+        .padding(.top, 28)
+      }
+
+      Image(Constants.podiumImage)
+        .resizable()
+        .frame(width: Constants.podiumSize.width, height: Constants.podiumSize.height)
+        .padding(.top, response.timeLeftInMs == nil ? 72 : 52)
+        .padding(.bottom, 20)
+
+      HStack(spacing: Constants.headerBottomHStackSpacing) {
+        ForEach(topThreePrincipals.indices, id: \.self) { index in
+          VStack(spacing: .zero) {
+            Text(condensedIDString(for: topThreePrincipals[index]))
+              .font(Constants.headerIDFont)
+              .foregroundColor(mode == .daily ? Constants.headerIDColour : Constants.headerIDColourWhite)
+              .multilineTextAlignment(.center)
+              .lineLimit(topThreePrincipals[index].count == .one ? .one : .two)
+              .truncationMode(.tail)
+
+            Spacer(minLength: 8.0)
+
+            VStack(spacing: .zero) {
+              Text(topThreeWins[index].description)
+                .font(Constants.satsFont)
+                .foregroundColor(mode == .daily ? Constants.satsColour : Constants.satsColourWhite)
+
+              Text(Constants.totalSats)
+                .font(Constants.gamesWonFont)
+                .foregroundColor(mode == .daily ? Constants.gamesWonColour : Constants.gamesWonColourWhite)
+            }
+          }
+          .frame(width: 93)
+        }
+      }
+      .frame(width: Constants.headerBottomHStackWidth)
+      .frame(height: topThreePrincipals.contains { $0.count > 1 } ? 80 : 67)
+      .padding(.bottom, 28)
     }
-    .frame(maxWidth: .infinity, alignment: .leading)
+    .frame(maxWidth: .infinity)
     .background(
-      LottieView(name: Constants.headerLottie,
-                 loopMode: .playOnce,
-                 animationSpeed: .one,
-                 resetProgress: false) {}
-        .offset(x: .three, y: .thirteen)
+      LottieView(
+        name: mode == .daily ? "leaderboard_daily" : "leaderboard_all_time",
+        loopMode: .playOnce,
+        animationSpeed: .one) {}
     )
-    .background(Constants.headerBackground)
+    .background(
+      Image(mode == .daily ? "leaderboard_daily_background" : "leaderboard_all_time_background")
+        .resizable()
+    )
+    .frame(maxHeight: .infinity, alignment: .top)
   }
   // swiftlint: enable function_body_length
 
@@ -151,22 +187,22 @@ struct LeaderboardView: View {
         Text(Constants.id)
           .font(Constants.idFont)
           .foregroundColor(Constants.idColour)
-          .padding(.leading, Constants.idLeading)
           .frame(width: rowWidth * Constants.idFactor, alignment: .leading)
 
         Text(Constants.totalSats)
           .font(Constants.totalSatsFont)
           .foregroundColor(Constants.totalSatsColour)
-          .padding(.leading, Constants.totalSatsLeading)
           .frame(width: rowWidth * Constants.totalSatsFactor, alignment: .trailing)
       }
 
-      LeaderboardRowView(
-        leaderboardRow: response.userRow,
-        isCurrentUser: true,
-        rowWidth: rowWidth,
-        imageURL: viewModel.fetchImageURL(for: response.userRow.principalID)
-      )
+      if let userRow = response.userRow {
+        LeaderboardRowView(
+          leaderboardRow: userRow,
+          isCurrentUser: true,
+          rowWidth: rowWidth,
+          imageURL: viewModel.fetchImageURL(for: userRow.principalID)
+        )
+      }
 
       ForEach(response.topRows, id: \.id) { leaderboardRow in
         LeaderboardRowView(
@@ -177,9 +213,9 @@ struct LeaderboardView: View {
         )
       }
     }
-    .frame(maxWidth: .infinity, alignment: .leading)
     .padding(.vertical, Constants.leaderboardVertical)
     .padding(.horizontal, Constants.leaderboardHorizontal)
+    .frame(maxWidth: .infinity, alignment: .leading)
   }
 
   private func topThreePositions(for response: LeaderboardResponse) -> ([[String]], [Int]) {
@@ -213,16 +249,6 @@ struct LeaderboardView: View {
         .appending("...")
     }
   }
-
-  private func textGradientFor(_ index: Int, radius: CGFloat) -> RadialGradient {
-    if index == .one {
-      Constants.goldGradient(endRadius: radius)
-    } else if index == .zero {
-      Constants.silverGradient(endRadius: radius)
-    } else {
-      Constants.bronzeGradient(endRadius: radius)
-    }
-  }
 }
 
 extension LeaderboardView {
@@ -241,7 +267,7 @@ extension LeaderboardView {
     static let headerLottie = "leaderboard"
 
     static let podiumImage = "podium"
-    static let podiumSize = CGSize(width: 245, height: 166)
+    static let podiumSize = CGSize(width: 241, height: 146)
     static let goldRadial = "gold_radial"
     static let goldSize = 57.0
     static let goldBorderSize = 65.0
@@ -257,14 +283,17 @@ extension LeaderboardView {
     static let headerTopHStackTop = 28.0
     static let headerBottomHStackSpacing = 16.0
     static let headerIDFont = YralFont.pt14.medium.swiftUIFont
-    static let headerIDColour = YralColor.grey400.swiftUIColor
+    static let headerIDColour = YralColor.grey600.swiftUIColor
+    static let headerIDColourWhite = YralColor.grey50.swiftUIColor
 
     static let satsImage = "sats"
     static let satsImageSize = 16.0
     static let satsFont = YralFont.pt14.bold.swiftUIFont
-    static let satsColour = YralColor.grey50.swiftUIColor
-    static let gamesWonFont = YralFont.pt14.medium.swiftUIFont
-    static let gamesWonColour = YralColor.grey50.swiftUIColor
+    static let satsColour = YralColor.grey600.swiftUIColor
+    static let satsColourWhite = YralColor.grey50.swiftUIColor
+    static let gamesWonFont = YralFont.pt12.medium.swiftUIFont
+    static let gamesWonColour = YralColor.grey600.swiftUIColor
+    static let gamesWonColourWhite = YralColor.grey50.swiftUIColor
 
     static let headerBottomHStackTop = 20.0
     static let headerBottomHStackBottom = 40.0
@@ -276,19 +305,19 @@ extension LeaderboardView {
     static let position = "Position"
     static let positionFont = YralFont.pt12.medium.swiftUIFont
     static let positionColour = YralColor.grey600.swiftUIColor
-    static let positionFactor = 0.17
+    static let positionFactor = 0.28
     static let id = "Player ID"
     static let idFont = YralFont.pt12.medium.swiftUIFont
     static let idColour = YralColor.grey600.swiftUIColor
-    static let idFactor = 0.45
+    static let idFactor = 0.44
     static let idLeading = 28.0
     static let totalSats = "Games Won"
     static let totalSatsFont = YralFont.pt12.medium.swiftUIFont
     static let totalSatsColour = YralColor.grey600.swiftUIColor
-    static let totalSatsFactor = 0.38
+    static let totalSatsFactor = 0.28
     static let totalSatsLeading = 48.0
 
-    static let leaderboardVertical = 22.0
+    static let leaderboardVertical = 20.0
     static let leaderboardHorizontal = 16.0
 
     static let winsEndRadius = 30.0
