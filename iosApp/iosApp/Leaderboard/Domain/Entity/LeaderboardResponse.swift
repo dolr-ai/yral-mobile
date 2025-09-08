@@ -16,8 +16,9 @@ struct LeaderboardRowResponse: Identifiable {
 }
 
 struct LeaderboardResponse {
-  let userRow: LeaderboardRowResponse
+  let userRow: LeaderboardRowResponse?
   let topRows: [LeaderboardRowResponse]
+  let timeLeftInMs: Int?
 }
 
 enum LeaderboardError: Error {
