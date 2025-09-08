@@ -33,9 +33,9 @@ enum CreateAIVideoScreenEvent {
   case updateSelectedProvider(AIVideoProviderResponse)
   case socialSignInSuccess(creditsAvailable: Bool)
   case socialSignInFailure
-  case generateVideoSuccess
+  case generateVideoSuccess(deductBalance: Int)
   case generateVideoFailure(String)
-  case generateVideoStatusFailure(String)
+  case generateVideoStatusFailure(error: String, addBalance: Int)
   case uploadAIVideoSuccess(String)
   case uploadAIVideoFailure(String)
 }
@@ -72,6 +72,10 @@ class CreateAIVideoViewModel: ObservableObject {
     self.generateVideoUseCase = generateVideoUseCase
     self.generateVideoStatusUseCase = generateVideoStatusUseCase
     self.uploadAIVideoUseCase = uploadAIVideoUseCase
+  }
+
+  deinit {
+    stopPolling()
   }
 
   @MainActor
@@ -121,7 +125,7 @@ class CreateAIVideoViewModel: ObservableObject {
   }
 
   @MainActor
-  func generateVideo(for prompt: String, withProvider provider: AIVideoProviderResponse) async {
+  func generateVideo(for prompt: String, withProvider provider: AIVideoProviderResponse, usingCredits: Bool) async {
     state = .loading
 
     let generateVideoRequest = GenerateVideoMetaRequest(
@@ -135,7 +139,7 @@ class CreateAIVideoViewModel: ObservableObject {
         prompt: prompt,
         resolution: nil,
         seed: nil,
-        tokenType: "Free",
+        tokenType: usingCredits ? "Free" : "Sats",
         userID: nil
       )
     )
@@ -146,7 +150,7 @@ class CreateAIVideoViewModel: ObservableObject {
       case .success(let response):
         pollingRequestKey = response.requestKey
         state = .success
-        event = .generateVideoSuccess
+        event = .generateVideoSuccess(deductBalance: provider.cost.sats)
       case .failure(let error):
         AnalyticsModuleKt.getAnalyticsManager().trackEvent(
           event: AiVideoGeneratedData(
@@ -172,7 +176,6 @@ class CreateAIVideoViewModel: ObservableObject {
           if status.contains("Complete: ") {
             stopPolling()
             videoURLString = status.replacingOccurrences(of: "Complete: ", with: "")
-
             AnalyticsModuleKt.getAnalyticsManager().trackEvent(
               event: AiVideoGeneratedData(
                 model: selectedProvider?.name ?? "",
@@ -181,11 +184,9 @@ class CreateAIVideoViewModel: ObservableObject {
                 reasonType: nil
               )
             )
-
-            Task {
-              await uploadAIVideo()
-            }
+            Task { await uploadAIVideo() }
           } else if status.contains("Failed: ") {
+            stopPolling()
             AnalyticsModuleKt.getAnalyticsManager().trackEvent(
               event: AiVideoGeneratedData(
                 model: selectedProvider?.name ?? "",
@@ -194,11 +195,13 @@ class CreateAIVideoViewModel: ObservableObject {
                 reasonType: .generationFailed
               )
             )
-
-            event = .generateVideoStatusFailure(status.replacingOccurrences(of: "Failed: ", with: ""))
-            stopPolling()
+            event = .generateVideoStatusFailure(
+              error: status.replacingOccurrences(of: "Failed: ", with: ""),
+              addBalance: selectedProvider?.cost.sats ?? .zero
+            )
           }
         case .failure(let error):
+          stopPolling()
           AnalyticsModuleKt.getAnalyticsManager().trackEvent(
             event: AiVideoGeneratedData(
               model: selectedProvider?.name ?? "",
@@ -207,10 +210,11 @@ class CreateAIVideoViewModel: ObservableObject {
               reasonType: .generationFailed
             )
           )
-
-          stopPolling()
           state = .failure(error)
-          event = .generateVideoStatusFailure(error.localizedDescription)
+          event = .generateVideoStatusFailure(
+            error: error.localizedDescription,
+            addBalance: selectedProvider?.cost.sats ?? .zero
+          )
         }
       }
     }
@@ -241,20 +245,28 @@ class CreateAIVideoViewModel: ObservableObject {
   }
 
   func startPolling() {
-    guard let request = pollingRequestKey else {
-      event = .generateVideoStatusFailure("No request key was found to generate video")
+    if let task = pollingTask, !task.isCancelled {
       return
     }
 
-    pollingTask = Task {
+    guard let request = pollingRequestKey else {
+      event = .generateVideoStatusFailure(
+        error: "No request key was found to generate video",
+        addBalance: selectedProvider?.cost.sats ?? .zero
+      )
+      return
+    }
+
+    pollingTask = Task { [weak self] in
       while !Task.isCancelled {
+        guard let self else { return }
         await self.getGenerateVideoStatus(for: request)
         try? await Task.sleep(nanoseconds: 5 * 1_000_000_000)
       }
     }
   }
 
-  func stopPolling(removeKey: Bool = true) {
+  func stopPolling() {
     pollingTask?.cancel()
     pollingTask = nil
     pollingRequestKey = nil

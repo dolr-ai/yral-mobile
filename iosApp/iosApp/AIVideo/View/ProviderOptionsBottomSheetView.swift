@@ -19,7 +19,8 @@ struct ProviderOptionsBottomSheetView: View {
 
   var body: some View {
     ZStack(alignment: .bottom) {
-      Color.black.opacity(Constants.backgroundOpacity)
+      Color.clear
+        .contentShape(Rectangle())
         .ignoresSafeArea()
         .onTapGesture {
           dismiss()
@@ -136,7 +137,6 @@ struct ProviderOptionsBottomSheetView: View {
 
 extension ProviderOptionsBottomSheetView {
   enum Constants {
-    static let backgroundOpacity = 0.8
     static let backgroundColor = YralColor.grey900.swiftUIColor
     static let vStackHorizontalPadding = 16.0
 
