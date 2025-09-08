@@ -216,6 +216,8 @@
 		10DF73402E38E00D009AD12B /* MixpanelSessionReplay in Frameworks */ = {isa = PBXBuildFile; productRef = 10DF733F2E38E00D009AD12B /* MixpanelSessionReplay */; };
 		10F89A4C2E01450B00B90BD0 /* Color+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10F89A4B2E0144FF00B90BD0 /* Color+Extensions.swift */; };
 		10F89A4D2E01450B00B90BD0 /* Color+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10F89A4B2E0144FF00B90BD0 /* Color+Extensions.swift */; };
+		10FEA88F2E6EA718000103EB /* LeaderboardNavControllerKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10FEA88E2E6EA709000103EB /* LeaderboardNavControllerKey.swift */; };
+		10FEA8902E6EA718000103EB /* LeaderboardNavControllerKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10FEA88E2E6EA709000103EB /* LeaderboardNavControllerKey.swift */; };
 		2152FB042600AC8F00CF470E /* IosApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* IosApp.swift */; };
 		63997C25DF21E5569B7BCFF5 /* Pods_Yral_Staging.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D57B68D9945A635CA2480172 /* Pods_Yral_Staging.framework */; };
 		7555FF83242A565900829871 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* ContentView.swift */; };
@@ -813,6 +815,7 @@
 		10CEBB842E3104000022803A /* HapticGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticGenerator.swift; sourceTree = "<group>"; };
 		10CEBB872E31041E0022803A /* Presets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Presets.swift; sourceTree = "<group>"; };
 		10F89A4B2E0144FF00B90BD0 /* Color+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Extensions.swift"; sourceTree = "<group>"; };
+		10FEA88E2E6EA709000103EB /* LeaderboardNavControllerKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeaderboardNavControllerKey.swift; sourceTree = "<group>"; };
 		2152FB032600AC8F00CF470E /* IosApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IosApp.swift; sourceTree = "<group>"; };
 		74294ECFE2C99B0DF03151D3 /* Pods-YralTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-YralTests.debug.xcconfig"; path = "Target Support Files/Pods-YralTests/Pods-YralTests.debug.xcconfig"; sourceTree = "<group>"; };
 		7555FF7B242A565900829871 /* Yral.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Yral.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -1052,8 +1055,6 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		AC9B77DE2D58C7E300270FC9 /* YralTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = YralTests;
 			sourceTree = "<group>";
 		};
@@ -1202,6 +1203,7 @@
 		10020A102DE8445200DF269E /* DI */ = {
 			isa = PBXGroup;
 			children = (
+				10FEA88E2E6EA709000103EB /* LeaderboardNavControllerKey.swift */,
 				10020A112DE8445C00DF269E /* LeaderboardDIContainer.swift */,
 			);
 			path = DI;
@@ -3112,9 +3114,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3129,9 +3135,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3293,9 +3303,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3519,6 +3533,7 @@
 				ACC1C39E2D9B046F005A7539 /* LottieRefreshSingletonView.swift in Sources */,
 				ACAA4D6F2DDCD529001092A6 /* NetworkMonitor.swift in Sources */,
 				105034B02DD62DB900571B4E /* CastVote.swift in Sources */,
+				10FEA88F2E6EA718000103EB /* LeaderboardNavControllerKey.swift in Sources */,
 				AC8958D92D3EA46800E19ED7 /* FeedsViewController+ScrollView.swift in Sources */,
 				10CEBB822E3103CD0022803A /* HapticFeedback+SwiftUI.swift in Sources */,
 				ACB46A772D105B17002E200C /* ReusableView.swift in Sources */,
@@ -3817,6 +3832,7 @@
 				ACC1C39F2D9B046F005A7539 /* LottieRefreshSingletonView.swift in Sources */,
 				ACAA4D702DDCD529001092A6 /* NetworkMonitor.swift in Sources */,
 				105034B12DD62DB900571B4E /* CastVote.swift in Sources */,
+				10FEA8902E6EA718000103EB /* LeaderboardNavControllerKey.swift in Sources */,
 				AC8958D82D3EA46800E19ED7 /* FeedsViewController+ScrollView.swift in Sources */,
 				10CEBB832E3103CD0022803A /* HapticFeedback+SwiftUI.swift in Sources */,
 				ACB46A762D105B17002E200C /* ReusableView.swift in Sources */,
