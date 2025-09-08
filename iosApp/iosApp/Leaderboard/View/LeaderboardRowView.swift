@@ -16,6 +16,7 @@ struct LeaderboardRowView: View {
   var body: some View {
     HStack(spacing: .zero) {
       Text("#\(leaderboardRow.position)")
+        .lineLimit(1)
         .font(Constants.userPositionFont)
         .foregroundColor(foregroundColorForPosition())
         .overlay(
@@ -45,16 +46,13 @@ struct LeaderboardRowView: View {
       }
       .frame(width: rowWidth * Constants.hStackWidthFactor, alignment: .leading)
 
-      HStack(spacing: Constants.hStackSpacing / .two) {
-        Text(leaderboardRow.wins.description)
-          .font(Constants.coinsFont)
-          .foregroundColor(Constants.coinsColour)
-          .lineLimit(.one)
-          .multilineTextAlignment(.trailing)
-      }
-      .padding(.trailing, Constants.bottomHStackTrailing)
-      .padding(.leading, Constants.bottomHStackLeading)
-      .frame(width: rowWidth * Constants.bottomHStackWidthFactor, alignment: .trailing)
+      Text(leaderboardRow.wins.description)
+        .font(Constants.coinsFont)
+        .foregroundColor(Constants.coinsColour)
+        .lineLimit(.one)
+        .multilineTextAlignment(.trailing)
+        .padding(.horizontal, Constants.bottomHStackTrailing)
+        .frame(width: rowWidth * Constants.bottomHStackWidthFactor, alignment: .trailing)
     }
     .frame(maxWidth: .infinity, alignment: .leading)
     .frame(height: Constants.rowHeight)
@@ -175,7 +173,7 @@ extension LeaderboardRowView {
     static let userPositionColor = YralColor.grey50.swiftUIColor
     static let userPositionFont = YralFont.pt14.bold.swiftUIFont
     static let userPositionHorizontalPadding = 8.0
-    static let userPositionWidthFactor = 0.17
+    static let userPositionWidthFactor = 0.24
 
     static let userIDFont = YralFont.pt14.medium.swiftUIFont
     static let userIDColour = YralColor.grey50.swiftUIColor
@@ -198,14 +196,14 @@ extension LeaderboardRowView {
     static let hStackSpacing = 8.0
     static let imageSize = 28.0
     static let borderedImageSize = 24.0
-    static let hStackWidthFactor = 0.45
+    static let hStackWidthFactor = 0.48
 
     static let satsImage = "sats"
     static let satsImageSize = 16.0
 
     static let bottomHStackTrailing = 8.0
     static let bottomHStackLeading = 48.0
-    static let bottomHStackWidthFactor = 0.38
+    static let bottomHStackWidthFactor = 0.28
 
     static let rowHeight = 42.0
     static let rowCornerRadius = 8.0
