@@ -35,7 +35,7 @@ final class LeaderboardDIContainer {
     let leaderboardRepository = makeLeaderboardRepositry()
     return LeaderboardViewModel(
       leaderboardUseCase: LeaderboardUseCase(
-        respository: leaderboardRepository,
+        repository: leaderboardRepository,
         crashReporter: dependencies.crashReporter
       ), session: dependencies.session
     )
