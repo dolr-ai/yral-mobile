@@ -15,10 +15,15 @@ struct AIVideoProviderMetaResponse {
 struct AIVideoProviderResponse: Identifiable {
   let id: String
   let name: String
+  let cost: AIVideoProviderCostResponse
   let description: String
   let isActive: Bool
   let iconURL: String
   let supportsAudio: Bool
   let defaultDuration: Int
   let defaultAspectRatio: String
+}
+
+struct AIVideoProviderCostResponse {
+  let sats: Int
 }

@@ -6,6 +6,8 @@
 //  Copyright © 2025 orgName. All rights reserved.
 //
 
+import SwiftUI
+
 final class CreateAIVideoDIContainer {
   struct Dependencies {
     let httpService: HTTPService
@@ -65,8 +67,15 @@ final class CreateAIVideoDIContainer {
     )
   }
 
-  func makeCreateAIVideoSreenView(onDismiss: @escaping () -> Void) -> CreateAIVideoScreenView {
-    return CreateAIVideoScreenView(
-      viewModel: makeAIVideoViewModel(), onDismiss: onDismiss)
+  func makeCreateAIVideoSreenView(onDismiss: @escaping () -> Void) -> UIHostingController<CreateAIVideoScreenView> {
+    let host = UIHostingController(
+      rootView: CreateAIVideoScreenView(
+        viewModel: makeAIVideoViewModel(),
+        onDismiss: onDismiss
+      )
+    )
+
+    host.extendedLayoutIncludesOpaqueBars = true
+    return host
   }
 }

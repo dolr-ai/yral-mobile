@@ -10,20 +10,6 @@ import SwiftUI
 import AVKit
 import iosSharedUmbrella
 
-struct UploadViewHost: View {
-  private let onDismiss: () -> Void
-  @StateObject private var viewModel: UploadViewModel
-
-  init(uploadViewDI: UploadDIContainer, onDismiss: @escaping () -> Void) {
-    self.onDismiss = onDismiss
-    _viewModel = StateObject(wrappedValue: uploadViewDI.makeUploadViewModel())
-  }
-
-  var body: some View {
-    UploadView(viewModel: viewModel, onDismiss: onDismiss)
-  }
-}
-
 struct UploadView: View {
   @State private var showVideoPicker = false
   @State private var videoURL: URL?
@@ -185,7 +171,6 @@ struct UploadView: View {
         }
       }
     }
-    .navigationBarHidden(true)
     .animation(.easeInOut, value: showUploadCompletedView)
     .animation(.easeInOut, value: showUploadFailedView)
     .onReceive(viewModel.$event) { event in
