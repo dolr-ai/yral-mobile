@@ -6,6 +6,8 @@
 //  Copyright © 2025 orgName. All rights reserved.
 //
 
+import SwiftUI
+
 final class LeaderboardDIContainer {
   struct Dependencies {
     let firebaseService: FirebaseService
@@ -39,7 +41,20 @@ final class LeaderboardDIContainer {
     )
   }
 
-  @MainActor func makeLeaderboardView() -> LeaderboardView {
-    LeaderboardView(viewModel: self.makeLeaderboardViewModel())
+  @MainActor func makeLeaderboardView() -> UINavigationController {
+    let rootView = LeaderboardView(viewModel: self.makeLeaderboardViewModel())
+      .environment(\.leaderboardNavController, nil)
+    let host = UIHostingController(rootView: rootView)
+    let navigationController = UINavigationController(rootViewController: host)
+    host.rootView = LeaderboardView(viewModel: self.makeLeaderboardViewModel())
+      .environment(\.leaderboardNavController, navigationController)
+
+    navigationController.setNavigationBarHidden(true, animated: false)
+    navigationController.view.backgroundColor = .clear
+    navigationController.edgesForExtendedLayout = .all
+    host.edgesForExtendedLayout = .all
+    host.extendedLayoutIncludesOpaqueBars = true
+
+    return navigationController
   }
 }
