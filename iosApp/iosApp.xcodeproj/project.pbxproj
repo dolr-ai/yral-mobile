@@ -269,6 +269,8 @@
 		AC26CA622D805D6D006ADA75 /* AccountError.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC26CA602D805D6A006ADA75 /* AccountError.swift */; };
 		AC26CA642D805E58006ADA75 /* FeedError.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC26CA632D805E52006ADA75 /* FeedError.swift */; };
 		AC26CA652D805E58006ADA75 /* FeedError.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC26CA632D805E52006ADA75 /* FeedError.swift */; };
+		AC2BD2BB2E6F1B0D009E7CAE /* ShareVideoHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC2BD2BA2E6F1AFA009E7CAE /* ShareVideoHandler.swift */; };
+		AC2BD2BC2E6F1B0D009E7CAE /* ShareVideoHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC2BD2BA2E6F1AFA009E7CAE /* ShareVideoHandler.swift */; };
 		AC2C30CD2D96C49800DA9F81 /* ReportUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC2C30CC2D96C49200DA9F81 /* ReportUseCase.swift */; };
 		AC2C30CE2D96C49800DA9F81 /* ReportUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC2C30CC2D96C49200DA9F81 /* ReportUseCase.swift */; };
 		AC2C30D12D96C51600DA9F81 /* ReportEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC2C30D02D96C51600DA9F81 /* ReportEntity.swift */; };
@@ -849,6 +851,7 @@
 		AC26CA5D2D8052D9006ADA75 /* BaseStreamingUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseStreamingUseCase.swift; sourceTree = "<group>"; };
 		AC26CA602D805D6A006ADA75 /* AccountError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountError.swift; sourceTree = "<group>"; };
 		AC26CA632D805E52006ADA75 /* FeedError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedError.swift; sourceTree = "<group>"; };
+		AC2BD2BA2E6F1AFA009E7CAE /* ShareVideoHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareVideoHandler.swift; sourceTree = "<group>"; };
 		AC2C30CC2D96C49200DA9F81 /* ReportUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportUseCase.swift; sourceTree = "<group>"; };
 		AC2C30D02D96C51600DA9F81 /* ReportEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportEntity.swift; sourceTree = "<group>"; };
 		AC2C30D32D96C68100DA9F81 /* ReportRequestDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportRequestDTO.swift; sourceTree = "<group>"; };
@@ -1543,14 +1546,13 @@
 		7555FF7D242A565900829871 /* iosApp */ = {
 			isa = PBXGroup;
 			children = (
-				1064B7E82E4B3FC00036C10B /* AIVideo */,
-				10CEBB7D2E3103580022803A /* HapticFeedback */,
-				ACD7C1702E1D836400075148 /* DeepLinkRouter */,
-				100209A92DE6E2E700DF269E /* Leaderboard */,
-				107C60922DB7AA86006FC467 /* SmileyGame */,
 				2152FB032600AC8F00CF470E /* IosApp.swift */,
 				ACB46A2B2D0EC82F002E200C /* AppDIContainer.swift */,
 				10C1B38A2E5375D000CFC41B /* AppDIContainerKey.swift */,
+				10CEBB7D2E3103580022803A /* HapticFeedback */,
+				ACD7C1702E1D836400075148 /* DeepLinking */,
+				100209A92DE6E2E700DF269E /* Leaderboard */,
+				107C60922DB7AA86006FC467 /* SmileyGame */,
 				ACB46A712D105AC0002E200C /* DesignSystem */,
 				ACC0F3932D2ED5B700FA5BD0 /* Splash */,
 				AC638BF72D230DA900481E94 /* HomeTabController */,
@@ -1577,13 +1579,6 @@
 				F101DC6A5D3FFB95F064D36B /* Pods_YralTests.framework */,
 			);
 			name = Frameworks;
-			sourceTree = "<group>";
-		};
-		AC00847D2E31DBFD0041302A /* RechargeView */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = RechargeView;
 			sourceTree = "<group>";
 		};
 		AC09A9AE2CDB775C009A39A4 /* yral-mobile-swift-binding */ = {
@@ -1767,6 +1762,18 @@
 				AC20A1182E3A7F77003306C1 /* WalletOverlayView */,
 			);
 			path = Utils;
+			sourceTree = "<group>";
+		};
+		AC2BD2B92E6F1ABA009E7CAE /* UploadVideo */ = {
+			isa = PBXGroup;
+			children = (
+				AC9293FB2D620B6C003DB102 /* View */,
+				AC7F7EA72D771D6400215162 /* ViewModel */,
+				AC7F7EAB2D771E9800215162 /* Domain */,
+				AC7F7EC12D773A5800215162 /* Data */,
+				ACC0D4432D8DA059006DCF5C /* DI */,
+			);
+			path = UploadVideo;
 			sourceTree = "<group>";
 		};
 		AC32E4012D270097001DDA43 /* static */ = {
@@ -2346,11 +2353,8 @@
 		AC9B77E92D5A6F2300270FC9 /* Upload */ = {
 			isa = PBXGroup;
 			children = (
-				AC9293FB2D620B6C003DB102 /* View */,
-				AC7F7EA72D771D6400215162 /* ViewModel */,
-				AC7F7EAB2D771E9800215162 /* Domain */,
-				AC7F7EC12D773A5800215162 /* Data */,
-				ACC0D4432D8DA059006DCF5C /* DI */,
+				AC2BD2B92E6F1ABA009E7CAE /* UploadVideo */,
+				1064B7E82E4B3FC00036C10B /* AIVideo */,
 			);
 			path = Upload;
 			sourceTree = "<group>";
@@ -2503,7 +2507,6 @@
 			isa = PBXGroup;
 			children = (
 				ACB46A6E2D0F4179002E200C /* FeedsViewControllerWrapper.swift */,
-				AC00847D2E31DBFD0041302A /* RechargeView */,
 				AC8958DA2D3EA47200E19ED7 /* FeedsVC */,
 				AC32E4222D2712E9001DDA43 /* Helper */,
 				ACB46A7E2D10602B002E200C /* Cells */,
@@ -2679,12 +2682,13 @@
 			path = Loader;
 			sourceTree = "<group>";
 		};
-		ACD7C1702E1D836400075148 /* DeepLinkRouter */ = {
+		ACD7C1702E1D836400075148 /* DeepLinking */ = {
 			isa = PBXGroup;
 			children = (
+				AC2BD2BA2E6F1AFA009E7CAE /* ShareVideoHandler.swift */,
 				ACD7C1712E1D837200075148 /* DeepLinkRouter.swift */,
 			);
-			path = DeepLinkRouter;
+			path = DeepLinking;
 			sourceTree = "<group>";
 		};
 		ACD941BC2CFF57A90038FCB6 /* Prod */ = {
@@ -3383,6 +3387,7 @@
 				100209FA2DE83F7900DF269E /* LeaderboardDTO.swift in Sources */,
 				ACCB98782D944213002B9675 /* UILabel+Extensions.swift in Sources */,
 				AC2C30D52D96C68700DA9F81 /* ReportRequestDTO.swift in Sources */,
+				AC2BD2BC2E6F1B0D009E7CAE /* ShareVideoHandler.swift in Sources */,
 				AC1F938C2DC112F000F322E1 /* SocialSignInUseCase.swift in Sources */,
 				10020A032DE8416A00DF269E /* LeaderboardRepositoryProtocol.swift in Sources */,
 				AC20A11A2E3A7F90003306C1 /* WalletOverlayView.swift in Sources */,
@@ -3681,6 +3686,7 @@
 				100209F92DE83F7900DF269E /* LeaderboardDTO.swift in Sources */,
 				ACCB98792D944213002B9675 /* UILabel+Extensions.swift in Sources */,
 				AC2C30D42D96C68700DA9F81 /* ReportRequestDTO.swift in Sources */,
+				AC2BD2BB2E6F1B0D009E7CAE /* ShareVideoHandler.swift in Sources */,
 				AC1F938D2DC112F000F322E1 /* SocialSignInUseCase.swift in Sources */,
 				10020A022DE8416A00DF269E /* LeaderboardRepositoryProtocol.swift in Sources */,
 				AC20A11B2E3A7F90003306C1 /* WalletOverlayView.swift in Sources */,

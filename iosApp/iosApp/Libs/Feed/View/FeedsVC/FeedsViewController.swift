@@ -69,7 +69,9 @@ class FeedsViewController: UIViewController {
   private var loaderCancellables = Set<AnyCancellable>()
   private var authStateCancellables = Set<AnyCancellable>()
   private var coinFetchingCancellables = Set<AnyCancellable>()
+  private var deepLinkCancellables = Set<AnyCancellable>()
   var session: SessionManager
+  var deepLinkRouter: DeepLinkRouter
   let crashReporter: CrashReporter
 
   init(
@@ -83,6 +85,7 @@ class FeedsViewController: UIViewController {
     self.playToScroll = playToScroll
     self.feedType = feedType
     self.session = session
+    self.deepLinkRouter = DeepLinkRouter.shared
     self.crashReporter = crashReporter
     super.init(nibName: nil, bundle: nil)
   }
@@ -99,6 +102,7 @@ class FeedsViewController: UIViewController {
     setupUI()
     startLoadingBindings()
     addAuthChangeListner()
+    addDeepLinkListner()
     Task { @MainActor [weak self] in
       guard let self = self else { return }
       await viewModel.fetchFeeds(request: InitialFeedRequest(numResults: Constants.initialNumResults))
@@ -418,6 +422,18 @@ class FeedsViewController: UIViewController {
       .store(in: &authStateCancellables)
   }
 
+  func addDeepLinkListner() {
+    deepLinkRouter.$pendingDestination.sink { [weak self] destination in
+      guard let self = self else { return }
+      switch destination {
+      case .openVideo(postId: let postId, principal: let principal, canisterId: let canisterID):
+        break
+      default: break
+      }
+    }
+    .store(in: &deepLinkCancellables)
+  }
+
   @objc func appDidBecomeActive() {
     if isCurrentlyVisible {
       guard !feedsDataSource.snapshot().itemIdentifiers.isEmpty else { return }
@@ -463,6 +479,8 @@ extension FeedsViewController {
     static let overlayIndex = 9
 
     static let winResult = "WIN"
+
+    static let shareText = "Check out this video on Yral 👀 Where watching = fun + games! ⚡ Try it 👉"
   }
 }
 // swiftlint: enable type_body_length file_length

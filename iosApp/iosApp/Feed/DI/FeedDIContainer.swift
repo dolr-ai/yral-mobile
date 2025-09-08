@@ -26,25 +26,6 @@ final class FeedDIContainer {
     self.dependencies = dependencies
   }
 
-  func makeFeedsViewControllerWrapper(
-    showFeeds: Binding<Bool>,
-    walletPhase: Binding<WalletPhase>,
-    walletOutcome: Binding<WalletPhase>,
-    playToScroll: Bool
-  ) -> FeedsViewControllerWrapper {
-    FeedsViewControllerWrapper(
-      feedsViewController: FeedsViewController(
-        viewModel: makeFeedsViewModel(),
-        playToScroll: playToScroll,
-        session: dependencies.session,
-        crashReporter: dependencies.crashReporter
-      ),
-      showFeeds: showFeeds,
-      walletPhase: walletPhase,
-      walletOutcome: walletOutcome
-    )
-  }
-
   func makeFeedsViewController(playToScroll: Bool) -> FeedsViewController {
     FeedsViewController(
       viewModel: makeFeedsViewModel(),
