@@ -13,6 +13,7 @@ struct LottieView: UIViewRepresentable {
   let name: String
   let loopMode: LottieLoopMode
   let animationSpeed: CGFloat
+  let resetProgress: Bool
   let animationCompleted: () -> Void
 
   func makeUIView(context: Context) -> UIView {
@@ -33,7 +34,7 @@ struct LottieView: UIViewRepresentable {
     ])
 
     animationView.play { finished in
-      if finished && loopMode == .playOnce {
+      if finished && loopMode == .playOnce && resetProgress {
         animationView.currentProgress = .zero
       }
       animationCompleted()

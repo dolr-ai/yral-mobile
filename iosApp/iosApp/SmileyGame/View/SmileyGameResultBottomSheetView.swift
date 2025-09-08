@@ -41,7 +41,8 @@ struct SmileyGameResultBottomSheetView: View {
           LottieView(
             name: gameResult.lottieName,
             loopMode: .playOnce,
-            animationSpeed: .one
+            animationSpeed: .one,
+            resetProgress: false
           ) {}
             .frame(width: Constants.lottieWidht)
             .frame(height: Constants.lottieHeight)
