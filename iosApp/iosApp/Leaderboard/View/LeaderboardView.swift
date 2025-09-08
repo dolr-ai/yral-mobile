@@ -64,7 +64,7 @@ struct LeaderboardView: View {
         .font(Constants.headerFont)
         .foregroundColor(Constants.headerColour)
         .padding(.leading, Constants.headerLeading)
-        .padding(.top, UIApplication.shared.topSafeAreaInset + Constants.headerTop)
+        .padding(.top, Constants.headerTop)
         .padding(.bottom, Constants.headerBottom)
 
       HStack(spacing: .zero) {
@@ -233,7 +233,7 @@ extension LeaderboardView {
     static let header = "Leaderboard"
     static let headerFont = YralFont.pt20.bold.swiftUIFont
     static let headerColour = YralColor.grey50.swiftUIColor
-    static let headerTop = 16.0
+    static let headerTop = 20.0
     static let headerLeading = 16.0
     static let headerBottom = 8.0
     static let headerBackground = YralColor.yellow400.swiftUIColor
