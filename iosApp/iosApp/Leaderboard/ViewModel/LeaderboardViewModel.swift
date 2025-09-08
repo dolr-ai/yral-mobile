@@ -61,6 +61,7 @@ class LeaderboardViewModel: ObservableObject {
 
   func fetchLeaderboard(for mode: LeaderboardMode) {
     leaderboardFetchTask?.cancel()
+    leaderboardResponse = nil
     state = .loading
 
     leaderboardFetchTask = Task { [weak self] in
