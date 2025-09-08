@@ -291,6 +291,18 @@ struct LeaderboardView: View {
       .frame(height: topThreePrincipals.contains { $0.count > 1 } ? 80 : 67)
       .padding(.bottom, 28)
     }
+    .frame(maxWidth: .infinity)
+    .background(
+      LottieView(
+        name: mode == .daily ? "leaderboard_daily" : "leaderboard_all_time",
+        loopMode: .playOnce,
+        animationSpeed: .one) {}
+    )
+    .background(
+      Image(mode == .daily ? "leaderboard_daily_background" : "leaderboard_all_time_background")
+        .resizable()
+    )
+    .frame(maxHeight: .infinity, alignment: .top)
   }
 
   @ViewBuilder
