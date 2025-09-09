@@ -231,7 +231,7 @@ class MainActivity : ComponentActivity() {
         Branch
             .sessionBuilder(this)
             .withCallback(branchSessionCallback)
-            .withData(this.intent.data)
+            .withData(this.intent?.data)
             .init()
     }
 
