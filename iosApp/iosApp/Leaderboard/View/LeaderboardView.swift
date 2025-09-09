@@ -23,6 +23,14 @@ struct LeaderboardView: View {
     ZStack {
       if let leaderboard = viewModel.leaderboardResponse, showLeaderboard {
         buildHeader(leaderboard)
+
+        DraggableView(
+          topInset: 140,
+          peekHeight: 150,
+          background: YralColor.grey950.swiftUIColor,
+          cornerRadius: 0) {
+            buildLeaderboard(leaderboard)
+          }
       }
     }
     .frame(maxWidth: .infinity)
