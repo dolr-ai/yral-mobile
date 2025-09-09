@@ -12,7 +12,7 @@ sealed interface AppRoute
  * A sub-interface for AppRoutes that can carry additional, non-navigational
  * metadata for analytics or other purposes.
  */
-interface AppRouteWithMetadata : AppRoute {
+interface WithMetadata {
     @Transient
     val metadata: Map<String, Any>
 }
@@ -23,7 +23,7 @@ interface AppRouteWithMetadata : AppRoute {
 data class ProductDetails(
     val productId: String,
     @Transient override val metadata: Map<String, Any> = emptyMap(),
-) : AppRouteWithMetadata,
+) : AppRoute, WithMetadata,
     ExternallyExposedRoute
 
 @Serializable
@@ -55,7 +55,7 @@ data class TestProductRoute(
     val productId: String,
     val category: String? = null,
     @Transient override val metadata: Map<String, Any> = emptyMap(),
-) : AppRouteWithMetadata,
+) : AppRoute, WithMetadata,
     ExternallyExposedRoute {
     companion object {
         const val PATH = "/test/product/{productId}"
@@ -66,7 +66,7 @@ data class TestProductRoute(
 data class TestUserRoute(
     val userId: String,
     @Transient override val metadata: Map<String, Any> = emptyMap(),
-) : AppRouteWithMetadata,
+) : AppRoute, WithMetadata,
     ExternallyExposedRoute {
     companion object {
         const val PATH = "/test/user/{userId}"
@@ -82,7 +82,7 @@ object TestHomeRoute : AppRoute, ExternallyExposedRoute {
 data class TestInternalRoute(
     val internalId: String,
     @Transient override val metadata: Map<String, Any> = emptyMap(),
-) : AppRouteWithMetadata // Note: does NOT implement com.yral.shared.libs.routing.routes.api.ExternallyExposedRoute
+) : AppRoute, WithMetadata // Note: does NOT implement com.yral.shared.libs.routing.routes.api.ExternallyExposedRoute
 
 @Serializable
 object TestUnknownRoute : AppRoute
