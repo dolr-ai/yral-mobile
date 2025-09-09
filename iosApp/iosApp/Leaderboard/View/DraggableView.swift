@@ -8,197 +8,147 @@
 
 import SwiftUI
 
-struct DraggableView<Content: View, StickyContent: View>: View {
-  @Binding var isExpanded: Bool
-
-  @State private var sheetY: CGFloat = .zero
-  @State private var dragStartY: CGFloat = .zero
-  @State private var isDraggingSheet: Bool = false
-  @State private var scrollOffset: CGFloat = .zero
-  @State private var scrollProxy: ScrollViewProxy?
-
-  @ViewBuilder let stickyContent: () -> StickyContent
-  @ViewBuilder let content: () -> Content
-
-  let topInset: CGFloat
-  let peekHeight: CGFloat
-  let background: Color
-
-  private let expandCollapseAnim = Animation.easeOut(duration: 0.25)
-  private let layoutAnim = Animation.easeOut(duration: 0.2)
-  private let collapseThreshold: CGFloat = 60
-  private let topAnchorID = "SCROLL_TOP"
-  private let topEpsilon: CGFloat = 1.0
-
-  init(
-    isExpanded: Binding<Bool>,
-    topInset: CGFloat,
-    peekHeight: CGFloat,
-    background: Color,
-    @ViewBuilder stickyContent: @escaping () -> StickyContent,
-    @ViewBuilder content: @escaping () -> Content
-  ) {
-    self._isExpanded = isExpanded
-    self.topInset = topInset
-    self.peekHeight = peekHeight
-    self.background = background
-    self.stickyContent = stickyContent
-    self.content = content
-  }
-
-  private func collapsedY(_ totalHeight: CGFloat) -> CGFloat {
-    max(topInset, totalHeight - peekHeight)
-  }
-
-  private func scrollToTop(_ proxy: ScrollViewProxy?) {
-    guard let proxy else { return }
-    withAnimation(nil) {
-      proxy.scrollTo(topAnchorID, anchor: .top)
-    }
-  }
-
-  var body: some View {
-    GeometryReader { geo in
-      let totalHeight = geo.size.height
-      let availableWidth = geo.size.width
-      let collapsed = collapsedY(totalHeight)
-      let clamp: (CGFloat) -> CGFloat = { yOffset in max(topInset, min(yOffset, collapsed)) }
-
-      let bodyContent =
-      ScrollViewReader { proxy in
-        VStack(spacing: 0) {
-          stickyContent()
-
-          ScrollView(showsIndicators: false) {
-            Color.clear
-              .frame(height: 1)
-              .id(topAnchorID)
-
-            TrackScrollOffset()
-
-            VStack(spacing: .zero) {
-              content()
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-          }
-          .coordinateSpace(name: "SCROLL")
-          .onPreferenceChange(ScrollOffsetKey.self) { scrollOffset = $0 }
-          .scrollLock(!isExpanded)
-          .allowsHitTesting(!(isExpanded && isDraggingSheet))
-        }
-        .frame(maxWidth: .infinity, alignment: .top)
-        .onAppear { scrollProxy = proxy }
-        .onChange(of: isExpanded) { expanded in
-          if !expanded {
-            scrollToTop(proxy)
-            DispatchQueue.main.async { scrollToTop(proxy) }
-          }
-        }
-      }
-
-      let drag = DragGesture(minimumDistance: 0, coordinateSpace: .global)
-        .onChanged { geo in
-          let displacementY = geo.translation.height
-
-          if isExpanded {
-            guard displacementY > 0, scrollOffset >= -topEpsilon else { return }
-            if !isDraggingSheet {
-              isDraggingSheet = true
-              dragStartY = topInset
-            }
-            sheetY = clamp(dragStartY + displacementY)
-          } else {
-            if !isDraggingSheet { isDraggingSheet = true }
-            if dragStartY == 0 { dragStartY = sheetY }
-            sheetY = clamp(dragStartY + displacementY)
-          }
-        }
-        .onEnded { geo in
-          let displacementY = geo.translation.height
-          defer {
-            isDraggingSheet = false
-            dragStartY = 0
-          }
-
-          if isExpanded {
-            if scrollOffset >= -topEpsilon, displacementY > collapseThreshold {
-              withAnimation(expandCollapseAnim) {
-                isExpanded = false
-                sheetY = collapsed
-              }
-              DispatchQueue.main.async { scrollToTop(scrollProxy) }
-            } else {
-              withAnimation(expandCollapseAnim) {
-                sheetY = topInset
-              }
-            }
-          } else {
-            if displacementY < -collapseThreshold {
-              withAnimation(expandCollapseAnim) {
-                isExpanded = true
-                sheetY = topInset
-              }
-            } else {
-              withAnimation(expandCollapseAnim) {
-                sheetY = collapsed
-              }
-            }
-          }
-        }
-
-      let visibleHeight = max(0, totalHeight - sheetY)
-
-      ZStack(alignment: .top) {
-        bodyContent
-      }
-      .background(background)
-      .frame(width: availableWidth, height: visibleHeight, alignment: .top)
-      .offset(y: sheetY)
-      .gesture(drag)
-
-      .onAppear {
-        sheetY = isExpanded ? topInset : collapsed
-      }
-      .onChange(of: geo.size.height) { _ in
-        withAnimation(layoutAnim) {
-          sheetY = isExpanded ? topInset : collapsed
-        }
-      }
-      .onChange(of: isExpanded) { expanded in
-        withAnimation(expandCollapseAnim) {
-          sheetY = expanded ? topInset : collapsed
-        }
-      }
-      .onChange(of: peekHeight) { newPeek in
-        let newCollapsedY = max(topInset, geo.size.height - max(0, newPeek))
-        withAnimation(expandCollapseAnim) {
-          if !isExpanded { sheetY = newCollapsedY }
-        }
-      }
-    }
-  }
-}
-
 private struct ScrollOffsetKey: PreferenceKey {
-  static var defaultValue: CGFloat = .zero
+  static var defaultValue: CGFloat = 0
   static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
 }
 
 private struct TrackScrollOffset: View {
   var body: some View {
     GeometryReader { geo in
-      Color.clear.preference(
-        key: ScrollOffsetKey.self,
-        value: geo.frame(in: .named(Constants.scrollKey)).minY
-      )
+      Color.clear
+        .preference(key: ScrollOffsetKey.self,
+                    value: geo.frame(in: .named("SCROLL")).minY)
     }
-    .frame(height: Constants.height)
+    .frame(height: 0)
   }
 }
 
-extension TrackScrollOffset {
-  enum Constants {
-    static let scrollKey = "SCROLL"
-    static let height = 0.0
+struct DraggableView<Content: View>: View {
+  let topInset: CGFloat
+  let peekHeight: CGFloat
+  let background: Color
+  let cornerRadius: CGFloat
+  let content: () -> Content
+
+  @State private var sheetY: CGFloat = 0
+  @State private var dragStartY: CGFloat = 0
+  @State private var scrollOffset: CGFloat = 0
+  @State private var isDraggingSheet: Bool = false
+
+  private var isPinnedToTop: Bool { sheetY <= topInset + 0.5 }
+
+  init(
+    topInset: CGFloat,
+    peekHeight: CGFloat,
+    background: Color = .black,
+    cornerRadius: CGFloat = 20,
+    @ViewBuilder content: @escaping () -> Content
+  ) {
+    self.topInset = topInset
+    self.peekHeight = peekHeight
+    self.background = background
+    self.cornerRadius = cornerRadius
+    self.content = content
+  }
+
+  var body: some View {
+    GeometryReader { geo in
+      let totalHeight = geo.size.height
+      let collapsedY = max(topInset, totalHeight - peekHeight)
+      let clamp: (CGFloat) -> CGFloat = { yPoint in max(topInset, min(yPoint, collapsedY)) }
+      let snapThreshold: CGFloat = 60
+
+      ZStack(alignment: .top) {
+        VStack(spacing: 0) {
+          Capsule()
+            .frame(width: 40, height: 6)
+            .opacity(0.3)
+            .padding(.top, 8)
+            .padding(.bottom, 8)
+
+          if #available(iOS 16.4, *) {
+            ScrollView(showsIndicators: false) {
+              TrackScrollOffset()
+              VStack(spacing: 12) {
+                content()
+              }
+              .padding(.horizontal, 16)
+              .padding(.bottom, 24)
+            }
+            .scrollBounceBehavior(.basedOnSize)
+            .coordinateSpace(name: "SCROLL")
+            // Scroll only when pinned to top and the sheet itself isn't being dragged.
+            .allowsHitTesting(isPinnedToTop && !isDraggingSheet)
+            .onPreferenceChange(ScrollOffsetKey.self) { value in
+              scrollOffset = value
+            }
+          } else {
+            ScrollView(showsIndicators: false) {
+              TrackScrollOffset()
+              VStack(spacing: 12) {
+                content()
+              }
+              .padding(.horizontal, 16)
+              .padding(.bottom, 24)
+            }
+            .coordinateSpace(name: "SCROLL")
+            // Scroll only when pinned to top and the sheet itself isn't being dragged.
+            .allowsHitTesting(isPinnedToTop && !isDraggingSheet)
+            .onPreferenceChange(ScrollOffsetKey.self) { value in
+              scrollOffset = value
+            }
+          }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .contentShape(Rectangle()) // capture drags across the whole surface
+      }
+      .background(background)
+      .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+      .shadow(radius: 10, y: -2)
+      .offset(y: sheetY)
+      .gesture( // ⬅︎ back to normal priority
+        DragGesture(minimumDistance: 0, coordinateSpace: .global)
+          .onChanged { geo in
+            let yDisplacement = geo.translation.height
+
+            // Decide if the SHEET should move:
+            // - If not pinned -> always the sheet (we're expanding from collapsed).
+            // - If pinned & dragging DOWN -> only if list is at/above top.
+            // - If pinned & dragging UP -> let ScrollView handle; do NOT move sheet.
+            let shouldDragSheet: Bool = {
+              if !isPinnedToTop { return true }
+              if yDisplacement > 0 { return scrollOffset <= 0 } // pull-down collapse only when list is at top
+              return false
+            }()
+
+            if shouldDragSheet {
+              if !isDraggingSheet { isDraggingSheet = true }      // lock list while dragging sheet
+              if dragStartY == 0 { dragStartY = sheetY }
+              sheetY = clamp(dragStartY + yDisplacement)                     // clamp to avoid overshoot
+            } else {
+              // Let ScrollView own the gesture
+              if isDraggingSheet { isDraggingSheet = false }
+            }
+          }
+          .onEnded { geo in
+            dragStartY = 0
+            isDraggingSheet = false
+
+            let yDisplacement = geo.translation.height
+            withAnimation(.easeOut(duration: 0.25)) {
+              if abs(yDisplacement) > snapThreshold {
+                sheetY = (yDisplacement < 0) ? topInset : collapsedY
+              } else {
+                let mid = (collapsedY + topInset) / 2
+                sheetY = (sheetY < mid) ? topInset : collapsedY
+              }
+            }
+          }
+      )
+      .onAppear {
+        sheetY = collapsedY // start collapsed
+      }
+    }
   }
 }
