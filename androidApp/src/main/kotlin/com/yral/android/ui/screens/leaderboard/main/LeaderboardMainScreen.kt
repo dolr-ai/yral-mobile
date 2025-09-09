@@ -16,15 +16,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.leaderboard.LeaderboardRow
 import com.yral.android.ui.screens.leaderboard.LeaderboardTableHeader
 import com.yral.android.ui.widgets.YralLoader
+import com.yral.android.ui.widgets.YralLottieAnimation
 import com.yral.shared.features.game.viewmodel.LeaderBoardViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -36,6 +41,7 @@ fun LeaderboardMainScreen(
     viewModel: LeaderBoardViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
+    var showConfetti by remember(state.isCurrentUserInTop) { mutableStateOf(state.isCurrentUserInTop) }
     LaunchedEffect(Unit) {
         viewModel.leaderBoardTelemetry.leaderboardPageViewed()
         viewModel.loadData()
@@ -71,9 +77,9 @@ fun LeaderboardMainScreen(
                     item {
                         Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                             LeaderboardRow(
-                                position = user.leaderboardPosition,
+                                position = user.position,
                                 userPrincipalId = user.userPrincipalId,
-                                profileImageUrl = user.profileImageUrl,
+                                profileImageUrl = user.profileImage,
                                 wins = user.wins,
                                 isCurrentUser = true,
                                 decorateCurrentUser = true,
@@ -125,6 +131,14 @@ fun LeaderboardMainScreen(
             ) {
                 YralLoader()
             }
+        }
+        if (showConfetti) {
+            YralLottieAnimation(
+                rawRes = R.raw.golden_confetti,
+                modifier = Modifier.fillMaxSize().background(YralColors.ScrimColorLight),
+                iterations = 1,
+                onAnimationComplete = { showConfetti = false },
+            )
         }
     }
 }

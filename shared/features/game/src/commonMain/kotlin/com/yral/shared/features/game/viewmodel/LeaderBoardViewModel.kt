@@ -8,7 +8,6 @@ import com.yral.shared.core.session.SessionManager
 import com.yral.shared.features.game.analytics.LeaderBoardTelemetry
 import com.yral.shared.features.game.data.models.LeaderboardMode
 import com.yral.shared.features.game.domain.GetLeaderboardUseCase
-import com.yral.shared.features.game.domain.models.CurrentUserInfo
 import com.yral.shared.features.game.domain.models.GetLeaderboardRequest
 import com.yral.shared.features.game.domain.models.LeaderboardItem
 import kotlinx.coroutines.Job
@@ -40,10 +39,16 @@ class LeaderBoardViewModel(
                                 mode = _state.value.selectedMode,
                             ),
                     ).onSuccess { data ->
+                        val currentUser =
+                            data.userRow
+                                ?: data.topRows.firstOrNull { item ->
+                                    item.userPrincipalId == sessionManager.userPrincipal
+                                }
                         _state.update {
                             it.copy(
                                 leaderboard = data.topRows,
-                                currentUser = data.userRow?.toCurrentUserInfo(),
+                                currentUser = data.userRow,
+                                isCurrentUserInTop = (currentUser?.position ?: Int.MAX_VALUE) <= TOP_N_THRESHOLD,
                                 isLoading = false,
                                 countDownMs = data.timeLeftMs,
                                 blinkCountDown =
@@ -97,20 +102,14 @@ class LeaderBoardViewModel(
 
     companion object {
         private const val COUNT_DOWN_BLINK_THRESHOLD = 2 * 60 * 60 * 1000 // Last 2 hours
+        const val TOP_N_THRESHOLD = 3
     }
 }
 
-fun LeaderboardItem.toCurrentUserInfo(): CurrentUserInfo =
-    CurrentUserInfo(
-        userPrincipalId = userPrincipalId,
-        profileImageUrl = profileImage,
-        wins = wins,
-        leaderboardPosition = position,
-    )
-
 data class LeaderBoardState(
     val leaderboard: List<LeaderboardItem> = emptyList(),
-    val currentUser: CurrentUserInfo? = null,
+    val currentUser: LeaderboardItem? = null,
+    val isCurrentUserInTop: Boolean = false,
     val isLoading: Boolean = false,
     val error: String? = null,
     val selectedMode: LeaderboardMode = LeaderboardMode.DAILY,

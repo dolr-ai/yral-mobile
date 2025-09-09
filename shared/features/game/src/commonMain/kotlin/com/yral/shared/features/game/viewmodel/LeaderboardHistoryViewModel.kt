@@ -8,6 +8,7 @@ import com.yral.shared.core.session.SessionManager
 import com.yral.shared.features.game.domain.GetLeaderboardHistoryUseCase
 import com.yral.shared.features.game.domain.models.LeaderboardHistory
 import com.yral.shared.features.game.domain.models.LeaderboardHistoryRequest
+import com.yral.shared.features.game.viewmodel.LeaderBoardViewModel.Companion.TOP_N_THRESHOLD
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -33,7 +34,11 @@ class LeaderboardHistoryViewModel(
                 .invoke(LeaderboardHistoryRequest(principalId = principal))
                 .onSuccess { history ->
                     _state.update {
-                        it.copy(isLoading = false, history = history, selectedIndex = 0)
+                        it.copy(
+                            isLoading = false,
+                            history = history,
+                            selectedIndex = 0,
+                        )
                     }
                 }.onFailure { error ->
                     _state.update { it.copy(isLoading = false, error = error.message) }
@@ -46,6 +51,16 @@ class LeaderboardHistoryViewModel(
     }
 
     fun isCurrentUser(principal: String) = principal == sessionManager.userPrincipal
+
+    fun isCurrentUserInTop(): Boolean {
+        val idx = state.value.selectedIndex
+        val item = state.value.history.getOrNull(idx) ?: return false
+        val position =
+            item.userRow?.position
+                ?: item.topRows.firstOrNull { isCurrentUser(it.userPrincipalId) }?.position
+                ?: Int.MAX_VALUE
+        return position <= TOP_N_THRESHOLD
+    }
 }
 
 data class LeaderboardHistoryState(

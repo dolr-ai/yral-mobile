@@ -24,6 +24,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -38,6 +41,7 @@ import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.leaderboard.LeaderboardRow
 import com.yral.android.ui.screens.leaderboard.LeaderboardTableHeader
 import com.yral.android.ui.widgets.YralLoader
+import com.yral.android.ui.widgets.YralLottieAnimation
 import com.yral.shared.features.game.viewmodel.LeaderboardHistoryViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -48,6 +52,7 @@ fun LeaderboardDetailsScreen(
     viewModel: LeaderboardHistoryViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
+    var showConfetti by remember(state.selectedIndex, state.history) { mutableStateOf(viewModel.isCurrentUserInTop()) }
     LaunchedEffect(Unit) { viewModel.fetchHistory() }
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
@@ -137,6 +142,14 @@ fun LeaderboardDetailsScreen(
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 YralLoader()
             }
+        }
+        if (showConfetti) {
+            YralLottieAnimation(
+                rawRes = R.raw.golden_confetti,
+                modifier = Modifier.fillMaxSize().background(YralColors.ScrimColorLight),
+                iterations = 1,
+                onAnimationComplete = { showConfetti = false },
+            )
         }
     }
 }
