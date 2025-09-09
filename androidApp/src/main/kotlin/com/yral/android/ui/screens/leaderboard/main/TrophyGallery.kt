@@ -48,7 +48,7 @@ import com.yral.android.ui.widgets.YralLottieAnimation
 import com.yral.shared.features.game.data.models.LeaderboardMode
 import com.yral.shared.features.game.domain.models.LeaderboardItem
 
-@Suppress("MagicNumber", "LongMethod")
+@Suppress("MagicNumber", "LongMethod", "CyclomaticComplexMethod")
 @Composable
 fun TrophyGallery(
     isLoading: Boolean,
