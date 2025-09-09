@@ -19,6 +19,7 @@ struct LeaderboardResponse {
   let userRow: LeaderboardRowResponse?
   let topRows: [LeaderboardRowResponse]
   let timeLeftInMs: Int?
+  let date: String?
 }
 
 enum LeaderboardError: Error {
