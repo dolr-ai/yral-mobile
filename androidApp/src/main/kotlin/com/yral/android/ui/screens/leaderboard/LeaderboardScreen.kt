@@ -71,7 +71,8 @@ fun LeaderboardScreen(
             // Trophies
             item {
                 TrophyGallery(
-                    leaderboard = state.leaderboard,
+                    isLoading = state.isLoading,
+                    leaderboard = if (state.isLoading) emptyList() else state.leaderboard,
                     selectedMode = state.selectedMode,
                     selectMode = { viewModel.selectMode(it) },
                     countDownMs = state.countDownMs,

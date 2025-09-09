@@ -49,6 +49,7 @@ import com.yral.shared.features.game.domain.models.LeaderboardItem
 @Suppress("MagicNumber")
 @Composable
 fun TrophyGallery(
+    isLoading: Boolean,
     leaderboard: List<LeaderboardItem>,
     countDownMs: Long?,
     blinkCountDown: Boolean,
@@ -61,7 +62,7 @@ fun TrophyGallery(
             LeaderboardMode.ALL_TIME -> R.drawable.purple_leaderboard
         }
     val trophyPaddingTop =
-        if (selectedMode.showCountDown && countDownMs != null) {
+        if ((selectedMode.showCountDown && countDownMs != null) || isLoading) {
             28.dp
         } else {
             56.dp
