@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct LeaderboardRowView: View {
+  @Environment(\.appDIContainer) var appDIContainer
+
   let leaderboardRow: LeaderboardRowResponse
   let isCurrentUser: Bool
   let rowWidth: CGFloat
@@ -32,17 +34,19 @@ struct LeaderboardRowView: View {
       HStack(spacing: Constants.hStackSpacing) {
         buildUserImage()
 
-        Text(isCurrentUser ? "You" : leaderboardRow.principalID)
-          .font(Constants.userIDFont)
-          .foregroundColor(foregroundColorForPrincipal())
-          .lineLimit(.one)
-          .overlay(
-            buildTextGradient(
-              text: leaderboardRow.principalID,
-              font: Constants.userIDFont,
-              endRadius: Constants.principalEndRadius
-            )
+        Text((isCurrentUser || leaderboardRow.principalID == appDIContainer?.authClient.userPrincipalString)
+             ? "You" : leaderboardRow.principalID)
+        .font(Constants.userIDFont)
+        .foregroundColor(foregroundColorForPrincipal())
+        .lineLimit(.one)
+        .overlay(
+          buildTextGradient(
+            text: leaderboardRow.principalID == appDIContainer?.authClient.userPrincipalString
+            ? "You" : leaderboardRow.principalID,
+            font: Constants.userIDFont,
+            endRadius: Constants.principalEndRadius
           )
+        )
       }
       .frame(width: rowWidth * Constants.hStackWidthFactor, alignment: .leading)
 
@@ -106,10 +110,10 @@ struct LeaderboardRowView: View {
                           leaderboardRow.position == .three
     ) {
       textGradientFor(leaderboardRow.position, radius: endRadius)
-      .mask(
-        Text(text)
-          .font(font)
-      )
+        .mask(
+          Text(text)
+            .font(font)
+        )
     } else {
       EmptyView()
     }
