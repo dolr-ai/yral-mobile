@@ -30,6 +30,7 @@ import com.yral.shared.libs.routing.deeplink.engine.UrlBuilder
 import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -67,6 +68,7 @@ class FeedViewModel(
         private const val FEEDS_PAGE_SIZE = 10
         private const val SUFFICIENT_NEW_REQUIRED = 10
         const val SIGN_UP_PAGE = 9
+        private const val PAGER_STATE_REFRESH_BUFFER_MS = 100L
     }
 
     private val _state = MutableStateFlow(FeedState())
@@ -124,10 +126,15 @@ class FeedViewModel(
         }
     }
 
-    private fun tryShowExistingDeeplink(
+    private suspend fun tryShowExistingDeeplink(
         postId: String,
         canisterId: String,
     ): Boolean {
+        // currently setting currentPageOfFeed to 0 does not reset the position and requires
+        // changes to pager state handling. Setting fetching to true kinda recreates the Pager
+        setDeeplinkFetching(true)
+        delay(PAGER_STATE_REFRESH_BUFFER_MS)
+
         val existingDetail =
             _state.value.feedDetails.firstOrNull {
                 it.postID == postId && it.canisterID == canisterId
@@ -141,10 +148,12 @@ class FeedViewModel(
                     feedDetails = updatedFeedDetails,
                     currentPageOfFeed = 0,
                     videoData = VideoData(),
+                    isDeeplinkFetching = false,
                 )
             }
             return true
         }
+        setDeeplinkFetching(true)
         return false
     }
 
