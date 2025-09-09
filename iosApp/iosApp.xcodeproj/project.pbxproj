@@ -224,6 +224,18 @@
 		10FEA9022E6EC7AA000103EB /* leaderboard_all_time.json in Resources */ = {isa = PBXBuildFile; fileRef = 10FEA8FD2E6EC7AA000103EB /* leaderboard_all_time.json */; };
 		10FEA9042E6F1471000103EB /* DraggableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10FEA9032E6F1465000103EB /* DraggableView.swift */; };
 		10FEA9052E6F1471000103EB /* DraggableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10FEA9032E6F1465000103EB /* DraggableView.swift */; };
+		10FEA9072E6FE64A000103EB /* LeaderboardHistoryRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10FEA9062E6FE63D000103EB /* LeaderboardHistoryRepository.swift */; };
+		10FEA9082E6FE64A000103EB /* LeaderboardHistoryRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10FEA9062E6FE63D000103EB /* LeaderboardHistoryRepository.swift */; };
+		10FEA90A2E6FE672000103EB /* LeaderboardHistoryRepositoryProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10FEA9092E6FE665000103EB /* LeaderboardHistoryRepositoryProtocol.swift */; };
+		10FEA90B2E6FE672000103EB /* LeaderboardHistoryRepositoryProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10FEA9092E6FE665000103EB /* LeaderboardHistoryRepositoryProtocol.swift */; };
+		10FEA90D2E6FE7E8000103EB /* LeaderboardHistoryUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10FEA90C2E6FE7E2000103EB /* LeaderboardHistoryUseCase.swift */; };
+		10FEA90E2E6FE7E8000103EB /* LeaderboardHistoryUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10FEA90C2E6FE7E2000103EB /* LeaderboardHistoryUseCase.swift */; };
+		10FEA9102E6FEBC4000103EB /* LeaderboardHistoryDIContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10FEA90F2E6FEBBC000103EB /* LeaderboardHistoryDIContainer.swift */; };
+		10FEA9112E6FEBC4000103EB /* LeaderboardHistoryDIContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10FEA90F2E6FEBBC000103EB /* LeaderboardHistoryDIContainer.swift */; };
+		10FEA9132E6FEFF1000103EB /* LeaderboardHistoryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10FEA9122E6FEFE9000103EB /* LeaderboardHistoryViewModel.swift */; };
+		10FEA9142E6FEFF1000103EB /* LeaderboardHistoryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10FEA9122E6FEFE9000103EB /* LeaderboardHistoryViewModel.swift */; };
+		10FEA9162E6FF216000103EB /* LeaderboardHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10FEA9152E6FF216000103EB /* LeaderboardHistoryView.swift */; };
+		10FEA9172E6FF216000103EB /* LeaderboardHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10FEA9152E6FF216000103EB /* LeaderboardHistoryView.swift */; };
 		2152FB042600AC8F00CF470E /* IosApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* IosApp.swift */; };
 		63997C25DF21E5569B7BCFF5 /* Pods_Yral_Staging.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D57B68D9945A635CA2480172 /* Pods_Yral_Staging.framework */; };
 		7555FF83242A565900829871 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* ContentView.swift */; };
@@ -825,6 +837,12 @@
 		10FEA8FD2E6EC7AA000103EB /* leaderboard_all_time.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = leaderboard_all_time.json; sourceTree = "<group>"; };
 		10FEA8FE2E6EC7AA000103EB /* leaderboard_daily.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = leaderboard_daily.json; sourceTree = "<group>"; };
 		10FEA9032E6F1465000103EB /* DraggableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DraggableView.swift; sourceTree = "<group>"; };
+		10FEA9062E6FE63D000103EB /* LeaderboardHistoryRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeaderboardHistoryRepository.swift; sourceTree = "<group>"; };
+		10FEA9092E6FE665000103EB /* LeaderboardHistoryRepositoryProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeaderboardHistoryRepositoryProtocol.swift; sourceTree = "<group>"; };
+		10FEA90C2E6FE7E2000103EB /* LeaderboardHistoryUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeaderboardHistoryUseCase.swift; sourceTree = "<group>"; };
+		10FEA90F2E6FEBBC000103EB /* LeaderboardHistoryDIContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeaderboardHistoryDIContainer.swift; sourceTree = "<group>"; };
+		10FEA9122E6FEFE9000103EB /* LeaderboardHistoryViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeaderboardHistoryViewModel.swift; sourceTree = "<group>"; };
+		10FEA9152E6FF216000103EB /* LeaderboardHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeaderboardHistoryView.swift; sourceTree = "<group>"; };
 		2152FB032600AC8F00CF470E /* IosApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IosApp.swift; sourceTree = "<group>"; };
 		74294ECFE2C99B0DF03151D3 /* Pods-YralTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-YralTests.debug.xcconfig"; path = "Target Support Files/Pods-YralTests/Pods-YralTests.debug.xcconfig"; sourceTree = "<group>"; };
 		7555FF7B242A565900829871 /* Yral.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Yral.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -1147,6 +1165,7 @@
 				10FEA9032E6F1465000103EB /* DraggableView.swift */,
 				10020A172DED6CE800DF269E /* LeaderboardRowView.swift */,
 				100209AB2DE6E30A00DF269E /* LeaderboardView.swift */,
+				10FEA9152E6FF216000103EB /* LeaderboardHistoryView.swift */,
 			);
 			path = View;
 			sourceTree = "<group>";
@@ -1182,6 +1201,7 @@
 		10020A002DE8415700DF269E /* Interface */ = {
 			isa = PBXGroup;
 			children = (
+				10FEA9092E6FE665000103EB /* LeaderboardHistoryRepositoryProtocol.swift */,
 				10020A012DE8415E00DF269E /* LeaderboardRepositoryProtocol.swift */,
 			);
 			path = Interface;
@@ -1190,6 +1210,7 @@
 		10020A042DE841AD00DF269E /* UseCase */ = {
 			isa = PBXGroup;
 			children = (
+				10FEA90C2E6FE7E2000103EB /* LeaderboardHistoryUseCase.swift */,
 				10020A052DE841B600DF269E /* LeaderboardUseCase.swift */,
 			);
 			path = UseCase;
@@ -1198,6 +1219,7 @@
 		10020A082DE8430200DF269E /* Repository */ = {
 			isa = PBXGroup;
 			children = (
+				10FEA9062E6FE63D000103EB /* LeaderboardHistoryRepository.swift */,
 				10020A092DE8430900DF269E /* LeaderboardRepository.swift */,
 			);
 			path = Repository;
@@ -1206,6 +1228,7 @@
 		10020A0C2DE8437C00DF269E /* ViewModel */ = {
 			isa = PBXGroup;
 			children = (
+				10FEA9122E6FEFE9000103EB /* LeaderboardHistoryViewModel.swift */,
 				10020A0D2DE8438200DF269E /* LeaderboardViewModel.swift */,
 			);
 			path = ViewModel;
@@ -1214,6 +1237,7 @@
 		10020A102DE8445200DF269E /* DI */ = {
 			isa = PBXGroup;
 			children = (
+				10FEA90F2E6FEBBC000103EB /* LeaderboardHistoryDIContainer.swift */,
 				10FEA88E2E6EA709000103EB /* LeaderboardNavControllerKey.swift */,
 				10020A112DE8445C00DF269E /* LeaderboardDIContainer.swift */,
 			);
@@ -3407,6 +3431,7 @@
 				AC462F482D95B7F8004957B3 /* ReportView.swift in Sources */,
 				AC61D3B12DB28AAB00A7EA92 /* EULAPopUpView.swift in Sources */,
 				AC92941D2D6622EE003DB102 /* VideoPickerViewControllerRepresentable.swift in Sources */,
+				10FEA9082E6FE64A000103EB /* LeaderboardHistoryRepository.swift in Sources */,
 				10C1B4012E57574D00CFC41B /* GenerateVideoStatusError.swift in Sources */,
 				1064B8062E4CB34E0036C10B /* PromptView.swift in Sources */,
 				100209FA2DE83F7900DF269E /* LeaderboardDTO.swift in Sources */,
@@ -3488,9 +3513,11 @@
 				AC8472AE2D1D9540004A4259 /* AVFoundation+Extensions.swift in Sources */,
 				AC92941A2D65F308003DB102 /* View+Extensions.swift in Sources */,
 				AC32E4652D2991AD001DDA43 /* AccountView.swift in Sources */,
+				10FEA9112E6FEBC4000103EB /* LeaderboardHistoryDIContainer.swift in Sources */,
 				ACC0D43E2D8C6BF3006DCF5C /* ClearBackgroundView.swift in Sources */,
 				AC4DECA92D3E06AC008EC8F5 /* FooterLoaderView.swift in Sources */,
 				10C1B4042E57589200CFC41B /* UploadAIVideoUseCase.swift in Sources */,
+				10FEA9142E6FEFF1000103EB /* LeaderboardHistoryViewModel.swift in Sources */,
 				AC51C0522DC4E0D200D5BA34 /* RefreshVideosRequest.swift in Sources */,
 				100F64EF2DCC96C9000BC17E /* YralCache.swift in Sources */,
 				ACAA53942E4CB292008D3025 /* FeedsCell+PlayToScroll.swift in Sources */,
@@ -3541,6 +3568,7 @@
 				106986032E53019F005BE0D4 /* CreateAIVideoDIContainer.swift in Sources */,
 				ACAA4D722DDCF866001092A6 /* FeedsPlayer+Events.swift in Sources */,
 				AC32E44C2D2965A3001DDA43 /* AccountViewModel.swift in Sources */,
+				10FEA9172E6FF216000103EB /* LeaderboardHistoryView.swift in Sources */,
 				AC09AA742CDD210D009A39A4 /* Data+Extensions.swift in Sources */,
 				ACE249E42E684A2F006200EB /* RecommendedUpdatePopUp.swift in Sources */,
 				AC09A9FA2CDB7A5D009A39A4 /* SwiftBindings+Extensions.swift in Sources */,
@@ -3587,6 +3615,7 @@
 				AC638BF62D2309C000481E94 /* KeychainHelper.swift in Sources */,
 				AC99BB9A2D84913C008012C2 /* YralColor.swift in Sources */,
 				1064B8012E4CA4110036C10B /* AIVideoProviderResponse.swift in Sources */,
+				10FEA90A2E6FE672000103EB /* LeaderboardHistoryRepositoryProtocol.swift in Sources */,
 				1069860C2E5303A7005BE0D4 /* AIVideoRepository.swift in Sources */,
 				107C60C92DBF7A2D006FC467 /* SmileyGameRuleDIContainer.swift in Sources */,
 				10C1B3E92E55EE2D00CFC41B /* DisableBackBottomSheet.swift in Sources */,
@@ -3620,6 +3649,7 @@
 				AC811B932DBA7C3B0094C5F6 /* SignupSheet.swift in Sources */,
 				7555FF83242A565900829871 /* ContentView.swift in Sources */,
 				10CEBB802E3103670022803A /* HapticFeedback.swift in Sources */,
+				10FEA90D2E6FE7E8000103EB /* LeaderboardHistoryUseCase.swift in Sources */,
 				ACB46A4C2D0ED110002E200C /* FeedRepositoryProtocol.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -3708,6 +3738,7 @@
 				AC462F472D95B7F8004957B3 /* ReportView.swift in Sources */,
 				AC61D3B22DB28AAB00A7EA92 /* EULAPopUpView.swift in Sources */,
 				AC92941C2D6622EE003DB102 /* VideoPickerViewControllerRepresentable.swift in Sources */,
+				10FEA9072E6FE64A000103EB /* LeaderboardHistoryRepository.swift in Sources */,
 				10C1B4022E57574D00CFC41B /* GenerateVideoStatusError.swift in Sources */,
 				1064B8072E4CB34E0036C10B /* PromptView.swift in Sources */,
 				100209F92DE83F7900DF269E /* LeaderboardDTO.swift in Sources */,
@@ -3789,9 +3820,11 @@
 				AC8472AD2D1D9540004A4259 /* AVFoundation+Extensions.swift in Sources */,
 				AC9294192D65F308003DB102 /* View+Extensions.swift in Sources */,
 				AC32E4662D2991AD001DDA43 /* AccountView.swift in Sources */,
+				10FEA9102E6FEBC4000103EB /* LeaderboardHistoryDIContainer.swift in Sources */,
 				ACC0D43D2D8C6BF3006DCF5C /* ClearBackgroundView.swift in Sources */,
 				AC4DECAA2D3E06AC008EC8F5 /* FooterLoaderView.swift in Sources */,
 				10C1B4052E57589200CFC41B /* UploadAIVideoUseCase.swift in Sources */,
+				10FEA9132E6FEFF1000103EB /* LeaderboardHistoryViewModel.swift in Sources */,
 				100F64EE2DCC96C9000BC17E /* YralCache.swift in Sources */,
 				AC51C0532DC4E0D200D5BA34 /* RefreshVideosRequest.swift in Sources */,
 				ACAA53952E4CB292008D3025 /* FeedsCell+PlayToScroll.swift in Sources */,
@@ -3842,6 +3875,7 @@
 				106986042E53019F005BE0D4 /* CreateAIVideoDIContainer.swift in Sources */,
 				ACAA4D732DDCF866001092A6 /* FeedsPlayer+Events.swift in Sources */,
 				AC32E44B2D2965A3001DDA43 /* AccountViewModel.swift in Sources */,
+				10FEA9162E6FF216000103EB /* LeaderboardHistoryView.swift in Sources */,
 				ACD9418A2CFF575C0038FCB6 /* Data+Extensions.swift in Sources */,
 				ACE249E52E684A2F006200EB /* RecommendedUpdatePopUp.swift in Sources */,
 				ACD9418B2CFF575C0038FCB6 /* SwiftBindings+Extensions.swift in Sources */,
@@ -3888,6 +3922,7 @@
 				AC638BF52D2309C000481E94 /* KeychainHelper.swift in Sources */,
 				AC99BB9B2D84913C008012C2 /* YralColor.swift in Sources */,
 				1064B8002E4CA4110036C10B /* AIVideoProviderResponse.swift in Sources */,
+				10FEA90B2E6FE672000103EB /* LeaderboardHistoryRepositoryProtocol.swift in Sources */,
 				1069860B2E5303A7005BE0D4 /* AIVideoRepository.swift in Sources */,
 				107C60C82DBF7A2D006FC467 /* SmileyGameRuleDIContainer.swift in Sources */,
 				10C1B3EA2E55EE2D00CFC41B /* DisableBackBottomSheet.swift in Sources */,
@@ -3921,6 +3956,7 @@
 				AC811B922DBA7C3B0094C5F6 /* SignupSheet.swift in Sources */,
 				ACD9418C2CFF575C0038FCB6 /* ContentView.swift in Sources */,
 				10CEBB7F2E3103670022803A /* HapticFeedback.swift in Sources */,
+				10FEA90E2E6FE7E8000103EB /* LeaderboardHistoryUseCase.swift in Sources */,
 				ACB46A4D2D0ED110002E200C /* FeedRepositoryProtocol.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -23,7 +23,7 @@ final class LeaderboardDIContainer {
     self.dependencies = dependencies
   }
 
-  func makeLeaderboardRepositry() -> LeaderboardRepository {
+  func makeLeaderboardRepository() -> LeaderboardRepository {
     LeaderboardRepository(
       firebaseService: dependencies.firebaseService,
       httpService: dependencies.httpService,
@@ -32,7 +32,7 @@ final class LeaderboardDIContainer {
   }
 
   @MainActor func makeLeaderboardViewModel() -> LeaderboardViewModel {
-    let leaderboardRepository = makeLeaderboardRepositry()
+    let leaderboardRepository = makeLeaderboardRepository()
     return LeaderboardViewModel(
       leaderboardUseCase: LeaderboardUseCase(
         repository: leaderboardRepository,
