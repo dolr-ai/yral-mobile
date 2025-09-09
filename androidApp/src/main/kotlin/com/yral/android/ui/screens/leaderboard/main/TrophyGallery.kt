@@ -67,7 +67,7 @@ fun TrophyGallery(
         when {
             isLoading -> 0.dp
             selectedMode.showCountDown -> 16.dp
-            !selectedMode.showCountDown -> 68.dp
+            !selectedMode.showCountDown -> 50.dp
             else -> 0.dp
         }
     val lottie =
@@ -90,11 +90,11 @@ fun TrophyGallery(
                     modifier = Modifier.fillMaxSize(),
                     rawRes = lottie,
                     iterations = 1,
-                    contentScale = ContentScale.FillBounds,
+                    contentScale = ContentScale.Crop,
                 )
             }
         }
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 23.dp)) {
             LeaderboardModeSelection(selectedMode, selectMode)
             Row {
                 if (selectedMode.showCountDown) {
@@ -122,15 +122,14 @@ fun TrophyGallery(
             if (selectedMode.showCountDown && countDownMs == null) {
                 Spacer(modifier = Modifier.height(11.dp))
             }
-            AnimatedVisibility(
-                visible = leaderboard.size > 3 && isTrophyVisible,
-                enter = fadeIn(),
-                exit = fadeOut(),
-            ) {
-                Column(modifier = Modifier.padding(top = trophyPaddingTop, bottom = 20.dp)) {
+            if (!isLoading) {
+                AnimatedVisibility(visible = leaderboard.size > 3 && isTrophyVisible) {
                     Column(
-                        modifier = Modifier.fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(top = trophyPaddingTop),
                     ) {
                         TrophyImages(leaderboard)
                         TrophyDetails(leaderboard, selectedMode)
