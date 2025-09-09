@@ -11,7 +11,7 @@ import Foundation
 enum LeaderboardHistoryViewState {
   case initialized
   case loading
-  case success
+  case success(selectedDate: String)
   case failure(Error)
 
   static func == (lhs: LeaderboardHistoryViewState, rhs: LeaderboardHistoryViewState) -> Bool {
@@ -48,10 +48,21 @@ class LeaderboardHistoryViewModel: ObservableObject {
       switch result {
       case .success(let response):
         self.leaderboardHistory = response
-        state = .success
+        if let defaultDate = response.first?.date {
+          state = .success(selectedDate: defaultDate)
+        }
       case .failure(let error):
         state = .failure(error)
       }
+    }
+  }
+
+  @MainActor
+  func fetchImageURL(for principal: String) -> URL? {
+    if let principal = try? get_principal(principal) {
+      return URL(string: propic_from_principal(principal).toString())
+    } else {
+      return nil
     }
   }
 }

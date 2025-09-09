@@ -23,11 +23,13 @@ struct LeaderboardDTO: Decodable {
   let userRow: LeaderboardRowDTO?
   let topRows: [LeaderboardRowDTO]
   let timeLeftInMs: Int?
+  let date: String?
 
   enum CodingKeys: String, CodingKey {
     case userRow = "user_row"
     case topRows = "top_rows"
     case timeLeftInMs = "time_left_ms"
+    case date
   }
 }
 
@@ -46,7 +48,8 @@ extension LeaderboardDTO {
     return LeaderboardResponse(
       userRow: userRow?.toDomain(),
       topRows: topRows.map { $0.toDomain() },
-      timeLeftInMs: timeLeftInMs
+      timeLeftInMs: timeLeftInMs,
+      date: date
     )
   }
 }
