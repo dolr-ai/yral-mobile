@@ -43,8 +43,8 @@ import com.yral.shared.features.auth.utils.OAuthUtilsHelper
 import com.yral.shared.koin.koinInstance
 import com.yral.shared.libs.routing.deeplink.engine.RoutingService
 import com.yral.shared.rust.service.services.HelperService.initRustLogger
-import io.branch.indexing.BranchUniversalObject
 import io.branch.referral.Branch
+import io.branch.indexing.BranchUniversalObject
 import io.branch.referral.BranchError
 import io.branch.referral.util.LinkProperties
 import kotlinx.serialization.json.Json
@@ -89,6 +89,7 @@ class MainActivity : ComponentActivity() {
                 deeplinkPath?.let {
                     val appRoute = routingService.parseUrl(it)
                     Logger.d("BranchSDK") { "deeplinkPath $deeplinkPath, appRoute $appRoute" }
+                    rootComponent.onNavigationRequest(appRoute)
                 }
             }
         }

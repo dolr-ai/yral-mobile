@@ -68,6 +68,7 @@ import com.yral.shared.features.game.viewmodel.NudgeType
 import com.yral.shared.libs.videoPlayer.YRALReelPlayer
 import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.libs.videoPlayer.util.ReelScrollDirection
+import kotlinx.coroutines.flow.collectLatest
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -83,6 +84,15 @@ fun FeedScreen(
     val gameState by gameViewModel.state.collectAsState()
 
     LaunchedEffect(Unit) { viewModel.pushScreenView() }
+
+    // Observe deep link navigation reactively - works even if screen is already open
+    LaunchedEffect(Unit) {
+        component.openPostDetails.collectLatest {
+            if (it != null) {
+                viewModel.showDeeplinkedVideoFirst(it.postId, it.canisterId)
+            }
+        }
+    }
 
     // Set initial video ID when feed loads
     LaunchedEffect(state.feedDetails.isNotEmpty()) {

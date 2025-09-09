@@ -114,8 +114,9 @@ class FeedViewModel(
      */
     fun showDeeplinkedVideoFirst(
         postId: String,
-        canisterId: String,
+        canisterId: String?,
     ) {
+        if (canisterId == null) return //todo
         coroutineScope.launch {
             // If details already exist, move to front and return; else fetch and show.
             if (tryShowExistingDeeplink(postId, canisterId)) return@launch
