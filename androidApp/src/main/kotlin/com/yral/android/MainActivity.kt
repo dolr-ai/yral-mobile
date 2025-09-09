@@ -42,8 +42,8 @@ import com.yral.shared.features.auth.utils.OAuthUtils
 import com.yral.shared.features.auth.utils.OAuthUtilsHelper
 import com.yral.shared.koin.koinInstance
 import com.yral.shared.rust.service.services.HelperService.initRustLogger
-import io.branch.indexing.BranchUniversalObject
 import io.branch.referral.Branch
+import io.branch.indexing.BranchUniversalObject
 import io.branch.referral.BranchError
 import io.branch.referral.util.LinkProperties
 import kotlinx.serialization.json.Json
@@ -68,10 +68,11 @@ class MainActivity : ComponentActivity() {
     // Shared Branch session callback for both init() and reInit()
     private val branchSessionCallback: (BranchUniversalObject?, LinkProperties?, BranchError?) -> Unit =
         { branchUniversalObject, linkProperties, error ->
+            intent = null
             if (error != null) {
                 Logger.d("BranchSDK") { "branch session error: " + error.message }
             } else {
-                Logger.d("BranchSDK") { "branch session complete" }
+                Logger.d("BranchSDK") { "branch session complete $intent" }
                 if (branchUniversalObject != null) {
                     Logger.d("BranchSDK") { "title " + branchUniversalObject.title }
                     Logger.d("BranchSDK") { "CanonicalIdentifier " + branchUniversalObject.canonicalIdentifier }
@@ -83,16 +84,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-
-    private val branchLinks =
-        setOf(
-            "f6ur9.app.link",
-            "link.yral.com",
-            "f6ur9-alternate.app.link",
-            "f6ur9.test-app.link",
-            "test-link.yral.com",
-            "f6ur9-alternate.test-app.link",
-        )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -136,24 +127,14 @@ class MainActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        // Update the Activity's intent for branch
+        setIntent(intent)
         handleIntent(intent)
         handleIntentForBranch(intent)
     }
 
-    private fun handleIntentForBranch(intent: Intent?) {
-        // Branch recommends re-initializing the session when the app is brought to foreground
-        // with a deep link while running in the background. This is typically indicated by the
-        // "branch_force_new_session" extra. As a fallback, also trigger reInit when there is
-        // deep link data present, since some OEMs/browsers may omit the extra.
-        val forceNewSession = intent?.getBooleanExtra("branch_force_new_session", false) == true
-        val data = intent?.data
-        val isBranchLink =
-            data?.let {
-                val scheme = it.scheme
-                val host = it.host
-                (scheme == "https" && host in branchLinks) || (scheme == "yral" && host == "open")
-            } ?: false
-        if (forceNewSession || isBranchLink) {
+    private fun handleIntentForBranch(intent: Intent) {
+        if (intent.hasExtra("branch_force_new_session") && intent.getBooleanExtra("branch_force_new_session", false)) {
             Branch
                 .sessionBuilder(this)
                 .withCallback(branchSessionCallback)
@@ -167,6 +148,7 @@ class MainActivity : ComponentActivity() {
         // Handle OAuth redirect URIs
         handleOAuthIntent(intent)?.let {
             oAuthUtils.invokeCallback(it)
+            setIntent(null)
             return
         }
 
@@ -176,6 +158,7 @@ class MainActivity : ComponentActivity() {
             Logger.d("MainActivity") { "Handling notification payload: $payload" }
             val destination = mapPayloadToDestination(payload)
             if (destination != null) {
+                setIntent(null)
                 handleNotificationDeepLink(destination)
             }
         }
