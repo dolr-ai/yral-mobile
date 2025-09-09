@@ -222,6 +222,8 @@
 		10FEA9002E6EC7AA000103EB /* leaderboard_all_time.json in Resources */ = {isa = PBXBuildFile; fileRef = 10FEA8FD2E6EC7AA000103EB /* leaderboard_all_time.json */; };
 		10FEA9012E6EC7AA000103EB /* leaderboard_daily.json in Resources */ = {isa = PBXBuildFile; fileRef = 10FEA8FE2E6EC7AA000103EB /* leaderboard_daily.json */; };
 		10FEA9022E6EC7AA000103EB /* leaderboard_all_time.json in Resources */ = {isa = PBXBuildFile; fileRef = 10FEA8FD2E6EC7AA000103EB /* leaderboard_all_time.json */; };
+		10FEA9042E6F1471000103EB /* DraggableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10FEA9032E6F1465000103EB /* DraggableView.swift */; };
+		10FEA9052E6F1471000103EB /* DraggableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10FEA9032E6F1465000103EB /* DraggableView.swift */; };
 		2152FB042600AC8F00CF470E /* IosApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* IosApp.swift */; };
 		63997C25DF21E5569B7BCFF5 /* Pods_Yral_Staging.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D57B68D9945A635CA2480172 /* Pods_Yral_Staging.framework */; };
 		7555FF83242A565900829871 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* ContentView.swift */; };
@@ -828,6 +830,7 @@
 		10FEA8FA2E6EC387000103EB /* LeaderboardQuery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeaderboardQuery.swift; sourceTree = "<group>"; };
 		10FEA8FD2E6EC7AA000103EB /* leaderboard_all_time.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = leaderboard_all_time.json; sourceTree = "<group>"; };
 		10FEA8FE2E6EC7AA000103EB /* leaderboard_daily.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = leaderboard_daily.json; sourceTree = "<group>"; };
+		10FEA9032E6F1465000103EB /* DraggableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DraggableView.swift; sourceTree = "<group>"; };
 		2152FB032600AC8F00CF470E /* IosApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IosApp.swift; sourceTree = "<group>"; };
 		74294ECFE2C99B0DF03151D3 /* Pods-YralTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-YralTests.debug.xcconfig"; path = "Target Support Files/Pods-YralTests/Pods-YralTests.debug.xcconfig"; sourceTree = "<group>"; };
 		7555FF7B242A565900829871 /* Yral.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Yral.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -1150,6 +1153,7 @@
 		100209AA2DE6E2F200DF269E /* View */ = {
 			isa = PBXGroup;
 			children = (
+				10FEA9032E6F1465000103EB /* DraggableView.swift */,
 				10020A172DED6CE800DF269E /* LeaderboardRowView.swift */,
 				100209AB2DE6E30A00DF269E /* LeaderboardView.swift */,
 			);
@@ -3566,6 +3570,7 @@
 				AC9294092D630266003DB102 /* UploadView.swift in Sources */,
 				10C1B3ED2E56E72A00CFC41B /* AIVideoCompletedView.swift in Sources */,
 				AC20A1412E3B7723003306C1 /* FeedsCell+Wallet.swift in Sources */,
+				10FEA9042E6F1471000103EB /* DraggableView.swift in Sources */,
 				AC7F7EBF2D7734BB00215162 /* UploadRepository.swift in Sources */,
 				107C61242DC0F2C8006FC467 /* SmileyGameRuleError.swift in Sources */,
 				10C1B38B2E5375D500CFC41B /* AppDIContainerKey.swift in Sources */,
@@ -3869,6 +3874,7 @@
 				AC9294082D630266003DB102 /* UploadView.swift in Sources */,
 				10C1B3EC2E56E72A00CFC41B /* AIVideoCompletedView.swift in Sources */,
 				AC20A1402E3B7723003306C1 /* FeedsCell+Wallet.swift in Sources */,
+				10FEA9052E6F1471000103EB /* DraggableView.swift in Sources */,
 				AC7F7EC02D7734BB00215162 /* UploadRepository.swift in Sources */,
 				107C61232DC0F2C8006FC467 /* SmileyGameRuleError.swift in Sources */,
 				10C1B38C2E5375D500CFC41B /* AppDIContainerKey.swift in Sources */,
