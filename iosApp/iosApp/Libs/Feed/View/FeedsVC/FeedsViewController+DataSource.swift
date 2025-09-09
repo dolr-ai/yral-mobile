@@ -80,11 +80,10 @@ extension FeedsViewController {
       snapshot.appendSections([.zero])
     }
     snapshot.appendItems(feeds, toSection: .zero)
-
-    feedsDataSource.apply(snapshot, animatingDifferences: shouldAnimate) { [weak self] in
+    applySnapshot(snapshot, animatingDifferences: shouldAnimate) { [weak self] in
       guard let self = self else { return }
       guard feedType == .currentUser else { return }
-      feedsPlayer.advanceToVideo(at: viewModel.getCurrentFeedIndex())
+      feedsPlayer.advanceToVideo(at: viewModel.getCurrentFeedIndex(), isDeepLink: false)
       self.feedsCV.scrollToItem(
         at: IndexPath(
           item: viewModel.getCurrentFeedIndex(),
@@ -104,13 +103,69 @@ extension FeedsViewController {
     guard !self.feedsDataSource.snapshot().itemIdentifiers.isEmpty else { return }
     var snapshot = feedsDataSource.snapshot()
     snapshot.appendItems(feeds, toSection: .zero)
-    feedsDataSource.apply(snapshot, animatingDifferences: shouldAnimate) {
+    applySnapshot(snapshot, animatingDifferences: shouldAnimate) {
       self.loadMoreRequestMade = {
         if case .fetchingInitialFeeds = self.viewModel.unifiedEvent {
           return true
         }
         return false
       }()
+    }
+  }
+
+  func removeFeeds(with feeds: [FeedResult], isReport: Bool = false, animated: Bool = false) {
+    var snapshot = feedsDataSource.snapshot()
+    snapshot.deleteItems(feeds)
+    applySnapshot(snapshot, animatingDifferences: animated) { [weak self] in
+      guard let self else { return }
+      feedsPlayer.removeFeeds(feeds)
+      if snapshot.itemIdentifiers.isEmpty {
+        feedsPlayer.pause()
+      }
+    }
+    if isReport {
+      DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.animationPeriod) {
+        ToastManager.showToast(type: .reportSuccess)
+      }
+    }
+    if snapshot.itemIdentifiers.isEmpty {
+      onBackButtonTap?()
+    }
+  }
+
+  func findItem(postId: UInt32, principal: String) -> FeedResult? {
+    feedsDataSource.snapshot().itemIdentifiers.first {
+      $0.postID == String(postId) && $0.principalID == principal
+    }
+  }
+
+  func insertOrMoveToFront(_ feed: FeedResult) {
+    var snapshot = feedsDataSource.snapshot()
+    if snapshot.numberOfSections == .zero { snapshot.appendSections([.zero]) }
+
+    if let duplicate = snapshot.itemIdentifiers.first(
+      where: { $0.postID == feed.postID && $0.principalID == feed.principalID }
+    ) {
+      snapshot.deleteItems([duplicate])
+      feedsPlayer.removeFeeds([duplicate])
+    }
+
+    if let firstItem = snapshot.itemIdentifiers.first {
+      snapshot.insertItems([feed], beforeItem: firstItem)
+    } else {
+      snapshot.appendItems([feed], toSection: .zero)
+    }
+    feedsPlayer.insertFeed([feed], at: .zero)
+    applySnapshot(snapshot, animatingDifferences: true) { [weak self] in
+      guard let self = self else { return }
+      self.feedsPlayer.advanceToVideo(at: .zero, isDeepLink: true)
+      self.feedsCV.scrollToItem(
+        at: IndexPath(
+          item: self.viewModel.getCurrentFeedIndex(),
+          section: .zero
+        ),
+        at: .centeredVertically, animated: false
+      )
     }
   }
 
@@ -173,9 +228,9 @@ extension FeedsViewController {
     }
 
     feedsDataSource.apply(snap, animatingDifferences: true)
-    let oldBalance = session.state.coins
-    let updatedBalance = Int(oldBalance) + response.coinDelta
-    session.update(coins: UInt64(updatedBalance))
+      let oldBalance = session.state.coins
+      let updatedBalance = Int(oldBalance) + response.coinDelta
+      session.update(coins: UInt64(updatedBalance))
   }
 
   func handleCastVoteFailure(_ errorMessage: String, videoID: String) {
@@ -201,27 +256,20 @@ extension FeedsViewController {
         snap.appendItems([newItem])
       }
     }
-
-    feedsDataSource.apply(snap, animatingDifferences: true)
+    applySnapshot(snap, animatingDifferences: true)
   }
+}
 
-  func removeFeeds(with feeds: [FeedResult], isReport: Bool = false, animated: Bool = false) {
-    var snapshot = feedsDataSource.snapshot()
-    snapshot.deleteItems(feeds)
-    feedsDataSource.apply(snapshot, animatingDifferences: animated) { [weak self] in
-      guard let self else { return }
-      feedsPlayer.removeFeeds(feeds)
-      if snapshot.itemIdentifiers.isEmpty {
-        feedsPlayer.pause()
-      }
-    }
-    if isReport {
-      DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.animationPeriod) {
-        ToastManager.showToast(type: .reportSuccess)
-      }
-    }
-    if snapshot.itemIdentifiers.isEmpty {
-      onBackButtonTap?()
+extension FeedsViewController {
+  func applySnapshot(
+    _ snapshot: Snapshot,
+    animatingDifferences: Bool = false,
+    completion: (() -> Void)? = nil
+  ) {
+    isApplyingSnapshot = true
+    feedsDataSource.apply(snapshot, animatingDifferences: animatingDifferences) { [weak self] in
+      completion?()
+      self?.isApplyingSnapshot = false
     }
   }
 }

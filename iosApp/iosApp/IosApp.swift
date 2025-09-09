@@ -16,6 +16,9 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     if UIApplication.shared.isProtectedDataAvailable {
       migrateKeychain()
     }
+    #if DEBUG
+    Branch.setUseTestBranchKey(true)
+    #endif
 
     Branch.getInstance().initSession(launchOptions: launchOptions) { (params, error) in
       if let error = error {
@@ -180,6 +183,12 @@ struct IosApp: App {
         .environmentObject(deepLinkRouter)
         .environmentObject(eventBus)
         .environment(\.appDIContainer, appDIContainer)
+        .onOpenURL { url in
+          Branch.getInstance().application(UIApplication.shared, open: url, options: [:])
+        }
+        .onContinueUserActivity(NSUserActivityTypeBrowsingWeb) { activity in
+          Branch.getInstance().continue(activity)
+        }
     }
   }
 

@@ -51,6 +51,10 @@ final class FeedDIContainer {
         feedRepository: repository,
         crashReporter: dependencies.crashReporter
       ),
+      deeplinkFeedUseCase: DeepLinkFeedUseCase(
+        feedRepository: repository,
+        crashReporter: dependencies.crashReporter
+      ),
       reportUseCase: ReportFeedsUseCase(
         feedRepository: repository,
         crashReporter: dependencies.crashReporter

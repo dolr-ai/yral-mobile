@@ -75,7 +75,7 @@ extension FeedsViewController: FeedsCellProtocol {
     BranchShareService.shared.generateLink(
       payload: SharePayload(
         title: Constants.shareText,
-        description: "",
+        description: Constants.shareDescription,
         imageUrl: item.thumbnail.absoluteString,
         postId: item.postID,
         principalId: item.principalID,

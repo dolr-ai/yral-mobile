@@ -35,16 +35,18 @@ final class BranchShareService {
     return branchUniversalObject
   }
 
-  func linkProperties(channel: String, campaign: String?) -> BranchLinkProperties {
+  func linkProperties(payload: SharePayload) -> BranchLinkProperties {
     let linkProperties = BranchLinkProperties()
     linkProperties.feature = "share"
-    linkProperties.channel = channel
-    linkProperties.campaign = campaign
     linkProperties.tags = ["organic", "user_share"]
-
-    linkProperties.addControlParam("$deeplink_path", withValue: "/video/{video_id}")
-    linkProperties.addControlParam("utm_source", withValue: channel)
-    linkProperties.addControlParam("utm_campaign", withValue: campaign ?? "na")
+    if let imageUrl = payload.imageUrl {
+      linkProperties.addControlParam("$og_image_url", withValue: imageUrl)
+    }
+    linkProperties.addControlParam("$og_title", withValue: payload.title)
+    linkProperties.addControlParam(
+      "$og_description", withValue: payload.description
+    )
+    linkProperties.addControlParam("$deeplink_path", withValue: "/video/\(payload.postId)")
     return linkProperties
   }
 
@@ -53,7 +55,7 @@ final class BranchShareService {
                     campaign: String? = nil,
                     completion: @escaping (String?) -> Void) {
     let branchUniversalObject = makeBranchUniversalObject(for: payload)
-    let properties = linkProperties(channel: channel, campaign: campaign)
+    let properties = linkProperties(payload: payload)
 
     branchUniversalObject.getShortUrl(with: properties) { url, error in
       if let error = error {

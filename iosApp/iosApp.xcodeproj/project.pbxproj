@@ -271,6 +271,10 @@
 		AC26CA652D805E58006ADA75 /* FeedError.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC26CA632D805E52006ADA75 /* FeedError.swift */; };
 		AC2BD2BB2E6F1B0D009E7CAE /* ShareVideoHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC2BD2BA2E6F1AFA009E7CAE /* ShareVideoHandler.swift */; };
 		AC2BD2BC2E6F1B0D009E7CAE /* ShareVideoHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC2BD2BA2E6F1AFA009E7CAE /* ShareVideoHandler.swift */; };
+		AC2BD4622E6FE420009E7CAE /* DeepLinkFeedRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC2BD4612E6FE416009E7CAE /* DeepLinkFeedRequest.swift */; };
+		AC2BD4632E6FE420009E7CAE /* DeepLinkFeedRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC2BD4612E6FE416009E7CAE /* DeepLinkFeedRequest.swift */; };
+		AC2BD4652E6FE475009E7CAE /* DeepLinkFeedUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC2BD4642E6FE475009E7CAE /* DeepLinkFeedUseCase.swift */; };
+		AC2BD4662E6FE475009E7CAE /* DeepLinkFeedUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC2BD4642E6FE475009E7CAE /* DeepLinkFeedUseCase.swift */; };
 		AC2C30CD2D96C49800DA9F81 /* ReportUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC2C30CC2D96C49200DA9F81 /* ReportUseCase.swift */; };
 		AC2C30CE2D96C49800DA9F81 /* ReportUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC2C30CC2D96C49200DA9F81 /* ReportUseCase.swift */; };
 		AC2C30D12D96C51600DA9F81 /* ReportEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC2C30D02D96C51600DA9F81 /* ReportEntity.swift */; };
@@ -852,6 +856,8 @@
 		AC26CA602D805D6A006ADA75 /* AccountError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountError.swift; sourceTree = "<group>"; };
 		AC26CA632D805E52006ADA75 /* FeedError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedError.swift; sourceTree = "<group>"; };
 		AC2BD2BA2E6F1AFA009E7CAE /* ShareVideoHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareVideoHandler.swift; sourceTree = "<group>"; };
+		AC2BD4612E6FE416009E7CAE /* DeepLinkFeedRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeepLinkFeedRequest.swift; sourceTree = "<group>"; };
+		AC2BD4642E6FE475009E7CAE /* DeepLinkFeedUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeepLinkFeedUseCase.swift; sourceTree = "<group>"; };
 		AC2C30CC2D96C49200DA9F81 /* ReportUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportUseCase.swift; sourceTree = "<group>"; };
 		AC2C30D02D96C51600DA9F81 /* ReportEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportEntity.swift; sourceTree = "<group>"; };
 		AC2C30D32D96C68100DA9F81 /* ReportRequestDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportRequestDTO.swift; sourceTree = "<group>"; };
@@ -2488,6 +2494,7 @@
 			isa = PBXGroup;
 			children = (
 				ACB46A632D0F0B70002E200C /* FetchInitialFeedsUseCase.swift */,
+				AC2BD4642E6FE475009E7CAE /* DeepLinkFeedUseCase.swift */,
 				AC49605A2D2C4BE5008D59D9 /* FetchMoreFeedsUseCase.swift */,
 				AC5A7C662DAD72A0009E9E42 /* LogUploadEventUseCase.swift */,
 				ACCA778D2DE4C19E005BC0FA /* EventBuffer.swift */,
@@ -2741,6 +2748,7 @@
 		ACDD23E22D8B18E200AB0DAF /* Entity */ = {
 			isa = PBXGroup;
 			children = (
+				AC2BD4612E6FE416009E7CAE /* DeepLinkFeedRequest.swift */,
 				ACB46A522D0ED222002E200C /* FeedQuery.swift */,
 				ACB46A4F2D0ED18B002E200C /* FeedResult.swift */,
 				AC26CA632D805E52006ADA75 /* FeedError.swift */,
@@ -3587,6 +3595,7 @@
 				107C60C02DBF4C17006FC467 /* FirebaseServiceProtocol.swift in Sources */,
 				AC7F7EE32D7A8E1600215162 /* UpdateMetaUseCase.swift in Sources */,
 				ACB46A6F2D0F417F002E200C /* FeedsViewControllerWrapper.swift in Sources */,
+				AC2BD4632E6FE420009E7CAE /* DeepLinkFeedRequest.swift in Sources */,
 				10020A062DE841BB00DF269E /* LeaderboardUseCase.swift in Sources */,
 				AC391EEA2DCE4DE600A8DFA9 /* DeleteUseCase.swift in Sources */,
 				ACB46A6C2D0F3F8E002E200C /* FeedsViewController.swift in Sources */,
@@ -3594,6 +3603,7 @@
 				AC811B932DBA7C3B0094C5F6 /* SignupSheet.swift in Sources */,
 				7555FF83242A565900829871 /* ContentView.swift in Sources */,
 				10CEBB802E3103670022803A /* HapticFeedback.swift in Sources */,
+				AC2BD4652E6FE475009E7CAE /* DeepLinkFeedUseCase.swift in Sources */,
 				ACB46A4C2D0ED110002E200C /* FeedRepositoryProtocol.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -3886,6 +3896,7 @@
 				107C60BF2DBF4C17006FC467 /* FirebaseServiceProtocol.swift in Sources */,
 				AC7F7EE22D7A8E1600215162 /* UpdateMetaUseCase.swift in Sources */,
 				ACB46A702D0F417F002E200C /* FeedsViewControllerWrapper.swift in Sources */,
+				AC2BD4622E6FE420009E7CAE /* DeepLinkFeedRequest.swift in Sources */,
 				10020A072DE841BB00DF269E /* LeaderboardUseCase.swift in Sources */,
 				AC391EE92DCE4DE600A8DFA9 /* DeleteUseCase.swift in Sources */,
 				ACB46A6B2D0F3F8E002E200C /* FeedsViewController.swift in Sources */,
@@ -3893,6 +3904,7 @@
 				AC811B922DBA7C3B0094C5F6 /* SignupSheet.swift in Sources */,
 				ACD9418C2CFF575C0038FCB6 /* ContentView.swift in Sources */,
 				10CEBB7F2E3103670022803A /* HapticFeedback.swift in Sources */,
+				AC2BD4662E6FE475009E7CAE /* DeepLinkFeedUseCase.swift in Sources */,
 				ACB46A4D2D0ED110002E200C /* FeedRepositoryProtocol.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
