@@ -94,10 +94,11 @@ internal class DefaultHomeComponent(
     }
 
     override fun onNavigationRequest(appRoute: AppRoute) {
-        when(appRoute) {
-            is PostDetailsRoute -> navigation.replaceAll(Config.Feed) {
-                (stack.value.active.instance as? Child.Feed)?.component?.openPostDetails(appRoute)
-            }
+        when (appRoute) {
+            is PostDetailsRoute ->
+                navigation.replaceAll(Config.Feed) {
+                    (stack.value.active.instance as? Child.Feed)?.component?.openPostDetails(appRoute)
+                }
             else -> {}
         }
     }

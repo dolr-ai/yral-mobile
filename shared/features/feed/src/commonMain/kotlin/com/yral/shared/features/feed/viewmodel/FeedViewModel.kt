@@ -25,9 +25,9 @@ import com.yral.shared.features.feed.domain.useCases.ReportVideoUseCase
 import com.yral.shared.features.feed.sharing.LinkGenerator
 import com.yral.shared.features.feed.sharing.LinkInput
 import com.yral.shared.features.feed.sharing.ShareService
+import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.libs.routing.deeplink.engine.UrlBuilder
 import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
-import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -116,7 +116,7 @@ class FeedViewModel(
         postId: String,
         canisterId: String?,
     ) {
-        if (canisterId == null) return //todo
+        if (canisterId == null) return // todo
         coroutineScope.launch {
             // If details already exist, move to front and return; else fetch and show.
             if (tryShowExistingDeeplink(postId, canisterId)) return@launch
@@ -168,7 +168,8 @@ class FeedViewModel(
             .invoke(post)
             .onSuccess { detail ->
                 _state.update { currentState ->
-                    val updatedFeedDetails = listOf(detail) + currentState.feedDetails.filterNot { it.videoID == detail.videoID }
+                    val updatedFeedDetails =
+                        listOf(detail) + currentState.feedDetails.filterNot { it.videoID == detail.videoID }
                     currentState.copy(
                         feedDetails = updatedFeedDetails,
                         currentPageOfFeed = 0,
@@ -176,8 +177,7 @@ class FeedViewModel(
                         videoData = VideoData(), // reset video state for the deeplinked item
                     )
                 }
-            }
-            .onFailure { throwable ->
+            }.onFailure { throwable ->
                 Logger.e(throwable) {
                     "Failed to fetch deeplinked video details for postId=$postId canisterId=$canisterId"
                 }
@@ -500,14 +500,15 @@ class FeedViewModel(
             val route = PostDetailsRoute(postId = feedDetails.postID, canisterId = feedDetails.canisterID)
             val internalUrl = urlBuilder.build(route) ?: feedDetails.url
             runSuspendCatching {
-                val link = linkGenerator.generateShareLink(
-                    LinkInput(
-                        internalUrl = internalUrl,
-                        title = "Yral Post",
-                        description = "Check out this post on Yral",
-                        contentImageUrl = feedDetails.thumbnail,
-                    ),
-                )
+                val link =
+                    linkGenerator.generateShareLink(
+                        LinkInput(
+                            internalUrl = internalUrl,
+                            title = "Yral Post",
+                            description = "Check out this post on Yral",
+                            contentImageUrl = feedDetails.thumbnail,
+                        ),
+                    )
                 val text = "$messagePrefix $link"
                 shareService.shareImageWithText(
                     imageUrl = feedDetails.thumbnail,

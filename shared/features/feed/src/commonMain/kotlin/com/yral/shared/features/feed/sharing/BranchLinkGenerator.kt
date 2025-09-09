@@ -15,23 +15,27 @@ class BranchLinkGenerator(
     override suspend fun generateShareLink(input: LinkInput): String =
         suspendCancellableCoroutine { cont ->
             try {
-                val meta = ContentMetadata().also { cm ->
-                    // include internal_url for now as a duplicate of android_deeplink_path in case android_deeplink_path does not work
-                    cm.addCustomMetadata("internal_url", input.internalUrl)
-                    // Include any caller-provided metadata
-                    input.metadata.forEach { (k, v) -> cm.addCustomMetadata(k, v) }
-                }
+                val meta =
+                    ContentMetadata().also { cm ->
+                        // include internal_url for now as a duplicate of android_deeplink_path in
+                        // case android_deeplink_path does not work
+                        cm.addCustomMetadata("internal_url", input.internalUrl)
+                        // Include any caller-provided metadata
+                        input.metadata.forEach { (k, v) -> cm.addCustomMetadata(k, v) }
+                    }
 
-                val buo = BranchUniversalObject()
-                    .setTitle(input.title ?: "")
-                    .setContentDescription(input.description ?: "")
-                    .setContentImageUrl(input.contentImageUrl ?: "")
-                    .setContentMetadata(meta)
+                val buo =
+                    BranchUniversalObject()
+                        .setTitle(input.title ?: "")
+                        .setContentDescription(input.description ?: "")
+                        .setContentImageUrl(input.contentImageUrl ?: "")
+                        .setContentMetadata(meta)
 
-                val linkProps = LinkProperties()
-                    .setChannel(input.channel ?: "")
-                    .setFeature(input.feature ?: "")
-                    .addControlParameter("\$android_deeplink_path", input.internalUrl.substringAfter("://"))
+                val linkProps =
+                    LinkProperties()
+                        .setChannel(input.channel ?: "")
+                        .setFeature(input.feature ?: "")
+                        .addControlParameter("\$android_deeplink_path", input.internalUrl.substringAfter("://"))
 
                 input.fallbackUrl?.let { linkProps.addControlParameter("\$fallback_url", it) }
 
@@ -47,7 +51,9 @@ class BranchLinkGenerator(
                         cont.resumeWithException(IllegalStateException("Branch returned null/blank URL"))
                     }
                 }
-            } catch (t: Throwable) {
+            } catch (
+                @Suppress("TooGenericExceptionCaught") t: Throwable,
+            ) {
                 // On any unexpected exception, fallback to internal URL
                 cont.resumeWithException(t)
             }

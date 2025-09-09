@@ -2,7 +2,6 @@ package com.yral.android.ui.screens.feed.nav
 
 import co.touchlab.kermit.Logger
 import com.arkivanov.decompose.ComponentContext
-import com.yral.android.ui.screens.profile.nav.ProfileComponent.Companion.DEEPLINK_VIDEO_PREFIX
 import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
