@@ -272,7 +272,7 @@ object LeaderboardMainScreenConstants {
             Color(0xFF7573BD).copy(alpha = 0.7f),
         )
 
-    const val CONFETTI_SCALE = 1.8f
+    const val CONFETTI_SCALE = 2.5f
     const val NO_OF_CONFETTI = 5
     const val CONFETTI_SIZE_FACTOR = 3
     const val CONFETTI_ITERATIONS = 2
