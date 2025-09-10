@@ -502,9 +502,11 @@ class FeedViewModel(
         _state.update { it.copy(reportSheetState = sheetState) }
     }
 
-    fun onShareClicked(feedDetails: FeedDetails) {
+    fun onShareClicked(
+        feedDetails: FeedDetails,
+        message: String,
+    ) {
         viewModelScope.launch {
-            val messagePrefix = "Check out this video on Yral 👀 Where watching = fun + games! ⚡ Try it 👉"
             // Build internal deep link using UrlBuilder and PostDetailsRoute
             val route = PostDetailsRoute(postId = feedDetails.postID, canisterId = feedDetails.canisterID)
             val internalUrl = urlBuilder.build(route) ?: feedDetails.url
@@ -513,12 +515,12 @@ class FeedViewModel(
                     linkGenerator.generateShareLink(
                         LinkInput(
                             internalUrl = internalUrl,
-                            title = messagePrefix,
+                            title = message,
                             description = "Watch on Yral",
                             contentImageUrl = feedDetails.thumbnail,
                         ),
                     )
-                val text = "$messagePrefix $link"
+                val text = "$message $link"
                 shareService.shareImageWithText(
                     imageUrl = feedDetails.thumbnail,
                     text = text,
