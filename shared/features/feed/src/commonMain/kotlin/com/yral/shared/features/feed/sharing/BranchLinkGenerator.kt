@@ -1,7 +1,6 @@
 package com.yral.shared.features.feed.sharing
 
 import android.content.Context
-import co.touchlab.kermit.Logger
 import io.branch.indexing.BranchUniversalObject
 import io.branch.referral.util.ContentMetadata
 import io.branch.referral.util.LinkProperties
@@ -41,7 +40,6 @@ class BranchLinkGenerator(
 
                 buo.generateShortUrl(context, linkProps) { url, error ->
                     if (error != null) {
-                        Logger.Companion.e("BranchSDK") { "Error generating short url: ${error.message}" }
                         // Fail with the error so caller can handle gracefully
                         cont.resumeWithException(IllegalStateException(error.message))
                     } else if (!url.isNullOrBlank()) {
