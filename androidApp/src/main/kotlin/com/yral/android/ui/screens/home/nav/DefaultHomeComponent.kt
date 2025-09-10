@@ -16,7 +16,7 @@ import com.arkivanov.decompose.value.Value
 import com.yral.android.ui.screens.account.nav.AccountComponent
 import com.yral.android.ui.screens.alertsrequest.nav.AlertsRequestComponent
 import com.yral.android.ui.screens.feed.nav.FeedComponent
-import com.yral.android.ui.screens.leaderboard.nav.LeaderboardComponent
+import com.yral.android.ui.screens.leaderboard.LeaderboardComponent
 import com.yral.android.ui.screens.profile.nav.ProfileComponent
 import com.yral.android.ui.screens.uploadVideo.UploadVideoRootComponent
 import com.yral.shared.libs.routing.routes.api.AppRoute
@@ -139,7 +139,10 @@ internal class DefaultHomeComponent(
         FeedComponent.Companion(componentContext = componentContext)
 
     private fun leaderboardComponent(componentContext: ComponentContext): LeaderboardComponent =
-        LeaderboardComponent.Companion(componentContext = componentContext)
+        LeaderboardComponent.Companion(
+            componentContext = componentContext,
+            snapshot = childSnapshots[Config.Leaderboard] as? LeaderboardComponent.Snapshot,
+        )
 
     private fun uploadVideoComponent(componentContext: ComponentContext): UploadVideoRootComponent =
         UploadVideoRootComponent.Companion(
