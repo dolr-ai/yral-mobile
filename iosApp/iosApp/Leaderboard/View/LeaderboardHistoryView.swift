@@ -17,7 +17,6 @@ struct LeaderboardHistoryView: View {
   @State private var selectedDate = ""
 
   let onDismiss: () -> Void
-  let rowWidth = UIScreen.main.bounds.width - 32
 
   var body: some View {
     VStack(alignment: .leading, spacing: .zero) {
@@ -81,17 +80,17 @@ struct LeaderboardHistoryView: View {
             Text(Constants.position)
               .font(Constants.positionFont)
               .foregroundColor(Constants.positionColour)
-              .frame(width: rowWidth * Constants.positionFactor, alignment: .leading)
+              .frame(width: Constants.rowWidth * Constants.positionFactor, alignment: .leading)
 
             Text(Constants.id)
               .font(Constants.idFont)
               .foregroundColor(Constants.idColour)
-              .frame(width: rowWidth * Constants.idFactor, alignment: .leading)
+              .frame(width: Constants.rowWidth * Constants.idFactor, alignment: .leading)
 
             Text(Constants.totalSats)
               .font(Constants.totalSatsFont)
               .foregroundColor(Constants.totalSatsColour)
-              .frame(width: rowWidth * Constants.totalSatsFactor, alignment: .trailing)
+              .frame(width: Constants.rowWidth * Constants.totalSatsFactor, alignment: .trailing)
           }
           .padding(.bottom, Constants.hstackBottom)
 
@@ -102,7 +101,7 @@ struct LeaderboardHistoryView: View {
                   LeaderboardRowView(
                     leaderboardRow: userRow,
                     isCurrentUser: true,
-                    rowWidth: rowWidth,
+                    rowWidth: Constants.rowWidth,
                     imageURL: viewModel.fetchImageURL(for: userRow.principalID)
                   )
                 }
@@ -111,7 +110,7 @@ struct LeaderboardHistoryView: View {
                   LeaderboardRowView(
                     leaderboardRow: leaderboardRow,
                     isCurrentUser: false,
-                    rowWidth: rowWidth,
+                    rowWidth: Constants.rowWidth,
                     imageURL: viewModel.fetchImageURL(for: leaderboardRow.principalID)
                   )
                 }
@@ -127,7 +126,8 @@ struct LeaderboardHistoryView: View {
         .frame(maxHeight: .infinity, alignment: .top)
       }
     }
-    .padding(Constants.screenPadding)
+    .padding(.horizontal, Constants.screenPadding)
+    .padding(.top, Constants.screenPadding)
     .frame(maxWidth: .infinity, alignment: .leading)
     .frame(maxHeight: .infinity, alignment: .top)
     .background(Constants.screenBackground)
@@ -139,13 +139,19 @@ struct LeaderboardHistoryView: View {
     }
     .overlay(alignment: .center) {
       if showConfetti {
-        LottieView(
-          name: Constants.confetti,
-          loopMode: .playOnce,
-          animationSpeed: .one) {
-            showConfetti = false
-          }
-          .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
+        ForEach(Constants.confettiPositions.indices, id: \.self) { index in
+          LottieView(
+            name: Constants.confetti,
+            loopMode: .playOnce,
+            animationSpeed: .one) {}
+            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.width)
+            .position(
+              x: UIScreen.main.bounds.width * Constants.confettiPositions[index].x,
+              y: UIScreen.main.bounds.height * Constants.confettiPositions[index].y
+            )
+            .allowsHitTesting(false)
+            .id(selectedDate)
+        }
       }
     }
     .onReceive(viewModel.$state) { state in
@@ -162,10 +168,8 @@ struct LeaderboardHistoryView: View {
         showConfetti = false
       }
     }
-    .onAppear {
-      Task {
-        await viewModel.fetchLeaderboardHistory()
-      }
+    .task {
+      await viewModel.fetchLeaderboardHistory()
     }
   }
 
@@ -186,6 +190,7 @@ struct LeaderboardHistoryView: View {
 
 extension LeaderboardHistoryView {
   enum Constants {
+    static let rowWidth = UIScreen.main.bounds.width - 32
     static let confetti = "leaderboard_confetti"
     static let loader = "Yral_Loader"
     static let loaderSize = 24.0
@@ -231,5 +236,13 @@ extension LeaderboardHistoryView {
     static let totalSatsFactor = 0.28
     static let scrollVstackSpacing = 12.0
     static let scrollViewVstackBottom = 40.0
+
+    static let confettiPositions: [CGPoint] = [
+      CGPoint(x: 0.25, y: 0.1),
+      CGPoint(x: 0.75, y: 0.27),
+      CGPoint(x: 0.25, y: 0.44),
+      CGPoint(x: 0.75, y: 0.61),
+      CGPoint(x: 0.25, y: 0.8)
+    ]
   }
 }
