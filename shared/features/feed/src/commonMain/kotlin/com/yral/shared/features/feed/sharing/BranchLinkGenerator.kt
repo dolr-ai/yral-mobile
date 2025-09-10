@@ -32,11 +32,9 @@ class BranchLinkGenerator(
 
                 val linkProps =
                     LinkProperties()
-                        .setChannel(input.channel ?: "")
                         .setFeature(input.feature ?: "")
-                        .addControlParameter("\$android_deeplink_path", input.internalUrl.substringAfter("://"))
-
-                input.fallbackUrl?.let { linkProps.addControlParameter("\$fallback_url", it) }
+                        .addTags(input.tags)
+                        .addControlParameter("\$deeplink_path", input.internalUrl.substringAfter("://"))
 
                 buo.generateShortUrl(context, linkProps) { url, error ->
                     if (error != null) {
@@ -56,4 +54,6 @@ class BranchLinkGenerator(
                 cont.resumeWithException(t)
             }
         }
+
+    private fun LinkProperties.addTags(tags: List<String>) = tags.fold(this) { lp, tag -> lp.addTag(tag) }
 }

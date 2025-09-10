@@ -510,6 +510,7 @@ class FeedViewModel(
     fun onShareClicked(
         feedDetails: FeedDetails,
         message: String,
+        description: String,
     ) {
         viewModelScope.launch {
             // Build internal deep link using UrlBuilder and PostDetailsRoute
@@ -521,7 +522,9 @@ class FeedViewModel(
                         LinkInput(
                             internalUrl = internalUrl,
                             title = message,
-                            description = "Watch on Yral",
+                            description = description,
+                            feature = "share",
+                            tags = listOf("organic", "user_share"),
                             contentImageUrl = feedDetails.thumbnail,
                         ),
                     )
