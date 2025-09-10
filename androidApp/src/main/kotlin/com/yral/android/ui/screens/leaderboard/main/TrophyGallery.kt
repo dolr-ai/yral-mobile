@@ -1,5 +1,8 @@
 package com.yral.android.ui.screens.leaderboard.main
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -8,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -22,7 +26,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.paint
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.painterResource
@@ -58,46 +61,40 @@ fun TrophyGallery(
     selectedMode: LeaderboardMode,
     selectMode: (LeaderboardMode) -> Unit,
     openHistory: () -> Unit,
+    isTrophyVisible: Boolean,
 ) {
-    val leaderboardBG =
-        when (selectedMode) {
-            LeaderboardMode.DAILY -> R.drawable.yellow_leaderboard
-            LeaderboardMode.ALL_TIME -> R.drawable.purple_leaderboard
-        }
     val trophyPaddingTop =
-        if ((selectedMode.showCountDown && countDownMs != null) || isLoading) {
-            28.dp
-        } else {
-            56.dp
+        when {
+            isLoading -> 0.dp
+            selectedMode.showCountDown -> 16.dp
+            !selectedMode.showCountDown -> 50.dp
+            else -> 0.dp
+        }
+    val lottie =
+        when (selectedMode) {
+            LeaderboardMode.DAILY -> R.raw.yellow_rays
+            LeaderboardMode.ALL_TIME -> R.raw.purple_rays
         }
     Box(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .paint(
-                    painter = painterResource(leaderboardBG),
-                    contentScale = ContentScale.FillBounds,
-                ),
+        modifier = Modifier.fillMaxWidth(),
         contentAlignment = Alignment.TopCenter,
     ) {
-        if (leaderboard.isNotEmpty()) {
-            val lottie =
-                when (selectedMode) {
-                    LeaderboardMode.DAILY -> R.raw.yellow_rays
-                    LeaderboardMode.ALL_TIME -> R.raw.purple_rays
-                }
+        AnimatedVisibility(
+            visible = leaderboard.isNotEmpty() && isTrophyVisible,
+            enter = fadeIn(),
+            exit = fadeOut(),
+            modifier = Modifier.matchParentSize(),
+        ) {
             key(lottie) {
                 YralLottieAnimation(
-                    modifier = Modifier.matchParentSize(),
+                    modifier = Modifier.fillMaxSize(),
                     rawRes = lottie,
                     iterations = 1,
-                    contentScale = ContentScale.FillBounds,
+                    contentScale = ContentScale.Crop,
                 )
             }
         }
-        Column(
-            modifier = Modifier.padding(16.dp),
-        ) {
+        Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 23.dp)) {
             LeaderboardModeSelection(selectedMode, selectMode)
             Row {
                 if (selectedMode.showCountDown) {
@@ -122,12 +119,22 @@ fun TrophyGallery(
                     )
                 }
             }
-            if (leaderboard.size > 3) {
-                Spacer(Modifier.height(trophyPaddingTop))
-                TrophyImages(leaderboard)
-                Spacer(Modifier.height(12.dp))
-                TrophyDetails(leaderboard, selectedMode)
-                Spacer(Modifier.height(20.dp))
+            if (selectedMode.showCountDown && countDownMs == null) {
+                Spacer(modifier = Modifier.height(11.dp))
+            }
+            if (!isLoading) {
+                AnimatedVisibility(visible = leaderboard.size > 3 && isTrophyVisible) {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(top = trophyPaddingTop),
+                    ) {
+                        TrophyImages(leaderboard)
+                        TrophyDetails(leaderboard, selectedMode)
+                    }
+                }
             }
         }
     }
