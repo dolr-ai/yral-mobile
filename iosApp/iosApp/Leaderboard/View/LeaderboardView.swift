@@ -51,7 +51,8 @@ struct LeaderboardView: View {
           LottieView(
             name: mode == .daily ? "leaderboard_daily" : "leaderboard_all_time",
             loopMode: .playOnce,
-            animationSpeed: .one) {}
+            animationSpeed: .one,
+            resetProgress: false) {}
             .id(mode)
         )
         .background(
@@ -85,7 +86,7 @@ struct LeaderboardView: View {
       .hapticFeedback(.impact(weight: .light), trigger: mode)
       .overlay(alignment: .center, content: {
         if showLoader {
-          LottieLoaderView(animationName: Constants.loader)
+          LottieLoaderView(animationName: Constants.loader, resetProgess: false)
             .frame(width: Constants.loaderSize, height: Constants.loaderSize)
         }
       })
@@ -95,7 +96,8 @@ struct LeaderboardView: View {
             LottieView(
               name: Constants.confetti,
               loopMode: .playOnce,
-              animationSpeed: .one) {}
+              animationSpeed: .one,
+              resetProgress: false) {}
               .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.width)
               .position(
                 x: UIScreen.main.bounds.width * Constants.confettiPositions[index].x,
