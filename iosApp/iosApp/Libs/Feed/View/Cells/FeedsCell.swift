@@ -579,15 +579,15 @@ extension FeedsCell {
   enum Constants {
     static let stackViewSpacing = 32.0
     static let horizontalMargin = 16.0
-    static let stackViewHeight = 80.0
-    static let stackViewBottom = 110.0
+    static let stackViewHeight = 104.0
+    static let stackViewBottom = 96.0
     static let stackViewBGColor = UIColor.clear
     static let actionButtonFont = YralFont.pt16.semiBold.uiFont
     static let shareButtonImage = UIImage(named: "share_feed")
     static let deleteButtonImage = UIImage(named: "delete_video_profile")
     static let reportButtonImage = UIImage(named: "report_feed")
-    static let actionButtonHeight: CGFloat = 24.0
-    static let actionButtonWidth: CGFloat = 30.0
+    static let actionButtonHeight: CGFloat = 36.0
+    static let actionButtonWidth: CGFloat = 36.0
     static let actionButtonImagePadding = 4.0
     static let actionButtonTitleColor = YralColor.grey50.uiColor
     static let profileInfoLeading = 16.0

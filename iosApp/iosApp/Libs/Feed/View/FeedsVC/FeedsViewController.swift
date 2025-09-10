@@ -434,6 +434,7 @@ class FeedsViewController: UIViewController {
       guard let self = self else { return }
       switch destination {
       case .openVideo(postId: let postId, principal: let principal, canisterId: let canisterID):
+        self.feedsCV.isHidden = true
         self.pendingAnchor = DeepLinkFeedRequest(principalID: principal, postID: postId, canisterID: canisterID ?? "")
         self.handleAnchorIfReady()
       default: break

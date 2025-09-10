@@ -166,6 +166,7 @@ extension FeedsViewController {
         ),
         at: .centeredVertically, animated: false
       )
+      self.feedsCV.isHidden = false
     }
   }
 
