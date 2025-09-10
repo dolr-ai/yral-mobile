@@ -513,8 +513,8 @@ class FeedViewModel(
                     linkGenerator.generateShareLink(
                         LinkInput(
                             internalUrl = internalUrl,
-                            title = "Yral Post",
-                            description = "Check out this post on Yral",
+                            title = messagePrefix,
+                            description = "Watch on Yral",
                             contentImageUrl = feedDetails.thumbnail,
                         ),
                     )
