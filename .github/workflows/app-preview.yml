@@ -70,6 +70,8 @@ jobs:
         run: |
           echo "KEYSTORE_PASSWORD=${{ secrets.ANDROID_ALPHA_SIGNING_SECRET_PASSWORD }}" >> $GITHUB_ENV
           echo "KEY_PASSWORD=${{ secrets.ANDROID_ALPHA_SIGNING_SECRET_PASSWORD }}" >> $GITHUB_ENV
+          echo "YRAL_BRANCH_KEY_TEST=${{ secrets.YRAL_BRANCH_KEY_TEST }}" >> $GITHUB_ENV
+          echo "YRAL_BRANCH_KEY=${{ secrets.YRAL_BRANCH_KEY }}" >> $GITHUB_ENV
 
       - name: Clean project
         run: ./gradlew clean

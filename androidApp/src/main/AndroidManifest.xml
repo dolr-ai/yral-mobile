@@ -11,6 +11,15 @@
 
     <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>
 
+    <queries>
+        <!-- Facebook app for referral data -->
+        <package android:name="com.facebook.katana" />
+        <!-- Instagram app for referral data -->
+        <package android:name="com.instagram.android" />
+        <!-- Facebook Lite app for referral data -->
+        <package android:name="com.facebook.lite" />
+    </queries>
+
     <application
             android:name=".YralApp"
             android:allowBackup="false"

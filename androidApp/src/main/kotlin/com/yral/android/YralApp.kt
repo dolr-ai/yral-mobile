@@ -73,6 +73,7 @@ class YralApp : Application() {
                 Branch.getAutoInstance(this, BuildConfig.BRANCH_KEY)
             }
         }
+        Branch.setFBAppID(this.getString(R.string.facebook_app_id))
     }
 
     private fun setupEmoji() {
