@@ -18,7 +18,7 @@ struct LeaderboardRowResponse: Identifiable {
 struct LeaderboardResponse {
   let userRow: LeaderboardRowResponse?
   let topRows: [LeaderboardRowResponse]
-  let timeLeftInMs: Int?
+  var timeLeftInMs: Int?
   let date: String?
 }
 
