@@ -134,7 +134,7 @@ struct LeaderboardHistoryView: View {
     .hapticFeedback(.impact(weight: .light), trigger: selectedDate)
     .overlay(alignment: .center) {
       if showLoader {
-        LottieLoaderView(animationName: Constants.loader)
+        LottieLoaderView(animationName: Constants.loader, resetProgess: false)
           .frame(width: Constants.loaderSize, height: Constants.loaderSize)
       }
     }
@@ -144,7 +144,8 @@ struct LeaderboardHistoryView: View {
           LottieView(
             name: Constants.confetti,
             loopMode: .playOnce,
-            animationSpeed: .one) {}
+            animationSpeed: .one,
+            resetProgress: false) {}
             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.width)
             .position(
               x: UIScreen.main.bounds.width * Constants.confettiPositions[index].x,
