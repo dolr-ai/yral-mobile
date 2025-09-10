@@ -68,6 +68,7 @@
     <string name="daily_wins">Daily Wins</string>
     <string name="all_wins">All Wins</string>
     <string name="end_in">Ends %s</string>
+    <string name="weekly_wins">Weekly Wins</string>
 
     <string name="scroll_to_next_video">Scroll To Next Video</string>
 

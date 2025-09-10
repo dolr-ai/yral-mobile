@@ -1,0 +1,230 @@
+package com.yral.android.ui.screens.leaderboard.main
+
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import com.yral.android.R
+import com.yral.android.ui.design.LocalAppTopography
+import com.yral.android.ui.design.YralColors
+import com.yral.android.ui.screens.leaderboard.LeaderboardRow
+import com.yral.android.ui.screens.leaderboard.LeaderboardTableHeader
+import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.PURPLE_BRUSH
+import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.YELLOW_BRUSH
+import com.yral.android.ui.widgets.YralLoader
+import com.yral.android.ui.widgets.YralLottieAnimation
+import com.yral.shared.features.game.data.models.LeaderboardMode
+import com.yral.shared.features.game.viewmodel.LeaderBoardState
+import com.yral.shared.features.game.viewmodel.LeaderBoardViewModel
+import org.koin.compose.viewmodel.koinViewModel
+
+@Suppress("LongMethod", "UnusedParameter")
+@Composable
+fun LeaderboardMainScreen(
+    component: LeaderboardMainComponent,
+    modifier: Modifier = Modifier,
+    viewModel: LeaderBoardViewModel = koinViewModel(),
+) {
+    val state by viewModel.state.collectAsState()
+    var showConfetti by remember(state.isCurrentUserInTop) { mutableStateOf(state.isCurrentUserInTop) }
+    LaunchedEffect(Unit) {
+        viewModel.leaderBoardTelemetry.leaderboardPageViewed()
+        viewModel.loadData()
+    }
+
+    val listState = rememberLazyListState()
+    var isTrophyVisible by remember { mutableStateOf(false) }
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.canScrollBackward }
+            .collect { canScrollBackward ->
+                isTrophyVisible = !canScrollBackward
+            }
+    }
+    val leaderboardBG =
+        when (state.selectedMode) {
+            LeaderboardMode.DAILY -> R.drawable.yellow_leaderboard
+            LeaderboardMode.ALL_TIME -> R.drawable.purple_leaderboard
+        }
+    Box(modifier = modifier) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            state = listState,
+        ) {
+            stickyHeader {
+                LeaderboardHeader(
+                    state = state,
+                    component = component,
+                    isTrophyVisible = isTrophyVisible,
+                    viewModel = viewModel,
+                    leaderboardBG = leaderboardBG,
+                )
+            }
+            if (!state.isLoading && state.error == null) {
+                // Show current user first if available
+                state.currentUser?.let { user ->
+                    item {
+                        Column(
+                            modifier =
+                                Modifier
+                                    .background(MaterialTheme.colorScheme.primaryContainer)
+                                    .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 4.dp),
+                        ) {
+                            LeaderboardRow(
+                                position = user.position,
+                                userPrincipalId = user.userPrincipalId,
+                                profileImageUrl = user.profileImage,
+                                wins = user.wins,
+                                isCurrentUser = true,
+                                decorateCurrentUser = true,
+                            )
+                        }
+                    }
+                }
+
+                // Leaderboard items
+                items(state.leaderboard) { item ->
+                    Column(
+                        modifier =
+                            Modifier
+                                .background(MaterialTheme.colorScheme.primaryContainer)
+                                .padding(start = 16.dp, end = 16.dp, top = 8.dp),
+                    ) {
+                        LeaderboardRow(
+                            position = item.position,
+                            userPrincipalId = item.userPrincipalId,
+                            profileImageUrl = item.profileImage,
+                            wins = item.wins,
+                            isCurrentUser = viewModel.isCurrentUser(item.userPrincipalId),
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+                }
+
+                // Bottom padding
+                item { Spacer(modifier = Modifier.height(68.dp)) }
+            }
+            if (!state.isLoading && state.error != null) {
+                item {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().padding(top = 24.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = state.error ?: "",
+                            style = LocalAppTopography.current.baseMedium,
+                            color = YralColors.Neutral500,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+                }
+            }
+        }
+        if (state.isLoading) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+            ) {
+                YralLoader()
+            }
+        }
+        if (showConfetti) {
+            YralLottieAnimation(
+                rawRes = R.raw.golden_confetti,
+                modifier = Modifier.fillMaxSize().background(YralColors.ScrimColorLight),
+                iterations = 1,
+                onAnimationComplete = { showConfetti = false },
+            )
+        }
+    }
+}
+
+@Composable
+private fun LeaderboardHeader(
+    state: LeaderBoardState,
+    component: LeaderboardMainComponent,
+    isTrophyVisible: Boolean,
+    viewModel: LeaderBoardViewModel,
+    leaderboardBG: Int,
+) {
+    val brushColors =
+        when (state.selectedMode) {
+            LeaderboardMode.DAILY -> YELLOW_BRUSH
+            LeaderboardMode.ALL_TIME -> PURPLE_BRUSH
+        }
+    Box {
+        Image(
+            painter = painterResource(leaderboardBG),
+            contentDescription = "",
+            contentScale = ContentScale.Crop,
+            alignment = Alignment.TopCenter,
+            modifier = Modifier.matchParentSize(),
+        )
+        Box(
+            modifier =
+                Modifier
+                    .matchParentSize()
+                    .background(Brush.verticalGradient(colors = brushColors)),
+        )
+        Column {
+            TrophyGallery(
+                isLoading = state.isLoading,
+                leaderboard = if (state.isLoading) emptyList() else state.leaderboard,
+                selectedMode = state.selectedMode,
+                selectMode = { viewModel.selectMode(it) },
+                countDownMs = state.countDownMs,
+                blinkCountDown = state.blinkCountDown,
+                openHistory = { component.openDailyHistory() },
+                isTrophyVisible = isTrophyVisible,
+            )
+            if (!state.isLoading) {
+                LeaderboardTableHeader()
+            }
+        }
+    }
+}
+
+@Suppress("MagicNumber")
+object LeaderboardMainScreenConstants {
+    const val POSITION_TEXT_WEIGHT = 0.17f
+    const val USER_DETAIL_WEIGHT = 0.55f
+    const val COIN_BALANCE_WEIGHT = 0.28f
+    const val MAX_CHAR_OF_NAME = 12
+    const val COUNT_DOWN_BG_ALPHA = 0.8f
+    const val COUNT_DOWN_ANIMATION_DURATION = 1000
+    val YELLOW_BRUSH =
+        listOf(
+            Color(0x00FFC842).copy(alpha = 0f),
+            Color(0xFFF6B517).copy(alpha = 0.7f),
+        )
+    val PURPLE_BRUSH =
+        listOf(
+            Color(0x00706EBB).copy(alpha = 0f),
+            Color(0xFF7573BD).copy(alpha = 0.7f),
+        )
+}

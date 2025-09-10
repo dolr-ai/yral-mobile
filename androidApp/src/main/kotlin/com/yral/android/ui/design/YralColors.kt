@@ -3,6 +3,8 @@
 package com.yral.android.ui.design
 
 import androidx.compose.ui.graphics.Color
+import com.yral.android.ui.design.YralColors.Grey50
+import kotlin.jvm.java
 
 object YralColors {
     val PrimaryContainer: Color = Color(0xFF0A0A0A)
@@ -38,6 +40,7 @@ object YralColors {
     val ShadowAmbientColor: Color = Color(0x1C8377C6)
     val ScrimColor: Color = Color(0xE5000000)
     val ScrimColorLight: Color = Color(0xCC000000)
+    val ScrimColorIcon: Color = Color(0xCC0A0A0A)
 
     val ButtonBorderColor: Color = Color(0xFFE0E0E9)
 
@@ -57,6 +60,7 @@ object YralColors {
 
     val Yellow200: Color = Color(0xFFFFC33A)
     val Yellow400: Color = Color(0xFF2C2310)
+    val Yellow300: Color = Color(0xFFB38929)
     val Yellow100: Color = Color(0xFFFFDC8D)
     val PrimaryYellow: Color = Color(0xFFF9EA0E)
 
