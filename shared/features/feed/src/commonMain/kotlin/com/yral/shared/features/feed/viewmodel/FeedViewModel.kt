@@ -1,10 +1,13 @@
 package com.yral.shared.features.feed.viewmodel
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
+import com.github.michaelbull.result.coroutines.runSuspendCatching
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.analytics.events.CtaType
+import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.utils.processFirstNSuspendFlow
 import com.yral.shared.crashlytics.core.CrashlyticsManager
@@ -19,9 +22,15 @@ import com.yral.shared.features.feed.domain.useCases.FetchMoreFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.GetInitialFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.ReportRequestParams
 import com.yral.shared.features.feed.domain.useCases.ReportVideoUseCase
+import com.yral.shared.features.feed.sharing.LinkGenerator
+import com.yral.shared.features.feed.sharing.LinkInput
+import com.yral.shared.features.feed.sharing.ShareService
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
+import com.yral.shared.libs.routing.deeplink.engine.UrlBuilder
+import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -36,6 +45,9 @@ class FeedViewModel(
     private val crashlyticsManager: CrashlyticsManager,
     private val feedTelemetry: FeedTelemetry,
     authClientFactory: AuthClientFactory,
+    private val shareService: ShareService,
+    private val urlBuilder: UrlBuilder,
+    private val linkGenerator: LinkGenerator,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.disk)
 
@@ -56,6 +68,7 @@ class FeedViewModel(
         private const val FEEDS_PAGE_SIZE = 10
         private const val SUFFICIENT_NEW_REQUIRED = 10
         const val SIGN_UP_PAGE = 9
+        private const val PAGER_STATE_REFRESH_BUFFER_MS = 100L
     }
 
     private val _state = MutableStateFlow(FeedState())
@@ -93,6 +106,97 @@ class FeedViewModel(
                     }
             }
         }
+    }
+
+    /**
+     * Call this when app is opened via a deeplink to a specific video.
+     * The video identified by [postId] and [canisterId] will be fetched and
+     * shown first to the user (prepended to the existing feed), followed by the normal feed.
+     * This method is idempotent per ViewModel instance.
+     */
+    fun showDeeplinkedVideoFirst(
+        postId: String,
+        canisterId: String,
+    ) {
+        coroutineScope.launch {
+            // If details already exist, move to front and return; else fetch and show.
+            if (tryShowExistingDeeplink(postId, canisterId)) return@launch
+            fetchAndShowDeeplink(postId, canisterId)
+        }
+    }
+
+    private suspend fun tryShowExistingDeeplink(
+        postId: String,
+        canisterId: String,
+    ): Boolean {
+        // currently setting currentPageOfFeed to 0 does not reset the position and requires
+        // changes to pager state handling. Setting fetching to true kinda recreates the Pager
+        setDeeplinkFetching(true)
+        delay(PAGER_STATE_REFRESH_BUFFER_MS)
+
+        val existingDetail =
+            _state.value.feedDetails.firstOrNull {
+                it.postID == postId && it.canisterID == canisterId
+            }
+        if (existingDetail != null) {
+            _state.update { currentState ->
+                addDeeplinkData(currentState, existingDetail)
+            }
+            return true
+        }
+        setDeeplinkFetching(true)
+        return false
+    }
+
+    private suspend fun fetchAndShowDeeplink(
+        postId: String,
+        canisterId: String,
+    ) {
+        // We only need canisterId and postId for fetching details.
+        // Other Post fields are not used by the underlying data source for this call.
+        val post =
+            Post(
+                canisterID = canisterId,
+                publisherUserId = "",
+                postID = postId,
+                videoID = "",
+                nsfwProbability = null,
+            )
+
+        setDeeplinkFetching(true)
+        requiredUseCases.fetchFeedDetailsUseCase
+            .invoke(post)
+            .onSuccess { detail ->
+                _state.update { currentState ->
+                    addDeeplinkData(currentState, detail)
+                }
+            }.onFailure { throwable ->
+                Logger.e(throwable) {
+                    "Failed to fetch deeplinked video details for postId=$postId canisterId=$canisterId"
+                }
+                setDeeplinkFetching(false)
+            }
+    }
+
+    private fun addDeeplinkData(
+        currentState: FeedState,
+        details: FeedDetails,
+    ): FeedState {
+        // Remove existing occurrence and insert at current page index
+        val filtered = currentState.feedDetails.filterNot { it.videoID == details.videoID }
+        val targetIndex = currentState.currentPageOfFeed.coerceIn(0, filtered.size)
+        val updatedFeedDetails =
+            filtered
+                .toMutableList()
+                .apply {
+                    add(targetIndex, details)
+                }.toList()
+        return currentState.copy(
+            feedDetails = updatedFeedDetails,
+            currentPageOfFeed = targetIndex,
+            videoData = VideoData(),
+            isDeeplinkFetching = false,
+        )
     }
 
     private suspend fun filterVotedAndFetchDetails(posts: List<Post>): Int {
@@ -330,8 +434,12 @@ class FeedViewModel(
         }
     }
 
-    private fun setLoading(isLoading: Boolean) {
-        _state.update { it.copy(isLoading = isLoading) }
+    private fun setReporting(isReporting: Boolean) {
+        _state.update { it.copy(isReporting = isReporting) }
+    }
+
+    private fun setDeeplinkFetching(isFetching: Boolean) {
+        _state.update { it.copy(isDeeplinkFetching = isFetching) }
     }
 
     fun reportVideo(
@@ -341,7 +449,7 @@ class FeedViewModel(
     ) {
         coroutineScope.launch {
             val currentFeed = _state.value.feedDetails[pageNo]
-            setLoading(true)
+            setReporting(true)
             requiredUseCases.reportVideoUseCase
                 .invoke(
                     parameter =
@@ -353,7 +461,7 @@ class FeedViewModel(
                             principal = currentFeed.principalID,
                         ),
                 ).onSuccess {
-                    setLoading(false)
+                    setReporting(false)
                     feedTelemetry.videoReportedSuccessfully(currentFeed, reason)
                     toggleReportSheet(false, pageNo)
                     _state.update { currentState ->
@@ -377,7 +485,7 @@ class FeedViewModel(
                         )
                     }
                 }.onFailure {
-                    setLoading(false)
+                    setReporting(false)
                     toggleReportSheet(true, pageNo)
                 }
         }
@@ -397,6 +505,36 @@ class FeedViewModel(
             sheetState = ReportSheetState.Open(pageNo)
         }
         _state.update { it.copy(reportSheetState = sheetState) }
+    }
+
+    fun onShareClicked(
+        feedDetails: FeedDetails,
+        message: String,
+    ) {
+        viewModelScope.launch {
+            // Build internal deep link using UrlBuilder and PostDetailsRoute
+            val route = PostDetailsRoute(canisterId = feedDetails.canisterID, postId = feedDetails.postID)
+            val internalUrl = urlBuilder.build(route) ?: feedDetails.url
+            runSuspendCatching {
+                val link =
+                    linkGenerator.generateShareLink(
+                        LinkInput(
+                            internalUrl = internalUrl,
+                            title = message,
+                            description = "Watch on Yral",
+                            contentImageUrl = feedDetails.thumbnail,
+                        ),
+                    )
+                val text = "$message $link"
+                shareService.shareImageWithText(
+                    imageUrl = feedDetails.thumbnail,
+                    text = text,
+                )
+            }.onFailure {
+                Logger.e(FeedViewModel::class.simpleName!!, it) { "Failed to share post" }
+                crashlyticsManager.recordException(YralException(it))
+            }
+        }
     }
 
     fun registerTrace(
@@ -459,7 +597,8 @@ data class FeedState(
     val isPostDescriptionExpanded: Boolean = false,
     val videoData: VideoData = VideoData(),
     val videoTracing: List<Pair<String, String>> = emptyList(),
-    val isLoading: Boolean = false,
+    val isReporting: Boolean = false,
+    val isDeeplinkFetching: Boolean = false,
     val reportSheetState: ReportSheetState = ReportSheetState.Closed,
     val showSignupFailedSheet: Boolean = false,
     val overlayType: OverlayType = OverlayType.DEFAULT,

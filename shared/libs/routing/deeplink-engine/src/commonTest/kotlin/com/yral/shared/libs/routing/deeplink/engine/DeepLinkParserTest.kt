@@ -1,5 +1,6 @@
 package com.yral.shared.libs.routing.deeplink.engine
 
+import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
 import com.yral.shared.libs.routing.routes.api.TestHomeRoute
 import com.yral.shared.libs.routing.routes.api.TestInternalRoute
 import com.yral.shared.libs.routing.routes.api.TestProductRoute
@@ -16,6 +17,7 @@ class DeepLinkParserTest {
             route<TestUserRoute>("/user/{userId}")
             route<TestHomeRoute>("/")
             route<TestInternalRoute>("/internal/{internalId}")
+            route<PostDetailsRoute>(PostDetailsRoute.PATH)
         }
 
     private val parser = DeepLinkParser(routingTable)
@@ -26,6 +28,25 @@ class DeepLinkParserTest {
 
         assertTrue(result is TestProductRoute)
         assertEquals("123", result.productId)
+    }
+
+    @Test
+    fun testParseValidPostDetailsDeepLink() {
+        val result = parser.parse("https://example.com/post/details/can-1/123")
+
+        println("result: $result")
+
+        assertTrue(result is PostDetailsRoute)
+        assertEquals("can-1", result.canisterId)
+        assertEquals("123", result.postId)
+    }
+
+    @Test
+    fun testParseInvalidPostDetailsUrlReturnsUnknown() {
+        // Missing canisterId segment: only one segment after /details/
+        val result = parser.parse("https://example.com/post/details/123")
+
+        assertTrue(result is Unknown)
     }
 
     @Test
@@ -112,6 +133,15 @@ class DeepLinkParserTest {
 
             else -> throw AssertionError("Expected TestProductRoute, got: $result (${result::class.simpleName})")
         }
+    }
+
+    @Test
+    fun testParseFromParameterMapPostDetailsMissingCanisterIdReturnsUnknown() {
+        val routeId = PostDetailsRoute.serializer().descriptor.serialName
+        val params = mapOf("route_id" to routeId, "postId" to "999")
+        val result = parser.parse(params)
+
+        assertTrue(result is Unknown)
     }
 
     @Test
