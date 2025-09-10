@@ -238,6 +238,8 @@
 		10FEA9172E6FF216000103EB /* LeaderboardHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10FEA9152E6FF216000103EB /* LeaderboardHistoryView.swift */; };
 		10FEA91C2E705598000103EB /* leaderboard_confetti.json in Resources */ = {isa = PBXBuildFile; fileRef = 10FEA91B2E705598000103EB /* leaderboard_confetti.json */; };
 		10FEA91D2E705598000103EB /* leaderboard_confetti.json in Resources */ = {isa = PBXBuildFile; fileRef = 10FEA91B2E705598000103EB /* leaderboard_confetti.json */; };
+		10FEA9882E720AC5000103EB /* SizeReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10FEA9872E720AC1000103EB /* SizeReader.swift */; };
+		10FEA9892E720AC5000103EB /* SizeReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10FEA9872E720AC1000103EB /* SizeReader.swift */; };
 		2152FB042600AC8F00CF470E /* IosApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* IosApp.swift */; };
 		63997C25DF21E5569B7BCFF5 /* Pods_Yral_Staging.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D57B68D9945A635CA2480172 /* Pods_Yral_Staging.framework */; };
 		7555FF83242A565900829871 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* ContentView.swift */; };
@@ -838,6 +840,7 @@
 		10FEA9122E6FEFE9000103EB /* LeaderboardHistoryViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeaderboardHistoryViewModel.swift; sourceTree = "<group>"; };
 		10FEA9152E6FF216000103EB /* LeaderboardHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeaderboardHistoryView.swift; sourceTree = "<group>"; };
 		10FEA91B2E705598000103EB /* leaderboard_confetti.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = leaderboard_confetti.json; sourceTree = "<group>"; };
+		10FEA9872E720AC1000103EB /* SizeReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SizeReader.swift; sourceTree = "<group>"; };
 		2152FB032600AC8F00CF470E /* IosApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IosApp.swift; sourceTree = "<group>"; };
 		74294ECFE2C99B0DF03151D3 /* Pods-YralTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-YralTests.debug.xcconfig"; path = "Target Support Files/Pods-YralTests/Pods-YralTests.debug.xcconfig"; sourceTree = "<group>"; };
 		7555FF7B242A565900829871 /* Yral.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Yral.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -1771,6 +1774,7 @@
 		AC26CA662D806501006ADA75 /* Utils */ = {
 			isa = PBXGroup;
 			children = (
+				10FEA9872E720AC1000103EB /* SizeReader.swift */,
 				100FCD6E2E659CDE00E9A02D /* ViewControllerWrapper.swift */,
 				10C1B3F12E57117500CFC41B /* EventBus.swift */,
 				AC04D3012E059E990055C4AA /* AppCheckProviderFactory.swift */,
@@ -3422,6 +3426,7 @@
 				AC32E4502D296628001DDA43 /* AccountUseCase.swift in Sources */,
 				ACCA778F2DE4C1A2005BC0FA /* EventBuffer.swift in Sources */,
 				ACEBF7EF2D6F847300B594A0 /* ToastManager.swift in Sources */,
+				10FEA9882E720AC5000103EB /* SizeReader.swift in Sources */,
 				ACAA4D6D2DDCB257001092A6 /* FirebasePerformanceMonitor.swift in Sources */,
 				1069861B2E530A01005BE0D4 /* CreateAIVideoViewModel.swift in Sources */,
 				ACDD23E72D8B1B5F00AB0DAF /* ProfileVideoRequest.swift in Sources */,
@@ -3726,6 +3731,7 @@
 				AC32E44F2D296628001DDA43 /* AccountUseCase.swift in Sources */,
 				ACCA778E2DE4C1A2005BC0FA /* EventBuffer.swift in Sources */,
 				ACEBF7F02D6F847300B594A0 /* ToastManager.swift in Sources */,
+				10FEA9892E720AC5000103EB /* SizeReader.swift in Sources */,
 				ACAA4D6C2DDCB257001092A6 /* FirebasePerformanceMonitor.swift in Sources */,
 				1069861A2E530A01005BE0D4 /* CreateAIVideoViewModel.swift in Sources */,
 				ACDD23E82D8B1B5F00AB0DAF /* ProfileVideoRequest.swift in Sources */,
