@@ -1,5 +1,6 @@
 package com.yral.shared.libs.routing.deeplink.engine
 
+import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
 import com.yral.shared.libs.routing.routes.api.TestHomeRoute
 import com.yral.shared.libs.routing.routes.api.TestInternalRoute
 import com.yral.shared.libs.routing.routes.api.TestProductRoute
@@ -16,6 +17,7 @@ class UrlBuilderTest {
             route<TestUserRoute>("/user/{userId}")
             route<TestHomeRoute>("/")
             route<TestInternalRoute>("/internal/{internalId}")
+            route<PostDetailsRoute>(PostDetailsRoute.PATH)
         }
 
     private val urlBuilder =
@@ -74,6 +76,21 @@ class UrlBuilderTest {
     }
 
     @Test
+    fun testBuildUrlForPostDetails() {
+        val customBuilder =
+            UrlBuilder(
+                routingTable = routingTable,
+                scheme = "yralm",
+                host = "",
+            )
+
+        val route = PostDetailsRoute(canisterId = "can-123", postId = "789")
+        val url = customBuilder.build(route)
+
+        assertEquals("yralm://post/details/can-123/789", url)
+    }
+
+    @Test
     fun testBuildUrlWithLeadingSlashPatternAndEmptyHost() {
         // Even if the pattern has a leading slash, hostless deep link should treat
         // the first path segment as the authority when scheme is custom and host is blank
@@ -113,7 +130,8 @@ class UrlBuilderTest {
         val route = TestProductRoute("")
         val url = urlBuilder.build(route)
 
-        assertEquals("https://example.com/product", url)
+        // productId is a required path parameter; URL cannot be constructed
+        assertNull(url)
     }
 
     @Test
@@ -151,6 +169,22 @@ class UrlBuilderTest {
     }
 
     @Test
+    fun testBuildUrlForPostDetailsUsesPathParams() {
+        // PostDetails uses required path parameters: canisterId and postId
+        val customBuilder =
+            UrlBuilder(
+                routingTable = routingTable,
+                scheme = "yralm",
+                host = "",
+            )
+
+        val route = PostDetailsRoute(canisterId = "cid-123", postId = "789")
+        val url = customBuilder.build(route)
+
+        assertEquals("yralm://post/details/cid-123/789", url)
+    }
+
+    @Test
     fun testBuildUrlFiltersBlankAndNullQueryParams() {
         // When no query template is present, remaining non-blank params are included.
         // Blank ("") and literal "null" should be filtered out.
@@ -162,5 +196,18 @@ class UrlBuilderTest {
         // Literal "null"
         val literalNullCategoryUrl = urlBuilder.build(TestProductRoute(productId = "123", category = "null"))
         assertEquals("https://example.com/product/123", literalNullCategoryUrl)
+    }
+
+    @Test
+    fun testBuildUrlFailsWhenPostDetailsPathParamBlank() {
+        val customBuilder =
+            UrlBuilder(
+                routingTable = routingTable,
+                scheme = "yralm",
+                host = "",
+            )
+        val url = customBuilder.build(PostDetailsRoute(canisterId = "", postId = "999"))
+        // canisterId is required in the path -> URL cannot be constructed
+        assertNull(url)
     }
 }

@@ -7,6 +7,7 @@ import com.yral.shared.libs.routing.deeplink.engine.RoutingTable
 import com.yral.shared.libs.routing.deeplink.engine.UrlBuilder
 import com.yral.shared.libs.routing.deeplink.engine.buildRoutingTable
 import com.yral.shared.libs.routing.routes.api.Home
+import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
 import com.yral.shared.libs.routing.routes.api.TestProductRoute
 import com.yral.shared.libs.routing.routes.api.TestUserRoute
 import com.yral.shared.libs.routing.routes.api.Unknown
@@ -20,6 +21,8 @@ val routingModule =
                 // Core app routes
                 route<Home>(Home.PATH)
                 route<Unknown>(Unknown.PATH)
+                // Feed / Post routes
+                route<PostDetailsRoute>(PostDetailsRoute.PATH)
 
                 // Test routes (for development/testing)
                 route<TestProductRoute>(TestProductRoute.PATH)

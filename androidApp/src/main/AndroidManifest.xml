@@ -105,6 +105,14 @@
             android:resource="@drawable/ic_stat_ic_notification" />
 
         <meta-data android:name="io.branch.sdk.TestMode" android:value="@bool/branch_test_mode" />
-
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 </manifest> 

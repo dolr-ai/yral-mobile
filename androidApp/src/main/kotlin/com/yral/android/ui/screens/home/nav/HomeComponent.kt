@@ -10,6 +10,7 @@ import com.yral.android.ui.screens.feed.nav.FeedComponent
 import com.yral.android.ui.screens.leaderboard.nav.LeaderboardComponent
 import com.yral.android.ui.screens.profile.nav.ProfileComponent
 import com.yral.android.ui.screens.uploadVideo.UploadVideoRootComponent
+import com.yral.shared.libs.routing.routes.api.AppRoute
 
 abstract class HomeComponent {
     abstract val stack: Value<ChildStack<*, Child>>
@@ -20,7 +21,10 @@ abstract class HomeComponent {
     abstract fun onProfileTabClick()
     abstract fun onAccountTabClick()
 
+    @Deprecated("use onNavigationRequest")
     abstract fun handleNavigation(destination: String)
+
+    abstract fun onNavigationRequest(appRoute: AppRoute)
 
     sealed class Child {
         class Feed(

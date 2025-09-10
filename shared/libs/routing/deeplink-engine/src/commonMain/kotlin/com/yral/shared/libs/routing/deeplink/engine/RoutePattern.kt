@@ -69,8 +69,9 @@ class RoutePattern(
      * Build both path segments and query parameters from the given params
      * according to this pattern's path and optional query template.
      *
-     * - Path placeholders are substituted from [params]. Missing values are
-     *   treated as empty and omitted from the resulting segments.
+     * - Path placeholders are substituted from [params]. All path parameters
+     *   are required and must be non-blank; if any are missing or blank, the
+     *   build will fail (callers should return null).
      * - Query parameters:
      *   - If the pattern defines a query template, only keys present in the
      *     template are included. If the template maps a key to a different
@@ -80,6 +81,15 @@ class RoutePattern(
      * - Blank strings and the literal string "null" are filtered out.
      */
     fun buildComponents(params: Map<String, String>): BuiltComponents {
+        // Enforce that all path placeholder parameters are present and non-blank
+        val requiredKeys = spec.pathTokens.filterIsInstance<PathToken.Param>().map { it.name }
+        val missingKey =
+            requiredKeys.firstOrNull { key ->
+                val v = params[key]
+                v.isNullOrBlank() || v == "null"
+            }
+        require(missingKey == null) { "Missing required path parameter: $missingKey" }
+
         val builtPath = buildPathSegments(params)
         val usedPathKeys = builtPath.usedKeys
 

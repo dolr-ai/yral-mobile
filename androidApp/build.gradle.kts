@@ -139,6 +139,7 @@ dependencies {
     implementation(projects.shared.libs.arch)
     implementation(projects.shared.libs.featureFlag)
     implementation(projects.shared.rust.service)
+    implementation(projects.shared.libs.routing.deeplinkEngine)
 }
 
 afterEvaluate {
