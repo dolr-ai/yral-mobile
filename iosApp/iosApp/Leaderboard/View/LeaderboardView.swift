@@ -20,8 +20,13 @@ struct LeaderboardView: View {
   @State private var showLoader = true
   @State private var showConfetti = false
   @State private var mode: LeaderboardMode = .daily
+  @State private var timerShadowColor = Color.clear
+  @State private var timerTextColor = YralColor.grey50.swiftUIColor
+  @State private var timerImage = Image("leaderboard_clock")
+  @State private var timerText = ""
 
   let rowWidth = UIScreen.main.bounds.width - 32
+  let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
   var body: some View {
     ZStack {
@@ -84,9 +89,31 @@ struct LeaderboardView: View {
       case .success:
         showLoader = false
         showConfetti = shouldShowConfetti()
+        timerText = formatMillisecondsToHMS(
+          viewModel.leaderboardResponse?.timeLeftInMs ?? 0
+        )
       default:
         showLoader = false
         showConfetti = false
+      }
+    })
+    .onReceive(timer, perform: { _ in
+      if mode == .daily {
+        if timerShadowColor == Color.clear || timerShadowColor == Color.white {
+          timerTextColor = YralColor.grey50.swiftUIColor
+          timerImage = Image("leaderboard_clock")
+          timerShadowColor = Color(hex: "E2017B")
+        } else {
+          timerTextColor = YralColor.primary300.swiftUIColor.opacity(0.6)
+          timerImage = Image("leaderboard_clock_pink")
+          timerShadowColor = Color.white
+        }
+
+        if let timeLeftInMs = viewModel.leaderboardResponse?.timeLeftInMs, timeLeftInMs > 0 {
+          let newTimeLeftInMs = timeLeftInMs - 1000
+          viewModel.leaderboardResponse?.timeLeftInMs = newTimeLeftInMs
+          timerText = formatMillisecondsToHMS(newTimeLeftInMs)
+        }
       }
     })
     .onAppear {
@@ -152,20 +179,26 @@ struct LeaderboardView: View {
       Spacer(minLength: .zero)
 
       HStack(spacing: 4) {
-        Image("leaderboard_clock")
+        timerImage
           .resizable()
           .frame(width: 18, height: 18)
 
-        Text("Ends \(viewModel.leaderboardResponse?.timeLeftInMs ?? 0)")
+        Text("Ends \(timerText)")
           .font(YralFont.pt12.bold.swiftUIFont)
-          .foregroundColor(YralColor.grey50.swiftUIColor)
+          .foregroundColor(timerTextColor)
       }
       .padding(.vertical, 4)
       .padding(.leading, 4)
       .padding(.trailing, 12)
       .background(
-        RoundedRectangle(cornerRadius: 12)
+        RoundedRectangle(cornerRadius: 13)
           .fill(YralColor.grey950.swiftUIColor.opacity(0.8))
+      )
+      .shadow(
+        color: timerShadowColor,
+        radius: 20.3,
+        x: 0,
+        y: 0
       )
       .offset(x: 36)
 
@@ -312,6 +345,15 @@ struct LeaderboardView: View {
     }
 
     return false
+  }
+
+  func formatMillisecondsToHMS(_ milliseconds: Int) -> String {
+    let totalSeconds = milliseconds / 1000
+    let hours = totalSeconds / 3600
+    let minutes = (totalSeconds % 3600) / 60
+    let seconds = totalSeconds % 60
+
+    return String(format: "%02d : %02d : %02d", hours, minutes, seconds)
   }
 }
 // swiftlint: enable type_body_length
