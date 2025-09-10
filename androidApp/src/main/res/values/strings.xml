@@ -51,6 +51,7 @@
     <string name="learn_more">Learn More</string>
     <string name="about_game">About the Game</string>
     <string name="msg_feed_video_share">Check out this video on Yral 👀 Where watching = fun + games! ⚡ Try it 👉</string>
+    <string name="msg_feed_video_share_desc">Watch on Yral</string>
 
     <!-- Error Messages -->
     <string name="error_timeout_title">Oops!</string>

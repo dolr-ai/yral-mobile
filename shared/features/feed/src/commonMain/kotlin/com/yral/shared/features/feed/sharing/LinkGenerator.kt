@@ -15,9 +15,8 @@ interface LinkGenerator {
  */
 data class LinkInput(
     val internalUrl: String,
-    val channel: String? = null,
     val feature: String? = null,
-    val fallbackUrl: String? = null,
+    val tags: List<String> = emptyList(),
     val title: String? = null,
     val description: String? = null,
     val contentImageUrl: String? = null,
