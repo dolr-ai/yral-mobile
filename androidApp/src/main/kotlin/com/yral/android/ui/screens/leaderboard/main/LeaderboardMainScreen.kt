@@ -2,6 +2,7 @@ package com.yral.android.ui.screens.leaderboard.main
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -18,15 +20,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -35,6 +42,10 @@ import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.leaderboard.LeaderboardRow
 import com.yral.android.ui.screens.leaderboard.LeaderboardTableHeader
+import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.CONFETTI_ITERATIONS
+import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.CONFETTI_SCALE
+import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.CONFETTI_SIZE_FACTOR
+import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.NO_OF_CONFETTI
 import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.PURPLE_BRUSH
 import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.YELLOW_BRUSH
 import com.yral.android.ui.widgets.YralLoader
@@ -153,14 +164,7 @@ fun LeaderboardMainScreen(
                 YralLoader()
             }
         }
-        if (showConfetti) {
-            YralLottieAnimation(
-                rawRes = R.raw.golden_confetti,
-                modifier = Modifier.fillMaxSize().background(YralColors.ScrimColorLight),
-                iterations = 1,
-                onAnimationComplete = { showConfetti = false },
-            )
-        }
+        LeaderboardConfetti(showConfetti) { showConfetti = false }
     }
 }
 
@@ -209,6 +213,46 @@ private fun LeaderboardHeader(
     }
 }
 
+@Composable
+fun LeaderboardConfetti(
+    showConfetti: Boolean,
+    confettiAnimationComplete: () -> Unit,
+) {
+    if (showConfetti) {
+        var count by remember { mutableIntStateOf(0) }
+        Column(
+            modifier = Modifier.fillMaxSize().padding(16.dp),
+            verticalArrangement = Arrangement.SpaceEvenly,
+        ) {
+            val size = LocalWindowInfo.current.containerSize.width / CONFETTI_SIZE_FACTOR
+            val density = LocalDensity.current
+            repeat(NO_OF_CONFETTI) { index ->
+                key(count) {
+                    YralLottieAnimation(
+                        rawRes = R.raw.colorful_confetti_brust,
+                        contentScale = ContentScale.Crop,
+                        iterations = 1,
+                        onAnimationComplete = {
+                            if (index == 0) {
+                                if (count < CONFETTI_ITERATIONS) {
+                                    count++
+                                } else {
+                                    confettiAnimationComplete()
+                                }
+                            }
+                        },
+                        modifier =
+                            Modifier
+                                .size(with(density) { size.toDp() })
+                                .scale(CONFETTI_SCALE)
+                                .align(if (index % 2 == 0) Alignment.Start else Alignment.End),
+                    )
+                }
+            }
+        }
+    }
+}
+
 @Suppress("MagicNumber")
 object LeaderboardMainScreenConstants {
     const val POSITION_TEXT_WEIGHT = 0.17f
@@ -227,4 +271,9 @@ object LeaderboardMainScreenConstants {
             Color(0x00706EBB).copy(alpha = 0f),
             Color(0xFF7573BD).copy(alpha = 0.7f),
         )
+
+    const val CONFETTI_SCALE = 1.8f
+    const val NO_OF_CONFETTI = 5
+    const val CONFETTI_SIZE_FACTOR = 3
+    const val CONFETTI_ITERATIONS = 2
 }

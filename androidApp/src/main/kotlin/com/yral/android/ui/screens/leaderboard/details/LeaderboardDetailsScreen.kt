@@ -40,8 +40,8 @@ import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.leaderboard.LeaderboardRow
 import com.yral.android.ui.screens.leaderboard.LeaderboardTableHeader
+import com.yral.android.ui.screens.leaderboard.main.LeaderboardConfetti
 import com.yral.android.ui.widgets.YralLoader
-import com.yral.android.ui.widgets.YralLottieAnimation
 import com.yral.shared.features.game.viewmodel.LeaderboardHistoryViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -143,14 +143,7 @@ fun LeaderboardDetailsScreen(
                 YralLoader()
             }
         }
-        if (showConfetti) {
-            YralLottieAnimation(
-                rawRes = R.raw.golden_confetti,
-                modifier = Modifier.fillMaxSize().background(YralColors.ScrimColorLight),
-                iterations = 1,
-                onAnimationComplete = { showConfetti = false },
-            )
-        }
+        LeaderboardConfetti(showConfetti) { showConfetti = false }
     }
 }
 
