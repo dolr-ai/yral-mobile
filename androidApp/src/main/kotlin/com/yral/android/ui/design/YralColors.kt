@@ -3,8 +3,6 @@
 package com.yral.android.ui.design
 
 import androidx.compose.ui.graphics.Color
-import com.yral.android.ui.design.YralColors.Grey50
-import kotlin.jvm.java
 
 object YralColors {
     val PrimaryContainer: Color = Color(0xFF0A0A0A)
