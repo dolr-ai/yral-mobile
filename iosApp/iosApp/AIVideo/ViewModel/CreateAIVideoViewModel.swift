@@ -36,7 +36,6 @@ enum CreateAIVideoScreenEvent {
   case generateVideoSuccess(deductBalance: Int)
   case generateVideoFailure(String)
   case generateVideoStatusFailure(error: String, addBalance: Int)
-  case generateVideoStatusSuccess(deductBalance: Int)
   case uploadAIVideoSuccess(String)
   case uploadAIVideoFailure(String)
 }
