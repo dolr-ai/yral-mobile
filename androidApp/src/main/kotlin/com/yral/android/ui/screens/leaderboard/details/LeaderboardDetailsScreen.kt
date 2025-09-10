@@ -89,7 +89,7 @@ fun LeaderboardDetailsScreen(
             }
             item {
                 Spacer(Modifier.height(16.dp))
-                LeaderboardTableHeader()
+                LeaderboardTableHeader(false)
                 Spacer(modifier = Modifier.height(8.dp))
             }
             if (!state.isLoading && state.error == null && state.history.isNotEmpty()) {

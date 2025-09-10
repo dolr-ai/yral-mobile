@@ -43,13 +43,18 @@ import com.yral.android.ui.widgets.YralAsyncImage
 import com.yral.android.ui.widgets.YralMaskedVectorTextV2
 
 @Composable
-fun LeaderboardTableHeader() {
+fun LeaderboardTableHeader(isTrophyVisible: Boolean) {
     Row(
         modifier =
             Modifier
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.primaryContainer)
-                .padding(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 4.dp),
+                .padding(
+                    start = 16.dp,
+                    end = 16.dp,
+                    top = if (isTrophyVisible) 20.dp else 12.dp,
+                    bottom = if (isTrophyVisible) 4.dp else 12.dp,
+                ),
         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start),
         verticalAlignment = Alignment.CenterVertically,
     ) {

@@ -203,7 +203,7 @@ private fun LeaderboardHeader(
                 isTrophyVisible = isTrophyVisible,
             )
             if (!state.isLoading) {
-                LeaderboardTableHeader()
+                LeaderboardTableHeader(isTrophyVisible)
             }
         }
     }
