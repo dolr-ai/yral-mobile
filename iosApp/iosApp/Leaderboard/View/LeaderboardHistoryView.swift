@@ -191,7 +191,6 @@ struct LeaderboardHistoryView: View {
 extension LeaderboardHistoryView {
   enum Constants {
     static let rowWidth = UIScreen.main.bounds.width - 32
-    static let confetti = "leaderboard_confetti"
     static let loader = "Yral_Loader"
     static let loaderSize = 24.0
 
@@ -237,6 +236,7 @@ extension LeaderboardHistoryView {
     static let scrollVstackSpacing = 12.0
     static let scrollViewVstackBottom = 40.0
 
+    static let confetti = "leaderboard_confetti"
     static let confettiPositions: [CGPoint] = [
       CGPoint(x: 0.25, y: 0.1),
       CGPoint(x: 0.75, y: 0.27),
