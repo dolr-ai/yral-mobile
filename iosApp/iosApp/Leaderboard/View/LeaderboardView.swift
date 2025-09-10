@@ -104,7 +104,7 @@ struct LeaderboardView: View {
           timerImage = Image("leaderboard_clock")
           timerShadowColor = Color(hex: "E2017B")
         } else {
-          timerTextColor = YralColor.primary300.swiftUIColor.opacity(0.6)
+          timerTextColor = Color(hex: "E2017B")
           timerImage = Image("leaderboard_clock_pink")
           timerShadowColor = Color.white
         }
