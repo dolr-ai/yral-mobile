@@ -116,9 +116,8 @@ class FeedViewModel(
      */
     fun showDeeplinkedVideoFirst(
         postId: String,
-        canisterId: String?,
+        canisterId: String,
     ) {
-        if (canisterId == null) return // todo
         coroutineScope.launch {
             // If details already exist, move to front and return; else fetch and show.
             if (tryShowExistingDeeplink(postId, canisterId)) return@launch
@@ -514,7 +513,7 @@ class FeedViewModel(
     ) {
         viewModelScope.launch {
             // Build internal deep link using UrlBuilder and PostDetailsRoute
-            val route = PostDetailsRoute(postId = feedDetails.postID, canisterId = feedDetails.canisterID)
+            val route = PostDetailsRoute(canisterId = feedDetails.canisterID, postId = feedDetails.postID)
             val internalUrl = urlBuilder.build(route) ?: feedDetails.url
             runSuspendCatching {
                 val link =

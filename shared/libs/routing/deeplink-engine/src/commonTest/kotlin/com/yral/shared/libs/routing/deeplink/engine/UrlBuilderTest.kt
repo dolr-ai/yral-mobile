@@ -84,10 +84,10 @@ class UrlBuilderTest {
                 host = "",
             )
 
-        val route = PostDetailsRoute(postId = "789")
+        val route = PostDetailsRoute(canisterId = "can-123", postId = "789")
         val url = customBuilder.build(route)
 
-        assertEquals("yralm://post/details/789", url)
+        assertEquals("yralm://post/details/can-123/789", url)
     }
 
     @Test
@@ -130,7 +130,8 @@ class UrlBuilderTest {
         val route = TestProductRoute("")
         val url = urlBuilder.build(route)
 
-        assertEquals("https://example.com/product", url)
+        // productId is a required path parameter; URL cannot be constructed
+        assertNull(url)
     }
 
     @Test
@@ -168,8 +169,8 @@ class UrlBuilderTest {
     }
 
     @Test
-    fun testBuildUrlWithQueryTemplateIncludedWhenPresent() {
-        // PostDetails defines a query template for canisterId
+    fun testBuildUrlForPostDetailsUsesPathParams() {
+        // PostDetails uses required path parameters: canisterId and postId
         val customBuilder =
             UrlBuilder(
                 routingTable = routingTable,
@@ -177,10 +178,10 @@ class UrlBuilderTest {
                 host = "",
             )
 
-        val route = PostDetailsRoute(postId = "789", canisterId = "cid-123")
+        val route = PostDetailsRoute(canisterId = "cid-123", postId = "789")
         val url = customBuilder.build(route)
 
-        assertEquals("yralm://post/details/789?canisterId=cid-123", url)
+        assertEquals("yralm://post/details/cid-123/789", url)
     }
 
     @Test
@@ -198,15 +199,15 @@ class UrlBuilderTest {
     }
 
     @Test
-    fun testQueryTemplateFiltersBlankMappedParam() {
+    fun testBuildUrlFailsWhenPostDetailsPathParamBlank() {
         val customBuilder =
             UrlBuilder(
                 routingTable = routingTable,
                 scheme = "yralm",
                 host = "",
             )
-        val url = customBuilder.build(PostDetailsRoute(postId = "999", canisterId = ""))
-        // canisterId blank -> should be filtered and no query appended
-        assertEquals("yralm://post/details/999", url)
+        val url = customBuilder.build(PostDetailsRoute(canisterId = "", postId = "999"))
+        // canisterId is required in the path -> URL cannot be constructed
+        assertNull(url)
     }
 }
