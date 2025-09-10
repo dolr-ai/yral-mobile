@@ -515,12 +515,13 @@ private fun ActionsRight(
             }
         }
         val msgFeedVideoShare = stringResource(R.string.msg_feed_video_share)
+        val msgFeedVideoShareDesc = stringResource(R.string.msg_feed_video_share_desc)
         Image(
             modifier =
                 Modifier
                     .size(36.dp)
                     .padding(1.5.dp)
-                    .clickable { feedViewModel.onShareClicked(feedDetails, msgFeedVideoShare) },
+                    .clickable { feedViewModel.onShareClicked(feedDetails, msgFeedVideoShare, msgFeedVideoShareDesc) },
             painter = painterResource(id = R.drawable.ic_share),
             contentDescription = "share video",
             contentScale = ContentScale.None,

@@ -86,8 +86,8 @@ class MainActivity : ComponentActivity() {
                 }
 
                 val deeplinkPath =
-                    linkProperties?.controlParams?.get("\$android_deeplink_path")
-                        ?: branchUniversalObject?.contentMetadata?.customMetadata?.get("\$android_deeplink_path")
+                    linkProperties?.controlParams?.get("\$deeplink_path")
+                        ?: branchUniversalObject?.contentMetadata?.customMetadata?.get("\$deeplink_path")
                 deeplinkPath?.let {
                     val appRoute = routingService.parseUrl(it)
                     Logger.d("BranchSDK") { "deeplinkPath $deeplinkPath, appRoute $appRoute" }
