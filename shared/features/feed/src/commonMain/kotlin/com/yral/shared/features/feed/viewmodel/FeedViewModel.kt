@@ -141,15 +141,7 @@ class FeedViewModel(
             }
         if (existingDetail != null) {
             _state.update { currentState ->
-                val updatedFeedDetails =
-                    listOf(existingDetail) +
-                        currentState.feedDetails.filterNot { it.videoID == existingDetail.videoID }
-                currentState.copy(
-                    feedDetails = updatedFeedDetails,
-                    currentPageOfFeed = 0,
-                    videoData = VideoData(),
-                    isDeeplinkFetching = false,
-                )
+                addDeeplinkData(currentState, existingDetail)
             }
             return true
         }
@@ -177,14 +169,7 @@ class FeedViewModel(
             .invoke(post)
             .onSuccess { detail ->
                 _state.update { currentState ->
-                    val updatedFeedDetails =
-                        listOf(detail) + currentState.feedDetails.filterNot { it.videoID == detail.videoID }
-                    currentState.copy(
-                        feedDetails = updatedFeedDetails,
-                        currentPageOfFeed = 0,
-                        isDeeplinkFetching = false,
-                        videoData = VideoData(), // reset video state for the deeplinked item
-                    )
+                    addDeeplinkData(currentState, detail)
                 }
             }.onFailure { throwable ->
                 Logger.e(throwable) {
@@ -192,6 +177,27 @@ class FeedViewModel(
                 }
                 setDeeplinkFetching(false)
             }
+    }
+
+    private fun addDeeplinkData(
+        currentState: FeedState,
+        details: FeedDetails,
+    ): FeedState {
+        // Remove existing occurrence and insert at current page index
+        val filtered = currentState.feedDetails.filterNot { it.videoID == details.videoID }
+        val targetIndex = currentState.currentPageOfFeed.coerceIn(0, filtered.size)
+        val updatedFeedDetails =
+            filtered
+                .toMutableList()
+                .apply {
+                    add(targetIndex, details)
+                }.toList()
+        return currentState.copy(
+            feedDetails = updatedFeedDetails,
+            currentPageOfFeed = targetIndex,
+            videoData = VideoData(),
+            isDeeplinkFetching = false,
+        )
     }
 
     private suspend fun filterVotedAndFetchDetails(posts: List<Post>): Int {
