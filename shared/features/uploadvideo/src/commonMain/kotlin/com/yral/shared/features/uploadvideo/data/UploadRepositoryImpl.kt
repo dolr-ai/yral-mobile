@@ -15,7 +15,7 @@ import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoParams
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoResult
 import com.yral.shared.features.uploadvideo.domain.models.UploadAiVideoFromUrlRequest
 import com.yral.shared.features.uploadvideo.domain.models.UploadFileRequest
-import com.yral.shared.uniffi.generated.delegatedIdentityWireToJson
+import com.yral.shared.rust.service.utils.delegatedIdentityWireToJson
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
 

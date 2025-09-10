@@ -3,7 +3,7 @@ package com.yral.shared.features.uploadvideo.data.remote.models
 import com.yral.shared.core.rust.KotlinDelegatedIdentityWire
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoParams
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoResult
-import com.yral.shared.uniffi.generated.VideoGenRequestKeyWrapper
+import com.yral.shared.rust.service.domain.models.VideoGenRequestKey
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.isSuccess
@@ -31,9 +31,18 @@ internal data class RequestBodyDto(
     @SerialName("prompt") val prompt: String,
     @SerialName("resolution") val resolution: String?,
     @SerialName("seed") val seed: Long? = null,
-    @SerialName("token_type") val tokenType: String?,
+    @SerialName("token_type") val tokenType: TokenType?,
     @SerialName("user_id") val userId: String,
 )
+
+@Serializable
+enum class TokenType {
+    @SerialName("Free")
+    FREE,
+
+    @SerialName("Sats")
+    SATS,
+}
 
 @Serializable
 internal data class GenerateVideoSuccessDto(
@@ -82,7 +91,7 @@ internal suspend fun HttpResponse.parseGenerateVideoResponse(json: Json): Genera
             operationId = dto.operationId,
             provider = dto.provider,
             requestKey =
-                VideoGenRequestKeyWrapper(
+                VideoGenRequestKey(
                     counter = dto.requestKey.counter.toULong(),
                     principal = dto.requestKey.principal,
                 ),

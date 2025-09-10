@@ -10,10 +10,10 @@ import com.yral.shared.features.uploadvideo.analytics.UploadVideoTelemetry
 import com.yral.shared.libs.arch.domain.FlowUseCase
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
-import com.yral.shared.rust.domain.RateLimitRepository
-import com.yral.shared.uniffi.generated.Result2Wrapper
-import com.yral.shared.uniffi.generated.VideoGenRequestKeyWrapper
-import com.yral.shared.uniffi.generated.VideoGenRequestStatusWrapper
+import com.yral.shared.rust.service.domain.RateLimitRepository
+import com.yral.shared.rust.service.domain.models.Result2
+import com.yral.shared.rust.service.domain.models.VideoGenRequestKey
+import com.yral.shared.rust.service.domain.models.VideoGenRequestStatus
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
@@ -46,19 +46,19 @@ internal class PollAndUploadAiVideoUseCase(
                         delay(delayMs.coerceAtLeast(0L))
                         val status =
                             rateLimitRepository.fetchVideoGenerationStatus(
-                                canisterID = parameters.canisterID,
+                                userPrincipal = parameters.userPrincipal,
                                 requestKey = parameters.requestKey,
                             )
                         when (status) {
-                            is Result2Wrapper.Err -> {
+                            is Result2.Err -> {
                                 pushGenerationFailed(parameters.modelName, status.v1)
                                 emit(Ok(PollAndUploadResult.Failed(status.v1)))
                                 return@withTimeout
                             }
 
-                            is Result2Wrapper.Ok -> {
+                            is Result2.Ok -> {
                                 when (val videoStatus = status.v1) {
-                                    is VideoGenRequestStatusWrapper.Complete -> {
+                                    is VideoGenRequestStatus.Complete -> {
                                         pushGenerationSuccessful(parameters.modelName)
                                         uploadVideoTelemetry.uploadInitiated(VideoCreationType.AI_VIDEO)
                                         // Upload the video when generation is complete
@@ -84,17 +84,18 @@ internal class PollAndUploadAiVideoUseCase(
                                                     reason = it.message ?: "",
                                                     type = VideoCreationType.AI_VIDEO,
                                                 )
+                                                emit(Ok(PollAndUploadResult.UploadFailed(it.message ?: "")))
                                             }
                                     }
 
-                                    is VideoGenRequestStatusWrapper.Failed -> {
+                                    is VideoGenRequestStatus.Failed -> {
                                         pushGenerationFailed(parameters.modelName, videoStatus.v1)
                                         emit(Ok(PollAndUploadResult.Failed(videoStatus.v1)))
                                         return@withTimeout
                                     }
 
-                                    VideoGenRequestStatusWrapper.Pending,
-                                    VideoGenRequestStatusWrapper.Processing,
+                                    VideoGenRequestStatus.Pending,
+                                    VideoGenRequestStatus.Processing,
                                     -> {
                                         emit(Ok(PollAndUploadResult.InProgress(pollCount)))
                                     }
@@ -184,9 +185,9 @@ internal class PollAndUploadAiVideoUseCase(
         }
 
     data class Params(
+        val userPrincipal: String,
         val modelName: String,
-        val canisterID: String,
-        val requestKey: VideoGenRequestKeyWrapper,
+        val requestKey: VideoGenRequestKey,
         val isFastInitially: Boolean = false,
         val maxPollingTimeMs: Long = DEFAULT_MAX_POLLING_MS,
         val hashtags: List<String> = emptyList(),
@@ -205,6 +206,10 @@ internal class PollAndUploadAiVideoUseCase(
         ) : PollAndUploadResult()
 
         data class Failed(
+            val errorMessage: String,
+        ) : PollAndUploadResult()
+
+        data class UploadFailed(
             val errorMessage: String,
         ) : PollAndUploadResult()
     }

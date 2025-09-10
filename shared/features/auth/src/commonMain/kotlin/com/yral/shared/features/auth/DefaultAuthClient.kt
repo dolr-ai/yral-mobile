@@ -31,9 +31,9 @@ import com.yral.shared.firebaseAuth.usecase.SignOutUseCase
 import com.yral.shared.firebaseStore.usecase.UpdateDocumentUseCase
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
-import com.yral.shared.uniffi.generated.CanistersWrapper
-import com.yral.shared.uniffi.generated.FfiException
-import com.yral.shared.uniffi.generated.authenticateWithNetwork
+import com.yral.shared.rust.service.utils.CanisterData
+import com.yral.shared.rust.service.utils.YralFfiException
+import com.yral.shared.rust.service.utils.authenticateWithNetwork
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.messaging.messaging
@@ -167,13 +167,15 @@ class DefaultAuthClient(
         try {
             var cachedSession = getCachedSession()
             if (cachedSession == null) {
-                val canisterWrapper = authenticateWithNetwork(data, null)
+                val canisterWrapper = authenticateWithNetwork(data)
                 cacheSession(data, canisterWrapper)
                 cachedSession =
                     Session(
                         identity = data,
-                        canisterId = canisterWrapper.getCanisterPrincipal(),
-                        userPrincipal = canisterWrapper.getUserPrincipal(),
+                        canisterId = canisterWrapper.canisterId,
+                        userPrincipal = canisterWrapper.userPrincipalId,
+                        profilePic = canisterWrapper.profilePic,
+                        isCreatedFromServiceCanister = canisterWrapper.isCreatedFromServiceCanister,
                     )
             }
             cachedSession.userPrincipal?.let { crashlyticsManager.setUserId(it) }
@@ -183,7 +185,7 @@ class DefaultAuthClient(
             } else {
                 authorizeFirebase(cachedSession)
             }
-        } catch (e: FfiException) {
+        } catch (e: YralFfiException) {
             resetCachedCanisterData()
             crashlyticsManager.recordException(e)
             throw YralAuthException(e)
@@ -334,6 +336,8 @@ class DefaultAuthClient(
                     throw SecurityException("Invalid state parameter - possible CSRF attack")
                 }
                 val currentUser = sessionManager.userPrincipal
+                // reset analytics manage: flush events and reset user properties
+                analyticsManager.reset()
                 sessionManager.updateState(SessionState.Loading)
                 authenticate(result.code, currentUser)
                 return
@@ -414,29 +418,44 @@ class DefaultAuthClient(
         val identity = preferences.getBytes(PrefKeys.IDENTITY.name)
         val canisterId = preferences.getString(PrefKeys.CANISTER_ID.name)
         val userPrincipal = preferences.getString(PrefKeys.USER_PRINCIPAL.name)
-        return if (identity != null && canisterId != null && userPrincipal != null) {
-            Session(
-                identity = identity,
-                canisterId = canisterId,
-                userPrincipal = userPrincipal,
-            )
-        } else {
-            null
-        }
+        val profilePic = preferences.getString(PrefKeys.PROFILE_PIC.name)
+        val isCreatedFromServiceCanister = preferences.getBoolean(PrefKeys.IS_CREATED_FROM_SERVICE_CANISTER.name)
+        return listOf(identity, canisterId, userPrincipal, profilePic)
+            .all { it != null }
+            .let { allPresent ->
+                if (allPresent) {
+                    Session(
+                        identity = identity!!,
+                        canisterId = canisterId!!,
+                        userPrincipal = userPrincipal!!,
+                        profilePic = profilePic!!,
+                        // default false for backward compatibility
+                        isCreatedFromServiceCanister = isCreatedFromServiceCanister ?: false,
+                    )
+                } else {
+                    null
+                }
+            }
     }
 
     private suspend fun cacheSession(
         identity: ByteArray,
-        canisterWrapper: CanistersWrapper,
+        canisterWrapper: CanisterData,
     ) {
-        preferences.putBytes(PrefKeys.IDENTITY.name, identity)
-        preferences.putString(PrefKeys.CANISTER_ID.name, canisterWrapper.getCanisterPrincipal())
-        preferences.putString(PrefKeys.USER_PRINCIPAL.name, canisterWrapper.getUserPrincipal())
+        with(canisterWrapper) {
+            preferences.putBytes(PrefKeys.IDENTITY.name, identity)
+            preferences.putString(PrefKeys.CANISTER_ID.name, canisterId)
+            preferences.putString(PrefKeys.USER_PRINCIPAL.name, userPrincipalId)
+            preferences.putString(PrefKeys.PROFILE_PIC.name, profilePic)
+            preferences.putBoolean(PrefKeys.IS_CREATED_FROM_SERVICE_CANISTER.name, isCreatedFromServiceCanister)
+        }
     }
 
     private suspend fun resetCachedCanisterData() {
         preferences.remove(PrefKeys.IDENTITY.name)
         preferences.remove(PrefKeys.CANISTER_ID.name)
         preferences.remove(PrefKeys.USER_PRINCIPAL.name)
+        preferences.remove(PrefKeys.PROFILE_PIC.name)
+        preferences.remove(PrefKeys.IS_CREATED_FROM_SERVICE_CANISTER.name)
     }
 }

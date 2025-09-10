@@ -41,7 +41,7 @@ import com.yral.shared.features.auth.utils.OAuthResult
 import com.yral.shared.features.auth.utils.OAuthUtils
 import com.yral.shared.features.auth.utils.OAuthUtilsHelper
 import com.yral.shared.koin.koinInstance
-import com.yral.shared.uniffi.generated.initRustLogger
+import com.yral.shared.rust.service.services.HelperService.initRustLogger
 import io.branch.indexing.BranchUniversalObject
 import io.branch.referral.Branch
 import io.branch.referral.BranchError

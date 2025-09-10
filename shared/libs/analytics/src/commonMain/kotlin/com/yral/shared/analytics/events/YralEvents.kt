@@ -730,12 +730,14 @@ data class CreateAIVideoClickedData(
     @SerialName("event") override val event: String = FeatureEvents.VIDEO_UPLOAD_ERROR_SHOWN.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.UPLOAD.getFeatureName(),
     @SerialName("model") val model: String,
+    @SerialName("prompt") val prompt: String,
 ) : BaseEventData(),
     EventData {
-    constructor(model: String) : this(
+    constructor(model: String, prompt: String) : this(
         FeatureEvents.CREATE_AI_VIDEO_CLICKED.getEventName(),
         Features.AUTH.getFeatureName(),
         model,
+        prompt,
     )
 }
 
@@ -902,7 +904,7 @@ data class VideoDurationWatchedEventData(
     @SerialName("is_logged_in") val isLoggedIn: Boolean,
     @SerialName("is_nsfw") val isNsfw: Boolean,
     @SerialName("like_count") val likeCount: Long,
-    @SerialName("post_id") val postID: Long,
+    @SerialName("post_id") val postID: String,
     @SerialName("publisher_canister_id") val publisherCanisterId: String,
     @SerialName("publisher_user_id") val publisherUserId: String,
     @SerialName("share_count") val shareCount: Long = 0,

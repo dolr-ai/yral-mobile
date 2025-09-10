@@ -7,7 +7,7 @@ struct HomeTabController: View {
   @State private var suppressAnalytics = false
   let feedsViewController: FeedsViewController
   let accountView: AccountView
-  let uploadOptionsScreenView: UploadOptionsScreenView
+  let uploadOptionsScreenView: UINavigationController
   let profileView: ProfileView
   let leaderboardView: LeaderboardView
 
@@ -29,12 +29,14 @@ struct HomeTabController: View {
   @State private var showNotificationsNudge = false
   @State private var walletPhase: WalletPhase = .none
   @State private var walletOutcome: WalletPhase = .none
+  @State private var showMandatoryAppUpdate = false
+  @State private var showRecommendedAppUpdate = false
 
   @EnvironmentObject var eventBus: EventBus
 
   init(
     feedsViewController: FeedsViewController,
-    uploadOptionsScreenView: UploadOptionsScreenView,
+    uploadOptionsScreenView: UINavigationController,
     profileView: ProfileView,
     accountView: AccountView,
     leaderboardView: LeaderboardView,
@@ -68,7 +70,7 @@ struct HomeTabController: View {
           }
           .tag(Tab.leaderboard)
 
-        uploadOptionsScreenView
+        ViewControllerWrapper(controller: uploadOptionsScreenView)
           .background(Color.black.edgesIgnoringSafeArea(.all))
           .tabItem {
             tabIcon(selected: selectedTab == .upload,
@@ -129,6 +131,9 @@ struct HomeTabController: View {
           }
         }
       }
+      .onReceive(eventBus.playGamesToEarnMoreTapped) {
+        selectedTab = .home
+      }
       .hapticFeedback(.impact(weight: .light), trigger: selectedTab)
       .fullScreenCover(isPresented: $showNotificationsNudge) {
         ZStack(alignment: .center) {
@@ -176,10 +181,30 @@ struct HomeTabController: View {
         }
       }
     }
+    .onAppear {
+      let status = AppUpdateHandler.shared.getAppUpdateStatus()
+      switch status {
+      case .none:
+        break
+      case .force:
+        self.showMandatoryAppUpdate = true
+      case .recommended:
+        self.showRecommendedAppUpdate = true
+      }
+    }
     .fullScreenCover(isPresented: $showEULA) {
       EULAPopupView(isPresented: $showEULA) {
         UserDefaultsManager.shared.set(true, for: .eulaAccepted)
         NotificationCenter.default.post(name: .eulaAcceptedChanged, object: nil)
+      }
+      .background( ClearBackgroundView() )
+    }
+    .fullScreenCover(isPresented: $showMandatoryAppUpdate) {
+      MandatoryUpdateView()
+    }
+    .fullScreenCover(isPresented: $showRecommendedAppUpdate) {
+      RecommendedUpdatePopUp {
+        showRecommendedAppUpdate = false
       }
       .background( ClearBackgroundView() )
     }
