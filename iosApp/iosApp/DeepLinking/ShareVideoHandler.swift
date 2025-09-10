@@ -7,63 +7,63 @@
 //
 
 import BranchSDK
+import iosSharedUmbrella
 
 struct SharePayload {
   let title: String
   let description: String
   let imageUrl: String?
   let postId: String
-  let principalId: String
-  let canisterId: String?
+  let canisterId: String
 }
 
 final class BranchShareService {
   static let shared = BranchShareService()
 
-  func makeBranchUniversalObject(for payload: SharePayload) -> BranchUniversalObject {
+  func makeBranchUniversalObject(for payload: SharePayload, deeplinkURL: String) -> BranchUniversalObject {
     let branchUniversalObject = BranchUniversalObject()
-    branchUniversalObject.canonicalUrl = "https://yral.app/video/\(payload.postId)"
     branchUniversalObject.title = payload.title
     branchUniversalObject.contentDescription = payload.description
-    if let imageUrl = payload.imageUrl { branchUniversalObject.imageUrl = imageUrl }
-
-    branchUniversalObject.contentMetadata.customMetadata["post_id"] = payload.postId
-    branchUniversalObject.contentMetadata.customMetadata["principal_id"] = payload.principalId
-    if let canisterId = payload.canisterId {
-      branchUniversalObject.contentMetadata.customMetadata["canister_id"] = canisterId
-    }
+//    if let imageUrl = payload.imageUrl { branchUniversalObject.imageUrl = imageUrl }
+    branchUniversalObject.imageUrl = nil
+    branchUniversalObject.contentMetadata.customMetadata["internal_url"] = deeplinkURL
     return branchUniversalObject
   }
 
-  func linkProperties(payload: SharePayload) -> BranchLinkProperties {
+  func linkProperties(payload: SharePayload, deeplinkURL: String) -> BranchLinkProperties {
     let linkProperties = BranchLinkProperties()
     linkProperties.feature = "share"
     linkProperties.tags = ["organic", "user_share"]
-    if let imageUrl = payload.imageUrl {
-      linkProperties.addControlParam("$og_image_url", withValue: imageUrl)
-    }
-    linkProperties.addControlParam("$og_title", withValue: payload.title)
     linkProperties.addControlParam(
-      "$og_description", withValue: payload.description
+      "$deeplink_path",
+      withValue: deeplinkURL.components(separatedBy: "://").last ?? deeplinkURL
     )
-    linkProperties.addControlParam("$deeplink_path", withValue: "/video/\(payload.postId)")
     return linkProperties
   }
 
   func generateLink(payload: SharePayload,
                     channel: String,
                     campaign: String? = nil,
-                    completion: @escaping (String?) -> Void) {
-    let branchUniversalObject = makeBranchUniversalObject(for: payload)
-    let properties = linkProperties(payload: payload)
+                    completion: @escaping (String?, Error?) -> Void) {
+    let route = PostDetailsRoute(canisterId: payload.canisterId, postId: payload.postId)
+    guard let url = AppDIHelper().getRoutingService().buildUrl(route: route) else {
+      completion(nil, DeepLinkUrlError.notFound)
+      return
+    }
+    let branchUniversalObject = makeBranchUniversalObject(for: payload, deeplinkURL: url)
+    let properties = linkProperties(payload: payload, deeplinkURL: url)
 
     branchUniversalObject.getShortUrl(with: properties) { url, error in
       if let error = error {
         print("Branch link error:", error)
-        completion(nil)
+        completion(nil, error)
       } else {
-        completion(url)
+        completion(url, nil)
       }
     }
+  }
+
+  enum DeepLinkUrlError: Error {
+    case notFound
   }
 }

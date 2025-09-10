@@ -6,8 +6,8 @@
 //  Copyright © 2025 orgName. All rights reserved.
 //
 
-// swiftlint: disable all
 import SwiftUI
+import iosSharedUmbrella
 
 @MainActor
 final class DeepLinkRouter: ObservableObject {
@@ -17,7 +17,7 @@ final class DeepLinkRouter: ObservableObject {
 
   enum Destination: Equatable {
     case profileAfterUpload
-    case openVideo(postId: UInt32, principal: String, canisterId: String?)
+    case openVideo(postId: UInt32, canisterId: String?)
   }
 
   @discardableResult func resolve(from userInfo: [AnyHashable: Any]) -> Destination? {
@@ -52,52 +52,23 @@ final class DeepLinkRouter: ObservableObject {
        type == Constants.videoUploadSuccessType {
       return .profileAfterUpload
     }
+    guard let deepLinkPath = params["$deeplink_path"] as? String,
+          let route = AppDIHelper().getRoutingService().parseUrl(
+            url: deepLinkPath
+          ) as? PostDetailsRoute else { return nil }
 
-    let postIdString =
-    DeepLinkRouter.string(from: params["post_id"]) ??
-    DeepLinkRouter.string(from: params["video_id"]) ??
-    DeepLinkRouter.postIdFromDeeplinkPath(DeepLinkRouter.string(from: params["$deeplink_path"]))
-
-    guard let postIdStr = postIdString, let postId = UInt32(postIdStr) else { return nil }
-
-    let principal =
-    DeepLinkRouter.string(from: params["principal"]) ??
-    DeepLinkRouter.string(from: params["principal_id"])
-
-    guard let principalStr = principal, !principalStr.isEmpty else { return nil }
-
-    let canisterId = DeepLinkRouter.string(from: params["canister_id"])
-
-    return .openVideo(postId: postId, principal: principalStr, canisterId: canisterId)
+    return .openVideo(postId: UInt32(route.postId) ?? .zero, canisterId: route.canisterId)
   }
 }
 
 private extension DeepLinkRouter {
   static func isBranchClick(_ value: Any?) -> Bool {
     switch value {
-    case let n as NSNumber: return n.intValue == 1
-    case let s as String:   return s == "1" || s.lowercased() == "true"
-    case let b as Bool:     return b
-    default:                return false
+    case let linkNumber as NSNumber: return linkNumber.intValue == 1
+    case let linkString as String: return linkString == "1" || linkString.lowercased() == "true"
+    case let linkBool as Bool: return linkBool
+    default: return false
     }
-  }
-  
-  static func string(from any: Any?) -> String? {
-    if let s = any as? String { return s }
-    if let n = any as? NSNumber { return n.stringValue }
-    return nil
-    // (Branch normally gives strings/NSNumber.)
-  }
-  
-  static func postIdFromDeeplinkPath(_ path: String?) -> String? {
-    guard let path = path, path.hasPrefix("/video/") else { return nil }
-    // Accept forms like "/video/123" or "/video/123/"
-    let comps = path.split(separator: "/")
-    // Expected: ["", "video", "123"] or ["video", "123"] depending on leading "/"
-    if let last = comps.last, CharacterSet.decimalDigits.isSuperset(of: CharacterSet(charactersIn: String(last))) {
-      return String(last)
-    }
-    return nil
   }
 }
 
@@ -110,4 +81,3 @@ extension DeepLinkRouter {
     static let branchError = "Branch error:"
   }
 }
-// swiftlint: enable all

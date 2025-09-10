@@ -433,9 +433,9 @@ class FeedsViewController: UIViewController {
     deepLinkRouter.$pendingDestination.sink { [weak self] destination in
       guard let self = self else { return }
       switch destination {
-      case .openVideo(postId: let postId, principal: let principal, canisterId: let canisterID):
+      case .openVideo(postId: let postId, canisterId: let canisterID):
         self.feedsCV.isHidden = true
-        self.pendingAnchor = DeepLinkFeedRequest(principalID: principal, postID: postId, canisterID: canisterID ?? "")
+        self.pendingAnchor = DeepLinkFeedRequest(postID: postId, canisterID: canisterID ?? "")
         self.handleAnchorIfReady()
       default: break
       }
@@ -448,14 +448,13 @@ class FeedsViewController: UIViewController {
     pendingAnchor = nil
 
     Task { @MainActor in
-      if let existingItem = findItem(postId: anchor.postID, principal: anchor.principalID) {
+      if let existingItem = findItem(postId: anchor.postID, canisterId: anchor.canisterID) {
         insertOrMoveToFront(existingItem)
         return
       }
       Task {
         await viewModel.fetchDeepLinkFeed(
           request: DeepLinkFeedRequest(
-            principalID: anchor.principalID,
             postID: anchor.postID,
             canisterID: anchor.canisterID
           )

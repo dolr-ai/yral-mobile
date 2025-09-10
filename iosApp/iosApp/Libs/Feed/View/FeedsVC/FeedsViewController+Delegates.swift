@@ -78,13 +78,16 @@ extension FeedsViewController: FeedsCellProtocol {
         description: Constants.shareDescription,
         imageUrl: item.thumbnail.absoluteString,
         postId: item.postID,
-        principalId: item.principalID,
         canisterId: item.canisterID
       ),
       channel: ""
-    ) { [weak self] shareUrlString in
-      guard let self = self,
-            let shareUrlString = shareUrlString,
+    ) { [weak self] shareUrlString, error  in
+      guard let self = self else { return }
+      if let error = error {
+        self.crashReporter.recordException(error)
+        return
+      }
+      guard let shareUrlString = shareUrlString,
             let shareURL = URL(
               string: shareUrlString
             ) else { return }

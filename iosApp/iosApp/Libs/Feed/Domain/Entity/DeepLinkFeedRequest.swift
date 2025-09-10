@@ -7,7 +7,6 @@
 //
 
 struct DeepLinkFeedRequest {
-  let principalID: String
   let postID: UInt32
   let canisterID: String
 }
