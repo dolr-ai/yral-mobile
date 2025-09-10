@@ -5,6 +5,9 @@
 //  Created by Sarvesh Sharma on 18/02/25.
 //  Copyright © 2025 orgName. All rights reserved.
 //
+
+import SwiftUI
+
 final class UploadDIContainer {
   struct Dependencies {
     let httpService: HTTPService
@@ -40,7 +43,15 @@ final class UploadDIContainer {
     )
   }
 
-  func makeUploadView(onDismiss: @escaping () -> Void) -> UploadView {
-    UploadView(viewModel: makeUploadViewModel(), onDismiss: onDismiss)
+  func makeUploadView(onDismiss: @escaping () -> Void) -> UIHostingController<UploadView> {
+    let host = UIHostingController(
+      rootView: UploadView(
+        viewModel: makeUploadViewModel(),
+        onDismiss: onDismiss
+      )
+    )
+
+    host.extendedLayoutIncludesOpaqueBars = true
+    return host
   }
 }

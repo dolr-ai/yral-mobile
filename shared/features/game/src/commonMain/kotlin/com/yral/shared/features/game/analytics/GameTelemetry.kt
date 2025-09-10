@@ -10,7 +10,7 @@ import com.yral.shared.analytics.events.GameTutorialShownEventData
 import com.yral.shared.analytics.events.GameType
 import com.yral.shared.analytics.events.GameVotedEventData
 import com.yral.shared.analytics.events.TokenType
-import com.yral.shared.rust.domain.models.FeedDetails
+import com.yral.shared.data.feed.domain.FeedDetails
 
 class GameTelemetry(
     private val analyticsManager: AnalyticsManager,

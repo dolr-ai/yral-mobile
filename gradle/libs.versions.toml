@@ -143,11 +143,13 @@ kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-cor
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
+kotlinx-serialization-properties = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-properties", version.ref = "kotlinxSerialization" }
 
 ktor-client-auth = { group = "io.ktor", name = "ktor-client-auth", version.ref = "ktor" }
 ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor" }
+ktor-http = { module = "io.ktor:ktor-http", version.ref = "ktor" }
 ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktor" }
 ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
 ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
@@ -219,7 +221,6 @@ firebase-perf = { id = "com.google.firebase.firebase-perf", version.ref = "fireb
 gms = { id = "com.google.gms.google-services", version.ref = "play-services" }
 gobleyCargo = { id = "dev.gobley.cargo", version.ref = "gobley" }
 gobleyUniffi = { id = "dev.gobley.uniffi", version.ref = "gobley" }
-gobleyRust = { id = "dev.gobley.rust", version.ref = "gobley" }
 kotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlinCocoapods = { id = "org.jetbrains.kotlin.native.cocoapods", version.ref = "kotlin" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
@@ -244,4 +245,4 @@ yral-shared-library = { id = "yral.shared.library" }
 yral-shared-library-compose = { id = "yral.shared.library.compose" }
 yral-shared-feature = { id = "yral.shared.feature" }
 yral-style-enforcer = { id = "yral.style.enforcer" }
-yral-shared-rust-lib = { id = "yral.shared.rust.lib" }
+yral-shared-rust-agent = { id = "yral.shared.rust.agent" }

@@ -134,6 +134,7 @@
     <string name="add_video_from_device">Add a video from your device.</string>
     <string name="model">Model</string>
     <string name="credits_used">%1d of %2d credits used</string>
+    <string name="credits_used_use_token">%1d of %2d credits used. You can create videos with %s.</string>
     <string name="prompt">Prompt</string>
     <string name="enter_prompt_here">Enter the Prompt here…</string>
     <string name="generate_video">Generate Video</string>
@@ -144,5 +145,10 @@
     <string name="you_will_loose_credits_desc">Leaving now will use up today’s AI credit. You can return tomorrow for a fresh credit.</string>
     <string name="yes_take_me_back">Yes, Take me back</string>
     <string name="stay_here">Stay Here</string>
-
+    <string name="credits_required">Credits Required</string>
+    <string name="current_balance">Current Balance :</string>
+    <string name="low_balance">Low Balance :</string>
+    <string name="play_games">Play Games</string>
+    <string name="to_earn_token">to earn %s!</string>
+    <string name="coins">YRAL</string>
 </resources>

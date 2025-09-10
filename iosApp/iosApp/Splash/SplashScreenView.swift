@@ -13,24 +13,30 @@ struct SplashScreenView: View {
     ZStack {
       Color.black.ignoresSafeArea()
       if isInitialAnimationComplete {
-        LottieView(name: Constants.lightningAnimation,
-                   loopMode: .loop,
-                   animationSpeed: .one) {
+        LottieView(
+          name: Constants.lightningAnimation,
+          loopMode: .loop,
+          animationSpeed: .one,
+          resetProgress: false
+        ) {
         }
-                   .ignoresSafeArea()
-                   .background(.black)
-                   .edgesIgnoringSafeArea(.all)
+        .ignoresSafeArea()
+        .background(.black)
+        .edgesIgnoringSafeArea(.all)
       } else {
-        LottieView(name: Constants.splashAnimation,
-                   loopMode: .playOnce,
-                   animationSpeed: .one) {
+        LottieView(
+          name: Constants.splashAnimation,
+          loopMode: .playOnce,
+          animationSpeed: .one,
+          resetProgress: false
+        ) {
           DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.one) {
             isInitialAnimationComplete = true
           }
         }
-                   .ignoresSafeArea()
-                   .background(.black)
-                   .edgesIgnoringSafeArea(.all)
+        .ignoresSafeArea()
+        .background(.black)
+        .edgesIgnoringSafeArea(.all)
       }
     }
   }

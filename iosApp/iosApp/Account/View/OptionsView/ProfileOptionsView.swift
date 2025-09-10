@@ -98,7 +98,7 @@ struct ProfileOptionsView: View {
         }
       }
       if isShowingLoader {
-        LottieLoaderView(animationName: Constants.loaderName)
+        LottieLoaderView(animationName: Constants.loaderName, resetProgess: false)
           .padding()
           .background(Color.clear)
           .cornerRadius(Constants.progressViewCornerRadius)

@@ -11,80 +11,53 @@ import iosSharedUmbrella
 
 struct UploadOptionsScreenView: View {
   @Environment(\.appDIContainer) private var appDIContainer
-
-  @State private var aiVideoScreenID = UUID()
-  @State private var navigateToAIVideoScreen = false
-  @State private var uploadViewID = UUID()
-  @State private var navigateToUploadVideoScreen = false
+  @Environment(\.uploadNavController) private var navController
 
   var body: some View {
-    NavigationView {
-      VStack(alignment: .leading, spacing: Constants.vstackSpacing) {
-        Text(Constants.screenTitle)
-          .font(Constants.screenTitleFont)
-          .foregroundColor(Constants.screenTitleColor)
-          .padding(.bottom, Constants.screenTitleBottom)
+    VStack(alignment: .leading, spacing: Constants.vstackSpacing) {
+      Text(Constants.screenTitle)
+        .font(Constants.screenTitleFont)
+        .foregroundColor(Constants.screenTitleColor)
+        .padding(.bottom, Constants.screenTitleBottom)
 
-        UploadOptionView(option: Constants.uploadOptionAI) {
-          aiVideoScreenID = UUID()
-          navigateToAIVideoScreen = true
-
-          AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-            event: VideoUploadTypeSelectedData(type: .aiVideo)
+      UploadOptionView(option: Constants.uploadOptionAI) {
+        if let createAIVideoDIContainer = makeCreateAIVideoDIContainer() {
+          navController?.pushViewController(
+            createAIVideoDIContainer.makeCreateAIVideoSreenView(onDismiss: {
+              navController?.popViewController(animated: true)
+            }),
+            animated: true
           )
         }
-        .background(
-          NavigationLink(isActive: $navigateToAIVideoScreen) {
-            if let createAIVideoDI = makeCreateAIVideoDIContainer() {
-              CreateAIVideoHost(
-                createAIVideoDI: createAIVideoDI,
-                onDismiss: { navigateToAIVideoScreen = false }
-              )
-              .id(aiVideoScreenID)
-            } else {
-              EmptyView()
-            }
-          } label: {
-            EmptyView()
-          }
-          .hidden()
-        )
 
-        UploadOptionView(option: Constants.uploadOptionDevice) {
-          uploadViewID = UUID()
-          navigateToUploadVideoScreen = true
-
-          AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-            event: VideoUploadTypeSelectedData(type: .uploadVideo)
-          )
-        }
-        .background(
-          NavigationLink(isActive: $navigateToUploadVideoScreen) {
-            if let uploadViewDI = makeUploadViewDIContainer() {
-              UploadViewHost(
-                uploadViewDI: uploadViewDI,
-                onDismiss: { navigateToUploadVideoScreen = false }
-              )
-              .id(uploadViewID)
-            } else {
-              EmptyView()
-            }
-          } label: {
-            EmptyView()
-          }
-          .hidden()
-        )
-
-        Spacer(minLength: .zero)
-      }
-      .padding(.vertical, Constants.vstackVertical)
-      .padding(.horizontal, Constants.vstackHorizontal)
-      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-      .task {
         AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-          event: UploadVideoPageViewedEventData()
+          event: VideoUploadTypeSelectedData(type: .aiVideo)
         )
       }
+
+      UploadOptionView(option: Constants.uploadOptionDevice) {
+        if let uploadDIContainer = makeUploadViewDIContainer() {
+          navController?.pushViewController(
+            uploadDIContainer.makeUploadView(onDismiss: {
+              navController?.popViewController(animated: true)
+            }),
+            animated: true
+          )
+        }
+
+        AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+          event: VideoUploadTypeSelectedData(type: .uploadVideo)
+        )
+      }
+    }
+    .padding(.vertical, Constants.vstackVertical)
+    .padding(.horizontal, Constants.vstackHorizontal)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .frame(maxHeight: .infinity, alignment: .top)
+    .task {
+      AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+        event: UploadVideoPageViewedEventData()
+      )
     }
   }
 }

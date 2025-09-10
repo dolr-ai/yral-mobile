@@ -10,7 +10,7 @@ import com.yral.shared.analytics.events.UploadVideoClickedEventData
 import com.yral.shared.analytics.events.VideoClickedEventData
 import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.analytics.events.VideoDeletedEventData
-import com.yral.shared.rust.domain.models.FeedDetails
+import com.yral.shared.data.feed.domain.FeedDetails
 
 class ProfileTelemetry(
     private val analyticsManager: AnalyticsManager,

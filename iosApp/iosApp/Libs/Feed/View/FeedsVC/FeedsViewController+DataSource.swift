@@ -122,21 +122,11 @@ extension FeedsViewController {
     }
 
     guard let cell = feedsCV.cellForItem(at: IndexPath(item: index, section: 0)) as? FeedsCell else {
-      updateUIAfterCastVoteSuccess(
-        with: response,
-        forIndex: index,
-        withItems: items,
-        andSnapshot: snapshot
-      )
+      updateUIAfterCastVoteSuccess(with: response)
       return
     }
     cell.startSmileyGamResultAnimation(for: response) { [weak self] in
-      self?.updateUIAfterCastVoteSuccess(
-        with: response,
-        forIndex: index,
-        withItems: items,
-        andSnapshot: snapshot
-      )
+      self?.updateUIAfterCastVoteSuccess(with: response)
     }
     guard index < snapshot.numberOfItems else {
       return
@@ -163,41 +153,56 @@ extension FeedsViewController {
     )
   }
 
-  private func updateUIAfterCastVoteSuccess(
-    with response: SmileyGameResultResponse,
-    forIndex index: Int,
-    withItems items: [FeedResult],
-    andSnapshot snapshot: NSDiffableDataSourceSnapshot<Int, FeedResult>
-  ) {
-    var items = items
-    items[index].smileyGame?.state = .played(response)
+  private func updateUIAfterCastVoteSuccess(with response: SmileyGameResultResponse) {
+    var snap = feedsDataSource.snapshot()
+    guard let oldItem = snap.itemIdentifiers.first(where: { $0.videoID == response.videoID }) else {
+      return
+    }
 
-    var snapshot = snapshot
-    snapshot.deleteItems(snapshot.itemIdentifiers)
-    snapshot.appendItems(items)
+    var newItem = oldItem
+    newItem.smileyGame?.state = .played(response)
 
-    self.feedsDataSource.apply(snapshot, animatingDifferences: true)
-    self.session.update(coins: response.coins)
+    if let pos = snap.itemIdentifiers.firstIndex(of: oldItem) {
+      snap.deleteItems([oldItem])
+      if pos < snap.itemIdentifiers.count {
+        let next = snap.itemIdentifiers[pos]
+        snap.insertItems([newItem], beforeItem: next)
+      } else {
+        snap.appendItems([newItem])
+      }
+    }
+
+    feedsDataSource.apply(snap, animatingDifferences: true)
+    let oldBalance = session.state.coins
+    let updatedBalance = Int(oldBalance) + response.coinDelta
+    session.update(coins: UInt64(updatedBalance))
   }
 
   func handleCastVoteFailure(_ errorMessage: String, videoID: String) {
-    var snapshot = feedsDataSource.snapshot()
-    var items = snapshot.itemIdentifiers
-    guard let index = items.firstIndex(where: { $0.videoID == videoID }) else {
+    var snap = feedsDataSource.snapshot()
+    guard let oldItem = snap.itemIdentifiers.first(where: { $0.videoID == videoID }) else {
       return
     }
 
-    guard let cell = feedsCV.cellForItem(at: IndexPath(item: index, section: 0)) as? FeedsCell else {
-      return
+    if let idx = snap.itemIdentifiers.firstIndex(of: oldItem),
+       let cell = feedsCV.cellForItem(at: IndexPath(item: idx, section: 0)) as? FeedsCell {
+      cell.handleSmileyGameError(errorMessage)
     }
 
-    cell.handleSmileyGameError(errorMessage)
+    var newItem = oldItem
+    newItem.smileyGame?.state = .error(errorMessage)
 
-    items[0].smileyGame?.state = .error(errorMessage)
+    if let pos = snap.itemIdentifiers.firstIndex(of: oldItem) {
+      snap.deleteItems([oldItem])
+      if pos < snap.itemIdentifiers.count {
+        let next = snap.itemIdentifiers[pos]
+        snap.insertItems([newItem], beforeItem: next)
+      } else {
+        snap.appendItems([newItem])
+      }
+    }
 
-    snapshot.deleteItems(snapshot.itemIdentifiers)
-    snapshot.appendItems(items)
-    feedsDataSource.apply(snapshot, animatingDifferences: true)
+    feedsDataSource.apply(snap, animatingDifferences: true)
   }
 
   func removeFeeds(with feeds: [FeedResult], isReport: Bool = false, animated: Bool = false) {

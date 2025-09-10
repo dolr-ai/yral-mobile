@@ -71,7 +71,7 @@ class FirebaseService: FirebaseServiceProtocol {
         transaction.updateData(["coins": coins], forDocument: document)
       }
     } catch {
-      print("sarvesh error: \(error)")
+      print("error: \(error)")
     }
   }
 

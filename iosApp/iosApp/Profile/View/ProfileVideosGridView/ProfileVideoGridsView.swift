@@ -56,7 +56,7 @@ struct ProfileVideosGridView: View {
             if video.postID == currentlyDeletingPostInfo?.postID && showDeleteIndictor {
               ZStack(alignment: .center) {
                 Color.black.opacity(Constants.loadingOpacity)
-                LottieLoaderView(animationName: Constants.loaderName)
+                LottieLoaderView(animationName: Constants.loaderName, resetProgess: false)
                   .frame(width: Constants.loaderSize, height: Constants.loaderSize)
                   .padding()
               }
