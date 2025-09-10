@@ -17,6 +17,7 @@ struct LeaderboardView: View {
 
   @StateObject var viewModel: LeaderboardViewModel
 
+  @State private var leaderboardRowsExpanded = false
   @State private var showLoader = true
   @State private var showConfetti = false
   @State private var mode: LeaderboardMode = .daily
@@ -25,101 +26,127 @@ struct LeaderboardView: View {
   @State private var timerImage = Image("leaderboard_clock")
   @State private var timerText = ""
 
+  @State private var headerHeight: CGFloat = 0
+
   let rowWidth = UIScreen.main.bounds.width - 32
   let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
   var body: some View {
-    ZStack {
-      VStack(alignment: .center, spacing: .zero) {
-        buildSegmentedControl()
+    GeometryReader { geo in
+      let usableHeight = geo.size.height - geo.safeAreaInsets.top - geo.safeAreaInsets.bottom
+      ZStack {
+        VStack(alignment: .center, spacing: .zero) {
+          buildSegmentedControl()
 
-        if viewModel.leaderboardResponse?.timeLeftInMs == nil {
-          buildTimerSection().hidden()
-        } else {
-          buildTimerSection()
+          if viewModel.leaderboardResponse?.timeLeftInMs == nil {
+            buildTimerSection().hidden()
+          } else {
+            buildTimerSection()
+          }
+
+          buildPodiumSection()
         }
-
-        buildPodiumSection()
-      }
-      .frame(maxWidth: .infinity)
-      .background(
-        LottieView(
-          name: mode == .daily ? "leaderboard_daily" : "leaderboard_all_time",
-          loopMode: .playOnce,
-          animationSpeed: .one) {}
-          .id(mode)
-      )
-      .background(
-        Image(mode == .daily ? "leaderboard_daily_background" : "leaderboard_all_time_background")
-          .resizable()
-      )
-      .frame(maxHeight: .infinity, alignment: .top)
-    }
-    .frame(maxWidth: .infinity)
-    .frame(maxHeight: .infinity)
-    .background(Constants.background).ignoresSafeArea()
-    .overlay(alignment: .center, content: {
-      if showLoader {
-        LottieLoaderView(animationName: Constants.loader)
-          .frame(width: Constants.loaderSize, height: Constants.loaderSize)
-      }
-    })
-    .overlay(alignment: .center) {
-      if showConfetti {
-        ForEach(Constants.confettiPositions.indices, id: \.self) { index in
+        .frame(maxWidth: .infinity)
+        .background(
           LottieView(
-            name: Constants.confetti,
+            name: mode == .daily ? "leaderboard_daily" : "leaderboard_all_time",
             loopMode: .playOnce,
             animationSpeed: .one) {}
-            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.width)
-            .position(
-              x: UIScreen.main.bounds.width * Constants.confettiPositions[index].x,
-              y: UIScreen.main.bounds.height * Constants.confettiPositions[index].y
-            )
-            .allowsHitTesting(false)
             .id(mode)
-        }
-      }
-    }
-    .onReceive(viewModel.$state, perform: { state in
-      switch state {
-      case .loading:
-        showLoader = true
-        showConfetti = false
-      case .success:
-        showLoader = false
-        showConfetti = shouldShowConfetti()
-        timerText = formatMillisecondsToHMS(
-          viewModel.leaderboardResponse?.timeLeftInMs ?? 0
         )
-      default:
-        showLoader = false
-        showConfetti = false
-      }
-    })
-    .onReceive(timer, perform: { _ in
-      if mode == .daily {
-        if timerShadowColor == Color.clear || timerShadowColor == Color.white {
-          timerTextColor = YralColor.grey50.swiftUIColor
-          timerImage = Image("leaderboard_clock")
-          timerShadowColor = Color(hex: "E2017B")
-        } else {
-          timerTextColor = Color(hex: "E2017B")
-          timerImage = Image("leaderboard_clock_pink")
-          timerShadowColor = Color.white
+        .background(
+          Image(mode == .daily ? "leaderboard_daily_background" : "leaderboard_all_time_background")
+            .resizable()
+            .readSize({ newSize in
+              headerHeight = newSize.height
+            })
+        )
+        .frame(maxHeight: .infinity, alignment: .top)
+        .onTapGesture {
+          leaderboardRowsExpanded = false
         }
 
-        if let timeLeftInMs = viewModel.leaderboardResponse?.timeLeftInMs, timeLeftInMs > 0 {
-          let newTimeLeftInMs = timeLeftInMs - 1000
-          viewModel.leaderboardResponse?.timeLeftInMs = newTimeLeftInMs
-          timerText = formatMillisecondsToHMS(newTimeLeftInMs)
+        if let response = viewModel.leaderboardResponse {
+          DraggableView(
+            isExpanded: $leaderboardRowsExpanded,
+            topInset: mode == .daily ? 140 : 96,
+            peekHeight: usableHeight - headerHeight,
+            background: YralColor.grey950.swiftUIColor
+          ) {
+              buildLeaderboard(response)
+            }
+          .id(mode)
+          .opacity(showLoader ? 0 : 1)
         }
       }
-    })
-    .onAppear {
-      showLoader = true
-      Task {
-        viewModel.refreshLeaderboardIfReady(for: mode)
+      .frame(maxWidth: .infinity)
+      .frame(maxHeight: .infinity)
+      .background(Constants.background).ignoresSafeArea()
+      .hapticFeedback(.impact(weight: .light), trigger: mode)
+      .overlay(alignment: .center, content: {
+        if showLoader {
+          LottieLoaderView(animationName: Constants.loader)
+            .frame(width: Constants.loaderSize, height: Constants.loaderSize)
+        }
+      })
+      .overlay(alignment: .center) {
+        if showConfetti {
+          ForEach(Constants.confettiPositions.indices, id: \.self) { index in
+            LottieView(
+              name: Constants.confetti,
+              loopMode: .playOnce,
+              animationSpeed: .one) {}
+              .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.width)
+              .position(
+                x: UIScreen.main.bounds.width * Constants.confettiPositions[index].x,
+                y: UIScreen.main.bounds.height * Constants.confettiPositions[index].y
+              )
+              .allowsHitTesting(false)
+              .id(mode)
+          }
+        }
+      }
+      .onReceive(viewModel.$state, perform: { state in
+        leaderboardRowsExpanded = false
+        switch state {
+        case .loading:
+          showLoader = true
+          showConfetti = false
+        case .success:
+          showLoader = false
+          showConfetti = shouldShowConfetti()
+          timerText = formatMillisecondsToHMS(
+            viewModel.leaderboardResponse?.timeLeftInMs ?? 0
+          )
+        default:
+          showLoader = false
+          showConfetti = false
+        }
+      })
+      .onReceive(timer, perform: { _ in
+        if mode == .daily {
+          if timerShadowColor == Color.clear || timerShadowColor == Color.white {
+            timerTextColor = YralColor.grey50.swiftUIColor
+            timerImage = Image("leaderboard_clock")
+            timerShadowColor = Color(hex: "E2017B")
+          } else {
+            timerTextColor = Color(hex: "E2017B")
+            timerImage = Image("leaderboard_clock_pink")
+            timerShadowColor = Color.white
+          }
+
+          if let timeLeftInMs = viewModel.leaderboardResponse?.timeLeftInMs, timeLeftInMs > 0 {
+            let newTimeLeftInMs = timeLeftInMs - 1000
+            viewModel.leaderboardResponse?.timeLeftInMs = newTimeLeftInMs
+            timerText = formatMillisecondsToHMS(newTimeLeftInMs)
+          }
+        }
+      })
+      .onAppear {
+        showLoader = true
+        Task {
+          viewModel.refreshLeaderboardIfReady(for: mode)
+        }
       }
     }
   }
@@ -139,6 +166,7 @@ struct LeaderboardView: View {
         .padding(.vertical, 4)
         .padding(.horizontal, 4)
         .onTapGesture {
+          leaderboardRowsExpanded = false
           mode = .daily
           Task {
             viewModel.refreshLeaderboardIfReady(for: mode)
@@ -158,6 +186,7 @@ struct LeaderboardView: View {
         .padding(.horizontal, 4)
         .onTapGesture {
           viewModel.leaderboardResponse?.timeLeftInMs = nil
+          leaderboardRowsExpanded = false
           mode = .allTime
           Task {
             viewModel.refreshLeaderboardIfReady(for: mode)
