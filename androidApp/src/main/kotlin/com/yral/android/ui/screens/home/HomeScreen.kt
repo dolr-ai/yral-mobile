@@ -62,7 +62,6 @@ import com.yral.shared.features.account.viewmodel.AccountsViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.game.viewmodel.GameViewModel
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
-import com.yral.shared.koin.koinInstance
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -164,7 +163,6 @@ private fun HomeScreenContent(
             is HomeComponent.Child.Leaderboard ->
                 LeaderboardScreen(
                     component = child.component,
-                    viewModel = koinInstance.get(),
                 )
 
             is HomeComponent.Child.UploadVideo -> {
