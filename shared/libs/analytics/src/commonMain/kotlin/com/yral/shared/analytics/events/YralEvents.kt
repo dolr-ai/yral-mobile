@@ -823,6 +823,7 @@ data class PushNotificationsEnabledEventData(
     )
 }
 
+@Serializable
 data class AirdropClaimedEventData(
     @SerialName("event") override val event: String = FeatureEvents.AIRDROP_CLAIMED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.FEED.getFeatureName(),
