@@ -36,11 +36,37 @@ struct LeaderboardView: View {
       let usableHeight = geo.size.height - geo.safeAreaInsets.top - geo.safeAreaInsets.bottom
       ZStack {
         VStack(alignment: .center, spacing: .zero) {
-          buildSegmentedControl()
+          VStack(alignment: .center, spacing: .zero) {
+            buildSegmentedControl()
 
-          if viewModel.leaderboardResponse?.timeLeftInMs != nil {
-            buildTimerSection()
+            if viewModel.leaderboardResponse?.timeLeftInMs != nil {
+              buildTimerSection()
+            }
           }
+          .padding(.bottom, 12)
+          .background(
+            mode == .daily ?
+            LinearGradient(
+              gradient: Gradient(stops: [
+                .init(color: Color(hex: "FFC842").opacity(0.0), location: 0.0),
+                .init(color: Color(hex: "F6B517"), location: 0.8967)
+              ]),
+              startPoint: .top,
+              endPoint: .bottom
+            )
+            .opacity(leaderboardRowsExpanded ? 1 : 0)
+            .animation(.easeOut(duration: 0.25), value: leaderboardRowsExpanded) :
+              LinearGradient(
+                gradient: Gradient(stops: [
+                  .init(color: Color(hex: "706EBB").opacity(0.0), location: 0.0633),
+                  .init(color: Color(hex: "7C79EA"), location: 0.8517)
+                ]),
+                startPoint: .top,
+                endPoint: .bottom
+              )
+              .opacity(leaderboardRowsExpanded ? 1 : 0)
+              .animation(.easeOut(duration: 0.25), value: leaderboardRowsExpanded)
+          )
 
           buildPodiumSection()
         }
@@ -257,7 +283,7 @@ struct LeaderboardView: View {
     Image(Constants.podiumImage)
       .resizable()
       .frame(width: Constants.podiumSize.width, height: Constants.podiumSize.height)
-      .padding(.top, 44)
+      .padding(.top, 32)
       .padding(.bottom, 20)
 
     if let response = viewModel.leaderboardResponse {
