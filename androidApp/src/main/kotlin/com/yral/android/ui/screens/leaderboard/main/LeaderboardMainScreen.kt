@@ -48,7 +48,6 @@ import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstan
 import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.NO_OF_CONFETTI
 import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.PURPLE_BRUSH
 import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.YELLOW_BRUSH
-import com.yral.android.ui.widgets.YralLoader
 import com.yral.android.ui.widgets.YralLottieAnimation
 import com.yral.shared.features.game.data.models.LeaderboardMode
 import com.yral.shared.features.game.viewmodel.LeaderBoardState
@@ -91,7 +90,7 @@ fun LeaderboardMainScreen(
                 LeaderboardHeader(
                     state = state,
                     component = component,
-                    isTrophyVisible = isTrophyVisible,
+                    isTrophyVisible = isTrophyVisible || state.isLoading,
                     viewModel = viewModel,
                     leaderboardBG = leaderboardBG,
                 )
@@ -156,14 +155,6 @@ fun LeaderboardMainScreen(
                 }
             }
         }
-        if (state.isLoading) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center,
-            ) {
-                YralLoader()
-            }
-        }
         LeaderboardConfetti(showConfetti) { showConfetti = false }
     }
 }
@@ -186,7 +177,7 @@ private fun LeaderboardHeader(
             painter = painterResource(leaderboardBG),
             contentDescription = "",
             contentScale = ContentScale.Crop,
-            alignment = Alignment.TopCenter,
+            alignment = if (isTrophyVisible) Alignment.Center else Alignment.TopCenter,
             modifier = Modifier.matchParentSize(),
         )
         Box(
@@ -206,9 +197,7 @@ private fun LeaderboardHeader(
                 openHistory = { component.openDailyHistory() },
                 isTrophyVisible = isTrophyVisible,
             )
-            if (!state.isLoading) {
-                LeaderboardTableHeader(isTrophyVisible)
-            }
+            LeaderboardTableHeader(isTrophyVisible)
         }
     }
 }
@@ -260,7 +249,8 @@ object LeaderboardMainScreenConstants {
     const val COIN_BALANCE_WEIGHT = 0.28f
     const val MAX_CHAR_OF_NAME = 12
     const val COUNT_DOWN_BG_ALPHA = 0.8f
-    const val COUNT_DOWN_ANIMATION_DURATION = 1000
+    const val COUNT_DOWN_ANIMATION_DURATION = 500
+    const val COUNT_DOWN_BORDER_ANIMATION_DURATION = 300
     val YELLOW_BRUSH =
         listOf(
             Color(0x00FFC842).copy(alpha = 0f),
@@ -275,5 +265,5 @@ object LeaderboardMainScreenConstants {
     const val CONFETTI_SCALE = 2.5f
     const val NO_OF_CONFETTI = 5
     const val CONFETTI_SIZE_FACTOR = 3
-    const val CONFETTI_ITERATIONS = 2
+    const val CONFETTI_ITERATIONS = 0
 }
