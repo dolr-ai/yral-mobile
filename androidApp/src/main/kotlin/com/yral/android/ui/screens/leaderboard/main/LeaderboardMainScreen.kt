@@ -249,7 +249,7 @@ object LeaderboardMainScreenConstants {
     const val COIN_BALANCE_WEIGHT = 0.28f
     const val MAX_CHAR_OF_NAME = 12
     const val COUNT_DOWN_BG_ALPHA = 0.8f
-    const val COUNT_DOWN_ANIMATION_DURATION = 1000
+    const val COUNT_DOWN_ANIMATION_DURATION = 500
     val YELLOW_BRUSH =
         listOf(
             Color(0x00FFC842).copy(alpha = 0f),
