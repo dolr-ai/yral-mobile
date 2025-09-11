@@ -111,6 +111,7 @@ struct HomeTabController: View {
         switch dest {
         case .profileAfterUpload:
           selectedTab = .profile
+        default: break
         }
         deepLinkRouter.pendingDestination = nil
       }

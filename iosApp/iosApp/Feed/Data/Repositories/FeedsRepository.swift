@@ -126,6 +126,16 @@ class FeedsRepository: FeedRepositoryProtocol {
     return .success(result)
   }
 
+  func fetchDeepLinkFeed(request: DeepLinkFeedRequest) async -> Result<FeedResult, FeedError> {
+    do {
+      let result = try await self.mapToFeedResults(feed: request)
+      return .success(result)
+    } catch {
+      let feedError = self.handleFeedError(error: error)
+      return .failure(feedError)
+    }
+  }
+
   private func mapToFeedResults<T: FeedMapping>(feed: T) async throws -> FeedResult {
     let principal = try get_principal(feed.canisterID)
     let identity = try self.authClient.generateNewDelegatedIdentity()
@@ -375,4 +385,10 @@ protocol FeedMapping {
   var postID: UInt32 { get }
   var canisterID: String { get }
   var nsfwProbability: Double { get }
+}
+
+extension DeepLinkFeedRequest: FeedMapping {
+  var nsfwProbability: Double {
+    return .zero
+  }
 }

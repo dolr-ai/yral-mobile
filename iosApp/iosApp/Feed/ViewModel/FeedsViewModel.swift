@@ -12,6 +12,7 @@ import iosSharedUmbrella
 class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
   let initialFeedsUseCase: FetchInitialFeedsUseCaseProtocol
   let moreFeedsUseCase: FetchMoreFeedsUseCaseProtocol
+  let deeplinkFeedUseCase: DeepLinkFeedUseCaseProtocol
   let reportUseCase: ReportFeedsUseCaseProtocol
   let logEventUseCase: LogUploadEventUseCaseProtocol
   let socialSignInUseCase: SocialSignInUseCaseProtocol
@@ -39,6 +40,7 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
   init(
     fetchFeedsUseCase: FetchInitialFeedsUseCaseProtocol,
     moreFeedsUseCase: FetchMoreFeedsUseCaseProtocol,
+    deeplinkFeedUseCase: DeepLinkFeedUseCaseProtocol,
     reportUseCase: ReportFeedsUseCaseProtocol,
     logEventUseCase: LogUploadEventUseCaseProtocol,
     socialSignInUseCase: SocialSignInUseCaseProtocol,
@@ -47,6 +49,7 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
   ) {
     self.initialFeedsUseCase = fetchFeedsUseCase
     self.moreFeedsUseCase = moreFeedsUseCase
+    self.deeplinkFeedUseCase = deeplinkFeedUseCase
     self.reportUseCase = reportUseCase
     self.logEventUseCase = logEventUseCase
     self.socialSignInUseCase = socialSignInUseCase
@@ -109,6 +112,18 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
       case .failure(let failure):
         print(failure)
       default: break
+      }
+    }
+  }
+
+  @MainActor func fetchDeepLinkFeed(request: DeepLinkFeedRequest) async {
+    do {
+      let result = await deeplinkFeedUseCase.execute(request: request)
+      switch result {
+      case .success(let feed):
+        unifiedEvent = .fetchedDeeplinkFeed(feed)
+      case .failure(let failure):
+        print(failure)
       }
     }
   }

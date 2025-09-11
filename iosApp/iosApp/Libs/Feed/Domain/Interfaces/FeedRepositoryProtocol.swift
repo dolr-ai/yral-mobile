@@ -10,6 +10,7 @@ import Combine
 protocol FeedRepositoryProtocol {
   func getInitialFeeds(numResults: Int) async -> Result<Void, FeedError>
   func fetchMoreFeeds(request: MoreFeedsRequest) async -> Result<[FeedResult], FeedError>
+  func fetchDeepLinkFeed(request: DeepLinkFeedRequest) async -> Result<FeedResult, FeedError>
   func reportVideo(request: ReportRequest) async -> Result<String, FeedError>
   func logEvent(request: [VideoEventRequest]) async -> Result<Void, FeedError>
   func rechargeWallet() async -> Result<Int64, FeedError>

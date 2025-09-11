@@ -106,11 +106,12 @@ final class FeedsPlayer: YralPlayer {
     player.isMuted = !(accepted ?? false)
   }
 
-  func advanceToVideo(at index: Int) {
+  func advanceToVideo(at index: Int, isDeepLink: Bool = false) {
+    let isNewVideo = currentIndex != index || isDeepLink
     guard index >= 0
             && index < feedResults.count
-            && currentIndex < feedResults.count,
-          currentIndex != index else { return }
+            && currentIndex < feedResults.count &&
+            isNewVideo else { return }
     lastLoopProgress = 0
     (player as? AVQueuePlayer)?.replaceCurrentItem(with: nil)
     if let videoID = feedResults[safe: index]?.videoID {
@@ -155,6 +156,10 @@ final class FeedsPlayer: YralPlayer {
     if feedResults.isEmpty {
       didEmptyFeeds?()
     }
+  }
+
+  func insertFeed(_ feeds: [FeedResult], at index: Int) {
+    self.feedResults.insert(contentsOf: feeds, at: index)
   }
 
   private func prepareCurrentVideo() async {
