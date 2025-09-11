@@ -275,5 +275,5 @@ object LeaderboardMainScreenConstants {
     const val CONFETTI_SCALE = 2.5f
     const val NO_OF_CONFETTI = 5
     const val CONFETTI_SIZE_FACTOR = 3
-    const val CONFETTI_ITERATIONS = 2
+    const val CONFETTI_ITERATIONS = 0
 }
