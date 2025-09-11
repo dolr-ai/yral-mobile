@@ -74,8 +74,10 @@ struct LeaderboardView: View {
             peekHeight: usableHeight - headerHeight,
             background: YralColor.grey950.swiftUIColor
           ) {
-              buildLeaderboard(response)
-            }
+            buildLeaderboardHeader()
+          } content: {
+            buildLeaderboard(response)
+          }
           .id(mode)
           .opacity(showLoader ? 0 : 1)
         }
@@ -294,25 +296,30 @@ struct LeaderboardView: View {
   }
 
   @ViewBuilder
+  private func buildLeaderboardHeader() -> some View {
+    HStack(spacing: .zero) {
+      Text(Constants.position)
+        .font(Constants.positionFont)
+        .foregroundColor(Constants.positionColour)
+        .frame(width: rowWidth * Constants.positionFactor, alignment: .leading)
+
+      Text(Constants.id)
+        .font(Constants.idFont)
+        .foregroundColor(Constants.idColour)
+        .frame(width: rowWidth * Constants.idFactor, alignment: .leading)
+
+      Text(Constants.totalSats)
+        .font(Constants.totalSatsFont)
+        .foregroundColor(Constants.totalSatsColour)
+        .frame(width: rowWidth * Constants.totalSatsFactor, alignment: .trailing)
+    }
+    .padding(.top, 20)
+    .padding(.bottom, 10)
+  }
+
+  @ViewBuilder
   private func buildLeaderboard(_ response: LeaderboardResponse) -> some View {
     VStack(alignment: .leading, spacing: Constants.vStackSpacing) {
-      HStack(spacing: .zero) {
-        Text(Constants.position)
-          .font(Constants.positionFont)
-          .foregroundColor(Constants.positionColour)
-          .frame(width: rowWidth * Constants.positionFactor, alignment: .leading)
-
-        Text(Constants.id)
-          .font(Constants.idFont)
-          .foregroundColor(Constants.idColour)
-          .frame(width: rowWidth * Constants.idFactor, alignment: .leading)
-
-        Text(Constants.totalSats)
-          .font(Constants.totalSatsFont)
-          .foregroundColor(Constants.totalSatsColour)
-          .frame(width: rowWidth * Constants.totalSatsFactor, alignment: .trailing)
-      }
-
       if let userRow = response.userRow {
         LeaderboardRowView(
           leaderboardRow: userRow,
@@ -331,7 +338,7 @@ struct LeaderboardView: View {
         )
       }
     }
-    .padding(.vertical, Constants.leaderboardVertical)
+    .padding(.bottom, Constants.leaderboardVertical)
     .padding(.horizontal, Constants.leaderboardHorizontal)
     .frame(maxWidth: .infinity, alignment: .leading)
   }
