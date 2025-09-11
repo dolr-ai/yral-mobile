@@ -24,6 +24,9 @@ class FeedsViewController: UIViewController {
   var lastContentOffsetY: CGFloat = 0
   let playToScroll: Bool
   var isShowingPlayToScroll = false
+  var pendingAnchor: DeepLinkFeedRequest?
+  var hasAppliedInitialSnapshot = false
+  var isApplyingSnapshot = false
 
   lazy var feedsPlayer: YralPlayer = { [unowned self] in
     let monitor = DefaultNetworkMonitor()
@@ -69,7 +72,9 @@ class FeedsViewController: UIViewController {
   private var loaderCancellables = Set<AnyCancellable>()
   private var authStateCancellables = Set<AnyCancellable>()
   private var coinFetchingCancellables = Set<AnyCancellable>()
+  private var deepLinkCancellables = Set<AnyCancellable>()
   var session: SessionManager
+  var deepLinkRouter: DeepLinkRouter
   let crashReporter: CrashReporter
 
   init(
@@ -83,6 +88,7 @@ class FeedsViewController: UIViewController {
     self.playToScroll = playToScroll
     self.feedType = feedType
     self.session = session
+    self.deepLinkRouter = DeepLinkRouter.shared
     self.crashReporter = crashReporter
     super.init(nibName: nil, bundle: nil)
   }
@@ -99,6 +105,7 @@ class FeedsViewController: UIViewController {
     setupUI()
     startLoadingBindings()
     addAuthChangeListner()
+    addDeepLinkListner()
     Task { @MainActor [weak self] in
       guard let self = self else { return }
       await viewModel.fetchFeeds(request: InitialFeedRequest(numResults: Constants.initialNumResults))
@@ -150,6 +157,8 @@ class FeedsViewController: UIViewController {
           DispatchQueue.main.async {
             self.updateData(withFeeds: feeds)
             self.activityIndicator.stopAnimating()
+            self.hasAppliedInitialSnapshot = true
+            self.handleAnchorIfReady()
           }
         case .failure(let errorMessage):
           self.loadMoreRequestMade = false
@@ -182,7 +191,7 @@ class FeedsViewController: UIViewController {
           DispatchQueue.main.async {
             self.shouldShowFooterLoader = false
             let snapshot = self.feedsDataSource.snapshot()
-            self.feedsDataSource.apply(snapshot, animatingDifferences: true)
+            self.applySnapshot(snapshot, animatingDifferences: true)
           }
         case .loadMoreFeedsFailed(let errorMessage):
           print("Load more feeds failed: \(errorMessage)")
@@ -223,16 +232,16 @@ class FeedsViewController: UIViewController {
           var snapshot = feedsDataSource.snapshot()
           let item = snapshot.itemIdentifiers[visibleIndexPath.item]
           snapshot.reloadItems([item])
-          feedsDataSource.apply(snapshot, animatingDifferences: true)
+          applySnapshot(snapshot, animatingDifferences: true)
           self.activityIndicator.stopAnimating()
         case .smileysFetched:
           self.activityIndicator.stopAnimating()
           var snapshot = feedsDataSource.snapshot()
           snapshot.reloadItems(snapshot.itemIdentifiers)
-          feedsDataSource.apply(snapshot, animatingDifferences: false)
+          applySnapshot(snapshot)
         case .feedsRefreshed:
           self.activityIndicator.startAnimating(in: self.view)
-          feedsDataSource.apply(Snapshot(), animatingDifferences: true)
+          applySnapshot(Snapshot())
         case .walletRechargeSuccess(let coins):
           if let indexPath = feedsCV.indexPathsForVisibleItems.first,
              let cell = feedsCV.cellForItem(at: indexPath) as? FeedsCell {
@@ -243,6 +252,8 @@ class FeedsViewController: UIViewController {
              let cell = feedsCV.cellForItem(at: indexPath) as? FeedsCell {
             cell.applyRechargeResult(.failure, coins: .zero)
           }
+        case .fetchedDeeplinkFeed(let feed):
+          insertOrMoveToFront(feed)
         }
       }
       .store(in: &paginatedFeedscancellables)
@@ -418,6 +429,40 @@ class FeedsViewController: UIViewController {
       .store(in: &authStateCancellables)
   }
 
+  func addDeepLinkListner() {
+    deepLinkRouter.$pendingDestination.sink { [weak self] destination in
+      guard let self = self else { return }
+      switch destination {
+      case .openVideo(postId: let postId, canisterId: let canisterID):
+        self.feedsCV.isHidden = true
+        self.pendingAnchor = DeepLinkFeedRequest(postID: postId, canisterID: canisterID ?? "")
+        self.handleAnchorIfReady()
+      default: break
+      }
+    }
+    .store(in: &deepLinkCancellables)
+  }
+
+  private func handleAnchorIfReady() {
+    guard let anchor = pendingAnchor, hasAppliedInitialSnapshot else { return }
+    pendingAnchor = nil
+
+    Task { @MainActor in
+      if let existingItem = findItem(postId: anchor.postID, canisterId: anchor.canisterID) {
+        insertOrMoveToFront(existingItem)
+        return
+      }
+      Task {
+        await viewModel.fetchDeepLinkFeed(
+          request: DeepLinkFeedRequest(
+            postID: anchor.postID,
+            canisterID: anchor.canisterID
+          )
+        )
+      }
+    }
+  }
+
   @objc func appDidBecomeActive() {
     if isCurrentlyVisible {
       guard !feedsDataSource.snapshot().itemIdentifiers.isEmpty else { return }
@@ -463,6 +508,9 @@ extension FeedsViewController {
     static let overlayIndex = 9
 
     static let winResult = "WIN"
+
+    static let shareText = "Check out this video on Yral 👀 Where watching = fun + games! ⚡ Try it 👉"
+    static let shareDescription = "Watch on Yral"
   }
 }
 // swiftlint: enable type_body_length file_length

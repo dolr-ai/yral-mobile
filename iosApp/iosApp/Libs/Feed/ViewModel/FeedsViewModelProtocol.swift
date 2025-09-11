@@ -23,6 +23,7 @@ enum UnifiedFeedEvent: Equatable {
   case loadMoreFeedsFailed(errorMessage: String)
   case toggleLikeFailed(errorMessage: String)
   case finishedLoadingInitialFeeds
+  case fetchedDeeplinkFeed(FeedResult)
   case deleteVideoInitiated
   case deleteVideoSuccess(feeds: [FeedResult])
   case deleteVideoFailed(errorMessage: String)
@@ -73,6 +74,7 @@ protocol FeedViewModelProtocol: ObservableObject {
 
   func fetchFeeds(request: InitialFeedRequest) async
   func loadMoreFeeds() async
+  func fetchDeepLinkFeed(request: DeepLinkFeedRequest) async
   func deleteVideo(request: DeleteVideoRequest) async
   func getCurrentFeedIndex() -> Int
   func report(request: ReportRequest) async

@@ -16,12 +16,20 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     if UIApplication.shared.isProtectedDataAvailable {
       migrateKeychain()
     }
+    #if DEBUG
+    Branch.setUseTestBranchKey(true)
+    #endif
 
     Branch.getInstance().initSession(launchOptions: launchOptions) { (params, error) in
-      if let params {
-        print("\(Constants.branchParameters) \(params)")
-      } else if let error {
-        print("\(Constants.branchError) \(error.localizedDescription)")
+      if let error = error {
+        print("\(DeepLinkRouter.Constants.branchError)", error)
+        return
+      }
+
+      if let dict = params as? [String: Any] {
+        Task { @MainActor in
+          DeepLinkRouter.shared.resolve(from: dict)
+        }
       }
     }
 
@@ -79,8 +87,8 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     didReceive response: UNNotificationResponse,
     withCompletionHandler completionHandler: @escaping () -> Void
   ) {
-    if isUploadNotification(userInfo: response.notification.request.content.userInfo) {
-      DeepLinkRouter.shared.pendingDestination = DeepLinkRouter.Destination.profileAfterUpload
+    Task { @MainActor in
+      DeepLinkRouter.shared.resolve(from: response.notification.request.content.userInfo)
     }
     completionHandler()
   }
@@ -175,6 +183,12 @@ struct IosApp: App {
         .environmentObject(deepLinkRouter)
         .environmentObject(eventBus)
         .environment(\.appDIContainer, appDIContainer)
+        .onOpenURL { url in
+          Branch.getInstance().application(UIApplication.shared, open: url, options: [:])
+        }
+        .onContinueUserActivity(NSUserActivityTypeBrowsingWeb) { activity in
+          Branch.getInstance().continue(activity)
+        }
     }
   }
 
@@ -239,7 +253,5 @@ extension AppDelegate {
     static let payloadString = "payload"
     static let typeString = "type"
     static let videoUploadSuccessType = "VideoUploadSuccessful"
-    static let branchParameters = "Branch parameters:"
-    static let branchError = "Branch error:"
   }
 }

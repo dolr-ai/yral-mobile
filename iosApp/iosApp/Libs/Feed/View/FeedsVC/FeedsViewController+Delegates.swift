@@ -70,19 +70,36 @@ extension FeedsViewController: FeedsCellProtocol {
 
   func shareButtonTapped(index: Int) {
     activityIndicator.startAnimating(in: self.view)
-    // swiftlint: disable line_length
-    guard let shareURL = URL(
-      string: "https://yral.com/hot-or-not/\(self.feedsDataSource.snapshot().itemIdentifiers[index].canisterID)/\(self.feedsDataSource.snapshot().itemIdentifiers[index].postID)"
-    ) else { return }
-    // swiftlint: enable line_length
-    let activityViewController = UIActivityViewController(
-      activityItems: [shareURL],
-      applicationActivities: nil
-    )
+    guard index < feedsDataSource.snapshot().itemIdentifiers.count else { return }
+    let item = feedsDataSource.snapshot().itemIdentifiers[index]
+    BranchShareService.shared.generateLink(
+      payload: SharePayload(
+        title: Constants.shareText,
+        description: Constants.shareDescription,
+        imageUrl: item.thumbnail.absoluteString,
+        postId: item.postID,
+        canisterId: item.canisterID
+      ),
+      channel: ""
+    ) { [weak self] shareUrlString, error  in
+      guard let self = self else { return }
+      if let error = error {
+        self.crashReporter.recordException(error)
+        return
+      }
+      guard let shareUrlString = shareUrlString,
+            let shareURL = URL(
+              string: shareUrlString
+            ) else { return }
+      let activityViewController = UIActivityViewController(
+        activityItems: [shareURL],
+        applicationActivities: nil
+      )
 
-    guard let viewController = navigationController?.viewControllers.first else { return }
-    viewController.present(activityViewController, animated: true) {
-      self.activityIndicator.stopAnimating()
+      guard let viewController = navigationController?.viewControllers.first else { return }
+      viewController.present(activityViewController, animated: true) {
+        self.activityIndicator.stopAnimating()
+      }
     }
   }
 

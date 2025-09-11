@@ -32,6 +32,9 @@ protocol YralPlayer {
   /// Adds more videos to the player
   func addFeedResults(_ feeds: [FeedResult])
 
+  /// Inserts feed at the given index
+  func insertFeed(_ feeds: [FeedResult], at index: Int)
+
   /// Increase index
   func incrementIndex()
 
@@ -39,7 +42,7 @@ protocol YralPlayer {
   func decrementIndex()
 
   /// Advances to any video on the basis of passed index
-  func advanceToVideo(at index: Int)
+  func advanceToVideo(at index: Int, isDeepLink: Bool)
 
   /// Removes videos from the player
   func removeFeeds(_ feeds: [FeedResult])
