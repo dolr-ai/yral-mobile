@@ -155,7 +155,7 @@ pub async fn authenticate_with_network(
     auth: DelegatedIdentityWire,
     referrer: Option<Principal>,
 ) -> std::result::Result<CanistersWrapper, String> {
-    let canisters: Canisters<true> = Canisters::<true>::authenticate_with_network(auth, referrer)
+    let canisters: Canisters<true> = Canisters::<true>::authenticate_with_network(auth)
         .await
         .map_err(|error| error.to_string())?;
     Ok(CanistersWrapper { inner: canisters })
