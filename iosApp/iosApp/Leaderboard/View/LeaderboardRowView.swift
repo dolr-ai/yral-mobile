@@ -34,15 +34,13 @@ struct LeaderboardRowView: View {
       HStack(spacing: Constants.hStackSpacing) {
         buildUserImage()
 
-        Text((isCurrentUser || leaderboardRow.principalID == appDIContainer?.authClient.userPrincipalString)
-             ? "You" : leaderboardRow.principalID)
+        Text(isCurrentUser ? "You" : leaderboardRow.principalID)
         .font(Constants.userIDFont)
         .foregroundColor(foregroundColorForPrincipal())
         .lineLimit(.one)
         .overlay(
           buildTextGradient(
-            text: leaderboardRow.principalID == appDIContainer?.authClient.userPrincipalString
-            ? "You" : leaderboardRow.principalID,
+            text: leaderboardRow.principalID,
             font: Constants.userIDFont,
             endRadius: Constants.principalEndRadius
           )
