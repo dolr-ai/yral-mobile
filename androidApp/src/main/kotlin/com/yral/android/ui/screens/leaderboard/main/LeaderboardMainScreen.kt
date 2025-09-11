@@ -48,7 +48,6 @@ import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstan
 import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.NO_OF_CONFETTI
 import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.PURPLE_BRUSH
 import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.YELLOW_BRUSH
-import com.yral.android.ui.widgets.YralLoader
 import com.yral.android.ui.widgets.YralLottieAnimation
 import com.yral.shared.features.game.data.models.LeaderboardMode
 import com.yral.shared.features.game.viewmodel.LeaderBoardState
@@ -91,7 +90,7 @@ fun LeaderboardMainScreen(
                 LeaderboardHeader(
                     state = state,
                     component = component,
-                    isTrophyVisible = isTrophyVisible,
+                    isTrophyVisible = isTrophyVisible || state.isLoading,
                     viewModel = viewModel,
                     leaderboardBG = leaderboardBG,
                 )
@@ -156,14 +155,6 @@ fun LeaderboardMainScreen(
                 }
             }
         }
-        if (state.isLoading) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center,
-            ) {
-                YralLoader()
-            }
-        }
         LeaderboardConfetti(showConfetti) { showConfetti = false }
     }
 }
@@ -206,9 +197,7 @@ private fun LeaderboardHeader(
                 openHistory = { component.openDailyHistory() },
                 isTrophyVisible = isTrophyVisible,
             )
-            if (!state.isLoading) {
-                LeaderboardTableHeader(isTrophyVisible)
-            }
+            LeaderboardTableHeader(isTrophyVisible)
         }
     }
 }
