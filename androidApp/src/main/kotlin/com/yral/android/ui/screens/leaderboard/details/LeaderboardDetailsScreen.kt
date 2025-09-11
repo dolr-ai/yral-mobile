@@ -63,34 +63,33 @@ fun LeaderboardDetailsScreen(
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.primaryContainer),
         ) {
-            item { Header { component.onBack() } }
-            item { Spacer(Modifier.height(22.dp)) }
-            item {
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier =
-                        Modifier
-                            .background(YralColors.Neutral800)
-                            .fillMaxWidth()
-                            .height(38.dp)
-                            .padding(start = 16.dp),
-                ) {
-                    val dates = state.history.map { it.date }
-                    itemsIndexed(dates) { index, date ->
-                        val index = dates.indexOf(date)
-                        DateChip(
-                            date = date,
-                            isSelected = index == state.selectedIndex,
-                            select = { viewModel.select(index) },
-                        )
+            stickyHeader {
+                Column(Modifier.background(MaterialTheme.colorScheme.primaryContainer)) {
+                    Header { component.onBack() }
+                    Spacer(Modifier.height(22.dp))
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier =
+                            Modifier
+                                .background(YralColors.Neutral800)
+                                .fillMaxWidth()
+                                .height(38.dp)
+                                .padding(start = 16.dp),
+                    ) {
+                        val dates = state.history.map { it.date }
+                        itemsIndexed(dates) { index, date ->
+                            val index = dates.indexOf(date)
+                            DateChip(
+                                date = date,
+                                isSelected = index == state.selectedIndex,
+                                select = { viewModel.select(index) },
+                            )
+                        }
                     }
+                    Spacer(Modifier.height(16.dp))
+                    LeaderboardTableHeader(false)
                 }
-            }
-            item {
-                Spacer(Modifier.height(16.dp))
-                LeaderboardTableHeader(false)
-                Spacer(modifier = Modifier.height(8.dp))
             }
             if (!state.isLoading && state.error == null && state.history.isNotEmpty()) {
                 val selected = state.history.getOrNull(state.selectedIndex)

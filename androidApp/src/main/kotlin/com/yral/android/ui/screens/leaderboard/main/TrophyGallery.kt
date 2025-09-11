@@ -47,6 +47,7 @@ import com.yral.android.ui.screens.leaderboard.main.LeaderboardHelpers.POS_SILVE
 import com.yral.android.ui.screens.leaderboard.main.LeaderboardHelpers.getTrophyImageHeight
 import com.yral.android.ui.screens.leaderboard.main.LeaderboardHelpers.getTrophyImageOffset
 import com.yral.android.ui.screens.leaderboard.main.LeaderboardHelpers.getTrophyImageWidth
+import com.yral.android.ui.widgets.YralLoader
 import com.yral.android.ui.widgets.YralLottieAnimation
 import com.yral.shared.features.game.data.models.LeaderboardMode
 import com.yral.shared.features.game.domain.models.LeaderboardItem
@@ -122,18 +123,16 @@ fun TrophyGallery(
             if (selectedMode.showCountDown && countDownMs == null) {
                 Spacer(modifier = Modifier.height(11.dp))
             }
-            if (!isLoading) {
-                AnimatedVisibility(visible = leaderboard.size > 3 && isTrophyVisible) {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(top = trophyPaddingTop),
-                    ) {
-                        TrophyImages(leaderboard)
-                        TrophyDetails(leaderboard, selectedMode)
-                    }
+            AnimatedVisibility(visible = isTrophyVisible) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(top = trophyPaddingTop),
+                ) {
+                    TrophyImages(leaderboard)
+                    TrophyDetails(leaderboard, selectedMode, isLoading)
                 }
             }
         }
@@ -180,6 +179,7 @@ private fun getProfileImageForTrophy(
 private fun ColumnScope.TrophyDetails(
     leaderboard: List<LeaderboardItem>,
     leaderboardMode: LeaderboardMode,
+    isLoading: Boolean,
 ) {
     Column(modifier = Modifier.align(Alignment.CenterHorizontally)) {
         val posGold by remember(leaderboard) { mutableStateOf(getTrophyDetailItem(POS_GOLD, leaderboard)) }
@@ -201,6 +201,7 @@ private fun ColumnScope.TrophyDetails(
                 gamesWon = posSilver.second,
                 lines = lines,
                 leaderboardMode = leaderboardMode,
+                isLoading = isLoading,
             )
             TrophyDetailsItem(
                 position = POS_GOLD,
@@ -208,6 +209,7 @@ private fun ColumnScope.TrophyDetails(
                 gamesWon = posGold.second,
                 lines = lines,
                 leaderboardMode = leaderboardMode,
+                isLoading = isLoading,
             )
             TrophyDetailsItem(
                 position = POS_BRONZE,
@@ -215,6 +217,7 @@ private fun ColumnScope.TrophyDetails(
                 gamesWon = posBronze.second,
                 lines = lines,
                 leaderboardMode = leaderboardMode,
+                isLoading = isLoading,
             )
         }
     }
@@ -291,6 +294,7 @@ private fun TrophyDetailsItem(
     lines: Int,
     gamesWon: Long,
     leaderboardMode: LeaderboardMode,
+    isLoading: Boolean,
 ) {
     val principalColor =
         when (leaderboardMode) {
@@ -313,37 +317,43 @@ private fun TrophyDetailsItem(
             LeaderboardMode.DAILY -> LocalAppTopography.current.baseBold.copy(color = principalColor)
             LeaderboardMode.ALL_TIME -> LocalAppTopography.current.baseBold.copy(color = principalColor)
         }
-    Column(
-        modifier = Modifier.width(93.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(
-            text = userPrincipalId,
-            style = LocalAppTopography.current.baseMedium,
-            color = principalColor,
-            minLines = lines,
-            maxLines = lines,
-            textAlign = TextAlign.Center,
-            overflow = TextOverflow.Ellipsis,
-        )
-        if (gamesWon >= 0) {
-            Spacer(Modifier.height(8.dp))
+    if (isLoading) {
+        Box(Modifier.width(85.dp)) {
+            YralLoader(size = 28.dp)
+        }
+    } else {
+        Column(
+            modifier = Modifier.width(93.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
             Text(
-                text = gamesWon.toString(),
-                style = gamesWonStyle,
+                text = userPrincipalId,
+                style = LocalAppTopography.current.baseMedium,
+                color = principalColor,
+                minLines = lines,
+                maxLines = lines,
                 textAlign = TextAlign.Center,
-                maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.onSizeChanged { textSize1 = it },
             )
-            Text(
-                text = stringResource(R.string.games_won),
-                style = gameWonStyleDes,
-                textAlign = TextAlign.Center,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.onSizeChanged { textSize2 = it / 2 },
-            )
+            if (gamesWon >= 0) {
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = gamesWon.toString(),
+                    style = gamesWonStyle,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.onSizeChanged { textSize1 = it },
+                )
+                Text(
+                    text = stringResource(R.string.games_won),
+                    style = gameWonStyleDes,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.onSizeChanged { textSize2 = it / 2 },
+                )
+            }
         }
     }
 }
