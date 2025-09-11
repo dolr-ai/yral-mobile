@@ -177,7 +177,7 @@ private fun LeaderboardHeader(
             painter = painterResource(leaderboardBG),
             contentDescription = "",
             contentScale = ContentScale.Crop,
-            alignment = Alignment.TopCenter,
+            alignment = if (isTrophyVisible) Alignment.Center else Alignment.TopCenter,
             modifier = Modifier.matchParentSize(),
         )
         Box(
