@@ -6,7 +6,7 @@ import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.pop
-import com.arkivanov.decompose.router.stack.push
+import com.arkivanov.decompose.router.stack.pushToFront
 import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.Value
 import com.yral.android.ui.screens.uploadVideo.aiVideoGen.AiVideoGenComponent
@@ -85,8 +85,8 @@ internal class DefaultUploadVideoRootComponent(
     private fun flowSelectionComponent(componentContext: ComponentContext): FlowSelectionComponent =
         FlowSelectionComponent.Companion(
             componentContext = componentContext,
-            onUploadVideoClicked = { navigation.push(Config.FileUpload) },
-            onAiVideoGenClicked = { navigation.push(Config.AiVideoGen) },
+            onUploadVideoClicked = { navigation.pushToFront(Config.FileUpload) },
+            onAiVideoGenClicked = { navigation.pushToFront(Config.AiVideoGen) },
         )
 
     private fun aiVideoGenComponent(componentContext: ComponentContext): AiVideoGenComponent =
