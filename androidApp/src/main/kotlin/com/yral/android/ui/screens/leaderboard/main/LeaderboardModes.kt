@@ -35,6 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -45,6 +46,7 @@ import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.COUNT_DOWN_ANIMATION_DURATION
 import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.COUNT_DOWN_BG_ALPHA
+import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.COUNT_DOWN_BORDER_ANIMATION_DURATION
 import com.yral.android.ui.widgets.YralMaskedVectorTextV2
 import com.yral.android.ui.widgets.YralNeonBorder
 import com.yral.shared.features.game.data.models.LeaderboardMode
@@ -122,6 +124,7 @@ private fun LeaderMode(
     }
 }
 
+@Suppress("LongMethod")
 @Composable
 fun ColumnScope.LeaderboardCountdown(
     countDownMs: Long,
@@ -137,8 +140,18 @@ fun ColumnScope.LeaderboardCountdown(
         }
     }
     Box(Modifier.align(Alignment.CenterHorizontally)) {
+        var showWhiteBorder by remember(blinkCountDown) { mutableStateOf(false) }
         if (blinkCountDown) {
-            LeaderboardCountdownBorder()
+            LeaderboardCountdownBorder(YralColors.Pink300)
+            if (showWhiteBorder) {
+                LeaderboardCountdownBorder(Color.White)
+            }
+        }
+        LaunchedEffect(blinkCountDown) {
+            if (blinkCountDown) {
+                delay(COUNT_DOWN_ANIMATION_DURATION.toLong())
+                showWhiteBorder = true
+            }
         }
         Box {
             Row(
@@ -180,7 +193,7 @@ fun ColumnScope.LeaderboardCountdown(
 }
 
 @Composable
-private fun BoxScope.LeaderboardCountdownBorder() {
+private fun BoxScope.LeaderboardCountdownBorder(borderColor: Color) {
     val infiniteTransition = rememberInfiniteTransition(label = "infiniteBounce")
     val alpha by infiniteTransition.animateFloat(
         initialValue = 1f,
@@ -188,7 +201,7 @@ private fun BoxScope.LeaderboardCountdownBorder() {
         animationSpec =
             infiniteRepeatable(
                 tween(
-                    durationMillis = COUNT_DOWN_ANIMATION_DURATION,
+                    durationMillis = COUNT_DOWN_BORDER_ANIMATION_DURATION,
                     easing = FastOutLinearInEasing,
                 ),
                 RepeatMode.Reverse,
@@ -198,14 +211,14 @@ private fun BoxScope.LeaderboardCountdownBorder() {
     val containerColor = YralColors.Neutral950
     val cornerRadius = 49.dp
     val paddingValues = PaddingValues(horizontal = 0.dp, vertical = 0.dp)
-    val neonColor = YralColors.Pink300.copy(alpha = alpha)
+    val neonColor = borderColor
     YralNeonBorder(
         paddingValues = paddingValues,
         cornerRadius = cornerRadius,
         containerColor = containerColor,
         neonColor = neonColor,
         borderWidth = 10f,
-        animationDuration = COUNT_DOWN_ANIMATION_DURATION.toLong(),
+        animationDuration = COUNT_DOWN_BORDER_ANIMATION_DURATION.toLong(),
     )
 }
 
@@ -238,7 +251,7 @@ private fun LeaderboardCountdownContent(
             )
             YralMaskedVectorTextV2(
                 text = stringResource(R.string.end_in, time),
-                vectorRes = R.drawable.pink_gradient_background,
+                vectorRes = R.drawable.count_down_timer,
                 textStyle = LocalAppTopography.current.regBold,
             )
         }

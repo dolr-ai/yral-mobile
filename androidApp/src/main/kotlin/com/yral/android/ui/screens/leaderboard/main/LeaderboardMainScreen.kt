@@ -250,6 +250,7 @@ object LeaderboardMainScreenConstants {
     const val MAX_CHAR_OF_NAME = 12
     const val COUNT_DOWN_BG_ALPHA = 0.8f
     const val COUNT_DOWN_ANIMATION_DURATION = 500
+    const val COUNT_DOWN_BORDER_ANIMATION_DURATION = 300
     val YELLOW_BRUSH =
         listOf(
             Color(0x00FFC842).copy(alpha = 0f),
