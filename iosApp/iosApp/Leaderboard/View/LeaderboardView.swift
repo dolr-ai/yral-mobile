@@ -87,9 +87,6 @@ struct LeaderboardView: View {
             })
         )
         .frame(maxHeight: .infinity, alignment: .top)
-        .onTapGesture {
-          leaderboardRowsExpanded = false
-        }
 
         if let response = viewModel.leaderboardResponse {
           DraggableView(
