@@ -75,7 +75,8 @@ struct LeaderboardView: View {
           LottieView(
             name: mode == .daily ? "leaderboard_daily" : "leaderboard_all_time",
             loopMode: .playOnce,
-            animationSpeed: .one) {}
+            animationSpeed: .one,
+            resetProgress: false) {}
             .id(mode)
         )
         .background(
@@ -109,19 +110,14 @@ struct LeaderboardView: View {
       .frame(maxHeight: .infinity)
       .background(Constants.background).ignoresSafeArea()
       .hapticFeedback(.impact(weight: .light), trigger: mode)
-      .overlay(alignment: .center, content: {
-        if showLoader {
-          LottieLoaderView(animationName: Constants.loader)
-            .frame(width: Constants.loaderSize, height: Constants.loaderSize)
-        }
-      })
       .overlay(alignment: .center) {
         if showConfetti {
           ForEach(Constants.confettiPositions.indices, id: \.self) { index in
             LottieView(
               name: Constants.confetti,
               loopMode: .playOnce,
-              animationSpeed: .one) {}
+              animationSpeed: .one,
+              resetProgress: false) {}
               .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.width)
               .position(
                 x: UIScreen.main.bounds.width * Constants.confettiPositions[index].x,
@@ -211,7 +207,6 @@ struct LeaderboardView: View {
         .padding(.vertical, 4)
         .padding(.horizontal, 4)
         .onTapGesture {
-          viewModel.leaderboardResponse?.timeLeftInMs = nil
           leaderboardRowsExpanded = false
           mode = .allTime
           Task {
@@ -313,6 +308,26 @@ struct LeaderboardView: View {
       }
       .frame(width: Constants.headerBottomHStackWidth)
       .frame(height: topThreePrincipals.contains { $0.count > 1 } ? 80 : 67)
+      .padding(.bottom, 28)
+    } else if showLoader {
+      HStack {
+        LottieLoaderView(animationName: Constants.loader, resetProgess: false)
+          .frame(width: Constants.loaderSize, height: Constants.loaderSize)
+          .padding(.leading, 44)
+
+        Spacer()
+
+        LottieLoaderView(animationName: Constants.loader, resetProgess: false)
+          .frame(width: Constants.loaderSize, height: Constants.loaderSize)
+
+        Spacer()
+
+        LottieLoaderView(animationName: Constants.loader, resetProgess: false)
+          .frame(width: Constants.loaderSize, height: Constants.loaderSize)
+          .padding(.trailing, 42)
+      }
+      .frame(width: Constants.headerBottomHStackWidth)
+      .frame(height: 67)
       .padding(.bottom, 28)
     }
   }
