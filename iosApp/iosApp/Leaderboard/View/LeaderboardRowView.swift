@@ -98,6 +98,7 @@ struct LeaderboardRowView: View {
                           leaderboardRow.position == .three
     ) {
       rectangularGradientFor(leaderboardRow.position)
+        .resizable()
         .clipShape(RoundedRectangle(cornerRadius: Constants.rowCornerRadius))
     } else {
       EmptyView()
