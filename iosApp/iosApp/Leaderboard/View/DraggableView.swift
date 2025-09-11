@@ -25,12 +25,13 @@ private struct TrackScrollOffset: View {
   }
 }
 
-struct DraggableView<Content: View>: View {
+struct DraggableView<Content: View, StickyContent: View>: View {
   @Binding var isExpanded: Bool
 
   let topInset: CGFloat
   let peekHeight: CGFloat
   let background: Color
+  let stickyContent: () -> StickyContent
   let content: () -> Content
 
   @State private var sheetY: CGFloat = 0
@@ -43,12 +44,14 @@ struct DraggableView<Content: View>: View {
     topInset: CGFloat,
     peekHeight: CGFloat,
     background: Color,
+    @ViewBuilder stickyContent: @escaping () -> StickyContent,
     @ViewBuilder content: @escaping () -> Content
   ) {
     self._isExpanded = isExpanded
     self.topInset = topInset
     self.peekHeight = peekHeight
     self.background = background
+    self.stickyContent = stickyContent
     self.content = content
   }
 
@@ -65,6 +68,7 @@ struct DraggableView<Content: View>: View {
 
       let bodyContent =
       VStack(spacing: 0) {
+        stickyContent()
         ScrollView(showsIndicators: false) {
           TrackScrollOffset()
           VStack(spacing: .zero) {
