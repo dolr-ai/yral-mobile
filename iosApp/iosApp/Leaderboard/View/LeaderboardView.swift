@@ -38,9 +38,7 @@ struct LeaderboardView: View {
         VStack(alignment: .center, spacing: .zero) {
           buildSegmentedControl()
 
-          if viewModel.leaderboardResponse?.timeLeftInMs == nil {
-            buildTimerSection().hidden()
-          } else {
+          if viewModel.leaderboardResponse?.timeLeftInMs != nil {
             buildTimerSection()
           }
 
