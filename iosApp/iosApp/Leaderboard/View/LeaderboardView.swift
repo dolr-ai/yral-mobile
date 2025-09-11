@@ -355,28 +355,6 @@ struct LeaderboardView: View {
   }
 
   @ViewBuilder
-  private func buildLeaderboardHeader() -> some View {
-    HStack(spacing: .zero) {
-      Text(Constants.position)
-        .font(Constants.positionFont)
-        .foregroundColor(Constants.positionColour)
-        .frame(width: rowWidth * Constants.positionFactor, alignment: .leading)
-
-      Text(Constants.id)
-        .font(Constants.idFont)
-        .foregroundColor(Constants.idColour)
-        .frame(width: rowWidth * Constants.idFactor, alignment: .leading)
-
-      Text(Constants.totalSats)
-        .font(Constants.totalSatsFont)
-        .foregroundColor(Constants.totalSatsColour)
-        .frame(width: rowWidth * Constants.totalSatsFactor, alignment: .trailing)
-    }
-    .padding(.top, 20)
-    .padding(.bottom, 10)
-  }
-
-  @ViewBuilder
   private func buildLeaderboard(_ response: LeaderboardResponse) -> some View {
     VStack(alignment: .leading, spacing: Constants.vStackSpacing) {
       if let userRow = response.userRow {
