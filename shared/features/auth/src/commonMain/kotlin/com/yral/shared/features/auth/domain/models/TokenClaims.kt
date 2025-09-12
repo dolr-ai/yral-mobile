@@ -20,6 +20,8 @@ data class TokenClaims(
     val extIsAnonymous: Boolean,
     @SerialName("ext_delegated_identity")
     val delegatedIdentity: ByteArray?,
+    @SerialName("email")
+    val email: String? = null,
 ) {
     fun isValid(currentTimeInEpochSeconds: Long): Boolean = expiry > currentTimeInEpochSeconds
 }

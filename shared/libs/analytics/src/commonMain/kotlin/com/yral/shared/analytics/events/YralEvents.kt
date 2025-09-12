@@ -544,6 +544,40 @@ data class GameTutorialShownEventData(
     )
 }
 
+@Serializable
+data class ForcedGameplayNudgeShownEventData(
+    @SerialName("event") override val event: String = FeatureEvents.FORCED_GAMEPLAY_NUDGE_SHOWN.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.FEED.getFeatureName(),
+    @SerialName("video_id") val videoId: String,
+    @SerialName("publisher_user_id") val publisherUserId: String,
+    @SerialName("like_count") val likeCount: Long,
+    @SerialName("share_count") val shareCount: Long,
+    @SerialName("view_count") val viewCount: Long,
+    @SerialName("game_type") val gameType: GameType,
+    @SerialName("is_nsfw") val isNsfw: Boolean,
+) : BaseEventData(),
+    EventData {
+    constructor(
+        videoId: String,
+        publisherUserId: String,
+        likeCount: Long,
+        shareCount: Long,
+        viewCount: Long,
+        gameType: GameType,
+        isNsfw: Boolean,
+    ) : this(
+        FeatureEvents.FORCED_GAMEPLAY_NUDGE_SHOWN.getEventName(),
+        Features.FEED.getFeatureName(),
+        videoId,
+        publisherUserId,
+        likeCount,
+        shareCount,
+        viewCount,
+        gameType,
+        isNsfw,
+    )
+}
+
 // --- Menu ---
 @Serializable
 data class MenuPageViewedEventData(
@@ -823,6 +857,7 @@ data class PushNotificationsEnabledEventData(
     )
 }
 
+@Serializable
 data class AirdropClaimedEventData(
     @SerialName("event") override val event: String = FeatureEvents.AIRDROP_CLAIMED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.FEED.getFeatureName(),
