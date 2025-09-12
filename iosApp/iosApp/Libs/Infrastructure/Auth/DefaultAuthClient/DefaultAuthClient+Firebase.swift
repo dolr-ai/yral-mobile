@@ -121,6 +121,7 @@ extension DefaultAuthClient {
       ) : .permanentAuthentication(
         userPrincipal: userPrincipalString ?? "",
         canisterPrincipal: canisterPrincipalString ?? "",
+        email: self.emailId ?? "",
         coins: coins,
         isFetchingCoins: isFetchingCoins
       )

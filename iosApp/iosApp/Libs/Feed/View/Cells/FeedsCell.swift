@@ -26,7 +26,7 @@ protocol FeedsCellProtocol: AnyObject {
   func walletAnimationStarted()
   func walletAnimationEnded(success: Bool, coins: Int64)
   func howToPlayTapped()
-  func howToPlayShown()
+  func howToPlayShown(index: Int)
 }
 
 // swiftlint: disable type_body_length
@@ -286,7 +286,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
       .compactMap { state -> (coins: UInt64, fetching: Bool)? in
         switch state {
         case .ephemeralAuthentication(_, _, let coins, let fetching),
-            .permanentAuthentication(_, _, let coins, let fetching):
+            .permanentAuthentication(_, _, _, let coins, let fetching):
           return (coins, fetching)
         default:
           return nil
@@ -504,6 +504,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
       }
     } else {
       reportButton.removeFromSuperview()
+      actionsStackView.addArrangedSubview(shareButton)
       actionsStackView.addArrangedSubview(deleteButton)
       profileInfoView.isHidden = true
       captionScrollView.isHidden = false
