@@ -27,6 +27,7 @@ actual fun initKoin(appDeclaration: KoinAppDeclaration) {
             networkModule,
             featureFlagModule,
             routingModule,
+            sharingModule,
         )
     }
 }

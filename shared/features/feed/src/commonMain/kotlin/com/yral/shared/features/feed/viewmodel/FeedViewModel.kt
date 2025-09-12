@@ -22,12 +22,12 @@ import com.yral.shared.features.feed.domain.useCases.FetchMoreFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.GetInitialFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.ReportRequestParams
 import com.yral.shared.features.feed.domain.useCases.ReportVideoUseCase
-import com.yral.shared.features.feed.sharing.LinkGenerator
-import com.yral.shared.features.feed.sharing.LinkInput
-import com.yral.shared.features.feed.sharing.ShareService
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.libs.routing.deeplink.engine.UrlBuilder
 import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
+import com.yral.shared.libs.sharing.LinkGenerator
+import com.yral.shared.libs.sharing.LinkInput
+import com.yral.shared.libs.sharing.ShareService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay

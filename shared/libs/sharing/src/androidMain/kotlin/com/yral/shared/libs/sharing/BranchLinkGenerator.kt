@@ -1,4 +1,4 @@
-package com.yral.shared.features.feed.sharing
+package com.yral.shared.libs.sharing
 
 import android.content.Context
 import io.branch.indexing.BranchUniversalObject
