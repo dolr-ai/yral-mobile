@@ -29,11 +29,17 @@ enum LeaderboardViewState {
   }
 }
 
+enum LeaderboardMode: String {
+  case daily
+  case allTime = "all_time"
+}
+
 @MainActor
 class LeaderboardViewModel: ObservableObject {
   private let leaderboardUseCase: LeaderboardUseCaseProtocol
   private var cancellables = Set<AnyCancellable>()
   var leaderboardResponse: LeaderboardResponse?
+  private var leaderboardFetchTask: Task<Void, Never>?
 
   @Published var state: LeaderboardViewState = .initialized
   private(set) var coinsReady = false
@@ -47,31 +53,45 @@ class LeaderboardViewModel: ObservableObject {
         guard let self else { return }
         Task { @MainActor in
           self.coinsReady = true
-          await self.fetchLeaderboard()
+          self.fetchLeaderboard(for: .daily)
         }
       }
       .store(in: &cancellables)
   }
 
-  func fetchLeaderboard() async {
+  func fetchLeaderboard(for mode: LeaderboardMode) {
+    leaderboardFetchTask?.cancel()
+    leaderboardResponse = nil
     state = .loading
 
-    let result = await leaderboardUseCase.execute()
-    await MainActor.run {
-      switch result {
-      case .success(let success):
-        self.leaderboardResponse = success
-        self.state = .success
-      case .failure(let failure):
-        self.state = .failure(failure)
-        print("Failed to fetch leaderboard: \(failure)")
+    leaderboardFetchTask = Task { [weak self] in
+      guard let self else { return }
+
+      do {
+        try Task.checkCancellation()
+        let result = await leaderboardUseCase.execute(request: LeaderboardQuery(mode: mode.rawValue))
+        try Task.checkCancellation()
+
+        switch result {
+        case .success(let success):
+          self.leaderboardResponse = success
+          self.state = .success
+        case .failure(let failure):
+          self.state = .failure(failure)
+          print("Failed to fetch leaderboard: \(failure)")
+        }
+      } catch is CancellationError {
+        print("Do nothing")
+      } catch {
+        self.state = .failure(error)
+        print("Failed to fetch leaderboard: \(error)")
       }
     }
   }
 
-  func refreshLeaderboardIfReady() async {
+  func refreshLeaderboardIfReady(for mode: LeaderboardMode) {
     guard coinsReady else { return }
-    await fetchLeaderboard()
+    fetchLeaderboard(for: mode)
   }
 
   func fetchImageURL(for principal: String) -> URL? {

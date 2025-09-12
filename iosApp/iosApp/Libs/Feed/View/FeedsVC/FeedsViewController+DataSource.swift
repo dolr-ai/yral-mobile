@@ -229,9 +229,9 @@ extension FeedsViewController {
     }
 
     feedsDataSource.apply(snap, animatingDifferences: true)
-      let oldBalance = session.state.coins
-      let updatedBalance = Int(oldBalance) + response.coinDelta
-      session.update(coins: UInt64(updatedBalance))
+    let oldBalance = session.state.coins
+    let updatedBalance = Int(oldBalance) + response.coinDelta
+    session.update(coins: UInt64(updatedBalance))
   }
 
   func handleCastVoteFailure(_ errorMessage: String, videoID: String) {

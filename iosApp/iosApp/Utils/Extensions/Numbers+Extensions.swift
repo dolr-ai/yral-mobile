@@ -24,6 +24,10 @@ extension CGFloat {
   static let apiDelay: CGFloat = 0.2
 }
 
+extension Double {
+  static let one: Double = 1
+}
+
 extension Int {
   static let zero: Int = 0
   static let one: Int = 1

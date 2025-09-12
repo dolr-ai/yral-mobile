@@ -1001,11 +1001,6 @@ def leaderboard_v2(request: Request):
                 "position": user_position
             }
 
-            # Check and remove user_row if it exists in top_rows
-            seen_caller = any(r["principal_id"] == pid for r in top_rows)
-            if seen_caller:
-                user_row = None
-
             return jsonify({
                 "user_row": user_row,
                 "top_rows": top_rows,
@@ -1082,11 +1077,6 @@ def leaderboard_v2(request: Request):
             "wins": user_wins,
             "position": user_position
         }
-
-        # Check and remove user_row if it exists in top_rows
-        seen_caller = any(r["principal_id"] == pid for r in top_rows)
-        if seen_caller:
-            user_row = None
 
         return jsonify({
             "user_row": user_row,
@@ -1224,9 +1214,6 @@ def leaderboard_history(request: Request):
                 user_row = _user_row_for_day(bucket_id, pid)
             except GoogleAPICallError as e:
                 user_row = {"principal_id": pid, "wins": 0, "position": 1}
-
-            if any(r["principal_id"] == pid for r in top_rows):
-                user_row = None
 
             result.append({
                 "date": date_label,      # 'Aug 15'

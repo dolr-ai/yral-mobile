@@ -9,7 +9,6 @@
 import SwiftUI
 
 extension View {
-  /// A modifier that shows a placeholder when `shouldShow` is true.
   func placeholder<Content: View>(
     when shouldShow: Bool,
     alignment: Alignment = .leading,
@@ -30,10 +29,20 @@ extension UIApplication {
 }
 
 extension View {
-  /// A modifier that hides the keyboard when tapping anywhere outside text fields.
   func hideKeyboardOnTap() -> some View {
     self.onTapGesture {
       UIApplication.shared.endEditing()
+    }
+  }
+}
+
+extension View {
+  @ViewBuilder
+  func scrollLock(_ disabled: Bool) -> some View {
+    if #available(iOS 16.0, *) {
+      self.scrollDisabled(disabled)
+    } else {
+      self.allowsHitTesting(!disabled)
     }
   }
 }
