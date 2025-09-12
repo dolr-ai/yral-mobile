@@ -140,6 +140,7 @@ dependencies {
     implementation(projects.shared.libs.featureFlag)
     implementation(projects.shared.rust.service)
     implementation(projects.shared.libs.routing.deeplinkEngine)
+    implementation(projects.shared.features.wallet)
 }
 
 afterEvaluate {
