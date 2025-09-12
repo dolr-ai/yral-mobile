@@ -127,6 +127,8 @@
 		106986172E5308DC005BE0D4 /* AIVideoProviderUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 106986152E5308D1005BE0D4 /* AIVideoProviderUseCase.swift */; };
 		1069861A2E530A01005BE0D4 /* CreateAIVideoViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 106986192E5309FB005BE0D4 /* CreateAIVideoViewModel.swift */; };
 		1069861B2E530A01005BE0D4 /* CreateAIVideoViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 106986192E5309FB005BE0D4 /* CreateAIVideoViewModel.swift */; };
+		107079612E742034000C7A2C /* LeaderboardView+Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107079602E742029000C7A2C /* LeaderboardView+Constants.swift */; };
+		107079622E742034000C7A2C /* LeaderboardView+Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107079602E742029000C7A2C /* LeaderboardView+Constants.swift */; };
 		107C60902DB7809A006FC467 /* UIView+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C608F2DB78093006FC467 /* UIView+Extensions.swift */; };
 		107C60912DB7809A006FC467 /* UIView+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C608F2DB78093006FC467 /* UIView+Extensions.swift */; };
 		107C60982DB8BCB1006FC467 /* SmileyGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C60972DB8BCB1006FC467 /* SmileyGameView.swift */; };
@@ -784,6 +786,7 @@
 		106986112E530548005BE0D4 /* AIVideoProviderError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIVideoProviderError.swift; sourceTree = "<group>"; };
 		106986152E5308D1005BE0D4 /* AIVideoProviderUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIVideoProviderUseCase.swift; sourceTree = "<group>"; };
 		106986192E5309FB005BE0D4 /* CreateAIVideoViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateAIVideoViewModel.swift; sourceTree = "<group>"; };
+		107079602E742029000C7A2C /* LeaderboardView+Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "LeaderboardView+Constants.swift"; sourceTree = "<group>"; };
 		107C608F2DB78093006FC467 /* UIView+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIView+Extensions.swift"; sourceTree = "<group>"; };
 		107C60972DB8BCB1006FC467 /* SmileyGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameView.swift; sourceTree = "<group>"; };
 		107C609A2DB90B22006FC467 /* SmileyGameResultBottomSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameResultBottomSheetView.swift; sourceTree = "<group>"; };
@@ -1144,6 +1147,7 @@
 		100209A92DE6E2E700DF269E /* Leaderboard */ = {
 			isa = PBXGroup;
 			children = (
+				1070795F2E74201B000C7A2C /* Helpers */,
 				10020A102DE8445200DF269E /* DI */,
 				10020A0C2DE8437C00DF269E /* ViewModel */,
 				100209FB2DE8400F00DF269E /* Domain */,
@@ -1393,6 +1397,14 @@
 				106986192E5309FB005BE0D4 /* CreateAIVideoViewModel.swift */,
 			);
 			path = ViewModel;
+			sourceTree = "<group>";
+		};
+		1070795F2E74201B000C7A2C /* Helpers */ = {
+			isa = PBXGroup;
+			children = (
+				107079602E742029000C7A2C /* LeaderboardView+Constants.swift */,
+			);
+			path = Helpers;
 			sourceTree = "<group>";
 		};
 		107C60922DB7AA86006FC467 /* SmileyGame */ = {
@@ -3490,6 +3502,7 @@
 				AC92941A2D65F308003DB102 /* View+Extensions.swift in Sources */,
 				AC32E4652D2991AD001DDA43 /* AccountView.swift in Sources */,
 				10FEA9112E6FEBC4000103EB /* LeaderboardHistoryDIContainer.swift in Sources */,
+				107079622E742034000C7A2C /* LeaderboardView+Constants.swift in Sources */,
 				ACC0D43E2D8C6BF3006DCF5C /* ClearBackgroundView.swift in Sources */,
 				AC4DECA92D3E06AC008EC8F5 /* FooterLoaderView.swift in Sources */,
 				10C1B4042E57589200CFC41B /* UploadAIVideoUseCase.swift in Sources */,
@@ -3795,6 +3808,7 @@
 				AC9294192D65F308003DB102 /* View+Extensions.swift in Sources */,
 				AC32E4662D2991AD001DDA43 /* AccountView.swift in Sources */,
 				10FEA9102E6FEBC4000103EB /* LeaderboardHistoryDIContainer.swift in Sources */,
+				107079612E742034000C7A2C /* LeaderboardView+Constants.swift in Sources */,
 				ACC0D43D2D8C6BF3006DCF5C /* ClearBackgroundView.swift in Sources */,
 				AC4DECAA2D3E06AC008EC8F5 /* FooterLoaderView.swift in Sources */,
 				10C1B4052E57589200CFC41B /* UploadAIVideoUseCase.swift in Sources */,
