@@ -40,7 +40,7 @@ struct LeaderboardHistoryView: View {
       .padding(.bottom, Constants.navHstackBottom)
       .padding(.leading, -Constants.navHstackLeading)
 
-      if viewModel.leaderboardHistory.count > 0 {
+      if viewModel.leaderboardHistory.count > .zero {
         // Scrollable Dates
         ScrollView(.horizontal, showsIndicators: false) {
           HStack(spacing: Constants.scrollHstackSpacing) {
@@ -134,7 +134,7 @@ struct LeaderboardHistoryView: View {
     .hapticFeedback(.impact(weight: .light), trigger: selectedDate)
     .overlay(alignment: .center) {
       if showLoader {
-        LottieLoaderView(animationName: Constants.loader)
+        LottieLoaderView(animationName: Constants.loader, resetProgess: false)
           .frame(width: Constants.loaderSize, height: Constants.loaderSize)
       }
     }
@@ -144,11 +144,12 @@ struct LeaderboardHistoryView: View {
           LottieView(
             name: Constants.confetti,
             loopMode: .playOnce,
-            animationSpeed: .one) {}
-            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.width)
+            animationSpeed: .one,
+            resetProgress: false) {}
+            .frame(width: Constants.screenWidth, height: Constants.screenWidth)
             .position(
-              x: UIScreen.main.bounds.width * Constants.confettiPositions[index].x,
-              y: UIScreen.main.bounds.height * Constants.confettiPositions[index].y
+              x: Constants.screenWidth * Constants.confettiPositions[index].x,
+              y: Constants.screenHeight * Constants.confettiPositions[index].y
             )
             .allowsHitTesting(false)
             .id(selectedDate)
@@ -181,7 +182,7 @@ struct LeaderboardHistoryView: View {
 
     if let leaderboard = viewModel.leaderboardHistory.first(where: { $0.date == selectedDate }) {
       return leaderboard.topRows.contains(where: {
-        ($0.principalID == appDIContainer?.authClient.userPrincipalString) && ([1, 2, 3].contains($0.position))
+        ($0.principalID == appDIContainer?.authClient.userPrincipalString) && (Constants.topThree.contains($0.position))
       })
     }
 
@@ -191,9 +192,12 @@ struct LeaderboardHistoryView: View {
 
 extension LeaderboardHistoryView {
   enum Constants {
+    static let screenWidth = UIScreen.main.bounds.width
+    static let screenHeight = UIScreen.main.bounds.height
     static let rowWidth = UIScreen.main.bounds.width - 32
     static let loader = "Yral_Loader"
     static let loaderSize = 24.0
+    static let topThree = [1, 2, 3]
 
     static let screenPadding = 16.0
     static let screenBackground = Color.black
