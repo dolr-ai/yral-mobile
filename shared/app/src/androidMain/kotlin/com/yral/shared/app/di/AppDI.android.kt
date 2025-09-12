@@ -37,6 +37,7 @@ actual fun initKoin(appDeclaration: KoinAppDeclaration) {
             archModule,
             featureFlagModule,
             routingModule,
+            sharingModule,
         )
         modules(
             authModule,

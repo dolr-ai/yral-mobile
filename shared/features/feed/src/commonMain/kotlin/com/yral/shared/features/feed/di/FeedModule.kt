@@ -1,7 +1,5 @@
 package com.yral.shared.features.feed.di
 
-import coil3.ImageLoader
-import coil3.SingletonImageLoader
 import com.yral.shared.features.feed.analytics.FeedTelemetry
 import com.yral.shared.features.feed.data.FeedRemoteDataSource
 import com.yral.shared.features.feed.data.FeedRepository
@@ -12,10 +10,6 @@ import com.yral.shared.features.feed.domain.useCases.FetchFeedDetailsUseCase
 import com.yral.shared.features.feed.domain.useCases.FetchMoreFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.GetInitialFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.ReportVideoUseCase
-import com.yral.shared.features.feed.sharing.AndroidShareService
-import com.yral.shared.features.feed.sharing.BranchLinkGenerator
-import com.yral.shared.features.feed.sharing.LinkGenerator
-import com.yral.shared.features.feed.sharing.ShareService
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.RequiredUseCases
 import org.koin.core.module.dsl.bind
@@ -36,7 +30,4 @@ val feedModule =
         factoryOf(::FeedRemoteDataSource) { bind<IFeedRemoteDataSource>() }
         factoryOf(::RequiredUseCases)
         factoryOf(::FeedTelemetry)
-        single<ImageLoader> { SingletonImageLoader.get(get()) }
-        factoryOf(::AndroidShareService) { bind<ShareService>() }
-        factoryOf(::BranchLinkGenerator) { bind<LinkGenerator>() }
     }
