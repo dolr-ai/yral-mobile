@@ -282,14 +282,14 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
     } catch {
       print(error)
     }
-    let (userPrincipal, canisterPrincipal, coins, isLoggedIn): (String, String, UInt64, Bool) = {
+    let (userPrincipal, canisterPrincipal, email, coins, isLoggedIn): (String, String, String?, UInt64, Bool) = {
       switch stateSubject.value {
       case .ephemeralAuthentication(let userPrincipal, let canisterPrincipal, let coins, _):
-        return (userPrincipal, canisterPrincipal, coins, false)
-      case .permanentAuthentication(let userPrincipal, let canisterPrincipal, let coins, _):
-        return (userPrincipal, canisterPrincipal, coins, true)
+        return (userPrincipal, canisterPrincipal, nil, coins, false)
+      case .permanentAuthentication(let userPrincipal, let canisterPrincipal, let email, let coins, _):
+        return (userPrincipal, canisterPrincipal, email, coins, true)
       default:
-        return ("", "", .zero, false)
+        return ("", "", nil, .zero, false)
       }
     }()
     AnalyticsModuleKt.getAnalyticsManager().setUserProperties(
@@ -299,7 +299,13 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
         isLoggedIn: KotlinBoolean(bool: isLoggedIn),
         isCreator: KotlinBoolean(bool: isCreator),
         walletBalance: KotlinDouble(value: Double(coins)),
-        tokenType: .yral
+        tokenType: .yral,
+        isForcedGamePlayUser: KotlinBoolean(
+          bool: AppDIHelper().getFeatureFlagManager().isEnabled(
+            flag: FeedFeatureFlags.SmileyGame.shared.StopAndVoteNudge
+          )
+        ),
+        emailId: email
       )
     )
     MPSessionReplay.getInstance()?.identify(distinctId: Mixpanel.sharedInstance()?.distinctId ?? "")
@@ -349,6 +355,7 @@ extension DefaultAuthClient {
     static let keychainIdentity = "yral.delegatedIdentity"
     static let keychainCanisterPrincipal = "yral.canisterPrincipal"
     static let keychainUserPrincipal = "yral.userPrincipal"
+    static let keychainEmail = "yral.userEmail"
     static let keychainAccessToken = "yral.accessToken"
     static let keychainIDToken = "yral.idToken"
     static let keychainRefreshToken = "yral.refreshToken"

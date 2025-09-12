@@ -31,6 +31,7 @@ final class SessionManager: ObservableObject {
       .store(in: &bag)
   }
 
+  // swiftlint: disable function_body_length
   func update(coins: UInt64) {
     switch state {
     case .ephemeralAuthentication(let userPrincipal, let canisterPrincipal, _, _):
@@ -47,13 +48,20 @@ final class SessionManager: ObservableObject {
           isLoggedIn: false,
           isCreator: nil,
           walletBalance: KotlinDouble(value: Double(coins)),
-          tokenType: .yral
+          tokenType: .yral,
+          isForcedGamePlayUser: KotlinBoolean(
+            bool: AppDIHelper().getFeatureFlagManager().isEnabled(
+              flag: FeedFeatureFlags.SmileyGame.shared.StopAndVoteNudge
+            )
+          ),
+          emailId: nil
         )
       )
-    case .permanentAuthentication(let userPrincipal, let canisterPrincipal, _, _):
+    case .permanentAuthentication(let userPrincipal, let email, let canisterPrincipal, _, _):
       state = .permanentAuthentication(
         userPrincipal: userPrincipal,
         canisterPrincipal: canisterPrincipal,
+        email: email,
         coins: coins,
         isFetchingCoins: false
       )
@@ -64,13 +72,20 @@ final class SessionManager: ObservableObject {
           isLoggedIn: true,
           isCreator: nil,
           walletBalance: KotlinDouble(value: Double(coins)),
-          tokenType: .yral
+          tokenType: .yral,
+          isForcedGamePlayUser: KotlinBoolean(
+            bool: AppDIHelper().getFeatureFlagManager().isEnabled(
+              flag: FeedFeatureFlags.SmileyGame.shared.StopAndVoteNudge
+            )
+          ),
+          emailId: ""
         )
       )
     default:
       break
     }
   }
+  // swiftlint: enable function_body_length
 }
 
 extension SessionManager {
@@ -96,7 +111,7 @@ extension SessionManager {
           .compactMap { state -> Void? in
             switch state {
             case .ephemeralAuthentication(_, _, _, let fetching),
-                .permanentAuthentication(_, _, _, let fetching):
+                .permanentAuthentication(_, _, _, _, let fetching):
               return fetching ? nil : ()
             default:
               return nil

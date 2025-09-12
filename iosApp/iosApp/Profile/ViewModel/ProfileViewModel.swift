@@ -182,8 +182,14 @@ class ProfileViewModel: ObservableObject {
         canisterId: analyticsInfo.canisterPrincipal,
         isLoggedIn: KotlinBoolean(bool: analyticsInfo.isLoggedIn),
         isCreator: KotlinBoolean(bool: self.feeds.count >= .one),
-        walletBalance: KotlinDouble(double: analyticsInfo.walletBalance),
-        tokenType: TokenType.yral
+        walletBalance: KotlinDouble(value: analyticsInfo.walletBalance),
+        tokenType: .yral,
+        isForcedGamePlayUser: KotlinBoolean(
+          bool: AppDIHelper().getFeatureFlagManager().isEnabled(
+            flag: FeedFeatureFlags.SmileyGame.shared.StopAndVoteNudge
+          )
+        ),
+        emailId: analyticsInfo.emailId
       )
     )
     AnalyticsModuleKt.getAnalyticsManager().flush()
@@ -194,5 +200,7 @@ class ProfileViewModel: ObservableObject {
     let canisterPrincipal: String
     let isLoggedIn: Bool
     let walletBalance: Double
+    let playToScroll: Bool
+    let emailId: String?
   }
 }

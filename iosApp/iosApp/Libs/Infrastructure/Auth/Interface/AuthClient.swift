@@ -7,6 +7,7 @@ protocol AuthClient {
   var canisterPrincipalString: String? { get }
   var userPrincipal: Principal? { get }
   var userPrincipalString: String? { get }
+  var emailId: String? { get }
   func initialize() async throws
   func generateNewDelegatedIdentity() throws -> DelegatedIdentity
   func generateNewDelegatedIdentityWireOneHour() throws -> DelegatedIdentityWire

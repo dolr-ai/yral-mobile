@@ -513,4 +513,9 @@ extension FeedsViewController {
     static let shareDescription = "Watch on Yral"
   }
 }
+
+protocol FeedsViewControllerRechargeDelegate: AnyObject {
+  func walletAnimationStarted()
+  func walletAnimationEnded(success: Bool, coins: Int64)
+}
 // swiftlint: enable type_body_length file_length

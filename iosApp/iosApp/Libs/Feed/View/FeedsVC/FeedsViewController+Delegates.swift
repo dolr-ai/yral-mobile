@@ -308,8 +308,20 @@ extension FeedsViewController: FeedsCellProtocol {
     self.navigationController?.pushViewController(smileyGameRuleVC, animated: true)
   }
 
-  func howToPlayShown() {
+  func howToPlayShown(index: Int) {
     self.isShowingPlayToScroll = false
+    let item = feedsDataSource.snapshot().itemIdentifiers[index]
+    AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+      event: ForcedGameplayNudgeShownEventData(
+        videoId: item.videoID,
+        publisherUserId: item.principalID,
+        likeCount: Int64(item.likeCount),
+        shareCount: .zero,
+        viewCount: item.viewCount,
+        gameType: .smiley,
+        isNsfw: false
+      )
+    )
   }
 }
 
@@ -385,9 +397,4 @@ extension FeedsViewController: FeedsPlayerProtocol {
       await self.viewModel.socialSignIn(request: provider)
     }
   }
-}
-
-protocol FeedsViewControllerRechargeDelegate: AnyObject {
-  func walletAnimationStarted()
-  func walletAnimationEnded(success: Bool, coins: Int64)
 }

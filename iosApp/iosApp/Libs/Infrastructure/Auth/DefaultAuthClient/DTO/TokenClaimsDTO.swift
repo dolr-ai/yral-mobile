@@ -16,6 +16,7 @@ struct TokenClaimsDTO: Decodable {
   let nonce: String?
   let extIsAnonymous: Bool
   let delegatedIdentity: SwiftDelegatedIdentityWire?
+  let emailID: String?
 
   private enum CodingKeys: String, CodingKey {
     case aud
@@ -26,5 +27,6 @@ struct TokenClaimsDTO: Decodable {
     case nonce
     case extIsAnonymous = "ext_is_anonymous"
     case delegatedIdentity = "ext_delegated_identity"
+    case emailID = "email"
   }
 }
