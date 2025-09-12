@@ -9,4 +9,6 @@ data class User(
     val isCreator: Boolean?,
     val walletBalance: Double?,
     val tokenType: TokenType?,
+    val isForcedGamePlayUser: Boolean?,
+    val emailId: String?,
 )

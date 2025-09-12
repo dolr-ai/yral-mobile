@@ -8,6 +8,7 @@ import com.mixpanel.android.sessionreplay.sensitive_views.AutoMaskedView
 import com.yral.shared.analytics.AnalyticsProvider
 import com.yral.shared.analytics.EventToMapConverter
 import com.yral.shared.analytics.User
+import com.yral.shared.analytics.di.IS_DEBUG
 import com.yral.shared.analytics.events.EventData
 import com.yral.shared.analytics.events.TokenType
 import org.json.JSONObject
@@ -21,6 +22,7 @@ actual class MixpanelAnalyticsProvider actual constructor(
 ) : AnalyticsProvider,
     KoinComponent {
     private val context: Context by inject()
+    private val isDebug: Boolean by inject(IS_DEBUG)
     override val name: String = "mixpanel"
 
     private val mixpanel: MixpanelAPI =
@@ -28,6 +30,9 @@ actual class MixpanelAnalyticsProvider actual constructor(
 
     init {
         // initSessionReplay(token)
+        if (isDebug) {
+            mixpanel.setEnableLogging(true)
+        }
     }
 
     fun initSessionReplay(token: String) {
@@ -59,6 +64,8 @@ actual class MixpanelAnalyticsProvider actual constructor(
                 "wallet_balance" to user.walletBalance,
                 "wallet_token_type" to (user.tokenType?.serialName ?: ""),
                 "canister_id" to user.canisterId,
+                "is_forced_gameplay_test_user" to user.isForcedGamePlayUser,
+                "email_id" to user.emailId,
             )
         if (user.isLoggedIn == true) {
             mixpanel.identify(user.userId)

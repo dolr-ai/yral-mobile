@@ -107,6 +107,7 @@ class AndroidOAuthUtilsHelper : OAuthUtilsHelper {
                 gson
                     .toJson(claims[KEY_DELEGATED_IDENTITY] as Map<*, *>)
                     .toByteArray(),
+            email = claims[KEY_EMAIL] as? String,
         )
     }
 

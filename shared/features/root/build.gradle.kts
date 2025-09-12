@@ -17,6 +17,7 @@ kotlin {
             implementation(projects.shared.libs.crashlytics)
             implementation(projects.shared.libs.analytics)
             implementation(projects.shared.libs.coroutinesX)
+            implementation(projects.shared.libs.featureFlag)
 
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.androidx.lifecycle.viewmodel)
