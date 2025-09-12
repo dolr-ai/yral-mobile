@@ -131,7 +131,7 @@ struct LeaderboardHistoryView: View {
     .frame(maxWidth: .infinity, alignment: .leading)
     .frame(maxHeight: .infinity, alignment: .top)
     .background(Constants.screenBackground)
-    .hapticFeedback(.impact(weight: .light), trigger: selectedDate)
+    .hapticFeedback(.impact(weight: HapticFeedback.Weight.light), trigger: selectedDate)
     .overlay(alignment: .center) {
       if showLoader {
         LottieLoaderView(animationName: Constants.loader, resetProgess: false)

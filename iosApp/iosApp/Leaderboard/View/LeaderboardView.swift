@@ -100,7 +100,7 @@ struct LeaderboardView: View {
       .frame(maxWidth: .infinity)
       .frame(maxHeight: .infinity)
       .background(Constants.background).ignoresSafeArea()
-      .hapticFeedback(.impact(weight: .light), trigger: mode)
+      .hapticFeedback(.impact(weight: HapticFeedback.Weight.light), trigger: mode)
       .overlay(alignment: .center) {
         if showConfetti {
           ForEach(Constants.confettiPositions.indices, id: \.self) { index in
