@@ -1,15 +1,15 @@
 //
-//  LeaderboardRepository.swift
+//  LeaderboardHistoryRepository.swift
 //  iosApp
 //
-//  Created by Samarth Paboowal on 29/05/25.
+//  Created by Samarth Paboowal on 09/09/25.
 //  Copyright © 2025 orgName. All rights reserved.
 //
 
 import Foundation
 import FirebaseFirestore
 
-class LeaderboardRepository: LeaderboardRepositoryProtocol {
+class LeaderboardHistoryRepository: LeaderboardHistoryRepositoryProtocol {
   private let firebaseService: FirebaseServiceProtocol
   private let httpService: HTTPService
   private let authClient: AuthClient
@@ -24,7 +24,7 @@ class LeaderboardRepository: LeaderboardRepositoryProtocol {
     self.authClient = authClient
   }
 
-  func fetchLeaderboard(request: LeaderboardQuery) async -> Result<LeaderboardResponse, LeaderboardError> {
+  func fetchLeaderboardHistory() async -> Result<[LeaderboardResponse], LeaderboardError> {
     guard let baseURL = httpService.baseURL else {
       return .failure(.network(.invalidRequest))
     }
@@ -53,24 +53,25 @@ class LeaderboardRepository: LeaderboardRepositoryProtocol {
     }
 
     do {
-      let httpBody = request.addingPrincipal(principalID)
-      let modifiedHttpBody = [
-        "data": httpBody
+      let httpBody = [
+        "data": [
+          "principal_id": principalID
+        ]
       ]
 
       let response = try await httpService.performRequest(
         for: Endpoint(
           http: "",
           baseURL: baseURL,
-          path: Constants.leaderboardPath,
+          path: Constants.leaderboardHistoryPath,
           method: .post,
           headers: httpHeaders,
-          body: try? JSONEncoder().encode(modifiedHttpBody)
+          body: try? JSONEncoder().encode(httpBody)
         ),
-        decodeAs: LeaderboardDTO.self
+        decodeAs: [LeaderboardDTO].self
       )
 
-      return .success(response.toDomain())
+      return .success(response.map { $0.toDomain() })
     } catch {
       switch error {
       case let error as NetworkError:
@@ -84,9 +85,9 @@ class LeaderboardRepository: LeaderboardRepositoryProtocol {
   }
 }
 
-extension LeaderboardRepository {
+extension LeaderboardHistoryRepository {
   enum Constants {
-    static let leaderboardPath = "leaderboard_v2"
+    static let leaderboardHistoryPath = "leaderboard_history"
     static let firebaseUserIDError = "Failed to fetch user ID token"
     static let principalIDError = "Failed to fetch princiapl ID"
   }

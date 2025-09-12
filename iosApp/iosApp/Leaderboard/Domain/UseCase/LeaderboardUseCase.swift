@@ -9,23 +9,22 @@
 import Foundation
 
 protocol LeaderboardUseCaseProtocol {
-  func execute() async -> Result<LeaderboardResponse, LeaderboardError>
+  func execute(request: LeaderboardQuery) async -> Result<LeaderboardResponse, LeaderboardError>
 }
 
-class LeaderboardUseCase: BaseResultUseCase<Void, LeaderboardResponse, LeaderboardError>, LeaderboardUseCaseProtocol {
+class LeaderboardUseCase: BaseResultUseCase
+<LeaderboardQuery, LeaderboardResponse, LeaderboardError>,
+LeaderboardUseCaseProtocol {
 
-  private let respository: LeaderboardRepositoryProtocol
+  private let repository: LeaderboardRepositoryProtocol
 
-  init(respository: LeaderboardRepositoryProtocol, crashReporter: CrashReporter) {
-    self.respository = respository
+  init(repository: LeaderboardRepositoryProtocol, crashReporter: CrashReporter) {
+    self.repository = repository
     super.init(crashReporter: crashReporter)
   }
 
-  func execute() async -> Result<LeaderboardResponse, LeaderboardError> {
-    await super.execute(request: ())
-  }
-
-  override func runImplementation(_ request: Void) async -> Result<LeaderboardResponse, LeaderboardError> {
-    await respository.fetchLeaderboard()
+  override func runImplementation(_ request: LeaderboardQuery) async ->
+  Result<LeaderboardResponse, LeaderboardError> {
+    await repository.fetchLeaderboard(request: request)
   }
 }

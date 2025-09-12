@@ -9,7 +9,7 @@ struct HomeTabController: View {
   let accountView: AccountView
   let uploadOptionsScreenView: UINavigationController
   let profileView: ProfileView
-  let leaderboardView: LeaderboardView
+  let leaderboardView: UINavigationController
 
   private var feedsViewControllerWrapper: FeedsViewControllerWrapper {
     FeedsViewControllerWrapper(
@@ -39,7 +39,7 @@ struct HomeTabController: View {
     uploadOptionsScreenView: UINavigationController,
     profileView: ProfileView,
     accountView: AccountView,
-    leaderboardView: LeaderboardView,
+    leaderboardView: UINavigationController,
   ) {
     self.feedsViewController = feedsViewController
     self.uploadOptionsScreenView = uploadOptionsScreenView
@@ -61,7 +61,7 @@ struct HomeTabController: View {
                              unselectedName: Constants.homeIconImageNameUnselected) }
           .tag(Tab.home)
 
-        leaderboardView
+        ViewControllerWrapper(controller: leaderboardView)
           .background(Color.black.edgesIgnoringSafeArea(.all))
           .tabItem {
             tabIcon(selected: selectedTab == .leaderboard,
@@ -135,7 +135,7 @@ struct HomeTabController: View {
       .onReceive(eventBus.playGamesToEarnMoreTapped) {
         selectedTab = .home
       }
-      .hapticFeedback(.impact(weight: .light), trigger: selectedTab)
+      .hapticFeedback(.impact(weight: HapticFeedback.Weight.light), trigger: selectedTab)
       .fullScreenCover(isPresented: $showNotificationsNudge) {
         ZStack(alignment: .center) {
           NotificationsNudge {
