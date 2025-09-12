@@ -120,7 +120,7 @@ struct CreateAIVideoScreenView: View {
           .padding(.bottom, Constants.genViewBottom)
           .overlay(alignment: .center) {
             VStack(spacing: Constants.genViewVstackSpacing) {
-              LottieLoaderView(animationName: Constants.loader)
+              LottieLoaderView(animationName: Constants.loader, resetProgess: false)
                 .frame(width: Constants.loaderSize, height: Constants.loaderSize)
 
               Text(Constants.loadingMessages[generatingVideoTextCurrentIndex])
