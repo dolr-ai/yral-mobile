@@ -288,8 +288,8 @@ final class DefaultAuthClient: NSObject, AuthClient {
           identity: data,
           canisterPrincipal: canisterPrincipalString,
           userPrincipal: userPrincipalString,
-          isServiceCanister: self.isServiceCanister,
-          email: email
+          email: email,
+          isServiceCanister: self.isServiceCanister
         )
       }
       await updateAuthState(for: type, withCoins: .zero, isFetchingCoins: true)
