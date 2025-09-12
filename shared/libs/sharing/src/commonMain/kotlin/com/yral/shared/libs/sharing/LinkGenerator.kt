@@ -1,4 +1,4 @@
-package com.yral.shared.features.feed.sharing
+package com.yral.shared.libs.sharing
 
 /**
  * A platform-agnostic interface to generate shareable links from input data.

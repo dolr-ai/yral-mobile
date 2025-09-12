@@ -1,4 +1,4 @@
-package com.yral.shared.features.feed.sharing
+package com.yral.shared.libs.sharing
 
 import android.content.Context
 import android.content.Intent
@@ -10,13 +10,6 @@ import coil3.request.ImageRequest
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
-
-interface ShareService {
-    suspend fun shareImageWithText(
-        imageUrl: String,
-        text: String,
-    )
-}
 
 class AndroidShareService(
     private val context: Context,
@@ -72,7 +65,7 @@ class AndroidShareService(
         val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
         val intent =
             Intent(Intent.ACTION_SEND).apply {
-                type = "image/jpg"
+                type = "image/*"
                 putExtra(Intent.EXTRA_STREAM, uri)
                 putExtra(Intent.EXTRA_TEXT, text)
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)

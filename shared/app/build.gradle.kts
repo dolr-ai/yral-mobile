@@ -22,10 +22,13 @@ kotlin {
             implementation(projects.shared.libs.arch)
             implementation(projects.shared.libs.coroutinesX)
             implementation(projects.shared.libs.featureFlag)
+            implementation(projects.shared.libs.sharing)
 
             // Routing framework dependencies
             implementation(projects.shared.libs.routing.routesApi)
             implementation(projects.shared.libs.routing.deeplinkEngine)
+
+            implementation(libs.coil.compose)
         }
 
         androidMain.dependencies {

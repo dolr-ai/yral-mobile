@@ -86,6 +86,7 @@ androidx-security-crypto = { module = "androidx.security:security-crypto", versi
 
 androidx-emoji2 = { module = "androidx.emoji2:emoji2", version.ref = "emoji2" }
 
+coil-core = { module = "io.coil-kt.coil3:coil-core", version.ref = "coil" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 coil-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil" }
 coil-svg = { module = "io.coil-kt.coil3:coil-svg", version.ref = "coil" }
