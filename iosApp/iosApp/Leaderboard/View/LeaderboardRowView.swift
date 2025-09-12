@@ -18,7 +18,7 @@ struct LeaderboardRowView: View {
   var body: some View {
     HStack(spacing: .zero) {
       Text("#\(leaderboardRow.position)")
-        .lineLimit(1)
+        .lineLimit(.one)
         .font(Constants.userPositionFont)
         .foregroundColor(foregroundColorForPosition())
         .overlay(
@@ -34,7 +34,7 @@ struct LeaderboardRowView: View {
       HStack(spacing: Constants.hStackSpacing) {
         buildUserImage()
 
-        Text(isCurrentUser ? "You" : leaderboardRow.principalID)
+        Text(isCurrentUser ? Constants.you : leaderboardRow.principalID)
         .font(Constants.userIDFont)
         .foregroundColor(foregroundColorForPrincipal())
         .lineLimit(.one)
@@ -173,6 +173,7 @@ struct LeaderboardRowView: View {
 
 extension LeaderboardRowView {
   enum Constants {
+    static let you = "You"
     static let userPositionColor = YralColor.grey50.swiftUIColor
     static let userPositionFont = YralFont.pt14.bold.swiftUIFont
     static let userPositionHorizontalPadding = 8.0
