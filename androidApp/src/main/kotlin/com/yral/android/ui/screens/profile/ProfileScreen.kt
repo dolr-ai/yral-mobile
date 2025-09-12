@@ -291,7 +291,7 @@ private fun ProfileHeader() {
 }
 
 @Composable
-private fun AccountInfoSection(accountInfo: AccountInfo) {
+fun AccountInfoSection(accountInfo: AccountInfo) {
     Column(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
     ) {

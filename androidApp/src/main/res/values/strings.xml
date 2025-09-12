@@ -157,4 +157,7 @@
     <string name="play_games">Play Games</string>
     <string name="to_earn_token">to earn %s!</string>
     <string name="coins">YRAL</string>
+
+    <!-- Wallet -->
+    <string name="my_wallet">My Wallet</string>
 </resources>

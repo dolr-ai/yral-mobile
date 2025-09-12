@@ -52,6 +52,7 @@ import com.yral.android.ui.screens.home.nav.HomeComponent.SlotChild
 import com.yral.android.ui.screens.leaderboard.LeaderboardScreen
 import com.yral.android.ui.screens.profile.ProfileScreen
 import com.yral.android.ui.screens.uploadVideo.UploadVideoRootScreen
+import com.yral.android.ui.screens.wallet.WalletScreen
 import com.yral.android.ui.widgets.YralFeedback
 import com.yral.shared.analytics.events.CategoryName
 import com.yral.shared.core.session.SessionKey
@@ -84,6 +85,7 @@ fun HomeScreen(
                     is HomeComponent.Child.Leaderboard -> HomeTab.LEADER_BOARD
                     is HomeComponent.Child.Profile -> HomeTab.PROFILE
                     is HomeComponent.Child.UploadVideo -> HomeTab.UPLOAD_VIDEO
+                    is HomeComponent.Child.Wallet -> HomeTab.WALLET
                 }
             val updateCurrentTab: (tab: HomeTab) -> Unit = { tab ->
                 when (tab) {
@@ -92,6 +94,7 @@ fun HomeScreen(
                     HomeTab.LEADER_BOARD -> component.onLeaderboardTabClick()
                     HomeTab.PROFILE -> component.onProfileTabClick()
                     HomeTab.UPLOAD_VIDEO -> component.onUploadVideoTabClick()
+                    HomeTab.WALLET -> component.onWalletTabClick()
                 }
             }
             HomeNavigationBar(
@@ -180,6 +183,12 @@ private fun HomeScreenContent(
                         profileVideos = profileVideos,
                     )
                 }
+            }
+
+            is HomeComponent.Child.Wallet -> {
+                WalletScreen(
+                    component = child.component,
+                )
             }
         }
     }
@@ -366,7 +375,6 @@ private enum class HomeTab(
         categoryName = CategoryName.LEADERBOARD,
         icon = R.drawable.leaderboard_nav_selected,
         unSelectedIcon = R.drawable.leaderboard_nav_unselected,
-        isNew = true,
     ),
     UPLOAD_VIDEO(
         title = "UploadVideo",
@@ -379,6 +387,13 @@ private enum class HomeTab(
         categoryName = CategoryName.PROFILE,
         icon = R.drawable.profile_nav_selected,
         unSelectedIcon = R.drawable.profile_nav_unselected,
+    ),
+    WALLET(
+        title = "Wallet",
+        categoryName = CategoryName.WALLET,
+        icon = R.drawable.wallet_nav,
+        unSelectedIcon = R.drawable.wallet_nav_unselected,
+        isNew = true,
     ),
     ACCOUNT(
         title = "Account",
