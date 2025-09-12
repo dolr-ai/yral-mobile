@@ -21,15 +21,13 @@ struct LeaderboardView: View {
   @State private var showLoader = true
   @State private var showConfetti = false
   @State private var mode: LeaderboardMode = .daily
-  @State private var timerShadowColor = Color.clear
-  @State private var timerTextColor = Color(hex: "E2017B")
-  @State private var timerImage = Image("leaderboard_clock_pink")
+  @State private var timerShadowColor = Constants.timerShadowClear
+  @State private var timerTextColor = Constants.timerShadowPink
+  @State private var timerImage = Constants.timerImagePink
   @State private var timerText = ""
+  @State private var headerHeight: CGFloat = .zero
 
-  @State private var headerHeight: CGFloat = 0
-
-  let rowWidth = UIScreen.main.bounds.width - 32
-  let timer = Timer.publish(every: 0.5, on: .main, in: .common).autoconnect()
+  let timer = Timer.publish(every: Constants.timerInterval, on: .main, in: .common).autoconnect()
 
   var body: some View {
     GeometryReader { geo in
@@ -43,29 +41,25 @@ struct LeaderboardView: View {
               buildTimerSection()
             }
           }
-          .padding(.bottom, 12)
+          .padding(.bottom, Constants.headerGradientBottom)
           .background(
             mode == .daily ?
-            LinearGradient(
-              gradient: Gradient(stops: [
-                .init(color: Color(hex: "FFC842").opacity(0.0), location: 0.0),
-                .init(color: Color(hex: "F6B517"), location: 0.8967)
-              ]),
-              startPoint: .top,
-              endPoint: .bottom
-            )
-            .opacity(leaderboardRowsExpanded ? 1 : 0)
-            .animation(.easeOut(duration: 0.25), value: leaderboardRowsExpanded) :
-              LinearGradient(
-                gradient: Gradient(stops: [
-                  .init(color: Color(hex: "706EBB").opacity(0.0), location: 0.0633),
-                  .init(color: Color(hex: "7C79EA"), location: 0.8517)
-                ]),
-                startPoint: .top,
-                endPoint: .bottom
+            Constants.headerGradientDaily
+              .opacity(leaderboardRowsExpanded ? .one : .zero)
+              .animation(
+                .easeOut(
+                  duration: Constants.headerGradientAnimationTime
+                ),
+                value: leaderboardRowsExpanded
+              ) :
+              Constants.headerGradientAllTime
+              .opacity(leaderboardRowsExpanded ? .one : .zero)
+              .animation(
+                .easeOut(
+                  duration: Constants.headerGradientAnimationTime
+                ),
+                value: leaderboardRowsExpanded
               )
-              .opacity(leaderboardRowsExpanded ? 1 : 0)
-              .animation(.easeOut(duration: 0.25), value: leaderboardRowsExpanded)
           )
 
           buildPodiumSection()
@@ -73,14 +67,14 @@ struct LeaderboardView: View {
         .frame(maxWidth: .infinity)
         .background(
           LottieView(
-            name: mode == .daily ? "leaderboard_daily" : "leaderboard_all_time",
+            name: mode == .daily ? Constants.dailyHeaderLottie : Constants.alltimeHeaderLottie,
             loopMode: .playOnce,
             animationSpeed: .one,
             resetProgress: false) {}
             .id(mode)
         )
         .background(
-          Image(mode == .daily ? "leaderboard_daily_background" : "leaderboard_all_time_background")
+          Image(mode == .daily ? Constants.dailyHeaderBackground : Constants.alltimeHeaderBackground)
             .resizable()
             .readSize({ newSize in
               headerHeight = newSize.height
@@ -91,16 +85,16 @@ struct LeaderboardView: View {
         if let response = viewModel.leaderboardResponse {
           DraggableView(
             isExpanded: $leaderboardRowsExpanded,
-            topInset: mode == .daily ? 140 : 96,
+            topInset: mode == .daily ? Constants.dailyTopInset : Constants.alltimeTopInset,
             peekHeight: usableHeight - headerHeight,
-            background: YralColor.grey950.swiftUIColor
+            background: Constants.dragViewBackground
           ) {
             buildLeaderboardHeader()
           } content: {
             buildLeaderboard(response)
           }
           .id(mode)
-          .opacity(showLoader ? 0 : 1)
+          .opacity(showLoader ? .zero : .one)
         }
       }
       .frame(maxWidth: .infinity)
@@ -115,10 +109,10 @@ struct LeaderboardView: View {
               loopMode: .playOnce,
               animationSpeed: .one,
               resetProgress: false) {}
-              .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.width)
+              .frame(width: Constants.screenWidth, height: Constants.screenWidth)
               .position(
-                x: UIScreen.main.bounds.width * Constants.confettiPositions[index].x,
-                y: UIScreen.main.bounds.height * Constants.confettiPositions[index].y
+                x: Constants.screenWidth * Constants.confettiPositions[index].x,
+                y: Constants.screenHeight * Constants.confettiPositions[index].y
               )
               .allowsHitTesting(false)
               .id(mode)
@@ -135,7 +129,7 @@ struct LeaderboardView: View {
           showLoader = false
           showConfetti = shouldShowConfetti()
           timerText = formatMillisecondsToHMS(
-            viewModel.leaderboardResponse?.timeLeftInMs ?? 0
+            viewModel.leaderboardResponse?.timeLeftInMs ?? .zero
           )
         default:
           showLoader = false
@@ -144,22 +138,22 @@ struct LeaderboardView: View {
       })
       .onReceive(timer, perform: { _ in
         if mode == .daily {
-          if let timeLeftInMs = viewModel.leaderboardResponse?.timeLeftInMs, timeLeftInMs > 0 {
-            if timeLeftInMs < 7200000 {
-              withAnimation(.easeIn(duration: 0.3)) {
-                if timerShadowColor == Color.clear || timerShadowColor == Color.white {
-                  timerTextColor = YralColor.grey50.swiftUIColor
-                  timerImage = Image("leaderboard_clock")
-                  timerShadowColor = Color(hex: "E2017B")
+          if let timeLeftInMs = viewModel.leaderboardResponse?.timeLeftInMs, timeLeftInMs > .zero {
+            if timeLeftInMs < Constants.timerAnimationTime {
+              withAnimation(.easeIn(duration: Constants.timerAnimationInterval)) {
+                if timerShadowColor == Constants.timerShadowClear || timerShadowColor == Constants.timerShadowWhite {
+                  timerTextColor = Constants.timerTextColorWhite
+                  timerImage = Constants.timerImageWhite
+                  timerShadowColor = Constants.timerShadowPink
                 } else {
-                  timerTextColor = Color(hex: "E2017B")
-                  timerImage = Image("leaderboard_clock_pink")
-                  timerShadowColor = Color.white
+                  timerTextColor = Constants.timerTextColorPink
+                  timerImage = Constants.timerImagePink
+                  timerShadowColor = Constants.timerShadowWhite
                 }
               }
             }
 
-            let newTimeLeftInMs = timeLeftInMs - 500
+            let newTimeLeftInMs = timeLeftInMs - Constants.timerIntervalMS
             viewModel.leaderboardResponse?.timeLeftInMs = newTimeLeftInMs
             timerText = formatMillisecondsToHMS(newTimeLeftInMs)
           }
@@ -176,18 +170,18 @@ struct LeaderboardView: View {
 
   @ViewBuilder
   private func buildSegmentedControl() -> some View {
-    HStack(spacing: 8) {
-      Text("Daily Wins")
-        .font(YralFont.pt20.bold.swiftUIFont)
-        .foregroundColor(mode == .daily ? YralColor.grey950.swiftUIColor : YralColor.grey600.swiftUIColor)
+    HStack(spacing: Constants.tabSpacing) {
+      Text(Constants.dailyTab)
+        .font(Constants.tabFont)
+        .foregroundColor(mode == .daily ? Constants.tabActiveColor : Constants.tabInactiveColor)
         .frame(maxWidth: .infinity)
         .frame(maxHeight: .infinity)
         .background(
-          RoundedRectangle(cornerRadius: 18)
-            .fill(mode == .daily ? YralColor.grey0.swiftUIColor : Color.clear)
+          RoundedRectangle(cornerRadius: Constants.tabCornerRadius)
+            .fill(mode == .daily ? Constants.tabActiveBackground : Constants.tabInactiveBackground)
         )
-        .padding(.vertical, 4)
-        .padding(.horizontal, 4)
+        .padding(.vertical, Constants.tabVertical)
+        .padding(.horizontal, Constants.tabHorizontal)
         .onTapGesture {
           leaderboardRowsExpanded = false
           mode = .daily
@@ -196,17 +190,17 @@ struct LeaderboardView: View {
           }
         }
 
-      Text("All Wins")
-        .font(YralFont.pt20.bold.swiftUIFont)
-        .foregroundColor(mode == .allTime ? YralColor.grey950.swiftUIColor : YralColor.grey600.swiftUIColor)
+      Text(Constants.alltimeTab)
+        .font(Constants.tabFont)
+        .foregroundColor(mode == .allTime ? Constants.tabActiveColor : Constants.tabInactiveColor)
         .frame(maxWidth: .infinity)
         .frame(maxHeight: .infinity)
         .background(
-          RoundedRectangle(cornerRadius: 18)
-            .fill(mode == .allTime ? YralColor.grey0.swiftUIColor : Color.clear)
+          RoundedRectangle(cornerRadius: Constants.tabCornerRadius)
+            .fill(mode == .allTime ? Constants.tabActiveBackground : Constants.tabInactiveBackground)
         )
-        .padding(.vertical, 4)
-        .padding(.horizontal, 4)
+        .padding(.vertical, Constants.tabVertical)
+        .padding(.horizontal, Constants.tabHorizontal)
         .onTapGesture {
           leaderboardRowsExpanded = false
           mode = .allTime
@@ -216,12 +210,11 @@ struct LeaderboardView: View {
         }
     }
     .frame(maxWidth: .infinity)
-    .frame(height: 44)
-    .background(YralColor.grey950.swiftUIColor)
-    .cornerRadius(22)
-    .padding(.horizontal, 16)
-    .padding(.top, 20)
-    .padding(.bottom, 20)
+    .frame(height: Constants.tabHeight)
+    .background(Constants.tabBackground)
+    .cornerRadius(Constants.tabExternalCornerRadius)
+    .padding(.horizontal, Constants.tabExternalHorizontal)
+    .padding(.vertical, Constants.tabExternalVertical)
   }
 
   @ViewBuilder
@@ -229,31 +222,31 @@ struct LeaderboardView: View {
     HStack(spacing: .zero) {
       Spacer(minLength: .zero)
 
-      HStack(spacing: 4) {
+      HStack(spacing: Constants.timerHstackSpacing) {
         timerImage
           .resizable()
-          .frame(width: 18, height: 18)
-          .animation(.easeIn(duration: 0.3), value: timerImage)
+          .frame(width: Constants.timerImageSize, height: Constants.timerImageSize)
+          .animation(.easeIn(duration: Constants.timerAnimationInterval), value: timerImage)
 
         Text("Ends \(timerText)")
-          .font(YralFont.pt12.bold.swiftUIFont)
+          .font(Constants.timerTextFont)
           .foregroundColor(timerTextColor)
-          .animation(.easeIn(duration: 0.3), value: timerTextColor)
+          .animation(.easeIn(duration: Constants.timerAnimationInterval), value: timerTextColor)
       }
-      .padding(.vertical, 4)
-      .padding(.leading, 4)
-      .padding(.trailing, 12)
+      .padding(.vertical, Constants.timerHstackVertical)
+      .padding(.leading, Constants.timerHstackLeading)
+      .padding(.trailing, Constants.timerHstackTrailing)
       .background(
-        RoundedRectangle(cornerRadius: 13)
-          .fill(YralColor.grey950.swiftUIColor.opacity(0.8))
+        RoundedRectangle(cornerRadius: Constants.timerHstackCornerRadius)
+          .fill(Constants.timerBackground)
       )
       .shadow(
         color: timerShadowColor,
-        radius: 20.3,
-        x: 0,
-        y: 0
+        radius: Constants.timerShadowRadius,
+        x: .zero,
+        y: .zero
       )
-      .offset(x: 36)
+      .offset(x: Constants.timerOffset)
 
       Spacer(minLength: .zero)
 
@@ -264,23 +257,24 @@ struct LeaderboardView: View {
           }), animated: true)
         }
       } label: {
-        Image("leaderboard_history")
+        Image(Constants.historyImage)
           .resizable()
-          .frame(width: 44, height: 44)
+          .frame(width: Constants.historyImageSize, height: Constants.historyImageSize)
       }
-      .padding(.trailing, 28)
+      .padding(.trailing, Constants.historyImageTrailing)
     }
     .frame(maxWidth: .infinity)
-    .frame(height: 44)
+    .frame(height: Constants.timerHstackHeight)
   }
 
+  // swiftlint: disable function_body_length
   @ViewBuilder
   private func buildPodiumSection() -> some View {
     Image(Constants.podiumImage)
       .resizable()
       .frame(width: Constants.podiumSize.width, height: Constants.podiumSize.height)
-      .padding(.top, 32)
-      .padding(.bottom, 20)
+      .padding(.top, Constants.podiumTop)
+      .padding(.bottom, Constants.podiumBottom)
 
     if let response = viewModel.leaderboardResponse {
       let (topThreePrincipals, topThreeWins) = topThreePositions(for: response)
@@ -294,8 +288,7 @@ struct LeaderboardView: View {
               .lineLimit(topThreePrincipals[index].count == .one ? .one : .two)
               .truncationMode(.tail)
 
-            Spacer(minLength: 8.0)
-
+            Spacer(minLength: Constants.gamesWonSpacing)
             VStack(spacing: .zero) {
               Text(topThreeWins[index].description)
                 .font(Constants.satsFont)
@@ -306,17 +299,20 @@ struct LeaderboardView: View {
                 .foregroundColor(mode == .daily ? Constants.gamesWonColour : Constants.gamesWonColourWhite)
             }
           }
-          .frame(width: 93)
+          .frame(width: Constants.gamesWonWidth)
         }
       }
       .frame(width: Constants.headerBottomHStackWidth)
-      .frame(height: topThreePrincipals.contains { $0.count > 1 } ? 80 : 67)
-      .padding(.bottom, 28)
+      .frame(
+        height: topThreePrincipals.contains { $0.count > 1 } ?
+        Constants.gamesWonMaxHeight : Constants.gamesWonMinHeight
+      )
+      .padding(.bottom, Constants.gamesWonBottom)
     } else if showLoader {
       HStack {
         LottieLoaderView(animationName: Constants.loader, resetProgess: false)
           .frame(width: Constants.loaderSize, height: Constants.loaderSize)
-          .padding(.leading, 44)
+          .padding(.leading, Constants.loaderLeading)
 
         Spacer()
 
@@ -327,13 +323,14 @@ struct LeaderboardView: View {
 
         LottieLoaderView(animationName: Constants.loader, resetProgess: false)
           .frame(width: Constants.loaderSize, height: Constants.loaderSize)
-          .padding(.trailing, 42)
+          .padding(.trailing, Constants.loaderTrailing)
       }
       .frame(width: Constants.headerBottomHStackWidth)
-      .frame(height: 67)
-      .padding(.bottom, 28)
+      .frame(height: Constants.gamesWonMinHeight)
+      .padding(.bottom, Constants.gamesWonBottom)
     }
   }
+  // swiftlint: enable function_body_length
 
   @ViewBuilder
   private func buildLeaderboardHeader() -> some View {
@@ -341,20 +338,20 @@ struct LeaderboardView: View {
       Text(Constants.position)
         .font(Constants.positionFont)
         .foregroundColor(Constants.positionColour)
-        .frame(width: rowWidth * Constants.positionFactor, alignment: .leading)
+        .frame(width: Constants.rowWidth * Constants.positionFactor, alignment: .leading)
 
       Text(Constants.id)
         .font(Constants.idFont)
         .foregroundColor(Constants.idColour)
-        .frame(width: rowWidth * Constants.idFactor, alignment: .leading)
+        .frame(width: Constants.rowWidth * Constants.idFactor, alignment: .leading)
 
       Text(Constants.totalSats)
         .font(Constants.totalSatsFont)
         .foregroundColor(Constants.totalSatsColour)
-        .frame(width: rowWidth * Constants.totalSatsFactor, alignment: .trailing)
+        .frame(width: Constants.rowWidth * Constants.totalSatsFactor, alignment: .trailing)
     }
-    .padding(.top, 20)
-    .padding(.bottom, 10)
+    .padding(.top, Constants.leaderboardHeaderTop)
+    .padding(.bottom, Constants.leaderboardHeaderBottom)
   }
 
   @ViewBuilder
@@ -364,7 +361,7 @@ struct LeaderboardView: View {
         LeaderboardRowView(
           leaderboardRow: userRow,
           isCurrentUser: true,
-          rowWidth: rowWidth,
+          rowWidth: Constants.rowWidth,
           imageURL: viewModel.fetchImageURL(for: userRow.principalID)
         )
       }
@@ -373,7 +370,7 @@ struct LeaderboardView: View {
         LeaderboardRowView(
           leaderboardRow: leaderboardRow,
           isCurrentUser: false,
-          rowWidth: rowWidth,
+          rowWidth: Constants.rowWidth,
           imageURL: viewModel.fetchImageURL(for: leaderboardRow.principalID)
         )
       }
@@ -418,7 +415,7 @@ struct LeaderboardView: View {
   private func shouldShowConfetti() -> Bool {
     if let leaderboard = viewModel.leaderboardResponse {
       return leaderboard.topRows.contains(where: {
-        ($0.principalID == appDIContainer?.authClient.userPrincipalString) && ([1, 2, 3].contains($0.position))
+        ($0.principalID == appDIContainer?.authClient.userPrincipalString) && (Constants.topThree.contains($0.position))
       })
     }
 
@@ -454,128 +451,6 @@ extension LeaderboardView {
         authClient: authClient
       )
     )
-  }
-}
-
-extension LeaderboardView {
-  enum Constants {
-    static let background = YralColor.grey950.swiftUIColor
-    static let loader = "Yral_Loader"
-    static let loaderSize = 24.0
-
-    static let header = "Leaderboard"
-    static let headerFont = YralFont.pt20.bold.swiftUIFont
-    static let headerColour = YralColor.grey50.swiftUIColor
-    static let headerTop = 20.0
-    static let headerLeading = 16.0
-    static let headerBottom = 8.0
-    static let headerBackground = YralColor.yellow400.swiftUIColor
-    static let headerLottie = "leaderboard"
-
-    static let podiumImage = "podium"
-    static let podiumSize = CGSize(width: 241, height: 146)
-    static let goldRadial = "gold_radial"
-    static let goldSize = 57.0
-    static let goldBorderSize = 65.0
-    static let goldOffset = (x: 0.0, y: 65.0)
-    static let silverRadial = "silver_radial"
-    static let silverBorderSize = 50.0
-    static let silverOffset = (x: 97.0, y: 25.0)
-    static let bronzeRadial = "bronze_radial"
-    static let bronzeSize = 43.0
-    static let bronzeBorderSize = 48.0
-    static let bronzeOffset = (x: 100.0, y: 10.0)
-
-    static let headerTopHStackTop = 28.0
-    static let headerBottomHStackSpacing = 16.0
-    static let headerIDFont = YralFont.pt14.medium.swiftUIFont
-    static let headerIDColour = YralColor.grey600.swiftUIColor
-    static let headerIDColourWhite = YralColor.grey50.swiftUIColor
-
-    static let satsImage = "sats"
-    static let satsImageSize = 16.0
-    static let satsFont = YralFont.pt14.bold.swiftUIFont
-    static let satsColour = YralColor.grey600.swiftUIColor
-    static let satsColourWhite = YralColor.grey50.swiftUIColor
-    static let gamesWonFont = YralFont.pt12.medium.swiftUIFont
-    static let gamesWonColour = YralColor.grey600.swiftUIColor
-    static let gamesWonColourWhite = YralColor.grey50.swiftUIColor
-
-    static let headerBottomHStackTop = 20.0
-    static let headerBottomHStackBottom = 40.0
-    static let headerBottomHStackWidth = 311.0
-    static let headerBottomHStackHeight = 110.0
-    static let headerBottomHStackSpacerMinLenght = 8.0
-
-    static let vStackSpacing = 12.0
-    static let position = "Position"
-    static let positionFont = YralFont.pt12.medium.swiftUIFont
-    static let positionColour = YralColor.grey600.swiftUIColor
-    static let positionFactor = 0.28
-    static let id = "Player ID"
-    static let idFont = YralFont.pt12.medium.swiftUIFont
-    static let idColour = YralColor.grey600.swiftUIColor
-    static let idFactor = 0.44
-    static let idLeading = 28.0
-    static let totalSats = "Games Won"
-    static let totalSatsFont = YralFont.pt12.medium.swiftUIFont
-    static let totalSatsColour = YralColor.grey600.swiftUIColor
-    static let totalSatsFactor = 0.28
-    static let totalSatsLeading = 48.0
-
-    static let leaderboardVertical = 20.0
-    static let leaderboardHorizontal = 16.0
-
-    static let winsEndRadius = 30.0
-    static let gameWinsEndRadius = 80.0
-
-    static func goldGradient(endRadius: CGFloat) -> RadialGradient {
-      RadialGradient(
-        stops: [
-          .init(color: Color(red: 191/255, green: 118/255, blue: 11/255), location: 0.0),
-          .init(color: Color(red: 255/255, green: 232/255, blue: 159/255), location: 0.507),
-          .init(color: Color(red: 195/255, green: 143/255, blue: 0/255), location: 1.0)
-        ],
-        center: UnitPoint(x: 0.0914, y: 0.0),
-        startRadius: 0,
-        endRadius: endRadius
-      )
-    }
-
-    static func silverGradient(endRadius: CGFloat) -> RadialGradient {
-      RadialGradient(
-        stops: [
-          .init(color: Color(red: 47/255, green: 47/255, blue: 48/255), location: 0.0),
-          .init(color: Color(red: 255/255, green: 255/255, blue: 255/255), location: 0.5),
-          .init(color: Color(red: 75/255, green: 75/255, blue: 75/255), location: 1.0)
-        ],
-        center: UnitPoint(x: 0.8443, y: 0.0),
-        startRadius: 0,
-        endRadius: endRadius
-      )
-    }
-
-    static func bronzeGradient(endRadius: CGFloat) -> RadialGradient {
-      RadialGradient(
-        stops: [
-          .init(color: Color(red: 109/255, green: 76/255, blue: 53/255), location: 0.0),
-          .init(color: Color(red: 219/255, green: 163/255, blue: 116/255), location: 0.5),
-          .init(color: Color(red: 159/255, green: 119/255, blue: 83/255), location: 1.0)
-        ],
-        center: UnitPoint(x: 0.1129, y: 0.3226),
-        startRadius: 0,
-        endRadius: endRadius
-      )
-    }
-
-    static let confetti = "leaderboard_confetti"
-    static let confettiPositions: [CGPoint] = [
-      CGPoint(x: 0.25, y: 0.1),
-      CGPoint(x: 0.75, y: 0.27),
-      CGPoint(x: 0.25, y: 0.44),
-      CGPoint(x: 0.75, y: 0.61),
-      CGPoint(x: 0.25, y: 0.8)
-    ]
   }
 }
 // swiftlint: enable file_length
