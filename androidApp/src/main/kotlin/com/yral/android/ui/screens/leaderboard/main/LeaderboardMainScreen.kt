@@ -64,7 +64,7 @@ fun LeaderboardMainScreen(
     val state by viewModel.state.collectAsState()
     var showConfetti by remember(state.isCurrentUserInTop) { mutableStateOf(state.isCurrentUserInTop) }
     LaunchedEffect(Unit) {
-        viewModel.leaderBoardTelemetry.leaderboardPageViewed()
+        viewModel.leaderboardPageViewed()
         viewModel.loadData()
     }
 
@@ -93,6 +93,7 @@ fun LeaderboardMainScreen(
                     isTrophyVisible = isTrophyVisible || state.isLoading,
                     viewModel = viewModel,
                     leaderboardBG = leaderboardBG,
+                    trackOpenHistory = { viewModel.leaderboardCalendarClicked() },
                 )
             }
             if (!state.isLoading && state.error == null) {
@@ -166,6 +167,7 @@ private fun LeaderboardHeader(
     isTrophyVisible: Boolean,
     viewModel: LeaderBoardViewModel,
     leaderboardBG: Int,
+    trackOpenHistory: () -> Unit,
 ) {
     val brushColors =
         when (state.selectedMode) {
@@ -194,7 +196,10 @@ private fun LeaderboardHeader(
                 selectMode = { viewModel.selectMode(it) },
                 countDownMs = state.countDownMs,
                 blinkCountDown = state.blinkCountDown,
-                openHistory = { component.openDailyHistory() },
+                openHistory = {
+                    trackOpenHistory()
+                    component.openDailyHistory()
+                },
                 isTrophyVisible = isTrophyVisible,
             )
             LeaderboardTableHeader(isTrophyVisible)

@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.core.session.SessionManager
+import com.yral.shared.features.game.analytics.LeaderBoardTelemetry
 import com.yral.shared.features.game.domain.GetLeaderboardHistoryUseCase
 import com.yral.shared.features.game.domain.models.LeaderboardHistory
 import com.yral.shared.features.game.domain.models.LeaderboardHistoryRequest
@@ -18,6 +19,7 @@ import kotlinx.coroutines.launch
 class LeaderboardHistoryViewModel(
     private val getLeaderboardHistoryUseCase: GetLeaderboardHistoryUseCase,
     private val sessionManager: SessionManager,
+    private val leaderBoardTelemetry: LeaderBoardTelemetry,
 ) : ViewModel() {
     private val _state = MutableStateFlow(LeaderboardHistoryState())
     val state: StateFlow<LeaderboardHistoryState> = _state.asStateFlow()
@@ -48,6 +50,22 @@ class LeaderboardHistoryViewModel(
 
     fun select(index: Int) {
         _state.update { it.copy(selectedIndex = index) }
+        with(_state.value) {
+            val selected = history.getOrNull(index)
+            selected?.let {
+                val currentUser =
+                    selected.userRow
+                        ?: selected.topRows.firstOrNull { item ->
+                            item.userPrincipalId == sessionManager.userPrincipal
+                        }
+                leaderBoardTelemetry.leaderboardDaySelected(
+                    day = index,
+                    date = selected.date,
+                    rank = currentUser?.position ?: Int.MAX_VALUE,
+                    visibleRows = selected.topRows.size + (selected.userRow?.let { 1 } ?: 0),
+                )
+            }
+        }
     }
 
     fun isCurrentUser(principal: String) = principal == sessionManager.userPrincipal

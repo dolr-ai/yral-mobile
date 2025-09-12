@@ -957,11 +957,81 @@ data class VideoDurationWatchedEventData(
 data class LeaderBoardPageViewedEventData(
     @SerialName("event") override val event: String = FeatureEvents.LEADERBOARD_PAGE_VIEWED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.LEADERBOARD.getFeatureName(),
+    @SerialName("leaderboard_tab") val leaderBoardTabType: LeaderBoardTabType,
 ) : BaseEventData(),
     EventData {
-    constructor() : this(
+    constructor(leaderBoardTabType: LeaderBoardTabType) : this(
         FeatureEvents.LEADERBOARD_PAGE_VIEWED.getEventName(),
         Features.AUTH.getFeatureName(),
+        leaderBoardTabType,
+    )
+}
+
+@Serializable
+data class LeaderBoardPageLoadedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.LEADERBOARD_PAGE_LOADED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.LEADERBOARD.getFeatureName(),
+    @SerialName("leaderboard_tab") val leaderBoardTabType: LeaderBoardTabType,
+    @SerialName("rank") val rank: Int,
+    @SerialName("visible_rows") val visibleRows: Int,
+) : BaseEventData(),
+    EventData {
+    constructor(leaderBoardTabType: LeaderBoardTabType, rank: Int, visibleRows: Int) : this(
+        FeatureEvents.LEADERBOARD_PAGE_LOADED.getEventName(),
+        Features.AUTH.getFeatureName(),
+        leaderBoardTabType,
+        rank,
+        visibleRows,
+    )
+}
+
+@Serializable
+data class LeaderBoardTabClickedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.LEADERBOARD_TAB_CLICKED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.LEADERBOARD.getFeatureName(),
+    @SerialName("leaderboard_tab") val leaderBoardTabType: LeaderBoardTabType,
+) : BaseEventData(),
+    EventData {
+    constructor(leaderBoardTabType: LeaderBoardTabType) : this(
+        FeatureEvents.LEADERBOARD_TAB_CLICKED.getEventName(),
+        Features.AUTH.getFeatureName(),
+        leaderBoardTabType,
+    )
+}
+
+@Serializable
+data class LeaderBoardCalendarClickedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.LEADERBOARD_CALENDAR_CLICKED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.LEADERBOARD.getFeatureName(),
+    @SerialName("leaderboard_tab") val leaderBoardTabType: LeaderBoardTabType,
+    @SerialName("rank") val rank: Int,
+) : BaseEventData(),
+    EventData {
+    constructor(leaderBoardTabType: LeaderBoardTabType, rank: Int) : this(
+        FeatureEvents.LEADERBOARD_CALENDAR_CLICKED.getEventName(),
+        Features.AUTH.getFeatureName(),
+        leaderBoardTabType,
+        rank,
+    )
+}
+
+@Serializable
+data class LeaderBoardDaySelectedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.LEADERBOARD_DAY_SELECTED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.LEADERBOARD.getFeatureName(),
+    @SerialName("day") val day: Int,
+    @SerialName("date") val string: String,
+    @SerialName("rank") val rank: Int,
+    @SerialName("visible_rows") val visibleRows: Int,
+) : BaseEventData(),
+    EventData {
+    constructor(day: Int, date: String, rank: Int, visibleRows: Int) : this(
+        FeatureEvents.LEADERBOARD_DAY_SELECTED.getEventName(),
+        Features.AUTH.getFeatureName(),
+        day,
+        date,
+        rank,
+        visibleRows,
     )
 }
 
@@ -1141,4 +1211,13 @@ enum class AiVideoGenFailureType {
 
     @SerialName("generation_failed")
     GENERATION_FAILED,
+}
+
+@Serializable
+enum class LeaderBoardTabType {
+    @SerialName("daily")
+    DAILY,
+
+    @SerialName("all")
+    ALL,
 }
