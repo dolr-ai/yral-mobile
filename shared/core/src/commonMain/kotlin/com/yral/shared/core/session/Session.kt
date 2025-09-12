@@ -12,4 +12,5 @@ data class SessionProperties(
     val coinBalance: Long? = null,
     val isSocialSignIn: Boolean? = null,
     val profileVideosCount: Int? = null,
+    val isForcedGamePlayUser: Boolean? = null,
 )

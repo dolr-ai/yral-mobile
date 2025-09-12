@@ -64,6 +64,10 @@ class SessionManager {
         _sessionProperties.update { it.copy(profileVideosCount = count) }
     }
 
+    fun updateIsForcedGamePlayUser(isForcedGamePlayUser: Boolean) {
+        _sessionProperties.update { it.copy(isForcedGamePlayUser = isForcedGamePlayUser) }
+    }
+
     fun observeSessionProperties(): StateFlow<SessionProperties> = sessionProperties
 
     fun resetSessionProperties() {

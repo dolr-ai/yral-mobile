@@ -2,6 +2,8 @@ package com.yral.shared.features.root.viewmodels
 
 import androidx.lifecycle.ViewModel
 import co.touchlab.kermit.Logger
+import com.yral.featureflag.FeatureFlagManager
+import com.yral.featureflag.FeedFeatureFlags
 import com.yral.shared.analytics.User
 import com.yral.shared.analytics.events.CategoryName
 import com.yral.shared.analytics.events.TokenType
@@ -37,6 +39,7 @@ class RootViewModel(
     private val sessionManager: SessionManager,
     private val crashlyticsManager: CrashlyticsManager,
     private val rootTelemetry: RootTelemetry,
+    private val flagManager: FeatureFlagManager,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.disk)
 
@@ -76,6 +79,7 @@ class RootViewModel(
                         isCreator = properties.profileVideosCount?.let { it > 0 },
                         walletBalance = properties.coinBalance?.toDouble(),
                         tokenType = TokenType.YRAL,
+                        isForcedGamePlayUser = properties.isForcedGamePlayUser,
                     )
                 }
             }
@@ -112,6 +116,9 @@ class RootViewModel(
         delay(initialDelayForSetup)
         sessionManager.identity?.let {
             _state.update { it.copy(showSplash = false) }
+            sessionManager.updateIsForcedGamePlayUser(
+                isForcedGamePlayUser = flagManager.isEnabled(FeedFeatureFlags.SmileyGame.StopAndVoteNudge),
+            )
         } ?: authClient.initialize()
     }
 
