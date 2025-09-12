@@ -65,6 +65,7 @@ actual class MixpanelAnalyticsProvider actual constructor(
                 "wallet_token_type" to (user.tokenType?.serialName ?: ""),
                 "canister_id" to user.canisterId,
                 "is_forced_gameplay_test_user" to user.isForcedGamePlayUser,
+                "email_id" to user.emailId,
             )
         if (user.isLoggedIn == true) {
             mixpanel.identify(user.userId)

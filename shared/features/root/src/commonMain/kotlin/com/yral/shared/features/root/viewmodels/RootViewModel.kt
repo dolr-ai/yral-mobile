@@ -80,6 +80,7 @@ class RootViewModel(
                         walletBalance = properties.coinBalance?.toDouble(),
                         tokenType = TokenType.YRAL,
                         isForcedGamePlayUser = properties.isForcedGamePlayUser,
+                        emailId = properties.emailId,
                     )
                 }
             }

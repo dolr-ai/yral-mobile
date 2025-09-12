@@ -106,6 +106,9 @@ class DefaultAuthClient(
                 }
                 handleExtractIdentityResponse(it)
             }
+            tokenClaim.email?.let {
+                sessionManager.updateLoggedInUserEmail(it)
+            }
         } else {
             refreshToken.takeIf { it.isNotEmpty() }?.let {
                 val rTokenClaim = oAuthUtilsHelper.parseOAuthToken(it)

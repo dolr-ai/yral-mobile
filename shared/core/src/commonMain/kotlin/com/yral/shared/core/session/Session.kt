@@ -13,4 +13,5 @@ data class SessionProperties(
     val isSocialSignIn: Boolean? = null,
     val profileVideosCount: Int? = null,
     val isForcedGamePlayUser: Boolean? = null,
+    val emailId: String? = null,
 )
