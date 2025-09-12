@@ -7,11 +7,15 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import androidx.paging.filter
+import co.touchlab.kermit.Logger
+import com.github.michaelbull.result.coroutines.runSuspendCatching
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.analytics.events.VideoDeleteCTA
+import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.core.session.SessionManager
+import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.features.auth.utils.getAccountInfo
 import com.yral.shared.features.profile.analytics.ProfileTelemetry
@@ -19,6 +23,11 @@ import com.yral.shared.features.profile.domain.DeleteVideoUseCase
 import com.yral.shared.features.profile.domain.ProfileVideosPagingSource
 import com.yral.shared.features.profile.domain.models.DeleteVideoRequest
 import com.yral.shared.features.profile.domain.repository.ProfileRepository
+import com.yral.shared.libs.routing.deeplink.engine.UrlBuilder
+import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
+import com.yral.shared.libs.sharing.LinkGenerator
+import com.yral.shared.libs.sharing.LinkInput
+import com.yral.shared.libs.sharing.ShareService
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -33,6 +42,10 @@ class ProfileViewModel(
     private val profileRepository: ProfileRepository,
     private val deleteVideoUseCase: DeleteVideoUseCase,
     private val profileTelemetry: ProfileTelemetry,
+    private val shareService: ShareService,
+    private val urlBuilder: UrlBuilder,
+    private val linkGenerator: LinkGenerator,
+    private val crashlyticsManager: CrashlyticsManager,
 ) : ViewModel() {
     companion object {
         private const val POSTS_PER_PAGE = 20
@@ -177,6 +190,40 @@ class ProfileViewModel(
         _state.update { it.copy(manualRefreshTriggered = isTriggered) }
         if (isTriggered) {
             sessionManager.updateProfileVideosCount(null)
+        }
+    }
+
+    fun onShareClicked(
+        feedDetails: FeedDetails,
+        message: String,
+        description: String,
+    ) {
+        viewModelScope.launch {
+            // Build internal deep link using UrlBuilder and PostDetailsRoute
+            val route =
+                PostDetailsRoute(canisterId = feedDetails.canisterID, postId = feedDetails.postID)
+            val internalUrl = urlBuilder.build(route) ?: feedDetails.url
+            runSuspendCatching {
+                val link =
+                    linkGenerator.generateShareLink(
+                        LinkInput(
+                            internalUrl = internalUrl,
+                            title = message,
+                            description = description,
+                            feature = "share",
+                            tags = listOf("organic", "user_share"),
+                            contentImageUrl = feedDetails.thumbnail,
+                        ),
+                    )
+                val text = "$message $link"
+                shareService.shareImageWithText(
+                    imageUrl = feedDetails.thumbnail,
+                    text = text,
+                )
+            }.onFailure {
+                Logger.e(ProfileViewModel::class.simpleName!!, it) { "Failed to share post" }
+                crashlyticsManager.recordException(YralException(it))
+            }
         }
     }
 }
