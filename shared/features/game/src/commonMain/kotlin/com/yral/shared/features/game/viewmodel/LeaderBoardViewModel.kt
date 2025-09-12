@@ -58,11 +58,6 @@ class LeaderBoardViewModel(
                             )
                         }
                         data.timeLeftMs?.let { startCountDown() }
-                        leaderBoardTelemetry.leaderboardPageLoaded(
-                            tab = _state.value.selectedMode,
-                            rank = currentUser?.position ?: Int.MAX_VALUE,
-                            visibleRows = data.topRows.size + (data.userRow?.let { 1 } ?: 0),
-                        )
                     }.onFailure { error ->
                         _state.update { it.copy(error = error.message, isLoading = false) }
                     }
@@ -117,6 +112,18 @@ class LeaderBoardViewModel(
             leaderBoardTelemetry.leaderboardCalendarClicked(
                 tab = selectedMode,
                 rank = currentUser?.position ?: Int.MAX_VALUE,
+            )
+        }
+    }
+
+    fun reportLeaderboardPageLoaded(visibleRows: Int) {
+        with(_state.value) {
+            val currentUser =
+                currentUser ?: leaderboard.firstOrNull { item -> item.userPrincipalId == sessionManager.userPrincipal }
+            leaderBoardTelemetry.leaderboardPageLoaded(
+                tab = selectedMode,
+                rank = currentUser?.position ?: Int.MAX_VALUE,
+                visibleRows = visibleRows,
             )
         }
     }

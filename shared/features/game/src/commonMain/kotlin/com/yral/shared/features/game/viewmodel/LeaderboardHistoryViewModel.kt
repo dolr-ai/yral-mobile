@@ -50,22 +50,6 @@ class LeaderboardHistoryViewModel(
 
     fun select(index: Int) {
         _state.update { it.copy(selectedIndex = index) }
-        with(_state.value) {
-            val selected = history.getOrNull(index)
-            selected?.let {
-                val currentUser =
-                    selected.userRow
-                        ?: selected.topRows.firstOrNull { item ->
-                            item.userPrincipalId == sessionManager.userPrincipal
-                        }
-                leaderBoardTelemetry.leaderboardDaySelected(
-                    day = index,
-                    date = selected.date,
-                    rank = currentUser?.position ?: Int.MAX_VALUE,
-                    visibleRows = selected.topRows.size + (selected.userRow?.let { 1 } ?: 0),
-                )
-            }
-        }
     }
 
     fun isCurrentUser(principal: String) = principal == sessionManager.userPrincipal
@@ -78,6 +62,24 @@ class LeaderboardHistoryViewModel(
                 ?: item.topRows.firstOrNull { isCurrentUser(it.userPrincipalId) }?.position
                 ?: Int.MAX_VALUE
         return position <= TOP_N_THRESHOLD
+    }
+
+    fun reportLeaderboardDaySelected(visibleRows: Int) {
+        with(_state.value) {
+            val index = selectedIndex
+            val selected = history.getOrNull(index) ?: return
+            val currentUser =
+                selected.userRow
+                    ?: selected.topRows.firstOrNull { item ->
+                        item.userPrincipalId == sessionManager.userPrincipal
+                    }
+            leaderBoardTelemetry.leaderboardDaySelected(
+                day = index,
+                date = selected.date,
+                rank = currentUser?.position ?: Int.MAX_VALUE,
+                visibleRows = visibleRows,
+            )
+        }
     }
 }
 

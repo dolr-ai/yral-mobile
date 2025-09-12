@@ -53,8 +53,10 @@ import com.yral.shared.features.game.data.models.LeaderboardMode
 import com.yral.shared.features.game.viewmodel.LeaderBoardState
 import com.yral.shared.features.game.viewmodel.LeaderBoardViewModel
 import org.koin.compose.viewmodel.koinViewModel
+import kotlin.math.max
+import kotlin.math.min
 
-@Suppress("LongMethod", "UnusedParameter")
+@Suppress("LongMethod", "UnusedParameter", "CyclomaticComplexMethod")
 @Composable
 fun LeaderboardMainScreen(
     component: LeaderboardMainComponent,
@@ -74,6 +76,32 @@ fun LeaderboardMainScreen(
         snapshotFlow { listState.canScrollBackward }
             .collect { canScrollBackward ->
                 isTrophyVisible = !canScrollBackward
+            }
+    }
+    var pageLoadedReported by remember(state.selectedMode) { mutableStateOf(false) }
+    LaunchedEffect(state.isLoading) {
+        if (state.isLoading) pageLoadedReported = false
+    }
+    LaunchedEffect(listState, state.isLoading, state.error, state.selectedMode) {
+        snapshotFlow { listState.layoutInfo.visibleItemsInfo }
+            .collect { itemsInfo ->
+                if (!state.isLoading && state.error == null && !pageLoadedReported) {
+                    val viewportStart = listState.layoutInfo.viewportStartOffset
+                    val viewportEnd = listState.layoutInfo.viewportEndOffset
+                    val visibleRowCount =
+                        itemsInfo.count { info ->
+                            if (info.contentType != "leaderboardRow") return@count false
+                            val itemStart = info.offset
+                            val itemEnd = info.offset + info.size
+                            val visible = min(itemEnd, viewportEnd) - max(itemStart, viewportStart)
+                            // Include only if strictly more than 50% visible
+                            visible > 0 && visible * 2 > info.size
+                        }
+                    if (visibleRowCount > 0) {
+                        viewModel.reportLeaderboardPageLoaded(visibleRowCount)
+                        pageLoadedReported = true
+                    }
+                }
             }
     }
     val leaderboardBG =
@@ -99,7 +127,7 @@ fun LeaderboardMainScreen(
             if (!state.isLoading && state.error == null) {
                 // Show current user first if available
                 state.currentUser?.let { user ->
-                    item {
+                    item(contentType = "leaderboardRow") {
                         Column(
                             modifier =
                                 Modifier
@@ -119,7 +147,7 @@ fun LeaderboardMainScreen(
                 }
 
                 // Leaderboard items
-                items(state.leaderboard) { item ->
+                items(items = state.leaderboard, contentType = { "leaderboardRow" }) { item ->
                     Column(
                         modifier =
                             Modifier
