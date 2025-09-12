@@ -19,6 +19,7 @@ final class DefaultAuthClient: NSObject, AuthClient {
   private(set) var canisterPrincipalString: String?
   private(set) var userPrincipal: Principal?
   private(set) var userPrincipalString: String?
+  private(set) var emailId: String?
   private(set) var identityData: Data?
   var isNewUser = false
   var provider: SocialProvider?
@@ -104,11 +105,14 @@ final class DefaultAuthClient: NSObject, AuthClient {
         self.userPrincipalString = userPrincipalString
         self.canisterPrincipal = try get_principal(canisterPrincipalString.intoRustString())
         self.userPrincipal = try get_principal(userPrincipalString.intoRustString())
+        self.emailId = try? KeychainHelper.retrieveString(
+          for: Constants.keychainEmail
+         )
         Task { @MainActor in
           try await exchangePrincipalID(type: type)
         }
       } else {
-        try await handleExtractIdentityResponse(from: data, type: .permanent)
+        try await handleExtractIdentityResponse(from: data, type: .permanent, email: nil)
       }
       do {
         try await registerForNotifications()
@@ -152,7 +156,7 @@ final class DefaultAuthClient: NSObject, AuthClient {
       guard let data = identityData else { return }
       try await setupSession(data, type: .ephemeral)
       Task { @MainActor in
-        try await self.handleExtractIdentityResponse(from: data, type: .ephemeral)
+        try await self.handleExtractIdentityResponse(from: data, type: .ephemeral, email: nil)
       }
       return
     } else {
@@ -217,12 +221,14 @@ final class DefaultAuthClient: NSObject, AuthClient {
     UserDefaultsManager.shared.set(refreshClaims.exp, for: .authRefreshTokenExpiryDateKey)
   }
 
-  func storeSessionData(identity: Data, canisterPrincipal: String, userPrincipal: String) {
+  func storeSessionData(identity: Data, canisterPrincipal: String, userPrincipal: String, email: String?) {
     do {
       try recordThrowingOperation {
         try KeychainHelper.store(data: identity, for: Constants.keychainIdentity)
         try KeychainHelper.store(userPrincipal, for: Constants.keychainUserPrincipal)
         try KeychainHelper.store(canisterPrincipal, for: Constants.keychainCanisterPrincipal)
+        guard let email = email else { return }
+        try KeychainHelper.store(email, for: Constants.keychainEmail)
       }
     } catch {
       print(error)
@@ -234,10 +240,10 @@ final class DefaultAuthClient: NSObject, AuthClient {
     let wire = claims.delegatedIdentity
     let wireData = try JSONEncoder().encode(wire)
     identityData = wireData
-    try await handleExtractIdentityResponse(from: wireData, type: type)
+    try await handleExtractIdentityResponse(from: wireData, type: type, email: claims.emailID)
   }
 
-  private func handleExtractIdentityResponse(from data: Data, type: DelegateIdentityType) async throws {
+  private func handleExtractIdentityResponse(from data: Data, type: DelegateIdentityType, email: String?) async throws {
     try await recordThrowingOperation {
       guard !data.isEmpty else {
         throw NetworkError.invalidResponse("Empty identity data received.")
@@ -267,10 +273,12 @@ final class DefaultAuthClient: NSObject, AuthClient {
         self.canisterPrincipalString = canisterPrincipalString
         self.userPrincipal = userPrincipal
         self.userPrincipalString = userPrincipalString
+        self.emailId = email
         self.storeSessionData(
           identity: data,
           canisterPrincipal: canisterPrincipalString,
-          userPrincipal: userPrincipalString
+          userPrincipal: userPrincipalString,
+          email: email
         )
       }
       await updateAuthState(for: type, withCoins: .zero, isFetchingCoins: true)
@@ -285,6 +293,7 @@ final class DefaultAuthClient: NSObject, AuthClient {
     try? KeychainHelper.deleteItem(for: Constants.keychainIdentity)
     try? KeychainHelper.deleteItem(for: Constants.keychainUserPrincipal)
     try? KeychainHelper.deleteItem(for: Constants.keychainCanisterPrincipal)
+    try? KeychainHelper.deleteItem(for: Constants.keychainEmail)
     try? KeychainHelper.deleteItem(for: Constants.keychainAccessToken)
     try? KeychainHelper.deleteItem(for: Constants.keychainIDToken)
     try? KeychainHelper.deleteItem(for: Constants.keychainRefreshToken)

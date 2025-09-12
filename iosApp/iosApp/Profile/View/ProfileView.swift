@@ -305,14 +305,14 @@ struct ProfileView: View {
 extension ProfileView {
   func sendAnalyticsInfo() {
     // swiftlint: disable large_tuple
-    let (userPrincipal, canisterPrincipal, coins, isLoggedIn): (String, String, UInt64, Bool) = {
+    let (userPrincipal, canisterPrincipal, email, coins, isLoggedIn): (String, String, String?, UInt64, Bool) = {
       switch session.state {
       case .ephemeralAuthentication(let userPrincipal, let canisterPrincipal, let coins, _):
-        return (userPrincipal, canisterPrincipal, coins, false)
-      case .permanentAuthentication(let userPrincipal, let canisterPrincipal, let coins, _):
-        return (userPrincipal, canisterPrincipal, coins, true)
+        return (userPrincipal, canisterPrincipal, nil, coins, false)
+      case .permanentAuthentication(let userPrincipal, let canisterPrincipal, let email, let coins, _):
+        return (userPrincipal, canisterPrincipal, email, coins, true)
       default:
-        return ("", "", .zero, false)
+        return ("", "", nil, .zero, false)
       }
     }()
     // swiftlint: enable large_tuple
@@ -321,7 +321,11 @@ extension ProfileView {
         userPrincipal: userPrincipal,
         canisterPrincipal: canisterPrincipal,
         isLoggedIn: isLoggedIn,
-        walletBalance: Double(coins)
+        walletBalance: Double(coins),
+        playToScroll: AppDIHelper().getFeatureFlagManager().isEnabled(
+          flag: FeedFeatureFlags.SmileyGame.shared.StopAndVoteNudge
+        ),
+        emailId: email
       )
     )
   }
