@@ -21,7 +21,7 @@ import kotlinx.coroutines.launch
 class LeaderBoardViewModel(
     private val getLeaderboardUseCase: GetLeaderboardUseCase,
     private val sessionManager: SessionManager,
-    val leaderBoardTelemetry: LeaderBoardTelemetry,
+    private val leaderBoardTelemetry: LeaderBoardTelemetry,
 ) : ViewModel() {
     private val _state = MutableStateFlow(LeaderBoardState())
     val state: StateFlow<LeaderBoardState> = _state.asStateFlow()
@@ -95,10 +95,38 @@ class LeaderBoardViewModel(
         if (_state.value.selectedMode != mode) {
             _state.update { it.copy(selectedMode = mode) }
             refreshData()
+            leaderBoardTelemetry.leaderboardTabClicked(mode)
         }
     }
 
     fun isCurrentUser(principal: String) = principal == sessionManager.userPrincipal
+
+    fun leaderboardPageViewed() {
+        leaderBoardTelemetry.leaderboardPageViewed(state.value.selectedMode)
+    }
+
+    fun leaderboardCalendarClicked() {
+        with(_state.value) {
+            val currentUser =
+                currentUser ?: leaderboard.firstOrNull { item -> item.userPrincipalId == sessionManager.userPrincipal }
+            leaderBoardTelemetry.leaderboardCalendarClicked(
+                tab = selectedMode,
+                rank = currentUser?.position ?: Int.MAX_VALUE,
+            )
+        }
+    }
+
+    fun reportLeaderboardPageLoaded(visibleRows: Int) {
+        with(_state.value) {
+            val currentUser =
+                currentUser ?: leaderboard.firstOrNull { item -> item.userPrincipalId == sessionManager.userPrincipal }
+            leaderBoardTelemetry.leaderboardPageLoaded(
+                tab = selectedMode,
+                rank = currentUser?.position ?: Int.MAX_VALUE,
+                visibleRows = visibleRows,
+            )
+        }
+    }
 
     companion object {
         private const val COUNT_DOWN_BLINK_THRESHOLD = 2 * 60 * 60 * 1000 // Last 2 hours

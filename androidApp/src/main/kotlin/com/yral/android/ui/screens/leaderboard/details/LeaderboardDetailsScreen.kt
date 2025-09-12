@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -27,6 +28,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -44,8 +46,10 @@ import com.yral.android.ui.screens.leaderboard.main.LeaderboardConfetti
 import com.yral.android.ui.widgets.YralLoader
 import com.yral.shared.features.game.viewmodel.LeaderboardHistoryViewModel
 import org.koin.compose.viewmodel.koinViewModel
+import kotlin.math.max
+import kotlin.math.min
 
-@Suppress("LongMethod")
+@Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
 fun LeaderboardDetailsScreen(
     component: LeaderboardDetailsComponent,
@@ -54,6 +58,32 @@ fun LeaderboardDetailsScreen(
     val state by viewModel.state.collectAsState()
     var showConfetti by remember(state.selectedIndex, state.history) { mutableStateOf(viewModel.isCurrentUserInTop()) }
     LaunchedEffect(Unit) { viewModel.fetchHistory() }
+    val listState = rememberLazyListState()
+    var pageLoadedReported by remember(state.selectedIndex) { mutableStateOf(false) }
+    LaunchedEffect(state.isLoading, state.selectedIndex) {
+        if (state.isLoading) pageLoadedReported = false
+    }
+    LaunchedEffect(listState, state.isLoading, state.error, state.selectedIndex) {
+        snapshotFlow { listState.layoutInfo.visibleItemsInfo }
+            .collect { itemsInfo ->
+                if (!state.isLoading && state.error == null && !pageLoadedReported) {
+                    val viewportStart = listState.layoutInfo.viewportStartOffset
+                    val viewportEnd = listState.layoutInfo.viewportEndOffset
+                    val visibleRowCount =
+                        itemsInfo.count { info ->
+                            if (info.contentType != "leaderboardRow") return@count false
+                            val itemStart = info.offset
+                            val itemEnd = info.offset + info.size
+                            val visible = min(itemEnd, viewportEnd) - max(itemStart, viewportStart)
+                            visible > 0 && visible * 2 > info.size
+                        }
+                    if (visibleRowCount > 0) {
+                        viewModel.reportLeaderboardDaySelected(visibleRowCount)
+                        pageLoadedReported = true
+                    }
+                }
+            }
+    }
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
             verticalArrangement = Arrangement.Top,
@@ -62,6 +92,7 @@ fun LeaderboardDetailsScreen(
                 Modifier
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.primaryContainer),
+            state = listState,
         ) {
             stickyHeader {
                 Column(Modifier.background(MaterialTheme.colorScheme.primaryContainer)) {
@@ -95,7 +126,7 @@ fun LeaderboardDetailsScreen(
                 val selected = state.history.getOrNull(state.selectedIndex)
                 selected?.let { day ->
                     day.userRow?.let { userRow ->
-                        item {
+                        item(contentType = "leaderboardRow") {
                             Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                                 LeaderboardRow(
                                     position = userRow.position,
@@ -109,7 +140,7 @@ fun LeaderboardDetailsScreen(
                             }
                         }
                     }
-                    items(day.topRows) { row ->
+                    items(items = day.topRows, contentType = { "leaderboardRow" }) { row ->
                         Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                             LeaderboardRow(
                                 position = row.position,
