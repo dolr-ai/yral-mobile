@@ -27,8 +27,6 @@ kotlin {
             // Routing framework dependencies
             implementation(projects.shared.libs.routing.routesApi)
             implementation(projects.shared.libs.routing.deeplinkEngine)
-
-            implementation(libs.coil.compose)
         }
 
         androidMain.dependencies {
@@ -43,6 +41,7 @@ kotlin {
             implementation(projects.shared.features.uploadvideo)
             implementation(projects.shared.features.profile)
             implementation(projects.shared.rust.service)
+            implementation(libs.coil.compose)
         }
 
         commonTest.dependencies {
