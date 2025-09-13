@@ -1621,6 +1621,30 @@ void* __swift_bridge__$Vec_PostServicePostViewStatistics$get_mut(void* vec_ptr, 
 uintptr_t __swift_bridge__$Vec_PostServicePostViewStatistics$len(void* vec_ptr);
 void* __swift_bridge__$Vec_PostServicePostViewStatistics$as_ptr(void* vec_ptr);
 
+typedef struct PostServiceGetPostsOfUserProfileError PostServiceGetPostsOfUserProfileError;
+void __swift_bridge__$PostServiceGetPostsOfUserProfileError$_free(void* self);
+
+void* __swift_bridge__$Vec_PostServiceGetPostsOfUserProfileError$new(void);
+void __swift_bridge__$Vec_PostServiceGetPostsOfUserProfileError$drop(void* vec_ptr);
+void __swift_bridge__$Vec_PostServiceGetPostsOfUserProfileError$push(void* vec_ptr, void* item_ptr);
+void* __swift_bridge__$Vec_PostServiceGetPostsOfUserProfileError$pop(void* vec_ptr);
+void* __swift_bridge__$Vec_PostServiceGetPostsOfUserProfileError$get(void* vec_ptr, uintptr_t index);
+void* __swift_bridge__$Vec_PostServiceGetPostsOfUserProfileError$get_mut(void* vec_ptr, uintptr_t index);
+uintptr_t __swift_bridge__$Vec_PostServiceGetPostsOfUserProfileError$len(void* vec_ptr);
+void* __swift_bridge__$Vec_PostServiceGetPostsOfUserProfileError$as_ptr(void* vec_ptr);
+
+typedef struct PostServiceResult3 PostServiceResult3;
+void __swift_bridge__$PostServiceResult3$_free(void* self);
+
+void* __swift_bridge__$Vec_PostServiceResult3$new(void);
+void __swift_bridge__$Vec_PostServiceResult3$drop(void* vec_ptr);
+void __swift_bridge__$Vec_PostServiceResult3$push(void* vec_ptr, void* item_ptr);
+void* __swift_bridge__$Vec_PostServiceResult3$pop(void* vec_ptr);
+void* __swift_bridge__$Vec_PostServiceResult3$get(void* vec_ptr, uintptr_t index);
+void* __swift_bridge__$Vec_PostServiceResult3$get_mut(void* vec_ptr, uintptr_t index);
+uintptr_t __swift_bridge__$Vec_PostServiceResult3$len(void* vec_ptr);
+void* __swift_bridge__$Vec_PostServiceResult3$as_ptr(void* vec_ptr);
+
 uint64_t __swift_bridge__$PostDetailsForFrontend$id(void* self);
 bool __swift_bridge__$PostDetailsForFrontend$is_nsfw(void* self);
 struct RustStr __swift_bridge__$PostDetailsForFrontend$video_uid(void* self);
@@ -1773,6 +1797,11 @@ void* __swift_bridge__$post_service_result_ok_value(void* result);
 void* __swift_bridge__$post_service_result_err_value(void* result);
 bool __swift_bridge__$is_created_from_service_canister(void* canister_principal);
 uint64_t __swift_bridge__$PostServicePostViewStatistics$total_view_count(void* self);
+bool __swift_bridge__$is_post_service_result_vec_ok(void* result);
+void* __swift_bridge__$post_service_result_vec_ok_value(void* result);
+bool __swift_bridge__$is_reached_end_of_items_list(void* error);
+bool __swift_bridge__$is_invalid_bounds_passed(void* error);
+bool __swift_bridge__$is_exceeded_max_number_of_items_allowed_in_one_request(void* error);
 typedef enum __swift_bridge__$ResultU32AndAgentError$Tag {__swift_bridge__$ResultU32AndAgentError$ResultOk, __swift_bridge__$ResultU32AndAgentError$ResultErr} __swift_bridge__$ResultU32AndAgentError$Tag;
 union __swift_bridge__$ResultU32AndAgentError$Fields {uint32_t ok; void* err;};
 typedef struct __swift_bridge__$ResultU32AndAgentError{__swift_bridge__$ResultU32AndAgentError$Tag tag; union __swift_bridge__$ResultU32AndAgentError$Fields payload;} __swift_bridge__$ResultU32AndAgentError;
