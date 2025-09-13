@@ -167,6 +167,7 @@ class FeedViewModel(
         requiredUseCases.fetchFeedDetailsUseCase
             .invoke(post)
             .onSuccess { detail ->
+                feedTelemetry.onDeeplink(detail.videoID)
                 _state.update { currentState ->
                     addDeeplinkData(currentState, detail)
                 }
@@ -512,6 +513,7 @@ class FeedViewModel(
         message: String,
         description: String,
     ) {
+        feedTelemetry.onShareClicked(feedDetails, sessionManager.userPrincipal)
         viewModelScope.launch {
             // Build internal deep link using UrlBuilder and PostDetailsRoute
             val route = PostDetailsRoute(canisterId = feedDetails.canisterID, postId = feedDetails.postID)

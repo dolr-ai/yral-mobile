@@ -198,6 +198,7 @@ class ProfileViewModel(
         message: String,
         description: String,
     ) {
+        profileTelemetry.onShareClicked(feedDetails, sessionManager.userPrincipal)
         viewModelScope.launch {
             // Build internal deep link using UrlBuilder and PostDetailsRoute
             val route =

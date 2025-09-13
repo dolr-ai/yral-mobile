@@ -79,6 +79,10 @@ enum class FeatureEvents {
 
     // Recharge
     AIRDROP_CLAIMED,
+
+    // Share
+    VIDEO_SHARE_CLICKED,
+    SHARE_APP_OPENED_FROM_LINK,
     ;
 
     fun getEventName(): String =
