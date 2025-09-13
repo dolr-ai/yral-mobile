@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import iosSharedUmbrella
 
 struct LeaderboardHistoryView: View {
   @Environment(\.appDIContainer) var appDIContainer
@@ -66,6 +67,7 @@ struct LeaderboardHistoryView: View {
                 .onTapGesture {
                   selectedDate = leaderboardDate
                   showConfetti = shouldShowConfetti()
+                  sendDaySelectedEvent()
                 }
             }
           }
@@ -165,6 +167,7 @@ struct LeaderboardHistoryView: View {
         selectedDate = defaultDate
         showLoader = false
         showConfetti = shouldShowConfetti()
+        sendDaySelectedEvent()
       default:
         showLoader = false
         showConfetti = false
@@ -187,6 +190,27 @@ struct LeaderboardHistoryView: View {
     }
 
     return false
+  }
+
+  private func sendDaySelectedEvent() {
+    guard let selectedIndex = viewModel.leaderboardHistory.firstIndex(where: {
+      $0.date == selectedDate
+    }) else {
+      return
+    }
+
+    let leaderboard = viewModel.leaderboardHistory[selectedIndex]
+    let date = leaderboard.date ?? ""
+    let userRank = leaderboard.userRow?.position ?? -1
+
+    AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+      event: LeaderBoardDaySelectedEventData(
+        day: Int32(selectedIndex),
+        date: date,
+        rank: Int32(userRank),
+        visibleRows: nil
+      )
+    )
   }
 }
 
