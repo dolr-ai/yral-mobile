@@ -147,6 +147,8 @@ fun ProfileScreen(
         when (val videoViewState = state.videoView) {
             is VideoViewState.ViewingReels -> {
                 if (profileVideos.itemCount > 0) {
+                    val msgFeedVideoShare = stringResource(R.string.msg_feed_video_share)
+                    val msgFeedVideoShareDesc = stringResource(R.string.msg_feed_video_share_desc)
                     ProfileReelPlayer(
                         reelVideos = profileVideos,
                         initialPage =
@@ -158,6 +160,13 @@ fun ProfileScreen(
                             viewModel.confirmDelete(
                                 feedDetails = video,
                                 ctaType = VideoDeleteCTA.VIDEO_FULLSCREEN,
+                            )
+                        },
+                        onShareClick = { feedDetails ->
+                            viewModel.onShareClicked(
+                                feedDetails,
+                                msgFeedVideoShare,
+                                msgFeedVideoShareDesc,
                             )
                         },
                         modifier = Modifier.fillMaxSize(),

@@ -24,6 +24,9 @@ kotlin {
             implementation(projects.shared.libs.arch)
             implementation(projects.shared.libs.coroutinesX)
             implementation(projects.shared.rust.service)
+            implementation(projects.shared.libs.routing.deeplinkEngine)
+            implementation(projects.shared.libs.sharing)
+            implementation(projects.shared.libs.crashlytics)
 
             implementation(libs.androidx.paging.common)
         }

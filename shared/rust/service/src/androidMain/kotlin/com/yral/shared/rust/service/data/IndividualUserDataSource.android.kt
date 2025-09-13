@@ -10,7 +10,7 @@ internal actual interface IndividualUserDataSource {
     suspend fun fetchFeedDetails(post: PostDTO): PostDetailsForFrontend
     suspend fun fetchSCFeedDetails(post: PostDTO): ScPostDetailsForFrontend
     suspend fun getPostsOfThisUserProfileWithPaginationCursor(
-        principalId: String,
+        canisterId: String,
         startIndex: ULong,
         pageSize: ULong,
     ): Result12

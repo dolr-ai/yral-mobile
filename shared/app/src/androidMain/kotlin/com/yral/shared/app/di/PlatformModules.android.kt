@@ -2,6 +2,8 @@ package com.yral.shared.app.di
 
 import android.content.pm.ApplicationInfo
 import co.touchlab.kermit.platformLogWriter
+import coil3.ImageLoader
+import coil3.SingletonImageLoader
 import com.yral.shared.analytics.di.IS_DEBUG
 import com.yral.shared.analytics.di.MIXPANEL_TOKEN
 import com.yral.shared.core.logging.YralLogger
@@ -33,4 +35,5 @@ actual val platformModule =
         // Reason: Verified in Repo, Callback in Repo required once app resumes
         single<OAuthUtils> { AndroidOAuthUtils() }
         factory<OAuthUtilsHelper> { AndroidOAuthUtilsHelper() }
+        single<ImageLoader> { SingletonImageLoader.get(get()) }
     }

@@ -49,6 +49,7 @@ fun ProfileReelPlayer(
     deletingVideoId: String,
     onBack: () -> Unit,
     onDeleteVideo: (FeedDetails) -> Unit,
+    onShareClick: (FeedDetails) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val videoReels =
@@ -74,6 +75,7 @@ fun ProfileReelPlayer(
                     isDeleting = deletingVideoId == currentVideo.videoID,
                     onBack = onBack,
                     onDeleteVideo = { onDeleteVideo(currentVideo) },
+                    onShareClick = { onShareClick(currentVideo) },
                 )
             }
         }
@@ -86,6 +88,7 @@ private fun ProfileReelOverlay(
     isDeleting: Boolean,
     onBack: () -> Unit,
     onDeleteVideo: () -> Unit,
+    onShareClick: () -> Unit,
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         Header(
@@ -106,8 +109,9 @@ private fun ProfileReelOverlay(
                 modifier = Modifier.align(Alignment.BottomStart),
                 caption = currentVideo.postDescription,
             )
-            DeleteIcon(
+            ActionsRight(
                 modifier = Modifier.align(Alignment.BottomEnd).padding(end = 16.dp, bottom = 89.dp),
+                onShareClick = onShareClick,
                 onDeleteVideo = onDeleteVideo,
             )
         }
@@ -187,8 +191,29 @@ private fun Caption(
 }
 
 @Composable
-private fun DeleteIcon(
+private fun ActionsRight(
     modifier: Modifier,
+    onShareClick: () -> Unit,
+    onDeleteVideo: () -> Unit,
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(26.dp, Alignment.CenterVertically),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        ShareIcon(
+            onClick = onShareClick,
+        )
+
+        DeleteIcon(
+            onDeleteVideo = onDeleteVideo,
+        )
+    }
+}
+
+@Composable
+private fun DeleteIcon(
+    modifier: Modifier = Modifier,
     onDeleteVideo: () -> Unit,
 ) {
     Box(modifier = modifier) {
@@ -198,6 +223,23 @@ private fun DeleteIcon(
             modifier = Modifier.size(36.dp).clickable { onDeleteVideo() },
         )
     }
+}
+
+@Composable
+private fun ShareIcon(
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    Image(
+        modifier =
+            modifier
+                .size(36.dp)
+                .padding(1.5.dp)
+                .clickable(onClick = onClick),
+        painter = painterResource(id = R.drawable.ic_share),
+        contentDescription = "share video",
+        contentScale = ContentScale.None,
+    )
 }
 
 @Composable

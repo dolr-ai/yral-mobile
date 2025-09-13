@@ -36,10 +36,10 @@ class ProfileDataSourceImpl(
         val isFromServiceCanister =
             sessionManager.isCreatedFromServiceCanister
                 ?: throw YralException("UserType not found")
-        val principalId = if (isFromServiceCanister) userPrincipal else canisterId
         val result =
             individualUserRepository.getPostsOfThisUserProfileWithPaginationCursor(
-                principalId = principalId,
+                canisterId = canisterId,
+                principalId = userPrincipal,
                 startIndex = startIndex,
                 pageSize = pageSize,
                 shouldFetchFromServiceCanisters = isFromServiceCanister,

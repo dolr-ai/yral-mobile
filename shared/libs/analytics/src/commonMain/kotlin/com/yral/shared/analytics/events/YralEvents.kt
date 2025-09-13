@@ -953,6 +953,54 @@ data class VideoDurationWatchedEventData(
     @SerialName("video_duration") val videoDuration: Double = 0.0,
 ) : EventData
 
+// --- Share ---
+@Serializable
+data class VideoShareClickedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.VIDEO_SHARE_CLICKED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.FEED.getFeatureName(),
+    @SerialName("video_id") val videoId: String,
+    @SerialName("source_screen") val sourceScreen: SourceScreen,
+    @SerialName("is_owner") val isOwner: Boolean,
+) : BaseEventData(),
+    EventData {
+    constructor(
+        videoId: String,
+        sourceScreen: SourceScreen,
+        isOwner: Boolean,
+    ) : this(
+        FeatureEvents.VIDEO_SHARE_CLICKED.getEventName(),
+        Features.FEED.getFeatureName(),
+        videoId,
+        sourceScreen,
+        isOwner,
+    )
+}
+
+@Serializable
+data class ShareAppOpenedFromLinkEventData(
+    @SerialName("event") override val event: String = FeatureEvents.SHARE_APP_OPENED_FROM_LINK.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.FEED.getFeatureName(),
+    @SerialName("video_id") val videoId: String,
+) : BaseEventData(),
+    EventData {
+    constructor(
+        videoId: String,
+    ) : this(
+        FeatureEvents.SHARE_APP_OPENED_FROM_LINK.getEventName(),
+        Features.FEED.getFeatureName(),
+        videoId,
+    )
+}
+
+@Serializable
+enum class SourceScreen {
+    @SerialName("homefeed")
+    HOMEFEED,
+
+    @SerialName("profile")
+    PROFILE,
+}
+
 @Serializable
 data class LeaderBoardPageViewedEventData(
     @SerialName("event") override val event: String = FeatureEvents.LEADERBOARD_PAGE_VIEWED.getEventName(),
