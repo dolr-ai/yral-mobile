@@ -23,12 +23,12 @@ internal class IndividualUserDataSourceImpl(
             .getIndividualPostDetailsById(post.postID)
 
     override suspend fun getPostsOfThisUserProfileWithPaginationCursor(
-        principalId: String,
+        canisterId: String,
         startIndex: ULong,
         pageSize: ULong,
     ): Result12 =
         individualUserServiceFactory
-            .service(principalId)
+            .service(canisterId)
             .getPostsOfThisUserProfileWithPaginationCursor(startIndex, pageSize)
 
     override suspend fun getSCPostsOfThisUserProfileWithPaginationCursor(

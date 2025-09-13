@@ -14,13 +14,7 @@ class FetchFeedDetailsUseCase(
     useCaseFailureListener: UseCaseFailureListener,
 ) : SuspendUseCase<Post, FeedDetails>(appDispatchers.network, useCaseFailureListener) {
     override suspend fun execute(parameter: Post): FeedDetails {
-        var isFromServiceCanister = getUserInfoServiceCanister() == parameter.canisterID
-        if (!isFromServiceCanister) {
-            val postIdAsUInt = parameter.postID.toUIntOrNull()
-            if (postIdAsUInt == null) {
-                isFromServiceCanister = true
-            }
-        }
+        val isFromServiceCanister = getUserInfoServiceCanister() == parameter.canisterID
         return individualUserRepository
             .fetchFeedDetails(parameter, isFromServiceCanister)
     }

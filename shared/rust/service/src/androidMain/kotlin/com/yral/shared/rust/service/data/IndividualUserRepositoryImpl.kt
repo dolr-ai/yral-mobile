@@ -34,6 +34,7 @@ internal class IndividualUserRepositoryImpl(
         }
 
     override suspend fun getPostsOfThisUserProfileWithPaginationCursor(
+        canisterId: String,
         principalId: String,
         startIndex: ULong,
         pageSize: ULong,
@@ -42,16 +43,16 @@ internal class IndividualUserRepositoryImpl(
         if (!shouldFetchFromServiceCanisters) {
             dataSource
                 .getPostsOfThisUserProfileWithPaginationCursor(
-                    principalId = principalId,
+                    canisterId = canisterId,
                     startIndex = startIndex,
                     pageSize = pageSize,
-                ).toPosts(principalId)
+                ).toPosts(canisterId)
         } else {
             dataSource
                 .getSCPostsOfThisUserProfileWithPaginationCursor(
                     principalId = principalId,
                     startIndex = startIndex,
                     pageSize = pageSize,
-                ).toPosts(principalId)
+                ).toPosts(canisterId)
         }
 }
