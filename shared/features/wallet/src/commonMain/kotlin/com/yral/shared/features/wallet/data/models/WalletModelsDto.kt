@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class GetBalanceResponseDto(
-    val balance: Long,
+    val balance: Double,
 )
 
 @Serializable

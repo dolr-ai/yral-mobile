@@ -71,7 +71,7 @@ class WalletViewModel(
 
 data class WalletState(
     val yralTokenBalance: Long? = null,
-    val bitcoinBalanceInSats: Long? = null,
+    val bitcoinBalanceInSats: Double? = null,
     val bitcoinValueInInr: Double? = null,
     val accountInfo: AccountInfo? = null,
 )

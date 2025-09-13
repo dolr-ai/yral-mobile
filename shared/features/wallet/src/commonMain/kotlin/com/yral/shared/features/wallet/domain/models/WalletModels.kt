@@ -5,5 +5,5 @@ data class BtcInInr(
 )
 
 data class UserBtcBalance(
-    val balanceInSats: Long,
+    val balanceInSats: Double,
 )

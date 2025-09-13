@@ -160,4 +160,8 @@
 
     <!-- Wallet -->
     <string name="my_wallet">My Wallet</string>
+    <string name="bit_coin">Bitcoin</string>
+    <string name="btc_inr_rate">1  Bitcoin = %s</string>
+    <string name="rupee_symbol">₹</string>
+    <string name="inr_balance">INR Balance</string>
 </resources>
