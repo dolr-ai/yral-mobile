@@ -1231,3 +1231,65 @@ def leaderboard_history(request: Request):
     except Exception as e:
         print("leaderboard_daily_last7_excl_today error:", e, file=sys.stderr)
         return error_response(500, "INTERNAL", "Internal server error")
+
+
+#################### BTC to INR ####################
+TICKER_URL = "https://blockchain.info/ticker"
+@https_fn.on_request(region="us-central1", enforce_app_check=True)
+def btc_inr_value(request: Request):
+    """
+    GET /btc_inr_value
+
+    Headers:
+      Authorization: Bearer <FIREBASE_ID_TOKEN>
+      X-Firebase-AppCheck: <APPCHECK_TOKEN>
+
+    Response (200):
+      { "inr": 0.00 }
+    """
+    try:
+        if request.method != "GET":
+            return error_response(405, "METHOD_NOT_ALLOWED", "GET required")
+
+        auth_header = request.headers.get("Authorization", "")
+        if not auth_header.startswith("Bearer "):
+            return error_response(401, "MISSING_ID_TOKEN", "Authorization token missing")
+        id_token = auth_header.split(" ", 1)[1]
+        try:
+            auth.verify_id_token(id_token)
+        except auth.InvalidIdTokenError:
+            return error_response(401, "ID_TOKEN_INVALID", "ID token invalid or expired")
+
+        actok = request.headers.get("X-Firebase-AppCheck")
+        if not actok:
+            return error_response(401, "APPCHECK_MISSING", "App Check token required")
+        try:
+            app_check.verify_token(actok)
+        except Exception:
+            return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
+
+        try:
+            resp = requests.get(TICKER_URL, timeout=6)
+        except requests.RequestException as e:
+            print("Network error:", e, file=sys.stderr)
+            return error_response(502, "UPSTREAM_UNREACHABLE", "Price source not reachable")
+
+        if resp.status_code != 200:
+            return error_response(502, "UPSTREAM_BAD_STATUS",
+                                  f"Price source returned {resp.status_code}")
+
+        try:
+            data = resp.json()
+            inr = data.get("INR") or {}
+            last = round(float(inr["last"]), 2)
+        except Exception as e:
+            print("Parse error:", e, file=sys.stderr)
+            return error_response(502, "UPSTREAM_BAD_PAYLOAD", "Unexpected price payload")
+
+        return jsonify({"inr": last}), 200
+
+    except GoogleAPICallError as e:
+        return error_response(500, "GOOGLE_API_ERROR", str(e))
+    except Exception as e:
+        print("Unhandled error:", e, file=sys.stderr)
+        return error_response(500, "INTERNAL", "Internal server error")
