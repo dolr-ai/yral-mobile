@@ -10,6 +10,7 @@ actual interface IndividualUserRepository {
         shouldFetchFromServiceCanisters: Boolean,
     ): FeedDetails
     suspend fun getPostsOfThisUserProfileWithPaginationCursor(
+        canisterId: String,
         principalId: String,
         startIndex: ULong,
         pageSize: ULong,

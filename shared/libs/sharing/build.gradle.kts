@@ -14,12 +14,12 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(projects.shared.libs.coroutinesX)
-                api(libs.coil.core)
             }
         }
         androidMain.dependencies {
             implementation(libs.branch)
             implementation(libs.play.services.ads.identifier)
+            api(libs.coil.core)
         }
     }
 }
