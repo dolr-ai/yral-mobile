@@ -16,7 +16,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
-class AnalyticsApiService(
+class AnalyticsApiService internal constructor(
     private val client: HttpClient,
     private val json: Json,
     private val preferences: Preferences,
