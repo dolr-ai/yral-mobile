@@ -94,10 +94,11 @@ kotlin {
         framework {
             baseName = "iosSharedUmbrella"
             @OptIn(ExperimentalKotlinGradlePluginApi::class)
-            transitiveExport = true
             export(projects.shared.libs.analytics)
             export(projects.shared.libs.crashlytics)
             export(projects.shared.app)
+            export(projects.shared.libs.featureFlag)
+            export(projects.shared.libs.routing.routesApi)
         }
     }
 
