@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import iosSharedUmbrella
 
 // swiftlint: disable file_length
 // swiftlint: disable type_body_length
@@ -126,6 +127,13 @@ struct LeaderboardView: View {
           showLoader = true
           showConfetti = false
         case .success:
+          AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+            event: LeaderBoardPageLoadedEventData(
+              leaderBoardTabType: mode == .daily ? .daily : .all,
+              rank: Int32(viewModel.leaderboardResponse?.userRow?.position ?? -1),
+              visibleRows: nil
+            )
+          )
           showLoader = false
           showConfetti = shouldShowConfetti()
           timerText = formatMillisecondsToHMS(
@@ -160,6 +168,11 @@ struct LeaderboardView: View {
         }
       })
       .onAppear {
+        AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+          event: LeaderBoardPageViewedEventData(
+            leaderBoardTabType: mode == .daily ? .daily : .all
+          )
+        )
         showLoader = true
         Task {
           viewModel.refreshLeaderboardIfReady(for: mode)
@@ -168,6 +181,7 @@ struct LeaderboardView: View {
     }
   }
 
+  // swiftlint: disable function_body_length
   @ViewBuilder
   private func buildSegmentedControl() -> some View {
     HStack(spacing: Constants.tabSpacing) {
@@ -185,6 +199,11 @@ struct LeaderboardView: View {
         .onTapGesture {
           leaderboardRowsExpanded = false
           mode = .daily
+          AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+            event: LeaderBoardTabClickedEventData(
+              leaderBoardTabType: .daily
+            )
+          )
           Task {
             viewModel.refreshLeaderboardIfReady(for: mode)
           }
@@ -204,6 +223,11 @@ struct LeaderboardView: View {
         .onTapGesture {
           leaderboardRowsExpanded = false
           mode = .allTime
+          AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+            event: LeaderBoardTabClickedEventData(
+              leaderBoardTabType: .all
+            )
+          )
           Task {
             viewModel.refreshLeaderboardIfReady(for: mode)
           }
@@ -216,6 +240,7 @@ struct LeaderboardView: View {
     .padding(.horizontal, Constants.tabExternalHorizontal)
     .padding(.vertical, Constants.tabExternalVertical)
   }
+  // swiftlint: enable function_body_length
 
   @ViewBuilder
   private func buildTimerSection() -> some View {
@@ -252,6 +277,12 @@ struct LeaderboardView: View {
 
       Button {
         if let leaderboardHistoryDIContainer = makeLeaderboardHistoryDIContainer() {
+          AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+            event: LeaderBoardCalendarClickedEventData(
+              leaderBoardTabType: .daily,
+              rank: Int32(viewModel.leaderboardResponse?.userRow?.position ?? -1)
+            )
+          )
           navController?.pushViewController(leaderboardHistoryDIContainer.makeLeaderboardHistoryView(onDismiss: {
             navController?.popViewController(animated: true)
           }), animated: true)
