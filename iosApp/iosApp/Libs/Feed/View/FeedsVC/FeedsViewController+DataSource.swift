@@ -133,9 +133,9 @@ extension FeedsViewController {
     }
   }
 
-  func findItem(postId: UInt32, canisterId: String) -> FeedResult? {
+  func findItem(postId: String, canisterId: String) -> FeedResult? {
     feedsDataSource.snapshot().itemIdentifiers.first {
-      $0.postID == String(postId) && $0.canisterID == canisterId
+      $0.postID == postId && $0.canisterID == canisterId
     }
   }
 

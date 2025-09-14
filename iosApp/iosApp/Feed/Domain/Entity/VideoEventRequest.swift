@@ -15,7 +15,7 @@ struct VideoEventRequest {
   let likeCount: Int32
   let nsfwProbability: Double
   var percentageWatched: Double = .zero
-  let postID: Int32
+  let postID: String
   let publisherCanisterID: String
   let publisherUserID: String
   var videoDuration: Double = .zero

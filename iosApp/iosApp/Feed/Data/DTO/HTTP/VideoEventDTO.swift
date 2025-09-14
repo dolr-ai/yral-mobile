@@ -29,7 +29,7 @@ struct VideoEventDTO: Codable {
   let isLoggedIn: Bool
   let isNsfw: Bool
   let likeCount: Int32
-  let postID: Int32
+  let postID: String
   let publisherCanisterId: String
   let publisherUserId: String
   let shareCount: Int = .zero
@@ -80,7 +80,7 @@ struct VideoEventDTO: Codable {
     self.isLoggedIn = try container.decode(Bool.self, forKey: .isLoggedIn)
     self.isNsfw = try container.decode(Bool.self, forKey: .isNsfw)
     self.likeCount = try container.decode(Int32.self, forKey: .likeCount)
-    self.postID = try container.decode(Int32.self, forKey: .postID)
+    self.postID = try container.decode(String.self, forKey: .postID)
     self.publisherCanisterId = try container.decode(String.self, forKey: .publisherCanisterId)
     self.publisherUserId = try container.decode(String.self, forKey: .publisherUserId)
     self.userID = try container.decode(String.self, forKey: .userID)
@@ -132,7 +132,7 @@ struct VideoEventDTO: Codable {
     isLoggedIn: Bool,
     isNsfw: Bool,
     likeCount: Int32,
-    postID: Int32,
+    postID: String,
     publisherCanisterId: String,
     publisherUserId: String,
     userID: String,

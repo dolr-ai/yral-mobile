@@ -9,6 +9,7 @@ import UIKit
 import SwiftUI
 import iosSharedUmbrella
 
+// swiftlint: disable file_length
 extension FeedsViewController: FeedsCellProtocol {
   func makeSmileyGameRulesDIContainer() -> SmileyGameRuleDIContainer {
     return SmileyGameRuleDIContainer(
@@ -72,6 +73,13 @@ extension FeedsViewController: FeedsCellProtocol {
     activityIndicator.startAnimating(in: self.view)
     guard index < feedsDataSource.snapshot().itemIdentifiers.count else { return }
     let item = feedsDataSource.snapshot().itemIdentifiers[index]
+    AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+      event: VideoShareClickedEventData(
+        videoId: item.videoID,
+        sourceScreen: feedType == .otherUsers ? .homefeed : .profile,
+        isOwner: feedType == .currentUser
+      )
+    )
     BranchShareService.shared.generateLink(
       payload: SharePayload(
         title: Constants.shareText,
@@ -163,7 +171,7 @@ extension FeedsViewController: FeedsCellProtocol {
         Task { @MainActor in
           let reportReason = othersText.isEmpty ? reason : othersText
           await self.viewModel.report(request: ReportRequest(
-            postId: UInt64(feedItem.postID) ?? .zero,
+            postId: feedItem.postID,
             videoId: feedItem.videoID,
             reason: reportReason,
             canisterID: feedItem.canisterID,
@@ -238,7 +246,7 @@ extension FeedsViewController: FeedsCellProtocol {
           if isDelete {
             await self.viewModel.deleteVideo(
               request: DeleteVideoRequest(
-                postId: UInt64(feedItem.postID) ?? .zero,
+                postId: feedItem.postID,
                 videoId: feedItem.videoID
               )
             )
@@ -361,7 +369,7 @@ extension FeedsViewController: FeedsPlayerProtocol {
           likeCount: Int32(feed.likeCount),
           nsfwProbability: feed.nsfwProbability,
           percentageWatched: percentageWatched,
-          postID: Int32(feed.postID) ?? .zero,
+          postID: feed.postID,
           publisherCanisterID: feed.canisterID,
           publisherUserID: feed.principalID,
           videoDuration: duration,
@@ -398,3 +406,4 @@ extension FeedsViewController: FeedsPlayerProtocol {
     }
   }
 }
+// swiftlint: enable file_length

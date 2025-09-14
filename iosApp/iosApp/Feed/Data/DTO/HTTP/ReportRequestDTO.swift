@@ -10,7 +10,7 @@ import Foundation
 struct ReportRequestDTO: Codable {
   let canisterId: String
   let principal: String
-  let postId: UInt64
+  let postId: String
   let reason: String
   let userCanisterId: String
   let userPrincipal: String

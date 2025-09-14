@@ -1021,10 +1021,10 @@ data class LeaderBoardPageLoadedEventData(
     @SerialName("feature_name") override val featureName: String = Features.LEADERBOARD.getFeatureName(),
     @SerialName("leaderboard_tab") val leaderBoardTabType: LeaderBoardTabType,
     @SerialName("rank") val rank: Int,
-    @SerialName("visible_rows") val visibleRows: Int,
+    @SerialName("visible_rows") val visibleRows: Int?,
 ) : BaseEventData(),
     EventData {
-    constructor(leaderBoardTabType: LeaderBoardTabType, rank: Int, visibleRows: Int) : this(
+    constructor(leaderBoardTabType: LeaderBoardTabType, rank: Int, visibleRows: Int?) : this(
         FeatureEvents.LEADERBOARD_PAGE_LOADED.getEventName(),
         Features.AUTH.getFeatureName(),
         leaderBoardTabType,
@@ -1070,10 +1070,10 @@ data class LeaderBoardDaySelectedEventData(
     @SerialName("day") val day: Int,
     @SerialName("date") val string: String,
     @SerialName("rank") val rank: Int,
-    @SerialName("visible_rows") val visibleRows: Int,
+    @SerialName("visible_rows") val visibleRows: Int?,
 ) : BaseEventData(),
     EventData {
-    constructor(day: Int, date: String, rank: Int, visibleRows: Int) : this(
+    constructor(day: Int, date: String, rank: Int, visibleRows: Int?) : this(
         FeatureEvents.LEADERBOARD_DAY_SELECTED.getEventName(),
         Features.AUTH.getFeatureName(),
         day,
