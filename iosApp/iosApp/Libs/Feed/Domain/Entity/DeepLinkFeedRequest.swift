@@ -7,6 +7,6 @@
 //
 
 struct DeepLinkFeedRequest {
-  let postID: UInt32
+  let postID: String
   let canisterID: String
 }

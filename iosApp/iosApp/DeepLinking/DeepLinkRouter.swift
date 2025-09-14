@@ -17,7 +17,7 @@ final class DeepLinkRouter: ObservableObject {
 
   enum Destination: Equatable {
     case profileAfterUpload
-    case openVideo(postId: UInt32, canisterId: String?)
+    case openVideo(postId: String, canisterId: String?)
   }
 
   @discardableResult func resolve(from userInfo: [AnyHashable: Any]) -> Destination? {
@@ -57,7 +57,7 @@ final class DeepLinkRouter: ObservableObject {
             url: deepLinkPath
           ) as? PostDetailsRoute else { return nil }
 
-    return .openVideo(postId: UInt32(route.postId) ?? .zero, canisterId: route.canisterId)
+    return .openVideo(postId: route.postId, canisterId: route.canisterId)
   }
 }
 

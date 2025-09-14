@@ -9,13 +9,13 @@
 import Foundation
 
 struct DeleteVideoRequestDTO: Codable {
-  let canisterId: String
-  let postId: UInt64
+  let publisherUserId: String
+  let postId: String
   let videoId: String
   let delegatedIdentityWire: SwiftDelegatedIdentityWire
 
   enum CodingKeys: String, CodingKey {
-    case canisterId = "canister_id"
+    case publisherUserId = "publisher_user_id"
     case postId = "post_id"
     case videoId = "video_id"
     case delegatedIdentityWire = "delegated_identity_wire"

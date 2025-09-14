@@ -171,7 +171,7 @@ struct ProfileView: View {
                 )
                 await self.viewModel.deleteVideo(
                   request: DeleteVideoRequest(
-                    postId: UInt64(deleteInfo.postID) ?? .zero,
+                    postId: deleteInfo.postID,
                     videoId: deleteInfo.videoId
                   )
                 )

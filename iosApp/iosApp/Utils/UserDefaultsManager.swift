@@ -16,6 +16,7 @@ enum DefaultsKey: String {
   case authRefreshTokenExpiryDateKey
   case keychainMigrationDone
   case onboardingCompleted
+  case isServiceCanisterUser
 }
 
 final class UserDefaultsManager {

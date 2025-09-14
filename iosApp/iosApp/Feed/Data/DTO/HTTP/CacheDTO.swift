@@ -18,7 +18,7 @@ struct PostsResponse: Codable {
 }
 
 struct CacheDTO: Codable {
-  let postID: UInt32
+  let postID: String
   let canisterID: String
   let videoID: String
   let nsfwProbability: Double
