@@ -9,6 +9,7 @@ import UIKit
 import SwiftUI
 import iosSharedUmbrella
 
+// swiftlint: disable file_length
 extension FeedsViewController: FeedsCellProtocol {
   func makeSmileyGameRulesDIContainer() -> SmileyGameRuleDIContainer {
     return SmileyGameRuleDIContainer(
@@ -72,6 +73,13 @@ extension FeedsViewController: FeedsCellProtocol {
     activityIndicator.startAnimating(in: self.view)
     guard index < feedsDataSource.snapshot().itemIdentifiers.count else { return }
     let item = feedsDataSource.snapshot().itemIdentifiers[index]
+    AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+      event: VideoShareClickedEventData(
+        videoId: item.videoID,
+        sourceScreen: feedType == .otherUsers ? .homefeed : .profile,
+        isOwner: feedType == .currentUser
+      )
+    )
     BranchShareService.shared.generateLink(
       payload: SharePayload(
         title: Constants.shareText,
@@ -398,3 +406,4 @@ extension FeedsViewController: FeedsPlayerProtocol {
     }
   }
 }
+// swiftlint: enable file_length

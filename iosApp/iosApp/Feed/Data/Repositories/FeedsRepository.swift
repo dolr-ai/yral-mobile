@@ -8,6 +8,7 @@
 
 import Foundation
 import Combine
+import iosSharedUmbrella
 
 // swiftlint: disable type_body_length file_length
 class FeedsRepository: FeedRepositoryProtocol {
@@ -128,7 +129,10 @@ class FeedsRepository: FeedRepositoryProtocol {
 
   func fetchDeepLinkFeed(request: DeepLinkFeedRequest) async -> Result<FeedResult, FeedError> {
     do {
-      let result = try await self.mapToFeedResults(feed: request)
+      let result = try await self.mapToFeedResults(feed: request, isDeeplink: true)
+      AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+        event: ShareAppOpenedFromLinkEventData(videoId: result.videoID)
+      )
       return .success(result)
     } catch {
       let feedError = self.handleFeedError(error: error)
@@ -136,14 +140,14 @@ class FeedsRepository: FeedRepositoryProtocol {
     }
   }
 
-  private func mapToFeedResults<T: FeedMapping>(feed: T) async throws -> FeedResult {
+  private func mapToFeedResults<T: FeedMapping>(feed: T, isDeeplink: Bool = false) async throws -> FeedResult {
     let principal = try get_principal(feed.canisterID)
     return is_created_from_service_canister(principal) ?
-    try await getServiceCanisterResult(feed: feed) :
-    try await getIndividualCanisterResult(feed: feed)
+    try await getServiceCanisterResult(feed: feed, isDeeplink: isDeeplink) :
+    try await getIndividualCanisterResult(feed: feed, isDeeplink: isDeeplink)
   }
 
-  private func getServiceCanisterResult(feed: FeedMapping) async throws -> FeedResult {
+  private func getServiceCanisterResult(feed: FeedMapping, isDeeplink: Bool = false) async throws -> FeedResult {
     let principal = try get_principal(feed.canisterID)
     let identity = try self.authClient.generateNewDelegatedIdentity()
     let service = try UserPostService(principal, identity)
@@ -157,7 +161,7 @@ class FeedsRepository: FeedRepositoryProtocol {
     guard !is_banned_due_to_user_reporting(resultValue.status()) else {
       throw FeedError.rustError(RustError.unknown("Post is banned"))
     }
-    guard !voteExistsForSmileyGame else {
+    guard !voteExistsForSmileyGame || isDeeplink else {
       throw FeedError.firebaseError("User has already voted for this video")
     }
     let videoURL = URL(
@@ -192,7 +196,7 @@ class FeedsRepository: FeedRepositoryProtocol {
     )
   }
 
-  private func getIndividualCanisterResult(feed: FeedMapping) async throws -> FeedResult {
+  private func getIndividualCanisterResult(feed: FeedMapping, isDeeplink: Bool = false) async throws -> FeedResult {
     let principal = try get_principal(feed.canisterID)
     let identity = try self.authClient.generateNewDelegatedIdentity()
     let service = try Service(principal, identity)
@@ -203,7 +207,7 @@ class FeedsRepository: FeedRepositoryProtocol {
       throw FeedError.rustError(RustError.unknown("Post is banned"))
     }
 
-    guard !voteExistsForSmileyGame else {
+    guard !voteExistsForSmileyGame || isDeeplink else {
       throw FeedError.firebaseError("User has already voted for this video")
     }
 
