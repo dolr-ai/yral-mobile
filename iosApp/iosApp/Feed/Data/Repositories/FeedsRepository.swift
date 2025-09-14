@@ -154,11 +154,9 @@ class FeedsRepository: FeedRepositoryProtocol {
     }
     let voteExistsForSmileyGame = (try? await fetchSmileyGamePlayedStatus(for: resultValue.video_uid().toString()))
         ?? false
-    // swiftlint: disable force_cast
-    guard !is_banned_due_to_user_reporting(resultValue.status() as! PostServicePostStatus) else {
+    guard !is_banned_due_to_user_reporting(resultValue.status()) else {
       throw FeedError.rustError(RustError.unknown("Post is banned"))
     }
-    // swiftlint: enable force_cast
     guard !voteExistsForSmileyGame else {
       throw FeedError.firebaseError("User has already voted for this video")
     }
@@ -444,10 +442,10 @@ protocol FeedMapping {
   var canisterID: String { get }
   var nsfwProbability: Double { get }
 }
-// swiftlint: enable file_length
 
 extension DeepLinkFeedRequest: FeedMapping {
   var nsfwProbability: Double {
     return .zero
   }
 }
+// swiftlint: enable file_length

@@ -181,8 +181,8 @@ public func get_status_value(_ status: VideoGenRequestStatus) -> RustString {
 public func make_videogen_request_key(_ principal: Principal, _ counter: UInt64) -> VideoGenRequestKey {
     VideoGenRequestKey(ptr: __swift_bridge__$make_videogen_request_key({principal.isOwned = false; return principal.ptr;}(), counter))
 }
-public func is_banned_due_to_user_reporting(_ status: PostServicePostStatus) -> Bool {
-    __swift_bridge__$is_banned_due_to_user_reporting({status.isOwned = false; return status.ptr;}())
+public func is_banned_due_to_user_reporting(_ status: PostServicePostStatusRef) -> Bool {
+    __swift_bridge__$is_banned_due_to_user_reporting(status.ptr)
 }
 public func is_post_service_result_ok(_ result: PostServiceResult1) -> Bool {
     __swift_bridge__$is_post_service_result_ok({result.isOwned = false; return result.ptr;}())
@@ -201,6 +201,9 @@ public func is_post_service_result_vec_ok(_ result: PostServiceResult3) -> Bool 
 }
 public func post_service_result_vec_ok_value(_ result: PostServiceResult3) -> Optional<RustVec<PostServicePost>> {
     { let val = __swift_bridge__$post_service_result_vec_ok_value({result.isOwned = false; return result.ptr;}()); if val != nil { return RustVec(ptr: val!) } else { return nil } }()
+}
+public func post_service_result_vec_err_value(_ result: PostServiceResult3) -> Optional<PostServiceGetPostsOfUserProfileError> {
+    { let val = __swift_bridge__$post_service_result_vec_err_value({result.isOwned = false; return result.ptr;}()); if val != nil { return PostServiceGetPostsOfUserProfileError(ptr: val!) } else { return nil } }()
 }
 public func is_reached_end_of_items_list(_ error: PostServiceGetPostsOfUserProfileError) -> Bool {
     __swift_bridge__$is_reached_end_of_items_list({error.isOwned = false; return error.ptr;}())

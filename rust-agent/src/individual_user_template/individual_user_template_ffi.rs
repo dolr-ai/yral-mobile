@@ -22,6 +22,8 @@ pub type PostServicePost = yral_canisters_client::user_post_service:: Post;
 pub type PostServicePostError = yral_canisters_client::user_post_service:: UserPostServiceError;
 pub type PostServicePostStatus = yral_canisters_client::user_post_service::PostStatus;
 pub type PostServicePostViewStatistics = yral_canisters_client::user_post_service::PostViewStatistics;
+pub type PostServiceResult3 = yral_canisters_client::user_post_service::Result3;
+pub type PostServiceGetPostsOfUserProfileError = yral_canisters_client::user_post_service::GetPostsOfUserProfileError;
 
 #[swift_bridge::bridge]
 mod ffi {
@@ -569,7 +571,7 @@ mod ffi {
             arg0: Principal,
             arg1: u64,
             arg2: u64,
-        ) -> Result<Vec<PostServicePost>, String>;
+        ) -> Result<PostServiceResult3, String>;
     }
 
     extern "Rust" {
@@ -599,7 +601,7 @@ mod ffi {
     }
 
     extern "Rust" {
-        fn is_banned_due_to_user_reporting(status: PostServicePostStatus) -> bool;
+        fn is_banned_due_to_user_reporting(status: &PostServicePostStatus) -> bool;
         fn is_post_service_result_ok(result: PostServiceResult1) -> bool;
         fn post_service_result_ok_value(result: PostServiceResult1) -> Option<PostServicePost>;
         fn post_service_result_err_value(result: PostServiceResult1) -> String;
@@ -610,5 +612,19 @@ mod ffi {
         type PostServicePostViewStatistics;
         #[swift_bridge(get(total_view_count))]
         fn total_view_count(&self) -> u64;
+    }
+
+    extern "Rust" {
+        type PostServiceResult3;
+        type PostServiceGetPostsOfUserProfileError;
+    }
+
+    extern "Rust" {
+        fn is_post_service_result_vec_ok(result: PostServiceResult3) -> bool;
+        fn post_service_result_vec_ok_value(result: PostServiceResult3) -> Option<Vec<PostServicePost>>;
+        fn post_service_result_vec_err_value(result: PostServiceResult3) -> Option<PostServiceGetPostsOfUserProfileError>;
+        fn is_reached_end_of_items_list(error: PostServiceGetPostsOfUserProfileError) -> bool;
+        fn is_invalid_bounds_passed(error: PostServiceGetPostsOfUserProfileError) -> bool;
+        fn is_exceeded_max_number_of_items_allowed_in_one_request(error: PostServiceGetPostsOfUserProfileError) -> bool;
     }
 }

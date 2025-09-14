@@ -10,6 +10,7 @@ use yral_canisters_client::user_post_service::Post;
 use yral_canisters_client::user_post_service::PostStatus;
 use std::time::SystemTime;
 use ic_agent::identity::DelegatedIdentity;
+use yral_canisters_client::user_post_service::Result3;
 
 
 pub struct ServiceCanistersDetails {
@@ -78,14 +79,14 @@ impl UserPostService {
         arg0: Principal,
         arg1: u64,
         arg2: u64,
-    ) -> Result<Vec<Post>, String> {
+    ) -> Result<Result3, String> {
         let agent = Arc::clone(&self.agent);
         let service = yral_canisters_client::user_post_service::UserPostService(
             yral_canisters_client::ic::USER_POST_SERVICE_ID,
             &agent,
         );
-        let details: Vec<Post> = service
-            .get_posts_of_this_user_profile_with_pagination_cursor(arg0, arg1, arg2)
+        let details = service
+            .get_posts_of_this_user_profile_with_pagination(arg0, arg1, arg2)
             .await
             .map_err(|e| e.to_string())?;
         

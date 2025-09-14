@@ -1799,6 +1799,7 @@ bool __swift_bridge__$is_created_from_service_canister(void* canister_principal)
 uint64_t __swift_bridge__$PostServicePostViewStatistics$total_view_count(void* self);
 bool __swift_bridge__$is_post_service_result_vec_ok(void* result);
 void* __swift_bridge__$post_service_result_vec_ok_value(void* result);
+void* __swift_bridge__$post_service_result_vec_err_value(void* result);
 bool __swift_bridge__$is_reached_end_of_items_list(void* error);
 bool __swift_bridge__$is_invalid_bounds_passed(void* error);
 bool __swift_bridge__$is_exceeded_max_number_of_items_allowed_in_one_request(void* error);

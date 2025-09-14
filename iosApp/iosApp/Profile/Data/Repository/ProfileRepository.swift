@@ -8,6 +8,7 @@
 import Foundation
 import Combine
 
+// swiftlint: disable type_body_length
 class ProfileRepository: ProfileRepositoryProtocol {
   @Published private(set) var videos: [FeedResult] = []
 
@@ -122,6 +123,7 @@ class ProfileRepository: ProfileRepositoryProtocol {
     }
   }
 
+  // swiftlint: disable function_body_length
   private func getServiceCanisterPosts(
     startIndex: UInt64,
     offset: UInt64
@@ -132,43 +134,98 @@ class ProfileRepository: ProfileRepositoryProtocol {
     let identity = try self.authClient.generateNewDelegatedIdentity()
     let principal = try get_principal(principalString)
     let service = try UserPostService(principal, identity)
-    let principalToSend = try get_principal(principalString)
     let result = try await service.get_posts_of_this_user_profile_with_pagination_cursor(
-      principalToSend,
+      try get_principal(principalString),
       startIndex,
       offset
     )
-    guard !result.isEmpty else {
-      return .failure(ProfileError.pageEndReached)
-    }
-    // swiftlint: disable force_cast
-    let filteredResult = result.filter { !is_banned_due_to_user_reporting($0.status() as! PostServicePostStatus) }
-    // swiftlint: enable force_cast
-    let feedResult = filteredResult.map { postDetail in
-      let videoURL = URL(
-        string: "\(Constants.cloudfarePrefix)\(postDetail.video_uid().toString())\(Constants.cloudflareSuffix)"
-      ) ?? URL(fileURLWithPath: "")
-      let thumbnailURL = URL(
-        string: "\(Constants.cloudfarePrefix)\(postDetail.video_uid().toString())\(Constants.thumbnailSuffix)"
-      ) ?? URL(fileURLWithPath: "")
+    let resultToUse = try await service.get_posts_of_this_user_profile_with_pagination_cursor(
+      try get_principal(principalString),
+      startIndex,
+      offset
+    )
+    if is_post_service_result_vec_ok(result), let resultValue = post_service_result_vec_ok_value(resultToUse) {
+      let filteredResult = resultValue.filter { !is_banned_due_to_user_reporting($0.status()) }
+      let feedResult = filteredResult.map { postDetail in
+        let videoURL = URL(
+          string: "\(Constants.cloudfarePrefix)\(postDetail.video_uid().toString())\(Constants.cloudflareSuffix)"
+        ) ?? URL(fileURLWithPath: "")
+        let thumbnailURL = URL(
+          string: "\(Constants.cloudfarePrefix)\(postDetail.video_uid().toString())\(Constants.thumbnailSuffix)"
+        ) ?? URL(fileURLWithPath: "")
 
-      return FeedResult(
-        postID: postDetail.id().toString(),
-        videoID: postDetail.video_uid().toString(),
-        canisterID: authClient.canisterPrincipalString ?? "",
-        principalID: authClient.userPrincipalString ?? "",
-        url: videoURL,
-        hashtags: postDetail.hashtags().map { $0.as_str().toString() },
-        thumbnail: thumbnailURL,
-        viewCount: Int64(postDetail.view_stats().total_view_count()),
-        displayName: "",
-        postDescription: postDetail.description().toString(),
-        likeCount: Int(postDetail.likes().count),
-        isLiked: false,
-        nsfwProbability: CGFloat.zero
+        return FeedResult(
+          postID: postDetail.id().toString(),
+          videoID: postDetail.video_uid().toString(),
+          canisterID: authClient.canisterPrincipalString ?? "",
+          principalID: authClient.userPrincipalString ?? "",
+          url: videoURL,
+          hashtags: postDetail.hashtags().map { $0.as_str().toString() },
+          thumbnail: thumbnailURL,
+          viewCount: Int64(postDetail.view_stats().total_view_count()),
+          displayName: "",
+          postDescription: postDetail.description().toString(),
+          likeCount: Int(postDetail.likes().count),
+          isLiked: false,
+          nsfwProbability: CGFloat.zero
+        )
+      }
+      return .success(feedResult)
+    } else {
+      let result = try await service.get_posts_of_this_user_profile_with_pagination_cursor(
+        try get_principal(principalString),
+        startIndex,
+        offset
       )
+      guard post_service_result_vec_err_value(result) != nil else {
+        return .failure(ProfileError.rustError(RustError.unknown("Failed to fetch profile results")))
+      }
+      if try await is_invalid_bounds_passed(
+        getError(
+          for: principalString,
+          service: service,
+          startIndex: startIndex,
+          offset: offset
+        )!
+      ) {
+        return .failure(ProfileError.invalidVideoRequest("Invalid bounds passed"))
+      } else if try await is_exceeded_max_number_of_items_allowed_in_one_request(
+        getError(
+          for: principalString,
+          service: service,
+          startIndex: startIndex,
+          offset: offset
+        )!
+      ) {
+        return .failure(ProfileError.invalidVideoRequest("Exceeded max number of items allowed in one request"))
+      } else if try await is_reached_end_of_items_list(
+        getError(
+          for: principalString,
+          service: service,
+          startIndex: startIndex,
+          offset: offset
+        )!
+      ) {
+        return .failure(ProfileError.pageEndReached)
+      } else {
+        return .failure(ProfileError.rustError(RustError.unknown("Failed to fetch profile results")))
+      }
     }
-    return .success(feedResult)
+  }
+  // swiftlint: enable function_body_length
+
+  private func getError(
+    for principalString: String,
+    service: UserPostService,
+    startIndex: UInt64,
+    offset: UInt64
+  ) async throws -> PostServiceGetPostsOfUserProfileError? {
+    let result = try await service.get_posts_of_this_user_profile_with_pagination_cursor(
+      try get_principal(principalString),
+      startIndex,
+      offset
+    )
+    return post_service_result_vec_err_value(result)
   }
 
   // swiftlint: disable function_body_length
@@ -250,3 +307,4 @@ extension ProfileRepository {
     static let offset = 10
   }
 }
+// swiftlint: enable type_body_length

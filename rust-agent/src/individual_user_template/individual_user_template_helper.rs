@@ -29,6 +29,8 @@ use yral_canisters_client::rate_limits::RateLimits;
 use yral_canisters_client::rate_limits::VideoGenRequestKey;
 use yral_canisters_client::rate_limits::VideoGenRequestStatus;
 use yral_canisters_client::user_post_service::UserPostServiceError;
+use crate::individual_user_template::individual_user_template_ffi::PostServiceResult3;
+use crate::individual_user_template::individual_user_template_ffi::PostServiceGetPostsOfUserProfileError;
 
 pub type Secp256k1Error = k256::elliptic_curve::Error;
 
@@ -364,7 +366,7 @@ pub fn make_videogen_request_key(principal: Principal, counter: u64) -> VideoGen
     VideoGenRequestKey { principal, counter }
 }
 
-pub fn is_banned_due_to_user_reporting(status: PostServicePostStatus) -> bool {
+pub fn is_banned_due_to_user_reporting(status: &PostServicePostStatus) -> bool {
     matches!(status, PostServicePostStatus::BannedDueToUserReporting)
 }
 
@@ -392,6 +394,40 @@ pub fn post_service_result_err_value(result: PostServiceResult1) -> String {
         },
     }
 }
+
+pub fn is_post_service_result_vec_ok(result: PostServiceResult3) -> bool {
+    matches!(result, PostServiceResult3::Ok(result))
+}
+
+pub fn post_service_result_vec_ok_value(result: PostServiceResult3) -> Option<Vec<PostServicePost>> {
+    match result {
+        PostServiceResult3::Ok(val) => Some(val),
+        PostServiceResult3::Err(_) => None,
+    }
+}
+
+pub fn post_service_result_vec_err_value(result: PostServiceResult3) -> Option<PostServiceGetPostsOfUserProfileError> {
+    match result {
+        PostServiceResult3::Ok(_) => None,
+        PostServiceResult3::Err(error) =>Some(error),
+    }
+}
+
+pub fn is_reached_end_of_items_list(error: PostServiceGetPostsOfUserProfileError) -> bool {
+    matches!(error, PostServiceGetPostsOfUserProfileError::ReachedEndOfItemsList)
+}
+
+pub fn is_invalid_bounds_passed(error: PostServiceGetPostsOfUserProfileError) -> bool {
+    matches!(error, PostServiceGetPostsOfUserProfileError::InvalidBoundsPassed)
+}
+
+pub fn is_exceeded_max_number_of_items_allowed_in_one_request(error: PostServiceGetPostsOfUserProfileError) -> bool {
+    matches!(
+        error,
+        PostServiceGetPostsOfUserProfileError::ExceededMaxNumberOfItemsAllowedInOneRequest
+    )
+}
+
 
 pub fn is_created_from_service_canister(canister_principal: Principal) -> bool {
     canister_principal == yral_canisters_client::ic::USER_INFO_SERVICE_ID
