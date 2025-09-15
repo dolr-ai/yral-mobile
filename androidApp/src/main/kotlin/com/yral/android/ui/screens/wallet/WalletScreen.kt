@@ -138,7 +138,7 @@ private fun BitCoinBalance(
             verticalAlignment = Alignment.CenterVertically,
             modifier =
                 Modifier
-                    .padding(start = 16.dp, end = 16.dp, bottom = 24.dp)
+                    .padding(start = 16.dp, end = 16.dp, bottom = 12.dp)
                     .border(
                         width = 1.dp,
                         color = YralColors.Neutral700,
@@ -266,7 +266,7 @@ private fun BtcInInr(btcInInr: Double?) {
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                    .padding(horizontal = 16.dp),
         )
     }
 }
