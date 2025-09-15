@@ -395,6 +395,8 @@
 		AC8FC76E2D9C01E9006F29BC /* Yral_Loader.json in Resources */ = {isa = PBXBuildFile; fileRef = AC8FC76C2D9C01E9006F29BC /* Yral_Loader.json */; };
 		AC9294192D65F308003DB102 /* View+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9294182D65F2FD003DB102 /* View+Extensions.swift */; };
 		AC92941A2D65F308003DB102 /* View+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9294182D65F2FD003DB102 /* View+Extensions.swift */; };
+		AC9461F52E780D58002B37C2 /* AccountDetailsUtility.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9461F42E780D50002B37C2 /* AccountDetailsUtility.swift */; };
+		AC9461F62E780D58002B37C2 /* AccountDetailsUtility.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9461F42E780D50002B37C2 /* AccountDetailsUtility.swift */; };
 		AC99BB572D81F517008012C2 /* AttributedText.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC99BB562D81F512008012C2 /* AttributedText.swift */; };
 		AC99BB582D81F517008012C2 /* AttributedText.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC99BB562D81F512008012C2 /* AttributedText.swift */; };
 		AC99BB922D834387008012C2 /* Lightning_Lottie.json in Resources */ = {isa = PBXBuildFile; fileRef = AC99BB912D834387008012C2 /* Lightning_Lottie.json */; };
@@ -936,6 +938,7 @@
 		AC8FC7692D9BE095006F29BC /* FeedRequestDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedRequestDTO.swift; sourceTree = "<group>"; };
 		AC8FC76C2D9C01E9006F29BC /* Yral_Loader.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Yral_Loader.json; sourceTree = "<group>"; };
 		AC9294182D65F2FD003DB102 /* View+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "View+Extensions.swift"; sourceTree = "<group>"; };
+		AC9461F42E780D50002B37C2 /* AccountDetailsUtility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountDetailsUtility.swift; sourceTree = "<group>"; };
 		AC99BB562D81F512008012C2 /* AttributedText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttributedText.swift; sourceTree = "<group>"; };
 		AC99BB912D834387008012C2 /* Lightning_Lottie.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Lightning_Lottie.json; sourceTree = "<group>"; };
 		AC99BB962D848654008012C2 /* YralFont.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralFont.swift; sourceTree = "<group>"; };
@@ -1095,8 +1098,6 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		AC9B77DE2D58C7E300270FC9 /* YralTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = YralTests;
 			sourceTree = "<group>";
 		};
@@ -1685,6 +1686,7 @@
 		AC26CA662D806501006ADA75 /* Utils */ = {
 			isa = PBXGroup;
 			children = (
+				AC9461F32E780D3E002B37C2 /* AccountDetails */,
 				ACE77F1C2E74412B00896DD2 /* AppUpdate */,
 				10FEA9872E720AC1000103EB /* SizeReader.swift */,
 				100FCD6E2E659CDE00E9A02D /* ViewControllerWrapper.swift */,
@@ -2100,6 +2102,14 @@
 				AC8958D72D3EA46000E19ED7 /* FeedsViewController+ScrollView.swift */,
 			);
 			path = FeedsVC;
+			sourceTree = "<group>";
+		};
+		AC9461F32E780D3E002B37C2 /* AccountDetails */ = {
+			isa = PBXGroup;
+			children = (
+				AC9461F42E780D50002B37C2 /* AccountDetailsUtility.swift */,
+			);
+			path = AccountDetails;
 			sourceTree = "<group>";
 		};
 		AC99BBAE2D86C54D008012C2 /* Profile */ = {
@@ -3179,9 +3189,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3196,9 +3210,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3360,9 +3378,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3429,6 +3451,7 @@
 				ACB46A652D0F0B75002E200C /* FetchInitialFeedsUseCase.swift in Sources */,
 				107C609C2DB90B22006FC467 /* SmileyGameResultBottomSheetView.swift in Sources */,
 				ACFEDFA12D96CEC2003116EA /* Errors.swift in Sources */,
+				AC9461F62E780D58002B37C2 /* AccountDetailsUtility.swift in Sources */,
 				ACB46A442D0ECBB3002E200C /* ml_feed.pb.swift in Sources */,
 				AC42D3672E0BFDCB009C2D92 /* DeleteAccountDTO.swift in Sources */,
 				AC8958E32D3EB0DB00E19ED7 /* ProfileOptionsWebView.swift in Sources */,
@@ -3740,6 +3763,7 @@
 				ACB46A642D0F0B75002E200C /* FetchInitialFeedsUseCase.swift in Sources */,
 				107C609B2DB90B22006FC467 /* SmileyGameResultBottomSheetView.swift in Sources */,
 				ACFEDFA22D96CEC2003116EA /* Errors.swift in Sources */,
+				AC9461F52E780D58002B37C2 /* AccountDetailsUtility.swift in Sources */,
 				ACB46A412D0ECBB3002E200C /* ml_feed.pb.swift in Sources */,
 				AC42D3682E0BFDCB009C2D92 /* DeleteAccountDTO.swift in Sources */,
 				AC8958E22D3EB0DB00E19ED7 /* ProfileOptionsWebView.swift in Sources */,
