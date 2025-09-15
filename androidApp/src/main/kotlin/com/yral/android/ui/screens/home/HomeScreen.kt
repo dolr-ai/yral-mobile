@@ -54,6 +54,8 @@ import com.yral.android.ui.screens.profile.ProfileScreen
 import com.yral.android.ui.screens.uploadVideo.UploadVideoRootScreen
 import com.yral.android.ui.screens.wallet.WalletScreen
 import com.yral.android.ui.widgets.YralFeedback
+import com.yral.featureflag.FeatureFlagManager
+import com.yral.featureflag.WalletFeatureFlags
 import com.yral.shared.analytics.events.CategoryName
 import com.yral.shared.core.session.SessionKey
 import com.yral.shared.core.session.SessionState
@@ -63,6 +65,7 @@ import com.yral.shared.features.account.viewmodel.AccountsViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.game.viewmodel.GameViewModel
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -216,6 +219,7 @@ private fun getProfileVideos(
     }
 }
 
+@Suppress("LongMethod")
 @Composable
 private fun HomeNavigationBar(
     currentTab: HomeTab,
@@ -223,6 +227,17 @@ private fun HomeNavigationBar(
     bottomNavigationClicked: (categoryName: CategoryName) -> Unit,
 ) {
     var playSound by remember { mutableStateOf(false) }
+    val flagManager = koinInject<FeatureFlagManager>()
+    val isWalletEnabled = flagManager.isEnabled(WalletFeatureFlags.Wallet.Enabled)
+    val tabs =
+        HomeTab.entries
+            .filter {
+                when (it) {
+                    HomeTab.ACCOUNT -> !isWalletEnabled
+                    HomeTab.WALLET -> isWalletEnabled
+                    else -> true
+                }
+            }
     NavigationBar(
         containerColor = MaterialTheme.colorScheme.primaryContainer,
         modifier =
@@ -233,7 +248,7 @@ private fun HomeNavigationBar(
                 .padding(start = 16.dp, end = 16.dp),
         windowInsets = WindowInsets(0, 0, 0, 0),
     ) {
-        HomeTab.entries.forEachIndexed { index, tab ->
+        tabs.forEachIndexed { index, tab ->
             val alignment =
                 remember {
                     when (index) {
@@ -382,18 +397,18 @@ private enum class HomeTab(
         icon = R.drawable.upload_video_nav_selected,
         unSelectedIcon = R.drawable.upload_video_nav_unselected,
     ),
-    PROFILE(
-        title = "Profile",
-        categoryName = CategoryName.PROFILE,
-        icon = R.drawable.profile_nav_selected,
-        unSelectedIcon = R.drawable.profile_nav_unselected,
-    ),
     WALLET(
         title = "Wallet",
         categoryName = CategoryName.WALLET,
         icon = R.drawable.wallet_nav,
         unSelectedIcon = R.drawable.wallet_nav_unselected,
         isNew = true,
+    ),
+    PROFILE(
+        title = "Profile",
+        categoryName = CategoryName.PROFILE,
+        icon = R.drawable.profile_nav_selected,
+        unSelectedIcon = R.drawable.profile_nav_unselected,
     ),
     ACCOUNT(
         title = "Account",
