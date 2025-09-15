@@ -60,15 +60,15 @@ extension ShareOptionsView {
     static let socialMediaPlatforms = [
       SocialMediaPlatform(
         imageName: "telegram_icon",
-        url: URL(string: "https://t.me/+c-LTX0Cp-ENmMzI1")!
+        url: URL(string: AccountDetailsUtility.shared.getDetails()?.telegram ?? "https://t.me/+c-LTX0Cp-ENmMzI1")!
       ),
       SocialMediaPlatform(
         imageName: "discord_icon",
-        url: URL(string: "https://discord.com/invite/GZ9QemnZuj")!
+        url: URL(string: AccountDetailsUtility.shared.getDetails()?.discord ?? "https://discord.com/invite/GZ9QemnZuj")!
       ),
       SocialMediaPlatform(
         imageName: "x_icon",
-        url: URL(string: "https://twitter.com/Yral_app")!
+        url: URL(string: AccountDetailsUtility.shared.getDetails()?.twitter ?? "https://twitter.com/Yral_app")!
       )
     ]
   }
