@@ -22,6 +22,7 @@ kotlin {
             implementation(projects.shared.libs.http)
             implementation(projects.shared.libs.arch)
             implementation(projects.shared.libs.coroutinesX)
+            implementation(projects.shared.libs.featureFlag)
         }
     }
 }

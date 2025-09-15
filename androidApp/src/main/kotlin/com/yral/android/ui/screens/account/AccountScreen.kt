@@ -50,16 +50,9 @@ import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.features.account.viewmodel.AccountBottomSheet
 import com.yral.shared.features.account.viewmodel.AccountHelpLink
+import com.yral.shared.features.account.viewmodel.AccountHelpLinkType
 import com.yral.shared.features.account.viewmodel.AccountsState
 import com.yral.shared.features.account.viewmodel.AccountsViewModel
-import com.yral.shared.features.account.viewmodel.AccountsViewModel.Companion.DELETE_ACCOUNT_URI
-import com.yral.shared.features.account.viewmodel.AccountsViewModel.Companion.DISCORD_LINK
-import com.yral.shared.features.account.viewmodel.AccountsViewModel.Companion.LOGOUT_URI
-import com.yral.shared.features.account.viewmodel.AccountsViewModel.Companion.PRIVACY_POLICY_URL
-import com.yral.shared.features.account.viewmodel.AccountsViewModel.Companion.TALK_TO_TEAM_URL
-import com.yral.shared.features.account.viewmodel.AccountsViewModel.Companion.TELEGRAM_LINK
-import com.yral.shared.features.account.viewmodel.AccountsViewModel.Companion.TERMS_OF_SERVICE_URL
-import com.yral.shared.features.account.viewmodel.AccountsViewModel.Companion.TWITTER_LINK
 import com.yral.shared.features.account.viewmodel.ErrorType
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -81,6 +74,7 @@ fun AccountScreen(
         )
         SheetContent(
             bottomSheetType = state.bottomSheetType,
+            tncLink = viewModel.getTncLink(),
             onDismissRequest = { viewModel.setBottomSheetType(AccountBottomSheet.None) },
             signInWithGoogle = { viewModel.signInWithGoogle(context) },
             onDeleteAccount = { viewModel.deleteAccount() },
@@ -139,6 +133,7 @@ private fun AccountScreenContent(
 @Composable
 private fun SheetContent(
     bottomSheetType: AccountBottomSheet,
+    tncLink: String,
     onDismissRequest: () -> Unit,
     signInWithGoogle: () -> Unit,
     onDeleteAccount: () -> Unit,
@@ -154,10 +149,8 @@ private fun SheetContent(
                 bottomSheetState = bottomSheetState,
                 onDismissRequest = onDismissRequest,
                 onSignupClicked = { signInWithGoogle() },
-                termsLink = TERMS_OF_SERVICE_URL,
-                openTerms = {
-                    extraSheetLink = TERMS_OF_SERVICE_URL
-                },
+                termsLink = tncLink,
+                openTerms = { extraSheetLink = tncLink },
             )
         }
 
@@ -398,7 +391,7 @@ private fun HelpLinkItem(
             }
             item.getText()?.let {
                 Text(
-                    text = stringResource(it),
+                    text = it,
                     style = LocalAppTopography.current.mdRegular,
                     color = YralColors.NeutralTextPrimary,
                 )
@@ -471,30 +464,31 @@ private fun SocialMediaHelpLinkItem(
 }
 
 private fun AccountHelpLink.getIcon() =
-    when (link) {
-        TALK_TO_TEAM_URL -> R.drawable.sms
-        TERMS_OF_SERVICE_URL -> R.drawable.document
-        PRIVACY_POLICY_URL -> R.drawable.lock
-        LOGOUT_URI -> R.drawable.logout
-        DELETE_ACCOUNT_URI -> R.drawable.delete
+    when (type) {
+        AccountHelpLinkType.TALK_TO_TEAM -> R.drawable.sms
+        AccountHelpLinkType.TERMS_OF_SERVICE -> R.drawable.document
+        AccountHelpLinkType.PRIVACY_POLICY -> R.drawable.lock
+        AccountHelpLinkType.LOGOUT -> R.drawable.logout
+        AccountHelpLinkType.DELETE_ACCOUNT -> R.drawable.delete
         else -> null
     }
 
 private fun AccountHelpLink.getSocialIcon() =
-    when (link) {
-        TELEGRAM_LINK -> R.drawable.telegram
-        DISCORD_LINK -> R.drawable.discord
-        TWITTER_LINK -> R.drawable.twitter
+    when (type) {
+        AccountHelpLinkType.TELEGRAM -> R.drawable.telegram
+        AccountHelpLinkType.DISCORD -> R.drawable.discord
+        AccountHelpLinkType.TWITTER -> R.drawable.twitter
         else -> null
     }
 
+@Composable
 private fun AccountHelpLink.getText() =
-    when (link) {
-        TALK_TO_TEAM_URL -> R.string.talk_to_the_team
-        TERMS_OF_SERVICE_URL -> R.string.terms_of_service
-        PRIVACY_POLICY_URL -> R.string.privacy_policy
-        LOGOUT_URI -> R.string.logout
-        DELETE_ACCOUNT_URI -> R.string.delete_account
+    when (type) {
+        AccountHelpLinkType.TALK_TO_TEAM -> linkText ?: stringResource(R.string.talk_to_the_team)
+        AccountHelpLinkType.TERMS_OF_SERVICE -> stringResource(R.string.terms_of_service)
+        AccountHelpLinkType.PRIVACY_POLICY -> stringResource(R.string.privacy_policy)
+        AccountHelpLinkType.LOGOUT -> stringResource(R.string.logout)
+        AccountHelpLinkType.DELETE_ACCOUNT -> stringResource(R.string.delete_account)
         else -> null
     }
 
