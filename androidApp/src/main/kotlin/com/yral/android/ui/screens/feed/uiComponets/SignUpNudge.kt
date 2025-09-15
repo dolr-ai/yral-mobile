@@ -27,10 +27,12 @@ import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.account.WebViewBottomSheet
 import com.yral.android.ui.widgets.YralLottieAnimation
 import com.yral.shared.analytics.events.SignupPageName
-import com.yral.shared.features.account.viewmodel.AccountsViewModel.Companion.TERMS_OF_SERVICE_URL
 
 @Composable
-fun SignupNudge(onSignupClicked: () -> Unit) {
+fun SignupNudge(
+    tncLink: String,
+    onSignupClicked: () -> Unit,
+) {
     var link by remember { mutableStateOf("") }
     Column(
         modifier =
@@ -48,8 +50,8 @@ fun SignupNudge(onSignupClicked: () -> Unit) {
         ) {
             SignupView(
                 pageName = SignupPageName.HOME,
-                termsLink = TERMS_OF_SERVICE_URL,
-                openTerms = { link = TERMS_OF_SERVICE_URL },
+                termsLink = tncLink,
+                openTerms = { link = tncLink },
                 onSignupClicked = onSignupClicked,
             )
         }

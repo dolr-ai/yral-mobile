@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.github.michaelbull.result.fold
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
+import com.yral.featureflag.FeatureFlagManager
+import com.yral.featureflag.accountFeatureFlags.AccountFeatureFlags
 import com.yral.shared.analytics.events.AiVideoGenFailureType
 import com.yral.shared.analytics.events.VideoCreationType
 import com.yral.shared.core.logging.YralLogger
@@ -40,6 +42,7 @@ class AiVideoGenViewModel internal constructor(
     private val sessionManager: SessionManager,
     private val crashlyticsManager: CrashlyticsManager,
     private val uploadVideoTelemetry: UploadVideoTelemetry,
+    private val flagManager: FeatureFlagManager,
     logger: YralLogger,
 ) : ViewModel() {
     private val logger = logger.withTag(AiVideoGenViewModel::class.simpleName ?: "")
@@ -424,6 +427,8 @@ class AiVideoGenViewModel internal constructor(
     fun updateBalance(balance: Long) {
         _state.update { it.copy(currentBalance = balance) }
     }
+
+    fun getTncLink(): String = flagManager.get(AccountFeatureFlags.AccountLinks.Links).tnc
 
     data class ViewState(
         val selectedProvider: Provider? = null,
