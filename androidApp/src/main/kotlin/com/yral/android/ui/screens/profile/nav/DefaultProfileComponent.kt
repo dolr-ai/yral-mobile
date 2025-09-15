@@ -30,4 +30,7 @@ internal class DefaultProfileComponent(
             }
         }
     }
+
+    @Suppress("EmptyFunctionBlock")
+    override fun openAccount() {}
 }

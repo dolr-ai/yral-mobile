@@ -30,6 +30,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.pullToRefreshIndicator
@@ -196,6 +197,8 @@ fun ProfileScreen(
                     },
                     onManualRefreshTriggered = { viewModel.setManualRefreshTriggered(it) },
                     pushScreenView = { viewModel.pushScreenView(it) },
+                    isWalletEnabled = state.isWalletEnabled,
+                    openAccount = { component.openAccount() },
                 )
             }
         }
@@ -236,14 +239,16 @@ private fun MainContent(
     profileVideos: LazyPagingItems<FeedDetails>,
     deletingVideoId: String,
     manualRefreshTriggered: Boolean,
+    isWalletEnabled: Boolean,
     uploadVideo: () -> Unit,
     openVideoReel: (Int) -> Unit,
     onDeleteVideo: (FeedDetails) -> Unit,
     onManualRefreshTriggered: (Boolean) -> Unit,
     pushScreenView: (Int) -> Unit,
+    openAccount: () -> Unit,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
-        ProfileHeader()
+        ProfileHeader(isWalletEnabled, openAccount)
         Spacer(modifier = Modifier.height(8.dp))
         accountInfo?.let { info ->
             AccountInfoSection(accountInfo = info)
@@ -276,17 +281,34 @@ private fun MainContent(
 }
 
 @Composable
-private fun ProfileHeader() {
+private fun ProfileHeader(
+    isWalletEnabled: Boolean,
+    openAccount: () -> Unit,
+) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(16.dp),
-        horizontalArrangement = Arrangement.Start,
-        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 16.dp),
+        horizontalArrangement = Arrangement.End,
+        verticalAlignment = Alignment.Top,
     ) {
-        Text(
-            text = stringResource(R.string.my_profile),
-            style = LocalAppTopography.current.xlBold,
-            color = YralColors.NeutralTextPrimary,
-        )
+        Row(
+            modifier = Modifier.weight(1f),
+            horizontalArrangement = Arrangement.Start,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(R.string.my_profile),
+                style = LocalAppTopography.current.xlBold,
+                color = YralColors.NeutralTextPrimary,
+            )
+        }
+        if (isWalletEnabled) {
+            Icon(
+                painter = painterResource(R.drawable.account_nav),
+                contentDescription = "Account",
+                tint = Color.White,
+                modifier = Modifier.size(32.dp).clickable { openAccount() },
+            )
+        }
     }
 }
 

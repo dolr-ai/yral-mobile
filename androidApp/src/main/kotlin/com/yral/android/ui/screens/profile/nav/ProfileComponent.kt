@@ -7,6 +7,7 @@ abstract class ProfileComponent {
     abstract val pendingVideoNavigation: Flow<String?>
     abstract fun onUploadVideoClick()
     abstract fun handleNavigation(destination: String)
+    abstract fun openAccount()
 
     companion object Companion {
         const val DEEPLINK = "yralm://profile"
