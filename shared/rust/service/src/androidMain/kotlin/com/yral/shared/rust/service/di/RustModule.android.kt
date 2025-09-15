@@ -10,6 +10,7 @@ import com.yral.shared.rust.service.domain.IndividualUserRepository
 import com.yral.shared.rust.service.domain.RateLimitRepository
 import com.yral.shared.rust.service.services.IndividualUserServiceFactory
 import com.yral.shared.rust.service.services.RateLimitServiceFactory
+import com.yral.shared.rust.service.services.SnsLedgerServiceFactory
 import com.yral.shared.rust.service.services.UserPostServiceFactory
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.bind
@@ -25,4 +26,5 @@ actual val rustModule: Module =
         single { IndividualUserServiceFactory() }
         single { RateLimitServiceFactory() }
         single { UserPostServiceFactory() }
+        single { SnsLedgerServiceFactory() }
     }

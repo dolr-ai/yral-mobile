@@ -19,4 +19,5 @@ internal actual interface IndividualUserDataSource {
         startIndex: ULong,
         pageSize: ULong,
     ): ScResult3
+    suspend fun getUserBitcoinBalance(principalId: String): String
 }

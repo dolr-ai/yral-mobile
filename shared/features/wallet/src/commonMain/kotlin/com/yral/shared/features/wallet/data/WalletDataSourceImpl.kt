@@ -2,12 +2,10 @@ package com.yral.shared.features.wallet.data
 
 import com.google.firebase.appcheck.ktx.appCheck
 import com.google.firebase.ktx.Firebase
-import com.yral.shared.core.AppConfigurations.PUMP_DUMP_BASE_URL
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.features.wallet.data.models.BtcPriceResponseDto
-import com.yral.shared.features.wallet.data.models.GetBalanceResponseDto
 import com.yral.shared.firebaseStore.cloudFunctionUrl
-import com.yral.shared.http.httpGet
+import com.yral.shared.rust.service.domain.IndividualUserRepository
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.expectSuccess
 import io.ktor.client.request.get
@@ -23,6 +21,7 @@ import kotlinx.serialization.json.Json
 class WalletDataSourceImpl(
     private val httpClient: HttpClient,
     private val json: Json,
+    private val individualUserRepository: IndividualUserRepository,
 ) : WalletDataSource {
     @Suppress("SwallowedException", "TooGenericExceptionCaught")
     override suspend fun getBtcInInr(idToken: String): BtcPriceResponseDto {
@@ -51,16 +50,9 @@ class WalletDataSourceImpl(
         }
     }
 
-    override suspend fun getUserBtcBalance(userPrincipal: String): GetBalanceResponseDto =
-        httpGet(
-            httpClient,
-            json,
-        ) {
-            url {
-                host = PUMP_DUMP_BASE_URL
-                path("v2/balance", userPrincipal)
-            }
-        }
+    override suspend fun getUserBtcBalance(userPrincipal: String): String =
+        individualUserRepository
+            .getUserBitcoinBalance(userPrincipal)
 
     companion object {
         private const val BTC_INR_VALUE_PATH = "btc_inr_value"

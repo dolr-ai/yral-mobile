@@ -16,4 +16,5 @@ actual interface IndividualUserRepository {
         pageSize: ULong,
         shouldFetchFromServiceCanisters: Boolean,
     ): Posts
+    suspend fun getUserBitcoinBalance(principalId: String): String
 }

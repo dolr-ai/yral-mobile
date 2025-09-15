@@ -55,4 +55,8 @@ internal class IndividualUserRepositoryImpl(
                     pageSize = pageSize,
                 ).toPosts(canisterId)
         }
+
+    override suspend fun getUserBitcoinBalance(principalId: String): String =
+        dataSource
+            .getUserBitcoinBalance(principalId)
 }

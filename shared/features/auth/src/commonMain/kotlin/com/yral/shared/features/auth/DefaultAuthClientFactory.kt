@@ -10,6 +10,7 @@ import com.yral.shared.features.auth.utils.OAuthUtilsHelper
 import com.yral.shared.preferences.Preferences
 import com.yral.shared.rust.service.services.IndividualUserServiceFactory
 import com.yral.shared.rust.service.services.RateLimitServiceFactory
+import com.yral.shared.rust.service.services.SnsLedgerServiceFactory
 import com.yral.shared.rust.service.services.UserPostServiceFactory
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CancellationException
@@ -29,6 +30,7 @@ class DefaultAuthClientFactory(
     private val individualUserServiceFactory: IndividualUserServiceFactory,
     private val rateLimitServiceFactory: RateLimitServiceFactory,
     private val userPostServiceFactory: UserPostServiceFactory,
+    private val snsLedgerServiceFactory: SnsLedgerServiceFactory,
     private val oAuthUtils: OAuthUtils,
     private val oAuthUtilsHelper: OAuthUtilsHelper,
     private val authTelemetry: AuthTelemetry,
@@ -69,6 +71,7 @@ class DefaultAuthClientFactory(
                 individualUserServiceFactory.initialize(identity)
                 rateLimitServiceFactory.initialize(identity)
                 userPostServiceFactory.initialize(identity)
+                snsLedgerServiceFactory.initialize(identity)
             },
         )
 }

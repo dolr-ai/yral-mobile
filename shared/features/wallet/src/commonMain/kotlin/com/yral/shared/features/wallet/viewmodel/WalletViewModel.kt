@@ -3,6 +3,7 @@ package com.yral.shared.features.wallet.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
+import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.core.session.SessionManager
@@ -62,7 +63,9 @@ class WalletViewModel(
             sessionManager.userPrincipal?.let { principal ->
                 getUserBtcBalanceUseCase(principal)
                     .onSuccess { bal ->
-                        _state.update { it.copy(bitcoinBalanceInSats = bal.balanceInSats) }
+                        _state.update { it.copy(bitcoinBalanceInSats = bal) }
+                    }.onFailure {
+                        Logger.d("Wallet") { "error $it" }
                     }
             }
         }
