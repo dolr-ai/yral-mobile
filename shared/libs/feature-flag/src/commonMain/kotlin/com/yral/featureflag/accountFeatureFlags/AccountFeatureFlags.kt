@@ -32,6 +32,7 @@ object AccountFeatureFlags {
 data class AccountLinksDto(
     @SerialName("support") val support: String,
     @SerialName("support_text") val supportText: String? = null,
+    @SerialName("support_icon") val supportIcon: String? = null,
     @SerialName("tnc") val tnc: String,
     @SerialName("privacy_policy") val privacyPolicy: String,
     @SerialName("telegram") val telegram: String,

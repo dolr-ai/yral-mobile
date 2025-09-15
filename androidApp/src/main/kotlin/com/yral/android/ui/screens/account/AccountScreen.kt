@@ -28,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
@@ -45,6 +46,7 @@ import com.yral.android.ui.screens.account.nav.AccountComponent
 import com.yral.android.ui.widgets.YralAsyncImage
 import com.yral.android.ui.widgets.YralErrorMessage
 import com.yral.android.ui.widgets.YralGradientButton
+import com.yral.android.ui.widgets.getSVGImageModel
 import com.yral.shared.analytics.events.MenuCtaType
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.core.session.AccountInfo
@@ -382,10 +384,17 @@ private fun HelpLinkItem(
             horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.Start),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            item.getIcon()?.let {
+            item.linkRemoteIcon?.let { url ->
+                YralAsyncImage(
+                    imageUrl = getSVGImageModel(url),
+                    contentScale = ContentScale.FillBounds,
+                    modifier = Modifier.size(20.dp),
+                    shape = RectangleShape,
+                )
+            } ?: item.getIcon()?.let {
                 Image(
                     painter = painterResource(id = it),
-                    contentDescription = "image description",
+                    contentDescription = "support",
                     contentScale = ContentScale.None,
                 )
             }

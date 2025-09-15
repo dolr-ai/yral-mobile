@@ -16,7 +16,9 @@ import com.yral.shared.features.auth.AuthClientFactory
 import com.yral.shared.features.auth.domain.useCases.DeleteAccountUseCase
 import com.yral.shared.features.auth.utils.SocialProvider
 import com.yral.shared.features.auth.utils.getAccountInfo
+import com.yral.shared.firebaseStore.getDownloadUrl
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
+import dev.gitlive.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,6 +35,7 @@ class AccountsViewModel(
     private val crashlyticsManager: CrashlyticsManager,
     val accountsTelemetry: AccountsTelemetry,
     flagManager: FeatureFlagManager,
+    private val firebaseStorage: FirebaseStorage,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.disk)
 
@@ -52,6 +55,16 @@ class AccountsViewModel(
                 ),
         )
     val state: StateFlow<AccountsState> = _state.asStateFlow()
+
+    init {
+        coroutineScope.launch {
+            _state.value.accountLinks.supportIcon?.let { supportIcon ->
+                getDownloadUrl(supportIcon, firebaseStorage)
+                    .takeIf { url -> url.isNotEmpty() }
+                    ?.let { iconUrl -> _state.update { it.copy(supportIcon = iconUrl) } }
+            }
+        }
+    }
 
     private fun logout() {
         coroutineScope.launch {
@@ -105,6 +118,7 @@ class AccountsViewModel(
                     type = AccountHelpLinkType.TALK_TO_TEAM,
                     link = accountLinks.support,
                     linkText = accountLinks.supportText,
+                    linkRemoteIcon = _state.value.supportIcon,
                     openInExternalBrowser = true,
                     menuCtaType = MenuCtaType.TALK_TO_THE_TEAM,
                 ),
@@ -192,6 +206,7 @@ data class AccountHelpLink(
     val type: AccountHelpLinkType,
     val link: String,
     val linkText: String? = null,
+    val linkRemoteIcon: String? = null,
     val openInExternalBrowser: Boolean,
     val menuCtaType: MenuCtaType,
 )
@@ -211,6 +226,7 @@ data class AccountsState(
     val accountInfo: AccountInfo?,
     val bottomSheetType: AccountBottomSheet = AccountBottomSheet.None,
     val accountLinks: AccountLinksDto,
+    val supportIcon: String? = null,
 )
 
 sealed interface AccountBottomSheet {
