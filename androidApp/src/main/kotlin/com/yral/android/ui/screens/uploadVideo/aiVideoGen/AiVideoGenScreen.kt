@@ -65,7 +65,6 @@ import com.yral.android.ui.widgets.YralMaskedVectorTextV2
 import com.yral.android.ui.widgets.getSVGImageModel
 import com.yral.android.ui.widgets.video.YralVideoPlayer
 import com.yral.shared.analytics.events.SignupPageName
-import com.yral.shared.features.account.viewmodel.AccountsViewModel.Companion.TERMS_OF_SERVICE_URL
 import com.yral.shared.features.account.viewmodel.ErrorType
 import com.yral.shared.features.uploadvideo.domain.models.Provider
 import com.yral.shared.features.uploadvideo.presentation.AiVideoGenViewModel
@@ -183,8 +182,8 @@ private fun AiVideoGenScreenPrompts(
                 bottomSheetState = bottomSheetState,
                 onDismissRequest = { viewModel.setBottomSheetType(BottomSheetType.None) },
                 onSignupClicked = { viewModel.signInWithGoogle(context) },
-                termsLink = TERMS_OF_SERVICE_URL,
-                openTerms = { viewModel.setBottomSheetType(BottomSheetType.Link(TERMS_OF_SERVICE_URL)) },
+                termsLink = viewModel.getTncLink(),
+                openTerms = { viewModel.setBottomSheetType(BottomSheetType.Link(viewModel.getTncLink())) },
             )
         }
         is BottomSheetType.Link -> {

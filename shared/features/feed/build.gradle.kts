@@ -28,6 +28,7 @@ kotlin {
             implementation(projects.shared.libs.routing.routesApi)
             implementation(projects.shared.libs.routing.deeplinkEngine)
             implementation(projects.shared.libs.sharing)
+            implementation(projects.shared.libs.featureFlag)
         }
     }
 }
