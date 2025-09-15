@@ -6,6 +6,7 @@ import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.featureflag.FeatureFlagManager
 import com.yral.featureflag.accountFeatureFlags.AccountFeatureFlags
+import com.yral.featureflag.accountFeatureFlags.AccountLinksDto
 import com.yral.shared.analytics.events.MenuCtaType
 import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.core.session.SessionManager
@@ -31,7 +32,7 @@ class AccountsViewModel(
     private val deleteAccountUseCase: DeleteAccountUseCase,
     private val crashlyticsManager: CrashlyticsManager,
     val accountsTelemetry: AccountsTelemetry,
-    private val flagManager: FeatureFlagManager,
+    flagManager: FeatureFlagManager,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.disk)
 
@@ -42,12 +43,15 @@ class AccountsViewModel(
                 handleSignupFailed()
             }
 
-    private val _state = MutableStateFlow(AccountsState())
+    private val _state =
+        MutableStateFlow(
+            value =
+                AccountsState(
+                    accountInfo = sessionManager.getAccountInfo(),
+                    accountLinks = flagManager.get(AccountFeatureFlags.AccountLinks.Links),
+                ),
+        )
     val state: StateFlow<AccountsState> = _state.asStateFlow()
-
-    init {
-        _state.update { it.copy(accountInfo = sessionManager.getAccountInfo()) }
-    }
 
     private fun logout() {
         coroutineScope.launch {
@@ -93,10 +97,8 @@ class AccountsViewModel(
         _state.update { it.copy(bottomSheetType = type) }
     }
 
-    fun getTncLink(): String = flagManager.get(AccountFeatureFlags.AccountLinks.Links).tnc
-
     fun getHelperLinks(): List<AccountHelpLink> {
-        val accountLinks = flagManager.get(AccountFeatureFlags.AccountLinks.Links)
+        val accountLinks = _state.value.accountLinks
         val links =
             mutableListOf(
                 AccountHelpLink(
@@ -142,7 +144,7 @@ class AccountsViewModel(
     }
 
     fun getSocialLinks(): List<AccountHelpLink> {
-        val accountLinks = flagManager.get(AccountFeatureFlags.AccountLinks.Links)
+        val accountLinks = _state.value.accountLinks
         return listOf(
             AccountHelpLink(
                 type = AccountHelpLinkType.TELEGRAM,
@@ -206,8 +208,9 @@ enum class AccountHelpLinkType {
 }
 
 data class AccountsState(
-    val accountInfo: AccountInfo? = null,
+    val accountInfo: AccountInfo?,
     val bottomSheetType: AccountBottomSheet = AccountBottomSheet.None,
+    val accountLinks: AccountLinksDto,
 )
 
 sealed interface AccountBottomSheet {

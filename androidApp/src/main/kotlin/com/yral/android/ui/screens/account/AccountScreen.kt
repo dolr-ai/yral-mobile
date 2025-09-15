@@ -74,7 +74,7 @@ fun AccountScreen(
         )
         SheetContent(
             bottomSheetType = state.bottomSheetType,
-            tncLink = viewModel.getTncLink(),
+            tncLink = state.accountLinks.tnc,
             onDismissRequest = { viewModel.setBottomSheetType(AccountBottomSheet.None) },
             signInWithGoogle = { viewModel.signInWithGoogle(context) },
             onDeleteAccount = { viewModel.deleteAccount() },
