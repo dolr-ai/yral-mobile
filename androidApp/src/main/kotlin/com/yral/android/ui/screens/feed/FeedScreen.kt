@@ -329,7 +329,7 @@ private fun FeedOverlay(
         )
         if (!feedViewModel.isLoggedIn() && pageNo != 0 && (pageNo % SIGN_UP_PAGE) == 0) {
             val context = LocalContext.current
-            SignupNudge {
+            SignupNudge(tncLink = feedViewModel.getTncLink()) {
                 feedViewModel.signInWithGoogle(context)
             }
         }

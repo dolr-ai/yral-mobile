@@ -6,6 +6,8 @@ import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.coroutines.runSuspendCatching
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
+import com.yral.featureflag.FeatureFlagManager
+import com.yral.featureflag.accountFeatureFlags.AccountFeatureFlags
 import com.yral.shared.analytics.events.CtaType
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.SessionManager
@@ -37,7 +39,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-@Suppress("TooManyFunctions")
+@Suppress("TooManyFunctions", "LongParameterList")
 class FeedViewModel(
     appDispatchers: AppDispatchers,
     private val sessionManager: SessionManager,
@@ -48,6 +50,7 @@ class FeedViewModel(
     private val shareService: ShareService,
     private val urlBuilder: UrlBuilder,
     private val linkGenerator: LinkGenerator,
+    private val flagManager: FeatureFlagManager,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.disk)
 
@@ -583,6 +586,8 @@ class FeedViewModel(
     fun pushScreenView() {
         feedTelemetry.onFeedPageViewed()
     }
+
+    fun getTncLink(): String = flagManager.get(AccountFeatureFlags.AccountLinks.Links).tnc
 
     data class RequiredUseCases(
         val getInitialFeedUseCase: GetInitialFeedUseCase,
