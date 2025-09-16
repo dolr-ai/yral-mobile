@@ -38,6 +38,7 @@ class ProfileInfoView: UIView, ImageLoaderProtocol {
   let coinsView = CoinsView()
 
   var profileInfo: ProfileInfo?
+  weak var delegate: ProfileInfoViewDelegate?
 
   override init(frame: CGRect) {
     super.init(frame: .zero)
@@ -72,6 +73,10 @@ class ProfileInfoView: UIView, ImageLoaderProtocol {
       coinsView.trailingAnchor.constraint(equalTo: trailingAnchor),
       coinsView.centerYAnchor.constraint(equalTo: imageView.centerYAnchor)
     ])
+    coinsView.isUserInteractionEnabled = true
+    let tapGesture = UITapGestureRecognizer(target: self, action: #selector(coinsTapped))
+    tapGesture.numberOfTapsRequired = .one
+    coinsView.addGestureRecognizer(tapGesture)
   }
 
   func addTitleLabel() {
@@ -111,6 +116,10 @@ class ProfileInfoView: UIView, ImageLoaderProtocol {
     coinsView.updateCoins(by: newCoins)
   }
 
+  @objc func coinsTapped() {
+    delegate?.coinsTapped()
+  }
+
   struct ProfileInfo {
     let imageURL: URL?
     let title: String
@@ -135,4 +144,8 @@ extension ProfileInfoView {
     static let labelTrailing = 12.0
     static let defaultProfileImage = UIImage(named: "default_profile")
   }
+}
+
+protocol ProfileInfoViewDelegate: AnyObject {
+  func coinsTapped()
 }

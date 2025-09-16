@@ -147,6 +147,9 @@ struct HomeTabController: View {
       .onReceive(eventBus.playGamesToEarnMoreTapped) {
         selectedTab = .home
       }
+      .onReceive(eventBus.walletTapped) {
+        selectedTab = .wallet
+      }
       .hapticFeedback(.impact(weight: HapticFeedback.Weight.light), trigger: selectedTab)
       .fullScreenCover(isPresented: $showNotificationsNudge) {
         ZStack(alignment: .center) {

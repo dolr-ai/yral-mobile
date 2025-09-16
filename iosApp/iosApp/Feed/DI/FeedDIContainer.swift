@@ -17,6 +17,7 @@ final class FeedDIContainer {
     let crashReporter: CrashReporter
     let socialSignInUseCase: SocialSignInUseCaseProtocol
     let session: SessionManager
+    let eventBus: EventBus
     let castVoteUseCase: CastVoteUseCaseProtocol
   }
 
@@ -31,6 +32,7 @@ final class FeedDIContainer {
       viewModel: makeFeedsViewModel(),
       playToScroll: playToScroll,
       session: dependencies.session,
+      eventBus: dependencies.eventBus,
       crashReporter: dependencies.crashReporter
     )
   }

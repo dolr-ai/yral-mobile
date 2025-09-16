@@ -14,6 +14,7 @@ final class WalletDIContainer {
     let authClient: AuthClient
     let crashReporter: CrashReporter
     let session: SessionManager
+    let accountUseCase: AccountUseCaseProtocol
   }
 
   private let dependencies: Dependencies
@@ -23,6 +24,6 @@ final class WalletDIContainer {
   }
 
   @MainActor func makeWalletView() -> WalletView {
-    WalletView()
+    WalletView(viewModel: WalletViewModel(accountUseCase: dependencies.accountUseCase))
   }
 }

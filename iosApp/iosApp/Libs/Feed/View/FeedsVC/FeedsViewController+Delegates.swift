@@ -331,6 +331,10 @@ extension FeedsViewController: FeedsCellProtocol {
       )
     )
   }
+
+  func coinsTapped() {
+    eventBus.walletTapped.send()
+  }
 }
 
 extension FeedsViewController: FeedsPlayerProtocol {
