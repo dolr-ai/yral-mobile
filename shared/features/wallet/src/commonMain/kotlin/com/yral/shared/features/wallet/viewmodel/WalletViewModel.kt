@@ -38,6 +38,11 @@ class WalletViewModel(
         walletTelemetry.onWalletScreenViewed()
     }
 
+    fun refresh() {
+        getBtcValueInInr()
+        getUserBtcBalanceUseCase()
+    }
+
     private fun observeBalance() {
         viewModelScope.launch {
             sessionManager.observeSessionProperties().collect { properties ->

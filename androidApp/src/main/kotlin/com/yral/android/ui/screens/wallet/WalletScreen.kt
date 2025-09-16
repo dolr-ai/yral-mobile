@@ -44,7 +44,10 @@ fun WalletScreen(
     viewModel: WalletViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    LaunchedEffect(Unit) { viewModel.onScreenViewed() }
+    LaunchedEffect(Unit) {
+        viewModel.refresh()
+        viewModel.onScreenViewed()
+    }
     Column(
         modifier = modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Top,
