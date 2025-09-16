@@ -40,6 +40,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -60,10 +61,10 @@ import com.yral.android.ui.widgets.YralButtonState
 import com.yral.android.ui.widgets.YralConfirmationMessage
 import com.yral.android.ui.widgets.YralGradientButton
 import com.yral.android.ui.widgets.YralLoader
+import com.yral.android.ui.widgets.YralMaskedVectorTextV2
 import com.yral.android.ui.widgets.getSVGImageModel
 import com.yral.android.ui.widgets.video.YralVideoPlayer
 import com.yral.shared.analytics.events.SignupPageName
-import com.yral.shared.features.account.viewmodel.AccountsViewModel.Companion.TERMS_OF_SERVICE_URL
 import com.yral.shared.features.account.viewmodel.ErrorType
 import com.yral.shared.features.uploadvideo.domain.models.Provider
 import com.yral.shared.features.uploadvideo.presentation.AiVideoGenViewModel
@@ -83,7 +84,8 @@ fun AiVideoGenScreen(
     val shouldRefresh = viewModel.sessionObserver.collectAsState(null)
     LaunchedEffect(shouldRefresh.value) {
         Logger.d("VideoGen") { "shouldRefresh: $shouldRefresh" }
-        shouldRefresh.value?.let { viewModel.refresh(it) }
+        shouldRefresh.value?.first?.let { viewModel.refresh(it) }
+        shouldRefresh.value?.second?.let { viewModel.updateBalance(it) }
     }
     BackHandler(
         enabled = viewState.uiState is UiState.Success,
@@ -180,8 +182,8 @@ private fun AiVideoGenScreenPrompts(
                 bottomSheetState = bottomSheetState,
                 onDismissRequest = { viewModel.setBottomSheetType(BottomSheetType.None) },
                 onSignupClicked = { viewModel.signInWithGoogle(context) },
-                termsLink = TERMS_OF_SERVICE_URL,
-                openTerms = { viewModel.setBottomSheetType(BottomSheetType.Link(TERMS_OF_SERVICE_URL)) },
+                termsLink = viewModel.getTncLink(),
+                openTerms = { viewModel.setBottomSheetType(BottomSheetType.Link(viewModel.getTncLink())) },
             )
         }
         is BottomSheetType.Link -> {
@@ -239,24 +241,27 @@ private fun PromptScreen(
                 YralButtonState.Disabled
             }
         }
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+    Column(
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
+    ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(24.dp, Alignment.Top),
-            modifier = Modifier.fillMaxSize(),
         ) {
-            viewState.selectedProvider?.let { provider ->
-                ModelDetails(
-                    provider = provider,
-                    usedCredits = viewState.usedCredits,
-                    totalCredits = viewState.totalCredits,
-                    onClick = showProvidersSheet,
-                )
-            }
             PromptInput(
                 text = viewState.prompt,
                 onValueChange = { viewModel.updatePromptText(it) },
                 onHeightChange = {},
             )
+            viewState.selectedProvider?.let { provider ->
+                ModelDetails(
+                    provider = provider,
+                    viewState = viewState,
+                    onClick = showProvidersSheet,
+                )
+            }
             YralGradientButton(
                 text = stringResource(R.string.generate_video),
                 buttonState = buttonState,
@@ -266,6 +271,43 @@ private fun PromptScreen(
                 },
             )
         }
+        if (viewState.usedCredits != null && !viewState.isCreditsAvailable() && viewState.isBalanceLow()) {
+            Spacer(Modifier.height(16.dp))
+            PlayGameText()
+        }
+    }
+}
+
+@Composable
+private fun PlayGameText() {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(0.dp, Alignment.CenterHorizontally),
+        verticalAlignment = Alignment.CenterVertically,
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 12.dp),
+    ) {
+        YralMaskedVectorTextV2(
+            text = stringResource(R.string.play_games),
+            vectorRes = R.drawable.pink_gradient_background,
+            textStyle =
+                LocalAppTopography
+                    .current
+                    .mdBold
+                    .plus(TextStyle(textAlign = TextAlign.Center)),
+        )
+        Text(
+            text =
+                "".plus(
+                    stringResource(
+                        R.string.to_earn_token,
+                        stringResource(R.string.coins),
+                    ),
+                ),
+            style = LocalAppTopography.current.baseRegular,
+            color = YralColors.NeutralTextPrimary,
+        )
     }
 }
 

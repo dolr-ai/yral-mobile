@@ -12,6 +12,7 @@ internal const val KEY_SUB = "sub" // Principal Of the Identity
 internal const val KEY_NONCE = "nonce" // Optionally set if client set a nonce during authorization code flow
 internal const val KEY_IS_ANONYMOUS = "ext_is_anonymous" // Whether this identity anonymous or not
 internal const val KEY_DELEGATED_IDENTITY = "ext_delegated_identity" // DelegatedIdentityWire
+internal const val KEY_EMAIL = "email" // Email of the user
 
 interface OAuthUtils {
     var callBack: ((result: OAuthResult) -> Unit)?

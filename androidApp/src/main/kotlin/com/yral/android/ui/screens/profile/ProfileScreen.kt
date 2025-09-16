@@ -76,10 +76,10 @@ import com.yral.android.ui.widgets.YralGradientButton
 import com.yral.android.ui.widgets.YralLoader
 import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.core.session.AccountInfo
+import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.features.profile.viewmodel.DeleteConfirmationState
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.features.profile.viewmodel.VideoViewState
-import com.yral.shared.rust.domain.models.FeedDetails
 import kotlinx.coroutines.flow.collectLatest
 
 @Suppress("LongMethod")
@@ -147,6 +147,8 @@ fun ProfileScreen(
         when (val videoViewState = state.videoView) {
             is VideoViewState.ViewingReels -> {
                 if (profileVideos.itemCount > 0) {
+                    val msgFeedVideoShare = stringResource(R.string.msg_feed_video_share)
+                    val msgFeedVideoShareDesc = stringResource(R.string.msg_feed_video_share_desc)
                     ProfileReelPlayer(
                         reelVideos = profileVideos,
                         initialPage =
@@ -158,6 +160,13 @@ fun ProfileScreen(
                             viewModel.confirmDelete(
                                 feedDetails = video,
                                 ctaType = VideoDeleteCTA.VIDEO_FULLSCREEN,
+                            )
+                        },
+                        onShareClick = { feedDetails ->
+                            viewModel.onShareClicked(
+                                feedDetails,
+                                msgFeedVideoShare,
+                                msgFeedVideoShareDesc,
                             )
                         },
                         modifier = Modifier.fillMaxSize(),

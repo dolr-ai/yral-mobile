@@ -1,6 +1,7 @@
 package com.yral.android.ui.screens.feed
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -54,6 +55,7 @@ import com.yral.android.ui.widgets.PreloadLottieAnimations
 import com.yral.android.ui.widgets.YralAsyncImage
 import com.yral.android.ui.widgets.YralErrorMessage
 import com.yral.android.ui.widgets.YralLoader
+import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.features.feed.viewmodel.FeedState
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.PRE_FETCH_BEFORE_LAST
@@ -66,7 +68,7 @@ import com.yral.shared.features.game.viewmodel.NudgeType
 import com.yral.shared.libs.videoPlayer.YRALReelPlayer
 import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.libs.videoPlayer.util.ReelScrollDirection
-import com.yral.shared.rust.domain.models.FeedDetails
+import kotlinx.coroutines.flow.collectLatest
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -82,6 +84,15 @@ fun FeedScreen(
     val gameState by gameViewModel.state.collectAsState()
 
     LaunchedEffect(Unit) { viewModel.pushScreenView() }
+
+    // Observe deep link navigation reactively - works even if screen is already open
+    LaunchedEffect(Unit) {
+        component.openPostDetails.collectLatest {
+            if (it != null) {
+                viewModel.showDeeplinkedVideoFirst(it.postId, it.canisterId)
+            }
+        }
+    }
 
     // Set initial video ID when feed loads
     LaunchedEffect(state.feedDetails.isNotEmpty()) {
@@ -114,6 +125,17 @@ fun FeedScreen(
         PreloadLottieAnimations(
             urls = gameState.gameIcons.map { it.clickAnimation },
         )
+    }
+
+    // Cold-start deeplink overlay: block UI with a centered loader until deeplinked item is fetched
+    if (state.isDeeplinkFetching) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) {
+            YralLoader(size = 48.dp)
+        }
+        return
     }
 
     Column(modifier = modifier) {
@@ -202,7 +224,7 @@ fun FeedScreen(
                     skipPartiallyExpanded = true,
                 ),
             onDismissRequest = { viewModel.toggleReportSheet(false, 0) },
-            isLoading = state.isLoading,
+            isLoading = state.isReporting,
             reasons = (state.reportSheetState as ReportSheetState.Open).reasons,
             onSubmit = { reason, text ->
                 viewModel.reportVideo(
@@ -264,8 +286,8 @@ private fun getReels(state: FeedState): List<Reels> =
 
 private fun FeedDetails.toReel() =
     Reels(
-        videoUrl = url.toString(),
-        thumbnailUrl = thumbnail.toString(),
+        videoUrl = url,
+        thumbnailUrl = thumbnail,
         videoId = videoID,
     )
 
@@ -307,7 +329,7 @@ private fun FeedOverlay(
         )
         if (!feedViewModel.isLoggedIn() && pageNo != 0 && (pageNo % SIGN_UP_PAGE) == 0) {
             val context = LocalContext.current
-            SignupNudge {
+            SignupNudge(tncLink = feedViewModel.getTncLink()) {
                 feedViewModel.signInWithGoogle(context)
             }
         }
@@ -480,8 +502,9 @@ private fun ActionsRight(
         verticalArrangement = Arrangement.spacedBy(26.dp, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
+        val feedDetails = state.feedDetails[pageNo]
         if (state.overlayType == OverlayType.GAME_TOGGLE) {
-            state.feedDetails[pageNo].profileImageURL?.let { profileImage ->
+            feedDetails.profileImageURL?.let { profileImage ->
                 YralAsyncImage(
                     imageUrl = profileImage.toString(),
                     modifier = Modifier.size(36.dp),
@@ -491,6 +514,19 @@ private fun ActionsRight(
                 )
             }
         }
+        val msgFeedVideoShare = stringResource(R.string.msg_feed_video_share)
+        val msgFeedVideoShareDesc = stringResource(R.string.msg_feed_video_share_desc)
+        Image(
+            modifier =
+                Modifier
+                    .size(36.dp)
+                    .padding(1.5.dp)
+                    .clickable { feedViewModel.onShareClicked(feedDetails, msgFeedVideoShare, msgFeedVideoShareDesc) },
+            painter = painterResource(id = R.drawable.ic_share),
+            contentDescription = "share video",
+            contentScale = ContentScale.None,
+        )
+
         ReportVideo(
             onReportClicked = { feedViewModel.toggleReportSheet(true, pageNo) },
         )

@@ -10,6 +10,7 @@ import iosSharedUmbrella
 
 extension FeedsViewController: UICollectionViewDelegate {
   func scrollViewDidScroll(_ scrollView: UIScrollView) {
+    guard !isApplyingSnapshot else { return }
     let offsetY = scrollView.contentOffset.y
     defer { lastContentOffsetY = offsetY }
 
@@ -47,10 +48,10 @@ extension FeedsViewController: UICollectionViewDelegate {
     guard playing < ids.count, candidate < ids.count else { return }
     self.feedsPlayer.incrementIndex()
     snapshot.reloadItems([ids[playing], ids[candidate]])
-    feedsDataSource.apply(snapshot, animatingDifferences: false) { [weak self] in
+    applySnapshot(snapshot, animatingDifferences: false) { [weak self] in
       guard self != nil else { return }
       self?.feedsPlayer.decrementIndex()
-      self?.feedsPlayer.advanceToVideo(at: candidate)
+      self?.feedsPlayer.advanceToVideo(at: candidate, isDeepLink: false)
     }
   }
 
@@ -64,7 +65,7 @@ extension FeedsViewController: UICollectionViewDelegate {
     let feedItemIndex = feedsCV.indexPathsForVisibleItems.first?.item ?? 0
     guard feedItemIndex < feedsDataSource.snapshot().itemIdentifiers.count else { return }
     let smileyGameState = feedsDataSource.snapshot().itemIdentifiers[feedItemIndex].smileyGame?.state
-    if velocityY < .zero, !isShowingPlayToScroll, case .notPlayed = smileyGameState {
+    if velocityY < .zero, case .notPlayed = smileyGameState {
       isShowingPlayToScroll = true
 
       let lockOffset = CGPoint(x: scrollView.contentOffset.x, y: lastContentOffsetY)

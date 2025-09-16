@@ -146,7 +146,7 @@ extension FeedsCell {
         ),
         howToPlayButton.heightAnchor.constraint(equalToConstant: Constants.howToPlayHeight),
         howToPlayWidthAnchor!,
-        howToPlayButton.centerYAnchor.constraint(equalTo: actionsStackView.centerYAnchor)
+        howToPlayButton.bottomAnchor.constraint(equalTo: actionsStackView.bottomAnchor)
       ])
       howToPlayButton.addTarget(self, action: #selector(howToPlayTapped), for: .touchUpInside)
     } else {

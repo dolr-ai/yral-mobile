@@ -2,6 +2,7 @@ package com.yral.shared.features.game.analytics
 
 import com.yral.shared.analytics.AnalyticsManager
 import com.yral.shared.analytics.events.AirdropClaimedEventData
+import com.yral.shared.analytics.events.ForcedGameplayNudgeShownEventData
 import com.yral.shared.analytics.events.GameConcludedBottomsheetClickedEventData
 import com.yral.shared.analytics.events.GameConcludedCtaType
 import com.yral.shared.analytics.events.GamePlayedEventData
@@ -10,7 +11,7 @@ import com.yral.shared.analytics.events.GameTutorialShownEventData
 import com.yral.shared.analytics.events.GameType
 import com.yral.shared.analytics.events.GameVotedEventData
 import com.yral.shared.analytics.events.TokenType
-import com.yral.shared.rust.domain.models.FeedDetails
+import com.yral.shared.data.feed.domain.FeedDetails
 
 class GameTelemetry(
     private val analyticsManager: AnalyticsManager,
@@ -87,6 +88,21 @@ class GameTelemetry(
         analyticsManager.trackEvent(
             event =
                 GameTutorialShownEventData(
+                    videoId = feedDetails.videoID,
+                    publisherUserId = feedDetails.principalID,
+                    likeCount = feedDetails.likeCount.toLong(),
+                    viewCount = feedDetails.viewCount.toLong(),
+                    isNsfw = feedDetails.isNSFW(),
+                    shareCount = 0,
+                    gameType = GameType.SMILEY,
+                ),
+        )
+    }
+
+    fun onForcedGamePlayNudgeShown(feedDetails: FeedDetails) {
+        analyticsManager.trackEvent(
+            event =
+                ForcedGameplayNudgeShownEventData(
                     videoId = feedDetails.videoID,
                     publisherUserId = feedDetails.principalID,
                     likeCount = feedDetails.likeCount.toLong(),

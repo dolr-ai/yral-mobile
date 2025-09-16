@@ -4,10 +4,14 @@ data class Session(
     val identity: ByteArray? = null,
     val canisterId: String? = null,
     val userPrincipal: String? = null,
+    val profilePic: String? = null,
+    val isCreatedFromServiceCanister: Boolean = false,
 )
 
 data class SessionProperties(
     val coinBalance: Long? = null,
     val isSocialSignIn: Boolean? = null,
     val profileVideosCount: Int? = null,
+    val isForcedGamePlayUser: Boolean? = null,
+    val emailId: String? = null,
 )

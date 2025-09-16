@@ -1,5 +1,7 @@
 package com.yral.android.ui.widgets
 
+import android.R.attr.fontStyle
+import android.R.attr.fontWeight
 import android.graphics.Bitmap
 import android.graphics.Paint
 import android.graphics.PorterDuff
@@ -18,14 +20,19 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFontFamilyResolver
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.font.resolveAsTypeface
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Density
 import androidx.core.graphics.createBitmap
 import android.graphics.Canvas as AndroidCanvas
 
+@Suppress("LongMethod")
 @Composable
 fun YralMaskedVectorTextV2(
     text: String,
@@ -42,7 +49,13 @@ fun YralMaskedVectorTextV2(
         remember(vectorRes) {
             AppCompatResources.getDrawable(context, vectorRes)?.mutate()
         } ?: return
-
+    val resolvedTypeface =
+        LocalFontFamilyResolver.current
+            .resolveAsTypeface(
+                fontFamily = textStyle.fontFamily ?: FontFamily.Default,
+                fontWeight = textStyle.fontWeight ?: FontWeight.Normal,
+                fontStyle = textStyle.fontStyle ?: FontStyle.Normal,
+            ).value
     Layout(
         content = {
             Canvas(modifier = Modifier) {
@@ -54,7 +67,8 @@ fun YralMaskedVectorTextV2(
                         text,
                         canvasWidth,
                         canvasHeight,
-                        textStyle,
+                        textStyle.fontSize.toPx(),
+                        resolvedTypeface,
                         textOverflow,
                         density,
                     )
@@ -103,7 +117,8 @@ private fun createTextBitmap(
     text: String,
     textWidth: Int,
     textHeight: Int,
-    textStyle: TextStyle,
+    fontSize: Float,
+    resolvedTypeface: Typeface,
     textOverflow: TextOverflow,
     density: Density,
 ): Bitmap {
@@ -112,12 +127,8 @@ private fun createTextBitmap(
     val androidTextPaint =
         TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
             color = android.graphics.Color.BLACK
-            textSize = with(density) { textStyle.fontSize.toPx() }
-            typeface =
-                when (textStyle.fontWeight) {
-                    FontWeight.Bold -> Typeface.DEFAULT_BOLD
-                    else -> Typeface.DEFAULT
-                }
+            textSize = with(density) { fontSize }
+            typeface = resolvedTypeface
             isAntiAlias = true
             isSubpixelText = true
         }

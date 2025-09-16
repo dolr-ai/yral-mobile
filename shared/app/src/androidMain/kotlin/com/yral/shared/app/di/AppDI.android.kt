@@ -14,7 +14,7 @@ import com.yral.shared.firebaseAuth.di.firebaseAuthModule
 import com.yral.shared.firebaseStore.di.firestoreModule
 import com.yral.shared.http.di.networkModule
 import com.yral.shared.preferences.di.preferencesModule
-import com.yral.shared.rust.di.rustModule
+import com.yral.shared.rust.service.di.rustModule
 import org.koin.core.context.startKoin
 import org.koin.dsl.KoinAppDeclaration
 
@@ -36,6 +36,8 @@ actual fun initKoin(appDeclaration: KoinAppDeclaration) {
             dispatchersModule,
             archModule,
             featureFlagModule,
+            routingModule,
+            sharingModule,
         )
         modules(
             authModule,

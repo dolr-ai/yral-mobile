@@ -1,7 +1,6 @@
 plugins {
     alias(libs.plugins.yral.shared.library)
     alias(libs.plugins.yral.android.library)
-    alias(libs.plugins.yral.shared.rust.lib)
 }
 
 version = "1.0"
@@ -23,6 +22,11 @@ kotlin {
             implementation(projects.shared.libs.arch)
             implementation(projects.shared.libs.coroutinesX)
             implementation(projects.shared.libs.featureFlag)
+            implementation(projects.shared.libs.sharing)
+
+            // Routing framework dependencies
+            implementation(projects.shared.libs.routing.routesApi)
+            implementation(projects.shared.libs.routing.deeplinkEngine)
         }
 
         androidMain.dependencies {
@@ -36,6 +40,8 @@ kotlin {
             implementation(projects.shared.features.game)
             implementation(projects.shared.features.uploadvideo)
             implementation(projects.shared.features.profile)
+            implementation(projects.shared.rust.service)
+            implementation(libs.coil.compose)
         }
 
         commonTest.dependencies {

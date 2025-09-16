@@ -1,6 +1,7 @@
 #![allow(dead_code, unused_imports)]
 mod individual_user_template_ffi;
 mod individual_user_template_helper;
+mod user_post_service_helper;
 use crate::RUNTIME;
 use candid::{self, CandidType, Decode, Deserialize, Encode, Principal};
 use ic_agent::identity::Secp256k1Identity;

@@ -5,16 +5,19 @@ import com.yral.shared.analytics.events.CategoryName
 import com.yral.shared.analytics.events.CtaType
 import com.yral.shared.analytics.events.GameType
 import com.yral.shared.analytics.events.HomePageViewedEventData
+import com.yral.shared.analytics.events.ShareAppOpenedFromLinkEventData
+import com.yral.shared.analytics.events.SourceScreen
 import com.yral.shared.analytics.events.VideoClickedEventData
 import com.yral.shared.analytics.events.VideoDurationWatchedEventData
 import com.yral.shared.analytics.events.VideoImpressionEventData
 import com.yral.shared.analytics.events.VideoReportedEventData
+import com.yral.shared.analytics.events.VideoShareClickedEventData
 import com.yral.shared.analytics.events.VideoStartedEventData
 import com.yral.shared.analytics.events.VideoViewedEventData
 import com.yral.shared.core.session.SessionManager
+import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.features.feed.viewmodel.VideoReportReason
 import com.yral.shared.features.feed.viewmodel.percentageOf
-import com.yral.shared.rust.domain.models.FeedDetails
 
 class FeedTelemetry(
     private val analyticsManager: AnalyticsManager,
@@ -156,5 +159,22 @@ class FeedTelemetry(
                     reason = reason.reason,
                 ),
         )
+    }
+
+    fun onShareClicked(
+        feedDetails: FeedDetails,
+        userPrincipalId: String?,
+    ) {
+        analyticsManager.trackEvent(
+            VideoShareClickedEventData(
+                feedDetails.videoID,
+                SourceScreen.HOMEFEED,
+                feedDetails.principalID == userPrincipalId,
+            ),
+        )
+    }
+
+    fun onDeeplink(videoId: String) {
+        analyticsManager.trackEvent(ShareAppOpenedFromLinkEventData(videoId))
     }
 }

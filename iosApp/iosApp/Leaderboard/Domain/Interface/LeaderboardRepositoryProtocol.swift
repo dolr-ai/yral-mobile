@@ -9,5 +9,5 @@
 import Foundation
 
 protocol LeaderboardRepositoryProtocol {
-  func fetchLeaderboard() async -> Result<LeaderboardResponse, LeaderboardError>
+  func fetchLeaderboard(request: LeaderboardQuery) async -> Result<LeaderboardResponse, LeaderboardError>
 }

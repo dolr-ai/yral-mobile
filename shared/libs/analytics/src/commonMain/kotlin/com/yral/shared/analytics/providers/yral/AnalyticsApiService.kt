@@ -6,6 +6,7 @@ import com.yral.shared.core.rust.KotlinDelegatedIdentityWire
 import com.yral.shared.http.httpPostWithStringResponse
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
+import com.yral.shared.rust.service.utils.delegatedIdentityWireToJson
 import io.ktor.client.HttpClient
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
@@ -43,7 +44,7 @@ class AnalyticsApiService(
     }
 
     companion object {
-        private const val BULK_EVENTS_END_POINT = "/api/v1/events/bulk"
+        private const val BULK_EVENTS_END_POINT = "/api/v2/events/bulk"
     }
 
     @Serializable

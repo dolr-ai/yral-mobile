@@ -13,4 +13,5 @@ enum class LeaderboardErrorCodes {
     FIRESTORE_ERROR,
     INTERNAL,
     UNKNOWN,
+    MISSING_PID,
 }

@@ -17,7 +17,7 @@ public func delegate_identity_with_max_age_public(_ parent_wire: DelegatedIdenti
 public func delegated_identity_wire_to_json(_ wire: DelegatedIdentityWireRef) -> RustString {
     RustString(ptr: __swift_bridge__$delegated_identity_wire_to_json(wire.ptr))
 }
-public func authenticate_with_network(_ auth: DelegatedIdentityWire, _ referrer: Optional<Principal>) async throws -> CanistersWrapper {
+public func authenticate_with_network(_ auth: DelegatedIdentityWire) async throws -> CanistersWrapper {
     func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
         let wrapper = Unmanaged<CbWrapper$authenticate_with_network>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
         if rustFnRetVal.is_ok {
@@ -35,7 +35,7 @@ public func authenticate_with_network(_ auth: DelegatedIdentityWire, _ referrer:
         let wrapper = CbWrapper$authenticate_with_network(cb: callback)
         let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
 
-        __swift_bridge__$authenticate_with_network(wrapperPtr, onComplete, {auth.isOwned = false; return auth.ptr;}(), { if let val = referrer { val.isOwned = false; return val.ptr } else { return nil } }())
+        __swift_bridge__$authenticate_with_network(wrapperPtr, onComplete, {auth.isOwned = false; return auth.ptr;}())
     })
 }
 class CbWrapper$authenticate_with_network {
@@ -181,6 +181,189 @@ public func get_status_value(_ status: VideoGenRequestStatus) -> RustString {
 public func make_videogen_request_key(_ principal: Principal, _ counter: UInt64) -> VideoGenRequestKey {
     VideoGenRequestKey(ptr: __swift_bridge__$make_videogen_request_key({principal.isOwned = false; return principal.ptr;}(), counter))
 }
+public func is_banned_due_to_user_reporting(_ status: PostServicePostStatusRef) -> Bool {
+    __swift_bridge__$is_banned_due_to_user_reporting(status.ptr)
+}
+public func is_post_service_result_ok(_ result: PostServiceResult1) -> Bool {
+    __swift_bridge__$is_post_service_result_ok({result.isOwned = false; return result.ptr;}())
+}
+public func post_service_result_ok_value(_ result: PostServiceResult1) -> Optional<PostServicePost> {
+    { let val = __swift_bridge__$post_service_result_ok_value({result.isOwned = false; return result.ptr;}()); if val != nil { return PostServicePost(ptr: val!) } else { return nil } }()
+}
+public func post_service_result_err_value(_ result: PostServiceResult1) -> RustString {
+    RustString(ptr: __swift_bridge__$post_service_result_err_value({result.isOwned = false; return result.ptr;}()))
+}
+public func is_created_from_service_canister(_ canister_principal: Principal) -> Bool {
+    __swift_bridge__$is_created_from_service_canister({canister_principal.isOwned = false; return canister_principal.ptr;}())
+}
+public func is_post_service_result_vec_ok(_ result: PostServiceResult3) -> Bool {
+    __swift_bridge__$is_post_service_result_vec_ok({result.isOwned = false; return result.ptr;}())
+}
+public func post_service_result_vec_ok_value(_ result: PostServiceResult3) -> Optional<RustVec<PostServicePost>> {
+    { let val = __swift_bridge__$post_service_result_vec_ok_value({result.isOwned = false; return result.ptr;}()); if val != nil { return RustVec(ptr: val!) } else { return nil } }()
+}
+public func post_service_result_vec_err_value(_ result: PostServiceResult3) -> Optional<PostServiceGetPostsOfUserProfileError> {
+    { let val = __swift_bridge__$post_service_result_vec_err_value({result.isOwned = false; return result.ptr;}()); if val != nil { return PostServiceGetPostsOfUserProfileError(ptr: val!) } else { return nil } }()
+}
+public func is_reached_end_of_items_list(_ error: PostServiceGetPostsOfUserProfileError) -> Bool {
+    __swift_bridge__$is_reached_end_of_items_list({error.isOwned = false; return error.ptr;}())
+}
+public func is_invalid_bounds_passed(_ error: PostServiceGetPostsOfUserProfileError) -> Bool {
+    __swift_bridge__$is_invalid_bounds_passed({error.isOwned = false; return error.ptr;}())
+}
+public func is_exceeded_max_number_of_items_allowed_in_one_request(_ error: PostServiceGetPostsOfUserProfileError) -> Bool {
+    __swift_bridge__$is_exceeded_max_number_of_items_allowed_in_one_request({error.isOwned = false; return error.ptr;}())
+}
+
+public class PostServicePostError: PostServicePostErrorRefMut {
+    var isOwned: Bool = true
+
+    public override init(ptr: UnsafeMutableRawPointer) {
+        super.init(ptr: ptr)
+    }
+
+    deinit {
+        if isOwned {
+            __swift_bridge__$PostServicePostError$_free(ptr)
+        }
+    }
+}
+public class PostServicePostErrorRefMut: PostServicePostErrorRef {
+    public override init(ptr: UnsafeMutableRawPointer) {
+        super.init(ptr: ptr)
+    }
+}
+public class PostServicePostErrorRef {
+    var ptr: UnsafeMutableRawPointer
+
+    public init(ptr: UnsafeMutableRawPointer) {
+        self.ptr = ptr
+    }
+}
+extension PostServicePostError: Vectorizable {
+    public static func vecOfSelfNew() -> UnsafeMutableRawPointer {
+        __swift_bridge__$Vec_PostServicePostError$new()
+    }
+
+    public static func vecOfSelfFree(vecPtr: UnsafeMutableRawPointer) {
+        __swift_bridge__$Vec_PostServicePostError$drop(vecPtr)
+    }
+
+    public static func vecOfSelfPush(vecPtr: UnsafeMutableRawPointer, value: PostServicePostError) {
+        __swift_bridge__$Vec_PostServicePostError$push(vecPtr, {value.isOwned = false; return value.ptr;}())
+    }
+
+    public static func vecOfSelfPop(vecPtr: UnsafeMutableRawPointer) -> Optional<Self> {
+        let pointer = __swift_bridge__$Vec_PostServicePostError$pop(vecPtr)
+        if pointer == nil {
+            return nil
+        } else {
+            return (PostServicePostError(ptr: pointer!) as! Self)
+        }
+    }
+
+    public static func vecOfSelfGet(vecPtr: UnsafeMutableRawPointer, index: UInt) -> Optional<PostServicePostErrorRef> {
+        let pointer = __swift_bridge__$Vec_PostServicePostError$get(vecPtr, index)
+        if pointer == nil {
+            return nil
+        } else {
+            return PostServicePostErrorRef(ptr: pointer!)
+        }
+    }
+
+    public static func vecOfSelfGetMut(vecPtr: UnsafeMutableRawPointer, index: UInt) -> Optional<PostServicePostErrorRefMut> {
+        let pointer = __swift_bridge__$Vec_PostServicePostError$get_mut(vecPtr, index)
+        if pointer == nil {
+            return nil
+        } else {
+            return PostServicePostErrorRefMut(ptr: pointer!)
+        }
+    }
+
+    public static func vecOfSelfAsPtr(vecPtr: UnsafeMutableRawPointer) -> UnsafePointer<PostServicePostErrorRef> {
+        UnsafePointer<PostServicePostErrorRef>(OpaquePointer(__swift_bridge__$Vec_PostServicePostError$as_ptr(vecPtr)))
+    }
+
+    public static func vecOfSelfLen(vecPtr: UnsafeMutableRawPointer) -> UInt {
+        __swift_bridge__$Vec_PostServicePostError$len(vecPtr)
+    }
+}
+
+
+public class PostServiceResult1: PostServiceResult1RefMut {
+    var isOwned: Bool = true
+
+    public override init(ptr: UnsafeMutableRawPointer) {
+        super.init(ptr: ptr)
+    }
+
+    deinit {
+        if isOwned {
+            __swift_bridge__$PostServiceResult1$_free(ptr)
+        }
+    }
+}
+public class PostServiceResult1RefMut: PostServiceResult1Ref {
+    public override init(ptr: UnsafeMutableRawPointer) {
+        super.init(ptr: ptr)
+    }
+}
+public class PostServiceResult1Ref {
+    var ptr: UnsafeMutableRawPointer
+
+    public init(ptr: UnsafeMutableRawPointer) {
+        self.ptr = ptr
+    }
+}
+extension PostServiceResult1: Vectorizable {
+    public static func vecOfSelfNew() -> UnsafeMutableRawPointer {
+        __swift_bridge__$Vec_PostServiceResult1$new()
+    }
+
+    public static func vecOfSelfFree(vecPtr: UnsafeMutableRawPointer) {
+        __swift_bridge__$Vec_PostServiceResult1$drop(vecPtr)
+    }
+
+    public static func vecOfSelfPush(vecPtr: UnsafeMutableRawPointer, value: PostServiceResult1) {
+        __swift_bridge__$Vec_PostServiceResult1$push(vecPtr, {value.isOwned = false; return value.ptr;}())
+    }
+
+    public static func vecOfSelfPop(vecPtr: UnsafeMutableRawPointer) -> Optional<Self> {
+        let pointer = __swift_bridge__$Vec_PostServiceResult1$pop(vecPtr)
+        if pointer == nil {
+            return nil
+        } else {
+            return (PostServiceResult1(ptr: pointer!) as! Self)
+        }
+    }
+
+    public static func vecOfSelfGet(vecPtr: UnsafeMutableRawPointer, index: UInt) -> Optional<PostServiceResult1Ref> {
+        let pointer = __swift_bridge__$Vec_PostServiceResult1$get(vecPtr, index)
+        if pointer == nil {
+            return nil
+        } else {
+            return PostServiceResult1Ref(ptr: pointer!)
+        }
+    }
+
+    public static func vecOfSelfGetMut(vecPtr: UnsafeMutableRawPointer, index: UInt) -> Optional<PostServiceResult1RefMut> {
+        let pointer = __swift_bridge__$Vec_PostServiceResult1$get_mut(vecPtr, index)
+        if pointer == nil {
+            return nil
+        } else {
+            return PostServiceResult1RefMut(ptr: pointer!)
+        }
+    }
+
+    public static func vecOfSelfAsPtr(vecPtr: UnsafeMutableRawPointer) -> UnsafePointer<PostServiceResult1Ref> {
+        UnsafePointer<PostServiceResult1Ref>(OpaquePointer(__swift_bridge__$Vec_PostServiceResult1$as_ptr(vecPtr)))
+    }
+
+    public static func vecOfSelfLen(vecPtr: UnsafeMutableRawPointer) -> UInt {
+        __swift_bridge__$Vec_PostServiceResult1$len(vecPtr)
+    }
+}
+
 
 public class VideoGenRequestStatus: VideoGenRequestStatusRefMut {
     var isOwned: Bool = true
@@ -11839,6 +12022,10 @@ extension CanistersWrapperRef {
         RustString(ptr: __swift_bridge__$CanistersWrapper$get_user_principal_string(ptr))
     }
 
+    public func is_created_from_service_canister() -> Bool {
+        __swift_bridge__$CanistersWrapper$is_created_from_service_canister(ptr)
+    }
+
     public func expiry_ns() -> UInt64 {
         __swift_bridge__$CanistersWrapper$expiry_ns(ptr)
     }
@@ -12246,6 +12433,571 @@ extension VideoGenRequestKey: Vectorizable {
 
     public static func vecOfSelfLen(vecPtr: UnsafeMutableRawPointer) -> UInt {
         __swift_bridge__$Vec_VideoGenRequestKey$len(vecPtr)
+    }
+}
+
+
+public class UserPostService: UserPostServiceRefMut {
+    var isOwned: Bool = true
+
+    public override init(ptr: UnsafeMutableRawPointer) {
+        super.init(ptr: ptr)
+    }
+
+    deinit {
+        if isOwned {
+            __swift_bridge__$UserPostService$_free(ptr)
+        }
+    }
+}
+extension UserPostService {
+  public convenience init(_ principal: Principal, _ identity: DelegatedIdentity) throws {
+    let val = __swift_bridge__$UserPostService$new(
+      { principal.isOwned = false; return principal.ptr }(),
+      { identity.isOwned = false; return identity.ptr }()
+    )
+
+    if val.is_ok {
+      self.init(ptr: val.ok_or_err!)
+    } else {
+      throw PrincipalError(ptr: val.ok_or_err!)
+    }
+  }
+}
+public class UserPostServiceRefMut: UserPostServiceRef {
+    public override init(ptr: UnsafeMutableRawPointer) {
+        super.init(ptr: ptr)
+    }
+}
+public class UserPostServiceRef {
+    var ptr: UnsafeMutableRawPointer
+
+    public init(ptr: UnsafeMutableRawPointer) {
+        self.ptr = ptr
+    }
+}
+extension UserPostServiceRef {
+    public func get_individual_post_details_by_id<GenericIntoRustString: IntoRustString>(_ arg0: GenericIntoRustString) async throws -> PostServiceResult1 {
+        func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
+            let wrapper = Unmanaged<CbWrapper$UserPostService$get_individual_post_details_by_id>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            if rustFnRetVal.is_ok {
+                wrapper.cb(.success(PostServiceResult1(ptr: rustFnRetVal.ok_or_err!)))
+            } else {
+                wrapper.cb(.failure(RustString(ptr: rustFnRetVal.ok_or_err!)))
+            }
+        }
+
+        return try await withCheckedThrowingContinuation({ (continuation: CheckedContinuation<PostServiceResult1, Error>) in
+            let callback = { rustFnRetVal in
+                continuation.resume(with: rustFnRetVal)
+            }
+
+            let wrapper = CbWrapper$UserPostService$get_individual_post_details_by_id(cb: callback)
+            let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
+
+            __swift_bridge__$UserPostService$get_individual_post_details_by_id(wrapperPtr, onComplete, ptr, { let rustString = arg0.intoRustString(); rustString.isOwned = false; return rustString.ptr }())
+        })
+    }
+    class CbWrapper$UserPostService$get_individual_post_details_by_id {
+        var cb: (Result<PostServiceResult1, Error>) -> ()
+    
+        public init(cb: @escaping (Result<PostServiceResult1, Error>) -> ()) {
+            self.cb = cb
+        }
+    }
+
+    public func get_posts_of_this_user_profile_with_pagination_cursor(_ arg0: Principal, _ arg1: UInt64, _ arg2: UInt64) async throws -> PostServiceResult3 {
+        func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: __private__ResultPtrAndPtr) {
+            let wrapper = Unmanaged<CbWrapper$UserPostService$get_posts_of_this_user_profile_with_pagination_cursor>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
+            if rustFnRetVal.is_ok {
+                wrapper.cb(.success(PostServiceResult3(ptr: rustFnRetVal.ok_or_err!)))
+            } else {
+                wrapper.cb(.failure(RustString(ptr: rustFnRetVal.ok_or_err!)))
+            }
+        }
+
+        return try await withCheckedThrowingContinuation({ (continuation: CheckedContinuation<PostServiceResult3, Error>) in
+            let callback = { rustFnRetVal in
+                continuation.resume(with: rustFnRetVal)
+            }
+
+            let wrapper = CbWrapper$UserPostService$get_posts_of_this_user_profile_with_pagination_cursor(cb: callback)
+            let wrapperPtr = Unmanaged.passRetained(wrapper).toOpaque()
+
+            __swift_bridge__$UserPostService$get_posts_of_this_user_profile_with_pagination_cursor(wrapperPtr, onComplete, ptr, {arg0.isOwned = false; return arg0.ptr;}(), arg1, arg2)
+        })
+    }
+    class CbWrapper$UserPostService$get_posts_of_this_user_profile_with_pagination_cursor {
+        var cb: (Result<PostServiceResult3, Error>) -> ()
+    
+        public init(cb: @escaping (Result<PostServiceResult3, Error>) -> ()) {
+            self.cb = cb
+        }
+    }
+}
+extension UserPostService: Vectorizable {
+    public static func vecOfSelfNew() -> UnsafeMutableRawPointer {
+        __swift_bridge__$Vec_UserPostService$new()
+    }
+
+    public static func vecOfSelfFree(vecPtr: UnsafeMutableRawPointer) {
+        __swift_bridge__$Vec_UserPostService$drop(vecPtr)
+    }
+
+    public static func vecOfSelfPush(vecPtr: UnsafeMutableRawPointer, value: UserPostService) {
+        __swift_bridge__$Vec_UserPostService$push(vecPtr, {value.isOwned = false; return value.ptr;}())
+    }
+
+    public static func vecOfSelfPop(vecPtr: UnsafeMutableRawPointer) -> Optional<Self> {
+        let pointer = __swift_bridge__$Vec_UserPostService$pop(vecPtr)
+        if pointer == nil {
+            return nil
+        } else {
+            return (UserPostService(ptr: pointer!) as! Self)
+        }
+    }
+
+    public static func vecOfSelfGet(vecPtr: UnsafeMutableRawPointer, index: UInt) -> Optional<UserPostServiceRef> {
+        let pointer = __swift_bridge__$Vec_UserPostService$get(vecPtr, index)
+        if pointer == nil {
+            return nil
+        } else {
+            return UserPostServiceRef(ptr: pointer!)
+        }
+    }
+
+    public static func vecOfSelfGetMut(vecPtr: UnsafeMutableRawPointer, index: UInt) -> Optional<UserPostServiceRefMut> {
+        let pointer = __swift_bridge__$Vec_UserPostService$get_mut(vecPtr, index)
+        if pointer == nil {
+            return nil
+        } else {
+            return UserPostServiceRefMut(ptr: pointer!)
+        }
+    }
+
+    public static func vecOfSelfAsPtr(vecPtr: UnsafeMutableRawPointer) -> UnsafePointer<UserPostServiceRef> {
+        UnsafePointer<UserPostServiceRef>(OpaquePointer(__swift_bridge__$Vec_UserPostService$as_ptr(vecPtr)))
+    }
+
+    public static func vecOfSelfLen(vecPtr: UnsafeMutableRawPointer) -> UInt {
+        __swift_bridge__$Vec_UserPostService$len(vecPtr)
+    }
+}
+
+
+public class PostServicePost: PostServicePostRefMut {
+    var isOwned: Bool = true
+
+    public override init(ptr: UnsafeMutableRawPointer) {
+        super.init(ptr: ptr)
+    }
+
+    deinit {
+        if isOwned {
+            __swift_bridge__$PostServicePost$_free(ptr)
+        }
+    }
+}
+public class PostServicePostRefMut: PostServicePostRef {
+    public override init(ptr: UnsafeMutableRawPointer) {
+        super.init(ptr: ptr)
+    }
+}
+public class PostServicePostRef {
+    var ptr: UnsafeMutableRawPointer
+
+    public init(ptr: UnsafeMutableRawPointer) {
+        self.ptr = ptr
+    }
+}
+extension PostServicePostRef {
+    public func id() -> RustStr {
+        __swift_bridge__$PostServicePost$id(ptr)
+    }
+
+    public func status() -> PostServicePostStatusRef {
+        PostServicePostStatusRef(ptr: __swift_bridge__$PostServicePost$status(ptr))
+    }
+
+    public func share_count() -> UInt64 {
+        __swift_bridge__$PostServicePost$share_count(ptr)
+    }
+
+    public func hashtags() -> RustVec<RustString> {
+        RustVec(ptr: __swift_bridge__$PostServicePost$hashtags(ptr))
+    }
+
+    public func description() -> RustStr {
+        __swift_bridge__$PostServicePost$description(ptr)
+    }
+
+    public func video_uid() -> RustStr {
+        __swift_bridge__$PostServicePost$video_uid(ptr)
+    }
+
+    public func creator_principal() -> RustString {
+        RustString(ptr: __swift_bridge__$PostServicePost$creator_principal(ptr))
+    }
+
+    public func likes() -> RustVec<Principal> {
+        RustVec(ptr: __swift_bridge__$PostServicePost$likes(ptr))
+    }
+
+    public func view_stats() -> PostServicePostViewStatisticsRef {
+        PostServicePostViewStatisticsRef(ptr: __swift_bridge__$PostServicePost$view_stats(ptr))
+    }
+}
+extension PostServicePost: Vectorizable {
+    public static func vecOfSelfNew() -> UnsafeMutableRawPointer {
+        __swift_bridge__$Vec_PostServicePost$new()
+    }
+
+    public static func vecOfSelfFree(vecPtr: UnsafeMutableRawPointer) {
+        __swift_bridge__$Vec_PostServicePost$drop(vecPtr)
+    }
+
+    public static func vecOfSelfPush(vecPtr: UnsafeMutableRawPointer, value: PostServicePost) {
+        __swift_bridge__$Vec_PostServicePost$push(vecPtr, {value.isOwned = false; return value.ptr;}())
+    }
+
+    public static func vecOfSelfPop(vecPtr: UnsafeMutableRawPointer) -> Optional<Self> {
+        let pointer = __swift_bridge__$Vec_PostServicePost$pop(vecPtr)
+        if pointer == nil {
+            return nil
+        } else {
+            return (PostServicePost(ptr: pointer!) as! Self)
+        }
+    }
+
+    public static func vecOfSelfGet(vecPtr: UnsafeMutableRawPointer, index: UInt) -> Optional<PostServicePostRef> {
+        let pointer = __swift_bridge__$Vec_PostServicePost$get(vecPtr, index)
+        if pointer == nil {
+            return nil
+        } else {
+            return PostServicePostRef(ptr: pointer!)
+        }
+    }
+
+    public static func vecOfSelfGetMut(vecPtr: UnsafeMutableRawPointer, index: UInt) -> Optional<PostServicePostRefMut> {
+        let pointer = __swift_bridge__$Vec_PostServicePost$get_mut(vecPtr, index)
+        if pointer == nil {
+            return nil
+        } else {
+            return PostServicePostRefMut(ptr: pointer!)
+        }
+    }
+
+    public static func vecOfSelfAsPtr(vecPtr: UnsafeMutableRawPointer) -> UnsafePointer<PostServicePostRef> {
+        UnsafePointer<PostServicePostRef>(OpaquePointer(__swift_bridge__$Vec_PostServicePost$as_ptr(vecPtr)))
+    }
+
+    public static func vecOfSelfLen(vecPtr: UnsafeMutableRawPointer) -> UInt {
+        __swift_bridge__$Vec_PostServicePost$len(vecPtr)
+    }
+}
+
+
+public class PostServicePostStatus: PostServicePostStatusRefMut {
+    var isOwned: Bool = true
+
+    public override init(ptr: UnsafeMutableRawPointer) {
+        super.init(ptr: ptr)
+    }
+
+    deinit {
+        if isOwned {
+            __swift_bridge__$PostServicePostStatus$_free(ptr)
+        }
+    }
+}
+public class PostServicePostStatusRefMut: PostServicePostStatusRef {
+    public override init(ptr: UnsafeMutableRawPointer) {
+        super.init(ptr: ptr)
+    }
+}
+public class PostServicePostStatusRef {
+    var ptr: UnsafeMutableRawPointer
+
+    public init(ptr: UnsafeMutableRawPointer) {
+        self.ptr = ptr
+    }
+}
+extension PostServicePostStatus: Vectorizable {
+    public static func vecOfSelfNew() -> UnsafeMutableRawPointer {
+        __swift_bridge__$Vec_PostServicePostStatus$new()
+    }
+
+    public static func vecOfSelfFree(vecPtr: UnsafeMutableRawPointer) {
+        __swift_bridge__$Vec_PostServicePostStatus$drop(vecPtr)
+    }
+
+    public static func vecOfSelfPush(vecPtr: UnsafeMutableRawPointer, value: PostServicePostStatus) {
+        __swift_bridge__$Vec_PostServicePostStatus$push(vecPtr, {value.isOwned = false; return value.ptr;}())
+    }
+
+    public static func vecOfSelfPop(vecPtr: UnsafeMutableRawPointer) -> Optional<Self> {
+        let pointer = __swift_bridge__$Vec_PostServicePostStatus$pop(vecPtr)
+        if pointer == nil {
+            return nil
+        } else {
+            return (PostServicePostStatus(ptr: pointer!) as! Self)
+        }
+    }
+
+    public static func vecOfSelfGet(vecPtr: UnsafeMutableRawPointer, index: UInt) -> Optional<PostServicePostStatusRef> {
+        let pointer = __swift_bridge__$Vec_PostServicePostStatus$get(vecPtr, index)
+        if pointer == nil {
+            return nil
+        } else {
+            return PostServicePostStatusRef(ptr: pointer!)
+        }
+    }
+
+    public static func vecOfSelfGetMut(vecPtr: UnsafeMutableRawPointer, index: UInt) -> Optional<PostServicePostStatusRefMut> {
+        let pointer = __swift_bridge__$Vec_PostServicePostStatus$get_mut(vecPtr, index)
+        if pointer == nil {
+            return nil
+        } else {
+            return PostServicePostStatusRefMut(ptr: pointer!)
+        }
+    }
+
+    public static func vecOfSelfAsPtr(vecPtr: UnsafeMutableRawPointer) -> UnsafePointer<PostServicePostStatusRef> {
+        UnsafePointer<PostServicePostStatusRef>(OpaquePointer(__swift_bridge__$Vec_PostServicePostStatus$as_ptr(vecPtr)))
+    }
+
+    public static func vecOfSelfLen(vecPtr: UnsafeMutableRawPointer) -> UInt {
+        __swift_bridge__$Vec_PostServicePostStatus$len(vecPtr)
+    }
+}
+
+
+public class PostServicePostViewStatistics: PostServicePostViewStatisticsRefMut {
+    var isOwned: Bool = true
+
+    public override init(ptr: UnsafeMutableRawPointer) {
+        super.init(ptr: ptr)
+    }
+
+    deinit {
+        if isOwned {
+            __swift_bridge__$PostServicePostViewStatistics$_free(ptr)
+        }
+    }
+}
+public class PostServicePostViewStatisticsRefMut: PostServicePostViewStatisticsRef {
+    public override init(ptr: UnsafeMutableRawPointer) {
+        super.init(ptr: ptr)
+    }
+}
+public class PostServicePostViewStatisticsRef {
+    var ptr: UnsafeMutableRawPointer
+
+    public init(ptr: UnsafeMutableRawPointer) {
+        self.ptr = ptr
+    }
+}
+extension PostServicePostViewStatisticsRef {
+    public func total_view_count() -> UInt64 {
+        __swift_bridge__$PostServicePostViewStatistics$total_view_count(ptr)
+    }
+}
+extension PostServicePostViewStatistics: Vectorizable {
+    public static func vecOfSelfNew() -> UnsafeMutableRawPointer {
+        __swift_bridge__$Vec_PostServicePostViewStatistics$new()
+    }
+
+    public static func vecOfSelfFree(vecPtr: UnsafeMutableRawPointer) {
+        __swift_bridge__$Vec_PostServicePostViewStatistics$drop(vecPtr)
+    }
+
+    public static func vecOfSelfPush(vecPtr: UnsafeMutableRawPointer, value: PostServicePostViewStatistics) {
+        __swift_bridge__$Vec_PostServicePostViewStatistics$push(vecPtr, {value.isOwned = false; return value.ptr;}())
+    }
+
+    public static func vecOfSelfPop(vecPtr: UnsafeMutableRawPointer) -> Optional<Self> {
+        let pointer = __swift_bridge__$Vec_PostServicePostViewStatistics$pop(vecPtr)
+        if pointer == nil {
+            return nil
+        } else {
+            return (PostServicePostViewStatistics(ptr: pointer!) as! Self)
+        }
+    }
+
+    public static func vecOfSelfGet(vecPtr: UnsafeMutableRawPointer, index: UInt) -> Optional<PostServicePostViewStatisticsRef> {
+        let pointer = __swift_bridge__$Vec_PostServicePostViewStatistics$get(vecPtr, index)
+        if pointer == nil {
+            return nil
+        } else {
+            return PostServicePostViewStatisticsRef(ptr: pointer!)
+        }
+    }
+
+    public static func vecOfSelfGetMut(vecPtr: UnsafeMutableRawPointer, index: UInt) -> Optional<PostServicePostViewStatisticsRefMut> {
+        let pointer = __swift_bridge__$Vec_PostServicePostViewStatistics$get_mut(vecPtr, index)
+        if pointer == nil {
+            return nil
+        } else {
+            return PostServicePostViewStatisticsRefMut(ptr: pointer!)
+        }
+    }
+
+    public static func vecOfSelfAsPtr(vecPtr: UnsafeMutableRawPointer) -> UnsafePointer<PostServicePostViewStatisticsRef> {
+        UnsafePointer<PostServicePostViewStatisticsRef>(OpaquePointer(__swift_bridge__$Vec_PostServicePostViewStatistics$as_ptr(vecPtr)))
+    }
+
+    public static func vecOfSelfLen(vecPtr: UnsafeMutableRawPointer) -> UInt {
+        __swift_bridge__$Vec_PostServicePostViewStatistics$len(vecPtr)
+    }
+}
+
+
+public class PostServiceGetPostsOfUserProfileError: PostServiceGetPostsOfUserProfileErrorRefMut {
+    var isOwned: Bool = true
+
+    public override init(ptr: UnsafeMutableRawPointer) {
+        super.init(ptr: ptr)
+    }
+
+    deinit {
+        if isOwned {
+            __swift_bridge__$PostServiceGetPostsOfUserProfileError$_free(ptr)
+        }
+    }
+}
+public class PostServiceGetPostsOfUserProfileErrorRefMut: PostServiceGetPostsOfUserProfileErrorRef {
+    public override init(ptr: UnsafeMutableRawPointer) {
+        super.init(ptr: ptr)
+    }
+}
+public class PostServiceGetPostsOfUserProfileErrorRef {
+    var ptr: UnsafeMutableRawPointer
+
+    public init(ptr: UnsafeMutableRawPointer) {
+        self.ptr = ptr
+    }
+}
+extension PostServiceGetPostsOfUserProfileError: Vectorizable {
+    public static func vecOfSelfNew() -> UnsafeMutableRawPointer {
+        __swift_bridge__$Vec_PostServiceGetPostsOfUserProfileError$new()
+    }
+
+    public static func vecOfSelfFree(vecPtr: UnsafeMutableRawPointer) {
+        __swift_bridge__$Vec_PostServiceGetPostsOfUserProfileError$drop(vecPtr)
+    }
+
+    public static func vecOfSelfPush(vecPtr: UnsafeMutableRawPointer, value: PostServiceGetPostsOfUserProfileError) {
+        __swift_bridge__$Vec_PostServiceGetPostsOfUserProfileError$push(vecPtr, {value.isOwned = false; return value.ptr;}())
+    }
+
+    public static func vecOfSelfPop(vecPtr: UnsafeMutableRawPointer) -> Optional<Self> {
+        let pointer = __swift_bridge__$Vec_PostServiceGetPostsOfUserProfileError$pop(vecPtr)
+        if pointer == nil {
+            return nil
+        } else {
+            return (PostServiceGetPostsOfUserProfileError(ptr: pointer!) as! Self)
+        }
+    }
+
+    public static func vecOfSelfGet(vecPtr: UnsafeMutableRawPointer, index: UInt) -> Optional<PostServiceGetPostsOfUserProfileErrorRef> {
+        let pointer = __swift_bridge__$Vec_PostServiceGetPostsOfUserProfileError$get(vecPtr, index)
+        if pointer == nil {
+            return nil
+        } else {
+            return PostServiceGetPostsOfUserProfileErrorRef(ptr: pointer!)
+        }
+    }
+
+    public static func vecOfSelfGetMut(vecPtr: UnsafeMutableRawPointer, index: UInt) -> Optional<PostServiceGetPostsOfUserProfileErrorRefMut> {
+        let pointer = __swift_bridge__$Vec_PostServiceGetPostsOfUserProfileError$get_mut(vecPtr, index)
+        if pointer == nil {
+            return nil
+        } else {
+            return PostServiceGetPostsOfUserProfileErrorRefMut(ptr: pointer!)
+        }
+    }
+
+    public static func vecOfSelfAsPtr(vecPtr: UnsafeMutableRawPointer) -> UnsafePointer<PostServiceGetPostsOfUserProfileErrorRef> {
+        UnsafePointer<PostServiceGetPostsOfUserProfileErrorRef>(OpaquePointer(__swift_bridge__$Vec_PostServiceGetPostsOfUserProfileError$as_ptr(vecPtr)))
+    }
+
+    public static func vecOfSelfLen(vecPtr: UnsafeMutableRawPointer) -> UInt {
+        __swift_bridge__$Vec_PostServiceGetPostsOfUserProfileError$len(vecPtr)
+    }
+}
+
+
+public class PostServiceResult3: PostServiceResult3RefMut {
+    var isOwned: Bool = true
+
+    public override init(ptr: UnsafeMutableRawPointer) {
+        super.init(ptr: ptr)
+    }
+
+    deinit {
+        if isOwned {
+            __swift_bridge__$PostServiceResult3$_free(ptr)
+        }
+    }
+}
+public class PostServiceResult3RefMut: PostServiceResult3Ref {
+    public override init(ptr: UnsafeMutableRawPointer) {
+        super.init(ptr: ptr)
+    }
+}
+public class PostServiceResult3Ref {
+    var ptr: UnsafeMutableRawPointer
+
+    public init(ptr: UnsafeMutableRawPointer) {
+        self.ptr = ptr
+    }
+}
+extension PostServiceResult3: Vectorizable {
+    public static func vecOfSelfNew() -> UnsafeMutableRawPointer {
+        __swift_bridge__$Vec_PostServiceResult3$new()
+    }
+
+    public static func vecOfSelfFree(vecPtr: UnsafeMutableRawPointer) {
+        __swift_bridge__$Vec_PostServiceResult3$drop(vecPtr)
+    }
+
+    public static func vecOfSelfPush(vecPtr: UnsafeMutableRawPointer, value: PostServiceResult3) {
+        __swift_bridge__$Vec_PostServiceResult3$push(vecPtr, {value.isOwned = false; return value.ptr;}())
+    }
+
+    public static func vecOfSelfPop(vecPtr: UnsafeMutableRawPointer) -> Optional<Self> {
+        let pointer = __swift_bridge__$Vec_PostServiceResult3$pop(vecPtr)
+        if pointer == nil {
+            return nil
+        } else {
+            return (PostServiceResult3(ptr: pointer!) as! Self)
+        }
+    }
+
+    public static func vecOfSelfGet(vecPtr: UnsafeMutableRawPointer, index: UInt) -> Optional<PostServiceResult3Ref> {
+        let pointer = __swift_bridge__$Vec_PostServiceResult3$get(vecPtr, index)
+        if pointer == nil {
+            return nil
+        } else {
+            return PostServiceResult3Ref(ptr: pointer!)
+        }
+    }
+
+    public static func vecOfSelfGetMut(vecPtr: UnsafeMutableRawPointer, index: UInt) -> Optional<PostServiceResult3RefMut> {
+        let pointer = __swift_bridge__$Vec_PostServiceResult3$get_mut(vecPtr, index)
+        if pointer == nil {
+            return nil
+        } else {
+            return PostServiceResult3RefMut(ptr: pointer!)
+        }
+    }
+
+    public static func vecOfSelfAsPtr(vecPtr: UnsafeMutableRawPointer) -> UnsafePointer<PostServiceResult3Ref> {
+        UnsafePointer<PostServiceResult3Ref>(OpaquePointer(__swift_bridge__$Vec_PostServiceResult3$as_ptr(vecPtr)))
+    }
+
+    public static func vecOfSelfLen(vecPtr: UnsafeMutableRawPointer) -> UInt {
+        __swift_bridge__$Vec_PostServiceResult3$len(vecPtr)
     }
 }
 

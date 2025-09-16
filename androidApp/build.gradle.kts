@@ -8,7 +8,6 @@ plugins {
     alias(libs.plugins.gms)
     alias(libs.plugins.firebase.perf)
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.yral.shared.rust.lib)
 }
 
 android {
@@ -119,6 +118,7 @@ dependencies {
     implementation(libs.googlePlay.inAppUpdate)
 
     implementation(projects.shared.core)
+    implementation(projects.shared.data)
     implementation(projects.shared.libs.preferences)
     implementation(projects.shared.libs.http)
     implementation(projects.shared.features.auth)
@@ -138,6 +138,8 @@ dependencies {
     implementation(projects.shared.features.profile)
     implementation(projects.shared.libs.arch)
     implementation(projects.shared.libs.featureFlag)
+    implementation(projects.shared.rust.service)
+    implementation(projects.shared.libs.routing.deeplinkEngine)
 }
 
 afterEvaluate {

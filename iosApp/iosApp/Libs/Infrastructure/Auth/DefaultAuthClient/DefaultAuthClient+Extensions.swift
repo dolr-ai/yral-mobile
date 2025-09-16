@@ -93,11 +93,10 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
         try firebaseService.signOut()
         let oldPrincipal = self.userPrincipalString
         do {
-          try await recordThrowingOperation {
-            try await deregisterForNotifications()
-          }
+          try await deregisterForNotifications()
         } catch {
-          print(error)
+          crashReporter.log(error.localizedDescription)
+          crashReporter.recordException(error)
         }
         try await processDelegatedIdentity(from: token, type: .permanent)
         UserDefaultsManager.shared.set(true, for: .userDefaultsLoggedIn)
@@ -105,11 +104,10 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
         self.provider = provider
         guard let canisterPrincipalString = self.canisterPrincipalString else { return }
         do {
-          try await recordThrowingOperation {
-            try await registerForNotifications()
-          }
+          try await registerForNotifications()
         } catch {
-          print(error)
+          crashReporter.log(error.localizedDescription)
+          crashReporter.recordException(error)
         }
         Task {
           do {
@@ -196,24 +194,22 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
   func updateSession(canisterID: String) async throws {
     let oldState = stateSubject.value
     do {
-      try await recordThrowingOperation {
-        guard let accessTokenData = try KeychainHelper.retrieveData(for: Constants.keychainAccessToken),
-              let accessTokenString = String(data: accessTokenData, encoding: .utf8),
-              let url = URL(string: Constants.yralMetaDataBaseURLString) else { return }
-        let body = Data("{}".utf8)
-        let endpoint = Endpoint(
-          http: "update_session_as_registered",
-          baseURL: url,
-          path: Constants.sessionRegistrationPath + canisterID,
-          method: .post,
-          headers: [
-            "authorization": "Bearer \(accessTokenString)",
-            "Content-Type": "application/json"
-          ],
-          body: body
-        )
-        try await networkService.performRequest(for: endpoint)
-      }
+      guard let accessTokenData = try KeychainHelper.retrieveData(for: Constants.keychainAccessToken),
+            let accessTokenString = String(data: accessTokenData, encoding: .utf8),
+            let url = URL(string: Constants.yralMetaDataBaseURLString) else { return }
+      let body = Data("{}".utf8)
+      let endpoint = Endpoint(
+        http: "update_session_as_registered",
+        baseURL: url,
+        path: Constants.sessionRegistrationPath + canisterID,
+        method: .post,
+        headers: [
+          "authorization": "Bearer \(accessTokenString)",
+          "Content-Type": "application/json"
+        ],
+        body: body
+      )
+      try await networkService.performRequest(for: endpoint)
     } catch {
       stateSubject.value = oldState
     }
@@ -236,11 +232,9 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
   }
 
   func deregisterForNotifications() async throws {
-    try await recordThrowingOperation {
-      let token = notificationService.getRegistrationToken()
-      let identity = try self.generateNewDelegatedIdentity()
-      try await unregister_device(identity, token.intoRustString())
-    }
+    let token = notificationService.getRegistrationToken()
+    let identity = try self.generateNewDelegatedIdentity()
+    try await unregister_device(identity, token.intoRustString())
   }
 
   func setAnalyticsData() async {
@@ -288,14 +282,14 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
     } catch {
       print(error)
     }
-    let (userPrincipal, canisterPrincipal, coins, isLoggedIn): (String, String, UInt64, Bool) = {
+    let (userPrincipal, canisterPrincipal, email, coins, isLoggedIn): (String, String, String?, UInt64, Bool) = {
       switch stateSubject.value {
       case .ephemeralAuthentication(let userPrincipal, let canisterPrincipal, let coins, _):
-        return (userPrincipal, canisterPrincipal, coins, false)
-      case .permanentAuthentication(let userPrincipal, let canisterPrincipal, let coins, _):
-        return (userPrincipal, canisterPrincipal, coins, true)
+        return (userPrincipal, canisterPrincipal, nil, coins, false)
+      case .permanentAuthentication(let userPrincipal, let canisterPrincipal, let email, let coins, _):
+        return (userPrincipal, canisterPrincipal, email, coins, true)
       default:
-        return ("", "", .zero, false)
+        return ("", "", nil, .zero, false)
       }
     }()
     AnalyticsModuleKt.getAnalyticsManager().setUserProperties(
@@ -305,7 +299,13 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
         isLoggedIn: KotlinBoolean(bool: isLoggedIn),
         isCreator: KotlinBoolean(bool: isCreator),
         walletBalance: KotlinDouble(value: Double(coins)),
-        tokenType: .yral
+        tokenType: .yral,
+        isForcedGamePlayUser: KotlinBoolean(
+          bool: AppDIHelper().getFeatureFlagManager().isEnabled(
+            flag: FeedFeatureFlags.SmileyGame.shared.StopAndVoteNudge
+          )
+        ),
+        emailId: email
       )
     )
     MPSessionReplay.getInstance()?.identify(distinctId: Mixpanel.sharedInstance()?.distinctId ?? "")
@@ -355,6 +355,7 @@ extension DefaultAuthClient {
     static let keychainIdentity = "yral.delegatedIdentity"
     static let keychainCanisterPrincipal = "yral.canisterPrincipal"
     static let keychainUserPrincipal = "yral.userPrincipal"
+    static let keychainEmail = "yral.userEmail"
     static let keychainAccessToken = "yral.accessToken"
     static let keychainIDToken = "yral.idToken"
     static let keychainRefreshToken = "yral.refreshToken"

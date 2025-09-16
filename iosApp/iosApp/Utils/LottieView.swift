@@ -13,6 +13,7 @@ struct LottieView: UIViewRepresentable {
   let name: String
   let loopMode: LottieLoopMode
   let animationSpeed: CGFloat
+  let resetProgress: Bool
   let animationCompleted: () -> Void
 
   func makeUIView(context: Context) -> UIView {
@@ -32,7 +33,10 @@ struct LottieView: UIViewRepresentable {
       animationView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor)
     ])
 
-    animationView.play { _ in
+    animationView.play { finished in
+      if finished && loopMode == .playOnce && resetProgress {
+        animationView.currentProgress = .zero
+      }
       animationCompleted()
     }
     return containerView

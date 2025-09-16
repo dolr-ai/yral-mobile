@@ -3,7 +3,6 @@ plugins {
     alias(libs.plugins.yral.android.library)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.kotlinCocoapods)
-    alias(libs.plugins.yral.shared.rust.lib)
 }
 
 kotlin {
@@ -39,6 +38,7 @@ kotlin {
             implementation(projects.shared.libs.crashlytics)
             api(libs.gitlive.firebase.kotlin.anlaytics)
             implementation(projects.shared.libs.preferences)
+            implementation(projects.shared.rust.service)
         }
         androidMain.dependencies {
             implementation(libs.facebook.sdk.android.core)

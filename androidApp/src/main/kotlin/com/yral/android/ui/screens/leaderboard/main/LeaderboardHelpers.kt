@@ -1,0 +1,117 @@
+package com.yral.android.ui.screens.leaderboard.main
+
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.dp
+import com.yral.android.R
+
+object LeaderboardHelpers {
+    const val POS_GOLD = 1
+    const val POS_SILVER = 2
+    const val POS_BRONZE = 3
+
+    fun getTextDecoration(position: Int): Int =
+        when (position) {
+            POS_GOLD -> R.drawable.golden_gradient
+            POS_SILVER -> R.drawable.silver_gradient
+            POS_BRONZE -> R.drawable.bronze_gradient
+            else -> 0
+        }
+
+    @Suppress("MagicNumber")
+    fun getBrush(
+        position: Int,
+        textSize: IntSize,
+    ): Brush? {
+        val width = textSize.width.toFloat().coerceAtLeast(1f)
+        val height = textSize.height.toFloat().coerceAtLeast(1f)
+
+        val scaleX = width / 50f
+        val scaleY = height / 50f
+        val radiusScale = maxOf(width, height) / 50f
+
+        return when (position) {
+            POS_GOLD ->
+                Brush.radialGradient(
+                    0f to Color(0xFFBF760B),
+                    0.413f to Color(0xFFFFE89F),
+                    1f to Color(0xFFC38F00),
+                    center = Offset(0f, 4.5f * scaleY),
+                    radius = 99.086f * radiusScale,
+                )
+
+            POS_SILVER ->
+                Brush.radialGradient(
+                    0f to Color(0xFF2F2F30),
+                    0.413f to Color(0xFFFFFFFF),
+                    1f to Color(0xFF4B4B4B),
+                    center = Offset(0f, 0f),
+                    radius = 91.219f * radiusScale,
+                )
+
+            POS_BRONZE ->
+                Brush.radialGradient(
+                    0f to Color(0xFF6D4C35),
+                    0.413f to Color(0xFFDBA374),
+                    1f to Color(0xFF9F7753),
+                    center = Offset(1f * scaleX, 2f * scaleY),
+                    radius = 98.995f * radiusScale,
+                )
+
+            else -> null
+        }
+    }
+
+    fun getProfileImageRing(position: Int): Int =
+        when (position) {
+            POS_GOLD -> R.drawable.golden_ring
+            POS_SILVER -> R.drawable.silver_ring
+            POS_BRONZE -> R.drawable.bronze_ring
+            else -> 0
+        }
+
+    fun getUserBriefBorder(position: Int): Int =
+        when (position) {
+            POS_GOLD -> R.drawable.golden_border
+            POS_SILVER -> R.drawable.silver_border
+            POS_BRONZE -> R.drawable.bronze_border
+            else -> 0
+        }
+
+    fun getTrophyImageWidth(position: Int): Dp =
+        when (position) {
+            POS_GOLD -> 66.75.dp
+            POS_SILVER -> 45.75.dp
+            POS_BRONZE -> 45.dp
+            else -> 45.dp
+        }
+
+    fun getTrophyImageHeight(position: Int): Dp =
+        when (position) {
+            POS_GOLD -> 146.dp
+            POS_SILVER -> 106.dp
+            POS_BRONZE -> 91.dp
+            else -> 91.dp
+        }
+
+    fun getTrophyImageOffset(
+        position: Int,
+        isProfileImageVisible: Boolean,
+    ) = if (isProfileImageVisible) {
+        when (position) {
+            POS_GOLD -> 20.dp
+            POS_SILVER -> 13.75.dp
+            POS_BRONZE -> 17.49.dp
+            else -> 17.49.dp
+        }
+    } else {
+        48.dp
+    }
+
+    const val PROFILE_IMAGE_SIZE = 25f
+    const val MAX_USERS_WITH_DUPLICATE_RANK = 4
+    const val MAX_USERS_PRINCIPAL_LENGTH = 4
+}

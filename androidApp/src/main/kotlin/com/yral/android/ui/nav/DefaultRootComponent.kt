@@ -12,6 +12,7 @@ import com.arkivanov.decompose.value.Value
 import com.yral.android.ui.screens.home.nav.HomeComponent
 import com.yral.android.ui.screens.profile.nav.ProfileComponent
 import com.yral.android.update.UpdateState
+import com.yral.shared.libs.routing.routes.api.AppRoute
 import kotlinx.serialization.Serializable
 
 internal class DefaultRootComponent(
@@ -20,7 +21,10 @@ internal class DefaultRootComponent(
     ComponentContext by componentContext {
     private val navigation = StackNavigation<Config>()
     private var homeComponent: HomeComponent? = null
+
+    @Deprecated("Use pendingNavRoute")
     private var pendingNavigation: String? = null
+    private var pendingNavRoute: AppRoute? = null
 
     private val _updateState = MutableValue<UpdateState>(UpdateState.Idle)
     override val updateState: Value<UpdateState> = _updateState
@@ -41,6 +45,12 @@ internal class DefaultRootComponent(
                 if (navigation != null && stack.active.instance is RootComponent.Child.Home) {
                     pendingNavigation = null
                     homeComponent?.handleNavigation(navigation)
+                } else {
+                    val navRoute = pendingNavRoute
+                    if (navRoute != null && stack.active.instance is RootComponent.Child.Home) {
+                        pendingNavRoute = null
+                        homeComponent?.onNavigationRequest(navRoute)
+                    }
                 }
             }
         }
@@ -77,6 +87,7 @@ internal class DefaultRootComponent(
 
     override fun isSplashActive(): Boolean = stack.active.instance is RootComponent.Child.Splash
 
+    @Deprecated("use onNavigationRequest")
     override fun handleNavigation(destination: String) {
         when {
             destination.startsWith(ProfileComponent.DEEPLINK) -> {
@@ -86,6 +97,14 @@ internal class DefaultRootComponent(
                     homeComponent?.handleNavigation(destination)
                 }
             }
+        }
+    }
+
+    override fun onNavigationRequest(appRoute: AppRoute) {
+        if (isSplashActive()) {
+            pendingNavRoute = appRoute
+        } else {
+            homeComponent?.onNavigationRequest(appRoute)
         }
     }
 

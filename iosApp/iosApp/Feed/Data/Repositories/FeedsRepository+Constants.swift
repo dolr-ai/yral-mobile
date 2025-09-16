@@ -13,10 +13,10 @@ extension FeedsRepository {
     static let cloudflareSuffix = "/manifest/video.m3u8"
     static let thumbnailSuffix = "/thumbnails/thumbnail.jpg"
     static let feedsBaseURL = "https://recommendation-service-82502260393.us-central1.run.app"
-    static let cacheSuffix = "/recommendations/cache"
-    static let mlFeedSuffix = "/recommendations"
-    static let reportVideoPath = "/api/v1/posts/report_v2"
-    static let videoEventPath = "/api/v1/events/bulk"
+    static let cacheSuffix = "/v2/recommendations/cache"
+    static let mlFeedSuffix = "/v2/recommendations"
+    static let reportVideoPath = "/api/v2/posts/report"
+    static let videoEventPath = "/api/v2/events/bulk"
     static let rechargePath = "tap_to_recharge"
     static let initialNumResults: Int64 = 20
     static let mlNumResults: Int64 = 10

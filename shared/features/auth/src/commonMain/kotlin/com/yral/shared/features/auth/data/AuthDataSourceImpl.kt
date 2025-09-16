@@ -1,6 +1,7 @@
 package com.yral.shared.features.auth.data
 
 import co.touchlab.kermit.Logger
+import com.github.michaelbull.result.onFailure
 import com.google.firebase.appcheck.ktx.appCheck
 import com.google.firebase.ktx.Firebase
 import com.yral.shared.core.AppConfigurations.METADATA_BASE_URL
@@ -17,9 +18,8 @@ import com.yral.shared.http.httpPost
 import com.yral.shared.http.httpPostWithStringResponse
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
-import com.yral.shared.uniffi.generated.delegatedIdentityWireToJson
-import com.yral.shared.uniffi.generated.registerDevice
-import com.yral.shared.uniffi.generated.unregisterDevice
+import com.yral.shared.rust.service.services.HelperService
+import com.yral.shared.rust.service.utils.delegatedIdentityWireToJson
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.expectSuccess
 import io.ktor.client.request.headers
@@ -172,14 +172,24 @@ class AuthDataSourceImpl(
         val identityWire = preferences.getBytes(PrefKeys.IDENTITY.name)
         identityWire?.let { identity ->
             Logger.d("AuthDataSource") { "registerForNotifications: token $token" }
-            registerDevice(identity, token)
+            HelperService
+                .registerDevice(identity, token)
+                .onFailure { error ->
+                    Logger.e("AuthDataSource") { "Failed to register device: ${error.message}" }
+                    throw YralException("Failed to register device: ${error.message}")
+                }
         } ?: throw YralException("Identity not found while registering for notifications")
     }
 
     override suspend fun deregisterForNotifications(token: String) {
         val identityWire = preferences.getBytes(PrefKeys.IDENTITY.name)
         identityWire?.let { identity ->
-            unregisterDevice(identity, token)
+            HelperService
+                .unregisterDevice(identity, token)
+                .onFailure { error ->
+                    Logger.e("AuthDataSource") { "Failed to unregister device: ${error.message}" }
+                    throw YralException("Failed to unregister device: ${error.message}")
+                }
         } ?: throw YralException("Identity not found while deregistering for notifications")
     }
 

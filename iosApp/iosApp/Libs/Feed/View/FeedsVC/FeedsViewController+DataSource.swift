@@ -80,11 +80,10 @@ extension FeedsViewController {
       snapshot.appendSections([.zero])
     }
     snapshot.appendItems(feeds, toSection: .zero)
-
-    feedsDataSource.apply(snapshot, animatingDifferences: shouldAnimate) { [weak self] in
+    applySnapshot(snapshot, animatingDifferences: shouldAnimate) { [weak self] in
       guard let self = self else { return }
       guard feedType == .currentUser else { return }
-      feedsPlayer.advanceToVideo(at: viewModel.getCurrentFeedIndex())
+      feedsPlayer.advanceToVideo(at: viewModel.getCurrentFeedIndex(), isDeepLink: false)
       self.feedsCV.scrollToItem(
         at: IndexPath(
           item: viewModel.getCurrentFeedIndex(),
@@ -104,13 +103,70 @@ extension FeedsViewController {
     guard !self.feedsDataSource.snapshot().itemIdentifiers.isEmpty else { return }
     var snapshot = feedsDataSource.snapshot()
     snapshot.appendItems(feeds, toSection: .zero)
-    feedsDataSource.apply(snapshot, animatingDifferences: shouldAnimate) {
+    applySnapshot(snapshot, animatingDifferences: shouldAnimate) {
       self.loadMoreRequestMade = {
         if case .fetchingInitialFeeds = self.viewModel.unifiedEvent {
           return true
         }
         return false
       }()
+    }
+  }
+
+  func removeFeeds(with feeds: [FeedResult], isReport: Bool = false, animated: Bool = false) {
+    var snapshot = feedsDataSource.snapshot()
+    snapshot.deleteItems(feeds)
+    applySnapshot(snapshot, animatingDifferences: animated) { [weak self] in
+      guard let self else { return }
+      feedsPlayer.removeFeeds(feeds)
+      if snapshot.itemIdentifiers.isEmpty {
+        feedsPlayer.pause()
+      }
+    }
+    if isReport {
+      DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.animationPeriod) {
+        ToastManager.showToast(type: .reportSuccess)
+      }
+    }
+    if snapshot.itemIdentifiers.isEmpty {
+      onBackButtonTap?()
+    }
+  }
+
+  func findItem(postId: String, canisterId: String) -> FeedResult? {
+    feedsDataSource.snapshot().itemIdentifiers.first {
+      $0.postID == postId && $0.canisterID == canisterId
+    }
+  }
+
+  func insertOrMoveToFront(_ feed: FeedResult) {
+    var snapshot = feedsDataSource.snapshot()
+    if snapshot.numberOfSections == .zero { snapshot.appendSections([.zero]) }
+
+    if let duplicate = snapshot.itemIdentifiers.first(
+      where: { $0.postID == feed.postID && $0.principalID == feed.principalID }
+    ) {
+      snapshot.deleteItems([duplicate])
+      feedsPlayer.removeFeeds([duplicate])
+    }
+
+    if let firstItem = snapshot.itemIdentifiers.first {
+      snapshot.insertItems([feed], beforeItem: firstItem)
+    } else {
+      snapshot.appendItems([feed], toSection: .zero)
+    }
+    feedsPlayer.insertFeed([feed], at: .zero)
+    applySnapshot(snapshot, animatingDifferences: true) { [weak self] in
+      guard let self = self else { return }
+      self.feedsPlayer.advanceToVideo(at: .zero, isDeepLink: true)
+      self.feedsCV.scrollToItem(
+        at: IndexPath(
+          item: self.viewModel.getCurrentFeedIndex(),
+          section: .zero
+        ),
+        at: .centeredVertically, animated: false
+      )
+      self.feedsCV.isHidden = false
     }
   }
 
@@ -122,21 +178,11 @@ extension FeedsViewController {
     }
 
     guard let cell = feedsCV.cellForItem(at: IndexPath(item: index, section: 0)) as? FeedsCell else {
-      updateUIAfterCastVoteSuccess(
-        with: response,
-        forIndex: index,
-        withItems: items,
-        andSnapshot: snapshot
-      )
+      updateUIAfterCastVoteSuccess(with: response)
       return
     }
     cell.startSmileyGamResultAnimation(for: response) { [weak self] in
-      self?.updateUIAfterCastVoteSuccess(
-        with: response,
-        forIndex: index,
-        withItems: items,
-        andSnapshot: snapshot
-      )
+      self?.updateUIAfterCastVoteSuccess(with: response)
     }
     guard index < snapshot.numberOfItems else {
       return
@@ -163,60 +209,68 @@ extension FeedsViewController {
     )
   }
 
-  private func updateUIAfterCastVoteSuccess(
-    with response: SmileyGameResultResponse,
-    forIndex index: Int,
-    withItems items: [FeedResult],
-    andSnapshot snapshot: NSDiffableDataSourceSnapshot<Int, FeedResult>
-  ) {
-    var items = items
-    items[index].smileyGame?.state = .played(response)
+  private func updateUIAfterCastVoteSuccess(with response: SmileyGameResultResponse) {
+    var snap = feedsDataSource.snapshot()
+    guard let oldItem = snap.itemIdentifiers.first(where: { $0.videoID == response.videoID }) else {
+      return
+    }
 
-    var snapshot = snapshot
-    snapshot.deleteItems(snapshot.itemIdentifiers)
-    snapshot.appendItems(items)
+    var newItem = oldItem
+    newItem.smileyGame?.state = .played(response)
 
-    self.feedsDataSource.apply(snapshot, animatingDifferences: true)
-    self.session.update(coins: response.coins)
+    if let pos = snap.itemIdentifiers.firstIndex(of: oldItem) {
+      snap.deleteItems([oldItem])
+      if pos < snap.itemIdentifiers.count {
+        let next = snap.itemIdentifiers[pos]
+        snap.insertItems([newItem], beforeItem: next)
+      } else {
+        snap.appendItems([newItem])
+      }
+    }
+
+    feedsDataSource.apply(snap, animatingDifferences: true)
+    let oldBalance = session.state.coins
+    let updatedBalance = Int(oldBalance) + response.coinDelta
+    session.update(coins: UInt64(updatedBalance))
   }
 
   func handleCastVoteFailure(_ errorMessage: String, videoID: String) {
-    var snapshot = feedsDataSource.snapshot()
-    var items = snapshot.itemIdentifiers
-    guard let index = items.firstIndex(where: { $0.videoID == videoID }) else {
+    var snap = feedsDataSource.snapshot()
+    guard let oldItem = snap.itemIdentifiers.first(where: { $0.videoID == videoID }) else {
       return
     }
 
-    guard let cell = feedsCV.cellForItem(at: IndexPath(item: index, section: 0)) as? FeedsCell else {
-      return
+    if let idx = snap.itemIdentifiers.firstIndex(of: oldItem),
+       let cell = feedsCV.cellForItem(at: IndexPath(item: idx, section: 0)) as? FeedsCell {
+      cell.handleSmileyGameError(errorMessage)
     }
 
-    cell.handleSmileyGameError(errorMessage)
+    var newItem = oldItem
+    newItem.smileyGame?.state = .error(errorMessage)
 
-    items[0].smileyGame?.state = .error(errorMessage)
-
-    snapshot.deleteItems(snapshot.itemIdentifiers)
-    snapshot.appendItems(items)
-    feedsDataSource.apply(snapshot, animatingDifferences: true)
+    if let pos = snap.itemIdentifiers.firstIndex(of: oldItem) {
+      snap.deleteItems([oldItem])
+      if pos < snap.itemIdentifiers.count {
+        let next = snap.itemIdentifiers[pos]
+        snap.insertItems([newItem], beforeItem: next)
+      } else {
+        snap.appendItems([newItem])
+      }
+    }
+    applySnapshot(snap, animatingDifferences: true)
   }
+}
 
-  func removeFeeds(with feeds: [FeedResult], isReport: Bool = false, animated: Bool = false) {
-    var snapshot = feedsDataSource.snapshot()
-    snapshot.deleteItems(feeds)
-    feedsDataSource.apply(snapshot, animatingDifferences: animated) { [weak self] in
-      guard let self else { return }
-      feedsPlayer.removeFeeds(feeds)
-      if snapshot.itemIdentifiers.isEmpty {
-        feedsPlayer.pause()
-      }
-    }
-    if isReport {
-      DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.animationPeriod) {
-        ToastManager.showToast(type: .reportSuccess)
-      }
-    }
-    if snapshot.itemIdentifiers.isEmpty {
-      onBackButtonTap?()
+extension FeedsViewController {
+  func applySnapshot(
+    _ snapshot: Snapshot,
+    animatingDifferences: Bool = false,
+    completion: (() -> Void)? = nil
+  ) {
+    isApplyingSnapshot = true
+    feedsDataSource.apply(snapshot, animatingDifferences: animatingDifferences) { [weak self] in
+      completion?()
+      self?.isApplyingSnapshot = false
     }
   }
 }
