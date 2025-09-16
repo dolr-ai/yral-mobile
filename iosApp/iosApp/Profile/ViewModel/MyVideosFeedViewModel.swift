@@ -163,4 +163,6 @@ class MyVideosFeedViewModel: FeedViewModelProtocol, ObservableObject {
   func refreshFeeds() async { }
 
   func rechargeWallet() async { }
+
+  func fetchDeepLinkFeed(request: DeepLinkFeedRequest) async { }
 }

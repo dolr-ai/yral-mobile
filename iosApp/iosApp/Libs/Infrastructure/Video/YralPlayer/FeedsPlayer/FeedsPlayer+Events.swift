@@ -63,7 +63,7 @@ extension FeedsPlayer {
   }
 
   @objc func handlePlaybackStalled(_ note: Notification) {
-    playbackMonitor?.incrementMetric(Constants.rebufferCountMetric, by: Int64(.one))
+    playbackMonitor?.incrementMetric(Constants.rebufferCountMetric, by: Int64(CGFloat.one))
     stallStart = Date()
   }
 

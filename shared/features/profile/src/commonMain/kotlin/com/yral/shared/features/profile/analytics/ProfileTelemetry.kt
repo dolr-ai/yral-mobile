@@ -6,11 +6,13 @@ import com.yral.shared.analytics.events.CtaType
 import com.yral.shared.analytics.events.DeleteVideoInitiatedEventData
 import com.yral.shared.analytics.events.GameType
 import com.yral.shared.analytics.events.ProfilePageViewedEventData
+import com.yral.shared.analytics.events.SourceScreen
 import com.yral.shared.analytics.events.UploadVideoClickedEventData
 import com.yral.shared.analytics.events.VideoClickedEventData
 import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.analytics.events.VideoDeletedEventData
-import com.yral.shared.rust.domain.models.FeedDetails
+import com.yral.shared.analytics.events.VideoShareClickedEventData
+import com.yral.shared.data.feed.domain.FeedDetails
 
 class ProfileTelemetry(
     private val analyticsManager: AnalyticsManager,
@@ -72,6 +74,19 @@ class ProfileTelemetry(
                     videoId = feedDetails.videoID,
                     ctaType = catType,
                 ),
+        )
+    }
+
+    fun onShareClicked(
+        feedDetails: FeedDetails,
+        userPrincipalId: String?,
+    ) {
+        analyticsManager.trackEvent(
+            VideoShareClickedEventData(
+                feedDetails.videoID,
+                SourceScreen.PROFILE,
+                feedDetails.principalID == userPrincipalId,
+            ),
         )
     }
 }

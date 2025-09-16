@@ -7,178 +7,408 @@
 //
 
 import SwiftUI
+import iosSharedUmbrella
 
+// swiftlint: disable file_length
+// swiftlint: disable type_body_length
 struct LeaderboardView: View {
   @EnvironmentObject var session: SessionManager
+  @Environment(\.appDIContainer) private var appDIContainer
+  @Environment(\.leaderboardNavController) private var navController
 
   @StateObject var viewModel: LeaderboardViewModel
 
-  @State private var showLeaderboard: Bool = false
-  @State private var showLoader: Bool = true
+  @State private var leaderboardRowsExpanded = false
+  @State private var showLoader = true
+  @State private var showConfetti = false
+  @State private var mode: LeaderboardMode = .daily
+  @State private var timerShadowColor = Constants.timerShadowClear
+  @State private var timerTextColor = Constants.timerShadowPink
+  @State private var timerImage = Constants.timerImagePink
+  @State private var timerText = ""
+  @State private var headerHeight: CGFloat = .zero
 
-  let rowWidth = UIScreen.main.bounds.width - 32
+  let timer = Timer.publish(every: Constants.timerInterval, on: .main, in: .common).autoconnect()
 
   var body: some View {
-      ScrollView {
-        if let leaderboard = viewModel.leaderboardResponse, showLeaderboard {
-          buildHeader(leaderboard)
-          buildLeaderboard(leaderboard)
+    GeometryReader { geo in
+      let usableHeight = geo.size.height - geo.safeAreaInsets.top - geo.safeAreaInsets.bottom
+      ZStack {
+        VStack(alignment: .center, spacing: .zero) {
+          VStack(alignment: .center, spacing: .zero) {
+            buildSegmentedControl()
+
+            if viewModel.leaderboardResponse?.timeLeftInMs != nil {
+              buildTimerSection()
+            }
+          }
+          .padding(.bottom, Constants.headerGradientBottom)
+          .background(
+            mode == .daily ?
+            Constants.headerGradientDaily
+              .opacity(leaderboardRowsExpanded ? .one : .zero)
+              .animation(
+                .easeOut(
+                  duration: Constants.headerGradientAnimationTime
+                ),
+                value: leaderboardRowsExpanded
+              ) :
+              Constants.headerGradientAllTime
+              .opacity(leaderboardRowsExpanded ? .one : .zero)
+              .animation(
+                .easeOut(
+                  duration: Constants.headerGradientAnimationTime
+                ),
+                value: leaderboardRowsExpanded
+              )
+          )
+
+          buildPodiumSection()
+        }
+        .frame(maxWidth: .infinity)
+        .background(
+          LottieView(
+            name: mode == .daily ? Constants.dailyHeaderLottie : Constants.alltimeHeaderLottie,
+            loopMode: .playOnce,
+            animationSpeed: .one,
+            resetProgress: false) {}
+            .id(mode)
+        )
+        .background(
+          Image(mode == .daily ? Constants.dailyHeaderBackground : Constants.alltimeHeaderBackground)
+            .resizable()
+            .readSize({ newSize in
+              headerHeight = newSize.height
+            })
+        )
+        .frame(maxHeight: .infinity, alignment: .top)
+
+        if let response = viewModel.leaderboardResponse {
+          DraggableView(
+            isExpanded: $leaderboardRowsExpanded,
+            topInset: mode == .daily ? Constants.dailyTopInset : Constants.alltimeTopInset,
+            peekHeight: usableHeight - headerHeight,
+            background: Constants.dragViewBackground
+          ) {
+            buildLeaderboardHeader()
+          } content: {
+            buildLeaderboard(response)
+          }
+          .id(mode)
+          .opacity(showLoader ? .zero : .one)
         }
       }
-      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+      .frame(maxWidth: .infinity)
+      .frame(maxHeight: .infinity)
       .background(Constants.background).ignoresSafeArea()
-      .overlay(alignment: .center, content: {
-        if showLoader {
-          LottieLoaderView(animationName: Constants.loader)
-            .frame(width: Constants.loaderSize, height: Constants.loaderSize)
+      .hapticFeedback(.impact(weight: HapticFeedback.Weight.light), trigger: mode)
+      .overlay(alignment: .center) {
+        if showConfetti {
+          ForEach(Constants.confettiPositions.indices, id: \.self) { index in
+            LottieView(
+              name: Constants.confetti,
+              loopMode: .playOnce,
+              animationSpeed: .one,
+              resetProgress: false) {}
+              .frame(width: Constants.screenWidth, height: Constants.screenWidth)
+              .position(
+                x: Constants.screenWidth * Constants.confettiPositions[index].x,
+                y: Constants.screenHeight * Constants.confettiPositions[index].y
+              )
+              .allowsHitTesting(false)
+              .id(mode)
+          }
         }
-      })
+      }
       .onReceive(viewModel.$state, perform: { state in
+        leaderboardRowsExpanded = false
         switch state {
         case .loading:
           showLoader = true
-          showLeaderboard = false
+          showConfetti = false
         case .success:
+          AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+            event: LeaderBoardPageLoadedEventData(
+              leaderBoardTabType: mode == .daily ? .daily : .all,
+              rank: Int32(viewModel.leaderboardResponse?.userRow?.position ?? -1),
+              visibleRows: nil
+            )
+          )
           showLoader = false
-          showLeaderboard = true
+          showConfetti = shouldShowConfetti()
+          timerText = formatMillisecondsToHMS(
+            viewModel.leaderboardResponse?.timeLeftInMs ?? .zero
+          )
         default:
           showLoader = false
-          showLeaderboard = false
+          showConfetti = false
+        }
+      })
+      .onReceive(timer, perform: { _ in
+        if mode == .daily {
+          if let timeLeftInMs = viewModel.leaderboardResponse?.timeLeftInMs, timeLeftInMs > .zero {
+            if timeLeftInMs < Constants.timerAnimationTime {
+              withAnimation(.easeIn(duration: Constants.timerAnimationInterval)) {
+                if timerShadowColor == Constants.timerShadowClear || timerShadowColor == Constants.timerShadowWhite {
+                  timerTextColor = Constants.timerTextColorWhite
+                  timerImage = Constants.timerImageWhite
+                  timerShadowColor = Constants.timerShadowPink
+                } else {
+                  timerTextColor = Constants.timerTextColorPink
+                  timerImage = Constants.timerImagePink
+                  timerShadowColor = Constants.timerShadowWhite
+                }
+              }
+            }
+
+            let newTimeLeftInMs = timeLeftInMs - Constants.timerIntervalMS
+            viewModel.leaderboardResponse?.timeLeftInMs = newTimeLeftInMs
+            timerText = formatMillisecondsToHMS(newTimeLeftInMs)
+          }
         }
       })
       .onAppear {
+        AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+          event: LeaderBoardPageViewedEventData(
+            leaderBoardTabType: mode == .daily ? .daily : .all
+          )
+        )
         showLoader = true
         Task {
-          await viewModel.refreshLeaderboardIfReady()
+          viewModel.refreshLeaderboardIfReady(for: mode)
         }
       }
+    }
   }
 
   // swiftlint: disable function_body_length
   @ViewBuilder
-  private func buildHeader(_ response: LeaderboardResponse) -> some View {
-    let (topThreePrincipals, topThreeWins) = topThreePositions(for: response)
-
-    VStack(alignment: .leading, spacing: .zero) {
-      Text(Constants.header)
-        .font(Constants.headerFont)
-        .foregroundColor(Constants.headerColour)
-        .padding(.leading, Constants.headerLeading)
-        .padding(.top, UIApplication.shared.topSafeAreaInset + Constants.headerTop)
-        .padding(.bottom, Constants.headerBottom)
-
-      HStack(spacing: .zero) {
-        Spacer(minLength: .zero)
-
-        Image(Constants.podiumImage)
-          .resizable()
-          .frame(width: Constants.podiumSize.width, height: Constants.podiumSize.height)
-
-        Spacer(minLength: .zero)
-      }
-      .padding(.top, Constants.headerTopHStackTop)
-
-      HStack(spacing: .zero) {
-        Spacer(minLength: .zero)
-
-        HStack(spacing: Constants.headerBottomHStackSpacing) {
-          ForEach(topThreePrincipals.indices, id: \.self) { index in
-            VStack(spacing: .zero) {
-              Text(condensedIDString(for: topThreePrincipals[index]))
-                .font(Constants.headerIDFont)
-                .foregroundColor(Constants.headerIDColour)
-                .multilineTextAlignment(.center)
-                .lineLimit(topThreePrincipals[index].count == .one ? .one : .two)
-                .truncationMode(.tail)
-
-              Spacer(minLength: Constants.headerBottomHStackSpacerMinLenght)
-
-              VStack(spacing: .zero) {
-                Text(topThreeWins[index].description)
-                  .font(Constants.satsFont)
-                  .foregroundColor(Constants.satsColour)
-                  .overlay(
-                    textGradientFor(index, radius: Constants.winsEndRadius)
-                      .mask(
-                        Text(topThreeWins[index].description)
-                          .font(Constants.satsFont)
-                      )
-                  )
-
-                Text(Constants.totalSats)
-                  .font(Constants.gamesWonFont)
-                  .foregroundColor(Constants.gamesWonColour)
-                  .overlay(
-                    textGradientFor(index, radius: Constants.gameWinsEndRadius)
-                      .mask(
-                        Text(Constants.totalSats)
-                          .font(Constants.gamesWonFont)
-                      )
-                  )
-              }
-            }
+  private func buildSegmentedControl() -> some View {
+    HStack(spacing: Constants.tabSpacing) {
+      Text(Constants.dailyTab)
+        .font(Constants.tabFont)
+        .foregroundColor(mode == .daily ? Constants.tabActiveColor : Constants.tabInactiveColor)
+        .frame(maxWidth: .infinity)
+        .frame(maxHeight: .infinity)
+        .background(
+          RoundedRectangle(cornerRadius: Constants.tabCornerRadius)
+            .fill(mode == .daily ? Constants.tabActiveBackground : Constants.tabInactiveBackground)
+        )
+        .padding(.vertical, Constants.tabVertical)
+        .padding(.horizontal, Constants.tabHorizontal)
+        .onTapGesture {
+          leaderboardRowsExpanded = false
+          mode = .daily
+          AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+            event: LeaderBoardTabClickedEventData(
+              leaderBoardTabType: .daily
+            )
+          )
+          Task {
+            viewModel.refreshLeaderboardIfReady(for: mode)
           }
         }
-        .frame(width: Constants.headerBottomHStackWidth)
-        .frame(maxHeight: Constants.headerBottomHStackHeight)
 
-        Spacer(minLength: .zero)
-      }
-      .padding(.top, Constants.headerBottomHStackTop)
-      .padding(.bottom, Constants.headerBottomHStackBottom)
+      Text(Constants.alltimeTab)
+        .font(Constants.tabFont)
+        .foregroundColor(mode == .allTime ? Constants.tabActiveColor : Constants.tabInactiveColor)
+        .frame(maxWidth: .infinity)
+        .frame(maxHeight: .infinity)
+        .background(
+          RoundedRectangle(cornerRadius: Constants.tabCornerRadius)
+            .fill(mode == .allTime ? Constants.tabActiveBackground : Constants.tabInactiveBackground)
+        )
+        .padding(.vertical, Constants.tabVertical)
+        .padding(.horizontal, Constants.tabHorizontal)
+        .onTapGesture {
+          leaderboardRowsExpanded = false
+          mode = .allTime
+          AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+            event: LeaderBoardTabClickedEventData(
+              leaderBoardTabType: .all
+            )
+          )
+          Task {
+            viewModel.refreshLeaderboardIfReady(for: mode)
+          }
+        }
     }
-    .frame(maxWidth: .infinity, alignment: .leading)
-    .background(
-      LottieView(name: Constants.headerLottie,
-                 loopMode: .playOnce,
-                 animationSpeed: .one) {}
-        .offset(x: .three, y: .thirteen)
-    )
-    .background(Constants.headerBackground)
+    .frame(maxWidth: .infinity)
+    .frame(height: Constants.tabHeight)
+    .background(Constants.tabBackground)
+    .cornerRadius(Constants.tabExternalCornerRadius)
+    .padding(.horizontal, Constants.tabExternalHorizontal)
+    .padding(.vertical, Constants.tabExternalVertical)
   }
   // swiftlint: enable function_body_length
 
   @ViewBuilder
+  private func buildTimerSection() -> some View {
+    HStack(spacing: .zero) {
+      Spacer(minLength: .zero)
+
+      HStack(spacing: Constants.timerHstackSpacing) {
+        timerImage
+          .resizable()
+          .frame(width: Constants.timerImageSize, height: Constants.timerImageSize)
+          .animation(.easeIn(duration: Constants.timerAnimationInterval), value: timerImage)
+
+        Text("Ends \(timerText)")
+          .font(Constants.timerTextFont)
+          .foregroundColor(timerTextColor)
+          .animation(.easeIn(duration: Constants.timerAnimationInterval), value: timerTextColor)
+      }
+      .padding(.vertical, Constants.timerHstackVertical)
+      .padding(.leading, Constants.timerHstackLeading)
+      .padding(.trailing, Constants.timerHstackTrailing)
+      .background(
+        RoundedRectangle(cornerRadius: Constants.timerHstackCornerRadius)
+          .fill(Constants.timerBackground)
+      )
+      .shadow(
+        color: timerShadowColor,
+        radius: Constants.timerShadowRadius,
+        x: .zero,
+        y: .zero
+      )
+      .offset(x: Constants.timerOffset)
+
+      Spacer(minLength: .zero)
+
+      Button {
+        if let leaderboardHistoryDIContainer = makeLeaderboardHistoryDIContainer() {
+          AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+            event: LeaderBoardCalendarClickedEventData(
+              leaderBoardTabType: .daily,
+              rank: Int32(viewModel.leaderboardResponse?.userRow?.position ?? -1)
+            )
+          )
+          navController?.pushViewController(leaderboardHistoryDIContainer.makeLeaderboardHistoryView(onDismiss: {
+            navController?.popViewController(animated: true)
+          }), animated: true)
+        }
+      } label: {
+        Image(Constants.historyImage)
+          .resizable()
+          .frame(width: Constants.historyImageSize, height: Constants.historyImageSize)
+      }
+      .padding(.trailing, Constants.historyImageTrailing)
+    }
+    .frame(maxWidth: .infinity)
+    .frame(height: Constants.timerHstackHeight)
+  }
+
+  // swiftlint: disable function_body_length
+  @ViewBuilder
+  private func buildPodiumSection() -> some View {
+    Image(Constants.podiumImage)
+      .resizable()
+      .frame(width: Constants.podiumSize.width, height: Constants.podiumSize.height)
+      .padding(.top, Constants.podiumTop)
+      .padding(.bottom, Constants.podiumBottom)
+
+    if let response = viewModel.leaderboardResponse {
+      let (topThreePrincipals, topThreeWins) = topThreePositions(for: response)
+      HStack(spacing: Constants.headerBottomHStackSpacing) {
+        ForEach(topThreePrincipals.indices, id: \.self) { index in
+          VStack(spacing: .zero) {
+            Text(condensedIDString(for: topThreePrincipals[index]))
+              .font(Constants.headerIDFont)
+              .foregroundColor(mode == .daily ? Constants.headerIDColour : Constants.headerIDColourWhite)
+              .multilineTextAlignment(.center)
+              .lineLimit(topThreePrincipals[index].count == .one ? .one : .two)
+              .truncationMode(.tail)
+
+            Spacer(minLength: Constants.gamesWonSpacing)
+            VStack(spacing: .zero) {
+              Text(topThreeWins[index].description)
+                .font(Constants.satsFont)
+                .foregroundColor(mode == .daily ? Constants.satsColour : Constants.satsColourWhite)
+
+              Text(Constants.totalSats)
+                .font(Constants.gamesWonFont)
+                .foregroundColor(mode == .daily ? Constants.gamesWonColour : Constants.gamesWonColourWhite)
+            }
+          }
+          .frame(width: Constants.gamesWonWidth)
+        }
+      }
+      .frame(width: Constants.headerBottomHStackWidth)
+      .frame(
+        height: topThreePrincipals.contains { $0.count > 1 } ?
+        Constants.gamesWonMaxHeight : Constants.gamesWonMinHeight
+      )
+      .padding(.bottom, Constants.gamesWonBottom)
+    } else if showLoader {
+      HStack {
+        LottieLoaderView(animationName: Constants.loader, resetProgess: false)
+          .frame(width: Constants.loaderSize, height: Constants.loaderSize)
+          .padding(.leading, Constants.loaderLeading)
+
+        Spacer()
+
+        LottieLoaderView(animationName: Constants.loader, resetProgess: false)
+          .frame(width: Constants.loaderSize, height: Constants.loaderSize)
+
+        Spacer()
+
+        LottieLoaderView(animationName: Constants.loader, resetProgess: false)
+          .frame(width: Constants.loaderSize, height: Constants.loaderSize)
+          .padding(.trailing, Constants.loaderTrailing)
+      }
+      .frame(width: Constants.headerBottomHStackWidth)
+      .frame(height: Constants.gamesWonMinHeight)
+      .padding(.bottom, Constants.gamesWonBottom)
+    }
+  }
+  // swiftlint: enable function_body_length
+
+  @ViewBuilder
+  private func buildLeaderboardHeader() -> some View {
+    HStack(spacing: .zero) {
+      Text(Constants.position)
+        .font(Constants.positionFont)
+        .foregroundColor(Constants.positionColour)
+        .frame(width: Constants.rowWidth * Constants.positionFactor, alignment: .leading)
+
+      Text(Constants.id)
+        .font(Constants.idFont)
+        .foregroundColor(Constants.idColour)
+        .frame(width: Constants.rowWidth * Constants.idFactor, alignment: .leading)
+
+      Text(Constants.totalSats)
+        .font(Constants.totalSatsFont)
+        .foregroundColor(Constants.totalSatsColour)
+        .frame(width: Constants.rowWidth * Constants.totalSatsFactor, alignment: .trailing)
+    }
+    .padding(.top, Constants.leaderboardHeaderTop)
+    .padding(.bottom, Constants.leaderboardHeaderBottom)
+  }
+
+  @ViewBuilder
   private func buildLeaderboard(_ response: LeaderboardResponse) -> some View {
     VStack(alignment: .leading, spacing: Constants.vStackSpacing) {
-      HStack(spacing: .zero) {
-        Text(Constants.position)
-          .font(Constants.positionFont)
-          .foregroundColor(Constants.positionColour)
-          .frame(width: rowWidth * Constants.positionFactor, alignment: .leading)
-
-        Text(Constants.id)
-          .font(Constants.idFont)
-          .foregroundColor(Constants.idColour)
-          .padding(.leading, Constants.idLeading)
-          .frame(width: rowWidth * Constants.idFactor, alignment: .leading)
-
-        Text(Constants.totalSats)
-          .font(Constants.totalSatsFont)
-          .foregroundColor(Constants.totalSatsColour)
-          .padding(.leading, Constants.totalSatsLeading)
-          .frame(width: rowWidth * Constants.totalSatsFactor, alignment: .trailing)
+      if let userRow = response.userRow {
+        LeaderboardRowView(
+          leaderboardRow: userRow,
+          isCurrentUser: true,
+          rowWidth: Constants.rowWidth,
+          imageURL: viewModel.fetchImageURL(for: userRow.principalID)
+        )
       }
-
-      LeaderboardRowView(
-        leaderboardRow: response.userRow,
-        isCurrentUser: true,
-        rowWidth: rowWidth,
-        imageURL: viewModel.fetchImageURL(for: response.userRow.principalID)
-      )
 
       ForEach(response.topRows, id: \.id) { leaderboardRow in
         LeaderboardRowView(
           leaderboardRow: leaderboardRow,
           isCurrentUser: false,
-          rowWidth: rowWidth,
+          rowWidth: Constants.rowWidth,
           imageURL: viewModel.fetchImageURL(for: leaderboardRow.principalID)
         )
       }
     }
-    .frame(maxWidth: .infinity, alignment: .leading)
-    .padding(.vertical, Constants.leaderboardVertical)
+    .padding(.bottom, Constants.leaderboardVertical)
     .padding(.horizontal, Constants.leaderboardHorizontal)
+    .frame(maxWidth: .infinity, alignment: .leading)
   }
 
   private func topThreePositions(for response: LeaderboardResponse) -> ([[String]], [Int]) {
@@ -213,123 +443,45 @@ struct LeaderboardView: View {
     }
   }
 
-  private func textGradientFor(_ index: Int, radius: CGFloat) -> RadialGradient {
-    if index == .one {
-      Constants.goldGradient(endRadius: radius)
-    } else if index == .zero {
-      Constants.silverGradient(endRadius: radius)
-    } else {
-      Constants.bronzeGradient(endRadius: radius)
+  private func shouldShowConfetti() -> Bool {
+    if let leaderboard = viewModel.leaderboardResponse {
+      return leaderboard.topRows.contains(where: {
+        ($0.principalID == appDIContainer?.authClient.userPrincipalString) && (Constants.topThree.contains($0.position))
+      })
     }
+
+    return false
+  }
+
+  func formatMillisecondsToHMS(_ milliseconds: Int) -> String {
+    let totalSeconds = milliseconds / 1000
+    let hours = totalSeconds / 3600
+    let minutes = (totalSeconds % 3600) / 60
+    let seconds = totalSeconds % 60
+
+    return String(format: "%02d : %02d : %02d", hours, minutes, seconds)
   }
 }
+// swiftlint: enable type_body_length
 
 extension LeaderboardView {
-  enum Constants {
-    static let background = YralColor.grey950.swiftUIColor
-    static let loader = "Yral_Loader"
-    static let loaderSize = 24.0
-
-    static let header = "Leaderboard"
-    static let headerFont = YralFont.pt20.bold.swiftUIFont
-    static let headerColour = YralColor.grey50.swiftUIColor
-    static let headerTop = 16.0
-    static let headerLeading = 16.0
-    static let headerBottom = 8.0
-    static let headerBackground = YralColor.yellow400.swiftUIColor
-    static let headerLottie = "leaderboard"
-
-    static let podiumImage = "podium"
-    static let podiumSize = CGSize(width: 245, height: 166)
-    static let goldRadial = "gold_radial"
-    static let goldSize = 57.0
-    static let goldBorderSize = 65.0
-    static let goldOffset = (x: 0.0, y: 65.0)
-    static let silverRadial = "silver_radial"
-    static let silverBorderSize = 50.0
-    static let silverOffset = (x: 97.0, y: 25.0)
-    static let bronzeRadial = "bronze_radial"
-    static let bronzeSize = 43.0
-    static let bronzeBorderSize = 48.0
-    static let bronzeOffset = (x: 100.0, y: 10.0)
-
-    static let headerTopHStackTop = 28.0
-    static let headerBottomHStackSpacing = 16.0
-    static let headerIDFont = YralFont.pt14.medium.swiftUIFont
-    static let headerIDColour = YralColor.grey400.swiftUIColor
-
-    static let satsImage = "sats"
-    static let satsImageSize = 16.0
-    static let satsFont = YralFont.pt14.bold.swiftUIFont
-    static let satsColour = YralColor.grey50.swiftUIColor
-    static let gamesWonFont = YralFont.pt14.medium.swiftUIFont
-    static let gamesWonColour = YralColor.grey50.swiftUIColor
-
-    static let headerBottomHStackTop = 20.0
-    static let headerBottomHStackBottom = 40.0
-    static let headerBottomHStackWidth = 311.0
-    static let headerBottomHStackHeight = 110.0
-    static let headerBottomHStackSpacerMinLenght = 8.0
-
-    static let vStackSpacing = 12.0
-    static let position = "Position"
-    static let positionFont = YralFont.pt12.medium.swiftUIFont
-    static let positionColour = YralColor.grey600.swiftUIColor
-    static let positionFactor = 0.17
-    static let id = "Player ID"
-    static let idFont = YralFont.pt12.medium.swiftUIFont
-    static let idColour = YralColor.grey600.swiftUIColor
-    static let idFactor = 0.45
-    static let idLeading = 28.0
-    static let totalSats = "Games Won"
-    static let totalSatsFont = YralFont.pt12.medium.swiftUIFont
-    static let totalSatsColour = YralColor.grey600.swiftUIColor
-    static let totalSatsFactor = 0.38
-    static let totalSatsLeading = 48.0
-
-    static let leaderboardVertical = 22.0
-    static let leaderboardHorizontal = 16.0
-
-    static let winsEndRadius = 30.0
-    static let gameWinsEndRadius = 80.0
-
-    static func goldGradient(endRadius: CGFloat) -> RadialGradient {
-      RadialGradient(
-        stops: [
-          .init(color: Color(red: 191/255, green: 118/255, blue: 11/255), location: 0.0),
-          .init(color: Color(red: 255/255, green: 232/255, blue: 159/255), location: 0.507),
-          .init(color: Color(red: 195/255, green: 143/255, blue: 0/255), location: 1.0)
-        ],
-        center: UnitPoint(x: 0.0914, y: 0.0),
-        startRadius: 0,
-        endRadius: endRadius
-      )
+  private func makeLeaderboardHistoryDIContainer() -> LeaderboardHistoryDIContainer? {
+    guard let authClient = appDIContainer?.authClient else {
+      return nil
     }
 
-    static func silverGradient(endRadius: CGFloat) -> RadialGradient {
-      RadialGradient(
-        stops: [
-          .init(color: Color(red: 47/255, green: 47/255, blue: 48/255), location: 0.0),
-          .init(color: Color(red: 255/255, green: 255/255, blue: 255/255), location: 0.5),
-          .init(color: Color(red: 75/255, green: 75/255, blue: 75/255), location: 1.0)
-        ],
-        center: UnitPoint(x: 0.8443, y: 0.0),
-        startRadius: 0,
-        endRadius: endRadius
-      )
-    }
+    let crashReporter = CompositeCrashReporter(
+      reporters: [FirebaseCrashlyticsReporter()]
+    )
 
-    static func bronzeGradient(endRadius: CGFloat) -> RadialGradient {
-      RadialGradient(
-        stops: [
-          .init(color: Color(red: 109/255, green: 76/255, blue: 53/255), location: 0.0),
-          .init(color: Color(red: 219/255, green: 163/255, blue: 116/255), location: 0.5),
-          .init(color: Color(red: 159/255, green: 119/255, blue: 83/255), location: 1.0)
-        ],
-        center: UnitPoint(x: 0.1129, y: 0.3226),
-        startRadius: 0,
-        endRadius: endRadius
+    return LeaderboardHistoryDIContainer(
+      dependencies: LeaderboardHistoryDIContainer.Dependencies(
+        firebaseService: FirebaseService(),
+        httpService: HTTPService(baseURLString: AppConfiguration().firebaseBaseURLString),
+        crashReporter: crashReporter,
+        authClient: authClient
       )
-    }
+    )
   }
 }
+// swiftlint: enable file_length

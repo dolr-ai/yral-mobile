@@ -57,12 +57,11 @@ import com.yral.shared.analytics.events.CategoryName
 import com.yral.shared.core.session.SessionKey
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.session.getKey
+import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.features.account.viewmodel.AccountsViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.game.viewmodel.GameViewModel
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
-import com.yral.shared.koin.koinInstance
-import com.yral.shared.rust.domain.models.FeedDetails
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -164,7 +163,6 @@ private fun HomeScreenContent(
             is HomeComponent.Child.Leaderboard ->
                 LeaderboardScreen(
                     component = child.component,
-                    viewModel = koinInstance.get(),
                 )
 
             is HomeComponent.Child.UploadVideo -> {

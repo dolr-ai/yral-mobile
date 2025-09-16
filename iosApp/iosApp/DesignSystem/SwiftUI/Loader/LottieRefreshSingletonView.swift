@@ -17,7 +17,7 @@ class LottieRefreshSingletonView: UIView {
   private class func sharedInstance(size: CGSize) -> UIView {
     let pointX = (UIScreen.main.bounds.width - size.width) / .two
     let view = LottieRefreshSingletonView(frame: CGRect(x: pointX, y: .zero, width: size.width, height: size.height))
-    let loaderView = LottieLoaderView(animationName: Constants.lottieName)
+    let loaderView = LottieLoaderView(animationName: Constants.lottieName, resetProgess: false)
 
     let hostingController = UIHostingController(rootView: loaderView)
     hostingController.view.backgroundColor = .clear

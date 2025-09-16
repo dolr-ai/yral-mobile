@@ -18,7 +18,7 @@ extension FeedsCell {
       self.addPlayToScrollInfoView(smileyView)
       DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.five) {
         self.cleanupOnOnboardingCompletion(smileyView: smileyView)
-        self.delegate?.howToPlayShown()
+        self.delegate?.howToPlayShown(index: self.index)
       }
     }
   }
@@ -60,6 +60,6 @@ extension FeedsCell {
   @objc func dismissPlayToScrollOnTap() {
     guard let smileyView = smileyGameHostController?.view else { return }
     self.cleanupOnOnboardingCompletion(smileyView: smileyView)
-    self.delegate?.howToPlayShown()
+    self.delegate?.howToPlayShown(index: index)
   }
 }

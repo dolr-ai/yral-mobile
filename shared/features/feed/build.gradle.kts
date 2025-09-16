@@ -2,7 +2,6 @@ plugins {
     alias(libs.plugins.yral.shared.feature)
     alias(libs.plugins.yral.android.feature)
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.yral.shared.rust.lib)
 }
 
 kotlin {
@@ -24,6 +23,12 @@ kotlin {
             implementation(projects.shared.libs.coroutinesX)
             implementation(projects.shared.libs.http)
             implementation(projects.shared.libs.firebaseStore)
+            implementation(projects.shared.data)
+            implementation(projects.shared.rust.service)
+            implementation(projects.shared.libs.routing.routesApi)
+            implementation(projects.shared.libs.routing.deeplinkEngine)
+            implementation(projects.shared.libs.sharing)
+            implementation(projects.shared.libs.featureFlag)
         }
     }
 }

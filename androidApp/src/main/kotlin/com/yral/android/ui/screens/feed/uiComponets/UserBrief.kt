@@ -22,11 +22,10 @@ import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.feed.uiComponets.UserBriefConstants.MAX_LINES_FOR_POST_DESCRIPTION
 import com.yral.android.ui.widgets.YralAsyncImage
-import io.ktor.http.Url
 
 @Composable
 fun UserBrief(
-    profileImageUrl: Url?,
+    profileImageUrl: String?,
     principalId: String,
     postDescription: String,
     isPostDescriptionExpanded: Boolean,
@@ -59,14 +58,16 @@ fun UserBrief(
 }
 
 @Composable
-private fun UserBriefProfileImage(profileImageUrl: Url?) {
-    YralAsyncImage(
-        imageUrl = profileImageUrl.toString(),
-        modifier = Modifier.size(40.dp),
-        border = 2.dp,
-        borderColor = YralColors.Pink300,
-        backgroundColor = YralColors.ProfilePicBackground,
-    )
+private fun UserBriefProfileImage(profileImageUrl: String?) {
+    profileImageUrl?.let {
+        YralAsyncImage(
+            imageUrl = profileImageUrl,
+            modifier = Modifier.size(40.dp),
+            border = 2.dp,
+            borderColor = YralColors.Pink300,
+            backgroundColor = YralColors.ProfilePicBackground,
+        )
+    }
 }
 
 @Composable

@@ -98,7 +98,7 @@ struct ProfileOptionsView: View {
         }
       }
       if isShowingLoader {
-        LottieLoaderView(animationName: Constants.loaderName)
+        LottieLoaderView(animationName: Constants.loaderName, resetProgess: false)
           .padding()
           .background(Color.clear)
           .cornerRadius(Constants.progressViewCornerRadius)
@@ -144,7 +144,7 @@ extension ProfileOptionsView {
       ),
       Options(
         image: Image("option_chat"),
-        text: "Talk to the Team",
+        text: AccountDetailsUtility.shared.getDetails()?.supportText ?? "Talk to the Team",
         redirection: Constants.whatsappId
       ),
       Options(
@@ -181,9 +181,11 @@ extension ProfileOptionsView {
     static let toggleWidth = 54.0
     static let toggleHeight = 30.0
     static let loaderName = "Yral_Loader"
-    static let whatsappId = "https://chat.whatsapp.com/C8FN7ISnvJP1DPcbgZ2vF9?mode=ac_t"
-    static let tncIosId = "https://yral.com/terms-ios"
-    static let privacyPolicyId = "https://yral.com/privacy-policy"
+    // swiftlint: disable line_length
+    static let whatsappId = AccountDetailsUtility.shared.getDetails()?.support ?? "https://chat.whatsapp.com/LMLykiRUrJD13oUtM61JJX?mode=ems_share_t"
+    static let tncIosId = AccountDetailsUtility.shared.getDetails()?.tnc ?? "https://yral.com/terms-ios"
+    static let privacyPolicyId = AccountDetailsUtility.shared.getDetails()?.privacyPolicy ??  "https://yral.com/privacy-policy"
+    // swiftlint: enable line_length
     static let logoutId = "logoutId"
     static let deleteId = "deleteId"
     static let alertId = "alertId"

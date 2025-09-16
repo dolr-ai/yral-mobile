@@ -1,4 +1,5 @@
 use crate::individual_user_template::individual_user_template_helper::*;
+use crate::individual_user_template::user_post_service_helper::*;
 use crate::{individual_user_template::*, Err};
 use candid::Nat;
 use candid::{self, ser, CandidType, Decode, Deserialize, Encode, Principal};
@@ -16,6 +17,13 @@ use yral_canisters_client::rate_limits::RateLimitStatus;
 use yral_canisters_client::rate_limits::VideoGenRequestKey;
 use yral_canisters_client::rate_limits::VideoGenRequestStatus;
 pub type RateLimitsResult2 = yral_canisters_client::rate_limits::Result2;
+pub type PostServiceResult1 = yral_canisters_client::user_post_service::Result1;
+pub type PostServicePost = yral_canisters_client::user_post_service:: Post;
+pub type PostServicePostError = yral_canisters_client::user_post_service:: UserPostServiceError;
+pub type PostServicePostStatus = yral_canisters_client::user_post_service::PostStatus;
+pub type PostServicePostViewStatistics = yral_canisters_client::user_post_service::PostViewStatistics;
+pub type PostServiceResult3 = yral_canisters_client::user_post_service::Result3;
+pub type PostServiceGetPostsOfUserProfileError = yral_canisters_client::user_post_service::GetPostsOfUserProfileError;
 
 #[swift_bridge::bridge]
 mod ffi {
@@ -139,6 +147,8 @@ mod ffi {
         type KeyValuePair;
         type RateLimitsResult2;
         type VideoGenRequestStatus;
+        type PostServiceResult1;
+        type PostServicePostError;
     }
 
     extern "Rust" {
@@ -460,13 +470,13 @@ mod ffi {
         type CanistersWrapper;
         async fn authenticate_with_network(
             auth: DelegatedIdentityWire,
-            referrer: Option<Principal>,
         ) -> Result<CanistersWrapper, String>;
 
         fn get_canister_principal(&self) -> Principal;
         fn get_canister_principal_string(&self) -> String;
         fn get_user_principal(&self) -> Principal;
         fn get_user_principal_string(&self) -> String;
+        fn is_created_from_service_canister(&self) -> bool;
         fn expiry_ns(&self) -> u64;
     }
 
@@ -541,5 +551,80 @@ mod ffi {
         fn principal(&self) -> Principal;
         #[swift_bridge(get(counter))]
         fn counter(&self) -> u64;
+    }
+
+    extern "Rust" {
+        type UserPostService;
+        #[swift_bridge(init)]
+        fn new(
+            principal: Principal,
+            identity: DelegatedIdentity,
+        ) -> Result<UserPostService, PrincipalError>;
+
+        async fn get_individual_post_details_by_id(
+            &self,
+            arg0: String,
+        ) -> Result<PostServiceResult1, String>;
+
+        async fn get_posts_of_this_user_profile_with_pagination_cursor(
+            &self,
+            arg0: Principal,
+            arg1: u64,
+            arg2: u64,
+        ) -> Result<PostServiceResult3, String>;
+    }
+
+    extern "Rust" {
+        type PostServicePost;
+        #[swift_bridge(get(&id))]
+        fn id(&self) -> &str;
+        #[swift_bridge(get(&status))]
+        fn status(&self) -> &PostServicePostStatus;
+        #[swift_bridge(get(share_count))]
+        fn share_count(&self) -> u64;
+        #[swift_bridge(get_with(&hashtags = Clone::clone))]
+        fn hashtags(&self) -> Vec<String>;
+        #[swift_bridge(get(&description))]
+        fn description(&self) -> &str;
+        #[swift_bridge(get(&video_uid))]
+        fn video_uid(&self) -> &str;
+        #[swift_bridge(get_with(&creator_principal = principal_to_string))]
+        fn creator_principal(&self) -> String;
+        #[swift_bridge(get_with(&likes = Clone::clone))]
+        fn likes(&self) -> Vec<Principal>;
+        #[swift_bridge(get(&view_stats))]
+        fn view_stats(&self) -> &PostServicePostViewStatistics;
+    }
+
+    extern "Rust" {
+        type PostServicePostStatus;
+    }
+
+    extern "Rust" {
+        fn is_banned_due_to_user_reporting(status: &PostServicePostStatus) -> bool;
+        fn is_post_service_result_ok(result: PostServiceResult1) -> bool;
+        fn post_service_result_ok_value(result: PostServiceResult1) -> Option<PostServicePost>;
+        fn post_service_result_err_value(result: PostServiceResult1) -> String;
+        fn is_created_from_service_canister(canister_principal: Principal) -> bool;
+    }
+
+    extern  "Rust" {
+        type PostServicePostViewStatistics;
+        #[swift_bridge(get(total_view_count))]
+        fn total_view_count(&self) -> u64;
+    }
+
+    extern "Rust" {
+        type PostServiceResult3;
+        type PostServiceGetPostsOfUserProfileError;
+    }
+
+    extern "Rust" {
+        fn is_post_service_result_vec_ok(result: PostServiceResult3) -> bool;
+        fn post_service_result_vec_ok_value(result: PostServiceResult3) -> Option<Vec<PostServicePost>>;
+        fn post_service_result_vec_err_value(result: PostServiceResult3) -> Option<PostServiceGetPostsOfUserProfileError>;
+        fn is_reached_end_of_items_list(error: PostServiceGetPostsOfUserProfileError) -> bool;
+        fn is_invalid_bounds_passed(error: PostServiceGetPostsOfUserProfileError) -> bool;
+        fn is_exceeded_max_number_of_items_allowed_in_one_request(error: PostServiceGetPostsOfUserProfileError) -> bool;
     }
 }

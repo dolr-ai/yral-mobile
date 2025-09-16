@@ -16,9 +16,11 @@ import com.arkivanov.decompose.value.Value
 import com.yral.android.ui.screens.account.nav.AccountComponent
 import com.yral.android.ui.screens.alertsrequest.nav.AlertsRequestComponent
 import com.yral.android.ui.screens.feed.nav.FeedComponent
-import com.yral.android.ui.screens.leaderboard.nav.LeaderboardComponent
+import com.yral.android.ui.screens.leaderboard.LeaderboardComponent
 import com.yral.android.ui.screens.profile.nav.ProfileComponent
 import com.yral.android.ui.screens.uploadVideo.UploadVideoRootComponent
+import com.yral.shared.libs.routing.routes.api.AppRoute
+import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
 import kotlinx.serialization.Serializable
 
 internal class DefaultHomeComponent(
@@ -79,6 +81,7 @@ internal class DefaultHomeComponent(
         navigation.replaceKeepingFeed(Config.Profile)
     }
 
+    @Deprecated("use onNavigationRequest")
     override fun handleNavigation(destination: String) {
         Logger.d("DefaultHomeComponent") { "handleNavigation: $destination" }
         when {
@@ -87,6 +90,16 @@ internal class DefaultHomeComponent(
                     (stack.value.active.instance as? Child.Profile)?.component?.handleNavigation(destination)
                 }
             }
+        }
+    }
+
+    override fun onNavigationRequest(appRoute: AppRoute) {
+        when (appRoute) {
+            is PostDetailsRoute ->
+                navigation.replaceAll(Config.Feed) {
+                    (stack.value.active.instance as? Child.Feed)?.component?.openPostDetails(appRoute)
+                }
+            else -> {}
         }
     }
 
@@ -126,7 +139,10 @@ internal class DefaultHomeComponent(
         FeedComponent.Companion(componentContext = componentContext)
 
     private fun leaderboardComponent(componentContext: ComponentContext): LeaderboardComponent =
-        LeaderboardComponent.Companion(componentContext = componentContext)
+        LeaderboardComponent.Companion(
+            componentContext = componentContext,
+            snapshot = childSnapshots[Config.Leaderboard] as? LeaderboardComponent.Snapshot,
+        )
 
     private fun uploadVideoComponent(componentContext: ComponentContext): UploadVideoRootComponent =
         UploadVideoRootComponent.Companion(

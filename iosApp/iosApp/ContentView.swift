@@ -135,7 +135,7 @@ struct ContentView: View {
     with wire: DelegatedIdentityWire,
     identity: DelegatedIdentity,
     identityNew: DelegatedIdentity) async throws {
-    let canistersWrapper = try await authenticate_with_network(wire, nil)
+    let canistersWrapper = try await authenticate_with_network(wire)
     let principal = canistersWrapper.get_canister_principal()
     let principalString = canistersWrapper.get_canister_principal_string().toString()
     let service = try Service(principal, identity)

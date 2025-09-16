@@ -62,7 +62,11 @@ class YralApp : Application() {
     }
 
     private fun setupBranch() {
-        Branch.enableLogging()
+        if (BuildConfig.DEBUG) {
+            Branch.enableLogging()
+        } else {
+            Branch.disableLogging()
+        }
         when (BuildConfig.FLAVOR) {
             "staging" -> {
                 Branch.enableTestMode()

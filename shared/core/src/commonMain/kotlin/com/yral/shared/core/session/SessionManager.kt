@@ -33,6 +33,20 @@ class SessionManager {
                 else -> null
             }
 
+    val profilePic: String?
+        get() =
+            when (val state = _state.value) {
+                is SessionState.SignedIn -> state.session.profilePic
+                else -> null
+            }
+
+    val isCreatedFromServiceCanister: Boolean?
+        get() =
+            when (val state = _state.value) {
+                is SessionState.SignedIn -> state.session.isCreatedFromServiceCanister
+                else -> null
+            }
+
     fun updateState(state: SessionState) {
         _state.update { state }
         _sessionProperties.update { SessionProperties() }
@@ -48,6 +62,14 @@ class SessionManager {
 
     fun updateProfileVideosCount(count: Int?) {
         _sessionProperties.update { it.copy(profileVideosCount = count) }
+    }
+
+    fun updateIsForcedGamePlayUser(isForcedGamePlayUser: Boolean) {
+        _sessionProperties.update { it.copy(isForcedGamePlayUser = isForcedGamePlayUser) }
+    }
+
+    fun updateLoggedInUserEmail(email: String?) {
+        _sessionProperties.update { it.copy(emailId = email) }
     }
 
     fun observeSessionProperties(): StateFlow<SessionProperties> = sessionProperties

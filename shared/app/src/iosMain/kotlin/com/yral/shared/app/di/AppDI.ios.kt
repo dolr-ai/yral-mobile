@@ -5,6 +5,7 @@ import com.yral.shared.analytics.di.analyticsModule
 import com.yral.shared.core.di.coreModule
 import com.yral.shared.crashlytics.di.crashlyticsModule
 import com.yral.shared.http.di.networkModule
+import com.yral.shared.libs.routing.deeplink.engine.RoutingService
 import com.yral.shared.preferences.di.preferencesModule
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
@@ -25,10 +26,13 @@ actual fun initKoin(appDeclaration: KoinAppDeclaration) {
             crashlyticsModule,
             networkModule,
             featureFlagModule,
+            routingModule,
+            sharingModule,
         )
     }
 }
 
 class AppDIHelper : KoinComponent {
     fun getFeatureFlagManager(): FeatureFlagManager = get()
+    fun getRoutingService(): RoutingService = get()
 }

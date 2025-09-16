@@ -19,6 +19,7 @@ final class DefaultAuthClient: NSObject, AuthClient {
   private(set) var canisterPrincipalString: String?
   private(set) var userPrincipal: Principal?
   private(set) var userPrincipalString: String?
+  private(set) var emailId: String?
   private(set) var identityData: Data?
   var isNewUser = false
   var provider: SocialProvider?
@@ -36,6 +37,7 @@ final class DefaultAuthClient: NSObject, AuthClient {
   let notificationService: NotificationService
 
   var pendingAuthState: String!
+  var isServiceCanister: Bool = false
 
   init(networkService: NetworkService,
        firebaseService: FirebaseService,
@@ -104,18 +106,21 @@ final class DefaultAuthClient: NSObject, AuthClient {
         self.userPrincipalString = userPrincipalString
         self.canisterPrincipal = try get_principal(canisterPrincipalString.intoRustString())
         self.userPrincipal = try get_principal(userPrincipalString.intoRustString())
+        self.isServiceCanister = UserDefaultsManager.shared.get(for: .isServiceCanisterUser) as Bool? ?? false
+        self.emailId = try? KeychainHelper.retrieveString(
+          for: Constants.keychainEmail
+         )
         Task { @MainActor in
           try await exchangePrincipalID(type: type)
         }
       } else {
-        try await handleExtractIdentityResponse(from: data, type: .permanent)
+        try await handleExtractIdentityResponse(from: data, type: .permanent, email: nil)
       }
       do {
-        try await recordThrowingOperation {
-          try await registerForNotifications()
-        }
+        try await registerForNotifications()
       } catch {
-        print(error)
+        crashReporter.log(error.localizedDescription)
+        crashReporter.recordException(error)
       }
     }
   }
@@ -153,7 +158,7 @@ final class DefaultAuthClient: NSObject, AuthClient {
       guard let data = identityData else { return }
       try await setupSession(data, type: .ephemeral)
       Task { @MainActor in
-        try await self.handleExtractIdentityResponse(from: data, type: .ephemeral)
+        try await self.handleExtractIdentityResponse(from: data, type: .ephemeral, email: nil)
       }
       return
     } else {
@@ -218,12 +223,21 @@ final class DefaultAuthClient: NSObject, AuthClient {
     UserDefaultsManager.shared.set(refreshClaims.exp, for: .authRefreshTokenExpiryDateKey)
   }
 
-  func storeSessionData(identity: Data, canisterPrincipal: String, userPrincipal: String) {
+  func storeSessionData(
+    identity: Data,
+    canisterPrincipal: String,
+    userPrincipal: String,
+    email: String?,
+    isServiceCanister: Bool
+  ) {
     do {
       try recordThrowingOperation {
         try KeychainHelper.store(data: identity, for: Constants.keychainIdentity)
         try KeychainHelper.store(userPrincipal, for: Constants.keychainUserPrincipal)
         try KeychainHelper.store(canisterPrincipal, for: Constants.keychainCanisterPrincipal)
+        UserDefaultsManager.shared.set(isServiceCanister, for: .isServiceCanisterUser)
+        guard let email = email else { return }
+        try KeychainHelper.store(email, for: Constants.keychainEmail)
       }
     } catch {
       print(error)
@@ -235,10 +249,10 @@ final class DefaultAuthClient: NSObject, AuthClient {
     let wire = claims.delegatedIdentity
     let wireData = try JSONEncoder().encode(wire)
     identityData = wireData
-    try await handleExtractIdentityResponse(from: wireData, type: type)
+    try await handleExtractIdentityResponse(from: wireData, type: type, email: claims.emailID)
   }
 
-  private func handleExtractIdentityResponse(from data: Data, type: DelegateIdentityType) async throws {
+  private func handleExtractIdentityResponse(from data: Data, type: DelegateIdentityType, email: String?) async throws {
     try await recordThrowingOperation {
       guard !data.isEmpty else {
         throw NetworkError.invalidResponse("Empty identity data received.")
@@ -255,7 +269,7 @@ final class DefaultAuthClient: NSObject, AuthClient {
 
       let principal = get_principal_from_identity(identity).toString()
       crashReporter.log("Principal id before authenticate_with_network: \(principal)")
-      let canistersWrapper = try await authenticate_with_network(wire, nil)
+      let canistersWrapper = try await authenticate_with_network(wire)
 
       let canisterPrincipal = canistersWrapper.get_canister_principal()
       let canisterPrincipalString = canistersWrapper.get_canister_principal_string().toString()
@@ -268,10 +282,14 @@ final class DefaultAuthClient: NSObject, AuthClient {
         self.canisterPrincipalString = canisterPrincipalString
         self.userPrincipal = userPrincipal
         self.userPrincipalString = userPrincipalString
+        self.isServiceCanister = canistersWrapper.is_created_from_service_canister()
+        self.emailId = email
         self.storeSessionData(
           identity: data,
           canisterPrincipal: canisterPrincipalString,
-          userPrincipal: userPrincipalString
+          userPrincipal: userPrincipalString,
+          email: email,
+          isServiceCanister: self.isServiceCanister
         )
       }
       await updateAuthState(for: type, withCoins: .zero, isFetchingCoins: true)
@@ -286,17 +304,17 @@ final class DefaultAuthClient: NSObject, AuthClient {
     try? KeychainHelper.deleteItem(for: Constants.keychainIdentity)
     try? KeychainHelper.deleteItem(for: Constants.keychainUserPrincipal)
     try? KeychainHelper.deleteItem(for: Constants.keychainCanisterPrincipal)
+    try? KeychainHelper.deleteItem(for: Constants.keychainEmail)
     try? KeychainHelper.deleteItem(for: Constants.keychainAccessToken)
     try? KeychainHelper.deleteItem(for: Constants.keychainIDToken)
     try? KeychainHelper.deleteItem(for: Constants.keychainRefreshToken)
     UserDefaultsManager.shared.remove(.authIdentityExpiryDateKey)
     UserDefaultsManager.shared.remove(.authRefreshTokenExpiryDateKey)
     do {
-      try await recordThrowingOperation {
-        try await deregisterForNotifications()
-      }
+      try await deregisterForNotifications()
     } catch {
-      print(error)
+      crashReporter.log(error.localizedDescription)
+      crashReporter.recordException(error)
     }
     identity = nil
     canisterPrincipal = nil
@@ -310,11 +328,10 @@ final class DefaultAuthClient: NSObject, AuthClient {
     provider = nil
     try await obtainAnonymousIdentity()
     do {
-      try await recordThrowingOperation {
-        try await registerForNotifications()
-      }
+      try await registerForNotifications()
     } catch {
-      print(error)
+      crashReporter.log(error.localizedDescription)
+      crashReporter.recordException(error)
     }
   }
 

@@ -33,7 +33,8 @@ struct WalletOverlayView: View {
         LottieView(
           name: Constants.rechargeSuccessLottie,
           loopMode: .playOnce,
-          animationSpeed: .one
+          animationSpeed: .one,
+          resetProgress: false
         ) {
           end(after: CGFloat.animationPeriod)
         }
@@ -41,7 +42,8 @@ struct WalletOverlayView: View {
         LottieView(
           name: Constants.rechargeFailureLottie,
           loopMode: .playOnce,
-          animationSpeed: .one
+          animationSpeed: .one,
+          resetProgress: false
         ) {
           end(after: CGFloat.three)
         }
@@ -56,7 +58,8 @@ struct WalletOverlayView: View {
     LottieView(
       name: Constants.rechargeLoadingLottie,
       loopMode: .playOnce,
-      animationSpeed: CGFloat.one
+      animationSpeed: CGFloat.one,
+      resetProgress: false
     ) {
       if outcome == .none {
         loopKey = UUID()

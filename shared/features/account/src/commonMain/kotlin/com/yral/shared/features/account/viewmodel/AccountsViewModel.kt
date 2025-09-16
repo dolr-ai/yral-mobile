@@ -4,6 +4,9 @@ import androidx.lifecycle.ViewModel
 import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
+import com.yral.featureflag.FeatureFlagManager
+import com.yral.featureflag.accountFeatureFlags.AccountFeatureFlags
+import com.yral.featureflag.accountFeatureFlags.AccountLinksDto
 import com.yral.shared.analytics.events.MenuCtaType
 import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.core.session.SessionManager
@@ -13,7 +16,9 @@ import com.yral.shared.features.auth.AuthClientFactory
 import com.yral.shared.features.auth.domain.useCases.DeleteAccountUseCase
 import com.yral.shared.features.auth.utils.SocialProvider
 import com.yral.shared.features.auth.utils.getAccountInfo
+import com.yral.shared.firebaseStore.getDownloadUrl
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
+import dev.gitlive.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,6 +34,8 @@ class AccountsViewModel(
     private val deleteAccountUseCase: DeleteAccountUseCase,
     private val crashlyticsManager: CrashlyticsManager,
     val accountsTelemetry: AccountsTelemetry,
+    flagManager: FeatureFlagManager,
+    private val firebaseStorage: FirebaseStorage,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.disk)
 
@@ -39,11 +46,24 @@ class AccountsViewModel(
                 handleSignupFailed()
             }
 
-    private val _state = MutableStateFlow(AccountsState())
+    private val _state =
+        MutableStateFlow(
+            value =
+                AccountsState(
+                    accountInfo = sessionManager.getAccountInfo(),
+                    accountLinks = flagManager.get(AccountFeatureFlags.AccountLinks.Links),
+                ),
+        )
     val state: StateFlow<AccountsState> = _state.asStateFlow()
 
     init {
-        _state.update { it.copy(accountInfo = sessionManager.getAccountInfo()) }
+        coroutineScope.launch {
+            _state.value.accountLinks.supportIcon?.let { supportIcon ->
+                getDownloadUrl(supportIcon, firebaseStorage)
+                    .takeIf { url -> url.isNotEmpty() }
+                    ?.let { iconUrl -> _state.update { it.copy(supportIcon = iconUrl) } }
+            }
+        }
     }
 
     private fun logout() {
@@ -91,20 +111,26 @@ class AccountsViewModel(
     }
 
     fun getHelperLinks(): List<AccountHelpLink> {
+        val accountLinks = _state.value.accountLinks
         val links =
             mutableListOf(
                 AccountHelpLink(
-                    link = TALK_TO_TEAM_URL,
+                    type = AccountHelpLinkType.TALK_TO_TEAM,
+                    link = accountLinks.support,
+                    linkText = accountLinks.supportText,
+                    linkRemoteIcon = _state.value.supportIcon,
                     openInExternalBrowser = true,
                     menuCtaType = MenuCtaType.TALK_TO_THE_TEAM,
                 ),
                 AccountHelpLink(
-                    link = TERMS_OF_SERVICE_URL,
+                    type = AccountHelpLinkType.TERMS_OF_SERVICE,
+                    link = accountLinks.tnc,
                     openInExternalBrowser = false,
                     menuCtaType = MenuCtaType.TERMS_OF_SERVICE,
                 ),
                 AccountHelpLink(
-                    link = PRIVACY_POLICY_URL,
+                    type = AccountHelpLinkType.PRIVACY_POLICY,
+                    link = accountLinks.privacyPolicy,
                     openInExternalBrowser = false,
                     menuCtaType = MenuCtaType.PRIVACY_POLICY,
                 ),
@@ -113,6 +139,7 @@ class AccountsViewModel(
         if (isSocialSignIn) {
             links.add(
                 AccountHelpLink(
+                    type = AccountHelpLinkType.LOGOUT,
                     link = LOGOUT_URI,
                     openInExternalBrowser = true,
                     menuCtaType = MenuCtaType.LOG_OUT,
@@ -120,6 +147,7 @@ class AccountsViewModel(
             )
             links.add(
                 AccountHelpLink(
+                    type = AccountHelpLinkType.DELETE_ACCOUNT,
                     link = DELETE_ACCOUNT_URI,
                     openInExternalBrowser = true,
                     menuCtaType = MenuCtaType.DELETE_ACCOUNT,
@@ -129,24 +157,29 @@ class AccountsViewModel(
         return links
     }
 
-    fun getSocialLinks(): List<AccountHelpLink> =
-        listOf(
+    fun getSocialLinks(): List<AccountHelpLink> {
+        val accountLinks = _state.value.accountLinks
+        return listOf(
             AccountHelpLink(
-                link = TELEGRAM_LINK,
+                type = AccountHelpLinkType.TELEGRAM,
+                link = accountLinks.telegram,
                 openInExternalBrowser = true,
                 menuCtaType = MenuCtaType.FOLLOW_ON,
             ),
             AccountHelpLink(
-                link = DISCORD_LINK,
+                type = AccountHelpLinkType.DISCORD,
+                link = accountLinks.discord,
                 openInExternalBrowser = true,
                 menuCtaType = MenuCtaType.FOLLOW_ON,
             ),
             AccountHelpLink(
-                link = TWITTER_LINK,
+                type = AccountHelpLinkType.TWITTER,
+                link = accountLinks.twitter,
                 openInExternalBrowser = true,
                 menuCtaType = MenuCtaType.FOLLOW_ON,
             ),
         )
+    }
 
     fun handleHelpLink(link: AccountHelpLink) {
         when (link.link) {
@@ -166,24 +199,34 @@ class AccountsViewModel(
     companion object {
         const val LOGOUT_URI = "yral://logout"
         const val DELETE_ACCOUNT_URI = "yral://deleteAccount"
-        const val TALK_TO_TEAM_URL = "https://chat.whatsapp.com/EeRnZQJNEOlEykLzbHS6zV?mode=ems_copy_c"
-        const val TERMS_OF_SERVICE_URL = "https://yral.com/terms-android"
-        const val PRIVACY_POLICY_URL = "https://yral.com/privacy-policy"
-        const val TELEGRAM_LINK = "https://t.me/+c-LTX0Cp-ENmMzI1"
-        const val DISCORD_LINK = "https://discord.com/invite/GZ9QemnZuj"
-        const val TWITTER_LINK = "https://twitter.com/Yral_app"
     }
 }
 
 data class AccountHelpLink(
+    val type: AccountHelpLinkType,
     val link: String,
+    val linkText: String? = null,
+    val linkRemoteIcon: String? = null,
     val openInExternalBrowser: Boolean,
     val menuCtaType: MenuCtaType,
 )
 
+enum class AccountHelpLinkType {
+    TALK_TO_TEAM,
+    TERMS_OF_SERVICE,
+    PRIVACY_POLICY,
+    TELEGRAM,
+    DISCORD,
+    TWITTER,
+    LOGOUT,
+    DELETE_ACCOUNT,
+}
+
 data class AccountsState(
-    val accountInfo: AccountInfo? = null,
+    val accountInfo: AccountInfo?,
     val bottomSheetType: AccountBottomSheet = AccountBottomSheet.None,
+    val accountLinks: AccountLinksDto,
+    val supportIcon: String? = null,
 )
 
 sealed interface AccountBottomSheet {

@@ -37,6 +37,7 @@ enum class FeatureEvents {
     GAME_PLAYED,
     GAME_TUTORIAL_SHOWN,
     GAME_CONCLUDED_BOTTOMSHEET_CLICKED,
+    FORCED_GAMEPLAY_NUDGE_SHOWN,
 
     // Menu
     MENU_PAGE_VIEWED,
@@ -71,9 +72,17 @@ enum class FeatureEvents {
 
     // Leaderboard
     LEADERBOARD_PAGE_VIEWED,
+    LEADERBOARD_PAGE_LOADED,
+    LEADERBOARD_TAB_CLICKED,
+    LEADERBOARD_CALENDAR_CLICKED,
+    LEADERBOARD_DAY_SELECTED,
 
     // Recharge
     AIRDROP_CLAIMED,
+
+    // Share
+    VIDEO_SHARE_CLICKED,
+    SHARE_APP_OPENED_FROM_LINK,
     ;
 
     fun getEventName(): String =

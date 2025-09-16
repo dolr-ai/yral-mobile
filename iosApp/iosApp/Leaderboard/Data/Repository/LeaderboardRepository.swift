@@ -24,7 +24,7 @@ class LeaderboardRepository: LeaderboardRepositoryProtocol {
     self.authClient = authClient
   }
 
-  func fetchLeaderboard() async -> Result<LeaderboardResponse, LeaderboardError> {
+  func fetchLeaderboard(request: LeaderboardQuery) async -> Result<LeaderboardResponse, LeaderboardError> {
     guard let baseURL = httpService.baseURL else {
       return .failure(.network(.invalidRequest))
     }
@@ -53,20 +53,19 @@ class LeaderboardRepository: LeaderboardRepositoryProtocol {
     }
 
     do {
-      let httpBody = [
-        "data": [
-          "principal_id": principalID
-        ]
+      let httpBody = request.addingPrincipal(principalID)
+      let modifiedHttpBody = [
+        "data": httpBody
       ]
 
       let response = try await httpService.performRequest(
         for: Endpoint(
           http: "",
           baseURL: baseURL,
-          path: "leaderboard",
+          path: Constants.leaderboardPath,
           method: .post,
           headers: httpHeaders,
-          body: try? JSONEncoder().encode(httpBody)
+          body: try? JSONEncoder().encode(modifiedHttpBody)
         ),
         decodeAs: LeaderboardDTO.self
       )
@@ -87,6 +86,7 @@ class LeaderboardRepository: LeaderboardRepositoryProtocol {
 
 extension LeaderboardRepository {
   enum Constants {
+    static let leaderboardPath = "leaderboard_v2"
     static let firebaseUserIDError = "Failed to fetch user ID token"
     static let principalIDError = "Failed to fetch princiapl ID"
   }

@@ -7,9 +7,9 @@ struct HomeTabController: View {
   @State private var suppressAnalytics = false
   let feedsViewController: FeedsViewController
   let accountView: AccountView
-  let uploadOptionsScreenView: UploadOptionsScreenView
+  let uploadOptionsScreenView: UINavigationController
   let profileView: ProfileView
-  let leaderboardView: LeaderboardView
+  let leaderboardView: UINavigationController
 
   private var feedsViewControllerWrapper: FeedsViewControllerWrapper {
     FeedsViewControllerWrapper(
@@ -29,15 +29,17 @@ struct HomeTabController: View {
   @State private var showNotificationsNudge = false
   @State private var walletPhase: WalletPhase = .none
   @State private var walletOutcome: WalletPhase = .none
+  @State private var showMandatoryAppUpdate = false
+  @State private var showRecommendedAppUpdate = false
 
   @EnvironmentObject var eventBus: EventBus
 
   init(
     feedsViewController: FeedsViewController,
-    uploadOptionsScreenView: UploadOptionsScreenView,
+    uploadOptionsScreenView: UINavigationController,
     profileView: ProfileView,
     accountView: AccountView,
-    leaderboardView: LeaderboardView,
+    leaderboardView: UINavigationController,
   ) {
     self.feedsViewController = feedsViewController
     self.uploadOptionsScreenView = uploadOptionsScreenView
@@ -59,7 +61,7 @@ struct HomeTabController: View {
                              unselectedName: Constants.homeIconImageNameUnselected) }
           .tag(Tab.home)
 
-        leaderboardView
+        ViewControllerWrapper(controller: leaderboardView)
           .background(Color.black.edgesIgnoringSafeArea(.all))
           .tabItem {
             tabIcon(selected: selectedTab == .leaderboard,
@@ -68,7 +70,7 @@ struct HomeTabController: View {
           }
           .tag(Tab.leaderboard)
 
-        uploadOptionsScreenView
+        ViewControllerWrapper(controller: uploadOptionsScreenView)
           .background(Color.black.edgesIgnoringSafeArea(.all))
           .tabItem {
             tabIcon(selected: selectedTab == .upload,
@@ -109,6 +111,7 @@ struct HomeTabController: View {
         switch dest {
         case .profileAfterUpload:
           selectedTab = .profile
+        default: break
         }
         deepLinkRouter.pendingDestination = nil
       }
@@ -129,7 +132,10 @@ struct HomeTabController: View {
           }
         }
       }
-      .hapticFeedback(.impact(weight: .light), trigger: selectedTab)
+      .onReceive(eventBus.playGamesToEarnMoreTapped) {
+        selectedTab = .home
+      }
+      .hapticFeedback(.impact(weight: HapticFeedback.Weight.light), trigger: selectedTab)
       .fullScreenCover(isPresented: $showNotificationsNudge) {
         ZStack(alignment: .center) {
           NotificationsNudge {
@@ -176,10 +182,30 @@ struct HomeTabController: View {
         }
       }
     }
+    .onAppear {
+      let status = AppUpdateHandler.shared.getAppUpdateStatus()
+      switch status {
+      case .none:
+        break
+      case .force:
+        self.showMandatoryAppUpdate = true
+      case .recommended:
+        self.showRecommendedAppUpdate = true
+      }
+    }
     .fullScreenCover(isPresented: $showEULA) {
       EULAPopupView(isPresented: $showEULA) {
         UserDefaultsManager.shared.set(true, for: .eulaAccepted)
         NotificationCenter.default.post(name: .eulaAcceptedChanged, object: nil)
+      }
+      .background( ClearBackgroundView() )
+    }
+    .fullScreenCover(isPresented: $showMandatoryAppUpdate) {
+      MandatoryUpdateView()
+    }
+    .fullScreenCover(isPresented: $showRecommendedAppUpdate) {
+      RecommendedUpdatePopUp {
+        showRecommendedAppUpdate = false
       }
       .background( ClearBackgroundView() )
     }

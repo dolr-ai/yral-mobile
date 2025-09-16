@@ -5,12 +5,11 @@ import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
-import com.yral.featureflag.FeatureFlagManager
-import com.yral.featureflag.FeedFeatureFlags
 import com.yral.shared.analytics.events.GameConcludedCtaType
 import com.yral.shared.analytics.events.GameType
 import com.yral.shared.core.session.DELAY_FOR_SESSION_PROPERTIES
 import com.yral.shared.core.session.SessionManager
+import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.features.game.analytics.GameTelemetry
 import com.yral.shared.features.game.domain.AutoRechargeBalanceUseCase
 import com.yral.shared.features.game.domain.CastVoteUseCase
@@ -25,7 +24,6 @@ import com.yral.shared.features.game.domain.models.toVoteResult
 import com.yral.shared.features.game.viewmodel.GameViewModel.Companion.SHOW_HOW_TO_PLAY_MAX_PAGE
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
-import com.yral.shared.rust.domain.models.FeedDetails
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
@@ -44,7 +42,6 @@ class GameViewModel(
     private val castVoteUseCase: CastVoteUseCase,
     private val gameTelemetry: GameTelemetry,
     private val autoRechargeBalanceUseCase: AutoRechargeBalanceUseCase,
-    flagManager: FeatureFlagManager,
 ) : ViewModel() {
     private val _state =
         MutableStateFlow(
@@ -52,7 +49,6 @@ class GameViewModel(
                 gameIcons = emptyList(),
                 gameRules = emptyList(),
                 coinBalance = 0,
-                isStopAndVote = flagManager.isEnabled(FeedFeatureFlags.SmileyGame.StopAndVoteNudge),
             ),
         )
     val state: StateFlow<GameState> = _state.asStateFlow()
@@ -71,6 +67,9 @@ class GameViewModel(
                 Logger.d("coinBalance") { "coin balance collected ${properties.coinBalance}" }
                 properties.coinBalance?.let { balance ->
                     _state.update { it.copy(coinBalance = balance) }
+                }
+                properties.isForcedGamePlayUser?.let { isStopAndVote ->
+                    _state.update { it.copy(isStopAndVote = isStopAndVote) }
                 }
             }
         }
@@ -367,6 +366,7 @@ class GameViewModel(
             NudgeType.MANDATORY -> {
                 Logger.d("Nudge") { "setSmileyGameManNudgeShown ${feedDetails.videoID}" }
                 _state.update { it.copy(nudgeType = null) }
+                gameTelemetry.onForcedGamePlayNudgeShown(feedDetails)
             }
             NudgeType.INTRO -> {
                 Logger.d("Nudge") { "setSmileyGameIntroNudgeShown ${feedDetails.videoID}" }
