@@ -16,6 +16,7 @@ struct FeedsViewControllerWrapper: UIViewControllerRepresentable {
   @Binding var walletOutcome: WalletPhase
   @EnvironmentObject var session: SessionManager
   @EnvironmentObject var deepLinkRouter: DeepLinkRouter
+  @EnvironmentObject var eventBus: EventBus
 
   func makeUIViewController(context: Context) -> UINavigationController {
     feedsViewController.onBackButtonTap = { [weak feedsViewController] in

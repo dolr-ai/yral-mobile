@@ -50,6 +50,7 @@ import GRPC
   }()
 
   lazy var session: SessionManager = SessionManager(auth: authClient)
+  lazy var eventBus: EventBus = EventBus()
 
   lazy var accountsRepository: AccountRepositoryProtocol = {
     AccountRepository(
@@ -81,6 +82,7 @@ import GRPC
         crashReporter: crashReporter,
         socialSignInUseCase: socialSignInUseCase,
         session: session,
+        eventBus: eventBus,
         castVoteUseCase: CastVoteUseCase(
           castVoteRepository: CastVoteRepository(
             firebaseService: FirebaseService(),
@@ -125,7 +127,8 @@ import GRPC
         httpService: HTTPService(baseURLString: appConfiguration.offchainBaseURLString),
         authClient: authClient,
         crashReporter: crashReporter,
-        session: session
+        session: session,
+        accountUseCase: accountUseCase
       )
     )
   }
@@ -137,7 +140,8 @@ import GRPC
         authClient: authClient,
         crashReporter: crashReporter,
         accountUseCase: accountUseCase,
-        session: session
+        session: session,
+        eventBus: eventBus
       )
     )
   }

@@ -14,6 +14,7 @@ final class ProfileDIContainer {
     let crashReporter: CrashReporter
     let accountUseCase: AccountUseCaseProtocol
     let session: SessionManager
+    let eventBus: EventBus
   }
 
   private let dependencies: Dependencies
@@ -88,6 +89,7 @@ final class ProfileDIContainer {
         playToScroll: false,
         feedType: .currentUser,
         session: dependencies.session,
+        eventBus: dependencies.eventBus,
         crashReporter: dependencies.crashReporter
       ),
       showFeeds: showFeeds,

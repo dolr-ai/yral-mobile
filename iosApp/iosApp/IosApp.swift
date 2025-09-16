@@ -167,7 +167,7 @@ struct IosApp: App {
   @State private var initializationError: Error?
   @StateObject private var session: SessionManager
   @StateObject private var deepLinkRouter = DeepLinkRouter.shared
-  @StateObject private var eventBus = EventBus()
+  @StateObject private var eventBus: EventBus
   @State private var authStatus: AuthState = .uninitialized
 
   init() {
@@ -175,6 +175,9 @@ struct IosApp: App {
     appDIContainer = container
     _session = StateObject(
       wrappedValue: container.session
+    )
+    _eventBus = StateObject(
+      wrappedValue: container.eventBus
     )
   }
 

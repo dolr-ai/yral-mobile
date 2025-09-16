@@ -27,6 +27,7 @@ protocol FeedsCellProtocol: AnyObject {
   func walletAnimationEnded(success: Bool, coins: Int64)
   func howToPlayTapped()
   func howToPlayShown(index: Int)
+  func coinsTapped()
 }
 
 // swiftlint: disable type_body_length
@@ -231,6 +232,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
         constant: Constants.profileInfoTop
       )
     ])
+    profileInfoView.delegate = self
   }
 
   func setupStackView() {
