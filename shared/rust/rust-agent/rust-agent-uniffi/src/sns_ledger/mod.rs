@@ -1,16 +1,15 @@
 // This is an experimental feature to generate Rust binding from Candid.
 // You may want to manually adjust some of the types.
 #![allow(dead_code, unused_imports)]
-use crate::individual_user_template;
-use crate::RUNTIME;
-use crate::uni_ffi_helpers::*;
 use candid::{self, CandidType, Decode, Deserialize, Encode, Int, Nat, Principal};
 use ic_agent::export::PrincipalError;
 use ic_agent::Agent;
 use std::sync::Arc;
-use uniffi::Record;
-use uniffi::Enum;
+use uniffi::{Record, Enum};
+use crate::uni_ffi_helpers::*;
 use crate::commons::*;
+use crate::individual_user_template;
+use crate::RUNTIME;
 
 type Result<T> = std::result::Result<T, FFIError>;
 
