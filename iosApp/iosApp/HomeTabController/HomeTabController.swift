@@ -10,6 +10,7 @@ struct HomeTabController: View {
   let uploadOptionsScreenView: UINavigationController
   let profileView: ProfileView
   let leaderboardView: UINavigationController
+  let walletView: WalletView
 
   private var feedsViewControllerWrapper: FeedsViewControllerWrapper {
     FeedsViewControllerWrapper(
@@ -36,13 +37,15 @@ struct HomeTabController: View {
 
   init(
     feedsViewController: FeedsViewController,
+    leaderboardView: UINavigationController,
     uploadOptionsScreenView: UINavigationController,
+    walletView: WalletView,
     profileView: ProfileView,
     accountView: AccountView,
-    leaderboardView: UINavigationController,
   ) {
     self.feedsViewController = feedsViewController
     self.uploadOptionsScreenView = uploadOptionsScreenView
+    self.walletView = walletView
     self.profileView = profileView
     self.accountView = accountView
     self.leaderboardView = leaderboardView
@@ -79,6 +82,15 @@ struct HomeTabController: View {
           }
           .tag(Tab.upload)
 
+        walletView
+          .background(Color.black.edgesIgnoringSafeArea(.all))
+          .tabItem {
+            tabIcon(selected: selectedTab == .wallet,
+                    selectedName: Constants.walletIconImageNameSelected,
+                    unselectedName: Constants.walletIconImageNameUnselected)
+          }
+          .tag(Tab.wallet)
+
         profileView
           .onUploadAction {
             suppressAnalytics = true
@@ -90,15 +102,15 @@ struct HomeTabController: View {
                              unselectedName: Constants.profileIconImageNameUnSelected) }
           .tag(Tab.profile)
 
-        accountView
-          .background(Color.black.edgesIgnoringSafeArea(.all))
-          .tabItem {
-            Image(
-              ImageResource(name: Constants.accountIconImageName, bundle: .main)
-            )
-            .renderingMode(.original)
-          }
-          .tag(Tab.account)
+//        accountView
+//          .background(Color.black.edgesIgnoringSafeArea(.all))
+//          .tabItem {
+//            Image(
+//              ImageResource(name: Constants.accountIconImageName, bundle: .main)
+//            )
+//            .renderingMode(.original)
+//          }
+//          .tag(Tab.account)
       }
       .onChange(of: selectedTab) { tab in
         guard !suppressAnalytics else {
@@ -232,6 +244,8 @@ struct HomeTabController: View {
       categoryName = .leaderboard
     case .upload:
       categoryName = .uploadVideo
+    case .wallet:
+      categoryName = .home
     case .profile:
       categoryName = .profile
     case .account:
@@ -251,6 +265,8 @@ extension HomeTabController {
     static let homeIconImageNameSelected = "home_tab_selected"
     static let leaderboardIconImageNameSelected = "leaderboard_tab_selected"
     static let leaderboardIconImageNameUnselected = "leaderboard_tab_unselected"
+    static let walletIconImageNameSelected = "wallet_tab_selected"
+    static let walletIconImageNameUnselected = "wallet_tab_unselected"
     static let uploadIconImageNameUnselected = "upload_tab_unselected"
     static let uploadIconImageNameSelected = "upload_tab_selected"
     static let profileIconImageNameUnSelected = "profile_tab_unselected"
@@ -264,7 +280,7 @@ extension HomeTabController {
 }
 
 enum Tab: Hashable {
-  case home, leaderboard, upload, profile, account
+  case home, leaderboard, wallet, upload, profile, account
 
   var intValue: Int {
     switch self {
@@ -274,10 +290,12 @@ enum Tab: Hashable {
       return .one
     case .upload:
       return .two
-    case .profile:
+    case .wallet:
       return .three
-    case .account:
+    case .profile:
       return .four
+    case .account:
+      return .five
     }
   }
 }
