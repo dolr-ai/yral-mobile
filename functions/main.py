@@ -645,6 +645,13 @@ def cast_vote_v2(request: Request):
 
 
 ############################## Leaderboard ##############################
+from constants import (
+    REWARD_AMOUNT,
+    DEFAULT_REWARD_CURRENCY,
+    SUPPORTED_REWARD_CURRENCIES,
+    REWARDS_ENABLED
+)
+
 def _bucket_bounds_ist() -> tuple[str, int, int]:
     """
     Returns (bucket_id, start_ms, end_ms) for today's IST day window.
@@ -1012,6 +1019,45 @@ def leaderboard_v2(request: Request):
         now_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
         time_left_ms = max(0, end_ms - now_ms)
 
+        day_doc_ref = db().collection(DAILY_COLL).document(bucket_id)
+        day_doc = day_doc_ref.get()
+
+        # set currency for daily leaderboard
+        currency = day_doc.get("currency")
+        if currency is None:
+            currency = DEFAULT_REWARD_CURRENCY
+            try:
+                day_doc_ref.update({
+                    "currency": currency,
+                    "updated_at": firestore.SERVER_TIMESTAMP
+                })
+            except Exception:
+                pass
+
+        # set rewards table for daily leaderboard
+        rewards_table = day_doc.get("rewards_table")
+        if rewards_table is None:
+            rewards_table = REWARD_AMOUNT.get(currency, {})
+            try:
+                day_doc_ref.update({
+                    "rewards_table": rewards_table,
+                    "updated_at": firestore.SERVER_TIMESTAMP
+                })
+            except Exception:
+                pass
+
+        # set rewards enabled for daily leaderboard
+        rewards_enabled = day_doc.get("rewards_enabled")
+        if rewards_enabled is None:
+            rewards_enabled = REWARDS_ENABLED
+            try:
+                day_doc_ref.update({
+                    "rewards_enabled": rewards_enabled,
+                    "updated_at": firestore.SERVER_TIMESTAMP
+                })
+            except Exception:
+                pass
+
         day_users = db().collection(f"{DAILY_COLL}/{bucket_id}/users")
         entry_ref = day_users.document(pid)
 
@@ -1071,17 +1117,26 @@ def leaderboard_v2(request: Request):
 
         # Safety: ensure exactly 10
         top_rows = top_rows[:10]
+        for row in top_rows:
+            if rewards_enabled:
+                row["reward"] = rewards_table.get(row["position"])
+            else:
+                row["reward"] = None
 
         user_row = {
             "principal_id": pid,
             "wins": user_wins,
             "position": user_position
         }
+        user_row["reward"] = rewards_table.get(user_position) if rewards_enabled else None
 
         return jsonify({
             "user_row": user_row,
             "top_rows": top_rows,
-            "time_left_ms": time_left_ms
+            "time_left_ms": time_left_ms,
+            "reward_currency": currency,
+            "rewards_enabled": rewards_enabled,
+            "rewards_finalized": bool(day_doc.get("rewards_finalized") or False)
         }), 200
 
     except auth.InvalidIdTokenError:
