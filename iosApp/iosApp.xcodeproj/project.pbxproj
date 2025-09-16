@@ -1496,20 +1496,21 @@
 		7555FF7D242A565900829871 /* iosApp */ = {
 			isa = PBXGroup;
 			children = (
-				ACE77F102E743E9900896DD2 /* DeepLinking */,
-				10CEBB7D2E3103580022803A /* HapticFeedback */,
-				100209A92DE6E2E700DF269E /* Leaderboard */,
-				107C60922DB7AA86006FC467 /* SmileyGame */,
 				2152FB032600AC8F00CF470E /* IosApp.swift */,
 				ACB46A2B2D0EC82F002E200C /* AppDIContainer.swift */,
 				10C1B38A2E5375D000CFC41B /* AppDIContainerKey.swift */,
-				ACB46A712D105AC0002E200C /* DesignSystem */,
 				ACC0F3932D2ED5B700FA5BD0 /* Splash */,
 				AC638BF72D230DA900481E94 /* HomeTabController */,
 				ACEBE9962D0C4AA50056F033 /* Feed */,
+				107C60922DB7AA86006FC467 /* SmileyGame */,
+				100209A92DE6E2E700DF269E /* Leaderboard */,
 				AC9B77E92D5A6F2300270FC9 /* Upload */,
+				AC1912952E7961C600BA5D78 /* Wallet */,
 				AC99BBAE2D86C54D008012C2 /* Profile */,
 				AC32E4292D27A412001DDA43 /* Account */,
+				ACE77F102E743E9900896DD2 /* DeepLinking */,
+				10CEBB7D2E3103580022803A /* HapticFeedback */,
+				ACB46A712D105AC0002E200C /* DesignSystem */,
 				AC99BBBD2D86F3C9008012C2 /* Libs */,
 				AC26CA662D806501006ADA75 /* Utils */,
 				ACC0F3992D2ED61100FA5BD0 /* Resources */,
@@ -1561,6 +1562,13 @@
 				AC09A9F92CDB7A5D009A39A4 /* SwiftBindings+Extensions.swift */,
 			);
 			path = Extensions;
+			sourceTree = "<group>";
+		};
+		AC1912952E7961C600BA5D78 /* Wallet */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Wallet;
 			sourceTree = "<group>";
 		};
 		AC1ACF9A2DB91799001BDCFD /* SessionManager */ = {
@@ -4313,7 +4321,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 101;
 				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 2UL556KNXC;
