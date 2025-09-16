@@ -160,8 +160,9 @@ struct IosApp: App {
   private let mixpanelToken = "MIXPANEL_TOKEN"
   @State private var feedsDIContainer: FeedDIContainer?
   @State private var leaderboardDIContainer: LeaderboardDIContainer?
-  @State private var profileDIContainer: ProfileDIContainer?
   @State private var uploadOptionsDIContainer: UploadOptionsDIContainer?
+  @State private var walletDIContainer: WalletDIContainer?
+  @State private var profileDIContainer: ProfileDIContainer?
   @State private var accountDIContainer: AccountDIContainer?
   @State private var initializationError: Error?
   @StateObject private var session: SessionManager
@@ -196,6 +197,7 @@ struct IosApp: App {
     if let feedsDIContainer = feedsDIContainer,
        let leaderboardDIContainer = leaderboardDIContainer,
        let uploadOptionsDIContainer = uploadOptionsDIContainer,
+       let walletDIContainer = walletDIContainer,
        let accountDIContainer = accountDIContainer,
        let profileDIContainer = profileDIContainer {
       let flagManager = AppDIHelper().getFeatureFlagManager()
@@ -203,10 +205,11 @@ struct IosApp: App {
         feedsViewController: feedsDIContainer.makeFeedsViewController(
           playToScroll: flagManager.isEnabled(flag: FeedFeatureFlags.SmileyGame.shared.StopAndVoteNudge)
         ),
+        leaderboardView: leaderboardDIContainer.makeLeaderboardView(),
         uploadOptionsScreenView: uploadOptionsDIContainer.makeUploadOptionsView(),
+        walletView: walletDIContainer.makeWalletView(),
         profileView: profileDIContainer.makeProfileView(),
-        accountView: accountDIContainer.makeAccountView(),
-        leaderboardView: leaderboardDIContainer.makeLeaderboardView()
+        accountView: accountDIContainer.makeAccountView()
       )
       .environmentObject(session)
       .environmentObject(deepLinkRouter)
@@ -238,10 +241,11 @@ struct IosApp: App {
       AnalyticsModuleKt.getAnalyticsManager().trackEvent(event: SplashScreenViewedEventData())
       feedsDIContainer = await appDIContainer.makeFeedDIContainer()
       try await appDIContainer.authClient.initialize()
+      leaderboardDIContainer = appDIContainer.makeLeaderboardDIContainer()
       uploadOptionsDIContainer = appDIContainer.makeUploadOptionsDIContainer()
+      walletDIContainer = appDIContainer.makeWalletDIContainer()
       profileDIContainer = appDIContainer.makeProfileDIContainer()
       accountDIContainer = appDIContainer.makeAccountDIContainer()
-      leaderboardDIContainer = appDIContainer.makeLeaderboardDIContainer()
     } catch {
       initializationError = error
     }

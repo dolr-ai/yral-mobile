@@ -197,6 +197,12 @@
 		AC1233752DF5E14100DAFCF4 /* libsecp256k1 in Frameworks */ = {isa = PBXBuildFile; productRef = AC1233742DF5E14100DAFCF4 /* libsecp256k1 */; };
 		AC1233772DF5E16000DAFCF4 /* P256K in Frameworks */ = {isa = PBXBuildFile; productRef = AC1233762DF5E16000DAFCF4 /* P256K */; };
 		AC12B9D22D3809B7004E9EA9 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = AC12B9D12D3809B7004E9EA9 /* GoogleService-Info.plist */; };
+		AC1912972E79624700BA5D78 /* WalletView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1912962E79624100BA5D78 /* WalletView.swift */; };
+		AC1912982E79624700BA5D78 /* WalletView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1912962E79624100BA5D78 /* WalletView.swift */; };
+		AC19129C2E7962AA00BA5D78 /* WalletDIContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC19129B2E7962A500BA5D78 /* WalletDIContainer.swift */; };
+		AC19129D2E7962AA00BA5D78 /* WalletDIContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC19129B2E7962A500BA5D78 /* WalletDIContainer.swift */; };
+		AC1912A02E796F3200BA5D78 /* YralTabbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC19129F2E796F2E00BA5D78 /* YralTabbar.swift */; };
+		AC1912A12E796F3200BA5D78 /* YralTabbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC19129F2E796F2E00BA5D78 /* YralTabbar.swift */; };
 		AC1ACF982DB9161F001BDCFD /* AuthState.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1ACF972DB9161D001BDCFD /* AuthState.swift */; };
 		AC1ACF992DB9161F001BDCFD /* AuthState.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1ACF972DB9161D001BDCFD /* AuthState.swift */; };
 		AC1ACF9C2DB917A3001BDCFD /* SessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1ACF9B2DB9179F001BDCFD /* SessionManager.swift */; };
@@ -844,6 +850,9 @@
 		AC09A9F92CDB7A5D009A39A4 /* SwiftBindings+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SwiftBindings+Extensions.swift"; sourceTree = "<group>"; };
 		AC09AA732CDD2107009A39A4 /* Data+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Data+Extensions.swift"; sourceTree = "<group>"; };
 		AC12B9D12D3809B7004E9EA9 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		AC1912962E79624100BA5D78 /* WalletView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletView.swift; sourceTree = "<group>"; };
+		AC19129B2E7962A500BA5D78 /* WalletDIContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletDIContainer.swift; sourceTree = "<group>"; };
+		AC19129F2E796F2E00BA5D78 /* YralTabbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralTabbar.swift; sourceTree = "<group>"; };
 		AC1ACF972DB9161D001BDCFD /* AuthState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthState.swift; sourceTree = "<group>"; };
 		AC1ACF9B2DB9179F001BDCFD /* SessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionManager.swift; sourceTree = "<group>"; };
 		AC1ACF9E2DB964A4001BDCFD /* SwiftUI+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SwiftUI+Extensions.swift"; sourceTree = "<group>"; };
@@ -1567,8 +1576,34 @@
 		AC1912952E7961C600BA5D78 /* Wallet */ = {
 			isa = PBXGroup;
 			children = (
+				AC1912992E79629400BA5D78 /* View */,
+				AC19129A2E79629B00BA5D78 /* DI */,
 			);
 			path = Wallet;
+			sourceTree = "<group>";
+		};
+		AC1912992E79629400BA5D78 /* View */ = {
+			isa = PBXGroup;
+			children = (
+				AC1912962E79624100BA5D78 /* WalletView.swift */,
+			);
+			path = View;
+			sourceTree = "<group>";
+		};
+		AC19129A2E79629B00BA5D78 /* DI */ = {
+			isa = PBXGroup;
+			children = (
+				AC19129B2E7962A500BA5D78 /* WalletDIContainer.swift */,
+			);
+			path = DI;
+			sourceTree = "<group>";
+		};
+		AC19129E2E796F1700BA5D78 /* Tabbar */ = {
+			isa = PBXGroup;
+			children = (
+				AC19129F2E796F2E00BA5D78 /* YralTabbar.swift */,
+			);
+			path = Tabbar;
 			sourceTree = "<group>";
 		};
 		AC1ACF9A2DB91799001BDCFD /* SessionManager */ = {
@@ -1805,6 +1840,7 @@
 		AC32E4482D2961CE001DDA43 /* SwiftUI */ = {
 			isa = PBXGroup;
 			children = (
+				AC19129E2E796F1700BA5D78 /* Tabbar */,
 				ACC1C3962D9AF8AB005A7539 /* Loader */,
 				10F89A4B2E0144FF00B90BD0 /* Color+Extensions.swift */,
 				AC462F412D95A4A8004957B3 /* OffsetableScrollView.swift */,
@@ -3453,6 +3489,7 @@
 				ACB46A442D0ECBB3002E200C /* ml_feed.pb.swift in Sources */,
 				AC42D3672E0BFDCB009C2D92 /* DeleteAccountDTO.swift in Sources */,
 				AC8958E32D3EB0DB00E19ED7 /* ProfileOptionsWebView.swift in Sources */,
+				AC19129D2E7962AA00BA5D78 /* WalletDIContainer.swift in Sources */,
 				ACC0D4642D9179C1006DCF5C /* DeleteVideoUseCase.swift in Sources */,
 				ACB46A482D0ECBD5002E200C /* FeedsRepository.swift in Sources */,
 				AC32E4412D295E97001DDA43 /* UserInfoView.swift in Sources */,
@@ -3497,6 +3534,7 @@
 				10020A192DED6CED00DF269E /* LeaderboardRowView.swift in Sources */,
 				ACC0F3972D2ED5D700FA5BD0 /* LottieView.swift in Sources */,
 				AC7D5B3E2E0EA7C6008853AF /* NotificationsNudge.swift in Sources */,
+				AC1912982E79624700BA5D78 /* WalletView.swift in Sources */,
 				AC2C30D22D96C51600DA9F81 /* ReportEntity.swift in Sources */,
 				ACB46A7D2D105BEB002E200C /* UIKitInitializers.swift in Sources */,
 				AC26CA562D80281D006ADA75 /* FirebaseCrashlyticsReporter.swift in Sources */,
@@ -3644,6 +3682,7 @@
 				107C61242DC0F2C8006FC467 /* SmileyGameRuleError.swift in Sources */,
 				10C1B38B2E5375D500CFC41B /* AppDIContainerKey.swift in Sources */,
 				ACC0D45D2D91785B006DCF5C /* SwiftDelegatedIdentityWire.swift in Sources */,
+				AC1912A12E796F3200BA5D78 /* YralTabbar.swift in Sources */,
 				ACB09FC92D92CB6400EE3239 /* ProfileRouter.swift in Sources */,
 				ACAA4D602DDC75CB001092A6 /* Notifications.swift in Sources */,
 				ACB46A812D106034002E200C /* FeedsCell.swift in Sources */,
@@ -3765,6 +3804,7 @@
 				ACB46A412D0ECBB3002E200C /* ml_feed.pb.swift in Sources */,
 				AC42D3682E0BFDCB009C2D92 /* DeleteAccountDTO.swift in Sources */,
 				AC8958E22D3EB0DB00E19ED7 /* ProfileOptionsWebView.swift in Sources */,
+				AC19129C2E7962AA00BA5D78 /* WalletDIContainer.swift in Sources */,
 				ACC0D4652D9179C1006DCF5C /* DeleteVideoUseCase.swift in Sources */,
 				ACB46A472D0ECBD5002E200C /* FeedsRepository.swift in Sources */,
 				AC32E4422D295E97001DDA43 /* UserInfoView.swift in Sources */,
@@ -3809,6 +3849,7 @@
 				10020A182DED6CED00DF269E /* LeaderboardRowView.swift in Sources */,
 				ACC0F3982D2ED5D700FA5BD0 /* LottieView.swift in Sources */,
 				AC7D5B3F2E0EA7C6008853AF /* NotificationsNudge.swift in Sources */,
+				AC1912972E79624700BA5D78 /* WalletView.swift in Sources */,
 				AC2C30D12D96C51600DA9F81 /* ReportEntity.swift in Sources */,
 				ACB46A7C2D105BEB002E200C /* UIKitInitializers.swift in Sources */,
 				AC26CA552D80281D006ADA75 /* FirebaseCrashlyticsReporter.swift in Sources */,
@@ -3956,6 +3997,7 @@
 				107C61232DC0F2C8006FC467 /* SmileyGameRuleError.swift in Sources */,
 				10C1B38C2E5375D500CFC41B /* AppDIContainerKey.swift in Sources */,
 				ACC0D45E2D91785B006DCF5C /* SwiftDelegatedIdentityWire.swift in Sources */,
+				AC1912A02E796F3200BA5D78 /* YralTabbar.swift in Sources */,
 				ACB09FCA2D92CB6400EE3239 /* ProfileRouter.swift in Sources */,
 				ACAA4D5F2DDC75CB001092A6 /* Notifications.swift in Sources */,
 				ACB46A802D106034002E200C /* FeedsCell.swift in Sources */,
