@@ -70,7 +70,6 @@ class MainActivity : ComponentActivity() {
     // Shared Branch session callback for both init() and reInit()
     private val branchSessionCallback: (BranchUniversalObject?, LinkProperties?, BranchError?) -> Unit =
         { branchUniversalObject, linkProperties, error ->
-            intent = null
             if (error != null) {
                 Logger.d("BranchSDK") { "branch session error: " + error.message }
             } else {
@@ -159,7 +158,6 @@ class MainActivity : ComponentActivity() {
         // Handle OAuth redirect URIs
         handleOAuthIntent(intent)?.let {
             oAuthUtils.invokeCallback(it)
-            setIntent(null)
             return
         }
 
@@ -169,7 +167,6 @@ class MainActivity : ComponentActivity() {
             Logger.d("MainActivity") { "Handling notification payload: $payload" }
             val destination = mapPayloadToDestination(payload)
             if (destination != null) {
-                setIntent(null)
                 handleNotificationDeepLink(destination)
             }
         }
