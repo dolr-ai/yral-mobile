@@ -29,6 +29,8 @@ kotlin {
             implementation(projects.shared.libs.crashlytics)
             implementation(projects.shared.libs.featureFlag)
 
+            implementation(projects.shared.features.account)
+
             implementation(libs.androidx.paging.common)
         }
     }

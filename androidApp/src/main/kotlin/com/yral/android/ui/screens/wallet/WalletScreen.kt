@@ -28,9 +28,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
-import com.yral.android.ui.screens.profile.AccountInfoSection
 import com.yral.android.ui.screens.wallet.nav.WalletComponent
-import com.yral.shared.features.wallet.domain.models.BtcInInr
+import com.yral.android.ui.widgets.YralAsyncImage
+import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.features.wallet.viewmodel.WalletViewModel
 import com.yral.shared.libs.CurrencyFormatter
 import com.yral.shared.libs.NumberFormatter
@@ -76,6 +76,36 @@ private fun WalletHeader() {
             text = stringResource(R.string.my_wallet),
             style = LocalAppTopography.current.xlBold,
             color = YralColors.NeutralTextPrimary,
+        )
+    }
+}
+
+@Composable
+private fun AccountInfoSection(accountInfo: AccountInfo) {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(bottom = 20.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.Start),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            YralAsyncImage(
+                imageUrl = accountInfo.profilePic,
+                modifier = Modifier.size(60.dp),
+            )
+            Text(
+                text = accountInfo.userPrincipal,
+                style = LocalAppTopography.current.baseMedium,
+                color = YralColors.NeutralTextSecondary,
+            )
+        }
+        Spacer(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(YralColors.Divider),
         )
     }
 }

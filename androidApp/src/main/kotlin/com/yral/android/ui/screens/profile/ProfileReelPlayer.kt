@@ -37,6 +37,7 @@ import com.yral.android.R
 import com.yral.android.ui.design.LocalAppTopography
 import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.feed.performance.PrefetchVideoListenerImpl
+import com.yral.android.ui.screens.profile.main.ProfileMainScreenConstants
 import com.yral.android.ui.widgets.YralLoader
 import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.libs.videoPlayer.YRALReelPlayer
@@ -171,7 +172,7 @@ private fun Caption(
             val scrollState = rememberScrollState()
             val maxHeight =
                 LocalAppTopography.current.feedDescription.lineHeight.value *
-                    ProfileScreenConstants.MAX_LINES_FOR_POST_DESCRIPTION
+                    ProfileMainScreenConstants.MAX_LINES_FOR_POST_DESCRIPTION
             Text(
                 modifier = Modifier.heightIn(max = maxHeight.dp).verticalScroll(scrollState),
                 text = caption,

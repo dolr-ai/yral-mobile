@@ -166,6 +166,7 @@ internal class DefaultHomeComponent(
         ProfileComponent.Companion(
             componentContext = componentContext,
             onUploadVideoClicked = { onUploadVideoTabClick() },
+            snapshot = childSnapshots[Config.Profile] as? ProfileComponent.Snapshot,
         )
 
     private fun accountComponent(componentContext: ComponentContext): AccountComponent =
