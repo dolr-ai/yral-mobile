@@ -8,6 +8,7 @@ import com.yral.shared.rust.service.data.RateLimitDataSourceImpl
 import com.yral.shared.rust.service.data.RateLimitRepositoryImpl
 import com.yral.shared.rust.service.domain.IndividualUserRepository
 import com.yral.shared.rust.service.domain.RateLimitRepository
+import com.yral.shared.rust.service.services.ICPLedgerServiceFactory
 import com.yral.shared.rust.service.services.IndividualUserServiceFactory
 import com.yral.shared.rust.service.services.RateLimitServiceFactory
 import com.yral.shared.rust.service.services.SnsLedgerServiceFactory
@@ -27,4 +28,5 @@ actual val rustModule: Module =
         single { RateLimitServiceFactory() }
         single { UserPostServiceFactory() }
         single { SnsLedgerServiceFactory() }
+        single { ICPLedgerServiceFactory() }
     }
