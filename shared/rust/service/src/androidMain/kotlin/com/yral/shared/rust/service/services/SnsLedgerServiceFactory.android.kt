@@ -1,12 +1,14 @@
 package com.yral.shared.rust.service.services
 
 import com.yral.shared.core.exceptions.YralException
+import com.yral.shared.uniffi.generated.Principal
 import com.yral.shared.uniffi.generated.SnsLedgerService
 
 actual class SnsLedgerServiceFactory {
     private var identityData: ByteArray? = null
 
-    internal fun service(): SnsLedgerService =
+    @Suppress("UnusedParameter")
+    internal fun service(principal: Principal): SnsLedgerService =
         identityData?.let {
             SnsLedgerService(
                 principalText = ICP_LEDGER_CANISTER,

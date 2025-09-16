@@ -50,9 +50,19 @@ class WalletDataSourceImpl(
         }
     }
 
-    override suspend fun getUserBtcBalance(userPrincipal: String): String =
+    override suspend fun getUserBtcBalance(
+        canisterId: String,
+        userPrincipal: String,
+    ): String =
         individualUserRepository
-            .getUserBitcoinBalance(userPrincipal)
+            .getUserBitcoinBalance(canisterId, userPrincipal)
+
+    override suspend fun getUserDolrBalance(
+        canisterId: String,
+        userPrincipal: String,
+    ): String =
+        individualUserRepository
+            .getUserDolrBalance(canisterId, userPrincipal)
 
     companion object {
         private const val BTC_INR_VALUE_PATH = "btc_inr_value"

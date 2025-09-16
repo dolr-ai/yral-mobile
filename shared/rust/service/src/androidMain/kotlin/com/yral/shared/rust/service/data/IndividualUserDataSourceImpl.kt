@@ -1,6 +1,7 @@
 package com.yral.shared.rust.service.data
 
 import com.yral.shared.data.feed.data.PostDTO
+import com.yral.shared.rust.service.services.ICPLedgerServiceFactory
 import com.yral.shared.rust.service.services.IndividualUserServiceFactory
 import com.yral.shared.rust.service.services.SnsLedgerServiceFactory
 import com.yral.shared.rust.service.services.UserPostServiceFactory
@@ -14,6 +15,7 @@ internal class IndividualUserDataSourceImpl(
     private val individualUserServiceFactory: IndividualUserServiceFactory,
     private val userPostServiceFactory: UserPostServiceFactory,
     private val snsLedgerServiceFactory: SnsLedgerServiceFactory,
+    private val icpLedgerServiceFactory: ICPLedgerServiceFactory,
 ) : IndividualUserDataSource {
     override suspend fun fetchFeedDetails(post: PostDTO): PostDetailsForFrontend =
         individualUserServiceFactory
@@ -43,9 +45,20 @@ internal class IndividualUserDataSourceImpl(
             .service(principalId)
             .getPostsOfThisUserProfileWithPaginationCursor(principalId, startIndex, pageSize)
 
-    override suspend fun getUserBitcoinBalance(principalId: String): String =
+    override suspend fun getUserBitcoinBalance(
+        canisterId: String,
+        principalId: String,
+    ): String =
+        icpLedgerServiceFactory
+            .service(canisterId)
+            .icrc1BalanceOf(Account(owner = principalId, subaccount = null))
+
+    override suspend fun getUserDolrBalance(
+        canisterId: String,
+        principalId: String,
+    ): String =
         snsLedgerServiceFactory
-            .service()
+            .service(canisterId)
             .icrc1BalanceOf(Account(owner = principalId, subaccount = null))
 
     internal companion object {

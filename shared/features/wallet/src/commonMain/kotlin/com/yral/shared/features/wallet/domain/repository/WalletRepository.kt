@@ -4,5 +4,12 @@ import com.yral.shared.features.wallet.domain.models.BtcInInr
 
 interface WalletRepository {
     suspend fun getBtcInInr(idToken: String): BtcInInr
-    suspend fun getUserBtcBalance(userPrincipal: String): String
+    suspend fun getUserBtcBalance(
+        canisterId: String,
+        userPrincipal: String,
+    ): String
+    suspend fun getUserDolrBalance(
+        canisterId: String,
+        userPrincipal: String,
+    ): String
 }

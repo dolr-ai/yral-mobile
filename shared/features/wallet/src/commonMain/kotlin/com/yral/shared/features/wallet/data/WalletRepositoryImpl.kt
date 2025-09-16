@@ -12,7 +12,17 @@ class WalletRepositoryImpl(
             .getBtcInInr(idToken)
             .toBtcInInr()
 
-    override suspend fun getUserBtcBalance(userPrincipal: String): String =
+    override suspend fun getUserBtcBalance(
+        canisterId: String,
+        userPrincipal: String,
+    ): String =
         dataSource
-            .getUserBtcBalance(userPrincipal)
+            .getUserBtcBalance(canisterId, userPrincipal)
+
+    override suspend fun getUserDolrBalance(
+        canisterId: String,
+        userPrincipal: String,
+    ): String =
+        dataSource
+            .getUserDolrBalance(canisterId, userPrincipal)
 }
