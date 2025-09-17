@@ -29,8 +29,6 @@ class WalletViewModel(
     init {
         _state.update { it.copy(accountInfo = sessionManager.getAccountInfo()) }
         observeBalance()
-        getBtcValueInInr()
-        getUserBtcBalanceUseCase()
     }
 
     fun onScreenViewed() {
@@ -38,9 +36,12 @@ class WalletViewModel(
         walletTelemetry.onWalletScreenViewed()
     }
 
-    fun refresh() {
-        getBtcValueInInr()
+    fun refresh(regionCode: String) {
         getUserBtcBalanceUseCase()
+        Logger.d("coinBalance") { "region $regionCode" }
+        if (regionCode == "IN") {
+            getBtcValueInInr()
+        }
     }
 
     private fun observeBalance() {
