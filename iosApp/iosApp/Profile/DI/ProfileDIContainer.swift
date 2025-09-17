@@ -15,6 +15,8 @@ final class ProfileDIContainer {
     let accountUseCase: AccountUseCaseProtocol
     let session: SessionManager
     let eventBus: EventBus
+    let accountRepository: AccountRepositoryProtocol
+    let socialSignInUseCase: SocialSignInUseCaseProtocol
   }
 
   private let dependencies: Dependencies
@@ -95,6 +97,23 @@ final class ProfileDIContainer {
       showFeeds: showFeeds,
       walletPhase: walletPhase,
       walletOutcome: walletOutcome
+    )
+  }
+
+  func makeAccount() -> AccountView {
+    AccountView(
+      viewModel: AccountViewModel(
+        accountUseCase: dependencies.accountUseCase,
+        socialSignInUseCase: dependencies.socialSignInUseCase,
+        logoutUseCase: LogoutUseCase(
+          accountRepository: dependencies.accountRepository,
+          crashReporter: dependencies.crashReporter
+        ),
+        deleteUseCase: DeleteUseCase(
+          accountRepository: dependencies.accountRepository,
+          crashReporter: dependencies.crashReporter
+        )
+      )
     )
   }
 }

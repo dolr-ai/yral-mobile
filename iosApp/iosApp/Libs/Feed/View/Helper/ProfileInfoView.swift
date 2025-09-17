@@ -71,7 +71,8 @@ class ProfileInfoView: UIView, ImageLoaderProtocol {
     addSubview(coinsView)
     NSLayoutConstraint.activate([
       coinsView.trailingAnchor.constraint(equalTo: trailingAnchor),
-      coinsView.centerYAnchor.constraint(equalTo: imageView.centerYAnchor)
+      coinsView.centerYAnchor.constraint(equalTo: imageView.centerYAnchor),
+      coinsView.heightAnchor.constraint(equalToConstant: 36.0)
     ])
     coinsView.isUserInteractionEnabled = true
     let tapGesture = UITapGestureRecognizer(target: self, action: #selector(coinsTapped))

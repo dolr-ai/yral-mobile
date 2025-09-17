@@ -163,7 +163,6 @@ struct IosApp: App {
   @State private var uploadOptionsDIContainer: UploadOptionsDIContainer?
   @State private var walletDIContainer: WalletDIContainer?
   @State private var profileDIContainer: ProfileDIContainer?
-  @State private var accountDIContainer: AccountDIContainer?
   @State private var initializationError: Error?
   @StateObject private var session: SessionManager
   @StateObject private var deepLinkRouter = DeepLinkRouter.shared
@@ -201,7 +200,6 @@ struct IosApp: App {
        let leaderboardDIContainer = leaderboardDIContainer,
        let uploadOptionsDIContainer = uploadOptionsDIContainer,
        let walletDIContainer = walletDIContainer,
-       let accountDIContainer = accountDIContainer,
        let profileDIContainer = profileDIContainer {
       let flagManager = AppDIHelper().getFeatureFlagManager()
       HomeTabController(
@@ -211,8 +209,7 @@ struct IosApp: App {
         leaderboardView: leaderboardDIContainer.makeLeaderboardView(),
         uploadOptionsScreenView: uploadOptionsDIContainer.makeUploadOptionsView(),
         walletView: walletDIContainer.makeWalletView(),
-        profileView: profileDIContainer.makeProfileView(),
-        accountView: accountDIContainer.makeAccountView()
+        profileView: profileDIContainer.makeProfileView()
       )
       .environmentObject(session)
       .environmentObject(deepLinkRouter)
@@ -248,7 +245,6 @@ struct IosApp: App {
       uploadOptionsDIContainer = appDIContainer.makeUploadOptionsDIContainer()
       walletDIContainer = appDIContainer.makeWalletDIContainer()
       profileDIContainer = appDIContainer.makeProfileDIContainer()
-      accountDIContainer = appDIContainer.makeAccountDIContainer()
     } catch {
       initializationError = error
     }

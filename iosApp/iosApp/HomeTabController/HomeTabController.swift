@@ -6,7 +6,6 @@ struct HomeTabController: View {
   @EnvironmentObject var deepLinkRouter: DeepLinkRouter
   @State private var suppressAnalytics = false
   let feedsViewController: FeedsViewController
-  let accountView: AccountView
   let uploadOptionsScreenView: UINavigationController
   let profileView: ProfileView
   let leaderboardView: UINavigationController
@@ -41,13 +40,11 @@ struct HomeTabController: View {
     uploadOptionsScreenView: UINavigationController,
     walletView: WalletView,
     profileView: ProfileView,
-    accountView: AccountView,
   ) {
     self.feedsViewController = feedsViewController
     self.uploadOptionsScreenView = uploadOptionsScreenView
     self.walletView = walletView
     self.profileView = profileView
-    self.accountView = accountView
     self.leaderboardView = leaderboardView
     UITabBar.appearance().backgroundColor = .black
     UITabBar.appearance().barTintColor = .black
@@ -101,16 +98,6 @@ struct HomeTabController: View {
                              selectedName: Constants.profileIconImageNameSelected,
                              unselectedName: Constants.profileIconImageNameUnSelected) }
           .tag(Tab.profile)
-
-//        accountView
-//          .background(Color.black.edgesIgnoringSafeArea(.all))
-//          .tabItem {
-//            Image(
-//              ImageResource(name: Constants.accountIconImageName, bundle: .main)
-//            )
-//            .renderingMode(.original)
-//          }
-//          .tag(Tab.account)
       }
       .onChange(of: selectedTab) { tab in
         guard !suppressAnalytics else {
@@ -251,8 +238,6 @@ struct HomeTabController: View {
       categoryName = .home
     case .profile:
       categoryName = .profile
-    case .account:
-      categoryName = .menu
     }
     AnalyticsModuleKt.getAnalyticsManager().trackEvent(
       event: BottomNavigationClickedEventData(
@@ -274,7 +259,6 @@ extension HomeTabController {
     static let uploadIconImageNameSelected = "upload_tab_selected"
     static let profileIconImageNameUnSelected = "profile_tab_unselected"
     static let profileIconImageNameSelected = "profile_tab_selected"
-    static let accountIconImageName = "account_tab"
     static let tabIndicatorHeight: CGFloat = 2.0
     static let indicatorWidth = 30.0
     static let indicatorColor = YralColor.primary300.swiftUIColor
@@ -283,7 +267,7 @@ extension HomeTabController {
 }
 
 enum Tab: Hashable {
-  case home, leaderboard, wallet, upload, profile, account
+  case home, leaderboard, wallet, upload, profile
 
   var intValue: Int {
     switch self {
@@ -297,8 +281,6 @@ enum Tab: Hashable {
       return .three
     case .profile:
       return .four
-    case .account:
-      return .five
     }
   }
 }
