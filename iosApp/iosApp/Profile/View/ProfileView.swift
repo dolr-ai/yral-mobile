@@ -10,7 +10,7 @@ import SwiftUI
 import iosSharedUmbrella
 import Combine
 
-// swiftlint: disable type_body_length
+// swiftlint: disable type_body_length file_length
 struct ProfileView: View {
   @State var showAccountInfo = false
   @State var showEmptyState = true
@@ -26,13 +26,16 @@ struct ProfileView: View {
   @State private var isVisible = false
   @State private var walletPhase: WalletPhase = .none
   @State private var walletOutcome: WalletPhase = .none
+
   @EnvironmentObject var session: SessionManager
   @EnvironmentObject private var deepLinkRouter: DeepLinkRouter
+
   var uploadVideoPressed: (() -> Void) = {}
 
   private enum ProfileRoute: Hashable { case account }
   @StateObject var viewModel: ProfileViewModel
   @State private var path: [ProfileRoute] = []
+
   let router: ProfileRouterProtocol
 
   init(viewModel: ProfileViewModel, router: ProfileRouterProtocol) {
@@ -43,277 +46,299 @@ struct ProfileView: View {
   var body: some View {
     if #available(iOS 16.0, *) {
       NavigationStack(path: $path) {
-        Group {
-          if showFeeds {
-            router.displayUserVideoFeed(
-              existingFeeds: viewModel.feeds,
-              info: MyVideosFeedInfo(
-                startIndex: viewModel.startIndex,
-                currentIndex: currentIndex
-              ),
-              showFeeds: $showFeeds,
-              walletPhase: $walletPhase,
-              walletOutcome: $walletOutcome
-            )
-            .edgesIgnoringSafeArea(.all)
-          } else {
-            VStack(spacing: .zero) {
-              VStack(alignment: .leading, spacing: Constants.vStackSpacing) {
-                HStack {
-                  Text(Constants.navigationTitle)
-                    .font(Constants.navigationTitleFont)
-                    .foregroundColor(Constants.navigationTitleTextColor)
-                    .padding(Constants.navigationTitlePadding)
-                  Spacer()
-                  Button {
-                    path.append(.account)
-                  } label: {
-                    Image(Constants.profileMenuImageName)
-                      .resizable()
-                      .frame(width: Constants.profileMenuImageSize, height: Constants.profileMenuImageSize)
-                  }
+        profileContent
+          .navigationDestination(for: ProfileRoute.self) { route in
+            switch route {
+            case .account:
+              router.displayAccountView()
+                .background(Color.black.ignoresSafeArea())
+            }
+          }
+          .edgesIgnoringSafeArea(.bottom)
+      }
+    } else {
+      NavigationView {
+        profileContent
+          .background(
+            NavigationLink(
+              destination: router.displayAccountView()
+                .background(Color.black.ignoresSafeArea()),
+              isActive: Binding(
+                get: { path.last == .account },
+                set: { isActive in
+                  if !isActive { path.removeAll() }
                 }
-                if showAccountInfo {
-                  UserInfoView(
-                    accountInfo: $accountInfo,
-                    shouldApplySpacing: false,
-                    showLoginButton: Binding(get: { false }, set: { _ in }),
-                    delegate: nil
+              )
+            ) { EmptyView() }
+              .hidden()
+          )
+      }
+      .navigationViewStyle(.stack)
+    }
+  }
+
+  private var profileContent: some View {
+    Group {
+      if showFeeds {
+        router.displayUserVideoFeed(
+          existingFeeds: viewModel.feeds,
+          info: MyVideosFeedInfo(
+            startIndex: viewModel.startIndex,
+            currentIndex: currentIndex
+          ),
+          showFeeds: $showFeeds,
+          walletPhase: $walletPhase,
+          walletOutcome: $walletOutcome
+        )
+        .edgesIgnoringSafeArea(.all)
+      } else {
+        VStack(spacing: .zero) {
+          VStack(alignment: .leading, spacing: Constants.vStackSpacing) {
+            HStack {
+              Text(Constants.navigationTitle)
+                .font(Constants.navigationTitleFont)
+                .foregroundColor(Constants.navigationTitleTextColor)
+                .padding(Constants.navigationTitlePadding)
+              Spacer()
+              Button {
+                if path.last != .account {
+                  path.append(.account)
+                }
+              } label: {
+                Image(Constants.profileMenuImageName)
+                  .resizable()
+                  .frame(width: Constants.profileMenuImageSize, height: Constants.profileMenuImageSize)
+              }
+            }
+            if showAccountInfo {
+              UserInfoView(
+                accountInfo: $accountInfo,
+                shouldApplySpacing: false,
+                showLoginButton: Binding(get: { false }, set: { _ in }),
+                delegate: nil
+              )
+            }
+          }
+          .padding(.horizontal, Constants.horizontalPadding)
+
+          ScrollViewReader { _ in
+            ScrollView {
+              Group {
+                if showEmptyState {
+                  VStack {
+                    Spacer(minLength: Constants.minimumTopSpacing)
+                    ProfileEmptyStateView {
+                      uploadVideoPressed()
+                    }
+                    Spacer(minLength: Constants.minimumBottomSpacing)
+                  }
+                } else {
+                  ProfileVideosGridView(
+                    videos: $videos,
+                    currentlyDeletingPostInfo: $deleteInfo,
+                    showDeleteIndictor: $showDeleteIndicator,
+                    onDelete: { info in
+                      self.deleteInfo = info
+                      withAnimation(.easeInOut(duration: CGFloat.animationPeriod)) {
+                        UIView.setAnimationsEnabled(false)
+                        showDelete = true
+                        currentIndex = videos.firstIndex(where: { $0.postID == info.postID }) ?? .zero
+                        if currentIndex < videos.count {
+                          let item = viewModel.feeds[currentIndex]
+                          AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+                            event: VideoClickedEventData(
+                              videoId: item.videoID,
+                              publisherUserId: item.principalID,
+                              likeCount: Int64(item.likeCount),
+                              shareCount: Int64(Int.zero),
+                              viewCount: item.viewCount,
+                              isGameEnabled: false,
+                              gameType: GameType.smiley,
+                              isNsfw: false,
+                              ctaType: .delete_,
+                              pageName: .profile
+                            )
+                          )
+                        }
+                      }
+                    },
+                    onVideoTapped: { videoInfo in
+                      currentIndex = videos.firstIndex(where: { $0.postID == videoInfo.postID }) ?? .zero
+                      if currentIndex < viewModel.feeds.count {
+                        let item = viewModel.feeds[currentIndex]
+                        AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+                          event: VideoClickedEventData(
+                            videoId: item.videoID,
+                            publisherUserId: item.principalID,
+                            likeCount: Int64(item.likeCount),
+                            shareCount: .zero,
+                            viewCount: Int64(item.viewCount),
+                            isGameEnabled: false,
+                            gameType: .smiley,
+                            isNsfw: false,
+                            ctaType: .play,
+                            pageName: .profile
+                          )
+                        )
+                      }
+                      withAnimation {
+                        showFeeds = true
+                      }
+                    },
+                    onLoadMore: {
+                      Task { @MainActor in
+                        await viewModel.getVideos()
+                      }
+                    }
                   )
                 }
               }
               .padding(.horizontal, Constants.horizontalPadding)
-
-              ScrollViewReader { _ in
-                ScrollView {
-                  Group {
-                    if showEmptyState {
-                      VStack {
-                        Spacer(minLength: Constants.minimumTopSpacing)
-                        ProfileEmptyStateView {
-                          uploadVideoPressed()
-                        }
-                        Spacer(minLength: Constants.minimumBottomSpacing)
-                      }
-                    } else {
-                      ProfileVideosGridView(
-                        videos: $videos,
-                        currentlyDeletingPostInfo: $deleteInfo,
-                        showDeleteIndictor: $showDeleteIndicator,
-                        onDelete: { info in
-                          self.deleteInfo = info
-                          withAnimation(.easeInOut(duration: CGFloat.animationPeriod)) {
-                            UIView.setAnimationsEnabled(false)
-                            showDelete = true
-                            currentIndex = videos.firstIndex(where: { $0.postID == info.postID }) ?? .zero
-                            if currentIndex < videos.count {
-                              let item = viewModel.feeds[currentIndex]
-                              AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-                                event: VideoClickedEventData(
-                                  videoId: item.videoID,
-                                  publisherUserId: item.principalID,
-                                  likeCount: Int64(item.likeCount),
-                                  shareCount: Int64(Int.zero),
-                                  viewCount: item.viewCount,
-                                  isGameEnabled: false,
-                                  gameType: GameType.smiley,
-                                  isNsfw: false,
-                                  ctaType: .delete_,
-                                  pageName: .profile
-                                )
-                              )
-                            }
-                          }
-                        },
-                        onVideoTapped: { videoInfo in
-                          currentIndex = videos.firstIndex(where: { $0.postID == videoInfo.postID }) ?? .zero
-                          if currentIndex < viewModel.feeds.count {
-                            let item = viewModel.feeds[currentIndex]
-                            AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-                              event: VideoClickedEventData(
-                                videoId: item.videoID,
-                                publisherUserId: item.principalID,
-                                likeCount: Int64(item.likeCount),
-                                shareCount: .zero,
-                                viewCount: Int64(item.viewCount),
-                                isGameEnabled: false,
-                                gameType: .smiley,
-                                isNsfw: false,
-                                ctaType: .play,
-                                pageName: .profile
-                              )
-                            )
-                          }
-                          withAnimation {
-                            showFeeds = true
-                          }
-                        },
-                        onLoadMore: {
-                          Task { @MainActor in
-                            await viewModel.getVideos()
-                          }
-                        }
-                      )
-                    }
-                  }
-                  .padding(.horizontal, Constants.horizontalPadding)
-                }
-                .offset(y: 20.0)
-                .refreshable {
-                  Task {
-                    await self.refreshVideos(shouldPurge: false)
-                  }
-                }
+            }
+            .offset(y: 20.0)
+            .refreshable {
+              Task {
+                await self.refreshVideos(shouldPurge: false)
               }
             }
-            .fullScreenCover(isPresented: $showDelete) {
-              NudgePopupView(
-                nudgeTitle: Constants.deleteTitle,
-                nudgeMessage: Constants.deleteText,
-                confirmLabel: Constants.deleteButtonTitle,
-                cancelLabel: Constants.cancelTitle,
-                onConfirm: {
-                  showDelete = false
-                  showDeleteIndicator = true
-                  Task { @MainActor in
-                    guard let deleteInfo else { return }
-                    AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-                      event: DeleteVideoInitiatedEventData(
-                        pageName: .profile,
-                        videoId: deleteInfo.videoId
-                      )
-                    )
-                    await self.viewModel.deleteVideo(
-                      request: DeleteVideoRequest(
-                        postId: deleteInfo.postID,
-                        videoId: deleteInfo.videoId
-                      )
-                    )
-                  }
-                },
-                onCancel: { showDelete = false }
-              )
-              .background( ClearBackgroundView() )
-            }
-            .task {
-              guard isLoadingFirstTime else {
+          }
+        }
+        .fullScreenCover(isPresented: $showDelete) {
+          NudgePopupView(
+            nudgeTitle: Constants.deleteTitle,
+            nudgeMessage: Constants.deleteText,
+            confirmLabel: Constants.deleteButtonTitle,
+            cancelLabel: Constants.cancelTitle,
+            onConfirm: {
+              showDelete = false
+              showDeleteIndicator = true
+              Task { @MainActor in
+                guard let deleteInfo else { return }
                 AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-                  event: ProfilePageViewedEventData(
-                    totalVideos: Int32(self.videos.count),
-                    isOwnProfile: true,
-                    publisherUserId: accountInfo?.canisterID ?? ""
+                  event: DeleteVideoInitiatedEventData(
+                    pageName: .profile,
+                    videoId: deleteInfo.videoId
                   )
                 )
-                return
-              }
-              isLoadingFirstTime = false
-              async let fetchProfile: () = viewModel.fetchProfileInfo()
-              async let fetchVideos: () = viewModel.getVideos()
-              _ = await (fetchProfile, fetchVideos)
-              AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-                event: ProfilePageViewedEventData(
-                  totalVideos: Int32(self.videos.count),
-                  isOwnProfile: true,
-                  publisherUserId: accountInfo?.canisterID ?? ""
+                await self.viewModel.deleteVideo(
+                  request: DeleteVideoRequest(
+                    postId: deleteInfo.postID,
+                    videoId: deleteInfo.videoId
+                  )
                 )
-              )
-            }
-            .onAppear {
-              isVisible = true
-              UIRefreshControl.appearance().tintColor = .clear
-              UIRefreshControl.appearance().addSubview(LottieRefreshSingletonView.shared)
-            }
-            .onDisappear {
-              isVisible = false
-            }
-          }
-        }
-        .onChange(of: viewModel.event) { event in
-          switch event {
-          case .fetchedAccountInfo(let info):
-            showAccountInfo = true
-            accountInfo = info
-          case .loadedVideos(let videos):
-            guard !videos.isEmpty else { return }
-            showEmptyState = false
-            self.videos += videos
-          case .deletedVideos:
-            withAnimation {
-              self.viewModel.deletedVideos.forEach { item in
-                self.videos.removeAll { $0.postID == item.postID }
               }
-            }
-            if self.videos.isEmpty {
-              showEmptyState = true
-            }
-            self.sendAnalyticsInfo()
+            },
+            onCancel: { showDelete = false }
+          )
+          .background(ClearBackgroundView())
+        }
+        .task {
+          guard isLoadingFirstTime else {
             AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-              event: VideoDeletedEventData(
-                pageName: .profile,
-                videoId: self.deleteInfo?.videoId ?? "",
-                ctaType: .profileThumbnail
+              event: ProfilePageViewedEventData(
+                totalVideos: Int32(self.videos.count),
+                isOwnProfile: true,
+                publisherUserId: accountInfo?.canisterID ?? ""
               )
             )
-            self.showDeleteIndicator = false
-          case .deleteVideoFailed:
-            self.deleteInfo = nil
-            self.showDeleteIndicator = false
-          case .refreshed(let refreshVideos):
-            if !refreshVideos.isEmpty {
-              self.videos = refreshVideos
-            }
-            showEmptyState = self.videos.isEmpty
-            if isPushNotificationFlow {
-              showFeeds = true
-              isPushNotificationFlow = false
-            }
-            if !isLoadingFirstTime, isVisible {
-              sendAnalyticsInfo()
-              AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-                event: ProfilePageViewedEventData(
-                  totalVideos: Int32(self.videos.count),
-                  isOwnProfile: true,
-                  publisherUserId: accountInfo?.canisterID ?? ""
-                )
-              )
-            }
-          case .pageEndReached(let isEmpty):
-            showEmptyState = isEmpty
-          default:
-            break
+            return
           }
-          viewModel.event = nil
+          isLoadingFirstTime = false
+          async let fetchProfile: () = viewModel.fetchProfileInfo()
+          async let fetchVideos: () = viewModel.getVideos()
+          _ = await (fetchProfile, fetchVideos)
+          AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+            event: ProfilePageViewedEventData(
+              totalVideos: Int32(self.videos.count),
+              isOwnProfile: true,
+              publisherUserId: accountInfo?.canisterID ?? ""
+            )
+          )
         }
-        .onReceive(session.phasePublisher) { phase in
-          switch phase {
-          case .loggedOut,
-              .ephemeral,
-              .permanent:
-            Task {
-              await viewModel.fetchProfileInfo()
-              await refreshVideos(shouldPurge: true)
-            }
-          default: break
-          }
+        .onAppear {
+          isVisible = true
+          UIRefreshControl.appearance().tintColor = .clear
+          UIRefreshControl.appearance().addSubview(LottieRefreshSingletonView.shared)
         }
-        .onReceive(deepLinkRouter.$pendingDestination.compactMap { $0 }) { dest in
-          guard dest == .profileAfterUpload else { return }
-          isPushNotificationFlow = true
-          Task { await refreshVideos(shouldPurge: false) }
+        .onDisappear {
+          isVisible = false
         }
       }
-      .navigationDestination(for: ProfileRoute.self) { route in
-        switch route {
-        case .account:
-          router.displayAccountView()
-            .background(Color.black.edgesIgnoringSafeArea(.all))
+    }
+    .onChange(of: viewModel.event) { event in
+      switch event {
+      case .fetchedAccountInfo(let info):
+        showAccountInfo = true
+        accountInfo = info
+      case .loadedVideos(let videos):
+        guard !videos.isEmpty else { return }
+        showEmptyState = false
+        self.videos += videos
+      case .deletedVideos:
+        withAnimation {
+          self.viewModel.deletedVideos.forEach { item in
+            self.videos.removeAll { $0.postID == item.postID }
+          }
         }
+        if self.videos.isEmpty {
+          showEmptyState = true
+        }
+        self.sendAnalyticsInfo()
+        AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+          event: VideoDeletedEventData(
+            pageName: .profile,
+            videoId: self.deleteInfo?.videoId ?? "",
+            ctaType: .profileThumbnail
+          )
+        )
+        self.showDeleteIndicator = false
+      case .deleteVideoFailed:
+        self.deleteInfo = nil
+        self.showDeleteIndicator = false
+      case .refreshed(let refreshVideos):
+        if !refreshVideos.isEmpty {
+          self.videos = refreshVideos
+        }
+        showEmptyState = self.videos.isEmpty
+        if isPushNotificationFlow {
+          showFeeds = true
+          isPushNotificationFlow = false
+        }
+        if !isLoadingFirstTime, isVisible {
+          sendAnalyticsInfo()
+          AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+            event: ProfilePageViewedEventData(
+              totalVideos: Int32(self.videos.count),
+              isOwnProfile: true,
+              publisherUserId: accountInfo?.canisterID ?? ""
+            )
+          )
+        }
+      case .pageEndReached(let isEmpty):
+        showEmptyState = isEmpty
+      default:
+        break
       }
-    } else {
-      // Fallback on earlier versions
+      viewModel.event = nil
+    }
+    .onReceive(session.phasePublisher) { phase in
+      switch phase {
+      case .loggedOut, .ephemeral, .permanent:
+        Task {
+          await viewModel.fetchProfileInfo()
+          await refreshVideos(shouldPurge: true)
+        }
+      default: break
+      }
+    }
+    .onReceive(deepLinkRouter.$pendingDestination.compactMap { $0 }) { dest in
+      guard dest == .profileAfterUpload else { return }
+      isPushNotificationFlow = true
+      Task { await refreshVideos(shouldPurge: false) }
     }
   }
 
+  // MARK: - Helpers
   func onUploadAction(_ action: @escaping () -> Void) -> ProfileView {
     var copy = self
     copy.uploadVideoPressed = action
@@ -381,4 +406,4 @@ extension ProfileView {
     static let profileMenuImageName = "profile_menu"
   }
 }
-// swiftlint: enable type_body_length
+// swiftlint: enable type_body_length file_length
