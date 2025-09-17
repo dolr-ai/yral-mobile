@@ -125,7 +125,6 @@ private fun YralTokenBalance(coinBalance: Long) {
                 .padding(horizontal = 16.dp, vertical = 24.dp)
                 .border(width = 1.dp, color = YralColors.Neutral700, shape = RoundedCornerShape(size = 8.dp))
                 .fillMaxWidth()
-                .height(65.dp)
                 .background(color = YralColors.Neutral800, shape = RoundedCornerShape(size = 8.dp))
                 .background(color = YralColors.ScrimColorBalance, shape = RoundedCornerShape(size = 8.dp))
                 .padding(start = 8.dp, top = 4.dp, end = 8.dp, bottom = 4.dp),
@@ -142,7 +141,7 @@ private fun YralTokenBalance(coinBalance: Long) {
                 Image(
                     painter = painterResource(id = R.drawable.yral),
                     contentDescription = stringResource(R.string.coins),
-                    contentScale = ContentScale.Crop,
+                    contentScale = ContentScale.Inside,
                     modifier = Modifier.size(48.dp),
                 )
                 Text(
@@ -202,7 +201,7 @@ private fun BitCoinBalance(
                         Image(
                             painter = painterResource(id = R.drawable.bitcoin),
                             contentDescription = stringResource(R.string.bit_coin),
-                            contentScale = ContentScale.Crop,
+                            contentScale = ContentScale.Inside,
                             modifier = Modifier.size(48.dp),
                         )
                         Text(
