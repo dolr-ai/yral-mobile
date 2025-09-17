@@ -68,9 +68,10 @@ class WalletViewModel(
             sessionManager.userPrincipal?.let { principal ->
                 getUserBtcBalanceUseCase(principal)
                     .onSuccess { bal ->
+                        Logger.d("coinBalance") { "btc balance collected $bal" }
                         _state.update { it.copy(bitcoinBalanceInSats = bal) }
                     }.onFailure {
-                        Logger.d("Wallet") { "error $it" }
+                        Logger.d("coinBalance") { "error fetching btc balance $it" }
                     }
             }
         }

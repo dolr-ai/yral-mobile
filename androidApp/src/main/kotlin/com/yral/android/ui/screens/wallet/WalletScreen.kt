@@ -211,7 +211,7 @@ private fun BitCoinBalance(
                         )
                     }
                     Text(
-                        text = balance.toBtc(),
+                        text = NumberFormatter().format(value = balance, maximumFractionDigits = 8),
                         style = LocalAppTopography.current.xlBold,
                         color = YralColors.NeutralTextPrimary,
                         textAlign = TextAlign.Center,
@@ -313,7 +313,3 @@ private fun Double.toInrString() =
             minimumFractionDigits = 2,
             maximumFractionDigits = 2,
         )
-
-private fun Double.toBtc() =
-    NumberFormatter()
-        .format(this)
