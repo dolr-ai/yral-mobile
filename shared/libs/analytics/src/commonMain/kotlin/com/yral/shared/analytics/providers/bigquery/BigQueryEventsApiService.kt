@@ -12,7 +12,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 
-class BigQueryEventsApiService(
+class BigQueryEventsApiService internal constructor(
     private val client: HttpClient,
 ) {
     suspend fun sendRows(rows: List<BigQueryEventRow>) {

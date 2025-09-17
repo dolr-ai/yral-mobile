@@ -19,9 +19,11 @@ kotlin {
         homepage = "https://github.com/dolr-ai/yral-mobile"
         ios.deploymentTarget = "15.6"
 
+        noPodspec()
+
         // Add Mixpanel pod
         pod("Mixpanel") {
-            extraOpts += listOf("-compiler-option", "-fmodules")
+//            extraOpts += listOf("-compiler-option", "-fmodules")
             version = "5.0.8"
         }
         pod("FBSDKCoreKit") {
