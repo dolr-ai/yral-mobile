@@ -357,7 +357,7 @@ pub struct LedgerService {
     pub agent: Arc<Agent>,
 }
 
-pub const DEFAULT_LEDGER_CANISTER: &str = "ryjl3-tyaaa-aaaaa-aaaba-cai";
+pub const DEFAULT_ICP_LEDGER_CANISTER: &str = "mxzaz-hqaaa-aaaar-qaada-cai";
 
 #[uniffi::export]
 impl LedgerService {
@@ -381,8 +381,8 @@ impl LedgerService {
 
   async fn query_canister(&self, method: &str, args: Vec<u8>) -> Result<Vec<u8>> {
     let agent = Arc::clone(&self.agent);
-    let principal = Principal::from_text(DEFAULT_LEDGER_CANISTER)
-          .map_err(|e| FFIError::PrincipalError(format!("Invalid default principal: {:?}", e)))?;;
+    let principal = Principal::from_text(DEFAULT_ICP_LEDGER_CANISTER)
+          .map_err(|e| FFIError::PrincipalError(format!("Invalid default principal: {:?}", e)))?;
     let method = method.to_string();
     RUNTIME.spawn(async move {
         agent

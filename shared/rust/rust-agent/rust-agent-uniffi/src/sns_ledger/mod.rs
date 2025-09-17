@@ -398,6 +398,8 @@ pub struct SnsLedgerService {
     pub agent: Arc<Agent>,
 }
 
+pub const DEFAULT_SNS_LEDGER_CANISTER: &str = "ryjl3-tyaaa-aaaaa-aaaba-cai";
+
 #[uniffi::export]
 impl SnsLedgerService {
     #[uniffi::constructor]
@@ -422,7 +424,8 @@ impl SnsLedgerService {
 
     async fn query_canister(&self, method: &str, args: Vec<u8>) -> Result<Vec<u8>> {
         let agent = Arc::clone(&self.agent);
-        let principal = self.principal;
+        let principal = Principal::from_text(DEFAULT_SNS_LEDGER_CANISTER)
+          .map_err(|e| FFIError::PrincipalError(format!("Invalid default principal: {:?}", e)))?;
         let method = method.to_string();
         RUNTIME.spawn(async move {
             agent
