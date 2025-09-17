@@ -340,6 +340,7 @@ def tap_to_recharge(request: Request):
         print("Unhandled error:", e, file=sys.stderr)
         return error_response(500, "INTERNAL", "Internal server error")
 
+# TODO: REMOVE THIS
 @https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"], enforce_app_check=True)
 def cast_vote(request: Request):
     balance_update_token = os.environ["BALANCE_UPDATE_TOKEN"]
@@ -775,6 +776,7 @@ def _has_any_docs_for_day(bucket_id: str) -> bool:
         print(f"[skip] users scan error for {bucket_id}: {e}", file=sys.stderr)
         return False
 
+# TODO: REMOVE THIS
 @https_fn.on_request(region="us-central1", enforce_app_check=True)
 def leaderboard(request: Request):
     """
@@ -946,6 +948,7 @@ def leaderboard(request: Request):
         print("Leaderboard error:", e, file=sys.stderr)
         return error_response(500, "INTERNAL", "Internal server error")
 
+# TODO: REMOVE THIS
 @https_fn.on_request(region="us-central1", enforce_app_check=True)
 def leaderboard_v2(request: Request):
     """
@@ -1309,6 +1312,7 @@ def leaderboard_v3(request: Request):
         print("Leaderboard error:", e, file=sys.stderr)
         return error_response(500, "INTERNAL", "Internal server error")
 
+# TODO: REMOVE THIS
 @https_fn.on_request(region="us-central1", enforce_app_check=True)
 def leaderboard_history(request: Request):
     """
