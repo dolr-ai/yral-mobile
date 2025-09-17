@@ -5,6 +5,7 @@ import com.yral.shared.features.wallet.domain.repository.WalletRepository
 import com.yral.shared.libs.arch.domain.SuspendUseCase
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
+import kotlin.math.pow
 
 class GetUserBtcBalanceUseCase(
     private val repository: WalletRepository,
@@ -19,5 +20,9 @@ class GetUserBtcBalanceUseCase(
                     canisterId = canisterId,
                     userPrincipal = parameter,
                 ).toDouble()
+                .toBtc()
         } ?: 0.0
+
+    @Suppress("MagicNumber")
+    private fun Double.toBtc() = this.div(10.0.pow(8))
 }
