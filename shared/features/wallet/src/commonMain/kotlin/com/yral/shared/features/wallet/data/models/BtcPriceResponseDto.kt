@@ -1,11 +1,19 @@
 package com.yral.shared.features.wallet.data.models
 
-import com.yral.shared.features.wallet.domain.models.BtcInInr
+import com.yral.shared.features.wallet.domain.models.BtcToCurrency
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class BtcPriceResponseDto(
-    val inr: Double,
+    @SerialName("conversion_rate")
+    val conversionRate: Double,
+    @SerialName("currency_code")
+    val currencyCode: String,
 )
 
-fun BtcPriceResponseDto.toBtcInInr(): BtcInInr = BtcInInr(priceInInr = this.inr)
+fun BtcPriceResponseDto.toDomain(): BtcToCurrency =
+    BtcToCurrency(
+        conversionRate = conversionRate,
+        currencyCode = currencyCode,
+    )

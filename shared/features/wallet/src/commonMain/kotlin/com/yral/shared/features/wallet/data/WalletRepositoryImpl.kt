@@ -1,16 +1,19 @@
 package com.yral.shared.features.wallet.data
 
-import com.yral.shared.features.wallet.data.models.toBtcInInr
-import com.yral.shared.features.wallet.domain.models.BtcInInr
+import com.yral.shared.features.wallet.data.models.toDomain
+import com.yral.shared.features.wallet.domain.models.BtcToCurrency
 import com.yral.shared.features.wallet.domain.repository.WalletRepository
 
 class WalletRepositoryImpl(
     private val dataSource: WalletDataSource,
 ) : WalletRepository {
-    override suspend fun getBtcInInr(idToken: String): BtcInInr =
+    override suspend fun getBtcConversionRate(
+        idToken: String,
+        countryCode: String,
+    ): BtcToCurrency =
         dataSource
-            .getBtcInInr(idToken)
-            .toBtcInInr()
+            .getBtcConversionRate(idToken, countryCode)
+            .toDomain()
 
     override suspend fun getUserBtcBalance(
         canisterId: String,

@@ -163,5 +163,5 @@
     <string name="bit_coin">Bitcoin</string>
     <string name="btc_inr_rate">1  Bitcoin = %s</string>
     <string name="rupee_symbol">₹</string>
-    <string name="inr_balance">INR Balance</string>
+    <string name="currency_balance">%s Balance</string>
 </resources>

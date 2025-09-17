@@ -9,7 +9,7 @@ import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.features.auth.utils.getAccountInfo
 import com.yral.shared.features.wallet.analytics.WalletTelemetry
-import com.yral.shared.features.wallet.domain.GetBtcInInrUseCase
+import com.yral.shared.features.wallet.domain.GetBtcConversionUseCase
 import com.yral.shared.features.wallet.domain.GetUserBtcBalanceUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,7 +19,7 @@ import kotlinx.coroutines.launch
 
 class WalletViewModel(
     private val sessionManager: SessionManager,
-    private val getBtcInInrUseCase: GetBtcInInrUseCase,
+    private val getBtcConversionUseCase: GetBtcConversionUseCase,
     private val getUserBtcBalanceUseCase: GetUserBtcBalanceUseCase,
     private val walletTelemetry: WalletTelemetry,
 ) : ViewModel() {
@@ -36,12 +36,9 @@ class WalletViewModel(
         walletTelemetry.onWalletScreenViewed()
     }
 
-    fun refresh(regionCode: String) {
+    fun refresh(countryCode: String) {
         getUserBtcBalanceUseCase()
-        Logger.d("coinBalance") { "region $regionCode" }
-        if (regionCode == "IN") {
-            getBtcValueInInr()
-        }
+        getBtcValueConversion(countryCode)
     }
 
     private fun observeBalance() {
@@ -55,11 +52,16 @@ class WalletViewModel(
         }
     }
 
-    private fun getBtcValueInInr() {
+    private fun getBtcValueConversion(countryCode: String) {
         viewModelScope.launch {
-            getBtcInInrUseCase()
+            getBtcConversionUseCase(parameter = GetBtcConversionUseCase.Params(countryCode))
                 .onSuccess { btcInInr ->
-                    _state.update { it.copy(bitcoinValueInInr = btcInInr.priceInInr) }
+                    _state.update {
+                        it.copy(
+                            btcConversionRate = btcInInr.conversionRate,
+                            btcConversionCurrency = btcInInr.currencyCode,
+                        )
+                    }
                 }
         }
     }
@@ -70,7 +72,7 @@ class WalletViewModel(
                 getUserBtcBalanceUseCase(principal)
                     .onSuccess { bal ->
                         Logger.d("coinBalance") { "btc balance collected $bal" }
-                        _state.update { it.copy(bitcoinBalanceInSats = bal) }
+                        _state.update { it.copy(bitcoinBalance = bal) }
                     }.onFailure {
                         Logger.d("coinBalance") { "error fetching btc balance $it" }
                     }
@@ -81,7 +83,8 @@ class WalletViewModel(
 
 data class WalletState(
     val yralTokenBalance: Long? = null,
-    val bitcoinBalanceInSats: Double? = null,
-    val bitcoinValueInInr: Double? = null,
+    val bitcoinBalance: Double? = null,
+    val btcConversionRate: Double? = null,
+    val btcConversionCurrency: String? = null,
     val accountInfo: AccountInfo? = null,
 )

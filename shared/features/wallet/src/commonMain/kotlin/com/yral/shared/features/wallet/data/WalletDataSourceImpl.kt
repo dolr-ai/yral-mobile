@@ -10,6 +10,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.plugins.expectSuccess
 import io.ktor.client.request.get
 import io.ktor.client.request.headers
+import io.ktor.client.request.parameter
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders
@@ -24,13 +25,17 @@ class WalletDataSourceImpl(
     private val individualUserRepository: IndividualUserRepository,
 ) : WalletDataSource {
     @Suppress("SwallowedException", "TooGenericExceptionCaught")
-    override suspend fun getBtcInInr(idToken: String): BtcPriceResponseDto {
+    override suspend fun getBtcConversionRate(
+        idToken: String,
+        countryCode: String,
+    ): BtcPriceResponseDto {
         val response: HttpResponse =
             httpClient.get {
                 expectSuccess = false
                 url {
                     host = cloudFunctionUrl()
-                    path(BTC_INR_VALUE_PATH)
+                    path(BTC_VALUE_BY_COUNTRY_PATH)
+                    parameter("country_code", countryCode)
                 }
                 val appCheckToken =
                     Firebase.appCheck
@@ -65,7 +70,7 @@ class WalletDataSourceImpl(
             .getUserDolrBalance(canisterId, userPrincipal)
 
     companion object {
-        private const val BTC_INR_VALUE_PATH = "btc_inr_value"
+        private const val BTC_VALUE_BY_COUNTRY_PATH = "btc_value_by_country"
         private const val HEADER_X_FIREBASE_APPCHECK = "X-Firebase-AppCheck"
     }
 }
