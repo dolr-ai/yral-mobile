@@ -11,13 +11,15 @@ import com.yral.android.ui.screens.account.AccountScreen
 import com.yral.android.ui.screens.profile.main.ProfileMainScreen
 import com.yral.android.ui.screens.profile.nav.ProfileComponent
 import com.yral.shared.data.feed.domain.FeedDetails
+import com.yral.shared.features.account.viewmodel.AccountsViewModel
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 
 @Composable
 fun ProfileScreen(
     component: ProfileComponent,
     modifier: Modifier = Modifier,
-    viewModel: ProfileViewModel,
+    profileViewModel: ProfileViewModel,
+    accountsViewModel: AccountsViewModel,
     profileVideos: LazyPagingItems<FeedDetails>,
 ) {
     Children(
@@ -30,13 +32,14 @@ fun ProfileScreen(
                 ProfileMainScreen(
                     component = instance.component,
                     modifier = Modifier.fillMaxSize(),
-                    viewModel = viewModel,
+                    viewModel = profileViewModel,
                     profileVideos = profileVideos,
                 )
             }
             is ProfileComponent.Child.Account -> {
                 AccountScreen(
                     component = instance.component,
+                    viewModel = accountsViewModel,
                 )
             }
         }

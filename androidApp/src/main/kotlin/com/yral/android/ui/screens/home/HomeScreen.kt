@@ -182,7 +182,8 @@ private fun HomeScreenContent(
                 profileVideos?.let {
                     ProfileScreen(
                         component = child.component,
-                        viewModel = profileViewModel,
+                        profileViewModel = profileViewModel,
+                        accountsViewModel = accountViewModel,
                         profileVideos = profileVideos,
                     )
                 }
