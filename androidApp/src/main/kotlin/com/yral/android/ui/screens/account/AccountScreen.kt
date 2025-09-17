@@ -152,7 +152,10 @@ private fun SheetContent(
             LoginBottomSheet(
                 bottomSheetState = bottomSheetState,
                 onDismissRequest = onDismissRequest,
-                onSignupClicked = { signInWithGoogle() },
+                onSignupClicked = {
+                    signInWithGoogle()
+                    onDismissRequest()
+                },
                 termsLink = tncLink,
                 openTerms = { extraSheetLink = tncLink },
             )
