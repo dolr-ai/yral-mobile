@@ -747,6 +747,36 @@ def _dense_top_rows_for_day(bucket_id: str) -> tuple[List[Dict], int, int]:
         })
     return rows, last_wins, current_rank
 
+def _dense_top_rows_for_day_v2(bucket_id: str, rewards_table: Optional[Dict[str, Any]] = None, rewards_enabled: bool = False) -> tuple[List[Dict], int, int]:
+    """Top 10 rows with dense ranking for a given IST bucket (with optional rewards)."""
+    coll = db().collection(f"{DAILY_COLL}/{bucket_id}/users")
+    snaps = (
+        coll.where("smiley_game_wins", ">", 0)
+            .order_by("smiley_game_wins", direction=firestore.Query.DESCENDING)
+            .limit(10)
+            .stream()
+    )
+    rows: List[Dict] = []
+    current_rank, last_wins = 0, None
+    for snap in snaps:
+        wins = int(snap.get("smiley_game_wins") or 0)
+        if wins != last_wins:
+            current_rank += 1  # dense ranking
+            last_wins = wins
+
+        row = {
+            "principal_id": snap.id,
+            "wins": wins,
+            "position": current_rank
+        }
+
+        if rewards_enabled and rewards_table:
+            row["reward"] = rewards_table.get(str(current_rank), None)
+
+        rows.append(row)
+
+    return rows, last_wins, current_rank
+
 def _user_row_for_day(bucket_id: str, pid: str) -> Dict:
     """Compute user's wins and dense position within that day's collection."""
     day_users = db().collection(f"{DAILY_COLL}/{bucket_id}/users")
@@ -764,6 +794,40 @@ def _user_row_for_day(bucket_id: str, pid: str) -> Dict:
         "wins": user_wins,
         "position": position,
     }
+
+def _user_row_for_day_v2(bucket_id: str, pid: str, rewards_table: Optional[Dict[str, Any]] = None, rewards_enabled: bool = False, top_rows: Optional[List[Dict]] = None) -> Dict:
+    """
+    Compute user's wins and dense position within that day's collection (with optional reward).
+    Optimizes by first checking if user is already present in top_rows.
+    """
+    # 1. Reuse from top_rows if already available
+    if top_rows:
+        for row in top_rows:
+            if row.get("principal_id") == pid:
+                return row
+
+    # 2. Else, fallback to Firestore query
+    day_users = db().collection(f"{DAILY_COLL}/{bucket_id}/users")
+    entry = day_users.document(pid).get()
+    user_wins = int((entry.get("smiley_game_wins") if entry.exists else 0) or 0)
+
+    # Compute dense rank
+    rank_q = day_users.where("smiley_game_wins", ">", user_wins).count().get()
+    higher = int(rank_q[0][0].value)
+    position = higher + 1
+
+    user_row = {
+        "principal_id": pid,
+        "wins": user_wins,
+        "position": position,
+    }
+
+    if rewards_enabled and user_wins > 0 and rewards_table:
+        user_row["reward"] = rewards_table.get(str(position), None)
+    else:
+        user_row["reward"] = None
+
+    return user_row
 
 def _has_any_docs_for_day(bucket_id: str) -> bool:
     """Fast existence check: returns True if the day has at least one user doc."""
@@ -1447,6 +1511,107 @@ def leaderboard_history(request: Request):
         return error_response(500, "FIRESTORE_ERROR", str(e))
     except Exception as e:
         print("leaderboard_daily_last7_excl_today error:", e, file=sys.stderr)
+        return error_response(500, "INTERNAL", "Internal server error")
+
+@https_fn.on_request(region="us-central1", enforce_app_check=True)
+def leaderboard_history_v2(request: Request):
+    """
+    Request:
+      { "data": { "principal_id": "<pid>" } }
+
+    Response: 200 OK with an ARRAY (newest → oldest). Each item:
+      {
+        "date": "Aug 15",
+        "top_rows": [ { principal_id, wins, position, reward? }, ... ],
+        "user_row": { principal_id, wins, position, reward? } | null,
+        "reward_currency": <str | None>,
+        "rewards_enabled": <bool>
+      }
+    """
+    try:
+        if request.method != "POST":
+            return error_response(405, "METHOD_NOT_ALLOWED", "POST required")
+
+        body = request.get_json(silent=True) or {}
+        data = body.get("data", {}) or {}
+        pid = str(data.get("principal_id", "")).strip()
+
+        if not pid:
+            return error_response(400, "MISSING_PID", "principal_id required")
+
+        auth_header = request.headers.get("Authorization", "")
+        if not auth_header.startswith("Bearer "):
+            return error_response(401, "MISSING_ID_TOKEN", "Authorization missing")
+        auth.verify_id_token(auth_header.split(" ", 1)[1])
+
+        actok = request.headers.get("X-Firebase-AppCheck")
+        if not actok:
+            return error_response(401, "APPCHECK_MISSING", "App Check token required")
+        try:
+            app_check.verify_token(actok)
+        except Exception:
+            return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
+
+        today = _ist_today_date()
+        days = [today - timedelta(days=offset) for offset in range(1, 8)]
+
+        result: List[Dict] = []
+        for d in days:
+            bucket_id = _bucket_id_for_ist_day(d)
+            date_label = _friendly_date_str(d)
+
+            day_doc = db().collection(DAILY_COLL).document(bucket_id).get()
+            day_data = day_doc.to_dict() if day_doc.exists else {}
+
+            currency = day_data.get("currency")
+            rewards_table = day_data.get("rewards_table")
+            rewards_enabled = day_data.get("rewards_enabled")
+
+            if not (currency and rewards_enabled and rewards_table):
+                rewards_enabled = False
+                currency = None
+                rewards_table = {}
+
+            rewards_table = {str(k): v for k, v in rewards_table.items()}
+
+            try:
+                top_rows, last_wins, current_rank = _dense_top_rows_for_day_v2(bucket_id, rewards_table, rewards_enabled)
+            except GoogleAPICallError as e:
+                print(f"[skip] top rows read error for {bucket_id}: {e}", file=sys.stderr)
+                continue
+
+            if not top_rows:
+                result.append({
+                    "date": date_label,
+                    "top_rows": [],
+                    "user_row": None,
+                    "reward_currency": currency,
+                    "rewards_enabled": rewards_enabled
+                })
+                continue
+
+            user_row = None
+            try:
+                user_row = _user_row_for_day_v2(bucket_id, pid, rewards_table, rewards_enabled, top_rows)
+            except GoogleAPICallError:
+                user_row = None
+
+            result.append({
+                "date": date_label,
+                "top_rows": top_rows,
+                "user_row": user_row,
+                "reward_currency": currency,
+                "rewards_enabled": rewards_enabled
+            })
+
+        return jsonify(result), 200
+
+    except auth.InvalidIdTokenError:
+        return error_response(401, "ID_TOKEN_INVALID", "ID token invalid or expired")
+    except GoogleAPICallError as e:
+        return error_response(500, "FIRESTORE_ERROR", str(e))
+    except Exception as e:
+        print("leaderboard_history error:", e, file=sys.stderr)
         return error_response(500, "INTERNAL", "Internal server error")
 
 
