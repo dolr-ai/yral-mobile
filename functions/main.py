@@ -678,10 +678,28 @@ def _inc_daily_leaderboard(pid: str, outcome: str) -> None:
     @firestore.transactional
     def _tx(tx: firestore.Transaction):
         # Ensure the day doc exists & store window bounds (helpful for reads/debug)
+        day_snapshot = day_ref.get(transaction=tx)
+        day_data = day_snapshot.to_dict() if day_snapshot.exists else {}
+
+        currency = day_data.get("currency")
+        if currency is None:
+            currency = DEFAULT_REWARD_CURRENCY
+        rewards_table = day_data.get("rewards_table")
+        if rewards_table is None:
+            rewards_table = REWARD_AMOUNT.get(currency, {})
+            rewards_table = { str(k): v for k, v in rewards_table.items() }
+        rewards_enabled = day_data.get("rewards_enabled")
+        if rewards_enabled is None:
+            rewards_enabled = REWARDS_ENABLED
+
         tx.set(day_ref, {
             "bucket_id": bucket_id,
             "start_ms": start_ms,
             "end_ms": end_ms,
+            "currency": currency,
+            "rewards_table": rewards_table,
+            "rewards_enabled": rewards_enabled,
+            "rewards_given": False,
             "updated_at": firestore.SERVER_TIMESTAMP
         }, merge=True)
 
@@ -1019,45 +1037,6 @@ def leaderboard_v2(request: Request):
         now_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
         time_left_ms = max(0, end_ms - now_ms)
 
-        day_doc_ref = db().collection(DAILY_COLL).document(bucket_id)
-        day_doc = day_doc_ref.get()
-
-        # set currency for daily leaderboard
-        currency = day_doc.get("currency")
-        if currency is None:
-            currency = DEFAULT_REWARD_CURRENCY
-            try:
-                day_doc_ref.update({
-                    "currency": currency,
-                    "updated_at": firestore.SERVER_TIMESTAMP
-                })
-            except Exception:
-                pass
-
-        # set rewards table for daily leaderboard
-        rewards_table = day_doc.get("rewards_table")
-        if rewards_table is None:
-            rewards_table = REWARD_AMOUNT.get(currency, {})
-            try:
-                day_doc_ref.update({
-                    "rewards_table": rewards_table,
-                    "updated_at": firestore.SERVER_TIMESTAMP
-                })
-            except Exception:
-                pass
-
-        # set rewards enabled for daily leaderboard
-        rewards_enabled = day_doc.get("rewards_enabled")
-        if rewards_enabled is None:
-            rewards_enabled = REWARDS_ENABLED
-            try:
-                day_doc_ref.update({
-                    "rewards_enabled": rewards_enabled,
-                    "updated_at": firestore.SERVER_TIMESTAMP
-                })
-            except Exception:
-                pass
-
         day_users = db().collection(f"{DAILY_COLL}/{bucket_id}/users")
         entry_ref = day_users.document(pid)
 
@@ -1117,26 +1096,209 @@ def leaderboard_v2(request: Request):
 
         # Safety: ensure exactly 10
         top_rows = top_rows[:10]
-        for row in top_rows:
-            if rewards_enabled:
-                row["reward"] = rewards_table.get(row["position"])
-            else:
-                row["reward"] = None
 
         user_row = {
             "principal_id": pid,
             "wins": user_wins,
             "position": user_position
         }
-        user_row["reward"] = rewards_table.get(user_position) if rewards_enabled else None
+
+        return jsonify({
+            "user_row": user_row,
+            "top_rows": top_rows,
+            "time_left_ms": time_left_ms
+        }), 200
+
+    except auth.InvalidIdTokenError:
+        return error_response(401, "ID_TOKEN_INVALID", "ID token invalid or expired")
+    except GoogleAPICallError as e:
+        return error_response(500, "FIRESTORE_ERROR", str(e))
+    except Exception as e:
+        print("Leaderboard error:", e, file=sys.stderr)
+        return error_response(500, "INTERNAL", "Internal server error")
+
+@https_fn.on_request(region="us-central1", enforce_app_check=True)
+def leaderboard_v3(request: Request):
+    """
+    Request
+      { "data": { "principal_id": "<pid>", "mode": "daily" | "all_time" } }
+
+    Response
+      {
+        "user_row": { principal_id, wins, position, reward? } | None,
+        "top_rows": [ { principal_id, wins, position, reward? }, ... ],
+        "time_left_ms": <int | null>,
+        "reward_currency": <str | None>,
+        "rewards_enabled": <bool>
+      }
+    """
+    try:
+        if request.method != "POST":
+            return error_response(405, "METHOD_NOT_ALLOWED", "POST required")
+
+        body = request.get_json(silent=True) or {}
+        data = body.get("data", {}) or {}
+
+        pid  = str(data.get("principal_id", "")).strip()
+        mode = str(data.get("mode", "")).lower().strip()
+        is_daily = (mode == "daily")
+
+        if not pid:
+            return error_response(400, "MISSING_PID", "principal_id required")
+
+        # ───────── Auth & App Check ─────────
+        auth_header = request.headers.get("Authorization", "")
+        if not auth_header.startswith("Bearer "):
+            return error_response(401, "MISSING_ID_TOKEN", "Authorization missing")
+        auth.verify_id_token(auth_header.split(" ", 1)[1])
+
+        actok = request.headers.get("X-Firebase-AppCheck")
+        if not actok:
+            return error_response(401, "APPCHECK_MISSING", "App Check token required")
+        try:
+            app_check.verify_token(actok)
+        except Exception:
+            return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
+
+        if not is_daily:
+            # ===== All-time leaderboard =====
+            users = db().collection("users")
+            user_ref = users.document(pid)
+
+            user_snap = user_ref.get()
+            user_wins = int(user_snap.get("smiley_game_wins") or 0)
+
+            rank_q = (
+                users.where("smiley_game_wins", ">", user_wins)
+                     .count()
+                     .get()
+            )
+            user_position = int(rank_q[0][0].value) + 1
+
+            top_snaps = (
+                users.order_by("smiley_game_wins", direction=firestore.Query.DESCENDING)
+                     .limit(10)
+                     .stream()
+            )
+
+            top_rows, current_rank, last_wins = [], 0, None
+            for snap in top_snaps:
+                wins = int(snap.get("smiley_game_wins") or 0)
+                if wins != last_wins:
+                    current_rank += 1   # dense ranking
+                    last_wins = wins
+                top_rows.append({
+                    "principal_id": snap.id,
+                    "wins": wins,
+                    "position": current_rank
+                })
+
+            user_row = {
+                "principal_id": pid,
+                "wins": user_wins,
+                "position": user_position
+            }
+
+            return jsonify({
+                "user_row": user_row,
+                "top_rows": top_rows,
+                "time_left_ms": None
+            }), 200
+
+        # ===== Daily leaderboard (IST day) =====
+        bucket_id, _start_ms, end_ms = _bucket_bounds_ist()
+        now_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
+        time_left_ms = max(0, end_ms - now_ms)
+
+        day_doc_ref = db().collection(DAILY_COLL).document(bucket_id)
+        day_doc = day_doc_ref.get()
+
+        if not day_doc.exists:
+            return jsonify({
+                "user_row": None,
+                "top_rows": [],
+                "time_left_ms": time_left_ms,
+                "reward_currency": None,
+                "rewards_enabled": False
+            }), 200
+
+        day_data = day_doc.to_dict() or {}
+
+        currency = day_data.get("currency")
+        rewards_table = day_data.get("rewards_table")
+        rewards_enabled = day_data.get("rewards_enabled")
+        if currency is None or rewards_table is None or rewards_enabled is None:
+            rewards_enabled = False
+            currency = None
+            rewards_table = {}
+
+        day_users = db().collection(f"{DAILY_COLL}/{bucket_id}/users")
+        top_snaps = (
+            day_users.where("smiley_game_wins", ">", 0)
+                    .order_by("smiley_game_wins", direction=firestore.Query.DESCENDING)
+                    .limit(10)
+                    .stream()
+        )
+
+        top_rows, current_rank, last_wins = [], 0, None
+        for snap in top_snaps:
+            wins = int(snap.get("smiley_game_wins") or 0)
+            if wins == 0:
+                continue
+            if wins != last_wins:
+                current_rank += 1    # dense ranking
+                last_wins = wins
+            row = {
+                "principal_id": snap.id,
+                "wins": wins,
+                "position": current_rank
+            }
+            if rewards_enabled:
+                row["reward"] = rewards_table.get(str(current_rank))
+            else:
+                row["reward"] = None
+            top_rows.append(row)
+
+        if not top_rows:
+            return jsonify({
+                "user_row": None,
+                "top_rows": [],
+                "time_left_ms": time_left_ms,
+                "reward_currency": currency,
+                "rewards_enabled": rewards_enabled
+            }), 200
+
+        user_row = None
+        for row in top_rows:
+            if row["principal_id"] == pid:
+                user_row = row
+                break
+
+        if user_row is None:
+            entry_ref = day_users.document(pid)
+            entry_snap = entry_ref.get()
+            user_wins = int((entry_snap.get("smiley_game_wins") if entry_snap.exists else 0) or 0)
+
+            rank_q = (
+                day_users.where("smiley_game_wins", ">", user_wins)
+                        .count()
+                        .get()
+            )
+            user_position = int(rank_q[0][0].value) + 1
+
+            user_row = {
+                "principal_id": pid,
+                "wins": user_wins,
+                "position": user_position,
+                "reward": rewards_table.get(str(user_position)) if (rewards_enabled and user_wins > 0) else None
+            }
 
         return jsonify({
             "user_row": user_row,
             "top_rows": top_rows,
             "time_left_ms": time_left_ms,
             "reward_currency": currency,
-            "rewards_enabled": rewards_enabled,
-            "rewards_finalized": bool(day_doc.get("rewards_finalized") or False)
+            "rewards_enabled": rewards_enabled
         }), 200
 
     except auth.InvalidIdTokenError:
