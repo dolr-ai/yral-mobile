@@ -1450,24 +1450,26 @@ def leaderboard_history(request: Request):
         return error_response(500, "INTERNAL", "Internal server error")
 
 
-#################### BTC to INR ####################
+#################### BTC to CURRENCY ####################
 TICKER_URL = "https://blockchain.info/ticker"
+
 @https_fn.on_request(region="us-central1", enforce_app_check=True)
-def btc_inr_value(request: Request):
+def btc_value_by_country(request: Request):
     """
-    GET /btc_inr_value
+    GET /btc_value_by_country?country_code=IN
 
     Headers:
       Authorization: Bearer <FIREBASE_ID_TOKEN>
       X-Firebase-AppCheck: <APPCHECK_TOKEN>
 
     Response (200):
-      { "inr": 0.00 }
+      { "conversion_rate": 0.00, "currency_code": "INR" | "USD" }
     """
     try:
         if request.method != "GET":
             return error_response(405, "METHOD_NOT_ALLOWED", "GET required")
 
+        # ─── Auth & App Check ────────────────────────────────────────────
         auth_header = request.headers.get("Authorization", "")
         if not auth_header.startswith("Bearer "):
             return error_response(401, "MISSING_ID_TOKEN", "Authorization token missing")
@@ -1485,6 +1487,11 @@ def btc_inr_value(request: Request):
         except Exception:
             return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
 
+        # ─── Parse country_code ─────────────────────────────────────────
+        country_code = request.args.get("country_code", "").strip().upper()
+        currency_code = "INR" if country_code == "IN" else "USD"
+
+        # ─── Fetch BTC price ────────────────────────────────────────────
         try:
             resp = requests.get(TICKER_URL, timeout=6)
         except requests.RequestException as e:
@@ -1492,18 +1499,20 @@ def btc_inr_value(request: Request):
             return error_response(502, "UPSTREAM_UNREACHABLE", "Price source not reachable")
 
         if resp.status_code != 200:
-            return error_response(502, "UPSTREAM_BAD_STATUS",
-                                  f"Price source returned {resp.status_code}")
+            return error_response(502, "UPSTREAM_BAD_STATUS", f"Price source returned {resp.status_code}")
 
         try:
             data = resp.json()
-            inr = data.get("INR") or {}
-            last = round(float(inr["last"]), 2)
+            currency_data = data.get(currency_code) or {}
+            last = round(float(currency_data["last"]), 2)
         except Exception as e:
             print("Parse error:", e, file=sys.stderr)
             return error_response(502, "UPSTREAM_BAD_PAYLOAD", "Unexpected price payload")
 
-        return jsonify({"inr": last}), 200
+        return jsonify({
+            "conversion_rate": last,
+            "currency_code": currency_code
+        }), 200
 
     except GoogleAPICallError as e:
         return error_response(500, "GOOGLE_API_ERROR", str(e))
