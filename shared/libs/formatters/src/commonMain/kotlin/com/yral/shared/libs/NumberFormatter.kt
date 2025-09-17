@@ -18,6 +18,8 @@ interface NumberFormatter {
     fun format(
         value: Double,
         localeCode: String? = null,
+        minimumFractionDigits: Int? = null,
+        maximumFractionDigits: Int? = null,
     ): String
 
     /**

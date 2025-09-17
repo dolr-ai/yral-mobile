@@ -10,11 +10,15 @@ internal object AndroidNumberFormatter : NumberFormatter {
     override fun format(
         value: Double,
         localeCode: String?,
+        minimumFractionDigits: Int?,
+        maximumFractionDigits: Int?,
     ): String {
         val numberFormat =
             localeCode?.let {
                 NumberFormat.getNumberInstance(Locale.forLanguageTag(it))
             } ?: NumberFormat.getNumberInstance()
+        minimumFractionDigits?.let { numberFormat.minimumFractionDigits = it }
+        maximumFractionDigits?.let { numberFormat.maximumFractionDigits = it }
 
         return numberFormat.format(value)
     }

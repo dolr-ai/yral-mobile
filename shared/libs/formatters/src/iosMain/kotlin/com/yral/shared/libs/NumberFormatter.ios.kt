@@ -12,6 +12,8 @@ internal object IosNumberFormatter : NumberFormatter {
     override fun format(
         value: Double,
         localeCode: String?,
+        minimumFractionDigits: Int?,
+        maximumFractionDigits: Int?,
     ): String {
         val numberFormat =
             NSNumberFormatter().apply {
