@@ -45,12 +45,14 @@ import com.yral.android.R
 import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.COUNT_DOWN_ANIMATION_DURATION
 import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.COUNT_DOWN_BG_ALPHA
 import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.COUNT_DOWN_BORDER_ANIMATION_DURATION
-import com.yral.android.ui.widgets.YralMaskedVectorTextV2
 import com.yral.android.ui.widgets.YralNeonBorder
 import com.yral.shared.features.game.data.models.LeaderboardMode
+import com.yral.shared.libs.designsystem.component.YralMaskedVectorTextV2
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import kotlinx.coroutines.delay
+import yral_mobile.shared.libs.designsystem.generated.resources.Res
+import yral_mobile.shared.libs.designsystem.generated.resources.count_down_timer
 import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
@@ -251,7 +253,7 @@ private fun LeaderboardCountdownContent(
             )
             YralMaskedVectorTextV2(
                 text = stringResource(R.string.end_in, time),
-                vectorRes = R.drawable.count_down_timer,
+                drawableRes = Res.drawable.count_down_timer,
                 textStyle = LocalAppTopography.current.regBold,
             )
         }

@@ -1,24 +1,24 @@
-package com.yral.android.ui.widgets
+package com.yral.shared.libs.designsystem.component
 
-import android.R.attr.fontStyle
-import android.R.attr.fontWeight
 import android.graphics.Bitmap
 import android.graphics.Paint
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffXfermode
 import android.graphics.Typeface
-import android.graphics.drawable.Drawable
 import android.text.TextPaint
-import androidx.appcompat.content.res.AppCompatResources
 import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Canvas
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.drawscope.CanvasDrawScope
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.Layout
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFontFamilyResolver
 import androidx.compose.ui.text.TextStyle
@@ -29,26 +29,25 @@ import androidx.compose.ui.text.font.resolveAsTypeface
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.core.graphics.createBitmap
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 import android.graphics.Canvas as AndroidCanvas
 
 @Suppress("LongMethod")
 @Composable
-fun YralMaskedVectorTextV2(
+actual fun YralMaskedVectorTextV2(
     text: String,
-    vectorRes: Int,
+    drawableRes: DrawableResource,
     textStyle: TextStyle,
-    modifier: Modifier = Modifier, // width need to specified according to useCase
-    maxLines: Int = Int.MAX_VALUE,
-    textOverflow: TextOverflow = TextOverflow.Clip,
+    modifier: Modifier, // width need to specified according to useCase
+    maxLines: Int,
+    textOverflow: TextOverflow,
 ) {
-    val context = LocalContext.current
     val density = LocalDensity.current
     val textMeasurer = rememberTextMeasurer()
-    val drawable =
-        remember(vectorRes) {
-            AppCompatResources.getDrawable(context, vectorRes)?.mutate()
-        } ?: return
+    val painter = painterResource(drawableRes)
     val resolvedTypeface =
         LocalFontFamilyResolver.current
             .resolveAsTypeface(
@@ -72,7 +71,7 @@ fun YralMaskedVectorTextV2(
                         textOverflow,
                         density,
                     )
-                val vectorBitmap = createVectorBitmap(drawable, canvasWidth, canvasHeight)
+                val vectorBitmap = painterToBitmap(painter, canvasWidth, canvasHeight, density)
                 val resultBitmap =
                     createMaskedBitmap(textBitmap, vectorBitmap, canvasWidth, canvasHeight)
                 drawResultBitmap(resultBitmap)
@@ -217,16 +216,29 @@ private fun startEllipsisText(
     return displayText
 }
 
-private fun createVectorBitmap(
-    drawable: Drawable,
+fun painterToBitmap(
+    painter: Painter,
     textWidth: Int,
     textHeight: Int,
+    density: Density,
 ): Bitmap {
-    val vectorBitmap = createBitmap(textWidth, textHeight)
-    val vectorCanvas = AndroidCanvas(vectorBitmap)
-    drawable.setBounds(0, 0, textWidth, textHeight)
-    drawable.draw(vectorCanvas)
-    return vectorBitmap
+    val imageBitmap = ImageBitmap(textWidth, textHeight)
+    val canvas = Canvas(imageBitmap)
+
+    val drawScope = CanvasDrawScope()
+    val floatSize = Size(textWidth.toFloat(), textHeight.toFloat())
+    drawScope.draw(
+        density = density,
+        layoutDirection = LayoutDirection.Ltr,
+        canvas = canvas,
+        size = floatSize,
+    ) {
+        with(painter) {
+            draw(floatSize)
+        }
+    }
+
+    return imageBitmap.asAndroidBitmap()
 }
 
 private fun createMaskedBitmap(

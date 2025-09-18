@@ -16,7 +16,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.yral.android.ui.widgets.YralBottomSheet
-import com.yral.android.ui.widgets.YralButton
+import com.yral.shared.libs.designsystem.component.YralButton
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 
