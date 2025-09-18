@@ -37,3 +37,4 @@ yral-identity = { git = "https://github.com/dolr-ai/yral-common.git", branch="ma
     "ic-git",
     "wasm-bindgen",
 ] }
+num-traits = "0.2.19"

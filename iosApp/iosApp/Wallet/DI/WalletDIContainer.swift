@@ -12,6 +12,7 @@ final class WalletDIContainer {
   struct Dependencies {
     let httpService: HTTPService
     let authClient: AuthClient
+    let firebaseService: FirebaseService
     let crashReporter: CrashReporter
     let session: SessionManager
     let accountUseCase: AccountUseCaseProtocol
@@ -24,6 +25,23 @@ final class WalletDIContainer {
   }
 
   @MainActor func makeWalletView() -> WalletView {
-    WalletView(viewModel: WalletViewModel(accountUseCase: dependencies.accountUseCase))
+    let repository = WalletRepository(
+      httpService: dependencies.httpService,
+      authClient: dependencies.authClient,
+      firebaseService: dependencies.firebaseService
+    )
+    return WalletView(
+      viewModel: WalletViewModel(
+        accountUseCase: dependencies.accountUseCase,
+        btcBalanceUseCase: FetchBTCBalanceUseCase(
+          walletRepository: repository,
+          crashReporter: dependencies.crashReporter
+        ),
+        exchangeRateUseCase: ExchangeRateUseCase(
+          walletRepository: repository,
+          crashReporter: dependencies.crashReporter
+        )
+      )
+    )
   }
 }
