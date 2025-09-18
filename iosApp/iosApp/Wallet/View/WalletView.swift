@@ -138,6 +138,7 @@ struct WalletView: View {
       guard isLoadingFirstTime else { return }
       await viewModel.fetchAccountInfo()
       isLoadingFirstTime = false
+      print("")
     }
   }
 }
