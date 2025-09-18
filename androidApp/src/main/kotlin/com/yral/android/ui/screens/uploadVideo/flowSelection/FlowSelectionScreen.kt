@@ -32,9 +32,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yral.android.R
 import com.yral.android.ui.screens.uploadVideo.flowSelection.FlowSelectionScreenConstants.DELAY_TO_SHOW_CLICK
-import com.yral.android.ui.widgets.YralButton
 import com.yral.shared.features.uploadvideo.presentation.FlowSelectionViewModel
 import com.yral.shared.features.uploadvideo.presentation.FlowType
+import com.yral.shared.libs.designsystem.component.YralButton
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import kotlinx.coroutines.delay
