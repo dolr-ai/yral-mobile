@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use crate::individual_user_template::individual_user_template_ffi::{PostServicePostStatus, PostServiceResult1, PostServicePost, PostServicePostError};
-use crate::{individual_user_template::*, Err};
+use crate::individual_user_template::*;
 use candid::Nat;
 use candid::{self, ser, CandidType, Decode, Deserialize, Encode, Principal};
 use ic_agent::export::PrincipalError;
