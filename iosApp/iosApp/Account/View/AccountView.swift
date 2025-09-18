@@ -20,11 +20,12 @@ struct AccountView: View {
   @State private var isLoggingOut = false
   @State private var showDelete = false
   @State private var isDeleting = false
+  @Binding var showAccount: Bool
   @EnvironmentObject var session: SessionManager
-  @Environment(\.dismiss) var dismiss
 
-  init(viewModel: AccountViewModel) {
+  init(viewModel: AccountViewModel, showAccount: Binding<Bool>) {
     _viewModel = StateObject(wrappedValue: viewModel)
+    self._showAccount = showAccount
   }
 
   var body: some View {
@@ -37,7 +38,7 @@ struct AccountView: View {
                 .resizable()
                 .frame(width: Constants.backImageSize, height: Constants.backImageSize)
                 .padding(Constants.navigationImagePadding)
-                .onTapGesture { dismiss() }
+                .onTapGesture { showAccount = false }
 
               Spacer()
             }

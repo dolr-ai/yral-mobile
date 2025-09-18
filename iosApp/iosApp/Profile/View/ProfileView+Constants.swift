@@ -5,6 +5,7 @@
 //  Created by Sarvesh Sharma on 17/09/25.
 //  Copyright © 2025 orgName. All rights reserved.
 //
+import SwiftUI
 
 extension ProfileView {
   enum Constants {

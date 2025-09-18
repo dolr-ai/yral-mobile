@@ -36,6 +36,7 @@ struct WalletView: View {
           showLoginButton: Binding(get: { false }, set: { _ in }),
           delegate: nil
         )
+        .padding(.top, Constants.userInfoViewToPadding)
 
         HStack {
           Image(Constants.yralTokenImage)
@@ -144,6 +145,7 @@ struct WalletView: View {
 extension WalletView {
   enum Constants {
     static let vStackSpacing: CGFloat = 24.0
+    static let userInfoViewToPadding = -4.0
     static let horizontalPadding: CGFloat = 16.0
     static let yralHstackHeight = 65.0
     static let btcHstackHeight = 56.0
