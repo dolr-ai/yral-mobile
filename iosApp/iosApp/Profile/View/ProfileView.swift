@@ -21,6 +21,7 @@ struct ProfileView: View {
   @State private var deleteInfo: ProfileVideoInfo?
   @State private var showDeleteIndicator: Bool = false
   @State private var showFeeds = false
+  @State private var showAccount = false
   @State private var currentIndex: Int = .zero
   @State private var isPushNotificationFlow: Bool = false
   @State private var isVisible = false
@@ -32,52 +33,17 @@ struct ProfileView: View {
 
   var uploadVideoPressed: (() -> Void) = {}
 
-  private enum ProfileRoute: Hashable { case account }
   @StateObject var viewModel: ProfileViewModel
-  @State private var path: [ProfileRoute] = []
 
   let router: ProfileRouterProtocol
 
   init(viewModel: ProfileViewModel, router: ProfileRouterProtocol) {
     self._viewModel = StateObject(wrappedValue: viewModel)
     self.router = router
+    UITabBar.appearance().isTranslucent = false
   }
 
   var body: some View {
-    if #available(iOS 16.0, *) {
-      NavigationStack(path: $path) {
-        profileContent
-          .navigationDestination(for: ProfileRoute.self) { route in
-            switch route {
-            case .account:
-              router.displayAccountView()
-                .background(Color.black.ignoresSafeArea())
-            }
-          }
-          .edgesIgnoringSafeArea(.bottom)
-      }
-    } else {
-      NavigationView {
-        profileContent
-          .background(
-            NavigationLink(
-              destination: router.displayAccountView()
-                .background(Color.black.ignoresSafeArea()),
-              isActive: Binding(
-                get: { path.last == .account },
-                set: { isActive in
-                  if !isActive { path.removeAll() }
-                }
-              )
-            ) { EmptyView() }
-              .hidden()
-          )
-      }
-      .navigationViewStyle(.stack)
-    }
-  }
-
-  private var profileContent: some View {
     Group {
       if showFeeds {
         router.displayUserVideoFeed(
@@ -91,6 +57,8 @@ struct ProfileView: View {
           walletOutcome: $walletOutcome
         )
         .edgesIgnoringSafeArea(.all)
+      } else if showAccount {
+        router.displayAccountView(showAccount: $showAccount)
       } else {
         VStack(spacing: .zero) {
           VStack(alignment: .leading, spacing: Constants.vStackSpacing) {
@@ -100,11 +68,7 @@ struct ProfileView: View {
                 .foregroundColor(Constants.navigationTitleTextColor)
                 .padding(Constants.navigationTitlePadding)
               Spacer()
-              Button {
-                if path.last != .account {
-                  path.append(.account)
-                }
-              } label: {
+              Button { showAccount = true } label: {
                 Image(Constants.profileMenuImageName)
                   .resizable()
                   .frame(width: Constants.profileMenuImageSize, height: Constants.profileMenuImageSize)

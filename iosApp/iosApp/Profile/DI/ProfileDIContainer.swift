@@ -100,7 +100,7 @@ final class ProfileDIContainer {
     )
   }
 
-  func makeAccount() -> AccountView {
+  func makeAccount(showAccount: Binding<Bool>) -> AccountView {
     AccountView(
       viewModel: AccountViewModel(
         accountUseCase: dependencies.accountUseCase,
@@ -113,7 +113,8 @@ final class ProfileDIContainer {
           accountRepository: dependencies.accountRepository,
           crashReporter: dependencies.crashReporter
         )
-      )
+      ),
+      showAccount: showAccount
     )
   }
 }
