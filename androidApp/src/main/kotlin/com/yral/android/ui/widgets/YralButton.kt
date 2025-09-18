@@ -28,7 +28,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.airbnb.lottie.compose.LottieConstants
-import com.yral.android.R
+import com.yral.shared.libs.designsystem.component.lottie.LottieRes
+import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 
@@ -42,7 +43,7 @@ fun YralButton(
     borderColor: Color = YralColors.ButtonBorderColor,
     icon: Int? = null,
     buttonState: YralButtonState = YralButtonState.Enabled,
-    loader: Int = R.raw.yral_loader,
+    loader: LottieRes = LottieRes.YRAL_LOADER,
     paddingValues: PaddingValues = PaddingValues(all = 10.dp),
     onClick: () -> Unit,
 ) {
@@ -97,7 +98,7 @@ fun YralButton(
 @Composable
 private fun ButtonLoader(
     buttonState: YralButtonState,
-    loader: Int,
+    loader: LottieRes,
 ) {
     AnimatedVisibility(
         visible = buttonState == YralButtonState.Loading,
