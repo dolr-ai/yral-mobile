@@ -5,6 +5,7 @@ import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.getOrThrow
+import com.yral.shared.koin.koinInstance
 
 actual object HelperService {
     private val logger = Logger.withTag("HelperService")
@@ -62,5 +63,13 @@ actual object HelperService {
     actual fun initRustLogger() {
         com.yral.shared.uniffi.generated
             .initRustLogger()
+    }
+
+    actual fun initServiceFactories(identityData: ByteArray) {
+        koinInstance.get<IndividualUserServiceFactory>().initialize(identityData)
+        koinInstance.get<RateLimitServiceFactory>().initialize(identityData)
+        koinInstance.get<UserPostServiceFactory>().initialize(identityData)
+        koinInstance.get<SnsLedgerServiceFactory>().initialize(identityData)
+        koinInstance.get<ICPLedgerServiceFactory>().initialize(identityData)
     }
 }

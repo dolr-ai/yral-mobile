@@ -10,6 +10,7 @@ import com.yral.android.ui.screens.feed.nav.FeedComponent
 import com.yral.android.ui.screens.leaderboard.LeaderboardComponent
 import com.yral.android.ui.screens.profile.nav.ProfileComponent
 import com.yral.android.ui.screens.uploadVideo.UploadVideoRootComponent
+import com.yral.android.ui.screens.wallet.nav.WalletComponent
 import com.yral.shared.libs.routing.routes.api.AppRoute
 
 abstract class HomeComponent {
@@ -20,6 +21,7 @@ abstract class HomeComponent {
     abstract fun onUploadVideoTabClick()
     abstract fun onProfileTabClick()
     abstract fun onAccountTabClick()
+    abstract fun onWalletTabClick()
 
     @Deprecated("use onNavigationRequest")
     abstract fun handleNavigation(destination: String)
@@ -41,6 +43,9 @@ abstract class HomeComponent {
         ) : Child()
         class Account(
             val component: AccountComponent,
+        ) : Child()
+        class Wallet(
+            val component: WalletComponent,
         ) : Child()
     }
 

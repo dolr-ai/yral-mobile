@@ -157,4 +157,11 @@
     <string name="play_games">Play Games</string>
     <string name="to_earn_token">to earn %s!</string>
     <string name="coins">YRAL</string>
+
+    <!-- Wallet -->
+    <string name="my_wallet">My Wallet</string>
+    <string name="bit_coin">Bitcoin</string>
+    <string name="btc_inr_rate">1 Bitcoin = %s</string>
+    <string name="rupee_symbol">₹</string>
+    <string name="currency_balance">%s Balance</string>
 </resources>

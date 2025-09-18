@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -16,6 +17,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -28,6 +30,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -60,7 +63,6 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun AccountScreen(
-    @Suppress("UnusedParameter")
     component: AccountComponent,
     modifier: Modifier = Modifier,
     viewModel: AccountsViewModel = koinViewModel(),
@@ -69,7 +71,7 @@ fun AccountScreen(
     val state by viewModel.state.collectAsState()
     LaunchedEffect(Unit) { viewModel.accountsTelemetry.onMenuScreenViewed() }
     Column(modifier = modifier.fillMaxSize()) {
-        AccountsTitle()
+        AccountsTitle(state.isWalletEnabled) { component.onBack() }
         AccountScreenContent(
             state = state,
             viewModel = viewModel,
@@ -150,7 +152,10 @@ private fun SheetContent(
             LoginBottomSheet(
                 bottomSheetState = bottomSheetState,
                 onDismissRequest = onDismissRequest,
-                onSignupClicked = { signInWithGoogle() },
+                onSignupClicked = {
+                    signInWithGoogle()
+                    onDismissRequest()
+                },
                 termsLink = tncLink,
                 openTerms = { extraSheetLink = tncLink },
             )
@@ -255,20 +260,34 @@ private fun ExtraLinkSheet(
 }
 
 @Composable
-private fun AccountsTitle() {
+private fun AccountsTitle(
+    isBackVisible: Boolean,
+    onBack: () -> Unit,
+) {
     Row(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(91.dp, Alignment.Start),
+                .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        if (isBackVisible) {
+            Icon(
+                painter = painterResource(R.drawable.arrow_left),
+                contentDescription = "back",
+                tint = Color.White,
+                modifier =
+                    Modifier
+                        .size(24.dp)
+                        .clickable { onBack() },
+            )
+        }
         Text(
             text = stringResource(R.string.accounts),
             style = LocalAppTopography.current.xlBold,
             color = YralColors.NeutralTextPrimary,
             textAlign = TextAlign.Center,
+            modifier = Modifier.weight(1f).offset(x = (-12).dp),
         )
     }
 }
