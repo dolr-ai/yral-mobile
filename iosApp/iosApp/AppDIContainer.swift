@@ -124,8 +124,9 @@ import GRPC
   func makeWalletDIContainer() -> WalletDIContainer {
     return WalletDIContainer(
       dependencies: WalletDIContainer.Dependencies(
-        httpService: HTTPService(baseURLString: appConfiguration.offchainBaseURLString),
+        httpService: HTTPService(baseURLString: appConfiguration.firebaseBaseURLString),
         authClient: authClient,
+        firebaseService: FirebaseService(),
         crashReporter: crashReporter,
         session: session,
         accountUseCase: accountUseCase

@@ -13,8 +13,7 @@ struct WalletView: View {
   @State var accountInfo: AccountInfo?
   @State private var isLoadingFirstTime = true
   @State private var yralToken = 0
-  @State private var btcToken = 0.000001
-  @State private var inrValue = 0.0
+  @State private var btcToken = 0.0
   @State private var btcToCurrencyValue = 0.0
   @EnvironmentObject var session: SessionManager
 
@@ -74,7 +73,7 @@ struct WalletView: View {
             .foregroundStyle(Constants.tokenTextColor)
             .padding(.vertical, Constants.btcHstackVerticalMargin)
           Spacer()
-          Text(String(btcToken))
+          Text(String(format: "%.8f", Double(btcToken)))
             .font(Constants.tokenValueFont)
             .foregroundStyle(Constants.tokenTextColor)
             .padding(.trailing, Constants.yralHstackMargin)
@@ -88,34 +87,34 @@ struct WalletView: View {
         )
         .background(TopRoundedRectangle(cornerRadius: Constants.yralHstackCornerRadius)
           .fill(Constants.yralHstackBGColor))
-
-        HStack(spacing: Constants.balanceHstackSpacing) {
-          Spacer()
-          Text(Constants.balanceString)
-            .font(Constants.balanceFont)
-            .foregroundStyle(Constants.balanceTextColor)
-          Image(Constants.rupeeImage)
-            .resizable()
-            .frame(width: Constants.rupeeImageSize, height: Constants.rupeeImageSize)
-          Text("\(Constants.currencySymbol)\(inrValue)")
-            .font(Constants.currencyFont)
-            .foregroundColor(Constants.currencyTextColor)
-            .padding(.vertical, Constants.currencyVerticalPadding)
-            .padding(.horizontal, Constants.currencyHorizontalPadding)
-            .background(Constants.currencyBGColor)
-            .cornerRadius(Constants.currencyRadius)
-            .padding(.trailing, Constants.yralHstackMargin)
+        if Locale.current.regionCode == Constants.indiaRegionCode {
+          HStack(spacing: Constants.balanceHstackSpacing) {
+            Spacer()
+            Text(Constants.balanceString)
+              .font(Constants.balanceFont)
+              .foregroundStyle(Constants.balanceTextColor)
+            Image(Constants.rupeeImage)
+              .resizable()
+              .frame(width: Constants.rupeeImageSize, height: Constants.rupeeImageSize)
+            Text("\(Constants.currencySymbol)\(String(format: "%.0f", btcToken * btcToCurrencyValue))")
+              .font(Constants.currencyFont)
+              .foregroundColor(Constants.currencyTextColor)
+              .padding(.vertical, Constants.currencyVerticalPadding)
+              .padding(.horizontal, Constants.currencyHorizontalPadding)
+              .background(Constants.currencyBGColor)
+              .cornerRadius(Constants.currencyRadius)
+              .padding(.trailing, Constants.yralHstackMargin)
+          }
+          .frame(height: Constants.currencyHStackHeight)
+          .cornerRadius(Constants.yralHstackCornerRadius)
+          .overlay(
+            BottomRoundedRectangle(cornerRadius: Constants.yralHstackCornerRadius)
+              .stroke(Constants.hstackBorderColor, lineWidth: .one)
+          )
+          .background(BottomRoundedRectangle(cornerRadius: Constants.yralHstackCornerRadius)
+            .fill(Constants.currencyHstackBGColor))
+          .padding(.top, -Constants.vStackSpacing)
         }
-        .frame(height: Constants.currencyHStackHeight)
-        .cornerRadius(Constants.yralHstackCornerRadius)
-        .overlay(
-          BottomRoundedRectangle(cornerRadius: Constants.yralHstackCornerRadius)
-            .stroke(Constants.hstackBorderColor, lineWidth: .one)
-        )
-        .background(BottomRoundedRectangle(cornerRadius: Constants.yralHstackCornerRadius)
-          .fill(Constants.currencyHstackBGColor))
-        .padding(.top, -Constants.vStackSpacing)
-
         HStack {
           Spacer()
           Text("\(Constants.conversionString)\(String(btcToCurrencyValue))")
@@ -131,14 +130,21 @@ struct WalletView: View {
       switch event {
       case .accountInfoFetched(let info):
         accountInfo = info
+      case .btcBalanceFetched(let balance):
+        btcToken = balance
+      case .exchangeRateFetched(let exchangeRate):
+        btcToCurrencyValue = exchangeRate
       default: break
       }
     }
     .task {
+      Task {
+        await viewModel.fetchBTCBalance()
+      }
       guard isLoadingFirstTime else { return }
       await viewModel.fetchAccountInfo()
       isLoadingFirstTime = false
-      print("")
+      await viewModel.fetchExchangeRate()
     }
   }
 }
@@ -189,8 +195,13 @@ extension WalletView {
     static let currencyFont = YralFont.pt14.semiBold.swiftUIFont
     static let currencyBGColor = YralColor.green400.swiftUIColor
     static let currencyHstackBGColor = YralColor.grey700.swiftUIColor
-    static let conversionString = "1  Bitcoin = ₹"
+    static var conversionString: String {
+      let locale = Locale.current
+      let currencySymbol = locale.currencySymbol ?? "$"
+      return "1 Bitcoin = \(currencySymbol)"
+    }
     static let conversionTextColor = YralColor.grey500.swiftUIColor
     static let conversionFont = YralFont.pt12.regular.swiftUIFont
+    static let indiaRegionCode = "IN"
   }
 }

@@ -2,10 +2,15 @@
 // You may want to manually adjust some of the types.
 #![allow(dead_code, unused_imports)]
 mod ledger_ffi;
+use std::ptr::null;
 use candid::{self, CandidType, Deserialize, Principal};
 use ic_cdk::api::call::CallResult as Result;
 use ic_cdk::api::call::RejectionCode;
-
+use candid::Nat;
+use candid::Encode;
+use candid::Decode;
+use num_traits::cast::ToPrimitive;
+use ic_agent::Agent;
 
 /// Subaccount is an arbitrary 32-byte byte array.
 /// Ledger uses subaccounts to compute the source address, which enables one
@@ -13,6 +18,14 @@ use ic_cdk::api::call::RejectionCode;
 pub type SubAccount = serde_bytes::ByteBuf;
 #[derive(CandidType, Deserialize)]
 pub struct Account { pub owner: Principal, pub subaccount: Option<SubAccount> }
+impl Account {
+  pub fn new_from_text(
+      owner_text: &str,
+  ) -> Option<Self> {
+      let owner = Principal::from_text(owner_text).ok()?;
+      Some(Self { owner, subaccount: None })
+  }
+}
 #[derive(CandidType, Deserialize)]
 pub struct FeatureFlags { #[serde(rename="icrc2")] pub icrc_2: bool }
 #[derive(CandidType, Deserialize)]
@@ -388,6 +401,10 @@ pub struct TransferFee {
 
 pub struct LedgerService(pub Principal);
 impl LedgerService {
+    pub fn ledger_new_from_text(principal_text: &str) -> Option<LedgerService> {
+      let pid = Principal::from_text(principal_text).ok()?;
+      Some(LedgerService(pid))
+  }
   /// Returns the amount of Tokens on the specified account.
   pub async fn account_balance(&self, arg0: &AccountBalanceArgs) -> Result<(Tokens,)> {
     ic_cdk::call(self.0, "account_balance", (arg0,)).await
@@ -407,18 +424,60 @@ impl LedgerService {
   pub async fn decimals(&self) -> Result<(DecimalsRet,)> {
     ic_cdk::call(self.0, "decimals", ()).await
   }
-  pub async fn icrc_1_balance_of(&self, arg0: &Account) -> Result<(Icrc1Tokens,)> {
-    ic_cdk::call(self.0, "icrc1_balance_of", (arg0,)).await
-  }
-  pub async fn icrc_1_balance_of_sb(
+  pub async fn icrc_1_balance_of(
     &self,
-    account: &Account
-) -> std::result::Result<Icrc1Tokens, BalanceError> {
-    match self.icrc_1_balance_of(account).await {
-        Ok((nat,)) => Ok(nat),              // <-- unwrap the single-element tuple
-        Err(e) => Err(e.into()),
-    }
-}
+    arg0: &Account
+  ) -> std::result::Result<u32, String> {
+      // Build (ideally reuse an Agent stored on `self`)
+      let agent = Agent::builder()
+          .with_url("https://ic0.app/")
+          .build()
+          .map_err(|e| e.to_string())?;
+
+      // If you're on a local replica, uncomment:
+      // agent.fetch_root_key().await.map_err(|e| e.to_string())?;
+
+      // Encode Candid args
+      let args = Encode!(arg0).map_err(|e| e.to_string())?;
+
+      // Ledger canister id
+      let ledger_id = Principal::from_text("mxzaz-hqaaa-aaaar-qaada-cai")
+          .map_err(|e| e.to_string())?;
+
+      // Query the canister
+      let bytes = agent
+          .query(&ledger_id, "icrc1_balance_of")
+          .with_arg(args)
+          .call()
+          .await
+          .map_err(|e| e.to_string())?;
+
+      // Decode reply into Nat
+      let nat: Icrc1Tokens = Decode!(&bytes, Icrc1Tokens).map_err(|e| e.to_string())?;
+      nat.0.to_u32().ok_or_else(|| "Nat value too large for u64".to_string())
+  }
+  // pub async fn icrc_1_balance_of(&self, arg0: &Account) -> std::result::Result<Icrc1Tokens, String> {
+  //   let agent = Agent::builder()
+  //   .with_url("https://ic0.app/")
+  //   .build()
+  //   .expect("Failed to create agent");
+  //   let args = Encode!(&arg0)?;
+  //   let principal_text: &str = "mxzaz-hqaaa-aaaar-qaada-cai";
+  //   let principal = Principal::from_text(principal_text)
+  //   .map_err(|e| e.to_string())?;
+
+  //   let bytes = agent
+  //       .update(&principal, "icrc1_balance_of")
+  //       .with_arg(args)
+  //       .call_and_wait()
+  //       .await;
+  //   Ok(Decode!(&bytes, Icrc1Tokens)?)
+
+    // match ic_cdk::call(self.0, "icrc1_balance_of", (arg0,)).await {
+    //   Ok((nat,)) => Ok(nat),
+    //   Err((_code, msg)) => Err(msg),
+    // }
+  // }
   pub async fn icrc_1_decimals(&self) -> Result<(u8,)> {
     ic_cdk::call(self.0, "icrc1_decimals", ()).await
   }
@@ -486,11 +545,6 @@ impl LedgerService {
   pub async fn transfer_fee(&self, arg0: &TransferFeeArg) -> Result<(TransferFee,)> {
     ic_cdk::call(self.0, "transfer_fee", (arg0,)).await
   }
-
-  pub fn ledger_new_from_text(principal_text: &str) -> Option<LedgerService> {
-    let pid = Principal::from_text(principal_text).ok()?;
-    Some(LedgerService(pid))
-}
 }
 
 #[derive(Debug)]

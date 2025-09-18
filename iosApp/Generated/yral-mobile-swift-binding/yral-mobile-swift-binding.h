@@ -1824,6 +1824,18 @@ void* __swift_bridge__$Vec_LedgerService$get_mut(void* vec_ptr, uintptr_t index)
 uintptr_t __swift_bridge__$Vec_LedgerService$len(void* vec_ptr);
 void* __swift_bridge__$Vec_LedgerService$as_ptr(void* vec_ptr);
 
+typedef struct Account Account;
+void __swift_bridge__$Account$_free(void* self);
+
+void* __swift_bridge__$Vec_Account$new(void);
+void __swift_bridge__$Vec_Account$drop(void* vec_ptr);
+void __swift_bridge__$Vec_Account$push(void* vec_ptr, void* item_ptr);
+void* __swift_bridge__$Vec_Account$pop(void* vec_ptr);
+void* __swift_bridge__$Vec_Account$get(void* vec_ptr, uintptr_t index);
+void* __swift_bridge__$Vec_Account$get_mut(void* vec_ptr, uintptr_t index);
+uintptr_t __swift_bridge__$Vec_Account$len(void* vec_ptr);
+void* __swift_bridge__$Vec_Account$as_ptr(void* vec_ptr);
+
 typedef struct BalanceError BalanceError;
 void __swift_bridge__$BalanceError$_free(void* self);
 
@@ -1848,19 +1860,11 @@ void* __swift_bridge__$Vec_Icrc1Tokens$get_mut(void* vec_ptr, uintptr_t index);
 uintptr_t __swift_bridge__$Vec_Icrc1Tokens$len(void* vec_ptr);
 void* __swift_bridge__$Vec_Icrc1Tokens$as_ptr(void* vec_ptr);
 
-typedef struct Account Account;
-void __swift_bridge__$Account$_free(void* self);
-
-void* __swift_bridge__$Vec_Account$new(void);
-void __swift_bridge__$Vec_Account$drop(void* vec_ptr);
-void __swift_bridge__$Vec_Account$push(void* vec_ptr, void* item_ptr);
-void* __swift_bridge__$Vec_Account$pop(void* vec_ptr);
-void* __swift_bridge__$Vec_Account$get(void* vec_ptr, uintptr_t index);
-void* __swift_bridge__$Vec_Account$get_mut(void* vec_ptr, uintptr_t index);
-uintptr_t __swift_bridge__$Vec_Account$len(void* vec_ptr);
-void* __swift_bridge__$Vec_Account$as_ptr(void* vec_ptr);
-
 void* __swift_bridge__$LedgerService$new_from_text(struct RustStr principal_text);
-void __swift_bridge__$LedgerService$icrc_1_balance_of_sb(void* callback_wrapper, void __swift_bridge__$LedgerService$icrc_1_balance_of_sb$async(void* callback_wrapper, struct __private__ResultPtrAndPtr ret), void* self, void* account);
+void __swift_bridge__$LedgerService$icrc_1_balance_of(void* callback_wrapper, void __swift_bridge__$LedgerService$icrc_1_balance_of$async(void* callback_wrapper, struct __swift_bridge__$ResultU32AndString ret), void* self, void* arg0);
+void* __swift_bridge__$Account$new_from_text(struct RustStr owner_text);
+typedef enum __swift_bridge__$ResultU32AndString$Tag {__swift_bridge__$ResultU32AndString$ResultOk, __swift_bridge__$ResultU32AndString$ResultErr} __swift_bridge__$ResultU32AndString$Tag;
+union __swift_bridge__$ResultU32AndString$Fields {uint32_t ok; void* err;};
+typedef struct __swift_bridge__$ResultU32AndString{__swift_bridge__$ResultU32AndString$Tag tag; union __swift_bridge__$ResultU32AndString$Fields payload;} __swift_bridge__$ResultU32AndString;
 
 

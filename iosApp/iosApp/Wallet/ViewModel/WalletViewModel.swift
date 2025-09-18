@@ -32,18 +32,26 @@ enum WalletPageState: Equatable {
 
 enum WalletPageEvent: Equatable {
   case accountInfoFetched(AccountInfo)
+  case btcBalanceFetched(Double)
+  case exchangeRateFetched(Double)
 }
 
 class WalletViewModel: ObservableObject {
   let accountUseCase: AccountUseCaseProtocol
+  let btcBalanceUseCase: FetchBTCBalanceUseCaseProtocol
+  let exchangeRateUseCase: ExchangeRateUseCaseProtocol
 
   @Published var state: WalletPageState = .initalized
   @Published var event: WalletPageEvent?
 
   init(
     accountUseCase: AccountUseCaseProtocol,
+    btcBalanceUseCase: FetchBTCBalanceUseCaseProtocol,
+    exchangeRateUseCase: ExchangeRateUseCaseProtocol
   ) {
     self.accountUseCase = accountUseCase
+    self.btcBalanceUseCase = btcBalanceUseCase
+    self.exchangeRateUseCase = exchangeRateUseCase
   }
 
   @MainActor func fetchAccountInfo() async {
@@ -53,6 +61,26 @@ class WalletViewModel: ObservableObject {
     case .success(let accountInfo):
       state = .success
       event = .accountInfoFetched(accountInfo)
+    case .failure(let error):
+      state = .failure(error)
+    }
+  }
+
+  @MainActor func fetchBTCBalance() async {
+    let result = await btcBalanceUseCase.execute()
+    switch result {
+    case .success(let btcBalance):
+      event = .btcBalanceFetched(btcBalance)
+    case .failure(let error):
+      state = .failure(error)
+    }
+  }
+
+  @MainActor func fetchExchangeRate() async {
+    let result = await exchangeRateUseCase.execute()
+    switch result {
+    case .success(let exchangeRate):
+      event = .exchangeRateFetched(exchangeRate)
     case .failure(let error):
       state = .failure(error)
     }
