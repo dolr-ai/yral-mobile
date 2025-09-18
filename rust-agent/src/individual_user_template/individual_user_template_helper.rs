@@ -182,8 +182,8 @@ pub async fn authenticate_with_network(
         inner: canisters,
         canister_principal,
         user_principal,
-        profile_pic: profile_details.propic,
-        is_created_from_service_canister: is_created_from_service_canister(canister_principal),
+        profile_pic: profile_details.profile_pic,
+        is_created_from_service_canister: canister_principal == yral_canisters_client::ic::USER_INFO_SERVICE_ID,
     })
 }
 
