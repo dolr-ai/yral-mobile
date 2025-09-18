@@ -20,6 +20,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.airbnb.lottie.compose.LottieConstants
 import com.yral.android.R
+import com.yral.shared.libs.designsystem.component.lottie.LottieRes
+import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 
 @Composable
@@ -91,11 +93,11 @@ enum class YralButtonType {
     Transparent,
 }
 
-private fun getLoaderResource(buttonType: YralButtonType): Int =
+private fun getLoaderResource(buttonType: YralButtonType): LottieRes =
     when (buttonType) {
-        YralButtonType.Pink -> R.raw.white_loader
-        YralButtonType.White -> R.raw.yral_loader
-        YralButtonType.Transparent -> R.raw.yral_loader
+        YralButtonType.Pink -> LottieRes.WHITE_LOADER
+        YralButtonType.White -> LottieRes.YRAL_LOADER
+        YralButtonType.Transparent -> LottieRes.YRAL_LOADER
     }
 
 private fun getButtonTextBackground(

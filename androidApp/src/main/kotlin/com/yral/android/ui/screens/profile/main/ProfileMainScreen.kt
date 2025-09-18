@@ -79,6 +79,7 @@ import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.features.profile.viewmodel.DeleteConfirmationState
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.features.profile.viewmodel.VideoViewState
+import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import kotlinx.coroutines.flow.collectLatest
@@ -663,7 +664,7 @@ private fun DeletingOverLay(
                 verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Bottom),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                YralLoader(size = loaderSize, R.raw.read_loader)
+                YralLoader(size = loaderSize, LottieRes.READ_LOADER)
                 Text(
                     text = stringResource(R.string.deleting),
                     style = textStyle,

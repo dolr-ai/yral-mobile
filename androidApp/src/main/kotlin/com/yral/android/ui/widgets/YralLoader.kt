@@ -9,12 +9,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.airbnb.lottie.compose.LottieConstants
-import com.yral.android.R
+import com.yral.shared.libs.designsystem.component.lottie.LottieRes
+import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
 
 @Composable
 fun YralLoader(
     size: Dp = 40.dp,
-    resource: Int = R.raw.yral_loader,
+    resource: LottieRes = LottieRes.YRAL_LOADER,
 ) {
     Box(
         modifier =
