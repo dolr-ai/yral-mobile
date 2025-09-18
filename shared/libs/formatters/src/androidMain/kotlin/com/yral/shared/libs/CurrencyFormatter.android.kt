@@ -15,13 +15,9 @@ internal class AndroidCurrencyFormatter : CurrencyFormatter {
     ): String {
         val format = NumberFormat.getCurrencyInstance()
         val currency = Currency.getInstance(currencyCode)
-        format.currency = currency
+        format.currency = if (withCurrencySymbol) currency else null
         format.maximumFractionDigits = maximumFractionDigits
         format.minimumFractionDigits = minimumFractionDigits
-
-        if (!withCurrencySymbol) {
-            format.currency = null
-        }
         return format.format(amount)
     }
 }

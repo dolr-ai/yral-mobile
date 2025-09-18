@@ -14,84 +14,55 @@ internal object AndroidNumberFormatter : NumberFormatter {
         maximumFractionDigits: Int?,
     ): String {
         val numberFormat =
-            localeCode?.let {
-                NumberFormat.getNumberInstance(Locale.forLanguageTag(it))
-            } ?: NumberFormat.getNumberInstance()
-        minimumFractionDigits?.let { numberFormat.minimumFractionDigits = it }
-        maximumFractionDigits?.let { numberFormat.maximumFractionDigits = it }
-
+            getNumberFormat(localeCode).apply {
+                minimumFractionDigits?.let { this.minimumFractionDigits = it }
+                maximumFractionDigits?.let { this.maximumFractionDigits = it }
+            }
         return numberFormat.format(value)
     }
 
     override fun format(
         value: Int,
         localeCode: String?,
-    ): String {
-        val numberFormat =
-            localeCode?.let {
-                NumberFormat.getNumberInstance(Locale.forLanguageTag(it))
-            } ?: NumberFormat.getNumberInstance()
-
-        return numberFormat.format(value)
-    }
+    ): String = getNumberFormat(localeCode).format(value)
 
     override fun format(
         value: Long,
         localeCode: String?,
-    ): String {
-        val numberFormat =
-            localeCode?.let {
-                NumberFormat.getNumberInstance(Locale.forLanguageTag(it))
-            } ?: NumberFormat.getNumberInstance()
-
-        return numberFormat.format(value)
-    }
+    ): String = getNumberFormat(localeCode).format(value)
 
     override fun parseAsDouble(
         text: String,
         localeCode: String?,
-    ): Double? {
-        val numberFormat =
-            localeCode?.let {
-                NumberFormat.getNumberInstance(Locale.forLanguageTag(it))
-            } ?: NumberFormat.getNumberInstance()
-
-        return try {
-            numberFormat.parse(text)?.toDouble()
+    ): Double? =
+        try {
+            getNumberFormat(localeCode).parse(text)?.toDouble()
         } catch (e: Exception) {
             null
         }
-    }
 
     override fun parseAsInt(
         text: String,
         localeCode: String?,
-    ): Int? {
-        val numberFormat =
-            localeCode?.let {
-                NumberFormat.getNumberInstance(Locale.forLanguageTag(it))
-            } ?: NumberFormat.getNumberInstance()
-
-        return try {
-            numberFormat.parse(text)?.toInt()
+    ): Int? =
+        try {
+            getNumberFormat(localeCode).parse(text)?.toInt()
         } catch (e: Exception) {
             null
         }
-    }
 
     override fun parseAsLong(
         text: String,
         localeCode: String?,
-    ): Long? {
-        val numberFormat =
-            localeCode?.let {
-                NumberFormat.getNumberInstance(Locale.forLanguageTag(it))
-            } ?: NumberFormat.getNumberInstance()
-
-        return try {
-            numberFormat.parse(text)?.toLong()
+    ): Long? =
+        try {
+            getNumberFormat(localeCode).parse(text)?.toLong()
         } catch (e: Exception) {
             null
         }
-    }
+
+    private fun getNumberFormat(localeCode: String?): NumberFormat =
+        localeCode?.let {
+            NumberFormat.getNumberInstance(Locale.forLanguageTag(it))
+        } ?: NumberFormat.getNumberInstance()
 }

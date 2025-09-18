@@ -16,13 +16,10 @@ internal object IosNumberFormatter : NumberFormatter {
         maximumFractionDigits: Int?,
     ): String {
         val numberFormat =
-            NSNumberFormatter().apply {
-                numberStyle = NSNumberFormatterDecimalStyle
-                locale = localeCode?.let {
-                    NSLocale(localeIdentifier = it)
-                } ?: NSLocale.currentLocale()
+            getNumberFormat(localeCode).apply {
+                minimumFractionDigits?.let { this.minimumFractionDigits = it.toULong() }
+                maximumFractionDigits?.let { this.maximumFractionDigits = it.toULong() }
             }
-
         val decimalNumber = NSNumber(double = value)
 
         return numberFormat.stringFromNumber(decimalNumber) ?: value.toString()
@@ -32,16 +29,8 @@ internal object IosNumberFormatter : NumberFormatter {
         value: Int,
         localeCode: String?,
     ): String {
-        val numberFormat =
-            NSNumberFormatter().apply {
-                numberStyle = NSNumberFormatterDecimalStyle
-                locale = localeCode?.let {
-                    NSLocale(localeIdentifier = it)
-                } ?: NSLocale.currentLocale()
-            }
-
+        val numberFormat = getNumberFormat(localeCode)
         val decimalNumber = NSNumber(int = value)
-
         return numberFormat.stringFromNumber(decimalNumber) ?: value.toString()
     }
 
@@ -49,61 +38,31 @@ internal object IosNumberFormatter : NumberFormatter {
         value: Long,
         localeCode: String?,
     ): String {
-        val numberFormat =
-            NSNumberFormatter().apply {
-                numberStyle = NSNumberFormatterDecimalStyle
-                locale = localeCode?.let {
-                    NSLocale(localeIdentifier = it)
-                } ?: NSLocale.currentLocale()
-            }
-
+        val numberFormat = getNumberFormat(localeCode)
         val decimalNumber = NSNumber(long = value)
-
         return numberFormat.stringFromNumber(decimalNumber) ?: value.toString()
     }
 
     override fun parseAsDouble(
         text: String,
         localeCode: String?,
-    ): Double? {
-        val numberFormat =
-            NSNumberFormatter().apply {
-                numberStyle = NSNumberFormatterDecimalStyle
-                locale = localeCode?.let {
-                    NSLocale(localeIdentifier = it)
-                } ?: NSLocale.currentLocale()
-            }
-
-        return numberFormat.numberFromString(text)?.doubleValue
-    }
+    ): Double? = getNumberFormat(localeCode).numberFromString(text)?.doubleValue
 
     override fun parseAsInt(
         text: String,
         localeCode: String?,
-    ): Int? {
-        val numberFormat =
-            NSNumberFormatter().apply {
-                numberStyle = NSNumberFormatterDecimalStyle
-                locale = localeCode?.let {
-                    NSLocale(localeIdentifier = it)
-                } ?: NSLocale.currentLocale()
-            }
-
-        return numberFormat.numberFromString(text)?.intValue
-    }
+    ): Int? = getNumberFormat(localeCode).numberFromString(text)?.intValue
 
     override fun parseAsLong(
         text: String,
         localeCode: String?,
-    ): Long? {
-        val numberFormat =
-            NSNumberFormatter().apply {
-                numberStyle = NSNumberFormatterDecimalStyle
-                locale = localeCode?.let {
-                    NSLocale(localeIdentifier = it)
-                } ?: NSLocale.currentLocale()
-            }
+    ): Long? = getNumberFormat(localeCode).numberFromString(text)?.longValue
 
-        return numberFormat.numberFromString(text)?.longValue
-    }
+    private fun getNumberFormat(localeCode: String?) =
+        NSNumberFormatter().apply {
+            numberStyle = NSNumberFormatterDecimalStyle
+            locale = localeCode?.let {
+                NSLocale(localeIdentifier = it)
+            } ?: NSLocale.currentLocale()
+        }
 }
