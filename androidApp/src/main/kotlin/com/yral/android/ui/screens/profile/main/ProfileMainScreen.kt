@@ -253,7 +253,7 @@ private fun MainContent(
                 LoadingContent()
             }
             is LoadState.Error -> {
-                onManualRefreshTriggered(false)
+                if (manualRefreshTriggered) onManualRefreshTriggered(false)
                 ErrorContent(message = stringResource(R.string.error_loading_videos))
             }
             is LoadState.NotLoading -> {
