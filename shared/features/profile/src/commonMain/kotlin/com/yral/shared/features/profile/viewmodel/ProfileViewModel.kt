@@ -11,6 +11,8 @@ import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.coroutines.runSuspendCatching
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
+import com.yral.featureflag.FeatureFlagManager
+import com.yral.featureflag.WalletFeatureFlags
 import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.AccountInfo
@@ -46,13 +48,19 @@ class ProfileViewModel(
     private val urlBuilder: UrlBuilder,
     private val linkGenerator: LinkGenerator,
     private val crashlyticsManager: CrashlyticsManager,
+    flagManager: FeatureFlagManager,
 ) : ViewModel() {
     companion object {
         private const val POSTS_PER_PAGE = 20
         private const val POSTS_PREFETCH_DISTANCE = 5
     }
 
-    private val _state = MutableStateFlow(ViewState())
+    private val _state =
+        MutableStateFlow(
+            ViewState(
+                isWalletEnabled = flagManager.isEnabled(WalletFeatureFlags.Wallet.Enabled),
+            ),
+        )
     val state: StateFlow<ViewState> = _state.asStateFlow()
 
     private val deletedVideoIds = MutableStateFlow<Set<String>>(emptySet())
@@ -234,6 +242,7 @@ data class ViewState(
     val deleteConfirmation: DeleteConfirmationState = DeleteConfirmationState.None,
     val videoView: VideoViewState = VideoViewState.None,
     val manualRefreshTriggered: Boolean = false,
+    val isWalletEnabled: Boolean = false,
 )
 
 sealed class DeleteConfirmationState {

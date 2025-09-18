@@ -1,16 +1,15 @@
 // This is an experimental feature to generate Rust binding from Candid.
 // You may want to manually adjust some of the types.
 #![allow(dead_code, unused_imports)]
-use crate::individual_user_template;
-use crate::RUNTIME;
-use crate::uni_ffi_helpers::*;
 use candid::{self, CandidType, Decode, Deserialize, Encode, Int, Nat, Principal};
 use ic_agent::export::PrincipalError;
 use ic_agent::Agent;
 use std::sync::Arc;
-use uniffi::Record;
-use uniffi::Enum;
+use uniffi::{Record, Enum};
+use crate::uni_ffi_helpers::*;
 use crate::commons::*;
+use crate::individual_user_template;
+use crate::RUNTIME;
 
 type Result<T> = std::result::Result<T, FFIError>;
 
@@ -399,6 +398,8 @@ pub struct SnsLedgerService {
     pub agent: Arc<Agent>,
 }
 
+pub const DEFAULT_SNS_LEDGER_CANISTER: &str = "ryjl3-tyaaa-aaaaa-aaaba-cai";
+
 #[uniffi::export]
 impl SnsLedgerService {
     #[uniffi::constructor]
@@ -423,7 +424,8 @@ impl SnsLedgerService {
 
     async fn query_canister(&self, method: &str, args: Vec<u8>) -> Result<Vec<u8>> {
         let agent = Arc::clone(&self.agent);
-        let principal = self.principal;
+        let principal = Principal::from_text(DEFAULT_SNS_LEDGER_CANISTER)
+          .map_err(|e| FFIError::PrincipalError(format!("Invalid default principal: {:?}", e)))?;
         let method = method.to_string();
         RUNTIME.spawn(async move {
             agent

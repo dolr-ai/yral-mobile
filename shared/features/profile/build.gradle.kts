@@ -27,6 +27,9 @@ kotlin {
             implementation(projects.shared.libs.routing.deeplinkEngine)
             implementation(projects.shared.libs.sharing)
             implementation(projects.shared.libs.crashlytics)
+            implementation(projects.shared.libs.featureFlag)
+
+            implementation(projects.shared.features.account)
 
             implementation(libs.androidx.paging.common)
         }

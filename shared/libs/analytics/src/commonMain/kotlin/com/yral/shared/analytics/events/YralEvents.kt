@@ -884,6 +884,18 @@ data class AirdropClaimedEventData(
 
 // --- Wallet ---
 @Serializable
+data class WalletPageViewedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.WALLET_PAGE_VIEWED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.WALLET.getFeatureName(),
+) : BaseEventData(),
+    EventData {
+    constructor() : this(
+        FeatureEvents.WALLET_PAGE_VIEWED.getEventName(),
+        Features.WALLET.getFeatureName(),
+    )
+}
+
+@Serializable
 data class CentsToDolrConvertedEventData(
     @SerialName("event") override val event: String = FeatureEvents.CENTS_TO_DOLR_CONVERTED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.WALLET.getFeatureName(),

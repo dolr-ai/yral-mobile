@@ -5,6 +5,7 @@ import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.featureflag.FeatureFlagManager
+import com.yral.featureflag.WalletFeatureFlags
 import com.yral.featureflag.accountFeatureFlags.AccountFeatureFlags
 import com.yral.featureflag.accountFeatureFlags.AccountLinksDto
 import com.yral.shared.analytics.events.MenuCtaType
@@ -52,6 +53,7 @@ class AccountsViewModel(
                 AccountsState(
                     accountInfo = sessionManager.getAccountInfo(),
                     accountLinks = flagManager.get(AccountFeatureFlags.AccountLinks.Links),
+                    isWalletEnabled = flagManager.isEnabled(WalletFeatureFlags.Wallet.Enabled),
                 ),
         )
     val state: StateFlow<AccountsState> = _state.asStateFlow()
@@ -227,6 +229,7 @@ data class AccountsState(
     val bottomSheetType: AccountBottomSheet = AccountBottomSheet.None,
     val accountLinks: AccountLinksDto,
     val supportIcon: String? = null,
+    val isWalletEnabled: Boolean = false,
 )
 
 sealed interface AccountBottomSheet {
