@@ -1,4 +1,4 @@
-package com.yral.android.ui.components
+package com.yral.shared.libs.designsystem.component.toast
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
@@ -35,15 +35,21 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
-import com.yral.android.R
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import org.jetbrains.compose.ui.tooling.preview.PreviewParameter
+import org.jetbrains.compose.ui.tooling.preview.PreviewParameterProvider
+import yral_mobile.shared.libs.designsystem.generated.resources.Res
+import yral_mobile.shared.libs.designsystem.generated.resources.cross
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_cross_circle
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_information_circle
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_tick_circle
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_warning_circle
 
 sealed class ToastType {
     abstract val message: String
@@ -282,7 +288,7 @@ private fun CtaText(
 @Composable
 private fun CrossIcon(onClick: () -> Unit) {
     Icon(
-        painter = painterResource(R.drawable.cross),
+        painter = painterResource(Res.drawable.cross),
         contentDescription = "Dismiss",
         tint = Color.White,
         modifier =
@@ -301,12 +307,12 @@ private fun iconColor(status: ToastStatus): Color =
         ToastStatus.Info -> YralColors.Pink300
     }
 
-private fun iconResource(status: ToastStatus): Int =
+private fun iconResource(status: ToastStatus): DrawableResource =
     when (status) {
-        ToastStatus.Success -> R.drawable.ic_tick_circle
-        ToastStatus.Warning -> R.drawable.ic_warning_circle
-        ToastStatus.Error -> R.drawable.ic_cross_circle
-        ToastStatus.Info -> R.drawable.ic_information_circle
+        ToastStatus.Success -> Res.drawable.ic_tick_circle
+        ToastStatus.Warning -> Res.drawable.ic_warning_circle
+        ToastStatus.Error -> Res.drawable.ic_cross_circle
+        ToastStatus.Info -> Res.drawable.ic_information_circle
     }
 
 private fun ctaColor(status: ToastStatus): Color =

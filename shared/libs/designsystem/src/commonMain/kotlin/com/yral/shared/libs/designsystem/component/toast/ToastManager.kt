@@ -1,4 +1,4 @@
-package com.yral.android.ui.components
+package com.yral.shared.libs.designsystem.component.toast
 
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.runtime.Composable
