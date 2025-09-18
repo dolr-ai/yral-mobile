@@ -28,9 +28,6 @@ import androidx.compose.ui.unit.sp
 import co.touchlab.kermit.Logger
 import com.arkivanov.decompose.defaultComponentContext
 import com.russhwolf.settings.Settings
-import com.yral.android.ui.design.LocalAppTopography
-import com.yral.android.ui.design.YralColors
-import com.yral.android.ui.design.appTypoGraphy
 import com.yral.android.ui.nav.DefaultRootComponent
 import com.yral.android.ui.screens.RootScreen
 import com.yral.android.ui.screens.profile.nav.ProfileComponent
@@ -41,6 +38,9 @@ import com.yral.shared.features.auth.utils.OAuthResult
 import com.yral.shared.features.auth.utils.OAuthUtils
 import com.yral.shared.features.auth.utils.OAuthUtilsHelper
 import com.yral.shared.koin.koinInstance
+import com.yral.shared.libs.designsystem.theme.LocalAppTopography
+import com.yral.shared.libs.designsystem.theme.YralColors
+import com.yral.shared.libs.designsystem.theme.appTypoGraphy
 import com.yral.shared.libs.routing.deeplink.engine.RoutingService
 import com.yral.shared.rust.service.services.HelperService.initRustLogger
 import io.branch.indexing.BranchUniversalObject
