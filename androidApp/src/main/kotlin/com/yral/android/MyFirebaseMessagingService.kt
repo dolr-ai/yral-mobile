@@ -4,10 +4,10 @@ import androidx.annotation.WorkerThread
 import co.touchlab.kermit.Logger
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
-import com.yral.android.ui.components.ToastManager
-import com.yral.android.ui.components.ToastStatus
-import com.yral.android.ui.components.ToastType
 import com.yral.shared.features.auth.domain.useCases.RegisterNotificationTokenUseCase
+import com.yral.shared.libs.designsystem.component.toast.ToastManager
+import com.yral.shared.libs.designsystem.component.toast.ToastStatus
+import com.yral.shared.libs.designsystem.component.toast.ToastType
 import kotlinx.coroutines.runBlocking
 import org.koin.android.ext.android.inject
 
