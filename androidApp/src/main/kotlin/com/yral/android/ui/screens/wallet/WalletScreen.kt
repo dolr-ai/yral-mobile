@@ -50,13 +50,9 @@ fun WalletScreen(
         viewModel.refresh(countryCode)
         viewModel.onScreenViewed()
     }
-    Column(
-        modifier = modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Top,
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
+    Column(modifier = modifier.fillMaxSize()) {
         WalletHeader()
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(16.dp))
         state.accountInfo?.let { info ->
             AccountInfoSection(accountInfo = info)
         }
