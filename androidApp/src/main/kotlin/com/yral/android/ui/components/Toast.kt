@@ -42,8 +42,8 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import com.yral.android.R
-import com.yral.android.ui.design.LocalAppTopography
-import com.yral.android.ui.design.YralColors
+import com.yral.shared.libs.designsystem.theme.LocalAppTopography
+import com.yral.shared.libs.designsystem.theme.YralColors
 
 sealed class ToastType {
     abstract val message: String

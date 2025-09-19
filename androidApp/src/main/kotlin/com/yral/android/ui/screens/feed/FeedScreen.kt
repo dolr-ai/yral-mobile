@@ -36,7 +36,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
 import com.yral.android.R
-import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.feed.nav.FeedComponent
 import com.yral.android.ui.screens.feed.performance.PrefetchVideoListenerImpl
 import com.yral.android.ui.screens.feed.performance.VideoListenerImpl
@@ -65,6 +64,7 @@ import com.yral.shared.features.feed.viewmodel.ReportSheetState
 import com.yral.shared.features.game.viewmodel.GameState
 import com.yral.shared.features.game.viewmodel.GameViewModel
 import com.yral.shared.features.game.viewmodel.NudgeType
+import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.videoPlayer.YRALReelPlayer
 import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.libs.videoPlayer.util.ReelScrollDirection

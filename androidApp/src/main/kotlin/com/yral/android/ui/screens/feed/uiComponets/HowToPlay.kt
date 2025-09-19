@@ -32,11 +32,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.yral.android.R
-import com.yral.android.ui.design.LocalAppTopography
-import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.feed.uiComponets.HowToPlayConstants.ANIMATION_DURATION
 import com.yral.android.ui.screens.feed.uiComponets.HowToPlayConstants.AUTO_CLOSE_DELAY
 import com.yral.android.ui.screens.feed.uiComponets.HowToPlayConstants.PAGE_SET_DELAY
+import com.yral.shared.libs.designsystem.theme.LocalAppTopography
+import com.yral.shared.libs.designsystem.theme.YralColors
 import kotlinx.coroutines.delay
 import kotlin.coroutines.cancellation.CancellationException
 

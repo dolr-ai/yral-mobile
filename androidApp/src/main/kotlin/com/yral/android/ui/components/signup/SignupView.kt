@@ -26,11 +26,11 @@ import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.yral.android.R
-import com.yral.android.ui.design.LocalAppTopography
-import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.widgets.YralButton
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.features.auth.analytics.AuthTelemetry
+import com.yral.shared.libs.designsystem.theme.LocalAppTopography
+import com.yral.shared.libs.designsystem.theme.YralColors
 import org.koin.compose.koinInject
 
 @Suppress("LongMethod")

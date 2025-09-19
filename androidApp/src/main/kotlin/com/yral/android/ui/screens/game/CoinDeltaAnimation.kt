@@ -29,12 +29,12 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
-import com.yral.android.ui.design.YralTypoGraphy
 import com.yral.android.ui.screens.game.CoinAnimationConstants.ANIMATION_DURATION
 import com.yral.android.ui.screens.game.CoinAnimationConstants.HORIZONTAL_PADDING
 import com.yral.android.ui.screens.game.CoinAnimationConstants.MAX_ALPHA
 import com.yral.android.ui.screens.game.CoinAnimationConstants.MIN_ALPHA
 import com.yral.android.ui.screens.game.CoinAnimationConstants.NUM_OF_TEXTS
+import com.yral.shared.libs.designsystem.theme.kumbhSansFontFamily
 import kotlinx.coroutines.delay
 import java.util.UUID
 import kotlin.random.Random
@@ -77,12 +77,13 @@ fun CoinDeltaAnimation(
                 ),
         )
 
+        val fontFamily = kumbhSansFontFamily()
         // Use mutableStateListOf for recomposition on change
         val animatedTexts =
             remember(containerHeightPx) {
                 mutableStateListOf<AnimatedText>().apply {
                     repeat(NUM_OF_TEXTS) {
-                        add(AnimatedText.create(containerHeightPx, text, textColor))
+                        add(AnimatedText.create(containerHeightPx, text, textColor, fontFamily))
                     }
                 }
             }
@@ -153,7 +154,7 @@ data class AnimatedText(
     val id: String = UUID.randomUUID().toString(),
     val text: String,
     val textColor: Color,
-    val fontFamily: FontFamily = YralTypoGraphy.KumbhSans,
+    val fontFamily: FontFamily,
     val fontSize: TextUnit = FONT_SIZE.sp,
     val fontWeight: FontWeight = FONT_WEIGHT,
     val rotationDegrees: Float = TILT_ANGLE,
@@ -172,10 +173,12 @@ data class AnimatedText(
             screenHeight: Int,
             text: String,
             textColor: Color,
+            fontFamily: FontFamily,
         ): AnimatedText =
             AnimatedText(
                 text = text,
                 textColor = textColor,
+                fontFamily = fontFamily,
                 startY = 0,
                 endY = screenHeight,
             )

@@ -21,7 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.yral.android.R
-import com.yral.android.ui.design.YralColors
+import com.yral.shared.libs.designsystem.theme.YralColors
 
 @Suppress("LongMethod")
 @Composable

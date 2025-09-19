@@ -20,7 +20,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.airbnb.lottie.compose.LottieConstants
 import com.yral.android.R
-import com.yral.android.ui.design.LocalAppTopography
+import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 
 @Composable
 fun YralGradientButton(

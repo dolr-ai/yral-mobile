@@ -38,8 +38,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.yral.android.R
-import com.yral.android.ui.design.LocalAppTopography
-import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.leaderboard.LeaderboardRow
 import com.yral.android.ui.screens.leaderboard.LeaderboardTableHeader
 import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.CONFETTI_ITERATIONS
@@ -52,6 +50,8 @@ import com.yral.android.ui.widgets.YralLottieAnimation
 import com.yral.shared.features.game.data.models.LeaderboardMode
 import com.yral.shared.features.game.viewmodel.LeaderBoardState
 import com.yral.shared.features.game.viewmodel.LeaderBoardViewModel
+import com.yral.shared.libs.designsystem.theme.LocalAppTopography
+import com.yral.shared.libs.designsystem.theme.YralColors
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.math.max
 import kotlin.math.min

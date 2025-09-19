@@ -1,6 +1,6 @@
 @file:Suppress("MagicNumber")
 
-package com.yral.android.ui.design
+package com.yral.shared.libs.designsystem.theme
 
 import androidx.compose.ui.graphics.Color
 
@@ -68,28 +68,6 @@ object YralColors {
     val SmileyGameCardBackground = Color(0x66000000)
     val GameToggleBackground = Color(0x66212121)
     val HowToPlayBackground = Color(0x80000000)
-
-    fun getColorByName(name: String): Color =
-        try {
-            val titleCaseName =
-                name
-                    .split(Regex("(?<=.)(?=\\d)"))
-                    .joinToString("") {
-                        it.replaceFirstChar { char -> char.uppercase() }
-                    }
-
-            val field = this::class.java.getDeclaredField(titleCaseName)
-            field.isAccessible = true
-            when (val value = field.get(this)) {
-                is Long -> Color(value.toULong())
-                is Color -> value
-                else -> {
-                    Grey50
-                }
-            }
-        } catch (_: Exception) {
-            Grey50
-        }
 
     fun getColorFromHex(hex: String): Color {
         val cleanHex = hex.removePrefix("#")

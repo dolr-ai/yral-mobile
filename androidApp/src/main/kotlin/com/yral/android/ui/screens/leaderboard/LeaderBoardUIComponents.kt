@@ -29,8 +29,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.yral.android.R
-import com.yral.android.ui.design.LocalAppTopography
-import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.leaderboard.main.LeaderboardHelpers.PROFILE_IMAGE_SIZE
 import com.yral.android.ui.screens.leaderboard.main.LeaderboardHelpers.getProfileImageRing
 import com.yral.android.ui.screens.leaderboard.main.LeaderboardHelpers.getTextDecoration
@@ -41,6 +39,8 @@ import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstan
 import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.USER_DETAIL_WEIGHT
 import com.yral.android.ui.widgets.YralAsyncImage
 import com.yral.android.ui.widgets.YralMaskedVectorTextV2
+import com.yral.shared.libs.designsystem.theme.LocalAppTopography
+import com.yral.shared.libs.designsystem.theme.YralColors
 
 @Composable
 fun LeaderboardTableHeader(isTrophyVisible: Boolean) {

@@ -28,13 +28,13 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.yral.android.R
-import com.yral.android.ui.design.LocalAppTopography
-import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.uploadVideo.aiVideoGen.AiVideoGenScreenConstants.ARROW_ROTATION
 import com.yral.android.ui.widgets.YralAsyncImage
 import com.yral.android.ui.widgets.getSVGImageModel
 import com.yral.shared.features.uploadvideo.domain.models.Provider
 import com.yral.shared.features.uploadvideo.presentation.AiVideoGenViewModel.ViewState
+import com.yral.shared.libs.designsystem.theme.LocalAppTopography
+import com.yral.shared.libs.designsystem.theme.YralColors
 
 @Composable
 fun ModelDetails(

@@ -36,8 +36,6 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.yral.android.R
-import com.yral.android.ui.design.LocalAppTopography
-import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.leaderboard.UserBriefProfileImage
 import com.yral.android.ui.screens.leaderboard.main.LeaderboardHelpers.MAX_USERS_PRINCIPAL_LENGTH
 import com.yral.android.ui.screens.leaderboard.main.LeaderboardHelpers.MAX_USERS_WITH_DUPLICATE_RANK
@@ -51,6 +49,8 @@ import com.yral.android.ui.widgets.YralLoader
 import com.yral.android.ui.widgets.YralLottieAnimation
 import com.yral.shared.features.game.data.models.LeaderboardMode
 import com.yral.shared.features.game.domain.models.LeaderboardItem
+import com.yral.shared.libs.designsystem.theme.LocalAppTopography
+import com.yral.shared.libs.designsystem.theme.YralColors
 
 @Suppress("MagicNumber", "LongMethod", "CyclomaticComplexMethod")
 @Composable

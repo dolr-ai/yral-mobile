@@ -22,11 +22,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.yral.android.R
 import com.yral.android.ui.components.signup.SignupView
-import com.yral.android.ui.design.LocalAppTopography
-import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.account.WebViewBottomSheet
 import com.yral.android.ui.widgets.YralLottieAnimation
 import com.yral.shared.analytics.events.SignupPageName
+import com.yral.shared.libs.designsystem.theme.LocalAppTopography
+import com.yral.shared.libs.designsystem.theme.YralColors
 
 @Composable
 fun SignupNudge(

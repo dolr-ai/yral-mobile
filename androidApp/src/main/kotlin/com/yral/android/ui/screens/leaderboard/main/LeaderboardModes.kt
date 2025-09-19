@@ -42,14 +42,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.dp
 import com.yral.android.R
-import com.yral.android.ui.design.LocalAppTopography
-import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.COUNT_DOWN_ANIMATION_DURATION
 import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.COUNT_DOWN_BG_ALPHA
 import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.COUNT_DOWN_BORDER_ANIMATION_DURATION
 import com.yral.android.ui.widgets.YralMaskedVectorTextV2
 import com.yral.android.ui.widgets.YralNeonBorder
 import com.yral.shared.features.game.data.models.LeaderboardMode
+import com.yral.shared.libs.designsystem.theme.LocalAppTopography
+import com.yral.shared.libs.designsystem.theme.YralColors
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
 

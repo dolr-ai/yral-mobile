@@ -49,8 +49,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import co.touchlab.kermit.Logger
 import com.yral.android.R
-import com.yral.android.ui.design.LocalAppTopography
-import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.account.ErrorMessageSheet
 import com.yral.android.ui.screens.account.LoginBottomSheet
 import com.yral.android.ui.screens.account.WebViewBottomSheet
@@ -70,6 +68,8 @@ import com.yral.shared.features.uploadvideo.domain.models.Provider
 import com.yral.shared.features.uploadvideo.presentation.AiVideoGenViewModel
 import com.yral.shared.features.uploadvideo.presentation.AiVideoGenViewModel.BottomSheetType
 import com.yral.shared.libs.arch.presentation.UiState
+import com.yral.shared.libs.designsystem.theme.LocalAppTopography
+import com.yral.shared.libs.designsystem.theme.YralColors
 import kotlinx.coroutines.delay
 import org.koin.compose.viewmodel.koinViewModel
 

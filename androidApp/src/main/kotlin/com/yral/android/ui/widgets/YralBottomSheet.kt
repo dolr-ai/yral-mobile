@@ -7,7 +7,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.yral.android.ui.design.YralColors
+import com.yral.shared.libs.designsystem.theme.YralColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

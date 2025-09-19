@@ -38,13 +38,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.yral.android.R
-import com.yral.android.ui.design.LocalAppTopography
-import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.leaderboard.LeaderboardRow
 import com.yral.android.ui.screens.leaderboard.LeaderboardTableHeader
 import com.yral.android.ui.screens.leaderboard.main.LeaderboardConfetti
 import com.yral.android.ui.widgets.YralLoader
 import com.yral.shared.features.game.viewmodel.LeaderboardHistoryViewModel
+import com.yral.shared.libs.designsystem.theme.LocalAppTopography
+import com.yral.shared.libs.designsystem.theme.YralColors
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.math.max
 import kotlin.math.min

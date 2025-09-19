@@ -60,8 +60,6 @@ import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
 import com.yral.android.R
 import com.yral.android.ui.components.DeleteConfirmationSheet
-import com.yral.android.ui.design.LocalAppTopography
-import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.profile.ProfileReelPlayer
 import com.yral.android.ui.screens.profile.main.ProfileMainScreenConstants.GRID_ITEM_ASPECT_RATIO
 import com.yral.android.ui.screens.profile.main.ProfileMainScreenConstants.PADDING_BOTTOM_ACCOUNT_INFO
@@ -81,6 +79,8 @@ import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.features.profile.viewmodel.DeleteConfirmationState
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.features.profile.viewmodel.VideoViewState
+import com.yral.shared.libs.designsystem.theme.LocalAppTopography
+import com.yral.shared.libs.designsystem.theme.YralColors
 import kotlinx.coroutines.flow.collectLatest
 
 @Suppress("LongMethod")

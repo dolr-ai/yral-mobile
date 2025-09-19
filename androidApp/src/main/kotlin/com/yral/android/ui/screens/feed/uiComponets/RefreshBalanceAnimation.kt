@@ -14,9 +14,9 @@ import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.yral.android.R
-import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.widgets.YralLottieAnimation
 import com.yral.shared.features.game.viewmodel.RefreshBalanceState
+import com.yral.shared.libs.designsystem.theme.YralColors
 
 @Composable
 internal fun RefreshBalanceAnimation(

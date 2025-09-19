@@ -22,7 +22,7 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.yral.android.ui.design.YralColors
+import com.yral.shared.libs.designsystem.theme.YralColors
 
 @Composable
 fun BoxScope.YralNeonBorder(
