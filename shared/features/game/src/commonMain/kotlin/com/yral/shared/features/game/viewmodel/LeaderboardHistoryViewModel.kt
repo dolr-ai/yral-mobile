@@ -43,7 +43,8 @@ class LeaderboardHistoryViewModel(
                         )
                     }
                 }.onFailure { error ->
-                    _state.update { it.copy(isLoading = false, error = error.message) }
+                    // No error to be shown on UI setting error as null
+                    _state.update { it.copy(isLoading = false, error = null) }
                 }
         }
     }
