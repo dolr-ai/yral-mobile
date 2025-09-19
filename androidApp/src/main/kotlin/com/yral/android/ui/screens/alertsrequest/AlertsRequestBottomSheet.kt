@@ -26,8 +26,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleStartEffect
 import com.yral.android.R
-import com.yral.android.ui.design.LocalAppTopography
-import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.alertsrequest.nav.AlertsRequestComponent
 import com.yral.android.ui.widgets.YralBottomSheet
 import com.yral.android.ui.widgets.YralButton
@@ -35,6 +33,8 @@ import com.yral.android.ui.widgets.YralGradientButton
 import com.yral.shared.analytics.AnalyticsManager
 import com.yral.shared.analytics.events.PushNotificationsEnabledEventData
 import com.yral.shared.analytics.events.PushNotificationsPopupEventData
+import com.yral.shared.libs.designsystem.theme.LocalAppTopography
+import com.yral.shared.libs.designsystem.theme.YralColors
 import dev.icerock.moko.permissions.DeniedAlwaysException
 import dev.icerock.moko.permissions.DeniedException
 import dev.icerock.moko.permissions.Permission

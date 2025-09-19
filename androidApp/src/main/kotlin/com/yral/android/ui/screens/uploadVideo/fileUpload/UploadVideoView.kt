@@ -50,8 +50,6 @@ import com.google.accompanist.permissions.MultiplePermissionsState
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.shouldShowRationale
 import com.yral.android.R
-import com.yral.android.ui.design.LocalAppTopography
-import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.widgets.YralButton
 import com.yral.android.ui.widgets.YralButtonState
 import com.yral.android.ui.widgets.YralErrorMessage
@@ -60,6 +58,8 @@ import com.yral.android.ui.widgets.video.VideoMetadataExtractor
 import com.yral.android.ui.widgets.video.VideoPermissionUtils
 import com.yral.android.ui.widgets.video.VideoValidator
 import com.yral.android.ui.widgets.video.YralVideoPlayer
+import com.yral.shared.libs.designsystem.theme.LocalAppTopography
+import com.yral.shared.libs.designsystem.theme.YralColors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext

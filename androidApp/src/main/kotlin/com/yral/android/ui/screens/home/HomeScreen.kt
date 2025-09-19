@@ -42,8 +42,6 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.yral.android.R
-import com.yral.android.ui.design.LocalAppTopography
-import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.account.AccountScreen
 import com.yral.android.ui.screens.alertsrequest.AlertsRequestBottomSheet
 import com.yral.android.ui.screens.feed.FeedScreen
@@ -65,6 +63,8 @@ import com.yral.shared.features.account.viewmodel.AccountsViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.game.viewmodel.GameViewModel
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
+import com.yral.shared.libs.designsystem.theme.LocalAppTopography
+import com.yral.shared.libs.designsystem.theme.YralColors
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 

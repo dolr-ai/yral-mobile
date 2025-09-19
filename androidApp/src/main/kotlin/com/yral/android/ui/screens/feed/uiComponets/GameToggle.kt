@@ -18,11 +18,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.yral.android.R
-import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.feed.uiComponets.GameToggleConstants.ICON_HEIGHT
 import com.yral.android.ui.screens.feed.uiComponets.GameToggleConstants.ICON_WIDTH
 import com.yral.android.ui.screens.feed.uiComponets.GameToggleConstants.IMAGE_SIZE
 import com.yral.shared.analytics.events.GameType
+import com.yral.shared.libs.designsystem.theme.YralColors
 
 @Composable
 fun GameToggle(
