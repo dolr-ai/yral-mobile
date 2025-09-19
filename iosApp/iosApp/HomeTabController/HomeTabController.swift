@@ -46,9 +46,10 @@ struct HomeTabController: View {
     self.walletView = walletView
     self.profileView = profileView
     self.leaderboardView = leaderboardView
-    UITabBar.appearance().backgroundColor = .black
-    UITabBar.appearance().barTintColor = .black
-    UITabBar.appearance().isTranslucent = false
+    let appearance = UITabBarAppearance()
+    appearance.configureWithTransparentBackground()
+    UITabBar.appearance().standardAppearance = appearance
+    UITabBar.appearance().scrollEdgeAppearance = appearance
   }
 
   var body: some View {
@@ -56,36 +57,18 @@ struct HomeTabController: View {
       TabView(selection: $selectedTab) {
         feedsViewControllerWrapper
           .background(Color.black.edgesIgnoringSafeArea(.all))
-          .tabItem { tabIcon(selected: selectedTab == .home,
-                             selectedName: Constants.homeIconImageNameSelected,
-                             unselectedName: Constants.homeIconImageNameUnselected) }
           .tag(Tab.home)
 
         ViewControllerWrapper(controller: leaderboardView)
           .background(Color.black.edgesIgnoringSafeArea(.all))
-          .tabItem {
-            tabIcon(selected: selectedTab == .leaderboard,
-                    selectedName: Constants.leaderboardIconImageNameSelected,
-                    unselectedName: Constants.leaderboardIconImageNameUnselected)
-          }
           .tag(Tab.leaderboard)
 
         ViewControllerWrapper(controller: uploadOptionsScreenView)
           .background(Color.black.edgesIgnoringSafeArea(.all))
-          .tabItem {
-            tabIcon(selected: selectedTab == .upload,
-                    selectedName: Constants.uploadIconImageNameSelected,
-                    unselectedName: Constants.uploadIconImageNameUnselected)
-          }
           .tag(Tab.upload)
 
         walletView
           .background(Color.black.edgesIgnoringSafeArea(.all))
-          .tabItem {
-            tabIcon(selected: selectedTab == .wallet,
-                    selectedName: Constants.walletIconImageNameSelected,
-                    unselectedName: Constants.walletIconImageNameUnselected)
-          }
           .tag(Tab.wallet)
 
         profileView
@@ -94,9 +77,6 @@ struct HomeTabController: View {
             selectedTab = .upload
           }
           .background(Color.black.edgesIgnoringSafeArea(.all))
-          .tabItem { tabIcon(selected: selectedTab == .profile,
-                             selectedName: Constants.profileIconImageNameSelected,
-                             unselectedName: Constants.profileIconImageNameUnSelected) }
           .tag(Tab.profile)
       }
       .onChange(of: selectedTab) { tab in
@@ -162,27 +142,18 @@ struct HomeTabController: View {
         .background(Color.black.opacity(Constants.walletOpacity))
         .transition(.opacity)
       }
-
-      GeometryReader { geometry in
-        let tabWidth = geometry.size.width / .five
-        let indicatorXPosition = CGFloat(selectedTab.intValue) * tabWidth + (tabWidth - Constants.indicatorWidth) / .two
-        VStack {
-          Spacer().frame(height: geometry.size.height)
-          HStack {
-            Spacer().frame(width: indicatorXPosition)
-            Rectangle()
-              .fill(Constants.indicatorColor)
-              .frame(
-                width: Constants.indicatorWidth,
-                height: Constants.tabIndicatorHeight
-              )
-              .cornerRadius(Constants.tabIndicatorHeight / .two)
-              .offset(x: .zero, y: -self.tabBarHeight)
-              .animation(.easeInOut, value: selectedTab)
-            Spacer()
-          }
-        }
-      }
+    }
+    .safeAreaInset(edge: .bottom) {
+      YralTabbar(
+        selectedTab: $selectedTab,
+        icons: [
+          (Constants.homeIconImageNameSelected, Constants.homeIconImageNameUnselected),
+          (Constants.leaderboardIconImageNameSelected, Constants.leaderboardIconImageNameUnselected),
+          (Constants.uploadIconImageNameSelected, Constants.uploadIconImageNameUnselected),
+          (Constants.walletIconImageNameSelected, Constants.walletIconImageNameUnselected),
+          (Constants.profileIconImageNameSelected, Constants.profileIconImageNameUnSelected)
+        ]
+      )
     }
     .onAppear {
       let status = AppUpdateHandler.shared.getAppUpdateStatus()

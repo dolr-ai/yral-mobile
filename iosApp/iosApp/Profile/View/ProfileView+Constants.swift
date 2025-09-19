@@ -30,5 +30,6 @@ extension ProfileView {
     static let cancelTitle = "Cancel"
     static let deleteButtonTitle = "Delete"
     static let profileMenuImageName = "profile_menu"
+    static let bottomAdjustmentYralTabBat = 48.0
   }
 }

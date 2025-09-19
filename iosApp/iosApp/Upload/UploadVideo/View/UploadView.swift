@@ -173,6 +173,8 @@ struct UploadView: View {
     }
     .animation(.easeInOut, value: showUploadCompletedView)
     .animation(.easeInOut, value: showUploadFailedView)
+    .ignoresSafeArea(.container, edges: .bottom)
+    .padding(.bottom, Constants.bottomAdjustmentYralTabBat)
     .onReceive(viewModel.$event) { event in
       guard let event = event else { return }
       switch event {
@@ -322,6 +324,7 @@ extension UploadView {
       startPoint: UnitPoint(x: 1, y: 0.51),
       endPoint: UnitPoint(x: 0.03, y: 1)
     )
+    static let bottomAdjustmentYralTabBat = 18.0
     static let uploadButtonTitle = "Upload"
     static let uploadButtonTextColor = YralColor.grey50.swiftUIColor
     static let uploadButtonFont = YralFont.pt16.bold.swiftUIFont
