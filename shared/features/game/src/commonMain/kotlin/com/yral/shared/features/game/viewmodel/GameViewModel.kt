@@ -30,6 +30,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -62,16 +64,23 @@ class GameViewModel(
                 properties.coinBalance?.let { balance ->
                     _state.update { it.copy(coinBalance = balance) }
                 }
-                if (properties.isFirebaseLoggedIn) {
-                    properties.isForcedGamePlayUser?.let { isStopAndVote ->
-                        _state.update { it.copy(isStopAndVote = isStopAndVote) }
-                    }
-                    listOf(
-                        async { getGameRules() },
-                        async { getGameIcons() },
-                    ).awaitAll()
-                }
             }
+        }
+        viewModelScope.launch {
+            // Observe firebase login
+            sessionManager
+                .observeSessionProperties()
+                .map { it.isFirebaseLoggedIn to it.isForcedGamePlayUser }
+                .distinctUntilChanged()
+                .collect { (isLoggedIn, isForcedGamePlayUser) ->
+                    if (isLoggedIn) {
+                        isForcedGamePlayUser?.let { _state.update { it.copy(isStopAndVote = isForcedGamePlayUser) } }
+                        listOf(
+                            async { getGameRules() },
+                            async { getGameIcons() },
+                        ).awaitAll()
+                    }
+                }
         }
     }
 
