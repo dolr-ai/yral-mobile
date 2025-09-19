@@ -48,22 +48,6 @@ struct AccountView: View {
               .foregroundColor(Constants.navigationTitleTextColor)
               .padding(Constants.navigationTitlePadding)
           }
-//          HStack {
-//            Image(Constants.backImage)
-//              .resizable()
-//              .frame(width: Constants.backImageSize, height: Constants.backImageSize)
-//              .padding(Constants.navigationTitlePadding)
-//              .onTapGesture {
-//                dismiss()
-//              }
-//            Spacer()
-//            Text(Constants.navigationTitle)
-//              .font(Constants.navigationTitleFont)
-//              .foregroundColor(Constants.navigationTitleTextColor)
-//              .frame(maxWidth: .infinity, alignment: .leading)
-//              .padding(Constants.navigationTitlePadding)
-//            Spacer()
-//          }
           switch viewModel.state {
           case .successfullyFetched(let info):
             UserInfoView(

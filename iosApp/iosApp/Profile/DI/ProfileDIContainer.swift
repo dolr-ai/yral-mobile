@@ -54,7 +54,8 @@ final class ProfileDIContainer {
       refreshVideoUseCase: RefreshVideosUseCase(
         profileRepository: profileRepository,
         crashReporter: dependencies.crashReporter
-      )
+      ),
+      socialSigninUseCase: dependencies.socialSignInUseCase
     )
   }
 
