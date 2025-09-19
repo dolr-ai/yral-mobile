@@ -59,7 +59,8 @@ class LeaderBoardViewModel(
                         }
                         data.timeLeftMs?.let { startCountDown() }
                     }.onFailure { error ->
-                        _state.update { it.copy(error = error.message, isLoading = false) }
+                        // No error to be shown on UI setting error as null
+                        _state.update { it.copy(error = null, isLoading = false) }
                     }
             }
         }

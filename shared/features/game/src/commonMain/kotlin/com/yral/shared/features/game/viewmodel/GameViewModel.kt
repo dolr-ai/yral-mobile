@@ -54,13 +54,7 @@ class GameViewModel(
     val state: StateFlow<GameState> = _state.asStateFlow()
 
     init {
-        viewModelScope.launch {
-            restoreDataFromPrefs()
-            listOf(
-                async { getGameRules() },
-                async { getGameIcons() },
-            ).awaitAll()
-        }
+        viewModelScope.launch { restoreDataFromPrefs() }
         viewModelScope.launch {
             // Observe coin balance changes
             sessionManager.observeSessionProperties().collect { properties ->
@@ -68,8 +62,14 @@ class GameViewModel(
                 properties.coinBalance?.let { balance ->
                     _state.update { it.copy(coinBalance = balance) }
                 }
-                properties.isForcedGamePlayUser?.let { isStopAndVote ->
-                    _state.update { it.copy(isStopAndVote = isStopAndVote) }
+                if (properties.isFirebaseLoggedIn) {
+                    properties.isForcedGamePlayUser?.let { isStopAndVote ->
+                        _state.update { it.copy(isStopAndVote = isStopAndVote) }
+                    }
+                    listOf(
+                        async { getGameRules() },
+                        async { getGameIcons() },
+                    ).awaitAll()
                 }
             }
         }
