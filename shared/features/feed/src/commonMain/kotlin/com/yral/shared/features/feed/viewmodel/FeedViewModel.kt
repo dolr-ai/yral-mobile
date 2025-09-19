@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.coroutines.runSuspendCatching
+import com.github.michaelbull.result.map
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.featureflag.FeatureFlagManager
@@ -214,16 +215,16 @@ class FeedViewModel(
                 n = newPosts.size,
                 process = { post ->
                     _state.update { it.copy(pendingFetchDetails = it.pendingFetchDetails + 1) }
-                    requiredUseCases.fetchFeedDetailsUseCase.invoke(post)
+                    requiredUseCases.fetchFeedDetailsUseCase
+                        .invoke(post)
+                        .map { detail -> detail to isAlreadyVoted(detail) }
                 },
-            ).collect { detail ->
-                detail
-                    .onSuccess { detail ->
+            ).collect { result ->
+                result
+                    .onSuccess { (detail, isVoted) ->
                         val existingDetailIds =
                             _state.value.feedDetails.mapTo(HashSet()) { it.videoID }
                         if (detail.videoID !in existingDetailIds) {
-                            val isVoted = isAlreadyVoted(detail)
-                            Logger.d("FeedPagination") { "isVoted $isVoted video Id: ${detail.videoID}" }
                             if (!isVoted) {
                                 count.update { it + 1 }
                                 _state.update { currentState ->
