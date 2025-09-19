@@ -24,6 +24,7 @@ k256 = { version = "0.13.4", default-features = false, features = [
     "std",
     "jwk",
 ] }
+ic-cdk = "0.15.1"
 
 yral-types = { git = "https://github.com/dolr-ai/yral-common.git", branch="feat/support-new-service-canisters"  }
 yral-canisters-client = { git = "https://github.com/dolr-ai/yral-common.git", branch="feat/support-new-service-canisters", features = [
@@ -36,3 +37,4 @@ yral-identity = { git = "https://github.com/dolr-ai/yral-common.git", branch="ma
     "ic-git",
     "wasm-bindgen",
 ] }
+num-traits = "0.2.19"

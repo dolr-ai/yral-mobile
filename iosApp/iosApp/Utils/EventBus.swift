@@ -11,4 +11,5 @@ import Combine
 final class EventBus: ObservableObject {
   let finishUploadingVideo = PassthroughSubject<Void, Never>()
   let playGamesToEarnMoreTapped = PassthroughSubject<Void, Never>()
+  let walletTapped = PassthroughSubject<Void, Never>()
 }

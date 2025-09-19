@@ -75,6 +75,7 @@ class FeedsViewController: UIViewController {
   private var deepLinkCancellables = Set<AnyCancellable>()
   var session: SessionManager
   var deepLinkRouter: DeepLinkRouter
+  var eventBus: EventBus
   let crashReporter: CrashReporter
 
   init(
@@ -82,6 +83,7 @@ class FeedsViewController: UIViewController {
     playToScroll: Bool,
     feedType: FeedType = .otherUsers,
     session: SessionManager,
+    eventBus: EventBus,
     crashReporter: CrashReporter
   ) {
     self.viewModel = viewModel
@@ -90,6 +92,7 @@ class FeedsViewController: UIViewController {
     self.session = session
     self.deepLinkRouter = DeepLinkRouter.shared
     self.crashReporter = crashReporter
+    self.eventBus = eventBus
     super.init(nibName: nil, bundle: nil)
   }
 
@@ -302,7 +305,7 @@ class FeedsViewController: UIViewController {
       feedsCV.leadingAnchor.constraint(equalTo: view.leadingAnchor),
       feedsCV.trailingAnchor.constraint(equalTo: view.trailingAnchor),
       feedsCV.topAnchor.constraint(equalTo: topAnchor),
-      feedsCV.bottomAnchor.constraint(equalTo: bottomAnchor)
+      feedsCV.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -18)
     ])
     feedsCV.register(FeedsCell.self)
     feedsCV.register(
