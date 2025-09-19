@@ -305,7 +305,7 @@ class FeedsViewController: UIViewController {
       feedsCV.leadingAnchor.constraint(equalTo: view.leadingAnchor),
       feedsCV.trailingAnchor.constraint(equalTo: view.trailingAnchor),
       feedsCV.topAnchor.constraint(equalTo: topAnchor),
-      feedsCV.bottomAnchor.constraint(equalTo: bottomAnchor)
+      feedsCV.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -18)
     ])
     feedsCV.register(FeedsCell.self)
     feedsCV.register(
