@@ -27,7 +27,6 @@ class WalletViewModel(
     val state: StateFlow<WalletState> = _state.asStateFlow()
 
     init {
-        _state.update { it.copy(accountInfo = sessionManager.getAccountInfo()) }
         observeBalance()
     }
 
@@ -37,6 +36,7 @@ class WalletViewModel(
     }
 
     fun refresh(countryCode: String) {
+        _state.update { it.copy(accountInfo = sessionManager.getAccountInfo()) }
         getUserBtcBalanceUseCase()
         getBtcValueConversion(countryCode)
     }
@@ -45,9 +45,7 @@ class WalletViewModel(
         viewModelScope.launch {
             sessionManager.observeSessionProperties().collect { properties ->
                 Logger.d("coinBalance") { "coin balance collected ${properties.coinBalance}" }
-                properties.coinBalance?.let { balance ->
-                    _state.update { it.copy(yralTokenBalance = balance) }
-                }
+                _state.update { it.copy(yralTokenBalance = properties.coinBalance ?: 0) }
             }
         }
     }
