@@ -10,7 +10,7 @@ import SwiftUI
 import iosSharedUmbrella
 import Combine
 
-// swiftlint: disable type_body_length
+// swiftlint: disable type_body_length file_length
 struct ProfileView: View {
   @State var showAccountInfo = false
   @State var showEmptyState = true
@@ -25,8 +25,12 @@ struct ProfileView: View {
   @State private var currentIndex: Int = .zero
   @State private var isPushNotificationFlow: Bool = false
   @State private var isVisible = false
+  @State private var showLoginButton: Bool = false
   @State private var walletPhase: WalletPhase = .none
   @State private var walletOutcome: WalletPhase = .none
+  @State private var showSignupSheet: Bool = false
+  @State private var showSignupFailureSheet: Bool = false
+  @State private var loadingProvider: SocialProvider?
 
   @EnvironmentObject var session: SessionManager
   @EnvironmentObject private var deepLinkRouter: DeepLinkRouter
@@ -78,8 +82,8 @@ struct ProfileView: View {
               UserInfoView(
                 accountInfo: $accountInfo,
                 shouldApplySpacing: false,
-                showLoginButton: Binding(get: { false }, set: { _ in }),
-                delegate: nil
+                showLoginButton: $showLoginButton,
+                delegate: self
               )
             }
           }
@@ -280,6 +284,18 @@ struct ProfileView: View {
         }
       case .pageEndReached(let isEmpty):
         showEmptyState = isEmpty
+      case .socialSignInSuccess:
+        loadingProvider = nil
+        showSignupSheet = false
+      case .socialSignInFailure:
+        if let authJourney = loadingProvider?.authJourney() {
+          AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+            event: AuthFailedEventData(authJourney: authJourney)
+          )
+        }
+        loadingProvider = nil
+        showSignupSheet = false
+        showSignupFailureSheet = true
       default:
         break
       }
@@ -287,13 +303,37 @@ struct ProfileView: View {
     }
     .onReceive(session.phasePublisher) { phase in
       switch phase {
-      case .loggedOut, .ephemeral, .permanent:
+      case .loggedOut, .ephemeral:
+        self.showLoginButton = true
+        Task {
+          await viewModel.fetchProfileInfo()
+          await refreshVideos(shouldPurge: true)
+        }
+      case .permanent:
+        self.showLoginButton = false
         Task {
           await viewModel.fetchProfileInfo()
           await refreshVideos(shouldPurge: true)
         }
       default: break
       }
+    }
+    .fullScreenCover(isPresented: $showSignupSheet) {
+      ZStack(alignment: .center) {
+        SignupSheet(
+          onComplete: { showSignupSheet = false },
+          loadingProvider: $loadingProvider,
+          delegate: self
+        )
+        .background( ClearBackgroundView() )
+      }
+    }
+    .fullScreenCover(isPresented: $showSignupFailureSheet) {
+      SignupFailureSheet(onComplete: {
+        showSignupSheet = false
+        showSignupFailureSheet = false
+      })
+      .background( ClearBackgroundView() )
     }
     .onReceive(deepLinkRouter.$pendingDestination.compactMap { $0 }) { dest in
       guard dest == .profileAfterUpload else { return }
@@ -344,4 +384,30 @@ extension ProfileView {
     )
   }
 }
-// swiftlint: enable type_body_length
+
+extension ProfileView: UserInfoViewProtocol {
+  func loginPressed() {
+    UIView.setAnimationsEnabled(false)
+    showSignupSheet = true
+    AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+      event: AuthScreenViewedEventData(pageName: .menu)
+    )
+  }
+}
+
+extension ProfileView: SignupSheetProtocol {
+  func signupwithGoogle() {
+    loadingProvider = .google
+    Task {
+      await viewModel.socialSignIn(request: .google)
+    }
+  }
+
+  func signupwithApple() {
+    loadingProvider = .apple
+    Task {
+      await viewModel.socialSignIn(request: .apple)
+    }
+  }
+}
+// swiftlint: enable type_body_length file_length

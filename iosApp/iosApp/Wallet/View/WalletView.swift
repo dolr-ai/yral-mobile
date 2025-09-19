@@ -137,6 +137,15 @@ struct WalletView: View {
       default: break
       }
     }
+    .onReceive(session.phasePublisher) { phase in
+      switch phase {
+      case .loggedOut, .ephemeral, .permanent:
+        Task {
+          await viewModel.fetchAccountInfo()
+        }
+      default: break
+      }
+    }
     .task {
       Task {
         await viewModel.fetchBTCBalance()
