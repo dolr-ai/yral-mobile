@@ -58,4 +58,8 @@ actual object HelperService {
     actual fun initRustLogger() {
         // call the uniffi generated function
     }
+
+    actual fun initServiceFactories(identityData: ByteArray) {
+        // call initialize on factories
+    }
 }
