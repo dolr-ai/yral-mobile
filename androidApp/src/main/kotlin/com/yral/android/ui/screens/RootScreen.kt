@@ -29,7 +29,6 @@ import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.stack.animation.fade
 import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
 import com.yral.android.R
-import com.yral.android.ui.components.ToastHost
 import com.yral.android.ui.components.UpdateNotificationHost
 import com.yral.android.ui.nav.RootComponent
 import com.yral.android.ui.nav.RootComponent.Child
@@ -40,6 +39,7 @@ import com.yral.android.ui.widgets.YralLottieAnimation
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.features.root.viewmodels.RootError
 import com.yral.shared.features.root.viewmodels.RootViewModel
+import com.yral.shared.libs.designsystem.component.toast.ToastHost
 import org.koin.compose.viewmodel.koinViewModel
 
 @Suppress("LongMethod")
