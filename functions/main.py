@@ -13,6 +13,7 @@ import random
 import collections
 from datetime import datetime, timezone, timedelta, date
 from zoneinfo import ZoneInfo
+from typing import Optional, List, Dict, Any
 
 firebase_admin.initialize_app()
 
@@ -340,6 +341,7 @@ def tap_to_recharge(request: Request):
         print("Unhandled error:", e, file=sys.stderr)
         return error_response(500, "INTERNAL", "Internal server error")
 
+# TODO: REMOVE THIS
 @https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"], enforce_app_check=True)
 def cast_vote(request: Request):
     balance_update_token = os.environ["BALANCE_UPDATE_TOKEN"]
@@ -645,6 +647,13 @@ def cast_vote_v2(request: Request):
 
 
 ############################## Leaderboard ##############################
+from constants import (
+    REWARD_AMOUNT,
+    DEFAULT_REWARD_CURRENCY,
+    SUPPORTED_REWARD_CURRENCIES,
+    REWARDS_ENABLED
+)
+
 def _bucket_bounds_ist() -> tuple[str, int, int]:
     """
     Returns (bucket_id, start_ms, end_ms) for today's IST day window.
@@ -671,10 +680,28 @@ def _inc_daily_leaderboard(pid: str, outcome: str) -> None:
     @firestore.transactional
     def _tx(tx: firestore.Transaction):
         # Ensure the day doc exists & store window bounds (helpful for reads/debug)
+        day_snapshot = day_ref.get(transaction=tx)
+        day_data = day_snapshot.to_dict() if day_snapshot.exists else {}
+
+        currency = day_data.get("currency")
+        if currency is None:
+            currency = DEFAULT_REWARD_CURRENCY
+        rewards_table = day_data.get("rewards_table")
+        if rewards_table is None:
+            rewards_table = REWARD_AMOUNT.get(currency, {})
+            rewards_table = { str(k): v for k, v in rewards_table.items() }
+        rewards_enabled = day_data.get("rewards_enabled")
+        if rewards_enabled is None:
+            rewards_enabled = REWARDS_ENABLED
+
         tx.set(day_ref, {
             "bucket_id": bucket_id,
             "start_ms": start_ms,
             "end_ms": end_ms,
+            "currency": currency,
+            "rewards_table": rewards_table,
+            "rewards_enabled": rewards_enabled,
+            "rewards_given": False,
             "updated_at": firestore.SERVER_TIMESTAMP
         }, merge=True)
 
@@ -722,6 +749,36 @@ def _dense_top_rows_for_day(bucket_id: str) -> tuple[List[Dict], int, int]:
         })
     return rows, last_wins, current_rank
 
+def _dense_top_rows_for_day_v2(bucket_id: str, rewards_table: Optional[Dict[str, Any]] = None, rewards_enabled: bool = False) -> tuple[List[Dict], int, int]:
+    """Top 10 rows with dense ranking for a given IST bucket (with optional rewards)."""
+    coll = db().collection(f"{DAILY_COLL}/{bucket_id}/users")
+    snaps = (
+        coll.where("smiley_game_wins", ">", 0)
+            .order_by("smiley_game_wins", direction=firestore.Query.DESCENDING)
+            .limit(10)
+            .stream()
+    )
+    rows: List[Dict] = []
+    current_rank, last_wins = 0, None
+    for snap in snaps:
+        wins = int(snap.get("smiley_game_wins") or 0)
+        if wins != last_wins:
+            current_rank += 1  # dense ranking
+            last_wins = wins
+
+        row = {
+            "principal_id": snap.id,
+            "wins": wins,
+            "position": current_rank
+        }
+
+        if rewards_enabled and rewards_table:
+            row["reward"] = rewards_table.get(str(current_rank), None)
+
+        rows.append(row)
+
+    return rows, last_wins, current_rank
+
 def _user_row_for_day(bucket_id: str, pid: str) -> Dict:
     """Compute user's wins and dense position within that day's collection."""
     day_users = db().collection(f"{DAILY_COLL}/{bucket_id}/users")
@@ -740,6 +797,40 @@ def _user_row_for_day(bucket_id: str, pid: str) -> Dict:
         "position": position,
     }
 
+def _user_row_for_day_v2(bucket_id: str, pid: str, rewards_table: Optional[Dict[str, Any]] = None, rewards_enabled: bool = False, top_rows: Optional[List[Dict]] = None) -> Dict:
+    """
+    Compute user's wins and dense position within that day's collection (with optional reward).
+    Optimizes by first checking if user is already present in top_rows.
+    """
+    # 1. Reuse from top_rows if already available
+    if top_rows:
+        for row in top_rows:
+            if row.get("principal_id") == pid:
+                return row
+
+    # 2. Else, fallback to Firestore query
+    day_users = db().collection(f"{DAILY_COLL}/{bucket_id}/users")
+    entry = day_users.document(pid).get()
+    user_wins = int((entry.get("smiley_game_wins") if entry.exists else 0) or 0)
+
+    # Compute dense rank
+    rank_q = day_users.where("smiley_game_wins", ">", user_wins).count().get()
+    higher = int(rank_q[0][0].value)
+    position = higher + 1
+
+    user_row = {
+        "principal_id": pid,
+        "wins": user_wins,
+        "position": position,
+    }
+
+    if rewards_enabled and user_wins > 0 and rewards_table:
+        user_row["reward"] = rewards_table.get(str(position), None)
+    else:
+        user_row["reward"] = None
+
+    return user_row
+
 def _has_any_docs_for_day(bucket_id: str) -> bool:
     """Fast existence check: returns True if the day has at least one user doc."""
     users_coll = db().collection(f"{DAILY_COLL}/{bucket_id}/users")
@@ -750,6 +841,7 @@ def _has_any_docs_for_day(bucket_id: str) -> bool:
         print(f"[skip] users scan error for {bucket_id}: {e}", file=sys.stderr)
         return False
 
+# TODO: REMOVE THIS
 @https_fn.on_request(region="us-central1", enforce_app_check=True)
 def leaderboard(request: Request):
     """
@@ -921,6 +1013,7 @@ def leaderboard(request: Request):
         print("Leaderboard error:", e, file=sys.stderr)
         return error_response(500, "INTERNAL", "Internal server error")
 
+# TODO: REMOVE THIS
 @https_fn.on_request(region="us-central1", enforce_app_check=True)
 def leaderboard_v2(request: Request):
     """
@@ -1093,6 +1186,199 @@ def leaderboard_v2(request: Request):
         return error_response(500, "INTERNAL", "Internal server error")
 
 @https_fn.on_request(region="us-central1", enforce_app_check=True)
+def leaderboard_v3(request: Request):
+    """
+    Request
+      { "data": { "principal_id": "<pid>", "mode": "daily" | "all_time" } }
+
+    Response
+      {
+        "user_row": { principal_id, wins, position, reward? } | None,
+        "top_rows": [ { principal_id, wins, position, reward? }, ... ],
+        "time_left_ms": <int | null>,
+        "reward_currency": <str | None>,
+        "rewards_enabled": <bool>
+      }
+    """
+    try:
+        if request.method != "POST":
+            return error_response(405, "METHOD_NOT_ALLOWED", "POST required")
+
+        body = request.get_json(silent=True) or {}
+        data = body.get("data", {}) or {}
+
+        pid  = str(data.get("principal_id", "")).strip()
+        mode = str(data.get("mode", "")).lower().strip()
+        is_daily = (mode == "daily")
+
+        if not pid:
+            return error_response(400, "MISSING_PID", "principal_id required")
+
+        # ───────── Auth & App Check ─────────
+        auth_header = request.headers.get("Authorization", "")
+        if not auth_header.startswith("Bearer "):
+            return error_response(401, "MISSING_ID_TOKEN", "Authorization missing")
+        auth.verify_id_token(auth_header.split(" ", 1)[1])
+
+        actok = request.headers.get("X-Firebase-AppCheck")
+        if not actok:
+            return error_response(401, "APPCHECK_MISSING", "App Check token required")
+        try:
+            app_check.verify_token(actok)
+        except Exception:
+            return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
+
+        if not is_daily:
+            # ===== All-time leaderboard =====
+            users = db().collection("users")
+            user_ref = users.document(pid)
+
+            user_snap = user_ref.get()
+            user_wins = int(user_snap.get("smiley_game_wins") or 0)
+
+            rank_q = (
+                users.where("smiley_game_wins", ">", user_wins)
+                     .count()
+                     .get()
+            )
+            user_position = int(rank_q[0][0].value) + 1
+
+            top_snaps = (
+                users.order_by("smiley_game_wins", direction=firestore.Query.DESCENDING)
+                     .limit(10)
+                     .stream()
+            )
+
+            top_rows, current_rank, last_wins = [], 0, None
+            for snap in top_snaps:
+                wins = int(snap.get("smiley_game_wins") or 0)
+                if wins != last_wins:
+                    current_rank += 1   # dense ranking
+                    last_wins = wins
+                top_rows.append({
+                    "principal_id": snap.id,
+                    "wins": wins,
+                    "position": current_rank
+                })
+
+            user_row = {
+                "principal_id": pid,
+                "wins": user_wins,
+                "position": user_position
+            }
+
+            return jsonify({
+                "user_row": user_row,
+                "top_rows": top_rows,
+                "time_left_ms": None
+            }), 200
+
+        # ===== Daily leaderboard (IST day) =====
+        bucket_id, _start_ms, end_ms = _bucket_bounds_ist()
+        now_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
+        time_left_ms = max(0, end_ms - now_ms)
+
+        day_doc_ref = db().collection(DAILY_COLL).document(bucket_id)
+        day_doc = day_doc_ref.get()
+
+        if not day_doc.exists:
+            return jsonify({
+                "user_row": None,
+                "top_rows": [],
+                "time_left_ms": time_left_ms,
+                "reward_currency": None,
+                "rewards_enabled": False
+            }), 200
+
+        day_data = day_doc.to_dict() or {}
+
+        currency = day_data.get("currency")
+        rewards_table = day_data.get("rewards_table")
+        rewards_enabled = day_data.get("rewards_enabled")
+        if currency is None or rewards_table is None or rewards_enabled is None:
+            rewards_enabled = False
+            currency = None
+            rewards_table = {}
+
+        day_users = db().collection(f"{DAILY_COLL}/{bucket_id}/users")
+        top_snaps = (
+            day_users.where("smiley_game_wins", ">", 0)
+                    .order_by("smiley_game_wins", direction=firestore.Query.DESCENDING)
+                    .limit(10)
+                    .stream()
+        )
+
+        top_rows, current_rank, last_wins = [], 0, None
+        for snap in top_snaps:
+            wins = int(snap.get("smiley_game_wins") or 0)
+            if wins == 0:
+                continue
+            if wins != last_wins:
+                current_rank += 1    # dense ranking
+                last_wins = wins
+            row = {
+                "principal_id": snap.id,
+                "wins": wins,
+                "position": current_rank
+            }
+            if rewards_enabled:
+                row["reward"] = rewards_table.get(str(current_rank))
+            else:
+                row["reward"] = None
+            top_rows.append(row)
+
+        if not top_rows:
+            return jsonify({
+                "user_row": None,
+                "top_rows": [],
+                "time_left_ms": time_left_ms,
+                "reward_currency": currency,
+                "rewards_enabled": rewards_enabled
+            }), 200
+
+        user_row = None
+        for row in top_rows:
+            if row["principal_id"] == pid:
+                user_row = row
+                break
+
+        if user_row is None:
+            entry_ref = day_users.document(pid)
+            entry_snap = entry_ref.get()
+            user_wins = int((entry_snap.get("smiley_game_wins") if entry_snap.exists else 0) or 0)
+
+            rank_q = (
+                day_users.where("smiley_game_wins", ">", user_wins)
+                        .count()
+                        .get()
+            )
+            user_position = int(rank_q[0][0].value) + 1
+
+            user_row = {
+                "principal_id": pid,
+                "wins": user_wins,
+                "position": user_position,
+                "reward": rewards_table.get(str(user_position)) if (rewards_enabled and user_wins > 0) else None
+            }
+
+        return jsonify({
+            "user_row": user_row,
+            "top_rows": top_rows,
+            "time_left_ms": time_left_ms,
+            "reward_currency": currency,
+            "rewards_enabled": rewards_enabled
+        }), 200
+
+    except auth.InvalidIdTokenError:
+        return error_response(401, "ID_TOKEN_INVALID", "ID token invalid or expired")
+    except GoogleAPICallError as e:
+        return error_response(500, "FIRESTORE_ERROR", str(e))
+    except Exception as e:
+        print("Leaderboard error:", e, file=sys.stderr)
+        return error_response(500, "INTERNAL", "Internal server error")
+
+# TODO: REMOVE THIS
+@https_fn.on_request(region="us-central1", enforce_app_check=True)
 def leaderboard_history(request: Request):
     """
     Request:
@@ -1232,25 +1518,128 @@ def leaderboard_history(request: Request):
         print("leaderboard_daily_last7_excl_today error:", e, file=sys.stderr)
         return error_response(500, "INTERNAL", "Internal server error")
 
-
-#################### BTC to INR ####################
-TICKER_URL = "https://blockchain.info/ticker"
 @https_fn.on_request(region="us-central1", enforce_app_check=True)
-def btc_inr_value(request: Request):
+def leaderboard_history_v2(request: Request):
     """
-    GET /btc_inr_value
+    Request:
+      { "data": { "principal_id": "<pid>" } }
+
+    Response: 200 OK with an ARRAY (newest → oldest). Each item:
+      {
+        "date": "Aug 15",
+        "top_rows": [ { principal_id, wins, position, reward? }, ... ],
+        "user_row": { principal_id, wins, position, reward? } | null,
+        "reward_currency": <str | None>,
+        "rewards_enabled": <bool>
+      }
+    """
+    try:
+        if request.method != "POST":
+            return error_response(405, "METHOD_NOT_ALLOWED", "POST required")
+
+        body = request.get_json(silent=True) or {}
+        data = body.get("data", {}) or {}
+        pid = str(data.get("principal_id", "")).strip()
+
+        if not pid:
+            return error_response(400, "MISSING_PID", "principal_id required")
+
+        auth_header = request.headers.get("Authorization", "")
+        if not auth_header.startswith("Bearer "):
+            return error_response(401, "MISSING_ID_TOKEN", "Authorization missing")
+        auth.verify_id_token(auth_header.split(" ", 1)[1])
+
+        actok = request.headers.get("X-Firebase-AppCheck")
+        if not actok:
+            return error_response(401, "APPCHECK_MISSING", "App Check token required")
+        try:
+            app_check.verify_token(actok)
+        except Exception:
+            return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
+
+        today = _ist_today_date()
+        days = [today - timedelta(days=offset) for offset in range(1, 8)]
+
+        result: List[Dict] = []
+        for d in days:
+            bucket_id = _bucket_id_for_ist_day(d)
+            date_label = _friendly_date_str(d)
+
+            day_doc = db().collection(DAILY_COLL).document(bucket_id).get()
+            day_data = day_doc.to_dict() if day_doc.exists else {}
+
+            currency = day_data.get("currency")
+            rewards_table = day_data.get("rewards_table")
+            rewards_enabled = day_data.get("rewards_enabled")
+
+            if not (currency and rewards_enabled and rewards_table):
+                rewards_enabled = False
+                currency = None
+                rewards_table = {}
+
+            rewards_table = {str(k): v for k, v in rewards_table.items()}
+
+            try:
+                top_rows, last_wins, current_rank = _dense_top_rows_for_day_v2(bucket_id, rewards_table, rewards_enabled)
+            except GoogleAPICallError as e:
+                print(f"[skip] top rows read error for {bucket_id}: {e}", file=sys.stderr)
+                continue
+
+            if not top_rows:
+                result.append({
+                    "date": date_label,
+                    "top_rows": [],
+                    "user_row": None,
+                    "reward_currency": currency,
+                    "rewards_enabled": rewards_enabled
+                })
+                continue
+
+            user_row = None
+            try:
+                user_row = _user_row_for_day_v2(bucket_id, pid, rewards_table, rewards_enabled, top_rows)
+            except GoogleAPICallError:
+                user_row = None
+
+            result.append({
+                "date": date_label,
+                "top_rows": top_rows,
+                "user_row": user_row,
+                "reward_currency": currency,
+                "rewards_enabled": rewards_enabled
+            })
+
+        return jsonify(result), 200
+
+    except auth.InvalidIdTokenError:
+        return error_response(401, "ID_TOKEN_INVALID", "ID token invalid or expired")
+    except GoogleAPICallError as e:
+        return error_response(500, "FIRESTORE_ERROR", str(e))
+    except Exception as e:
+        print("leaderboard_history error:", e, file=sys.stderr)
+        return error_response(500, "INTERNAL", "Internal server error")
+
+
+#################### BTC to CURRENCY ####################
+TICKER_URL = "https://blockchain.info/ticker"
+
+@https_fn.on_request(region="us-central1", enforce_app_check=True)
+def btc_value_by_country(request: Request):
+    """
+    GET /btc_value_by_country?country_code=IN
 
     Headers:
       Authorization: Bearer <FIREBASE_ID_TOKEN>
       X-Firebase-AppCheck: <APPCHECK_TOKEN>
 
     Response (200):
-      { "inr": 0.00 }
+      { "conversion_rate": 0.00, "currency_code": "INR" | "USD" }
     """
     try:
         if request.method != "GET":
             return error_response(405, "METHOD_NOT_ALLOWED", "GET required")
 
+        # ─── Auth & App Check ────────────────────────────────────────────
         auth_header = request.headers.get("Authorization", "")
         if not auth_header.startswith("Bearer "):
             return error_response(401, "MISSING_ID_TOKEN", "Authorization token missing")
@@ -1268,6 +1657,11 @@ def btc_inr_value(request: Request):
         except Exception:
             return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
 
+        # ─── Parse country_code ─────────────────────────────────────────
+        country_code = request.args.get("country_code", "").strip().upper()
+        currency_code = "INR" if country_code == "IN" else "USD"
+
+        # ─── Fetch BTC price ────────────────────────────────────────────
         try:
             resp = requests.get(TICKER_URL, timeout=6)
         except requests.RequestException as e:
@@ -1275,18 +1669,20 @@ def btc_inr_value(request: Request):
             return error_response(502, "UPSTREAM_UNREACHABLE", "Price source not reachable")
 
         if resp.status_code != 200:
-            return error_response(502, "UPSTREAM_BAD_STATUS",
-                                  f"Price source returned {resp.status_code}")
+            return error_response(502, "UPSTREAM_BAD_STATUS", f"Price source returned {resp.status_code}")
 
         try:
             data = resp.json()
-            inr = data.get("INR") or {}
-            last = round(float(inr["last"]), 2)
+            currency_data = data.get(currency_code) or {}
+            last = round(float(currency_data["last"]), 2)
         except Exception as e:
             print("Parse error:", e, file=sys.stderr)
             return error_response(502, "UPSTREAM_BAD_PAYLOAD", "Unexpected price payload")
 
-        return jsonify({"inr": last}), 200
+        return jsonify({
+            "conversion_rate": last,
+            "currency_code": currency_code
+        }), 200
 
     except GoogleAPICallError as e:
         return error_response(500, "GOOGLE_API_ERROR", str(e))
