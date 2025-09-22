@@ -106,14 +106,21 @@ class AuthDataSourceImpl(
     override suspend fun updateSessionAsRegistered(
         idToken: String,
         canisterId: String,
+        userPrincipal: String,
     ) {
         httpPostWithStringResponse(client) {
             expectSuccess = false
             url {
                 host = METADATA_BASE_URL
-                path(UPDATE_SESSION_AS_REGISTERED, canisterId)
+                path(UPDATE_SESSION_AS_REGISTERED)
             }
             headers.append("authorization", "Bearer $idToken")
+            setBody(
+                mapOf(
+                    "user_canister" to canisterId,
+                    "user_principal" to userPrincipal,
+                ),
+            )
         }
     }
 
@@ -203,7 +210,7 @@ class AuthDataSourceImpl(
         private const val GRANT_TYPE_AUTHORIZATION = "authorization_code"
         private const val GRANT_TYPE_CLIENT_CREDS = "client_credentials"
         private const val GRANT_TYPE_REFRESH_TOKEN = "refresh_token"
-        private const val UPDATE_SESSION_AS_REGISTERED = "update_session_as_registered"
+        private const val UPDATE_SESSION_AS_REGISTERED = "/v2/update_session_as_registered"
         private const val EXCHANGE_PRINCIPAL_PATH = "exchange_principal_id"
         private const val HEADER_X_FIREBASE_APPCHECK = "X-Firebase-AppCheck"
         private const val DELETE_ACCOUNT = "api/v1/user"
