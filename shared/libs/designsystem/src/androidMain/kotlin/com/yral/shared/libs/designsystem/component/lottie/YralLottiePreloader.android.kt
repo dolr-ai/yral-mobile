@@ -1,4 +1,4 @@
-package com.yral.android.ui.widgets
+package com.yral.shared.libs.designsystem.component.lottie
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -9,12 +9,11 @@ import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.logging.YralLogger
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.koin.koinInstance
-import org.koin.compose.koinInject
 
 @Composable
-fun PreloadLottieAnimation(
+actual fun PreloadLottieAnimation(
     url: String,
-    crashlyticsManager: CrashlyticsManager = koinInject(),
+    crashlyticsManager: CrashlyticsManager,
 ) {
     val logger = yralLottieLogger()
     val context = LocalContext.current
@@ -36,9 +35,4 @@ fun PreloadLottieAnimation(
     }
 }
 
-@Composable
-fun PreloadLottieAnimations(urls: List<String>) {
-    urls.forEach { url -> PreloadLottieAnimation(url) }
-}
-
-fun yralLottieLogger(): Logger = koinInstance.get<YralLogger>().withTag("YralLottie")
+internal fun yralLottieLogger(): Logger = koinInstance.get<YralLogger>().withTag("YralLottie")

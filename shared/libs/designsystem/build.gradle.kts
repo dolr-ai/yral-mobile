@@ -15,6 +15,10 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(compose.components.resources)
+                implementation(projects.shared.libs.koin)
+                implementation(projects.shared.libs.crashlytics)
+                implementation(projects.shared.core)
+                implementation(libs.koin.compose)
             }
         }
         androidMain {
