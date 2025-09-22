@@ -40,11 +40,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yral.android.R
 import com.yral.android.ui.components.DeleteConfirmationSheet
+import com.yral.android.ui.components.signup.AccountInfoView
+import com.yral.android.ui.components.signup.ExtraLinkSheet
 import com.yral.android.ui.screens.account.AccountScreenConstants.SOCIAL_MEDIA_LINK_BOTTOM_SPACER_WEIGHT
 import com.yral.android.ui.screens.account.nav.AccountComponent
 import com.yral.shared.analytics.events.MenuCtaType
 import com.yral.shared.analytics.events.SignupPageName
-import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.features.account.viewmodel.AccountBottomSheet
 import com.yral.shared.features.account.viewmodel.AccountHelpLink
 import com.yral.shared.features.account.viewmodel.AccountHelpLinkType
@@ -55,7 +56,6 @@ import com.yral.shared.features.auth.viewModel.LoginViewModel
 import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
-import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.component.getSVGImageModel
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
@@ -113,7 +113,7 @@ private fun AccountScreenContent(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         state.accountInfo?.let {
-            AccountDetail(
+            AccountInfoView(
                 accountInfo = it,
                 isSocialSignIn = viewModel.isLoggedIn(),
             ) {
@@ -121,7 +121,6 @@ private fun AccountScreenContent(
                 viewModel.accountsTelemetry.signUpClicked(SignupPageName.MENU)
             }
         }
-        Divider()
         HelpLinks(
             links = viewModel.getHelperLinks(),
             onLinkClicked = {
@@ -242,27 +241,6 @@ private fun ErrorMessageSheet(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun ExtraLinkSheet(
-    extraSheetLink: String,
-    onDismissRequest: () -> Unit,
-) {
-    val extraSheetState = rememberModalBottomSheetState()
-    LaunchedEffect(extraSheetLink) {
-        if (extraSheetLink.isEmpty()) {
-            extraSheetState.hide()
-        } else {
-            extraSheetState.show()
-        }
-    }
-    WebViewBottomSheet(
-        link = extraSheetLink,
-        bottomSheetState = extraSheetState,
-        onDismissRequest = onDismissRequest,
-    )
-}
-
 @Composable
 private fun AccountsTitle(
     isBackVisible: Boolean,
@@ -293,60 +271,6 @@ private fun AccountsTitle(
             textAlign = TextAlign.Center,
             modifier = Modifier.weight(1f).offset(x = (-12).dp),
         )
-    }
-}
-
-@Composable
-private fun AccountDetail(
-    accountInfo: AccountInfo,
-    isSocialSignIn: Boolean,
-    onLoginClicked: () -> Unit,
-) {
-    Column(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(
-                    start = 16.dp,
-                    top = YralDimens.paddingLg,
-                    end = 16.dp,
-                    bottom = YralDimens.paddingLg,
-                ),
-        verticalArrangement = Arrangement.spacedBy(30.dp, Alignment.Top),
-        horizontalAlignment = Alignment.Start,
-    ) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.Start),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            YralAsyncImage(
-                imageUrl = accountInfo.profilePic,
-                modifier = Modifier.size(60.dp),
-            )
-            Text(
-                text = accountInfo.userPrincipal,
-                style = LocalAppTopography.current.baseMedium,
-                color = YralColors.NeutralTextSecondary,
-            )
-        }
-        if (!isSocialSignIn) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.Top),
-            ) {
-                YralGradientButton(
-                    text = stringResource(R.string.login),
-                    onClick = onLoginClicked,
-                )
-                Text(
-                    text = stringResource(R.string.anonymous_account_setup),
-                    style = LocalAppTopography.current.baseRegular,
-                    color = YralColors.NeutralTextPrimary,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-        }
     }
 }
 

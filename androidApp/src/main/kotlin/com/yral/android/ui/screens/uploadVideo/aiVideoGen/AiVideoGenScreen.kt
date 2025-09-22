@@ -28,6 +28,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -48,8 +49,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import co.touchlab.kermit.Logger
 import com.yral.android.R
+import com.yral.android.ui.components.signup.ExtraLinkSheet
 import com.yral.android.ui.screens.account.LoginBottomSheet
-import com.yral.android.ui.screens.account.WebViewBottomSheet
 import com.yral.android.ui.screens.uploadVideo.aiVideoGen.AiVideoGenScreenConstants.LOADING_MESSAGE_DELAY
 import com.yral.android.ui.widgets.video.YralVideoPlayer
 import com.yral.shared.analytics.events.SignupPageName
@@ -153,8 +154,8 @@ private fun AiVideoGenScreenPrompts(
     viewState: AiVideoGenViewModel.ViewState,
     viewModel: AiVideoGenViewModel,
 ) {
+    var extraSheetLink by remember { mutableStateOf("") }
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val extraSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     when (val sheetType = viewState.bottomSheetType) {
         is BottomSheetType.ModelSelection -> {
             ModelSelection(
@@ -189,22 +190,7 @@ private fun AiVideoGenScreenPrompts(
                 bottomSheetState = bottomSheetState,
                 onDismissRequest = { viewModel.setBottomSheetType(BottomSheetType.None) },
                 termsLink = viewModel.getTncLink(),
-                openTerms = { viewModel.setBottomSheetType(BottomSheetType.Link(viewModel.getTncLink())) },
-            )
-        }
-        is BottomSheetType.Link -> {
-            // reusing from account to be refactored in independent components
-            LaunchedEffect(sheetType.url) {
-                if (sheetType.url.isEmpty()) {
-                    extraSheetState.hide()
-                } else {
-                    extraSheetState.show()
-                }
-            }
-            WebViewBottomSheet(
-                link = sheetType.url,
-                bottomSheetState = extraSheetState,
-                onDismissRequest = { viewModel.setBottomSheetType(BottomSheetType.Signup) },
+                openTerms = { extraSheetLink = viewModel.getTncLink() },
             )
         }
         is BottomSheetType.BackConfirmation -> {
@@ -222,6 +208,12 @@ private fun AiVideoGenScreenPrompts(
             )
         }
         is BottomSheetType.None -> Unit
+    }
+    if (extraSheetLink.isNotEmpty()) {
+        ExtraLinkSheet(
+            extraSheetLink = extraSheetLink,
+            onDismissRequest = { extraSheetLink = "" },
+        )
     }
 }
 

@@ -428,9 +428,6 @@ class AiVideoGenViewModel internal constructor(
             val endFlow: Boolean = false,
         ) : BottomSheetType()
         data object Signup : BottomSheetType()
-        data class Link(
-            val url: String,
-        ) : BottomSheetType()
         data object BackConfirmation : BottomSheetType()
     }
 
