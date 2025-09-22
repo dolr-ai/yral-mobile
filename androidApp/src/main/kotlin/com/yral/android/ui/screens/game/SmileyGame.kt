@@ -69,7 +69,8 @@ fun SmileyGame(
     var animateBubbles by remember { mutableStateOf(false) }
     var iconPositions by remember { mutableStateOf(mapOf<Int, Float>()) }
     val bubbleAnimationComplete =
-        !animateBubbles || (clickedIcon?.getBubbleResource() == 0 && clickedIcon.clickAnimation.isEmpty())
+        !animateBubbles ||
+            (clickedIcon != null && clickedIcon.getBubbleResource() == null && clickedIcon.clickAnimation.isEmpty())
     val resultViewVisible = (coinDelta != 0 || errorMessage.isNotEmpty()) && bubbleAnimationComplete
     var animatingNudgeIconPosition by remember { mutableStateOf<Int?>(null) }
     var nudgeIterationCount by remember { mutableIntStateOf(0) }

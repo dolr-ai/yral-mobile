@@ -35,10 +35,11 @@ import com.yral.android.ui.nav.RootComponent.Child
 import com.yral.android.ui.screens.home.HomeScreen
 import com.yral.android.ui.widgets.YralErrorMessage
 import com.yral.android.ui.widgets.YralLoader
-import com.yral.android.ui.widgets.YralLottieAnimation
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.features.root.viewmodels.RootError
 import com.yral.shared.features.root.viewmodels.RootViewModel
+import com.yral.shared.libs.designsystem.component.lottie.LottieRes
+import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
 import com.yral.shared.libs.designsystem.component.toast.ToastHost
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -188,7 +189,7 @@ private fun Splash(
         ) {
             YralLottieAnimation(
                 modifier = Modifier.fillMaxSize(),
-                rawRes = R.raw.splash_lottie,
+                rawRes = LottieRes.SPLASH,
                 iterations = 1,
                 contentScale = ContentScale.Crop,
                 onAnimationComplete = onAnimationComplete,
@@ -202,7 +203,7 @@ private fun Splash(
         ) {
             YralLottieAnimation(
                 modifier = Modifier.fillMaxSize(),
-                rawRes = R.raw.lightning_lottie,
+                rawRes = LottieRes.LIGHTNING,
                 contentScale = ContentScale.Crop,
             )
         }

@@ -17,6 +17,11 @@ kotlin {
                 implementation(compose.components.resources)
             }
         }
+        androidMain {
+            dependencies {
+                implementation(libs.lottie)
+            }
+        }
     }
 }
 

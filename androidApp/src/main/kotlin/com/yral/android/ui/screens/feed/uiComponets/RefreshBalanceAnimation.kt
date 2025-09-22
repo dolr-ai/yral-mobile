@@ -10,12 +10,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
-import com.airbnb.lottie.compose.rememberLottieComposition
-import com.yral.android.R
-import com.yral.android.ui.widgets.YralLottieAnimation
 import com.yral.shared.features.game.viewmodel.RefreshBalanceState
+import com.yral.shared.libs.designsystem.component.lottie.LottieRes
+import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
+import com.yral.shared.libs.designsystem.component.lottie.rememberYralLottieComposition
 import com.yral.shared.libs.designsystem.theme.YralColors
 
 @Composable
@@ -30,11 +29,11 @@ internal fun RefreshBalanceAnimation(
         exit = fadeOut(),
     ) {
         // Preload result animations to prevent flicker
-        val successComposition by rememberLottieComposition(
-            LottieCompositionSpec.RawRes(R.raw.claim_successful_wo_loading),
+        val successComposition by rememberYralLottieComposition(
+            LottieRes.CLAIM_SUCCESSFUL_WO_LOADING,
         )
-        val failureComposition by rememberLottieComposition(
-            LottieCompositionSpec.RawRes(R.raw.claim_unsucessful_wo_loading),
+        val failureComposition by rememberYralLottieComposition(
+            LottieRes.CLAIM_UNSUCCESSFUL_WO_LOADING,
         )
 
         Box(
@@ -47,7 +46,7 @@ internal fun RefreshBalanceAnimation(
             when (refreshBalanceState) {
                 RefreshBalanceState.LOADING -> {
                     YralLottieAnimation(
-                        rawRes = R.raw.common_loading,
+                        rawRes = LottieRes.COMMON_LOADING,
                         iterations = LottieConstants.IterateForever,
                         modifier = Modifier.Companion.fillMaxSize(),
                     )
