@@ -1,4 +1,4 @@
-package com.yral.android.ui.widgets
+package com.yral.shared.libs.designsystem.component
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -8,7 +8,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.airbnb.lottie.compose.LottieConstants
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
 
@@ -28,7 +27,7 @@ fun YralLoader(
                 Modifier
                     .size(size),
             rawRes = resource,
-            iterations = LottieConstants.IterateForever,
+            iterations = Int.MAX_VALUE,
         )
     }
 }

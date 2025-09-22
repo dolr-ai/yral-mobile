@@ -27,10 +27,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleStartEffect
 import com.yral.android.R
 import com.yral.android.ui.screens.alertsrequest.nav.AlertsRequestComponent
-import com.yral.android.ui.widgets.YralBottomSheet
 import com.yral.shared.analytics.AnalyticsManager
 import com.yral.shared.analytics.events.PushNotificationsEnabledEventData
 import com.yral.shared.analytics.events.PushNotificationsPopupEventData
+import com.yral.shared.libs.designsystem.component.YralBottomSheet
 import com.yral.shared.libs.designsystem.component.YralButton
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
