@@ -143,6 +143,7 @@ dependencies {
     implementation(projects.shared.features.wallet)
     implementation(projects.shared.libs.formatters)
     implementation(projects.shared.libs.designsystem)
+    implementation(compose.components.resources)
 }
 
 afterEvaluate {

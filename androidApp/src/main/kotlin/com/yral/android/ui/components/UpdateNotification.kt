@@ -8,6 +8,11 @@ import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.yral.android.R
 import com.yral.android.ui.nav.RootComponent
 import com.yral.android.update.UpdateState
+import com.yral.shared.libs.designsystem.component.toast.ToastCTA
+import com.yral.shared.libs.designsystem.component.toast.ToastDuration
+import com.yral.shared.libs.designsystem.component.toast.ToastManager
+import com.yral.shared.libs.designsystem.component.toast.ToastType
+import com.yral.shared.libs.designsystem.component.toast.showInfo
 
 @Composable
 fun UpdateNotificationHost(rootComponent: RootComponent) {
