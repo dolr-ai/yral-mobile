@@ -200,10 +200,13 @@ class DefaultAuthClient(
     private suspend fun updateYralSession(session: Session) {
         preferences.getString(PrefKeys.ID_TOKEN.name)?.let { idToken ->
             session.canisterId?.let { canisterId ->
-                updateSessionAsRegistered(
-                    idToken = idToken,
-                    canisterId = canisterId,
-                )
+                session.userPrincipal?.let { userPrincipal ->
+                    updateSessionAsRegistered(
+                        idToken = idToken,
+                        canisterId = canisterId,
+                        userPrincipal = userPrincipal,
+                    )
+                }
             }
         }
     }
@@ -407,12 +410,14 @@ class DefaultAuthClient(
     private suspend fun updateSessionAsRegistered(
         idToken: String,
         canisterId: String,
+        userPrincipal: String,
     ) {
         requiredUseCases.updateSessionAsRegisteredUseCase.invoke(
             parameter =
                 UpdateSessionAsRegisteredUseCase.Params(
                     idToken = idToken,
                     canisterId = canisterId,
+                    userPrincipal = userPrincipal,
                 ),
         )
     }
