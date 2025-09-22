@@ -1,6 +1,6 @@
 import re, random, string, datetime as _dt, sys
 import firebase_admin
-from firebase_admin import auth, app_check, firestore, functions
+from firebase_admin import auth, app_check, firestore
 from firebase_functions import https_fn
 from firebase_functions.https_fn import HttpsError, CallableRequest
 from flask import Request, jsonify, make_response
@@ -26,7 +26,8 @@ SMILEY_GAME_CONFIG_PATH = "config/smiley_game_v2"
 VIDEO_COLL = "videos"
 DAILY_COLL = "leaderboards_daily"
 
-BALANCE_URL = "https://yral-hot-or-not.go-bazzinga.workers.dev/update_balance/"
+BALANCE_URL_YRAL_TOKEN = "https://yral-hot-or-not.go-bazzinga.workers.dev/update_balance/"
+BALANCE_URL_CKBTC = "https://yral-hot-or-not.go-bazzinga.workers.dev/v2/transfer_ckbtc/"
 
 IST = timezone(timedelta(hours=5, minutes=30))
 
@@ -206,8 +207,8 @@ def exchange_principal_id(request: Request):
         print("Unhandled error:", e, file=sys.stderr)
         return error_response(500, "INTERNAL", "Internal server error")
 
-def _push_delta(token: str, principal_id: str, delta: int) -> tuple[bool, str | None]:
-    url = f"{BALANCE_URL}{principal_id}"
+def _push_delta_yral_token(token: str, principal_id: str, delta: int) -> tuple[bool, str | None]:
+    url = f"{BALANCE_URL_YRAL_TOKEN}{principal_id}"
     headers = {
         "Authorization": token,
         "Content-Type": "application/json",
@@ -220,6 +221,31 @@ def _push_delta(token: str, principal_id: str, delta: int) -> tuple[bool, str | 
         resp = requests.post(url, json=body, timeout=5, headers=headers)
         if resp.status_code == 200:
             return True, None
+        return False, f"Status: {resp.status_code}, Body: {resp.text}"
+    except requests.RequestException as e:
+        return False, str(e)
+
+def _push_delta_ckbtc(token: str, amount: int, recipient_principal: str, memo_text: str) -> tuple[bool, str | None]:
+    url = BALANCE_URL_CKBTC
+
+    headers = {
+        "Authorization": token,
+        "Content-Type": "application/json",
+    }
+
+    body = {
+        "amount": amount,
+        "recipient_principal": recipient_principal,
+        "memo_text": memo_text
+    }
+
+    try:
+        resp = requests.post(url, json=body, timeout=5, headers=headers)
+        if resp.status_code == 200:
+            json = resp.json()
+            if json.get("success", False):
+                return True, None
+            return False, f"Failed: {json}"
         return False, f"Status: {resp.status_code}, Body: {resp.text}"
     except requests.RequestException as e:
         return False, str(e)
@@ -258,7 +284,7 @@ def update_balance(request: Request):
         #         "App Check token invalid"
         #     )
 
-        success, error_msg = _push_delta(balance_update_token, pid, delta)
+        success, error_msg = _push_delta_yral_token(balance_update_token, pid, delta)
 
         if not success:
             return error_response(502, "UPSTREAM_FAILED", f"Balance update failed: {error_msg}")
@@ -321,7 +347,7 @@ def tap_to_recharge(request: Request):
 
         # 6️⃣ Push to wallet first
         DELTA = 15
-        if not _push_delta(os.environ["BALANCE_UPDATE_TOKEN"], pid, DELTA):
+        if not _push_delta_yral_token(os.environ["BALANCE_UPDATE_TOKEN"], pid, DELTA):
             return error_response(
                 502, "UPSTREAM_FAILED",
                 "Wallet update failed, try again later.")
@@ -454,7 +480,7 @@ def cast_vote(request: Request):
         delta  = WIN_REWARD if outcome == "WIN" else LOSS_PENALTY
         coins  = tx_coin_change(pid, vid, delta, outcome)
 
-        if not _push_delta(balance_update_token, pid, delta):
+        if not _push_delta_yral_token(balance_update_token, pid, delta):
             _ = tx_coin_change(pid, vid, -delta, "ROLLBACK")
             return error_response(502, "UPSTREAM_FAILED", "We couldn’t record your vote. Please try voting again after sometime.")
 
@@ -601,7 +627,7 @@ def cast_vote_v2(request: Request):
         delta  = WIN_REWARD if outcome == "WIN" else LOSS_PENALTY
         coins  = tx_coin_change(pid, vid, delta, outcome)
 
-        if not _push_delta(balance_update_token, pid, delta):
+        if not _push_delta_yral_token(balance_update_token, pid, delta):
             _ = tx_coin_change(pid, vid, -delta, "ROLLBACK")
             return error_response(502, "UPSTREAM_FAILED", "We couldn’t record your vote. Please try voting again after sometime.")
 
@@ -714,6 +740,11 @@ def _inc_daily_leaderboard(pid: str, outcome: str) -> None:
         tx.set(entry_ref, updates, merge=True)
 
     _tx(db().transaction())
+
+def _yesterday_bucket_id_ist() -> str:
+    ist_now = datetime.now(timezone.utc) + timedelta(hours=5, minutes=30)
+    yesterday = ist_now.date() - timedelta(days=1)
+    return yesterday.strftime("%Y-%m-%d")
 
 def _bucket_id_for_ist_day(d: date) -> str:
     """Return 'YYYY-MM-DD' for a given IST date."""
