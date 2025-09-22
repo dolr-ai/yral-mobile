@@ -28,11 +28,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yral.android.R
 import com.yral.android.ui.screens.wallet.nav.WalletComponent
-import com.yral.android.ui.widgets.YralAsyncImage
 import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.features.wallet.viewmodel.WalletViewModel
 import com.yral.shared.libs.CurrencyFormatter
 import com.yral.shared.libs.NumberFormatter
+import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import org.koin.compose.viewmodel.koinViewModel

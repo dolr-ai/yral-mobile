@@ -50,7 +50,6 @@ import com.yral.android.ui.screens.game.AboutGameSheet
 import com.yral.android.ui.screens.game.CoinBalance
 import com.yral.android.ui.screens.game.GameResultSheet
 import com.yral.android.ui.screens.game.SmileyGame
-import com.yral.android.ui.widgets.YralAsyncImage
 import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.features.feed.viewmodel.FeedState
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
@@ -61,6 +60,7 @@ import com.yral.shared.features.feed.viewmodel.ReportSheetState
 import com.yral.shared.features.game.viewmodel.GameState
 import com.yral.shared.features.game.viewmodel.GameViewModel
 import com.yral.shared.features.game.viewmodel.NudgeType
+import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
 import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.lottie.PreloadLottieAnimations

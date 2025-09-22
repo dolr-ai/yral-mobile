@@ -19,9 +19,9 @@ import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.sp
 import com.yral.android.R
-import com.yral.android.ui.widgets.YralAsyncImage
 import com.yral.shared.features.game.domain.models.GameIcon
 import com.yral.shared.features.game.domain.models.GameIconNames
+import com.yral.shared.libs.designsystem.component.YralAsyncImage
 
 @Composable
 fun GameIcon(

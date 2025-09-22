@@ -43,8 +43,6 @@ import com.yral.android.R
 import com.yral.android.ui.components.DeleteConfirmationSheet
 import com.yral.android.ui.screens.account.AccountScreenConstants.SOCIAL_MEDIA_LINK_BOTTOM_SPACER_WEIGHT
 import com.yral.android.ui.screens.account.nav.AccountComponent
-import com.yral.android.ui.widgets.YralAsyncImage
-import com.yral.android.ui.widgets.getSVGImageModel
 import com.yral.shared.analytics.events.MenuCtaType
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.core.session.AccountInfo
@@ -54,8 +52,10 @@ import com.yral.shared.features.account.viewmodel.AccountHelpLinkType
 import com.yral.shared.features.account.viewmodel.AccountsState
 import com.yral.shared.features.account.viewmodel.AccountsViewModel
 import com.yral.shared.features.account.viewmodel.ErrorType
+import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
 import com.yral.shared.libs.designsystem.component.YralGradientButton
+import com.yral.shared.libs.designsystem.component.getSVGImageModel
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.designsystem.theme.YralDimens

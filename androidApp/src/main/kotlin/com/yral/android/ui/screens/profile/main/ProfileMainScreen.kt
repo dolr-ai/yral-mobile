@@ -66,14 +66,14 @@ import com.yral.android.ui.screens.profile.main.ProfileMainScreenConstants.PADDI
 import com.yral.android.ui.screens.profile.main.ProfileMainScreenConstants.PULL_TO_REFRESH_INDICATOR_SIZE
 import com.yral.android.ui.screens.profile.main.ProfileMainScreenConstants.PULL_TO_REFRESH_INDICATOR_THRESHOLD
 import com.yral.android.ui.screens.profile.main.ProfileMainScreenConstants.PULL_TO_REFRESH_OFFSET_MULTIPLIER
-import com.yral.android.ui.widgets.LoaderSize
-import com.yral.android.ui.widgets.YralAsyncImage
 import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.features.profile.viewmodel.DeleteConfirmationState
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.features.profile.viewmodel.VideoViewState
+import com.yral.shared.libs.designsystem.component.LoaderSize
+import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralButtonState
 import com.yral.shared.libs.designsystem.component.YralButtonType
 import com.yral.shared.libs.designsystem.component.YralErrorMessage

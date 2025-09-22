@@ -37,7 +37,7 @@ import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstan
 import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.MAX_CHAR_OF_NAME
 import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.POSITION_TEXT_WEIGHT
 import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.USER_DETAIL_WEIGHT
-import com.yral.android.ui.widgets.YralAsyncImage
+import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralMaskedVectorTextV2
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
