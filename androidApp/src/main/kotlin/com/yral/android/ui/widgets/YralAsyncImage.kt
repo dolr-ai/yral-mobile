@@ -28,6 +28,7 @@ import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter
 import coil3.request.ImageRequest
 import coil3.svg.SvgDecoder
+import com.yral.shared.libs.designsystem.component.YralLoader
 import kotlin.math.min
 
 @SuppressLint("UnusedBoxWithConstraintsScope")

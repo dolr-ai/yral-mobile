@@ -1,4 +1,4 @@
-package com.yral.android.ui.widgets
+package com.yral.shared.libs.designsystem.component
 
 import android.content.ActivityNotFoundException
 import android.content.Intent
@@ -31,11 +31,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
-fun YralWebView(
+actual fun YralWebView(
     url: String,
-    modifier: Modifier = Modifier,
-    maxRetries: Int = 3,
-    retryDelayMillis: Long = 1000,
+    modifier: Modifier,
+    maxRetries: Int,
+    retryDelayMillis: Long,
 ) {
     var isLoading by remember { mutableStateOf(true) }
     val scope = rememberCoroutineScope()

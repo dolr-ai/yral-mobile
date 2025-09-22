@@ -33,11 +33,11 @@ import com.yral.android.ui.components.UpdateNotificationHost
 import com.yral.android.ui.nav.RootComponent
 import com.yral.android.ui.nav.RootComponent.Child
 import com.yral.android.ui.screens.home.HomeScreen
-import com.yral.android.ui.widgets.YralErrorMessage
-import com.yral.android.ui.widgets.YralLoader
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.features.root.viewmodels.RootError
 import com.yral.shared.features.root.viewmodels.RootViewModel
+import com.yral.shared.libs.designsystem.component.YralErrorMessage
+import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
 import com.yral.shared.libs.designsystem.component.toast.ToastHost

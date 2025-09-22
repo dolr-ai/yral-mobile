@@ -7,8 +7,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.yral.android.ui.widgets.YralBottomSheet
-import com.yral.android.ui.widgets.YralWebView
+import com.yral.shared.libs.designsystem.component.YralBottomSheet
+import com.yral.shared.libs.designsystem.component.YralWebView
 import com.yral.shared.libs.designsystem.theme.YralColors
 
 @OptIn(ExperimentalMaterial3Api::class)
