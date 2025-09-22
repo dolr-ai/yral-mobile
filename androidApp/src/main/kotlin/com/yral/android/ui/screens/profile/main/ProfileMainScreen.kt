@@ -68,8 +68,6 @@ import com.yral.android.ui.screens.profile.main.ProfileMainScreenConstants.PULL_
 import com.yral.android.ui.screens.profile.main.ProfileMainScreenConstants.PULL_TO_REFRESH_OFFSET_MULTIPLIER
 import com.yral.android.ui.widgets.LoaderSize
 import com.yral.android.ui.widgets.YralAsyncImage
-import com.yral.android.ui.widgets.YralErrorMessage
-import com.yral.android.ui.widgets.YralLoader
 import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.data.feed.domain.FeedDetails
@@ -78,7 +76,9 @@ import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.features.profile.viewmodel.VideoViewState
 import com.yral.shared.libs.designsystem.component.YralButtonState
 import com.yral.shared.libs.designsystem.component.YralButtonType
+import com.yral.shared.libs.designsystem.component.YralErrorMessage
 import com.yral.shared.libs.designsystem.component.YralGradientButton
+import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors

@@ -1,4 +1,4 @@
-package com.yral.android.ui.widgets
+package com.yral.shared.libs.designsystem.component
 
 import android.media.MediaPlayer
 import androidx.compose.runtime.Composable
@@ -17,11 +17,11 @@ private const val HAPTIC_FEEDBACK_DELAY = 30L
 
 @Suppress("TooGenericExceptionCaught")
 @Composable
-fun YralFeedback(
+actual fun YralFeedback(
     sound: Int,
-    withHapticFeedback: Boolean = false,
-    hapticFeedbackType: HapticFeedbackType = HapticFeedbackType.ContextClick,
-    onPlayed: () -> Unit = {},
+    withHapticFeedback: Boolean,
+    hapticFeedbackType: HapticFeedbackType,
+    onPlayed: () -> Unit,
 ) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current

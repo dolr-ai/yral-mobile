@@ -13,7 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.yral.android.ui.screens.game.SmileyGameConstants.NUDGE_ANIMATION_DURATION
-import com.yral.android.ui.widgets.YralNeonBorder
+import com.yral.shared.libs.designsystem.component.YralNeonBorder
 import com.yral.shared.libs.designsystem.theme.YralColors.SmileyGameCardBackground
 
 @Composable

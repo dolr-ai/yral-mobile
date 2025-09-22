@@ -54,9 +54,6 @@ import com.yral.android.ui.screens.account.LoginBottomSheet
 import com.yral.android.ui.screens.account.WebViewBottomSheet
 import com.yral.android.ui.screens.uploadVideo.aiVideoGen.AiVideoGenScreenConstants.LOADING_MESSAGE_DELAY
 import com.yral.android.ui.widgets.YralAsyncImage
-import com.yral.android.ui.widgets.YralBottomSheet
-import com.yral.android.ui.widgets.YralConfirmationMessage
-import com.yral.android.ui.widgets.YralLoader
 import com.yral.android.ui.widgets.getSVGImageModel
 import com.yral.android.ui.widgets.video.YralVideoPlayer
 import com.yral.shared.analytics.events.SignupPageName
@@ -65,8 +62,11 @@ import com.yral.shared.features.uploadvideo.domain.models.Provider
 import com.yral.shared.features.uploadvideo.presentation.AiVideoGenViewModel
 import com.yral.shared.features.uploadvideo.presentation.AiVideoGenViewModel.BottomSheetType
 import com.yral.shared.libs.arch.presentation.UiState
+import com.yral.shared.libs.designsystem.component.YralBottomSheet
 import com.yral.shared.libs.designsystem.component.YralButtonState
+import com.yral.shared.libs.designsystem.component.YralConfirmationMessage
 import com.yral.shared.libs.designsystem.component.YralGradientButton
+import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.YralMaskedVectorTextV2
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
