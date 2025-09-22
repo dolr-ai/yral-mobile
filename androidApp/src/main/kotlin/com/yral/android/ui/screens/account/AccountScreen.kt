@@ -23,7 +23,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,12 +32,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yral.android.R
 import com.yral.android.ui.components.DeleteConfirmationSheet
 import com.yral.android.ui.screens.account.AccountScreenConstants.SOCIAL_MEDIA_LINK_BOTTOM_SPACER_WEIGHT
@@ -52,6 +51,8 @@ import com.yral.shared.features.account.viewmodel.AccountHelpLinkType
 import com.yral.shared.features.account.viewmodel.AccountsState
 import com.yral.shared.features.account.viewmodel.AccountsViewModel
 import com.yral.shared.features.account.viewmodel.ErrorType
+import com.yral.shared.features.auth.viewModel.LoginViewModel
+import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
 import com.yral.shared.libs.designsystem.component.YralGradientButton
@@ -61,15 +62,26 @@ import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.designsystem.theme.YralDimens
 import org.koin.compose.viewmodel.koinViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AccountScreen(
     component: AccountComponent,
     modifier: Modifier = Modifier,
     viewModel: AccountsViewModel = koinViewModel(),
+    loginViewModel: LoginViewModel = koinViewModel(),
 ) {
-    val context = LocalContext.current
-    val state by viewModel.state.collectAsState()
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val loginState = loginViewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { viewModel.accountsTelemetry.onMenuScreenViewed() }
+    val bottomSheetState =
+        rememberModalBottomSheetState(
+            skipPartiallyExpanded = true,
+        )
+    LaunchedEffect(loginState.value) {
+        if (loginState.value is UiState.Failure) {
+            viewModel.setBottomSheetType(AccountBottomSheet.SignUp)
+        }
+    }
     Column(modifier = modifier.fillMaxSize()) {
         AccountsTitle(state.isWalletEnabled) { component.onBack() }
         AccountScreenContent(
@@ -77,10 +89,10 @@ fun AccountScreen(
             viewModel = viewModel,
         )
         SheetContent(
+            bottomSheetState = bottomSheetState,
             bottomSheetType = state.bottomSheetType,
             tncLink = state.accountLinks.tnc,
             onDismissRequest = { viewModel.setBottomSheetType(AccountBottomSheet.None) },
-            signInWithGoogle = { viewModel.signInWithGoogle(context) },
             onDeleteAccount = { viewModel.deleteAccount() },
         )
     }
@@ -136,26 +148,18 @@ private fun AccountScreenContent(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SheetContent(
+    bottomSheetState: SheetState,
     bottomSheetType: AccountBottomSheet,
     tncLink: String,
     onDismissRequest: () -> Unit,
-    signInWithGoogle: () -> Unit,
     onDeleteAccount: () -> Unit,
 ) {
-    val bottomSheetState =
-        rememberModalBottomSheetState(
-            skipPartiallyExpanded = true,
-        )
     var extraSheetLink by remember { mutableStateOf("") }
     when (bottomSheetType) {
         is AccountBottomSheet.SignUp -> {
             LoginBottomSheet(
                 bottomSheetState = bottomSheetState,
                 onDismissRequest = onDismissRequest,
-                onSignupClicked = {
-                    signInWithGoogle()
-                    onDismissRequest()
-                },
                 termsLink = tncLink,
                 openTerms = { extraSheetLink = tncLink },
             )
@@ -211,7 +215,7 @@ private fun SheetContent(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ErrorMessageSheet(
+private fun ErrorMessageSheet(
     errorType: ErrorType,
     bottomSheetState: SheetState,
     onDismissRequest: () -> Unit,
