@@ -17,6 +17,7 @@ interface AuthRepository {
     suspend fun updateSessionAsRegistered(
         idToken: String,
         canisterId: String,
+        userPrincipal: String,
     )
     suspend fun exchangePrincipalId(
         idToken: String,
