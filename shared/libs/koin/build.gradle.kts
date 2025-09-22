@@ -21,6 +21,7 @@ kotlin {
             dependencies {
                 api(project.dependencies.platform(libs.koin.bom))
                 api(libs.koin.core)
+                api(libs.koin.compose)
             }
         }
     }

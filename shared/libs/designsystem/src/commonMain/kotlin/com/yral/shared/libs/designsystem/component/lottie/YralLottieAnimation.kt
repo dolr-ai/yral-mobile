@@ -2,7 +2,6 @@ package com.yral.shared.libs.designsystem.component.lottie
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 

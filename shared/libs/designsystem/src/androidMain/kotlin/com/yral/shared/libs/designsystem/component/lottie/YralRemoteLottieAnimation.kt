@@ -1,4 +1,4 @@
-package com.yral.android.ui.widgets
+package com.yral.shared.libs.designsystem.component.lottie
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -15,21 +15,20 @@ import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeoutOrNull
-import org.koin.compose.koinInject
 
 @Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
-fun YralRemoteLottieAnimation(
-    modifier: Modifier = Modifier,
+actual fun YralRemoteLottieAnimation(
+    modifier: Modifier,
     url: String,
-    iterations: Int = LottieConstants.IterateForever,
-    contentScale: ContentScale = ContentScale.FillBounds,
-    onAnimationComplete: () -> Unit = {},
-    onError: (Throwable) -> Unit = {},
-    onLoading: () -> Unit = {},
-    placeholder: @Composable (() -> Unit)? = null,
-    errorContent: @Composable ((Throwable) -> Unit)? = null,
-    crashlyticsManager: CrashlyticsManager = koinInject(),
+    iterations: Int,
+    contentScale: ContentScale,
+    onAnimationComplete: () -> Unit,
+    onError: (Throwable) -> Unit,
+    onLoading: () -> Unit,
+    placeholder: @Composable (() -> Unit)?,
+    errorContent: @Composable ((Throwable) -> Unit)?,
+    crashlyticsManager: CrashlyticsManager,
 ) {
     val logger = yralLottieLogger()
 
