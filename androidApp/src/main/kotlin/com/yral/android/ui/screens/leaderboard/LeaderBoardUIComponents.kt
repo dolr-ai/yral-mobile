@@ -38,7 +38,7 @@ import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstan
 import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.POSITION_TEXT_WEIGHT
 import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.USER_DETAIL_WEIGHT
 import com.yral.android.ui.widgets.YralAsyncImage
-import com.yral.android.ui.widgets.YralMaskedVectorTextV2
+import com.yral.shared.libs.designsystem.component.YralMaskedVectorTextV2
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 
@@ -202,10 +202,10 @@ fun UserBriefPositionNumber(
     decorateCurrentUser: Boolean,
 ) {
     val decoration = getTextDecoration(position)
-    if (decoration != 0 && !decorateCurrentUser) {
+    if (decoration != null && !decorateCurrentUser) {
         YralMaskedVectorTextV2(
             text = "#$position",
-            vectorRes = decoration,
+            drawableRes = decoration,
             textStyle = LocalAppTopography.current.baseBold,
             modifier = Modifier.width(21.dp),
             textOverflow = TextOverflow.Ellipsis,
@@ -255,10 +255,10 @@ private fun UserBriefGradientProfileName(
     name: String,
 ) {
     val decoration = getTextDecoration(position)
-    if (decoration != 0) {
+    if (decoration != null) {
         YralMaskedVectorTextV2(
             text = name,
-            vectorRes = decoration,
+            drawableRes = decoration,
             textStyle = LocalAppTopography.current.baseMedium,
             maxLines = 1,
             textOverflow = TextOverflow.Ellipsis,

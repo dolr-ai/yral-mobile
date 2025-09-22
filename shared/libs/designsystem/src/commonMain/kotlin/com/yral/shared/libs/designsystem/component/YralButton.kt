@@ -1,4 +1,4 @@
-package com.yral.android.ui.widgets
+package com.yral.shared.libs.designsystem.component
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -22,16 +22,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.airbnb.lottie.compose.LottieConstants
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun YralButton(
@@ -41,7 +41,7 @@ fun YralButton(
     backgroundColor: Color = Color.White,
     borderWidth: Dp = 0.75.dp,
     borderColor: Color = YralColors.ButtonBorderColor,
-    icon: Int? = null,
+    icon: DrawableResource? = null,
     buttonState: YralButtonState = YralButtonState.Enabled,
     loader: LottieRes = LottieRes.YRAL_LOADER,
     paddingValues: PaddingValues = PaddingValues(all = 10.dp),
@@ -69,7 +69,7 @@ fun YralButton(
     ) {
         icon?.let {
             Image(
-                painter = painterResource(id = icon),
+                painter = painterResource(icon),
                 contentDescription = "image description",
                 contentScale = ContentScale.None,
             )
@@ -108,7 +108,7 @@ private fun ButtonLoader(
         YralLottieAnimation(
             modifier = Modifier.size(20.dp),
             rawRes = loader,
-            iterations = LottieConstants.IterateForever,
+            iterations = Int.MAX_VALUE,
         )
     }
 }

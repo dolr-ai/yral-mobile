@@ -1,4 +1,4 @@
-package com.yral.android.ui.widgets
+package com.yral.shared.libs.designsystem.component
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -14,15 +14,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.paint
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.airbnb.lottie.compose.LottieConstants
-import com.yral.android.R
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
+import yral_mobile.shared.libs.designsystem.generated.resources.Res
+import yral_mobile.shared.libs.designsystem.generated.resources.pink_gradient_background
+import yral_mobile.shared.libs.designsystem.generated.resources.pink_gradient_background_disabled
+import yral_mobile.shared.libs.designsystem.generated.resources.transparent_background
+import yral_mobile.shared.libs.designsystem.generated.resources.white_background
+import yral_mobile.shared.libs.designsystem.generated.resources.white_background_disabled
 
 @Composable
 fun YralGradientButton(
@@ -55,7 +60,7 @@ fun YralGradientButton(
         ) {
             YralMaskedVectorTextV2(
                 text = text,
-                vectorRes = getButtonTextBackground(buttonType, buttonState),
+                drawableRes = getButtonTextBackground(buttonType, buttonState),
                 textStyle =
                     LocalAppTopography
                         .current
@@ -75,7 +80,7 @@ fun YralGradientButton(
             YralLottieAnimation(
                 modifier = Modifier.size(20.dp),
                 rawRes = getLoaderResource(buttonType),
-                iterations = LottieConstants.IterateForever,
+                iterations = Int.MAX_VALUE,
             )
         }
     }
@@ -103,53 +108,53 @@ private fun getLoaderResource(buttonType: YralButtonType): LottieRes =
 private fun getButtonTextBackground(
     buttonType: YralButtonType,
     buttonState: YralButtonState,
-): Int =
+): DrawableResource =
     when (buttonType) {
         YralButtonType.Pink ->
             when (buttonState) {
-                YralButtonState.Enabled -> R.drawable.white_background
-                YralButtonState.Disabled -> R.drawable.white_background_disabled
-                YralButtonState.Loading -> R.drawable.white_background
+                YralButtonState.Enabled -> Res.drawable.white_background
+                YralButtonState.Disabled -> Res.drawable.white_background_disabled
+                YralButtonState.Loading -> Res.drawable.white_background
             }
 
         YralButtonType.White ->
             when (buttonState) {
-                YralButtonState.Enabled -> R.drawable.pink_gradient_background
-                YralButtonState.Disabled -> R.drawable.pink_gradient_background_disabled
-                YralButtonState.Loading -> R.drawable.pink_gradient_background
+                YralButtonState.Enabled -> Res.drawable.pink_gradient_background
+                YralButtonState.Disabled -> Res.drawable.pink_gradient_background_disabled
+                YralButtonState.Loading -> Res.drawable.pink_gradient_background
             }
 
         YralButtonType.Transparent ->
             when (buttonState) {
-                YralButtonState.Enabled -> R.drawable.pink_gradient_background
-                YralButtonState.Disabled -> R.drawable.pink_gradient_background_disabled
-                YralButtonState.Loading -> R.drawable.pink_gradient_background
+                YralButtonState.Enabled -> Res.drawable.pink_gradient_background
+                YralButtonState.Disabled -> Res.drawable.pink_gradient_background_disabled
+                YralButtonState.Loading -> Res.drawable.pink_gradient_background
             }
     }
 
 private fun getButtonBackground(
     buttonType: YralButtonType,
     buttonState: YralButtonState,
-): Int =
+): DrawableResource =
     when (buttonType) {
         YralButtonType.Pink ->
             when (buttonState) {
-                YralButtonState.Enabled -> R.drawable.pink_gradient_background
-                YralButtonState.Disabled -> R.drawable.pink_gradient_background_disabled
-                YralButtonState.Loading -> R.drawable.pink_gradient_background
+                YralButtonState.Enabled -> Res.drawable.pink_gradient_background
+                YralButtonState.Disabled -> Res.drawable.pink_gradient_background_disabled
+                YralButtonState.Loading -> Res.drawable.pink_gradient_background
             }
 
         YralButtonType.White ->
             when (buttonState) {
-                YralButtonState.Enabled -> R.drawable.white_background
-                YralButtonState.Disabled -> R.drawable.white_background_disabled
-                YralButtonState.Loading -> R.drawable.white_background
+                YralButtonState.Enabled -> Res.drawable.white_background
+                YralButtonState.Disabled -> Res.drawable.white_background_disabled
+                YralButtonState.Loading -> Res.drawable.white_background
             }
 
         YralButtonType.Transparent ->
             when (buttonState) {
-                YralButtonState.Enabled -> R.drawable.transparent_background
-                YralButtonState.Disabled -> R.drawable.transparent_background
-                YralButtonState.Loading -> R.drawable.transparent_background
+                YralButtonState.Enabled -> Res.drawable.transparent_background
+                YralButtonState.Disabled -> Res.drawable.transparent_background
+                YralButtonState.Loading -> Res.drawable.transparent_background
             }
     }

@@ -7,18 +7,23 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.yral.android.R
+import org.jetbrains.compose.resources.DrawableResource
+import yral_mobile.shared.libs.designsystem.generated.resources.Res
+import yral_mobile.shared.libs.designsystem.generated.resources.bronze_gradient
+import yral_mobile.shared.libs.designsystem.generated.resources.golden_gradient
+import yral_mobile.shared.libs.designsystem.generated.resources.silver_gradient
 
 object LeaderboardHelpers {
     const val POS_GOLD = 1
     const val POS_SILVER = 2
     const val POS_BRONZE = 3
 
-    fun getTextDecoration(position: Int): Int =
+    fun getTextDecoration(position: Int): DrawableResource? =
         when (position) {
-            POS_GOLD -> R.drawable.golden_gradient
-            POS_SILVER -> R.drawable.silver_gradient
-            POS_BRONZE -> R.drawable.bronze_gradient
-            else -> 0
+            POS_GOLD -> Res.drawable.golden_gradient
+            POS_SILVER -> Res.drawable.silver_gradient
+            POS_BRONZE -> Res.drawable.bronze_gradient
+            else -> null
         }
 
     @Suppress("MagicNumber")

@@ -22,10 +22,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.yral.android.R
 import com.yral.android.ui.widgets.YralBottomSheet
-import com.yral.android.ui.widgets.YralButton
-import com.yral.android.ui.widgets.YralGradientButton
 import com.yral.shared.analytics.events.GameConcludedCtaType
 import com.yral.shared.features.game.domain.models.GameIcon
+import com.yral.shared.libs.designsystem.component.YralButton
+import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
