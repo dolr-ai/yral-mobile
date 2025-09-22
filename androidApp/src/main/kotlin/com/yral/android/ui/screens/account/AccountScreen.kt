@@ -45,7 +45,6 @@ import com.yral.android.ui.screens.account.AccountScreenConstants.SOCIAL_MEDIA_L
 import com.yral.android.ui.screens.account.nav.AccountComponent
 import com.yral.android.ui.widgets.YralAsyncImage
 import com.yral.android.ui.widgets.YralErrorMessage
-import com.yral.android.ui.widgets.YralGradientButton
 import com.yral.android.ui.widgets.getSVGImageModel
 import com.yral.shared.analytics.events.MenuCtaType
 import com.yral.shared.analytics.events.SignupPageName
@@ -56,6 +55,7 @@ import com.yral.shared.features.account.viewmodel.AccountHelpLinkType
 import com.yral.shared.features.account.viewmodel.AccountsState
 import com.yral.shared.features.account.viewmodel.AccountsViewModel
 import com.yral.shared.features.account.viewmodel.ErrorType
+import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.designsystem.theme.YralDimens

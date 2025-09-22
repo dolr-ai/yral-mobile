@@ -26,12 +26,14 @@ import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.yral.android.R
-import com.yral.android.ui.widgets.YralButton
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.features.auth.analytics.AuthTelemetry
+import com.yral.shared.libs.designsystem.component.YralButton
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import org.koin.compose.koinInject
+import yral_mobile.shared.libs.designsystem.generated.resources.Res
+import yral_mobile.shared.libs.designsystem.generated.resources.google
 
 @Suppress("LongMethod")
 @Composable
@@ -89,7 +91,7 @@ fun SignupView(
             ) {
                 YralButton(
                     text = stringResource(R.string.signup_with_google),
-                    icon = R.drawable.google,
+                    icon = Res.drawable.google,
                 ) {
                     authTelemetry.onSignupJourneySelected()
                     onSignupClicked()
