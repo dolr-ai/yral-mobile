@@ -1,3 +1,5 @@
+import org.gradle.kotlin.dsl.implementation
+
 plugins {
     alias(libs.plugins.yral.shared.library)
     alias(libs.plugins.yral.android.library)
@@ -19,6 +21,8 @@ kotlin {
                 implementation(projects.shared.libs.crashlytics)
                 implementation(projects.shared.core)
                 implementation(libs.koin.compose)
+                implementation(libs.coil.compose)
+                implementation(libs.coil.svg)
             }
         }
         androidMain {

@@ -1,6 +1,5 @@
-package com.yral.android.ui.widgets
+package com.yral.shared.libs.designsystem.component
 
-import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -21,17 +20,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter
+import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
 import coil3.svg.SvgDecoder
-import com.yral.shared.libs.designsystem.component.YralLoader
 import kotlin.math.min
 
-@SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 fun YralAsyncImage(
     imageUrl: Any,
@@ -94,7 +91,7 @@ fun YralAsyncImage(
 @Composable
 fun getSVGImageModel(url: String) =
     ImageRequest
-        .Builder(LocalContext.current)
+        .Builder(LocalPlatformContext.current)
         .data(url)
         .decoderFactory(SvgDecoder.Factory())
         .build()

@@ -19,7 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.yral.android.ui.screens.feed.uiComponets.UserBriefConstants.MAX_LINES_FOR_POST_DESCRIPTION
-import com.yral.android.ui.widgets.YralAsyncImage
+import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 
