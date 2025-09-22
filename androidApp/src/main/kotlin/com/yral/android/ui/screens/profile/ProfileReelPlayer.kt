@@ -38,6 +38,7 @@ import com.yral.android.ui.screens.feed.performance.PrefetchVideoListenerImpl
 import com.yral.android.ui.screens.profile.main.ProfileMainScreenConstants
 import com.yral.android.ui.widgets.YralLoader
 import com.yral.shared.data.feed.domain.FeedDetails
+import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.videoPlayer.YRALReelPlayer
@@ -262,7 +263,7 @@ private fun DeletingOverlay(
                 verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Bottom),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                YralLoader(size = loaderSize, R.raw.read_loader)
+                YralLoader(size = loaderSize, LottieRes.READ_LOADER)
                 Text(
                     text = stringResource(R.string.deleting),
                     style = textStyle,

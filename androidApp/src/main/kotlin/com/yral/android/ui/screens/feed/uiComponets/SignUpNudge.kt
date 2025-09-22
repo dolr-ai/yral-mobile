@@ -23,8 +23,9 @@ import androidx.compose.ui.unit.dp
 import com.yral.android.R
 import com.yral.android.ui.components.signup.SignupView
 import com.yral.android.ui.screens.account.WebViewBottomSheet
-import com.yral.android.ui.widgets.YralLottieAnimation
 import com.yral.shared.analytics.events.SignupPageName
+import com.yral.shared.libs.designsystem.component.lottie.LottieRes
+import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 
@@ -67,7 +68,7 @@ fun SignupNudge(
             )
             YralLottieAnimation(
                 modifier = Modifier.size(36.dp),
-                R.raw.signup_scroll,
+                LottieRes.SIGNUP_SCROLL,
             )
         }
     }

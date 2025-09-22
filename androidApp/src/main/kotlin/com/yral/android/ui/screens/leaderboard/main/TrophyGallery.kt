@@ -46,9 +46,10 @@ import com.yral.android.ui.screens.leaderboard.main.LeaderboardHelpers.getTrophy
 import com.yral.android.ui.screens.leaderboard.main.LeaderboardHelpers.getTrophyImageOffset
 import com.yral.android.ui.screens.leaderboard.main.LeaderboardHelpers.getTrophyImageWidth
 import com.yral.android.ui.widgets.YralLoader
-import com.yral.android.ui.widgets.YralLottieAnimation
 import com.yral.shared.features.game.data.models.LeaderboardMode
 import com.yral.shared.features.game.domain.models.LeaderboardItem
+import com.yral.shared.libs.designsystem.component.lottie.LottieRes
+import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 
@@ -73,8 +74,8 @@ fun TrophyGallery(
         }
     val lottie =
         when (selectedMode) {
-            LeaderboardMode.DAILY -> R.raw.yellow_rays
-            LeaderboardMode.ALL_TIME -> R.raw.purple_rays
+            LeaderboardMode.DAILY -> LottieRes.YELLOW_RAYS
+            LeaderboardMode.ALL_TIME -> LottieRes.PURPLE_RAYS
         }
     Box(
         modifier = Modifier.fillMaxWidth(),

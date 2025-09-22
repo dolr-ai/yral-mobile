@@ -46,10 +46,11 @@ import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstan
 import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.NO_OF_CONFETTI
 import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.PURPLE_BRUSH
 import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.YELLOW_BRUSH
-import com.yral.android.ui.widgets.YralLottieAnimation
 import com.yral.shared.features.game.data.models.LeaderboardMode
 import com.yral.shared.features.game.viewmodel.LeaderBoardState
 import com.yral.shared.features.game.viewmodel.LeaderBoardViewModel
+import com.yral.shared.libs.designsystem.component.lottie.LottieRes
+import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import org.koin.compose.viewmodel.koinViewModel
@@ -251,7 +252,7 @@ fun LeaderboardConfetti(
             repeat(NO_OF_CONFETTI) { index ->
                 key(count) {
                     YralLottieAnimation(
-                        rawRes = R.raw.colorful_confetti_brust,
+                        rawRes = LottieRes.COLORFUL_CONFETTI_BRUST,
                         contentScale = ContentScale.Crop,
                         iterations = 1,
                         onAnimationComplete = {
