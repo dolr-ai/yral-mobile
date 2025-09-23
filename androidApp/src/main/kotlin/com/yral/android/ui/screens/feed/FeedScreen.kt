@@ -36,8 +36,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
 import com.yral.android.R
-import com.yral.android.ui.components.ReportVideo
-import com.yral.android.ui.components.ReportVideoSheet
 import com.yral.android.ui.screens.feed.nav.FeedComponent
 import com.yral.android.ui.screens.feed.performance.PrefetchVideoListenerImpl
 import com.yral.android.ui.screens.feed.performance.VideoListenerImpl
@@ -68,6 +66,8 @@ import com.yral.shared.libs.videoPlayer.YRALReelPlayer
 import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.libs.videoPlayer.util.ReelScrollDirection
 import com.yral.shared.reportVideo.domain.models.ReportSheetState
+import com.yral.shared.reportVideo.ui.ReportVideo
+import com.yral.shared.reportVideo.ui.ReportVideoSheet
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.compose.viewmodel.koinViewModel
 

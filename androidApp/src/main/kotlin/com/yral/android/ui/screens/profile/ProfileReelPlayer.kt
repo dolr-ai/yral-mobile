@@ -38,8 +38,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
 import com.yral.android.R
-import com.yral.android.ui.components.ReportVideo
-import com.yral.android.ui.components.ReportVideoSheet
 import com.yral.android.ui.screens.feed.performance.PrefetchVideoListenerImpl
 import com.yral.android.ui.screens.profile.main.ProfileMainScreenConstants
 import com.yral.shared.data.feed.domain.FeedDetails
@@ -51,6 +49,8 @@ import com.yral.shared.libs.videoPlayer.YRALReelPlayer
 import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.reportVideo.domain.models.ReportSheetState
 import com.yral.shared.reportVideo.domain.models.VideoReportReason
+import com.yral.shared.reportVideo.ui.ReportVideo
+import com.yral.shared.reportVideo.ui.ReportVideoSheet
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
