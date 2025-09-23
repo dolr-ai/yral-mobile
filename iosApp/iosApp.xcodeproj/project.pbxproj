@@ -301,6 +301,8 @@
 		AC32E4702D299E74001DDA43 /* ICPBrandingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E46E2D299E6B001DDA43 /* ICPBrandingView.swift */; };
 		AC32E4792D2AF599001DDA43 /* CacheDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E4782D2AF594001DDA43 /* CacheDTO.swift */; };
 		AC32E47A2D2AF599001DDA43 /* CacheDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E4782D2AF594001DDA43 /* CacheDTO.swift */; };
+		AC36F5CC2E83072A008F12BC /* UpdateSessionDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC36F5CB2E830723008F12BC /* UpdateSessionDTO.swift */; };
+		AC36F5CD2E83072A008F12BC /* UpdateSessionDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC36F5CB2E830723008F12BC /* UpdateSessionDTO.swift */; };
 		AC391EE62DCE476400A8DFA9 /* Signup_scroll_lottie.json in Resources */ = {isa = PBXBuildFile; fileRef = AC391EE52DCE476400A8DFA9 /* Signup_scroll_lottie.json */; };
 		AC391EE72DCE476400A8DFA9 /* Signup_scroll_lottie.json in Resources */ = {isa = PBXBuildFile; fileRef = AC391EE52DCE476400A8DFA9 /* Signup_scroll_lottie.json */; };
 		AC391EE92DCE4DE600A8DFA9 /* DeleteUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC391EE82DCE4DE100A8DFA9 /* DeleteUseCase.swift */; };
@@ -918,6 +920,7 @@
 		AC32E46A2D299DF9001DDA43 /* ShareOptionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareOptionsView.swift; sourceTree = "<group>"; };
 		AC32E46E2D299E6B001DDA43 /* ICPBrandingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ICPBrandingView.swift; sourceTree = "<group>"; };
 		AC32E4782D2AF594001DDA43 /* CacheDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CacheDTO.swift; sourceTree = "<group>"; };
+		AC36F5CB2E830723008F12BC /* UpdateSessionDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateSessionDTO.swift; sourceTree = "<group>"; };
 		AC391EE52DCE476400A8DFA9 /* Signup_scroll_lottie.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Signup_scroll_lottie.json; sourceTree = "<group>"; };
 		AC391EE82DCE4DE100A8DFA9 /* DeleteUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeleteUseCase.swift; sourceTree = "<group>"; };
 		AC3FBE0F2E2BAA0F00CE3EC1 /* MP4DownloadManaging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MP4DownloadManaging.swift; sourceTree = "<group>"; };
@@ -1131,6 +1134,8 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		AC9B77DE2D58C7E300270FC9 /* YralTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = YralTests;
 			sourceTree = "<group>";
 		};
@@ -1650,6 +1655,7 @@
 		AC1F93972DC14A9000F322E1 /* DTO */ = {
 			isa = PBXGroup;
 			children = (
+				AC36F5CB2E830723008F12BC /* UpdateSessionDTO.swift */,
 				ACF63A732DC26C8F00C4BCCC /* TokenClaimsDTO.swift */,
 				AC1F93912DC1494500F322E1 /* TokenRequestDTO.swift */,
 				AC1F93942DC1495100F322E1 /* TokenResponseDTO.swift */,
@@ -3305,13 +3311,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3326,13 +3328,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3494,13 +3492,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3653,6 +3647,7 @@
 				107079622E742034000C7A2C /* LeaderboardView+Constants.swift in Sources */,
 				ACC0D43E2D8C6BF3006DCF5C /* ClearBackgroundView.swift in Sources */,
 				AC4DECA92D3E06AC008EC8F5 /* FooterLoaderView.swift in Sources */,
+				AC36F5CD2E83072A008F12BC /* UpdateSessionDTO.swift in Sources */,
 				10FEA9142E6FEFF1000103EB /* LeaderboardHistoryViewModel.swift in Sources */,
 				AC51C0522DC4E0D200D5BA34 /* RefreshVideosRequest.swift in Sources */,
 				100F64EF2DCC96C9000BC17E /* YralCache.swift in Sources */,
@@ -3976,6 +3971,7 @@
 				107079612E742034000C7A2C /* LeaderboardView+Constants.swift in Sources */,
 				ACC0D43D2D8C6BF3006DCF5C /* ClearBackgroundView.swift in Sources */,
 				AC4DECAA2D3E06AC008EC8F5 /* FooterLoaderView.swift in Sources */,
+				AC36F5CC2E83072A008F12BC /* UpdateSessionDTO.swift in Sources */,
 				10FEA9132E6FEFF1000103EB /* LeaderboardHistoryViewModel.swift in Sources */,
 				100F64EE2DCC96C9000BC17E /* YralCache.swift in Sources */,
 				AC51C0532DC4E0D200D5BA34 /* RefreshVideosRequest.swift in Sources */,
