@@ -234,6 +234,7 @@ class AiVideoGenViewModel internal constructor(
     }
 
     private fun reserveBalance() {
+        if (_state.value.isCreditsAvailable()) return
         _state.value.selectedProvider?.let { selectedProvider ->
             val reservedBalance = selectedProvider.cost?.sats
             reservedBalance?.let { cost ->
