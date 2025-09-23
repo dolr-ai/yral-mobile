@@ -41,7 +41,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yral.android.R
 import com.yral.android.ui.components.DeleteConfirmationSheet
 import com.yral.android.ui.components.signup.AccountInfoView
-import com.yral.android.ui.components.signup.ExtraLinkSheet
 import com.yral.android.ui.screens.account.AccountScreenConstants.SOCIAL_MEDIA_LINK_BOTTOM_SPACER_WEIGHT
 import com.yral.android.ui.screens.account.nav.AccountComponent
 import com.yral.shared.analytics.events.MenuCtaType
@@ -56,6 +55,7 @@ import com.yral.shared.features.auth.viewModel.LoginViewModel
 import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
+import com.yral.shared.libs.designsystem.component.YralWebViewBottomSheet
 import com.yral.shared.libs.designsystem.component.getSVGImageModel
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
@@ -154,6 +154,7 @@ private fun SheetContent(
     onDeleteAccount: () -> Unit,
 ) {
     var extraSheetLink by remember { mutableStateOf("") }
+    val extraSheetState = rememberModalBottomSheetState()
     when (bottomSheetType) {
         is AccountBottomSheet.SignUp -> {
             LoginBottomSheet(
@@ -173,7 +174,7 @@ private fun SheetContent(
                     uriHandler.openUri(linkToOpen.link)
                 }
             } else {
-                WebViewBottomSheet(
+                YralWebViewBottomSheet(
                     link = linkToOpen.link,
                     bottomSheetState = bottomSheetState,
                     onDismissRequest = onDismissRequest,
@@ -205,8 +206,9 @@ private fun SheetContent(
         is AccountBottomSheet.None -> Unit
     }
     if (extraSheetLink.isNotEmpty()) {
-        ExtraLinkSheet(
-            extraSheetLink = extraSheetLink,
+        YralWebViewBottomSheet(
+            link = extraSheetLink,
+            bottomSheetState = extraSheetState,
             onDismissRequest = { extraSheetLink = "" },
         )
     }

@@ -62,7 +62,6 @@ import androidx.paging.compose.itemKey
 import com.yral.android.R
 import com.yral.android.ui.components.DeleteConfirmationSheet
 import com.yral.android.ui.components.signup.AccountInfoView
-import com.yral.android.ui.components.signup.ExtraLinkSheet
 import com.yral.android.ui.screens.account.LoginBottomSheet
 import com.yral.android.ui.screens.profile.ProfileReelPlayer
 import com.yral.android.ui.screens.profile.main.ProfileMainScreenConstants.GRID_ITEM_ASPECT_RATIO
@@ -86,6 +85,7 @@ import com.yral.shared.libs.designsystem.component.YralButtonType
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.component.YralLoader
+import com.yral.shared.libs.designsystem.component.YralWebViewBottomSheet
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
@@ -291,6 +291,7 @@ private fun MainContent(
             }
         }
     }
+    val extraSheetState = rememberModalBottomSheetState()
     var extraSheetLink by remember { mutableStateOf("") }
     when (state.bottomSheet) {
         ProfileBottomSheet.None -> Unit
@@ -304,8 +305,9 @@ private fun MainContent(
         }
     }
     if (extraSheetLink.isNotEmpty()) {
-        ExtraLinkSheet(
-            extraSheetLink = extraSheetLink,
+        YralWebViewBottomSheet(
+            link = extraSheetLink,
+            bottomSheetState = extraSheetState,
             onDismissRequest = { extraSheetLink = "" },
         )
     }

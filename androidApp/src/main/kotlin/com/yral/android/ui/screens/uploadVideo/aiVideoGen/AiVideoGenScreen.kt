@@ -49,7 +49,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import co.touchlab.kermit.Logger
 import com.yral.android.R
-import com.yral.android.ui.components.signup.ExtraLinkSheet
 import com.yral.android.ui.screens.account.LoginBottomSheet
 import com.yral.android.ui.screens.uploadVideo.aiVideoGen.AiVideoGenScreenConstants.LOADING_MESSAGE_DELAY
 import com.yral.android.ui.widgets.video.YralVideoPlayer
@@ -66,6 +65,7 @@ import com.yral.shared.libs.designsystem.component.YralConfirmationMessage
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.YralMaskedVectorTextV2
+import com.yral.shared.libs.designsystem.component.YralWebViewBottomSheet
 import com.yral.shared.libs.designsystem.component.getSVGImageModel
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
@@ -156,6 +156,7 @@ private fun AiVideoGenScreenPrompts(
 ) {
     var extraSheetLink by remember { mutableStateOf("") }
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val extraSheetState = rememberModalBottomSheetState()
     when (val sheetType = viewState.bottomSheetType) {
         is BottomSheetType.ModelSelection -> {
             ModelSelection(
@@ -210,8 +211,9 @@ private fun AiVideoGenScreenPrompts(
         is BottomSheetType.None -> Unit
     }
     if (extraSheetLink.isNotEmpty()) {
-        ExtraLinkSheet(
-            extraSheetLink = extraSheetLink,
+        YralWebViewBottomSheet(
+            link = extraSheetLink,
+            bottomSheetState = extraSheetState,
             onDismissRequest = { extraSheetLink = "" },
         )
     }
