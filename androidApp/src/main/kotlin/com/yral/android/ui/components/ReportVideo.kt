@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.feed.uiComponets
+package com.yral.android.ui.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -38,12 +38,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.yral.android.R
-import com.yral.shared.features.feed.viewmodel.VideoReportReason
 import com.yral.shared.libs.designsystem.component.YralBottomSheet
 import com.yral.shared.libs.designsystem.component.YralButtonState
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import com.yral.shared.reportVideo.domain.models.VideoReportReason
 
 @Composable
 fun ReportVideo(

@@ -1,4 +1,4 @@
-package com.yral.shared.features.feed.data.models
+package com.yral.shared.reportVideo.data.models
 
 import com.yral.shared.core.rust.KotlinDelegatedIdentityWire
 import kotlinx.serialization.SerialName

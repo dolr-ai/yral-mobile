@@ -14,6 +14,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(projects.shared.core)
+            implementation(projects.shared.featureLibs.reportVideo)
             implementation(projects.shared.libs.preferences)
             implementation(projects.shared.libs.http)
             implementation(projects.shared.libs.analytics)

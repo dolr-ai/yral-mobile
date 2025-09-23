@@ -23,14 +23,16 @@ import com.yral.shared.features.feed.domain.useCases.CheckVideoVoteUseCase
 import com.yral.shared.features.feed.domain.useCases.FetchFeedDetailsUseCase
 import com.yral.shared.features.feed.domain.useCases.FetchMoreFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.GetInitialFeedUseCase
-import com.yral.shared.features.feed.domain.useCases.ReportRequestParams
-import com.yral.shared.features.feed.domain.useCases.ReportVideoUseCase
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.libs.routing.deeplink.engine.UrlBuilder
 import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
 import com.yral.shared.libs.sharing.LinkGenerator
 import com.yral.shared.libs.sharing.LinkInput
 import com.yral.shared.libs.sharing.ShareService
+import com.yral.shared.reportVideo.domain.ReportRequestParams
+import com.yral.shared.reportVideo.domain.ReportVideoUseCase
+import com.yral.shared.reportVideo.domain.models.ReportSheetState
+import com.yral.shared.reportVideo.domain.models.VideoReportReason
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
@@ -627,31 +629,6 @@ data class VideoData(
     val lastKnownTotalTime: Int = 0,
     val isFirstTimeUpdate: Boolean = true,
 )
-
-sealed interface ReportSheetState {
-    data object Closed : ReportSheetState
-    data class Open(
-        val pageNo: Int,
-        val reasons: List<VideoReportReason> =
-            listOf(
-                VideoReportReason.NUDITY_PORN,
-                VideoReportReason.VIOLENCE,
-                VideoReportReason.OFFENSIVE,
-                VideoReportReason.SPAM,
-                VideoReportReason.OTHERS,
-            ),
-    ) : ReportSheetState
-}
-
-enum class VideoReportReason(
-    val reason: String,
-) {
-    NUDITY_PORN("Nudity / Porn"),
-    VIOLENCE("Violence / Gore"),
-    OFFENSIVE("Offensive"),
-    SPAM("Spam / Ad"),
-    OTHERS("Others"),
-}
 
 @Suppress("MagicNumber")
 internal fun Int.percentageOf(total: Int): Double =

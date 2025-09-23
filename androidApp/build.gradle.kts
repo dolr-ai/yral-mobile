@@ -143,6 +143,7 @@ dependencies {
     implementation(projects.shared.features.wallet)
     implementation(projects.shared.libs.formatters)
     implementation(projects.shared.libs.designsystem)
+    implementation(projects.shared.featureLibs.reportVideo)
     implementation(compose.components.resources)
 }
 

@@ -1,7 +1,7 @@
-package com.yral.shared.features.feed.domain
+package com.yral.shared.reportVideo.domain.models
 
 import com.yral.shared.core.rust.KotlinDelegatedIdentityWire
-import com.yral.shared.features.feed.data.models.ReportRequestDto
+import com.yral.shared.reportVideo.data.models.ReportRequestDto
 
 data class ReportRequest(
     val postId: String,
@@ -14,7 +14,7 @@ data class ReportRequest(
     val delegatedIdentityWire: KotlinDelegatedIdentityWire,
 )
 
-internal fun ReportRequest.toDto(): ReportRequestDto =
+fun ReportRequest.toDto(): ReportRequestDto =
     ReportRequestDto(
         postId = postId,
         videoId = videoId,
