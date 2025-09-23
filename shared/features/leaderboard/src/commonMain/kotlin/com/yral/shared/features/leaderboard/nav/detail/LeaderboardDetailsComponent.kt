@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.leaderboard.details
+package com.yral.shared.features.leaderboard.nav.detail
 
 import com.arkivanov.decompose.ComponentContext
 

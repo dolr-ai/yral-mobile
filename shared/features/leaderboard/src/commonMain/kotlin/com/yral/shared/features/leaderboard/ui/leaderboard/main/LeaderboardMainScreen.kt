@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.leaderboard.main
+package com.yral.shared.features.leaderboard.ui.leaderboard.main
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -34,26 +34,30 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.yral.android.R
-import com.yral.android.ui.screens.leaderboard.LeaderboardRow
-import com.yral.android.ui.screens.leaderboard.LeaderboardTableHeader
-import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.CONFETTI_ITERATIONS
-import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.CONFETTI_SCALE
-import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.CONFETTI_SIZE_FACTOR
-import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.NO_OF_CONFETTI
-import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.PURPLE_BRUSH
-import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.YELLOW_BRUSH
 import com.yral.shared.features.leaderboard.data.models.LeaderboardMode
+import com.yral.shared.features.leaderboard.nav.main.LeaderboardMainComponent
+import com.yral.shared.features.leaderboard.ui.leaderboard.LeaderboardRow
+import com.yral.shared.features.leaderboard.ui.leaderboard.LeaderboardTableHeader
+import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardMainScreenConstants.CONFETTI_ITERATIONS
+import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardMainScreenConstants.CONFETTI_SCALE
+import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardMainScreenConstants.CONFETTI_SIZE_FACTOR
+import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardMainScreenConstants.NO_OF_CONFETTI
+import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardMainScreenConstants.PURPLE_BRUSH
+import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardMainScreenConstants.YELLOW_BRUSH
 import com.yral.shared.features.leaderboard.viewmodel.LeaderBoardState
 import com.yral.shared.features.leaderboard.viewmodel.LeaderBoardViewModel
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
+import yral_mobile.shared.features.leaderboard.generated.resources.Res
+import yral_mobile.shared.features.leaderboard.generated.resources.purple_leaderboard
+import yral_mobile.shared.features.leaderboard.generated.resources.yellow_leaderboard
 import kotlin.math.max
 import kotlin.math.min
 
@@ -107,8 +111,8 @@ fun LeaderboardMainScreen(
     }
     val leaderboardBG =
         when (state.selectedMode) {
-            LeaderboardMode.DAILY -> R.drawable.yellow_leaderboard
-            LeaderboardMode.ALL_TIME -> R.drawable.purple_leaderboard
+            LeaderboardMode.DAILY -> Res.drawable.yellow_leaderboard
+            LeaderboardMode.ALL_TIME -> Res.drawable.purple_leaderboard
         }
     Box(modifier = modifier) {
         LazyColumn(
@@ -195,7 +199,7 @@ private fun LeaderboardHeader(
     component: LeaderboardMainComponent,
     isTrophyVisible: Boolean,
     viewModel: LeaderBoardViewModel,
-    leaderboardBG: Int,
+    leaderboardBG: DrawableResource,
     trackOpenHistory: () -> Unit,
 ) {
     val brushColors =

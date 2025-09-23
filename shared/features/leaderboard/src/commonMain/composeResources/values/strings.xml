@@ -1,0 +1,11 @@
+<resources>
+    <string name="position">Position</string>
+    <string name="games_won">Games Won</string>
+    <string name="player_id">Player ID</string>
+    <string name="you">You</string>
+    <string name="new_">New</string>
+    <string name="daily_wins">Daily Wins</string>
+    <string name="all_wins">All Wins</string>
+    <string name="end_in">Ends %1$s</string>
+    <string name="weekly_wins">Weekly Wins</string>
+</resources>

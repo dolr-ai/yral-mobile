@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.leaderboard.main
+package com.yral.shared.features.leaderboard.ui.leaderboard.main
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -6,12 +6,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import com.yral.android.R
 import org.jetbrains.compose.resources.DrawableResource
-import yral_mobile.shared.libs.designsystem.generated.resources.Res
+import yral_mobile.shared.features.leaderboard.generated.resources.Res
+import yral_mobile.shared.features.leaderboard.generated.resources.bronze_border
+import yral_mobile.shared.features.leaderboard.generated.resources.bronze_ring
+import yral_mobile.shared.features.leaderboard.generated.resources.golden_border
+import yral_mobile.shared.features.leaderboard.generated.resources.golden_ring
+import yral_mobile.shared.features.leaderboard.generated.resources.silver_border
+import yral_mobile.shared.features.leaderboard.generated.resources.silver_ring
 import yral_mobile.shared.libs.designsystem.generated.resources.bronze_gradient
 import yral_mobile.shared.libs.designsystem.generated.resources.golden_gradient
 import yral_mobile.shared.libs.designsystem.generated.resources.silver_gradient
+import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 object LeaderboardHelpers {
     const val POS_GOLD = 1
@@ -20,9 +26,9 @@ object LeaderboardHelpers {
 
     fun getTextDecoration(position: Int): DrawableResource? =
         when (position) {
-            POS_GOLD -> Res.drawable.golden_gradient
-            POS_SILVER -> Res.drawable.silver_gradient
-            POS_BRONZE -> Res.drawable.bronze_gradient
+            POS_GOLD -> DesignRes.drawable.golden_gradient
+            POS_SILVER -> DesignRes.drawable.silver_gradient
+            POS_BRONZE -> DesignRes.drawable.bronze_gradient
             else -> null
         }
 
@@ -70,20 +76,20 @@ object LeaderboardHelpers {
         }
     }
 
-    fun getProfileImageRing(position: Int): Int =
+    fun getProfileImageRing(position: Int): DrawableResource? =
         when (position) {
-            POS_GOLD -> R.drawable.golden_ring
-            POS_SILVER -> R.drawable.silver_ring
-            POS_BRONZE -> R.drawable.bronze_ring
-            else -> 0
+            POS_GOLD -> Res.drawable.golden_ring
+            POS_SILVER -> Res.drawable.silver_ring
+            POS_BRONZE -> Res.drawable.bronze_ring
+            else -> null
         }
 
-    fun getUserBriefBorder(position: Int): Int =
+    fun getUserBriefBorder(position: Int): DrawableResource? =
         when (position) {
-            POS_GOLD -> R.drawable.golden_border
-            POS_SILVER -> R.drawable.silver_border
-            POS_BRONZE -> R.drawable.bronze_border
-            else -> 0
+            POS_GOLD -> Res.drawable.golden_border
+            POS_SILVER -> Res.drawable.silver_border
+            POS_BRONZE -> Res.drawable.bronze_border
+            else -> null
         }
 
     fun getTrophyImageWidth(position: Int): Dp =

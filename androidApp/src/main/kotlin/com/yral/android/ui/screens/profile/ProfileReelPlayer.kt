@@ -51,6 +51,9 @@ import com.yral.shared.reportVideo.domain.models.ReportSheetState
 import com.yral.shared.reportVideo.domain.models.VideoReportReason
 import com.yral.shared.reportVideo.ui.ReportVideo
 import com.yral.shared.reportVideo.ui.ReportVideoSheet
+import org.jetbrains.compose.resources.painterResource
+import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
+import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -173,7 +176,7 @@ private fun Header(
     ) {
         Image(
             modifier = Modifier.size(24.dp).clickable { onBack() },
-            painter = painterResource(id = R.drawable.arrow_left),
+            painter = painterResource(DesignRes.drawable.arrow_left),
             contentDescription = "back",
         )
         Text(

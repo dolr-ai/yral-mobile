@@ -1,11 +1,11 @@
-package com.yral.android.ui.screens.leaderboard
+package com.yral.shared.features.leaderboard.nav
 
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.value.Value
-import com.yral.android.ui.screens.home.nav.HomeChildSnapshotProvider
-import com.yral.android.ui.screens.leaderboard.details.LeaderboardDetailsComponent
-import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainComponent
+import com.yral.shared.features.leaderboard.nav.detail.LeaderboardDetailsComponent
+import com.yral.shared.features.leaderboard.nav.main.LeaderboardMainComponent
+import com.yral.shared.libs.arch.nav.HomeChildSnapshotProvider
 import kotlinx.serialization.Serializable
 
 abstract class LeaderboardComponent : HomeChildSnapshotProvider {
