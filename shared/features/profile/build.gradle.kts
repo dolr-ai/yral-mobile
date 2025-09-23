@@ -29,7 +29,7 @@ kotlin {
             implementation(projects.shared.libs.crashlytics)
             implementation(projects.shared.libs.featureFlag)
             implementation(projects.shared.features.account)
-            implementation(projects.shared.featureLibs.reportVideo)
+            implementation(projects.shared.features.reportVideo)
 
             implementation(libs.androidx.paging.common)
         }
