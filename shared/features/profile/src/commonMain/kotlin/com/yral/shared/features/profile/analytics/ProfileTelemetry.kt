@@ -11,8 +11,10 @@ import com.yral.shared.analytics.events.UploadVideoClickedEventData
 import com.yral.shared.analytics.events.VideoClickedEventData
 import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.analytics.events.VideoDeletedEventData
+import com.yral.shared.analytics.events.VideoReportedEventData
 import com.yral.shared.analytics.events.VideoShareClickedEventData
 import com.yral.shared.data.feed.domain.FeedDetails
+import com.yral.shared.reportVideo.domain.models.VideoReportReason
 
 class ProfileTelemetry(
     private val analyticsManager: AnalyticsManager,
@@ -87,6 +89,44 @@ class ProfileTelemetry(
                 SourceScreen.PROFILE,
                 feedDetails.principalID == userPrincipalId,
             ),
+        )
+    }
+
+    fun videoClicked(
+        feedDetails: FeedDetails,
+        ctaType: CtaType,
+    ) {
+        analyticsManager.trackEvent(
+            event =
+                VideoClickedEventData(
+                    videoId = feedDetails.videoID,
+                    publisherUserId = feedDetails.principalID,
+                    likeCount = feedDetails.likeCount.toLong(),
+                    viewCount = feedDetails.viewCount.toLong(),
+                    isNsfw = feedDetails.isNSFW(),
+                    ctaType = ctaType,
+                    shareCount = 0,
+                    isGameEnabled = true,
+                    gameType = GameType.SMILEY,
+                    pageName = CategoryName.PROFILE,
+                ),
+        )
+    }
+
+    fun videoReportedSuccessfully(
+        feedDetails: FeedDetails,
+        reason: VideoReportReason,
+    ) {
+        analyticsManager.trackEvent(
+            event =
+                VideoReportedEventData(
+                    videoId = feedDetails.videoID,
+                    publisherUserId = feedDetails.principalID,
+                    isNsfw = feedDetails.isNSFW(),
+                    isGameEnabled = true,
+                    gameType = GameType.SMILEY,
+                    reason = reason.reason,
+                ),
         )
     }
 }
