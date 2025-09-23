@@ -42,8 +42,6 @@ import com.yral.android.ui.screens.feed.performance.VideoListenerImpl
 import com.yral.android.ui.screens.feed.uiComponets.GameToggle
 import com.yral.android.ui.screens.feed.uiComponets.HowToPlay
 import com.yral.android.ui.screens.feed.uiComponets.RefreshBalanceAnimation
-import com.yral.android.ui.screens.feed.uiComponets.ReportVideo
-import com.yral.android.ui.screens.feed.uiComponets.ReportVideoSheet
 import com.yral.android.ui.screens.feed.uiComponets.SignupNudge
 import com.yral.android.ui.screens.feed.uiComponets.UserBrief
 import com.yral.android.ui.screens.game.AboutGameSheet
@@ -56,7 +54,6 @@ import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.PRE_FETCH_BEFORE_LAST
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.SIGN_UP_PAGE
 import com.yral.shared.features.feed.viewmodel.OverlayType
-import com.yral.shared.features.feed.viewmodel.ReportSheetState
 import com.yral.shared.features.game.viewmodel.GameState
 import com.yral.shared.features.game.viewmodel.GameViewModel
 import com.yral.shared.features.game.viewmodel.NudgeType
@@ -68,6 +65,9 @@ import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.videoPlayer.YRALReelPlayer
 import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.libs.videoPlayer.util.ReelScrollDirection
+import com.yral.shared.reportVideo.domain.models.ReportSheetState
+import com.yral.shared.reportVideo.ui.ReportVideo
+import com.yral.shared.reportVideo.ui.ReportVideoSheet
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.compose.viewmodel.koinViewModel
 

@@ -1,6 +1,8 @@
 package com.yral.android.ui.screens.profile
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -15,7 +17,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -43,17 +47,28 @@ import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.videoPlayer.YRALReelPlayer
 import com.yral.shared.libs.videoPlayer.model.Reels
+import com.yral.shared.reportVideo.domain.models.ReportSheetState
+import com.yral.shared.reportVideo.domain.models.VideoReportReason
+import com.yral.shared.reportVideo.ui.ReportVideo
+import com.yral.shared.reportVideo.ui.ReportVideoSheet
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileReelPlayer(
     reelVideos: LazyPagingItems<FeedDetails>,
     initialPage: Int,
     deletingVideoId: String,
+    isReporting: Boolean,
+    reportSheetState: ReportSheetState,
+    onReportClick: (pageNo: Int, video: FeedDetails) -> Unit,
+    dismissReportSheet: (video: FeedDetails) -> Unit,
+    reportVideo: (reason: VideoReportReason, text: String, pageNo: Int, video: FeedDetails) -> Unit,
     onBack: () -> Unit,
     onDeleteVideo: (FeedDetails) -> Unit,
     onShareClick: (FeedDetails) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val videoReels =
         remember(reelVideos.itemSnapshotList) {
             reelVideos.itemSnapshotList.items.map { it.toReel() }
@@ -76,9 +91,22 @@ fun ProfileReelPlayer(
                     currentVideo = currentVideo,
                     isDeleting = deletingVideoId == currentVideo.videoID,
                     onBack = onBack,
+                    onReportClick = { onReportClick(pageNo, currentVideo) },
                     onDeleteVideo = { onDeleteVideo(currentVideo) },
                     onShareClick = { onShareClick(currentVideo) },
                 )
+                when (val reportSheetState = reportSheetState) {
+                    ReportSheetState.Closed -> Unit
+                    is ReportSheetState.Open -> {
+                        ReportVideoSheet(
+                            onDismissRequest = { dismissReportSheet(currentVideo) },
+                            bottomSheetState = bottomSheetState,
+                            isLoading = isReporting,
+                            reasons = reportSheetState.reasons,
+                            onSubmit = { reason, text -> reportVideo(reason, text, pageNo, currentVideo) },
+                        )
+                    }
+                }
             }
         }
     }
@@ -89,6 +117,7 @@ private fun ProfileReelOverlay(
     currentVideo: FeedDetails,
     isDeleting: Boolean,
     onBack: () -> Unit,
+    onReportClick: () -> Unit,
     onDeleteVideo: () -> Unit,
     onShareClick: () -> Unit,
 ) {
@@ -113,6 +142,7 @@ private fun ProfileReelOverlay(
             )
             ActionsRight(
                 modifier = Modifier.align(Alignment.BottomEnd).padding(end = 16.dp, bottom = 89.dp),
+                onReportClick = onReportClick,
                 onShareClick = onShareClick,
                 onDeleteVideo = onDeleteVideo,
             )
@@ -195,6 +225,7 @@ private fun Caption(
 @Composable
 private fun ActionsRight(
     modifier: Modifier,
+    onReportClick: () -> Unit,
     onShareClick: () -> Unit,
     onDeleteVideo: () -> Unit,
 ) {
@@ -205,6 +236,10 @@ private fun ActionsRight(
     ) {
         ShareIcon(
             onClick = onShareClick,
+        )
+
+        ReportVideo(
+            onReportClicked = onReportClick,
         )
 
         DeleteIcon(
@@ -252,8 +287,8 @@ private fun DeletingOverlay(
 ) {
     AnimatedVisibility(
         visible = isDeleting,
-        enter = androidx.compose.animation.fadeIn(),
-        exit = androidx.compose.animation.fadeOut(),
+        enter = fadeIn(),
+        exit = fadeOut(),
     ) {
         Box(
             modifier = Modifier.fillMaxSize().background(YralColors.ScrimColor).clickable { },
@@ -276,7 +311,7 @@ private fun DeletingOverlay(
 
 private fun FeedDetails.toReel() =
     Reels(
-        videoUrl = url.toString(),
-        thumbnailUrl = thumbnail.toString(),
+        videoUrl = url,
+        thumbnailUrl = thumbnail,
         videoId = videoID,
     )

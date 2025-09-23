@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.feed.uiComponets
+package com.yral.shared.reportVideo.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -33,17 +33,31 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.yral.android.R
-import com.yral.shared.features.feed.viewmodel.VideoReportReason
 import com.yral.shared.libs.designsystem.component.YralBottomSheet
 import com.yral.shared.libs.designsystem.component.YralButtonState
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import com.yral.shared.reportVideo.domain.models.VideoReportReason
+import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
+import yral_mobile.shared.features.reportvideo.generated.resources.Res
+import yral_mobile.shared.features.reportvideo.generated.resources.add_details
+import yral_mobile.shared.features.reportvideo.generated.resources.please_provide_more_details
+import yral_mobile.shared.features.reportvideo.generated.resources.reason_nudity
+import yral_mobile.shared.features.reportvideo.generated.resources.reason_offensive
+import yral_mobile.shared.features.reportvideo.generated.resources.reason_others
+import yral_mobile.shared.features.reportvideo.generated.resources.reason_spam
+import yral_mobile.shared.features.reportvideo.generated.resources.reason_violence
+import yral_mobile.shared.features.reportvideo.generated.resources.report_video
+import yral_mobile.shared.features.reportvideo.generated.resources.report_video_question
+import yral_mobile.shared.features.reportvideo.generated.resources.submit
+import yral_mobile.shared.libs.designsystem.generated.resources.exclamation
+import yral_mobile.shared.libs.designsystem.generated.resources.radio_selected
+import yral_mobile.shared.libs.designsystem.generated.resources.radio_unselected
+import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @Composable
 fun ReportVideo(
@@ -57,7 +71,7 @@ fun ReportVideo(
                     .size(36.dp)
                     .padding(1.dp)
                     .clickable { onReportClicked() },
-            painter = painterResource(id = R.drawable.exclamation),
+            painter = painterResource(DesignRes.drawable.exclamation),
             contentDescription = "report video",
             contentScale = ContentScale.None,
         )
@@ -108,7 +122,7 @@ fun ReportVideoSheet(
                 onTextUpdate = { text = it },
             )
             YralGradientButton(
-                text = stringResource(R.string.submit),
+                text = stringResource(Res.string.submit),
                 buttonState = buttonState,
             ) {
                 selectedReason?.let {
@@ -127,14 +141,14 @@ private fun VideoReportSheetTitle() {
     ) {
         Text(
             modifier = Modifier.fillMaxWidth(),
-            text = stringResource(R.string.report_video),
+            text = stringResource(Res.string.report_video),
             style = LocalAppTopography.current.xlSemiBold,
             color = Color.White,
             textAlign = TextAlign.Center,
         )
         Text(
             modifier = Modifier.fillMaxWidth(),
-            text = stringResource(R.string.report_video_question),
+            text = stringResource(Res.string.report_video_question),
             style = LocalAppTopography.current.regRegular,
             color = Color.White,
             textAlign = TextAlign.Center,
@@ -207,7 +221,7 @@ private fun ReasonDetailsInput(
     ) {
         Text(
             modifier = Modifier.fillMaxWidth(),
-            text = stringResource(R.string.please_provide_more_details),
+            text = stringResource(Res.string.please_provide_more_details),
             style = LocalAppTopography.current.baseMedium,
             color = YralColors.Neutral300,
         )
@@ -233,7 +247,7 @@ private fun ReasonDetailsInput(
             textStyle = LocalAppTopography.current.baseRegular,
             placeholder = {
                 Text(
-                    text = stringResource(R.string.add_details),
+                    text = stringResource(Res.string.add_details),
                     style = LocalAppTopography.current.baseRegular,
                     color = YralColors.Neutral600,
                 )
@@ -263,12 +277,11 @@ private fun ReasonItem(
             modifier = Modifier.size(18.dp),
             painter =
                 painterResource(
-                    id =
-                        if (isSelected) {
-                            R.drawable.radio_selected
-                        } else {
-                            R.drawable.radio_unselected
-                        },
+                    if (isSelected) {
+                        DesignRes.drawable.radio_selected
+                    } else {
+                        DesignRes.drawable.radio_unselected
+                    },
                 ),
             contentDescription = "image description",
             contentScale = ContentScale.None,
@@ -284,9 +297,9 @@ private fun ReasonItem(
 @Composable
 private fun VideoReportReason.displayText(): String =
     when (this) {
-        VideoReportReason.NUDITY_PORN -> stringResource(R.string.reason_nudity)
-        VideoReportReason.VIOLENCE -> stringResource(R.string.reason_violence)
-        VideoReportReason.OFFENSIVE -> stringResource(R.string.reason_offensive)
-        VideoReportReason.SPAM -> stringResource(R.string.reason_spam)
-        VideoReportReason.OTHERS -> stringResource(R.string.reason_others)
+        VideoReportReason.NUDITY_PORN -> stringResource(Res.string.reason_nudity)
+        VideoReportReason.VIOLENCE -> stringResource(Res.string.reason_violence)
+        VideoReportReason.OFFENSIVE -> stringResource(Res.string.reason_offensive)
+        VideoReportReason.SPAM -> stringResource(Res.string.reason_spam)
+        VideoReportReason.OTHERS -> stringResource(Res.string.reason_others)
     }

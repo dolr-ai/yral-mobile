@@ -1,18 +1,17 @@
-package com.yral.shared.features.feed.domain.useCases
+package com.yral.shared.reportVideo.domain
 
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.rust.KotlinDelegatedIdentityWire
 import com.yral.shared.core.session.SessionManager
-import com.yral.shared.features.feed.domain.IFeedRepository
-import com.yral.shared.features.feed.domain.ReportRequest
 import com.yral.shared.libs.arch.domain.SuspendUseCase
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
+import com.yral.shared.reportVideo.domain.models.ReportRequest
 import com.yral.shared.rust.service.utils.delegatedIdentityWireToJson
 import kotlinx.serialization.json.Json
 
 class ReportVideoUseCase(
-    private val feedRepository: IFeedRepository,
+    private val repository: IReportVideoRepository,
     private val sessionManager: SessionManager,
     private val json: Json,
     appDispatchers: AppDispatchers,
@@ -26,7 +25,7 @@ class ReportVideoUseCase(
             val identityWireJson = delegatedIdentityWireToJson(identity)
             val delegatedIdentityWire =
                 json.decodeFromString<KotlinDelegatedIdentityWire>(identityWireJson)
-            return feedRepository
+            return repository
                 .reportVideo(
                     ReportRequest(
                         postId = parameter.postId,

@@ -170,6 +170,30 @@ fun ProfileMainScreen(
                                 .coerceAtMost(profileVideos.itemCount - 1),
                         deletingVideoId = deletingVideoId,
                         onBack = { viewModel.closeVideoReel() },
+                        isReporting = state.isReporting,
+                        reportSheetState = state.reportSheetState,
+                        onReportClick = { pageNo, video ->
+                            viewModel.toggleReportSheet(
+                                isOpen = true,
+                                currentDetail = video,
+                                pageNo = pageNo,
+                            )
+                        },
+                        dismissReportSheet = { video ->
+                            viewModel.toggleReportSheet(
+                                isOpen = false,
+                                currentDetail = video,
+                                pageNo = 0,
+                            )
+                        },
+                        reportVideo = { reason, text, pageNo, video ->
+                            viewModel.reportVideo(
+                                reason = reason,
+                                text = text,
+                                pageNo = pageNo,
+                                currentFeed = video,
+                            )
+                        },
                         onDeleteVideo = { video ->
                             viewModel.confirmDelete(
                                 feedDetails = video,

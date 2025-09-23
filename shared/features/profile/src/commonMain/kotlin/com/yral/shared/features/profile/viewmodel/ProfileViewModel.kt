@@ -14,6 +14,7 @@ import com.github.michaelbull.result.onSuccess
 import com.yral.featureflag.FeatureFlagManager
 import com.yral.featureflag.WalletFeatureFlags
 import com.yral.featureflag.accountFeatureFlags.AccountFeatureFlags
+import com.yral.shared.analytics.events.CtaType
 import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.AccountInfo
@@ -31,6 +32,10 @@ import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
 import com.yral.shared.libs.sharing.LinkGenerator
 import com.yral.shared.libs.sharing.LinkInput
 import com.yral.shared.libs.sharing.ShareService
+import com.yral.shared.reportVideo.domain.ReportRequestParams
+import com.yral.shared.reportVideo.domain.ReportVideoUseCase
+import com.yral.shared.reportVideo.domain.models.ReportSheetState
+import com.yral.shared.reportVideo.domain.models.VideoReportReason
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -40,10 +45,12 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+@Suppress("LongParameterList")
 class ProfileViewModel(
     private val sessionManager: SessionManager,
     private val profileRepository: ProfileRepository,
     private val deleteVideoUseCase: DeleteVideoUseCase,
+    private val reportVideoUseCase: ReportVideoUseCase,
     private val profileTelemetry: ProfileTelemetry,
     private val shareService: ShareService,
     private val urlBuilder: UrlBuilder,
@@ -244,6 +251,52 @@ class ProfileViewModel(
     }
 
     fun getTncLink(): String = flagManager.get(AccountFeatureFlags.AccountLinks.Links).tnc
+
+    fun toggleReportSheet(
+        isOpen: Boolean,
+        currentDetail: FeedDetails,
+        pageNo: Int,
+    ) {
+        var sheetState: ReportSheetState = ReportSheetState.Closed
+        if (isOpen) {
+            profileTelemetry.videoClicked(
+                feedDetails = currentDetail,
+                ctaType = CtaType.REPORT,
+            )
+            sheetState = ReportSheetState.Open(pageNo)
+        }
+        _state.update { it.copy(reportSheetState = sheetState) }
+    }
+
+    fun reportVideo(
+        pageNo: Int,
+        currentFeed: FeedDetails,
+        reason: VideoReportReason,
+        text: String,
+    ) {
+        viewModelScope.launch {
+            _state.update { it.copy(isReporting = true) }
+            reportVideoUseCase
+                .invoke(
+                    parameter =
+                        ReportRequestParams(
+                            postId = currentFeed.postID,
+                            videoId = currentFeed.videoID,
+                            reason = text.ifEmpty { reason.reason },
+                            canisterID = currentFeed.canisterID,
+                            principal = currentFeed.principalID,
+                        ),
+                ).onSuccess { _ ->
+                    _state.update { it.copy(isReporting = false) }
+                    profileTelemetry.videoReportedSuccessfully(currentFeed, reason)
+                    toggleReportSheet(false, currentFeed, pageNo)
+                    // Remove video from paging source
+                }.onFailure {
+                    _state.update { it.copy(isReporting = false) }
+                    toggleReportSheet(true, currentFeed, pageNo)
+                }
+        }
+    }
 }
 
 data class ViewState(
@@ -253,6 +306,8 @@ data class ViewState(
     val manualRefreshTriggered: Boolean = false,
     val isWalletEnabled: Boolean = false,
     val bottomSheet: ProfileBottomSheet = ProfileBottomSheet.None,
+    val isReporting: Boolean = false,
+    val reportSheetState: ReportSheetState = ReportSheetState.Closed,
 )
 
 sealed interface ProfileBottomSheet {

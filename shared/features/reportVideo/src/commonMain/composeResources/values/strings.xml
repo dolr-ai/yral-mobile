@@ -1,0 +1,12 @@
+<resources>
+    <string name="reason_nudity">Nudity / Porn</string>
+    <string name="reason_violence">Violence / Gore</string>
+    <string name="reason_offensive">Offensive</string>
+    <string name="reason_spam">Spam / Ad</string>
+    <string name="reason_others">Others</string>
+    <string name="report_video">Report Video</string>
+    <string name="report_video_question">Why are you reporting this post?</string>
+    <string name="submit">Submit</string>
+    <string name="please_provide_more_details">Please provide more details.</string>
+    <string name="add_details">Add details</string>
+</resources>
