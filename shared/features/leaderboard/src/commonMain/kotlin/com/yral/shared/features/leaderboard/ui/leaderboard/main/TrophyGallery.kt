@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.leaderboard.main
+package com.yral.shared.features.leaderboard.ui.leaderboard.main
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -28,30 +28,35 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import com.yral.android.R
-import com.yral.android.ui.screens.leaderboard.UserBriefProfileImage
-import com.yral.android.ui.screens.leaderboard.main.LeaderboardHelpers.MAX_USERS_PRINCIPAL_LENGTH
-import com.yral.android.ui.screens.leaderboard.main.LeaderboardHelpers.MAX_USERS_WITH_DUPLICATE_RANK
-import com.yral.android.ui.screens.leaderboard.main.LeaderboardHelpers.POS_BRONZE
-import com.yral.android.ui.screens.leaderboard.main.LeaderboardHelpers.POS_GOLD
-import com.yral.android.ui.screens.leaderboard.main.LeaderboardHelpers.POS_SILVER
-import com.yral.android.ui.screens.leaderboard.main.LeaderboardHelpers.getTrophyImageHeight
-import com.yral.android.ui.screens.leaderboard.main.LeaderboardHelpers.getTrophyImageOffset
-import com.yral.android.ui.screens.leaderboard.main.LeaderboardHelpers.getTrophyImageWidth
 import com.yral.shared.features.leaderboard.data.models.LeaderboardMode
 import com.yral.shared.features.leaderboard.domain.models.LeaderboardItem
+import com.yral.shared.features.leaderboard.ui.leaderboard.UserBriefProfileImage
+import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardHelpers.MAX_USERS_PRINCIPAL_LENGTH
+import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardHelpers.MAX_USERS_WITH_DUPLICATE_RANK
+import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardHelpers.POS_BRONZE
+import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardHelpers.POS_GOLD
+import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardHelpers.POS_SILVER
+import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardHelpers.getTrophyImageHeight
+import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardHelpers.getTrophyImageOffset
+import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardHelpers.getTrophyImageWidth
 import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
+import yral_mobile.shared.features.leaderboard.generated.resources.Res
+import yral_mobile.shared.features.leaderboard.generated.resources.bronze_trophy
+import yral_mobile.shared.features.leaderboard.generated.resources.games_won
+import yral_mobile.shared.features.leaderboard.generated.resources.golden_trophy
+import yral_mobile.shared.features.leaderboard.generated.resources.silver_trophy
 
 @Suppress("MagicNumber", "LongMethod", "CyclomaticComplexMethod")
 @Composable
@@ -150,17 +155,17 @@ private fun ColumnScope.TrophyImages(leaderboard: List<LeaderboardItem>) {
         Trophy(
             position = POS_SILVER,
             profileImageUrl = getProfileImageForTrophy(1, leaderboard),
-            trophyResource = R.drawable.silver_trophy,
+            trophyResource = Res.drawable.silver_trophy,
         )
         Trophy(
             position = POS_GOLD,
             profileImageUrl = getProfileImageForTrophy(0, leaderboard),
-            trophyResource = R.drawable.golden_trophy,
+            trophyResource = Res.drawable.golden_trophy,
         )
         Trophy(
             position = POS_BRONZE,
             profileImageUrl = getProfileImageForTrophy(2, leaderboard),
-            trophyResource = R.drawable.bronze_trophy,
+            trophyResource = Res.drawable.bronze_trophy,
         )
     }
 }
@@ -251,7 +256,7 @@ private fun getTrophyDetailsUserTexts(user: List<LeaderboardItem>): String =
 private fun Trophy(
     position: Int,
     profileImageUrl: String,
-    trophyResource: Int,
+    trophyResource: DrawableResource,
 ) {
     val width = getTrophyImageWidth(position)
     val height = getTrophyImageHeight(position)
@@ -268,7 +273,7 @@ private fun Trophy(
         contentAlignment = Alignment.TopCenter,
     ) {
         Image(
-            painter = painterResource(id = trophyResource),
+            painter = painterResource(trophyResource),
             contentDescription = "image description",
             contentScale = ContentScale.Crop,
             modifier =
@@ -347,7 +352,7 @@ private fun TrophyDetailsItem(
                     modifier = Modifier.onSizeChanged { textSize1 = it },
                 )
                 Text(
-                    text = stringResource(R.string.games_won),
+                    text = stringResource(Res.string.games_won),
                     style = gameWonStyleDes,
                     textAlign = TextAlign.Center,
                     maxLines = 1,

@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.leaderboard
+package com.yral.shared.features.leaderboard.ui.leaderboard
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -22,25 +22,29 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.yral.android.R
-import com.yral.android.ui.screens.leaderboard.main.LeaderboardHelpers.PROFILE_IMAGE_SIZE
-import com.yral.android.ui.screens.leaderboard.main.LeaderboardHelpers.getProfileImageRing
-import com.yral.android.ui.screens.leaderboard.main.LeaderboardHelpers.getTextDecoration
-import com.yral.android.ui.screens.leaderboard.main.LeaderboardHelpers.getUserBriefBorder
-import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.COIN_BALANCE_WEIGHT
-import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.MAX_CHAR_OF_NAME
-import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.POSITION_TEXT_WEIGHT
-import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.USER_DETAIL_WEIGHT
+import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardHelpers.PROFILE_IMAGE_SIZE
+import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardHelpers.getProfileImageRing
+import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardHelpers.getTextDecoration
+import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardHelpers.getUserBriefBorder
+import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardMainScreenConstants.COIN_BALANCE_WEIGHT
+import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardMainScreenConstants.MAX_CHAR_OF_NAME
+import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardMainScreenConstants.POSITION_TEXT_WEIGHT
+import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardMainScreenConstants.USER_DETAIL_WEIGHT
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralMaskedVectorTextV2
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
+import yral_mobile.shared.features.leaderboard.generated.resources.Res
+import yral_mobile.shared.features.leaderboard.generated.resources.games_won
+import yral_mobile.shared.features.leaderboard.generated.resources.player_id
+import yral_mobile.shared.features.leaderboard.generated.resources.position
+import yral_mobile.shared.features.leaderboard.generated.resources.you
 
 @Composable
 fun LeaderboardTableHeader(isTrophyVisible: Boolean) {
@@ -59,7 +63,7 @@ fun LeaderboardTableHeader(isTrophyVisible: Boolean) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = stringResource(R.string.position),
+            text = stringResource(Res.string.position),
             modifier = Modifier.weight(POSITION_TEXT_WEIGHT),
             style = LocalAppTopography.current.regMedium,
             color = YralColors.Neutral500,
@@ -67,7 +71,7 @@ fun LeaderboardTableHeader(isTrophyVisible: Boolean) {
             overflow = TextOverflow.Ellipsis,
         )
         Text(
-            text = stringResource(R.string.player_id),
+            text = stringResource(Res.string.player_id),
             modifier =
                 Modifier
                     .weight(USER_DETAIL_WEIGHT)
@@ -77,7 +81,7 @@ fun LeaderboardTableHeader(isTrophyVisible: Boolean) {
             maxLines = 1,
         )
         Text(
-            text = stringResource(R.string.games_won),
+            text = stringResource(Res.string.games_won),
             modifier = Modifier.weight(COIN_BALANCE_WEIGHT),
             style = LocalAppTopography.current.regMedium,
             color = YralColors.Neutral500,
@@ -134,7 +138,7 @@ private fun UserBriefWithBorder(
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         val border = getUserBriefBorder(position)
-        if (border > 0 && !decorateCurrentUser) {
+        if (border != null && !decorateCurrentUser) {
             Image(
                 painter = painterResource(border),
                 contentDescription = null,
@@ -231,7 +235,7 @@ private fun UserBriefProfileName(
 ) {
     val displayName =
         if (isCurrentUser) {
-            stringResource(R.string.you)
+            stringResource(Res.string.you)
         } else {
             name.take(MAX_CHAR_OF_NAME).plus("...")
         }
@@ -288,7 +292,7 @@ fun UserBriefProfileImage(
             backgroundColor = YralColors.ProfilePicBackground,
         )
         val profileImageRing = getProfileImageRing(position)
-        if (profileImageRing > 0) {
+        if (profileImageRing != null) {
             Image(
                 painter = painterResource(profileImageRing),
                 contentDescription = null,

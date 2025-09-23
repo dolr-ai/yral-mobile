@@ -35,6 +35,9 @@ import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.getSVGImageModel
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import org.jetbrains.compose.resources.painterResource
+import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
+import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @Composable
 fun ModelDetails(
@@ -298,7 +301,7 @@ private fun ProviderRow(
             }
         }
         Image(
-            painter = painterResource(id = R.drawable.arrow_left),
+            painter = painterResource(DesignRes.drawable.arrow_left),
             contentDescription = "select model",
             contentScale = ContentScale.None,
             modifier = Modifier.size(24.dp).rotate(ARROW_ROTATION),

@@ -60,7 +60,10 @@ import com.yral.shared.libs.designsystem.component.getSVGImageModel
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.designsystem.theme.YralDimens
+import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
+import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
+import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -257,7 +260,7 @@ private fun AccountsTitle(
     ) {
         if (isBackVisible) {
             Icon(
-                painter = painterResource(R.drawable.arrow_left),
+                painter = painterResource(DesignRes.drawable.arrow_left),
                 contentDescription = "back",
                 tint = Color.White,
                 modifier =
