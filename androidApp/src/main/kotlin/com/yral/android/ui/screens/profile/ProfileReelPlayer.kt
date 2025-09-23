@@ -234,12 +234,12 @@ private fun ActionsRight(
         verticalArrangement = Arrangement.spacedBy(26.dp, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        ReportVideo(
-            onReportClicked = onReportClick,
-        )
-
         ShareIcon(
             onClick = onShareClick,
+        )
+
+        ReportVideo(
+            onReportClicked = onReportClick,
         )
 
         DeleteIcon(
