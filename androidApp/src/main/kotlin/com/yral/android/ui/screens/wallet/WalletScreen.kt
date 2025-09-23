@@ -27,12 +27,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yral.android.R
+import com.yral.android.ui.components.signup.AccountInfoView
 import com.yral.android.ui.screens.wallet.nav.WalletComponent
-import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.features.wallet.viewmodel.WalletViewModel
 import com.yral.shared.libs.CurrencyFormatter
 import com.yral.shared.libs.NumberFormatter
-import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import org.koin.compose.viewmodel.koinViewModel
@@ -52,9 +51,13 @@ fun WalletScreen(
     }
     Column(modifier = modifier.fillMaxSize()) {
         WalletHeader()
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(4.dp))
         state.accountInfo?.let { info ->
-            AccountInfoSection(accountInfo = info)
+            AccountInfoView(
+                accountInfo = info,
+                isSocialSignIn = true,
+                onLoginClicked = {},
+            )
         }
         state.yralTokenBalance?.let { coinBalance ->
             YralTokenBalance(coinBalance)
@@ -81,36 +84,6 @@ private fun WalletHeader() {
             text = stringResource(R.string.my_wallet),
             style = LocalAppTopography.current.xlBold,
             color = YralColors.NeutralTextPrimary,
-        )
-    }
-}
-
-@Composable
-private fun AccountInfoSection(accountInfo: AccountInfo) {
-    Column(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(bottom = 20.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.Start),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            YralAsyncImage(
-                imageUrl = accountInfo.profilePic,
-                modifier = Modifier.size(60.dp),
-            )
-            Text(
-                text = accountInfo.userPrincipal,
-                style = LocalAppTopography.current.baseMedium,
-                color = YralColors.NeutralTextSecondary,
-            )
-        }
-        Spacer(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .height(1.dp)
-                    .background(YralColors.Divider),
         )
     }
 }
