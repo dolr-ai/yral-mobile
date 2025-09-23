@@ -4,11 +4,11 @@ import com.google.firebase.appcheck.ktx.appCheck
 import com.google.firebase.ktx.Firebase
 import com.yral.shared.core.AppConfigurations.PUMP_DUMP_BASE_URL
 import com.yral.shared.core.exceptions.YralException
+import com.yral.shared.data.FirebaseFunctionRequest
 import com.yral.shared.features.game.data.models.AutoRechargeBalanceRequestDto
 import com.yral.shared.features.game.data.models.AutoRechargeBalanceResponseDto
 import com.yral.shared.features.game.data.models.CastVoteRequestDto
 import com.yral.shared.features.game.data.models.CastVoteResponseDto
-import com.yral.shared.features.game.data.models.FirebaseFunctionRequest
 import com.yral.shared.features.game.data.models.GetBalanceResponseDto
 import com.yral.shared.firebaseStore.cloudFunctionUrl
 import com.yral.shared.http.httpGet

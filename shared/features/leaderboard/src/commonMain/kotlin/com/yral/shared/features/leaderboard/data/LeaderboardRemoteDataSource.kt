@@ -1,7 +1,7 @@
 package com.yral.shared.features.leaderboard.data
 
 import com.yral.shared.core.exceptions.YralException
-import com.yral.shared.features.leaderboard.data.models.FirebaseFunctionRequest
+import com.yral.shared.data.FirebaseFunctionRequest
 import com.yral.shared.features.leaderboard.data.models.GetLeaderboardRequestDto
 import com.yral.shared.features.leaderboard.data.models.LeaderboardHistoryDayDto
 import com.yral.shared.features.leaderboard.data.models.LeaderboardHistoryRequestDto

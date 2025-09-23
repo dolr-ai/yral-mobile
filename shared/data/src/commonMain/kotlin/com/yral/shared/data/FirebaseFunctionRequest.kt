@@ -1,10 +1,10 @@
-package com.yral.shared.features.leaderboard.data.models
+package com.yral.shared.data
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-internal data class FirebaseFunctionRequest<T>(
+data class FirebaseFunctionRequest<T>(
     @SerialName("data")
     val data: T,
 )
