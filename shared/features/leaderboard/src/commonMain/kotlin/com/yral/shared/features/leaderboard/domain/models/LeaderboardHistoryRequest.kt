@@ -1,6 +1,6 @@
-package com.yral.shared.features.game.domain.models
+package com.yral.shared.features.leaderboard.domain.models
 
-import com.yral.shared.features.game.data.models.LeaderboardHistoryRequestDto
+import com.yral.shared.features.leaderboard.data.models.LeaderboardHistoryRequestDto
 
 data class LeaderboardHistoryRequest(
     val principalId: String,

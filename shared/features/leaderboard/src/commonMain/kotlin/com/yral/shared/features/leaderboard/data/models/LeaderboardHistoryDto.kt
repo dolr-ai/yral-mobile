@@ -1,13 +1,13 @@
-package com.yral.shared.features.game.data.models
+package com.yral.shared.features.leaderboard.data.models
 
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
-import com.yral.shared.features.game.domain.models.LeaderboardErrorCodes
-import com.yral.shared.features.game.domain.models.LeaderboardHistory
-import com.yral.shared.features.game.domain.models.LeaderboardHistoryDay
-import com.yral.shared.features.game.domain.models.LeaderboardHistoryError
-import com.yral.shared.features.game.domain.models.toLeaderboardItem
+import com.yral.shared.features.leaderboard.domain.models.LeaderboardErrorCodes
+import com.yral.shared.features.leaderboard.domain.models.LeaderboardHistory
+import com.yral.shared.features.leaderboard.domain.models.LeaderboardHistoryDay
+import com.yral.shared.features.leaderboard.domain.models.LeaderboardHistoryError
+import com.yral.shared.features.leaderboard.domain.models.toLeaderboardItem
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
