@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.leaderboard
+package com.yral.shared.features.leaderboard.ui.leaderboard
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -6,8 +6,9 @@ import androidx.compose.ui.Modifier
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.stack.animation.slide
 import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
-import com.yral.android.ui.screens.leaderboard.details.LeaderboardDetailsScreen
-import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreen
+import com.yral.shared.features.leaderboard.nav.LeaderboardComponent
+import com.yral.shared.features.leaderboard.ui.leaderboard.details.LeaderboardDetailsScreen
+import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardMainScreen
 
 @Composable
 fun LeaderboardScreen(

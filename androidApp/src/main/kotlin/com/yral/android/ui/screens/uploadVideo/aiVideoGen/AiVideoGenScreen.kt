@@ -70,9 +70,11 @@ import com.yral.shared.libs.designsystem.component.getSVGImageModel
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
-import yral_mobile.shared.libs.designsystem.generated.resources.Res
+import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
 import yral_mobile.shared.libs.designsystem.generated.resources.pink_gradient_background
+import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @Suppress("LongMethod")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -282,7 +284,7 @@ private fun PlayGameText() {
     ) {
         YralMaskedVectorTextV2(
             text = stringResource(R.string.play_games),
-            drawableRes = Res.drawable.pink_gradient_background,
+            drawableRes = DesignRes.drawable.pink_gradient_background,
             textStyle =
                 LocalAppTopography
                     .current
@@ -503,7 +505,7 @@ private fun Header(onBack: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Image(
-            painter = painterResource(id = R.drawable.arrow_left),
+            painter = painterResource(DesignRes.drawable.arrow_left),
             contentDescription = "back button",
             contentScale = ContentScale.None,
             modifier = Modifier.size(24.dp).clickable { onBack() },

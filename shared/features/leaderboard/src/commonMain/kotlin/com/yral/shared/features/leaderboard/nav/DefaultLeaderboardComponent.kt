@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.leaderboard
+package com.yral.shared.features.leaderboard.nav
 
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.ChildStack
@@ -7,8 +7,8 @@ import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.router.stack.push
 import com.arkivanov.decompose.value.Value
-import com.yral.android.ui.screens.leaderboard.details.LeaderboardDetailsComponent
-import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainComponent
+import com.yral.shared.features.leaderboard.nav.detail.LeaderboardDetailsComponent
+import com.yral.shared.features.leaderboard.nav.main.LeaderboardMainComponent
 import kotlinx.serialization.Serializable
 import org.koin.core.component.KoinComponent
 

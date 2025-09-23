@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.leaderboard.main
+package com.yral.shared.features.leaderboard.ui.leaderboard.main
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.FastOutLinearInEasing
@@ -37,23 +37,27 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.dp
-import com.yral.android.R
-import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.COUNT_DOWN_ANIMATION_DURATION
-import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.COUNT_DOWN_BG_ALPHA
-import com.yral.android.ui.screens.leaderboard.main.LeaderboardMainScreenConstants.COUNT_DOWN_BORDER_ANIMATION_DURATION
 import com.yral.shared.features.leaderboard.data.models.LeaderboardMode
+import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardMainScreenConstants.COUNT_DOWN_ANIMATION_DURATION
+import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardMainScreenConstants.COUNT_DOWN_BG_ALPHA
+import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardMainScreenConstants.COUNT_DOWN_BORDER_ANIMATION_DURATION
 import com.yral.shared.libs.designsystem.component.YralMaskedVectorTextV2
 import com.yral.shared.libs.designsystem.component.YralNeonBorder
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import kotlinx.coroutines.delay
-import yral_mobile.shared.libs.designsystem.generated.resources.Res
+import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
+import yral_mobile.shared.features.leaderboard.generated.resources.Res
+import yral_mobile.shared.features.leaderboard.generated.resources.all_wins
+import yral_mobile.shared.features.leaderboard.generated.resources.daily_wins
+import yral_mobile.shared.features.leaderboard.generated.resources.end_in
+import yral_mobile.shared.features.leaderboard.generated.resources.ic_calander_week_1
+import yral_mobile.shared.features.leaderboard.generated.resources.ic_clock
+import yral_mobile.shared.features.leaderboard.generated.resources.ic_gradient_clock
 import yral_mobile.shared.libs.designsystem.generated.resources.count_down_timer
-import kotlin.time.Duration.Companion.milliseconds
+import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @Composable
 fun LeaderboardModeSelection(
@@ -95,8 +99,8 @@ private fun LeaderMode(
 ) {
     val modeText =
         when (mode) {
-            LeaderboardMode.DAILY -> stringResource(R.string.daily_wins)
-            LeaderboardMode.ALL_TIME -> stringResource(R.string.all_wins)
+            LeaderboardMode.DAILY -> stringResource(Res.string.daily_wins)
+            LeaderboardMode.ALL_TIME -> stringResource(Res.string.all_wins)
         }
     val chipColor =
         when (selectedMode == mode) {
@@ -236,24 +240,24 @@ private fun LeaderboardCountdownContent(
     ) {
         if (isNeon) {
             Image(
-                painter = painterResource(id = R.drawable.ic_clock),
+                painter = painterResource(Res.drawable.ic_clock),
                 contentDescription = "image description",
                 contentScale = ContentScale.None,
             )
             Text(
-                text = stringResource(R.string.end_in, time),
+                text = stringResource(Res.string.end_in, time),
                 style = LocalAppTopography.current.regBold,
                 color = YralColors.Neutral50,
             )
         } else {
             Image(
-                painter = painterResource(id = R.drawable.ic_gradient_clock),
+                painter = painterResource(Res.drawable.ic_gradient_clock),
                 contentDescription = "image description",
                 contentScale = ContentScale.None,
             )
             YralMaskedVectorTextV2(
-                text = stringResource(R.string.end_in, time),
-                drawableRes = Res.drawable.count_down_timer,
+                text = stringResource(Res.string.end_in, time),
+                drawableRes = DesignRes.drawable.count_down_timer,
                 textStyle = LocalAppTopography.current.regBold,
             )
         }
@@ -275,7 +279,7 @@ fun LeaderboardHistoryIcon(modifier: Modifier) {
                     ),
         ) {
             Image(
-                painter = painterResource(id = R.drawable.ic_calander_week_1),
+                painter = painterResource(Res.drawable.ic_calander_week_1),
                 contentDescription = "image description",
                 contentScale = ContentScale.FillBounds,
                 modifier = Modifier.size(30.dp),
@@ -284,11 +288,4 @@ fun LeaderboardHistoryIcon(modifier: Modifier) {
     }
 }
 
-@Suppress("MagicNumber")
-private fun formatMillisToHHmmSS(millis: Long): String {
-    val duration = millis.milliseconds
-    val hours = duration.inWholeHours
-    val minutes = (duration.inWholeMinutes % 60)
-    val seconds = (duration.inWholeSeconds % 60)
-    return String.format(Locale.current.platformLocale, "%02d:%02d:%02d", hours, minutes, seconds)
-}
+internal expect fun formatMillisToHHmmSS(millis: Long): String

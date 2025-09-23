@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.leaderboard.details
+package com.yral.shared.features.leaderboard.ui.leaderboard.details
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -33,21 +33,25 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.yral.android.R
-import com.yral.android.ui.screens.leaderboard.LeaderboardRow
-import com.yral.android.ui.screens.leaderboard.LeaderboardTableHeader
-import com.yral.android.ui.screens.leaderboard.main.LeaderboardConfetti
+import com.yral.shared.features.leaderboard.nav.detail.LeaderboardDetailsComponent
+import com.yral.shared.features.leaderboard.ui.leaderboard.LeaderboardRow
+import com.yral.shared.features.leaderboard.ui.leaderboard.LeaderboardTableHeader
+import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardConfetti
 import com.yral.shared.features.leaderboard.viewmodel.LeaderboardHistoryViewModel
 import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import yral_mobile.shared.features.leaderboard.generated.resources.Res
+import yral_mobile.shared.features.leaderboard.generated.resources.weekly_wins
+import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
 import kotlin.math.max
 import kotlin.math.min
+import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
@@ -188,7 +192,7 @@ private fun Header(onBack: () -> Unit) {
                 .padding(vertical = 12.dp, horizontal = 12.dp),
     ) {
         Image(
-            painter = painterResource(id = R.drawable.arrow_left),
+            painter = painterResource(DesignRes.drawable.arrow_left),
             contentDescription = "image description",
             contentScale = ContentScale.None,
             modifier =
@@ -197,7 +201,7 @@ private fun Header(onBack: () -> Unit) {
                     .clickable { onBack() },
         )
         Text(
-            text = stringResource(R.string.weekly_wins),
+            text = stringResource(Res.string.weekly_wins),
             style = LocalAppTopography.current.xlBold,
             modifier = Modifier.fillMaxWidth(),
             color = YralColors.NeutralIconsActive,

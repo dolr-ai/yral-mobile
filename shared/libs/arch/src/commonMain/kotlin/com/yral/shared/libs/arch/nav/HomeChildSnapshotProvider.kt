@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.home.nav
+package com.yral.shared.libs.arch.nav
 
 interface HomeChildSnapshotProvider {
     fun createHomeSnapshot(): Any

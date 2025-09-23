@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.yral.shared.feature)
     alias(libs.plugins.yral.android.feature)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.yral.shared.library.compose)
 }
 
 kotlin {
@@ -17,6 +18,8 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.koin.compose.viewmodel)
 
+            implementation(compose.components.resources)
+
             implementation(projects.shared.core)
             implementation(projects.shared.data)
             implementation(projects.shared.libs.koin)
@@ -27,6 +30,7 @@ kotlin {
             implementation(projects.shared.libs.firebaseStore)
             implementation(projects.shared.libs.firebaseAuth)
             implementation(projects.shared.libs.http)
+            implementation(projects.shared.libs.designsystem)
             implementation(projects.shared.rust.service)
         }
     }

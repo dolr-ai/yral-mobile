@@ -7,10 +7,10 @@ import com.arkivanov.decompose.value.Value
 import com.yral.android.ui.screens.account.nav.AccountComponent
 import com.yral.android.ui.screens.alertsrequest.nav.AlertsRequestComponent
 import com.yral.android.ui.screens.feed.nav.FeedComponent
-import com.yral.android.ui.screens.leaderboard.LeaderboardComponent
 import com.yral.android.ui.screens.profile.nav.ProfileComponent
 import com.yral.android.ui.screens.uploadVideo.UploadVideoRootComponent
 import com.yral.android.ui.screens.wallet.nav.WalletComponent
+import com.yral.shared.features.leaderboard.nav.LeaderboardComponent
 import com.yral.shared.libs.routing.routes.api.AppRoute
 
 abstract class HomeComponent {

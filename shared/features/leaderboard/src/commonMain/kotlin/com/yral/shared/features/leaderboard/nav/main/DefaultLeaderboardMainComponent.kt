@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.leaderboard.main
+package com.yral.shared.features.leaderboard.nav.main
 
 import com.arkivanov.decompose.ComponentContext
 import org.koin.core.component.KoinComponent
