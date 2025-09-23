@@ -45,8 +45,8 @@ import com.yral.android.ui.screens.leaderboard.main.LeaderboardHelpers.POS_SILVE
 import com.yral.android.ui.screens.leaderboard.main.LeaderboardHelpers.getTrophyImageHeight
 import com.yral.android.ui.screens.leaderboard.main.LeaderboardHelpers.getTrophyImageOffset
 import com.yral.android.ui.screens.leaderboard.main.LeaderboardHelpers.getTrophyImageWidth
-import com.yral.shared.features.game.data.models.LeaderboardMode
-import com.yral.shared.features.game.domain.models.LeaderboardItem
+import com.yral.shared.features.leaderboard.data.models.LeaderboardMode
+import com.yral.shared.features.leaderboard.domain.models.LeaderboardItem
 import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation

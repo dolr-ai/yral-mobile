@@ -42,6 +42,7 @@ kotlin {
             implementation(projects.shared.features.uploadvideo)
             implementation(projects.shared.features.profile)
             implementation(projects.shared.features.wallet)
+            implementation(projects.shared.features.leaderboard)
             implementation(projects.shared.rust.service)
             implementation(libs.coil.compose)
         }
