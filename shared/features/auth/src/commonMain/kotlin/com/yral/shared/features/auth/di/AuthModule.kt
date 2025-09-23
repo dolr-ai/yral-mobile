@@ -16,6 +16,7 @@ import com.yral.shared.features.auth.domain.useCases.ObtainAnonymousIdentityUseC
 import com.yral.shared.features.auth.domain.useCases.RefreshTokenUseCase
 import com.yral.shared.features.auth.domain.useCases.RegisterNotificationTokenUseCase
 import com.yral.shared.features.auth.domain.useCases.UpdateSessionAsRegisteredUseCase
+import com.yral.shared.features.auth.viewModel.LoginViewModel
 import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
@@ -36,4 +37,5 @@ val authModule =
         factoryOf(::AuthTelemetry)
         factoryOf(::RegisterNotificationTokenUseCase)
         factoryOf(::DeregisterNotificationTokenUseCase)
+        singleOf(::LoginViewModel)
     }

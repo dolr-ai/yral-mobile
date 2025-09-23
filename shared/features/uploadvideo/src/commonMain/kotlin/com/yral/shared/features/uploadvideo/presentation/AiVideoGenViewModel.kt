@@ -12,9 +12,6 @@ import com.yral.shared.analytics.events.VideoCreationType
 import com.yral.shared.core.logging.YralLogger
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
-import com.yral.shared.crashlytics.core.CrashlyticsManager
-import com.yral.shared.features.auth.AuthClientFactory
-import com.yral.shared.features.auth.utils.SocialProvider
 import com.yral.shared.features.uploadvideo.analytics.UploadVideoTelemetry
 import com.yral.shared.features.uploadvideo.data.remote.models.TokenType
 import com.yral.shared.features.uploadvideo.domain.GenerateVideoUseCase
@@ -37,22 +34,13 @@ import kotlinx.coroutines.launch
 
 @Suppress("TooManyFunctions")
 class AiVideoGenViewModel internal constructor(
-    authClientFactory: AuthClientFactory,
     private val requiredUseCases: RequiredUseCases,
     private val sessionManager: SessionManager,
-    private val crashlyticsManager: CrashlyticsManager,
     private val uploadVideoTelemetry: UploadVideoTelemetry,
     private val flagManager: FeatureFlagManager,
     logger: YralLogger,
 ) : ViewModel() {
     private val logger = logger.withTag(AiVideoGenViewModel::class.simpleName ?: "")
-
-    private val authClient =
-        authClientFactory
-            .create(viewModelScope) { e ->
-                logger.e(e) { "Auth error" }
-                handleSignupFailed()
-            }
 
     private val _state = MutableStateFlow(ViewState())
     val state: StateFlow<ViewState> = _state.asStateFlow()
@@ -395,22 +383,6 @@ class AiVideoGenViewModel internal constructor(
         pollingJob?.cancel()
     }
 
-    @Suppress("TooGenericExceptionCaught")
-    fun signInWithGoogle(context: Any) {
-        viewModelScope.launch {
-            try {
-                authClient.signInWithSocial(context, SocialProvider.GOOGLE)
-            } catch (e: Exception) {
-                crashlyticsManager.recordException(e)
-                handleSignupFailed()
-            }
-        }
-    }
-
-    private fun handleSignupFailed() {
-        setBottomSheetType(type = BottomSheetType.SignupFailed)
-    }
-
     fun createAiVideoClicked() {
         with(_state.value) {
             selectedProvider?.name?.let {
@@ -455,13 +427,7 @@ class AiVideoGenViewModel internal constructor(
             val message: String,
             val endFlow: Boolean = false,
         ) : BottomSheetType()
-
         data object Signup : BottomSheetType()
-        data class Link(
-            val url: String,
-        ) : BottomSheetType()
-
-        data object SignupFailed : BottomSheetType()
         data object BackConfirmation : BottomSheetType()
     }
 

@@ -13,6 +13,7 @@ import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.featureflag.FeatureFlagManager
 import com.yral.featureflag.WalletFeatureFlags
+import com.yral.featureflag.accountFeatureFlags.AccountFeatureFlags
 import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.AccountInfo
@@ -48,7 +49,7 @@ class ProfileViewModel(
     private val urlBuilder: UrlBuilder,
     private val linkGenerator: LinkGenerator,
     private val crashlyticsManager: CrashlyticsManager,
-    flagManager: FeatureFlagManager,
+    private val flagManager: FeatureFlagManager,
 ) : ViewModel() {
     companion object {
         private const val POSTS_PER_PAGE = 20
@@ -235,6 +236,14 @@ class ProfileViewModel(
             }
         }
     }
+
+    fun isLoggedIn(): Boolean = sessionManager.isSocialSignIn()
+
+    fun setBottomSheetType(type: ProfileBottomSheet) {
+        _state.update { it.copy(bottomSheet = type) }
+    }
+
+    fun getTncLink(): String = flagManager.get(AccountFeatureFlags.AccountLinks.Links).tnc
 }
 
 data class ViewState(
@@ -243,7 +252,13 @@ data class ViewState(
     val videoView: VideoViewState = VideoViewState.None,
     val manualRefreshTriggered: Boolean = false,
     val isWalletEnabled: Boolean = false,
+    val bottomSheet: ProfileBottomSheet = ProfileBottomSheet.None,
 )
+
+sealed interface ProfileBottomSheet {
+    data object None : ProfileBottomSheet
+    data object SignUp : ProfileBottomSheet
+}
 
 sealed class DeleteConfirmationState {
     data object None : DeleteConfirmationState()

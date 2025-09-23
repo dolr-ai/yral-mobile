@@ -28,6 +28,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -35,7 +36,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -49,13 +49,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import co.touchlab.kermit.Logger
 import com.yral.android.R
-import com.yral.android.ui.screens.account.ErrorMessageSheet
 import com.yral.android.ui.screens.account.LoginBottomSheet
-import com.yral.android.ui.screens.account.WebViewBottomSheet
 import com.yral.android.ui.screens.uploadVideo.aiVideoGen.AiVideoGenScreenConstants.LOADING_MESSAGE_DELAY
 import com.yral.android.ui.widgets.video.YralVideoPlayer
 import com.yral.shared.analytics.events.SignupPageName
-import com.yral.shared.features.account.viewmodel.ErrorType
+import com.yral.shared.features.auth.viewModel.LoginViewModel
 import com.yral.shared.features.uploadvideo.domain.models.Provider
 import com.yral.shared.features.uploadvideo.presentation.AiVideoGenViewModel
 import com.yral.shared.features.uploadvideo.presentation.AiVideoGenViewModel.BottomSheetType
@@ -67,6 +65,7 @@ import com.yral.shared.libs.designsystem.component.YralConfirmationMessage
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.YralMaskedVectorTextV2
+import com.yral.shared.libs.designsystem.component.YralWebViewBottomSheet
 import com.yral.shared.libs.designsystem.component.getSVGImageModel
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
@@ -75,19 +74,27 @@ import org.koin.compose.viewmodel.koinViewModel
 import yral_mobile.shared.libs.designsystem.generated.resources.Res
 import yral_mobile.shared.libs.designsystem.generated.resources.pink_gradient_background
 
+@Suppress("LongMethod")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AiVideoGenScreen(
     component: AiVideoGenComponent,
     modifier: Modifier = Modifier,
     viewModel: AiVideoGenViewModel = koinViewModel(),
+    loginViewModel: LoginViewModel = koinViewModel(),
 ) {
     val viewState by viewModel.state.collectAsStateWithLifecycle()
+    val loginState = loginViewModel.state.collectAsStateWithLifecycle()
     val shouldRefresh = viewModel.sessionObserver.collectAsState(null)
     LaunchedEffect(shouldRefresh.value) {
         Logger.d("VideoGen") { "shouldRefresh: $shouldRefresh" }
         shouldRefresh.value?.first?.let { viewModel.refresh(it) }
         shouldRefresh.value?.second?.let { viewModel.updateBalance(it) }
+    }
+    LaunchedEffect(loginState.value) {
+        if (loginState.value is UiState.Failure) {
+            viewModel.setBottomSheetType(BottomSheetType.Signup)
+        }
     }
     BackHandler(
         enabled = viewState.uiState is UiState.Success,
@@ -147,9 +154,9 @@ private fun AiVideoGenScreenPrompts(
     viewState: AiVideoGenViewModel.ViewState,
     viewModel: AiVideoGenViewModel,
 ) {
-    val context = LocalContext.current
+    var extraSheetLink by remember { mutableStateOf("") }
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val extraSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val extraSheetState = rememberModalBottomSheetState()
     when (val sheetType = viewState.bottomSheetType) {
         is BottomSheetType.ModelSelection -> {
             ModelSelection(
@@ -183,32 +190,8 @@ private fun AiVideoGenScreenPrompts(
                 pageName = SignupPageName.VIDEO_CREATION,
                 bottomSheetState = bottomSheetState,
                 onDismissRequest = { viewModel.setBottomSheetType(BottomSheetType.None) },
-                onSignupClicked = { viewModel.signInWithGoogle(context) },
                 termsLink = viewModel.getTncLink(),
-                openTerms = { viewModel.setBottomSheetType(BottomSheetType.Link(viewModel.getTncLink())) },
-            )
-        }
-        is BottomSheetType.Link -> {
-            // reusing from account to be refactored in independent components
-            LaunchedEffect(sheetType.url) {
-                if (sheetType.url.isEmpty()) {
-                    extraSheetState.hide()
-                } else {
-                    extraSheetState.show()
-                }
-            }
-            WebViewBottomSheet(
-                link = sheetType.url,
-                bottomSheetState = extraSheetState,
-                onDismissRequest = { viewModel.setBottomSheetType(BottomSheetType.Signup) },
-            )
-        }
-        is BottomSheetType.SignupFailed -> {
-            // reusing from account to be refactored in independent components
-            ErrorMessageSheet(
-                errorType = ErrorType.SIGNUP_FAILED,
-                onDismissRequest = { viewModel.setBottomSheetType(BottomSheetType.None) },
-                bottomSheetState = bottomSheetState,
+                openTerms = { extraSheetLink = viewModel.getTncLink() },
             )
         }
         is BottomSheetType.BackConfirmation -> {
@@ -226,6 +209,13 @@ private fun AiVideoGenScreenPrompts(
             )
         }
         is BottomSheetType.None -> Unit
+    }
+    if (extraSheetLink.isNotEmpty()) {
+        YralWebViewBottomSheet(
+            link = extraSheetLink,
+            bottomSheetState = extraSheetState,
+            onDismissRequest = { extraSheetLink = "" },
+        )
     }
 }
 

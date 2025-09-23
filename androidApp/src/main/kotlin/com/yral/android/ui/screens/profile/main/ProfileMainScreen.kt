@@ -31,6 +31,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.pullToRefreshIndicator
@@ -60,6 +61,8 @@ import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
 import com.yral.android.R
 import com.yral.android.ui.components.DeleteConfirmationSheet
+import com.yral.android.ui.components.signup.AccountInfoView
+import com.yral.android.ui.screens.account.LoginBottomSheet
 import com.yral.android.ui.screens.profile.ProfileReelPlayer
 import com.yral.android.ui.screens.profile.main.ProfileMainScreenConstants.GRID_ITEM_ASPECT_RATIO
 import com.yral.android.ui.screens.profile.main.ProfileMainScreenConstants.PADDING_BOTTOM_ACCOUNT_INFO
@@ -67,11 +70,14 @@ import com.yral.android.ui.screens.profile.main.ProfileMainScreenConstants.PULL_
 import com.yral.android.ui.screens.profile.main.ProfileMainScreenConstants.PULL_TO_REFRESH_INDICATOR_THRESHOLD
 import com.yral.android.ui.screens.profile.main.ProfileMainScreenConstants.PULL_TO_REFRESH_OFFSET_MULTIPLIER
 import com.yral.shared.analytics.events.VideoDeleteCTA
-import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.data.feed.domain.FeedDetails
+import com.yral.shared.features.auth.viewModel.LoginViewModel
 import com.yral.shared.features.profile.viewmodel.DeleteConfirmationState
+import com.yral.shared.features.profile.viewmodel.ProfileBottomSheet
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.features.profile.viewmodel.VideoViewState
+import com.yral.shared.features.profile.viewmodel.ViewState
+import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.designsystem.component.LoaderSize
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralButtonState
@@ -79,10 +85,12 @@ import com.yral.shared.libs.designsystem.component.YralButtonType
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.component.YralLoader
+import com.yral.shared.libs.designsystem.component.YralWebViewBottomSheet
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import kotlinx.coroutines.flow.collectLatest
+import org.koin.compose.viewmodel.koinViewModel
 
 @Suppress("LongMethod")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -92,8 +100,17 @@ fun ProfileMainScreen(
     modifier: Modifier = Modifier,
     viewModel: ProfileViewModel,
     profileVideos: LazyPagingItems<FeedDetails>,
+    loginViewModel: LoginViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val loginState by loginViewModel.state.collectAsStateWithLifecycle()
+    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    LaunchedEffect(loginState) {
+        if (loginState is UiState.Failure) {
+            viewModel.setBottomSheetType(ProfileBottomSheet.SignUp)
+        }
+    }
+
     val backHandlerEnabled by remember(state.videoView) {
         mutableStateOf(state.videoView is VideoViewState.ViewingReels)
     }
@@ -138,7 +155,7 @@ fun ProfileMainScreen(
                 else -> ""
             }
         }
-    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
     val gridState = rememberLazyGridState()
     Box(modifier = modifier.fillMaxSize()) {
         when (val videoViewState = state.videoView) {
@@ -175,25 +192,16 @@ fun ProfileMainScreen(
             VideoViewState.None -> {
                 MainContent(
                     modifier = Modifier.fillMaxSize(),
-                    accountInfo = state.accountInfo,
+                    bottomSheetState = bottomSheetState,
+                    state = state,
+                    viewModel = viewModel,
                     gridState = gridState,
                     profileVideos = profileVideos,
-                    manualRefreshTriggered = state.manualRefreshTriggered,
+                    deletingVideoId = deletingVideoId,
                     uploadVideo = {
                         viewModel.uploadVideoClicked()
                         component.onUploadVideoClick()
                     },
-                    openVideoReel = { clickedIndex -> viewModel.openVideoReel(clickedIndex) },
-                    deletingVideoId = deletingVideoId,
-                    onDeleteVideo = { video ->
-                        viewModel.confirmDelete(
-                            feedDetails = video,
-                            ctaType = VideoDeleteCTA.PROFILE_THUMBNAIL,
-                        )
-                    },
-                    onManualRefreshTriggered = { viewModel.setManualRefreshTriggered(it) },
-                    pushScreenView = { viewModel.pushScreenView(it) },
-                    isWalletEnabled = state.isWalletEnabled,
                     openAccount = { component.openAccount() },
                 )
             }
@@ -227,52 +235,81 @@ fun ProfileMainScreen(
     }
 }
 
+@Suppress("LongMethod")
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MainContent(
     modifier: Modifier,
-    accountInfo: AccountInfo?,
+    bottomSheetState: SheetState,
+    state: ViewState,
+    viewModel: ProfileViewModel,
     gridState: LazyGridState,
     profileVideos: LazyPagingItems<FeedDetails>,
     deletingVideoId: String,
-    manualRefreshTriggered: Boolean,
-    isWalletEnabled: Boolean,
     uploadVideo: () -> Unit,
-    openVideoReel: (Int) -> Unit,
-    onDeleteVideo: (FeedDetails) -> Unit,
-    onManualRefreshTriggered: (Boolean) -> Unit,
-    pushScreenView: (Int) -> Unit,
     openAccount: () -> Unit,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
-        ProfileHeader(isWalletEnabled, openAccount)
-        Spacer(modifier = Modifier.height(8.dp))
-        accountInfo?.let { info ->
-            AccountInfoSection(accountInfo = info)
+        ProfileHeader(
+            isWalletEnabled = state.isWalletEnabled,
+            openAccount = openAccount,
+        )
+        state.accountInfo?.let { info ->
+            AccountInfoView(
+                accountInfo = info,
+                isSocialSignIn = viewModel.isLoggedIn(),
+                onLoginClicked = { viewModel.setBottomSheetType(ProfileBottomSheet.SignUp) },
+            )
         }
         when (profileVideos.loadState.refresh) {
             is LoadState.Loading -> {
                 LoadingContent()
             }
             is LoadState.Error -> {
-                if (manualRefreshTriggered) onManualRefreshTriggered(false)
+                if (state.manualRefreshTriggered) viewModel.setManualRefreshTriggered(false)
                 ErrorContent(message = stringResource(R.string.error_loading_videos))
             }
             is LoadState.NotLoading -> {
-                if (manualRefreshTriggered) {
-                    pushScreenView(profileVideos.itemCount)
-                    onManualRefreshTriggered(false)
+                if (state.manualRefreshTriggered) {
+                    viewModel.pushScreenView(profileVideos.itemCount)
+                    viewModel.setManualRefreshTriggered(false)
                 }
                 SuccessContent(
                     gridState = gridState,
                     profileVideos = profileVideos,
                     deletingVideoId = deletingVideoId,
                     uploadVideo = uploadVideo,
-                    openVideoReel = openVideoReel,
-                    onDeleteVideo = onDeleteVideo,
-                    onManualRefreshTriggered = onManualRefreshTriggered,
+                    openVideoReel = { viewModel.openVideoReel(it) },
+                    onDeleteVideo = {
+                        viewModel.confirmDelete(
+                            feedDetails = it,
+                            ctaType = VideoDeleteCTA.PROFILE_THUMBNAIL,
+                        )
+                    },
+                    onManualRefreshTriggered = { viewModel.setManualRefreshTriggered(it) },
                 )
             }
         }
+    }
+    val extraSheetState = rememberModalBottomSheetState()
+    var extraSheetLink by remember { mutableStateOf("") }
+    when (state.bottomSheet) {
+        ProfileBottomSheet.None -> Unit
+        ProfileBottomSheet.SignUp -> {
+            LoginBottomSheet(
+                bottomSheetState = bottomSheetState,
+                onDismissRequest = { viewModel.setBottomSheetType(ProfileBottomSheet.None) },
+                termsLink = viewModel.getTncLink(),
+                openTerms = { extraSheetLink = viewModel.getTncLink() },
+            )
+        }
+    }
+    if (extraSheetLink.isNotEmpty()) {
+        YralWebViewBottomSheet(
+            link = extraSheetLink,
+            bottomSheetState = extraSheetState,
+            onDismissRequest = { extraSheetLink = "" },
+        )
     }
 }
 
@@ -282,7 +319,10 @@ private fun ProfileHeader(
     openAccount: () -> Unit,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 16.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 12.dp),
         horizontalArrangement = Arrangement.End,
         verticalAlignment = Alignment.Top,
     ) {
@@ -305,36 +345,6 @@ private fun ProfileHeader(
                 modifier = Modifier.size(32.dp).clickable { openAccount() },
             )
         }
-    }
-}
-
-@Composable
-private fun AccountInfoSection(accountInfo: AccountInfo) {
-    Column(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(bottom = 20.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.Start),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            YralAsyncImage(
-                imageUrl = accountInfo.profilePic,
-                modifier = Modifier.size(60.dp),
-            )
-            Text(
-                text = accountInfo.userPrincipal,
-                style = LocalAppTopography.current.baseMedium,
-                color = YralColors.NeutralTextSecondary,
-            )
-        }
-        Spacer(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .height(1.dp)
-                    .background(YralColors.Divider),
-        )
     }
 }
 

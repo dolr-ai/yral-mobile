@@ -11,11 +11,9 @@ import com.yral.featureflag.accountFeatureFlags.AccountLinksDto
 import com.yral.shared.analytics.events.MenuCtaType
 import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.core.session.SessionManager
-import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.account.analytics.AccountsTelemetry
 import com.yral.shared.features.auth.AuthClientFactory
 import com.yral.shared.features.auth.domain.useCases.DeleteAccountUseCase
-import com.yral.shared.features.auth.utils.SocialProvider
 import com.yral.shared.features.auth.utils.getAccountInfo
 import com.yral.shared.firebaseStore.getDownloadUrl
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
@@ -33,7 +31,6 @@ class AccountsViewModel(
     authClientFactory: AuthClientFactory,
     private val sessionManager: SessionManager,
     private val deleteAccountUseCase: DeleteAccountUseCase,
-    private val crashlyticsManager: CrashlyticsManager,
     val accountsTelemetry: AccountsTelemetry,
     flagManager: FeatureFlagManager,
     private val firebaseStorage: FirebaseStorage,
@@ -87,18 +84,6 @@ class AccountsViewModel(
                         type = AccountBottomSheet.ErrorMessage(ErrorType.DELETE_ACCOUNT_FAILED),
                     )
                 }
-        }
-    }
-
-    @Suppress("TooGenericExceptionCaught")
-    fun signInWithGoogle(context: Any) {
-        coroutineScope.launch {
-            try {
-                authClient.signInWithSocial(context, SocialProvider.GOOGLE)
-            } catch (e: Exception) {
-                crashlyticsManager.recordException(e)
-                handleSignupFailed()
-            }
         }
     }
 
