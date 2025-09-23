@@ -1,4 +1,4 @@
-package com.yral.shared.features.game.analytics
+package com.yral.shared.features.leaderboard.analytics
 
 import com.yral.shared.analytics.AnalyticsManager
 import com.yral.shared.analytics.events.LeaderBoardCalendarClickedEventData
@@ -7,7 +7,7 @@ import com.yral.shared.analytics.events.LeaderBoardPageLoadedEventData
 import com.yral.shared.analytics.events.LeaderBoardPageViewedEventData
 import com.yral.shared.analytics.events.LeaderBoardTabClickedEventData
 import com.yral.shared.analytics.events.LeaderBoardTabType
-import com.yral.shared.features.game.data.models.LeaderboardMode
+import com.yral.shared.features.leaderboard.data.models.LeaderboardMode
 
 class LeaderBoardTelemetry(
     private val analyticsManager: AnalyticsManager,

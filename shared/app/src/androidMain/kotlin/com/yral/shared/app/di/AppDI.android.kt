@@ -7,6 +7,7 @@ import com.yral.shared.features.account.di.accountsModule
 import com.yral.shared.features.auth.di.authModule
 import com.yral.shared.features.feed.di.feedModule
 import com.yral.shared.features.game.di.gameModule
+import com.yral.shared.features.leaderboard.di.leaderboardModule
 import com.yral.shared.features.profile.di.profileModule
 import com.yral.shared.features.root.di.rootModule
 import com.yral.shared.features.uploadvideo.di.uploadVideoModule
@@ -48,6 +49,7 @@ actual fun initKoin(appDeclaration: KoinAppDeclaration) {
             rootModule,
             accountsModule,
             gameModule,
+            leaderboardModule,
             uploadVideoModule,
             profileModule,
             walletModule,

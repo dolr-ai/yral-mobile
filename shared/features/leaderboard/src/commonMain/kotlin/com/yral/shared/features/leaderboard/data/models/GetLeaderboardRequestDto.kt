@@ -1,4 +1,4 @@
-package com.yral.shared.features.game.data.models
+package com.yral.shared.features.leaderboard.data.models
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

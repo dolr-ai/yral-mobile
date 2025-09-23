@@ -1,15 +1,15 @@
-package com.yral.shared.features.game.viewmodel
+package com.yral.shared.features.leaderboard.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.core.session.SessionManager
-import com.yral.shared.features.game.analytics.LeaderBoardTelemetry
-import com.yral.shared.features.game.data.models.LeaderboardMode
-import com.yral.shared.features.game.domain.GetLeaderboardUseCase
-import com.yral.shared.features.game.domain.models.GetLeaderboardRequest
-import com.yral.shared.features.game.domain.models.LeaderboardItem
+import com.yral.shared.features.leaderboard.analytics.LeaderBoardTelemetry
+import com.yral.shared.features.leaderboard.data.models.LeaderboardMode
+import com.yral.shared.features.leaderboard.domain.GetLeaderboardUseCase
+import com.yral.shared.features.leaderboard.domain.models.GetLeaderboardRequest
+import com.yral.shared.features.leaderboard.domain.models.LeaderboardItem
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow

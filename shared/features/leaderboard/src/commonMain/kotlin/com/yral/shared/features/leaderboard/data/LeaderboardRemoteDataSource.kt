@@ -1,17 +1,14 @@
-package com.yral.shared.features.game.data
+package com.yral.shared.features.leaderboard.data
 
-import com.google.firebase.appcheck.ktx.appCheck
-import com.google.firebase.ktx.Firebase
-import com.yral.shared.core.AppConfigurations.PUMP_DUMP_BASE_URL
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.data.FirebaseFunctionRequest
-import com.yral.shared.features.game.data.models.AutoRechargeBalanceRequestDto
-import com.yral.shared.features.game.data.models.AutoRechargeBalanceResponseDto
-import com.yral.shared.features.game.data.models.CastVoteRequestDto
-import com.yral.shared.features.game.data.models.CastVoteResponseDto
-import com.yral.shared.features.game.data.models.GetBalanceResponseDto
+import com.yral.shared.features.leaderboard.data.models.GetLeaderboardRequestDto
+import com.yral.shared.features.leaderboard.data.models.LeaderboardHistoryDayDto
+import com.yral.shared.features.leaderboard.data.models.LeaderboardHistoryRequestDto
+import com.yral.shared.features.leaderboard.data.models.LeaderboardHistoryResponseDto
+import com.yral.shared.features.leaderboard.data.models.LeaderboardResponseDto
 import com.yral.shared.firebaseStore.cloudFunctionUrl
-import com.yral.shared.http.httpGet
+import com.yral.shared.firebaseStore.firebaseAppCheckToken
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.expectSuccess
 import io.ktor.client.request.headers
@@ -22,31 +19,26 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.path
-import kotlinx.coroutines.tasks.await
 import kotlinx.serialization.json.Json
 
-class GameRemoteDataSource(
+class LeaderboardRemoteDataSource(
     private val httpClient: HttpClient,
     private val json: Json,
-) : IGameRemoteDataSource {
+) : ILeaderboardRemoteDataSource {
     @Suppress("SwallowedException", "TooGenericExceptionCaught")
-    override suspend fun castVote(
+    override suspend fun getLeaderboard(
         idToken: String,
-        request: CastVoteRequestDto,
-    ): CastVoteResponseDto {
+        request: GetLeaderboardRequestDto,
+    ): LeaderboardResponseDto {
         try {
             val response: HttpResponse =
                 httpClient.post {
                     expectSuccess = false
                     url {
                         host = cloudFunctionUrl()
-                        path(CAST_VOTE_PATH)
+                        path(LEADERBOARD_PATH)
                     }
-                    val appCheckToken =
-                        Firebase.appCheck
-                            .getToken(false)
-                            .await()
-                            .token
+                    val appCheckToken = firebaseAppCheckToken()
                     headers {
                         append(HttpHeaders.Authorization, "Bearer $idToken")
                         append(HEADER_X_FIREBASE_APPCHECK, appCheckToken)
@@ -56,45 +48,30 @@ class GameRemoteDataSource(
             val apiResponseString = response.bodyAsText()
             val responseDto =
                 if (response.status == HttpStatusCode.OK) {
-                    json.decodeFromString<CastVoteResponseDto.Success>(apiResponseString)
+                    json.decodeFromString<LeaderboardResponseDto.Success>(apiResponseString)
                 } else {
-                    json.decodeFromString<CastVoteResponseDto.Error>(apiResponseString)
+                    json.decodeFromString<LeaderboardResponseDto.Error>(apiResponseString)
                 }
             return responseDto
         } catch (e: Exception) {
-            throw YralException("Error in casting vote: ${e.message}")
+            throw YralException("Error in getting leaderboard: ${e.message}")
         }
     }
 
-    override suspend fun getBalance(userPrincipal: String): GetBalanceResponseDto =
-        httpGet(
-            httpClient,
-            json,
-        ) {
-            url {
-                host = PUMP_DUMP_BASE_URL
-                path(GET_BALANCE_PATH, userPrincipal)
-            }
-        }
-
     @Suppress("SwallowedException", "TooGenericExceptionCaught")
-    override suspend fun autoRechargeBalance(
+    override suspend fun getLeaderboardHistory(
         idToken: String,
-        request: AutoRechargeBalanceRequestDto,
-    ): AutoRechargeBalanceResponseDto {
+        request: LeaderboardHistoryRequestDto,
+    ): LeaderboardHistoryResponseDto {
         try {
             val response: HttpResponse =
                 httpClient.post {
                     expectSuccess = false
                     url {
                         host = cloudFunctionUrl()
-                        path(AUTO_RECHARGE_BALANCE_PATH)
+                        path(LEADERBOARD_HISTORY_PATH)
                     }
-                    val appCheckToken =
-                        Firebase.appCheck
-                            .getToken(false)
-                            .await()
-                            .token
+                    val appCheckToken = firebaseAppCheckToken()
                     headers {
                         append(HttpHeaders.Authorization, "Bearer $idToken")
                         append(HEADER_X_FIREBASE_APPCHECK, appCheckToken)
@@ -104,20 +81,20 @@ class GameRemoteDataSource(
             val apiResponseString = response.bodyAsText()
             val responseDto =
                 if (response.status == HttpStatusCode.OK) {
-                    json.decodeFromString<AutoRechargeBalanceResponseDto.Success>(apiResponseString)
+                    val days = json.decodeFromString<List<LeaderboardHistoryDayDto>>(apiResponseString)
+                    LeaderboardHistoryResponseDto.Success(days)
                 } else {
-                    json.decodeFromString<AutoRechargeBalanceResponseDto.Error>(apiResponseString)
+                    json.decodeFromString<LeaderboardHistoryResponseDto.Error>(apiResponseString)
                 }
             return responseDto
         } catch (e: Exception) {
-            throw YralException("Error in updating balance: ${e.message}")
+            throw YralException("Error in getting leaderboard history: ${e.message}")
         }
     }
 
     companion object {
-        private const val CAST_VOTE_PATH = "cast_vote_v2"
-        private const val GET_BALANCE_PATH = "v2/balance"
-        private const val AUTO_RECHARGE_BALANCE_PATH = "tap_to_recharge"
+        private const val LEADERBOARD_PATH = "leaderboard_v2"
+        private const val LEADERBOARD_HISTORY_PATH = "leaderboard_history"
         private const val HEADER_X_FIREBASE_APPCHECK = "X-Firebase-AppCheck"
     }
 }

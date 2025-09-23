@@ -1,4 +1,4 @@
-package com.yral.shared.features.game.domain.models
+package com.yral.shared.features.leaderboard.domain.models
 
 data class LeaderboardError(
     val code: LeaderboardErrorCodes,

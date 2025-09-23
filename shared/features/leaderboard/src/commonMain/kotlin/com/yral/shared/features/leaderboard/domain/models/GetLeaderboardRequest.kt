@@ -1,7 +1,7 @@
-package com.yral.shared.features.game.domain.models
+package com.yral.shared.features.leaderboard.domain.models
 
-import com.yral.shared.features.game.data.models.GetLeaderboardRequestDto
-import com.yral.shared.features.game.data.models.LeaderboardMode
+import com.yral.shared.features.leaderboard.data.models.GetLeaderboardRequestDto
+import com.yral.shared.features.leaderboard.data.models.LeaderboardMode
 
 data class GetLeaderboardRequest(
     val principalId: String,
