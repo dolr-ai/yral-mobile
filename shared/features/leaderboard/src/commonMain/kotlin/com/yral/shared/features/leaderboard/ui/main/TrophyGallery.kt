@@ -1,4 +1,4 @@
-package com.yral.shared.features.leaderboard.ui.leaderboard.main
+package com.yral.shared.features.leaderboard.ui.main
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -35,15 +35,10 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.yral.shared.features.leaderboard.data.models.LeaderboardMode
 import com.yral.shared.features.leaderboard.domain.models.LeaderboardItem
-import com.yral.shared.features.leaderboard.ui.leaderboard.UserBriefProfileImage
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardHelpers.MAX_USERS_PRINCIPAL_LENGTH
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardHelpers.MAX_USERS_WITH_DUPLICATE_RANK
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardHelpers.POS_BRONZE
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardHelpers.POS_GOLD
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardHelpers.POS_SILVER
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardHelpers.getTrophyImageHeight
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardHelpers.getTrophyImageOffset
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardHelpers.getTrophyImageWidth
+import com.yral.shared.features.leaderboard.ui.UserBriefProfileImage
+import com.yral.shared.features.leaderboard.ui.main.LeaderboardHelpers.POS_BRONZE
+import com.yral.shared.features.leaderboard.ui.main.LeaderboardHelpers.POS_GOLD
+import com.yral.shared.features.leaderboard.ui.main.LeaderboardHelpers.POS_SILVER
 import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
@@ -246,9 +241,9 @@ private fun getTrophyDetailsUserTexts(user: List<LeaderboardItem>): String =
         1 -> user[0].userPrincipalId
         else ->
             user
-                .take(MAX_USERS_WITH_DUPLICATE_RANK)
+                .take(LeaderboardHelpers.MAX_USERS_WITH_DUPLICATE_RANK)
                 .joinToString(", ") {
-                    it.userPrincipalId.take(MAX_USERS_PRINCIPAL_LENGTH) + "..."
+                    it.userPrincipalId.take(LeaderboardHelpers.MAX_USERS_PRINCIPAL_LENGTH) + "..."
                 }
     }
 
@@ -258,10 +253,10 @@ private fun Trophy(
     profileImageUrl: String,
     trophyResource: DrawableResource,
 ) {
-    val width = getTrophyImageWidth(position)
-    val height = getTrophyImageHeight(position)
+    val width = LeaderboardHelpers.getTrophyImageWidth(position)
+    val height = LeaderboardHelpers.getTrophyImageHeight(position)
     val offset =
-        getTrophyImageOffset(
+        LeaderboardHelpers.getTrophyImageOffset(
             position = position,
             isProfileImageVisible = profileImageUrl.isNotEmpty(),
         )

@@ -1,4 +1,4 @@
-package com.yral.shared.features.leaderboard.ui.leaderboard.main
+package com.yral.shared.features.leaderboard.ui.main
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -38,14 +38,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.yral.shared.features.leaderboard.data.models.LeaderboardMode
 import com.yral.shared.features.leaderboard.nav.main.LeaderboardMainComponent
-import com.yral.shared.features.leaderboard.ui.leaderboard.LeaderboardRow
-import com.yral.shared.features.leaderboard.ui.leaderboard.LeaderboardTableHeader
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardMainScreenConstants.CONFETTI_ITERATIONS
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardMainScreenConstants.CONFETTI_SCALE
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardMainScreenConstants.CONFETTI_SIZE_FACTOR
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardMainScreenConstants.NO_OF_CONFETTI
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardMainScreenConstants.PURPLE_BRUSH
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardMainScreenConstants.YELLOW_BRUSH
+import com.yral.shared.features.leaderboard.ui.LeaderboardRow
+import com.yral.shared.features.leaderboard.ui.LeaderboardTableHeader
 import com.yral.shared.features.leaderboard.viewmodel.LeaderBoardState
 import com.yral.shared.features.leaderboard.viewmodel.LeaderBoardViewModel
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
@@ -204,8 +198,8 @@ private fun LeaderboardHeader(
 ) {
     val brushColors =
         when (state.selectedMode) {
-            LeaderboardMode.DAILY -> YELLOW_BRUSH
-            LeaderboardMode.ALL_TIME -> PURPLE_BRUSH
+            LeaderboardMode.DAILY -> LeaderboardMainScreenConstants.YELLOW_BRUSH
+            LeaderboardMode.ALL_TIME -> LeaderboardMainScreenConstants.PURPLE_BRUSH
         }
     Box {
         Image(
@@ -251,9 +245,9 @@ fun LeaderboardConfetti(
             modifier = Modifier.fillMaxSize().padding(16.dp),
             verticalArrangement = Arrangement.SpaceEvenly,
         ) {
-            val size = LocalWindowInfo.current.containerSize.width / CONFETTI_SIZE_FACTOR
+            val size = LocalWindowInfo.current.containerSize.width / LeaderboardMainScreenConstants.CONFETTI_SIZE_FACTOR
             val density = LocalDensity.current
-            repeat(NO_OF_CONFETTI) { index ->
+            repeat(LeaderboardMainScreenConstants.NO_OF_CONFETTI) { index ->
                 key(count) {
                     YralLottieAnimation(
                         rawRes = LottieRes.COLORFUL_CONFETTI_BRUST,
@@ -261,7 +255,7 @@ fun LeaderboardConfetti(
                         iterations = 1,
                         onAnimationComplete = {
                             if (index == 0) {
-                                if (count < CONFETTI_ITERATIONS) {
+                                if (count < LeaderboardMainScreenConstants.CONFETTI_ITERATIONS) {
                                     count++
                                 } else {
                                     confettiAnimationComplete()
@@ -271,7 +265,7 @@ fun LeaderboardConfetti(
                         modifier =
                             Modifier
                                 .size(with(density) { size.toDp() })
-                                .scale(CONFETTI_SCALE)
+                                .scale(LeaderboardMainScreenConstants.CONFETTI_SCALE)
                                 .align(if (index % 2 == 0) Alignment.Start else Alignment.End),
                     )
                 }

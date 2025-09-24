@@ -1,4 +1,4 @@
-package com.yral.shared.features.leaderboard.ui.leaderboard.details
+package com.yral.shared.features.leaderboard.ui.history
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -36,9 +36,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.yral.shared.features.leaderboard.nav.detail.LeaderboardDetailsComponent
-import com.yral.shared.features.leaderboard.ui.leaderboard.LeaderboardRow
-import com.yral.shared.features.leaderboard.ui.leaderboard.LeaderboardTableHeader
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardConfetti
+import com.yral.shared.features.leaderboard.ui.LeaderboardRow
+import com.yral.shared.features.leaderboard.ui.LeaderboardTableHeader
+import com.yral.shared.features.leaderboard.ui.main.LeaderboardConfetti
 import com.yral.shared.features.leaderboard.viewmodel.LeaderboardHistoryViewModel
 import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography

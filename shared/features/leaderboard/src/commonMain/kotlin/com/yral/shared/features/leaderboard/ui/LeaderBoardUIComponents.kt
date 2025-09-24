@@ -1,4 +1,4 @@
-package com.yral.shared.features.leaderboard.ui.leaderboard
+package com.yral.shared.features.leaderboard.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -26,14 +26,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardHelpers.PROFILE_IMAGE_SIZE
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardHelpers.getProfileImageRing
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardHelpers.getTextDecoration
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardHelpers.getUserBriefBorder
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardMainScreenConstants.COIN_BALANCE_WEIGHT
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardMainScreenConstants.MAX_CHAR_OF_NAME
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardMainScreenConstants.POSITION_TEXT_WEIGHT
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardMainScreenConstants.USER_DETAIL_WEIGHT
+import com.yral.shared.features.leaderboard.ui.main.LeaderboardHelpers
+import com.yral.shared.features.leaderboard.ui.main.LeaderboardMainScreenConstants
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralMaskedVectorTextV2
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
@@ -64,7 +58,7 @@ fun LeaderboardTableHeader(isTrophyVisible: Boolean) {
     ) {
         Text(
             text = stringResource(Res.string.position),
-            modifier = Modifier.weight(POSITION_TEXT_WEIGHT),
+            modifier = Modifier.weight(LeaderboardMainScreenConstants.POSITION_TEXT_WEIGHT),
             style = LocalAppTopography.current.regMedium,
             color = YralColors.Neutral500,
             maxLines = 1,
@@ -74,15 +68,15 @@ fun LeaderboardTableHeader(isTrophyVisible: Boolean) {
             text = stringResource(Res.string.player_id),
             modifier =
                 Modifier
-                    .weight(USER_DETAIL_WEIGHT)
-                    .padding(start = PROFILE_IMAGE_SIZE.dp + 8.dp),
+                    .weight(LeaderboardMainScreenConstants.USER_DETAIL_WEIGHT)
+                    .padding(start = LeaderboardHelpers.PROFILE_IMAGE_SIZE.dp + 8.dp),
             style = LocalAppTopography.current.regMedium,
             color = YralColors.Neutral500,
             maxLines = 1,
         )
         Text(
             text = stringResource(Res.string.games_won),
-            modifier = Modifier.weight(COIN_BALANCE_WEIGHT),
+            modifier = Modifier.weight(LeaderboardMainScreenConstants.COIN_BALANCE_WEIGHT),
             style = LocalAppTopography.current.regMedium,
             color = YralColors.Neutral500,
             textAlign = TextAlign.End,
@@ -137,7 +131,7 @@ private fun UserBriefWithBorder(
     content: @Composable () -> Unit,
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
-        val border = getUserBriefBorder(position)
+        val border = LeaderboardHelpers.getUserBriefBorder(position)
         if (border != null && !decorateCurrentUser) {
             Image(
                 painter = painterResource(border),
@@ -169,14 +163,14 @@ private fun UserBriefContent(
     ) {
         // Position column
         Row(
-            modifier = Modifier.weight(POSITION_TEXT_WEIGHT),
+            modifier = Modifier.weight(LeaderboardMainScreenConstants.POSITION_TEXT_WEIGHT),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             UserBriefPositionNumber(position, decorateCurrentUser)
         }
         // Player ID column with avatar
         Row(
-            modifier = Modifier.weight(USER_DETAIL_WEIGHT),
+            modifier = Modifier.weight(LeaderboardMainScreenConstants.USER_DETAIL_WEIGHT),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             UserBriefProfileImage(position, profileImageUrl)
@@ -185,7 +179,7 @@ private fun UserBriefContent(
         }
         // Games won
         Box(
-            modifier = Modifier.weight(COIN_BALANCE_WEIGHT),
+            modifier = Modifier.weight(LeaderboardMainScreenConstants.COIN_BALANCE_WEIGHT),
             contentAlignment = Alignment.CenterEnd,
         ) {
             Text(
@@ -205,7 +199,7 @@ fun UserBriefPositionNumber(
     position: Int,
     decorateCurrentUser: Boolean,
 ) {
-    val decoration = getTextDecoration(position)
+    val decoration = LeaderboardHelpers.getTextDecoration(position)
     if (decoration != null && !decorateCurrentUser) {
         YralMaskedVectorTextV2(
             text = "#$position",
@@ -237,7 +231,7 @@ private fun UserBriefProfileName(
         if (isCurrentUser) {
             stringResource(Res.string.you)
         } else {
-            name.take(MAX_CHAR_OF_NAME).plus("...")
+            name.take(LeaderboardMainScreenConstants.MAX_CHAR_OF_NAME).plus("...")
         }
     if (decorateCurrentUser) {
         Text(
@@ -258,7 +252,7 @@ private fun UserBriefGradientProfileName(
     position: Int,
     name: String,
 ) {
-    val decoration = getTextDecoration(position)
+    val decoration = LeaderboardHelpers.getTextDecoration(position)
     if (decoration != null) {
         YralMaskedVectorTextV2(
             text = name,
@@ -283,7 +277,7 @@ private fun UserBriefGradientProfileName(
 fun UserBriefProfileImage(
     position: Int,
     profileImageUrl: String,
-    size: Dp = PROFILE_IMAGE_SIZE.dp,
+    size: Dp = LeaderboardHelpers.PROFILE_IMAGE_SIZE.dp,
 ) {
     Box(modifier = Modifier.wrapContentSize()) {
         YralAsyncImage(
@@ -291,7 +285,7 @@ fun UserBriefProfileImage(
             modifier = Modifier.size(size),
             backgroundColor = YralColors.ProfilePicBackground,
         )
-        val profileImageRing = getProfileImageRing(position)
+        val profileImageRing = LeaderboardHelpers.getProfileImageRing(position)
         if (profileImageRing != null) {
             Image(
                 painter = painterResource(profileImageRing),

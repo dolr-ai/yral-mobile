@@ -1,4 +1,4 @@
-package com.yral.shared.features.leaderboard.ui.leaderboard.main
+package com.yral.shared.features.leaderboard.ui.main
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
