@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.game
+package com.yral.shared.features.game.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -16,11 +16,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.yral.android.R
 import com.yral.shared.analytics.events.GameConcludedCtaType
 import com.yral.shared.features.game.domain.models.GameIcon
 import com.yral.shared.libs.designsystem.component.YralBottomSheet
@@ -30,7 +28,18 @@ import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import org.jetbrains.compose.resources.stringResource
+import yral_mobile.shared.features.game.generated.resources.Res
+import yral_mobile.shared.features.game.generated.resources.congratulations
+import yral_mobile.shared.features.game.generated.resources.keep_playing
+import yral_mobile.shared.features.game.generated.resources.learn_more
+import yral_mobile.shared.features.game.generated.resources.since_most_people_not_voted_on
+import yral_mobile.shared.features.game.generated.resources.since_most_people_voted_on
+import yral_mobile.shared.features.game.generated.resources.you_lost_x_coins
+import yral_mobile.shared.features.game.generated.resources.you_win_x_coins
+import yral_mobile.shared.libs.designsystem.generated.resources.oops
 import kotlin.math.abs
+import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -72,9 +81,9 @@ fun GameResultSheet(
                     text =
                         stringResource(
                             if (coinDelta > 0) {
-                                R.string.congratulations
+                                Res.string.congratulations
                             } else {
-                                R.string.oops
+                                DesignRes.string.oops
                             },
                         ),
                     style = LocalAppTopography.current.lgBold,
@@ -143,9 +152,9 @@ private fun GameResultSheetMessage(
 private fun getResultText(coinDelta: Int): String =
     stringResource(
         if (coinDelta > 0) {
-            R.string.since_most_people_voted_on
+            Res.string.since_most_people_voted_on
         } else {
-            R.string.since_most_people_not_voted_on
+            Res.string.since_most_people_not_voted_on
         },
     )
 
@@ -153,9 +162,9 @@ private fun getResultText(coinDelta: Int): String =
 private fun getResultCentsText(coinDelta: Int): String =
     stringResource(
         if (coinDelta > 0) {
-            R.string.you_win_x_coins
+            Res.string.you_win_x_coins
         } else {
-            R.string.you_lost_x_coins
+            Res.string.you_lost_x_coins
         },
         abs(coinDelta),
     )
@@ -194,14 +203,14 @@ private fun GameResultSheetButtons(
     ) {
         YralGradientButton(
             modifier = Modifier.weight(1f),
-            text = stringResource(R.string.keep_playing),
+            text = stringResource(Res.string.keep_playing),
         ) {
             onSheetButtonClicked(GameConcludedCtaType.KEEP_PLAYING)
             onDismissRequest()
         }
         YralButton(
             modifier = Modifier.weight(1f),
-            text = stringResource(R.string.learn_more),
+            text = stringResource(Res.string.learn_more),
             borderWidth = 1.dp,
             borderColor = YralColors.Pink300,
             backgroundColor = YralColors.Neutral900,

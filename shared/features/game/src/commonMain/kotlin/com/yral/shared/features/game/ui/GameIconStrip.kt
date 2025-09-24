@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.game
+package com.yral.shared.features.game.ui
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -16,13 +16,13 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.unit.dp
-import com.yral.android.R
-import com.yral.android.ui.screens.game.GameIconStrip.GAME_ICON_ANIMATION_DURATION
-import com.yral.android.ui.screens.game.GameIconStrip.GAME_ICON_NUDGE_ANIMATION_DURATION
-import com.yral.android.ui.screens.game.GameIconStrip.GAME_ICON_ROTATION_DEGREE
-import com.yral.android.ui.screens.game.GameIconStrip.GAME_ICON_SCALING_FACTOR
 import com.yral.shared.features.game.domain.models.GameIcon
+import com.yral.shared.features.game.ui.GameIconStrip.GAME_ICON_ANIMATION_DURATION
+import com.yral.shared.features.game.ui.GameIconStrip.GAME_ICON_NUDGE_ANIMATION_DURATION
+import com.yral.shared.features.game.ui.GameIconStrip.GAME_ICON_ROTATION_DEGREE
+import com.yral.shared.features.game.ui.GameIconStrip.GAME_ICON_SCALING_FACTOR
 import com.yral.shared.libs.designsystem.component.YralFeedback
+import com.yral.shared.libs.designsystem.component.popPressedSoundId
 import kotlinx.coroutines.delay
 
 @Suppress("LongMethod")
@@ -111,7 +111,7 @@ private fun Feedback(
 ) {
     if (playSound) {
         YralFeedback(
-            sound = R.raw.pop_pressed,
+            sound = popPressedSoundId(),
             withHapticFeedback = true,
             onPlayed = { setPlaySound(false) },
         )

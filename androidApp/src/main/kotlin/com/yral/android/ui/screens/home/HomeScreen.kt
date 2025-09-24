@@ -63,6 +63,7 @@ import com.yral.shared.features.game.viewmodel.GameViewModel
 import com.yral.shared.features.leaderboard.ui.LeaderboardScreen
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.libs.designsystem.component.YralFeedback
+import com.yral.shared.libs.designsystem.component.popPressedSoundId
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import org.koin.compose.koinInject
@@ -288,7 +289,7 @@ private fun HomeNavigationBar(
     }
     if (playSound) {
         YralFeedback(
-            sound = R.raw.pop_pressed,
+            sound = popPressedSoundId(),
             withHapticFeedback = true,
         ) { playSound = false }
     }
