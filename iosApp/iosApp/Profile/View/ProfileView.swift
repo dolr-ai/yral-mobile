@@ -234,7 +234,7 @@ struct ProfileView: View {
       }
     }
     .ignoresSafeArea(.container, edges: .bottom)
-    .padding(.bottom, Constants.bottomAdjustmentYralTabBat)
+    .padding(.bottom, Constants.bottomAdjustmentYralTabBar)
     .onChange(of: viewModel.event) { event in
       switch event {
       case .fetchedAccountInfo(let info):

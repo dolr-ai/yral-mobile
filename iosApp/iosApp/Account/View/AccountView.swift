@@ -74,8 +74,8 @@ struct AccountView: View {
           ProfileOptionsView(showLogoutButton: $showLoginButton.inverted, delegate: self)
           Spacer()
           ShareOptionsView()
+            .padding(.bottom, Constants.bottomSpacing)
           //        ICPBrandingView()
-          Spacer().frame(height: Constants.bottomSpacing)
         }
         .padding([.top], Constants.vStackPadding)
       }
@@ -235,11 +235,12 @@ extension AccountView {
 
     static let vStackSpacing = 30.0
     static let vStackPadding = 30.0
-    static let bottomSpacing = 40.0
+    static let bottomSpacing = 60.0
     static let loadingStateOpacity = 0.4
     static let userInfoHorizontalPadding = 16.0
     static let loaderSize = 24.0
     static let backImageSize = 24.0
+    static let bottomAdjustmentYralTabBar = 18.0
     static let lottieName = "Yral_Loader"
     static let deleteTitle = "Delete Account?"
     static let deleteText = "Are you sure you want to delete your account?"
