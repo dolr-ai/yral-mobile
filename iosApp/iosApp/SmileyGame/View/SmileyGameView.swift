@@ -31,45 +31,7 @@ struct SmileyGameView: View {
     HStack(spacing: Constants.zero) {
       switch smileyGame.state {
       case .notPlayed:
-        ForEach(smileyGame.config.smileys, id: \.id) { smiley in
-          FirebaseImageView(path: smiley.imageURL, fallbackImage: smiley.fallbackImage)
-            .frame(width: Constants.smileySize, height: Constants.smileySize)
-            .opacity(
-              (!isFocused || smiley.id == selectedID) ? Constants.one : Constants.zero
-            )
-            .scaleEffect(
-              (smiley.id == selectedID && isPopped) ? Constants.smileyScale : Constants.one
-            )
-            .shadow(
-              color: (smiley.id == selectedID && isPopped) ?
-              Color.white.opacity(Constants.shadownOpacity) : Color.white.opacity(.zero),
-              radius: (smiley.id == selectedID && isPopped) ? Constants.shadowRadius : Constants.zero,
-              x: (smiley.id == selectedID && isPopped) ? -Constants.one : Constants.zero,
-              y: Constants.zero
-            )
-            .rotationEffect(getRotation(for: smiley))
-            .animation(.easeOut(duration: Constants.durationPointTwo), value: selectedID)
-            .animation(.easeOut(duration: Constants.durationPointOne), value: isFocused)
-            .animation(.easeOut(duration: Constants.durationPointThree), value: showWinnerOnly)
-            .onTapGesture {
-              stopOnboardingLoop()
-              if selectedID == nil {
-                HapticGenerator.performFeedback(.impact(weight: .light))
-                AudioPlayer.shared.play(named: Constants.smileyTapAudio)
-                smileyTapped(smiley)
-                selectedID = smiley.id
-                startPopAnimation(for: smiley)
-              }
-            }
-            .onReceive(resultAnimationSubscriber) { result in
-              startAnimation(for: result)
-            }
-            .padding(.vertical, Constants.smileyVerticalPadding)
-
-          if smiley.id != smileyGame.config.smileys.last?.id {
-            Spacer(minLength: Constants.smileySpacer)
-          }
-        }
+        gameView()
       case .played(let result):
         resultView(for: result)
       case .error(let errorMessage):
@@ -79,6 +41,8 @@ struct SmileyGameView: View {
           .minimumScaleFactor(Constants.textMinScale)
           .allowsTightening(true)
           .foregroundColor(YralColor.green50.swiftUIColor)
+      case .voted:
+        gameView()
       }
     }
     .onReceive(initialStateSubscriber) { game in
@@ -104,6 +68,48 @@ struct SmileyGameView: View {
       Constants.viewBackground.opacity(Constants.viewOpacity)
     )
     .clipShape(RoundedRectangle(cornerRadius: Constants.viewHeight / Constants.two))
+  }
+
+  @ViewBuilder func gameView() -> some View {
+    ForEach(smileyGame.config.smileys, id: \.id) { smiley in
+      FirebaseImageView(path: smiley.imageURL, fallbackImage: smiley.fallbackImage)
+        .frame(width: Constants.smileySize, height: Constants.smileySize)
+        .opacity(
+          (!isFocused || smiley.id == selectedID) ? Constants.one : Constants.zero
+        )
+        .scaleEffect(
+          (smiley.id == selectedID && isPopped) ? Constants.smileyScale : Constants.one
+        )
+        .shadow(
+          color: (smiley.id == selectedID && isPopped) ?
+          Color.white.opacity(Constants.shadownOpacity) : Color.white.opacity(.zero),
+          radius: (smiley.id == selectedID && isPopped) ? Constants.shadowRadius : Constants.zero,
+          x: (smiley.id == selectedID && isPopped) ? -Constants.one : Constants.zero,
+          y: Constants.zero
+        )
+        .rotationEffect(getRotation(for: smiley))
+        .animation(.easeOut(duration: Constants.durationPointTwo), value: selectedID)
+        .animation(.easeOut(duration: Constants.durationPointOne), value: isFocused)
+        .animation(.easeOut(duration: Constants.durationPointThree), value: showWinnerOnly)
+        .onTapGesture {
+          stopOnboardingLoop()
+          if selectedID == nil {
+            HapticGenerator.performFeedback(.impact(weight: .light))
+            AudioPlayer.shared.play(named: Constants.smileyTapAudio)
+            smileyTapped(smiley)
+            selectedID = smiley.id
+            startPopAnimation(for: smiley)
+          }
+        }
+        .onReceive(resultAnimationSubscriber) { result in
+          startAnimation(for: result)
+        }
+        .padding(.vertical, Constants.smileyVerticalPadding)
+
+      if smiley.id != smileyGame.config.smileys.last?.id {
+        Spacer(minLength: Constants.smileySpacer)
+      }
+    }
   }
 
   @ViewBuilder func resultView(for result: SmileyGameResultResponse) -> some View {
