@@ -179,6 +179,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     return imageView
   }()
   var expectedVideoID: String?
+  var overlayGeneration = 0
 
   enum RechargeResult { case success, failure }
 
@@ -528,6 +529,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
 
   override func prepareForReuse() {
     super.prepareForReuse()
+    overlayGeneration &+= 1
     playerLayer?.isHidden = true
     playerLayer?.player = nil
     playerLayer?.removeFromSuperlayer()
