@@ -234,6 +234,28 @@ extension FeedsViewController {
     session.update(coins: UInt64(updatedBalance))
   }
 
+  func updateUIAfterGamePlayed(for videoID: String) {
+    var snap = feedsDataSource.snapshot()
+    guard let oldItem = snap.itemIdentifiers.first(where: { $0.videoID == videoID }) else {
+      return
+    }
+
+    var newItem = oldItem
+    newItem.smileyGame?.state = .voted
+
+    if let pos = snap.itemIdentifiers.firstIndex(of: oldItem) {
+      snap.deleteItems([oldItem])
+      if pos < snap.itemIdentifiers.count {
+        let next = snap.itemIdentifiers[pos]
+        snap.insertItems([newItem], beforeItem: next)
+      } else {
+        snap.appendItems([newItem])
+      }
+    }
+
+    feedsDataSource.apply(snap, animatingDifferences: true)
+  }
+
   func handleCastVoteFailure(_ errorMessage: String, videoID: String) {
     var snap = feedsDataSource.snapshot()
     guard let oldItem = snap.itemIdentifiers.first(where: { $0.videoID == videoID }) else {
