@@ -226,11 +226,10 @@ fun FeedScreen(
             onDismissRequest = { viewModel.toggleReportSheet(false, 0) },
             isLoading = state.isReporting,
             reasons = (state.reportSheetState as ReportSheetState.Open).reasons,
-            onSubmit = { reason, text ->
+            onSubmit = { reportVideoData ->
                 viewModel.reportVideo(
-                    reason = reason,
-                    text = text,
                     pageNo = (state.reportSheetState as ReportSheetState.Open).pageNo,
+                    reportVideoData = reportVideoData,
                 )
             },
         )

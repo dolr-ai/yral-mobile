@@ -27,6 +27,9 @@ import com.yral.shared.features.profile.domain.DeleteVideoUseCase
 import com.yral.shared.features.profile.domain.ProfileVideosPagingSource
 import com.yral.shared.features.profile.domain.models.DeleteVideoRequest
 import com.yral.shared.features.profile.domain.repository.ProfileRepository
+import com.yral.shared.libs.designsystem.component.toast.ToastManager
+import com.yral.shared.libs.designsystem.component.toast.ToastStatus
+import com.yral.shared.libs.designsystem.component.toast.ToastType
 import com.yral.shared.libs.routing.deeplink.engine.UrlBuilder
 import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
 import com.yral.shared.libs.sharing.LinkGenerator
@@ -35,7 +38,7 @@ import com.yral.shared.libs.sharing.ShareService
 import com.yral.shared.reportVideo.domain.ReportRequestParams
 import com.yral.shared.reportVideo.domain.ReportVideoUseCase
 import com.yral.shared.reportVideo.domain.models.ReportSheetState
-import com.yral.shared.reportVideo.domain.models.VideoReportReason
+import com.yral.shared.reportVideo.domain.models.ReportVideoData
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -271,8 +274,7 @@ class ProfileViewModel(
     fun reportVideo(
         pageNo: Int,
         currentFeed: FeedDetails,
-        reason: VideoReportReason,
-        text: String,
+        reportVideoData: ReportVideoData,
     ) {
         viewModelScope.launch {
             _state.update { it.copy(isReporting = true) }
@@ -282,13 +284,19 @@ class ProfileViewModel(
                         ReportRequestParams(
                             postId = currentFeed.postID,
                             videoId = currentFeed.videoID,
-                            reason = text.ifEmpty { reason.reason },
+                            reason = reportVideoData.otherReasonText.ifEmpty { reportVideoData.reason.reason },
                             canisterID = currentFeed.canisterID,
                             principal = currentFeed.principalID,
                         ),
                 ).onSuccess { _ ->
                     _state.update { it.copy(isReporting = false) }
-                    profileTelemetry.videoReportedSuccessfully(currentFeed, reason)
+                    with(reportVideoData) {
+                        ToastManager.showToast(
+                            type = ToastType.Big(successMessage.first, successMessage.second),
+                            status = ToastStatus.Success,
+                        )
+                    }
+                    profileTelemetry.videoReportedSuccessfully(currentFeed, reportVideoData.reason)
                     toggleReportSheet(false, currentFeed, pageNo)
                     // Remove video from paging source
                 }.onFailure {

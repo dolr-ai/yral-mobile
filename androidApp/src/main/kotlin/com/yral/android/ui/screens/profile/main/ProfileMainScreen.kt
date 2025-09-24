@@ -186,12 +186,11 @@ fun ProfileMainScreen(
                                 pageNo = 0,
                             )
                         },
-                        reportVideo = { reason, text, pageNo, video ->
+                        reportVideo = { pageNo, video, reportVideoData ->
                             viewModel.reportVideo(
-                                reason = reason,
-                                text = text,
                                 pageNo = pageNo,
                                 currentFeed = video,
+                                reportVideoData = reportVideoData,
                             )
                         },
                         onDeleteVideo = { video ->

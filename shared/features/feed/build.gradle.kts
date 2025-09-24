@@ -29,6 +29,7 @@ kotlin {
             implementation(projects.shared.libs.routing.deeplinkEngine)
             implementation(projects.shared.libs.sharing)
             implementation(projects.shared.libs.featureFlag)
+            implementation(projects.shared.libs.designsystem)
             implementation(projects.shared.features.reportVideo)
         }
     }
