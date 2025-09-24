@@ -20,21 +20,34 @@ struct AccountView: View {
   @State private var isLoggingOut = false
   @State private var showDelete = false
   @State private var isDeleting = false
+  @Binding var showAccount: Bool
   @EnvironmentObject var session: SessionManager
 
-  init(viewModel: AccountViewModel) {
+  init(viewModel: AccountViewModel, showAccount: Binding<Bool>) {
     _viewModel = StateObject(wrappedValue: viewModel)
+    self._showAccount = showAccount
   }
 
   var body: some View {
     ZStack {
       ScrollView {
         VStack(spacing: Constants.vStackSpacing) {
-          Text(Constants.navigationTitle)
-            .font(Constants.navigationTitleFont)
-            .foregroundColor(Constants.navigationTitleTextColor)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(Constants.navigationTitlePadding)
+          ZStack {
+            HStack {
+              Image(Constants.backImage)
+                .resizable()
+                .frame(width: Constants.backImageSize, height: Constants.backImageSize)
+                .padding(Constants.navigationImagePadding)
+                .onTapGesture { showAccount = false }
+
+              Spacer()
+            }
+
+            Text(Constants.navigationTitle)
+              .font(Constants.navigationTitleFont)
+              .foregroundColor(Constants.navigationTitleTextColor)
+              .padding(Constants.navigationTitlePadding)
+          }
           switch viewModel.state {
           case .successfullyFetched(let info):
             UserInfoView(
@@ -61,8 +74,8 @@ struct AccountView: View {
           ProfileOptionsView(showLogoutButton: $showLoginButton.inverted, delegate: self)
           Spacer()
           ShareOptionsView()
+            .padding(.bottom, Constants.bottomSpacing)
           //        ICPBrandingView()
-          Spacer().frame(height: Constants.bottomSpacing)
         }
         .padding([.top], Constants.vStackPadding)
       }
@@ -109,6 +122,7 @@ struct AccountView: View {
         }
       }
     }
+    .navigationBarBackButtonHidden(true)
     .task {
       AnalyticsModuleKt.getAnalyticsManager().trackEvent(
         event: MenuPageViewedEventData()
@@ -205,23 +219,33 @@ extension AccountView {
     static let navigationTitle = "Accounts"
     static let navigationTitleFont = YralFont.pt20.bold.swiftUIFont
     static let navigationTitleTextColor = YralColor.grey50.swiftUIColor
-    static let navigationTitlePadding = EdgeInsets(
+    static let navigationImagePadding = EdgeInsets(
       top: -12.0,
       leading: 16.0,
       bottom: 8.0,
       trailing: 0.0
     )
 
+    static let navigationTitlePadding = EdgeInsets(
+      top: -12.0,
+      leading: 0.0,
+      bottom: 8.0,
+      trailing: 0.0
+    )
+
     static let vStackSpacing = 30.0
     static let vStackPadding = 30.0
-    static let bottomSpacing = 40.0
+    static let bottomSpacing = 60.0
     static let loadingStateOpacity = 0.4
     static let userInfoHorizontalPadding = 16.0
     static let loaderSize = 24.0
+    static let backImageSize = 24.0
+    static let bottomAdjustmentYralTabBar = 18.0
     static let lottieName = "Yral_Loader"
     static let deleteTitle = "Delete Account?"
     static let deleteText = "Are you sure you want to delete your account?"
     static let cancelTitle = "Cancel"
     static let deleteButtonTitle = "Delete"
+    static let backImage = "chevron-left"
   }
 }

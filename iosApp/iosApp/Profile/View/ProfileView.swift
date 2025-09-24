@@ -10,7 +10,7 @@ import SwiftUI
 import iosSharedUmbrella
 import Combine
 
-// swiftlint: disable type_body_length
+// swiftlint: disable type_body_length file_length
 struct ProfileView: View {
   @State var showAccountInfo = false
   @State var showEmptyState = true
@@ -21,21 +21,30 @@ struct ProfileView: View {
   @State private var deleteInfo: ProfileVideoInfo?
   @State private var showDeleteIndicator: Bool = false
   @State private var showFeeds = false
+  @State private var showAccount = false
   @State private var currentIndex: Int = .zero
   @State private var isPushNotificationFlow: Bool = false
   @State private var isVisible = false
+  @State private var showLoginButton: Bool = false
   @State private var walletPhase: WalletPhase = .none
   @State private var walletOutcome: WalletPhase = .none
+  @State private var showSignupSheet: Bool = false
+  @State private var showSignupFailureSheet: Bool = false
+  @State private var loadingProvider: SocialProvider?
+
   @EnvironmentObject var session: SessionManager
   @EnvironmentObject private var deepLinkRouter: DeepLinkRouter
+
   var uploadVideoPressed: (() -> Void) = {}
 
   @StateObject var viewModel: ProfileViewModel
+
   let router: ProfileRouterProtocol
 
   init(viewModel: ProfileViewModel, router: ProfileRouterProtocol) {
     self._viewModel = StateObject(wrappedValue: viewModel)
     self.router = router
+    UITabBar.appearance().isTranslucent = false
   }
 
   var body: some View {
@@ -52,19 +61,29 @@ struct ProfileView: View {
           walletOutcome: $walletOutcome
         )
         .edgesIgnoringSafeArea(.all)
+      } else if showAccount {
+        router.displayAccountView(showAccount: $showAccount)
       } else {
         VStack(spacing: .zero) {
           VStack(alignment: .leading, spacing: Constants.vStackSpacing) {
-            Text(Constants.navigationTitle)
-              .font(Constants.navigationTitleFont)
-              .foregroundColor(Constants.navigationTitleTextColor)
-              .padding(Constants.navigationTitlePadding)
+            HStack {
+              Text(Constants.navigationTitle)
+                .font(Constants.navigationTitleFont)
+                .foregroundColor(Constants.navigationTitleTextColor)
+                .padding(Constants.navigationTitlePadding)
+              Spacer()
+              Button { showAccount = true } label: {
+                Image(Constants.profileMenuImageName)
+                  .resizable()
+                  .frame(width: Constants.profileMenuImageSize, height: Constants.profileMenuImageSize)
+              }
+            }
             if showAccountInfo {
               UserInfoView(
                 accountInfo: $accountInfo,
                 shouldApplySpacing: false,
-                showLoginButton: Binding(get: { false }, set: { _ in }),
-                delegate: nil
+                showLoginButton: $showLoginButton,
+                delegate: self
               )
             }
           }
@@ -111,24 +130,24 @@ struct ProfileView: View {
                         }
                       }
                     },
-                      onVideoTapped: { videoInfo in
-                        currentIndex = videos.firstIndex(where: { $0.postID == videoInfo.postID }) ?? .zero
-                        if currentIndex < viewModel.feeds.count {
-                          let item = viewModel.feeds[currentIndex]
-                          AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-                            event: VideoClickedEventData(
-                              videoId: item.videoID,
-                              publisherUserId: item.principalID,
-                              likeCount: Int64(item.likeCount),
-                              shareCount: .zero,
-                              viewCount: Int64(item.viewCount),
-                              isGameEnabled: false,
-                              gameType: .smiley,
-                              isNsfw: false,
-                              ctaType: .play,
-                              pageName: .profile
-                            )
+                    onVideoTapped: { videoInfo in
+                      currentIndex = videos.firstIndex(where: { $0.postID == videoInfo.postID }) ?? .zero
+                      if currentIndex < viewModel.feeds.count {
+                        let item = viewModel.feeds[currentIndex]
+                        AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+                          event: VideoClickedEventData(
+                            videoId: item.videoID,
+                            publisherUserId: item.principalID,
+                            likeCount: Int64(item.likeCount),
+                            shareCount: .zero,
+                            viewCount: Int64(item.viewCount),
+                            isGameEnabled: false,
+                            gameType: .smiley,
+                            isNsfw: false,
+                            ctaType: .play,
+                            pageName: .profile
                           )
+                        )
                       }
                       withAnimation {
                         showFeeds = true
@@ -179,7 +198,7 @@ struct ProfileView: View {
             },
             onCancel: { showDelete = false }
           )
-          .background( ClearBackgroundView() )
+          .background(ClearBackgroundView())
         }
         .task {
           guard isLoadingFirstTime else {
@@ -214,6 +233,8 @@ struct ProfileView: View {
         }
       }
     }
+    .ignoresSafeArea(.container, edges: .bottom)
+    .padding(.bottom, Constants.bottomAdjustmentYralTabBar)
     .onChange(of: viewModel.event) { event in
       switch event {
       case .fetchedAccountInfo(let info):
@@ -265,6 +286,18 @@ struct ProfileView: View {
         }
       case .pageEndReached(let isEmpty):
         showEmptyState = isEmpty
+      case .socialSignInSuccess:
+        loadingProvider = nil
+        showSignupSheet = false
+      case .socialSignInFailure:
+        if let authJourney = loadingProvider?.authJourney() {
+          AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+            event: AuthFailedEventData(authJourney: authJourney)
+          )
+        }
+        loadingProvider = nil
+        showSignupSheet = false
+        showSignupFailureSheet = true
       default:
         break
       }
@@ -272,15 +305,37 @@ struct ProfileView: View {
     }
     .onReceive(session.phasePublisher) { phase in
       switch phase {
-      case .loggedOut,
-          .ephemeral,
-          .permanent:
+      case .loggedOut, .ephemeral:
+        self.showLoginButton = true
+        Task {
+          await viewModel.fetchProfileInfo()
+          await refreshVideos(shouldPurge: true)
+        }
+      case .permanent:
+        self.showLoginButton = false
         Task {
           await viewModel.fetchProfileInfo()
           await refreshVideos(shouldPurge: true)
         }
       default: break
       }
+    }
+    .fullScreenCover(isPresented: $showSignupSheet) {
+      ZStack(alignment: .center) {
+        SignupSheet(
+          onComplete: { showSignupSheet = false },
+          loadingProvider: $loadingProvider,
+          delegate: self
+        )
+        .background( ClearBackgroundView() )
+      }
+    }
+    .fullScreenCover(isPresented: $showSignupFailureSheet) {
+      SignupFailureSheet(onComplete: {
+        showSignupSheet = false
+        showSignupFailureSheet = false
+      })
+      .background( ClearBackgroundView() )
     }
     .onReceive(deepLinkRouter.$pendingDestination.compactMap { $0 }) { dest in
       guard dest == .profileAfterUpload else { return }
@@ -289,6 +344,7 @@ struct ProfileView: View {
     }
   }
 
+  // MARK: - Helpers
   func onUploadAction(_ action: @escaping () -> Void) -> ProfileView {
     var copy = self
     copy.uploadVideoPressed = action
@@ -331,27 +387,29 @@ extension ProfileView {
   }
 }
 
-extension ProfileView {
-  enum Constants {
-    static let navigationTitle = "My Profile"
-    static let navigationTitleFont = YralFont.pt20.bold.swiftUIFont
-    static let navigationTitleTextColor = YralColor.grey50.swiftUIColor
-    static let navigationTitlePadding = EdgeInsets(
-      top: 20.0,
-      leading: 0.0,
-      bottom: 16.0,
-      trailing: 0.0
+extension ProfileView: UserInfoViewProtocol {
+  func loginPressed() {
+    UIView.setAnimationsEnabled(false)
+    showSignupSheet = true
+    AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+      event: AuthScreenViewedEventData(pageName: .menu)
     )
-
-    static let vStackSpacing: CGFloat = 20.0
-    static let horizontalPadding: CGFloat = 16.0
-    static let minimumTopSpacing: CGFloat = 16.0
-    static let minimumBottomSpacing: CGFloat = 16.0
-
-    static let deleteTitle = "Delete video?"
-    static let deleteText = "This video will be permanently deleted from your Yral account."
-    static let cancelTitle = "Cancel"
-    static let deleteButtonTitle = "Delete"
   }
 }
-// swiftlint: enable type_body_length
+
+extension ProfileView: SignupSheetProtocol {
+  func signupwithGoogle() {
+    loadingProvider = .google
+    Task {
+      await viewModel.socialSignIn(request: .google)
+    }
+  }
+
+  func signupwithApple() {
+    loadingProvider = .apple
+    Task {
+      await viewModel.socialSignIn(request: .apple)
+    }
+  }
+}
+// swiftlint: enable type_body_length file_length

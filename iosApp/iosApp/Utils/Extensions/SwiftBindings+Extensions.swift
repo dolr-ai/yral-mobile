@@ -41,6 +41,13 @@ extension Secp256k1Error: LocalizedError {
   }
 }
 
+extension BalanceError: Error {}
+extension BalanceError: LocalizedError {
+  public var errorDescription: String? {
+    return String(describing: self)
+  }
+}
+
 extension RustVec where T == UInt8 {
   public convenience init(bytes: UnsafeRawBufferPointer) {
     self.init()
