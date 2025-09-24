@@ -714,8 +714,15 @@ def _inc_daily_leaderboard(pid: str, outcome: str) -> None:
             currency = DEFAULT_REWARD_CURRENCY
         rewards_table = day_data.get("rewards_table")
         if rewards_table is None:
-            rewards_table = REWARD_AMOUNT.get(currency, {})
-            rewards_table = { str(k): v for k, v in rewards_table.items() }
+            if currency == CURRENCY_BTC:
+                rewards_table = {
+                    COUNTRY_CODE_INDIA: REWARD_AMOUNT[CURRENCY_BTC][COUNTRY_CODE_INDIA],
+                    COUNTRY_CODE_USA: REWARD_AMOUNT[CURRENCY_BTC][COUNTRY_CODE_USA]
+                }
+            else:
+                rewards_table = {
+                    str(k): v for k, v in REWARD_AMOUNT.get(currency, {}).items()
+                }
         rewards_enabled = day_data.get("rewards_enabled")
         if rewards_enabled is None:
             rewards_enabled = REWARDS_ENABLED
@@ -933,8 +940,15 @@ def reward_leaderboard_winners(cloud_event):
             }), 200
 
         currency = data.get("currency")
-        rewards_table = data.get("rewards_table") or {}
-        rewards_table = {str(k): v for k, v in rewards_table.items()}
+
+        rewards_table_raw = data.get("rewards_table") or {}
+        # Always use INR reward amounts for BTC (USD table is only for app display)
+        if currency == CURRENCY_BTC:
+            rewards_table = rewards_table_raw.get(COUNTRY_CODE_INDIA, {})
+        else:
+            rewards_table = rewards_table_raw
+        rewards_table = { str(k): int(v) for k, v in rewards_table.items() if v is not None }
+
         token = os.environ.get("BALANCE_UPDATE_TOKEN", "")
 
         if not currency or not rewards_table or not token:
@@ -964,10 +978,12 @@ def reward_leaderboard_winners(cloud_event):
                 continue
 
             success, error = (False, None)
-            if currency == "YRAL":
+            if currency == CURRENCY_YRAL:
                 success, error = _push_delta_yral_token(token, pid, reward_amount)
-            elif currency == "BTC":
-                success, error = _push_delta_ckbtc(token, pid, reward_amount, "Daily leaderboard reward")
+            elif currency == CURRENCY_BTC:
+                reward_amount_inr = reward_amount
+                reward_amount_ckbtc = reward_amount_inr * 10   # Assuming 1 BTC = ₹1,00,00,000
+                success, error = _push_delta_ckbtc(token, pid, reward_amount_ckbtc, "Daily leaderboard reward")
             else:
                 print(f"[ERROR] Unknown currency: {currency}")
                 continue
@@ -982,7 +998,7 @@ def reward_leaderboard_winners(cloud_event):
 
             if success:
                 print(f"[OK] Rewarded {pid} ({currency}) = {reward_amount}")
-                if currency == "YRAL":
+                if currency == CURRENCY_YRAL:
                     tx_coin_change(pid, None, reward_amount, "Daily leaderboard reward")
             else:
                 print(f"[FAIL] Failed to reward {pid}: {error}")
@@ -1377,6 +1393,7 @@ def leaderboard_v3(request: Request):
         data = body.get("data", {}) or {}
 
         pid  = str(data.get("principal_id", "")).strip()
+        country_code = str(data.get("country_code", "US")).strip().upper()
         mode = str(data.get("mode", "")).lower().strip()
         is_daily = (mode == "daily")
 
@@ -1464,11 +1481,20 @@ def leaderboard_v3(request: Request):
             }), 200
 
         day_data = day_doc.to_dict() or {}
-
         currency = day_data.get("currency")
-        rewards_table_raw = day_data.get("rewards_table") or {}
-        rewards_table = {str(k): int(v) for k, v in rewards_table_raw.items() if v is not None}
         rewards_enabled = day_data.get("rewards_enabled")
+
+        rewards_table_raw = day_data.get("rewards_table") or {}
+        if currency == CURRENCY_BTC:
+            if country_code == COUNTRY_CODE_INDIA:
+                rewards_table = rewards_table_raw.get(COUNTRY_CODE_INDIA, {})
+            else:
+                rewards_table = rewards_table_raw.get(COUNTRY_CODE_USA, {})
+        else:
+            rewards_table = rewards_table_raw
+
+        rewards_table = {str(k): int(v) for k, v in rewards_table.items() if v is not None}
+
         if currency is None or rewards_enabled is None:
             rewards_enabled = False
             currency = None
@@ -1716,6 +1742,7 @@ def leaderboard_history_v2(request: Request):
         body = request.get_json(silent=True) or {}
         data = body.get("data", {}) or {}
         pid = str(data.get("principal_id", "")).strip()
+        country_code = str(data.get("country_code", "US")).strip().upper()
 
         if not pid:
             return error_response(400, "MISSING_PID", "principal_id required")
@@ -1745,8 +1772,20 @@ def leaderboard_history_v2(request: Request):
             day_data = day_doc.to_dict() if day_doc.exists else {}
 
             currency = day_data.get("currency")
+
             rewards_table_raw = day_data.get("rewards_table") or {}
-            rewards_table = {str(k): int(v) for k, v in rewards_table_raw.items() if v is not None}
+            if currency == CURRENCY_BTC:
+                # Choose between INR or USD based on country
+                if country_code == COUNTRY_CODE_INDIA:
+                    rewards_table = rewards_table_raw.get(COUNTRY_CODE_INDIA, {})
+                else:
+                    rewards_table = rewards_table_raw.get(COUNTRY_CODE_USA, {})
+            else:
+                rewards_table = rewards_table_raw
+
+            # Ensure all keys are str and values are int
+            rewards_table = {str(k): int(v) for k, v in rewards_table.items() if v is not None}
+
             rewards_enabled = day_data.get("rewards_enabled")
 
             if currency is None or rewards_enabled is None:
