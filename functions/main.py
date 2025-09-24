@@ -1441,7 +1441,8 @@ def leaderboard_v3(request: Request):
                 "top_rows": top_rows,
                 "time_left_ms": None,
                 "reward_currency": None,
-                "rewards_enabled": False
+                "rewards_enabled": False,
+                "rewards_table": {}
             }), 200
 
         # ===== Daily leaderboard (IST day) =====
@@ -1458,15 +1459,17 @@ def leaderboard_v3(request: Request):
                 "top_rows": [],
                 "time_left_ms": time_left_ms,
                 "reward_currency": None,
-                "rewards_enabled": False
+                "rewards_enabled": False,
+                "rewards_table": {}
             }), 200
 
         day_data = day_doc.to_dict() or {}
 
         currency = day_data.get("currency")
-        rewards_table = day_data.get("rewards_table")
+        rewards_table_raw = day_data.get("rewards_table") or {}
+        rewards_table = {str(k): int(v) for k, v in rewards_table_raw.items() if v is not None}
         rewards_enabled = day_data.get("rewards_enabled")
-        if currency is None or rewards_table is None or rewards_enabled is None:
+        if currency is None or rewards_enabled is None:
             rewards_enabled = False
             currency = None
             rewards_table = {}
@@ -1504,7 +1507,8 @@ def leaderboard_v3(request: Request):
                 "top_rows": [],
                 "time_left_ms": time_left_ms,
                 "reward_currency": currency,
-                "rewards_enabled": rewards_enabled
+                "rewards_enabled": rewards_enabled,
+                "rewards_table": rewards_table
             }), 200
 
         user_row = None
@@ -1537,7 +1541,8 @@ def leaderboard_v3(request: Request):
             "top_rows": top_rows,
             "time_left_ms": time_left_ms,
             "reward_currency": currency,
-            "rewards_enabled": rewards_enabled
+            "rewards_enabled": rewards_enabled,
+            "rewards_table": rewards_table
         }), 200
 
     except auth.InvalidIdTokenError:
@@ -1740,15 +1745,14 @@ def leaderboard_history_v2(request: Request):
             day_data = day_doc.to_dict() if day_doc.exists else {}
 
             currency = day_data.get("currency")
-            rewards_table = day_data.get("rewards_table")
+            rewards_table_raw = day_data.get("rewards_table") or {}
+            rewards_table = {str(k): int(v) for k, v in rewards_table_raw.items() if v is not None}
             rewards_enabled = day_data.get("rewards_enabled")
 
-            if not (currency and rewards_enabled and rewards_table):
+            if currency is None or rewards_enabled is None:
                 rewards_enabled = False
                 currency = None
                 rewards_table = {}
-
-            rewards_table = {str(k): v for k, v in rewards_table.items()}
 
             try:
                 top_rows, last_wins, current_rank = _dense_top_rows_for_day_v2(bucket_id, rewards_table, rewards_enabled)
@@ -1762,7 +1766,8 @@ def leaderboard_history_v2(request: Request):
                     "top_rows": [],
                     "user_row": None,
                     "reward_currency": currency,
-                    "rewards_enabled": rewards_enabled
+                    "rewards_enabled": rewards_enabled,
+                    "rewards_table": rewards_table
                 })
                 continue
 
@@ -1777,7 +1782,8 @@ def leaderboard_history_v2(request: Request):
                 "top_rows": top_rows,
                 "user_row": user_row,
                 "reward_currency": currency,
-                "rewards_enabled": rewards_enabled
+                "rewards_enabled": rewards_enabled,
+                "rewards_table": rewards_table
             })
 
         return jsonify(result), 200
