@@ -35,7 +35,6 @@ struct ShareOptionsView: View {
         }
       }
     }
-    .padding(.top, Constants.verticalPadding)
     .padding(.horizontal, Constants.horizontalPadding)
   }
 
@@ -50,7 +49,6 @@ extension ShareOptionsView {
     static let vStackSpacing: CGFloat = 24
     static let hStackSpacing: CGFloat = 16
     static let iconSize: CGFloat = 45
-    static let verticalPadding: CGFloat = 114
     static let horizontalPadding: CGFloat = 45
     static let titleText = "Follow us on"
     static let titleFont = YralFont.pt12.medium.swiftUIFont

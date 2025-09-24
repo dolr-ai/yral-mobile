@@ -1,6 +1,6 @@
 use crate::individual_user_template::individual_user_template_helper::*;
 use crate::individual_user_template::user_post_service_helper::*;
-use crate::{individual_user_template::*, Err};
+use crate::individual_user_template::*;
 use candid::Nat;
 use candid::{self, ser, CandidType, Decode, Deserialize, Encode, Principal};
 use ic_agent::export::PrincipalError;

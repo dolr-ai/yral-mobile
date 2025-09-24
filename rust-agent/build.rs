@@ -13,13 +13,7 @@ fn main() {
     let bridges: Vec<&str> = vec![
         "src/lib.rs",
         "src/individual_user_template/individual_user_template_ffi.rs",
-        "src/platform_orchestrator/platform_orchestrator_ffi.rs",
-        "src/post_cache/post_cache_ffi.rs",
-        "src/sns_governance/sns_governance_ffi.rs",
-        "src/sns_index/sns_index_ffi.rs",
-        "src/sns_ledger/sns_ledger_ffi.rs",
-        "src/sns_root/sns_root_ffi.rs",
-        "src/sns_swap/sns_swap_ffi.rs",
+        "src/ledger/ledger_ffi.rs"
     ];
     for path in &bridges {
         println!("cargo:rerun-if-changed={}", path);

@@ -23,6 +23,8 @@ enum ProfilePageEvent: Equatable {
   case deletedVideos([ProfileVideoInfo])
   case deleteVideoFailed(String)
   case refreshed([ProfileVideoInfo])
+  case socialSignInSuccess
+  case socialSignInFailure
 }
 
 class ProfileViewModel: ObservableObject {
@@ -34,6 +36,7 @@ class ProfileViewModel: ObservableObject {
   let myVideosUseCase: MyVideosUseCaseProtocol
   let deleteVideoUseCase: DeleteVideoUseCaseProtocol
   let refreshVideoUseCase: RefreshVideosUseCaseProtocol
+  let socialSigninUseCase: SocialSignInUseCaseProtocol
   private var cancellables = Set<AnyCancellable>()
   var deletedVideos: [ProfileVideoInfo] = []
   var startIndex = Int.zero
@@ -45,12 +48,14 @@ class ProfileViewModel: ObservableObject {
     accountUseCase: AccountUseCaseProtocol,
     myVideosUseCase: MyVideosUseCaseProtocol,
     deleteVideoUseCase: DeleteVideoUseCaseProtocol,
-    refreshVideoUseCase: RefreshVideosUseCaseProtocol
+    refreshVideoUseCase: RefreshVideosUseCaseProtocol,
+    socialSigninUseCase: SocialSignInUseCaseProtocol
   ) {
     self.accountUseCase = accountUseCase
     self.myVideosUseCase = myVideosUseCase
     self.deleteVideoUseCase = deleteVideoUseCase
     self.refreshVideoUseCase = refreshVideoUseCase
+    self.socialSigninUseCase = socialSigninUseCase
     myVideosUseCase.videosPublisher
       .sink { [weak self] videos in
         guard let self = self else { return }
@@ -172,6 +177,18 @@ class ProfileViewModel: ObservableObject {
         }
       }
       isLoading = false
+    }
+  }
+
+  func socialSignIn(request: SocialProvider) async {
+    let result = await self.socialSigninUseCase.execute(request: request)
+    await MainActor.run {
+      switch result {
+      case .success:
+        self.event = .socialSignInSuccess
+      case .failure:
+        self.event = .socialSignInFailure
+      }
     }
   }
 

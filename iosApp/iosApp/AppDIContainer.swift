@@ -50,6 +50,7 @@ import GRPC
   }()
 
   lazy var session: SessionManager = SessionManager(auth: authClient)
+  lazy var eventBus: EventBus = EventBus()
 
   lazy var accountsRepository: AccountRepositoryProtocol = {
     AccountRepository(
@@ -81,6 +82,7 @@ import GRPC
         crashReporter: crashReporter,
         socialSignInUseCase: socialSignInUseCase,
         session: session,
+        eventBus: eventBus,
         castVoteUseCase: CastVoteUseCase(
           castVoteRepository: CastVoteRepository(
             firebaseService: FirebaseService(),
@@ -105,19 +107,6 @@ import GRPC
     )
   }
 
-  func makeAccountDIContainer() -> AccountDIContainer {
-    return AccountDIContainer(
-      dependencies: AccountDIContainer.Dependencies(
-        httpService: HTTPService(baseURLString: appConfiguration.offchainBaseURLString),
-        authClient: authClient,
-        crashReporter: crashReporter,
-        accountUseCase: accountUseCase,
-        accountRepository: accountsRepository,
-        socialSignInUseCase: socialSignInUseCase
-      )
-    )
-  }
-
   func makeUploadOptionsDIContainer() -> UploadOptionsDIContainer {
     return UploadOptionsDIContainer()
   }
@@ -132,6 +121,19 @@ import GRPC
     )
   }
 
+  func makeWalletDIContainer() -> WalletDIContainer {
+    return WalletDIContainer(
+      dependencies: WalletDIContainer.Dependencies(
+        httpService: HTTPService(baseURLString: appConfiguration.firebaseBaseURLString),
+        authClient: authClient,
+        firebaseService: FirebaseService(),
+        crashReporter: crashReporter,
+        session: session,
+        accountUseCase: accountUseCase
+      )
+    )
+  }
+
   func makeProfileDIContainer() -> ProfileDIContainer {
     return ProfileDIContainer(
       dependencies: ProfileDIContainer.Dependencies(
@@ -139,7 +141,10 @@ import GRPC
         authClient: authClient,
         crashReporter: crashReporter,
         accountUseCase: accountUseCase,
-        session: session
+        session: session,
+        eventBus: eventBus,
+        accountRepository: accountsRepository,
+        socialSignInUseCase: socialSignInUseCase
       )
     )
   }

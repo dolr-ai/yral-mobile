@@ -47,6 +47,8 @@ class FeedsRepository: FeedRepositoryProtocol {
         ),
         decodeAs: PostsResponse.self
       ).posts
+      guard !cacheResponse.isEmpty
+      else { return .failure(FeedError.networkError(.invalidResponse("Empty feeds received")))}
     } catch {
       switch error {
       case let error as NetworkError:

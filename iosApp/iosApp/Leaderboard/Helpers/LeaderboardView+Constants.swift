@@ -67,6 +67,7 @@ extension LeaderboardView {
     static let tabExternalCornerRadius = 22.0
     static let tabExternalHorizontal = 16.0
     static let tabExternalVertical = 20.0
+    static let bottomAdjustmentYralTabBar = 18.0
 
     static let timerInterval: TimeInterval = 0.5
     static let timerIntervalMS = 500
