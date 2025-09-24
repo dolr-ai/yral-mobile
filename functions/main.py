@@ -966,7 +966,7 @@ def reward_leaderboard_winners(cloud_event):
             success, error = (False, None)
             if currency == "YRAL":
                 success, error = _push_delta_yral_token(token, pid, reward_amount)
-            elif currency == "CKBTC":
+            elif currency == "BTC":
                 success, error = _push_delta_ckbtc(token, pid, reward_amount, "Daily leaderboard reward")
             else:
                 print(f"[ERROR] Unknown currency: {currency}")
