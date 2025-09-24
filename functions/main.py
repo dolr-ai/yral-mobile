@@ -367,6 +367,7 @@ def tap_to_recharge(request: Request):
         print("Unhandled error:", e, file=sys.stderr)
         return error_response(500, "INTERNAL", "Internal server error")
 
+# TODO: REMOVE THIS
 @https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"])
 def cast_vote(request: Request):
     balance_update_token = os.environ["BALANCE_UPDATE_TOKEN"]
@@ -871,6 +872,145 @@ def _has_any_docs_for_day(bucket_id: str) -> bool:
         print(f"[skip] users scan error for {bucket_id}: {e}", file=sys.stderr)
         return False
 
+def _top_winners(bucket_id: str) -> list[dict]:
+    MAX_DOCS = 100
+    coll = db().collection(f"{DAILY_COLL}/{bucket_id}/users")
+
+    snaps = (
+        coll.where("smiley_game_wins", ">", 0)
+            .order_by("smiley_game_wins", direction=firestore.Query.DESCENDING)
+            .limit(MAX_DOCS)
+            .stream()
+    )
+
+    winners = []
+    current_rank = 0
+    last_wins = None
+
+    for snap in snaps:
+        wins = int(snap.get("smiley_game_wins") or 0)
+        if wins != last_wins:
+            current_rank += 1
+            last_wins = wins
+        if current_rank > 5:
+            break
+        winners.append({
+            "principal_id": snap.id,
+            "wins": wins,
+            "position": current_rank
+        })
+
+    return winners
+
+@https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"])
+def reward_leaderboard_winners(cloud_event):
+    try:
+        bucket_id = _yesterday_bucket_id_ist()
+        day_ref = db().collection(DAILY_COLL).document(bucket_id)
+        day_snap: DocumentSnapshot = day_ref.get()
+
+        if not day_snap.exists:
+            print(f"[SKIP] No day doc found for {bucket_id}")
+            return jsonify({
+                "status": "skipped",
+                "reason": f"No day doc found for {bucket_id}"
+            }), 200
+
+        data = day_snap.to_dict() or {}
+
+        if data.get("rewards_given", False):
+            print(f"[SKIP] Rewards already given for {bucket_id}")
+            return jsonify({
+                "status": "skipped",
+                "reason": "Rewards already given"
+            }), 200
+
+        if not data.get("rewards_enabled", False):
+            print(f"[SKIP] Rewards not enabled for {bucket_id}")
+            return jsonify({
+                "status": "skipped",
+                "reason": "Rewards not enabled"
+            }), 200
+
+        currency = data.get("currency")
+        rewards_table = data.get("rewards_table") or {}
+        rewards_table = {str(k): v for k, v in rewards_table.items()}
+        token = os.environ.get("BALANCE_UPDATE_TOKEN", "")
+
+        if not currency or not rewards_table or not token:
+            print(f"[ERROR] Missing currency, rewards_table, or token")
+            return jsonify({
+                "status": "error",
+                "reason": "Missing currency, rewards_table, or token"
+            }), 400
+
+        winners = _top_winners(bucket_id)
+        if not winners:
+            print(f"[INFO] No winners found for {bucket_id}")
+            return jsonify({
+                "status": "skipped",
+                "reason": "No winners found"
+            }), 200
+
+        reward_log = []
+
+        for user in winners:
+            pid = user["principal_id"]
+            position = user["position"]
+            reward_amount = rewards_table.get(str(position))
+
+            if not reward_amount:
+                print(f"[SKIP] No reward for position {position}")
+                continue
+
+            success, error = (False, None)
+            if currency == "YRAL":
+                success, error = _push_delta_yral_token(token, pid, reward_amount)
+            elif currency == "CKBTC":
+                success, error = _push_delta_ckbtc(token, pid, reward_amount, "Daily leaderboard reward")
+            else:
+                print(f"[ERROR] Unknown currency: {currency}")
+                continue
+
+            reward_log.append({
+                "principal_id": pid,
+                "position": position,
+                "amount": reward_amount,
+                "success": success,
+                "error": error
+            })
+
+            if success:
+                print(f"[OK] Rewarded {pid} ({currency}) = {reward_amount}")
+                if currency == "YRAL":
+                    tx_coin_change(pid, None, reward_amount, "Daily leaderboard reward")
+            else:
+                print(f"[FAIL] Failed to reward {pid}: {error}")
+
+        day_ref.update({
+            "rewards_given": True,
+            "reward": {
+                "timestamp": firestore.SERVER_TIMESTAMP,
+                "winners": reward_log
+            }
+        })
+
+        print(f"[DONE] Reward processing complete for {bucket_id}")
+        return jsonify({
+            "status": "success",
+            "message": f"Reward processing complete for {bucket_id}",
+            "rewards": reward_log
+        }), 200
+
+    except Exception as e:
+        print("Reward job error:", e, file=sys.stderr)
+        return jsonify({
+            "status": "error",
+            "message": "Internal server error",
+            "details": str(e)
+        }), 500
+
+# TODO: REMOVE THIS
 @https_fn.on_request(region="us-central1")
 def leaderboard(request: Request):
     """
@@ -1042,6 +1182,7 @@ def leaderboard(request: Request):
         print("Leaderboard error:", e, file=sys.stderr)
         return error_response(500, "INTERNAL", "Internal server error")
 
+# TODO: REMOVE THIS
 @https_fn.on_request(region="us-central1")
 def leaderboard_v2(request: Request):
     """
@@ -1213,7 +1354,7 @@ def leaderboard_v2(request: Request):
         print("Leaderboard error:", e, file=sys.stderr)
         return error_response(500, "INTERNAL", "Internal server error")
 
-@https_fn.on_request(region="us-central1", enforce_app_check=True)
+@https_fn.on_request(region="us-central1")
 def leaderboard_v3(request: Request):
     """
     Request
@@ -1248,13 +1389,13 @@ def leaderboard_v3(request: Request):
             return error_response(401, "MISSING_ID_TOKEN", "Authorization missing")
         auth.verify_id_token(auth_header.split(" ", 1)[1])
 
-        actok = request.headers.get("X-Firebase-AppCheck")
-        if not actok:
-            return error_response(401, "APPCHECK_MISSING", "App Check token required")
-        try:
-            app_check.verify_token(actok)
-        except Exception:
-            return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
+        # actok = request.headers.get("X-Firebase-AppCheck")
+        # if not actok:
+        #     return error_response(401, "APPCHECK_MISSING", "App Check token required")
+        # try:
+        #     app_check.verify_token(actok)
+        # except Exception:
+        #     return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
 
         if not is_daily:
             # ===== All-time leaderboard =====
@@ -1298,7 +1439,9 @@ def leaderboard_v3(request: Request):
             return jsonify({
                 "user_row": user_row,
                 "top_rows": top_rows,
-                "time_left_ms": None
+                "time_left_ms": None,
+                "reward_currency": None,
+                "rewards_enabled": False
             }), 200
 
         # ===== Daily leaderboard (IST day) =====
@@ -1405,6 +1548,7 @@ def leaderboard_v3(request: Request):
         print("Leaderboard error:", e, file=sys.stderr)
         return error_response(500, "INTERNAL", "Internal server error")
 
+# TODO: REMOVE THIS
 @https_fn.on_request(region="us-central1")
 def leaderboard_history(request: Request):
     """
@@ -1545,7 +1689,7 @@ def leaderboard_history(request: Request):
         print("leaderboard_daily_last7_excl_today error:", e, file=sys.stderr)
         return error_response(500, "INTERNAL", "Internal server error")
 
-@https_fn.on_request(region="us-central1", enforce_app_check=True)
+@https_fn.on_request(region="us-central1")
 def leaderboard_history_v2(request: Request):
     """
     Request:
@@ -1576,13 +1720,13 @@ def leaderboard_history_v2(request: Request):
             return error_response(401, "MISSING_ID_TOKEN", "Authorization missing")
         auth.verify_id_token(auth_header.split(" ", 1)[1])
 
-        actok = request.headers.get("X-Firebase-AppCheck")
-        if not actok:
-            return error_response(401, "APPCHECK_MISSING", "App Check token required")
-        try:
-            app_check.verify_token(actok)
-        except Exception:
-            return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
+        # actok = request.headers.get("X-Firebase-AppCheck")
+        # if not actok:
+        #     return error_response(401, "APPCHECK_MISSING", "App Check token required")
+        # try:
+        #     app_check.verify_token(actok)
+        # except Exception:
+        #     return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
 
         today = _ist_today_date()
         days = [today - timedelta(days=offset) for offset in range(1, 8)]
