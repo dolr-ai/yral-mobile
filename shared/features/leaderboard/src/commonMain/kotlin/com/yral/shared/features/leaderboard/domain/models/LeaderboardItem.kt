@@ -8,6 +8,7 @@ data class LeaderboardItem(
     val profileImage: String,
     val wins: Long,
     val position: Int,
+    val reward: Double?,
 )
 
 fun LeaderboardRowDto.toLeaderboardItem(): LeaderboardItem =
@@ -16,4 +17,5 @@ fun LeaderboardRowDto.toLeaderboardItem(): LeaderboardItem =
         profileImage = propicFromPrincipal(principalId),
         wins = wins,
         position = position,
+        reward = reward,
     )

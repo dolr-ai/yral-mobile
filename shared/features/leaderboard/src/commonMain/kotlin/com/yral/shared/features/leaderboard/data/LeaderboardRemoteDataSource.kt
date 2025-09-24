@@ -93,7 +93,7 @@ class LeaderboardRemoteDataSource(
     }
 
     companion object {
-        private const val LEADERBOARD_PATH = "leaderboard_v2"
+        private const val LEADERBOARD_PATH = "leaderboard_v3"
         private const val LEADERBOARD_HISTORY_PATH = "leaderboard_history"
         private const val HEADER_X_FIREBASE_APPCHECK = "X-Firebase-AppCheck"
     }

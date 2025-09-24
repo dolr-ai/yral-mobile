@@ -4,6 +4,11 @@ import com.yral.shared.features.leaderboard.data.models.LeaderboardHistoryReques
 
 data class LeaderboardHistoryRequest(
     val principalId: String,
+    val countryCode: String,
 )
 
-fun LeaderboardHistoryRequest.toDto(): LeaderboardHistoryRequestDto = LeaderboardHistoryRequestDto(principalId)
+fun LeaderboardHistoryRequest.toDto(): LeaderboardHistoryRequestDto =
+    LeaderboardHistoryRequestDto(
+        principalId = principalId,
+        countryCode = countryCode,
+    )

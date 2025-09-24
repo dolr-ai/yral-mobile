@@ -34,6 +34,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.yral.shared.features.leaderboard.data.models.LeaderboardMode
@@ -62,11 +63,12 @@ fun LeaderboardMainScreen(
     modifier: Modifier = Modifier,
     viewModel: LeaderBoardViewModel = koinViewModel(),
 ) {
+    val countryCode = Locale.current.region
     val state by viewModel.state.collectAsState()
     var showConfetti by remember(state.isCurrentUserInTop) { mutableStateOf(state.isCurrentUserInTop) }
     LaunchedEffect(Unit) {
         viewModel.leaderboardPageViewed()
-        viewModel.loadData()
+        viewModel.loadData(countryCode)
     }
 
     val listState = rememberLazyListState()
@@ -115,6 +117,7 @@ fun LeaderboardMainScreen(
         ) {
             stickyHeader {
                 LeaderboardHeader(
+                    countryCode = countryCode,
                     state = state,
                     component = component,
                     isTrophyVisible = isTrophyVisible || state.isLoading,
@@ -189,6 +192,7 @@ fun LeaderboardMainScreen(
 
 @Composable
 private fun LeaderboardHeader(
+    countryCode: String,
     state: LeaderBoardState,
     component: LeaderboardMainComponent,
     isTrophyVisible: Boolean,
@@ -220,7 +224,7 @@ private fun LeaderboardHeader(
                 isLoading = state.isLoading,
                 leaderboard = if (state.isLoading) emptyList() else state.leaderboard,
                 selectedMode = state.selectedMode,
-                selectMode = { viewModel.selectMode(it) },
+                selectMode = { viewModel.selectMode(it, countryCode) },
                 countDownMs = state.countDownMs,
                 blinkCountDown = state.blinkCountDown,
                 openHistory = {

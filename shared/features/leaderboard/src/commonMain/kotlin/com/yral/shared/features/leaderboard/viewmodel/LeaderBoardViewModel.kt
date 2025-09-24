@@ -27,7 +27,7 @@ class LeaderBoardViewModel(
     val state: StateFlow<LeaderBoardState> = _state.asStateFlow()
     private var countdownJob: Job? = null
 
-    fun loadData() {
+    fun loadData(countryCode: String) {
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, error = null, countDownMs = null) }
             sessionManager.userPrincipal?.let { userPrincipal ->
@@ -37,6 +37,7 @@ class LeaderBoardViewModel(
                             GetLeaderboardRequest(
                                 principalId = userPrincipal,
                                 mode = _state.value.selectedMode,
+                                countryCode = countryCode,
                             ),
                     ).onSuccess { data ->
                         val currentUser =
@@ -57,7 +58,7 @@ class LeaderBoardViewModel(
                                     } == true,
                             )
                         }
-                        data.timeLeftMs?.let { startCountDown() }
+                        data.timeLeftMs?.let { startCountDown(countryCode) }
                     }.onFailure { error ->
                         // No error to be shown on UI setting error as null
                         _state.update { it.copy(error = null, isLoading = false) }
@@ -67,7 +68,7 @@ class LeaderBoardViewModel(
     }
 
     @Suppress("MagicNumber")
-    private fun startCountDown() {
+    private fun startCountDown(countryCode: String) {
         countdownJob?.cancel()
         countdownJob =
             viewModelScope.launch {
@@ -83,19 +84,22 @@ class LeaderBoardViewModel(
                     }
                     currentTime = _state.value.countDownMs
                 }
-                refreshData()
+                refreshData(countryCode)
             }
     }
 
-    private fun refreshData() {
+    private fun refreshData(countryCode: String) {
         _state.update { it.copy(error = null) }
-        loadData()
+        loadData(countryCode)
     }
 
-    fun selectMode(mode: LeaderboardMode) {
+    fun selectMode(
+        mode: LeaderboardMode,
+        countryCode: String,
+    ) {
         if (_state.value.selectedMode != mode) {
             _state.update { it.copy(selectedMode = mode) }
-            refreshData()
+            refreshData(countryCode)
             leaderBoardTelemetry.leaderboardTabClicked(mode)
         }
     }

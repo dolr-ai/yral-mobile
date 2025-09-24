@@ -7,6 +7,7 @@ import com.yral.shared.features.leaderboard.domain.models.LeaderboardErrorCodes
 import com.yral.shared.features.leaderboard.domain.models.LeaderboardHistory
 import com.yral.shared.features.leaderboard.domain.models.LeaderboardHistoryDay
 import com.yral.shared.features.leaderboard.domain.models.LeaderboardHistoryError
+import com.yral.shared.features.leaderboard.domain.models.RewardCurrency
 import com.yral.shared.features.leaderboard.domain.models.toLeaderboardItem
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -19,6 +20,12 @@ data class LeaderboardHistoryDayDto(
     val topRows: List<LeaderboardRowDto>,
     @SerialName("user_row")
     val userRow: LeaderboardRowDto? = null,
+    @SerialName("reward_currency")
+    val rewardCurrency: String? = null,
+    @SerialName("reward_currency_code")
+    val rewardCurrencyCode: String? = null,
+    @SerialName("rewards_enabled")
+    val rewardsEnabled: Boolean,
 )
 
 @Serializable
@@ -45,6 +52,8 @@ fun LeaderboardHistoryResponseDto.toLeaderboardHistory(): Result<LeaderboardHist
                         date = day.date,
                         topRows = day.topRows.map { it.toLeaderboardItem() },
                         userRow = day.userRow?.toLeaderboardItem(),
+                        rewardCurrency = day.rewardCurrency?.let { RewardCurrency.valueOf(it) },
+                        rewardCurrencyCode = day.rewardCurrencyCode,
                     )
                 },
             )

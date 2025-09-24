@@ -33,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.yral.shared.features.leaderboard.nav.detail.LeaderboardDetailsComponent
@@ -59,9 +60,10 @@ fun LeaderboardDetailsScreen(
     component: LeaderboardDetailsComponent,
     viewModel: LeaderboardHistoryViewModel = koinViewModel(),
 ) {
+    val countryCode = Locale.current.region
     val state by viewModel.state.collectAsState()
     var showConfetti by remember(state.selectedIndex, state.history) { mutableStateOf(viewModel.isCurrentUserInTop()) }
-    LaunchedEffect(Unit) { viewModel.fetchHistory() }
+    LaunchedEffect(Unit) { viewModel.fetchHistory(countryCode) }
     val listState = rememberLazyListState()
     var pageLoadedReported by remember(state.selectedIndex) { mutableStateOf(false) }
     LaunchedEffect(state.isLoading, state.selectedIndex) {
