@@ -32,6 +32,7 @@ import com.yral.android.ui.screens.uploadVideo.aiVideoGen.AiVideoGenScreenConsta
 import com.yral.shared.features.uploadvideo.domain.models.Provider
 import com.yral.shared.features.uploadvideo.presentation.AiVideoGenViewModel.ViewState
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
+import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.getSVGImageModel
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
@@ -83,6 +84,13 @@ fun ModelDetails(
                 )
             }
         }
+            ?: Column(
+                modifier = Modifier.fillMaxWidth().height(130.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                YralLoader(size = 34.dp)
+            }
     }
 }
 
