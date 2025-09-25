@@ -7,7 +7,7 @@ import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.core.session.SessionManager
-import com.yral.shared.features.auth.utils.getAccountInfo
+import com.yral.shared.core.utils.getAccountInfo
 import com.yral.shared.features.wallet.analytics.WalletTelemetry
 import com.yral.shared.features.wallet.domain.GetBtcConversionUseCase
 import com.yral.shared.features.wallet.domain.GetUserBtcBalanceUseCase

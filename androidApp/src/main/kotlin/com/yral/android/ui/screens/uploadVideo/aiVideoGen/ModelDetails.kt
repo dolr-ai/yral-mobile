@@ -18,7 +18,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -37,7 +36,11 @@ import com.yral.shared.libs.designsystem.component.getSVGImageModel
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
+import yral_mobile.shared.libs.designsystem.generated.resources.coins
+import yral_mobile.shared.libs.designsystem.generated.resources.current_balance
+import yral_mobile.shared.libs.designsystem.generated.resources.yral
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @Composable
@@ -165,13 +168,13 @@ private fun CostToken() {
                 ).padding(all = 8.dp),
     ) {
         Image(
-            painter = painterResource(id = R.drawable.yral),
+            painter = painterResource(DesignRes.drawable.yral),
             contentDescription = "yral",
             contentScale = ContentScale.Inside,
             modifier = Modifier.size(24.dp),
         )
         Text(
-            text = stringResource(R.string.coins),
+            text = stringResource(DesignRes.string.coins),
             style = LocalAppTopography.current.baseBold,
             color = YralColors.NeutralTextPrimary,
         )
@@ -197,7 +200,7 @@ private fun CreditsBalance(
                         R.string.credits_used_use_token,
                         usedCredits,
                         totalCredits,
-                        stringResource(R.string.coins),
+                        stringResource(DesignRes.string.coins),
                     ),
                 style = LocalAppTopography.current.regRegular.copy(fontWeight = FontWeight.Bold),
                 color = YralColors.NeutralTextSecondary,
@@ -221,7 +224,7 @@ private fun CreditsBalance(
                         isBalanceLow = isBalanceLow,
                         isCreditsAvailable = isCreditsAvailable,
                         currentBalance = it,
-                        token = stringResource(R.string.coins),
+                        token = stringResource(DesignRes.string.coins),
                     ),
             )
         }
@@ -246,7 +249,7 @@ private fun buildBalanceString(
             )
         if (!isBalanceLow || isCreditsAvailable) {
             withStyle(spanStyle) {
-                append(stringResource(R.string.current_balance))
+                append(stringResource(DesignRes.string.current_balance))
             }
             withStyle(spanStyle.copy(fontWeight = FontWeight.Bold)) {
                 append(" $currentBalance $token")

@@ -40,7 +40,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yral.android.R
 import com.yral.android.ui.components.DeleteConfirmationSheet
-import com.yral.android.ui.components.signup.AccountInfoView
 import com.yral.android.ui.screens.account.AccountScreenConstants.SOCIAL_MEDIA_LINK_BOTTOM_SPACER_WEIGHT
 import com.yral.android.ui.screens.account.nav.AccountComponent
 import com.yral.shared.analytics.events.MenuCtaType
@@ -53,6 +52,7 @@ import com.yral.shared.features.account.viewmodel.AccountsViewModel
 import com.yral.shared.features.account.viewmodel.ErrorType
 import com.yral.shared.features.auth.viewModel.LoginViewModel
 import com.yral.shared.libs.arch.presentation.UiState
+import com.yral.shared.libs.designsystem.component.AccountInfoView
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
 import com.yral.shared.libs.designsystem.component.YralWebViewBottomSheet

@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.wallet.nav
+package com.yral.shared.features.wallet.nav
 
 import com.arkivanov.decompose.ComponentContext
 import org.koin.core.component.KoinComponent

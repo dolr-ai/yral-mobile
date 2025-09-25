@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.wallet
+package com.yral.shared.features.wallet.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -20,21 +20,30 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.yral.android.R
-import com.yral.android.ui.components.signup.AccountInfoView
-import com.yral.android.ui.screens.wallet.nav.WalletComponent
+import com.yral.shared.features.wallet.nav.WalletComponent
 import com.yral.shared.features.wallet.viewmodel.WalletViewModel
 import com.yral.shared.libs.CurrencyFormatter
 import com.yral.shared.libs.NumberFormatter
+import com.yral.shared.libs.designsystem.component.AccountInfoView
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import yral_mobile.shared.features.wallet.generated.resources.Res
+import yral_mobile.shared.features.wallet.generated.resources.bit_coin
+import yral_mobile.shared.features.wallet.generated.resources.bitcoin
+import yral_mobile.shared.features.wallet.generated.resources.btc_inr_rate
+import yral_mobile.shared.features.wallet.generated.resources.ic_rupee
+import yral_mobile.shared.features.wallet.generated.resources.my_wallet
+import yral_mobile.shared.libs.designsystem.generated.resources.coins
+import yral_mobile.shared.libs.designsystem.generated.resources.current_balance
+import yral_mobile.shared.libs.designsystem.generated.resources.yral
+import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @Composable
 fun WalletScreen(
@@ -81,7 +90,7 @@ private fun WalletHeader() {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = stringResource(R.string.my_wallet),
+            text = stringResource(Res.string.my_wallet),
             style = LocalAppTopography.current.xlBold,
             color = YralColors.NeutralTextPrimary,
         )
@@ -112,13 +121,13 @@ private fun YralTokenBalance(coinBalance: Long) {
                 modifier = Modifier.weight(1f),
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.yral),
-                    contentDescription = stringResource(R.string.coins),
+                    painter = painterResource(DesignRes.drawable.yral),
+                    contentDescription = stringResource(DesignRes.string.coins),
                     contentScale = ContentScale.Inside,
                     modifier = Modifier.size(48.dp),
                 )
                 Text(
-                    text = stringResource(R.string.coins),
+                    text = stringResource(DesignRes.string.coins),
                     style = LocalAppTopography.current.xlBold,
                     color = YralColors.NeutralTextPrimary,
                     textAlign = TextAlign.Center,
@@ -174,13 +183,13 @@ private fun BitCoinBalance(
                         modifier = Modifier.weight(1f),
                     ) {
                         Image(
-                            painter = painterResource(id = R.drawable.bitcoin),
-                            contentDescription = stringResource(R.string.bit_coin),
+                            painter = painterResource(Res.drawable.bitcoin),
+                            contentDescription = stringResource(Res.string.bit_coin),
                             contentScale = ContentScale.Inside,
                             modifier = Modifier.size(48.dp),
                         )
                         Text(
-                            text = stringResource(R.string.bit_coin),
+                            text = stringResource(Res.string.bit_coin),
                             style = LocalAppTopography.current.xlBold,
                             color = YralColors.NeutralTextPrimary,
                             textAlign = TextAlign.Center,
@@ -238,14 +247,14 @@ private fun CurrencyBalanceRow(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = stringResource(R.string.current_balance),
+                        text = stringResource(DesignRes.string.current_balance),
                         style = LocalAppTopography.current.regRegular,
                         color = YralColors.NeutralTextSecondary,
                         textAlign = TextAlign.Center,
                     )
                     if (currencyCode == "INR") {
                         Image(
-                            painter = painterResource(id = R.drawable.ic_rupee),
+                            painter = painterResource(Res.drawable.ic_rupee),
                             contentDescription = "image description",
                             contentScale = ContentScale.None,
                             modifier = Modifier.size(28.dp),
@@ -283,7 +292,7 @@ private fun BtcInCurrency(
     btcConversionRate?.let {
         currencyCode?.let {
             Text(
-                text = stringResource(R.string.btc_inr_rate, btcConversionRate.toCurrencyString(currencyCode)),
+                text = stringResource(Res.string.btc_inr_rate, btcConversionRate.toCurrencyString(currencyCode)),
                 style = LocalAppTopography.current.regRegular,
                 color = YralColors.NeutralTextSecondary,
                 textAlign = TextAlign.End,
