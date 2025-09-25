@@ -1745,6 +1745,7 @@ def leaderboard_history_v2(request: Request):
         "top_rows": [ { principal_id, wins, position, reward? }, ... ],
         "user_row": { principal_id, wins, position, reward? } | null,
         "reward_currency": <str | None>,
+        "reward_currency_code": "INR/USD"
         "rewards_enabled": <bool>
       }
     """
