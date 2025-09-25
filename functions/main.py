@@ -1785,16 +1785,20 @@ def leaderboard_history_v2(request: Request):
             day_data = day_doc.to_dict() if day_doc.exists else {}
 
             currency = day_data.get("currency")
+            reward_currency_code = None
 
             rewards_table_raw = day_data.get("rewards_table") or {}
             if currency == CURRENCY_BTC:
                 # Choose between INR or USD based on country
                 if country_code == COUNTRY_CODE_INDIA:
                     rewards_table = rewards_table_raw.get(COUNTRY_CODE_INDIA, {})
+                    reward_currency_code = "INR"
                 else:
                     rewards_table = rewards_table_raw.get(COUNTRY_CODE_USA, {})
+                    reward_currency_code = "USD"
             else:
                 rewards_table = rewards_table_raw
+                reward_currency_code = None
 
             # Ensure all keys are str and values are int
             rewards_table = {str(k): int(v) for k, v in rewards_table.items() if v is not None}
@@ -1805,6 +1809,7 @@ def leaderboard_history_v2(request: Request):
                 rewards_enabled = False
                 currency = None
                 rewards_table = {}
+                reward_currency_code = None
 
             try:
                 top_rows, last_wins, current_rank = _dense_top_rows_for_day_v2(bucket_id, rewards_table, rewards_enabled)
@@ -1818,6 +1823,7 @@ def leaderboard_history_v2(request: Request):
                     "top_rows": [],
                     "user_row": None,
                     "reward_currency": currency,
+                    "reward_currency_code": reward_currency_code,
                     "rewards_enabled": rewards_enabled,
                     "rewards_table": rewards_table
                 })
@@ -1834,6 +1840,7 @@ def leaderboard_history_v2(request: Request):
                 "top_rows": top_rows,
                 "user_row": user_row,
                 "reward_currency": currency,
+                "reward_currency_code": reward_currency_code,
                 "rewards_enabled": rewards_enabled,
                 "rewards_table": rewards_table
             })
