@@ -90,7 +90,7 @@ struct LeaderboardView: View {
             peekHeight: usableHeight - headerHeight,
             background: Constants.dragViewBackground
           ) {
-            buildLeaderboardHeader()
+            buildLeaderboardHeader(response)
           } content: {
             buildLeaderboard(response)
           }
@@ -367,22 +367,60 @@ struct LeaderboardView: View {
   // swiftlint: enable function_body_length
 
   @ViewBuilder
-  private func buildLeaderboardHeader() -> some View {
+  private func buildLeaderboardHeader(_ response: LeaderboardResponse) -> some View {
+    let rewardsEnabled = response.rewardsEnabled
+    let rewardCurrency = response.rewardCurrency ?? Constants.defaultRewardCurrency
+
     HStack(spacing: .zero) {
       Text(Constants.position)
         .font(Constants.positionFont)
         .foregroundColor(Constants.positionColour)
-        .frame(width: Constants.rowWidth * Constants.positionFactor, alignment: .leading)
+        .frame(
+          width: Constants.rowWidth * (
+            rewardsEnabled ? Constants.positionFactorWithReward : Constants.positionFactor
+          ),
+          alignment: .leading
+        )
 
       Text(Constants.id)
         .font(Constants.idFont)
         .foregroundColor(Constants.idColour)
-        .frame(width: Constants.rowWidth * Constants.idFactor, alignment: .leading)
+        .frame(
+          width: Constants.rowWidth * (
+            rewardsEnabled ? Constants.idFactorWithReward : Constants.idFactor
+          ),
+          alignment: .leading
+        )
+
+      if rewardsEnabled {
+        HStack(spacing: .four) {
+          Spacer(minLength: .zero)
+
+          Text(Constants.reward)
+            .font(Constants.rewardFont)
+            .foregroundColor(Constants.rewardColour)
+
+          Image(
+            rewardCurrency == Constants.defaultRewardCurrency ? Constants.rewardYral : Constants.rewardBTC
+          )
+            .resizable()
+            .frame(width: Constants.rewardImageSize, height: Constants.rewardImageSize)
+        }
+        .frame(
+          width: Constants.rowWidth * Constants.rewardFactor,
+          alignment: .trailing
+        )
+      }
 
       Text(Constants.totalSats)
         .font(Constants.totalSatsFont)
         .foregroundColor(Constants.totalSatsColour)
-        .frame(width: Constants.rowWidth * Constants.totalSatsFactor, alignment: .trailing)
+        .frame(
+          width: Constants.rowWidth * (
+            rewardsEnabled ? Constants.totalSatsFactorWithReward : Constants.totalSatsFactor
+          ),
+          alignment: .trailing
+        )
     }
     .padding(.top, Constants.leaderboardHeaderTop)
     .padding(.bottom, Constants.leaderboardHeaderBottom)
@@ -390,13 +428,20 @@ struct LeaderboardView: View {
 
   @ViewBuilder
   private func buildLeaderboard(_ response: LeaderboardResponse) -> some View {
+    let rewardsEnabled = response.rewardsEnabled
+    let rewardCurrency = response.rewardCurrency ?? "YRAL"
+    let rewardCurrencyCode = response.rewardCurrencyCode
+
     VStack(alignment: .leading, spacing: Constants.vStackSpacing) {
       if let userRow = response.userRow {
         LeaderboardRowView(
           leaderboardRow: userRow,
           isCurrentUser: true,
           rowWidth: Constants.rowWidth,
-          imageURL: viewModel.fetchImageURL(for: userRow.principalID)
+          imageURL: viewModel.fetchImageURL(for: userRow.principalID),
+          rewardsEnabled: rewardsEnabled,
+          rewardCurrency: rewardCurrency,
+          rewardCurrencyCode: rewardCurrencyCode
         )
       }
 
@@ -405,7 +450,10 @@ struct LeaderboardView: View {
           leaderboardRow: leaderboardRow,
           isCurrentUser: false,
           rowWidth: Constants.rowWidth,
-          imageURL: viewModel.fetchImageURL(for: leaderboardRow.principalID)
+          imageURL: viewModel.fetchImageURL(for: leaderboardRow.principalID),
+          rewardsEnabled: rewardsEnabled,
+          rewardCurrency: rewardCurrency,
+          rewardCurrencyCode: rewardCurrencyCode
         )
       }
     }

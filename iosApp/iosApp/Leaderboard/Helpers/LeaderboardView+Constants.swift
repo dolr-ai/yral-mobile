@@ -16,6 +16,7 @@ extension LeaderboardView {
     static let rowWidth = UIScreen.main.bounds.width - 32
 
     static let background = YralColor.grey950.swiftUIColor
+    static let defaultRewardCurrency = "YRAL"
     static let loader = "Yral_Loader"
     static let loaderSize = 24.0
     static let loaderLeading = 44.0
@@ -133,18 +134,27 @@ extension LeaderboardView {
 
     static let vStackSpacing = 12.0
     static let position = "Position"
-    static let positionFont = YralFont.pt12.medium.swiftUIFont
-    static let positionColour = YralColor.grey600.swiftUIColor
+    static let positionFont = YralFont.pt12.regular.swiftUIFont
+    static let positionColour = YralColor.grey400.swiftUIColor
     static let positionFactor = 0.28
-    static let id = "Player ID"
-    static let idFont = YralFont.pt12.medium.swiftUIFont
-    static let idColour = YralColor.grey600.swiftUIColor
+    static let positionFactorWithReward = 0.18
+    static let id = "Player"
+    static let idFont = YralFont.pt12.regular.swiftUIFont
+    static let idColour = YralColor.grey400.swiftUIColor
     static let idFactor = 0.44
-    static let idLeading = 28.0
+    static let idFactorWithReward = 0.35
+    static let rewardYral = "yral_token_wallet"
+    static let rewardBTC = "btc_token_wallet"
+    static let reward = "Rewards"
+    static let rewardFont = YralFont.pt12.regular.swiftUIFont
+    static let rewardColour = YralColor.grey400.swiftUIColor
+    static let rewardFactor = 0.22
+    static let rewardImageSize = 14.0
     static let totalSats = "Games Won"
-    static let totalSatsFont = YralFont.pt12.medium.swiftUIFont
-    static let totalSatsColour = YralColor.grey600.swiftUIColor
+    static let totalSatsFont = YralFont.pt12.regular.swiftUIFont
+    static let totalSatsColour = YralColor.grey400.swiftUIColor
     static let totalSatsFactor = 0.28
+    static let totalSatsFactorWithReward = 0.25
     static let totalSatsLeading = 48.0
 
     static let leaderboardHeaderTop = 20.0
