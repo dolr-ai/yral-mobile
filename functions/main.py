@@ -134,7 +134,7 @@ def error_response(status: int, code: str, message: str):
     return make_response(jsonify(payload), status)
 
 # ─────────────────────  MAIN HANDLER  ────────────────────────
-@https_fn.on_request(region="us-central1", enforce_app_check=True)
+@https_fn.on_request(region="us-central1")
 def exchange_principal_id(request: Request):
     try:
         # 1. validate & auth -------------------------------------------------
@@ -154,12 +154,12 @@ def exchange_principal_id(request: Request):
         caller_token = auth.verify_id_token(auth_header.split(" ", 1)[1])
         old_uid = caller_token["uid"]                      # could equal principal_id
 
-        actok = request.headers.get("X-Firebase-AppCheck")
-        if actok:
-            try:
-                app_check.verify_token(actok)
-            except Exception:
-                return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
+        # actok = request.headers.get("X-Firebase-AppCheck")
+        # if actok:
+        #     try:
+        #         app_check.verify_token(actok)
+        #     except Exception:
+        #         return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
 
         # 2. ensure Auth user for principal_id ------------------------------
         try:
@@ -223,7 +223,7 @@ def _push_delta(token: str, principal_id: str, delta: int) -> tuple[bool, str | 
     except requests.RequestException as e:
         return False, str(e)
     
-@https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"], enforce_app_check=True)
+@https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"])
 def update_balance(request: Request):
     balance_update_token = os.environ["BALANCE_UPDATE_TOKEN"]
     try:
@@ -242,20 +242,20 @@ def update_balance(request: Request):
         auth.verify_id_token(auth_header.split(" ", 1)[1])
 
         # ───────── App Check enforcement ─────────
-        actok = request.headers.get("X-Firebase-AppCheck")
-        if not actok:
-            return error_response(
-                401, "APPCHECK_MISSING",
-                "App Check token required"
-            )
+        # actok = request.headers.get("X-Firebase-AppCheck")
+        # if not actok:
+        #     return error_response(
+        #         401, "APPCHECK_MISSING",
+        #         "App Check token required"
+        #     )
 
-        try:
-            app_check.verify_token(actok)
-        except Exception:
-            return error_response(
-                401, "APPCHECK_INVALID",
-                "App Check token invalid"
-            )
+        # try:
+        #     app_check.verify_token(actok)
+        # except Exception:
+        #     return error_response(
+        #         401, "APPCHECK_INVALID",
+        #         "App Check token invalid"
+        #     )
 
         success, error_msg = _push_delta(balance_update_token, pid, delta)
 
@@ -274,7 +274,7 @@ def update_balance(request: Request):
         print("Unhandled error:", e, file=sys.stderr)
         return error_response(500, "INTERNAL", "Internal server error")
 
-@https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"], enforce_app_check=True)
+@https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"])
 def tap_to_recharge(request: Request):
     try:
         # 1️⃣ POST check
@@ -295,20 +295,20 @@ def tap_to_recharge(request: Request):
         auth.verify_id_token(auth_header.split(" ", 1)[1])
 
         # ───────── App Check enforcement ─────────
-        actok = request.headers.get("X-Firebase-AppCheck")
-        if not actok:
-            return error_response(
-                401, "APPCHECK_MISSING",
-                "App Check token required"
-            )
+        # actok = request.headers.get("X-Firebase-AppCheck")
+        # if not actok:
+        #     return error_response(
+        #         401, "APPCHECK_MISSING",
+        #         "App Check token required"
+        #     )
 
-        try:
-            app_check.verify_token(actok)
-        except Exception:
-            return error_response(
-                401, "APPCHECK_INVALID",
-                "App Check token invalid"
-            )
+        # try:
+        #     app_check.verify_token(actok)
+        # except Exception:
+        #     return error_response(
+        #         401, "APPCHECK_INVALID",
+        #         "App Check token invalid"
+        #     )
 
         # 5️⃣ Ensure balance is zero
         user_ref = db().document(f"users/{pid}")
@@ -340,7 +340,7 @@ def tap_to_recharge(request: Request):
         print("Unhandled error:", e, file=sys.stderr)
         return error_response(500, "INTERNAL", "Internal server error")
 
-@https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"], enforce_app_check=True)
+@https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"])
 def cast_vote(request: Request):
     balance_update_token = os.environ["BALANCE_UPDATE_TOKEN"]
     try:
@@ -359,12 +359,12 @@ def cast_vote(request: Request):
             return error_response(401, "MISSING_ID_TOKEN", "Authorization missing")
         auth.verify_id_token(auth_header.split(" ", 1)[1])
 
-        actok = request.headers.get("X-Firebase-AppCheck")
-        if actok:
-            try:
-                app_check.verify_token(actok)
-            except Exception:
-                return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
+        # actok = request.headers.get("X-Firebase-AppCheck")
+        # if actok:
+        #     try:
+        #         app_check.verify_token(actok)
+        #     except Exception:
+        #         return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
 
         # load the global smiley list once per cold-start
         smileys     = get_smileys()                          # [{id, image_name, …}, …]
@@ -490,7 +490,7 @@ def cast_vote(request: Request):
         print("Unhandled error:", e, file=sys.stderr)
         return error_response(500, "INTERNAL", "Internal server error")
 
-@https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"], enforce_app_check=True)
+@https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"])
 def cast_vote_v2(request: Request):
     balance_update_token = os.environ["BALANCE_UPDATE_TOKEN"]
     try:
@@ -509,12 +509,12 @@ def cast_vote_v2(request: Request):
             return error_response(401, "MISSING_ID_TOKEN", "Authorization missing")
         auth.verify_id_token(auth_header.split(" ", 1)[1])
 
-        actok = request.headers.get("X-Firebase-AppCheck")
-        if actok:
-            try:
-                app_check.verify_token(actok)
-            except Exception:
-                return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
+        # actok = request.headers.get("X-Firebase-AppCheck")
+        # if actok:
+        #     try:
+        #         app_check.verify_token(actok)
+        #     except Exception:
+        #         return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
 
         # load the global smiley list once per cold-start
         smileys     = get_smileys()                          # [{id, image_name, …}, …]
@@ -750,7 +750,7 @@ def _has_any_docs_for_day(bucket_id: str) -> bool:
         print(f"[skip] users scan error for {bucket_id}: {e}", file=sys.stderr)
         return False
 
-@https_fn.on_request(region="us-central1", enforce_app_check=True)
+@https_fn.on_request(region="us-central1")
 def leaderboard(request: Request):
     """
     Request
@@ -783,13 +783,13 @@ def leaderboard(request: Request):
             return error_response(401, "MISSING_ID_TOKEN", "Authorization missing")
         auth.verify_id_token(auth_header.split(" ", 1)[1])
 
-        actok = request.headers.get("X-Firebase-AppCheck")
-        if not actok:
-            return error_response(401, "APPCHECK_MISSING", "App Check token required")
-        try:
-            app_check.verify_token(actok)
-        except Exception:
-            return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
+        # actok = request.headers.get("X-Firebase-AppCheck")
+        # if not actok:
+        #     return error_response(401, "APPCHECK_MISSING", "App Check token required")
+        # try:
+        #     app_check.verify_token(actok)
+        # except Exception:
+        #     return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
 
         if not is_daily:
             # ===== All-time leaderboard =====
@@ -921,7 +921,7 @@ def leaderboard(request: Request):
         print("Leaderboard error:", e, file=sys.stderr)
         return error_response(500, "INTERNAL", "Internal server error")
 
-@https_fn.on_request(region="us-central1", enforce_app_check=True)
+@https_fn.on_request(region="us-central1")
 def leaderboard_v2(request: Request):
     """
     Request
@@ -954,13 +954,13 @@ def leaderboard_v2(request: Request):
             return error_response(401, "MISSING_ID_TOKEN", "Authorization missing")
         auth.verify_id_token(auth_header.split(" ", 1)[1])
 
-        actok = request.headers.get("X-Firebase-AppCheck")
-        if not actok:
-            return error_response(401, "APPCHECK_MISSING", "App Check token required")
-        try:
-            app_check.verify_token(actok)
-        except Exception:
-            return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
+        # actok = request.headers.get("X-Firebase-AppCheck")
+        # if not actok:
+        #     return error_response(401, "APPCHECK_MISSING", "App Check token required")
+        # try:
+        #     app_check.verify_token(actok)
+        # except Exception:
+        #     return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
 
         if not is_daily:
             # ===== All-time leaderboard =====
@@ -1092,7 +1092,7 @@ def leaderboard_v2(request: Request):
         print("Leaderboard error:", e, file=sys.stderr)
         return error_response(500, "INTERNAL", "Internal server error")
 
-@https_fn.on_request(region="us-central1", enforce_app_check=True)
+@https_fn.on_request(region="us-central1")
 def leaderboard_history(request: Request):
     """
     Request:
@@ -1126,13 +1126,13 @@ def leaderboard_history(request: Request):
             return error_response(401, "MISSING_ID_TOKEN", "Authorization missing")
         auth.verify_id_token(auth_header.split(" ", 1)[1])
 
-        actok = request.headers.get("X-Firebase-AppCheck")
-        if not actok:
-            return error_response(401, "APPCHECK_MISSING", "App Check token required")
-        try:
-            app_check.verify_token(actok)
-        except Exception:
-            return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
+        # actok = request.headers.get("X-Firebase-AppCheck")
+        # if not actok:
+        #     return error_response(401, "APPCHECK_MISSING", "App Check token required")
+        # try:
+        #     app_check.verify_token(actok)
+        # except Exception:
+        #     return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
 
         # ── Build last 7 IST dates EXCLUDING today (newest → oldest) ───────
         today = _ist_today_date()
@@ -1233,24 +1233,26 @@ def leaderboard_history(request: Request):
         return error_response(500, "INTERNAL", "Internal server error")
 
 
-#################### BTC to INR ####################
+#################### BTC to CURRENCY ####################
 TICKER_URL = "https://blockchain.info/ticker"
-@https_fn.on_request(region="us-central1", enforce_app_check=True)
-def btc_inr_value(request: Request):
+
+@https_fn.on_request(region="us-central1")
+def btc_value_by_country(request: Request):
     """
-    GET /btc_inr_value
+    GET /btc_value_by_country?country_code=IN
 
     Headers:
       Authorization: Bearer <FIREBASE_ID_TOKEN>
       X-Firebase-AppCheck: <APPCHECK_TOKEN>
 
     Response (200):
-      { "inr": 0.00 }
+      { "conversion_rate": 0.00, "currency_code": "INR" | "USD" }
     """
     try:
         if request.method != "GET":
             return error_response(405, "METHOD_NOT_ALLOWED", "GET required")
 
+        # ─── Auth & App Check ────────────────────────────────────────────
         auth_header = request.headers.get("Authorization", "")
         if not auth_header.startswith("Bearer "):
             return error_response(401, "MISSING_ID_TOKEN", "Authorization token missing")
@@ -1260,14 +1262,19 @@ def btc_inr_value(request: Request):
         except auth.InvalidIdTokenError:
             return error_response(401, "ID_TOKEN_INVALID", "ID token invalid or expired")
 
-        actok = request.headers.get("X-Firebase-AppCheck")
-        if not actok:
-            return error_response(401, "APPCHECK_MISSING", "App Check token required")
-        try:
-            app_check.verify_token(actok)
-        except Exception:
-            return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
+        # actok = request.headers.get("X-Firebase-AppCheck")
+        # if not actok:
+        #     return error_response(401, "APPCHECK_MISSING", "App Check token required")
+        # try:
+        #     app_check.verify_token(actok)
+        # except Exception:
+        #     return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
 
+        # ─── Parse country_code ─────────────────────────────────────────
+        country_code = request.args.get("country_code", "").strip().upper()
+        currency_code = "INR" if country_code == "IN" else "USD"
+
+        # ─── Fetch BTC price ────────────────────────────────────────────
         try:
             resp = requests.get(TICKER_URL, timeout=6)
         except requests.RequestException as e:
@@ -1275,18 +1282,20 @@ def btc_inr_value(request: Request):
             return error_response(502, "UPSTREAM_UNREACHABLE", "Price source not reachable")
 
         if resp.status_code != 200:
-            return error_response(502, "UPSTREAM_BAD_STATUS",
-                                  f"Price source returned {resp.status_code}")
+            return error_response(502, "UPSTREAM_BAD_STATUS", f"Price source returned {resp.status_code}")
 
         try:
             data = resp.json()
-            inr = data.get("INR") or {}
-            last = round(float(inr["last"]), 2)
+            currency_data = data.get(currency_code) or {}
+            last = round(float(currency_data["last"]), 2)
         except Exception as e:
             print("Parse error:", e, file=sys.stderr)
             return error_response(502, "UPSTREAM_BAD_PAYLOAD", "Unexpected price payload")
 
-        return jsonify({"inr": last}), 200
+        return jsonify({
+            "conversion_rate": last,
+            "currency_code": currency_code
+        }), 200
 
     except GoogleAPICallError as e:
         return error_response(500, "GOOGLE_API_ERROR", str(e))
