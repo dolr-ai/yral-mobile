@@ -215,6 +215,13 @@ fun FeedScreen(
                     YralLoader(size = 20.dp)
                 }
             }
+        } else {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+            ) {
+                YralLoader()
+            }
         }
     }
     if (state.reportSheetState is ReportSheetState.Open) {

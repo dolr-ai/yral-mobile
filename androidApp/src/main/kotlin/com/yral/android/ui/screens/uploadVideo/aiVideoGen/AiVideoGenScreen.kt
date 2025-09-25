@@ -12,13 +12,17 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
@@ -36,6 +40,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -45,6 +51,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import co.touchlab.kermit.Logger
@@ -82,6 +89,7 @@ import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 fun AiVideoGenScreen(
     component: AiVideoGenComponent,
     modifier: Modifier = Modifier,
+    bottomPadding: Dp,
     viewModel: AiVideoGenViewModel = koinViewModel(),
     loginViewModel: LoginViewModel = koinViewModel(),
 ) {
@@ -123,11 +131,22 @@ fun AiVideoGenScreen(
                     viewModel.cleanup()
                     component.onBack()
                 }
-                Column(modifier = Modifier.padding(top = 20.dp)) {
+                val density = LocalDensity.current
+                val imeBottomDp = with(density) { WindowInsets.ime.getBottom(this).toDp() }
+                val keyboardAwareBottomPadding = (imeBottomDp - bottomPadding).coerceAtLeast(0.dp)
+                val focusManager = LocalFocusManager.current
+                Column(
+                    modifier =
+                        Modifier
+                            .verticalScroll(rememberScrollState())
+                            .padding(bottom = keyboardAwareBottomPadding)
+                            .clickable { focusManager.clearFocus(true) },
+                ) {
                     PromptScreen(
                         viewState = viewState,
                         viewModel = viewModel,
                         showProvidersSheet = { viewModel.setBottomSheetType(BottomSheetType.ModelSelection) },
+                        goToHome = { component.goToHome() },
                     )
                 }
             }
@@ -226,6 +245,7 @@ private fun PromptScreen(
     viewState: AiVideoGenViewModel.ViewState,
     viewModel: AiVideoGenViewModel,
     showProvidersSheet: () -> Unit,
+    goToHome: () -> Unit,
 ) {
     val buttonState =
         remember(viewState.usedCredits, viewState.prompt) {
@@ -239,7 +259,7 @@ private fun PromptScreen(
         modifier =
             Modifier
                 .fillMaxSize()
-                .padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
+                .padding(start = 16.dp, end = 16.dp, bottom = 16.dp, top = 20.dp),
     ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(24.dp, Alignment.Top),
@@ -267,13 +287,13 @@ private fun PromptScreen(
         }
         if (viewState.usedCredits != null && !viewState.isCreditsAvailable() && viewState.isBalanceLow()) {
             Spacer(Modifier.height(16.dp))
-            PlayGameText()
+            PlayGameText(goToHome)
         }
     }
 }
 
 @Composable
-private fun PlayGameText() {
+private fun PlayGameText(goToHome: () -> Unit) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(0.dp, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
@@ -290,6 +310,7 @@ private fun PlayGameText() {
                     .current
                     .mdBold
                     .plus(TextStyle(textAlign = TextAlign.Center)),
+            modifier = Modifier.clickable { goToHome() },
         )
         Text(
             text =
