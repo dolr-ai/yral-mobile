@@ -100,6 +100,7 @@ class FeedViewModel(
                             setLoadingMore(false)
                             loadMoreFeed()
                         } else {
+                            crashlyticsManager.recordException(YralException("Initial cache feed empty"))
                             val notVotedCount = filterVotedAndFetchDetails(posts)
                             Logger.d("FeedPagination") { "notVotedCount in initialFeed $notVotedCount" }
                             if (notVotedCount < SUFFICIENT_NEW_REQUIRED) {
@@ -182,7 +183,7 @@ class FeedViewModel(
                 }
             }.onFailure { throwable ->
                 Logger.e(throwable) {
-                    "Failed to fetch deeplinked video details for postId=$postId canisterId=$canisterId"
+                    "Failed to fetch deep linked video details for postId=$postId canisterId=$canisterId"
                 }
                 setDeeplinkFetching(false)
             }
@@ -323,6 +324,9 @@ class FeedViewModel(
                             setLoadingMore(false)
                         }
                     } else {
+                        if (totalNotVotedCount < SUFFICIENT_NEW_REQUIRED) {
+                            crashlyticsManager.recordException(YralException("Feed ran dry"))
+                        }
                         setLoadingMore(false)
                     }
                 }.onFailure {
