@@ -319,7 +319,7 @@ def tap_to_recharge(request: Request):
                 f"Balance is already {current}. Recharge works only at 0.")
 
         # 6️⃣ Push to wallet first
-        DELTA = 100
+        DELTA = 15
         if not _push_delta(os.environ["BALANCE_UPDATE_TOKEN"], pid, DELTA):
             return error_response(
                 502, "UPSTREAM_FAILED",
