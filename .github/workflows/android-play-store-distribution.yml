@@ -110,3 +110,4 @@ jobs:
           releaseFiles: androidApp/build/outputs/bundle/prodRelease/androidApp-prod-release.aab
           track: internal
           status: draft
+          changesNotSentForReview: true
