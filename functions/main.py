@@ -1462,6 +1462,7 @@ def leaderboard_v3(request: Request):
                 "top_rows": top_rows,
                 "time_left_ms": None,
                 "reward_currency": None,
+                "reward_currency_code": None,
                 "rewards_enabled": False,
                 "rewards_table": {}
             }), 200
@@ -1480,6 +1481,7 @@ def leaderboard_v3(request: Request):
                 "top_rows": [],
                 "time_left_ms": time_left_ms,
                 "reward_currency": None,
+                "reward_currency_code": None,
                 "rewards_enabled": False,
                 "rewards_table": {}
             }), 200
@@ -1487,15 +1489,19 @@ def leaderboard_v3(request: Request):
         day_data = day_doc.to_dict() or {}
         currency = day_data.get("currency")
         rewards_enabled = day_data.get("rewards_enabled")
+        reward_currency_code = None
 
         rewards_table_raw = day_data.get("rewards_table") or {}
         if currency == CURRENCY_BTC:
             if country_code == COUNTRY_CODE_INDIA:
                 rewards_table = rewards_table_raw.get(COUNTRY_CODE_INDIA, {})
+                reward_currency_code = "INR"
             else:
                 rewards_table = rewards_table_raw.get(COUNTRY_CODE_USA, {})
+                reward_currency_code = "USD"
         else:
             rewards_table = rewards_table_raw
+            reward_currency_code = None
 
         rewards_table = {str(k): int(v) for k, v in rewards_table.items() if v is not None}
 
@@ -1503,6 +1509,7 @@ def leaderboard_v3(request: Request):
             rewards_enabled = False
             currency = None
             rewards_table = {}
+            reward_currency_code = None
 
         day_users = db().collection(f"{DAILY_COLL}/{bucket_id}/users")
         top_snaps = (
@@ -1537,6 +1544,7 @@ def leaderboard_v3(request: Request):
                 "top_rows": [],
                 "time_left_ms": time_left_ms,
                 "reward_currency": currency,
+                "reward_currency_code": reward_currency_code,
                 "rewards_enabled": rewards_enabled,
                 "rewards_table": rewards_table
             }), 200
@@ -1571,6 +1579,7 @@ def leaderboard_v3(request: Request):
             "top_rows": top_rows,
             "time_left_ms": time_left_ms,
             "reward_currency": currency,
+            "reward_currency_code": reward_currency_code,
             "rewards_enabled": rewards_enabled,
             "rewards_table": rewards_table
         }), 200
