@@ -40,6 +40,7 @@ import com.yral.shared.libs.designsystem.component.YralButtonState
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import com.yral.shared.reportVideo.domain.models.ReportVideoData
 import com.yral.shared.reportVideo.domain.models.VideoReportReason
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -51,6 +52,8 @@ import yral_mobile.shared.features.reportvideo.generated.resources.reason_offens
 import yral_mobile.shared.features.reportvideo.generated.resources.reason_others
 import yral_mobile.shared.features.reportvideo.generated.resources.reason_spam
 import yral_mobile.shared.features.reportvideo.generated.resources.reason_violence
+import yral_mobile.shared.features.reportvideo.generated.resources.report_submitted
+import yral_mobile.shared.features.reportvideo.generated.resources.report_submitted_thank_you
 import yral_mobile.shared.features.reportvideo.generated.resources.report_video
 import yral_mobile.shared.features.reportvideo.generated.resources.report_video_question
 import yral_mobile.shared.features.reportvideo.generated.resources.submit
@@ -85,8 +88,11 @@ fun ReportVideoSheet(
     bottomSheetState: SheetState,
     isLoading: Boolean,
     reasons: List<VideoReportReason>,
-    onSubmit: (reason: VideoReportReason, text: String) -> Unit,
+    onSubmit: (ReportVideoData) -> Unit,
 ) {
+    val successMessage =
+        stringResource(Res.string.report_submitted) to
+            stringResource(Res.string.report_submitted_thank_you)
     var selectedReason by remember { mutableStateOf<VideoReportReason?>(null) }
     var text by remember { mutableStateOf("") }
     val buttonState =
@@ -126,7 +132,13 @@ fun ReportVideoSheet(
                 buttonState = buttonState,
             ) {
                 selectedReason?.let {
-                    onSubmit(it, text)
+                    onSubmit(
+                        ReportVideoData(
+                            reason = it,
+                            otherReasonText = text,
+                            successMessage = successMessage,
+                        ),
+                    )
                 }
             }
         }

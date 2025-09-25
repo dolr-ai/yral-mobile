@@ -1,5 +1,6 @@
 package com.yral.android.ui.screens.profile
 
+import android.R.attr.text
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -48,7 +49,7 @@ import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.videoPlayer.YRALReelPlayer
 import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.reportVideo.domain.models.ReportSheetState
-import com.yral.shared.reportVideo.domain.models.VideoReportReason
+import com.yral.shared.reportVideo.domain.models.ReportVideoData
 import com.yral.shared.reportVideo.ui.ReportVideo
 import com.yral.shared.reportVideo.ui.ReportVideoSheet
 import org.jetbrains.compose.resources.painterResource
@@ -65,7 +66,7 @@ fun ProfileReelPlayer(
     reportSheetState: ReportSheetState,
     onReportClick: (pageNo: Int, video: FeedDetails) -> Unit,
     dismissReportSheet: (video: FeedDetails) -> Unit,
-    reportVideo: (reason: VideoReportReason, text: String, pageNo: Int, video: FeedDetails) -> Unit,
+    reportVideo: (pageNo: Int, video: FeedDetails, reportVideoData: ReportVideoData) -> Unit,
     onBack: () -> Unit,
     onDeleteVideo: (FeedDetails) -> Unit,
     onShareClick: (FeedDetails) -> Unit,
@@ -106,7 +107,9 @@ fun ProfileReelPlayer(
                             bottomSheetState = bottomSheetState,
                             isLoading = isReporting,
                             reasons = reportSheetState.reasons,
-                            onSubmit = { reason, text -> reportVideo(reason, text, pageNo, currentVideo) },
+                            onSubmit = { reportVideoData ->
+                                reportVideo(pageNo, currentVideo, reportVideoData)
+                            },
                         )
                     }
                 }

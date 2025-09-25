@@ -293,7 +293,7 @@ private fun PlayGameText() {
         )
         Text(
             text =
-                "".plus(
+                " ".plus(
                     stringResource(
                         R.string.to_earn_token,
                         stringResource(R.string.coins),

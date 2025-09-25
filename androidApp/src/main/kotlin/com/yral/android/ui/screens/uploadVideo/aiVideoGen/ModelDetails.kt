@@ -72,7 +72,6 @@ fun ModelDetails(
                 )
                 CostRow(
                     isCreditsAvailable = viewState.isCreditsAvailable(),
-                    isBalanceLow = viewState.isBalanceLow(),
                     selectedProvider = viewState.selectedProvider,
                 )
                 CreditsBalance(
@@ -90,7 +89,6 @@ fun ModelDetails(
 @Composable
 private fun CostRow(
     isCreditsAvailable: Boolean,
-    isBalanceLow: Boolean,
     selectedProvider: Provider?,
 ) {
     Row(
@@ -109,7 +107,6 @@ private fun CostRow(
     ) {
         Cost(
             selectedProvider = selectedProvider,
-            isBalanceLow = isBalanceLow,
             isCreditsAvailable = isCreditsAvailable,
             modifier = Modifier.weight(1f),
         )
@@ -121,7 +118,6 @@ private fun CostRow(
 private fun Cost(
     selectedProvider: Provider?,
     isCreditsAvailable: Boolean,
-    isBalanceLow: Boolean,
     modifier: Modifier,
 ) {
     Row(
@@ -131,11 +127,11 @@ private fun Cost(
     ) {
         selectedProvider?.cost?.sats?.let { cost ->
             Text(
-                text = if (isCreditsAvailable || isBalanceLow) "0" else "$cost",
+                text = if (isCreditsAvailable) "0" else "$cost",
                 style = LocalAppTopography.current.mdSemiBold,
                 color = YralColors.Neutral300,
             )
-            if (isCreditsAvailable || isBalanceLow) {
+            if (isCreditsAvailable) {
                 Text(
                     text = "$cost",
                     style = LocalAppTopography.current.baseMedium,
