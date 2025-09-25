@@ -177,6 +177,7 @@ class GameViewModel(
             updatedGameResult[feedDetails.videoID] = initialGameResult
             currentState.copy(
                 gameResult = updatedGameResult,
+                lastVotedCount = currentState.lastVotedCount + 1,
             )
         }
         sessionManager.userPrincipal?.let { principal ->
@@ -278,7 +279,6 @@ class GameViewModel(
                     showResultSheet = shouldShowResultSheet,
                     isLoading = false,
                     lastBalanceDifference = voteResult.coinDelta,
-                    lastVotedCount = it.lastVotedCount + 1,
                     isSmileyGameIntroNudgeShown = true,
                 )
             }
