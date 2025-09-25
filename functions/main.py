@@ -1302,3 +1302,50 @@ def btc_value_by_country(request: Request):
     except Exception as e:
         print("Unhandled error:", e, file=sys.stderr)
         return error_response(500, "INTERNAL", "Internal server error")
+
+
+#################### WEB ENDPOINTS ####################
+@https_fn.on_request(region="us-central1")
+def get_smiley_game_stats(request: Request):
+    """
+    GET /get_smiley_game_stats?principal_id=<id>
+
+    Response (200):
+    {
+      "principal_id": "<id>",
+      "wins": <int>,
+      "losses": <int>,
+      "total_games": <int>
+    }
+
+    Error (any):
+    { "error": "Error message" }
+    """
+    try:
+        if request.method != "GET":
+            return jsonify({"error": "GET required"}), 405
+
+        principal_id = request.args.get("principal_id", "").strip()
+        if not principal_id:
+            return jsonify({"error": "Missing principal_id"}), 400
+
+        user_ref = db().document(f"users/{principal_id}")
+        snap = user_ref.get()
+
+        if not snap.exists:
+            return jsonify({"error": f"User {principal_id} not found"}), 404
+
+        wins = int(snap.get("smiley_game_wins") or 0)
+        losses = int(snap.get("smiley_game_losses") or 0)
+        total = wins + losses
+
+        return jsonify({
+            "principal_id": principal_id,
+            "wins": wins,
+            "losses": losses,
+            "total_games": total
+        }), 200
+
+    except Exception as e:
+        print("get_smiley_game_stats error:", e, file=sys.stderr)
+        return jsonify({"error": "Internal server error"}), 500
