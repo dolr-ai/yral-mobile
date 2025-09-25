@@ -122,6 +122,14 @@ object LeaderboardHelpers {
         48.dp
     }
 
+    fun getTrophyRewardOffset(position: Int) =
+        when (position) {
+            POS_GOLD -> 3.dp
+            POS_SILVER -> 9.dp
+            POS_BRONZE -> 16.dp
+            else -> 16.dp
+        }
+
     const val PROFILE_IMAGE_SIZE = 25f
     const val MAX_USERS_WITH_DUPLICATE_RANK = 4
     const val MAX_USERS_PRINCIPAL_LENGTH = 4

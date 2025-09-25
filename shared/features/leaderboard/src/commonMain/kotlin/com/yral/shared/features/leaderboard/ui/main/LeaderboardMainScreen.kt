@@ -232,6 +232,9 @@ private fun LeaderboardHeader(
                     component.openDailyHistory()
                 },
                 isTrophyVisible = isTrophyVisible,
+                rewardCurrency = state.rewardCurrency,
+                rewardCurrencyCode = state.rewardCurrencyCode,
+                rewardsTable = state.rewardsTable,
             )
             LeaderboardTableHeader(isTrophyVisible)
         }

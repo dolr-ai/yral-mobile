@@ -8,7 +8,6 @@ import com.yral.shared.features.leaderboard.domain.models.LeaderboardData
 import com.yral.shared.features.leaderboard.domain.models.LeaderboardError
 import com.yral.shared.features.leaderboard.domain.models.LeaderboardErrorCodes
 import com.yral.shared.features.leaderboard.domain.models.RewardCurrency
-import com.yral.shared.features.leaderboard.domain.models.RewardPosition
 import com.yral.shared.features.leaderboard.domain.models.toLeaderboardItem
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -73,7 +72,7 @@ fun LeaderboardResponseDto.toLeaderboardData(): Result<LeaderboardData, Leaderbo
                     rewardsTable =
                         rewardsTable
                             ?.mapNotNull { (key, value) ->
-                                safeValueOf<RewardPosition>(key)?.let { enumValue -> enumValue to value }
+                                key.toIntOrNull()?.let { enumValue -> enumValue to value }
                             }?.toMap(),
                 ),
             )

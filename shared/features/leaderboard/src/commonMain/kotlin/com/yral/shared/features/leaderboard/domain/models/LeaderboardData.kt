@@ -6,17 +6,10 @@ data class LeaderboardData(
     val timeLeftMs: Long?,
     val rewardCurrency: RewardCurrency? = null,
     val rewardCurrencyCode: String? = null,
-    val rewardsTable: Map<RewardPosition, Double>? = null,
+    val rewardsTable: Map<Int, Double>? = null,
 )
 
 enum class RewardCurrency {
     YRAL,
     BTC,
-}
-
-enum class RewardPosition {
-    FIRST,
-    SECOND,
-    THIRD,
-    OTHER,
 }

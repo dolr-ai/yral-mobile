@@ -10,6 +10,7 @@ import com.yral.shared.features.leaderboard.data.models.LeaderboardMode
 import com.yral.shared.features.leaderboard.domain.GetLeaderboardUseCase
 import com.yral.shared.features.leaderboard.domain.models.GetLeaderboardRequest
 import com.yral.shared.features.leaderboard.domain.models.LeaderboardItem
+import com.yral.shared.features.leaderboard.domain.models.RewardCurrency
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -56,6 +57,9 @@ class LeaderBoardViewModel(
                                     data.timeLeftMs?.let { timeLeft ->
                                         timeLeft < COUNT_DOWN_BLINK_THRESHOLD
                                     } == true,
+                                rewardCurrency = data.rewardCurrency,
+                                rewardCurrencyCode = data.rewardCurrencyCode,
+                                rewardsTable = data.rewardsTable,
                             )
                         }
                         data.timeLeftMs?.let { startCountDown(countryCode) }
@@ -148,4 +152,7 @@ data class LeaderBoardState(
     val selectedMode: LeaderboardMode = LeaderboardMode.DAILY,
     val countDownMs: Long? = null,
     val blinkCountDown: Boolean = false,
+    val rewardCurrency: RewardCurrency? = null,
+    val rewardCurrencyCode: String? = null,
+    val rewardsTable: Map<Int, Double>? = null,
 )
