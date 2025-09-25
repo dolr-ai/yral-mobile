@@ -146,6 +146,7 @@ fun AiVideoGenScreen(
                         viewState = viewState,
                         viewModel = viewModel,
                         showProvidersSheet = { viewModel.setBottomSheetType(BottomSheetType.ModelSelection) },
+                        goToHome = { component.goToHome() },
                     )
                 }
             }
@@ -244,6 +245,7 @@ private fun PromptScreen(
     viewState: AiVideoGenViewModel.ViewState,
     viewModel: AiVideoGenViewModel,
     showProvidersSheet: () -> Unit,
+    goToHome: () -> Unit,
 ) {
     val buttonState =
         remember(viewState.usedCredits, viewState.prompt) {
@@ -285,13 +287,13 @@ private fun PromptScreen(
         }
         if (viewState.usedCredits != null && !viewState.isCreditsAvailable() && viewState.isBalanceLow()) {
             Spacer(Modifier.height(16.dp))
-            PlayGameText()
+            PlayGameText(goToHome)
         }
     }
 }
 
 @Composable
-private fun PlayGameText() {
+private fun PlayGameText(goToHome: () -> Unit) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(0.dp, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
@@ -308,6 +310,7 @@ private fun PlayGameText() {
                     .current
                     .mdBold
                     .plus(TextStyle(textAlign = TextAlign.Center)),
+            modifier = Modifier.clickable { goToHome() },
         )
         Text(
             text =
