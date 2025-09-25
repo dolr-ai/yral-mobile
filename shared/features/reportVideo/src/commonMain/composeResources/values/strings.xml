@@ -9,4 +9,6 @@
     <string name="submit">Submit</string>
     <string name="please_provide_more_details">Please provide more details.</string>
     <string name="add_details">Add details</string>
+    <string name="report_submitted">Report Submitted!</string>
+    <string name="report_submitted_thank_you">Thanks for letting us know! Our team will review this video soon.</string>
 </resources>

@@ -28,6 +28,7 @@ kotlin {
             implementation(projects.shared.libs.sharing)
             implementation(projects.shared.libs.crashlytics)
             implementation(projects.shared.libs.featureFlag)
+            implementation(projects.shared.libs.designsystem)
             implementation(projects.shared.features.account)
             implementation(projects.shared.features.reportVideo)
 
