@@ -149,11 +149,11 @@ struct WalletView: View {
     .task {
       Task {
         await viewModel.fetchBTCBalance()
+        await viewModel.fetchExchangeRate()
       }
       guard isLoadingFirstTime else { return }
       await viewModel.fetchAccountInfo()
       isLoadingFirstTime = false
-      await viewModel.fetchExchangeRate()
     }
   }
 }
