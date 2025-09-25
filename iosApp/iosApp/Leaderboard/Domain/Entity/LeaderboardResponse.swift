@@ -13,6 +13,7 @@ struct LeaderboardRowResponse: Identifiable {
   let position: Int
   let principalID: String
   let wins: Int
+  let reward: Int?
 }
 
 struct LeaderboardResponse {
@@ -20,6 +21,10 @@ struct LeaderboardResponse {
   let topRows: [LeaderboardRowResponse]
   var timeLeftInMs: Int?
   let date: String?
+  let rewardCurrency: String?
+  let rewardCurrencyCode: String?
+  let rewardsEnabled: Bool
+  let rewardsTable: [String: Int]?
 }
 
 enum LeaderboardError: Error {
