@@ -71,9 +71,6 @@ class DefaultAuthClient(
                 accessToken = "",
                 refreshToken = "",
             )
-            sessionManager.updateSocialSignInStatus(
-                isSocialSignIn = preferences.getBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name) ?: false,
-            )
         } ?: obtainAnonymousIdentity()
     }
 
@@ -184,6 +181,7 @@ class DefaultAuthClient(
             cachedSession.userPrincipal?.let { crashlyticsManager.setUserId(it) }
             sessionManager.updateCoinBalance(0)
             setSession(session = cachedSession)
+            fetchBalance(session = cachedSession)
             if (auth.currentUser?.uid == cachedSession.userPrincipal) {
                 sessionManager.updateFirebaseLoginState(true)
                 postFirebaseLogin(cachedSession)

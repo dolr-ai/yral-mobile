@@ -280,7 +280,7 @@ private fun MainContent(
         state.accountInfo?.let { info ->
             AccountInfoView(
                 accountInfo = info,
-                isSocialSignIn = viewModel.isLoggedIn(),
+                isSocialSignIn = state.isLoggedIn,
                 onLoginClicked = { viewModel.setBottomSheetType(ProfileBottomSheet.SignUp) },
             )
         }
