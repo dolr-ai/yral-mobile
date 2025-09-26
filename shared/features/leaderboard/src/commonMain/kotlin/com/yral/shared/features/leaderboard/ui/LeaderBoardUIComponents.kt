@@ -93,7 +93,7 @@ fun LeaderboardTableHeader(
         )
         rewardIcon?.let {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(3.5.dp, Alignment.CenterHorizontally),
+                horizontalArrangement = Arrangement.spacedBy(3.5.dp, Alignment.End),
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.weight(LeaderboardMainScreenConstants.REWARD_WEIGHT),
             ) {
