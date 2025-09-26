@@ -286,7 +286,6 @@ private fun Trophy(
     Box(
         modifier =
             Modifier
-                .width(width)
                 .height(height + offset),
         contentAlignment = Alignment.TopCenter,
     ) {

@@ -293,9 +293,9 @@ fun LeaderboardConfetti(
 
 @Suppress("MagicNumber")
 object LeaderboardMainScreenConstants {
-    val LEADERBOARD_HEADER_WEIGHTS = listOf(0.17f, 0.52f, 0.28f, 0.31f)
-    val LEADERBOARD_HEADER_WEIGHTS_FOLD = listOf(0.17f, 0.54f, 0.28f, 0.29f)
-    val LEADERBOARD_ROW_WEIGHTS = listOf(0.17f, 0.55f, 0.28f, 0.28f)
+    val LEADERBOARD_HEADER_WEIGHTS = listOf(0.17f, 0.52f, 0.30f, 0.29f)
+    val LEADERBOARD_HEADER_WEIGHTS_FOLD = listOf(0.17f, 0.54f, 0.30f, 0.27f)
+    val LEADERBOARD_ROW_WEIGHTS = listOf(0.17f, 0.55f, 0.30f, 0.26f)
     const val MAX_CHAR_OF_NAME = 9
     const val COUNT_DOWN_BG_ALPHA = 0.8f
     const val COUNT_DOWN_ANIMATION_DURATION = 500

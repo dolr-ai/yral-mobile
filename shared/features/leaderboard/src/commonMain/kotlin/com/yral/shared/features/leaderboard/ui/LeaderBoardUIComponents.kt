@@ -386,8 +386,6 @@ fun LeaderboardReward(
             RewardCurrency.YRAL -> reward?.toInt()?.toString()
             RewardCurrency.BTC ->
                 rewardCurrencyCode?.let { currencyCode -> reward?.toCurrencyString(currencyCode) }
-                    ?: ""
-
             else -> null
         }
     Row(
@@ -395,7 +393,6 @@ fun LeaderboardReward(
         verticalAlignment = Alignment.CenterVertically,
         modifier =
             modifier
-                .width(55.dp)
                 .height(24.dp)
                 .background(
                     color = if (isBackgroundVisible) YralColors.GameRewardChipBackground else Color.Transparent,
