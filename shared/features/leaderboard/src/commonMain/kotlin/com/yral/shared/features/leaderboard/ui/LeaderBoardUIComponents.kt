@@ -19,6 +19,8 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -33,12 +35,12 @@ import com.yral.shared.features.leaderboard.ui.main.LeaderboardMainScreenConstan
 import com.yral.shared.features.leaderboard.ui.main.LeaderboardMainScreenConstants.LEADERBOARD_HEADER_WEIGHTS
 import com.yral.shared.features.leaderboard.ui.main.LeaderboardMainScreenConstants.LEADERBOARD_HEADER_WEIGHTS_FOLD
 import com.yral.shared.features.leaderboard.ui.main.LeaderboardMainScreenConstants.LEADERBOARD_ROW_WEIGHTS
-import com.yral.shared.features.leaderboard.ui.main.isScreenUnfolded
 import com.yral.shared.libs.CurrencyFormatter
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralMaskedVectorTextV2
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import com.yral.shared.libs.designsystem.windowInfo.rememberScreenFoldStateProvider
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import yral_mobile.shared.features.leaderboard.generated.resources.Res
@@ -64,8 +66,9 @@ fun LeaderboardTableHeader(
             else -> null
         }
 
+    val isScreenUnfolded by rememberScreenFoldStateProvider().isScreenUnfoldedFlow.collectAsState(false)
     val headerWeights =
-        if (isScreenUnfolded()) {
+        if (isScreenUnfolded) {
             LEADERBOARD_HEADER_WEIGHTS_FOLD
         } else {
             LEADERBOARD_HEADER_WEIGHTS

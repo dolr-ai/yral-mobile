@@ -360,6 +360,3 @@ object LeaderboardMainScreenConstants {
     const val CONFETTI_SIZE_FACTOR = 3
     const val CONFETTI_ITERATIONS = 0
 }
-
-@Composable
-expect fun isScreenUnfolded(): Boolean
