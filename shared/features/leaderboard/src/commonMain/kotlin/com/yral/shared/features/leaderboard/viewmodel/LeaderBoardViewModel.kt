@@ -28,9 +28,22 @@ class LeaderBoardViewModel(
     val state: StateFlow<LeaderBoardState> = _state.asStateFlow()
     private var countdownJob: Job? = null
 
+    private fun resetState() {
+        _state.update {
+            it.copy(
+                isLoading = true,
+                error = null,
+                countDownMs = null,
+                rewardCurrency = null,
+                rewardCurrencyCode = null,
+                rewardsTable = null,
+            )
+        }
+    }
+
     fun loadData(countryCode: String) {
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, error = null, countDownMs = null) }
+            resetState()
             sessionManager.userPrincipal?.let { userPrincipal ->
                 getLeaderboardUseCase
                     .invoke(

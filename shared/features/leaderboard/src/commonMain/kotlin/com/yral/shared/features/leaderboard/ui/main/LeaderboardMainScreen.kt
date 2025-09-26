@@ -143,6 +143,9 @@ fun LeaderboardMainScreen(
                                 wins = user.wins,
                                 isCurrentUser = true,
                                 decorateCurrentUser = true,
+                                rewardCurrency = state.rewardCurrency,
+                                rewardCurrencyCode = state.rewardCurrencyCode,
+                                reward = user.reward,
                             )
                         }
                     }
@@ -162,6 +165,10 @@ fun LeaderboardMainScreen(
                             profileImageUrl = item.profileImage,
                             wins = item.wins,
                             isCurrentUser = viewModel.isCurrentUser(item.userPrincipalId),
+                            decorateCurrentUser = false,
+                            rewardCurrency = state.rewardCurrency,
+                            rewardCurrencyCode = state.rewardCurrencyCode,
+                            reward = item.reward,
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                     }
@@ -236,7 +243,10 @@ private fun LeaderboardHeader(
                 rewardCurrencyCode = state.rewardCurrencyCode,
                 rewardsTable = state.rewardsTable,
             )
-            LeaderboardTableHeader(isTrophyVisible)
+            LeaderboardTableHeader(
+                isTrophyVisible = isTrophyVisible,
+                rewardCurrency = state.rewardCurrency,
+            )
         }
     }
 }
@@ -286,7 +296,7 @@ object LeaderboardMainScreenConstants {
     const val POSITION_TEXT_WEIGHT = 0.17f
     const val USER_DETAIL_WEIGHT = 0.55f
     const val COIN_BALANCE_WEIGHT = 0.28f
-    const val MAX_CHAR_OF_NAME = 12
+    const val MAX_CHAR_OF_NAME = 9
     const val COUNT_DOWN_BG_ALPHA = 0.8f
     const val COUNT_DOWN_ANIMATION_DURATION = 500
     const val COUNT_DOWN_BORDER_ANIMATION_DURATION = 300

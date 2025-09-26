@@ -4,7 +4,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,9 +16,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -39,11 +36,11 @@ import androidx.compose.ui.unit.dp
 import com.yral.shared.features.leaderboard.data.models.LeaderboardMode
 import com.yral.shared.features.leaderboard.domain.models.LeaderboardItem
 import com.yral.shared.features.leaderboard.domain.models.RewardCurrency
+import com.yral.shared.features.leaderboard.ui.LeaderboardReward
 import com.yral.shared.features.leaderboard.ui.UserBriefProfileImage
 import com.yral.shared.features.leaderboard.ui.main.LeaderboardHelpers.POS_BRONZE
 import com.yral.shared.features.leaderboard.ui.main.LeaderboardHelpers.POS_GOLD
 import com.yral.shared.features.leaderboard.ui.main.LeaderboardHelpers.POS_SILVER
-import com.yral.shared.libs.CurrencyFormatter
 import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
@@ -57,9 +54,6 @@ import yral_mobile.shared.features.leaderboard.generated.resources.bronze_trophy
 import yral_mobile.shared.features.leaderboard.generated.resources.games_won
 import yral_mobile.shared.features.leaderboard.generated.resources.golden_trophy
 import yral_mobile.shared.features.leaderboard.generated.resources.silver_trophy
-import yral_mobile.shared.libs.designsystem.generated.resources.bitcoin
-import yral_mobile.shared.libs.designsystem.generated.resources.yral
-import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @Suppress("MagicNumber", "LongMethod", "CyclomaticComplexMethod")
 @Composable
@@ -319,6 +313,7 @@ private fun Trophy(
                     rewardCurrency = rewardCurrency,
                     rewardCurrencyCode = rewardCurrencyCode,
                     reward = it,
+                    isBackgroundVisible = true,
                     modifier =
                         Modifier
                             .align(Alignment.Center)
@@ -326,49 +321,6 @@ private fun Trophy(
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun LeaderboardReward(
-    modifier: Modifier,
-    rewardCurrency: RewardCurrency,
-    rewardCurrencyCode: String?,
-    reward: Double,
-) {
-    val rewardIcon =
-        when (rewardCurrency) {
-            RewardCurrency.YRAL -> DesignRes.drawable.yral
-            RewardCurrency.BTC -> DesignRes.drawable.bitcoin
-        }
-    val rewardText =
-        when (rewardCurrency) {
-            RewardCurrency.YRAL -> reward.toInt().toString()
-            RewardCurrency.BTC ->
-                rewardCurrencyCode?.let { currencyCode -> reward.toCurrencyString(currencyCode) } ?: ""
-        }
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(3.5.dp, Alignment.CenterHorizontally),
-        verticalAlignment = Alignment.CenterVertically,
-        modifier =
-            modifier
-                .width(55.dp)
-                .height(24.dp)
-                .background(color = YralColors.GameRewardChipBackground, shape = RoundedCornerShape(size = 38.dp))
-                .padding(start = 7.dp, top = 3.5.dp, end = 3.5.dp, bottom = 3.5.dp),
-    ) {
-        Text(
-            text = rewardText,
-            style = LocalAppTopography.current.regSemiBold,
-            textAlign = TextAlign.Center,
-            color = YralColors.Neutral950,
-        )
-        Image(
-            painter = painterResource(rewardIcon),
-            contentDescription = "image description",
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.size(14.dp),
-        )
     }
 }
 
@@ -443,13 +395,3 @@ private fun TrophyDetailsItem(
         }
     }
 }
-
-private fun Double.toCurrencyString(currencyCode: String) =
-    CurrencyFormatter()
-        .format(
-            amount = this,
-            currencyCode = currencyCode,
-            withCurrencySymbol = true,
-            minimumFractionDigits = 2,
-            maximumFractionDigits = 2,
-        )

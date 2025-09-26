@@ -125,7 +125,10 @@ fun LeaderboardDetailsScreen(
                         }
                     }
                     Spacer(Modifier.height(16.dp))
-                    LeaderboardTableHeader(false)
+                    LeaderboardTableHeader(
+                        isTrophyVisible = false,
+                        rewardCurrency = null,
+                    )
                 }
             }
             if (!state.isLoading && state.error == null && state.history.isNotEmpty()) {
