@@ -106,6 +106,7 @@ private fun AccountScreenContent(
     state: AccountsState,
     viewModel: AccountsViewModel,
 ) {
+    val helperLinks = remember(state.isLoggedIn) { viewModel.getHelperLinks() }
     Column(
         modifier =
             Modifier
@@ -118,14 +119,14 @@ private fun AccountScreenContent(
         state.accountInfo?.let {
             AccountInfoView(
                 accountInfo = it,
-                isSocialSignIn = viewModel.isLoggedIn(),
+                isSocialSignIn = state.isLoggedIn,
             ) {
                 viewModel.setBottomSheetType(AccountBottomSheet.SignUp)
                 viewModel.accountsTelemetry.signUpClicked(SignupPageName.MENU)
             }
         }
         HelpLinks(
-            links = viewModel.getHelperLinks(),
+            links = helperLinks,
             onLinkClicked = {
                 viewModel.accountsTelemetry.onMenuClicked(it.menuCtaType)
                 viewModel.handleHelpLink(it)
