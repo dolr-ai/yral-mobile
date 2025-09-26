@@ -100,6 +100,7 @@ fun LeaderboardDetailsScreen(
                     .background(MaterialTheme.colorScheme.primaryContainer),
             state = listState,
         ) {
+            val selected = state.history.getOrNull(state.selectedIndex)
             stickyHeader {
                 Column(Modifier.background(MaterialTheme.colorScheme.primaryContainer)) {
                     Header { component.onBack() }
@@ -127,12 +128,11 @@ fun LeaderboardDetailsScreen(
                     Spacer(Modifier.height(16.dp))
                     LeaderboardTableHeader(
                         isTrophyVisible = false,
-                        rewardCurrency = null,
+                        rewardCurrency = selected?.rewardCurrency,
                     )
                 }
             }
             if (!state.isLoading && state.error == null && state.history.isNotEmpty()) {
-                val selected = state.history.getOrNull(state.selectedIndex)
                 selected?.let { day ->
                     day.userRow?.let { userRow ->
                         item(contentType = "leaderboardRow") {
@@ -144,6 +144,9 @@ fun LeaderboardDetailsScreen(
                                     wins = userRow.wins,
                                     isCurrentUser = true,
                                     decorateCurrentUser = true,
+                                    rewardCurrency = selected.rewardCurrency,
+                                    rewardCurrencyCode = selected.rewardCurrencyCode,
+                                    reward = userRow.reward,
                                 )
                                 Spacer(Modifier.height(12.dp))
                             }
@@ -157,6 +160,9 @@ fun LeaderboardDetailsScreen(
                                 profileImageUrl = row.profileImage,
                                 wins = row.wins,
                                 isCurrentUser = viewModel.isCurrentUser(row.userPrincipalId),
+                                rewardCurrency = selected.rewardCurrency,
+                                rewardCurrencyCode = selected.rewardCurrencyCode,
+                                reward = row.reward,
                             )
                             Spacer(modifier = Modifier.height(12.dp))
                         }
