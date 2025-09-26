@@ -71,9 +71,6 @@ class DefaultAuthClient(
                 accessToken = "",
                 refreshToken = "",
             )
-            sessionManager.updateSocialSignInStatus(
-                isSocialSignIn = preferences.getBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name) ?: false,
-            )
         } ?: obtainAnonymousIdentity()
     }
 
