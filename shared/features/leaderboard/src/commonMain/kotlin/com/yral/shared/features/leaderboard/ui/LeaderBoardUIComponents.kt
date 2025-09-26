@@ -30,6 +30,10 @@ import androidx.compose.ui.unit.dp
 import com.yral.shared.features.leaderboard.domain.models.RewardCurrency
 import com.yral.shared.features.leaderboard.ui.main.LeaderboardHelpers
 import com.yral.shared.features.leaderboard.ui.main.LeaderboardMainScreenConstants
+import com.yral.shared.features.leaderboard.ui.main.LeaderboardMainScreenConstants.LEADERBOARD_HEADER_WEIGHTS
+import com.yral.shared.features.leaderboard.ui.main.LeaderboardMainScreenConstants.LEADERBOARD_HEADER_WEIGHTS_FOLD
+import com.yral.shared.features.leaderboard.ui.main.LeaderboardMainScreenConstants.LEADERBOARD_ROW_WEIGHTS
+import com.yral.shared.features.leaderboard.ui.main.isScreenUnfolded
 import com.yral.shared.libs.CurrencyFormatter
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralMaskedVectorTextV2
@@ -47,7 +51,7 @@ import yral_mobile.shared.libs.designsystem.generated.resources.bitcoin
 import yral_mobile.shared.libs.designsystem.generated.resources.yral
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
-@Suppress("LongMethod")
+@Suppress("LongMethod", "MagicNumber")
 @Composable
 fun LeaderboardTableHeader(
     isTrophyVisible: Boolean,
@@ -59,6 +63,14 @@ fun LeaderboardTableHeader(
             RewardCurrency.BTC -> DesignRes.drawable.bitcoin
             else -> null
         }
+
+    val headerWeights =
+        if (isScreenUnfolded()) {
+            LEADERBOARD_HEADER_WEIGHTS_FOLD
+        } else {
+            LEADERBOARD_HEADER_WEIGHTS
+        }
+
     Row(
         modifier =
             Modifier
@@ -75,7 +87,7 @@ fun LeaderboardTableHeader(
     ) {
         Text(
             text = stringResource(Res.string.position),
-            modifier = Modifier.weight(LeaderboardMainScreenConstants.POSITION_TEXT_WEIGHT),
+            modifier = Modifier.weight(headerWeights[0]),
             style = LocalAppTopography.current.regMedium,
             color = YralColors.Neutral500,
             maxLines = 1,
@@ -85,18 +97,19 @@ fun LeaderboardTableHeader(
             text = stringResource(Res.string.player),
             modifier =
                 Modifier
-                    .weight(LeaderboardMainScreenConstants.USER_DETAIL_WEIGHT)
+                    .weight(headerWeights[1])
                     .padding(start = 6.dp),
             style = LocalAppTopography.current.regMedium,
             color = YralColors.Neutral500,
             maxLines = 1,
         )
-        rewardIcon?.let {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(3.5.dp, Alignment.End),
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.weight(LeaderboardMainScreenConstants.REWARD_WEIGHT),
-            ) {
+
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(3.5.dp, Alignment.End),
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.weight(headerWeights[2]),
+        ) {
+            rewardIcon?.let {
                 Text(
                     text = stringResource(Res.string.rewards),
                     style = LocalAppTopography.current.regRegular,
@@ -113,7 +126,7 @@ fun LeaderboardTableHeader(
         }
         Text(
             text = stringResource(Res.string.games_won),
-            modifier = Modifier.weight(LeaderboardMainScreenConstants.COIN_BALANCE_WEIGHT),
+            modifier = Modifier.weight(headerWeights[3]),
             style = LocalAppTopography.current.regMedium,
             color = YralColors.Neutral500,
             textAlign = TextAlign.End,
@@ -187,6 +200,7 @@ private fun UserBriefWithBorder(
     }
 }
 
+@Suppress("MagicNumber")
 @Composable
 private fun UserBriefContent(
     position: Int,
@@ -209,14 +223,14 @@ private fun UserBriefContent(
     ) {
         // Position column
         Row(
-            modifier = Modifier.weight(LeaderboardMainScreenConstants.POSITION_TEXT_WEIGHT),
+            modifier = Modifier.weight(LEADERBOARD_ROW_WEIGHTS[0]),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             UserBriefPositionNumber(position, decorateCurrentUser)
         }
         // Player ID column with avatar
         Row(
-            modifier = Modifier.weight(LeaderboardMainScreenConstants.USER_DETAIL_WEIGHT),
+            modifier = Modifier.weight(LEADERBOARD_ROW_WEIGHTS[1]),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             UserBriefProfileImage(position, profileImageUrl)
@@ -225,7 +239,7 @@ private fun UserBriefContent(
         }
         // Rewards
         LeaderboardReward(
-            modifier = Modifier.weight(LeaderboardMainScreenConstants.REWARD_WEIGHT),
+            modifier = Modifier.weight(LEADERBOARD_ROW_WEIGHTS[2]),
             rewardCurrency = rewardCurrency,
             rewardCurrencyCode = rewardCurrencyCode,
             reward = reward,
@@ -234,7 +248,7 @@ private fun UserBriefContent(
         )
         // Games won
         Box(
-            modifier = Modifier.weight(LeaderboardMainScreenConstants.COIN_BALANCE_WEIGHT),
+            modifier = Modifier.weight(LEADERBOARD_ROW_WEIGHTS[3]),
             contentAlignment = Alignment.CenterEnd,
         ) {
             Text(
@@ -371,7 +385,9 @@ fun LeaderboardReward(
         when (rewardCurrency) {
             RewardCurrency.YRAL -> reward?.toInt()?.toString()
             RewardCurrency.BTC ->
-                rewardCurrencyCode?.let { currencyCode -> reward?.toCurrencyString(currencyCode) } ?: ""
+                rewardCurrencyCode?.let { currencyCode -> reward?.toCurrencyString(currencyCode) }
+                    ?: ""
+
             else -> null
         }
     Row(

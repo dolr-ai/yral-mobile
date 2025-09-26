@@ -34,5 +34,8 @@ kotlin {
             implementation(projects.shared.libs.formatters)
             implementation(projects.shared.rust.service)
         }
+        androidMain.dependencies {
+            implementation(libs.androidx.window)
+        }
     }
 }

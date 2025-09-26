@@ -293,10 +293,9 @@ fun LeaderboardConfetti(
 
 @Suppress("MagicNumber")
 object LeaderboardMainScreenConstants {
-    const val POSITION_TEXT_WEIGHT = 0.17f
-    const val USER_DETAIL_WEIGHT = 0.55f
-    const val COIN_BALANCE_WEIGHT = 0.28f
-    const val REWARD_WEIGHT = 0.28f
+    val LEADERBOARD_HEADER_WEIGHTS = listOf(0.17f, 0.52f, 0.28f, 0.31f)
+    val LEADERBOARD_HEADER_WEIGHTS_FOLD = listOf(0.17f, 0.54f, 0.28f, 0.29f)
+    val LEADERBOARD_ROW_WEIGHTS = listOf(0.17f, 0.55f, 0.28f, 0.28f)
     const val MAX_CHAR_OF_NAME = 9
     const val COUNT_DOWN_BG_ALPHA = 0.8f
     const val COUNT_DOWN_ANIMATION_DURATION = 500
@@ -317,3 +316,6 @@ object LeaderboardMainScreenConstants {
     const val CONFETTI_SIZE_FACTOR = 3
     const val CONFETTI_ITERATIONS = 0
 }
+
+@Composable
+expect fun isScreenUnfolded(): Boolean
