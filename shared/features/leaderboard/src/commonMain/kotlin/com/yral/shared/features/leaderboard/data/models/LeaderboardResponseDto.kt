@@ -67,13 +67,17 @@ fun LeaderboardResponseDto.toLeaderboardData(): Result<LeaderboardData, Leaderbo
                     userRow = userRow?.toLeaderboardItem(),
                     topRows = topRows.map { it.toLeaderboardItem() },
                     timeLeftMs = timeLeftMs,
-                    rewardCurrency = rewardCurrency?.let { safeValueOf<RewardCurrency>(it) },
-                    rewardCurrencyCode = rewardCurrencyCode,
+                    rewardCurrency =
+                        rewardCurrency
+                            ?.let { safeValueOf<RewardCurrency>(it) }
+                            .takeIf { rewardsEnabled },
+                    rewardCurrencyCode = rewardCurrencyCode.takeIf { rewardsEnabled },
                     rewardsTable =
                         rewardsTable
                             ?.mapNotNull { (key, value) ->
                                 key.toIntOrNull()?.let { enumValue -> enumValue to value }
-                            }?.toMap(),
+                            }?.toMap()
+                            .takeIf { rewardsEnabled },
                 ),
             )
         }

@@ -52,8 +52,11 @@ fun LeaderboardHistoryResponseDto.toLeaderboardHistory(): Result<LeaderboardHist
                         date = day.date,
                         topRows = day.topRows.map { it.toLeaderboardItem() },
                         userRow = day.userRow?.toLeaderboardItem(),
-                        rewardCurrency = day.rewardCurrency?.let { RewardCurrency.valueOf(it) },
-                        rewardCurrencyCode = day.rewardCurrencyCode,
+                        rewardCurrency =
+                            day.rewardCurrency
+                                ?.let { RewardCurrency.valueOf(it) }
+                                .takeIf { day.rewardsEnabled },
+                        rewardCurrencyCode = day.rewardCurrencyCode.takeIf { day.rewardsEnabled },
                     )
                 },
             )
