@@ -6,10 +6,15 @@ import org.koin.core.component.KoinComponent
 internal class DefaultLeaderboardMainComponent(
     componentContext: ComponentContext,
     private val onDailyHistoryClicked: () -> Unit,
+    private val navigateToHome: () -> Unit,
 ) : LeaderboardMainComponent,
     ComponentContext by componentContext,
     KoinComponent {
     override fun openDailyHistory() {
         onDailyHistoryClicked.invoke()
+    }
+
+    override fun navigateToHome() {
+        navigateToHome.invoke()
     }
 }

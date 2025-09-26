@@ -7,4 +7,6 @@ import kotlinx.serialization.Serializable
 data class LeaderboardHistoryRequestDto(
     @SerialName("principal_id")
     val principalId: String,
+    @SerialName("country_code")
+    val countryCode: String,
 )

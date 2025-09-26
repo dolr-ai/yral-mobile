@@ -1,4 +1,4 @@
-package com.yral.shared.features.leaderboard.ui.leaderboard.main
+package com.yral.shared.features.leaderboard.ui.main
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -35,15 +35,12 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.yral.shared.features.leaderboard.data.models.LeaderboardMode
 import com.yral.shared.features.leaderboard.domain.models.LeaderboardItem
-import com.yral.shared.features.leaderboard.ui.leaderboard.UserBriefProfileImage
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardHelpers.MAX_USERS_PRINCIPAL_LENGTH
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardHelpers.MAX_USERS_WITH_DUPLICATE_RANK
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardHelpers.POS_BRONZE
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardHelpers.POS_GOLD
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardHelpers.POS_SILVER
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardHelpers.getTrophyImageHeight
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardHelpers.getTrophyImageOffset
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardHelpers.getTrophyImageWidth
+import com.yral.shared.features.leaderboard.domain.models.RewardCurrency
+import com.yral.shared.features.leaderboard.ui.LeaderboardReward
+import com.yral.shared.features.leaderboard.ui.UserBriefProfileImage
+import com.yral.shared.features.leaderboard.ui.main.LeaderboardHelpers.POS_BRONZE
+import com.yral.shared.features.leaderboard.ui.main.LeaderboardHelpers.POS_GOLD
+import com.yral.shared.features.leaderboard.ui.main.LeaderboardHelpers.POS_SILVER
 import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
@@ -69,10 +66,13 @@ fun TrophyGallery(
     selectMode: (LeaderboardMode) -> Unit,
     openHistory: () -> Unit,
     isTrophyVisible: Boolean,
+    rewardCurrency: RewardCurrency? = null,
+    rewardCurrencyCode: String? = null,
+    rewardsTable: Map<Int, Double>? = null,
 ) {
     val trophyPaddingTop =
         when {
-            isLoading -> 0.dp
+            isLoading || leaderboard.isEmpty() -> 0.dp
             selectedMode.showCountDown -> 16.dp
             !selectedMode.showCountDown -> 50.dp
             else -> 0.dp
@@ -137,7 +137,7 @@ fun TrophyGallery(
                             .fillMaxWidth()
                             .padding(top = trophyPaddingTop),
                 ) {
-                    TrophyImages(leaderboard)
+                    TrophyImages(leaderboard, rewardCurrency, rewardCurrencyCode, rewardsTable)
                     TrophyDetails(leaderboard, selectedMode, isLoading)
                 }
             }
@@ -146,7 +146,12 @@ fun TrophyGallery(
 }
 
 @Composable
-private fun ColumnScope.TrophyImages(leaderboard: List<LeaderboardItem>) {
+private fun ColumnScope.TrophyImages(
+    leaderboard: List<LeaderboardItem>,
+    rewardCurrency: RewardCurrency?,
+    rewardCurrencyCode: String?,
+    rewardsTable: Map<Int, Double>?,
+) {
     Row(
         modifier = Modifier.align(Alignment.CenterHorizontally),
         horizontalArrangement = Arrangement.spacedBy(42.dp),
@@ -156,16 +161,25 @@ private fun ColumnScope.TrophyImages(leaderboard: List<LeaderboardItem>) {
             position = POS_SILVER,
             profileImageUrl = getProfileImageForTrophy(1, leaderboard),
             trophyResource = Res.drawable.silver_trophy,
+            rewardCurrency = rewardCurrency,
+            rewardCurrencyCode = rewardCurrencyCode,
+            rewardsTable = rewardsTable,
         )
         Trophy(
             position = POS_GOLD,
             profileImageUrl = getProfileImageForTrophy(0, leaderboard),
             trophyResource = Res.drawable.golden_trophy,
+            rewardCurrency = rewardCurrency,
+            rewardCurrencyCode = rewardCurrencyCode,
+            rewardsTable = rewardsTable,
         )
         Trophy(
             position = POS_BRONZE,
             profileImageUrl = getProfileImageForTrophy(2, leaderboard),
             trophyResource = Res.drawable.bronze_trophy,
+            rewardCurrency = rewardCurrency,
+            rewardCurrencyCode = rewardCurrencyCode,
+            rewardsTable = rewardsTable,
         )
     }
 }
@@ -246,9 +260,9 @@ private fun getTrophyDetailsUserTexts(user: List<LeaderboardItem>): String =
         1 -> user[0].userPrincipalId
         else ->
             user
-                .take(MAX_USERS_WITH_DUPLICATE_RANK)
+                .take(LeaderboardHelpers.MAX_USERS_WITH_DUPLICATE_RANK)
                 .joinToString(", ") {
-                    it.userPrincipalId.take(MAX_USERS_PRINCIPAL_LENGTH) + "..."
+                    it.userPrincipalId.take(LeaderboardHelpers.MAX_USERS_PRINCIPAL_LENGTH) + "..."
                 }
     }
 
@@ -257,18 +271,21 @@ private fun Trophy(
     position: Int,
     profileImageUrl: String,
     trophyResource: DrawableResource,
+    rewardCurrency: RewardCurrency?,
+    rewardCurrencyCode: String?,
+    rewardsTable: Map<Int, Double>?,
 ) {
-    val width = getTrophyImageWidth(position)
-    val height = getTrophyImageHeight(position)
+    val width = LeaderboardHelpers.getTrophyImageWidth(position)
+    val height = LeaderboardHelpers.getTrophyImageHeight(position)
     val offset =
-        getTrophyImageOffset(
+        LeaderboardHelpers.getTrophyImageOffset(
             position = position,
             isProfileImageVisible = profileImageUrl.isNotEmpty(),
         )
+    val rewardOffset = LeaderboardHelpers.getTrophyRewardOffset(position = position)
     Box(
         modifier =
             Modifier
-                .width(width)
                 .height(height + offset),
         contentAlignment = Alignment.TopCenter,
     ) {
@@ -288,6 +305,20 @@ private fun Trophy(
                 profileImageUrl = profileImageUrl,
                 size = width,
             )
+        }
+        rewardsTable?.get(position)?.let {
+            if (rewardCurrency != null) {
+                LeaderboardReward(
+                    rewardCurrency = rewardCurrency,
+                    rewardCurrencyCode = rewardCurrencyCode,
+                    reward = it,
+                    isBackgroundVisible = true,
+                    modifier =
+                        Modifier
+                            .align(Alignment.Center)
+                            .offset { IntOffset(0, rewardOffset.roundToPx()) },
+                )
+            }
         }
     }
 }

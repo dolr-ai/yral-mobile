@@ -10,6 +10,7 @@ import com.yral.shared.features.leaderboard.data.models.LeaderboardMode
 import com.yral.shared.features.leaderboard.domain.GetLeaderboardUseCase
 import com.yral.shared.features.leaderboard.domain.models.GetLeaderboardRequest
 import com.yral.shared.features.leaderboard.domain.models.LeaderboardItem
+import com.yral.shared.features.leaderboard.domain.models.RewardCurrency
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,9 +28,22 @@ class LeaderBoardViewModel(
     val state: StateFlow<LeaderBoardState> = _state.asStateFlow()
     private var countdownJob: Job? = null
 
-    fun loadData() {
+    private fun resetState() {
+        _state.update {
+            it.copy(
+                isLoading = true,
+                error = null,
+                countDownMs = null,
+                rewardCurrency = null,
+                rewardCurrencyCode = null,
+                rewardsTable = null,
+            )
+        }
+    }
+
+    fun loadData(countryCode: String) {
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, error = null, countDownMs = null) }
+            resetState()
             sessionManager.userPrincipal?.let { userPrincipal ->
                 getLeaderboardUseCase
                     .invoke(
@@ -37,6 +51,7 @@ class LeaderBoardViewModel(
                             GetLeaderboardRequest(
                                 principalId = userPrincipal,
                                 mode = _state.value.selectedMode,
+                                countryCode = countryCode,
                             ),
                     ).onSuccess { data ->
                         val currentUser =
@@ -55,9 +70,12 @@ class LeaderBoardViewModel(
                                     data.timeLeftMs?.let { timeLeft ->
                                         timeLeft < COUNT_DOWN_BLINK_THRESHOLD
                                     } == true,
+                                rewardCurrency = data.rewardCurrency,
+                                rewardCurrencyCode = data.rewardCurrencyCode,
+                                rewardsTable = data.rewardsTable,
                             )
                         }
-                        data.timeLeftMs?.let { startCountDown() }
+                        data.timeLeftMs?.let { startCountDown(countryCode) }
                     }.onFailure { error ->
                         // No error to be shown on UI setting error as null
                         _state.update { it.copy(error = null, isLoading = false) }
@@ -67,7 +85,7 @@ class LeaderBoardViewModel(
     }
 
     @Suppress("MagicNumber")
-    private fun startCountDown() {
+    private fun startCountDown(countryCode: String) {
         countdownJob?.cancel()
         countdownJob =
             viewModelScope.launch {
@@ -83,19 +101,22 @@ class LeaderBoardViewModel(
                     }
                     currentTime = _state.value.countDownMs
                 }
-                refreshData()
+                refreshData(countryCode)
             }
     }
 
-    private fun refreshData() {
+    private fun refreshData(countryCode: String) {
         _state.update { it.copy(error = null) }
-        loadData()
+        loadData(countryCode)
     }
 
-    fun selectMode(mode: LeaderboardMode) {
+    fun selectMode(
+        mode: LeaderboardMode,
+        countryCode: String,
+    ) {
         if (_state.value.selectedMode != mode) {
             _state.update { it.copy(selectedMode = mode) }
-            refreshData()
+            refreshData(countryCode)
             leaderBoardTelemetry.leaderboardTabClicked(mode)
         }
     }
@@ -144,4 +165,7 @@ data class LeaderBoardState(
     val selectedMode: LeaderboardMode = LeaderboardMode.DAILY,
     val countDownMs: Long? = null,
     val blinkCountDown: Boolean = false,
+    val rewardCurrency: RewardCurrency? = null,
+    val rewardCurrencyCode: String? = null,
+    val rewardsTable: Map<Int, Double>? = null,
 )

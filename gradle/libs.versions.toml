@@ -59,6 +59,7 @@ moko-permissions="0.19.1"
 branch="5.19.0"
 play-services-ads-identifier="18.0.1"
 emoji2 = "1.5.0"
+window = "1.5.0"
 
 [libraries]
 
@@ -205,6 +206,7 @@ kotlin-gradlePlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-pl
 ksp-gradlePlugin = { group = "com.google.devtools.ksp", name = "com.google.devtools.ksp.gradle.plugin", version.ref = "ksp" }
 spotless-gradlePlugin = { group = "com.diffplug.spotless", name = "spotless-plugin-gradle", version.ref = "spotless" }
 truth = { group = "com.google.truth", name = "truth", version.ref = "truth" }
+androidx-window = { group = "androidx.window", name = "window", version.ref = "window" }
 
 
 [plugins]

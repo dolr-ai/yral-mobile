@@ -151,6 +151,7 @@ internal class DefaultHomeComponent(
         LeaderboardComponent.Companion(
             componentContext = componentContext,
             snapshot = childSnapshots[Config.Leaderboard] as? LeaderboardComponent.Snapshot,
+            navigateToHome = { onFeedTabClick() },
         )
 
     private fun uploadVideoComponent(componentContext: ComponentContext): UploadVideoRootComponent =
