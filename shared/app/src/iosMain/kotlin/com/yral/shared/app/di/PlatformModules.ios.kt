@@ -3,6 +3,8 @@ package com.yral.shared.app.di
 import com.yral.shared.analytics.di.IS_DEBUG
 import com.yral.shared.analytics.di.MIXPANEL_TOKEN
 import com.yral.shared.core.logging.YralLogger
+import com.yral.shared.libs.designsystem.component.IOSScreenFoldStateProvider
+import com.yral.shared.libs.designsystem.windowInfo.ScreenFoldStateProvider
 import org.koin.dsl.module
 import platform.Foundation.NSBundle
 
@@ -16,4 +18,5 @@ actual val platformModule =
         single<Boolean>(IS_DEBUG) {
             NSBundle.mainBundle.bundleIdentifier != "com.yral.iosApp"
         }
+        single<ScreenFoldStateProvider> { IOSScreenFoldStateProvider() }
     }
