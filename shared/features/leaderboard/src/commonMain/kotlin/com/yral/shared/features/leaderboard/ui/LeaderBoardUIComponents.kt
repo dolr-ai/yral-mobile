@@ -119,7 +119,7 @@ fun LeaderboardTableHeader(
                 Image(
                     painter = painterResource(rewardIcon),
                     contentDescription = "image description",
-                    contentScale = ContentScale.Crop,
+                    contentScale = ContentScale.FillBounds,
                     modifier = Modifier.size(14.dp),
                 )
             }
@@ -413,7 +413,7 @@ fun LeaderboardReward(
                 Image(
                     painter = painterResource(rewardIcon),
                     contentDescription = "reward currency",
-                    contentScale = ContentScale.Crop,
+                    contentScale = ContentScale.FillBounds,
                     modifier = Modifier.size(14.dp),
                 )
             }
