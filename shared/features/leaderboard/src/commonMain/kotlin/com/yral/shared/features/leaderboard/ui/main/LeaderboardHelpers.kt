@@ -1,4 +1,4 @@
-package com.yral.shared.features.leaderboard.ui.leaderboard.main
+package com.yral.shared.features.leaderboard.ui.main
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -121,6 +121,14 @@ object LeaderboardHelpers {
     } else {
         48.dp
     }
+
+    fun getTrophyRewardOffset(position: Int) =
+        when (position) {
+            POS_GOLD -> 3.dp
+            POS_SILVER -> 9.dp
+            POS_BRONZE -> 16.dp
+            else -> 16.dp
+        }
 
     const val PROFILE_IMAGE_SIZE = 25f
     const val MAX_USERS_WITH_DUPLICATE_RANK = 4

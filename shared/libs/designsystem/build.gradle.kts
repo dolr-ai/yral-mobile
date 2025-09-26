@@ -28,6 +28,7 @@ kotlin {
         androidMain {
             dependencies {
                 implementation(libs.lottie)
+                implementation(libs.androidx.window)
             }
         }
     }

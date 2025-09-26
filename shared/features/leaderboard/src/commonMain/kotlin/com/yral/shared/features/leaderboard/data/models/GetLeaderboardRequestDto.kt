@@ -9,6 +9,8 @@ data class GetLeaderboardRequestDto(
     val principalId: String,
     @SerialName("mode")
     val mode: LeaderboardMode,
+    @SerialName("country_code")
+    val countryCode: String,
 )
 
 @Serializable

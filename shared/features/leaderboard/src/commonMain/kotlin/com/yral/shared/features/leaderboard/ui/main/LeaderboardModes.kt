@@ -1,4 +1,4 @@
-package com.yral.shared.features.leaderboard.ui.leaderboard.main
+package com.yral.shared.features.leaderboard.ui.main
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.FastOutLinearInEasing
@@ -39,9 +39,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.yral.shared.features.leaderboard.data.models.LeaderboardMode
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardMainScreenConstants.COUNT_DOWN_ANIMATION_DURATION
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardMainScreenConstants.COUNT_DOWN_BG_ALPHA
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardMainScreenConstants.COUNT_DOWN_BORDER_ANIMATION_DURATION
 import com.yral.shared.libs.designsystem.component.YralMaskedVectorTextV2
 import com.yral.shared.libs.designsystem.component.YralNeonBorder
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
@@ -140,7 +137,7 @@ fun ColumnScope.LeaderboardCountdown(
     LaunchedEffect(blinkCountDown) {
         if (blinkCountDown) {
             while (true) {
-                delay(COUNT_DOWN_ANIMATION_DURATION.toLong())
+                delay(LeaderboardMainScreenConstants.COUNT_DOWN_ANIMATION_DURATION.toLong())
                 neon = !neon
             }
         }
@@ -155,7 +152,7 @@ fun ColumnScope.LeaderboardCountdown(
         }
         LaunchedEffect(blinkCountDown) {
             if (blinkCountDown) {
-                delay(COUNT_DOWN_ANIMATION_DURATION.toLong())
+                delay(LeaderboardMainScreenConstants.COUNT_DOWN_ANIMATION_DURATION.toLong())
                 showWhiteBorder = true
             }
         }
@@ -167,7 +164,7 @@ fun ColumnScope.LeaderboardCountdown(
                     Modifier
                         .height(26.dp)
                         .width(115.dp)
-                        .alpha(COUNT_DOWN_BG_ALPHA)
+                        .alpha(LeaderboardMainScreenConstants.COUNT_DOWN_BG_ALPHA)
                         .background(
                             color = YralColors.Neutral950,
                             shape = RoundedCornerShape(size = 39.dp),
@@ -179,14 +176,15 @@ fun ColumnScope.LeaderboardCountdown(
                         fadeIn(
                             animationSpec =
                                 tween(
-                                    durationMillis = COUNT_DOWN_ANIMATION_DURATION / 2,
+                                    durationMillis = LeaderboardMainScreenConstants.COUNT_DOWN_ANIMATION_DURATION / 2,
                                     easing = FastOutLinearInEasing,
                                 ),
                         ) togetherWith
                             fadeOut(
                                 animationSpec =
                                     tween(
-                                        durationMillis = COUNT_DOWN_ANIMATION_DURATION / 2,
+                                        durationMillis =
+                                            LeaderboardMainScreenConstants.COUNT_DOWN_ANIMATION_DURATION / 2,
                                         easing = FastOutLinearInEasing,
                                     ),
                             )
@@ -207,7 +205,7 @@ private fun BoxScope.LeaderboardCountdownBorder(borderColor: Color) {
         animationSpec =
             infiniteRepeatable(
                 tween(
-                    durationMillis = COUNT_DOWN_BORDER_ANIMATION_DURATION,
+                    durationMillis = LeaderboardMainScreenConstants.COUNT_DOWN_BORDER_ANIMATION_DURATION,
                     easing = FastOutLinearInEasing,
                 ),
                 RepeatMode.Reverse,
@@ -224,7 +222,7 @@ private fun BoxScope.LeaderboardCountdownBorder(borderColor: Color) {
         containerColor = containerColor,
         neonColor = neonColor,
         borderWidth = 10f,
-        animationDuration = COUNT_DOWN_BORDER_ANIMATION_DURATION.toLong(),
+        animationDuration = LeaderboardMainScreenConstants.COUNT_DOWN_BORDER_ANIMATION_DURATION.toLong(),
     )
 }
 

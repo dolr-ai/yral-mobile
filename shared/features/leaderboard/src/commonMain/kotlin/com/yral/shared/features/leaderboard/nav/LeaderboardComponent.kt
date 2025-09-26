@@ -34,10 +34,12 @@ abstract class LeaderboardComponent : HomeChildSnapshotProvider {
         operator fun invoke(
             componentContext: ComponentContext,
             snapshot: Snapshot?,
+            navigateToHome: () -> Unit,
         ): LeaderboardComponent =
             DefaultLeaderboardComponent(
                 componentContext = componentContext,
                 snapshot = snapshot,
+                navigateToHome = navigateToHome,
             )
     }
 }

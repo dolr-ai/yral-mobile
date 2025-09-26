@@ -1,4 +1,4 @@
-package com.yral.shared.features.leaderboard.ui.leaderboard
+package com.yral.shared.features.leaderboard.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -19,35 +19,61 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardHelpers.PROFILE_IMAGE_SIZE
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardHelpers.getProfileImageRing
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardHelpers.getTextDecoration
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardHelpers.getUserBriefBorder
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardMainScreenConstants.COIN_BALANCE_WEIGHT
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardMainScreenConstants.MAX_CHAR_OF_NAME
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardMainScreenConstants.POSITION_TEXT_WEIGHT
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardMainScreenConstants.USER_DETAIL_WEIGHT
+import com.yral.shared.features.leaderboard.domain.models.RewardCurrency
+import com.yral.shared.features.leaderboard.ui.main.LeaderboardHelpers
+import com.yral.shared.features.leaderboard.ui.main.LeaderboardMainScreenConstants
+import com.yral.shared.features.leaderboard.ui.main.LeaderboardMainScreenConstants.LEADERBOARD_HEADER_WEIGHTS
+import com.yral.shared.features.leaderboard.ui.main.LeaderboardMainScreenConstants.LEADERBOARD_HEADER_WEIGHTS_FOLD
+import com.yral.shared.features.leaderboard.ui.main.LeaderboardMainScreenConstants.LEADERBOARD_ROW_WEIGHTS
+import com.yral.shared.libs.CurrencyFormatter
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralMaskedVectorTextV2
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import com.yral.shared.libs.designsystem.windowInfo.rememberScreenFoldStateProvider
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import yral_mobile.shared.features.leaderboard.generated.resources.Res
 import yral_mobile.shared.features.leaderboard.generated.resources.games_won
-import yral_mobile.shared.features.leaderboard.generated.resources.player_id
+import yral_mobile.shared.features.leaderboard.generated.resources.player
 import yral_mobile.shared.features.leaderboard.generated.resources.position
+import yral_mobile.shared.features.leaderboard.generated.resources.rewards
 import yral_mobile.shared.features.leaderboard.generated.resources.you
+import yral_mobile.shared.libs.designsystem.generated.resources.bitcoin
+import yral_mobile.shared.libs.designsystem.generated.resources.yral
+import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
+@Suppress("LongMethod", "MagicNumber")
 @Composable
-fun LeaderboardTableHeader(isTrophyVisible: Boolean) {
+fun LeaderboardTableHeader(
+    isTrophyVisible: Boolean,
+    rewardCurrency: RewardCurrency?,
+) {
+    val rewardIcon =
+        when (rewardCurrency) {
+            RewardCurrency.YRAL -> DesignRes.drawable.yral
+            RewardCurrency.BTC -> DesignRes.drawable.bitcoin
+            else -> null
+        }
+
+    val isScreenUnfolded by rememberScreenFoldStateProvider().isScreenUnfoldedFlow.collectAsState(false)
+    val headerWeights =
+        if (isScreenUnfolded) {
+            LEADERBOARD_HEADER_WEIGHTS_FOLD
+        } else {
+            LEADERBOARD_HEADER_WEIGHTS
+        }
+
     Row(
         modifier =
             Modifier
@@ -64,25 +90,46 @@ fun LeaderboardTableHeader(isTrophyVisible: Boolean) {
     ) {
         Text(
             text = stringResource(Res.string.position),
-            modifier = Modifier.weight(POSITION_TEXT_WEIGHT),
+            modifier = Modifier.weight(headerWeights[0]),
             style = LocalAppTopography.current.regMedium,
             color = YralColors.Neutral500,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
         Text(
-            text = stringResource(Res.string.player_id),
+            text = stringResource(Res.string.player),
             modifier =
                 Modifier
-                    .weight(USER_DETAIL_WEIGHT)
-                    .padding(start = PROFILE_IMAGE_SIZE.dp + 8.dp),
+                    .weight(headerWeights[1])
+                    .padding(start = 6.dp),
             style = LocalAppTopography.current.regMedium,
             color = YralColors.Neutral500,
             maxLines = 1,
         )
+
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(3.5.dp, Alignment.End),
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.weight(headerWeights[2]),
+        ) {
+            rewardIcon?.let {
+                Text(
+                    text = stringResource(Res.string.rewards),
+                    style = LocalAppTopography.current.regRegular,
+                    textAlign = TextAlign.Center,
+                    color = YralColors.NeutralTextSecondary,
+                )
+                Image(
+                    painter = painterResource(rewardIcon),
+                    contentDescription = "image description",
+                    contentScale = ContentScale.FillBounds,
+                    modifier = Modifier.size(14.dp),
+                )
+            }
+        }
         Text(
             text = stringResource(Res.string.games_won),
-            modifier = Modifier.weight(COIN_BALANCE_WEIGHT),
+            modifier = Modifier.weight(headerWeights[3]),
             style = LocalAppTopography.current.regMedium,
             color = YralColors.Neutral500,
             textAlign = TextAlign.End,
@@ -100,6 +147,9 @@ fun LeaderboardRow(
     wins: Long,
     isCurrentUser: Boolean,
     decorateCurrentUser: Boolean = false,
+    rewardCurrency: RewardCurrency? = null,
+    rewardCurrencyCode: String? = null,
+    reward: Double? = null,
 ) {
     Card(
         modifier =
@@ -125,6 +175,9 @@ fun LeaderboardRow(
                 wins,
                 isCurrentUser,
                 decorateCurrentUser,
+                rewardCurrency,
+                rewardCurrencyCode,
+                reward,
             )
         }
     }
@@ -137,7 +190,7 @@ private fun UserBriefWithBorder(
     content: @Composable () -> Unit,
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
-        val border = getUserBriefBorder(position)
+        val border = LeaderboardHelpers.getUserBriefBorder(position)
         if (border != null && !decorateCurrentUser) {
             Image(
                 painter = painterResource(border),
@@ -150,6 +203,7 @@ private fun UserBriefWithBorder(
     }
 }
 
+@Suppress("MagicNumber")
 @Composable
 private fun UserBriefContent(
     position: Int,
@@ -158,6 +212,9 @@ private fun UserBriefContent(
     wins: Long,
     isCurrentUser: Boolean,
     decorateCurrentUser: Boolean,
+    rewardCurrency: RewardCurrency?,
+    rewardCurrencyCode: String?,
+    reward: Double?,
 ) {
     Row(
         modifier =
@@ -169,23 +226,32 @@ private fun UserBriefContent(
     ) {
         // Position column
         Row(
-            modifier = Modifier.weight(POSITION_TEXT_WEIGHT),
+            modifier = Modifier.weight(LEADERBOARD_ROW_WEIGHTS[0]),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             UserBriefPositionNumber(position, decorateCurrentUser)
         }
         // Player ID column with avatar
         Row(
-            modifier = Modifier.weight(USER_DETAIL_WEIGHT),
+            modifier = Modifier.weight(LEADERBOARD_ROW_WEIGHTS[1]),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             UserBriefProfileImage(position, profileImageUrl)
             Spacer(modifier = Modifier.width(8.dp))
             UserBriefProfileName(position, userPrincipalId, isCurrentUser, decorateCurrentUser)
         }
+        // Rewards
+        LeaderboardReward(
+            modifier = Modifier.weight(LEADERBOARD_ROW_WEIGHTS[2]),
+            rewardCurrency = rewardCurrency,
+            rewardCurrencyCode = rewardCurrencyCode,
+            reward = reward,
+            isBackgroundVisible = false,
+            horizontalAlignment = Alignment.End,
+        )
         // Games won
         Box(
-            modifier = Modifier.weight(COIN_BALANCE_WEIGHT),
+            modifier = Modifier.weight(LEADERBOARD_ROW_WEIGHTS[3]),
             contentAlignment = Alignment.CenterEnd,
         ) {
             Text(
@@ -205,7 +271,7 @@ fun UserBriefPositionNumber(
     position: Int,
     decorateCurrentUser: Boolean,
 ) {
-    val decoration = getTextDecoration(position)
+    val decoration = LeaderboardHelpers.getTextDecoration(position)
     if (decoration != null && !decorateCurrentUser) {
         YralMaskedVectorTextV2(
             text = "#$position",
@@ -237,7 +303,7 @@ private fun UserBriefProfileName(
         if (isCurrentUser) {
             stringResource(Res.string.you)
         } else {
-            name.take(MAX_CHAR_OF_NAME).plus("...")
+            name.take(LeaderboardMainScreenConstants.MAX_CHAR_OF_NAME).plus("...")
         }
     if (decorateCurrentUser) {
         Text(
@@ -258,7 +324,7 @@ private fun UserBriefGradientProfileName(
     position: Int,
     name: String,
 ) {
-    val decoration = getTextDecoration(position)
+    val decoration = LeaderboardHelpers.getTextDecoration(position)
     if (decoration != null) {
         YralMaskedVectorTextV2(
             text = name,
@@ -283,7 +349,7 @@ private fun UserBriefGradientProfileName(
 fun UserBriefProfileImage(
     position: Int,
     profileImageUrl: String,
-    size: Dp = PROFILE_IMAGE_SIZE.dp,
+    size: Dp = LeaderboardHelpers.PROFILE_IMAGE_SIZE.dp,
 ) {
     Box(modifier = Modifier.wrapContentSize()) {
         YralAsyncImage(
@@ -291,7 +357,7 @@ fun UserBriefProfileImage(
             modifier = Modifier.size(size),
             backgroundColor = YralColors.ProfilePicBackground,
         )
-        val profileImageRing = getProfileImageRing(position)
+        val profileImageRing = LeaderboardHelpers.getProfileImageRing(position)
         if (profileImageRing != null) {
             Image(
                 painter = painterResource(profileImageRing),
@@ -302,3 +368,65 @@ fun UserBriefProfileImage(
         }
     }
 }
+
+@Composable
+fun LeaderboardReward(
+    modifier: Modifier,
+    rewardCurrency: RewardCurrency?,
+    rewardCurrencyCode: String?,
+    reward: Double?,
+    isBackgroundVisible: Boolean,
+    horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
+) {
+    val rewardIcon =
+        when (rewardCurrency) {
+            RewardCurrency.YRAL -> DesignRes.drawable.yral
+            RewardCurrency.BTC -> DesignRes.drawable.bitcoin
+            else -> null
+        }
+    val rewardText =
+        when (rewardCurrency) {
+            RewardCurrency.YRAL -> reward?.toInt()?.toString()
+            RewardCurrency.BTC ->
+                rewardCurrencyCode?.let { currencyCode -> reward?.toCurrencyString(currencyCode) }
+            else -> null
+        }
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(3.5.dp, horizontalAlignment),
+        verticalAlignment = Alignment.CenterVertically,
+        modifier =
+            modifier
+                .height(24.dp)
+                .background(
+                    color = if (isBackgroundVisible) YralColors.GameRewardChipBackground else Color.Transparent,
+                    shape = RoundedCornerShape(size = 38.dp),
+                ).padding(start = 7.dp, top = 3.5.dp, end = 3.5.dp, bottom = 3.5.dp),
+    ) {
+        rewardText?.let {
+            Text(
+                text = rewardText,
+                style = LocalAppTopography.current.regSemiBold,
+                textAlign = TextAlign.End,
+                color = if (isBackgroundVisible) YralColors.Neutral950 else YralColors.Neutral50,
+            )
+            rewardIcon?.let {
+                Image(
+                    painter = painterResource(rewardIcon),
+                    contentDescription = "reward currency",
+                    contentScale = ContentScale.FillBounds,
+                    modifier = Modifier.size(14.dp),
+                )
+            }
+        }
+    }
+}
+
+private fun Double.toCurrencyString(currencyCode: String) =
+    CurrencyFormatter()
+        .format(
+            amount = this,
+            currencyCode = currencyCode,
+            withCurrencySymbol = true,
+            minimumFractionDigits = 2,
+            maximumFractionDigits = 2,
+        )

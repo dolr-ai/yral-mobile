@@ -1,4 +1,4 @@
-package com.yral.shared.features.leaderboard.ui.leaderboard.main
+package com.yral.shared.features.leaderboard.ui.main
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -34,29 +35,29 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.yral.shared.features.leaderboard.data.models.LeaderboardMode
 import com.yral.shared.features.leaderboard.nav.main.LeaderboardMainComponent
-import com.yral.shared.features.leaderboard.ui.leaderboard.LeaderboardRow
-import com.yral.shared.features.leaderboard.ui.leaderboard.LeaderboardTableHeader
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardMainScreenConstants.CONFETTI_ITERATIONS
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardMainScreenConstants.CONFETTI_SCALE
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardMainScreenConstants.CONFETTI_SIZE_FACTOR
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardMainScreenConstants.NO_OF_CONFETTI
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardMainScreenConstants.PURPLE_BRUSH
-import com.yral.shared.features.leaderboard.ui.leaderboard.main.LeaderboardMainScreenConstants.YELLOW_BRUSH
+import com.yral.shared.features.leaderboard.ui.LeaderboardRow
+import com.yral.shared.features.leaderboard.ui.LeaderboardTableHeader
 import com.yral.shared.features.leaderboard.viewmodel.LeaderBoardState
 import com.yral.shared.features.leaderboard.viewmodel.LeaderBoardViewModel
+import com.yral.shared.libs.designsystem.component.YralButtonType
+import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import yral_mobile.shared.features.leaderboard.generated.resources.Res
+import yral_mobile.shared.features.leaderboard.generated.resources.play_games_to_claim_your_spot
 import yral_mobile.shared.features.leaderboard.generated.resources.purple_leaderboard
+import yral_mobile.shared.features.leaderboard.generated.resources.start_playing
 import yral_mobile.shared.features.leaderboard.generated.resources.yellow_leaderboard
 import kotlin.math.max
 import kotlin.math.min
@@ -68,11 +69,12 @@ fun LeaderboardMainScreen(
     modifier: Modifier = Modifier,
     viewModel: LeaderBoardViewModel = koinViewModel(),
 ) {
+    val countryCode = Locale.current.region
     val state by viewModel.state.collectAsState()
     var showConfetti by remember(state.isCurrentUserInTop) { mutableStateOf(state.isCurrentUserInTop) }
     LaunchedEffect(Unit) {
         viewModel.leaderboardPageViewed()
-        viewModel.loadData()
+        viewModel.loadData(countryCode)
     }
 
     val listState = rememberLazyListState()
@@ -121,6 +123,7 @@ fun LeaderboardMainScreen(
         ) {
             stickyHeader {
                 LeaderboardHeader(
+                    countryCode = countryCode,
                     state = state,
                     component = component,
                     isTrophyVisible = isTrophyVisible || state.isLoading,
@@ -146,6 +149,9 @@ fun LeaderboardMainScreen(
                                 wins = user.wins,
                                 isCurrentUser = true,
                                 decorateCurrentUser = true,
+                                rewardCurrency = state.rewardCurrency,
+                                rewardCurrencyCode = state.rewardCurrencyCode,
+                                reward = user.reward,
                             )
                         }
                     }
@@ -165,9 +171,17 @@ fun LeaderboardMainScreen(
                             profileImageUrl = item.profileImage,
                             wins = item.wins,
                             isCurrentUser = viewModel.isCurrentUser(item.userPrincipalId),
+                            decorateCurrentUser = false,
+                            rewardCurrency = state.rewardCurrency,
+                            rewardCurrencyCode = state.rewardCurrencyCode,
+                            reward = item.reward,
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                     }
+                }
+
+                if (state.leaderboard.isEmpty()) {
+                    item { EmptyState(isTrophyVisible, component) }
                 }
 
                 // Bottom padding
@@ -194,7 +208,40 @@ fun LeaderboardMainScreen(
 }
 
 @Composable
+private fun EmptyState(
+    isTrophyVisible: Boolean,
+    component: LeaderboardMainComponent,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(30.dp, Alignment.Top),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier =
+                Modifier
+                    .width(270.dp)
+                    .padding(top = if (!isTrophyVisible) 210.dp else 68.dp),
+        ) {
+            Text(
+                text = stringResource(Res.string.play_games_to_claim_your_spot),
+                style = LocalAppTopography.current.lgMedium,
+                color = Color.White,
+                textAlign = TextAlign.Center,
+            )
+            YralGradientButton(
+                text = stringResource(Res.string.start_playing),
+                buttonType = YralButtonType.White,
+                onClick = { component.navigateToHome() },
+            )
+        }
+    }
+}
+
+@Composable
 private fun LeaderboardHeader(
+    countryCode: String,
     state: LeaderBoardState,
     component: LeaderboardMainComponent,
     isTrophyVisible: Boolean,
@@ -204,8 +251,8 @@ private fun LeaderboardHeader(
 ) {
     val brushColors =
         when (state.selectedMode) {
-            LeaderboardMode.DAILY -> YELLOW_BRUSH
-            LeaderboardMode.ALL_TIME -> PURPLE_BRUSH
+            LeaderboardMode.DAILY -> LeaderboardMainScreenConstants.YELLOW_BRUSH
+            LeaderboardMode.ALL_TIME -> LeaderboardMainScreenConstants.PURPLE_BRUSH
         }
     Box {
         Image(
@@ -226,7 +273,7 @@ private fun LeaderboardHeader(
                 isLoading = state.isLoading,
                 leaderboard = if (state.isLoading) emptyList() else state.leaderboard,
                 selectedMode = state.selectedMode,
-                selectMode = { viewModel.selectMode(it) },
+                selectMode = { viewModel.selectMode(it, countryCode) },
                 countDownMs = state.countDownMs,
                 blinkCountDown = state.blinkCountDown,
                 openHistory = {
@@ -234,8 +281,16 @@ private fun LeaderboardHeader(
                     component.openDailyHistory()
                 },
                 isTrophyVisible = isTrophyVisible,
+                rewardCurrency = state.rewardCurrency,
+                rewardCurrencyCode = state.rewardCurrencyCode,
+                rewardsTable = state.rewardsTable,
             )
-            LeaderboardTableHeader(isTrophyVisible)
+            if (state.leaderboard.isNotEmpty()) {
+                LeaderboardTableHeader(
+                    isTrophyVisible = isTrophyVisible,
+                    rewardCurrency = state.rewardCurrency,
+                )
+            }
         }
     }
 }
@@ -251,9 +306,9 @@ fun LeaderboardConfetti(
             modifier = Modifier.fillMaxSize().padding(16.dp),
             verticalArrangement = Arrangement.SpaceEvenly,
         ) {
-            val size = LocalWindowInfo.current.containerSize.width / CONFETTI_SIZE_FACTOR
+            val size = LocalWindowInfo.current.containerSize.width / LeaderboardMainScreenConstants.CONFETTI_SIZE_FACTOR
             val density = LocalDensity.current
-            repeat(NO_OF_CONFETTI) { index ->
+            repeat(LeaderboardMainScreenConstants.NO_OF_CONFETTI) { index ->
                 key(count) {
                     YralLottieAnimation(
                         rawRes = LottieRes.COLORFUL_CONFETTI_BRUST,
@@ -261,7 +316,7 @@ fun LeaderboardConfetti(
                         iterations = 1,
                         onAnimationComplete = {
                             if (index == 0) {
-                                if (count < CONFETTI_ITERATIONS) {
+                                if (count < LeaderboardMainScreenConstants.CONFETTI_ITERATIONS) {
                                     count++
                                 } else {
                                     confettiAnimationComplete()
@@ -271,7 +326,7 @@ fun LeaderboardConfetti(
                         modifier =
                             Modifier
                                 .size(with(density) { size.toDp() })
-                                .scale(CONFETTI_SCALE)
+                                .scale(LeaderboardMainScreenConstants.CONFETTI_SCALE)
                                 .align(if (index % 2 == 0) Alignment.Start else Alignment.End),
                     )
                 }
@@ -282,10 +337,10 @@ fun LeaderboardConfetti(
 
 @Suppress("MagicNumber")
 object LeaderboardMainScreenConstants {
-    const val POSITION_TEXT_WEIGHT = 0.17f
-    const val USER_DETAIL_WEIGHT = 0.55f
-    const val COIN_BALANCE_WEIGHT = 0.28f
-    const val MAX_CHAR_OF_NAME = 12
+    val LEADERBOARD_HEADER_WEIGHTS = listOf(0.17f, 0.52f, 0.30f, 0.29f)
+    val LEADERBOARD_HEADER_WEIGHTS_FOLD = listOf(0.17f, 0.54f, 0.30f, 0.27f)
+    val LEADERBOARD_ROW_WEIGHTS = listOf(0.17f, 0.55f, 0.30f, 0.26f)
+    const val MAX_CHAR_OF_NAME = 9
     const val COUNT_DOWN_BG_ALPHA = 0.8f
     const val COUNT_DOWN_ANIMATION_DURATION = 500
     const val COUNT_DOWN_BORDER_ANIMATION_DURATION = 300
