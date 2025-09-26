@@ -184,6 +184,7 @@ class DefaultAuthClient(
             cachedSession.userPrincipal?.let { crashlyticsManager.setUserId(it) }
             sessionManager.updateCoinBalance(0)
             setSession(session = cachedSession)
+            fetchBalance(session = cachedSession)
             if (auth.currentUser?.uid == cachedSession.userPrincipal) {
                 sessionManager.updateFirebaseLoginState(true)
                 postFirebaseLogin(cachedSession)
