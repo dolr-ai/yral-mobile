@@ -39,7 +39,7 @@ actual val platformModule =
         single<OAuthUtils> { AndroidOAuthUtils() }
         factory<OAuthUtilsHelper> { AndroidOAuthUtilsHelper() }
         single<ImageLoader> { SingletonImageLoader.get(get()) }
-        single<ScreenFoldStateProvider> { (activityContext: Context) ->
+        factory<ScreenFoldStateProvider> { (activityContext: Context) ->
             AndroidScreenFoldStateProvider(activityContext)
         }
     }
