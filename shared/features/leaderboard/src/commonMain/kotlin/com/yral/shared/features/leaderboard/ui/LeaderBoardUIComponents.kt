@@ -95,7 +95,7 @@ fun LeaderboardTableHeader(
             Row(
                 horizontalArrangement = Arrangement.spacedBy(3.5.dp, Alignment.CenterHorizontally),
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.weight(LeaderboardMainScreenConstants.COIN_BALANCE_WEIGHT),
+                modifier = Modifier.weight(LeaderboardMainScreenConstants.REWARD_WEIGHT),
             ) {
                 Text(
                     text = stringResource(Res.string.rewards),
@@ -225,7 +225,7 @@ private fun UserBriefContent(
         }
         // Rewards
         LeaderboardReward(
-            modifier = Modifier.weight(LeaderboardMainScreenConstants.COIN_BALANCE_WEIGHT),
+            modifier = Modifier.weight(LeaderboardMainScreenConstants.REWARD_WEIGHT),
             rewardCurrency = rewardCurrency,
             rewardCurrencyCode = rewardCurrencyCode,
             reward = reward,

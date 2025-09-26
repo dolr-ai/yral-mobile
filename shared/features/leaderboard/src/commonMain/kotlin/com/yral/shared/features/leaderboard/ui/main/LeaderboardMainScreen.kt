@@ -296,6 +296,7 @@ object LeaderboardMainScreenConstants {
     const val POSITION_TEXT_WEIGHT = 0.17f
     const val USER_DETAIL_WEIGHT = 0.55f
     const val COIN_BALANCE_WEIGHT = 0.28f
+    const val REWARD_WEIGHT = 0.28f
     const val MAX_CHAR_OF_NAME = 9
     const val COUNT_DOWN_BG_ALPHA = 0.8f
     const val COUNT_DOWN_ANIMATION_DURATION = 500
