@@ -15,6 +15,7 @@ import org.koin.core.component.KoinComponent
 internal class DefaultLeaderboardComponent(
     componentContext: ComponentContext,
     private val snapshot: Snapshot?,
+    private val navigateToHome: () -> Unit,
 ) : LeaderboardComponent(),
     ComponentContext by componentContext,
     KoinComponent {
@@ -73,6 +74,7 @@ internal class DefaultLeaderboardComponent(
         LeaderboardMainComponent.Companion(
             componentContext = componentContext,
             onDailyHistoryClicked = { navigation.push(Config.Details) },
+            navigateToHome = navigateToHome,
         )
 
     private fun detailsComponent(componentContext: ComponentContext): LeaderboardDetailsComponent =

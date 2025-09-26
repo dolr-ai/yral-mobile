@@ -72,7 +72,7 @@ fun TrophyGallery(
 ) {
     val trophyPaddingTop =
         when {
-            isLoading -> 0.dp
+            isLoading || leaderboard.isEmpty() -> 0.dp
             selectedMode.showCountDown -> 16.dp
             !selectedMode.showCountDown -> 50.dp
             else -> 0.dp

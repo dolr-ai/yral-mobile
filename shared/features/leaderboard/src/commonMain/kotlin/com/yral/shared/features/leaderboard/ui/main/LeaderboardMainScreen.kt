@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -43,15 +44,20 @@ import com.yral.shared.features.leaderboard.ui.LeaderboardRow
 import com.yral.shared.features.leaderboard.ui.LeaderboardTableHeader
 import com.yral.shared.features.leaderboard.viewmodel.LeaderBoardState
 import com.yral.shared.features.leaderboard.viewmodel.LeaderBoardViewModel
+import com.yral.shared.libs.designsystem.component.YralButtonType
+import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import yral_mobile.shared.features.leaderboard.generated.resources.Res
+import yral_mobile.shared.features.leaderboard.generated.resources.play_games_to_claim_your_spot
 import yral_mobile.shared.features.leaderboard.generated.resources.purple_leaderboard
+import yral_mobile.shared.features.leaderboard.generated.resources.start_playing
 import yral_mobile.shared.features.leaderboard.generated.resources.yellow_leaderboard
 import kotlin.math.max
 import kotlin.math.min
@@ -174,6 +180,10 @@ fun LeaderboardMainScreen(
                     }
                 }
 
+                if (state.leaderboard.isEmpty()) {
+                    item { EmptyState(isTrophyVisible, component) }
+                }
+
                 // Bottom padding
                 item { Spacer(modifier = Modifier.height(68.dp)) }
             }
@@ -194,6 +204,38 @@ fun LeaderboardMainScreen(
             }
         }
         LeaderboardConfetti(showConfetti) { showConfetti = false }
+    }
+}
+
+@Composable
+private fun EmptyState(
+    isTrophyVisible: Boolean,
+    component: LeaderboardMainComponent,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(30.dp, Alignment.Top),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier =
+                Modifier
+                    .width(270.dp)
+                    .padding(top = if (!isTrophyVisible) 210.dp else 68.dp),
+        ) {
+            Text(
+                text = stringResource(Res.string.play_games_to_claim_your_spot),
+                style = LocalAppTopography.current.lgMedium,
+                color = Color.White,
+                textAlign = TextAlign.Center,
+            )
+            YralGradientButton(
+                text = stringResource(Res.string.start_playing),
+                buttonType = YralButtonType.White,
+                onClick = { component.navigateToHome() },
+            )
+        }
     }
 }
 
@@ -243,10 +285,12 @@ private fun LeaderboardHeader(
                 rewardCurrencyCode = state.rewardCurrencyCode,
                 rewardsTable = state.rewardsTable,
             )
-            LeaderboardTableHeader(
-                isTrophyVisible = isTrophyVisible,
-                rewardCurrency = state.rewardCurrency,
-            )
+            if (state.leaderboard.isNotEmpty()) {
+                LeaderboardTableHeader(
+                    isTrophyVisible = isTrophyVisible,
+                    rewardCurrency = state.rewardCurrency,
+                )
+            }
         }
     }
 }
