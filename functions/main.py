@@ -1476,14 +1476,25 @@ def leaderboard_v3(request: Request):
         day_doc = day_doc_ref.get()
 
         if not day_doc.exists:
+            fallback_reward_currency = DEFAULT_REWARD_CURRENCY
+            fallback_rewards_enabled = REWARDS_ENABLED
+            if fallback_reward_currency == CURRENCY_YRAL:
+                fallback_reward_currency_code = None
+                fallback_rewards_table = REWARD_AMOUNT.get(fallback_reward_currency, {})
+            else:
+                fallback_reward_currency_code = "INR" if country_code == COUNTRY_CODE_INDIA else "USD"
+                fallback_rewards_table = REWARD_AMOUNT[fallback_reward_currency].get(country_code, {})
+
+            fallback_rewards_table = {str(k): int(v) for k, v in fallback_rewards_table.items() if v is not None}
+            
             return jsonify({
                 "user_row": None,
                 "top_rows": [],
                 "time_left_ms": time_left_ms,
-                "reward_currency": None,
-                "reward_currency_code": None,
-                "rewards_enabled": False,
-                "rewards_table": {}
+                "reward_currency": fallback_reward_currency,
+                "reward_currency_code": fallback_reward_currency_code,
+                "rewards_enabled": fallback_rewards_enabled,
+                "rewards_table": fallback_rewards_table
             }), 200
 
         day_data = day_doc.to_dict() or {}
