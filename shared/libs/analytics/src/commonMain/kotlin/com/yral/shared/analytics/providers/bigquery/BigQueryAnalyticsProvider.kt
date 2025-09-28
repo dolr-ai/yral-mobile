@@ -13,8 +13,8 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.number
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -23,6 +23,8 @@ import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 @Suppress("LongParameterList")
 class BigQueryAnalyticsProvider(
@@ -117,6 +119,7 @@ class BigQueryAnalyticsProvider(
         }
     }
 
+    @OptIn(ExperimentalTime::class)
     @Suppress("MagicNumber")
     private fun toRow(event: EventData): BigQueryEventRow {
         val base: JsonObject = json.encodeToJsonElement(event).jsonObject
@@ -130,9 +133,13 @@ class BigQueryAnalyticsProvider(
             buildString {
                 append(dt.year.toString().padStart(4, '0'))
                 append('-')
-                append(dt.monthNumber.toString().padStart(2, '0'))
+                append(
+                    dt.month.number
+                        .toString()
+                        .padStart(2, '0'),
+                )
                 append('-')
-                append(dt.dayOfMonth.toString().padStart(2, '0'))
+                append(dt.day.toString().padStart(2, '0'))
                 append('T')
                 append(dt.hour.toString().padStart(2, '0'))
                 append(':')
