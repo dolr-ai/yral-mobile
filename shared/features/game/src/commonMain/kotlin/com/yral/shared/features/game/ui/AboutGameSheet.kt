@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.game
+package com.yral.shared.features.game.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -19,13 +19,11 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import com.yral.android.R
 import com.yral.shared.features.game.domain.models.AboutGameBodyType
 import com.yral.shared.features.game.domain.models.AboutGameItem
 import com.yral.shared.features.game.domain.models.AboutGameItemBody
@@ -33,6 +31,9 @@ import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralBottomSheet
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import org.jetbrains.compose.resources.stringResource
+import yral_mobile.shared.features.game.generated.resources.Res
+import yral_mobile.shared.features.game.generated.resources.about_game
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -51,7 +52,7 @@ fun AboutGameSheet(
         ) {
             Text(
                 modifier = Modifier.padding(vertical = 12.dp),
-                text = stringResource(id = R.string.about_game),
+                text = stringResource(Res.string.about_game),
                 style = LocalAppTopography.current.xlBold,
             )
             Spacer(Modifier.height(12.dp))

@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.game
+package com.yral.shared.features.game.ui
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationVector1D
@@ -13,7 +13,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -21,12 +20,17 @@ import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import com.yral.android.R
-import com.yral.android.ui.screens.game.GameResultConstant.RESULT_ANIMATION_DURATION
 import com.yral.shared.features.game.domain.models.GameIcon
 import com.yral.shared.features.game.domain.models.GameIconNames
+import com.yral.shared.features.game.ui.GameResultConstant.RESULT_ANIMATION_DURATION
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import org.jetbrains.compose.resources.stringResource
+import yral_mobile.shared.features.game.generated.resources.Res
+import yral_mobile.shared.features.game.generated.resources.not_most_popular_pick
+import yral_mobile.shared.features.game.generated.resources.was_most_people_choice
+import yral_mobile.shared.features.game.generated.resources.you_lost_x_coins
+import yral_mobile.shared.features.game.generated.resources.you_win_x_coins
 import kotlin.math.abs
 
 private object GameResultConstant {
@@ -110,7 +114,7 @@ private fun gameResultText(
             withStyle(spanStyle) {
                 append(
                     stringResource(
-                        R.string.was_most_people_choice,
+                        Res.string.was_most_people_choice,
                         iconName.name.lowercase().capitalize(Locale.current),
                     ),
                 )
@@ -119,7 +123,7 @@ private fun gameResultText(
             withStyle(spanStyle.plus(SpanStyle(color = YralColors.Green300))) {
                 append(
                     stringResource(
-                        R.string.you_win_x_coins,
+                        Res.string.you_win_x_coins,
                         coinDelta,
                     ),
                 )
@@ -127,14 +131,14 @@ private fun gameResultText(
         } else {
             withStyle(spanStyle) {
                 append(
-                    stringResource(R.string.not_most_popular_pick),
+                    stringResource(Res.string.not_most_popular_pick),
                 )
                 append(" ")
             }
             withStyle(spanStyle.plus(SpanStyle(color = YralColors.Red300))) {
                 append(
                     stringResource(
-                        R.string.you_lost_x_coins,
+                        Res.string.you_lost_x_coins,
                         abs(coinDelta),
                     ),
                 )

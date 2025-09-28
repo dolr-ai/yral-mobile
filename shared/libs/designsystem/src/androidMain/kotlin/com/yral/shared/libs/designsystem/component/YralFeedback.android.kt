@@ -10,6 +10,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import co.touchlab.kermit.Logger
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.crashlytics.core.CrashlyticsManager
+import com.yral.shared.libs.designsystem.R
 import kotlinx.coroutines.delay
 import org.koin.compose.koinInject
 
@@ -67,3 +68,5 @@ private fun HapticFeedbackType.extendedHapticDuration(): Long =
         HapticFeedbackType.LongPress -> 500L
         else -> HAPTIC_FEEDBACK_DELAY // only 1 loop
     }
+
+actual fun popPressedSoundId(): Int = R.raw.pop_pressed

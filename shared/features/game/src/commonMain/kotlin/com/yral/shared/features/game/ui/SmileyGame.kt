@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.game
+package com.yral.shared.features.game.ui
 
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.RepeatMode
@@ -33,22 +33,27 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import com.yral.android.R
-import com.yral.android.ui.screens.game.SmileyGameConstants.MANDATORY_NUDGE_ANIMATION_ICON_ITERATIONS
-import com.yral.android.ui.screens.game.SmileyGameConstants.NUDGE_ANIMATION_DURATION
-import com.yral.android.ui.screens.game.SmileyGameConstants.NUDGE_ANIMATION_ICON_ITERATIONS
 import com.yral.shared.features.game.domain.models.GameIcon
+import com.yral.shared.features.game.ui.SmileyGameConstants.MANDATORY_NUDGE_ANIMATION_ICON_ITERATIONS
+import com.yral.shared.features.game.ui.SmileyGameConstants.NUDGE_ANIMATION_DURATION
+import com.yral.shared.features.game.ui.SmileyGameConstants.NUDGE_ANIMATION_ICON_ITERATIONS
 import com.yral.shared.features.game.viewmodel.NudgeType
 import com.yral.shared.libs.designsystem.component.YralFeedback
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
+import yral_mobile.shared.features.game.generated.resources.Res
+import yral_mobile.shared.features.game.generated.resources.smiley_game_nudge_1
+import yral_mobile.shared.features.game.generated.resources.smiley_game_nudge_2
+import yral_mobile.shared.features.game.generated.resources.smiley_game_nudge_arrow
+import yral_mobile.shared.features.game.generated.resources.smiley_game_nudge_mandatory
+import yral_mobile.shared.features.game.generated.resources.smiley_game_nudge_stars
 import kotlin.coroutines.cancellation.CancellationException
 
 @Suppress("LongMethod", "CyclomaticComplexMethod")
@@ -154,12 +159,15 @@ fun SmileyGame(
     }
     if (resultViewVisible && !hasShownCoinDeltaAnimation) {
         YralFeedback(
-            sound = if (coinDelta > 0) R.raw.spilled_coin else R.raw.coin_loss,
+            sound = if (coinDelta > 0) spilledCoinSoundId() else coinLossSoundId(),
             withHapticFeedback = true,
             hapticFeedbackType = HapticFeedbackType.LongPress,
         )
     }
 }
+
+expect fun coinLossSoundId(): Int
+expect fun spilledCoinSoundId(): Int
 
 private fun isNudgeIterationValid(
     nudgeIteration: Int,
@@ -272,7 +280,7 @@ private fun SmileyGameNudgeContent(
         var textWidth by remember { mutableIntStateOf(0) }
         if (!isNudgeMandatory) {
             Image(
-                painter = painterResource(id = R.drawable.smiley_game_nudge_stars),
+                painter = painterResource(Res.drawable.smiley_game_nudge_stars),
                 contentDescription = null,
                 modifier =
                     Modifier
@@ -303,14 +311,14 @@ private fun SmileyGameNudgeContent(
                 text =
                     if (isNudgeMandatory) {
                         buildAnnotatedString {
-                            withStyle(spanStyle) { append(stringResource(R.string.smiley_game_nudge_mandatory)) }
+                            withStyle(spanStyle) { append(stringResource(Res.string.smiley_game_nudge_mandatory)) }
                         }
                     } else {
                         buildAnnotatedString {
-                            withStyle(spanStyle) { append(stringResource(R.string.smiley_game_nudge_1)) }
+                            withStyle(spanStyle) { append(stringResource(Res.string.smiley_game_nudge_1)) }
                             withStyle(spanStyle) { append("\n") }
                             withStyle(style = spanStyle.copy(color = YralColors.Yellow200)) {
-                                append(stringResource(R.string.smiley_game_nudge_2))
+                                append(stringResource(Res.string.smiley_game_nudge_2))
                             }
                         }
                     },
@@ -318,7 +326,7 @@ private fun SmileyGameNudgeContent(
                 modifier = Modifier.onGloballyPositioned { textWidth = it.size.width },
             )
             Image(
-                painter = painterResource(id = R.drawable.smiley_game_nudge_arrow),
+                painter = painterResource(Res.drawable.smiley_game_nudge_arrow),
                 contentDescription = "arrow",
                 modifier = Modifier,
             )

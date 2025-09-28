@@ -90,7 +90,10 @@ import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import kotlinx.coroutines.flow.collectLatest
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import yral_mobile.shared.libs.designsystem.generated.resources.oops
+import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @Suppress("LongMethod")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -246,7 +249,7 @@ fun ProfileMainScreen(
         }
         is DeleteConfirmationState.Error -> {
             YralErrorMessage(
-                title = stringResource(R.string.oops),
+                title = stringResource(DesignRes.string.oops),
                 error = stringResource(R.string.failed_to_delete_video),
                 cta = stringResource(R.string.try_again),
                 onDismiss = { viewModel.clearDeleteConfirmationState() },
