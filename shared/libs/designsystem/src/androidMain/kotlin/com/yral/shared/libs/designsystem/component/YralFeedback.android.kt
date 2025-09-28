@@ -69,4 +69,4 @@ private fun HapticFeedbackType.extendedHapticDuration(): Long =
         else -> HAPTIC_FEEDBACK_DELAY // only 1 loop
     }
 
-actual fun popPressedSoundId(): Int = R.raw.pop_pressed
+actual fun popPressedSoundId(): Int = R.raw.shared_libs_designsystem_pop_pressed
