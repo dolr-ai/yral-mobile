@@ -19,9 +19,9 @@ import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.core.session.SessionManager
+import com.yral.shared.core.utils.getAccountInfo
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.data.feed.domain.FeedDetails
-import com.yral.shared.features.auth.utils.getAccountInfo
 import com.yral.shared.features.profile.analytics.ProfileTelemetry
 import com.yral.shared.features.profile.domain.DeleteVideoUseCase
 import com.yral.shared.features.profile.domain.ProfileVideosPagingSource

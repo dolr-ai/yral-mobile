@@ -61,7 +61,6 @@ import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
 import com.yral.android.R
 import com.yral.android.ui.components.DeleteConfirmationSheet
-import com.yral.android.ui.components.signup.AccountInfoView
 import com.yral.android.ui.screens.account.LoginBottomSheet
 import com.yral.android.ui.screens.profile.ProfileReelPlayer
 import com.yral.android.ui.screens.profile.main.ProfileMainScreenConstants.GRID_ITEM_ASPECT_RATIO
@@ -78,6 +77,7 @@ import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.features.profile.viewmodel.VideoViewState
 import com.yral.shared.features.profile.viewmodel.ViewState
 import com.yral.shared.libs.arch.presentation.UiState
+import com.yral.shared.libs.designsystem.component.AccountInfoView
 import com.yral.shared.libs.designsystem.component.LoaderSize
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralButtonState

@@ -1,4 +1,4 @@
-package com.yral.android.ui.components.signup
+package com.yral.shared.libs.designsystem.component
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -13,16 +13,16 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.yral.android.R
 import com.yral.shared.core.session.AccountInfo
-import com.yral.shared.libs.designsystem.component.YralAsyncImage
-import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.designsystem.theme.YralDimens
+import org.jetbrains.compose.resources.stringResource
+import yral_mobile.shared.libs.designsystem.generated.resources.Res
+import yral_mobile.shared.libs.designsystem.generated.resources.anonymous_account_setup
+import yral_mobile.shared.libs.designsystem.generated.resources.login
 
 @Composable
 fun AccountInfoView(
@@ -64,11 +64,11 @@ fun AccountInfoView(
                 verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.Top),
             ) {
                 YralGradientButton(
-                    text = stringResource(R.string.login),
+                    text = stringResource(Res.string.login),
                     onClick = onLoginClicked,
                 )
                 Text(
-                    text = stringResource(R.string.anonymous_account_setup),
+                    text = stringResource(Res.string.anonymous_account_setup),
                     style = LocalAppTopography.current.baseRegular,
                     color = YralColors.NeutralTextPrimary,
                     textAlign = TextAlign.Center,

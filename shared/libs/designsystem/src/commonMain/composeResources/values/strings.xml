@@ -1,3 +1,7 @@
 <resources>
     <string name="oops">OOPS!!!</string>
+    <string name="login">Login</string>
+    <string name="anonymous_account_setup">Your Yral account has been setup. Login to not lose progress.</string>
+    <string name="coins">YRAL</string>
+    <string name="current_balance">Current Balance :</string>
 </resources>

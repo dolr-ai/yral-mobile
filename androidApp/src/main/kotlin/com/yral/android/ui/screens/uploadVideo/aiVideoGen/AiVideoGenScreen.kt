@@ -78,8 +78,10 @@ import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
+import yral_mobile.shared.libs.designsystem.generated.resources.coins
 import yral_mobile.shared.libs.designsystem.generated.resources.pink_gradient_background
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
@@ -317,7 +319,7 @@ private fun PlayGameText(goToHome: () -> Unit) {
                 " ".plus(
                     stringResource(
                         R.string.to_earn_token,
-                        stringResource(R.string.coins),
+                        stringResource(DesignRes.string.coins),
                     ),
                 ),
             style = LocalAppTopography.current.baseRegular,

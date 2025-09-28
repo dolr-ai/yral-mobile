@@ -1,4 +1,4 @@
-package com.yral.shared.features.auth.utils
+package com.yral.shared.core.utils
 
 import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.core.session.SessionManager

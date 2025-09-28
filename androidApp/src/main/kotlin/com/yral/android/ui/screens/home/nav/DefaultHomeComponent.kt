@@ -18,8 +18,8 @@ import com.yral.android.ui.screens.alertsrequest.nav.AlertsRequestComponent
 import com.yral.android.ui.screens.feed.nav.FeedComponent
 import com.yral.android.ui.screens.profile.nav.ProfileComponent
 import com.yral.android.ui.screens.uploadVideo.UploadVideoRootComponent
-import com.yral.android.ui.screens.wallet.nav.WalletComponent
 import com.yral.shared.features.leaderboard.nav.LeaderboardComponent
+import com.yral.shared.features.wallet.nav.WalletComponent
 import com.yral.shared.libs.arch.nav.HomeChildSnapshotProvider
 import com.yral.shared.libs.routing.routes.api.AppRoute
 import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
