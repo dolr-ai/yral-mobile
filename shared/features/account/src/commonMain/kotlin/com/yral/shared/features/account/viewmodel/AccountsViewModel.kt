@@ -11,10 +11,10 @@ import com.yral.featureflag.accountFeatureFlags.AccountLinksDto
 import com.yral.shared.analytics.events.MenuCtaType
 import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.core.session.SessionManager
+import com.yral.shared.core.utils.getAccountInfo
 import com.yral.shared.features.account.analytics.AccountsTelemetry
 import com.yral.shared.features.auth.AuthClientFactory
 import com.yral.shared.features.auth.domain.useCases.DeleteAccountUseCase
-import com.yral.shared.features.auth.utils.getAccountInfo
 import com.yral.shared.firebaseStore.getDownloadUrl
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import dev.gitlive.firebase.storage.FirebaseStorage
