@@ -40,7 +40,8 @@ import dev.gitlive.firebase.messaging.messaging
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 @Suppress("TooManyFunctions", "LongParameterList")
 class DefaultAuthClient(
@@ -88,6 +89,7 @@ class DefaultAuthClient(
             }.onFailure { throw YralAuthException("obtaining anonymous token failed - ${it.message}") }
     }
 
+    @OptIn(ExperimentalTime::class)
     private suspend fun handleToken(
         idToken: String,
         accessToken: String,

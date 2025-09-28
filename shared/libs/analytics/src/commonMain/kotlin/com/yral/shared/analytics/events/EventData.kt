@@ -1,14 +1,17 @@
 package com.yral.shared.analytics.events
 
 import com.yral.shared.analytics.constants.FeatureEvents
-import kotlinx.datetime.Clock
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 @Serializable
 sealed interface EventData {
     val event: String
     val featureName: String
+
+    @OptIn(ExperimentalTime::class)
     val timestamp: Long
         get() = Clock.System.now().toEpochMilliseconds()
 }
