@@ -1,6 +1,5 @@
-package com.yral.android.ui.screens.game
+package com.yral.shared.features.game.ui
 
-import android.annotation.SuppressLint
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.LinearEasing
@@ -29,15 +28,16 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
-import com.yral.android.ui.screens.game.CoinAnimationConstants.ANIMATION_DURATION
-import com.yral.android.ui.screens.game.CoinAnimationConstants.HORIZONTAL_PADDING
-import com.yral.android.ui.screens.game.CoinAnimationConstants.MAX_ALPHA
-import com.yral.android.ui.screens.game.CoinAnimationConstants.MIN_ALPHA
-import com.yral.android.ui.screens.game.CoinAnimationConstants.NUM_OF_TEXTS
+import com.yral.shared.features.game.ui.CoinAnimationConstants.ANIMATION_DURATION
+import com.yral.shared.features.game.ui.CoinAnimationConstants.HORIZONTAL_PADDING
+import com.yral.shared.features.game.ui.CoinAnimationConstants.MAX_ALPHA
+import com.yral.shared.features.game.ui.CoinAnimationConstants.MIN_ALPHA
+import com.yral.shared.features.game.ui.CoinAnimationConstants.NUM_OF_TEXTS
 import com.yral.shared.libs.designsystem.theme.kumbhSansFontFamily
 import kotlinx.coroutines.delay
-import java.util.UUID
 import kotlin.random.Random
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 private object CoinAnimationConstants {
     const val NUM_OF_TEXTS = 1
@@ -48,7 +48,6 @@ private object CoinAnimationConstants {
     const val ANIMATION_DURATION = 2000
 }
 
-@SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 fun CoinDeltaAnimation(
     text: String,
@@ -150,8 +149,9 @@ fun SingleAnimatedText(
     )
 }
 
+@OptIn(ExperimentalUuidApi::class)
 data class AnimatedText(
-    val id: String = UUID.randomUUID().toString(),
+    val id: String = Uuid.random().toString(),
     val text: String,
     val textColor: Color,
     val fontFamily: FontFamily,

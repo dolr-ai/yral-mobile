@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.game
+package com.yral.shared.features.game.ui
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
@@ -36,27 +36,29 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import com.yral.android.R
-import com.yral.android.ui.screens.game.CoinBagConstants.ANIMATION_DURATION
-import com.yral.android.ui.screens.game.CoinBagConstants.COIN_BAG_ROTATION
-import com.yral.android.ui.screens.game.CoinBagConstants.COIN_BAG_SCALE
-import com.yral.android.ui.screens.game.CoinBagConstants.COIN_OFFSET_X_END
-import com.yral.android.ui.screens.game.CoinBagConstants.COIN_OFFSET_X_MID
-import com.yral.android.ui.screens.game.CoinBagConstants.COIN_OFFSET_X_START
-import com.yral.android.ui.screens.game.CoinBagConstants.COIN_OFFSET_Y_END
-import com.yral.android.ui.screens.game.CoinBagConstants.COIN_OFFSET_Y_MID
-import com.yral.android.ui.screens.game.CoinBagConstants.COIN_OFFSET_Y_START
-import com.yral.android.ui.screens.game.CoinBagConstants.COIN_SCALE
-import com.yral.android.ui.screens.game.CoinBagConstants.COIN_SCALE_MID
+import com.yral.shared.features.game.ui.CoinBagConstants.ANIMATION_DURATION
+import com.yral.shared.features.game.ui.CoinBagConstants.COIN_BAG_ROTATION
+import com.yral.shared.features.game.ui.CoinBagConstants.COIN_BAG_SCALE
+import com.yral.shared.features.game.ui.CoinBagConstants.COIN_OFFSET_X_END
+import com.yral.shared.features.game.ui.CoinBagConstants.COIN_OFFSET_X_MID
+import com.yral.shared.features.game.ui.CoinBagConstants.COIN_OFFSET_X_START
+import com.yral.shared.features.game.ui.CoinBagConstants.COIN_OFFSET_Y_END
+import com.yral.shared.features.game.ui.CoinBagConstants.COIN_OFFSET_Y_MID
+import com.yral.shared.features.game.ui.CoinBagConstants.COIN_OFFSET_Y_START
+import com.yral.shared.features.game.ui.CoinBagConstants.COIN_SCALE
+import com.yral.shared.features.game.ui.CoinBagConstants.COIN_SCALE_MID
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.painterResource
+import yral_mobile.shared.features.game.generated.resources.Res
+import yral_mobile.shared.features.game.generated.resources.coin_bag
+import yral_mobile.shared.features.game.generated.resources.gold_coins
 
 private object CoinBagConstants {
     const val STATIC_BAG_SIZE = 36
@@ -159,7 +161,7 @@ private fun CoinBag(
     Box {
         // Animated bag
         Image(
-            painter = painterResource(R.drawable.coin_bag),
+            painter = painterResource(Res.drawable.coin_bag),
             contentDescription = "Static coin bag",
             modifier =
                 Modifier
@@ -175,7 +177,7 @@ private fun CoinBag(
         // Animated coins
         if (coinVisible) {
             Image(
-                painter = painterResource(R.drawable.gold_coins),
+                painter = painterResource(Res.drawable.gold_coins),
                 contentDescription = "Animated coins",
                 modifier =
                     Modifier

@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.game
+package com.yral.shared.features.game.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -12,7 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.yral.android.ui.screens.game.SmileyGameConstants.NUDGE_ANIMATION_DURATION
+import com.yral.shared.features.game.ui.SmileyGameConstants.NUDGE_ANIMATION_DURATION
 import com.yral.shared.libs.designsystem.component.YralNeonBorder
 import com.yral.shared.libs.designsystem.theme.YralColors.SmileyGameCardBackground
 
