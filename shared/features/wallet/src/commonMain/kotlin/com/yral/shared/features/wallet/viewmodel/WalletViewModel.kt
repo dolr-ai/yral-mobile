@@ -90,6 +90,10 @@ class WalletViewModel(
             }
         }
     }
+
+    fun toggleHowToEarnHelp() {
+        _state.update { it.copy(howToEarnHelpVisible = !it.howToEarnHelpVisible) }
+    }
 }
 
 data class WalletState(
@@ -98,4 +102,5 @@ data class WalletState(
     val btcConversionRate: Double? = null,
     val btcConversionCurrency: String? = null,
     val accountInfo: AccountInfo? = null,
+    val howToEarnHelpVisible: Boolean = false,
 )

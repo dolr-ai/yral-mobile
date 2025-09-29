@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,14 +13,20 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -29,6 +36,9 @@ import com.yral.shared.features.wallet.viewmodel.WalletViewModel
 import com.yral.shared.libs.CurrencyFormatter
 import com.yral.shared.libs.NumberFormatter
 import com.yral.shared.libs.designsystem.component.AccountInfoView
+import com.yral.shared.libs.designsystem.component.YralBottomSheet
+import com.yral.shared.libs.designsystem.component.YralButton
+import com.yral.shared.libs.designsystem.component.YralMaskedVectorTextV2
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import org.jetbrains.compose.resources.painterResource
@@ -38,13 +48,19 @@ import yral_mobile.shared.features.wallet.generated.resources.Res
 import yral_mobile.shared.features.wallet.generated.resources.bit_coin
 import yral_mobile.shared.features.wallet.generated.resources.bitcoin
 import yral_mobile.shared.features.wallet.generated.resources.btc_inr_rate
+import yral_mobile.shared.features.wallet.generated.resources.get_bitcoin_p1
+import yral_mobile.shared.features.wallet.generated.resources.get_bitcoin_p2
+import yral_mobile.shared.features.wallet.generated.resources.how_to_earn_bitcoin
+import yral_mobile.shared.features.wallet.generated.resources.how_to_earn_bitcoins
 import yral_mobile.shared.features.wallet.generated.resources.ic_rupee
 import yral_mobile.shared.features.wallet.generated.resources.my_wallet
 import yral_mobile.shared.libs.designsystem.generated.resources.coins
 import yral_mobile.shared.libs.designsystem.generated.resources.current_balance
+import yral_mobile.shared.libs.designsystem.generated.resources.golden_gradient_text
 import yral_mobile.shared.libs.designsystem.generated.resources.yral
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WalletScreen(
     @Suppress("UnusedParameter")
@@ -59,6 +75,7 @@ fun WalletScreen(
     LaunchedEffect(isFirebaseLoggedIn) {
         viewModel.refresh(countryCode, isFirebaseLoggedIn)
     }
+    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     Column(modifier = modifier.fillMaxSize()) {
         WalletHeader()
         Spacer(modifier = Modifier.height(4.dp))
@@ -80,6 +97,25 @@ fun WalletScreen(
             )
             Spacer(modifier = Modifier.height(24.dp))
         }
+        state.bitcoinBalance?.let {
+            YralButton(
+                text = stringResource(Res.string.how_to_earn_bitcoin),
+                onClick = { viewModel.toggleHowToEarnHelp() },
+                modifier =
+                    Modifier
+                        .wrapContentWidth()
+                        .height(40.dp)
+                        .padding(horizontal = 16.dp),
+            )
+        }
+    }
+    if (state.howToEarnHelpVisible) {
+        YralBottomSheet(
+            onDismissRequest = { viewModel.toggleHowToEarnHelp() },
+            bottomSheetState = bottomSheetState,
+            dragHandle = null,
+            content = { HowToEarnBitcoinSheet() },
+        )
     }
 }
 
@@ -315,3 +351,58 @@ private fun Double.toCurrencyString(currencyCode: String) =
             minimumFractionDigits = 2,
             maximumFractionDigits = 2,
         )
+
+@Composable
+private fun HowToEarnBitcoinSheet() {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(52.dp, Alignment.Top),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 40.dp),
+    ) {
+        Text(
+            text = stringResource(Res.string.how_to_earn_bitcoins),
+            style = LocalAppTopography.current.lgBold,
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center,
+            color = Color.White,
+        )
+        Column(
+            verticalArrangement = Arrangement.spacedBy(32.dp, Alignment.CenterVertically),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Box(modifier = Modifier.fillMaxWidth().height(161.dp))
+            Column {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(0.dp, Alignment.CenterHorizontally),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp),
+                ) {
+                    Text(
+                        text = stringResource(Res.string.get_bitcoin_p1).plus(" "),
+                        style = LocalAppTopography.current.baseRegular,
+                        color = YralColors.NeutralTextPrimary,
+                    )
+                    YralMaskedVectorTextV2(
+                        text = stringResource(Res.string.bit_coin),
+                        drawableRes = DesignRes.drawable.golden_gradient_text,
+                        textStyle =
+                            LocalAppTopography
+                                .current
+                                .mdBold
+                                .plus(TextStyle(textAlign = TextAlign.Center)),
+                    )
+                }
+                Text(
+                    text = stringResource(Res.string.get_bitcoin_p2).plus(" "),
+                    style = LocalAppTopography.current.baseRegular,
+                    color = YralColors.NeutralTextPrimary,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                )
+            }
+        }
+    }
+}

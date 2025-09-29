@@ -2,5 +2,8 @@
     <string name="my_wallet">My Wallet</string>
     <string name="bit_coin">Bitcoin</string>
     <string name="btc_inr_rate">1 Bitcoin = %1$s</string>
-
+    <string name="how_to_earn_bitcoin">How to Earn Bitcoin</string>
+    <string name="how_to_earn_bitcoins">How to earn BITCOINS!</string>
+    <string name="get_bitcoin_p1">Get</string>
+    <string name="get_bitcoin_p2">on having views per video.</string>
 </resources>
