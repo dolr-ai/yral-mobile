@@ -33,8 +33,11 @@ struct LeaderboardView: View {
 
   var body: some View {
     GeometryReader { geo in
-      var usableHeight = geo.size.height - geo.safeAreaInsets.top - geo.safeAreaInsets.bottom
-      usableHeight -= Constants.bottomAdjustmentYralTabBar
+      let usableHeight = geo.size.height
+      - geo.safeAreaInsets.top
+      - geo.safeAreaInsets.bottom
+      - Constants.bottomAdjustmentYralTabBar
+
       ZStack {
         VStack(alignment: .center, spacing: .zero) {
           VStack(alignment: .center, spacing: .zero) {
