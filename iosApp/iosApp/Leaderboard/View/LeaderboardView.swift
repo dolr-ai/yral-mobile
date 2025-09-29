@@ -13,6 +13,7 @@ import iosSharedUmbrella
 // swiftlint: disable type_body_length
 struct LeaderboardView: View {
   @EnvironmentObject var session: SessionManager
+  @EnvironmentObject var eventBus: EventBus
   @Environment(\.appDIContainer) private var appDIContainer
   @Environment(\.leaderboardNavController) private var navController
 
@@ -32,7 +33,8 @@ struct LeaderboardView: View {
 
   var body: some View {
     GeometryReader { geo in
-      let usableHeight = geo.size.height - geo.safeAreaInsets.top - geo.safeAreaInsets.bottom
+      var usableHeight = geo.size.height - geo.safeAreaInsets.top - geo.safeAreaInsets.bottom
+      usableHeight -= Constants.bottomAdjustmentYralTabBar
       ZStack {
         VStack(alignment: .center, spacing: .zero) {
           VStack(alignment: .center, spacing: .zero) {
@@ -90,7 +92,33 @@ struct LeaderboardView: View {
             peekHeight: usableHeight - headerHeight,
             background: Constants.dragViewBackground
           ) {
-            buildLeaderboardHeader(response)
+            if response.topRows.isEmpty {
+              VStack(spacing: Constants.emptyVstackSpacing) {
+                Text(Constants.emptyTitle)
+                  .font(Constants.emptyFont)
+                  .foregroundColor(Constants.emptyColor)
+                  .multilineTextAlignment(.center)
+                  .frame(maxWidth: .infinity)
+                  .fixedSize(horizontal: false, vertical: true)
+
+                Text(Constants.emptyCTA)
+                  .font(Constants.emptyCTAFont)
+                  .foregroundColor(Constants.emptyCTAColor)
+                  .frame(height: Constants.emptyCTAHeight)
+                  .frame(maxWidth: .infinity)
+                  .background(Constants.emptyCTABackground)
+                  .clipShape(
+                    RoundedRectangle(cornerRadius: Constants.emptyCTACornerRadius)
+                  )
+                  .onTapGesture {
+                    eventBus.startPlayingTapped.send(())
+                  }
+              }
+              .frame(width: Constants.emptyVstackWidth)
+              .padding(.top, Constants.emptyVstackTop)
+            } else {
+              buildLeaderboardHeader(response)
+            }
           } content: {
             buildLeaderboard(response)
           }
@@ -309,9 +337,30 @@ struct LeaderboardView: View {
       .frame(width: Constants.podiumSize.width, height: Constants.podiumSize.height)
       .padding(.top, Constants.podiumTop)
       .padding(.bottom, Constants.podiumBottom)
+      .overlay(
+        ZStack {
+          buildRewardBadge(position: .one)
+            .position(
+              x: Constants.goldBadgePosition.x,
+              y: Constants.goldBadgePosition.y
+            )
+
+          buildRewardBadge(position: .two)
+            .position(
+              x: Constants.silverBadgePosition.x,
+              y: Constants.silverBadgePosition.y
+            )
+
+          buildRewardBadge(position: .three)
+            .position(
+              x: Constants.bronzeBadgePosition.x,
+              y: Constants.bronzeBadgePosition.y
+            )
+        }
+      )
 
     if let response = viewModel.leaderboardResponse {
-      let (topThreePrincipals, topThreeWins) = topThreePositions(for: response)
+      let topThreePrincipals = topThreePositions(for: response)
       HStack(spacing: Constants.headerBottomHStackSpacing) {
         ForEach(topThreePrincipals.indices, id: \.self) { index in
           VStack(spacing: .zero) {
@@ -321,24 +370,13 @@ struct LeaderboardView: View {
               .multilineTextAlignment(.center)
               .lineLimit(topThreePrincipals[index].count == .one ? .one : .two)
               .truncationMode(.tail)
-
-            Spacer(minLength: Constants.gamesWonSpacing)
-            VStack(spacing: .zero) {
-              Text(topThreeWins[index].description)
-                .font(Constants.satsFont)
-                .foregroundColor(mode == .daily ? Constants.satsColour : Constants.satsColourWhite)
-
-              Text(Constants.totalSats)
-                .font(Constants.gamesWonFont)
-                .foregroundColor(mode == .daily ? Constants.gamesWonColour : Constants.gamesWonColourWhite)
-            }
           }
           .frame(width: Constants.gamesWonWidth)
         }
       }
       .frame(width: Constants.headerBottomHStackWidth)
       .frame(
-        height: topThreePrincipals.contains { $0.count > 1 } ?
+        height: topThreePrincipals.contains { $0.count > 2 } ?
         Constants.gamesWonMaxHeight : Constants.gamesWonMinHeight
       )
       .padding(.bottom, Constants.gamesWonBottom)
@@ -365,6 +403,31 @@ struct LeaderboardView: View {
     }
   }
   // swiftlint: enable function_body_length
+
+  @ViewBuilder
+  private func buildRewardBadge(position: Int) -> some View {
+    if let leaderboard = viewModel.leaderboardResponse,
+       let rewardsTable = leaderboard.rewardsTable,
+       leaderboard.rewardsEnabled {
+      let rewardCurrency = leaderboard.rewardCurrency ?? Constants.defaultRewardCurrency
+      HStack(spacing: Constants.rewardBadgeSpacing) {
+        Text("\(leaderboard.rewardCurrencyCode?.currencySymbol ?? "")\(rewardsTable[String(position)] ?? 0)")
+          .font(Constants.rewardBadgeFont)
+          .foregroundColor(Constants.rewardBadgeColor)
+
+        Image(rewardCurrency == Constants.defaultRewardCurrency ? Constants.rewardYral : Constants.rewardBTC)
+          .resizable()
+          .frame(width: Constants.rewardImageSize, height: Constants.rewardImageSize)
+      }
+      .padding(.leading, Constants.rewardBadgeLeading)
+      .padding(.trailing, Constants.rewardBadgeTrailing)
+      .frame(height: Constants.rewardBadgeHeight)
+      .background(Constants.rewardBadgeBackground)
+      .clipShape(
+        RoundedRectangle(cornerRadius: Constants.rewardBadgeCorner)
+      )
+    }
+  }
 
   @ViewBuilder
   private func buildLeaderboardHeader(_ response: LeaderboardResponse) -> some View {
@@ -462,7 +525,7 @@ struct LeaderboardView: View {
     .frame(maxWidth: .infinity, alignment: .leading)
   }
 
-  private func topThreePositions(for response: LeaderboardResponse) -> ([[String]], [Int]) {
+  private func topThreePositions(for response: LeaderboardResponse) -> [[String]] {
 
     var grouped: [Int: (ids: [String], wins: Int)] = [:]
 
@@ -475,9 +538,8 @@ struct LeaderboardView: View {
 
     let order: [Int] = [.two, .one, .three]
     let idsByPosition   = order.map { grouped[$0]?.ids   ?? [] }
-    let winsByPosition = order.map { grouped[$0]?.wins ?? .zero }
 
-    return (idsByPosition, winsByPosition)
+    return idsByPosition
   }
 
   private func condensedIDString(for ids: [String]) -> String {
