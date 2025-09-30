@@ -7,6 +7,16 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 object AppFeatureFlags {
+    object Android :
+        FlagGroup(keyPrefix = "app_android", defaultAudience = FlagAudience.INTERNAL_QA) {
+        val EnableAppCheck: FeatureFlag<Boolean> =
+            boolean(
+                keySuffix = "enableAppCheck",
+                name = "Enable Firebase App Check",
+                description = "Toggle Firebase App Check usage on Android.",
+                defaultValue = true,
+            )
+    }
     object Ios :
         FlagGroup(keyPrefix = "app_ios", defaultAudience = FlagAudience.INTERNAL_QA) {
         val InAppUpdate: FeatureFlag<IAPConfig> =
