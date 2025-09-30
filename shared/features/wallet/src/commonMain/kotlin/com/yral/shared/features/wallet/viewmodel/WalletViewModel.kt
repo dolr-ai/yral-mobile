@@ -14,6 +14,8 @@ import com.yral.shared.features.wallet.domain.GetUserBtcBalanceUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -26,6 +28,12 @@ class WalletViewModel(
     private val _state = MutableStateFlow(WalletState())
     val state: StateFlow<WalletState> = _state.asStateFlow()
 
+    val firebaseLogin =
+        sessionManager
+            .observeSessionProperties()
+            .map { it.isFirebaseLoggedIn }
+            .distinctUntilChanged()
+
     init {
         observeBalance()
     }
@@ -35,10 +43,15 @@ class WalletViewModel(
         walletTelemetry.onWalletScreenViewed()
     }
 
-    fun refresh(countryCode: String) {
+    fun refresh(
+        countryCode: String,
+        isFirebaseLoggedIn: Boolean,
+    ) {
         _state.update { it.copy(accountInfo = sessionManager.getAccountInfo()) }
         getUserBtcBalanceUseCase()
-        getBtcValueConversion(countryCode)
+        if (isFirebaseLoggedIn) {
+            getBtcValueConversion(countryCode)
+        }
     }
 
     private fun observeBalance() {

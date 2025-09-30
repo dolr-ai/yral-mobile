@@ -21,8 +21,13 @@ import com.yral.android.ui.screens.uploadVideo.UploadVideoRootComponent
 import com.yral.shared.features.leaderboard.nav.LeaderboardComponent
 import com.yral.shared.features.wallet.nav.WalletComponent
 import com.yral.shared.libs.arch.nav.HomeChildSnapshotProvider
+import com.yral.shared.libs.routing.routes.api.AddVideo
 import com.yral.shared.libs.routing.routes.api.AppRoute
+import com.yral.shared.libs.routing.routes.api.GenerateAIVideo
+import com.yral.shared.libs.routing.routes.api.Leaderboard
 import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
+import com.yral.shared.libs.routing.routes.api.Profile
+import com.yral.shared.libs.routing.routes.api.Wallet
 import kotlinx.serialization.Serializable
 
 @Suppress("TooManyFunctions")
@@ -101,6 +106,14 @@ internal class DefaultHomeComponent(
             is PostDetailsRoute ->
                 navigation.replaceAll(Config.Feed) {
                     (stack.value.active.instance as? Child.Feed)?.component?.openPostDetails(appRoute)
+                }
+            is Wallet -> onWalletTabClick()
+            is Leaderboard -> onLeaderboardTabClick()
+            is Profile -> onProfileTabClick()
+            is AddVideo -> onUploadVideoTabClick()
+            is GenerateAIVideo ->
+                navigation.replaceKeepingFeed(Config.UploadVideo) {
+                    (stack.value.active.instance as? Child.UploadVideo)?.component?.handleNavigation(appRoute)
                 }
             else -> {}
         }

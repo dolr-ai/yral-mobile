@@ -12,6 +12,8 @@ import com.arkivanov.decompose.value.Value
 import com.yral.android.ui.screens.uploadVideo.aiVideoGen.AiVideoGenComponent
 import com.yral.android.ui.screens.uploadVideo.fileUpload.UploadVideoComponent
 import com.yral.android.ui.screens.uploadVideo.flowSelection.FlowSelectionComponent
+import com.yral.shared.libs.routing.routes.api.AppRoute
+import com.yral.shared.libs.routing.routes.api.GenerateAIVideo
 import kotlinx.serialization.Serializable
 import org.koin.core.component.KoinComponent
 
@@ -102,6 +104,13 @@ internal class DefaultUploadVideoRootComponent(
             goToHome = iGoToHome,
             onBack = { navigation.pop() },
         )
+
+    override fun handleNavigation(appRoute: AppRoute) {
+        when (appRoute) {
+            is GenerateAIVideo -> navigation.pushToFront(Config.AiVideoGen)
+            else -> {}
+        }
+    }
 
     @Serializable
     private sealed interface Config {
