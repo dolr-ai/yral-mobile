@@ -23,6 +23,7 @@ struct DraggableView<Content: View, StickyContent: View>: View {
   let topInset: CGFloat
   let peekHeight: CGFloat
   let background: Color
+  let isDragEnabled: Bool
 
   private let expandCollapseAnim = Animation.easeOut(duration: 0.25)
   private let layoutAnim = Animation.easeOut(duration: 0.2)
@@ -35,6 +36,7 @@ struct DraggableView<Content: View, StickyContent: View>: View {
     topInset: CGFloat,
     peekHeight: CGFloat,
     background: Color,
+    isDragEnabled: Bool,
     @ViewBuilder stickyContent: @escaping () -> StickyContent,
     @ViewBuilder content: @escaping () -> Content
   ) {
@@ -42,6 +44,7 @@ struct DraggableView<Content: View, StickyContent: View>: View {
     self.topInset = topInset
     self.peekHeight = peekHeight
     self.background = background
+    self.isDragEnabled = isDragEnabled
     self.stickyContent = stickyContent
     self.content = content
   }
@@ -154,7 +157,7 @@ struct DraggableView<Content: View, StickyContent: View>: View {
       .background(background)
       .frame(width: availableWidth, height: visibleHeight, alignment: .top)
       .offset(y: sheetY)
-      .gesture(drag)
+      .gesture(isDragEnabled ? drag : nil)
 
       .onAppear {
         sheetY = isExpanded ? topInset : collapsed
