@@ -20,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
@@ -38,6 +39,7 @@ import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yral.shared.features.leaderboard.data.models.LeaderboardMode
 import com.yral.shared.features.leaderboard.nav.main.LeaderboardMainComponent
 import com.yral.shared.features.leaderboard.ui.LeaderboardRow
@@ -72,11 +74,18 @@ fun LeaderboardMainScreen(
     val countryCode = Locale.current.region
     val state by viewModel.state.collectAsState()
     var showConfetti by remember(state.isCurrentUserInTop) { mutableStateOf(state.isCurrentUserInTop) }
-    LaunchedEffect(Unit) {
-        viewModel.leaderboardPageViewed()
-        viewModel.loadData(countryCode)
+    val isFirebaseLoggedIn by viewModel.firebaseLogin.collectAsStateWithLifecycle(false)
+    var hasStartedLoadingSinceLogin by remember(isFirebaseLoggedIn) { mutableStateOf(false) }
+    LaunchedEffect(Unit) { viewModel.leaderboardPageViewed() }
+    LaunchedEffect(isFirebaseLoggedIn) { viewModel.loadData(countryCode) }
+    val isEmptyStateVisible by remember(state.isLoading, isFirebaseLoggedIn, hasStartedLoadingSinceLogin) {
+        derivedStateOf { !state.isLoading && isFirebaseLoggedIn && hasStartedLoadingSinceLogin }
     }
-
+    LaunchedEffect(state.isLoading, isFirebaseLoggedIn) {
+        if (isFirebaseLoggedIn && state.isLoading) {
+            hasStartedLoadingSinceLogin = true
+        }
+    }
     val listState = rememberLazyListState()
     var isTrophyVisible by remember { mutableStateOf(false) }
     LaunchedEffect(listState) {
@@ -125,6 +134,7 @@ fun LeaderboardMainScreen(
                 LeaderboardHeader(
                     countryCode = countryCode,
                     state = state,
+                    isFirebaseLoggedIn = isFirebaseLoggedIn,
                     component = component,
                     isTrophyVisible = isTrophyVisible || state.isLoading,
                     viewModel = viewModel,
@@ -180,7 +190,7 @@ fun LeaderboardMainScreen(
                     }
                 }
 
-                if (state.leaderboard.isEmpty()) {
+                if (isEmptyStateVisible) {
                     item { EmptyState(isTrophyVisible, component) }
                 }
 
@@ -243,6 +253,7 @@ private fun EmptyState(
 private fun LeaderboardHeader(
     countryCode: String,
     state: LeaderBoardState,
+    isFirebaseLoggedIn: Boolean,
     component: LeaderboardMainComponent,
     isTrophyVisible: Boolean,
     viewModel: LeaderBoardViewModel,
@@ -254,6 +265,9 @@ private fun LeaderboardHeader(
             LeaderboardMode.DAILY -> LeaderboardMainScreenConstants.YELLOW_BRUSH
             LeaderboardMode.ALL_TIME -> LeaderboardMainScreenConstants.PURPLE_BRUSH
         }
+    val loading by remember(state.isLoading, isFirebaseLoggedIn) {
+        mutableStateOf(state.isLoading || !isFirebaseLoggedIn)
+    }
     Box {
         Image(
             painter = painterResource(leaderboardBG),
@@ -270,8 +284,8 @@ private fun LeaderboardHeader(
         )
         Column {
             TrophyGallery(
-                isLoading = state.isLoading,
-                leaderboard = if (state.isLoading) emptyList() else state.leaderboard,
+                isLoading = loading,
+                leaderboard = if (loading) emptyList() else state.leaderboard,
                 selectedMode = state.selectedMode,
                 selectMode = { viewModel.selectMode(it, countryCode) },
                 countDownMs = state.countDownMs,

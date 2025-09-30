@@ -16,6 +16,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -27,6 +29,12 @@ class LeaderBoardViewModel(
     private val _state = MutableStateFlow(LeaderBoardState())
     val state: StateFlow<LeaderBoardState> = _state.asStateFlow()
     private var countdownJob: Job? = null
+
+    val firebaseLogin =
+        sessionManager
+            .observeSessionProperties()
+            .map { it.isFirebaseLoggedIn }
+            .distinctUntilChanged()
 
     private fun resetState() {
         _state.update {
