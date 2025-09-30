@@ -18,7 +18,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -31,6 +30,7 @@ import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.yral.shared.features.wallet.domain.models.BtcRewardConfig
 import com.yral.shared.features.wallet.nav.WalletComponent
 import com.yral.shared.features.wallet.viewmodel.WalletViewModel
 import com.yral.shared.libs.CurrencyFormatter
@@ -110,12 +110,14 @@ fun WalletScreen(
         }
     }
     if (state.howToEarnHelpVisible) {
-        YralBottomSheet(
-            onDismissRequest = { viewModel.toggleHowToEarnHelp() },
-            bottomSheetState = bottomSheetState,
-            dragHandle = null,
-            content = { HowToEarnBitcoinSheet() },
-        )
+        state.rewardConfig?.let { rewardConfig ->
+            YralBottomSheet(
+                onDismissRequest = { viewModel.toggleHowToEarnHelp() },
+                bottomSheetState = bottomSheetState,
+                dragHandle = null,
+                content = { HowToEarnBitcoinSheet(rewardConfig) },
+            )
+        }
     }
 }
 
@@ -352,8 +354,9 @@ private fun Double.toCurrencyString(currencyCode: String) =
             maximumFractionDigits = 2,
         )
 
+@Suppress("LongMethod")
 @Composable
-private fun HowToEarnBitcoinSheet() {
+private fun HowToEarnBitcoinSheet(rewardConfig: BtcRewardConfig) {
     Column(
         verticalArrangement = Arrangement.spacedBy(52.dp, Alignment.Top),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -370,7 +373,15 @@ private fun HowToEarnBitcoinSheet() {
             verticalArrangement = Arrangement.spacedBy(32.dp, Alignment.CenterVertically),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Box(modifier = Modifier.fillMaxWidth().height(161.dp))
+            Box(modifier = Modifier.fillMaxWidth().height(161.dp)) {
+                Text(
+                    text = rewardConfig.viewMileStone.toString(),
+                    style = LocalAppTopography.current.xlBold,
+                    textAlign = TextAlign.Center,
+                    color = Color.White,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
             Column {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(0.dp, Alignment.CenterHorizontally),
