@@ -23,6 +23,7 @@ import com.yral.shared.features.wallet.nav.WalletComponent
 import com.yral.shared.libs.arch.nav.HomeChildSnapshotProvider
 import com.yral.shared.libs.routing.routes.api.AddVideo
 import com.yral.shared.libs.routing.routes.api.AppRoute
+import com.yral.shared.libs.routing.routes.api.GenerateAIVideo
 import com.yral.shared.libs.routing.routes.api.Leaderboard
 import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
 import com.yral.shared.libs.routing.routes.api.Profile
@@ -110,6 +111,10 @@ internal class DefaultHomeComponent(
             is Leaderboard -> onLeaderboardTabClick()
             is Profile -> onProfileTabClick()
             is AddVideo -> onUploadVideoTabClick()
+            is GenerateAIVideo ->
+                navigation.replaceKeepingFeed(Config.UploadVideo) {
+                    (stack.value.active.instance as? Child.UploadVideo)?.component?.handleNavigation(appRoute)
+                }
             else -> {}
         }
     }

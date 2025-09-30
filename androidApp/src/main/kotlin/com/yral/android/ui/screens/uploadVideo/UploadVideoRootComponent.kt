@@ -7,6 +7,7 @@ import com.yral.android.ui.screens.uploadVideo.aiVideoGen.AiVideoGenComponent
 import com.yral.android.ui.screens.uploadVideo.fileUpload.UploadVideoComponent
 import com.yral.android.ui.screens.uploadVideo.flowSelection.FlowSelectionComponent
 import com.yral.shared.libs.arch.nav.HomeChildSnapshotProvider
+import com.yral.shared.libs.routing.routes.api.AppRoute
 import kotlinx.serialization.Serializable
 
 abstract class UploadVideoRootComponent : HomeChildSnapshotProvider {
@@ -14,6 +15,7 @@ abstract class UploadVideoRootComponent : HomeChildSnapshotProvider {
 
     // Handle back presses within the upload flow. Returns true if consumed.
     abstract fun onBackClicked(): Boolean
+    abstract fun handleNavigation(appRoute: AppRoute)
 
     sealed class Child {
         class FlowSelection(

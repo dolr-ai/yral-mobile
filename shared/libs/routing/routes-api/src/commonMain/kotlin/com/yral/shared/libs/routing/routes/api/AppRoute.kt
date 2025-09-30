@@ -48,6 +48,11 @@ object AddVideo : AppRoute, ExternallyExposedRoute {
 }
 
 @Serializable
+object GenerateAIVideo : AppRoute, ExternallyExposedRoute {
+    const val PATH = "/addVideo/aiGen"
+}
+
+@Serializable
 object Profile : AppRoute, ExternallyExposedRoute {
     const val PATH = "/profile"
 }
