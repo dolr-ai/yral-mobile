@@ -37,8 +37,6 @@
     <string name="delete_account_question">Are you sure you want to delete your account?</string>
     <string name="no_take_me_back">No, take me back</string>
     <string name="yes_delete">Yes, Delete</string>
-    <string name="msg_feed_video_share">Check out this video on Yral 👀 Where watching = fun + games! ⚡ Try it 👉</string>
-    <string name="msg_feed_video_share_desc">Watch on Yral</string>
 
     <!-- Error Messages -->
     <string name="error_timeout_title">Oops!</string>
@@ -54,7 +52,6 @@
 
     <string name="scroll_to_next_video">Scroll To Next Video</string>
 
-    <string name="upload_video">Upload Video</string>
     <string name="upload_video_to_share_with_world">Upload a video to share with the world!</string>
     <string name="video_file_max_seconds">Video file (Max %ds)</string>
     <string name="select_file">Select File</string>
@@ -68,23 +65,11 @@
     <string name="uploading_progress">Uploading… %d%%</string>
     <string name="upload_completed">Upload Completed</string>
     <string name="upload_completed_message">We\'re processing your video. It\'ll be in \'Your Videos\' under My Profile soon. Happy scrolling!</string>
-    <string name="your_videos">Your Videos</string>
-    <string name="my_profile">My Profile</string>
-    <string name="done">Done</string>
-    <string name="something_went_wrong">Something went wrong!</string>
+
     <string name="upload_video_error">We couldn’t upload your video due to some reasons. Try uploading it again.</string>
     <string name="upload_video_error_reason"> due to %s reasons</string>
-    <string name="try_again">Try Again</string>
     <string name="go_to_home">Go to Home</string>
-    <string name="you_have_not_uploaded_any_video_yet">You have not uploaded any videos yet.</string>
-    <string name="delete_video">Delete video?</string>
-    <string name="video_will_be_deleted_permanently">This video will be permanently deleted from your yral account.</string>
-    <string name="delete">Delete</string>
-    <string name="cancel">Cancel</string>
-    <string name="deleting">Deleting…</string>
-    <string name="error_loading_more_videos">Error loading more videos</string>
-    <string name="error_loading_videos">Error loading videos</string>
-    <string name="failed_to_delete_video">Failed to delete video</string>
+
     <string name="how_to_play">How to Play</string>
 
     <!-- Permission Messages -->

@@ -66,8 +66,12 @@ import com.yral.shared.libs.designsystem.component.YralFeedback
 import com.yral.shared.libs.designsystem.component.popPressedSoundId
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
+import yral_mobile.shared.libs.designsystem.generated.resources.account_nav
+import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @Composable
 fun HomeScreen(
@@ -360,13 +364,18 @@ private fun NewTaggedColumn(
             Spacer(modifier = Modifier.weight(1f))
         }
 
+        val icon =
+            if (isSelected) {
+                tab.icon
+            } else {
+                tab.unSelectedIcon
+            }
         Icon(
             modifier = Modifier.size(32.dp),
             painter =
-                if (isSelected) {
-                    painterResource(tab.icon)
-                } else {
-                    painterResource(tab.unSelectedIcon)
+                when (icon) {
+                    is HomeTab.Icon.DrawableRes -> painterResource(icon.drawableResource)
+                    is HomeTab.Icon.ResourceId -> painterResource(icon.id)
                 },
             contentDescription = tab.title,
             tint = Color.White,
@@ -377,45 +386,54 @@ private fun NewTaggedColumn(
 private enum class HomeTab(
     val title: String,
     val categoryName: CategoryName,
-    val icon: Int,
-    val unSelectedIcon: Int,
+    val icon: HomeTab.Icon,
+    val unSelectedIcon: HomeTab.Icon,
     val isNew: Boolean = false,
 ) {
     HOME(
         title = "Home",
         categoryName = CategoryName.HOME,
-        icon = R.drawable.home_nav_selected,
-        unSelectedIcon = R.drawable.home_nav_unselected,
+        icon = Icon.ResourceId(R.drawable.home_nav_selected),
+        unSelectedIcon = Icon.ResourceId(R.drawable.home_nav_unselected),
     ),
     LEADER_BOARD(
         title = "LeaderBoard",
         categoryName = CategoryName.LEADERBOARD,
-        icon = R.drawable.leaderboard_nav_selected,
-        unSelectedIcon = R.drawable.leaderboard_nav_unselected,
+        icon = Icon.ResourceId(R.drawable.leaderboard_nav_selected),
+        unSelectedIcon = Icon.ResourceId(R.drawable.leaderboard_nav_unselected),
     ),
     UPLOAD_VIDEO(
         title = "UploadVideo",
         categoryName = CategoryName.UPLOAD_VIDEO,
-        icon = R.drawable.upload_video_nav_selected,
-        unSelectedIcon = R.drawable.upload_video_nav_unselected,
+        icon = Icon.ResourceId(R.drawable.upload_video_nav_selected),
+        unSelectedIcon = Icon.ResourceId(R.drawable.upload_video_nav_unselected),
     ),
     WALLET(
         title = "Wallet",
         categoryName = CategoryName.WALLET,
-        icon = R.drawable.wallet_nav,
-        unSelectedIcon = R.drawable.wallet_nav_unselected,
+        icon = Icon.ResourceId(R.drawable.wallet_nav),
+        unSelectedIcon = Icon.ResourceId(R.drawable.wallet_nav_unselected),
         isNew = true,
     ),
     PROFILE(
         title = "Profile",
         categoryName = CategoryName.PROFILE,
-        icon = R.drawable.profile_nav_selected,
-        unSelectedIcon = R.drawable.profile_nav_unselected,
+        icon = Icon.ResourceId(R.drawable.profile_nav_selected),
+        unSelectedIcon = Icon.ResourceId(R.drawable.profile_nav_unselected),
     ),
     ACCOUNT(
         title = "Account",
         categoryName = CategoryName.MENU,
-        icon = R.drawable.account_nav,
-        unSelectedIcon = R.drawable.account_nav,
-    ),
+        icon = Icon.DrawableRes(DesignRes.drawable.account_nav),
+        unSelectedIcon = Icon.DrawableRes(DesignRes.drawable.account_nav),
+    ), ;
+
+    sealed interface Icon {
+        data class ResourceId(
+            val id: Int,
+        ) : Icon // temporary unless we completely migrate to drawableResource
+        data class DrawableRes(
+            val drawableResource: DrawableResource,
+        ) : Icon
+    }
 }

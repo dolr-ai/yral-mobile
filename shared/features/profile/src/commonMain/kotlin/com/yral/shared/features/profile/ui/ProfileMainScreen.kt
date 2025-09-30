@@ -1,6 +1,5 @@
-package com.yral.android.ui.screens.profile.main
+package com.yral.shared.features.profile.ui
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -44,12 +43,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -59,18 +58,9 @@ import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
-import com.yral.android.R
-import com.yral.android.ui.components.DeleteConfirmationSheet
-import com.yral.android.ui.screens.account.LoginBottomSheet
-import com.yral.android.ui.screens.profile.ProfileReelPlayer
-import com.yral.android.ui.screens.profile.main.ProfileMainScreenConstants.GRID_ITEM_ASPECT_RATIO
-import com.yral.android.ui.screens.profile.main.ProfileMainScreenConstants.PADDING_BOTTOM_ACCOUNT_INFO
-import com.yral.android.ui.screens.profile.main.ProfileMainScreenConstants.PULL_TO_REFRESH_INDICATOR_SIZE
-import com.yral.android.ui.screens.profile.main.ProfileMainScreenConstants.PULL_TO_REFRESH_INDICATOR_THRESHOLD
-import com.yral.android.ui.screens.profile.main.ProfileMainScreenConstants.PULL_TO_REFRESH_OFFSET_MULTIPLIER
 import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.data.feed.domain.FeedDetails
-import com.yral.shared.features.auth.viewModel.LoginViewModel
+import com.yral.shared.features.profile.nav.ProfileMainComponent
 import com.yral.shared.features.profile.viewmodel.DeleteConfirmationState
 import com.yral.shared.features.profile.viewmodel.ProfileBottomSheet
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
@@ -78,6 +68,7 @@ import com.yral.shared.features.profile.viewmodel.VideoViewState
 import com.yral.shared.features.profile.viewmodel.ViewState
 import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.designsystem.component.AccountInfoView
+import com.yral.shared.libs.designsystem.component.DeleteConfirmationSheet
 import com.yral.shared.libs.designsystem.component.LoaderSize
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralButtonState
@@ -89,24 +80,48 @@ import com.yral.shared.libs.designsystem.component.YralWebViewBottomSheet
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import com.yral.shared.libs.videoPlayer.model.Reels
+import com.yral.shared.libs.videoPlayer.util.PrefetchVideoListener
 import kotlinx.coroutines.flow.collectLatest
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.viewmodel.koinViewModel
+import yral_mobile.shared.features.profile.generated.resources.Res
+import yral_mobile.shared.features.profile.generated.resources.clapperboard
+import yral_mobile.shared.features.profile.generated.resources.delete
+import yral_mobile.shared.features.profile.generated.resources.delete_video
+import yral_mobile.shared.features.profile.generated.resources.deleting
+import yral_mobile.shared.features.profile.generated.resources.error_loading_more_videos
+import yral_mobile.shared.features.profile.generated.resources.error_loading_videos
+import yral_mobile.shared.features.profile.generated.resources.failed_to_delete_video
+import yral_mobile.shared.features.profile.generated.resources.pink_heart
+import yral_mobile.shared.features.profile.generated.resources.video_will_be_deleted_permanently
+import yral_mobile.shared.features.profile.generated.resources.white_heart
+import yral_mobile.shared.features.profile.generated.resources.you_have_not_uploaded_any_video_yet
+import yral_mobile.shared.libs.designsystem.generated.resources.account_nav
+import yral_mobile.shared.libs.designsystem.generated.resources.cancel
+import yral_mobile.shared.libs.designsystem.generated.resources.delete
+import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_share
+import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_share_desc
+import yral_mobile.shared.libs.designsystem.generated.resources.my_profile
 import yral_mobile.shared.libs.designsystem.generated.resources.oops
+import yral_mobile.shared.libs.designsystem.generated.resources.something_went_wrong
+import yral_mobile.shared.libs.designsystem.generated.resources.try_again
+import yral_mobile.shared.libs.designsystem.generated.resources.upload_video
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @Suppress("LongMethod")
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 fun ProfileMainScreen(
     component: ProfileMainComponent,
     modifier: Modifier = Modifier,
     viewModel: ProfileViewModel,
     profileVideos: LazyPagingItems<FeedDetails>,
-    loginViewModel: LoginViewModel = koinViewModel(),
+    loginState: UiState<*>,
+    loginBottomSheet: LoginBottomSheetComposable,
+    getPrefetchListener: (reel: Reels) -> PrefetchVideoListener,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val loginState by loginViewModel.state.collectAsStateWithLifecycle()
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     LaunchedEffect(loginState) {
         if (loginState is UiState.Failure) {
@@ -164,8 +179,8 @@ fun ProfileMainScreen(
         when (val videoViewState = state.videoView) {
             is VideoViewState.ViewingReels -> {
                 if (profileVideos.itemCount > 0) {
-                    val msgFeedVideoShare = stringResource(R.string.msg_feed_video_share)
-                    val msgFeedVideoShareDesc = stringResource(R.string.msg_feed_video_share_desc)
+                    val msgFeedVideoShare = stringResource(DesignRes.string.msg_feed_video_share)
+                    val msgFeedVideoShareDesc = stringResource(DesignRes.string.msg_feed_video_share_desc)
                     ProfileReelPlayer(
                         reelVideos = profileVideos,
                         initialPage =
@@ -209,6 +224,7 @@ fun ProfileMainScreen(
                                 msgFeedVideoShareDesc,
                             )
                         },
+                        getPrefetchListener = getPrefetchListener,
                         modifier = Modifier.fillMaxSize(),
                     )
                 } else {
@@ -229,6 +245,7 @@ fun ProfileMainScreen(
                         component.onUploadVideoClick()
                     },
                     openAccount = { component.openAccount() },
+                    loginBottomSheet = loginBottomSheet,
                 )
             }
         }
@@ -238,11 +255,11 @@ fun ProfileMainScreen(
         is DeleteConfirmationState.AwaitingConfirmation -> {
             DeleteConfirmationSheet(
                 bottomSheetState = bottomSheetState,
-                title = stringResource(R.string.delete_video),
+                title = stringResource(Res.string.delete_video),
                 subTitle = "",
-                confirmationMessage = stringResource(R.string.video_will_be_deleted_permanently),
-                cancelButton = stringResource(R.string.cancel),
-                deleteButton = stringResource(R.string.delete),
+                confirmationMessage = stringResource(Res.string.video_will_be_deleted_permanently),
+                cancelButton = stringResource(DesignRes.string.cancel),
+                deleteButton = stringResource(Res.string.delete),
                 onDismissRequest = { viewModel.clearDeleteConfirmationState() },
                 onDelete = { viewModel.deleteVideo() },
             )
@@ -250,8 +267,8 @@ fun ProfileMainScreen(
         is DeleteConfirmationState.Error -> {
             YralErrorMessage(
                 title = stringResource(DesignRes.string.oops),
-                error = stringResource(R.string.failed_to_delete_video),
-                cta = stringResource(R.string.try_again),
+                error = stringResource(Res.string.failed_to_delete_video),
+                cta = stringResource(DesignRes.string.try_again),
                 onDismiss = { viewModel.clearDeleteConfirmationState() },
                 onClick = { viewModel.deleteVideo() },
                 sheetState = bottomSheetState,
@@ -260,6 +277,14 @@ fun ProfileMainScreen(
         DeleteConfirmationState.None, is DeleteConfirmationState.InProgress -> Unit
     }
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+typealias LoginBottomSheetComposable = @Composable (
+    bottomSheetState: SheetState,
+    onDismissRequest: () -> Unit,
+    termsLink: String,
+    openTerms: () -> Unit,
+) -> Unit
 
 @Suppress("LongMethod")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -274,6 +299,7 @@ private fun MainContent(
     deletingVideoId: String,
     uploadVideo: () -> Unit,
     openAccount: () -> Unit,
+    loginBottomSheet: LoginBottomSheetComposable,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         ProfileHeader(
@@ -293,7 +319,7 @@ private fun MainContent(
             }
             is LoadState.Error -> {
                 if (state.manualRefreshTriggered) viewModel.setManualRefreshTriggered(false)
-                ErrorContent(message = stringResource(R.string.error_loading_videos))
+                ErrorContent(message = stringResource(Res.string.error_loading_videos))
             }
             is LoadState.NotLoading -> {
                 if (state.manualRefreshTriggered) {
@@ -322,11 +348,11 @@ private fun MainContent(
     when (state.bottomSheet) {
         ProfileBottomSheet.None -> Unit
         ProfileBottomSheet.SignUp -> {
-            LoginBottomSheet(
-                bottomSheetState = bottomSheetState,
-                onDismissRequest = { viewModel.setBottomSheetType(ProfileBottomSheet.None) },
-                termsLink = viewModel.getTncLink(),
-                openTerms = { extraSheetLink = viewModel.getTncLink() },
+            loginBottomSheet(
+                bottomSheetState,
+                { viewModel.setBottomSheetType(ProfileBottomSheet.None) },
+                viewModel.getTncLink(),
+                { extraSheetLink = viewModel.getTncLink() },
             )
         }
     }
@@ -353,19 +379,19 @@ private fun ProfileHeader(
         verticalAlignment = Alignment.Top,
     ) {
         Row(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.Companion.weight(1f),
             horizontalArrangement = Arrangement.Start,
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = stringResource(R.string.my_profile),
+                text = stringResource(DesignRes.string.my_profile),
                 style = LocalAppTopography.current.xlBold,
                 color = YralColors.NeutralTextPrimary,
             )
         }
         if (isWalletEnabled) {
             Icon(
-                painter = painterResource(R.drawable.account_nav),
+                painter = painterResource(DesignRes.drawable.account_nav),
                 contentDescription = "Account",
                 tint = Color.White,
                 modifier = Modifier.size(32.dp).clickable { openAccount() },
@@ -380,7 +406,7 @@ private fun LoadingContent() {
         modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
         contentAlignment = Alignment.Center,
     ) {
-        YralLoader(size = PULL_TO_REFRESH_INDICATOR_SIZE.dp)
+        YralLoader(size = ProfileMainScreenConstants.PULL_TO_REFRESH_INDICATOR_SIZE.dp)
     }
 }
 
@@ -392,7 +418,7 @@ private fun ErrorContent(message: String) {
         verticalArrangement = Arrangement.Center,
     ) {
         Text(
-            text = stringResource(R.string.something_went_wrong),
+            text = stringResource(DesignRes.string.something_went_wrong),
             style = LocalAppTopography.current.lgBold,
             color = YralColors.NeutralTextPrimary,
             textAlign = TextAlign.Center,
@@ -422,13 +448,13 @@ private fun SuccessContent(
         modifier =
             Modifier
                 .fillMaxSize()
-                .padding(top = PADDING_BOTTOM_ACCOUNT_INFO.dp),
+                .padding(top = ProfileMainScreenConstants.PADDING_BOTTOM_ACCOUNT_INFO.dp),
     ) {
         val pullRefreshState = rememberPullToRefreshState()
         val offset =
             pullRefreshState.distanceFraction *
-                PULL_TO_REFRESH_INDICATOR_SIZE *
-                PULL_TO_REFRESH_OFFSET_MULTIPLIER
+                ProfileMainScreenConstants.PULL_TO_REFRESH_INDICATOR_SIZE *
+                ProfileMainScreenConstants.PULL_TO_REFRESH_OFFSET_MULTIPLIER
 
         val isRefreshing = profileVideos.loadState.refresh is LoadState.Loading
 
@@ -448,12 +474,12 @@ private fun SuccessContent(
                                 state = pullRefreshState,
                                 isRefreshing = isRefreshing,
                                 containerColor = Color.Transparent,
-                                threshold = PULL_TO_REFRESH_INDICATOR_THRESHOLD.dp,
+                                threshold = ProfileMainScreenConstants.PULL_TO_REFRESH_INDICATOR_THRESHOLD.dp,
                                 elevation = 0.dp,
                             ),
                     contentAlignment = Alignment.Center,
                 ) {
-                    YralLoader(PULL_TO_REFRESH_INDICATOR_SIZE.dp)
+                    YralLoader(ProfileMainScreenConstants.PULL_TO_REFRESH_INDICATOR_SIZE.dp)
                 }
             },
         ) {
@@ -483,19 +509,19 @@ private fun EmptyStateContent(
             Modifier
                 .fillMaxSize()
                 .padding(horizontal = 16.dp)
-                .offset(y = (offset - PADDING_BOTTOM_ACCOUNT_INFO).dp)
+                .offset(y = (offset - ProfileMainScreenConstants.PADDING_BOTTOM_ACCOUNT_INFO).dp)
                 .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
         Image(
-            painter = painterResource(id = R.drawable.clapperboard),
+            painter = painterResource(Res.drawable.clapperboard),
             contentDescription = null,
             modifier = Modifier.size(100.dp),
         )
         Spacer(modifier = Modifier.height(20.dp))
         Text(
-            text = stringResource(R.string.you_have_not_uploaded_any_video_yet),
+            text = stringResource(Res.string.you_have_not_uploaded_any_video_yet),
             style = LocalAppTopography.current.lgMedium,
             color = YralColors.NeutralTextPrimary,
             textAlign = TextAlign.Center,
@@ -503,7 +529,7 @@ private fun EmptyStateContent(
         Spacer(modifier = Modifier.height(36.dp))
         YralGradientButton(
             modifier = Modifier.fillMaxWidth(),
-            text = stringResource(R.string.upload_video),
+            text = stringResource(DesignRes.string.upload_video),
             buttonType = YralButtonType.White,
             onClick = uploadVideo,
         )
@@ -609,14 +635,14 @@ private fun PagingErrorIndicator(
                 verticalArrangement = Arrangement.spacedBy(0.dp),
             ) {
                 Text(
-                    text = stringResource(R.string.error_loading_more_videos),
+                    text = stringResource(Res.string.error_loading_more_videos),
                     style = LocalAppTopography.current.xsBold,
                     color = YralColors.NeutralTextSecondary,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 YralGradientButton(
-                    text = stringResource(R.string.try_again),
+                    text = stringResource(DesignRes.string.try_again),
                     onClick = onRetry,
                     modifier = Modifier.fillMaxWidth(),
                     buttonState = YralButtonState.Enabled,
@@ -625,7 +651,7 @@ private fun PagingErrorIndicator(
             }
         } else {
             Text(
-                text = stringResource(R.string.error_loading_more_videos),
+                text = stringResource(Res.string.error_loading_more_videos),
                 style = LocalAppTopography.current.baseMedium,
                 color = YralColors.NeutralTextSecondary,
                 textAlign = TextAlign.Center,
@@ -645,7 +671,7 @@ private fun VideoGridItem(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .aspectRatio(GRID_ITEM_ASPECT_RATIO)
+                .aspectRatio(ProfileMainScreenConstants.GRID_ITEM_ASPECT_RATIO)
                 .clip(shape = RoundedCornerShape(8.dp))
                 .background(
                     color = YralColors.Neutral900,
@@ -702,7 +728,7 @@ private fun DeletingOverLay(
             ) {
                 YralLoader(size = loaderSize, LottieRes.READ_LOADER)
                 Text(
-                    text = stringResource(R.string.deleting),
+                    text = stringResource(Res.string.deleting),
                     style = textStyle,
                     color = YralColors.NeutralTextPrimary,
                 )
@@ -733,12 +759,11 @@ private fun BoxScope.VideoGridItemActions(
             Image(
                 painter =
                     painterResource(
-                        id =
-                            if (likeCount > 0U && isLiked) {
-                                R.drawable.pink_heart
-                            } else {
-                                R.drawable.white_heart
-                            },
+                        if (likeCount > 0U && isLiked) {
+                            Res.drawable.pink_heart
+                        } else {
+                            Res.drawable.white_heart
+                        },
                     ),
                 contentDescription = "like heart",
                 modifier = Modifier.size(24.dp),
@@ -750,7 +775,7 @@ private fun BoxScope.VideoGridItemActions(
             )
         }
         Image(
-            painter = painterResource(id = R.drawable.delete),
+            painter = painterResource(DesignRes.drawable.delete),
             contentDescription = "Delete video",
             modifier =
                 Modifier

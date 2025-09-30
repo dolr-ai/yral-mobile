@@ -9,7 +9,7 @@ import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.router.stack.push
 import com.arkivanov.decompose.value.Value
 import com.yral.android.ui.screens.account.nav.AccountComponent
-import com.yral.android.ui.screens.profile.main.ProfileMainComponent
+import com.yral.shared.features.profile.nav.ProfileMainComponent
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow

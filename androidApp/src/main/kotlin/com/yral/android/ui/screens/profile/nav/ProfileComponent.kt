@@ -4,7 +4,7 @@ import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.value.Value
 import com.yral.android.ui.screens.account.nav.AccountComponent
-import com.yral.android.ui.screens.profile.main.ProfileMainComponent
+import com.yral.shared.features.profile.nav.ProfileMainComponent
 import com.yral.shared.libs.arch.nav.HomeChildSnapshotProvider
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
