@@ -78,33 +78,79 @@ struct LeaderboardHistoryView: View {
         .padding(.horizontal, -Constants.scrollViewHorizontal)
 
         VStack(alignment: .leading, spacing: .zero) {
+          let leaderboard = viewModel.leaderboardHistory.first(where: {
+            $0.date == selectedDate
+          })
+          let rewardsEnabled = leaderboard?.rewardsEnabled ?? false
+          let rewardsCurrency = leaderboard?.rewardCurrency ?? Constants.defaultRewardCurrency
           HStack(spacing: .zero) {
             Text(Constants.position)
               .font(Constants.positionFont)
               .foregroundColor(Constants.positionColour)
-              .frame(width: Constants.rowWidth * Constants.positionFactor, alignment: .leading)
+              .frame(
+                width: Constants.rowWidth * (
+                  rewardsEnabled ? Constants.positionFactorWithReward : Constants.positionFactor
+                ),
+                alignment: .leading
+              )
 
             Text(Constants.id)
               .font(Constants.idFont)
               .foregroundColor(Constants.idColour)
-              .frame(width: Constants.rowWidth * Constants.idFactor, alignment: .leading)
+              .frame(
+                width: Constants.rowWidth * (
+                  rewardsEnabled ? Constants.idFactorWithReward : Constants.idFactor
+                ),
+                alignment: .leading
+              )
+
+            if rewardsEnabled {
+              HStack(spacing: .four) {
+                Spacer(minLength: .zero)
+
+                Text(Constants.reward)
+                  .font(Constants.rewardFont)
+                  .foregroundColor(Constants.rewardColour)
+
+                Image(
+                  rewardsCurrency == Constants.defaultRewardCurrency ? Constants.rewardYral : Constants.rewardBTC
+                )
+                  .resizable()
+                  .frame(width: Constants.rewardImageSize, height: Constants.rewardImageSize)
+              }
+              .frame(
+                width: Constants.rowWidth * Constants.rewardFactor,
+                alignment: .trailing
+              )
+            }
 
             Text(Constants.totalSats)
               .font(Constants.totalSatsFont)
               .foregroundColor(Constants.totalSatsColour)
-              .frame(width: Constants.rowWidth * Constants.totalSatsFactor, alignment: .trailing)
+              .frame(
+                width: Constants.rowWidth * (
+                  rewardsEnabled ? Constants.totalSatsFactorWithReward : Constants.totalSatsFactor
+                ),
+                alignment: .trailing
+              )
           }
           .padding(.bottom, Constants.hstackBottom)
 
           ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: Constants.scrollVstackSpacing) {
               if let leaderboard = viewModel.leaderboardHistory.first(where: { $0.date == selectedDate }) {
+                let rewardsEnabled = leaderboard.rewardsEnabled
+                let rewardCurrency = leaderboard.rewardCurrency ?? Constants.defaultRewardCurrency
+                let rewardCurrencyCode = leaderboard.rewardCurrencyCode
                 if let userRow = leaderboard.userRow {
                   LeaderboardRowView(
                     leaderboardRow: userRow,
                     isCurrentUser: true,
                     rowWidth: Constants.rowWidth,
-                    imageURL: viewModel.fetchImageURL(for: userRow.principalID)
+                    imageURL: viewModel.fetchImageURL(for: userRow.principalID),
+                    rewardsEnabled: rewardsEnabled,
+                    rewardCurrency: rewardCurrency,
+                    rewardCurrencyCode: rewardCurrencyCode
                   )
                 }
 
@@ -113,7 +159,10 @@ struct LeaderboardHistoryView: View {
                     leaderboardRow: leaderboardRow,
                     isCurrentUser: false,
                     rowWidth: Constants.rowWidth,
-                    imageURL: viewModel.fetchImageURL(for: leaderboardRow.principalID)
+                    imageURL: viewModel.fetchImageURL(for: leaderboardRow.principalID),
+                    rewardsEnabled: rewardsEnabled,
+                    rewardCurrency: rewardCurrency,
+                    rewardCurrencyCode: rewardCurrencyCode
                   )
                 }
               }
@@ -219,6 +268,7 @@ extension LeaderboardHistoryView {
     static let screenWidth = UIScreen.main.bounds.width
     static let screenHeight = UIScreen.main.bounds.height
     static let rowWidth = UIScreen.main.bounds.width - 32
+    static let defaultRewardCurrency = "YRAL"
     static let loader = "Yral_Loader"
     static let loaderSize = 24.0
     static let topThree = [1, 2, 3]
@@ -251,17 +301,27 @@ extension LeaderboardHistoryView {
     static let vstackTop = 40.0
     static let hstackBottom = 12.0
     static let position = "Position"
-    static let positionFont = YralFont.pt12.medium.swiftUIFont
-    static let positionColour = YralColor.grey500.swiftUIColor
+    static let positionFont = YralFont.pt12.regular.swiftUIFont
+    static let positionColour = YralColor.grey400.swiftUIColor
     static let positionFactor = 0.28
-    static let id = "Player ID"
-    static let idFont = YralFont.pt12.medium.swiftUIFont
-    static let idColour = YralColor.grey500.swiftUIColor
+    static let positionFactorWithReward = 0.18
+    static let id = "Player"
+    static let idFont = YralFont.pt12.regular.swiftUIFont
+    static let idColour = YralColor.grey400.swiftUIColor
     static let idFactor = 0.44
+    static let idFactorWithReward = 0.35
+    static let rewardYral = "yral_token_wallet"
+    static let rewardBTC = "btc_token_wallet"
+    static let reward = "Rewards"
+    static let rewardFont = YralFont.pt12.regular.swiftUIFont
+    static let rewardColour = YralColor.grey400.swiftUIColor
+    static let rewardFactor = 0.22
+    static let rewardImageSize = 14.0
     static let totalSats = "Games Won"
-    static let totalSatsFont = YralFont.pt12.medium.swiftUIFont
-    static let totalSatsColour = YralColor.grey500.swiftUIColor
+    static let totalSatsFont = YralFont.pt12.regular.swiftUIFont
+    static let totalSatsColour = YralColor.grey400.swiftUIColor
     static let totalSatsFactor = 0.28
+    static let totalSatsFactorWithReward = 0.25
     static let scrollVstackSpacing = 12.0
     static let scrollViewVstackBottom = 40.0
 

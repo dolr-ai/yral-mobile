@@ -14,10 +14,13 @@ struct LeaderboardRowView: View {
   let isCurrentUser: Bool
   let rowWidth: CGFloat
   let imageURL: URL?
+  let rewardsEnabled: Bool
+  let rewardCurrency: String
+  let rewardCurrencyCode: String?
 
   var body: some View {
     HStack(spacing: .zero) {
-      Text("#\(leaderboardRow.position)")
+      Text("#\(leaderboardRow.position.formattedWithK)")
         .lineLimit(.one)
         .font(Constants.userPositionFont)
         .foregroundColor(foregroundColorForPosition())
@@ -29,7 +32,12 @@ struct LeaderboardRowView: View {
           )
         )
         .padding(.horizontal, Constants.userPositionHorizontalPadding)
-        .frame(width: rowWidth * Constants.userPositionWidthFactor, alignment: .leading)
+        .frame(
+          width: rowWidth * (
+            rewardsEnabled ? Constants.userPositionRewardWidthFactor : Constants.userPositionWidthFactor
+          ),
+          alignment: .leading
+        )
 
       HStack(spacing: Constants.hStackSpacing) {
         buildUserImage()
@@ -46,7 +54,32 @@ struct LeaderboardRowView: View {
           )
         )
       }
-      .frame(width: rowWidth * Constants.hStackWidthFactor, alignment: .leading)
+      .frame(
+        width: rowWidth * (rewardsEnabled ? Constants.hStackRewardWidthFactor : Constants.hStackWidthFactor),
+        alignment: .leading
+      )
+
+      if rewardsEnabled {
+        HStack(spacing: .four) {
+          if let reward = leaderboardRow.reward {
+            Spacer(minLength: .zero)
+
+            Text("\(rewardCurrencyCode?.currencySymbol ?? "")\(reward)")
+              .font(Constants.rewardFont)
+              .foregroundColor(Constants.rewardColour)
+
+            Image(
+              rewardCurrency == Constants.defaultRewardCurrency ? Constants.rewardImageYral : Constants.rewardImageBTC
+            )
+              .resizable()
+              .frame(width: Constants.rewardImageSize, height: Constants.rewardImageSize)
+          }
+        }
+        .frame(
+          width: rowWidth * Constants.rewardWidthFactor,
+          alignment: .trailing
+        )
+      }
 
       Text(leaderboardRow.wins.description)
         .font(Constants.coinsFont)
@@ -54,7 +87,12 @@ struct LeaderboardRowView: View {
         .lineLimit(.one)
         .multilineTextAlignment(.trailing)
         .padding(.horizontal, Constants.bottomHStackTrailing)
-        .frame(width: rowWidth * Constants.bottomHStackWidthFactor, alignment: .trailing)
+        .frame(
+          width: rowWidth * (
+            rewardsEnabled ? Constants.bottomHStackRewardWidthFactor : Constants.bottomHStackWidthFactor
+          ),
+          alignment: .trailing
+        )
     }
     .frame(maxWidth: .infinity, alignment: .leading)
     .frame(height: Constants.rowHeight)
@@ -173,14 +211,22 @@ struct LeaderboardRowView: View {
 
 extension LeaderboardRowView {
   enum Constants {
+    static let defaultRewardCurrency = "YRAL"
+
     static let you = "You"
     static let userPositionColor = YralColor.grey50.swiftUIColor
     static let userPositionFont = YralFont.pt14.bold.swiftUIFont
     static let userPositionHorizontalPadding = 8.0
     static let userPositionWidthFactor = 0.24
+    static let userPositionRewardWidthFactor = 0.18
 
     static let userIDFont = YralFont.pt14.medium.swiftUIFont
     static let userIDColour = YralColor.grey50.swiftUIColor
+
+    static let rewardFont = YralFont.pt14.bold.swiftUIFont
+    static let rewardColour = YralColor.grey50.swiftUIColor
+    static let rewardImageYral = "yral_token_wallet"
+    static let rewardImageBTC = "btc_token_wallet"
 
     static let coinsFont = YralFont.pt14.bold.swiftUIFont
     static let coinsColour = YralColor.grey50.swiftUIColor
@@ -201,13 +247,18 @@ extension LeaderboardRowView {
     static let imageSize = 28.0
     static let borderedImageSize = 24.0
     static let hStackWidthFactor = 0.48
+    static let hStackRewardWidthFactor = 0.35
 
     static let satsImage = "sats"
     static let satsImageSize = 16.0
 
+    static let rewardWidthFactor = 0.22
+    static let rewardImageSize = 14.0
+
     static let bottomHStackTrailing = 8.0
     static let bottomHStackLeading = 48.0
     static let bottomHStackWidthFactor = 0.28
+    static let bottomHStackRewardWidthFactor = 0.25
 
     static let rowHeight = 42.0
     static let rowCornerRadius = 8.0

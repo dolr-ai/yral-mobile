@@ -86,7 +86,7 @@ class LeaderboardRepository: LeaderboardRepositoryProtocol {
 
 extension LeaderboardRepository {
   enum Constants {
-    static let leaderboardPath = "leaderboard_v2"
+    static let leaderboardPath = "leaderboard_v3"
     static let firebaseUserIDError = "Failed to fetch user ID token"
     static let principalIDError = "Failed to fetch princiapl ID"
   }

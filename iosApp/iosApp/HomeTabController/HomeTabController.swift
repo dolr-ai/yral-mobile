@@ -94,6 +94,9 @@ struct HomeTabController: View {
         }
         deepLinkRouter.pendingDestination = nil
       }
+      .onReceive(eventBus.startPlayingTapped) {
+        selectedTab = .home
+      }
       .onReceive(eventBus.finishUploadingVideo) {
         UIView.setAnimationsEnabled(false)
         suppressAnalytics = true
