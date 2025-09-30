@@ -6,10 +6,10 @@ struct HomeTabController: View {
   @EnvironmentObject var deepLinkRouter: DeepLinkRouter
   @State private var suppressAnalytics = false
   let feedsViewController: FeedsViewController
-  let accountView: AccountView
   let uploadOptionsScreenView: UINavigationController
   let profileView: ProfileView
   let leaderboardView: UINavigationController
+  let walletView: WalletView
 
   private var feedsViewControllerWrapper: FeedsViewControllerWrapper {
     FeedsViewControllerWrapper(
@@ -36,19 +36,20 @@ struct HomeTabController: View {
 
   init(
     feedsViewController: FeedsViewController,
-    uploadOptionsScreenView: UINavigationController,
-    profileView: ProfileView,
-    accountView: AccountView,
     leaderboardView: UINavigationController,
+    uploadOptionsScreenView: UINavigationController,
+    walletView: WalletView,
+    profileView: ProfileView,
   ) {
     self.feedsViewController = feedsViewController
     self.uploadOptionsScreenView = uploadOptionsScreenView
+    self.walletView = walletView
     self.profileView = profileView
-    self.accountView = accountView
     self.leaderboardView = leaderboardView
-    UITabBar.appearance().backgroundColor = .black
-    UITabBar.appearance().barTintColor = .black
-    UITabBar.appearance().isTranslucent = false
+    let appearance = UITabBarAppearance()
+    appearance.configureWithTransparentBackground()
+    UITabBar.appearance().standardAppearance = appearance
+    UITabBar.appearance().scrollEdgeAppearance = appearance
   }
 
   var body: some View {
@@ -56,28 +57,19 @@ struct HomeTabController: View {
       TabView(selection: $selectedTab) {
         feedsViewControllerWrapper
           .background(Color.black.edgesIgnoringSafeArea(.all))
-          .tabItem { tabIcon(selected: selectedTab == .home,
-                             selectedName: Constants.homeIconImageNameSelected,
-                             unselectedName: Constants.homeIconImageNameUnselected) }
           .tag(Tab.home)
 
         ViewControllerWrapper(controller: leaderboardView)
           .background(Color.black.edgesIgnoringSafeArea(.all))
-          .tabItem {
-            tabIcon(selected: selectedTab == .leaderboard,
-                    selectedName: Constants.leaderboardIconImageNameSelected,
-                    unselectedName: Constants.leaderboardIconImageNameUnselected)
-          }
           .tag(Tab.leaderboard)
 
         ViewControllerWrapper(controller: uploadOptionsScreenView)
           .background(Color.black.edgesIgnoringSafeArea(.all))
-          .tabItem {
-            tabIcon(selected: selectedTab == .upload,
-                    selectedName: Constants.uploadIconImageNameSelected,
-                    unselectedName: Constants.uploadIconImageNameUnselected)
-          }
           .tag(Tab.upload)
+
+        walletView
+          .background(Color.black.edgesIgnoringSafeArea(.all))
+          .tag(Tab.wallet)
 
         profileView
           .onUploadAction {
@@ -85,20 +77,7 @@ struct HomeTabController: View {
             selectedTab = .upload
           }
           .background(Color.black.edgesIgnoringSafeArea(.all))
-          .tabItem { tabIcon(selected: selectedTab == .profile,
-                             selectedName: Constants.profileIconImageNameSelected,
-                             unselectedName: Constants.profileIconImageNameUnSelected) }
           .tag(Tab.profile)
-
-        accountView
-          .background(Color.black.edgesIgnoringSafeArea(.all))
-          .tabItem {
-            Image(
-              ImageResource(name: Constants.accountIconImageName, bundle: .main)
-            )
-            .renderingMode(.original)
-          }
-          .tag(Tab.account)
       }
       .onChange(of: selectedTab) { tab in
         guard !suppressAnalytics else {
@@ -135,6 +114,9 @@ struct HomeTabController: View {
       .onReceive(eventBus.playGamesToEarnMoreTapped) {
         selectedTab = .home
       }
+      .onReceive(eventBus.walletTapped) {
+        selectedTab = .wallet
+      }
       .hapticFeedback(.impact(weight: HapticFeedback.Weight.light), trigger: selectedTab)
       .fullScreenCover(isPresented: $showNotificationsNudge) {
         ZStack(alignment: .center) {
@@ -160,27 +142,18 @@ struct HomeTabController: View {
         .background(Color.black.opacity(Constants.walletOpacity))
         .transition(.opacity)
       }
-
-      GeometryReader { geometry in
-        let tabWidth = geometry.size.width / .five
-        let indicatorXPosition = CGFloat(selectedTab.intValue) * tabWidth + (tabWidth - Constants.indicatorWidth) / .two
-        VStack {
-          Spacer().frame(height: geometry.size.height)
-          HStack {
-            Spacer().frame(width: indicatorXPosition)
-            Rectangle()
-              .fill(Constants.indicatorColor)
-              .frame(
-                width: Constants.indicatorWidth,
-                height: Constants.tabIndicatorHeight
-              )
-              .cornerRadius(Constants.tabIndicatorHeight / .two)
-              .offset(x: .zero, y: -self.tabBarHeight)
-              .animation(.easeInOut, value: selectedTab)
-            Spacer()
-          }
-        }
-      }
+    }
+    .safeAreaInset(edge: .bottom) {
+      YralTabbar(
+        selectedTab: $selectedTab,
+        icons: [
+          (Constants.homeIconImageNameSelected, Constants.homeIconImageNameUnselected),
+          (Constants.leaderboardIconImageNameSelected, Constants.leaderboardIconImageNameUnselected),
+          (Constants.uploadIconImageNameSelected, Constants.uploadIconImageNameUnselected),
+          (Constants.walletIconImageNameSelected, Constants.walletIconImageNameUnselected),
+          (Constants.profileIconImageNameSelected, Constants.profileIconImageNameUnSelected)
+        ]
+      )
     }
     .onAppear {
       let status = AppUpdateHandler.shared.getAppUpdateStatus()
@@ -232,10 +205,10 @@ struct HomeTabController: View {
       categoryName = .leaderboard
     case .upload:
       categoryName = .uploadVideo
+    case .wallet:
+      categoryName = .home
     case .profile:
       categoryName = .profile
-    case .account:
-      categoryName = .menu
     }
     AnalyticsModuleKt.getAnalyticsManager().trackEvent(
       event: BottomNavigationClickedEventData(
@@ -251,11 +224,12 @@ extension HomeTabController {
     static let homeIconImageNameSelected = "home_tab_selected"
     static let leaderboardIconImageNameSelected = "leaderboard_tab_selected"
     static let leaderboardIconImageNameUnselected = "leaderboard_tab_unselected"
+    static let walletIconImageNameSelected = "wallet_tab_selected"
+    static let walletIconImageNameUnselected = "wallet_tab_unselected"
     static let uploadIconImageNameUnselected = "upload_tab_unselected"
     static let uploadIconImageNameSelected = "upload_tab_selected"
     static let profileIconImageNameUnSelected = "profile_tab_unselected"
     static let profileIconImageNameSelected = "profile_tab_selected"
-    static let accountIconImageName = "account_tab"
     static let tabIndicatorHeight: CGFloat = 2.0
     static let indicatorWidth = 30.0
     static let indicatorColor = YralColor.primary300.swiftUIColor
@@ -264,7 +238,7 @@ extension HomeTabController {
 }
 
 enum Tab: Hashable {
-  case home, leaderboard, upload, profile, account
+  case home, leaderboard, wallet, upload, profile
 
   var intValue: Int {
     switch self {
@@ -274,9 +248,9 @@ enum Tab: Hashable {
       return .one
     case .upload:
       return .two
-    case .profile:
+    case .wallet:
       return .three
-    case .account:
+    case .profile:
       return .four
     }
   }

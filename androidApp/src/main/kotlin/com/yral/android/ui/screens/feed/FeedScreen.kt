@@ -36,38 +36,38 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
 import com.yral.android.R
-import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.feed.nav.FeedComponent
 import com.yral.android.ui.screens.feed.performance.PrefetchVideoListenerImpl
 import com.yral.android.ui.screens.feed.performance.VideoListenerImpl
 import com.yral.android.ui.screens.feed.uiComponets.GameToggle
 import com.yral.android.ui.screens.feed.uiComponets.HowToPlay
 import com.yral.android.ui.screens.feed.uiComponets.RefreshBalanceAnimation
-import com.yral.android.ui.screens.feed.uiComponets.ReportVideo
-import com.yral.android.ui.screens.feed.uiComponets.ReportVideoSheet
 import com.yral.android.ui.screens.feed.uiComponets.SignupNudge
 import com.yral.android.ui.screens.feed.uiComponets.UserBrief
 import com.yral.android.ui.screens.game.AboutGameSheet
 import com.yral.android.ui.screens.game.CoinBalance
 import com.yral.android.ui.screens.game.GameResultSheet
 import com.yral.android.ui.screens.game.SmileyGame
-import com.yral.android.ui.widgets.PreloadLottieAnimations
-import com.yral.android.ui.widgets.YralAsyncImage
-import com.yral.android.ui.widgets.YralErrorMessage
-import com.yral.android.ui.widgets.YralLoader
 import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.features.feed.viewmodel.FeedState
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.PRE_FETCH_BEFORE_LAST
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.SIGN_UP_PAGE
 import com.yral.shared.features.feed.viewmodel.OverlayType
-import com.yral.shared.features.feed.viewmodel.ReportSheetState
 import com.yral.shared.features.game.viewmodel.GameState
 import com.yral.shared.features.game.viewmodel.GameViewModel
 import com.yral.shared.features.game.viewmodel.NudgeType
+import com.yral.shared.libs.designsystem.component.YralAsyncImage
+import com.yral.shared.libs.designsystem.component.YralErrorMessage
+import com.yral.shared.libs.designsystem.component.YralLoader
+import com.yral.shared.libs.designsystem.component.lottie.PreloadLottieAnimations
+import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.videoPlayer.YRALReelPlayer
 import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.libs.videoPlayer.util.ReelScrollDirection
+import com.yral.shared.reportVideo.domain.models.ReportSheetState
+import com.yral.shared.reportVideo.ui.ReportVideo
+import com.yral.shared.reportVideo.ui.ReportVideoSheet
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -215,6 +215,13 @@ fun FeedScreen(
                     YralLoader(size = 20.dp)
                 }
             }
+        } else {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+            ) {
+                YralLoader()
+            }
         }
     }
     if (state.reportSheetState is ReportSheetState.Open) {
@@ -226,11 +233,10 @@ fun FeedScreen(
             onDismissRequest = { viewModel.toggleReportSheet(false, 0) },
             isLoading = state.isReporting,
             reasons = (state.reportSheetState as ReportSheetState.Open).reasons,
-            onSubmit = { reason, text ->
+            onSubmit = { reportVideoData ->
                 viewModel.reportVideo(
-                    reason = reason,
-                    text = text,
                     pageNo = (state.reportSheetState as ReportSheetState.Open).pageNo,
+                    reportVideoData = reportVideoData,
                 )
             },
         )

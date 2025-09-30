@@ -11,7 +11,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -22,17 +21,20 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.yral.android.R
 import com.yral.android.ui.components.signup.SignupView
-import com.yral.android.ui.design.LocalAppTopography
-import com.yral.android.ui.design.YralColors
-import com.yral.android.ui.screens.account.WebViewBottomSheet
-import com.yral.android.ui.widgets.YralLottieAnimation
 import com.yral.shared.analytics.events.SignupPageName
+import com.yral.shared.libs.designsystem.component.YralWebViewBottomSheet
+import com.yral.shared.libs.designsystem.component.lottie.LottieRes
+import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
+import com.yral.shared.libs.designsystem.theme.LocalAppTopography
+import com.yral.shared.libs.designsystem.theme.YralColors
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SignupNudge(
     tncLink: String,
     onSignupClicked: () -> Unit,
 ) {
+    val sheetState = rememberModalBottomSheetState()
     var link by remember { mutableStateOf("") }
     Column(
         modifier =
@@ -67,35 +69,15 @@ fun SignupNudge(
             )
             YralLottieAnimation(
                 modifier = Modifier.size(36.dp),
-                R.raw.signup_scroll,
+                LottieRes.SIGNUP_SCROLL,
             )
         }
     }
     if (link.isNotEmpty()) {
-        LinkSheet(
+        YralWebViewBottomSheet(
             link = link,
+            bottomSheetState = sheetState,
             onDismissRequest = { link = "" },
         )
     }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun LinkSheet(
-    link: String,
-    onDismissRequest: () -> Unit,
-) {
-    val extraSheetState = rememberModalBottomSheetState()
-    LaunchedEffect(link) {
-        if (link.isEmpty()) {
-            extraSheetState.hide()
-        } else {
-            extraSheetState.show()
-        }
-    }
-    WebViewBottomSheet(
-        link = link,
-        bottomSheetState = extraSheetState,
-        onDismissRequest = onDismissRequest,
-    )
 }

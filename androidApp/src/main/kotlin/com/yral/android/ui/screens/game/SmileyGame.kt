@@ -41,14 +41,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.yral.android.R
-import com.yral.android.ui.design.LocalAppTopography
-import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.game.SmileyGameConstants.MANDATORY_NUDGE_ANIMATION_ICON_ITERATIONS
 import com.yral.android.ui.screens.game.SmileyGameConstants.NUDGE_ANIMATION_DURATION
 import com.yral.android.ui.screens.game.SmileyGameConstants.NUDGE_ANIMATION_ICON_ITERATIONS
-import com.yral.android.ui.widgets.YralFeedback
 import com.yral.shared.features.game.domain.models.GameIcon
 import com.yral.shared.features.game.viewmodel.NudgeType
+import com.yral.shared.libs.designsystem.component.YralFeedback
+import com.yral.shared.libs.designsystem.theme.LocalAppTopography
+import com.yral.shared.libs.designsystem.theme.YralColors
 import kotlin.coroutines.cancellation.CancellationException
 
 @Suppress("LongMethod", "CyclomaticComplexMethod")
@@ -69,7 +69,8 @@ fun SmileyGame(
     var animateBubbles by remember { mutableStateOf(false) }
     var iconPositions by remember { mutableStateOf(mapOf<Int, Float>()) }
     val bubbleAnimationComplete =
-        !animateBubbles || (clickedIcon?.getBubbleResource() == 0 && clickedIcon.clickAnimation.isEmpty())
+        !animateBubbles ||
+            (clickedIcon != null && clickedIcon.getBubbleResource() == null && clickedIcon.clickAnimation.isEmpty())
     val resultViewVisible = (coinDelta != 0 || errorMessage.isNotEmpty()) && bubbleAnimationComplete
     var animatingNudgeIconPosition by remember { mutableStateOf<Int?>(null) }
     var nudgeIterationCount by remember { mutableIntStateOf(0) }

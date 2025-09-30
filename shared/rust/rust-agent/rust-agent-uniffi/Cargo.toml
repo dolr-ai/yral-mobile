@@ -13,7 +13,7 @@ tokio = { version = "1.28", features = ["macros", "rt-multi-thread"] }
 ic-agent = "0.41.0"
 lazy_static = "1.4"
 candid = "0.10.10"
-serde = "1.0.213"
+serde = "=1.0.218"
 serde_json = "1.0.132"
 serde_bytes = "0.11.15"
 k256 = { version = "0.13.4", default-features = false, features = [
@@ -22,11 +22,11 @@ k256 = { version = "0.13.4", default-features = false, features = [
 ] }
 openssl = { version = "0.10", features = ["vendored"] }
 
-yral-types = { git = "https://github.com/dolr-ai/yral-common.git", branch="feat/support-new-service-canisters" }
-yral-canisters-client = { git = "https://github.com/dolr-ai/yral-common.git", branch="feat/support-new-service-canisters", features = [
+yral-types = { git = "https://github.com/dolr-ai/yral-common.git", branch="master" }
+yral-canisters-client = { git = "https://github.com/dolr-ai/yral-common.git", branch="master", features = [
     "full",
 ] }
-yral-canisters-common = { git = "https://github.com/dolr-ai/yral-common.git", branch="feat/support-new-service-canisters" }
+yral-canisters-common = { git = "https://github.com/dolr-ai/yral-common.git", branch="master" }
 yral-metadata-client = { git = "https://github.com/yral-dapp/yral-metadata", branch = "master", default-features = false }
 yral-metadata-types = { git = "https://github.com/yral-dapp/yral-metadata", branch = "master", default-features = false }
 yral-identity = { git = "https://github.com/dolr-ai/yral-common.git", branch="master", default-features = false, features = [

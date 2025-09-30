@@ -17,6 +17,8 @@ protocol ProfileRouterProtocol {
     walletPhase: Binding<WalletPhase>,
     walletOutcome: Binding<WalletPhase>
   ) -> FeedsViewControllerWrapper
+
+  func displayAccountView(showAccount: Binding<Bool>) -> AccountView
 }
 
 final class ProfileRouter: ProfileRouterProtocol {
@@ -40,5 +42,9 @@ final class ProfileRouter: ProfileRouterProtocol {
       walletPhase: walletPhase,
       walletOutcome: walletOutcome
     )
+  }
+
+  func displayAccountView(showAccount: Binding<Bool>) -> AccountView {
+    return profileDI.makeAccount(showAccount: showAccount)
   }
 }

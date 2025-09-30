@@ -16,6 +16,8 @@ expect object HelperService {
     ): Result<Unit, DeviceRegistrationError>
 
     fun initRustLogger()
+
+    fun initServiceFactories(identityData: ByteArray)
 }
 
 sealed class DeviceRegistrationError : Exception() {

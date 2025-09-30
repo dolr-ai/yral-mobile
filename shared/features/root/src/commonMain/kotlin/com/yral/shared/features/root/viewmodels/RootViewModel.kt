@@ -13,6 +13,7 @@ import com.yral.shared.core.session.SessionState
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.AuthClientFactory
 import com.yral.shared.features.auth.YralAuthException
+import com.yral.shared.features.auth.YralFBAuthException
 import com.yral.shared.features.root.analytics.RootTelemetry
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import kotlinx.coroutines.CoroutineScope
@@ -24,6 +25,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
@@ -86,7 +88,39 @@ class RootViewModel(
             }
         }
 
+    val firebaseAuthFlow =
+        combine(
+            sessionManager.state,
+            sessionManager.observeSessionProperties(),
+        ) { state, properties ->
+            (state is SessionState.SignedIn) to properties.isFirebaseLoggedIn
+        }.distinctUntilChanged()
+
     private var initialisationJob: Job? = null
+
+    init {
+        coroutineScope.launch {
+            firebaseAuthFlow.collect { (isSignedIn, isAuthenticated) ->
+                if (isSignedIn && !isAuthenticated) {
+                    coroutineScope.launch {
+                        val session = (sessionManager.state.value as? SessionState.SignedIn)?.session
+                        try {
+                            session?.let { authClient.authorizeFirebase(session) }
+                        } catch (e: YralFBAuthException) {
+                            // Do not update error in state since no error message required
+                            Logger.e("Firebase Auth error - $e")
+                            crashlyticsManager.recordException(e)
+                            session?.let { authClient.fetchBalance(session) }
+                        } catch (e: YralAuthException) {
+                            // can be triggered in postFirebaseLogin when getting balance
+                            Logger.e("Fetch Balance error - $e")
+                            crashlyticsManager.recordException(e)
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     fun initialize() {
         initialisationJob?.cancel()

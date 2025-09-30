@@ -10,11 +10,13 @@ import UIKit
 extension FeedsCell {
   func showOnboardingFlow() {
     guard let smileyView = smileyGameHostController?.view else { return }
+    let gen = { overlayGeneration &+= 1; return overlayGeneration }()
     addGameInfoOverlayView()
     let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissOnboardingOnTap))
     gameInfoOverlayView.addGestureRecognizer(tapGesture)
     animateGameInfoOverlayView(smileyView: smileyView) { [weak self] in
-      guard let self = self else { return }
+      guard let self = self,
+            self.overlayGeneration == gen else { return }
       self.addOnboardingInfoView(smileyView)
       DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.five) {
         self.cleanupOnOnboardingCompletion(smileyView: smileyView)

@@ -22,8 +22,8 @@ final class AccountDIContainer {
     self.dependencies = dependencies
   }
 
-  func makeAccountView() -> AccountView {
-    AccountView(viewModel: makeAccountViewModel())
+  func makeAccountView() {
+//    AccountView(viewModel: makeAccountViewModel(), showAccount: <#Binding<Bool>#>)
   }
 
   func makeAccountViewModel() -> AccountViewModel {

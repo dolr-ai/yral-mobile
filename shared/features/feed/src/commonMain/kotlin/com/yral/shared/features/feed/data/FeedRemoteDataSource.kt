@@ -1,12 +1,9 @@
 package com.yral.shared.features.feed.data
 
-import com.yral.shared.core.AppConfigurations
 import com.yral.shared.core.AppConfigurations.FEED_BASE_URL
 import com.yral.shared.features.feed.data.models.FeedRequestDTO
 import com.yral.shared.features.feed.data.models.PostResponseDTO
-import com.yral.shared.features.feed.data.models.ReportRequestDto
 import com.yral.shared.http.httpPost
-import com.yral.shared.http.httpPostWithStringResponse
 import io.ktor.client.HttpClient
 import io.ktor.client.request.setBody
 import io.ktor.http.path
@@ -15,7 +12,7 @@ import kotlinx.serialization.json.Json
 class FeedRemoteDataSource(
     private val client: HttpClient,
     private val json: Json,
-) : IFeedRemoteDataSource {
+) : IFeedDataSource {
     override suspend fun getInitialFeeds(feedRequestDTO: FeedRequestDTO): PostResponseDTO =
         httpPost(
             httpClient = client,
@@ -40,20 +37,8 @@ class FeedRemoteDataSource(
             setBody(feedRequestDTO)
         }
 
-    override suspend fun reportVideo(request: ReportRequestDto): String =
-        httpPostWithStringResponse(
-            httpClient = client,
-        ) {
-            url {
-                host = AppConfigurations.OFF_CHAIN_BASE_URL
-                path(REPORT_VIDEO_PATH)
-            }
-            setBody(request)
-        }
-
     companion object {
         private const val CACHED_FEED_PATH = "v2/recommendations/cache"
         private const val ML_FEED_PATH = "v2/recommendations"
-        private const val REPORT_VIDEO_PATH = "/api/v2/posts/report"
     }
 }

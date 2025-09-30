@@ -9,21 +9,7 @@ Pod::Spec.new do |spec|
     spec.vendored_frameworks      = 'build/cocoapods/framework/iosSharedUmbrella.framework'
     spec.libraries                = 'c++'
     spec.ios.deployment_target    = '15.6'
-    spec.dependency 'FBSDKCoreKit', '18.0.0'
-    spec.dependency 'FirebaseAnalytics', '11.14.0'
-    spec.dependency 'FirebaseAppCheck', '11.14.0'
-    spec.dependency 'FirebaseAuth'
-    spec.dependency 'FirebaseCore', '11.14.0'
-    spec.dependency 'FirebaseCoreInternal', '11.14.0'
-    spec.dependency 'FirebaseCrashlytics', '11.14.0'
-    spec.dependency 'FirebaseFirestore', '11.14.0'
-    spec.dependency 'FirebaseInstallations', '11.14.0'
-    spec.dependency 'FirebaseMessaging', '11.14.0'
-    spec.dependency 'FirebasePerformance', '11.14.0'
-    spec.dependency 'FirebaseStorage', '11.14.0'
-    spec.dependency 'GoogleUtilities', '8.1'
-    spec.dependency 'Mixpanel', '5.0.8'
-    spec.dependency 'nanopb', '3.30910.0'
+                
                 
     if !Dir.exist?('build/cocoapods/framework/iosSharedUmbrella.framework') || Dir.empty?('build/cocoapods/framework/iosSharedUmbrella.framework')
         raise "

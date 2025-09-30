@@ -24,12 +24,12 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.yral.android.R
-import com.yral.android.ui.design.LocalAppTopography
-import com.yral.android.ui.design.YralColors
-import com.yral.android.ui.widgets.YralAsyncImage
-import com.yral.android.ui.widgets.YralBottomSheet
-import com.yral.android.ui.widgets.getSVGImageModel
 import com.yral.shared.features.uploadvideo.domain.models.Provider
+import com.yral.shared.libs.designsystem.component.YralAsyncImage
+import com.yral.shared.libs.designsystem.component.YralBottomSheet
+import com.yral.shared.libs.designsystem.component.getSVGImageModel
+import com.yral.shared.libs.designsystem.theme.LocalAppTopography
+import com.yral.shared.libs.designsystem.theme.YralColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

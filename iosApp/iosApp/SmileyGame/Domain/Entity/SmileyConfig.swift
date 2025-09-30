@@ -23,6 +23,7 @@ struct Smiley: Identifiable, Hashable {
 
 enum SmileyGameState: Hashable {
   case notPlayed
+  case voted
   case played(SmileyGameResultResponse)
   case error(String)
 }

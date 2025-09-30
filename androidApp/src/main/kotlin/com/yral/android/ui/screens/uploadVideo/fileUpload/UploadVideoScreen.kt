@@ -42,7 +42,6 @@ import androidx.compose.ui.graphics.Brush.Companion.linearGradient
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -53,15 +52,18 @@ import co.touchlab.kermit.Logger
 import com.yral.android.R
 import com.yral.android.ui.components.hashtagInput.HashtagInput
 import com.yral.android.ui.components.hashtagInput.keyboardHeightAsState
-import com.yral.android.ui.design.LocalAppTopography
-import com.yral.android.ui.design.YralColors
-import com.yral.android.ui.widgets.YralButtonState
-import com.yral.android.ui.widgets.YralGradientButton
 import com.yral.android.ui.widgets.video.YralVideoPlayer
 import com.yral.shared.features.uploadvideo.presentation.UploadVideoViewModel
 import com.yral.shared.libs.arch.presentation.UiState
+import com.yral.shared.libs.designsystem.component.YralButtonState
+import com.yral.shared.libs.designsystem.component.YralGradientButton
+import com.yral.shared.libs.designsystem.theme.LocalAppTopography
+import com.yral.shared.libs.designsystem.theme.YralColors
 import kotlinx.coroutines.flow.collectLatest
+import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
+import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
+import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 private const val TOTAL_ITEMS = 5
 
@@ -184,7 +186,7 @@ private fun Header(onBack: (() -> Unit)? = null) {
     ) {
         onBack?.let {
             Image(
-                painter = painterResource(id = R.drawable.arrow_left),
+                painter = painterResource(DesignRes.drawable.arrow_left),
                 contentDescription = "back button",
                 contentScale = ContentScale.None,
                 modifier = Modifier.size(24.dp).clickable { onBack() },

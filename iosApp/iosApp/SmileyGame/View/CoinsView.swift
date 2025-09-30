@@ -160,6 +160,14 @@ class CoinsView: UIView {
       decrementCoins(by: UInt64(abs(newCoins)))
     }
   }
+
+  override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+    let hit = super.hitTest(point, with: event)
+    if hit == self || subviews.contains(where: { $0 == hit }) {
+      return self
+    }
+    return nil
+  }
 }
 
 extension CoinsView {

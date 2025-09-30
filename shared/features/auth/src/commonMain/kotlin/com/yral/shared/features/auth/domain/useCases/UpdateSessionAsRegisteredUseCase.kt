@@ -15,10 +15,12 @@ class UpdateSessionAsRegisteredUseCase(
             .updateSessionAsRegistered(
                 idToken = parameter.idToken,
                 canisterId = parameter.canisterId,
+                userPrincipal = parameter.userPrincipal,
             )
 
     data class Params(
         val idToken: String,
         val canisterId: String,
+        val userPrincipal: String,
     )
 }

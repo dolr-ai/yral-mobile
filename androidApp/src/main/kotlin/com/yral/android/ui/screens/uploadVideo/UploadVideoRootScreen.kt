@@ -27,7 +27,7 @@ fun UploadVideoRootScreen(
                 FlowSelectionScreen(component = instance.component)
             }
             is UploadVideoRootComponent.Child.AiVideoGen -> {
-                AiVideoGenScreen(component = instance.component)
+                AiVideoGenScreen(component = instance.component, bottomPadding = bottomPadding)
             }
             is UploadVideoRootComponent.Child.FileUpload -> {
                 UploadVideoScreen(component = instance.component, bottomPadding = bottomPadding)

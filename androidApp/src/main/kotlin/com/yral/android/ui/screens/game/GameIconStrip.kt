@@ -21,8 +21,8 @@ import com.yral.android.ui.screens.game.GameIconStrip.GAME_ICON_ANIMATION_DURATI
 import com.yral.android.ui.screens.game.GameIconStrip.GAME_ICON_NUDGE_ANIMATION_DURATION
 import com.yral.android.ui.screens.game.GameIconStrip.GAME_ICON_ROTATION_DEGREE
 import com.yral.android.ui.screens.game.GameIconStrip.GAME_ICON_SCALING_FACTOR
-import com.yral.android.ui.widgets.YralFeedback
 import com.yral.shared.features.game.domain.models.GameIcon
+import com.yral.shared.libs.designsystem.component.YralFeedback
 import kotlinx.coroutines.delay
 
 @Suppress("LongMethod")

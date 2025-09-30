@@ -7,3 +7,7 @@ class YralAuthException(
 ) : YralException(error) {
     constructor(e: Throwable) : this(e.message ?: "Unknown error")
 }
+
+class YralFBAuthException(
+    val error: String,
+) : YralException(error)

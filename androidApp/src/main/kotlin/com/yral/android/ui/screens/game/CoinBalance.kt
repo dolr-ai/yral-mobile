@@ -41,8 +41,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.yral.android.R
-import com.yral.android.ui.design.LocalAppTopography
-import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.game.CoinBagConstants.ANIMATION_DURATION
 import com.yral.android.ui.screens.game.CoinBagConstants.COIN_BAG_ROTATION
 import com.yral.android.ui.screens.game.CoinBagConstants.COIN_BAG_SCALE
@@ -54,6 +52,8 @@ import com.yral.android.ui.screens.game.CoinBagConstants.COIN_OFFSET_Y_MID
 import com.yral.android.ui.screens.game.CoinBagConstants.COIN_OFFSET_Y_START
 import com.yral.android.ui.screens.game.CoinBagConstants.COIN_SCALE
 import com.yral.android.ui.screens.game.CoinBagConstants.COIN_SCALE_MID
+import com.yral.shared.libs.designsystem.theme.LocalAppTopography
+import com.yral.shared.libs.designsystem.theme.YralColors
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay

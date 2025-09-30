@@ -29,7 +29,7 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
       .first ?? UIWindow()
   }
 
-  // swiftlint: disable function_body_length
+  // swiftlint: disable function_body_length cyclomatic_complexity
   @MainActor
   func signInWithSocial(provider: SocialProvider) async throws {
     let oldState = stateSubject.value
@@ -103,6 +103,7 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
         isNewUser = oldPrincipal == self.userPrincipalString
         self.provider = provider
         guard let canisterPrincipalString = self.canisterPrincipalString else { return }
+        guard let userPrincipalString = self.userPrincipalString else { return }
         do {
           try await registerForNotifications()
         } catch {
@@ -111,7 +112,7 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
         }
         Task {
           do {
-            try await updateSession(canisterID: canisterPrincipalString)
+            try await updateSession(canisterID: canisterPrincipalString, principalID: userPrincipalString)
           } catch {
             crashReporter.recordException(error)
           }
@@ -122,7 +123,7 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
       throw error
     }
   }
-  // swiftlint: enable function_body_length
+  // swiftlint: enable function_body_length cyclomatic_complexity
 
   private func getAuthURL(
     provider: SocialProvider,
@@ -191,23 +192,23 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
     return try JSONDecoder().decode(TokenClaimsDTO.self, from: data)
   }
 
-  func updateSession(canisterID: String) async throws {
+  func updateSession(canisterID: String, principalID: String) async throws {
     let oldState = stateSubject.value
     do {
       guard let accessTokenData = try KeychainHelper.retrieveData(for: Constants.keychainAccessToken),
             let accessTokenString = String(data: accessTokenData, encoding: .utf8),
             let url = URL(string: Constants.yralMetaDataBaseURLString) else { return }
-      let body = Data("{}".utf8)
+      let request = UpdateSessionDTO(canisterId: canisterID, userPrincipal: principalID)
       let endpoint = Endpoint(
         http: "update_session_as_registered",
         baseURL: url,
-        path: Constants.sessionRegistrationPath + canisterID,
+        path: Constants.sessionRegistrationPath,
         method: .post,
         headers: [
           "authorization": "Bearer \(accessTokenString)",
           "Content-Type": "application/json"
         ],
-        body: body
+        body: try JSONEncoder().encode(request)
       )
       try await networkService.performRequest(for: endpoint)
     } catch {
@@ -361,7 +362,7 @@ extension DefaultAuthClient {
     static let keychainRefreshToken = "yral.refreshToken"
     static let temporaryIdentityExpirySecond: UInt64 = 3600
     static let yralMetaDataBaseURLString = "https://yral-metadata.fly.dev"
-    static let sessionRegistrationPath = "/update_session_as_registered/"
+    static let sessionRegistrationPath = "/v2/update_session_as_registered"
   }
 }
 

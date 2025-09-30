@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.core.provider.FontRequest
 import androidx.emoji2.text.EmojiCompat
 import androidx.emoji2.text.FontRequestEmojiCompatConfig
+import co.touchlab.kermit.Logger
 import com.facebook.FacebookSdk
 import com.facebook.LoggingBehavior
 import com.google.firebase.Firebase
@@ -12,13 +13,20 @@ import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory
 import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
 import com.google.firebase.initialize
 import com.yral.android.ui.widgets.video.di.videoWidgetModule
+import com.yral.shared.analytics.providers.mixpanel.MixpanelAnalyticsProvider
 import com.yral.shared.app.di.initKoin
 import com.yral.shared.koin.koinInstance
 import dev.gitlive.firebase.crashlytics.FirebaseCrashlytics
 import io.branch.referral.Branch
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import org.koin.android.ext.koin.androidContext
 
 class YralApp : Application() {
+    private val appCoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
     override fun onCreate() {
         super.onCreate()
         setupFirebase()
@@ -30,6 +38,7 @@ class YralApp : Application() {
             modules(videoWidgetModule)
         }
         koinInstance.get<FirebaseCrashlytics>().setCrashlyticsCollectionEnabled(!BuildConfig.DEBUG)
+        observeAndAddDistinctIdToBranch()
     }
 
     private fun setupFirebase() {
@@ -78,6 +87,15 @@ class YralApp : Application() {
             }
         }
         Branch.setFBAppID(this.getString(R.string.facebook_app_id))
+    }
+
+    private fun observeAndAddDistinctIdToBranch() {
+        appCoroutineScope.launch {
+            koinInstance.get<MixpanelAnalyticsProvider>().observeDistinctId().collect { distinctId ->
+                Logger.d("MixPanel") { "Updating distinct id in branch" }
+                Branch.getInstance().setRequestMetadata("\$mixpanel_distinct_id", distinctId)
+            }
+        }
     }
 
     private fun setupEmoji() {

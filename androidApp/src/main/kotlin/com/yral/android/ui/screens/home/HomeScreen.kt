@@ -42,17 +42,16 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.yral.android.R
-import com.yral.android.ui.design.LocalAppTopography
-import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.account.AccountScreen
 import com.yral.android.ui.screens.alertsrequest.AlertsRequestBottomSheet
 import com.yral.android.ui.screens.feed.FeedScreen
 import com.yral.android.ui.screens.home.nav.HomeComponent
 import com.yral.android.ui.screens.home.nav.HomeComponent.SlotChild
-import com.yral.android.ui.screens.leaderboard.LeaderboardScreen
 import com.yral.android.ui.screens.profile.ProfileScreen
 import com.yral.android.ui.screens.uploadVideo.UploadVideoRootScreen
-import com.yral.android.ui.widgets.YralFeedback
+import com.yral.android.ui.screens.wallet.WalletScreen
+import com.yral.featureflag.FeatureFlagManager
+import com.yral.featureflag.WalletFeatureFlags
 import com.yral.shared.analytics.events.CategoryName
 import com.yral.shared.core.session.SessionKey
 import com.yral.shared.core.session.SessionState
@@ -61,7 +60,12 @@ import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.features.account.viewmodel.AccountsViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.game.viewmodel.GameViewModel
+import com.yral.shared.features.leaderboard.ui.leaderboard.LeaderboardScreen
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
+import com.yral.shared.libs.designsystem.component.YralFeedback
+import com.yral.shared.libs.designsystem.theme.LocalAppTopography
+import com.yral.shared.libs.designsystem.theme.YralColors
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -84,6 +88,7 @@ fun HomeScreen(
                     is HomeComponent.Child.Leaderboard -> HomeTab.LEADER_BOARD
                     is HomeComponent.Child.Profile -> HomeTab.PROFILE
                     is HomeComponent.Child.UploadVideo -> HomeTab.UPLOAD_VIDEO
+                    is HomeComponent.Child.Wallet -> HomeTab.WALLET
                 }
             val updateCurrentTab: (tab: HomeTab) -> Unit = { tab ->
                 when (tab) {
@@ -92,6 +97,7 @@ fun HomeScreen(
                     HomeTab.LEADER_BOARD -> component.onLeaderboardTabClick()
                     HomeTab.PROFILE -> component.onProfileTabClick()
                     HomeTab.UPLOAD_VIDEO -> component.onUploadVideoTabClick()
+                    HomeTab.WALLET -> component.onWalletTabClick()
                 }
             }
             HomeNavigationBar(
@@ -176,10 +182,17 @@ private fun HomeScreenContent(
                 profileVideos?.let {
                     ProfileScreen(
                         component = child.component,
-                        viewModel = profileViewModel,
+                        profileViewModel = profileViewModel,
+                        accountsViewModel = accountViewModel,
                         profileVideos = profileVideos,
                     )
                 }
+            }
+
+            is HomeComponent.Child.Wallet -> {
+                WalletScreen(
+                    component = child.component,
+                )
             }
         }
     }
@@ -207,6 +220,7 @@ private fun getProfileVideos(
     }
 }
 
+@Suppress("LongMethod")
 @Composable
 private fun HomeNavigationBar(
     currentTab: HomeTab,
@@ -214,6 +228,17 @@ private fun HomeNavigationBar(
     bottomNavigationClicked: (categoryName: CategoryName) -> Unit,
 ) {
     var playSound by remember { mutableStateOf(false) }
+    val flagManager = koinInject<FeatureFlagManager>()
+    val isWalletEnabled = flagManager.isEnabled(WalletFeatureFlags.Wallet.Enabled)
+    val tabs =
+        HomeTab.entries
+            .filter {
+                when (it) {
+                    HomeTab.ACCOUNT -> !isWalletEnabled
+                    HomeTab.WALLET -> isWalletEnabled
+                    else -> true
+                }
+            }
     NavigationBar(
         containerColor = MaterialTheme.colorScheme.primaryContainer,
         modifier =
@@ -224,7 +249,7 @@ private fun HomeNavigationBar(
                 .padding(start = 16.dp, end = 16.dp),
         windowInsets = WindowInsets(0, 0, 0, 0),
     ) {
-        HomeTab.entries.forEachIndexed { index, tab ->
+        tabs.forEachIndexed { index, tab ->
             val alignment =
                 remember {
                     when (index) {
@@ -366,13 +391,19 @@ private enum class HomeTab(
         categoryName = CategoryName.LEADERBOARD,
         icon = R.drawable.leaderboard_nav_selected,
         unSelectedIcon = R.drawable.leaderboard_nav_unselected,
-        isNew = true,
     ),
     UPLOAD_VIDEO(
         title = "UploadVideo",
         categoryName = CategoryName.UPLOAD_VIDEO,
         icon = R.drawable.upload_video_nav_selected,
         unSelectedIcon = R.drawable.upload_video_nav_unselected,
+    ),
+    WALLET(
+        title = "Wallet",
+        categoryName = CategoryName.WALLET,
+        icon = R.drawable.wallet_nav,
+        unSelectedIcon = R.drawable.wallet_nav_unselected,
+        isNew = true,
     ),
     PROFILE(
         title = "Profile",

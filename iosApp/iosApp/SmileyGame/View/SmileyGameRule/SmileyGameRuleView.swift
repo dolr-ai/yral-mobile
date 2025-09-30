@@ -43,6 +43,8 @@ struct SmileyGameRuleView: View {
         EmptyView()
       }
     }
+    .ignoresSafeArea(.container, edges: .bottom)
+    .padding(.bottom, Constants.bottomAdjustmentYralTabBar)
     .onReceive(viewModel.$state, perform: { state in
       switch state {
       case .success:
@@ -74,5 +76,6 @@ extension SmileyGameRuleView {
     static let ruleBottomPadding = 20.0
     static let pageTopPadding = 12.0
     static let backgroundColor = YralColor.grey950.swiftUIColor
+    static let bottomAdjustmentYralTabBar = 18.0
   }
 }

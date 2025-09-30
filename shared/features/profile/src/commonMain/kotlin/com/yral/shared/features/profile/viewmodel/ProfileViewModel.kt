@@ -11,6 +11,10 @@ import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.coroutines.runSuspendCatching
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
+import com.yral.featureflag.FeatureFlagManager
+import com.yral.featureflag.WalletFeatureFlags
+import com.yral.featureflag.accountFeatureFlags.AccountFeatureFlags
+import com.yral.shared.analytics.events.CtaType
 import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.AccountInfo
@@ -23,11 +27,18 @@ import com.yral.shared.features.profile.domain.DeleteVideoUseCase
 import com.yral.shared.features.profile.domain.ProfileVideosPagingSource
 import com.yral.shared.features.profile.domain.models.DeleteVideoRequest
 import com.yral.shared.features.profile.domain.repository.ProfileRepository
+import com.yral.shared.libs.designsystem.component.toast.ToastManager
+import com.yral.shared.libs.designsystem.component.toast.ToastStatus
+import com.yral.shared.libs.designsystem.component.toast.ToastType
 import com.yral.shared.libs.routing.deeplink.engine.UrlBuilder
 import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
 import com.yral.shared.libs.sharing.LinkGenerator
 import com.yral.shared.libs.sharing.LinkInput
 import com.yral.shared.libs.sharing.ShareService
+import com.yral.shared.reportVideo.domain.ReportRequestParams
+import com.yral.shared.reportVideo.domain.ReportVideoUseCase
+import com.yral.shared.reportVideo.domain.models.ReportSheetState
+import com.yral.shared.reportVideo.domain.models.ReportVideoData
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -37,22 +48,30 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+@Suppress("LongParameterList")
 class ProfileViewModel(
     private val sessionManager: SessionManager,
     private val profileRepository: ProfileRepository,
     private val deleteVideoUseCase: DeleteVideoUseCase,
+    private val reportVideoUseCase: ReportVideoUseCase,
     private val profileTelemetry: ProfileTelemetry,
     private val shareService: ShareService,
     private val urlBuilder: UrlBuilder,
     private val linkGenerator: LinkGenerator,
     private val crashlyticsManager: CrashlyticsManager,
+    private val flagManager: FeatureFlagManager,
 ) : ViewModel() {
     companion object {
         private const val POSTS_PER_PAGE = 20
         private const val POSTS_PREFETCH_DISTANCE = 5
     }
 
-    private val _state = MutableStateFlow(ViewState())
+    private val _state =
+        MutableStateFlow(
+            ViewState(
+                isWalletEnabled = flagManager.isEnabled(WalletFeatureFlags.Wallet.Enabled),
+            ),
+        )
     val state: StateFlow<ViewState> = _state.asStateFlow()
 
     private val deletedVideoIds = MutableStateFlow<Set<String>>(emptySet())
@@ -227,6 +246,65 @@ class ProfileViewModel(
             }
         }
     }
+
+    fun isLoggedIn(): Boolean = sessionManager.isSocialSignIn()
+
+    fun setBottomSheetType(type: ProfileBottomSheet) {
+        _state.update { it.copy(bottomSheet = type) }
+    }
+
+    fun getTncLink(): String = flagManager.get(AccountFeatureFlags.AccountLinks.Links).tnc
+
+    fun toggleReportSheet(
+        isOpen: Boolean,
+        currentDetail: FeedDetails,
+        pageNo: Int,
+    ) {
+        var sheetState: ReportSheetState = ReportSheetState.Closed
+        if (isOpen) {
+            profileTelemetry.videoClicked(
+                feedDetails = currentDetail,
+                ctaType = CtaType.REPORT,
+            )
+            sheetState = ReportSheetState.Open(pageNo)
+        }
+        _state.update { it.copy(reportSheetState = sheetState) }
+    }
+
+    fun reportVideo(
+        pageNo: Int,
+        currentFeed: FeedDetails,
+        reportVideoData: ReportVideoData,
+    ) {
+        viewModelScope.launch {
+            _state.update { it.copy(isReporting = true) }
+            reportVideoUseCase
+                .invoke(
+                    parameter =
+                        ReportRequestParams(
+                            postId = currentFeed.postID,
+                            videoId = currentFeed.videoID,
+                            reason = reportVideoData.otherReasonText.ifEmpty { reportVideoData.reason.reason },
+                            canisterID = currentFeed.canisterID,
+                            principal = currentFeed.principalID,
+                        ),
+                ).onSuccess { _ ->
+                    _state.update { it.copy(isReporting = false) }
+                    with(reportVideoData) {
+                        ToastManager.showToast(
+                            type = ToastType.Big(successMessage.first, successMessage.second),
+                            status = ToastStatus.Success,
+                        )
+                    }
+                    profileTelemetry.videoReportedSuccessfully(currentFeed, reportVideoData.reason)
+                    toggleReportSheet(false, currentFeed, pageNo)
+                    // Remove video from paging source
+                }.onFailure {
+                    _state.update { it.copy(isReporting = false) }
+                    toggleReportSheet(true, currentFeed, pageNo)
+                }
+        }
+    }
 }
 
 data class ViewState(
@@ -234,7 +312,16 @@ data class ViewState(
     val deleteConfirmation: DeleteConfirmationState = DeleteConfirmationState.None,
     val videoView: VideoViewState = VideoViewState.None,
     val manualRefreshTriggered: Boolean = false,
+    val isWalletEnabled: Boolean = false,
+    val bottomSheet: ProfileBottomSheet = ProfileBottomSheet.None,
+    val isReporting: Boolean = false,
+    val reportSheetState: ReportSheetState = ReportSheetState.Closed,
 )
+
+sealed interface ProfileBottomSheet {
+    data object None : ProfileBottomSheet
+    data object SignUp : ProfileBottomSheet
+}
 
 sealed class DeleteConfirmationState {
     data object None : DeleteConfirmationState()

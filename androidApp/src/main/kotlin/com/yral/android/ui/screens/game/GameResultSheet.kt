@@ -21,14 +21,15 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.yral.android.R
-import com.yral.android.ui.design.LocalAppTopography
-import com.yral.android.ui.design.YralColors
-import com.yral.android.ui.widgets.YralBottomSheet
-import com.yral.android.ui.widgets.YralButton
-import com.yral.android.ui.widgets.YralGradientButton
-import com.yral.android.ui.widgets.YralLottieAnimation
 import com.yral.shared.analytics.events.GameConcludedCtaType
 import com.yral.shared.features.game.domain.models.GameIcon
+import com.yral.shared.libs.designsystem.component.YralBottomSheet
+import com.yral.shared.libs.designsystem.component.YralButton
+import com.yral.shared.libs.designsystem.component.YralGradientButton
+import com.yral.shared.libs.designsystem.component.lottie.LottieRes
+import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
+import com.yral.shared.libs.designsystem.theme.LocalAppTopography
+import com.yral.shared.libs.designsystem.theme.YralColors
 import kotlin.math.abs
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -170,7 +171,7 @@ private fun getResultCentsTextColor(coinDelta: Int): Color =
 @Composable
 private fun GameResultBagAnimation(coinDelta: Int) {
     val bagAnimationRes =
-        if (coinDelta > 0) R.raw.smiley_game_win else R.raw.smiley_game_lose
+        if (coinDelta > 0) LottieRes.SMILEY_GAME_WIN else LottieRes.SMILEY_GAME_LOSE
     YralLottieAnimation(
         rawRes = bagAnimationRes,
         iterations = 1,

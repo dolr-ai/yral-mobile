@@ -12,13 +12,17 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
@@ -28,6 +32,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -35,7 +40,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -45,47 +51,60 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import co.touchlab.kermit.Logger
 import com.yral.android.R
-import com.yral.android.ui.design.LocalAppTopography
-import com.yral.android.ui.design.YralColors
-import com.yral.android.ui.screens.account.ErrorMessageSheet
 import com.yral.android.ui.screens.account.LoginBottomSheet
-import com.yral.android.ui.screens.account.WebViewBottomSheet
 import com.yral.android.ui.screens.uploadVideo.aiVideoGen.AiVideoGenScreenConstants.LOADING_MESSAGE_DELAY
-import com.yral.android.ui.widgets.YralAsyncImage
-import com.yral.android.ui.widgets.YralBottomSheet
-import com.yral.android.ui.widgets.YralButtonState
-import com.yral.android.ui.widgets.YralConfirmationMessage
-import com.yral.android.ui.widgets.YralGradientButton
-import com.yral.android.ui.widgets.YralLoader
-import com.yral.android.ui.widgets.YralMaskedVectorTextV2
-import com.yral.android.ui.widgets.getSVGImageModel
 import com.yral.android.ui.widgets.video.YralVideoPlayer
 import com.yral.shared.analytics.events.SignupPageName
-import com.yral.shared.features.account.viewmodel.ErrorType
+import com.yral.shared.features.auth.viewModel.LoginViewModel
 import com.yral.shared.features.uploadvideo.domain.models.Provider
 import com.yral.shared.features.uploadvideo.presentation.AiVideoGenViewModel
 import com.yral.shared.features.uploadvideo.presentation.AiVideoGenViewModel.BottomSheetType
 import com.yral.shared.libs.arch.presentation.UiState
+import com.yral.shared.libs.designsystem.component.YralAsyncImage
+import com.yral.shared.libs.designsystem.component.YralBottomSheet
+import com.yral.shared.libs.designsystem.component.YralButtonState
+import com.yral.shared.libs.designsystem.component.YralConfirmationMessage
+import com.yral.shared.libs.designsystem.component.YralGradientButton
+import com.yral.shared.libs.designsystem.component.YralLoader
+import com.yral.shared.libs.designsystem.component.YralMaskedVectorTextV2
+import com.yral.shared.libs.designsystem.component.YralWebViewBottomSheet
+import com.yral.shared.libs.designsystem.component.getSVGImageModel
+import com.yral.shared.libs.designsystem.theme.LocalAppTopography
+import com.yral.shared.libs.designsystem.theme.YralColors
 import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
+import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
+import yral_mobile.shared.libs.designsystem.generated.resources.pink_gradient_background
+import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
+@Suppress("LongMethod")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AiVideoGenScreen(
     component: AiVideoGenComponent,
     modifier: Modifier = Modifier,
+    bottomPadding: Dp,
     viewModel: AiVideoGenViewModel = koinViewModel(),
+    loginViewModel: LoginViewModel = koinViewModel(),
 ) {
     val viewState by viewModel.state.collectAsStateWithLifecycle()
+    val loginState = loginViewModel.state.collectAsStateWithLifecycle()
     val shouldRefresh = viewModel.sessionObserver.collectAsState(null)
     LaunchedEffect(shouldRefresh.value) {
         Logger.d("VideoGen") { "shouldRefresh: $shouldRefresh" }
         shouldRefresh.value?.first?.let { viewModel.refresh(it) }
         shouldRefresh.value?.second?.let { viewModel.updateBalance(it) }
+    }
+    LaunchedEffect(loginState.value) {
+        if (loginState.value is UiState.Failure) {
+            viewModel.setBottomSheetType(BottomSheetType.Signup)
+        }
     }
     BackHandler(
         enabled = viewState.uiState is UiState.Success,
@@ -112,11 +131,22 @@ fun AiVideoGenScreen(
                     viewModel.cleanup()
                     component.onBack()
                 }
-                Column(modifier = Modifier.padding(top = 20.dp)) {
+                val density = LocalDensity.current
+                val imeBottomDp = with(density) { WindowInsets.ime.getBottom(this).toDp() }
+                val keyboardAwareBottomPadding = (imeBottomDp - bottomPadding).coerceAtLeast(0.dp)
+                val focusManager = LocalFocusManager.current
+                Column(
+                    modifier =
+                        Modifier
+                            .verticalScroll(rememberScrollState())
+                            .padding(bottom = keyboardAwareBottomPadding)
+                            .clickable { focusManager.clearFocus(true) },
+                ) {
                     PromptScreen(
                         viewState = viewState,
                         viewModel = viewModel,
                         showProvidersSheet = { viewModel.setBottomSheetType(BottomSheetType.ModelSelection) },
+                        goToHome = { component.goToHome() },
                     )
                 }
             }
@@ -145,9 +175,9 @@ private fun AiVideoGenScreenPrompts(
     viewState: AiVideoGenViewModel.ViewState,
     viewModel: AiVideoGenViewModel,
 ) {
-    val context = LocalContext.current
+    var extraSheetLink by remember { mutableStateOf("") }
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val extraSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val extraSheetState = rememberModalBottomSheetState()
     when (val sheetType = viewState.bottomSheetType) {
         is BottomSheetType.ModelSelection -> {
             ModelSelection(
@@ -181,32 +211,8 @@ private fun AiVideoGenScreenPrompts(
                 pageName = SignupPageName.VIDEO_CREATION,
                 bottomSheetState = bottomSheetState,
                 onDismissRequest = { viewModel.setBottomSheetType(BottomSheetType.None) },
-                onSignupClicked = { viewModel.signInWithGoogle(context) },
                 termsLink = viewModel.getTncLink(),
-                openTerms = { viewModel.setBottomSheetType(BottomSheetType.Link(viewModel.getTncLink())) },
-            )
-        }
-        is BottomSheetType.Link -> {
-            // reusing from account to be refactored in independent components
-            LaunchedEffect(sheetType.url) {
-                if (sheetType.url.isEmpty()) {
-                    extraSheetState.hide()
-                } else {
-                    extraSheetState.show()
-                }
-            }
-            WebViewBottomSheet(
-                link = sheetType.url,
-                bottomSheetState = extraSheetState,
-                onDismissRequest = { viewModel.setBottomSheetType(BottomSheetType.Signup) },
-            )
-        }
-        is BottomSheetType.SignupFailed -> {
-            // reusing from account to be refactored in independent components
-            ErrorMessageSheet(
-                errorType = ErrorType.SIGNUP_FAILED,
-                onDismissRequest = { viewModel.setBottomSheetType(BottomSheetType.None) },
-                bottomSheetState = bottomSheetState,
+                openTerms = { extraSheetLink = viewModel.getTncLink() },
             )
         }
         is BottomSheetType.BackConfirmation -> {
@@ -225,6 +231,13 @@ private fun AiVideoGenScreenPrompts(
         }
         is BottomSheetType.None -> Unit
     }
+    if (extraSheetLink.isNotEmpty()) {
+        YralWebViewBottomSheet(
+            link = extraSheetLink,
+            bottomSheetState = extraSheetState,
+            onDismissRequest = { extraSheetLink = "" },
+        )
+    }
 }
 
 @Composable
@@ -232,6 +245,7 @@ private fun PromptScreen(
     viewState: AiVideoGenViewModel.ViewState,
     viewModel: AiVideoGenViewModel,
     showProvidersSheet: () -> Unit,
+    goToHome: () -> Unit,
 ) {
     val buttonState =
         remember(viewState.usedCredits, viewState.prompt) {
@@ -245,7 +259,7 @@ private fun PromptScreen(
         modifier =
             Modifier
                 .fillMaxSize()
-                .padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
+                .padding(start = 16.dp, end = 16.dp, bottom = 16.dp, top = 20.dp),
     ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(24.dp, Alignment.Top),
@@ -273,13 +287,13 @@ private fun PromptScreen(
         }
         if (viewState.usedCredits != null && !viewState.isCreditsAvailable() && viewState.isBalanceLow()) {
             Spacer(Modifier.height(16.dp))
-            PlayGameText()
+            PlayGameText(goToHome)
         }
     }
 }
 
 @Composable
-private fun PlayGameText() {
+private fun PlayGameText(goToHome: () -> Unit) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(0.dp, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
@@ -290,16 +304,17 @@ private fun PlayGameText() {
     ) {
         YralMaskedVectorTextV2(
             text = stringResource(R.string.play_games),
-            vectorRes = R.drawable.pink_gradient_background,
+            drawableRes = DesignRes.drawable.pink_gradient_background,
             textStyle =
                 LocalAppTopography
                     .current
                     .mdBold
                     .plus(TextStyle(textAlign = TextAlign.Center)),
+            modifier = Modifier.clickable { goToHome() },
         )
         Text(
             text =
-                "".plus(
+                " ".plus(
                     stringResource(
                         R.string.to_earn_token,
                         stringResource(R.string.coins),
@@ -511,7 +526,7 @@ private fun Header(onBack: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Image(
-            painter = painterResource(id = R.drawable.arrow_left),
+            painter = painterResource(DesignRes.drawable.arrow_left),
             contentDescription = "back button",
             contentScale = ContentScale.None,
             modifier = Modifier.size(24.dp).clickable { onBack() },

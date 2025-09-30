@@ -22,11 +22,11 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.yral.android.R
 import com.yral.android.ui.components.AnimatedBounceIcon
-import com.yral.android.ui.design.LocalAppTopography
-import com.yral.android.ui.design.YralColors
-import com.yral.android.ui.widgets.YralButtonState
-import com.yral.android.ui.widgets.YralButtonType
-import com.yral.android.ui.widgets.YralGradientButton
+import com.yral.shared.libs.designsystem.component.YralButtonState
+import com.yral.shared.libs.designsystem.component.YralButtonType
+import com.yral.shared.libs.designsystem.component.YralGradientButton
+import com.yral.shared.libs.designsystem.theme.LocalAppTopography
+import com.yral.shared.libs.designsystem.theme.YralColors
 
 @Composable
 fun UploadVideoSuccess(onDone: () -> Unit) {

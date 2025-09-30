@@ -117,6 +117,7 @@ extension FeedsViewController: FeedsCellProtocol {
     let smileyID = smiley.id
 
     Task { @MainActor in
+      updateUIAfterGamePlayed(for: item.videoID)
       await self.viewModel.castVote(request: CastVoteQuery(videoID: videoID, smileyID: smileyID))
     }
     AnalyticsModuleKt.getAnalyticsManager().trackEvent(
@@ -330,6 +331,10 @@ extension FeedsViewController: FeedsCellProtocol {
         isNsfw: false
       )
     )
+  }
+
+  func coinsTapped() {
+    eventBus.walletTapped.send()
   }
 }
 
