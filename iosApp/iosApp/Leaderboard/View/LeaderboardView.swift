@@ -93,7 +93,8 @@ struct LeaderboardView: View {
             isExpanded: $leaderboardRowsExpanded,
             topInset: mode == .daily ? Constants.dailyTopInset : Constants.alltimeTopInset,
             peekHeight: usableHeight - headerHeight,
-            background: Constants.dragViewBackground
+            background: Constants.dragViewBackground,
+            isDragEnabled: response.topRows.count > .four
           ) {
             if response.topRows.isEmpty {
               VStack(spacing: Constants.emptyVstackSpacing) {
