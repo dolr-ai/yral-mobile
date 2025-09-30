@@ -1,17 +1,16 @@
 plugins {
     alias(libs.plugins.yral.shared.library)
     alias(libs.plugins.yral.android.library)
-    alias(libs.plugins.composeMultiplatform)
+    alias(libs.plugins.yral.shared.library.compose)
     alias(libs.plugins.composeCompiler)
 }
 
 kotlin {
     androidTarget()
-//    listOf(
-//        iosX64(),
-//        iosArm64(),
-//        iosSimulatorArm64()
-//    )
+    listOf(
+        iosArm64(),
+        iosSimulatorArm64(),
+    )
 
     sourceSets {
         androidMain.dependencies {

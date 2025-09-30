@@ -132,7 +132,7 @@ internal fun YRALReelsPlayerView(
             url = reel.videoUrl,
             listener = prefetchVideoListener,
             onUrlReady = {
-                prefetchQueue.removeIf { it.videoId == reel.videoId }
+                prefetchQueue.removeAll { it.videoId == reel.videoId }
                 prefetchedReels.add(reel.videoId)
             },
         )
