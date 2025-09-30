@@ -10,7 +10,9 @@ import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.utils.getAccountInfo
 import com.yral.shared.features.wallet.analytics.WalletTelemetry
 import com.yral.shared.features.wallet.domain.GetBtcConversionUseCase
+import com.yral.shared.features.wallet.domain.GetRewardConfigUseCase
 import com.yral.shared.features.wallet.domain.GetUserBtcBalanceUseCase
+import com.yral.shared.features.wallet.domain.models.BtcRewardConfig
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,6 +25,7 @@ class WalletViewModel(
     private val sessionManager: SessionManager,
     private val getBtcConversionUseCase: GetBtcConversionUseCase,
     private val getUserBtcBalanceUseCase: GetUserBtcBalanceUseCase,
+    private val getRewardConfigUseCase: GetRewardConfigUseCase,
     private val walletTelemetry: WalletTelemetry,
 ) : ViewModel() {
     private val _state = MutableStateFlow(WalletState())
@@ -36,6 +39,11 @@ class WalletViewModel(
 
     init {
         observeBalance()
+        viewModelScope.launch {
+            getRewardConfigUseCase
+                .invoke()
+                .onSuccess { rewardConfig -> _state.update { it.copy(rewardConfig = rewardConfig) } }
+        }
     }
 
     fun onScreenViewed() {
@@ -103,4 +111,5 @@ data class WalletState(
     val btcConversionCurrency: String? = null,
     val accountInfo: AccountInfo? = null,
     val howToEarnHelpVisible: Boolean = false,
+    val rewardConfig: BtcRewardConfig? = null,
 )
