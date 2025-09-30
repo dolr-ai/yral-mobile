@@ -55,12 +55,9 @@ fun WalletScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val isFirebaseLoggedIn by viewModel.firebaseLogin.collectAsStateWithLifecycle(false)
     val countryCode = Locale.current.region
-    LaunchedEffect(Unit) {
-        viewModel.refresh(countryCode)
-        viewModel.onScreenViewed()
-    }
+    LaunchedEffect(Unit) { viewModel.onScreenViewed() }
     LaunchedEffect(isFirebaseLoggedIn) {
-        viewModel.refresh(countryCode)
+        viewModel.refresh(countryCode, isFirebaseLoggedIn)
     }
     Column(modifier = modifier.fillMaxSize()) {
         WalletHeader()

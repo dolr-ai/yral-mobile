@@ -77,9 +77,18 @@ fun LeaderboardMainScreen(
     val isFirebaseLoggedIn by viewModel.firebaseLogin.collectAsStateWithLifecycle(false)
     var hasStartedLoadingSinceLogin by remember(isFirebaseLoggedIn) { mutableStateOf(false) }
     LaunchedEffect(Unit) { viewModel.leaderboardPageViewed() }
-    LaunchedEffect(isFirebaseLoggedIn) { viewModel.loadData(countryCode) }
+    LaunchedEffect(isFirebaseLoggedIn) {
+        if (isFirebaseLoggedIn) {
+            viewModel.loadData(countryCode)
+        }
+    }
     val isEmptyStateVisible by remember(state.isLoading, isFirebaseLoggedIn, hasStartedLoadingSinceLogin) {
-        derivedStateOf { !state.isLoading && isFirebaseLoggedIn && hasStartedLoadingSinceLogin }
+        derivedStateOf {
+            !state.isLoading &&
+                isFirebaseLoggedIn &&
+                hasStartedLoadingSinceLogin &&
+                state.leaderboard.isEmpty()
+        }
     }
     LaunchedEffect(state.isLoading, isFirebaseLoggedIn) {
         if (isFirebaseLoggedIn && state.isLoading) {

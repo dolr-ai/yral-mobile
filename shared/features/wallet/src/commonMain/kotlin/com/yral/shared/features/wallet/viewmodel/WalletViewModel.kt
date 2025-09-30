@@ -43,10 +43,15 @@ class WalletViewModel(
         walletTelemetry.onWalletScreenViewed()
     }
 
-    fun refresh(countryCode: String) {
+    fun refresh(
+        countryCode: String,
+        isFirebaseLoggedIn: Boolean,
+    ) {
         _state.update { it.copy(accountInfo = sessionManager.getAccountInfo()) }
         getUserBtcBalanceUseCase()
-        getBtcValueConversion(countryCode)
+        if (isFirebaseLoggedIn) {
+            getBtcValueConversion(countryCode)
+        }
     }
 
     private fun observeBalance() {

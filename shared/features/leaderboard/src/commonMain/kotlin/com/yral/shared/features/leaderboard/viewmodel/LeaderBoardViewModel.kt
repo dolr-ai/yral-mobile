@@ -168,7 +168,7 @@ data class LeaderBoardState(
     val leaderboard: List<LeaderboardItem> = emptyList(),
     val currentUser: LeaderboardItem? = null,
     val isCurrentUserInTop: Boolean = false,
-    val isLoading: Boolean = false,
+    val isLoading: Boolean = true,
     val error: String? = null,
     val selectedMode: LeaderboardMode = LeaderboardMode.DAILY,
     val countDownMs: Long? = null,
