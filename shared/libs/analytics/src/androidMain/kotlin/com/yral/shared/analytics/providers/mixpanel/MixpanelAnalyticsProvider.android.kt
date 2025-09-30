@@ -11,6 +11,9 @@ import com.yral.shared.analytics.User
 import com.yral.shared.analytics.di.IS_DEBUG
 import com.yral.shared.analytics.events.EventData
 import com.yral.shared.analytics.events.TokenType
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import org.json.JSONObject
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -34,6 +37,9 @@ actual class MixpanelAnalyticsProvider actual constructor(
             mixpanel.setEnableLogging(true)
         }
     }
+
+    private val distinctId = MutableStateFlow(mixpanel.distinctId)
+    fun observeDistinctId(): Flow<String> = distinctId.asStateFlow()
 
     fun initSessionReplay(token: String) {
         MPSessionReplay.initialize(
@@ -70,6 +76,7 @@ actual class MixpanelAnalyticsProvider actual constructor(
         if (user.isLoggedIn == true) {
             mixpanel.identify(user.userId)
             MPSessionReplay.getInstance()?.identify(user.userId)
+            distinctId.value = mixpanel.distinctId
             superProps["user_id"] = user.userId
             superProps["visitor_id"] = null
         } else {
@@ -82,6 +89,7 @@ actual class MixpanelAnalyticsProvider actual constructor(
     override fun reset() {
         mixpanel.reset()
         MPSessionReplay.getInstance()?.identify(mixpanel.distinctId)
+        distinctId.value = mixpanel.distinctId
     }
 
     override fun toValidKeyName(key: String): String = key

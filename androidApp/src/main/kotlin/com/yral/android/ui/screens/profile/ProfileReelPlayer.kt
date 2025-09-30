@@ -1,6 +1,9 @@
 package com.yral.android.ui.screens.profile
 
+import android.R.attr.text
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -15,7 +18,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,24 +39,40 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
 import com.yral.android.R
-import com.yral.android.ui.design.LocalAppTopography
-import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.feed.performance.PrefetchVideoListenerImpl
-import com.yral.android.ui.widgets.YralLoader
+import com.yral.android.ui.screens.profile.main.ProfileMainScreenConstants
 import com.yral.shared.data.feed.domain.FeedDetails
+import com.yral.shared.libs.designsystem.component.YralLoader
+import com.yral.shared.libs.designsystem.component.lottie.LottieRes
+import com.yral.shared.libs.designsystem.theme.LocalAppTopography
+import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.videoPlayer.YRALReelPlayer
 import com.yral.shared.libs.videoPlayer.model.Reels
+import com.yral.shared.reportVideo.domain.models.ReportSheetState
+import com.yral.shared.reportVideo.domain.models.ReportVideoData
+import com.yral.shared.reportVideo.ui.ReportVideo
+import com.yral.shared.reportVideo.ui.ReportVideoSheet
+import org.jetbrains.compose.resources.painterResource
+import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
+import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileReelPlayer(
     reelVideos: LazyPagingItems<FeedDetails>,
     initialPage: Int,
     deletingVideoId: String,
+    isReporting: Boolean,
+    reportSheetState: ReportSheetState,
+    onReportClick: (pageNo: Int, video: FeedDetails) -> Unit,
+    dismissReportSheet: (video: FeedDetails) -> Unit,
+    reportVideo: (pageNo: Int, video: FeedDetails, reportVideoData: ReportVideoData) -> Unit,
     onBack: () -> Unit,
     onDeleteVideo: (FeedDetails) -> Unit,
     onShareClick: (FeedDetails) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val videoReels =
         remember(reelVideos.itemSnapshotList) {
             reelVideos.itemSnapshotList.items.map { it.toReel() }
@@ -74,9 +95,24 @@ fun ProfileReelPlayer(
                     currentVideo = currentVideo,
                     isDeleting = deletingVideoId == currentVideo.videoID,
                     onBack = onBack,
+                    onReportClick = { onReportClick(pageNo, currentVideo) },
                     onDeleteVideo = { onDeleteVideo(currentVideo) },
                     onShareClick = { onShareClick(currentVideo) },
                 )
+                when (val reportSheetState = reportSheetState) {
+                    ReportSheetState.Closed -> Unit
+                    is ReportSheetState.Open -> {
+                        ReportVideoSheet(
+                            onDismissRequest = { dismissReportSheet(currentVideo) },
+                            bottomSheetState = bottomSheetState,
+                            isLoading = isReporting,
+                            reasons = reportSheetState.reasons,
+                            onSubmit = { reportVideoData ->
+                                reportVideo(pageNo, currentVideo, reportVideoData)
+                            },
+                        )
+                    }
+                }
             }
         }
     }
@@ -87,6 +123,7 @@ private fun ProfileReelOverlay(
     currentVideo: FeedDetails,
     isDeleting: Boolean,
     onBack: () -> Unit,
+    onReportClick: () -> Unit,
     onDeleteVideo: () -> Unit,
     onShareClick: () -> Unit,
 ) {
@@ -111,6 +148,7 @@ private fun ProfileReelOverlay(
             )
             ActionsRight(
                 modifier = Modifier.align(Alignment.BottomEnd).padding(end = 16.dp, bottom = 89.dp),
+                onReportClick = onReportClick,
                 onShareClick = onShareClick,
                 onDeleteVideo = onDeleteVideo,
             )
@@ -141,7 +179,7 @@ private fun Header(
     ) {
         Image(
             modifier = Modifier.size(24.dp).clickable { onBack() },
-            painter = painterResource(id = R.drawable.arrow_left),
+            painter = painterResource(DesignRes.drawable.arrow_left),
             contentDescription = "back",
         )
         Text(
@@ -171,7 +209,7 @@ private fun Caption(
             val scrollState = rememberScrollState()
             val maxHeight =
                 LocalAppTopography.current.feedDescription.lineHeight.value *
-                    ProfileScreenConstants.MAX_LINES_FOR_POST_DESCRIPTION
+                    ProfileMainScreenConstants.MAX_LINES_FOR_POST_DESCRIPTION
             Text(
                 modifier = Modifier.heightIn(max = maxHeight.dp).verticalScroll(scrollState),
                 text = caption,
@@ -193,6 +231,7 @@ private fun Caption(
 @Composable
 private fun ActionsRight(
     modifier: Modifier,
+    onReportClick: () -> Unit,
     onShareClick: () -> Unit,
     onDeleteVideo: () -> Unit,
 ) {
@@ -203,6 +242,10 @@ private fun ActionsRight(
     ) {
         ShareIcon(
             onClick = onShareClick,
+        )
+
+        ReportVideo(
+            onReportClicked = onReportClick,
         )
 
         DeleteIcon(
@@ -250,8 +293,8 @@ private fun DeletingOverlay(
 ) {
     AnimatedVisibility(
         visible = isDeleting,
-        enter = androidx.compose.animation.fadeIn(),
-        exit = androidx.compose.animation.fadeOut(),
+        enter = fadeIn(),
+        exit = fadeOut(),
     ) {
         Box(
             modifier = Modifier.fillMaxSize().background(YralColors.ScrimColor).clickable { },
@@ -261,7 +304,7 @@ private fun DeletingOverlay(
                 verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Bottom),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                YralLoader(size = loaderSize, R.raw.read_loader)
+                YralLoader(size = loaderSize, LottieRes.READ_LOADER)
                 Text(
                     text = stringResource(R.string.deleting),
                     style = textStyle,
@@ -274,7 +317,7 @@ private fun DeletingOverlay(
 
 private fun FeedDetails.toReel() =
     Reels(
-        videoUrl = url.toString(),
-        thumbnailUrl = thumbnail.toString(),
+        videoUrl = url,
+        thumbnailUrl = thumbnail,
         videoId = videoID,
     )

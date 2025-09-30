@@ -14,4 +14,5 @@ data class SessionProperties(
     val profileVideosCount: Int? = null,
     val isForcedGamePlayUser: Boolean? = null,
     val emailId: String? = null,
+    val isFirebaseLoggedIn: Boolean = false,
 )

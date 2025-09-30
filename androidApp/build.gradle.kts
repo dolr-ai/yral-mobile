@@ -14,8 +14,8 @@ android {
     namespace = "com.yral.android"
     defaultConfig {
         applicationId = "com.yral.android"
-        versionCode = 18
-        versionName = "1.7.0"
+        versionCode = 20
+        versionName = "1.7.1"
         ndkVersion = "28.0.13004108"
         buildConfigField(
             type = "String",
@@ -140,6 +140,12 @@ dependencies {
     implementation(projects.shared.libs.featureFlag)
     implementation(projects.shared.rust.service)
     implementation(projects.shared.libs.routing.deeplinkEngine)
+    implementation(projects.shared.features.wallet)
+    implementation(projects.shared.libs.formatters)
+    implementation(projects.shared.libs.designsystem)
+    implementation(projects.shared.features.reportVideo)
+    implementation(compose.components.resources)
+    implementation(projects.shared.features.leaderboard)
 }
 
 afterEvaluate {

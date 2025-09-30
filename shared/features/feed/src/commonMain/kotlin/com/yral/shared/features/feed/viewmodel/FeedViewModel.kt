@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.coroutines.runSuspendCatching
+import com.github.michaelbull.result.map
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.featureflag.FeatureFlagManager
@@ -22,14 +23,19 @@ import com.yral.shared.features.feed.domain.useCases.CheckVideoVoteUseCase
 import com.yral.shared.features.feed.domain.useCases.FetchFeedDetailsUseCase
 import com.yral.shared.features.feed.domain.useCases.FetchMoreFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.GetInitialFeedUseCase
-import com.yral.shared.features.feed.domain.useCases.ReportRequestParams
-import com.yral.shared.features.feed.domain.useCases.ReportVideoUseCase
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
+import com.yral.shared.libs.designsystem.component.toast.ToastManager
+import com.yral.shared.libs.designsystem.component.toast.ToastStatus
+import com.yral.shared.libs.designsystem.component.toast.ToastType
 import com.yral.shared.libs.routing.deeplink.engine.UrlBuilder
 import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
 import com.yral.shared.libs.sharing.LinkGenerator
 import com.yral.shared.libs.sharing.LinkInput
 import com.yral.shared.libs.sharing.ShareService
+import com.yral.shared.reportVideo.domain.ReportRequestParams
+import com.yral.shared.reportVideo.domain.ReportVideoUseCase
+import com.yral.shared.reportVideo.domain.models.ReportSheetState
+import com.yral.shared.reportVideo.domain.models.ReportVideoData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
@@ -94,6 +100,7 @@ class FeedViewModel(
                             setLoadingMore(false)
                             loadMoreFeed()
                         } else {
+                            crashlyticsManager.recordException(YralException("Initial cache feed empty"))
                             val notVotedCount = filterVotedAndFetchDetails(posts)
                             Logger.d("FeedPagination") { "notVotedCount in initialFeed $notVotedCount" }
                             if (notVotedCount < SUFFICIENT_NEW_REQUIRED) {
@@ -176,7 +183,7 @@ class FeedViewModel(
                 }
             }.onFailure { throwable ->
                 Logger.e(throwable) {
-                    "Failed to fetch deeplinked video details for postId=$postId canisterId=$canisterId"
+                    "Failed to fetch deep linked video details for postId=$postId canisterId=$canisterId"
                 }
                 setDeeplinkFetching(false)
             }
@@ -214,16 +221,16 @@ class FeedViewModel(
                 n = newPosts.size,
                 process = { post ->
                     _state.update { it.copy(pendingFetchDetails = it.pendingFetchDetails + 1) }
-                    requiredUseCases.fetchFeedDetailsUseCase.invoke(post)
+                    requiredUseCases.fetchFeedDetailsUseCase
+                        .invoke(post)
+                        .map { detail -> detail to isAlreadyVoted(detail) }
                 },
-            ).collect { detail ->
-                detail
-                    .onSuccess { detail ->
+            ).collect { result ->
+                result
+                    .onSuccess { (detail, isVoted) ->
                         val existingDetailIds =
                             _state.value.feedDetails.mapTo(HashSet()) { it.videoID }
                         if (detail.videoID !in existingDetailIds) {
-                            val isVoted = isAlreadyVoted(detail)
-                            Logger.d("FeedPagination") { "isVoted $isVoted video Id: ${detail.videoID}" }
                             if (!isVoted) {
                                 count.update { it + 1 }
                                 _state.update { currentState ->
@@ -317,6 +324,9 @@ class FeedViewModel(
                             setLoadingMore(false)
                         }
                     } else {
+                        if (totalNotVotedCount < SUFFICIENT_NEW_REQUIRED) {
+                            crashlyticsManager.recordException(YralException("Feed ran dry"))
+                        }
                         setLoadingMore(false)
                     }
                 }.onFailure {
@@ -448,8 +458,7 @@ class FeedViewModel(
 
     fun reportVideo(
         pageNo: Int,
-        reason: VideoReportReason,
-        text: String,
+        reportVideoData: ReportVideoData,
     ) {
         coroutineScope.launch {
             val currentFeed = _state.value.feedDetails[pageNo]
@@ -460,13 +469,19 @@ class FeedViewModel(
                         ReportRequestParams(
                             postId = currentFeed.postID,
                             videoId = currentFeed.videoID,
-                            reason = text.ifEmpty { reason.reason },
+                            reason = reportVideoData.otherReasonText.ifEmpty { reportVideoData.reason.reason },
                             canisterID = currentFeed.canisterID,
                             principal = currentFeed.principalID,
                         ),
                 ).onSuccess {
                     setReporting(false)
-                    feedTelemetry.videoReportedSuccessfully(currentFeed, reason)
+                    with(reportVideoData) {
+                        ToastManager.showToast(
+                            type = ToastType.Big(successMessage.first, successMessage.second),
+                            status = ToastStatus.Success,
+                        )
+                    }
+                    feedTelemetry.videoReportedSuccessfully(currentFeed, reportVideoData.reason)
                     toggleReportSheet(false, pageNo)
                     _state.update { currentState ->
                         val updatedFeedDetails = currentState.feedDetails.toMutableList()
@@ -626,31 +641,6 @@ data class VideoData(
     val lastKnownTotalTime: Int = 0,
     val isFirstTimeUpdate: Boolean = true,
 )
-
-sealed interface ReportSheetState {
-    data object Closed : ReportSheetState
-    data class Open(
-        val pageNo: Int,
-        val reasons: List<VideoReportReason> =
-            listOf(
-                VideoReportReason.NUDITY_PORN,
-                VideoReportReason.VIOLENCE,
-                VideoReportReason.OFFENSIVE,
-                VideoReportReason.SPAM,
-                VideoReportReason.OTHERS,
-            ),
-    ) : ReportSheetState
-}
-
-enum class VideoReportReason(
-    val reason: String,
-) {
-    NUDITY_PORN("Nudity / Porn"),
-    VIOLENCE("Violence / Gore"),
-    OFFENSIVE("Offensive"),
-    SPAM("Spam / Ad"),
-    OTHERS("Others"),
-}
 
 @Suppress("MagicNumber")
 internal fun Int.percentageOf(total: Int): Double =

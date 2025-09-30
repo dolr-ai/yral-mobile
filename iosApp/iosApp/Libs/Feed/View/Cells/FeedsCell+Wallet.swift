@@ -8,7 +8,7 @@
 import UIKit
 import Lottie
 
-extension FeedsCell {
+extension FeedsCell: ProfileInfoViewDelegate {
   func beginWalletRechargeLoading() {
     delegate?.walletAnimationStarted()
   }
@@ -24,5 +24,9 @@ extension FeedsCell {
       success: result == .success,
       coins: coins
     )
+  }
+
+  func coinsTapped() {
+    delegate?.coinsTapped()
   }
 }

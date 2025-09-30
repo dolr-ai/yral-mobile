@@ -30,6 +30,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -54,13 +56,7 @@ class GameViewModel(
     val state: StateFlow<GameState> = _state.asStateFlow()
 
     init {
-        viewModelScope.launch {
-            restoreDataFromPrefs()
-            listOf(
-                async { getGameRules() },
-                async { getGameIcons() },
-            ).awaitAll()
-        }
+        viewModelScope.launch { restoreDataFromPrefs() }
         viewModelScope.launch {
             // Observe coin balance changes
             sessionManager.observeSessionProperties().collect { properties ->
@@ -68,10 +64,23 @@ class GameViewModel(
                 properties.coinBalance?.let { balance ->
                     _state.update { it.copy(coinBalance = balance) }
                 }
-                properties.isForcedGamePlayUser?.let { isStopAndVote ->
-                    _state.update { it.copy(isStopAndVote = isStopAndVote) }
-                }
             }
+        }
+        viewModelScope.launch {
+            // Observe firebase login
+            sessionManager
+                .observeSessionProperties()
+                .map { it.isFirebaseLoggedIn to it.isForcedGamePlayUser }
+                .distinctUntilChanged()
+                .collect { (isLoggedIn, isForcedGamePlayUser) ->
+                    if (isLoggedIn) {
+                        isForcedGamePlayUser?.let { _state.update { it.copy(isStopAndVote = isForcedGamePlayUser) } }
+                        listOf(
+                            async { getGameRules() },
+                            async { getGameIcons() },
+                        ).awaitAll()
+                    }
+                }
         }
     }
 
@@ -168,6 +177,7 @@ class GameViewModel(
             updatedGameResult[feedDetails.videoID] = initialGameResult
             currentState.copy(
                 gameResult = updatedGameResult,
+                lastVotedCount = currentState.lastVotedCount + 1,
             )
         }
         sessionManager.userPrincipal?.let { principal ->
@@ -269,7 +279,6 @@ class GameViewModel(
                     showResultSheet = shouldShowResultSheet,
                     isLoading = false,
                     lastBalanceDifference = voteResult.coinDelta,
-                    lastVotedCount = it.lastVotedCount + 1,
                     isSmileyGameIntroNudgeShown = true,
                 )
             }

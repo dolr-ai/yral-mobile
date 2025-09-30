@@ -7,13 +7,16 @@ import com.yral.shared.features.account.di.accountsModule
 import com.yral.shared.features.auth.di.authModule
 import com.yral.shared.features.feed.di.feedModule
 import com.yral.shared.features.game.di.gameModule
+import com.yral.shared.features.leaderboard.di.leaderboardModule
 import com.yral.shared.features.profile.di.profileModule
 import com.yral.shared.features.root.di.rootModule
 import com.yral.shared.features.uploadvideo.di.uploadVideoModule
+import com.yral.shared.features.wallet.di.walletModule
 import com.yral.shared.firebaseAuth.di.firebaseAuthModule
 import com.yral.shared.firebaseStore.di.firestoreModule
 import com.yral.shared.http.di.networkModule
 import com.yral.shared.preferences.di.preferencesModule
+import com.yral.shared.reportVideo.di.reportVideoModule
 import com.yral.shared.rust.service.di.rustModule
 import org.koin.core.context.startKoin
 import org.koin.dsl.KoinAppDeclaration
@@ -38,6 +41,7 @@ actual fun initKoin(appDeclaration: KoinAppDeclaration) {
             featureFlagModule,
             routingModule,
             sharingModule,
+            reportVideoModule,
         )
         modules(
             authModule,
@@ -45,8 +49,10 @@ actual fun initKoin(appDeclaration: KoinAppDeclaration) {
             rootModule,
             accountsModule,
             gameModule,
+            leaderboardModule,
             uploadVideoModule,
             profileModule,
+            walletModule,
         )
     }
 }

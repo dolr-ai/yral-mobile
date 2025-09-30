@@ -27,6 +27,7 @@ protocol FeedsCellProtocol: AnyObject {
   func walletAnimationEnded(success: Bool, coins: Int64)
   func howToPlayTapped()
   func howToPlayShown(index: Int)
+  func coinsTapped()
 }
 
 // swiftlint: disable type_body_length
@@ -178,6 +179,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     return imageView
   }()
   var expectedVideoID: String?
+  var overlayGeneration = 0
 
   enum RechargeResult { case success, failure }
 
@@ -231,6 +233,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
         constant: Constants.profileInfoTop
       )
     ])
+    profileInfoView.delegate = self
   }
 
   func setupStackView() {
@@ -526,6 +529,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
 
   override func prepareForReuse() {
     super.prepareForReuse()
+    overlayGeneration &+= 1
     playerLayer?.isHidden = true
     playerLayer?.player = nil
     playerLayer?.removeFromSuperlayer()

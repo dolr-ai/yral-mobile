@@ -14,6 +14,9 @@ final class ProfileDIContainer {
     let crashReporter: CrashReporter
     let accountUseCase: AccountUseCaseProtocol
     let session: SessionManager
+    let eventBus: EventBus
+    let accountRepository: AccountRepositoryProtocol
+    let socialSignInUseCase: SocialSignInUseCaseProtocol
   }
 
   private let dependencies: Dependencies
@@ -51,7 +54,8 @@ final class ProfileDIContainer {
       refreshVideoUseCase: RefreshVideosUseCase(
         profileRepository: profileRepository,
         crashReporter: dependencies.crashReporter
-      )
+      ),
+      socialSigninUseCase: dependencies.socialSignInUseCase
     )
   }
 
@@ -88,11 +92,30 @@ final class ProfileDIContainer {
         playToScroll: false,
         feedType: .currentUser,
         session: dependencies.session,
+        eventBus: dependencies.eventBus,
         crashReporter: dependencies.crashReporter
       ),
       showFeeds: showFeeds,
       walletPhase: walletPhase,
       walletOutcome: walletOutcome
+    )
+  }
+
+  func makeAccount(showAccount: Binding<Bool>) -> AccountView {
+    AccountView(
+      viewModel: AccountViewModel(
+        accountUseCase: dependencies.accountUseCase,
+        socialSignInUseCase: dependencies.socialSignInUseCase,
+        logoutUseCase: LogoutUseCase(
+          accountRepository: dependencies.accountRepository,
+          crashReporter: dependencies.crashReporter
+        ),
+        deleteUseCase: DeleteUseCase(
+          accountRepository: dependencies.accountRepository,
+          crashReporter: dependencies.crashReporter
+        )
+      ),
+      showAccount: showAccount
     )
   }
 }

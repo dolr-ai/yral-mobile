@@ -28,13 +28,17 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.yral.android.R
-import com.yral.android.ui.design.LocalAppTopography
-import com.yral.android.ui.design.YralColors
 import com.yral.android.ui.screens.uploadVideo.aiVideoGen.AiVideoGenScreenConstants.ARROW_ROTATION
-import com.yral.android.ui.widgets.YralAsyncImage
-import com.yral.android.ui.widgets.getSVGImageModel
 import com.yral.shared.features.uploadvideo.domain.models.Provider
 import com.yral.shared.features.uploadvideo.presentation.AiVideoGenViewModel.ViewState
+import com.yral.shared.libs.designsystem.component.YralAsyncImage
+import com.yral.shared.libs.designsystem.component.YralLoader
+import com.yral.shared.libs.designsystem.component.getSVGImageModel
+import com.yral.shared.libs.designsystem.theme.LocalAppTopography
+import com.yral.shared.libs.designsystem.theme.YralColors
+import org.jetbrains.compose.resources.painterResource
+import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
+import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @Composable
 fun ModelDetails(
@@ -69,7 +73,6 @@ fun ModelDetails(
                 )
                 CostRow(
                     isCreditsAvailable = viewState.isCreditsAvailable(),
-                    isBalanceLow = viewState.isBalanceLow(),
                     selectedProvider = viewState.selectedProvider,
                 )
                 CreditsBalance(
@@ -81,13 +84,19 @@ fun ModelDetails(
                 )
             }
         }
+            ?: Column(
+                modifier = Modifier.fillMaxWidth().height(130.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                YralLoader(size = 34.dp)
+            }
     }
 }
 
 @Composable
 private fun CostRow(
     isCreditsAvailable: Boolean,
-    isBalanceLow: Boolean,
     selectedProvider: Provider?,
 ) {
     Row(
@@ -106,7 +115,6 @@ private fun CostRow(
     ) {
         Cost(
             selectedProvider = selectedProvider,
-            isBalanceLow = isBalanceLow,
             isCreditsAvailable = isCreditsAvailable,
             modifier = Modifier.weight(1f),
         )
@@ -118,7 +126,6 @@ private fun CostRow(
 private fun Cost(
     selectedProvider: Provider?,
     isCreditsAvailable: Boolean,
-    isBalanceLow: Boolean,
     modifier: Modifier,
 ) {
     Row(
@@ -128,11 +135,11 @@ private fun Cost(
     ) {
         selectedProvider?.cost?.sats?.let { cost ->
             Text(
-                text = if (isCreditsAvailable || isBalanceLow) "0" else "$cost",
+                text = if (isCreditsAvailable) "0" else "$cost",
                 style = LocalAppTopography.current.mdSemiBold,
                 color = YralColors.Neutral300,
             )
-            if (isCreditsAvailable || isBalanceLow) {
+            if (isCreditsAvailable) {
                 Text(
                     text = "$cost",
                     style = LocalAppTopography.current.baseMedium,
@@ -298,7 +305,7 @@ private fun ProviderRow(
             }
         }
         Image(
-            painter = painterResource(id = R.drawable.arrow_left),
+            painter = painterResource(DesignRes.drawable.arrow_left),
             contentDescription = "select model",
             contentScale = ContentScale.None,
             modifier = Modifier.size(24.dp).rotate(ARROW_ROTATION),

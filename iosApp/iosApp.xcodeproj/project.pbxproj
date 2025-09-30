@@ -197,6 +197,16 @@
 		AC1233752DF5E14100DAFCF4 /* libsecp256k1 in Frameworks */ = {isa = PBXBuildFile; productRef = AC1233742DF5E14100DAFCF4 /* libsecp256k1 */; };
 		AC1233772DF5E16000DAFCF4 /* P256K in Frameworks */ = {isa = PBXBuildFile; productRef = AC1233762DF5E16000DAFCF4 /* P256K */; };
 		AC12B9D22D3809B7004E9EA9 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = AC12B9D12D3809B7004E9EA9 /* GoogleService-Info.plist */; };
+		AC1912972E79624700BA5D78 /* WalletView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1912962E79624100BA5D78 /* WalletView.swift */; };
+		AC1912982E79624700BA5D78 /* WalletView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1912962E79624100BA5D78 /* WalletView.swift */; };
+		AC19129C2E7962AA00BA5D78 /* WalletDIContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC19129B2E7962A500BA5D78 /* WalletDIContainer.swift */; };
+		AC19129D2E7962AA00BA5D78 /* WalletDIContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC19129B2E7962A500BA5D78 /* WalletDIContainer.swift */; };
+		AC1912A02E796F3200BA5D78 /* YralTabbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC19129F2E796F2E00BA5D78 /* YralTabbar.swift */; };
+		AC1912A12E796F3200BA5D78 /* YralTabbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC19129F2E796F2E00BA5D78 /* YralTabbar.swift */; };
+		AC1912A32E7978DE00BA5D78 /* WalletViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1912A22E7978D800BA5D78 /* WalletViewModel.swift */; };
+		AC1912A42E7978DE00BA5D78 /* WalletViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1912A22E7978D800BA5D78 /* WalletViewModel.swift */; };
+		AC1912A72E79856200BA5D78 /* CustomRoundedRectangle.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1912A62E79855400BA5D78 /* CustomRoundedRectangle.swift */; };
+		AC1912A82E79856200BA5D78 /* CustomRoundedRectangle.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1912A62E79855400BA5D78 /* CustomRoundedRectangle.swift */; };
 		AC1ACF982DB9161F001BDCFD /* AuthState.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1ACF972DB9161D001BDCFD /* AuthState.swift */; };
 		AC1ACF992DB9161F001BDCFD /* AuthState.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1ACF972DB9161D001BDCFD /* AuthState.swift */; };
 		AC1ACF9C2DB917A3001BDCFD /* SessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1ACF9B2DB9179F001BDCFD /* SessionManager.swift */; };
@@ -291,6 +301,8 @@
 		AC32E4702D299E74001DDA43 /* ICPBrandingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E46E2D299E6B001DDA43 /* ICPBrandingView.swift */; };
 		AC32E4792D2AF599001DDA43 /* CacheDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E4782D2AF594001DDA43 /* CacheDTO.swift */; };
 		AC32E47A2D2AF599001DDA43 /* CacheDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC32E4782D2AF594001DDA43 /* CacheDTO.swift */; };
+		AC36F5CC2E83072A008F12BC /* UpdateSessionDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC36F5CB2E830723008F12BC /* UpdateSessionDTO.swift */; };
+		AC36F5CD2E83072A008F12BC /* UpdateSessionDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC36F5CB2E830723008F12BC /* UpdateSessionDTO.swift */; };
 		AC391EE62DCE476400A8DFA9 /* Signup_scroll_lottie.json in Resources */ = {isa = PBXBuildFile; fileRef = AC391EE52DCE476400A8DFA9 /* Signup_scroll_lottie.json */; };
 		AC391EE72DCE476400A8DFA9 /* Signup_scroll_lottie.json in Resources */ = {isa = PBXBuildFile; fileRef = AC391EE52DCE476400A8DFA9 /* Signup_scroll_lottie.json */; };
 		AC391EE92DCE4DE600A8DFA9 /* DeleteUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC391EE82DCE4DE100A8DFA9 /* DeleteUseCase.swift */; };
@@ -389,6 +401,8 @@
 		AC8958E02D3EA60500E19ED7 /* FeedsViewController+DataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC8958DE2D3EA5FE00E19ED7 /* FeedsViewController+DataSource.swift */; };
 		AC8958E22D3EB0DB00E19ED7 /* ProfileOptionsWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC8958E12D3EB0D100E19ED7 /* ProfileOptionsWebView.swift */; };
 		AC8958E32D3EB0DB00E19ED7 /* ProfileOptionsWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC8958E12D3EB0D100E19ED7 /* ProfileOptionsWebView.swift */; };
+		AC8BB94D2E7AF36900E6BB3E /* ProfileView+Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC8BB94C2E7AF36200E6BB3E /* ProfileView+Constants.swift */; };
+		AC8BB94E2E7AF36900E6BB3E /* ProfileView+Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC8BB94C2E7AF36200E6BB3E /* ProfileView+Constants.swift */; };
 		AC8FC76A2D9BE09A006F29BC /* FeedRequestDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC8FC7692D9BE095006F29BC /* FeedRequestDTO.swift */; };
 		AC8FC76B2D9BE09A006F29BC /* FeedRequestDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC8FC7692D9BE095006F29BC /* FeedRequestDTO.swift */; };
 		AC8FC76D2D9C01E9006F29BC /* Yral_Loader.json in Resources */ = {isa = PBXBuildFile; fileRef = AC8FC76C2D9C01E9006F29BC /* Yral_Loader.json */; };
@@ -539,6 +553,16 @@
 		ACCEAD362E393EAA00D9F03F /* FeedsRepository+Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACCEAD342E393EA400D9F03F /* FeedsRepository+Constants.swift */; };
 		ACD7C16E2E1D38DF00075148 /* DefaultAuthClient+Firebase.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD7C16D2E1D38D400075148 /* DefaultAuthClient+Firebase.swift */; };
 		ACD7C16F2E1D38DF00075148 /* DefaultAuthClient+Firebase.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD7C16D2E1D38D400075148 /* DefaultAuthClient+Firebase.swift */; };
+		ACD8C35A2E7C5FEE0066027B /* FetchBTCBalanceUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD8C3592E7C5FC90066027B /* FetchBTCBalanceUseCase.swift */; };
+		ACD8C35B2E7C5FEE0066027B /* FetchBTCBalanceUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD8C3592E7C5FC90066027B /* FetchBTCBalanceUseCase.swift */; };
+		ACD8C35D2E7C602E0066027B /* WalletError.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD8C35C2E7C602B0066027B /* WalletError.swift */; };
+		ACD8C35E2E7C602E0066027B /* WalletError.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD8C35C2E7C602B0066027B /* WalletError.swift */; };
+		ACD8C3602E7C60AB0066027B /* WalletRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD8C35F2E7C60A60066027B /* WalletRepository.swift */; };
+		ACD8C3612E7C60AB0066027B /* WalletRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD8C35F2E7C60A60066027B /* WalletRepository.swift */; };
+		ACD8C3632E7C685B0066027B /* BTCPriceResponseDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD8C3622E7C68490066027B /* BTCPriceResponseDTO.swift */; };
+		ACD8C3642E7C685B0066027B /* BTCPriceResponseDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD8C3622E7C68490066027B /* BTCPriceResponseDTO.swift */; };
+		ACD8C36A2E7C6B770066027B /* ExchangeRateUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD8C3692E7C6B750066027B /* ExchangeRateUseCase.swift */; };
+		ACD8C36B2E7C6B770066027B /* ExchangeRateUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD8C3692E7C6B750066027B /* ExchangeRateUseCase.swift */; };
 		ACD941872CFF575C0038FCB6 /* IosApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* IosApp.swift */; };
 		ACD941882CFF575C0038FCB6 /* yral-mobile-swift-binding.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC09A9AD2CDB775C009A39A4 /* yral-mobile-swift-binding.swift */; };
 		ACD941892CFF575C0038FCB6 /* SwiftBridgeCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC09A9B02CDB775C009A39A4 /* SwiftBridgeCore.swift */; };
@@ -844,6 +868,11 @@
 		AC09A9F92CDB7A5D009A39A4 /* SwiftBindings+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SwiftBindings+Extensions.swift"; sourceTree = "<group>"; };
 		AC09AA732CDD2107009A39A4 /* Data+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Data+Extensions.swift"; sourceTree = "<group>"; };
 		AC12B9D12D3809B7004E9EA9 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		AC1912962E79624100BA5D78 /* WalletView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletView.swift; sourceTree = "<group>"; };
+		AC19129B2E7962A500BA5D78 /* WalletDIContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletDIContainer.swift; sourceTree = "<group>"; };
+		AC19129F2E796F2E00BA5D78 /* YralTabbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralTabbar.swift; sourceTree = "<group>"; };
+		AC1912A22E7978D800BA5D78 /* WalletViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletViewModel.swift; sourceTree = "<group>"; };
+		AC1912A62E79855400BA5D78 /* CustomRoundedRectangle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomRoundedRectangle.swift; sourceTree = "<group>"; };
 		AC1ACF972DB9161D001BDCFD /* AuthState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthState.swift; sourceTree = "<group>"; };
 		AC1ACF9B2DB9179F001BDCFD /* SessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionManager.swift; sourceTree = "<group>"; };
 		AC1ACF9E2DB964A4001BDCFD /* SwiftUI+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SwiftUI+Extensions.swift"; sourceTree = "<group>"; };
@@ -891,6 +920,7 @@
 		AC32E46A2D299DF9001DDA43 /* ShareOptionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareOptionsView.swift; sourceTree = "<group>"; };
 		AC32E46E2D299E6B001DDA43 /* ICPBrandingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ICPBrandingView.swift; sourceTree = "<group>"; };
 		AC32E4782D2AF594001DDA43 /* CacheDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CacheDTO.swift; sourceTree = "<group>"; };
+		AC36F5CB2E830723008F12BC /* UpdateSessionDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateSessionDTO.swift; sourceTree = "<group>"; };
 		AC391EE52DCE476400A8DFA9 /* Signup_scroll_lottie.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Signup_scroll_lottie.json; sourceTree = "<group>"; };
 		AC391EE82DCE4DE100A8DFA9 /* DeleteUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeleteUseCase.swift; sourceTree = "<group>"; };
 		AC3FBE0F2E2BAA0F00CE3EC1 /* MP4DownloadManaging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MP4DownloadManaging.swift; sourceTree = "<group>"; };
@@ -935,6 +965,7 @@
 		AC8958DB2D3EA54000E19ED7 /* FeedsViewController+Delegates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FeedsViewController+Delegates.swift"; sourceTree = "<group>"; };
 		AC8958DE2D3EA5FE00E19ED7 /* FeedsViewController+DataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FeedsViewController+DataSource.swift"; sourceTree = "<group>"; };
 		AC8958E12D3EB0D100E19ED7 /* ProfileOptionsWebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileOptionsWebView.swift; sourceTree = "<group>"; };
+		AC8BB94C2E7AF36200E6BB3E /* ProfileView+Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ProfileView+Constants.swift"; sourceTree = "<group>"; };
 		AC8FC7692D9BE095006F29BC /* FeedRequestDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedRequestDTO.swift; sourceTree = "<group>"; };
 		AC8FC76C2D9C01E9006F29BC /* Yral_Loader.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Yral_Loader.json; sourceTree = "<group>"; };
 		AC9294182D65F2FD003DB102 /* View+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "View+Extensions.swift"; sourceTree = "<group>"; };
@@ -1010,6 +1041,11 @@
 		ACCB98772D94420D002B9675 /* UILabel+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UILabel+Extensions.swift"; sourceTree = "<group>"; };
 		ACCEAD342E393EA400D9F03F /* FeedsRepository+Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FeedsRepository+Constants.swift"; sourceTree = "<group>"; };
 		ACD7C16D2E1D38D400075148 /* DefaultAuthClient+Firebase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DefaultAuthClient+Firebase.swift"; sourceTree = "<group>"; };
+		ACD8C3592E7C5FC90066027B /* FetchBTCBalanceUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FetchBTCBalanceUseCase.swift; sourceTree = "<group>"; };
+		ACD8C35C2E7C602B0066027B /* WalletError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletError.swift; sourceTree = "<group>"; };
+		ACD8C35F2E7C60A60066027B /* WalletRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletRepository.swift; sourceTree = "<group>"; };
+		ACD8C3622E7C68490066027B /* BTCPriceResponseDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BTCPriceResponseDTO.swift; sourceTree = "<group>"; };
+		ACD8C3692E7C6B750066027B /* ExchangeRateUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExchangeRateUseCase.swift; sourceTree = "<group>"; };
 		ACD941B82CFF575C0038FCB6 /* Yral-Staging.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Yral-Staging.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACD941B92CFF575C0038FCB6 /* Info-Staging.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "Info-Staging.plist"; path = "/Users/sarveshsharma/Desktop/yral-mobile/iosApp/Staging/Info-Staging.plist"; sourceTree = "<absolute>"; };
 		ACD941BE2CFF58B10038FCB6 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -1098,6 +1134,8 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		AC9B77DE2D58C7E300270FC9 /* YralTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = YralTests;
 			sourceTree = "<group>";
 		};
@@ -1494,20 +1532,21 @@
 		7555FF7D242A565900829871 /* iosApp */ = {
 			isa = PBXGroup;
 			children = (
-				ACE77F102E743E9900896DD2 /* DeepLinking */,
-				10CEBB7D2E3103580022803A /* HapticFeedback */,
-				100209A92DE6E2E700DF269E /* Leaderboard */,
-				107C60922DB7AA86006FC467 /* SmileyGame */,
 				2152FB032600AC8F00CF470E /* IosApp.swift */,
 				ACB46A2B2D0EC82F002E200C /* AppDIContainer.swift */,
 				10C1B38A2E5375D000CFC41B /* AppDIContainerKey.swift */,
-				ACB46A712D105AC0002E200C /* DesignSystem */,
 				ACC0F3932D2ED5B700FA5BD0 /* Splash */,
 				AC638BF72D230DA900481E94 /* HomeTabController */,
 				ACEBE9962D0C4AA50056F033 /* Feed */,
+				107C60922DB7AA86006FC467 /* SmileyGame */,
+				100209A92DE6E2E700DF269E /* Leaderboard */,
 				AC9B77E92D5A6F2300270FC9 /* Upload */,
+				AC1912952E7961C600BA5D78 /* Wallet */,
 				AC99BBAE2D86C54D008012C2 /* Profile */,
 				AC32E4292D27A412001DDA43 /* Account */,
+				ACE77F102E743E9900896DD2 /* DeepLinking */,
+				10CEBB7D2E3103580022803A /* HapticFeedback */,
+				ACB46A712D105AC0002E200C /* DesignSystem */,
 				AC99BBBD2D86F3C9008012C2 /* Libs */,
 				AC26CA662D806501006ADA75 /* Utils */,
 				ACC0F3992D2ED61100FA5BD0 /* Resources */,
@@ -1561,6 +1600,50 @@
 			path = Extensions;
 			sourceTree = "<group>";
 		};
+		AC1912952E7961C600BA5D78 /* Wallet */ = {
+			isa = PBXGroup;
+			children = (
+				AC1912992E79629400BA5D78 /* View */,
+				AC1912A52E7978E200BA5D78 /* ViewModel */,
+				ACD8C3572E7C5FB10066027B /* Domain */,
+				ACD8C3582E7C5FBA0066027B /* Data */,
+				AC19129A2E79629B00BA5D78 /* DI */,
+			);
+			path = Wallet;
+			sourceTree = "<group>";
+		};
+		AC1912992E79629400BA5D78 /* View */ = {
+			isa = PBXGroup;
+			children = (
+				AC1912962E79624100BA5D78 /* WalletView.swift */,
+			);
+			path = View;
+			sourceTree = "<group>";
+		};
+		AC19129A2E79629B00BA5D78 /* DI */ = {
+			isa = PBXGroup;
+			children = (
+				AC19129B2E7962A500BA5D78 /* WalletDIContainer.swift */,
+			);
+			path = DI;
+			sourceTree = "<group>";
+		};
+		AC19129E2E796F1700BA5D78 /* Tabbar */ = {
+			isa = PBXGroup;
+			children = (
+				AC19129F2E796F2E00BA5D78 /* YralTabbar.swift */,
+			);
+			path = Tabbar;
+			sourceTree = "<group>";
+		};
+		AC1912A52E7978E200BA5D78 /* ViewModel */ = {
+			isa = PBXGroup;
+			children = (
+				AC1912A22E7978D800BA5D78 /* WalletViewModel.swift */,
+			);
+			path = ViewModel;
+			sourceTree = "<group>";
+		};
 		AC1ACF9A2DB91799001BDCFD /* SessionManager */ = {
 			isa = PBXGroup;
 			children = (
@@ -1572,6 +1655,7 @@
 		AC1F93972DC14A9000F322E1 /* DTO */ = {
 			isa = PBXGroup;
 			children = (
+				AC36F5CB2E830723008F12BC /* UpdateSessionDTO.swift */,
 				ACF63A732DC26C8F00C4BCCC /* TokenClaimsDTO.swift */,
 				AC1F93912DC1494500F322E1 /* TokenRequestDTO.swift */,
 				AC1F93942DC1495100F322E1 /* TokenResponseDTO.swift */,
@@ -1686,6 +1770,7 @@
 		AC26CA662D806501006ADA75 /* Utils */ = {
 			isa = PBXGroup;
 			children = (
+				AC1912A62E79855400BA5D78 /* CustomRoundedRectangle.swift */,
 				AC9461F32E780D3E002B37C2 /* AccountDetails */,
 				ACE77F1C2E74412B00896DD2 /* AppUpdate */,
 				10FEA9872E720AC1000103EB /* SizeReader.swift */,
@@ -1795,6 +1880,7 @@
 		AC32E4482D2961CE001DDA43 /* SwiftUI */ = {
 			isa = PBXGroup;
 			children = (
+				AC19129E2E796F1700BA5D78 /* Tabbar */,
 				ACC1C3962D9AF8AB005A7539 /* Loader */,
 				10F89A4B2E0144FF00B90BD0 /* Color+Extensions.swift */,
 				AC462F412D95A4A8004957B3 /* OffsetableScrollView.swift */,
@@ -2129,6 +2215,7 @@
 			isa = PBXGroup;
 			children = (
 				AC99BBAF2D86C55E008012C2 /* ProfileView.swift */,
+				AC8BB94C2E7AF36200E6BB3E /* ProfileView+Constants.swift */,
 				AC4E996A2D8874BA000B47B3 /* ProfileVideosGridView */,
 				AC99BBBF2D86FF76008012C2 /* ProfileEmptyState */,
 			);
@@ -2528,6 +2615,41 @@
 				ACC1C3972D9AF8B3005A7539 /* LottieLoaderContainerView.swift */,
 			);
 			path = Loader;
+			sourceTree = "<group>";
+		};
+		ACD8C3572E7C5FB10066027B /* Domain */ = {
+			isa = PBXGroup;
+			children = (
+				ACD8C3692E7C6B750066027B /* ExchangeRateUseCase.swift */,
+				ACD8C3592E7C5FC90066027B /* FetchBTCBalanceUseCase.swift */,
+				ACD8C36C2E7C6B7A0066027B /* Entity */,
+			);
+			path = Domain;
+			sourceTree = "<group>";
+		};
+		ACD8C3582E7C5FBA0066027B /* Data */ = {
+			isa = PBXGroup;
+			children = (
+				ACD8C3652E7C685F0066027B /* DTO */,
+				ACD8C35F2E7C60A60066027B /* WalletRepository.swift */,
+			);
+			path = Data;
+			sourceTree = "<group>";
+		};
+		ACD8C3652E7C685F0066027B /* DTO */ = {
+			isa = PBXGroup;
+			children = (
+				ACD8C3622E7C68490066027B /* BTCPriceResponseDTO.swift */,
+			);
+			path = DTO;
+			sourceTree = "<group>";
+		};
+		ACD8C36C2E7C6B7A0066027B /* Entity */ = {
+			isa = PBXGroup;
+			children = (
+				ACD8C35C2E7C602B0066027B /* WalletError.swift */,
+			);
+			path = Entity;
 			sourceTree = "<group>";
 		};
 		ACD941BC2CFF57A90038FCB6 /* Prod */ = {
@@ -3189,13 +3311,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3210,13 +3328,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3378,13 +3492,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3407,6 +3517,7 @@
 				ACAA4D692DDCB162001092A6 /* PerformanceMonitor.swift in Sources */,
 				107C60D32DBF9FC4006FC467 /* GameRuleView.swift in Sources */,
 				ACB46A422D0ECBB3002E200C /* ml_feed.proto in Sources */,
+				AC1912A72E79856200BA5D78 /* CustomRoundedRectangle.swift in Sources */,
 				10020AAE2DF7FDB700DF269E /* SatsCoinResponse.swift in Sources */,
 				AC8958DD2D3EA54700E19ED7 /* FeedsViewController+Delegates.swift in Sources */,
 				ACB46A612D0EF94B002E200C /* DefaultAuthClient.swift in Sources */,
@@ -3455,6 +3566,7 @@
 				ACB46A442D0ECBB3002E200C /* ml_feed.pb.swift in Sources */,
 				AC42D3672E0BFDCB009C2D92 /* DeleteAccountDTO.swift in Sources */,
 				AC8958E32D3EB0DB00E19ED7 /* ProfileOptionsWebView.swift in Sources */,
+				AC19129D2E7962AA00BA5D78 /* WalletDIContainer.swift in Sources */,
 				ACC0D4642D9179C1006DCF5C /* DeleteVideoUseCase.swift in Sources */,
 				ACB46A482D0ECBD5002E200C /* FeedsRepository.swift in Sources */,
 				AC32E4412D295E97001DDA43 /* UserInfoView.swift in Sources */,
@@ -3499,6 +3611,7 @@
 				10020A192DED6CED00DF269E /* LeaderboardRowView.swift in Sources */,
 				ACC0F3972D2ED5D700FA5BD0 /* LottieView.swift in Sources */,
 				AC7D5B3E2E0EA7C6008853AF /* NotificationsNudge.swift in Sources */,
+				AC1912982E79624700BA5D78 /* WalletView.swift in Sources */,
 				AC2C30D22D96C51600DA9F81 /* ReportEntity.swift in Sources */,
 				ACB46A7D2D105BEB002E200C /* UIKitInitializers.swift in Sources */,
 				AC26CA562D80281D006ADA75 /* FirebaseCrashlyticsReporter.swift in Sources */,
@@ -3534,6 +3647,7 @@
 				107079622E742034000C7A2C /* LeaderboardView+Constants.swift in Sources */,
 				ACC0D43E2D8C6BF3006DCF5C /* ClearBackgroundView.swift in Sources */,
 				AC4DECA92D3E06AC008EC8F5 /* FooterLoaderView.swift in Sources */,
+				AC36F5CD2E83072A008F12BC /* UpdateSessionDTO.swift in Sources */,
 				10FEA9142E6FEFF1000103EB /* LeaderboardHistoryViewModel.swift in Sources */,
 				AC51C0522DC4E0D200D5BA34 /* RefreshVideosRequest.swift in Sources */,
 				100F64EF2DCC96C9000BC17E /* YralCache.swift in Sources */,
@@ -3589,6 +3703,7 @@
 				ACE77EF12E743E7400896DD2 /* CreateAIVideoDIContainer.swift in Sources */,
 				ACE77EF22E743E7400896DD2 /* UploadVideoUseCase.swift in Sources */,
 				ACE77EF32E743E7400896DD2 /* AnimatedCheckbox.swift in Sources */,
+				AC8BB94D2E7AF36900E6BB3E /* ProfileView+Constants.swift in Sources */,
 				ACE77EF42E743E7400896DD2 /* UploadRepository.swift in Sources */,
 				ACE77EF52E743E7400896DD2 /* UploadNavControllerKey.swift in Sources */,
 				ACE77EF62E743E7400896DD2 /* AIVideoProviderError.swift in Sources */,
@@ -3602,6 +3717,7 @@
 				ACE77EFE2E743E7400896DD2 /* UploadAIVideoUseCase.swift in Sources */,
 				ACE77EFF2E743E7400896DD2 /* SelectFileView.swift in Sources */,
 				ACE77F002E743E7400896DD2 /* VideoUploadError.swift in Sources */,
+				ACD8C35A2E7C5FEE0066027B /* FetchBTCBalanceUseCase.swift in Sources */,
 				ACE77F012E743E7400896DD2 /* UploadOptionsDIContainer.swift in Sources */,
 				ACE77F022E743E7400896DD2 /* GenerateVideoRequest.swift in Sources */,
 				ACE77F032E743E7400896DD2 /* VideoPickerViewControllerRepresentable.swift in Sources */,
@@ -3621,7 +3737,9 @@
 				ACAA4DBC2DDE08D6001092A6 /* HLSDownloadManager+Mockers.swift in Sources */,
 				10020A152DE9842800DF269E /* UIApplication+Extensions.swift in Sources */,
 				10020A132DE8446000DF269E /* LeaderboardDIContainer.swift in Sources */,
+				ACD8C3642E7C685B0066027B /* BTCPriceResponseDTO.swift in Sources */,
 				ACB09FDA2D92D6E900EE3239 /* MoreFeedsRequest.swift in Sources */,
+				ACD8C3612E7C60AB0066027B /* WalletRepository.swift in Sources */,
 				107C60912DB7809A006FC467 /* UIView+Extensions.swift in Sources */,
 				ACDD23E42D8B19FF00AB0DAF /* MyVideosUseCase.swift in Sources */,
 				ACF63A742DC26C9500C4BCCC /* TokenClaimsDTO.swift in Sources */,
@@ -3646,6 +3764,7 @@
 				107C61242DC0F2C8006FC467 /* SmileyGameRuleError.swift in Sources */,
 				10C1B38B2E5375D500CFC41B /* AppDIContainerKey.swift in Sources */,
 				ACC0D45D2D91785B006DCF5C /* SwiftDelegatedIdentityWire.swift in Sources */,
+				AC1912A12E796F3200BA5D78 /* YralTabbar.swift in Sources */,
 				ACB09FC92D92CB6400EE3239 /* ProfileRouter.swift in Sources */,
 				ACAA4D602DDC75CB001092A6 /* Notifications.swift in Sources */,
 				ACB46A812D106034002E200C /* FeedsCell.swift in Sources */,
@@ -3671,6 +3790,7 @@
 				AC6E31232D22F08F001EBE6C /* ImageLoaderProtocol.swift in Sources */,
 				105034A22DD5E3D500571B4E /* SmileyConfigDTO.swift in Sources */,
 				AC462F422D95A4AD004957B3 /* OffsetableScrollView.swift in Sources */,
+				ACD8C36B2E7C6B770066027B /* ExchangeRateUseCase.swift in Sources */,
 				ACE77F162E74405300896DD2 /* DeepLinkFeedRequest.swift in Sources */,
 				AC04D3022E059EA50055C4AA /* AppCheckProviderFactory.swift in Sources */,
 				100209FE2DE8402600DF269E /* LeaderboardResponse.swift in Sources */,
@@ -3679,6 +3799,7 @@
 				107C60D62DBFA7C0006FC467 /* FirebaseImageView.swift in Sources */,
 				107C60B42DBF4857006FC467 /* SmileyGameRuleUseCase.swift in Sources */,
 				ACB46A292D0EC76A002E200C /* AppConfiguration.swift in Sources */,
+				ACD8C35D2E7C602E0066027B /* WalletError.swift in Sources */,
 				ACB46A342D0EC8FF002E200C /* Numbers+Extensions.swift in Sources */,
 				ACBBF84E2E40CA1E00002188 /* ProfileError.swift in Sources */,
 				105034BF2DD636CC00571B4E /* CastVoteUseCase.swift in Sources */,
@@ -3692,6 +3813,7 @@
 				AC811B932DBA7C3B0094C5F6 /* SignupSheet.swift in Sources */,
 				7555FF83242A565900829871 /* ContentView.swift in Sources */,
 				10CEBB802E3103670022803A /* HapticFeedback.swift in Sources */,
+				AC1912A32E7978DE00BA5D78 /* WalletViewModel.swift in Sources */,
 				10FEA90D2E6FE7E8000103EB /* LeaderboardHistoryUseCase.swift in Sources */,
 				ACB46A4C2D0ED110002E200C /* FeedRepositoryProtocol.swift in Sources */,
 			);
@@ -3719,6 +3841,7 @@
 				ACAA4D6A2DDCB162001092A6 /* PerformanceMonitor.swift in Sources */,
 				107C60D42DBF9FC4006FC467 /* GameRuleView.swift in Sources */,
 				ACB46A3F2D0ECBB3002E200C /* ml_feed.proto in Sources */,
+				AC1912A82E79856200BA5D78 /* CustomRoundedRectangle.swift in Sources */,
 				10020AAD2DF7FDB700DF269E /* SatsCoinResponse.swift in Sources */,
 				AC8958DC2D3EA54700E19ED7 /* FeedsViewController+Delegates.swift in Sources */,
 				ACB46A602D0EF94B002E200C /* DefaultAuthClient.swift in Sources */,
@@ -3767,6 +3890,7 @@
 				ACB46A412D0ECBB3002E200C /* ml_feed.pb.swift in Sources */,
 				AC42D3682E0BFDCB009C2D92 /* DeleteAccountDTO.swift in Sources */,
 				AC8958E22D3EB0DB00E19ED7 /* ProfileOptionsWebView.swift in Sources */,
+				AC19129C2E7962AA00BA5D78 /* WalletDIContainer.swift in Sources */,
 				ACC0D4652D9179C1006DCF5C /* DeleteVideoUseCase.swift in Sources */,
 				ACB46A472D0ECBD5002E200C /* FeedsRepository.swift in Sources */,
 				AC32E4422D295E97001DDA43 /* UserInfoView.swift in Sources */,
@@ -3811,6 +3935,7 @@
 				10020A182DED6CED00DF269E /* LeaderboardRowView.swift in Sources */,
 				ACC0F3982D2ED5D700FA5BD0 /* LottieView.swift in Sources */,
 				AC7D5B3F2E0EA7C6008853AF /* NotificationsNudge.swift in Sources */,
+				AC1912972E79624700BA5D78 /* WalletView.swift in Sources */,
 				AC2C30D12D96C51600DA9F81 /* ReportEntity.swift in Sources */,
 				ACB46A7C2D105BEB002E200C /* UIKitInitializers.swift in Sources */,
 				AC26CA552D80281D006ADA75 /* FirebaseCrashlyticsReporter.swift in Sources */,
@@ -3846,6 +3971,7 @@
 				107079612E742034000C7A2C /* LeaderboardView+Constants.swift in Sources */,
 				ACC0D43D2D8C6BF3006DCF5C /* ClearBackgroundView.swift in Sources */,
 				AC4DECAA2D3E06AC008EC8F5 /* FooterLoaderView.swift in Sources */,
+				AC36F5CC2E83072A008F12BC /* UpdateSessionDTO.swift in Sources */,
 				10FEA9132E6FEFF1000103EB /* LeaderboardHistoryViewModel.swift in Sources */,
 				100F64EE2DCC96C9000BC17E /* YralCache.swift in Sources */,
 				AC51C0532DC4E0D200D5BA34 /* RefreshVideosRequest.swift in Sources */,
@@ -3901,6 +4027,7 @@
 				ACE77EB92E743E7400896DD2 /* CreateAIVideoDIContainer.swift in Sources */,
 				ACE77EBA2E743E7400896DD2 /* UploadVideoUseCase.swift in Sources */,
 				ACE77EBB2E743E7400896DD2 /* AnimatedCheckbox.swift in Sources */,
+				AC8BB94E2E7AF36900E6BB3E /* ProfileView+Constants.swift in Sources */,
 				ACE77EBC2E743E7400896DD2 /* UploadRepository.swift in Sources */,
 				ACE77EBD2E743E7400896DD2 /* UploadNavControllerKey.swift in Sources */,
 				ACE77EBE2E743E7400896DD2 /* AIVideoProviderError.swift in Sources */,
@@ -3914,6 +4041,7 @@
 				ACE77EC62E743E7400896DD2 /* UploadAIVideoUseCase.swift in Sources */,
 				ACE77EC72E743E7400896DD2 /* SelectFileView.swift in Sources */,
 				ACE77EC82E743E7400896DD2 /* VideoUploadError.swift in Sources */,
+				ACD8C35B2E7C5FEE0066027B /* FetchBTCBalanceUseCase.swift in Sources */,
 				ACE77EC92E743E7400896DD2 /* UploadOptionsDIContainer.swift in Sources */,
 				ACE77ECA2E743E7400896DD2 /* GenerateVideoRequest.swift in Sources */,
 				ACE77ECB2E743E7400896DD2 /* VideoPickerViewControllerRepresentable.swift in Sources */,
@@ -3933,7 +4061,9 @@
 				ACAA4DBB2DDE08D6001092A6 /* HLSDownloadManager+Mockers.swift in Sources */,
 				10020A162DE9842800DF269E /* UIApplication+Extensions.swift in Sources */,
 				10020A122DE8446000DF269E /* LeaderboardDIContainer.swift in Sources */,
+				ACD8C3632E7C685B0066027B /* BTCPriceResponseDTO.swift in Sources */,
 				ACB09FDB2D92D6E900EE3239 /* MoreFeedsRequest.swift in Sources */,
+				ACD8C3602E7C60AB0066027B /* WalletRepository.swift in Sources */,
 				107C60902DB7809A006FC467 /* UIView+Extensions.swift in Sources */,
 				ACDD23E52D8B19FF00AB0DAF /* MyVideosUseCase.swift in Sources */,
 				ACF63A752DC26C9500C4BCCC /* TokenClaimsDTO.swift in Sources */,
@@ -3958,6 +4088,7 @@
 				107C61232DC0F2C8006FC467 /* SmileyGameRuleError.swift in Sources */,
 				10C1B38C2E5375D500CFC41B /* AppDIContainerKey.swift in Sources */,
 				ACC0D45E2D91785B006DCF5C /* SwiftDelegatedIdentityWire.swift in Sources */,
+				AC1912A02E796F3200BA5D78 /* YralTabbar.swift in Sources */,
 				ACB09FCA2D92CB6400EE3239 /* ProfileRouter.swift in Sources */,
 				ACAA4D5F2DDC75CB001092A6 /* Notifications.swift in Sources */,
 				ACB46A802D106034002E200C /* FeedsCell.swift in Sources */,
@@ -3983,6 +4114,7 @@
 				AC6E31222D22F08F001EBE6C /* ImageLoaderProtocol.swift in Sources */,
 				105034A12DD5E3D500571B4E /* SmileyConfigDTO.swift in Sources */,
 				AC462F432D95A4AD004957B3 /* OffsetableScrollView.swift in Sources */,
+				ACD8C36A2E7C6B770066027B /* ExchangeRateUseCase.swift in Sources */,
 				ACE77F172E74405300896DD2 /* DeepLinkFeedRequest.swift in Sources */,
 				AC04D3032E059EA50055C4AA /* AppCheckProviderFactory.swift in Sources */,
 				100209FF2DE8402600DF269E /* LeaderboardResponse.swift in Sources */,
@@ -3991,6 +4123,7 @@
 				107C60D72DBFA7C0006FC467 /* FirebaseImageView.swift in Sources */,
 				107C60B52DBF4857006FC467 /* SmileyGameRuleUseCase.swift in Sources */,
 				ACB46A2A2D0EC76A002E200C /* AppConfiguration.swift in Sources */,
+				ACD8C35E2E7C602E0066027B /* WalletError.swift in Sources */,
 				ACB46A332D0EC8FF002E200C /* Numbers+Extensions.swift in Sources */,
 				ACBBF84F2E40CA1E00002188 /* ProfileError.swift in Sources */,
 				105034C02DD636CC00571B4E /* CastVoteUseCase.swift in Sources */,
@@ -4004,6 +4137,7 @@
 				AC811B922DBA7C3B0094C5F6 /* SignupSheet.swift in Sources */,
 				ACD9418C2CFF575C0038FCB6 /* ContentView.swift in Sources */,
 				10CEBB7F2E3103670022803A /* HapticFeedback.swift in Sources */,
+				AC1912A42E7978DE00BA5D78 /* WalletViewModel.swift in Sources */,
 				10FEA90E2E6FE7E8000103EB /* LeaderboardHistoryUseCase.swift in Sources */,
 				ACB46A4D2D0ED110002E200C /* FeedRepositoryProtocol.swift in Sources */,
 			);
@@ -4290,7 +4424,7 @@
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = "Staging/Info-Staging.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Yral-Staging";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -4323,14 +4457,14 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 101;
 				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 2UL556KNXC;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = "Staging/Info-Staging.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Yral-Staging";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

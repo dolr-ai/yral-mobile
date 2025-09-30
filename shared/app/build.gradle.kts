@@ -14,6 +14,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(projects.shared.core)
+            implementation(projects.shared.features.reportVideo)
             implementation(projects.shared.libs.preferences)
             implementation(projects.shared.libs.http)
             implementation(projects.shared.libs.analytics)
@@ -40,6 +41,8 @@ kotlin {
             implementation(projects.shared.features.game)
             implementation(projects.shared.features.uploadvideo)
             implementation(projects.shared.features.profile)
+            implementation(projects.shared.features.wallet)
+            implementation(projects.shared.features.leaderboard)
             implementation(projects.shared.rust.service)
             implementation(libs.coil.compose)
         }

@@ -16,13 +16,16 @@ import com.arkivanov.decompose.value.Value
 import com.yral.android.ui.screens.account.nav.AccountComponent
 import com.yral.android.ui.screens.alertsrequest.nav.AlertsRequestComponent
 import com.yral.android.ui.screens.feed.nav.FeedComponent
-import com.yral.android.ui.screens.leaderboard.LeaderboardComponent
 import com.yral.android.ui.screens.profile.nav.ProfileComponent
 import com.yral.android.ui.screens.uploadVideo.UploadVideoRootComponent
+import com.yral.android.ui.screens.wallet.nav.WalletComponent
+import com.yral.shared.features.leaderboard.nav.LeaderboardComponent
+import com.yral.shared.libs.arch.nav.HomeChildSnapshotProvider
 import com.yral.shared.libs.routing.routes.api.AppRoute
 import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
 import kotlinx.serialization.Serializable
 
+@Suppress("TooManyFunctions")
 internal class DefaultHomeComponent(
     componentContext: ComponentContext,
 ) : HomeComponent(),
@@ -107,6 +110,10 @@ internal class DefaultHomeComponent(
         navigation.replaceKeepingFeed(Config.Account)
     }
 
+    override fun onWalletTabClick() {
+        navigation.replaceKeepingFeed(Config.Wallet)
+    }
+
     private inline fun StackNavigator<Config>.replaceKeepingFeed(
         configuration: Config,
         crossinline onComplete: () -> Unit = { },
@@ -124,6 +131,7 @@ internal class DefaultHomeComponent(
             is Config.UploadVideo -> Child.UploadVideo(uploadVideoComponent(componentContext))
             is Config.Profile -> Child.Profile(profileComponent(componentContext))
             is Config.Account -> Child.Account(accountComponent(componentContext))
+            is Config.Wallet -> Child.Wallet(walletComponent(componentContext))
         }
 
     private fun mapActiveChild(child: Child): Pair<Config, HomeChildSnapshotProvider?> =
@@ -133,6 +141,7 @@ internal class DefaultHomeComponent(
             is Child.UploadVideo -> Config.UploadVideo to child.component
             is Child.Profile -> Config.Profile to (child.component as? HomeChildSnapshotProvider)
             is Child.Account -> Config.Account to (child.component as? HomeChildSnapshotProvider)
+            is Child.Wallet -> Config.Wallet to (child.component as? HomeChildSnapshotProvider)
         }
 
     private fun feedComponent(componentContext: ComponentContext): FeedComponent =
@@ -158,10 +167,14 @@ internal class DefaultHomeComponent(
         ProfileComponent.Companion(
             componentContext = componentContext,
             onUploadVideoClicked = { onUploadVideoTabClick() },
+            snapshot = childSnapshots[Config.Profile] as? ProfileComponent.Snapshot,
         )
 
     private fun accountComponent(componentContext: ComponentContext): AccountComponent =
         AccountComponent.Companion(componentContext = componentContext)
+
+    private fun walletComponent(componentContext: ComponentContext): WalletComponent =
+        WalletComponent.Companion(componentContext = componentContext)
 
     private fun slotChild(
         config: SlotConfig,
@@ -200,6 +213,9 @@ internal class DefaultHomeComponent(
 
         @Serializable
         data object Account : Config
+
+        @Serializable
+        data object Wallet : Config
     }
 
     @Serializable

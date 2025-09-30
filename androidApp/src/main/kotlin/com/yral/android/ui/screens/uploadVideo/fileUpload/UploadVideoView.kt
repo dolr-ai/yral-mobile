@@ -38,7 +38,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
@@ -50,20 +49,23 @@ import com.google.accompanist.permissions.MultiplePermissionsState
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.shouldShowRationale
 import com.yral.android.R
-import com.yral.android.ui.design.LocalAppTopography
-import com.yral.android.ui.design.YralColors
-import com.yral.android.ui.widgets.YralButton
-import com.yral.android.ui.widgets.YralButtonState
-import com.yral.android.ui.widgets.YralErrorMessage
 import com.yral.android.ui.widgets.video.VideoFileManager
 import com.yral.android.ui.widgets.video.VideoMetadataExtractor
 import com.yral.android.ui.widgets.video.VideoPermissionUtils
 import com.yral.android.ui.widgets.video.VideoValidator
 import com.yral.android.ui.widgets.video.YralVideoPlayer
+import com.yral.shared.libs.designsystem.component.YralButton
+import com.yral.shared.libs.designsystem.component.YralButtonState
+import com.yral.shared.libs.designsystem.component.YralErrorMessage
+import com.yral.shared.libs.designsystem.theme.LocalAppTopography
+import com.yral.shared.libs.designsystem.theme.YralColors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
+import yral_mobile.shared.libs.designsystem.generated.resources.Res
+import yral_mobile.shared.libs.designsystem.generated.resources.cross
 
 const val UPLOAD_BOX_ASPECT_RATIO = 0.75f
 
@@ -102,7 +104,7 @@ fun UploadVideo(
                         },
                     )
                     Image(
-                        painter = painterResource(id = R.drawable.cross),
+                        painter = painterResource(Res.drawable.cross),
                         contentDescription = "Remove video",
                         contentScale = ContentScale.None,
                         modifier =

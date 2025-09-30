@@ -8,11 +8,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import com.yral.android.R
-import com.yral.android.ui.widgets.YralLottieAnimation
-import com.yral.android.ui.widgets.YralRemoteLottieAnimation
 import com.yral.shared.features.game.domain.models.GameIcon
 import com.yral.shared.features.game.domain.models.GameIconNames
+import com.yral.shared.libs.designsystem.component.lottie.LottieRes
+import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
+import com.yral.shared.libs.designsystem.component.lottie.YralRemoteLottieAnimation
 
 @Composable
 fun GameIconBubbles(
@@ -34,7 +34,7 @@ fun GameIconBubbles(
         )
     } else {
         val animationRes = icon.getBubbleResource()
-        if (animationRes != 0) {
+        if (animationRes != null) {
             YralLottieAnimation(
                 modifier = Modifier.fillMaxSize(),
                 rawRes = animationRes,
@@ -46,13 +46,13 @@ fun GameIconBubbles(
     }
 }
 
-fun GameIcon.getBubbleResource(): Int =
+fun GameIcon.getBubbleResource(): LottieRes? =
     when (imageName) {
-        GameIconNames.LAUGH -> R.raw.smiley_game_laugh
-        GameIconNames.HEART -> R.raw.smiley_game_heart
-        GameIconNames.FIRE -> R.raw.smiley_game_fire
-        GameIconNames.SURPRISE -> R.raw.smiley_game_surprise
-        GameIconNames.ROCKET -> R.raw.smiley_game_rocket
-        GameIconNames.PUKE -> R.raw.smiley_game_puke
-        GameIconNames.UNKNOWN -> 0
+        GameIconNames.LAUGH -> LottieRes.SMILEY_GAME_LAUGH
+        GameIconNames.HEART -> LottieRes.SMILEY_GAME_HEART
+        GameIconNames.FIRE -> LottieRes.SMILEY_GAME_FIRE
+        GameIconNames.SURPRISE -> LottieRes.SMILEY_GAME_SURPRISE
+        GameIconNames.ROCKET -> LottieRes.SMILEY_GAME_ROCKET
+        GameIconNames.PUKE -> LottieRes.SMILEY_GAME_PUKE
+        GameIconNames.UNKNOWN -> null
     }

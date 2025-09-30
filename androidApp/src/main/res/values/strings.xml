@@ -61,15 +61,9 @@
     <string name="error_retry">Retry</string>
 
     <string name="leaderboard">Leaderboard</string>
-    <string name="position">Position</string>
-    <string name="games_won">Games Won</string>
-    <string name="player_id">Player ID</string>
-    <string name="you">You</string>
     <string name="new_">New</string>
-    <string name="daily_wins">Daily Wins</string>
-    <string name="all_wins">All Wins</string>
-    <string name="end_in">Ends %s</string>
-    <string name="weekly_wins">Weekly Wins</string>
+
+
 
     <string name="scroll_to_next_video">Scroll To Next Video</string>
 
@@ -157,4 +151,11 @@
     <string name="play_games">Play Games</string>
     <string name="to_earn_token">to earn %s!</string>
     <string name="coins">YRAL</string>
+
+    <!-- Wallet -->
+    <string name="my_wallet">My Wallet</string>
+    <string name="bit_coin">Bitcoin</string>
+    <string name="btc_inr_rate">1 Bitcoin = %s</string>
+    <string name="rupee_symbol">₹</string>
+    <string name="currency_balance">%s Balance</string>
 </resources>

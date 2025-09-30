@@ -183,10 +183,12 @@ class DefaultAuthClient(
             }
             cachedSession.userPrincipal?.let { crashlyticsManager.setUserId(it) }
             sessionManager.updateCoinBalance(0)
+            setSession(session = cachedSession)
             if (auth.currentUser?.uid == cachedSession.userPrincipal) {
-                setSession(session = cachedSession)
+                sessionManager.updateFirebaseLoginState(true)
+                postFirebaseLogin(cachedSession)
             } else {
-                authorizeFirebase(cachedSession)
+                sessionManager.updateFirebaseLoginState(false)
             }
         } catch (e: YralFfiException) {
             resetCachedCanisterData()
@@ -198,15 +200,18 @@ class DefaultAuthClient(
     private suspend fun updateYralSession(session: Session) {
         preferences.getString(PrefKeys.ID_TOKEN.name)?.let { idToken ->
             session.canisterId?.let { canisterId ->
-                updateSessionAsRegistered(
-                    idToken = idToken,
-                    canisterId = canisterId,
-                )
+                session.userPrincipal?.let { userPrincipal ->
+                    updateSessionAsRegistered(
+                        idToken = idToken,
+                        canisterId = canisterId,
+                        userPrincipal = userPrincipal,
+                    )
+                }
             }
         }
     }
 
-    private suspend fun authorizeFirebase(session: Session) {
+    override suspend fun authorizeFirebase(session: Session) {
         requiredUseCases
             .signOutUseCase
             .invoke(Unit)
@@ -215,8 +220,8 @@ class DefaultAuthClient(
                     .signInAnonymouslyUseCase
                     .invoke(Unit)
                     .onSuccess { getIdTokenAndProceed(session) }
-                    .onFailure { throw YralAuthException("firebase anonymous sign in failed - ${it.message}") }
-            }.onFailure { throw YralAuthException("sign out for anonymous sign in failed - ${it.message}") }
+                    .onFailure { throw YralFBAuthException("firebase anonymous sign in failed - ${it.message}") }
+            }.onFailure { throw YralFBAuthException("sign out for anonymous sign in failed - ${it.message}") }
     }
 
     private suspend fun getIdTokenAndProceed(session: Session) {
@@ -224,7 +229,7 @@ class DefaultAuthClient(
             .getIdTokenUseCase
             .invoke(GetIdTokenUseCase.DEFAULT)
             .onSuccess { idToken -> exchangePrincipalId(session, idToken) }
-            .onFailure { throw YralAuthException("firebase idToken not found - ${it.message}") }
+            .onFailure { throw YralFBAuthException("firebase idToken not found - ${it.message}") }
     }
 
     private suspend fun exchangePrincipalId(
@@ -239,8 +244,8 @@ class DefaultAuthClient(
                         userPrincipal = userPrincipal,
                     ),
                 ).onSuccess { signInWithToken(session, it) }
-                .onFailure { throw YralAuthException("exchanging principal failed - ${it.message}") }
-        } ?: throw YralAuthException("exchanging principal failed - user principal not found")
+                .onFailure { throw YralFBAuthException("exchanging principal failed - ${it.message}") }
+        } ?: throw YralFBAuthException("exchanging principal failed - user principal not found")
     }
 
     private suspend fun signInWithToken(
@@ -253,9 +258,19 @@ class DefaultAuthClient(
             .onSuccess {
                 requiredUseCases.signInWithTokenUseCase
                     .invoke(exchangeResult.token)
-                    .onSuccess { setSession(session = session) }
-                    .onFailure { throw YralAuthException("sign in with token failed - ${it.message}") }
-            }.onFailure { throw YralAuthException("sign out for auth token sign in failed - ${it.message}") }
+                    .onSuccess {
+                        sessionManager.updateFirebaseLoginState(true)
+                        postFirebaseLogin(session)
+                    }.onFailure { throw YralFBAuthException("sign in with token failed - ${it.message}") }
+            }.onFailure { throw YralFBAuthException("sign out for auth token sign in failed - ${it.message}") }
+    }
+
+    override suspend fun fetchBalance(session: Session) {
+        session.userPrincipal?.let { userPrincipal ->
+            requiredUseCases.getBalanceUseCase
+                .invoke(userPrincipal)
+                .onSuccess { coinBalance -> sessionManager.updateCoinBalance(coinBalance) }
+        }
     }
 
     @Suppress("ThrowsCount")
@@ -264,6 +279,8 @@ class DefaultAuthClient(
             requiredUseCases.getBalanceUseCase
                 .invoke(userPrincipal)
                 .onSuccess { coinBalance ->
+                    // Update last known coin balance irrespective of firebase login
+                    sessionManager.updateCoinBalance(coinBalance)
                     requiredUseCases
                         .updateDocumentUseCase
                         .invoke(
@@ -273,8 +290,7 @@ class DefaultAuthClient(
                                     documentId = userPrincipal,
                                     fieldAndValue = Pair("coins", coinBalance),
                                 ),
-                        ).onSuccess { sessionManager.updateCoinBalance(coinBalance) }
-                        .onFailure { throw YralAuthException("update coin balance failed ${it.message}") }
+                        ).onFailure { throw YralFBAuthException("update coin balance failed ${it.message}") }
                 }.onFailure { throw YralAuthException("get balance failed ${it.message}") }
         } ?: throw YralAuthException("get balance failed - user principal not found")
     }
@@ -282,6 +298,9 @@ class DefaultAuthClient(
     private fun setSession(session: Session) {
         session.identity?.let { identity -> initRustFactories(identity) }
         sessionManager.updateState(SessionState.SignedIn(session = session))
+    }
+
+    private fun postFirebaseLogin(session: Session) {
         scope.launch { updateBalanceAndProceed(session) }
         scope.launch {
             val result =
@@ -391,12 +410,14 @@ class DefaultAuthClient(
     private suspend fun updateSessionAsRegistered(
         idToken: String,
         canisterId: String,
+        userPrincipal: String,
     ) {
         requiredUseCases.updateSessionAsRegisteredUseCase.invoke(
             parameter =
                 UpdateSessionAsRegisteredUseCase.Params(
                     idToken = idToken,
                     canisterId = canisterId,
+                    userPrincipal = userPrincipal,
                 ),
         )
     }

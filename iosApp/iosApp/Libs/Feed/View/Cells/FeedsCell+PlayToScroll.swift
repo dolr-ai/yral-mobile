@@ -9,14 +9,23 @@ import UIKit
 
 extension FeedsCell {
   func showPlayToScroll() {
-    guard let smileyView = smileyGameHostController?.view, case .notPlayed = smileyGame?.state else { return }
+    guard let smileyView = smileyGameHostController?.view,
+          case .notPlayed = smileyGame?.state,
+          smileyView.isDescendant(of: contentView) else { return }
+    let gen = { overlayGeneration &+= 1; return overlayGeneration }()
     addGameInfoOverlayView()
     let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissPlayToScrollOnTap))
     gameInfoOverlayView.addGestureRecognizer(tapGesture)
     animateGameInfoOverlayView(smileyView: smileyView) { [weak self] in
-      guard let self = self else { return }
+      guard let self = self,
+            self.overlayGeneration == gen,
+            smileyView.isDescendant(of: contentView),
+            smileyView.window != nil else { return }
       self.addPlayToScrollInfoView(smileyView)
-      DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.five) {
+      DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.five) { [weak self] in
+        guard let self = self,
+              self.overlayGeneration == gen,
+              smileyView.isDescendant(of: self.contentView) else { return }
         self.cleanupOnOnboardingCompletion(smileyView: smileyView)
         self.delegate?.howToPlayShown(index: self.index)
       }

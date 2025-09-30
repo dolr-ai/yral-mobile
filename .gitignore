@@ -83,7 +83,7 @@ local.properties
 # Ignore Cargo.lock for libraries
 # Cargo.lock should be included in binaries for reproducible builds
 # More info: https://doc.rust-lang.org/cargo/faq.html#why-do-binaries-have-cargolock-in-version-control-but-not-libraries
-Cargo.lock
+#Cargo.lock
 
 # Output of `cargo doc`, created by running `cargo doc`
 /doc/

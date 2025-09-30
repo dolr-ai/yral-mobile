@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 
-class EventBus {
+internal class EventBus {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val _events = MutableSharedFlow<EventData>(replay = 0, extraBufferCapacity = 64)
     val events: SharedFlow<EventData> = _events.asSharedFlow()
