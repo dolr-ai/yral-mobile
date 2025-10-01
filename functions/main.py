@@ -249,57 +249,6 @@ def _push_delta_ckbtc(token: str, amount: int, recipient_principal: str, memo_te
         return False, f"Status: {resp.status_code}, Body: {resp.text}"
     except requests.RequestException as e:
         return False, str(e)
-    
-@https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"])
-def update_balance(request: Request):
-    balance_update_token = os.environ["BALANCE_UPDATE_TOKEN"]
-    try:
-        if request.method != "POST":
-            return error_response(405, "METHOD_NOW_ALLOWED", "POST required")
-
-        body = request.get_json(silent=True) or {}
-        data = body.get("data", {})
-        pid = str(data.get("principal_id", "")).strip()
-        delta = int(data.get("delta", 0))
-        is_airdropped = bool(data.get("is_airdropped", False))
-
-        auth_header = request.headers.get("Authorization", "")
-        if not auth_header.startswith("Bearer "):
-            return error_response(401, "MISSING_ID_TOKEN", "Authorization token missing")
-        auth.verify_id_token(auth_header.split(" ", 1)[1])
-
-        # ───────── App Check enforcement ─────────
-        # actok = request.headers.get("X-Firebase-AppCheck")
-        # if not actok:
-        #     return error_response(
-        #         401, "APPCHECK_MISSING",
-        #         "App Check token required"
-        #     )
-
-        # try:
-        #     app_check.verify_token(actok)
-        # except Exception:
-        #     return error_response(
-        #         401, "APPCHECK_INVALID",
-        #         "App Check token invalid"
-        #     )
-
-        success, error_msg = _push_delta_yral_token(balance_update_token, pid, delta)
-
-        if not success:
-            return error_response(502, "UPSTREAM_FAILED", f"Balance update failed: {error_msg}")
-
-        coins = tx_coin_change(pid, None, delta, "AIRDROP")
-
-        return jsonify({"coins": coins}), 200
-
-    except auth.InvalidIdTokenError:
-        return error_response(401, "ID_TOKEN_INVALID", "ID token invalid or expired")
-    except GoogleAPICallError as e:
-        return error_response(500, "FIRESTORE_ERROR", str(e))
-    except Exception as e:                                 # fallback
-        print("Unhandled error:", e, file=sys.stderr)
-        return error_response(500, "INTERNAL", "Internal server error")
 
 @https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"])
 def tap_to_recharge(request: Request):
