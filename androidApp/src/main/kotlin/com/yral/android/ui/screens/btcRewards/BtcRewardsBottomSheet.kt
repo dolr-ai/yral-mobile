@@ -1,7 +1,10 @@
 package com.yral.android.ui.screens.btcRewards
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -11,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -20,10 +24,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.yral.android.R
+import com.yral.android.ui.screens.btcRewards.BtcRewardsBottomSheetConstants.ANIMATION_VIEW_ASPECT_RATIO
 import com.yral.android.ui.screens.btcRewards.nav.BtcRewardsComponent
 import com.yral.shared.libs.designsystem.component.YralBottomSheet
 import com.yral.shared.libs.designsystem.component.YralButton
 import com.yral.shared.libs.designsystem.component.YralGradientButton
+import com.yral.shared.libs.designsystem.component.lottie.LottieRes
+import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralBrushes
 import com.yral.shared.libs.designsystem.theme.YralColors
@@ -49,6 +56,13 @@ fun BtcRewardsBottomSheet(component: BtcRewardsComponent) {
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth(),
             )
+            Box(modifier = Modifier.fillMaxWidth().aspectRatio(ANIMATION_VIEW_ASPECT_RATIO)) {
+                YralLottieAnimation(
+                    rawRes = LottieRes.BTC_CREDITED,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Inside,
+                )
+            }
             Column(
                 verticalArrangement = Arrangement.spacedBy(28.dp, Alignment.Top),
                 horizontalAlignment = Alignment.Start,
@@ -117,3 +131,7 @@ private fun buildAnnotatedCongratsText(): AnnotatedString =
             }
         }
     }
+
+object BtcRewardsBottomSheetConstants {
+    const val ANIMATION_VIEW_ASPECT_RATIO = 2.2f
+}
