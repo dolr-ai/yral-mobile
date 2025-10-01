@@ -47,28 +47,26 @@ class YralApp : Application() {
     private fun setupFirebase() {
         koinInstance.get<FirebaseCrashlytics>().setCrashlyticsCollectionEnabled(!BuildConfig.DEBUG)
 
-        appCoroutineScope.launch {
-            val firebaseApp = FirebaseApp.getInstance()
-            val flagManager = koinInstance.get<FeatureFlagManager>()
-            val enableAppCheck = flagManager.isEnabled(AppFeatureFlags.Android.EnableAppCheck)
-            if (enableAppCheck) {
-                Firebase
-                    .appCheck(firebaseApp)
-                    .installAppCheckProviderFactory {
-                        if (BuildConfig.DEBUG) {
-                            DebugAppCheckProviderFactory
-                                .getInstance()
-                                .create(firebaseApp)
-                        } else {
-                            PlayIntegrityAppCheckProviderFactory
-                                .getInstance()
-                                .create(firebaseApp)
-                        }
+        val firebaseApp = FirebaseApp.getInstance()
+        val flagManager = koinInstance.get<FeatureFlagManager>()
+        val enableAppCheck = flagManager.isEnabled(AppFeatureFlags.Android.EnableAppCheck)
+        if (enableAppCheck) {
+            Firebase
+                .appCheck(firebaseApp)
+                .installAppCheckProviderFactory {
+                    if (BuildConfig.DEBUG) {
+                        DebugAppCheckProviderFactory
+                            .getInstance()
+                            .create(firebaseApp)
+                    } else {
+                        PlayIntegrityAppCheckProviderFactory
+                            .getInstance()
+                            .create(firebaseApp)
                     }
-                Logger.d("YralApp") { "Installed appcheck" }
-            } else {
-                Logger.d("YralApp") { "Skipping appcheck since it is disabled" }
-            }
+                }
+            Logger.d("YralApp") { "Installed appcheck" }
+        } else {
+            Logger.d("YralApp") { "Skipping appcheck since it is disabled" }
         }
     }
 

@@ -14,7 +14,7 @@ object AppFeatureFlags {
                 keySuffix = "enableAppCheck",
                 name = "Enable Firebase App Check",
                 description = "Toggle Firebase App Check usage on Android.",
-                defaultValue = true,
+                defaultValue = false,
             )
     }
     object Ios :
