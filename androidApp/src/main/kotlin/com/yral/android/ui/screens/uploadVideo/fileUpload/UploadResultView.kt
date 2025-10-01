@@ -27,6 +27,13 @@ import com.yral.shared.libs.designsystem.component.YralButtonType
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import org.jetbrains.compose.resources.stringResource
+import yral_mobile.shared.libs.designsystem.generated.resources.done
+import yral_mobile.shared.libs.designsystem.generated.resources.my_profile
+import yral_mobile.shared.libs.designsystem.generated.resources.something_went_wrong
+import yral_mobile.shared.libs.designsystem.generated.resources.try_again
+import yral_mobile.shared.libs.designsystem.generated.resources.your_videos
+import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @Composable
 fun UploadVideoSuccess(onDone: () -> Unit) {
@@ -67,7 +74,7 @@ fun UploadVideoSuccess(onDone: () -> Unit) {
             }
             YralGradientButton(
                 modifier = Modifier.fillMaxWidth(),
-                text = stringResource(R.string.done),
+                text = stringResource(DesignRes.string.done),
                 buttonState = YralButtonState.Enabled,
                 buttonType = YralButtonType.Transparent,
                 onClick = onDone,
@@ -79,19 +86,19 @@ fun UploadVideoSuccess(onDone: () -> Unit) {
 @Composable
 private fun buildUploadCompletedMessage(): AnnotatedString {
     val fullMessage = stringResource(R.string.upload_completed_message)
-    val yourVideos = stringResource(R.string.your_videos)
-    val myProfile = stringResource(R.string.my_profile)
+    val yourVideos = stringResource(DesignRes.string.your_videos)
+    val myProfile = stringResource(DesignRes.string.my_profile)
     val firstPart = fullMessage.substringBefore(yourVideos)
     val middlePart = fullMessage.substringAfter(yourVideos).substringBefore(myProfile)
     val endPart = fullMessage.substringAfter(myProfile)
     return buildAnnotatedString {
         append(firstPart)
         withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
-            append(stringResource(R.string.your_videos))
+            append(stringResource(DesignRes.string.your_videos))
         }
         append(middlePart)
         withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
-            append(stringResource(R.string.my_profile))
+            append(stringResource(DesignRes.string.my_profile))
         }
         append(endPart)
     }
@@ -125,7 +132,7 @@ fun UploadVideoFailure(
             ) {
                 Text(
                     modifier = Modifier.fillMaxWidth(),
-                    text = stringResource(R.string.something_went_wrong),
+                    text = stringResource(DesignRes.string.something_went_wrong),
                     style = LocalAppTopography.current.lgBold,
                     color = Color.White,
                     textAlign = TextAlign.Center,
@@ -143,7 +150,7 @@ fun UploadVideoFailure(
             }
             YralGradientButton(
                 modifier = Modifier.fillMaxWidth(),
-                text = stringResource(R.string.try_again),
+                text = stringResource(DesignRes.string.try_again),
                 buttonState = YralButtonState.Enabled,
                 buttonType = YralButtonType.Pink,
                 onClick = onTryAgain,

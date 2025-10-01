@@ -1,6 +1,5 @@
-package com.yral.android.ui.screens.profile
+package com.yral.shared.features.profile.ui
 
-import android.R.attr.text
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -31,16 +30,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.paint
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
-import com.yral.android.R
-import com.yral.android.ui.screens.feed.performance.PrefetchVideoListenerImpl
-import com.yral.android.ui.screens.profile.main.ProfileMainScreenConstants
 import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
@@ -48,12 +42,21 @@ import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.videoPlayer.YRALReelPlayer
 import com.yral.shared.libs.videoPlayer.model.Reels
+import com.yral.shared.libs.videoPlayer.util.PrefetchVideoListener
 import com.yral.shared.reportVideo.domain.models.ReportSheetState
 import com.yral.shared.reportVideo.domain.models.ReportVideoData
 import com.yral.shared.reportVideo.ui.ReportVideo
 import com.yral.shared.reportVideo.ui.ReportVideoSheet
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
+import yral_mobile.shared.features.profile.generated.resources.Res
+import yral_mobile.shared.features.profile.generated.resources.deleting
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
+import yral_mobile.shared.libs.designsystem.generated.resources.delete
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_share
+import yral_mobile.shared.libs.designsystem.generated.resources.shadow
+import yral_mobile.shared.libs.designsystem.generated.resources.shadow_bottom
+import yral_mobile.shared.libs.designsystem.generated.resources.your_videos
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -70,6 +73,7 @@ fun ProfileReelPlayer(
     onBack: () -> Unit,
     onDeleteVideo: (FeedDetails) -> Unit,
     onShareClick: (FeedDetails) -> Unit,
+    getPrefetchListener: (reel: Reels) -> PrefetchVideoListener,
     modifier: Modifier = Modifier,
 ) {
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -86,7 +90,7 @@ fun ProfileReelPlayer(
             onPageLoaded = { },
             recordTime = { _, _ -> },
             didVideoEnd = { },
-            getPrefetchListener = { reel -> PrefetchVideoListenerImpl(reel) },
+            getPrefetchListener = getPrefetchListener,
             getVideoListener = { null },
         ) { pageNo ->
             val currentVideo = reelVideos[pageNo]
@@ -138,7 +142,7 @@ private fun ProfileReelOverlay(
                     .fillMaxWidth()
                     .align(Alignment.BottomCenter)
                     .paint(
-                        painter = painterResource(R.drawable.shadow_bottom),
+                        painter = painterResource(DesignRes.drawable.shadow_bottom),
                         contentScale = ContentScale.FillBounds,
                     ),
         ) {
@@ -171,7 +175,7 @@ private fun Header(
             modifier
                 .fillMaxWidth()
                 .paint(
-                    painter = painterResource(R.drawable.shadow),
+                    painter = painterResource(DesignRes.drawable.shadow),
                     contentScale = ContentScale.FillBounds,
                 ).padding(horizontal = 12.dp, vertical = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -183,7 +187,7 @@ private fun Header(
             contentDescription = "back",
         )
         Text(
-            text = stringResource(R.string.your_videos),
+            text = stringResource(DesignRes.string.your_videos),
             style = LocalAppTopography.current.xlBold,
             color = Color.White,
         )
@@ -261,7 +265,7 @@ private fun DeleteIcon(
 ) {
     Box(modifier = modifier) {
         Image(
-            painter = painterResource(R.drawable.delete),
+            painter = painterResource(DesignRes.drawable.delete),
             contentDescription = "delete video",
             modifier = Modifier.size(36.dp).clickable { onDeleteVideo() },
         )
@@ -279,7 +283,7 @@ private fun ShareIcon(
                 .size(36.dp)
                 .padding(1.5.dp)
                 .clickable(onClick = onClick),
-        painter = painterResource(id = R.drawable.ic_share),
+        painter = painterResource(DesignRes.drawable.ic_share),
         contentDescription = "share video",
         contentScale = ContentScale.None,
     )
@@ -306,7 +310,7 @@ private fun DeletingOverlay(
             ) {
                 YralLoader(size = loaderSize, LottieRes.READ_LOADER)
                 Text(
-                    text = stringResource(R.string.deleting),
+                    text = stringResource(Res.string.deleting),
                     style = textStyle,
                     color = YralColors.NeutralTextPrimary,
                 )

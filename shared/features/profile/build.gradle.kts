@@ -2,21 +2,20 @@ plugins {
     alias(libs.plugins.yral.shared.feature)
     alias(libs.plugins.yral.android.feature)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.yral.shared.library.compose)
 }
 
 kotlin {
     androidTarget()
-//    listOf(
-//        iosX64(),
-//        iosArm64(),
-//        iosSimulatorArm64()
-//    )
+    listOf(
+        iosArm64(),
+        iosSimulatorArm64(),
+    )
 
     sourceSets {
         commonMain.dependencies {
             implementation(projects.shared.core)
             implementation(projects.shared.data)
-            implementation(projects.shared.features.auth)
             implementation(projects.shared.libs.koin)
             implementation(projects.shared.libs.analytics)
             implementation(projects.shared.libs.preferences)
@@ -29,10 +28,13 @@ kotlin {
             implementation(projects.shared.libs.crashlytics)
             implementation(projects.shared.libs.featureFlag)
             implementation(projects.shared.libs.designsystem)
-            implementation(projects.shared.features.account)
+            implementation(projects.shared.libs.videoPlayer)
             implementation(projects.shared.features.reportVideo)
 
             implementation(libs.androidx.paging.common)
+            implementation(libs.androidx.paging.compose)
+            implementation(compose.components.resources)
+            implementation(libs.compose.ui.backhandler)
         }
     }
 }

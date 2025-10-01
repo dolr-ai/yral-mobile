@@ -61,8 +61,10 @@ import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
+import yral_mobile.shared.libs.designsystem.generated.resources.upload_video
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 private const val TOTAL_ITEMS = 5
@@ -193,7 +195,7 @@ private fun Header(onBack: (() -> Unit)? = null) {
             )
         }
         Text(
-            text = stringResource(R.string.upload_video),
+            text = stringResource(DesignRes.string.upload_video),
             style = LocalAppTopography.current.xlBold,
             color = YralColors.NeutralTextPrimary,
         )

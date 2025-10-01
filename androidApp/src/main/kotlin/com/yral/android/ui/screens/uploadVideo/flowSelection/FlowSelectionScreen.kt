@@ -39,7 +39,10 @@ import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import yral_mobile.shared.libs.designsystem.generated.resources.upload_video
+import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @Composable
 fun FlowSelectionScreen(
@@ -75,9 +78,9 @@ fun FlowSelectionScreen(
             )
             FlowItem(
                 icon = R.drawable.ic_upload,
-                title = stringResource(R.string.upload_video),
+                title = stringResource(DesignRes.string.upload_video),
                 subTitle = stringResource(R.string.add_video_from_device),
-                button = stringResource(R.string.upload_video),
+                button = stringResource(DesignRes.string.upload_video),
                 isSelected = viewState.flowType == FlowType.UPLOAD_VIDEO,
                 onClick = {
                     coroutineScope.launch {

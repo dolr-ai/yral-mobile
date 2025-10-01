@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.profile.main
+package com.yral.shared.features.profile.nav
 
 import com.arkivanov.decompose.ComponentContext
 import kotlinx.coroutines.flow.Flow
