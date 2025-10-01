@@ -14,6 +14,7 @@ import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.Value
 import com.yral.android.ui.screens.alertsrequest.nav.AlertsRequestComponent
+import com.yral.android.ui.screens.btcRewards.nav.BtcRewardsComponent
 import com.yral.android.ui.screens.feed.nav.FeedComponent
 import com.yral.android.ui.screens.profile.nav.ProfileComponent
 import com.yral.shared.features.account.nav.AccountComponent
@@ -23,6 +24,7 @@ import com.yral.shared.features.wallet.nav.WalletComponent
 import com.yral.shared.libs.arch.nav.HomeChildSnapshotProvider
 import com.yral.shared.libs.routing.routes.api.AddVideo
 import com.yral.shared.libs.routing.routes.api.AppRoute
+import com.yral.shared.libs.routing.routes.api.BtcRewardsReceived
 import com.yral.shared.libs.routing.routes.api.GenerateAIVideo
 import com.yral.shared.libs.routing.routes.api.Leaderboard
 import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
@@ -115,7 +117,8 @@ internal class DefaultHomeComponent(
                 navigation.replaceKeepingFeed(Config.UploadVideo) {
                     (stack.value.active.instance as? Child.UploadVideo)?.component?.handleNavigation(appRoute)
                 }
-            else -> {}
+            is BtcRewardsReceived -> showSlot(SlotConfig.BtcRewardsBottomSheet)
+            else -> Unit
         }
     }
 
@@ -199,12 +202,30 @@ internal class DefaultHomeComponent(
                 SlotChild.AlertsRequestBottomSheet(
                     alertsRequestComponent(componentContext),
                 )
+            SlotConfig.BtcRewardsBottomSheet ->
+                SlotChild.BtcRewardsBottomSheet(
+                    btcRewardsComponent(componentContext),
+                )
         }
 
     private fun alertsRequestComponent(componentContext: ComponentContext): AlertsRequestComponent =
         AlertsRequestComponent(
             componentContext = componentContext,
             onDismissed = slotNavigation::dismiss,
+        )
+
+    private fun btcRewardsComponent(componentContext: ComponentContext): BtcRewardsComponent =
+        BtcRewardsComponent(
+            componentContext = componentContext,
+            onDismissed = slotNavigation::dismiss,
+            navigateToWallet = {
+                slotNavigation.dismiss()
+                onWalletTabClick()
+            },
+            navigateToFeed = {
+                slotNavigation.dismiss()
+                onFeedTabClick()
+            },
         )
 
     private fun showSlot(slotConfig: SlotConfig) {
@@ -236,5 +257,8 @@ internal class DefaultHomeComponent(
     private sealed interface SlotConfig {
         @Serializable
         data object AlertsRequestBottomSheet : SlotConfig
+
+        @Serializable
+        data object BtcRewardsBottomSheet : SlotConfig
     }
 }

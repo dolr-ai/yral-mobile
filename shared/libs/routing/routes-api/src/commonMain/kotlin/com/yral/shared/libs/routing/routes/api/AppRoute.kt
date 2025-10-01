@@ -73,6 +73,11 @@ data class PostDetailsRoute(
     }
 }
 
+@Serializable
+object BtcRewardsReceived : AppRoute, ExternallyExposedRoute {
+    const val PATH = "/btcRewardsReceived"
+}
+
 // --- Test Route Definitions for Testing ---
 
 @Serializable

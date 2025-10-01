@@ -14,5 +14,12 @@ object WalletFeatureFlags {
                 description = "Enable or disable wallet",
                 defaultValue = false,
             )
+        val BtcRewardsLink: FeatureFlag<String> =
+            string(
+                keySuffix = "btcRewardsLink",
+                name = "BTC Rewards Link",
+                description = "BTC Rewards Link",
+                defaultValue = "https://link.yral.com/dJqgFEnM6Wb",
+            )
     }
 }
