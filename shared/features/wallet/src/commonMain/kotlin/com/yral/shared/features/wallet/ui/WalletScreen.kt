@@ -66,10 +66,10 @@ import yral_mobile.shared.libs.designsystem.generated.resources.current_balance
 import yral_mobile.shared.libs.designsystem.generated.resources.yral
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
+@Suppress("UnusedParameter", "LongMethod")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WalletScreen(
-    @Suppress("UnusedParameter")
     component: WalletComponent,
     modifier: Modifier = Modifier,
     viewModel: WalletViewModel = koinViewModel(),
@@ -104,16 +104,18 @@ fun WalletScreen(
             Spacer(modifier = Modifier.height(24.dp))
         }
         state.bitcoinBalance?.let {
-            YralButton(
-                text = stringResource(Res.string.how_to_earn_bitcoin),
-                onClick = { viewModel.toggleHowToEarnHelp() },
-                modifier =
-                    Modifier
-                        .wrapContentWidth()
-                        .height(40.dp)
-                        .padding(horizontal = 16.dp),
-                textStyle = LocalAppTopography.current.baseBold,
-            )
+            state.rewardConfig?.let {
+                YralButton(
+                    text = stringResource(Res.string.how_to_earn_bitcoin),
+                    onClick = { viewModel.toggleHowToEarnHelp() },
+                    modifier =
+                        Modifier
+                            .wrapContentWidth()
+                            .height(40.dp)
+                            .padding(horizontal = 16.dp),
+                    textStyle = LocalAppTopography.current.baseBold,
+                )
+            }
         }
     }
     if (state.howToEarnHelpVisible) {
