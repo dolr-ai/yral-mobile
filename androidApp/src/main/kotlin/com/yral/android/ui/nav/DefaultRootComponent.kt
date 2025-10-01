@@ -13,6 +13,7 @@ import com.yral.android.ui.screens.home.nav.HomeComponent
 import com.yral.android.ui.screens.profile.nav.ProfileComponent
 import com.yral.android.update.UpdateState
 import com.yral.shared.libs.routing.routes.api.AppRoute
+import com.yral.shared.libs.routing.routes.api.BtcRewardsReceived
 import kotlinx.serialization.Serializable
 
 internal class DefaultRootComponent(
@@ -96,6 +97,9 @@ internal class DefaultRootComponent(
                 } else {
                     homeComponent?.handleNavigation(destination)
                 }
+            }
+            destination == BtcRewardsReceived.toString() -> {
+                onNavigationRequest(BtcRewardsReceived)
             }
         }
     }

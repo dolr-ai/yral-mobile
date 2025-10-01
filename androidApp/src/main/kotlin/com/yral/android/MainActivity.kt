@@ -42,6 +42,7 @@ import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.designsystem.theme.appTypoGraphy
 import com.yral.shared.libs.routing.deeplink.engine.RoutingService
+import com.yral.shared.libs.routing.routes.api.BtcRewardsReceived
 import com.yral.shared.rust.service.services.HelperService.initRustLogger
 import io.branch.indexing.BranchUniversalObject
 import io.branch.referral.Branch
@@ -153,7 +154,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun handleIntent(intent: Intent?) {
-        Logger.d("onNewIntent: ${intent?.data}")
+        Logger.d("MainActivity") { "onNewIntent: ${intent?.data}" }
 
         // Handle OAuth redirect URIs
         handleOAuthIntent(intent)?.let {
@@ -193,6 +194,7 @@ class MainActivity : ComponentActivity() {
                         ProfileComponent.DEEPLINK
                     }
                 }
+                "RewardEarned" -> BtcRewardsReceived.toString()
                 // Add more notification types here as needed
                 else -> {
                     Logger.w("MainActivity") { "Unknown notification type: $type" }
