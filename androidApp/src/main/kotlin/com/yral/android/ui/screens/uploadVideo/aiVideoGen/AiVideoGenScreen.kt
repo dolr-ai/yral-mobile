@@ -82,7 +82,12 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
 import yral_mobile.shared.libs.designsystem.generated.resources.coins
+import yral_mobile.shared.libs.designsystem.generated.resources.done
+import yral_mobile.shared.libs.designsystem.generated.resources.my_profile
 import yral_mobile.shared.libs.designsystem.generated.resources.pink_gradient_background
+import yral_mobile.shared.libs.designsystem.generated.resources.something_went_wrong
+import yral_mobile.shared.libs.designsystem.generated.resources.try_again
+import yral_mobile.shared.libs.designsystem.generated.resources.your_videos
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @Suppress("LongMethod")
@@ -440,7 +445,7 @@ private fun GenerationErrorPrompt(
                     .padding(start = 16.dp, top = 36.dp, end = 16.dp, bottom = 36.dp),
         ) {
             Text(
-                text = stringResource(R.string.something_went_wrong),
+                text = stringResource(DesignRes.string.something_went_wrong),
                 style = LocalAppTopography.current.lgBold,
                 color = Color.White,
             )
@@ -462,7 +467,7 @@ private fun GenerationErrorPrompt(
                     )
                 }
                 YralGradientButton(
-                    text = stringResource(R.string.try_again),
+                    text = stringResource(DesignRes.string.try_again),
                     onClick = tryAgain,
                 )
             }
@@ -514,7 +519,7 @@ private fun GenerationSuccessScreen(
         }
         YralGradientButton(
             modifier = Modifier.fillMaxWidth(),
-            text = stringResource(R.string.done),
+            text = stringResource(DesignRes.string.done),
             onClick = goToHome,
         )
     }
@@ -550,19 +555,19 @@ object AiVideoGenScreenConstants {
 @Composable
 private fun buildUploadCompletedMessage(): AnnotatedString {
     val fullMessage = stringResource(R.string.upload_completed_message)
-    val yourVideos = stringResource(R.string.your_videos)
-    val myProfile = stringResource(R.string.my_profile)
+    val yourVideos = stringResource(DesignRes.string.your_videos)
+    val myProfile = stringResource(DesignRes.string.my_profile)
     val firstPart = fullMessage.substringBefore(yourVideos)
     val middlePart = fullMessage.substringAfter(yourVideos).substringBefore(myProfile)
     val endPart = fullMessage.substringAfter(myProfile)
     return buildAnnotatedString {
         append(firstPart)
         withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
-            append(stringResource(R.string.your_videos))
+            append(stringResource(DesignRes.string.your_videos))
         }
         append(middlePart)
         withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
-            append(stringResource(R.string.my_profile))
+            append(stringResource(DesignRes.string.my_profile))
         }
         append(endPart)
     }

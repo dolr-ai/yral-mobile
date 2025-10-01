@@ -39,7 +39,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yral.android.R
-import com.yral.android.ui.components.DeleteConfirmationSheet
 import com.yral.android.ui.screens.account.AccountScreenConstants.SOCIAL_MEDIA_LINK_BOTTOM_SPACER_WEIGHT
 import com.yral.android.ui.screens.account.nav.AccountComponent
 import com.yral.shared.analytics.events.MenuCtaType
@@ -53,6 +52,7 @@ import com.yral.shared.features.account.viewmodel.ErrorType
 import com.yral.shared.features.auth.viewModel.LoginViewModel
 import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.designsystem.component.AccountInfoView
+import com.yral.shared.libs.designsystem.component.DeleteConfirmationSheet
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
 import com.yral.shared.libs.designsystem.component.YralWebViewBottomSheet
@@ -60,9 +60,11 @@ import com.yral.shared.libs.designsystem.component.getSVGImageModel
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.designsystem.theme.YralDimens
+import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
+import yral_mobile.shared.libs.designsystem.generated.resources.delete
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -346,7 +348,13 @@ private fun HelpLinkItem(
                 )
             } ?: item.getIcon()?.let {
                 Image(
-                    painter = painterResource(id = it),
+                    painter =
+                        if (it is DrawableResource) {
+                            painterResource(it)
+                        } else {
+                            // temporary unless we completely migrate to drawableResource
+                            painterResource(id = it as Int)
+                        },
                     contentDescription = "support",
                     contentScale = ContentScale.None,
                 )
@@ -431,7 +439,7 @@ private fun AccountHelpLink.getIcon() =
         AccountHelpLinkType.TERMS_OF_SERVICE -> R.drawable.document
         AccountHelpLinkType.PRIVACY_POLICY -> R.drawable.lock
         AccountHelpLinkType.LOGOUT -> R.drawable.logout
-        AccountHelpLinkType.DELETE_ACCOUNT -> R.drawable.delete
+        AccountHelpLinkType.DELETE_ACCOUNT -> DesignRes.drawable.delete
         else -> null
     }
 

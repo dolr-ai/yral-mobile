@@ -1,0 +1,11 @@
+<resources>
+    <string name="deleting">Deleting…</string>
+    <string name="delete">Delete</string>
+    <string name="video_will_be_deleted_permanently">This video will be permanently deleted from your yral account.</string>
+    <string name="delete_video">Delete video?</string>
+    <string name="failed_to_delete_video">Failed to delete video</string>
+    <string name="error_loading_videos">Error loading videos</string>
+    <string name="you_have_not_uploaded_any_video_yet">You have not uploaded any videos yet.</string>
+    <string name="error_loading_more_videos">Error loading more videos</string>
+
+</resources>

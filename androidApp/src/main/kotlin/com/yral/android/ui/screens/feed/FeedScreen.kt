@@ -69,7 +69,15 @@ import com.yral.shared.reportVideo.domain.models.ReportSheetState
 import com.yral.shared.reportVideo.ui.ReportVideo
 import com.yral.shared.reportVideo.ui.ReportVideoSheet
 import kotlinx.coroutines.flow.collectLatest
+import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_share
+import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_share
+import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_share_desc
+import yral_mobile.shared.libs.designsystem.generated.resources.shadow
+import yral_mobile.shared.libs.designsystem.generated.resources.shadow_bottom
+import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Suppress("LongMethod", "CyclomaticComplexMethod", "UnusedParameter")
@@ -352,7 +360,7 @@ private fun TopViewWithGameToggle(
             Modifier
                 .fillMaxWidth()
                 .paint(
-                    painter = painterResource(R.drawable.shadow),
+                    painter = painterResource(DesignRes.drawable.shadow),
                     contentScale = ContentScale.FillBounds,
                 ),
         contentAlignment = Alignment.TopStart,
@@ -402,7 +410,7 @@ private fun TopView(
             Modifier
                 .fillMaxWidth()
                 .paint(
-                    painter = painterResource(R.drawable.shadow),
+                    painter = painterResource(DesignRes.drawable.shadow),
                     contentScale = ContentScale.FillBounds,
                 ).padding(end = 26.dp),
     ) {
@@ -488,7 +496,7 @@ private fun Shadow(modifier: Modifier) {
             modifier
                 .fillMaxWidth()
                 .paint(
-                    painter = painterResource(R.drawable.shadow_bottom),
+                    painter = painterResource(DesignRes.drawable.shadow_bottom),
                     contentScale = ContentScale.FillBounds,
                     alpha = 0.3f,
                 ),
@@ -520,15 +528,15 @@ private fun ActionsRight(
                 )
             }
         }
-        val msgFeedVideoShare = stringResource(R.string.msg_feed_video_share)
-        val msgFeedVideoShareDesc = stringResource(R.string.msg_feed_video_share_desc)
+        val msgFeedVideoShare = stringResource(DesignRes.string.msg_feed_video_share)
+        val msgFeedVideoShareDesc = stringResource(DesignRes.string.msg_feed_video_share_desc)
         Image(
             modifier =
                 Modifier
                     .size(36.dp)
                     .padding(1.5.dp)
                     .clickable { feedViewModel.onShareClicked(feedDetails, msgFeedVideoShare, msgFeedVideoShareDesc) },
-            painter = painterResource(id = R.drawable.ic_share),
+            painter = painterResource(DesignRes.drawable.ic_share),
             contentDescription = "share video",
             contentScale = ContentScale.None,
         )
