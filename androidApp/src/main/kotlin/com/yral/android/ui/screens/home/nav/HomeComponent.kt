@@ -5,6 +5,7 @@ import com.arkivanov.decompose.router.slot.ChildSlot
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.value.Value
 import com.yral.android.ui.screens.alertsrequest.nav.AlertsRequestComponent
+import com.yral.android.ui.screens.btcRewards.nav.BtcRewardsComponent
 import com.yral.android.ui.screens.profile.nav.ProfileComponent
 import com.yral.shared.features.account.nav.AccountComponent
 import com.yral.shared.features.feed.nav.FeedComponent
@@ -54,6 +55,10 @@ abstract class HomeComponent {
     sealed class SlotChild {
         class AlertsRequestBottomSheet(
             val component: AlertsRequestComponent,
+        ) : SlotChild()
+
+        class BtcRewardsBottomSheet(
+            val component: BtcRewardsComponent,
         ) : SlotChild()
     }
     companion object {

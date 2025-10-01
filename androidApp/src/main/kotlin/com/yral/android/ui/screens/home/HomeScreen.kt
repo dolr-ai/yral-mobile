@@ -45,6 +45,7 @@ import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.yral.android.R
 import com.yral.android.ui.screens.alertsrequest.AlertsRequestBottomSheet
+import com.yral.android.ui.screens.btcRewards.BtcRewardsBottomSheet
 import com.yral.android.ui.screens.feed.FeedScreen
 import com.yral.android.ui.screens.home.nav.HomeComponent
 import com.yral.android.ui.screens.home.nav.HomeComponent.SlotChild
@@ -137,6 +138,10 @@ private fun SlotContent(component: HomeComponent) {
         when (slotChild) {
             is SlotChild.AlertsRequestBottomSheet ->
                 AlertsRequestBottomSheet(
+                    component = slotChild.component,
+                )
+            is SlotChild.BtcRewardsBottomSheet ->
+                BtcRewardsBottomSheet(
                     component = slotChild.component,
                 )
         }

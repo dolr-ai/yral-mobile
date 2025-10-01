@@ -7,6 +7,7 @@ import com.yral.shared.libs.routing.deeplink.engine.RoutingTable
 import com.yral.shared.libs.routing.deeplink.engine.UrlBuilder
 import com.yral.shared.libs.routing.deeplink.engine.buildRoutingTable
 import com.yral.shared.libs.routing.routes.api.AddVideo
+import com.yral.shared.libs.routing.routes.api.BtcRewardsReceived
 import com.yral.shared.libs.routing.routes.api.GenerateAIVideo
 import com.yral.shared.libs.routing.routes.api.Home
 import com.yral.shared.libs.routing.routes.api.Leaderboard
@@ -31,6 +32,8 @@ val routingModule =
                 route<AddVideo>(AddVideo.PATH)
                 route<GenerateAIVideo>(GenerateAIVideo.PATH)
                 route<Profile>(Profile.PATH)
+
+                route<BtcRewardsReceived>(BtcRewardsReceived.PATH)
 
                 // Feed / Post routes
                 route<PostDetailsRoute>(PostDetailsRoute.PATH)
