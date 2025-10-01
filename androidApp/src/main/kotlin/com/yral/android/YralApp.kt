@@ -8,11 +8,14 @@ import co.touchlab.kermit.Logger
 import com.facebook.FacebookSdk
 import com.facebook.LoggingBehavior
 import com.google.firebase.Firebase
+import com.google.firebase.FirebaseApp
 import com.google.firebase.appcheck.appCheck
 import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory
 import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
 import com.google.firebase.initialize
 import com.yral.android.ui.widgets.video.di.videoWidgetModule
+import com.yral.featureflag.AppFeatureFlags
+import com.yral.featureflag.FeatureFlagManager
 import com.yral.shared.analytics.providers.mixpanel.MixpanelAnalyticsProvider
 import com.yral.shared.app.di.initKoin
 import com.yral.shared.koin.koinInstance
@@ -29,7 +32,7 @@ class YralApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        setupFirebase()
+        Firebase.initialize(this)
         setupFacebook()
         setupBranch()
         setupEmoji()
@@ -37,13 +40,17 @@ class YralApp : Application() {
             androidContext(this@YralApp)
             modules(videoWidgetModule)
         }
-        koinInstance.get<FirebaseCrashlytics>().setCrashlyticsCollectionEnabled(!BuildConfig.DEBUG)
+        setupFirebase()
         observeAndAddDistinctIdToBranch()
     }
 
     private fun setupFirebase() {
-        val firebaseApp = Firebase.initialize(this)
-        firebaseApp?.let {
+        koinInstance.get<FirebaseCrashlytics>().setCrashlyticsCollectionEnabled(!BuildConfig.DEBUG)
+
+        val firebaseApp = FirebaseApp.getInstance()
+        val flagManager = koinInstance.get<FeatureFlagManager>()
+        val enableAppCheck = flagManager.isEnabled(AppFeatureFlags.Android.EnableAppCheck)
+        if (enableAppCheck) {
             Firebase
                 .appCheck(firebaseApp)
                 .installAppCheckProviderFactory {
@@ -57,6 +64,9 @@ class YralApp : Application() {
                             .create(firebaseApp)
                     }
                 }
+            Logger.d("YralApp") { "Installed appcheck" }
+        } else {
+            Logger.d("YralApp") { "Skipping appcheck since it is disabled" }
         }
     }
 
