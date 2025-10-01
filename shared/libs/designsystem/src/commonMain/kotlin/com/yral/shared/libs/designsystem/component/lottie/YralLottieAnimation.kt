@@ -11,7 +11,6 @@ expect fun YralLottieAnimation(
     rawRes: LottieRes,
     iterations: Int = Int.MAX_VALUE,
     contentScale: ContentScale = ContentScale.FillBounds,
-    textReplacements: Map<String, String> = emptyMap(),
     onAnimationComplete: () -> Unit = {},
 )
 
@@ -26,9 +25,3 @@ expect fun YralLottieAnimation(
 
 @Composable
 expect fun rememberYralLottieComposition(lottieRes: LottieRes): State<Any?>
-
-@Composable
-expect fun rememberYralLottieComposition(
-    lottieRes: LottieRes,
-    textReplacements: Map<String, String>,
-): State<Any?>
