@@ -25,9 +25,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yral.shared.features.wallet.domain.models.BtcRewardConfig
@@ -38,10 +42,10 @@ import com.yral.shared.libs.NumberFormatter
 import com.yral.shared.libs.designsystem.component.AccountInfoView
 import com.yral.shared.libs.designsystem.component.YralBottomSheet
 import com.yral.shared.libs.designsystem.component.YralButton
-import com.yral.shared.libs.designsystem.component.YralMaskedVectorTextV2
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
+import com.yral.shared.libs.designsystem.theme.YralBrushes
 import com.yral.shared.libs.designsystem.theme.YralColors
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -50,15 +54,13 @@ import yral_mobile.shared.features.wallet.generated.resources.Res
 import yral_mobile.shared.features.wallet.generated.resources.bit_coin
 import yral_mobile.shared.features.wallet.generated.resources.bitcoin
 import yral_mobile.shared.features.wallet.generated.resources.btc_inr_rate
-import yral_mobile.shared.features.wallet.generated.resources.get_bitcoin_p1
-import yral_mobile.shared.features.wallet.generated.resources.get_bitcoin_p2
+import yral_mobile.shared.features.wallet.generated.resources.get_bitcoin
 import yral_mobile.shared.features.wallet.generated.resources.how_to_earn_bitcoin
 import yral_mobile.shared.features.wallet.generated.resources.how_to_earn_bitcoins
 import yral_mobile.shared.features.wallet.generated.resources.ic_rupee
 import yral_mobile.shared.features.wallet.generated.resources.my_wallet
 import yral_mobile.shared.libs.designsystem.generated.resources.coins
 import yral_mobile.shared.libs.designsystem.generated.resources.current_balance
-import yral_mobile.shared.libs.designsystem.generated.resources.golden_gradient_text
 import yral_mobile.shared.libs.designsystem.generated.resources.yral
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
@@ -381,38 +383,54 @@ private fun HowToEarnBitcoinSheet(rewardConfig: BtcRewardConfig) {
                     modifier = Modifier.fillMaxSize(),
                 )
             }
-            Column {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(0.dp, Alignment.CenterHorizontally),
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 24.dp),
-                ) {
-                    Text(
-                        text = stringResource(Res.string.get_bitcoin_p1).plus(" "),
-                        style = LocalAppTopography.current.baseRegular,
-                        color = YralColors.NeutralTextPrimary,
-                    )
-                    YralMaskedVectorTextV2(
-                        text = stringResource(Res.string.bit_coin),
-                        drawableRes = DesignRes.drawable.golden_gradient_text,
-                        textStyle =
-                            LocalAppTopography
-                                .current
-                                .mdBold
-                                .plus(TextStyle(textAlign = TextAlign.Center)),
-                    )
-                }
-                Text(
-                    text = stringResource(Res.string.get_bitcoin_p2).plus(" "),
-                    style = LocalAppTopography.current.baseRegular,
-                    color = YralColors.NeutralTextPrimary,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center,
-                )
-            }
+            Text(
+                text = buildAnnotatedGetText(),
+                style = LocalAppTopography.current.baseRegular,
+                color = YralColors.NeutralTextPrimary,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center,
+            )
         }
     }
 }
+
+@Composable
+private fun buildAnnotatedGetText(): AnnotatedString =
+    buildAnnotatedString {
+        val fullText = stringResource(Res.string.get_bitcoin)
+        val maskedText = stringResource(Res.string.bit_coin)
+        val maskedStart = fullText.indexOf(maskedText)
+        val maskedEnd = maskedStart + maskedText.length
+        val textStyle = LocalAppTopography.current.baseRegular
+        val spanStyle =
+            SpanStyle(
+                fontSize = textStyle.fontSize,
+                fontFamily = textStyle.fontFamily,
+                fontWeight = textStyle.fontWeight,
+            )
+        if (maskedStart >= 0) {
+            withStyle(
+                style = spanStyle.copy(color = YralColors.Neutral300),
+            ) { append(fullText.substring(0, maskedStart)) }
+
+            withStyle(
+                style =
+                    spanStyle.copy(
+                        brush = YralBrushes.GoldenTextBrush,
+                        fontWeight = FontWeight.Bold,
+                    ),
+            ) { append(fullText.substring(maskedStart, maskedEnd)) }
+
+            if (maskedEnd < fullText.length) {
+                withStyle(
+                    style = spanStyle.copy(color = YralColors.Neutral300),
+                ) { append(fullText.substring(maskedEnd)) }
+            }
+        } else {
+            withStyle(
+                style = spanStyle.copy(color = YralColors.Neutral300),
+            ) {
+                append(fullText)
+            }
+        }
+    }
