@@ -39,6 +39,8 @@ import com.yral.shared.libs.designsystem.component.AccountInfoView
 import com.yral.shared.libs.designsystem.component.YralBottomSheet
 import com.yral.shared.libs.designsystem.component.YralButton
 import com.yral.shared.libs.designsystem.component.YralMaskedVectorTextV2
+import com.yral.shared.libs.designsystem.component.lottie.LottieRes
+import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import org.jetbrains.compose.resources.painterResource
@@ -354,7 +356,7 @@ private fun Double.toCurrencyString(currencyCode: String) =
             maximumFractionDigits = 2,
         )
 
-@Suppress("LongMethod")
+@Suppress("LongMethod", "UnusedParameter")
 @Composable
 private fun HowToEarnBitcoinSheet(rewardConfig: BtcRewardConfig) {
     Column(
@@ -374,12 +376,9 @@ private fun HowToEarnBitcoinSheet(rewardConfig: BtcRewardConfig) {
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Box(modifier = Modifier.fillMaxWidth().height(161.dp)) {
-                Text(
-                    text = rewardConfig.viewMileStone.toString(),
-                    style = LocalAppTopography.current.xlBold,
-                    textAlign = TextAlign.Center,
-                    color = Color.White,
-                    modifier = Modifier.fillMaxWidth(),
+                YralLottieAnimation(
+                    rawRes = LottieRes.BTC_REWARDS_VIEWS_ANIMATION,
+                    modifier = Modifier.fillMaxSize(),
                 )
             }
             Column {
