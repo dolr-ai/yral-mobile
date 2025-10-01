@@ -112,6 +112,7 @@ fun WalletScreen(
                         .wrapContentWidth()
                         .height(40.dp)
                         .padding(horizontal = 16.dp),
+                textStyle = LocalAppTopography.current.baseBold,
             )
         }
     }
