@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -34,7 +35,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.yral.shared.features.wallet.domain.models.BtcRewardConfig
 import com.yral.shared.features.wallet.nav.WalletComponent
 import com.yral.shared.features.wallet.viewmodel.WalletViewModel
 import com.yral.shared.libs.CurrencyFormatter
@@ -43,7 +43,9 @@ import com.yral.shared.libs.designsystem.component.AccountInfoView
 import com.yral.shared.libs.designsystem.component.YralBottomSheet
 import com.yral.shared.libs.designsystem.component.YralButton
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
+import com.yral.shared.libs.designsystem.component.lottie.PreloadLottieAnimations
 import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
+import com.yral.shared.libs.designsystem.component.lottie.YralRemoteLottieAnimation
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralBrushes
 import com.yral.shared.libs.designsystem.theme.YralColors
@@ -119,9 +121,14 @@ fun WalletScreen(
                 onDismissRequest = { viewModel.toggleHowToEarnHelp() },
                 bottomSheetState = bottomSheetState,
                 dragHandle = null,
-                content = { HowToEarnBitcoinSheet(rewardConfig) },
+                content = { HowToEarnBitcoinSheet(state.rewardAnimationUrl) },
             )
         }
+    }
+    state.rewardAnimationUrl?.let {
+        PreloadLottieAnimations(
+            urls = listOf(it),
+        )
     }
 }
 
@@ -360,7 +367,7 @@ private fun Double.toCurrencyString(currencyCode: String) =
 
 @Suppress("LongMethod", "UnusedParameter")
 @Composable
-private fun HowToEarnBitcoinSheet(rewardConfig: BtcRewardConfig) {
+private fun HowToEarnBitcoinSheet(rewardAnimationUrl: String?) {
     Column(
         verticalArrangement = Arrangement.spacedBy(52.dp, Alignment.Top),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -377,11 +384,17 @@ private fun HowToEarnBitcoinSheet(rewardConfig: BtcRewardConfig) {
             verticalArrangement = Arrangement.spacedBy(32.dp, Alignment.CenterVertically),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Box(modifier = Modifier.fillMaxWidth().height(161.dp)) {
-                YralLottieAnimation(
-                    rawRes = LottieRes.BTC_REWARDS_VIEWS_ANIMATION,
-                    modifier = Modifier.fillMaxSize(),
-                )
+            Box(modifier = Modifier.width(358.dp).height(161.dp)) {
+                rewardAnimationUrl?.let {
+                    YralRemoteLottieAnimation(
+                        url = rewardAnimationUrl,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
+                    ?: YralLottieAnimation(
+                        rawRes = LottieRes.BTC_REWARDS_VIEWS_ANIMATION,
+                        modifier = Modifier.fillMaxSize(),
+                    )
             }
             Text(
                 text = buildAnnotatedGetText(),

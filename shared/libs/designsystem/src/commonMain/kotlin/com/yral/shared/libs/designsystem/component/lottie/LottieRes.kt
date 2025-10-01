@@ -28,7 +28,7 @@ enum class LottieRes(
     YRAL_LOADER("yral_loader.json"),
     WHITE_LOADER("white_loader.json"),
     READ_LOADER("read_loader.json"),
-    BTC_REWARDS_VIEWS_ANIMATION("btc_rewards_views_animation.json"),
+    BTC_REWARDS_VIEWS_ANIMATION("btc_rewards_views.json"),
     BTC_CREDITED("btc_credited.json"),
     ;
 
