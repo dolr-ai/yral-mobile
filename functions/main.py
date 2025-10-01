@@ -27,7 +27,7 @@ VIDEO_COLL = "videos"
 DAILY_COLL = "leaderboards_daily"
 
 BALANCE_URL_YRAL_TOKEN = "https://yral-hot-or-not.go-bazzinga.workers.dev/update_balance/"
-BALANCE_URL_CKBTC = "https://yral-hot-or-not.go-bazzinga.workers.dev/v2/transfer_ckbtc/"
+BALANCE_URL_CKBTC = "https://yral-hot-or-not.go-bazzinga.workers.dev/v2/transfer_ckbtc"
 
 IST = timezone(timedelta(hours=5, minutes=30))
 
@@ -987,7 +987,7 @@ def reward_leaderboard_winners(cloud_event):
             elif currency == CURRENCY_BTC:
                 reward_amount_inr = reward_amount
                 reward_amount_ckbtc = reward_amount_inr * 10   # Assuming 1 BTC = ₹1,00,00,000
-                success, error = _push_delta_ckbtc(token, pid, reward_amount_ckbtc, "Daily leaderboard reward")
+                success, error = _push_delta_ckbtc(token, reward_amount_ckbtc, pid, "Daily leaderboard reward")
             else:
                 print(f"[ERROR] Unknown currency: {currency}")
                 continue
