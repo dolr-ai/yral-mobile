@@ -13,10 +13,10 @@ import com.arkivanov.decompose.router.stack.StackNavigator
 import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.Value
-import com.yral.android.ui.screens.account.nav.AccountComponent
 import com.yral.android.ui.screens.alertsrequest.nav.AlertsRequestComponent
 import com.yral.android.ui.screens.feed.nav.FeedComponent
 import com.yral.android.ui.screens.profile.nav.ProfileComponent
+import com.yral.shared.features.account.nav.AccountComponent
 import com.yral.shared.features.leaderboard.nav.LeaderboardComponent
 import com.yral.shared.features.uploadvideo.nav.UploadVideoRootComponent
 import com.yral.shared.features.wallet.nav.WalletComponent

@@ -10,12 +10,12 @@ import androidx.paging.compose.LazyPagingItems
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.stack.animation.slide
 import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
-import com.yral.android.ui.screens.account.AccountScreen
-import com.yral.android.ui.screens.account.LoginBottomSheet
 import com.yral.android.ui.screens.feed.performance.PrefetchVideoListenerImpl
 import com.yral.android.ui.screens.profile.nav.ProfileComponent
 import com.yral.shared.data.feed.domain.FeedDetails
+import com.yral.shared.features.account.ui.AccountScreen
 import com.yral.shared.features.account.viewmodel.AccountsViewModel
+import com.yral.shared.features.auth.ui.LoginBottomSheet
 import com.yral.shared.features.auth.viewModel.LoginViewModel
 import com.yral.shared.features.profile.ui.ProfileMainScreen
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
@@ -58,9 +58,20 @@ fun ProfileScreen(
                 )
             }
             is ProfileComponent.Child.Account -> {
+                val loginViewModel: LoginViewModel = koinViewModel()
+                val loginState by loginViewModel.state.collectAsStateWithLifecycle()
                 AccountScreen(
                     component = instance.component,
                     viewModel = accountsViewModel,
+                    loginState = loginState,
+                    loginBottomSheet = { bottomSheetState, onDismissRequest, termsLink, openTerms ->
+                        LoginBottomSheet(
+                            bottomSheetState = bottomSheetState,
+                            onDismissRequest = onDismissRequest,
+                            termsLink = termsLink,
+                            openTerms = openTerms,
+                        )
+                    },
                 )
             }
         }

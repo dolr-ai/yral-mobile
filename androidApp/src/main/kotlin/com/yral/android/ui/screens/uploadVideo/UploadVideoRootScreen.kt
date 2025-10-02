@@ -11,7 +11,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.stack.animation.slide
 import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
-import com.yral.android.ui.screens.account.LoginBottomSheet
+import com.yral.shared.features.auth.ui.LoginBottomSheet
 import com.yral.shared.features.auth.viewModel.LoginViewModel
 import com.yral.shared.features.uploadvideo.nav.UploadVideoRootComponent
 import com.yral.shared.features.uploadvideo.ui.FlowSelectionScreen

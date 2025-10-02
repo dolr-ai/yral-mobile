@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -36,13 +37,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.yral.android.R
-import com.yral.android.ui.screens.account.AccountScreen
 import com.yral.android.ui.screens.alertsrequest.AlertsRequestBottomSheet
 import com.yral.android.ui.screens.feed.FeedScreen
 import com.yral.android.ui.screens.home.nav.HomeComponent
@@ -56,7 +57,10 @@ import com.yral.shared.core.session.SessionKey
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.session.getKey
 import com.yral.shared.data.feed.domain.FeedDetails
+import com.yral.shared.features.account.ui.AccountScreen
 import com.yral.shared.features.account.viewmodel.AccountsViewModel
+import com.yral.shared.features.auth.ui.LoginBottomSheet
+import com.yral.shared.features.auth.viewModel.LoginViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.game.viewmodel.GameViewModel
 import com.yral.shared.features.leaderboard.ui.LeaderboardScreen
@@ -139,6 +143,7 @@ private fun SlotContent(component: HomeComponent) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Suppress("LongMethod")
 @Composable
 private fun HomeScreenContent(
@@ -165,11 +170,23 @@ private fun HomeScreenContent(
                     gameViewModel = gameViewModel,
                 )
 
-            is HomeComponent.Child.Account ->
+            is HomeComponent.Child.Account -> {
+                val loginViewModel: LoginViewModel = koinViewModel()
+                val loginState by loginViewModel.state.collectAsStateWithLifecycle()
                 AccountScreen(
                     component = child.component,
                     viewModel = accountViewModel,
+                    loginState = loginState,
+                    loginBottomSheet = { bottomSheetState, onDismissRequest, termsLink, openTerms ->
+                        LoginBottomSheet(
+                            bottomSheetState = bottomSheetState,
+                            onDismissRequest = onDismissRequest,
+                            termsLink = termsLink,
+                            openTerms = openTerms,
+                        )
+                    },
                 )
+            }
 
             is HomeComponent.Child.Leaderboard ->
                 LeaderboardScreen(

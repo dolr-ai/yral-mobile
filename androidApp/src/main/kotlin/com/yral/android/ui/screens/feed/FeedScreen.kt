@@ -72,6 +72,8 @@ import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import yral_mobile.shared.libs.designsystem.generated.resources.could_not_login
+import yral_mobile.shared.libs.designsystem.generated.resources.could_not_login_desc
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_share
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_share
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_share_desc
@@ -280,8 +282,8 @@ fun FeedScreen(
     }
     if (state.showSignupFailedSheet) {
         YralErrorMessage(
-            title = stringResource(R.string.could_not_login),
-            error = stringResource(R.string.could_not_login_desc),
+            title = stringResource(DesignRes.string.could_not_login),
+            error = stringResource(DesignRes.string.could_not_login_desc),
             sheetState =
                 rememberModalBottomSheetState(
                     skipPartiallyExpanded = true,

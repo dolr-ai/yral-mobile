@@ -1,4 +1,4 @@
-package com.yral.android.ui.components.signup
+package com.yral.shared.features.auth.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -13,8 +13,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
@@ -25,15 +23,23 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import com.yral.android.R
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.features.auth.analytics.AuthTelemetry
 import com.yral.shared.libs.designsystem.component.YralButton
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
-import yral_mobile.shared.libs.designsystem.generated.resources.Res
+import yral_mobile.shared.features.auth.generated.resources.Res
+import yral_mobile.shared.features.auth.generated.resources.continue_to_sign_up_for_free
+import yral_mobile.shared.features.auth.generated.resources.join_yral
+import yral_mobile.shared.features.auth.generated.resources.sign_up_disclaimer
+import yral_mobile.shared.features.auth.generated.resources.signup_consent
+import yral_mobile.shared.features.auth.generated.resources.signup_with_google
+import yral_mobile.shared.features.auth.generated.resources.terms_of_service_signup_consent
 import yral_mobile.shared.libs.designsystem.generated.resources.google
+import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @Suppress("LongMethod")
 @Composable
@@ -51,7 +57,7 @@ fun SignupView(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Image(
-            painter = painterResource(R.drawable.join_yral),
+            painter = painterResource(Res.drawable.join_yral),
             contentDescription = "Join Yral",
             modifier =
                 Modifier
@@ -72,14 +78,14 @@ fun SignupView(
                 Text(
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center,
-                    text = stringResource(R.string.continue_to_sign_up_for_free),
+                    text = stringResource(Res.string.continue_to_sign_up_for_free),
                     style = LocalAppTopography.current.xlSemiBold,
                     color = Color.White,
                 )
                 Text(
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center,
-                    text = stringResource(R.string.sign_up_disclaimer),
+                    text = stringResource(Res.string.sign_up_disclaimer),
                     style = LocalAppTopography.current.baseRegular,
                     color = Color.White,
                 )
@@ -90,8 +96,8 @@ fun SignupView(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 YralButton(
-                    text = stringResource(R.string.signup_with_google),
-                    icon = Res.drawable.google,
+                    text = stringResource(Res.string.signup_with_google),
+                    icon = DesignRes.drawable.google,
                 ) {
                     authTelemetry.onSignupJourneySelected()
                     onSignupClicked()
@@ -111,8 +117,8 @@ private fun annotateText(
     termsLink: String,
     openTerms: () -> Unit,
 ): AnnotatedString {
-    val consentText = stringResource(R.string.signup_consent)
-    val termOfServiceText = stringResource(R.string.terms_of_service_signup_consent)
+    val consentText = stringResource(Res.string.signup_consent)
+    val termOfServiceText = stringResource(Res.string.terms_of_service_signup_consent)
     return buildAnnotatedString {
         val termsStart = consentText.indexOf(termOfServiceText)
         val termsEnd = termsStart + termOfServiceText.length
