@@ -12,6 +12,7 @@ import iosSharedUmbrella
 struct UploadOptionsScreenView: View {
   @Environment(\.appDIContainer) private var appDIContainer
   @Environment(\.uploadNavController) private var navController
+  @EnvironmentObject var deepLinkRouter: DeepLinkRouter
 
   var body: some View {
     VStack(alignment: .leading, spacing: Constants.vstackSpacing) {
@@ -54,6 +55,22 @@ struct UploadOptionsScreenView: View {
     .padding(.horizontal, Constants.vstackHorizontal)
     .frame(maxWidth: .infinity, alignment: .leading)
     .frame(maxHeight: .infinity, alignment: .top)
+    .onReceive(deepLinkRouter.$pendingDestination.compactMap { $0 }) { dest in
+      switch dest {
+      case .aiGen:
+        navController?.popToRootViewController(animated: false)
+        if let createAIVideoDIContainer = makeCreateAIVideoDIContainer() {
+          navController?.pushViewController(
+            createAIVideoDIContainer.makeCreateAIVideoSreenView(onDismiss: {
+              navController?.popViewController(animated: true)
+            }),
+            animated: true
+          )
+        }
+      default:
+        break
+      }
+    }
     .task {
       AnalyticsModuleKt.getAnalyticsManager().trackEvent(
         event: UploadVideoPageViewedEventData()
