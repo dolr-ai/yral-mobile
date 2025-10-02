@@ -88,9 +88,22 @@ struct HomeTabController: View {
       }
       .onReceive(deepLinkRouter.$pendingDestination.compactMap { $0 }) { dest in
         switch dest {
+        case .openVideo:
+          selectedTab = .home
+        case .home:
+          selectedTab = .home
+        case .leaderboard:
+          selectedTab = .leaderboard
+        case .addVideo:
+          selectedTab = .upload
+        case .aiGen:
+          selectedTab = .upload
+        case .wallet:
+          selectedTab = .wallet
+        case .profile:
+          selectedTab = .profile
         case .profileAfterUpload:
           selectedTab = .profile
-        default: break
         }
         deepLinkRouter.pendingDestination = nil
       }
