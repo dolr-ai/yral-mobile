@@ -1,13 +1,7 @@
-package com.yral.shared.rust.service.domain.models
+package com.yral.shared.rust.service.data.models
 
+import com.yral.shared.rust.service.domain.models.RateLimitStatus
 import com.yral.shared.uniffi.generated.RateLimitStatusWrapper
-
-data class RateLimitStatus(
-    val principal: String,
-    val windowStart: ULong,
-    val isLimited: Boolean,
-    val requestCount: ULong,
-)
 
 internal fun RateLimitStatusWrapper.toStatus() =
     RateLimitStatus(
