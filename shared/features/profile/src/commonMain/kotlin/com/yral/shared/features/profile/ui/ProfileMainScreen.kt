@@ -313,8 +313,11 @@ private fun MainContent(
             AccountInfoView(
                 accountInfo = info,
                 isSocialSignIn = state.isLoggedIn,
+                showEditProfile = state.isLoggedIn,
                 onLoginClicked = { viewModel.setBottomSheetType(ProfileBottomSheet.SignUp) },
+                onEditProfileClicked = { },
             )
+            Spacer(modifier = Modifier.height(16.dp))
         }
         when (profileVideos.loadState.refresh) {
             is LoadState.Loading -> {

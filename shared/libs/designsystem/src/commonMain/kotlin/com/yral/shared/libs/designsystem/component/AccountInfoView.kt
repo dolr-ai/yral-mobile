@@ -1,14 +1,19 @@
 package com.yral.shared.libs.designsystem.component
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -22,13 +27,17 @@ import com.yral.shared.libs.designsystem.theme.YralDimens
 import org.jetbrains.compose.resources.stringResource
 import yral_mobile.shared.libs.designsystem.generated.resources.Res
 import yral_mobile.shared.libs.designsystem.generated.resources.anonymous_account_setup
+import yral_mobile.shared.libs.designsystem.generated.resources.edit_profile
 import yral_mobile.shared.libs.designsystem.generated.resources.login
 
+@Suppress("LongMethod")
 @Composable
 fun AccountInfoView(
     accountInfo: AccountInfo,
     isSocialSignIn: Boolean,
+    showEditProfile: Boolean,
     onLoginClicked: () -> Unit,
+    onEditProfileClicked: () -> Unit,
 ) {
     Column(
         modifier =
@@ -58,6 +67,14 @@ fun AccountInfoView(
                 color = YralColors.NeutralTextSecondary,
             )
         }
+        if (showEditProfile) {
+            EditProfileButton(
+                modifier =
+                    Modifier
+                        .fillMaxWidth(),
+                onClick = onEditProfileClicked,
+            )
+        }
         if (!isSocialSignIn) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -83,5 +100,32 @@ fun AccountInfoView(
                     .height(1.dp)
                     .background(YralColors.Divider),
         )
+    }
+}
+
+@Composable
+private fun EditProfileButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier.height(40.dp),
+        shape = RoundedCornerShape(8.dp),
+        color = YralColors.Neutral800,
+        contentColor = YralColors.NeutralTextPrimary,
+        border = BorderStroke(1.dp, YralColors.Neutral700),
+        onClick = onClick,
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = stringResource(Res.string.edit_profile),
+                style = LocalAppTopography.current.baseSemiBold,
+                color = YralColors.NeutralTextPrimary,
+                textAlign = TextAlign.Center,
+            )
+        }
     }
 }

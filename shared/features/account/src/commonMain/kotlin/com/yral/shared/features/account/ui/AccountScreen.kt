@@ -144,10 +144,13 @@ private fun AccountScreenContent(
             AccountInfoView(
                 accountInfo = it,
                 isSocialSignIn = state.isLoggedIn,
-            ) {
-                viewModel.setBottomSheetType(AccountBottomSheet.SignUp)
-                viewModel.accountsTelemetry.signUpClicked(SignupPageName.MENU)
-            }
+                showEditProfile = false,
+                onLoginClicked = {
+                    viewModel.setBottomSheetType(AccountBottomSheet.SignUp)
+                    viewModel.accountsTelemetry.signUpClicked(SignupPageName.MENU)
+                },
+                onEditProfileClicked = {},
+            )
         }
         HelpLinks(
             links = helperLinks,
@@ -308,7 +311,10 @@ private fun AccountsTitle(
             style = LocalAppTopography.current.xlBold,
             color = YralColors.NeutralTextPrimary,
             textAlign = TextAlign.Center,
-            modifier = Modifier.weight(1f).offset(x = (-12).dp),
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .offset(x = (-12).dp),
         )
     }
 }
