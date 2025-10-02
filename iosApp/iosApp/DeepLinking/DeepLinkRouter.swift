@@ -16,6 +16,12 @@ final class DeepLinkRouter: ObservableObject {
   @Published var pendingDestination: Destination?
 
   enum Destination: Equatable {
+    case home
+    case leaderboard
+    case addVideo
+    case aiGen
+    case wallet
+    case profile
     case profileAfterUpload
     case openVideo(postId: String, canisterId: String?)
   }
@@ -51,13 +57,33 @@ final class DeepLinkRouter: ObservableObject {
     if let type = params[Constants.typeString] as? String,
        type == Constants.videoUploadSuccessType {
       return .profileAfterUpload
+    } else if let deepLinkPath = params["$deeplink_path"] as? String {
+      let route = AppDIHelper().getRoutingService().parseUrl(url: deepLinkPath)
+      return mapRouteToDestination(route)
     }
-    guard let deepLinkPath = params["$deeplink_path"] as? String,
-          let route = AppDIHelper().getRoutingService().parseUrl(
-            url: deepLinkPath
-          ) as? PostDetailsRoute else { return nil }
 
-    return .openVideo(postId: route.postId, canisterId: route.canisterId)
+    return nil
+  }
+
+  private func mapRouteToDestination(_ route: AppRoute) -> Destination? {
+    switch route {
+    case let postDetailsRoute as PostDetailsRoute:
+      return .openVideo(postId: postDetailsRoute.postId, canisterId: postDetailsRoute.canisterId)
+    case _ as Home:
+      return .home
+    case _ as Leaderboard:
+      return .leaderboard
+    case _ as AddVideo:
+      return .addVideo
+    case _ as GenerateAIVideo:
+      return .aiGen
+    case _ as Wallet:
+      return .wallet
+    case _ as Profile:
+      return .profile
+    default:
+      return nil
+    }
   }
 }
 
