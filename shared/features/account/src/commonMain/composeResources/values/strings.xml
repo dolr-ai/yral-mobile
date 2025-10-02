@@ -1,0 +1,17 @@
+<resources>
+    <string name="delete_your_account">Delete your account</string>
+    <string name="delete_account_disclaimer">This action will not be reverted. All your data will be removed from our platform.</string>
+    <string name="delete_account_question">Are you sure you want to delete your account?</string>
+    <string name="no_take_me_back">No, take me back</string>
+    <string name="yes_delete">Yes, Delete</string>
+    <string name="error_delete_account_title">Oops! Account not deleted</string>
+    <string name="error_delete_account">Unable to delete your account at the moment. Please try again.</string>
+    <string name="accounts">Accounts</string>
+    <string name="follow_us_on">Follow us on</string>
+    <string name="talk_to_the_team">Talk to the team</string>
+    <string name="privacy_policy">Privacy Policy</string>
+    <string name="logout">Logout</string>
+    <string name="delete_account">Delete Account</string>
+
+
+</resources>
