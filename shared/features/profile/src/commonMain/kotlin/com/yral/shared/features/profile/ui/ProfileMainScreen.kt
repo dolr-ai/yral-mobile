@@ -311,7 +311,10 @@ private fun MainContent(
                 accountInfo = info,
                 isSocialSignIn = state.isLoggedIn,
                 onLoginClicked = { viewModel.setBottomSheetType(ProfileBottomSheet.SignUp) },
+                showEditProfile = true,
+                onEditProfileClicked = { },
             )
+            Spacer(modifier = Modifier.height(16.dp))
         }
         when (profileVideos.loadState.refresh) {
             is LoadState.Loading -> {
@@ -770,7 +773,7 @@ private fun BoxScope.VideoGridItemActions(
             )
             Text(
                 text = likeCount.toString(),
-                style = LocalAppTopography.current.baseMedium,
+                style = LocalAppTopography.current.baseSemiBold,
                 color = YralColors.NeutralTextPrimary,
             )
         }

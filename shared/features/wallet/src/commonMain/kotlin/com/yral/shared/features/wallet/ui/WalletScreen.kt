@@ -66,7 +66,9 @@ fun WalletScreen(
             AccountInfoView(
                 accountInfo = info,
                 isSocialSignIn = true,
+                showEditProfile = false,
                 onLoginClicked = {},
+                onEditProfileClicked = {},
             )
         }
         state.yralTokenBalance?.let { coinBalance ->
