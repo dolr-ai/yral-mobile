@@ -1,12 +1,12 @@
 package com.yral.shared.rust.service.data
 
+import com.yral.shared.rust.service.data.models.toResult
+import com.yral.shared.rust.service.data.models.toStatus
+import com.yral.shared.rust.service.data.models.toWrapper
 import com.yral.shared.rust.service.domain.RateLimitRepository
 import com.yral.shared.rust.service.domain.models.RateLimitStatus
 import com.yral.shared.rust.service.domain.models.Result2
 import com.yral.shared.rust.service.domain.models.VideoGenRequestKey
-import com.yral.shared.rust.service.domain.models.toResult
-import com.yral.shared.rust.service.domain.models.toStatus
-import com.yral.shared.rust.service.domain.models.toWrapper
 
 internal class RateLimitRepositoryImpl(
     private val dataSource: RateLimitDataSource,

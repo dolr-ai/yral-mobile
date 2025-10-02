@@ -1,11 +1,7 @@
-package com.yral.shared.rust.service.domain.models
+package com.yral.shared.rust.service.data.models
 
+import com.yral.shared.rust.service.domain.models.VideoGenRequestKey
 import com.yral.shared.uniffi.generated.VideoGenRequestKeyWrapper
-
-data class VideoGenRequestKey(
-    val principal: String,
-    val counter: ULong,
-)
 
 internal fun VideoGenRequestKey.toWrapper(): VideoGenRequestKeyWrapper =
     VideoGenRequestKeyWrapper(
