@@ -2,15 +2,15 @@ plugins {
     alias(libs.plugins.yral.shared.feature)
     alias(libs.plugins.yral.android.feature)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.yral.shared.library.compose)
 }
 
 kotlin {
     androidTarget()
-//    listOf(
-//        iosX64(),
-//        iosArm64(),
-//        iosSimulatorArm64()
-//    )
+    listOf(
+        iosArm64(),
+        iosSimulatorArm64(),
+    )
 
     sourceSets {
         androidMain.dependencies {
@@ -30,8 +30,11 @@ kotlin {
             implementation(projects.shared.libs.arch)
             implementation(projects.shared.libs.coroutinesX)
             implementation(projects.shared.rust.service)
+            implementation(projects.shared.libs.designsystem)
 
             implementation(libs.gitlive.firebase.messaging)
+
+            implementation(compose.components.resources)
         }
     }
 }
