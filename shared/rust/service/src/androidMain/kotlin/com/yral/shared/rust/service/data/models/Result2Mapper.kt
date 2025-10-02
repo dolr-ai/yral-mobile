@@ -1,33 +1,15 @@
-package com.yral.shared.rust.service.domain.models
+package com.yral.shared.rust.service.data.models
 
+import com.yral.shared.rust.service.domain.models.Result2
+import com.yral.shared.rust.service.domain.models.VideoGenRequestStatus
 import com.yral.shared.uniffi.generated.Result2Wrapper
 import com.yral.shared.uniffi.generated.VideoGenRequestStatusWrapper
-
-sealed class Result2 {
-    data class Ok(
-        val v1: VideoGenRequestStatus,
-    ) : Result2()
-    data class Err(
-        val v1: String,
-    ) : Result2()
-}
 
 internal fun Result2Wrapper.toResult() =
     when (this) {
         is Result2Wrapper.Ok -> Result2.Ok(v1.toVideoGenRequestStatus())
         is Result2Wrapper.Err -> Result2.Err(v1)
     }
-
-sealed class VideoGenRequestStatus {
-    data class Failed(
-        val v1: String,
-    ) : VideoGenRequestStatus()
-    data class Complete(
-        val v1: String,
-    ) : VideoGenRequestStatus()
-    data object Processing : VideoGenRequestStatus()
-    data object Pending : VideoGenRequestStatus()
-}
 
 internal fun VideoGenRequestStatusWrapper.toVideoGenRequestStatus() =
     when (this) {
