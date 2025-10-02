@@ -25,7 +25,10 @@ import com.yral.shared.features.auth.viewModel.LoginViewModel
 import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.designsystem.component.YralBottomSheet
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import yral_mobile.shared.libs.designsystem.generated.resources.ok
+import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -89,7 +92,7 @@ fun LoginBottomSheet(
                 title = stringResource(R.string.could_not_login),
                 error = stringResource(R.string.could_not_login_desc),
                 sheetState = bottomSheetState,
-                cta = stringResource(R.string.ok),
+                cta = stringResource(DesignRes.string.ok),
                 onClick = { dismissRequest() },
                 onDismiss = { dismissRequest() },
             )

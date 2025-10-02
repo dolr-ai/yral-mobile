@@ -1,16 +1,18 @@
+import org.gradle.kotlin.dsl.implementation
+
 plugins {
     alias(libs.plugins.yral.shared.feature)
     alias(libs.plugins.yral.android.feature)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.yral.shared.library.compose)
 }
 
 kotlin {
     androidTarget()
-//    listOf(
-//        iosX64(),
-//        iosArm64(),
-//        iosSimulatorArm64()
-//    )
+    listOf(
+        iosArm64(),
+        iosSimulatorArm64(),
+    )
 
     sourceSets {
         commonMain.dependencies {
@@ -24,6 +26,15 @@ kotlin {
             implementation(projects.shared.libs.coroutinesX)
             implementation(projects.shared.libs.featureFlag)
             implementation(projects.shared.rust.service)
+            implementation(projects.shared.libs.designsystem)
+            implementation(projects.shared.libs.routing.routesApi)
+            implementation(projects.shared.libs.videoPlayer)
+            implementation(compose.components.resources)
+            implementation(libs.compose.ui.backhandler)
+            implementation(libs.coil.compose)
+        }
+        androidMain.dependencies {
+            implementation(libs.accompanist.permission)
         }
     }
 }
