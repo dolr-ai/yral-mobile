@@ -159,7 +159,7 @@ extension LeaderboardView {
     static let dragViewBackground = YralColor.grey950.swiftUIColor
 
     static let vStackSpacing = 12.0
-    static let position = "Position"
+    static let position = "Rank"
     static let positionFont = YralFont.pt12.regular.swiftUIFont
     static let positionColour = YralColor.grey400.swiftUIColor
     static let positionFactor = 0.28
@@ -176,7 +176,7 @@ extension LeaderboardView {
     static let rewardColour = YralColor.grey400.swiftUIColor
     static let rewardFactor = 0.22
     static let rewardImageSize = 14.0
-    static let totalSats = "Games Won"
+    static let totalSats = "Wins"
     static let totalSatsFont = YralFont.pt12.regular.swiftUIFont
     static let totalSatsColour = YralColor.grey400.swiftUIColor
     static let totalSatsFactor = 0.28

@@ -466,12 +466,6 @@ struct LeaderboardView: View {
           Text(Constants.reward)
             .font(Constants.rewardFont)
             .foregroundColor(Constants.rewardColour)
-
-          Image(
-            rewardCurrency == Constants.defaultRewardCurrency ? Constants.rewardYral : Constants.rewardBTC
-          )
-            .resizable()
-            .frame(width: Constants.rewardImageSize, height: Constants.rewardImageSize)
         }
         .frame(
           width: Constants.rowWidth * Constants.rewardFactor,
