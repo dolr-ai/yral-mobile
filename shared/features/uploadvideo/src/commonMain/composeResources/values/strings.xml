@@ -1,0 +1,47 @@
+<resources>
+    <string name="add_video">Add Video</string>
+    <string name="create_ai_video">Create AI Video</string>
+    <string name="generate_video_by_giving_a_prompt_to_ai">Generate a video by giving a prompt to AI.</string>
+    <string name="create_with_ai">Create with AI</string>
+    <string name="add_video_from_device">Add a video from your device.</string>
+    <string name="upload_completed">Upload Completed</string>
+    <string name="upload_completed_message">We're processing your video. It'll be in 'Your Videos' under My Profile soon. Happy scrolling!</string>
+    <string name="upload_video_error">We couldn’t upload your video due to some reasons. Try uploading it again.</string>
+    <string name="go_to_home">Go to Home</string>
+    <string name="uploading_message">Uploading may take a moment. Feel free to explore more videos on the home page while you wait!</string>
+    <string name="uploading_progress">Uploading… %1$d%</string>
+    <string name="caption">Caption</string>
+    <string name="add_hashtag">Add Hashtag</string>
+    <string name="upload">Upload</string>
+    <string name="enter_caption_here">Enter the caption here</string>
+    <string name="add_hashtags">Add another #hashtags</string>
+    <string name="hit_enter_to_add_hashtags">Hit enter to add #hashtags</string>
+    <string name="select_file">Select File</string>
+    <string name="upload_video_to_share_with_world">Upload a video to share with the world!</string>
+    <string name="video_file_max_seconds">Video file (Max %1$ds)</string>
+    <string name="permission_required_description">To upload videos, please allow access to your device's media files in Settings. You can choose "Allow all" or "Allow limited access" - both work for uploading videos.</string>
+    <string name="video_validation_unable_to_read_duration">Unable to read video duration</string>
+    <string name="video_validation_unable_to_read_file_size">Unable to read video file size</string>
+    <string name="video_validation_duration_exceeds_limit_with_data">Selected video exceeds %1$s seconds</string>
+    <string name="video_validation_file_size_exceeds_limit_with_data">Selected video exceeds %1$s</string>
+    <string name="video_validation_processing_failed">Failed to process video</string>
+
+    <!-- Video Gen/Upload -->
+    <string name="model">Model</string>
+    <string name="credits_used">%1$d of %2$d credits used</string>
+    <string name="credits_used_use_token">%1$d of %2$d credits used. You can create videos with %3$s.</string>
+    <string name="prompt">Prompt</string>
+    <string name="enter_prompt_here">Enter the Prompt here…</string>
+    <string name="generating_video">Generating Video…</string>
+    <string name="this_may_take_few_minutes">This may take few minutes</string>
+    <string name="upload_successful">Upload Successful</string>
+    <string name="credits_required">Credits Required</string>
+    <string name="low_balance">Low Balance :</string>
+    <string name="you_will_loose_ai_credits">You will loose AI Credits</string>
+    <string name="you_will_loose_credits_desc">Leaving now will use up today’s AI credit. You can return tomorrow for a fresh credit.</string>
+    <string name="yes_take_me_back">Yes, Take me back</string>
+    <string name="stay_here">Stay Here</string>
+    <string name="generate_video">Generate Video</string>
+    <string name="play_games">Play Games</string>
+    <string name="to_earn_token">to earn %1$s!</string>
+</resources>
