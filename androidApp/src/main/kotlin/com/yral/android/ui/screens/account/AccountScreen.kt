@@ -62,9 +62,11 @@ import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.designsystem.theme.YralDimens
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
 import yral_mobile.shared.libs.designsystem.generated.resources.delete
+import yral_mobile.shared.libs.designsystem.generated.resources.ok
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -243,7 +245,7 @@ private fun ErrorMessageSheet(
         title = stringResource(title),
         error = stringResource(error),
         sheetState = bottomSheetState,
-        cta = stringResource(R.string.ok),
+        cta = stringResource(DesignRes.string.ok),
         onClick = onDismissRequest,
         onDismiss = onDismissRequest,
     )

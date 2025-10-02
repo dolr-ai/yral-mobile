@@ -13,11 +13,11 @@ import com.google.firebase.appcheck.appCheck
 import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory
 import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
 import com.google.firebase.initialize
-import com.yral.android.ui.widgets.video.di.videoWidgetModule
 import com.yral.featureflag.AppFeatureFlags
 import com.yral.featureflag.FeatureFlagManager
 import com.yral.shared.analytics.providers.mixpanel.MixpanelAnalyticsProvider
 import com.yral.shared.app.di.initKoin
+import com.yral.shared.features.uploadvideo.utils.di.videoWidgetModule
 import com.yral.shared.koin.koinInstance
 import dev.gitlive.firebase.crashlytics.FirebaseCrashlytics
 import io.branch.referral.Branch

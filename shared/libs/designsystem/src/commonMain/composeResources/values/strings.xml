@@ -13,4 +13,10 @@
     <string name="upload_video">Upload Video</string>
     <string name="msg_feed_video_share">Check out this video on Yral 👀 Where watching = fun + games! ⚡ Try it 👉</string>
     <string name="msg_feed_video_share_desc">Watch on Yral</string>
+    <string name="ok">OK</string>
+    <string name="error">Error</string>
+
+    <!-- Permission Messages -->
+    <string name="permission_required_title">Permission required!</string>
+    <string name="go_to_settings">Go to settings</string>
 </resources>

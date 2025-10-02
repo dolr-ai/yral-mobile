@@ -75,6 +75,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_share
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_share
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_share_desc
+import yral_mobile.shared.libs.designsystem.generated.resources.ok
 import yral_mobile.shared.libs.designsystem.generated.resources.shadow
 import yral_mobile.shared.libs.designsystem.generated.resources.shadow_bottom
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
@@ -285,7 +286,7 @@ fun FeedScreen(
                 rememberModalBottomSheetState(
                     skipPartiallyExpanded = true,
                 ),
-            cta = stringResource(R.string.ok),
+            cta = stringResource(DesignRes.string.ok),
             onClick = { viewModel.toggleSignupFailed(false) },
             onDismiss = { viewModel.toggleSignupFailed(false) },
         )
