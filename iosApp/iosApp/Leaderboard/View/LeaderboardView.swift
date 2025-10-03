@@ -24,7 +24,7 @@ struct LeaderboardView: View {
   @State private var showConfetti = false
   @State private var mode: LeaderboardMode = .daily
   @State private var timerShadowColor = Constants.timerShadowClear
-  @State private var timerTextColor = Constants.timerShadowPink
+  @State private var timerTextColor = Constants.timerTextColorPink
   @State private var timerImage = Constants.timerImagePink
   @State private var timerText = ""
   @State private var headerHeight: CGFloat = .zero
@@ -94,7 +94,7 @@ struct LeaderboardView: View {
             topInset: mode == .daily ? Constants.dailyTopInset : Constants.alltimeTopInset,
             peekHeight: usableHeight - headerHeight,
             background: Constants.dragViewBackground,
-            isDragEnabled: response.topRows.count > .four
+            isDragEnabled: response.topRows.count > .three
           ) {
             if response.topRows.isEmpty {
               VStack(spacing: Constants.emptyVstackSpacing) {
@@ -436,7 +436,6 @@ struct LeaderboardView: View {
   @ViewBuilder
   private func buildLeaderboardHeader(_ response: LeaderboardResponse) -> some View {
     let rewardsEnabled = response.rewardsEnabled
-    let rewardCurrency = response.rewardCurrency ?? Constants.defaultRewardCurrency
 
     HStack(spacing: .zero) {
       Text(Constants.position)
@@ -466,12 +465,6 @@ struct LeaderboardView: View {
           Text(Constants.reward)
             .font(Constants.rewardFont)
             .foregroundColor(Constants.rewardColour)
-
-          Image(
-            rewardCurrency == Constants.defaultRewardCurrency ? Constants.rewardYral : Constants.rewardBTC
-          )
-            .resizable()
-            .frame(width: Constants.rewardImageSize, height: Constants.rewardImageSize)
         }
         .frame(
           width: Constants.rowWidth * Constants.rewardFactor,

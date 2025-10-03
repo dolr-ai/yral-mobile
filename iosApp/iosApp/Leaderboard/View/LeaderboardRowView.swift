@@ -20,7 +20,7 @@ struct LeaderboardRowView: View {
 
   var body: some View {
     HStack(spacing: .zero) {
-      Text("#\(leaderboardRow.position.formattedWithK)")
+      Text("#\(leaderboardRow.position.formattedWithSuffix)")
         .lineLimit(.one)
         .font(Constants.userPositionFont)
         .foregroundColor(foregroundColorForPosition())
@@ -81,7 +81,7 @@ struct LeaderboardRowView: View {
         )
       }
 
-      Text(leaderboardRow.wins.description)
+      Text(leaderboardRow.wins.formattedWithSuffix)
         .font(Constants.coinsFont)
         .foregroundColor(Constants.coinsColour)
         .lineLimit(.one)
