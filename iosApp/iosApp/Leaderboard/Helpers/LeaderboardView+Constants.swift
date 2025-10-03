@@ -35,7 +35,7 @@ extension LeaderboardView {
     static let rewardBadgeTrailing = 4.0
     static let rewardBadgeHeight = 24.0
     static let rewardBadgeCorner = 12.0
-    static let rewardBadgeBackground = YralColor.yellow100.swiftUIColor
+    static let rewardBadgeBackground = YralColor.yellow50.swiftUIColor
 
     static let goldBadgePosition = CGPoint(x: 120.5, y: 83)
     static let silverBadgePosition = CGPoint(x: 23.5, y: 110)
@@ -101,9 +101,9 @@ extension LeaderboardView {
     static let timerAnimationInterval: TimeInterval = 0.3
     static let timerAnimationTime = 7200000
     static let timerShadowClear = Color.clear
-    static let timerShadowPink = Color(hex: "E2017B")
+    static let timerShadowPink = YralColor.red300.swiftUIColor
     static let timerShadowWhite = Color.white
-    static let timerTextColorPink = Color(hex: "E2017B")
+    static let timerTextColorPink = YralColor.red300.swiftUIColor
     static let timerTextColorWhite = YralColor.grey50.swiftUIColor
     static let timerImageWhite = Image("leaderboard_clock")
     static let timerImagePink = Image("leaderboard_clock_pink")
@@ -121,7 +121,7 @@ extension LeaderboardView {
 
     static let historyImage = "leaderboard_history"
     static let historyImageSize = 44.0
-    static let historyImageTrailing = 28.0
+    static let historyImageTrailing = 16.0
 
     static let podiumImage = "podium"
     static let podiumSize = CGSize(width: 241, height: 146)

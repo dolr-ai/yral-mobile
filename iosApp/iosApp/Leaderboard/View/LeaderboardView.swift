@@ -24,7 +24,7 @@ struct LeaderboardView: View {
   @State private var showConfetti = false
   @State private var mode: LeaderboardMode = .daily
   @State private var timerShadowColor = Constants.timerShadowClear
-  @State private var timerTextColor = Constants.timerShadowPink
+  @State private var timerTextColor = Constants.timerTextColorPink
   @State private var timerImage = Constants.timerImagePink
   @State private var timerText = ""
   @State private var headerHeight: CGFloat = .zero
@@ -436,7 +436,6 @@ struct LeaderboardView: View {
   @ViewBuilder
   private func buildLeaderboardHeader(_ response: LeaderboardResponse) -> some View {
     let rewardsEnabled = response.rewardsEnabled
-    let rewardCurrency = response.rewardCurrency ?? Constants.defaultRewardCurrency
 
     HStack(spacing: .zero) {
       Text(Constants.position)
