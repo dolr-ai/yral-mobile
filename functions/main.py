@@ -27,7 +27,7 @@ VIDEO_COLL = "videos"
 DAILY_COLL = "leaderboards_daily"
 
 BALANCE_URL_YRAL_TOKEN = "https://yral-hot-or-not.go-bazzinga.workers.dev/update_balance/"
-BALANCE_URL_CKBTC = "https://yral-hot-or-not.go-bazzinga.workers.dev/v2/transfer_ckbtc/"
+BALANCE_URL_CKBTC = "https://yral-hot-or-not.go-bazzinga.workers.dev/v2/transfer_ckbtc"
 
 IST = timezone(timedelta(hours=5, minutes=30))
 
@@ -249,57 +249,6 @@ def _push_delta_ckbtc(token: str, amount: int, recipient_principal: str, memo_te
         return False, f"Status: {resp.status_code}, Body: {resp.text}"
     except requests.RequestException as e:
         return False, str(e)
-    
-@https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"])
-def update_balance(request: Request):
-    balance_update_token = os.environ["BALANCE_UPDATE_TOKEN"]
-    try:
-        if request.method != "POST":
-            return error_response(405, "METHOD_NOW_ALLOWED", "POST required")
-
-        body = request.get_json(silent=True) or {}
-        data = body.get("data", {})
-        pid = str(data.get("principal_id", "")).strip()
-        delta = int(data.get("delta", 0))
-        is_airdropped = bool(data.get("is_airdropped", False))
-
-        auth_header = request.headers.get("Authorization", "")
-        if not auth_header.startswith("Bearer "):
-            return error_response(401, "MISSING_ID_TOKEN", "Authorization token missing")
-        auth.verify_id_token(auth_header.split(" ", 1)[1])
-
-        # ───────── App Check enforcement ─────────
-        # actok = request.headers.get("X-Firebase-AppCheck")
-        # if not actok:
-        #     return error_response(
-        #         401, "APPCHECK_MISSING",
-        #         "App Check token required"
-        #     )
-
-        # try:
-        #     app_check.verify_token(actok)
-        # except Exception:
-        #     return error_response(
-        #         401, "APPCHECK_INVALID",
-        #         "App Check token invalid"
-        #     )
-
-        success, error_msg = _push_delta_yral_token(balance_update_token, pid, delta)
-
-        if not success:
-            return error_response(502, "UPSTREAM_FAILED", f"Balance update failed: {error_msg}")
-
-        coins = tx_coin_change(pid, None, delta, "AIRDROP")
-
-        return jsonify({"coins": coins}), 200
-
-    except auth.InvalidIdTokenError:
-        return error_response(401, "ID_TOKEN_INVALID", "ID token invalid or expired")
-    except GoogleAPICallError as e:
-        return error_response(500, "FIRESTORE_ERROR", str(e))
-    except Exception as e:                                 # fallback
-        print("Unhandled error:", e, file=sys.stderr)
-        return error_response(500, "INTERNAL", "Internal server error")
 
 @https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"])
 def tap_to_recharge(request: Request):
@@ -987,7 +936,7 @@ def reward_leaderboard_winners(cloud_event):
             elif currency == CURRENCY_BTC:
                 reward_amount_inr = reward_amount
                 reward_amount_ckbtc = reward_amount_inr * 10   # Assuming 1 BTC = ₹1,00,00,000
-                success, error = _push_delta_ckbtc(token, pid, reward_amount_ckbtc, "Daily leaderboard reward")
+                success, error = _push_delta_ckbtc(token, reward_amount_ckbtc, pid, "Daily leaderboard reward")
             else:
                 print(f"[ERROR] Unknown currency: {currency}")
                 continue
