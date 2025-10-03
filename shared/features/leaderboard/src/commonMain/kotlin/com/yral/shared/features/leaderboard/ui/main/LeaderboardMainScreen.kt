@@ -33,11 +33,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yral.shared.features.leaderboard.data.models.LeaderboardMode
@@ -96,13 +99,7 @@ fun LeaderboardMainScreen(
         }
     }
     val listState = rememberLazyListState()
-    var isTrophyVisible by remember { mutableStateOf(false) }
-    LaunchedEffect(listState) {
-        snapshotFlow { listState.canScrollBackward }
-            .collect { canScrollBackward ->
-                isTrophyVisible = !canScrollBackward
-            }
-    }
+    var isTrophyVisible by remember { mutableStateOf(true) }
     var pageLoadedReported by remember(state.selectedMode) { mutableStateOf(false) }
     LaunchedEffect(state.isLoading) {
         if (state.isLoading) pageLoadedReported = false
@@ -136,8 +133,21 @@ fun LeaderboardMainScreen(
         }
     Box(modifier = modifier) {
         LazyColumn(
-            modifier = Modifier.fillMaxSize(),
             state = listState,
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .nestedScroll(
+                        object : NestedScrollConnection {
+                            override suspend fun onPostFling(
+                                consumed: Velocity,
+                                available: Velocity,
+                            ): Velocity {
+                                isTrophyVisible = consumed.y > 0
+                                return super.onPostFling(consumed, available)
+                            }
+                        },
+                    ),
         ) {
             stickyHeader {
                 LeaderboardHeader(
