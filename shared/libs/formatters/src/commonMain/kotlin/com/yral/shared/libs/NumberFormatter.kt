@@ -94,4 +94,30 @@ interface NumberFormatter {
     ): Long?
 }
 
+fun NumberFormatter.formatAbbreviation(
+    num: Int,
+    decimals: Int = 1,
+): String = formatAbbreviation(num.toDouble(), decimals)
+
+fun NumberFormatter.formatAbbreviation(
+    num: Long,
+    decimals: Int = 1,
+): String = formatAbbreviation(num.toDouble(), decimals)
+
+@Suppress("MagicNumber")
+fun NumberFormatter.formatAbbreviation(
+    number: Double,
+    decimals: Int,
+): String {
+    var current = number
+    var index = 0
+    while (current >= 1000 && index < prefixes.size - 1) {
+        current /= 1000
+        index++
+    }
+    return "${format(value = current, maximumFractionDigits = decimals)}${prefixes[index]}"
+}
+
+private val prefixes = arrayOf("", "K", "M", "B", "T")
+
 expect fun NumberFormatter(): NumberFormatter
