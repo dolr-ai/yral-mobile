@@ -111,12 +111,6 @@ struct LeaderboardHistoryView: View {
                 Text(Constants.reward)
                   .font(Constants.rewardFont)
                   .foregroundColor(Constants.rewardColour)
-
-                Image(
-                  rewardsCurrency == Constants.defaultRewardCurrency ? Constants.rewardYral : Constants.rewardBTC
-                )
-                  .resizable()
-                  .frame(width: Constants.rewardImageSize, height: Constants.rewardImageSize)
               }
               .frame(
                 width: Constants.rowWidth * Constants.rewardFactor,
@@ -300,7 +294,7 @@ extension LeaderboardHistoryView {
 
     static let vstackTop = 40.0
     static let hstackBottom = 12.0
-    static let position = "Position"
+    static let position = "Rank"
     static let positionFont = YralFont.pt12.regular.swiftUIFont
     static let positionColour = YralColor.grey400.swiftUIColor
     static let positionFactor = 0.28
@@ -317,7 +311,7 @@ extension LeaderboardHistoryView {
     static let rewardColour = YralColor.grey400.swiftUIColor
     static let rewardFactor = 0.22
     static let rewardImageSize = 14.0
-    static let totalSats = "Games Won"
+    static let totalSats = "Wins"
     static let totalSatsFont = YralFont.pt12.regular.swiftUIFont
     static let totalSatsColour = YralColor.grey400.swiftUIColor
     static let totalSatsFactor = 0.28

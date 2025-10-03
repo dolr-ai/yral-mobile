@@ -83,6 +83,9 @@ struct DraggableView<Content: View, StickyContent: View>: View {
               content()
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+
+            Color.clear
+              .frame(height: 40)
           }
           .coordinateSpace(name: "SCROLL")
           .onPreferenceChange(ScrollOffsetKey.self) { scrollOffset = $0 }
