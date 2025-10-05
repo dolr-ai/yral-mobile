@@ -245,6 +245,7 @@ fun ProfileMainScreen(
                         component.onUploadVideoClick()
                     },
                     openAccount = { component.openAccount() },
+                    openEditProfile = { component.openEditProfile() },
                     loginBottomSheet = loginBottomSheet,
                 )
             }
@@ -299,6 +300,7 @@ private fun MainContent(
     deletingVideoId: String,
     uploadVideo: () -> Unit,
     openAccount: () -> Unit,
+    openEditProfile: () -> Unit,
     loginBottomSheet: LoginBottomSheetComposable,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
@@ -312,7 +314,7 @@ private fun MainContent(
                 isSocialSignIn = state.isLoggedIn,
                 onLoginClicked = { viewModel.setBottomSheetType(ProfileBottomSheet.SignUp) },
                 showEditProfile = true,
-                onEditProfileClicked = { },
+                onEditProfileClicked = openEditProfile,
             )
             Spacer(modifier = Modifier.height(16.dp))
         }

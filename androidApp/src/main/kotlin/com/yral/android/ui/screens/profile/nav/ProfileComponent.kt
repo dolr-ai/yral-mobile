@@ -4,6 +4,7 @@ import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.value.Value
 import com.yral.android.ui.screens.account.nav.AccountComponent
+import com.yral.shared.features.profile.nav.EditProfileComponent
 import com.yral.shared.features.profile.nav.ProfileMainComponent
 import com.yral.shared.libs.arch.nav.HomeChildSnapshotProvider
 import kotlinx.coroutines.flow.Flow
@@ -16,6 +17,7 @@ abstract class ProfileComponent : HomeChildSnapshotProvider {
     abstract fun onUploadVideoClick()
     abstract fun handleNavigation(destination: String)
     abstract fun openAccount()
+    abstract fun openEditProfile()
     abstract fun onBackClicked(): Boolean
 
     sealed class Child {
@@ -25,6 +27,9 @@ abstract class ProfileComponent : HomeChildSnapshotProvider {
         class Account(
             val component: AccountComponent,
         ) : Child()
+        class EditProfile(
+            val component: EditProfileComponent,
+        ) : Child()
     }
 
     @Serializable
@@ -32,7 +37,7 @@ abstract class ProfileComponent : HomeChildSnapshotProvider {
         val routes: List<Route>,
     ) {
         @Serializable
-        enum class Route { Main, Account }
+        enum class Route { Main, Account, EditProfile }
     }
 
     companion object Companion {

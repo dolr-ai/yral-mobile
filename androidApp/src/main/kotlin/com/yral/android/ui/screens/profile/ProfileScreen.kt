@@ -17,7 +17,9 @@ import com.yral.android.ui.screens.profile.nav.ProfileComponent
 import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.features.account.viewmodel.AccountsViewModel
 import com.yral.shared.features.auth.viewModel.LoginViewModel
+import com.yral.shared.features.profile.ui.EditProfileScreen
 import com.yral.shared.features.profile.ui.ProfileMainScreen
+import com.yral.shared.features.profile.viewmodel.EditProfileViewModel
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -61,6 +63,14 @@ fun ProfileScreen(
                 AccountScreen(
                     component = instance.component,
                     viewModel = accountsViewModel,
+                )
+            }
+            is ProfileComponent.Child.EditProfile -> {
+                val editProfileViewModel: EditProfileViewModel = koinViewModel()
+                EditProfileScreen(
+                    component = instance.component,
+                    viewModel = editProfileViewModel,
+                    modifier = Modifier.fillMaxSize(),
                 )
             }
         }

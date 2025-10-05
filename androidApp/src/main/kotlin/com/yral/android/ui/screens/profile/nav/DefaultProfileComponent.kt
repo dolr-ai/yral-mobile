@@ -9,6 +9,7 @@ import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.router.stack.push
 import com.arkivanov.decompose.value.Value
 import com.yral.android.ui.screens.account.nav.AccountComponent
+import com.yral.shared.features.profile.nav.EditProfileComponent
 import com.yral.shared.features.profile.nav.ProfileMainComponent
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -59,6 +60,10 @@ internal class DefaultProfileComponent(
         navigation.push(Config.Account)
     }
 
+    override fun openEditProfile() {
+        navigation.push(Config.EditProfile)
+    }
+
     override fun onBackClicked(): Boolean {
         val items = stack.value.items
         return if (items.size > 1) {
@@ -69,22 +74,24 @@ internal class DefaultProfileComponent(
         }
     }
 
-    override fun createHomeSnapshot(): Snapshot =
-        Snapshot(
-            routes =
-                stack.value.items.map { item ->
-                    when (item.configuration) {
-                        is Config.Main -> Snapshot.Route.Main
-                        is Config.Account -> Snapshot.Route.Account
-                        else -> Snapshot.Route.Main
-                    }
-                },
-        )
+    override fun createHomeSnapshot(): Snapshot {
+        val routes =
+            stack.value.items.map { item ->
+                return@map when (val config = item.configuration) {
+                    is Config.Main -> ProfileComponent.Snapshot.Route.Main
+                    is Config.Account -> ProfileComponent.Snapshot.Route.Account
+                    is Config.EditProfile -> ProfileComponent.Snapshot.Route.EditProfile
+                    else -> error("Unsupported profile config: $config")
+                }
+            }
+        return Snapshot(routes = routes)
+    }
 
     private fun Snapshot.Route.toConfig(): Config =
         when (this) {
             Snapshot.Route.Main -> Config.Main
             Snapshot.Route.Account -> Config.Account
+            Snapshot.Route.EditProfile -> Config.EditProfile
         }
 
     private fun child(
@@ -94,6 +101,7 @@ internal class DefaultProfileComponent(
         when (config) {
             Config.Main -> Child.Main(profileMainComponent(componentContext))
             Config.Account -> Child.Account(accountComponent(componentContext))
+            Config.EditProfile -> Child.EditProfile(editProfileComponent(componentContext))
         }
 
     private fun profileMainComponent(componentContext: ComponentContext): ProfileMainComponent =
@@ -102,10 +110,17 @@ internal class DefaultProfileComponent(
             pendingVideoNavigation = pendingVideoNavigation,
             onUploadVideoClicked = onUploadVideoClicked,
             openAccount = this::openAccount,
+            openEditProfile = this::openEditProfile,
         )
 
     private fun accountComponent(componentContext: ComponentContext): AccountComponent =
         AccountComponent.Companion(
+            componentContext = componentContext,
+            onBack = this::onBackClicked,
+        )
+
+    private fun editProfileComponent(componentContext: ComponentContext): EditProfileComponent =
+        EditProfileComponent.Companion(
             componentContext = componentContext,
             onBack = this::onBackClicked,
         )
@@ -117,5 +132,8 @@ internal class DefaultProfileComponent(
 
         @Serializable
         data object Account : Config
+
+        @Serializable
+        data object EditProfile : Config
     }
 }
