@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.feed.uiComponets
+package com.yral.shared.features.feed.ui.components
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
@@ -27,17 +27,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.yral.android.R
-import com.yral.android.ui.screens.feed.uiComponets.HowToPlayConstants.ANIMATION_DURATION
-import com.yral.android.ui.screens.feed.uiComponets.HowToPlayConstants.AUTO_CLOSE_DELAY
-import com.yral.android.ui.screens.feed.uiComponets.HowToPlayConstants.PAGE_SET_DELAY
+import com.yral.shared.features.feed.ui.components.HowToPlayConstants.ANIMATION_DURATION
+import com.yral.shared.features.feed.ui.components.HowToPlayConstants.AUTO_CLOSE_DELAY
+import com.yral.shared.features.feed.ui.components.HowToPlayConstants.PAGE_SET_DELAY
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
+import yral_mobile.shared.features.feed.generated.resources.Res
+import yral_mobile.shared.features.feed.generated.resources.how_to_play
+import yral_mobile.shared.features.feed.generated.resources.ic_how_to_play
 import kotlin.coroutines.cancellation.CancellationException
 
 @Composable
@@ -59,7 +61,7 @@ fun HowToPlay(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Image(
-            painter = painterResource(id = R.drawable.ic_how_to_play),
+            painter = painterResource(Res.drawable.ic_how_to_play),
             contentDescription = "how to play",
             contentScale = ContentScale.None,
             modifier = Modifier.size(32.dp),
@@ -118,7 +120,7 @@ private fun AnimatedBackground(
     ) { isExpanded ->
         if (isExpanded) {
             Text(
-                text = stringResource(R.string.how_to_play),
+                text = stringResource(Res.string.how_to_play),
                 style = LocalAppTopography.current.regMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = Color.White,

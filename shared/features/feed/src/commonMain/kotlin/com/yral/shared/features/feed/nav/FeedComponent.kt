@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.feed.nav
+package com.yral.shared.features.feed.nav
 
 import com.arkivanov.decompose.ComponentContext
 import com.yral.shared.libs.routing.routes.api.PostDetailsRoute

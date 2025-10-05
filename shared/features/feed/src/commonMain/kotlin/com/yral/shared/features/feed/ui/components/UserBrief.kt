@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.feed.uiComponets
+package com.yral.shared.features.feed.ui.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -18,7 +18,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.yral.android.ui.screens.feed.uiComponets.UserBriefConstants.MAX_LINES_FOR_POST_DESCRIPTION
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
@@ -103,7 +102,7 @@ private fun UserBriefDetails(
                         .current
                         .feedDescription
                         .lineHeight
-                        .value * MAX_LINES_FOR_POST_DESCRIPTION
+                        .value * UserBriefConstants.MAX_LINES_FOR_POST_DESCRIPTION
                 Text(
                     modifier =
                         Modifier

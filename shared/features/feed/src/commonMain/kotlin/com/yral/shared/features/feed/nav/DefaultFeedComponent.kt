@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.feed.nav
+package com.yral.shared.features.feed.nav
 
 import co.touchlab.kermit.Logger
 import com.arkivanov.decompose.ComponentContext

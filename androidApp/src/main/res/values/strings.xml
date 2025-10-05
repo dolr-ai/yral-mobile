@@ -22,12 +22,9 @@
 
 
 
-    <string name="scroll_to_next_video">Scroll To Next Video</string>
 
 
     <string name="upload_video_error_reason"> due to %s reasons</string>
-
-    <string name="how_to_play">How to Play</string>
 
     <!-- Facebook SDK Configuration -->
     <string name="facebook_app_id">4094678660808510</string>
