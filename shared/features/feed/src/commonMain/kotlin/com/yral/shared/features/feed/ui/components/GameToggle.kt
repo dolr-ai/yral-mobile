@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.feed.uiComponets
+package com.yral.shared.features.feed.ui.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -15,14 +15,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import com.yral.android.R
-import com.yral.android.ui.screens.feed.uiComponets.GameToggleConstants.ICON_HEIGHT
-import com.yral.android.ui.screens.feed.uiComponets.GameToggleConstants.ICON_WIDTH
-import com.yral.android.ui.screens.feed.uiComponets.GameToggleConstants.IMAGE_SIZE
 import com.yral.shared.analytics.events.GameType
 import com.yral.shared.libs.designsystem.theme.YralColors
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
+import yral_mobile.shared.features.feed.generated.resources.Res
+import yral_mobile.shared.features.feed.generated.resources.ic_game_hot
+import yral_mobile.shared.features.feed.generated.resources.ic_game_smiley
 
 @Composable
 fun GameToggle(
@@ -39,12 +39,12 @@ fun GameToggle(
                 .padding(start = 4.5.dp, top = 4.5.dp, end = 4.5.dp, bottom = 4.5.dp),
     ) {
         GameIcon(
-            drawable = R.drawable.ic_game_hot,
+            drawable = Res.drawable.ic_game_hot,
             isSelected = gameType == GameType.HOT_OR_NOT,
             onSelectGame = { onSelectGame(GameType.HOT_OR_NOT) },
         )
         GameIcon(
-            drawable = R.drawable.ic_game_smiley,
+            drawable = Res.drawable.ic_game_smiley,
             isSelected = gameType == GameType.SMILEY,
             onSelectGame = { onSelectGame(GameType.SMILEY) },
         )
@@ -53,7 +53,7 @@ fun GameToggle(
 
 @Composable
 private fun GameIcon(
-    drawable: Int,
+    drawable: DrawableResource,
     isSelected: Boolean,
     onSelectGame: () -> Unit,
 ) {
@@ -72,8 +72,8 @@ private fun GameIcon(
         horizontalAlignment = Alignment.Start,
         modifier =
             Modifier
-                .width(ICON_WIDTH)
-                .height(ICON_HEIGHT)
+                .width(GameToggleConstants.ICON_WIDTH)
+                .height(GameToggleConstants.ICON_HEIGHT)
                 .then(background)
                 .padding(start = 9.dp, top = 6.75.dp, end = 9.dp, bottom = 6.75.dp)
                 .clickable { onSelectGame() },
@@ -85,7 +85,7 @@ private fun GameIcon(
             modifier =
                 Modifier
                     .padding(0.25.dp)
-                    .size(IMAGE_SIZE),
+                    .size(GameToggleConstants.IMAGE_SIZE),
         )
     }
 }

@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.feed.uiComponets
+package com.yral.shared.features.feed.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -10,20 +10,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import com.airbnb.lottie.compose.LottieConstants
-import com.yral.shared.features.game.viewmodel.RefreshBalanceState
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
 import com.yral.shared.libs.designsystem.component.lottie.rememberYralLottieComposition
 import com.yral.shared.libs.designsystem.theme.YralColors
 
 @Composable
-internal fun RefreshBalanceAnimation(
-    refreshBalanceState: RefreshBalanceState,
+fun RefreshBalanceAnimation(
+    refreshBalanceState: RefreshBalanceAnimationState,
     onAnimationComplete: () -> Unit,
 ) {
     AnimatedVisibility(
-        visible = refreshBalanceState != RefreshBalanceState.HIDDEN,
+        visible = refreshBalanceState != RefreshBalanceAnimationState.HIDDEN,
         modifier = Modifier.Companion.fillMaxSize(),
         enter = fadeIn(),
         exit = fadeOut(),
@@ -44,15 +42,14 @@ internal fun RefreshBalanceAnimation(
                     .clickable {},
         ) {
             when (refreshBalanceState) {
-                RefreshBalanceState.LOADING -> {
+                RefreshBalanceAnimationState.LOADING -> {
                     YralLottieAnimation(
                         rawRes = LottieRes.COMMON_LOADING,
-                        iterations = LottieConstants.IterateForever,
                         modifier = Modifier.Companion.fillMaxSize(),
                     )
                 }
 
-                RefreshBalanceState.SUCCESS -> {
+                RefreshBalanceAnimationState.SUCCESS -> {
                     YralLottieAnimation(
                         composition = successComposition,
                         iterations = 1,
@@ -61,7 +58,7 @@ internal fun RefreshBalanceAnimation(
                     )
                 }
 
-                RefreshBalanceState.FAILURE -> {
+                RefreshBalanceAnimationState.FAILURE -> {
                     YralLottieAnimation(
                         composition = failureComposition,
                         iterations = 1,
@@ -70,10 +67,17 @@ internal fun RefreshBalanceAnimation(
                     )
                 }
 
-                RefreshBalanceState.HIDDEN -> {
+                RefreshBalanceAnimationState.HIDDEN -> {
                     // This case is handled by the early return
                 }
             }
         }
     }
+}
+
+enum class RefreshBalanceAnimationState {
+    HIDDEN,
+    LOADING,
+    SUCCESS,
+    FAILURE,
 }
