@@ -1,5 +1,6 @@
 package com.yral.shared.libs.routing.routes.api
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
@@ -74,8 +75,20 @@ data class PostDetailsRoute(
 }
 
 @Serializable
-object BtcRewardsReceived : AppRoute, ExternallyExposedRoute {
-    const val PATH = "/btcRewardsReceived"
+data class RewardsReceived(
+    val token: String,
+    val rewardOn: RewardOn,
+) : AppRoute,
+    ExternallyExposedRoute {
+    companion object {
+        const val PATH = "rewardsReceived/{token}/{rewardOn}"
+    }
+}
+
+@Serializable
+enum class RewardOn {
+    @SerialName("video_views")
+    VIDEO_VIEWS,
 }
 
 // --- Test Route Definitions for Testing ---

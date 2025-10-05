@@ -45,7 +45,6 @@ import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.yral.android.R
 import com.yral.android.ui.screens.alertsrequest.AlertsRequestBottomSheet
-import com.yral.android.ui.screens.btcRewards.BtcRewardsBottomSheet
 import com.yral.android.ui.screens.feed.FeedScreen
 import com.yral.android.ui.screens.home.nav.HomeComponent
 import com.yral.android.ui.screens.home.nav.HomeComponent.SlotChild
@@ -67,6 +66,7 @@ import com.yral.shared.features.game.viewmodel.GameViewModel
 import com.yral.shared.features.leaderboard.ui.LeaderboardScreen
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.features.wallet.ui.WalletScreen
+import com.yral.shared.features.wallet.ui.btcRewards.VideoViewsRewardsBottomSheet
 import com.yral.shared.libs.designsystem.component.YralFeedback
 import com.yral.shared.libs.designsystem.component.popPressedSoundId
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
@@ -140,8 +140,8 @@ private fun SlotContent(component: HomeComponent) {
                 AlertsRequestBottomSheet(
                     component = slotChild.component,
                 )
-            is SlotChild.BtcRewardsBottomSheet ->
-                BtcRewardsBottomSheet(
+            is SlotChild.VideoViewsRewardsBottomSheet ->
+                VideoViewsRewardsBottomSheet(
                     component = slotChild.component,
                 )
         }

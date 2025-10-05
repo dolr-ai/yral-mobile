@@ -43,7 +43,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                 val jsonObject = Json.decodeFromString(JsonObject.serializer(), payload)
                 val type = jsonObject["type"]?.jsonPrimitive?.content
                 when (type) {
-                    "RewardEarned" -> handleBtcRewardsNotification(message)
+                    "RewardEarned" -> handleVideoViewsRewardsNotification(message)
                     else -> handleToastNotification(notification)
                 }
             } ?: handleToastNotification(notification)
@@ -71,7 +71,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         )
     }
 
-    private fun handleBtcRewardsNotification(message: RemoteMessage) {
+    private fun handleVideoViewsRewardsNotification(message: RemoteMessage) {
         val intent = Intent(this, MainActivity::class.java)
         // Use these flags to bring an existing instance to the front or create a new one if needed
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)

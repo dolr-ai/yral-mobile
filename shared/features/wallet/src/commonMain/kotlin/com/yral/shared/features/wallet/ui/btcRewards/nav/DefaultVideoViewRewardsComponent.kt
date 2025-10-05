@@ -1,13 +1,13 @@
-package com.yral.android.ui.screens.btcRewards.nav
+package com.yral.shared.features.wallet.ui.btcRewards.nav
 
 import com.arkivanov.decompose.ComponentContext
 
-internal class DefaultBtcRewardsComponent(
+class DefaultVideoViewRewardsComponent(
     componentContext: ComponentContext,
     private val onDismissed: () -> Unit,
     private val navigateToWallet: () -> Unit,
     private val navigateToFeed: () -> Unit,
-) : BtcRewardsComponent,
+) : VideoViewRewardsComponent,
     ComponentContext by componentContext {
     override fun onDismissClicked() {
         onDismissed()

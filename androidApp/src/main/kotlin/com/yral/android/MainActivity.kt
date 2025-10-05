@@ -42,7 +42,9 @@ import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.designsystem.theme.appTypoGraphy
 import com.yral.shared.libs.routing.deeplink.engine.RoutingService
-import com.yral.shared.libs.routing.routes.api.BtcRewardsReceived
+import com.yral.shared.libs.routing.routes.api.AppRoute
+import com.yral.shared.libs.routing.routes.api.RewardOn
+import com.yral.shared.libs.routing.routes.api.RewardsReceived
 import com.yral.shared.rust.service.services.HelperService.initRustLogger
 import io.branch.indexing.BranchUniversalObject
 import io.branch.referral.Branch
@@ -166,10 +168,8 @@ class MainActivity : ComponentActivity() {
         val payload = intent?.getStringExtra("payload")
         if (payload != null) {
             Logger.d("MainActivity") { "Handling notification payload: $payload" }
-            val destination = mapPayloadToDestination(payload)
-            if (destination != null) {
-                handleNotificationDeepLink(destination)
-            }
+            mapPayloadToDestination(payload)?.let { destination -> handleNotificationDeepLink(destination) }
+            mapPayloadToRoute(payload)?.let { route -> handleNotificationDeepLink(route) }
         }
     }
 
@@ -194,7 +194,6 @@ class MainActivity : ComponentActivity() {
                         ProfileComponent.DEEPLINK
                     }
                 }
-                "RewardEarned" -> BtcRewardsReceived.toString()
                 // Add more notification types here as needed
                 else -> {
                     Logger.w("MainActivity") { "Unknown notification type: $type" }
@@ -209,10 +208,40 @@ class MainActivity : ComponentActivity() {
             null
         }
 
+    private fun mapPayloadToRoute(payload: String): AppRoute? =
+        try {
+            val jsonObject = Json.decodeFromString(JsonObject.serializer(), payload)
+            val type = jsonObject["type"]?.jsonPrimitive?.content
+
+            when (type) {
+                // hard coded values for now since not enough information from BE
+                "RewardEarned" -> RewardsReceived("btc", RewardOn.VIDEO_VIEWS)
+                else -> null
+            }
+        } catch (
+            @Suppress("TooGenericExceptionCaught") e: Exception,
+        ) {
+            Logger.e("MainActivity", e) { "Error parsing notification payload: $payload" }
+            crashlyticsManager.recordException(e)
+            null
+        }
+
     private fun handleNotificationDeepLink(dest: String) {
         try {
             Logger.d("MainActivity") { "Handling deep link: $dest" }
             rootComponent.handleNavigation(dest)
+        } catch (
+            @Suppress("TooGenericExceptionCaught") e: Exception,
+        ) {
+            Logger.e("MainActivity", e) { "Error handling deep link: $dest" }
+            crashlyticsManager.recordException(e)
+        }
+    }
+
+    private fun handleNotificationDeepLink(dest: AppRoute) {
+        try {
+            Logger.d("MainActivity") { "Handling deep link: $dest" }
+            rootComponent.onNavigationRequest(dest)
         } catch (
             @Suppress("TooGenericExceptionCaught") e: Exception,
         ) {

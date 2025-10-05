@@ -14,21 +14,23 @@ import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.Value
 import com.yral.android.ui.screens.alertsrequest.nav.AlertsRequestComponent
-import com.yral.android.ui.screens.btcRewards.nav.BtcRewardsComponent
 import com.yral.android.ui.screens.profile.nav.ProfileComponent
 import com.yral.shared.features.account.nav.AccountComponent
 import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.features.leaderboard.nav.LeaderboardComponent
 import com.yral.shared.features.uploadvideo.nav.UploadVideoRootComponent
 import com.yral.shared.features.wallet.nav.WalletComponent
+import com.yral.shared.features.wallet.ui.btcRewards.nav.DefaultVideoViewRewardsComponent
+import com.yral.shared.features.wallet.ui.btcRewards.nav.VideoViewRewardsComponent
 import com.yral.shared.libs.arch.nav.HomeChildSnapshotProvider
 import com.yral.shared.libs.routing.routes.api.AddVideo
 import com.yral.shared.libs.routing.routes.api.AppRoute
-import com.yral.shared.libs.routing.routes.api.BtcRewardsReceived
 import com.yral.shared.libs.routing.routes.api.GenerateAIVideo
 import com.yral.shared.libs.routing.routes.api.Leaderboard
 import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
 import com.yral.shared.libs.routing.routes.api.Profile
+import com.yral.shared.libs.routing.routes.api.RewardOn
+import com.yral.shared.libs.routing.routes.api.RewardsReceived
 import com.yral.shared.libs.routing.routes.api.Wallet
 import kotlinx.serialization.Serializable
 
@@ -117,7 +119,11 @@ internal class DefaultHomeComponent(
                 navigation.replaceKeepingFeed(Config.UploadVideo) {
                     (stack.value.active.instance as? Child.UploadVideo)?.component?.handleNavigation(appRoute)
                 }
-            is BtcRewardsReceived -> showSlot(SlotConfig.BtcRewardsBottomSheet)
+            is RewardsReceived -> {
+                when (appRoute.rewardOn) {
+                    RewardOn.VIDEO_VIEWS -> showSlot(SlotConfig.VideoViewsRewardsBottomSheet)
+                }
+            }
             else -> Unit
         }
     }
@@ -202,8 +208,8 @@ internal class DefaultHomeComponent(
                 SlotChild.AlertsRequestBottomSheet(
                     alertsRequestComponent(componentContext),
                 )
-            SlotConfig.BtcRewardsBottomSheet ->
-                SlotChild.BtcRewardsBottomSheet(
+            SlotConfig.VideoViewsRewardsBottomSheet ->
+                SlotChild.VideoViewsRewardsBottomSheet(
                     btcRewardsComponent(componentContext),
                 )
         }
@@ -214,8 +220,8 @@ internal class DefaultHomeComponent(
             onDismissed = slotNavigation::dismiss,
         )
 
-    private fun btcRewardsComponent(componentContext: ComponentContext): BtcRewardsComponent =
-        BtcRewardsComponent(
+    private fun btcRewardsComponent(componentContext: ComponentContext): VideoViewRewardsComponent =
+        DefaultVideoViewRewardsComponent(
             componentContext = componentContext,
             onDismissed = slotNavigation::dismiss,
             navigateToWallet = {
@@ -259,6 +265,6 @@ internal class DefaultHomeComponent(
         data object AlertsRequestBottomSheet : SlotConfig
 
         @Serializable
-        data object BtcRewardsBottomSheet : SlotConfig
+        data object VideoViewsRewardsBottomSheet : SlotConfig
     }
 }

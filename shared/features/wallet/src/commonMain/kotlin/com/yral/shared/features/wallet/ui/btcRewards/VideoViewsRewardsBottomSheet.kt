@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.btcRewards
+package com.yral.shared.features.wallet.ui.btcRewards
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,7 +16,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
@@ -24,8 +23,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import com.yral.android.R
-import com.yral.android.ui.screens.btcRewards.nav.BtcRewardsComponent
+import com.yral.shared.features.wallet.ui.btcRewards.nav.VideoViewRewardsComponent
 import com.yral.shared.libs.designsystem.component.YralBottomSheet
 import com.yral.shared.libs.designsystem.component.YralButton
 import com.yral.shared.libs.designsystem.component.YralGradientButton
@@ -34,10 +32,17 @@ import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralBrushes
 import com.yral.shared.libs.designsystem.theme.YralColors
+import org.jetbrains.compose.resources.stringResource
+import yral_mobile.shared.features.wallet.generated.resources.Res
+import yral_mobile.shared.features.wallet.generated.resources.bit_coin
+import yral_mobile.shared.features.wallet.generated.resources.btc_credited
+import yral_mobile.shared.features.wallet.generated.resources.btc_rewards_congratulations
+import yral_mobile.shared.features.wallet.generated.resources.go_to_wallet
+import yral_mobile.shared.features.wallet.generated.resources.keep_scrolling
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BtcRewardsBottomSheet(component: BtcRewardsComponent) {
+fun VideoViewsRewardsBottomSheet(component: VideoViewRewardsComponent) {
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     YralBottomSheet(
         onDismissRequest = { component.onDismissClicked() },
@@ -50,7 +55,7 @@ fun BtcRewardsBottomSheet(component: BtcRewardsComponent) {
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 36.dp),
         ) {
             Text(
-                text = stringResource(R.string.btc_credited),
+                text = stringResource(Res.string.btc_credited),
                 style = LocalAppTopography.current.lgBold,
                 color = Color.White,
                 textAlign = TextAlign.Center,
@@ -77,10 +82,10 @@ fun BtcRewardsBottomSheet(component: BtcRewardsComponent) {
                     horizontalAlignment = Alignment.Start,
                 ) {
                     YralGradientButton(
-                        text = stringResource(R.string.go_to_wallet),
+                        text = stringResource(Res.string.go_to_wallet),
                     ) { component.openWallet() }
                     YralButton(
-                        text = stringResource(R.string.keep_scrolling),
+                        text = stringResource(Res.string.keep_scrolling),
                         borderColor = YralColors.Neutral700,
                         borderWidth = 1.dp,
                         backgroundColor = YralColors.Neutral800,
@@ -98,8 +103,8 @@ fun BtcRewardsBottomSheet(component: BtcRewardsComponent) {
 @Composable
 private fun buildAnnotatedCongratsText(): AnnotatedString =
     buildAnnotatedString {
-        val fullText = stringResource(R.string.btc_rewards_congratulations)
-        val maskedText = stringResource(R.string.bit_coin)
+        val fullText = stringResource(Res.string.btc_rewards_congratulations)
+        val maskedText = stringResource(Res.string.bit_coin)
         val maskedStart = fullText.indexOf(maskedText)
         val maskedEnd = maskedStart + maskedText.length
         val textStyle = LocalAppTopography.current.mdBold

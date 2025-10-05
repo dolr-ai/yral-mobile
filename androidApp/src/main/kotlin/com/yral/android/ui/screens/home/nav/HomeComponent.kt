@@ -5,13 +5,13 @@ import com.arkivanov.decompose.router.slot.ChildSlot
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.value.Value
 import com.yral.android.ui.screens.alertsrequest.nav.AlertsRequestComponent
-import com.yral.android.ui.screens.btcRewards.nav.BtcRewardsComponent
 import com.yral.android.ui.screens.profile.nav.ProfileComponent
 import com.yral.shared.features.account.nav.AccountComponent
 import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.features.leaderboard.nav.LeaderboardComponent
 import com.yral.shared.features.uploadvideo.nav.UploadVideoRootComponent
 import com.yral.shared.features.wallet.nav.WalletComponent
+import com.yral.shared.features.wallet.ui.btcRewards.nav.VideoViewRewardsComponent
 import com.yral.shared.libs.routing.routes.api.AppRoute
 
 abstract class HomeComponent {
@@ -57,8 +57,8 @@ abstract class HomeComponent {
             val component: AlertsRequestComponent,
         ) : SlotChild()
 
-        class BtcRewardsBottomSheet(
-            val component: BtcRewardsComponent,
+        class VideoViewsRewardsBottomSheet(
+            val component: VideoViewRewardsComponent,
         ) : SlotChild()
     }
     companion object {

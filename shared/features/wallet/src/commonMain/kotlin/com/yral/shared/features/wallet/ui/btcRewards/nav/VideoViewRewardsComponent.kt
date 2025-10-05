@@ -1,8 +1,8 @@
-package com.yral.android.ui.screens.btcRewards.nav
+package com.yral.shared.features.wallet.ui.btcRewards.nav
 
 import com.arkivanov.decompose.ComponentContext
 
-interface BtcRewardsComponent {
+interface VideoViewRewardsComponent {
     fun onDismissClicked()
     fun openFeed()
     fun openWallet()
@@ -13,8 +13,8 @@ interface BtcRewardsComponent {
             onDismissed: () -> Unit,
             navigateToWallet: () -> Unit,
             navigateToFeed: () -> Unit,
-        ): BtcRewardsComponent =
-            DefaultBtcRewardsComponent(
+        ): VideoViewRewardsComponent =
+            DefaultVideoViewRewardsComponent(
                 componentContext,
                 onDismissed,
                 navigateToWallet,
