@@ -5,7 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -36,18 +35,20 @@ import com.yral.shared.features.leaderboard.ui.main.LeaderboardMainScreenConstan
 import com.yral.shared.features.leaderboard.ui.main.LeaderboardMainScreenConstants.LEADERBOARD_HEADER_WEIGHTS_FOLD
 import com.yral.shared.features.leaderboard.ui.main.LeaderboardMainScreenConstants.LEADERBOARD_ROW_WEIGHTS
 import com.yral.shared.libs.CurrencyFormatter
+import com.yral.shared.libs.NumberFormatter
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralMaskedVectorTextV2
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.designsystem.windowInfo.rememberScreenFoldStateProvider
+import com.yral.shared.libs.formatAbbreviation
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import yral_mobile.shared.features.leaderboard.generated.resources.Res
-import yral_mobile.shared.features.leaderboard.generated.resources.games_won
 import yral_mobile.shared.features.leaderboard.generated.resources.player
-import yral_mobile.shared.features.leaderboard.generated.resources.position
+import yral_mobile.shared.features.leaderboard.generated.resources.rank
 import yral_mobile.shared.features.leaderboard.generated.resources.rewards
+import yral_mobile.shared.features.leaderboard.generated.resources.wins
 import yral_mobile.shared.features.leaderboard.generated.resources.you
 import yral_mobile.shared.libs.designsystem.generated.resources.bitcoin
 import yral_mobile.shared.libs.designsystem.generated.resources.yral
@@ -89,7 +90,7 @@ fun LeaderboardTableHeader(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = stringResource(Res.string.position),
+            text = stringResource(Res.string.rank),
             modifier = Modifier.weight(headerWeights[0]),
             style = LocalAppTopography.current.regMedium,
             color = YralColors.Neutral500,
@@ -128,7 +129,7 @@ fun LeaderboardTableHeader(
             }
         }
         Text(
-            text = stringResource(Res.string.games_won),
+            text = stringResource(Res.string.wins),
             modifier = Modifier.weight(headerWeights[3]),
             style = LocalAppTopography.current.regMedium,
             color = YralColors.Neutral500,
@@ -203,7 +204,7 @@ private fun UserBriefWithBorder(
     }
 }
 
-@Suppress("MagicNumber")
+@Suppress("MagicNumber", "UnusedParameter")
 @Composable
 private fun UserBriefContent(
     position: Int,
@@ -236,8 +237,8 @@ private fun UserBriefContent(
             modifier = Modifier.weight(LEADERBOARD_ROW_WEIGHTS[1]),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            UserBriefProfileImage(position, profileImageUrl)
-            Spacer(modifier = Modifier.width(8.dp))
+            // UserBriefProfileImage(position, profileImageUrl)
+            // Spacer(modifier = Modifier.width(8.dp))
             UserBriefProfileName(position, userPrincipalId, isCurrentUser, decorateCurrentUser)
         }
         // Rewards
@@ -255,7 +256,7 @@ private fun UserBriefContent(
             contentAlignment = Alignment.CenterEnd,
         ) {
             Text(
-                text = wins.toString(),
+                text = NumberFormatter().formatAbbreviation(wins),
                 style = LocalAppTopography.current.baseBold,
                 color = YralColors.Neutral50,
                 textAlign = TextAlign.Center,
@@ -272,9 +273,10 @@ fun UserBriefPositionNumber(
     decorateCurrentUser: Boolean,
 ) {
     val decoration = LeaderboardHelpers.getTextDecoration(position)
+    val formattedPosition = NumberFormatter().formatAbbreviation(position)
     if (decoration != null && !decorateCurrentUser) {
         YralMaskedVectorTextV2(
-            text = "#$position",
+            text = "#$formattedPosition",
             drawableRes = decoration,
             textStyle = LocalAppTopography.current.baseBold,
             modifier = Modifier.width(21.dp),
@@ -283,7 +285,7 @@ fun UserBriefPositionNumber(
         )
     } else {
         Text(
-            text = "#$position",
+            text = "#$formattedPosition",
             style = LocalAppTopography.current.baseBold,
             color = YralColors.Neutral50,
             overflow = TextOverflow.Ellipsis,

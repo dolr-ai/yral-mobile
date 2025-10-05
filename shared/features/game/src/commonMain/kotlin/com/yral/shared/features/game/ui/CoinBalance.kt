@@ -21,7 +21,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -50,8 +50,10 @@ import com.yral.shared.features.game.ui.CoinBagConstants.COIN_OFFSET_Y_MID
 import com.yral.shared.features.game.ui.CoinBagConstants.COIN_OFFSET_Y_START
 import com.yral.shared.features.game.ui.CoinBagConstants.COIN_SCALE
 import com.yral.shared.features.game.ui.CoinBagConstants.COIN_SCALE_MID
+import com.yral.shared.libs.NumberFormatter
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import com.yral.shared.libs.formatAbbreviation
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
@@ -203,7 +205,7 @@ private fun BoxScope.Balance(coinBalance: Long) {
         modifier =
             Modifier
                 .height(32.dp)
-                .width(75.dp)
+                .widthIn(min = 75.dp)
                 .background(
                     brush =
                         Brush.linearGradient(
@@ -250,7 +252,7 @@ private fun BalanceText(coinBalance: Long) {
         label = "CoinBalanceChange",
     ) { balance ->
         Text(
-            text = balance.toString(),
+            text = NumberFormatter().formatAbbreviation(balance),
             style = LocalAppTopography.current.feedCanisterId,
             color = animatedColor,
             overflow = TextOverflow.Ellipsis,

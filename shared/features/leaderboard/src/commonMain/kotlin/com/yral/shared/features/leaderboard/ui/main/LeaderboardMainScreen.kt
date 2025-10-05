@@ -33,11 +33,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yral.shared.features.leaderboard.data.models.LeaderboardMode
@@ -96,13 +99,7 @@ fun LeaderboardMainScreen(
         }
     }
     val listState = rememberLazyListState()
-    var isTrophyVisible by remember { mutableStateOf(false) }
-    LaunchedEffect(listState) {
-        snapshotFlow { listState.canScrollBackward }
-            .collect { canScrollBackward ->
-                isTrophyVisible = !canScrollBackward
-            }
-    }
+    var isTrophyVisible by remember { mutableStateOf(true) }
     var pageLoadedReported by remember(state.selectedMode) { mutableStateOf(false) }
     LaunchedEffect(state.isLoading) {
         if (state.isLoading) pageLoadedReported = false
@@ -136,8 +133,21 @@ fun LeaderboardMainScreen(
         }
     Box(modifier = modifier) {
         LazyColumn(
-            modifier = Modifier.fillMaxSize(),
             state = listState,
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .nestedScroll(
+                        object : NestedScrollConnection {
+                            override suspend fun onPostFling(
+                                consumed: Velocity,
+                                available: Velocity,
+                            ): Velocity {
+                                isTrophyVisible = consumed.y > 0
+                                return super.onPostFling(consumed, available)
+                            }
+                        },
+                    ),
         ) {
             stickyHeader {
                 LeaderboardHeader(
@@ -360,9 +370,9 @@ fun LeaderboardConfetti(
 
 @Suppress("MagicNumber")
 object LeaderboardMainScreenConstants {
-    val LEADERBOARD_HEADER_WEIGHTS = listOf(0.17f, 0.52f, 0.30f, 0.29f)
-    val LEADERBOARD_HEADER_WEIGHTS_FOLD = listOf(0.17f, 0.54f, 0.30f, 0.27f)
-    val LEADERBOARD_ROW_WEIGHTS = listOf(0.17f, 0.55f, 0.30f, 0.26f)
+    val LEADERBOARD_HEADER_WEIGHTS = listOf(0.27f, 0.32f, 0.40f, 0.29f)
+    val LEADERBOARD_HEADER_WEIGHTS_FOLD = listOf(0.27f, 0.34f, 0.40f, 0.27f)
+    val LEADERBOARD_ROW_WEIGHTS = listOf(0.27f, 0.35f, 0.40f, 0.26f)
     const val MAX_CHAR_OF_NAME = 9
     const val COUNT_DOWN_BG_ALPHA = 0.8f
     const val COUNT_DOWN_ANIMATION_DURATION = 500
