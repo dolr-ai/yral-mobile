@@ -15,6 +15,8 @@ struct WalletView: View {
   @State private var yralToken = 0
   @State private var btcToken = 0.0
   @State private var btcToCurrencyValue = 0.0
+  @State private var showEarnBTCButton = false
+  @State private var showEarnBTCBottomSheet = false
   @EnvironmentObject var session: SessionManager
 
   init(viewModel: WalletViewModel) {
@@ -122,6 +124,21 @@ struct WalletView: View {
             .font(Constants.conversionFont)
         }
         .padding(.top, -Constants.conversionHstackTopPadding)
+
+        if showEarnBTCButton {
+          Text(Constants.ctaTitle)
+            .font(Constants.ctaFont)
+            .foregroundColor(Constants.ctaColor)
+            .padding(.vertical, Constants.ctaVertical)
+            .padding(.horizontal, Constants.ctaHorizontal)
+            .background(Constants.ctaBackground)
+            .clipShape(
+              RoundedRectangle(cornerRadius: Constants.ctaCornerRadius)
+            )
+            .onTapGesture {
+              showEarnBTCBottomSheet = true
+            }
+        }
       }
       .padding(.horizontal, Constants.horizontalPadding)
       Spacer()
@@ -134,6 +151,8 @@ struct WalletView: View {
         btcToken = balance
       case .exchangeRateFetched(let exchangeRate):
         btcToCurrencyValue = exchangeRate
+      case .videoViewedRewardsStatusFetched(let status):
+        showEarnBTCButton = status
       default: break
       }
     }
@@ -146,6 +165,19 @@ struct WalletView: View {
       default: break
       }
     }
+    .overlay(alignment: .center, content: {
+      if showEarnBTCBottomSheet {
+        Color.black.opacity(Constants.bottomSheetBackgroundOpacity)
+          .ignoresSafeArea()
+          .transition(.opacity)
+      }
+    })
+    .fullScreenCover(isPresented: $showEarnBTCBottomSheet) {
+      VideoViewedRewardsBottomSheet {
+        showEarnBTCBottomSheet = false
+      }
+      .background( ClearBackgroundView() )
+    }
     .task {
       Task {
         await viewModel.fetchBTCBalance()
@@ -154,6 +186,7 @@ struct WalletView: View {
       await viewModel.fetchAccountInfo()
       isLoadingFirstTime = false
       await viewModel.fetchExchangeRate()
+      await viewModel.fetchVideoViewedRewardsStatus()
     }
   }
 }
@@ -212,5 +245,14 @@ extension WalletView {
     static let conversionTextColor = YralColor.grey500.swiftUIColor
     static let conversionFont = YralFont.pt12.regular.swiftUIFont
     static let indiaRegionCode = "IN"
+
+    static let ctaTitle = "How to Earn Bitcoin"
+    static let ctaFont = YralFont.pt14.bold.swiftUIFont
+    static let ctaColor = YralColor.grey800.swiftUIColor
+    static let ctaBackground = YralColor.grey50.swiftUIColor
+    static let ctaCornerRadius = 8.0
+    static let ctaVertical = 10.0
+    static let ctaHorizontal = 20.0
+    static let bottomSheetBackgroundOpacity = 0.8
   }
 }
