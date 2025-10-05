@@ -97,6 +97,12 @@
 		10512A532DA795A800114BAA /* YralQueuePlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10512A512DA7959D00114BAA /* YralQueuePlayer.swift */; };
 		107079612E742034000C7A2C /* LeaderboardView+Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107079602E742029000C7A2C /* LeaderboardView+Constants.swift */; };
 		107079622E742034000C7A2C /* LeaderboardView+Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107079602E742029000C7A2C /* LeaderboardView+Constants.swift */; };
+		1072EF7C2E8EBFCA00C34353 /* VideoViewedRewardsDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1072EF7B2E8EBFBB00C34353 /* VideoViewedRewardsDTO.swift */; };
+		1072EF7D2E8EBFCA00C34353 /* VideoViewedRewardsDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1072EF7B2E8EBFBB00C34353 /* VideoViewedRewardsDTO.swift */; };
+		1072EF7F2E8EC48400C34353 /* VideoViewedRewardsUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1072EF7E2E8EC47800C34353 /* VideoViewedRewardsUseCase.swift */; };
+		1072EF802E8EC48400C34353 /* VideoViewedRewardsUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1072EF7E2E8EC47800C34353 /* VideoViewedRewardsUseCase.swift */; };
+		1072EF822E8EC96300C34353 /* VideoViewedRewardsBottomSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1072EF812E8EC96300C34353 /* VideoViewedRewardsBottomSheet.swift */; };
+		1072EF832E8EC96300C34353 /* VideoViewedRewardsBottomSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1072EF812E8EC96300C34353 /* VideoViewedRewardsBottomSheet.swift */; };
 		107C60902DB7809A006FC467 /* UIView+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C608F2DB78093006FC467 /* UIView+Extensions.swift */; };
 		107C60912DB7809A006FC467 /* UIView+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C608F2DB78093006FC467 /* UIView+Extensions.swift */; };
 		107C60982DB8BCB1006FC467 /* SmileyGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107C60972DB8BCB1006FC467 /* SmileyGameView.swift */; };
@@ -810,6 +816,9 @@
 		10512A422DA666A900114BAA /* YralPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralPlayer.swift; sourceTree = "<group>"; };
 		10512A512DA7959D00114BAA /* YralQueuePlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralQueuePlayer.swift; sourceTree = "<group>"; };
 		107079602E742029000C7A2C /* LeaderboardView+Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "LeaderboardView+Constants.swift"; sourceTree = "<group>"; };
+		1072EF7B2E8EBFBB00C34353 /* VideoViewedRewardsDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoViewedRewardsDTO.swift; sourceTree = "<group>"; };
+		1072EF7E2E8EC47800C34353 /* VideoViewedRewardsUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoViewedRewardsUseCase.swift; sourceTree = "<group>"; };
+		1072EF812E8EC96300C34353 /* VideoViewedRewardsBottomSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoViewedRewardsBottomSheet.swift; sourceTree = "<group>"; };
 		107C608F2DB78093006FC467 /* UIView+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIView+Extensions.swift"; sourceTree = "<group>"; };
 		107C60972DB8BCB1006FC467 /* SmileyGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameView.swift; sourceTree = "<group>"; };
 		107C609A2DB90B22006FC467 /* SmileyGameResultBottomSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameResultBottomSheetView.swift; sourceTree = "<group>"; };
@@ -1620,6 +1629,7 @@
 			isa = PBXGroup;
 			children = (
 				AC1912962E79624100BA5D78 /* WalletView.swift */,
+				1072EF812E8EC96300C34353 /* VideoViewedRewardsBottomSheet.swift */,
 			);
 			path = View;
 			sourceTree = "<group>";
@@ -2624,6 +2634,7 @@
 		ACD8C3572E7C5FB10066027B /* Domain */ = {
 			isa = PBXGroup;
 			children = (
+				1072EF7E2E8EC47800C34353 /* VideoViewedRewardsUseCase.swift */,
 				ACD8C3692E7C6B750066027B /* ExchangeRateUseCase.swift */,
 				ACD8C3592E7C5FC90066027B /* FetchBTCBalanceUseCase.swift */,
 				ACD8C36C2E7C6B7A0066027B /* Entity */,
@@ -2643,6 +2654,7 @@
 		ACD8C3652E7C685F0066027B /* DTO */ = {
 			isa = PBXGroup;
 			children = (
+				1072EF7B2E8EBFBB00C34353 /* VideoViewedRewardsDTO.swift */,
 				ACD8C3622E7C68490066027B /* BTCPriceResponseDTO.swift */,
 			);
 			path = DTO;
@@ -3580,6 +3592,7 @@
 				10FEA9082E6FE64A000103EB /* LeaderboardHistoryRepository.swift in Sources */,
 				100209FA2DE83F7900DF269E /* LeaderboardDTO.swift in Sources */,
 				ACCB98782D944213002B9675 /* UILabel+Extensions.swift in Sources */,
+				1072EF802E8EC48400C34353 /* VideoViewedRewardsUseCase.swift in Sources */,
 				AC2C30D52D96C68700DA9F81 /* ReportRequestDTO.swift in Sources */,
 				AC1F938C2DC112F000F322E1 /* SocialSignInUseCase.swift in Sources */,
 				10020A032DE8416A00DF269E /* LeaderboardRepositoryProtocol.swift in Sources */,
@@ -3686,6 +3699,7 @@
 				ACE77EDB2E743E7400896DD2 /* GenerateVideoError.swift in Sources */,
 				ACE77EDC2E743E7400896DD2 /* UploadOptionsScreenView.swift in Sources */,
 				ACE77EDD2E743E7400896DD2 /* GetUploadEndpointUseCase.swift in Sources */,
+				1072EF822E8EC96300C34353 /* VideoViewedRewardsBottomSheet.swift in Sources */,
 				ACE77EDE2E743E7400896DD2 /* UploadView.swift in Sources */,
 				ACE77EDF2E743E7400896DD2 /* AIVideoProviderResponse.swift in Sources */,
 				ACE77EE02E743E7400896DD2 /* UploadViewModel.swift in Sources */,
@@ -3780,6 +3794,7 @@
 				107C60992DB8BCB1006FC467 /* SmileyGameView.swift in Sources */,
 				AC1F93932DC1494800F322E1 /* TokenRequestDTO.swift in Sources */,
 				ACC0F3942D2ED5B700FA5BD0 /* SplashScreenView.swift in Sources */,
+				1072EF7C2E8EBFCA00C34353 /* VideoViewedRewardsDTO.swift in Sources */,
 				AC99BBB12D86C563008012C2 /* ProfileView.swift in Sources */,
 				10F89A4D2E01450B00B90BD0 /* Color+Extensions.swift in Sources */,
 				AC99BB972D848667008012C2 /* YralFont.swift in Sources */,
@@ -3905,6 +3920,7 @@
 				10FEA9072E6FE64A000103EB /* LeaderboardHistoryRepository.swift in Sources */,
 				100209F92DE83F7900DF269E /* LeaderboardDTO.swift in Sources */,
 				ACCB98792D944213002B9675 /* UILabel+Extensions.swift in Sources */,
+				1072EF7F2E8EC48400C34353 /* VideoViewedRewardsUseCase.swift in Sources */,
 				AC2C30D42D96C68700DA9F81 /* ReportRequestDTO.swift in Sources */,
 				AC1F938D2DC112F000F322E1 /* SocialSignInUseCase.swift in Sources */,
 				10020A022DE8416A00DF269E /* LeaderboardRepositoryProtocol.swift in Sources */,
@@ -4011,6 +4027,7 @@
 				ACE77EA32E743E7400896DD2 /* GenerateVideoError.swift in Sources */,
 				ACE77EA42E743E7400896DD2 /* UploadOptionsScreenView.swift in Sources */,
 				ACE77EA52E743E7400896DD2 /* GetUploadEndpointUseCase.swift in Sources */,
+				1072EF832E8EC96300C34353 /* VideoViewedRewardsBottomSheet.swift in Sources */,
 				ACE77EA62E743E7400896DD2 /* UploadView.swift in Sources */,
 				ACE77EA72E743E7400896DD2 /* AIVideoProviderResponse.swift in Sources */,
 				ACE77EA82E743E7400896DD2 /* UploadViewModel.swift in Sources */,
@@ -4105,6 +4122,7 @@
 				AC1F93922DC1494800F322E1 /* TokenRequestDTO.swift in Sources */,
 				107C60982DB8BCB1006FC467 /* SmileyGameView.swift in Sources */,
 				ACC0F3952D2ED5B700FA5BD0 /* SplashScreenView.swift in Sources */,
+				1072EF7D2E8EBFCA00C34353 /* VideoViewedRewardsDTO.swift in Sources */,
 				AC99BBB02D86C563008012C2 /* ProfileView.swift in Sources */,
 				10F89A4C2E01450B00B90BD0 /* Color+Extensions.swift in Sources */,
 				AC99BB982D848667008012C2 /* YralFont.swift in Sources */,
