@@ -6,6 +6,7 @@ import com.yral.shared.features.profile.data.ProfileDataSourceImpl
 import com.yral.shared.features.profile.data.ProfileRepositoryImpl
 import com.yral.shared.features.profile.domain.DeleteVideoUseCase
 import com.yral.shared.features.profile.domain.repository.ProfileRepository
+import com.yral.shared.features.profile.viewmodel.EditProfileViewModel
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.viewModelOf
@@ -19,4 +20,5 @@ val profileModule =
         factoryOf(::DeleteVideoUseCase)
         factoryOf(::ProfileTelemetry)
         viewModelOf(::ProfileViewModel)
+        viewModelOf(::EditProfileViewModel)
     }

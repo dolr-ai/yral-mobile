@@ -12,6 +12,8 @@
     <string name="something_went_wrong">Something went wrong!</string>
     <string name="upload_video">Upload Video</string>
     <string name="edit_profile">Edit Profile</string>
+    <string name="username">Username</string>
+    <string name="unique_id">Unique ID</string>
     <string name="msg_feed_video_share">Check out this video on Yral 👀 Where watching = fun + games! ⚡ Try it 👉</string>
     <string name="msg_feed_video_share_desc">Watch on Yral</string>
     <string name="ok">OK</string>
