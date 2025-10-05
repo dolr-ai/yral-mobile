@@ -32,19 +32,19 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
 import com.yral.android.R
-import com.yral.android.ui.screens.feed.nav.FeedComponent
 import com.yral.android.ui.screens.feed.performance.PrefetchVideoListenerImpl
 import com.yral.android.ui.screens.feed.performance.VideoListenerImpl
-import com.yral.android.ui.screens.feed.uiComponets.GameToggle
-import com.yral.android.ui.screens.feed.uiComponets.HowToPlay
-import com.yral.android.ui.screens.feed.uiComponets.RefreshBalanceAnimation
-import com.yral.android.ui.screens.feed.uiComponets.SignupNudge
-import com.yral.android.ui.screens.feed.uiComponets.UserBrief
 import com.yral.shared.data.feed.domain.FeedDetails
+import com.yral.shared.features.feed.nav.FeedComponent
+import com.yral.shared.features.feed.ui.components.GameToggle
+import com.yral.shared.features.feed.ui.components.HowToPlay
+import com.yral.shared.features.feed.ui.components.RefreshBalanceAnimation
+import com.yral.shared.features.feed.ui.components.RefreshBalanceAnimationState
+import com.yral.shared.features.feed.ui.components.SignupNudge
+import com.yral.shared.features.feed.ui.components.UserBrief
 import com.yral.shared.features.feed.viewmodel.FeedState
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.PRE_FETCH_BEFORE_LAST
@@ -57,6 +57,7 @@ import com.yral.shared.features.game.ui.SmileyGame
 import com.yral.shared.features.game.viewmodel.GameState
 import com.yral.shared.features.game.viewmodel.GameViewModel
 import com.yral.shared.features.game.viewmodel.NudgeType
+import com.yral.shared.features.game.viewmodel.RefreshBalanceState
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
 import com.yral.shared.libs.designsystem.component.YralLoader
@@ -486,11 +487,19 @@ private fun BottomView(
         )
         Game(state, pageNo, gameState, gameViewModel)
         RefreshBalanceAnimation(
-            refreshBalanceState = gameState.refreshBalanceState,
+            refreshBalanceState = gameState.refreshBalanceState.toRefreshBalanceAnimationState(),
             onAnimationComplete = { gameViewModel.hideRefreshBalanceAnimation() },
         )
     }
 }
+
+private fun RefreshBalanceState.toRefreshBalanceAnimationState(): RefreshBalanceAnimationState =
+    when (this) {
+        RefreshBalanceState.LOADING -> RefreshBalanceAnimationState.LOADING
+        RefreshBalanceState.SUCCESS -> RefreshBalanceAnimationState.SUCCESS
+        RefreshBalanceState.FAILURE -> RefreshBalanceAnimationState.FAILURE
+        RefreshBalanceState.HIDDEN -> RefreshBalanceAnimationState.HIDDEN
+    }
 
 @Composable
 private fun Shadow(modifier: Modifier) {

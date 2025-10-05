@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.feed.uiComponets
+package com.yral.shared.features.feed.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,9 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.yral.android.R
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.features.auth.ui.SignupView
 import com.yral.shared.libs.designsystem.component.YralWebViewBottomSheet
@@ -27,6 +25,9 @@ import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import org.jetbrains.compose.resources.stringResource
+import yral_mobile.shared.features.feed.generated.resources.Res
+import yral_mobile.shared.features.feed.generated.resources.scroll_to_next_video
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,7 +64,7 @@ fun SignupNudge(
             verticalArrangement = Arrangement.Bottom,
         ) {
             Text(
-                text = stringResource(R.string.scroll_to_next_video),
+                text = stringResource(Res.string.scroll_to_next_video),
                 style = LocalAppTopography.current.mdBold,
                 color = YralColors.NeutralIconsActive,
             )
