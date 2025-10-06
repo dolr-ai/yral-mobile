@@ -597,7 +597,7 @@ extension FeedsCell {
     static let actionButtonTitleColor = YralColor.grey50.uiColor
     static let profileInfoLeading = 16.0
     static let profileInfoTop = 8.0
-    static let profileInfoTrailing = 24.0
+    static let profileInfoTrailing = 16.0
     static let profileInfoViewHeight = 56.0
     static let defaultProfileImage = UIImage(named: "default_profile")
     static let playerPlaceHolderImage = UIImage(named: "player_placeholder")
