@@ -81,12 +81,13 @@ struct VideoViewedRewardsBottomSheet: View {
     }
     .onAppear {
       FirebaseLottieManager.shared.data(
-        forPath: Constants.lottiePath,
-        cache: false) { result in
+        forPath: Constants.lottiePath
+      ) { result in
           if case .success(let data) = result {
             lottieData = data
           }
         }
+
       withAnimation(.easeInOut(duration: Constants.bottomSheetAppearTime)) {
         showBottomSheet = true
       }

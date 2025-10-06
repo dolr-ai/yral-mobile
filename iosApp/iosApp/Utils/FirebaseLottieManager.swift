@@ -15,7 +15,6 @@ final class FirebaseLottieManager {
 
   func data(
     forPath path: String,
-    cache: Bool = true,
     completion: @escaping (Result<Data, Error>) -> Void
   ) {
     if let data = YralCache.shared.data(forPath: path) {
@@ -26,9 +25,7 @@ final class FirebaseLottieManager {
     ref.getData(maxSize: Constants.maxBytes) { result in
       switch result {
       case .success(let data):
-        if cache {
-          YralCache.shared.store(data, forPath: path)
-        }
+        YralCache.shared.store(data, forPath: path)
         completion(.success(data))
       case .failure(let error):
         print("Failed to download lottie: \(error.localizedDescription)")
@@ -37,8 +34,12 @@ final class FirebaseLottieManager {
     }
   }
 
-  func downloadAndSaveToCache(forPath path: String) {
-    guard YralCache.shared.data(forPath: path) == nil else {
+  func downloadAndSaveToCache(
+    forPath path: String,
+    ignoreCache: Bool = false
+  ) {
+    let hasCache = YralCache.shared.data(forPath: path) != nil
+    if hasCache && !ignoreCache {
       return
     }
 

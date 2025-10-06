@@ -153,6 +153,10 @@ struct WalletView: View {
         btcToCurrencyValue = exchangeRate
       case .videoViewedRewardsStatusFetched(let status):
         showEarnBTCButton = status
+        FirebaseLottieManager.shared.downloadAndSaveToCache(
+          forPath: Constants.lottiePath,
+          ignoreCache: true
+        )
       default: break
       }
     }
@@ -185,8 +189,8 @@ struct WalletView: View {
       guard isLoadingFirstTime else { return }
       await viewModel.fetchAccountInfo()
       isLoadingFirstTime = false
-      await viewModel.fetchExchangeRate()
       await viewModel.fetchVideoViewedRewardsStatus()
+      await viewModel.fetchExchangeRate()
     }
   }
 }
@@ -254,5 +258,6 @@ extension WalletView {
     static let ctaVertical = 10.0
     static let ctaHorizontal = 20.0
     static let bottomSheetBackgroundOpacity = 0.8
+    static let lottiePath = "btc_rewards/btc_rewards_views.json"
   }
 }
