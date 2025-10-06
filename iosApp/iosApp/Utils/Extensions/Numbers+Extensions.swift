@@ -72,3 +72,30 @@ extension Int {
     }
   }
 }
+
+extension UInt64 {
+  var formattedWithSuffix: String {
+    let num = Double(self)
+
+    switch num {
+    case 0..<1_000:
+      return "\(self)"
+
+    case 1_000..<1_000_000:
+      let value = (num / 1_000).rounded(toPlaces: 1)
+      return "\(value.cleanValue)K"
+
+    case 1_000_000..<1_000_000_000:
+      let value = (num / 1_000_000).rounded(toPlaces: 1)
+      return "\(value.cleanValue)M"
+
+    case 1_000_000_000..<1_000_000_000_000:
+      let value = (num / 1_000_000_000).rounded(toPlaces: 1)
+      return "\(value.cleanValue)B"
+
+    default:
+      let value = (num / 1_000_000_000_000).rounded(toPlaces: 1)
+      return "\(value.cleanValue)T"
+    }
+  }
+}
