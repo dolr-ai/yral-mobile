@@ -195,7 +195,7 @@ private fun AccountScreenContent(
                 .fillMaxSize()
                 .padding(top = 8.dp)
                 .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(30.dp, Alignment.Top),
+        verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         state.accountInfo?.let {
@@ -395,7 +395,7 @@ private fun HelpLinks(
                 .fillMaxWidth()
                 .padding(
                     start = 16.dp,
-                    top = YralDimens.paddingLg,
+                    top = 0.dp,
                     end = 16.dp,
                     bottom = YralDimens.paddingLg,
                 ),

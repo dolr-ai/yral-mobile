@@ -313,7 +313,7 @@ private fun MainContent(
                 accountInfo = info,
                 isSocialSignIn = state.isLoggedIn,
                 onLoginClicked = { viewModel.setBottomSheetType(ProfileBottomSheet.SignUp) },
-                showEditProfile = true,
+                showEditProfile = state.isLoggedIn,
                 onEditProfileClicked = openEditProfile,
             )
             Spacer(modifier = Modifier.height(16.dp))
