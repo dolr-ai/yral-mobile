@@ -77,11 +77,30 @@ data class PostDetailsRoute(
 @Serializable
 data class RewardsReceived(
     val token: String,
+    @SerialName("reward_on")
     val rewardOn: RewardOn,
+    @SerialName("creator_id")
+    val creatorId: String? = null,
+    @SerialName("video_id")
+    val videoID: String? = null,
+    @SerialName("reward_btc")
+    val rewardBtc: String? = null,
+    @SerialName("reward_inr")
+    val rewardInr: String? = null,
+    @SerialName("timestamp")
+    val timestamp: String? = null,
 ) : AppRoute,
     ExternallyExposedRoute {
     companion object {
-        const val PATH = "rewardsReceived/{token}/{rewardOn}"
+        const val PATH =
+            "rewardsReceived?" +
+                "token={token}" +
+                "&reward_on={reward_on}" +
+                "&creator_id={creator_id}" +
+                "&video_id={video_id}" +
+                "&reward_btc={reward_btc}" +
+                "&reward_inr={reward_inr}" +
+                "&timestamp={timestamp}"
     }
 }
 

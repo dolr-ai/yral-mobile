@@ -43,8 +43,6 @@ import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.designsystem.theme.appTypoGraphy
 import com.yral.shared.libs.routing.deeplink.engine.RoutingService
 import com.yral.shared.libs.routing.routes.api.AppRoute
-import com.yral.shared.libs.routing.routes.api.RewardOn
-import com.yral.shared.libs.routing.routes.api.RewardsReceived
 import com.yral.shared.rust.service.services.HelperService.initRustLogger
 import io.branch.indexing.BranchUniversalObject
 import io.branch.referral.Branch
@@ -211,13 +209,8 @@ class MainActivity : ComponentActivity() {
     private fun mapPayloadToRoute(payload: String): AppRoute? =
         try {
             val jsonObject = Json.decodeFromString(JsonObject.serializer(), payload)
-            val type = jsonObject["type"]?.jsonPrimitive?.content
-
-            when (type) {
-                // hard coded values for now since not enough information from BE
-                "RewardEarned" -> RewardsReceived("btc", RewardOn.VIDEO_VIEWS)
-                else -> null
-            }
+            val internalUrl = jsonObject["internalUrl"]?.jsonPrimitive?.content
+            internalUrl?.let { routingService.parseUrl(internalUrl) }
         } catch (
             @Suppress("TooGenericExceptionCaught") e: Exception,
         ) {
