@@ -105,6 +105,17 @@ data class RewardsReceived(
 }
 
 @Serializable
+data class VideoUploadSuccessful(
+    @SerialName("video_id")
+    val videoID: String? = null,
+) : AppRoute,
+    ExternallyExposedRoute {
+    companion object {
+        const val PATH = "profile/videos?video_id={video_id}"
+    }
+}
+
+@Serializable
 enum class RewardOn {
     @SerialName("video_views")
     VIDEO_VIEWS,
