@@ -39,6 +39,13 @@ class SessionManager {
                 else -> null
             }
 
+    val username: String?
+        get() =
+            when (val state = _state.value) {
+                is SessionState.SignedIn -> state.session.username
+                else -> null
+            }
+
     val isCreatedFromServiceCanister: Boolean?
         get() =
             when (val state = _state.value) {

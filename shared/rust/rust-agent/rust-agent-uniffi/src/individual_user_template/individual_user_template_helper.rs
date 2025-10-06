@@ -129,6 +129,7 @@ pub struct CanistersWrapper {
     canister_principal: Principal,
     user_principal: Principal,
     profile_pic: String,
+    username: Option<String>,
     is_created_from_service_canister: bool,
 }
 
@@ -154,6 +155,10 @@ impl CanistersWrapper {
         self.profile_pic.to_string()
     }
 
+    pub fn get_username(&self) -> Option<String> {
+        self.username.clone()
+    }
+
     pub fn is_created_from_service_canister(&self) -> bool {
         self.is_created_from_service_canister
     }
@@ -177,7 +182,8 @@ pub async fn authenticate_with_network(auth_data: Vec<u8>) -> std::result::Resul
                 is_created_from_service_canister: is_created_from_service_canister,
                 canister_principal: canister_principal,
                 user_principal: user_principal,
-                profile_pic: profile_details.profile_pic_or_random()
+                profile_pic: profile_details.profile_pic_or_random(),
+                username: profile_details.username.clone(),
             }
         )
     }).await.map_err(|e| FFIError::AgentError(format!("{:?}", e)))?
