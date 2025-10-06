@@ -17,6 +17,8 @@ import com.yral.shared.features.auth.AuthClientFactory
 import com.yral.shared.features.auth.domain.useCases.DeleteAccountUseCase
 import com.yral.shared.firebaseStore.getDownloadUrl
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
+import com.yral.shared.preferences.PrefKeys
+import com.yral.shared.preferences.Preferences
 import dev.gitlive.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -28,15 +30,17 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class AccountsViewModel(
-    appDispatchers: AppDispatchers,
-    authClientFactory: AuthClientFactory,
-    private val sessionManager: SessionManager,
-    private val deleteAccountUseCase: DeleteAccountUseCase,
-    val accountsTelemetry: AccountsTelemetry,
-    flagManager: FeatureFlagManager,
-    private val firebaseStorage: FirebaseStorage,
+class AccountsViewModel internal constructor(
+    private val dependencies: Dependencies,
 ) : ViewModel() {
+    private val appDispatchers = dependencies.appDispatchers
+    private val authClientFactory = dependencies.authClientFactory
+    private val sessionManager = dependencies.sessionManager
+    private val deleteAccountUseCase = dependencies.deleteAccountUseCase
+    val accountsTelemetry = dependencies.accountsTelemetry
+    private val flagManager = dependencies.flagManager
+    private val firebaseStorage = dependencies.firebaseStorage
+    private val preferences = dependencies.preferences
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.disk)
 
     private val authClient =
@@ -64,6 +68,10 @@ class AccountsViewModel(
                     .takeIf { url -> url.isNotEmpty() }
                     ?.let { iconUrl -> _state.update { it.copy(supportIcon = iconUrl) } }
             }
+        }
+        coroutineScope.launch {
+            val isEnabled = preferences.getBoolean(PrefKeys.NOTIFICATION_ALERTS_ENABLED.name) ?: false
+            _state.update { it.copy(alertsEnabled = isEnabled) }
         }
         coroutineScope.launch {
             sessionManager
@@ -191,10 +199,27 @@ class AccountsViewModel(
         }
     }
 
+    fun onAlertsToggleChanged(isEnabled: Boolean) {
+        coroutineScope.launch {
+            preferences.putBoolean(PrefKeys.NOTIFICATION_ALERTS_ENABLED.name, isEnabled)
+        }
+        _state.update { it.copy(alertsEnabled = isEnabled) }
+    }
+
     companion object {
         const val LOGOUT_URI = "yral://logout"
         const val DELETE_ACCOUNT_URI = "yral://deleteAccount"
     }
+    internal data class Dependencies(
+        val appDispatchers: AppDispatchers,
+        val authClientFactory: AuthClientFactory,
+        val sessionManager: SessionManager,
+        val deleteAccountUseCase: DeleteAccountUseCase,
+        val accountsTelemetry: AccountsTelemetry,
+        val flagManager: FeatureFlagManager,
+        val firebaseStorage: FirebaseStorage,
+        val preferences: Preferences,
+    )
 }
 
 data class AccountHelpLink(
@@ -224,6 +249,7 @@ data class AccountsState(
     val supportIcon: String? = null,
     val isWalletEnabled: Boolean = false,
     val isLoggedIn: Boolean = false,
+    val alertsEnabled: Boolean = false,
 )
 
 sealed interface AccountBottomSheet {

@@ -18,6 +18,7 @@
     <string name="username_error_text">Username should be more than 3 characters and no special characters allowed.</string>
     <string name="change_name_prompt">Are you sure you want to change your name to %1$s?</string>
     <string name="change_name">Change name</string>
+    <string name="alerts">Alerts</string>
     <string name="msg_feed_video_share">Check out this video on Yral 👀 Where watching = fun + games! ⚡ Try it 👉</string>
     <string name="msg_feed_video_share_desc">Watch on Yral</string>
     <string name="ok">OK</string>
