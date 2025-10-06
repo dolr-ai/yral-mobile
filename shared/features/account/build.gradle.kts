@@ -24,6 +24,7 @@ kotlin {
             implementation(projects.shared.libs.coroutinesX)
             implementation(projects.shared.libs.featureFlag)
             implementation(projects.shared.libs.firebaseStore)
+            implementation(projects.shared.libs.preferences)
         }
     }
 }
