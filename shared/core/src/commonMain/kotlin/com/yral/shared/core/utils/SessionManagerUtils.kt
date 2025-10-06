@@ -9,6 +9,7 @@ fun SessionManager.getAccountInfo(): AccountInfo? =
             AccountInfo(
                 userPrincipal = principal,
                 profilePic = pic,
+                username = username,
             )
         }
     }
