@@ -31,6 +31,7 @@ struct HomeTabController: View {
   @State private var walletOutcome: WalletPhase = .none
   @State private var showMandatoryAppUpdate = false
   @State private var showRecommendedAppUpdate = false
+  @State private var showBTCEarnedBottomSheet = false
 
   @EnvironmentObject var eventBus: EventBus
 
@@ -176,6 +177,19 @@ struct HomeTabController: View {
         self.showRecommendedAppUpdate = true
       }
     }
+    .overlay(alignment: .center, content: {
+      if showBTCEarnedBottomSheet {
+        Color.black.opacity(Constants.bottomSheetBackgroundOpacity)
+          .ignoresSafeArea()
+          .transition(.opacity)
+      }
+    })
+    .fullScreenCover(isPresented: $showBTCEarnedBottomSheet) {
+      VideoViewedRewardsCreditedBottomSheet {
+        showBTCEarnedBottomSheet = false
+      }
+      .background( ClearBackgroundView() )
+    }
     .fullScreenCover(isPresented: $showEULA) {
       EULAPopupView(isPresented: $showEULA) {
         UserDefaultsManager.shared.set(true, for: .eulaAccepted)
@@ -244,6 +258,7 @@ extension HomeTabController {
     static let indicatorWidth = 30.0
     static let indicatorColor = YralColor.primary300.swiftUIColor
     static let walletOpacity = 0.8
+    static let bottomSheetBackgroundOpacity = 0.8
   }
 }
 
