@@ -10,6 +10,7 @@ import androidx.paging.compose.LazyPagingItems
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.stack.animation.slide
 import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
+import com.yral.android.ui.screens.account.rememberAlertsToggleHandler
 import com.yral.android.ui.screens.feed.performance.PrefetchVideoListenerImpl
 import com.yral.android.ui.screens.profile.nav.ProfileComponent
 import com.yral.shared.data.feed.domain.FeedDetails
@@ -62,6 +63,7 @@ fun ProfileScreen(
             is ProfileComponent.Child.Account -> {
                 val loginViewModel: LoginViewModel = koinViewModel()
                 val loginState by loginViewModel.state.collectAsStateWithLifecycle()
+                val alertsToggleHandler = rememberAlertsToggleHandler()
                 AccountScreen(
                     component = instance.component,
                     viewModel = accountsViewModel,
@@ -74,6 +76,7 @@ fun ProfileScreen(
                             openTerms = openTerms,
                         )
                     },
+                    onAlertsToggleRequest = alertsToggleHandler,
                 )
             }
             is ProfileComponent.Child.EditProfile -> {

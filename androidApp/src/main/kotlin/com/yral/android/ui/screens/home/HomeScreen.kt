@@ -44,6 +44,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.yral.android.R
+import com.yral.android.ui.screens.account.rememberAlertsToggleHandler
 import com.yral.android.ui.screens.alertsrequest.AlertsRequestBottomSheet
 import com.yral.android.ui.screens.feed.FeedScreen
 import com.yral.android.ui.screens.home.nav.HomeComponent
@@ -179,6 +180,7 @@ private fun HomeScreenContent(
             is HomeComponent.Child.Account -> {
                 val loginViewModel: LoginViewModel = koinViewModel()
                 val loginState by loginViewModel.state.collectAsStateWithLifecycle()
+                val alertsToggleHandler = rememberAlertsToggleHandler()
                 AccountScreen(
                     component = child.component,
                     viewModel = accountViewModel,
@@ -191,6 +193,7 @@ private fun HomeScreenContent(
                             openTerms = openTerms,
                         )
                     },
+                    onAlertsToggleRequest = alertsToggleHandler,
                 )
             }
 
