@@ -43,6 +43,8 @@
 		100F64EF2DCC96C9000BC17E /* YralCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100F64ED2DCC96C5000BC17E /* YralCache.swift */; };
 		100FCD6F2E659CE400E9A02D /* ViewControllerWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100FCD6E2E659CDE00E9A02D /* ViewControllerWrapper.swift */; };
 		100FCD702E659CE400E9A02D /* ViewControllerWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100FCD6E2E659CDE00E9A02D /* ViewControllerWrapper.swift */; };
+		101F53A22E93C8A9003505D4 /* ViewsCountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 101F53A12E93C8A0003505D4 /* ViewsCountView.swift */; };
+		101F53A32E93C8A9003505D4 /* ViewsCountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 101F53A12E93C8A0003505D4 /* ViewsCountView.swift */; };
 		102300392E44D48F00E6936E /* BranchSDK in Frameworks */ = {isa = PBXBuildFile; productRef = 102300382E44D48F00E6936E /* BranchSDK */; };
 		1023003B2E44D4E200E6936E /* BranchSDK in Frameworks */ = {isa = PBXBuildFile; productRef = 1023003A2E44D4E200E6936E /* BranchSDK */; };
 		1023FFEE2E41DD3E00E6936E /* smiley_game_puke.json in Resources */ = {isa = PBXBuildFile; fileRef = 1023FFED2E41DD3E00E6936E /* smiley_game_puke.json */; };
@@ -791,6 +793,7 @@
 		100F63D22DCB4630000BC17E /* SmileyGameRuleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameRuleView.swift; sourceTree = "<group>"; };
 		100F64ED2DCC96C5000BC17E /* YralCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralCache.swift; sourceTree = "<group>"; };
 		100FCD6E2E659CDE00E9A02D /* ViewControllerWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewControllerWrapper.swift; sourceTree = "<group>"; };
+		101F53A12E93C8A0003505D4 /* ViewsCountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewsCountView.swift; sourceTree = "<group>"; };
 		102300362E44D00200E6936E /* Yral-Staging.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "Yral-Staging.entitlements"; sourceTree = "<group>"; };
 		1023FFED2E41DD3E00E6936E /* smiley_game_puke.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = smiley_game_puke.json; sourceTree = "<group>"; };
 		103BBB032DACE21D00C0BFD0 /* HLSDownloadManaging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HLSDownloadManaging.swift; sourceTree = "<group>"; };
@@ -2167,6 +2170,7 @@
 		AC811B422DBA57390094C5F6 /* View */ = {
 			isa = PBXGroup;
 			children = (
+				101F53A12E93C8A0003505D4 /* ViewsCountView.swift */,
 				AC7D5B3D2E0EA7BE008853AF /* NotificationsNudge.swift */,
 				AC811B3F2DBA56F00094C5F6 /* SignupOverlay.swift */,
 			);
@@ -3675,6 +3679,7 @@
 				AC51C0522DC4E0D200D5BA34 /* RefreshVideosRequest.swift in Sources */,
 				100F64EF2DCC96C9000BC17E /* YralCache.swift in Sources */,
 				ACAA53942E4CB292008D3025 /* FeedsCell+PlayToScroll.swift in Sources */,
+				101F53A22E93C8A9003505D4 /* ViewsCountView.swift in Sources */,
 				ACC1C3982D9AF8BD005A7539 /* LottieLoaderContainerView.swift in Sources */,
 				AC4E99692D884BDB000B47B3 /* ProfileVideoGridsView.swift in Sources */,
 				ACC0D4522D8DDB97006DCF5C /* ProfileRepositoryProtocol.swift in Sources */,
@@ -4004,6 +4009,7 @@
 				100F64EE2DCC96C9000BC17E /* YralCache.swift in Sources */,
 				AC51C0532DC4E0D200D5BA34 /* RefreshVideosRequest.swift in Sources */,
 				ACAA53952E4CB292008D3025 /* FeedsCell+PlayToScroll.swift in Sources */,
+				101F53A32E93C8A9003505D4 /* ViewsCountView.swift in Sources */,
 				ACC1C3992D9AF8BD005A7539 /* LottieLoaderContainerView.swift in Sources */,
 				AC4E99682D884BDB000B47B3 /* ProfileVideoGridsView.swift in Sources */,
 				ACC0D4532D8DDB97006DCF5C /* ProfileRepositoryProtocol.swift in Sources */,

@@ -46,56 +46,48 @@ extension Int {
   static let five: Int = 5
   static let ten: Int = 10
   static let thousand: Int = 1000
+}
 
+protocol FormattableNumber {
+  var doubleValue: Double { get }
+}
+
+extension FormattableNumber {
   var formattedWithSuffix: String {
-    let num = Double(self)
+    let num = abs(doubleValue)
+    let sign = (doubleValue < 0) ? "-" : ""
 
     switch num {
     case 0..<1_000:
-      return "\(self)"
+      return "\(sign)\(Int(num))"
 
     case 1_000..<1_000_000:
       let value = (num / 1_000).rounded(toPlaces: 1)
-      return "\(value.cleanValue)K"
+      return "\(sign)\(value.cleanValue)K"
 
     case 1_000_000..<1_000_000_000:
       let value = (num / 1_000_000).rounded(toPlaces: 1)
-      return "\(value.cleanValue)M"
+      return "\(sign)\(value.cleanValue)M"
 
     case 1_000_000_000..<1_000_000_000_000:
       let value = (num / 1_000_000_000).rounded(toPlaces: 1)
-      return "\(value.cleanValue)B"
+      return "\(sign)\(value.cleanValue)B"
 
     default:
       let value = (num / 1_000_000_000_000).rounded(toPlaces: 1)
-      return "\(value.cleanValue)T"
+      return "\(sign)\(value.cleanValue)T"
     }
   }
 }
 
-extension UInt64 {
-  var formattedWithSuffix: String {
-    let num = Double(self)
+extension Int: FormattableNumber {
+  var doubleValue: Double { Double(self) }
+}
 
-    switch num {
-    case 0..<1_000:
-      return "\(self)"
+extension Int64: FormattableNumber {
+  var doubleValue: Double { Double(self) }
+}
 
-    case 1_000..<1_000_000:
-      let value = (num / 1_000).rounded(toPlaces: 1)
-      return "\(value.cleanValue)K"
-
-    case 1_000_000..<1_000_000_000:
-      let value = (num / 1_000_000).rounded(toPlaces: 1)
-      return "\(value.cleanValue)M"
-
-    case 1_000_000_000..<1_000_000_000_000:
-      let value = (num / 1_000_000_000).rounded(toPlaces: 1)
-      return "\(value.cleanValue)B"
-
-    default:
-      let value = (num / 1_000_000_000_000).rounded(toPlaces: 1)
-      return "\(value.cleanValue)T"
-    }
-  }
+extension UInt64: FormattableNumber {
+  var doubleValue: Double { Double(self) }
 }
