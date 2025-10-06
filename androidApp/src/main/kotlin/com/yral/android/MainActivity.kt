@@ -30,7 +30,6 @@ import com.arkivanov.decompose.defaultComponentContext
 import com.russhwolf.settings.Settings
 import com.yral.android.ui.nav.DefaultRootComponent
 import com.yral.android.ui.screens.RootScreen
-import com.yral.android.ui.screens.profile.nav.ProfileComponent
 import com.yral.android.update.InAppUpdateManager
 import com.yral.android.update.UpdateState
 import com.yral.shared.crashlytics.core.CrashlyticsManager
@@ -166,7 +165,6 @@ class MainActivity : ComponentActivity() {
         val payload = intent?.getStringExtra("payload")
         if (payload != null) {
             Logger.d("MainActivity") { "Handling notification payload: $payload" }
-            mapPayloadToDestination(payload)?.let { destination -> handleNotificationDeepLink(destination) }
             mapPayloadToRoute(payload)?.let { route -> handleNotificationDeepLink(route) }
         }
     }
@@ -175,36 +173,6 @@ class MainActivity : ComponentActivity() {
         intent
             ?.data
             ?.let { oAuthUtilsHelper.mapUriToOAuthResult(it.toString()) }
-
-    private fun mapPayloadToDestination(payload: String): String? =
-        try {
-            val jsonObject = Json.decodeFromString(JsonObject.serializer(), payload)
-            val type = jsonObject["type"]?.jsonPrimitive?.content
-
-            when (type) {
-                "VideoUploadSuccessful" -> {
-                    // For video upload success, navigate to specific post
-                    val videoId = jsonObject["video_id"]?.jsonPrimitive?.content
-
-                    if (!videoId.isNullOrEmpty()) {
-                        "${ProfileComponent.DEEPLINK_VIDEO_PREFIX}/$videoId"
-                    } else {
-                        ProfileComponent.DEEPLINK
-                    }
-                }
-                // Add more notification types here as needed
-                else -> {
-                    Logger.w("MainActivity") { "Unknown notification type: $type" }
-                    null
-                }
-            }
-        } catch (
-            @Suppress("TooGenericExceptionCaught") e: Exception,
-        ) {
-            Logger.e("MainActivity", e) { "Error parsing notification payload: $payload" }
-            crashlyticsManager.recordException(e)
-            null
-        }
 
     private fun mapPayloadToRoute(payload: String): AppRoute? =
         try {
@@ -218,18 +186,6 @@ class MainActivity : ComponentActivity() {
             crashlyticsManager.recordException(e)
             null
         }
-
-    private fun handleNotificationDeepLink(dest: String) {
-        try {
-            Logger.d("MainActivity") { "Handling deep link: $dest" }
-            rootComponent.handleNavigation(dest)
-        } catch (
-            @Suppress("TooGenericExceptionCaught") e: Exception,
-        ) {
-            Logger.e("MainActivity", e) { "Error handling deep link: $dest" }
-            crashlyticsManager.recordException(e)
-        }
-    }
 
     private fun handleNotificationDeepLink(dest: AppRoute) {
         try {

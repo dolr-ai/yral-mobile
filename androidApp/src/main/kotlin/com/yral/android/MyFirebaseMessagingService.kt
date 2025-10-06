@@ -15,6 +15,8 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.koin.android.ext.android.inject
 
+private val TYPES_WITH_INTERNAL_URL = listOf("RewardEarned")
+
 class MyFirebaseMessagingService : FirebaseMessagingService() {
     private val registerNotificationTokenUseCase: RegisterNotificationTokenUseCase by inject()
 
@@ -43,7 +45,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                 val jsonObject = Json.decodeFromString(JsonObject.serializer(), payload)
                 val type = jsonObject["type"]?.jsonPrimitive?.content
                 when (type) {
-                    "RewardEarned" -> handleVideoViewsRewardsNotification(message)
+                    in TYPES_WITH_INTERNAL_URL -> handleNotificationsWithInternalUrl(message)
                     else -> handleToastNotification(notification)
                 }
             } ?: handleToastNotification(notification)
@@ -71,7 +73,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         )
     }
 
-    private fun handleVideoViewsRewardsNotification(message: RemoteMessage) {
+    private fun handleNotificationsWithInternalUrl(message: RemoteMessage) {
         val intent = Intent(this, MainActivity::class.java)
         // Use these flags to bring an existing instance to the front or create a new one if needed
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
