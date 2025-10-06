@@ -196,6 +196,7 @@ class DefaultAuthClient(
                         canisterId = canisterWrapper.canisterId,
                         userPrincipal = canisterWrapper.userPrincipalId,
                         profilePic = canisterWrapper.profilePic,
+                        username = canisterWrapper.username,
                         isCreatedFromServiceCanister = canisterWrapper.isCreatedFromServiceCanister,
                     )
             }
@@ -466,6 +467,7 @@ class DefaultAuthClient(
         val canisterId = preferences.getString(PrefKeys.CANISTER_ID.name)
         val userPrincipal = preferences.getString(PrefKeys.USER_PRINCIPAL.name)
         val profilePic = preferences.getString(PrefKeys.PROFILE_PIC.name)
+        val username = preferences.getString(PrefKeys.USERNAME.name)
         val isCreatedFromServiceCanister = preferences.getBoolean(PrefKeys.IS_CREATED_FROM_SERVICE_CANISTER.name)
         return listOf(identity, canisterId, userPrincipal, profilePic)
             .all { it != null }
@@ -476,6 +478,7 @@ class DefaultAuthClient(
                         canisterId = canisterId!!,
                         userPrincipal = userPrincipal!!,
                         profilePic = profilePic!!,
+                        username = username,
                         // default false for backward compatibility
                         isCreatedFromServiceCanister = isCreatedFromServiceCanister ?: false,
                     )
@@ -494,6 +497,12 @@ class DefaultAuthClient(
             preferences.putString(PrefKeys.CANISTER_ID.name, canisterId)
             preferences.putString(PrefKeys.USER_PRINCIPAL.name, userPrincipalId)
             preferences.putString(PrefKeys.PROFILE_PIC.name, profilePic)
+            val username = username
+            if (username != null) {
+                preferences.putString(PrefKeys.USERNAME.name, username)
+            } else {
+                preferences.remove(PrefKeys.USERNAME.name)
+            }
             preferences.putBoolean(PrefKeys.IS_CREATED_FROM_SERVICE_CANISTER.name, isCreatedFromServiceCanister)
         }
     }
@@ -503,6 +512,7 @@ class DefaultAuthClient(
         preferences.remove(PrefKeys.CANISTER_ID.name)
         preferences.remove(PrefKeys.USER_PRINCIPAL.name)
         preferences.remove(PrefKeys.PROFILE_PIC.name)
+        preferences.remove(PrefKeys.USERNAME.name)
         preferences.remove(PrefKeys.IS_CREATED_FROM_SERVICE_CANISTER.name)
     }
 }
