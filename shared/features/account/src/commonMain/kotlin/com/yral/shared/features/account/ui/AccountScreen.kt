@@ -1,4 +1,4 @@
-package com.yral.android.ui.screens.account
+package com.yral.shared.features.account.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -37,26 +37,20 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import co.touchlab.kermit.Logger
-import com.google.firebase.messaging.FirebaseMessaging
-import com.yral.android.R
-import com.yral.android.ui.screens.account.AccountScreenConstants.SOCIAL_MEDIA_LINK_BOTTOM_SPACER_WEIGHT
-import com.yral.android.ui.screens.account.nav.AccountComponent
 import com.yral.shared.analytics.events.MenuCtaType
 import com.yral.shared.analytics.events.SignupPageName
+import com.yral.shared.features.account.nav.AccountComponent
+import com.yral.shared.features.account.ui.AccountScreenConstants.SOCIAL_MEDIA_LINK_BOTTOM_SPACER_WEIGHT
 import com.yral.shared.features.account.viewmodel.AccountBottomSheet
 import com.yral.shared.features.account.viewmodel.AccountHelpLink
 import com.yral.shared.features.account.viewmodel.AccountHelpLinkType
 import com.yral.shared.features.account.viewmodel.AccountsState
 import com.yral.shared.features.account.viewmodel.AccountsViewModel
 import com.yral.shared.features.account.viewmodel.ErrorType
-import com.yral.shared.features.auth.domain.useCases.DeregisterNotificationTokenUseCase
-import com.yral.shared.features.auth.domain.useCases.RegisterNotificationTokenUseCase
-import com.yral.shared.features.auth.viewModel.LoginViewModel
 import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.designsystem.component.AccountInfoView
 import com.yral.shared.libs.designsystem.component.DeleteConfirmationSheet
@@ -67,76 +61,75 @@ import com.yral.shared.libs.designsystem.component.getSVGImageModel
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.designsystem.theme.YralDimens
-import dev.icerock.moko.permissions.DeniedAlwaysException
-import dev.icerock.moko.permissions.DeniedException
-import dev.icerock.moko.permissions.Permission
-import dev.icerock.moko.permissions.PermissionsController
-import dev.icerock.moko.permissions.compose.BindEffect
-import dev.icerock.moko.permissions.compose.PermissionsControllerFactory
-import dev.icerock.moko.permissions.compose.rememberPermissionsControllerFactory
-import dev.icerock.moko.permissions.notifications.REMOTE_NOTIFICATION
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
-import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
+import yral_mobile.shared.features.account.generated.resources.Res
+import yral_mobile.shared.features.account.generated.resources.accounts
+import yral_mobile.shared.features.account.generated.resources.delete_account
+import yral_mobile.shared.features.account.generated.resources.delete_account_disclaimer
+import yral_mobile.shared.features.account.generated.resources.delete_account_question
+import yral_mobile.shared.features.account.generated.resources.delete_your_account
+import yral_mobile.shared.features.account.generated.resources.discord
+import yral_mobile.shared.features.account.generated.resources.document
+import yral_mobile.shared.features.account.generated.resources.error_delete_account
+import yral_mobile.shared.features.account.generated.resources.error_delete_account_title
+import yral_mobile.shared.features.account.generated.resources.follow_us_on
+import yral_mobile.shared.features.account.generated.resources.lock
+import yral_mobile.shared.features.account.generated.resources.logout
+import yral_mobile.shared.features.account.generated.resources.no_take_me_back
+import yral_mobile.shared.features.account.generated.resources.privacy_policy
+import yral_mobile.shared.features.account.generated.resources.sms
+import yral_mobile.shared.features.account.generated.resources.talk_to_the_team
+import yral_mobile.shared.features.account.generated.resources.telegram
+import yral_mobile.shared.features.account.generated.resources.twitter
+import yral_mobile.shared.features.account.generated.resources.yes_delete
 import yral_mobile.shared.libs.designsystem.generated.resources.alerts
 import yral_mobile.shared.libs.designsystem.generated.resources.alerts_icon
+import yral_mobile.shared.libs.designsystem.generated.resources.arrow
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
+import yral_mobile.shared.libs.designsystem.generated.resources.could_not_login
+import yral_mobile.shared.libs.designsystem.generated.resources.could_not_login_desc
 import yral_mobile.shared.libs.designsystem.generated.resources.delete
-import androidx.compose.ui.res.stringResource as androidStringResource
+import yral_mobile.shared.libs.designsystem.generated.resources.ok
+import yral_mobile.shared.libs.designsystem.generated.resources.terms_of_service
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Suppress("SwallowedException", "LongMethod")
+@Suppress("LongMethod")
 @Composable
 fun AccountScreen(
     component: AccountComponent,
     modifier: Modifier = Modifier,
     viewModel: AccountsViewModel = koinViewModel(),
-    loginViewModel: LoginViewModel = koinViewModel(),
+    loginState: UiState<*>,
+    loginBottomSheet: LoginBottomSheetComposable,
+    onAlertsToggleRequest: suspend (Boolean) -> Boolean = { it },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val loginState = loginViewModel.state.collectAsStateWithLifecycle()
-    val permissionsFactory: PermissionsControllerFactory = rememberPermissionsControllerFactory()
-    val permissionsController: PermissionsController =
-        remember(permissionsFactory) {
-            permissionsFactory.createPermissionsController()
-        }
-    BindEffect(permissionsController)
-    val coroutineScope = rememberCoroutineScope()
-    val registerNotificationTokenUseCase: RegisterNotificationTokenUseCase = koinInject()
-    val deregisterNotificationTokenUseCase: DeregisterNotificationTokenUseCase = koinInject()
     var initialAlertsSyncDone by remember { mutableStateOf(false) }
-    val handleAlertsToggle =
-        remember(permissionsController, registerNotificationTokenUseCase, deregisterNotificationTokenUseCase) {
+    val coroutineScope = rememberCoroutineScope()
+    LaunchedEffect(Unit) { viewModel.accountsTelemetry.onMenuScreenViewed() }
+    val bottomSheetState =
+        rememberModalBottomSheetState(
+            skipPartiallyExpanded = true,
+        )
+    LaunchedEffect(loginState) {
+        if (loginState is UiState.Failure) {
+            viewModel.setBottomSheetType(AccountBottomSheet.SignUp)
+        }
+    }
+    val handleAlertsToggle: (Boolean) -> Unit =
+        remember(viewModel, onAlertsToggleRequest) {
             { enabled: Boolean ->
                 coroutineScope.launch {
-                    if (enabled) {
-                        permissionsController.getPermissionState(Permission.REMOTE_NOTIFICATION)
-                        try {
-                            permissionsController.providePermission(Permission.REMOTE_NOTIFICATION)
-                            val granted = permissionsController.isPermissionGranted(Permission.REMOTE_NOTIFICATION)
-                            if (granted) {
-                                val registered = registerNotificationToken(registerNotificationTokenUseCase)
-                                viewModel.onAlertsToggleChanged(registered)
-                            } else {
-                                viewModel.onAlertsToggleChanged(false)
-                            }
-                        } catch (deniedAlways: DeniedAlwaysException) {
-                            viewModel.onAlertsToggleChanged(false)
-                        } catch (_: DeniedException) {
-                            viewModel.onAlertsToggleChanged(false)
-                        }
-                    } else {
-                        val deregistered = deregisterNotificationToken(deregisterNotificationTokenUseCase)
-                        if (!deregistered) {
-                            Logger.e("AccountScreen") { "Failed to deregister notifications" }
-                        }
-                        viewModel.onAlertsToggleChanged(false)
-                    }
+                    val result =
+                        runCatching { onAlertsToggleRequest(enabled) }
+                            .onFailure { error ->
+                                Logger.e("AccountScreen") { "Alerts toggle failed: ${error.message}" }
+                            }.getOrElse { false }
+                    viewModel.onAlertsToggleChanged(result)
                 }
                 Unit
             }
@@ -144,25 +137,18 @@ fun AccountScreen(
     LaunchedEffect(initialAlertsSyncDone, state.alertsEnabled) {
         if (!initialAlertsSyncDone) {
             if (state.alertsEnabled) {
-                val granted = permissionsController.isPermissionGranted(Permission.REMOTE_NOTIFICATION)
-                if (granted) {
-                    registerNotificationToken(registerNotificationTokenUseCase)
-                } else {
-                    deregisterNotificationToken(deregisterNotificationTokenUseCase)
+                val registered =
+                    runCatching { onAlertsToggleRequest(true) }
+                        .onFailure { error ->
+                            Logger.e("AccountScreen") {
+                                "Failed to ensure alerts registration: ${error.message}"
+                            }
+                        }.getOrElse { false }
+                if (!registered) {
                     viewModel.onAlertsToggleChanged(false)
                 }
             }
             initialAlertsSyncDone = true
-        }
-    }
-    LaunchedEffect(Unit) { viewModel.accountsTelemetry.onMenuScreenViewed() }
-    val bottomSheetState =
-        rememberModalBottomSheetState(
-            skipPartiallyExpanded = true,
-        )
-    LaunchedEffect(loginState.value) {
-        if (loginState.value is UiState.Failure) {
-            viewModel.setBottomSheetType(AccountBottomSheet.SignUp)
         }
     }
     Column(modifier = modifier.fillMaxSize()) {
@@ -170,6 +156,7 @@ fun AccountScreen(
         AccountScreenContent(
             state = state,
             viewModel = viewModel,
+            alertsEnabled = state.alertsEnabled,
             onAlertsToggle = handleAlertsToggle,
         )
         SheetContent(
@@ -178,6 +165,7 @@ fun AccountScreen(
             tncLink = state.accountLinks.tnc,
             onDismissRequest = { viewModel.setBottomSheetType(AccountBottomSheet.None) },
             onDeleteAccount = { viewModel.deleteAccount() },
+            loginBottomSheet = loginBottomSheet,
         )
     }
 }
@@ -186,6 +174,7 @@ fun AccountScreen(
 private fun AccountScreenContent(
     state: AccountsState,
     viewModel: AccountsViewModel,
+    alertsEnabled: Boolean,
     onAlertsToggle: (Boolean) -> Unit,
 ) {
     val helperLinks = remember(state.isLoggedIn) { viewModel.getHelperLinks() }
@@ -216,7 +205,7 @@ private fun AccountScreenContent(
         }
         HelpLinks(
             links = helperLinks,
-            alertsEnabled = state.alertsEnabled,
+            alertsEnabled = alertsEnabled,
             onAlertsToggle = onAlertsToggle,
             onLinkClicked = {
                 viewModel.accountsTelemetry.onMenuClicked(it.menuCtaType)
@@ -238,6 +227,14 @@ private fun AccountScreenContent(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+typealias LoginBottomSheetComposable = @Composable (
+    bottomSheetState: SheetState,
+    onDismissRequest: () -> Unit,
+    termsLink: String,
+    openTerms: () -> Unit,
+) -> Unit
+
 @Suppress("LongMethod")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -247,16 +244,17 @@ private fun SheetContent(
     tncLink: String,
     onDismissRequest: () -> Unit,
     onDeleteAccount: () -> Unit,
+    loginBottomSheet: LoginBottomSheetComposable,
 ) {
     var extraSheetLink by remember { mutableStateOf("") }
     val extraSheetState = rememberModalBottomSheetState()
     when (bottomSheetType) {
         is AccountBottomSheet.SignUp -> {
-            LoginBottomSheet(
-                bottomSheetState = bottomSheetState,
-                onDismissRequest = onDismissRequest,
-                termsLink = tncLink,
-                openTerms = { extraSheetLink = tncLink },
+            loginBottomSheet(
+                bottomSheetState,
+                onDismissRequest,
+                tncLink,
+                { extraSheetLink = tncLink },
             )
         }
 
@@ -288,11 +286,11 @@ private fun SheetContent(
         is AccountBottomSheet.DeleteAccount -> {
             DeleteConfirmationSheet(
                 bottomSheetState = bottomSheetState,
-                title = androidStringResource(R.string.delete_your_account),
-                subTitle = androidStringResource(R.string.delete_account_disclaimer),
-                confirmationMessage = androidStringResource(R.string.delete_account_question),
-                cancelButton = androidStringResource(R.string.no_take_me_back),
-                deleteButton = androidStringResource(R.string.yes_delete),
+                title = stringResource(Res.string.delete_your_account),
+                subTitle = stringResource(Res.string.delete_account_disclaimer),
+                confirmationMessage = stringResource(Res.string.delete_account_question),
+                cancelButton = stringResource(Res.string.no_take_me_back),
+                deleteButton = stringResource(Res.string.yes_delete),
                 onDismissRequest = onDismissRequest,
                 onDelete = onDeleteAccount,
             )
@@ -320,19 +318,19 @@ private fun ErrorMessageSheet(
         remember {
             when (errorType) {
                 ErrorType.SIGNUP_FAILED -> {
-                    R.string.could_not_login to R.string.could_not_login_desc
+                    DesignRes.string.could_not_login to DesignRes.string.could_not_login_desc
                 }
 
                 ErrorType.DELETE_ACCOUNT_FAILED -> {
-                    R.string.error_delete_account_title to R.string.error_delete_account
+                    Res.string.error_delete_account_title to Res.string.error_delete_account
                 }
             }
         }
     YralErrorMessage(
-        title = androidStringResource(title),
-        error = androidStringResource(error),
+        title = stringResource(title),
+        error = stringResource(error),
         sheetState = bottomSheetState,
-        cta = androidStringResource(R.string.ok),
+        cta = stringResource(DesignRes.string.ok),
         onClick = onDismissRequest,
         onDismiss = onDismissRequest,
     )
@@ -362,14 +360,11 @@ private fun AccountsTitle(
             )
         }
         Text(
-            text = androidStringResource(R.string.accounts),
+            text = stringResource(Res.string.accounts),
             style = LocalAppTopography.current.xlBold,
             color = YralColors.NeutralTextPrimary,
             textAlign = TextAlign.Center,
-            modifier =
-                Modifier
-                    .weight(1f)
-                    .offset(x = (-12).dp),
+            modifier = Modifier.weight(1f).offset(x = (-12).dp),
         )
     }
 }
@@ -492,13 +487,7 @@ private fun HelpLinkItem(
                 )
             } ?: item.getIcon()?.let {
                 Image(
-                    painter =
-                        if (it is DrawableResource) {
-                            painterResource(it)
-                        } else {
-                            // temporary unless we completely migrate to drawableResource
-                            painterResource(id = it as Int)
-                        },
+                    painter = painterResource(it),
                     contentDescription = "support",
                     contentScale = ContentScale.None,
                 )
@@ -513,7 +502,7 @@ private fun HelpLinkItem(
         }
         Spacer(modifier = Modifier.weight(1f))
         Image(
-            painter = painterResource(id = R.drawable.arrow),
+            painter = painterResource(DesignRes.drawable.arrow),
             contentDescription = "image description",
             contentScale = ContentScale.None,
         )
@@ -539,7 +528,7 @@ private fun SocialMediaHelpLinks(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
-            text = androidStringResource(R.string.follow_us_on),
+            text = stringResource(Res.string.follow_us_on),
             style = LocalAppTopography.current.regRegular,
             color = YralColors.Neutral500,
             textAlign = TextAlign.Center,
@@ -558,42 +547,6 @@ private fun SocialMediaHelpLinks(
     }
 }
 
-private suspend fun registerNotificationToken(registerUseCase: RegisterNotificationTokenUseCase): Boolean {
-    val tokenResult = runCatching { FirebaseMessaging.getInstance().token.await() }
-    val token = tokenResult.getOrNull()
-    if (!tokenResult.isSuccess || token.isNullOrBlank()) {
-        Logger.e("AccountScreen") {
-            "Failed to fetch FCM token for registration: ${tokenResult.exceptionOrNull()?.message}"
-        }
-        return false
-    }
-    return runCatching {
-        registerUseCase(RegisterNotificationTokenUseCase.Parameter(token = token))
-    }.onFailure { error ->
-        Logger.e("AccountScreen") {
-            "Failed to register notifications: ${error.message}"
-        }
-    }.isSuccess
-}
-
-private suspend fun deregisterNotificationToken(deregisterUseCase: DeregisterNotificationTokenUseCase): Boolean {
-    val tokenResult = runCatching { FirebaseMessaging.getInstance().token.await() }
-    val token = tokenResult.getOrNull()
-    if (!tokenResult.isSuccess || token.isNullOrBlank()) {
-        Logger.e("AccountScreen") {
-            "Failed to fetch FCM token for deregistration: ${tokenResult.exceptionOrNull()?.message}"
-        }
-        return false
-    }
-    return runCatching {
-        deregisterUseCase(DeregisterNotificationTokenUseCase.Parameter(token = token))
-    }.onFailure { error ->
-        Logger.e("AccountScreen") {
-            "Failed to deregister notifications: ${error.message}"
-        }
-    }.isSuccess
-}
-
 @Composable
 private fun SocialMediaHelpLinkItem(
     item: AccountHelpLink,
@@ -606,7 +559,7 @@ private fun SocialMediaHelpLinkItem(
                     .width(45.dp)
                     .height(45.dp)
                     .clickable { onLinkClicked(item) },
-            painter = painterResource(id = it),
+            painter = painterResource(it),
             contentDescription = "social account icon",
             contentScale = ContentScale.None,
         )
@@ -615,30 +568,30 @@ private fun SocialMediaHelpLinkItem(
 
 private fun AccountHelpLink.getIcon() =
     when (type) {
-        AccountHelpLinkType.TALK_TO_TEAM -> R.drawable.sms
-        AccountHelpLinkType.TERMS_OF_SERVICE -> R.drawable.document
-        AccountHelpLinkType.PRIVACY_POLICY -> R.drawable.lock
-        AccountHelpLinkType.LOGOUT -> R.drawable.logout
+        AccountHelpLinkType.TALK_TO_TEAM -> Res.drawable.sms
+        AccountHelpLinkType.TERMS_OF_SERVICE -> Res.drawable.document
+        AccountHelpLinkType.PRIVACY_POLICY -> Res.drawable.lock
+        AccountHelpLinkType.LOGOUT -> Res.drawable.logout
         AccountHelpLinkType.DELETE_ACCOUNT -> DesignRes.drawable.delete
         else -> null
     }
 
 private fun AccountHelpLink.getSocialIcon() =
     when (type) {
-        AccountHelpLinkType.TELEGRAM -> R.drawable.telegram
-        AccountHelpLinkType.DISCORD -> R.drawable.discord
-        AccountHelpLinkType.TWITTER -> R.drawable.twitter
+        AccountHelpLinkType.TELEGRAM -> Res.drawable.telegram
+        AccountHelpLinkType.DISCORD -> Res.drawable.discord
+        AccountHelpLinkType.TWITTER -> Res.drawable.twitter
         else -> null
     }
 
 @Composable
 private fun AccountHelpLink.getText() =
     when (type) {
-        AccountHelpLinkType.TALK_TO_TEAM -> linkText ?: androidStringResource(R.string.talk_to_the_team)
-        AccountHelpLinkType.TERMS_OF_SERVICE -> androidStringResource(R.string.terms_of_service)
-        AccountHelpLinkType.PRIVACY_POLICY -> androidStringResource(R.string.privacy_policy)
-        AccountHelpLinkType.LOGOUT -> androidStringResource(R.string.logout)
-        AccountHelpLinkType.DELETE_ACCOUNT -> androidStringResource(R.string.delete_account)
+        AccountHelpLinkType.TALK_TO_TEAM -> linkText ?: stringResource(Res.string.talk_to_the_team)
+        AccountHelpLinkType.TERMS_OF_SERVICE -> stringResource(DesignRes.string.terms_of_service)
+        AccountHelpLinkType.PRIVACY_POLICY -> stringResource(Res.string.privacy_policy)
+        AccountHelpLinkType.LOGOUT -> stringResource(Res.string.logout)
+        AccountHelpLinkType.DELETE_ACCOUNT -> stringResource(Res.string.delete_account)
         else -> null
     }
 
