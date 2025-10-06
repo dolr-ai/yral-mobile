@@ -1,6 +1,5 @@
 package com.yral.android.ui.screens.home.nav
 
-import co.touchlab.kermit.Logger
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.slot.ChildSlot
 import com.arkivanov.decompose.router.slot.SlotNavigation
@@ -31,6 +30,7 @@ import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
 import com.yral.shared.libs.routing.routes.api.Profile
 import com.yral.shared.libs.routing.routes.api.RewardOn
 import com.yral.shared.libs.routing.routes.api.RewardsReceived
+import com.yral.shared.libs.routing.routes.api.VideoUploadSuccessful
 import com.yral.shared.libs.routing.routes.api.Wallet
 import kotlinx.serialization.Serializable
 
@@ -93,18 +93,6 @@ internal class DefaultHomeComponent(
         navigation.replaceKeepingFeed(Config.Profile)
     }
 
-    @Deprecated("use onNavigationRequest")
-    override fun handleNavigation(destination: String) {
-        Logger.d("DefaultHomeComponent") { "handleNavigation: $destination" }
-        when {
-            destination.startsWith(ProfileComponent.DEEPLINK) -> {
-                navigation.replaceKeepingFeed(Config.Profile) {
-                    (stack.value.active.instance as? Child.Profile)?.component?.handleNavigation(destination)
-                }
-            }
-        }
-    }
-
     override fun onNavigationRequest(appRoute: AppRoute) {
         when (appRoute) {
             is PostDetailsRoute ->
@@ -124,6 +112,10 @@ internal class DefaultHomeComponent(
                     RewardOn.VIDEO_VIEWS -> showSlot(SlotConfig.VideoViewsRewardsBottomSheet)
                 }
             }
+            is VideoUploadSuccessful ->
+                navigation.replaceKeepingFeed(Config.Profile) {
+                    (stack.value.active.instance as? Child.Profile)?.component?.onNavigationRequest(appRoute)
+                }
             else -> Unit
         }
     }

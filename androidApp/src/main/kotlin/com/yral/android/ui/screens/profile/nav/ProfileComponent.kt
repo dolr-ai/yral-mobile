@@ -6,6 +6,7 @@ import com.arkivanov.decompose.value.Value
 import com.yral.shared.features.account.nav.AccountComponent
 import com.yral.shared.features.profile.nav.ProfileMainComponent
 import com.yral.shared.libs.arch.nav.HomeChildSnapshotProvider
+import com.yral.shared.libs.routing.routes.api.AppRoute
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
 
@@ -14,7 +15,7 @@ abstract class ProfileComponent : HomeChildSnapshotProvider {
 
     abstract val pendingVideoNavigation: Flow<String?>
     abstract fun onUploadVideoClick()
-    abstract fun handleNavigation(destination: String)
+    abstract fun onNavigationRequest(appRoute: AppRoute)
     abstract fun openAccount()
     abstract fun onBackClicked(): Boolean
 
@@ -36,8 +37,6 @@ abstract class ProfileComponent : HomeChildSnapshotProvider {
     }
 
     companion object Companion {
-        const val DEEPLINK = "yralm://profile"
-        const val DEEPLINK_VIDEO_PREFIX = "$DEEPLINK/videos"
         operator fun invoke(
             componentContext: ComponentContext,
             snapshot: Snapshot?,

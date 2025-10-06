@@ -16,9 +16,6 @@ interface RootComponent {
 
     fun setSplashActive(active: Boolean)
 
-    @Deprecated("use onNavigationRequest")
-    fun handleNavigation(destination: String)
-
     fun onNavigationRequest(appRoute: AppRoute)
 
     fun onUpdateStateChanged(state: UpdateState)

@@ -10,6 +10,8 @@ import com.arkivanov.decompose.router.stack.push
 import com.arkivanov.decompose.value.Value
 import com.yral.shared.features.account.nav.AccountComponent
 import com.yral.shared.features.profile.nav.ProfileMainComponent
+import com.yral.shared.libs.routing.routes.api.AppRoute
+import com.yral.shared.libs.routing.routes.api.VideoUploadSuccessful
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -44,14 +46,16 @@ internal class DefaultProfileComponent(
         onUploadVideoClicked.invoke()
     }
 
-    override fun handleNavigation(destination: String) {
-        Logger.d("DefaultProfileComponent") { "handleNavigation: $destination" }
-        when {
-            destination.startsWith(DEEPLINK_VIDEO_PREFIX) -> {
-                val videoId = destination.substringAfterLast("/videos/")
-                val channelResult = _pendingVideoNavigation.trySend(videoId)
-                Logger.d("DefaultProfileComponent") { "handleNavigation: channelResult: $channelResult" }
+    override fun onNavigationRequest(appRoute: AppRoute) {
+        Logger.d("DefaultProfileComponent") { "handleNavigation: $appRoute" }
+        when (appRoute) {
+            is VideoUploadSuccessful -> {
+                appRoute.videoID?.let { videoId ->
+                    val channelResult = _pendingVideoNavigation.trySend(videoId)
+                    Logger.d("DefaultProfileComponent") { "handleNavigation: channelResult: $channelResult" }
+                }
             }
+            else -> Unit
         }
     }
 

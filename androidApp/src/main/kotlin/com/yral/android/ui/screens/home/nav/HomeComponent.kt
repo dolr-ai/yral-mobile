@@ -23,10 +23,6 @@ abstract class HomeComponent {
     abstract fun onProfileTabClick()
     abstract fun onAccountTabClick()
     abstract fun onWalletTabClick()
-
-    @Deprecated("use onNavigationRequest")
-    abstract fun handleNavigation(destination: String)
-
     abstract fun onNavigationRequest(appRoute: AppRoute)
 
     sealed class Child {

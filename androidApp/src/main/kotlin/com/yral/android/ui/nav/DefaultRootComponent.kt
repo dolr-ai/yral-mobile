@@ -10,7 +10,6 @@ import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.MutableValue
 import com.arkivanov.decompose.value.Value
 import com.yral.android.ui.screens.home.nav.HomeComponent
-import com.yral.android.ui.screens.profile.nav.ProfileComponent
 import com.yral.android.update.UpdateState
 import com.yral.shared.libs.routing.routes.api.AppRoute
 import kotlinx.serialization.Serializable
@@ -22,8 +21,6 @@ internal class DefaultRootComponent(
     private val navigation = StackNavigation<Config>()
     private var homeComponent: HomeComponent? = null
 
-    @Deprecated("Use pendingNavRoute")
-    private var pendingNavigation: String? = null
     private var pendingNavRoute: AppRoute? = null
 
     private val _updateState = MutableValue<UpdateState>(UpdateState.Idle)
@@ -41,16 +38,10 @@ internal class DefaultRootComponent(
         ).also { stackValue ->
             // Observe stack changes to handle pending navigation
             stackValue.subscribe { stack ->
-                val navigation = pendingNavigation
-                if (navigation != null && stack.active.instance is RootComponent.Child.Home) {
-                    pendingNavigation = null
-                    homeComponent?.handleNavigation(navigation)
-                } else {
-                    val navRoute = pendingNavRoute
-                    if (navRoute != null && stack.active.instance is RootComponent.Child.Home) {
-                        pendingNavRoute = null
-                        homeComponent?.onNavigationRequest(navRoute)
-                    }
+                val navRoute = pendingNavRoute
+                if (navRoute != null && stack.active.instance is RootComponent.Child.Home) {
+                    pendingNavRoute = null
+                    homeComponent?.onNavigationRequest(navRoute)
                 }
             }
         }
@@ -86,19 +77,6 @@ internal class DefaultRootComponent(
     }
 
     override fun isSplashActive(): Boolean = stack.active.instance is RootComponent.Child.Splash
-
-    @Deprecated("use onNavigationRequest")
-    override fun handleNavigation(destination: String) {
-        when {
-            destination.startsWith(ProfileComponent.DEEPLINK) -> {
-                if (isSplashActive()) {
-                    pendingNavigation = destination
-                } else {
-                    homeComponent?.handleNavigation(destination)
-                }
-            }
-        }
-    }
 
     override fun onNavigationRequest(appRoute: AppRoute) {
         if (isSplashActive()) {
