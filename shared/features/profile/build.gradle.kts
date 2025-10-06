@@ -29,6 +29,7 @@ kotlin {
             implementation(projects.shared.libs.featureFlag)
             implementation(projects.shared.libs.designsystem)
             implementation(projects.shared.libs.videoPlayer)
+            implementation(projects.shared.libs.formatters)
             implementation(projects.shared.features.reportVideo)
 
             implementation(libs.androidx.paging.common)
