@@ -1,6 +1,7 @@
 package com.yral.shared.features.wallet.data
 
 import com.yral.shared.features.wallet.data.models.BtcPriceResponseDto
+import com.yral.shared.features.wallet.data.models.BtcRewardConfigResponseDto
 
 interface WalletDataSource {
     suspend fun getBtcConversionRate(
@@ -15,4 +16,5 @@ interface WalletDataSource {
         canisterId: String,
         userPrincipal: String,
     ): String
+    suspend fun getBtcRewardConfig(): BtcRewardConfigResponseDto
 }

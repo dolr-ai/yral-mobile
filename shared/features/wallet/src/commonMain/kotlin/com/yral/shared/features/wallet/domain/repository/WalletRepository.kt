@@ -1,5 +1,6 @@
 package com.yral.shared.features.wallet.domain.repository
 
+import com.yral.shared.features.wallet.domain.models.BtcRewardConfig
 import com.yral.shared.features.wallet.domain.models.BtcToCurrency
 
 interface WalletRepository {
@@ -15,4 +16,5 @@ interface WalletRepository {
         canisterId: String,
         userPrincipal: String,
     ): String
+    suspend fun getBtcRewardConfig(): BtcRewardConfig
 }

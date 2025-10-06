@@ -11,6 +11,7 @@ import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.features.leaderboard.nav.LeaderboardComponent
 import com.yral.shared.features.uploadvideo.nav.UploadVideoRootComponent
 import com.yral.shared.features.wallet.nav.WalletComponent
+import com.yral.shared.features.wallet.ui.btcRewards.nav.VideoViewRewardsComponent
 import com.yral.shared.libs.routing.routes.api.AppRoute
 
 abstract class HomeComponent {
@@ -54,6 +55,10 @@ abstract class HomeComponent {
     sealed class SlotChild {
         class AlertsRequestBottomSheet(
             val component: AlertsRequestComponent,
+        ) : SlotChild()
+
+        class VideoViewsRewardsBottomSheet(
+            val component: VideoViewRewardsComponent,
         ) : SlotChild()
     }
     companion object {

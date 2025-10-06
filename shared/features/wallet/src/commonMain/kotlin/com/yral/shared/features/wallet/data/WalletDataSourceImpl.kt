@@ -1,9 +1,12 @@
 package com.yral.shared.features.wallet.data
 
+import com.yral.shared.core.AppConfigurations.OFF_CHAIN_BASE_URL
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.features.wallet.data.models.BtcPriceResponseDto
+import com.yral.shared.features.wallet.data.models.BtcRewardConfigResponseDto
 import com.yral.shared.firebaseStore.cloudFunctionUrl
 import com.yral.shared.firebaseStore.firebaseAppCheckToken
+import com.yral.shared.http.httpGet
 import com.yral.shared.rust.service.domain.IndividualUserRepository
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.expectSuccess
@@ -63,8 +66,21 @@ class WalletDataSourceImpl(
         individualUserRepository
             .getUserDolrBalance(canisterId, userPrincipal)
 
+    override suspend fun getBtcRewardConfig(): BtcRewardConfigResponseDto =
+        httpGet(
+            httpClient = httpClient,
+            json = json,
+            block = {
+                url {
+                    host = OFF_CHAIN_BASE_URL
+                    path(BTC_REWARD_CONFIG_PATH)
+                }
+            },
+        )
+
     companion object {
         private const val BTC_VALUE_BY_COUNTRY_PATH = "btc_value_by_country"
         private const val HEADER_X_FIREBASE_APPCHECK = "X-Firebase-AppCheck"
+        private const val BTC_REWARD_CONFIG_PATH = "api/v1/rewards/config"
     }
 }
