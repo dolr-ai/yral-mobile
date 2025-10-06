@@ -15,7 +15,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.koin.android.ext.android.inject
 
-private val TYPES_WITH_INTERNAL_URL = listOf("RewardEarned")
+private val NOTIF_THAT_REQUIRES_NAVIGATION = listOf("RewardEarned")
 
 class MyFirebaseMessagingService : FirebaseMessagingService() {
     private val registerNotificationTokenUseCase: RegisterNotificationTokenUseCase by inject()
@@ -45,7 +45,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                 val jsonObject = Json.decodeFromString(JsonObject.serializer(), payload)
                 val type = jsonObject["type"]?.jsonPrimitive?.content
                 when (type) {
-                    in TYPES_WITH_INTERNAL_URL -> handleNotificationsWithInternalUrl(message)
+                    in NOTIF_THAT_REQUIRES_NAVIGATION -> handleNotificationsWithInternalUrl(message)
                     else -> handleToastNotification(notification)
                 }
             } ?: handleToastNotification(notification)
