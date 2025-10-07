@@ -27,6 +27,7 @@ import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,6 +36,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.SolidColor
@@ -106,6 +109,7 @@ fun EditProfileScreen(
                     detectTapGestures { offset ->
                         val bounds = usernameBounds
                         if (bounds == null || !bounds.contains(offset)) {
+                            viewModel.revertUsernameChange()
                             focusManager.clearFocus()
                         }
                     }
@@ -172,6 +176,8 @@ fun EditProfileScreen(
                     text = message,
                     style = LocalAppTopography.current.baseRegular,
                     color = messageColor,
+                    textAlign = TextAlign.Start,
+                    modifier = Modifier.fillMaxWidth(),
                 )
                 Spacer(modifier = Modifier.height(24.dp))
             } else {
@@ -317,6 +323,12 @@ private fun UsernameTextField(
     onBoundsChanged: (Rect) -> Unit,
 ) {
     val shape = RoundedCornerShape(12.dp)
+    val focusRequester = remember { FocusRequester() }
+    LaunchedEffect(state.shouldFocusUsername) {
+        if (state.shouldFocusUsername) {
+            focusRequester.requestFocus()
+        }
+    }
     BasicTextField(
         value = state.usernameInput,
         onValueChange = onValueChange,
@@ -327,6 +339,7 @@ private fun UsernameTextField(
             Modifier
                 .fillMaxWidth()
                 .height(44.dp)
+                .focusRequester(focusRequester)
                 .onFocusChanged { focusState -> onFocusChanged(focusState.isFocused) }
                 .onGloballyPositioned { coordinates ->
                     onBoundsChanged(coordinates.boundsInParent())
