@@ -169,7 +169,7 @@ fun rememberPooledExoPlayer(
 
     // Acquire player only when active (prevents pool contention)
     LaunchedEffect(playerData.url, isPause, playerPool) {
-        if (playerData.url.isNotEmpty()) {
+        if (playerData.url.isNotBlank()) {
             if (!isPause) {
                 if (platformPlayer == null) {
                     platformPlayer =

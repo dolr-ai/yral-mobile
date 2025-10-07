@@ -32,3 +32,4 @@ fun Reels.toPlayerData(): PlayerData =
 
 const val PREFETCH_NEXT_N_THUMBNAILS = 4
 const val PREFETCH_NEXT_N_VIDEOS = 4
+const val PREFETCH_QUEUE_CAP = 10

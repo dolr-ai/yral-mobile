@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import com.yral.shared.libs.videoPlayer.model.PREFETCH_NEXT_N_VIDEOS
+import com.yral.shared.libs.videoPlayer.model.PREFETCH_QUEUE_CAP
 import com.yral.shared.libs.videoPlayer.model.PlayerConfig
 import com.yral.shared.libs.videoPlayer.model.PlayerControls
 import com.yral.shared.libs.videoPlayer.model.Reels
@@ -114,6 +115,7 @@ internal fun YRALReelsPlayerView(
         snapshotFlow { pagerState.currentPage }
             .distinctUntilChanged()
             .collect { currentPage ->
+                if (prefetchQueue.size > PREFETCH_QUEUE_CAP) prefetchQueue.clear()
                 val newReels =
                     reels
                         .nextN(currentPage, PREFETCH_NEXT_N_VIDEOS)

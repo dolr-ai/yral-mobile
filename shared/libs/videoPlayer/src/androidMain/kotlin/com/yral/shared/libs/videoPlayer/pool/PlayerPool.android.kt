@@ -34,6 +34,12 @@ actual class PlayerPool(
     private val pool = mutableListOf<PooledExoPlayer>()
     private val mutex = Mutex()
 
+    private fun PlatformPlayer.fullStopAndClear() {
+        pause()
+        stop()
+        clearMediaItems()
+    }
+
     private data class PooledExoPlayer(
         val platformPlayer: PlatformPlayer,
         var isInUse: Boolean = false,
@@ -84,9 +90,7 @@ actual class PlayerPool(
             pool.find { it.platformPlayer == player }?.let { pooledPlayer ->
                 pooledPlayer.isInUse = false
                 pooledPlayer.currentUrl = null
-                pooledPlayer.platformPlayer.pause()
-                pooledPlayer.platformPlayer.stop()
-                pooledPlayer.platformPlayer.clearMediaItems()
+                pooledPlayer.platformPlayer.fullStopAndClear()
                 cleanup(pooledPlayer)
             }
         }
@@ -114,9 +118,7 @@ actual class PlayerPool(
         pooledPlayer.currentUrl = playerData.url
 
         // Reset player state completely
-        pooledPlayer.platformPlayer.stop()
-        pooledPlayer.platformPlayer.clearMediaItems()
-        pooledPlayer.platformPlayer.pause() // Ensure consistent initial state
+        pooledPlayer.platformPlayer.fullStopAndClear()
 
         // Set up listeners
         pooledPlayer.externalListener?.onSetupPlayer()

@@ -117,7 +117,7 @@ actual fun CMPPlayer(
             key(playerData.url) {
                 AndroidView(
                     factory = { playerView.apply { player = exoPlayer } },
-                    modifier = modifier,
+                    modifier = Modifier.fillMaxSize(),
                     onRelease = { view ->
                         view.player?.let { p ->
                             if (p is ExoPlayer) {
@@ -127,13 +127,15 @@ actual fun CMPPlayer(
                             }
                         }
                         view.player = null
+                        view.keepScreenOn = false
                     },
                     update = { view ->
-                        if (view.player == exoPlayer) {
-                            exoPlayer.playWhenReady = !playerParams.isPause
-                            exoPlayer.volume = if (playerParams.isMute) 0f else 1f
-                            playerParams.sliderTime?.let { exoPlayer.seekTo(it.toLong()) }
-                            exoPlayer.setPlaybackSpeed(playerParams.speed.toFloat())
+                        val player = exoPlayer
+                        if (player != null && view.player === player) {
+                            player.playWhenReady = !playerParams.isPause
+                            player.volume = if (playerParams.isMute) 0f else 1f
+                            playerParams.sliderTime?.let { player.seekTo(it.toLong()) }
+                            player.setPlaybackSpeed(playerParams.speed.toFloat())
                             view.artworkDisplayMode = PlayerView.ARTWORK_DISPLAY_MODE_FILL
                             view.resizeMode =
                                 when (playerParams.size) {
