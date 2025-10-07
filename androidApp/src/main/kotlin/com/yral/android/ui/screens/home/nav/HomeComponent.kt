@@ -13,6 +13,7 @@ import com.yral.shared.features.uploadvideo.nav.UploadVideoRootComponent
 import com.yral.shared.features.wallet.nav.WalletComponent
 import com.yral.shared.features.wallet.ui.btcRewards.nav.VideoViewRewardsComponent
 import com.yral.shared.libs.routing.routes.api.AppRoute
+import com.yral.shared.libs.routing.routes.api.RewardsReceived
 
 abstract class HomeComponent {
     abstract val stack: Value<ChildStack<*, Child>>
@@ -55,6 +56,7 @@ abstract class HomeComponent {
 
         class VideoViewsRewardsBottomSheet(
             val component: VideoViewRewardsComponent,
+            val data: RewardsReceived,
         ) : SlotChild()
     }
     companion object {

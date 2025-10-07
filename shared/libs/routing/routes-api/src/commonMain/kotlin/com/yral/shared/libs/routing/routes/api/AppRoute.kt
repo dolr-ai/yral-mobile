@@ -89,6 +89,8 @@ data class RewardsReceived(
     val rewardInr: String? = null,
     @SerialName("timestamp")
     val timestamp: String? = null,
+    @SerialName("view_count")
+    val viewCount: String? = null,
 ) : AppRoute,
     ExternallyExposedRoute {
     companion object {
@@ -100,6 +102,7 @@ data class RewardsReceived(
                 "&video_id={video_id}" +
                 "&reward_btc={reward_btc}" +
                 "&reward_inr={reward_inr}" +
+                "&view_count={view_count}" +
                 "&timestamp={timestamp}"
     }
 }
