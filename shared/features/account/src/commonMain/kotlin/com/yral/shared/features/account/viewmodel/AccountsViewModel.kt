@@ -82,6 +82,15 @@ class AccountsViewModel internal constructor(
                     _state.update { it.copy(isLoggedIn = isSocialSignIn == true) }
                 }
         }
+        coroutineScope.launch {
+            sessionManager
+                .state
+                .map { sessionManager.getAccountInfo() }
+                .distinctUntilChanged()
+                .collect { info: AccountInfo? ->
+                    _state.update { it.copy(accountInfo = info) }
+                }
+        }
     }
 
     private fun logout() {

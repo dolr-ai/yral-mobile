@@ -150,19 +150,28 @@ fun EditProfileScreen(
                 onBoundsChanged = { usernameBounds = it },
             )
             val isInvalid = !state.isUsernameValid
-            if (state.isUsernameFocused) {
+            val customError = state.usernameErrorMessage
+            if (customError != null || state.isUsernameFocused) {
                 Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text =
-                        stringResource(
+                val message =
+                    customError
+                        ?: stringResource(
                             if (isInvalid) {
                                 DesignRes.string.username_error_text
                             } else {
                                 DesignRes.string.username_helper_text
                             },
-                        ),
+                        )
+                val messageColor =
+                    if (customError != null || isInvalid) {
+                        YralColors.Red300
+                    } else {
+                        YralColors.Neutral500
+                    }
+                Text(
+                    text = message,
                     style = LocalAppTopography.current.baseRegular,
-                    color = if (isInvalid) YralColors.Red300 else YralColors.Neutral500,
+                    color = messageColor,
                 )
                 Spacer(modifier = Modifier.height(24.dp))
             } else {

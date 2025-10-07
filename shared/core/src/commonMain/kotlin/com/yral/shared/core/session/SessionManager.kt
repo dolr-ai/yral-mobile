@@ -78,6 +78,16 @@ class SessionManager {
         sessionProperties.update { it.copy(emailId = email) }
     }
 
+    fun updateUsername(username: String?) {
+        _state.update { state ->
+            if (state is SessionState.SignedIn) {
+                state.copy(session = state.session.copy(username = username))
+            } else {
+                state
+            }
+        }
+    }
+
     fun updateFirebaseLoginState(isLoggedIn: Boolean) {
         sessionProperties.update { it.copy(isFirebaseLoggedIn = isLoggedIn) }
     }
