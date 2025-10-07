@@ -143,6 +143,7 @@ private fun SlotContent(component: HomeComponent) {
             is SlotChild.VideoViewsRewardsBottomSheet ->
                 VideoViewsRewardsBottomSheet(
                     component = slotChild.component,
+                    data = slotChild.data,
                 )
         }
     }
