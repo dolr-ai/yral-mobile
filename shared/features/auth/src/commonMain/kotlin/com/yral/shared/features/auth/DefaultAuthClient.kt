@@ -166,25 +166,23 @@ class DefaultAuthClient(
         sessionManager.updateState(SessionState.Initial)
     }
 
-    private suspend fun refreshAuthenticateWithNetwork(data: ByteArray) {
+    private suspend fun refreshAuthenticateWithNetwork(data: ByteArray): Session? =
         try {
             Logger.d("DefaultAuthClient") { "Refreshing authenticateWithNetwork" }
             val canisterWrapper = authenticateWithNetwork(data)
             cacheSession(data, canisterWrapper)
-            val cachedSession =
-                Session(
-                    identity = data,
-                    canisterId = canisterWrapper.canisterId,
-                    userPrincipal = canisterWrapper.userPrincipalId,
-                    profilePic = canisterWrapper.profilePic,
-                    isCreatedFromServiceCanister = canisterWrapper.isCreatedFromServiceCanister,
-                )
-            sessionManager.updateReauthenticatedState(SessionState.SignedIn(cachedSession))
             Logger.d("DefaultAuthClient") { "Reauthenticated: ${canisterWrapper.isCreatedFromServiceCanister} " }
+            Session(
+                identity = data,
+                canisterId = canisterWrapper.canisterId,
+                userPrincipal = canisterWrapper.userPrincipalId,
+                profilePic = canisterWrapper.profilePic,
+                isCreatedFromServiceCanister = canisterWrapper.isCreatedFromServiceCanister,
+            )
         } catch (e: YralFfiException) {
             crashlyticsManager.recordException(YralException("Reauthenticate failed $e"))
+            null
         }
-    }
 
     private suspend fun handleExtractIdentityResponse(data: ByteArray) {
         try {
@@ -203,6 +201,10 @@ class DefaultAuthClient(
             }
             cachedSession.userPrincipal?.let { crashlyticsManager.setUserId(it) }
             sessionManager.updateCoinBalance(0)
+            if (!cachedSession.isCreatedFromServiceCanister) {
+                val reAuthenticatedSession = refreshAuthenticateWithNetwork(data)
+                reAuthenticatedSession?.let { cachedSession = reAuthenticatedSession }
+            }
             setSession(session = cachedSession)
             fetchBalance(session = cachedSession)
             if (auth.currentUser?.uid == cachedSession.userPrincipal) {
@@ -210,9 +212,6 @@ class DefaultAuthClient(
                 postFirebaseLogin(cachedSession)
             } else {
                 sessionManager.updateFirebaseLoginState(false)
-            }
-            if (!cachedSession.isCreatedFromServiceCanister) {
-                scope.launch { refreshAuthenticateWithNetwork(data) }
             }
         } catch (e: YralFfiException) {
             resetCachedCanisterData()
