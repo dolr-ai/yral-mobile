@@ -106,6 +106,7 @@ fun AccountScreen(
     loginState: UiState<*>,
     loginBottomSheet: LoginBottomSheetComposable,
     onAlertsToggleRequest: suspend (Boolean) -> Boolean = { it },
+    currentAlertsStatusProvider: (suspend () -> Boolean)? = null,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var initialAlertsSyncDone by remember { mutableStateOf(false) }
@@ -120,18 +121,33 @@ fun AccountScreen(
             viewModel.setBottomSheetType(AccountBottomSheet.SignUp)
         }
     }
+    LaunchedEffect(currentAlertsStatusProvider) {
+        currentAlertsStatusProvider?.let { provider ->
+            val actual =
+                runCatching { provider() }
+                    .onFailure { error ->
+                        Logger.e("AccountScreen") { "Failed to refresh alerts status: ${error.message}" }
+                    }.getOrElse { state.alertsEnabled }
+            if (actual != state.alertsEnabled) {
+                viewModel.onAlertsToggleChanged(actual)
+            }
+        }
+    }
     val handleAlertsToggle: (Boolean) -> Unit =
-        remember(viewModel, onAlertsToggleRequest) {
+        remember(viewModel, onAlertsToggleRequest, state.alertsEnabled) {
             { enabled: Boolean ->
+                val previous = state.alertsEnabled
+                viewModel.onAlertsToggleChanged(enabled)
                 coroutineScope.launch {
-                    val result =
+                    val success =
                         runCatching { onAlertsToggleRequest(enabled) }
                             .onFailure { error ->
                                 Logger.e("AccountScreen") { "Alerts toggle failed: ${error.message}" }
                             }.getOrElse { false }
-                    viewModel.onAlertsToggleChanged(result)
+                    if (!success) {
+                        viewModel.onAlertsToggleChanged(previous)
+                    }
                 }
-                Unit
             }
         }
     LaunchedEffect(initialAlertsSyncDone, state.alertsEnabled) {
