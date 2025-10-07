@@ -24,10 +24,11 @@ final class DeepLinkRouter: ObservableObject {
     case profile
     case profileAfterUpload
     case openVideo(postId: String, canisterId: String?)
+    case videoViewedRewards
   }
 
   @discardableResult func resolve(from userInfo: [AnyHashable: Any]) -> Destination? {
-    if let dest = resolveUploadDestination(fromPNs: userInfo) {
+    if let dest = resolveDestination(fromPNs: userInfo) {
       pendingDestination = dest
     } else if let dest = resolveBranchDestination(fromBranch: userInfo) {
       pendingDestination = dest
@@ -35,20 +36,13 @@ final class DeepLinkRouter: ObservableObject {
     return pendingDestination
   }
 
-  private func resolveUploadDestination(fromPNs userInfo: [AnyHashable: Any]) -> Destination? {
-    guard
-      let payloadString = userInfo[Constants.payloadString] as? String,
-      let data = payloadString.data(using: .utf8),
-      let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-      let type = json[Constants.typeString] as? String
-    else {
+  private func resolveDestination(fromPNs userInfo: [AnyHashable: Any]) -> Destination? {
+    guard let internalURL = userInfo["internalUrl"] as? String else {
       return nil
     }
 
-    if type == Constants.videoUploadSuccessType {
-      return .profileAfterUpload
-    }
-    return nil
+    let route = AppDIHelper().getRoutingService().parseUrl(url: internalURL)
+    return mapRouteToDestination(route)
   }
 
   private func resolveBranchDestination(fromBranch params: [AnyHashable: Any]) -> Destination? {
@@ -81,6 +75,10 @@ final class DeepLinkRouter: ObservableObject {
       return .wallet
     case _ as Profile:
       return .profile
+    case _ as RewardsReceived:
+      return .videoViewedRewards
+    case _ as VideoUploadSuccessful:
+      return .profileAfterUpload
     default:
       return nil
     }

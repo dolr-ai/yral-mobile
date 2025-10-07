@@ -99,6 +99,8 @@ struct HomeTabController: View {
           selectedTab = .wallet
         case .profile, .profileAfterUpload:
           selectedTab = .profile
+        case .videoViewedRewards:
+          showBTCEarnedBottomSheet = true
         }
         deepLinkRouter.pendingDestination = nil
       }

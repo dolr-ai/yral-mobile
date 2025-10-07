@@ -97,12 +97,17 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     _ center: UNUserNotificationCenter,
     willPresent notification: UNNotification
   ) async -> UNNotificationPresentationOptions {
-    if isUploadNotification(userInfo: notification.request.content.userInfo) {
-      ToastManager.showToast(type: .uploadSuccess) { }
-      onTap: {
-        DeepLinkRouter.shared.pendingDestination = .profileAfterUpload
+    if let type = notification.request.content.userInfo["type"] as? String {
+      if type == Constants.videoUploadSuccessType {
+        ToastManager.showToast(type: .uploadSuccess) {}
+        onTap: {
+          DeepLinkRouter.shared.pendingDestination = .profileAfterUpload
+        }
+      } else if type == Constants.videoViewedRewardType {
+        DeepLinkRouter.shared.pendingDestination = .videoViewedRewards
       }
     }
+
     return []
   }
 
@@ -256,5 +261,6 @@ extension AppDelegate {
     static let payloadString = "payload"
     static let typeString = "type"
     static let videoUploadSuccessType = "VideoUploadSuccessful"
+    static let videoViewedRewardType = "RewardEarned"
   }
 }
