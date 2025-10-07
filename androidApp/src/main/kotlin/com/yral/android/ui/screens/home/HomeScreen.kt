@@ -25,10 +25,12 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,6 +39,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
@@ -44,7 +49,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.yral.android.R
-import com.yral.android.ui.screens.account.rememberAlertsToggleHandler
+import com.yral.android.ui.screens.account.rememberAlertsPermissionController
 import com.yral.android.ui.screens.alertsrequest.AlertsRequestBottomSheet
 import com.yral.android.ui.screens.feed.FeedScreen
 import com.yral.android.ui.screens.home.nav.HomeComponent
@@ -72,6 +77,7 @@ import com.yral.shared.libs.designsystem.component.YralFeedback
 import com.yral.shared.libs.designsystem.component.popPressedSoundId
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
@@ -180,7 +186,35 @@ private fun HomeScreenContent(
             is HomeComponent.Child.Account -> {
                 val loginViewModel: LoginViewModel = koinViewModel()
                 val loginState by loginViewModel.state.collectAsStateWithLifecycle()
-                val alertsToggleHandler = rememberAlertsToggleHandler()
+                val alertsPermissionController = rememberAlertsPermissionController()
+                val lifecycleOwner = LocalLifecycleOwner.current
+                val scope = rememberCoroutineScope()
+
+                LaunchedEffect(alertsPermissionController) {
+                    val actual =
+                        runCatching { alertsPermissionController.currentStatus() }
+                            .getOrElse { accountViewModel.state.value.alertsEnabled }
+                    accountViewModel.onAlertsToggleChanged(actual)
+                }
+
+                DisposableEffect(lifecycleOwner, alertsPermissionController) {
+                    val observer =
+                        LifecycleEventObserver { _, event ->
+                            if (event == Lifecycle.Event.ON_RESUME) {
+                                scope.launch {
+                                    val actual =
+                                        runCatching { alertsPermissionController.currentStatus() }
+                                            .getOrElse { accountViewModel.state.value.alertsEnabled }
+                                    if (actual != accountViewModel.state.value.alertsEnabled) {
+                                        accountViewModel.onAlertsToggleChanged(actual)
+                                    }
+                                }
+                            }
+                        }
+                    lifecycleOwner.lifecycle.addObserver(observer)
+                    onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+                }
+
                 AccountScreen(
                     component = child.component,
                     viewModel = accountViewModel,
@@ -193,7 +227,8 @@ private fun HomeScreenContent(
                             openTerms = openTerms,
                         )
                     },
-                    onAlertsToggleRequest = alertsToggleHandler,
+                    onAlertsToggleRequest = alertsPermissionController.toggle,
+                    currentAlertsStatusProvider = alertsPermissionController.currentStatus,
                 )
             }
 
