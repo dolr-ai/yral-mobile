@@ -62,7 +62,7 @@ fun AccountInfoView(
                 modifier = Modifier.size(60.dp),
             )
             Text(
-                text = accountInfo.userPrincipal,
+                text = accountInfo.displayName,
                 style = LocalAppTopography.current.baseMedium,
                 color = YralColors.NeutralTextSecondary,
             )

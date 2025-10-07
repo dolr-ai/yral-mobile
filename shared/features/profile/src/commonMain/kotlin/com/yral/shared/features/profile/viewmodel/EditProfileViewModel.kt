@@ -1,11 +1,17 @@
 package com.yral.shared.features.profile.viewmodel
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.github.michaelbull.result.onFailure
+import com.github.michaelbull.result.onSuccess
 import com.yral.shared.core.session.SessionManager
+import com.yral.shared.rust.service.services.HelperService
+import com.yral.shared.rust.service.services.MetadataUpdateError
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 class EditProfileViewModel(
     private val sessionManager: SessionManager,
@@ -20,7 +26,8 @@ class EditProfileViewModel(
     init {
         val profilePic = sessionManager.profilePic
         val uniqueId = sessionManager.userPrincipal.orEmpty()
-        val initialUsername = sanitizeInput("")
+        println("Sarvesh: ${sessionManager.username}")
+        val initialUsername = sanitizeInput(sessionManager.username.orEmpty())
         _state.update {
             it.copy(
                 profileImageUrl = profilePic,
@@ -28,6 +35,7 @@ class EditProfileViewModel(
                 initialUsername = initialUsername,
                 uniqueId = uniqueId,
                 isUsernameValid = true,
+                usernameErrorMessage = null,
             )
         }
     }
@@ -38,6 +46,7 @@ class EditProfileViewModel(
             it.copy(
                 usernameInput = sanitized,
                 isUsernameValid = isValidOrEmpty(sanitized),
+                usernameErrorMessage = null,
             )
         }
     }
@@ -56,12 +65,18 @@ class EditProfileViewModel(
                     isUsernameFocused = false,
                     usernameInput = it.initialUsername,
                     isUsernameValid = true,
+                    usernameErrorMessage = null,
                 )
             } else {
                 it.copy(
                     isUsernameFocused = isFocused,
                     initialUsername = currentInitial,
-                    isUsernameValid = if (isFocused) isValidOrEmpty(sanitized) else it.isUsernameValid,
+                    isUsernameValid =
+                        if (isFocused && it.usernameErrorMessage == null) {
+                            isValidOrEmpty(sanitized)
+                        } else {
+                            it.isUsernameValid
+                        },
                 )
             }
         }
@@ -74,20 +89,65 @@ class EditProfileViewModel(
             it.copy(
                 usernameInput = sanitized,
                 isUsernameValid = isValid,
+                usernameErrorMessage = if (isValid) null else it.usernameErrorMessage,
             )
         }
         return isValid
     }
 
     fun applyUsernameChange() {
-        _state.update {
-            val sanitized = sanitizeInput(it.usernameInput)
-            it.copy(
-                usernameInput = sanitized,
-                initialUsername = sanitized,
-                isUsernameFocused = false,
-                isUsernameValid = true,
-            )
+        val sanitized = sanitizeInput(_state.value.usernameInput)
+        val identity = sessionManager.identity ?: return
+        val userCanisterId = sessionManager.canisterID ?: return
+        val previousUsername = _state.value.initialUsername
+
+        viewModelScope.launch {
+            HelperService
+                .updateUserMetadata(identity, userCanisterId, sanitized)
+                .onSuccess {
+                    sessionManager.updateUsername(sanitized)
+                    _state.update { current ->
+                        current.copy(
+                            usernameInput = sanitized,
+                            initialUsername = sanitized,
+                            isUsernameFocused = false,
+                            isUsernameValid = true,
+                            usernameErrorMessage = null,
+                        )
+                    }
+                }.onFailure { error ->
+                    when (error) {
+                        is MetadataUpdateError.UsernameTaken -> {
+                            _state.update { current ->
+                                current.copy(
+                                    isUsernameValid = false,
+                                    usernameErrorMessage = error.message,
+                                )
+                            }
+                        }
+
+                        is MetadataUpdateError.InvalidUsername -> {
+                            _state.update { current ->
+                                current.copy(
+                                    isUsernameValid = false,
+                                    usernameErrorMessage = error.message,
+                                )
+                            }
+                        }
+
+                        else -> {
+                            _state.update { current ->
+                                current.copy(
+                                    usernameInput = previousUsername,
+                                    initialUsername = previousUsername,
+                                    isUsernameFocused = false,
+                                    isUsernameValid = true,
+                                    usernameErrorMessage = null,
+                                )
+                            }
+                        }
+                    }
+                }
         }
     }
 
@@ -98,6 +158,7 @@ class EditProfileViewModel(
                 usernameInput = if (shouldClear) "" else it.initialUsername,
                 isUsernameFocused = false,
                 isUsernameValid = true,
+                usernameErrorMessage = null,
             )
         }
     }
@@ -120,4 +181,5 @@ data class EditProfileViewState(
     val initialUsername: String = "",
     val isUsernameFocused: Boolean = false,
     val isUsernameValid: Boolean = true,
+    val usernameErrorMessage: String? = null,
 )

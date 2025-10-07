@@ -21,6 +21,7 @@ use yral_canisters_common::utils::profile::propic_from_principal as inner_propic
 use yral_canisters_common::Canisters;
 use yral_metadata_client::DeviceRegistrationToken;
 use yral_metadata_client::MetadataClient;
+use yral_metadata_types::SetUserMetadataReqMetadata;
 use yral_types::delegated_identity::DelegatedIdentityWire;
 
 pub type Secp256k1Error = k256::elliptic_curve::Error;
@@ -296,4 +297,33 @@ pub async fn unregister_device(
                 .map_err(|e| FFIError::AgentError(format!("Api Error: {:?}", e)))?;    
         Ok(res)
     }).await.map_err(|e| FFIError::AgentError(format!("{:?}", e)))?
+}
+
+#[uniffi::export]
+pub async fn set_user_metadata(
+    identity_data: Vec<u8>,
+    user_canister_id: String,
+    user_name: String,
+) -> std::result::Result<(), FFIError> {
+    RUNTIME
+        .spawn(async move {
+            let identity = delegated_identity_from_bytes(&identity_data)
+                .map_err(|e| FFIError::UnknownError(format!("Failed to parse identity: {:?}", e)))?;
+            let principal = Principal::from_text(&user_canister_id).map_err(FFIError::from)?;
+
+            let client: MetadataClient<false> = MetadataClient::default();
+            let metadata = SetUserMetadataReqMetadata {
+                user_canister_id: principal,
+                user_name,
+            };
+
+            client
+                .set_user_metadata(&identity, metadata)
+                .await
+                .map_err(|e| FFIError::AgentError(format!("Api Error: {:?}", e)))?;
+
+            Ok(())
+        })
+        .await
+        .map_err(|e| FFIError::AgentError(format!("{:?}", e)))?
 }
