@@ -12,10 +12,11 @@ struct LeaderboardRowDTO: Decodable {
   let principalID: String
   var position: Int
   let wins: Int
+  let reward: Int?
 
   enum CodingKeys: String, CodingKey {
     case principalID = "principal_id"
-    case position, wins
+    case position, wins, reward
   }
 }
 
@@ -24,12 +25,20 @@ struct LeaderboardDTO: Decodable {
   let topRows: [LeaderboardRowDTO]
   let timeLeftInMs: Int?
   let date: String?
+  let rewardCurrency: String?
+  let rewardCurrencyCode: String?
+  let rewardsEnabled: Bool
+  let rewardsTable: [String: Int]?
 
   enum CodingKeys: String, CodingKey {
     case userRow = "user_row"
     case topRows = "top_rows"
     case timeLeftInMs = "time_left_ms"
     case date
+    case rewardCurrency = "reward_currency"
+    case rewardCurrencyCode = "reward_currency_code"
+    case rewardsEnabled = "rewards_enabled"
+    case rewardsTable = "rewards_table"
   }
 }
 
@@ -38,7 +47,8 @@ extension LeaderboardRowDTO {
     return LeaderboardRowResponse(
       position: position,
       principalID: principalID,
-      wins: wins
+      wins: wins,
+      reward: reward
     )
   }
 }
@@ -49,7 +59,11 @@ extension LeaderboardDTO {
       userRow: userRow?.toDomain(),
       topRows: topRows.map { $0.toDomain() },
       timeLeftInMs: timeLeftInMs,
-      date: date
+      date: date,
+      rewardCurrency: rewardCurrency,
+      rewardCurrencyCode: rewardCurrencyCode,
+      rewardsEnabled: rewardsEnabled,
+      rewardsTable: rewardsTable
     )
   }
 }

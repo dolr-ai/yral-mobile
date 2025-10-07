@@ -24,7 +24,7 @@ class LeaderboardHistoryViewModel(
     private val _state = MutableStateFlow(LeaderboardHistoryState())
     val state: StateFlow<LeaderboardHistoryState> = _state.asStateFlow()
 
-    fun fetchHistory() {
+    fun fetchHistory(countryCode: String) {
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, error = null) }
             val principal = sessionManager.userPrincipal
@@ -33,8 +33,13 @@ class LeaderboardHistoryViewModel(
                 return@launch
             }
             getLeaderboardHistoryUseCase
-                .invoke(LeaderboardHistoryRequest(principalId = principal))
-                .onSuccess { history ->
+                .invoke(
+                    parameter =
+                        LeaderboardHistoryRequest(
+                            principalId = principal,
+                            countryCode = countryCode,
+                        ),
+                ).onSuccess { history ->
                     _state.update {
                         it.copy(
                             isLoading = false,

@@ -3,9 +3,11 @@ package com.yral.shared.features.leaderboard.data.models
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
+import com.yral.shared.core.utils.safeValueOf
 import com.yral.shared.features.leaderboard.domain.models.LeaderboardData
 import com.yral.shared.features.leaderboard.domain.models.LeaderboardError
 import com.yral.shared.features.leaderboard.domain.models.LeaderboardErrorCodes
+import com.yral.shared.features.leaderboard.domain.models.RewardCurrency
 import com.yral.shared.features.leaderboard.domain.models.toLeaderboardItem
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -20,6 +22,14 @@ sealed class LeaderboardResponseDto {
         val topRows: List<LeaderboardRowDto>,
         @SerialName("time_left_ms")
         val timeLeftMs: Long?,
+        @SerialName("reward_currency")
+        val rewardCurrency: String? = null,
+        @SerialName("reward_currency_code")
+        val rewardCurrencyCode: String? = null,
+        @SerialName("rewards_enabled")
+        val rewardsEnabled: Boolean,
+        @SerialName("rewards_table")
+        val rewardsTable: Map<String, Double>? = null,
     ) : LeaderboardResponseDto()
 
     @Serializable
@@ -37,6 +47,8 @@ data class LeaderboardRowDto(
     val wins: Long,
     @SerialName("position")
     val position: Int,
+    @SerialName("reward")
+    val reward: Double? = null,
 )
 
 @Serializable
@@ -55,6 +67,17 @@ fun LeaderboardResponseDto.toLeaderboardData(): Result<LeaderboardData, Leaderbo
                     userRow = userRow?.toLeaderboardItem(),
                     topRows = topRows.map { it.toLeaderboardItem() },
                     timeLeftMs = timeLeftMs,
+                    rewardCurrency =
+                        rewardCurrency
+                            ?.let { safeValueOf<RewardCurrency>(it) }
+                            .takeIf { rewardsEnabled },
+                    rewardCurrencyCode = rewardCurrencyCode.takeIf { rewardsEnabled },
+                    rewardsTable =
+                        rewardsTable
+                            ?.mapNotNull { (key, value) ->
+                                key.toIntOrNull()?.let { enumValue -> enumValue to value }
+                            }?.toMap()
+                            .takeIf { rewardsEnabled },
                 ),
             )
         }

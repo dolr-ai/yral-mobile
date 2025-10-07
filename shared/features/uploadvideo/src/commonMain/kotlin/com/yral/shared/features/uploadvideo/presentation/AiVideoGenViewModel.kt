@@ -227,7 +227,7 @@ class AiVideoGenViewModel internal constructor(
             val reservedBalance = selectedProvider.cost?.sats
             reservedBalance?.let { cost ->
                 _state.update { it.copy(reservedBalance = cost) }
-                sessionManager.sessionProperties.value.coinBalance?.let { balance ->
+                _state.value.currentBalance?.let { balance ->
                     sessionManager.updateCoinBalance(balance.minus(cost))
                 }
             }
@@ -238,7 +238,7 @@ class AiVideoGenViewModel internal constructor(
         with(_state.value) {
             reservedBalance?.let { reserved ->
                 _state.update { it.copy(reservedBalance = null) }
-                sessionManager.sessionProperties.value.coinBalance?.let { balance ->
+                _state.value.currentBalance?.let { balance ->
                     sessionManager.updateCoinBalance(balance.plus(reserved))
                 }
             }

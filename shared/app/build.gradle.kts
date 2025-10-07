@@ -24,6 +24,7 @@ kotlin {
             implementation(projects.shared.libs.coroutinesX)
             implementation(projects.shared.libs.featureFlag)
             implementation(projects.shared.libs.sharing)
+            implementation(projects.shared.libs.designsystem)
 
             // Routing framework dependencies
             implementation(projects.shared.libs.routing.routesApi)

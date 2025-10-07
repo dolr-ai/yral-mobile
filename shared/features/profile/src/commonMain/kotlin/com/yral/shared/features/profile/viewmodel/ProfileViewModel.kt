@@ -19,9 +19,9 @@ import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.core.session.SessionManager
+import com.yral.shared.core.utils.getAccountInfo
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.data.feed.domain.FeedDetails
-import com.yral.shared.features.auth.utils.getAccountInfo
 import com.yral.shared.features.profile.analytics.ProfileTelemetry
 import com.yral.shared.features.profile.domain.DeleteVideoUseCase
 import com.yral.shared.features.profile.domain.ProfileVideosPagingSource
@@ -45,6 +45,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -103,6 +104,15 @@ class ProfileViewModel(
 
     init {
         _state.update { it.copy(accountInfo = sessionManager.getAccountInfo()) }
+        viewModelScope.launch {
+            sessionManager
+                .observeSessionProperties()
+                .map { it.isSocialSignIn }
+                .distinctUntilChanged()
+                .collect { isSocialSignIn ->
+                    _state.update { it.copy(isLoggedIn = isSocialSignIn == true) }
+                }
+        }
     }
 
     fun confirmDelete(
@@ -247,8 +257,6 @@ class ProfileViewModel(
         }
     }
 
-    fun isLoggedIn(): Boolean = sessionManager.isSocialSignIn()
-
     fun setBottomSheetType(type: ProfileBottomSheet) {
         _state.update { it.copy(bottomSheet = type) }
     }
@@ -316,6 +324,7 @@ data class ViewState(
     val bottomSheet: ProfileBottomSheet = ProfileBottomSheet.None,
     val isReporting: Boolean = false,
     val reportSheetState: ReportSheetState = ReportSheetState.Closed,
+    val isLoggedIn: Boolean = false,
 )
 
 sealed interface ProfileBottomSheet {

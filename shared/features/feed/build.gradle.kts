@@ -2,15 +2,15 @@ plugins {
     alias(libs.plugins.yral.shared.feature)
     alias(libs.plugins.yral.android.feature)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.yral.shared.library.compose)
 }
 
 kotlin {
     androidTarget()
-//    listOf(
-//        iosX64(),
-//        iosArm64(),
-//        iosSimulatorArm64()
-//    )
+    listOf(
+        iosArm64(),
+        iosSimulatorArm64(),
+    )
 
     sourceSets {
         commonMain.dependencies {
@@ -31,6 +31,8 @@ kotlin {
             implementation(projects.shared.libs.featureFlag)
             implementation(projects.shared.libs.designsystem)
             implementation(projects.shared.features.reportVideo)
+            implementation(projects.shared.libs.videoPlayer)
+            implementation(compose.components.resources)
         }
     }
 }

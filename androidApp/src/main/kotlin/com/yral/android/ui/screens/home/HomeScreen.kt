@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -36,20 +37,19 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.yral.android.R
-import com.yral.android.ui.screens.account.AccountScreen
 import com.yral.android.ui.screens.alertsrequest.AlertsRequestBottomSheet
 import com.yral.android.ui.screens.feed.FeedScreen
 import com.yral.android.ui.screens.home.nav.HomeComponent
 import com.yral.android.ui.screens.home.nav.HomeComponent.SlotChild
 import com.yral.android.ui.screens.profile.ProfileScreen
 import com.yral.android.ui.screens.uploadVideo.UploadVideoRootScreen
-import com.yral.android.ui.screens.wallet.WalletScreen
 import com.yral.featureflag.FeatureFlagManager
 import com.yral.featureflag.WalletFeatureFlags
 import com.yral.shared.analytics.events.CategoryName
@@ -57,16 +57,25 @@ import com.yral.shared.core.session.SessionKey
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.session.getKey
 import com.yral.shared.data.feed.domain.FeedDetails
+import com.yral.shared.features.account.ui.AccountScreen
 import com.yral.shared.features.account.viewmodel.AccountsViewModel
+import com.yral.shared.features.auth.ui.LoginBottomSheet
+import com.yral.shared.features.auth.viewModel.LoginViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.game.viewmodel.GameViewModel
-import com.yral.shared.features.leaderboard.ui.leaderboard.LeaderboardScreen
+import com.yral.shared.features.leaderboard.ui.LeaderboardScreen
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
+import com.yral.shared.features.wallet.ui.WalletScreen
 import com.yral.shared.libs.designsystem.component.YralFeedback
+import com.yral.shared.libs.designsystem.component.popPressedSoundId
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
+import yral_mobile.shared.libs.designsystem.generated.resources.account_nav
+import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @Composable
 fun HomeScreen(
@@ -134,6 +143,7 @@ private fun SlotContent(component: HomeComponent) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Suppress("LongMethod")
 @Composable
 private fun HomeScreenContent(
@@ -160,11 +170,23 @@ private fun HomeScreenContent(
                     gameViewModel = gameViewModel,
                 )
 
-            is HomeComponent.Child.Account ->
+            is HomeComponent.Child.Account -> {
+                val loginViewModel: LoginViewModel = koinViewModel()
+                val loginState by loginViewModel.state.collectAsStateWithLifecycle()
                 AccountScreen(
                     component = child.component,
                     viewModel = accountViewModel,
+                    loginState = loginState,
+                    loginBottomSheet = { bottomSheetState, onDismissRequest, termsLink, openTerms ->
+                        LoginBottomSheet(
+                            bottomSheetState = bottomSheetState,
+                            onDismissRequest = onDismissRequest,
+                            termsLink = termsLink,
+                            openTerms = openTerms,
+                        )
+                    },
                 )
+            }
 
             is HomeComponent.Child.Leaderboard ->
                 LeaderboardScreen(
@@ -288,7 +310,7 @@ private fun HomeNavigationBar(
     }
     if (playSound) {
         YralFeedback(
-            sound = R.raw.pop_pressed,
+            sound = popPressedSoundId(),
             withHapticFeedback = true,
         ) { playSound = false }
     }
@@ -359,13 +381,18 @@ private fun NewTaggedColumn(
             Spacer(modifier = Modifier.weight(1f))
         }
 
+        val icon =
+            if (isSelected) {
+                tab.icon
+            } else {
+                tab.unSelectedIcon
+            }
         Icon(
             modifier = Modifier.size(32.dp),
             painter =
-                if (isSelected) {
-                    painterResource(tab.icon)
-                } else {
-                    painterResource(tab.unSelectedIcon)
+                when (icon) {
+                    is HomeTab.Icon.DrawableRes -> painterResource(icon.drawableResource)
+                    is HomeTab.Icon.ResourceId -> painterResource(icon.id)
                 },
             contentDescription = tab.title,
             tint = Color.White,
@@ -376,45 +403,54 @@ private fun NewTaggedColumn(
 private enum class HomeTab(
     val title: String,
     val categoryName: CategoryName,
-    val icon: Int,
-    val unSelectedIcon: Int,
+    val icon: HomeTab.Icon,
+    val unSelectedIcon: HomeTab.Icon,
     val isNew: Boolean = false,
 ) {
     HOME(
         title = "Home",
         categoryName = CategoryName.HOME,
-        icon = R.drawable.home_nav_selected,
-        unSelectedIcon = R.drawable.home_nav_unselected,
+        icon = Icon.ResourceId(R.drawable.home_nav_selected),
+        unSelectedIcon = Icon.ResourceId(R.drawable.home_nav_unselected),
     ),
     LEADER_BOARD(
         title = "LeaderBoard",
         categoryName = CategoryName.LEADERBOARD,
-        icon = R.drawable.leaderboard_nav_selected,
-        unSelectedIcon = R.drawable.leaderboard_nav_unselected,
+        icon = Icon.ResourceId(R.drawable.leaderboard_nav_selected),
+        unSelectedIcon = Icon.ResourceId(R.drawable.leaderboard_nav_unselected),
     ),
     UPLOAD_VIDEO(
         title = "UploadVideo",
         categoryName = CategoryName.UPLOAD_VIDEO,
-        icon = R.drawable.upload_video_nav_selected,
-        unSelectedIcon = R.drawable.upload_video_nav_unselected,
+        icon = Icon.ResourceId(R.drawable.upload_video_nav_selected),
+        unSelectedIcon = Icon.ResourceId(R.drawable.upload_video_nav_unselected),
     ),
     WALLET(
         title = "Wallet",
         categoryName = CategoryName.WALLET,
-        icon = R.drawable.wallet_nav,
-        unSelectedIcon = R.drawable.wallet_nav_unselected,
+        icon = Icon.ResourceId(R.drawable.wallet_nav),
+        unSelectedIcon = Icon.ResourceId(R.drawable.wallet_nav_unselected),
         isNew = true,
     ),
     PROFILE(
         title = "Profile",
         categoryName = CategoryName.PROFILE,
-        icon = R.drawable.profile_nav_selected,
-        unSelectedIcon = R.drawable.profile_nav_unselected,
+        icon = Icon.ResourceId(R.drawable.profile_nav_selected),
+        unSelectedIcon = Icon.ResourceId(R.drawable.profile_nav_unselected),
     ),
     ACCOUNT(
         title = "Account",
         categoryName = CategoryName.MENU,
-        icon = R.drawable.account_nav,
-        unSelectedIcon = R.drawable.account_nav,
-    ),
+        icon = Icon.DrawableRes(DesignRes.drawable.account_nav),
+        unSelectedIcon = Icon.DrawableRes(DesignRes.drawable.account_nav),
+    ), ;
+
+    sealed interface Icon {
+        data class ResourceId(
+            val id: Int,
+        ) : Icon // temporary unless we completely migrate to drawableResource
+        data class DrawableRes(
+            val drawableResource: DrawableResource,
+        ) : Icon
+    }
 }

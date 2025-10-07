@@ -1,0 +1,26 @@
+<resources>
+    <string name="oops">OOPS!!!</string>
+    <string name="login">Login</string>
+    <string name="anonymous_account_setup">Your Yral account has been setup. Login to not lose progress.</string>
+    <string name="coins">YRAL</string>
+    <string name="current_balance">Current Balance :</string>
+    <string name="your_videos">Your Videos</string>
+    <string name="cancel">Cancel</string>
+    <string name="try_again">Try Again</string>
+    <string name="my_profile">My Profile</string>
+    <string name="done">Done</string>
+    <string name="something_went_wrong">Something went wrong!</string>
+    <string name="upload_video">Upload Video</string>
+    <string name="msg_feed_video_share">Check out this video on Yral 👀 Where watching = fun + games! ⚡ Try it 👉</string>
+    <string name="msg_feed_video_share_desc">Watch on Yral</string>
+    <string name="ok">OK</string>
+    <string name="error">Error</string>
+    <string name="terms_of_service">Terms of service</string>
+
+    <!-- Permission Messages -->
+    <string name="permission_required_title">Permission required!</string>
+    <string name="go_to_settings">Go to settings</string>
+
+    <string name="could_not_login">Couldn’t Log In</string>
+    <string name="could_not_login_desc">The operation couldn’t be completed. Please try again</string>
+</resources>

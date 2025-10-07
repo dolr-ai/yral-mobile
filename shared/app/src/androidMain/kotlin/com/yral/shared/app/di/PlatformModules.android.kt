@@ -1,5 +1,6 @@
 package com.yral.shared.app.di
 
+import android.content.Context
 import android.content.pm.ApplicationInfo
 import co.touchlab.kermit.platformLogWriter
 import coil3.ImageLoader
@@ -11,6 +12,8 @@ import com.yral.shared.features.auth.utils.AndroidOAuthUtils
 import com.yral.shared.features.auth.utils.AndroidOAuthUtilsHelper
 import com.yral.shared.features.auth.utils.OAuthUtils
 import com.yral.shared.features.auth.utils.OAuthUtilsHelper
+import com.yral.shared.libs.designsystem.component.AndroidScreenFoldStateProvider
+import com.yral.shared.libs.designsystem.windowInfo.ScreenFoldStateProvider
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
@@ -36,4 +39,7 @@ actual val platformModule =
         single<OAuthUtils> { AndroidOAuthUtils() }
         factory<OAuthUtilsHelper> { AndroidOAuthUtilsHelper() }
         single<ImageLoader> { SingletonImageLoader.get(get()) }
+        factory<ScreenFoldStateProvider> { (activityContext: Context) ->
+            AndroidScreenFoldStateProvider(activityContext)
+        }
     }

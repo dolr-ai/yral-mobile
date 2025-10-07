@@ -28,8 +28,33 @@ data class ProductDetails(
     ExternallyExposedRoute
 
 @Serializable
-object Home : AppRoute {
+object Home : AppRoute, ExternallyExposedRoute {
     const val PATH = "/"
+}
+
+@Serializable
+object Wallet : AppRoute, ExternallyExposedRoute {
+    const val PATH = "/wallet"
+}
+
+@Serializable
+object Leaderboard : AppRoute, ExternallyExposedRoute {
+    const val PATH = "/leaderboard"
+}
+
+@Serializable
+object AddVideo : AppRoute, ExternallyExposedRoute {
+    const val PATH = "/addVideo"
+}
+
+@Serializable
+object GenerateAIVideo : AppRoute, ExternallyExposedRoute {
+    const val PATH = "/addVideo/aiGen"
+}
+
+@Serializable
+object Profile : AppRoute, ExternallyExposedRoute {
+    const val PATH = "/profile"
 }
 
 @Serializable

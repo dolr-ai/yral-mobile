@@ -16,6 +16,8 @@ import com.yral.shared.features.auth.YralAuthException
 import com.yral.shared.features.auth.YralFBAuthException
 import com.yral.shared.features.root.analytics.RootTelemetry
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
+import com.yral.shared.preferences.PrefKeys
+import com.yral.shared.preferences.Preferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -42,6 +44,7 @@ class RootViewModel(
     private val crashlyticsManager: CrashlyticsManager,
     private val rootTelemetry: RootTelemetry,
     private val flagManager: FeatureFlagManager,
+    private val preferences: Preferences,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.disk)
 
@@ -153,6 +156,9 @@ class RootViewModel(
             _state.update { it.copy(showSplash = false) }
             sessionManager.updateIsForcedGamePlayUser(
                 isForcedGamePlayUser = flagManager.isEnabled(FeedFeatureFlags.SmileyGame.StopAndVoteNudge),
+            )
+            sessionManager.updateSocialSignInStatus(
+                isSocialSignIn = preferences.getBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name) ?: false,
             )
         } ?: authClient.initialize()
     }

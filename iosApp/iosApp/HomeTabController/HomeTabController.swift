@@ -88,11 +88,21 @@ struct HomeTabController: View {
       }
       .onReceive(deepLinkRouter.$pendingDestination.compactMap { $0 }) { dest in
         switch dest {
-        case .profileAfterUpload:
+        case .openVideo, .home:
+          selectedTab = .home
+        case .leaderboard:
+          selectedTab = .leaderboard
+        case .addVideo, .aiGen:
+          selectedTab = .upload
+        case .wallet:
+          selectedTab = .wallet
+        case .profile, .profileAfterUpload:
           selectedTab = .profile
-        default: break
         }
         deepLinkRouter.pendingDestination = nil
+      }
+      .onReceive(eventBus.startPlayingTapped) {
+        selectedTab = .home
       }
       .onReceive(eventBus.finishUploadingVideo) {
         UIView.setAnimationsEnabled(false)

@@ -1,6 +1,6 @@
 import re, random, string, datetime as _dt, sys
 import firebase_admin
-from firebase_admin import auth, app_check, firestore, functions
+from firebase_admin import auth, app_check, firestore
 from firebase_functions import https_fn
 from firebase_functions.https_fn import HttpsError, CallableRequest
 from flask import Request, jsonify, make_response
@@ -13,6 +13,7 @@ import random
 import collections
 from datetime import datetime, timezone, timedelta, date
 from zoneinfo import ZoneInfo
+from typing import Optional, List, Dict, Any
 
 firebase_admin.initialize_app()
 
@@ -25,7 +26,8 @@ SMILEY_GAME_CONFIG_PATH = "config/smiley_game_v2"
 VIDEO_COLL = "videos"
 DAILY_COLL = "leaderboards_daily"
 
-BALANCE_URL = "https://yral-hot-or-not.go-bazzinga.workers.dev/update_balance/"
+BALANCE_URL_YRAL_TOKEN = "https://yral-hot-or-not.go-bazzinga.workers.dev/update_balance/"
+BALANCE_URL_CKBTC = "https://yral-hot-or-not.go-bazzinga.workers.dev/v2/transfer_ckbtc"
 
 IST = timezone(timedelta(hours=5, minutes=30))
 
@@ -134,7 +136,7 @@ def error_response(status: int, code: str, message: str):
     return make_response(jsonify(payload), status)
 
 # ─────────────────────  MAIN HANDLER  ────────────────────────
-@https_fn.on_request(region="us-central1", enforce_app_check=True)
+@https_fn.on_request(region="us-central1")
 def exchange_principal_id(request: Request):
     try:
         # 1. validate & auth -------------------------------------------------
@@ -154,12 +156,12 @@ def exchange_principal_id(request: Request):
         caller_token = auth.verify_id_token(auth_header.split(" ", 1)[1])
         old_uid = caller_token["uid"]                      # could equal principal_id
 
-        actok = request.headers.get("X-Firebase-AppCheck")
-        if actok:
-            try:
-                app_check.verify_token(actok)
-            except Exception:
-                return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
+        # actok = request.headers.get("X-Firebase-AppCheck")
+        # if actok:
+        #     try:
+        #         app_check.verify_token(actok)
+        #     except Exception:
+        #         return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
 
         # 2. ensure Auth user for principal_id ------------------------------
         try:
@@ -205,8 +207,8 @@ def exchange_principal_id(request: Request):
         print("Unhandled error:", e, file=sys.stderr)
         return error_response(500, "INTERNAL", "Internal server error")
 
-def _push_delta(token: str, principal_id: str, delta: int) -> tuple[bool, str | None]:
-    url = f"{BALANCE_URL}{principal_id}"
+def _push_delta_yral_token(token: str, principal_id: str, delta: int) -> tuple[bool, str | None]:
+    url = f"{BALANCE_URL_YRAL_TOKEN}{principal_id}"
     headers = {
         "Authorization": token,
         "Content-Type": "application/json",
@@ -222,59 +224,33 @@ def _push_delta(token: str, principal_id: str, delta: int) -> tuple[bool, str | 
         return False, f"Status: {resp.status_code}, Body: {resp.text}"
     except requests.RequestException as e:
         return False, str(e)
-    
-@https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"], enforce_app_check=True)
-def update_balance(request: Request):
-    balance_update_token = os.environ["BALANCE_UPDATE_TOKEN"]
+
+def _push_delta_ckbtc(token: str, amount: int, recipient_principal: str, memo_text: str) -> tuple[bool, str | None]:
+    url = BALANCE_URL_CKBTC
+
+    headers = {
+        "Authorization": token,
+        "Content-Type": "application/json",
+    }
+
+    body = {
+        "amount": amount,
+        "recipient_principal": recipient_principal,
+        "memo_text": memo_text
+    }
+
     try:
-        if request.method != "POST":
-            return error_response(405, "METHOD_NOW_ALLOWED", "POST required")
+        resp = requests.post(url, json=body, timeout=5, headers=headers)
+        if resp.status_code == 200:
+            json = resp.json()
+            if json.get("success", False):
+                return True, None
+            return False, f"Failed: {json}"
+        return False, f"Status: {resp.status_code}, Body: {resp.text}"
+    except requests.RequestException as e:
+        return False, str(e)
 
-        body = request.get_json(silent=True) or {}
-        data = body.get("data", {})
-        pid = str(data.get("principal_id", "")).strip()
-        delta = int(data.get("delta", 0))
-        is_airdropped = bool(data.get("is_airdropped", False))
-
-        auth_header = request.headers.get("Authorization", "")
-        if not auth_header.startswith("Bearer "):
-            return error_response(401, "MISSING_ID_TOKEN", "Authorization token missing")
-        auth.verify_id_token(auth_header.split(" ", 1)[1])
-
-        # ───────── App Check enforcement ─────────
-        actok = request.headers.get("X-Firebase-AppCheck")
-        if not actok:
-            return error_response(
-                401, "APPCHECK_MISSING",
-                "App Check token required"
-            )
-
-        try:
-            app_check.verify_token(actok)
-        except Exception:
-            return error_response(
-                401, "APPCHECK_INVALID",
-                "App Check token invalid"
-            )
-
-        success, error_msg = _push_delta(balance_update_token, pid, delta)
-
-        if not success:
-            return error_response(502, "UPSTREAM_FAILED", f"Balance update failed: {error_msg}")
-
-        coins = tx_coin_change(pid, None, delta, "AIRDROP")
-
-        return jsonify({"coins": coins}), 200
-
-    except auth.InvalidIdTokenError:
-        return error_response(401, "ID_TOKEN_INVALID", "ID token invalid or expired")
-    except GoogleAPICallError as e:
-        return error_response(500, "FIRESTORE_ERROR", str(e))
-    except Exception as e:                                 # fallback
-        print("Unhandled error:", e, file=sys.stderr)
-        return error_response(500, "INTERNAL", "Internal server error")
-
-@https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"], enforce_app_check=True)
+@https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"])
 def tap_to_recharge(request: Request):
     try:
         # 1️⃣ POST check
@@ -295,20 +271,20 @@ def tap_to_recharge(request: Request):
         auth.verify_id_token(auth_header.split(" ", 1)[1])
 
         # ───────── App Check enforcement ─────────
-        actok = request.headers.get("X-Firebase-AppCheck")
-        if not actok:
-            return error_response(
-                401, "APPCHECK_MISSING",
-                "App Check token required"
-            )
+        # actok = request.headers.get("X-Firebase-AppCheck")
+        # if not actok:
+        #     return error_response(
+        #         401, "APPCHECK_MISSING",
+        #         "App Check token required"
+        #     )
 
-        try:
-            app_check.verify_token(actok)
-        except Exception:
-            return error_response(
-                401, "APPCHECK_INVALID",
-                "App Check token invalid"
-            )
+        # try:
+        #     app_check.verify_token(actok)
+        # except Exception:
+        #     return error_response(
+        #         401, "APPCHECK_INVALID",
+        #         "App Check token invalid"
+        #     )
 
         # 5️⃣ Ensure balance is zero
         user_ref = db().document(f"users/{pid}")
@@ -319,8 +295,8 @@ def tap_to_recharge(request: Request):
                 f"Balance is already {current}. Recharge works only at 0.")
 
         # 6️⃣ Push to wallet first
-        DELTA = 100
-        if not _push_delta(os.environ["BALANCE_UPDATE_TOKEN"], pid, DELTA):
+        DELTA = 15
+        if not _push_delta_yral_token(os.environ["BALANCE_UPDATE_TOKEN"], pid, DELTA):
             return error_response(
                 502, "UPSTREAM_FAILED",
                 "Wallet update failed, try again later.")
@@ -340,7 +316,8 @@ def tap_to_recharge(request: Request):
         print("Unhandled error:", e, file=sys.stderr)
         return error_response(500, "INTERNAL", "Internal server error")
 
-@https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"], enforce_app_check=True)
+# TODO: REMOVE THIS
+@https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"])
 def cast_vote(request: Request):
     balance_update_token = os.environ["BALANCE_UPDATE_TOKEN"]
     try:
@@ -359,12 +336,12 @@ def cast_vote(request: Request):
             return error_response(401, "MISSING_ID_TOKEN", "Authorization missing")
         auth.verify_id_token(auth_header.split(" ", 1)[1])
 
-        actok = request.headers.get("X-Firebase-AppCheck")
-        if actok:
-            try:
-                app_check.verify_token(actok)
-            except Exception:
-                return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
+        # actok = request.headers.get("X-Firebase-AppCheck")
+        # if actok:
+        #     try:
+        #         app_check.verify_token(actok)
+        #     except Exception:
+        #         return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
 
         # load the global smiley list once per cold-start
         smileys     = get_smileys()                          # [{id, image_name, …}, …]
@@ -453,7 +430,7 @@ def cast_vote(request: Request):
         delta  = WIN_REWARD if outcome == "WIN" else LOSS_PENALTY
         coins  = tx_coin_change(pid, vid, delta, outcome)
 
-        if not _push_delta(balance_update_token, pid, delta):
+        if not _push_delta_yral_token(balance_update_token, pid, delta):
             _ = tx_coin_change(pid, vid, -delta, "ROLLBACK")
             return error_response(502, "UPSTREAM_FAILED", "We couldn’t record your vote. Please try voting again after sometime.")
 
@@ -490,7 +467,7 @@ def cast_vote(request: Request):
         print("Unhandled error:", e, file=sys.stderr)
         return error_response(500, "INTERNAL", "Internal server error")
 
-@https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"], enforce_app_check=True)
+@https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"])
 def cast_vote_v2(request: Request):
     balance_update_token = os.environ["BALANCE_UPDATE_TOKEN"]
     try:
@@ -509,12 +486,12 @@ def cast_vote_v2(request: Request):
             return error_response(401, "MISSING_ID_TOKEN", "Authorization missing")
         auth.verify_id_token(auth_header.split(" ", 1)[1])
 
-        actok = request.headers.get("X-Firebase-AppCheck")
-        if actok:
-            try:
-                app_check.verify_token(actok)
-            except Exception:
-                return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
+        # actok = request.headers.get("X-Firebase-AppCheck")
+        # if actok:
+        #     try:
+        #         app_check.verify_token(actok)
+        #     except Exception:
+        #         return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
 
         # load the global smiley list once per cold-start
         smileys     = get_smileys()                          # [{id, image_name, …}, …]
@@ -600,7 +577,7 @@ def cast_vote_v2(request: Request):
         delta  = WIN_REWARD if outcome == "WIN" else LOSS_PENALTY
         coins  = tx_coin_change(pid, vid, delta, outcome)
 
-        if not _push_delta(balance_update_token, pid, delta):
+        if not _push_delta_yral_token(balance_update_token, pid, delta):
             _ = tx_coin_change(pid, vid, -delta, "ROLLBACK")
             return error_response(502, "UPSTREAM_FAILED", "We couldn’t record your vote. Please try voting again after sometime.")
 
@@ -645,6 +622,17 @@ def cast_vote_v2(request: Request):
 
 
 ############################## Leaderboard ##############################
+from constants import (
+    REWARD_AMOUNT,
+    DEFAULT_REWARD_CURRENCY,
+    SUPPORTED_REWARD_CURRENCIES,
+    REWARDS_ENABLED,
+    CURRENCY_BTC,
+    CURRENCY_YRAL,
+    COUNTRY_CODE_INDIA,
+    COUNTRY_CODE_USA
+)
+
 def _bucket_bounds_ist() -> tuple[str, int, int]:
     """
     Returns (bucket_id, start_ms, end_ms) for today's IST day window.
@@ -671,10 +659,35 @@ def _inc_daily_leaderboard(pid: str, outcome: str) -> None:
     @firestore.transactional
     def _tx(tx: firestore.Transaction):
         # Ensure the day doc exists & store window bounds (helpful for reads/debug)
+        day_snapshot = day_ref.get(transaction=tx)
+        day_data = day_snapshot.to_dict() if day_snapshot.exists else {}
+
+        currency = day_data.get("currency")
+        if currency is None:
+            currency = DEFAULT_REWARD_CURRENCY
+        rewards_table = day_data.get("rewards_table")
+        if rewards_table is None:
+            if currency == CURRENCY_BTC:
+                rewards_table = {
+                    COUNTRY_CODE_INDIA: REWARD_AMOUNT[CURRENCY_BTC][COUNTRY_CODE_INDIA],
+                    COUNTRY_CODE_USA: REWARD_AMOUNT[CURRENCY_BTC][COUNTRY_CODE_USA]
+                }
+            else:
+                rewards_table = {
+                    str(k): v for k, v in REWARD_AMOUNT.get(currency, {}).items()
+                }
+        rewards_enabled = day_data.get("rewards_enabled")
+        if rewards_enabled is None:
+            rewards_enabled = REWARDS_ENABLED
+
         tx.set(day_ref, {
             "bucket_id": bucket_id,
             "start_ms": start_ms,
             "end_ms": end_ms,
+            "currency": currency,
+            "rewards_table": rewards_table,
+            "rewards_enabled": rewards_enabled,
+            "rewards_given": False,
             "updated_at": firestore.SERVER_TIMESTAMP
         }, merge=True)
 
@@ -688,6 +701,11 @@ def _inc_daily_leaderboard(pid: str, outcome: str) -> None:
         tx.set(entry_ref, updates, merge=True)
 
     _tx(db().transaction())
+
+def _yesterday_bucket_id_ist() -> str:
+    ist_now = datetime.now(timezone.utc) + timedelta(hours=5, minutes=30)
+    yesterday = ist_now.date() - timedelta(days=1)
+    return yesterday.strftime("%Y-%m-%d")
 
 def _bucket_id_for_ist_day(d: date) -> str:
     """Return 'YYYY-MM-DD' for a given IST date."""
@@ -722,6 +740,36 @@ def _dense_top_rows_for_day(bucket_id: str) -> tuple[List[Dict], int, int]:
         })
     return rows, last_wins, current_rank
 
+def _dense_top_rows_for_day_v2(bucket_id: str, rewards_table: Optional[Dict[str, Any]] = None, rewards_enabled: bool = False) -> tuple[List[Dict], int, int]:
+    """Top 10 rows with dense ranking for a given IST bucket (with optional rewards)."""
+    coll = db().collection(f"{DAILY_COLL}/{bucket_id}/users")
+    snaps = (
+        coll.where("smiley_game_wins", ">", 0)
+            .order_by("smiley_game_wins", direction=firestore.Query.DESCENDING)
+            .limit(10)
+            .stream()
+    )
+    rows: List[Dict] = []
+    current_rank, last_wins = 0, None
+    for snap in snaps:
+        wins = int(snap.get("smiley_game_wins") or 0)
+        if wins != last_wins:
+            current_rank += 1  # dense ranking
+            last_wins = wins
+
+        row = {
+            "principal_id": snap.id,
+            "wins": wins,
+            "position": current_rank
+        }
+
+        if rewards_enabled and rewards_table:
+            row["reward"] = rewards_table.get(str(current_rank), None)
+
+        rows.append(row)
+
+    return rows, last_wins, current_rank
+
 def _user_row_for_day(bucket_id: str, pid: str) -> Dict:
     """Compute user's wins and dense position within that day's collection."""
     day_users = db().collection(f"{DAILY_COLL}/{bucket_id}/users")
@@ -740,6 +788,40 @@ def _user_row_for_day(bucket_id: str, pid: str) -> Dict:
         "position": position,
     }
 
+def _user_row_for_day_v2(bucket_id: str, pid: str, rewards_table: Optional[Dict[str, Any]] = None, rewards_enabled: bool = False, top_rows: Optional[List[Dict]] = None) -> Dict:
+    """
+    Compute user's wins and dense position within that day's collection (with optional reward).
+    Optimizes by first checking if user is already present in top_rows.
+    """
+    # 1. Reuse from top_rows if already available
+    if top_rows:
+        for row in top_rows:
+            if row.get("principal_id") == pid:
+                return row
+
+    # 2. Else, fallback to Firestore query
+    day_users = db().collection(f"{DAILY_COLL}/{bucket_id}/users")
+    entry = day_users.document(pid).get()
+    user_wins = int((entry.get("smiley_game_wins") if entry.exists else 0) or 0)
+
+    # Compute dense rank
+    rank_q = day_users.where("smiley_game_wins", ">", user_wins).count().get()
+    higher = int(rank_q[0][0].value)
+    position = higher + 1
+
+    user_row = {
+        "principal_id": pid,
+        "wins": user_wins,
+        "position": position,
+    }
+
+    if rewards_enabled and user_wins > 0 and rewards_table:
+        user_row["reward"] = rewards_table.get(str(position), None)
+    else:
+        user_row["reward"] = None
+
+    return user_row
+
 def _has_any_docs_for_day(bucket_id: str) -> bool:
     """Fast existence check: returns True if the day has at least one user doc."""
     users_coll = db().collection(f"{DAILY_COLL}/{bucket_id}/users")
@@ -750,7 +832,155 @@ def _has_any_docs_for_day(bucket_id: str) -> bool:
         print(f"[skip] users scan error for {bucket_id}: {e}", file=sys.stderr)
         return False
 
-@https_fn.on_request(region="us-central1", enforce_app_check=True)
+def _top_winners(bucket_id: str) -> list[dict]:
+    MAX_DOCS = 100
+    coll = db().collection(f"{DAILY_COLL}/{bucket_id}/users")
+
+    snaps = (
+        coll.where("smiley_game_wins", ">", 0)
+            .order_by("smiley_game_wins", direction=firestore.Query.DESCENDING)
+            .limit(MAX_DOCS)
+            .stream()
+    )
+
+    winners = []
+    current_rank = 0
+    last_wins = None
+
+    for snap in snaps:
+        wins = int(snap.get("smiley_game_wins") or 0)
+        if wins != last_wins:
+            current_rank += 1
+            last_wins = wins
+        if current_rank > 5:
+            break
+        winners.append({
+            "principal_id": snap.id,
+            "wins": wins,
+            "position": current_rank
+        })
+
+    return winners
+
+@https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"])
+def reward_leaderboard_winners(cloud_event):
+    try:
+        bucket_id = _yesterday_bucket_id_ist()
+        day_ref = db().collection(DAILY_COLL).document(bucket_id)
+        day_snap: DocumentSnapshot = day_ref.get()
+
+        if not day_snap.exists:
+            print(f"[SKIP] No day doc found for {bucket_id}")
+            return jsonify({
+                "status": "skipped",
+                "reason": f"No day doc found for {bucket_id}"
+            }), 200
+
+        data = day_snap.to_dict() or {}
+
+        if data.get("rewards_given", False):
+            print(f"[SKIP] Rewards already given for {bucket_id}")
+            return jsonify({
+                "status": "skipped",
+                "reason": "Rewards already given"
+            }), 200
+
+        if not data.get("rewards_enabled", False):
+            print(f"[SKIP] Rewards not enabled for {bucket_id}")
+            return jsonify({
+                "status": "skipped",
+                "reason": "Rewards not enabled"
+            }), 200
+
+        currency = data.get("currency")
+
+        rewards_table_raw = data.get("rewards_table") or {}
+        # Always use INR reward amounts for BTC (USD table is only for app display)
+        if currency == CURRENCY_BTC:
+            rewards_table = rewards_table_raw.get(COUNTRY_CODE_INDIA, {})
+        else:
+            rewards_table = rewards_table_raw
+        rewards_table = { str(k): int(v) for k, v in rewards_table.items() if v is not None }
+
+        token = os.environ.get("BALANCE_UPDATE_TOKEN", "")
+
+        if not currency or not rewards_table or not token:
+            print(f"[ERROR] Missing currency, rewards_table, or token")
+            return jsonify({
+                "status": "error",
+                "reason": "Missing currency, rewards_table, or token"
+            }), 400
+
+        winners = _top_winners(bucket_id)
+        if not winners:
+            print(f"[INFO] No winners found for {bucket_id}")
+            return jsonify({
+                "status": "skipped",
+                "reason": "No winners found"
+            }), 200
+
+        reward_log = []
+
+        for user in winners:
+            pid = user["principal_id"]
+            position = user["position"]
+            reward_amount = rewards_table.get(str(position))
+
+            if not reward_amount:
+                print(f"[SKIP] No reward for position {position}")
+                continue
+
+            success, error = (False, None)
+            if currency == CURRENCY_YRAL:
+                success, error = _push_delta_yral_token(token, pid, reward_amount)
+            elif currency == CURRENCY_BTC:
+                reward_amount_inr = reward_amount
+                reward_amount_ckbtc = reward_amount_inr * 10   # Assuming 1 BTC = ₹1,00,00,000
+                success, error = _push_delta_ckbtc(token, reward_amount_ckbtc, pid, "Daily leaderboard reward")
+            else:
+                print(f"[ERROR] Unknown currency: {currency}")
+                continue
+
+            reward_log.append({
+                "principal_id": pid,
+                "position": position,
+                "amount": reward_amount,
+                "success": success,
+                "error": error
+            })
+
+            if success:
+                print(f"[OK] Rewarded {pid} ({currency}) = {reward_amount}")
+                if currency == CURRENCY_YRAL:
+                    tx_coin_change(pid, None, reward_amount, "Daily leaderboard reward")
+            else:
+                print(f"[FAIL] Failed to reward {pid}: {error}")
+
+        day_ref.update({
+            "rewards_given": True,
+            "reward": {
+                "timestamp": firestore.SERVER_TIMESTAMP,
+                "winners": reward_log
+            }
+        })
+
+        print(f"[DONE] Reward processing complete for {bucket_id}")
+        return jsonify({
+            "status": "success",
+            "message": f"Reward processing complete for {bucket_id}",
+            "rewards": reward_log
+        }), 200
+
+    except Exception as e:
+        print("Reward job error:", e, file=sys.stderr)
+        return jsonify({
+            "status": "error",
+            "message": "Internal server error",
+            "details": str(e)
+        }), 500
+
+# TODO: REMOVE THIS
+@https_fn.on_request(region="us-central1")
 def leaderboard(request: Request):
     """
     Request
@@ -783,13 +1013,13 @@ def leaderboard(request: Request):
             return error_response(401, "MISSING_ID_TOKEN", "Authorization missing")
         auth.verify_id_token(auth_header.split(" ", 1)[1])
 
-        actok = request.headers.get("X-Firebase-AppCheck")
-        if not actok:
-            return error_response(401, "APPCHECK_MISSING", "App Check token required")
-        try:
-            app_check.verify_token(actok)
-        except Exception:
-            return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
+        # actok = request.headers.get("X-Firebase-AppCheck")
+        # if not actok:
+        #     return error_response(401, "APPCHECK_MISSING", "App Check token required")
+        # try:
+        #     app_check.verify_token(actok)
+        # except Exception:
+        #     return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
 
         if not is_daily:
             # ===== All-time leaderboard =====
@@ -921,7 +1151,8 @@ def leaderboard(request: Request):
         print("Leaderboard error:", e, file=sys.stderr)
         return error_response(500, "INTERNAL", "Internal server error")
 
-@https_fn.on_request(region="us-central1", enforce_app_check=True)
+# TODO: REMOVE THIS
+@https_fn.on_request(region="us-central1")
 def leaderboard_v2(request: Request):
     """
     Request
@@ -954,13 +1185,13 @@ def leaderboard_v2(request: Request):
             return error_response(401, "MISSING_ID_TOKEN", "Authorization missing")
         auth.verify_id_token(auth_header.split(" ", 1)[1])
 
-        actok = request.headers.get("X-Firebase-AppCheck")
-        if not actok:
-            return error_response(401, "APPCHECK_MISSING", "App Check token required")
-        try:
-            app_check.verify_token(actok)
-        except Exception:
-            return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
+        # actok = request.headers.get("X-Firebase-AppCheck")
+        # if not actok:
+        #     return error_response(401, "APPCHECK_MISSING", "App Check token required")
+        # try:
+        #     app_check.verify_token(actok)
+        # except Exception:
+        #     return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
 
         if not is_daily:
             # ===== All-time leaderboard =====
@@ -1092,7 +1323,237 @@ def leaderboard_v2(request: Request):
         print("Leaderboard error:", e, file=sys.stderr)
         return error_response(500, "INTERNAL", "Internal server error")
 
-@https_fn.on_request(region="us-central1", enforce_app_check=True)
+@https_fn.on_request(region="us-central1")
+def leaderboard_v3(request: Request):
+    """
+    Request
+      { "data": { "principal_id": "<pid>", "mode": "daily" | "all_time" } }
+
+    Response
+      {
+        "user_row": { principal_id, wins, position, reward? } | None,
+        "top_rows": [ { principal_id, wins, position, reward? }, ... ],
+        "time_left_ms": <int | null>,
+        "reward_currency": <str | None>,
+        "rewards_enabled": <bool>
+      }
+    """
+    try:
+        if request.method != "POST":
+            return error_response(405, "METHOD_NOT_ALLOWED", "POST required")
+
+        body = request.get_json(silent=True) or {}
+        data = body.get("data", {}) or {}
+
+        pid  = str(data.get("principal_id", "")).strip()
+        country_code = str(data.get("country_code", "US")).strip().upper()
+        mode = str(data.get("mode", "")).lower().strip()
+        is_daily = (mode == "daily")
+
+        if not pid:
+            return error_response(400, "MISSING_PID", "principal_id required")
+
+        # ───────── Auth & App Check ─────────
+        auth_header = request.headers.get("Authorization", "")
+        if not auth_header.startswith("Bearer "):
+            return error_response(401, "MISSING_ID_TOKEN", "Authorization missing")
+        auth.verify_id_token(auth_header.split(" ", 1)[1])
+
+        # actok = request.headers.get("X-Firebase-AppCheck")
+        # if not actok:
+        #     return error_response(401, "APPCHECK_MISSING", "App Check token required")
+        # try:
+        #     app_check.verify_token(actok)
+        # except Exception:
+        #     return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
+
+        if not is_daily:
+            # ===== All-time leaderboard =====
+            users = db().collection("users")
+            user_ref = users.document(pid)
+
+            user_snap = user_ref.get()
+            user_wins = int(user_snap.get("smiley_game_wins") or 0)
+
+            rank_q = (
+                users.where("smiley_game_wins", ">", user_wins)
+                     .count()
+                     .get()
+            )
+            user_position = int(rank_q[0][0].value) + 1
+
+            top_snaps = (
+                users.order_by("smiley_game_wins", direction=firestore.Query.DESCENDING)
+                     .limit(10)
+                     .stream()
+            )
+
+            top_rows, current_rank, last_wins = [], 0, None
+            for snap in top_snaps:
+                wins = int(snap.get("smiley_game_wins") or 0)
+                if wins != last_wins:
+                    current_rank += 1   # dense ranking
+                    last_wins = wins
+                top_rows.append({
+                    "principal_id": snap.id,
+                    "wins": wins,
+                    "position": current_rank
+                })
+
+            user_row = {
+                "principal_id": pid,
+                "wins": user_wins,
+                "position": user_position
+            }
+
+            return jsonify({
+                "user_row": user_row,
+                "top_rows": top_rows,
+                "time_left_ms": None,
+                "reward_currency": None,
+                "reward_currency_code": None,
+                "rewards_enabled": False,
+                "rewards_table": {}
+            }), 200
+
+        # ===== Daily leaderboard (IST day) =====
+        bucket_id, _start_ms, end_ms = _bucket_bounds_ist()
+        now_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
+        time_left_ms = max(0, end_ms - now_ms)
+
+        day_doc_ref = db().collection(DAILY_COLL).document(bucket_id)
+        day_doc = day_doc_ref.get()
+
+        if not day_doc.exists:
+            fallback_reward_currency = DEFAULT_REWARD_CURRENCY
+            fallback_rewards_enabled = REWARDS_ENABLED
+            if fallback_reward_currency == CURRENCY_YRAL:
+                fallback_reward_currency_code = None
+                fallback_rewards_table = REWARD_AMOUNT.get(fallback_reward_currency, {})
+            else:
+                fallback_reward_currency_code = "INR" if country_code == COUNTRY_CODE_INDIA else "USD"
+                fallback_rewards_table = REWARD_AMOUNT[fallback_reward_currency].get(country_code, {})
+
+            fallback_rewards_table = {str(k): int(v) for k, v in fallback_rewards_table.items() if v is not None}
+            
+            return jsonify({
+                "user_row": None,
+                "top_rows": [],
+                "time_left_ms": time_left_ms,
+                "reward_currency": fallback_reward_currency,
+                "reward_currency_code": fallback_reward_currency_code,
+                "rewards_enabled": fallback_rewards_enabled,
+                "rewards_table": fallback_rewards_table
+            }), 200
+
+        day_data = day_doc.to_dict() or {}
+        currency = day_data.get("currency")
+        rewards_enabled = day_data.get("rewards_enabled")
+        reward_currency_code = None
+
+        rewards_table_raw = day_data.get("rewards_table") or {}
+        if currency == CURRENCY_BTC:
+            if country_code == COUNTRY_CODE_INDIA:
+                rewards_table = rewards_table_raw.get(COUNTRY_CODE_INDIA, {})
+                reward_currency_code = "INR"
+            else:
+                rewards_table = rewards_table_raw.get(COUNTRY_CODE_USA, {})
+                reward_currency_code = "USD"
+        else:
+            rewards_table = rewards_table_raw
+            reward_currency_code = None
+
+        rewards_table = {str(k): int(v) for k, v in rewards_table.items() if v is not None}
+
+        if currency is None or rewards_enabled is None:
+            rewards_enabled = False
+            currency = None
+            rewards_table = {}
+            reward_currency_code = None
+
+        day_users = db().collection(f"{DAILY_COLL}/{bucket_id}/users")
+        top_snaps = (
+            day_users.where("smiley_game_wins", ">", 0)
+                    .order_by("smiley_game_wins", direction=firestore.Query.DESCENDING)
+                    .limit(10)
+                    .stream()
+        )
+
+        top_rows, current_rank, last_wins = [], 0, None
+        for snap in top_snaps:
+            wins = int(snap.get("smiley_game_wins") or 0)
+            if wins == 0:
+                continue
+            if wins != last_wins:
+                current_rank += 1    # dense ranking
+                last_wins = wins
+            row = {
+                "principal_id": snap.id,
+                "wins": wins,
+                "position": current_rank
+            }
+            if rewards_enabled:
+                row["reward"] = rewards_table.get(str(current_rank))
+            else:
+                row["reward"] = None
+            top_rows.append(row)
+
+        if not top_rows:
+            return jsonify({
+                "user_row": None,
+                "top_rows": [],
+                "time_left_ms": time_left_ms,
+                "reward_currency": currency,
+                "reward_currency_code": reward_currency_code,
+                "rewards_enabled": rewards_enabled,
+                "rewards_table": rewards_table
+            }), 200
+
+        user_row = None
+        for row in top_rows:
+            if row["principal_id"] == pid:
+                user_row = row
+                break
+
+        if user_row is None:
+            entry_ref = day_users.document(pid)
+            entry_snap = entry_ref.get()
+            user_wins = int((entry_snap.get("smiley_game_wins") if entry_snap.exists else 0) or 0)
+
+            rank_q = (
+                day_users.where("smiley_game_wins", ">", user_wins)
+                        .count()
+                        .get()
+            )
+            user_position = int(rank_q[0][0].value) + 1
+
+            user_row = {
+                "principal_id": pid,
+                "wins": user_wins,
+                "position": user_position,
+                "reward": rewards_table.get(str(user_position)) if (rewards_enabled and user_wins > 0) else None
+            }
+
+        return jsonify({
+            "user_row": user_row,
+            "top_rows": top_rows,
+            "time_left_ms": time_left_ms,
+            "reward_currency": currency,
+            "reward_currency_code": reward_currency_code,
+            "rewards_enabled": rewards_enabled,
+            "rewards_table": rewards_table
+        }), 200
+
+    except auth.InvalidIdTokenError:
+        return error_response(401, "ID_TOKEN_INVALID", "ID token invalid or expired")
+    except GoogleAPICallError as e:
+        return error_response(500, "FIRESTORE_ERROR", str(e))
+    except Exception as e:
+        print("Leaderboard error:", e, file=sys.stderr)
+        return error_response(500, "INTERNAL", "Internal server error")
+
+# TODO: REMOVE THIS
+@https_fn.on_request(region="us-central1")
 def leaderboard_history(request: Request):
     """
     Request:
@@ -1126,13 +1587,13 @@ def leaderboard_history(request: Request):
             return error_response(401, "MISSING_ID_TOKEN", "Authorization missing")
         auth.verify_id_token(auth_header.split(" ", 1)[1])
 
-        actok = request.headers.get("X-Firebase-AppCheck")
-        if not actok:
-            return error_response(401, "APPCHECK_MISSING", "App Check token required")
-        try:
-            app_check.verify_token(actok)
-        except Exception:
-            return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
+        # actok = request.headers.get("X-Firebase-AppCheck")
+        # if not actok:
+        #     return error_response(401, "APPCHECK_MISSING", "App Check token required")
+        # try:
+        #     app_check.verify_token(actok)
+        # except Exception:
+        #     return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
 
         # ── Build last 7 IST dates EXCLUDING today (newest → oldest) ───────
         today = _ist_today_date()
@@ -1232,25 +1693,150 @@ def leaderboard_history(request: Request):
         print("leaderboard_daily_last7_excl_today error:", e, file=sys.stderr)
         return error_response(500, "INTERNAL", "Internal server error")
 
-
-#################### BTC to INR ####################
-TICKER_URL = "https://blockchain.info/ticker"
-@https_fn.on_request(region="us-central1", enforce_app_check=True)
-def btc_inr_value(request: Request):
+@https_fn.on_request(region="us-central1")
+def leaderboard_history_v2(request: Request):
     """
-    GET /btc_inr_value
+    Request:
+      { "data": { "principal_id": "<pid>" } }
+
+    Response: 200 OK with an ARRAY (newest → oldest). Each item:
+      {
+        "date": "Aug 15",
+        "top_rows": [ { principal_id, wins, position, reward? }, ... ],
+        "user_row": { principal_id, wins, position, reward? } | null,
+        "reward_currency": <str | None>,
+        "reward_currency_code": "INR/USD"
+        "rewards_enabled": <bool>
+      }
+    """
+    try:
+        if request.method != "POST":
+            return error_response(405, "METHOD_NOT_ALLOWED", "POST required")
+
+        body = request.get_json(silent=True) or {}
+        data = body.get("data", {}) or {}
+        pid = str(data.get("principal_id", "")).strip()
+        country_code = str(data.get("country_code", "US")).strip().upper()
+
+        if not pid:
+            return error_response(400, "MISSING_PID", "principal_id required")
+
+        auth_header = request.headers.get("Authorization", "")
+        if not auth_header.startswith("Bearer "):
+            return error_response(401, "MISSING_ID_TOKEN", "Authorization missing")
+        auth.verify_id_token(auth_header.split(" ", 1)[1])
+
+        # actok = request.headers.get("X-Firebase-AppCheck")
+        # if not actok:
+        #     return error_response(401, "APPCHECK_MISSING", "App Check token required")
+        # try:
+        #     app_check.verify_token(actok)
+        # except Exception:
+        #     return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
+
+        today = _ist_today_date()
+        days = [today - timedelta(days=offset) for offset in range(1, 8)]
+
+        result: List[Dict] = []
+        for d in days:
+            bucket_id = _bucket_id_for_ist_day(d)
+            date_label = _friendly_date_str(d)
+
+            day_doc = db().collection(DAILY_COLL).document(bucket_id).get()
+            day_data = day_doc.to_dict() if day_doc.exists else {}
+
+            currency = day_data.get("currency")
+            reward_currency_code = None
+
+            rewards_table_raw = day_data.get("rewards_table") or {}
+            if currency == CURRENCY_BTC:
+                # Choose between INR or USD based on country
+                if country_code == COUNTRY_CODE_INDIA:
+                    rewards_table = rewards_table_raw.get(COUNTRY_CODE_INDIA, {})
+                    reward_currency_code = "INR"
+                else:
+                    rewards_table = rewards_table_raw.get(COUNTRY_CODE_USA, {})
+                    reward_currency_code = "USD"
+            else:
+                rewards_table = rewards_table_raw
+                reward_currency_code = None
+
+            # Ensure all keys are str and values are int
+            rewards_table = {str(k): int(v) for k, v in rewards_table.items() if v is not None}
+
+            rewards_enabled = day_data.get("rewards_enabled")
+
+            if currency is None or rewards_enabled is None:
+                rewards_enabled = False
+                currency = None
+                rewards_table = {}
+                reward_currency_code = None
+
+            try:
+                top_rows, last_wins, current_rank = _dense_top_rows_for_day_v2(bucket_id, rewards_table, rewards_enabled)
+            except GoogleAPICallError as e:
+                print(f"[skip] top rows read error for {bucket_id}: {e}", file=sys.stderr)
+                continue
+
+            if not top_rows:
+                result.append({
+                    "date": date_label,
+                    "top_rows": [],
+                    "user_row": None,
+                    "reward_currency": currency,
+                    "reward_currency_code": reward_currency_code,
+                    "rewards_enabled": rewards_enabled,
+                    "rewards_table": rewards_table
+                })
+                continue
+
+            user_row = None
+            try:
+                user_row = _user_row_for_day_v2(bucket_id, pid, rewards_table, rewards_enabled, top_rows)
+            except GoogleAPICallError:
+                user_row = None
+
+            result.append({
+                "date": date_label,
+                "top_rows": top_rows,
+                "user_row": user_row,
+                "reward_currency": currency,
+                "reward_currency_code": reward_currency_code,
+                "rewards_enabled": rewards_enabled,
+                "rewards_table": rewards_table
+            })
+
+        return jsonify(result), 200
+
+    except auth.InvalidIdTokenError:
+        return error_response(401, "ID_TOKEN_INVALID", "ID token invalid or expired")
+    except GoogleAPICallError as e:
+        return error_response(500, "FIRESTORE_ERROR", str(e))
+    except Exception as e:
+        print("leaderboard_history error:", e, file=sys.stderr)
+        return error_response(500, "INTERNAL", "Internal server error")
+
+
+#################### BTC to CURRENCY ####################
+TICKER_URL = "https://blockchain.info/ticker"
+
+@https_fn.on_request(region="us-central1")
+def btc_value_by_country(request: Request):
+    """
+    GET /btc_value_by_country?country_code=IN
 
     Headers:
       Authorization: Bearer <FIREBASE_ID_TOKEN>
       X-Firebase-AppCheck: <APPCHECK_TOKEN>
 
     Response (200):
-      { "inr": 0.00 }
+      { "conversion_rate": 0.00, "currency_code": "INR" | "USD" }
     """
     try:
         if request.method != "GET":
             return error_response(405, "METHOD_NOT_ALLOWED", "GET required")
 
+        # ─── Auth & App Check ────────────────────────────────────────────
         auth_header = request.headers.get("Authorization", "")
         if not auth_header.startswith("Bearer "):
             return error_response(401, "MISSING_ID_TOKEN", "Authorization token missing")
@@ -1260,14 +1846,19 @@ def btc_inr_value(request: Request):
         except auth.InvalidIdTokenError:
             return error_response(401, "ID_TOKEN_INVALID", "ID token invalid or expired")
 
-        actok = request.headers.get("X-Firebase-AppCheck")
-        if not actok:
-            return error_response(401, "APPCHECK_MISSING", "App Check token required")
-        try:
-            app_check.verify_token(actok)
-        except Exception:
-            return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
+        # actok = request.headers.get("X-Firebase-AppCheck")
+        # if not actok:
+        #     return error_response(401, "APPCHECK_MISSING", "App Check token required")
+        # try:
+        #     app_check.verify_token(actok)
+        # except Exception:
+        #     return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
 
+        # ─── Parse country_code ─────────────────────────────────────────
+        country_code = request.args.get("country_code", "").strip().upper()
+        currency_code = "INR" if country_code == "IN" else "USD"
+
+        # ─── Fetch BTC price ────────────────────────────────────────────
         try:
             resp = requests.get(TICKER_URL, timeout=6)
         except requests.RequestException as e:
@@ -1275,21 +1866,70 @@ def btc_inr_value(request: Request):
             return error_response(502, "UPSTREAM_UNREACHABLE", "Price source not reachable")
 
         if resp.status_code != 200:
-            return error_response(502, "UPSTREAM_BAD_STATUS",
-                                  f"Price source returned {resp.status_code}")
+            return error_response(502, "UPSTREAM_BAD_STATUS", f"Price source returned {resp.status_code}")
 
         try:
             data = resp.json()
-            inr = data.get("INR") or {}
-            last = round(float(inr["last"]), 2)
+            currency_data = data.get(currency_code) or {}
+            last = round(float(currency_data["last"]), 2)
         except Exception as e:
             print("Parse error:", e, file=sys.stderr)
             return error_response(502, "UPSTREAM_BAD_PAYLOAD", "Unexpected price payload")
 
-        return jsonify({"inr": last}), 200
+        return jsonify({
+            "conversion_rate": last,
+            "currency_code": currency_code
+        }), 200
 
     except GoogleAPICallError as e:
         return error_response(500, "GOOGLE_API_ERROR", str(e))
     except Exception as e:
         print("Unhandled error:", e, file=sys.stderr)
         return error_response(500, "INTERNAL", "Internal server error")
+
+
+#################### WEB ENDPOINTS ####################
+@https_fn.on_request(region="us-central1")
+def get_smiley_game_stats(request: Request):
+    """
+    GET /get_smiley_game_stats?principal_id=<id>
+
+    Response (200):
+    {
+      "principal_id": "<id>",
+      "wins": <int>,
+      "losses": <int>,
+      "total_games": <int>
+    }
+
+    Error (any):
+    { "error": "Error message" }
+    """
+    try:
+        if request.method != "GET":
+            return jsonify({"error": "GET required"}), 405
+
+        principal_id = request.args.get("principal_id", "").strip()
+        if not principal_id:
+            return jsonify({"error": "Missing principal_id"}), 400
+
+        user_ref = db().document(f"users/{principal_id}")
+        snap = user_ref.get()
+
+        if not snap.exists:
+            return jsonify({"error": f"User {principal_id} not found"}), 404
+
+        wins = int(snap.get("smiley_game_wins") or 0)
+        losses = int(snap.get("smiley_game_losses") or 0)
+        total = wins + losses
+
+        return jsonify({
+            "principal_id": principal_id,
+            "wins": wins,
+            "losses": losses,
+            "total_games": total
+        }), 200
+
+    except Exception as e:
+        print("get_smiley_game_stats error:", e, file=sys.stderr)
+        return jsonify({"error": "Internal server error"}), 500

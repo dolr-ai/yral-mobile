@@ -32,31 +32,32 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
 import com.yral.android.R
-import com.yral.android.ui.screens.feed.nav.FeedComponent
 import com.yral.android.ui.screens.feed.performance.PrefetchVideoListenerImpl
 import com.yral.android.ui.screens.feed.performance.VideoListenerImpl
-import com.yral.android.ui.screens.feed.uiComponets.GameToggle
-import com.yral.android.ui.screens.feed.uiComponets.HowToPlay
-import com.yral.android.ui.screens.feed.uiComponets.RefreshBalanceAnimation
-import com.yral.android.ui.screens.feed.uiComponets.SignupNudge
-import com.yral.android.ui.screens.feed.uiComponets.UserBrief
-import com.yral.android.ui.screens.game.AboutGameSheet
-import com.yral.android.ui.screens.game.CoinBalance
-import com.yral.android.ui.screens.game.GameResultSheet
-import com.yral.android.ui.screens.game.SmileyGame
 import com.yral.shared.data.feed.domain.FeedDetails
+import com.yral.shared.features.feed.nav.FeedComponent
+import com.yral.shared.features.feed.ui.components.GameToggle
+import com.yral.shared.features.feed.ui.components.HowToPlay
+import com.yral.shared.features.feed.ui.components.RefreshBalanceAnimation
+import com.yral.shared.features.feed.ui.components.RefreshBalanceAnimationState
+import com.yral.shared.features.feed.ui.components.SignupNudge
+import com.yral.shared.features.feed.ui.components.UserBrief
 import com.yral.shared.features.feed.viewmodel.FeedState
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.PRE_FETCH_BEFORE_LAST
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.SIGN_UP_PAGE
 import com.yral.shared.features.feed.viewmodel.OverlayType
+import com.yral.shared.features.game.ui.AboutGameSheet
+import com.yral.shared.features.game.ui.CoinBalance
+import com.yral.shared.features.game.ui.GameResultSheet
+import com.yral.shared.features.game.ui.SmileyGame
 import com.yral.shared.features.game.viewmodel.GameState
 import com.yral.shared.features.game.viewmodel.GameViewModel
 import com.yral.shared.features.game.viewmodel.NudgeType
+import com.yral.shared.features.game.viewmodel.RefreshBalanceState
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
 import com.yral.shared.libs.designsystem.component.YralLoader
@@ -69,7 +70,18 @@ import com.yral.shared.reportVideo.domain.models.ReportSheetState
 import com.yral.shared.reportVideo.ui.ReportVideo
 import com.yral.shared.reportVideo.ui.ReportVideoSheet
 import kotlinx.coroutines.flow.collectLatest
+import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import yral_mobile.shared.libs.designsystem.generated.resources.could_not_login
+import yral_mobile.shared.libs.designsystem.generated.resources.could_not_login_desc
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_share
+import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_share
+import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_share_desc
+import yral_mobile.shared.libs.designsystem.generated.resources.ok
+import yral_mobile.shared.libs.designsystem.generated.resources.shadow
+import yral_mobile.shared.libs.designsystem.generated.resources.shadow_bottom
+import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Suppress("LongMethod", "CyclomaticComplexMethod", "UnusedParameter")
@@ -271,13 +283,13 @@ fun FeedScreen(
     }
     if (state.showSignupFailedSheet) {
         YralErrorMessage(
-            title = stringResource(R.string.could_not_login),
-            error = stringResource(R.string.could_not_login_desc),
+            title = stringResource(DesignRes.string.could_not_login),
+            error = stringResource(DesignRes.string.could_not_login_desc),
             sheetState =
                 rememberModalBottomSheetState(
                     skipPartiallyExpanded = true,
                 ),
-            cta = stringResource(R.string.ok),
+            cta = stringResource(DesignRes.string.ok),
             onClick = { viewModel.toggleSignupFailed(false) },
             onDismiss = { viewModel.toggleSignupFailed(false) },
         )
@@ -352,7 +364,7 @@ private fun TopViewWithGameToggle(
             Modifier
                 .fillMaxWidth()
                 .paint(
-                    painter = painterResource(R.drawable.shadow),
+                    painter = painterResource(DesignRes.drawable.shadow),
                     contentScale = ContentScale.FillBounds,
                 ),
         contentAlignment = Alignment.TopStart,
@@ -402,7 +414,7 @@ private fun TopView(
             Modifier
                 .fillMaxWidth()
                 .paint(
-                    painter = painterResource(R.drawable.shadow),
+                    painter = painterResource(DesignRes.drawable.shadow),
                     contentScale = ContentScale.FillBounds,
                 ).padding(end = 26.dp),
     ) {
@@ -475,11 +487,19 @@ private fun BottomView(
         )
         Game(state, pageNo, gameState, gameViewModel)
         RefreshBalanceAnimation(
-            refreshBalanceState = gameState.refreshBalanceState,
+            refreshBalanceState = gameState.refreshBalanceState.toRefreshBalanceAnimationState(),
             onAnimationComplete = { gameViewModel.hideRefreshBalanceAnimation() },
         )
     }
 }
+
+private fun RefreshBalanceState.toRefreshBalanceAnimationState(): RefreshBalanceAnimationState =
+    when (this) {
+        RefreshBalanceState.LOADING -> RefreshBalanceAnimationState.LOADING
+        RefreshBalanceState.SUCCESS -> RefreshBalanceAnimationState.SUCCESS
+        RefreshBalanceState.FAILURE -> RefreshBalanceAnimationState.FAILURE
+        RefreshBalanceState.HIDDEN -> RefreshBalanceAnimationState.HIDDEN
+    }
 
 @Composable
 private fun Shadow(modifier: Modifier) {
@@ -488,7 +508,7 @@ private fun Shadow(modifier: Modifier) {
             modifier
                 .fillMaxWidth()
                 .paint(
-                    painter = painterResource(R.drawable.shadow_bottom),
+                    painter = painterResource(DesignRes.drawable.shadow_bottom),
                     contentScale = ContentScale.FillBounds,
                     alpha = 0.3f,
                 ),
@@ -520,15 +540,15 @@ private fun ActionsRight(
                 )
             }
         }
-        val msgFeedVideoShare = stringResource(R.string.msg_feed_video_share)
-        val msgFeedVideoShareDesc = stringResource(R.string.msg_feed_video_share_desc)
+        val msgFeedVideoShare = stringResource(DesignRes.string.msg_feed_video_share)
+        val msgFeedVideoShareDesc = stringResource(DesignRes.string.msg_feed_video_share_desc)
         Image(
             modifier =
                 Modifier
                     .size(36.dp)
                     .padding(1.5.dp)
                     .clickable { feedViewModel.onShareClicked(feedDetails, msgFeedVideoShare, msgFeedVideoShareDesc) },
-            painter = painterResource(id = R.drawable.ic_share),
+            painter = painterResource(DesignRes.drawable.ic_share),
             contentDescription = "share video",
             contentScale = ContentScale.None,
         )

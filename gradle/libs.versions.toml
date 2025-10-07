@@ -5,7 +5,7 @@ android-tools = "31.10.1"
 compileSDK = "35"
 minSDK = "24"
 targetSDK = "35"
-kotlin = "2.1.21"
+kotlin = "2.2.10"
 compose = "1.7.8"
 compose-compiler = "1.5.4"
 compose-material3 = "1.3.2"
@@ -14,7 +14,7 @@ androidx-browser = "1.8.0"
 androidx-datastore = "1.1.7"
 androidx-lifecycle = "2.9.1"
 androidx-lint-gradle = "1.0.0-alpha05"
-androidx-paging = "3.3.5"
+androidx-paging = "3.4.0-alpha04"
 androidx-security-crypto = "1.1.0-alpha07"
 androidx-testExt = "1.2.1"
 androidx-test-runner = "1.6.2"
@@ -28,9 +28,9 @@ detekt = "1.23.8"
 detektComposeRules = "0.4.22"
 essenty = "2.5.0"
 facebook-sdk-android = "18.0.3"
-firebase-bom = "33.12.0"
-firebaseCrashlyticsPlugin = "3.0.3"
-firebase-gitlive-sdk = "2.1.0"
+firebase-bom = "33.15.0"
+firebaseCrashlyticsPlugin = "3.0.4"
+firebase-gitlive-sdk = "2.3.0"
 firebasePerfPlugin = "1.4.2"
 gobley = "0.2.0"
 haze = "1.6.10"
@@ -38,10 +38,10 @@ inAppUpdate = "2.1.0"
 koinBom = "4.1.0"
 kotlinResult = "2.0.1"
 kotlinxCoroutines = "1.10.2"
-kotlinx-datetime = "0.6.2"
-kotlinxSerialization = "1.8.1"
+kotlinx-datetime = "0.7.1"
+kotlinxSerialization = "1.9.0"
 ksp = "2.1.21-2.0.2"
-ktor = "3.1.3"
+ktor = "3.3.0"
 lottie = "6.6.6"
 media3Exoplayer = "1.6.1"
 mixpanel = "8.2.0"
@@ -59,6 +59,7 @@ moko-permissions="0.19.1"
 branch="5.19.0"
 play-services-ads-identifier="18.0.1"
 emoji2 = "1.5.0"
+window = "1.5.0"
 
 [libraries]
 
@@ -96,6 +97,7 @@ compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = 
 compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview", version.ref = "compose" }
 compose-foundation = { module = "androidx.compose.foundation:foundation", version.ref = "compose" }
 compose-material3 = { module = "androidx.compose.material3:material3", version.ref = "compose-material3" }
+compose-ui-backhandler = { module = "org.jetbrains.compose.ui:ui-backhandler", version.ref = "composeMultiplatform" }
 
 decompose-decompose = { group = "com.arkivanov.decompose", name = "decompose", version.ref = "decompose" }
 decompose-extensions-compose = { group = "com.arkivanov.decompose", name = "extensions-compose", version.ref = "decompose" }
@@ -205,6 +207,7 @@ kotlin-gradlePlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-pl
 ksp-gradlePlugin = { group = "com.google.devtools.ksp", name = "com.google.devtools.ksp.gradle.plugin", version.ref = "ksp" }
 spotless-gradlePlugin = { group = "com.diffplug.spotless", name = "spotless-plugin-gradle", version.ref = "spotless" }
 truth = { group = "com.google.truth", name = "truth", version.ref = "truth" }
+androidx-window = { group = "androidx.window", name = "window", version.ref = "window" }
 
 
 [plugins]

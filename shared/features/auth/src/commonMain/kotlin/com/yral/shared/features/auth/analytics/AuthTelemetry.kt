@@ -5,7 +5,6 @@ import com.yral.shared.analytics.events.AuthFailedEventData
 import com.yral.shared.analytics.events.AuthJourney
 import com.yral.shared.analytics.events.AuthScreenViewedEventData
 import com.yral.shared.analytics.events.LoginSuccessEventData
-import com.yral.shared.analytics.events.SignupClickedEventData
 import com.yral.shared.analytics.events.SignupJourneySelected
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.analytics.events.SignupSuccessEventData
@@ -19,10 +18,6 @@ class AuthTelemetry(
 
     fun onSignupJourneySelected() {
         analyticsManager.trackEvent(SignupJourneySelected(authJourney = AuthJourney.GOOGLE))
-    }
-
-    fun signupClicked(pageName: SignupPageName) {
-        analyticsManager.trackEvent(SignupClickedEventData(pageName = pageName))
     }
 
     fun onAuthSuccess(isNewUser: Boolean) {

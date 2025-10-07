@@ -9,8 +9,7 @@ class SessionManager {
     private val _state = MutableStateFlow<SessionState>(SessionState.Initial)
     val state = _state.asStateFlow()
 
-    private val _sessionProperties = MutableStateFlow(SessionProperties())
-    val sessionProperties = _sessionProperties.asStateFlow()
+    private val sessionProperties = MutableStateFlow(SessionProperties())
 
     val canisterID: String?
         get() =
@@ -49,37 +48,37 @@ class SessionManager {
 
     fun updateState(state: SessionState) {
         _state.update { state }
-        _sessionProperties.update { SessionProperties() }
+        sessionProperties.update { SessionProperties() }
     }
 
     fun updateCoinBalance(newBalance: Long) {
-        _sessionProperties.update { it.copy(coinBalance = newBalance) }
+        sessionProperties.update { it.copy(coinBalance = newBalance) }
     }
 
     fun updateSocialSignInStatus(isSocialSignIn: Boolean) {
-        _sessionProperties.update { it.copy(isSocialSignIn = isSocialSignIn) }
+        sessionProperties.update { it.copy(isSocialSignIn = isSocialSignIn) }
     }
 
     fun updateProfileVideosCount(count: Int?) {
-        _sessionProperties.update { it.copy(profileVideosCount = count) }
+        sessionProperties.update { it.copy(profileVideosCount = count) }
     }
 
     fun updateIsForcedGamePlayUser(isForcedGamePlayUser: Boolean) {
-        _sessionProperties.update { it.copy(isForcedGamePlayUser = isForcedGamePlayUser) }
+        sessionProperties.update { it.copy(isForcedGamePlayUser = isForcedGamePlayUser) }
     }
 
     fun updateLoggedInUserEmail(email: String?) {
-        _sessionProperties.update { it.copy(emailId = email) }
+        sessionProperties.update { it.copy(emailId = email) }
     }
 
     fun updateFirebaseLoginState(isLoggedIn: Boolean) {
-        _sessionProperties.update { it.copy(isFirebaseLoggedIn = isLoggedIn) }
+        sessionProperties.update { it.copy(isFirebaseLoggedIn = isLoggedIn) }
     }
 
-    fun observeSessionProperties(): StateFlow<SessionProperties> = sessionProperties
+    fun observeSessionProperties(): StateFlow<SessionProperties> = sessionProperties.asStateFlow()
 
     fun resetSessionProperties() {
-        _sessionProperties.update {
+        sessionProperties.update {
             SessionProperties(
                 coinBalance = 0,
                 profileVideosCount = 0,
