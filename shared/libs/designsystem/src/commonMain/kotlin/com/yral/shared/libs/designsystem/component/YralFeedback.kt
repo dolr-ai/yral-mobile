@@ -10,3 +10,5 @@ expect fun YralFeedback(
     hapticFeedbackType: HapticFeedbackType = HapticFeedbackType.ContextClick,
     onPlayed: () -> Unit = {},
 )
+
+expect fun popPressedSoundId(): Int

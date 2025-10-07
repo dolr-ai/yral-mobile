@@ -2,16 +2,20 @@ plugins {
     alias(libs.plugins.yral.shared.feature)
     alias(libs.plugins.yral.android.feature)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.yral.shared.library.compose)
 }
 
 kotlin {
     androidTarget()
+    listOf(
+        iosArm64(),
+        iosSimulatorArm64(),
+    )
 
     sourceSets {
         commonMain.dependencies {
             implementation(projects.shared.core)
             implementation(projects.shared.data)
-            implementation(projects.shared.features.auth)
             implementation(projects.shared.libs.koin)
             implementation(projects.shared.libs.analytics)
             implementation(projects.shared.libs.http)
@@ -20,7 +24,10 @@ kotlin {
             implementation(projects.shared.libs.analytics)
             implementation(projects.shared.libs.firebaseStore)
             implementation(projects.shared.libs.firebaseAuth)
+            implementation(projects.shared.libs.formatters)
+            implementation(projects.shared.libs.designsystem)
             implementation(projects.shared.rust.service)
+            implementation(compose.components.resources)
         }
     }
 }

@@ -69,7 +69,10 @@ class LeaderboardViewModel: ObservableObject {
 
       do {
         try Task.checkCancellation()
-        let result = await leaderboardUseCase.execute(request: LeaderboardQuery(mode: mode.rawValue))
+        let result = await leaderboardUseCase.execute(request: LeaderboardQuery(
+          mode: mode.rawValue,
+          countryCode: Locale.current.regionCode ?? "US"
+        ))
         try Task.checkCancellation()
 
         switch result {

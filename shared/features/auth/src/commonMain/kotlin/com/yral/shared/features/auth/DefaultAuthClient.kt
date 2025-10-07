@@ -40,7 +40,8 @@ import dev.gitlive.firebase.messaging.messaging
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 @Suppress("TooManyFunctions", "LongParameterList")
 class DefaultAuthClient(
@@ -71,9 +72,6 @@ class DefaultAuthClient(
                 accessToken = "",
                 refreshToken = "",
             )
-            sessionManager.updateSocialSignInStatus(
-                isSocialSignIn = preferences.getBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name) ?: false,
-            )
         } ?: obtainAnonymousIdentity()
     }
 
@@ -91,6 +89,7 @@ class DefaultAuthClient(
             }.onFailure { throw YralAuthException("obtaining anonymous token failed - ${it.message}") }
     }
 
+    @OptIn(ExperimentalTime::class)
     private suspend fun handleToken(
         idToken: String,
         accessToken: String,
@@ -184,6 +183,7 @@ class DefaultAuthClient(
             cachedSession.userPrincipal?.let { crashlyticsManager.setUserId(it) }
             sessionManager.updateCoinBalance(0)
             setSession(session = cachedSession)
+            fetchBalance(session = cachedSession)
             if (auth.currentUser?.uid == cachedSession.userPrincipal) {
                 sessionManager.updateFirebaseLoginState(true)
                 postFirebaseLogin(cachedSession)

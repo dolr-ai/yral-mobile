@@ -1,28 +1,6 @@
 <resources>
     <string name="app_name">Yral</string>
-    <string name="accounts">Accounts</string>
     <string name="coming_soon">Coming soon</string>
-    <string name="talk_to_the_team">Talk to the team</string>
-    <string name="terms_of_service">Terms of service</string>
-    <string name="privacy_policy">Privacy Policy</string>
-    <string name="follow_us_on">Follow us on</string>
-    <string name="login">Login</string>
-    <string name="logout">Logout</string>
-    <string name="anonymous_account_setup">Your Yral account has been setup. Login to not lose progress.</string>
-    <string name="continue_to_sign_up_for_free">Continue to sign up for free</string>
-    <string name="sign_up_disclaimer">If you already have an account, we’ll log you in</string>
-    <string name="signup_consent">By signing up, you agree to our Terms of Service</string>
-    <string name="terms_of_service_signup_consent">Terms of Service</string>
-    <string name="signup_with_google">Sign up with Google</string>
-    <string name="could_not_login">Couldn’t Log In</string>
-    <string name="could_not_login_desc">The operation couldn’t be completed. Please try again</string>
-    <string name="ok">OK</string>
-    <string name="error">Error</string>
-    <string name="video_validation_unable_to_read_duration">Unable to read video duration</string>
-    <string name="video_validation_unable_to_read_file_size">Unable to read video file size</string>
-    <string name="video_validation_duration_exceeds_limit_with_data">Selected video exceeds %1$s seconds</string>
-    <string name="video_validation_file_size_exceeds_limit_with_data">Selected video exceeds %1$s</string>
-    <string name="video_validation_processing_failed">Failed to process video</string>
     <string name="reason_nudity">Nudity / Porn</string>
     <string name="reason_violence">Violence / Gore</string>
     <string name="reason_offensive">Offensive</string>
@@ -33,31 +11,10 @@
     <string name="submit">Submit</string>
     <string name="please_provide_more_details">Please provide more details.</string>
     <string name="add_details">Add details</string>
-    <string name="delete_account">Delete Account</string>
-    <string name="delete_your_account">Delete your account</string>
-    <string name="delete_account_disclaimer">This action will not be reverted. All your data will be removed from our platform.</string>
-    <string name="delete_account_question">Are you sure you want to delete your account?</string>
-    <string name="no_take_me_back">No, take me back</string>
-    <string name="yes_delete">Yes, Delete</string>
-    <string name="was_most_people_choice">%s was the most popular choice.</string>
-    <string name="you_win_x_coins">You win %d YRAL tokens!</string>
-    <string name="not_most_popular_pick">Not the most popular pick!</string>
-    <string name="you_lost_x_coins">You lost %d YRAL tokens!</string>
-    <string name="oops">OOPS!!!</string>
-    <string name="since_most_people_not_voted_on">Since most people didn’t vote on</string>
-    <string name="congratulations">Congratulations!</string>
-    <string name="since_most_people_voted_on">Since most people voted on</string>
-    <string name="keep_playing">Keep Playing</string>
-    <string name="learn_more">Learn More</string>
-    <string name="about_game">About the Game</string>
-    <string name="msg_feed_video_share">Check out this video on Yral 👀 Where watching = fun + games! ⚡ Try it 👉</string>
-    <string name="msg_feed_video_share_desc">Watch on Yral</string>
 
     <!-- Error Messages -->
     <string name="error_timeout_title">Oops!</string>
     <string name="error_timeout">Unable to load content. Please try again.</string>
-    <string name="error_delete_account_title">Oops! Account not deleted</string>
-    <string name="error_delete_account">Unable to delete your account at the moment. Please try again.</string>
     <string name="error_retry">Retry</string>
 
     <string name="leaderboard">Leaderboard</string>
@@ -65,45 +22,9 @@
 
 
 
-    <string name="scroll_to_next_video">Scroll To Next Video</string>
 
-    <string name="upload_video">Upload Video</string>
-    <string name="upload_video_to_share_with_world">Upload a video to share with the world!</string>
-    <string name="video_file_max_seconds">Video file (Max %ds)</string>
-    <string name="select_file">Select File</string>
-    <string name="caption">Caption</string>
-    <string name="enter_caption_here">Enter the caption here</string>
-    <string name="add_hashtag">Add Hashtag</string>
-    <string name="hit_enter_to_add_hashtags">Hit enter to add #hashtags</string>
-    <string name="add_hashtags">Add another #hashtags</string>
-    <string name="upload">Upload</string>
-    <string name="uploading_message">Uploading may take a moment. Feel free to explore more videos on the home page while you wait!</string>
-    <string name="uploading_progress">Uploading… %d%%</string>
-    <string name="upload_completed">Upload Completed</string>
-    <string name="upload_completed_message">We\'re processing your video. It\'ll be in \'Your Videos\' under My Profile soon. Happy scrolling!</string>
-    <string name="your_videos">Your Videos</string>
-    <string name="my_profile">My Profile</string>
-    <string name="done">Done</string>
-    <string name="something_went_wrong">Something went wrong!</string>
-    <string name="upload_video_error">We couldn’t upload your video due to some reasons. Try uploading it again.</string>
+
     <string name="upload_video_error_reason"> due to %s reasons</string>
-    <string name="try_again">Try Again</string>
-    <string name="go_to_home">Go to Home</string>
-    <string name="you_have_not_uploaded_any_video_yet">You have not uploaded any videos yet.</string>
-    <string name="delete_video">Delete video?</string>
-    <string name="video_will_be_deleted_permanently">This video will be permanently deleted from your yral account.</string>
-    <string name="delete">Delete</string>
-    <string name="cancel">Cancel</string>
-    <string name="deleting">Deleting…</string>
-    <string name="error_loading_more_videos">Error loading more videos</string>
-    <string name="error_loading_videos">Error loading videos</string>
-    <string name="failed_to_delete_video">Failed to delete video</string>
-    <string name="how_to_play">How to Play</string>
-
-    <!-- Permission Messages -->
-    <string name="permission_required_title">Permission required!</string>
-    <string name="permission_required_description">To upload videos, please allow access to your device\'s media files in Settings. You can choose \"Allow all\" or \"Allow limited access\" - both work for uploading videos.</string>
-    <string name="go_to_settings">Go to settings</string>
 
     <!-- Facebook SDK Configuration -->
     <string name="facebook_app_id">4094678660808510</string>
@@ -117,45 +38,12 @@
     <string name="turn_on_alerts">Turn on Alerts</string>
     <string name="not_now">Not Now</string>
 
-    <!-- Nudges -->
-    <string name="smiley_game_nudge_1">Match the vibe, win the coin</string>
-    <string name="smiley_game_nudge_2">Choose the top emojis &amp; get YRAL (Bitcoin)”</string>
-    <string name="smiley_game_nudge_mandatory">React to this video to unlock the next one!</string>
-
     <!--In App Purchases-->
     <string name="flexible_downloaded_message">A new version is ready to install</string>
     <string name="flexible_downloaded_cta">RESTART</string>
 
-    <!-- Video Gen/Upload -->
-    <string name="add_video">Add Video</string>
-    <string name="create_ai_video">Create AI Video</string>
-    <string name="generate_video_by_giving_a_prompt_to_ai">Generate a video by giving a prompt to AI.</string>
-    <string name="create_with_ai">Create with AI</string>
-    <string name="add_video_from_device">Add a video from your device.</string>
-    <string name="model">Model</string>
-    <string name="credits_used">%1d of %2d credits used</string>
-    <string name="credits_used_use_token">%1d of %2d credits used. You can create videos with %s.</string>
-    <string name="prompt">Prompt</string>
-    <string name="enter_prompt_here">Enter the Prompt here…</string>
-    <string name="generate_video">Generate Video</string>
-    <string name="generating_video">Generating Video…</string>
-    <string name="this_may_take_few_minutes">This may take few minutes</string>
-    <string name="upload_successful">Upload Successful</string>
-    <string name="you_will_loose_ai_credits">You will loose AI Credits</string>
-    <string name="you_will_loose_credits_desc">Leaving now will use up today’s AI credit. You can return tomorrow for a fresh credit.</string>
-    <string name="yes_take_me_back">Yes, Take me back</string>
-    <string name="stay_here">Stay Here</string>
-    <string name="credits_required">Credits Required</string>
-    <string name="current_balance">Current Balance :</string>
-    <string name="low_balance">Low Balance :</string>
-    <string name="play_games">Play Games</string>
-    <string name="to_earn_token">to earn %s!</string>
-    <string name="coins">YRAL</string>
 
     <!-- Wallet -->
-    <string name="my_wallet">My Wallet</string>
-    <string name="bit_coin">Bitcoin</string>
-    <string name="btc_inr_rate">1 Bitcoin = %s</string>
     <string name="rupee_symbol">₹</string>
     <string name="currency_balance">%s Balance</string>
 </resources>

@@ -55,7 +55,8 @@ class LeaderboardHistoryRepository: LeaderboardHistoryRepositoryProtocol {
     do {
       let httpBody = [
         "data": [
-          "principal_id": principalID
+          "principal_id": principalID,
+          "country_code": Locale.current.regionCode ?? "US"
         ]
       ]
 
@@ -87,7 +88,7 @@ class LeaderboardHistoryRepository: LeaderboardHistoryRepositoryProtocol {
 
 extension LeaderboardHistoryRepository {
   enum Constants {
-    static let leaderboardHistoryPath = "leaderboard_history"
+    static let leaderboardHistoryPath = "leaderboard_history_v2"
     static let firebaseUserIDError = "Failed to fetch user ID token"
     static let principalIDError = "Failed to fetch princiapl ID"
   }

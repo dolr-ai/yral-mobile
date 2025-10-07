@@ -130,3 +130,5 @@ fun <P, R> Iterable<P>.processFirstNSuspendFlow(
         }
     }
 }
+
+inline fun <reified T : Enum<T>> safeValueOf(name: String?): T? = enumValues<T>().find { it.name == name }

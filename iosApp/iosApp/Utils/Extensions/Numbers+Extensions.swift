@@ -26,6 +26,15 @@ extension CGFloat {
 
 extension Double {
   static let one: Double = 1
+
+  func rounded(toPlaces places: Int) -> Double {
+    let divisor = pow(10.0, Double(places))
+    return (self * divisor).rounded() / divisor
+  }
+
+  var cleanValue: String {
+    return truncatingRemainder(dividingBy: 1) == 0 ? String(format: "%.0f", self) : String(format: "%.1f", self)
+  }
 }
 
 extension Int {
@@ -37,4 +46,29 @@ extension Int {
   static let five: Int = 5
   static let ten: Int = 10
   static let thousand: Int = 1000
+
+  var formattedWithSuffix: String {
+    let num = Double(self)
+
+    switch num {
+    case 0..<1_000:
+      return "\(self)"
+
+    case 1_000..<1_000_000:
+      let value = (num / 1_000).rounded(toPlaces: 1)
+      return "\(value.cleanValue)K"
+
+    case 1_000_000..<1_000_000_000:
+      let value = (num / 1_000_000).rounded(toPlaces: 1)
+      return "\(value.cleanValue)M"
+
+    case 1_000_000_000..<1_000_000_000_000:
+      let value = (num / 1_000_000_000).rounded(toPlaces: 1)
+      return "\(value.cleanValue)B"
+
+    default:
+      let value = (num / 1_000_000_000_000).rounded(toPlaces: 1)
+      return "\(value.cleanValue)T"
+    }
+  }
 }

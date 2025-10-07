@@ -1,10 +1,9 @@
 package com.yral.shared.features.wallet.data
 
-import com.google.firebase.appcheck.ktx.appCheck
-import com.google.firebase.ktx.Firebase
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.features.wallet.data.models.BtcPriceResponseDto
 import com.yral.shared.firebaseStore.cloudFunctionUrl
+import com.yral.shared.firebaseStore.firebaseAppCheckToken
 import com.yral.shared.rust.service.domain.IndividualUserRepository
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.expectSuccess
@@ -16,7 +15,6 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.path
-import kotlinx.coroutines.tasks.await
 import kotlinx.serialization.json.Json
 
 class WalletDataSourceImpl(
@@ -37,11 +35,7 @@ class WalletDataSourceImpl(
                     path(BTC_VALUE_BY_COUNTRY_PATH)
                     parameter("country_code", countryCode)
                 }
-                val appCheckToken =
-                    Firebase.appCheck
-                        .getToken(false)
-                        .await()
-                        .token
+                val appCheckToken = firebaseAppCheckToken()
                 headers {
                     append(HttpHeaders.Authorization, "Bearer $idToken")
                     append(HEADER_X_FIREBASE_APPCHECK, appCheckToken)

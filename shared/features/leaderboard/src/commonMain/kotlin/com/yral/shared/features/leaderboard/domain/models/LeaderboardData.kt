@@ -4,4 +4,12 @@ data class LeaderboardData(
     val userRow: LeaderboardItem?,
     val topRows: List<LeaderboardItem>,
     val timeLeftMs: Long?,
+    val rewardCurrency: RewardCurrency? = null,
+    val rewardCurrencyCode: String? = null,
+    val rewardsTable: Map<Int, Double>? = null,
 )
+
+enum class RewardCurrency {
+    YRAL,
+    BTC,
+}

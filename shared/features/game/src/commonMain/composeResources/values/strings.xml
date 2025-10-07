@@ -1,0 +1,19 @@
+<resources>
+    <string name="about_game">About the Game</string>
+
+    <!-- Nudges -->
+    <string name="smiley_game_nudge_1">Match the vibe, win the coin</string>
+    <string name="smiley_game_nudge_2">Choose the top emojis &amp; get YRAL (Bitcoin)”</string>
+    <string name="smiley_game_nudge_mandatory">React to this video to unlock the next one!</string>
+
+    <string name="congratulations">Congratulations!</string>
+    <string name="since_most_people_not_voted_on">Since most people didn’t vote on</string>
+    <string name="since_most_people_voted_on">Since most people voted on</string>
+    <string name="you_win_x_coins">You win %1$d YRAL tokens!</string>
+    <string name="you_lost_x_coins">You lost %1$d YRAL tokens!</string>
+    <string name="keep_playing">Keep Playing</string>
+    <string name="learn_more">Learn More</string>
+    <string name="was_most_people_choice">%1$s was the most popular choice.</string>
+    <string name="not_most_popular_pick">Not the most popular pick!</string>
+
+</resources>

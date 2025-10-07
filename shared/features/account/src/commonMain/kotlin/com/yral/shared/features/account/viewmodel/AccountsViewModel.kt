@@ -11,10 +11,10 @@ import com.yral.featureflag.accountFeatureFlags.AccountLinksDto
 import com.yral.shared.analytics.events.MenuCtaType
 import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.core.session.SessionManager
+import com.yral.shared.core.utils.getAccountInfo
 import com.yral.shared.features.account.analytics.AccountsTelemetry
 import com.yral.shared.features.auth.AuthClientFactory
 import com.yral.shared.features.auth.domain.useCases.DeleteAccountUseCase
-import com.yral.shared.features.auth.utils.getAccountInfo
 import com.yral.shared.firebaseStore.getDownloadUrl
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import dev.gitlive.firebase.storage.FirebaseStorage
@@ -23,6 +23,8 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -62,6 +64,15 @@ class AccountsViewModel(
                     .takeIf { url -> url.isNotEmpty() }
                     ?.let { iconUrl -> _state.update { it.copy(supportIcon = iconUrl) } }
             }
+        }
+        coroutineScope.launch {
+            sessionManager
+                .observeSessionProperties()
+                .map { it.isSocialSignIn }
+                .distinctUntilChanged()
+                .collect { isSocialSignIn ->
+                    _state.update { it.copy(isLoggedIn = isSocialSignIn == true) }
+                }
         }
     }
 
@@ -122,8 +133,7 @@ class AccountsViewModel(
                     menuCtaType = MenuCtaType.PRIVACY_POLICY,
                 ),
             )
-        val isSocialSignIn = isLoggedIn()
-        if (isSocialSignIn) {
+        if (_state.value.isLoggedIn) {
             links.add(
                 AccountHelpLink(
                     type = AccountHelpLinkType.LOGOUT,
@@ -181,8 +191,6 @@ class AccountsViewModel(
         }
     }
 
-    fun isLoggedIn(): Boolean = sessionManager.isSocialSignIn()
-
     companion object {
         const val LOGOUT_URI = "yral://logout"
         const val DELETE_ACCOUNT_URI = "yral://deleteAccount"
@@ -215,6 +223,7 @@ data class AccountsState(
     val accountLinks: AccountLinksDto,
     val supportIcon: String? = null,
     val isWalletEnabled: Boolean = false,
+    val isLoggedIn: Boolean = false,
 )
 
 sealed interface AccountBottomSheet {

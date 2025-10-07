@@ -68,6 +68,7 @@ object YralColors {
     val SmileyGameCardBackground = Color(0x66000000)
     val GameToggleBackground = Color(0x66212121)
     val HowToPlayBackground = Color(0x80000000)
+    val GameRewardChipBackground = Color(0xFFE2E6FF)
 
     fun getColorFromHex(hex: String): Color {
         val cleanHex = hex.removePrefix("#")

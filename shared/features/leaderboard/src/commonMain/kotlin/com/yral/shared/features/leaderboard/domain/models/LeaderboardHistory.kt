@@ -12,4 +12,6 @@ data class LeaderboardHistoryDay(
     val date: String,
     val topRows: List<LeaderboardItem>,
     val userRow: LeaderboardItem?,
+    val rewardCurrency: RewardCurrency? = null,
+    val rewardCurrencyCode: String? = null,
 )
