@@ -916,6 +916,40 @@ data class SatsToBtcConvertedEventData(
     @SerialName("sats_converted") val satsConverted: Double,
 ) : EventData
 
+@Serializable
+data class VideoViewsRewardsNudgeShownEventData(
+    @SerialName("event") override val event: String = FeatureEvents.VIDEO_VIEWS_REWARDS_NUDGE_SHOWN.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.WALLET.getFeatureName(),
+    @SerialName("video_id") val videoId: String?,
+    @SerialName("current_views") val currentViews: Long?,
+    @SerialName("reward_amount_btc") val rewardAmountBtc: Double?,
+) : BaseEventData(),
+    EventData {
+    constructor(
+        videoId: String?,
+        currentViews: Long?,
+        rewardAmountBtc: Double?,
+    ) : this(
+        FeatureEvents.VIDEO_VIEWS_REWARDS_NUDGE_SHOWN.getEventName(),
+        Features.WALLET.getFeatureName(),
+        videoId,
+        currentViews,
+        rewardAmountBtc,
+    )
+}
+
+@Serializable
+data class HowToEarnClickedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.HOW_TO_EARN_CLICKED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.WALLET.getFeatureName(),
+) : BaseEventData(),
+    EventData {
+    constructor() : this(
+        FeatureEvents.HOW_TO_EARN_CLICKED.getEventName(),
+        Features.WALLET.getFeatureName(),
+    )
+}
+
 // --- Refer & Earn ---
 @Serializable
 data class ReferAndEarnPageViewedEventData(

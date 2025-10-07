@@ -109,7 +109,7 @@ internal class DefaultHomeComponent(
                 }
             is RewardsReceived -> {
                 when (appRoute.rewardOn) {
-                    RewardOn.VIDEO_VIEWS -> showSlot(SlotConfig.VideoViewsRewardsBottomSheet)
+                    RewardOn.VIDEO_VIEWS -> showSlot(SlotConfig.VideoViewsRewardsBottomSheet(appRoute))
                 }
             }
             is VideoUploadSuccessful ->
@@ -200,9 +200,10 @@ internal class DefaultHomeComponent(
                 SlotChild.AlertsRequestBottomSheet(
                     alertsRequestComponent(componentContext),
                 )
-            SlotConfig.VideoViewsRewardsBottomSheet ->
+            is SlotConfig.VideoViewsRewardsBottomSheet ->
                 SlotChild.VideoViewsRewardsBottomSheet(
-                    btcRewardsComponent(componentContext),
+                    component = btcRewardsComponent(componentContext),
+                    data = config.data,
                 )
         }
 
@@ -257,6 +258,8 @@ internal class DefaultHomeComponent(
         data object AlertsRequestBottomSheet : SlotConfig
 
         @Serializable
-        data object VideoViewsRewardsBottomSheet : SlotConfig
+        data class VideoViewsRewardsBottomSheet(
+            val data: RewardsReceived,
+        ) : SlotConfig
     }
 }

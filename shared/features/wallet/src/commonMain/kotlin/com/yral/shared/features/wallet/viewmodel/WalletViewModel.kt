@@ -112,8 +112,11 @@ class WalletViewModel(
         }
     }
 
-    fun toggleHowToEarnHelp() {
-        _state.update { it.copy(howToEarnHelpVisible = !it.howToEarnHelpVisible) }
+    fun toggleHowToEarnHelp(isOpen: Boolean) {
+        _state.update { it.copy(howToEarnHelpVisible = isOpen) }
+        if (isOpen) {
+            walletTelemetry.onHowToEarnClicked()
+        }
     }
 
     companion object {

@@ -107,7 +107,7 @@ fun WalletScreen(
             state.rewardConfig?.let {
                 YralButton(
                     text = stringResource(Res.string.how_to_earn_bitcoin),
-                    onClick = { viewModel.toggleHowToEarnHelp() },
+                    onClick = { viewModel.toggleHowToEarnHelp(true) },
                     modifier =
                         Modifier
                             .wrapContentWidth()
@@ -121,7 +121,7 @@ fun WalletScreen(
     if (state.howToEarnHelpVisible) {
         state.rewardConfig?.let { rewardConfig ->
             YralBottomSheet(
-                onDismissRequest = { viewModel.toggleHowToEarnHelp() },
+                onDismissRequest = { viewModel.toggleHowToEarnHelp(false) },
                 bottomSheetState = bottomSheetState,
                 dragHandle = null,
                 content = { HowToEarnBitcoinSheet(state.rewardAnimationUrl) },

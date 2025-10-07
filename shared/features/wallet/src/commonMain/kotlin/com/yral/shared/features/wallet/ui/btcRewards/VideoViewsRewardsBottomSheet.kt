@@ -12,6 +12,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -23,6 +24,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import com.yral.shared.features.wallet.analytics.WalletTelemetry
 import com.yral.shared.features.wallet.ui.btcRewards.nav.VideoViewRewardsComponent
 import com.yral.shared.libs.designsystem.component.YralBottomSheet
 import com.yral.shared.libs.designsystem.component.YralButton
@@ -32,7 +34,9 @@ import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralBrushes
 import com.yral.shared.libs.designsystem.theme.YralColors
+import com.yral.shared.libs.routing.routes.api.RewardsReceived
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import yral_mobile.shared.features.wallet.generated.resources.Res
 import yral_mobile.shared.features.wallet.generated.resources.bit_coin
 import yral_mobile.shared.features.wallet.generated.resources.btc_credited
@@ -42,8 +46,13 @@ import yral_mobile.shared.features.wallet.generated.resources.keep_scrolling
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun VideoViewsRewardsBottomSheet(component: VideoViewRewardsComponent) {
+fun VideoViewsRewardsBottomSheet(
+    component: VideoViewRewardsComponent,
+    data: RewardsReceived,
+    walletTelemetry: WalletTelemetry = koinInject(),
+) {
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    LaunchedEffect(Unit) { walletTelemetry.onVideoViewsRewardsNudgeShown(data) }
     YralBottomSheet(
         onDismissRequest = { component.onDismissClicked() },
         bottomSheetState = bottomSheetState,
