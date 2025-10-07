@@ -46,6 +46,10 @@ class SessionManager {
                 else -> null
             }
 
+    fun updateReauthenticatedState(state: SessionState) {
+        _state.update { state }
+    }
+
     fun updateState(state: SessionState) {
         _state.update { state }
         sessionProperties.update { SessionProperties() }
