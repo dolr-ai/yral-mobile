@@ -105,4 +105,14 @@ subprojects {
             input.from(sarifReportFile)
         }
     }
+
+    // Black listing alpha version of compose ui since 1.10.3-alphaX dependency
+    // required by androidx-paging 3.4.0-alphaX is buggy
+    configurations.configureEach {
+        dependencies.withType<ExternalModuleDependency>().configureEach {
+            if (group == "androidx.paging" && version?.contains("alpha") == true) {
+                exclude(group = "androidx.compose.ui", module = "ui")
+            }
+        }
+    }
 }
