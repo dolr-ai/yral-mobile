@@ -10,7 +10,6 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.runtime.remember
@@ -32,7 +31,6 @@ import com.yral.shared.libs.videoPlayer.util.PrefetchVideoListener
 import com.yral.shared.libs.videoPlayer.util.ReelScrollDirection
 import com.yral.shared.libs.videoPlayer.util.nextN
 import com.yral.shared.libs.videoPlayer.util.rememberPrefetchPlayerWithLifecycle
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 @Composable
@@ -148,30 +146,6 @@ internal fun YRALReelsPlayerView(
             .collect { page -> pagerState.animateScrollToPage(page) }
     }
 
-    // Page change to start/stop play back time trace
-    var lastPage by remember { mutableIntStateOf(-1) }
-    LaunchedEffect(key1 = pagerState, reels) {
-        snapshotFlow { pagerState.currentPage to reels }
-            .distinctUntilChanged()
-            .collect { (page, reels) ->
-                if (lastPage != page) {
-                    if (reels.size > lastPage && lastPage >= 0) {
-                        playerPool.onPlayBackStopped(
-                            playerData = reels[lastPage].toPlayerData(),
-                        )
-                    }
-                    // small delay for player setup
-                    delay(PLAYER_SETUP_DELAY)
-                    if (reels.size > page && page >= 0) {
-                        playerPool.onPlayBackStarted(
-                            playerData = reels[page].toPlayerData(),
-                        )
-                    }
-                    lastPage = page
-                }
-            }
-    }
-
     var isPause by remember { mutableStateOf(false) } // State for pausing/resuming video
 
     // Detect user attempts to scroll beyond available pages (start or end)
@@ -190,14 +164,12 @@ internal fun YRALReelsPlayerView(
         VerticalPager(
             modifier = modifier.nestedScroll(edgeDetectConnection),
             state = pagerState,
-            userScrollEnabled = true, // Ensure user scrolling is enabled
+            userScrollEnabled = true,
             beyondViewportPageCount = 0,
             key = { page -> reels.getOrNull(page)?.videoId ?: page },
         ) { page ->
-            // Create a side effect to detect when this page is shown
-            LaunchedEffect(page, pagerState.currentPage) {
-                if (pagerState.currentPage == page) {
-                    // Call the callback directly from here
+            LaunchedEffect(page, pagerState.settledPage) {
+                if (pagerState.settledPage == page) {
                     onPageLoaded(page)
                 }
             }
@@ -213,12 +185,13 @@ internal fun YRALReelsPlayerView(
                     playerControls =
                         PlayerControls(
                             isPause =
-                                if (pagerState.currentPage == page) {
+                                if (pagerState.settledPage == page) {
                                     isPause
                                 } else {
                                     true
-                                }, // Pause video when not in focus
-                            onPauseToggle = { isPause = isPause.not() }, // Toggle pause/resume
+                                },
+                            isCurrentPage = pagerState.currentPage == page,
+                            onPauseToggle = { isPause = isPause.not() },
                             recordTime = recordTime,
                         ),
                     playerPool = playerPool,
@@ -231,13 +204,11 @@ internal fun YRALReelsPlayerView(
         HorizontalPager(
             modifier = modifier.nestedScroll(edgeDetectConnection),
             state = pagerState,
-            userScrollEnabled = true, // Ensure user scrolling is enabled
+            userScrollEnabled = true,
             beyondViewportPageCount = 0,
         ) { page ->
-            // Create a side effect to detect when this page is shown
-            LaunchedEffect(page, pagerState.currentPage) {
-                if (pagerState.currentPage == page) {
-                    // Call the callback directly from here
+            LaunchedEffect(page, pagerState.settledPage) {
+                if (pagerState.settledPage == page) {
                     onPageLoaded(page)
                 }
             }
@@ -253,12 +224,13 @@ internal fun YRALReelsPlayerView(
                     playerControls =
                         PlayerControls(
                             isPause =
-                                if (pagerState.currentPage == page) {
+                                if (pagerState.settledPage == page) {
                                     isPause
                                 } else {
                                     true
-                                }, // Pause video when not in focus
-                            onPauseToggle = { isPause = isPause.not() }, // Toggle pause/resume
+                                },
+                            isCurrentPage = pagerState.currentPage == page,
+                            onPauseToggle = { isPause = isPause.not() },
                             recordTime = recordTime,
                         ),
                     playerPool = playerPool,
@@ -286,5 +258,3 @@ private fun PrefetchVideos(
         )
     }
 }
-
-private const val PLAYER_SETUP_DELAY = 100L

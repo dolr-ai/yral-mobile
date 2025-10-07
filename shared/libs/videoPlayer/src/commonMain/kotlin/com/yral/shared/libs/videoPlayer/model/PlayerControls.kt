@@ -1,8 +1,9 @@
 package com.yral.shared.libs.videoPlayer.model
 
 data class PlayerControls(
-    val isPause: Boolean, // Flag indicating if the video is paused
-    val onPauseToggle: (() -> Unit), // Callback for toggling pause/resume
+    val isPause: Boolean,
+    val isCurrentPage: Boolean = true,
+    val onPauseToggle: (() -> Unit),
     val recordTime: (Int, Int) -> Unit,
 )
 

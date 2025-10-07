@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -61,6 +62,29 @@ actual fun CMPPlayer(
     var isBuffering by remember { mutableStateOf(false) }
     var showThumbnail by remember { mutableStateOf(true) }
 
+    // Stop audio immediately when not current page (during scroll)
+    LaunchedEffect(playerParams.isCurrentPage, exoPlayer) {
+        if (!playerParams.isCurrentPage && exoPlayer != null) {
+            exoPlayer.playWhenReady = false
+            exoPlayer.volume = 0f
+            exoPlayer.stop()
+        }
+    }
+
+    // Disconnect player when paused (after scroll settles)
+    LaunchedEffect(playerParams.isPause, exoPlayer, playerView) {
+        if (playerParams.isPause) {
+            exoPlayer?.let {
+                it.playWhenReady = false
+                it.volume = 0f
+                it.stop()
+            }
+            playerView?.player = null
+        } else if (exoPlayer != null && playerView != null) {
+            playerView.player = exoPlayer
+        }
+    }
+
     // Notify buffer state changes
     LaunchedEffect(isBuffering) {
         playerParams.bufferCallback(isBuffering)
@@ -89,24 +113,37 @@ actual fun CMPPlayer(
     }
 
     Box(modifier) {
-        // YralBlurredThumbnail(playerData.thumbnailUrl)
-        playerView?.let {
-            AndroidView(
-                factory = { playerView },
-                modifier = modifier,
-                update = {
-                    exoPlayer.playWhenReady = !playerParams.isPause
-                    exoPlayer.volume = if (playerParams.isMute) 0f else 1f
-                    playerParams.sliderTime?.let { exoPlayer.seekTo(it.toLong()) }
-                    exoPlayer.setPlaybackSpeed(playerParams.speed.toFloat())
-                    playerView.artworkDisplayMode = PlayerView.ARTWORK_DISPLAY_MODE_FILL
-                    playerView.resizeMode =
-                        when (playerParams.size) {
-                            ScreenResize.FIT -> AspectRatioFrameLayout.RESIZE_MODE_FIT
-                            ScreenResize.FILL -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+        if (exoPlayer != null && playerView != null && !playerParams.isPause) {
+            key(playerData.url) {
+                AndroidView(
+                    factory = { playerView.apply { player = exoPlayer } },
+                    modifier = modifier,
+                    onRelease = { view ->
+                        view.player?.let { p ->
+                            if (p is ExoPlayer) {
+                                p.playWhenReady = false
+                                p.volume = 0f
+                                p.stop()
+                            }
                         }
-                },
-            )
+                        view.player = null
+                    },
+                    update = { view ->
+                        if (view.player == exoPlayer) {
+                            exoPlayer.playWhenReady = !playerParams.isPause
+                            exoPlayer.volume = if (playerParams.isMute) 0f else 1f
+                            playerParams.sliderTime?.let { exoPlayer.seekTo(it.toLong()) }
+                            exoPlayer.setPlaybackSpeed(playerParams.speed.toFloat())
+                            view.artworkDisplayMode = PlayerView.ARTWORK_DISPLAY_MODE_FILL
+                            view.resizeMode =
+                                when (playerParams.size) {
+                                    ScreenResize.FIT -> AspectRatioFrameLayout.RESIZE_MODE_FIT
+                                    ScreenResize.FILL -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+                                }
+                        }
+                    },
+                )
+            }
         }
         if (showThumbnail) {
             AsyncImage(

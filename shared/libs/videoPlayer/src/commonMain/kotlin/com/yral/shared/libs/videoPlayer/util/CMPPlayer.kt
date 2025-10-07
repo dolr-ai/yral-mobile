@@ -19,6 +19,7 @@ expect fun CMPPlayer(
 
 data class CMPPlayerParams(
     val isPause: Boolean,
+    val isCurrentPage: Boolean = true,
     val isMute: Boolean,
     val totalTime: ((Int) -> Unit),
     val currentTime: ((Int) -> Unit),

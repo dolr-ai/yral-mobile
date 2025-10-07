@@ -106,6 +106,7 @@ internal fun YRALVideoPlayerWithControl(
             playerParams =
                 CMPPlayerParams(
                     isPause = playerControls.isPause,
+                    isCurrentPage = playerControls.isCurrentPage,
                     isMute = isMute,
                     totalTime = { totalTime = it }, // Update total time of the video
                     currentTime = {

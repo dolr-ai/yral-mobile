@@ -9,6 +9,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -30,6 +31,7 @@ import com.yral.shared.libs.videoPlayer.pool.PlatformPlayer
 import com.yral.shared.libs.videoPlayer.pool.PlayerPool
 import com.yral.shared.libs.videoPlayer.pool.VideoListener
 import com.yral.shared.libs.videoPlayer.util.isHlsUrl
+import kotlinx.coroutines.launch
 
 @OptIn(UnstableApi::class)
 @Composable
@@ -48,10 +50,15 @@ fun rememberPlayerView(
                         )
                     useController = false
                     resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
-                    player = exoPlayer
                     setShowBuffering(PlayerView.SHOW_BUFFERING_NEVER)
                 }
         }
+
+    // Update player connection when exoPlayer instance changes
+    LaunchedEffect(exoPlayer) {
+        playerView.player = exoPlayer
+    }
+
     DisposableEffect(playerView) {
         onDispose {
             playerView.player = null
@@ -148,22 +155,53 @@ fun rememberPooledExoPlayer(
 ): ExoPlayer? {
     var platformPlayer: PlatformPlayer? by remember { mutableStateOf(null) }
     var exoPlayer: ExoPlayer? by remember { mutableStateOf(null) }
+    val coroutineScope = rememberCoroutineScope()
 
-    // Get player from pool when URL changes
-    LaunchedEffect(playerData.url, playerPool) {
-        if (playerData.url.isNotEmpty()) {
-            platformPlayer =
-                playerPool
-                    .getPlayer(
-                        playerData = playerData,
-                        videoListener = videoListener,
-                    )
-            exoPlayer = platformPlayer?.internalExoPlayer
+    // Stop audio immediately when paused
+    LaunchedEffect(isPause, exoPlayer) {
+        val player = exoPlayer
+        if (isPause && player != null) {
+            player.playWhenReady = false
+            player.volume = 0f
+            player.stop()
         }
     }
 
-    // Note: Performance tracing is now handled internally by the PlayerPool
-    // No need for additional tracing here to avoid duplicates
+    // Acquire player only when active (prevents pool contention)
+    LaunchedEffect(playerData.url, isPause, playerPool) {
+        if (playerData.url.isNotEmpty()) {
+            if (!isPause) {
+                if (platformPlayer == null) {
+                    platformPlayer =
+                        playerPool
+                            .getPlayer(
+                                playerData = playerData,
+                                videoListener = videoListener,
+                            )
+                    exoPlayer = platformPlayer?.internalExoPlayer
+                    playerPool.onPlayBackStarted(playerData)
+                }
+            } else {
+                platformPlayer?.let { player ->
+                    playerPool.onPlayBackStopped(playerData)
+                    playerPool.releasePlayer(player)
+                    platformPlayer = null
+                    exoPlayer = null
+                }
+            }
+        }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            platformPlayer?.let { player ->
+                coroutineScope.launch {
+                    playerPool.onPlayBackStopped(playerData)
+                    playerPool.releasePlayer(player)
+                }
+            }
+        }
+    }
 
     val lifecycleOwner = LocalLifecycleOwner.current
     var appInBackground by remember {
