@@ -99,7 +99,14 @@ struct HomeTabController: View {
           selectedTab = .wallet
         case .profile, .profileAfterUpload:
           selectedTab = .profile
-        case .videoViewedRewards:
+        case .videoViewedRewards(let videoID, let totalViews, let rewardAmount):
+          AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+            event: VideoViewsRewardsNudgeShownEventData(
+              videoId: videoID,
+              currentViews: KotlinLong(value: totalViews),
+              rewardAmountBtc: KotlinDouble(value: rewardAmount)
+            )
+          )
           showBTCEarnedBottomSheet = true
         }
         deepLinkRouter.pendingDestination = nil

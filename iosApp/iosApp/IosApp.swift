@@ -97,14 +97,21 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     _ center: UNUserNotificationCenter,
     willPresent notification: UNNotification
   ) async -> UNNotificationPresentationOptions {
-    if let type = notification.request.content.userInfo["type"] as? String {
+    if let type = notification.request.content.userInfo["type"] as? String,
+       let internalURL = notification.request.content.userInfo["internalUrl"] as? String {
       if type == Constants.videoUploadSuccessType {
         ToastManager.showToast(type: .uploadSuccess) {}
         onTap: {
           DeepLinkRouter.shared.pendingDestination = .profileAfterUpload
         }
       } else if type == Constants.videoViewedRewardType {
-        DeepLinkRouter.shared.pendingDestination = .videoViewedRewards
+        if let rewards = AppDIHelper().getRoutingService().parseUrl(url: internalURL) as? RewardsReceived {
+          DeepLinkRouter.shared.pendingDestination = .videoViewedRewards(
+            videoID: rewards.videoID ?? "",
+            totalViews: Int64(rewards.viewCount ?? "0") ?? 0,
+            rewardAmount: Double(rewards.rewardBtc ?? "0") ?? 0
+          )
+        }
       }
     }
 

@@ -24,7 +24,7 @@ final class DeepLinkRouter: ObservableObject {
     case profile
     case profileAfterUpload
     case openVideo(postId: String, canisterId: String?)
-    case videoViewedRewards
+    case videoViewedRewards(videoID: String, totalViews: Int64, rewardAmount: Double)
   }
 
   @discardableResult func resolve(from userInfo: [AnyHashable: Any]) -> Destination? {
@@ -75,8 +75,12 @@ final class DeepLinkRouter: ObservableObject {
       return .wallet
     case _ as Profile:
       return .profile
-    case _ as RewardsReceived:
-      return .videoViewedRewards
+    case let rewardsReceived as RewardsReceived:
+      return .videoViewedRewards(
+        videoID: rewardsReceived.videoID ?? "",
+        totalViews: Int64(rewardsReceived.viewCount ?? "0") ?? 0,
+        rewardAmount: Double(rewardsReceived.rewardBtc ?? "0") ?? 0
+      )
     case _ as VideoUploadSuccessful:
       return .profileAfterUpload
     default:

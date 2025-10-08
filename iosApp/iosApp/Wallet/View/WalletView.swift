@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import iosSharedUmbrella
 
 struct WalletView: View {
   @StateObject var viewModel: WalletViewModel
@@ -137,6 +138,7 @@ struct WalletView: View {
             )
             .onTapGesture {
               showEarnBTCBottomSheet = true
+              AnalyticsModuleKt.getAnalyticsManager().trackEvent(event: HowToEarnClickedEventData())
             }
         }
       }
