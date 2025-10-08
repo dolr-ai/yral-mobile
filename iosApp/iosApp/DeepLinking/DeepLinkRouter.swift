@@ -37,7 +37,10 @@ final class DeepLinkRouter: ObservableObject {
   }
 
   private func resolveDestination(fromPNs userInfo: [AnyHashable: Any]) -> Destination? {
-    guard let internalURL = userInfo["internalUrl"] as? String else {
+    guard let payloadString = userInfo[Constants.payloadString] as? String,
+          let payloadData = payloadString.data(using: .utf8),
+          let payloadDict = try? JSONSerialization.jsonObject(with: payloadData) as? [String: Any],
+          let internalURL = payloadDict[Constants.internalURL] as? String else {
       return nil
     }
 
@@ -104,6 +107,7 @@ extension DeepLinkRouter {
   enum Constants {
     static let payloadString = "payload"
     static let typeString = "type"
+    static let internalURL = "internalUrl"
     static let videoUploadSuccessType = "VideoUploadSuccessful"
     static let branchParameters = "Branch parameters:"
     static let branchError = "Branch error:"

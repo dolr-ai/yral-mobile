@@ -97,8 +97,11 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     _ center: UNUserNotificationCenter,
     willPresent notification: UNNotification
   ) async -> UNNotificationPresentationOptions {
-    if let type = notification.request.content.userInfo["type"] as? String,
-       let internalURL = notification.request.content.userInfo["internalUrl"] as? String {
+    if let payloadString = notification.request.content.userInfo[Constants.payloadString] as? String,
+       let payloadData = payloadString.data(using: .utf8),
+       let payloadDict = try? JSONSerialization.jsonObject(with: payloadData) as? [String: Any],
+       let type = payloadDict[Constants.typeString] as? String,
+       let internalURL = payloadDict[Constants.internalURL] as? String {
       if type == Constants.videoUploadSuccessType {
         ToastManager.showToast(type: .uploadSuccess) {}
         onTap: {
@@ -267,6 +270,7 @@ extension AppDelegate {
   public enum Constants {
     static let payloadString = "payload"
     static let typeString = "type"
+    static let internalURL = "internalUrl"
     static let videoUploadSuccessType = "VideoUploadSuccessful"
     static let videoViewedRewardType = "RewardEarned"
   }
