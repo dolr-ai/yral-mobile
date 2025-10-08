@@ -17,6 +17,8 @@ import com.google.android.play.core.install.model.AppUpdateType
 import com.google.android.play.core.install.model.InstallStatus
 import com.google.android.play.core.install.model.UpdateAvailability
 import com.russhwolf.settings.Settings
+import com.yral.shared.app.UpdateState
+import com.yral.shared.app.UpdateType
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.preferences.PrefKeys
 
