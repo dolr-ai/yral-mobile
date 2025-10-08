@@ -178,6 +178,7 @@ class DefaultAuthClient(
                 canisterId = canisterWrapper.canisterId,
                 userPrincipal = canisterWrapper.userPrincipalId,
                 profilePic = canisterWrapper.profilePic,
+                username = canisterWrapper.username,
                 isCreatedFromServiceCanister = canisterWrapper.isCreatedFromServiceCanister,
             )
         } catch (e: YralFfiException) {
