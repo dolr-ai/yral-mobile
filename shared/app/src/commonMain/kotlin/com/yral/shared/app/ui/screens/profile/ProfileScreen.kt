@@ -115,14 +115,12 @@ internal fun ProfileScreen(
                     currentAlertsStatusProvider = alertsPermissionController.currentStatus,
                 )
             }
-            is ProfileComponent.Child.EditProfile -> {
-                val editProfileViewModel: EditProfileViewModel = koinViewModel()
+            is ProfileComponent.Child.EditProfile ->
                 EditProfileScreen(
                     component = instance.component,
-                    viewModel = editProfileViewModel,
+                    viewModel = koinViewModel<EditProfileViewModel>(),
                     modifier = Modifier.fillMaxSize(),
                 )
-            }
         }
     }
 }

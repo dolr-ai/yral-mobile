@@ -32,19 +32,19 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+@Suppress("LongParameterList")
 class AccountsViewModel internal constructor(
-    private val dependencies: Dependencies,
+    private val appDispatchers: AppDispatchers,
+    private val authClientFactory: AuthClientFactory,
+    private val sessionManager: SessionManager,
+    private val deleteAccountUseCase: DeleteAccountUseCase,
+    val accountsTelemetry: AccountsTelemetry,
+    private val flagManager: FeatureFlagManager,
+    private val firebaseStorage: FirebaseStorage,
+    private val preferences: Preferences,
+    private val registerNotificationTokenUseCase: RegisterNotificationTokenUseCase,
+    private val deregisterNotificationTokenUseCase: DeregisterNotificationTokenUseCase,
 ) : ViewModel() {
-    private val appDispatchers = dependencies.appDispatchers
-    private val authClientFactory = dependencies.authClientFactory
-    private val sessionManager = dependencies.sessionManager
-    private val deleteAccountUseCase = dependencies.deleteAccountUseCase
-    val accountsTelemetry = dependencies.accountsTelemetry
-    private val flagManager = dependencies.flagManager
-    private val firebaseStorage = dependencies.firebaseStorage
-    private val preferences = dependencies.preferences
-    private val registerNotificationTokenUseCase = dependencies.registerNotificationTokenUseCase
-    private val deregisterNotificationTokenUseCase = dependencies.deregisterNotificationTokenUseCase
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.disk)
 
     private val authClient =
@@ -245,18 +245,6 @@ class AccountsViewModel internal constructor(
         const val LOGOUT_URI = "yral://logout"
         const val DELETE_ACCOUNT_URI = "yral://deleteAccount"
     }
-    internal data class Dependencies(
-        val appDispatchers: AppDispatchers,
-        val authClientFactory: AuthClientFactory,
-        val sessionManager: SessionManager,
-        val deleteAccountUseCase: DeleteAccountUseCase,
-        val accountsTelemetry: AccountsTelemetry,
-        val flagManager: FeatureFlagManager,
-        val firebaseStorage: FirebaseStorage,
-        val preferences: Preferences,
-        val registerNotificationTokenUseCase: RegisterNotificationTokenUseCase,
-        val deregisterNotificationTokenUseCase: DeregisterNotificationTokenUseCase,
-    )
 }
 
 data class AccountHelpLink(
