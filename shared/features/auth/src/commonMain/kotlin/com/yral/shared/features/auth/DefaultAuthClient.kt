@@ -9,6 +9,7 @@ import com.yral.shared.core.session.DELAY_FOR_SESSION_PROPERTIES
 import com.yral.shared.core.session.Session
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
+import com.yral.shared.core.utils.resolveUsername
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.analytics.AuthTelemetry
 import com.yral.shared.features.auth.domain.AuthRepository
@@ -178,7 +179,7 @@ class DefaultAuthClient(
                 canisterId = canisterWrapper.canisterId,
                 userPrincipal = canisterWrapper.userPrincipalId,
                 profilePic = canisterWrapper.profilePic,
-                username = canisterWrapper.username,
+                username = resolveUsername(canisterWrapper.username, canisterWrapper.userPrincipalId),
                 isCreatedFromServiceCanister = canisterWrapper.isCreatedFromServiceCanister,
             )
         } catch (e: YralFfiException) {
@@ -198,7 +199,7 @@ class DefaultAuthClient(
                             canisterId = canisterWrapper.canisterId,
                             userPrincipal = canisterWrapper.userPrincipalId,
                             profilePic = canisterWrapper.profilePic,
-                            username = canisterWrapper.username,
+                            username = resolveUsername(canisterWrapper.username, canisterWrapper.userPrincipalId),
                             isCreatedFromServiceCanister = canisterWrapper.isCreatedFromServiceCanister,
                         )
                     }
@@ -491,12 +492,13 @@ class DefaultAuthClient(
             .all { it != null }
             .let { allPresent ->
                 if (allPresent) {
+                    val principal = userPrincipal!!
                     Session(
                         identity = identity!!,
                         canisterId = canisterId!!,
-                        userPrincipal = userPrincipal!!,
+                        userPrincipal = principal,
                         profilePic = profilePic!!,
-                        username = username,
+                        username = resolveUsername(username, principal),
                         // default false for backward compatibility
                         isCreatedFromServiceCanister = isCreatedFromServiceCanister ?: false,
                     )
@@ -515,9 +517,9 @@ class DefaultAuthClient(
             preferences.putString(PrefKeys.CANISTER_ID.name, canisterId)
             preferences.putString(PrefKeys.USER_PRINCIPAL.name, userPrincipalId)
             preferences.putString(PrefKeys.PROFILE_PIC.name, profilePic)
-            val username = username
-            if (username != null) {
-                preferences.putString(PrefKeys.USERNAME.name, username)
+            val resolvedUsername = resolveUsername(username, userPrincipalId)
+            if (resolvedUsername != null) {
+                preferences.putString(PrefKeys.USERNAME.name, resolvedUsername)
             } else {
                 preferences.remove(PrefKeys.USERNAME.name)
             }

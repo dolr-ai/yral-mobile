@@ -132,5 +132,4 @@ object LeaderboardHelpers {
 
     const val PROFILE_IMAGE_SIZE = 25f
     const val MAX_USERS_WITH_DUPLICATE_RANK = 4
-    const val MAX_USERS_PRINCIPAL_LENGTH = 4
 }

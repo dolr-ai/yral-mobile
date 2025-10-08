@@ -305,7 +305,12 @@ private fun UserBriefProfileName(
         if (isCurrentUser) {
             stringResource(Res.string.you)
         } else {
-            name.take(LeaderboardMainScreenConstants.MAX_CHAR_OF_NAME).plus("...")
+            val limit = LeaderboardMainScreenConstants.MAX_CHAR_OF_NAME
+            if (name.length > limit) {
+                name.take(limit) + "..."
+            } else {
+                name
+            }
         }
     if (decorateCurrentUser) {
         Text(
