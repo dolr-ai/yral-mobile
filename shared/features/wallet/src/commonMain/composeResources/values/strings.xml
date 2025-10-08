@@ -2,11 +2,11 @@
     <string name="my_wallet">My Wallet</string>
     <string name="bit_coin">Bitcoin</string>
     <string name="btc_inr_rate">1 Bitcoin = %1$s</string>
-    <string name="how_to_earn_bitcoin">How to Earn Bitcoin</string>
-    <string name="how_to_earn_bitcoins">How to earn BITCOINS!</string>
+    <string name="how_to_earn_bitcoin">How to get Bitcoin</string>
+    <string name="how_to_earn_bitcoins">How to get Bitcoin reward?</string>
     <string name="get_bitcoin">Get Bitcoin \non having views per video.</string>
-    <string name="btc_credited">Bitcoin Credited</string>
+    <string name="btc_credited">Bitcoin Reward added</string>
     <string name="go_to_wallet">Go to Wallet</string>
     <string name="keep_scrolling">Keep Scrolling</string>
-    <string name="btc_rewards_congratulations">Congrats! Your video views have earned you Bitcoin. \nSee your balance in the wallet.</string>
+    <string name="btc_rewards_congratulations">Congrats! You’ve received a Bitcoin reward for your video views. See it in your wallet.</string>
 </resources>
