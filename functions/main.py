@@ -751,6 +751,8 @@ def _dense_top_rows_for_day_v2(bucket_id: str, rewards_table: Optional[Dict[str,
     )
     rows: List[Dict] = []
     current_rank, last_wins = 0, None
+    principal_ids = []
+
     for snap in snaps:
         wins = int(snap.get("smiley_game_wins") or 0)
         if wins != last_wins:
@@ -767,6 +769,16 @@ def _dense_top_rows_for_day_v2(bucket_id: str, rewards_table: Optional[Dict[str,
             row["reward"] = rewards_table.get(str(current_rank), None)
 
         rows.append(row)
+        principal_ids.append(snap.id)
+
+    if principal_ids:
+        user_refs = [db().collection("users").document(pid) for pid in principal_ids]
+        user_docs = db().get_all(user_refs)
+        username_map = {
+            doc.id: (doc.to_dict() or {}).get("username") for doc in user_docs
+        }
+        for row in rows:
+            row["username"] = username_map.get(row["principal_id"])
 
     return rows, last_wins, current_rank
 
@@ -809,10 +821,14 @@ def _user_row_for_day_v2(bucket_id: str, pid: str, rewards_table: Optional[Dict[
     higher = int(rank_q[0][0].value)
     position = higher + 1
 
+    user_doc = db().collection("users").document(pid).get()
+    username = (user_doc.to_dict() or {}).get("username")
+
     user_row = {
         "principal_id": pid,
         "wins": user_wins,
         "position": position,
+        "username": username
     }
 
     if rewards_enabled and user_wins > 0 and rewards_table:
@@ -1373,7 +1389,9 @@ def leaderboard_v3(request: Request):
             user_ref = users.document(pid)
 
             user_snap = user_ref.get()
-            user_wins = int(user_snap.get("smiley_game_wins") or 0)
+            user_doc = user_snap.to_dict() or {}
+            user_wins = int(user_doc.get("smiley_game_wins") or 0)
+            username = user_doc.get("username")
 
             rank_q = (
                 users.where("smiley_game_wins", ">", user_wins)
@@ -1390,20 +1408,23 @@ def leaderboard_v3(request: Request):
 
             top_rows, current_rank, last_wins = [], 0, None
             for snap in top_snaps:
-                wins = int(snap.get("smiley_game_wins") or 0)
+                doc = snap.to_dict() or {}
+                wins = int(doc.get("smiley_game_wins") or 0)
                 if wins != last_wins:
                     current_rank += 1   # dense ranking
                     last_wins = wins
                 top_rows.append({
                     "principal_id": snap.id,
                     "wins": wins,
-                    "position": current_rank
+                    "position": current_rank,
+                    "username": doc.get("username")
                 })
 
             user_row = {
                 "principal_id": pid,
                 "wins": user_wins,
-                "position": user_position
+                "position": user_position,
+                "username": username
             }
 
             return jsonify({
@@ -1487,10 +1508,14 @@ def leaderboard_v3(request: Request):
             if wins != last_wins:
                 current_rank += 1    # dense ranking
                 last_wins = wins
+
+            user_doc = db().collection("users").document(snap.id).get()
+            username = (user_doc.to_dict() or {}).get("username")
             row = {
                 "principal_id": snap.id,
                 "wins": wins,
-                "position": current_rank
+                "position": current_rank,
+                "username": username
             }
             if rewards_enabled:
                 row["reward"] = rewards_table.get(str(current_rank))
@@ -1519,6 +1544,8 @@ def leaderboard_v3(request: Request):
             entry_ref = day_users.document(pid)
             entry_snap = entry_ref.get()
             user_wins = int((entry_snap.get("smiley_game_wins") if entry_snap.exists else 0) or 0)
+            user_doc = db().collection("users").document(pid).get()
+            username = (user_doc.to_dict() or {}).get("username")
 
             rank_q = (
                 day_users.where("smiley_game_wins", ">", user_wins)
@@ -1531,7 +1558,8 @@ def leaderboard_v3(request: Request):
                 "principal_id": pid,
                 "wins": user_wins,
                 "position": user_position,
-                "reward": rewards_table.get(str(user_position)) if (rewards_enabled and user_wins > 0) else None
+                "reward": rewards_table.get(str(user_position)) if (rewards_enabled and user_wins > 0) else None,
+                "username": username
             }
 
         return jsonify({
