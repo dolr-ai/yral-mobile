@@ -4,6 +4,7 @@ import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.analytics.AnalyticsManager
+import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.DELAY_FOR_SESSION_PROPERTIES
 import com.yral.shared.core.session.Session
 import com.yral.shared.core.session.SessionManager
@@ -165,6 +166,24 @@ class DefaultAuthClient(
         sessionManager.updateState(SessionState.Initial)
     }
 
+    private suspend fun refreshAuthenticateWithNetwork(data: ByteArray): Session? =
+        try {
+            Logger.d("DefaultAuthClient") { "Refreshing authenticateWithNetwork" }
+            val canisterWrapper = authenticateWithNetwork(data)
+            cacheSession(data, canisterWrapper)
+            Logger.d("DefaultAuthClient") { "Reauthenticated: ${canisterWrapper.isCreatedFromServiceCanister} " }
+            Session(
+                identity = data,
+                canisterId = canisterWrapper.canisterId,
+                userPrincipal = canisterWrapper.userPrincipalId,
+                profilePic = canisterWrapper.profilePic,
+                isCreatedFromServiceCanister = canisterWrapper.isCreatedFromServiceCanister,
+            )
+        } catch (e: YralFfiException) {
+            crashlyticsManager.recordException(YralException("Reauthenticate failed $e"))
+            null
+        }
+
     private suspend fun handleExtractIdentityResponse(data: ByteArray) {
         try {
             var cachedSession = getCachedSession()
@@ -182,6 +201,10 @@ class DefaultAuthClient(
             }
             cachedSession.userPrincipal?.let { crashlyticsManager.setUserId(it) }
             sessionManager.updateCoinBalance(0)
+            if (!cachedSession.isCreatedFromServiceCanister) {
+                val reAuthenticatedSession = refreshAuthenticateWithNetwork(data)
+                reAuthenticatedSession?.let { cachedSession = reAuthenticatedSession }
+            }
             setSession(session = cachedSession)
             fetchBalance(session = cachedSession)
             if (auth.currentUser?.uid == cachedSession.userPrincipal) {

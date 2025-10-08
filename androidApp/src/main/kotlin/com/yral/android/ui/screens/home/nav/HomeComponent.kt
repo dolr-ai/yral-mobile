@@ -11,7 +11,9 @@ import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.features.leaderboard.nav.LeaderboardComponent
 import com.yral.shared.features.uploadvideo.nav.UploadVideoRootComponent
 import com.yral.shared.features.wallet.nav.WalletComponent
+import com.yral.shared.features.wallet.ui.btcRewards.nav.VideoViewRewardsComponent
 import com.yral.shared.libs.routing.routes.api.AppRoute
+import com.yral.shared.libs.routing.routes.api.RewardsReceived
 
 abstract class HomeComponent {
     abstract val stack: Value<ChildStack<*, Child>>
@@ -22,10 +24,6 @@ abstract class HomeComponent {
     abstract fun onProfileTabClick()
     abstract fun onAccountTabClick()
     abstract fun onWalletTabClick()
-
-    @Deprecated("use onNavigationRequest")
-    abstract fun handleNavigation(destination: String)
-
     abstract fun onNavigationRequest(appRoute: AppRoute)
 
     sealed class Child {
@@ -54,6 +52,11 @@ abstract class HomeComponent {
     sealed class SlotChild {
         class AlertsRequestBottomSheet(
             val component: AlertsRequestComponent,
+        ) : SlotChild()
+
+        class VideoViewsRewardsBottomSheet(
+            val component: VideoViewRewardsComponent,
+            val data: RewardsReceived,
         ) : SlotChild()
     }
     companion object {

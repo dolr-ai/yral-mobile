@@ -10,7 +10,11 @@ import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.utils.getAccountInfo
 import com.yral.shared.features.wallet.analytics.WalletTelemetry
 import com.yral.shared.features.wallet.domain.GetBtcConversionUseCase
+import com.yral.shared.features.wallet.domain.GetRewardConfigUseCase
 import com.yral.shared.features.wallet.domain.GetUserBtcBalanceUseCase
+import com.yral.shared.features.wallet.domain.models.BtcRewardConfig
+import com.yral.shared.firebaseStore.getDownloadUrl
+import dev.gitlive.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,7 +27,9 @@ class WalletViewModel(
     private val sessionManager: SessionManager,
     private val getBtcConversionUseCase: GetBtcConversionUseCase,
     private val getUserBtcBalanceUseCase: GetUserBtcBalanceUseCase,
+    private val getRewardConfigUseCase: GetRewardConfigUseCase,
     private val walletTelemetry: WalletTelemetry,
+    private val firebaseStorage: FirebaseStorage,
 ) : ViewModel() {
     private val _state = MutableStateFlow(WalletState())
     val state: StateFlow<WalletState> = _state.asStateFlow()
@@ -36,6 +42,21 @@ class WalletViewModel(
 
     init {
         observeBalance()
+        viewModelScope.launch {
+            getRewardConfigUseCase
+                .invoke()
+                .onSuccess { rewardConfig -> _state.update { it.copy(rewardConfig = rewardConfig) } }
+        }
+        viewModelScope.launch {
+            val animation =
+                getDownloadUrl(
+                    path = BTC_REWARD_ANIMATION_URL,
+                    storage = firebaseStorage,
+                )
+            if (animation.isNotEmpty()) {
+                _state.update { it.copy(rewardAnimationUrl = animation) }
+            }
+        }
     }
 
     fun onScreenViewed() {
@@ -90,6 +111,17 @@ class WalletViewModel(
             }
         }
     }
+
+    fun toggleHowToEarnHelp(isOpen: Boolean) {
+        _state.update { it.copy(howToEarnHelpVisible = isOpen) }
+        if (isOpen) {
+            walletTelemetry.onHowToEarnClicked()
+        }
+    }
+
+    companion object {
+        private const val BTC_REWARD_ANIMATION_URL = "btc_rewards/btc_rewards_views.json"
+    }
 }
 
 data class WalletState(
@@ -98,4 +130,7 @@ data class WalletState(
     val btcConversionRate: Double? = null,
     val btcConversionCurrency: String? = null,
     val accountInfo: AccountInfo? = null,
+    val howToEarnHelpVisible: Boolean = false,
+    val rewardConfig: BtcRewardConfig? = null,
+    val rewardAnimationUrl: String? = null,
 )
