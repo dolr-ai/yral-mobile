@@ -257,14 +257,11 @@ private fun getTrophyDetailItem(
 
 private fun getTrophyDetailsUserTexts(user: List<LeaderboardItem>): String =
     when (user.size) {
-        1 -> user[0].username?.takeIf { it.isNotBlank() } ?: user[0].userPrincipalId
+        1 -> user[0].username
         else ->
             user
                 .take(LeaderboardHelpers.MAX_USERS_WITH_DUPLICATE_RANK)
-                .joinToString(", ") {
-                    it.username?.takeIf { name -> name.isNotBlank() }
-                        ?: (it.userPrincipalId.take(LeaderboardHelpers.MAX_USERS_PRINCIPAL_LENGTH) + "...")
-                }
+                .joinToString(", ") { it.username }
     }
 
 @Composable
