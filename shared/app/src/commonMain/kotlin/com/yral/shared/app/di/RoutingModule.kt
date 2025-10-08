@@ -12,9 +12,11 @@ import com.yral.shared.libs.routing.routes.api.Home
 import com.yral.shared.libs.routing.routes.api.Leaderboard
 import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
 import com.yral.shared.libs.routing.routes.api.Profile
+import com.yral.shared.libs.routing.routes.api.RewardsReceived
 import com.yral.shared.libs.routing.routes.api.TestProductRoute
 import com.yral.shared.libs.routing.routes.api.TestUserRoute
 import com.yral.shared.libs.routing.routes.api.Unknown
+import com.yral.shared.libs.routing.routes.api.VideoUploadSuccessful
 import com.yral.shared.libs.routing.routes.api.Wallet
 import org.koin.dsl.module
 
@@ -31,6 +33,10 @@ val routingModule =
                 route<AddVideo>(AddVideo.PATH)
                 route<GenerateAIVideo>(GenerateAIVideo.PATH)
                 route<Profile>(Profile.PATH)
+
+                route<VideoUploadSuccessful>(VideoUploadSuccessful.PATH)
+
+                route<RewardsReceived>(RewardsReceived.PATH)
 
                 // Feed / Post routes
                 route<PostDetailsRoute>(PostDetailsRoute.PATH)

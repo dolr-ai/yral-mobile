@@ -66,6 +66,7 @@ import com.yral.shared.features.game.viewmodel.GameViewModel
 import com.yral.shared.features.leaderboard.ui.LeaderboardScreen
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.features.wallet.ui.WalletScreen
+import com.yral.shared.features.wallet.ui.btcRewards.VideoViewsRewardsBottomSheet
 import com.yral.shared.libs.designsystem.component.YralFeedback
 import com.yral.shared.libs.designsystem.component.popPressedSoundId
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
@@ -138,6 +139,11 @@ private fun SlotContent(component: HomeComponent) {
             is SlotChild.AlertsRequestBottomSheet ->
                 AlertsRequestBottomSheet(
                     component = slotChild.component,
+                )
+            is SlotChild.VideoViewsRewardsBottomSheet ->
+                VideoViewsRewardsBottomSheet(
+                    component = slotChild.component,
+                    data = slotChild.data,
                 )
         }
     }

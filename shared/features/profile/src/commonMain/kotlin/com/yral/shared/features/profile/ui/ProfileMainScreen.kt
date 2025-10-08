@@ -66,6 +66,7 @@ import com.yral.shared.features.profile.viewmodel.ProfileBottomSheet
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.features.profile.viewmodel.VideoViewState
 import com.yral.shared.features.profile.viewmodel.ViewState
+import com.yral.shared.libs.NumberFormatter
 import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.designsystem.component.AccountInfoView
 import com.yral.shared.libs.designsystem.component.DeleteConfirmationSheet
@@ -80,6 +81,7 @@ import com.yral.shared.libs.designsystem.component.YralWebViewBottomSheet
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import com.yral.shared.libs.formatAbbreviation
 import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.libs.videoPlayer.util.PrefetchVideoListener
 import kotlinx.coroutines.flow.collectLatest
@@ -100,6 +102,7 @@ import yral_mobile.shared.features.profile.generated.resources.you_have_not_uplo
 import yral_mobile.shared.libs.designsystem.generated.resources.account_nav
 import yral_mobile.shared.libs.designsystem.generated.resources.cancel
 import yral_mobile.shared.libs.designsystem.generated.resources.delete
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_views
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_share
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_share_desc
 import yral_mobile.shared.libs.designsystem.generated.resources.my_profile
@@ -694,6 +697,7 @@ private fun VideoGridItem(
             VideoGridItemActions(
                 isLiked = video.isLiked,
                 likeCount = video.likeCount,
+                viewCount = video.viewCount,
                 onDeleteVideo = onDeleteClick,
             )
         }
@@ -741,6 +745,8 @@ private fun DeletingOverLay(
 private fun BoxScope.VideoGridItemActions(
     isLiked: Boolean,
     likeCount: ULong,
+    viewCount: ULong,
+    isLikeVisible: Boolean = false,
     onDeleteVideo: () -> Unit,
 ) {
     Row(
@@ -756,20 +762,35 @@ private fun BoxScope.VideoGridItemActions(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
+            val icon =
+                if (isLikeVisible) {
+                    if (likeCount > 0U && isLiked) {
+                        Res.drawable.pink_heart
+                    } else {
+                        Res.drawable.white_heart
+                    }
+                } else {
+                    DesignRes.drawable.ic_views
+                }
+            val iconDescription =
+                if (isLikeVisible) {
+                    "likes"
+                } else {
+                    "views"
+                }
+            val iconCount =
+                if (isLikeVisible) {
+                    likeCount
+                } else {
+                    viewCount
+                }
             Image(
-                painter =
-                    painterResource(
-                        if (likeCount > 0U && isLiked) {
-                            Res.drawable.pink_heart
-                        } else {
-                            Res.drawable.white_heart
-                        },
-                    ),
-                contentDescription = "like heart",
+                painter = painterResource(icon),
+                contentDescription = iconDescription,
                 modifier = Modifier.size(24.dp),
             )
             Text(
-                text = likeCount.toString(),
+                text = NumberFormatter().formatAbbreviation(iconCount.toLong()),
                 style = LocalAppTopography.current.baseMedium,
                 color = YralColors.NeutralTextPrimary,
             )

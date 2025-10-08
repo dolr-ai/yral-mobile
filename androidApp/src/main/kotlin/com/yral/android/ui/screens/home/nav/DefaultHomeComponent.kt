@@ -1,6 +1,5 @@
 package com.yral.android.ui.screens.home.nav
 
-import co.touchlab.kermit.Logger
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.slot.ChildSlot
 import com.arkivanov.decompose.router.slot.SlotNavigation
@@ -20,6 +19,8 @@ import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.features.leaderboard.nav.LeaderboardComponent
 import com.yral.shared.features.uploadvideo.nav.UploadVideoRootComponent
 import com.yral.shared.features.wallet.nav.WalletComponent
+import com.yral.shared.features.wallet.ui.btcRewards.nav.DefaultVideoViewRewardsComponent
+import com.yral.shared.features.wallet.ui.btcRewards.nav.VideoViewRewardsComponent
 import com.yral.shared.libs.arch.nav.HomeChildSnapshotProvider
 import com.yral.shared.libs.routing.routes.api.AddVideo
 import com.yral.shared.libs.routing.routes.api.AppRoute
@@ -27,6 +28,9 @@ import com.yral.shared.libs.routing.routes.api.GenerateAIVideo
 import com.yral.shared.libs.routing.routes.api.Leaderboard
 import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
 import com.yral.shared.libs.routing.routes.api.Profile
+import com.yral.shared.libs.routing.routes.api.RewardOn
+import com.yral.shared.libs.routing.routes.api.RewardsReceived
+import com.yral.shared.libs.routing.routes.api.VideoUploadSuccessful
 import com.yral.shared.libs.routing.routes.api.Wallet
 import kotlinx.serialization.Serializable
 
@@ -89,18 +93,6 @@ internal class DefaultHomeComponent(
         navigation.replaceKeepingFeed(Config.Profile)
     }
 
-    @Deprecated("use onNavigationRequest")
-    override fun handleNavigation(destination: String) {
-        Logger.d("DefaultHomeComponent") { "handleNavigation: $destination" }
-        when {
-            destination.startsWith(ProfileComponent.DEEPLINK) -> {
-                navigation.replaceKeepingFeed(Config.Profile) {
-                    (stack.value.active.instance as? Child.Profile)?.component?.handleNavigation(destination)
-                }
-            }
-        }
-    }
-
     override fun onNavigationRequest(appRoute: AppRoute) {
         when (appRoute) {
             is PostDetailsRoute ->
@@ -115,7 +107,16 @@ internal class DefaultHomeComponent(
                 navigation.replaceKeepingFeed(Config.UploadVideo) {
                     (stack.value.active.instance as? Child.UploadVideo)?.component?.handleNavigation(appRoute)
                 }
-            else -> {}
+            is RewardsReceived -> {
+                when (appRoute.rewardOn) {
+                    RewardOn.VIDEO_VIEWS -> showSlot(SlotConfig.VideoViewsRewardsBottomSheet(appRoute))
+                }
+            }
+            is VideoUploadSuccessful ->
+                navigation.replaceKeepingFeed(Config.Profile) {
+                    (stack.value.active.instance as? Child.Profile)?.component?.onNavigationRequest(appRoute)
+                }
+            else -> Unit
         }
     }
 
@@ -199,12 +200,31 @@ internal class DefaultHomeComponent(
                 SlotChild.AlertsRequestBottomSheet(
                     alertsRequestComponent(componentContext),
                 )
+            is SlotConfig.VideoViewsRewardsBottomSheet ->
+                SlotChild.VideoViewsRewardsBottomSheet(
+                    component = btcRewardsComponent(componentContext),
+                    data = config.data,
+                )
         }
 
     private fun alertsRequestComponent(componentContext: ComponentContext): AlertsRequestComponent =
         AlertsRequestComponent(
             componentContext = componentContext,
             onDismissed = slotNavigation::dismiss,
+        )
+
+    private fun btcRewardsComponent(componentContext: ComponentContext): VideoViewRewardsComponent =
+        DefaultVideoViewRewardsComponent(
+            componentContext = componentContext,
+            onDismissed = slotNavigation::dismiss,
+            navigateToWallet = {
+                slotNavigation.dismiss()
+                onWalletTabClick()
+            },
+            navigateToFeed = {
+                slotNavigation.dismiss()
+                onFeedTabClick()
+            },
         )
 
     private fun showSlot(slotConfig: SlotConfig) {
@@ -236,5 +256,10 @@ internal class DefaultHomeComponent(
     private sealed interface SlotConfig {
         @Serializable
         data object AlertsRequestBottomSheet : SlotConfig
+
+        @Serializable
+        data class VideoViewsRewardsBottomSheet(
+            val data: RewardsReceived,
+        ) : SlotConfig
     }
 }

@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -58,11 +59,14 @@ import com.yral.shared.features.game.viewmodel.GameState
 import com.yral.shared.features.game.viewmodel.GameViewModel
 import com.yral.shared.features.game.viewmodel.NudgeType
 import com.yral.shared.features.game.viewmodel.RefreshBalanceState
+import com.yral.shared.libs.NumberFormatter
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
 import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.lottie.PreloadLottieAnimations
+import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import com.yral.shared.libs.formatAbbreviation
 import com.yral.shared.libs.videoPlayer.YRALReelPlayer
 import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.libs.videoPlayer.util.ReelScrollDirection
@@ -76,6 +80,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import yral_mobile.shared.libs.designsystem.generated.resources.could_not_login
 import yral_mobile.shared.libs.designsystem.generated.resources.could_not_login_desc
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_share
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_views
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_share
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_share_desc
 import yral_mobile.shared.libs.designsystem.generated.resources.ok
@@ -525,14 +530,14 @@ private fun ActionsRight(
 ) {
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(26.dp, Alignment.CenterVertically),
+        verticalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         val feedDetails = state.feedDetails[pageNo]
         if (state.overlayType == OverlayType.GAME_TOGGLE) {
             feedDetails.profileImageURL?.let { profileImage ->
                 YralAsyncImage(
-                    imageUrl = profileImage.toString(),
+                    imageUrl = profileImage,
                     modifier = Modifier.size(36.dp),
                     border = 2.dp,
                     borderColor = Color.White,
@@ -552,6 +557,26 @@ private fun ActionsRight(
             contentDescription = "share video",
             contentScale = ContentScale.None,
         )
+
+        Column(
+            verticalArrangement = Arrangement.spacedBy(0.dp, Alignment.Top),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Image(
+                painter = painterResource(DesignRes.drawable.ic_views),
+                contentDescription = "video views",
+                contentScale = ContentScale.None,
+                modifier =
+                    Modifier
+                        .size(36.dp)
+                        .padding(1.5.dp),
+            )
+            Text(
+                text = NumberFormatter().formatAbbreviation(feedDetails.viewCount.toLong(), 1),
+                style = LocalAppTopography.current.regSemiBold,
+                color = YralColors.NeutralTextPrimary,
+            )
+        }
 
         ReportVideo(
             onReportClicked = { feedViewModel.toggleReportSheet(true, pageNo) },

@@ -30,7 +30,6 @@ import com.arkivanov.decompose.defaultComponentContext
 import com.russhwolf.settings.Settings
 import com.yral.android.ui.nav.DefaultRootComponent
 import com.yral.android.ui.screens.RootScreen
-import com.yral.android.ui.screens.profile.nav.ProfileComponent
 import com.yral.android.update.InAppUpdateManager
 import com.yral.android.update.UpdateState
 import com.yral.shared.crashlytics.core.CrashlyticsManager
@@ -42,6 +41,7 @@ import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.designsystem.theme.appTypoGraphy
 import com.yral.shared.libs.routing.deeplink.engine.RoutingService
+import com.yral.shared.libs.routing.routes.api.AppRoute
 import com.yral.shared.rust.service.services.HelperService.initRustLogger
 import io.branch.indexing.BranchUniversalObject
 import io.branch.referral.Branch
@@ -153,7 +153,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun handleIntent(intent: Intent?) {
-        Logger.d("onNewIntent: ${intent?.data}")
+        Logger.d("MainActivity") { "onNewIntent: ${intent?.data}" }
 
         // Handle OAuth redirect URIs
         handleOAuthIntent(intent)?.let {
@@ -165,10 +165,7 @@ class MainActivity : ComponentActivity() {
         val payload = intent?.getStringExtra("payload")
         if (payload != null) {
             Logger.d("MainActivity") { "Handling notification payload: $payload" }
-            val destination = mapPayloadToDestination(payload)
-            if (destination != null) {
-                handleNotificationDeepLink(destination)
-            }
+            mapPayloadToRoute(payload)?.let { route -> handleNotificationDeepLink(route) }
         }
     }
 
@@ -177,28 +174,11 @@ class MainActivity : ComponentActivity() {
             ?.data
             ?.let { oAuthUtilsHelper.mapUriToOAuthResult(it.toString()) }
 
-    private fun mapPayloadToDestination(payload: String): String? =
+    private fun mapPayloadToRoute(payload: String): AppRoute? =
         try {
             val jsonObject = Json.decodeFromString(JsonObject.serializer(), payload)
-            val type = jsonObject["type"]?.jsonPrimitive?.content
-
-            when (type) {
-                "VideoUploadSuccessful" -> {
-                    // For video upload success, navigate to specific post
-                    val videoId = jsonObject["video_id"]?.jsonPrimitive?.content
-
-                    if (!videoId.isNullOrEmpty()) {
-                        "${ProfileComponent.DEEPLINK_VIDEO_PREFIX}/$videoId"
-                    } else {
-                        ProfileComponent.DEEPLINK
-                    }
-                }
-                // Add more notification types here as needed
-                else -> {
-                    Logger.w("MainActivity") { "Unknown notification type: $type" }
-                    null
-                }
-            }
+            val internalUrl = jsonObject["internalUrl"]?.jsonPrimitive?.content
+            internalUrl?.let { routingService.parseUrl(internalUrl) }
         } catch (
             @Suppress("TooGenericExceptionCaught") e: Exception,
         ) {
@@ -207,10 +187,10 @@ class MainActivity : ComponentActivity() {
             null
         }
 
-    private fun handleNotificationDeepLink(dest: String) {
+    private fun handleNotificationDeepLink(dest: AppRoute) {
         try {
             Logger.d("MainActivity") { "Handling deep link: $dest" }
-            rootComponent.handleNavigation(dest)
+            rootComponent.onNavigationRequest(dest)
         } catch (
             @Suppress("TooGenericExceptionCaught") e: Exception,
         ) {

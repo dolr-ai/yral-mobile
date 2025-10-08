@@ -36,10 +36,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
 import com.yral.shared.data.feed.domain.FeedDetails
+import com.yral.shared.libs.NumberFormatter
 import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import com.yral.shared.libs.formatAbbreviation
 import com.yral.shared.libs.videoPlayer.YRALReelPlayer
 import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.libs.videoPlayer.util.PrefetchVideoListener
@@ -54,6 +56,7 @@ import yral_mobile.shared.features.profile.generated.resources.deleting
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
 import yral_mobile.shared.libs.designsystem.generated.resources.delete
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_share
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_views
 import yral_mobile.shared.libs.designsystem.generated.resources.shadow
 import yral_mobile.shared.libs.designsystem.generated.resources.shadow_bottom
 import yral_mobile.shared.libs.designsystem.generated.resources.your_videos
@@ -152,6 +155,7 @@ private fun ProfileReelOverlay(
             )
             ActionsRight(
                 modifier = Modifier.align(Alignment.BottomEnd).padding(end = 16.dp, bottom = 89.dp),
+                views = currentVideo.viewCount.toLong(),
                 onReportClick = onReportClick,
                 onShareClick = onShareClick,
                 onDeleteVideo = onDeleteVideo,
@@ -235,6 +239,7 @@ private fun Caption(
 @Composable
 private fun ActionsRight(
     modifier: Modifier,
+    views: Long,
     onReportClick: () -> Unit,
     onShareClick: () -> Unit,
     onDeleteVideo: () -> Unit,
@@ -248,12 +253,40 @@ private fun ActionsRight(
             onClick = onShareClick,
         )
 
+        ViewsIcon(
+            views = views,
+        )
+
         ReportVideo(
             onReportClicked = onReportClick,
         )
 
         DeleteIcon(
             onDeleteVideo = onDeleteVideo,
+        )
+    }
+}
+
+@Composable
+private fun ViewsIcon(
+    modifier: Modifier = Modifier,
+    views: Long,
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(0.dp, Alignment.Top),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier,
+    ) {
+        Image(
+            painter = painterResource(DesignRes.drawable.ic_views),
+            contentDescription = "video views",
+            contentScale = ContentScale.None,
+            modifier = Modifier.size(36.dp),
+        )
+        Text(
+            text = NumberFormatter().formatAbbreviation(views, 1),
+            style = LocalAppTopography.current.regSemiBold,
+            color = YralColors.NeutralTextPrimary,
         )
     }
 }

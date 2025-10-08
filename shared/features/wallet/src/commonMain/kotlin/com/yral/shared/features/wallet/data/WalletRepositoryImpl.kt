@@ -1,6 +1,7 @@
 package com.yral.shared.features.wallet.data
 
 import com.yral.shared.features.wallet.data.models.toDomain
+import com.yral.shared.features.wallet.domain.models.BtcRewardConfig
 import com.yral.shared.features.wallet.domain.models.BtcToCurrency
 import com.yral.shared.features.wallet.domain.repository.WalletRepository
 
@@ -28,4 +29,10 @@ class WalletRepositoryImpl(
     ): String =
         dataSource
             .getUserDolrBalance(canisterId, userPrincipal)
+
+    override suspend fun getBtcRewardConfig(): BtcRewardConfig =
+        dataSource
+            .getBtcRewardConfig()
+            .config
+            .toDomain()
 }

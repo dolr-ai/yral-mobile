@@ -3,6 +3,7 @@ package com.yral.shared.libs.videoPlayer
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.media3.exoplayer.ExoPlayer
+import co.touchlab.kermit.Logger
 
 fun getExoPlayerLifecycleObserver(
     exoPlayer: ExoPlayer,
@@ -33,10 +34,9 @@ private fun handleOnResume(
     wasAppInBackground: Boolean,
     setWasAppInBackground: (Boolean) -> Unit,
 ) {
-    if (wasAppInBackground) {
-        exoPlayer.prepare()
-        exoPlayer.playWhenReady = !isPause
-    }
+    Logger.d("ExoPlayer") { "WasAppInBackground $wasAppInBackground" }
+    exoPlayer.prepare()
+    exoPlayer.playWhenReady = !isPause
     setWasAppInBackground(false)
 }
 
