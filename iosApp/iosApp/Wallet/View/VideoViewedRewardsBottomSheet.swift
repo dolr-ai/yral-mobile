@@ -156,7 +156,7 @@ extension VideoViewedRewardsBottomSheet {
     static let loader = "Yral_Loader"
     static let loaderSize = 24.0
 
-    static let title = "How to earn BITCOINS!"
+    static let title = "How to get Bitcoin reward?"
     static let titleFont = YralFont.pt18.bold.swiftUIFont
     static let titleColor = YralColor.grey0.swiftUIColor
     static let titleTop = 40.0

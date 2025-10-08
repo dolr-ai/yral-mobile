@@ -38,8 +38,8 @@ struct VideoViewedRewardsCreditedBottomSheet: View {
     ]
 
     attributed.append(NSAttributedString(string: Constants.descriptionText1, attributes: attrs))
-    attributed.append(NSAttributedString(string: Constants.descriptionText2, attributes: attrs))
-    attributed.append(NSAttributedString(string: Constants.descriptionText3, attributes: boldAttrs))
+    attributed.append(NSAttributedString(string: Constants.descriptionText2, attributes: boldAttrs))
+    attributed.append(NSAttributedString(string: Constants.descriptionText3, attributes: attrs))
     attributed.append(NSAttributedString(string: Constants.descriptionText4, attributes: attrs))
 
     return attributed
@@ -105,6 +105,7 @@ struct VideoViewedRewardsCreditedBottomSheet: View {
 
       AttributedText(
         attributedString: getBitcoinAttributedText,
+        horizontalPadding: Constants.vStackHorizontalPadding,
         alignment: .center
       )
       .frame(height: Constants.descriptionHeight)
@@ -164,7 +165,7 @@ extension VideoViewedRewardsCreditedBottomSheet {
     static let bottomSheetDismissTime = 0.1
     static let bottomSheetAppearTime = 0.3
 
-    static let title = "Bitcoin Credited"
+    static let title = "Bitcoin Reward added"
     static let titleFont = YralFont.pt18.bold.swiftUIFont
     static let titleColor = YralColor.grey0.swiftUIColor
     static let titleTop = 36.0
@@ -175,10 +176,10 @@ extension VideoViewedRewardsCreditedBottomSheet {
     static let descriptionBottom = 28.0
     static let descriptionBaseFont = YralFont.pt16.regular.uiFont
     static let descriptionBoldFont = YralFont.pt16.bold.uiFont
-    static let descriptionText1 = "Congrats! Your video views have\n"
-    static let descriptionText2 = "earned you "
-    static let descriptionText3 = "Bitcoin.\n"
-    static let descriptionText4 = "See your balance in the wallet."
+    static let descriptionText1 = "Congrats! You've received a "
+    static let descriptionText2 = "Bitcoin "
+    static let descriptionText3 = "reward for your video views. "
+    static let descriptionText4 = "See it in your wallet."
     static let descriptionBaseColor =  YralColor.grey300.uiColor
     static let descriptionBoldColor = UIColor(
       red: 219/255,
@@ -214,8 +215,4 @@ extension VideoViewedRewardsCreditedBottomSheet {
     static let scrollingCornerRadius = 8.0
     static let scrollingBottom = 44.0
   }
-}
-
-#Preview {
-  VideoViewedRewardsCreditedBottomSheet {}
 }

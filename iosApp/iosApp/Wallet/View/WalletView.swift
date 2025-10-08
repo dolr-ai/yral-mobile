@@ -250,7 +250,7 @@ extension WalletView {
     static let conversionFont = YralFont.pt12.regular.swiftUIFont
     static let indiaRegionCode = "IN"
 
-    static let ctaTitle = "How to Earn Bitcoin"
+    static let ctaTitle = "How to get Bitcoin"
     static let ctaFont = YralFont.pt14.bold.swiftUIFont
     static let ctaColor = YralColor.grey800.swiftUIColor
     static let ctaBackground = YralColor.grey50.swiftUIColor
