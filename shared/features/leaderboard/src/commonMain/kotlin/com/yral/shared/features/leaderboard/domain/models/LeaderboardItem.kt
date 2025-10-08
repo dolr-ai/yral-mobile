@@ -9,6 +9,7 @@ data class LeaderboardItem(
     val wins: Long,
     val position: Int,
     val reward: Double?,
+    val username: String?,
 )
 
 fun LeaderboardRowDto.toLeaderboardItem(): LeaderboardItem =
@@ -18,4 +19,5 @@ fun LeaderboardRowDto.toLeaderboardItem(): LeaderboardItem =
         wins = wins,
         position = position,
         reward = reward,
+        username = username,
     )

@@ -139,7 +139,7 @@ fun LeaderboardDetailsScreen(
                             Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                                 LeaderboardRow(
                                     position = userRow.position,
-                                    userPrincipalId = userRow.userPrincipalId,
+                                    userIdentifier = userRow.username ?: userRow.userPrincipalId,
                                     profileImageUrl = userRow.profileImage,
                                     wins = userRow.wins,
                                     isCurrentUser = true,
@@ -156,7 +156,7 @@ fun LeaderboardDetailsScreen(
                         Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                             LeaderboardRow(
                                 position = row.position,
-                                userPrincipalId = row.userPrincipalId,
+                                userIdentifier = row.username ?: row.userPrincipalId,
                                 profileImageUrl = row.profileImage,
                                 wins = row.wins,
                                 isCurrentUser = viewModel.isCurrentUser(row.userPrincipalId),

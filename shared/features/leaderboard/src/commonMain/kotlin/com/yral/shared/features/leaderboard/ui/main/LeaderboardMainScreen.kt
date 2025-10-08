@@ -173,7 +173,7 @@ fun LeaderboardMainScreen(
                         ) {
                             LeaderboardRow(
                                 position = user.position,
-                                userPrincipalId = user.userPrincipalId,
+                                userIdentifier = user.username ?: user.userPrincipalId,
                                 profileImageUrl = user.profileImage,
                                 wins = user.wins,
                                 isCurrentUser = true,
@@ -196,7 +196,7 @@ fun LeaderboardMainScreen(
                     ) {
                         LeaderboardRow(
                             position = item.position,
-                            userPrincipalId = item.userPrincipalId,
+                            userIdentifier = item.username ?: item.userPrincipalId,
                             profileImageUrl = item.profileImage,
                             wins = item.wins,
                             isCurrentUser = viewModel.isCurrentUser(item.userPrincipalId),
