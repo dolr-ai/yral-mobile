@@ -28,10 +28,10 @@ import androidx.compose.ui.unit.sp
 import co.touchlab.kermit.Logger
 import com.arkivanov.decompose.defaultComponentContext
 import com.russhwolf.settings.Settings
-import com.yral.android.ui.nav.DefaultRootComponent
-import com.yral.android.ui.screens.RootScreen
 import com.yral.android.update.InAppUpdateManager
-import com.yral.android.update.UpdateState
+import com.yral.shared.app.UpdateState
+import com.yral.shared.app.nav.DefaultRootComponent
+import com.yral.shared.app.ui.screens.RootScreen
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.utils.OAuthResult
 import com.yral.shared.features.auth.utils.OAuthUtils

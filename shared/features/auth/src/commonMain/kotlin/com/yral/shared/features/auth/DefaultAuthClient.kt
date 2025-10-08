@@ -506,3 +506,7 @@ class DefaultAuthClient(
         preferences.remove(PrefKeys.IS_CREATED_FROM_SERVICE_CANISTER.name)
     }
 }
+
+class SecurityException(
+    message: String,
+) : Exception(message)

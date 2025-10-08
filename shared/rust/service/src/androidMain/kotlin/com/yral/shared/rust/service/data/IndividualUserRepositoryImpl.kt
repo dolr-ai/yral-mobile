@@ -3,10 +3,10 @@ package com.yral.shared.rust.service.data
 import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.data.feed.domain.Post
 import com.yral.shared.data.feed.domain.toDTO
+import com.yral.shared.rust.service.data.models.toPosts
 import com.yral.shared.rust.service.domain.IndividualUserRepository
 import com.yral.shared.rust.service.domain.models.Posts
 import com.yral.shared.rust.service.domain.models.toFeedDetails
-import com.yral.shared.rust.service.domain.models.toPosts
 
 internal class IndividualUserRepositoryImpl(
     private val dataSource: IndividualUserDataSource,
