@@ -15,6 +15,8 @@ import com.yral.shared.core.utils.getAccountInfo
 import com.yral.shared.features.account.analytics.AccountsTelemetry
 import com.yral.shared.features.auth.AuthClientFactory
 import com.yral.shared.features.auth.domain.useCases.DeleteAccountUseCase
+import com.yral.shared.features.auth.domain.useCases.DeregisterNotificationTokenUseCase
+import com.yral.shared.features.auth.domain.useCases.RegisterNotificationTokenUseCase
 import com.yral.shared.firebaseStore.getDownloadUrl
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.preferences.PrefKeys
@@ -41,6 +43,8 @@ class AccountsViewModel internal constructor(
     private val flagManager = dependencies.flagManager
     private val firebaseStorage = dependencies.firebaseStorage
     private val preferences = dependencies.preferences
+    private val registerNotificationTokenUseCase = dependencies.registerNotificationTokenUseCase
+    private val deregisterNotificationTokenUseCase = dependencies.deregisterNotificationTokenUseCase
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.disk)
 
     private val authClient =
@@ -215,6 +219,28 @@ class AccountsViewModel internal constructor(
         _state.update { it.copy(alertsEnabled = isEnabled) }
     }
 
+    suspend fun registerAlerts(token: String): Boolean =
+        runCatching {
+            registerNotificationTokenUseCase(
+                RegisterNotificationTokenUseCase.Parameter(token = token),
+            )
+        }.onFailure { error ->
+            Logger.e("AccountsViewModel") {
+                "Failed to register notifications: ${error.message}"
+            }
+        }.isSuccess
+
+    suspend fun deregisterAlerts(token: String): Boolean =
+        runCatching {
+            deregisterNotificationTokenUseCase(
+                DeregisterNotificationTokenUseCase.Parameter(token = token),
+            )
+        }.onFailure { error ->
+            Logger.e("AccountsViewModel") {
+                "Failed to deregister notifications: ${error.message}"
+            }
+        }.isSuccess
+
     companion object {
         const val LOGOUT_URI = "yral://logout"
         const val DELETE_ACCOUNT_URI = "yral://deleteAccount"
@@ -228,6 +254,8 @@ class AccountsViewModel internal constructor(
         val flagManager: FeatureFlagManager,
         val firebaseStorage: FirebaseStorage,
         val preferences: Preferences,
+        val registerNotificationTokenUseCase: RegisterNotificationTokenUseCase,
+        val deregisterNotificationTokenUseCase: DeregisterNotificationTokenUseCase,
     )
 }
 

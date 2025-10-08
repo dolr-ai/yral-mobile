@@ -8,8 +8,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import co.touchlab.kermit.Logger
 import com.google.firebase.messaging.FirebaseMessaging
-import com.yral.shared.features.auth.domain.useCases.DeregisterNotificationTokenUseCase
-import com.yral.shared.features.auth.domain.useCases.RegisterNotificationTokenUseCase
+import com.yral.shared.features.account.viewmodel.AccountsViewModel
 import dev.icerock.moko.permissions.DeniedAlwaysException
 import dev.icerock.moko.permissions.DeniedException
 import dev.icerock.moko.permissions.Permission
@@ -20,7 +19,6 @@ import dev.icerock.moko.permissions.compose.PermissionsControllerFactory
 import dev.icerock.moko.permissions.compose.rememberPermissionsControllerFactory
 import dev.icerock.moko.permissions.notifications.REMOTE_NOTIFICATION
 import kotlinx.coroutines.tasks.await
-import org.koin.compose.koinInject
 
 data class AlertsPermissionController(
     val toggle: suspend (Boolean) -> Boolean,
@@ -29,24 +27,21 @@ data class AlertsPermissionController(
 
 @Suppress("LongMethod")
 @Composable
-fun rememberAlertsPermissionController(): AlertsPermissionController {
+fun rememberAlertsPermissionController(viewModel: AccountsViewModel): AlertsPermissionController {
     val permissionsFactory: PermissionsControllerFactory = rememberPermissionsControllerFactory()
     val permissionsController: PermissionsController =
         remember(permissionsFactory) { permissionsFactory.createPermissionsController() }
     BindEffect(permissionsController)
-    val registerNotificationTokenUseCase: RegisterNotificationTokenUseCase = koinInject()
-    val deregisterNotificationTokenUseCase: DeregisterNotificationTokenUseCase = koinInject()
     val context = LocalContext.current
     return remember(
         permissionsController,
-        registerNotificationTokenUseCase,
-        deregisterNotificationTokenUseCase,
+        viewModel,
         context,
     ) {
         val toggle: suspend (Boolean) -> Boolean = { enabled ->
             if (enabled) {
                 when (permissionsController.getPermissionState(Permission.REMOTE_NOTIFICATION)) {
-                    PermissionState.Granted -> registerNotificationToken(registerNotificationTokenUseCase)
+                    PermissionState.Granted -> registerNotificationToken(viewModel)
                     PermissionState.Denied,
                     PermissionState.NotDetermined,
                     PermissionState.NotGranted,
@@ -54,7 +49,7 @@ fun rememberAlertsPermissionController(): AlertsPermissionController {
                         try {
                             permissionsController.providePermission(Permission.REMOTE_NOTIFICATION)
                             if (permissionsController.isPermissionGranted(Permission.REMOTE_NOTIFICATION)) {
-                                registerNotificationToken(registerNotificationTokenUseCase)
+                                registerNotificationToken(viewModel)
                             } else {
                                 openNotificationSettings(context)
                                 false
@@ -82,7 +77,7 @@ fun rememberAlertsPermissionController(): AlertsPermissionController {
                 val currentlyGranted = permissionsController.isPermissionGranted(Permission.REMOTE_NOTIFICATION)
                 openNotificationSettings(context)
                 if (!currentlyGranted) {
-                    val deregistered = deregisterNotificationToken(deregisterNotificationTokenUseCase)
+                    val deregistered = deregisterNotificationToken(viewModel)
                     if (!deregistered) {
                         Logger.e("AccountScreen") { "Failed to deregister notifications" }
                     }
@@ -93,7 +88,7 @@ fun rememberAlertsPermissionController(): AlertsPermissionController {
         val status: suspend () -> Boolean = {
             val granted = permissionsController.isPermissionGranted(Permission.REMOTE_NOTIFICATION)
             if (!granted) {
-                val deregistered = deregisterNotificationToken(deregisterNotificationTokenUseCase)
+                val deregistered = deregisterNotificationToken(viewModel)
                 if (!deregistered) {
                     Logger.e("AccountScreen") {
                         "Failed to deregister notifications after permission revocation"
@@ -106,7 +101,7 @@ fun rememberAlertsPermissionController(): AlertsPermissionController {
     }
 }
 
-private suspend fun registerNotificationToken(registerUseCase: RegisterNotificationTokenUseCase): Boolean {
+private suspend fun registerNotificationToken(viewModel: AccountsViewModel): Boolean {
     val tokenResult = runCatching { FirebaseMessaging.getInstance().token.await() }
     val token = tokenResult.getOrNull()
     if (!tokenResult.isSuccess || token.isNullOrBlank()) {
@@ -115,16 +110,10 @@ private suspend fun registerNotificationToken(registerUseCase: RegisterNotificat
         }
         return false
     }
-    return runCatching {
-        registerUseCase(RegisterNotificationTokenUseCase.Parameter(token = token))
-    }.onFailure { error ->
-        Logger.e("AccountScreen") {
-            "Failed to register notifications: ${error.message}"
-        }
-    }.isSuccess
+    return viewModel.registerAlerts(token)
 }
 
-private suspend fun deregisterNotificationToken(deregisterUseCase: DeregisterNotificationTokenUseCase): Boolean {
+private suspend fun deregisterNotificationToken(viewModel: AccountsViewModel): Boolean {
     val tokenResult = runCatching { FirebaseMessaging.getInstance().token.await() }
     val token = tokenResult.getOrNull()
     if (!tokenResult.isSuccess || token.isNullOrBlank()) {
@@ -133,13 +122,7 @@ private suspend fun deregisterNotificationToken(deregisterUseCase: DeregisterNot
         }
         return false
     }
-    return runCatching {
-        deregisterUseCase(DeregisterNotificationTokenUseCase.Parameter(token = token))
-    }.onFailure { error ->
-        Logger.e("AccountScreen") {
-            "Failed to deregister notifications: ${error.message}"
-        }
-    }.isSuccess
+    return viewModel.deregisterAlerts(token)
 }
 
 private fun openNotificationSettings(context: android.content.Context) {

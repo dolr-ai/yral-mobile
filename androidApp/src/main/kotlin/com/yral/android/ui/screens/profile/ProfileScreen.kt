@@ -71,7 +71,7 @@ fun ProfileScreen(
             is ProfileComponent.Child.Account -> {
                 val loginViewModel: LoginViewModel = koinViewModel()
                 val loginState by loginViewModel.state.collectAsStateWithLifecycle()
-                val alertsPermissionController = rememberAlertsPermissionController()
+                val alertsPermissionController = rememberAlertsPermissionController(accountsViewModel)
                 val lifecycleOwner = LocalLifecycleOwner.current
                 val scope = rememberCoroutineScope()
 
