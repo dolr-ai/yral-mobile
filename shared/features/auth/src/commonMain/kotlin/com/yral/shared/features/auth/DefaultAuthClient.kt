@@ -188,31 +188,47 @@ class DefaultAuthClient(
 
     private suspend fun handleExtractIdentityResponse(data: ByteArray) {
         try {
-            var cachedSession = getCachedSession()
-            if (cachedSession == null) {
-                val canisterWrapper = authenticateWithNetwork(data)
-                cacheSession(data, canisterWrapper)
-                cachedSession =
-                    Session(
-                        identity = data,
-                        canisterId = canisterWrapper.canisterId,
-                        userPrincipal = canisterWrapper.userPrincipalId,
-                        profilePic = canisterWrapper.profilePic,
-                        username = canisterWrapper.username,
-                        isCreatedFromServiceCanister = canisterWrapper.isCreatedFromServiceCanister,
-                    )
-            }
-            cachedSession.userPrincipal?.let { crashlyticsManager.setUserId(it) }
+            var session =
+                getCachedSession()
+                    ?: run {
+                        val canisterWrapper = authenticateWithNetwork(data)
+                        cacheSession(data, canisterWrapper)
+                        Session(
+                            identity = data,
+                            canisterId = canisterWrapper.canisterId,
+                            userPrincipal = canisterWrapper.userPrincipalId,
+                            profilePic = canisterWrapper.profilePic,
+                            username = canisterWrapper.username,
+                            isCreatedFromServiceCanister = canisterWrapper.isCreatedFromServiceCanister,
+                        )
+                    }
+            session.userPrincipal?.let { crashlyticsManager.setUserId(it) }
             sessionManager.updateCoinBalance(0)
-            if (!cachedSession.isCreatedFromServiceCanister) {
-                val reAuthenticatedSession = refreshAuthenticateWithNetwork(data)
-                reAuthenticatedSession?.let { cachedSession = reAuthenticatedSession }
+            val username = session.username
+            val userPrincipal = session.userPrincipal
+            if (!username.isNullOrBlank() && !userPrincipal.isNullOrBlank()) {
+                scope.launch {
+                    requiredUseCases.updateDocumentUseCase
+                        .invoke(
+                            parameter =
+                                UpdateDocumentUseCase.Params(
+                                    collectionName = "users",
+                                    documentId = userPrincipal,
+                                    fieldAndValue = Pair("username", username),
+                                ),
+                        ).onFailure { error ->
+                            Logger.e(error) { "Failed to update username for $userPrincipal" }
+                        }
+                }
             }
-            setSession(session = cachedSession)
-            fetchBalance(session = cachedSession)
-            if (auth.currentUser?.uid == cachedSession.userPrincipal) {
+            if (!session.isCreatedFromServiceCanister) {
+                refreshAuthenticateWithNetwork(data)?.let { session = it }
+            }
+            setSession(session = session)
+            fetchBalance(session = session)
+            if (auth.currentUser?.uid == session.userPrincipal) {
                 sessionManager.updateFirebaseLoginState(true)
-                postFirebaseLogin(cachedSession)
+                postFirebaseLogin(session)
             } else {
                 sessionManager.updateFirebaseLoginState(false)
             }
