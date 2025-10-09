@@ -201,14 +201,6 @@ private fun HomeScreenContent(
                     rememberAlertsPermissionController(accountViewModel)
                 val lifecycleOwner = LocalLifecycleOwner.current
                 val scope = rememberCoroutineScope()
-
-                LaunchedEffect(alertsPermissionController) {
-                    val actual =
-                        runCatching { alertsPermissionController.currentStatus() }
-                            .getOrElse { accountViewModel.state.value.alertsEnabled }
-                    accountViewModel.onAlertsToggleChanged(actual)
-                }
-
                 DisposableEffect(lifecycleOwner, alertsPermissionController) {
                     val observer =
                         LifecycleEventObserver { _, event ->

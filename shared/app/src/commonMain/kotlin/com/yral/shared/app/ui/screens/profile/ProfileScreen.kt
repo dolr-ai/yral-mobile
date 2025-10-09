@@ -3,14 +3,8 @@ package com.yral.shared.app.ui.screens.profile
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.LazyPagingItems
 import com.arkivanov.decompose.extensions.compose.stack.Children
@@ -28,7 +22,6 @@ import com.yral.shared.features.profile.ui.EditProfileScreen
 import com.yral.shared.features.profile.ui.ProfileMainScreen
 import com.yral.shared.features.profile.viewmodel.EditProfileViewModel
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
-import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -74,33 +67,6 @@ internal fun ProfileScreen(
                 val loginState by loginViewModel.state.collectAsStateWithLifecycle()
                 val alertsPermissionController =
                     rememberAlertsPermissionController(accountsViewModel)
-                val lifecycleOwner = LocalLifecycleOwner.current
-                val scope = rememberCoroutineScope()
-
-                LaunchedEffect(alertsPermissionController) {
-                    val actual =
-                        runCatching { alertsPermissionController.currentStatus() }
-                            .getOrElse { accountsViewModel.state.value.alertsEnabled }
-                    accountsViewModel.onAlertsToggleChanged(actual)
-                }
-
-                DisposableEffect(lifecycleOwner, alertsPermissionController) {
-                    val observer =
-                        LifecycleEventObserver { _, event ->
-                            if (event == Lifecycle.Event.ON_RESUME) {
-                                scope.launch {
-                                    val actual =
-                                        runCatching { alertsPermissionController.currentStatus() }
-                                            .getOrElse { accountsViewModel.state.value.alertsEnabled }
-                                    if (actual != accountsViewModel.state.value.alertsEnabled) {
-                                        accountsViewModel.onAlertsToggleChanged(actual)
-                                    }
-                                }
-                            }
-                        }
-                    lifecycleOwner.lifecycle.addObserver(observer)
-                    onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
-                }
                 AccountScreen(
                     component = instance.component,
                     viewModel = accountsViewModel,
