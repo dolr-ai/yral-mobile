@@ -50,7 +50,7 @@ import com.yral.featureflag.FeatureFlagManager
 import com.yral.featureflag.WalletFeatureFlags
 import com.yral.shared.analytics.events.CategoryName
 import com.yral.shared.app.ui.screens.alertsrequest.AlertsRequestBottomSheet
-import com.yral.shared.app.ui.screens.feed.FeedScreen
+import com.yral.shared.app.ui.screens.feed.FeedScaffoldScreen
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent.SlotChild
 import com.yral.shared.app.ui.screens.profile.ProfileScreen
@@ -193,9 +193,9 @@ private fun HomeScreenContent(
     ) {
         when (val child = it.instance) {
             is HomeComponent.Child.Feed ->
-                FeedScreen(
+                FeedScaffoldScreen(
                     component = child.component,
-                    viewModel = feedViewModel,
+                    feedViewModel = feedViewModel,
                     gameViewModel = gameViewModel,
                 )
 

@@ -38,12 +38,16 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.features.game.domain.models.GameIcon
 import com.yral.shared.features.game.ui.SmileyGameConstants.MANDATORY_NUDGE_ANIMATION_ICON_ITERATIONS
 import com.yral.shared.features.game.ui.SmileyGameConstants.NUDGE_ANIMATION_DURATION
 import com.yral.shared.features.game.ui.SmileyGameConstants.NUDGE_ANIMATION_ICON_ITERATIONS
+import com.yral.shared.features.game.viewmodel.GameViewModel
 import com.yral.shared.features.game.viewmodel.NudgeType
 import com.yral.shared.libs.designsystem.component.YralFeedback
+import com.yral.shared.libs.designsystem.component.lottie.PreloadLottieAnimations
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import org.jetbrains.compose.resources.painterResource
@@ -56,9 +60,53 @@ import yral_mobile.shared.features.game.generated.resources.smiley_game_nudge_ma
 import yral_mobile.shared.features.game.generated.resources.smiley_game_nudge_stars
 import kotlin.coroutines.cancellation.CancellationException
 
+@Composable
+fun Game(
+    feedDetails: FeedDetails,
+    pageNo: Int,
+    gameViewModel: GameViewModel,
+) {
+    val gameState by gameViewModel.state.collectAsStateWithLifecycle()
+    if (gameState.gameIcons.isNotEmpty()) {
+        SmileyGame(
+            gameIcons = gameState.gameIcons,
+            clickedIcon = gameState.gameResult[feedDetails.videoID]?.first,
+            onIconClicked = { icon, isTutorialVote ->
+                gameViewModel.setClickedIcon(
+                    icon = icon,
+                    feedDetails = feedDetails,
+                    isTutorialVote = isTutorialVote,
+                )
+            },
+            coinDelta = gameViewModel.getFeedGameResult(feedDetails.videoID),
+            errorMessage = gameViewModel.getFeedGameResultError(feedDetails.videoID),
+            isLoading = gameState.isLoading,
+            hasShownCoinDeltaAnimation =
+                gameViewModel.hasShownCoinDeltaAnimation(
+                    videoId = feedDetails.videoID,
+                ),
+            onDeltaAnimationComplete = {
+                gameViewModel.markCoinDeltaAnimationShown(
+                    videoId = feedDetails.videoID,
+                )
+            },
+            nudgeType = gameState.nudgeType,
+            pageNo = pageNo,
+            onNudgeAnimationComplete = {
+                gameViewModel.setSmileyGameNudgeShown(feedDetails)
+            },
+        )
+    }
+    if (gameState.gameIcons.isNotEmpty()) {
+        PreloadLottieAnimations(
+            urls = gameState.gameIcons.map { it.clickAnimation },
+        )
+    }
+}
+
 @Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
-fun SmileyGame(
+internal fun SmileyGame(
     gameIcons: List<GameIcon>,
     clickedIcon: GameIcon?,
     isLoading: Boolean,

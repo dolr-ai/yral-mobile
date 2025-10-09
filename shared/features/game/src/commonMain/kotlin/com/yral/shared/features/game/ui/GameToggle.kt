@@ -1,4 +1,4 @@
-package com.yral.shared.features.feed.ui.components
+package com.yral.shared.features.game.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -20,9 +20,9 @@ import com.yral.shared.analytics.events.GameType
 import com.yral.shared.libs.designsystem.theme.YralColors
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
-import yral_mobile.shared.features.feed.generated.resources.Res
-import yral_mobile.shared.features.feed.generated.resources.ic_game_hot
-import yral_mobile.shared.features.feed.generated.resources.ic_game_smiley
+import yral_mobile.shared.features.game.generated.resources.Res
+import yral_mobile.shared.features.game.generated.resources.ic_game_hot
+import yral_mobile.shared.features.game.generated.resources.ic_game_smiley
 
 @Composable
 fun GameToggle(
