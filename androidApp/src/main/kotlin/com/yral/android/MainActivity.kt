@@ -8,29 +8,16 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LocalRippleConfiguration
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Shapes
-import androidx.compose.material3.Typography
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import co.touchlab.kermit.Logger
 import com.arkivanov.decompose.defaultComponentContext
 import com.russhwolf.settings.Settings
 import com.yral.android.update.InAppUpdateManager
 import com.yral.shared.app.UpdateState
 import com.yral.shared.app.nav.DefaultRootComponent
+import com.yral.shared.app.ui.MyApplicationTheme
 import com.yral.shared.app.ui.screens.RootScreen
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.utils.OAuthResult
@@ -38,7 +25,6 @@ import com.yral.shared.features.auth.utils.OAuthUtils
 import com.yral.shared.features.auth.utils.OAuthUtilsHelper
 import com.yral.shared.koin.koinInstance
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
-import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.designsystem.theme.appTypoGraphy
 import com.yral.shared.libs.routing.deeplink.engine.RoutingService
 import com.yral.shared.libs.routing.routes.api.AppRoute
@@ -216,52 +202,4 @@ class MainActivity : ComponentActivity() {
         oAuthUtils.cleanup()
         super.onDestroy()
     }
-}
-
-@Suppress("MagicNumber")
-@Composable
-private fun MyApplicationTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    content: @Composable () -> Unit,
-) {
-    val colors =
-        if (darkTheme) {
-            darkColorScheme(
-                primary = YralColors.Pink300,
-                secondary = Color(0xFF03DAC5),
-                tertiary = Color(0xFF3700B3),
-                primaryContainer = YralColors.PrimaryContainer,
-                onPrimaryContainer = YralColors.OnPrimaryContainer,
-            )
-        } else {
-            lightColorScheme(
-                primary = YralColors.Pink300,
-                secondary = Color(0xFF03DAC5),
-                tertiary = Color(0xFF3700B3),
-                primaryContainer = YralColors.PrimaryContainer,
-                onPrimaryContainer = YralColors.OnPrimaryContainer,
-            )
-        }
-    val typography =
-        Typography(
-            bodyMedium =
-                TextStyle(
-                    fontFamily = FontFamily.Default,
-                    fontWeight = FontWeight.Normal,
-                    fontSize = 16.sp,
-                ),
-        )
-    val shapes =
-        Shapes(
-            small = RoundedCornerShape(4.dp),
-            medium = RoundedCornerShape(4.dp),
-            large = RoundedCornerShape(0.dp),
-        )
-
-    MaterialTheme(
-        colorScheme = colors,
-        typography = typography,
-        shapes = shapes,
-        content = content,
-    )
 }
