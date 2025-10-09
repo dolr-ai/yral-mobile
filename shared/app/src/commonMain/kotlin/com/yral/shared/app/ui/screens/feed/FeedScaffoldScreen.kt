@@ -41,6 +41,7 @@ import com.yral.shared.features.game.ui.toRefreshBalanceAnimationState
 import com.yral.shared.features.game.viewmodel.GameState
 import com.yral.shared.features.game.viewmodel.GameViewModel
 import com.yral.shared.features.game.viewmodel.NudgeType
+import com.yral.shared.features.leaderboard.ui.DailyRanK
 import org.jetbrains.compose.resources.painterResource
 import yral_mobile.shared.libs.designsystem.generated.resources.shadow
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
@@ -179,6 +180,11 @@ private fun OverLayTop(
                 updateGameType = updateGameType,
             )
         }
+        OverlayType.DAILY_RANK ->
+            OverlayTopDailyRank(
+                gameState = gameState,
+                setAnimateCoinBalance = setAnimateCoinBalance,
+            )
     }
 }
 
@@ -235,6 +241,37 @@ private fun OverlayTopDefault(
                 modifier = Modifier.padding(vertical = 22.dp),
             )
         }
+    }
+}
+
+@Composable
+private fun OverlayTopDailyRank(
+    gameState: GameState,
+    setAnimateCoinBalance: (Boolean) -> Unit,
+) {
+    Box(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .paint(
+                    painter = painterResource(DesignRes.drawable.shadow),
+                    contentScale = ContentScale.FillBounds,
+                ).padding(horizontal = 26.dp),
+    ) {
+        DailyRanK(
+            position = 2,
+            newPosition = 1,
+            animate = gameState.animateCoinBalance,
+            setAnimate = { setAnimateCoinBalance(it) },
+            modifier = Modifier.padding(vertical = 32.dp).align(Alignment.TopStart),
+        )
+        CoinBalance(
+            coinBalance = gameState.coinBalance,
+            coinDelta = gameState.lastBalanceDifference,
+            animateBag = gameState.animateCoinBalance,
+            setAnimate = { setAnimateCoinBalance(it) },
+            modifier = Modifier.padding(vertical = 32.dp).align(Alignment.TopEnd),
+        )
     }
 }
 
