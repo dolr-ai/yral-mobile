@@ -12,6 +12,7 @@ import Combine
 protocol WalletRepositoryProtocol {
   func fetchSatoshiBalance() async -> Result<UInt32, WalletError>
   func fetchBTCExchangeRate() async -> Result<Double, WalletError>
+  func fetchVideoViewedRewardsStatus() async -> Result<Bool, WalletError>
 }
 
 class WalletRepository: WalletRepositoryProtocol {
@@ -69,6 +70,28 @@ class WalletRepository: WalletRepositoryProtocol {
       return .success(response.conversionRate)
     } catch {
       return .failure(WalletError.networkError(NetworkError.invalidResponse(error.localizedDescription)))
+    }
+  }
+
+  func fetchVideoViewedRewardsStatus() async -> Result<Bool, WalletError> {
+    guard let baseURL = URL(string: AppConfiguration().offchainBaseURLString) else {
+      return .failure(.networkError(.invalidRequest))
+    }
+    do {
+      let endpoint = Endpoint(
+        http: "",
+        baseURL: baseURL,
+        path: "/api/v1/rewards/config",
+        method: .get)
+
+      let response = try await httpService.performRequest(
+        for: endpoint,
+        decodeAs: VideoViewedRewardsDTO.self
+      )
+
+      return .success((response.config?.rewardAmountINR ?? 0) > 0)
+    } catch {
+      return .failure(.networkError(.invalidResponse(error.localizedDescription)))
     }
   }
 }

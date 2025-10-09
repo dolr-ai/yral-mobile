@@ -34,12 +34,14 @@ enum WalletPageEvent: Equatable {
   case accountInfoFetched(AccountInfo)
   case btcBalanceFetched(Double)
   case exchangeRateFetched(Double)
+  case videoViewedRewardsStatusFetched(Bool)
 }
 
 class WalletViewModel: ObservableObject {
   let accountUseCase: AccountUseCaseProtocol
   let btcBalanceUseCase: FetchBTCBalanceUseCaseProtocol
   let exchangeRateUseCase: ExchangeRateUseCaseProtocol
+  let videoViewedRewardsUseCase: VideoViewedRewardsUseCaseProtocol
 
   @Published var state: WalletPageState = .initalized
   @Published var event: WalletPageEvent?
@@ -47,11 +49,13 @@ class WalletViewModel: ObservableObject {
   init(
     accountUseCase: AccountUseCaseProtocol,
     btcBalanceUseCase: FetchBTCBalanceUseCaseProtocol,
-    exchangeRateUseCase: ExchangeRateUseCaseProtocol
+    exchangeRateUseCase: ExchangeRateUseCaseProtocol,
+    videoViewedRewardsUseCase: VideoViewedRewardsUseCaseProtocol
   ) {
     self.accountUseCase = accountUseCase
     self.btcBalanceUseCase = btcBalanceUseCase
     self.exchangeRateUseCase = exchangeRateUseCase
+    self.videoViewedRewardsUseCase = videoViewedRewardsUseCase
   }
 
   @MainActor func fetchAccountInfo() async {
@@ -83,6 +87,16 @@ class WalletViewModel: ObservableObject {
       event = .exchangeRateFetched(exchangeRate)
     case .failure(let error):
       state = .failure(error)
+    }
+  }
+
+  @MainActor func fetchVideoViewedRewardsStatus() async {
+    let result = await videoViewedRewardsUseCase.execute()
+    switch result {
+    case .success(let status):
+      event = .videoViewedRewardsStatusFetched(status)
+    case .failure:
+      break
     }
   }
 }
