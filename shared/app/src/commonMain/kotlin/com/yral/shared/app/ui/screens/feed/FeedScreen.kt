@@ -260,22 +260,26 @@ internal fun FeedScreen(
     if (gameState.showResultSheet && state.currentPageOfFeed < state.feedDetails.size) {
         val currentVideoId = state.feedDetails[state.currentPageOfFeed].videoID
         val coinDelta = gameViewModel.getFeedGameResult(currentVideoId)
-        GameResultSheet(
-            coinDelta = coinDelta,
-            gameIcon = gameState.gameResult[currentVideoId]?.first,
-            onDismissRequest = {
-                gameViewModel.toggleResultSheet(false)
-            },
-            openAboutGame = {
-                gameViewModel.toggleAboutGame(true)
-            },
-            onSheetButtonClicked = { ctaType ->
-                gameViewModel.onResultSheetButtonClicked(
-                    coinDelta = coinDelta,
-                    ctaType = ctaType,
-                )
-            },
-        )
+        if (coinDelta != 0) {
+            GameResultSheet(
+                coinDelta = coinDelta,
+                gameIcon = gameState.gameResult[currentVideoId]?.first,
+                onDismissRequest = {
+                    gameViewModel.toggleResultSheet(false)
+                },
+                openAboutGame = {
+                    gameViewModel.toggleAboutGame(true)
+                },
+                onSheetButtonClicked = { ctaType ->
+                    gameViewModel.onResultSheetButtonClicked(
+                        coinDelta = coinDelta,
+                        ctaType = ctaType,
+                    )
+                },
+            )
+        } else {
+            gameViewModel.toggleResultSheet(false)
+        }
     }
     if (gameState.showAboutGame && state.currentPageOfFeed < state.feedDetails.size) {
         AboutGameSheet(
