@@ -9,6 +9,7 @@ internal class DefaultProfileMainComponent(
     override val pendingVideoNavigation: Flow<String?>,
     private val onUploadVideoClicked: () -> Unit,
     private val openAccount: () -> Unit,
+    private val openEditProfile: () -> Unit,
 ) : ProfileMainComponent,
     ComponentContext by componentContext,
     KoinComponent {
@@ -18,5 +19,9 @@ internal class DefaultProfileMainComponent(
 
     override fun openAccount() {
         openAccount.invoke()
+    }
+
+    override fun openEditProfile() {
+        openEditProfile.invoke()
     }
 }

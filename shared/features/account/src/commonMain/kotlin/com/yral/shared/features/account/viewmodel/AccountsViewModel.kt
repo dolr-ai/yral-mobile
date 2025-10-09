@@ -15,8 +15,12 @@ import com.yral.shared.core.utils.getAccountInfo
 import com.yral.shared.features.account.analytics.AccountsTelemetry
 import com.yral.shared.features.auth.AuthClientFactory
 import com.yral.shared.features.auth.domain.useCases.DeleteAccountUseCase
+import com.yral.shared.features.auth.domain.useCases.DeregisterNotificationTokenUseCase
+import com.yral.shared.features.auth.domain.useCases.RegisterNotificationTokenUseCase
 import com.yral.shared.firebaseStore.getDownloadUrl
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
+import com.yral.shared.preferences.PrefKeys
+import com.yral.shared.preferences.Preferences
 import dev.gitlive.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -28,14 +32,18 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class AccountsViewModel(
-    appDispatchers: AppDispatchers,
-    authClientFactory: AuthClientFactory,
+@Suppress("LongParameterList")
+class AccountsViewModel internal constructor(
+    private val appDispatchers: AppDispatchers,
+    private val authClientFactory: AuthClientFactory,
     private val sessionManager: SessionManager,
     private val deleteAccountUseCase: DeleteAccountUseCase,
     val accountsTelemetry: AccountsTelemetry,
-    flagManager: FeatureFlagManager,
+    private val flagManager: FeatureFlagManager,
     private val firebaseStorage: FirebaseStorage,
+    private val preferences: Preferences,
+    private val registerNotificationTokenUseCase: RegisterNotificationTokenUseCase,
+    private val deregisterNotificationTokenUseCase: DeregisterNotificationTokenUseCase,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.disk)
 
@@ -66,12 +74,25 @@ class AccountsViewModel(
             }
         }
         coroutineScope.launch {
+            val isEnabled = preferences.getBoolean(PrefKeys.NOTIFICATION_ALERTS_ENABLED.name) ?: false
+            _state.update { it.copy(alertsEnabled = isEnabled) }
+        }
+        coroutineScope.launch {
             sessionManager
                 .observeSessionProperties()
                 .map { it.isSocialSignIn }
                 .distinctUntilChanged()
                 .collect { isSocialSignIn ->
                     _state.update { it.copy(isLoggedIn = isSocialSignIn == true) }
+                }
+        }
+        coroutineScope.launch {
+            sessionManager
+                .state
+                .map { sessionManager.getAccountInfo() }
+                .distinctUntilChanged()
+                .collect { info: AccountInfo? ->
+                    _state.update { it.copy(accountInfo = info) }
                 }
         }
     }
@@ -191,6 +212,35 @@ class AccountsViewModel(
         }
     }
 
+    fun onAlertsToggleChanged(isEnabled: Boolean) {
+        coroutineScope.launch {
+            preferences.putBoolean(PrefKeys.NOTIFICATION_ALERTS_ENABLED.name, isEnabled)
+        }
+        _state.update { it.copy(alertsEnabled = isEnabled) }
+    }
+
+    suspend fun registerAlerts(token: String): Boolean =
+        runCatching {
+            registerNotificationTokenUseCase(
+                RegisterNotificationTokenUseCase.Parameter(token = token),
+            )
+        }.onFailure { error ->
+            Logger.e("AccountsViewModel") {
+                "Failed to register notifications: ${error.message}"
+            }
+        }.isSuccess
+
+    suspend fun deregisterAlerts(token: String): Boolean =
+        runCatching {
+            deregisterNotificationTokenUseCase(
+                DeregisterNotificationTokenUseCase.Parameter(token = token),
+            )
+        }.onFailure { error ->
+            Logger.e("AccountsViewModel") {
+                "Failed to deregister notifications: ${error.message}"
+            }
+        }.isSuccess
+
     companion object {
         const val LOGOUT_URI = "yral://logout"
         const val DELETE_ACCOUNT_URI = "yral://deleteAccount"
@@ -224,6 +274,7 @@ data class AccountsState(
     val supportIcon: String? = null,
     val isWalletEnabled: Boolean = false,
     val isLoggedIn: Boolean = false,
+    val alertsEnabled: Boolean = false,
 )
 
 sealed interface AccountBottomSheet {

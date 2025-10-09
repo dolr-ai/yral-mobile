@@ -430,6 +430,7 @@ private fun TopView(
         val screenWidthPx = LocalWindowInfo.current.containerSize.width
         UserBrief(
             principalId = state.feedDetails[pageNo].principalID,
+            displayName = state.feedDetails[pageNo].displayName.ifBlank { null },
             profileImageUrl = state.feedDetails[pageNo].profileImageURL,
             postDescription = state.feedDetails[pageNo].postDescription,
             isPostDescriptionExpanded = state.isPostDescriptionExpanded,

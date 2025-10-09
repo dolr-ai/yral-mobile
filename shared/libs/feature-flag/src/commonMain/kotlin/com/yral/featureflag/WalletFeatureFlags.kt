@@ -12,7 +12,7 @@ object WalletFeatureFlags {
                 keySuffix = "enabled",
                 name = "Enable or disable wallet",
                 description = "Enable or disable wallet",
-                defaultValue = false,
+                defaultValue = true,
             )
     }
 }

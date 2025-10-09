@@ -143,7 +143,7 @@ fun LeaderboardTableHeader(
 @Composable
 fun LeaderboardRow(
     position: Int,
-    userPrincipalId: String,
+    userIdentifier: String,
     profileImageUrl: String,
     wins: Long,
     isCurrentUser: Boolean,
@@ -171,7 +171,7 @@ fun LeaderboardRow(
         UserBriefWithBorder(position, decorateCurrentUser) {
             UserBriefContent(
                 position,
-                userPrincipalId,
+                userIdentifier,
                 profileImageUrl,
                 wins,
                 isCurrentUser,

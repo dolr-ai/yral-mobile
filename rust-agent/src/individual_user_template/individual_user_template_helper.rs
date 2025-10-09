@@ -134,6 +134,7 @@ pub struct CanistersWrapper {
     canister_principal: Principal,
     user_principal: Principal,
     profile_pic: String,
+    username: Option<String>,
     is_created_from_service_canister: bool
 }
 
@@ -156,6 +157,10 @@ impl CanistersWrapper {
 
     pub fn get_profile_pic(&self) -> String {
         self.profile_pic.to_string()
+    }
+
+    pub fn get_username(&self) -> Option<String> {
+        self.username.clone()
     }
 
     pub fn is_created_from_service_canister(&self) -> bool {
@@ -184,7 +189,8 @@ pub async fn authenticate_with_network(
                 is_created_from_service_canister: true,
                 canister_principal: canister_principal,
                 user_principal: profile_details.user_canister,
-                profile_pic: profile_details.profile_pic_or_random()
+                profile_pic: profile_details.profile_pic_or_random(),
+                username: profile_details.username.clone(),
             }
         )
     } else {
@@ -194,7 +200,8 @@ pub async fn authenticate_with_network(
                 is_created_from_service_canister: false,
                 canister_principal: canister_principal,
                 user_principal: user_principal,
-                profile_pic: propic_from_principal(user_principal)
+                profile_pic: propic_from_principal(user_principal),
+                username: profile_details.username.clone(),
             }
         )
     }

@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.yral.shared.core.utils.resolveUsername
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
@@ -26,6 +27,7 @@ import com.yral.shared.libs.designsystem.theme.YralColors
 fun UserBrief(
     profileImageUrl: String?,
     principalId: String,
+    displayName: String?,
     postDescription: String,
     isPostDescriptionExpanded: Boolean,
     setPostDescriptionExpanded: (isExpanded: Boolean) -> Unit,
@@ -47,6 +49,7 @@ fun UserBrief(
             UserBriefProfileImage(profileImageUrl)
             UserBriefDetails(
                 modifier = Modifier.weight(1f),
+                displayName = displayName,
                 principalId = principalId,
                 postDescription = postDescription,
                 isPostDescriptionExpanded = isPostDescriptionExpanded,
@@ -72,6 +75,7 @@ private fun UserBriefProfileImage(profileImageUrl: String?) {
 @Composable
 private fun UserBriefDetails(
     modifier: Modifier,
+    displayName: String?,
     principalId: String,
     postDescription: String,
     isPostDescriptionExpanded: Boolean,
@@ -87,8 +91,9 @@ private fun UserBriefDetails(
         verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically),
         horizontalAlignment = Alignment.Start,
     ) {
+        val displayText = resolveUsername(displayName, principalId) ?: principalId
         Text(
-            text = principalId,
+            text = displayText,
             style = LocalAppTopography.current.feedCanisterId,
             color = Color.White,
             maxLines = 1,

@@ -55,6 +55,27 @@ actual object HelperService {
             Err(DeviceRegistrationError.UnknownError(e.message ?: "Unexpected error occurred"))
         }
 
+    actual suspend fun updateUserMetadata(
+        identityData: ByteArray,
+        userCanisterId: String,
+        userName: String,
+    ): Result<Unit, MetadataUpdateError> =
+        try {
+            validateMetadataInputs(identityData, userCanisterId, userName).getOrThrow()
+
+            // Call the uniffi generated function
+
+            Ok(Unit)
+        } catch (e: MetadataUpdateError) {
+            Err(e)
+        } catch (
+            @Suppress("TooGenericExceptionCaught")
+            e: Exception,
+        ) {
+            logger.e(e) { "Unexpected error during metadata update" }
+            Err(MetadataUpdateError.UnknownError(e.message ?: "Unexpected error occurred"))
+        }
+
     actual fun initRustLogger() {
         // call the uniffi generated function
     }

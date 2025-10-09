@@ -19,6 +19,7 @@ actual suspend fun authenticateWithNetwork(data: ByteArray): CanisterData {
             canisterId = wrapper.getCanisterPrincipal(),
             userPrincipalId = wrapper.getUserPrincipal(),
             profilePic = wrapper.getProfilePic(),
+            username = wrapper.getUsername(),
             isCreatedFromServiceCanister = wrapper.isCreatedFromServiceCanister(),
         )
     } catch (exception: FfiException) {
