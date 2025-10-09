@@ -14,7 +14,6 @@ import com.yral.shared.app.ui.screens.feed.performance.PrefetchVideoListenerImpl
 import com.yral.shared.app.ui.screens.profile.nav.ProfileComponent
 import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.features.account.ui.AccountScreen
-import com.yral.shared.features.account.ui.rememberAlertsPermissionController
 import com.yral.shared.features.account.viewmodel.AccountsViewModel
 import com.yral.shared.features.auth.ui.LoginBottomSheet
 import com.yral.shared.features.auth.viewModel.LoginViewModel
@@ -33,6 +32,7 @@ internal fun ProfileScreen(
     profileViewModel: ProfileViewModel,
     accountsViewModel: AccountsViewModel,
     profileVideos: LazyPagingItems<FeedDetails>,
+    onAlertsToggleRequest: suspend (Boolean) -> Boolean,
 ) {
     Children(
         stack = component.stack,
@@ -65,8 +65,6 @@ internal fun ProfileScreen(
             is ProfileComponent.Child.Account -> {
                 val loginViewModel: LoginViewModel = koinViewModel()
                 val loginState by loginViewModel.state.collectAsStateWithLifecycle()
-                val alertsPermissionController =
-                    rememberAlertsPermissionController(accountsViewModel)
                 AccountScreen(
                     component = instance.component,
                     viewModel = accountsViewModel,
@@ -79,8 +77,7 @@ internal fun ProfileScreen(
                             openTerms = openTerms,
                         )
                     },
-                    onAlertsToggleRequest = alertsPermissionController.toggle,
-                    currentAlertsStatusProvider = alertsPermissionController.currentStatus,
+                    onAlertsToggleRequest = onAlertsToggleRequest,
                 )
             }
 

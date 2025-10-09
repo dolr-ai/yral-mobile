@@ -11,7 +11,7 @@ import kotlin.time.Duration.Companion.minutes
 class FirebaseRemoteConfigProvider(
     override val id: String = ID,
     override val name: String = NAME,
-    private val isDevMode: Boolean = true,
+    private val isDevMode: Boolean = false,
 ) : FeatureFlagProvider {
     private val remoteConfig: FirebaseRemoteConfig = Firebase.remoteConfig
     override val isRemote: Boolean = true

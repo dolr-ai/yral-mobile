@@ -105,12 +105,9 @@ fun AccountScreen(
     viewModel: AccountsViewModel = koinViewModel(),
     loginState: UiState<*>,
     loginBottomSheet: LoginBottomSheetComposable,
-    onAlertsToggleRequest: suspend (Boolean) -> Boolean = { it },
-    currentAlertsStatusProvider: (suspend () -> Boolean)? = null,
+    onAlertsToggleRequest: suspend (Boolean) -> Boolean,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    var initialAlertsSyncDone by remember { mutableStateOf(false) }
-    val coroutineScope = rememberCoroutineScope()
     LaunchedEffect(Unit) { viewModel.accountsTelemetry.onMenuScreenViewed() }
     val bottomSheetState =
         rememberModalBottomSheetState(
@@ -121,52 +118,22 @@ fun AccountScreen(
             viewModel.setBottomSheetType(AccountBottomSheet.SignUp)
         }
     }
-    LaunchedEffect(currentAlertsStatusProvider) {
-        currentAlertsStatusProvider?.let { provider ->
-            val actual =
-                runCatching { provider() }
-                    .onFailure { error ->
-                        Logger.e("AccountScreen") { "Failed to refresh alerts status: ${error.message}" }
-                    }.getOrElse { state.alertsEnabled }
-            if (actual != state.alertsEnabled) {
-                viewModel.onAlertsToggleChanged(actual)
-            }
-        }
-    }
+    val scope = rememberCoroutineScope()
     val handleAlertsToggle: (Boolean) -> Unit =
-        remember(viewModel, onAlertsToggleRequest, state.alertsEnabled) {
-            { enabled: Boolean ->
-                val previous = state.alertsEnabled
-                viewModel.onAlertsToggleChanged(enabled)
-                coroutineScope.launch {
-                    val success =
-                        runCatching { onAlertsToggleRequest(enabled) }
-                            .onFailure { error ->
-                                Logger.e("AccountScreen") { "Alerts toggle failed: ${error.message}" }
-                            }.getOrElse { false }
-                    if (!success) {
-                        viewModel.onAlertsToggleChanged(previous)
-                    }
-                }
-            }
-        }
-    LaunchedEffect(initialAlertsSyncDone, state.alertsEnabled) {
-        if (!initialAlertsSyncDone) {
-            if (state.alertsEnabled) {
-                val registered =
-                    runCatching { onAlertsToggleRequest(true) }
+        { enabled: Boolean ->
+            val previous = state.alertsEnabled
+            viewModel.onAlertsToggleChanged(enabled)
+            scope.launch {
+                val success =
+                    runCatching { onAlertsToggleRequest(enabled) }
                         .onFailure { error ->
-                            Logger.e("AccountScreen") {
-                                "Failed to ensure alerts registration: ${error.message}"
-                            }
+                            Logger.e("AccountScreen") { "Alerts toggle failed: ${error.message}" }
                         }.getOrElse { false }
-                if (!registered) {
-                    viewModel.onAlertsToggleChanged(false)
+                if (!success) {
+                    viewModel.onAlertsToggleChanged(previous)
                 }
             }
-            initialAlertsSyncDone = true
         }
-    }
     Column(modifier = modifier.fillMaxSize()) {
         AccountsTitle(state.isWalletEnabled) { component.onBack() }
         AccountScreenContent(

@@ -1,7 +1,41 @@
 package com.yral.shared.core.utils
 
-private const val USERNAME_PREFIX = "player-"
-private const val USERNAME_HASH_LENGTH = 10
+private val USERNAME_PREFIX_WORDS =
+    listOf(
+        "amber",
+        "aster",
+        "aurora",
+        "blaze",
+        "cascade",
+        "celeste",
+        "ember",
+        "glimmer",
+        "halo",
+        "harbor",
+        "lumen",
+        "meadow",
+        "nebula",
+        "onyx",
+        "orbit",
+        "pebble",
+        "quartz",
+        "solace",
+        "solstice",
+        "spark",
+        "spruce",
+        "starlit",
+        "summit",
+        "terra",
+        "topaz",
+        "velvet",
+        "verve",
+        "vista",
+        "willow",
+        "zenith",
+        "zephyr",
+    )
+
+private const val USERNAME_HASH_LENGTH = 6
 private const val USERNAME_BASE = 36
 private const val USERNAME_PAD_CHAR = '0'
 
@@ -26,5 +60,7 @@ fun generateUsernameFromPrincipal(principal: String): String {
         }
     val base36 = hash.toString(USERNAME_BASE)
     val suffix = base36.takeLast(USERNAME_HASH_LENGTH).padStart(USERNAME_HASH_LENGTH, USERNAME_PAD_CHAR)
-    return USERNAME_PREFIX + suffix.lowercase()
+    val prefixIndex = (hash % USERNAME_PREFIX_WORDS.size.toULong()).toInt()
+    val prefix = USERNAME_PREFIX_WORDS[prefixIndex]
+    return "$prefix-${suffix.lowercase()}"
 }

@@ -28,13 +28,10 @@ kotlin {
             implementation(projects.shared.libs.designsystem)
             implementation(compose.components.resources)
             implementation(libs.coil.compose)
-        }
-        androidMain.dependencies {
-            implementation(libs.firebase.bom)
-            implementation(libs.firebase.messaging)
             implementation(libs.moko.permissions)
             implementation(libs.moko.permissions.compose)
             implementation(libs.moko.permissions.notifications)
+            implementation(libs.gitlive.firebase.messaging)
         }
     }
 }

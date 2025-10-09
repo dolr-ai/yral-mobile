@@ -189,47 +189,31 @@ class DefaultAuthClient(
 
     private suspend fun handleExtractIdentityResponse(data: ByteArray) {
         try {
-            var session =
-                getCachedSession()
-                    ?: run {
-                        val canisterWrapper = authenticateWithNetwork(data)
-                        cacheSession(data, canisterWrapper)
-                        Session(
-                            identity = data,
-                            canisterId = canisterWrapper.canisterId,
-                            userPrincipal = canisterWrapper.userPrincipalId,
-                            profilePic = canisterWrapper.profilePic,
-                            username = resolveUsername(canisterWrapper.username, canisterWrapper.userPrincipalId),
-                            isCreatedFromServiceCanister = canisterWrapper.isCreatedFromServiceCanister,
-                        )
-                    }
-            session.userPrincipal?.let { crashlyticsManager.setUserId(it) }
+            var cachedSession = getCachedSession()
+            if (cachedSession == null) {
+                val canisterWrapper = authenticateWithNetwork(data)
+                cacheSession(data, canisterWrapper)
+                cachedSession =
+                    Session(
+                        identity = data,
+                        canisterId = canisterWrapper.canisterId,
+                        userPrincipal = canisterWrapper.userPrincipalId,
+                        profilePic = canisterWrapper.profilePic,
+                        username = resolveUsername(canisterWrapper.username, canisterWrapper.userPrincipalId),
+                        isCreatedFromServiceCanister = canisterWrapper.isCreatedFromServiceCanister,
+                    )
+            }
+            cachedSession.userPrincipal?.let { crashlyticsManager.setUserId(it) }
             sessionManager.updateCoinBalance(0)
-            val username = session.username
-            val userPrincipal = session.userPrincipal
-            if (!username.isNullOrBlank() && !userPrincipal.isNullOrBlank()) {
-                scope.launch {
-                    requiredUseCases.updateDocumentUseCase
-                        .invoke(
-                            parameter =
-                                UpdateDocumentUseCase.Params(
-                                    collectionName = "users",
-                                    documentId = userPrincipal,
-                                    fieldAndValue = Pair("username", username),
-                                ),
-                        ).onFailure { error ->
-                            Logger.e(error) { "Failed to update username for $userPrincipal" }
-                        }
-                }
+            if (!cachedSession.isCreatedFromServiceCanister) {
+                val reAuthenticatedSession = refreshAuthenticateWithNetwork(data)
+                reAuthenticatedSession?.let { cachedSession = reAuthenticatedSession }
             }
-            if (!session.isCreatedFromServiceCanister) {
-                refreshAuthenticateWithNetwork(data)?.let { session = it }
-            }
-            setSession(session = session)
-            fetchBalance(session = session)
-            if (auth.currentUser?.uid == session.userPrincipal) {
+            setSession(session = cachedSession)
+            fetchBalance(session = cachedSession)
+            if (auth.currentUser?.uid == cachedSession.userPrincipal) {
                 sessionManager.updateFirebaseLoginState(true)
-                postFirebaseLogin(session)
+                postFirebaseLogin(cachedSession)
             } else {
                 sessionManager.updateFirebaseLoginState(false)
             }
@@ -344,6 +328,23 @@ class DefaultAuthClient(
     }
 
     private fun postFirebaseLogin(session: Session) {
+        scope.launch {
+            session.userPrincipal?.let { userPrincipal ->
+                session.username?.let { username ->
+                    requiredUseCases.updateDocumentUseCase
+                        .invoke(
+                            parameter =
+                                UpdateDocumentUseCase.Params(
+                                    collectionName = "users",
+                                    documentId = userPrincipal,
+                                    fieldAndValue = Pair("username", username),
+                                ),
+                        ).onFailure { error ->
+                            Logger.e(error) { "Failed to update username for $userPrincipal" }
+                        }
+                }
+            }
+        }
         scope.launch { updateBalanceAndProceed(session) }
         scope.launch {
             val result =
@@ -492,13 +493,12 @@ class DefaultAuthClient(
             .all { it != null }
             .let { allPresent ->
                 if (allPresent) {
-                    val principal = userPrincipal!!
                     Session(
                         identity = identity!!,
                         canisterId = canisterId!!,
-                        userPrincipal = principal,
+                        userPrincipal = userPrincipal!!,
                         profilePic = profilePic!!,
-                        username = resolveUsername(username, principal),
+                        username = resolveUsername(username, userPrincipal),
                         // default false for backward compatibility
                         isCreatedFromServiceCanister = isCreatedFromServiceCanister ?: false,
                     )

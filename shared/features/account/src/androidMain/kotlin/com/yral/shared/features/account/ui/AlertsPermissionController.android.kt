@@ -8,8 +8,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import co.touchlab.kermit.Logger
-import com.google.firebase.messaging.FirebaseMessaging
 import com.yral.shared.features.account.viewmodel.AccountsViewModel
+import dev.gitlive.firebase.Firebase
+import dev.gitlive.firebase.messaging.messaging
 import dev.icerock.moko.permissions.DeniedAlwaysException
 import dev.icerock.moko.permissions.DeniedException
 import dev.icerock.moko.permissions.Permission
@@ -19,7 +20,6 @@ import dev.icerock.moko.permissions.compose.BindEffect
 import dev.icerock.moko.permissions.compose.PermissionsControllerFactory
 import dev.icerock.moko.permissions.compose.rememberPermissionsControllerFactory
 import dev.icerock.moko.permissions.notifications.REMOTE_NOTIFICATION
-import kotlinx.coroutines.tasks.await
 
 @Suppress("LongMethod")
 @Composable
@@ -98,7 +98,7 @@ actual fun rememberAlertsPermissionController(viewModel: AccountsViewModel): Ale
 }
 
 private suspend fun registerNotificationToken(viewModel: AccountsViewModel): Boolean {
-    val tokenResult = runCatching { FirebaseMessaging.getInstance().token.await() }
+    val tokenResult = runCatching { Firebase.messaging.getToken() }
     val token = tokenResult.getOrNull()
     if (!tokenResult.isSuccess || token.isNullOrBlank()) {
         Logger.e("AccountScreen") {
@@ -110,7 +110,7 @@ private suspend fun registerNotificationToken(viewModel: AccountsViewModel): Boo
 }
 
 private suspend fun deregisterNotificationToken(viewModel: AccountsViewModel): Boolean {
-    val tokenResult = runCatching { FirebaseMessaging.getInstance().token.await() }
+    val tokenResult = runCatching { Firebase.messaging.getToken() }
     val token = tokenResult.getOrNull()
     if (!tokenResult.isSuccess || token.isNullOrBlank()) {
         Logger.e("AccountScreen") {

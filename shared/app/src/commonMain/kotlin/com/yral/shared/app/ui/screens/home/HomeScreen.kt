@@ -60,6 +60,7 @@ import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.session.getKey
 import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.features.account.ui.AccountScreen
+import com.yral.shared.features.account.ui.AlertsPermissionController
 import com.yral.shared.features.account.ui.rememberAlertsPermissionController
 import com.yral.shared.features.account.viewmodel.AccountsViewModel
 import com.yral.shared.features.auth.ui.LoginBottomSheet
@@ -182,6 +183,10 @@ private fun HomeScreenContent(
     val profileViewModel = koinViewModel<ProfileViewModel>(key = "profile-$sessionKey")
     val accountViewModel = koinViewModel<AccountsViewModel>(key = "account-$sessionKey")
     val profileVideos = getProfileVideos(profileViewModel, sessionKey, updateProfileVideosCount)
+    val alertsPermissionController =
+        rememberAlertsPermissionController(accountViewModel)
+    NotificationPermissionObserver(alertsPermissionController, accountViewModel)
+
     Children(
         stack = component.stack,
         modifier = modifier,
@@ -197,28 +202,6 @@ private fun HomeScreenContent(
             is HomeComponent.Child.Account -> {
                 val loginViewModel: LoginViewModel = koinViewModel()
                 val loginState by loginViewModel.state.collectAsStateWithLifecycle()
-                val alertsPermissionController =
-                    rememberAlertsPermissionController(accountViewModel)
-                val lifecycleOwner = LocalLifecycleOwner.current
-                val scope = rememberCoroutineScope()
-                DisposableEffect(lifecycleOwner, alertsPermissionController) {
-                    val observer =
-                        LifecycleEventObserver { _, event ->
-                            if (event == Lifecycle.Event.ON_RESUME) {
-                                scope.launch {
-                                    val actual =
-                                        runCatching { alertsPermissionController.currentStatus() }
-                                            .getOrElse { accountViewModel.state.value.alertsEnabled }
-                                    if (actual != accountViewModel.state.value.alertsEnabled) {
-                                        accountViewModel.onAlertsToggleChanged(actual)
-                                    }
-                                }
-                            }
-                        }
-                    lifecycleOwner.lifecycle.addObserver(observer)
-                    onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
-                }
-
                 AccountScreen(
                     component = child.component,
                     viewModel = accountViewModel,
@@ -232,7 +215,6 @@ private fun HomeScreenContent(
                         )
                     },
                     onAlertsToggleRequest = alertsPermissionController.toggle,
-                    currentAlertsStatusProvider = alertsPermissionController.currentStatus,
                 )
             }
 
@@ -255,6 +237,7 @@ private fun HomeScreenContent(
                         profileViewModel = profileViewModel,
                         accountsViewModel = accountViewModel,
                         profileVideos = profileVideos,
+                        onAlertsToggleRequest = alertsPermissionController.toggle,
                     )
                 }
             }
@@ -265,6 +248,32 @@ private fun HomeScreenContent(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun NotificationPermissionObserver(
+    alertsPermissionController: AlertsPermissionController,
+    accountViewModel: AccountsViewModel,
+) {
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val scope = rememberCoroutineScope()
+    DisposableEffect(lifecycleOwner, alertsPermissionController) {
+        val observer =
+            LifecycleEventObserver { _, event ->
+                if (event == Lifecycle.Event.ON_RESUME) {
+                    scope.launch {
+                        val actual =
+                            runCatching { alertsPermissionController.currentStatus() }
+                                .getOrElse { accountViewModel.state.value.alertsEnabled }
+                        if (actual != accountViewModel.state.value.alertsEnabled) {
+                            accountViewModel.onAlertsToggleChanged(actual)
+                        }
+                    }
+                }
+            }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 }
 

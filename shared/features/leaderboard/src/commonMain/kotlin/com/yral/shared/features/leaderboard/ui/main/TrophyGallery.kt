@@ -261,7 +261,9 @@ private fun getTrophyDetailsUserTexts(user: List<LeaderboardItem>): String =
         else ->
             user
                 .take(LeaderboardHelpers.MAX_USERS_WITH_DUPLICATE_RANK)
-                .joinToString(", ") { it.username }
+                .joinToString(", ") {
+                    it.username.take(LeaderboardHelpers.MAX_USERS_PRINCIPAL_LENGTH) + "..."
+                }
     }
 
 @Composable
