@@ -16,11 +16,11 @@ import androidx.paging.compose.LazyPagingItems
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.stack.animation.slide
 import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
-import com.yral.android.ui.screens.account.rememberAlertsPermissionController
 import com.yral.shared.app.ui.screens.feed.performance.PrefetchVideoListenerImpl
 import com.yral.shared.app.ui.screens.profile.nav.ProfileComponent
 import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.features.account.ui.AccountScreen
+import com.yral.shared.features.account.ui.rememberAlertsPermissionController
 import com.yral.shared.features.account.viewmodel.AccountsViewModel
 import com.yral.shared.features.auth.ui.LoginBottomSheet
 import com.yral.shared.features.auth.viewModel.LoginViewModel
@@ -68,10 +68,12 @@ internal fun ProfileScreen(
                     getPrefetchListener = { reel -> PrefetchVideoListenerImpl(reel) },
                 )
             }
+
             is ProfileComponent.Child.Account -> {
                 val loginViewModel: LoginViewModel = koinViewModel()
                 val loginState by loginViewModel.state.collectAsStateWithLifecycle()
-                val alertsPermissionController = rememberAlertsPermissionController(accountsViewModel)
+                val alertsPermissionController =
+                    rememberAlertsPermissionController(accountsViewModel)
                 val lifecycleOwner = LocalLifecycleOwner.current
                 val scope = rememberCoroutineScope()
 
@@ -115,6 +117,7 @@ internal fun ProfileScreen(
                     currentAlertsStatusProvider = alertsPermissionController.currentStatus,
                 )
             }
+
             is ProfileComponent.Child.EditProfile ->
                 EditProfileScreen(
                     component = instance.component,

@@ -1,5 +1,6 @@
-package com.yral.android.ui.screens.account
+package com.yral.shared.features.account.ui
 
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
@@ -20,14 +21,9 @@ import dev.icerock.moko.permissions.compose.rememberPermissionsControllerFactory
 import dev.icerock.moko.permissions.notifications.REMOTE_NOTIFICATION
 import kotlinx.coroutines.tasks.await
 
-data class AlertsPermissionController(
-    val toggle: suspend (Boolean) -> Boolean,
-    val currentStatus: suspend () -> Boolean,
-)
-
 @Suppress("LongMethod")
 @Composable
-fun rememberAlertsPermissionController(viewModel: AccountsViewModel): AlertsPermissionController {
+actual fun rememberAlertsPermissionController(viewModel: AccountsViewModel): AlertsPermissionController {
     val permissionsFactory: PermissionsControllerFactory = rememberPermissionsControllerFactory()
     val permissionsController: PermissionsController =
         remember(permissionsFactory) { permissionsFactory.createPermissionsController() }
@@ -125,7 +121,7 @@ private suspend fun deregisterNotificationToken(viewModel: AccountsViewModel): B
     return viewModel.deregisterAlerts(token)
 }
 
-private fun openNotificationSettings(context: android.content.Context) {
+private fun openNotificationSettings(context: Context) {
     val primaryIntent =
         Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
             putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)

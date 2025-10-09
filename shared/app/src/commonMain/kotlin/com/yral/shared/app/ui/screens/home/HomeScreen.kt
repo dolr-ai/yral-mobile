@@ -46,14 +46,6 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
-import com.yral.android.R
-import com.yral.android.ui.screens.account.rememberAlertsPermissionController
-import com.yral.android.ui.screens.alertsrequest.AlertsRequestBottomSheet
-import com.yral.android.ui.screens.feed.FeedScreen
-import com.yral.android.ui.screens.home.nav.HomeComponent
-import com.yral.android.ui.screens.home.nav.HomeComponent.SlotChild
-import com.yral.android.ui.screens.profile.ProfileScreen
-import com.yral.android.ui.screens.uploadVideo.UploadVideoRootScreen
 import com.yral.featureflag.FeatureFlagManager
 import com.yral.featureflag.WalletFeatureFlags
 import com.yral.shared.analytics.events.CategoryName
@@ -68,6 +60,7 @@ import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.session.getKey
 import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.features.account.ui.AccountScreen
+import com.yral.shared.features.account.ui.rememberAlertsPermissionController
 import com.yral.shared.features.account.viewmodel.AccountsViewModel
 import com.yral.shared.features.auth.ui.LoginBottomSheet
 import com.yral.shared.features.auth.viewModel.LoginViewModel
@@ -164,6 +157,7 @@ private fun SlotContent(component: HomeComponent) {
                 AlertsRequestBottomSheet(
                     component = slotChild.component,
                 )
+
             is SlotChild.VideoViewsRewardsBottomSheet ->
                 VideoViewsRewardsBottomSheet(
                     component = slotChild.component,
@@ -203,7 +197,8 @@ private fun HomeScreenContent(
             is HomeComponent.Child.Account -> {
                 val loginViewModel: LoginViewModel = koinViewModel()
                 val loginState by loginViewModel.state.collectAsStateWithLifecycle()
-                val alertsPermissionController = rememberAlertsPermissionController(accountViewModel)
+                val alertsPermissionController =
+                    rememberAlertsPermissionController(accountViewModel)
                 val lifecycleOwner = LocalLifecycleOwner.current
                 val scope = rememberCoroutineScope()
 
