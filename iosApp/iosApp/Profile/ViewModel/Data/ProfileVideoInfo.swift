@@ -14,6 +14,7 @@ struct ProfileVideoInfo: Equatable {
   let thumbnailUrl: URL
   let likeCount: Int
   let isLiked: Bool
+  let viewCount: Int64
 }
 
 extension FeedResult {
@@ -23,7 +24,8 @@ extension FeedResult {
       videoId: self.videoID,
       thumbnailUrl: self.thumbnail,
       likeCount: self.likeCount,
-      isLiked: self.isLiked
+      isLiked: self.isLiked,
+      viewCount: self.viewCount
     )
   }
 }

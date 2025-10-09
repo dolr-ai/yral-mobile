@@ -40,6 +40,10 @@ final class WalletDIContainer {
         exchangeRateUseCase: ExchangeRateUseCase(
           walletRepository: repository,
           crashReporter: dependencies.crashReporter
+        ),
+        videoViewedRewardsUseCase: VideoViewedRewardsUseCase(
+          walletRepository: repository,
+          crashReporter: dependencies.crashReporter
         )
       )
     )
