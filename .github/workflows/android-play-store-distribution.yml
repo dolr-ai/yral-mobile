@@ -89,7 +89,7 @@ jobs:
         run: ./gradlew clean
 
       - name: Build AAB with Gradle
-        run: ./gradlew androidApp:bundleProdRelease -PisDebug=false
+        run: ./gradlew androidApp:bundleProdRelease
         env:
           GITHUB_USERNAME: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
