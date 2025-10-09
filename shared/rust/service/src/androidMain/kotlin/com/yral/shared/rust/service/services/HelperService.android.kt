@@ -60,6 +60,37 @@ actual object HelperService {
             Err(DeviceRegistrationError.UnknownError(e.message ?: "Unexpected error occurred"))
         }
 
+    actual suspend fun updateUserMetadata(
+        identityData: ByteArray,
+        userCanisterId: String,
+        userName: String,
+    ): Result<Unit, MetadataUpdateError> =
+        try {
+            validateMetadataInputs(identityData, userCanisterId, userName).getOrThrow()
+
+            logger.d { "Updating metadata for canister: $userCanisterId" }
+
+            com.yral.shared.uniffi.generated
+                .setUserMetadata(identityData, userCanisterId, userName)
+
+            Ok(Unit)
+        } catch (e: MetadataUpdateError) {
+            Err(e)
+        } catch (
+            @Suppress("TooGenericExceptionCaught")
+            e: Exception,
+        ) {
+            val errorMessage = e.message.orEmpty()
+            logger.e(e) { "Unexpected error during metadata update" }
+            val mappedError =
+                if (errorMessage.contains("DuplicateUsername", ignoreCase = true)) {
+                    MetadataUpdateError.UsernameTaken("This username is already taken.")
+                } else {
+                    MetadataUpdateError.UnknownError(errorMessage.ifBlank { "Unexpected error occurred" })
+                }
+            Err(mappedError)
+        }
+
     actual fun initRustLogger() {
         com.yral.shared.uniffi.generated
             .initRustLogger()

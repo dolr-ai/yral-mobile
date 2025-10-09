@@ -17,11 +17,14 @@ import com.yral.shared.features.account.ui.AccountScreen
 import com.yral.shared.features.account.viewmodel.AccountsViewModel
 import com.yral.shared.features.auth.ui.LoginBottomSheet
 import com.yral.shared.features.auth.viewModel.LoginViewModel
+import com.yral.shared.features.profile.ui.EditProfileScreen
 import com.yral.shared.features.profile.ui.ProfileMainScreen
+import com.yral.shared.features.profile.viewmodel.EditProfileViewModel
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
+@Suppress("LongMethod")
 @Composable
 internal fun ProfileScreen(
     component: ProfileComponent,
@@ -29,6 +32,7 @@ internal fun ProfileScreen(
     profileViewModel: ProfileViewModel,
     accountsViewModel: AccountsViewModel,
     profileVideos: LazyPagingItems<FeedDetails>,
+    onAlertsToggleRequest: suspend (Boolean) -> Boolean,
 ) {
     Children(
         stack = component.stack,
@@ -57,6 +61,7 @@ internal fun ProfileScreen(
                     getPrefetchListener = { reel -> PrefetchVideoListenerImpl(reel) },
                 )
             }
+
             is ProfileComponent.Child.Account -> {
                 val loginViewModel: LoginViewModel = koinViewModel()
                 val loginState by loginViewModel.state.collectAsStateWithLifecycle()
@@ -72,8 +77,16 @@ internal fun ProfileScreen(
                             openTerms = openTerms,
                         )
                     },
+                    onAlertsToggleRequest = onAlertsToggleRequest,
                 )
             }
+
+            is ProfileComponent.Child.EditProfile ->
+                EditProfileScreen(
+                    component = instance.component,
+                    viewModel = koinViewModel<EditProfileViewModel>(),
+                    modifier = Modifier.fillMaxSize(),
+                )
         }
     }
 }

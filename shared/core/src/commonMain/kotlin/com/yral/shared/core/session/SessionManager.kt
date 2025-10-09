@@ -39,6 +39,13 @@ class SessionManager {
                 else -> null
             }
 
+    val username: String?
+        get() =
+            when (val state = _state.value) {
+                is SessionState.SignedIn -> state.session.username
+                else -> null
+            }
+
     val isCreatedFromServiceCanister: Boolean?
         get() =
             when (val state = _state.value) {
@@ -69,6 +76,16 @@ class SessionManager {
 
     fun updateLoggedInUserEmail(email: String?) {
         sessionProperties.update { it.copy(emailId = email) }
+    }
+
+    fun updateUsername(username: String?) {
+        _state.update { state ->
+            if (state is SessionState.SignedIn) {
+                state.copy(session = state.session.copy(username = username))
+            } else {
+                state
+            }
+        }
     }
 
     fun updateFirebaseLoginState(isLoggedIn: Boolean) {

@@ -21,6 +21,7 @@ use yral_canisters_common::utils::profile::propic_from_principal as inner_propic
 use yral_canisters_common::Canisters;
 use yral_metadata_client::DeviceRegistrationToken;
 use yral_metadata_client::MetadataClient;
+use yral_metadata_types::SetUserMetadataReqMetadata;
 use yral_types::delegated_identity::DelegatedIdentityWire;
 
 pub type Secp256k1Error = k256::elliptic_curve::Error;
@@ -129,6 +130,7 @@ pub struct CanistersWrapper {
     canister_principal: Principal,
     user_principal: Principal,
     profile_pic: String,
+    username: Option<String>,
     is_created_from_service_canister: bool,
 }
 
@@ -154,6 +156,10 @@ impl CanistersWrapper {
         self.profile_pic.to_string()
     }
 
+    pub fn get_username(&self) -> Option<String> {
+        self.username.clone()
+    }
+
     pub fn is_created_from_service_canister(&self) -> bool {
         self.is_created_from_service_canister
     }
@@ -177,7 +183,8 @@ pub async fn authenticate_with_network(auth_data: Vec<u8>) -> std::result::Resul
                 is_created_from_service_canister: is_created_from_service_canister,
                 canister_principal: canister_principal,
                 user_principal: user_principal,
-                profile_pic: profile_details.profile_pic_or_random()
+                profile_pic: profile_details.profile_pic_or_random(),
+                username: profile_details.username.clone(),
             }
         )
     }).await.map_err(|e| FFIError::AgentError(format!("{:?}", e)))?
@@ -290,4 +297,33 @@ pub async fn unregister_device(
                 .map_err(|e| FFIError::AgentError(format!("Api Error: {:?}", e)))?;    
         Ok(res)
     }).await.map_err(|e| FFIError::AgentError(format!("{:?}", e)))?
+}
+
+#[uniffi::export]
+pub async fn set_user_metadata(
+    identity_data: Vec<u8>,
+    user_canister_id: String,
+    user_name: String,
+) -> std::result::Result<(), FFIError> {
+    RUNTIME
+        .spawn(async move {
+            let identity = delegated_identity_from_bytes(&identity_data)
+                .map_err(|e| FFIError::UnknownError(format!("Failed to parse identity: {:?}", e)))?;
+            let principal = Principal::from_text(&user_canister_id).map_err(FFIError::from)?;
+
+            let client: MetadataClient<false> = MetadataClient::default();
+            let metadata = SetUserMetadataReqMetadata {
+                user_canister_id: principal,
+                user_name,
+            };
+
+            client
+                .set_user_metadata(&identity, metadata)
+                .await
+                .map_err(|e| FFIError::AgentError(format!("Api Error: {:?}", e)))?;
+
+            Ok(())
+        })
+        .await
+        .map_err(|e| FFIError::AgentError(format!("{:?}", e)))?
 }
