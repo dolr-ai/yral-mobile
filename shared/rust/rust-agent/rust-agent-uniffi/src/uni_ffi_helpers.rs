@@ -134,5 +134,10 @@ cfg_if! {
                               .build())
             );
         }
+    } else {
+        #[uniffi::export]
+        fn init_rust_logger() {
+            // Stub for non-Android targets to keep UniFFI bindings consistent.
+        }
     }
 }

@@ -1,3 +1,5 @@
 package com.yral.shared.rust.service.utils
 
-expect fun getUserInfoServiceCanister(): String
+import com.yral.shared.uniffi.generated.ServiceCanistersDetails
+
+fun getUserInfoServiceCanister(): String = ServiceCanistersDetails().getUserInfoServiceCanisterId()
