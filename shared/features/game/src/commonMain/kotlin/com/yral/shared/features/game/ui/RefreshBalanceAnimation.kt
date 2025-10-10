@@ -1,4 +1,4 @@
-package com.yral.shared.features.feed.ui.components
+package com.yral.shared.features.game.ui
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import com.yral.shared.features.game.viewmodel.RefreshBalanceState
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
 import com.yral.shared.libs.designsystem.component.lottie.rememberYralLottieComposition
@@ -81,3 +82,11 @@ enum class RefreshBalanceAnimationState {
     SUCCESS,
     FAILURE,
 }
+
+fun RefreshBalanceState.toRefreshBalanceAnimationState(): RefreshBalanceAnimationState =
+    when (this) {
+        RefreshBalanceState.LOADING -> RefreshBalanceAnimationState.LOADING
+        RefreshBalanceState.SUCCESS -> RefreshBalanceAnimationState.SUCCESS
+        RefreshBalanceState.FAILURE -> RefreshBalanceAnimationState.FAILURE
+        RefreshBalanceState.HIDDEN -> RefreshBalanceAnimationState.HIDDEN
+    }

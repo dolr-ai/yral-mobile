@@ -1,4 +1,4 @@
-package com.yral.shared.app.ui.screens.feed
+package com.yral.shared.features.feed.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
