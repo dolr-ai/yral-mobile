@@ -6,11 +6,13 @@ import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.active
 import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.pop
+import com.arkivanov.decompose.router.stack.pushToFront
 import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.MutableValue
 import com.arkivanov.decompose.value.Value
 import com.yral.shared.app.UpdateState
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent
+import com.yral.shared.features.profile.nav.EditProfileComponent
 import com.yral.shared.libs.routing.routes.api.AppRoute
 import kotlinx.serialization.Serializable
 
@@ -53,6 +55,7 @@ class DefaultRootComponent(
         when (config) {
             is Config.Splash -> RootComponent.Child.Splash(splashComponent(componentContext))
             is Config.Home -> RootComponent.Child.Home(homeComponent(componentContext))
+            is Config.EditProfile -> RootComponent.Child.EditProfile(editProfileComponent(componentContext))
         }
 
     private fun splashComponent(componentContext: ComponentContext): SplashComponent =
@@ -61,10 +64,20 @@ class DefaultRootComponent(
         )
 
     private fun homeComponent(componentContext: ComponentContext): HomeComponent {
-        val component = HomeComponent.Companion(componentContext = componentContext)
+        val component =
+            HomeComponent.Companion(
+                componentContext = componentContext,
+                openEditProfile = this::openEditProfile,
+            )
         homeComponent = component
         return component
     }
+
+    private fun editProfileComponent(componentContext: ComponentContext): EditProfileComponent =
+        EditProfileComponent.Companion(
+            componentContext = componentContext,
+            onBack = this::onBackClicked,
+        )
 
     override fun onBackClicked() {
         navigation.pop()
@@ -98,6 +111,10 @@ class DefaultRootComponent(
         onCompleteUpdateCallback = callback
     }
 
+    override fun openEditProfile() {
+        navigation.pushToFront(Config.EditProfile)
+    }
+
     @Serializable
     private sealed interface Config {
         @Serializable
@@ -105,5 +122,8 @@ class DefaultRootComponent(
 
         @Serializable
         data object Home : Config
+
+        @Serializable
+        data object EditProfile : Config
     }
 }

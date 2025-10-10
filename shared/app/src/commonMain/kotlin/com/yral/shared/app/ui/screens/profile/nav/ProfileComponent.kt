@@ -46,6 +46,7 @@ abstract class ProfileComponent : HomeChildSnapshotProvider {
             componentContext: ComponentContext,
             snapshot: Snapshot?,
             onUploadVideoClicked: () -> Unit,
-        ): ProfileComponent = DefaultProfileComponent(componentContext, snapshot, onUploadVideoClicked)
+            openEditProfile: () -> Unit,
+        ): ProfileComponent = DefaultProfileComponent(componentContext, snapshot, onUploadVideoClicked, openEditProfile)
     }
 }
