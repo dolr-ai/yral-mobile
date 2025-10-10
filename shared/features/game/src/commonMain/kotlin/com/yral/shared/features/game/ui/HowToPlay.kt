@@ -1,4 +1,4 @@
-package com.yral.shared.features.feed.ui.components
+package com.yral.shared.features.game.ui
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
@@ -29,17 +29,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.yral.shared.features.feed.ui.components.HowToPlayConstants.ANIMATION_DURATION
-import com.yral.shared.features.feed.ui.components.HowToPlayConstants.AUTO_CLOSE_DELAY
-import com.yral.shared.features.feed.ui.components.HowToPlayConstants.PAGE_SET_DELAY
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import yral_mobile.shared.features.feed.generated.resources.Res
-import yral_mobile.shared.features.feed.generated.resources.how_to_play
-import yral_mobile.shared.features.feed.generated.resources.ic_how_to_play
+import yral_mobile.shared.features.game.generated.resources.Res
+import yral_mobile.shared.features.game.generated.resources.how_to_play
+import yral_mobile.shared.features.game.generated.resources.ic_how_to_play
 import kotlin.coroutines.cancellation.CancellationException
 
 @Composable
@@ -86,12 +83,12 @@ private fun AnimatedBackground(
     LaunchedEffect(shouldExpand) {
         try {
             if (shouldExpand) {
-                delay(PAGE_SET_DELAY)
+                delay(HowToPlayConstants.PAGE_SET_DELAY)
                 setBackGroundVisible(true)
                 isExpanded = true
-                delay(AUTO_CLOSE_DELAY)
+                delay(HowToPlayConstants.AUTO_CLOSE_DELAY)
                 isExpanded = false
-                delay(ANIMATION_DURATION.toLong() / 2)
+                delay(HowToPlayConstants.ANIMATION_DURATION.toLong() / 2)
                 setBackGroundVisible(false)
                 onAnimationComplete()
             } else {
@@ -113,8 +110,8 @@ private fun AnimatedBackground(
         label = "HowToPlay $pageNo",
         targetState = isExpanded,
         transitionSpec = {
-            (expandHorizontally { 0 } + fadeIn(tween(ANIMATION_DURATION))) togetherWith
-                (shrinkHorizontally { -it } + fadeOut(tween(ANIMATION_DURATION))) using
+            (expandHorizontally { 0 } + fadeIn(tween(HowToPlayConstants.ANIMATION_DURATION))) togetherWith
+                (shrinkHorizontally { -it } + fadeOut(tween(HowToPlayConstants.ANIMATION_DURATION))) using
                 SizeTransform(clip = false)
         },
     ) { isExpanded ->

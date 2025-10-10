@@ -32,6 +32,7 @@ kotlin {
             implementation(projects.shared.libs.designsystem)
             implementation(projects.shared.features.reportVideo)
             implementation(projects.shared.libs.videoPlayer)
+            implementation(projects.shared.libs.formatters)
             implementation(compose.components.resources)
         }
     }
