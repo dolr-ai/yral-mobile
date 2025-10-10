@@ -8,6 +8,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -28,6 +29,8 @@ import com.yral.shared.app.nav.RootComponent.Child
 import com.yral.shared.app.ui.components.UpdateNotificationHost
 import com.yral.shared.app.ui.screens.home.HomeScreen
 import com.yral.shared.core.session.SessionState
+import com.yral.shared.features.profile.ui.EditProfileScreen
+import com.yral.shared.features.profile.viewmodel.EditProfileViewModel
 import com.yral.shared.features.root.viewmodels.RootError
 import com.yral.shared.features.root.viewmodels.RootViewModel
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
@@ -89,6 +92,14 @@ fun RootScreen(
                         sessionState = sessionState,
                         bottomNavigationAnalytics = { viewModel.bottomNavigationClicked(it) },
                         updateProfileVideosCount = { viewModel.updateProfileVideosCount(it) },
+                    )
+                }
+                is Child.EditProfile -> {
+                    HandleSystemBars(show = true)
+                    EditProfileScreen(
+                        component = child.component,
+                        viewModel = koinViewModel<EditProfileViewModel>(),
+                        modifier = Modifier.fillMaxSize().safeDrawingPadding(),
                     )
                 }
             }

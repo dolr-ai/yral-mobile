@@ -6,7 +6,7 @@ import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.pop
-import com.arkivanov.decompose.router.stack.push
+import com.arkivanov.decompose.router.stack.pushToFront
 import com.arkivanov.decompose.value.Value
 import com.yral.shared.features.account.nav.AccountComponent
 import com.yral.shared.features.profile.nav.EditProfileComponent
@@ -23,6 +23,7 @@ internal class DefaultProfileComponent(
     componentContext: ComponentContext,
     private val snapshot: Snapshot?,
     private val onUploadVideoClicked: () -> Unit,
+    private val openEditProfile: () -> Unit,
 ) : ProfileComponent(),
     ComponentContext by componentContext,
     KoinComponent {
@@ -61,11 +62,12 @@ internal class DefaultProfileComponent(
     }
 
     override fun openAccount() {
-        navigation.push(Config.Account)
+        navigation.pushToFront(Config.Account)
     }
 
     override fun openEditProfile() {
-        navigation.push(Config.EditProfile)
+        openEditProfile.invoke()
+        // navigation.pushToFront(Config.EditProfile)
     }
 
     override fun onBackClicked(): Boolean {
