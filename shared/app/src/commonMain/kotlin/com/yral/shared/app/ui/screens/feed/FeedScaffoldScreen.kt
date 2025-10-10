@@ -58,13 +58,14 @@ fun FeedScaffoldScreen(
     val gameState by gameViewModel.state.collectAsStateWithLifecycle()
     val feedState by feedViewModel.state.collectAsStateWithLifecycle()
     val dailyRank by leaderBoardViewModel.dailyRank.collectAsStateWithLifecycle(null)
+    leaderBoardViewModel.refreshRank.collectAsStateWithLifecycle(false)
     FeedScreen(
         component = component,
         viewModel = feedViewModel,
         topOverlay = { pageNo ->
             OverLayTop(
                 pageNo = pageNo,
-                dailyRank = dailyRank?.second?.dailyRank,
+                dailyRank = dailyRank,
                 feedState = feedState,
                 gameState = gameState,
                 componentAnimationInfo = TopComponentAnimationInfo(gameState.animateCoinBalance),

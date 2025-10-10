@@ -44,13 +44,10 @@ class LeaderBoardViewModel(
     val dailyRank =
         sessionManager
             .observeSessionProperties()
-            .map { it.isFirebaseLoggedIn to it }
+            .map { it.dailyRank }
             .distinctUntilChanged()
-            .onEach {
-                if (it.first) {
-                    refreshTodayRank()
-                }
-            }
+
+    val refreshRank = firebaseLogin.onEach { if (it) refreshTodayRank() }
 
     private fun resetState() {
         _state.update {
@@ -174,19 +171,17 @@ class LeaderBoardViewModel(
         }
     }
 
-    private fun refreshTodayRank() {
-        viewModelScope.launch {
-            Logger.d("DailyRank") { "Fetching today rank" }
-            sessionManager.userPrincipal?.let { userPrincipal ->
-                getLeaderboardRankForTodayUseCase(
-                    parameter = LeaderboardDailyRankRequest(userPrincipal),
-                ).onSuccess {
-                    Logger.d("DailyRank") { "rank in vm $it" }
-                    sessionManager.updateDailyRank(it.position)
-                }.onFailure {
-                    Logger.d("DailyRank") { "rank fetching error $it" }
-                    sessionManager.updateDailyRank(null)
-                }
+    private suspend fun refreshTodayRank() {
+        Logger.d("DailyRank") { "Fetching today rank" }
+        sessionManager.userPrincipal?.let { userPrincipal ->
+            getLeaderboardRankForTodayUseCase(
+                parameter = LeaderboardDailyRankRequest(userPrincipal),
+            ).onSuccess {
+                Logger.d("DailyRank") { "rank in vm $it" }
+                sessionManager.updateDailyRank(it.position)
+            }.onFailure {
+                Logger.d("DailyRank") { "rank fetching error $it" }
+                sessionManager.updateDailyRank(null)
             }
         }
     }
