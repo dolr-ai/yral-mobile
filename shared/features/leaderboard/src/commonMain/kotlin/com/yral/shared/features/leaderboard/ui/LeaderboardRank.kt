@@ -63,20 +63,23 @@ private object LeaderboardRankConstants {
 @Composable
 fun DailyRanK(
     position: Long,
-    newPosition: Long,
     animate: Boolean,
     setAnimate: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var previousPosition by remember { mutableLongStateOf(position) }
+    val delta = position - previousPosition
     Box(
         modifier = modifier,
         contentAlignment = Alignment.CenterStart,
     ) {
         Position(
             position = position,
+            delta = delta,
+            onAnimationComplete = { previousPosition = position },
         )
         Trophy(
-            didWin = newPosition != position,
+            didWin = false,
             animateBag = animate,
             setAnimate = setAnimate,
         )
@@ -133,7 +136,11 @@ private fun Trophy(
 }
 
 @Composable
-private fun BoxScope.Position(position: Long) {
+private fun BoxScope.Position(
+    position: Long,
+    delta: Long,
+    onAnimationComplete: () -> Unit,
+) {
     Column(
         modifier =
             Modifier
@@ -156,14 +163,18 @@ private fun BoxScope.Position(position: Long) {
     ) {
         PositionText(
             position = position,
+            delta = delta,
+            onAnimationComplete = onAnimationComplete,
         )
     }
 }
 
 @Composable
-private fun PositionText(position: Long) {
-    var previousPosition by remember { mutableLongStateOf(position) }
-    val delta = position - previousPosition
+private fun PositionText(
+    position: Long,
+    delta: Long,
+    onAnimationComplete: () -> Unit,
+) {
     // Animate color based on delta using animateColorAsState
     val targetColor =
         when {
@@ -194,6 +205,6 @@ private fun PositionText(position: Long) {
     }
     LaunchedEffect(position) {
         delay(ANIMATION_DURATION.toLong())
-        previousPosition = position
+        onAnimationComplete()
     }
 }
