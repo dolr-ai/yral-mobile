@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -39,6 +40,17 @@ class LeaderBoardViewModel(
             .observeSessionProperties()
             .map { it.isFirebaseLoggedIn }
             .distinctUntilChanged()
+
+    val dailyRank =
+        sessionManager
+            .observeSessionProperties()
+            .map { it.isFirebaseLoggedIn to it }
+            .distinctUntilChanged()
+            .onEach {
+                if (it.first) {
+                    refreshTodayRank()
+                }
+            }
 
     private fun resetState() {
         _state.update {
@@ -162,7 +174,7 @@ class LeaderBoardViewModel(
         }
     }
 
-    fun refreshTodayRank() {
+    private fun refreshTodayRank() {
         viewModelScope.launch {
             Logger.d("DailyRank") { "Fetching today rank" }
             sessionManager.userPrincipal?.let { userPrincipal ->
