@@ -60,6 +60,9 @@ abstract class HomeComponent {
         ) : SlotChild()
     }
     companion object {
-        operator fun invoke(componentContext: ComponentContext): HomeComponent = DefaultHomeComponent(componentContext)
+        operator fun invoke(
+            componentContext: ComponentContext,
+            openEditProfile: () -> Unit,
+        ): HomeComponent = DefaultHomeComponent(componentContext, openEditProfile)
     }
 }

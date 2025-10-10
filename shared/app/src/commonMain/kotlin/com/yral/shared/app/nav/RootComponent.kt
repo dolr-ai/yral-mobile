@@ -4,6 +4,7 @@ import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.value.Value
 import com.yral.shared.app.UpdateState
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent
+import com.yral.shared.features.profile.nav.EditProfileComponent
 import com.yral.shared.libs.routing.routes.api.AppRoute
 
 interface RootComponent {
@@ -22,6 +23,8 @@ interface RootComponent {
 
     fun onCompleteUpdateClicked()
 
+    fun openEditProfile()
+
     // Defines all possible child components
     sealed class Child {
         class Splash(
@@ -29,6 +32,9 @@ interface RootComponent {
         ) : Child()
         class Home(
             val component: HomeComponent,
+        ) : Child()
+        class EditProfile(
+            val component: EditProfileComponent,
         ) : Child()
     }
 }

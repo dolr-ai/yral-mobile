@@ -37,6 +37,7 @@ import kotlinx.serialization.Serializable
 @Suppress("TooManyFunctions")
 internal class DefaultHomeComponent(
     componentContext: ComponentContext,
+    private val openEditProfile: () -> Unit,
 ) : HomeComponent(),
     ComponentContext by componentContext {
     private val navigation = StackNavigation<Config>()
@@ -182,6 +183,7 @@ internal class DefaultHomeComponent(
         ProfileComponent.Companion(
             componentContext = componentContext,
             onUploadVideoClicked = { onUploadVideoTabClick() },
+            openEditProfile = openEditProfile,
             snapshot = childSnapshots[Config.Profile] as? ProfileComponent.Snapshot,
         )
 
