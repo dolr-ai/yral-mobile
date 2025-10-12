@@ -8,4 +8,7 @@ open class YralException : Exception {
     constructor(text: String) : super("Unknown exception: $text") {
         this.text = text
     }
+    constructor(message: String?, cause: Throwable?) : super(message, cause) {
+        this.text = message
+    }
 }
