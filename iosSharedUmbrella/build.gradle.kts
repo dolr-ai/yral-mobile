@@ -1,5 +1,7 @@
 plugins {
-    alias(libs.plugins.kotlinMultiplatform)
+    alias(libs.plugins.yral.shared.feature)
+    alias(libs.plugins.yral.shared.library.compose)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.kotlinCocoapods)
 }
 
@@ -23,6 +25,8 @@ kotlin {
             export(projects.shared.app)
             export(projects.shared.libs.featureFlag)
             export(projects.shared.libs.routing.routesApi)
+            export(libs.decompose.decompose)
+            export(libs.essenty.lifecycle)
         }
     }
 
@@ -33,6 +37,7 @@ kotlin {
             api(projects.shared.libs.crashlytics)
             api(projects.shared.libs.featureFlag)
             api(projects.shared.libs.routing.routesApi)
+            implementation(compose.components.resources)
         }
     }
 }
