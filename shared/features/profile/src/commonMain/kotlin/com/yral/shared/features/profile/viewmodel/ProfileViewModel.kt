@@ -39,6 +39,8 @@ import com.yral.shared.reportVideo.domain.ReportRequestParams
 import com.yral.shared.reportVideo.domain.ReportVideoUseCase
 import com.yral.shared.reportVideo.domain.models.ReportSheetState
 import com.yral.shared.reportVideo.domain.models.ReportVideoData
+import com.yral.shared.rust.service.domain.models.PagedFollowerItem
+import com.yral.shared.rust.service.domain.pagedDataSource.UserInfoPagingSourceFactory
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -61,6 +63,7 @@ class ProfileViewModel(
     private val linkGenerator: LinkGenerator,
     private val crashlyticsManager: CrashlyticsManager,
     private val flagManager: FeatureFlagManager,
+    private val userInfoPagingSourceFactory: UserInfoPagingSourceFactory,
 ) : ViewModel() {
     companion object {
         private const val POSTS_PER_PAGE = 20
@@ -101,6 +104,46 @@ class ProfileViewModel(
                             video.videoID !in deletedIds
                     }
             }.distinctUntilChanged()
+
+    val followers: Flow<PagingData<PagedFollowerItem>>? =
+        sessionManager.userPrincipal?.let { userPrincipal ->
+            Pager(
+                config =
+                    PagingConfig(
+                        pageSize = POSTS_PER_PAGE,
+                        initialLoadSize = POSTS_PER_PAGE,
+                        prefetchDistance = POSTS_PREFETCH_DISTANCE,
+                        enablePlaceholders = false,
+                    ),
+                pagingSourceFactory = {
+                    userInfoPagingSourceFactory.createFollowersPagingSource(
+                        principal = userPrincipal,
+                        targetPrincipal = userPrincipal,
+                        withCallerFollows = true,
+                    )
+                },
+            ).flow.cachedIn(viewModelScope)
+        }
+
+    val following: Flow<PagingData<PagedFollowerItem>>? =
+        sessionManager.userPrincipal?.let { userPrincipal ->
+            Pager(
+                config =
+                    PagingConfig(
+                        pageSize = POSTS_PER_PAGE,
+                        initialLoadSize = POSTS_PER_PAGE,
+                        prefetchDistance = POSTS_PREFETCH_DISTANCE,
+                        enablePlaceholders = false,
+                    ),
+                pagingSourceFactory = {
+                    userInfoPagingSourceFactory.createFollowingPagingSource(
+                        principal = userPrincipal,
+                        targetPrincipal = userPrincipal,
+                        withCallerFollows = true,
+                    )
+                },
+            ).flow.cachedIn(viewModelScope)
+        }
 
     init {
         _state.update { it.copy(accountInfo = sessionManager.getAccountInfo()) }

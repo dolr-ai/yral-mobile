@@ -182,6 +182,7 @@ private fun AccountScreenContent(
                 },
                 onEditProfileClicked = {},
             )
+            Spacer(modifier = Modifier.height(8.dp))
         } else {
             Spacer(modifier = Modifier.height(8.dp))
         }

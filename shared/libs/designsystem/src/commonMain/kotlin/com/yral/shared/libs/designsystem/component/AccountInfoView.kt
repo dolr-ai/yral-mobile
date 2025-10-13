@@ -21,19 +21,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.yral.shared.core.session.AccountInfo
+import com.yral.shared.libs.NumberFormatter
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.designsystem.theme.YralDimens
+import com.yral.shared.libs.formatAbbreviation
 import org.jetbrains.compose.resources.stringResource
 import yral_mobile.shared.libs.designsystem.generated.resources.Res
 import yral_mobile.shared.libs.designsystem.generated.resources.anonymous_account_setup
 import yral_mobile.shared.libs.designsystem.generated.resources.edit_profile
+import yral_mobile.shared.libs.designsystem.generated.resources.followers
+import yral_mobile.shared.libs.designsystem.generated.resources.following
 import yral_mobile.shared.libs.designsystem.generated.resources.login
 
 @Suppress("LongMethod")
 @Composable
 fun AccountInfoView(
     accountInfo: AccountInfo,
+    totalFollowers: Long? = null,
+    totalFollowing: Long? = null,
     isSocialSignIn: Boolean,
     showEditProfile: Boolean,
     onLoginClicked: () -> Unit,
@@ -47,7 +53,6 @@ fun AccountInfoView(
                     start = 16.dp,
                     top = YralDimens.paddingLg,
                     end = 16.dp,
-                    bottom = YralDimens.paddingLg,
                 ),
         verticalArrangement = Arrangement.spacedBy(30.dp, Alignment.Top),
         horizontalAlignment = Alignment.Start,
@@ -59,13 +64,55 @@ fun AccountInfoView(
         ) {
             YralAsyncImage(
                 imageUrl = accountInfo.profilePic,
-                modifier = Modifier.size(60.dp),
+                modifier = Modifier.size(76.dp),
             )
-            Text(
-                text = accountInfo.displayName,
-                style = LocalAppTopography.current.baseMedium,
-                color = YralColors.NeutralTextSecondary,
-            )
+            Column(
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Text(
+                    text = accountInfo.displayName,
+                    style = LocalAppTopography.current.baseMedium,
+                    color = YralColors.NeutralTextSecondary,
+                )
+                Row {
+                    totalFollowers?.let {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.Top),
+                            horizontalAlignment = Alignment.Start,
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            Text(
+                                text = NumberFormatter().formatAbbreviation(totalFollowers, 0),
+                                style = LocalAppTopography.current.mdSemiBold,
+                                color = YralColors.NeutralTextPrimary,
+                            )
+                            Text(
+                                text = stringResource(Res.string.followers),
+                                style = LocalAppTopography.current.baseRegular,
+                                color = YralColors.NeutralTextPrimary,
+                            )
+                        }
+                    }
+                    totalFollowing?.let {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.Top),
+                            horizontalAlignment = Alignment.Start,
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            Text(
+                                text = NumberFormatter().formatAbbreviation(totalFollowing, 0),
+                                style = LocalAppTopography.current.mdSemiBold,
+                                color = YralColors.NeutralTextPrimary,
+                            )
+                            Text(
+                                text = stringResource(Res.string.following),
+                                style = LocalAppTopography.current.baseRegular,
+                                color = YralColors.NeutralTextPrimary,
+                            )
+                        }
+                    }
+                }
+            }
         }
         if (showEditProfile) {
             EditProfileButton(
@@ -98,7 +145,8 @@ fun AccountInfoView(
                 Modifier
                     .fillMaxWidth()
                     .height(1.dp)
-                    .background(YralColors.Divider),
+                    .background(YralColors.Divider)
+                    .padding(bottom = YralDimens.paddingLg),
         )
     }
 }

@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
 import com.yral.shared.analytics.events.VideoDeleteCTA
@@ -84,6 +85,7 @@ import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.formatAbbreviation
 import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.libs.videoPlayer.util.PrefetchVideoListener
+import com.yral.shared.rust.service.domain.models.PagedFollowerItem
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -125,6 +127,10 @@ fun ProfileMainScreen(
     getPrefetchListener: (reel: Reels) -> PrefetchVideoListener,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+
+    val followers = viewModel.followers?.collectAsLazyPagingItems()
+    val following = viewModel.following?.collectAsLazyPagingItems()
+
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     LaunchedEffect(loginState) {
         if (loginState is UiState.Failure) {
@@ -242,6 +248,8 @@ fun ProfileMainScreen(
                     viewModel = viewModel,
                     gridState = gridState,
                     profileVideos = profileVideos,
+                    followers = followers,
+                    following = following,
                     deletingVideoId = deletingVideoId,
                     uploadVideo = {
                         viewModel.uploadVideoClicked()
@@ -290,7 +298,7 @@ typealias LoginBottomSheetComposable = @Composable (
     openTerms: () -> Unit,
 ) -> Unit
 
-@Suppress("LongMethod")
+@Suppress("LongMethod", "CyclomaticComplexMethod")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MainContent(
@@ -300,6 +308,8 @@ private fun MainContent(
     viewModel: ProfileViewModel,
     gridState: LazyGridState,
     profileVideos: LazyPagingItems<FeedDetails>,
+    followers: LazyPagingItems<PagedFollowerItem>?,
+    following: LazyPagingItems<PagedFollowerItem>?,
     deletingVideoId: String,
     uploadVideo: () -> Unit,
     openAccount: () -> Unit,
@@ -312,14 +322,31 @@ private fun MainContent(
             openAccount = openAccount,
         )
         state.accountInfo?.let { info ->
+            val followersCount =
+                followers?.let { pagingItems ->
+                    if (pagingItems.itemCount > 0) {
+                        pagingItems[0]?.totalCount?.toLong() ?: 0
+                    } else {
+                        0
+                    }
+                } ?: 0
+            val followingCount =
+                following?.let { pagingItems ->
+                    if (pagingItems.itemCount > 0) {
+                        pagingItems[0]?.totalCount?.toLong() ?: 0
+                    } else {
+                        0
+                    }
+                } ?: 0
             AccountInfoView(
                 accountInfo = info,
+                totalFollowers = followersCount,
+                totalFollowing = followingCount,
                 isSocialSignIn = state.isLoggedIn,
                 showEditProfile = state.isLoggedIn,
                 onLoginClicked = { viewModel.setBottomSheetType(ProfileBottomSheet.SignUp) },
                 onEditProfileClicked = openEditProfile,
             )
-            Spacer(modifier = Modifier.height(16.dp))
         }
         when (profileVideos.loadState.refresh) {
             is LoadState.Loading -> {
