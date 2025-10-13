@@ -45,12 +45,15 @@ class CoinsView: UIView {
     label.backgroundColor = .clear
     label.font = Constants.labelFont
     label.textColor = Constants.labelTextColor
+    label.adjustsFontSizeToFitWidth = true
+    label.minimumScaleFactor = 0.5
+    label.numberOfLines = 1
     return label
   }()
 
   var coins: UInt64 = .zero {
     didSet {
-      label.text = "\(coins)"
+      label.text = "\(coins.formattedWithSuffix)"
     }
   }
 

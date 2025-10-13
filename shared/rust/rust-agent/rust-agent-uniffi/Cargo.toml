@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [lib]
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "staticlib"]
 name = "yral_mobile_uniffi"
 
 [dependencies]
@@ -43,10 +43,6 @@ android_logger = "0.15.0"
 [build-dependencies]
 uniffi = { version = "0.28.3", features = ["build"] }
 
-[profile.dev]
-opt-level = 3
-lto = true
-panic = "unwind"
 
 [profile.release]
 opt-level = 3

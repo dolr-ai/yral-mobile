@@ -24,10 +24,11 @@ final class DeepLinkRouter: ObservableObject {
     case profile
     case profileAfterUpload
     case openVideo(postId: String, canisterId: String?)
+    case videoViewedRewards(videoID: String, totalViews: Int64, rewardAmount: Double)
   }
 
   @discardableResult func resolve(from userInfo: [AnyHashable: Any]) -> Destination? {
-    if let dest = resolveUploadDestination(fromPNs: userInfo) {
+    if let dest = resolveDestination(fromPNs: userInfo) {
       pendingDestination = dest
     } else if let dest = resolveBranchDestination(fromBranch: userInfo) {
       pendingDestination = dest
@@ -35,20 +36,16 @@ final class DeepLinkRouter: ObservableObject {
     return pendingDestination
   }
 
-  private func resolveUploadDestination(fromPNs userInfo: [AnyHashable: Any]) -> Destination? {
-    guard
-      let payloadString = userInfo[Constants.payloadString] as? String,
-      let data = payloadString.data(using: .utf8),
-      let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-      let type = json[Constants.typeString] as? String
-    else {
+  private func resolveDestination(fromPNs userInfo: [AnyHashable: Any]) -> Destination? {
+    guard let payloadString = userInfo[Constants.payloadString] as? String,
+          let payloadData = payloadString.data(using: .utf8),
+          let payloadDict = try? JSONSerialization.jsonObject(with: payloadData) as? [String: Any],
+          let internalURL = payloadDict[Constants.internalURL] as? String else {
       return nil
     }
 
-    if type == Constants.videoUploadSuccessType {
-      return .profileAfterUpload
-    }
-    return nil
+    let route = AppDIHelper().getRoutingService().parseUrl(url: internalURL)
+    return mapRouteToDestination(route)
   }
 
   private func resolveBranchDestination(fromBranch params: [AnyHashable: Any]) -> Destination? {
@@ -81,6 +78,14 @@ final class DeepLinkRouter: ObservableObject {
       return .wallet
     case _ as Profile:
       return .profile
+    case let rewardsReceived as RewardsReceived:
+      return .videoViewedRewards(
+        videoID: rewardsReceived.videoID ?? "",
+        totalViews: Int64(rewardsReceived.viewCount ?? "0") ?? 0,
+        rewardAmount: Double(rewardsReceived.rewardBtc ?? "0") ?? 0
+      )
+    case _ as VideoUploadSuccessful:
+      return .profileAfterUpload
     default:
       return nil
     }
@@ -102,6 +107,7 @@ extension DeepLinkRouter {
   enum Constants {
     static let payloadString = "payload"
     static let typeString = "type"
+    static let internalURL = "internalUrl"
     static let videoUploadSuccessType = "VideoUploadSuccessful"
     static let branchParameters = "Branch parameters:"
     static let branchError = "Branch error:"

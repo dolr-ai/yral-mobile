@@ -24,9 +24,14 @@ kotlin {
             implementation(projects.shared.libs.coroutinesX)
             implementation(projects.shared.libs.featureFlag)
             implementation(projects.shared.libs.firebaseStore)
+            implementation(projects.shared.libs.preferences)
             implementation(projects.shared.libs.designsystem)
             implementation(compose.components.resources)
             implementation(libs.coil.compose)
+            implementation(libs.moko.permissions)
+            implementation(libs.moko.permissions.compose)
+            implementation(libs.moko.permissions.notifications)
+            implementation(libs.gitlive.firebase.messaging)
         }
     }
 }

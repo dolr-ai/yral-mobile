@@ -9,6 +9,7 @@ import com.yral.shared.core.session.DELAY_FOR_SESSION_PROPERTIES
 import com.yral.shared.core.session.Session
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
+import com.yral.shared.core.utils.resolveUsername
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.analytics.AuthTelemetry
 import com.yral.shared.features.auth.domain.AuthRepository
@@ -143,6 +144,7 @@ class DefaultAuthClient(
             PrefKeys.ACCESS_TOKEN.name,
             PrefKeys.ID_TOKEN.name,
             PrefKeys.HOW_TO_PLAY_SHOWN.name,
+            PrefKeys.USERNAME.name,
             // PrefKeys.SMILEY_GAME_NUDGE_SHOWN.name,
         ).forEach { key ->
             preferences.remove(key)
@@ -177,6 +179,7 @@ class DefaultAuthClient(
                 canisterId = canisterWrapper.canisterId,
                 userPrincipal = canisterWrapper.userPrincipalId,
                 profilePic = canisterWrapper.profilePic,
+                username = resolveUsername(canisterWrapper.username, canisterWrapper.userPrincipalId),
                 isCreatedFromServiceCanister = canisterWrapper.isCreatedFromServiceCanister,
             )
         } catch (e: YralFfiException) {
@@ -196,6 +199,7 @@ class DefaultAuthClient(
                         canisterId = canisterWrapper.canisterId,
                         userPrincipal = canisterWrapper.userPrincipalId,
                         profilePic = canisterWrapper.profilePic,
+                        username = resolveUsername(canisterWrapper.username, canisterWrapper.userPrincipalId),
                         isCreatedFromServiceCanister = canisterWrapper.isCreatedFromServiceCanister,
                     )
             }
@@ -324,6 +328,23 @@ class DefaultAuthClient(
     }
 
     private fun postFirebaseLogin(session: Session) {
+        scope.launch {
+            session.userPrincipal?.let { userPrincipal ->
+                session.username?.let { username ->
+                    requiredUseCases.updateDocumentUseCase
+                        .invoke(
+                            parameter =
+                                UpdateDocumentUseCase.Params(
+                                    collectionName = "users",
+                                    documentId = userPrincipal,
+                                    fieldAndValue = Pair("username", username),
+                                ),
+                        ).onFailure { error ->
+                            Logger.e(error) { "Failed to update username for $userPrincipal" }
+                        }
+                }
+            }
+        }
         scope.launch { updateBalanceAndProceed(session) }
         scope.launch {
             val result =
@@ -466,6 +487,7 @@ class DefaultAuthClient(
         val canisterId = preferences.getString(PrefKeys.CANISTER_ID.name)
         val userPrincipal = preferences.getString(PrefKeys.USER_PRINCIPAL.name)
         val profilePic = preferences.getString(PrefKeys.PROFILE_PIC.name)
+        val username = preferences.getString(PrefKeys.USERNAME.name)
         val isCreatedFromServiceCanister = preferences.getBoolean(PrefKeys.IS_CREATED_FROM_SERVICE_CANISTER.name)
         return listOf(identity, canisterId, userPrincipal, profilePic)
             .all { it != null }
@@ -476,6 +498,7 @@ class DefaultAuthClient(
                         canisterId = canisterId!!,
                         userPrincipal = userPrincipal!!,
                         profilePic = profilePic!!,
+                        username = resolveUsername(username, userPrincipal),
                         // default false for backward compatibility
                         isCreatedFromServiceCanister = isCreatedFromServiceCanister ?: false,
                     )
@@ -494,6 +517,12 @@ class DefaultAuthClient(
             preferences.putString(PrefKeys.CANISTER_ID.name, canisterId)
             preferences.putString(PrefKeys.USER_PRINCIPAL.name, userPrincipalId)
             preferences.putString(PrefKeys.PROFILE_PIC.name, profilePic)
+            val resolvedUsername = resolveUsername(username, userPrincipalId)
+            if (resolvedUsername != null) {
+                preferences.putString(PrefKeys.USERNAME.name, resolvedUsername)
+            } else {
+                preferences.remove(PrefKeys.USERNAME.name)
+            }
             preferences.putBoolean(PrefKeys.IS_CREATED_FROM_SERVICE_CANISTER.name, isCreatedFromServiceCanister)
         }
     }
@@ -503,6 +532,11 @@ class DefaultAuthClient(
         preferences.remove(PrefKeys.CANISTER_ID.name)
         preferences.remove(PrefKeys.USER_PRINCIPAL.name)
         preferences.remove(PrefKeys.PROFILE_PIC.name)
+        preferences.remove(PrefKeys.USERNAME.name)
         preferences.remove(PrefKeys.IS_CREATED_FROM_SERVICE_CANISTER.name)
     }
 }
+
+class SecurityException(
+    message: String,
+) : Exception(message)

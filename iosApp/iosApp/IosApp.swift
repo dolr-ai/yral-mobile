@@ -97,12 +97,27 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     _ center: UNUserNotificationCenter,
     willPresent notification: UNNotification
   ) async -> UNNotificationPresentationOptions {
-    if isUploadNotification(userInfo: notification.request.content.userInfo) {
-      ToastManager.showToast(type: .uploadSuccess) { }
-      onTap: {
-        DeepLinkRouter.shared.pendingDestination = .profileAfterUpload
+    if let payloadString = notification.request.content.userInfo[Constants.payloadString] as? String,
+       let payloadData = payloadString.data(using: .utf8),
+       let payloadDict = try? JSONSerialization.jsonObject(with: payloadData) as? [String: Any],
+       let type = payloadDict[Constants.typeString] as? String,
+       let internalURL = payloadDict[Constants.internalURL] as? String {
+      if type == Constants.videoUploadSuccessType {
+        ToastManager.showToast(type: .uploadSuccess) {}
+        onTap: {
+          DeepLinkRouter.shared.pendingDestination = .profileAfterUpload
+        }
+      } else if type == Constants.videoViewedRewardType {
+        if let rewards = AppDIHelper().getRoutingService().parseUrl(url: internalURL) as? RewardsReceived {
+          DeepLinkRouter.shared.pendingDestination = .videoViewedRewards(
+            videoID: rewards.videoID ?? "",
+            totalViews: Int64(rewards.viewCount ?? "0") ?? 0,
+            rewardAmount: Double(rewards.rewardBtc ?? "0") ?? 0
+          )
+        }
       }
     }
+
     return []
   }
 
@@ -255,6 +270,8 @@ extension AppDelegate {
   public enum Constants {
     static let payloadString = "payload"
     static let typeString = "type"
+    static let internalURL = "internalUrl"
     static let videoUploadSuccessType = "VideoUploadSuccessful"
+    static let videoViewedRewardType = "RewardEarned"
   }
 }

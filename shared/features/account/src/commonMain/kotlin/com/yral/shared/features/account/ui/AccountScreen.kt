@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -19,6 +20,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.SheetState
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -26,6 +29,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,6 +40,7 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import co.touchlab.kermit.Logger
 import com.yral.shared.analytics.events.MenuCtaType
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.features.account.nav.AccountComponent
@@ -56,6 +61,7 @@ import com.yral.shared.libs.designsystem.component.getSVGImageModel
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.designsystem.theme.YralDimens
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -79,6 +85,8 @@ import yral_mobile.shared.features.account.generated.resources.talk_to_the_team
 import yral_mobile.shared.features.account.generated.resources.telegram
 import yral_mobile.shared.features.account.generated.resources.twitter
 import yral_mobile.shared.features.account.generated.resources.yes_delete
+import yral_mobile.shared.libs.designsystem.generated.resources.alerts
+import yral_mobile.shared.libs.designsystem.generated.resources.alerts_icon
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
 import yral_mobile.shared.libs.designsystem.generated.resources.could_not_login
@@ -89,6 +97,7 @@ import yral_mobile.shared.libs.designsystem.generated.resources.terms_of_service
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @OptIn(ExperimentalMaterial3Api::class)
+@Suppress("LongMethod")
 @Composable
 fun AccountScreen(
     component: AccountComponent,
@@ -96,6 +105,7 @@ fun AccountScreen(
     viewModel: AccountsViewModel = koinViewModel(),
     loginState: UiState<*>,
     loginBottomSheet: LoginBottomSheetComposable,
+    onAlertsToggleRequest: suspend (Boolean) -> Boolean,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { viewModel.accountsTelemetry.onMenuScreenViewed() }
@@ -108,11 +118,29 @@ fun AccountScreen(
             viewModel.setBottomSheetType(AccountBottomSheet.SignUp)
         }
     }
+    val scope = rememberCoroutineScope()
+    val handleAlertsToggle: (Boolean) -> Unit =
+        { enabled: Boolean ->
+            val previous = state.alertsEnabled
+            viewModel.onAlertsToggleChanged(enabled)
+            scope.launch {
+                val success =
+                    runCatching { onAlertsToggleRequest(enabled) }
+                        .onFailure { error ->
+                            Logger.e("AccountScreen") { "Alerts toggle failed: ${error.message}" }
+                        }.getOrElse { false }
+                if (!success) {
+                    viewModel.onAlertsToggleChanged(previous)
+                }
+            }
+        }
     Column(modifier = modifier.fillMaxSize()) {
         AccountsTitle(state.isWalletEnabled) { component.onBack() }
         AccountScreenContent(
             state = state,
             viewModel = viewModel,
+            alertsEnabled = state.alertsEnabled,
+            onAlertsToggle = handleAlertsToggle,
         )
         SheetContent(
             bottomSheetState = bottomSheetState,
@@ -129,6 +157,8 @@ fun AccountScreen(
 private fun AccountScreenContent(
     state: AccountsState,
     viewModel: AccountsViewModel,
+    alertsEnabled: Boolean,
+    onAlertsToggle: (Boolean) -> Unit,
 ) {
     val helperLinks = remember(state.isLoggedIn) { viewModel.getHelperLinks() }
     Column(
@@ -137,20 +167,28 @@ private fun AccountScreenContent(
                 .fillMaxSize()
                 .padding(top = 8.dp)
                 .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(30.dp, Alignment.Top),
+        verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        state.accountInfo?.let {
+        val accountInfo = state.accountInfo
+        if (accountInfo != null) {
             AccountInfoView(
-                accountInfo = it,
+                accountInfo = accountInfo,
                 isSocialSignIn = state.isLoggedIn,
-            ) {
-                viewModel.setBottomSheetType(AccountBottomSheet.SignUp)
-                viewModel.accountsTelemetry.signUpClicked(SignupPageName.MENU)
-            }
+                showEditProfile = false,
+                onLoginClicked = {
+                    viewModel.setBottomSheetType(AccountBottomSheet.SignUp)
+                    viewModel.accountsTelemetry.signUpClicked(SignupPageName.MENU)
+                },
+                onEditProfileClicked = {},
+            )
+        } else {
+            Spacer(modifier = Modifier.height(8.dp))
         }
         HelpLinks(
             links = helperLinks,
+            alertsEnabled = alertsEnabled,
+            onAlertsToggle = onAlertsToggle,
             onLinkClicked = {
                 viewModel.accountsTelemetry.onMenuClicked(it.menuCtaType)
                 viewModel.handleHelpLink(it)
@@ -328,6 +366,8 @@ private fun Divider() {
 @Composable
 private fun HelpLinks(
     links: List<AccountHelpLink>,
+    alertsEnabled: Boolean,
+    onAlertsToggle: (Boolean) -> Unit,
     onLinkClicked: (link: AccountHelpLink) -> Unit,
 ) {
     Column(
@@ -336,19 +376,69 @@ private fun HelpLinks(
                 .fillMaxWidth()
                 .padding(
                     start = 16.dp,
-                    top = YralDimens.paddingLg,
+                    top = 0.dp,
                     end = 16.dp,
                     bottom = YralDimens.paddingLg,
                 ),
-        verticalArrangement = Arrangement.spacedBy(20.dp, Alignment.Top),
         horizontalAlignment = Alignment.End,
     ) {
-        links.forEach {
-            HelpLinkItem(
-                item = it,
-                onLinkClicked = onLinkClicked,
-            )
+        AlertsToggleRow(
+            isEnabled = alertsEnabled,
+            onToggle = onAlertsToggle,
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        Column(
+            verticalArrangement = Arrangement.spacedBy(20.dp, Alignment.Top),
+            horizontalAlignment = Alignment.End,
+        ) {
+            links.forEach {
+                HelpLinkItem(
+                    item = it,
+                    onLinkClicked = onLinkClicked,
+                )
+            }
         }
+    }
+}
+
+@Composable
+private fun AlertsToggleRow(
+    isEnabled: Boolean,
+    onToggle: (Boolean) -> Unit,
+) {
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .heightIn(min = 26.dp)
+                .padding(vertical = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.Start),
+    ) {
+        Image(
+            painter = painterResource(DesignRes.drawable.alerts_icon),
+            contentDescription = stringResource(DesignRes.string.alerts),
+            contentScale = ContentScale.None,
+        )
+        Text(
+            text = stringResource(DesignRes.string.alerts),
+            style = LocalAppTopography.current.mdRegular,
+            color = YralColors.NeutralTextPrimary,
+        )
+        Spacer(modifier = Modifier.weight(1f))
+        Switch(
+            checked = isEnabled,
+            onCheckedChange = onToggle,
+            colors =
+                SwitchDefaults.colors(
+                    checkedThumbColor = YralColors.NeutralTextPrimary,
+                    checkedTrackColor = YralColors.Pink300,
+                    uncheckedThumbColor = YralColors.NeutralTextPrimary,
+                    uncheckedTrackColor = YralColors.Neutral700,
+                    checkedBorderColor = Color.Transparent,
+                    uncheckedBorderColor = Color.Transparent,
+                ),
+        )
     }
 }
 

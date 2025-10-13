@@ -65,7 +65,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     stackView.distribution = .fill
     stackView.spacing = Constants.stackViewSpacing
     stackView.backgroundColor = Constants.stackViewBGColor
-    stackView.alignment = .trailing
+    stackView.alignment = .center
     return stackView
   }()
 
@@ -79,6 +79,12 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
 
   private var reportButton: UIButton = {
     return getActionButton(withTitle: "", image: Constants.reportButtonImage)
+  }()
+
+  private var viewsCountView: ViewsCountView = {
+    let view = ViewsCountView()
+    view.translatesAutoresizingMaskIntoConstraints = false
+    return view
   }()
 
   let captionScrollView: UIScrollView = {
@@ -499,6 +505,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
       profileInfoView.isHidden = false
       captionScrollView.isHidden = true
       actionsStackView.addArrangedSubview(shareButton)
+      actionsStackView.addArrangedSubview(viewsCountView)
       actionsStackView.addArrangedSubview(reportButton)
       deleteButton.removeFromSuperview()
       setupSmileyGameView()
@@ -508,11 +515,15 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     } else {
       reportButton.removeFromSuperview()
       actionsStackView.addArrangedSubview(shareButton)
+      actionsStackView.addArrangedSubview(viewsCountView)
       actionsStackView.addArrangedSubview(deleteButton)
       profileInfoView.isHidden = true
       captionScrollView.isHidden = false
       setCaptionHeight(captionText: profileInfo.subtitle)
     }
+
+    viewsCountView.setCount(feedInfo.viewCount)
+
     signupOverlayHost.view.isHidden = !feedInfo.showLoginOverlay
     if feedInfo.showLoginOverlay {
       AnalyticsModuleKt.getAnalyticsManager().trackEvent(
@@ -573,6 +584,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     let thumbnailURL: URL?
     let likeCount: Int
     let isLiked: Bool
+    let viewCount: Int64
     let feedType: FeedType
     let showLoginOverlay: Bool
     let showOnboarding: Bool
@@ -584,7 +596,7 @@ extension FeedsCell {
   enum Constants {
     static let stackViewSpacing = 32.0
     static let horizontalMargin = 16.0
-    static let stackViewHeight = 104.0
+    static let stackViewHeight = 182.0
     static let stackViewBottom = 96.0
     static let stackViewBGColor = UIColor.clear
     static let actionButtonFont = YralFont.pt16.semiBold.uiFont
@@ -597,7 +609,7 @@ extension FeedsCell {
     static let actionButtonTitleColor = YralColor.grey50.uiColor
     static let profileInfoLeading = 16.0
     static let profileInfoTop = 8.0
-    static let profileInfoTrailing = 24.0
+    static let profileInfoTrailing = 16.0
     static let profileInfoViewHeight = 56.0
     static let defaultProfileImage = UIImage(named: "default_profile")
     static let playerPlaceHolderImage = UIImage(named: "player_placeholder")

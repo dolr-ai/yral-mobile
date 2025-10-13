@@ -121,7 +121,7 @@ impl std::fmt::Display for FFIError {
 cfg_if! {
     if #[cfg(target_os = "android")] {
         #[uniffi::export]
-        fn init_rust_logger() {
+        pub fn init_rust_logger() {
             use android_logger::{Config, FilterBuilder};
             use log::{LevelFilter};
             android_logger::init_once(
@@ -133,6 +133,11 @@ cfg_if! {
                               .parse("debug,hello::crate=error")
                               .build())
             );
+        }
+    } else {
+        #[uniffi::export]
+        fn init_rust_logger() {
+            // Stub for non-Android targets to keep UniFFI bindings consistent.
         }
     }
 }
