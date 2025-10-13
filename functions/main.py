@@ -1867,6 +1867,87 @@ def leaderboard_history_v2(request: Request):
         print("leaderboard_history error:", e, file=sys.stderr)
         return error_response(500, "INTERNAL", "Internal server error")
 
+@https_fn.on_request(region="us-central1")
+def daily_rank(request: Request):
+    """
+    POST /daily_rank
+
+    Request:
+      {
+        "data": {
+          "principal_id": "<pid>"
+        }
+      }
+
+    Response (200):
+      {
+        "principal_id": "<pid>",
+        "wins": <int>,
+        "position": <int>
+      }
+    """
+    try:
+        if request.method != "POST":
+            return error_response(405, "METHOD_NOT_ALLOWED", "POST required")
+
+        body = request.get_json(silent=True) or {}
+        data = body.get("data", {}) or {}
+        pid = str(data.get("principal_id", "")).strip()
+
+        if not pid:
+            return error_response(400, "MISSING_PID", "principal_id is required")
+
+        # ───────── Auth & App Check ─────────
+        auth_header = request.headers.get("Authorization", "")
+        if not auth_header.startswith("Bearer "):
+            return error_response(401, "MISSING_ID_TOKEN", "Authorization missing")
+        auth.verify_id_token(auth_header.split(" ", 1)[1])
+
+        # Optional: Uncomment if App Check required
+        # actok = request.headers.get("X-Firebase-AppCheck")
+        # if not actok:
+        #     return error_response(401, "APPCHECK_MISSING", "App Check token required")
+        # try:
+        #     app_check.verify_token(actok)
+        # except Exception:
+        #     return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
+
+        # ───────── Get bucket and user doc ─────────
+        bucket_id, _start_ms, _end_ms = _bucket_bounds_ist()
+        users_ref = db().collection(f"{DAILY_COLL}/{bucket_id}/users")
+        user_doc = users_ref.document(pid).get()
+
+        if not user_doc.exists:
+            return jsonify({
+                "principal_id": pid,
+                "wins": 0,
+                "position": 0
+            }), 200
+
+        wins = int(user_doc.get("smiley_game_wins") or 0)
+
+        # ───────── Rank calculation (dense) ─────────
+        count_snap = (
+            users_ref.where("smiley_game_wins", ">", wins)
+                     .count()
+                     .get()
+        )
+        position = int(count_snap[0][0].value) + 1 if wins > 0 else 0
+
+        return jsonify({
+            "principal_id": pid,
+            "wins": wins,
+            "position": position
+        }), 200
+
+    except auth.InvalidIdTokenError:
+        return error_response(401, "ID_TOKEN_INVALID", "ID token invalid or expired")
+    except GoogleAPICallError as e:
+        return error_response(500, "FIRESTORE_ERROR", str(e))
+    except Exception as e:
+        print("daily_rank error:", e, file=sys.stderr)
+        return error_response(500, "INTERNAL", "Internal server error")
+
 
 #################### BTC to CURRENCY ####################
 TICKER_URL = "https://blockchain.info/ticker"
