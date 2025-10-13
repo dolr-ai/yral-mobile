@@ -46,6 +46,7 @@ struct UserInfoView: View {
           .lineLimit(.two)
       }
       .frame(maxWidth: .infinity, alignment: .leading)
+
       if showLoginButton {
         Button {
           delegate?.loginPressed()
@@ -61,7 +62,27 @@ struct UserInfoView: View {
             .background(Constants.loginButtonGradient)
             .cornerRadius(Constants.loginButtonCornerRadius)
         }
+      } else {
+        Button {
+
+        } label: {
+          Text(Constants.editButtonTitle)
+            .font(Constants.editButtonFont)
+            .foregroundColor(Constants.editButtonColor)
+            .padding(.vertical, Constants.editButtonVertical)
+            .frame(maxWidth: .infinity, alignment: .center)
+            .background(
+              RoundedRectangle(cornerRadius: Constants.editButtonCornerRadius)
+                .fill(Constants.editButtonBackground)
+            )
+            .overlay(
+              RoundedRectangle(cornerRadius: Constants.editButtonCornerRadius)
+                .stroke(Constants.editButtonBorder, lineWidth: .one)
+            )
+        }
+        .padding(.vertical, -Constants.editButtonParentVertical)
       }
+
       Rectangle()
         .fill(Constants.dividerColor)
         .frame(height: .one)
@@ -94,6 +115,15 @@ extension UserInfoView {
     static let loginButtonHeight = 45.0
     static let loginButtonCornerRadius: CGFloat = 8
     static let dividerColor = YralColor.grey800.swiftUIColor
+
+    static let editButtonTitle = "Edit Profile"
+    static let editButtonFont = YralFont.pt14.semiBold.swiftUIFont
+    static let editButtonColor = YralColor.grey50.swiftUIColor
+    static let editButtonBackground = YralColor.grey800.swiftUIColor
+    static let editButtonBorder = YralColor.grey700.swiftUIColor
+    static let editButtonCornerRadius = 8.0
+    static let editButtonVertical = 10.0
+    static let editButtonParentVertical = 14.0
   }
 }
 
