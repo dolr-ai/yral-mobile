@@ -206,7 +206,8 @@ class ProfileViewModel: ObservableObject {
             flag: FeedFeatureFlags.SmileyGame.shared.StopAndVoteNudge
           )
         ),
-        emailId: analyticsInfo.emailId
+        emailId: analyticsInfo.emailId,
+        oneSignalUserId: analyticsInfo.userPrincipal
       )
     )
     AnalyticsModuleKt.getAnalyticsManager().flush()

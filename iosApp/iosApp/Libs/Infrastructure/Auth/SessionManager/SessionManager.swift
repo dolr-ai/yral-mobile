@@ -54,7 +54,8 @@ final class SessionManager: ObservableObject {
               flag: FeedFeatureFlags.SmileyGame.shared.StopAndVoteNudge
             )
           ),
-          emailId: nil
+          emailId: nil,
+          oneSignalUserId: userPrincipal
         )
       )
     case .permanentAuthentication(let userPrincipal, let email, let canisterPrincipal, _, _):
@@ -78,7 +79,8 @@ final class SessionManager: ObservableObject {
               flag: FeedFeatureFlags.SmileyGame.shared.StopAndVoteNudge
             )
           ),
-          emailId: ""
+          emailId: "",
+          oneSignalUserId: userPrincipal
         )
       )
     default:

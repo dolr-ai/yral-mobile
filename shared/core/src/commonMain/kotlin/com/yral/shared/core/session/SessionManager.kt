@@ -78,6 +78,10 @@ class SessionManager {
         sessionProperties.update { it.copy(emailId = email) }
     }
 
+    fun updateOneSignalUserId(oneSignalUserId: String?) {
+        sessionProperties.update { it.copy(oneSignalUserId = oneSignalUserId) }
+    }
+
     fun updateUsername(username: String?) {
         _state.update { state ->
             if (state is SessionState.SignedIn) {

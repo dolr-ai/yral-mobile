@@ -14,6 +14,11 @@ actual class MixpanelAnalyticsProvider actual constructor(
     private val mapConverter: EventToMapConverter,
     token: String,
 ) : AnalyticsProvider {
+    private companion object {
+        private const val ONE_SIGNAL_PROPERTY = "\$onesignal_user_id"
+        private const val ONE_SIGNAL_SUPER_PROPERTY = "onesignal_user_id"
+    }
+
     override val name: String = "mixpanel"
     private val mixpanel: Mixpanel = Mixpanel.sharedInstanceWithToken(token, true)
 
@@ -39,11 +44,15 @@ actual class MixpanelAnalyticsProvider actual constructor(
                 "canister_id" to user.canisterId,
                 "is_Forced Gameplay_test_user" to user.isForcedGamePlayUser,
                 "email_id" to user.emailId,
+                ONE_SIGNAL_SUPER_PROPERTY to (user.oneSignalUserId ?: user.userId),
             )
         if (user.isLoggedIn ?: false) {
             mixpanel.identify(user.userId)
+            mixpanel.people?.identify(user.userId)
             superProps["user_id"] = user.userId
             superProps["visitor_id"] = null
+            val oneSignalId = user.oneSignalUserId ?: user.userId
+            mixpanel.people?.set(property = ONE_SIGNAL_PROPERTY, to = oneSignalId)
         } else {
             superProps["visitor_id"] = user.userId
             superProps["user_id"] = null
@@ -52,6 +61,7 @@ actual class MixpanelAnalyticsProvider actual constructor(
     }
 
     override fun reset() {
+        mixpanel.people?.unset(property = ONE_SIGNAL_PROPERTY)
         mixpanel.reset()
     }
 

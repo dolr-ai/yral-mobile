@@ -306,7 +306,8 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
             flag: FeedFeatureFlags.SmileyGame.shared.StopAndVoteNudge
           )
         ),
-        emailId: email
+        emailId: email,
+        oneSignalUserId: userPrincipal
       )
     )
     MPSessionReplay.getInstance()?.identify(distinctId: Mixpanel.sharedInstance()?.distinctId ?? "")

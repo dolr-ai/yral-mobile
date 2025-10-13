@@ -24,6 +24,11 @@ actual class MixpanelAnalyticsProvider actual constructor(
     token: String,
 ) : AnalyticsProvider,
     KoinComponent {
+    private companion object {
+        private const val ONE_SIGNAL_PROPERTY = "\$onesignal_user_id"
+        private const val ONE_SIGNAL_SUPER_PROPERTY = "onesignal_user_id"
+    }
+
     private val context: Context by inject()
     private val isDebug: Boolean by inject(IS_DEBUG)
     override val name: String = "mixpanel"
@@ -72,13 +77,17 @@ actual class MixpanelAnalyticsProvider actual constructor(
                 "canister_id" to user.canisterId,
                 "is_forced_gameplay_test_user" to user.isForcedGamePlayUser,
                 "email_id" to user.emailId,
+                ONE_SIGNAL_SUPER_PROPERTY to (user.oneSignalUserId ?: user.userId),
             )
         if (user.isLoggedIn == true) {
             mixpanel.identify(user.userId)
+            mixpanel.people.identify(user.userId)
             MPSessionReplay.getInstance()?.identify(user.userId)
             distinctId.value = mixpanel.distinctId
             superProps["user_id"] = user.userId
             superProps["visitor_id"] = null
+            val oneSignalId = user.oneSignalUserId ?: user.userId
+            mixpanel.people.set(ONE_SIGNAL_PROPERTY, oneSignalId)
         } else {
             superProps["visitor_id"] = user.userId
             superProps["user_id"] = null
@@ -87,6 +96,7 @@ actual class MixpanelAnalyticsProvider actual constructor(
     }
 
     override fun reset() {
+        mixpanel.people.unset(ONE_SIGNAL_PROPERTY)
         mixpanel.reset()
         MPSessionReplay.getInstance()?.identify(mixpanel.distinctId)
         distinctId.value = mixpanel.distinctId
