@@ -1,8 +1,8 @@
 package com.yral.shared.rust.service.domain
 
+import com.yral.shared.rust.service.domain.models.FollowersPageResult
+import com.yral.shared.rust.service.domain.models.FollowingPageResult
 import com.yral.shared.uniffi.generated.Principal
-import com.yral.shared.uniffi.generated.UisFollowersResponse
-import com.yral.shared.uniffi.generated.UisFollowingResponse
 import com.yral.shared.uniffi.generated.UisUserProfileDetailsForFrontendV4
 
 interface UserInfoRepository {
@@ -27,7 +27,7 @@ interface UserInfoRepository {
         cursorPrincipal: Principal?,
         limit: ULong,
         withCallerFollows: Boolean?,
-    ): UisFollowersResponse
+    ): FollowersPageResult
 
     suspend fun getFollowing(
         principal: Principal,
@@ -35,5 +35,5 @@ interface UserInfoRepository {
         cursorPrincipal: Principal?,
         limit: ULong,
         withCallerFollows: Boolean?,
-    ): UisFollowingResponse
+    ): FollowingPageResult
 }

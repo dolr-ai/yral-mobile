@@ -1,9 +1,11 @@
 package com.yral.shared.rust.service.data
 
 import com.yral.shared.rust.service.domain.UserInfoRepository
+import com.yral.shared.rust.service.domain.models.FollowersPageResult
+import com.yral.shared.rust.service.domain.models.FollowingPageResult
+import com.yral.shared.rust.service.domain.models.toFollowerPageResult
+import com.yral.shared.rust.service.domain.models.toFollowingPageResult
 import com.yral.shared.uniffi.generated.Principal
-import com.yral.shared.uniffi.generated.UisFollowersResponse
-import com.yral.shared.uniffi.generated.UisFollowingResponse
 import com.yral.shared.uniffi.generated.UisUserProfileDetailsForFrontendV4
 
 class UserInfoRepositoryImpl(
@@ -30,14 +32,15 @@ class UserInfoRepositoryImpl(
         cursorPrincipal: Principal?,
         limit: ULong,
         withCallerFollows: Boolean?,
-    ): UisFollowersResponse =
-        dataSource.getFollowers(
-            principal = principal,
-            targetPrincipal = targetPrincipal,
-            cursorPrincipal = cursorPrincipal,
-            limit = limit,
-            withCallerFollows = withCallerFollows,
-        )
+    ): FollowersPageResult =
+        dataSource
+            .getFollowers(
+                principal = principal,
+                targetPrincipal = targetPrincipal,
+                cursorPrincipal = cursorPrincipal,
+                limit = limit,
+                withCallerFollows = withCallerFollows,
+            ).toFollowerPageResult()
 
     override suspend fun getFollowing(
         principal: Principal,
@@ -45,12 +48,13 @@ class UserInfoRepositoryImpl(
         cursorPrincipal: Principal?,
         limit: ULong,
         withCallerFollows: Boolean?,
-    ): UisFollowingResponse =
-        dataSource.getFollowing(
-            principal = principal,
-            targetPrincipal = targetPrincipal,
-            cursorPrincipal = cursorPrincipal,
-            limit = limit,
-            withCallerFollows = withCallerFollows,
-        )
+    ): FollowingPageResult =
+        dataSource
+            .getFollowing(
+                principal = principal,
+                targetPrincipal = targetPrincipal,
+                cursorPrincipal = cursorPrincipal,
+                limit = limit,
+                withCallerFollows = withCallerFollows,
+            ).toFollowingPageResult()
 }

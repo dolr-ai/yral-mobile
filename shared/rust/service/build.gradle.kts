@@ -26,6 +26,9 @@ kotlin {
 
             api(libs.kotlinResult.core)
             api(libs.kotlinResult.coroutines)
+
+            implementation(libs.androidx.paging.common)
+            implementation(libs.androidx.paging.compose)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

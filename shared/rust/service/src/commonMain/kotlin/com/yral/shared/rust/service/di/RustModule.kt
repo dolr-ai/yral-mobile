@@ -12,9 +12,8 @@ import com.yral.shared.rust.service.data.UserInfoRepositoryImpl
 import com.yral.shared.rust.service.domain.IndividualUserRepository
 import com.yral.shared.rust.service.domain.RateLimitRepository
 import com.yral.shared.rust.service.domain.UserInfoRepository
+import com.yral.shared.rust.service.domain.pagedDataSource.UserInfoPagingSourceFactory
 import com.yral.shared.rust.service.domain.usecases.FollowUserUseCase
-import com.yral.shared.rust.service.domain.usecases.GetFollowersUseCase
-import com.yral.shared.rust.service.domain.usecases.GetFollowingUseCase
 import com.yral.shared.rust.service.domain.usecases.GetProfileDetailsV4UseCase
 import com.yral.shared.rust.service.domain.usecases.UnfollowUserUseCase
 import com.yral.shared.rust.service.services.ICPLedgerServiceFactory
@@ -54,6 +53,7 @@ val rustModule: Module =
         factoryOf(::FollowUserUseCase)
         factoryOf(::UnfollowUserUseCase)
         factoryOf(::GetProfileDetailsV4UseCase)
-        factoryOf(::GetFollowersUseCase)
-        factoryOf(::GetFollowingUseCase)
+
+        // Paging Data Sources Factory
+        factoryOf(::UserInfoPagingSourceFactory)
     }
