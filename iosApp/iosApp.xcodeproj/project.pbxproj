@@ -37,6 +37,8 @@
 		10020AAE2DF7FDB700DF269E /* SatsCoinResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10020AAC2DF7FDAC00DF269E /* SatsCoinResponse.swift */; };
 		10020AB02DF7FE2A00DF269E /* SatsCoinError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10020AAF2DF7FE2400DF269E /* SatsCoinError.swift */; };
 		10020AB12DF7FE2A00DF269E /* SatsCoinError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10020AAF2DF7FE2400DF269E /* SatsCoinError.swift */; };
+		1005408B2E9D4AE5004F8588 /* ConfirmUsernameBottomSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1005408A2E9D4AD4004F8588 /* ConfirmUsernameBottomSheet.swift */; };
+		1005408C2E9D4AE5004F8588 /* ConfirmUsernameBottomSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1005408A2E9D4AD4004F8588 /* ConfirmUsernameBottomSheet.swift */; };
 		100F63D32DCB4630000BC17E /* SmileyGameRuleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100F63D22DCB4630000BC17E /* SmileyGameRuleView.swift */; };
 		100F63D42DCB4630000BC17E /* SmileyGameRuleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100F63D22DCB4630000BC17E /* SmileyGameRuleView.swift */; };
 		100F64EE2DCC96C9000BC17E /* YralCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100F64ED2DCC96C5000BC17E /* YralCache.swift */; };
@@ -796,6 +798,7 @@
 		10020AA92DF7FBDB00DF269E /* SatsCoinDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SatsCoinDTO.swift; sourceTree = "<group>"; };
 		10020AAC2DF7FDAC00DF269E /* SatsCoinResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SatsCoinResponse.swift; sourceTree = "<group>"; };
 		10020AAF2DF7FE2400DF269E /* SatsCoinError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SatsCoinError.swift; sourceTree = "<group>"; };
+		1005408A2E9D4AD4004F8588 /* ConfirmUsernameBottomSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfirmUsernameBottomSheet.swift; sourceTree = "<group>"; };
 		100F63D22DCB4630000BC17E /* SmileyGameRuleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameRuleView.swift; sourceTree = "<group>"; };
 		100F64ED2DCC96C5000BC17E /* YralCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralCache.swift; sourceTree = "<group>"; };
 		100FCD6E2E659CDE00E9A02D /* ViewControllerWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewControllerWrapper.swift; sourceTree = "<group>"; };
@@ -1161,8 +1164,6 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		AC9B77DE2D58C7E300270FC9 /* YralTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = YralTests;
 			sourceTree = "<group>";
 		};
@@ -2248,6 +2249,7 @@
 		AC99BBB22D86C568008012C2 /* View */ = {
 			isa = PBXGroup;
 			children = (
+				1005408A2E9D4AD4004F8588 /* ConfirmUsernameBottomSheet.swift */,
 				AC99BBAF2D86C55E008012C2 /* ProfileView.swift */,
 				AC8BB94C2E7AF36200E6BB3E /* ProfileView+Constants.swift */,
 				AC4E996A2D8874BA000B47B3 /* ProfileVideosGridView */,
@@ -3350,9 +3352,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3367,9 +3373,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3384,9 +3394,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3401,9 +3415,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3565,9 +3583,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3582,9 +3604,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3604,6 +3630,7 @@
 				107C61782DC35ED6006FC467 /* CoinsView.swift in Sources */,
 				ACB46A262D0EC0A3002E200C /* FeedsPlayer.swift in Sources */,
 				ACB46A682D0F3609002E200C /* FeedsViewModel.swift in Sources */,
+				1005408B2E9D4AE5004F8588 /* ConfirmUsernameBottomSheet.swift in Sources */,
 				ACAA4D692DDCB162001092A6 /* PerformanceMonitor.swift in Sources */,
 				107C60D32DBF9FC4006FC467 /* GameRuleView.swift in Sources */,
 				ACB46A422D0ECBB3002E200C /* ml_feed.proto in Sources */,
@@ -3937,6 +3964,7 @@
 				107C61772DC35ED6006FC467 /* CoinsView.swift in Sources */,
 				ACB46A272D0EC0A3002E200C /* FeedsPlayer.swift in Sources */,
 				ACB46A692D0F3609002E200C /* FeedsViewModel.swift in Sources */,
+				1005408C2E9D4AE5004F8588 /* ConfirmUsernameBottomSheet.swift in Sources */,
 				ACAA4D6A2DDCB162001092A6 /* PerformanceMonitor.swift in Sources */,
 				107C60D42DBF9FC4006FC467 /* GameRuleView.swift in Sources */,
 				ACB46A3F2D0ECBB3002E200C /* ml_feed.proto in Sources */,
