@@ -28,7 +28,6 @@ kotlin {
             implementation(projects.shared.libs.sharing)
             implementation(projects.shared.libs.designsystem)
             implementation(projects.shared.libs.videoPlayer)
-            implementation(projects.shared.libs.formatters)
             implementation(projects.shared.data)
 
             // Routing framework dependencies

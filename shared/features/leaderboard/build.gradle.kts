@@ -31,7 +31,6 @@ kotlin {
             implementation(projects.shared.libs.firebaseAuth)
             implementation(projects.shared.libs.http)
             implementation(projects.shared.libs.designsystem)
-            implementation(projects.shared.libs.formatters)
             implementation(projects.shared.rust.service)
         }
     }
