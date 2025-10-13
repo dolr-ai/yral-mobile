@@ -468,20 +468,31 @@ def cast_vote(request: Request):
         return error_response(500, "INTERNAL", "Internal server error")
 
 def _get_daily_position(pid: str) -> int:
+    """
+    Returns the user's dense rank for today's IST leaderboard.
+    If user not found, returns 0.
+    If user exists but has 0 wins, still returns their rank (N+1).
+    """
     bucket_id, _start, _end = _bucket_bounds_ist()
     users_ref = db().collection(f"{DAILY_COLL}/{bucket_id}/users")
     user_doc = users_ref.document(pid).get()
+
+    # User not found → rank 0
     if not user_doc.exists:
         return 0
+
     wins = int(user_doc.get("smiley_game_wins") or 0)
-    if wins == 0:
-        return 0
+
+    # Count users with strictly more wins
     count_snap = (
         users_ref.where("smiley_game_wins", ">", wins)
                  .count()
                  .get()
     )
-    return int(count_snap[0][0].value) + 1
+    higher_count = int(count_snap[0][0].value)
+    position = higher_count + 1
+
+    return position
 
 @https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"])
 def cast_vote_v2(request: Request):
@@ -1932,7 +1943,8 @@ def daily_rank(request: Request):
                      .count()
                      .get()
         )
-        position = int(count_snap[0][0].value) + 1 if wins > 0 else 0
+        higher_count = int(count_snap[0][0].value)
+        position = higher_count + 1
 
         return jsonify({
             "principal_id": pid,
