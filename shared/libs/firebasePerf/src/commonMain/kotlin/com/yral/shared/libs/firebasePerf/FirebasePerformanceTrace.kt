@@ -32,7 +32,7 @@ open class FirebasePerformanceTrace(
         attribute: String,
         value: String,
     ) {
-        trace.putAttribute(attribute, value)
+        trace.setAttribute(attribute, value)
     }
 
     override fun putMetric(
@@ -42,3 +42,8 @@ open class FirebasePerformanceTrace(
         trace.putMetric(metricName, value)
     }
 }
+
+expect fun Trace.setAttribute(
+    attribute: String,
+    value: String,
+)

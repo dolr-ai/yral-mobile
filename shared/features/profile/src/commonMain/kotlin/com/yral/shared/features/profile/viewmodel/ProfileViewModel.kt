@@ -113,6 +113,15 @@ class ProfileViewModel(
                     _state.update { it.copy(isLoggedIn = isSocialSignIn == true) }
                 }
         }
+        viewModelScope.launch {
+            sessionManager
+                .state
+                .map { sessionManager.getAccountInfo() }
+                .distinctUntilChanged()
+                .collect { info ->
+                    _state.update { it.copy(accountInfo = info) }
+                }
+        }
     }
 
     fun confirmDelete(

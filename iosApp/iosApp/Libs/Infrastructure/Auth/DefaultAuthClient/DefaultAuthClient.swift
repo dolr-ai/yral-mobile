@@ -108,8 +108,12 @@ final class DefaultAuthClient: NSObject, AuthClient {
         self.userPrincipal = try get_principal(userPrincipalString.intoRustString())
         self.isServiceCanister = UserDefaultsManager.shared.get(for: .isServiceCanisterUser) as Bool? ?? false
         self.emailId = try? KeychainHelper.retrieveString(
-          for: Constants.keychainEmail
-         )
+            for: Constants.keychainEmail
+        )
+        if !self.isServiceCanister {
+          try await handleExtractIdentityResponse(from: data, type: type, email: self.emailId)
+          return
+        }
         Task { @MainActor in
           try await exchangePrincipalID(type: type)
         }

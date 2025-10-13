@@ -10,16 +10,36 @@ import SwiftUI
 import Lottie
 
 struct LottieView: UIViewRepresentable {
+  let data: Data?
   let name: String
   let loopMode: LottieLoopMode
   let animationSpeed: CGFloat
   let resetProgress: Bool
   let animationCompleted: () -> Void
 
+  init(
+    data: Data? = nil,
+    name: String,
+    loopMode: LottieLoopMode,
+    animationSpeed: CGFloat,
+    resetProgress: Bool,
+    animationCompleted: @escaping () -> Void
+  ) {
+    self.data = data
+    self.name = name
+    self.loopMode = loopMode
+    self.animationSpeed = animationSpeed
+    self.resetProgress = resetProgress
+    self.animationCompleted = animationCompleted
+  }
+
   func makeUIView(context: Context) -> UIView {
     let containerView = UIView(frame: .zero)
     let animationView = LottieAnimationView()
     animationView.animation = LottieAnimation.named(name)
+    if let animationData = data {
+      animationView.animation = try? LottieAnimation.from(data: animationData)
+    }
     animationView.animationSpeed = animationSpeed
     animationView.loopMode = loopMode
     animationView.contentMode = .scaleAspectFill

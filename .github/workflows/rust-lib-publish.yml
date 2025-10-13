@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   build-apk:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
       
     steps:
       - name: Checkout repository
@@ -38,7 +38,7 @@ jobs:
 
       - name: Update version code
         run: |
-          sed -i 's/version[[:space:]]*=[[:space:]]*"[0-9]\+\.[0-9]\+"/version = "'"${{ github.event.inputs.version }}"'"/' ./shared/rust/rust-agent/build.gradle.kts
+          sed -i '' -E "s/version[[:space:]]*=[[:space:]]*\"[0-9]+\.[0-9]+\"/version = \"${{ github.event.inputs.version }}\"/" ./shared/rust/rust-agent/build.gradle.kts
           cat ./shared/rust/rust-agent/build.gradle.kts | grep version 
 
       - name: Clean project

@@ -49,6 +49,8 @@ data class LeaderboardRowDto(
     val position: Int,
     @SerialName("reward")
     val reward: Double? = null,
+    @SerialName("username")
+    val username: String? = null,
 )
 
 @Serializable

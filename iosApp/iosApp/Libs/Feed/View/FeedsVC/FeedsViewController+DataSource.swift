@@ -39,6 +39,7 @@ extension FeedsViewController {
             thumbnailURL: feed.thumbnail,
             likeCount: feed.likeCount,
             isLiked: feed.isLiked,
+            viewCount: feed.viewCount,
             feedType: self.feedType,
             showLoginOverlay: (
               indexPath.item != .zero &&

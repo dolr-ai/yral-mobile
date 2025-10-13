@@ -41,10 +41,19 @@ check(JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
     """.trimIndent()
 }
 
+val isLocalRust: Boolean =
+    providers
+        .gradleProperty("isLocalRust")
+        .map { it.toBoolean() }
+        .orElse(false)
+        .get()
+
 include(":androidApp")
 include(":shared:core")
 include(":shared:data")
-// include(":shared:rust:rust-agent")
+if (isLocalRust) {
+    include(":shared:rust:rust-agent")
+}
 include(":shared:rust:service")
 include(":shared:libs:preferences")
 include(":shared:libs:http")

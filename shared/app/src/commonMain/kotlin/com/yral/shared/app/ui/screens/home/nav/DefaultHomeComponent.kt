@@ -1,0 +1,267 @@
+package com.yral.shared.app.ui.screens.home.nav
+
+import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.decompose.router.slot.ChildSlot
+import com.arkivanov.decompose.router.slot.SlotNavigation
+import com.arkivanov.decompose.router.slot.activate
+import com.arkivanov.decompose.router.slot.childSlot
+import com.arkivanov.decompose.router.slot.dismiss
+import com.arkivanov.decompose.router.stack.ChildStack
+import com.arkivanov.decompose.router.stack.StackNavigation
+import com.arkivanov.decompose.router.stack.StackNavigator
+import com.arkivanov.decompose.router.stack.childStack
+import com.arkivanov.decompose.router.stack.replaceAll
+import com.arkivanov.decompose.value.Value
+import com.yral.shared.app.ui.screens.alertsrequest.nav.AlertsRequestComponent
+import com.yral.shared.app.ui.screens.profile.nav.ProfileComponent
+import com.yral.shared.features.account.nav.AccountComponent
+import com.yral.shared.features.feed.nav.FeedComponent
+import com.yral.shared.features.leaderboard.nav.LeaderboardComponent
+import com.yral.shared.features.uploadvideo.nav.UploadVideoRootComponent
+import com.yral.shared.features.wallet.nav.WalletComponent
+import com.yral.shared.features.wallet.ui.btcRewards.nav.DefaultVideoViewRewardsComponent
+import com.yral.shared.features.wallet.ui.btcRewards.nav.VideoViewRewardsComponent
+import com.yral.shared.libs.arch.nav.HomeChildSnapshotProvider
+import com.yral.shared.libs.routing.routes.api.AddVideo
+import com.yral.shared.libs.routing.routes.api.AppRoute
+import com.yral.shared.libs.routing.routes.api.GenerateAIVideo
+import com.yral.shared.libs.routing.routes.api.Leaderboard
+import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
+import com.yral.shared.libs.routing.routes.api.Profile
+import com.yral.shared.libs.routing.routes.api.RewardOn
+import com.yral.shared.libs.routing.routes.api.RewardsReceived
+import com.yral.shared.libs.routing.routes.api.VideoUploadSuccessful
+import com.yral.shared.libs.routing.routes.api.Wallet
+import kotlinx.serialization.Serializable
+
+@Suppress("TooManyFunctions")
+internal class DefaultHomeComponent(
+    componentContext: ComponentContext,
+    private val openEditProfile: () -> Unit,
+) : HomeComponent(),
+    ComponentContext by componentContext {
+    private val navigation = StackNavigation<Config>()
+    private val childSnapshots: MutableMap<Config, Any> = LinkedHashMap()
+    private var lastActiveConfig: Config? = null
+    private var lastActiveProvider: HomeChildSnapshotProvider? = null
+
+    override val stack: Value<ChildStack<*, Child>> =
+        childStack(
+            source = navigation,
+            serializer = Config.serializer(),
+            initialConfiguration = Config.Feed,
+            handleBackButton = true,
+            childFactory = ::child,
+        ).also { stackValue ->
+            stackValue.subscribe { current ->
+                val activeChild = current.active.instance
+                val (newConfig, newProvider) = mapActiveChild(activeChild)
+                if (lastActiveConfig != newConfig) {
+                    lastActiveProvider?.let { provider ->
+                        lastActiveConfig?.let { prevConfig ->
+                            childSnapshots[prevConfig] = provider.createHomeSnapshot()
+                        }
+                    }
+                    lastActiveConfig = newConfig
+                    lastActiveProvider = newProvider
+                }
+            }
+        }
+
+    private val slotNavigation = SlotNavigation<SlotConfig>()
+
+    override val slot: Value<ChildSlot<*, SlotChild>> =
+        childSlot(
+            source = slotNavigation,
+            serializer = SlotConfig.serializer(),
+            handleBackButton = true,
+            childFactory = ::slotChild,
+        )
+
+    override fun onFeedTabClick() {
+        navigation.replaceAll(Config.Feed)
+    }
+
+    override fun onLeaderboardTabClick() {
+        navigation.replaceKeepingFeed(Config.Leaderboard)
+    }
+
+    override fun onUploadVideoTabClick() {
+        navigation.replaceKeepingFeed(Config.UploadVideo)
+    }
+
+    override fun onProfileTabClick() {
+        navigation.replaceKeepingFeed(Config.Profile)
+    }
+
+    override fun onNavigationRequest(appRoute: AppRoute) {
+        when (appRoute) {
+            is PostDetailsRoute ->
+                navigation.replaceAll(Config.Feed) {
+                    (stack.value.active.instance as? Child.Feed)?.component?.openPostDetails(appRoute)
+                }
+            is Wallet -> onWalletTabClick()
+            is Leaderboard -> onLeaderboardTabClick()
+            is Profile -> onProfileTabClick()
+            is AddVideo -> onUploadVideoTabClick()
+            is GenerateAIVideo ->
+                navigation.replaceKeepingFeed(Config.UploadVideo) {
+                    (stack.value.active.instance as? Child.UploadVideo)?.component?.handleNavigation(appRoute)
+                }
+            is RewardsReceived -> {
+                when (appRoute.rewardOn) {
+                    RewardOn.VIDEO_VIEWS -> showSlot(SlotConfig.VideoViewsRewardsBottomSheet(appRoute))
+                }
+            }
+            is VideoUploadSuccessful ->
+                navigation.replaceKeepingFeed(Config.Profile) {
+                    (stack.value.active.instance as? Child.Profile)?.component?.onNavigationRequest(appRoute)
+                }
+            else -> Unit
+        }
+    }
+
+    override fun onAccountTabClick() {
+        navigation.replaceKeepingFeed(Config.Account)
+    }
+
+    override fun onWalletTabClick() {
+        navigation.replaceKeepingFeed(Config.Wallet)
+    }
+
+    private inline fun StackNavigator<Config>.replaceKeepingFeed(
+        configuration: Config,
+        crossinline onComplete: () -> Unit = { },
+    ) {
+        replaceAll(Config.Feed, configuration, onComplete = onComplete)
+    }
+
+    private fun child(
+        config: Config,
+        componentContext: ComponentContext,
+    ): Child =
+        when (config) {
+            is Config.Feed -> Child.Feed(feedComponent(componentContext))
+            is Config.Leaderboard -> Child.Leaderboard(leaderboardComponent(componentContext))
+            is Config.UploadVideo -> Child.UploadVideo(uploadVideoComponent(componentContext))
+            is Config.Profile -> Child.Profile(profileComponent(componentContext))
+            is Config.Account -> Child.Account(accountComponent(componentContext))
+            is Config.Wallet -> Child.Wallet(walletComponent(componentContext))
+        }
+
+    private fun mapActiveChild(child: Child): Pair<Config, HomeChildSnapshotProvider?> =
+        when (child) {
+            is Child.Feed -> Config.Feed to (child.component as? HomeChildSnapshotProvider)
+            is Child.Leaderboard -> Config.Leaderboard to (child.component as? HomeChildSnapshotProvider)
+            is Child.UploadVideo -> Config.UploadVideo to child.component
+            is Child.Profile -> Config.Profile to (child.component as? HomeChildSnapshotProvider)
+            is Child.Account -> Config.Account to (child.component as? HomeChildSnapshotProvider)
+            is Child.Wallet -> Config.Wallet to (child.component as? HomeChildSnapshotProvider)
+        }
+
+    private fun feedComponent(componentContext: ComponentContext): FeedComponent =
+        FeedComponent.Companion(componentContext = componentContext)
+
+    private fun leaderboardComponent(componentContext: ComponentContext): LeaderboardComponent =
+        LeaderboardComponent.Companion(
+            componentContext = componentContext,
+            snapshot = childSnapshots[Config.Leaderboard] as? LeaderboardComponent.Snapshot,
+            navigateToHome = { onFeedTabClick() },
+        )
+
+    private fun uploadVideoComponent(componentContext: ComponentContext): UploadVideoRootComponent =
+        UploadVideoRootComponent.Companion(
+            componentContext = componentContext,
+            goToHome = {
+                onFeedTabClick()
+                showSlot(SlotConfig.AlertsRequestBottomSheet)
+            },
+            snapshot = childSnapshots[Config.UploadVideo] as? UploadVideoRootComponent.Snapshot,
+        )
+
+    private fun profileComponent(componentContext: ComponentContext): ProfileComponent =
+        ProfileComponent.Companion(
+            componentContext = componentContext,
+            onUploadVideoClicked = { onUploadVideoTabClick() },
+            openEditProfile = openEditProfile,
+            snapshot = childSnapshots[Config.Profile] as? ProfileComponent.Snapshot,
+        )
+
+    private fun accountComponent(componentContext: ComponentContext): AccountComponent =
+        AccountComponent.Companion(componentContext = componentContext)
+
+    private fun walletComponent(componentContext: ComponentContext): WalletComponent =
+        WalletComponent.Companion(componentContext = componentContext)
+
+    private fun slotChild(
+        config: SlotConfig,
+        componentContext: ComponentContext,
+    ): SlotChild =
+        when (config) {
+            SlotConfig.AlertsRequestBottomSheet ->
+                SlotChild.AlertsRequestBottomSheet(
+                    alertsRequestComponent(componentContext),
+                )
+            is SlotConfig.VideoViewsRewardsBottomSheet ->
+                SlotChild.VideoViewsRewardsBottomSheet(
+                    component = btcRewardsComponent(componentContext),
+                    data = config.data,
+                )
+        }
+
+    private fun alertsRequestComponent(componentContext: ComponentContext): AlertsRequestComponent =
+        AlertsRequestComponent(
+            componentContext = componentContext,
+            onDismissed = slotNavigation::dismiss,
+        )
+
+    private fun btcRewardsComponent(componentContext: ComponentContext): VideoViewRewardsComponent =
+        DefaultVideoViewRewardsComponent(
+            componentContext = componentContext,
+            onDismissed = slotNavigation::dismiss,
+            navigateToWallet = {
+                slotNavigation.dismiss()
+                onWalletTabClick()
+            },
+            navigateToFeed = {
+                slotNavigation.dismiss()
+                onFeedTabClick()
+            },
+        )
+
+    private fun showSlot(slotConfig: SlotConfig) {
+        slotNavigation.activate(slotConfig)
+    }
+
+    @Serializable
+    private sealed interface Config {
+        @Serializable
+        data object Feed : Config
+
+        @Serializable
+        data object Leaderboard : Config
+
+        @Serializable
+        data object UploadVideo : Config
+
+        @Serializable
+        data object Profile : Config
+
+        @Serializable
+        data object Account : Config
+
+        @Serializable
+        data object Wallet : Config
+    }
+
+    @Serializable
+    private sealed interface SlotConfig {
+        @Serializable
+        data object AlertsRequestBottomSheet : SlotConfig
+
+        @Serializable
+        data class VideoViewsRewardsBottomSheet(
+            val data: RewardsReceived,
+        ) : SlotConfig
+    }
+}

@@ -1,9 +1,32 @@
 package com.yral.shared.rust.service.utils
 
-expect fun delegatedIdentityWireToJson(bytes: ByteArray): String
+import com.yral.shared.uniffi.generated.FfiException
 
-expect fun propicFromPrincipal(principalId: String): String
+fun delegatedIdentityWireToJson(bytes: ByteArray): String =
+    com.yral.shared.uniffi.generated
+        .delegatedIdentityWireToJson(bytes)
 
-expect suspend fun authenticateWithNetwork(data: ByteArray): CanisterData
+fun propicFromPrincipal(principalId: String): String =
+    com.yral.shared.uniffi.generated
+        .propicFromPrincipal(principalId)
 
-expect fun yralAuthLoginHint(identity: ByteArray): String
+suspend fun authenticateWithNetwork(data: ByteArray): CanisterData {
+    try {
+        val wrapper =
+            com.yral.shared.uniffi.generated
+                .authenticateWithNetwork(data)
+        return CanisterData(
+            canisterId = wrapper.getCanisterPrincipal(),
+            userPrincipalId = wrapper.getUserPrincipal(),
+            profilePic = wrapper.getProfilePic(),
+            username = wrapper.getUsername(),
+            isCreatedFromServiceCanister = wrapper.isCreatedFromServiceCanister(),
+        )
+    } catch (exception: FfiException) {
+        throw YralFfiException(exception)
+    }
+}
+
+fun yralAuthLoginHint(identity: ByteArray): String =
+    com.yral.shared.uniffi.generated
+        .yralAuthLoginHint(identity)

@@ -77,7 +77,7 @@ jobs:
         run: ./gradlew clean
 
       - name: Build APK
-        run: ./gradlew androidApp:bundleStagingRelease -PisDebug=false
+        run: ./gradlew androidApp:bundleStagingRelease
         env:
           GITHUB_USERNAME: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

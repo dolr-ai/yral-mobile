@@ -9,6 +9,5 @@ import org.koin.dsl.module
 val accountsModule =
     module {
         factoryOf(::AccountsTelemetry)
-        factoryOf(::AccountsTelemetry)
         viewModelOf(::AccountsViewModel)
     }

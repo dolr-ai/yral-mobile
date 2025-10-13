@@ -13,7 +13,10 @@ final class FirebaseLottieManager {
 
   private init() {}
 
-  func data(forPath path: String, completion: @escaping (Result<Data, Error>) -> Void) {
+  func data(
+    forPath path: String,
+    completion: @escaping (Result<Data, Error>) -> Void
+  ) {
     if let data = YralCache.shared.data(forPath: path) {
       return completion(.success(data))
     }
@@ -31,8 +34,12 @@ final class FirebaseLottieManager {
     }
   }
 
-  func downloadAndSaveToCache(forPath path: String) {
-    guard YralCache.shared.data(forPath: path) == nil else {
+  func downloadAndSaveToCache(
+    forPath path: String,
+    ignoreCache: Bool = false
+  ) {
+    let hasCache = YralCache.shared.data(forPath: path) != nil
+    if hasCache && !ignoreCache {
       return
     }
 

@@ -8,6 +8,10 @@ plugins {
 
 kotlin {
     androidTarget()
+    listOf(
+        iosArm64(),
+        iosSimulatorArm64(),
+    )
 
     sourceSets {
         commonMain.dependencies {
@@ -27,7 +31,6 @@ kotlin {
             implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)
             implementation(libs.turbine)
-            implementation(libs.mockk)
         }
     }
 }

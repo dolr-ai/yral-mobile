@@ -11,6 +11,14 @@
     <string name="done">Done</string>
     <string name="something_went_wrong">Something went wrong!</string>
     <string name="upload_video">Upload Video</string>
+    <string name="edit_profile">Edit Profile</string>
+    <string name="username">Username</string>
+    <string name="unique_id">Unique ID</string>
+    <string name="username_helper_text">Try creating a unique username. Use 3–15 alphabets or numbers. No spaces or special characters allowed.</string>
+    <string name="username_error_text">Username should be between 3 and 15 characters long and contain no special characters.</string>
+    <string name="change_name_prompt">Are you sure you want to change your name to %1$s?</string>
+    <string name="change_name">Change name</string>
+    <string name="alerts">Alerts</string>
     <string name="msg_feed_video_share">Check out this video on Yral 👀 Where watching = fun + games! ⚡ Try it 👉</string>
     <string name="msg_feed_video_share_desc">Watch on Yral</string>
     <string name="ok">OK</string>

@@ -33,10 +33,13 @@ struct ProfileVideosGridView: View {
               }
             HStack(alignment: .bottom) {
               HStack(spacing: Constants.innerHStackSpacing) {
-                Image(video.isLiked ? Constants.likeImageNameSelected : Constants.likeImageNameUnselected)
-                Text("\(video.likeCount)")
-                  .font(Constants.likeTextFont)
-                  .foregroundColor(Constants.likeTextColor)
+                Image(Constants.viewImage)
+                  .resizable()
+                  .frame(width: 24, height: 24)
+
+                Text("\(video.viewCount)")
+                  .font(Constants.viewTextFont)
+                  .foregroundColor(Constants.viewTextColor)
               }
               .padding(.leading, Constants.buttonHorizontalPadding)
               Spacer()
@@ -90,11 +93,12 @@ extension ProfileVideosGridView {
     static let deleteTappableSize = 50.0
 
     static let deleteImageName = "delete_profile"
+    static let viewImage = "video_views"
     static let likeImageNameSelected = "like_profile"
     static let likeImageNameUnselected = "dislike_profile"
 
-    static let likeTextFont = YralFont.pt14.medium.swiftUIFont
-    static let likeTextColor = YralColor.grey50.swiftUIColor
+    static let viewTextFont = YralFont.pt14.medium.swiftUIFont
+    static let viewTextColor = YralColor.grey50.swiftUIColor
 
     static let loaderName = "Yral_Loader"
     static let loaderSize = 24.0

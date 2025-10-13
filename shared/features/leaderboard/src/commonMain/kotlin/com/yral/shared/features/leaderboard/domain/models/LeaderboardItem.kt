@@ -1,5 +1,6 @@
 package com.yral.shared.features.leaderboard.domain.models
 
+import com.yral.shared.core.utils.resolveUsername
 import com.yral.shared.features.leaderboard.data.models.LeaderboardRowDto
 import com.yral.shared.rust.service.utils.propicFromPrincipal
 
@@ -9,6 +10,7 @@ data class LeaderboardItem(
     val wins: Long,
     val position: Int,
     val reward: Double?,
+    val username: String,
 )
 
 fun LeaderboardRowDto.toLeaderboardItem(): LeaderboardItem =
@@ -18,4 +20,5 @@ fun LeaderboardRowDto.toLeaderboardItem(): LeaderboardItem =
         wins = wins,
         position = position,
         reward = reward,
+        username = resolveUsername(username, principalId) ?: principalId,
     )
