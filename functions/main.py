@@ -467,6 +467,22 @@ def cast_vote(request: Request):
         print("Unhandled error:", e, file=sys.stderr)
         return error_response(500, "INTERNAL", "Internal server error")
 
+def _get_daily_position(pid: str) -> int:
+    bucket_id, _start, _end = _bucket_bounds_ist()
+    users_ref = db().collection(f"{DAILY_COLL}/{bucket_id}/users")
+    user_doc = users_ref.document(pid).get()
+    if not user_doc.exists:
+        return 0
+    wins = int(user_doc.get("smiley_game_wins") or 0)
+    if wins == 0:
+        return 0
+    count_snap = (
+        users_ref.where("smiley_game_wins", ">", wins)
+                 .count()
+                 .get()
+    )
+    return int(count_snap[0][0].value) + 1
+
 @https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"])
 def cast_vote_v2(request: Request):
     balance_update_token = os.environ["BALANCE_UPDATE_TOKEN"]
@@ -596,6 +612,12 @@ def cast_vote_v2(request: Request):
         except Exception as e:
             print(f"[daily-leaderboard] failed for {pid}: {e}", file=sys.stderr)
 
+        try:
+            new_position = _get_daily_position(pid)
+        except Exception as e:
+            print(f"[rank] position calc failed for {pid}: {e}", file=sys.stderr)
+            new_position = 0
+
         # 6. success payload (voted smiley) ──────────────────────────────
         voted = smiley_map[sid]
         return jsonify({
@@ -608,7 +630,8 @@ def cast_vote_v2(request: Request):
                 "image_fallback": voted["image_fallback"]
             },
             "coins":       coins,
-            "coin_delta":  delta
+            "coin_delta":  delta,
+            "new_position": new_position
         }), 200
 
     # known error wrappers ───────────────────────────────────────────────
