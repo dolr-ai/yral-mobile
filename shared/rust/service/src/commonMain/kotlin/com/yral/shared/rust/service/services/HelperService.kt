@@ -100,6 +100,7 @@ object HelperService {
         koinInstance.get<IndividualUserServiceFactory>().initialize(identityData)
         koinInstance.get<RateLimitServiceFactory>().initialize(identityData)
         koinInstance.get<UserPostServiceFactory>().initialize(identityData)
+        koinInstance.get<UserInfoServiceFactory>().initialize(identityData)
         koinInstance.get<SnsLedgerServiceFactory>().initialize(identityData)
         koinInstance.get<ICPLedgerServiceFactory>().initialize(identityData)
     }
