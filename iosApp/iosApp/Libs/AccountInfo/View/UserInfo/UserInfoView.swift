@@ -12,6 +12,7 @@ import iosSharedUmbrella
 struct UserInfoView: View {
   @Binding var accountInfo: AccountInfo?
   @Binding var showLoginButton: Bool
+  @Binding var showEditProfileButton: Bool
   var shouldApplySpacing: Bool
   var delegate: UserInfoViewProtocol?
 
@@ -19,11 +20,13 @@ struct UserInfoView: View {
     accountInfo: Binding<AccountInfo?>,
     shouldApplySpacing: Bool,
     showLoginButton: Binding<Bool>,
+    showEditProfileButton: Binding<Bool>,
     delegate: UserInfoViewProtocol?
   ) {
     self._accountInfo = accountInfo
     self.shouldApplySpacing = shouldApplySpacing
     self._showLoginButton = showLoginButton
+    self._showEditProfileButton = showEditProfileButton
     self.delegate = delegate
   }
 
@@ -40,7 +43,7 @@ struct UserInfoView: View {
           )
           .clipShape(Circle())
           .overlay(Circle().stroke(Color.white, lineWidth: .one))
-        Text(accountInfo?.canisterID ?? "")
+        Text(accountInfo?.username ?? "")
           .font(Constants.profileLabelFont)
           .foregroundColor(Constants.profileLabelColor)
           .lineLimit(.two)
@@ -62,7 +65,7 @@ struct UserInfoView: View {
             .background(Constants.loginButtonGradient)
             .cornerRadius(Constants.loginButtonCornerRadius)
         }
-      } else {
+      } else if showEditProfileButton {
         Button {
 
         } label: {

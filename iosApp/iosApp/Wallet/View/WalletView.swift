@@ -36,6 +36,7 @@ struct WalletView: View {
           accountInfo: $accountInfo,
           shouldApplySpacing: false,
           showLoginButton: Binding(get: { false }, set: { _ in }),
+          showEditProfileButton: Binding(get: { false }, set: { _ in }),
           delegate: nil
         )
         .padding(.top, Constants.userInfoViewToPadding)
