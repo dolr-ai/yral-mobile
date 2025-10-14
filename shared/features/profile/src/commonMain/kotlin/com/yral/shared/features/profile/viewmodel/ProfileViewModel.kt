@@ -41,6 +41,7 @@ import com.yral.shared.reportVideo.domain.models.ReportSheetState
 import com.yral.shared.reportVideo.domain.models.ReportVideoData
 import com.yral.shared.rust.service.domain.models.PagedFollowerItem
 import com.yral.shared.rust.service.domain.pagedDataSource.UserInfoPagingSourceFactory
+import com.yral.shared.rust.service.utils.CanisterData
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -53,6 +54,7 @@ import kotlinx.coroutines.launch
 
 @Suppress("LongParameterList")
 class ProfileViewModel(
+    private val canisterData: CanisterData,
     private val sessionManager: SessionManager,
     private val profileRepository: ProfileRepository,
     private val deleteVideoUseCase: DeleteVideoUseCase,
@@ -91,6 +93,9 @@ class ProfileViewModel(
             pagingSourceFactory = {
                 ProfileVideosPagingSource(
                     profileRepository = profileRepository,
+                    canisterId = canisterData.canisterId,
+                    userPrincipal = canisterData.userPrincipalId,
+                    isFromServiceCanister = canisterData.isCreatedFromServiceCanister,
                 )
             },
         ).flow
@@ -106,7 +111,7 @@ class ProfileViewModel(
             }.distinctUntilChanged()
 
     val followers: Flow<PagingData<PagedFollowerItem>>? =
-        sessionManager.userPrincipal?.let { userPrincipal ->
+        canisterData.userPrincipalId.let { userPrincipal ->
             Pager(
                 config =
                     PagingConfig(
@@ -126,7 +131,7 @@ class ProfileViewModel(
         }
 
     val following: Flow<PagingData<PagedFollowerItem>>? =
-        sessionManager.userPrincipal?.let { userPrincipal ->
+        canisterData.userPrincipalId.let { userPrincipal ->
             Pager(
                 config =
                     PagingConfig(
@@ -146,24 +151,42 @@ class ProfileViewModel(
         }
 
     init {
-        _state.update { it.copy(accountInfo = sessionManager.getAccountInfo()) }
-        viewModelScope.launch {
-            sessionManager
-                .observeSessionProperties()
-                .map { it.isSocialSignIn }
-                .distinctUntilChanged()
-                .collect { isSocialSignIn ->
-                    _state.update { it.copy(isLoggedIn = isSocialSignIn == true) }
-                }
+        _state.update {
+            it.copy(
+                accountInfo =
+                    AccountInfo(
+                        userPrincipal = canisterData.userPrincipalId,
+                        profilePic = canisterData.profilePic,
+                        username = canisterData.username,
+                    ),
+            )
         }
-        viewModelScope.launch {
-            sessionManager
-                .state
-                .map { sessionManager.getAccountInfo() }
-                .distinctUntilChanged()
-                .collect { info ->
-                    _state.update { it.copy(accountInfo = info) }
-                }
+        if (canisterData.userPrincipalId != sessionManager.userPrincipal) {
+            _state.update {
+                it.copy(
+                    isOwnProfile = false,
+                    isWalletEnabled = false,
+                )
+            }
+        } else {
+            viewModelScope.launch {
+                sessionManager
+                    .observeSessionProperties()
+                    .map { it.isSocialSignIn }
+                    .distinctUntilChanged()
+                    .collect { isSocialSignIn ->
+                        _state.update { it.copy(isLoggedIn = isSocialSignIn == true) }
+                    }
+            }
+            viewModelScope.launch {
+                sessionManager
+                    .state
+                    .map { sessionManager.getAccountInfo() }
+                    .distinctUntilChanged()
+                    .collect { info ->
+                        _state.update { it.copy(accountInfo = info) }
+                    }
+            }
         }
     }
 
@@ -269,7 +292,7 @@ class ProfileViewModel(
 
     fun setManualRefreshTriggered(isTriggered: Boolean) {
         _state.update { it.copy(manualRefreshTriggered = isTriggered) }
-        if (isTriggered) {
+        if (isTriggered && _state.value.isOwnProfile) {
             sessionManager.updateProfileVideosCount(null)
         }
     }
@@ -377,6 +400,7 @@ data class ViewState(
     val isReporting: Boolean = false,
     val reportSheetState: ReportSheetState = ReportSheetState.Closed,
     val isLoggedIn: Boolean = false,
+    val isOwnProfile: Boolean = true,
 )
 
 sealed interface ProfileBottomSheet {
