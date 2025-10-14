@@ -49,6 +49,8 @@
 	<true/>
 	<key>MIXPANEL_TOKEN</key>
 	<string>9f7ce647e4b8548dc3cd5b16a98c9ade</string>
+	<key>ONESIGNAL_APP_ID</key>
+	<string>REPLACE_WITH_ONESIGNAL_APP_ID</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Yral requires camera access to allow to record and upload videos. Your camera will only be used when you choose to create a new video.</string>
 	<key>NSMicrophoneUsageDescription</key>

@@ -44,24 +44,27 @@ actual class MixpanelAnalyticsProvider actual constructor(
                 "canister_id" to user.canisterId,
                 "is_Forced Gameplay_test_user" to user.isForcedGamePlayUser,
                 "email_id" to user.emailId,
-                ONE_SIGNAL_SUPER_PROPERTY to (user.oneSignalUserId ?: user.userId),
             )
+        user.oneSignalUserId?.let { oneSignalId ->
+            superProps[ONE_SIGNAL_SUPER_PROPERTY] = oneSignalId
+        } ?: superProps.remove(ONE_SIGNAL_SUPER_PROPERTY)
         if (user.isLoggedIn ?: false) {
             mixpanel.identify(user.userId)
-            mixpanel.people?.identify(user.userId)
             superProps["user_id"] = user.userId
             superProps["visitor_id"] = null
-            val oneSignalId = user.oneSignalUserId ?: user.userId
-            mixpanel.people?.set(property = ONE_SIGNAL_PROPERTY, to = oneSignalId)
+            user.oneSignalUserId?.let {
+                mixpanel.people.set(property = ONE_SIGNAL_PROPERTY, to = it)
+            } ?: mixpanel.people.unset(properties = listOf(ONE_SIGNAL_PROPERTY))
         } else {
             superProps["visitor_id"] = user.userId
             superProps["user_id"] = null
+            mixpanel.people.unset(properties = listOf(ONE_SIGNAL_PROPERTY))
         }
         mixpanel.registerSuperProperties(superProps)
     }
 
     override fun reset() {
-        mixpanel.people?.unset(property = ONE_SIGNAL_PROPERTY)
+        mixpanel.people.unset(properties = listOf(ONE_SIGNAL_PROPERTY))
         mixpanel.reset()
     }
 

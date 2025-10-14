@@ -77,8 +77,10 @@ actual class MixpanelAnalyticsProvider actual constructor(
                 "canister_id" to user.canisterId,
                 "is_forced_gameplay_test_user" to user.isForcedGamePlayUser,
                 "email_id" to user.emailId,
-                ONE_SIGNAL_SUPER_PROPERTY to (user.oneSignalUserId ?: user.userId),
             )
+        user.oneSignalUserId?.let { oneSignalId ->
+            superProps[ONE_SIGNAL_SUPER_PROPERTY] = oneSignalId
+        } ?: superProps.remove(ONE_SIGNAL_SUPER_PROPERTY)
         if (user.isLoggedIn == true) {
             mixpanel.identify(user.userId)
             mixpanel.people.identify(user.userId)
@@ -86,11 +88,12 @@ actual class MixpanelAnalyticsProvider actual constructor(
             distinctId.value = mixpanel.distinctId
             superProps["user_id"] = user.userId
             superProps["visitor_id"] = null
-            val oneSignalId = user.oneSignalUserId ?: user.userId
-            mixpanel.people.set(ONE_SIGNAL_PROPERTY, oneSignalId)
+            user.oneSignalUserId?.let { mixpanel.people.set(ONE_SIGNAL_PROPERTY, it) }
+                ?: mixpanel.people.unset(ONE_SIGNAL_PROPERTY)
         } else {
             superProps["visitor_id"] = user.userId
             superProps["user_id"] = null
+            mixpanel.people.unset(ONE_SIGNAL_PROPERTY)
         }
         mixpanel.registerSuperProperties(JSONObject(superProps))
     }

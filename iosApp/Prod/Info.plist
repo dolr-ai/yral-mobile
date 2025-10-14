@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleExecutable</key>
@@ -57,6 +59,8 @@
 	<string>Yral requires camera access to allow you to record and upload videos. Your camera will only be used when you choose to create a new video.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Yral requires microphone access to capture audio while recording videos. Your microphone will only be used during video recording.</string>
+	<key>ONESIGNAL_APP_ID</key>
+	<string>REPLACE_WITH_ONESIGNAL_APP_ID</string>
 	<key>UIAppFonts</key>
 	<array>
 		<string>KumbhSans-Black.ttf</string>
@@ -107,6 +111,5 @@
 		<string>link.yral.com</string>
 		<string>f6ur9-alternate.app.link</string>
 	</array>
-    <key>CADisableMinimumFrameDurationOnPhone</key><true/>
 </dict>
 </plist>
