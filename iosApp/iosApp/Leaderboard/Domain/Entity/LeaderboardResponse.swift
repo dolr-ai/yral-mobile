@@ -14,6 +14,7 @@ struct LeaderboardRowResponse: Identifiable {
   let principalID: String
   let wins: Int
   let reward: Int?
+  let username: String?
 }
 
 struct LeaderboardResponse {
