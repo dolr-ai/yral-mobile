@@ -8,8 +8,8 @@ import com.yral.shared.rust.service.data.IndividualUserDataSourceImpl.Companion.
 import com.yral.shared.rust.service.utils.propicFromPrincipal
 import com.yral.shared.uniffi.generated.PostDetailsForFrontend
 import com.yral.shared.uniffi.generated.PostStatus
-import com.yral.shared.uniffi.generated.ScPostDetailsForFrontend
-import com.yral.shared.uniffi.generated.ScPostStatus
+import com.yral.shared.uniffi.generated.UpsPostDetailsForFrontend
+import com.yral.shared.uniffi.generated.UpsPostStatus
 
 internal fun PostDetailsForFrontend.toFeedDetails(
     postId: String,
@@ -40,12 +40,12 @@ internal fun PostDetailsForFrontend.toFeedDetails(
     )
 }
 
-internal fun ScPostDetailsForFrontend.toFeedDetails(
+internal fun UpsPostDetailsForFrontend.toFeedDetails(
     postId: String,
     canisterId: String,
     nsfwProbability: Double?,
 ): FeedDetails {
-    if (status == ScPostStatus.BANNED_DUE_TO_USER_REPORTING) {
+    if (status == UpsPostStatus.BANNED_DUE_TO_USER_REPORTING) {
         throw YralException("Post is banned $postId")
     }
     val videoUrl = "$CLOUD_FLARE_PREFIX$videoUid$CLOUD_FLARE_SUFFIX_MP4"

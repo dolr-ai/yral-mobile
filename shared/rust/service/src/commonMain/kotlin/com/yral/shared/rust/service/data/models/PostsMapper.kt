@@ -5,8 +5,8 @@ import com.yral.shared.rust.service.domain.models.PostsOfUserProfileError
 import com.yral.shared.rust.service.domain.models.toFeedDetails
 import com.yral.shared.uniffi.generated.GetPostsOfUserProfileError
 import com.yral.shared.uniffi.generated.Result12
-import com.yral.shared.uniffi.generated.ScGetPostsOfUserProfileError
-import com.yral.shared.uniffi.generated.ScResult3
+import com.yral.shared.uniffi.generated.UpsGetPostsOfUserProfileError
+import com.yral.shared.uniffi.generated.UpsResult3
 
 internal fun GetPostsOfUserProfileError.toPostsOfUserProfileError(): PostsOfUserProfileError =
     when (this) {
@@ -32,9 +32,9 @@ internal fun Result12.toPosts(canisterId: String): Posts =
         is Result12.Err -> Posts.Err(v1.toPostsOfUserProfileError())
     }
 
-internal fun ScResult3.toPosts(canisterId: String): Posts =
+internal fun UpsResult3.toPosts(canisterId: String): Posts =
     when (this) {
-        is ScResult3.Ok ->
+        is UpsResult3.Ok ->
             Posts.Ok(
                 v1.map {
                     it.toFeedDetails(
@@ -44,13 +44,13 @@ internal fun ScResult3.toPosts(canisterId: String): Posts =
                     )
                 },
             )
-        is ScResult3.Err -> Posts.Err(v1.toPostsOfUserProfileError())
+        is UpsResult3.Err -> Posts.Err(v1.toPostsOfUserProfileError())
     }
 
-fun ScGetPostsOfUserProfileError.toPostsOfUserProfileError(): PostsOfUserProfileError =
+fun UpsGetPostsOfUserProfileError.toPostsOfUserProfileError(): PostsOfUserProfileError =
     when (this) {
-        ScGetPostsOfUserProfileError.REACHED_END_OF_ITEMS_LIST -> PostsOfUserProfileError.REACHED_END_OF_ITEMS_LIST
-        ScGetPostsOfUserProfileError.INVALID_BOUNDS_PASSED -> PostsOfUserProfileError.INVALID_BOUNDS_PASSED
-        ScGetPostsOfUserProfileError.EXCEEDED_MAX_NUMBER_OF_ITEMS_ALLOWED_IN_ONE_REQUEST ->
+        UpsGetPostsOfUserProfileError.REACHED_END_OF_ITEMS_LIST -> PostsOfUserProfileError.REACHED_END_OF_ITEMS_LIST
+        UpsGetPostsOfUserProfileError.INVALID_BOUNDS_PASSED -> PostsOfUserProfileError.INVALID_BOUNDS_PASSED
+        UpsGetPostsOfUserProfileError.EXCEEDED_MAX_NUMBER_OF_ITEMS_ALLOWED_IN_ONE_REQUEST ->
             PostsOfUserProfileError.EXCEEDED_MAX_NUMBER_OF_ITEMS_ALLOWED_IN_ONE_REQUEST
     }
