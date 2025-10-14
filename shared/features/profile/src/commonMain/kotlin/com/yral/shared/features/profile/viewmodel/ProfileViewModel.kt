@@ -48,6 +48,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -82,36 +83,40 @@ class ProfileViewModel(
 
     private val deletedVideoIds = MutableStateFlow<Set<String>>(emptySet())
     val profileVideos: Flow<PagingData<FeedDetails>> =
-        Pager(
-            config =
-                PagingConfig(
-                    pageSize = POSTS_PER_PAGE,
-                    initialLoadSize = POSTS_PER_PAGE,
-                    prefetchDistance = POSTS_PREFETCH_DISTANCE,
-                    enablePlaceholders = false,
-                ),
-            pagingSourceFactory = {
-                ProfileVideosPagingSource(
-                    profileRepository = profileRepository,
-                    canisterId = canisterData.canisterId,
-                    userPrincipal = canisterData.userPrincipalId,
-                    isFromServiceCanister = canisterData.isCreatedFromServiceCanister,
-                )
-            },
-        ).flow
-            .cachedIn(viewModelScope)
-            .combine(deletedVideoIds) { pagingData, deletedIds ->
-                val videoIds = mutableSetOf<String>()
-                pagingData
-                    .filter { video ->
-                        video.videoID.isNotEmpty() &&
-                            videoIds.add(video.videoID) &&
-                            video.videoID !in deletedIds
-                    }
-            }.distinctUntilChanged()
+        if (canisterData.userPrincipalId.isNotEmpty()) {
+            Pager(
+                config =
+                    PagingConfig(
+                        pageSize = POSTS_PER_PAGE,
+                        initialLoadSize = POSTS_PER_PAGE,
+                        prefetchDistance = POSTS_PREFETCH_DISTANCE,
+                        enablePlaceholders = false,
+                    ),
+                pagingSourceFactory = {
+                    ProfileVideosPagingSource(
+                        profileRepository = profileRepository,
+                        canisterId = canisterData.canisterId,
+                        userPrincipal = canisterData.userPrincipalId,
+                        isFromServiceCanister = canisterData.isCreatedFromServiceCanister,
+                    )
+                },
+            ).flow
+                .cachedIn(viewModelScope)
+                .combine(deletedVideoIds) { pagingData, deletedIds ->
+                    val videoIds = mutableSetOf<String>()
+                    pagingData
+                        .filter { video ->
+                            video.videoID.isNotEmpty() &&
+                                videoIds.add(video.videoID) &&
+                                video.videoID !in deletedIds
+                        }
+                }.distinctUntilChanged()
+        } else {
+            flowOf()
+        }
 
     val followers: Flow<PagingData<PagedFollowerItem>>? =
-        canisterData.userPrincipalId.let { userPrincipal ->
+        if (canisterData.userPrincipalId.isNotEmpty()) {
             Pager(
                 config =
                     PagingConfig(
@@ -122,16 +127,18 @@ class ProfileViewModel(
                     ),
                 pagingSourceFactory = {
                     userInfoPagingSourceFactory.createFollowersPagingSource(
-                        principal = userPrincipal,
-                        targetPrincipal = userPrincipal,
+                        principal = canisterData.userPrincipalId,
+                        targetPrincipal = canisterData.userPrincipalId,
                         withCallerFollows = true,
                     )
                 },
             ).flow.cachedIn(viewModelScope)
+        } else {
+            flowOf()
         }
 
     val following: Flow<PagingData<PagedFollowerItem>>? =
-        canisterData.userPrincipalId.let { userPrincipal ->
+        if (canisterData.userPrincipalId.isNotEmpty()) {
             Pager(
                 config =
                     PagingConfig(
@@ -142,12 +149,14 @@ class ProfileViewModel(
                     ),
                 pagingSourceFactory = {
                     userInfoPagingSourceFactory.createFollowingPagingSource(
-                        principal = userPrincipal,
-                        targetPrincipal = userPrincipal,
+                        principal = canisterData.userPrincipalId,
+                        targetPrincipal = canisterData.userPrincipalId,
                         withCallerFollows = true,
                     )
                 },
             ).flow.cachedIn(viewModelScope)
+        } else {
+            flowOf()
         }
 
     init {

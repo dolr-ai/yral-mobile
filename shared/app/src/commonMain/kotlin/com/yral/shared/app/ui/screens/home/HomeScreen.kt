@@ -182,19 +182,7 @@ private fun HomeScreenContent(
     updateProfileVideosCount: (count: Int) -> Unit,
 ) {
     val sessionKey = sessionState.getKey()
-    val canisterData =
-        when (sessionState) {
-            SessionState.Initial -> null
-            SessionState.Loading -> null
-            is SessionState.SignedIn ->
-                CanisterData(
-                    canisterId = sessionState.session.canisterId ?: "",
-                    userPrincipalId = sessionState.session.userPrincipal ?: "",
-                    profilePic = sessionState.session.profilePic ?: "",
-                    username = sessionState.session.username,
-                    isCreatedFromServiceCanister = sessionState.session.isCreatedFromServiceCanister,
-                )
-        }
+    val canisterData = sessionState.getCanisterData()
     val feedViewModel = koinViewModel<FeedViewModel>(key = "feed-$sessionKey")
     val gameViewModel = koinViewModel<GameViewModel>(key = "game-$sessionKey")
     val profileViewModel =
@@ -522,3 +510,25 @@ private enum class HomeTab(
         unSelectedIcon = DesignRes.drawable.account_nav,
     ),
 }
+
+private fun SessionState.getCanisterData(): CanisterData =
+    when (this) {
+        SessionState.Initial,
+        SessionState.Loading,
+        ->
+            CanisterData(
+                canisterId = "",
+                userPrincipalId = "",
+                profilePic = "",
+                username = "",
+                isCreatedFromServiceCanister = true,
+            )
+        is SessionState.SignedIn ->
+            CanisterData(
+                canisterId = session.canisterId ?: "",
+                userPrincipalId = session.userPrincipal ?: "",
+                profilePic = session.profilePic ?: "",
+                username = session.username,
+                isCreatedFromServiceCanister = session.isCreatedFromServiceCanister,
+            )
+    }
