@@ -531,11 +531,7 @@ struct LeaderboardView: View {
         grouped[row.position] = (ids: [], wins: row.wins)
       }
 
-      if let username = row.username {
-        grouped[row.position]!.ids.append(username)
-      } else {
-        grouped[row.position]!.ids.append(row.principalID)
-      }
+      grouped[row.position]!.ids.append(row.username)
     }
 
     let order: [Int] = [.two, .one, .three]

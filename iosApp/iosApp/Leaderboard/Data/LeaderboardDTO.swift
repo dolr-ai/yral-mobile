@@ -50,7 +50,7 @@ extension LeaderboardRowDTO {
       principalID: principalID,
       wins: wins,
       reward: reward,
-      username: username
+      username: username ?? UsernameGenerator.shared.generateUsername(from: principalID)
     )
   }
 }
