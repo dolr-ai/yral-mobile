@@ -11,4 +11,5 @@ import Foundation
 struct AccountInfo: Equatable {
   let imageURL: URL?
   let canisterID: String
+  let username: String
 }

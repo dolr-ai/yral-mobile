@@ -22,7 +22,13 @@ class AccountRepository: AccountRepositoryProtocol {
        let principal = try? get_principal(principalString) {
       imageURL = URL(string: propic_from_principal(principal).toString())
     }
-    return .success(AccountInfo(imageURL: imageURL, canisterID: authClient.userPrincipalString ?? ""))
+    return .success(AccountInfo(
+      imageURL: imageURL,
+      canisterID: authClient.userPrincipalString ?? "",
+      username: authClient.username ?? UsernameGenerator.shared.generateUsername(
+        from: authClient.userPrincipalString ?? ""
+      )
+    ))
   }
 
   func socialSignIn(provider: SocialProvider) async -> Result<Void, AccountError> {

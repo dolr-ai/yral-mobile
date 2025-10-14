@@ -83,6 +83,7 @@ struct ProfileView: View {
                 accountInfo: $accountInfo,
                 shouldApplySpacing: false,
                 showLoginButton: $showLoginButton,
+                showEditProfileButton: $showLoginButton.inverted,
                 delegate: self
               )
             }
