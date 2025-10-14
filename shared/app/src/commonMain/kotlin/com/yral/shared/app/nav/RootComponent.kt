@@ -5,7 +5,9 @@ import com.arkivanov.decompose.value.Value
 import com.yral.shared.app.UpdateState
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent
 import com.yral.shared.features.profile.nav.EditProfileComponent
+import com.yral.shared.features.profile.nav.ProfileMainComponent
 import com.yral.shared.libs.routing.routes.api.AppRoute
+import com.yral.shared.rust.service.utils.CanisterData
 
 interface RootComponent {
     val stack: Value<ChildStack<*, Child>>
@@ -25,6 +27,8 @@ interface RootComponent {
 
     fun openEditProfile()
 
+    fun openProfile(userCanisterData: CanisterData)
+
     // Defines all possible child components
     sealed class Child {
         class Splash(
@@ -35,6 +39,9 @@ interface RootComponent {
         ) : Child()
         class EditProfile(
             val component: EditProfileComponent,
+        ) : Child()
+        class UserProfile(
+            val component: ProfileMainComponent,
         ) : Child()
     }
 }

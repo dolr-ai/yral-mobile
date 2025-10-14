@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
+import com.yral.shared.core.utils.resolveUsername
 import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.features.feed.ui.components.SignupNudge
@@ -48,6 +49,8 @@ import com.yral.shared.libs.videoPlayer.util.ReelScrollDirection
 import com.yral.shared.reportVideo.domain.models.ReportSheetState
 import com.yral.shared.reportVideo.ui.ReportVideo
 import com.yral.shared.reportVideo.ui.ReportVideoSheet
+import com.yral.shared.rust.service.utils.CanisterData
+import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -159,6 +162,7 @@ fun FeedScreen(
                     feedViewModel = viewModel,
                     topOverlay = { topOverlay(pageNo) },
                     bottomOverlay = { bottomOverlay(pageNo) },
+                    openProfile = { canisterData -> component.openProfile(canisterData) },
                 )
             }
             // Show loader at the bottom when loading more content AND no new items have been added yet
@@ -236,6 +240,7 @@ private fun FeedOverlay(
     feedViewModel: FeedViewModel,
     topOverlay: @Composable () -> Unit,
     bottomOverlay: @Composable () -> Unit,
+    openProfile: (userCanisterData: CanisterData) -> Unit,
 ) {
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -247,6 +252,7 @@ private fun FeedOverlay(
             pageNo = pageNo,
             feedViewModel = feedViewModel,
             bottomOverlay = bottomOverlay,
+            openProfile = openProfile,
         )
         if (!feedViewModel.isLoggedIn() && pageNo != 0 && (pageNo % SIGN_UP_PAGE) == 0) {
             val context = getContext()
@@ -263,6 +269,7 @@ private fun BottomView(
     pageNo: Int,
     feedViewModel: FeedViewModel,
     bottomOverlay: @Composable () -> Unit,
+    openProfile: (userCanisterData: CanisterData) -> Unit,
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         Shadow(Modifier.align(Alignment.BottomCenter))
@@ -274,6 +281,7 @@ private fun BottomView(
             pageNo = pageNo,
             state = state,
             feedViewModel = feedViewModel,
+            openProfile = openProfile,
         )
         bottomOverlay()
     }
@@ -293,12 +301,14 @@ private fun Shadow(modifier: Modifier) {
     )
 }
 
+@Suppress("LongMethod")
 @Composable
 private fun ActionsRight(
     modifier: Modifier,
     pageNo: Int,
     state: FeedState,
     feedViewModel: FeedViewModel,
+    openProfile: (userCanisterData: CanisterData) -> Unit,
 ) {
     Column(
         modifier = modifier,
@@ -310,10 +320,24 @@ private fun ActionsRight(
             feedDetails.profileImageURL?.let { profileImage ->
                 YralAsyncImage(
                     imageUrl = profileImage,
-                    modifier = Modifier.size(36.dp),
                     border = 2.dp,
                     borderColor = Color.White,
                     backgroundColor = YralColors.ProfilePicBackground,
+                    modifier =
+                        Modifier
+                            .size(36.dp)
+                            .clickable {
+                                openProfile(
+                                    CanisterData(
+                                        canisterId = feedDetails.canisterID,
+                                        userPrincipalId = feedDetails.principalID,
+                                        profilePic = feedDetails.profileImageURL ?: "",
+                                        username = resolveUsername(null, feedDetails.principalID),
+                                        isCreatedFromServiceCanister =
+                                            feedDetails.canisterID == getUserInfoServiceCanister(),
+                                    ),
+                                )
+                            },
                 )
             }
         }
