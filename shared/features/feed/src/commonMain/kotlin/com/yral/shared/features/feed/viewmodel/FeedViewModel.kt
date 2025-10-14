@@ -621,7 +621,7 @@ data class FeedState(
     val isDeeplinkFetching: Boolean = false,
     val reportSheetState: ReportSheetState = ReportSheetState.Closed,
     val showSignupFailedSheet: Boolean = false,
-    val overlayType: OverlayType = OverlayType.DAILY_RANK,
+    val overlayType: OverlayType = OverlayType.DEFAULT,
 )
 
 enum class OverlayType {

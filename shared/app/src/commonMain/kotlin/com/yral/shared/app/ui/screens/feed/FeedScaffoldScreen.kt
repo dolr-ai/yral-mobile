@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -57,8 +58,14 @@ fun FeedScaffoldScreen(
 ) {
     val gameState by gameViewModel.state.collectAsStateWithLifecycle()
     val feedState by feedViewModel.state.collectAsStateWithLifecycle()
-    val dailyRank by leaderBoardViewModel.dailyRank.collectAsStateWithLifecycle(null)
-    leaderBoardViewModel.refreshRank.collectAsStateWithLifecycle(false)
+    val dailyRank by if (feedState.overlayType == OverlayType.DAILY_RANK) {
+        leaderBoardViewModel.dailyRank.collectAsStateWithLifecycle(null)
+    } else {
+        remember { mutableStateOf(null) }
+    }
+    if (feedState.overlayType == OverlayType.DAILY_RANK) {
+        leaderBoardViewModel.refreshRank.collectAsStateWithLifecycle(false)
+    }
     FeedScreen(
         component = component,
         viewModel = feedViewModel,
