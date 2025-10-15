@@ -26,7 +26,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yral.shared.analytics.events.GameType
 import com.yral.shared.app.ui.screens.feed.performance.PrefetchVideoListenerImpl
 import com.yral.shared.app.ui.screens.feed.performance.VideoListenerImpl
-import com.yral.shared.core.utils.resolveUsername
 import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.features.feed.ui.FeedScreen
 import com.yral.shared.features.feed.ui.components.UserBrief
@@ -47,8 +46,8 @@ import com.yral.shared.features.game.viewmodel.NudgeType
 import com.yral.shared.features.leaderboard.ui.DailyRanK
 import com.yral.shared.features.leaderboard.viewmodel.LeaderBoardViewModel
 import com.yral.shared.libs.designsystem.component.lottie.PreloadLottieAnimations
+import com.yral.shared.rust.service.domain.models.toCanisterData
 import com.yral.shared.rust.service.utils.CanisterData
-import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
 import org.jetbrains.compose.resources.painterResource
 import yral_mobile.shared.libs.designsystem.generated.resources.shadow
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
@@ -249,18 +248,7 @@ private fun OverlayTopDefault(
                 Modifier
                     .fillMaxWidth()
                     .padding(end = with(density) { paddingEnd.toDp() + 46.dp })
-                    .clickable {
-                        openUserProfile(
-                            CanisterData(
-                                canisterId = feedDetails.canisterID,
-                                userPrincipalId = feedDetails.principalID,
-                                profilePic = feedDetails.profileImageURL ?: "",
-                                username = resolveUsername(null, feedDetails.principalID),
-                                isCreatedFromServiceCanister =
-                                    feedDetails.canisterID == getUserInfoServiceCanister(),
-                            ),
-                        )
-                    },
+                    .clickable { openUserProfile(feedDetails.toCanisterData()) },
         )
         Box(
             modifier =

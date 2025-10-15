@@ -25,7 +25,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
-import com.yral.shared.core.utils.resolveUsername
 import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.features.feed.ui.components.SignupNudge
@@ -49,8 +48,8 @@ import com.yral.shared.libs.videoPlayer.util.ReelScrollDirection
 import com.yral.shared.reportVideo.domain.models.ReportSheetState
 import com.yral.shared.reportVideo.ui.ReportVideo
 import com.yral.shared.reportVideo.ui.ReportVideoSheet
+import com.yral.shared.rust.service.domain.models.toCanisterData
 import com.yral.shared.rust.service.utils.CanisterData
-import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -326,18 +325,7 @@ private fun ActionsRight(
                     modifier =
                         Modifier
                             .size(36.dp)
-                            .clickable {
-                                openProfile(
-                                    CanisterData(
-                                        canisterId = feedDetails.canisterID,
-                                        userPrincipalId = feedDetails.principalID,
-                                        profilePic = feedDetails.profileImageURL ?: "",
-                                        username = resolveUsername(null, feedDetails.principalID),
-                                        isCreatedFromServiceCanister =
-                                            feedDetails.canisterID == getUserInfoServiceCanister(),
-                                    ),
-                                )
-                            },
+                            .clickable { openProfile(feedDetails.toCanisterData()) },
                 )
             }
         }

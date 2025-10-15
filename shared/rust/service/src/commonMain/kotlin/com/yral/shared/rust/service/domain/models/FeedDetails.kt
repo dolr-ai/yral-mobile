@@ -1,10 +1,12 @@
 package com.yral.shared.rust.service.domain.models
 
 import com.yral.shared.core.exceptions.YralException
+import com.yral.shared.core.utils.resolveUsername
 import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.rust.service.data.IndividualUserDataSourceImpl.Companion.CLOUD_FLARE_PREFIX
 import com.yral.shared.rust.service.data.IndividualUserDataSourceImpl.Companion.CLOUD_FLARE_SUFFIX_MP4
 import com.yral.shared.rust.service.data.IndividualUserDataSourceImpl.Companion.THUMBNAIL_SUFFIX
+import com.yral.shared.rust.service.utils.CanisterData
 import com.yral.shared.rust.service.utils.propicFromPrincipal
 import com.yral.shared.uniffi.generated.PostDetailsForFrontend
 import com.yral.shared.uniffi.generated.PostStatus
@@ -37,6 +39,9 @@ internal fun PostDetailsForFrontend.toFeedDetails(
         likeCount = likeCount,
         isLiked = likedByMe,
         nsfwProbability = nsfwProbability,
+        isFollowing = false,
+        isFromServiceCanister = false,
+        userName = null,
     )
 }
 
@@ -66,5 +71,17 @@ internal fun UpsPostDetailsForFrontend.toFeedDetails(
         likeCount = likeCount,
         isLiked = likedByMe,
         nsfwProbability = nsfwProbability,
+        isFollowing = false,
+        isFromServiceCanister = true,
+        userName = null,
     )
 }
+
+fun FeedDetails.toCanisterData(): CanisterData =
+    CanisterData(
+        canisterId = canisterID,
+        userPrincipalId = principalID,
+        profilePic = profileImageURL ?: "",
+        username = resolveUsername(userName, principalID),
+        isCreatedFromServiceCanister = isFromServiceCanister,
+    )
