@@ -71,7 +71,18 @@ class FirebaseService: FirebaseServiceProtocol {
         transaction.updateData(["coins": coins], forDocument: document)
       }
     } catch {
-      print("error: \(error)")
+      print("error: \(error.localizedDescription)")
+    }
+  }
+
+  func update(username: String, forPrincipal principal: String) async throws {
+    let document = database.document("users/\(principal)")
+    do {
+      _ = try await database.runTransaction { transaction, _ in
+        transaction.updateData(["username": username], forDocument: document)
+      }
+    } catch {
+      print("error: \(error.localizedDescription)")
     }
   }
 

@@ -245,7 +245,9 @@ final class DefaultAuthClient: NSObject, AuthClient {
         try KeychainHelper.store(userPrincipal, for: Constants.keychainUserPrincipal)
         try KeychainHelper.store(canisterPrincipal, for: Constants.keychainCanisterPrincipal)
         UserDefaultsManager.shared.set(isServiceCanister, for: .isServiceCanisterUser)
-        UserDefaultsManager.shared.set(username, for: .username)
+        if let username {
+          UserDefaultsManager.shared.set(username, for: .username)
+        }
         guard let email = email else { return }
         try KeychainHelper.store(email, for: Constants.keychainEmail)
       }
@@ -254,6 +256,17 @@ final class DefaultAuthClient: NSObject, AuthClient {
     }
   }
   // swiftlint: enable function_parameter_count
+
+  func updateUsername(_ username: String) {
+    self.username = username
+    UserDefaultsManager.shared.set(username, for: .username)
+
+    if let userPrincipal = userPrincipalString {
+      Task {
+        try? await firebaseService.update(username: username, forPrincipal: userPrincipal)
+      }
+    }
+  }
 
   func processDelegatedIdentity(from token: TokenResponse, type: DelegateIdentityType) async throws {
     let claims = try decodeTokenClaims(from: token.idToken)
