@@ -1,5 +1,6 @@
 package com.yral.shared.app.ui.screens.feed
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -25,6 +26,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yral.shared.analytics.events.GameType
 import com.yral.shared.app.ui.screens.feed.performance.PrefetchVideoListenerImpl
 import com.yral.shared.app.ui.screens.feed.performance.VideoListenerImpl
+import com.yral.shared.core.utils.resolveUsername
 import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.features.feed.ui.FeedScreen
 import com.yral.shared.features.feed.ui.components.UserBrief
@@ -45,6 +47,8 @@ import com.yral.shared.features.game.viewmodel.NudgeType
 import com.yral.shared.features.leaderboard.ui.DailyRanK
 import com.yral.shared.features.leaderboard.viewmodel.LeaderBoardViewModel
 import com.yral.shared.libs.designsystem.component.lottie.PreloadLottieAnimations
+import com.yral.shared.rust.service.utils.CanisterData
+import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
 import org.jetbrains.compose.resources.painterResource
 import yral_mobile.shared.libs.designsystem.generated.resources.shadow
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
@@ -80,6 +84,7 @@ fun FeedScaffoldScreen(
                 setAnimateCoinBalance = { gameViewModel.setAnimateCoinBalance(it) },
                 setPostDescriptionExpanded = { feedViewModel.setPostDescriptionExpanded(it) },
                 updateGameType = { gameViewModel.updateGameType(it) },
+                openUserProfile = { component.openProfile(it) },
             )
         },
         bottomOverlay = { pageNo -> OverlayBottom(pageNo, feedState, gameState, gameViewModel) },
@@ -179,6 +184,7 @@ private fun OverLayTop(
     setAnimateCoinBalance: (Boolean) -> Unit,
     setPostDescriptionExpanded: (Boolean) -> Unit,
     updateGameType: (GameType) -> Unit,
+    openUserProfile: (canisterData: CanisterData) -> Unit,
 ) {
     when (feedState.overlayType) {
         OverlayType.DEFAULT -> {
@@ -189,6 +195,7 @@ private fun OverLayTop(
                 componentInfo = componentAnimationInfo,
                 setPostDescriptionExpanded = setPostDescriptionExpanded,
                 setAnimateCoinBalance = setAnimateCoinBalance,
+                openUserProfile = openUserProfile,
             )
         }
         OverlayType.GAME_TOGGLE -> {
@@ -207,6 +214,7 @@ private fun OverLayTop(
     }
 }
 
+@Suppress("LongMethod")
 @Composable
 private fun OverlayTopDefault(
     pageNo: Int,
@@ -215,6 +223,7 @@ private fun OverlayTopDefault(
     componentInfo: TopComponentAnimationInfo,
     setPostDescriptionExpanded: (Boolean) -> Unit,
     setAnimateCoinBalance: (Boolean) -> Unit,
+    openUserProfile: (canisterData: CanisterData) -> Unit,
 ) {
     Box(
         modifier =
@@ -228,17 +237,30 @@ private fun OverlayTopDefault(
         var paddingEnd by remember { mutableFloatStateOf(0f) }
         val density = LocalDensity.current
         val screenWidthPx = LocalWindowInfo.current.containerSize.width
+        val feedDetails = feedState.feedDetails[pageNo]
         UserBrief(
-            principalId = feedState.feedDetails[pageNo].principalID,
-            profileImageUrl = feedState.feedDetails[pageNo].profileImageURL,
-            displayName = feedState.feedDetails[pageNo].displayName.ifBlank { null },
-            postDescription = feedState.feedDetails[pageNo].postDescription,
+            principalId = feedDetails.principalID,
+            profileImageUrl = feedDetails.profileImageURL,
+            displayName = feedDetails.displayName.ifBlank { null },
+            postDescription = feedDetails.postDescription,
             isPostDescriptionExpanded = feedState.isPostDescriptionExpanded,
             setPostDescriptionExpanded = { setPostDescriptionExpanded(it) },
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(end = with(density) { paddingEnd.toDp() + 46.dp }),
+                    .padding(end = with(density) { paddingEnd.toDp() + 46.dp })
+                    .clickable {
+                        openUserProfile(
+                            CanisterData(
+                                canisterId = feedDetails.canisterID,
+                                userPrincipalId = feedDetails.principalID,
+                                profilePic = feedDetails.profileImageURL ?: "",
+                                username = resolveUsername(null, feedDetails.principalID),
+                                isCreatedFromServiceCanister =
+                                    feedDetails.canisterID == getUserInfoServiceCanister(),
+                            ),
+                        )
+                    },
         )
         Box(
             modifier =
