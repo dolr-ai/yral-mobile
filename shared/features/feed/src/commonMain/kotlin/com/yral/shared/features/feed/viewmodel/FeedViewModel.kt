@@ -14,6 +14,7 @@ import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.utils.processFirstNSuspendFlow
 import com.yral.shared.crashlytics.core.CrashlyticsManager
+import com.yral.shared.data.PrincipalsFollowStatus
 import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.data.feed.domain.Post
 import com.yral.shared.features.auth.AuthClientFactory
@@ -42,6 +43,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -82,6 +84,25 @@ class FeedViewModel(
 
     private val _state = MutableStateFlow(FeedState())
     val state: StateFlow<FeedState> = _state.asStateFlow()
+
+    internal val followPrincipalsStatus =
+        combine(
+            PrincipalsFollowStatus.principalsFollowed,
+            PrincipalsFollowStatus.principalsUnFollowed,
+        ) { followedPrincipals, unfollowedPrincipals ->
+            _state.update {
+                it.copy(
+                    feedDetails =
+                        it.feedDetails.map { details ->
+                            when (details.principalID) {
+                                in followedPrincipals -> details.copy(isFollowing = true)
+                                in unfollowedPrincipals -> details.copy(isFollowing = false)
+                                else -> details
+                            }
+                        },
+                )
+            }
+        }
 
     init {
         initialFeedData()

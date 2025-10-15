@@ -21,6 +21,7 @@ import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.utils.getAccountInfo
 import com.yral.shared.crashlytics.core.CrashlyticsManager
+import com.yral.shared.data.PrincipalsFollowStatus
 import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.features.profile.analytics.ProfileTelemetry
 import com.yral.shared.features.profile.domain.DeleteVideoUseCase
@@ -432,6 +433,7 @@ class ProfileViewModel(
                     ),
             ).onSuccess {
                 _state.update { it.copy(isFollowing = true) }
+                PrincipalsFollowStatus.addPrincipal(canisterData.userPrincipalId)
                 Logger.d("Follow") { "Started following" }
             }.onFailure {
                 Logger.d("Follow") { "Follow request failed $it" }
@@ -449,6 +451,7 @@ class ProfileViewModel(
                     ),
             ).onSuccess {
                 _state.update { it.copy(isFollowing = false) }
+                PrincipalsFollowStatus.removePrincipal(canisterData.userPrincipalId)
                 Logger.d("Follow") { "Discontinued following" }
             }.onFailure {
                 Logger.d("Follow") { "UnFollow request failed $it" }

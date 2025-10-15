@@ -60,6 +60,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
 import com.yral.shared.analytics.events.VideoDeleteCTA
+import com.yral.shared.data.PrincipalsFollowStatus
 import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.features.profile.nav.ProfileMainComponent
 import com.yral.shared.features.profile.viewmodel.DeleteConfirmationState
@@ -135,6 +136,7 @@ fun ProfileMainScreen(
 
     val followers = viewModel.followers?.collectAsLazyPagingItems()
     val following = viewModel.following?.collectAsLazyPagingItems()
+    val principalFollowed = PrincipalsFollowStatus.principalsFollowed.collectAsStateWithLifecycle()
 
     var isFollowing by remember { mutableStateOf(state.isFollowing) }
     val followedSuccessfully = stringResource(DesignRes.string.started_following, state.accountInfo?.displayName ?: "")
@@ -147,6 +149,12 @@ fun ProfileMainScreen(
                         message = followedSuccessfully,
                     ),
             )
+        }
+    }
+
+    LaunchedEffect(principalFollowed) {
+        if (state.isOwnProfile) {
+            following?.refresh()
         }
     }
 
