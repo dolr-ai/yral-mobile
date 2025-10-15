@@ -1,7 +1,6 @@
 package com.yral.shared.rust.service.services
 
 import co.touchlab.kermit.Logger
-import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.uniffi.generated.LogLevel
 import com.yral.shared.uniffi.generated.LogMessage
 import com.yral.shared.uniffi.generated.LoggerException
@@ -21,9 +20,9 @@ import kotlinx.coroutines.launch
  * external logging service. This approach is used because UniFFI doesn't support callback
  * interfaces in the current version.
  */
-@Suppress("TooGenericExceptionCaught", "UnusedParameter")
-class LogForwardingService(
-    private val crashlyticsManager: CrashlyticsManager,
+@Suppress("TooGenericExceptionCaught")
+internal class LogForwardingService(
+    private val forwarder: RustLogForwardingListener,
 ) {
     private val logger = Logger.withTag("LogForwardingService")
     private var forwardingJob: Job? = null
@@ -88,71 +87,10 @@ class LogForwardingService(
     private fun forwardLogMessage(logMessage: LogMessage) {
         try {
             val formattedMessage = "[${logMessage.tag}] ${logMessage.level} - ${logMessage.message}"
-
-            // Forward to Crashlytics
-            forwardToCrashlytics(logMessage, formattedMessage)
-
-            // Forward to Sentry (uncomment if using Sentry)
-            // forwardToSentry(logMessage, formattedMessage)
+            forwarder.forwardMessage(logMessage.toRust(), formattedMessage)
+            logger.i { formattedMessage }
         } catch (e: Exception) {
             logger.e(e) { "Error forwarding log message: ${logMessage.message}" }
-        }
-    }
-
-    /**
-     * Forward log message to Firebase Crashlytics.
-     */
-    private fun forwardToCrashlytics(
-        logMessage: LogMessage,
-        formattedMessage: String,
-    ) {
-        try {
-            if (logMessage.level == LogLevel.ERROR) {
-                crashlyticsManager.recordException(Exception("Rust Error: ${logMessage.message}"))
-            }
-            logger.i { "Crashlytics: $formattedMessage" }
-        } catch (e: Exception) {
-            logger.e(e) { "Error forwarding to Crashlytics" }
-        }
-    }
-
-    /**
-     * Forward log message to Sentry.
-     */
-    @Suppress("UnusedPrivateMember")
-    private fun forwardToSentry(
-        logMessage: LogMessage,
-        formattedMessage: String,
-    ) {
-        try {
-            // Uncomment and implement when Sentry is available
-
-            /*
-            val sentryLevel = when (logMessage.level) {
-                com.yral.shared.uniffi.generated.LogLevel.Error -> SentryLevel.ERROR
-                com.yral.shared.uniffi.generated.LogLevel.Warn -> SentryLevel.WARNING
-                com.yral.shared.uniffi.generated.LogLevel.Info -> SentryLevel.INFO
-                com.yral.shared.uniffi.generated.LogLevel.Debug -> SentryLevel.DEBUG
-                com.yral.shared.uniffi.generated.LogLevel.Trace -> SentryLevel.DEBUG
-            }
-
-            SentrySDK.captureMessage(formattedMessage) { scope ->
-                scope.level = sentryLevel
-                scope.setTag("rust_log_tag", logMessage.tag)
-                scope.setTag("rust_log_level", logMessage.level.name)
-                scope.setContext("rust_log", mapOf(
-                    "timestamp" to logMessage.timestamp,
-                    "tag" to logMessage.tag,
-                    "level" to logMessage.level.name,
-                    "message" to logMessage.message
-                ))
-            }
-             */
-
-            // For now, just log to console
-            logger.i { "Sentry: $formattedMessage" }
-        } catch (e: Exception) {
-            logger.e(e) { "Error forwarding to Sentry" }
         }
     }
 
@@ -176,3 +114,40 @@ class LogForwardingService(
      */
     fun isForwarding(): Boolean = isRunning
 }
+
+interface RustLogForwardingListener {
+    fun forwardMessage(
+        logMessage: RustLogMessage,
+        formattedMessage: String,
+    )
+}
+
+data class RustLogMessage(
+    val tag: String,
+    val level: RustLogLevel,
+    val message: String,
+    val timestamp: ULong,
+)
+
+enum class RustLogLevel {
+    ERROR,
+    WARN,
+    INFO,
+    DEBUG,
+    TRACE,
+}
+
+fun LogMessage.toRust(): RustLogMessage =
+    RustLogMessage(
+        tag = tag,
+        level =
+            when (level) {
+                LogLevel.ERROR -> RustLogLevel.ERROR
+                LogLevel.WARN -> RustLogLevel.WARN
+                LogLevel.INFO -> RustLogLevel.INFO
+                LogLevel.DEBUG -> RustLogLevel.DEBUG
+                LogLevel.TRACE -> RustLogLevel.TRACE
+            },
+        message = message,
+        timestamp = timestamp,
+    )
