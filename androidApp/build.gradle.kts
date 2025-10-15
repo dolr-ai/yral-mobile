@@ -14,8 +14,8 @@ android {
     namespace = "com.yral.android"
     defaultConfig {
         applicationId = "com.yral.android"
-        versionCode = 23
-        versionName = "1.8.1"
+        versionCode = 26
+        versionName = "1.9.0"
         ndkVersion = "28.0.13004108"
         buildConfigField(
             type = "String",
@@ -34,7 +34,11 @@ android {
     }
     packaging {
         resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes +=
+                setOf(
+                    "/META-INF/{AL2.0,LGPL2.1}",
+                    "META-INF/versions/9/OSGI-INF/MANIFEST.MF",
+                )
         }
     }
     signingConfigs {
@@ -93,7 +97,6 @@ dependencies {
     implementation(libs.firebase.appcheck.playintegrity)
     implementation(libs.firebase.appcheck.debug)
     implementation(libs.firebase.messaging)
-    implementation(libs.lottie)
     implementation(libs.coil.compose)
     implementation(libs.coil.okhttp)
     implementation(libs.coil.svg)

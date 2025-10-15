@@ -1,5 +1,3 @@
-import org.gradle.kotlin.dsl.implementation
-
 plugins {
     alias(libs.plugins.yral.shared.library)
     alias(libs.plugins.yral.android.library)
@@ -23,11 +21,14 @@ kotlin {
                 implementation(libs.koin.compose)
                 implementation(libs.coil.compose)
                 implementation(libs.coil.svg)
+                implementation(libs.compottie)
+                implementation(libs.compottie.dot)
+                implementation(libs.compottie.network)
+                implementation(libs.compottie.resources)
             }
         }
         androidMain {
             dependencies {
-                implementation(libs.lottie)
                 implementation(libs.androidx.window)
             }
         }

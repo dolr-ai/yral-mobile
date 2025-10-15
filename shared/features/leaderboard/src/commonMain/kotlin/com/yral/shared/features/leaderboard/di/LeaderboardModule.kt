@@ -5,6 +5,7 @@ import com.yral.shared.features.leaderboard.data.ILeaderboardRemoteDataSource
 import com.yral.shared.features.leaderboard.data.LeaderboardRemoteDataSource
 import com.yral.shared.features.leaderboard.data.LeaderboardRepository
 import com.yral.shared.features.leaderboard.domain.GetLeaderboardHistoryUseCase
+import com.yral.shared.features.leaderboard.domain.GetLeaderboardRankForTodayUseCase
 import com.yral.shared.features.leaderboard.domain.GetLeaderboardUseCase
 import com.yral.shared.features.leaderboard.domain.ILeaderboardRepository
 import com.yral.shared.features.leaderboard.viewmodel.LeaderBoardViewModel
@@ -18,6 +19,7 @@ val leaderboardModule =
     module {
         factoryOf(::GetLeaderboardUseCase)
         factoryOf(::GetLeaderboardHistoryUseCase)
+        factoryOf(::GetLeaderboardRankForTodayUseCase)
         viewModelOf(::LeaderBoardViewModel)
         viewModelOf(::LeaderboardHistoryViewModel)
         factoryOf(::LeaderboardRepository) { bind<ILeaderboardRepository>() }

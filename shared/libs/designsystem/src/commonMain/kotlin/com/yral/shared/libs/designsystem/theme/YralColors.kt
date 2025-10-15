@@ -47,6 +47,7 @@ object YralColors {
 
     val Red300: Color = Color(0xFFF14331)
     val Red400: Color = Color(0xFFAB3023)
+    val Red500: Color = Color(0xFF2A120F)
     val ErrorRed: Color = Color(0xFFEF4444)
 
     val Green50: Color = Color(0xFFE9FAF2)

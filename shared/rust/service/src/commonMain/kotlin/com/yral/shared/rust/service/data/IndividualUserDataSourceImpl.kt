@@ -8,8 +8,8 @@ import com.yral.shared.rust.service.services.UserPostServiceFactory
 import com.yral.shared.uniffi.generated.Account
 import com.yral.shared.uniffi.generated.PostDetailsForFrontend
 import com.yral.shared.uniffi.generated.Result12
-import com.yral.shared.uniffi.generated.ScPostDetailsForFrontend
-import com.yral.shared.uniffi.generated.ScResult3
+import com.yral.shared.uniffi.generated.UpsPostDetailsForFrontend
+import com.yral.shared.uniffi.generated.UpsResult3
 
 internal class IndividualUserDataSourceImpl(
     private val individualUserServiceFactory: IndividualUserServiceFactory,
@@ -22,7 +22,7 @@ internal class IndividualUserDataSourceImpl(
             .service(principal = post.canisterID)
             .getIndividualPostDetailsById(post.postID.toULong())
 
-    override suspend fun fetchSCFeedDetails(post: PostDTO): ScPostDetailsForFrontend =
+    override suspend fun fetchSCFeedDetails(post: PostDTO): UpsPostDetailsForFrontend =
         userPostServiceFactory
             .service(principal = post.canisterID)
             .getIndividualPostDetailsById(post.postID)
@@ -40,7 +40,7 @@ internal class IndividualUserDataSourceImpl(
         principalId: String,
         startIndex: ULong,
         pageSize: ULong,
-    ): ScResult3 =
+    ): UpsResult3 =
         userPostServiceFactory
             .service(principalId)
             .getPostsOfThisUserProfileWithPaginationCursor(principalId, startIndex, pageSize)

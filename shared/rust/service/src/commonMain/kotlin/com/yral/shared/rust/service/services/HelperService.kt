@@ -6,6 +6,8 @@ import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.getOrThrow
 import com.yral.shared.koin.koinInstance
+import com.yral.shared.uniffi.generated.LogLevel
+import com.yral.shared.uniffi.generated.LoggerException
 
 object HelperService {
     private val logger = Logger.withTag("HelperService")
@@ -92,14 +94,35 @@ object HelperService {
         }
 
     fun initRustLogger() {
-        com.yral.shared.uniffi.generated
-            .initRustLogger()
+        try {
+            com.yral.shared.uniffi.generated
+                .initRustLogger(
+                    customTag = "YralMobileRust",
+                    maxLevel = LogLevel.DEBUG,
+                )
+            startLogForwarding()
+            logger.i { "Rust logger initialized successfully" }
+        } catch (e: LoggerException) {
+            logger.e { "Failed to initialize Rust logger: $e" }
+        } catch (
+            @Suppress("TooGenericExceptionCaught")
+            e: Exception,
+        ) {
+            logger.e(e) { "Unexpected error initializing Rust logger" }
+        }
+    }
+
+    fun startLogForwarding() {
+        val logForwardingService = koinInstance.get<LogForwardingService>()
+        logForwardingService.startForwarding()
+        logger.i { "Log forwarding service started" }
     }
 
     fun initServiceFactories(identityData: ByteArray) {
         koinInstance.get<IndividualUserServiceFactory>().initialize(identityData)
         koinInstance.get<RateLimitServiceFactory>().initialize(identityData)
         koinInstance.get<UserPostServiceFactory>().initialize(identityData)
+        koinInstance.get<UserInfoServiceFactory>().initialize(identityData)
         koinInstance.get<SnsLedgerServiceFactory>().initialize(identityData)
         koinInstance.get<ICPLedgerServiceFactory>().initialize(identityData)
     }

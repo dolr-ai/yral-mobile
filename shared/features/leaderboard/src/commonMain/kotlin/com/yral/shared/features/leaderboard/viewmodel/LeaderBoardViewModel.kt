@@ -2,13 +2,16 @@ package com.yral.shared.features.leaderboard.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.features.leaderboard.analytics.LeaderBoardTelemetry
 import com.yral.shared.features.leaderboard.data.models.LeaderboardMode
+import com.yral.shared.features.leaderboard.domain.GetLeaderboardRankForTodayUseCase
 import com.yral.shared.features.leaderboard.domain.GetLeaderboardUseCase
 import com.yral.shared.features.leaderboard.domain.models.GetLeaderboardRequest
+import com.yral.shared.features.leaderboard.domain.models.LeaderboardDailyRankRequest
 import com.yral.shared.features.leaderboard.domain.models.LeaderboardItem
 import com.yral.shared.features.leaderboard.domain.models.RewardCurrency
 import kotlinx.coroutines.Job
@@ -18,11 +21,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class LeaderBoardViewModel(
     private val getLeaderboardUseCase: GetLeaderboardUseCase,
+    private val getLeaderboardRankForTodayUseCase: GetLeaderboardRankForTodayUseCase,
     private val sessionManager: SessionManager,
     private val leaderBoardTelemetry: LeaderBoardTelemetry,
 ) : ViewModel() {
@@ -35,6 +40,14 @@ class LeaderBoardViewModel(
             .observeSessionProperties()
             .map { it.isFirebaseLoggedIn }
             .distinctUntilChanged()
+
+    val dailyRank =
+        sessionManager
+            .observeSessionProperties()
+            .map { it.dailyRank }
+            .distinctUntilChanged()
+
+    val refreshRank = firebaseLogin.onEach { if (it) refreshTodayRank() }
 
     private fun resetState() {
         _state.update {
@@ -155,6 +168,21 @@ class LeaderBoardViewModel(
                 rank = currentUser?.position ?: Int.MAX_VALUE,
                 visibleRows = visibleRows,
             )
+        }
+    }
+
+    private suspend fun refreshTodayRank() {
+        Logger.d("DailyRank") { "Fetching today rank" }
+        sessionManager.userPrincipal?.let { userPrincipal ->
+            getLeaderboardRankForTodayUseCase(
+                parameter = LeaderboardDailyRankRequest(userPrincipal),
+            ).onSuccess {
+                Logger.d("DailyRank") { "rank in vm $it" }
+                sessionManager.updateDailyRank(it.position)
+            }.onFailure {
+                Logger.d("DailyRank") { "rank fetching error $it" }
+                sessionManager.updateDailyRank(null)
+            }
         }
     }
 

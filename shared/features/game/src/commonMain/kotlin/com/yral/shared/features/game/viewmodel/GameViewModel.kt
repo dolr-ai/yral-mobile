@@ -18,6 +18,7 @@ import com.yral.shared.features.game.domain.GetGameRulesUseCase
 import com.yral.shared.features.game.domain.models.AboutGameItem
 import com.yral.shared.features.game.domain.models.AutoRechargeBalanceRequest
 import com.yral.shared.features.game.domain.models.CastVoteRequest
+import com.yral.shared.features.game.domain.models.CastVoteResponse
 import com.yral.shared.features.game.domain.models.GameIcon
 import com.yral.shared.features.game.domain.models.VoteResult
 import com.yral.shared.features.game.domain.models.toVoteResult
@@ -197,6 +198,9 @@ class GameViewModel(
                             gameIconId = icon.id,
                         ),
                 ).onSuccess { result ->
+                    if (result is CastVoteResponse.Success) {
+                        sessionManager.updateDailyRank(result.newPosition)
+                    }
                     setFeedGameResult(
                         videoId = feedDetails.videoID,
                         voteResult = result.toVoteResult(),

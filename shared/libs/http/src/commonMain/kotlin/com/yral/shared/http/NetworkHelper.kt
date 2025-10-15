@@ -1,7 +1,6 @@
 package com.yral.shared.http
 
 import com.yral.shared.http.exception.NetworkException
-import com.yral.shared.http.exception.UnknownException
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.RedirectResponseException
@@ -104,5 +103,5 @@ fun <K> handleException(exception: Exception): K =
         is ClientRequestException,
         -> throw NetworkException(exception)
 
-        else -> throw UnknownException(exception)
+        else -> throw exception
     }

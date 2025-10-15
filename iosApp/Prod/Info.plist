@@ -107,5 +107,6 @@
 		<string>link.yral.com</string>
 		<string>f6ur9-alternate.app.link</string>
 	</array>
+    <key>CADisableMinimumFrameDurationOnPhone</key><true/>
 </dict>
 </plist>

@@ -42,45 +42,45 @@ impl ServiceCanistersDetails {
 }
 
 #[derive(CandidType, Deserialize, Enum)]
-pub enum SCResult3 {
-    Ok(Vec<SCPostDetailsForFrontend>),
-    Err(SCGetPostsOfUserProfileError),
+pub enum UPSResult3 {
+    Ok(Vec<UPSPostDetailsForFrontend>),
+    Err(UPSGetPostsOfUserProfileError),
 }
 
-impl From<yral_canisters_client::user_post_service::Result3> for SCResult3 {
+impl From<yral_canisters_client::user_post_service::Result3> for UPSResult3 {
     fn from(result: yral_canisters_client::user_post_service::Result3) -> Self {
         match result {
             yral_canisters_client::user_post_service::Result3::Ok(posts) => {
-                SCResult3::Ok(posts.into_iter().map(|post| SCPostDetailsForFrontend::from_post(post, &Principal::anonymous())).collect())
+                UPSResult3::Ok(posts.into_iter().map(|post| UPSPostDetailsForFrontend::from_post(post, &Principal::anonymous())).collect())
             }
             yral_canisters_client::user_post_service::Result3::Err(err) => {
-                SCResult3::Err(err.into())
+                UPSResult3::Err(err.into())
             }
         }
     }
 }
 
 #[derive(CandidType, Deserialize, Enum)]
-pub enum SCGetPostsOfUserProfileError {
+pub enum UPSGetPostsOfUserProfileError {
     ReachedEndOfItemsList,
     InvalidBoundsPassed,
     ExceededMaxNumberOfItemsAllowedInOneRequest,
 }
 
-impl From<yral_canisters_client::user_post_service::GetPostsOfUserProfileError> for SCGetPostsOfUserProfileError {
+impl From<yral_canisters_client::user_post_service::GetPostsOfUserProfileError> for UPSGetPostsOfUserProfileError {
     fn from(error: yral_canisters_client::user_post_service::GetPostsOfUserProfileError) -> Self {
         match error {
-            yral_canisters_client::user_post_service::GetPostsOfUserProfileError::ReachedEndOfItemsList => SCGetPostsOfUserProfileError::ReachedEndOfItemsList,
-            yral_canisters_client::user_post_service::GetPostsOfUserProfileError::InvalidBoundsPassed => SCGetPostsOfUserProfileError::InvalidBoundsPassed,
-            yral_canisters_client::user_post_service::GetPostsOfUserProfileError::ExceededMaxNumberOfItemsAllowedInOneRequest => SCGetPostsOfUserProfileError::ExceededMaxNumberOfItemsAllowedInOneRequest,
+            yral_canisters_client::user_post_service::GetPostsOfUserProfileError::ReachedEndOfItemsList => UPSGetPostsOfUserProfileError::ReachedEndOfItemsList,
+            yral_canisters_client::user_post_service::GetPostsOfUserProfileError::InvalidBoundsPassed => UPSGetPostsOfUserProfileError::InvalidBoundsPassed,
+            yral_canisters_client::user_post_service::GetPostsOfUserProfileError::ExceededMaxNumberOfItemsAllowedInOneRequest => UPSGetPostsOfUserProfileError::ExceededMaxNumberOfItemsAllowedInOneRequest,
         }
     }
 }
 
 #[derive(CandidType, Deserialize, Record)]
-pub struct SCPostDetailsForFrontend{
+pub struct UPSPostDetailsForFrontend{
     pub id: String,
-    pub status: SCPostStatus,
+    pub status: UPSPostStatus,
     pub hashtags: Vec<String>,
     pub like_count: u64,
     pub description: String,
@@ -92,11 +92,11 @@ pub struct SCPostDetailsForFrontend{
     pub liked_by_me: bool,
 }
 
-impl SCPostDetailsForFrontend {
+impl UPSPostDetailsForFrontend {
     pub fn from_post(post: Post, current_user: &Principal) -> Self {
         Self {
             id: post.id,
-            status: SCPostStatus::from(post.status),
+            status: UPSPostStatus::from(post.status),
             hashtags: post.hashtags,
             like_count: post.likes.len() as u64,
             description: post.description,
@@ -111,7 +111,7 @@ impl SCPostDetailsForFrontend {
 }
 
 #[derive(CandidType, Deserialize, Enum)]
-pub enum SCPostStatus {
+pub enum UPSPostStatus {
     BannedForExplicitness,
     BannedDueToUserReporting,
     Uploaded,
@@ -121,16 +121,16 @@ pub enum SCPostStatus {
     Deleted,
 }
 
-impl From<PostStatus> for SCPostStatus {
+impl From<PostStatus> for UPSPostStatus {
     fn from(status: PostStatus) -> Self {
         match status {
-            PostStatus::BannedForExplicitness => SCPostStatus::BannedForExplicitness,
-            PostStatus::BannedDueToUserReporting => SCPostStatus::BannedDueToUserReporting,
-            PostStatus::Uploaded => SCPostStatus::Uploaded,
-            PostStatus::CheckingExplicitness => SCPostStatus::CheckingExplicitness,
-            PostStatus::ReadyToView => SCPostStatus::ReadyToView,
-            PostStatus::Transcoding => SCPostStatus::Transcoding,
-            PostStatus::Deleted => SCPostStatus::Deleted,
+            PostStatus::BannedForExplicitness => UPSPostStatus::BannedForExplicitness,
+            PostStatus::BannedDueToUserReporting => UPSPostStatus::BannedDueToUserReporting,
+            PostStatus::Uploaded => UPSPostStatus::Uploaded,
+            PostStatus::CheckingExplicitness => UPSPostStatus::CheckingExplicitness,
+            PostStatus::ReadyToView => UPSPostStatus::ReadyToView,
+            PostStatus::Transcoding => UPSPostStatus::Transcoding,
+            PostStatus::Deleted => UPSPostStatus::Deleted,
         }
     }
 }
@@ -177,7 +177,7 @@ impl UserPostService {
     pub async fn get_individual_post_details_by_id(
         &self,
         arg0: String,
-    ) -> Result<SCPostDetailsForFrontend> {
+    ) -> Result<UPSPostDetailsForFrontend> {
         let agent = Arc::clone(&self.agent);
         let principal = self.principal;
         RUNTIME.spawn(async move {
@@ -190,7 +190,7 @@ impl UserPostService {
                 .await
                 .map_err(|e| FFIError::AgentError(format!("{:?}", e)))?;
             match details {
-                Result1::Ok(post_details) => Ok(SCPostDetailsForFrontend::from_post(post_details, &principal)),
+                Result1::Ok(post_details) => Ok(UPSPostDetailsForFrontend::from_post(post_details, &principal)),
                 Result1::Err(err) => Err(FFIError::UnknownError(format!("Details not found {:?}", err))),
             }
         }).await.map_err(|e| FFIError::AgentError(format!("{:?}", e)))?
@@ -202,7 +202,7 @@ impl UserPostService {
         arg0: String,
         arg1: u64,
         arg2: u64,
-    ) -> Result<SCResult3> {
+    ) -> Result<UPSResult3> {
         let agent = Arc::clone(&self.agent);
         let principal = Principal::from_text(arg0)
             .map_err(|e| FFIError::PrincipalError(format!("Invalid principal: {:?}", e)))?;
@@ -215,7 +215,7 @@ impl UserPostService {
                 .get_posts_of_this_user_profile_with_pagination(principal, arg1, arg2)
                 .await
                 .map_err(|e| FFIError::AgentError(format!("{:?}", e)))?;
-            Ok(SCResult3::from(details))
+            Ok(UPSResult3::from(details))
         }).await.map_err(|e| FFIError::AgentError(format!("{:?}", e)))?
     }
 }

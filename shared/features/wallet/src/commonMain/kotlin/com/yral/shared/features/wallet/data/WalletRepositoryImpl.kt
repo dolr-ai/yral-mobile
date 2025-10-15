@@ -30,9 +30,9 @@ class WalletRepositoryImpl(
         dataSource
             .getUserDolrBalance(canisterId, userPrincipal)
 
-    override suspend fun getBtcRewardConfig(): BtcRewardConfig =
+    override suspend fun getBtcRewardConfig(): BtcRewardConfig? =
         dataSource
             .getBtcRewardConfig()
             .config
-            .toDomain()
+            ?.toDomain()
 }
