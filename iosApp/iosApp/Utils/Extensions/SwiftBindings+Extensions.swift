@@ -57,3 +57,10 @@ extension RustVec where T == UInt8 {
     }
   }
 }
+
+extension FFIError: Error {}
+extension FFIError: LocalizedError {
+  public var errorDescription: String? {
+    return self.to_string().toString()
+  }
+}

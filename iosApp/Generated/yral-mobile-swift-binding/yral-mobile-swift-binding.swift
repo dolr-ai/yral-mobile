@@ -214,11 +214,6 @@ public func is_invalid_bounds_passed(_ error: PostServiceGetPostsOfUserProfileEr
 public func is_exceeded_max_number_of_items_allowed_in_one_request(_ error: PostServiceGetPostsOfUserProfileError) -> Bool {
     __swift_bridge__$is_exceeded_max_number_of_items_allowed_in_one_request({error.isOwned = false; return error.ptr;}())
 }
-extension FFIError: Error {
-    public var localizedDescription: String {
-        return self.to_string().toString() // ✅ Convert RustString → Swift String
-    }
-}
 public func set_user_metadata<GenericIntoRustString: IntoRustString>(_ identity_data: RustVec<UInt8>, _ user_canister_id: GenericIntoRustString, _ user_name: GenericIntoRustString) async throws -> () {
     func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: UnsafeMutableRawPointer?) {
         let wrapper = Unmanaged<CbWrapper$set_user_metadata>.fromOpaque(cbWrapperPtr!).takeRetainedValue()
