@@ -58,5 +58,5 @@ val rustModule: Module =
         // Paging Data Sources Factory
         factoryOf(::UserInfoPagingSourceFactory)
 
-        single { LogForwardingService() }
+        single { LogForwardingService(get()) }
     }

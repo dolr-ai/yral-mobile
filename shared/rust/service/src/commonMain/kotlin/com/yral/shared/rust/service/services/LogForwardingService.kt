@@ -1,6 +1,8 @@
 package com.yral.shared.rust.service.services
 
 import co.touchlab.kermit.Logger
+import com.yral.shared.crashlytics.core.CrashlyticsManager
+import com.yral.shared.uniffi.generated.LogLevel
 import com.yral.shared.uniffi.generated.LogMessage
 import com.yral.shared.uniffi.generated.LoggerException
 import com.yral.shared.uniffi.generated.getLogMessages
@@ -20,7 +22,9 @@ import kotlinx.coroutines.launch
  * interfaces in the current version.
  */
 @Suppress("TooGenericExceptionCaught", "UnusedParameter")
-class LogForwardingService {
+class LogForwardingService(
+    private val crashlyticsManager: CrashlyticsManager,
+) {
     private val logger = Logger.withTag("LogForwardingService")
     private var forwardingJob: Job? = null
     private var isRunning = false
@@ -103,28 +107,9 @@ class LogForwardingService {
         formattedMessage: String,
     ) {
         try {
-            // Uncomment and implement when Firebase Crashlytics is available
-
-            /*
-            val crashlytics = FirebaseCrashlytics.getInstance()
-
-            // Set custom keys for better filtering
-            crashlytics.setCustomKey("rust_log_level", logMessage.level.name)
-            crashlytics.setCustomKey("rust_log_tag", logMessage.tag)
-            crashlytics.setCustomKey("rust_log_timestamp", logMessage.timestamp.toString())
-
-            // Log the message
-            crashlytics.log(formattedMessage)
-
-            // For error level logs, also record as non-fatal exception
-            if (logMessage.level == com.yral.shared.uniffi.generated.LogLevel.Error) {
-                crashlytics.recordException(
-                    Exception("Rust Error: ${logMessage.message}")
-                )
+            if (logMessage.level == LogLevel.ERROR) {
+                crashlyticsManager.recordException(Exception("Rust Error: ${logMessage.message}"))
             }
-             */
-
-            // For now, just log to console
             logger.i { "Crashlytics: $formattedMessage" }
         } catch (e: Exception) {
             logger.e(e) { "Error forwarding to Crashlytics" }
