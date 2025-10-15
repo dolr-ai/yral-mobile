@@ -1,7 +1,6 @@
 use crate::UniffiCustomTypeConverter;
 use candid::Error as CandidError;
 use candid::{CandidType, Deserialize, Nat, Principal};
-use cfg_if::cfg_if;
 use ic_agent::export::PrincipalError;
 use ic_agent::AgentError;
 use serde_bytes::ByteBuf;
@@ -114,30 +113,6 @@ impl std::fmt::Display for FFIError {
             FFIError::CandidError(msg) => write!(f, "CandidError: {}", msg),
             FFIError::PrincipalError(msg) => write!(f, "PrincipalError: {}", msg),
             FFIError::UnknownError(msg) => write!(f, "UnknownError: {}", msg),
-        }
-    }
-}
-
-cfg_if! {
-    if #[cfg(target_os = "android")] {
-        #[uniffi::export]
-        pub fn init_rust_logger() {
-            use android_logger::{Config, FilterBuilder};
-            use log::{LevelFilter};
-            android_logger::init_once(
-                Config::default()
-                    .with_max_level(LevelFilter::Trace) // limit log level
-                    .with_tag("Rust Logger") // logs will show under mytag tag
-                    .with_filter( // configure messages for specific crate
-                          FilterBuilder::new()
-                              .parse("debug,hello::crate=error")
-                              .build())
-            );
-        }
-    } else {
-        #[uniffi::export]
-        fn init_rust_logger() {
-            // Stub for non-Android targets to keep UniFFI bindings consistent.
         }
     }
 }

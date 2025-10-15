@@ -18,6 +18,7 @@ import com.yral.shared.rust.service.domain.usecases.GetProfileDetailsV4UseCase
 import com.yral.shared.rust.service.domain.usecases.UnfollowUserUseCase
 import com.yral.shared.rust.service.services.ICPLedgerServiceFactory
 import com.yral.shared.rust.service.services.IndividualUserServiceFactory
+import com.yral.shared.rust.service.services.LogForwardingService
 import com.yral.shared.rust.service.services.RateLimitServiceFactory
 import com.yral.shared.rust.service.services.SnsLedgerServiceFactory
 import com.yral.shared.rust.service.services.UserInfoServiceFactory
@@ -25,6 +26,7 @@ import com.yral.shared.rust.service.services.UserPostServiceFactory
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.factoryOf
+import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 
 val rustModule: Module =
@@ -56,4 +58,6 @@ val rustModule: Module =
 
         // Paging Data Sources Factory
         factoryOf(::UserInfoPagingSourceFactory)
+
+        singleOf(::LogForwardingService)
     }

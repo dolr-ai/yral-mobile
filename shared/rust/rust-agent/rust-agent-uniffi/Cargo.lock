@@ -56,23 +56,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "683d7910e743518b0e34f1186f92494becacb047c7b6bf616c96772180fef923"
 
 [[package]]
-name = "android_log-sys"
-version = "0.3.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "84521a3cf562bc62942e294181d9eef17eb38ceb8c68677bc49f144e4c3d4f8d"
-
-[[package]]
-name = "android_logger"
-version = "0.15.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dbb4e440d04be07da1f1bf44fb4495ebd58669372fe0cffa6e48595ac5bd88a3"
-dependencies = [
- "android_log-sys",
- "env_filter",
- "log",
-]
-
-[[package]]
 name = "android_system_properties"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -660,14 +643,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "57663b653d948a338bfb3eeba9bb2fd5fcfaecb9e199e87e1eda4d9e8b240fd9"
 dependencies = [
  "ciborium-io",
- "half 2.7.0",
+ "half 2.7.1",
 ]
 
 [[package]]
 name = "clap"
-version = "4.5.48"
+version = "4.5.49"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e2134bb3ea021b78629caa971416385309e0131b351b25e01dc16fb54e1b5fae"
+checksum = "f4512b90fa68d3a9932cea5184017c5d200f5921df706d45e853537dea51508f"
 dependencies = [
  "clap_builder",
  "clap_derive",
@@ -675,9 +658,9 @@ dependencies = [
 
 [[package]]
 name = "clap_builder"
-version = "4.5.48"
+version = "4.5.49"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c2ba64afa3c0a6df7fa517765e31314e983f51dda798ffba27b988194fb65dc9"
+checksum = "0025e98baa12e766c67ba13ff4695a887a1eba19569aad00a472546795bd6730"
 dependencies = [
  "anstream",
  "anstyle",
@@ -687,9 +670,9 @@ dependencies = [
 
 [[package]]
 name = "clap_derive"
-version = "4.5.47"
+version = "4.5.49"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bbfd7eae0b0f1a6e63d4b13c9c478de77c2eb546fba158ad50b4203dc24b9f9c"
+checksum = "2a0b5487afeab2deb2ff4e03a807ad1a03ac532ff5a2cee5d86884440c7f7671"
 dependencies = [
  "heck",
  "proc-macro2",
@@ -699,9 +682,9 @@ dependencies = [
 
 [[package]]
 name = "clap_lex"
-version = "0.7.5"
+version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b94f61472cee1439c0b966b47e3aca9ae07e45d070759512cd390ea2bebc6675"
+checksum = "a1d728cc89cf3aee9ff92b05e62b19ee65a02b5702cff7d5a377e32c6ae29d8d"
 
 [[package]]
 name = "codespan-reporting"
@@ -1185,16 +1168,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "env_filter"
-version = "0.1.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "186e05a59d4c50738528153b83b0b0194d3a29507dfec16eccd4b342903397d0"
-dependencies = [
- "log",
- "regex",
-]
-
-[[package]]
 name = "equivalent"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1384,9 +1357,9 @@ dependencies = [
 
 [[package]]
 name = "generic-array"
-version = "0.14.8"
+version = "0.14.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1dc8f7d2ded5f9209535e4b3fd4d39c002f30902ff5ce9f64e2c33d549576500"
+checksum = "4bb6743198531e02858aeaea5398fcc883e71851fcbcb5a2f773e2fb6cb1edf2"
 dependencies = [
  "typenum",
  "version_check",
@@ -1435,7 +1408,7 @@ checksum = "0cc23270f6e1808e30a928bdc84dea0b9b4136a8bc82338574f23baf47bbd280"
 [[package]]
 name = "global-constants"
 version = "0.1.0"
-source = "git+https://github.com/dolr-ai/yral-common.git?branch=master#4f57b223d643bf0e688612ae6be0b1d67007c383"
+source = "git+https://github.com/dolr-ai/yral-common.git?branch=master#efee1c6b9a2e683ef9b4422c9352fb00c90a0dbd"
 dependencies = [
  "candid",
  "num-bigint",
@@ -1493,9 +1466,9 @@ checksum = "1b43ede17f21864e81be2fa654110bf1e793774238d86ef8555c37e6519c0403"
 
 [[package]]
 name = "half"
-version = "2.7.0"
+version = "2.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e54c115d4f30f52c67202f079c5f9d8b49db4691f460fdb0b4c2e838261b2ba5"
+checksum = "6ea2d84b969582b4b1864a92dc5d27cd2b77b622a8d79306834f1be5ba20d84b"
 dependencies = [
  "cfg-if",
  "crunchy",
@@ -1563,7 +1536,7 @@ dependencies = [
 [[package]]
 name = "hon-worker-common"
 version = "0.1.0"
-source = "git+https://github.com/dolr-ai/yral-common.git?branch=master#4f57b223d643bf0e688612ae6be0b1d67007c383"
+source = "git+https://github.com/dolr-ai/yral-common.git?branch=master#efee1c6b9a2e683ef9b4422c9352fb00c90a0dbd"
 dependencies = [
  "candid",
  "global-constants",
@@ -1573,7 +1546,7 @@ dependencies = [
  "serde_with 3.14.1",
  "thiserror 2.0.17",
  "url",
- "yral-identity 0.1.0 (git+https://github.com/dolr-ai/yral-common.git?branch=master)",
+ "yral-identity",
 ]
 
 [[package]]
@@ -2650,7 +2623,7 @@ dependencies = [
  "petgraph",
  "pico-args",
  "regex",
- "regex-syntax 0.8.7",
+ "regex-syntax 0.8.8",
  "string_cache",
  "term",
  "tiny-keccak",
@@ -3497,25 +3470,25 @@ dependencies = [
 
 [[package]]
 name = "regex"
-version = "1.12.1"
+version = "1.12.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4a52d8d02cacdb176ef4678de6c052efb4b3da14b78e4db683a4252762be5433"
+checksum = "843bc0191f75f3e22651ae5f1e72939ab2f72a4bc30fa80a066bd66edefc24d4"
 dependencies = [
  "aho-corasick",
  "memchr",
  "regex-automata",
- "regex-syntax 0.8.7",
+ "regex-syntax 0.8.8",
 ]
 
 [[package]]
 name = "regex-automata"
-version = "0.4.12"
+version = "0.4.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "722166aa0d7438abbaa4d5cc2c649dac844e8c56d82fb3d33e9c34b5cd268fc6"
+checksum = "5276caf25ac86c8d810222b3dbb938e512c55c6831a10f3e6ed1c93b84041f1c"
 dependencies = [
  "aho-corasick",
  "memchr",
- "regex-syntax 0.8.7",
+ "regex-syntax 0.8.8",
 ]
 
 [[package]]
@@ -3526,9 +3499,9 @@ checksum = "f162c6dd7b008981e4d40210aca20b4bd0f9b60ca9271061b07f78537722f2e1"
 
 [[package]]
 name = "regex-syntax"
-version = "0.8.7"
+version = "0.8.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c3160422bbd54dd5ecfdca71e5fd59b7b8fe2b1697ab2baf64f6d05dcc66d298"
+checksum = "7a2d987857b319362043e95f5353c0535c1f58eec5336fdfcf626430af7def58"
 
 [[package]]
 name = "rend"
@@ -3541,9 +3514,9 @@ dependencies = [
 
 [[package]]
 name = "reqwest"
-version = "0.12.23"
+version = "0.12.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d429f34c8092b2d42c7c93cec323bb4adeb7c67698f70839adec842ec10c7ceb"
+checksum = "9d0946410b9f7b082a427e4ef5c8ff541a88b357bc6c637c40db3a68ac70a36f"
 dependencies = [
  "base64 0.22.1",
  "bytes",
@@ -4113,7 +4086,7 @@ checksum = "b7c388c1b5e93756d0c740965c41e8822f866621d41acbdf6336a6a168f8840c"
 [[package]]
 name = "sns-validation"
 version = "0.1.0"
-source = "git+https://github.com/dolr-ai/yral-common.git?branch=master#4f57b223d643bf0e688612ae6be0b1d67007c383"
+source = "git+https://github.com/dolr-ai/yral-common.git?branch=master#efee1c6b9a2e683ef9b4422c9352fb00c90a0dbd"
 dependencies = [
  "candid",
  "humantime",
@@ -4125,12 +4098,12 @@ dependencies = [
 
 [[package]]
 name = "socket2"
-version = "0.6.0"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "233504af464074f9d066d7b5416c5f9b894a5862a6506e306f7b816cdd6f1807"
+checksum = "17129e116933cf371d018bb80ae557e889637989d8638274fb25622827b03881"
 dependencies = [
  "libc",
- "windows-sys 0.59.0",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
@@ -5377,13 +5350,14 @@ dependencies = [
 [[package]]
 name = "yral-canisters-client"
 version = "0.1.0"
-source = "git+https://github.com/dolr-ai/yral-common.git?branch=master#4f57b223d643bf0e688612ae6be0b1d67007c383"
+source = "git+https://github.com/dolr-ai/yral-common.git?branch=master#efee1c6b9a2e683ef9b4422c9352fb00c90a0dbd"
 dependencies = [
  "anyhow",
  "candid",
  "candid_parser",
  "convert_case 0.6.0",
  "ic-agent",
+ "log",
  "prettyplease",
  "proc-macro2",
  "quote",
@@ -5397,7 +5371,7 @@ dependencies = [
 [[package]]
 name = "yral-canisters-common"
 version = "0.1.0"
-source = "git+https://github.com/dolr-ai/yral-common.git?branch=master#4f57b223d643bf0e688612ae6be0b1d67007c383"
+source = "git+https://github.com/dolr-ai/yral-common.git?branch=master#efee1c6b9a2e683ef9b4422c9352fb00c90a0dbd"
 dependencies = [
  "async-trait",
  "candid",
@@ -5423,7 +5397,7 @@ dependencies = [
  "url",
  "web-time",
  "yral-canisters-client",
- "yral-identity 0.1.0 (git+https://github.com/dolr-ai/yral-common.git?branch=master)",
+ "yral-identity",
  "yral-metadata-client",
  "yral-metadata-types",
  "yral-pump-n-dump-common",
@@ -5434,7 +5408,7 @@ dependencies = [
 [[package]]
 name = "yral-identity"
 version = "0.1.0"
-source = "git+https://github.com/dolr-ai/yral-common.git?branch=master#4f57b223d643bf0e688612ae6be0b1d67007c383"
+source = "git+https://github.com/dolr-ai/yral-common.git?branch=master#efee1c6b9a2e683ef9b4422c9352fb00c90a0dbd"
 dependencies = [
  "candid",
  "getrandom 0.2.16",
@@ -5447,33 +5421,21 @@ dependencies = [
 ]
 
 [[package]]
-name = "yral-identity"
-version = "0.1.0"
-source = "git+https://github.com/yral-dapp/yral-common.git?branch=master#4f57b223d643bf0e688612ae6be0b1d67007c383"
-dependencies = [
- "candid",
- "ic-agent",
- "serde",
- "thiserror 2.0.17",
- "web-time",
-]
-
-[[package]]
 name = "yral-metadata-client"
 version = "0.1.0"
-source = "git+https://github.com/yral-dapp/yral-metadata?branch=master#e3104935f75ee092fc5882f4d51b605d2d91c3c5"
+source = "git+https://github.com/yral-dapp/yral-metadata?branch=master#3bd32bdc2d833be9009d27718efb8451a4fb5e1f"
 dependencies = [
  "ic-agent",
  "reqwest",
  "thiserror 1.0.69",
- "yral-identity 0.1.0 (git+https://github.com/yral-dapp/yral-common.git?branch=master)",
+ "yral-identity",
  "yral-metadata-types",
 ]
 
 [[package]]
 name = "yral-metadata-types"
 version = "0.1.0"
-source = "git+https://github.com/yral-dapp/yral-metadata?branch=master#e3104935f75ee092fc5882f4d51b605d2d91c3c5"
+source = "git+https://github.com/yral-dapp/yral-metadata?branch=master#3bd32bdc2d833be9009d27718efb8451a4fb5e1f"
 dependencies = [
  "candid",
  "chrono",
@@ -5482,20 +5444,20 @@ dependencies = [
  "thiserror 1.0.69",
  "utoipa",
  "utoipa-swagger-ui",
- "yral-identity 0.1.0 (git+https://github.com/yral-dapp/yral-common.git?branch=master)",
+ "yral-identity",
 ]
 
 [[package]]
 name = "yral-mobile-uniffi"
 version = "0.1.0"
 dependencies = [
- "android_logger",
  "candid",
  "cfg-if",
  "ic-agent",
  "k256",
  "lazy_static",
  "log",
+ "once_cell",
  "openssl",
  "serde",
  "serde_bytes",
@@ -5504,7 +5466,7 @@ dependencies = [
  "uniffi",
  "yral-canisters-client",
  "yral-canisters-common",
- "yral-identity 0.1.0 (git+https://github.com/dolr-ai/yral-common.git?branch=master)",
+ "yral-identity",
  "yral-metadata-client",
  "yral-metadata-types",
  "yral-types",
@@ -5513,20 +5475,20 @@ dependencies = [
 [[package]]
 name = "yral-pump-n-dump-common"
 version = "0.1.0"
-source = "git+https://github.com/dolr-ai/yral-common.git?branch=master#4f57b223d643bf0e688612ae6be0b1d67007c383"
+source = "git+https://github.com/dolr-ai/yral-common.git?branch=master#efee1c6b9a2e683ef9b4422c9352fb00c90a0dbd"
 dependencies = [
  "candid",
  "serde",
  "serde_json",
  "uuid",
  "yral-canisters-client",
- "yral-identity 0.1.0 (git+https://github.com/dolr-ai/yral-common.git?branch=master)",
+ "yral-identity",
 ]
 
 [[package]]
 name = "yral-types"
 version = "0.1.0"
-source = "git+https://github.com/dolr-ai/yral-common.git?branch=master#4f57b223d643bf0e688612ae6be0b1d67007c383"
+source = "git+https://github.com/dolr-ai/yral-common.git?branch=master#efee1c6b9a2e683ef9b4422c9352fb00c90a0dbd"
 dependencies = [
  "ic-agent",
  "k256",
@@ -5539,7 +5501,7 @@ dependencies = [
 [[package]]
 name = "yral-username-gen"
 version = "0.1.0"
-source = "git+https://github.com/dolr-ai/yral-common.git?branch=master#4f57b223d643bf0e688612ae6be0b1d67007c383"
+source = "git+https://github.com/dolr-ai/yral-common.git?branch=master#efee1c6b9a2e683ef9b4422c9352fb00c90a0dbd"
 dependencies = [
  "candid",
  "rand 0.9.2",
