@@ -14,6 +14,8 @@ kotlin {
     sourceSets {
         androidMain.dependencies {
             api(libs.ktor.client.okhttp)
+            implementation(project.dependencies.platform(libs.okhttp.bom))
+            implementation(libs.okhttp.dns)
         }
         commonMain.dependencies {
             api(libs.ktor.client.core)
@@ -30,4 +32,9 @@ kotlin {
             implementation(libs.ktor.client.darwin)
         }
     }
+}
+
+dependencies {
+    debugImplementation(libs.chucker.debug)
+    releaseImplementation(libs.chucker.release)
 }

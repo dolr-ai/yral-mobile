@@ -3,6 +3,7 @@ package com.yral.shared.app.di
 import co.touchlab.kermit.platformLogWriter
 import com.yral.shared.analytics.di.IS_DEBUG
 import com.yral.shared.analytics.di.analyticsModule
+import com.yral.shared.app.config.AppHTTPEventListener
 import com.yral.shared.app.config.AppUseCaseFailureListener
 import com.yral.shared.app.config.NBRFailureListener
 import com.yral.shared.core.di.coreModule
@@ -19,6 +20,7 @@ import com.yral.shared.features.uploadvideo.di.uploadVideoModule
 import com.yral.shared.features.wallet.di.walletModule
 import com.yral.shared.firebaseAuth.di.firebaseAuthModule
 import com.yral.shared.firebaseStore.di.firestoreModule
+import com.yral.shared.http.HTTPEventListener
 import com.yral.shared.http.di.networkModule
 import com.yral.shared.libs.arch.data.NetworkBoundResource
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
@@ -27,6 +29,7 @@ import com.yral.shared.preferences.di.preferencesModule
 import com.yral.shared.reportVideo.di.reportVideoModule
 import com.yral.shared.rust.service.di.rustModule
 import org.koin.core.context.startKoin
+import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.KoinAppDeclaration
 import org.koin.dsl.bind
@@ -55,6 +58,7 @@ fun initKoin(config: KoinAppDeclaration? = null) {
             sharingModule,
             reportVideoModule,
             loggerModule,
+            httpListenerModule,
         )
 
         modules(
@@ -82,4 +86,9 @@ internal val archModule =
     module {
         singleOf(::NBRFailureListener) bind NetworkBoundResource.OnFailureListener::class
         singleOf(::AppUseCaseFailureListener) bind UseCaseFailureListener::class
+    }
+
+internal val httpListenerModule =
+    module {
+        factoryOf(::AppHTTPEventListener) bind HTTPEventListener::class
     }
