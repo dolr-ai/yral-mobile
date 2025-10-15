@@ -22,7 +22,7 @@ import com.yral.shared.features.game.ui.GameIconStrip.GAME_ICON_NUDGE_ANIMATION_
 import com.yral.shared.features.game.ui.GameIconStrip.GAME_ICON_ROTATION_DEGREE
 import com.yral.shared.features.game.ui.GameIconStrip.GAME_ICON_SCALING_FACTOR
 import com.yral.shared.libs.designsystem.component.YralFeedback
-import com.yral.shared.libs.designsystem.component.popPressedSoundId
+import com.yral.shared.libs.designsystem.component.popPressedSoundUri
 import kotlinx.coroutines.delay
 
 @Suppress("LongMethod")
@@ -111,7 +111,7 @@ private fun Feedback(
 ) {
     if (playSound) {
         YralFeedback(
-            sound = popPressedSoundId(),
+            soundUri = popPressedSoundUri(),
             withHapticFeedback = true,
             onPlayed = { setPlaySound(false) },
         )
