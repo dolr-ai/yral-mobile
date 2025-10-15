@@ -16,5 +16,5 @@ interface WalletRepository {
         canisterId: String,
         userPrincipal: String,
     ): String
-    suspend fun getBtcRewardConfig(): BtcRewardConfig
+    suspend fun getBtcRewardConfig(): BtcRewardConfig?
 }

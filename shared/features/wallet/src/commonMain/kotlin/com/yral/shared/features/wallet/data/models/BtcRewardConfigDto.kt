@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class BtcRewardConfigResponseDto(
     @SerialName("config")
-    val config: BtcRewardConfigDto,
+    val config: BtcRewardConfigDto? = null,
 )
 
 @Serializable

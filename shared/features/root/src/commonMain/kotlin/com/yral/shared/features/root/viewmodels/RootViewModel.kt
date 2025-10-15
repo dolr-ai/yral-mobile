@@ -108,12 +108,14 @@ class RootViewModel(
                     coroutineScope.launch {
                         val session = (sessionManager.state.value as? SessionState.SignedIn)?.session
                         try {
-                            session?.let { authClient.authorizeFirebase(session) }
+                            session?.let {
+                                authClient.fetchBalance(session)
+                                authClient.authorizeFirebase(session)
+                            }
                         } catch (e: YralFBAuthException) {
                             // Do not update error in state since no error message required
                             Logger.e("Firebase Auth error - $e")
                             crashlyticsManager.recordException(e)
-                            session?.let { authClient.fetchBalance(session) }
                         } catch (e: YralAuthException) {
                             // can be triggered in postFirebaseLogin when getting balance
                             Logger.e("Fetch Balance error - $e")
