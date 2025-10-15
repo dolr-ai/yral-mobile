@@ -8,7 +8,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-class BranchLinkGenerator(
+class AndroidBranchLinkGenerator(
     private val context: Context,
 ) : LinkGenerator {
     override suspend fun generateShareLink(input: LinkInput): String =
