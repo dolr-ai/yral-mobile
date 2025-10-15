@@ -93,7 +93,7 @@ struct EditProfileView: View {
               if isFocused {
                 username = ""
               } else {
-                UIPasteboard.general.string = accountInfo.canisterID
+                UIPasteboard.general.string = username
                 HapticGenerator.performFeedback(.impact(weight: .heavy))
               }
             }
