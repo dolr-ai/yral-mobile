@@ -18,6 +18,7 @@ import com.yral.shared.rust.service.domain.usecases.GetProfileDetailsV4UseCase
 import com.yral.shared.rust.service.domain.usecases.UnfollowUserUseCase
 import com.yral.shared.rust.service.services.ICPLedgerServiceFactory
 import com.yral.shared.rust.service.services.IndividualUserServiceFactory
+import com.yral.shared.rust.service.services.LogForwardingService
 import com.yral.shared.rust.service.services.RateLimitServiceFactory
 import com.yral.shared.rust.service.services.SnsLedgerServiceFactory
 import com.yral.shared.rust.service.services.UserInfoServiceFactory
@@ -56,4 +57,6 @@ val rustModule: Module =
 
         // Paging Data Sources Factory
         factoryOf(::UserInfoPagingSourceFactory)
+
+        single { LogForwardingService() }
     }
