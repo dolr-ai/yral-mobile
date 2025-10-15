@@ -92,6 +92,10 @@ class SessionManager {
         sessionProperties.update { it.copy(isFirebaseLoggedIn = isLoggedIn) }
     }
 
+    fun updateDailyRank(dailyRank: Long?) {
+        sessionProperties.update { it.copy(dailyRank = dailyRank) }
+    }
+
     fun observeSessionProperties(): StateFlow<SessionProperties> = sessionProperties.asStateFlow()
 
     fun resetSessionProperties() {

@@ -627,6 +627,7 @@ data class FeedState(
 enum class OverlayType {
     DEFAULT,
     GAME_TOGGLE,
+    DAILY_RANK,
 }
 
 data class VideoData(

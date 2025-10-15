@@ -16,4 +16,5 @@ data class SessionProperties(
     val isForcedGamePlayUser: Boolean? = null,
     val emailId: String? = null,
     val isFirebaseLoggedIn: Boolean = false,
+    val dailyRank: Long? = null,
 )

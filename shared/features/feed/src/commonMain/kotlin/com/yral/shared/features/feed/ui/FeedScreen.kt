@@ -306,7 +306,7 @@ private fun ActionsRight(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         val feedDetails = state.feedDetails[pageNo]
-        if (state.overlayType == OverlayType.GAME_TOGGLE) {
+        if (state.overlayType in listOf(OverlayType.GAME_TOGGLE, OverlayType.DAILY_RANK)) {
             feedDetails.profileImageURL?.let { profileImage ->
                 YralAsyncImage(
                     imageUrl = profileImage,

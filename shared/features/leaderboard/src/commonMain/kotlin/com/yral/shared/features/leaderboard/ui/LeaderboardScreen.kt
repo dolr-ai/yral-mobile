@@ -9,10 +9,12 @@ import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
 import com.yral.shared.features.leaderboard.nav.LeaderboardComponent
 import com.yral.shared.features.leaderboard.ui.history.LeaderboardDetailsScreen
 import com.yral.shared.features.leaderboard.ui.main.LeaderboardMainScreen
+import com.yral.shared.features.leaderboard.viewmodel.LeaderBoardViewModel
 
 @Composable
 fun LeaderboardScreen(
     component: LeaderboardComponent,
+    leaderBoardViewModel: LeaderBoardViewModel,
     modifier: Modifier = Modifier,
 ) {
     Children(
@@ -24,6 +26,7 @@ fun LeaderboardScreen(
             is LeaderboardComponent.Child.Main -> {
                 LeaderboardMainScreen(
                     component = instance.component,
+                    viewModel = leaderBoardViewModel,
                     modifier = Modifier.fillMaxSize(),
                 )
             }

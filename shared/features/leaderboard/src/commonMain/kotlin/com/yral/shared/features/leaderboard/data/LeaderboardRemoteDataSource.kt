@@ -3,6 +3,8 @@ package com.yral.shared.features.leaderboard.data
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.data.FirebaseFunctionRequest
 import com.yral.shared.features.leaderboard.data.models.GetLeaderboardRequestDto
+import com.yral.shared.features.leaderboard.data.models.LeaderboardDailyRankRequestDto
+import com.yral.shared.features.leaderboard.data.models.LeaderboardDailyRankResponseDto
 import com.yral.shared.features.leaderboard.data.models.LeaderboardHistoryDayDto
 import com.yral.shared.features.leaderboard.data.models.LeaderboardHistoryRequestDto
 import com.yral.shared.features.leaderboard.data.models.LeaderboardHistoryResponseDto
@@ -92,9 +94,43 @@ class LeaderboardRemoteDataSource(
         }
     }
 
+    @Suppress("SwallowedException", "TooGenericExceptionCaught")
+    override suspend fun getLeaderboardRankForToday(
+        idToken: String,
+        request: LeaderboardDailyRankRequestDto,
+    ): LeaderboardDailyRankResponseDto {
+        try {
+            val response: HttpResponse =
+                httpClient.post {
+                    expectSuccess = false
+                    url {
+                        host = cloudFunctionUrl()
+                        path(DAILY_RANK_PATH)
+                    }
+                    val appCheckToken = firebaseAppCheckToken()
+                    headers {
+                        append(HttpHeaders.Authorization, "Bearer $idToken")
+                        append(HEADER_X_FIREBASE_APPCHECK, appCheckToken)
+                    }
+                    setBody(FirebaseFunctionRequest(request))
+                }
+            val apiResponseString = response.bodyAsText()
+            val responseDto =
+                if (response.status == HttpStatusCode.OK) {
+                    json.decodeFromString<LeaderboardDailyRankResponseDto.Success>(apiResponseString)
+                } else {
+                    json.decodeFromString<LeaderboardDailyRankResponseDto.Error>(apiResponseString)
+                }
+            return responseDto
+        } catch (e: Exception) {
+            throw YralException("Error in getting leaderboard rank: ${e.message}")
+        }
+    }
+
     companion object {
         private const val LEADERBOARD_PATH = "leaderboard_v3"
         private const val LEADERBOARD_HISTORY_PATH = "leaderboard_history_v2"
+        private const val DAILY_RANK_PATH = "daily_rank"
         private const val HEADER_X_FIREBASE_APPCHECK = "X-Firebase-AppCheck"
     }
 }
