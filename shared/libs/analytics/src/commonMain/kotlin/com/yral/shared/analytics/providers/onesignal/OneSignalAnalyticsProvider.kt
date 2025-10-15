@@ -26,8 +26,7 @@ class OneSignalAnalyticsProvider(
 
     override fun setUserProperties(user: User) {
         if (user.isLoggedIn == true) {
-            val externalId = user.oneSignalUserId ?: user.userId
-            oneSignal.login(externalId)
+            oneSignal.login(user.userId)
         } else {
             oneSignal.logout()
         }

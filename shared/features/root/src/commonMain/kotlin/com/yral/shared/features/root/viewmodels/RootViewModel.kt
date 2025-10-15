@@ -86,7 +86,6 @@ class RootViewModel(
                         tokenType = TokenType.YRAL,
                         isForcedGamePlayUser = properties.isForcedGamePlayUser,
                         emailId = properties.emailId,
-                        oneSignalUserId = properties.oneSignalUserId,
                     )
                 }
             }

@@ -60,7 +60,7 @@
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Yral requires microphone access to capture audio while recording videos. Your microphone will only be used during video recording.</string>
 	<key>ONESIGNAL_APP_ID</key>
-	<string>REPLACE_WITH_ONESIGNAL_APP_ID</string>
+	<string>3b2fb986-1a1a-4afd-b0f0-271faa4697a2</string>
 	<key>UIAppFonts</key>
 	<array>
 		<string>KumbhSans-Black.ttf</string>

@@ -11,5 +11,4 @@ data class User(
     val tokenType: TokenType?,
     val isForcedGamePlayUser: Boolean?,
     val emailId: String?,
-    val oneSignalUserId: String? = null,
 )

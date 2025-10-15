@@ -26,7 +26,6 @@ actual class MixpanelAnalyticsProvider actual constructor(
     KoinComponent {
     private companion object {
         private const val ONE_SIGNAL_PROPERTY = "\$onesignal_user_id"
-        private const val ONE_SIGNAL_SUPER_PROPERTY = "onesignal_user_id"
     }
 
     private val context: Context by inject()
@@ -78,22 +77,16 @@ actual class MixpanelAnalyticsProvider actual constructor(
                 "is_forced_gameplay_test_user" to user.isForcedGamePlayUser,
                 "email_id" to user.emailId,
             )
-        user.oneSignalUserId?.let { oneSignalId ->
-            superProps[ONE_SIGNAL_SUPER_PROPERTY] = oneSignalId
-        } ?: superProps.remove(ONE_SIGNAL_SUPER_PROPERTY)
+        mixpanel.people.set(ONE_SIGNAL_PROPERTY, user.userId)
         if (user.isLoggedIn == true) {
             mixpanel.identify(user.userId)
-            mixpanel.people.identify(user.userId)
             MPSessionReplay.getInstance()?.identify(user.userId)
             distinctId.value = mixpanel.distinctId
             superProps["user_id"] = user.userId
             superProps["visitor_id"] = null
-            user.oneSignalUserId?.let { mixpanel.people.set(ONE_SIGNAL_PROPERTY, it) }
-                ?: mixpanel.people.unset(ONE_SIGNAL_PROPERTY)
         } else {
             superProps["visitor_id"] = user.userId
             superProps["user_id"] = null
-            mixpanel.people.unset(ONE_SIGNAL_PROPERTY)
         }
         mixpanel.registerSuperProperties(JSONObject(superProps))
     }

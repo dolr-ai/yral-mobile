@@ -26,7 +26,7 @@
     <!-- MixPanel SDK Configuration -->
     <string name="mixpanel_token">609abef3172b5fc64554f5ac6c77414d</string>
     <!-- OneSignal SDK Configuration -->
-    <string name="onesignal_app_id">REPLACE_WITH_ONESIGNAL_APP_ID</string>
+    <string name="onesignal_app_id">3b2fb986-1a1a-4afd-b0f0-271faa4697a2</string>
 
 
 

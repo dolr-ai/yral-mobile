@@ -324,7 +324,6 @@ class DefaultAuthClient(
     private fun setSession(session: Session) {
         session.identity?.let { identity -> initRustFactories(identity) }
         sessionManager.updateState(SessionState.SignedIn(session = session))
-        session.userPrincipal?.let { sessionManager.updateOneSignalUserId(it) }
     }
 
     private fun postFirebaseLogin(session: Session) {

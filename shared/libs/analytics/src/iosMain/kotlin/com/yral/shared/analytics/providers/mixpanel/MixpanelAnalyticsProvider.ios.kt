@@ -16,7 +16,6 @@ actual class MixpanelAnalyticsProvider actual constructor(
 ) : AnalyticsProvider {
     private companion object {
         private const val ONE_SIGNAL_PROPERTY = "\$onesignal_user_id"
-        private const val ONE_SIGNAL_SUPER_PROPERTY = "onesignal_user_id"
     }
 
     override val name: String = "mixpanel"
@@ -45,20 +44,14 @@ actual class MixpanelAnalyticsProvider actual constructor(
                 "is_Forced Gameplay_test_user" to user.isForcedGamePlayUser,
                 "email_id" to user.emailId,
             )
-        user.oneSignalUserId?.let { oneSignalId ->
-            superProps[ONE_SIGNAL_SUPER_PROPERTY] = oneSignalId
-        } ?: superProps.remove(ONE_SIGNAL_SUPER_PROPERTY)
+        mixpanel.people.set(property = ONE_SIGNAL_PROPERTY, to = user.userId)
         if (user.isLoggedIn ?: false) {
             mixpanel.identify(user.userId)
             superProps["user_id"] = user.userId
             superProps["visitor_id"] = null
-            user.oneSignalUserId?.let {
-                mixpanel.people.set(property = ONE_SIGNAL_PROPERTY, to = it)
-            } ?: mixpanel.people.unset(properties = listOf(ONE_SIGNAL_PROPERTY))
         } else {
             superProps["visitor_id"] = user.userId
             superProps["user_id"] = null
-            mixpanel.people.unset(properties = listOf(ONE_SIGNAL_PROPERTY))
         }
         mixpanel.registerSuperProperties(superProps)
     }
