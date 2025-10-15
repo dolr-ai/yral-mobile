@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -56,6 +57,8 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import yral_mobile.shared.libs.designsystem.generated.resources.could_not_login
 import yral_mobile.shared.libs.designsystem.generated.resources.could_not_login_desc
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_follow
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_following
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_share
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_views
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_share
@@ -317,16 +320,34 @@ private fun ActionsRight(
         val feedDetails = state.feedDetails[pageNo]
         if (state.overlayType in listOf(OverlayType.GAME_TOGGLE, OverlayType.DAILY_RANK)) {
             feedDetails.profileImageURL?.let { profileImage ->
-                YralAsyncImage(
-                    imageUrl = profileImage,
-                    border = 2.dp,
-                    borderColor = Color.White,
-                    backgroundColor = YralColors.ProfilePicBackground,
+                Column(
                     modifier =
                         Modifier
-                            .size(36.dp)
+                            .offset(y = 16.dp)
                             .clickable { openProfile(feedDetails.toCanisterData()) },
-                )
+                ) {
+                    YralAsyncImage(
+                        imageUrl = profileImage,
+                        border = 2.dp,
+                        borderColor = Color.White,
+                        backgroundColor = YralColors.ProfilePicBackground,
+                        modifier = Modifier.size(36.dp),
+                    )
+                    Image(
+                        painter =
+                            painterResource(
+                                resource =
+                                    if (feedDetails.isFollowing) {
+                                        DesignRes.drawable.ic_following
+                                    } else {
+                                        DesignRes.drawable.ic_follow
+                                    },
+                            ),
+                        contentDescription = "follow",
+                        contentScale = ContentScale.None,
+                        modifier = Modifier.size(36.dp).offset(y = (-10).dp),
+                    )
+                }
             }
         }
         val msgFeedVideoShare = stringResource(DesignRes.string.msg_feed_video_share)
