@@ -47,6 +47,8 @@
 		100540DC2E9E61B7004F8588 /* Nouns.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100540DA2E9E61B3004F8588 /* Nouns.swift */; };
 		100540DE2E9E61BB004F8588 /* Adjectives.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100540DD2E9E61B9004F8588 /* Adjectives.swift */; };
 		100540DF2E9E61BB004F8588 /* Adjectives.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100540DD2E9E61B9004F8588 /* Adjectives.swift */; };
+		100540E12E9E8F44004F8588 /* EditProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100540E02E9E8F44004F8588 /* EditProfileView.swift */; };
+		100540E22E9E8F44004F8588 /* EditProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100540E02E9E8F44004F8588 /* EditProfileView.swift */; };
 		100F63D32DCB4630000BC17E /* SmileyGameRuleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100F63D22DCB4630000BC17E /* SmileyGameRuleView.swift */; };
 		100F63D42DCB4630000BC17E /* SmileyGameRuleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100F63D22DCB4630000BC17E /* SmileyGameRuleView.swift */; };
 		100F64EE2DCC96C9000BC17E /* YralCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100F64ED2DCC96C5000BC17E /* YralCache.swift */; };
@@ -811,6 +813,7 @@
 		100540D72E9E6142004F8588 /* SeededGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeededGenerator.swift; sourceTree = "<group>"; };
 		100540DA2E9E61B3004F8588 /* Nouns.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Nouns.swift; sourceTree = "<group>"; };
 		100540DD2E9E61B9004F8588 /* Adjectives.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Adjectives.swift; sourceTree = "<group>"; };
+		100540E02E9E8F44004F8588 /* EditProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditProfileView.swift; sourceTree = "<group>"; };
 		100F63D22DCB4630000BC17E /* SmileyGameRuleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameRuleView.swift; sourceTree = "<group>"; };
 		100F64ED2DCC96C5000BC17E /* YralCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralCache.swift; sourceTree = "<group>"; };
 		100FCD6E2E659CDE00E9A02D /* ViewControllerWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewControllerWrapper.swift; sourceTree = "<group>"; };
@@ -2278,6 +2281,7 @@
 				AC8BB94C2E7AF36200E6BB3E /* ProfileView+Constants.swift */,
 				AC4E996A2D8874BA000B47B3 /* ProfileVideosGridView */,
 				AC99BBBF2D86FF76008012C2 /* ProfileEmptyState */,
+				100540E02E9E8F44004F8588 /* EditProfileView.swift */,
 			);
 			path = View;
 			sourceTree = "<group>";
@@ -3804,6 +3808,7 @@
 				AC4E99692D884BDB000B47B3 /* ProfileVideoGridsView.swift in Sources */,
 				ACC0D4522D8DDB97006DCF5C /* ProfileRepositoryProtocol.swift in Sources */,
 				105034BA2DD6332C00571B4E /* CastVoteError.swift in Sources */,
+				100540E22E9E8F44004F8588 /* EditProfileView.swift in Sources */,
 				AC6BECBD2D09F68C002E2021 /* Endpoint.swift in Sources */,
 				ACB117492E9EAEEE0064677F /* IosDependencyProvider.swift in Sources */,
 				AC09A9B32CDB775C009A39A4 /* SwiftBridgeCore.swift in Sources */,
@@ -4142,6 +4147,7 @@
 				AC4E99682D884BDB000B47B3 /* ProfileVideoGridsView.swift in Sources */,
 				ACC0D4532D8DDB97006DCF5C /* ProfileRepositoryProtocol.swift in Sources */,
 				105034B92DD6332C00571B4E /* CastVoteError.swift in Sources */,
+				100540E12E9E8F44004F8588 /* EditProfileView.swift in Sources */,
 				AC6BECBC2D09F68C002E2021 /* Endpoint.swift in Sources */,
 				ACB1174A2E9EAEEE0064677F /* IosDependencyProvider.swift in Sources */,
 				ACD941892CFF575C0038FCB6 /* SwiftBridgeCore.swift in Sources */,

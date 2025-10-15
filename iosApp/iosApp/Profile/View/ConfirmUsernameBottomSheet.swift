@@ -72,7 +72,7 @@ struct ConfirmUsernameBottomSheet: View {
         .padding(.bottom, Constants.usernameBottom)
 
       Button {
-
+        save()
       }
       label: {
         Text(Constants.changeButtonTitle)
@@ -85,7 +85,7 @@ struct ConfirmUsernameBottomSheet: View {
       .padding(.bottom, Constants.changeButtonBottom)
 
       Button {
-
+        dismiss()
       } label: {
         Text(Constants.cancelButtonTitle)
           .font(Constants.cancelButtonFont)
@@ -102,6 +102,15 @@ struct ConfirmUsernameBottomSheet: View {
           )
       }
       .padding(.bottom, Constants.cancelButtonBottom)
+    }
+  }
+
+  private func save() {
+    withAnimation(.easeInOut(duration: CGFloat.animationPeriod)) {
+      showBottomSheet = false
+    }
+    DispatchQueue.main.asyncAfter(deadline: .now() + CGFloat.animationPeriod) {
+      onChangeName()
     }
   }
 

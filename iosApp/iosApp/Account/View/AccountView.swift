@@ -181,6 +181,8 @@ extension AccountView: UserInfoViewProtocol {
       event: AuthScreenViewedEventData(pageName: .menu)
     )
   }
+
+  func editProfilePressed() {}
 }
 
 extension AccountView: SignupSheetProtocol {

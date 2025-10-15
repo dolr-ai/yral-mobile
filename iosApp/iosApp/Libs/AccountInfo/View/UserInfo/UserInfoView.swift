@@ -67,7 +67,7 @@ struct UserInfoView: View {
         }
       } else if showEditProfileButton {
         Button {
-
+          delegate?.editProfilePressed()
         } label: {
           Text(Constants.editButtonTitle)
             .font(Constants.editButtonFont)
@@ -132,4 +132,5 @@ extension UserInfoView {
 
 protocol UserInfoViewProtocol: Any {
   func loginPressed()
+  func editProfilePressed()
 }
