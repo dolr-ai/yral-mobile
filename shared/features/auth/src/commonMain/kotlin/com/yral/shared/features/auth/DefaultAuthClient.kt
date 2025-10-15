@@ -210,7 +210,6 @@ class DefaultAuthClient(
                 reAuthenticatedSession?.let { cachedSession = reAuthenticatedSession }
             }
             setSession(session = cachedSession)
-            fetchBalance(session = cachedSession)
             if (auth.currentUser?.uid == cachedSession.userPrincipal) {
                 sessionManager.updateFirebaseLoginState(true)
                 postFirebaseLogin(cachedSession)

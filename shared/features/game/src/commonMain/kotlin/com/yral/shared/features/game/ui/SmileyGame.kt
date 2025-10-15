@@ -47,7 +47,6 @@ import com.yral.shared.features.game.ui.SmileyGameConstants.NUDGE_ANIMATION_ICON
 import com.yral.shared.features.game.viewmodel.GameViewModel
 import com.yral.shared.features.game.viewmodel.NudgeType
 import com.yral.shared.libs.designsystem.component.YralFeedback
-import com.yral.shared.libs.designsystem.component.lottie.PreloadLottieAnimations
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import org.jetbrains.compose.resources.painterResource
@@ -95,11 +94,6 @@ fun Game(
             onNudgeAnimationComplete = {
                 gameViewModel.setSmileyGameNudgeShown(feedDetails)
             },
-        )
-    }
-    if (gameState.gameIcons.isNotEmpty()) {
-        PreloadLottieAnimations(
-            urls = gameState.gameIcons.map { it.clickAnimation },
         )
     }
 }

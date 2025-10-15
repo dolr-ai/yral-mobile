@@ -46,6 +46,7 @@ class WalletViewModel(
             getRewardConfigUseCase
                 .invoke()
                 .onSuccess { rewardConfig -> _state.update { it.copy(rewardConfig = rewardConfig) } }
+                .onFailure { Logger.e("Wallet") { "error fetching reward config $it" } }
         }
         viewModelScope.launch {
             val animation =

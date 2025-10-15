@@ -44,6 +44,7 @@ import com.yral.shared.features.game.viewmodel.GameViewModel
 import com.yral.shared.features.game.viewmodel.NudgeType
 import com.yral.shared.features.leaderboard.ui.DailyRanK
 import com.yral.shared.features.leaderboard.viewmodel.LeaderBoardViewModel
+import com.yral.shared.libs.designsystem.component.lottie.PreloadLottieAnimations
 import org.jetbrains.compose.resources.painterResource
 import yral_mobile.shared.libs.designsystem.generated.resources.shadow
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
@@ -160,6 +161,11 @@ fun FeedScaffoldScreen(
             onDismissRequest = {
                 gameViewModel.toggleAboutGame(false)
             },
+        )
+    }
+    if (gameState.gameIcons.isNotEmpty()) {
+        PreloadLottieAnimations(
+            urls = gameState.gameIcons.map { it.clickAnimation },
         )
     }
 }
