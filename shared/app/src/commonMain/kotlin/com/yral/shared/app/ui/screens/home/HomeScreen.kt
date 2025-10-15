@@ -68,6 +68,7 @@ import com.yral.shared.features.auth.viewModel.LoginViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.game.viewmodel.GameViewModel
 import com.yral.shared.features.leaderboard.ui.LeaderboardScreen
+import com.yral.shared.features.leaderboard.viewmodel.LeaderBoardViewModel
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.features.wallet.ui.WalletScreen
 import com.yral.shared.features.wallet.ui.btcRewards.VideoViewsRewardsBottomSheet
@@ -182,9 +183,11 @@ private fun HomeScreenContent(
     val gameViewModel = koinViewModel<GameViewModel>(key = "game-$sessionKey")
     val profileViewModel = koinViewModel<ProfileViewModel>(key = "profile-$sessionKey")
     val accountViewModel = koinViewModel<AccountsViewModel>(key = "account-$sessionKey")
+    val leaderBoardViewModel = koinViewModel<LeaderBoardViewModel>(key = "leaderboard-$sessionKey")
+
     val profileVideos = getProfileVideos(profileViewModel, sessionKey, updateProfileVideosCount)
-    val alertsPermissionController =
-        rememberAlertsPermissionController(accountViewModel)
+
+    val alertsPermissionController = rememberAlertsPermissionController(accountViewModel)
     NotificationPermissionObserver(alertsPermissionController, accountViewModel)
 
     Children(
@@ -197,6 +200,7 @@ private fun HomeScreenContent(
                     component = child.component,
                     feedViewModel = feedViewModel,
                     gameViewModel = gameViewModel,
+                    leaderBoardViewModel = leaderBoardViewModel,
                 )
 
             is HomeComponent.Child.Account -> {
@@ -221,6 +225,7 @@ private fun HomeScreenContent(
             is HomeComponent.Child.Leaderboard ->
                 LeaderboardScreen(
                     component = child.component,
+                    leaderBoardViewModel = leaderBoardViewModel,
                 )
 
             is HomeComponent.Child.UploadVideo -> {

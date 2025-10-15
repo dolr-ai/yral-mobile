@@ -32,7 +32,7 @@ enum class LottieRes(
     BTC_CREDITED("btc_credited.json"),
     ;
 
-    private val path: String = "files/lottie/$filename"
+    val path: String = "files/lottie/$filename"
 
     val assetPath = Res.getUri(path).removePrefix("file:///android_asset/")
 }

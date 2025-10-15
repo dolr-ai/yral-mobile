@@ -1,6 +1,8 @@
 package com.yral.shared.features.leaderboard.data
 
 import com.yral.shared.features.leaderboard.data.models.GetLeaderboardRequestDto
+import com.yral.shared.features.leaderboard.data.models.LeaderboardDailyRankRequestDto
+import com.yral.shared.features.leaderboard.data.models.LeaderboardDailyRankResponseDto
 import com.yral.shared.features.leaderboard.data.models.LeaderboardHistoryRequestDto
 import com.yral.shared.features.leaderboard.data.models.LeaderboardHistoryResponseDto
 import com.yral.shared.features.leaderboard.data.models.LeaderboardResponseDto
@@ -15,4 +17,9 @@ interface ILeaderboardRemoteDataSource {
         idToken: String,
         request: LeaderboardHistoryRequestDto,
     ): LeaderboardHistoryResponseDto
+
+    suspend fun getLeaderboardRankForToday(
+        idToken: String,
+        request: LeaderboardDailyRankRequestDto,
+    ): LeaderboardDailyRankResponseDto
 }

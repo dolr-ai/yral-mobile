@@ -10,6 +10,6 @@ class GetRewardConfigUseCase(
     private val repository: WalletRepository,
     appDispatchers: AppDispatchers,
     failureListener: UseCaseFailureListener,
-) : UnitSuspendUseCase<BtcRewardConfig>(appDispatchers.network, failureListener) {
-    override suspend fun execute(parameter: Unit): BtcRewardConfig = repository.getBtcRewardConfig()
+) : UnitSuspendUseCase<BtcRewardConfig?>(appDispatchers.network, failureListener) {
+    override suspend fun execute(parameter: Unit): BtcRewardConfig? = repository.getBtcRewardConfig()
 }

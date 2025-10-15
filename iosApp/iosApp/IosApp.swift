@@ -9,6 +9,9 @@ import MixpanelSessionReplay
 import BranchSDK
 
 class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate, MessagingDelegate {
+  let root: RootComponent = DefaultRootComponent(
+      componentContext: DefaultComponentContext(lifecycle: ApplicationLifecycle())
+  )
   func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
@@ -193,10 +196,12 @@ struct IosApp: App {
     _eventBus = StateObject(
       wrappedValue: container.eventBus
     )
+      AppDIKt.doInitKoin()
   }
 
   var body: some Scene {
     WindowGroup {
+      // RootView(root: delegate.root)
       contentView()
         .environmentObject(deepLinkRouter)
         .environmentObject(eventBus)
@@ -243,7 +248,6 @@ struct IosApp: App {
   @MainActor
   private func initializeDependencies() async {
     do {
-      AppDI_iosKt.doInitKoin { _ in  }
       AnalyticsModuleKt.getAnalyticsManager().initialise()
       if let mixpanelToken = Bundle.main.infoDictionary?[mixpanelToken] as? String {
         let config = MPSessionReplayConfig(wifiOnly: false, autoMaskedViews: [.web])

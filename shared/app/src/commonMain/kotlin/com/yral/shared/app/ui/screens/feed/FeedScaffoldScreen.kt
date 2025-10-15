@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -41,6 +42,9 @@ import com.yral.shared.features.game.ui.toRefreshBalanceAnimationState
 import com.yral.shared.features.game.viewmodel.GameState
 import com.yral.shared.features.game.viewmodel.GameViewModel
 import com.yral.shared.features.game.viewmodel.NudgeType
+import com.yral.shared.features.leaderboard.ui.DailyRanK
+import com.yral.shared.features.leaderboard.viewmodel.LeaderBoardViewModel
+import com.yral.shared.libs.designsystem.component.lottie.PreloadLottieAnimations
 import org.jetbrains.compose.resources.painterResource
 import yral_mobile.shared.libs.designsystem.generated.resources.shadow
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
@@ -51,15 +55,25 @@ fun FeedScaffoldScreen(
     component: FeedComponent,
     feedViewModel: FeedViewModel,
     gameViewModel: GameViewModel,
+    leaderBoardViewModel: LeaderBoardViewModel,
 ) {
     val gameState by gameViewModel.state.collectAsStateWithLifecycle()
     val feedState by feedViewModel.state.collectAsStateWithLifecycle()
+    val dailyRank by if (feedState.overlayType == OverlayType.DAILY_RANK) {
+        leaderBoardViewModel.dailyRank.collectAsStateWithLifecycle(null)
+    } else {
+        remember { mutableStateOf(null) }
+    }
+    if (feedState.overlayType == OverlayType.DAILY_RANK) {
+        leaderBoardViewModel.refreshRank.collectAsStateWithLifecycle(false)
+    }
     FeedScreen(
         component = component,
         viewModel = feedViewModel,
         topOverlay = { pageNo ->
             OverLayTop(
                 pageNo = pageNo,
+                dailyRank = dailyRank,
                 feedState = feedState,
                 gameState = gameState,
                 componentAnimationInfo = TopComponentAnimationInfo(gameState.animateCoinBalance),
@@ -149,11 +163,17 @@ fun FeedScaffoldScreen(
             },
         )
     }
+    if (gameState.gameIcons.isNotEmpty()) {
+        PreloadLottieAnimations(
+            urls = gameState.gameIcons.map { it.clickAnimation },
+        )
+    }
 }
 
 @Composable
 private fun OverLayTop(
     pageNo: Int,
+    dailyRank: Long?,
     feedState: FeedState,
     gameState: GameState,
     componentAnimationInfo: TopComponentAnimationInfo,
@@ -179,6 +199,12 @@ private fun OverLayTop(
                 updateGameType = updateGameType,
             )
         }
+        OverlayType.DAILY_RANK ->
+            OverlayTopDailyRank(
+                dailyRank = dailyRank,
+                gameState = gameState,
+                setAnimateCoinBalance = setAnimateCoinBalance,
+            )
     }
 }
 
@@ -235,6 +261,39 @@ private fun OverlayTopDefault(
                 modifier = Modifier.padding(vertical = 22.dp),
             )
         }
+    }
+}
+
+@Composable
+private fun OverlayTopDailyRank(
+    dailyRank: Long?,
+    gameState: GameState,
+    setAnimateCoinBalance: (Boolean) -> Unit,
+) {
+    Box(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .paint(
+                    painter = painterResource(DesignRes.drawable.shadow),
+                    contentScale = ContentScale.FillBounds,
+                ).padding(horizontal = 26.dp),
+    ) {
+        dailyRank?.let {
+            DailyRanK(
+                position = dailyRank,
+                animate = gameState.animateCoinBalance,
+                setAnimate = { setAnimateCoinBalance(it) },
+                modifier = Modifier.padding(vertical = 32.dp).align(Alignment.TopStart),
+            )
+        }
+        CoinBalance(
+            coinBalance = gameState.coinBalance,
+            coinDelta = gameState.lastBalanceDifference,
+            animateBag = gameState.animateCoinBalance,
+            setAnimate = { setAnimateCoinBalance(it) },
+            modifier = Modifier.padding(vertical = 32.dp).align(Alignment.TopEnd),
+        )
     }
 }
 

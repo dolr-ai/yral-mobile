@@ -27,7 +27,7 @@ fun GameIconBubbles(
         YralRemoteLottieAnimation(
             modifier = Modifier.fillMaxSize(),
             url = icon.clickAnimation,
-            contentScale = ContentScale.Inside,
+            contentScale = ContentScale.FillBounds,
             iterations = 1,
             onAnimationComplete = onAnimationComplete,
             onError = { error -> playLocalAnimation = true },
@@ -39,7 +39,7 @@ fun GameIconBubbles(
                 modifier = Modifier.fillMaxSize(),
                 rawRes = animationRes,
                 iterations = 1,
-                contentScale = ContentScale.Inside,
+                contentScale = ContentScale.FillBounds,
                 onAnimationComplete = onAnimationComplete,
             )
         }
