@@ -1,12 +1,12 @@
 package com.yral.shared.rust.service.services
 
 import co.touchlab.kermit.Logger
+import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.uniffi.generated.LogLevel
 import com.yral.shared.uniffi.generated.LogMessage
 import com.yral.shared.uniffi.generated.LoggerException
 import com.yral.shared.uniffi.generated.getLogMessages
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
@@ -22,6 +22,7 @@ import kotlinx.coroutines.launch
  */
 @Suppress("TooGenericExceptionCaught")
 internal class LogForwardingService(
+    private val appDispatchers: AppDispatchers,
     private val forwarder: RustLogForwardingListener,
 ) {
     private val logger = Logger.withTag("LogForwardingService")
@@ -46,7 +47,7 @@ internal class LogForwardingService(
 
         isRunning = true
         forwardingJob =
-            CoroutineScope(SupervisorJob() + Dispatchers.Default).launch {
+            CoroutineScope(SupervisorJob() + appDispatchers.cpu).launch {
                 logger.i { "Starting log forwarding service" }
                 while (isActive && isRunning) {
                     try {

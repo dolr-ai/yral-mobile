@@ -26,6 +26,7 @@ import com.yral.shared.rust.service.services.UserPostServiceFactory
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.factoryOf
+import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 
 val rustModule: Module =
@@ -58,5 +59,5 @@ val rustModule: Module =
         // Paging Data Sources Factory
         factoryOf(::UserInfoPagingSourceFactory)
 
-        single { LogForwardingService(get()) }
+        singleOf(::LogForwardingService)
     }
