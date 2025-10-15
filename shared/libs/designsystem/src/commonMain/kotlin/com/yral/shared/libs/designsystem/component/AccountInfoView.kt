@@ -30,6 +30,7 @@ import org.jetbrains.compose.resources.stringResource
 import yral_mobile.shared.libs.designsystem.generated.resources.Res
 import yral_mobile.shared.libs.designsystem.generated.resources.anonymous_account_setup
 import yral_mobile.shared.libs.designsystem.generated.resources.edit_profile
+import yral_mobile.shared.libs.designsystem.generated.resources.follow
 import yral_mobile.shared.libs.designsystem.generated.resources.followers
 import yral_mobile.shared.libs.designsystem.generated.resources.following
 import yral_mobile.shared.libs.designsystem.generated.resources.login
@@ -42,8 +43,11 @@ fun AccountInfoView(
     totalFollowing: Long? = null,
     isSocialSignIn: Boolean,
     showEditProfile: Boolean,
+    showFollow: Boolean = false,
+    isFollowing: Boolean = false,
     onLoginClicked: () -> Unit,
     onEditProfileClicked: () -> Unit,
+    onFollowClicked: () -> Unit = {},
 ) {
     Column(
         modifier =
@@ -115,10 +119,9 @@ fun AccountInfoView(
             }
         }
         if (showEditProfile) {
-            EditProfileButton(
-                modifier =
-                    Modifier
-                        .fillMaxWidth(),
+            ProfileButton(
+                text = stringResource(Res.string.edit_profile),
+                modifier = Modifier.fillMaxWidth(),
                 onClick = onEditProfileClicked,
             )
         }
@@ -140,6 +143,21 @@ fun AccountInfoView(
                 )
             }
         }
+        if (showFollow) {
+            ProfileButton(
+                text =
+                    stringResource(
+                        resource =
+                            if (isFollowing) {
+                                Res.string.following
+                            } else {
+                                Res.string.follow
+                            },
+                    ),
+                modifier = Modifier.fillMaxWidth(),
+                onClick = onFollowClicked,
+            )
+        }
         Spacer(
             modifier =
                 Modifier
@@ -152,7 +170,8 @@ fun AccountInfoView(
 }
 
 @Composable
-private fun EditProfileButton(
+private fun ProfileButton(
+    text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -169,7 +188,7 @@ private fun EditProfileButton(
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                text = stringResource(Res.string.edit_profile),
+                text = text,
                 style = LocalAppTopography.current.baseSemiBold,
                 color = YralColors.NeutralTextPrimary,
                 textAlign = TextAlign.Center,

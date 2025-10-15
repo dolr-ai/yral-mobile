@@ -34,5 +34,6 @@
 
     <string name="followers">Followers</string>
     <string name="following">Following</string>
-
+    <string name="follow">Follow</string>
+    <string name="started_following">You’re now following @%1$s !</string>
 </resources>

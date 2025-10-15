@@ -80,6 +80,9 @@ import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.YralWebViewBottomSheet
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
+import com.yral.shared.libs.designsystem.component.toast.ToastManager
+import com.yral.shared.libs.designsystem.component.toast.ToastType
+import com.yral.shared.libs.designsystem.component.toast.showSuccess
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.formatAbbreviation
@@ -111,11 +114,12 @@ import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_s
 import yral_mobile.shared.libs.designsystem.generated.resources.my_profile
 import yral_mobile.shared.libs.designsystem.generated.resources.oops
 import yral_mobile.shared.libs.designsystem.generated.resources.something_went_wrong
+import yral_mobile.shared.libs.designsystem.generated.resources.started_following
 import yral_mobile.shared.libs.designsystem.generated.resources.try_again
 import yral_mobile.shared.libs.designsystem.generated.resources.upload_video
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
-@Suppress("LongMethod")
+@Suppress("LongMethod", "CyclomaticComplexMethod")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 fun ProfileMainScreen(
@@ -131,6 +135,20 @@ fun ProfileMainScreen(
 
     val followers = viewModel.followers?.collectAsLazyPagingItems()
     val following = viewModel.following?.collectAsLazyPagingItems()
+
+    var isFollowing by remember { mutableStateOf(state.isFollowing) }
+    val followedSuccessfully = stringResource(DesignRes.string.started_following, state.accountInfo?.displayName ?: "")
+    LaunchedEffect(state.isFollowing) {
+        if (!isFollowing && state.isFollowing) {
+            isFollowing = true
+            ToastManager.showSuccess(
+                type =
+                    ToastType.Small(
+                        message = followedSuccessfully,
+                    ),
+            )
+        }
+    }
 
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     LaunchedEffect(loginState) {
@@ -352,8 +370,11 @@ private fun MainContent(
                 totalFollowing = followingCount,
                 isSocialSignIn = state.isLoggedIn || !state.isOwnProfile,
                 showEditProfile = state.isLoggedIn && state.isOwnProfile,
+                showFollow = !state.isOwnProfile && state.isLoggedIn,
+                isFollowing = state.isFollowing,
                 onLoginClicked = { viewModel.setBottomSheetType(ProfileBottomSheet.SignUp) },
                 onEditProfileClicked = openEditProfile,
+                onFollowClicked = { viewModel.followUnfollow() },
             )
         }
         when (profileVideos.loadState.refresh) {

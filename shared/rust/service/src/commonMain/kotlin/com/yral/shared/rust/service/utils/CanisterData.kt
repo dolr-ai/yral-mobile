@@ -9,4 +9,5 @@ data class CanisterData(
     val profilePic: String,
     val username: String?,
     val isCreatedFromServiceCanister: Boolean,
+    val isFollowing: Boolean = false,
 )

@@ -41,6 +41,10 @@ import com.yral.shared.reportVideo.domain.models.ReportSheetState
 import com.yral.shared.reportVideo.domain.models.ReportVideoData
 import com.yral.shared.rust.service.domain.models.PagedFollowerItem
 import com.yral.shared.rust.service.domain.pagedDataSource.UserInfoPagingSourceFactory
+import com.yral.shared.rust.service.domain.usecases.FollowUserParams
+import com.yral.shared.rust.service.domain.usecases.FollowUserUseCase
+import com.yral.shared.rust.service.domain.usecases.UnfollowUserParams
+import com.yral.shared.rust.service.domain.usecases.UnfollowUserUseCase
 import com.yral.shared.rust.service.utils.CanisterData
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -60,6 +64,8 @@ class ProfileViewModel(
     private val profileRepository: ProfileRepository,
     private val deleteVideoUseCase: DeleteVideoUseCase,
     private val reportVideoUseCase: ReportVideoUseCase,
+    private val followUserUseCase: FollowUserUseCase,
+    private val unfollowUserUseCase: UnfollowUserUseCase,
     private val profileTelemetry: ProfileTelemetry,
     private val shareService: ShareService,
     private val urlBuilder: UrlBuilder,
@@ -175,18 +181,10 @@ class ProfileViewModel(
                 it.copy(
                     isOwnProfile = false,
                     isWalletEnabled = false,
+                    isFollowing = canisterData.isFollowing,
                 )
             }
         } else {
-            viewModelScope.launch {
-                sessionManager
-                    .observeSessionProperties()
-                    .map { it.isSocialSignIn }
-                    .distinctUntilChanged()
-                    .collect { isSocialSignIn ->
-                        _state.update { it.copy(isLoggedIn = isSocialSignIn == true) }
-                    }
-            }
             viewModelScope.launch {
                 sessionManager
                     .state
@@ -196,6 +194,15 @@ class ProfileViewModel(
                         _state.update { it.copy(accountInfo = info) }
                     }
             }
+        }
+        viewModelScope.launch {
+            sessionManager
+                .observeSessionProperties()
+                .map { it.isSocialSignIn }
+                .distinctUntilChanged()
+                .collect { isSocialSignIn ->
+                    _state.update { it.copy(isLoggedIn = isSocialSignIn == true) }
+                }
         }
     }
 
@@ -397,6 +404,57 @@ class ProfileViewModel(
                 }
         }
     }
+
+    fun followUnfollow() {
+        viewModelScope.launch {
+            sessionManager.userPrincipal?.let { userPrincipal ->
+                with(_state.value) {
+                    Logger.d("Follow") { "Follow unfollow request $isFollowing" }
+                    if (isLoggedIn) {
+                        if (isFollowing) {
+                            unFollow()
+                        } else {
+                            follow()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private suspend fun follow() {
+        sessionManager.userPrincipal?.let { userPrincipal ->
+            followUserUseCase(
+                parameter =
+                    FollowUserParams(
+                        principal = userPrincipal,
+                        targetPrincipal = canisterData.userPrincipalId,
+                    ),
+            ).onSuccess {
+                _state.update { it.copy(isFollowing = true) }
+                Logger.d("Follow") { "Started following" }
+            }.onFailure {
+                Logger.d("Follow") { "Follow request failed $it" }
+            }
+        }
+    }
+
+    private suspend fun unFollow() {
+        sessionManager.userPrincipal?.let { userPrincipal ->
+            unfollowUserUseCase(
+                parameter =
+                    UnfollowUserParams(
+                        principal = userPrincipal,
+                        targetPrincipal = canisterData.userPrincipalId,
+                    ),
+            ).onSuccess {
+                _state.update { it.copy(isFollowing = false) }
+                Logger.d("Follow") { "Discontinued following" }
+            }.onFailure {
+                Logger.d("Follow") { "UnFollow request failed $it" }
+            }
+        }
+    }
 }
 
 data class ViewState(
@@ -410,6 +468,7 @@ data class ViewState(
     val reportSheetState: ReportSheetState = ReportSheetState.Closed,
     val isLoggedIn: Boolean = false,
     val isOwnProfile: Boolean = true,
+    val isFollowing: Boolean = false,
 )
 
 sealed interface ProfileBottomSheet {

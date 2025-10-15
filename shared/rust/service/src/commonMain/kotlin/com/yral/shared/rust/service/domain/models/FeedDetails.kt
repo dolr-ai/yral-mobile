@@ -84,4 +84,5 @@ fun FeedDetails.toCanisterData(): CanisterData =
         profilePic = profileImageURL ?: "",
         username = resolveUsername(userName, principalID),
         isCreatedFromServiceCanister = isFromServiceCanister,
+        isFollowing = isFollowing,
     )
