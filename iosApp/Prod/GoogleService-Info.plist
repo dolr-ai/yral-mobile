@@ -26,5 +26,7 @@
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
 	<string>1:1035262663512:ios:d552d8604c837aaf1c232d</string>
+	<key>DATABASE_URL</key>
+	<string>STUB</string>
 </dict>
 </plist>
