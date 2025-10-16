@@ -64,6 +64,7 @@ import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.features.profile.nav.ProfileMainComponent
 import com.yral.shared.features.profile.viewmodel.DeleteConfirmationState
 import com.yral.shared.features.profile.viewmodel.ProfileBottomSheet
+import com.yral.shared.features.profile.viewmodel.ProfileEvents
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.features.profile.viewmodel.VideoViewState
 import com.yral.shared.features.profile.viewmodel.ViewState
@@ -82,6 +83,7 @@ import com.yral.shared.libs.designsystem.component.YralWebViewBottomSheet
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.component.toast.ToastManager
 import com.yral.shared.libs.designsystem.component.toast.ToastType
+import com.yral.shared.libs.designsystem.component.toast.showError
 import com.yral.shared.libs.designsystem.component.toast.showSuccess
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
@@ -90,6 +92,7 @@ import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.libs.videoPlayer.util.PrefetchVideoListener
 import com.yral.shared.rust.service.domain.models.PagedFollowerItem
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.receiveAsFlow
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import yral_mobile.shared.features.profile.generated.resources.Res
@@ -136,12 +139,21 @@ fun ProfileMainScreen(
     val followers = viewModel.followers?.collectAsLazyPagingItems()
     val following = viewModel.following?.collectAsLazyPagingItems()
 
-    var isFollowing by remember { mutableStateOf(state.isFollowing) }
     val followedSuccessfully = stringResource(DesignRes.string.started_following, state.accountInfo?.displayName ?: "")
-    LaunchedEffect(state.isFollowing) {
-        if (!isFollowing && state.isFollowing) {
-            isFollowing = true
-            ToastManager.showSuccess(type = ToastType.Small(message = followedSuccessfully))
+    LaunchedEffect(Unit) {
+        viewModel.profileEvents.receiveAsFlow().collect { event ->
+            when (event) {
+                is ProfileEvents.FollowedSuccessfully -> {
+                    ToastManager.showSuccess(type = ToastType.Small(message = followedSuccessfully))
+                    followers?.refresh()
+                }
+                is ProfileEvents.UnfollowedSuccessfully -> {
+                    followers?.refresh()
+                }
+                is ProfileEvents.Failed -> {
+                    ToastManager.showError(type = ToastType.Small(message = event.message))
+                }
+            }
         }
     }
 

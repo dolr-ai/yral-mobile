@@ -46,6 +46,7 @@ import com.yral.shared.rust.service.domain.usecases.FollowUserUseCase
 import com.yral.shared.rust.service.domain.usecases.UnfollowUserParams
 import com.yral.shared.rust.service.domain.usecases.UnfollowUserUseCase
 import com.yral.shared.rust.service.utils.CanisterData
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -85,6 +86,8 @@ class ProfileViewModel(
             ),
         )
     val state: StateFlow<ViewState> = _state.asStateFlow()
+
+    val profileEvents = Channel<ProfileEvents>(Channel.CONFLATED)
 
     private val deletedVideoIds = MutableStateFlow<Set<String>>(emptySet())
     val profileVideos: Flow<PagingData<FeedDetails>> =
@@ -427,9 +430,11 @@ class ProfileViewModel(
                     ),
             ).onSuccess {
                 _state.update { it.copy(isFollowing = true) }
+                profileEvents.trySend(ProfileEvents.FollowedSuccessfully)
                 sessionManager.addPrincipalToFollow(canisterData.userPrincipalId)
                 Logger.d("Follow") { "Started following" }
             }.onFailure {
+                profileEvents.trySend(ProfileEvents.Failed(it.message ?: "Follow failed"))
                 Logger.d("Follow") { "Follow request failed $it" }
             }
         }
@@ -445,9 +450,11 @@ class ProfileViewModel(
                     ),
             ).onSuccess {
                 _state.update { it.copy(isFollowing = false) }
+                profileEvents.trySend(ProfileEvents.UnfollowedSuccessfully)
                 sessionManager.removePrincipalFromFollow(canisterData.userPrincipalId)
                 Logger.d("Follow") { "Discontinued following" }
             }.onFailure {
+                profileEvents.trySend(ProfileEvents.Failed(it.message ?: "Unfollow failed"))
                 Logger.d("Follow") { "UnFollow request failed $it" }
             }
         }
@@ -494,4 +501,12 @@ sealed class VideoViewState {
     data class ViewingReels(
         val initialPage: Int = 0,
     ) : VideoViewState()
+}
+
+sealed class ProfileEvents {
+    data object FollowedSuccessfully : ProfileEvents()
+    data object UnfollowedSuccessfully : ProfileEvents()
+    data class Failed(
+        val message: String,
+    ) : ProfileEvents()
 }
