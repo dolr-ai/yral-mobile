@@ -112,6 +112,17 @@ class EditProfileViewModel(
         }
     }
 
+    fun clearUsernameInput() {
+        _state.update {
+            it.copy(
+                usernameInput = "",
+                isUsernameValid = true,
+                usernameErrorMessage = null,
+                shouldFocusUsername = true,
+            )
+        }
+    }
+
     fun validateCurrentUsername(): Boolean {
         val sanitized = sanitizeInput(_state.value.usernameInput)
         val isValid = isValidUsername(sanitized)
