@@ -201,15 +201,15 @@ internal fun SmileyGame(
     }
     if (resultViewVisible && !hasShownCoinDeltaAnimation) {
         YralFeedback(
-            sound = if (coinDelta > 0) spilledCoinSoundId() else coinLossSoundId(),
+            soundUri = if (coinDelta > 0) spilledCoinSoundUri() else coinLossSoundUri(),
             withHapticFeedback = true,
             hapticFeedbackType = HapticFeedbackType.LongPress,
         )
     }
 }
 
-expect fun coinLossSoundId(): Int
-expect fun spilledCoinSoundId(): Int
+fun coinLossSoundUri(): String = Res.getUri("files/audio/coin_loss.mp3")
+fun spilledCoinSoundUri(): String = Res.getUri("files/audio/spilled_coin.mp3")
 
 private fun isNudgeIterationValid(
     nudgeIteration: Int,
