@@ -31,12 +31,20 @@ class EditProfileViewModel(
         val profilePic = sessionManager.profilePic
         val uniqueId = sessionManager.userPrincipal.orEmpty()
         val initialUsername = sanitizedSessionUsername()
+        val email =
+            sessionManager
+                .observeSessionProperties()
+                .value
+                .emailId
+                .orEmpty()
         _state.update {
             it.copy(
                 profileImageUrl = profilePic,
                 usernameInput = initialUsername,
                 initialUsername = initialUsername,
                 uniqueId = uniqueId,
+                bioInput = "",
+                emailId = email,
                 isUsernameValid = true,
                 usernameErrorMessage = null,
                 shouldFocusUsername = false,
@@ -98,6 +106,23 @@ class EditProfileViewModel(
         }
     }
 
+    fun onBioChanged(value: String) {
+        _state.update { current ->
+            current.copy(bioInput = value)
+        }
+    }
+
+    fun clearUsernameInput() {
+        _state.update {
+            it.copy(
+                usernameInput = "",
+                isUsernameValid = true,
+                usernameErrorMessage = null,
+                shouldFocusUsername = true,
+            )
+        }
+    }
+
     fun validateCurrentUsername(): Boolean {
         val sanitized = sanitizeInput(_state.value.usernameInput)
         val isValid = isValidUsername(sanitized)
@@ -111,66 +136,79 @@ class EditProfileViewModel(
         return isValid
     }
 
+    @Suppress("LongMethod")
     fun applyUsernameChange() {
         val sanitized = sanitizeInput(_state.value.usernameInput)
         val identity = sessionManager.identity ?: return
         val userCanisterId = sessionManager.canisterID ?: return
         val previousUsername = _state.value.initialUsername
+        if (previousUsername == sanitized) {
+            _state.update { current ->
+                current.copy(
+                    usernameInput = previousUsername,
+                    initialUsername = previousUsername,
+                    isUsernameFocused = false,
+                    isUsernameValid = true,
+                    usernameErrorMessage = null,
+                    shouldFocusUsername = false,
+                )
+            }
+        } else {
+            viewModelScope.launch {
+                HelperService
+                    .updateUserMetadata(identity, userCanisterId, sanitized)
+                    .onSuccess {
+                        sessionManager.updateUsername(sanitized)
+                        preferences.putString(PrefKeys.USERNAME.name, sanitized)
+                        _state.update { current ->
+                            current.copy(
+                                usernameInput = sanitized,
+                                initialUsername = sanitized,
+                                isUsernameFocused = false,
+                                isUsernameValid = true,
+                                usernameErrorMessage = null,
+                                shouldFocusUsername = false,
+                            )
+                        }
+                    }.onFailure { error ->
+                        when (error) {
+                            is MetadataUpdateError.UsernameTaken -> {
+                                _state.update { current ->
+                                    current.copy(
+                                        isUsernameValid = false,
+                                        usernameErrorMessage = error.message,
+                                        shouldFocusUsername = true,
+                                        isUsernameFocused = true,
+                                    )
+                                }
+                            }
 
-        viewModelScope.launch {
-            HelperService
-                .updateUserMetadata(identity, userCanisterId, sanitized)
-                .onSuccess {
-                    sessionManager.updateUsername(sanitized)
-                    preferences.putString(PrefKeys.USERNAME.name, sanitized)
-                    _state.update { current ->
-                        current.copy(
-                            usernameInput = sanitized,
-                            initialUsername = sanitized,
-                            isUsernameFocused = false,
-                            isUsernameValid = true,
-                            usernameErrorMessage = null,
-                            shouldFocusUsername = false,
-                        )
+                            is MetadataUpdateError.InvalidUsername -> {
+                                _state.update { current ->
+                                    current.copy(
+                                        isUsernameValid = false,
+                                        usernameErrorMessage = error.message,
+                                        shouldFocusUsername = true,
+                                        isUsernameFocused = true,
+                                    )
+                                }
+                            }
+
+                            else -> {
+                                _state.update { current ->
+                                    current.copy(
+                                        usernameInput = previousUsername,
+                                        initialUsername = previousUsername,
+                                        isUsernameFocused = true,
+                                        isUsernameValid = false,
+                                        usernameErrorMessage = error.message,
+                                        shouldFocusUsername = true,
+                                    )
+                                }
+                            }
+                        }
                     }
-                }.onFailure { error ->
-                    when (error) {
-                        is MetadataUpdateError.UsernameTaken -> {
-                            _state.update { current ->
-                                current.copy(
-                                    isUsernameValid = false,
-                                    usernameErrorMessage = error.message,
-                                    shouldFocusUsername = true,
-                                    isUsernameFocused = true,
-                                )
-                            }
-                        }
-
-                        is MetadataUpdateError.InvalidUsername -> {
-                            _state.update { current ->
-                                current.copy(
-                                    isUsernameValid = false,
-                                    usernameErrorMessage = error.message,
-                                    shouldFocusUsername = true,
-                                    isUsernameFocused = true,
-                                )
-                            }
-                        }
-
-                        else -> {
-                            _state.update { current ->
-                                current.copy(
-                                    usernameInput = previousUsername,
-                                    initialUsername = previousUsername,
-                                    isUsernameFocused = true,
-                                    isUsernameValid = false,
-                                    usernameErrorMessage = error.message,
-                                    shouldFocusUsername = true,
-                                )
-                            }
-                        }
-                    }
-                }
+            }
         }
     }
 
@@ -206,6 +244,8 @@ data class EditProfileViewState(
     val usernameInput: String = "",
     val uniqueId: String = "",
     val initialUsername: String = "",
+    val bioInput: String = "",
+    val emailId: String = "",
     val isUsernameFocused: Boolean = false,
     val isUsernameValid: Boolean = true,
     val usernameErrorMessage: String? = null,
