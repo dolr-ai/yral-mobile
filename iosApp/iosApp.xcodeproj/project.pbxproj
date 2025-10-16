@@ -37,6 +37,18 @@
 		10020AAE2DF7FDB700DF269E /* SatsCoinResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10020AAC2DF7FDAC00DF269E /* SatsCoinResponse.swift */; };
 		10020AB02DF7FE2A00DF269E /* SatsCoinError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10020AAF2DF7FE2400DF269E /* SatsCoinError.swift */; };
 		10020AB12DF7FE2A00DF269E /* SatsCoinError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10020AAF2DF7FE2400DF269E /* SatsCoinError.swift */; };
+		1005408B2E9D4AE5004F8588 /* ConfirmUsernameBottomSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1005408A2E9D4AD4004F8588 /* ConfirmUsernameBottomSheet.swift */; };
+		1005408C2E9D4AE5004F8588 /* ConfirmUsernameBottomSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1005408A2E9D4AD4004F8588 /* ConfirmUsernameBottomSheet.swift */; };
+		100540D52E9E6139004F8588 /* UsernameGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100540D42E9E6135004F8588 /* UsernameGenerator.swift */; };
+		100540D62E9E6139004F8588 /* UsernameGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100540D42E9E6135004F8588 /* UsernameGenerator.swift */; };
+		100540D82E9E6147004F8588 /* SeededGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100540D72E9E6142004F8588 /* SeededGenerator.swift */; };
+		100540D92E9E6147004F8588 /* SeededGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100540D72E9E6142004F8588 /* SeededGenerator.swift */; };
+		100540DB2E9E61B7004F8588 /* Nouns.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100540DA2E9E61B3004F8588 /* Nouns.swift */; };
+		100540DC2E9E61B7004F8588 /* Nouns.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100540DA2E9E61B3004F8588 /* Nouns.swift */; };
+		100540DE2E9E61BB004F8588 /* Adjectives.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100540DD2E9E61B9004F8588 /* Adjectives.swift */; };
+		100540DF2E9E61BB004F8588 /* Adjectives.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100540DD2E9E61B9004F8588 /* Adjectives.swift */; };
+		100540E12E9E8F44004F8588 /* EditProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100540E02E9E8F44004F8588 /* EditProfileView.swift */; };
+		100540E22E9E8F44004F8588 /* EditProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100540E02E9E8F44004F8588 /* EditProfileView.swift */; };
 		100F63D32DCB4630000BC17E /* SmileyGameRuleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100F63D22DCB4630000BC17E /* SmileyGameRuleView.swift */; };
 		100F63D42DCB4630000BC17E /* SmileyGameRuleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100F63D22DCB4630000BC17E /* SmileyGameRuleView.swift */; };
 		100F64EE2DCC96C9000BC17E /* YralCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100F64ED2DCC96C5000BC17E /* YralCache.swift */; };
@@ -792,6 +804,12 @@
 		10020AA92DF7FBDB00DF269E /* SatsCoinDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SatsCoinDTO.swift; sourceTree = "<group>"; };
 		10020AAC2DF7FDAC00DF269E /* SatsCoinResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SatsCoinResponse.swift; sourceTree = "<group>"; };
 		10020AAF2DF7FE2400DF269E /* SatsCoinError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SatsCoinError.swift; sourceTree = "<group>"; };
+		1005408A2E9D4AD4004F8588 /* ConfirmUsernameBottomSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfirmUsernameBottomSheet.swift; sourceTree = "<group>"; };
+		100540D42E9E6135004F8588 /* UsernameGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsernameGenerator.swift; sourceTree = "<group>"; };
+		100540D72E9E6142004F8588 /* SeededGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeededGenerator.swift; sourceTree = "<group>"; };
+		100540DA2E9E61B3004F8588 /* Nouns.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Nouns.swift; sourceTree = "<group>"; };
+		100540DD2E9E61B9004F8588 /* Adjectives.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Adjectives.swift; sourceTree = "<group>"; };
+		100540E02E9E8F44004F8588 /* EditProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditProfileView.swift; sourceTree = "<group>"; };
 		100F63D22DCB4630000BC17E /* SmileyGameRuleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameRuleView.swift; sourceTree = "<group>"; };
 		100F64ED2DCC96C5000BC17E /* YralCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralCache.swift; sourceTree = "<group>"; };
 		100FCD6E2E659CDE00E9A02D /* ViewControllerWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewControllerWrapper.swift; sourceTree = "<group>"; };
@@ -1155,8 +1173,6 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		AC9B77DE2D58C7E300270FC9 /* YralTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = YralTests;
 			sourceTree = "<group>";
 		};
@@ -1318,6 +1334,17 @@
 				10020A112DE8445C00DF269E /* LeaderboardDIContainer.swift */,
 			);
 			path = DI;
+			sourceTree = "<group>";
+		};
+		100540D32E9E6122004F8588 /* UsernameGenerator */ = {
+			isa = PBXGroup;
+			children = (
+				100540DD2E9E61B9004F8588 /* Adjectives.swift */,
+				100540DA2E9E61B3004F8588 /* Nouns.swift */,
+				100540D72E9E6142004F8588 /* SeededGenerator.swift */,
+				100540D42E9E6135004F8588 /* UsernameGenerator.swift */,
+			);
+			path = UsernameGenerator;
 			sourceTree = "<group>";
 		};
 		103BBB022DACE1FE00C0BFD0 /* Interface */ = {
@@ -1795,6 +1822,7 @@
 		AC26CA662D806501006ADA75 /* Utils */ = {
 			isa = PBXGroup;
 			children = (
+				100540D32E9E6122004F8588 /* UsernameGenerator */,
 				AC1912A62E79855400BA5D78 /* CustomRoundedRectangle.swift */,
 				AC9461F32E780D3E002B37C2 /* AccountDetails */,
 				ACE77F1C2E74412B00896DD2 /* AppUpdate */,
@@ -2240,10 +2268,12 @@
 		AC99BBB22D86C568008012C2 /* View */ = {
 			isa = PBXGroup;
 			children = (
+				1005408A2E9D4AD4004F8588 /* ConfirmUsernameBottomSheet.swift */,
 				AC99BBAF2D86C55E008012C2 /* ProfileView.swift */,
 				AC8BB94C2E7AF36200E6BB3E /* ProfileView+Constants.swift */,
 				AC4E996A2D8874BA000B47B3 /* ProfileVideosGridView */,
 				AC99BBBF2D86FF76008012C2 /* ProfileEmptyState */,
+				100540E02E9E8F44004F8588 /* EditProfileView.swift */,
 			);
 			path = View;
 			sourceTree = "<group>";
@@ -3342,9 +3372,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3359,9 +3393,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3376,9 +3414,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3393,9 +3435,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3557,9 +3603,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3574,9 +3624,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3596,6 +3650,7 @@
 				107C61782DC35ED6006FC467 /* CoinsView.swift in Sources */,
 				ACB46A262D0EC0A3002E200C /* FeedsPlayer.swift in Sources */,
 				ACB46A682D0F3609002E200C /* FeedsViewModel.swift in Sources */,
+				1005408B2E9D4AE5004F8588 /* ConfirmUsernameBottomSheet.swift in Sources */,
 				ACAA4D692DDCB162001092A6 /* PerformanceMonitor.swift in Sources */,
 				107C60D32DBF9FC4006FC467 /* GameRuleView.swift in Sources */,
 				ACB46A422D0ECBB3002E200C /* ml_feed.proto in Sources */,
@@ -3670,12 +3725,14 @@
 				ACC0D4582D9177C2006DCF5C /* DeleteVideoRequest.swift in Sources */,
 				ACB46A502D0ED195002E200C /* FeedResult.swift in Sources */,
 				100FCD702E659CE400E9A02D /* ViewControllerWrapper.swift in Sources */,
+				100540D82E9E6147004F8588 /* SeededGenerator.swift in Sources */,
 				ACB46A532D0ED22B002E200C /* FeedQuery.swift in Sources */,
 				AC32E4502D296628001DDA43 /* AccountUseCase.swift in Sources */,
 				ACCA778F2DE4C1A2005BC0FA /* EventBuffer.swift in Sources */,
 				ACEBF7EF2D6F847300B594A0 /* ToastManager.swift in Sources */,
 				10FEA9882E720AC5000103EB /* SizeReader.swift in Sources */,
 				ACAA4D6D2DDCB257001092A6 /* FirebasePerformanceMonitor.swift in Sources */,
+				100540DC2E9E61B7004F8588 /* Nouns.swift in Sources */,
 				103EB6A42E9393450045A5DA /* VideoViewedRewardsCreditedBottomSheet.swift in Sources */,
 				ACDD23E72D8B1B5F00AB0DAF /* ProfileVideoRequest.swift in Sources */,
 				ACC0D44E2D8DDB21006DCF5C /* ProfileRepository.swift in Sources */,
@@ -3743,6 +3800,7 @@
 				AC4E99692D884BDB000B47B3 /* ProfileVideoGridsView.swift in Sources */,
 				ACC0D4522D8DDB97006DCF5C /* ProfileRepositoryProtocol.swift in Sources */,
 				105034BA2DD6332C00571B4E /* CastVoteError.swift in Sources */,
+				100540E22E9E8F44004F8588 /* EditProfileView.swift in Sources */,
 				AC6BECBD2D09F68C002E2021 /* Endpoint.swift in Sources */,
 				AC09A9B32CDB775C009A39A4 /* SwiftBridgeCore.swift in Sources */,
 				ACC1C3942D9AF854005A7539 /* LottieLoaderView.swift in Sources */,
@@ -3824,6 +3882,7 @@
 				AC811B402DBA56F70094C5F6 /* SignupOverlay.swift in Sources */,
 				ACAA4DBC2DDE08D6001092A6 /* HLSDownloadManager+Mockers.swift in Sources */,
 				10020A152DE9842800DF269E /* UIApplication+Extensions.swift in Sources */,
+				100540DE2E9E61BB004F8588 /* Adjectives.swift in Sources */,
 				10020A132DE8446000DF269E /* LeaderboardDIContainer.swift in Sources */,
 				ACD8C3642E7C685B0066027B /* BTCPriceResponseDTO.swift in Sources */,
 				ACB09FDA2D92D6E900EE3239 /* MoreFeedsRequest.swift in Sources */,
@@ -3884,6 +3943,7 @@
 				AC04D3022E059EA50055C4AA /* AppCheckProviderFactory.swift in Sources */,
 				100209FE2DE8402600DF269E /* LeaderboardResponse.swift in Sources */,
 				105034B62DD6316B00571B4E /* CastVoteRepository.swift in Sources */,
+				100540D52E9E6139004F8588 /* UsernameGenerator.swift in Sources */,
 				ACF63A782DC271F900C4BCCC /* DefaultAuthClient+Extensions.swift in Sources */,
 				107C60D62DBFA7C0006FC467 /* FirebaseImageView.swift in Sources */,
 				107C60B42DBF4857006FC467 /* SmileyGameRuleUseCase.swift in Sources */,
@@ -3927,6 +3987,7 @@
 				107C61772DC35ED6006FC467 /* CoinsView.swift in Sources */,
 				ACB46A272D0EC0A3002E200C /* FeedsPlayer.swift in Sources */,
 				ACB46A692D0F3609002E200C /* FeedsViewModel.swift in Sources */,
+				1005408C2E9D4AE5004F8588 /* ConfirmUsernameBottomSheet.swift in Sources */,
 				ACAA4D6A2DDCB162001092A6 /* PerformanceMonitor.swift in Sources */,
 				107C60D42DBF9FC4006FC467 /* GameRuleView.swift in Sources */,
 				ACB46A3F2D0ECBB3002E200C /* ml_feed.proto in Sources */,
@@ -4001,12 +4062,14 @@
 				ACC0D4572D9177C2006DCF5C /* DeleteVideoRequest.swift in Sources */,
 				ACB46A512D0ED195002E200C /* FeedResult.swift in Sources */,
 				100FCD6F2E659CE400E9A02D /* ViewControllerWrapper.swift in Sources */,
+				100540D92E9E6147004F8588 /* SeededGenerator.swift in Sources */,
 				ACB46A542D0ED22B002E200C /* FeedQuery.swift in Sources */,
 				AC32E44F2D296628001DDA43 /* AccountUseCase.swift in Sources */,
 				ACCA778E2DE4C1A2005BC0FA /* EventBuffer.swift in Sources */,
 				ACEBF7F02D6F847300B594A0 /* ToastManager.swift in Sources */,
 				10FEA9892E720AC5000103EB /* SizeReader.swift in Sources */,
 				ACAA4D6C2DDCB257001092A6 /* FirebasePerformanceMonitor.swift in Sources */,
+				100540DB2E9E61B7004F8588 /* Nouns.swift in Sources */,
 				103EB6A32E9393450045A5DA /* VideoViewedRewardsCreditedBottomSheet.swift in Sources */,
 				ACDD23E82D8B1B5F00AB0DAF /* ProfileVideoRequest.swift in Sources */,
 				ACC0D44F2D8DDB21006DCF5C /* ProfileRepository.swift in Sources */,
@@ -4074,6 +4137,7 @@
 				AC4E99682D884BDB000B47B3 /* ProfileVideoGridsView.swift in Sources */,
 				ACC0D4532D8DDB97006DCF5C /* ProfileRepositoryProtocol.swift in Sources */,
 				105034B92DD6332C00571B4E /* CastVoteError.swift in Sources */,
+				100540E12E9E8F44004F8588 /* EditProfileView.swift in Sources */,
 				AC6BECBC2D09F68C002E2021 /* Endpoint.swift in Sources */,
 				ACD941892CFF575C0038FCB6 /* SwiftBridgeCore.swift in Sources */,
 				ACC1C3952D9AF854005A7539 /* LottieLoaderView.swift in Sources */,
@@ -4155,6 +4219,7 @@
 				AC811B412DBA56F70094C5F6 /* SignupOverlay.swift in Sources */,
 				ACAA4DBB2DDE08D6001092A6 /* HLSDownloadManager+Mockers.swift in Sources */,
 				10020A162DE9842800DF269E /* UIApplication+Extensions.swift in Sources */,
+				100540DF2E9E61BB004F8588 /* Adjectives.swift in Sources */,
 				10020A122DE8446000DF269E /* LeaderboardDIContainer.swift in Sources */,
 				ACD8C3632E7C685B0066027B /* BTCPriceResponseDTO.swift in Sources */,
 				ACB09FDB2D92D6E900EE3239 /* MoreFeedsRequest.swift in Sources */,
@@ -4215,6 +4280,7 @@
 				AC04D3032E059EA50055C4AA /* AppCheckProviderFactory.swift in Sources */,
 				100209FF2DE8402600DF269E /* LeaderboardResponse.swift in Sources */,
 				ACF63A772DC271F900C4BCCC /* DefaultAuthClient+Extensions.swift in Sources */,
+				100540D62E9E6139004F8588 /* UsernameGenerator.swift in Sources */,
 				105034B72DD6316B00571B4E /* CastVoteRepository.swift in Sources */,
 				107C60D72DBFA7C0006FC467 /* FirebaseImageView.swift in Sources */,
 				107C60B52DBF4857006FC467 /* SmileyGameRuleUseCase.swift in Sources */,

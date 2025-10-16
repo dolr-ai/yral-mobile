@@ -118,4 +118,11 @@ final class ProfileDIContainer {
       showAccount: showAccount
     )
   }
+
+  func makeEditProfile(showEditProfile: Binding<Bool>, accountInfo: Binding<AccountInfo>) -> EditProfileView {
+    EditProfileView(
+      accountInfo: accountInfo,
+      showEditProfile: showEditProfile
+    )
+  }
 }
