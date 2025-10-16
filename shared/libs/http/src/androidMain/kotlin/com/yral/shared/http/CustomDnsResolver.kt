@@ -35,8 +35,8 @@ class CustomDnsResolver(
                 // Fallback to DNS over HTTPS
                 dnsOverHttps.lookup(hostname)
             } catch (fallbackException: UnknownHostException) {
-                httpEventListener.logException(DNSLookupException("DNSOverHttp failed", e))
-                emptyList()
+                httpEventListener.logException(DNSLookupException("DNSOverHttp failed", fallbackException))
+                throw fallbackException
             }
         }
 }

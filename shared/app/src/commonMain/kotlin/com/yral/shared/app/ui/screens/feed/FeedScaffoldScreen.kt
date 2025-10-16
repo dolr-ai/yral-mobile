@@ -84,7 +84,7 @@ fun FeedScaffoldScreen(
         },
         bottomOverlay = { pageNo -> OverlayBottom(pageNo, feedState, gameState, gameViewModel) },
         onPageChanged = { pageNo, currentPageOfFeed ->
-            if (pageNo < feedState.feedDetails.size) {
+            if (pageNo > 0 && pageNo < feedState.feedDetails.size) {
                 // Set current video ID for the new page
                 gameViewModel.setCurrentVideoId(feedState.feedDetails[pageNo].videoID)
                 // Mark animation as shown for the previous page when changing pages
@@ -107,13 +107,12 @@ fun FeedScaffoldScreen(
                 feedDetailsSize = feedState.feedDetails.size,
             )
         },
-        limitReelCount = {
+        limitReelCount =
             if (gameState.isStopAndVote) {
                 gameState.lastVotedCount
             } else {
                 feedState.feedDetails.size
-            }
-        },
+            },
         getPrefetchListener = { PrefetchVideoListenerImpl(it) },
         getVideoListener = {
             VideoListenerImpl(

@@ -93,9 +93,8 @@ internal fun YRALReelsPlayerView(
     getVideoListener: (reel: Reels) -> VideoListener?,
     overlayContent: @Composable (pageNo: Int) -> Unit,
 ) {
-    val pageCount by remember(reels, maxReelsInPager) {
-        derivedStateOf { minOf(reels.size, maxReelsInPager) }
-    }
+    val pageCount = minOf(reels.size, maxReelsInPager)
+    if (pageCount == 0) return
     // Remember the state of the pager
     val pagerState =
         rememberPagerState(
