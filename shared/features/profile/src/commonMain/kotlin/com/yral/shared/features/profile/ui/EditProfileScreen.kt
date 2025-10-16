@@ -4,7 +4,9 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,10 +42,11 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.boundsInParent
+import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalFocusManager
@@ -64,6 +67,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
+import yral_mobile.shared.libs.designsystem.generated.resources.bio
 import yral_mobile.shared.libs.designsystem.generated.resources.cancel
 import yral_mobile.shared.libs.designsystem.generated.resources.change_name
 import yral_mobile.shared.libs.designsystem.generated.resources.change_name_prompt
@@ -71,6 +75,8 @@ import yral_mobile.shared.libs.designsystem.generated.resources.copy_profile_nam
 import yral_mobile.shared.libs.designsystem.generated.resources.cross
 import yral_mobile.shared.libs.designsystem.generated.resources.done
 import yral_mobile.shared.libs.designsystem.generated.resources.edit_profile
+import yral_mobile.shared.libs.designsystem.generated.resources.email_id
+import yral_mobile.shared.libs.designsystem.generated.resources.enter_bio
 import yral_mobile.shared.libs.designsystem.generated.resources.profile_placeholder
 import yral_mobile.shared.libs.designsystem.generated.resources.unique_id
 import yral_mobile.shared.libs.designsystem.generated.resources.username
@@ -79,7 +85,7 @@ import yral_mobile.shared.libs.designsystem.generated.resources.username_helper_
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Suppress("LongMethod")
+@Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
 fun EditProfileScreen(
     component: EditProfileComponent,
@@ -90,6 +96,7 @@ fun EditProfileScreen(
     val clipboardManager = LocalClipboardManager.current
     val focusManager = LocalFocusManager.current
     var usernameBounds by remember { mutableStateOf<Rect?>(null) }
+    var bioBounds by remember { mutableStateOf<Rect?>(null) }
     val scrollState = rememberScrollState()
     var showConfirmation by remember { mutableStateOf(false) }
     var pendingUsername by remember { mutableStateOf("") }
@@ -103,13 +110,20 @@ fun EditProfileScreen(
         modifier =
             modifier
                 .fillMaxSize()
+                .background(Color.Black)
                 .verticalScroll(scrollState)
-                .pointerInput(state.isUsernameFocused, usernameBounds) {
-                    if (!state.isUsernameFocused) return@pointerInput
-                    detectTapGestures { offset ->
-                        val bounds = usernameBounds
-                        if (bounds == null || !bounds.contains(offset)) {
-                            viewModel.revertUsernameChange()
+                .pointerInput(state.isUsernameFocused, usernameBounds, bioBounds) {
+                    awaitEachGesture {
+                        val down = awaitFirstDown(requireUnconsumed = true)
+                        val up = waitForUpOrCancellation()
+                        val position = (up ?: down).position
+                        val inUsername = usernameBounds?.contains(position) == true
+                        val inBio = bioBounds?.contains(position) == true
+
+                        if (!inUsername && !inBio) {
+                            if (state.isUsernameFocused) {
+                                viewModel.revertUsernameChange()
+                            }
                             focusManager.clearFocus()
                         }
                     }
@@ -179,19 +193,27 @@ fun EditProfileScreen(
                     textAlign = TextAlign.Start,
                     modifier = Modifier.fillMaxWidth(),
                 )
-                Spacer(modifier = Modifier.height(24.dp))
-            } else {
-                Spacer(modifier = Modifier.height(28.dp))
-                UniqueIdSection(
-                    uniqueId = state.uniqueId,
-                    onCopy = {
-                        if (state.uniqueId.isNotEmpty()) {
-                            clipboardManager.setText(AnnotatedString(state.uniqueId))
-                        }
-                    },
-                )
-                Spacer(modifier = Modifier.height(24.dp))
             }
+            Spacer(modifier = Modifier.height(24.dp))
+
+            BioSection(
+                bio = state.bioInput,
+                onBioChange = viewModel::onBioChanged,
+                onBoundsChanged = { bioBounds = it },
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+
+            UniqueIdSection(
+                uniqueId = state.uniqueId,
+                onCopy = {
+                    if (state.uniqueId.isNotEmpty()) {
+                        clipboardManager.setText(AnnotatedString(state.uniqueId))
+                    }
+                },
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+
+            EmailSection(email = state.emailId)
         }
     }
 
@@ -342,7 +364,7 @@ private fun UsernameTextField(
                 .focusRequester(focusRequester)
                 .onFocusChanged { focusState -> onFocusChanged(focusState.isFocused) }
                 .onGloballyPositioned { coordinates ->
-                    onBoundsChanged(coordinates.boundsInParent())
+                    onBoundsChanged(coordinates.boundsInRoot())
                 },
         decorationBox = { innerTextField ->
             val isInvalid = !state.isUsernameValid
@@ -469,6 +491,59 @@ private fun ChangeUsernameConfirmationSheet(
 }
 
 @Composable
+private fun BioSection(
+    bio: String,
+    onBioChange: (String) -> Unit,
+    onBoundsChanged: (Rect) -> Unit,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.Start,
+    ) {
+        Text(
+            text = stringResource(DesignRes.string.bio),
+            style = LocalAppTopography.current.baseMedium,
+            color = YralColors.NeutralTextTertiary,
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        val shape = RoundedCornerShape(12.dp)
+        BasicTextField(
+            value = bio,
+            onValueChange = onBioChange,
+            textStyle = LocalAppTopography.current.baseRegular.copy(color = YralColors.NeutralTextPrimary),
+            cursorBrush = SolidColor(YralColors.NeutralTextPrimary),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .defaultMinSize(minHeight = 44.dp)
+                    .onGloballyPositioned { coordinates ->
+                        onBoundsChanged(coordinates.boundsInRoot())
+                    },
+            decorationBox = { innerTextField ->
+                Box(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .clip(shape)
+                            .background(YralColors.Neutral900)
+                            .border(1.dp, YralColors.Neutral700, shape)
+                            .padding(horizontal = 10.dp, vertical = 12.dp),
+                ) {
+                    if (bio.isEmpty()) {
+                        Text(
+                            text = stringResource(DesignRes.string.enter_bio),
+                            style = LocalAppTopography.current.baseRegular,
+                            color = YralColors.NeutralTextTertiary,
+                        )
+                    }
+                    innerTextField()
+                }
+            },
+        )
+    }
+}
+
+@Composable
 private fun UniqueIdSection(
     uniqueId: String,
     onCopy: () -> Unit,
@@ -515,6 +590,39 @@ private fun UniqueIdSection(
                     modifier = Modifier.size(18.dp),
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun EmailSection(email: String) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.Start,
+    ) {
+        Text(
+            text = stringResource(DesignRes.string.email_id),
+            style = LocalAppTopography.current.baseMedium,
+            color = YralColors.NeutralTextTertiary,
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        val shape = RoundedCornerShape(12.dp)
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .defaultMinSize(minHeight = 44.dp)
+                    .clip(shape)
+                    .background(YralColors.Neutral900)
+                    .border(1.dp, YralColors.Neutral700, shape)
+                    .padding(horizontal = 10.dp, vertical = 12.dp),
+            contentAlignment = Alignment.CenterStart,
+        ) {
+            Text(
+                text = email,
+                style = LocalAppTopography.current.baseRegular,
+                color = YralColors.NeutralTextPrimary,
+            )
         }
     }
 }

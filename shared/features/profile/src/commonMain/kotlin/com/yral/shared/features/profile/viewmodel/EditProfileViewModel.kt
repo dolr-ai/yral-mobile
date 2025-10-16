@@ -31,12 +31,20 @@ class EditProfileViewModel(
         val profilePic = sessionManager.profilePic
         val uniqueId = sessionManager.userPrincipal.orEmpty()
         val initialUsername = sanitizedSessionUsername()
+        val email =
+            sessionManager
+                .observeSessionProperties()
+                .value
+                .emailId
+                .orEmpty()
         _state.update {
             it.copy(
                 profileImageUrl = profilePic,
                 usernameInput = initialUsername,
                 initialUsername = initialUsername,
                 uniqueId = uniqueId,
+                bioInput = "",
+                emailId = email,
                 isUsernameValid = true,
                 usernameErrorMessage = null,
                 shouldFocusUsername = false,
@@ -95,6 +103,12 @@ class EditProfileViewModel(
                         shouldFocusUsername = false,
                     )
             }
+        }
+    }
+
+    fun onBioChanged(value: String) {
+        _state.update { current ->
+            current.copy(bioInput = value)
         }
     }
 
@@ -206,6 +220,8 @@ data class EditProfileViewState(
     val usernameInput: String = "",
     val uniqueId: String = "",
     val initialUsername: String = "",
+    val bioInput: String = "",
+    val emailId: String = "",
     val isUsernameFocused: Boolean = false,
     val isUsernameValid: Boolean = true,
     val usernameErrorMessage: String? = null,
