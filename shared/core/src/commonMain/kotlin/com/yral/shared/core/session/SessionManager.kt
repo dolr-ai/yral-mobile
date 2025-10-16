@@ -109,22 +109,12 @@ class SessionManager {
         mutableProperties.update { it.copy(unFollowedPrincipals = it.unFollowedPrincipals + principal) }
     }
 
-    suspend fun <T> observeSessionProperty(
-        selector: (SessionProperties) -> T,
-        action: suspend (T) -> Unit,
-    ) = mutableProperties
-        .map(selector)
-        .distinctUntilChanged()
-        .collect(action)
-
-    suspend fun <T : Any> observeSessionPropertyWithDefault(
+    fun <T : Any> observeSessionPropertyWithDefault(
         selector: (SessionProperties) -> T?,
         defaultValue: T,
-        action: suspend (T) -> Unit,
     ) = mutableProperties
         .map { selector(it) ?: defaultValue }
         .distinctUntilChanged()
-        .collect(action)
 
     fun <T> observeSessionProperty(selector: (SessionProperties) -> T) =
         mutableProperties
@@ -134,10 +124,10 @@ class SessionManager {
     fun <R> observeSessionStateWithProperty(transform: suspend (SessionState, SessionProperties) -> R) =
         combine(mutableState.asStateFlow(), mutableProperties.asStateFlow(), transform).distinctUntilChanged()
 
-    suspend fun <T> observeState(
-        transform: suspend (SessionState) -> T,
-        action: suspend (T) -> Unit,
-    ): Unit = mutableState.map(transform).distinctUntilChanged().collect(action)
+    fun <T> observeSessionState(transform: suspend (SessionState) -> T) =
+        mutableState
+            .map(transform)
+            .distinctUntilChanged()
 
     fun resetSessionProperties() {
         mutableProperties.update {

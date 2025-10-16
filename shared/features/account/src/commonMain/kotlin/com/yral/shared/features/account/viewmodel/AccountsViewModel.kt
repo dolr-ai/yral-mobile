@@ -76,16 +76,14 @@ class AccountsViewModel internal constructor(
             _state.update { it.copy(alertsEnabled = isEnabled) }
         }
         coroutineScope.launch {
-            sessionManager.observeSessionProperty({ it.isSocialSignIn }) { isSocialSignIn ->
+            sessionManager.observeSessionProperty { it.isSocialSignIn }.collect { isSocialSignIn ->
                 _state.update { it.copy(isLoggedIn = isSocialSignIn == true) }
             }
         }
         coroutineScope.launch {
             sessionManager
-                .observeState(
-                    transform = { sessionManager.getAccountInfo() },
-                    action = { info: AccountInfo? -> _state.update { it.copy(accountInfo = info) } },
-                )
+                .observeSessionState(transform = { sessionManager.getAccountInfo() })
+                .collect { info: AccountInfo? -> _state.update { it.copy(accountInfo = info) } }
         }
     }
 

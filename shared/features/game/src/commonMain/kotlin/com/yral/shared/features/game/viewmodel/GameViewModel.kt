@@ -57,16 +57,15 @@ class GameViewModel(
     init {
         viewModelScope.launch { restoreDataFromPrefs() }
         viewModelScope.launch {
-            sessionManager.observeSessionProperty({ it.coinBalance }) { coinBalance ->
+            sessionManager.observeSessionProperty { it.coinBalance }.collect { coinBalance ->
                 Logger.d("coinBalance") { "coin balance collected $coinBalance" }
                 coinBalance?.let { balance -> _state.update { it.copy(coinBalance = balance) } }
             }
         }
         viewModelScope.launch {
             sessionManager
-                .observeSessionProperty(
-                    selector = { it.isFirebaseLoggedIn to it.isForcedGamePlayUser },
-                ) { (isLoggedIn, isForcedGamePlayUser) ->
+                .observeSessionProperty { it.isFirebaseLoggedIn to it.isForcedGamePlayUser }
+                .collect { (isLoggedIn, isForcedGamePlayUser) ->
                     if (isLoggedIn) {
                         isForcedGamePlayUser?.let { _state.update { it.copy(isStopAndVote = isForcedGamePlayUser) } }
                         listOf(

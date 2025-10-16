@@ -42,9 +42,11 @@ class LeaderBoardViewModel(
 
     init {
         viewModelScope.launch {
-            sessionManager.observeSessionProperty({ it.isFirebaseLoggedIn }) { isFirebaseLoggedIn ->
-                _state.update { it.copy(isFirebaseLoggedIn = true) }
-            }
+            sessionManager
+                .observeSessionProperty { it.isFirebaseLoggedIn }
+                .collect { isFirebaseLoggedIn ->
+                    _state.update { it.copy(isFirebaseLoggedIn = true) }
+                }
         }
     }
 

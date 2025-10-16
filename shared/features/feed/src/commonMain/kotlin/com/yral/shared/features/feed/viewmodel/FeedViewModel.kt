@@ -86,30 +86,31 @@ class FeedViewModel(
     init {
         initialFeedData()
         viewModelScope.launch {
-            sessionManager.observeSessionProperty(
-                selector = { it.followedPrincipals to it.unFollowedPrincipals },
-            ) { (followedPrincipals, unfollowedPrincipals) ->
-                _state.update {
-                    it.copy(
-                        feedDetails =
-                            it.feedDetails.map { details ->
-                                when (details.principalID) {
-                                    in followedPrincipals -> details.copy(isFollowing = true)
-                                    in unfollowedPrincipals -> details.copy(isFollowing = false)
-                                    else -> details
-                                }
-                            },
-                    )
+            sessionManager
+                .observeSessionProperty { it.followedPrincipals to it.unFollowedPrincipals }
+                .collect { (followedPrincipals, unfollowedPrincipals) ->
+                    _state.update {
+                        it.copy(
+                            feedDetails =
+                                it.feedDetails.map { details ->
+                                    when (details.principalID) {
+                                        in followedPrincipals -> details.copy(isFollowing = true)
+                                        in unfollowedPrincipals -> details.copy(isFollowing = false)
+                                        else -> details
+                                    }
+                                },
+                        )
+                    }
                 }
-            }
         }
         viewModelScope.launch {
-            sessionManager.observeSessionPropertyWithDefault(
-                selector = { it.isSocialSignIn },
-                defaultValue = false,
-            ) { isSocialSignIn ->
-                _state.update { it.copy(isLoggedIn = isSocialSignIn) }
-            }
+            sessionManager
+                .observeSessionPropertyWithDefault(
+                    selector = { it.isSocialSignIn },
+                    defaultValue = false,
+                ).collect { isSocialSignIn ->
+                    _state.update { it.copy(isLoggedIn = isSocialSignIn) }
+                }
         }
     }
 

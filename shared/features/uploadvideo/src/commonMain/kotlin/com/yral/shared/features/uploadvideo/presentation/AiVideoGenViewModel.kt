@@ -60,12 +60,13 @@ class AiVideoGenViewModel internal constructor(
 
     init {
         viewModelScope.launch {
-            sessionManager.observeSessionPropertyWithDefault(
-                selector = { it.isSocialSignIn },
-                defaultValue = false,
-            ) { isSocialSignIn ->
-                _state.update { it.copy(isLoggedIn = isSocialSignIn) }
-            }
+            sessionManager
+                .observeSessionPropertyWithDefault(
+                    selector = { it.isSocialSignIn },
+                    defaultValue = false,
+                ).collect { isSocialSignIn ->
+                    _state.update { it.copy(isLoggedIn = isSocialSignIn) }
+                }
         }
     }
 

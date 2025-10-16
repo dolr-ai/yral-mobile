@@ -90,19 +90,17 @@ class RootViewModel(
     init {
         coroutineScope.launch {
             sessionManager
-                .observeState(
-                    transform = { it },
-                    action = { sessionState ->
-                        if (sessionState != _state.value.sessionState) {
-                            _state.update { it.copy(sessionState = sessionState) }
-                            when (sessionState) {
-                                is SessionState.Initial -> initialize()
-                                is SessionState.SignedIn -> initialize()
-                                else -> Unit
-                            }
+                .observeSessionState(transform = { it })
+                .collect { sessionState ->
+                    if (sessionState != _state.value.sessionState) {
+                        _state.update { it.copy(sessionState = sessionState) }
+                        when (sessionState) {
+                            is SessionState.Initial -> initialize()
+                            is SessionState.SignedIn -> initialize()
+                            else -> Unit
                         }
-                    },
-                )
+                    }
+                }
         }
         coroutineScope.launch {
             sessionManager

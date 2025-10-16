@@ -191,14 +191,12 @@ class ProfileViewModel(
         } else {
             viewModelScope.launch {
                 sessionManager
-                    .observeState(
-                        transform = { sessionManager.getAccountInfo() },
-                        action = { info -> _state.update { it.copy(accountInfo = info) } },
-                    )
+                    .observeSessionState(transform = { sessionManager.getAccountInfo() })
+                    .collect { info -> _state.update { it.copy(accountInfo = info) } }
             }
         }
         viewModelScope.launch {
-            sessionManager.observeSessionProperty({ it.isSocialSignIn }) { isSocialSignIn ->
+            sessionManager.observeSessionProperty { it.isSocialSignIn }.collect { isSocialSignIn ->
                 _state.update { it.copy(isLoggedIn = isSocialSignIn == true) }
             }
         }
