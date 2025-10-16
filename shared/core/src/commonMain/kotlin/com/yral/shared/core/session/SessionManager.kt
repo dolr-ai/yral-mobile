@@ -96,6 +96,16 @@ class SessionManager {
         sessionProperties.update { it.copy(dailyRank = dailyRank) }
     }
 
+    fun addPrincipalToFollow(principal: String) {
+        sessionProperties.update { it.copy(followedPrincipals = it.followedPrincipals + principal) }
+        sessionProperties.update { it.copy(unFollowedPrincipals = it.unFollowedPrincipals - principal) }
+    }
+
+    fun removePrincipalFromFollow(principal: String) {
+        sessionProperties.update { it.copy(followedPrincipals = it.followedPrincipals - principal) }
+        sessionProperties.update { it.copy(unFollowedPrincipals = it.unFollowedPrincipals + principal) }
+    }
+
     fun observeSessionProperties(): StateFlow<SessionProperties> = sessionProperties.asStateFlow()
 
     fun resetSessionProperties() {
