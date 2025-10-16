@@ -75,11 +75,10 @@ fun WalletScreen(
     viewModel: WalletViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val isFirebaseLoggedIn by viewModel.firebaseLogin.collectAsStateWithLifecycle(false)
     val countryCode = Locale.current.region
     LaunchedEffect(Unit) { viewModel.onScreenViewed() }
-    LaunchedEffect(isFirebaseLoggedIn) {
-        viewModel.refresh(countryCode, isFirebaseLoggedIn)
+    LaunchedEffect(state.isFirebaseLoggedIn) {
+        viewModel.refresh(countryCode)
     }
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     Column(modifier = modifier.fillMaxSize()) {

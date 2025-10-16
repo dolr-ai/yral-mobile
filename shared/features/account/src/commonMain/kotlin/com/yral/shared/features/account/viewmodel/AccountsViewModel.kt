@@ -27,8 +27,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -78,22 +76,16 @@ class AccountsViewModel internal constructor(
             _state.update { it.copy(alertsEnabled = isEnabled) }
         }
         coroutineScope.launch {
-            sessionManager
-                .observeSessionProperties()
-                .map { it.isSocialSignIn }
-                .distinctUntilChanged()
-                .collect { isSocialSignIn ->
-                    _state.update { it.copy(isLoggedIn = isSocialSignIn == true) }
-                }
+            sessionManager.observeSessionProperty({ it.isSocialSignIn }) { isSocialSignIn ->
+                _state.update { it.copy(isLoggedIn = isSocialSignIn == true) }
+            }
         }
         coroutineScope.launch {
             sessionManager
-                .state
-                .map { sessionManager.getAccountInfo() }
-                .distinctUntilChanged()
-                .collect { info: AccountInfo? ->
-                    _state.update { it.copy(accountInfo = info) }
-                }
+                .observeState(
+                    transform = { sessionManager.getAccountInfo() },
+                    action = { info: AccountInfo? -> _state.update { it.copy(accountInfo = info) } },
+                )
         }
     }
 

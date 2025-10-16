@@ -19,8 +19,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -35,19 +33,20 @@ class LeaderBoardViewModel(
     val state: StateFlow<LeaderBoardState> = _state.asStateFlow()
     private var countdownJob: Job? = null
 
-    val firebaseLogin =
-        sessionManager
-            .observeSessionProperties()
-            .map { it.isFirebaseLoggedIn }
-            .distinctUntilChanged()
+    val dailyRank = sessionManager.observeSessionProperty { it.dailyRank }
 
-    val dailyRank =
+    val refreshRank =
         sessionManager
-            .observeSessionProperties()
-            .map { it.dailyRank }
-            .distinctUntilChanged()
+            .observeSessionProperty { it.isFirebaseLoggedIn }
+            .onEach { isLoggedIn -> if (isLoggedIn) refreshTodayRank() }
 
-    val refreshRank = firebaseLogin.onEach { if (it) refreshTodayRank() }
+    init {
+        viewModelScope.launch {
+            sessionManager.observeSessionProperty({ it.isFirebaseLoggedIn }) { isFirebaseLoggedIn ->
+                _state.update { it.copy(isFirebaseLoggedIn = true) }
+            }
+        }
+    }
 
     private fun resetState() {
         _state.update {
@@ -204,4 +203,5 @@ data class LeaderBoardState(
     val rewardCurrency: RewardCurrency? = null,
     val rewardCurrencyCode: String? = null,
     val rewardsTable: Map<Int, Double>? = null,
+    val isFirebaseLoggedIn: Boolean = false,
 )

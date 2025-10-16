@@ -31,8 +31,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -59,21 +57,16 @@ class GameViewModel(
     init {
         viewModelScope.launch { restoreDataFromPrefs() }
         viewModelScope.launch {
-            // Observe coin balance changes
-            sessionManager.observeSessionProperties().collect { properties ->
-                Logger.d("coinBalance") { "coin balance collected ${properties.coinBalance}" }
-                properties.coinBalance?.let { balance ->
-                    _state.update { it.copy(coinBalance = balance) }
-                }
+            sessionManager.observeSessionProperty({ it.coinBalance }) { coinBalance ->
+                Logger.d("coinBalance") { "coin balance collected $coinBalance" }
+                coinBalance?.let { balance -> _state.update { it.copy(coinBalance = balance) } }
             }
         }
         viewModelScope.launch {
-            // Observe firebase login
             sessionManager
-                .observeSessionProperties()
-                .map { it.isFirebaseLoggedIn to it.isForcedGamePlayUser }
-                .distinctUntilChanged()
-                .collect { (isLoggedIn, isForcedGamePlayUser) ->
+                .observeSessionProperty(
+                    selector = { it.isFirebaseLoggedIn to it.isForcedGamePlayUser },
+                ) { (isLoggedIn, isForcedGamePlayUser) ->
                     if (isLoggedIn) {
                         isForcedGamePlayUser?.let { _state.update { it.copy(isStopAndVote = isForcedGamePlayUser) } }
                         listOf(

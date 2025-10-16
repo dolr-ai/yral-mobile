@@ -42,8 +42,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -85,30 +83,33 @@ class FeedViewModel(
     private val _state = MutableStateFlow(FeedState())
     val state: StateFlow<FeedState> = _state.asStateFlow()
 
-    private val followPrincipalsStatus =
-        sessionManager
-            .observeSessionProperties()
-            .map { it.followedPrincipals to it.unFollowedPrincipals }
-            .distinctUntilChanged()
-
     init {
         initialFeedData()
         viewModelScope.launch {
-            followPrincipalsStatus
-                .collect { (followedPrincipals, unfollowedPrincipals) ->
-                    _state.update {
-                        it.copy(
-                            feedDetails =
-                                it.feedDetails.map { details ->
-                                    when (details.principalID) {
-                                        in followedPrincipals -> details.copy(isFollowing = true)
-                                        in unfollowedPrincipals -> details.copy(isFollowing = false)
-                                        else -> details
-                                    }
-                                },
-                        )
-                    }
+            sessionManager.observeSessionProperty(
+                selector = { it.followedPrincipals to it.unFollowedPrincipals },
+            ) { (followedPrincipals, unfollowedPrincipals) ->
+                _state.update {
+                    it.copy(
+                        feedDetails =
+                            it.feedDetails.map { details ->
+                                when (details.principalID) {
+                                    in followedPrincipals -> details.copy(isFollowing = true)
+                                    in unfollowedPrincipals -> details.copy(isFollowing = false)
+                                    else -> details
+                                }
+                            },
+                    )
                 }
+            }
+        }
+        viewModelScope.launch {
+            sessionManager.observeSessionPropertyWithDefault(
+                selector = { it.isSocialSignIn },
+                defaultValue = false,
+            ) { isSocialSignIn ->
+                _state.update { it.copy(isLoggedIn = isSocialSignIn) }
+            }
         }
     }
 
@@ -450,7 +451,7 @@ class FeedViewModel(
         val currentFeed = _state.value.feedDetails[_state.value.currentPageOfFeed]
         feedTelemetry.onVideoDurationWatched(
             feedDetails = currentFeed,
-            isLoggedIn = isLoggedIn(),
+            isLoggedIn = _state.value.isLoggedIn,
             currentTime = videoData.lastKnownCurrentTime,
             totalTime = videoData.lastKnownTotalTime,
         )
@@ -616,8 +617,6 @@ class FeedViewModel(
         _state.update { it.copy(showSignupFailedSheet = shouldShow) }
     }
 
-    fun isLoggedIn(): Boolean = sessionManager.isSocialSignIn()
-
     fun pushScreenView() {
         feedTelemetry.onFeedPageViewed()
     }
@@ -647,6 +646,7 @@ data class FeedState(
     val reportSheetState: ReportSheetState = ReportSheetState.Closed,
     val showSignupFailedSheet: Boolean = false,
     val overlayType: OverlayType = OverlayType.DAILY_RANK,
+    val isLoggedIn: Boolean = false,
 )
 
 enum class OverlayType {

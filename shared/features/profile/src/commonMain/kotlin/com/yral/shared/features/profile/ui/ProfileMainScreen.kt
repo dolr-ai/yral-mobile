@@ -145,10 +145,12 @@ fun ProfileMainScreen(
         }
     }
 
-    val principalFollowed = viewModel.followStatus.collectAsStateWithLifecycle(null)
-    LaunchedEffect(principalFollowed) {
-        if (state.isOwnProfile) {
-            following?.refresh()
+    LaunchedEffect(Unit) {
+        viewModel.followStatus.collect {
+            if (state.isOwnProfile) {
+                followers?.refresh()
+                following?.refresh()
+            }
         }
     }
 

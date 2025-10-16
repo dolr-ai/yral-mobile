@@ -59,25 +59,7 @@ fun RootScreen(
     viewModel: RootViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
-    val sessionState by viewModel.sessionManagerState.collectAsState()
-
-    val analyticsUser = viewModel.analyticsUser.collectAsState(null)
-    LaunchedEffect(analyticsUser.value) {
-        viewModel.setUser(analyticsUser.value)
-    }
-
-    LaunchedEffect(sessionState) {
-        if (sessionState != state.currentSessionState) {
-            when (sessionState) {
-                is SessionState.Initial -> viewModel.initialize()
-                is SessionState.SignedIn -> viewModel.initialize()
-                else -> Unit
-            }
-        }
-    }
-
     rootComponent.setSplashActive(state.showSplash)
-
     Box(modifier = Modifier.fillMaxSize()) {
         Children(stack = rootComponent.stack, modifier = Modifier.fillMaxSize(), animation = stackAnimation(fade())) {
             when (val child = it.instance) {
@@ -94,7 +76,7 @@ fun RootScreen(
                     HandleSystemBars(show = true)
                     HomeScreen(
                         component = child.component,
-                        sessionState = sessionState,
+                        sessionState = state.sessionState,
                         bottomNavigationAnalytics = { viewModel.bottomNavigationClicked(it) },
                         updateProfileVideosCount = { viewModel.updateProfileVideosCount(it) },
                     )
@@ -148,7 +130,7 @@ fun RootScreen(
         // 1. after logout on account screen during anonymous sign in
         // 2. after social sign in
         // 3. after delete account during anonymous sign in
-        if (!state.showSplash && sessionState is SessionState.Loading) {
+        if (!state.showSplash && state.sessionState is SessionState.Loading) {
             BlockingLoader()
         }
 

@@ -26,8 +26,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
@@ -69,12 +67,8 @@ class RootViewModel(
     private val _state = MutableStateFlow(RootState())
     val state: StateFlow<RootState> = _state.asStateFlow()
 
-    val sessionManagerState = sessionManager.state
-    val analyticsUser =
-        combine(
-            sessionManager.state,
-            sessionManager.observeSessionProperties(),
-        ) { state, properties ->
+    private val analyticsUser =
+        sessionManager.observeSessionStateWithProperty { state, properties ->
             sessionManager.userPrincipal?.let { userPrincipal ->
                 sessionManager.canisterID?.let { canisterID ->
                     User(
@@ -91,39 +85,50 @@ class RootViewModel(
             }
         }
 
-    val firebaseAuthFlow =
-        combine(
-            sessionManager.state,
-            sessionManager.observeSessionProperties(),
-        ) { state, properties ->
-            (state is SessionState.SignedIn) to properties.isFirebaseLoggedIn
-        }.distinctUntilChanged()
-
     private var initialisationJob: Job? = null
 
     init {
         coroutineScope.launch {
-            firebaseAuthFlow.collect { (isSignedIn, isAuthenticated) ->
-                if (isSignedIn && !isAuthenticated) {
-                    coroutineScope.launch {
-                        val session = (sessionManager.state.value as? SessionState.SignedIn)?.session
-                        try {
-                            session?.let {
+            sessionManager
+                .observeState(
+                    transform = { it },
+                    action = { sessionState ->
+                        if (sessionState != _state.value.sessionState) {
+                            _state.update { it.copy(sessionState = sessionState) }
+                            when (sessionState) {
+                                is SessionState.Initial -> initialize()
+                                is SessionState.SignedIn -> initialize()
+                                else -> Unit
+                            }
+                        }
+                    },
+                )
+        }
+        coroutineScope.launch {
+            sessionManager
+                .observeSessionStateWithProperty { state, properties ->
+                    (state as? SessionState.SignedIn)?.session to properties.isFirebaseLoggedIn
+                }.collect { (session, isAuthenticated) ->
+                    if (session != null && !isAuthenticated) {
+                        coroutineScope.launch {
+                            try {
                                 authClient.fetchBalance(session)
                                 authClient.authorizeFirebase(session)
+                            } catch (e: YralFBAuthException) {
+                                // Do not update error in state since no error message required
+                                Logger.e("Firebase Auth error - $e")
+                                crashlyticsManager.recordException(e)
+                            } catch (e: YralAuthException) {
+                                // can be triggered in postFirebaseLogin when getting balance
+                                Logger.e("Fetch Balance error - $e")
+                                crashlyticsManager.recordException(e)
                             }
-                        } catch (e: YralFBAuthException) {
-                            // Do not update error in state since no error message required
-                            Logger.e("Firebase Auth error - $e")
-                            crashlyticsManager.recordException(e)
-                        } catch (e: YralAuthException) {
-                            // can be triggered in postFirebaseLogin when getting balance
-                            Logger.e("Fetch Balance error - $e")
-                            crashlyticsManager.recordException(e)
                         }
                     }
                 }
-            }
+        }
+        coroutineScope.launch {
+            analyticsUser.collect { user -> rootTelemetry.setUser(user) }
         }
     }
 
@@ -180,15 +185,11 @@ class RootViewModel(
     fun bottomNavigationClicked(categoryName: CategoryName) {
         rootTelemetry.bottomNavigationClicked(categoryName)
     }
-
-    fun setUser(user: User?) {
-        rootTelemetry.setUser(user)
-    }
 }
 
 data class RootState(
     val showSplash: Boolean = true,
     val initialAnimationComplete: Boolean = false,
-    val currentSessionState: SessionState? = null,
+    val sessionState: SessionState = SessionState.Loading,
     val error: RootError? = null,
 )

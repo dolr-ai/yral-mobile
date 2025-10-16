@@ -53,7 +53,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -165,11 +164,7 @@ class ProfileViewModel(
             flowOf()
         }
 
-    val followStatus =
-        sessionManager
-            .observeSessionProperties()
-            .map { it.followedPrincipals }
-            .distinctUntilChanged()
+    val followStatus = sessionManager.observeSessionProperty { it.followedPrincipals to it.unFollowedPrincipals }
 
     init {
         _state.update {
@@ -193,22 +188,16 @@ class ProfileViewModel(
         } else {
             viewModelScope.launch {
                 sessionManager
-                    .state
-                    .map { sessionManager.getAccountInfo() }
-                    .distinctUntilChanged()
-                    .collect { info ->
-                        _state.update { it.copy(accountInfo = info) }
-                    }
+                    .observeState(
+                        transform = { sessionManager.getAccountInfo() },
+                        action = { info -> _state.update { it.copy(accountInfo = info) } },
+                    )
             }
         }
         viewModelScope.launch {
-            sessionManager
-                .observeSessionProperties()
-                .map { it.isSocialSignIn }
-                .distinctUntilChanged()
-                .collect { isSocialSignIn ->
-                    _state.update { it.copy(isLoggedIn = isSocialSignIn == true) }
-                }
+            sessionManager.observeSessionProperty({ it.isSocialSignIn }) { isSocialSignIn ->
+                _state.update { it.copy(isLoggedIn = isSocialSignIn == true) }
+            }
         }
     }
 
@@ -254,7 +243,7 @@ class ProfileViewModel(
                     deletedVideoIds.update { it + deleteRequest.feedDetails.videoID }
 
                     // Update session manager with new video count
-                    val currentCount = sessionManager.profileVideosCount()
+                    val currentCount = sessionManager.profileVideosCount
                     sessionManager.updateProfileVideosCount(
                         count = (currentCount - 1).coerceAtLeast(0),
                     )

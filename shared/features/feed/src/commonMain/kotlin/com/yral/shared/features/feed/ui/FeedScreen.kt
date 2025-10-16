@@ -25,7 +25,6 @@ import androidx.compose.ui.draw.paint
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import co.touchlab.kermit.Logger
 import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.features.feed.nav.FeedComponent
@@ -84,7 +83,6 @@ fun FeedScreen(
     getVideoListener: (reel: Reels) -> VideoListener?,
 ) {
     val state by viewModel.state.collectAsState()
-    viewModel.followPrincipalsStatus.collectAsStateWithLifecycle(null)
 
     LaunchedEffect(Unit) { viewModel.pushScreenView() }
 
@@ -258,7 +256,7 @@ private fun FeedOverlay(
             bottomOverlay = bottomOverlay,
             openProfile = openProfile,
         )
-        if (!feedViewModel.isLoggedIn() && pageNo != 0 && (pageNo % SIGN_UP_PAGE) == 0) {
+        if (!state.isLoggedIn && pageNo != 0 && (pageNo % SIGN_UP_PAGE) == 0) {
             val context = getContext()
             SignupNudge(tncLink = feedViewModel.getTncLink()) {
                 feedViewModel.signInWithGoogle(context)
