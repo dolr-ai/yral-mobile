@@ -214,6 +214,7 @@ fun EditProfileScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             EmailSection(email = state.emailId)
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 
