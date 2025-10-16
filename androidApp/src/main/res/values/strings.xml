@@ -25,6 +25,8 @@
     <string name="facebook_client_token">12e001a6a4b9c84c8e617275f274a1a1</string>
     <!-- MixPanel SDK Configuration -->
     <string name="mixpanel_token">609abef3172b5fc64554f5ac6c77414d</string>
+    <!-- OneSignal SDK Configuration -->
+    <string name="onesignal_app_id">3b2fb986-1a1a-4afd-b0f0-271faa4697a2</string>
 
 
 
