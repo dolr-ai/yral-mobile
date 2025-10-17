@@ -154,21 +154,22 @@ class FeedViewModel(
     private fun fetchAIFeed() {
         coroutineScope.launch {
             sessionManager.userPrincipal?.let { userPrincipal ->
+                setLoadingMore(true)
                 requiredUseCases.getAIFeedUseCase
                     .invoke(
                         parameter = GetAIFeedUseCase.Params(userId = userPrincipal),
                     ).onSuccess { result ->
-                        val posts = result.posts.map { it.copy(canisterID = "gxhc3-pqaaa-aaaas-qbh3q-cai") }
+                        val posts = result.posts
                         Logger.d("FeedPagination") { "posts in ai feed ${posts.size}" }
                         if (posts.isEmpty()) {
                             setLoadingMore(false)
-                            loadMoreFeed()
+                            updateFeedType(FeedType.DEFAULT)
                         } else {
-                            val notVotedCount = filterVotedAndFetchDetails(posts)
-                            Logger.d("FeedPagination") { "notVotedCount in initialFeed $notVotedCount" }
+                            val notVotedCount = filterVotedAndFetchDetails(posts, false)
+                            Logger.d("FeedPagination") { "notVotedCount in ai feed $notVotedCount" }
                             if (notVotedCount < SUFFICIENT_NEW_REQUIRED) {
                                 setLoadingMore(false)
-                                fetchAIFeed()
+                                // fetchAIFeed()
                             } else {
                                 setLoadingMore(false)
                             }
@@ -274,7 +275,11 @@ class FeedViewModel(
         )
     }
 
-    private suspend fun filterVotedAndFetchDetails(posts: List<Post>): Int {
+    @Suppress("LongMethod")
+    private suspend fun filterVotedAndFetchDetails(
+        posts: List<Post>,
+        checkVotes: Boolean = true,
+    ): Int {
         val fetchedIds = _state.value.posts.mapTo(HashSet()) { it.videoID }
         val newPosts = posts.filter { post -> post.videoID !in fetchedIds }
         _state.update { it.copy(posts = it.posts + newPosts) }
@@ -289,10 +294,15 @@ class FeedViewModel(
                         .invoke(post)
                         .map { detail ->
                             if (detail == null) {
-                                Logger.e("Feed") { "Detail is null for ${post.postID}" }
+                                Logger.e("FeedPagination") { "Detail is null for ${post.postID}" }
                                 crashlyticsManager.recordException(YralException("Detail is null for ${post.postID}"))
                             }
-                            detail to detail?.let { isAlreadyVoted(it) }
+                            detail to
+                                if (checkVotes) {
+                                    detail?.let { isAlreadyVoted(it) }
+                                } else {
+                                    false
+                                }
                         }
                 },
             ).collect { result ->
@@ -327,7 +337,7 @@ class FeedViewModel(
                             }
                         } ?: _state.update { it.copy(pendingFetchDetails = it.pendingFetchDetails - 1) }
                     }.onFailure {
-                        Logger.e(it) { "Failed to fetch details" }
+                        Logger.e("FeedPagination") { "Failed to fetch details $it" }
                         _state.update { state -> state.copy(pendingFetchDetails = state.pendingFetchDetails - 1) }
                     }
             }
@@ -674,7 +684,17 @@ class FeedViewModel(
     fun getTncLink(): String = flagManager.get(AccountFeatureFlags.AccountLinks.Links).tnc
 
     fun updateFeedType(feedType: FeedType) {
-        _state.update { it.copy(feedType = feedType) }
+        if (_state.value.isLoadingMore) return
+        _state.update {
+            val updatedFeed = it.feedDetails.take(it.currentPageOfFeed + 1)
+            val updatedVideoIds = updatedFeed.mapTo(HashSet()) { feed -> feed.videoID }
+            it.copy(
+                feedType = feedType,
+                feedDetails = updatedFeed,
+                isLoadingMore = false,
+                posts = it.posts.filter { post -> post.videoID !in updatedVideoIds },
+            )
+        }
     }
 
     data class RequiredUseCases(
@@ -703,7 +723,7 @@ data class FeedState(
     val showSignupFailedSheet: Boolean = false,
     val overlayType: OverlayType = OverlayType.DAILY_RANK,
     val isLoggedIn: Boolean = false,
-    val feedType: FeedType = FeedType.DEFAULT,
+    val feedType: FeedType = FeedType.AI,
 )
 
 enum class OverlayType {
