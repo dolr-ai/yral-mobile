@@ -86,7 +86,7 @@ class FeedViewModel(
     val state: StateFlow<FeedState> = _state.asStateFlow()
 
     init {
-        if (_state.value.isOnlyAIFeed) {
+        if (_state.value.feedType == FeedType.AI) {
             fetchAIFeed()
         } else {
             initialFeedData()
@@ -158,7 +158,7 @@ class FeedViewModel(
                     .invoke(
                         parameter = GetAIFeedUseCase.Params(userId = userPrincipal),
                     ).onSuccess { result ->
-                        val posts = result.posts
+                        val posts = result.posts.map { it.copy(canisterID = "gxhc3-pqaaa-aaaas-qbh3q-cai") }
                         Logger.d("FeedPagination") { "posts in ai feed ${posts.size}" }
                         if (posts.isEmpty()) {
                             setLoadingMore(false)
@@ -348,7 +348,7 @@ class FeedViewModel(
     fun loadMoreFeed() {
         if (_state.value.isLoadingMore) return
         coroutineScope.launch {
-            if (_state.value.isOnlyAIFeed) {
+            if (_state.value.feedType == FeedType.AI) {
                 fetchAIFeed()
             } else {
                 loadMoreFeedRecursively(
@@ -673,6 +673,10 @@ class FeedViewModel(
 
     fun getTncLink(): String = flagManager.get(AccountFeatureFlags.AccountLinks.Links).tnc
 
+    fun updateFeedType(feedType: FeedType) {
+        _state.update { it.copy(feedType = feedType) }
+    }
+
     data class RequiredUseCases(
         val getInitialFeedUseCase: GetInitialFeedUseCase,
         val fetchMoreFeedUseCase: FetchMoreFeedUseCase,
@@ -699,13 +703,19 @@ data class FeedState(
     val showSignupFailedSheet: Boolean = false,
     val overlayType: OverlayType = OverlayType.DAILY_RANK,
     val isLoggedIn: Boolean = false,
-    val isOnlyAIFeed: Boolean = true,
+    val feedType: FeedType = FeedType.DEFAULT,
 )
 
 enum class OverlayType {
     DEFAULT,
     GAME_TOGGLE,
     DAILY_RANK,
+}
+
+enum class FeedType {
+    DEFAULT,
+    AI,
+    NSFW,
 }
 
 data class VideoData(
