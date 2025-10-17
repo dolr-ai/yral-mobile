@@ -23,6 +23,7 @@ import com.yral.shared.features.feed.domain.useCases.CheckVideoVoteUseCase
 import com.yral.shared.features.feed.domain.useCases.FetchFeedDetailsUseCase
 import com.yral.shared.features.feed.domain.useCases.FetchFeedDetailsWithCreatorInfoUseCase
 import com.yral.shared.features.feed.domain.useCases.FetchMoreFeedUseCase
+import com.yral.shared.features.feed.domain.useCases.GetAIFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.GetInitialFeedUseCase
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.libs.designsystem.component.toast.ToastManager
@@ -46,7 +47,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-@Suppress("TooManyFunctions", "LongParameterList")
+@Suppress("TooManyFunctions", "LongParameterList", "LargeClass")
 class FeedViewModel(
     appDispatchers: AppDispatchers,
     private val sessionManager: SessionManager,
@@ -75,7 +76,9 @@ class FeedViewModel(
         private val ANALYTICS_VIDEO_VIEWED_RANGE = 3000L..4000L
         private const val FULL_VIDEO_WATCHED_THRESHOLD = 95.0
         private const val MAX_PAGE_SIZE = 100
+        private const val MAX_PAGE_SIZE_AI_FEED = 50
         private const val FEEDS_PAGE_SIZE = 10
+        private const val FEEDS_PAGE_SIZE_AI_FEED = 10
         private const val SUFFICIENT_NEW_REQUIRED = 10
         const val SIGN_UP_PAGE = 9
         private const val PAGER_STATE_REFRESH_BUFFER_MS = 100L
@@ -85,7 +88,15 @@ class FeedViewModel(
     val state: StateFlow<FeedState> = _state.asStateFlow()
 
     init {
-        initialFeedData()
+        if (_state.value.feedType == FeedType.AI) {
+            fetchAIFeed(
+                currentBatchSize = FEEDS_PAGE_SIZE_AI_FEED,
+                totalNotVotedCount = 0,
+                recursionDepth = 0,
+            )
+        } else {
+            initialFeedData()
+        }
         viewModelScope.launch {
             sessionManager
                 .observeSessionProperty { it.followedPrincipals to it.unFollowedPrincipals }
@@ -141,6 +152,54 @@ class FeedViewModel(
                     }.onFailure {
                         setLoadingMore(false)
                         loadMoreFeed()
+                    }
+            }
+        }
+    }
+
+    private fun fetchAIFeed(
+        currentBatchSize: Int,
+        totalNotVotedCount: Int,
+        recursionDepth: Int = 0,
+        maxDepth: Int = MAX_PAGE_SIZE_AI_FEED / FEEDS_PAGE_SIZE_AI_FEED,
+    ) {
+        if (recursionDepth >= maxDepth) {
+            setLoadingMore(false)
+            // Safeguard: Max recursion depth reached
+            // Optionally log or notify here
+            return
+        }
+        coroutineScope.launch {
+            sessionManager.userPrincipal?.let { userPrincipal ->
+                setLoadingMore(true)
+                requiredUseCases.getAIFeedUseCase
+                    .invoke(
+                        parameter = GetAIFeedUseCase.Params(userId = userPrincipal, batchSize = currentBatchSize),
+                    ).onSuccess { result ->
+                        val posts = result.posts
+                        Logger.d("FeedPagination") { "posts in ai feed ${posts.size}" }
+                        if (posts.isEmpty()) {
+                            setLoadingMore(false)
+                            updateFeedType(FeedType.DEFAULT)
+                        } else {
+                            val notVotedCount = filterVotedAndFetchDetails(posts, true)
+                            val newTotal = totalNotVotedCount + notVotedCount
+                            Logger.d("FeedPagination") { "notVotedCount in ai feed $notVotedCount" }
+                            if (notVotedCount < SUFFICIENT_NEW_REQUIRED) {
+                                val nextBatchSize =
+                                    (currentBatchSize + FEEDS_PAGE_SIZE_AI_FEED).coerceAtMost(MAX_PAGE_SIZE_AI_FEED)
+                                fetchAIFeed(
+                                    currentBatchSize = nextBatchSize,
+                                    totalNotVotedCount = newTotal,
+                                    recursionDepth = recursionDepth + 1,
+                                )
+                            } else {
+                                setLoadingMore(false)
+                            }
+                        }
+                    }.onFailure {
+                        setLoadingMore(false)
+                        Logger.e("FeedPagination") { "Error fetching ai feed $it" }
                     }
             }
         }
@@ -242,7 +301,11 @@ class FeedViewModel(
         )
     }
 
-    private suspend fun filterVotedAndFetchDetails(posts: List<Post>): Int {
+    @Suppress("LongMethod")
+    private suspend fun filterVotedAndFetchDetails(
+        posts: List<Post>,
+        checkVotes: Boolean = true,
+    ): Int {
         val fetchedIds = _state.value.posts.mapTo(HashSet()) { it.videoID }
         val newPosts = posts.filter { post -> post.videoID !in fetchedIds }
         _state.update { it.copy(posts = it.posts + newPosts) }
@@ -257,10 +320,15 @@ class FeedViewModel(
                         .invoke(post)
                         .map { detail ->
                             if (detail == null) {
-                                Logger.e("Feed") { "Detail is null for ${post.postID}" }
+                                Logger.e("FeedPagination") { "Detail is null for ${post.postID}" }
                                 crashlyticsManager.recordException(YralException("Detail is null for ${post.postID}"))
                             }
-                            detail to detail?.let { isAlreadyVoted(it) }
+                            detail to
+                                if (checkVotes) {
+                                    detail?.let { isAlreadyVoted(it) }
+                                } else {
+                                    false
+                                }
                         }
                 },
             ).collect { result ->
@@ -295,7 +363,7 @@ class FeedViewModel(
                             }
                         } ?: _state.update { it.copy(pendingFetchDetails = it.pendingFetchDetails - 1) }
                     }.onFailure {
-                        Logger.e(it) { "Failed to fetch details" }
+                        Logger.e("FeedPagination") { "Failed to fetch details $it" }
                         _state.update { state -> state.copy(pendingFetchDetails = state.pendingFetchDetails - 1) }
                     }
             }
@@ -316,11 +384,19 @@ class FeedViewModel(
     fun loadMoreFeed() {
         if (_state.value.isLoadingMore) return
         coroutineScope.launch {
-            loadMoreFeedRecursively(
-                currentBatchSize = FEEDS_PAGE_SIZE,
-                totalNotVotedCount = 0,
-                recursionDepth = 0,
-            )
+            if (_state.value.feedType == FeedType.AI) {
+                fetchAIFeed(
+                    currentBatchSize = FEEDS_PAGE_SIZE_AI_FEED,
+                    totalNotVotedCount = 0,
+                    recursionDepth = 0,
+                )
+            } else {
+                loadMoreFeedRecursively(
+                    currentBatchSize = FEEDS_PAGE_SIZE,
+                    totalNotVotedCount = 0,
+                    recursionDepth = 0,
+                )
+            }
         }
     }
 
@@ -637,6 +713,20 @@ class FeedViewModel(
 
     fun getTncLink(): String = flagManager.get(AccountFeatureFlags.AccountLinks.Links).tnc
 
+    fun updateFeedType(feedType: FeedType) {
+        if (_state.value.isLoadingMore || _state.value.feedType == feedType) return
+        _state.update {
+            val updatedFeed = it.feedDetails.take(it.currentPageOfFeed + 1)
+            val updatedVideoIds = updatedFeed.mapTo(HashSet()) { feed -> feed.videoID }
+            it.copy(
+                feedType = feedType,
+                feedDetails = updatedFeed,
+                isLoadingMore = false,
+                posts = it.posts.filter { post -> post.videoID !in updatedVideoIds },
+            )
+        }
+    }
+
     data class RequiredUseCases(
         val getInitialFeedUseCase: GetInitialFeedUseCase,
         val fetchMoreFeedUseCase: FetchMoreFeedUseCase,
@@ -644,6 +734,7 @@ class FeedViewModel(
         val fetchVideoDetailsWithCreatorInfoUseCase: FetchFeedDetailsWithCreatorInfoUseCase,
         val reportVideoUseCase: ReportVideoUseCase,
         val checkVideoVoteUseCase: CheckVideoVoteUseCase,
+        val getAIFeedUseCase: GetAIFeedUseCase,
     )
 }
 
@@ -662,12 +753,19 @@ data class FeedState(
     val showSignupFailedSheet: Boolean = false,
     val overlayType: OverlayType = OverlayType.DAILY_RANK,
     val isLoggedIn: Boolean = false,
+    val feedType: FeedType = FeedType.AI,
 )
 
 enum class OverlayType {
     DEFAULT,
     GAME_TOGGLE,
     DAILY_RANK,
+}
+
+enum class FeedType {
+    DEFAULT,
+    AI,
+    NSFW,
 }
 
 data class VideoData(
