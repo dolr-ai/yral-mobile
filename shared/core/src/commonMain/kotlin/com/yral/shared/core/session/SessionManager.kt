@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 
@@ -136,6 +137,13 @@ class SessionManager {
         mutableState
             .map(transform)
             .distinctUntilChanged()
+
+    suspend fun <T : Any> readLatestSessionPropertyWithDefault(
+        selector: (SessionProperties) -> T?,
+        defaultValue: T,
+    ) = mutableProperties
+        .map { selector(it) ?: defaultValue }
+        .first()
 
     fun resetSessionProperties() {
         mutableProperties.update {

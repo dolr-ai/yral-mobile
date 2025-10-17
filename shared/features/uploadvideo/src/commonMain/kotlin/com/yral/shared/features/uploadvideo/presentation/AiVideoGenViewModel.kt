@@ -140,7 +140,11 @@ class AiVideoGenViewModel internal constructor(
                         parameter =
                             GetFreeCreditsStatusUseCase.Params(
                                 userPrincipal = userPrincipal,
-                                isRegistered = _state.value.isLoggedIn,
+                                isRegistered =
+                                    sessionManager.readLatestSessionPropertyWithDefault(
+                                        selector = { it.isSocialSignIn },
+                                        defaultValue = false,
+                                    ),
                             ),
                     ).onSuccess { status ->
                         uploadVideoTelemetry.videoCreationPageViewed(
