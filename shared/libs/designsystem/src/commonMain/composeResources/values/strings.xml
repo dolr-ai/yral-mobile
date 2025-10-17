@@ -18,6 +18,7 @@
     <string name="enter_bio">Enter bio</string>
     <string name="email_id">Email Id</string>
     <string name="save_changes">Save Changes</string>
+    <string name="uploading_profile_picture">Uploading Profile Pciture</string>
     <string name="username_helper_text">Try creating a unique username. Use 3–15 alphabets or numbers. No spaces or special characters allowed.</string>
     <string name="username_error_text">Username should be between 3 and 15 characters long and contain no special characters.</string>
     <string name="change_name_prompt">Are you sure you want to change your name to %1$s?</string>
@@ -32,6 +33,9 @@
     <!-- Permission Messages -->
     <string name="permission_required_title">Permission required!</string>
     <string name="go_to_settings">Go to settings</string>
+
+    <string name="upload_photo">Upload Photo</string>
+    <string name="take_photo">Take A Photo</string>
 
     <string name="could_not_login">Couldn’t Log In</string>
     <string name="could_not_login_desc">The operation couldn’t be completed. Please try again</string>

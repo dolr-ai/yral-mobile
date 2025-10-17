@@ -92,6 +92,16 @@ class SessionManager {
         }
     }
 
+    fun updateProfilePicture(profilePictureUrl: String?) {
+        mutableState.update { state ->
+            if (state is SessionState.SignedIn) {
+                state.copy(session = state.session.copy(profilePic = profilePictureUrl))
+            } else {
+                state
+            }
+        }
+    }
+
     fun updateFirebaseLoginState(isLoggedIn: Boolean) {
         mutableProperties.update { it.copy(isFirebaseLoggedIn = isLoggedIn) }
     }
