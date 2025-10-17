@@ -2,23 +2,32 @@ package com.yral.shared.features.profile.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
+import com.yral.shared.rust.service.domain.usecases.GetProfileDetailsV4Params
+import com.yral.shared.rust.service.domain.usecases.GetProfileDetailsV4UseCase
+import com.yral.shared.rust.service.domain.usecases.UpdateProfileDetailsParams
+import com.yral.shared.rust.service.domain.usecases.UpdateProfileDetailsUseCase
 import com.yral.shared.rust.service.services.HelperService
 import com.yral.shared.rust.service.services.MetadataUpdateError
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class EditProfileViewModel(
     private val sessionManager: SessionManager,
     private val preferences: Preferences,
+    private val getProfileDetailsV4UseCase: GetProfileDetailsV4UseCase,
+    private val updateProfileDetailsUseCase: UpdateProfileDetailsUseCase,
 ) : ViewModel() {
+    private val logger = Logger.withTag("EditProfileViewModel")
     companion object {
         private const val MIN_USERNAME_LENGTH = 3
         private const val MAX_USERNAME_LENGTH = 15
@@ -31,12 +40,6 @@ class EditProfileViewModel(
         val profilePic = sessionManager.profilePic
         val uniqueId = sessionManager.userPrincipal.orEmpty()
         val initialUsername = sanitizedSessionUsername()
-        val email =
-            sessionManager
-                .observeSessionProperties()
-                .value
-                .emailId
-                .orEmpty()
         _state.update {
             it.copy(
                 profileImageUrl = profilePic,
@@ -44,11 +47,50 @@ class EditProfileViewModel(
                 initialUsername = initialUsername,
                 uniqueId = uniqueId,
                 bioInput = "",
-                emailId = email,
+                initialBio = "",
                 isUsernameValid = true,
                 usernameErrorMessage = null,
                 shouldFocusUsername = false,
             )
+        }
+
+        viewModelScope.launch {
+            sessionManager
+                .observeSessionPropertyWithDefault(
+                    selector = { properties -> properties.emailId },
+                    defaultValue = "",
+                ).collect { email ->
+                    _state.update { current -> current.copy(emailId = email) }
+                }
+        }
+
+        fetchProfileDetails()
+    }
+
+    private fun fetchProfileDetails() {
+        val principalText = sessionManager.userPrincipal ?: return
+        val principal = principalText
+        viewModelScope.launch {
+            getProfileDetailsV4UseCase(
+                GetProfileDetailsV4Params(
+                    principal = principal,
+                    targetPrincipal = principal,
+                ),
+            ).onSuccess { details ->
+                val bio = sanitizeBio(details.bio.orEmpty())
+                _state.update { current ->
+                    if (current.initialBio.isNotEmpty()) {
+                        current
+                    } else {
+                        current.copy(
+                            bioInput = bio,
+                            initialBio = bio,
+                        )
+                    }
+                }
+            }.onFailure { error ->
+                logger.e { "Failed to fetch profile details: ${error.message}" }
+            }
         }
     }
 
@@ -136,41 +178,61 @@ class EditProfileViewModel(
         return isValid
     }
 
-    @Suppress("LongMethod")
-    fun applyUsernameChange() {
-        val sanitized = sanitizeInput(_state.value.usernameInput)
-        val identity = sessionManager.identity ?: return
-        val userCanisterId = sessionManager.canisterID ?: return
+    @Suppress("LongMethod", "CyclomaticComplexMethod", "ReturnCount")
+    fun saveProfileChanges() {
+        val sanitizedUsername = sanitizeInput(_state.value.usernameInput)
+        val sanitizedBio = sanitizeBio(_state.value.bioInput)
+        val userPrincipalText = sessionManager.userPrincipal ?: return
+        val principal = userPrincipalText
+        val identity = sessionManager.identity
+        val userCanisterId = sessionManager.canisterID
         val previousUsername = _state.value.initialUsername
-        if (previousUsername == sanitized) {
+        val previousBio = _state.value.initialBio
+        val shouldUpdateUsername = previousUsername != sanitizedUsername
+        val shouldUpdateBio = previousBio != sanitizedBio
+
+        _state.update { current ->
+            current.copy(usernameInput = sanitizedUsername, bioInput = sanitizedBio)
+        }
+
+        if (shouldUpdateUsername && (identity == null || userCanisterId == null)) {
+            logger.e { "Cannot update username without identity data or canister id" }
+            return
+        }
+
+        if (!shouldUpdateUsername && !shouldUpdateBio) {
             _state.update { current ->
                 current.copy(
-                    usernameInput = previousUsername,
-                    initialUsername = previousUsername,
+                    usernameInput = sanitizedUsername,
+                    initialUsername = sanitizedUsername,
+                    bioInput = sanitizedBio,
+                    initialBio = sanitizedBio,
                     isUsernameFocused = false,
                     isUsernameValid = true,
                     usernameErrorMessage = null,
                     shouldFocusUsername = false,
                 )
             }
-        } else {
-            viewModelScope.launch {
+            return
+        }
+
+        viewModelScope.launch {
+            if (shouldUpdateUsername) {
+                val identityData = identity
+                val canisterId = userCanisterId
+                if (identityData == null || canisterId == null) {
+                    logger.e { "Cannot update username without identity data or canister id" }
+                    _state.update { current ->
+                        current.copy(usernameInput = previousUsername)
+                    }
+                    return@launch
+                }
                 HelperService
-                    .updateUserMetadata(identity, userCanisterId, sanitized)
-                    .onSuccess {
-                        sessionManager.updateUsername(sanitized)
-                        preferences.putString(PrefKeys.USERNAME.name, sanitized)
-                        _state.update { current ->
-                            current.copy(
-                                usernameInput = sanitized,
-                                initialUsername = sanitized,
-                                isUsernameFocused = false,
-                                isUsernameValid = true,
-                                usernameErrorMessage = null,
-                                shouldFocusUsername = false,
-                            )
-                        }
-                    }.onFailure { error ->
+                    .updateUserMetadata(
+                        identityData,
+                        canisterId,
+                        sanitizedUsername,
+                    ).onFailure { error ->
                         when (error) {
                             is MetadataUpdateError.UsernameTaken -> {
                                 _state.update { current ->
@@ -207,7 +269,64 @@ class EditProfileViewModel(
                                 }
                             }
                         }
+                        return@launch
+                    }.onSuccess {
+                        sessionManager.updateUsername(sanitizedUsername)
+                        preferences.putString(PrefKeys.USERNAME.name, sanitizedUsername)
+                        _state.update { current ->
+                            current.copy(
+                                usernameInput = sanitizedUsername,
+                                initialUsername = sanitizedUsername,
+                                isUsernameFocused = false,
+                                isUsernameValid = true,
+                                usernameErrorMessage = null,
+                                shouldFocusUsername = false,
+                            )
+                        }
                     }
+            } else {
+                _state.update { current ->
+                    current.copy(
+                        usernameInput = sanitizedUsername,
+                        initialUsername = sanitizedUsername,
+                        isUsernameFocused = false,
+                        isUsernameValid = true,
+                        usernameErrorMessage = null,
+                        shouldFocusUsername = false,
+                    )
+                }
+            }
+
+            if (shouldUpdateBio) {
+                updateProfileDetailsUseCase(
+                    UpdateProfileDetailsParams(
+                        principal = principal,
+                        bio = sanitizedBio.takeUnless { it.isEmpty() },
+                    ),
+                ).onFailure { error ->
+                    logger.e { "Failed to update bio: ${error.message}" }
+                    _state.update { current ->
+                        current.copy(
+                            bioInput = previousBio,
+                            initialBio = previousBio,
+                        )
+                    }
+                    return@launch
+                }.onSuccess {
+                    _state.update { current ->
+                        current.copy(
+                            bioInput = sanitizedBio,
+                            initialBio = sanitizedBio,
+                        )
+                    }
+                }
+            } else {
+                _state.update { current ->
+                    current.copy(
+                        bioInput = sanitizedBio,
+                        initialBio = sanitizedBio,
+                    )
+                }
             }
         }
     }
@@ -230,6 +349,8 @@ class EditProfileViewModel(
 
     private fun sanitizeInput(value: String): String = value.trim().removePrefix("@")
 
+    private fun sanitizeBio(value: String): String = value.trim()
+
     private fun isValidUsername(value: String): Boolean =
         value.length in MIN_USERNAME_LENGTH..MAX_USERNAME_LENGTH &&
             value.all { it.isLetterOrDigit() }
@@ -245,6 +366,7 @@ data class EditProfileViewState(
     val uniqueId: String = "",
     val initialUsername: String = "",
     val bioInput: String = "",
+    val initialBio: String = "",
     val emailId: String = "",
     val isUsernameFocused: Boolean = false,
     val isUsernameValid: Boolean = true,
