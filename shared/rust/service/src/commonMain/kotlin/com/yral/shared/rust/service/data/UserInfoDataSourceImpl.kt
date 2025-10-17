@@ -1,9 +1,11 @@
 package com.yral.shared.rust.service.data
 
+import com.yral.shared.rust.service.domain.models.ProfileUpdateDetails
 import com.yral.shared.rust.service.services.UserInfoServiceFactory
 import com.yral.shared.uniffi.generated.Principal
 import com.yral.shared.uniffi.generated.UisFollowersResponse
 import com.yral.shared.uniffi.generated.UisFollowingResponse
+import com.yral.shared.uniffi.generated.UisProfileUpdateDetails
 import com.yral.shared.uniffi.generated.UisUserProfileDetailsForFrontendV4
 
 class UserInfoDataSourceImpl(
@@ -64,4 +66,19 @@ class UserInfoDataSourceImpl(
                 limit = limit,
                 withCallerFollows = withCallerFollows,
             )
+
+    override suspend fun updateProfileDetails(
+        principal: Principal,
+        details: ProfileUpdateDetails,
+    ) {
+        userInfoServiceFactory
+            .service(principal)
+            .updateProfileDetails(
+                UisProfileUpdateDetails(
+                    bio = details.bio?.takeUnless { it.isBlank() },
+                    websiteUrl = details.websiteUrl,
+                    profilePictureUrl = details.profilePictureUrl,
+                ),
+            )
+    }
 }
