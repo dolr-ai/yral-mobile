@@ -6,6 +6,8 @@ import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.core.session.SessionManager
+import com.yral.shared.features.profile.domain.UploadProfileImageParams
+import com.yral.shared.features.profile.domain.UploadProfileImageUseCase
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import com.yral.shared.rust.service.domain.usecases.GetProfileDetailsV4Params
@@ -17,15 +19,17 @@ import com.yral.shared.rust.service.services.MetadataUpdateError
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 
 class EditProfileViewModel(
     private val sessionManager: SessionManager,
     private val preferences: Preferences,
     private val getProfileDetailsV4UseCase: GetProfileDetailsV4UseCase,
     private val updateProfileDetailsUseCase: UpdateProfileDetailsUseCase,
+    private val uploadProfileImageUseCase: UploadProfileImageUseCase,
 ) : ViewModel() {
     private val logger = Logger.withTag("EditProfileViewModel")
     companion object {
@@ -78,6 +82,7 @@ class EditProfileViewModel(
                 ),
             ).onSuccess { details ->
                 val bio = sanitizeBio(details.bio.orEmpty())
+                val profileImage = details.profilePictureUrl
                 _state.update { current ->
                     if (current.initialBio.isNotEmpty()) {
                         current
@@ -85,14 +90,69 @@ class EditProfileViewModel(
                         current.copy(
                             bioInput = bio,
                             initialBio = bio,
+                            profileImageUrl = profileImage ?: current.profileImageUrl,
                         )
                     }
+                }
+                if (profileImage != null) {
+                    sessionManager.updateProfilePicture(profileImage)
+                    preferences.putString(PrefKeys.PROFILE_PIC.name, profileImage)
                 }
             }.onFailure { error ->
                 logger.e { "Failed to fetch profile details: ${error.message}" }
             }
         }
     }
+
+    @Suppress("TooGenericExceptionCaught")
+    fun uploadProfileImage(imageBytes: ByteArray) {
+        if (_state.value.isUploadingProfileImage) {
+            return
+        }
+        viewModelScope.launch {
+            _state.update { current ->
+                current.copy(isUploadingProfileImage = true, profileImageUploadError = null)
+            }
+
+            val base64 =
+                try {
+                    encodeToBase64(imageBytes)
+                } catch (error: Throwable) {
+                    logger.e { "Failed to encode profile image: ${error.message}" }
+                    _state.update { current ->
+                        current.copy(
+                            isUploadingProfileImage = false,
+                            profileImageUploadError = error.message ?: "Unable to process image",
+                        )
+                    }
+                    return@launch
+                }
+
+            uploadProfileImageUseCase(UploadProfileImageParams(base64))
+                .onSuccess { imageUrl ->
+                    sessionManager.updateProfilePicture(imageUrl)
+                    preferences.putString(PrefKeys.PROFILE_PIC.name, imageUrl)
+                    _state.update { current ->
+                        current.copy(
+                            profileImageUrl = imageUrl,
+                            isUploadingProfileImage = false,
+                            profileImageUploadError = null,
+                        )
+                    }
+                }.onFailure { error ->
+                    logger.e { "Failed to upload profile image: ${error.message}" }
+                    _state.update { current ->
+                        current.copy(
+                            isUploadingProfileImage = false,
+                            profileImageUploadError = error.message ?: "Failed to upload profile picture",
+                        )
+                    }
+                }
+        }
+    }
+
+    @OptIn(ExperimentalEncodingApi::class)
+    private fun encodeToBase64(bytes: ByteArray): String = Base64.Default.encode(bytes)
 
     fun onUsernameChanged(value: String) {
         val sanitized = sanitizeInput(value)
@@ -362,6 +422,8 @@ class EditProfileViewModel(
 
 data class EditProfileViewState(
     val profileImageUrl: String? = null,
+    val isUploadingProfileImage: Boolean = false,
+    val profileImageUploadError: String? = null,
     val usernameInput: String = "",
     val uniqueId: String = "",
     val initialUsername: String = "",

@@ -5,6 +5,8 @@ import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.rust.KotlinDelegatedIdentityWire
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.features.profile.data.models.DeleteVideoRequestBody
+import com.yral.shared.features.profile.data.models.UploadProfileImageRequestBody
+import com.yral.shared.features.profile.data.models.UploadProfileImageResponse
 import com.yral.shared.features.profile.data.models.VideoViewsDto
 import com.yral.shared.features.profile.domain.models.DeleteVideoRequest
 import com.yral.shared.features.profile.domain.models.ProfileVideosPageResult
@@ -16,6 +18,7 @@ import com.yral.shared.rust.service.domain.models.PostsOfUserProfileError
 import com.yral.shared.rust.service.utils.delegatedIdentityWireToJson
 import io.ktor.client.HttpClient
 import io.ktor.client.request.setBody
+import io.ktor.http.URLProtocol
 import io.ktor.http.path
 import kotlinx.serialization.json.Json
 
@@ -109,6 +112,33 @@ class ProfileDataSourceImpl(
             }
             setBody(mapOf("video_ids" to videoId))
         }
+
+    override suspend fun uploadProfileImage(imageBase64: String): String {
+        val identity =
+            sessionManager.identity
+                ?: throw YralException("No identity found")
+
+        val identityWireJson = delegatedIdentityWireToJson(identity)
+        val delegatedIdentityWire =
+            json.decodeFromString<KotlinDelegatedIdentityWire>(identityWireJson)
+
+        val response =
+            httpPost<UploadProfileImageResponse>(httpClient, json) {
+                url {
+                    protocol = URLProtocol.HTTPS
+                    host = OFF_CHAIN_BASE_URL
+                    path("api", "v1", "user", "profile-image")
+                }
+                setBody(
+                    UploadProfileImageRequestBody(
+                        delegatedIdentityWire = delegatedIdentityWire,
+                        imageData = imageBase64,
+                    ),
+                )
+            }
+
+        return response.profileImageUrl
+    }
 
     companion object {
         private const val DELETE_VIDEO_ENDPOINT = "/api/v2/posts"

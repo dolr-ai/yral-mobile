@@ -19,6 +19,7 @@ import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.core.session.SessionManager
+import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.utils.getAccountInfo
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.data.feed.domain.FeedDetails
@@ -204,6 +205,33 @@ class ProfileViewModel(
                 sessionManager
                     .observeSessionState(transform = { sessionManager.getAccountInfo() })
                     .collect { info -> _state.update { it.copy(accountInfo = info) } }
+            }
+            viewModelScope.launch {
+                sessionManager
+                    .observeSessionState { state ->
+                        if (state is SessionState.SignedIn) {
+                            state.session.profilePic
+                        } else {
+                            null
+                        }
+                    }.collect { updatedPic ->
+                        if (updatedPic != null) {
+                            _state.update { current ->
+                                if (!current.isOwnProfile) {
+                                    current
+                                } else {
+                                    val updatedInfo =
+                                        current.accountInfo?.copy(profilePic = updatedPic)
+                                            ?: AccountInfo(
+                                                userPrincipal = sessionManager.userPrincipal.orEmpty(),
+                                                profilePic = updatedPic,
+                                                username = sessionManager.username,
+                                            )
+                                    current.copy(accountInfo = updatedInfo)
+                                }
+                            }
+                        }
+                    }
             }
         }
         viewModelScope.launch {
