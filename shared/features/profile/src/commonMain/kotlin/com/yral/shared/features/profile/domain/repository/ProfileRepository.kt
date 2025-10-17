@@ -13,4 +13,6 @@ interface ProfileRepository {
     ): ProfileVideosPageResult
 
     suspend fun deleteVideo(request: DeleteVideoRequest)
+
+    suspend fun uploadProfileImage(imageBase64: String): String
 }
