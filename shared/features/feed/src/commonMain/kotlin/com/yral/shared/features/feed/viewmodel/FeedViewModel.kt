@@ -23,6 +23,7 @@ import com.yral.shared.features.feed.domain.useCases.CheckVideoVoteUseCase
 import com.yral.shared.features.feed.domain.useCases.FetchFeedDetailsUseCase
 import com.yral.shared.features.feed.domain.useCases.FetchFeedDetailsWithCreatorInfoUseCase
 import com.yral.shared.features.feed.domain.useCases.FetchMoreFeedUseCase
+import com.yral.shared.features.feed.domain.useCases.GetAIFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.GetInitialFeedUseCase
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.libs.designsystem.component.toast.ToastManager
@@ -85,7 +86,11 @@ class FeedViewModel(
     val state: StateFlow<FeedState> = _state.asStateFlow()
 
     init {
-        initialFeedData()
+        if (_state.value.isOnlyAIFeed) {
+            fetchAIFeed()
+        } else {
+            initialFeedData()
+        }
         viewModelScope.launch {
             sessionManager
                 .observeSessionProperty { it.followedPrincipals to it.unFollowedPrincipals }
@@ -142,6 +147,33 @@ class FeedViewModel(
                         setLoadingMore(false)
                         loadMoreFeed()
                     }
+            }
+        }
+    }
+
+    private fun fetchAIFeed() {
+        coroutineScope.launch {
+            sessionManager.userPrincipal?.let { userPrincipal ->
+                requiredUseCases.getAIFeedUseCase
+                    .invoke(
+                        parameter = GetAIFeedUseCase.Params(userId = userPrincipal),
+                    ).onSuccess { result ->
+                        val posts = result.posts
+                        Logger.d("FeedPagination") { "posts in ai feed ${posts.size}" }
+                        if (posts.isEmpty()) {
+                            setLoadingMore(false)
+                            loadMoreFeed()
+                        } else {
+                            val notVotedCount = filterVotedAndFetchDetails(posts)
+                            Logger.d("FeedPagination") { "notVotedCount in initialFeed $notVotedCount" }
+                            if (notVotedCount < SUFFICIENT_NEW_REQUIRED) {
+                                setLoadingMore(false)
+                                fetchAIFeed()
+                            } else {
+                                setLoadingMore(false)
+                            }
+                        }
+                    }.onFailure { Logger.e("FeedPagination") { "Error fetching ai feed $it" } }
             }
         }
     }
@@ -316,11 +348,15 @@ class FeedViewModel(
     fun loadMoreFeed() {
         if (_state.value.isLoadingMore) return
         coroutineScope.launch {
-            loadMoreFeedRecursively(
-                currentBatchSize = FEEDS_PAGE_SIZE,
-                totalNotVotedCount = 0,
-                recursionDepth = 0,
-            )
+            if (_state.value.isOnlyAIFeed) {
+                fetchAIFeed()
+            } else {
+                loadMoreFeedRecursively(
+                    currentBatchSize = FEEDS_PAGE_SIZE,
+                    totalNotVotedCount = 0,
+                    recursionDepth = 0,
+                )
+            }
         }
     }
 
@@ -644,6 +680,7 @@ class FeedViewModel(
         val fetchVideoDetailsWithCreatorInfoUseCase: FetchFeedDetailsWithCreatorInfoUseCase,
         val reportVideoUseCase: ReportVideoUseCase,
         val checkVideoVoteUseCase: CheckVideoVoteUseCase,
+        val getAIFeedUseCase: GetAIFeedUseCase,
     )
 }
 
@@ -662,6 +699,7 @@ data class FeedState(
     val showSignupFailedSheet: Boolean = false,
     val overlayType: OverlayType = OverlayType.DAILY_RANK,
     val isLoggedIn: Boolean = false,
+    val isOnlyAIFeed: Boolean = true,
 )
 
 enum class OverlayType {
