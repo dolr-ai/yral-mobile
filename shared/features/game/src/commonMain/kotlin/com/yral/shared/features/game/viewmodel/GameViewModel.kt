@@ -57,10 +57,14 @@ class GameViewModel(
     init {
         viewModelScope.launch { restoreDataFromPrefs() }
         viewModelScope.launch {
-            sessionManager.observeSessionProperty { it.coinBalance }.collect { coinBalance ->
-                Logger.d("coinBalance") { "coin balance collected $coinBalance" }
-                coinBalance?.let { balance -> _state.update { it.copy(coinBalance = balance) } }
-            }
+            sessionManager
+                .observeSessionPropertyWithDefault(
+                    selector = { it.coinBalance },
+                    defaultValue = 0,
+                ).collect { coinBalance ->
+                    Logger.d("coinBalance") { "coin balance collected $coinBalance" }
+                    _state.update { it.copy(coinBalance = coinBalance) }
+                }
         }
         viewModelScope.launch {
             sessionManager

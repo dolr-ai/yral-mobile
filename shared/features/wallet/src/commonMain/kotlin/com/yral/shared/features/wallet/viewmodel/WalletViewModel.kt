@@ -54,7 +54,7 @@ class WalletViewModel(
             sessionManager
                 .observeSessionProperty { it.isFirebaseLoggedIn }
                 .collect { isFirebaseLoggedIn ->
-                    _state.update { it.copy(isFirebaseLoggedIn = true) }
+                    _state.update { it.copy(isFirebaseLoggedIn = isFirebaseLoggedIn) }
                 }
         }
     }
@@ -74,10 +74,14 @@ class WalletViewModel(
 
     private fun observeBalance() {
         viewModelScope.launch {
-            sessionManager.observeSessionProperty { it.coinBalance }.collect { coinBalance ->
-                Logger.d("coinBalance") { "coin balance collected $coinBalance" }
-                _state.update { it.copy(yralTokenBalance = coinBalance ?: 0) }
-            }
+            sessionManager
+                .observeSessionPropertyWithDefault(
+                    selector = { it.coinBalance },
+                    defaultValue = 0,
+                ).collect { coinBalance ->
+                    Logger.d("coinBalance") { "coin balance collected $coinBalance" }
+                    _state.update { it.copy(yralTokenBalance = coinBalance) }
+                }
         }
     }
 

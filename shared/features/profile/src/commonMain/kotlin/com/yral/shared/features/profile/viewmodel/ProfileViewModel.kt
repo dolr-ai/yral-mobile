@@ -53,7 +53,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -87,7 +89,8 @@ class ProfileViewModel(
         )
     val state: StateFlow<ViewState> = _state.asStateFlow()
 
-    val profileEvents = Channel<ProfileEvents>(Channel.CONFLATED)
+    private val profileEventsChannel = Channel<ProfileEvents>(Channel.CONFLATED)
+    val profileEvents = profileEventsChannel.receiveAsFlow()
 
     private val deletedVideoIds = MutableStateFlow<Set<String>>(emptySet())
     val profileVideos: Flow<PagingData<FeedDetails>> =
@@ -123,7 +126,7 @@ class ProfileViewModel(
             flowOf()
         }
 
-    val followers: Flow<PagingData<PagedFollowerItem>>? =
+    val followers: Flow<PagingData<PagedFollowerItem>> =
         if (canisterData.userPrincipalId.isNotEmpty()) {
             Pager(
                 config =
@@ -142,10 +145,10 @@ class ProfileViewModel(
                 },
             ).flow.cachedIn(viewModelScope)
         } else {
-            flowOf()
+            emptyFlow()
         }
 
-    val following: Flow<PagingData<PagedFollowerItem>>? =
+    val following: Flow<PagingData<PagedFollowerItem>> =
         if (canisterData.userPrincipalId.isNotEmpty()) {
             Pager(
                 config =
@@ -164,7 +167,7 @@ class ProfileViewModel(
                 },
             ).flow.cachedIn(viewModelScope)
         } else {
-            flowOf()
+            emptyFlow()
         }
 
     val followStatus = sessionManager.observeSessionProperty { it.followedPrincipals to it.unFollowedPrincipals }
@@ -196,9 +199,13 @@ class ProfileViewModel(
             }
         }
         viewModelScope.launch {
-            sessionManager.observeSessionProperty { it.isSocialSignIn }.collect { isSocialSignIn ->
-                _state.update { it.copy(isLoggedIn = isSocialSignIn == true) }
-            }
+            sessionManager
+                .observeSessionPropertyWithDefault(
+                    selector = { it.isSocialSignIn },
+                    defaultValue = false,
+                ).collect { isSocialSignIn ->
+                    _state.update { it.copy(isLoggedIn = isSocialSignIn) }
+                }
         }
     }
 
@@ -429,13 +436,13 @@ class ProfileViewModel(
                     ),
             ).onSuccess {
                 _state.update { it.copy(isFollowing = true, isFollowInProgress = false) }
-                profileEvents.trySend(ProfileEvents.FollowedSuccessfully)
+                profileEventsChannel.trySend(ProfileEvents.FollowedSuccessfully)
                 sessionManager.addPrincipalToFollow(canisterData.userPrincipalId)
                 Logger.d("Follow") { "Started following" }
-            }.onFailure {
+            }.onFailure { e ->
                 _state.update { it.copy(isFollowInProgress = false) }
-                profileEvents.trySend(ProfileEvents.Failed(it.message ?: "Follow failed"))
-                Logger.d("Follow") { "Follow request failed $it" }
+                profileEventsChannel.trySend(ProfileEvents.Failed(e.message ?: "Follow failed"))
+                Logger.d("Follow") { "Follow request failed $e" }
             }
         }
     }
@@ -451,13 +458,13 @@ class ProfileViewModel(
                     ),
             ).onSuccess {
                 _state.update { it.copy(isFollowing = false, isFollowInProgress = false) }
-                profileEvents.trySend(ProfileEvents.UnfollowedSuccessfully)
+                profileEventsChannel.trySend(ProfileEvents.UnfollowedSuccessfully)
                 sessionManager.removePrincipalFromFollow(canisterData.userPrincipalId)
                 Logger.d("Follow") { "Discontinued following" }
-            }.onFailure {
+            }.onFailure { e ->
                 _state.update { it.copy(isFollowInProgress = false) }
-                profileEvents.trySend(ProfileEvents.Failed(it.message ?: "Unfollow failed"))
-                Logger.d("Follow") { "UnFollow request failed $it" }
+                profileEventsChannel.trySend(ProfileEvents.Failed(e.message ?: "Unfollow failed"))
+                Logger.d("Follow") { "UnFollow request failed $e" }
             }
         }
     }

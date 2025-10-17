@@ -91,7 +91,6 @@ import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.libs.videoPlayer.util.PrefetchVideoListener
 import com.yral.shared.rust.service.domain.models.PagedFollowerItem
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.receiveAsFlow
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import yral_mobile.shared.features.profile.generated.resources.Res
@@ -135,19 +134,19 @@ fun ProfileMainScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
-    val followers = viewModel.followers?.collectAsLazyPagingItems()
-    val following = viewModel.following?.collectAsLazyPagingItems()
+    val followers = viewModel.followers.collectAsLazyPagingItems()
+    val following = viewModel.following.collectAsLazyPagingItems()
 
     val followedSuccessfully = stringResource(DesignRes.string.started_following, state.accountInfo?.displayName ?: "")
     LaunchedEffect(Unit) {
-        viewModel.profileEvents.receiveAsFlow().collect { event ->
+        viewModel.profileEvents.collect { event ->
             when (event) {
                 is ProfileEvents.FollowedSuccessfully -> {
                     ToastManager.showSuccess(type = ToastType.Small(message = followedSuccessfully))
-                    followers?.refresh()
+                    followers.refresh()
                 }
                 is ProfileEvents.UnfollowedSuccessfully -> {
-                    followers?.refresh()
+                    followers.refresh()
                 }
                 is ProfileEvents.Failed -> {
                     ToastManager.showError(type = ToastType.Small(message = event.message))
@@ -159,8 +158,8 @@ fun ProfileMainScreen(
     LaunchedEffect(Unit) {
         viewModel.followStatus.collect {
             if (state.isOwnProfile) {
-                followers?.refresh()
-                following?.refresh()
+                followers.refresh()
+                following.refresh()
             }
         }
     }

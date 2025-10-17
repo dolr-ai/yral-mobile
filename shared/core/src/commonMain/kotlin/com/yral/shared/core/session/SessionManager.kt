@@ -100,13 +100,21 @@ class SessionManager {
     }
 
     fun addPrincipalToFollow(principal: String) {
-        mutableProperties.update { it.copy(followedPrincipals = it.followedPrincipals + principal) }
-        mutableProperties.update { it.copy(unFollowedPrincipals = it.unFollowedPrincipals - principal) }
+        mutableProperties.update {
+            it.copy(
+                followedPrincipals = it.followedPrincipals + principal,
+                unFollowedPrincipals = it.unFollowedPrincipals - principal,
+            )
+        }
     }
 
     fun removePrincipalFromFollow(principal: String) {
-        mutableProperties.update { it.copy(followedPrincipals = it.followedPrincipals - principal) }
-        mutableProperties.update { it.copy(unFollowedPrincipals = it.unFollowedPrincipals + principal) }
+        mutableProperties.update {
+            it.copy(
+                followedPrincipals = it.followedPrincipals - principal,
+                unFollowedPrincipals = it.unFollowedPrincipals + principal,
+            )
+        }
     }
 
     fun <T : Any> observeSessionPropertyWithDefault(

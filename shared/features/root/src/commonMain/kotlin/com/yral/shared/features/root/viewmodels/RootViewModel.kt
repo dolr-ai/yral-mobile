@@ -103,25 +103,28 @@ class RootViewModel(
                 }
         }
         coroutineScope.launch {
+            var firebaseJob: Job? = null
             sessionManager
                 .observeSessionStateWithProperty { state, properties ->
                     (state as? SessionState.SignedIn)?.session to properties.isFirebaseLoggedIn
                 }.collect { (session, isAuthenticated) ->
                     if (session != null && !isAuthenticated) {
-                        coroutineScope.launch {
-                            try {
-                                authClient.fetchBalance(session)
-                                authClient.authorizeFirebase(session)
-                            } catch (e: YralFBAuthException) {
-                                // Do not update error in state since no error message required
-                                Logger.e("Firebase Auth error - $e")
-                                crashlyticsManager.recordException(e)
-                            } catch (e: YralAuthException) {
-                                // can be triggered in postFirebaseLogin when getting balance
-                                Logger.e("Fetch Balance error - $e")
-                                crashlyticsManager.recordException(e)
+                        firebaseJob?.cancel()
+                        firebaseJob =
+                            coroutineScope.launch {
+                                try {
+                                    authClient.fetchBalance(session)
+                                    authClient.authorizeFirebase(session)
+                                } catch (e: YralFBAuthException) {
+                                    // Do not update error in state since no error message required
+                                    Logger.e("Firebase Auth error - $e")
+                                    crashlyticsManager.recordException(e)
+                                } catch (e: YralAuthException) {
+                                    // can be triggered in postFirebaseLogin when getting balance
+                                    Logger.e("Fetch Balance error - $e")
+                                    crashlyticsManager.recordException(e)
+                                }
                             }
-                        }
                     }
                 }
         }

@@ -45,7 +45,7 @@ class LeaderBoardViewModel(
             sessionManager
                 .observeSessionProperty { it.isFirebaseLoggedIn }
                 .collect { isFirebaseLoggedIn ->
-                    _state.update { it.copy(isFirebaseLoggedIn = true) }
+                    _state.update { it.copy(isFirebaseLoggedIn = isFirebaseLoggedIn) }
                 }
         }
     }
