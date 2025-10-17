@@ -684,7 +684,7 @@ class FeedViewModel(
     fun getTncLink(): String = flagManager.get(AccountFeatureFlags.AccountLinks.Links).tnc
 
     fun updateFeedType(feedType: FeedType) {
-        if (_state.value.isLoadingMore) return
+        if (_state.value.isLoadingMore || _state.value.feedType == feedType) return
         _state.update {
             val updatedFeed = it.feedDetails.take(it.currentPageOfFeed + 1)
             val updatedVideoIds = updatedFeed.mapTo(HashSet()) { feed -> feed.videoID }

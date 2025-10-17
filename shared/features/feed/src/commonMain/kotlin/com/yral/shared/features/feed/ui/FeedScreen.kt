@@ -27,6 +27,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.paint
 import androidx.compose.ui.graphics.Color
@@ -337,6 +338,7 @@ private fun ActionsRight(
         ) {
             FeedToggle(
                 feedType = state.feedType,
+                isLoadingMore = state.isLoadingMore,
                 onSelectFeed = { feedViewModel.updateFeedType(it) },
                 modifier = Modifier.offset(y = 16.dp),
             )
@@ -416,10 +418,16 @@ private fun ActionsRight(
 @Composable
 private fun FeedToggle(
     feedType: FeedType,
+    isLoadingMore: Boolean,
     modifier: Modifier = Modifier,
     onSelectFeed: (feedType: FeedType) -> Unit,
     feedToggleBGOpacity: Float = 0.6f,
 ) {
+    val icons =
+        listOf(
+            FeedType.AI to Res.drawable.ic_ai_feed,
+            FeedType.DEFAULT to Res.drawable.ic_normal_video,
+        )
     var isExpanded by remember { mutableStateOf(false) }
     LaunchedEffect(isExpanded) {
         if (isExpanded) {
@@ -436,42 +444,26 @@ private fun FeedToggle(
                     color = YralColors.Neutral800.copy(feedToggleBGOpacity),
                     shape = CircleShape,
                 ).padding(4.5.dp)
-                .clickable { isExpanded = !isExpanded }, // Toggle expand/collapse on click
+                .alpha(if (isLoadingMore) 1 / 2f else 1f),
     ) {
         if (isExpanded) {
-            FeedIcon(
-                drawable = Res.drawable.ic_ai_feed,
-                isSelected = feedType == FeedType.AI,
-                onSelectFeed = {
-                    isExpanded = false
-                    onSelectFeed(FeedType.AI)
-                },
-            )
-            FeedIcon(
-                drawable = Res.drawable.ic_normal_video,
-                isSelected = feedType == FeedType.DEFAULT,
-                onSelectFeed = {
-                    isExpanded = false
-                    onSelectFeed(FeedType.DEFAULT)
-                },
-            )
+            icons.forEach { (type, drawable) ->
+                FeedIcon(
+                    drawable = drawable,
+                    isSelected = feedType == type,
+                    onSelectFeed = {
+                        isExpanded = false
+                        onSelectFeed(type)
+                    },
+                )
+            }
         } else {
-            when (feedType) {
-                FeedType.AI -> {
-                    FeedIcon(
-                        drawable = Res.drawable.ic_ai_feed,
-                        isSelected = true,
-                        onSelectFeed = { isExpanded = true }, // Expand on click
-                    )
-                }
-                FeedType.DEFAULT -> {
-                    FeedIcon(
-                        drawable = Res.drawable.ic_normal_video,
-                        isSelected = true,
-                        onSelectFeed = { isExpanded = true }, // Expand on click
-                    )
-                }
-                FeedType.NSFW -> Unit
+            icons.find { (type, _) -> feedType == type }?.let { (_, drawable) ->
+                FeedIcon(
+                    drawable = drawable,
+                    isSelected = true,
+                    onSelectFeed = { if (!isLoadingMore) isExpanded = true },
+                )
             }
         }
     }
