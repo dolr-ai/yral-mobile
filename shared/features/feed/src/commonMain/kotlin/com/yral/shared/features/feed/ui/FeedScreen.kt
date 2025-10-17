@@ -501,10 +501,7 @@ private fun FeedIcon(
             painter = painterResource(drawable),
             contentDescription = "feed",
             contentScale = ContentScale.Inside,
-            modifier =
-                Modifier
-                    .padding(0.25.dp)
-                    .size(32.dp),
+            modifier = Modifier.fillMaxSize(),
         )
     }
 }

@@ -17,15 +17,12 @@ class GetAIFeedUseCase(
             feedRequest =
                 AIFeedRequest(
                     userId = parameter.userId,
-                    count = INITIAL_REQUEST,
+                    count = parameter.batchSize,
                 ),
         )
 
-    companion object {
-        private const val INITIAL_REQUEST = 20
-    }
-
     data class Params(
         val userId: String,
+        val batchSize: Int,
     )
 }

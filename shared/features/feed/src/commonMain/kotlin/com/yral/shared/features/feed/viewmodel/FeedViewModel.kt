@@ -47,7 +47,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-@Suppress("TooManyFunctions", "LongParameterList")
+@Suppress("TooManyFunctions", "LongParameterList", "LargeClass")
 class FeedViewModel(
     appDispatchers: AppDispatchers,
     private val sessionManager: SessionManager,
@@ -76,7 +76,9 @@ class FeedViewModel(
         private val ANALYTICS_VIDEO_VIEWED_RANGE = 3000L..4000L
         private const val FULL_VIDEO_WATCHED_THRESHOLD = 95.0
         private const val MAX_PAGE_SIZE = 100
+        private const val MAX_PAGE_SIZE_AI_FEED = 50
         private const val FEEDS_PAGE_SIZE = 10
+        private const val FEEDS_PAGE_SIZE_AI_FEED = 10
         private const val SUFFICIENT_NEW_REQUIRED = 10
         const val SIGN_UP_PAGE = 9
         private const val PAGER_STATE_REFRESH_BUFFER_MS = 100L
@@ -87,7 +89,11 @@ class FeedViewModel(
 
     init {
         if (_state.value.feedType == FeedType.AI) {
-            fetchAIFeed()
+            fetchAIFeed(
+                currentBatchSize = FEEDS_PAGE_SIZE_AI_FEED,
+                totalNotVotedCount = 0,
+                recursionDepth = 0,
+            )
         } else {
             initialFeedData()
         }
@@ -151,13 +157,24 @@ class FeedViewModel(
         }
     }
 
-    private fun fetchAIFeed() {
+    private fun fetchAIFeed(
+        currentBatchSize: Int,
+        totalNotVotedCount: Int,
+        recursionDepth: Int = 0,
+        maxDepth: Int = MAX_PAGE_SIZE_AI_FEED / FEEDS_PAGE_SIZE_AI_FEED,
+    ) {
+        if (recursionDepth >= maxDepth) {
+            setLoadingMore(false)
+            // Safeguard: Max recursion depth reached
+            // Optionally log or notify here
+            return
+        }
         coroutineScope.launch {
             sessionManager.userPrincipal?.let { userPrincipal ->
                 setLoadingMore(true)
                 requiredUseCases.getAIFeedUseCase
                     .invoke(
-                        parameter = GetAIFeedUseCase.Params(userId = userPrincipal),
+                        parameter = GetAIFeedUseCase.Params(userId = userPrincipal, batchSize = currentBatchSize),
                     ).onSuccess { result ->
                         val posts = result.posts
                         Logger.d("FeedPagination") { "posts in ai feed ${posts.size}" }
@@ -165,16 +182,25 @@ class FeedViewModel(
                             setLoadingMore(false)
                             updateFeedType(FeedType.DEFAULT)
                         } else {
-                            val notVotedCount = filterVotedAndFetchDetails(posts, false)
+                            val notVotedCount = filterVotedAndFetchDetails(posts, true)
+                            val newTotal = totalNotVotedCount + notVotedCount
                             Logger.d("FeedPagination") { "notVotedCount in ai feed $notVotedCount" }
                             if (notVotedCount < SUFFICIENT_NEW_REQUIRED) {
-                                setLoadingMore(false)
-                                fetchAIFeed()
+                                val nextBatchSize =
+                                    (currentBatchSize + FEEDS_PAGE_SIZE_AI_FEED).coerceAtMost(MAX_PAGE_SIZE_AI_FEED)
+                                fetchAIFeed(
+                                    currentBatchSize = nextBatchSize,
+                                    totalNotVotedCount = newTotal,
+                                    recursionDepth = recursionDepth + 1,
+                                )
                             } else {
                                 setLoadingMore(false)
                             }
                         }
-                    }.onFailure { Logger.e("FeedPagination") { "Error fetching ai feed $it" } }
+                    }.onFailure {
+                        setLoadingMore(false)
+                        Logger.e("FeedPagination") { "Error fetching ai feed $it" }
+                    }
             }
         }
     }
@@ -359,7 +385,11 @@ class FeedViewModel(
         if (_state.value.isLoadingMore) return
         coroutineScope.launch {
             if (_state.value.feedType == FeedType.AI) {
-                fetchAIFeed()
+                fetchAIFeed(
+                    currentBatchSize = FEEDS_PAGE_SIZE_AI_FEED,
+                    totalNotVotedCount = 0,
+                    recursionDepth = 0,
+                )
             } else {
                 loadMoreFeedRecursively(
                     currentBatchSize = FEEDS_PAGE_SIZE,
