@@ -3,10 +3,12 @@ package com.yral.shared.rust.service.data
 import com.yral.shared.rust.service.domain.UserInfoRepository
 import com.yral.shared.rust.service.domain.models.FollowersPageResult
 import com.yral.shared.rust.service.domain.models.FollowingPageResult
+import com.yral.shared.rust.service.domain.models.ProfileUpdateDetails
+import com.yral.shared.rust.service.domain.models.UserProfileDetails
+import com.yral.shared.rust.service.domain.models.toDomain
 import com.yral.shared.rust.service.domain.models.toFollowerPageResult
 import com.yral.shared.rust.service.domain.models.toFollowingPageResult
 import com.yral.shared.uniffi.generated.Principal
-import com.yral.shared.uniffi.generated.UisUserProfileDetailsForFrontendV4
 
 class UserInfoRepositoryImpl(
     private val dataSource: UserInfoDataSource,
@@ -24,7 +26,10 @@ class UserInfoRepositoryImpl(
     override suspend fun getProfileDetailsV4(
         principal: Principal,
         targetPrincipal: Principal,
-    ): UisUserProfileDetailsForFrontendV4 = dataSource.getProfileDetailsV4(principal, targetPrincipal)
+    ): UserProfileDetails =
+        dataSource
+            .getProfileDetailsV4(principal, targetPrincipal)
+            .toDomain()
 
     override suspend fun getFollowers(
         principal: Principal,
@@ -57,4 +62,9 @@ class UserInfoRepositoryImpl(
                 limit = limit,
                 withCallerFollows = withCallerFollows,
             ).toFollowingPageResult()
+
+    override suspend fun updateProfileDetails(
+        principal: Principal,
+        details: ProfileUpdateDetails,
+    ) = dataSource.updateProfileDetails(principal, details)
 }
