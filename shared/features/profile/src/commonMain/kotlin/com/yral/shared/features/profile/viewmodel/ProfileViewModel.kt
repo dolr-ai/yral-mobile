@@ -420,6 +420,7 @@ class ProfileViewModel(
 
     private suspend fun follow() {
         sessionManager.userPrincipal?.let { userPrincipal ->
+            _state.update { it.copy(isFollowInProgress = true) }
             followUserUseCase(
                 parameter =
                     FollowUserParams(
@@ -427,11 +428,12 @@ class ProfileViewModel(
                         targetPrincipal = canisterData.userPrincipalId,
                     ),
             ).onSuccess {
-                _state.update { it.copy(isFollowing = true) }
+                _state.update { it.copy(isFollowing = true, isFollowInProgress = false) }
                 profileEvents.trySend(ProfileEvents.FollowedSuccessfully)
                 sessionManager.addPrincipalToFollow(canisterData.userPrincipalId)
                 Logger.d("Follow") { "Started following" }
             }.onFailure {
+                _state.update { it.copy(isFollowInProgress = false) }
                 profileEvents.trySend(ProfileEvents.Failed(it.message ?: "Follow failed"))
                 Logger.d("Follow") { "Follow request failed $it" }
             }
@@ -440,6 +442,7 @@ class ProfileViewModel(
 
     private suspend fun unFollow() {
         sessionManager.userPrincipal?.let { userPrincipal ->
+            _state.update { it.copy(isFollowInProgress = true) }
             unfollowUserUseCase(
                 parameter =
                     UnfollowUserParams(
@@ -447,11 +450,12 @@ class ProfileViewModel(
                         targetPrincipal = canisterData.userPrincipalId,
                     ),
             ).onSuccess {
-                _state.update { it.copy(isFollowing = false) }
+                _state.update { it.copy(isFollowing = false, isFollowInProgress = false) }
                 profileEvents.trySend(ProfileEvents.UnfollowedSuccessfully)
                 sessionManager.removePrincipalFromFollow(canisterData.userPrincipalId)
                 Logger.d("Follow") { "Discontinued following" }
             }.onFailure {
+                _state.update { it.copy(isFollowInProgress = false) }
                 profileEvents.trySend(ProfileEvents.Failed(it.message ?: "Unfollow failed"))
                 Logger.d("Follow") { "UnFollow request failed $it" }
             }
@@ -471,6 +475,7 @@ data class ViewState(
     val isLoggedIn: Boolean = false,
     val isOwnProfile: Boolean = true,
     val isFollowing: Boolean = false,
+    val isFollowInProgress: Boolean = false,
 )
 
 sealed interface ProfileBottomSheet {

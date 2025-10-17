@@ -18,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.yral.shared.core.session.AccountInfo
@@ -45,6 +46,7 @@ fun AccountInfoView(
     showEditProfile: Boolean,
     showFollow: Boolean = false,
     isFollowing: Boolean = false,
+    isFollowInProgress: Boolean = false,
     onLoginClicked: () -> Unit,
     onEditProfileClicked: () -> Unit,
     onFollowClicked: () -> Unit = {},
@@ -144,7 +146,8 @@ fun AccountInfoView(
             }
         }
         if (showFollow) {
-            ProfileButton(
+            YralButton(
+                modifier = Modifier.fillMaxWidth(),
                 text =
                     stringResource(
                         resource =
@@ -154,8 +157,15 @@ fun AccountInfoView(
                                 Res.string.follow
                             },
                     ),
-                modifier = Modifier.fillMaxWidth(),
+                borderColor = YralColors.Neutral700,
+                borderWidth = 1.dp,
+                backgroundColor = YralColors.Neutral800,
+                textStyle =
+                    TextStyle(
+                        color = YralColors.NeutralTextPrimary,
+                    ),
                 onClick = onFollowClicked,
+                buttonState = if (isFollowInProgress) YralButtonState.Loading else YralButtonState.Enabled,
             )
         }
         Spacer(

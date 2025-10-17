@@ -388,6 +388,7 @@ private fun MainContent(
                 showEditProfile = state.isLoggedIn && state.isOwnProfile,
                 showFollow = !state.isOwnProfile && state.isLoggedIn,
                 isFollowing = state.isFollowing,
+                isFollowInProgress = state.isFollowInProgress,
                 onLoginClicked = { viewModel.setBottomSheetType(ProfileBottomSheet.SignUp) },
                 onEditProfileClicked = openEditProfile,
                 onFollowClicked = { viewModel.followUnfollow() },
