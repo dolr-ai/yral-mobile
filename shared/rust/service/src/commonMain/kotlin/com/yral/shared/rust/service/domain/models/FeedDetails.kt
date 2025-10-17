@@ -7,8 +7,10 @@ import com.yral.shared.rust.service.data.IndividualUserDataSourceImpl.Companion.
 import com.yral.shared.rust.service.data.IndividualUserDataSourceImpl.Companion.CLOUD_FLARE_SUFFIX_MP4
 import com.yral.shared.rust.service.data.IndividualUserDataSourceImpl.Companion.THUMBNAIL_SUFFIX
 import com.yral.shared.rust.service.utils.CanisterData
+import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
 import com.yral.shared.rust.service.utils.propicFromPrincipal
 import com.yral.shared.uniffi.generated.PostDetailsForFrontend
+import com.yral.shared.uniffi.generated.PostDetailsWithUserInfo
 import com.yral.shared.uniffi.generated.PostStatus
 import com.yral.shared.uniffi.generated.UpsPostDetailsForFrontend
 import com.yral.shared.uniffi.generated.UpsPostStatus
@@ -74,6 +76,30 @@ internal fun UpsPostDetailsForFrontend.toFeedDetails(
         isFollowing = false,
         isFromServiceCanister = true,
         userName = null,
+    )
+}
+
+internal fun PostDetailsWithUserInfo.toFeedDetails(videoUid: String): FeedDetails {
+    val videoUrl = "$CLOUD_FLARE_PREFIX$videoUid$CLOUD_FLARE_SUFFIX_MP4"
+    val thumbnailUrl = "$CLOUD_FLARE_PREFIX$videoUid$THUMBNAIL_SUFFIX"
+    return FeedDetails(
+        postID = postId,
+        videoID = videoUid,
+        canisterID = canisterId,
+        principalID = posterPrincipal,
+        url = videoUrl,
+        hashtags = hashtags,
+        thumbnail = thumbnailUrl,
+        viewCount = views,
+        displayName = displayName ?: username ?: "",
+        postDescription = description,
+        profileImageURL = propicUrl,
+        likeCount = likes,
+        isLiked = likedByUser ?: false,
+        nsfwProbability = nsfwProbability.toDouble(),
+        isFollowing = userFollowsCreator ?: false,
+        isFromServiceCanister = canisterId == getUserInfoServiceCanister(),
+        userName = username,
     )
 }
 
