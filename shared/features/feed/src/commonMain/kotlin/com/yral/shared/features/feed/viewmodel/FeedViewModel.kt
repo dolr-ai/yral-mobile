@@ -169,7 +169,7 @@ class FeedViewModel(
                             Logger.d("FeedPagination") { "notVotedCount in ai feed $notVotedCount" }
                             if (notVotedCount < SUFFICIENT_NEW_REQUIRED) {
                                 setLoadingMore(false)
-                                // fetchAIFeed()
+                                fetchAIFeed()
                             } else {
                                 setLoadingMore(false)
                             }
