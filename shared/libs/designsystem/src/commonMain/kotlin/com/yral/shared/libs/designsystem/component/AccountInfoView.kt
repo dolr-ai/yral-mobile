@@ -22,11 +22,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.yral.shared.core.session.AccountInfo
-import com.yral.shared.libs.NumberFormatter
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.designsystem.theme.YralDimens
-import com.yral.shared.libs.formatAbbreviation
 import org.jetbrains.compose.resources.stringResource
 import yral_mobile.shared.libs.designsystem.generated.resources.Res
 import yral_mobile.shared.libs.designsystem.generated.resources.anonymous_account_setup
@@ -88,7 +86,7 @@ fun AccountInfoView(
                             modifier = Modifier.weight(1f),
                         ) {
                             Text(
-                                text = NumberFormatter().formatAbbreviation(totalFollowers, 0),
+                                text = formatAbbreviation(totalFollowers, 0),
                                 style = LocalAppTopography.current.mdSemiBold,
                                 color = YralColors.NeutralTextPrimary,
                             )
@@ -106,7 +104,7 @@ fun AccountInfoView(
                             modifier = Modifier.weight(1f),
                         ) {
                             Text(
-                                text = NumberFormatter().formatAbbreviation(totalFollowing, 0),
+                                text = formatAbbreviation(totalFollowing, 0),
                                 style = LocalAppTopography.current.mdSemiBold,
                                 color = YralColors.NeutralTextPrimary,
                             )

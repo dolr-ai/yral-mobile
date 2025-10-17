@@ -36,12 +36,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
 import com.yral.shared.data.feed.domain.FeedDetails
-import com.yral.shared.libs.NumberFormatter
 import com.yral.shared.libs.designsystem.component.YralLoader
+import com.yral.shared.libs.designsystem.component.formatAbbreviation
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
-import com.yral.shared.libs.formatAbbreviation
 import com.yral.shared.libs.videoPlayer.YRALReelPlayer
 import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.libs.videoPlayer.util.PrefetchVideoListener
@@ -304,7 +303,7 @@ private fun ViewsIcon(
             modifier = Modifier.size(36.dp),
         )
         Text(
-            text = NumberFormatter().formatAbbreviation(views, 1),
+            text = formatAbbreviation(views, 1),
             style = LocalAppTopography.current.regSemiBold,
             color = YralColors.NeutralTextPrimary,
         )

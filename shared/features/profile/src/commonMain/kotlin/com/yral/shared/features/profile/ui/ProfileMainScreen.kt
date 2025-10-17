@@ -68,7 +68,6 @@ import com.yral.shared.features.profile.viewmodel.ProfileEvents
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.features.profile.viewmodel.VideoViewState
 import com.yral.shared.features.profile.viewmodel.ViewState
-import com.yral.shared.libs.NumberFormatter
 import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.designsystem.component.AccountInfoView
 import com.yral.shared.libs.designsystem.component.DeleteConfirmationSheet
@@ -80,6 +79,7 @@ import com.yral.shared.libs.designsystem.component.YralErrorMessage
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.YralWebViewBottomSheet
+import com.yral.shared.libs.designsystem.component.formatAbbreviation
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.component.toast.ToastManager
 import com.yral.shared.libs.designsystem.component.toast.ToastType
@@ -87,7 +87,6 @@ import com.yral.shared.libs.designsystem.component.toast.showError
 import com.yral.shared.libs.designsystem.component.toast.showSuccess
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
-import com.yral.shared.libs.formatAbbreviation
 import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.libs.videoPlayer.util.PrefetchVideoListener
 import com.yral.shared.rust.service.domain.models.PagedFollowerItem
@@ -895,7 +894,7 @@ private fun BoxScope.VideoGridItemActions(
                 modifier = Modifier.size(24.dp),
             )
             Text(
-                text = NumberFormatter().formatAbbreviation(iconCount.toLong()),
+                text = formatAbbreviation(iconCount.toLong()),
                 style = LocalAppTopography.current.baseMedium,
                 color = YralColors.NeutralTextPrimary,
             )

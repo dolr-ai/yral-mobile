@@ -34,13 +34,12 @@ import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.PRE_FETCH_BEFORE_LAST
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.SIGN_UP_PAGE
 import com.yral.shared.features.feed.viewmodel.OverlayType
-import com.yral.shared.libs.NumberFormatter
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
 import com.yral.shared.libs.designsystem.component.YralLoader
+import com.yral.shared.libs.designsystem.component.formatAbbreviation
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
-import com.yral.shared.libs.formatAbbreviation
 import com.yral.shared.libs.videoPlayer.YRALReelPlayer
 import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.libs.videoPlayer.pool.VideoListener
@@ -377,7 +376,7 @@ private fun ActionsRight(
                         .padding(1.5.dp),
             )
             Text(
-                text = NumberFormatter().formatAbbreviation(feedDetails.viewCount.toLong(), 1),
+                text = formatAbbreviation(feedDetails.viewCount.toLong(), 1),
                 style = LocalAppTopography.current.regSemiBold,
                 color = YralColors.NeutralTextPrimary,
             )

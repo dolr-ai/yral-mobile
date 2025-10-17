@@ -50,10 +50,9 @@ import com.yral.shared.features.game.ui.CoinBagConstants.COIN_OFFSET_Y_MID
 import com.yral.shared.features.game.ui.CoinBagConstants.COIN_OFFSET_Y_START
 import com.yral.shared.features.game.ui.CoinBagConstants.COIN_SCALE
 import com.yral.shared.features.game.ui.CoinBagConstants.COIN_SCALE_MID
-import com.yral.shared.libs.NumberFormatter
+import com.yral.shared.libs.designsystem.component.formatAbbreviation
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
-import com.yral.shared.libs.formatAbbreviation
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
@@ -252,7 +251,7 @@ private fun BalanceText(coinBalance: Long) {
         label = "CoinBalanceChange",
     ) { balance ->
         Text(
-            text = NumberFormatter().formatAbbreviation(balance),
+            text = formatAbbreviation(balance),
             style = LocalAppTopography.current.feedCanisterId,
             color = animatedColor,
             overflow = TextOverflow.Ellipsis,
