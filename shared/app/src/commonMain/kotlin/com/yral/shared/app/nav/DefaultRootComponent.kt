@@ -13,7 +13,10 @@ import com.arkivanov.decompose.value.Value
 import com.yral.shared.app.UpdateState
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent
 import com.yral.shared.features.profile.nav.EditProfileComponent
+import com.yral.shared.features.profile.nav.ProfileMainComponent
 import com.yral.shared.libs.routing.routes.api.AppRoute
+import com.yral.shared.rust.service.utils.CanisterData
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.serialization.Serializable
 
 class DefaultRootComponent(
@@ -56,6 +59,7 @@ class DefaultRootComponent(
             is Config.Splash -> RootComponent.Child.Splash(splashComponent(componentContext))
             is Config.Home -> RootComponent.Child.Home(homeComponent(componentContext))
             is Config.EditProfile -> RootComponent.Child.EditProfile(editProfileComponent(componentContext))
+            is Config.UserProfile -> RootComponent.Child.UserProfile(profileComponent(componentContext, config))
         }
 
     private fun splashComponent(componentContext: ComponentContext): SplashComponent =
@@ -68,6 +72,7 @@ class DefaultRootComponent(
             HomeComponent.Companion(
                 componentContext = componentContext,
                 openEditProfile = this::openEditProfile,
+                openProfile = this::openProfile,
             )
         homeComponent = component
         return component
@@ -77,6 +82,20 @@ class DefaultRootComponent(
         EditProfileComponent.Companion(
             componentContext = componentContext,
             onBack = this::onBackClicked,
+        )
+
+    private fun profileComponent(
+        componentContext: ComponentContext,
+        config: Config.UserProfile,
+    ): ProfileMainComponent =
+        ProfileMainComponent.invoke(
+            componentContext = componentContext,
+            userCanisterData = config.userCanisterData,
+            pendingVideoNavigation = flowOf(null),
+            onUploadVideoClicked = {},
+            openAccount = {},
+            openEditProfile = {},
+            onBackClicked = this::onBackClicked,
         )
 
     override fun onBackClicked() {
@@ -115,6 +134,10 @@ class DefaultRootComponent(
         navigation.pushToFront(Config.EditProfile)
     }
 
+    override fun openProfile(userCanisterData: CanisterData) {
+        navigation.pushToFront(Config.UserProfile(userCanisterData))
+    }
+
     @Serializable
     private sealed interface Config {
         @Serializable
@@ -125,5 +148,10 @@ class DefaultRootComponent(
 
         @Serializable
         data object EditProfile : Config
+
+        @Serializable
+        data class UserProfile(
+            val userCanisterData: CanisterData,
+        ) : Config
     }
 }

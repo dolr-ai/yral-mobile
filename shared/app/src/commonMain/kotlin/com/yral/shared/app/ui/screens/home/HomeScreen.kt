@@ -76,12 +76,14 @@ import com.yral.shared.libs.designsystem.component.YralFeedback
 import com.yral.shared.libs.designsystem.component.popPressedSoundUri
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import com.yral.shared.rust.service.utils.CanisterData
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 import yral_mobile.shared.app.generated.resources.Res
 import yral_mobile.shared.app.generated.resources.home_nav_selected
 import yral_mobile.shared.app.generated.resources.home_nav_unselected
@@ -143,7 +145,7 @@ internal fun HomeScreen(
                     .padding(innerPadding)
                     .background(MaterialTheme.colorScheme.primaryContainer),
             innerPadding = innerPadding,
-            sessionKey = sessionState.getKey(),
+            sessionState = sessionState,
             updateProfileVideosCount = updateProfileVideosCount,
         )
         SlotContent(component)
@@ -176,12 +178,17 @@ private fun HomeScreenContent(
     component: HomeComponent,
     modifier: Modifier,
     innerPadding: PaddingValues,
-    sessionKey: String,
+    sessionState: SessionState,
     updateProfileVideosCount: (count: Int) -> Unit,
 ) {
+    val sessionKey = sessionState.getKey()
+    val canisterData = sessionState.getCanisterData()
     val feedViewModel = koinViewModel<FeedViewModel>(key = "feed-$sessionKey")
     val gameViewModel = koinViewModel<GameViewModel>(key = "game-$sessionKey")
-    val profileViewModel = koinViewModel<ProfileViewModel>(key = "profile-$sessionKey")
+    val profileViewModel =
+        koinViewModel<ProfileViewModel>(key = "profile-$sessionKey") {
+            parametersOf(canisterData)
+        }
     val accountViewModel = koinViewModel<AccountsViewModel>(key = "account-$sessionKey")
     val leaderBoardViewModel = koinViewModel<LeaderBoardViewModel>(key = "leaderboard-$sessionKey")
 
@@ -503,3 +510,25 @@ private enum class HomeTab(
         unSelectedIcon = DesignRes.drawable.account_nav,
     ),
 }
+
+private fun SessionState.getCanisterData(): CanisterData =
+    when (this) {
+        SessionState.Initial,
+        SessionState.Loading,
+        ->
+            CanisterData(
+                canisterId = "",
+                userPrincipalId = "",
+                profilePic = "",
+                username = "",
+                isCreatedFromServiceCanister = true,
+            )
+        is SessionState.SignedIn ->
+            CanisterData(
+                canisterId = session.canisterId ?: "",
+                userPrincipalId = session.userPrincipal ?: "",
+                profilePic = session.profilePic ?: "",
+                username = session.username,
+                isCreatedFromServiceCanister = session.isCreatedFromServiceCanister,
+            )
+    }

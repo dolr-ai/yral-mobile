@@ -36,12 +36,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
 import com.yral.shared.data.feed.domain.FeedDetails
-import com.yral.shared.libs.NumberFormatter
 import com.yral.shared.libs.designsystem.component.YralLoader
+import com.yral.shared.libs.designsystem.component.formatAbbreviation
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
-import com.yral.shared.libs.formatAbbreviation
 import com.yral.shared.libs.videoPlayer.YRALReelPlayer
 import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.libs.videoPlayer.util.PrefetchVideoListener
@@ -62,11 +61,14 @@ import yral_mobile.shared.libs.designsystem.generated.resources.shadow_bottom
 import yral_mobile.shared.libs.designsystem.generated.resources.your_videos
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
+@Suppress("LongParameterList")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileReelPlayer(
     reelVideos: LazyPagingItems<FeedDetails>,
     initialPage: Int,
+    isOwnProfile: Boolean,
+    userName: String?,
     deletingVideoId: String,
     isReporting: Boolean,
     reportSheetState: ReportSheetState,
@@ -100,6 +102,8 @@ fun ProfileReelPlayer(
             if (currentVideo != null) {
                 ProfileReelOverlay(
                     currentVideo = currentVideo,
+                    isOwnProfile = isOwnProfile,
+                    userName = userName,
                     isDeleting = deletingVideoId == currentVideo.videoID,
                     onBack = onBack,
                     onReportClick = { onReportClick(pageNo, currentVideo) },
@@ -128,6 +132,8 @@ fun ProfileReelPlayer(
 @Composable
 private fun ProfileReelOverlay(
     currentVideo: FeedDetails,
+    isOwnProfile: Boolean,
+    userName: String?,
     isDeleting: Boolean,
     onBack: () -> Unit,
     onReportClick: () -> Unit,
@@ -137,6 +143,8 @@ private fun ProfileReelOverlay(
     Box(modifier = Modifier.fillMaxSize()) {
         Header(
             modifier = Modifier.align(Alignment.TopStart),
+            isOwnProfile = isOwnProfile,
+            userName = userName,
             onBack = onBack,
         )
         Box(
@@ -156,6 +164,7 @@ private fun ProfileReelOverlay(
             ActionsRight(
                 modifier = Modifier.align(Alignment.BottomEnd).padding(end = 16.dp, bottom = 89.dp),
                 views = currentVideo.viewCount.toLong(),
+                isOwnProfile = isOwnProfile,
                 onReportClick = onReportClick,
                 onShareClick = onShareClick,
                 onDeleteVideo = onDeleteVideo,
@@ -172,6 +181,8 @@ private fun ProfileReelOverlay(
 @Composable
 private fun Header(
     modifier: Modifier,
+    isOwnProfile: Boolean,
+    userName: String?,
     onBack: () -> Unit,
 ) {
     Row(
@@ -191,7 +202,12 @@ private fun Header(
             contentDescription = "back",
         )
         Text(
-            text = stringResource(DesignRes.string.your_videos),
+            text =
+                if (isOwnProfile) {
+                    stringResource(DesignRes.string.your_videos)
+                } else {
+                    userName ?: ""
+                },
             style = LocalAppTopography.current.xlBold,
             color = Color.White,
         )
@@ -240,6 +256,7 @@ private fun Caption(
 private fun ActionsRight(
     modifier: Modifier,
     views: Long,
+    isOwnProfile: Boolean,
     onReportClick: () -> Unit,
     onShareClick: () -> Unit,
     onDeleteVideo: () -> Unit,
@@ -261,9 +278,11 @@ private fun ActionsRight(
             onReportClicked = onReportClick,
         )
 
-        DeleteIcon(
-            onDeleteVideo = onDeleteVideo,
-        )
+        if (isOwnProfile) {
+            DeleteIcon(
+                onDeleteVideo = onDeleteVideo,
+            )
+        }
     }
 }
 
@@ -284,7 +303,7 @@ private fun ViewsIcon(
             modifier = Modifier.size(36.dp),
         )
         Text(
-            text = NumberFormatter().formatAbbreviation(views, 1),
+            text = formatAbbreviation(views, 1),
             style = LocalAppTopography.current.regSemiBold,
             color = YralColors.NeutralTextPrimary,
         )

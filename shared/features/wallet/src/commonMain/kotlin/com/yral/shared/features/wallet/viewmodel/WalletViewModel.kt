@@ -18,8 +18,6 @@ import dev.gitlive.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -33,12 +31,6 @@ class WalletViewModel(
 ) : ViewModel() {
     private val _state = MutableStateFlow(WalletState())
     val state: StateFlow<WalletState> = _state.asStateFlow()
-
-    val firebaseLogin =
-        sessionManager
-            .observeSessionProperties()
-            .map { it.isFirebaseLoggedIn }
-            .distinctUntilChanged()
 
     init {
         observeBalance()
@@ -58,6 +50,13 @@ class WalletViewModel(
                 _state.update { it.copy(rewardAnimationUrl = animation) }
             }
         }
+        viewModelScope.launch {
+            sessionManager
+                .observeSessionProperty { it.isFirebaseLoggedIn }
+                .collect { isFirebaseLoggedIn ->
+                    _state.update { it.copy(isFirebaseLoggedIn = isFirebaseLoggedIn) }
+                }
+        }
     }
 
     fun onScreenViewed() {
@@ -65,23 +64,24 @@ class WalletViewModel(
         walletTelemetry.onWalletScreenViewed()
     }
 
-    fun refresh(
-        countryCode: String,
-        isFirebaseLoggedIn: Boolean,
-    ) {
+    fun refresh(countryCode: String) {
         _state.update { it.copy(accountInfo = sessionManager.getAccountInfo()) }
         getUserBtcBalanceUseCase()
-        if (isFirebaseLoggedIn) {
+        if (_state.value.isFirebaseLoggedIn) {
             getBtcValueConversion(countryCode)
         }
     }
 
     private fun observeBalance() {
         viewModelScope.launch {
-            sessionManager.observeSessionProperties().collect { properties ->
-                Logger.d("coinBalance") { "coin balance collected ${properties.coinBalance}" }
-                _state.update { it.copy(yralTokenBalance = properties.coinBalance ?: 0) }
-            }
+            sessionManager
+                .observeSessionPropertyWithDefault(
+                    selector = { it.coinBalance },
+                    defaultValue = 0,
+                ).collect { coinBalance ->
+                    Logger.d("coinBalance") { "coin balance collected $coinBalance" }
+                    _state.update { it.copy(yralTokenBalance = coinBalance) }
+                }
         }
     }
 
@@ -134,4 +134,5 @@ data class WalletState(
     val howToEarnHelpVisible: Boolean = false,
     val rewardConfig: BtcRewardConfig? = null,
     val rewardAnimationUrl: String? = null,
+    val isFirebaseLoggedIn: Boolean = false,
 )

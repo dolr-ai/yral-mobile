@@ -31,4 +31,9 @@
 
     <string name="could_not_login">Couldn’t Log In</string>
     <string name="could_not_login_desc">The operation couldn’t be completed. Please try again</string>
+
+    <string name="followers">Followers</string>
+    <string name="following">Following</string>
+    <string name="follow">Follow</string>
+    <string name="started_following">You’re now following @%1$s !</string>
 </resources>

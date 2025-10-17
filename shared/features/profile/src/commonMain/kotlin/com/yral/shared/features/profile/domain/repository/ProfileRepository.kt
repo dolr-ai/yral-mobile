@@ -5,6 +5,9 @@ import com.yral.shared.features.profile.domain.models.ProfileVideosPageResult
 
 interface ProfileRepository {
     suspend fun getProfileVideos(
+        canisterId: String,
+        userPrincipal: String,
+        isFromServiceCanister: Boolean,
         startIndex: ULong,
         pageSize: ULong,
     ): ProfileVideosPageResult

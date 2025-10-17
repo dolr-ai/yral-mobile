@@ -14,6 +14,7 @@ import com.yral.shared.features.wallet.nav.WalletComponent
 import com.yral.shared.features.wallet.ui.btcRewards.nav.VideoViewRewardsComponent
 import com.yral.shared.libs.routing.routes.api.AppRoute
 import com.yral.shared.libs.routing.routes.api.RewardsReceived
+import com.yral.shared.rust.service.utils.CanisterData
 
 abstract class HomeComponent {
     abstract val stack: Value<ChildStack<*, Child>>
@@ -63,6 +64,7 @@ abstract class HomeComponent {
         operator fun invoke(
             componentContext: ComponentContext,
             openEditProfile: () -> Unit,
-        ): HomeComponent = DefaultHomeComponent(componentContext, openEditProfile)
+            openProfile: (userCanisterData: CanisterData) -> Unit,
+        ): HomeComponent = DefaultHomeComponent(componentContext, openEditProfile, openProfile)
     }
 }
