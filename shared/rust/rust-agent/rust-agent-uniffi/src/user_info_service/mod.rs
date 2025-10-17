@@ -288,6 +288,34 @@ impl UserInfoService {
     }
 
     #[uniffi::method]
+    pub async fn update_profile_details(&self, details: UISProfileUpdateDetails) -> Result<()> {
+        let agent = Arc::clone(&self.agent);
+        let update_details = details;
+        RUNTIME
+            .spawn(async move {
+                let service = yral_canisters_client::user_info_service::UserInfoService(
+                    yral_canisters_client::ic::USER_INFO_SERVICE_ID,
+                    &agent,
+                );
+                let res = service
+                    .update_profile_details(update_details.into())
+                    .await
+                    .map_err(|e| FFIError::AgentError(format!("{:?}", e)))?;
+                match res {
+                    yral_canisters_client::user_info_service::Result_::Ok => Ok(()),
+                    yral_canisters_client::user_info_service::Result_::Err(msg) => {
+                        Err(FFIError::UnknownError(format!(
+                            "Update profile details failed: {}",
+                            msg
+                        )))
+                    }
+                }
+            })
+            .await
+            .map_err(|e| FFIError::AgentError(format!("{:?}", e)))?
+    }
+
+    #[uniffi::method]
     pub async fn get_followers(
         &self,
         principal_text: String,
@@ -369,5 +397,4 @@ impl UserInfoService {
             .map_err(|e| FFIError::AgentError(format!("{:?}", e)))?
     }
 }
-
 

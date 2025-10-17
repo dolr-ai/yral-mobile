@@ -92,7 +92,7 @@ fun EditProfileScreen(
         val isValid = viewModel.validateCurrentUsername()
         if (isValid) {
             focusManager.clearFocus()
-            viewModel.applyUsernameChange()
+            viewModel.saveProfileChanges()
         }
     }
 
